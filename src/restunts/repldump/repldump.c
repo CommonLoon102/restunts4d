@@ -195,15 +195,26 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 
 #endif
 
+// First argument is the filename without the .rpl extension.
+// If there is a second argument (it can by anything, usually 1), then the filename
+// can contain the .rpl extension. It is useful to call this tool via batch files,
+// in that case this tool will terminate normally after done, no need to press any keys.
 int stuntsmain(int argc, char* argv[]) {
-	int i;
+	int i, len;
 	char outname[13], carid[5];
 	FILE* fout;
 	
-	if (argc != 2) {
+	if (argc < 2) {
 		printf("Usage: %s REPLNAME\n\n", argv[0]);
+		printf("Or pass second argument to exit tool automatically on completion:\n");
+		printf("Usage: %s REPLNAME 1\n\n", argv[0]);
 		return 1;
 	}
+	
+        len = strlen(argv[1]);
+        if (len >= 4 && ((strcmp(argv[1] + len - 4, ".rpl") == 0) || strcmp(argv[1] + len - 4, ".RPL") == 0)) {
+                argv[1][len - 4] = '\0';
+        }
 
 	init_main(argc, argv);
 	init_div0();
@@ -223,6 +234,7 @@ int stuntsmain(int argc, char* argv[]) {
 	
 	init_kevinrandom("kevin");
 
+	printf("File: %s\n\n", argv[1]);
 	printf("Loading replay... ");
 	file_load_replay("", argv[1]);
 	printf("OK\n");
@@ -263,19 +275,23 @@ int stuntsmain(int argc, char* argv[]) {
 	game_replay_mode = 2;
 	is_in_replay = 1;
 
-	printf("Loading assets... ");
+	printf("Setup player cars... ");
 	setup_player_cars();
 	kbormouse = 0;
 	byte_449E6 = 0;
 	byte_449DA = 1;
+	printf("OK\n");
 	
+	printf("Set frame callback... ");
 	set_frame_callback();
 	game_replay_mode_copy = 0xFF;
 	byte_44346 = 0;
 	byte_4432A = 0;
 	byte_46467 = 0;
 	dashb_toggle = 0;
+	printf("OK\n");
 	
+	printf("Restore game state... ");
 	cameramode = 0;
 	game_replay_mode = 2;
 	word_44DCA = 0x1F4;
@@ -316,15 +332,17 @@ int stuntsmain(int argc, char* argv[]) {
 	
 	fclose(fout);
 	
-	input_do_checking(1);
-
-	fatal_error("\nDone.\n");
-
-	//audio_stop_unk();
-	//audiodrv_atexit();
-	//kb_exit_handler();
-	//kb_shift_checking1();
-	//video_set_mode7();
+	if (argc == 2) {
+	        input_do_checking(1);
+	        fatal_error("\nDone.\n");
+	}
+	else {
+	        audio_stop_unk();
+	        audiodrv_atexit();
+	        kb_exit_handler();
+	        kb_shift_checking1();
+	        video_set_mode7();
+	}
 
 	return 0;
 }
