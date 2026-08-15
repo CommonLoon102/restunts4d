@@ -107,6 +107,6 @@ These modules are logical only now, not decoupled in the game:
 2. Engine (physics+AI)
 3. Renderer
 
-The ported code must be faithful to the Engine only. The Renderer can be
-rewritten from scratch, as long as it more-or-less producing similar output
-as the original.
+The ported code must be faithful to the Engine only, even the bugs related to collision
+detection and physics must be kept. The Renderer can be rewritten, even from scratch,
+as long as it is more-or-less producing visually similar output to the original.
