@@ -12,3 +12,7 @@ installation included in the repo, since stunts does not run from too deep direc
 the include directory contains include files for borlands crt. the crt obj files are currently 
 located in ..\src\restunts\crt
 
+the scripts folder contains scripts which are helping to find desyncing replays so they can be
+analyzed later. dosbox-x is required to be installed, only it has -silent mode which is headless,
+therefore it won't show any popping up dosbox window, very useful for batch processing.
+
