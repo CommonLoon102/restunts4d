@@ -42,3 +42,5 @@ stunts/*.rpl
 stunts/*.trk
 stunts/*.txt
 stunts/*.vsh
+stunts/*.sh
+stunts/.partitions_all.txt.*
