@@ -11,10 +11,6 @@ run_dosbox_exe() {
     local exe="$1"
     local filename="$2"
 
-    echo "hello from dosbox $exe $filename"
-    echo "$GAME_DIR"
-    echo "$CONFIG"
-
     timeout --signal=KILL 10s \
         dosbox-x \
         -silent \
