@@ -1,0 +1,112 @@
+# Project Background
+
+Currently, the project can be built two different way:
+1. make restunts
+2. make restunts-original
+
+The source code for the original DOS game has been lost but it got reverse-engineered to assembly.
+The 1. method produces an almost completely same .exe as the original. It will be named RESTUNTO.EXE.
+The 2. method incorporates some functions ported to C. The exe will be named RESTUNTS.EXE.
+
+The 2. method has some discrepancies to the original, the two main ones:
+ - some replays would desync
+ - the game would terminate with an out-of-memory message when selecting particularly demanding cars
+
+Most of the desyncs are due to some minor differences to the collision logic.
+
+There are some custom cars what being selected will crash the game when trying to start playing on a track.
+Stunts allocates part of its resources in the data segment and part in a dynamically allocated heap. Interestingly, the C rewrite had changed the memory allocator for the latter: while the original game employs the unusual “Allocate memory” service of DOS (int 21h, AH=48h), Restunts calls instead the malloc function provided by the C runtime. Apparently the latter function was not able to deliver as much memory as the OS interrupt.
+
+## What is a desync?
+
+Save a replay file (.rpl) with RESTUNTO.EXE and load it with RESTUNTS.EXE. In some cases
+at some point the car will crash to something or bounce back differently instead of
+properly completing the track. This is due to the changed behavior to collision detection
+and some car physics. This is not intended behavior and must be fixed.
+
+# Methodology
+
+Make changes to the C code or port assembly to C, then try to play back some replay files
+to see nothing broke. If something broke, revert and try again or somehow fix the code.
+
+# Project Goals And Roadmap
+
+The goals are in order, each goal must be broken down into very small tasks and complete
+them incrementally while constantly ensuring nothing has been broken. A huge amount of replay
+files can guarantee that the behavior didn't change.
+
+1. Fix the car loading issue caused by memory allocation (this might be needed to be pushed
+to later time,due to DOS memory limitations)
+2. Fix car collision logic and physics to match the original behavior
+3. Port all assembly code to C
+4. Port from DOS to SDL, build a native 64 bit application, so it is possible to use more memory
+5. Make the game compatible with Linux, Windows and optionally Mac
+6. Add quality of life improvements:
+ - Option to switch between mph/kmh
+ - Hotkey to rewind the game during racing, no need to go to the replay menu
+ - Unlimited view distance
+ - 120 FPS instead of 20
+ - Support for unlimited screen resulution (ultra-wide monitors, 8K)
+ - Better mouse input
+ - Steering wheel input
+ - Remove limits: map size, replay length
+ - Import new obstacles, stunt elements what can be placed onto maps
+ - Select more than one opponent
+ - Better driving skills for AI opponent
+ - Multiplayer against humans
+ - Compile to WebAssembly, run from web browser
+ - Create a website where players can join to lobbies and race against each other
+ - Android port
+
+# Abstract Architecture of The Game
+
+Basically, we have 4 initial inputs:
+1. Selected car
+2. Selected track
+3. Selected opponent
+4. Selected car for opponent
+
+Somewhere/somehow need to select these 4 things. Originally, it being
+done is the game's simple menu system.
+
+Then the race starts:
+The opponent's actions are calculated via game logic (AI).
+The player's actions are being recorded by keyboard/mouse/joystick input.
+
+Then the game engine calculates the gamestate based on the 4 initial input
+and the player's input (keyboard presses mostly). This will create a new
+gamestate. The engine calculates the position of the car, determines if
+there was a collision with any track element or with the opponent's car.
+
+Then the renderer draws the world based on the 4 initial inputs and the current
+gamestate.
+
+Basically, the renderer will just put the cars onto the track, and render the world from
+the viewpoint of the camera's position and direction 20 times per second.
+
+There are (at least) three other things what needs to be taken care of, because they are being
+constantly animated:
+1. The diner's (decoration element what can be placed onto the track) flashing sign
+2. The blades of the windmills (another decoration).
+3. At the start of the game, a truck opens its door and our car is disembarking it.
+
+## Camera
+There are 4 types of camera in the game. The player can switch between these cameras
+when driving or when watching a replay.
+1. Cockpit camera
+2. Helicopter camera
+3. Free camera
+4. TV camera positions
+
+The Free camera can be adjusted: zooming in and out, and the direction from where the camera
+looking to (up/down, left/right).
+
+## Logical modules
+These modules are logical only now, not decoupled in the game:
+1. Input handler
+2. Engine (physics+AI)
+3. Renderer
+
+The ported code must be faithful to the Engine only. The Renderer can be
+rewritten from scratch, as long as it more-or-less producing similar output
+as the original.
