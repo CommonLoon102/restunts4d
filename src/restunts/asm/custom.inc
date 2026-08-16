@@ -225,6 +225,7 @@ extrn init_game_state:proc
 extrn restore_gamestate:proc
 extrn update_gamestate:proc
 extrn setup_aero_trackdata:proc
+extrn rebuild_opponent_route:proc
 
 extrn run_game:proc
 extrn init_div0:proc

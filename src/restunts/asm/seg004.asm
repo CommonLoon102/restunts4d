@@ -56,6 +56,7 @@ seg004 segment byte public 'STUNTSC' use16
     public ported_sub_204AE_
     public track_setup
     public off_2147C
+    public ported_load_opponent_data_
     public load_opponent_data
     public subst_hillroad_track
 build_track_object proc far
@@ -5839,7 +5840,7 @@ loc_217C2:
     ; align 2
     db 144
 track_setup endp
-load_opponent_data proc far
+ported_load_opponent_data_ proc far
     var_F30 = word ptr -3888
     var_B2E = word ptr -2862
     var_B2C = word ptr -2860
@@ -6105,6 +6106,13 @@ loc_21A42:
 loc_21A54:
     mov     si, [bp+var_4]
     jmp     loc_21878
+ported_load_opponent_data_ endp
+load_opponent_data proc far
+
+    push    cs
+    call near ptr ported_load_opponent_data_
+    call    rebuild_opponent_route
+    retf
 load_opponent_data endp
 subst_hillroad_track proc far
      s = byte ptr 0

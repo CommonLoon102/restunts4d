@@ -711,6 +711,100 @@ extern char gnam_string[]; // 40 bytes
 extern char gsna_string[]; // 5 bytes
 
 extern void copy_string(char*, char far*);
+extern void load_opponent_data(void);
+
+/*
+ * Build the opponent route again with explicit storage and deterministic
+ * tie-breaking. The original assembly search keeps large path/backtracking
+ * arrays on the stack. Its result changes with the ported executable's memory
+ * layout when two routes have the same total PATH cost. The original game
+ * selects the later equal-cost route, so preserve that behavior deliberately.
+ */
+void rebuild_opponent_route(void) {
+	short route[901];
+	short branch_node[256];
+	short branch_route_len[256];
+	unsigned long branch_cost[256];
+	short far* route_out;
+	unsigned char far* path_cost;
+	void far* opponent_res;
+	unsigned long cost;
+	unsigned long best_cost;
+	short node;
+	short next_node;
+	short alternate_node;
+	int route_len;
+	int branch_count;
+	int i;
+	int seen;
+	char opponent_resname[5];
+
+	opponent_resname[0] = 'o';
+	opponent_resname[1] = 'p';
+	opponent_resname[2] = 'p';
+	opponent_resname[3] = gameconfig.game_opponenttype + '0';
+	opponent_resname[4] = 0;
+
+	opponent_res = file_load_resfile(opponent_resname);
+	path_cost = locate_shape_alt(opponent_res, "path");
+	route_out = (short far*)trackdata3;
+
+	node = 0;
+	route_len = 0;
+	branch_count = 0;
+	cost = 0;
+	best_cost = 999999L;
+
+	while (1) {
+		next_node = td01_track_file_cpy[node];
+		seen = 0;
+
+		if (next_node != 0 && next_node != -1) {
+			for (i = 0; i < route_len; ++i) {
+				if (route[i] == node) {
+					seen = 1;
+					break;
+				}
+			}
+		}
+
+		route[route_len++] = node;
+		cost += path_cost[(unsigned char)td17_trk_elem_ordered[node]] + 1L;
+
+		if (next_node == 0) {
+			if (cost <= best_cost) {
+				best_cost = cost;
+				for (i = 0; i < route_len; ++i) {
+					route_out[i] = route[i];
+				}
+				route_out[route_len] = 0;
+				route_out[route_len + 1] = 1;
+			}
+		} else if (next_node != -1 && !seen) {
+			alternate_node = td02_penalty_related[node];
+			if (alternate_node != -1 && branch_count < 256) {
+				branch_node[branch_count] = alternate_node;
+				branch_route_len[branch_count] = route_len;
+				branch_cost[branch_count] = cost;
+				branch_count++;
+			}
+
+			node = next_node;
+			continue;
+		}
+
+		if (branch_count == 0) {
+			break;
+		}
+
+		branch_count--;
+		node = branch_node[branch_count];
+		route_len = branch_route_len[branch_count];
+		cost = branch_cost[branch_count];
+	}
+
+	unload_resource(opponent_res);
+}
 
 void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 	int i;
