@@ -48,7 +48,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	int var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
-	int var_140someWhlData[4];
+	/* Preserve the original stack slot; the surrounding locals are layout-sensitive. */
+	volatile int var_140someWhlData[4];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
 	int pState_f40_sar2;
@@ -199,6 +200,13 @@ loc_14FA6:
 loc_14FAC:
 //    mov     pState_f36Mminf40sar2, ax
 	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
+	/*
+	 * Collision processing overwrites var_140someWhlData in the translated
+	 * stack layout, so keep a second copy outside that fragile slot.
+	 * var_DC is unused during wheel collision detection and is completely
+	 * reinitialized before its normal use later in this function.
+	 */
+	var_DC[var_wheelIndex].x = pState_f36Mminf40sar2;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx += vec_planerotopresult.x;
 	var_DEptrTo1C0->ly += vec_planerotopresult.y;
@@ -1323,7 +1331,7 @@ loc_15882:
 	vec_unk2.y = 0;
 	vec_unk2.z = 0x40;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = var_DC[var_wheelIndex].x;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx -= vec_planerotopresult.x;
 	var_DEptrTo1C0->ly -= vec_planerotopresult.y;
@@ -1471,7 +1479,7 @@ loc_159AD:
 	vec_unk2.y = 0;
 	vec_unk2.z = var_pSpeed2Scaled;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = var_DC[var_wheelIndex].x;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_planerotopresult.x;
 	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_planerotopresult.y;
@@ -1664,7 +1672,7 @@ loc_15A30:
 	vec_unk2.y = 0;
 	vec_unk2.z = var_EE;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = var_DC[var_wheelIndex].x;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_C.x + vec_planerotopresult.x;
 	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_C.y + vec_planerotopresult.y;
