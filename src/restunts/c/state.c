@@ -51,7 +51,36 @@ void player_op(char arg_carInputByte) {
 	state.game_travDist += state.playerstate.car_speed2;
 	var_1C = state.field_45B;
 	var_2 = state.field_2F2;
+	/*
+	 * detect_penalty follows td01[-1] when a branch ends. The original
+	 * allocator happened to route that out-of-bounds read back into the
+	 * main path, while the C allocator returns a wrong-way result. Retry
+	 * from the first post-finish piece when the third adjacent-piece check
+	 * confirms this terminal-branch case. The first call updates the start
+	 * tile, so preserve it in scratch vectors that are overwritten later.
+	 */
+	var_1A[0].x = state.game_startcol;
+	var_1A[0].y = state.game_startcol2;
+	var_1A[0].z = state.game_startrow;
+	var_1A[1].x = state.game_startrow2;
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+	if (
+		/* The penalty detector reported that the car is going the wrong way. */
+		var_1EpenaltyCounter == -1 &&
+		/* The route branch being followed has ended and has no next piece. */
+		td01_track_file_cpy[state.field_2F2] == -1 &&
+		/* This transition was seen twice already; this is the third confirmation. */
+		state.field_45C == 2 &&
+		/* The newly detected piece is connected to the last known piece. */
+		(td01_track_file_cpy[state.field_2F4] == var_2 || td02_penalty_related[state.field_2F4] == var_2)
+	) {
+		state.game_startcol = var_1A[0].x;
+		state.game_startcol2 = var_1A[0].y;
+		state.game_startrow = var_1A[0].z;
+		state.game_startrow2 = var_1A[1].x;
+		var_2 = td01_track_file_cpy[0];
+		si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+	}
 	if (si != 0)
 		goto loc_172CB;
 	goto loc_173B3;
