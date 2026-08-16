@@ -276,7 +276,10 @@ int stuntsmain(int argc, char* argv[]) {
 	is_in_replay = 1;
 
 	printf("Setup player cars... ");
-	setup_player_cars();
+	if (setup_player_cars() != 0) {
+		printf("FAIL (out of memory)\n");
+		return 1;
+	}
 	kbormouse = 0;
 	byte_449E6 = 0;
 	byte_449DA = 1;

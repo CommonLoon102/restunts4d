@@ -5,6 +5,13 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$SCRIPT_DIR/dosbox.proc.conf"
 GAME_DIR="$SCRIPT_DIR/../../stunts"
 
+base="${filename%.[rR][pP][lL]}"
+BINFILE="$GAME_DIR/$base.BIN"
+BNIFILE="$GAME_DIR/$base.BNI"
+
+# Do not allow output from an earlier run to hide a crash or setup failure.
+rm -f -- "$BINFILE" "$BNIFILE"
+
 wine cmd.exe /D /S /C "S: && cd S:\src\restunts && makerepldump"
 
 run_dosbox_exe() {
@@ -40,35 +47,36 @@ run_dosbox_exe() {
     esac
 }
 
-run_dosbox_exe "repldumo.exe" "$filename"
-run_dosbox_exe "repldump.exe" "$filename"
-
-base="${filename%.rpl}"
-bin_file="${base}.BIN"
-bni_file="${base}.BNI"
+failed=false
+run_dosbox_exe "repldumo.exe" "$filename" || failed=true
+run_dosbox_exe "repldump.exe" "$filename" || failed=true
 
 bin_exists=true
 bni_exists=true
 
-BINFILE="$GAME_DIR/$bin_file"
-BNIFILE="$GAME_DIR/$bni_file"
-
 # Check .BIN independently.
 if [[ ! -f "$BINFILE" ]]; then
-    echo "echo repldumo.exe hasn't produced output"
-    bin_exists=false
+	echo "repldumo.exe hasn't produced output"
+	bin_exists=false
+	failed=true
 fi
 
 # Check .BNI independently.
 if [[ ! -f "$BNIFILE" ]]; then
-    echo "echo repldump.exe hasn't produced output"
-    bni_exists=false
+	echo "repldump.exe hasn't produced output"
+	bni_exists=false
+	failed=true
 fi
 
 # Only compare if both output files exist.
 # cmp -s performs a byte-for-byte comparison without calculating hashes.
 if [[ "$bin_exists" == true && "$bni_exists" == true ]]; then
-    if ! cmp -s "$BINFILE" "$BNIFILE"; then
-        echo "file mismatch"
-    fi
+	if ! cmp -s "$BINFILE" "$BNIFILE"; then
+		echo "file mismatch"
+		failed=true
+	fi
+fi
+
+if [[ "$failed" == true ]]; then
+	exit 1
 fi
