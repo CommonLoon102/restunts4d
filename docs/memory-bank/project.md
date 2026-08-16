@@ -1,6 +1,6 @@
 # Project Background
 
-Currently, the project can be built two different way:
+Currently, the project can be built in two different ways:
 1. make restunts
 2. make restunts-original
 
