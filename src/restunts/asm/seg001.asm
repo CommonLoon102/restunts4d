@@ -5397,11 +5397,23 @@ loc_178AE:
     mov     bx, [bp+arg_extVar2ptr]
     mov     si, [bx]
 loc_178B9:
+    ; Process the -1 route-end sentinel once, as the original does.
+    ; Only zero-tail tracks observed the wrapped td01[-1] word as zero.
+    ; td20+708h is the final word of the 70Ah-byte raw track.
+    cmp     si, 0FFFFh
+    jnz     short loc_178C5
+    les     bx, td20_trk_file_appnd
+    cmp     word ptr es:[bx+708h], 0
+    jnz     short loc_178C5
+    sub     ax, ax
+    jmp     short loc_178D2
+loc_178C5:
     mov     bx, si
     shl     bx, 1
     add     bx, word ptr td01_track_file_cpy
     mov     es, word ptr td01_track_file_cpy+2
     mov     ax, es:[bx]
+loc_178D2:
     mov     [bp+var_2], ax
     mov     bx, ax
     add     bx, bp
