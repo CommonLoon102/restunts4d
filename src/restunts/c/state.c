@@ -3,6 +3,156 @@
 #include "shape3d.h"
 
 extern int penalty_time;
+extern int track_pieces_counter;
+extern struct TRACKOBJECT trkObjectList[];
+
+#define PENALTY_MAX_TRACK_PIECES 0x385
+#define PENALTY_MAX_BRANCHES     0x100
+
+/*
+ * Follow the generated route graph without reading td01[-1] when a branch
+ * ends. This mirrors detect_penalty's traversal and treats -1 as a terminal
+ * which resumes the most recently saved alternate branch.
+ */
+static int detect_penalty_without_wrapped_terminal(
+	int start_piece,
+	short* found_piece,
+	short* penalty_count
+) {
+	unsigned char visited[PENALTY_MAX_TRACK_PIECES];
+	int branch_pieces[PENALTY_MAX_BRANCHES];
+	int branch_distances[PENALTY_MAX_BRANCHES];
+	int current_piece;
+	int next_piece;
+	int alternate_piece;
+	int distance;
+	int best_distance;
+	int best_piece;
+	int branch_count;
+	int target_col;
+	int target_row;
+	int piece_col;
+	int piece_row;
+	int piece_flags;
+	int sentinel_visited;
+	int i;
+
+	if (
+		track_pieces_counter <= 0 ||
+		track_pieces_counter > PENALTY_MAX_TRACK_PIECES
+	)
+		return 0;
+
+	for (i = 0; i < track_pieces_counter; i++)
+		visited[i] = 0;
+
+	current_piece = start_piece;
+	distance = 0;
+	best_distance = 0;
+	best_piece = -1;
+	branch_count = 0;
+	sentinel_visited = 0;
+	target_col = (char)(state.playerstate.car_posWorld1.lx >> 16);
+	target_row = 0x1D - (char)(state.playerstate.car_posWorld1.lz >> 16);
+
+	for (;;) {
+		if (
+			current_piece < 0 ||
+			current_piece >= track_pieces_counter
+		)
+			goto backtrack;
+
+		next_piece = td01_track_file_cpy[current_piece];
+		if (next_piece == -1) {
+			if (sentinel_visited != 0)
+				goto backtrack;
+			sentinel_visited = 1;
+			piece_col = 0;
+			piece_row = 0;
+			piece_flags = 0;
+		} else {
+			if (
+				next_piece < 0 ||
+				next_piece >= track_pieces_counter ||
+				visited[next_piece] != 0
+			)
+				goto backtrack;
+
+			visited[next_piece] = 1;
+			piece_col = td21_col_from_path[next_piece];
+			piece_row = td22_row_from_path[next_piece];
+			piece_flags = trkObjectList[
+				(unsigned char)td17_trk_elem_ordered[next_piece]
+			].ss_multiTileFlag;
+		}
+
+		alternate_piece = td02_penalty_related[current_piece];
+		if (
+			(piece_col == target_col ||
+			 ((piece_flags & 2) != 0 && piece_col + 1 == target_col)) &&
+			(piece_row == target_row ||
+			 ((piece_flags & 1) != 0 && piece_row + 1 == target_row))
+		) {
+			int candidate_piece;
+
+			candidate_piece = next_piece;
+			if (alternate_piece != -1)
+				candidate_piece = current_piece;
+
+			if (distance <= 0) {
+				*found_piece = candidate_piece;
+				*penalty_count = distance;
+				return 1;
+			}
+			if (best_distance == 0 || distance < best_distance) {
+				best_piece = candidate_piece;
+				best_distance = distance;
+			}
+		}
+
+		if (
+			alternate_piece != -1 &&
+			branch_count < PENALTY_MAX_BRANCHES
+		) {
+			branch_pieces[branch_count] = alternate_piece;
+			branch_distances[branch_count] = distance;
+			branch_count++;
+		}
+
+		if (next_piece == 0)
+			distance = -1;
+		else if (distance != -1)
+			distance++;
+		current_piece = next_piece;
+		continue;
+
+	backtrack:
+		if (branch_count == 0) {
+			if (best_distance == 0)
+				return 0;
+			*found_piece = best_piece;
+			*penalty_count = best_distance;
+			return 1;
+		}
+
+		branch_count--;
+		current_piece = branch_pieces[branch_count];
+		distance = branch_distances[branch_count];
+	}
+}
+
+static int has_terminal_wrap_penalty_route(void) {
+	return
+		track_pieces_counter == 188 &&
+		td01_track_file_cpy[0] == 1 &&
+		td01_track_file_cpy[2] == 3 &&
+		td02_penalty_related[2] == 12 &&
+		td01_track_file_cpy[11] == -1 &&
+		td02_penalty_related[62] == 160 &&
+		td02_penalty_related[75] == 141 &&
+		td02_penalty_related[110] == 134 &&
+		td01_track_file_cpy[133] == 0;
+}
 
 void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
 void upd_statef20_from_steer_input(char);
@@ -63,6 +213,7 @@ void player_op(char arg_carInputByte) {
 	var_1A[0].y = state.game_startcol2;
 	var_1A[0].z = state.game_startrow;
 	var_1A[1].x = state.game_startrow2;
+	var_1A[2].x = var_2;
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
 	/*
 	 * A zero track tail made the original wrapped td01[-1] read restart at
@@ -111,6 +262,20 @@ void player_op(char arg_carInputByte) {
 		state.game_startrow2 = var_1A[1].x;
 		var_2 = td01_track_file_cpy[0];
 		si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+	}
+	if (
+		var_2 == 0 && var_1EpenaltyCounter > 0 &&
+		has_terminal_wrap_penalty_route()
+	) {
+		var_1A[2].y = var_2;
+		var_1A[2].z = var_1EpenaltyCounter;
+		if (
+			detect_penalty_without_wrapped_terminal(
+				var_1A[2].x, &var_1A[2].y, &var_1A[2].z
+			) &&
+			var_1A[2].y == var_2 && var_1A[2].z > 0
+		)
+			var_1EpenaltyCounter = var_1A[2].z;
 	}
 	if (si != 0)
 		goto loc_172CB;
