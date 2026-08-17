@@ -1,6 +1,22 @@
 #!/bin/bash
 
+if (( $# < 1 || $# > 2 )); then
+    echo "Usage: $0 <replay-file> [true|false]" >&2
+    exit 2
+fi
+
 filename="$1"
+rebuild_exes="${2:-true}"
+
+case "$rebuild_exes" in
+    true|false)
+        ;;
+    *)
+        echo "Usage: $0 <replay-file> [true|false]" >&2
+        exit 2
+        ;;
+esac
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$SCRIPT_DIR/dosbox.proc.conf"
 GAME_DIR="$SCRIPT_DIR/../../stunts"
@@ -12,7 +28,9 @@ BNIFILE="$GAME_DIR/$base.BNI"
 # Do not allow output from an earlier run to hide a crash or setup failure.
 rm -f -- "$BINFILE" "$BNIFILE"
 
-wine cmd.exe /D /S /C "S: && cd S:\src\restunts && makerepldump"
+if [[ "$rebuild_exes" == true ]]; then
+    wine cmd.exe /D /S /C "S: && cd S:\src\restunts && makerepldump"
+fi
 
 run_dosbox_exe() {
     local exe="$1"
