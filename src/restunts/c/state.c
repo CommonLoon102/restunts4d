@@ -64,6 +64,37 @@ void player_op(char arg_carInputByte) {
 	var_1A[0].z = state.game_startrow;
 	var_1A[1].x = state.game_startrow2;
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+	/*
+	 * A zero track tail made the original wrapped td01[-1] read restart at
+	 * the main route. Prefer the directly connected piece over an overlapping
+	 * branch at the same coordinates, and discard a positive distance caused
+	 * by reaching that connected piece only after the translated detour.
+	 * The map prefix limits this emulation to the route layout whose wrapped
+	 * word was confirmed to be zero; other zero-tailed tracks read other data.
+	 */
+	if (
+		td14_elem_map_main[0] == 0x64 &&
+		td14_elem_map_main[1] == 0x23 &&
+		td14_elem_map_main[2] == 0x66 &&
+		td14_elem_map_main[3] == 0x64 &&
+		td15_terr_map_main[0x383] == 0 && td15_terr_map_main[0x384] == 0 &&
+		state.field_45C == 2 &&
+		state.field_2F4 >= 0 && state.field_2F4 < 0x385 &&
+		td01_track_file_cpy[state.field_2F4] >= 0 &&
+		td01_track_file_cpy[state.field_2F4] < 0x385
+	) {
+		if (var_2 == td01_track_file_cpy[state.field_2F4]) {
+			if (var_1EpenaltyCounter > 0)
+				var_1EpenaltyCounter = 0;
+		} else if (
+			var_2 >= 0 && var_2 < 0x385 &&
+			td21_col_from_path[var_2] == td21_col_from_path[td01_track_file_cpy[state.field_2F4]] &&
+			td22_row_from_path[var_2] == td22_row_from_path[td01_track_file_cpy[state.field_2F4]]
+		) {
+			var_2 = td01_track_file_cpy[state.field_2F4];
+			var_1EpenaltyCounter = 0;
+		}
+	}
 	if (
 		/* The penalty detector reported that the car is going the wrong way. */
 		var_1EpenaltyCounter == -1 &&

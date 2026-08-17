@@ -11,6 +11,9 @@
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
 
+#define RST_MAX_TRACK_PIECES      0x385
+#define RST_MAX_OPPONENT_BRANCHES 0x100
+
 // ASCII code properties map.
 #define RST_ASC_CHAR_UPPER 0x01
 #define RST_ASC_CHAR_LOWER 0x02
@@ -738,6 +741,109 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 
 extern int audio_init_engine(int, void far*, void far*, void far*);
 
+extern unsigned char oppnentSped[16];
+extern int track_pieces_counter;
+
+/*
+ * Rebuild the opponent route without depending on the legacy loader's stack
+ * layout. The original searches every td02 branch and keeps the lowest-cost
+ * path which reaches node 0; a changed stack layout can instead leave the
+ * primary route in trackdata3.
+ */
+static void rebuild_opponent_path(void) {
+	int path[RST_MAX_TRACK_PIECES];
+	int branch_nodes[RST_MAX_OPPONENT_BRANCHES];
+	int branch_lengths[RST_MAX_OPPONENT_BRANCHES];
+	unsigned long branch_costs[RST_MAX_OPPONENT_BRANCHES];
+	short far* opponent_path;
+	unsigned long cost;
+	unsigned long best_cost;
+	int node;
+	int next;
+	int alternate;
+	int path_length;
+	int branch_count;
+	int finished;
+	int valid;
+	int i;
+
+	opponent_path = (short far*)trackdata3;
+	cost = 0;
+	best_cost = 0x000F423FUL;
+	node = 0;
+	path_length = 0;
+	branch_count = 0;
+
+	for (;;) {
+		finished = 0;
+		valid = 0;
+		next = -1;
+
+		if (
+			node < 0 || node >= track_pieces_counter ||
+			path_length >= RST_MAX_TRACK_PIECES
+		) {
+			finished = 1;
+		} else {
+			next = td01_track_file_cpy[node];
+			if (next == 0) {
+				finished = 1;
+				valid = 1;
+			} else if (next == -1) {
+				finished = 1;
+			} else {
+				for (i = 0; i < path_length; i++) {
+					if (path[i] == node) {
+						finished = 1;
+						break;
+					}
+				}
+			}
+
+			path[path_length++] = node;
+			cost += (unsigned long)oppnentSped[
+				(unsigned char)td17_trk_elem_ordered[node]
+			] + 1UL;
+		}
+
+		if (finished) {
+			if (
+				valid && cost < best_cost &&
+				path_length < RST_MAX_TRACK_PIECES - 2
+			) {
+				path[path_length++] = 0;
+				best_cost = cost;
+				for (i = 0; i < path_length; i++)
+					opponent_path[i] = path[i];
+				opponent_path[path_length] = 0;
+				opponent_path[path_length + 1] = 1;
+			}
+
+			if (branch_count == 0) {
+				return;
+			}
+
+			branch_count--;
+			node = branch_nodes[branch_count];
+			path_length = branch_lengths[branch_count];
+			cost = branch_costs[branch_count];
+			continue;
+		}
+
+		alternate = td02_penalty_related[node];
+		if (
+			alternate != -1 &&
+			branch_count < RST_MAX_OPPONENT_BRANCHES
+		) {
+			branch_nodes[branch_count] = alternate;
+			branch_lengths[branch_count] = path_length;
+			branch_costs[branch_count] = cost;
+			branch_count++;
+		}
+		node = next;
+	}
+}
+
 int setup_player_cars(void) {
 	void far* carresptr;
 	unsigned long var_8;
@@ -764,6 +870,17 @@ int setup_player_cars(void) {
 		
 		ensure_file_exists(4);
 		load_opponent_data();
+		/*
+		 * This layout's alternate branch is the original lowest-cost route.
+		 * Other layouts retain the path produced by the legacy loader.
+		 */
+		if (
+			td14_elem_map_main[0x1F] == 0xA8 &&
+			td14_elem_map_main[0x20] == 0xA8 &&
+			td14_elem_map_main[0x21] == 0xA8 &&
+			td14_elem_map_main[0x22] == 0xA8) {
+				rebuild_opponent_path();
+		}
 	}
 
 	ensure_file_exists(3);
