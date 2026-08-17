@@ -2,6 +2,10 @@
 #include "math.h"
 #include "shape3d.h"
 
+#ifdef RESTUNTS_DOS
+#include <dos.h>
+#endif
+
 extern int penalty_time;
 extern int track_pieces_counter;
 extern struct TRACKOBJECT trkObjectList[];
@@ -158,6 +162,45 @@ void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
 void upd_statef20_from_steer_input(char);
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd, int);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
+int detect_penalty(int* found_piece, int* penalty_count);
+
+#ifdef RESTUNTS_DOS
+extern int legacy_wheel_angle_stack_words[4];
+
+/*
+ * In the original update_gamestate stack, detect_penalty's branch_pieces
+ * entries 114..117 occupy the same four words that later become the
+ * opponent update's uninitialized wheel-angle locals.  Seed those slots in
+ * the real assembly routine's future stack frame, then retain any values the
+ * traversal writes there.  This reproduces the execution-state dependency
+ * without tying it to a particular car or track.
+ */
+static int detect_penalty_with_legacy_wheel_angles(
+	int* found_piece,
+	int* penalty_count
+) {
+	unsigned detect_bp;
+	unsigned short far* detect_frame;
+	int result;
+	int i;
+
+	/* Two near arguments, a far return address, and detect_penalty's saved BP. */
+	asm mov ax, sp
+	asm sub ax, 10
+	asm mov detect_bp, ax
+	detect_frame = (unsigned short far*)MK_FP(_SS, detect_bp);
+
+	for (i = 0; i < 4; i++)
+		detect_frame[-153 + i] = legacy_wheel_angle_stack_words[i];
+
+	result = detect_penalty(found_piece, penalty_count);
+
+	for (i = 0; i < 4; i++)
+		legacy_wheel_angle_stack_words[i] = detect_frame[-153 + i];
+
+	return result;
+}
+#endif
 
 void player_op(char arg_carInputByte) {
 	struct VECTOR var_38;
@@ -214,7 +257,13 @@ void player_op(char arg_carInputByte) {
 	var_1A[0].z = state.game_startrow;
 	var_1A[1].x = state.game_startrow2;
 	var_1A[2].x = var_2;
+#ifdef RESTUNTS_DOS
+	si = detect_penalty_with_legacy_wheel_angles(
+		&var_2, &var_1EpenaltyCounter
+	);
+#else
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+#endif
 	/*
 	 * A zero track tail made the original wrapped td01[-1] read restart at
 	 * the main route. Prefer the directly connected piece over an overlapping

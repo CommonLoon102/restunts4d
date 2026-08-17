@@ -49,6 +49,13 @@ extern int bto_auxiliary1(int, int, struct VECTOR*);
  */
 static int saved_wheel_plane_angles[4];
 
+/*
+ * In the original call stack, these four words are left underneath the
+ * opponent's wheel-angle locals.  They start as player mat_134 values, but
+ * later legacy calls can overwrite them before the opponent update.
+ */
+int legacy_wheel_angle_stack_words[4];
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
@@ -612,6 +619,10 @@ loc_152D7:
     sub     ax, wallStartZ
     mov     [bp+vec_1E4.vz], ax*/
 	mat_rot_y(&mat_134, -wallOrientation - 0x100);
+	legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+	legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+	legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+	legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
 	mat_mul_vector(&vec_182, &mat_134, &vec_C);
 	mat_mul_vector(&vec_1E4, &mat_134, &vec_1C);
 	if (vec_1C.z <= 0)
@@ -1250,6 +1261,10 @@ loc_157DC:
     sub     ax, [bp+var_122.vz]
     mov     [bp+vec_1E4.vz], ax*/
 	mat_134 = var_6->plane_rotation;
+	legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+	legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+	legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+	legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
 	mat_invert(&mat_134, &var_MmatFromAngleZ);
 	mat_mul_vector(&vec_182, &var_MmatFromAngleZ, &vec_C);
 	/*
