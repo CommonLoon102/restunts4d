@@ -2294,8 +2294,40 @@ loc_25C92:
 // ------------------------------------ primtype 5 - unknown / particle? ------------------------------------
 
 loc_25CE0:
-	fatal_error("unhandled primitive type 5");
-	goto loc_25988; // var4++ | goto 25801
+	asm {
+		les bx, transshapeprimitives
+		mov al, es:[bx]
+		sub ah, ah
+		mov si, ax
+		cmp [si+var_vertflagtbl], ah
+		jz short loc_25CF4
+		jmp loc_25801
+	loc_25CF4:
+		mov bx, si
+		shl bx, 1
+		add bx, ax
+		shl bx, 1
+		add bx, bp
+		mov ax, [bx+offset var_vecarr.z]
+		cwd
+		mov word ptr [var_18], ax
+		mov word ptr [var_18+2], dx
+		mov bx, polyvertpointptrtab
+		mov ax, [bx]
+		mov dx, [bx+2]
+		les bx, transshapepolyinfo
+		mov es:[bx+6], ax
+		mov es:[bx+8], dx
+		test transshapeflags, 8
+		jz short loc_25D34
+		push word ptr transshaperectptr
+		push word ptr polyvertpointptrtab
+		call far ptr rect_adjust_from_point
+		add sp, 4
+	loc_25D34:
+		mov transshapenumvertscopy, 1
+		jmp loc_25988
+	}
 /*asm {
     les     bx, transshapeprimitives
     mov     al, es:[bx]     // primitives+ 0 = type
