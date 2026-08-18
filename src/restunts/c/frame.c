@@ -3,8 +3,11 @@
 #include "shape3d.h"
 
 #define TILES_TO_DRAW_COUNT 110
+#define RENDERING_HINT_PROBE_INTERVAL 16
 
 static char low_detail_priority_array[] = { 99, 20, 18, 16, 14, 12, 10 };
+static char rendering_attempt_hint;
+static int rendering_attempt_probe_frame = -1;
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
@@ -229,11 +232,12 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	int var_counter, var_counter2;
 	char cam_tile_south, cam_tile_east;
 	char tile_south, tile_east;
-	char other_offset_south, other_offset_east;
 	char tile_to_draw_south_offset, tile_to_draw_east_offset;
 	char car_tile_east, car_tile_south;
 	unsigned char tiles_to_draw_terr_type_vec[TILES_TO_DRAW_COUNT];
 	char should_skip_tile[TILES_TO_DRAW_COUNT];
+	char candidate_tiles_south[TILES_TO_DRAW_COUNT];
+	char candidate_tiles_east[TILES_TO_DRAW_COUNT];
 	char tiles_to_draw_south[TILES_TO_DRAW_COUNT];
 	char tiles_to_draw_east[TILES_TO_DRAW_COUNT];
 	unsigned char tiles_to_draw_elem_type_vec[TILES_TO_DRAW_COUNT];
@@ -452,14 +456,39 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 		car_tile_south = 0x1D - (state.playerstate.car_posWorld1.lz >> 16);
 	}
 
-	for (si = 0; si < TILES_TO_DRAW_COUNT; si++) {
-		should_skip_tile[si] = 0;
-	}
-
 	depth_to_east = lookahead_tiles[0] == 4 ? 1 : lookahead_tiles[0] == -4 ? -1 : 0;
 	depth_to_south = lookahead_tiles[1] == 4 ? 1 : lookahead_tiles[1] == -4 ? -1 : 0;
 	width_to_east = lookahead_tiles[0] == 2 ? 1 : lookahead_tiles[0] == -2 ? -1 : 0;
 	width_to_south = lookahead_tiles[1] == 2 ? 1 : lookahead_tiles[1] == -2 ? -1 : 0;
+
+	// Convert the camera-relative tile list to track coordinates once. The
+	// duplicate and wheel scans below used to repeat this calculation hundreds
+	// of times per frame.
+	if (depth_to_east != 0) {
+		for (si = 0; si < TILES_TO_DRAW_COUNT; si++) {
+			offset_east = depth_to_east > 0
+				? lookahead_tiles_supersight[si].depth
+				: -lookahead_tiles_supersight[si].depth;
+			offset_south = width_to_south > 0
+				? lookahead_tiles_supersight[si].width
+				: -lookahead_tiles_supersight[si].width;
+			candidate_tiles_east[si] = cam_tile_east + offset_east;
+			candidate_tiles_south[si] = cam_tile_south + offset_south;
+			should_skip_tile[si] = 0;
+		}
+	} else {
+		for (si = 0; si < TILES_TO_DRAW_COUNT; si++) {
+			offset_east = width_to_east > 0
+				? lookahead_tiles_supersight[si].width
+				: -lookahead_tiles_supersight[si].width;
+			offset_south = depth_to_south > 0
+				? lookahead_tiles_supersight[si].depth
+				: -lookahead_tiles_supersight[si].depth;
+			candidate_tiles_east[si] = cam_tile_east + offset_east;
+			candidate_tiles_south[si] = cam_tile_south + offset_south;
+			should_skip_tile[si] = 0;
+		}
+	}
 
 	// Scan nearest-to-farthest so duplicate cells of multi-tile objects can be
 	// suppressed before the painter's loop visits them in the opposite order.
@@ -469,12 +498,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 			continue;
 		}
 
-		offset_east = lookahead_tiles_supersight[si].depth * depth_to_east
-			+ lookahead_tiles_supersight[si].width * width_to_east;
-		offset_south = lookahead_tiles_supersight[si].depth * depth_to_south
-			+ lookahead_tiles_supersight[si].width * width_to_south;
-		tile_east = cam_tile_east + offset_east;
-		tile_south = cam_tile_south + offset_south;
+		tile_east = candidate_tiles_east[si];
+		tile_south = candidate_tiles_south[si];
 
 		if (tile_east < 0 || tile_east > 0x1D || tile_south < 0 || tile_south > 0x1D) {
 			should_skip_tile[si] = 2;
@@ -497,11 +522,9 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 		} else if (elem_map_value == 0xFF) {
 			tile_east--;
 		}
-		if (tile_east != cam_tile_east + offset_east || tile_south != cam_tile_south + offset_south) {
+		if (tile_east != candidate_tiles_east[si] || tile_south != candidate_tiles_south[si]) {
 			elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 			terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
-			offset_east = tile_east - cam_tile_east;
-			offset_south = tile_south - cam_tile_south;
 		}
 
 		tiles_to_draw_terr_type_vec[si] = terr_map_value;
@@ -524,20 +547,15 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		for (di = 0; di < si; di++) {
-			other_offset_east = lookahead_tiles_supersight[di].depth * depth_to_east
-				+ lookahead_tiles_supersight[di].width * width_to_east;
-			other_offset_south = lookahead_tiles_supersight[di].depth * depth_to_south
-				+ lookahead_tiles_supersight[di].width * width_to_south;
-
-			if (idx == 1 && other_offset_east == offset_east
-				&& (other_offset_south == offset_south || other_offset_south == offset_south + 1)) {
+			if (idx == 1 && candidate_tiles_east[di] == tile_east
+				&& (candidate_tiles_south[di] == tile_south || candidate_tiles_south[di] == tile_south + 1)) {
 				should_skip_tile[di] = 1;
-			} else if (idx == 2 && other_offset_south == offset_south
-				&& (other_offset_east == offset_east || other_offset_east == offset_east + 1)) {
+			} else if (idx == 2 && candidate_tiles_south[di] == tile_south
+				&& (candidate_tiles_east[di] == tile_east || candidate_tiles_east[di] == tile_east + 1)) {
 				should_skip_tile[di] = 1;
 			} else if (idx == 3
-				&& (other_offset_east == offset_east || other_offset_east == offset_east + 1)
-				&& (other_offset_south == offset_south || other_offset_south == offset_south + 1)) {
+				&& (candidate_tiles_east[di] == tile_east || candidate_tiles_east[di] == tile_east + 1)
+				&& (candidate_tiles_south[di] == tile_south || candidate_tiles_south[di] == tile_south + 1)) {
 					should_skip_tile[di] = 1;
 			}
 		}
@@ -566,12 +584,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 					if (should_skip_tile[si] == 2) {
 						continue;
 					}
-					offset_east = lookahead_tiles_supersight[si].depth * depth_to_east
-						+ lookahead_tiles_supersight[si].width * width_to_east;
-					offset_south = lookahead_tiles_supersight[si].depth * depth_to_south
-						+ lookahead_tiles_supersight[si].width * width_to_south;
-					if (offset_east + cam_tile_east == tile_east
-						&& offset_south + cam_tile_south == tile_south) {
+					if (candidate_tiles_east[si] == tile_east
+						&& candidate_tiles_south[si] == tile_south) {
 						var_3C = tile_east;
 						var_60 = tile_south;
 						idx = si;
@@ -618,12 +632,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 						if (should_skip_tile[si] == 2) {
 							continue;
 						}
-						offset_east = lookahead_tiles_supersight[si].depth * depth_to_east
-							+ lookahead_tiles_supersight[si].width * width_to_east;
-						offset_south = lookahead_tiles_supersight[si].depth * depth_to_south
-							+ lookahead_tiles_supersight[si].width * width_to_south;
-						if (offset_east + cam_tile_east == tile_east
-							&& offset_south + cam_tile_south == tile_south) {
+						if (candidate_tiles_east[si] == tile_east
+							&& candidate_tiles_south[si] == tile_south) {
 							var_4A = tile_east;
 							var_6E = tile_south;
 							idx = si;
@@ -655,9 +665,18 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	var_4E = 0;
 	si = 0;
-	discarded_tiles = 0;
-	attempts_count = 0;
-	is_last_attempt = 0;
+	if (state.game_frame == 0) {
+		rendering_attempt_hint = 0;
+		rendering_attempt_probe_frame = -1;
+	}
+	attempts_count = rendering_attempt_hint;
+	discarded_tiles = attempts_count > 1 ? (attempts_count - 1) * 20 : 0;
+	if (discarded_tiles > TILES_TO_DRAW_COUNT - 4) {
+		discarded_tiles = TILES_TO_DRAW_COUNT - 4;
+		is_last_attempt = 1;
+	} else {
+		is_last_attempt = 0;
+	}
 	
 start_rendering:
 	low_detail_threshold = get_low_detail_threshold_at_attempt(attempts_count);
@@ -751,7 +770,7 @@ start_rendering:
 					var_transformresult = transformed_shape_op(&currenttransshape[0]);
 					if (var_transformresult > 0) {
 						has_attempt_failed = 1;
-						break;
+						goto rendering_attempt_done;
 					}
 				}
 			}
@@ -794,7 +813,7 @@ start_rendering:
 						var_transformresult = transformed_shape_op(&currenttransshape[0]);
 						if (var_transformresult > 0) {
 							has_attempt_failed = 1;
-							break;
+							goto rendering_attempt_done;
 						}
 					}
 				}
@@ -835,7 +854,7 @@ start_rendering:
 			var_transformresult = transformed_shape_op(&currenttransshape[0]);
 			if (var_transformresult > 0) {
 				has_attempt_failed = 1;
-				break;
+				goto rendering_attempt_done;
 			}
 		}
 
@@ -897,7 +916,7 @@ start_rendering:
 					var_transformresult = transformed_shape_op(&currenttransshape[0]);
 					if (var_transformresult > 0) {
 						has_attempt_failed = 1;
-						break;
+						goto rendering_attempt_done;
 					}
 				}
 			}
@@ -933,7 +952,7 @@ start_rendering:
 						var_transformresult = transformed_shape_op(&currenttransshape[1]);
 						if (var_transformresult > 0) {
 							has_attempt_failed = 1;
-							break;
+							goto rendering_attempt_done;
 						}
 					} else {
 						currenttransshape[1].rectptr = &rect_unk6;
@@ -970,7 +989,7 @@ start_rendering:
 				var_transformresult = transformed_shape_op(&currenttransshape[0]);
 				if (var_transformresult > 0) {
 					has_attempt_failed = 1;
-					break;
+					goto rendering_attempt_done;
 				}
 			} else {
 				currenttransshape->rectptr = &rect_unk6;
@@ -1211,7 +1230,7 @@ start_rendering:
 				var_transformresult = transformed_shape_op(&currenttransshape[di]); // DI??
 				if (var_transformresult > 0) {
 					has_attempt_failed = 1;
-					break;
+					goto rendering_attempt_done;
 				}
 
 				if (var_transformresult == 0) {
@@ -1229,6 +1248,7 @@ start_rendering:
 		}
 	}
 
+rendering_attempt_done:
 	if ((si < TILES_TO_DRAW_COUNT || has_attempt_failed != 0) && is_last_attempt == 0) {
 		// Retry an overfull scene with lower-poly models first, then discard
 		// the least important (farthest) tiles in fixed-size batches.
@@ -1242,6 +1262,18 @@ start_rendering:
 		}
 		polyinfo_reset();
 		goto start_rendering;
+	}
+
+	// Nearby frames usually need the same degradation level. Reuse the last
+	// successful level to avoid repeating known-to-fail full-detail passes, but
+	// periodically probe one better level so quality recovers after the view
+	// becomes less crowded.
+	rendering_attempt_hint = attempts_count;
+	if (has_attempt_failed == 0 && rendering_attempt_hint > 0
+		&& rendering_attempt_probe_frame != state.game_frame
+		&& (state.game_frame & (RENDERING_HINT_PROBE_INTERVAL - 1)) == 0) {
+		rendering_attempt_hint--;
+		rendering_attempt_probe_frame = state.game_frame;
 	}
 
 	// Draw the skybox
