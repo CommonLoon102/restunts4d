@@ -124,6 +124,63 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	} else {
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
 	}
+	#ifdef RESTUNTS_DOS
+	if (arg_MplayerFlag == 0 && var_pSpeed2Scaled == 0 &&
+		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
+		/*
+		 * When player speed has just reached zero, the original skips
+		 * var_140someWhlData initialization and reuses opponent wheel-world
+		 * words left at the same stack addresses. Reconstruct those words in
+		 * the existing saved array without changing the legacy data layout.
+		 */
+		mat_unk = *mat_rot_zxy(
+			-state.opponentstate.car_rotate.z,
+			-state.opponentstate.car_rotate.y,
+			-state.opponentstate.car_rotate.x,
+			0
+		);
+		var_F0 = 0;
+		if (state.opponentstate.car_sumSurfAllWheels != 0 &&
+			state.opponentstate.car_speed2 <= 0x1E00) {
+			vec_1C6.x = 0;
+			vec_1C6.y = 0x7530;
+			vec_1C6.z = 0;
+			mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+			if (vec_FC.y < 0)
+				var_F0 = 0xC0;
+		}
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0)
+			var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -state.opponentstate.car_angle_z, 0);
+
+		vec_1C6 = simd_opponent.wheel_coords[2];
+		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		saved_wheel_plane_angles[0] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
+		);
+
+		vec_1C6 = simd_opponent.wheel_coords[3];
+		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		saved_wheel_plane_angles[1] = (unsigned int)(
+			state.opponentstate.car_posWorld1.lx + vec_FC.x
+		);
+		saved_wheel_plane_angles[2] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
+		);
+		saved_wheel_plane_angles[3] = (unsigned int)(
+			state.opponentstate.car_posWorld1.ly + vec_FC.y
+		);
+	}
+	#endif
 
 	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
