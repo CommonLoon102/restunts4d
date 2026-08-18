@@ -56,6 +56,9 @@ static int saved_wheel_plane_angles[4];
  */
 int legacy_wheel_angle_stack_words[4];
 
+/* Stack residue left by update_grip for the following player physics call. */
+int legacy_grip_stack_words[4];
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
@@ -89,6 +92,13 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	struct VECTOR var_DC[32];
 	
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
+
+#ifdef RESTUNTS_DOS
+	var_16[0] = legacy_grip_stack_words[0];
+	var_16[1] = legacy_grip_stack_words[1];
+	var_16[2] = legacy_grip_stack_words[2];
+	var_16[3] = legacy_grip_stack_words[3];
+#endif
 
 	pState_lvec1_x = arg_pState->car_posWorld1.lx;
 	pState_lvec1_y = arg_pState->car_posWorld1.ly;

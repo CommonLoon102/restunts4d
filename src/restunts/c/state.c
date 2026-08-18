@@ -166,6 +166,7 @@ int detect_penalty(int* found_piece, int* penalty_count);
 
 #ifdef RESTUNTS_DOS
 extern int legacy_wheel_angle_stack_words[4];
+extern int legacy_grip_stack_words[4];
 
 /*
  * In the original update_gamestate stack, detect_penalty's branch_pieces
@@ -240,6 +241,28 @@ void player_op(char arg_carInputByte) {
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
 	update_grip(&state.playerstate, &simd_player, 1);
+#ifdef RESTUNTS_DOS
+	/*
+	 * update_player_state's four uninitialized wheel-contact words overlap
+	 * the tail of update_grip's preceding stack frame in the original
+	 * player_op. Capture that frame residue immediately after update_grip
+	 * returns, before another call can overwrite it.
+	 *
+	 * Saving BX moves SP by one word. Relative to that adjusted SP, the
+	 * original future var_16[0..3] words are at -24h..-1Eh.
+	 */
+	asm push bx
+	asm mov bx, sp
+	asm mov ax, ss:[bx-24h]
+	asm mov legacy_grip_stack_words, ax
+	asm mov ax, ss:[bx-22h]
+	asm mov legacy_grip_stack_words+2, ax
+	asm mov ax, ss:[bx-20h]
+	asm mov legacy_grip_stack_words+4, ax
+	asm mov ax, ss:[bx-1Eh]
+	asm mov legacy_grip_stack_words+6, ax
+	asm pop bx
+#endif
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
 	state.game_travDist += state.playerstate.car_speed2;
 	var_1C = state.field_45B;
