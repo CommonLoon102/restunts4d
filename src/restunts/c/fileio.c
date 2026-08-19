@@ -23,6 +23,15 @@
 #define RS_VLE_ESC_WIDTH 0x40
 #define RS_VLE_NUM_SYMB  0x80
 
+void far* options_misc_resptr;
+
+static void register_options_misc_resource(const char* filename, void far* resptr) {
+	if (filename[0] == 'm' && filename[1] == 'i' && filename[2] == 's' &&
+		filename[3] == 'c' && filename[4] == 0) {
+		options_misc_resptr = resptr;
+	}
+}
+
 struct compr_header {
 	union {
 		char passes;
@@ -1011,19 +1020,28 @@ void far* file_load_resfile(const char* filename) {
 		strcat(name, ".res");
 		
 		result = file_load_resource(1, name);
-		if (result != 0) return result;
+		if (result != 0) {
+			register_options_misc_resource(filename, result);
+			return result;
+		}
 	
 		strcpy(name, filename);
 		strcat(name, ".pre");
 		
 		result = file_load_resource(7, name);
-		if (result != 0) return result;
+		if (result != 0) {
+			register_options_misc_resource(filename, result);
+			return result;
+		}
 			
 		do_dea_textres();
 	}
 }
 
 void unload_resource(void far* resptr) {
+	if (resptr == options_misc_resptr) {
+		options_misc_resptr = 0;
+	}
 	mmgr_free(resptr);
 }
 

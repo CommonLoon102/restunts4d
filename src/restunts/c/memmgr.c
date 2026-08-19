@@ -6,7 +6,7 @@
 #include "memmgr.h"
 #include "buildinfo.h"
 
-extern void far* miscptr;
+extern void far* options_misc_resptr;
 
 static char build_info[] = "Version 1.1 " BUILD_GIT_HASH " (" __DATE__ ")";
 
@@ -648,7 +648,7 @@ char far* locate_shape_fatal(char far* data, char* name) {
 
 char far* locate_shape_alt(char far* data, char* name) {
 	/* Keep the Options menu ASM untouched; replace only its GVER resource. */
-	if (data == miscptr && name[0] == 'g' && name[1] == 'v' &&
+	if (data == options_misc_resptr && name[0] == 'g' && name[1] == 'v' &&
 		name[2] == 'e' && name[3] == 'r' && name[4] == 0) {
 		return (char far*)build_info;
 	}
