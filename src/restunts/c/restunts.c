@@ -16,6 +16,16 @@
 #define BIOS_KEYCODE_F6 16384
 #define BIOS_KEYCODE_F7 16640
 
+// Set 1 keyboard scan code for Q.
+#define RST_REWIND_SCANCODE 0x10
+
+// The replay controls accumulate one game frame for every 20 timer-speed
+// units. Keep their initial speed for ten seconds, then double it.
+#define RST_REWIND_UNITS_PER_FRAME 20L
+#define RST_REWIND_BASE_SPEED       3L
+#define RST_REWIND_DOUBLE_SPEED     6L
+#define RST_REWIND_DOUBLE_AFTER_TICKS 1000UL
+
 #define RST_MAX_TRACK_PIECES      0x385
 #define RST_MAX_OPPONENT_BRANCHES 0x100
 
@@ -697,6 +707,16 @@ void update_gamestate() {
 	}
 }
 
+static void seek_replay_gamestate(unsigned short target_frame)
+{
+	restore_gamestate(target_frame);
+	elapsed_time2 = target_frame;
+
+	while (state.game_frame != target_frame) {
+		update_gamestate();
+	}
+}
+
 extern char aCarcoun[];
 extern void far* engptr;
 extern void far* eng1ptr;
@@ -969,8 +989,17 @@ void run_game(void) {
 	struct RECTANGLE var_rect;
 	int var_2;
 	int regsi;
+	int rewind_active;
+	unsigned short rewind_origin_frame;
+	unsigned short rewind_target_frame;
+	unsigned long rewind_timer_delta;
+	unsigned long rewind_held_timer_ticks;
+	long rewind_accumulator;
+	long rewind_max_accumulator;
+	long rewind_speed;
 
 	var_C = -1;
+	rewind_active = 0;
 	rect_windshield.left = 0;
 	rect_windshield.right = 320;
 	var_2 = -1;
@@ -1067,6 +1096,64 @@ void run_game(void) {
 				update_gamestate();
 				continue;
 			}
+
+			if (idle_expired == 0) {
+				if (rewind_active == 0) {
+					if (game_replay_mode == 0 && byte_449DA == 0
+						&& state.game_inputmode != 0
+						&& kb_get_key_state(RST_REWIND_SCANCODE) != 0) {
+						rewind_origin_frame = state.game_frame;
+						rewind_accumulator = 0;
+						rewind_held_timer_ticks = 0;
+						rewind_active = 1;
+
+						// Freeze the recording callback while old replay input is
+						// used to reconstruct the selected game state.
+						disable();
+						game_replay_mode = 2;
+						is_in_replay = 1;
+						enable();
+						byte_449E6 = 0;
+						audio_carstate();
+						timer_get_delta_alt();
+					}
+				} else if (kb_get_key_state(RST_REWIND_SCANCODE) != 0) {
+					rewind_timer_delta = timer_get_delta_alt();
+					rewind_held_timer_ticks += rewind_timer_delta;
+					rewind_speed = rewind_held_timer_ticks < RST_REWIND_DOUBLE_AFTER_TICKS
+						? RST_REWIND_BASE_SPEED : RST_REWIND_DOUBLE_SPEED;
+
+					rewind_max_accumulator = (long)rewind_origin_frame
+						* RST_REWIND_UNITS_PER_FRAME;
+					rewind_accumulator += (long)rewind_timer_delta * rewind_speed;
+					if (rewind_accumulator > rewind_max_accumulator) {
+						rewind_accumulator = rewind_max_accumulator;
+					}
+
+					rewind_target_frame = rewind_origin_frame
+						- (unsigned short)(rewind_accumulator
+							/ RST_REWIND_UNITS_PER_FRAME);
+					if (rewind_target_frame != state.game_frame) {
+						seek_replay_gamestate(rewind_target_frame);
+					}
+				} else {
+					// Continuing to drive creates a new timeline. Discard all
+					// recorded input after the state selected on key release.
+					gameconfig.game_recordedframes = state.game_frame;
+					elapsed_time2 = state.game_frame;
+					byte_43966 = 3;
+					state.game_3F6autoLoadEvalFlag = 0;
+					state.game_frame_in_sec = 0;
+					byte_449E6 = 0;
+					disable();
+					game_replay_mode = 0;
+					is_in_replay = 0;
+					enable();
+					rewind_active = 0;
+					kbormouse = 0;
+					audio_carstate();
+				}
+			}
 			
 			
 			if (game_replay_mode == 0 && byte_449DA == 0 && state.game_inputmode != 0) {
@@ -1120,7 +1207,7 @@ void run_game(void) {
 				roofbmpheight_copy = 0;
 				byte_449E2 = 0;
 
-				if (game_replay_mode != 2 || idle_expired != 0 || (replaybar_toggle == 0 && is_in_replay == 0)) {
+				if (game_replay_mode != 2 || idle_expired != 0 || rewind_active != 0 || (replaybar_toggle == 0 && is_in_replay == 0)) {
 					replaybar_enabled = 0;
 				} else {
 					replaybar_enabled = 1;
@@ -1238,6 +1325,9 @@ void run_game(void) {
 				}
 
 				if (game_replay_mode == 2) {
+					if (rewind_active != 0) {
+						continue;
+					}
 					loop_game(3, 0, 0);
 					continue;
 				}
