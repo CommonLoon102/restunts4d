@@ -43,6 +43,7 @@ stunts/*.trk
 stunts/*.txt
 stunts/*.vsh
 stunts/replay_files
+stunts/cars
 stunts/*partitions_all.txt*
 stunts/remote-autocheck.sh
 stunts/dumpsrv-client.sh

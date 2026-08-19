@@ -2713,7 +2713,8 @@ loc_23456:
     mov     ax, si
     shl     ax, 1
     mov     [bp+var_20], ax
-    push    meter_needle_color
+    ; Use the low byte of the car's Red #5 word for the speedometer needle.
+    push    simd_player.field_A6+8
     mov     bx, ax
     mov     al, (simd_player.spdpoints+1)[bx]
     sub     ah, ah
@@ -2728,7 +2729,19 @@ loc_23485:
     mov     ax, di
     shl     ax, 1
     mov     [bp+var_20], ax
-    push    meter_needle_color
+    ; A nonzero high byte selects an independent tachometer colour.  Legacy
+    ; cars leave it at zero, so both needles use the low-byte colour.
+    cmp     byte ptr [simd_player.field_A6+9], 0
+    jz      use_the_same_colour
+    push    simd_player.field_A6+9
+    jmp     needle_value_successfully_set
+use_the_same_colour:
+    push    simd_player.field_A6+8
+needle_value_successfully_set:
+    nop
+    nop
+    nop
+
     mov     bx, ax
     mov     al, (simd_player.revpoints+1)[bx]
     sub     ah, ah
