@@ -2973,17 +2973,19 @@ loc_11BC3:
     db 144
 highscore_write_b endp
 run_car_menu proc far
-    var_10C = dword ptr -268
-    var_108 = byte ptr -264
-    var_106 = byte ptr -262
-    var_104_rc = RECTANGLE ptr -260
-    var_FC = dword ptr -252
-    var_carpospolarangle = word ptr -248
-    var_F6 = byte ptr -246
-    var_findfile = word ptr -244
-    var_F2 = byte ptr -242
-    var_caridindex = byte ptr -240
-    var_carids = byte ptr -238
+    ; Keep the count below 128 because the original menu sign-extends it.
+    ; Only pre-buffer locals move, preserving every later stack offset.
+    var_10C = dword ptr -708
+    var_108 = byte ptr -704
+    var_106 = byte ptr -702
+    var_104_rc = RECTANGLE ptr -700
+    var_FC = dword ptr -692
+    var_carpospolarangle = word ptr -688
+    var_F6 = byte ptr -686
+    var_findfile = word ptr -684
+    var_F2 = byte ptr -682
+    var_caridindex = byte ptr -680
+    var_carids = byte ptr -678 ; 120 five-byte car IDs
     var_rotationdelta = word ptr -76
     var_4A = word ptr -74
     var_48 = word ptr -72
@@ -3014,7 +3016,7 @@ run_car_menu proc far
 
     push    bp
     mov     bp, sp
-    sub     sp, 10Ch
+    sub     sp, 2C4h
     push    di
     push    si
     push    si
@@ -3107,7 +3109,7 @@ loc_11CE1:
     add     di, ax
     mov     [bp+di+var_carids+4], 0
     inc     [bp+var_46]
-    cmp     [bp+var_46], 20h ; ' '
+    cmp     [bp+var_46], 78h ; 120 cars
     jnz     short loc_11CE1
 loc_11D44:
     call    nullsub_1
@@ -3361,7 +3363,7 @@ loc_11FC8:
     shl     ax, 1
     add     ax, cx
     add     ax, bp
-    sub     ax, 0EEh ; '�'  ; var_EE = var_carids
+    sub     ax, 2A6h ; var_2A6 = var_carids
     push    ax
     call    shape3d_load_car_shapes
     add     sp, 4
