@@ -1662,9 +1662,17 @@ int stuntsmainimpl(int argc, char* argv[]) {
 
 	int i, result;
 	int regax, regsi;
-	char var_A;
+	char var_A, skip_initial_intro;
 	char far* trkptr;
 	char far* textresptr;
+
+	skip_initial_intro = 0;
+	for (i = 1; i < argc; ++i) {
+		if (stricmp(argv[i], "/nointro") == 0) {
+			skip_initial_intro = 1;
+			break;
+		}
+	}
 	
 	//return ported_stuntsmain_(argc, argv);
 
@@ -1710,7 +1718,13 @@ int stuntsmainimpl(int argc, char* argv[]) {
 		}
 		
 		idle_expired = 0;
-		result = run_intro_looped();
+		if (skip_initial_intro) {
+			/* Skip startup only, so leaving the menu can still reach the intro. */
+			skip_initial_intro = 0;
+			result = 0;
+		} else {
+			result = run_intro_looped();
+		}
 		if (result == 27) {
 			textresptr = locate_text_res(mainresptr, "dos");
 			result = show_dialog(2, 1, textresptr, 0xFFFF, 0xFFFF, dialogarg2, 0, 0);
