@@ -4,10 +4,20 @@
 
 #define TILES_TO_DRAW_COUNT 110
 #define RENDERING_HINT_PROBE_INTERVAL 16
+#define CAMERA_DISTANCE_STEP 0x1E
+#define CAMERA_DISTANCE_PROXY 0x32A
+#define CAMERA_ELEVATION_STEP 4
+#define CAMERA_ELEVATION_VANILLA_STEP 0x10
+#define CAMERA_ELEVATION_PROXY 0
+#define CAMERA_ELEVATION_SUPERSIGHT_MIN -0xFC
+#define CAMERA_ELEVATION_SUPERSIGHT_MAX 0x300
 
 static char low_detail_priority_array[] = { 99, 20, 18, 16, 14, 12, 10 };
 static char rendering_attempt_hint;
 static int rendering_attempt_probe_frame = -1;
+static char extended_camera_initialized;
+static int extended_camera_distance;
+static int extended_camera_elevation;
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
@@ -213,6 +223,73 @@ static char get_low_detail_threshold_at_attempt(char attempt) {
 	return low_detail_priority_array[attempt];
 }
 
+static int add_camera_distance_wrapped(int value, int delta) {
+	long result = (long)value + delta;
+	if (result > 32767L) {
+		result -= 65536L;
+	} else if (result < -32768L) {
+		result += 65536L;
+	}
+	return (int)result;
+}
+
+static void update_extended_camera_positioning(
+	int* camera_distance,
+	int* camera_elevation
+) {
+	int elevation_delta;
+	int distance_delta;
+	long elevation;
+
+	if (cameramode != 2) {
+		if (extended_camera_initialized != 0) {
+			custom_camera_distance = extended_camera_distance;
+			custom_camera_elevation_angle = extended_camera_elevation;
+		}
+		extended_camera_initialized = 0;
+		*camera_distance = custom_camera_distance;
+		*camera_elevation = custom_camera_elevation_angle;
+		return;
+	}
+
+	if (extended_camera_initialized == 0) {
+		extended_camera_initialized = 1;
+		extended_camera_distance = custom_camera_distance;
+		extended_camera_elevation = custom_camera_elevation_angle;
+	} else {
+		// The unchanged assembly applies every input source to these neutral
+		// proxy values. Transfer its deltas to the extended camera so mouse,
+		// keyboard and joystick controls all have identical behavior.
+		distance_delta = custom_camera_distance - CAMERA_DISTANCE_PROXY;
+		if (distance_delta % CAMERA_DISTANCE_STEP == 0) {
+			extended_camera_distance = add_camera_distance_wrapped(
+				extended_camera_distance, distance_delta);
+		} else {
+			extended_camera_distance = custom_camera_distance;
+		}
+
+		elevation_delta = custom_camera_elevation_angle - CAMERA_ELEVATION_PROXY;
+		if (elevation_delta % CAMERA_ELEVATION_VANILLA_STEP == 0) {
+			elevation = (long)extended_camera_elevation
+				+ (long)(elevation_delta / CAMERA_ELEVATION_VANILLA_STEP)
+				* CAMERA_ELEVATION_STEP;
+			if (elevation > CAMERA_ELEVATION_SUPERSIGHT_MAX) {
+				elevation = CAMERA_ELEVATION_SUPERSIGHT_MAX;
+			} else if (elevation < CAMERA_ELEVATION_SUPERSIGHT_MIN) {
+				elevation = CAMERA_ELEVATION_SUPERSIGHT_MIN;
+			}
+			extended_camera_elevation = (int)elevation;
+		} else {
+			extended_camera_elevation = custom_camera_elevation_angle;
+		}
+	}
+
+	custom_camera_distance = CAMERA_DISTANCE_PROXY;
+	custom_camera_elevation_angle = CAMERA_ELEVATION_PROXY;
+	*camera_distance = extended_camera_distance;
+	*camera_elevation = extended_camera_elevation;
+}
+
 void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	int si;
 	char var_122;
@@ -227,6 +304,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	int var_38, car_rot_z_3;
 	int var_transformresult;
 	int heading;
+	int camera_distance;
+	int camera_elevation;
 	char* lookahead_tiles;
 	int skybox_parameter;
 	int var_counter, var_counter2;
@@ -314,6 +393,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 		car_rot_x = state.opponentstate.car_rotate.x;
 	}
 
+	update_extended_camera_positioning(&camera_distance, &camera_elevation);
+
 	car_rot_x_2 = -1;
 	car_rot_z_2 = 0;
 	
@@ -344,8 +425,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		offset_vector.x = 0;
 		offset_vector.y = 0;
-		offset_vector.z = custom_camera_distance;
-		car_rot_matrix = mat_rot_zxy(0, -custom_camera_elevation_angle, polarAngle(car_to_cam_rotated.x, car_to_cam_rotated.z) - custom_camera_azimuth_angle, 0);
+		offset_vector.z = camera_distance;
+		car_rot_matrix = mat_rot_zxy(0, -camera_elevation, polarAngle(car_to_cam_rotated.x, car_to_cam_rotated.z) - custom_camera_azimuth_angle, 0);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
 		cam_pos.x = car_pos.x + car_to_cam_rotated.x;
