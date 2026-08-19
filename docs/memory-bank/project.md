@@ -41,8 +41,7 @@ The goals are in order, each goal must be broken down into very small tasks and 
 them incrementally while constantly ensuring nothing has been broken. A huge amount of replay
 files can guarantee that the behavior didn't change.
 
-1. Fix the car loading issue caused by memory allocation (this might be needed to be pushed
-to later time,due to DOS memory limitations)
+1. Fix the car loading issue caused by memory allocation
 2. Fix car collision logic and physics to match the original behavior
 3. Port all assembly code to C
 4. Port from DOS to SDL, build a native 64 bit application, so it is possible to use more memory
