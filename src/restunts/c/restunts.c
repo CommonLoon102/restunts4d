@@ -13,6 +13,7 @@
 
 // Packed BIOS key codes used by the keyboard callback table.
 #define BIOS_KEYCODE_F5 16128
+#define BIOS_KEYCODE_F6 16384
 #define BIOS_KEYCODE_F7 16640
 
 #define RST_MAX_TRACK_PIECES      0x385
@@ -1007,6 +1008,7 @@ void run_game(void) {
 		do_mer_restext();
 	} else {
 		kb_reg_callback(BIOS_KEYCODE_F5, &supersight_toggle_debug_overlay);
+		kb_reg_callback(BIOS_KEYCODE_F6, &supersight_toggle_illusion_tiles);
 		kb_reg_callback(BIOS_KEYCODE_F7, &supersight_activate_owoot_camera);
 
 		kbormouse = 0;
@@ -1313,6 +1315,7 @@ void run_game(void) {
 		remove_frame_callback();
 		free_player_cars();
 		nopsub_304AF(BIOS_KEYCODE_F5);
+		nopsub_304AF(BIOS_KEYCODE_F6);
 		nopsub_304AF(BIOS_KEYCODE_F7);
 	}
 

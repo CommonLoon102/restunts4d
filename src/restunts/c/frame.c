@@ -21,8 +21,12 @@
 #define DEBUG_OVERLAY_COLOR_NO_FAILURES 15
 #define DEBUG_OVERLAY_COLOR_ONE_FAILURE 14
 #define DEBUG_OVERLAY_COLOR_MULTIPLE_FAILURES 12
+#define DEBUG_OVERLAY_BUFFER_SIZE 80
 #define ELAPSED_TIME_X 140
 #define ELAPSED_TIME_CAMERA_STATS_OFFSET 115
+#define TRACK_ELEMENT_FILLER_SOUTHEAST 253
+#define TRACK_ELEMENT_FILLER_SOUTH 254
+#define TRACK_ELEMENT_FILLER_EAST 255
 
 static char low_detail_priority_array[] = { 99, 20, 18, 16, 14, 12, 10 };
 static char rendering_attempt_hint;
@@ -31,6 +35,7 @@ static char extended_camera_initialized;
 static int extended_camera_distance;
 static int extended_camera_elevation;
 static char display_debug_overlay;
+static char reveal_illusion_tiles;
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
@@ -309,6 +314,10 @@ void supersight_toggle_debug_overlay(void) {
 	display_debug_overlay ^= 1;
 }
 
+void supersight_toggle_illusion_tiles(void) {
+	reveal_illusion_tiles ^= 1;
+}
+
 void supersight_activate_owoot_camera(void) {
 	extended_camera_initialized = 1;
 	extended_camera_distance = OWOOT_CAMERA_DISTANCE;
@@ -380,7 +389,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	char low_detail_priority;
 	char low_detail_threshold;
 	unsigned discarded_tiles;
-	char debug_overlay_str[60];
+	char debug_overlay_str[DEBUG_OVERLAY_BUFFER_SIZE];
 	char attempts_count;
 	char is_last_attempt;
 	char has_attempt_failed;
@@ -624,18 +633,29 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 			terr_map_value = 0;
 		}
 
-		// Filler cells point back to the north-west anchor of a multi-tile object.
-		if (elem_map_value == 0xFD) {
-			tile_east--;
-			tile_south--;
-		} else if (elem_map_value == 0xFE) {
-			tile_south--;
-		} else if (elem_map_value == 0xFF) {
-			tile_east--;
-		}
-		if (tile_east != candidate_tiles_east[si] || tile_south != candidate_tiles_south[si]) {
-			elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
-			terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+		if (reveal_illusion_tiles != 0) {
+			// With illusion tiles visible, filler cells do not redirect to the
+			// north-west anchor. The anchor is drawn only when scanned directly.
+			if (elem_map_value == TRACK_ELEMENT_FILLER_SOUTHEAST
+				|| elem_map_value == TRACK_ELEMENT_FILLER_SOUTH
+				|| elem_map_value == TRACK_ELEMENT_FILLER_EAST) {
+				should_skip_tile[si] = 1;
+				continue;
+			}
+		} else {
+			// Filler cells point back to the north-west anchor of a multi-tile object.
+			if (elem_map_value == TRACK_ELEMENT_FILLER_SOUTHEAST) {
+				tile_east--;
+				tile_south--;
+			} else if (elem_map_value == TRACK_ELEMENT_FILLER_SOUTH) {
+				tile_south--;
+			} else if (elem_map_value == TRACK_ELEMENT_FILLER_EAST) {
+				tile_east--;
+			}
+			if (tile_east != candidate_tiles_east[si] || tile_south != candidate_tiles_south[si]) {
+				elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
+				terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+			}
 		}
 
 		tiles_to_draw_terr_type_vec[si] = terr_map_value;
@@ -653,7 +673,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		idx = trkObjectList[elem_map_value].ss_multiTileFlag;
-		if (idx == 0) {
+		if (idx == 0 || reveal_illusion_tiles != 0) {
 			continue;
 		}
 
@@ -1390,8 +1410,9 @@ rendering_attempt_done:
 	if (display_debug_overlay != 0) {
 		_sprintf(
 			debug_overlay_str,
-			"Polys: %3u, mem: %5u, fails: %u, discards: %2u",
-			polyinfonumpolys, polyinfoptrnext, attempts_count, discarded_tiles);
+			"Polys: %3u, mem: %5u, fails: %u, discards: %2u, reveal: %s",
+			polyinfonumpolys, polyinfoptrnext, attempts_count, discarded_tiles,
+			reveal_illusion_tiles != 0 ? "on" : "off");
 	}
 
 	// Draw the skybox

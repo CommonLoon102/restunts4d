@@ -488,6 +488,7 @@ extern void _srand(unsigned int);
 extern int _sprintf(char* dest, const char* format, ...);
 
 extern void supersight_toggle_debug_overlay(void);
+extern void supersight_toggle_illusion_tiles(void);
 extern void supersight_activate_owoot_camera(void);
 
 #ifdef RESTUNTS_DOS
