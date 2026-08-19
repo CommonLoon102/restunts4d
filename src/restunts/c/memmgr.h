@@ -19,14 +19,11 @@ void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2);
 void mmgr_alloc_resmem(unsigned short arg_0);
 void mmgr_alloc_a000(void);
 unsigned short mmgr_get_ofs_diff(void);
-#ifdef RESTUNTS_DOS
-unsigned short mmgr_borrow_video_memory(void);
-void mmgr_restore_video_memory(unsigned short oldlimit);
-int mmgr_reserve_upper_memory(unsigned short paras);
-void far* mmgr_claim_upper_memory(unsigned short paras);
-int mmgr_is_upper_memory(void far* ptr);
-void mmgr_free_upper_memory(void far* ptr);
-#endif
+unsigned long mmgr_prepare_fullscreen_window(void);
+void far* mmgr_alloc_window_pages(const char* name, unsigned short pages);
+void mmgr_release_window(void far* ptr);
+void far* mmgr_alloc_shape2d_pages(const char* name, unsigned short pages);
+void far* mmgr_finish_shape2d_pages(void far* ptr);
 void far* mmgr_free(char far* ptr);
 void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras);
 void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short paras);
