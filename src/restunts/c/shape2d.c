@@ -40,15 +40,7 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 	wnddefseg = FP_SEG(&wnd_defs);
 
 	pages = ((width * height + sizeof(struct SHAPE2D)) >> 4) + 1;
-#ifdef RESTUNTS_DOS
-	shapebuf = MK_FP(0, 0);
-	/* A reserved UMB keeps a large window out of the conventional arena. */
-	if (pages > mmgr_get_ofs_diff()) {
-		shapebuf = mmgr_claim_upper_memory(pages);
-	}
-	if (!shapebuf)
-#endif
-		shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
+	shapebuf = mmgr_alloc_window_pages("MCGA WINDOW", pages);
 	
 	hdr = (struct SHAPE2D far*)MK_FP(FP_SEG(shapebuf), 0);
 	hdr->s2d_width = width;
@@ -100,12 +92,7 @@ void sprite_free_wnd(struct SPRITE far* wndsprite) {
 		fatal_error(aWindowReleased);
 	}
 	next_wnd_def = next_wnd_def - spritesize;
-#ifdef RESTUNTS_DOS
-	if (mmgr_is_upper_memory((void far*)wndsprite->sprite_bitmapptr)) {
-		mmgr_free_upper_memory((void far*)wndsprite->sprite_bitmapptr);
-	} else
-#endif
-		mmgr_release((void far*)wndsprite->sprite_bitmapptr);
+	mmgr_release_window((void far*)wndsprite->sprite_bitmapptr);
 }
 
 void sprite_set_1_from_argptr(struct SPRITE far* argsprite) {
@@ -637,9 +624,6 @@ void far* file_load_shape2d_res(char* resname, int fatal) {
 	char* shapename = mmgr_path_to_name(resname);
 	void far* mempages;
 	void far* memchunk = mmgr_get_chunk_by_name(shapename);
-#ifdef RESTUNTS_DOS
-	unsigned short oldlimit = 0;
-#endif
 
 	if (memchunk) return memchunk;
 
@@ -647,24 +631,12 @@ void far* file_load_shape2d_res(char* resname, int fatal) {
 	if (!memchunk) return 0;
 
 	chunksize = mmgr_get_chunk_size(memchunk);
-#ifdef RESTUNTS_DOS
-	/* The parsed block is resized before the conventional-memory limit returns. */
-	if (chunksize > mmgr_get_ofs_diff()) {
-		oldlimit = mmgr_borrow_video_memory();
-	}
-#endif
-	mempages = mmgr_alloc_pages(resname, chunksize);
+	mempages = mmgr_alloc_shape2d_pages(resname, chunksize);
 
 	parse_shape2d(memchunk, mempages);
 
 	mmgr_release(memchunk);
-	mempages = mmgr_op_unk(mempages);
-#ifdef RESTUNTS_DOS
-	if (oldlimit != 0) {
-		mmgr_restore_video_memory(oldlimit);
-	}
-#endif
-	return mempages;
+	return mmgr_finish_shape2d_pages(mempages);
 }
 
 void far* file_load_shape2d_res_fatal(char* resname) {
