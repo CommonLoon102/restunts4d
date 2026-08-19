@@ -11,6 +11,10 @@
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
 
+// Packed BIOS key codes used by the keyboard callback table.
+#define BIOS_KEYCODE_F5 16128
+#define BIOS_KEYCODE_F7 16640
+
 #define RST_MAX_TRACK_PIECES      0x385
 #define RST_MAX_OPPONENT_BRANCHES 0x100
 
@@ -1002,6 +1006,8 @@ void run_game(void) {
 		free_player_cars();
 		do_mer_restext();
 	} else {
+		kb_reg_callback(BIOS_KEYCODE_F5, &supersight_toggle_debug_overlay);
+		kb_reg_callback(BIOS_KEYCODE_F7, &supersight_activate_owoot_camera);
 
 		kbormouse = 0;
 		byte_449E6 = 0;
@@ -1306,6 +1312,8 @@ void run_game(void) {
 		mouse_minmax_position(0);
 		remove_frame_callback();
 		free_player_cars();
+		nopsub_304AF(BIOS_KEYCODE_F5);
+		nopsub_304AF(BIOS_KEYCODE_F7);
 	}
 
 	waitflag = 0x64;

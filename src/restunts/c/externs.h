@@ -441,6 +441,7 @@ extern void kb_exit_handler(void);
 extern void kb_shift_checking1(void);
 extern void kb_shift_checking2(void);
 extern void kb_reg_callback(int code, void (far* callback)(void));
+extern void nopsub_304AF(int code);
 extern void show_graphic_levels_menu(void);
 extern void do_joy_restext(void);
 extern void do_key_restext(void);
@@ -484,6 +485,10 @@ extern void far* __fmemcpy(void far*, const void far*, unsigned);
 extern unsigned _abs(unsigned);
 extern int _rand(void);
 extern void _srand(unsigned int);
+extern int _sprintf(char* dest, const char* format, ...);
+
+extern void supersight_toggle_debug_overlay(void);
+extern void supersight_activate_owoot_camera(void);
 
 #ifdef RESTUNTS_DOS
 #define memcpy _memcpy

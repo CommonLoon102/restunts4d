@@ -4,13 +4,25 @@
 
 #define TILES_TO_DRAW_COUNT 110
 #define RENDERING_HINT_PROBE_INTERVAL 16
-#define CAMERA_DISTANCE_STEP 0x1E
-#define CAMERA_DISTANCE_PROXY 0x32A
+#define CAMERA_MODE_FREE 2
+#define CAMERA_DISTANCE_STEP 30
+#define CAMERA_DISTANCE_PROXY 810
 #define CAMERA_ELEVATION_STEP 4
-#define CAMERA_ELEVATION_VANILLA_STEP 0x10
+#define CAMERA_ELEVATION_VANILLA_STEP 16
 #define CAMERA_ELEVATION_PROXY 0
-#define CAMERA_ELEVATION_SUPERSIGHT_MIN -0xFC
-#define CAMERA_ELEVATION_SUPERSIGHT_MAX 0x300
+#define CAMERA_ELEVATION_SUPERSIGHT_MIN -252
+#define CAMERA_ELEVATION_SUPERSIGHT_MAX 768
+#define OWOOT_CAMERA_DISTANCE 210
+#define OWOOT_CAMERA_AZIMUTH 512
+#define OWOOT_CAMERA_ELEVATION 240
+#define DEBUG_OVERLAY_X 12
+#define DEBUG_OVERLAY_CAMERA_Y_OFFSET 2
+#define DEBUG_OVERLAY_STATS_Y_OFFSET 12
+#define DEBUG_OVERLAY_COLOR_NO_FAILURES 15
+#define DEBUG_OVERLAY_COLOR_ONE_FAILURE 14
+#define DEBUG_OVERLAY_COLOR_MULTIPLE_FAILURES 12
+#define ELAPSED_TIME_X 140
+#define ELAPSED_TIME_CAMERA_STATS_OFFSET 115
 
 static char low_detail_priority_array[] = { 99, 20, 18, 16, 14, 12, 10 };
 static char rendering_attempt_hint;
@@ -18,6 +30,7 @@ static int rendering_attempt_probe_frame = -1;
 static char extended_camera_initialized;
 static int extended_camera_distance;
 static int extended_camera_elevation;
+static char display_debug_overlay;
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
@@ -37,6 +50,8 @@ extern int custom_camera_distance;
 extern int custom_camera_elevation_angle;
 extern int custom_camera_azimuth_angle;
 extern int word_44D20;
+extern unsigned polyinfonumpolys;
+extern unsigned polyinfoptrnext;
 extern char detail_threshold_by_level[];
 extern char byte_3C0C6[];
 extern char word_46468;
@@ -241,7 +256,7 @@ static void update_extended_camera_positioning(
 	int distance_delta;
 	long elevation;
 
-	if (cameramode != 2) {
+	if (cameramode != CAMERA_MODE_FREE) {
 		if (extended_camera_initialized != 0) {
 			custom_camera_distance = extended_camera_distance;
 			custom_camera_elevation_angle = extended_camera_elevation;
@@ -288,6 +303,20 @@ static void update_extended_camera_positioning(
 	custom_camera_elevation_angle = CAMERA_ELEVATION_PROXY;
 	*camera_distance = extended_camera_distance;
 	*camera_elevation = extended_camera_elevation;
+}
+
+void supersight_toggle_debug_overlay(void) {
+	display_debug_overlay ^= 1;
+}
+
+void supersight_activate_owoot_camera(void) {
+	extended_camera_initialized = 1;
+	extended_camera_distance = OWOOT_CAMERA_DISTANCE;
+	extended_camera_elevation = OWOOT_CAMERA_ELEVATION;
+	custom_camera_distance = CAMERA_DISTANCE_PROXY;
+	custom_camera_elevation_angle = CAMERA_ELEVATION_PROXY;
+	custom_camera_azimuth_angle = OWOOT_CAMERA_AZIMUTH;
+	cameramode = CAMERA_MODE_FREE;
 }
 
 void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
@@ -351,6 +380,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	char low_detail_priority;
 	char low_detail_threshold;
 	unsigned discarded_tiles;
+	char debug_overlay_str[60];
 	char attempts_count;
 	char is_last_attempt;
 	char has_attempt_failed;
@@ -1357,6 +1387,13 @@ rendering_attempt_done:
 		rendering_attempt_probe_frame = state.game_frame;
 	}
 
+	if (display_debug_overlay != 0) {
+		_sprintf(
+			debug_overlay_str,
+			"Polys: %3u, mem: %5u, fails: %u, discards: %2u",
+			polyinfonumpolys, polyinfoptrnext, attempts_count, discarded_tiles);
+	}
+
 	// Draw the skybox
 	var_132 = skybox_op(arg_0, arg_cliprectptr, skybox_parameter, &var_mat, car_rot_z_3, car_rot_x_2, cam_pos.y);
 	sprite_set_1_size(0, 0x140, arg_cliprectptr->top, arg_cliprectptr->bottom);
@@ -1430,15 +1467,55 @@ rendering_attempt_done:
 		}
 	}
 
+	if (display_debug_overlay != 0) {
+		font_set_fontdef2(fontnptr);
+		si = attempts_count == 0 ? DEBUG_OVERLAY_COLOR_NO_FAILURES
+			: attempts_count == 1 ? DEBUG_OVERLAY_COLOR_ONE_FAILURE
+			: DEBUG_OVERLAY_COLOR_MULTIPLE_FAILURES;
+		rect_union(
+			intro_draw_text(debug_overlay_str, DEBUG_OVERLAY_X,
+				roofbmpheight + DEBUG_OVERLAY_STATS_Y_OFFSET, si, 0),
+			&rect_unk11, &rect_unk11);
+
+		if (cameramode == CAMERA_MODE_FREE) {
+			_sprintf(
+				debug_overlay_str,
+				"Cam: dist: %5d, azimuth: %4d, elevation: %4d",
+				camera_distance, custom_camera_azimuth_angle, camera_elevation);
+			rect_union(
+				intro_draw_text(debug_overlay_str, DEBUG_OVERLAY_X,
+					roofbmpheight + DEBUG_OVERLAY_CAMERA_Y_OFFSET, si, 0),
+				&rect_unk11, &rect_unk11);
+		}
+
+		rect_union(
+			intro_draw_text(" ", DEBUG_OVERLAY_X,
+				roofbmpheight + DEBUG_OVERLAY_CAMERA_Y_OFFSET, 0, 0),
+			&rect_unk11, &rect_unk11);
+		font_set_fontdef();
+	}
+
 	// Show elapsed time
 	if (game_replay_mode == 0) {
 		if (state.game_inputmode != 0) {
 			format_frame_as_string(&resID_byte1, elapsed_time1 + elapsed_time2, 0);
 			font_set_fontdef2(fontledresptr);
 			if (slow_video_mgmt_copy != 0) {
-				rect_union(intro_draw_text(&resID_byte1, 0x8C, roofbmpheight + 2, dialog_fnt_colour, 0), &rect_unk11, &rect_unk11);
+				rect_union(
+					intro_draw_text(
+						&resID_byte1,
+						ELAPSED_TIME_X
+							+ (display_debug_overlay != 0 && cameramode == CAMERA_MODE_FREE
+								? ELAPSED_TIME_CAMERA_STATS_OFFSET : 0),
+						roofbmpheight + 2, dialog_fnt_colour, 0),
+					&rect_unk11, &rect_unk11);
 			} else {
-				intro_draw_text(&resID_byte1, 0x8C, roofbmpheight + 2, dialog_fnt_colour, 0);
+				intro_draw_text(
+					&resID_byte1,
+					ELAPSED_TIME_X
+						+ (display_debug_overlay != 0 && cameramode == CAMERA_MODE_FREE
+							? ELAPSED_TIME_CAMERA_STATS_OFFSET : 0),
+					roofbmpheight + 2, dialog_fnt_colour, 0);
 			}
 
 			font_set_fontdef();
