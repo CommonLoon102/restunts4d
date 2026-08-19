@@ -49,8 +49,11 @@ asm: force_me
 asmorig: force_me
 	make -C asmorig $(MAKE_PARAMS)
 
-c: force_me
+c: buildinfo force_me
 	make -C c $(MAKE_PARAMS)
+
+buildinfo: force_me
+	call makebuildinfo.bat
 
 restunts-sdl:
 	make -C sdl $(MAKE_PARAMS)

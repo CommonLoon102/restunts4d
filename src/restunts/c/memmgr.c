@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include "externs.h"
 #include "memmgr.h"
+#include "buildinfo.h"
+
+extern void far* miscptr;
+
+static char build_info[] = "Version 1.1 " BUILD_GIT_HASH " (" __DATE__ ")";
 
 #ifdef RESTUNTS_DOS
 
@@ -642,6 +647,11 @@ char far* locate_shape_fatal(char far* data, char* name) {
 }
 
 char far* locate_shape_alt(char far* data, char* name) {
+	/* Keep the Options menu ASM untouched; replace only its GVER resource. */
+	if (data == miscptr && name[0] == 'g' && name[1] == 'v' &&
+		name[2] == 'e' && name[3] == 'r' && name[4] == 0) {
+		return (char far*)build_info;
+	}
 	return locate_shape_fatal(data, name);
 }
 

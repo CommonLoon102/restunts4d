@@ -24,6 +24,8 @@ OBJ_FILES_BACKSLASH = $(subst /,\,$(OBJ_FILES))
 
 all: $(OBJ_FILES)
 
+$(OBJDIR)/memmgr.obj: buildinfo.h
+
 $(OBJDIR)/%.obj: %.c
   # c file name
 	$(eval C_FILE = $<)
