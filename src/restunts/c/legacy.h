@@ -55,6 +55,21 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 		(bytes)[1] = (legacy_u8)(legacy_write_u16_value_ >> 8); \
 	} while (0)
 
+#define LEGACY_READ_U32_LE(bytes) \
+	((legacy_u32)(legacy_u8)((bytes)[0]) | \
+	((legacy_u32)(legacy_u8)((bytes)[1]) << 8) | \
+	((legacy_u32)(legacy_u8)((bytes)[2]) << 16) | \
+	((legacy_u32)(legacy_u8)((bytes)[3]) << 24))
+
+#define LEGACY_WRITE_U32_LE(bytes, value) \
+	do { \
+		legacy_u32 legacy_write_u32_value_ = (legacy_u32)(value); \
+		(bytes)[0] = (legacy_u8)legacy_write_u32_value_; \
+		(bytes)[1] = (legacy_u8)(legacy_write_u32_value_ >> 8); \
+		(bytes)[2] = (legacy_u8)(legacy_write_u32_value_ >> 16); \
+		(bytes)[3] = (legacy_u8)(legacy_write_u32_value_ >> 24); \
+	} while (0)
+
 /*
  * Borland's cast is the original machine-level bit reinterpretation.  The
  * hosted implementation avoids C's implementation-defined out-of-range
