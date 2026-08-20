@@ -555,14 +555,9 @@ unsigned long mmgr_get_chunk_size_bytes(char far* ptr) {
 //#endif
 
 
-struct resheader {
-	unsigned long size;
-	unsigned short chunks;
-};
-
 char far* locate_resource(char far* data, char* name, unsigned short fatal) {
-	unsigned int i, j;
-	struct resheader far* hdr = (struct resheader far*)data;
+	legacy_u16 i, j;
+	legacy_u16 chunks = LEGACY_READ_U16_LE((legacy_u8 far*)data + 4);
 	char far* resnames = (char far*)data + 6; // point at first 4-byte resource identifier
 	char huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
 
@@ -578,7 +573,7 @@ char far* locate_resource(char far* data, char* name, unsigned short fatal) {
 		}
 	}
 
-	for (j = 0; j < hdr->chunks; j++) {
+	for (j = 0; j < chunks; j++) {
 		for (i = 0; i < 4; i++) {
 			if (resnames[i] != name[i]) {
 				break;
@@ -586,8 +581,10 @@ char far* locate_resource(char far* data, char* name, unsigned short fatal) {
 		}
 		if (i == 4 || (resnames[i] == 0 && name[i] == 0x20)) {
 			result = data;
-			result += hdr->chunks * 8 + 6; // header, names and offsets
-			result += *(unsigned long int far*)(&resnames[hdr->chunks * 4]); // extract the offset
+			result += (legacy_u16)(chunks * 8U + 6U); // header, names and offsets
+			result += LEGACY_READ_U32_LE(
+				(legacy_u8 far*)resnames + (legacy_u16)(chunks * 4U)
+			); // extract the offset
 			return (char far*)result;
 		}
 		resnames += 4; // move pointer to next 4-byte resource identifier
