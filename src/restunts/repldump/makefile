@@ -20,6 +20,8 @@ CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
                h_lrsh.obj h_padd.obj h_pina.obj h_pada.obj \
                f_pcmp.obj h_lursh.obj h_psbp.obj h_llsh.obj
 
+DOS_RUNTIME_FILES = intdos.obj dosalloc.obj dosfree.obj ioerror.obj segread.obj
+
 # prefix with path
 RESTUNTS_OBJDIR = $(SRC)\c\build\dos
 ASM_OBJDIR = $(SRC)\asm\build
@@ -34,7 +36,7 @@ ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
 
 ifeq ($(TARGET), ported)
-  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
+  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES) $(DOS_RUNTIME_FILES)
   CFLAGS = 
   OUTFILE = repldump.exe
 endif

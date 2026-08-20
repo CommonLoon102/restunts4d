@@ -1,5 +1,17 @@
 #ifdef RESTUNTS_DOS
 #include <dos.h>
+
+/* The DOS build disables automatic C symbol underscores with /u-. */
+#define intdos _intdos
+#define _dos_allocmem __dos_allocmem
+#define _dos_freemem __dos_freemem
+int _Cdecl _intdos(union REGS far* inregs, union REGS far* outregs);
+unsigned _Cdecl __dos_allocmem(unsigned size, void far* segment);
+unsigned _Cdecl __dos_freemem(unsigned segment);
+
+/* Minimal error-state globals used by the selected DOS runtime modules. */
+int _errno;
+int __sys_nerr = 0x30;
 #endif
 
 #include "externs.h"
@@ -13,81 +25,60 @@ static int upper_memory_reserved;
 static unsigned short borrowed_video_limit;
 
 static unsigned short dos_get_alloc_strategy(void) {
-	unsigned short result = 0xFFFF;
+	union REGS inregs;
+	union REGS outregs;
 
-	__asm {
-		mov ax, 5800h
-		int 21h
-		jc short get_strategy_done
-		xor ah, ah
-		mov result, ax
-	get_strategy_done:
+	inregs.x.ax = 0x5800;
+	intdos(&inregs, &outregs);
+	if (outregs.x.cflag != 0) {
+		return 0xFFFF;
 	}
-	return result;
+	return outregs.h.al;
 }
 
 static int dos_set_alloc_strategy(unsigned short strategy) {
-	int result = 0;
+	union REGS inregs;
+	union REGS outregs;
 
-	__asm {
-		mov ax, 5801h
-		mov bx, strategy
-		int 21h
-		jc short set_strategy_done
-		mov result, 1
-	set_strategy_done:
-	}
-	return result;
+	inregs.x.ax = 0x5801;
+	inregs.x.bx = strategy;
+	intdos(&inregs, &outregs);
+	return outregs.x.cflag == 0;
 }
 
 static unsigned short dos_get_umb_link_state(void) {
-	unsigned short result = 0xFFFF;
+	union REGS inregs;
+	union REGS outregs;
 
-	__asm {
-		mov ax, 5802h
-		int 21h
-		jc short get_umb_link_done
-		xor ah, ah
-		mov result, ax
-	get_umb_link_done:
+	inregs.x.ax = 0x5802;
+	intdos(&inregs, &outregs);
+	if (outregs.x.cflag != 0) {
+		return 0xFFFF;
 	}
-	return result;
+	return outregs.h.al;
 }
 
 static int dos_set_umb_link_state(unsigned short state) {
-	int result = 0;
+	union REGS inregs;
+	union REGS outregs;
 
-	__asm {
-		mov ax, 5803h
-		mov bx, state
-		int 21h
-		jc short set_umb_link_done
-		mov result, 1
-	set_umb_link_done:
-	}
-	return result;
+	inregs.x.ax = 0x5803;
+	inregs.x.bx = state;
+	intdos(&inregs, &outregs);
+	return outregs.x.cflag == 0;
 }
 
 static unsigned short dos_alloc_checked(unsigned short paras) {
-	unsigned short result = 0;
+	unsigned short blockseg;
 
-	__asm {
-		mov bx, paras
-		mov ah, 48h
-		int 21h
-		jc short alloc_checked_done
-		mov result, ax
-	alloc_checked_done:
+	if (_dos_allocmem(paras, MK_FP(_SS, FP_OFF(&blockseg))) != 0) {
+		return 0;
 	}
-	return result;
+	return blockseg;
 }
 
 static void dos_free(unsigned short blockseg) {
-	__asm {
-		mov es, blockseg
-		mov ah, 49h
-		int 21h
-	}
+	_dos_freemem(blockseg);
 }
 
 static unsigned short dos_alloc_upper(unsigned short paras) {

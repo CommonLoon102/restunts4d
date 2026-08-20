@@ -21,3 +21,8 @@ example commands:
 	tlib cm.lib * H_LURSH
 	tlib cm.lib * H_PSBP
 	tlib cm.lib * H_LLSH
+	tlib cm.lib * INTDOS
+	tlib cm.lib * DOSALLOC
+	tlib cm.lib * DOSFREE
+	tlib cm.lib * IOERROR
+	tlib cm.lib * SEGREAD
