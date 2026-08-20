@@ -1,6 +1,8 @@
 #ifndef RESTUNTS_MEMMGR_H
 #define RESTUNTS_MEMMGR_H
 
+#include "legacy.h"
+
 #ifdef RESTUNTS_SDL
 #define far
 #endif
@@ -8,10 +10,14 @@
 #pragma pack (push, 1)
 struct MEMCHUNK {
 	char resname[12];
-	unsigned ressize;
-	unsigned resofs;
-	unsigned resunk;
+	legacy_u16 ressize;
+	legacy_u16 resofs;
+	legacy_u16 resunk;
 };
+
+typedef char legacy_memchunk_must_be_18_bytes[
+	(sizeof(struct MEMCHUNK) == 18) ? 1 : -1
+];
 #pragma pack (pop)
 
 const char* mmgr_path_to_name(const char* filename);
