@@ -33,8 +33,7 @@ separate from converting the game-side vector setup.
 - The Phase 0 audit reports seven preserved-assembly symbol references, down
   from eight, and the checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
-  no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 1 slice 03.
+  no ad-hoc local replay was run for this slice.
 - The comprehensive remote collection reports zero mismatches and is
   byte-identical to the Phase 1 slice 04 clean baseline. Its preserved result is
   `stunts/partitions_all_phase5_init_div0_c.txt`; an empty result file means

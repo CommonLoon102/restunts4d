@@ -47,8 +47,7 @@ No `seg0xx.asm` source was changed.
 - Borland C++ 5.2 compiles and links both `RESTUNTS.EXE` and `REPLDUMP.EXE`.
 - The Phase 0 audit remains current and reports zero active inline assembly,
   zero preserved-assembly calls from C, and 86 assembly link inputs.
-- No additional ad-hoc replay state dump was run after Phase 1 slice 03 reached
-  the requested local-run limit.
+- No ad-hoc local replay state dump was run for this slice.
 - The serial comprehensive replay run returned an empty
   `partitions_all_phase1_slice18_geometry_layouts.txt`, byte-identical to the
   clean Phase 1 slice 17 report.

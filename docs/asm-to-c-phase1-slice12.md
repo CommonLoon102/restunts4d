@@ -59,8 +59,7 @@ ignored `stunts` test directory.
   sequence.
 - The Phase 0 audit reports 24 active inline-assembly sites, down from 26,
   and the checked-in inventory is current.
-- No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 1 slice 03.
+- No ad-hoc local replay was run for this slice.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase12_c_frame_expression.txt`, byte-identical to the clean
   Phase 1 slice 11 result.

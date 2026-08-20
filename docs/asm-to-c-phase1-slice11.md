@@ -53,8 +53,7 @@ slice. No `seg0xx.asm` source was changed.
   with universal terminal backtracking. That evidence defines the narrow
   fallback above and avoids track- or replay-specific fingerprints.
 - The checked-in inventory is current.
-- No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 1 slice 03.
+- No ad-hoc local replay was run for this slice.
 
 - The final hybrid comprehensive collection reports zero mismatches and is
   byte-identical to the Phase 1 slice 10 clean baseline. Its preserved result is

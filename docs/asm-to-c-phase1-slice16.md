@@ -49,8 +49,7 @@ of the final source or executable.
 - The DOS compiler builds both `RESTUNTS.EXE` and `REPLDUMP.EXE`.
 - The Phase 0 audit reports zero active inline-assembly sites, down from 12, and
   zero preserved-assembly symbol calls from C.
-- No additional ad-hoc replay state dump was run after Phase 1 slice 03 reached
-  the requested local-run limit.
+- No ad-hoc local replay state dump was run for this slice.
 - The serial comprehensive replay run returned an empty
   `partitions_all_phase1_slice16_draw_line_c.txt`, byte-identical to the clean
   Phase 1 slice 15 result.

@@ -34,9 +34,8 @@ ABI-focused chunk.
   incompatible `abs` declaration in `externs.h`.
 - The Phase 0 audit reports 36 active inline-assembly sites, down from 39, and
   the checked-in inventory is current.
-- No further ad-hoc local replay was run after Phase 1 slice 03 reached the requested
-  local-run limit; the comprehensive serial remote collection is the replay
-  regression gate for this slice.
+- No ad-hoc local replay was run for this slice; the comprehensive serial
+  remote collection is its replay regression gate.
 - The comprehensive remote collection reports zero mismatches and is
   byte-identical to the Phase 1 slice 03 clean baseline. Its preserved result is
   `stunts/partitions_all_phase4_memmgr_dos_c.txt`; an empty result file means

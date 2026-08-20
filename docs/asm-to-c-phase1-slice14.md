@@ -38,8 +38,7 @@ No `seg0xx.asm` source was changed.
 - The Phase 0 audit reports zero preserved-assembly symbol references from C.
   The 13 remaining inline-assembly sites are all in the two large renderer
   routines already identified in `shape3d.c`.
-- No additional ad-hoc local replay was run after Phase 1 slice 03 reached the
-  requested local-run limit.
+- No ad-hoc local replay was run for this slice.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase1_slice14_player_speed_c.txt`, byte-identical to the
   clean Phase 1 slice 13 result.

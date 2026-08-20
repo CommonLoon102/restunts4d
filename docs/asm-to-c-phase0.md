@@ -67,6 +67,6 @@ The strict make target scans the path in `C_ONLY_LINK_INPUT` for assembly object
 
 ## Testing policy for later phases
 
-Phase 0 changes only documentation and audit tooling, so replay execution is not required. Later implementation chunks must use the established local replay workflow, with no more than 20 ad-hoc local replays. Comprehensive replay testing must use the serial remote service, and each returned `partitions_all.txt` must be renamed before another request.
+Phase 0 changes only documentation and audit tooling, so replay execution is not required. Later implementation slices must use the established local replay workflow, with no more than 20 ad-hoc local replays per slice. Comprehensive replay testing must use the serial remote service, and each returned `partitions_all.txt` must be renamed before another request.
 
 All local DOSBox runs of `REPLDUMP.EXE` and `REPLDUMO.EXE` must use `-silent`.

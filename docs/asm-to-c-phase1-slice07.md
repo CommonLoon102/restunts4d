@@ -34,8 +34,7 @@ active block so there is one authoritative implementation.
 - The Phase 0 audit reports 35 active inline-assembly sites, down from 36, and
   the checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
-  no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 1 slice 03.
+  no ad-hoc local replay was run for this slice.
 
 The replay dumper guards simulation state and broad integration but does not
 guarantee pixel-level execution of this rendering branch. The direct mapping

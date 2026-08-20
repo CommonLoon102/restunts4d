@@ -34,8 +34,7 @@ No `seg0xx.asm` source was changed.
   prototype warnings.
 - The Phase 0 audit reports 13 active inline-assembly sites, down from 24,
   and the checked-in inventory is current.
-- No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 1 slice 03.
+- No ad-hoc local replay was run for this slice.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase13_grip_residue_c.txt`, byte-identical to the clean
   Phase 1 slice 12 result.

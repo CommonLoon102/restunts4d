@@ -45,8 +45,7 @@ final source or executable.
 - The DOS compiler builds both `RESTUNTS.EXE` and `REPLDUMP.EXE`.
 - The Phase 0 audit reports 12 active inline-assembly sites, down from 13.
   All 12 are in the remaining `draw_line_related_impl` rasterizer.
-- No additional ad-hoc replay state dump was run after Phase 1 slice 03
-  reached the requested local-run limit.
+- No ad-hoc local replay state dump was run for this slice.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase1_slice15_prerender_edges_c.txt`, byte-identical to the
   clean Phase 1 slice 14 result.
