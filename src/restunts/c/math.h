@@ -100,6 +100,21 @@ void heapsort_by_order(
 
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
 legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
+legacy_s16 rect_is_inside(struct RECTANGLE* r1, struct RECTANGLE* r2);
+legacy_s16 rect_is_overlapping(struct RECTANGLE* r1, struct RECTANGLE* r2);
+legacy_s16 rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2);
+void rectlist_add_rect(
+	legacy_s8* array_length,
+	struct RECTANGLE* array,
+	struct RECTANGLE* rect);
+void rectlist_add_rects(
+	legacy_u8 rect_count,
+	legacy_u8* array_indices,
+	struct RECTANGLE* first_array,
+	struct RECTANGLE* second_array,
+	struct RECTANGLE* clipping_rect,
+	legacy_s8* output_length,
+	struct RECTANGLE* output_array);
 
 void plane_rotate_op(void);
 legacy_s16 plane_origin_op(

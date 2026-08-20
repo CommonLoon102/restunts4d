@@ -550,13 +550,19 @@ legacy_s16 rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 0;
 }
 
-void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr, struct RECTANGLE* rect) {	
-	int var_counter;
+void rectlist_add_rect(
+	legacy_s8* arg_rect_array_length_ptr,
+	struct RECTANGLE* arg_rect_array_ptr,
+	struct RECTANGLE* rect)
+{
+	legacy_s8 var_counter;
 	struct RECTANGLE var_rect;
 	struct RECTANGLE var_rect2;
 	struct RECTANGLE var_rect3;
 	struct RECTANGLE* var_rectptr;
-	int var_22, var_18, var_12;
+	legacy_u8 var_22;
+	legacy_u8 var_18;
+	legacy_s8 var_12;
 
 	if (video_flag2_is1 != 1) {
 		fatal_error("rectlist_add_rect: unexpected code path");
@@ -582,9 +588,11 @@ void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_re
 
 			while (((*arg_rect_array_length_ptr) - 1) > var_12) {
 				arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-				var_12++;
+				var_12 = LEGACY_S8_FROM_BITS(
+					(legacy_u8)((legacy_u8)var_12 + 1U));
 			}
-			(*arg_rect_array_length_ptr)--;
+			*arg_rect_array_length_ptr = LEGACY_S8_FROM_BITS(
+				(legacy_u8)((legacy_u8)*arg_rect_array_length_ptr - 1U));
 			continue;
 		}
 
@@ -633,9 +641,11 @@ void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_re
 
 		while (((*arg_rect_array_length_ptr) - 1) > var_12) {
 			arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-			var_12 ++;
+			var_12 = LEGACY_S8_FROM_BITS(
+				(legacy_u8)((legacy_u8)var_12 + 1U));
 		}
-		(*arg_rect_array_length_ptr)--;
+		*arg_rect_array_length_ptr = LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)*arg_rect_array_length_ptr - 1U));
 		if (var_18 != 0) {
 			rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect2);
 		}
@@ -678,44 +688,54 @@ void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_re
 
 		while (((*arg_rect_array_length_ptr) - 1) > var_12) {
 			arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-			var_12 ++;
+			var_12 = LEGACY_S8_FROM_BITS(
+				(legacy_u8)((legacy_u8)var_12 + 1U));
 		}
-		(*arg_rect_array_length_ptr)--;
+		*arg_rect_array_length_ptr = LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)*arg_rect_array_length_ptr - 1U));
 		rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect);
 		return ;
 	}
 
-	arg_rect_array_ptr[*arg_rect_array_length_ptr] = *rect;
-	(*arg_rect_array_length_ptr)++;
+	arg_rect_array_ptr[(legacy_s16)*arg_rect_array_length_ptr] = *rect;
+	*arg_rect_array_length_ptr = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)*arg_rect_array_length_ptr + 1U));
 }
 
 
-void rectlist_add_rects(char arg_rectcount, char* arg_rectarray_indices, 
+void rectlist_add_rects(
+	legacy_u8 arg_rectcount,
+	legacy_u8* arg_rectarray_indices,
 	struct RECTANGLE* arg_rectarray1, struct RECTANGLE* arg_rectarray2, 
-	struct RECTANGLE* arg_rectptr, char* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr) 
+	struct RECTANGLE* arg_rectptr,
+	legacy_s8* arg_rect_array_length_ptr,
+	struct RECTANGLE* arg_rect_array_ptr)
 {
 	struct RECTANGLE* var_rectptr3;
 	struct RECTANGLE* var_rectptr;
 	struct RECTANGLE* var_rectptr2;
 	struct RECTANGLE var_rect;
 	struct RECTANGLE var_rect2;
-	int var_2, var_rectcounter;
-	int var_rectarray_index;
-	struct RECTANGLE* temprectptr;
+	legacy_u8 var_2;
+	legacy_u8 var_rectcounter;
+	legacy_u8 var_rectarray_index;
+	legacy_s16 var_rectarray_offset;
 /*
 	return ported_rect_clip_combined_(
 		arg_rectcount, arg_rectarray_indices, arg_rectarray1, arg_rectarray2, arg_rectptr,
 		arg_rect_array_length_ptr, arg_rect_array_ptr);
 	*/
 	for (var_rectcounter = 0; var_rectcounter < arg_rectcount; var_rectcounter++) {
+		var_rectarray_offset = (legacy_s16)LEGACY_S8_FROM_BITS(
+			var_rectcounter);
 
-		var_rectarray_index = arg_rectarray_indices[var_rectcounter];
+		var_rectarray_index = arg_rectarray_indices[var_rectarray_offset];
 		if ((var_rectarray_index & 1) != 0) {
-			var_rectptr = &arg_rectarray1[var_rectcounter];
+			var_rectptr = &arg_rectarray1[var_rectarray_offset];
 		}
 
 		if ((var_rectarray_index & 2) != 0) {
-			var_rectptr3 = &arg_rectarray2[var_rectcounter];
+			var_rectptr3 = &arg_rectarray2[var_rectarray_offset];
 		}
 
 		if (((var_rectarray_index & 1) == 0) || var_rectptr->right <= var_rectptr->left) {
