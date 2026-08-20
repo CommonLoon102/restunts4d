@@ -244,8 +244,8 @@ extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
 
 extern short video_flag1_is1;
-extern short video_flag2_is1;
-extern short video_flag3_isFFFF;
+extern legacy_s16 video_flag2_is1;
+extern legacy_s16 video_flag3_isFFFF;
 extern short video_flag4_is1;
 extern short video_flag5_is0;
 extern short video_flag6_is1;
