@@ -6,14 +6,20 @@
 #pragma pack (push, 1)
 
 struct SHAPE3D {
-	unsigned short shape3d_numverts;
+	legacy_u16 shape3d_numverts;
 	struct VECTOR far* shape3d_verts;
-	unsigned short shape3d_numprimitives;
-	unsigned short shape3d_numpaints;
+	legacy_u16 shape3d_numprimitives;
+	legacy_u16 shape3d_numpaints;
 	char far* shape3d_primitives;
 	char far* shape3d_cull1;
 	char far* shape3d_cull2;
 };
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_shape3d_dos_layout_must_be_22_bytes[
+	(sizeof(struct SHAPE3D) == 22) ? 1 : -1
+];
+#endif
 
 struct SHAPE3DHEADER {
 	legacy_u8 header_numverts;
