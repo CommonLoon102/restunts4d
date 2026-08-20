@@ -69,7 +69,6 @@ int get_0(void)
 
 unsigned long timer_get_counter(void)
 {
-	/*
 	unsigned long val;
 
 	disable();
@@ -77,46 +76,21 @@ unsigned long timer_get_counter(void)
 	enable();
 
 	return val;
-	*/
-
-	// Compiler produces too sloppy code; stick to asm for now...
-	__asm {
-		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
-		sti
-	}
 }
 
 unsigned long timer_get_delta(void)
 {
-    /*
 	unsigned long last, curr;
-	
+
 	last = last_timer_callback_counter;
-	
+
 	disable();
-	curr = timer_get_counter();
+	curr = timer_callback_counter;
 	enable();
-	
+
 	last_timer_callback_counter = curr;
 
 	return curr - last;
-	*/
-	
-	// Compiler produces too sloppy code; stick to asm for now...
-	__asm {
-		mov     bx, word ptr last_timer_callback_counter
-		mov     cx, word ptr last_timer_callback_counter+2
-		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
-		sti
-		mov     word ptr last_timer_callback_counter, ax
-		mov     word ptr last_timer_callback_counter+2, dx
-		sub     ax, bx
-		sbb     dx, cx
-	}
 }
 
 unsigned long timer_get_delta_alt(void)
