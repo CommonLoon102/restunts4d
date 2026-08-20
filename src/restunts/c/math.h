@@ -1,47 +1,69 @@
 #ifndef RESTUNTS_MATH_H
 #define RESTUNTS_MATH_H
 
+#include "legacy.h"
+
 #pragma pack (push, 1)
 
 struct RECTANGLE {
-	int left, right;
-	int top, bottom;
+	legacy_s16 left, right;
+	legacy_s16 top, bottom;
 	//int x1, y1;
 	//int x2, y2;
 };
 
 struct VECTOR {
-	short x, y, z;
+	legacy_s16 x, y, z;
 };
 
 struct VECTORLONG {
-	long lx, ly, lz;
+	legacy_s32 lx, ly, lz;
 };
 
 struct POINT2D {
-	int px, py;
+	legacy_s16 px, py;
 };
 
 struct MATRIX {
 	union {
-		int vals[9];
+		legacy_s16 vals[9];
 		struct {
-			int _11, _21, _31;
-			int _12, _22, _32;
-			int _13, _23, _33;
+			legacy_s16 _11, _21, _31;
+			legacy_s16 _12, _22, _32;
+			legacy_s16 _13, _23, _33;
 		} m;
 	};
 };
 
 struct PLANE {
-	int plane_yz;
-	int plane_xy;
+	legacy_s16 plane_yz;
+	legacy_s16 plane_xy;
 	struct VECTOR plane_origin;
 	struct VECTOR plane_normal;
 	struct MATRIX plane_rotation;
 };
 
 #pragma pack (pop)
+
+/* These sizes are part of both the resource format and the assembly ABI. */
+typedef char legacy_rectangle_must_be_8_bytes[
+	(sizeof(struct RECTANGLE) == 8) ? 1 : -1
+];
+typedef char legacy_vector_must_be_6_bytes[
+	(sizeof(struct VECTOR) == 6) ? 1 : -1
+];
+typedef char legacy_vectorlong_must_be_12_bytes[
+	(sizeof(struct VECTORLONG) == 12) ? 1 : -1
+];
+typedef char legacy_point2d_must_be_4_bytes[
+	(sizeof(struct POINT2D) == 4) ? 1 : -1
+];
+typedef char legacy_matrix_must_be_18_bytes[
+	(sizeof(struct MATRIX) == 18) ? 1 : -1
+];
+typedef char legacy_plane_must_be_34_bytes[
+	(sizeof(struct PLANE) == 34) ? 1 : -1
+];
 
 short sin_fast(unsigned short s);
 short cos_fast(unsigned short s);

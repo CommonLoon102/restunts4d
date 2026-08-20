@@ -37,19 +37,15 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
  * Borland's cast is the original machine-level bit reinterpretation.  The
  * hosted implementation avoids C's implementation-defined out-of-range
  * unsigned-to-signed conversion while producing the same two's-complement
- * value.
+ * value.  As with the shift macro below, pass only side-effect-free values.
  */
 #if defined(__BORLANDC__)
 #define LEGACY_S16_FROM_BITS(value) ((legacy_s16)(legacy_u16)(value))
 #else
-static legacy_s16 legacy_s16_from_bits(legacy_u16 value)
-{
-	if (value <= 0x7FFFU)
-		return (legacy_s16)value;
-	return (legacy_s16)(-1 - (legacy_s16)(0xFFFFU - value));
-}
 #define LEGACY_S16_FROM_BITS(value) \
-	legacy_s16_from_bits((legacy_u16)(value))
+	((legacy_u16)(value) <= 0x7FFFU ? \
+	(legacy_s16)(legacy_u16)(value) : \
+	(legacy_s16)(-1 - (legacy_s16)(0xFFFFU - (legacy_u16)(value))))
 #endif
 
 #define LEGACY_U16_WRAP_ADD(left, right) \
