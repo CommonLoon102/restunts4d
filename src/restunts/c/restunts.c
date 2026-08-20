@@ -8,6 +8,13 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#ifdef RESTUNTS_DOS
+/* The DOS build disables automatic C symbol underscores with /u-. */
+int _Cdecl _intdosx(union REGS* inregs, union REGS* outregs,
+	struct SREGS* segregs);
+void _Cdecl _segread(struct SREGS* segregs);
+#endif
+
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
 
@@ -1389,27 +1396,24 @@ void run_game(void) {
 
 void init_div0(void)
 {
-	// Use original code until we can link with a libc for intdosx().
-	ported_init_div0_();
-
-	/*
+#ifdef RESTUNTS_DOS
 	union REGS inregs, outregs;
 	struct SREGS segregs;
-	
+
+	_segread(&segregs);
+
 	// Get current division by zero interrupt.
-	inregs.h.ah = 0x35;
-	inregs.h.al = 0;
-	intdosx(&inregs, &outregs, &segregs);
-	
+	inregs.x.ax = 0x3500;
+	_intdosx(&inregs, &outregs, &segregs);
+
 	old_intr0_handler = MK_FP(segregs.es, outregs.x.bx);
-	
+
 	// Set division by zero interrupt.
-	inregs.h.ah = 0x25;
-	inregs.h.al = 0;
+	inregs.x.ax = 0x2500;
 	segregs.ds  = FP_SEG(intr0_handler);
 	inregs.x.dx = FP_OFF(intr0_handler);
-	intdosx(&inregs, &outregs, &segregs);
-	*/
+	_intdosx(&inregs, &outregs, &segregs);
+#endif
 }
 
 void copy_material_list_pointers(void* clrlist, void* clrlist2, void* patlist, void* patlist2, unsigned short videoConst)
