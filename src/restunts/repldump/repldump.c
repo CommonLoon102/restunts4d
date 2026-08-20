@@ -125,7 +125,7 @@ void init_trackdata(void) {
 	td02_penalty_related = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x70a;
-	trackdata3 = trkptr;
+	trackdata3 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x70a;
 	td04_aerotable_pl = (legacy_s16 far*)trkptr;
@@ -134,10 +134,10 @@ void init_trackdata(void) {
 	td05_aerotable_op = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
-	trackdata6 = trkptr;
+	trackdata6 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
-	trackdata7 = trkptr;
+	trackdata7 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
 	td08_direction_related = (legacy_s16 far*)trkptr;

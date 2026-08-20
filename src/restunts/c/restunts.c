@@ -268,7 +268,7 @@ void init_trackdata(void) {
 	td02_penalty_related = (legacy_s16 far*)trkptr;
 	
 	trkptr += 0x70a;
-	trackdata3 = trkptr;
+	trackdata3 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x70a;
 	td04_aerotable_pl = (legacy_s16 far*)trkptr;
@@ -277,10 +277,10 @@ void init_trackdata(void) {
 	td05_aerotable_op = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
-	trackdata6 = trkptr;
+	trackdata6 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
-	trackdata7 = trkptr;
+	trackdata7 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
 	td08_direction_related = (legacy_s16 far*)trkptr;
@@ -761,7 +761,7 @@ static void rebuild_opponent_path(void) {
 	int branch_nodes[RST_MAX_OPPONENT_BRANCHES];
 	int branch_lengths[RST_MAX_OPPONENT_BRANCHES];
 	unsigned long branch_costs[RST_MAX_OPPONENT_BRANCHES];
-	short far* opponent_path;
+	legacy_s16 far* opponent_path;
 	unsigned long cost;
 	unsigned long best_cost;
 	int node;
@@ -773,7 +773,7 @@ static void rebuild_opponent_path(void) {
 	int valid;
 	int i;
 
-	opponent_path = (short far*)trackdata3;
+	opponent_path = trackdata3;
 	cost = 0;
 	best_cost = 0x000F423FUL;
 	node = 0;
