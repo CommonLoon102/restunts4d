@@ -11,13 +11,13 @@
 #pragma pack (push, 1)
 
 struct GAMEINFO {
-	char game_playercarid[4];
-	char game_playermaterial;
-	char game_playertransmission;
-	char game_opponenttype;
-	char game_opponentcarid[4];
-	char game_opponentmaterial;
-	char game_opponenttransmission;
+	legacy_s8 game_playercarid[4];
+	legacy_u8 game_playermaterial;
+	legacy_u8 game_playertransmission;
+	legacy_u8 game_opponenttype;
+	legacy_s8 game_opponentcarid[4];
+	legacy_u8 game_opponentmaterial;
+	legacy_u8 game_opponenttransmission;
 	char game_trackname[9];
 	legacy_u16 game_framespersec;
 	legacy_u16 game_recordedframes;
@@ -416,7 +416,7 @@ extern char setup_track(void);
 extern void run_tracks_menu(int unk);
 extern void run_opponent_menu(void);
 extern void show_waiting(void);
-extern void run_car_menu(struct GAMEINFO* unk, char* unk2, char* unk3, unsigned int unk4);
+extern void run_car_menu(struct GAMEINFO* unk, legacy_u8* unk2, legacy_u8* unk3, unsigned int unk4);
 extern void run_game(void);
 extern unsigned end_hiscore(void);
 extern unsigned run_option_menu(void);
@@ -463,7 +463,7 @@ extern void video_set_mode4(void);
 extern void video_set_mode7(void);
 extern void video_set_mode_13h(void);
 
-extern void shape3d_load_car_shapes(char* carid, char* oppcarid);
+extern void shape3d_load_car_shapes(const legacy_s8* carid, const legacy_s8* oppcarid);
 
 extern void load_palandcursor(void);
 extern void sprite_set_1_size(unsigned short left, unsigned short right, unsigned short top, unsigned short height);

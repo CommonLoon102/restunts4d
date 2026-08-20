@@ -255,7 +255,7 @@ void set_default_car(void) {
 	gameconfig.game_playertransmission = 1;
 	gameconfig.game_opponenttype       = 0;
 	gameconfig.game_opponentmaterial   = 0;
-	gameconfig.game_opponentcarid[0]   = 0xFF;
+	gameconfig.game_opponentcarid[0]   = -1;
 }
 
 void init_trackdata(void) {
@@ -1643,7 +1643,8 @@ int stuntsmain2(int argc, char* argv[]) {
 	carposangle = polarAngle(carpos.y, carpos.z);
 
 	shape3d_load_all();
-	shape3d_load_car_shapes("coun", "coun");
+	shape3d_load_car_shapes(
+		(const legacy_s8*)"coun", (const legacy_s8*)"coun");
 	select_cliprect_rotate(0, carposangle, 0, &cliprect, 0);
 
 	//shaperect = cliprect;

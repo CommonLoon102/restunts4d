@@ -999,23 +999,25 @@ static void gameinfo_decode(
 
 	for (index = 0; index < 4; ++index) {
 		destination->game_playercarid[index] =
-			(char)source[GAMEINFO_PLAYER_CAR_ID_OFFSET + index];
+			LEGACY_S8_FROM_BITS(
+				source[GAMEINFO_PLAYER_CAR_ID_OFFSET + index]);
 		destination->game_opponentcarid[index] =
-			(char)source[GAMEINFO_OPPONENT_CAR_ID_OFFSET + index];
+			LEGACY_S8_FROM_BITS(
+				source[GAMEINFO_OPPONENT_CAR_ID_OFFSET + index]);
 	}
 	destination->game_playermaterial =
-		(char)source[GAMEINFO_PLAYER_MATERIAL_OFFSET];
+		source[GAMEINFO_PLAYER_MATERIAL_OFFSET];
 	destination->game_playertransmission =
-		(char)source[GAMEINFO_PLAYER_TRANSMISSION_OFFSET];
+		source[GAMEINFO_PLAYER_TRANSMISSION_OFFSET];
 	destination->game_opponenttype =
-		(char)source[GAMEINFO_OPPONENT_TYPE_OFFSET];
+		source[GAMEINFO_OPPONENT_TYPE_OFFSET];
 	destination->game_opponentmaterial =
-		(char)source[GAMEINFO_OPPONENT_MATERIAL_OFFSET];
+		source[GAMEINFO_OPPONENT_MATERIAL_OFFSET];
 	destination->game_opponenttransmission =
-		(char)source[GAMEINFO_OPPONENT_TRANSMISSION_OFFSET];
+		source[GAMEINFO_OPPONENT_TRANSMISSION_OFFSET];
 	for (index = 0; index < 9; ++index) {
-		destination->game_trackname[index] =
-			(char)source[GAMEINFO_TRACK_NAME_OFFSET + index];
+		((legacy_u8*)destination->game_trackname)[index] =
+			source[GAMEINFO_TRACK_NAME_OFFSET + index];
 	}
 	destination->game_framespersec = LEGACY_READ_U16_LE(
 		source + GAMEINFO_FRAMES_PER_SEC_OFFSET);

@@ -4167,7 +4167,7 @@ extern int word_4448A[];
 
 void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
-void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
+void shape3d_load_car_shapes(const legacy_s8 arg_playercarid[], const legacy_s8 arg_opponentcarid[]) {
 	int i;
 	struct VECTOR far* var_E;
 	unsigned long var_6;
