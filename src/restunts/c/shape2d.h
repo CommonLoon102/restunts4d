@@ -23,20 +23,26 @@ typedef char legacy_shape2d_must_be_16_bytes[
 
 struct SPRITE {
 	struct SHAPE2D far* sprite_bitmapptr;
-	unsigned short sprite_unk1;
-	unsigned short sprite_unk2;
-	unsigned short sprite_unk3;
-	unsigned int* sprite_lineofs;
-	unsigned short sprite_left;
-	unsigned short sprite_right;
-	unsigned short sprite_top;
-	unsigned short sprite_height;
-	unsigned short sprite_pitch;
-	unsigned short sprite_unk4;
-	unsigned short sprite_width2;
-	unsigned short sprite_left2;
-	unsigned short sprite_widthsum;
+	legacy_u16 sprite_unk1;
+	legacy_u16 sprite_unk2;
+	legacy_u16 sprite_unk3;
+	legacy_u16* sprite_lineofs;
+	legacy_u16 sprite_left;
+	legacy_u16 sprite_right;
+	legacy_u16 sprite_top;
+	legacy_u16 sprite_height;
+	legacy_u16 sprite_pitch;
+	legacy_u16 sprite_unk4;
+	legacy_u16 sprite_width2;
+	legacy_u16 sprite_left2;
+	legacy_u16 sprite_widthsum;
 };
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_sprite_dos_layout_must_be_30_bytes[
+	(sizeof(struct SPRITE) == 30) ? 1 : -1
+];
+#endif
 #pragma pack (pop)
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int);

@@ -30,9 +30,9 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 	struct SPRITE far * farwnd;
 	char far* shapebuf;
 	struct SHAPE2D far* hdr;
-	unsigned int lineofs;
-	unsigned int* lineofsptr;
-	unsigned int far* farlineofsptr;
+	legacy_u16 lineofs;
+	legacy_u16* lineofsptr;
+	legacy_u16 far* farlineofsptr;
 	unsigned short wnddefseg;
 	
 	(void)unk;
@@ -52,7 +52,7 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 
 	// it is safe to read/write the pointers to next_wnd_def/wnd_defs, but not the contents
 	wnd = next_wnd_def;
-	nextwnd = next_wnd_def + sizeof(struct SPRITE) + height * sizeof(unsigned int);
+	nextwnd = next_wnd_def + sizeof(struct SPRITE) + height * sizeof(legacy_u16);
 	if (FP_OFF(nextwnd) >= FP_OFF(&wnd_defs) + 0xE10) {
 		fatal_error(aWindowdefOutOfRowTableSpa);
 	}
@@ -61,7 +61,7 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 	// get a writable far pointer to the wndsprite
 	farwnd = MK_FP(wnddefseg, FP_OFF(wnd));
 
-	lineofsptr = (unsigned int*)(wnd + sizeof(struct SPRITE));
+	lineofsptr = (legacy_u16*)(wnd + sizeof(struct SPRITE));
 	farwnd->sprite_bitmapptr = hdr;
 	farwnd->sprite_lineofs = lineofsptr;
 	farwnd->sprite_left = 0;
@@ -86,8 +86,8 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 }
 
 void sprite_free_wnd(struct SPRITE far* wndsprite) {
-	unsigned short spritesize;
-	spritesize = sizeof(struct SPRITE) + wndsprite->sprite_height * sizeof(unsigned short);
+	legacy_u16 spritesize;
+	spritesize = sizeof(struct SPRITE) + wndsprite->sprite_height * sizeof(legacy_u16);
 	if (FP_OFF(wndsprite) + spritesize != FP_OFF(next_wnd_def)) {
 		fatal_error(aWindowReleased);
 	}
@@ -135,7 +135,7 @@ void sprite_clear_1_color(unsigned char color) {
 	unsigned int ofs;
 	unsigned int fill_size;
 	unsigned char far* bitmapptr;
-	unsigned int far* lineofs;
+	legacy_u16 far* lineofs;
 
 	top = sprite1.sprite_top;
 	left = sprite1.sprite_left;
@@ -170,7 +170,7 @@ void sprite_putimage(struct SHAPE2D far* shape) {
 	int lines, widthdiff, i, j;
 	unsigned int ofs;
 	unsigned char far* destbitmapptr;
-	unsigned int far* destlineofs;
+	legacy_u16 far* destlineofs;
 	unsigned char far* srcbitmapptr;
 	ported_sprite_putimage_(shape);
 	return ;
