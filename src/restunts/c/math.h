@@ -85,7 +85,7 @@ struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk);
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
 
-int vector_op_unk2(struct VECTOR* vec);
+legacy_s16 vector_op_unk2(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
 void vector_op_unk(
 	struct VECTOR* vec1,

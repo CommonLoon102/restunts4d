@@ -38,9 +38,9 @@ seg001	car_car_coll_detect_maybe	pending	asm_only	5	18	352	-	-
 seg001	init_plantrak	pending	asm_only	1	6	148	-	-
 seg001	do_opponent_op	pending	asm_only	1	2	4	-	-
 seg001	update_crash_state	ported	c_active_with_asm	16	6	152	src/restunts/c/statecrs.c:18	-
-seg001	plane_rotate_op	ported	c_active_with_asm	5	20	163	src/restunts/c/math.c:1018	-
-seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:973	-
-seg001	vec_normalInnerProduct	ported	c_active_with_asm	1	8	62	src/restunts/c/math.c:951	-
+seg001	plane_rotate_op	ported	c_active_with_asm	5	20	163	src/restunts/c/math.c:1027	-
+seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:982	-
+seg001	vec_normalInnerProduct	ported	c_active_with_asm	1	8	62	src/restunts/c/math.c:960	-
 seg001	state_op_unk	pending	asm_only	2	10	138	-	-
 seg001	sub_19BA0	pending	asm_only	1	4	96	-	-
 seg001	setup_aero_trackdata	ported	c_active_with_asm	4	18	133	src/restunts/c/restunts.c:725	-
@@ -107,7 +107,7 @@ seg006	transformed_shape_op_helper3	ported	c_active_with_asm	2	4	86	-	-
 seg006	get_a_poly_info	pending	c_translation_inactive	4	16	188	src/restunts/c/shape3d.c:2711	An incomplete C translation is disabled with #if 0.
 seg006	mat_rot_zxy	ported	c_active_with_asm	24	16	159	src/restunts/c/math.c:377	-
 seg006	rect_adjust_from_point	ported	c_active_with_asm	15	0	33	src/restunts/c/math.c:411	-
-seg006	vector_op_unk2	ported	c_active_with_asm	1	14	126	src/restunts/c/math.c:766	-
+seg006	vector_op_unk2	ported	c_active_with_asm	1	14	126	src/restunts/c/math.c:773	-
 seg006	calc_sincos80	ported	c_active_with_asm	1	8	30	src/restunts/c/shape3d.c:2666	-
 seg006	nopsub_26552	ignore	not_required	0	0	15	-	-
 seg006	rect_union	ported	c_active_with_asm	17	0	47	src/restunts/c/math.c:433	-
@@ -304,7 +304,7 @@ seg012	file_decomp_paras_nofatal	ported	c_active_with_asm	0	0	9	src/restunts/c/f
 seg012	file_decomp_paras_fatal	ported	c_active_with_asm	0	1	66	src/restunts/c/fileio.c:347	-
 seg012	file_find	ported	c_active_with_asm	6	0	44	src/restunts/c/fileio.c:201	-
 seg012	file_find_next	ported	c_active_with_asm	1	0	13	src/restunts/c/fileio.c:233	-
-seg012	multiply_and_scale	ported	c_active_with_asm	101	0	13	src/restunts/c/math.c:928	-
+seg012	multiply_and_scale	ported	c_active_with_asm	101	0	13	src/restunts/c/math.c:937	-
 seg012	video_set_mode4	pending	asm_only	1	0	41	-	-
 seg012	polarRadius2D	ported	c_active_with_asm	21	6	47	src/restunts/c/math.c:109	-
 seg012	video_set_mode7	pending	asm_only	1	2	44	-	-
@@ -393,7 +393,7 @@ seg012	nopsub_322B4	ignore	not_required	0	0	7	-	-
 seg012	nopsub_322C0	ignore	not_required	0	0	12	-	-
 seg012	nopsub_322DF	ignore	not_required	0	0	10	-	-
 seg012	set_projection	ported	c_active_with_asm	4	10	92	src/restunts/c/shape3d.c:2609	-
-seg012	vector_to_point	ported	c_active_with_asm	10	0	97	src/restunts/c/math.c:872	-
+seg012	vector_to_point	ported	c_active_with_asm	10	0	97	src/restunts/c/math.c:881	-
 seg012	sprite_free_wnd	ported	c_active_with_asm	24	3	35	src/restunts/c/shape2d.c:88	-
 seg012	file_write_nofatal	ported	c_active_with_asm	0	0	9	src/restunts/c/fileio.c:447	-
 seg012	file_write_fatal	ported	c_active_with_asm	4	1	65	src/restunts/c/fileio.c:441	-
@@ -432,7 +432,7 @@ seg012	file_decomp_vle	ported	c_active_with_asm	1	0	271	src/restunts/c/fileio.c:
 seg012	nopsub_32FEE	ignore	not_required	0	0	8	-	-
 seg012	video_get_status	ported	c_active_with_asm	2	0	6	src/restunts/c/restunts.c:194	-
 seg012	nopsub_33006	ignore	not_required	0	0	8	-	-
-seg012	vector_op_unk	ported	c_active_with_asm	6	0	40	src/restunts/c/math.c:902	-
+seg012	vector_op_unk	ported	c_active_with_asm	6	0	40	src/restunts/c/math.c:911	-
 seg012	preRender_sphere	pending	asm_only	2	6	169	-	-
 seg012	nopsub_3320E	ignore	not_required	0	0	43	-	-
 seg012	sprite_set_1_size	pending	asm_only	49	0	14	-	-

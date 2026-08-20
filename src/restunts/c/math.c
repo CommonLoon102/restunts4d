@@ -763,24 +763,31 @@ void rect_array_sort_by_top(char arg_array_length, struct RECTANGLE* arg_rect_ar
 }
 
 
-int vector_op_unk2(struct VECTOR* vec) {
-	legacy_s32 y;
-	legacy_s32 temp;
+static legacy_s16 legacy_abs_word(legacy_s16 value)
+{
+	if (value < 0)
+		return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(value));
+	return value;
+}
+
+legacy_s16 vector_op_unk2(struct VECTOR* vec) {
+	legacy_u32 y_bits;
+	legacy_u32 temp_bits;
+	legacy_u32 angle_bits;
+	legacy_u16 angle_word;
+	legacy_u8 result;
 	int flag;
-	int result;
-	legacy_s32 angle;
-	
-	y = abs(vec->y);
-	
-	temp = polarRadius2D(abs(vec->x), abs(vec->z));
+
+	y_bits = (legacy_u32)(legacy_s32)legacy_abs_word(vec->y);
+	temp_bits = (legacy_u16)polarRadius2D(
+		legacy_abs_word(vec->x), legacy_abs_word(vec->z));
 	
 	if (sin80 != cos80) {
-		//fatal_error("sin80 != cos80 - not observed");
-		y = y * sin80;
-		temp = temp * cos80;
+		y_bits = LEGACY_U32_WRAP_MUL(y_bits, (legacy_u32)sin80);
+		temp_bits = LEGACY_U32_WRAP_MUL(temp_bits, (legacy_u32)cos80);
 	} 
 
-	if (temp >= y) {
+	if (LEGACY_S32_FROM_BITS(temp_bits) >= LEGACY_S32_FROM_BITS(y_bits)) {
 		flag = 0;
 	} else {
 		flag = 1;
@@ -799,14 +806,16 @@ int vector_op_unk2(struct VECTOR* vec) {
 		result = 0;
 	}
 	
-	angle = -polarAngle(vec->z, -vec->x);
-	if (angle < 0) {
-		angle += 0x400;
-	}
-	
-	result += (((angle << 4) - angle) >> 10);
-	
-	return result;
+	angle_word = LEGACY_U16_WRAP_NEGATE(polarAngle(
+		vec->z, LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(vec->x))));
+	if (LEGACY_S16_FROM_BITS(angle_word) < 0)
+		angle_word = LEGACY_U16_WRAP_ADD(angle_word, 0x400U);
+	angle_bits = (legacy_u32)(legacy_s32)LEGACY_S16_FROM_BITS(angle_word);
+	angle_bits = LEGACY_U32_WRAP_SUB(
+		LEGACY_U32_WRAP_MUL(angle_bits, 16U), angle_bits);
+	angle_bits >>= 10;
+	result = (legacy_u8)(result + (legacy_u8)angle_bits);
+	return (legacy_s16)LEGACY_S8_FROM_BITS(result);
 }
 
 extern legacy_u16 projectiondata5;
