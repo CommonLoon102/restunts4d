@@ -119,19 +119,19 @@ void init_trackdata(void) {
 	char far* trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
 
-	td01_track_file_cpy = trkptr;
+	td01_track_file_cpy = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x70a;
-	td02_penalty_related = trkptr;
+	td02_penalty_related = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x70a;
 	trackdata3 = trkptr;
 
 	trkptr += 0x70a;
-	td04_aerotable_pl = trkptr;
+	td04_aerotable_pl = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
-	td05_aerotable_op = trkptr;
+	td05_aerotable_op = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x80;
 	trackdata6 = trkptr;
@@ -140,13 +140,13 @@ void init_trackdata(void) {
 	trackdata7 = trkptr;
 
 	trkptr += 0x80;
-	td08_direction_related = trkptr;
+	td08_direction_related = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x60;
-	trackdata9 = trkptr;
+	trackdata9 = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x180;
-	td10_track_check_rel = trkptr;
+	td10_track_check_rel = (legacy_s16 far*)trkptr;
 
 	trkptr += 0x120;
 	td11_highscores = trkptr;
