@@ -110,8 +110,6 @@ const char* mmgr_path_to_name(const char* filename) {
 	return result;
 }
 
-extern void far* ported_mmgr_alloc_pages_(const char* arg_0, unsigned short arg_2);
-
 void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
 	int i;
 	struct MEMCHUNK* resdi;
@@ -373,8 +371,6 @@ void mmgr_find_free(void) {
 
 	popregs();
 }
-
-void far* ported_mmgr_get_chunk_by_name_(const char* name);
 
 void far* mmgr_get_chunk_by_name(const char* name) {
 	const char* pcdi;

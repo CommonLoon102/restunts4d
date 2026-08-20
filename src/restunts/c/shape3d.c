@@ -4950,7 +4950,6 @@ extern int word_443E8[];
 extern int word_4448A[];
 
 void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
-void ported_sub_204AE_(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
 void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 	int i;
@@ -5049,7 +5048,6 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 	int var_10;
 	int var_8;
 	int var_4;
-	//return ported_sub_204AE_(arg_verts, arg_4, arg_6, arg_8, arg_vecarray, arg_vecptr);
 	if (arg_8[4] != 0) {
 		var_C = sin_fast(arg_4 / 2);
 		var_2 = cos_fast(arg_4 / 2);
