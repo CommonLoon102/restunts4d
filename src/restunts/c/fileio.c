@@ -980,13 +980,90 @@ void file_load_audiores(const char* songfile, const char* voicefile, const char*
 	is_audioloaded = 1;
 }
 
+#define GAMEINFO_PLAYER_CAR_ID_OFFSET 0
+#define GAMEINFO_PLAYER_MATERIAL_OFFSET 4
+#define GAMEINFO_PLAYER_TRANSMISSION_OFFSET 5
+#define GAMEINFO_OPPONENT_TYPE_OFFSET 6
+#define GAMEINFO_OPPONENT_CAR_ID_OFFSET 7
+#define GAMEINFO_OPPONENT_MATERIAL_OFFSET 11
+#define GAMEINFO_OPPONENT_TRANSMISSION_OFFSET 12
+#define GAMEINFO_TRACK_NAME_OFFSET 13
+#define GAMEINFO_FRAMES_PER_SEC_OFFSET 22
+#define GAMEINFO_RECORDED_FRAMES_OFFSET 24
+
+static void gameinfo_decode(
+	struct GAMEINFO* destination,
+	const legacy_u8 far* source)
+{
+	int index;
+
+	for (index = 0; index < 4; ++index) {
+		destination->game_playercarid[index] =
+			(char)source[GAMEINFO_PLAYER_CAR_ID_OFFSET + index];
+		destination->game_opponentcarid[index] =
+			(char)source[GAMEINFO_OPPONENT_CAR_ID_OFFSET + index];
+	}
+	destination->game_playermaterial =
+		(char)source[GAMEINFO_PLAYER_MATERIAL_OFFSET];
+	destination->game_playertransmission =
+		(char)source[GAMEINFO_PLAYER_TRANSMISSION_OFFSET];
+	destination->game_opponenttype =
+		(char)source[GAMEINFO_OPPONENT_TYPE_OFFSET];
+	destination->game_opponentmaterial =
+		(char)source[GAMEINFO_OPPONENT_MATERIAL_OFFSET];
+	destination->game_opponenttransmission =
+		(char)source[GAMEINFO_OPPONENT_TRANSMISSION_OFFSET];
+	for (index = 0; index < 9; ++index) {
+		destination->game_trackname[index] =
+			(char)source[GAMEINFO_TRACK_NAME_OFFSET + index];
+	}
+	destination->game_framespersec = LEGACY_READ_U16_LE(
+		source + GAMEINFO_FRAMES_PER_SEC_OFFSET);
+	destination->game_recordedframes = LEGACY_READ_U16_LE(
+		source + GAMEINFO_RECORDED_FRAMES_OFFSET);
+}
+
+static void gameinfo_encode(
+	legacy_u8 far* destination,
+	const struct GAMEINFO* source)
+{
+	int index;
+
+	for (index = 0; index < 4; ++index) {
+		destination[GAMEINFO_PLAYER_CAR_ID_OFFSET + index] =
+			(legacy_u8)source->game_playercarid[index];
+		destination[GAMEINFO_OPPONENT_CAR_ID_OFFSET + index] =
+			(legacy_u8)source->game_opponentcarid[index];
+	}
+	destination[GAMEINFO_PLAYER_MATERIAL_OFFSET] =
+		(legacy_u8)source->game_playermaterial;
+	destination[GAMEINFO_PLAYER_TRANSMISSION_OFFSET] =
+		(legacy_u8)source->game_playertransmission;
+	destination[GAMEINFO_OPPONENT_TYPE_OFFSET] =
+		(legacy_u8)source->game_opponenttype;
+	destination[GAMEINFO_OPPONENT_MATERIAL_OFFSET] =
+		(legacy_u8)source->game_opponentmaterial;
+	destination[GAMEINFO_OPPONENT_TRANSMISSION_OFFSET] =
+		(legacy_u8)source->game_opponenttransmission;
+	for (index = 0; index < 9; ++index) {
+		destination[GAMEINFO_TRACK_NAME_OFFSET + index] =
+			(legacy_u8)source->game_trackname[index];
+	}
+	LEGACY_WRITE_U16_LE(
+		destination + GAMEINFO_FRAMES_PER_SEC_OFFSET,
+		source->game_framespersec);
+	LEGACY_WRITE_U16_LE(
+		destination + GAMEINFO_RECORDED_FRAMES_OFFSET,
+		source->game_recordedframes);
+}
+
 short file_load_replay(const char* dir, const char* name)
 {
 	file_build_path(dir, name, ".rpl", g_path_buf);
 
 	g_is_busy = 1;
 	file_read_fatal(g_path_buf, td13_rpl_header);
-	gameconfig = *(struct GAMEINFO far*)td13_rpl_header;
+	gameinfo_decode(&gameconfig, (const legacy_u8 far*)td13_rpl_header);
 	g_is_busy = 0;
 	return 0;
 }
@@ -995,10 +1072,13 @@ short file_write_replay(const char* filename)
 {
 	short ret;
 
-	*(struct GAMEINFO far*)td13_rpl_header = gameconfig;
+	gameinfo_encode((legacy_u8 far*)td13_rpl_header, &gameconfig);
 
 	g_is_busy = 1;
-	ret = file_write_fatal(filename, td13_rpl_header, sizeof(struct GAMEINFO) + gameconfig.game_recordedframes);
+	ret = file_write_fatal(
+		filename,
+		td13_rpl_header,
+		GAMEINFO_SERIALIZED_SIZE + gameconfig.game_recordedframes);
 	g_is_busy = 0;
 	
 	return ret;

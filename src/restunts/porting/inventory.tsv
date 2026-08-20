@@ -88,8 +88,8 @@ seg005	remove_frame_callback	pending	asm_only	1	4	14	-	-
 seg005	frame_callback	pending	asm_only	0	12	87	-	-
 seg005	replay_unk2	pending	asm_only	4	26	289	-	-
 seg005	sub_2298C	pending	asm_only	1	14	312	-	-
-seg005	file_load_replay	ported	c_active_with_asm	3	4	36	src/restunts/c/fileio.c:983	-
-seg005	file_write_replay	ported	c_active_with_asm	1	2	33	src/restunts/c/fileio.c:994	-
+seg005	file_load_replay	ported	c_active_with_asm	3	4	36	src/restunts/c/fileio.c:1060	-
+seg005	file_write_replay	ported	c_active_with_asm	1	2	33	src/restunts/c/fileio.c:1071	-
 seg005	setup_car_shapes	pending	asm_only	4	134	862	-	-
 seg005	setup_player_cars	ported	c_active_with_asm	2	60	235	src/restunts/c/restunts.c:853	-
 seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts.c:943	-

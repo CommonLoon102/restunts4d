@@ -19,9 +19,14 @@ struct GAMEINFO {
 	char game_opponentmaterial;
 	char game_opponenttransmission;
 	char game_trackname[9];
-	unsigned short game_framespersec;
-	unsigned short game_recordedframes;
+	legacy_u16 game_framespersec;
+	legacy_u16 game_recordedframes;
 };
+
+#define GAMEINFO_SERIALIZED_SIZE 26U
+typedef char legacy_gameinfo_must_be_26_bytes[
+	(sizeof(struct GAMEINFO) == GAMEINFO_SERIALIZED_SIZE) ? 1 : -1
+];
 
 struct CARSTATE {
 	struct VECTORLONG car_posWorld1;

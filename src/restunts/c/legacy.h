@@ -33,6 +33,18 @@ typedef char legacy_u16_must_be_2_bytes[(sizeof(legacy_u16) == 2) ? 1 : -1];
 typedef char legacy_s32_must_be_4_bytes[(sizeof(legacy_s32) == 4) ? 1 : -1];
 typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 
+/* Pass a side-effect-free byte pointer to these little-endian accessors. */
+#define LEGACY_READ_U16_LE(bytes) \
+	((legacy_u16)((legacy_u16)(legacy_u8)((bytes)[0]) | \
+	((legacy_u16)(legacy_u8)((bytes)[1]) << 8)))
+
+#define LEGACY_WRITE_U16_LE(bytes, value) \
+	do { \
+		legacy_u16 legacy_write_u16_value_ = (legacy_u16)(value); \
+		(bytes)[0] = (legacy_u8)legacy_write_u16_value_; \
+		(bytes)[1] = (legacy_u8)(legacy_write_u16_value_ >> 8); \
+	} while (0)
+
 /*
  * Borland's cast is the original machine-level bit reinterpretation.  The
  * hosted implementation avoids C's implementation-defined out-of-range
