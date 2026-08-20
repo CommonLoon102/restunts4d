@@ -938,21 +938,41 @@ legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
 	return LEGACY_S16_FROM_BITS(result_bits);
 }
 
-extern int planindex;
+extern legacy_s16 planindex;
 extern struct PLANE far* planptr;
 extern struct PLANE far* current_planptr;
-extern int elem_xCenter;
-extern int elem_zCenter;
-extern int terrainHeight;
+extern legacy_s16 elem_xCenter;
+extern legacy_s16 elem_zCenter;
+extern legacy_s16 terrainHeight;
 
-int vec_normalInnerProduct(int x, int y, int z, struct VECTOR far* normal) {
-	return (
-		((long)normal->x * x) + 
-		((long)normal->z * z) +
-		((long)normal->y * y)) / 0x2000;
+legacy_s16 vec_normalInnerProduct(
+	legacy_s16 x,
+	legacy_s16 y,
+	legacy_s16 z,
+	struct VECTOR far* normal)
+{
+	legacy_u32 sum;
+	legacy_s32 quotient;
+
+	sum = LEGACY_U32_WRAP_MUL(
+		(legacy_u32)(legacy_s32)normal->x,
+		(legacy_u32)(legacy_s32)x);
+	sum = LEGACY_U32_WRAP_ADD(sum, LEGACY_U32_WRAP_MUL(
+		(legacy_u32)(legacy_s32)normal->z,
+		(legacy_u32)(legacy_s32)z));
+	sum = LEGACY_U32_WRAP_ADD(sum, LEGACY_U32_WRAP_MUL(
+		(legacy_u32)(legacy_s32)normal->y,
+		(legacy_u32)(legacy_s32)y));
+	quotient = LEGACY_S32_FROM_BITS(sum) / (legacy_s32)0x2000;
+	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
-int plane_origin_op(int arg_planindex, int x, int y, int z) {
+legacy_s16 plane_origin_op(
+	legacy_s16 arg_planindex,
+	legacy_s16 x,
+	legacy_s16 y,
+	legacy_s16 z)
+{
 	struct PLANE far* curplane;
 	struct VECTOR a;
 	struct VECTOR b;
@@ -963,16 +983,18 @@ int plane_origin_op(int arg_planindex, int x, int y, int z) {
 		curplane = &planptr[arg_planindex];
 	}
 
-	b.y = curplane->plane_origin.y + terrainHeight;
-	a.y = y - b.y;
+	b.y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		curplane->plane_origin.y, terrainHeight));
+	a.y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(y, b.y));
 	if (arg_planindex < 4) {
-		// NOTE: what is this
 		return a.y;
 	}
-	b.x = curplane->plane_origin.x + elem_xCenter;
-	b.z = curplane->plane_origin.z + elem_zCenter;
-	a.x = x - b.x;
-	a.z = z - b.z;
+	b.x = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		curplane->plane_origin.x, elem_xCenter));
+	b.z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		curplane->plane_origin.z, elem_zCenter));
+	a.x = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(x, b.x));
+	a.z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(z, b.z));
 	return vec_normalInnerProduct(a.x, a.y, a.z, &curplane->plane_normal);
 }
 

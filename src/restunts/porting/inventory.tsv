@@ -38,8 +38,8 @@ seg001	car_car_coll_detect_maybe	pending	asm_only	5	18	352	-	-
 seg001	init_plantrak	pending	asm_only	1	6	148	-	-
 seg001	do_opponent_op	pending	asm_only	1	2	4	-	-
 seg001	update_crash_state	ported	c_active_with_asm	16	6	152	src/restunts/c/statecrs.c:18	-
-seg001	plane_rotate_op	ported	c_active_with_asm	5	20	163	src/restunts/c/math.c:993	-
-seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:955	-
+seg001	plane_rotate_op	ported	c_active_with_asm	5	20	163	src/restunts/c/math.c:1015	-
+seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:970	-
 seg001	vec_normalInnerProduct	ported	c_active_with_asm	1	8	62	src/restunts/c/math.c:948	-
 seg001	state_op_unk	pending	asm_only	2	10	138	-	-
 seg001	sub_19BA0	pending	asm_only	1	4	96	-	-

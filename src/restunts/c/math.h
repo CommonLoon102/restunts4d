@@ -99,6 +99,7 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
 
 void plane_rotate_op(void);
-int plane_origin_op(int index, int b, int c, int d);
+legacy_s16 plane_origin_op(
+	legacy_s16 index, legacy_s16 x, legacy_s16 y, legacy_s16 z);
 
 #endif
