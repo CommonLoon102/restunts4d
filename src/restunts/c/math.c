@@ -296,15 +296,13 @@ void mat_rot_z(struct MATRIX* outmat, int angle) {
 // multiplying the non-zero axes. currently not optimized except for the y cache:
 
 #ifdef RESTUNTS_DOS
-extern int legacy_wheel_angle_stack_words[4];
-
 static void seed_legacy_opponent_wheel_angles(unsigned caller_bp) {
-	unsigned short far* caller_frame;
+	legacy_u16 far* caller_frame;
 	int front_wheel_delta;
 	int scaled_speed;
 	int i;
 
-	caller_frame = (unsigned short far*)MK_FP(_SS, caller_bp);
+	caller_frame = (legacy_u16 far*)MK_FP(_SS, caller_bp);
 	if (caller_frame[3] != FP_OFF(&state.opponentstate) ||
 		caller_frame[4] != FP_OFF(&simd_opponent) ||
 		caller_frame[5] != FP_OFF(&state.playerstate) ||

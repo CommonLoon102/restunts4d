@@ -47,17 +47,17 @@ extern int bto_auxiliary1(int, int, struct VECTOR*);
  * Collision handling overwrites the translated stack copy on hard landings.
  * Keep the angles outside that layout-sensitive legacy stack frame.
  */
-static int saved_wheel_plane_angles[4];
+static legacy_s16 saved_wheel_plane_angles[4];
 
 /*
  * In the original call stack, these four words are left underneath the
  * opponent's wheel-angle locals.  They start as player mat_134 values, but
  * later legacy calls can overwrite them before the opponent update.
  */
-int legacy_wheel_angle_stack_words[4];
+legacy_s16 legacy_wheel_angle_stack_words[4];
 
 /* Stack residue left by update_grip for the following player physics call. */
-int legacy_grip_stack_words[4];
+legacy_s16 legacy_grip_stack_words[4];
 
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
@@ -65,7 +65,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
 	/* Preserve the original stack slot; the surrounding locals are layout-sensitive. */
-	volatile int var_140someWhlData[4];
+	volatile legacy_s16 var_140someWhlData[4];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
 	int pState_f40_sar2;
@@ -84,7 +84,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	unsigned int var_190;
 	struct MATRIX* var_EA;
 	int si;
-	int var_16[4];
+	legacy_s16 var_16[4];
 	struct PLANE far* var_6;
 	struct VECTOR vec_1DE[4];
 	int var_E;

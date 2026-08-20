@@ -9,7 +9,6 @@
 extern int penalty_time;
 extern int track_pieces_counter;
 extern struct TRACKOBJECT trkObjectList[];
-extern int legacy_wheel_angle_stack_words[4];
 
 #define PENALTY_MAX_TRACK_PIECES 0x385
 #define PENALTY_MAX_BRANCHES     0x80
@@ -17,7 +16,7 @@ extern int legacy_wheel_angle_stack_words[4];
 
 static int finish_penalty_traversal(
 	int result,
-	int branch_pieces[],
+	legacy_s16 branch_pieces[],
 	int retain_legacy_words
 ) {
 	int i;
@@ -44,8 +43,8 @@ static int detect_penalty_c(
 	int* terminal_encountered
 ) {
 	unsigned char visited[PENALTY_MAX_TRACK_PIECES];
-	int branch_pieces[PENALTY_MAX_BRANCHES];
-	int branch_distances[PENALTY_MAX_BRANCHES];
+	legacy_s16 branch_pieces[PENALTY_MAX_BRANCHES];
+	legacy_s16 branch_distances[PENALTY_MAX_BRANCHES];
 	int current_piece;
 	int next_piece;
 	int alternate_piece;
@@ -229,8 +228,8 @@ static int detect_penalty_without_wrapped_terminal(
 	short* penalty_count
 ) {
 	unsigned char visited[PENALTY_MAX_TRACK_PIECES];
-	int branch_pieces[PENALTY_MAX_BRANCHES];
-	int branch_distances[PENALTY_MAX_BRANCHES];
+	legacy_s16 branch_pieces[PENALTY_MAX_BRANCHES];
+	legacy_s16 branch_distances[PENALTY_MAX_BRANCHES];
 	int current_piece;
 	int next_piece;
 	int alternate_piece;
@@ -369,10 +368,6 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd, int);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
 int detect_penalty(int* found_piece, int* penalty_count);
 
-#ifdef RESTUNTS_DOS
-extern int legacy_grip_stack_words[4];
-#endif
-
 void player_op(char arg_carInputByte) {
 	struct VECTOR var_38;
 	struct VECTOR var_32;
@@ -422,16 +417,16 @@ void player_op(char arg_carInputByte) {
 	 * Borland places var_terminalPenalty at BP-28. The residue words are at
 	 * BP-118..BP-112, so derive them without adding another stack local.
 	 */
-	legacy_grip_stack_words[0] = *(unsigned short far*)MK_FP(
+	legacy_grip_stack_words[0] = *(legacy_u16 far*)MK_FP(
 		_SS, FP_OFF(&var_terminalPenalty) - 90
 	);
-	legacy_grip_stack_words[1] = *(unsigned short far*)MK_FP(
+	legacy_grip_stack_words[1] = *(legacy_u16 far*)MK_FP(
 		_SS, FP_OFF(&var_terminalPenalty) - 88
 	);
-	legacy_grip_stack_words[2] = *(unsigned short far*)MK_FP(
+	legacy_grip_stack_words[2] = *(legacy_u16 far*)MK_FP(
 		_SS, FP_OFF(&var_terminalPenalty) - 86
 	);
-	legacy_grip_stack_words[3] = *(unsigned short far*)MK_FP(
+	legacy_grip_stack_words[3] = *(legacy_u16 far*)MK_FP(
 		_SS, FP_OFF(&var_terminalPenalty) - 84
 	);
 #endif

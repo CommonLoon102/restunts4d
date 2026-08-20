@@ -406,6 +406,8 @@ extern legacy_u32 last_timer_callback_counter;
 extern legacy_u32 timer_copy_unk;
 
 extern unsigned char g_kevinrandom_seed[];
+extern legacy_s16 legacy_wheel_angle_stack_words[4];
+extern legacy_s16 legacy_grip_stack_words[4];
 extern const char aReservememoryO[];
 extern const char aReservememoryOutOfMemory[];
 extern const char aMemoryManagerB[];
