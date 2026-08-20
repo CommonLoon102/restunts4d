@@ -33,65 +33,69 @@ struct CARSTATE {
 	struct VECTORLONG car_posWorld2;
 	struct VECTOR car_rotate; // applying the (x, y, z) vector notation to rotation
                               // angles is a source of confusion.
-	short car_pseudoGravity;
-	short car_steeringAngle;
-	short car_currpm;
-	short car_lastrpm;
-	short car_idlerpm2;
-	short car_speeddiff; // former gripdiff
-	unsigned short car_speed;     // former trackgrip
+	legacy_s16 car_pseudoGravity;
+	legacy_s16 car_steeringAngle;
+	legacy_s16 car_currpm;
+	legacy_s16 car_lastrpm;
+	legacy_s16 car_idlerpm2;
+	legacy_s16 car_speeddiff; // former gripdiff
+	legacy_u16 car_speed;     // former trackgrip
                          // value is 2^8*(mph value) and unsigned
-	unsigned short car_speed2;    // former trackgrip2
+	legacy_u16 car_speed2;    // former trackgrip2
                          // speed is the rev-coupled speed, while speed2 is
                          // the actual car speed. They are different, for
                          // instance, during jumps (where accelerating increases
                          // revs without making the car go faster).
-	unsigned short car_lastspeed; // former lasttrackgrip
-	unsigned short car_gearratio;
-	unsigned short car_gearratioshr8;
-	short car_knob_x;
-	short car_36MwhlAngle;
-	short car_knob_y;
-	short car_knob_x2;
-	short car_knob_y2;
-	short car_angle_z;
-	short car_40MfrontWhlAngle;
-	short field_42;
-	short car_demandedGrip;
-	short car_surfacegrip_sum;
-	short field_48;
-	short car_trackdata3_index;
-	short car_rc1[4]; // four words, one for each wheel.
-	short car_rc2[4];
-	short car_rc3[4];
-	short car_rc4[4];
-	short car_rc5[4];
+	legacy_u16 car_lastspeed; // former lasttrackgrip
+	legacy_u16 car_gearratio;
+	legacy_u16 car_gearratioshr8;
+	legacy_s16 car_knob_x;
+	legacy_s16 car_36MwhlAngle;
+	legacy_s16 car_knob_y;
+	legacy_s16 car_knob_x2;
+	legacy_s16 car_knob_y2;
+	legacy_s16 car_angle_z;
+	legacy_s16 car_40MfrontWhlAngle;
+	legacy_s16 field_42;
+	legacy_s16 car_demandedGrip;
+	legacy_s16 car_surfacegrip_sum;
+	legacy_s16 field_48;
+	legacy_s16 car_trackdata3_index;
+	legacy_s16 car_rc1[4]; // four words, one for each wheel.
+	legacy_s16 car_rc2[4];
+	legacy_s16 car_rc3[4];
+	legacy_s16 car_rc4[4];
+	legacy_s16 car_rc5[4];
 	struct VECTOR car_whlWorldCrds1[4];
 	struct VECTOR car_whlWorldCrds2[4];
 	struct VECTOR car_vec_unk3;
 	struct VECTOR car_vec_unk4;
 	struct VECTOR car_vec_unk5;
-	short field_B6;
-	short field_B8;
-	short field_BA;
-	char car_is_braking;
-	char car_is_accelerating;
-	char car_current_gear;
-	char car_sumSurfFrontWheels;
-	char car_sumSurfRearWheels;
-	char car_sumSurfAllWheels; // used as jump flag.
-	char car_surfaceWhl[4];      // surface types for each of the wheels, it seems.
-	char car_engineLimiterTimer;
-	char car_slidingFlag;
-	char field_C8;
-	char car_crashBmpFlag;
-	char car_changing_gear;
-	char car_fpsmul2;
-	char car_transmission;
-	char field_CD;
-	char field_CE; // is added?
-	char field_CF; // is initialized?
+	legacy_s16 field_B6;
+	legacy_s16 field_B8;
+	legacy_s16 field_BA;
+	legacy_s8 car_is_braking;
+	legacy_s8 car_is_accelerating;
+	legacy_s8 car_current_gear;
+	legacy_s8 car_sumSurfFrontWheels;
+	legacy_s8 car_sumSurfRearWheels;
+	legacy_s8 car_sumSurfAllWheels; // used as jump flag.
+	legacy_s8 car_surfaceWhl[4];      // surface types for each of the wheels, it seems.
+	legacy_s8 car_engineLimiterTimer;
+	legacy_s8 car_slidingFlag;
+	legacy_s8 field_C8;
+	legacy_s8 car_crashBmpFlag;
+	legacy_s8 car_changing_gear;
+	legacy_s8 car_fpsmul2;
+	legacy_s8 car_transmission;
+	legacy_s8 field_CD;
+	legacy_s8 field_CE; // is added?
+	legacy_s8 field_CF; // is initialized?
 };
+
+typedef char legacy_carstate_must_be_208_bytes[
+	(sizeof(struct CARSTATE) == 208) ? 1 : -1
+];
 
 struct GAMESTATE {
 	long game_longs1[24]; // x
