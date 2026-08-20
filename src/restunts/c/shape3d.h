@@ -37,10 +37,16 @@ struct TRANSFORMEDSHAPE3D {
 	struct SHAPE3D* shapeptr;
 	struct RECTANGLE* rectptr;
 	struct VECTOR rotvec;
-	unsigned short unk;
-	unsigned char ts_flags;
-	unsigned char material;
+	legacy_u16 unk;
+	legacy_u8 ts_flags;
+	legacy_u8 material;
 };
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_transformed_shape3d_dos_layout_must_be_20_bytes[
+	(sizeof(struct TRANSFORMEDSHAPE3D) == 20) ? 1 : -1
+];
+#endif
 
 #pragma pack (pop)
 
