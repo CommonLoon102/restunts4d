@@ -1,6 +1,7 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
+#include <stddef.h>
 #include "math.h"
 
 #ifdef RESTUNTS_SDL
@@ -151,37 +152,48 @@ typedef char legacy_gamestate_must_be_1120_bytes[
 ];
 
 struct SIMD {
-	char num_gears;
-	char simd_unk;
-	short car_mass;
-	short braking_eff;
-	short idle_rpm;
-	short downshift_rpm;
-	short upshift_rpm;
-	short max_rpm;
-	unsigned short gear_ratios[7];
+	legacy_u8 num_gears;
+	legacy_u8 simd_unk;
+	legacy_s16 car_mass;
+	legacy_s16 braking_eff;
+	legacy_s16 idle_rpm;
+	legacy_s16 downshift_rpm;
+	legacy_s16 upshift_rpm;
+	legacy_s16 max_rpm;
+	legacy_u16 gear_ratios[7];
 	struct POINT2D knob_points[7];
-	short aero_resistance;
-	char idle_torque;
-	char torque_curve[104];
-	char field_A3;
-	short grip;
-	short field_A6[7];
-	short sliding;
-	short surface_grip[4];
-	char simd_unk3[10];
+	legacy_s16 aero_resistance;
+	legacy_u8 idle_torque;
+	legacy_u8 torque_curve[104];
+	legacy_u8 field_A3;
+	legacy_s16 grip;
+	legacy_s16 field_A6[7];
+	legacy_s16 sliding;
+	legacy_s16 surface_grip[4];
+	legacy_u8 simd_unk3[10];
 	struct POINT2D collide_points[2];
-	short car_height;
+	legacy_s16 car_height;
 	struct VECTOR wheel_coords[4];
-	char steeringdots[62];
+	legacy_u8 steeringdots[62];
 	struct POINT2D spdcenter;
-	short spdnumpoints;
-	char spdpoints[208];
+	legacy_s16 spdnumpoints;
+	legacy_u8 spdpoints[208];
 	struct POINT2D revcenter;
-	short revnumpoints;
-	char revpoints[256];
-	short far* aerorestable;
+	legacy_s16 revnumpoints;
+	legacy_u8 revpoints[256];
+	legacy_s16 far* aerorestable;
 };
+
+#define SIMD_PARAMETER_DATA_SIZE 772U
+#define SIMD_RESOURCE_SIZE 776U
+typedef char legacy_simd_parameter_data_must_be_772_bytes[
+	(offsetof(struct SIMD, aerorestable) == SIMD_PARAMETER_DATA_SIZE) ? 1 : -1
+];
+#ifdef RESTUNTS_DOS
+typedef char legacy_simd_dos_layout_must_be_776_bytes[
+	(sizeof(struct SIMD) == SIMD_RESOURCE_SIZE) ? 1 : -1
+];
+#endif
 
 struct TRKOBJINFO {
 	char  si_noOfBlocks;      // How many shapeInfo pieces compose the element. Arbitrary for the first piece, 0 for the following ones.

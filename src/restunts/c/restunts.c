@@ -724,7 +724,7 @@ extern void copy_string(char*, char far*);
 void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 	int i;
 	if (is_opponent == 0) {
-		fmemcpy(MK_FP(FP_SEG(&simd_player), FP_OFF(&simd_player)), locate_shape_alt(carresptr, "simd"), sizeof(struct SIMD));
+		fmemcpy(MK_FP(FP_SEG(&simd_player), FP_OFF(&simd_player)), locate_shape_alt(carresptr, "simd"), SIMD_PARAMETER_DATA_SIZE);
 		simd_player.aerorestable = td04_aerotable_pl;
 		// Maximum speed is 40h
 		// Division by 2^9.
@@ -735,7 +735,7 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
 	} else {
-		fmemcpy(MK_FP(FP_SEG(&simd_opponent), FP_OFF(&simd_opponent)), locate_shape_alt(carresptr, "simd"), sizeof(struct SIMD));
+		fmemcpy(MK_FP(FP_SEG(&simd_opponent), FP_OFF(&simd_opponent)), locate_shape_alt(carresptr, "simd"), SIMD_PARAMETER_DATA_SIZE);
 		simd_opponent.aerorestable = td05_aerotable_op;
 
 		for (i = 0; i < 0x40; i++) {
