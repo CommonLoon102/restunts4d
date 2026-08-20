@@ -87,7 +87,11 @@ void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
 
 int vector_op_unk2(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
-void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i);
+void vector_op_unk(
+	struct VECTOR* vec1,
+	struct VECTOR* vec2,
+	struct VECTOR* outvec,
+	legacy_s16 i);
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
 

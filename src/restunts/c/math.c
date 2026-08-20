@@ -879,24 +879,47 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		vec->y, vec->z, projectiondata10, projectiondata8, 1);
 }
 
-void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i) {
-	short delta;
-	short var_4, var_2;
-	
+static legacy_s16 interpolate_vector_component(
+	legacy_s16 first,
+	legacy_s16 second,
+	legacy_s16 numerator,
+	legacy_s16 denominator)
+{
+	legacy_s16 delta;
+	legacy_s32 product;
+	legacy_s32 quotient;
+
+	delta = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(first, second));
+	product = (legacy_s32)delta * (legacy_s32)numerator;
+	quotient = product / (legacy_s32)denominator;
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		(legacy_u16)quotient, second));
+}
+
+void vector_op_unk(
+	struct VECTOR* vec1,
+	struct VECTOR* vec2,
+	struct VECTOR* outvec,
+	legacy_s16 i)
+{
+	legacy_s16 numerator;
+	legacy_s16 denominator;
+
 	outvec->z = i;
 
-	var_4 = (short)(outvec->z - vec2->z);
-	var_2 = (short)(vec1->z - vec2->z);
-	if (var_2 < 0) {
-		/* The original uses a 16-bit logical SHR for both values. */
-		var_4 = (short)((unsigned short)var_4 >> 1);
-		var_2 = (short)((unsigned short)var_2 >> 1);
+	numerator = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_WRAP_SUB(outvec->z, vec2->z));
+	denominator = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_WRAP_SUB(vec1->z, vec2->z));
+	if (denominator < 0) {
+		numerator = (legacy_s16)((legacy_u16)numerator >> 1);
+		denominator = (legacy_s16)((legacy_u16)denominator >> 1);
 	}
-	
-	delta = (short)(vec1->x - vec2->x);
-	outvec->x = (short)(((long)delta * var_4) / var_2 + vec2->x);
-	delta = (short)(vec1->y - vec2->y);
-	outvec->y = (short)(((long)delta * var_4) / var_2 + vec2->y);
+
+	outvec->x = interpolate_vector_component(
+		vec1->x, vec2->x, numerator, denominator);
+	outvec->y = interpolate_vector_component(
+		vec1->y, vec2->y, numerator, denominator);
 }
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
