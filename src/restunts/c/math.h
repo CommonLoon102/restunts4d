@@ -65,8 +65,8 @@ typedef char legacy_plane_must_be_34_bytes[
 	(sizeof(struct PLANE) == 34) ? 1 : -1
 ];
 
-short sin_fast(unsigned short s);
-short cos_fast(unsigned short s);
+legacy_s16 sin_fast(legacy_u16 s);
+legacy_s16 cos_fast(legacy_u16 s);
 
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y);
@@ -78,9 +78,9 @@ void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* out
 void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR* outvec);
 void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outmat);
 void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat);
-void mat_rot_x(struct MATRIX* outmat, int angle);
-void mat_rot_y(struct MATRIX* outmat, int angle);
-void mat_rot_z(struct MATRIX* outmat, int angle);
+void mat_rot_x(struct MATRIX* outmat, legacy_u16 angle);
+void mat_rot_y(struct MATRIX* outmat, legacy_u16 angle);
+void mat_rot_z(struct MATRIX* outmat, legacy_u16 angle);
 struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk);
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
