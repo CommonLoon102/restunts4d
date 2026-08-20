@@ -96,6 +96,10 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	((legacy_u16)(((legacy_u16)(value) >> 1) | \
 	((legacy_u16)(value) & 0x8000U)))
 
+#define LEGACY_U32_SAR1(value) \
+	((legacy_u32)(((legacy_u32)(value) >> 1) | \
+	((legacy_u32)(value) & (legacy_u32)0x80000000UL)))
+
 #define LEGACY_U32_FROM_WORDS(high_word, low_word) \
 	(((legacy_u32)(legacy_u16)(high_word) << 16) | \
 	(legacy_u16)(low_word))

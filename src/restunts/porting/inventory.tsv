@@ -43,7 +43,7 @@ seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:107
 seg001	vec_normalInnerProduct	ported	c_active_with_asm	1	8	62	src/restunts/c/math.c:1052	-
 seg001	state_op_unk	pending	asm_only	2	10	138	-	-
 seg001	sub_19BA0	pending	asm_only	1	4	96	-	-
-seg001	setup_aero_trackdata	ported	c_active_with_asm	4	18	133	src/restunts/c/restunts.c:730	-
+seg001	setup_aero_trackdata	ported	c_active_with_asm	4	18	133	src/restunts/c/restunts.c:748	-
 seg002	update_rpm_from_speed	ported	c_active_with_asm	1	0	16	src/restunts/c/statecar.c:4	-
 seg002	nopsub_19DE8	ignore	not_required	0	0	16	-	-
 seg002	nopsub_19DFF	ignore	not_required	0	0	6	-	-
@@ -80,7 +80,7 @@ seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4297
 seg004	track_setup	pending	asm_only	6	6	1484	-	-
 seg004	load_opponent_data	pending	asm_only	2	12	213	-	-
 seg004	subst_hillroad_track	pending	asm_only	5	0	125	-	-
-seg005	run_game	ported	c_active_with_asm	1	164	716	src/restunts/c/restunts.c:970	-
+seg005	run_game	ported	c_active_with_asm	1	164	716	src/restunts/c/restunts.c:990	-
 seg005	handle_ingame_kb_shortcuts	pending	asm_only	2	8	113	-	-
 seg005	init_unknown	ported	c_active_with_asm	2	0	16	src/restunts/c/restunts.c:366	-
 seg005	set_frame_callback	pending	asm_only	1	2	9	-	-
@@ -91,13 +91,13 @@ seg005	sub_2298C	pending	asm_only	1	14	312	-	-
 seg005	file_load_replay	ported	c_active_with_asm	3	4	36	src/restunts/c/fileio.c:1062	-
 seg005	file_write_replay	ported	c_active_with_asm	1	2	33	src/restunts/c/fileio.c:1073	-
 seg005	setup_car_shapes	pending	asm_only	4	134	862	-	-
-seg005	setup_player_cars	ported	c_active_with_asm	2	60	235	src/restunts/c/restunts.c:856	-
-seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts.c:946	-
+seg005	setup_player_cars	ported	c_active_with_asm	2	60	235	src/restunts/c/restunts.c:876	-
+seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts.c:966	-
 seg005	mouse_minmax_position	pending	asm_only	5	6	33	-	-
 seg005	replay_unk	pending	asm_only	1	0	68	-	-
 seg005	loop_game	pending	asm_only	28	290	1733	-	-
 seg006	init_polyinfo	ported	c_active_with_asm	1	12	38	src/restunts/c/shape3d.c:2683	-
-seg006	copy_material_list_pointers	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1422	-
+seg006	copy_material_list_pointers	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1442	-
 seg006	polyinfo_reset	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2668	-
 seg006	select_cliprect_rotate	ported	c_active_with_asm	4	10	67	src/restunts/c/shape3d.c:2640	-
 seg006	transformed_shape_op	ported	c_active_with_asm	16	88	1398	src/restunts/c/shape3d.c:140	-
@@ -595,7 +595,7 @@ seg031	file_combine_and_find	ported	c_active_with_asm	2	4	16	src/restunts/c/file
 seg031	file_find_next_alt	ported	c_active_with_asm	2	2	2	src/restunts/c/fileio.c:250	-
 seg031	nullsub_1	pending	asm_only	4	0	2	-	-
 seg031	nullsub_2	pending	asm_only	5	0	2	-	-
-seg031	init_main	ported	c_active_with_asm	1	75	378	src/restunts/c/restunts.c:1431	-
+seg031	init_main	ported	c_active_with_asm	1	75	378	src/restunts/c/restunts.c:1451	-
 seg031	random_wait	ported	c_active_with_asm	2	12	44	src/restunts/c/restunts.c:199	-
 seg031	load_palandcursor	pending	asm_only	1	34	129	-	-
 seg031	get_0	ported	c_active_with_asm	2	0	3	src/restunts/c/restunts.c:72	-

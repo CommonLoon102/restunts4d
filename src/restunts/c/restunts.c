@@ -727,8 +727,26 @@ extern char gsna_string[]; // 5 bytes
 
 extern void copy_string(char*, char far*);
 
-void setup_aero_trackdata(void far* carresptr, int is_opponent) {
-	int i;
+static legacy_s16 aero_table_entry(
+	legacy_s16 aero_resistance,
+	legacy_u16 speed)
+{
+	legacy_u32 product_bits;
+	legacy_u32 resistance_bits;
+	legacy_u16 shift_count;
+
+	resistance_bits = LEGACY_U32_FROM_WORDS(
+		aero_resistance < 0 ? 0xFFFFU : 0U,
+		aero_resistance);
+	product_bits = LEGACY_U32_WRAP_MUL(resistance_bits, speed);
+	product_bits = LEGACY_U32_WRAP_MUL(product_bits, speed);
+	for (shift_count = 0; shift_count < 9U; ++shift_count)
+		product_bits = LEGACY_U32_SAR1(product_bits);
+	return LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD(product_bits));
+}
+
+void setup_aero_trackdata(void far* carresptr, legacy_u16 is_opponent) {
+	legacy_u16 i;
 	if (is_opponent == 0) {
 		fmemcpy(MK_FP(FP_SEG(&simd_player), FP_OFF(&simd_player)), locate_shape_alt(carresptr, "simd"), SIMD_PARAMETER_DATA_SIZE);
 		simd_player.aerorestable = td04_aerotable_pl;
@@ -736,7 +754,8 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 		// Division by 2^9.
 		// 2^8 shifts one fullbyte, and it is known there is a 1/2 factor in FDrag.
 		for (i = 0; i < 0x40; i++) {
-			td04_aerotable_pl[i] = ((long)simd_player.aero_resistance * (long)i * (long)i) >> 9;
+			td04_aerotable_pl[i] = aero_table_entry(
+				simd_player.aero_resistance, i);
 		}
 
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
@@ -745,7 +764,8 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 		simd_opponent.aerorestable = td05_aerotable_op;
 
 		for (i = 0; i < 0x40; i++) {
-			td05_aerotable_op[i] = ((long)simd_opponent.aero_resistance * (long)i * (long)i) >> 9;
+			td05_aerotable_op[i] = aero_table_entry(
+				simd_opponent.aero_resistance, i);
 		}
 		copy_string(gsna_string, locate_shape_alt(carresptr, "gsna"));
 	}
