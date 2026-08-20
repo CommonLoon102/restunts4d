@@ -857,10 +857,20 @@ void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outv
 	outvec->y = (short)(((long)delta * var_4) / var_2 + vec2->y);
 }
 
-short multiply_and_scale(short a1, short a2)
+legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
 {
-	long mul = (long)a1 * (long)a2 * 4L;
-	return (mul >> 16) + ((mul & 0x8000) >> 15);
+	legacy_u32 scaled_product;
+	legacy_u16 result_bits;
+
+	scaled_product = LEGACY_U32_WRAP_MUL(
+		(legacy_u32)(legacy_s32)a1,
+		(legacy_u32)(legacy_s32)a2);
+	scaled_product = LEGACY_U32_WRAP_MUL(scaled_product, 4U);
+	result_bits = LEGACY_U32_HIGH_WORD(scaled_product);
+	if ((LEGACY_U32_LOW_WORD(scaled_product) & 0x8000U) != 0)
+		result_bits = LEGACY_U16_WRAP_ADD(result_bits, 1U);
+
+	return LEGACY_S16_FROM_BITS(result_bits);
 }
 
 extern int planindex;

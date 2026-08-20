@@ -89,7 +89,7 @@ int vector_op_unk2(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i);
 
-short multiply_and_scale(short a1, short a2);
+legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
 
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
 int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
