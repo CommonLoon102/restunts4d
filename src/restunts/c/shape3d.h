@@ -16,11 +16,15 @@ struct SHAPE3D {
 };
 
 struct SHAPE3DHEADER {
-	unsigned char header_numverts;
-	unsigned char header_numprimitives;
-	unsigned char header_numpaints;
-	unsigned char header_reserved;
+	legacy_u8 header_numverts;
+	legacy_u8 header_numprimitives;
+	legacy_u8 header_numpaints;
+	legacy_u8 header_reserved;
 };
+
+typedef char legacy_shape3d_header_must_be_4_bytes[
+	(sizeof(struct SHAPE3DHEADER) == 4) ? 1 : -1
+];
 
 struct TRANSFORMEDSHAPE3D {
 	struct VECTOR pos;
