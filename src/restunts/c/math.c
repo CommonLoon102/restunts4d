@@ -156,42 +156,59 @@ unsigned rect_compare_point(struct POINT2D* pt) {
 	return flag;
 }
 
+static legacy_s16 multiply_and_shift_14(legacy_s16 left, legacy_s16 right)
+{
+	legacy_u32 product;
+
+	product = LEGACY_U32_WRAP_MUL(
+		(legacy_u32)(legacy_s32)left,
+		(legacy_u32)(legacy_s32)right);
+	product = LEGACY_U32_WRAP_MUL(product, 4U);
+	return LEGACY_S16_FROM_BITS(LEGACY_U32_HIGH_WORD(product));
+}
+
 void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* outvec) {
 
 	if (mat->m._11 != 0 && invec->x != 0)
-		outvec->x = ((long)mat->m._11 * invec->x) >> 14;
+		outvec->x = multiply_and_shift_14(mat->m._11, invec->x);
 	else
 		outvec->x = 0;
 
 	if (mat->m._12 != 0 && invec->y != 0)
-		outvec->x += ((long)mat->m._12 * invec->y) >> 14;
+		outvec->x = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->x, multiply_and_shift_14(mat->m._12, invec->y)));
 
 	if (mat->m._13 != 0 && invec->z != 0)
-		outvec->x += ((long)mat->m._13 * invec->z) >> 14;
+		outvec->x = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->x, multiply_and_shift_14(mat->m._13, invec->z)));
 
 
 	if (mat->m._21 != 0 && invec->x != 0)
-		outvec->y = ((long)mat->m._21 * invec->x) >> 14;
+		outvec->y = multiply_and_shift_14(mat->m._21, invec->x);
 	else
 		outvec->y = 0;
 
 	if (mat->m._22 != 0 && invec->y != 0)
-		outvec->y += ((long)mat->m._22 * invec->y) >> 14;
+		outvec->y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->y, multiply_and_shift_14(mat->m._22, invec->y)));
 
 	if (mat->m._23 != 0 && invec->z != 0)
-		outvec->y += ((long)mat->m._23 * invec->z) >> 14;
+		outvec->y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->y, multiply_and_shift_14(mat->m._23, invec->z)));
 
 
 	if (mat->m._31 != 0 && invec->x != 0)
-		outvec->z = ((long)mat->m._31 * invec->x) >> 14;
+		outvec->z = multiply_and_shift_14(mat->m._31, invec->x);
 	else
 		outvec->z = 0;
 
 	if (mat->m._32 != 0 && invec->y != 0)
-		outvec->z += ((long)mat->m._32 * invec->y) >> 14;
+		outvec->z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->z, multiply_and_shift_14(mat->m._32, invec->y)));
 
 	if (mat->m._33 != 0 && invec->z != 0)
-		outvec->z += ((long)mat->m._33 * invec->z) >> 14;
+		outvec->z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			outvec->z, multiply_and_shift_14(mat->m._33, invec->z)));
 
 }
 
@@ -204,21 +221,23 @@ void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR
 
 void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outmat) {
 	int counter;
-	int* rmatvals = rmat->vals;
-	int* lmatvals = lmat->vals;
-	int* outmatvals = outmat->vals;
+	legacy_s16* rmatvals = rmat->vals;
+	legacy_s16* lmatvals = lmat->vals;
+	legacy_s16* outmatvals = outmat->vals;
 	
 	counter = 9;
 	while (counter > 0) {
 		if (rmatvals[0] != 0 && lmatvals[0] != 0)
-			outmatvals[0] = ((long)rmatvals[0] * lmatvals[0]) >> 14; else
+			outmatvals[0] = multiply_and_shift_14(rmatvals[0], lmatvals[0]); else
 			outmatvals[0] = 0;
 
 		if (rmatvals[1] != 0 && lmatvals[3] != 0)
-			outmatvals[0] += ((long)rmatvals[1] * lmatvals[3]) >> 14;
+			outmatvals[0] = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+				outmatvals[0], multiply_and_shift_14(rmatvals[1], lmatvals[3])));
 
 		if (rmatvals[2] != 0 && lmatvals[6] != 0)
-			outmatvals[0] += ((long)rmatvals[2] * lmatvals[6]) >> 14;
+			outmatvals[0] = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+				outmatvals[0], multiply_and_shift_14(rmatvals[2], lmatvals[6])));
 		
 		outmatvals++;
 		if (counter != 7 && counter != 4) {
