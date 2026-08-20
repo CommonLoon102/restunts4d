@@ -406,13 +406,13 @@ struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
 }
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
-	int temp;
+	legacy_s16 temp;
 	
 	if (rc->left > pt->px) {
 		rc->left = pt->px;
 	}
 	
-	temp = pt->px + 1;
+	temp = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(pt->px, 1U));
 	if (rc->right < temp) {
 		rc->right = temp;
 	}
@@ -421,7 +421,7 @@ void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
 		rc->top = pt->py;
 	}
 	
-	temp = pt->py + 1;
+	temp = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(pt->py, 1U));
 	if (rc->bottom < temp) {
 		rc->bottom = temp;
 	}
