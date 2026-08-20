@@ -322,7 +322,7 @@ unsigned short file_paras_nofatal(const char* filename)
 // Get number of 16-byte blocks needed to store the final result of an assumed compressed file.
 unsigned short file_decomp_paras(const char* filename, int fatal)
 {
-	long length;
+	legacy_u32 length;
 	FILE* file;
 	struct compr_header hdr;
 	
@@ -332,7 +332,7 @@ unsigned short file_decomp_paras(const char* filename, int fatal)
 		
 		if (!ferror(file)) {
 			// May overflow, but all Stunts files are rather small.
-			length = hdr.sizel | ((long)hdr.sizeh << 16);
+			length = LEGACY_U32_FROM_WORDS(hdr.sizeh, hdr.sizel);
 			return (length >> 4) + (length & 0xF ? 1 : 0);
 		}
 	}
@@ -395,7 +395,7 @@ void far* file_read_nofatal(const char* filename, void far* dst)
 }
 
 // Write given source buffer to file. Returns a non-zero value on errors unless fatal is set.
-short file_write(const char* filename, void far* src, unsigned long length, int fatal)
+short file_write(const char* filename, void far* src, legacy_u32 length, int fatal)
 {
 	unsigned short retval;
 	unsigned short wrtlen;
@@ -438,19 +438,19 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 }
 
 // Write given source buffer to file, handle errors as fatal.
-short file_write_fatal(const char* filename, void far* src, unsigned long length)
+short file_write_fatal(const char* filename, void far* src, legacy_u32 length)
 {
 	return file_write(filename, src, length, 1);
 }
 
 // Write given source buffer to file, returns a non-zero value on error.
-short file_write_nofatal(const char* filename, void far* src, unsigned long length)
+short file_write_nofatal(const char* filename, void far* src, legacy_u32 length)
 {
 	return file_write(filename, src, length, 0);
 }
 
 // Sequential byte runs pass of run-length encoding.
-unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* dst, unsigned long srclen, unsigned char esc)
+legacy_u32 file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* dst, legacy_u32 srclen, unsigned char esc)
 {
 	unsigned char cur, rep;
 	unsigned char huge* seqstart, huge* seqend;
@@ -494,7 +494,7 @@ unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* d
 }
 
 // Single byte runs pass of run-length encoding.
-unsigned long file_decomp_rle_single(unsigned char huge* src, unsigned char huge* dst, unsigned long len, unsigned char* esclookup)
+legacy_u32 file_decomp_rle_single(unsigned char huge* src, unsigned char huge* dst, legacy_u32 len, unsigned char* esclookup)
 {
 	unsigned char cur, rep;
 	unsigned short repw;
@@ -545,9 +545,9 @@ unsigned long file_decomp_rle_single(unsigned char huge* src, unsigned char huge
 }
 
 // Decompress run-length encoded sub-file.
-unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
+legacy_u32 file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
 {
-	unsigned long len, srclen, passlen;
+	legacy_u32 len, srclen, passlen;
 	unsigned int skipseq, i;
 	unsigned char esclookup[RS_RLE_ESCLOOKUP_LEN];
 	unsigned char huge* origsrc;
@@ -559,12 +559,12 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 
 	// Get decompressed size from header.
 	hdr = (struct compr_header far*)src;
-	len = hdr->sizel | ((long)hdr->sizeh << 16);
+	len = LEGACY_U32_FROM_WORDS(hdr->sizeh, hdr->sizel);
 	origsrc = src += sizeof(*hdr);
 	
 	// Get source size and escape codes.
 	subhdr = (struct compr_rle_header far*)src;
-	srclen = subhdr->srcsizel | ((long)subhdr->srcsizeh << 16);
+	srclen = LEGACY_U32_FROM_WORDS(subhdr->srcsizeh, subhdr->srcsizel);
 	
 	skipseq = (subhdr->esclen & 0x80) == 0x80; // MSB denotes skipping the initial pass for byte sequence runs.
 	subhdr->esclen &= ~0x80;
@@ -595,9 +595,9 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 }
 
 // Decompress variable-length encoded sub-file.
-unsigned long file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
+legacy_u32 file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
 {
-	unsigned long len, lenleft;
+	legacy_u32 len, lenleft;
 	unsigned int additive, alphlen, width, widthdistr, i, j;
 	unsigned short esc1[RS_VLE_ESC_LEN], esc2[RS_VLE_ESC_LEN];
 	unsigned char alph[RS_VLE_ALPH_LEN], symb[RS_VLE_ALPH_LEN], wdth[RS_VLE_ALPH_LEN];
@@ -613,7 +613,7 @@ unsigned long file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, 
 
 	// Get decompressed size from header.
 	hdr = (struct compr_header far*)src;
-	len = lenleft = hdr->sizel | ((long)hdr->sizeh << 16);
+	len = lenleft = LEGACY_U32_FROM_WORDS(hdr->sizeh, hdr->sizel);
 	src += sizeof(*hdr);
 
 	// One-byte escape codes length counter.
@@ -739,7 +739,7 @@ unsigned long file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, 
 // Decompress file. Returns pointer to result, NULL or raises fatal error.
 void far* file_decomp(const char* filename, int fatal)
 {
-	unsigned long passlen;
+	legacy_u32 passlen;
 	unsigned short paras, decompparas;
 	unsigned char passes, type;
 	unsigned char far* src;

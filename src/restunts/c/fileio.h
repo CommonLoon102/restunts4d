@@ -1,6 +1,8 @@
 #ifndef RESTUNTS_FILEIO_H
 #define RESTUNTS_FILEIO_H
 
+#include "legacy.h"
+
 #ifdef RESTUNTS_SDL
 #define far
 #endif
@@ -28,9 +30,9 @@ void far* file_read(const char* filename, void far* dst, int fatal);
 void far* file_read_fatal(const char* filename, void far* dst);
 void far* file_read_nofatal(const char* filename, void far* dst);
 
-short file_write(const char* filename, void far* src, unsigned long length, int fatal);
-short file_write_fatal(const char* filename, void far* src, unsigned long length);
-short file_write_nofatal(const char* filename, void far* src, unsigned long length);
+short file_write(const char* filename, void far* src, legacy_u32 length, int fatal);
+short file_write_fatal(const char* filename, void far* src, legacy_u32 length);
+short file_write_nofatal(const char* filename, void far* src, legacy_u32 length);
 
 void far* file_decomp(const char* filename, int fatal);
 void far* file_decomp_fatal(const char* filename);
