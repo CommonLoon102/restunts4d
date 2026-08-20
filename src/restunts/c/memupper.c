@@ -5,8 +5,8 @@
 #define intdos _intdos
 #define _dos_allocmem __dos_allocmem
 #define _dos_freemem __dos_freemem
-int _Cdecl _intdos(union REGS far* inregs, union REGS far* outregs);
-unsigned _Cdecl __dos_allocmem(unsigned size, void far* segment);
+int _Cdecl _intdos(union REGS* inregs, union REGS* outregs);
+unsigned _Cdecl __dos_allocmem(unsigned size, unsigned* segment);
 unsigned _Cdecl __dos_freemem(unsigned segment);
 
 /* Minimal error-state globals used by the selected DOS runtime modules. */
@@ -23,6 +23,7 @@ static unsigned short upper_memory_segment;
 static unsigned short upper_memory_paras;
 static int upper_memory_reserved;
 static unsigned short borrowed_video_limit;
+static unsigned dos_alloc_segment_result;
 
 static unsigned short dos_get_alloc_strategy(void) {
 	union REGS inregs;
@@ -69,12 +70,10 @@ static int dos_set_umb_link_state(unsigned short state) {
 }
 
 static unsigned short dos_alloc_checked(unsigned short paras) {
-	unsigned short blockseg;
-
-	if (_dos_allocmem(paras, MK_FP(_SS, FP_OFF(&blockseg))) != 0) {
+	if (_dos_allocmem(paras, &dos_alloc_segment_result) != 0) {
 		return 0;
 	}
-	return blockseg;
+	return dos_alloc_segment_result;
 }
 
 static void dos_free(unsigned short blockseg) {

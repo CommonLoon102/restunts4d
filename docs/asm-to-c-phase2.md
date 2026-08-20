@@ -26,8 +26,10 @@ No `seg0xx.asm` source was changed.
 - Setter calls still report success only when DOS clears the carry flag.
 - Paragraph allocation still returns zero on failure and the allocated segment
   on success.
-- The allocation result pointer is explicitly constructed from `SS` because
-  the destination is a stack local in the medium memory model.
+- The allocation result uses DOS-only data-segment storage because the
+  medium-model runtime receives this output through a near pointer. Phase 3's
+  ABI audit corrected the initial literal-`far` declaration and stack-local
+  result pointer.
 - The original upper-memory-only, first-fit strategy and restoration order are
   unchanged.
 

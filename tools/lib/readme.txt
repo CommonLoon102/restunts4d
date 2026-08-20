@@ -26,3 +26,10 @@ example commands:
 	tlib cm.lib * DOSFREE
 	tlib cm.lib * IOERROR
 	tlib cm.lib * SEGREAD
+	tlib cm.lib * DOSCLOSE
+	tlib cm.lib * DOSCREAT
+	tlib cm.lib * DOSFIND
+	tlib cm.lib * DOSOPEN
+	tlib cm.lib * DOSREAD
+	tlib cm.lib * DOSWRITE
+	tlib cm.lib * REMOVE

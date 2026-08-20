@@ -1,5 +1,24 @@
 #ifdef RESTUNTS_DOS
 #include <dos.h>
+
+/* The DOS build disables automatic C symbol underscores with /u-. */
+#define _dos_close __dos_close
+#define _dos_creat __dos_creat
+#define _dos_findfirst __dos_findfirst
+#define _dos_findnext __dos_findnext
+#define _dos_open __dos_open
+#define _dos_read __dos_read
+#define _dos_write __dos_write
+int _Cdecl _int86(int interrupt, union REGS* inregs, union REGS* outregs);
+unsigned _Cdecl __dos_close(int file);
+unsigned _Cdecl __dos_creat(const char* path, unsigned attr, int* file);
+unsigned _Cdecl __dos_findfirst(const char* path, unsigned attr, struct find_t* info);
+unsigned _Cdecl __dos_findnext(struct find_t* info);
+unsigned _Cdecl __dos_open(const char* path, unsigned flags, int* file);
+unsigned _Cdecl __dos_read(int file, void far* buffer, unsigned length, unsigned* read);
+unsigned _Cdecl __dos_write(int file, const void far* buffer, unsigned length, unsigned* written);
+int _Cdecl _remove(const char* path);
+extern int __doserrno;
 #endif
 #ifdef RESTUNTS_SDL
 #include <stdio.h>
@@ -57,121 +76,61 @@ typedef unsigned size_t;
 typedef int FILE;
 
 int g_errno;
+static int dos_file_handle;
+static unsigned dos_io_count;
 
 FILE* fopen(const char* path, const char* mode)
 {
-	unsigned short segm = FP_SEG(path);
-	unsigned short offs = FP_OFF(path);
-	FILE* handle;
+	unsigned error;
 
 	g_errno = 0;
 
 	if (mode[0] == 'w') { // Create new file for writing
-		__asm {
-			push ds
-			mov  ah, 3Ch // Create file
-			mov  cx, 0 // No attributes
-			mov  ds, segm
-			mov  dx, offs
-			int  21h
-			jnc  short create_ok
-			mov  ax, 0
-			mov  g_errno, 1
-		create_ok:
-			mov  handle, ax
-			pop  ds
-		}
+		error = _dos_creat(path, 0, &dos_file_handle);
 	}
 	else { // Open existing file for reading
-		__asm {
-			push ds
-			mov  ah, 3Dh // Open file
-			mov  al, 0 // Read only
-			mov  ds, segm
-			mov  dx, offs
-			int  21h
-			jnc  short open_ok
-			mov  ax, 0
-			mov  g_errno, 1
-		open_ok:
-			mov  handle, ax
-			pop  ds
-		}
+		error = _dos_open(path, 0, &dos_file_handle);
 	}
 
-	return handle;
+	if (error != 0) {
+		g_errno = 1;
+		return 0;
+	}
+
+	return (FILE*)dos_file_handle;
 }
 
 int fclose(FILE* file)
 {
-	int res;
-
-	__asm {
-		mov  ah, 3Eh // Close file
-		mov  bx, file
-		int  21h
-		jnc  short close_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	close_ok:
-		mov  res, ax
+	if (_dos_close((int)file) != 0) {
+		g_errno = 1;
 	}
-	
-	return res;
+
+	return 0;
 }
 
 size_t fread(void far* dst, size_t size, size_t nmemb, FILE* file)
 {
-	unsigned short segm = FP_SEG(dst);
-	unsigned short offs = FP_OFF(dst);
-
-	size_t res;
 	size *= nmemb;
-	
-	__asm {
-		push ds
-		mov  ah, 3Fh // Read from file
-		mov  bx, file
-		mov  ds, segm
-		mov  dx, offs
-		mov  cx, size
-		int  21h
-		jnc  short read_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	read_ok:
-		mov  res, ax
-		pop  ds
+
+	if (_dos_read((int)file, dst, size, &dos_io_count) != 0) {
+		g_errno = 1;
+		return 0;
 	}
-	
-	return res;
+
+	return dos_io_count;
 }
 
 size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 {
-	unsigned short segm = FP_SEG(src);
-	unsigned short offs = FP_OFF(src);
-
-	size_t res;
 	size *= nmemb;
-	
-	__asm {
-		push ds
-		mov  ah, 40h // Write to file
-		mov  bx, file
-		mov  ds, segm
-		mov  dx, offs
-		mov  cx, size
-		int  21h
-		jnc  short write_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	write_ok:
-		mov  res, ax
-		pop  ds
+
+	if (_dos_write((int)file, src, size, &dos_io_count) != 0) {
+		g_errno = 1;
+		return 0;
 	}
-	
-	return res;
+
+	return dos_io_count;
 }
 
 #define SEEK_SET 0
@@ -180,44 +139,35 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 
 int fseek(FILE *file, long offset, int origin)
 {
-	unsigned short ol = offset;
-	unsigned short oh = offset >> 16;
+	union REGS inregs;
+	union REGS outregs;
 
-	origin |= (0x42 << 8); // Seek file cmd as high byte
-
-	__asm {
-		mov  ax, origin
-		mov  bx, file
-		mov  cx, oh
-		mov  dx, ol
-		int  21h
-		jnc  short seek_ok
-		mov  g_errno, 1
-	seek_ok:
+	inregs.x.ax = 0x4200 | origin;
+	inregs.x.bx = (int)file;
+	inregs.x.cx = offset >> 16;
+	inregs.x.dx = offset;
+	_int86(0x21, &inregs, &outregs);
+	if (outregs.x.cflag != 0) {
+		g_errno = 1;
 	}
 
 	return 0;
 }
 long ftell(FILE *file)
 {
-	unsigned short ol;
-	unsigned short oh;
+	union REGS inregs;
+	union REGS outregs;
 
-	__asm {
-		mov  ah, 42h // Seek file
-		mov  al, SEEK_CUR
-		mov  bx, file
-		mov  cx, 0
-		mov  dx, 0
-		int  21h
-		jnc  short tell_ok
-		mov  word ptr g_errno, 1
-	tell_ok:
-		mov  oh, dx
-		mov  ol, ax
+	inregs.x.ax = 0x4200 | SEEK_CUR;
+	inregs.x.bx = (int)file;
+	inregs.x.cx = 0;
+	inregs.x.dx = 0;
+	_int86(0x21, &inregs, &outregs);
+	if (outregs.x.cflag != 0) {
+		g_errno = 1;
 	}
 
-	return ((long)oh << 16) | ol;
+	return ((long)outregs.x.dx << 16) | outregs.x.ax;
 }
 
 int ferror(FILE* file)
@@ -230,27 +180,12 @@ int ferror(FILE* file)
 
 int remove(const char* path)
 {
-	unsigned short segm = FP_SEG(path);
-	unsigned short offs = FP_OFF(path);
-	int retval;
-
-	__asm {
-		push ds
-		mov  ah, 41h // Unlink file
-		mov  ds, segm
-		mov  dx, offs
-		int  21h
-		jnc  short unlink_ok
-		mov  word ptr retval, -1
-		mov  g_errno, ax
-		jmp  short unlink_done
-	unlink_ok:
-		mov  word ptr retval, 0
-	unlink_done:
-		pop ds
+	if (_remove(path) != 0) {
+		g_errno = __doserrno;
+		return -1;
 	}
-	
-	return retval;
+
+	return 0;
 }
 #endif
 
@@ -270,23 +205,7 @@ const char* file_find(const char* query)
 	char attrs = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
 	int retval;
 
-	__asm {
-		mov  ah, 1Ah // Set DTA
-		mov  dx, offset g_find.dta
-		int  21h
-
-		mov  ah, 4Eh // Find first file
-		mov  cl, attrs
-		mov  dx, query
-		int  21h
-
-		jnc  short find_ok
-		mov  word ptr retval, -1
-		jmp  short find_done
-	find_ok:
-		mov  word ptr retval, 0
-	find_done:
-	}
+	retval = _dos_findfirst(query, attrs, &g_find.dta);
 
 	// Find failed.
 	if (retval) {
@@ -315,21 +234,7 @@ const char* file_find_next(void)
 {
 	int retval;
 
-	__asm {
-		mov  ah, 1Ah // Set DTA
-		mov  dx, offset g_find.dta
-		int  21h
-
-		mov  ah, 4Fh // Find next file
-		int  21h
-
-		jnc  short findnext_ok
-		mov  word ptr retval, -1
-		jmp  short findnext_done
-	findnext_ok:
-		mov  word ptr retval, 0
-	findnext_done:
-	}
+	retval = _dos_findnext(&g_find.dta);
 
 	// Find next failed.
 	if (retval) {
