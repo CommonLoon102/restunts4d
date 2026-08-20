@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Twenty-four implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Twenty-five implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -66,6 +66,7 @@ portable enough to support it.
 22. [Fixed-width game-state layout](asm-to-c-phase1-slice22.md)
 23. [Fixed-width car-parameter layout and pointer-safe loading](asm-to-c-phase1-slice23.md)
 24. [Fixed-width memory-manager records](asm-to-c-phase1-slice24.md)
+25. [Fixed-width 2D-shape headers](asm-to-c-phase1-slice25.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

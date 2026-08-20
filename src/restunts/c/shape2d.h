@@ -1,19 +1,25 @@
 #ifndef RESTUNTS_SHAPE2D_H
 #define RESTUNTS_SHAPE2D_H
 
+#include "legacy.h"
+
 #pragma pack (push, 1)
 struct SHAPE2D {
-	unsigned short s2d_width;
-	unsigned short s2d_height;
-	unsigned short s2d_unk1;
-	unsigned short s2d_unk2;
-	unsigned short s2d_pos_x;
-	unsigned short s2d_pos_y;
-	unsigned char s2d_unk3;
-	unsigned char s2d_unk4;
-	unsigned char s2d_unk5;
-	unsigned char s2d_unk6;
+	legacy_u16 s2d_width;
+	legacy_u16 s2d_height;
+	legacy_u16 s2d_unk1;
+	legacy_u16 s2d_unk2;
+	legacy_u16 s2d_pos_x;
+	legacy_u16 s2d_pos_y;
+	legacy_u8 s2d_unk3;
+	legacy_u8 s2d_unk4;
+	legacy_u8 s2d_unk5;
+	legacy_u8 s2d_unk6;
 };
+
+typedef char legacy_shape2d_must_be_16_bytes[
+	(sizeof(struct SHAPE2D) == 16) ? 1 : -1
+];
 
 struct SPRITE {
 	struct SHAPE2D far* sprite_bitmapptr;
