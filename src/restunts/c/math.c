@@ -91,33 +91,40 @@ int polarAngle(int z, int y) {
 	
 }
 
-int polarRadius2D(int z, int y) {
-	long result;
+legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
+	legacy_s16 result;
+	legacy_u32 numerator;
 	
 	result = polarAngle(z, y);
 	
 	if (result < 0) {
-		result = -result;
+		result = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(result));
 	}
 	
 	if (result >= 0x100) {
-		result = -(result - 0x200);
+		result = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(
+			LEGACY_U16_WRAP_SUB(result, 0x200U)));
 	}
 	
 	if (result <= 0x80) {
 		result = cos_fast(result);
 		if (y < 0)
-			y = -y;
-		return (((unsigned long)y) << 14) / result;
+			y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(y));
+		numerator = LEGACY_U32_WRAP_MUL(
+			(legacy_u32)(legacy_s32)y, 0x4000UL);
 	} else {
 		result = sin_fast(result);
 		if (z < 0)
-			z = -z;
-		return (((unsigned long)z) << 14) / result;
+			z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(z));
+		numerator = LEGACY_U32_WRAP_MUL(
+			(legacy_u32)(legacy_s32)z, 0x4000UL);
 	}
+
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)(numerator / (legacy_u16)result));
 }
 
-int polarRadius3D(struct VECTOR* vec) {
+legacy_s16 polarRadius3D(struct VECTOR* vec) {
 	return polarRadius2D( polarRadius2D(vec->x, vec->y), vec->z );
 }
 

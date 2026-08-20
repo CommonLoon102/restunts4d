@@ -69,8 +69,8 @@ short sin_fast(unsigned short s);
 short cos_fast(unsigned short s);
 
 int polarAngle(int z, int y);
-int polarRadius2D(int z, int y);
-int polarRadius3D(struct VECTOR* vec);
+legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y);
+legacy_s16 polarRadius3D(struct VECTOR* vec);
 
 unsigned rect_compare_point(struct POINT2D* pt);
 
