@@ -2512,20 +2512,22 @@ return result;
 
 // parameter points to a far array of 2d points
 char is_facing_camera(struct POINT2D far* pts) {
-	long dx0, dy0, dx1, dy1;
-	long temp;
+	legacy_s32 dx0, dy0, dx1, dy1;
+	legacy_u32 temp;
 
-	dx0 = (long)pts[0].px - pts[1].px;
-	dx1 = (long)pts[2].px - pts[1].px;
+	dx0 = (legacy_s32)pts[0].px - (legacy_s32)pts[1].px;
+	dx1 = (legacy_s32)pts[2].px - (legacy_s32)pts[1].px;
 	
 	if (dx0 == 0 && dx1 == 0) return 0;
 		
-	dy0 = (long)pts[0].py - pts[1].py;
-	dy1 = (long)pts[2].py - pts[1].py;
+	dy0 = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(pts[0].py, pts[1].py));
+	dy1 = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(pts[2].py, pts[1].py));
 
 	if (dy0 == 0 && dy1 == 0) return 0;
-	temp = (dx1 * dy0) - (dx0 * dy1);
-	return temp <= 0 ? 0 : 1;
+	temp = LEGACY_U32_WRAP_SUB(
+		LEGACY_U32_WRAP_MUL(dx1, dy0),
+		LEGACY_U32_WRAP_MUL(dx0, dy1));
+	return temp == 0 || LEGACY_U32_IS_NEGATIVE(temp) ? 0 : 1;
 }
 
 extern unsigned projectiondata1;

@@ -99,6 +99,10 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_U32_FROM_WORDS(high_word, low_word) \
 	(((legacy_u32)(legacy_u16)(high_word) << 16) | \
 	(legacy_u16)(low_word))
+#define LEGACY_U32_WRAP_SUB(left, right) \
+	((legacy_u32)((legacy_u32)(left) - (legacy_u32)(right)))
+#define LEGACY_U32_WRAP_MUL(left, right) \
+	((legacy_u32)((legacy_u32)(left) * (legacy_u32)(right)))
 #define LEGACY_U32_LOW_WORD(value) ((legacy_u16)(legacy_u32)(value))
 #define LEGACY_U32_HIGH_WORD(value) \
 	((legacy_u16)((legacy_u32)(value) >> 16))
