@@ -95,14 +95,14 @@ extern short word_4448A[];
 extern char backlights_paint_override;
 extern int word_449FC[];
 extern int word_463D6;
-extern int transformedshape_zarray[];
-extern int transformedshape_indices[];
+extern legacy_s16 transformedshape_zarray[];
+extern legacy_s16 transformedshape_indices[];
 extern char transformedshape_arg2array[];
 extern int sdgame2_widths[];
 extern void far* sdgame2shapes[];
 extern void far* fontledresptr;
 extern int dialog_fnt_colour;
-extern char transformedshape_counter;
+extern legacy_u8 transformedshape_counter;
 
 struct TILE_REL_COORDS {
 	char width;
@@ -234,7 +234,6 @@ struct RECTANGLE* intro_draw_text(char* str, int a, int b, int c, int d);
 void font_set_fontdef2(void far* data);
 void format_frame_as_string(char* s, int time, int c);
 void shape_op_explosion(int a, void far* shp, int x, int y);
-void heapsort_by_order(int n, int* heap, int* data);
 
 static char get_low_detail_threshold_at_attempt(char attempt) {
 	if (attempt >= sizeof(low_detail_priority_array)) {

@@ -1,3 +1,5 @@
+#include "legacy.h"
+
 /* stolen from bsort.c, written by
  *   Robert Fowler,  Computer Science Department, U of Rochester
  *   February, 1989.
@@ -20,51 +22,31 @@ changes:
 	- sorts a data array based on the heap array contents
  */
 
-static void heapify(int* heap, int* data, int start, int end) {
-	int last = ((end + 1) >> 1);
-	while (start < last) {
-		int lson = (start << 1) + 1;
-		int rson = lson + 1;
-		int smallest;
+void heapsort_by_order(
+	legacy_s16 count, legacy_s16* values, legacy_s16* order)
+{
+	legacy_s16 gap;
+	legacy_s16 counter;
+	legacy_s16 index;
+	legacy_s16 temp;
 
-		if (rson <= end) {
-			if (heap[lson] >= heap[rson]) {
-				smallest = rson;
-			} else {
-				smallest = lson;
+	gap = (legacy_s16)(count / 2);
+	while (gap > 0) {
+		counter = gap;
+		while (counter < count) {
+			index = (legacy_s16)(counter - gap);
+			while (index >= 0 && values[index + gap] > values[index]) {
+				temp = values[index];
+				values[index] = values[index + gap];
+				values[index + gap] = temp;
+
+				temp = order[index];
+				order[index] = order[index + gap];
+				order[index + gap] = temp;
+				index = (legacy_s16)(index - gap);
 			}
-		} else {
-			smallest = lson;
+			counter++;
 		}
-
-		if (heap[smallest] <= heap[start]) {
-			int temp = heap[start];
-			heap[start] = heap[smallest];
-			heap[smallest] = temp;
-
-			temp = data[start];
-			data[start] = data[smallest];
-			data[smallest] = temp;
-			start = smallest;
-		} 
-		else break;
-	}
-}
-
-void heapsort_by_order(int n, int* heap, int* data) {
-	int i;
-	for(i = (n - 1) / 2; i >= 0; i--) {
-		heapify(heap, data, i, n - 1);
-	}
-
-	for(i = n - 1; i > 0; i--) {
-		int temp = heap[0];
-		heap[0] = heap[i];
-		heap[i] = temp;
-
-		temp = data[0];
-		data[0] = data[i];
-		data[i] = temp;
-		heapify(heap, data, 0, i - 1);
+		gap = (legacy_s16)(gap / 2);
 	}
 }

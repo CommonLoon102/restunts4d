@@ -95,6 +95,9 @@ void vector_op_unk(
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
 
+void heapsort_by_order(
+	legacy_s16 count, legacy_s16* values, legacy_s16* order);
+
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
 legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
 
