@@ -212,16 +212,22 @@ struct TRKOBJINFO {
 
 struct TRACKOBJECT {
 	struct TRKOBJINFO* ss_trkObjInfoPtr; // offset (0003B770)
-	short ss_rotY;           // Horizontal orientation of the element.
+	legacy_s16 ss_rotY;      // Horizontal orientation of the element.
 	struct SHAPE3D* ss_shapePtr;       // offset (0003B770)
 	struct SHAPE3D* ss_loShapePtr;     // offset (0003B770)
-	unsigned char  ss_ssOvelay;       // Renders additional sceneShapes over the current one.
-	char  ss_surfaceType;    // Paintjob. FF will induce alternating paintjobs.
-	char  ss_ignoreZBias;    // Appears to be Z-bias override flag, mostly used for roads and corners.
-	char  ss_multiTileFlag;  // 0 = one-tile, 1 = two-tile vertical, 2 = two-tile horizontal, 3 = four-tile.
-	char  ss_physicalModel;  // sets the physical model in build_track_object
-	char  scene_unk5;        // always zero.
+	legacy_u8 ss_ssOvelay;       // Renders additional sceneShapes over the current one.
+	legacy_s8 ss_surfaceType;    // Paintjob. FF will induce alternating paintjobs.
+	legacy_u8 ss_ignoreZBias;    // Appears to be Z-bias override flag, mostly used for roads and corners.
+	legacy_u8 ss_multiTileFlag;  // 0 = one-tile, 1 = two-tile vertical, 2 = two-tile horizontal, 3 = four-tile.
+	legacy_u8 ss_physicalModel;  // sets the physical model in build_track_object
+	legacy_u8 scene_unk5;        // always zero.
 };
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_trackobject_dos_layout_must_be_14_bytes[
+	(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1
+];
+#endif
 
 #pragma pack (pop)
 
