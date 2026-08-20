@@ -371,7 +371,6 @@ int detect_penalty(int* found_piece, int* penalty_count);
 
 #ifdef RESTUNTS_DOS
 extern int legacy_grip_stack_words[4];
-extern void ported_update_car_speed_(char, int, struct CARSTATE*, struct SIMD*);
 #endif
 
 void player_op(char arg_carInputByte) {
@@ -410,16 +409,7 @@ void player_op(char arg_carInputByte) {
 		}
 	}
 
-#ifdef RESTUNTS_DOS
-	/*
-	 * update_car_speed is currently a C wrapper around the preserved routine.
-	 * Bypass that extra frame so update_grip leaves the same stack residue for
-	 * update_player_state's legacy fifth collision pass as the original game.
-	 */
-	ported_update_car_speed_(arg_carInputByte, 0, &state.playerstate, &simd_player);
-#else
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
-#endif
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
 	update_grip(&state.playerstate, &simd_player, 1);
 #ifdef RESTUNTS_DOS
