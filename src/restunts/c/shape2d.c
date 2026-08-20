@@ -131,8 +131,9 @@ void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
 
 void sprite_clear_1_color(unsigned char color) {
 	
-	int height, top, left, right, pitch, lines, width, widthdiff, i, j;
+	int top, left, right, pitch, lines, width, i;
 	unsigned int ofs;
+	unsigned int fill_size;
 	unsigned char far* bitmapptr;
 	unsigned int far* lineofs;
 
@@ -150,14 +151,16 @@ void sprite_clear_1_color(unsigned char color) {
 
 	width = right - left;
 	if (width <= 0) return ;
-	
-	widthdiff = pitch - width;
+
+	if (width == pitch) {
+		fill_size = (unsigned int)((unsigned long)width * lines);
+		fmemset(bitmapptr + ofs, color, fill_size);
+		return;
+	}
 
 	for (i = 0; i < lines; i++) {
-		for (j = 0; j < width; j++) {
-			bitmapptr[ofs ++] = color;
-		}
-		ofs += widthdiff;
+		fmemset(bitmapptr + ofs, color, width);
+		ofs += pitch;
 	}
 }
 

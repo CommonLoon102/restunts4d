@@ -9,6 +9,7 @@ example commands:
 	tlib cm.lib * STRCPY
 	tlib cm.lib * MEMCPY
 	tlib cm.lib * FMEMCPY
+	tlib cm.lib * FMEMSET
 	tlib cm.lib * H_LDIV
 	tlib cm.lib * F_LXMUL
 	tlib cm.lib * F_SCOPY

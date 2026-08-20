@@ -482,6 +482,7 @@ extern int _strcmp(const char* dest, const char* src);
 extern int _stricmp(const char* dest, const char* src);
 extern unsigned _strlen(const char* str);
 extern void far* __fmemcpy(void far*, const void far*, unsigned);
+extern void far* __fmemset(void far*, int, unsigned);
 extern unsigned _abs(unsigned);
 extern int _rand(void);
 extern void _srand(unsigned int);
@@ -497,6 +498,7 @@ extern void supersight_activate_owoot_camera(void);
 #define strcat _strcat
 #define strlen _strlen
 #define fmemcpy __fmemcpy
+#define fmemset __fmemset
 #define strcmp _strcmp
 #define stricmp _stricmp
 #define abs _abs

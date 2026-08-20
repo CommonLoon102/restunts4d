@@ -1539,7 +1539,7 @@ void init_main(int argc, char* argv[])
 
 	timer_get_delta_alt();
 	for (i = 0; i < 15; ++i) {
-		ported_sprite_clear_1_color_(0); // the c impl is too slow/wrong and produces faulty timing values
+		sprite_clear_1_color(0);
 	}
 	timerdelta1 = timer_get_delta_alt();
 	

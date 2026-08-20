@@ -20,7 +20,7 @@ CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
                h_lrsh.obj h_padd.obj h_pina.obj h_pada.obj \
                f_pcmp.obj h_lursh.obj h_psbp.obj h_llsh.obj
 
-DOS_RUNTIME_FILES = intdos.obj dosalloc.obj dosfree.obj ioerror.obj segread.obj \
+DOS_RUNTIME_FILES = intdos.obj dosalloc.obj dosfree.obj fmemset.obj ioerror.obj segread.obj \
                     dosclose.obj doscreat.obj dosfind.obj dosopen.obj \
                     dosread.obj doswrite.obj remove.obj
 
