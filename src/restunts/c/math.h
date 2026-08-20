@@ -72,7 +72,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y);
 legacy_s16 polarRadius3D(struct VECTOR* vec);
 
-unsigned rect_compare_point(struct POINT2D* pt);
+legacy_s16 rect_compare_point(struct POINT2D* pt);
 
 void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* outvec);
 void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR* outvec);
@@ -96,7 +96,7 @@ void vector_op_unk(
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
 
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
-int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
+legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
 
 void plane_rotate_op(void);
 legacy_s16 plane_origin_op(

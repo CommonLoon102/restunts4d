@@ -143,8 +143,8 @@ legacy_s16 polarRadius3D(struct VECTOR* vec) {
 	return polarRadius2D( polarRadius2D(vec->x, vec->y), vec->z );
 }
 
-unsigned rect_compare_point(struct POINT2D* pt) {
-	char flag;
+legacy_s16 rect_compare_point(struct POINT2D* pt) {
+	legacy_u8 flag;
 	if (pt->py < select_rect_rc.top)
 		flag = 1;
 	else if (pt->py > select_rect_rc.bottom)
@@ -471,8 +471,8 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 */
 }
 
-int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
-	if (r1->right <= r1->left) return 1;
+legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
+	if (r1->right < r1->left) return 1;
 	if (r2->right <= r1->left) return 1;
 	if (r1->right <= r2->left) return 1;
 	if (r1->top >= r2->bottom) return 1;
@@ -496,7 +496,7 @@ int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 0;
 }
 
-int rect_is_inside(struct RECTANGLE* r1, struct RECTANGLE* r2) {
+legacy_s16 rect_is_inside(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->right > r2->right) {
 		return 0;
 	}
@@ -516,7 +516,7 @@ int rect_is_inside(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 1;
 }
 
-int rect_is_overlapping(struct RECTANGLE* r1, struct RECTANGLE* r2) {
+legacy_s16 rect_is_overlapping(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->right <= r2->left) {
 		return 0;
 	}
@@ -536,14 +536,14 @@ int rect_is_overlapping(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 1;
 }
 
-int rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
+legacy_s16 rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->bottom == r2->top || r1->top == r2->bottom) {
 		if (r1->left == r2->left && r1->right == r2->right)
 			return 1;
 		return 0;
 	}
 
-	if (r1->right == r2->left || r2->right == r2->left) {
+	if (r1->right == r2->left || r2->right == r1->left) {
 		if (r1->top == r2->top && r1->bottom == r2->bottom)
 			return 1;
 	}
