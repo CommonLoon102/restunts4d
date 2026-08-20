@@ -57,7 +57,12 @@ unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
 void set_projection(
 	legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4);
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
-unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* cliprect, int unk);
+legacy_u16 select_cliprect_rotate(
+	legacy_u16 angZ,
+	legacy_u16 angX,
+	legacy_u16 angY,
+	struct RECTANGLE* cliprect,
+	legacy_u16 unk);
 void init_polyinfo(void);
 void polyinfo_reset(void);
 void get_a_poly_info(void);

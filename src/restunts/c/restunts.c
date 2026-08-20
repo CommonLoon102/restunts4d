@@ -335,7 +335,12 @@ void init_trackdata(void) {
 
 extern struct SHAPE3D game3dshapes[];
 
-extern unsigned select_cliprect_rotate(int angX, int angY, int angZ, struct RECTANGLE* cliprect, int unk);
+extern legacy_u16 select_cliprect_rotate(
+	legacy_u16 angZ,
+	legacy_u16 angX,
+	legacy_u16 angY,
+	struct RECTANGLE* cliprect,
+	legacy_u16 unk);
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
 extern void sub_29772(void);
 extern void set_projection(

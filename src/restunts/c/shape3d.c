@@ -118,7 +118,7 @@ extern unsigned poly_linklist_40ED6_iter4;
 
 extern unsigned char transshapenumvertscopy;
 extern struct POINT2D* polyvertpointptrtab[];
-extern unsigned select_rect_param;
+extern legacy_u16 select_rect_param;
 extern unsigned char primidxcounttab[];
 extern unsigned char primtypetab[];
 extern char far* transshapeprimptr;
@@ -2637,7 +2637,13 @@ extern struct RECTANGLE select_rect_rc;
 //extern unsigned word_411F6;
 extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
 
-unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* cliprect, int unk) {
+legacy_u16 select_cliprect_rotate(
+	legacy_u16 angZ,
+	legacy_u16 angX,
+	legacy_u16 angY,
+	struct RECTANGLE* cliprect,
+	legacy_u16 unk)
+{
 	struct MATRIX* matptr;
 	struct VECTOR vec, vec2;
 
@@ -2647,12 +2653,16 @@ unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* 
 	polyinfo_reset();
 	select_rect_rc = *cliprect;
 	select_rect_param = unk;
-	matptr = mat_rot_zxy(-angZ, -angX, -angY, 0);
+	matptr = mat_rot_zxy(
+		LEGACY_U16_WRAP_NEGATE(angZ),
+		LEGACY_U16_WRAP_NEGATE(angX),
+		LEGACY_U16_WRAP_NEGATE(angY),
+		0);
 	vec.z = 0x2710;
 	vec.y = 0;
 	vec.x = 0;
 	mat_mul_vector(&vec, matptr, &vec2);
-	return polarAngle(vec2.x, vec2.z) & 0x3FF;
+	return (legacy_u16)((legacy_u16)polarAngle(vec2.x, vec2.z) & 0x03FFU);
 }
 
 void polyinfo_reset(void) {
