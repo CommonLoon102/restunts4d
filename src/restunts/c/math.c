@@ -806,73 +806,77 @@ int vector_op_unk2(struct VECTOR* vec) {
 	return result;
 }
 
-extern int projectiondata5, projectiondata8, projectiondata9, projectiondata10;
+extern legacy_u16 projectiondata5;
+extern legacy_u16 projectiondata8;
+extern legacy_u16 projectiondata9;
+extern legacy_u16 projectiondata10;
+
+static int legacy_s16_add_overflow(
+	legacy_u16 left, legacy_u16 right, legacy_u16 result)
+{
+	return ((~(left ^ right) & (left ^ result) & 0x8000U) != 0);
+}
+
+static legacy_s16 project_coordinate(
+	legacy_s16 coordinate,
+	legacy_s16 depth,
+	legacy_u16 scale,
+	legacy_u16 center,
+	int reverse_direction)
+{
+	legacy_u16 magnitude;
+	legacy_u16 limit;
+	legacy_u16 delta;
+	legacy_u16 result;
+	legacy_u32 product;
+	legacy_u32 quotient;
+	int negative_delta;
+
+	negative_delta = coordinate < 0;
+	if (reverse_direction)
+		negative_delta = !negative_delta;
+
+	if (coordinate < 0)
+		magnitude = LEGACY_U16_WRAP_NEGATE(coordinate);
+	else
+		magnitude = (legacy_u16)coordinate;
+
+	product = LEGACY_U32_WRAP_MUL(magnitude, scale);
+	limit = LEGACY_U16_WRAP_ADD(
+		LEGACY_U32_HIGH_WORD(product),
+		LEGACY_U32_HIGH_WORD(product));
+	if ((LEGACY_U32_LOW_WORD(product) & 0x8000U) != 0)
+		limit = LEGACY_U16_WRAP_ADD(limit, 1U);
+
+	if (depth <= LEGACY_S16_FROM_BITS(limit))
+		return negative_delta ?
+			LEGACY_S16_FROM_BITS(0x8300U) : (legacy_s16)0x7D00;
+
+	quotient = product / (legacy_u16)depth;
+	delta = (legacy_u16)quotient;
+	if (negative_delta)
+		delta = LEGACY_U16_WRAP_NEGATE(delta);
+	result = LEGACY_U16_WRAP_ADD(delta, center);
+
+	if (legacy_s16_add_overflow(delta, center, result))
+		return (result & 0x8000U) != 0 ?
+			(legacy_s16)0x7D00 : LEGACY_S16_FROM_BITS(0x8300U);
+
+	return LEGACY_S16_FROM_BITS(result);
+}
 
 
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
-
-	// the original code checks for several overflows (in a strange way) - this code does not, but seems to do well anyway
-
-	long proj;
-	long comp;
-	
 	if (vec->z <= 0) {
-		outpt->px = 0x8000;
-		outpt->py = 0x8000;
+		outpt->px = LEGACY_S16_FROM_BITS(0x8000U);
+		outpt->py = LEGACY_S16_FROM_BITS(0x8000U);
 		return;
 	}
-	
-	if (vec->x < 0) {
-		proj = (long)-vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%li  %i", proj, comp);
-			comp++;
-		}
 
-		if (vec->z > comp) { 
-			outpt->px = -(proj / vec->z) + projectiondata5;
-		} else
-			outpt->px = -0x7D00;
-	} else {
-		proj = (long)vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->px = (proj / vec->z) + projectiondata5;
-		else
-			outpt->px = 0x7D00;
-	}
-
-	if (vec->y < 0) {
-		proj = (long)-vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->py = (proj / vec->z) + projectiondata8;
-		else
-			outpt->py = 0x7D00;
-	} else {
-		proj = (long)vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->py = -(proj / vec->z) + projectiondata8;
-		else
-			outpt->py = -0x7D00;
-	}
+	outpt->px = project_coordinate(
+		vec->x, vec->z, projectiondata9, projectiondata5, 0);
+	outpt->py = project_coordinate(
+		vec->y, vec->z, projectiondata10, projectiondata8, 1);
 }
 
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i) {

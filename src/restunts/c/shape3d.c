@@ -2530,16 +2530,16 @@ char is_facing_camera(struct POINT2D far* pts) {
 	return temp == 0 || LEGACY_U32_IS_NEGATIVE(temp) ? 0 : 1;
 }
 
-extern unsigned projectiondata1;
-extern unsigned projectiondata2;
-extern unsigned projectiondata3;
-extern unsigned projectiondata4;
-extern unsigned projectiondata5;
-extern unsigned projectiondata6;
-extern unsigned projectiondata7;
-extern unsigned projectiondata8;
-extern unsigned projectiondata9;
-extern unsigned projectiondata10;
+extern legacy_u16 projectiondata1;
+extern legacy_u16 projectiondata2;
+extern legacy_u16 projectiondata3;
+extern legacy_u16 projectiondata4;
+extern legacy_u16 projectiondata5;
+extern legacy_u16 projectiondata6;
+extern legacy_u16 projectiondata7;
+extern legacy_u16 projectiondata8;
+extern legacy_u16 projectiondata9;
+extern legacy_u16 projectiondata10;
 
 unsigned projectiondata9_times_ratio(unsigned i1, int i2) {
 	return projectiondata9 * i1 / i2;
