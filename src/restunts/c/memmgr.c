@@ -1,5 +1,11 @@
 #ifdef RESTUNTS_DOS
 #include <dos.h>
+
+/* The DOS build disables automatic C symbol underscores with /u-. */
+int _Cdecl _intdos(union REGS* inregs, union REGS* outregs);
+int _Cdecl _intdosx(union REGS* inregs, union REGS* outregs,
+	struct SREGS* segregs);
+void _Cdecl _segread(struct SREGS* segregs);
 #endif
 #include <stdlib.h>
 #include "externs.h"
@@ -24,39 +30,35 @@ static char build_info[] = "Version 1.1 " BUILD_GIT_HASH " (" __DATE__ ")";
 	}
 
 void far* dos_get_psp(void) {
-	unsigned short resseg, resofs;
-	__asm {
-		push ds
-		mov ah, 62h
-		int 21h
-		mov resseg, ds
-		mov resofs, bx
-		pop ds
-	}
-	return MK_FP(resseg, resofs);
+	union REGS inregs;
+	union REGS outregs;
+
+	inregs.x.ax = 0x6200;
+	_intdos(&inregs, &outregs);
+	return MK_FP(_DS, outregs.x.bx);
 }
 
 unsigned short dos_alloc(unsigned short paras) {
-	unsigned short resseg;
-	__asm {
-		mov bx, paras
-		mov ah, 48h
-		int 21h
-		mov resseg, ax
-	}
-	return resseg;
+	union REGS inregs;
+	union REGS outregs;
+
+	inregs.x.ax = 0x4800;
+	inregs.x.bx = paras;
+	_intdos(&inregs, &outregs);
+	return outregs.x.ax;
 }
 
 unsigned short dos_setblock(unsigned short blockseg, unsigned short newsize) {
-	unsigned short res;
-	__asm {
-		mov bx, newsize
-		mov es, blockseg
-		mov ah, 4ah
-		int 21h
-		mov res, bx	// bx = max blocks
-	}
-	return res;
+	union REGS inregs;
+	union REGS outregs;
+	struct SREGS segregs;
+
+	inregs.x.ax = 0x4A00;
+	inregs.x.bx = newsize;
+	_segread(&segregs);
+	segregs.es = blockseg;
+	_intdosx(&inregs, &outregs, &segregs);
+	return outregs.x.bx; /* BX is the maximum available block count. */
 }
 
 #else
