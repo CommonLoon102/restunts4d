@@ -3195,593 +3195,271 @@ the_end:*/
 
 // aka preRender_helper3 in the IDB
 void preRender_default_impl_helper(int* regsi, unsigned var_A, unsigned var_C, int* var_18) {
-	unsigned sprite1_sprite_left2 = sprite1.sprite_left2;
-	unsigned sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	unsigned sprite1_sprite_top = sprite1.sprite_top;
-	unsigned sprite1_sprite_height = sprite1.sprite_height;
+	unsigned mode;
+	unsigned merge;
+	unsigned step;
+	unsigned frac;
+	unsigned long sum;
+	unsigned long fixed;
+	unsigned long delta;
+	int count;
+	int remaining;
+	int ofs;
+	int i;
+	int carry;
+	int write_value;
+	int target;
+	short value;
 
-asm {
-    mov     ax, ss
-    mov     es, ax
-	mov si, regsi
-    mov     cx, [si+0Eh]
-    or      cx, cx
-    //jle     short loc_31BA8  // TOO FAR JUMP??
+	mode = (unsigned char)regsi[9];
+	merge = (unsigned char)var_A;
+	count = (short)regsi[7];
 
-ja _nole
-jmp loc_31BA8
-	
+	if (count > 0) {
+		if (mode < 2 || mode > 8)
+			return;
 
-_nole:
-    mov     di, [si+6]
-    shl     di, 1
-    add     di, [var_18]
-    mov     bl, [si+12h]
-    xor     bh, bh
-    //shl     bx, 1
-    cmp     byte ptr [var_A], 0   // var_A is 1 when calling prerender_default, or 0 when calling prerender_default_alt
-    jnz     short loc_31B7F
+		ofs = (short)regsi[3];
+		step = (unsigned short)regsi[6];
 
-    cmp bx, 0
-    jne _noo0
-    jmp locret_31AA3
-_noo0:
-    cmp bx, 1
-    jne _noo1
-    jmp locret_31AA3
-_noo1:
-    cmp bx, 2
-    jne _noo2
-    jmp loc_31D0B
-_noo2:
-    cmp bx, 3
-    jne _noo3
-    jmp loc_31D31
-_noo3:
-    cmp bx, 4
-    jne _noo4
-    jmp loc_31D5C
-_noo4:
-    cmp bx, 5
-    jne _noo5
-    jmp loc_31D87
-_noo5:
-    cmp bx, 6
-    jne _noo6
-    jmp loc_31DCA
-_noo6:
-    cmp bx, 7
-    jne _noo7
-    jmp loc_31E0D
-_noo7:
-    cmp bx, 8
-    jne _noo8
-    jmp loc_31E61
-_noo8:
-    cmp bx, 9	
-	
-    jmp locret_31AA3 // same as 0
+		if (mode <= 6) {
+			if (mode <= 4) {
+				fixed = (unsigned long)(unsigned short)regsi[1] << 16;
+				if (mode == 3)
+					delta = 0xFFFF0000UL;
+				else if (mode == 4)
+					delta = 0x10000UL;
+				else
+					delta = 0;
+			} else {
+				fixed = ((unsigned long)(unsigned short)regsi[1] << 16) |
+					(unsigned short)regsi[0];
+				fixed += 0x8000UL;
+				if (mode == 5)
+					delta = 0UL - step;
+				else
+					delta = step;
+			}
 
+			if (merge != 0) {
+				for (i = 0; i < count; i++) {
+					value = (short)(fixed >> 16);
+					if ((short)var_18[480 + ofs] < value)
+						var_18[480 + ofs] = value;
+					else if ((short)var_18[ofs] > value)
+						var_18[ofs] = value;
+					ofs++;
+					fixed += delta;
+				}
+			} else {
+				target = -1;
+				for (i = 0; i < count; i++) {
+					value = (short)(fixed >> 16);
+					if ((short)var_18[ofs] > value) {
+						target = 0;
+						break;
+					}
+					if ((short)var_18[480 + ofs] < value) {
+						target = 480;
+						break;
+					}
+					ofs++;
+					fixed += delta;
+				}
+				if (target >= 0) {
+					for (; i < count; i++) {
+						value = (short)(fixed >> 16);
+						var_18[target + ofs] = value;
+						ofs++;
+						fixed += delta;
+					}
+				}
+			}
+			goto preRender_c_tail;
+		}
 
-loc_31B7F:
+		value = (short)regsi[1];
+		frac = (unsigned short)regsi[2];
+		sum = (unsigned long)frac + 0x8000UL;
+		frac = (unsigned short)sum;
+		if (sum > 0xFFFFUL)
+			ofs++;
+		remaining = count;
 
+		if (merge != 0) {
+			if (mode == 7) {
+				carry = 0;
+				while (remaining > 0) {
+					if ((short)var_18[480 + ofs] < value)
+						var_18[480 + ofs] = value;
+					sum = (unsigned long)frac + step;
+					carry = sum > 0xFFFFUL;
+					frac = (unsigned short)sum;
+					if (carry) {
+						if ((short)var_18[ofs] > value)
+							var_18[ofs] = value;
+						ofs++;
+					}
+					value = (short)(value - 1);
+					remaining--;
+				}
+				if (!carry) {
+					value = (short)(value + 1);
+					if ((short)var_18[ofs] > value)
+						var_18[ofs] = value;
+				}
+			} else {
+				carry = 0;
+				while (remaining > 0) {
+					if ((short)var_18[ofs] > value)
+						var_18[ofs] = value;
+					sum = (unsigned long)frac + step;
+					carry = sum > 0xFFFFUL;
+					frac = (unsigned short)sum;
+					if (carry) {
+						if ((short)var_18[480 + ofs] < value)
+							var_18[480 + ofs] = value;
+						ofs++;
+					}
+					value = (short)(value + 1);
+					remaining--;
+				}
+				if (!carry) {
+					value = (short)(value - 1);
+					if ((short)var_18[480 + ofs] < value)
+						var_18[480 + ofs] = value;
+				}
+			}
+			goto preRender_c_tail;
+		}
 
-    cmp bx, 0
-    jne _no0
-    jmp locret_31AA3
-_no0:
-    cmp bx, 1
-    jne _no1
-    jmp locret_31AA3
-_no1:
-    cmp bx, 2
-    jne _no2
-    jmp loc_31B98
-_no2:
-    cmp bx, 3
-    jne _no3
-    jmp loc_31BB7
-_no3:
-    cmp bx, 4
-    jne _no4
-    jmp loc_31BDB
-_no4:
-    cmp bx, 5
-    jne _no5
-    jmp loc_31BFF
-_no5:
-    cmp bx, 6
-    jne _no6
-    jmp loc_31C37
-_no6:
-    cmp bx, 7
-    jne _no7
-    jmp loc_31C6F
-_no7:
-    cmp bx, 8
-    jne _no8
-    jmp loc_31CB1
-_no8:
-    cmp bx, 9
-    
-    //je locret_31AA3
-    
-    jmp locret_31AA3 // same as 0
+		if (mode == 7) {
+			while (remaining > 0) {
+				if ((short)var_18[480 + ofs] < value) {
+					write_value = 1;
+					while (remaining > 0) {
+						if (write_value)
+							var_18[480 + ofs++] = value;
+						value = (short)(value - 1);
+						sum = (unsigned long)frac + step;
+						carry = sum > 0xFFFFUL;
+						frac = (unsigned short)sum;
+						remaining--;
+						write_value = carry;
+					}
+					goto preRender_c_tail;
+				}
 
-locret_31AA3:
-    //retn
-    jmp the_end
+				sum = (unsigned long)frac + step;
+				carry = sum > 0xFFFFUL;
+				frac = (unsigned short)sum;
+				if (carry) {
+					if ((short)var_18[ofs] > value) {
+						write_value = 1;
+						while (remaining > 0) {
+							if (write_value)
+								var_18[ofs++] = value;
+							value = (short)(value - 1);
+							remaining--;
+							if (remaining == 0) {
+								if (!write_value)
+									var_18[ofs] = (short)(value + 1);
+								goto preRender_c_tail;
+							}
+							sum = (unsigned long)frac + step;
+							carry = sum > 0xFFFFUL;
+							frac = (unsigned short)sum;
+							write_value = carry;
+						}
+					}
+					ofs++;
+				}
+				value = (short)(value - 1);
+				remaining--;
+			}
+		} else {
+			while (remaining > 0) {
+				if ((short)var_18[ofs] > value) {
+					write_value = 1;
+					while (remaining > 0) {
+						if (write_value)
+							var_18[ofs++] = value;
+						value = (short)(value + 1);
+						sum = (unsigned long)frac + step;
+						carry = sum > 0xFFFFUL;
+						frac = (unsigned short)sum;
+						remaining--;
+						write_value = carry;
+					}
+					goto preRender_c_tail;
+				}
 
+				sum = (unsigned long)frac + step;
+				carry = sum > 0xFFFFUL;
+				frac = (unsigned short)sum;
+				if (carry) {
+					if ((short)var_18[480 + ofs] < value) {
+						var_18[480 + ofs] = value;
+						while (remaining > 0) {
+							value = (short)(value + 1);
+							sum = (unsigned long)frac + step;
+							carry = sum > 0xFFFFUL;
+							frac = (unsigned short)sum;
+							remaining--;
+							if (remaining == 0) {
+								ofs++;
+								var_18[480 + ofs] = (short)(value - 1);
+								goto preRender_c_tail;
+							}
+							if (carry) {
+								ofs++;
+								var_18[480 + ofs] = value;
+							}
+						}
+					}
+					ofs++;
+				}
+				value = (short)(value + 1);
+				remaining--;
+			}
+		}
+	}
 
-loc_31B98:
-    mov     ax, [si+2]
-loc_31B9B:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BAB
-    cmp     [di], ax
-    jle     short loc_31BAF
-    stosw
-    loop    loc_31B9B
-loc_31BA8:
-    jmp     loc_31EB9
-loc_31BAB:
-    mov     [di+3C0h], ax
-loc_31BAF:
-    add     di, 2
-    loop    loc_31B9B
-    jmp     loc_31EB9
+preRender_c_tail:
+	if ((unsigned char)var_C == 0)
+		return;
 
-loc_31BB7:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31BBD:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BCE
-    cmp     [di], ax
-    jle     short loc_31BD2
-    stosw
-    dec     ax
-    loop    loc_31BBD
-    jmp     loc_31EB9
-loc_31BCE:
-    mov     [di+3C0h], ax
-loc_31BD2:
-    add     di, 2
-    dec     ax
-    loop    loc_31BBD
-    jmp     loc_31EB9
+	count = (short)regsi[10];
+	if (count > 0) {
+		ofs = (short)regsi[3] - count;
+		if ((short)regsi[2] < 0)
+			ofs++;
+		for (i = 0; i < count; i++)
+			var_18[ofs + i] = (short)sprite1.sprite_left2;
+	}
 
-loc_31BDB:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31BE1:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BF2
-    cmp     [di], ax
-    jle     short loc_31BF6
-    stosw
-    inc     ax
-    loop    loc_31BE1
-    jmp     loc_31EB9
-loc_31BF2:
-    mov     [di+3C0h], ax
-loc_31BF6:
-    add     di, 2
-    inc     ax
-    loop    loc_31BE1
-    jmp     loc_31EB9
+	count = (short)regsi[12];
+	if (count > 0) {
+		ofs = (short)regsi[3] - count;
+		if ((short)regsi[2] < 0)
+			ofs++;
+		for (i = 0; i < count; i++)
+			var_18[480 + ofs + i] = (short)(sprite1.sprite_widthsum - 1);
+	}
 
-loc_31BFF:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31C11:
-    cmp     [di+3C0h], ax
-    jl      short loc_31C26
-    cmp     [di], ax
-    jle     short loc_31C2A
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31C11
-    jmp     loc_31EB9
-loc_31C26:
-    mov     [di+3C0h], ax
-loc_31C2A:
-    add     di, 2
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31C11
-    jmp     loc_31EB9
+	count = (short)regsi[11];
+	if (count > 0) {
+		ofs = (short)regsi[5] + 1;
+		for (i = 0; i < count; i++)
+			var_18[ofs + i] = (short)sprite1.sprite_left2;
+	}
 
-loc_31C37:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31C49:
-    cmp     [di+3C0h], ax
-    jl      short loc_31C5E
-    cmp     [di], ax
-    jle     short loc_31C62
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31C49
-    jmp     loc_31EB9
-loc_31C5E:
-    mov     [di+3C0h], ax
-loc_31C62:
-    add     di, 2
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31C49
-    jmp     loc_31EB9
-
-loc_31C6F:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31C84
-    add     di, 2
-loc_31C84:
-    cmp     [di+3C0h], ax
-    jge     short loc_31C8E
-    mov     [di+3C0h], ax
-loc_31C8E:
-    add     dx, bx
-    jnb     short loc_31CA4
-    cmp     [di], ax
-    jle     short loc_31C98
-    mov     [di], ax
-loc_31C98:
-    add     di, 2
-    dec     ax
-    loop    loc_31C84
-    sub     di, 2
-    jmp     loc_31EB9
-loc_31CA4:
-    dec     ax
-    loop    loc_31C8E
-    inc     ax
-    cmp     [di], ax
-    jle     short loc_31CAE
-    mov     [di], ax
-loc_31CAE:
-    jmp     loc_31EB9
-
-loc_31CB1:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31CC6
-    add     di, 2
-loc_31CC6:
-    cmp     [di], ax
-    jle     short loc_31CCC
-    mov     [di], ax
-loc_31CCC:
-    add     dx, bx
-    jnb     short loc_31CE6
-    cmp     [di+3C0h], ax
-    jge     short loc_31CDA
-    mov     [di+3C0h], ax
-loc_31CDA:
-    add     di, 2
-    inc     ax
-    loop    loc_31CC6
-    sub     di, 2
-    jmp     loc_31EB9
-loc_31CE6:
-    inc     ax
-    loop    loc_31CCC
-    dec     ax
-    cmp     [di+3C0h], ax
-    jge     short loc_31CAE
-    mov     [di+3C0h], ax
-    jmp     loc_31EB9
-
-loc_31D0B:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D11:
-    cmp     [di], ax
-    jg      short loc_31D23
-    cmp     [di+3C0h], ax
-    jl      short loc_31D28
-    add     di, 2
-    loop    loc_31D11
-    jmp     loc_31EB9
-loc_31D23:
-    rep stosw
-    jmp     loc_31EB9
-loc_31D28:
-    add     di, 3C0h
-    rep stosw
-    jmp     loc_31EB9
-loc_31D31:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D37:
-    cmp     [di], ax
-    jg      short loc_31D4A
-    cmp     [di+3C0h], ax
-    jl      short loc_31D51
-    add     di, 2
-    dec     ax
-    loop    loc_31D37
-    jmp     loc_31EB9
-loc_31D4A:
-    stosw
-    dec     ax
-    loop    loc_31D4A
-    jmp     loc_31EB9
-loc_31D51:
-    add     di, 3C0h
-loc_31D55:
-    stosw
-    dec     ax
-    loop    loc_31D55
-    jmp     loc_31EB9
-loc_31D5C:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D62:
-    cmp     [di], ax
-    jg      short loc_31D75
-    cmp     [di+3C0h], ax
-    jl      short loc_31D7C
-    add     di, 2
-    inc     ax
-    loop    loc_31D62
-    jmp     loc_31EB9
-loc_31D75:
-    stosw
-    inc     ax
-    loop    loc_31D75
-    jmp     loc_31EB9
-loc_31D7C:
-    add     di, 3C0h
-loc_31D80:
-    stosw
-    inc     ax
-    loop    loc_31D80
-    jmp     loc_31EB9
-loc_31D87:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31D99:
-    cmp     [di], ax
-    jg      short loc_31DB0
-    cmp     [di+3C0h], ax
-    jl      short loc_31DBB
-    add     di, 2
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31D99
-    jmp     loc_31EB9
-loc_31DB0:
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31DB0
-    jmp     loc_31EB9
-loc_31DBB:
-    add     di, 3C0h
-loc_31DBF:
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31DBF
-    jmp     loc_31EB9
-loc_31DCA:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31DDC:
-    cmp     [di], ax
-    jg      short loc_31DF3
-    cmp     [di+3C0h], ax
-    jl      short loc_31DFE
-    add     di, 2
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31DDC
-    jmp     loc_31EB9
-loc_31DF3:
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31DF3
-    jmp     loc_31EB9
-loc_31DFE:
-    add     di, 3C0h
-loc_31E02:
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31E02
-    jmp     loc_31EB9
-loc_31E0D:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31E22
-    add     di, 2
-loc_31E22:
-    cmp     [di+3C0h], ax
-    jl      short loc_31E39
-    add     dx, bx
-    jnb     short loc_31E33
-    cmp     [di], ax
-    jg      short loc_31E51
-    add     di, 2
-loc_31E33:
-    dec     ax
-    loop    loc_31E22
-    jmp     loc_31EB9
-loc_31E39:
-    add     di, 3C0h
-loc_31E3D:
-    stosw
-loc_31E3E:
-    dec     ax
-    add     dx, bx
-    jnb     short loc_31E48
-    loop    loc_31E3D
-    jmp     short loc_31EB9
-
-loc_31E48:
-    loop    loc_31E3E
-    jmp     short loc_31EB9
-
-loc_31E4D:
-    add     dx, bx
-    jnb     short loc_31E58
-loc_31E51:
-    stosw
-    dec     ax
-    loop    loc_31E4D
-    jmp     short loc_31EB9
-
-loc_31E58:
-    dec     ax
-    loop    loc_31E4D
-    inc     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31E61:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31E76
-    add     di, 2
-loc_31E76:
-    cmp     [di], ax
-    jg      short loc_31EB2
-    add     dx, bx
-    jnb     short loc_31E87
-    cmp     [di+3C0h], ax
-    jl      short loc_31E8D
-    add     di, 2
-loc_31E87:
-    inc     ax
-    loop    loc_31E76
-    jmp     short loc_31EB9
-
-loc_31E8D:
-    add     di, 3C0h
-loc_31E91:
-    mov     [di], ax
-loc_31E93:
-    inc     ax
-    add     dx, bx
-    jnb     short loc_31EA3
-    add     di, 2
-    loop    loc_31E91
-    dec     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31EA3:
-    loop    loc_31E93
-    add     di, 2
-    dec     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31EAE:
-    add     dx, bx
-    jnb     short loc_31EB3
-loc_31EB2:
-    stosw
-loc_31EB3:
-    inc     ax
-    loop    loc_31EAE
-    jmp     short loc_31EB9
-
-loc_31EB9:
-    cmp     byte ptr [var_C], 0
-    jnz     short loc_31EC0
-    //retn
-    jmp the_end
-loc_31EC0:
-    mov     cx, [si+14h]
-    or      cx, cx
-    jle     short loc_31EE1
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    rep stosw
-loc_31EE1:
-    mov     cx, [si+18h]
-    or      cx, cx
-    jle     short loc_31F07
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    add     di, 3C0h
-    mov     ax, [sprite1_sprite_widthsum]
-    dec     ax
-    rep stosw
-loc_31F07:
-    mov     cx, [si+16h]
-    or      cx, cx
-    jle     short loc_31F1D
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    rep stosw
-loc_31F1D:
-    mov     cx, [si+1Ah]
-    or      cx, cx
-    jle     short locret_31F38
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    add     di, 3C0h
-    mov     ax, [sprite1_sprite_widthsum]
-    dec     ax
-    rep stosw
-locret_31F38:
-    //retn
-    jmp the_end
-}
-
-the_end:
+	count = (short)regsi[13];
+	if (count > 0) {
+		ofs = (short)regsi[5] + 1;
+		for (i = 0; i < count; i++)
+			var_18[480 + ofs + i] = (short)(sprite1.sprite_widthsum - 1);
+	}
 }
 
 extern unsigned far word_2F448; // seg012

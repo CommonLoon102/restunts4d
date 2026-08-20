@@ -2,6 +2,7 @@ segment	routine	port_state	source_evidence	note
 seg001	update_car_speed	c_active_with_asm	src/restunts/c/statecar.c:30	The C translation is active for player_op; the protected assembly opponent caller still invokes the preserved routine.
 seg002	init_div0	c_active_with_asm	src/restunts/c/restunts.c:1390	The C entry point delegates interrupt installation to ported_init_div0_.
 seg006	get_a_poly_info	c_translation_inactive	src/restunts/c/shape3d.c:2711	An incomplete C translation is disabled with #if 0.
+seg012	preRender_helper3	c_active_with_asm	src/restunts/c/shape3d.c:3197	C renderer callers use the verified implementation; two protected seg012 callers still use the original near routine.
 seg012	sprite_putimage	c_translation_inactive	src/restunts/c/shape2d.c:165	The C translation is disabled with #if 0 and documents a known rendering failure.
 seg012	sprite_putimage_and	c_translation_inactive	src/restunts/c/shape2d.c:195	The C wrapper is disabled with #if 0 and calls preserved assembly.
 seg012	sprite_putimage_or	c_translation_inactive	src/restunts/c/shape2d.c:202	The C wrapper is disabled with #if 0 and calls preserved assembly.

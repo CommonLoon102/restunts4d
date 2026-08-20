@@ -74,9 +74,9 @@ seg004	build_track_object	pending	asm_only	4	82	2208	-	-
 seg004	bto_auxiliary1	pending	asm_only	1	0	364	-	-
 seg004	shape3d_load_all	ported	c_active_with_asm	2	12	78	src/restunts/c/shape3d.c:49	-
 seg004	shape3d_free_all	ported	c_active_with_asm	2	4	16	src/restunts/c/shape3d.c:75	-
-seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4808	-
-seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4944	-
-seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4897	-
+seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4486	-
+seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4622	-
+seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4575	-
 seg004	track_setup	pending	asm_only	6	6	1484	-	-
 seg004	load_opponent_data	pending	asm_only	2	12	213	-	-
 seg004	subst_hillroad_track	pending	asm_only	5	0	125	-	-
@@ -282,8 +282,8 @@ seg012	sub_2EAD4	pending	asm_only	5	0	5	-	-
 seg012	set_add_value	pending	asm_only	2	4	15	-	-
 seg012	sub_2EB07	pending	asm_only	1	2	9	-	-
 seg012	sub_2EB1E	pending	asm_only	1	4	16	-	-
-seg012	draw_line_related_alt	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:3797	-
-seg012	draw_line_related	ported	c_active_with_asm	4	0	752	src/restunts/c/shape3d.c:3792	-
+seg012	draw_line_related_alt	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:3475	-
+seg012	draw_line_related	ported	c_active_with_asm	4	0	752	src/restunts/c/shape3d.c:3470	-
 seg012	parse_shape2d_helper	pending	asm_only	5	0	16	-	-
 seg012	parse_shape2d_helper2	pending	asm_only	1	0	20	-	-
 seg012	criterr_interrupt_handler	pending	asm_only	0	1	21	-	-
@@ -383,7 +383,7 @@ seg012	skybox_op_helper	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:
 seg012	preRender_wheel_helper4	ported	c_active_with_asm	2	17	193	src/restunts/c/shape3d.c:2768	-
 seg012	preRender_helper	pending	asm_only	2	0	70	-	-
 seg012	preRender_helper2	pending	asm_only	4	0	105	-	-
-seg012	preRender_helper3	pending	asm_only	2	0	408	-	-
+seg012	preRender_helper3	pending	c_active_with_asm	2	0	408	src/restunts/c/shape3d.c:3197	C renderer callers use the verified implementation; two protected seg012 callers still use the original near routine.
 seg012	nopsub_31F39	ignore	not_required	0	0	12	-	-
 seg012	nopsub_31F55	ignore	not_required	0	9	200	-	-
 seg012	nopsub_3215A	ignore	not_required	1	0	10	-	-
