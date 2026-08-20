@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Forty-two implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Forty-three implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -84,6 +84,7 @@ portable enough to support it.
 40. [Exact memory-manager byte-count APIs](asm-to-c-phase1-slice40.md)
 41. [Exact physics and culling double-word state](asm-to-c-phase1-slice41.md)
 42. [Exact file byte-count APIs](asm-to-c-phase1-slice42.md)
+43. [Exact car-state initializer ABI](asm-to-c-phase1-slice43.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

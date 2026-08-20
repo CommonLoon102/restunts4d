@@ -454,6 +454,7 @@ extern unsigned short someZeroVideoConst;
 extern short sub_18D60(short car_trackdata3_index, struct VECTOR* car_vec_unk3, short field_CE, short* unk);
 extern void font_set_fontdef(void);
 extern void init_polyinfo(void);
+extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 pos_x, legacy_s32 pos_y, legacy_s32 pos_z, legacy_s16 track_angle);
 extern unsigned short run_intro_looped(void);
 extern unsigned short show_dialog(int unk1, int unk2, void far* textresptr, unsigned short unk3, unsigned short unk4, int arg, void* unk5, int unk6);
 extern char run_menu(void);

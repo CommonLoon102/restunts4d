@@ -367,7 +367,7 @@ void init_unknown(void)
 	word_44DCA = 0;
 }
 
-void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle)
+void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle)
 {
 	int i;
 	struct VECTOR whlPos;
@@ -522,9 +522,9 @@ void init_game_state(short arg)
 			&state.playerstate,
 			&simd_player,
 			gameconfig.game_playertransmission,
-			(long)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(long)hillHeightConsts[hillFlag] * 64L,
-			(long)(trackcenterpos[startrow2] + tmprow) * 64L,
+			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64,
+			(legacy_s32)hillHeightConsts[hillFlag] * 64,
+			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64,
 			-track_angle);
 
 		state.field_2F2 = 0;
@@ -561,9 +561,9 @@ void init_game_state(short arg)
 			&state.opponentstate,
 			&simd_opponent,
 			1,
-			(long)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(long)hillHeightConsts[hillFlag] * 64L,
-			(long)(trackcenterpos[startrow2] + tmprow) * 64L,
+			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64,
+			(legacy_s32)hillHeightConsts[hillFlag] * 64,
+			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64,
 			-track_angle);
 
 		if (gameconfig.game_opponenttype && arg != -2) {
