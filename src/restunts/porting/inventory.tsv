@@ -19,10 +19,10 @@ seg000	set_default_car	ported	c_active_with_asm	1	0	10	src/restunts/c/restunts.c
 seg001	opponent_op	pending	asm_only	2	40	613	-	-
 seg001	mat_mul_vector2	ported	c_active_with_asm	2	2	27	src/restunts/c/math.c:215	-
 seg001	update_player_state	ported	c_active_with_asm	2	170	2464	src/restunts/c/stateply.c:59	-
-seg001	init_carstate_from_simd	ported	c_active_with_asm	3	0	226	src/restunts/c/restunts.c:370	-
-seg001	init_game_state	ported	c_active_with_asm	11	60	435	src/restunts/c/restunts.c:443	-
-seg001	restore_gamestate	ported	c_active_with_asm	5	8	94	src/restunts/c/restunts.c:583	-
-seg001	update_gamestate	ported	c_active_with_asm	5	26	182	src/restunts/c/restunts.c:619	-
+seg001	init_carstate_from_simd	ported	c_active_with_asm	3	0	226	src/restunts/c/restunts.c:371	-
+seg001	init_game_state	ported	c_active_with_asm	11	60	435	src/restunts/c/restunts.c:444	-
+seg001	restore_gamestate	ported	c_active_with_asm	5	8	94	src/restunts/c/restunts.c:584	-
+seg001	update_gamestate	ported	c_active_with_asm	5	26	182	src/restunts/c/restunts.c:620	-
 seg001	player_op	ported	c_active_with_asm	2	44	589	src/restunts/c/state.c:370	-
 seg001	detect_penalty	pending	asm_only	1	0	223	-	-
 seg001	update_car_speed	ported	c_active_with_asm	3	16	492	src/restunts/c/statecar.c:30	The C translation is active for player_op; the protected assembly opponent caller still invokes the preserved routine.
@@ -43,7 +43,7 @@ seg001	plane_origin_op	ported	c_active_with_asm	7	2	50	src/restunts/c/math.c:932
 seg001	vec_normalInnerProduct	ported	c_active_with_asm	1	8	62	src/restunts/c/math.c:925	-
 seg001	state_op_unk	pending	asm_only	2	10	138	-	-
 seg001	sub_19BA0	pending	asm_only	1	4	96	-	-
-seg001	setup_aero_trackdata	ported	c_active_with_asm	4	18	133	src/restunts/c/restunts.c:724	-
+seg001	setup_aero_trackdata	ported	c_active_with_asm	4	18	133	src/restunts/c/restunts.c:725	-
 seg002	update_rpm_from_speed	ported	c_active_with_asm	1	0	16	src/restunts/c/statecar.c:4	-
 seg002	nopsub_19DE8	ignore	not_required	0	0	16	-	-
 seg002	nopsub_19DFF	ignore	not_required	0	0	6	-	-
@@ -74,15 +74,15 @@ seg004	build_track_object	pending	asm_only	4	82	2208	-	-
 seg004	bto_auxiliary1	pending	asm_only	1	0	364	-	-
 seg004	shape3d_load_all	ported	c_active_with_asm	2	12	78	src/restunts/c/shape3d.c:48	-
 seg004	shape3d_free_all	ported	c_active_with_asm	2	4	16	src/restunts/c/shape3d.c:74	-
-seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4168	-
-seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4304	-
-seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4257	-
+seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4198	-
+seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4334	-
+seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4287	-
 seg004	track_setup	pending	asm_only	6	6	1484	-	-
 seg004	load_opponent_data	pending	asm_only	2	12	213	-	-
 seg004	subst_hillroad_track	pending	asm_only	5	0	125	-	-
-seg005	run_game	ported	c_active_with_asm	1	164	716	src/restunts/c/restunts.c:964	-
+seg005	run_game	ported	c_active_with_asm	1	164	716	src/restunts/c/restunts.c:965	-
 seg005	handle_ingame_kb_shortcuts	pending	asm_only	2	8	113	-	-
-seg005	init_unknown	ported	c_active_with_asm	2	0	16	src/restunts/c/restunts.c:360	-
+seg005	init_unknown	ported	c_active_with_asm	2	0	16	src/restunts/c/restunts.c:361	-
 seg005	set_frame_callback	pending	asm_only	1	2	9	-	-
 seg005	remove_frame_callback	pending	asm_only	1	4	14	-	-
 seg005	frame_callback	pending	asm_only	0	12	87	-	-
@@ -91,15 +91,15 @@ seg005	sub_2298C	pending	asm_only	1	14	312	-	-
 seg005	file_load_replay	ported	c_active_with_asm	3	4	36	src/restunts/c/fileio.c:1062	-
 seg005	file_write_replay	ported	c_active_with_asm	1	2	33	src/restunts/c/fileio.c:1073	-
 seg005	setup_car_shapes	pending	asm_only	4	134	862	-	-
-seg005	setup_player_cars	ported	c_active_with_asm	2	60	235	src/restunts/c/restunts.c:850	-
-seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts.c:940	-
+seg005	setup_player_cars	ported	c_active_with_asm	2	60	235	src/restunts/c/restunts.c:851	-
+seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts.c:941	-
 seg005	mouse_minmax_position	pending	asm_only	5	6	33	-	-
 seg005	replay_unk	pending	asm_only	1	0	68	-	-
 seg005	loop_game	pending	asm_only	28	290	1733	-	-
-seg006	init_polyinfo	ported	c_active_with_asm	1	12	38	src/restunts/c/shape3d.c:2643	-
-seg006	copy_material_list_pointers	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1416	-
-seg006	polyinfo_reset	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2628	-
-seg006	select_cliprect_rotate	ported	c_active_with_asm	4	10	67	src/restunts/c/shape3d.c:2610	-
+seg006	init_polyinfo	ported	c_active_with_asm	1	12	38	src/restunts/c/shape3d.c:2673	-
+seg006	copy_material_list_pointers	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1417	-
+seg006	polyinfo_reset	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2658	-
+seg006	select_cliprect_rotate	ported	c_active_with_asm	4	10	67	src/restunts/c/shape3d.c:2640	-
 seg006	transformed_shape_op	ported	c_active_with_asm	16	88	1398	src/restunts/c/shape3d.c:140	-
 seg006	transformed_shape_op_helper	ported	c_active_with_asm	1	0	74	-	-
 seg006	rect_compare_point	ported	c_active_with_asm	6	0	32	src/restunts/c/math.c:143	-
@@ -108,7 +108,7 @@ seg006	get_a_poly_info	pending	c_translation_inactive	4	16	188	src/restunts/c/sh
 seg006	mat_rot_zxy	ported	c_active_with_asm	24	16	159	src/restunts/c/math.c:374	-
 seg006	rect_adjust_from_point	ported	c_active_with_asm	15	0	33	src/restunts/c/math.c:408	-
 seg006	vector_op_unk2	ported	c_active_with_asm	1	14	126	src/restunts/c/math.c:763	-
-seg006	calc_sincos80	ported	c_active_with_asm	1	8	30	src/restunts/c/shape3d.c:2636	-
+seg006	calc_sincos80	ported	c_active_with_asm	1	8	30	src/restunts/c/shape3d.c:2666	-
 seg006	nopsub_26552	ignore	not_required	0	0	15	-	-
 seg006	rect_union	ported	c_active_with_asm	17	0	47	src/restunts/c/math.c:430	-
 seg006	rect_intersect	ported	c_active_with_asm	8	0	56	src/restunts/c/math.c:471	-
@@ -289,7 +289,7 @@ seg012	parse_shape2d_helper2	pending	asm_only	1	0	20	-	-
 seg012	criterr_interrupt_handler	pending	asm_only	0	1	21	-	-
 seg012	set_criterr_handler	pending	asm_only	1	2	28	-	-
 seg012	criterr_exithandler	pending	asm_only	0	0	11	-	-
-seg012	preRender_unk	ported	c_active_with_asm	1	0	29	src/restunts/c/shape3d.c:2779	-
+seg012	preRender_unk	ported	c_active_with_asm	1	0	29	src/restunts/c/shape3d.c:2809	-
 seg012	nopsub_2F424	ignore	not_required	0	0	8	-	-
 seg012	nopsub_2F436	ignore	not_required	0	0	1235	-	-
 seg012	preRender_line	pending	asm_only	35	4	24	-	-
@@ -377,10 +377,10 @@ seg012	mmgr_release	ported	c_active_with_asm	12	0	24	src/restunts/c/memmgr.c	-
 seg012	mmgr_get_chunk_size	ported	c_active_with_asm	2	0	18	src/restunts/c/memmgr.c:428	-
 seg012	mmgr_resize_memory	ported	c_active_with_asm	2	2	56	src/restunts/c/memmgr.c	-
 seg012	mmgr_op_unk	ported	c_active_with_asm	2	2	51	src/restunts/c/memmgr.c:499	-
-seg012	preRender_default	ported	c_active_with_asm	1	0	7	src/restunts/c/shape3d.c:2751	-
-seg012	preRender_default_alt	ported	c_active_with_asm	4	0	12	src/restunts/c/shape3d.c:2743	-
-seg012	skybox_op_helper	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2759	-
-seg012	preRender_wheel_helper4	ported	c_active_with_asm	2	17	193	src/restunts/c/shape3d.c:2767	-
+seg012	preRender_default	ported	c_active_with_asm	1	0	7	src/restunts/c/shape3d.c:2781	-
+seg012	preRender_default_alt	ported	c_active_with_asm	4	0	12	src/restunts/c/shape3d.c:2773	-
+seg012	skybox_op_helper	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2789	-
+seg012	preRender_wheel_helper4	ported	c_active_with_asm	2	17	193	src/restunts/c/shape3d.c:2797	-
 seg012	preRender_helper	pending	asm_only	2	0	70	-	-
 seg012	preRender_helper2	pending	asm_only	4	0	105	-	-
 seg012	preRender_helper3	pending	c_active_with_asm	2	0	408	src/restunts/c/shape3d.c:3197	C renderer callers use the verified implementation; two protected seg012 callers still use the original near routine.
@@ -392,7 +392,7 @@ seg012	nopsub_3219D	ignore	not_required	6	10	100	-	-
 seg012	nopsub_322B4	ignore	not_required	0	0	7	-	-
 seg012	nopsub_322C0	ignore	not_required	0	0	12	-	-
 seg012	nopsub_322DF	ignore	not_required	0	0	10	-	-
-seg012	set_projection	ported	c_active_with_asm	4	10	92	src/restunts/c/shape3d.c:2587	-
+seg012	set_projection	ported	c_active_with_asm	4	10	92	src/restunts/c/shape3d.c:2609	-
 seg012	vector_to_point	ported	c_active_with_asm	10	0	97	src/restunts/c/math.c:869	-
 seg012	sprite_free_wnd	ported	c_active_with_asm	24	3	35	src/restunts/c/shape2d.c:88	-
 seg012	file_write_nofatal	ported	c_active_with_asm	0	0	9	src/restunts/c/fileio.c:447	-
@@ -421,7 +421,7 @@ seg012	timer_compare_dx	ported	c_active_with_asm	1	2	10	src/restunts/c/restunts.
 seg012	timer_get_counter_unk	ported	c_active_with_asm	3	4	18	src/restunts/c/restunts.c:139	-
 seg012	font_op	pending	asm_only	2	0	10	-	-
 seg012	font_op2	pending	asm_only	18	0	32	-	-
-seg012	preRender_patterned	ported	c_active_with_asm	1	0	26	src/restunts/c/shape3d.c:2789	-
+seg012	preRender_patterned	ported	c_active_with_asm	1	0	26	src/restunts/c/shape3d.c:2819	-
 seg012	nopsub_328C9	ignore	not_required	0	0	8	-	-
 seg012	nopsub_328DB	ignore	not_required	0	0	9	-	-
 seg012	mat_mul_vector	ported	c_active_with_asm	54	0	122	src/restunts/c/math.c:170	-
@@ -595,7 +595,7 @@ seg031	file_combine_and_find	ported	c_active_with_asm	2	4	16	src/restunts/c/file
 seg031	file_find_next_alt	ported	c_active_with_asm	2	2	2	src/restunts/c/fileio.c:250	-
 seg031	nullsub_1	pending	asm_only	4	0	2	-	-
 seg031	nullsub_2	pending	asm_only	5	0	2	-	-
-seg031	init_main	ported	c_active_with_asm	1	75	378	src/restunts/c/restunts.c:1425	-
+seg031	init_main	ported	c_active_with_asm	1	75	378	src/restunts/c/restunts.c:1426	-
 seg031	random_wait	ported	c_active_with_asm	2	12	44	src/restunts/c/restunts.c:199	-
 seg031	load_palandcursor	pending	asm_only	1	34	129	-	-
 seg031	get_0	ported	c_active_with_asm	2	0	3	src/restunts/c/restunts.c:72	-

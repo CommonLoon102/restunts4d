@@ -92,7 +92,7 @@ void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape) {
 
 extern char is_facing_camera(struct POINT2D far*);
 extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned, unsigned);
-extern unsigned projectiondata9_times_ratio(unsigned, int);
+extern legacy_u16 projectiondata9_times_ratio(legacy_u16, legacy_u16);
 extern void __aFuldiv();
 
 extern unsigned word_40ECE;
@@ -2541,8 +2541,11 @@ extern legacy_u16 projectiondata8;
 extern legacy_u16 projectiondata9;
 extern legacy_u16 projectiondata10;
 
-unsigned projectiondata9_times_ratio(unsigned i1, int i2) {
-	return projectiondata9 * i1 / i2;
+legacy_u16 projectiondata9_times_ratio(legacy_u16 numerator, legacy_u16 denominator) {
+	legacy_u32 product;
+
+	product = LEGACY_U32_WRAP_MUL(projectiondata9, numerator);
+	return (legacy_u16)(product / denominator);
 }
 
 extern int poly_linked_list_40ED6[];
@@ -2584,23 +2587,50 @@ extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned arg_0, uns
 	return 1;
 }
 
-void set_projection(int i1, int i2, int i3, int i4) {
-	
-	projectiondata1 = (((long)i1 << 11) / 0x168) >> 1;
-	projectiondata2 = (((long)i2 << 11) / 0x168) >> 1;
-	projectiondata3 = i3 >> 1;
-	projectiondata5 = projectiondata3 + projectiondata4;
-	projectiondata6 = i4 >> 1;
-	projectiondata8 = projectiondata6 + projectiondata7;
-	projectiondata9 = (long)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+static legacy_u16 projection_angle_from_size(legacy_u16 size)
+{
+	legacy_u32 numerator;
+
+	numerator = LEGACY_U32_WRAP_MUL(size, 0x800UL);
+	return (legacy_u16)((numerator / 0x168U) >> 1);
+}
+
+static legacy_u16 projection_scale(legacy_u16 angle, legacy_u16 dimension)
+{
+	legacy_u32 numerator;
+	legacy_u16 denominator;
+
+	numerator = LEGACY_U32_WRAP_MUL(
+		(legacy_u16)cos_fast(angle), dimension);
+	denominator = (legacy_u16)sin_fast(angle);
+	return (legacy_u16)(numerator / denominator);
+}
+
+void set_projection(
+	legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4)
+{
+	projectiondata1 = projection_angle_from_size(i1);
+	projectiondata2 = projection_angle_from_size(i2);
+	projectiondata3 = (legacy_u16)(i3 >> 1);
+	projectiondata5 = LEGACY_U16_WRAP_ADD(
+		projectiondata3, projectiondata4);
+	projectiondata6 = (legacy_u16)(i4 >> 1);
+	projectiondata8 = LEGACY_U16_WRAP_ADD(
+		projectiondata6, projectiondata7);
+	projectiondata9 = projection_scale(projectiondata1, projectiondata3);
 
 	if (projectiondata2 != 0) {
-		projectiondata10 = (long)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+		projectiondata10 = projection_scale(
+			projectiondata2, projectiondata6);
 	} else {
-		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
-		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
+		projectiondata10 = LEGACY_U16_WRAP_SUB(
+			LEGACY_U16_WRAP_SUB(
+				projectiondata9, projectiondata9 >> 3),
+			projectiondata9 >> 4);
+		projectiondata2 = (legacy_u16)polarAngle(
+			LEGACY_S16_FROM_BITS(projectiondata10),
+			LEGACY_S16_FROM_BITS(projectiondata6));
 	}
-	
 }
 
 extern struct RECTANGLE select_rect_rc;

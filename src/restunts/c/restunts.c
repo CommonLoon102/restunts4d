@@ -338,7 +338,8 @@ extern struct SHAPE3D game3dshapes[];
 extern unsigned select_cliprect_rotate(int angX, int angY, int angZ, struct RECTANGLE* cliprect, int unk);
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
 extern void sub_29772(void);
-extern void set_projection(int, int, int, int);
+extern void set_projection(
+	legacy_u16, legacy_u16, legacy_u16, legacy_u16);
 
 struct RECTANGLE shaperect = { 0, 320, 0, 200 };
 struct TRANSFORMEDSHAPE3D transshape;
