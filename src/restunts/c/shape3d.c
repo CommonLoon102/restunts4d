@@ -3,6 +3,7 @@
 #include <limits.h>
 #include "externs.h"
 #include "fileio.h"
+#include "legacy.h"
 #include "memmgr.h"
 #include "shape3d.h"
 #include "shape2d.h"
@@ -3462,35 +3463,35 @@ preRender_c_tail:
 	}
 }
 
-extern unsigned far word_2F448; // seg012
-extern unsigned far off_2F44A[]; // seg012
+extern legacy_u16 far word_2F448; // seg012
+extern legacy_u16 far off_2F44A[]; // seg012
 
 unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4);
 
-static unsigned short draw_line_sar1(unsigned short value) {
-	return (unsigned short)((value >> 1) | (value & 0x8000U));
+static legacy_u16 draw_line_sar1(legacy_u16 value) {
+	return LEGACY_U16_SAR1(value);
 }
 
-static unsigned short draw_line_round_div(unsigned long numerator, unsigned short divisor) {
-	unsigned long quotient;
-	unsigned short remainder;
+static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) {
+	legacy_u32 quotient;
+	legacy_u16 remainder;
 
 	quotient = numerator / divisor;
-	remainder = (unsigned short)(numerator % divisor);
-	if ((unsigned short)(divisor >> 1) < remainder)
+	remainder = (legacy_u16)(numerator % divisor);
+	if ((legacy_u16)(divisor >> 1) < remainder)
 		quotient++;
-	return (unsigned short)quotient;
+	return LEGACY_U32_LOW_WORD(quotient);
 }
 
-static unsigned short draw_line_step(unsigned short minor, unsigned short major) {
-	unsigned short far* table;
+static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
+	legacy_u16 far* table;
 
-	if ((short)major < (short)word_2F448) {
-		table = (unsigned short far*)MK_FP(FP_SEG(&word_2F448),
+	if (LEGACY_S16_FROM_BITS(major) < LEGACY_S16_FROM_BITS(word_2F448)) {
+		table = (legacy_u16 far*)MK_FP(FP_SEG(&word_2F448),
 			off_2F44A[major]);
 		return table[minor];
 	}
-	return draw_line_round_div((unsigned long)minor << 16, major);
+	return draw_line_round_div((legacy_u32)minor << 16, major);
 }
 
 unsigned draw_line_related(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8) {
@@ -3502,21 +3503,21 @@ unsigned draw_line_related_alt(unsigned arg_startX, unsigned arg_startY, unsigne
 }
 
 unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4) {
-	unsigned short* line;
-	unsigned short ax;
-	unsigned short bx;
-	unsigned short cx;
-	unsigned short dx;
-	unsigned short mode;
-	unsigned short clip;
-	unsigned short old_value;
-	unsigned short advance;
-	unsigned short original_count;
-	unsigned long value32;
-	unsigned long product;
-	long difference;
+	legacy_u16* line;
+	legacy_u16 ax;
+	legacy_u16 bx;
+	legacy_u16 cx;
+	legacy_u16 dx;
+	legacy_u16 mode;
+	legacy_u16 clip;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+	legacy_u16 original_count;
+	legacy_u32 value32;
+	legacy_u32 product;
+	legacy_s32 difference;
 
-	line = (unsigned short*)arg_8;
+	line = (legacy_u16*)arg_8;
 	line[9] = 0x00FFU;
 	line[0] = 0;
 	line[2] = 0;
@@ -3525,11 +3526,11 @@ unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsign
 	line[12] = 0;
 	line[13] = 0;
 
-	ax = (unsigned short)arg_startY;
-	bx = (unsigned short)arg_endY;
-	cx = (unsigned short)arg_startX;
-	dx = (unsigned short)arg_endX;
-	if ((short)ax <= (short)bx) {
+	ax = (legacy_u16)arg_startY;
+	bx = (legacy_u16)arg_endY;
+	cx = (legacy_u16)arg_startX;
+	dx = (legacy_u16)arg_endX;
+	if (LEGACY_S16_FROM_BITS(ax) <= LEGACY_S16_FROM_BITS(bx)) {
 		line[1] = cx;
 		line[3] = ax;
 		line[4] = dx;
@@ -3545,86 +3546,86 @@ unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsign
 
 draw_c_clip_initial:
 	dx = 0;
-	if ((unsigned short)var_4 == 0) {
+	if ((legacy_u16)var_4 == 0) {
 		ax = line[3];
 		bx = sprite1.sprite_top;
 		cx = sprite1.sprite_height;
-		if ((short)ax >= (short)cx) {
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx)) {
 			dx = 8;
 			goto draw_c_reject;
 		}
-		if ((short)ax < (short)bx)
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
 			dx |= 0x0400U;
 
 		ax = line[5];
-		if ((short)ax < (short)bx) {
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
 			dx = 4;
 			goto draw_c_reject;
 		}
-		if ((short)ax >= (short)cx)
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
 			dx |= 8;
 
 		bx = sprite1.sprite_left2;
 		cx = sprite1.sprite_widthsum;
 		ax = line[1];
-		if ((short)ax < (short)bx)
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
 			dx |= 0x0200U;
-		if ((short)ax >= (short)cx)
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
 			dx |= 0x0100U;
 		ax = line[4];
-		if ((short)ax < (short)bx)
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
 			dx |= 2;
-		if ((short)ax >= (short)cx)
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
 			dx |= 1;
-		if ((unsigned char)dx & (unsigned char)(dx >> 8)) {
-			dx = (unsigned char)dx & (unsigned char)(dx >> 8);
+		if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
+			dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
 			goto draw_c_reject;
 		}
 	}
 
-	dx = (unsigned short)((unsigned char)dx | (unsigned char)(dx >> 8));
+	dx = (legacy_u16)((legacy_u8)dx | (legacy_u8)(dx >> 8));
 	clip = dx;
-	difference = (long)(short)line[5] - (long)(short)line[3];
+	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[5]) - (legacy_s32)LEGACY_S16_FROM_BITS(line[3]);
 	if (difference < -32768L || difference > 32767L)
 		goto draw_c_subdivide;
-	cx = (unsigned short)difference;
-	difference = (long)(short)line[4] - (long)(short)line[1];
+	cx = (legacy_u16)difference;
+	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[4]) - (legacy_s32)LEGACY_S16_FROM_BITS(line[1]);
 	if (difference < -32768L || difference > 32767L)
 		goto draw_c_subdivide;
-	dx = (unsigned short)difference;
+	dx = (legacy_u16)difference;
 	if (dx == 0) {
-		cx = (unsigned short)(cx + 1);
+		cx = (legacy_u16)(cx + 1);
 		line[7] = cx;
-		line[9] = (unsigned short)((line[9] & 0xFF00U) | 2U);
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 2U);
 		goto draw_c_dispatch_clip;
 	}
 
-	if ((short)dx >= 0) {
+	if (LEGACY_S16_FROM_BITS(dx) >= 0) {
 		if (dx < cx) {
-			line[9] = (unsigned short)((line[9] & 0xFF00U) | 6U);
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 6U);
 			goto draw_c_compute_step;
 		}
 		if (dx == cx) {
-			line[9] = (unsigned short)((line[9] & 0xFF00U) | 4U);
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 4U);
 			goto draw_c_count;
 		}
-		line[9] = (unsigned short)((line[9] & 0xFF00U) | 8U);
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 8U);
 		bx = cx;
 		cx = dx;
 		dx = bx;
 	} else {
 		if (dx == 0x8000U)
 			goto draw_c_subdivide;
-		dx = (unsigned short)(0U - dx);
+		dx = (legacy_u16)(0U - dx);
 		if (dx < cx) {
-			line[9] = (unsigned short)((line[9] & 0xFF00U) | 5U);
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 5U);
 			goto draw_c_compute_step;
 		}
 		if (dx == cx) {
-			line[9] = (unsigned short)((line[9] & 0xFF00U) | 3U);
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 3U);
 			goto draw_c_count;
 		}
-		line[9] = (unsigned short)((line[9] & 0xFF00U) | 7U);
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 7U);
 		bx = cx;
 		cx = dx;
 		dx = bx;
@@ -3635,7 +3636,7 @@ draw_c_compute_step:
 	if (cx == 0x7FFFU)
 		goto draw_c_subdivide;
 draw_c_count:
-	line[7] = (unsigned short)(cx + 1);
+	line[7] = (legacy_u16)(cx + 1);
 
 draw_c_dispatch_clip:
 	switch (clip & 0x0FU) {
@@ -3659,56 +3660,56 @@ draw_c_clip_top:
 	ax = line[3];
 	cx = sprite1.sprite_top;
 	line[3] = cx;
-	cx = (unsigned short)(cx - ax);
+	cx = (legacy_u16)(cx - ax);
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
-		line[7] = (unsigned short)(line[7] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_top;
 	case 3:
-		line[1] = (unsigned short)(line[1] - cx);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[1] = (legacy_u16)(line[1] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_top;
 	case 4:
-		line[1] = (unsigned short)(line[1] + cx);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[1] = (legacy_u16)(line[1] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_top;
 	case 5:
-		product = (unsigned long)line[6] * cx;
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		product = (legacy_u32)line[6] * cx;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 -= product;
-		line[0] = (unsigned short)value32;
-		line[1] = (unsigned short)(value32 >> 16);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_top;
 	case 6:
-		product = (unsigned long)line[6] * cx;
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		product = (legacy_u32)line[6] * cx;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 += product;
-		line[0] = (unsigned short)value32;
-		line[1] = (unsigned short)(value32 >> 16);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_top;
 	case 7:
 	case 8:
 		line[3] = ax;
-		advance = draw_line_round_div((unsigned long)cx << 16, line[6]);
+		advance = draw_line_round_div((legacy_u32)cx << 16, line[6]);
 		if (mode == 7)
-			line[1] = (unsigned short)(line[1] - advance);
+			line[1] = (legacy_u16)(line[1] - advance);
 		else
-			line[1] = (unsigned short)(line[1] + advance);
-		line[7] = (unsigned short)(line[7] - advance);
-		if ((short)line[7] <= 0) {
+			line[1] = (legacy_u16)(line[1] + advance);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
 			line[7] = 1;
 			line[3] = sprite1.sprite_top;
 			line[1] = line[4];
 			goto draw_c_after_top;
 		}
-		product = (unsigned long)advance * line[6];
-		value32 = ((unsigned long)line[3] << 16) | line[2];
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
 		value32 += product;
-		line[2] = (unsigned short)value32;
-		line[3] = (unsigned short)(value32 >> 16);
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
 		goto draw_c_after_top;
 	}
 	return 0;
@@ -3720,53 +3721,53 @@ draw_c_after_top:
 
 draw_c_clip_bottom:
 	cx = line[5];
-	dx = (unsigned short)(sprite1.sprite_height - 1);
+	dx = (legacy_u16)(sprite1.sprite_height - 1);
 	line[5] = dx;
-	cx = (unsigned short)(cx - dx);
+	cx = (legacy_u16)(cx - dx);
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
-		line[7] = (unsigned short)(line[7] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_reclip_x;
 	case 3:
-		line[4] = (unsigned short)(line[4] + cx);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[4] = (legacy_u16)(line[4] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_reclip_x;
 	case 4:
-		line[4] = (unsigned short)(line[4] - cx);
-		line[7] = (unsigned short)(line[7] - cx);
+		line[4] = (legacy_u16)(line[4] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_reclip_x;
 	case 5:
-		line[7] = (unsigned short)(line[7] - cx);
-		advance = (unsigned short)(line[7] - 1);
-		product = (unsigned long)line[6] * advance;
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		line[7] = (legacy_u16)(line[7] - cx);
+		advance = (legacy_u16)(line[7] - 1);
+		product = (legacy_u32)line[6] * advance;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 -= product;
 		value32 += 0x8000UL;
-		line[4] = (unsigned short)(value32 >> 16);
+		line[4] = (legacy_u16)(value32 >> 16);
 		goto draw_c_reclip_x;
 	case 6:
-		line[7] = (unsigned short)(line[7] - cx);
-		advance = (unsigned short)(line[7] - 1);
-		product = (unsigned long)line[6] * advance;
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		line[7] = (legacy_u16)(line[7] - cx);
+		advance = (legacy_u16)(line[7] - 1);
+		product = (legacy_u32)line[6] * advance;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 += product;
 		value32 += 0x8000UL;
-		line[4] = (unsigned short)(value32 >> 16);
+		line[4] = (legacy_u16)(value32 >> 16);
 		goto draw_c_reclip_x;
 	case 7:
 	case 8:
-		value32 = ((unsigned long)dx << 16) -
-			(((unsigned long)line[3] << 16) | line[2]);
-		if ((long)value32 < 0)
+		value32 = ((legacy_u32)dx << 16) -
+			(((legacy_u32)line[3] << 16) | line[2]);
+		if (LEGACY_U32_IS_NEGATIVE(value32))
 			advance = 0;
 		else
 			advance = draw_line_round_div(value32, line[6]);
 		if (mode == 7)
-			line[4] = (unsigned short)(line[1] - advance);
+			line[4] = (legacy_u16)(line[1] - advance);
 		else
-			line[4] = (unsigned short)(line[1] + advance);
-		line[7] = (unsigned short)(advance + 1);
+			line[4] = (legacy_u16)(line[1] + advance);
+		line[7] = (legacy_u16)(advance + 1);
 		goto draw_c_reclip_x;
 	}
 	return 0;
@@ -3780,81 +3781,81 @@ draw_c_clip_left:
 		cx = sprite1.sprite_left2;
 		ax = line[4];
 		line[4] = cx;
-		cx = (unsigned short)(cx - ax);
-		line[11] = (unsigned short)(line[11] + cx);
-		line[7] = (unsigned short)(line[7] - cx);
-		line[5] = (unsigned short)(line[5] - cx);
+		cx = (legacy_u16)(cx - ax);
+		line[11] = (legacy_u16)(line[11] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[5] = (legacy_u16)(line[5] - cx);
 		goto draw_c_after_left;
 	case 4:
 		ax = line[1];
 		cx = sprite1.sprite_left2;
 		line[1] = cx;
-		cx = (unsigned short)(cx - ax);
-		line[10] = (unsigned short)(line[10] + cx);
-		line[3] = (unsigned short)(line[3] + cx);
-		line[7] = (unsigned short)(line[7] - cx);
+		cx = (legacy_u16)(cx - ax);
+		line[10] = (legacy_u16)(line[10] + cx);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
 		goto draw_c_after_left;
 	case 5:
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		line[4] = sprite1.sprite_left2;
-		difference = (long)(short)line[1] - (long)(short)sprite1.sprite_left2;
+		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[1]) - (legacy_s32)LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
 		if (difference < 0)
 			advance = 1;
 		else {
 			advance = draw_line_round_div(value32 -
-				((unsigned long)sprite1.sprite_left2 << 16), line[6]);
-			advance = (unsigned short)(advance + 1);
+				((legacy_u32)sprite1.sprite_left2 << 16), line[6]);
+			advance = (legacy_u16)(advance + 1);
 		}
 		original_count = line[7];
 		line[7] = advance;
-		line[11] = (unsigned short)(line[11] + original_count - advance);
-		line[5] = (unsigned short)(line[3] + advance - 1);
+		line[11] = (legacy_u16)(line[11] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
 		goto draw_c_after_left;
 	case 6:
-		value32 = ((unsigned long)sprite1.sprite_left2 << 16) -
-			(((unsigned long)line[1] << 16) | line[0]);
-		if ((long)value32 < 0)
+		value32 = ((legacy_u32)sprite1.sprite_left2 << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if (LEGACY_U32_IS_NEGATIVE(value32))
 			goto draw_c_reject_left;
 		advance = draw_line_round_div(value32, line[6]);
-		line[3] = (unsigned short)(line[3] + advance);
-		line[10] = (unsigned short)(line[10] + advance);
-		line[7] = (unsigned short)(line[7] - advance);
-		if ((short)line[7] <= 0)
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[10] = (legacy_u16)(line[10] + advance);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
 			goto draw_c_reject_left;
-		product = (unsigned long)advance * line[6];
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 += product;
-		line[0] = (unsigned short)value32;
-		line[1] = (unsigned short)(value32 >> 16);
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
 		goto draw_c_after_left;
 	case 7:
 		ax = line[1];
 		dx = sprite1.sprite_left2;
 		line[4] = dx;
-		ax = (unsigned short)(ax - dx);
-		advance = (unsigned short)(ax + 1);
+		ax = (legacy_u16)(ax - dx);
+		advance = (legacy_u16)(ax + 1);
 		line[7] = advance;
-		product = (unsigned long)ax * line[6];
-		value32 = ((unsigned long)line[3] << 16) | line[2];
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
 		value32 += product;
 		value32 += 0x8000UL;
 		old_value = line[5];
-		line[5] = (unsigned short)(value32 >> 16);
-		line[11] = (unsigned short)(line[11] + old_value - line[5]);
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[11] = (legacy_u16)(line[11] + old_value - line[5]);
 		goto draw_c_after_left;
 	case 8:
 		old_value = line[1];
 		line[1] = sprite1.sprite_left2;
-		advance = (unsigned short)(line[1] - old_value);
-		line[7] = (unsigned short)(line[7] - advance);
-		product = (unsigned long)advance * line[6];
-		value32 = ((unsigned long)line[3] << 16) | line[2];
-		old_value = (unsigned short)((value32 + 0x8000UL) >> 16);
+		advance = (legacy_u16)(line[1] - old_value);
+		line[7] = (legacy_u16)(line[7] - advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
 		value32 += product;
-		line[2] = (unsigned short)value32;
-		line[3] = (unsigned short)(value32 >> 16);
-		advance = (unsigned short)((value32 + 0x8000UL) >> 16);
-		line[10] = (unsigned short)(line[10] + advance - old_value);
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[10] = (legacy_u16)(line[10] + advance - old_value);
 		goto draw_c_after_left;
 	default:
 		return 0;
@@ -3877,82 +3878,82 @@ draw_c_clip_right:
 		goto draw_c_reject;
 	case 3:
 		cx = line[1];
-		ax = (unsigned short)(sprite1.sprite_widthsum - 1);
+		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
 		line[1] = ax;
-		cx = (unsigned short)(cx - ax);
-		line[3] = (unsigned short)(line[3] + cx);
-		line[7] = (unsigned short)(line[7] - cx);
-		line[12] = (unsigned short)(line[12] + cx);
+		cx = (legacy_u16)(cx - ax);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[12] = (legacy_u16)(line[12] + cx);
 		return 0;
 	case 4:
-		cx = (unsigned short)(sprite1.sprite_widthsum - 1);
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
 		ax = line[4];
 		line[4] = cx;
-		ax = (unsigned short)(ax - cx);
-		line[13] = (unsigned short)(line[13] + ax);
-		line[7] = (unsigned short)(line[7] - ax);
-		line[5] = (unsigned short)(line[5] - ax);
+		ax = (legacy_u16)(ax - cx);
+		line[13] = (legacy_u16)(line[13] + ax);
+		line[7] = (legacy_u16)(line[7] - ax);
+		line[5] = (legacy_u16)(line[5] - ax);
 		return 0;
 	case 5:
-		value32 = ((unsigned long)line[1] << 16) | line[0];
-		value32 -= (unsigned long)(sprite1.sprite_widthsum - 1) << 16;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= (legacy_u32)(sprite1.sprite_widthsum - 1) << 16;
 		advance = draw_line_round_div(value32, line[6]);
-		line[7] = (unsigned short)(line[7] - advance);
-		if ((short)line[7] <= 0) {
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
 			dx = 1;
 			goto draw_c_reject;
 		}
-		line[3] = (unsigned short)(line[3] + advance);
-		line[12] = (unsigned short)(line[12] + advance);
-		product = (unsigned long)advance * line[6];
-		value32 = ((unsigned long)line[1] << 16) | line[0];
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[12] = (legacy_u16)(line[12] + advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 -= product;
-		line[0] = (unsigned short)value32;
-		line[1] = (unsigned short)(value32 >> 16);
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
 		return 0;
 	case 6:
-		line[4] = (unsigned short)(sprite1.sprite_widthsum - 1);
-		value32 = ((unsigned long)line[4] << 16) -
-			(((unsigned long)line[1] << 16) | line[0]);
-		if ((long)value32 < 0) {
+		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		value32 = ((legacy_u32)line[4] << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if (LEGACY_U32_IS_NEGATIVE(value32)) {
 			dx = 1;
 			goto draw_c_reject;
 		}
-		advance = (unsigned short)(draw_line_round_div(value32, line[6]) + 1);
+		advance = (legacy_u16)(draw_line_round_div(value32, line[6]) + 1);
 		original_count = line[7];
 		line[7] = advance;
-		line[13] = (unsigned short)(line[13] + original_count - advance);
-		line[5] = (unsigned short)(line[3] + advance - 1);
+		line[13] = (legacy_u16)(line[13] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
 		return 0;
 	case 7:
 		ax = line[1];
-		cx = (unsigned short)(sprite1.sprite_widthsum - 1);
-		ax = (unsigned short)(ax - cx);
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		ax = (legacy_u16)(ax - cx);
 		line[1] = cx;
-		line[7] = (unsigned short)(line[7] - ax);
-		product = (unsigned long)ax * line[6];
-		value32 = ((unsigned long)line[3] << 16) | line[2];
-		old_value = (unsigned short)((value32 + 0x8000UL) >> 16);
+		line[7] = (legacy_u16)(line[7] - ax);
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
 		value32 += product;
-		line[2] = (unsigned short)value32;
-		line[3] = (unsigned short)(value32 >> 16);
-		advance = (unsigned short)((value32 + 0x8000UL) >> 16);
-		line[12] = (unsigned short)(line[12] + advance - old_value);
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[12] = (legacy_u16)(line[12] + advance - old_value);
 		return 0;
 	case 8:
 		ax = sprite1.sprite_widthsum;
-		cx = (unsigned short)(ax - 1);
+		cx = (legacy_u16)(ax - 1);
 		line[4] = cx;
-		ax = (unsigned short)(ax - line[1]);
+		ax = (legacy_u16)(ax - line[1]);
 		line[7] = ax;
-		advance = (unsigned short)(ax - 1);
-		product = (unsigned long)advance * line[6];
-		value32 = ((unsigned long)line[3] << 16) | line[2];
+		advance = (legacy_u16)(ax - 1);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
 		value32 += product;
 		value32 += 0x8000UL;
 		old_value = line[5];
-		line[5] = (unsigned short)(value32 >> 16);
-		line[13] = (unsigned short)(line[13] + old_value - line[5]);
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[13] = (legacy_u16)(line[13] + old_value - line[5]);
 		return 0;
 	default:
 		return 0;
@@ -3961,22 +3962,22 @@ draw_c_clip_right:
 draw_c_reclip_x:
 	dx = 0;
 	ax = line[1];
-	if ((short)ax < (short)sprite1.sprite_left2)
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
 		dx |= 0x0200U;
-	value32 = (unsigned long)line[0] + 0x8000UL;
-	ax = (unsigned short)(ax + (unsigned short)(value32 >> 16));
-	if ((short)ax >= (short)sprite1.sprite_widthsum)
+	value32 = (legacy_u32)line[0] + 0x8000UL;
+	ax = (legacy_u16)(ax + (legacy_u16)(value32 >> 16));
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum))
 		dx |= 0x0100U;
 	ax = line[4];
-	if ((short)ax < (short)sprite1.sprite_left2)
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
 		dx |= 2;
-	if ((short)ax >= (short)sprite1.sprite_widthsum)
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum))
 		dx |= 1;
-	if ((unsigned char)dx & (unsigned char)(dx >> 8)) {
-		dx = (unsigned char)dx & (unsigned char)(dx >> 8);
+	if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
+		dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
 		goto draw_c_reject;
 	}
-	dx = (unsigned short)((unsigned char)dx | (unsigned char)(dx >> 8));
+	dx = (legacy_u16)((legacy_u8)dx | (legacy_u8)(dx >> 8));
 	if (dx != 0) {
 		clip = dx;
 		goto draw_c_dispatch_clip;
@@ -3985,12 +3986,12 @@ draw_c_reclip_x:
 
 draw_c_reject:
 	clip = dx & 0x00FFU;
-	line[9] = (unsigned short)((line[9] & 0x00FFU) | (clip << 8));
+	line[9] = (legacy_u16)((line[9] & 0x00FFU) | (clip << 8));
 	line[7] = 0;
 	if (clip & 4U) {
 		line[3] = sprite1.sprite_top;
 		line[2] = 0;
-		line[5] = (unsigned short)(sprite1.sprite_top - 1);
+		line[5] = (legacy_u16)(sprite1.sprite_top - 1);
 		return clip;
 	}
 	if (clip & 8U) {
@@ -3999,27 +4000,27 @@ draw_c_reject:
 		return clip;
 	}
 	cx = line[5];
-	if ((short)cx >= (short)sprite1.sprite_height)
-		cx = (unsigned short)(sprite1.sprite_height - 1);
-	value32 = (unsigned long)line[2] + 0x8000UL;
-	dx = (unsigned short)(line[3] + (unsigned short)(value32 >> 16));
-	if ((short)dx < (short)sprite1.sprite_top)
+	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_height))
+		cx = (legacy_u16)(sprite1.sprite_height - 1);
+	value32 = (legacy_u32)line[2] + 0x8000UL;
+	dx = (legacy_u16)(line[3] + (legacy_u16)(value32 >> 16));
+	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_top))
 		dx = sprite1.sprite_top;
 	line[3] = dx;
 	line[2] = 0;
-	cx = (unsigned short)(cx - dx + 1);
-	line[5] = (unsigned short)(dx - 1);
+	cx = (legacy_u16)(cx - dx + 1);
+	line[5] = (legacy_u16)(dx - 1);
 	if (clip & 2U)
-		line[11] = (unsigned short)(line[11] + cx);
+		line[11] = (legacy_u16)(line[11] + cx);
 	else
-		line[13] = (unsigned short)(line[13] + cx);
+		line[13] = (legacy_u16)(line[13] + cx);
 	return clip;
 
 draw_c_horizontal:
-	line[9] = (unsigned short)((line[9] & 0xFF00U) | 1U);
+	line[9] = (legacy_u16)((line[9] & 0xFF00U) | 1U);
 	if (cx == dx)
-		line[9] = (unsigned short)((line[9] & 0xFF00U) | 9U);
-	if ((short)cx > (short)dx) {
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 9U);
+	if (LEGACY_S16_FROM_BITS(cx) > LEGACY_S16_FROM_BITS(dx)) {
 		line[9] &= 0xFF00U;
 		line[1] = dx;
 		line[4] = cx;
@@ -4027,121 +4028,121 @@ draw_c_horizontal:
 		cx = dx;
 		dx = bx;
 	}
-	if ((unsigned short)var_4 != 0) {
-		line[7] = (unsigned short)(dx - cx + 1);
+	if ((legacy_u16)var_4 != 0) {
+		line[7] = (legacy_u16)(dx - cx + 1);
 		return 0;
 	}
 	bx = sprite1.sprite_top;
-	if ((short)ax < (short)bx) {
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
 		line[3] = bx;
 		line[5] = bx;
 		dx = 4;
 		goto draw_c_horizontal_reject;
 	}
 	bx = sprite1.sprite_height;
-	if ((short)ax >= (short)bx) {
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(bx)) {
 		line[3] = bx;
 		line[5] = bx;
 		dx = 8;
 		goto draw_c_horizontal_reject;
 	}
-	line[7] = (unsigned short)(dx - cx + 1);
-	if ((short)dx < (short)sprite1.sprite_left2) {
-		line[5] = (unsigned short)(line[5] - 1);
+	line[7] = (legacy_u16)(dx - cx + 1);
+	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+		line[5] = (legacy_u16)(line[5] - 1);
 		line[11] = 1;
 		dx = 2;
 		goto draw_c_horizontal_reject;
 	}
-	if ((short)cx >= (short)sprite1.sprite_widthsum) {
-		line[5] = (unsigned short)(line[5] - 1);
+	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
+		line[5] = (legacy_u16)(line[5] - 1);
 		line[13] = 1;
 		dx = 1;
 		goto draw_c_horizontal_reject;
 	}
-	ax = (unsigned short)(sprite1.sprite_left2 - cx);
-	if ((short)ax > 0) {
+	ax = (legacy_u16)(sprite1.sprite_left2 - cx);
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
 		line[1] = sprite1.sprite_left2;
-		line[7] = (unsigned short)(line[7] - ax);
+		line[7] = (legacy_u16)(line[7] - ax);
 	}
-	ax = (unsigned short)(dx - (sprite1.sprite_widthsum - 1));
-	if ((short)ax > 0) {
-		line[7] = (unsigned short)(line[7] - ax);
-		line[4] = (unsigned short)(sprite1.sprite_widthsum - 1);
+	ax = (legacy_u16)(dx - (sprite1.sprite_widthsum - 1));
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		line[7] = (legacy_u16)(line[7] - ax);
+		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
 	}
 	return 0;
 
 draw_c_horizontal_reject:
-	line[9] = (unsigned short)((line[9] & 0x00FFU) | ((dx & 0xFFU) << 8));
+	line[9] = (legacy_u16)((line[9] & 0x00FFU) | ((dx & 0xFFU) << 8));
 	line[7] = 0;
 	return dx & 0xFFU;
 
 draw_c_subdivide:
 	cx = draw_line_sar1(line[5]);
 	ax = draw_line_sar1(line[3]);
-	cx = draw_line_sar1((unsigned short)(cx - ax));
+	cx = draw_line_sar1((legacy_u16)(cx - ax));
 	dx = draw_line_sar1(line[4]);
 	ax = draw_line_sar1(line[1]);
-	dx = draw_line_sar1((unsigned short)(dx - ax));
+	dx = draw_line_sar1((legacy_u16)(dx - ax));
 
 draw_c_subdivide_top_test:
-	if ((short)line[3] > (short)0xC180U)
+	if (LEGACY_S16_FROM_BITS(line[3]) > LEGACY_S16_FROM_BITS(0xC180U))
 		goto draw_c_subdivide_bottom_test;
 draw_c_subdivide_top:
-	ax = (unsigned short)(line[3] + cx);
+	ax = (legacy_u16)(line[3] + cx);
 	line[3] = ax;
 	bx = ax;
-	ax = (unsigned short)(ax - sprite1.sprite_top);
-	if ((short)ax > 0) {
-		if ((short)ax > (short)cx)
+	ax = (legacy_u16)(ax - sprite1.sprite_top);
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
 			ax = cx;
-		bx = (unsigned short)(bx - sprite1.sprite_height);
-		if ((short)bx > 0) {
-			ax = (unsigned short)(ax - bx);
-			if ((short)ax <= 0)
+		bx = (legacy_u16)(bx - sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(bx) > 0) {
+			ax = (legacy_u16)(ax - bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
 				goto draw_c_subdivide_top_next;
 		}
-		if ((short)line[1] < (short)sprite1.sprite_left2)
-			line[10] = (unsigned short)(line[10] + ax);
+		if (LEGACY_S16_FROM_BITS(line[1]) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+			line[10] = (legacy_u16)(line[10] + ax);
 		else
-			line[12] = (unsigned short)(line[12] + ax);
+			line[12] = (legacy_u16)(line[12] + ax);
 	}
 draw_c_subdivide_top_next:
-	line[1] = (unsigned short)(line[1] + dx);
+	line[1] = (legacy_u16)(line[1] + dx);
 	goto draw_c_subdivide_top_test;
 
 draw_c_subdivide_bottom_test:
-	if ((short)line[5] >= (short)0x3E80U)
+	if (LEGACY_S16_FROM_BITS(line[5]) >= LEGACY_S16_FROM_BITS(0x3E80U))
 		goto draw_c_subdivide_bottom;
-	if ((short)line[1] <= (short)0xC180U ||
-		(short)line[1] >= (short)0x3E80U)
+	if (LEGACY_S16_FROM_BITS(line[1]) <= LEGACY_S16_FROM_BITS(0xC180U) ||
+		LEGACY_S16_FROM_BITS(line[1]) >= LEGACY_S16_FROM_BITS(0x3E80U))
 		goto draw_c_subdivide_top;
-	if ((short)line[4] <= (short)0xC180U ||
-		(short)line[4] >= (short)0x3E80U)
+	if (LEGACY_S16_FROM_BITS(line[4]) <= LEGACY_S16_FROM_BITS(0xC180U) ||
+		LEGACY_S16_FROM_BITS(line[4]) >= LEGACY_S16_FROM_BITS(0x3E80U))
 		goto draw_c_subdivide_bottom;
 	goto draw_c_clip_initial;
 
 draw_c_subdivide_bottom:
-	ax = (unsigned short)(line[5] - cx);
+	ax = (legacy_u16)(line[5] - cx);
 	line[5] = ax;
 	bx = ax;
-	ax = (unsigned short)(ax - sprite1.sprite_height + 1);
-	if ((short)ax < 0) {
-		ax = (unsigned short)(0U - ax);
-		if ((short)ax > (short)cx)
+	ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
+	if (LEGACY_S16_FROM_BITS(ax) < 0) {
+		ax = (legacy_u16)(0U - ax);
+		if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
 			ax = cx;
-		bx = (unsigned short)(bx - sprite1.sprite_top + 1);
-		if ((short)bx < 0) {
-			ax = (unsigned short)(ax + bx);
-			if ((short)ax <= 0)
+		bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
+		if (LEGACY_S16_FROM_BITS(bx) < 0) {
+			ax = (legacy_u16)(ax + bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
 				goto draw_c_subdivide_bottom_next;
 		}
-		if ((short)line[4] < (short)sprite1.sprite_left2)
-			line[11] = (unsigned short)(line[11] + ax);
+		if (LEGACY_S16_FROM_BITS(line[4]) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+			line[11] = (legacy_u16)(line[11] + ax);
 		else
-			line[13] = (unsigned short)(line[13] + ax);
+			line[13] = (legacy_u16)(line[13] + ax);
 	}
 draw_c_subdivide_bottom_next:
-	line[4] = (unsigned short)(line[4] - dx);
+	line[4] = (legacy_u16)(line[4] - dx);
 	goto draw_c_subdivide_bottom_test;
 }
 

@@ -9,12 +9,32 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Sixteen implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Seventeen implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
 | Phase 5 | Not started | No Phase 5 implementation has been committed. |
 | Phase 6 | Not started | No Phase 6 implementation has been committed. |
+
+## Agreed top-level scope
+
+The seven top-level phases are:
+
+0. Define and measure what a C-only build means, including the assembly
+   inventory and regression gates.
+1. Establish exact legacy C semantics: fixed-width values, explicit wrapping,
+   shifts and rotations, multiply/divide behavior, little-endian decoding,
+   explicit serialization, deterministic legacy state, and checked divisions.
+2. Produce a C-only headless replay engine.
+3. Port the renderer.
+4. Port menus, the editor, and input handling.
+5. Isolate audio and low-level DOS platform services. External DOS driver
+   binaries may still contain assembly.
+6. Complete the C-only cutover.
+
+An SDL backend is a later platform-porting project, outside this DOS-focused
+assembly-to-C roadmap. It can discard the DOS service layer once the engine is
+portable enough to support it.
 
 ## Phase 0
 
@@ -38,6 +58,7 @@ phase. Slice numbers never advance the top-level phase number.
 14. [Player speed update](asm-to-c-phase1-slice14.md)
 15. [Pre-render edge merge](asm-to-c-phase1-slice15.md)
 16. [Clipped line rasterizer](asm-to-c-phase1-slice16.md)
+17. [Fixed-width legacy integer foundation](asm-to-c-phase1-slice17.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

@@ -72,11 +72,11 @@ seg003	setup_intro	pending	asm_only	1	90	468	-	-
 seg003	intro_op	pending	asm_only	1	32	294	-	-
 seg004	build_track_object	pending	asm_only	4	82	2208	-	-
 seg004	bto_auxiliary1	pending	asm_only	1	0	364	-	-
-seg004	shape3d_load_all	ported	c_active_with_asm	2	12	78	src/restunts/c/shape3d.c:49	-
-seg004	shape3d_free_all	ported	c_active_with_asm	2	4	16	src/restunts/c/shape3d.c:75	-
-seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4169	-
-seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4305	-
-seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4258	-
+seg004	shape3d_load_all	ported	c_active_with_asm	2	12	78	src/restunts/c/shape3d.c:50	-
+seg004	shape3d_free_all	ported	c_active_with_asm	2	4	16	src/restunts/c/shape3d.c:76	-
+seg004	shape3d_load_car_shapes	ported	c_active_with_asm	2	64	452	src/restunts/c/shape3d.c:4170	-
+seg004	shape3d_free_car_shapes	ported	c_active_with_asm	3	8	48	src/restunts/c/shape3d.c:4306	-
+seg004	sub_204AE	ported	c_active_with_asm	4	20	215	src/restunts/c/shape3d.c:4259	-
 seg004	track_setup	pending	asm_only	6	6	1484	-	-
 seg004	load_opponent_data	pending	asm_only	2	12	213	-	-
 seg004	subst_hillroad_track	pending	asm_only	5	0	125	-	-
@@ -96,11 +96,11 @@ seg005	free_player_cars	ported	c_active_with_asm	3	24	42	src/restunts/c/restunts
 seg005	mouse_minmax_position	pending	asm_only	5	6	33	-	-
 seg005	replay_unk	pending	asm_only	1	0	68	-	-
 seg005	loop_game	pending	asm_only	28	290	1733	-	-
-seg006	init_polyinfo	ported	c_active_with_asm	1	12	38	src/restunts/c/shape3d.c:2644	-
+seg006	init_polyinfo	ported	c_active_with_asm	1	12	38	src/restunts/c/shape3d.c:2645	-
 seg006	copy_material_list_pointers	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1419	-
-seg006	polyinfo_reset	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2629	-
-seg006	select_cliprect_rotate	ported	c_active_with_asm	4	10	67	src/restunts/c/shape3d.c:2611	-
-seg006	transformed_shape_op	ported	c_active_with_asm	16	88	1398	src/restunts/c/shape3d.c:142	-
+seg006	polyinfo_reset	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2630	-
+seg006	select_cliprect_rotate	ported	c_active_with_asm	4	10	67	src/restunts/c/shape3d.c:2612	-
+seg006	transformed_shape_op	ported	c_active_with_asm	16	88	1398	src/restunts/c/shape3d.c:143	-
 seg006	transformed_shape_op_helper	ported	c_active_with_asm	1	0	74	-	-
 seg006	rect_compare_point	ported	c_active_with_asm	6	0	32	src/restunts/c/math.c:125	-
 seg006	transformed_shape_op_helper3	ported	c_active_with_asm	2	4	86	-	-
@@ -108,7 +108,7 @@ seg006	get_a_poly_info	pending	c_translation_inactive	4	16	188	src/restunts/c/sh
 seg006	mat_rot_zxy	ported	c_active_with_asm	24	16	159	src/restunts/c/math.c:339	-
 seg006	rect_adjust_from_point	ported	c_active_with_asm	15	0	33	src/restunts/c/math.c:373	-
 seg006	vector_op_unk2	ported	c_active_with_asm	1	14	126	src/restunts/c/math.c:728	-
-seg006	calc_sincos80	ported	c_active_with_asm	1	8	30	src/restunts/c/shape3d.c:2637	-
+seg006	calc_sincos80	ported	c_active_with_asm	1	8	30	src/restunts/c/shape3d.c:2638	-
 seg006	nopsub_26552	ignore	not_required	0	0	15	-	-
 seg006	rect_union	ported	c_active_with_asm	17	0	47	src/restunts/c/math.c:395	-
 seg006	rect_intersect	ported	c_active_with_asm	8	0	56	src/restunts/c/math.c:436	-
@@ -168,7 +168,7 @@ seg008	call_read_line	pending	asm_only	5	8	54	-	-
 seg008	input_repeat_check	pending	asm_only	3	6	28	-	-
 seg008	draw_lines_unk	pending	asm_only	3	24	142	-	-
 seg008	draw_button	pending	asm_only	33	36	241	-	-
-seg008	shape3d_init_shape	ported	c_active_with_asm	18	0	69	src/restunts/c/shape3d.c:82	-
+seg008	shape3d_init_shape	ported	c_active_with_asm	18	0	69	src/restunts/c/shape3d.c:83	-
 seg008	font_op2_alt	pending	asm_only	25	2	12	-	-
 seg008	sprite_blit_to_video	pending	asm_only	14	20	62	-	-
 seg008	show_waiting	pending	asm_only	11	6	26	-	-
@@ -289,7 +289,7 @@ seg012	parse_shape2d_helper2	pending	asm_only	1	0	20	-	-
 seg012	criterr_interrupt_handler	pending	asm_only	0	1	21	-	-
 seg012	set_criterr_handler	pending	asm_only	1	2	28	-	-
 seg012	criterr_exithandler	pending	asm_only	0	0	11	-	-
-seg012	preRender_unk	ported	c_active_with_asm	1	0	29	src/restunts/c/shape3d.c:2780	-
+seg012	preRender_unk	ported	c_active_with_asm	1	0	29	src/restunts/c/shape3d.c:2781	-
 seg012	nopsub_2F424	ignore	not_required	0	0	8	-	-
 seg012	nopsub_2F436	ignore	not_required	0	0	1235	-	-
 seg012	preRender_line	pending	asm_only	35	4	24	-	-
@@ -377,10 +377,10 @@ seg012	mmgr_release	ported	c_active_with_asm	12	0	24	src/restunts/c/memmgr.c	-
 seg012	mmgr_get_chunk_size	ported	c_active_with_asm	2	0	18	src/restunts/c/memmgr.c:428	-
 seg012	mmgr_resize_memory	ported	c_active_with_asm	2	2	56	src/restunts/c/memmgr.c	-
 seg012	mmgr_op_unk	ported	c_active_with_asm	2	2	51	src/restunts/c/memmgr.c:499	-
-seg012	preRender_default	ported	c_active_with_asm	1	0	7	src/restunts/c/shape3d.c:2752	-
-seg012	preRender_default_alt	ported	c_active_with_asm	4	0	12	src/restunts/c/shape3d.c:2744	-
-seg012	skybox_op_helper	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2760	-
-seg012	preRender_wheel_helper4	ported	c_active_with_asm	2	17	193	src/restunts/c/shape3d.c:2768	-
+seg012	preRender_default	ported	c_active_with_asm	1	0	7	src/restunts/c/shape3d.c:2753	-
+seg012	preRender_default_alt	ported	c_active_with_asm	4	0	12	src/restunts/c/shape3d.c:2745	-
+seg012	skybox_op_helper	ported	c_active_with_asm	2	0	7	src/restunts/c/shape3d.c:2761	-
+seg012	preRender_wheel_helper4	ported	c_active_with_asm	2	17	193	src/restunts/c/shape3d.c:2769	-
 seg012	preRender_helper	pending	asm_only	2	0	70	-	-
 seg012	preRender_helper2	pending	asm_only	4	0	105	-	-
 seg012	preRender_helper3	pending	c_active_with_asm	2	0	408	src/restunts/c/shape3d.c:3197	C renderer callers use the verified implementation; two protected seg012 callers still use the original near routine.
@@ -392,7 +392,7 @@ seg012	nopsub_3219D	ignore	not_required	6	10	100	-	-
 seg012	nopsub_322B4	ignore	not_required	0	0	7	-	-
 seg012	nopsub_322C0	ignore	not_required	0	0	12	-	-
 seg012	nopsub_322DF	ignore	not_required	0	0	10	-	-
-seg012	set_projection	ported	c_active_with_asm	4	10	92	src/restunts/c/shape3d.c:2587	-
+seg012	set_projection	ported	c_active_with_asm	4	10	92	src/restunts/c/shape3d.c:2588	-
 seg012	vector_to_point	ported	c_active_with_asm	10	0	97	src/restunts/c/math.c:777	-
 seg012	sprite_free_wnd	ported	c_active_with_asm	24	3	35	src/restunts/c/shape2d.c:88	-
 seg012	file_write_nofatal	ported	c_active_with_asm	0	0	9	src/restunts/c/fileio.c:447	-
@@ -421,7 +421,7 @@ seg012	timer_compare_dx	ported	c_active_with_asm	1	2	10	src/restunts/c/restunts.
 seg012	timer_get_counter_unk	ported	c_active_with_asm	3	4	18	src/restunts/c/restunts.c:139	-
 seg012	font_op	pending	asm_only	2	0	10	-	-
 seg012	font_op2	pending	asm_only	18	0	32	-	-
-seg012	preRender_patterned	ported	c_active_with_asm	1	0	26	src/restunts/c/shape3d.c:2790	-
+seg012	preRender_patterned	ported	c_active_with_asm	1	0	26	src/restunts/c/shape3d.c:2791	-
 seg012	nopsub_328C9	ignore	not_required	0	0	8	-	-
 seg012	nopsub_328DB	ignore	not_required	0	0	9	-	-
 seg012	mat_mul_vector	ported	c_active_with_asm	54	0	122	src/restunts/c/math.c:141	-
