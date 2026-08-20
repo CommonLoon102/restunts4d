@@ -10,7 +10,11 @@ extern struct MATRIX mat_z_rot;
 extern struct MATRIX mat_x_rot;
 extern struct MATRIX mat_y_rot;
 extern struct MATRIX mat_rot_temp;
-extern unsigned mat_y_rot_angle;
+extern struct MATRIX mat_y0;
+extern struct MATRIX mat_y100;
+extern struct MATRIX mat_y200;
+extern struct MATRIX mat_y300;
+extern legacy_u16 mat_y_rot_angle;
 
 legacy_s16 sintab[] = {
 	0, 101, 201, 302, 402, 503, 603, 704, 804, 904, 1005, 1105, 1205, 1306, 1406, 1506, 1606, 1706, 1806, 1906, 2006, 2105, 2205, 2305, 2404, 2503, 2603, 2702, 2801, 2900, 2999, 3098, 3196, 3295, 3393, 3492, 3590, 3688, 3786, 3883, 3981, 4078, 4176, 4273, 4370, 4467, 4563, 4660, 4756, 4852, 4948, 5044, 5139, 5235, 5330, 5425, 5520, 5614, 5708, 5803, 5897, 5990, 6084, 6177, 6270, 6363, 6455, 6547, 6639, 6731, 6823, 6914, 7005, 7096, 7186, 7276, 7366, 7456, 7545, 7635, 7723, 7812, 7900, 7988, 8076, 8163, 8250, 8337, 8423, 8509, 8595, 8680, 8765, 8850, 8935, 9019, 9102, 9186, 9269, 9352, 9434, 9516, 9598, 9679, 9760, 9841, 9921, 10001, 10080, 10159, 10238, 10316, 10394, 10471, 10549, 10625, 10702, 10778, 10853, 10928, 11003, 11077, 11151, 11224, 11297, 11370, 11442, 11514, 11585, 11656, 11727, 11797, 11866, 11935, 12004, 12072, 12140, 12207, 12274, 12340, 12406, 12472, 12537, 12601, 12665, 12729, 12792, 12854, 12916, 12978, 13039, 13100, 13160, 13219, 13279, 13337, 13395, 13453, 13510, 13567, 13623, 13678, 13733, 13788, 13842, 13896, 13949, 14001, 14053, 14104, 14155, 14206, 14256, 14305, 14354, 14402, 14449, 14497, 14543, 14589, 14635, 14680, 14724, 14768, 14811, 14854, 14896, 14937, 14978, 15019, 15059, 15098, 15137, 15175, 15213, 15250, 15286, 15322, 15357, 15392, 15426, 15460, 15493, 15525, 15557, 15588, 15619, 15649, 15679, 15707, 15736, 15763, 15791, 15817, 15843, 15868, 15893, 15917, 15941, 15964, 15986, 16008, 16029, 16049, 16069, 16088, 16107, 16125, 16143, 16160, 16176, 16192, 16207, 16221, 16235, 16248, 16261, 16273, 16284, 16295, 16305, 16315, 16324, 16332, 16340, 16347, 16353, 16359, 16364, 16369, 16373, 16376, 16379, 16381, 16383, 16384, 16384
@@ -223,7 +227,7 @@ void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR
 }
 
 void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outmat) {
-	int counter;
+	legacy_u16 counter;
 	legacy_s16* rmatvals = rmat->vals;
 	legacy_s16* lmatvals = lmat->vals;
 	legacy_s16* outmatvals = outmat->vals;
@@ -255,7 +259,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 }
 
 void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat) {
-	int temp;
+	legacy_s16 temp;
 	if (inmat == outmat) {
 		temp = outmat->m._21;
 		outmat->m._21 = outmat->m._12;
@@ -332,15 +336,18 @@ void mat_rot_z(struct MATRIX* outmat, legacy_u16 angle) {
 	outmat->m._33 = 0x4000;
 }
 
-// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only 
-// multiplying the non-zero axes. currently not optimized except for the y cache:
+/*
+ * Preserve the original axis-selection table: it avoids rounding through
+ * identity matrices and returns the same shared matrix object for each case.
+ */
 
 #ifdef RESTUNTS_DOS
-static void seed_legacy_opponent_wheel_angles(unsigned caller_bp) {
+static void seed_legacy_opponent_wheel_angles(legacy_u16 caller_bp) {
 	legacy_u16 far* caller_frame;
-	int front_wheel_delta;
-	int scaled_speed;
-	int i;
+	legacy_s16 front_wheel_delta;
+	legacy_u16 scaled_speed;
+	legacy_s16 i;
+	legacy_u32 scaled_speed_product;
 
 	caller_frame = (legacy_u16 far*)MK_FP(_SS, caller_bp);
 	if (caller_frame[3] != FP_OFF(&state.opponentstate) ||
@@ -349,21 +356,27 @@ static void seed_legacy_opponent_wheel_angles(unsigned caller_bp) {
 		caller_frame[6] != FP_OFF(&simd_player) ||
 		caller_frame[7] != 1)
 		return;
-	if (framespersec == 0xA) {
-		scaled_speed = ((long)state.opponentstate.car_speed2 * 0x580) / 0x1E00;
-	} else {
-		scaled_speed = ((long)state.opponentstate.car_speed2 * 0x580) / 0x3C00;
-	}
+	scaled_speed_product = LEGACY_U32_WRAP_MUL(
+		state.opponentstate.car_speed2, 0x580UL);
+	if (framespersec == 0xA)
+		scaled_speed = (legacy_u16)(scaled_speed_product / 0x1E00UL);
+	else
+		scaled_speed = (legacy_u16)(scaled_speed_product / 0x3C00UL);
 	if (scaled_speed != 0) {
 		front_wheel_delta = 0;
 		if (state.opponentstate.car_sumSurfAllWheels != 0)
-			front_wheel_delta = state.opponentstate.car_40MfrontWhlAngle >> 2;
+			front_wheel_delta = LEGACY_S16_FROM_BITS(LEGACY_U16_SAR1(
+				LEGACY_U16_SAR1(
+					state.opponentstate.car_40MfrontWhlAngle)));
 
 		for (i = 0; i < 4; i++) {
 			legacy_wheel_angle_stack_words[i] =
 				state.opponentstate.car_36MwhlAngle;
 			if (i < 2)
-				legacy_wheel_angle_stack_words[i] -= front_wheel_delta;
+				legacy_wheel_angle_stack_words[i] =
+					LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
+						legacy_wheel_angle_stack_words[i],
+						front_wheel_delta));
 		}
 		return;
 	}
@@ -374,38 +387,103 @@ static void seed_legacy_opponent_wheel_angles(unsigned caller_bp) {
 }
 #endif
 
-struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
-	int flag;
+static struct MATRIX* compose_mat_rot_zxy(
+	legacy_u16 z,
+	legacy_u16 x,
+	legacy_u16 y,
+	legacy_u8 reverse_order)
+{
+	legacy_u16 active_axes;
+	legacy_u16 normalized_y;
+	struct MATRIX* y_matrix;
+
+	active_axes = 0;
+	if ((z & 0x3FFU) != 0) {
+		active_axes |= 4U;
+		mat_rot_z(&mat_z_rot, z);
+	}
+	if ((x & 0x3FFU) != 0) {
+		active_axes |= 2U;
+		mat_rot_x(&mat_x_rot, x);
+	}
+	if ((y & 0x3FFU) != 0) {
+		active_axes |= 1U;
+		normalized_y = y & 0x3FFU;
+		if (normalized_y == mat_y_rot_angle) {
+			y_matrix = &mat_y_rot;
+		} else if (normalized_y == 0x100U) {
+			y_matrix = &mat_y100;
+		} else if (normalized_y == 0x200U) {
+			y_matrix = &mat_y200;
+		} else if (normalized_y == 0x300U) {
+			y_matrix = &mat_y300;
+		} else {
+			mat_rot_y(&mat_y_rot, y);
+			mat_y_rot_angle = normalized_y;
+			y_matrix = &mat_y_rot;
+		}
+	} else {
+		y_matrix = &mat_y0;
+	}
+
+	switch (active_axes) {
+	case 0:
+		return &mat_y0;
+	case 1:
+		return y_matrix;
+	case 2:
+		return &mat_x_rot;
+	case 3:
+		if ((reverse_order & 1U) != 0)
+			mat_multiply(y_matrix, &mat_x_rot, &mat_rot_temp);
+		else
+			mat_multiply(&mat_x_rot, y_matrix, &mat_rot_temp);
+		return &mat_rot_temp;
+	case 4:
+		return &mat_z_rot;
+	case 5:
+		if ((reverse_order & 1U) != 0)
+			mat_multiply(y_matrix, &mat_z_rot, &mat_rot_temp);
+		else
+			mat_multiply(&mat_z_rot, y_matrix, &mat_rot_temp);
+		return &mat_rot_temp;
+	case 6:
+		if ((reverse_order & 1U) != 0)
+			mat_multiply(&mat_x_rot, &mat_z_rot, &mat_rot_temp);
+		else
+			mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
+		return &mat_rot_temp;
+	case 7:
+		if ((reverse_order & 1U) != 0) {
+			mat_multiply(y_matrix, &mat_x_rot, &mat_rot_temp);
+			mat_multiply(&mat_rot_temp, &mat_z_rot, &mat_x_rot);
+			return &mat_x_rot;
+		}
+		mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
+		mat_multiply(&mat_rot_temp, y_matrix, &mat_z_rot);
+		return &mat_z_rot;
+	}
+
+	return &mat_y0;
+}
+
+struct MATRIX* mat_rot_zxy(
+	legacy_u16 z,
+	legacy_u16 x,
+	legacy_u16 y,
+	legacy_u8 reverse_order)
+{
 
 #ifdef RESTUNTS_DOS
-	unsigned caller_bp;
+	legacy_u16 caller_bp;
 
-	caller_bp = *(unsigned short far*)MK_FP(
+	caller_bp = *(legacy_u16 far*)MK_FP(
 		_SS, FP_OFF(&caller_bp) + sizeof(caller_bp)
 	);
 	seed_legacy_opponent_wheel_angles(caller_bp);
 #endif
-	
-	mat_rot_z(&mat_z_rot, z);
-	mat_rot_x(&mat_x_rot, x);
-	
-	// y rotation matrix cache
-	/*if (mat_y_rot_angle != y) {
-		mat_rot_y(&mat_y_rot, y);
-		mat_y_rot_angle = y;
-	}*/
-	mat_y_rot_angle = y; // dont forget this!!
-	mat_rot_y(&mat_y_rot, y);
-	
-	if ((unk & 1) != 0) {
-		mat_multiply(&mat_y_rot, &mat_x_rot, &mat_rot_temp);
-		mat_multiply(&mat_rot_temp, &mat_z_rot, &mat_x_rot);
-		return &mat_x_rot;
-	} else {
-		mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
-		mat_multiply(&mat_rot_temp, &mat_y_rot, &mat_z_rot);
-		return &mat_z_rot;
-	}
+
+	return compose_mat_rot_zxy(z, x, y, reverse_order);
 }
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {

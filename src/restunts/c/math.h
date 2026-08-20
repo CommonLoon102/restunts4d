@@ -81,7 +81,11 @@ void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat);
 void mat_rot_x(struct MATRIX* outmat, legacy_u16 angle);
 void mat_rot_y(struct MATRIX* outmat, legacy_u16 angle);
 void mat_rot_z(struct MATRIX* outmat, legacy_u16 angle);
-struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk);
+struct MATRIX* mat_rot_zxy(
+	legacy_u16 z,
+	legacy_u16 x,
+	legacy_u16 y,
+	legacy_u8 reverse_order);
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
 
