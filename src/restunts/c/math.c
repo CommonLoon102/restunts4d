@@ -342,8 +342,9 @@ struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
 #ifdef RESTUNTS_DOS
 	unsigned caller_bp;
 
-	asm mov ax, [bp]
-	asm mov caller_bp, ax
+	caller_bp = *(unsigned short far*)MK_FP(
+		_SS, FP_OFF(&caller_bp) + sizeof(caller_bp)
+	);
 	seed_legacy_opponent_wheel_angles(caller_bp);
 #endif
 	
