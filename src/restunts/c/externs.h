@@ -196,19 +196,24 @@ typedef char legacy_simd_dos_layout_must_be_776_bytes[
 #endif
 
 struct TRKOBJINFO {
-	char  si_noOfBlocks;      // How many shapeInfo pieces compose the element. Arbitrary for the first piece, 0 for the following ones.
-	char  si_entryPoint;      // Connectivity of the track element regarding tiles.
-	char  si_exitPoint;
-	char  si_entryType;        // Connectivity of the track element regarding element types.
-	char  si_exitType;
-	char  si_arrowType;        // Type of the element for determining penalty-arrow behaviour.
-	short si_arrowOrient;      // Orientation angle for penalty-arrow purposes
-	short* si_cameraDataOffset; // offset (0003B770)
-	char  si_opp1;             //Appears to affect how the opponent AI approaches an element.
-	char  si_opp2;
-	char  si_opp3;
-	char  si_oppSpedCode;
+	legacy_u8 si_noOfBlocks;       // How many shapeInfo pieces compose the element. Arbitrary for the first piece, 0 for the following ones.
+	legacy_u8 si_entryPoint;       // Connectivity of the track element regarding tiles.
+	legacy_u8 si_exitPoint;
+	legacy_u8 si_entryType;        // Connectivity of the track element regarding element types.
+	legacy_u8 si_exitType;
+	legacy_u8 si_arrowType;        // Type of the element for determining penalty-arrow behaviour.
+	legacy_s16 si_arrowOrient;     // Orientation angle for penalty-arrow purposes
+	legacy_s16* si_cameraDataOffset; // offset (0003B770)
+	legacy_s16* si_opponentCameraDataOffset;
+	legacy_s8 si_opp3;
+	legacy_u8 si_oppSpedCode;
 };
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_trkobjinfo_dos_layout_must_be_14_bytes[
+	(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1
+];
+#endif
 
 struct TRACKOBJECT {
 	struct TRKOBJINFO* ss_trkObjInfoPtr; // offset (0003B770)
