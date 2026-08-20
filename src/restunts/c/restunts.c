@@ -849,7 +849,7 @@ static void rebuild_opponent_path(void) {
 
 int setup_player_cars(void) {
 	void far* carresptr;
-	unsigned long var_8;
+	legacy_u32 var_8;
 
 	wndsprite = 0;
 	ensure_file_exists(2);

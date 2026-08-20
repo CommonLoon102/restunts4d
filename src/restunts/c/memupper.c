@@ -159,12 +159,12 @@ static void restore_video_memory(unsigned short oldlimit) {
 
 #endif
 
-unsigned long mmgr_prepare_fullscreen_window(void) {
-	unsigned long available = mmgr_get_res_ofs_diff_scaled();
+legacy_u32 mmgr_prepare_fullscreen_window(void) {
+	legacy_u32 available = mmgr_get_res_ofs_diff_scaled();
 
 #ifdef RESTUNTS_DOS
-	if (available <= 0xFA00L && reserve_upper_memory(0xFA2)) {
-		return 0xFA01L;
+	if (available <= (legacy_u32)0xFA00U && reserve_upper_memory(0xFA2)) {
+		return (legacy_u32)0xFA01U;
 	}
 #endif
 	return available;

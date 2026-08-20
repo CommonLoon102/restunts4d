@@ -151,7 +151,7 @@ void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
 	return MK_FP(rdx, 0);
 }
 
-void far* mmgr_alloc_resbytes(const char* name, long int size) {
+void far* mmgr_alloc_resbytes(const char* name, legacy_s32 size) {
 	/* The original allocator always reserves one paragraph after division. */
 	return mmgr_alloc_pages(name, size / 16 + 1);
 }
@@ -543,13 +543,13 @@ void far* mmgr_op_unk(char far* ptr) {
 	return MK_FP(resdi->resofs, 0);
 }
 
-unsigned long mmgr_get_res_ofs_diff_scaled(void) {
-	unsigned long result = mmgr_get_ofs_diff();
+legacy_u32 mmgr_get_res_ofs_diff_scaled(void) {
+	legacy_u32 result = mmgr_get_ofs_diff();
 	return result << 4;
 }
 
-unsigned long mmgr_get_chunk_size_bytes(char far* ptr) {
-	unsigned long result = mmgr_get_chunk_size(ptr);
+legacy_u32 mmgr_get_chunk_size_bytes(char far* ptr) {
+	legacy_u32 result = mmgr_get_chunk_size(ptr);
 	return result << 4;
 }
 //#endif

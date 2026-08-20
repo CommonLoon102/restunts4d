@@ -43,13 +43,11 @@ extern char far* curshapeptr;
 extern struct SHAPE3D game3dshapes[130];
 
 extern void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape);
-extern unsigned long mmgr_get_res_ofs_diff_scaled(void);
-
 extern char aBarn[];
 
 int shape3d_load_all() {
 	int i;
-	unsigned long mmgrofsdiff;
+	legacy_u32 mmgrofsdiff;
 	char* shapename;
 
 	game1ptr = 0;
@@ -57,7 +55,7 @@ int shape3d_load_all() {
 	
 	mmgrofsdiff = mmgr_get_res_ofs_diff_scaled();
 	
-	if (mmgrofsdiff < 0xFDE8)	// ??
+	if (mmgrofsdiff < (legacy_u32)0xFDE8U)	// ??
 		return 1;
 
 	game1ptr = file_load_3dres("game1");
@@ -4170,7 +4168,7 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 void shape3d_load_car_shapes(const legacy_s8 arg_playercarid[], const legacy_s8 arg_opponentcarid[]) {
 	int i;
 	struct VECTOR far* var_E;
-	unsigned long var_6;
+	legacy_u32 var_6;
 	aStxxx[2] = arg_playercarid[0];
 	aStxxx[3] = arg_playercarid[1];
 	aStxxx[4] = arg_playercarid[2];
@@ -4211,7 +4209,7 @@ void shape3d_load_car_shapes(const legacy_s8 arg_playercarid[], const legacy_s8 
 			arg_playercarid[2] == arg_opponentcarid[2] && arg_playercarid[3] == arg_opponentcarid[3])
 		{
 			var_6 = mmgr_get_chunk_size_bytes(carresptr);
-			car2resptr = mmgr_alloc_resbytes("car2", var_6);
+			car2resptr = mmgr_alloc_resbytes("car2", (legacy_s32)var_6);
 			
 			for (i = 0; i < var_6; i++) {
 				car2resptr[i] = carresptr[i];
