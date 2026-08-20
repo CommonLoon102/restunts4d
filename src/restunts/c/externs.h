@@ -408,6 +408,8 @@ extern legacy_u32 timer_copy_unk;
 extern unsigned char g_kevinrandom_seed[];
 extern legacy_s16 legacy_wheel_angle_stack_words[4];
 extern legacy_s16 legacy_grip_stack_words[4];
+extern legacy_u8 oppnentSped[16];
+extern legacy_s16 track_pieces_counter;
 extern const char aReservememoryO[];
 extern const char aReservememoryOutOfMemory[];
 extern const char aMemoryManagerB[];

@@ -747,9 +747,6 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 
 extern int audio_init_engine(int, void far*, void far*, void far*);
 
-extern unsigned char oppnentSped[16];
-extern int track_pieces_counter;
-
 /*
  * Rebuild the opponent route without depending on the legacy loader's stack
  * layout. The original searches every td02 branch and keeps the lowest-cost
@@ -757,25 +754,25 @@ extern int track_pieces_counter;
  * primary route in trackdata3.
  */
 static void rebuild_opponent_path(void) {
-	int path[RST_MAX_TRACK_PIECES];
-	int branch_nodes[RST_MAX_OPPONENT_BRANCHES];
-	int branch_lengths[RST_MAX_OPPONENT_BRANCHES];
-	unsigned long branch_costs[RST_MAX_OPPONENT_BRANCHES];
+	legacy_s16 path[RST_MAX_TRACK_PIECES];
+	legacy_s16 branch_nodes[RST_MAX_OPPONENT_BRANCHES];
+	legacy_s16 branch_lengths[RST_MAX_OPPONENT_BRANCHES];
+	legacy_u32 branch_costs[RST_MAX_OPPONENT_BRANCHES];
 	legacy_s16 far* opponent_path;
-	unsigned long cost;
-	unsigned long best_cost;
-	int node;
-	int next;
-	int alternate;
-	int path_length;
-	int branch_count;
-	int finished;
-	int valid;
-	int i;
+	legacy_u32 cost;
+	legacy_u32 best_cost;
+	legacy_s16 node;
+	legacy_s16 next;
+	legacy_s16 alternate;
+	legacy_s16 path_length;
+	legacy_s16 branch_count;
+	legacy_s16 finished;
+	legacy_s16 valid;
+	legacy_s16 i;
 
 	opponent_path = trackdata3;
 	cost = 0;
-	best_cost = 0x000F423FUL;
+	best_cost = (legacy_u32)0x000F423FUL;
 	node = 0;
 	path_length = 0;
 	branch_count = 0;
@@ -807,9 +804,9 @@ static void rebuild_opponent_path(void) {
 			}
 
 			path[path_length++] = node;
-			cost += (unsigned long)oppnentSped[
-				(unsigned char)td17_trk_elem_ordered[node]
-			] + 1UL;
+			cost += (legacy_u32)oppnentSped[
+				(legacy_u8)td17_trk_elem_ordered[node]
+			] + 1U;
 		}
 
 		if (finished) {

@@ -7,7 +7,6 @@
 #endif
 
 extern int penalty_time;
-extern int track_pieces_counter;
 extern struct TRACKOBJECT trkObjectList[];
 
 #define PENALTY_MAX_TRACK_PIECES 0x385
