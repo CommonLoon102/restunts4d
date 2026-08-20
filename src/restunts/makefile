@@ -36,6 +36,9 @@ ifeq ($(CONFIG),debug)
 endif
 
 MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
+PYTHON ?= python3
+PORTING_AUDIT = ../../tools/scripts/porting_audit.py
+C_ONLY_LINK_INPUT ?= src/restunts/dos/makefile
 
 restunts: asm c
 	make -C dos $(MAKE_PARAMS)
@@ -63,6 +66,15 @@ repldump: asm c
 
 repldump-original: asmorig
 	make -C repldump TARGET=original $(MAKE_PARAMS)
+
+porting-status:
+	$(PYTHON) $(PORTING_AUDIT) --format summary
+
+porting-audit:
+	$(PYTHON) $(PORTING_AUDIT) --check-inventory --format summary
+
+c-only-audit:
+	$(PYTHON) $(PORTING_AUDIT) --check-inventory --require-c-only --link-input $(C_ONLY_LINK_INPUT) --format summary
 
 clean:
 	make -C dos $(MAKE_PARAMS) clean
