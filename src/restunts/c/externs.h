@@ -401,9 +401,9 @@ extern struct MEMCHUNK* resendptr1;
 extern struct MEMCHUNK* resendptr2;
 extern unsigned short resmaxsize;
 
-extern unsigned long timer_callback_counter;
-extern unsigned long last_timer_callback_counter;
-extern unsigned long timer_copy_unk;
+extern legacy_u32 timer_callback_counter;
+extern legacy_u32 last_timer_callback_counter;
+extern legacy_u32 timer_copy_unk;
 
 extern unsigned char g_kevinrandom_seed[];
 extern const char aReservememoryO[];
@@ -504,7 +504,15 @@ extern void sprite_blit_to_video(struct SPRITE far* sprite);
 extern short intr0_handler(void);
 extern short (far* old_intr0_handler)(void);
 extern void timer_setup_interrupt(void);
-extern unsigned long timer_get_delta_alt(void);
+extern legacy_u32 timer_get_counter(void);
+extern legacy_u32 timer_get_delta(void);
+extern legacy_u32 timer_get_delta_alt(void);
+extern legacy_u32 timer_custom_delta(legacy_u32 ticks);
+extern void timer_reset(void);
+extern legacy_u32 timer_copy_counter(legacy_u32 ticks);
+extern legacy_u32 timer_wait_for_dx(void);
+extern int timer_compare_dx(void);
+extern legacy_u32 timer_get_counter_unk(legacy_u32 ticks);
 
 extern short set_criterr_handler(short (far* callback)(void));
 extern void libsub_quit_to_dos_alt(short a1);

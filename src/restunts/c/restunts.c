@@ -74,9 +74,9 @@ int get_0(void)
 	return 0;
 }
 
-unsigned long timer_get_counter(void)
+legacy_u32 timer_get_counter(void)
 {
-	unsigned long val;
+	legacy_u32 val;
 
 	disable();
 	val = timer_callback_counter;
@@ -85,9 +85,9 @@ unsigned long timer_get_counter(void)
 	return val;
 }
 
-unsigned long timer_get_delta(void)
+legacy_u32 timer_get_delta(void)
 {
-	unsigned long last, curr;
+	legacy_u32 last, curr;
 
 	last = last_timer_callback_counter;
 
@@ -100,30 +100,30 @@ unsigned long timer_get_delta(void)
 	return curr - last;
 }
 
-unsigned long timer_get_delta_alt(void)
+legacy_u32 timer_get_delta_alt(void)
 {
 	return timer_get_delta();
 }
 
-unsigned long timer_custom_delta(unsigned long ticks)
+legacy_u32 timer_custom_delta(legacy_u32 ticks)
 {
 	return timer_get_counter() - ticks;
 }
 
-void timer_reset()
+void timer_reset(void)
 {
 	timer_callback_counter = 0;
 }
 
-unsigned long timer_copy_counter(unsigned long ticks)
+legacy_u32 timer_copy_counter(legacy_u32 ticks)
 {
 	timer_copy_unk = timer_get_counter() + ticks;
 	return timer_copy_unk;
 }
 
-unsigned long timer_wait_for_dx(void)
+legacy_u32 timer_wait_for_dx(void)
 {
-	unsigned long res;
+	legacy_u32 res;
 	do {
 		res = timer_get_counter();
 	} while (res < timer_copy_unk);
@@ -136,9 +136,9 @@ int timer_compare_dx(void)
 	return timer_get_counter() >= timer_copy_unk;
 }
 
-unsigned long timer_get_counter_unk(unsigned long ticks)
+legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
 {
-	unsigned long target, res;
+	legacy_u32 target, res;
 	target = timer_get_counter() + ticks;
 	
 	do {
@@ -973,8 +973,8 @@ void run_game(void) {
 	int rewind_active;
 	unsigned short rewind_origin_frame;
 	unsigned short rewind_target_frame;
-	unsigned long rewind_timer_delta;
-	unsigned long rewind_held_timer_ticks;
+	legacy_u32 rewind_timer_delta;
+	legacy_u32 rewind_held_timer_ticks;
 	long rewind_accumulator;
 	long rewind_max_accumulator;
 	long rewind_speed;
@@ -1429,7 +1429,7 @@ void init_main(int argc, char* argv[])
 {
 	unsigned int i, j;
 	unsigned char argmode4, argnosound, argnounknown;
-	unsigned long timerdelta1, timerdelta2, timerdelta3;
+	legacy_u32 timerdelta1, timerdelta2, timerdelta3;
 	struct POINT2D tmppoint;
 	struct RECTANGLE tmprect;
 
