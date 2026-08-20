@@ -68,7 +68,7 @@ typedef char legacy_plane_must_be_34_bytes[
 short sin_fast(unsigned short s);
 short cos_fast(unsigned short s);
 
-int polarAngle(int z, int y);
+legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y);
 legacy_s16 polarRadius3D(struct VECTOR* vec);
 

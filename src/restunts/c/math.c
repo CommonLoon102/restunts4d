@@ -36,27 +36,28 @@ short cos_fast(unsigned short s) {
 	return sin_fast(s + 0x100);
 }
 
-int polarAngle(int z, int y) {
-	
-	unsigned flag;
-	int temp, result;
-	unsigned long index;
+legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
+	legacy_u16 flag;
+	legacy_s16 temp, result;
+	legacy_u32 quotient;
+	legacy_u16 index;
 	
 	flag = 0;
+	result = 0;
 	
 	if (z < 0) {
 		flag |= 4;
-		z = -z;
+		z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(z));
 	}
 	
 	if (y < 0) {
 		flag |= 2;
-		y = -y;
+		y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(y));
 	}
 	
 	if (z == y) {
-		if (z == 0) return result; // orig code has undefined return value here as well!
-		result = 0x80;
+		if (z != 0)
+			result = 0x80;
 	} else {
 		if (z > y) {
 			temp = z;
@@ -64,31 +65,42 @@ int polarAngle(int z, int y) {
 			y = temp;
 			flag |= 1;
 		}
-		index = (((unsigned long)z << 16) / y);
-		if ((index & 0xFF) >= 0x80) // round upwards
-			index += 0x100;
-		result = atantable[index >> 8];
+		if ((legacy_u16)y != 0) {
+			quotient = ((legacy_u32)(legacy_u16)z << 16) /
+				(legacy_u16)y;
+			index = (legacy_u16)quotient >> 8;
+			if (((legacy_u8)quotient & 0xFFU) >= 0x80U)
+				index = LEGACY_U16_WRAP_ADD(index, 1U);
+			result = atantable[index];
+		}
 	}
 	
 	switch (flag) {
 		case 0:
 			return result;
 		case 1:
-			return -result + 0x100;
+			return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+				LEGACY_U16_WRAP_NEGATE(result), 0x100U));
 		case 2:
-			return -result + 0x200;
+			return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+				LEGACY_U16_WRAP_NEGATE(result), 0x200U));
 		case 3:
-			return result + 0x100;
+			return LEGACY_S16_FROM_BITS(
+				LEGACY_U16_WRAP_ADD(result, 0x100U));
 		case 4:
-			return -result;
+			return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(result));
 		case 5:
-			return result - 0x100;
+			return LEGACY_S16_FROM_BITS(
+				LEGACY_U16_WRAP_SUB(result, 0x100U));
 		case 6:
-			return result - 0x200;
+			return LEGACY_S16_FROM_BITS(
+				LEGACY_U16_WRAP_SUB(result, 0x200U));
 		case 7:
-			return -(result + 0x100);
+			return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(
+				LEGACY_U16_WRAP_ADD(result, 0x100U)));
 	}
-	
+
+	return 0;
 }
 
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
