@@ -2,6 +2,10 @@
 #include "math.h"
 #include "shape3d.h"
 
+#ifdef RESTUNTS_DOS
+#include <dos.h>
+#endif
+
 extern int penalty_time;
 extern int track_pieces_counter;
 extern struct TRACKOBJECT trkObjectList[];
@@ -425,20 +429,21 @@ void player_op(char arg_carInputByte) {
 	 * player_op. Capture that frame residue immediately after update_grip
 	 * returns, before another call can overwrite it.
 	 *
-	 * Saving BX moves SP by one word. Relative to that adjusted SP, the
-	 * original future var_16[0..3] words are at -24h..-1Eh.
+	 * Borland places var_terminalPenalty at BP-28. The residue words are at
+	 * BP-118..BP-112, so derive them without adding another stack local.
 	 */
-	asm push bx
-	asm mov bx, sp
-	asm mov ax, ss:[bx-24h]
-	asm mov legacy_grip_stack_words, ax
-	asm mov ax, ss:[bx-22h]
-	asm mov legacy_grip_stack_words+2, ax
-	asm mov ax, ss:[bx-20h]
-	asm mov legacy_grip_stack_words+4, ax
-	asm mov ax, ss:[bx-1Eh]
-	asm mov legacy_grip_stack_words+6, ax
-	asm pop bx
+	legacy_grip_stack_words[0] = *(unsigned short far*)MK_FP(
+		_SS, FP_OFF(&var_terminalPenalty) - 90
+	);
+	legacy_grip_stack_words[1] = *(unsigned short far*)MK_FP(
+		_SS, FP_OFF(&var_terminalPenalty) - 88
+	);
+	legacy_grip_stack_words[2] = *(unsigned short far*)MK_FP(
+		_SS, FP_OFF(&var_terminalPenalty) - 86
+	);
+	legacy_grip_stack_words[3] = *(unsigned short far*)MK_FP(
+		_SS, FP_OFF(&var_terminalPenalty) - 84
+	);
 #endif
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
 	state.game_travDist += state.playerstate.car_speed2;
