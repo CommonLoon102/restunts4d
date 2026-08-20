@@ -27,7 +27,7 @@ void far* mmgr_finish_shape2d_pages(void far* ptr);
 void far* mmgr_free(char far* ptr);
 void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras);
 void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short paras);
-void mmgr_find_free();
+void mmgr_find_free(void);
 void far* mmgr_get_chunk_by_name(const char* arg_0);
 void mmgr_release(char far* ptr);
 unsigned short mmgr_get_chunk_size(char far* ptr);

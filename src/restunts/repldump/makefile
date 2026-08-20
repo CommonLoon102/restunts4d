@@ -38,7 +38,8 @@ ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
 
 ifeq ($(TARGET), ported)
-  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES) $(DOS_RUNTIME_FILES)
+  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(OBJDIR)\regshim.obj $(CM_LIB_FILES) $(DOS_RUNTIME_FILES)
+  DOS_ABI_DEP = $(OBJDIR)/regshim.obj
   CFLAGS = 
   OUTFILE = repldump.exe
 endif
@@ -58,6 +59,11 @@ SPACE=$() $()
 CTARGETS = $(subst $(SPACE),$(SEP),$(ALL_OBJ_FILES))
 
 CC = bcc $(RESTUNTS_CFLAGS) $(CFLAGS)
+TFLAGS = /zn
+ifeq ($(CONFIG), debug)
+  TFLAGS = /zi
+endif
+ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
 
 LFLAGS = 
 ifeq ($(CONFIG), debug)
@@ -66,7 +72,7 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
+repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES) $(DOS_ABI_DEP)
   ifeq ($(LINKER), wlink)
 		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT PATH $(TOOLS_LIB) file $(CTARGETS)
   else
@@ -80,6 +86,10 @@ repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
 
 $(OBJDIR)/repldump.obj: repldump.c
 	$(CC) -I../c $?
+
+$(OBJDIR)/regshim.obj: ../dos/regshim.asm
+	$(eval OBJ_FILE = $(subst /,\,$@))
+	$(ASM) ..\dos\regshim.asm, $(OBJ_FILE)
 
 clean:
 	del build\ported\repldump.obj

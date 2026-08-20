@@ -17,18 +17,12 @@ extern void far* options_misc_resptr;
 static char build_info[] = "Version 1.1 " BUILD_GIT_HASH " (" __DATE__ ")";
 
 #ifdef RESTUNTS_DOS
+#define DOS_ABI_IMPL(name) name##_impl
+#else
+#define DOS_ABI_IMPL(name) name
+#endif
 
-#define pushregs()\
-	_asm {\
-		push dx\
-	}\
-
-
-#define popregs()\
-	_asm {\
-		pop dx\
-	}
-
+#ifdef RESTUNTS_DOS
 void far* dos_get_psp(void) {
 	union REGS inregs;
 	union REGS outregs;
@@ -62,9 +56,6 @@ unsigned short dos_setblock(unsigned short blockseg, unsigned short newsize) {
 }
 
 #else
-void pushregs() {}
-void popregs() {}
-	
 size_t word_3FF82 = 0; // last para reserved by memmgr
 size_t word_3FF84 = 0; // first para reserved by memmgr
 unsigned short resmaxsize = 0; // size of largest chunk?
@@ -94,19 +85,16 @@ struct MEMCHUNK* resptr2 = resources;
 
 #endif
 
-const char* mmgr_path_to_name(const char* filename) {
+const char* DOS_ABI_IMPL(mmgr_path_to_name)(const char* filename) {
 	const char* c;
 	const char* result;
 
-	pushregs();
-	
 	result = filename;
 	for (c = filename; *c; c++) {
 		if (*c == ':' || *c == '\\') 
 			result = c + 1;
 	}
 	
-	popregs();
 	return result;
 }
 
@@ -296,12 +284,8 @@ void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras)
 }
 
 
-void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short paras) {
+void DOS_ABI_IMPL(copy_paras_reverse)(unsigned short srcseg, unsigned short destseg, short paras) {
 	unsigned short count, ofs;
-	unsigned short far* destptr;
-	unsigned short far* srcptr;
-
-	pushregs();
 
 	srcseg += paras;
 	destseg += paras;
@@ -318,25 +302,20 @@ void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short par
 		count <<= 3;
 		ofs = (count << 1) - 2;
 
-		srcptr = MK_FP(srcseg, ofs);
-		destptr = MK_FP(destseg, ofs);
 		while (count) {
-			*destptr = *srcptr;
-			srcptr--;
-			destptr--;
+			*(unsigned short far*)MK_FP(destseg, ofs) =
+				*(unsigned short far*)MK_FP(srcseg, ofs);
+			ofs -= sizeof(unsigned short);
 			count--;
 		}
 	}
-	popregs();
 }
 
-void mmgr_find_free(void) {
+void DOS_ABI_IMPL(mmgr_find_free)(void) {
 	int i;
 	unsigned short regax, regdx;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
-
-	pushregs();
 
 	ressi = resendptr2;
 	resdi = ressi;
@@ -369,7 +348,6 @@ void mmgr_find_free(void) {
 	resdi++;
 	resendptr1 = resdi;
 
-	popregs();
 }
 
 void far* mmgr_get_chunk_by_name(const char* name) {
@@ -420,18 +398,13 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 	return MK_FP(0, 0);
 }
 
-void mmgr_release(char far* ptr) {
+void DOS_ABI_IMPL(mmgr_release)(char far* ptr) {
 	int i;
 	unsigned short regax, regbx, regcx, regdx;
 	char* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	pushregs();
-	__asm {
-		push bx
-	}
-	
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
@@ -450,10 +423,6 @@ void mmgr_release(char far* ptr) {
 		resptr2 = ressi;
 	}
 
-	__asm {
-		pop bx
-	}
-	popregs();
 }
 
 unsigned short mmgr_get_chunk_size(char far* ptr) {
@@ -475,14 +444,12 @@ unsigned short mmgr_get_chunk_size(char far* ptr) {
 	return ressi->ressize;
 }
 
-unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, unsigned short arg_4) {
+unsigned short DOS_ABI_IMPL(mmgr_resize_memory)(unsigned short arg_0, unsigned short arg_2, unsigned short arg_4) {
 	int i;
 	unsigned short regax, regbx, regcx, regdx;
 	char* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
-
-	pushregs();
 
 	(void)arg_0;
 	regax = arg_2;
@@ -498,7 +465,6 @@ unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, un
 	regax = arg_4;
 	if (regax <= ressi->ressize) {
 		ressi->ressize = regax;
-		popregs();
 		return regax;
 	}
 
@@ -511,7 +477,6 @@ unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, un
 		resmaxsize = regax;
 
 	if (regax <= resdi->resofs) {
-		popregs();
 		return 0;
 	}
 
@@ -528,7 +493,6 @@ unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, un
 		ressi++;
 		resendptr1 = ressi;
 	}
-	popregs();
 	return 0;
 }
 
