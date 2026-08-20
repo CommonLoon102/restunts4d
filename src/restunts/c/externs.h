@@ -405,6 +405,16 @@ extern legacy_u32 timer_callback_counter;
 extern legacy_u32 last_timer_callback_counter;
 extern legacy_u32 timer_copy_unk;
 
+extern legacy_s32 invpow2tbl[32];
+extern legacy_s32 cos80;
+extern legacy_s32 sin80;
+extern legacy_s32 cos80_2;
+extern legacy_s32 sin80_2;
+extern legacy_s32 gState_travDist;
+extern legacy_s32 pState_lvec1_x;
+extern legacy_s32 pState_lvec1_y;
+extern legacy_s32 pState_lvec1_z;
+
 extern unsigned char g_kevinrandom_seed[];
 extern legacy_s16 legacy_wheel_angle_stack_words[4];
 extern legacy_s16 legacy_grip_stack_words[4];

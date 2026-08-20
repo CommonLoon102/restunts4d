@@ -1,7 +1,6 @@
 #include "externs.h"
 #include "math.h"
 
-extern long gState_travDist;
 extern short gState_total_finish_time;
 extern short gState_144;
 extern short gState_pEndFrame;

@@ -1,9 +1,6 @@
 #include "externs.h"
 #include "math.h"
 
-extern long pState_lvec1_x;
-extern long pState_lvec1_y;
-extern long pState_lvec1_z;
 extern int pState_minusRotate_z_1;
 extern int pState_minusRotate_z_2;
 extern int pState_minusRotate_y_1;

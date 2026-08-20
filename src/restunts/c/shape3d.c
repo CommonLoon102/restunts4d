@@ -104,7 +104,6 @@ extern unsigned char transshapematerial;
 extern unsigned char transshapeflags;
 extern struct RECTANGLE* transshaperectptr;
 extern struct MATRIX mat_temp;
-extern long invpow2tbl[32];
 extern unsigned char byte_4393D;
 
 // Four iterators in the linked list. Their roles are just the best guess
@@ -139,8 +138,8 @@ struct ASMVECTOR {
 };
 
 unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
-	long far* var_cull1;
-	long far* var_cull2;
+	legacy_s32 far* var_cull1;
+	legacy_s32 far* var_cull2;
 		
 	unsigned char var_vertflagtbl[256];
 	struct MATRIX* var_rotmatptr;
@@ -150,15 +149,15 @@ unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	struct VECTOR var_vec2;
 	struct VECTOR var_vec3;
 	struct VECTOR var_vec4;
-	long var_45C;
-	long var_A;
+	legacy_s32 var_45C;
+	legacy_s32 var_A;
 	unsigned var_45E, var_460, var_1A;
 	unsigned char var_ptrectflag, var_primtype;
 	struct VECTOR var_vecarr[255];
 	unsigned var_primitiveflags, var_fileprimtype, var_4, var_polyvertcounter, var_C, var_448, var_B7C, var_462;
 	int var_polyvertX, var_polyvertY;
 	struct POINT2D far* var_transshapepolyinfoptptr;
-	long var_18;
+	legacy_s32 var_18;
 	struct POINT2D var_574, var_450;
 	struct POINT2D var_vecarr2[255];
 	struct POINT2D** var_polyvertunktabptr;
@@ -2605,7 +2604,6 @@ void set_projection(int i1, int i2, int i3, int i4) {
 extern struct RECTANGLE select_rect_rc;
 //extern unsigned word_411F6;
 extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
-extern long sin80, cos80, sin80_2, cos80_2;
 
 unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* cliprect, int unk) {
 	struct MATRIX* matptr;
