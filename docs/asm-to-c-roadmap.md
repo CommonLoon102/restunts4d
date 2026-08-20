@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Sixty-two implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Sixty-three implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -104,6 +104,7 @@ portable enough to support it.
 60. [Defined plane-rotation word semantics](asm-to-c-phase1-slice60.md)
 61. [Restored non-unit-pixel rectangle semantics](asm-to-c-phase1-slice61.md)
 62. [Defined clip-rectangle rotation word semantics](asm-to-c-phase1-slice62.md)
+63. [Defined RPM-update word semantics](asm-to-c-phase1-slice63.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

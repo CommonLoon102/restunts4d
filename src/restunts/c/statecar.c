@@ -1,9 +1,16 @@
 #include "externs.h"
 #include "math.h"
 
-unsigned int update_rpm_from_speed(unsigned int currpm, unsigned int speed, unsigned int gearratio, int changing_gear, unsigned int idle_rpm) {
+legacy_u16 update_rpm_from_speed(
+	legacy_u16 currpm,
+	legacy_u16 speed,
+	legacy_u16 gearratio,
+	legacy_u16 changing_gear,
+	legacy_u16 idle_rpm)
+{
 	if (changing_gear == 0) {
-		currpm = ((unsigned long)speed * gearratio) >> 16;
+		currpm = LEGACY_U32_HIGH_WORD(
+			LEGACY_U32_WRAP_MUL(speed, gearratio));
 	}
 
 	if (currpm >= idle_rpm) {
