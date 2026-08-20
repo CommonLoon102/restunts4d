@@ -149,7 +149,7 @@ unsigned long timer_get_counter_unk(unsigned long ticks)
 }
 
 #define KEVINRANDOM_SEED_LEN 6
-void init_kevinrandom(const char* seed)
+void init_kevinrandom(const legacy_s8* seed)
 {
 	int i;
 
@@ -158,7 +158,7 @@ void init_kevinrandom(const char* seed)
 	}
 }
 
-void get_kevinrandom_seed(char* seed)
+void get_kevinrandom_seed(legacy_s8* seed)
 {
 	int i;
 
@@ -1620,7 +1620,7 @@ int stuntsmain2(int argc, char* argv[]) {
 
 	init_unknown();
 	
-	init_kevinrandom("kevin");
+	init_kevinrandom((const legacy_s8*)"kevin");
 
 	strcpy(gameconfig.game_trackname, "DEFAULT");
 	
@@ -1761,7 +1761,7 @@ int stuntsmainimpl(int argc, char* argv[]) {
 
 	init_unknown();
 	
-	init_kevinrandom("kevin");
+	init_kevinrandom((const legacy_s8*)"kevin");
 	
 	strcpy(gameconfig.game_trackname, "DEFAULT");
 	

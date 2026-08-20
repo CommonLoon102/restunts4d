@@ -98,53 +98,57 @@ typedef char legacy_carstate_must_be_208_bytes[
 ];
 
 struct GAMESTATE {
-	long game_longs1[24]; // x
-	long game_longs2[24]; // y
-	long game_longs3[24]; // z
+	legacy_s32 game_longs1[24]; // x
+	legacy_s32 game_longs2[24]; // y
+	legacy_s32 game_longs3[24]; // z
 	struct VECTOR game_vec1[2]; // 0 = player, 1 = opponent
 	struct VECTOR game_vec3;
 	struct VECTOR game_vec4;
-	short game_frame_in_sec;
-	short game_frames_per_sec;
-	long  game_travDist;
-	short game_frame;
-	short game_total_finish; // finish time + penalty when crossed finish line
-	short field_144;
-	short game_pEndFrame;
-	short game_oEndFrame;   // former game_frame2
-	short game_penalty; // probably penalty counter
-	unsigned short game_impactSpeed;
-	unsigned short game_topSpeed;
-	short game_jumpCount;
+	legacy_s16 game_frame_in_sec;
+	legacy_s16 game_frames_per_sec;
+	legacy_s32 game_travDist;
+	legacy_s16 game_frame;
+	legacy_s16 game_total_finish; // finish time + penalty when crossed finish line
+	legacy_s16 field_144;
+	legacy_s16 game_pEndFrame;
+	legacy_s16 game_oEndFrame;   // former game_frame2
+	legacy_s16 game_penalty; // probably penalty counter
+	legacy_u16 game_impactSpeed;
+	legacy_u16 game_topSpeed;
+	legacy_s16 game_jumpCount;
 	struct CARSTATE playerstate;
 	struct CARSTATE opponentstate;
-	short field_2F2;
-	short field_2F4;
-	short game_startcol;
-	short game_startcol2;
-	short game_startrow;
-	short game_startrow2;
-	short field_2FE[24];
-	short field_32E[24];
-	short field_35E[24];
-	short field_38E[24];
-	char field_3BE[48];
-	char kevinseed[6];
-	char field_3F4;
-	char game_inputmode; // 0 = waiting for input, 1 = input active, 2 = no input (during the intro)
-	char game_3F6autoLoadEvalFlag;
-	char field_3F7[2]; // 0 = player, 1 = opponent
-	char field_3F9;
-	char field_3FA[48];
-	char field_42A;
-	char field_42B[24];
-	char field_443[24];
-	char field_45B;
-	char field_45C;
-	char field_45D;
-	char field_45E;
-	char field_45F;
+	legacy_s16 field_2F2;
+	legacy_s16 field_2F4;
+	legacy_s16 game_startcol;
+	legacy_s16 game_startcol2;
+	legacy_s16 game_startrow;
+	legacy_s16 game_startrow2;
+	legacy_s16 field_2FE[24];
+	legacy_s16 field_32E[24];
+	legacy_s16 field_35E[24];
+	legacy_s16 field_38E[24];
+	legacy_s8 field_3BE[48];
+	legacy_s8 kevinseed[6];
+	legacy_s8 field_3F4;
+	legacy_s8 game_inputmode; // 0 = waiting for input, 1 = input active, 2 = no input (during the intro)
+	legacy_s8 game_3F6autoLoadEvalFlag;
+	legacy_s8 field_3F7[2]; // 0 = player, 1 = opponent
+	legacy_s8 field_3F9;
+	legacy_s8 field_3FA[48];
+	legacy_s8 field_42A;
+	legacy_s8 field_42B[24];
+	legacy_s8 field_443[24];
+	legacy_s8 field_45B;
+	legacy_s8 field_45C;
+	legacy_s8 field_45D;
+	legacy_s8 field_45E;
+	legacy_s8 field_45F;
 };
+
+typedef char legacy_gamestate_must_be_1120_bytes[
+	(sizeof(struct GAMESTATE) == 1120) ? 1 : -1
+];
 
 struct SIMD {
 	char num_gears;
