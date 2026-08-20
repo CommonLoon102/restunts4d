@@ -2943,7 +2943,8 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 	unsigned long temp;
 	char* errorstr = "%i ";
 	
-	if (mode == 1) asm jmp preRender_helper2;
+	if (mode == 1)
+		goto preRender_helper2;
 
 	//fatal_error("%i %i", sprite1_sprite_left2, sprite1_sprite_widthsum);
 	
@@ -2984,97 +2985,6 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 			var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
 		}
 	}
-
-asm {
-    mov     ax, ss
-    mov     es, ax
-
-	mov si, regsi
-/*	mov ax, mode
-	cmp ax, 1
-	jne _allok // cannot je to preRender_helper2, too far. jmp is ok tho
-	jmp preRender_helper2
-
-_allok:
-    mov     cx, [si+14h]
-    or      cx, cx
-    jle     short loc_319F9
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, sprite1_sprite_left2
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_319F9:
-    mov     cx, [si+18h]
-    or      cx, cx
-    jle     short loc_31A25
-loc_31A00:
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_widthsum]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_31A25:
-/*    mov     cx, [si+16h]
-    or      cx, cx
-    jle     short loc_31A46
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_31A46:
-    mov     cx, [si+1Ah]
-    or      cx, cx
-    jle     short preRender_helper2		// JLE HERE CALL ABOVE! WTF! THIS JUMP REACHES A RETN WHICH RETURNS FROM _THIS_ FUNCTION
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_widthsum]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-*/
-}
 
 preRender_helper2:
 
