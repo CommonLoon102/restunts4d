@@ -2,16 +2,217 @@
 #include "math.h"
 #include "shape3d.h"
 
-#ifdef RESTUNTS_DOS
-#include <dos.h>
-#endif
-
 extern int penalty_time;
 extern int track_pieces_counter;
 extern struct TRACKOBJECT trkObjectList[];
+extern int legacy_wheel_angle_stack_words[4];
 
 #define PENALTY_MAX_TRACK_PIECES 0x385
-#define PENALTY_MAX_BRANCHES     0x100
+#define PENALTY_MAX_BRANCHES     0x80
+#define PENALTY_LEGACY_FIRST_BRANCH 114
+
+static int finish_penalty_traversal(
+	int result,
+	int branch_pieces[],
+	int retain_legacy_words
+) {
+	int i;
+
+	if (retain_legacy_words != 0) {
+		for (i = 0; i < 4; i++) {
+			legacy_wheel_angle_stack_words[i] =
+				branch_pieces[PENALTY_LEGACY_FIRST_BRANCH + i];
+		}
+	}
+	return result;
+}
+
+/*
+ * C translation of the original route traversal. The assembly routine's
+ * branch_pieces[114..117] words were later reused as uninitialized opponent
+ * wheel angles. Model that accidental state flow explicitly instead of
+ * reading and writing another function's physical stack frame.
+ */
+static int detect_penalty_c(
+	int* found_piece,
+	int* penalty_count,
+	int retain_legacy_words,
+	int* terminal_encountered
+) {
+	unsigned char visited[PENALTY_MAX_TRACK_PIECES];
+	int branch_pieces[PENALTY_MAX_BRANCHES];
+	int branch_distances[PENALTY_MAX_BRANCHES];
+	int current_piece;
+	int next_piece;
+	int alternate_piece;
+	int distance;
+	int best_distance;
+	int best_piece;
+	int branch_count;
+	int target_col;
+	int target_row;
+	int piece_col;
+	int piece_row;
+	int piece_flags;
+	int sentinel_visited;
+	int i;
+
+	for (i = 0; i < 4; i++) {
+		branch_pieces[PENALTY_LEGACY_FIRST_BRANCH + i] =
+			legacy_wheel_angle_stack_words[i];
+	}
+	*terminal_encountered = 0;
+
+	target_col = (char)(state.playerstate.car_posWorld1.lx >> 16);
+	target_row = 0x1D - (char)(state.playerstate.car_posWorld1.lz >> 16);
+	if (
+		(target_col == state.game_startcol ||
+		 target_col == state.game_startcol2) &&
+		(target_row == state.game_startrow ||
+		 target_row == state.game_startrow2)
+	) {
+		*penalty_count = 0;
+		return finish_penalty_traversal(
+			0, branch_pieces, retain_legacy_words
+		);
+	}
+	if (
+		target_col < 0 || target_col > 0x1D ||
+		target_row < 0 || target_row > 0x1D ||
+		track_pieces_counter <= 0 ||
+		track_pieces_counter > PENALTY_MAX_TRACK_PIECES
+	) {
+		*penalty_count = -2;
+		return finish_penalty_traversal(
+			1, branch_pieces, retain_legacy_words
+		);
+	}
+
+	for (i = 0; i < track_pieces_counter; i++)
+		visited[i] = 0;
+
+	current_piece = *found_piece;
+	distance = 0;
+	best_distance = 0;
+	best_piece = -1;
+	branch_count = 0;
+	sentinel_visited = 0;
+
+	for (;;) {
+		if (current_piece == -1) {
+			*terminal_encountered = 1;
+			next_piece = 0;
+		} else if (
+			current_piece < 0 ||
+			current_piece >= track_pieces_counter
+		) {
+			goto backtrack;
+		} else {
+			next_piece = td01_track_file_cpy[current_piece];
+		}
+
+		if (next_piece == -1) {
+			if (sentinel_visited != 0)
+				goto backtrack;
+			sentinel_visited = 1;
+			/* These preceding bytes are inside the shared track-data block. */
+			piece_col = td21_col_from_path[-1];
+			piece_row = td22_row_from_path[-1];
+			piece_flags = trkObjectList[
+				(unsigned char)td17_trk_elem_ordered[-1]
+			].ss_multiTileFlag;
+		} else {
+			if (
+				next_piece < 0 ||
+				next_piece >= track_pieces_counter ||
+				visited[next_piece] != 0
+			)
+				goto backtrack;
+
+			visited[next_piece] = 1;
+			piece_col = td21_col_from_path[next_piece];
+			piece_row = td22_row_from_path[next_piece];
+			piece_flags = trkObjectList[
+				(unsigned char)td17_trk_elem_ordered[next_piece]
+			].ss_multiTileFlag;
+		}
+
+		if (current_piece == -1)
+			alternate_piece = td02_penalty_related[-1];
+		else
+			alternate_piece = td02_penalty_related[current_piece];
+
+		if (
+			(piece_col == target_col ||
+			 ((piece_flags & 2) != 0 && piece_col + 1 == target_col)) &&
+			(piece_row == target_row ||
+			 ((piece_flags & 1) != 0 && piece_row + 1 == target_row))
+		) {
+			if (alternate_piece != -1)
+				next_piece = current_piece;
+
+			state.game_startcol = piece_col;
+			state.game_startcol2 = piece_col;
+			if ((piece_flags & 2) != 0)
+				state.game_startcol2++;
+			state.game_startrow = piece_row;
+			state.game_startrow2 = piece_row;
+			if ((piece_flags & 1) != 0)
+				state.game_startrow2++;
+
+			if (distance <= 0) {
+				*found_piece = next_piece;
+				*penalty_count = distance;
+				return finish_penalty_traversal(
+					1, branch_pieces, retain_legacy_words
+				);
+			}
+			if (best_distance == 0 || distance < best_distance) {
+				best_piece = next_piece;
+				best_distance = distance;
+			}
+		}
+
+		if (alternate_piece != -1) {
+			if (branch_count >= PENALTY_MAX_BRANCHES)
+				goto backtrack;
+			branch_distances[branch_count] = distance;
+			branch_pieces[branch_count] = alternate_piece;
+			branch_count++;
+		}
+
+		if (next_piece == 0)
+			distance = -1;
+		else if (distance != -1)
+			distance++;
+		current_piece = next_piece;
+		continue;
+
+	backtrack:
+		if (branch_count != 0) {
+			branch_count--;
+			current_piece = branch_pieces[branch_count];
+			distance = branch_distances[branch_count];
+			continue;
+		}
+		if (best_distance != 0) {
+			*found_piece = best_piece;
+			*penalty_count = best_distance;
+			return finish_penalty_traversal(
+				1, branch_pieces, retain_legacy_words
+			);
+		}
+
+		state.game_startcol = target_col;
+		state.game_startcol2 = target_col;
+		state.game_startrow = target_row;
+		state.game_startrow2 = target_row;
+		*penalty_count = -2;
+		return finish_penalty_traversal(
+			1, branch_pieces, retain_legacy_words
+		);
+	}
+}
 
 /*
  * Follow the generated route graph without reading td01[-1] when a branch
@@ -165,43 +366,8 @@ void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, 
 int detect_penalty(int* found_piece, int* penalty_count);
 
 #ifdef RESTUNTS_DOS
-extern int legacy_wheel_angle_stack_words[4];
 extern int legacy_grip_stack_words[4];
 extern void ported_update_car_speed_(char, int, struct CARSTATE*, struct SIMD*);
-
-/*
- * In the original update_gamestate stack, detect_penalty's branch_pieces
- * entries 114..117 occupy the same four words that later become the
- * opponent update's uninitialized wheel-angle locals.  Seed those slots in
- * the real assembly routine's future stack frame, then retain any values the
- * traversal writes there.  This reproduces the execution-state dependency
- * without tying it to a particular car or track.
- */
-static int detect_penalty_with_legacy_wheel_angles(
-	int* found_piece,
-	int* penalty_count
-) {
-	unsigned detect_bp;
-	unsigned short far* detect_frame;
-	int result;
-	int i;
-
-	/* Two near arguments, a far return address, and detect_penalty's saved BP. */
-	asm mov ax, sp
-	asm sub ax, 10
-	asm mov detect_bp, ax
-	detect_frame = (unsigned short far*)MK_FP(_SS, detect_bp);
-
-	for (i = 0; i < 4; i++)
-		detect_frame[-153 + i] = legacy_wheel_angle_stack_words[i];
-
-	result = detect_penalty(found_piece, penalty_count);
-
-	for (i = 0; i < 4; i++)
-		legacy_wheel_angle_stack_words[i] = detect_frame[-153 + i];
-
-	return result;
-}
 #endif
 
 void player_op(char arg_carInputByte) {
@@ -217,6 +383,7 @@ void player_op(char arg_carInputByte) {
 	char var_2C;
 	int var_2;
 	int var_1EpenaltyCounter;
+	int var_terminalPenalty;
 	int si;
 
 	//return ported_player_op_(arg_carInputByte);
@@ -290,13 +457,17 @@ void player_op(char arg_carInputByte) {
 	var_1A[0].z = state.game_startrow;
 	var_1A[1].x = state.game_startrow2;
 	var_1A[2].x = var_2;
-#ifdef RESTUNTS_DOS
-	si = detect_penalty_with_legacy_wheel_angles(
-		&var_2, &var_1EpenaltyCounter
+	si = detect_penalty_c(
+		&var_2, &var_1EpenaltyCounter, 1, &var_terminalPenalty
 	);
-#else
-	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
-#endif
+	if (var_terminalPenalty != 0) {
+		state.game_startcol = var_1A[0].x;
+		state.game_startcol2 = var_1A[0].y;
+		state.game_startrow = var_1A[0].z;
+		state.game_startrow2 = var_1A[1].x;
+		var_2 = var_1A[2].x;
+		si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+	}
 	/*
 	 * A zero track tail made the original wrapped td01[-1] read restart at
 	 * the main route. Prefer the directly connected piece over an overlapping
