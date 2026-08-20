@@ -1065,7 +1065,7 @@ short file_load_replay(const char* dir, const char* name)
 
 	g_is_busy = 1;
 	file_read_fatal(g_path_buf, td13_rpl_header);
-	gameinfo_decode(&gameconfig, (const legacy_u8 far*)td13_rpl_header);
+	gameinfo_decode(&gameconfig, td13_rpl_header);
 	g_is_busy = 0;
 	return 0;
 }
@@ -1074,7 +1074,7 @@ short file_write_replay(const char* filename)
 {
 	short ret;
 
-	gameinfo_encode((legacy_u8 far*)td13_rpl_header, &gameconfig);
+	gameinfo_encode(td13_rpl_header, &gameconfig);
 
 	g_is_busy = 1;
 	ret = file_write_fatal(

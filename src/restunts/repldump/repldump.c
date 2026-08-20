@@ -116,8 +116,8 @@ void init_row_tables(void) {
 }
 
 void init_trackdata(void) {
-	char far* trkptr;
-	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
+	legacy_u8 far* trkptr;
+	trkptr = (legacy_u8 far*)mmgr_alloc_resbytes("trakdata", 0x6BF3);
 
 	td01_track_file_cpy = (legacy_s16 far*)trkptr;
 
