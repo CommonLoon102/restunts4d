@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 3
+# Assembly-to-C migration: Phase 1, slice 03
 
 ## DOS file-I/O boundary
 
-Phase 3 removes all ten active inline-assembly blocks from
+Phase 1 slice 03 removes all ten active inline-assembly blocks from
 `src/restunts/c/fileio.c`. The converted operations are create/open, close,
 read, write, seek, tell, remove, find-first, and find-next.
 
@@ -26,7 +26,7 @@ cross the normal data segment.
 During incremental testing, literal `far` declarations for the near runtime
 arguments caused deterministic replay-dumper timeouts. The declarations were
 corrected to match the actual medium-model ABI. The same correction was applied
-to the Phase 2 upper-memory aliases. Runtime result values that must be passed
+to the Phase 1 slice 02 upper-memory aliases. Runtime result values that must be passed
 by near pointer use DOS-only data-segment storage rather than stack locals.
 
 ## Behavior preserved
@@ -50,7 +50,7 @@ by near pointer use DOS-only data-segment storage rather than stack locals.
   further local replay sampling was performed after the full-build pass.
 - The Phase 0 audit reports 39 active inline-assembly sites, down from 49.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 2 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 02 clean baseline. Its preserved result is
   `stunts/partitions_all_phase3_fileio_c.txt`; an empty result file means that
   every replay matched.
 

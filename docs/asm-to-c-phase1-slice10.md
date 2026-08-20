@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 10
+# Assembly-to-C migration: Phase 1, slice 10
 
 ## Polygon-edge helper control flow
 
-Phase 10 removes two active inline-assembly remnants from
+Phase 1 slice 10 removes two active inline-assembly remnants from
 `generate_poly_edges`.
 
 The function represents the original adjacent `preRender_helper` and
@@ -42,10 +42,10 @@ changed.
 - The checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
   no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 9 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 09 clean baseline. Its preserved result is
   `stunts/partitions_all_phase10_poly_edges_c.txt`; an empty result file means
   that every replay matched.
 

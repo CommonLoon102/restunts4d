@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 13
+# Assembly-to-C migration: Phase 1, slice 13
 
 ## Grip stack-residue capture expressed in C
 
-Phase 13 removes the eleven active inline-assembly statements from
+Phase 1 slice 13 removes the eleven active inline-assembly statements from
 `player_op` in `state.c`. The statements captured four words left below the
 current stack pointer by the preceding preserved `update_grip` call and saved
 them in `legacy_grip_stack_words` for `update_player_state`.
@@ -20,7 +20,7 @@ The generated listing was inspected after the change:
 - no call or stack write occurs between `update_grip` and the capture;
 - the values are stored in the same four `legacy_grip_stack_words` entries.
 
-This is a transitional DOS compatibility path, like Phase 12. It is ordinary
+This is a transitional DOS compatibility path, like Phase 1 slice 12. It is ordinary
 C but still deliberately depends on Borland's 16-bit frame layout. The code
 is guarded by `RESTUNTS_DOS`; a future portable backend must replace the
 underlying uninitialized-stack behavior with explicit physics state.
@@ -35,7 +35,7 @@ No `seg0xx.asm` source was changed.
 - The Phase 0 audit reports 13 active inline-assembly sites, down from 24,
   and the checked-in inventory is current.
 - No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase13_grip_residue_c.txt`, byte-identical to the clean
-  Phase 12 result.
+  Phase 1 slice 12 result.

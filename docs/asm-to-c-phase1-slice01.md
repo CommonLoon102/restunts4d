@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 1
+# Assembly-to-C migration: Phase 1, slice 01
 
 ## First conversion slice
 
-The first Phase 1 slice removes the active inline assembly from
+Phase 1 slice 01 removes the active inline assembly from
 `timer_get_counter` and `timer_get_delta` in `src/restunts/c/restunts.c`.
 These routines were selected because they form a small, cohesive boundary and
 do not participate in replay physics calculations.

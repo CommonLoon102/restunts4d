@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 4
+# Assembly-to-C migration: Phase 1, slice 04
 
 ## DOS conventional-memory boundary
 
-Phase 4 removes three active inline-assembly blocks from
+Phase 1 slice 04 removes three active inline-assembly blocks from
 `src/restunts/c/memmgr.c`: querying the program segment prefix, allocating a
 DOS paragraph block, and resizing a DOS paragraph block.
 
@@ -34,11 +34,11 @@ ABI-focused chunk.
   incompatible `abs` declaration in `externs.h`.
 - The Phase 0 audit reports 36 active inline-assembly sites, down from 39, and
   the checked-in inventory is current.
-- No further ad-hoc local replay was run after Phase 3 reached the requested
+- No further ad-hoc local replay was run after Phase 1 slice 03 reached the requested
   local-run limit; the comprehensive serial remote collection is the replay
   regression gate for this slice.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 3 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 03 clean baseline. Its preserved result is
   `stunts/partitions_all_phase4_memmgr_dos_c.txt`; an empty result file means
   that every replay matched.
 

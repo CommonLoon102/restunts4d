@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 11
+# Assembly-to-C migration: Phase 1, slice 11
 
 ## Penalty-route traversal
 
-Phase 11 moves the defined portion of `player_op`'s penalty-route traversal
+Phase 1 slice 11 moves the defined portion of `player_op`'s penalty-route traversal
 from the preserved `detect_penalty` assembly routine to C. The translation
 keeps the original depth-first route walk, alternate-branch stack, closest
 positive distance, start-tile updates, and wrong-way results.
@@ -54,10 +54,10 @@ slice. No `seg0xx.asm` source was changed.
   fallback above and avoids track- or replay-specific fingerprints.
 - The checked-in inventory is current.
 - No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 
 - The final hybrid comprehensive collection reports zero mismatches and is
-  byte-identical to the Phase 10 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 10 clean baseline. Its preserved result is
   `stunts/partitions_all_phase11_detect_penalty_hybrid_c.txt`; an empty result
   file means that every replay matched.
 

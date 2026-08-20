@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 9
+# Assembly-to-C migration: Phase 1, slice 09
 
 ## DOS compiler-ABI boundary
 
-Phase 9 removes all four active inline-assembly sites from `memmgr.c`. The
+Phase 1 slice 09 removes all four active inline-assembly sites from `memmgr.c`. The
 memory-manager behavior remains implemented in C; a small DOS-only external
 shim now preserves the register behavior on which legacy assembly callers
 depend.
@@ -51,10 +51,10 @@ removed.
 - The checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
   no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 8 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 08 clean baseline. Its preserved result is
   `stunts/partitions_all_phase9_memmgr_abi_c.txt`; an empty result file means
   that every replay matched.
 

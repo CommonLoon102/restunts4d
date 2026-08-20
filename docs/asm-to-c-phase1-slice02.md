@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 2
+# Assembly-to-C migration: Phase 1, slice 02
 
 ## DOS upper-memory boundary
 
-Phase 2 removes the six active inline-assembly blocks from
+Phase 1 slice 02 removes the six active inline-assembly blocks from
 `src/restunts/c/memupper.c`. The converted routines cover DOS allocation
 strategy queries and updates, UMB link-state queries and updates, paragraph
 allocation, and paragraph release.
@@ -27,7 +27,8 @@ No `seg0xx.asm` source was changed.
 - Paragraph allocation still returns zero on failure and the allocated segment
   on success.
 - The allocation result uses DOS-only data-segment storage because the
-  medium-model runtime receives this output through a near pointer. Phase 3's
+  medium-model runtime receives this output through a near pointer. Phase 1
+  slice 03's
   ABI audit corrected the initial literal-`far` declaration and stack-local
   result pointer.
 - The original upper-memory-only, first-fit strategy and restoration order are
@@ -42,7 +43,7 @@ No `seg0xx.asm` source was changed.
 - The Phase 0 audit reports 49 active inline-assembly sites, down from 55.
 - The checked-in porting inventory remains current.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 1 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 01 clean baseline. Its preserved result is
   `stunts/partitions_all_phase2_memupper_c.txt`; an empty result file means
   that every replay matched.
 

@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 8
+# Assembly-to-C migration: Phase 1, slice 08
 
 ## Optimized C sprite clear
 
-Phase 8 removes the startup timing loop's last call to the preserved
+Phase 1 slice 08 removes the startup timing loop's last call to the preserved
 `ported_sprite_clear_1_color_` routine. All callers now use the existing
 `sprite_clear_1_color` C implementation.
 
@@ -40,9 +40,9 @@ unchanged, and no `seg0xx.asm` source was changed.
 - The checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
   no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 7 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 07 clean baseline. Its preserved result is
   `stunts/partitions_all_phase8_sprite_clear_c.txt`; an empty result file means
   that every replay matched.
 

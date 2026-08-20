@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 12
+# Assembly-to-C migration: Phase 1, slice 12
 
 ## Caller-frame access expressed in C
 
-Phase 12 removes the last two active inline-assembly statements from
+Phase 1 slice 12 removes the last two active inline-assembly statements from
 `math.c`. They loaded `mat_rot_zxy`'s saved caller frame pointer into a local
 word before invoking the existing DOS compatibility helper.
 
@@ -55,12 +55,12 @@ ignored `stunts` test directory.
 
 - The DOS compiler builds both `RESTUNTS.EXE` and `REPLDUMP.EXE` with no new
   warning in the final changed code.
-- The generated DOS instructions at the replaced site match the Phase 11
+- The generated DOS instructions at the replaced site match the Phase 1 slice 11
   sequence.
 - The Phase 0 audit reports 24 active inline-assembly sites, down from 26,
   and the checked-in inventory is current.
 - No additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 - The serial comprehensive remote run returned an empty
   `partitions_all_phase12_c_frame_expression.txt`, byte-identical to the clean
-  Phase 11 result.
+  Phase 1 slice 11 result.

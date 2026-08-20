@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 5
+# Assembly-to-C migration: Phase 1, slice 05
 
 ## Divide-by-zero vector setup
 
-Phase 5 replaces the call from `init_div0()` to the preserved
+Phase 1 slice 05 replaces the call from `init_div0()` to the preserved
 `ported_init_div0_` routine with its C translation. The routine had already
 been transcribed in comments, but was deferred until a reviewed Borland
 `intdosx` runtime boundary was available.
@@ -34,9 +34,9 @@ separate from converting the game-side vector setup.
   from eight, and the checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
   no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 4 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slice 04 clean baseline. Its preserved result is
   `stunts/partitions_all_phase5_init_div0_c.txt`; an empty result file means
   that every replay matched.
 

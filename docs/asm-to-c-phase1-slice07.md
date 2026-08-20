@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 7
+# Assembly-to-C migration: Phase 1, slice 07
 
 ## Particle primitive branch
 
-Phase 7 removes the active inline-assembly block for primitive type 5 in
+Phase 1 slice 07 removes the active inline-assembly block for primitive type 5 in
 `transformed_shape_op`. The original listing identifies this type as a
 particle. The branch is compact and maps directly onto C data structures that
 the surrounding translated branches already use.
@@ -35,14 +35,14 @@ active block so there is one authoritative implementation.
   the checked-in inventory is current.
 - The comprehensive serial remote collection is the replay regression gate;
   no additional ad-hoc local replays were run after reaching the requested
-  local-run limit in Phase 3.
+  local-run limit in Phase 1 slice 03.
 
 The replay dumper guards simulation state and broad integration but does not
 guarantee pixel-level execution of this rendering branch. The direct mapping
 above and the DOS compiler's type checking are therefore also material parts
 of this slice's verification.
 - The comprehensive remote collection reports zero mismatches and is
-  byte-identical to the Phase 5/6 clean baseline. Its preserved result is
+  byte-identical to the Phase 1 slices 05/06 clean baseline. Its preserved result is
   `stunts/partitions_all_phase7_particle_primitive_c.txt`; an empty result file
   means that every replay matched.
 

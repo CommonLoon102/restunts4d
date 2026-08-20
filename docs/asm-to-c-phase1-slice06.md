@@ -1,8 +1,8 @@
-# Assembly-to-C migration: Phase 6
+# Assembly-to-C migration: Phase 1, slice 06
 
 ## Stale fallback cleanup
 
-Phase 6 removes three obsolete `ported_*` fallback declarations from active C
+Phase 1 slice 06 removes three obsolete `ported_*` fallback declarations from active C
 sources:
 
 - `ported_mmgr_alloc_pages_`
@@ -23,8 +23,8 @@ No executable statement, linker input, or `seg0xx.asm` source was changed.
 - `REPLDUMP.EXE` is byte-for-byte identical before and after the cleanup, with
   SHA-256
   `2abd15ee479c2ff9507d41529cdb8210d4161a508ed7217c67ae73298330ad5a`.
-- Because the executable is exactly the one already validated by Phase 5, the
-  Phase 5 comprehensive remote result is also the regression proof for this
+- Because the executable is exactly the one already validated by Phase 1
+  slice 05, that comprehensive remote result is also the regression proof for this
   source-only cleanup. No additional serial request is necessary.
 - The Phase 0 audit reports four preserved-assembly symbol references, down
   from seven, and the checked-in inventory is current.
