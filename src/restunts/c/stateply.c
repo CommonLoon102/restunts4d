@@ -2,16 +2,16 @@
 #include "math.h"
 
 extern int pState_minusRotate_z_1;
-extern int pState_minusRotate_z_2;
+extern legacy_s16 pState_minusRotate_z_2;
 extern int pState_minusRotate_y_1;
-extern int pState_minusRotate_y_2;
+extern legacy_s16 pState_minusRotate_y_2;
 extern int pState_minusRotate_x_1;
-extern int pState_minusRotate_x_2;
+extern legacy_s16 pState_minusRotate_x_2;
 extern struct MATRIX mat_unk;
 extern struct VECTOR vec_unk2;
 extern legacy_s16 planindex;
 extern legacy_s16 planindex_copy;
-extern int pState_f36Mminf40sar2;
+extern legacy_s16 pState_f36Mminf40sar2;
 extern struct VECTOR vec_planerotopresult;
 extern char current_surf_type;
 extern int nextPosAndNormalIP;
@@ -65,7 +65,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	volatile legacy_s16 var_140someWhlData[4];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
-	int pState_f40_sar2;
+	legacy_s16 pState_f40_sar2;
 	char var_EC;
 	int var_F0;
 	struct VECTOR vec_E4;
@@ -111,7 +111,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	pState_minusRotate_y_2 = arg_pState->car_rotate.x;
 
 	if (arg_pState->car_sumSurfAllWheels != 0) {
-		pState_f40_sar2 = arg_pState->car_40MfrontWhlAngle >> 2;
+		pState_f40_sar2 = LEGACY_S16_FROM_BITS(LEGACY_U16_SAR1(
+			LEGACY_U16_SAR1(arg_pState->car_40MfrontWhlAngle)));
 	} else {
 		pState_f40_sar2 = 0;
 	}
@@ -461,7 +462,8 @@ loc_15126:
     jl      short loc_15130
     jmp     loc_14FA6*/
 loc_15130:
-	pState_f36Mminf40sar2 = arg_pState->car_36MwhlAngle - pState_f40_sar2;
+	pState_f36Mminf40sar2 = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
+		arg_pState->car_36MwhlAngle, pState_f40_sar2));
 	goto loc_14FAC;
 /*
     mov     bx, [bp+arg_pState]

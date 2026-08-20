@@ -72,7 +72,10 @@ extern struct TRANSFORMEDSHAPE3D currenttransshape[29];
 extern struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
 extern struct TRACKOBJECT trkObjectList[215]; // 215 entries
 extern unsigned char fence_TrkObjCodes[];
-extern int pState_minusRotate_z_2, pState_minusRotate_x_2, pState_minusRotate_y_2, pState_f36Mminf40sar2;
+extern legacy_s16 pState_minusRotate_z_2;
+extern legacy_s16 pState_minusRotate_x_2;
+extern legacy_s16 pState_minusRotate_y_2;
+extern legacy_s16 pState_f36Mminf40sar2;
 
 extern char unk_3C0EE[];
 extern char unk_3C0F0[];
