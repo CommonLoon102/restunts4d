@@ -106,6 +106,9 @@ static legacy_u16 average_speed_words(
 #define STATECAR_S16_ADD_ASSIGN(target, value) ((target) += (value))
 #define STATECAR_S16_SUB_ASSIGN(target, value) ((target) -= (value))
 #define STATECAR_U16_ADD_ASSIGN(target, value) ((target) += (value))
+#define STATECAR_U16_SUB_ASSIGN(target, value) ((target) -= (value))
+#define STATECAR_S16_LOW_PRODUCT(left, right) \
+	((legacy_s16)((left) * (right)))
 #else
 #define STATECAR_S16_SUB(left, right) LEGACY_S16_WRAP_SUB(left, right)
 #define STATECAR_S16_DOUBLE(value) LEGACY_S16_WRAP_ADD(value, value)
@@ -117,6 +120,11 @@ static legacy_u16 average_speed_words(
 	((target) = LEGACY_S16_WRAP_SUB(target, value))
 #define STATECAR_U16_ADD_ASSIGN(target, value) \
 	((target) = LEGACY_U16_WRAP_ADD(target, value))
+#define STATECAR_U16_SUB_ASSIGN(target, value) \
+	((target) = LEGACY_U16_WRAP_SUB(target, value))
+#define STATECAR_S16_LOW_PRODUCT(left, right) \
+	LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD( \
+		LEGACY_U32_WRAP_MUL((legacy_u16)(left), (legacy_u16)(right))))
 #endif
 
 void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
@@ -886,9 +894,12 @@ loc_17F45:
 		goto loc_17FBF;
 	if (arg_carState->car_lastrpm <= arg_carState->car_currpm)
 		goto loc_17FBF;
-	if (arg_carState->car_lastrpm - arg_carState->car_currpm <= 0x7D0)
+	if (STATECAR_S16_SUB(
+		arg_carState->car_lastrpm, arg_carState->car_currpm) <= 0x7D0)
 		goto loc_17FA4;
-	if (arg_simd->idle_torque * arg_carState->car_gearratioshr8 <= 0x2EE0)
+	if (STATECAR_S16_LOW_PRODUCT(
+		arg_simd->idle_torque,
+		arg_carState->car_gearratioshr8) <= 0x2EE0)
 		goto loc_17FBF;
 	arg_carState->car_engineLimiterTimer = 0x1E;
 	goto loc_17FBF;
@@ -916,9 +927,10 @@ loc_17F45:
     db 144*/
 loc_17FA4:
 	// NOTE: signed comparison:
-	if (arg_carState->car_currpm - arg_carState->car_lastrpm > 0x7D0) {
+	if (STATECAR_S16_SUB(
+		arg_carState->car_currpm, arg_carState->car_lastrpm) > 0x7D0) {
 		arg_carState->car_engineLimiterTimer = 0xA;
-		arg_carState->car_speed2 -= 0x500;
+		STATECAR_U16_SUB_ASSIGN(arg_carState->car_speed2, 0x500);
 	}
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bx+CARSTATE.car_currpm]
@@ -948,6 +960,8 @@ loc_17FD0:
 #undef STATECAR_S16_ADD_ASSIGN
 #undef STATECAR_S16_SUB_ASSIGN
 #undef STATECAR_U16_ADD_ASSIGN
+#undef STATECAR_U16_SUB_ASSIGN
+#undef STATECAR_S16_LOW_PRODUCT
 /*
     pop     si
     pop     di
