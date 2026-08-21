@@ -986,7 +986,7 @@ loc_1543A:
     ; align 2
     db 144*/
 loc_1544A:
-	var_EE = (wallOrientation + 0x200) & 0x3FF;
+	var_EE = stateply_add_word(wallOrientation, 0x200) & 0x3FF;
 	vec_FC.x = -768;//0xFD00; // TODO: a negative number
 /*    mov     ax, wallOrientation
     add     ah, 2
@@ -1014,7 +1014,7 @@ loc_1546E:
 	var_138 = 0;
 	if (si <= 0x100)
 		goto loc_154CA;
-	si = 0x400 - si;
+	si = stateply_sub_word(0x400, si);
 	var_138 = 1;
 /*    sub     ax, ax
     push    ax
@@ -2622,8 +2622,8 @@ loc_160A7:
     cmp     [bp+var_F2], 0
     jl      short loc_16146*/
 loc_1611C:
-	pState_minusRotate_x_1 = polarAngle(
-		STATEPLY_S16_WRAP_NEGATE(var_F2), var_F4) - 0x100;
+	pState_minusRotate_x_1 = stateply_sub_word(polarAngle(
+		STATEPLY_S16_WRAP_NEGATE(var_F2), var_F4), 0x100);
 	if (pState_minusRotate_x_1 >= 0)
 		goto loc_1613E;
 	goto loc_16141;
@@ -2734,7 +2734,8 @@ loc_161AB:
     cmp     [bp+var_F2], 0
     jg      short loc_16204*/
 loc_161DE:
-	pState_minusRotate_z_1 = polarAngle(var_F2, var_F4) - 0x100;
+	pState_minusRotate_z_1 = stateply_sub_word(
+		polarAngle(var_F2, var_F4), 0x100);
 	if (pState_minusRotate_z_1 >= 0)
 		goto loc_161FC;
 	goto loc_161FF;
