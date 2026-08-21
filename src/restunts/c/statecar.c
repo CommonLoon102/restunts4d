@@ -117,6 +117,26 @@ static legacy_s8 gear_change_frame_count(legacy_u16 fps)
 #endif
 
 #if defined(__BORLANDC__)
+#define STATECAR_INCREMENT_BYTE(target) ((target)++)
+#define STATECAR_DECREMENT_BYTE(target) ((target)--)
+#else
+static legacy_s8 statecar_increment_byte(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value + 1U));
+}
+
+static legacy_s8 statecar_decrement_byte(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value - 1U));
+}
+
+#define STATECAR_INCREMENT_BYTE(target) \
+	((target) = statecar_increment_byte(target))
+#define STATECAR_DECREMENT_BYTE(target) \
+	((target) = statecar_decrement_byte(target))
+#endif
+
+#if defined(__BORLANDC__)
 #define STATECAR_S16_SUB(left, right) ((left) - (right))
 #define STATECAR_S16_DOUBLE(value) ((value) << 1)
 #define STATECAR_S16_NEGATE(value) (-(value))
@@ -184,7 +204,7 @@ loc_17A8E:
 loc_17A93:
 	if (arg_carState->car_engineLimiterTimer == 0)
 		goto loc_17AA1;
-	arg_carState->car_engineLimiterTimer--;
+	STATECAR_DECREMENT_BYTE(arg_carState->car_engineLimiterTimer);
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_engineLimiterTimer], 0
     jz      short loc_17AA1
@@ -260,7 +280,7 @@ loc_17B04:
 loc_17B0F:
 	if (arg_carState->car_current_gear == arg_simd->num_gears)
 		goto loc_17B86;
-	arg_carState->car_current_gear++;
+	STATECAR_INCREMENT_BYTE(arg_carState->car_current_gear);
 	goto loc_17B39;
 /*    mov     si, [bp+arg_simd]
     mov     al, [si+SIMD.num_gears]
@@ -279,7 +299,7 @@ loc_17B20:
 loc_17B2E:
 	if (arg_carState->car_current_gear <= 1)
 		goto loc_17B86;
-	arg_carState->car_current_gear--;
+	STATECAR_DECREMENT_BYTE(arg_carState->car_current_gear);
 /*    cmp     [bx+CARSTATE.car_current_gear], 1
     jle     short loc_17B86
     dec     [bx+CARSTATE.car_current_gear]*/
@@ -492,7 +512,7 @@ loc_17C93:
 loc_17C9E:
 	if (arg_carState->car_fpsmul2 == 0)
 		goto loc_17CAC;
-	arg_carState->car_fpsmul2--;
+	STATECAR_DECREMENT_BYTE(arg_carState->car_fpsmul2);
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_fpsmul2], 0
     jz      short loc_17CAC
