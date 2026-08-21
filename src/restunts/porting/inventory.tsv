@@ -18,7 +18,7 @@ seg000	security_check	pending	asm_only	2	36	180	-	-
 seg000	set_default_car	ported	c_active_with_asm	1	0	10	src/restunts/c/restunts.c:249	-
 seg001	opponent_op	pending	asm_only	2	40	613	-	-
 seg001	mat_mul_vector2	ported	c_active_with_asm	2	2	27	src/restunts/c/math.c:222	-
-seg001	update_player_state	ported	c_active_with_asm	2	170	2464	src/restunts/c/stateply.c:160	-
+seg001	update_player_state	ported	c_active_with_asm	2	170	2464	src/restunts/c/stateply.c:166	-
 seg001	init_carstate_from_simd	ported	c_active_with_asm	3	0	226	src/restunts/c/restunts.c:376	-
 seg001	init_game_state	ported	c_active_with_asm	11	60	435	src/restunts/c/restunts.c:449	-
 seg001	restore_gamestate	ported	c_active_with_asm	5	8	94	src/restunts/c/restunts.c:589	-

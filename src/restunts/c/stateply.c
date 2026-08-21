@@ -150,10 +150,16 @@ static legacy_s16 interpolate_wheel_delta(
 
 #if defined(__BORLANDC__)
 #define decode_track_collision_index(value) ((char)(value))
+#define stateply_negate_word_operand(value) (-(value))
 #else
 static legacy_s16 decode_track_collision_index(legacy_u8 value)
 {
 	return LEGACY_S8_FROM_BITS(value);
+}
+
+static legacy_s16 stateply_negate_word_operand(legacy_u16 value)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(value));
 }
 #endif
 
@@ -235,9 +241,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * the existing saved array without changing the legacy data layout.
 		 */
 		mat_unk = *mat_rot_zxy(
-			-state.opponentstate.car_rotate.z,
-			-state.opponentstate.car_rotate.y,
-			-state.opponentstate.car_rotate.x,
+			stateply_negate_word_operand(
+				state.opponentstate.car_rotate.z),
+			stateply_negate_word_operand(
+				state.opponentstate.car_rotate.y),
+			stateply_negate_word_operand(
+				state.opponentstate.car_rotate.x),
 			0
 		);
 		var_F0 = 0;
@@ -3435,8 +3444,8 @@ loc_1667A:
 	state.field_3FA[si] = 1;
 	
 	state_op_unk(
-		si + 2,
-		-arg_pState->car_rotate.x,
+		stateply_add_word(si, 2),
+		stateply_negate_word_operand(arg_pState->car_rotate.x),
 		scale_speed2_for_physics(arg_pState->car_speed2, 0x3C00U));
 	/*
     mov     state.field_3FA[si], 1
