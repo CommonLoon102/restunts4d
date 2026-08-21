@@ -78,6 +78,8 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((track_center) - ((coordinate) >> 6))
 #define super_random_absolute_word(first, second, third, fourth) \
 	LEGACY_S16_ABS_WORD((first) + (second) + (third) + (fourth))
+#define game_frame_interval_word(fps) (30 * (legacy_s16)(fps))
+#define game_tick_interval_word(fps) (100 / (legacy_s16)(fps))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -221,6 +223,17 @@ static legacy_s16 super_random_absolute_word(
 		LEGACY_U16_WRAP_ADD(first, second),
 		LEGACY_U16_WRAP_ADD(third, fourth)));
 	return LEGACY_S16_ABS_WORD(sum);
+}
+
+static legacy_s16 game_frame_interval_word(legacy_u16 fps)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(30U, fps));
+}
+
+static legacy_s16 game_tick_interval_word(legacy_u16 fps)
+{
+	return (legacy_s16)((legacy_s32)100L /
+		(legacy_s32)LEGACY_S16_FROM_BITS(fps));
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -667,8 +680,8 @@ void init_game_state(short arg)
 		steerWhlRespTable_ptr = &steerWhlRespTable_20fps;
 	}
 	
-	word_45A00 = framespersec * 30;
-	word_4499C = 100 / framespersec;
+	word_45A00 = game_frame_interval_word(framespersec);
+	word_4499C = game_tick_interval_word(framespersec);
 
 	if (arg != -3) {
 		init_unknown();
