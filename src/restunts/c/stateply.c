@@ -1057,7 +1057,7 @@ loc_154CA:
     db 144*/
 loc_154F8:
     //mov     ax, si
-	var_138 = si << 1;
+	var_138 = LEGACY_S16_WRAP_SHL1(si);
 loc_154FA:
     //shl     ax, 1
     //mov     [bp+var_138], ax
@@ -3199,7 +3199,7 @@ loc_16566:
     pop     bp
     retf*/
 loc_16578:
-	vec_FC.x = var_11ApStateWorldCrds[0].x >> 10;
+	vec_FC.x = LEGACY_S16_SAR10(var_11ApStateWorldCrds[0].x);
 	vec_FC.z = LEGACY_S16_WRAP_SAR10_SUB_NEGATE(
 		var_11ApStateWorldCrds[0].z, 0x1D);
 	vec_18EoStateWorldCrds[1].x = 0;

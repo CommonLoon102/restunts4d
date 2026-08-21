@@ -111,6 +111,7 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_WRAP_NEGATE_SUM_ADD(value, sum_addend, final_addend) \
 	((legacy_s16)(-((legacy_s16)(value) + (legacy_s16)(sum_addend)) + \
 	(legacy_s16)(final_addend)))
+#define LEGACY_S16_WRAP_SHL1(value) ((value) << 1)
 #define LEGACY_S16_WRAP_NEGATE_SHL1(value) \
 	((legacy_s16)(-(legacy_s16)(value) << 1))
 #else
@@ -121,6 +122,8 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_WRAP_NEGATE_SUM_ADD(value, sum_addend, final_addend) \
 	LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE( \
 		LEGACY_S16_WRAP_ADD(value, sum_addend)), final_addend)
+#define LEGACY_S16_WRAP_SHL1(value) \
+	LEGACY_S16_FROM_BITS((legacy_u16)((legacy_u16)(value) << 1))
 #define LEGACY_S16_WRAP_NEGATE_SHL1(value) \
 	LEGACY_S16_FROM_BITS((legacy_u16)( \
 		(legacy_u16)LEGACY_S16_WRAP_NEGATE(value) << 1))
@@ -152,9 +155,12 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	((((legacy_u16)(value) & 0x8000U) != 0) ? 0xFFC0U : 0U)))
 
 #if defined(__BORLANDC__)
+#define LEGACY_S16_SAR10(value) ((value) >> 10)
 #define LEGACY_S16_WRAP_SAR10_SUB_NEGATE(value, subtrahend) \
 	(-(((value) >> 10) - (subtrahend)))
 #else
+#define LEGACY_S16_SAR10(value) \
+	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR10(value))
 #define LEGACY_S16_WRAP_SAR10_SUB_NEGATE(value, subtrahend) \
 	LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB( \
 		LEGACY_S16_FROM_BITS(LEGACY_U16_SAR10(value)), subtrahend))
