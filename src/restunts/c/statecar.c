@@ -32,6 +32,29 @@ loc_19DE3:
     mov     ax, cx*/
 }
 
+static legacy_s16 accelerate_delta_speed_for_mass(
+	legacy_s16 delta_speed,
+	legacy_u16 gearratio_shift8,
+	legacy_u8 torque,
+	legacy_u16 mass)
+{
+	legacy_u16 torque_product;
+	legacy_u16 delta_bits;
+	legacy_u32 signed_delta_bits;
+	legacy_u32 quotient;
+
+	torque_product = LEGACY_U32_LOW_WORD(
+		LEGACY_U32_WRAP_MUL(gearratio_shift8, torque));
+	delta_bits = LEGACY_U16_WRAP_ADD(
+		delta_speed, torque_product >> 4);
+	signed_delta_bits = LEGACY_U32_FROM_WORDS(
+		(delta_bits & 0x8000U) != 0 ? 0xFFFFU : 0U,
+		delta_bits);
+	quotient = LEGACY_U32_WRAP_MUL(signed_delta_bits, 0x19U) / mass;
+	return LEGACY_S16_FROM_BITS(
+		LEGACY_U16_SAR1(LEGACY_U32_LOW_WORD(quotient)));
+}
+
 void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 /*update_car_speed proc far
     var_currTorque = byte ptr -10
@@ -603,10 +626,11 @@ loc_17E0C:
     shr     ax, 1
     mov     [bp+var_currTorque], al*/
 loc_17E34:
-	var_deltaSpeed += (arg_carState->car_gearratioshr8 * var_currTorque) >> 4;
-	var_deltaSpeed = (unsigned long)((long)var_deltaSpeed * 0x19) /
-		(unsigned short)arg_simd->car_mass;
-	var_deltaSpeed >>= 1;
+	var_deltaSpeed = accelerate_delta_speed_for_mass(
+		LEGACY_S16_FROM_BITS((legacy_u16)var_deltaSpeed),
+		arg_carState->car_gearratioshr8,
+		var_currTorque,
+		(legacy_u16)arg_simd->car_mass);
 
 /*    mov     al, [bp+var_currTorque]
     sub     ah, ah
