@@ -66,6 +66,10 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((legacy_s16)(legacy_s8)(value) << 10)
 #define restunts_scale_word_to_dword(value) \
 	((legacy_s32)(legacy_s16)(value) * 64L)
+#define replay_frame_word_quotient(frame, interval) \
+	((unsigned short)(frame) / (unsigned short)(interval))
+#define replay_frame_word_remainder(frame, interval) \
+	((unsigned short)(frame) % (unsigned short)(interval))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -155,6 +159,20 @@ static legacy_s32 restunts_scale_word_to_dword(legacy_u16 value)
 {
 	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_MUL(
 		LEGACY_U32_SIGN_EXTEND_S16(value), 64UL));
+}
+
+static legacy_u16 replay_frame_word_quotient(
+	legacy_u16 frame,
+	legacy_u16 interval
+) {
+	return (legacy_u16)(frame / interval);
+}
+
+static legacy_u16 replay_frame_word_remainder(
+	legacy_u16 frame,
+	legacy_u16 interval
+) {
+	return (legacy_u16)(frame % interval);
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -769,17 +787,22 @@ void restore_gamestate(unsigned short frame)
 
 
 void update_gamestate() {
-	char var_carInputByte;
+	legacy_s8 var_carInputByte;
 
-	var_carInputByte = td16_rpl_buffer[state.game_frame];
+	var_carInputByte = LEGACY_S8_FROM_BITS(
+		td16_rpl_buffer[(legacy_u16)state.game_frame]);
 	if (var_carInputByte != 0) {
 		state.game_inputmode = 1;
 	}
 	
-	if ((state.game_frame % word_45A00) == 0) {
+	if (replay_frame_word_remainder(
+			state.game_frame, word_45A00) == 0) {
 		get_kevinrandom_seed(state.kevinseed);
 	
-		fmemcpy(&cvxptr[state.game_frame / word_45A00], MK_FP(FP_SEG(&state), FP_OFF(&state)), sizeof(struct GAMESTATE));
+		fmemcpy(&cvxptr[replay_frame_word_quotient(
+			state.game_frame, word_45A00)],
+			MK_FP(FP_SEG(&state), FP_OFF(&state)),
+			sizeof(struct GAMESTATE));
 	}
 
 	RESTUNTS_INCREMENT_WORD(state.game_frame);

@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | One hundred and five implementation slices are comprehensively replay-tested. |
+| Phase 1 | In progress | One hundred and six implementation slices are comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -147,6 +147,7 @@ portable enough to support it.
 103. [Defined player start-position arithmetic](asm-to-c-phase1-slice103.md)
 104. [Defined initial scene-vector word arithmetic](asm-to-c-phase1-slice104.md)
 105. [Defined initial-car coordinate arithmetic](asm-to-c-phase1-slice105.md)
+106. [Defined replay checkpoint word semantics](asm-to-c-phase1-slice106.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap
