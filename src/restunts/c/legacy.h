@@ -110,6 +110,10 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	((legacy_u32)(value) & (legacy_u32)0x80000000UL)))
 #define LEGACY_U32_SAR2(value) \
 	LEGACY_U32_SAR1(LEGACY_U32_SAR1(value))
+#define LEGACY_U32_SAR6(value) \
+	((legacy_u32)(((legacy_u32)(value) >> 6) | \
+	((((legacy_u32)(value) & (legacy_u32)0x80000000UL) != 0) ? \
+	(legacy_u32)0xFC000000UL : (legacy_u32)0)))
 
 #define LEGACY_U32_FROM_WORDS(high_word, low_word) \
 	(((legacy_u32)(legacy_u16)(high_word) << 16) | \
@@ -150,6 +154,8 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S32_WRAP_SUM4_SAR2(first, second, third, fourth) \
 	(((legacy_s32)(first) + (legacy_s32)(second) + \
 	(legacy_s32)(third) + (legacy_s32)(fourth)) >> 2)
+#define LEGACY_S16_FROM_S32_SAR6(value) \
+	((legacy_s16)((legacy_s32)(value) >> 6))
 #else
 #define LEGACY_S32_WRAP_ADD_S16(left, right) \
 	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD( \
@@ -161,6 +167,9 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	LEGACY_S32_FROM_BITS(LEGACY_U32_SAR2(LEGACY_U32_WRAP_ADD( \
 		LEGACY_U32_WRAP_ADD((legacy_u32)(first), (legacy_u32)(second)), \
 		LEGACY_U32_WRAP_ADD((legacy_u32)(third), (legacy_u32)(fourth)))))
+#define LEGACY_S16_FROM_S32_SAR6(value) \
+	LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD( \
+		LEGACY_U32_SAR6((legacy_u32)(value))))
 #endif
 
 #endif

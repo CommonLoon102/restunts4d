@@ -575,9 +575,9 @@ loc_151BA:
     add     sp, 4*/
 loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
-	vec_1C6.x = var_DEptrTo1C0->lx >> 6;
-	vec_1C6.y = var_DEptrTo1C0->ly >> 6;
-	vec_1C6.z = var_DEptrTo1C0->lz >> 6;
+	vec_1C6.x = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx);
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
+	vec_1C6.z = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz);
 	
 	if (state.game_inputmode != 2)
 		goto loc_15240;
@@ -661,9 +661,11 @@ loc_1527C:
 	vec_182.x = arg_pState->car_whlWorldCrds1[var_wheelIndex].x - wallStartX;
 	vec_182.y = 0;
 	vec_182.z = arg_pState->car_whlWorldCrds1[var_wheelIndex].z - wallStartZ;
-	vec_1E4.x = (var_DEptrTo1C0->lx >> 6) - wallStartX;
+	vec_1E4.x = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx), wallStartX);
 	vec_1E4.y = 0;
-	vec_1E4.z = (var_DEptrTo1C0->lz >> 6) - wallStartZ;
+	vec_1E4.z = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz), wallStartZ);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -1194,7 +1196,7 @@ loc_15642:
     sub     word ptr [bx+VECTORLONG.ly], ax
     sbb     word ptr [bx+(VECTORLONG.ly+2)], dx*/
 loc_156A3:
-	vec_1C6.y = var_DEptrTo1C0->ly >> 6;
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
 	if (state.game_inputmode == 2) {
 		nextPosAndNormalIP = vec_1C6.y;
 		//goto loc_156D6;
@@ -1276,9 +1278,12 @@ loc_1570A:
     add     ax, elem_zCenter
     mov     [bp+var_122.vz], ax
 */
-	vec_182.x = (var_146ptrTo176->lx >> 6) - var_122.x;
-	vec_182.y = (var_146ptrTo176->ly >> 6) - var_122.y;
-	vec_182.z = (var_146ptrTo176->lz >> 6) - var_122.z;
+	vec_182.x = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_146ptrTo176->lx), var_122.x);
+	vec_182.y = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_146ptrTo176->ly), var_122.y);
+	vec_182.z = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_146ptrTo176->lz), var_122.z);
 /*
     mov     bx, [bp+var_146ptrTo176]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -1313,9 +1318,12 @@ loc_15789:
     jnz     short loc_15789
     sub     ax, [bp+var_122.vz]
     mov     [bp+vec_182.vz], ax*/
-	vec_1E4.x = (var_DEptrTo1C0->lx >> 6) - var_122.x;
-	vec_1E4.y = (var_DEptrTo1C0->ly >> 6) - var_122.y;
-	vec_1E4.z = (var_DEptrTo1C0->lz >> 6) - var_122.z;
+	vec_1E4.x = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx), var_122.x);
+	vec_1E4.y = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly), var_122.y);
+	vec_1E4.z = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz), var_122.z);
 /*
     mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -1478,9 +1486,9 @@ loc_158DA:
 	planindex = 0;
 	current_planptr = planptr;
 	byte_4392C = 1;
-	vec_1C6.x = var_DEptrTo1C0->lx >> 6;
-	vec_1C6.y = var_DEptrTo1C0->ly >> 6;
-	vec_1C6.z = var_DEptrTo1C0->lz >> 6;
+	vec_1C6.x = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx);
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
+	vec_1C6.z = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz);
 /*    mov     planindex, 0
     mov     ax, word ptr planptr
     mov     dx, word ptr planptr+2
@@ -1860,9 +1868,9 @@ loc_15A30:
     mov     word ptr [bx+VECTORLONG.lz], cx
     mov     word ptr [bx+(VECTORLONG.lz+2)], ax*/
 loc_15C04:
-	vec_1C6.x = var_DEptrTo1C0->lx >> 6;
-	vec_1C6.y = var_DEptrTo1C0->ly >> 6;
-	vec_1C6.z = var_DEptrTo1C0->lz >> 6;
+	vec_1C6.x = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx);
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
+	vec_1C6.z = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz);
 /*    mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
     mov     dx, word ptr [bx+(VECTORLONG.lx+2)]
@@ -2022,9 +2030,9 @@ loc_15D39:
     jl      short loc_15D43
     jmp     loc_15163*/
 loc_15D43:
-	vec_1C6.x = var_DEptrTo1C0->lx >> 6;
-	vec_1C6.y = var_DEptrTo1C0->ly >> 6;
-	vec_1C6.z = var_DEptrTo1C0->lz >> 6;
+	vec_1C6.x = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx);
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
+	vec_1C6.z = LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz);
 /*
     mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -2098,9 +2106,12 @@ loc_15DD1:
     jl      short loc_15DDB
     jmp     code_update_globalPos*/
 loc_15DDB:
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].x = var_DEptrTo1C0->lx >> 6;
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].y = var_DEptrTo1C0->ly >> 6;
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].z = var_DEptrTo1C0->lz >> 6;
+	arg_pState->car_whlWorldCrds1[var_wheelIndex].x =
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx);
+	arg_pState->car_whlWorldCrds1[var_wheelIndex].y =
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->ly);
+	arg_pState->car_whlWorldCrds1[var_wheelIndex].z =
+		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lz);
 /*    mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
     mov     dx, word ptr [bx+(VECTORLONG.lx+2)]
@@ -2828,9 +2839,12 @@ loc_16336:
     push    ax
     call    mat_mul_vector
     add     sp, 6*/
-	vec_1C6.x = (vec_FC.x + pState_lvec1_x) >> 6;
-	vec_1C6.y = (vec_FC.y + pState_lvec1_y) >> 6;
-	vec_1C6.z = (vec_FC.z + pState_lvec1_z) >> 6;
+	vec_1C6.x = LEGACY_S16_FROM_S32_SAR6(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_x, vec_FC.x));
+	vec_1C6.y = LEGACY_S16_FROM_S32_SAR6(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_y, vec_FC.y));
+	vec_1C6.z = LEGACY_S16_FROM_S32_SAR6(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_z, vec_FC.z));
 /*    mov     ax, [bp+vec_FC.vx]
     cwd
     add     ax, pState_lvec1_x_ax
@@ -2934,9 +2948,9 @@ loc_16428:
     inc     state.game_jumpCount*/
 loc_1644C:
 	arg_pState->car_sumSurfAllWheels = var_11C;
-	var_11ApStateWorldCrds[0].x = pState_lvec1_x >> 6;
-	var_11ApStateWorldCrds[0].y = pState_lvec1_y >> 6;
-	var_11ApStateWorldCrds[0].z = pState_lvec1_z >> 6;
+	var_11ApStateWorldCrds[0].x = LEGACY_S16_FROM_S32_SAR6(pState_lvec1_x);
+	var_11ApStateWorldCrds[0].y = LEGACY_S16_FROM_S32_SAR6(pState_lvec1_y);
+	var_11ApStateWorldCrds[0].z = LEGACY_S16_FROM_S32_SAR6(pState_lvec1_z);
 /*    mov     al, [bp+var_11C]
     mov     [bx+CARSTATE.car_sumSurfAllWheels], al
     mov     ax, pState_lvec1_x_ax
@@ -2982,9 +2996,12 @@ loc_16487:
     jnz     short loc_164B2
     jmp     loc_16578*/
 loc_164B2:
-	vec_18EoStateWorldCrds[0].x = arg_oState->car_posWorld1.lx >> 6;
-	vec_18EoStateWorldCrds[0].y = arg_oState->car_posWorld1.ly >> 6;
-	vec_18EoStateWorldCrds[0].z = arg_oState->car_posWorld1.lz >> 6;
+	vec_18EoStateWorldCrds[0].x =
+		LEGACY_S16_FROM_S32_SAR6(arg_oState->car_posWorld1.lx);
+	vec_18EoStateWorldCrds[0].y =
+		LEGACY_S16_FROM_S32_SAR6(arg_oState->car_posWorld1.ly);
+	vec_18EoStateWorldCrds[0].z =
+		LEGACY_S16_FROM_S32_SAR6(arg_oState->car_posWorld1.lz);
 /*    mov     bx, [bp+arg_oState]
     mov     ax, word ptr [bx+CARSTATE.car_posWorld1.lx]
     mov     dx, word ptr [bx+(CARSTATE.car_posWorld1.lx+2)]
