@@ -14,6 +14,34 @@ extern int word_43964;
 extern char byte_459D8;
 extern int word_4408C;
 
+#if defined(__BORLANDC__)
+#define statecrs_scale_frame_count(fps) ((fps) << 2)
+#define statecrs_add_time_words(left, right) ((left) + (right))
+#define statecrs_sum_finish_time(frame, penalty, elapsed) \
+	((frame) + (penalty) + (elapsed))
+#else
+static legacy_s16 statecrs_scale_frame_count(legacy_u16 fps)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(fps, 4U));
+}
+
+static legacy_s16 statecrs_add_time_words(
+	legacy_u16 left,
+	legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
+}
+
+static legacy_s16 statecrs_sum_finish_time(
+	legacy_u16 frame,
+	legacy_u16 penalty,
+	legacy_u16 elapsed)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		LEGACY_U16_WRAP_ADD(frame, penalty), elapsed));
+}
+#endif
+
 // previously set_AV_event_triggers
 void update_crash_state(int arg_someFlag, int arg_MplayerFlag) {
 /*    var_cState = word ptr -4
@@ -136,7 +164,7 @@ loc_1967F:
 	if (arg_MplayerFlag != 0)
 		goto loc_196B3;
 	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = framespersec << 2;
+	state.game_frames_per_sec = statecrs_scale_frame_count(framespersec);
 /*    mov     bx, [bp+var_cState]
     mov     [bx+CARSTATE.car_crashBmpFlag], 1
     sub     ax, ax
@@ -222,7 +250,7 @@ loc_19704:
     jmp     loc_1964E*/
 loc_19719:
 	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = framespersec << 2;
+	state.game_frames_per_sec = statecrs_scale_frame_count(framespersec);
 /*    mov     bx, [bp+var_cState]
     mov     ax, [bx+CARSTATE.car_speed2]
     mov     state.game_impactSpeed, ax
@@ -239,7 +267,8 @@ loc_19730:
 	var_cState->car_crashBmpFlag = 3;
 	if (arg_MplayerFlag != 0)
 		goto loc_19752;
-	state.game_total_finish = state.game_frame + state.game_penalty + elapsed_time1;
+	state.game_total_finish = statecrs_sum_finish_time(
+		state.game_frame, state.game_penalty, elapsed_time1);
 	state.game_frames_per_sec = framespersec;
 	goto loc_19729;
 /*    mov     bx, [bp+var_cState]
@@ -255,7 +284,8 @@ loc_19730:
     ; align 2
     db 144*/
 loc_19752:
-	state.field_144 = state.game_frame + elapsed_time1;
+	state.field_144 = statecrs_add_time_words(
+		state.game_frame, elapsed_time1);
 	goto loc_1964E;
 /*    mov     ax, state.game_frame
     add     ax, elapsed_time1
