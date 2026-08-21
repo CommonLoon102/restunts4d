@@ -56,9 +56,20 @@ legacy_s16 legacy_wheel_angle_stack_words[4];
 /* Stack residue left by update_grip for the following player physics call. */
 legacy_s16 legacy_grip_stack_words[4];
 
+static legacy_s16 scale_speed2_for_physics(
+	legacy_u16 speed,
+	legacy_u16 denominator)
+{
+	legacy_u32 product;
+
+	product = LEGACY_U32_WRAP_MUL(speed, 0x0580U);
+	return LEGACY_S16_FROM_BITS(
+		LEGACY_U32_LOW_WORD(product / denominator));
+}
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
-	int var_pSpeed2Scaled;
+	legacy_s16 var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
 	/* Preserve the original stack slot; the surrounding locals are layout-sensitive. */
@@ -118,9 +129,11 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 
 	if (framespersec == 0xA) {
-		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x1E00;
+		var_pSpeed2Scaled = scale_speed2_for_physics(
+			arg_pState->car_speed2, 0x1E00U);
 	} else {
-		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
+		var_pSpeed2Scaled = scale_speed2_for_physics(
+			arg_pState->car_speed2, 0x3C00U);
 	}
 	#ifdef RESTUNTS_DOS
 	if (arg_MplayerFlag == 0 && var_pSpeed2Scaled == 0 &&
@@ -3229,7 +3242,10 @@ loc_1667A:
     jz      short loc_16710*/
 	state.field_3FA[si] = 1;
 	
-	state_op_unk(si + 2, -arg_pState->car_rotate.x, ((long)arg_pState->car_speed2 * 0x580) / 0x3C00);
+	state_op_unk(
+		si + 2,
+		-arg_pState->car_rotate.x,
+		scale_speed2_for_physics(arg_pState->car_speed2, 0x3C00U));
 	/*
     mov     state.field_3FA[si], 1
     mov     ax, 3C00h       ; 15360 = track grid length / 2
