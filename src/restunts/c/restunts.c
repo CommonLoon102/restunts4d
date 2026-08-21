@@ -70,6 +70,10 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((unsigned short)(frame) / (unsigned short)(interval))
 #define replay_frame_word_remainder(frame, interval) \
 	((unsigned short)(frame) % (unsigned short)(interval))
+#define restore_frame_word_quotient(frame, interval) \
+	((unsigned short)((short)(frame) / (short)(interval)))
+#define restore_checkpoint_frame_word(slot, interval) \
+	((unsigned short)((short)(slot) * (short)(interval)))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -173,6 +177,24 @@ static legacy_u16 replay_frame_word_remainder(
 	legacy_u16 interval
 ) {
 	return (legacy_u16)(frame % interval);
+}
+
+static legacy_u16 restore_frame_word_quotient(
+	legacy_u16 frame,
+	legacy_u16 interval
+) {
+	legacy_s32 quotient;
+
+	quotient = (legacy_s32)LEGACY_S16_FROM_BITS(frame) /
+		(legacy_s32)LEGACY_S16_FROM_BITS(interval);
+	return (legacy_u16)quotient;
+}
+
+static legacy_u16 restore_checkpoint_frame_word(
+	legacy_u16 slot,
+	legacy_u16 interval
+) {
+	return LEGACY_U16_WRAP_MUL(slot, interval);
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -758,16 +780,17 @@ void restore_gamestate(unsigned short frame)
 		init_game_state(0);
 	}
 	
-	curframe = frame / word_45A00;
+	curframe = restore_frame_word_quotient(frame, word_45A00);
 	
 	if (curframe == RST_CVX_NUM) {
 		curframe--;
 	}
 	
 	// Find last gamestate in cvx.
-	if (frame >= state.game_frame) {
+	if ((legacy_u16)frame >= (legacy_u16)state.game_frame) {
 		while (1) {
-			if (curframe * word_45A00 <= state.game_frame) {
+			if (restore_checkpoint_frame_word(curframe, word_45A00) <=
+					(legacy_u16)state.game_frame) {
 				return;
 			}
 			else if (((struct GAMESTATE far*)cvxptr)[curframe].field_3F4 != 0) {
