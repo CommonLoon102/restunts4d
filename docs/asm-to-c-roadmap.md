@@ -134,6 +134,7 @@ portable enough to support it.
 90. [Defined hidden call-operand arithmetic](asm-to-c-phase1-slice90.md)
 91. [Defined penalty track-coordinate byte semantics](asm-to-c-phase1-slice91.md)
 92. [Defined penalty accumulator arithmetic](asm-to-c-phase1-slice92.md)
+93. [Defined projected-coordinate subtraction](asm-to-c-phase1-slice93.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap
