@@ -3248,9 +3248,9 @@ void preRender_default_impl_helper(int* regsi, unsigned var_A, unsigned var_C, i
 	unsigned merge;
 	unsigned step;
 	unsigned frac;
-	unsigned long sum;
-	unsigned long fixed;
-	unsigned long delta;
+	legacy_u32 sum;
+	legacy_u32 fixed;
+	legacy_u32 delta;
 	int count;
 	int remaining;
 	int ofs;
