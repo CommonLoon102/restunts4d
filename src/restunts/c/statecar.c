@@ -55,6 +55,39 @@ static legacy_s16 accelerate_delta_speed_for_mass(
 		LEGACY_U16_SAR1(LEGACY_U32_LOW_WORD(quotient)));
 }
 
+static legacy_u8 opponent_speed_damping_factor(legacy_u8 opponent_speed)
+{
+	legacy_u16 factor_word;
+
+	factor_word = LEGACY_U16_WRAP_SUB(opponent_speed, 0x00C8U);
+	factor_word = LEGACY_U16_WRAP_NEGATE(factor_word);
+	return (legacy_u8)(factor_word >> 1);
+}
+
+static legacy_s16 damp_delta_speed_for_opponent(
+	legacy_s16 delta_speed,
+	legacy_u8 damping_factor)
+{
+	legacy_u16 delta_bits;
+	legacy_s32 product;
+	legacy_s32 quotient;
+
+	delta_bits = (legacy_u16)delta_speed;
+	product = (legacy_s32)delta_speed * (legacy_s32)damping_factor;
+#if defined(__BORLANDC__)
+	/* Borland's signed division matches the original truncation toward zero. */
+	quotient = product / (legacy_s32)0xC8L;
+#else
+	if (product < 0) {
+		quotient = -((-product) / (legacy_s32)0xC8L);
+	} else {
+		quotient = product / (legacy_s32)0xC8L;
+	}
+#endif
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
+		delta_bits, (legacy_u16)quotient));
+}
+
 void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 /*update_car_speed proc far
     var_currTorque = byte ptr -10
@@ -661,10 +694,12 @@ loc_17E34:
     mov     [bp+var_deltaSpeed], ax*/
 	if (arg_MplayerFlag == 0)
 		goto loc_17EAD;
-	var_currTorque = (unsigned int)(0xC8 - *oppnentSped) >> 1;
+	var_currTorque = opponent_speed_damping_factor(*oppnentSped);
 	if (var_currTorque == 0)
 		goto loc_17EAD;
-	var_deltaSpeed -=  ((long)var_currTorque * var_deltaSpeed) / 0xC8;
+	var_deltaSpeed = damp_delta_speed_for_opponent(
+		LEGACY_S16_FROM_BITS((legacy_u16)var_deltaSpeed),
+		var_currTorque);
 /*    cmp     [bp+arg_MplayerFlag], 0
     jz      short loc_17EAD
     mov     al, oppnentSped
