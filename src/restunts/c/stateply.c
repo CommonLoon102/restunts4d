@@ -67,6 +67,43 @@ static legacy_s16 scale_speed2_for_physics(
 		LEGACY_U32_LOW_WORD(product / denominator));
 }
 
+#if defined(__BORLANDC__)
+#define interpolate_wheel_delta(current, base, multiplier, divisor) \
+	((legacy_s16)((((legacy_s32)(current) - (legacy_s32)(base)) * \
+	(legacy_s16)(multiplier)) / (legacy_s16)(divisor)))
+#else
+static legacy_s16 interpolate_wheel_delta(
+	legacy_s32 current,
+	legacy_s32 base,
+	legacy_s16 multiplier,
+	legacy_s16 divisor)
+{
+	legacy_u32 difference_bits;
+	legacy_u32 product_bits;
+	legacy_u32 dividend_magnitude;
+	legacy_u32 divisor_magnitude;
+	legacy_u32 quotient_bits;
+	legacy_u16 divisor_bits;
+	legacy_u8 result_is_negative;
+
+	difference_bits = LEGACY_U32_WRAP_SUB(current, base);
+	product_bits = LEGACY_U32_WRAP_MUL(
+		difference_bits, LEGACY_U32_SIGN_EXTEND_S16(multiplier));
+	divisor_bits = (legacy_u16)divisor;
+	result_is_negative = (legacy_u8)(
+		LEGACY_U32_IS_NEGATIVE(product_bits) !=
+		((divisor_bits & 0x8000U) != 0));
+	dividend_magnitude = LEGACY_U32_IS_NEGATIVE(product_bits) ?
+		LEGACY_U32_WRAP_SUB(0, product_bits) : product_bits;
+	divisor_magnitude = (divisor_bits & 0x8000U) != 0 ?
+		(legacy_u16)(0U - divisor_bits) : divisor_bits;
+	quotient_bits = dividend_magnitude / divisor_magnitude;
+	if (result_is_negative != 0)
+		quotient_bits = LEGACY_U32_WRAP_SUB(0, quotient_bits);
+	return LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD(quotient_bits));
+}
+#endif
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -827,7 +864,7 @@ loc_153AE:
 	vec_17C.y = (vec_1C.y - vec_FC.y) << 6;
 	vec_17C.z = (vec_1C.z - vec_FC.z) << 6;
 	var_F2 = polarRadius3D(&vec_17C);
-	var_F4 = var_pSpeed2Scaled - var_F2;
+	var_F4 = LEGACY_S16_WRAP_SUB(var_pSpeed2Scaled, var_F2);
 /*    sub     ax, ax
     push    ax
     lea     ax, [bp+vec_FC]
@@ -1075,9 +1112,15 @@ loc_15599:
 loc_155A1:
 	if (var_F4 == 0)
 		goto loc_15530;
-	vec_C.x = ((var_DEptrTo1C0->lx - var_146ptrTo176->lx) * var_F4) / var_pSpeed2Scaled;
-	vec_C.y = ((var_DEptrTo1C0->ly - var_146ptrTo176->ly) * var_F4) / var_pSpeed2Scaled;
-	vec_C.z = ((var_DEptrTo1C0->lz - var_146ptrTo176->lz) * var_F4) / var_pSpeed2Scaled;
+	vec_C.x = interpolate_wheel_delta(
+		var_DEptrTo1C0->lx, var_146ptrTo176->lx,
+		(legacy_s16)var_F4, var_pSpeed2Scaled);
+	vec_C.y = interpolate_wheel_delta(
+		var_DEptrTo1C0->ly, var_146ptrTo176->ly,
+		(legacy_s16)var_F4, var_pSpeed2Scaled);
+	vec_C.z = interpolate_wheel_delta(
+		var_DEptrTo1C0->lz, var_146ptrTo176->lz,
+		(legacy_s16)var_F4, var_pSpeed2Scaled);
 	goto loc_1553F;
 /*    cmp     [bp+var_F4], 0
     jz      short loc_15530
@@ -1703,11 +1746,18 @@ loc_15A30:
     shl     ax, cl
     mov     [bp+vec_17C.vz], ax*/
 	var_EE = polarRadius3D(&vec_17C);
-	var_F4 = arg_pState->car_rc1[var_wheelIndex] + var_pSpeed2Scaled;
-	var_F2 = var_F4 - var_EE;
-	vec_C.x = ((var_DEptrTo1C0->lx - var_146ptrTo176->lx) * var_F2) / var_F4;
-	vec_C.y = ((var_DEptrTo1C0->ly - var_146ptrTo176->ly) * var_F2) / var_F4;
-	vec_C.z = ((var_DEptrTo1C0->lz - var_146ptrTo176->lz) * var_F2) / var_F4;
+	var_F4 = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_rc1[var_wheelIndex], var_pSpeed2Scaled);
+	var_F2 = LEGACY_S16_WRAP_SUB(var_F4, var_EE);
+	vec_C.x = interpolate_wheel_delta(
+		var_DEptrTo1C0->lx, var_146ptrTo176->lx,
+		(legacy_s16)var_F2, (legacy_s16)var_F4);
+	vec_C.y = interpolate_wheel_delta(
+		var_DEptrTo1C0->ly, var_146ptrTo176->ly,
+		(legacy_s16)var_F2, (legacy_s16)var_F4);
+	vec_C.z = interpolate_wheel_delta(
+		var_DEptrTo1C0->lz, var_146ptrTo176->lz,
+		(legacy_s16)var_F2, (legacy_s16)var_F4);
 /*    lea     ax, [bp+vec_17C]
     push    ax
     call    polarRadius3D
