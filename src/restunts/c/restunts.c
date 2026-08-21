@@ -557,7 +557,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, le
 
 	playerstate->car_posWorld1.lx = posX;
 	playerstate->car_posWorld2.lx = posX;
-	playerstate->car_posWorld1.ly = posY + 512;
+	playerstate->car_posWorld1.ly = LEGACY_S32_WRAP_ADD_S16(posY, 512);
 	playerstate->car_posWorld2.ly = posY;
 	playerstate->car_posWorld1.lz = posZ;
 	playerstate->car_posWorld2.lz = posZ;
@@ -595,9 +595,9 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, le
 	playerstate->car_demandedGrip = 0;
 	playerstate->car_surfacegrip_sum = 1000;
 
-	whlPos.x = posX / 64;
-	whlPos.y = posY / 64;
-	whlPos.z = posZ / 64;
+	whlPos.x = LEGACY_S16_FROM_S32_SAR6(posX);
+	whlPos.y = LEGACY_S16_FROM_S32_SAR6(posY);
+	whlPos.z = LEGACY_S16_FROM_S32_SAR6(posZ);
 
 	for (i = 0; i < 4; ++i) {
 		playerstate->car_surfaceWhl[i] = 1;
