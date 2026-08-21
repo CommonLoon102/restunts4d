@@ -98,6 +98,27 @@ static legacy_u16 average_speed_words(
 	return LEGACY_U32_LOW_WORD(sum >> 1);
 }
 
+#if defined(__BORLANDC__)
+#define STATECAR_S16_SUB(left, right) ((left) - (right))
+#define STATECAR_S16_DOUBLE(value) ((value) << 1)
+#define STATECAR_S16_NEGATE(value) (-(value))
+#define STATECAR_U16_NEGATE(value) (-(value))
+#define STATECAR_S16_ADD_ASSIGN(target, value) ((target) += (value))
+#define STATECAR_S16_SUB_ASSIGN(target, value) ((target) -= (value))
+#define STATECAR_U16_ADD_ASSIGN(target, value) ((target) += (value))
+#else
+#define STATECAR_S16_SUB(left, right) LEGACY_S16_WRAP_SUB(left, right)
+#define STATECAR_S16_DOUBLE(value) LEGACY_S16_WRAP_ADD(value, value)
+#define STATECAR_S16_NEGATE(value) LEGACY_S16_WRAP_NEGATE(value)
+#define STATECAR_U16_NEGATE(value) LEGACY_U16_WRAP_NEGATE(value)
+#define STATECAR_S16_ADD_ASSIGN(target, value) \
+	((target) = LEGACY_S16_WRAP_ADD(target, value))
+#define STATECAR_S16_SUB_ASSIGN(target, value) \
+	((target) = LEGACY_S16_WRAP_SUB(target, value))
+#define STATECAR_U16_ADD_ASSIGN(target, value) \
+	((target) = LEGACY_U16_WRAP_ADD(target, value))
+#endif
+
 void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 /*update_car_speed proc far
     var_currTorque = byte ptr -10
@@ -112,11 +133,11 @@ void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTAT
     arg_carState = word ptr 10
     arg_simd = word ptr 12
 */
-	int var_2;
-	int var_4;
-	unsigned int var_updatedSpeed;
-	int var_deltaSpeed;
-	unsigned char var_currTorque;
+	legacy_s16 var_2;
+	legacy_s16 var_4;
+	legacy_u16 var_updatedSpeed;
+	legacy_s16 var_deltaSpeed;
+	legacy_u8 var_currTorque;
 
 	if (framespersec != 0x14)
 		goto loc_17A8E;
@@ -452,10 +473,13 @@ loc_17C9E:
     dec     [bx+CARSTATE.car_fpsmul2]*/
 loc_17CAC:
 	var_updatedSpeed = arg_carState->car_speed;
-	var_deltaSpeed = arg_carState->car_pseudoGravity - arg_simd->aerorestable[var_updatedSpeed >> 10];
+	var_deltaSpeed = STATECAR_S16_SUB(
+		arg_carState->car_pseudoGravity,
+		arg_simd->aerorestable[var_updatedSpeed >> 10]);
 	if ((unsigned short)arg_carState->car_currpm <= (unsigned short)arg_simd->max_rpm)
 		goto loc_17CEA;
-	arg_carState->car_currpm = arg_simd->max_rpm - 1;
+	arg_carState->car_currpm = STATECAR_S16_SUB(
+		arg_simd->max_rpm, 1);
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bx+CARSTATE.car_speed]
     mov     [bp+var_updatedSpeed], ax
@@ -477,7 +501,7 @@ loc_17CAC:
     dec     ax
     mov     [bx+CARSTATE.car_currpm], ax*/
 loc_17CE1:
-	var_deltaSpeed -= arg_simd->braking_eff;
+	STATECAR_S16_SUB_ASSIGN(var_deltaSpeed, arg_simd->braking_eff);
 	goto loc_17D36;
 /*    mov     bx, [bp+arg_simd]
     mov     ax, [bx+SIMD.braking_eff]
@@ -516,7 +540,9 @@ loc_17D10:
 	arg_carState->car_is_braking = 1;
 	if (arg_MplayerFlag == 0)
 		goto loc_17CE1;
-	var_deltaSpeed -= arg_simd->braking_eff << 1;
+	STATECAR_S16_SUB_ASSIGN(
+		var_deltaSpeed,
+		STATECAR_S16_DOUBLE(arg_simd->braking_eff));
 /*  mov     bx, [bp+arg_carState]
     mov     [bx+CARSTATE.car_is_accelerating], 0
     mov     [bx+CARSTATE.car_engineLimiterTimer], 0
@@ -531,7 +557,7 @@ loc_17D36:
 loc_17D39:
 	if (framespersec != 0xA)
 		goto loc_17D46;
-	var_deltaSpeed += var_deltaSpeed;
+	STATECAR_S16_ADD_ASSIGN(var_deltaSpeed, var_deltaSpeed);
 /*    cmp     framespersec, 0Ah
     jnz     short loc_17D46
     mov     ax, [bp+var_deltaSpeed]
@@ -551,7 +577,7 @@ loc_17D4F:
     jb      short loc_17D59
     jmp     loc_17EC2*/
 loc_17D59:
-	var_updatedSpeed += var_deltaSpeed;
+	STATECAR_U16_ADD_ASSIGN(var_updatedSpeed, var_deltaSpeed);
 /*    mov     ax, [bp+var_deltaSpeed]
     add     [bp+var_updatedSpeed], ax*/
 loc_17D5F:
@@ -563,7 +589,8 @@ loc_17D5F:
     jnz     short loc_17D6C
     jmp     loc_17F3C*/
 loc_17D6C:
-	var_4 = arg_carState->car_speed2 - var_updatedSpeed;
+	var_4 = STATECAR_S16_SUB(
+		arg_carState->car_speed2, var_updatedSpeed);
 	if (var_4 < 0)
 		goto loc_17D7C;
 	goto loc_17EF8;
@@ -574,7 +601,7 @@ loc_17D6C:
     jl      short loc_17D7C
     jmp     loc_17EF8*/
 loc_17D7C:
-	var_4 = -var_4;
+	var_4 = STATECAR_S16_NEGATE(var_4);
 	goto loc_17EFB;
 /*    neg     ax
     jmp     loc_17EFB*/
@@ -586,7 +613,7 @@ loc_17D82:
 	arg_carState->car_engineLimiterTimer = 0;
 	if (framespersec != 0xA)
 		goto loc_17DB2;
-	arg_carState->car_currpm -= 0x50;
+	STATECAR_S16_SUB_ASSIGN(arg_carState->car_currpm, 0x50);
 	goto loc_17D39;
 /*    mov     bx, [bp+arg_carState]
     mov     [bx+CARSTATE.car_is_braking], 0
@@ -599,7 +626,7 @@ loc_17D82:
     sub     [bx+CARSTATE.car_currpm], 50h ; 'P'
     jmp     short loc_17D39*/
 loc_17DB2:
-	arg_carState->car_currpm -= 0x28;
+	STATECAR_S16_SUB_ASSIGN(arg_carState->car_currpm, 0x28);
 	goto loc_17D39;
 /*    mov     bx, [bp+arg_carState]
     sub     [bx+CARSTATE.car_currpm], 28h ; '('
@@ -626,7 +653,7 @@ loc_17DD4:
     jb      short loc_17DDE
     jmp     loc_17D39*/
 loc_17DDE:
-	var_deltaSpeed += 0x300;
+	STATECAR_S16_ADD_ASSIGN(var_deltaSpeed, 0x300);
 	goto loc_17D39;
 /*    add     byte ptr [bp+var_deltaSpeed+1], 3
     jmp     loc_17D39
@@ -678,7 +705,7 @@ loc_17E0C:
     mov     [bp+var_currTorque], al*/
 loc_17E34:
 	var_deltaSpeed = accelerate_delta_speed_for_mass(
-		LEGACY_S16_FROM_BITS((legacy_u16)var_deltaSpeed),
+		var_deltaSpeed,
 		arg_carState->car_gearratioshr8,
 		var_currTorque,
 		(legacy_u16)arg_simd->car_mass);
@@ -716,7 +743,7 @@ loc_17E34:
 	if (var_currTorque == 0)
 		goto loc_17EAD;
 	var_deltaSpeed = damp_delta_speed_for_opponent(
-		LEGACY_S16_FROM_BITS((legacy_u16)var_deltaSpeed),
+		var_deltaSpeed,
 		var_currTorque);
 /*    cmp     [bp+arg_MplayerFlag], 0
     jz      short loc_17EAD
@@ -760,7 +787,7 @@ loc_17EB7:
     mov     [bx+CARSTATE.car_engineLimiterTimer], 5
     jmp     loc_17D39*/
 loc_17EC2:
-	var_updatedSpeed += var_deltaSpeed;
+	STATECAR_U16_ADD_ASSIGN(var_updatedSpeed, var_deltaSpeed);
 	if (var_updatedSpeed < 0x8000)
 		goto loc_17ED9;
 	if (var_updatedSpeed > 0xF500)
@@ -781,7 +808,7 @@ loc_17ED9:
     ; align 2
     db 144*/
 loc_17EE2:
-	if (-var_deltaSpeed > var_updatedSpeed)
+	if (STATECAR_U16_NEGATE(var_deltaSpeed) > var_updatedSpeed)
 		goto loc_17EEF;
 	goto loc_17D59;
 /*    mov     ax, [bp+var_deltaSpeed]
@@ -914,6 +941,13 @@ loc_17FBF:
 loc_17FD0:
 	return;
 }
+#undef STATECAR_S16_SUB
+#undef STATECAR_S16_DOUBLE
+#undef STATECAR_S16_NEGATE
+#undef STATECAR_U16_NEGATE
+#undef STATECAR_S16_ADD_ASSIGN
+#undef STATECAR_S16_SUB_ASSIGN
+#undef STATECAR_U16_ADD_ASSIGN
 /*
     pop     si
     pop     di
