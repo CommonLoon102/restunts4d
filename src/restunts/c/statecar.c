@@ -143,7 +143,8 @@ loc_17A93:
     jz      short loc_17AA1
     dec     [bx+CARSTATE.car_engineLimiterTimer]*/
 loc_17AA1:
-	arg_carState->car_speeddiff = arg_carState->car_speed2 - arg_carState->car_lastspeed;
+	arg_carState->car_speeddiff = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_speed2, arg_carState->car_lastspeed);
 	arg_carState->car_lastspeed = arg_carState->car_speed2;
 	arg_carState->car_lastrpm = arg_carState->car_currpm;
 	if (arg_carState->car_transmission != 0)
