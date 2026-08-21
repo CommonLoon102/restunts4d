@@ -68,6 +68,22 @@ static legacy_s16 scale_speed2_for_physics(
 }
 
 #if defined(__BORLANDC__)
+#define collision_speed_threshold(value) \
+	(-(((value) * 0x46 >> 8) - 0x64) << 8)
+#else
+static legacy_u16 collision_speed_threshold(legacy_s16 value)
+{
+	legacy_u16 product_bits;
+	legacy_u16 adjusted_bits;
+
+	product_bits = LEGACY_U16_WRAP_MUL(value, 0x46U);
+	adjusted_bits = LEGACY_U16_WRAP_NEGATE(LEGACY_U16_WRAP_SUB(
+		LEGACY_U16_SAR8(product_bits), 0x64U));
+	return (legacy_u16)((adjusted_bits & 0x00FFU) << 8);
+}
+#endif
+
+#if defined(__BORLANDC__)
 #define interpolate_wheel_delta(current, base, multiplier, divisor) \
 	((legacy_s16)((((legacy_s32)(current) - (legacy_s32)(base)) * \
 	(legacy_s16)(multiplier)) / (legacy_s16)(divisor)))
@@ -1011,7 +1027,7 @@ nosmart
     mov     [bp+var_138], 1*/
 loc_154CA:
 	// TODO: suspicious (gets here when colliding)
-	var_190 = -((si * 0x46 >> 8) - 0x64) << 8;
+	var_190 = collision_speed_threshold(si);
 	if (arg_pState->car_speed2 <= var_190)
 		goto loc_15513;
 	if (var_138 == 0)
@@ -3184,7 +3200,8 @@ loc_16566:
     retf*/
 loc_16578:
 	vec_FC.x = var_11ApStateWorldCrds[0].x >> 10;
-	vec_FC.z = -((var_11ApStateWorldCrds[0].z >> 10) - 0x1D);
+	vec_FC.z = LEGACY_S16_WRAP_SAR10_SUB_NEGATE(
+		var_11ApStateWorldCrds[0].z, 0x1D);
 	vec_18EoStateWorldCrds[1].x = 0;
 	vec_18EoStateWorldCrds[1].y = 0;
 	vec_18EoStateWorldCrds[1].z = 0;

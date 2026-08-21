@@ -89,6 +89,9 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	((legacy_u16)((legacy_u16)(left) + (legacy_u16)(right)))
 #define LEGACY_U16_WRAP_SUB(left, right) \
 	((legacy_u16)((legacy_u16)(left) - (legacy_u16)(right)))
+#define LEGACY_U16_WRAP_MUL(left, right) \
+	((legacy_u16)((legacy_u32)(legacy_u16)(left) * \
+	(legacy_u32)(legacy_u16)(right)))
 #define LEGACY_U16_WRAP_NEGATE(value) \
 	((legacy_u16)(0U - (legacy_u16)(value)))
 #define LEGACY_S16_WRAP_ADD(left, right) \
@@ -141,6 +144,21 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_U16_SAR1(value) \
 	((legacy_u16)(((legacy_u16)(value) >> 1) | \
 	((legacy_u16)(value) & 0x8000U)))
+#define LEGACY_U16_SAR8(value) \
+	((legacy_u16)(((legacy_u16)(value) >> 8) | \
+	((((legacy_u16)(value) & 0x8000U) != 0) ? 0xFF00U : 0U)))
+#define LEGACY_U16_SAR10(value) \
+	((legacy_u16)(((legacy_u16)(value) >> 10) | \
+	((((legacy_u16)(value) & 0x8000U) != 0) ? 0xFFC0U : 0U)))
+
+#if defined(__BORLANDC__)
+#define LEGACY_S16_WRAP_SAR10_SUB_NEGATE(value, subtrahend) \
+	(-(((value) >> 10) - (subtrahend)))
+#else
+#define LEGACY_S16_WRAP_SAR10_SUB_NEGATE(value, subtrahend) \
+	LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB( \
+		LEGACY_S16_FROM_BITS(LEGACY_U16_SAR10(value)), subtrahend))
+#endif
 
 #define LEGACY_U32_SAR1(value) \
 	((legacy_u32)(((legacy_u32)(value) >> 1) | \
