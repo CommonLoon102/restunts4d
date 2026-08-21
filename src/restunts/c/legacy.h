@@ -177,4 +177,11 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 		LEGACY_U32_LOW_WORD(left), LEGACY_U32_LOW_WORD(right)))
 #endif
 
+#define LEGACY_S16_LOW_S32_ADD_S16(left, right) \
+	LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD( \
+		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(left, right)))
+#define LEGACY_S16_HIGH_S32_ADD_S16(left, right) \
+	LEGACY_S16_FROM_BITS(LEGACY_U32_HIGH_WORD( \
+		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(left, right)))
+
 #endif

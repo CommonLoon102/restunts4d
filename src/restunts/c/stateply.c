@@ -170,9 +170,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 			vec_1C6 = vec_FC;
 		}
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		saved_wheel_plane_angles[0] = (unsigned int)(
-			(unsigned long)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
-		);
+		saved_wheel_plane_angles[0] = LEGACY_S16_HIGH_S32_ADD_S16(
+			state.opponentstate.car_posWorld1.lz, vec_FC.z);
 
 		vec_1C6 = simd_opponent.wheel_coords[3];
 		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
@@ -181,15 +180,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 			vec_1C6 = vec_FC;
 		}
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		saved_wheel_plane_angles[1] = (unsigned int)(
-			state.opponentstate.car_posWorld1.lx + vec_FC.x
-		);
-		saved_wheel_plane_angles[2] = (unsigned int)(
-			(unsigned long)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
-		);
-		saved_wheel_plane_angles[3] = (unsigned int)(
-			state.opponentstate.car_posWorld1.ly + vec_FC.y
-		);
+		saved_wheel_plane_angles[1] = LEGACY_S16_LOW_S32_ADD_S16(
+			state.opponentstate.car_posWorld1.lx, vec_FC.x);
+		saved_wheel_plane_angles[2] = LEGACY_S16_HIGH_S32_ADD_S16(
+			state.opponentstate.car_posWorld1.lx, vec_FC.x);
+		saved_wheel_plane_angles[3] = LEGACY_S16_LOW_S32_ADD_S16(
+			state.opponentstate.car_posWorld1.ly, vec_FC.y);
 	}
 	#endif
 
