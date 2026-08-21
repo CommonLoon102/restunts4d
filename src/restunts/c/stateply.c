@@ -209,7 +209,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 					state.opponentstate.car_angle_z), 0);
 
 		vec_1C6 = simd_opponent.wheel_coords[2];
-		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
+		vec_1C6.y = LEGACY_S16_WRAP_NEGATE_SUM_ADD(
+			state.opponentstate.car_rc2[2], 0x180, var_F0);
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
 			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
 			vec_1C6 = vec_FC;
@@ -219,7 +220,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 			state.opponentstate.car_posWorld1.lz, vec_FC.z);
 
 		vec_1C6 = simd_opponent.wheel_coords[3];
-		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
+		vec_1C6.y = LEGACY_S16_WRAP_NEGATE_SUM_ADD(
+			state.opponentstate.car_rc2[3], 0x180, var_F0);
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
 			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
 			vec_1C6 = vec_FC;
@@ -384,7 +386,8 @@ loc_14FFA:
     jmp     loc_1513E*/
 loc_15004:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
-	vec_1C6.y = -(arg_pState->car_rc2[var_wheelIndex] + 0x180);
+	vec_1C6.y = LEGACY_S16_WRAP_NEGATE_SUM_ADD(
+		arg_pState->car_rc2[var_wheelIndex], 0x180, 0);
 	if (var_F0 >= 0)
 		goto loc_1504A;
 	vec_1C6.y -= var_F0;
@@ -750,7 +753,8 @@ loc_152D7:
     jnz     short loc_152D7
     sub     ax, wallStartZ
     mov     [bp+vec_1E4.vz], ax*/
-	mat_rot_y(&mat_134, -wallOrientation - 0x100);
+	mat_rot_y(&mat_134,
+		LEGACY_S16_WRAP_NEGATE_SUB(wallOrientation, 0x100));
 	legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
 	legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
 	legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
@@ -909,7 +913,8 @@ loc_153AE:
     sub     ax, [bp+var_F2]
     mov     [bp+var_F4], ax*/
 loc_1540C:
-	var_EE = (-pState_minusRotate_y_1 - wallOrientation) & 0x3FF;
+	var_EE = LEGACY_S16_WRAP_NEGATE_SUB(
+		pState_minusRotate_y_1, wallOrientation) & 0x3FF;
 	vec_FC.z = var_F2;
 	vec_FC.y = 0;
 	if (var_EE < 0x100)
@@ -964,7 +969,8 @@ loc_1546E:
 		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
 		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE, 0);
 	mat_mul_vector(&vec_FC, var_EA, &vec_1C);
-	si = (-pState_minusRotate_y_1 - var_EE) & 0x3FF;
+	si = LEGACY_S16_WRAP_NEGATE_SUB(
+		pState_minusRotate_y_1, var_EE) & 0x3FF;
 	var_138 = 0;
 	if (si <= 0x100)
 		goto loc_154CA;
@@ -1010,7 +1016,7 @@ loc_154CA:
 		goto loc_15513;
 	if (var_138 == 0)
 		goto loc_154F8;
-	var_138 = -si << 1; //.. ax = -i
+	var_138 = LEGACY_S16_WRAP_NEGATE_SHL1(si); //.. ax = -i
 	goto loc_154FA;
 /*
     mov     ax, 46h ; 'F'
@@ -1966,7 +1972,8 @@ loc_15C3F:
 		goto loc_15CDF;
 	if (var_136 == 0)
 		goto loc_15C75;
-	nextPosAndNormalIP = (-nextPosAndNormalIP) + 6;
+	nextPosAndNormalIP = LEGACY_S16_WRAP_NEGATE_ADD(
+		nextPosAndNormalIP, 6);
 /*    push    ax
     push    [bp+vec_1C6.vy]
     push    [bp+vec_1C6.vx]
