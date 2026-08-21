@@ -259,6 +259,32 @@ static int fullscreen_window_is_available(
 	return LEGACY_S32_FROM_BITS(available) > limit;
 }
 
+static legacy_s32 rewind_maximum_accumulator(legacy_u16 frame)
+{
+	return (legacy_s32)((legacy_u32)frame *
+		(legacy_u32)RST_REWIND_UNITS_PER_FRAME);
+}
+
+static legacy_s32 rewind_advance_accumulator(
+	legacy_u32 accumulator,
+	legacy_u32 delta,
+	legacy_s32 speed
+) {
+	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD(
+		accumulator, LEGACY_U32_WRAP_MUL(delta, (legacy_u32)speed)));
+}
+
+static legacy_u16 rewind_target_frame_word(
+	legacy_u16 origin,
+	legacy_u32 accumulator
+) {
+	legacy_s32 quotient;
+
+	quotient = LEGACY_S32_FROM_BITS(accumulator) /
+		RST_REWIND_UNITS_PER_FRAME;
+	return LEGACY_U16_WRAP_SUB(origin, (legacy_u16)quotient);
+}
+
 #define RESTUNTS_INCREMENT_WORD(target) \
 	((target) = restunts_increment_word(target))
 #define RESTUNTS_ADD_WORD(target, value) \
@@ -1270,9 +1296,9 @@ void run_game(void) {
 	unsigned short rewind_target_frame;
 	legacy_u32 rewind_timer_delta;
 	legacy_u32 rewind_held_timer_ticks;
-	long rewind_accumulator;
-	long rewind_max_accumulator;
-	long rewind_speed;
+	legacy_s32 rewind_accumulator;
+	legacy_s32 rewind_max_accumulator;
+	legacy_s32 rewind_speed;
 
 	var_C = -1;
 	rewind_active = 0;
@@ -1404,16 +1430,28 @@ void run_game(void) {
 					rewind_speed = rewind_held_timer_ticks < RST_REWIND_DOUBLE_AFTER_TICKS
 						? RST_REWIND_BASE_SPEED : RST_REWIND_DOUBLE_SPEED;
 
+#if defined(__BORLANDC__)
 					rewind_max_accumulator = (long)rewind_origin_frame
 						* RST_REWIND_UNITS_PER_FRAME;
 					rewind_accumulator += (long)rewind_timer_delta * rewind_speed;
+#else
+					rewind_max_accumulator =
+						rewind_maximum_accumulator(rewind_origin_frame);
+					rewind_accumulator = rewind_advance_accumulator(
+						rewind_accumulator, rewind_timer_delta, rewind_speed);
+#endif
 					if (rewind_accumulator > rewind_max_accumulator) {
 						rewind_accumulator = rewind_max_accumulator;
 					}
 
+#if defined(__BORLANDC__)
 					rewind_target_frame = rewind_origin_frame
 						- (unsigned short)(rewind_accumulator
 							/ RST_REWIND_UNITS_PER_FRAME);
+#else
+					rewind_target_frame = rewind_target_frame_word(
+						rewind_origin_frame, rewind_accumulator);
+#endif
 					if (rewind_target_frame != state.game_frame) {
 						seek_replay_gamestate(rewind_target_frame);
 					}
