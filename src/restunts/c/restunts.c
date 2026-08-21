@@ -64,6 +64,8 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((first) + (second) + (third))
 #define restunts_grid_coordinate_word(value) \
 	((legacy_s16)(legacy_s8)(value) << 10)
+#define restunts_scale_word_to_dword(value) \
+	((legacy_s32)(legacy_s16)(value) * 64L)
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -147,6 +149,12 @@ static legacy_s16 restunts_grid_coordinate_word(legacy_u8 value)
 	signed_value = LEGACY_S8_FROM_BITS(value);
 	return LEGACY_S16_FROM_BITS((legacy_u16)(
 		(legacy_u32)(legacy_u16)signed_value << 10));
+}
+
+static legacy_s32 restunts_scale_word_to_dword(legacy_u16 value)
+{
+	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_MUL(
+		LEGACY_U32_SIGN_EXTEND_S16(value), 64UL));
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -642,22 +650,29 @@ void init_game_state(short arg)
 		state.game_jumpCount = 0;
 
 		// Init player car.
-		tmpcol =
-			  multiply_and_scale(sin_fast(track_angle + 0x200), 210)
-			+ multiply_and_scale(sin_fast(track_angle + 0x100),  36);
+		tmpcol = restunts_add_two_words(
+			multiply_and_scale(sin_fast(
+				restunts_add_two_words(track_angle, 0x200)), 210),
+			multiply_and_scale(sin_fast(
+				restunts_add_two_words(track_angle, 0x100)), 36));
 		
-		tmprow =
-			  multiply_and_scale(cos_fast(track_angle + 0x200), 210)
-			+ multiply_and_scale(cos_fast(track_angle + 0x100),  36);
+		tmprow = restunts_add_two_words(
+			multiply_and_scale(cos_fast(
+				restunts_add_two_words(track_angle, 0x200)), 210),
+			multiply_and_scale(cos_fast(
+				restunts_add_two_words(track_angle, 0x100)), 36));
 
 		init_carstate_from_simd(
 			&state.playerstate,
 			&simd_player,
-			gameconfig.game_playertransmission,
-			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64,
-			(legacy_s32)hillHeightConsts[hillFlag] * 64,
-			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64,
-			-track_angle);
+			LEGACY_S8_FROM_BITS(gameconfig.game_playertransmission),
+			restunts_scale_word_to_dword(restunts_add_two_words(
+				trackcenterpos2[LEGACY_S8_FROM_BITS(startcol2)], tmpcol)),
+			restunts_scale_word_to_dword(
+				hillHeightConsts[LEGACY_S8_FROM_BITS(hillFlag)]),
+			restunts_scale_word_to_dword(restunts_add_two_words(
+				trackcenterpos[LEGACY_S8_FROM_BITS(startrow2)], tmprow)),
+			LEGACY_S16_WRAP_NEGATE(track_angle));
 
 		state.field_2F2 = 0;
 		state.field_45D = 0;
@@ -665,10 +680,10 @@ void init_game_state(short arg)
 		state.field_45B = 0;
 		state.field_45C = 0;
 		
-		state.game_startcol  = startcol2;
-		state.game_startcol2 = startcol2;
-		state.game_startrow  = startrow2;
-		state.game_startrow2 = startrow2;
+		state.game_startcol  = LEGACY_S8_FROM_BITS(startcol2);
+		state.game_startcol2 = LEGACY_S8_FROM_BITS(startcol2);
+		state.game_startrow  = LEGACY_S8_FROM_BITS(startrow2);
+		state.game_startrow2 = LEGACY_S8_FROM_BITS(startrow2);
 
 		if (arg != -2) {
 			sub_18D60(
@@ -680,22 +695,29 @@ void init_game_state(short arg)
 		}
 
 		// Init opponent car.
-		tmpcol =
-			  multiply_and_scale(sin_fast(track_angle + 0x200), 210)
-			+ multiply_and_scale(sin_fast(track_angle + 0x300),  36);
+		tmpcol = restunts_add_two_words(
+			multiply_and_scale(sin_fast(
+				restunts_add_two_words(track_angle, 0x200)), 210),
+			multiply_and_scale(sin_fast(
+				restunts_add_two_words(track_angle, 0x300)), 36));
 		
-		tmprow =
-			  multiply_and_scale(cos_fast(track_angle + 0x200), 210)
-			+ multiply_and_scale(cos_fast(track_angle + 0x300),  36);
+		tmprow = restunts_add_two_words(
+			multiply_and_scale(cos_fast(
+				restunts_add_two_words(track_angle, 0x200)), 210),
+			multiply_and_scale(cos_fast(
+				restunts_add_two_words(track_angle, 0x300)), 36));
 
 		init_carstate_from_simd(
 			&state.opponentstate,
 			&simd_opponent,
 			1,
-			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64,
-			(legacy_s32)hillHeightConsts[hillFlag] * 64,
-			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64,
-			-track_angle);
+			restunts_scale_word_to_dword(restunts_add_two_words(
+				trackcenterpos2[LEGACY_S8_FROM_BITS(startcol2)], tmpcol)),
+			restunts_scale_word_to_dword(
+				hillHeightConsts[LEGACY_S8_FROM_BITS(hillFlag)]),
+			restunts_scale_word_to_dword(restunts_add_two_words(
+				trackcenterpos[LEGACY_S8_FROM_BITS(startrow2)], tmprow)),
+			LEGACY_S16_WRAP_NEGATE(track_angle));
 
 		if (gameconfig.game_opponenttype && arg != -2) {
 			sub_18D60(
