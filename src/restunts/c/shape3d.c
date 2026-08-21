@@ -2294,9 +2294,7 @@ loc_25C92:
 // ------------------------------------ primtype 5 - unknown / particle? ------------------------------------
 
 loc_25CE0:
-	fatal_error("unhandled primitive type 5");
-	goto loc_25988; // var4++ | goto 25801
-/*asm {
+asm {
     les     bx, transshapeprimitives
     mov     al, es:[bx]     // primitives+ 0 = type
     sub     ah, ah
@@ -2330,7 +2328,7 @@ loc_25CF4:
 loc_25D34:
     mov     transshapenumvertscopy, 1
     jmp     loc_25988
-}    */
+}
 
 
 // ------------------------------------ jumps here from inside the loc_25801-case if var_4 != 0------------------------------------
