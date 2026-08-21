@@ -55,6 +55,10 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((unsigned char)((target)++))
 #define replay_frame_word(frame, elapsed) ((frame) + (elapsed))
 #define opponent_replay_timeout_word(fps) (0x5DC * (fps))
+#define RESTUNTS_ADD_SCALED_WORD_TO_DWORD(target, value) \
+	((target) += (legacy_s32)(legacy_s16)(value) << 6)
+#define RESTUNTS_ADD_WORD_TO_DWORD(target, value) \
+	((target) += (legacy_s16)(value))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -95,6 +99,26 @@ static legacy_u16 opponent_replay_timeout_word(legacy_u16 fps)
 	return LEGACY_U16_WRAP_MUL(0x5DCU, fps);
 }
 
+static legacy_s32 restunts_add_scaled_word_to_dword(
+	legacy_u32 target,
+	legacy_u16 value
+) {
+	legacy_u32 scaled_value;
+
+	scaled_value = LEGACY_U32_WRAP_MUL(
+		LEGACY_U32_SIGN_EXTEND_S16(value), 64UL);
+	return LEGACY_S32_FROM_BITS(
+		LEGACY_U32_WRAP_ADD(target, scaled_value));
+}
+
+static legacy_s32 restunts_add_word_to_dword(
+	legacy_u32 target,
+	legacy_u16 value
+) {
+	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD(
+		target, LEGACY_U32_SIGN_EXTEND_S16(value)));
+}
+
 #define RESTUNTS_INCREMENT_WORD(target) \
 	((target) = restunts_increment_word(target))
 #define RESTUNTS_ADD_WORD(target, value) \
@@ -105,6 +129,10 @@ static legacy_u16 opponent_replay_timeout_word(legacy_u16 fps)
 	((target) = restunts_decrement_byte(target))
 #define consume_initial_route_index(target) \
 	consume_initial_route_index_value(&(target))
+#define RESTUNTS_ADD_SCALED_WORD_TO_DWORD(target, value) \
+	((target) = restunts_add_scaled_word_to_dword((target), (value)))
+#define RESTUNTS_ADD_WORD_TO_DWORD(target, value) \
+	((target) = restunts_add_word_to_dword((target), (value)))
 #endif
 
 // Use the Stunts' data for now.
@@ -1128,9 +1156,14 @@ void run_game(void) {
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = 1;
 				
-				state.playerstate.car_posWorld1.lx += multiply_and_scale(sin_fast(track_angle), -240) << 6;
-				state.playerstate.car_posWorld1.lz += multiply_and_scale(cos_fast(track_angle), -240) << 6;
-				state.playerstate.car_posWorld1.ly += 0x580;
+				RESTUNTS_ADD_SCALED_WORD_TO_DWORD(
+					state.playerstate.car_posWorld1.lx,
+					multiply_and_scale(sin_fast(track_angle), -240));
+				RESTUNTS_ADD_SCALED_WORD_TO_DWORD(
+					state.playerstate.car_posWorld1.lz,
+					multiply_and_scale(cos_fast(track_angle), -240));
+				RESTUNTS_ADD_WORD_TO_DWORD(
+					state.playerstate.car_posWorld1.ly, 0x580);
 				byte_43966 = 1;
 			} else {
 				cameramode = 0;
