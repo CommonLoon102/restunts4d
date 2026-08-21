@@ -99,6 +99,24 @@ static legacy_u16 average_speed_words(
 }
 
 #if defined(__BORLANDC__)
+#define gear_change_frame_count(fps) \
+	((char)(((char)(fps) >> 1) + (unsigned char)(fps)))
+#else
+static legacy_s8 gear_change_frame_count(legacy_u16 fps)
+{
+	legacy_u8 fps_byte;
+	legacy_u16 signed_word;
+	legacy_u8 half_byte;
+
+	fps_byte = (legacy_u8)fps;
+	signed_word = fps_byte <= 0x7FU ?
+		fps_byte : (legacy_u16)(0xFF00U | fps_byte);
+	half_byte = (legacy_u8)LEGACY_U16_SAR1(signed_word);
+	return LEGACY_S8_FROM_BITS((legacy_u8)(half_byte + fps_byte));
+}
+#endif
+
+#if defined(__BORLANDC__)
 #define STATECAR_S16_SUB(left, right) ((left) - (right))
 #define STATECAR_S16_DOUBLE(value) ((value) << 1)
 #define STATECAR_S16_NEGATE(value) (-(value))
@@ -267,7 +285,7 @@ loc_17B2E:
     dec     [bx+CARSTATE.car_current_gear]*/
 loc_17B39:
 	arg_carState->car_changing_gear = 1;
-	arg_carState->car_fpsmul2 = (framespersec >> 1) + framespersec; // 1.5sec in frames
+	arg_carState->car_fpsmul2 = gear_change_frame_count(framespersec);
 	arg_carState->car_knob_x2 = arg_simd->knob_points[arg_carState->car_current_gear].px;
 	arg_carState->car_knob_y2 = arg_simd->knob_points[arg_carState->car_current_gear].py;
 	

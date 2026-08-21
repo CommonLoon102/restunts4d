@@ -138,6 +138,7 @@ portable enough to support it.
 94. [Defined player progress counters](asm-to-c-phase1-slice94.md)
 95. [Defined route-angle word arithmetic](asm-to-c-phase1-slice95.md)
 96. [Defined route byte-index semantics](asm-to-c-phase1-slice96.md)
+97. [Defined gear-change frame-count byte semantics](asm-to-c-phase1-slice97.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap
