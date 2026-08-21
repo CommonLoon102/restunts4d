@@ -281,7 +281,8 @@ loc_17B86:
 loc_17B93:
 	if (arg_carState->car_knob_x != arg_carState->car_knob_x2)
 		goto loc_17C0C;
-	var_4 = arg_carState->car_knob_y2 - arg_carState->car_knob_y;
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_y2, arg_carState->car_knob_y);
 	if (var_4 != 0)
 		goto loc_17BDA;
 	arg_carState->car_changing_gear = 0;
@@ -317,7 +318,7 @@ loc_17B93:
     ; align 2
     db 144*/
 loc_17BDA:
-	if (abs(var_4) > var_2)
+	if (LEGACY_S16_ABS_WORD(var_4) > var_2)
 		goto loc_17BF6;
 	arg_carState->car_knob_y = arg_carState->car_knob_y2;
 	goto loc_17C84;
@@ -340,7 +341,8 @@ loc_17BF6:
     jle     short loc_17BFF
     jmp     loc_17C93*/
 loc_17BFF:
-	arg_carState->car_knob_y -= var_2;
+	arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_y, var_2);
 	goto loc_17CAC;
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
@@ -351,8 +353,9 @@ loc_17BFF:
 loc_17C0C:
 	if (arg_simd->knob_points[0].py != arg_carState->car_knob_y)
 		goto loc_17C5E;
-	var_4 = arg_carState->car_knob_x2 - arg_carState->car_knob_x;
-	if (abs(var_4) > var_2)
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_x2, arg_carState->car_knob_x);
+	if (LEGACY_S16_ABS_WORD(var_4) > var_2)
 		goto loc_17C40;
 	arg_carState->car_knob_x = arg_carState->car_knob_x2;
 	goto loc_17CAC;
@@ -378,7 +381,8 @@ loc_17C0C:
 loc_17C40:
 	if (var_4 <= 0)
 		goto loc_17C52;
-	arg_carState->car_knob_x += var_2;
+	arg_carState->car_knob_x = LEGACY_S16_WRAP_ADD(
+		arg_carState->car_knob_x, var_2);
 	goto loc_17CAC;
 /*    cmp     [bp+var_4], 0
     jle     short loc_17C52
@@ -389,7 +393,8 @@ loc_17C40:
     ; align 2
     db 144*/
 loc_17C52:
-	arg_carState->car_knob_x -= var_2;
+	arg_carState->car_knob_x = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_x, var_2);
 	goto loc_17CAC;
     /*mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
@@ -398,8 +403,9 @@ loc_17C52:
     ; align 2
     db 144*/
 loc_17C5E:
-	var_4 = arg_simd->knob_points[0].py - arg_carState->car_knob_y;
-	if (abs(var_4) > var_2)
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_simd->knob_points[0].py, arg_carState->car_knob_y);
+	if (LEGACY_S16_ABS_WORD(var_4) > var_2)
 		goto loc_17C8A;
 	arg_carState->car_knob_y = arg_simd->knob_points[0].py;
 /*    mov     bx, [bp+arg_simd]
@@ -429,7 +435,8 @@ loc_17C8A:
     jg      short loc_17C93
     jmp     loc_17BFF*/
 loc_17C93:
-	arg_carState->car_knob_y += var_2;
+	arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
+		arg_carState->car_knob_y, var_2);
 	goto loc_17CAC;
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
