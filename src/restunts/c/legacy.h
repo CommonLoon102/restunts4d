@@ -100,6 +100,21 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_ABS_WORD(value) \
 	((legacy_s16)(value) < 0 ? \
 	LEGACY_S16_WRAP_NEGATE(value) : (legacy_s16)(value))
+#if defined(__BORLANDC__)
+#define LEGACY_S16_WRAP_SHL6(value) \
+	((legacy_s16)((legacy_s16)(value) << 6))
+#define LEGACY_S16_WRAP_SUB_SHL6(left, right) \
+	((legacy_s16)(((legacy_s16)(left) - (legacy_s16)(right)) << 6))
+#define LEGACY_S16_WRAP_NEGATE_SHL6(value) \
+	((legacy_s16)(-(legacy_s16)(value) << 6))
+#else
+#define LEGACY_S16_WRAP_SHL6(value) \
+	LEGACY_S16_FROM_BITS((legacy_u16)((legacy_u16)(value) << 6))
+#define LEGACY_S16_WRAP_SUB_SHL6(left, right) \
+	LEGACY_S16_WRAP_SHL6(LEGACY_S16_WRAP_SUB(left, right))
+#define LEGACY_S16_WRAP_NEGATE_SHL6(value) \
+	LEGACY_S16_WRAP_SHL6(LEGACY_S16_WRAP_NEGATE(value))
+#endif
 
 #define LEGACY_U16_SAR1(value) \
 	((legacy_u16)(((legacy_u16)(value) >> 1) | \

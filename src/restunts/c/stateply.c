@@ -860,9 +860,9 @@ loc_15398:
     jmp     short loc_1540C*/
 loc_153AE:
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = (vec_1C.x - vec_FC.x) << 6;
-	vec_17C.y = (vec_1C.y - vec_FC.y) << 6;
-	vec_17C.z = (vec_1C.z - vec_FC.z) << 6;
+	vec_17C.x = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.x, vec_FC.x);
+	vec_17C.y = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.y, vec_FC.y);
+	vec_17C.z = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.z, vec_FC.z);
 	var_F2 = polarRadius3D(&vec_17C);
 	var_F4 = LEGACY_S16_WRAP_SUB(var_pSpeed2Scaled, var_F2);
 /*    sub     ax, ax
@@ -1702,9 +1702,9 @@ loc_15A30:
 	vec_1C.z = -vec_1C.y;
 	vec_1C.y = var_EE;
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = (vec_1C.x - vec_FC.x) << 6;
-	vec_17C.y = (vec_1C.y - vec_FC.y) << 6;
-	vec_17C.z = (vec_1C.z - vec_FC.z) << 6;
+	vec_17C.x = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.x, vec_FC.x);
+	vec_17C.y = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.y, vec_FC.y);
+	vec_17C.z = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.z, vec_FC.z);
 /*
     mov     ax, [bp+vec_C.vz]
     mov     [bp+var_EE], ax
@@ -1971,7 +1971,7 @@ loc_15C3F:
 loc_15C75:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
-	vec_1C6.y = (-nextPosAndNormalIP) << 6;
+	vec_1C6.y = LEGACY_S16_WRAP_NEGATE_SHL6(nextPosAndNormalIP);
 	mat_mul_vector2(&vec_1C6, &planptr[planindex].plane_rotation, &vec_FC);
 /*
     mov     [bp+vec_1C6.vz], 0
@@ -2858,7 +2858,8 @@ loc_1632C:
     jmp     loc_16428*/
 loc_16336:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
-	vec_1C6.y = arg_pSimd->collide_points[0].py << 6;
+	vec_1C6.y = LEGACY_S16_WRAP_SHL6(
+		arg_pSimd->collide_points[0].py);
 	mat_mul_vector(&vec_1C6, var_EA, &vec_FC);
 /*    mov     al, [bp+var_wheelIndex]
     cbw
