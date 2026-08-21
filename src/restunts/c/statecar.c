@@ -88,6 +88,16 @@ static legacy_s16 damp_delta_speed_for_opponent(
 		delta_bits, (legacy_u16)quotient));
 }
 
+static legacy_u16 average_speed_words(
+	legacy_u16 first,
+	legacy_u16 second)
+{
+	legacy_u32 sum;
+
+	sum = LEGACY_U32_WRAP_ADD(first, second);
+	return LEGACY_U32_LOW_WORD(sum >> 1);
+}
+
 void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 /*update_car_speed proc far
     var_currTorque = byte ptr -10
@@ -783,7 +793,8 @@ loc_17EF8:
 loc_17EFB:
 	if (var_4 <= 0x1400)
 		goto loc_17F28;
-	arg_carState->car_speed = ((long)arg_carState->car_speed + arg_carState->car_speed2) >> 1;
+	arg_carState->car_speed = average_speed_words(
+		arg_carState->car_speed, arg_carState->car_speed2);
 	arg_carState->car_speed2 = arg_carState->car_speed;
 	arg_carState->car_engineLimiterTimer = 5;
 	goto loc_17F45;

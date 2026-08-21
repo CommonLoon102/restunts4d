@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Sixty-seven implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Sixty-eight implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -109,6 +109,7 @@ portable enough to support it.
 65. [Defined player-physics speed scaling](asm-to-c-phase1-slice65.md)
 66. [Defined torque/mass acceleration arithmetic](asm-to-c-phase1-slice66.md)
 67. [Defined opponent-speed damping arithmetic](asm-to-c-phase1-slice67.md)
+68. [Defined unsigned speed-word averaging](asm-to-c-phase1-slice68.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap
