@@ -2935,7 +2935,7 @@ void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int*
 		temp0x = var_16[0];
 		temp0y = var_16[1];
 		var_16-=2;
-		if (var_16 < var_vertlineptr)
+		if (var_16 < (unsigned*)var_vertlineptr)
 			var_16 = var_8;
 		temp1x = var_16[0];
 		temp1y = var_16[1];
@@ -2978,8 +2978,8 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 	int sprite1_sprite_top = sprite1.sprite_top;
 	int sprite1_sprite_height = sprite1.sprite_height;
 	int i, count, ofs;
-	unsigned long value;
-	unsigned long temp;
+	legacy_u32 value;
+	legacy_u32 temp;
 	char* errorstr = "%i ";
 	
 	if (mode == 1)
@@ -3055,7 +3055,12 @@ preRender_helper2:
 			}
 			return ;
 		case 5:
+#if defined(__BORLANDC__)
 			value = ((unsigned long*)regsi)[0] + 0x8000;
+#else
+			value = LEGACY_U32_WRAP_ADD(
+				LEGACY_U32_FROM_WORDS(regsi[1], regsi[0]), 0x8000UL);
+#endif
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = value >> 16;
 				var_18[480 + ofs + i] = value >> 16;
@@ -3063,7 +3068,12 @@ preRender_helper2:
 			}
 			return ;
 		case 6:
+#if defined(__BORLANDC__)
 			value = ((unsigned long*)regsi)[0] + 0x8000;
+#else
+			value = LEGACY_U32_WRAP_ADD(
+				LEGACY_U32_FROM_WORDS(regsi[1], regsi[0]), 0x8000UL);
+#endif
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = value >> 16;
 				var_18[480 + ofs + i] = value >> 16;
