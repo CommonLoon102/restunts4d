@@ -136,6 +136,7 @@ portable enough to support it.
 92. [Defined penalty accumulator arithmetic](asm-to-c-phase1-slice92.md)
 93. [Defined projected-coordinate subtraction](asm-to-c-phase1-slice93.md)
 94. [Defined player progress counters](asm-to-c-phase1-slice94.md)
+95. [Defined route-angle word arithmetic](asm-to-c-phase1-slice95.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

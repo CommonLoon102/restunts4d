@@ -96,6 +96,30 @@ static legacy_s8 increment_state_byte(legacy_u8 value)
 	((target) = increment_state_byte(target))
 #endif
 
+#if defined(__BORLANDC__)
+#define subtract_state_word(left, right) ((left) - (right))
+#define negate_state_word(value) (-(value))
+#define STATE_ADD_WORD(target, value) ((target) += (value))
+#else
+static legacy_s16 subtract_state_word(legacy_u16 left, legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(left, right));
+}
+
+static legacy_s16 negate_state_word(legacy_u16 value)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_NEGATE(value));
+}
+
+static legacy_s16 add_state_word(legacy_u16 left, legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
+}
+
+#define STATE_ADD_WORD(target, value) \
+	((target) = add_state_word(target, value))
+#endif
+
 static int finish_penalty_traversal(
 	int result,
 	legacy_s16 branch_pieces[],
@@ -799,7 +823,12 @@ loc_175D0:
 	sub_18D60(var_2, &var_1A, var_3A, 0);
 loc_175F0:
 
-	si = (state.playerstate.car_rotate.x - polarAngle(var_52[0].x - var_1A[0].x, var_1A[0].z - var_52[0].z) & 0x3FF) & 0x3FF;
+	si = subtract_state_word(
+		state.playerstate.car_rotate.x,
+		polarAngle(
+			subtract_state_word(var_52[0].x, var_1A[0].x),
+			subtract_state_word(var_1A[0].z, var_52[0].z)) &
+			0x3FF) & 0x3FF;
 	if (si > 0x380)
 		goto loc_17631;
 	if (si >= 0x80)
@@ -849,7 +878,8 @@ loc_176F0:
 		var_28.z, state.playerstate.car_posWorld1.lz);
 	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
 	mat_mul_vector(&var_28, var_matptr, &var_38);
-	state.playerstate.field_48 = polarAngle(-var_38.x, var_38.z) & 0x3FF;
+	state.playerstate.field_48 = polarAngle(
+		negate_state_word(var_38.x), var_38.z) & 0x3FF;
 	if (state.playerstate.car_crashBmpFlag != 0)
 		goto loc_17771;
 
@@ -881,11 +911,11 @@ loc_1779E:
 	state.field_45D = 2;
 	goto loc_17771;
 loc_177AC:
-	si += multiply_and_scale(
+	STATE_ADD_WORD(si, multiply_and_scale(
 		sin_fast(track_angle),
 		subtract_projected_world_coordinate(
 			trackcenterpos2[startcol2],
-			state.playerstate.car_posWorld1.lx));
+			state.playerstate.car_posWorld1.lx)));
 	
 	if (si >= 0)
 		goto loc_17810;
