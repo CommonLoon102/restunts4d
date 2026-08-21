@@ -53,6 +53,8 @@ void _Cdecl _segread(struct SREGS* segregs);
 #define RESTUNTS_DECREMENT_BYTE(target) ((target)--)
 #define consume_initial_route_index(target) \
 	((unsigned char)((target)++))
+#define replay_frame_word(frame, elapsed) ((frame) + (elapsed))
+#define opponent_replay_timeout_word(fps) (0x5DC * (fps))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -81,6 +83,16 @@ static legacy_u16 consume_initial_route_index_value(legacy_s8* target)
 	old_value = (legacy_u8)*target;
 	*target = restunts_increment_byte(old_value);
 	return old_value;
+}
+
+static legacy_u16 replay_frame_word(legacy_u16 frame, legacy_u16 elapsed)
+{
+	return LEGACY_U16_WRAP_ADD(frame, elapsed);
+}
+
+static legacy_u16 opponent_replay_timeout_word(legacy_u16 fps)
+{
+	return LEGACY_U16_WRAP_MUL(0x5DCU, fps);
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -1433,7 +1445,9 @@ void run_game(void) {
 				regsi++;
 				if (regsi == framespersec) {
 					regsi = 0;
-					format_frame_as_string(&resID_byte1, state.game_frame + elapsed_time1, 1);
+					format_frame_as_string(&resID_byte1,
+						replay_frame_word(state.game_frame, elapsed_time1),
+						1);
 					mouse_draw_opaque_check();
 					sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), var_16[1]);
 					mouse_draw_transparent_check();
@@ -1443,7 +1457,8 @@ void run_game(void) {
 					break;
 				if (state.opponentstate.car_crashBmpFlag != 0)
 					break;
-				if (0x5DC * framespersec == state.game_frame + elapsed_time1)
+				if (opponent_replay_timeout_word(framespersec) ==
+						replay_frame_word(state.game_frame, elapsed_time1))
 					break;
 			}
 		}
