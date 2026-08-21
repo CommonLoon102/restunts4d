@@ -398,24 +398,26 @@ int video_get_status(void)
 
 int random_wait(void)
 {
-	int status1, i;
+	int status1;
+	legacy_u16 i;
 	
 	status1 = video_get_status();
 	
 	for (i = 0; status1 == video_get_status() && i < 12000; ++i);
 	
 	if (i == 1024) {
-		i = aMisc_1[0];
+		i = (legacy_u16)(legacy_s16)
+			LEGACY_S8_FROM_BITS(aMisc_1[0]);
 	}
 	
-	while (i--) {
+	while (i-- != 0) {
 		rand();
 		get_kevinrandom();
 	}
 	
-	i &= 0xFF;
+	i &= 0xFFU;
 	
-	while (i--) {
+	while (i-- != 0) {
 		get_kevinrandom();
 		rand();
 	}
