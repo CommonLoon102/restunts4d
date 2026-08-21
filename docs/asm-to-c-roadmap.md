@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | Eighty-four implementation slices are committed and comprehensively replay-tested. |
+| Phase 1 | In progress | Eighty-five implementation slices are committed and comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -126,6 +126,7 @@ portable enough to support it.
 82. [Defined compound signed-word negations](asm-to-c-phase1-slice82.md)
 83. [Defined shifted compound negations](asm-to-c-phase1-slice83.md)
 84. [Defined direct signed-word shifts](asm-to-c-phase1-slice84.md)
+85. [Defined direct signed-word addition and subtraction](asm-to-c-phase1-slice85.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

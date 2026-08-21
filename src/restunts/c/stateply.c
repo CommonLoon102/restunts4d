@@ -68,9 +68,31 @@ static legacy_s16 scale_speed2_for_physics(
 }
 
 #if defined(__BORLANDC__)
+#define stateply_add_word(left, right) ((left) + (right))
+#define stateply_sub_word(left, right) ((left) - (right))
+#define stateply_add_angle_word(left, right) ((left) + (right))
+#define STATEPLY_S16_WRAP_ADD_ASSIGN(target, value) ((target) += (value))
+#define STATEPLY_S16_WRAP_SUB_ASSIGN(target, value) ((target) -= (value))
 #define collision_speed_threshold(value) \
 	(-(((value) * 0x46 >> 8) - 0x64) << 8)
 #else
+static legacy_s16 stateply_add_word(legacy_u16 left, legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
+}
+
+static legacy_s16 stateply_sub_word(legacy_u16 left, legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(left, right));
+}
+
+#define stateply_add_angle_word(left, right) \
+	LEGACY_U16_WRAP_ADD(left, right)
+#define STATEPLY_S16_WRAP_ADD_ASSIGN(target, value) \
+	((target) = stateply_add_word(target, value))
+#define STATEPLY_S16_WRAP_SUB_ASSIGN(target, value) \
+	((target) = stateply_sub_word(target, value))
+
 static legacy_u16 collision_speed_threshold(legacy_s16 value)
 {
 	legacy_u16 product_bits;
@@ -406,7 +428,7 @@ loc_15004:
 		arg_pState->car_rc2[var_wheelIndex], 0x180, 0);
 	if (var_F0 >= 0)
 		goto loc_1504A;
-	vec_1C6.y -= var_F0;
+	STATEPLY_S16_WRAP_SUB_ASSIGN(vec_1C6.y, var_F0);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -722,9 +744,11 @@ loc_15270:
     jl      short loc_1527C
     jmp     loc_15950*/
 loc_1527C:
-	vec_182.x = arg_pState->car_whlWorldCrds1[var_wheelIndex].x - wallStartX;
+	vec_182.x = stateply_sub_word(
+		arg_pState->car_whlWorldCrds1[var_wheelIndex].x, wallStartX);
 	vec_182.y = 0;
-	vec_182.z = arg_pState->car_whlWorldCrds1[var_wheelIndex].z - wallStartZ;
+	vec_182.z = stateply_sub_word(
+		arg_pState->car_whlWorldCrds1[var_wheelIndex].z, wallStartZ);
 	vec_1E4.x = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_FROM_S32_SAR6(var_DEptrTo1C0->lx), wallStartX);
 	vec_1E4.y = 0;
@@ -1225,12 +1249,14 @@ loc_155A1:
     mov     [bp+vec_C.vz], ax
     jmp     loc_1553F*/
 loc_15642:
-	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
+	STATEPLY_S16_WRAP_ADD_ASSIGN(arg_pState->car_rc1[var_wheelIndex],
+		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 	if (framespersec != 0xA)
 		goto loc_156A3;
-	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
+	STATEPLY_S16_WRAP_ADD_ASSIGN(arg_pState->car_rc1[var_wheelIndex],
+		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 /*
@@ -1333,9 +1359,9 @@ loc_15703:
     jmp     loc_15D2B*/
 loc_1570A:
 	var_6 = &planptr[planindex];
-	var_122.x = var_6->plane_origin.x + elem_xCenter;
-	var_122.y = var_6->plane_origin.y + terrainHeight;
-	var_122.z = var_6->plane_origin.z + elem_zCenter;
+	var_122.x = stateply_add_word(var_6->plane_origin.x, elem_xCenter);
+	var_122.y = stateply_add_word(var_6->plane_origin.y, terrainHeight);
+	var_122.z = stateply_add_word(var_6->plane_origin.z, elem_zCenter);
 /*    mov     ax, 22h ; '"'
     imul    planindex
     add     ax, word ptr planptr
@@ -2277,7 +2303,7 @@ loc_15E38:
 loc_15E85:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
-	vec_1C6.y = var_EE + 0x180;
+	vec_1C6.y = stateply_add_word(var_EE, 0x180);
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_182);
 	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lx, vec_182.x);
@@ -3278,7 +3304,7 @@ loc_165F0:
 	vec_18EoStateWorldCrds[0].z = var_DC[si].z;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD6A, vec_18EoStateWorldCrds) == 0)
 		goto loc_165EA;
-	arg_pState->car_36MwhlAngle -= 0x200;
+	STATEPLY_S16_WRAP_SUB_ASSIGN(arg_pState->car_36MwhlAngle, 0x200);
 /*    mov     al, [bp+var_EC]
     sub     ah, ah
     cmp     ax, si
@@ -3442,9 +3468,13 @@ loc_1671F:
     jz      short loc_1672C
     jmp     loc_16840*/
 loc_1672C:
-	vec_18EoStateWorldCrds[0].x = trackcenterpos2[startcol2] + multiply_and_scale(sin_fast(track_angle + 0x100), 0x7E);
+	vec_18EoStateWorldCrds[0].x = stateply_add_word(
+		trackcenterpos2[startcol2], multiply_and_scale(
+			sin_fast(stateply_add_angle_word(track_angle, 0x100)), 0x7E));
 	vec_18EoStateWorldCrds[0].y = hillHeightConsts[hillFlag];
-	vec_18EoStateWorldCrds[0].z = trackcenterpos[startrow2] + multiply_and_scale(cos_fast(track_angle + 0x100), 0x7E);
+	vec_18EoStateWorldCrds[0].z = stateply_add_word(
+		trackcenterpos[startrow2], multiply_and_scale(
+			cos_fast(stateply_add_angle_word(track_angle, 0x100)), 0x7E));
 /*    mov     ax, 7Eh ; '~'
     push    ax
     mov     ax, track_angle
@@ -3503,8 +3533,12 @@ loc_1672C:
     mov     [bp+var_138], ax
     or      ax, ax
     jnz     short loc_16836*/
-	vec_18EoStateWorldCrds[0].x = trackcenterpos2[startcol2] + multiply_and_scale(sin_fast(track_angle + 0x300), 0x7E);
-	vec_18EoStateWorldCrds[0].z = trackcenterpos[startrow2] + multiply_and_scale(cos_fast(track_angle + 0x300), 0x7E);
+	vec_18EoStateWorldCrds[0].x = stateply_add_word(
+		trackcenterpos2[startcol2], multiply_and_scale(
+			sin_fast(stateply_add_angle_word(track_angle, 0x300)), 0x7E));
+	vec_18EoStateWorldCrds[0].z = stateply_add_word(
+		trackcenterpos[startrow2], multiply_and_scale(
+			cos_fast(stateply_add_angle_word(track_angle, 0x300)), 0x7E));
 /*
     mov     ax, 7Eh ; '~'
     push    ax
