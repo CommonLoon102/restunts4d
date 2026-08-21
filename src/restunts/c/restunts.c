@@ -59,6 +59,11 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((target) += (legacy_s32)(legacy_s16)(value) << 6)
 #define RESTUNTS_ADD_WORD_TO_DWORD(target, value) \
 	((target) += (legacy_s16)(value))
+#define restunts_add_two_words(left, right) ((left) + (right))
+#define restunts_add_three_words(first, second, third) \
+	((first) + (second) + (third))
+#define restunts_grid_coordinate_word(value) \
+	((legacy_s16)(legacy_s8)(value) << 10)
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -117,6 +122,31 @@ static legacy_s32 restunts_add_word_to_dword(
 ) {
 	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD(
 		target, LEGACY_U32_SIGN_EXTEND_S16(value)));
+}
+
+static legacy_s16 restunts_add_two_words(
+	legacy_u16 left,
+	legacy_u16 right
+) {
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
+}
+
+static legacy_s16 restunts_add_three_words(
+	legacy_u16 first,
+	legacy_u16 second,
+	legacy_u16 third
+) {
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		LEGACY_U16_WRAP_ADD(first, second), third));
+}
+
+static legacy_s16 restunts_grid_coordinate_word(legacy_u8 value)
+{
+	legacy_s8 signed_value;
+
+	signed_value = LEGACY_S8_FROM_BITS(value);
+	return LEGACY_S16_FROM_BITS((legacy_u16)(
+		(legacy_u32)(legacy_u16)signed_value << 10));
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -578,16 +608,23 @@ void init_game_state(short arg)
 		}
 
 		state.game_vec1[0].x =
-			  multiply_and_scale(sin_fast(track_angle + 0x300),  512)
-			+ multiply_and_scale(sin_fast(track_angle + 0x200), 4096)
-			+ ((short)startcol2 << 10);
+			restunts_add_three_words(
+				multiply_and_scale(sin_fast(
+					restunts_add_two_words(track_angle, 0x300)), 512),
+				multiply_and_scale(sin_fast(
+					restunts_add_two_words(track_angle, 0x200)), 4096),
+				restunts_grid_coordinate_word(startcol2));
 
-		state.game_vec1[0].y = hillHeightConsts[hillFlag] + 960;
+		state.game_vec1[0].y = restunts_add_two_words(
+			hillHeightConsts[LEGACY_S8_FROM_BITS(hillFlag)], 960);
 
 		state.game_vec1[0].z =
-			  multiply_and_scale(cos_fast(track_angle + 0x300),  512)
-			+ multiply_and_scale(cos_fast(track_angle + 0x200), 4096)
-			+ trackpos[startrow2];
+			restunts_add_three_words(
+				multiply_and_scale(cos_fast(
+					restunts_add_two_words(track_angle, 0x300)), 512),
+				multiply_and_scale(cos_fast(
+					restunts_add_two_words(track_angle, 0x200)), 4096),
+				trackpos[LEGACY_S8_FROM_BITS(startrow2)]);
 
 		state.game_vec1[1] = state.game_vec1[0];
 		state.game_vec3 = state.game_vec1[0];
