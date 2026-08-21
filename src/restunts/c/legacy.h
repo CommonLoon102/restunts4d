@@ -124,6 +124,11 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_U32_IS_NEGATIVE(value) \
 	((((legacy_u32)(value)) & (legacy_u32)0x80000000UL) != 0)
 
+#define LEGACY_U32_SIGN_EXTEND_S16(value) \
+	LEGACY_U32_FROM_WORDS( \
+		(((legacy_u16)(value) & 0x8000U) != 0) ? 0xFFFFU : 0U, \
+		(legacy_u16)(value))
+
 #if defined(__BORLANDC__)
 #define LEGACY_S32_FROM_BITS(value) ((legacy_s32)(legacy_u32)(value))
 #else
@@ -132,6 +137,21 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	(legacy_s32)(legacy_u32)(value) : \
 	(legacy_s32)(-1 - (legacy_s32)( \
 		(legacy_u32)0xFFFFFFFFUL - (legacy_u32)(value))))
+#endif
+
+/* Pass side-effect-free values to these signed-word/double-word operations. */
+#if defined(__BORLANDC__)
+#define LEGACY_S32_WRAP_ADD_S16(left, right) \
+	((legacy_s32)(left) + (legacy_s16)(right))
+#define LEGACY_S32_WRAP_SUB_S16(left, right) \
+	((legacy_s32)(left) - (legacy_s16)(right))
+#else
+#define LEGACY_S32_WRAP_ADD_S16(left, right) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD( \
+		(legacy_u32)(left), LEGACY_U32_SIGN_EXTEND_S16(right)))
+#define LEGACY_S32_WRAP_SUB_S16(left, right) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_SUB( \
+		(legacy_u32)(left), LEGACY_U32_SIGN_EXTEND_S16(right)))
 #endif
 
 #endif

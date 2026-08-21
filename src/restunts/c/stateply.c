@@ -293,9 +293,12 @@ loc_14FAC:
 	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
 	saved_wheel_plane_angles[var_wheelIndex] = pState_f36Mminf40sar2;
 	plane_rotate_op();
-	var_DEptrTo1C0->lx += vec_planerotopresult.x;
-	var_DEptrTo1C0->ly += vec_planerotopresult.y;
-	var_DEptrTo1C0->lz += vec_planerotopresult.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lx, vec_planerotopresult.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->ly, vec_planerotopresult.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lz, vec_planerotopresult.z);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -397,9 +400,12 @@ loc_1504A:
     pop     si*/
 loc_15077:
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-	var_DEptrTo1C0->lx = vec_FC.x + pState_lvec1_x;
-	var_DEptrTo1C0->ly = vec_FC.y + pState_lvec1_y;
-	var_DEptrTo1C0->lz = vec_FC.z + pState_lvec1_z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_x, vec_FC.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_y, vec_FC.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_z, vec_FC.z);
 /*    lea     ax, [bp+vec_FC]
     push    ax
     mov     ax, offset mat_unk
@@ -1140,11 +1146,13 @@ loc_155A1:
     jmp     loc_1553F*/
 loc_15642:
 	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
-	var_DEptrTo1C0->ly -= arg_pState->car_rc1[var_wheelIndex];
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
+		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 	if (framespersec != 0xA)
 		goto loc_156A3;
 	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
-	var_DEptrTo1C0->ly -= arg_pState->car_rc1[var_wheelIndex];
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
+		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -1427,9 +1435,12 @@ loc_15882:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = saved_wheel_plane_angles[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx -= vec_planerotopresult.x;
-	var_DEptrTo1C0->ly -= vec_planerotopresult.y;
-	var_DEptrTo1C0->lz -= vec_planerotopresult.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_SUB_S16(
+		var_DEptrTo1C0->lx, vec_planerotopresult.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
+		var_DEptrTo1C0->ly, vec_planerotopresult.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_SUB_S16(
+		var_DEptrTo1C0->lz, vec_planerotopresult.z);
 	goto loc_15CDF;
 /*    mov     vec_unk2.vx, 0
     mov     vec_unk2.vy, 0
@@ -1535,9 +1546,12 @@ loc_15964:
     jl      short loc_1596E
     jmp     loc_15642*/
 loc_1596E:
-	var_DEptrTo1C0->lx += vec_E4.x;
-	var_DEptrTo1C0->ly += vec_E4.y;
-	var_DEptrTo1C0->lz += vec_E4.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lx, vec_E4.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->ly, vec_E4.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lz, vec_E4.z);
 	goto loc_156ED;
 /*    mov     ax, [bp+var_E4]
     cwd
@@ -1575,9 +1589,12 @@ loc_159AD:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = saved_wheel_plane_angles[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_planerotopresult.x;
-	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_planerotopresult.y;
-	var_DEptrTo1C0->lz = var_146ptrTo176->lz + vec_planerotopresult.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->lx, vec_planerotopresult.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->ly, vec_planerotopresult.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->lz, vec_planerotopresult.z);
 	goto loc_15C04;
 /*    mov     vec_unk2.vx, 0
     mov     vec_unk2.vy, 0
@@ -1915,9 +1932,12 @@ loc_15C75:
     push    cs
     call near ptr ported_mat_mul_vector2_
     add     sp, 8*/
-	var_DEptrTo1C0->lx += vec_FC.x;
-	var_DEptrTo1C0->ly += vec_FC.y;
-	var_DEptrTo1C0->lz += vec_FC.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lx, vec_FC.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->ly, vec_FC.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lz, vec_FC.z);
 /*    mov     ax, [bp+vec_FC.vx]
     cwd
     mov     bx, [bp+var_DEptrTo1C0]
@@ -2155,9 +2175,12 @@ loc_15E85:
 	vec_1C6.x = 0;
 	vec_1C6.y = var_EE + 0x180;
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_182);
-	var_DEptrTo1C0->lx += vec_182.x;
-	var_DEptrTo1C0->ly += vec_182.y;
-	var_DEptrTo1C0->lz += vec_182.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lx, vec_182.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->ly, vec_182.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_DEptrTo1C0->lz, vec_182.z);
 	goto loc_15DC8;
 /*    mov     [bp+vec_1C6.vz], 0
     mov     [bp+vec_1C6.vx], 0
