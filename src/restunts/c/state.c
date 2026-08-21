@@ -74,6 +74,28 @@ static legacy_s16 subtract_projected_world_coordinate(
 }
 #endif
 
+#if defined(__BORLANDC__)
+#define STATE_ADD_TRAVEL_DISTANCE(target, value) ((target) += (value))
+#define STATE_INCREMENT_BYTE(target) ((target)++)
+#else
+static legacy_s32 add_travel_distance(
+	legacy_u32 distance,
+	legacy_u16 speed)
+{
+	return LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_ADD(distance, speed));
+}
+
+static legacy_s8 increment_state_byte(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value + 1U));
+}
+
+#define STATE_ADD_TRAVEL_DISTANCE(target, value) \
+	((target) = add_travel_distance(target, value))
+#define STATE_INCREMENT_BYTE(target) \
+	((target) = increment_state_byte(target))
+#endif
+
 static int finish_penalty_traversal(
 	int result,
 	legacy_s16 branch_pieces[],
@@ -495,7 +517,8 @@ void player_op(char arg_carInputByte) {
 	);
 #endif
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
-	state.game_travDist += state.playerstate.car_speed2;
+	STATE_ADD_TRAVEL_DISTANCE(
+		state.game_travDist, state.playerstate.car_speed2);
 	var_1C = state.field_45B;
 	var_2 = state.field_2F2;
 	/*
@@ -607,7 +630,7 @@ loc_172F3:
 		goto loc_17308;
 	if (state.field_2F4 == 0)
 		goto loc_17308;
-	state.playerstate.field_CD++;
+	STATE_INCREMENT_BYTE(state.playerstate.field_CD);
 	goto loc_1737B;
 loc_17308:
 	if (var_1EpenaltyCounter < 0)
@@ -629,7 +652,7 @@ loc_1732E:
 	if (td02_penalty_related[state.field_2F4] != var_2)
 		goto loc_17350;
 loc_17349:
-	state.field_45C++;
+	STATE_INCREMENT_BYTE(state.field_45C);
 	goto loc_17374;
 loc_17350:
 	if (td01_track_file_cpy[var_2] == state.field_2F4)
