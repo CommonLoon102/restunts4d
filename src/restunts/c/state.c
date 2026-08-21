@@ -6,7 +6,7 @@
 #include <dos.h>
 #endif
 
-extern int penalty_time;
+extern legacy_s16 penalty_time;
 extern struct TRACKOBJECT trkObjectList[];
 
 #define PENALTY_MAX_TRACK_PIECES 0x385
@@ -30,6 +30,35 @@ static legacy_s16 decode_penalty_track_row(legacy_u32 position)
 	coordinate = (legacy_u8)(position >> 16);
 	return LEGACY_S8_FROM_BITS((legacy_u8)(0x1DU - coordinate));
 }
+#endif
+
+#if defined(__BORLANDC__)
+#define calculate_penalty_time(counter, fps) ((counter) * (fps) * 3)
+#define calculate_penalty_display_counter(fps) ((fps) << 2)
+#define STATE_ADD_PENALTY_WORD(target, value) ((target) += (value))
+#else
+static legacy_s16 calculate_penalty_time(
+	legacy_u16 counter,
+	legacy_u16 fps)
+{
+	legacy_u16 product;
+
+	product = LEGACY_U16_WRAP_MUL(counter, fps);
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(product, 3U));
+}
+
+static legacy_u8 calculate_penalty_display_counter(legacy_u16 fps)
+{
+	return (legacy_u8)LEGACY_U16_WRAP_MUL(fps, 4U);
+}
+
+static legacy_s16 add_penalty_word(legacy_u16 total, legacy_u16 value)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(total, value));
+}
+
+#define STATE_ADD_PENALTY_WORD(target, value) \
+	((target) = add_penalty_word(target, value))
 #endif
 
 static int finish_penalty_traversal(
@@ -607,9 +636,10 @@ loc_1737B:
 	if (var_1EpenaltyCounter <= 0)
 		goto loc_173AD;
 		
-	penalty_time = var_1EpenaltyCounter * framespersec * 3;
-	show_penalty_counter = framespersec << 2;
-	state.game_penalty += penalty_time;
+	penalty_time = calculate_penalty_time(
+		var_1EpenaltyCounter, framespersec);
+	show_penalty_counter = calculate_penalty_display_counter(framespersec);
+	STATE_ADD_PENALTY_WORD(state.game_penalty, penalty_time);
 	
 loc_173AD:
 	state.field_2F4 = var_2;

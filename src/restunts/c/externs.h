@@ -282,7 +282,7 @@ extern char byte_44346;
 extern char byte_46467;
 extern char dashb_toggle;
 extern char byte_4432A;
-extern char show_penalty_counter;
+extern legacy_u8 show_penalty_counter;
 extern int word_45D94;
 extern int word_45D3E;
 extern char byte_3B8F2;
