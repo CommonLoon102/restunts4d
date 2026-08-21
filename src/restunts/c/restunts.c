@@ -50,6 +50,9 @@ void _Cdecl _segread(struct SREGS* segregs);
 #define RESTUNTS_INCREMENT_WORD(target) ((target)++)
 #define RESTUNTS_ADD_WORD(target, value) ((target) += (value))
 #define RESTUNTS_INCREMENT_BYTE(target) ((target)++)
+#define RESTUNTS_DECREMENT_BYTE(target) ((target)--)
+#define consume_initial_route_index(target) \
+	((unsigned char)((target)++))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -61,9 +64,23 @@ static legacy_s16 restunts_add_word(legacy_u16 left, legacy_u16 right)
 	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
 }
 
-static legacy_u8 restunts_increment_byte(legacy_u8 value)
+static legacy_s8 restunts_increment_byte(legacy_u8 value)
 {
-	return (legacy_u8)(value + 1U);
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value + 1U));
+}
+
+static legacy_s8 restunts_decrement_byte(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value - 1U));
+}
+
+static legacy_u16 consume_initial_route_index_value(legacy_s8* target)
+{
+	legacy_u8 old_value;
+
+	old_value = (legacy_u8)*target;
+	*target = restunts_increment_byte(old_value);
+	return old_value;
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -72,6 +89,10 @@ static legacy_u8 restunts_increment_byte(legacy_u8 value)
 	((target) = restunts_add_word(target, value))
 #define RESTUNTS_INCREMENT_BYTE(target) \
 	((target) = restunts_increment_byte(target))
+#define RESTUNTS_DECREMENT_BYTE(target) \
+	((target) = restunts_decrement_byte(target))
+#define consume_initial_route_index(target) \
+	consume_initial_route_index_value(&(target))
 #endif
 
 // Use the Stunts' data for now.
@@ -576,10 +597,9 @@ void init_game_state(short arg)
 			sub_18D60(
 				state.playerstate.car_trackdata3_index,
 				&state.playerstate.car_vec_unk3,
-				state.playerstate.field_CE,
+				consume_initial_route_index(
+					state.playerstate.field_CE),
 				0);
-			
-			state.playerstate.field_CE++;
 		}
 
 		// Init opponent car.
@@ -604,10 +624,9 @@ void init_game_state(short arg)
 			sub_18D60(
 				trackdata3[state.opponentstate.car_trackdata3_index], // TODO: Verify
 				&state.opponentstate.car_vec_unk3,
-				state.opponentstate.field_CE,
+				consume_initial_route_index(
+					state.opponentstate.field_CE),
 				&state.field_3F9); // TODO: Verify
-		
-			state.opponentstate.field_CE++;
 		}
 
 		state.field_42A = 0;
@@ -1049,7 +1068,7 @@ void run_game(void) {
 			game_replay_mode = 1;
 		}
 	} else {
-		cameramode++;
+		RESTUNTS_INCREMENT_BYTE(cameramode);
 		if (cameramode == 4) {
 			cameramode = 0;
 		}
@@ -1322,7 +1341,7 @@ void run_game(void) {
 			}
 
 			if (byte_454A4 != 0) {
-				byte_454A4--;
+				RESTUNTS_DECREMENT_BYTE(byte_454A4);
 			}
 
 			if (video_flag5_is0 != 0) {
