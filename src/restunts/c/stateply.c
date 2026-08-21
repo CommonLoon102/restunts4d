@@ -148,6 +148,15 @@ static legacy_s16 interpolate_wheel_delta(
 #define STATEPLY_S16_WRAP_NEGATE(value) LEGACY_S16_WRAP_NEGATE(value)
 #endif
 
+#if defined(__BORLANDC__)
+#define decode_track_collision_index(value) ((char)(value))
+#else
+static legacy_s16 decode_track_collision_index(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS(value);
+}
+#endif
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -3358,7 +3367,8 @@ loc_16648:
     ; align 2
     db 144*/
 loc_16650:
-	si = (char)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
+	si = decode_track_collision_index(
+		trackdata19[trackrows[vec_FC.z] + vec_FC.x]);
 	if (si != -1) //0xFF) // note: checking for 0xff elsewhere, should be signed and check for -1
 		goto loc_16670;
 	goto loc_16710;
