@@ -2224,9 +2224,12 @@ loc_15E85:
     ; align 2
     db 144*/
 code_update_globalPos:
-	pState_lvec1_x = (vecl_1C0[0].lx + vecl_1C0[1].lx + vecl_1C0[2].lx + vecl_1C0[3].lx) >> 2;
-	pState_lvec1_y = (vecl_1C0[0].ly + vecl_1C0[1].ly + vecl_1C0[2].ly + vecl_1C0[3].ly) >> 2;
-	pState_lvec1_z = (vecl_1C0[0].lz + vecl_1C0[1].lz + vecl_1C0[2].lz + vecl_1C0[3].lz) >> 2;
+	pState_lvec1_x = LEGACY_S32_WRAP_SUM4_SAR2(
+		vecl_1C0[0].lx, vecl_1C0[1].lx, vecl_1C0[2].lx, vecl_1C0[3].lx);
+	pState_lvec1_y = LEGACY_S32_WRAP_SUM4_SAR2(
+		vecl_1C0[0].ly, vecl_1C0[1].ly, vecl_1C0[2].ly, vecl_1C0[3].ly);
+	pState_lvec1_z = LEGACY_S32_WRAP_SUM4_SAR2(
+		vecl_1C0[0].lz, vecl_1C0[1].lz, vecl_1C0[2].lz, vecl_1C0[3].lz);
 /*    mov     ax, word ptr [bp+vecl_1C0.lx]
     mov     dx, word ptr [bp+vecl_1C0.lx+2]
     add     ax, word ptr [bp+var_1B4.lx]
