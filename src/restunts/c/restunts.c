@@ -80,6 +80,11 @@ void _Cdecl _segread(struct SREGS* segregs);
 	LEGACY_S16_ABS_WORD((first) + (second) + (third) + (fourth))
 #define game_frame_interval_word(fps) (30 * (legacy_s16)(fps))
 #define game_tick_interval_word(fps) (100 / (legacy_s16)(fps))
+#define fullscreen_window_limit(first, second) \
+	(64000L / ((legacy_s32)(legacy_s16)(first) * \
+	(legacy_s32)(legacy_s16)(second)))
+#define fullscreen_window_is_available(available, limit) \
+	((legacy_s32)(available) > (legacy_s32)(limit))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -234,6 +239,24 @@ static legacy_s16 game_tick_interval_word(legacy_u16 fps)
 {
 	return (legacy_s16)((legacy_s32)100L /
 		(legacy_s32)LEGACY_S16_FROM_BITS(fps));
+}
+
+static legacy_s32 fullscreen_window_limit(
+	legacy_u16 first,
+	legacy_u16 second
+) {
+	legacy_s32 divisor;
+
+	divisor = (legacy_s32)LEGACY_S16_FROM_BITS(first) *
+		(legacy_s32)LEGACY_S16_FROM_BITS(second);
+	return (legacy_s32)64000L / divisor;
+}
+
+static int fullscreen_window_is_available(
+	legacy_u32 available,
+	legacy_s32 limit
+) {
+	return LEGACY_S32_FROM_BITS(available) > limit;
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -1122,7 +1145,7 @@ static void rebuild_opponent_path(void) {
 
 int setup_player_cars(void) {
 	void far* carresptr;
-	legacy_u32 var_8;
+	legacy_s32 var_8;
 
 	wndsprite = 0;
 	ensure_file_exists(2);
@@ -1198,8 +1221,10 @@ int setup_player_cars(void) {
 
 	if (video_flag5_is0 == 0) {
 		
-		var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1);
-		if (mmgr_prepare_fullscreen_window() <= var_8) {
+		var_8 = fullscreen_window_limit(
+			video_flag1_is1, video_flag4_is1);
+		if (!fullscreen_window_is_available(
+			mmgr_prepare_fullscreen_window(), var_8)) {
 			return 1;
 		}
 		wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);

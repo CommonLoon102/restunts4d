@@ -9,7 +9,7 @@ phase. Slice numbers never advance the top-level phase number.
 | Top-level phase | Status | Notes |
 | --- | --- | --- |
 | Phase 0 | Complete | Established the inventory, audits, and regression workflow. |
-| Phase 1 | In progress | One hundred and twelve implementation slices are comprehensively replay-tested. |
+| Phase 1 | In progress | One hundred and thirteen implementation slices are comprehensively replay-tested. |
 | Phase 2 | Not started | No Phase 2 implementation has been committed. |
 | Phase 3 | Not started | No Phase 3 implementation has been committed. |
 | Phase 4 | Not started | No Phase 4 implementation has been committed. |
@@ -154,6 +154,7 @@ portable enough to support it.
 110. [Defined super-random word arithmetic](asm-to-c-phase1-slice110.md)
 111. [Defined random-wait counter semantics](asm-to-c-phase1-slice111.md)
 112. [Defined game interval word arithmetic](asm-to-c-phase1-slice112.md)
+113. [Defined fullscreen-window threshold arithmetic](asm-to-c-phase1-slice113.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap
