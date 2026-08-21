@@ -2528,8 +2528,10 @@ loc_1604B:
 /*    mov     pState_lvec1_z_ax, 0F00h
     mov     pState_lvec1_z_dx, 0*/
 loc_16057:
-	var_EE = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
-	var_F2 = vec_1DE[3].z + vec_1DE[2].z - vec_1DE[0].z - vec_1DE[1].z;
+	var_EE = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[3].x, vec_1DE[2].x, vec_1DE[0].x, vec_1DE[1].x);
+	var_F2 = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[3].z, vec_1DE[2].z, vec_1DE[0].z, vec_1DE[1].z);
 	pState_minusRotate_y_1 = polarAngle(
 		var_EE, STATEPLY_S16_WRAP_NEGATE(var_F2)) & 0x3FF;
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
@@ -2595,8 +2597,10 @@ loc_160A7:
     inc     [bp+var_wheelIndex]
     cmp     [bp+var_wheelIndex], 4
     jl      short loc_160A7*/
-	var_F2 = vec_1DE[3].z + vec_1DE[2].z - vec_1DE[0].z - vec_1DE[1].z;
-	var_F4 = vec_1DE[3].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[1].y;
+	var_F2 = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[3].z, vec_1DE[2].z, vec_1DE[0].z, vec_1DE[1].z);
+	var_F4 = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[3].y, vec_1DE[2].y, vec_1DE[0].y, vec_1DE[1].y);
 	//var_F2 = vec_1CC.z + vec_1D2.z - vec_1DE.z - vec_1D8.z;
 	//var_F4 = vec_1CC.y + vec_1D2.y - vec_1DE.y - vec_1D8.y;
 	if (var_F4 != 0)
@@ -2701,8 +2705,10 @@ loc_16169:
     cmp     [bp+var_wheelIndex], 4
     jl      short loc_16169*/
 loc_161AB:
-	var_F2 = vec_1DE[1].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[3].x;
-	var_F4 = vec_1DE[1].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[3].y;
+	var_F2 = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[1].x, vec_1DE[2].x, vec_1DE[0].x, vec_1DE[3].x);
+	var_F4 = LEGACY_S16_WRAP_ADD_SUB_SUB(
+		vec_1DE[1].y, vec_1DE[2].y, vec_1DE[0].y, vec_1DE[3].y);
 
 	//var_F2 = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
 	//var_F4 = vec_1DE[3].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[1].y;
