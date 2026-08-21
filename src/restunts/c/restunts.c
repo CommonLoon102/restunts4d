@@ -74,6 +74,8 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((unsigned short)((short)(frame) / (short)(interval)))
 #define restore_checkpoint_frame_word(slot, interval) \
 	((unsigned short)((short)(slot) * (short)(interval)))
+#define paused_replay_track_delta(track_center, coordinate) \
+	((track_center) - ((coordinate) >> 6))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -195,6 +197,14 @@ static legacy_u16 restore_checkpoint_frame_word(
 	legacy_u16 interval
 ) {
 	return LEGACY_U16_WRAP_MUL(slot, interval);
+}
+
+static legacy_s16 paused_replay_track_delta(
+	legacy_u16 track_center,
+	legacy_u32 coordinate
+) {
+	return LEGACY_S16_WRAP_SUB(
+		track_center, LEGACY_S16_FROM_S32_SAR6(coordinate));
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -868,8 +878,15 @@ void update_gamestate() {
 			}
 
 			if (byte_4393C == 2) {
-				if (  multiply_and_scale(cos_fast(track_angle), trackcenterpos[startrow2] - (state.playerstate.car_posWorld1.lz >> 6)) 
-					+ multiply_and_scale(sin_fast(track_angle), trackcenterpos2[startcol2] - (state.playerstate.car_posWorld1.lx >> 6)) <= 0xE4) {
+				if (restunts_add_two_words(
+						multiply_and_scale(cos_fast(track_angle),
+							paused_replay_track_delta(
+								trackcenterpos[LEGACY_S8_FROM_BITS(startrow2)],
+								state.playerstate.car_posWorld1.lz)),
+						multiply_and_scale(sin_fast(track_angle),
+							paused_replay_track_delta(
+								trackcenterpos2[LEGACY_S8_FROM_BITS(startcol2)],
+								state.playerstate.car_posWorld1.lx))) <= 0xE4) {
 					if (state.playerstate.car_speed != 0) {
 						player_op(2);
 					} else {
