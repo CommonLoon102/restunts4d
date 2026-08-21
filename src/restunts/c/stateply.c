@@ -2295,9 +2295,12 @@ loc_15F66:
     mov     [bp+var_DEptrTo1C0], ax
     mov     [bp+var_wheelIndex], 0*/
 code_update_rotCoords:
-	vec_1DE[var_wheelIndex].x = var_DEptrTo1C0->lx - pState_lvec1_x;
-	vec_1DE[var_wheelIndex].y = var_DEptrTo1C0->ly - pState_lvec1_y;
-	vec_1DE[var_wheelIndex].z = var_DEptrTo1C0->lz - pState_lvec1_z;
+	vec_1DE[var_wheelIndex].x = LEGACY_S16_LOW_S32_SUB(
+		var_DEptrTo1C0->lx, pState_lvec1_x);
+	vec_1DE[var_wheelIndex].y = LEGACY_S16_LOW_S32_SUB(
+		var_DEptrTo1C0->ly, pState_lvec1_y);
+	vec_1DE[var_wheelIndex].z = LEGACY_S16_LOW_S32_SUB(
+		var_DEptrTo1C0->lz, pState_lvec1_z);
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
 	if (var_wheelIndex < 4)
