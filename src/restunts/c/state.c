@@ -120,6 +120,29 @@ static legacy_s16 add_state_word(legacy_u16 left, legacy_u16 right)
 	((target) = add_state_word(target, value))
 #endif
 
+#if defined(__BORLANDC__)
+#define decrement_route_index_signed(value) \
+	((char)((unsigned char)(value) - 1))
+#define consume_car_route_index(target) ((unsigned char)((target)++))
+#else
+static legacy_s16 decrement_route_index_signed(legacy_u8 value)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(value - 1U));
+}
+
+static legacy_u16 consume_car_route_index_value(legacy_s8* target)
+{
+	legacy_u8 old_value;
+
+	old_value = (legacy_u8)*target;
+	*target = LEGACY_S8_FROM_BITS((legacy_u8)(old_value + 1U));
+	return old_value;
+}
+
+#define consume_car_route_index(target) \
+	consume_car_route_index_value(&(target))
+#endif
+
 static int finish_penalty_traversal(
 	int result,
 	legacy_s16 branch_pieces[],
@@ -485,10 +508,10 @@ void player_op(char arg_carInputByte) {
 	struct VECTOR var_1A[4];
 	struct VECTOR var_52[4];
 	struct MATRIX* var_matptr;
-	char var_3A;
+	legacy_u8 var_3A;
 	char var_1C;
-	char var_2A;
-	char var_2C;
+	legacy_u8 var_2A;
+	legacy_u8 var_2C;
 	int var_2;
 	int var_1EpenaltyCounter;
 	int var_terminalPenalty;
@@ -818,7 +841,8 @@ loc_175AF:
 	sub_18D60(var_2, &var_1A, 1, 0);
 	goto loc_175F0;
 loc_175D0:
-	sub_18D60(var_2, &var_52, var_3A - 1, 0);
+	sub_18D60(
+		var_2, &var_52, decrement_route_index_signed(var_3A), 0);
 
 	sub_18D60(var_2, &var_1A, var_3A, 0);
 loc_175F0:
@@ -841,10 +865,14 @@ loc_17631:
 loc_17640:
 	state.playerstate.car_trackdata3_index = state.field_2F2;
 loc_17643:
-	state.playerstate.field_CE = var_3A;
+	state.playerstate.field_CE = LEGACY_S8_FROM_BITS(var_3A);
 loc_1764C:
 	// NOTE: note the ++
-	if (sub_18D60(state.playerstate.car_trackdata3_index, &state.playerstate.car_vec_unk3, state.playerstate.field_CE++, 0) == 0)
+	if (sub_18D60(
+			state.playerstate.car_trackdata3_index,
+			&state.playerstate.car_vec_unk3,
+			consume_car_route_index(state.playerstate.field_CE),
+			0) == 0)
 		goto loc_17699;
 	if (td02_penalty_related[state.field_2F2] == -1)
 		goto loc_17684;
