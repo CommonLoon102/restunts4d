@@ -132,6 +132,7 @@ portable enough to support it.
 88. [Defined orientation word offsets](asm-to-c-phase1-slice88.md)
 89. [Defined signed collision-table decoding](asm-to-c-phase1-slice89.md)
 90. [Defined hidden call-operand arithmetic](asm-to-c-phase1-slice90.md)
+91. [Defined penalty track-coordinate byte semantics](asm-to-c-phase1-slice91.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

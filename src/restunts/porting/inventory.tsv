@@ -23,7 +23,7 @@ seg001	init_carstate_from_simd	ported	c_active_with_asm	3	0	226	src/restunts/c/r
 seg001	init_game_state	ported	c_active_with_asm	11	60	435	src/restunts/c/restunts.c:449	-
 seg001	restore_gamestate	ported	c_active_with_asm	5	8	94	src/restunts/c/restunts.c:589	-
 seg001	update_gamestate	ported	c_active_with_asm	5	26	182	src/restunts/c/restunts.c:625	-
-seg001	player_op	ported	c_active_with_asm	2	44	589	src/restunts/c/state.c:370	-
+seg001	player_op	ported	c_active_with_asm	2	44	589	src/restunts/c/state.c:393	-
 seg001	detect_penalty	pending	asm_only	1	0	223	-	-
 seg001	update_car_speed	ported	c_active_with_asm	3	16	492	src/restunts/c/statecar.c:30	The C translation is active for player_op; the protected assembly opponent caller still invokes the preserved routine.
 seg001	update_grip	pending	asm_only	2	12	438	-	-

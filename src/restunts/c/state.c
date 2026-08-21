@@ -13,6 +13,25 @@ extern struct TRACKOBJECT trkObjectList[];
 #define PENALTY_MAX_BRANCHES     0x80
 #define PENALTY_LEGACY_FIRST_BRANCH 114
 
+#if defined(__BORLANDC__)
+#define decode_penalty_track_column(position) ((char)((position) >> 16))
+#define decode_penalty_track_row(position) \
+	((char)(0x1D - (char)((position) >> 16)))
+#else
+static legacy_s16 decode_penalty_track_column(legacy_u32 position)
+{
+	return LEGACY_S8_FROM_BITS((legacy_u8)(position >> 16));
+}
+
+static legacy_s16 decode_penalty_track_row(legacy_u32 position)
+{
+	legacy_u8 coordinate;
+
+	coordinate = (legacy_u8)(position >> 16);
+	return LEGACY_S8_FROM_BITS((legacy_u8)(0x1DU - coordinate));
+}
+#endif
+
 static int finish_penalty_traversal(
 	int result,
 	legacy_s16 branch_pieces[],
@@ -65,8 +84,10 @@ static int detect_penalty_c(
 	}
 	*terminal_encountered = 0;
 
-	target_col = (char)(state.playerstate.car_posWorld1.lx >> 16);
-	target_row = 0x1D - (char)(state.playerstate.car_posWorld1.lz >> 16);
+	target_col = decode_penalty_track_column(
+		state.playerstate.car_posWorld1.lx);
+	target_row = decode_penalty_track_row(
+		state.playerstate.car_posWorld1.lz);
 	if (
 		(target_col == state.game_startcol ||
 		 target_col == state.game_startcol2) &&
@@ -259,8 +280,10 @@ static int detect_penalty_without_wrapped_terminal(
 	best_piece = -1;
 	branch_count = 0;
 	sentinel_visited = 0;
-	target_col = (char)(state.playerstate.car_posWorld1.lx >> 16);
-	target_row = 0x1D - (char)(state.playerstate.car_posWorld1.lz >> 16);
+	target_col = decode_penalty_track_column(
+		state.playerstate.car_posWorld1.lx);
+	target_row = decode_penalty_track_row(
+		state.playerstate.car_posWorld1.lz);
 
 	for (;;) {
 		if (
