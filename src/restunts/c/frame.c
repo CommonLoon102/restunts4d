@@ -255,6 +255,22 @@ static int add_camera_distance_wrapped(int value, int delta) {
 	return (int)result;
 }
 
+#if !defined(__BORLANDC__)
+static legacy_s16 explosion_scale_word(
+	legacy_u16 extent,
+	legacy_u16 width
+) {
+	legacy_u32 numerator_bits;
+	legacy_s32 quotient;
+
+	numerator_bits = LEGACY_U32_WRAP_MUL(
+		LEGACY_U32_SIGN_EXTEND_S16(extent), 256UL);
+	quotient = LEGACY_S32_FROM_BITS(numerator_bits) /
+		(legacy_s32)LEGACY_S16_FROM_BITS(width);
+	return LEGACY_S16_FROM_BITS(LEGACY_U32_LOW_WORD(quotient));
+}
+#endif
+
 static void update_extended_camera_positioning(
 	int* camera_distance,
 	int* camera_elevation
@@ -1454,7 +1470,12 @@ rendering_attempt_done:
 			}
 
 			di = (state.game_frame >> 2) % 3 ;
+#if defined(__BORLANDC__)
 			var_counter = ((long)idx << 8) / (long)sdgame2_widths[di];
+#else
+			var_counter = explosion_scale_word(
+				idx, sdgame2_widths[di]);
+#endif
 			shape_op_explosion(var_counter, sdgame2shapes[di], offset_vector.x, offset_vector.y);
 		}
 	}

@@ -56,7 +56,7 @@ seg002	intr0_handler	pending	asm_only	0	0	16	-	-
 seg002	init_div0	ported	c_active_with_asm	1	0	15	src/restunts/c/restunts.c:1390	The C entry point delegates interrupt installation to ported_init_div0_.
 seg003	sub_19F14	pending	asm_only	1	20	146	-	-
 seg003	init_rect_arrays	pending	asm_only	2	0	59	-	-
-seg003	update_frame	ported	c_active_with_asm	1	162	3038	src/restunts/c/frame.c:333	-
+seg003	update_frame	ported	c_active_with_asm	1	162	3038	src/restunts/c/frame.c:349	-
 seg003	skybox_op_helper2	pending	asm_only	3	20	128	-	-
 seg003	skybox_op	pending	asm_only	1	68	650	-	-
 seg003	transformed_shape_add_for_sort	pending	asm_only	9	2	44	-	-
