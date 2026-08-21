@@ -104,6 +104,12 @@ static legacy_s16 interpolate_wheel_delta(
 }
 #endif
 
+#if defined(__BORLANDC__)
+#define STATEPLY_S16_WRAP_NEGATE(value) (-(legacy_s16)(value))
+#else
+#define STATEPLY_S16_WRAP_NEGATE(value) LEGACY_S16_WRAP_NEGATE(value)
+#endif
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -198,7 +204,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 				var_F0 = 0xC0;
 		}
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0)
-			var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -state.opponentstate.car_angle_z, 0);
+			var_MmatFromAngleZ = *mat_rot_zxy(
+				0, 0, STATEPLY_S16_WRAP_NEGATE(
+					state.opponentstate.car_angle_z), 0);
 
 		vec_1C6 = simd_opponent.wheel_coords[2];
 		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
@@ -226,20 +234,24 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 	#endif
 
-	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
+	mat_unk = *mat_rot_zxy(
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
 		vec_1C6.x = 0;
 		vec_1C6.y = 0;
 		vec_1C6.z = 0x82;
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		arg_pState->car_pseudoGravity = -vec_FC.y;
+		arg_pState->car_pseudoGravity = STATEPLY_S16_WRAP_NEGATE(vec_FC.y);
 	} else {
 		arg_pState->car_pseudoGravity = 0;
 	}
 
 	if ((arg_pState->car_angle_z & 0x3FF) != 0) {
 		var_EC = 1;
-		var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -arg_pState->car_angle_z, 0);
+		var_MmatFromAngleZ = *mat_rot_zxy(
+			0, 0, STATEPLY_S16_WRAP_NEGATE(arg_pState->car_angle_z), 0);
 	} else {
 		var_EC = 0;
 	}
@@ -941,14 +953,16 @@ nosmart
 loc_1545D:
 	if (var_136 == 0)
 		goto loc_1546E;
-	vec_FC.x = -vec_FC.x;
+	vec_FC.x = STATEPLY_S16_WRAP_NEGATE(vec_FC.x);
 /*    cmp     [bp+var_136], 0
     jz      short loc_1546E
     mov     ax, [bp+vec_FC.vx]
     neg     ax
     mov     [bp+vec_FC.vx], ax*/
 loc_1546E:
-	var_EA = mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, var_EE, 0);
+	var_EA = mat_rot_zxy(
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE, 0);
 	mat_mul_vector(&vec_FC, var_EA, &vec_1C);
 	si = (-pState_minusRotate_y_1 - var_EE) & 0x3FF;
 	var_138 = 0;
@@ -1695,11 +1709,11 @@ loc_159AD:
     db 144*/
 loc_15A30:
 	var_EE = vec_C.z;
-	vec_C.z = -vec_C.y;
+	vec_C.z = STATEPLY_S16_WRAP_NEGATE(vec_C.y);
 	vec_C.y = var_EE;
 
 	var_EE = vec_1C.z;
-	vec_1C.z = -vec_1C.y;
+	vec_1C.z = STATEPLY_S16_WRAP_NEGATE(vec_1C.y);
 	vec_1C.y = var_EE;
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
 	vec_17C.x = LEGACY_S16_WRAP_SUB_SHL6(vec_1C.x, vec_FC.x);
@@ -2467,7 +2481,8 @@ loc_1604B:
 loc_16057:
 	var_EE = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
 	var_F2 = vec_1DE[3].z + vec_1DE[2].z - vec_1DE[0].z - vec_1DE[1].z;
-	pState_minusRotate_y_1 = polarAngle(var_EE, -var_F2) & 0x3FF;
+	pState_minusRotate_y_1 = polarAngle(
+		var_EE, STATEPLY_S16_WRAP_NEGATE(var_F2)) & 0x3FF;
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
 	var_wheelIndex = 0;
 /*    mov     ax, [bp+vec_1CC.vx]
@@ -2554,7 +2569,8 @@ loc_160A7:
     cmp     [bp+var_F2], 0
     jl      short loc_16146*/
 loc_1611C:
-	pState_minusRotate_x_1 = polarAngle(-var_F2, var_F4) - 0x100;
+	pState_minusRotate_x_1 = polarAngle(
+		STATEPLY_S16_WRAP_NEGATE(var_F2), var_F4) - 0x100;
 	if (pState_minusRotate_x_1 >= 0)
 		goto loc_1613E;
 	goto loc_16141;
@@ -2580,7 +2596,7 @@ loc_1613E:
 	goto loc_16146;
     //mov     ax, pState_minusRotate_x_1
 loc_16141:
-	if (-pState_minusRotate_x_1 >= 2)
+	if (STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_x_1) >= 2)
 		goto loc_1614C;
 	/*cmp     ax, 2
     jge     short loc_1614C*/
@@ -2683,7 +2699,7 @@ loc_161FC:
 	goto loc_16204;
     //mov     ax, pState_minusRotate_z_1
 loc_161FF:
-	if (-pState_minusRotate_z_1 >= 2)
+	if (STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >= 2)
 		goto loc_1620A;
     //cmp     ax, 2
     //jge     short loc_1620A
@@ -2736,7 +2752,10 @@ loc_1624E:
     call near ptr audio_unk3
     add     sp, 4*/
 loc_1625F:
-	var_EA = mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
+	var_EA = mat_rot_zxy(
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
+		STATEPLY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
 	var_wheelIndex = 0;
 	goto loc_1632C;
 /*    sub     ax, ax
