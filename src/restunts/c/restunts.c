@@ -76,6 +76,8 @@ void _Cdecl _segread(struct SREGS* segregs);
 	((unsigned short)((short)(slot) * (short)(interval)))
 #define paused_replay_track_delta(track_center, coordinate) \
 	((track_center) - ((coordinate) >> 6))
+#define super_random_absolute_word(first, second, third, fourth) \
+	LEGACY_S16_ABS_WORD((first) + (second) + (third) + (fourth))
 #else
 static legacy_s16 restunts_increment_word(legacy_u16 value)
 {
@@ -205,6 +207,20 @@ static legacy_s16 paused_replay_track_delta(
 ) {
 	return LEGACY_S16_WRAP_SUB(
 		track_center, LEGACY_S16_FROM_S32_SAR6(coordinate));
+}
+
+static legacy_s16 super_random_absolute_word(
+	legacy_u16 first,
+	legacy_u16 second,
+	legacy_u16 third,
+	legacy_u16 fourth
+) {
+	legacy_s16 sum;
+
+	sum = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		LEGACY_U16_WRAP_ADD(first, second),
+		LEGACY_U16_WRAP_ADD(third, fourth)));
+	return LEGACY_S16_ABS_WORD(sum);
 }
 
 #define RESTUNTS_INCREMENT_WORD(target) \
@@ -364,8 +380,15 @@ int get_kevinrandom(void)
 
 int get_super_random(void)
 {
-	int val = rand() + get_kevinrandom() + timer_get_counter() + gState_frame;
-	return val < 0 ? -val : val;
+	legacy_u16 random_word;
+	legacy_u16 kevin_word;
+	legacy_u16 timer_word;
+
+	random_word = (legacy_u16)rand();
+	kevin_word = (legacy_u16)get_kevinrandom();
+	timer_word = (legacy_u16)timer_get_counter();
+	return super_random_absolute_word(
+		random_word, kevin_word, timer_word, gState_frame);
 }
 
 int video_get_status(void)
