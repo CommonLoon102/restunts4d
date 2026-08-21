@@ -141,6 +141,7 @@ portable enough to support it.
 97. [Defined gear-change frame-count byte semantics](asm-to-c-phase1-slice97.md)
 98. [Defined statecar byte-counter updates](asm-to-c-phase1-slice98.md)
 99. [Defined crash timing word arithmetic](asm-to-c-phase1-slice99.md)
+100. [Defined game-state counter updates](asm-to-c-phase1-slice100.md)
 
 The historical replay-result filenames still contain labels such as
 `phase7` or `phase13`. They are preserved test artifacts and are not roadmap

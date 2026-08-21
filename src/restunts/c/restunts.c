@@ -46,6 +46,34 @@ void _Cdecl _segread(struct SREGS* segregs);
 #define RST_ASC_SPACE      0x40
 #define RST_ASC_HEX        0x80
 
+#if defined(__BORLANDC__)
+#define RESTUNTS_INCREMENT_WORD(target) ((target)++)
+#define RESTUNTS_ADD_WORD(target, value) ((target) += (value))
+#define RESTUNTS_INCREMENT_BYTE(target) ((target)++)
+#else
+static legacy_s16 restunts_increment_word(legacy_u16 value)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(value, 1U));
+}
+
+static legacy_s16 restunts_add_word(legacy_u16 left, legacy_u16 right)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right));
+}
+
+static legacy_u8 restunts_increment_byte(legacy_u8 value)
+{
+	return (legacy_u8)(value + 1U);
+}
+
+#define RESTUNTS_INCREMENT_WORD(target) \
+	((target) = restunts_increment_word(target))
+#define RESTUNTS_ADD_WORD(target, value) \
+	((target) = restunts_add_word(target, value))
+#define RESTUNTS_INCREMENT_BYTE(target) \
+	((target) = restunts_increment_byte(target))
+#endif
+
 // Use the Stunts' data for now.
 extern unsigned const char* g_ascii_props;
 /*
@@ -636,12 +664,12 @@ void update_gamestate() {
 		fmemcpy(&cvxptr[state.game_frame / word_45A00], MK_FP(FP_SEG(&state), FP_OFF(&state)), sizeof(struct GAMESTATE));
 	}
 
-	state.game_frame++;
+	RESTUNTS_INCREMENT_WORD(state.game_frame);
 	if (state.game_3F6autoLoadEvalFlag != 0 && state.game_frame_in_sec < state.game_frames_per_sec) {
-		state.game_frame_in_sec++;
+		RESTUNTS_INCREMENT_WORD(state.game_frame_in_sec);
 		if (state.game_frame_in_sec == state.game_frames_per_sec && byte_449DA == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 && state.playerstate.car_speed2 != 0) {
-				state.game_frames_per_sec++;
+				RESTUNTS_INCREMENT_WORD(state.game_frames_per_sec);
 			} else if (game_replay_mode == 0) {
 				byte_449DA = 1;
 			}
@@ -668,11 +696,11 @@ void update_gamestate() {
 		audio_carstate();
 		if (byte_4393C != 0) {
 			if (word_44DCA < 0x1C2) {
-				word_44DCA += 8;
+				RESTUNTS_ADD_WORD(word_44DCA, 8);
 			}
 
 			if (byte_4393C == 1 && word_44DCA > 0x180) {
-				byte_4393C++;
+				RESTUNTS_INCREMENT_BYTE(byte_4393C);
 			}
 
 			if (byte_4393C == 2) {
