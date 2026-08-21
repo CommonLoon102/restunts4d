@@ -177,7 +177,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	struct PLANE far* var_6;
 	struct VECTOR vec_1DE[4];
 	int var_E;
-	char var_11C;
+	legacy_s8 var_11C;
 	struct VECTOR var_DC[32];
 	
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
@@ -2761,8 +2761,10 @@ loc_161FF:
 loc_16204:
     pState_minusRotate_z_1 = 0;
 loc_1620A:
-	arg_pState->car_sumSurfFrontWheels = arg_pState->car_surfaceWhl[0] + arg_pState->car_surfaceWhl[1];
-	arg_pState->car_sumSurfRearWheels = arg_pState->car_surfaceWhl[2] + arg_pState->car_surfaceWhl[3];
+	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
+		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
+	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
+		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
 	if (state.game_inputmode != 2)
 		goto loc_16236;
 	goto loc_16840;
@@ -3051,14 +3053,15 @@ loc_1641E:
 loc_16425:
     goto     loc_162F9;
 loc_16428:
-	var_11C = arg_pState->car_sumSurfFrontWheels + arg_pState->car_sumSurfRearWheels;
+	var_11C = LEGACY_S8_WRAP_ADD(arg_pState->car_sumSurfFrontWheels,
+		arg_pState->car_sumSurfRearWheels);
 	if (arg_MplayerFlag != 0)
 		goto loc_1644C;
 	if (var_11C != 0)
 		goto loc_1644C;
 	if (arg_pState->car_sumSurfAllWheels == 0)
 		goto loc_1644C;
-	state.game_jumpCount++;
+	STATEPLY_S16_WRAP_ADD_ASSIGN(state.game_jumpCount, 1);
 /*    mov     bx, [bp+arg_pState]
     mov     al, [bx+CARSTATE.car_sumSurfFrontWheels]
     add     al, [bx+CARSTATE.car_sumSurfRearWheels]

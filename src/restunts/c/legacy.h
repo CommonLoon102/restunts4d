@@ -36,11 +36,15 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 /* Convert byte bit patterns without plain-char signedness; pass a pure value. */
 #if defined(__BORLANDC__)
 #define LEGACY_S8_FROM_BITS(value) ((legacy_s8)(legacy_u8)(value))
+#define LEGACY_S8_WRAP_ADD(left, right) ((left) + (right))
 #else
 #define LEGACY_S8_FROM_BITS(value) \
 	((legacy_u8)(value) <= 0x7FU ? \
 	(legacy_s8)(legacy_u8)(value) : \
 	(legacy_s8)(-1 - (legacy_s8)(0xFFU - (legacy_u8)(value))))
+#define LEGACY_S8_WRAP_ADD(left, right) \
+	LEGACY_S8_FROM_BITS((legacy_u8)( \
+		(legacy_u8)(left) + (legacy_u8)(right)))
 #endif
 
 /* Pass a side-effect-free byte pointer to these little-endian accessors. */
