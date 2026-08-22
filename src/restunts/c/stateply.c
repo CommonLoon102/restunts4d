@@ -43,6 +43,12 @@ extern int car_car_coll_detect_maybe(struct POINT2D*, struct VECTOR*, struct POI
 
 extern int bto_auxiliary1(int, int, struct VECTOR*);
 
+/*
+ * Collision handling overwrites the translated stack copy on hard landings.
+ * Keep the angles outside that layout-sensitive legacy stack frame.
+ */
+static int saved_wheel_plane_angles[4];
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
@@ -199,6 +205,7 @@ loc_14FA6:
 loc_14FAC:
 //    mov     pState_f36Mminf40sar2, ax
 	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
+	saved_wheel_plane_angles[var_wheelIndex] = pState_f36Mminf40sar2;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx += vec_planerotopresult.x;
 	var_DEptrTo1C0->ly += vec_planerotopresult.y;
@@ -1323,7 +1330,7 @@ loc_15882:
 	vec_unk2.y = 0;
 	vec_unk2.z = 0x40;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = saved_wheel_plane_angles[var_wheelIndex];
 	plane_rotate_op();
 	var_DEptrTo1C0->lx -= vec_planerotopresult.x;
 	var_DEptrTo1C0->ly -= vec_planerotopresult.y;
@@ -1471,7 +1478,7 @@ loc_159AD:
 	vec_unk2.y = 0;
 	vec_unk2.z = var_pSpeed2Scaled;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = saved_wheel_plane_angles[var_wheelIndex];
 	plane_rotate_op();
 	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_planerotopresult.x;
 	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_planerotopresult.y;
@@ -1664,7 +1671,7 @@ loc_15A30:
 	vec_unk2.y = 0;
 	vec_unk2.z = var_EE;
 	planindex_copy = planindex;
-	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
+	pState_f36Mminf40sar2 = saved_wheel_plane_angles[var_wheelIndex];
 	plane_rotate_op();
 	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_C.x + vec_planerotopresult.x;
 	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_C.y + vec_planerotopresult.y;
