@@ -787,20 +787,23 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 }
 
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i) {
-	
-	long var_4, var_2;
+	short delta;
+	short var_4, var_2;
 	
 	outvec->z = i;
 
-	var_4 = outvec->z - vec2->z;
-	var_2 = vec1->z - vec2->z;
+	var_4 = (short)(outvec->z - vec2->z);
+	var_2 = (short)(vec1->z - vec2->z);
 	if (var_2 < 0) {
-		var_4 = var_4 >> 1;
-		var_2 = var_2 >> 1;
+		/* The original uses a 16-bit logical SHR for both values. */
+		var_4 = (short)((unsigned short)var_4 >> 1);
+		var_2 = (short)((unsigned short)var_2 >> 1);
 	}
 	
-	outvec->x = (vec1->x - vec2->x) * var_4 / var_2 + vec2->x;
-	outvec->y = (vec1->y - vec2->y) * var_4 / var_2 + vec2->y;
+	delta = (short)(vec1->x - vec2->x);
+	outvec->x = (short)(((long)delta * var_4) / var_2 + vec2->x);
+	delta = (short)(vec1->y - vec2->y);
+	outvec->y = (short)(((long)delta * var_4) / var_2 + vec2->y);
 }
 
 short multiply_and_scale(short a1, short a2)
