@@ -326,7 +326,7 @@ void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short par
 
 void mmgr_find_free(void) {
 	int i;
-	unsigned short regax, regdx;
+	unsigned short regax, regdx, resunk;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -347,8 +347,9 @@ void mmgr_find_free(void) {
 				resdi--;
 				resdi->ressize = ressi->ressize;
 				resdi->resofs = regax;
+				resunk = ressi->resunk;
 				ressi->resunk = 0;
-				resdi->resunk = ressi->resunk;
+				resdi->resunk = resunk;
 				for (i = 0; i < 0xC; i++) {
 					resdi->resname[i] = ressi->resname[i];
 				}
@@ -371,7 +372,9 @@ void far* ported_mmgr_get_chunk_by_name_(const char* name);
 void far* mmgr_get_chunk_by_name(const char* name) {
 	const char* pcdi;
 	int regbx, regax;
+	unsigned short srcofs, srcsize, destofs;
 	struct MEMCHUNK* ressi;
+	struct MEMCHUNK* resdi;
 	int found = 0;
 	
 	ressi = resendptr1;
@@ -390,25 +393,32 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 				}
 				break;
 			}
-			if (ressi->resname[regbx] != 0)
+			if (pcdi[regbx] != ressi->resname[regbx])
 				break;
 		}
 		if (regbx == 0xC || found == 1) {
+			/* Restore the cached block exactly as the original allocator does. */
+			srcofs = ressi->resofs;
+			srcsize = ressi->ressize;
+			destofs = resptr2->resofs + resptr2->ressize;
 			ressi->resunk = 0;
-			resptr2->resofs = resptr2->resofs + resptr2->ressize;
-			resptr2->ressize = resptr2->ressize;
-			memcpy(resptr2->resname, ressi->resname, sizeof(char[12]));
-			if (resptr2 == resendptr1) {
+			resdi = resptr2 + 1;
+			resptr2 = resdi;
+			resdi->resofs = destofs;
+			resdi->ressize = srcsize;
+			resdi->resunk = 2;
+			memcpy(resdi->resname, ressi->resname, sizeof(char[12]));
+			if (resdi == resendptr1) {
 				resendptr1++;
 			}
-			mmgr_copy_paras(ressi->resofs, resptr2->resofs, resptr2->ressize);
-			regax = resptr2->resofs + resptr2->ressize;
+			mmgr_copy_paras(srcofs, destofs, srcsize);
+			regax = destofs + srcsize;
 			while (regax > resendptr1->resofs) {
 				resendptr1->resunk = 0;
 				resendptr1++;
 			}
 			mmgr_find_free();
-			return MK_FP(resptr2->resofs, 0);
+			return MK_FP(resdi->resofs, 0);
 		}
 
 	}
