@@ -67,7 +67,7 @@ int fclose(FILE* file)
 	close_ok:
 		mov  res, ax
 	}
-	
+
 	return res;
 }
 
@@ -78,7 +78,7 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 
 	size_t res;
 	size *= nmemb;
-	
+
 	__asm {
 		push ds
 		mov  ah, 40h // Write to file
@@ -94,7 +94,7 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 		mov  res, ax
 		pop  ds
 	}
-	
+
 	return res;
 }
 
@@ -108,7 +108,7 @@ void init_row_tables(void) {
 		terrainpos[i] = i << 10;
 		terraincenterpos[i] = (i << 10) + 0x200;
 	}
-	
+
 	for (i = 0; i < 30; i++) {
 		trackpos2[i] = i << 10;
 		trackcenterpos2[i] = (i << 10) + 0x200;
@@ -120,10 +120,10 @@ void init_trackdata(void) {
 	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
 
 	td01_track_file_cpy = trkptr;
-	
+
 	trkptr += 0x70a;
 	td02_penalty_related = trkptr;
-	
+
 	trkptr += 0x70a;
 	trackdata3 = trkptr;
 
@@ -195,34 +195,46 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 
 #endif
 
+// First argument is the filename without the .rpl extension.
+// If there is a second argument (it can by anything, usually 1), then the filename
+// can contain the .rpl extension. It is useful to call this tool via batch files,
+// in that case this tool will terminate normally after done, no need to press any keys.
 int stuntsmain(int argc, char* argv[]) {
-	int i;
+	int i, len;
 	char outname[13], carid[5];
 	FILE* fout;
-	
-	if (argc != 2) {
+
+	if (argc < 2) {
 		printf("Usage: %s REPLNAME\n\n", argv[0]);
+		printf("Or pass second argument to exit tool automatically on completion:\n");
+		printf("Usage: %s REPLNAME 1\n\n", argv[0]);
 		return 1;
 	}
+
+		len = strlen(argv[1]);
+		if (len >= 4 && ((strcmp(argv[1] + len - 4, ".rpl") == 0) || strcmp(argv[1] + len - 4, ".RPL") == 0)) {
+				argv[1][len - 4] = '\0';
+		}
 
 	init_main(argc, argv);
 	init_div0();
 	init_row_tables();
 
 	mainresptr = file_load_resfile("main");
-	
+
 	fontdefptr = file_load_resource(0, "fontdef.fnt");
 	fontnptr = file_load_resource(0, "fontn.fnt");
 
 	font_set_fontdef();
 	init_polyinfo();
-	
+
 	init_trackdata();
 
 	init_unknown();
-	
+
 	init_kevinrandom("kevin");
 
+	printf("File: %s\n\n", argv[1]);
 	printf("Loading replay... ");
 	file_load_replay("", argv[1]);
 	printf("OK\n");
@@ -248,11 +260,11 @@ int stuntsmain(int argc, char* argv[]) {
 	printf("Allocating cvx... ");
 	cvxptr = mmgr_alloc_resbytes("cvx", 0x5780);
 	printf("OK\n");
-	
+
 	printf("Initializing game state... ");
 	init_game_state(0xFFFF);
 	printf("OK\n");
-	
+
 	// Inits from run_game()...
 	word_449EA = 0xFFFF;
 	run_game_random = get_kevinrandom() << 3;
@@ -263,19 +275,26 @@ int stuntsmain(int argc, char* argv[]) {
 	game_replay_mode = 2;
 	is_in_replay = 1;
 
-	printf("Loading assets... ");
-	setup_player_cars();
+	printf("Setup player cars... ");
+	if (setup_player_cars() != 0) {
+		printf("FAIL (out of memory)\n");
+		return 1;
+	}
 	kbormouse = 0;
 	byte_449E6 = 0;
 	byte_449DA = 1;
-	
+	printf("OK\n");
+
+	printf("Set frame callback... ");
 	set_frame_callback();
 	game_replay_mode_copy = 0xFF;
 	byte_44346 = 0;
 	byte_4432A = 0;
 	byte_46467 = 0;
 	dashb_toggle = 0;
-	
+	printf("OK\n");
+
+	printf("Restore game state... ");
 	cameramode = 0;
 	game_replay_mode = 2;
 	word_44DCA = 0x1F4;
@@ -284,7 +303,7 @@ int stuntsmain(int argc, char* argv[]) {
 	restore_gamestate(0);
 	restore_gamestate(gameconfig.game_recordedframes);
 	printf("OK\n");
-	
+
 	strcpy(outname, argv[1]);
 #ifdef RESTUNTS_ORIGINAL
 	strcat(outname, ".BIN");
@@ -293,14 +312,14 @@ int stuntsmain(int argc, char* argv[]) {
 #endif
 	outname[12] = 0;
 	printf("Creating output file '%s'... ", outname);
-	
+
 	fout = fopen(outname, "w");
 	if (!fout) {
 		printf("FAIL\n");
 		return 1;
 	}
 	printf("OK\n");
-	
+
 	fwrite(&gameconfig.game_recordedframes, sizeof(unsigned short), 1, fout);
 
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
@@ -311,20 +330,22 @@ int stuntsmain(int argc, char* argv[]) {
 		fwrite(&state, sizeof(struct GAMESTATE), 1, fout);
 		//printf("Current frame %d\n", state.frame);
 	}
-	
+
 	printf("OK\n");
-	
+
 	fclose(fout);
-	
-	input_do_checking(1);
 
-	fatal_error("\nDone.\n");
-
-	//audio_stop_unk();
-	//audiodrv_atexit();
-	//kb_exit_handler();
-	//kb_shift_checking1();
-	//video_set_mode7();
+	if (argc == 2) {
+			input_do_checking(1);
+			fatal_error("\nDone.\n");
+	}
+	else {
+			audio_stop_unk();
+			audiodrv_atexit();
+			kb_exit_handler();
+			kb_shift_checking1();
+			video_set_mode7();
+	}
 
 	return 0;
 }

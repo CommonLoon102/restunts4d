@@ -42,3 +42,10 @@ stunts/*.rpl
 stunts/*.trk
 stunts/*.txt
 stunts/*.vsh
+stunts/*.COD
+stunts/*.DIF
+stunts/*.HDR
+stunts/*.CMN
+stunts/*.DAT
+stunts/*.COM
+stunts/*.sh
