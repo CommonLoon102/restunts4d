@@ -5,18 +5,27 @@ existing replay comparison scripts, and returns `partitions_all.txt`.
 
 ## Directory layout
 
-Keep these files and the replay-processing inputs in the same directory:
+Keep the PowerShell scripts and DOSBox configuration in the service directory:
 
 - `dumpsrv.ps1`
 - `rpl2statemain.ps1`
 - `rpl2state.ps1`
 - `dosbox.proc.conf`
-- `REPLDUMO.EXE`
-- the numeric `.rpl` input files
-- all the files for custom cars
-- rest of files needed for Stunts
 
-The uploaded file is always written to this directory as `REPLDUMP.EXE`.
+Create a `stunts` subdirectory beneath the service directory and put all
+replay-processing inputs there:
+
+- `stunts\REPLDUMO.EXE`
+- the numeric `.rpl` input files
+- all files for custom cars
+- the rest of the files needed for Stunts
+
+The request body is always written to `stunts\REPLDUMP.EXE`; no uploaded
+filename is used. DOSBox mounts only the `stunts` subdirectory as drive `C:`,
+so code running inside DOSBox cannot access the PowerShell scripts or the
+DOSBox configuration in the parent directory. The per-partition
+`partition_<n>.txt` files and combined `partitions_all.txt` result are also
+written to the parent service directory, outside the DOSBox mount.
 
 ## First time setup
 

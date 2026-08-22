@@ -29,11 +29,12 @@ $ErrorActionPreference = 'Stop'
 $endpointPath = '/process'
 $maximumUploadBytes = 1MB
 $processingTimeoutMilliseconds = 30 * 60 * 1000
-$serviceDirectory = $PSScriptRoot
-$processingScript = Join-Path $serviceDirectory 'rpl2statemain.ps1'
-$workerScript = Join-Path $serviceDirectory 'rpl2state.ps1'
-$uploadPath = Join-Path $serviceDirectory 'REPLDUMP.EXE'
-$resultPath = Join-Path $serviceDirectory 'partitions_all.txt'
+$scriptDirectory = $PSScriptRoot
+$stuntsDirectory = Join-Path $scriptDirectory 'stunts'
+$processingScript = Join-Path $scriptDirectory 'rpl2statemain.ps1'
+$workerScript = Join-Path $scriptDirectory 'rpl2state.ps1'
+$uploadPath = Join-Path $stuntsDirectory 'REPLDUMP.EXE'
+$resultPath = Join-Path $scriptDirectory 'partitions_all.txt'
 
 if ([string]::IsNullOrWhiteSpace($ApiKey)) {
     throw 'Set DUMPSRV_API_KEY or provide -ApiKey.'
@@ -43,6 +44,10 @@ foreach ($requiredScript in @($processingScript, $workerScript)) {
     if (-not (Test-Path -LiteralPath $requiredScript -PathType Leaf)) {
         throw "Required script not found: $requiredScript"
     }
+}
+
+if (-not (Test-Path -LiteralPath $stuntsDirectory -PathType Container)) {
+    throw "Stunts directory not found: $stuntsDirectory"
 }
 
 if (-not [System.Net.HttpListener]::IsSupported) {
@@ -119,7 +124,7 @@ function Send-TextResponse {
 $requestHandler = {
     param(
         [System.Net.HttpListenerContext]$Context,
-        [string]$ServiceDirectory,
+        [string]$StuntsDirectory,
         [string]$ProcessingScript,
         [string]$UploadPath,
         [string]$ResultPath,
@@ -199,7 +204,7 @@ $requestHandler = {
 
         $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
         $startInfo.FileName = [Environment]::ProcessPath
-        $startInfo.WorkingDirectory = $ServiceDirectory
+        $startInfo.WorkingDirectory = $StuntsDirectory
         $startInfo.UseShellExecute = $false
         $startInfo.CreateNoWindow = $true
         $startInfo.RedirectStandardOutput = $true
@@ -288,7 +293,9 @@ $requestHandler = {
         $responseClosed = $true
 
         try {
-            Get-ChildItem -LiteralPath $ServiceDirectory -File |
+            Get-ChildItem -LiteralPath (
+                [System.IO.Path]::GetDirectoryName($ProcessingScript)
+            ) -File |
                 Where-Object { $_.Extension -ieq '.txt' } |
                 Remove-Item -Force
             Write-Output (
@@ -431,7 +438,7 @@ try {
                 -ScriptBlock $requestHandler `
                 -ArgumentList @(
                     $context,
-                    $serviceDirectory,
+                    $stuntsDirectory,
                     $processingScript,
                     $uploadPath,
                     $resultPath,

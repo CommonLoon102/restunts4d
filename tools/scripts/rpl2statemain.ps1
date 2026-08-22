@@ -19,9 +19,15 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
-$workerScript = Join-Path $PSScriptRoot 'rpl2state.ps1'
+$scriptDirectory = $PSScriptRoot
+$stuntsDirectory = Join-Path $scriptDirectory 'stunts'
+$workerScript = Join-Path $scriptDirectory 'rpl2state.ps1'
 if (-not (Test-Path -LiteralPath $workerScript -PathType Leaf)) {
     throw "Worker script not found: $workerScript"
+}
+
+if (-not (Test-Path -LiteralPath $stuntsDirectory -PathType Container)) {
+    throw "Stunts directory not found: $stuntsDirectory"
 }
 
 $jobs = @()
@@ -92,7 +98,7 @@ finally {
     }
 }
 
-$combinedOutputFile = Join-Path $PSScriptRoot 'partitions_all.txt'
+$combinedOutputFile = Join-Path $scriptDirectory 'partitions_all.txt'
 $uniqueLines = [System.Collections.Generic.HashSet[string]]::new(
     [System.StringComparer]::Ordinal
 )
@@ -100,7 +106,7 @@ $entries = [System.Collections.Generic.List[object]]::new()
 $sequence = 0
 
 for ($partition = 0; $partition -lt $PartitionCount; $partition++) {
-    $partitionFile = Join-Path $PSScriptRoot "partition_$partition.txt"
+    $partitionFile = Join-Path $scriptDirectory "partition_$partition.txt"
     if (-not (Test-Path -LiteralPath $partitionFile -PathType Leaf)) {
         continue
     }

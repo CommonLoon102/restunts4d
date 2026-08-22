@@ -23,10 +23,19 @@ if ($Partition -ge $PartitionCount) {
     throw 'Partition must be less than PartitionCount.'
 }
 
-$GameDir = $PSScriptRoot
-$Config = Join-Path $GameDir 'dosbox.proc.conf'
-$OutputFile = Join-Path $GameDir "partition_$Partition.txt"
+$ScriptDirectory = $PSScriptRoot
+$GameDir = Join-Path $ScriptDirectory 'stunts'
+$Config = Join-Path $ScriptDirectory 'dosbox.proc.conf'
+$OutputFile = Join-Path $ScriptDirectory "partition_$Partition.txt"
 $TimeoutMilliseconds = 10000
+
+if (-not (Test-Path -LiteralPath $GameDir -PathType Container)) {
+    throw "Stunts directory not found: $GameDir"
+}
+
+if (-not (Test-Path -LiteralPath $Config -PathType Leaf)) {
+    throw "DOSBox configuration not found: $Config"
+}
 
 # Target filenames contain only a numeric counter, such as 0000.rpl.
 # Calculate each file's partition from that counter at runtime.
@@ -86,6 +95,7 @@ function Invoke-DosBoxExecutable {
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
     $startInfo.FileName = 'C:\DOSBox-x\dosbox-X.exe'
+    $startInfo.WorkingDirectory = $GameDir
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardOutput = $true
