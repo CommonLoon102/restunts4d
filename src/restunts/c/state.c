@@ -2,12 +2,54 @@
 #include "math.h"
 #include "shape3d.h"
 
+#ifdef RESTUNTS_DOS
+#include <dos.h>
+#endif
+
 extern int penalty_time;
 
 void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
 void upd_statef20_from_steer_input(char);
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd, int);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
+int detect_penalty(int* found_piece, int* penalty_count);
+
+#ifdef RESTUNTS_DOS
+extern int legacy_wheel_angle_stack_words[4];
+extern int legacy_grip_stack_words[4];
+extern void ported_update_car_speed_(char, int, struct CARSTATE*, struct SIMD*);
+
+/*
+ * detect_penalty's branch words and the opponent physics wheel-angle locals
+ * occupy the same addresses in the original update stack. Preserve that
+ * accidental state flow explicitly when the assembly routine is called from C.
+ */
+static int detect_penalty_with_legacy_wheel_angles(
+	int* found_piece,
+	int* penalty_count
+) {
+	unsigned detect_bp;
+	unsigned short far* detect_frame;
+	int result;
+	int i;
+
+	/* Two near arguments, a far return address, and detect_penalty's saved BP. */
+	asm mov ax, sp
+	asm sub ax, 10
+	asm mov detect_bp, ax
+	detect_frame = (unsigned short far*)MK_FP(_SS, detect_bp);
+
+	for (i = 0; i < 4; i++)
+		detect_frame[-153 + i] = legacy_wheel_angle_stack_words[i];
+
+	result = detect_penalty(found_piece, penalty_count);
+
+	for (i = 0; i < 4; i++)
+		legacy_wheel_angle_stack_words[i] = detect_frame[-153 + i];
+
+	return result;
+}
+#endif
 
 void player_op(char arg_carInputByte) {
 	struct VECTOR var_38;
@@ -44,14 +86,42 @@ void player_op(char arg_carInputByte) {
 		}
 	}
 
+#ifdef RESTUNTS_DOS
+	/* Avoid an extra C frame that shifts the following legacy stack residue. */
+	ported_update_car_speed_(arg_carInputByte, 0, &state.playerstate, &simd_player);
+#else
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
+#endif
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
 	update_grip(&state.playerstate, &simd_player, 1);
+#ifdef RESTUNTS_DOS
+	/*
+	 * update_player_state's uninitialized wheel-contact words overlap the tail
+	 * of update_grip's preceding frame in the original player update.
+	 */
+	asm push bx
+	asm mov bx, sp
+	asm mov ax, ss:[bx-24h]
+	asm mov legacy_grip_stack_words, ax
+	asm mov ax, ss:[bx-22h]
+	asm mov legacy_grip_stack_words+2, ax
+	asm mov ax, ss:[bx-20h]
+	asm mov legacy_grip_stack_words+4, ax
+	asm mov ax, ss:[bx-1Eh]
+	asm mov legacy_grip_stack_words+6, ax
+	asm pop bx
+#endif
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
 	state.game_travDist += state.playerstate.car_speed2;
 	var_1C = state.field_45B;
 	var_2 = state.field_2F2;
+#ifdef RESTUNTS_DOS
+	si = detect_penalty_with_legacy_wheel_angles(
+		&var_2, &var_1EpenaltyCounter
+	);
+#else
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
+#endif
 	if (si != 0)
 		goto loc_172CB;
 	goto loc_173B3;
