@@ -159,7 +159,8 @@ void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
 }
 
 void far* mmgr_alloc_resbytes(const char* name, long int size) {
-	return mmgr_alloc_pages(name, size / 16);
+	/* The original allocator always reserves one paragraph after division. */
+	return mmgr_alloc_pages(name, size / 16 + 1);
 }
 
 void mmgr_alloc_resmem(unsigned short arg_0) {
