@@ -40,7 +40,7 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 	wnddefseg = FP_SEG(&wnd_defs);
 
 	pages = ((width * height + sizeof(struct SHAPE2D)) >> 4) + 1;
-	shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
+	shapebuf = mmgr_alloc_window_pages("MCGA WINDOW", pages);
 	
 	hdr = (struct SHAPE2D far*)MK_FP(FP_SEG(shapebuf), 0);
 	hdr->s2d_width = width;
@@ -92,7 +92,7 @@ void sprite_free_wnd(struct SPRITE far* wndsprite) {
 		fatal_error(aWindowReleased);
 	}
 	next_wnd_def = next_wnd_def - spritesize;
-	mmgr_release((void far*)wndsprite->sprite_bitmapptr);
+	mmgr_release_window((void far*)wndsprite->sprite_bitmapptr);
 }
 
 void sprite_set_1_from_argptr(struct SPRITE far* argsprite) {
@@ -631,12 +631,12 @@ void far* file_load_shape2d_res(char* resname, int fatal) {
 	if (!memchunk) return 0;
 
 	chunksize = mmgr_get_chunk_size(memchunk);
-	mempages = mmgr_alloc_pages(resname, chunksize);
+	mempages = mmgr_alloc_shape2d_pages(resname, chunksize);
 
 	parse_shape2d(memchunk, mempages);
 
 	mmgr_release(memchunk);
-	return mmgr_op_unk(mempages);
+	return mmgr_finish_shape2d_pages(mempages);
 }
 
 void far* file_load_shape2d_res_fatal(char* resname) {
