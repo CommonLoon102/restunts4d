@@ -4978,7 +4978,7 @@ void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 		shape3d_init_shape(locate_shape_fatal(car2resptr, "car0"), &game3dshapes[125]);
 		shape3d_init_shape(locate_shape_fatal(car2resptr, "car1"), &game3dshapes[127]);
 
-		var_E = &(game3dshapes[126].shape3d_verts[8]);
+		var_E = &(game3dshapes[127].shape3d_verts[8]);
 		oppcarshapevec.z = var_E[0].z;
 		oppcarshapevec.x = (var_E[3].x + var_E[0].x)/2;
 		oppcarshapevec2.z = var_E[6].z;
