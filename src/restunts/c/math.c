@@ -719,71 +719,48 @@ int vector_op_unk2(struct VECTOR* vec) {
 
 extern int projectiondata5, projectiondata8, projectiondata9, projectiondata10;
 
+static int project_component_to_screen(short component, short depth, unsigned scale, int center, int invert) {
+	unsigned magnitude;
+	unsigned long projection;
+	unsigned long result;
+	long coordinate;
+	int direction;
+
+	if (component < 0) {
+		magnitude = (unsigned)(-(long)component);
+		direction = -1;
+	} else {
+		magnitude = (unsigned)component;
+		direction = 1;
+	}
+
+	if (invert)
+		direction = -direction;
+
+	projection = (unsigned long)magnitude * scale;
+	if ((unsigned long)(unsigned short)depth <= (projection >> 15))
+		return direction < 0 ? -0x7D00 : 0x7D00;
+
+	result = projection / (unsigned short)depth;
+	coordinate = direction < 0 ? -(long)result : (long)result;
+	coordinate += center;
+
+	if (coordinate > 32767L)
+		return 0x7D00;
+	if (coordinate < -32768L)
+		return -0x7D00;
+	return (int)coordinate;
+}
 
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
-
-	// the original code checks for several overflows (in a strange way) - this code does not, but seems to do well anyway
-
-	long proj;
-	long comp;
-	
 	if (vec->z <= 0) {
 		outpt->px = 0x8000;
 		outpt->py = 0x8000;
 		return;
 	}
-	
-	if (vec->x < 0) {
-		proj = (long)-vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%li  %i", proj, comp);
-			comp++;
-		}
 
-		if (vec->z > comp) { 
-			outpt->px = -(proj / vec->z) + projectiondata5;
-		} else
-			outpt->px = -0x7D00;
-	} else {
-		proj = (long)vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->px = (proj / vec->z) + projectiondata5;
-		else
-			outpt->px = 0x7D00;
-	}
-
-	if (vec->y < 0) {
-		proj = (long)-vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->py = (proj / vec->z) + projectiondata8;
-		else
-			outpt->py = 0x7D00;
-	} else {
-		proj = (long)vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
-
-		if (vec->z > comp) 
-			outpt->py = -(proj / vec->z) + projectiondata8;
-		else
-			outpt->py = -0x7D00;
-	}
+	outpt->px = project_component_to_screen(vec->x, vec->z, (unsigned)projectiondata9, projectiondata5, 0);
+	outpt->py = project_component_to_screen(vec->y, vec->z, (unsigned)projectiondata10, projectiondata8, 1);
 }
 
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, short i) {
