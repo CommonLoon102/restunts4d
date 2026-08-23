@@ -247,7 +247,7 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 	struct SHAPE2D far* memshape;
 	char far* membitmapptr;
 	unsigned char flag;
-	int i, j;
+	int i, j, sourceindex, sourcestep;
 
 	shapecount = *(unsigned short far*)&memchunk[4];
 	counter = 0;
@@ -284,8 +284,25 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 							}
 							break;
 						case 2:
-							// refer to loc_32BDE in the original function
-							fatal_error("unhandled flip type 2");
+							j = 0;
+							while (j < height) {
+								sourceindex = j / 2;
+								sourcestep = (height + 1) / 2;
+								for (i = 0; i < width; i++) {
+									mempages[i + j * width] = membitmapptr[sourceindex];
+									sourceindex += sourcestep;
+								}
+								j++;
+								if (j == height) {
+									break;
+								}
+								sourcestep = height / 2;
+								for (i = 0; i < width; i++) {
+									mempages[i + j * width] = membitmapptr[sourceindex];
+									sourceindex += sourcestep;
+								}
+								j++;
+							}
 							break;
 					}
 					
@@ -301,45 +318,6 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 		counter++;
 		shapecount--;
 	} while (shapecount > 0);
-	
-/*    asm {
-
-	this is the unimplemented unflip case 2 above:
-
-// switch 2
-loc_32BDE:
-    mov     bx, dx // dx = row counter
-    shr     bx, 1
-    add     bx, 10h
-    add     bx, [var_6]
-    mov     cx, [var_C] // width
-    mov     si, [var_E]  // height
-    shr     si, 1
-    adc     si, 0		// si = (height + 1) / 2
-
-loc_32BF3:
-    mov     al, [bx]
-    stosb
-    add     bx, si
-    loop    loc_32BF3
-
-    inc     dx
-    cmp     dx, [var_E]
-    jz      short loc_32C15 // done
-
-    mov     cx, [var_C]
-    mov     si, [var_E]
-    shr     si, 1
-loc_32C08:
-    mov     al, [bx]
-    stosb
-    add     bx, si
-    loop    loc_32C08
-    inc     dx
-    cmp     dx, [var_E]
-    jnz     short loc_32BDE
-    */
-
 }
 
 void file_unflip_shape2d_pes(unsigned char far* memchunk, char far* mempages) {
