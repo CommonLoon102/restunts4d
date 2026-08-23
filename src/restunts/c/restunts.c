@@ -226,7 +226,7 @@ int random_wait(void)
 
 int toupper(int ch)
 {
-	if (ch >= 'a' && ch < 'z') {
+	if (ch >= 'a' && ch <= 'z') {
 		ch -= ' ';
 	}
 	
