@@ -805,7 +805,7 @@ int setup_player_cars(void) {
 
 	if (video_flag5_is0 == 0) {
 		
-		var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1);
+		var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1) + 0x12;
 		if (mmgr_prepare_fullscreen_window() <= var_8) {
 			return 1;
 		}
