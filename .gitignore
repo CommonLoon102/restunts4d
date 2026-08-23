@@ -49,3 +49,5 @@ stunts/*.CMN
 stunts/*.DAT
 stunts/*.COM
 stunts/*.sh
+stunts/cars/*
+stunts/.partitions_all.txt.*
