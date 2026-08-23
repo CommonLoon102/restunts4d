@@ -587,7 +587,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 						di = 1;
 					} else
 					if (tile_to_draw_south_offset == 0x1D) {
-						di = 1;
+						di = 3;
 					} else {
 						di = 2;
 					}
