@@ -338,6 +338,17 @@ void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
 	}
 }
 
+static int rect_adjust_right_for_video(int right) {
+	unsigned short adjusted;
+
+	adjusted = (unsigned short)((unsigned short)right + (unsigned short)video_flag2_is1);
+	adjusted = (unsigned short)(adjusted - 1U);
+	adjusted &= (unsigned short)video_flag3_isFFFF;
+	if (adjusted <= 0x7FFFU)
+		return (int)adjusted;
+	return -1 - (int)(0xFFFFU - adjusted);
+}
+
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc) {
 	if (r1->left <= r2->left) {
 		outrc->left = r1->left;
@@ -363,20 +374,8 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 		outrc->bottom = r2->bottom;
 	}
 	
-	if (video_flag2_is1 == 1) {
-		return ;
-	}
-
-	fatal_error("rect_union: unexpected code path");
-	/*
-	mov     bx, [bp+arg_outrectptr]
-	mov     si, bx
-	mov     ax, [si+RECTANGLE.rc_right]
-	add     ax, video_flag2_is1
-	dec     ax
-	and     ax, video_flag3_isFFFF
-	mov     [bx+RECTANGLE.rc_right], ax
-*/
+	if (video_flag2_is1 != 1)
+		outrc->right = rect_adjust_right_for_video(outrc->right);
 }
 
 int rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
@@ -466,17 +465,8 @@ void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_re
 	struct RECTANGLE* var_rectptr;
 	int var_22, var_18, var_12;
 
-	if (video_flag2_is1 != 1) {
-		fatal_error("rectlist_add_rect: unexpected code path");
-		/*
-		mov     bx, [bp+arg_rectptr]
-		mov     si, bx
-		mov     ax, [si+RECTANGLE.rc_right]
-		add     ax, video_flag2_is1
-		dec     ax
-		and     ax, video_flag3_isFFFF
-		mov     [bx+RECTANGLE.rc_right], ax*/
-	}
+	if (video_flag2_is1 != 1)
+		rect->right = rect_adjust_right_for_video(rect->right);
 	
 	for (var_counter = 0; var_counter < *arg_rect_array_length_ptr; var_counter++) {
 		var_rectptr = &arg_rect_array_ptr[var_counter];
