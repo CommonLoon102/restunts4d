@@ -241,7 +241,7 @@ unsigned short file_get_res_shape_count(void far* memchunk) {
 	return ((unsigned short far*)memchunk)[2];
 }
 
-void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
+int file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 
 	int shapecount, counter, width, height;
 	struct SHAPE2D far* memshape;
@@ -258,6 +258,9 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 		if ((flag & 0xF0) == 0) {
 			flag = memshape->s2d_unk5 >> 4;
 			if (flag != 0) {
+				if (flag >= 4) {
+					return 1;
+				}
 				if (flag < 4) {
 					width = memshape->s2d_width;
 					height = memshape->s2d_height;
@@ -318,6 +321,7 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 		counter++;
 		shapecount--;
 	} while (shapecount > 0);
+	return 0;
 }
 
 void file_unflip_shape2d_pes(unsigned char far* memchunk, char far* mempages) {

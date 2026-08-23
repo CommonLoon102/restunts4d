@@ -60,7 +60,7 @@ struct SHAPE2D far* file_get_shape2d(unsigned char far* memchunk, int index);
 
 unsigned short file_get_res_shape_count(void far* memchunk);
 
-void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages);
+int file_unflip_shape2d(unsigned char far* memchunk, char far* mempages);
 
 void file_unflip_shape2d_pes(unsigned char far* memchunk, char far* mempages);
 
