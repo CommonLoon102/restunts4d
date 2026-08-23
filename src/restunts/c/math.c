@@ -6,6 +6,7 @@ extern struct MATRIX mat_z_rot;
 extern struct MATRIX mat_x_rot;
 extern struct MATRIX mat_y_rot;
 extern struct MATRIX mat_rot_temp;
+extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
 extern unsigned mat_y_rot_angle;
 extern long sin80, cos80;
 
@@ -288,32 +289,88 @@ void mat_rot_z(struct MATRIX* outmat, int angle) {
 	outmat->m._33 = 0x4000;
 }
 
-// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only 
-// multiplying the non-zero axes. currently not optimized except for the y cache:
-
 struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
-	int flag;
-	
-	mat_rot_z(&mat_z_rot, z);
-	mat_rot_x(&mat_x_rot, x);
-	
-	// y rotation matrix cache
-	/*if (mat_y_rot_angle != y) {
-		mat_rot_y(&mat_y_rot, y);
-		mat_y_rot_angle = y;
-	}*/
-	mat_y_rot_angle = y; // dont forget this!!
-	mat_rot_y(&mat_y_rot, y);
-	
-	if ((unk & 1) != 0) {
-		mat_multiply(&mat_y_rot, &mat_x_rot, &mat_rot_temp);
-		mat_multiply(&mat_rot_temp, &mat_z_rot, &mat_x_rot);
-		return &mat_x_rot;
-	} else {
-		mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
-		mat_multiply(&mat_rot_temp, &mat_y_rot, &mat_z_rot);
-		return &mat_z_rot;
+	unsigned flag;
+	unsigned yangle;
+	struct MATRIX* ymat;
+
+	flag = 0;
+	if ((z & 0x3FF) != 0) {
+		flag |= 4;
+		mat_rot_z(&mat_z_rot, z);
 	}
+	if ((x & 0x3FF) != 0) {
+		flag |= 2;
+		mat_rot_x(&mat_x_rot, x);
+	}
+
+	yangle = y & 0x3FF;
+	ymat = &mat_y0;
+	if (yangle != 0) {
+		flag |= 1;
+		if (yangle == mat_y_rot_angle) {
+			ymat = &mat_y_rot;
+		}
+		else if (yangle == 0x100) {
+			ymat = &mat_y100;
+		}
+		else if (yangle == 0x200) {
+			ymat = &mat_y200;
+		}
+		else if (yangle == 0x300) {
+			ymat = &mat_y300;
+		}
+		else {
+			mat_rot_y(&mat_y_rot, y);
+			mat_y_rot_angle = yangle;
+			ymat = &mat_y_rot;
+		}
+	}
+
+	switch (flag) {
+		case 0:
+			return &mat_y0;
+		case 1:
+			return ymat;
+		case 2:
+			return &mat_x_rot;
+		case 3:
+			if ((unk & 1) != 0) {
+				mat_multiply(ymat, &mat_x_rot, &mat_rot_temp);
+			}
+			else {
+				mat_multiply(&mat_x_rot, ymat, &mat_rot_temp);
+			}
+			return &mat_rot_temp;
+		case 4:
+			return &mat_z_rot;
+		case 5:
+			if ((unk & 1) != 0) {
+				mat_multiply(ymat, &mat_z_rot, &mat_rot_temp);
+			}
+			else {
+				mat_multiply(&mat_z_rot, ymat, &mat_rot_temp);
+			}
+			return &mat_rot_temp;
+		case 6:
+			if ((unk & 1) != 0) {
+				mat_multiply(&mat_x_rot, &mat_z_rot, &mat_rot_temp);
+			}
+			else {
+				mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
+			}
+			return &mat_rot_temp;
+		case 7:
+			if ((unk & 1) != 0) {
+				mat_multiply(ymat, &mat_x_rot, &mat_rot_temp);
+				mat_multiply(&mat_rot_temp, &mat_z_rot, &mat_x_rot);
+				return &mat_x_rot;
+			}
+			mat_multiply(&mat_z_rot, &mat_x_rot, &mat_rot_temp);
+			mat_multiply(&mat_rot_temp, ymat, &mat_z_rot);
+			return &mat_z_rot;
+	}
+	return &mat_y0;
 }
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
