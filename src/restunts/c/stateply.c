@@ -49,6 +49,14 @@ extern int bto_auxiliary1(int, int, struct VECTOR*);
  */
 static int saved_wheel_plane_angles[4];
 
+#ifdef RESTUNTS_DOS
+/*
+ * Explicit models of words which alias across consecutive legacy stack frames.
+ */
+int legacy_wheel_angle_stack_words[4];
+int legacy_grip_stack_words[4];
+#endif
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
@@ -82,6 +90,13 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
 
+#ifdef RESTUNTS_DOS
+	var_16[0] = legacy_grip_stack_words[0];
+	var_16[1] = legacy_grip_stack_words[1];
+	var_16[2] = legacy_grip_stack_words[2];
+	var_16[3] = legacy_grip_stack_words[3];
+#endif
+
 	pState_lvec1_x = arg_pState->car_posWorld1.lx;
 	pState_lvec1_y = arg_pState->car_posWorld1.ly;
 	pState_lvec1_z = arg_pState->car_posWorld1.lz;
@@ -106,6 +121,64 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	} else {
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
 	}
+
+#ifdef RESTUNTS_DOS
+	if (arg_MplayerFlag == 0 && var_pSpeed2Scaled == 0 &&
+		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
+		/*
+		 * On the zero-speed crash transition, the original wheel-angle locals
+		 * reuse opponent wheel-coordinate words left at the same stack addresses.
+		 */
+		mat_unk = *mat_rot_zxy(
+			-state.opponentstate.car_rotate.z,
+			-state.opponentstate.car_rotate.y,
+			-state.opponentstate.car_rotate.x,
+			0
+		);
+		var_F0 = 0;
+		if (state.opponentstate.car_sumSurfAllWheels != 0 &&
+			state.opponentstate.car_speed2 <= 0x1E00) {
+			vec_1C6.x = 0;
+			vec_1C6.y = 0x7530;
+			vec_1C6.z = 0;
+			mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+			if (vec_FC.y < 0)
+				var_F0 = 0xC0;
+		}
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0)
+			var_MmatFromAngleZ = *mat_rot_zxy(
+				0, 0, -state.opponentstate.car_angle_z, 0
+			);
+
+		vec_1C6 = simd_opponent.wheel_coords[2];
+		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		saved_wheel_plane_angles[0] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
+		);
+
+		vec_1C6 = simd_opponent.wheel_coords[3];
+		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		saved_wheel_plane_angles[1] = (unsigned int)(
+			state.opponentstate.car_posWorld1.lx + vec_FC.x
+		);
+		saved_wheel_plane_angles[2] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
+		);
+		saved_wheel_plane_angles[3] = (unsigned int)(
+			state.opponentstate.car_posWorld1.ly + vec_FC.y
+		);
+	}
+#endif
 
 	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
@@ -611,6 +684,12 @@ loc_152D7:
     sub     ax, wallStartZ
     mov     [bp+vec_1E4.vz], ax*/
 	mat_rot_y(&mat_134, -wallOrientation - 0x100);
+#ifdef RESTUNTS_DOS
+	legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+	legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+	legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+	legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
+#endif
 	mat_mul_vector(&vec_182, &mat_134, &vec_C);
 	mat_mul_vector(&vec_1E4, &mat_134, &vec_1C);
 	if (vec_1C.z <= 0)
@@ -1249,6 +1328,12 @@ loc_157DC:
     sub     ax, [bp+var_122.vz]
     mov     [bp+vec_1E4.vz], ax*/
 	mat_134 = var_6->plane_rotation;
+#ifdef RESTUNTS_DOS
+	legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+	legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+	legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+	legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
+#endif
 	mat_invert(&mat_134, &var_MmatFromAngleZ);
 	mat_mul_vector(&vec_182, &var_MmatFromAngleZ, &vec_C);
 	/*

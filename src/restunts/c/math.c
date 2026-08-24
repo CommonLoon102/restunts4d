@@ -1,6 +1,10 @@
 #include "externs.h"
 #include "math.h"
 
+#ifdef RESTUNTS_DOS
+#include <dos.h>
+#endif
+
 extern struct RECTANGLE select_rect_rc;
 extern struct MATRIX mat_z_rot;
 extern struct MATRIX mat_x_rot;
@@ -288,12 +292,74 @@ void mat_rot_z(struct MATRIX* outmat, int angle) {
 	outmat->m._33 = 0x4000;
 }
 
-// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only 
-// multiplying the non-zero axes. currently not optimized except for the y cache:
+#ifdef RESTUNTS_DOS
+extern int legacy_wheel_angle_stack_words[4];
 
+/*
+ * The original assembly leaves four wheel-angle locals in
+ * update_player_state uninitialized when the opponent's scaled speed is zero.
+ * Those words therefore retain values written at the same stack addresses by
+ * earlier physics calls. C compilation changes the intervening frame layout,
+ * so relying on the real stack produces different opponent movement and replay
+ * desyncs.
+ *
+ * mat_rot_zxy is the first convenient call made after those locals are
+ * allocated. From here the DOS build can recognize the opponent invocation,
+ * remember the values produced while it is moving, and seed the caller's four
+ * slots when it stops. The shared array explicitly models the accidental state
+ * flow of the original executable without imposing DOS stack behavior on SDL.
+ */
+static void seed_legacy_opponent_wheel_angles(unsigned caller_bp) {
+	unsigned short far* caller_frame;
+	int front_wheel_delta;
+	int scaled_speed;
+	int i;
+
+	caller_frame = (unsigned short far*)MK_FP(_SS, caller_bp);
+	if (caller_frame[3] != FP_OFF(&state.opponentstate) ||
+		caller_frame[4] != FP_OFF(&simd_opponent) ||
+		caller_frame[5] != FP_OFF(&state.playerstate) ||
+		caller_frame[6] != FP_OFF(&simd_player) ||
+		caller_frame[7] != 1)
+		return;
+	if (framespersec == 0xA) {
+		scaled_speed = ((long)state.opponentstate.car_speed2 * 0x580) / 0x1E00;
+	} else {
+		scaled_speed = ((long)state.opponentstate.car_speed2 * 0x580) / 0x3C00;
+	}
+	if (scaled_speed != 0) {
+		front_wheel_delta = 0;
+		if (state.opponentstate.car_sumSurfAllWheels != 0)
+			front_wheel_delta = state.opponentstate.car_40MfrontWhlAngle >> 2;
+
+		for (i = 0; i < 4; i++) {
+			legacy_wheel_angle_stack_words[i] =
+				state.opponentstate.car_36MwhlAngle;
+			if (i < 2)
+				legacy_wheel_angle_stack_words[i] -= front_wheel_delta;
+		}
+		return;
+	}
+
+	for (i = 0; i < 4; i++) {
+		caller_frame[-160 + i] = legacy_wheel_angle_stack_words[i];
+	}
+}
+#endif
+
+// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only
+// multiplying the non-zero axes. currently not optimized except for the y cache:
 struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
 	int flag;
-	
+
+#ifdef RESTUNTS_DOS
+	unsigned caller_bp;
+
+	asm mov ax, [bp]
+	asm mov caller_bp, ax
+	seed_legacy_opponent_wheel_angles(caller_bp);
+#endif
+
 	mat_rot_z(&mat_z_rot, z);
 	mat_rot_x(&mat_x_rot, x);
 	
