@@ -556,53 +556,58 @@ void far* file_load_shape2d(char* shapename, int fatal) {
 	}
 	
 	if (*strptr != 0) {
-		fatal_error("unhandled - load_2dshape has dot in the name");
-	}
-
-	for (counter = 0; shapeexts[counter] != 0; counter++) {
-
-		strcpy(strptr, shapeexts[counter]);
 		memchunk = mmgr_get_chunk_by_name(str);
 		if (memchunk) return memchunk; // return existing chunk with same name
+	}
+	else {
+		for (counter = 0; shapeexts[counter] != 0; counter++) {
+			strcpy(strptr, shapeexts[counter]);
+			memchunk = mmgr_get_chunk_by_name(str);
+			if (memchunk) return memchunk; // return existing chunk with same name
 
-		if (file_find(str)) {
-			if (stricmp(strptr, ".PVS") == 0) {
-				memchunk = file_decomp(str, fatal);
-				if (!memchunk) return MK_FP(0, 0);
-				
-				unflipsize = file_get_unflip_size(memchunk);
-				mempages = mmgr_alloc_pages("UNFLIP", unflipsize);
-				file_unflip_shape2d(memchunk, mempages);
-				mmgr_release(mempages);
-				
-				return memchunk;
-			}
-			else if (stricmp(strptr, ".XVS") == 0) {
-				return file_decomp(str, fatal);
-			}
-			else if (stricmp(strptr, ".PES") == 0) {
-				memchunk = file_decomp(str, fatal);
-				if (!memchunk) return MK_FP(0, 0);
-				
-				mempages = mmgr_alloc_pages("UNFLIP", 1000);
-				file_unflip_shape2d_pes(memchunk, mempages);
-				mmgr_release(mempages);
-
-				return file_load_shape2d_esh(memchunk, str);
-			}
-			else if (stricmp(strptr, ".ESH") == 0) {
-				memchunk = file_load_binary(str, fatal);
-				if (!memchunk) return MK_FP(0, 0);
-
-				return file_load_shape2d_esh(memchunk, str);
-			}
-			else { // .VSH
-				return file_load_binary(str, fatal);
+			if (file_find(str)) {
+				break;
 			}
 		}
+		if (shapeexts[counter] == 0) {
+			fatal_error("unhandled - cannot load %s", str);
+			return 0;
+		}
 	}
-	fatal_error("unhandled - cannot load %s", str);
-	return 0;
+
+	if (stricmp(strptr, ".PVS") == 0) {
+		memchunk = file_decomp(str, fatal);
+		if (!memchunk) return MK_FP(0, 0);
+
+		unflipsize = file_get_unflip_size(memchunk);
+		mempages = mmgr_alloc_pages("UNFLIP", unflipsize);
+		file_unflip_shape2d(memchunk, mempages);
+		mmgr_release(mempages);
+
+		return memchunk;
+	}
+	else if (stricmp(strptr, ".XVS") == 0) {
+		return file_decomp(str, fatal);
+	}
+	else if (stricmp(strptr, ".PES") == 0) {
+		memchunk = file_decomp(str, fatal);
+		if (!memchunk) return MK_FP(0, 0);
+
+		mempages = mmgr_alloc_pages("UNFLIP", 1000);
+		file_unflip_shape2d_pes(memchunk, mempages);
+		mmgr_release(mempages);
+
+		return file_load_shape2d_esh(memchunk, str);
+	}
+	else if (stricmp(strptr, ".ESH") == 0) {
+		memchunk = file_load_binary(str, fatal);
+		if (!memchunk) return MK_FP(0, 0);
+
+		return file_load_shape2d_esh(memchunk, str);
+	}
+	else { // .VSH or an explicit unknown extension
+		return file_load_binary(str, fatal);
+	}
 }
 
 void far* file_load_shape2d_fatal(char* shapename) {
