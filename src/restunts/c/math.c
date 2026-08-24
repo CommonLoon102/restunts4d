@@ -517,7 +517,7 @@ int rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 		return 0;
 	}
 
-	if (r1->right == r2->left || r2->right == r2->left) {
+	if (r1->right == r2->left || r2->right == r1->left) {
 		if (r1->top == r2->top && r1->bottom == r2->bottom)
 			return 1;
 	}
