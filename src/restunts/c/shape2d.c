@@ -530,7 +530,7 @@ void far* file_load_shape2d_esh(void far* memchunk, const char* str) {
 	
 	mempages = mmgr_alloc_pages(str, expandedsize);
 
-	*(long*)mempages = (long)expandedsize * 16;
+	*(long far*)mempages = (long)expandedsize * 16;
 	
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);
