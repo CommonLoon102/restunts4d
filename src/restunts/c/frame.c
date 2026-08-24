@@ -515,8 +515,8 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 						
 					if (state.opponentstate.car_surfaceWhl[0] != 4 || state.opponentstate.car_surfaceWhl[1] != 4 || state.opponentstate.car_surfaceWhl[2] != 4 || state.opponentstate.car_surfaceWhl[3] != 4) {
 						offset_vector.x = 0;
-						offset_vector.y = 0;
-						offset_vector.z = 0x7530;
+						offset_vector.z = 0;
+						offset_vector.y = 0x7530;
 						mat_mul_vector(&offset_vector, car_rot_matrix, &var_vec8);
 						mat_mul_vector(&var_vec8, &mat_temp, &offset_vector);
 						if (offset_vector.z <= 0) {
@@ -1004,7 +1004,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 				curtransshape_ptr->rotvec.z = -state.opponentstate.car_rotate.x;
 				curtransshape_ptr->unk = 0x12C;
 				curtransshape_ptr->material = gameconfig.game_opponentmaterial;
-				transformed_shape_add_for_sort(var_4A & var_12A, 3);
+				transformed_shape_add_for_sort(var_A4 & var_12A, 3);
 			}
 		}
 
