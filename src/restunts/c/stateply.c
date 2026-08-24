@@ -43,6 +43,14 @@ extern int car_car_coll_detect_maybe(struct POINT2D*, struct VECTOR*, struct POI
 
 extern int bto_auxiliary1(int, int, struct VECTOR*);
 
+/*
+ * The original assembly skips initialization of var_140someWhlData when the
+ * scaled speed is zero. At this call site the same stack words normally still
+ * contain the angles written by the preceding moving frame. A translated C
+ * frame has a different layout, so preserve that legacy residue explicitly.
+ */
+static int legacy_wheel_plane_angle_residue[4];
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
@@ -99,6 +107,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x1E00;
 	} else {
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
+	}
+	if (var_pSpeed2Scaled == 0) {
+		var_140someWhlData[0] = legacy_wheel_plane_angle_residue[0];
+		var_140someWhlData[1] = legacy_wheel_plane_angle_residue[1];
+		var_140someWhlData[2] = legacy_wheel_plane_angle_residue[2];
+		var_140someWhlData[3] = legacy_wheel_plane_angle_residue[3];
 	}
 
 	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
@@ -199,6 +213,7 @@ loc_14FA6:
 loc_14FAC:
 //    mov     pState_f36Mminf40sar2, ax
 	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
+	legacy_wheel_plane_angle_residue[var_wheelIndex] = pState_f36Mminf40sar2;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx += vec_planerotopresult.x;
 	var_DEptrTo1C0->ly += vec_planerotopresult.y;
