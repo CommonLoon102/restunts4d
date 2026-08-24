@@ -560,7 +560,7 @@ void far* file_load_shape2d(char* shapename, int fatal) {
 		if (memchunk) return memchunk; // return existing chunk with same name
 	}
 	else {
-		for (counter = 0; shapeexts[counter] != 0; counter++) {
+		for (counter = 0; shapeexts[counter][0] != 0; counter++) {
 			strcpy(strptr, shapeexts[counter]);
 			memchunk = mmgr_get_chunk_by_name(str);
 			if (memchunk) return memchunk; // return existing chunk with same name
@@ -568,10 +568,6 @@ void far* file_load_shape2d(char* shapename, int fatal) {
 			if (file_find(str)) {
 				break;
 			}
-		}
-		if (shapeexts[counter] == 0) {
-			fatal_error("unhandled - cannot load %s", str);
-			return 0;
 		}
 	}
 
