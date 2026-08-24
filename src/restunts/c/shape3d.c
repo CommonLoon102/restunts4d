@@ -4922,6 +4922,9 @@ void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 	int i;
 	struct VECTOR far* var_E;
 	unsigned long var_6;
+	unsigned long copy_index;
+	unsigned char far* source_bytes;
+	unsigned char far* destination_bytes;
 	aStxxx[2] = arg_playercarid[0];
 	aStxxx[3] = arg_playercarid[1];
 	aStxxx[4] = arg_playercarid[2];
@@ -4963,9 +4966,11 @@ void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 		{
 			var_6 = mmgr_get_chunk_size_bytes(carresptr);
 			car2resptr = mmgr_alloc_resbytes("car2", var_6);
-			
-			for (i = 0; i < var_6; i++) {
-				car2resptr[i] = carresptr[i];
+			source_bytes = (unsigned char far*)carresptr;
+			destination_bytes = (unsigned char far*)car2resptr;
+
+			for (copy_index = 0; copy_index < var_6; copy_index++) {
+				destination_bytes[(unsigned short)copy_index] = source_bytes[(unsigned short)copy_index];
 			}
 		} else {
 			aStxxx[2] = arg_opponentcarid[0];
