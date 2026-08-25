@@ -49,14 +49,20 @@ extern int bto_auxiliary1(int, int, struct VECTOR*);
  * contain the angles written by the preceding moving frame. A translated C
  * frame has a different layout, so preserve that legacy residue explicitly.
  */
-static int legacy_wheel_plane_angle_residue[4];
+static short legacy_wheel_plane_angle_residue[4];
+
+/*
+ * Explicit models of words which alias across consecutive legacy stack frames.
+ */
+short legacy_wheel_angle_stack_words[4];
+short legacy_grip_stack_words[4];
 
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
-	int var_140someWhlData[4];
+	short var_140someWhlData[4];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
 	int pState_f40_sar2;
@@ -75,7 +81,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	unsigned int var_190;
 	struct MATRIX* var_EA;
 	int si;
-	int var_16[4];
+	short var_16[4];
 	struct PLANE far* var_6;
 	struct VECTOR vec_1DE[4];
 	int var_E;
@@ -84,6 +90,17 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
 
+	/*
+	 * Seed the four collision-plane results from the explicit model of the
+	 * original overlapping stack window. Each successful wheel lookup below
+	 * replaces its corresponding entry.
+	 */
+	var_16[0] = legacy_grip_stack_words[0];
+	var_16[1] = legacy_grip_stack_words[1];
+	var_16[2] = legacy_grip_stack_words[2];
+	var_16[3] = legacy_grip_stack_words[3];
+
+	/* Initialize the working position and rotation from the current car pose. */
 	pState_lvec1_x = arg_pState->car_posWorld1.lx;
 	pState_lvec1_y = arg_pState->car_posWorld1.ly;
 	pState_lvec1_z = arg_pState->car_posWorld1.lz;
@@ -97,22 +114,134 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	pState_minusRotate_y_1 = arg_pState->car_rotate.x;
 	pState_minusRotate_y_2 = arg_pState->car_rotate.x;
 
+	/*
+	 * While the car has surface contact, offset the first two wheel-plane
+	 * angles by one quarter of the front-wheel angle.
+	 */
 	if (arg_pState->car_sumSurfAllWheels != 0) {
 		pState_f40_sar2 = arg_pState->car_40MfrontWhlAngle >> 2;
 	} else {
 		pState_f40_sar2 = 0;
 	}
 
+	/* Convert speed to per-tick travel, accounting for the simulation rate. */
 	if (framespersec == 0xA) {
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x1E00;
 	} else {
 		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
 	}
+
+	/*
+	 * At zero per-tick travel the original skips initialization of its four
+	 * wheel-angle locals. Restore the retained words from the stack window
+	 * appropriate to the opponent or player invocation.
+	 */
 	if (var_pSpeed2Scaled == 0) {
-		var_140someWhlData[0] = legacy_wheel_plane_angle_residue[0];
-		var_140someWhlData[1] = legacy_wheel_plane_angle_residue[1];
-		var_140someWhlData[2] = legacy_wheel_plane_angle_residue[2];
-		var_140someWhlData[3] = legacy_wheel_plane_angle_residue[3];
+		if (arg_MplayerFlag != 0) {
+			var_140someWhlData[0] = legacy_wheel_angle_stack_words[0];
+			var_140someWhlData[1] = legacy_wheel_angle_stack_words[1];
+			var_140someWhlData[2] = legacy_wheel_angle_stack_words[2];
+			var_140someWhlData[3] = legacy_wheel_angle_stack_words[3];
+		} else {
+			var_140someWhlData[0] = legacy_wheel_plane_angle_residue[0];
+			var_140someWhlData[1] = legacy_wheel_plane_angle_residue[1];
+			var_140someWhlData[2] = legacy_wheel_plane_angle_residue[2];
+			var_140someWhlData[3] = legacy_wheel_plane_angle_residue[3];
+		}
+	}
+
+	/*
+	 * On the first stopped frame of a player crash, the retained words come
+	 * from rear-opponent wheel coordinates rather than ordinary wheel angles.
+	 * Reconstruct those words from explicit game state.
+	 */
+	if (arg_MplayerFlag == 0 && var_pSpeed2Scaled == 0 &&
+		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
+		/*
+		 * On the zero-speed crash transition, the original wheel-angle locals
+		 * reuse opponent wheel-coordinate words left at the same stack addresses.
+		 */
+		mat_unk = *mat_rot_zxy(
+			-state.opponentstate.car_rotate.z,
+			-state.opponentstate.car_rotate.y,
+			-state.opponentstate.car_rotate.x,
+			0
+		);
+		/*
+		if (opponent has wheel contact &&
+			opponent speed <= 30 mph &&
+			opponent is upside down)
+		{
+			wheel_y_adjustment = 192;
+		}
+		*/
+		var_F0 = 0;
+		if (state.opponentstate.car_sumSurfAllWheels != 0 &&
+			state.opponentstate.car_speed2 <= 0x1E00) {
+			vec_1C6.x = 0;
+			vec_1C6.y = 0x7530;
+			vec_1C6.z = 0;
+			mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+			if (vec_FC.y < 0) {
+				var_F0 = 0xC0;
+			}
+		}
+
+		/* Prepare the optional auxiliary wheel rotation once for both wheels. */
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -state.opponentstate.car_angle_z, 0);
+		}
+
+		/*
+		 * Rebuild wheel 2 in car-local coordinates, including suspension travel
+		 * and the low-speed inverted-car adjustment.
+		 */
+		vec_1C6 = simd_opponent.wheel_coords[2];
+		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+
+		/*
+		 * Rotate wheel 2 into world axes and recover the high word of its world
+		 * Z coordinate, the first aliased stack word.
+		 */
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		var_140someWhlData[0] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
+		);
+		legacy_wheel_plane_angle_residue[0] = var_140someWhlData[0];
+
+		/* Rebuild wheel 3 using the same local-coordinate adjustments. */
+		vec_1C6 = simd_opponent.wheel_coords[3];
+		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
+		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+			vec_1C6 = vec_FC;
+		}
+
+		/*
+		 * Rotate wheel 3 into world axes and recover the low word of its world
+		 * X coordinate, the second aliased stack word.
+		 */
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
+		var_140someWhlData[1] = (unsigned int)(
+			state.opponentstate.car_posWorld1.lx + vec_FC.x
+		);
+
+		/* Commit the second word and recover world X's high word as the third. */
+		legacy_wheel_plane_angle_residue[1] = var_140someWhlData[1];
+		var_140someWhlData[2] = (unsigned int)(
+			(unsigned long)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
+		);
+
+		/* Commit the third word and recover world Y's low word as the fourth. */
+		legacy_wheel_plane_angle_residue[2] = var_140someWhlData[2];
+		var_140someWhlData[3] = (unsigned int)(
+			state.opponentstate.car_posWorld1.ly + vec_FC.y
+		);
+		legacy_wheel_plane_angle_residue[3] = var_140someWhlData[3];
 	}
 
 	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
@@ -214,6 +343,9 @@ loc_14FAC:
 //    mov     pState_f36Mminf40sar2, ax
 	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
 	legacy_wheel_plane_angle_residue[var_wheelIndex] = pState_f36Mminf40sar2;
+	if (arg_MplayerFlag != 0)
+		legacy_wheel_angle_stack_words[var_wheelIndex] =
+			pState_f36Mminf40sar2;
 	plane_rotate_op();
 	var_DEptrTo1C0->lx += vec_planerotopresult.x;
 	var_DEptrTo1C0->ly += vec_planerotopresult.y;
@@ -619,6 +751,12 @@ loc_152D7:
     sub     ax, wallStartZ
     mov     [bp+vec_1E4.vz], ax*/
 	mat_rot_y(&mat_134, -wallOrientation - 0x100);
+	if (arg_MplayerFlag == 0) {
+		legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+		legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+		legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+		legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
+	}
 	mat_mul_vector(&vec_182, &mat_134, &vec_C);
 	mat_mul_vector(&vec_1E4, &mat_134, &vec_1C);
 	if (vec_1C.z <= 0)
@@ -1257,6 +1395,12 @@ loc_157DC:
     sub     ax, [bp+var_122.vz]
     mov     [bp+vec_1E4.vz], ax*/
 	mat_134 = var_6->plane_rotation;
+	if (arg_MplayerFlag == 0) {
+		legacy_wheel_angle_stack_words[0] = mat_134.vals[4];
+		legacy_wheel_angle_stack_words[1] = mat_134.vals[5];
+		legacy_wheel_angle_stack_words[2] = mat_134.vals[6];
+		legacy_wheel_angle_stack_words[3] = mat_134.vals[7];
+	}
 	mat_invert(&mat_134, &var_MmatFromAngleZ);
 	mat_mul_vector(&vec_182, &var_MmatFromAngleZ, &vec_C);
 	/*

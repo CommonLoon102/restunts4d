@@ -893,9 +893,10 @@ ported_update_player_state_ proc far
     arg_oSimd = word ptr 12
     arg_MplayerFlag = byte ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 1E4h
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     update_player_state
+    db      144
+    db      144
     push    di
     push    si
     mov     bx, [bp+arg_pState]

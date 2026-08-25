@@ -3,6 +3,86 @@
 #include "shape3d.h"
 
 extern int penalty_time;
+extern short legacy_grip_stack_words[4];
+extern short grassDecelDivTab[];
+
+/*
+ * The original player update reuses four words below player_op's stack frame.
+ * update_car_speed and update_grip write that same physical window before the
+ * player physics reads it. Keep the window as explicit 16-bit execution state
+ * so its behavior does not depend on a compiler's frame layout or ABI.
+ */
+static void update_legacy_grip_stack_words(
+	struct CARSTATE* carstate,
+	struct SIMD* simd,
+	unsigned int speed_before_grip,
+	unsigned int speed2_before_grip
+) {
+	short combined_grip_operand;
+	short sliding_sum;
+	short* sliding_values;
+	unsigned int grip_speed;
+	unsigned int speed_shr8;
+	unsigned long speed_squared;
+	long scaled_combined_grip;
+	int grass_wheels;
+	int i;
+
+	/* The original player_op reaches update_grip with SI == 0x50. */
+	legacy_grip_stack_words[3] = 0x50;
+	if (carstate->car_sumSurfAllWheels == 0)
+		return;
+
+	/*
+	 * Reproduce update_grip's first operands: twice the car's base grip and
+	 * the sum of the four surface-specific sliding coefficients.
+	 */
+	combined_grip_operand = (short)((unsigned short)simd->grip << 1);
+	sliding_sum = 0;
+	sliding_values = &simd->sliding;
+	for (i = 0; i < 4; i++) {
+		sliding_sum = (short)(
+			(unsigned short)sliding_sum +
+			(unsigned short)sliding_values[
+				(unsigned char)carstate->car_surfaceWhl[i]
+			]
+		);
+	}
+
+	/* Operand words left by update_grip's first signed long multiply. */
+	legacy_grip_stack_words[0] = sliding_sum < 0 ? -1 : 0;
+	legacy_grip_stack_words[1] = combined_grip_operand;
+	legacy_grip_stack_words[2] = combined_grip_operand < 0 ? -1 : 0;
+
+	if (carstate->car_demandedGrip <= carstate->car_surfacegrip_sum)
+		return;
+
+	/*
+	 * Sliding grip uses the post-deceleration speed when any wheel is on
+	 * grass, with the divisor selected by the number of grass wheels.
+	 */
+	grass_wheels = 0;
+	for (i = 0; i < 4; i++) {
+		if (carstate->car_surfaceWhl[i] == 4)
+			grass_wheels++;
+	}
+	grip_speed = speed_before_grip;
+	if (grass_wheels != 0) {
+		speed2_before_grip -=
+			speed2_before_grip / (unsigned short)grassDecelDivTab[grass_wheels];
+		grip_speed = speed2_before_grip;
+	}
+
+	/* Operand words left by the sliding-grip signed long division. */
+	speed_shr8 = grip_speed >> 8;
+	speed_squared = (unsigned long)speed_shr8 * speed_shr8;
+	scaled_combined_grip =
+		(long)carstate->car_surfacegrip_sum * 0x100L;
+	legacy_grip_stack_words[0] =
+		(short)((unsigned long)scaled_combined_grip >> 16);
+	legacy_grip_stack_words[1] = (short)speed_squared;
+	legacy_grip_stack_words[2] = (short)(speed_squared >> 16);
+}
 
 void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
 void upd_statef20_from_steer_input(char);
@@ -22,6 +102,8 @@ void player_op(char arg_carInputByte) {
 	char var_2C;
 	int var_2;
 	int var_1EpenaltyCounter;
+	unsigned int var_speedBeforeGrip;
+	unsigned int var_speed2BeforeGrip;
 	int si;
 
 	//return ported_player_op_(arg_carInputByte);
@@ -45,8 +127,19 @@ void player_op(char arg_carInputByte) {
 	}
 
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
+	legacy_grip_stack_words[0] = state.playerstate.car_lastrpm;
+	legacy_grip_stack_words[1] = (short)state.playerstate.car_speed;
+	legacy_grip_stack_words[2] = (short)state.playerstate.car_gearratio;
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
+	var_speedBeforeGrip = state.playerstate.car_speed;
+	var_speed2BeforeGrip = state.playerstate.car_speed2;
 	update_grip(&state.playerstate, &simd_player, 1);
+	update_legacy_grip_stack_words(
+		&state.playerstate,
+		&simd_player,
+		var_speedBeforeGrip,
+		var_speed2BeforeGrip
+	);
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
 	state.game_travDist += state.playerstate.car_speed2;
 	var_1C = state.field_45B;
