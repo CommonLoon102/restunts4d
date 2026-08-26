@@ -2818,7 +2818,7 @@ void preRender_patterned(unsigned unk, unsigned arg_color, unsigned arg_vertline
 	imagefunc = &preRender_line;
 	word_4031E = unk;
 	
-	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 0);
+	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
 void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int* arg_vertlines, unsigned var_A) {
