@@ -56,7 +56,10 @@ int shape3d_load_all() {
 	
 	mmgrofsdiff = mmgr_get_res_ofs_diff_scaled();
 	
-	if (mmgrofsdiff < 0xFDE8)	// ??
+	// The original only had the arena to draw on. The track shapes loaded
+	// below can come out of upper memory instead, so the arena check only
+	// has to hold when the pool cannot cover the same amount.
+	if (mmgrofsdiff < 0xFDE8 && !highpool_can_fit(0xFDE))	// ??
 		return 1;
 
 	game1ptr = file_load_3dres("game1");

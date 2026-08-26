@@ -32,6 +32,16 @@ void far* mmgr_alloc_resbytes(const char* name, long int size);
 unsigned long mmgr_get_res_ofs_diff_scaled(void);
 unsigned long mmgr_get_chunk_size_bytes(char far* ptr);
 
+void himem_init(void);
+void ems_shutdown(void);
+void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short largeonly);
+int highpool_owns_seg(unsigned short seg);
+int highpool_route(const char* name, unsigned short paras);
+int highpool_can_fit(unsigned short paras);
+void far* highpool_alloc(const char* name, unsigned short paras);
+void far* highpool_get_by_name(const char* name);
+void mmgr_rename_chunk(char far* ptr, const char* name);
+
 char far* locate_resource(char far* data, char* name, unsigned short fatal);
 char far* locate_shape_nofatal(char far* data, char* name);
 char far* locate_shape_fatal(char far* data, char* name);

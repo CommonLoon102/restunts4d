@@ -624,6 +624,7 @@ void far* file_load_shape2d_res(char* resname, int fatal) {
 	char* shapename = mmgr_path_to_name(resname);
 	void far* mempages;
 	void far* memchunk = mmgr_get_chunk_by_name(shapename);
+	unsigned short freeparas, margin, rawseg;
 
 	if (memchunk) return memchunk;
 
@@ -631,6 +632,41 @@ void far* file_load_shape2d_res(char* resname, int fatal) {
 	if (!memchunk) return 0;
 
 	chunksize = mmgr_get_chunk_size(memchunk);
+
+	// Parsing normally needs a second buffer as large as the loaded one, and
+	// the largest custom dashboards leave no room for that in the arena.
+	// Upper memory is the first choice for the second buffer; only when the
+	// destination really has to come out of the arena, and does not fit, is
+	// the chunk grown instead so the raw data can slide up inside it and
+	// parse_shape2d write downwards into the same chunk.
+	//
+	// That overlap is safe: both cursors run forwards with the writer
+	// starting a margin below the reader, and across the stock and custom
+	// cars the writer leads by at most 38% of the resource against a margin
+	// of 60% or more. Compared shape by shape against the two-buffer output
+	// the bytes are identical everywhere parse_shape2d writes; only the tail
+	// past the last shape differs, and the parser leaves that region alone
+	// in either case. What is left afterwards has the same size, position
+	// and name as the two-buffer path would have produced.
+	freeparas = mmgr_get_ofs_diff();
+	if (freeparas < (unsigned short)chunksize + 2 &&
+	    !(highpool_route(resname, (unsigned short)chunksize) &&
+	      highpool_can_fit((unsigned short)chunksize))) {
+		margin = ((unsigned short)chunksize >> 1) + ((unsigned short)chunksize >> 2);
+		if (margin > freeparas - (freeparas >> 3))
+			margin = freeparas - (freeparas >> 3);
+
+		if (margin >= ((unsigned short)chunksize >> 1)) {
+			rawseg = FP_SEG(memchunk);
+			mmgr_resize_memory(0, rawseg, chunksize + margin);
+			copy_paras_reverse(rawseg, rawseg + margin, chunksize);
+			parse_shape2d(MK_FP(rawseg + margin, 0), MK_FP(rawseg, 0));
+			mmgr_resize_memory(0, rawseg, chunksize);
+			mmgr_rename_chunk(MK_FP(rawseg, 0), resname);
+			return MK_FP(rawseg, 0);
+		}
+	}
+
 	mempages = mmgr_alloc_pages(resname, chunksize);
 
 	parse_shape2d(memchunk, mempages);

@@ -54,6 +54,197 @@ unsigned short dos_setblock(unsigned short blockseg, unsigned short newsize) {
 	return res;
 }
 
+void dos_free(unsigned short blockseg) {
+	__asm {
+		mov es, blockseg
+		mov ah, 49h
+		int 21h
+	}
+}
+
+// High-memory pool. A few render-only chunks are served from upper memory
+// (the fixed-mapped 64k EMS page frame and/or a DOS upper memory block) so
+// they stop competing with the car resources for the conventional arena
+// below A000. Both regions are plain addressable RAM once set up, so far
+// pointers into them behave like ordinary memory everywhere, including in
+// the original asm consumers. See highpool_names for what may go here.
+unsigned short ems_handle = 0;
+unsigned char ems_present = 0;
+
+typedef void (far* emsvoidfunctype)();
+extern void add_exit_handler(emsvoidfunctype exitfunc);
+
+void ems_shutdown(void) {
+	unsigned short handle;
+
+	if (ems_present == 0)
+		return;
+	ems_present = 0;
+	handle = ems_handle;
+	ems_handle = 0;
+	__asm {
+		mov ah, 45h
+		mov dx, handle
+		int 67h
+	}
+}
+
+static void ems_init(void) {
+	unsigned short vecseg, vecofs, frameseg, handle, stat;
+	unsigned char pageno;
+	int i;
+	char far* devname;
+	static char emmname[8] = { 'E', 'M', 'M', 'X', 'X', 'X', 'X', '0' };
+
+	ems_present = 0;
+
+	__asm {
+		push es
+		mov ax, 3567h
+		int 21h
+		mov vecseg, es
+		mov vecofs, bx
+		pop es
+	}
+	if (vecseg == 0 && vecofs == 0)
+		return;
+
+	// The int 67h vector points into the EMM device driver; its header
+	// carries the device name at offset 0Ah.
+	devname = MK_FP(vecseg, 0x0A);
+	for (i = 0; i < 8; i++) {
+		if (devname[i] != emmname[i])
+			return;
+	}
+
+	__asm {
+		mov ah, 40h
+		int 67h
+		mov stat, ax
+	}
+	if (stat & 0xFF00)
+		return;
+
+	__asm {
+		mov ah, 41h
+		int 67h
+		mov stat, ax
+		mov frameseg, bx
+	}
+	if (stat & 0xFF00)
+		return;
+
+	__asm {
+		mov ah, 43h
+		mov bx, 4
+		int 67h
+		mov stat, ax
+		mov handle, dx
+	}
+	if (stat & 0xFF00)
+		return;
+
+	for (i = 0; i < 4; i++) {
+		pageno = (unsigned char)i;
+		__asm {
+			mov ah, 44h
+			mov al, pageno
+			mov bl, pageno
+			xor bh, bh
+			mov dx, handle
+			int 67h
+			mov stat, ax
+		}
+		if (stat & 0xFF00) {
+			__asm {
+				mov ah, 45h
+				mov dx, handle
+				int 67h
+			}
+			return;
+		}
+	}
+
+	ems_handle = handle;
+	ems_present = 1;
+	add_exit_handler(ems_shutdown);
+	highpool_add_block(frameseg, 0x1000, 0);
+}
+
+static void umb_init(void) {
+	unsigned short oldstrat, oldlink, umbsize, umbseg;
+
+	__asm {
+		mov ax, 5800h
+		int 21h
+		mov oldstrat, ax
+	}
+	__asm {
+		mov ax, 5802h
+		int 21h
+		xor ah, ah
+		mov oldlink, ax
+	}
+	__asm {
+		mov ax, 5803h
+		mov bx, 1
+		int 21h
+	}
+	__asm {
+		mov ax, 5801h
+		mov bx, 40h		// first fit, high memory only
+		int 21h
+	}
+
+	// Probing with an impossible size makes DOS report the largest free
+	// block, which under the high-only strategy is the largest UMB.
+	umbsize = 0;
+	__asm {
+		mov ah, 48h
+		mov bx, 0FFFFh
+		int 21h
+		mov umbsize, bx
+	}
+
+	umbseg = 0;
+	if (umbsize >= 0x100)
+		umbseg = dos_alloc(umbsize);
+
+	__asm {
+		mov ax, 5801h
+		mov bx, oldstrat
+		int 21h
+	}
+	__asm {
+		mov ax, 5803h
+		mov bx, oldlink
+		int 21h
+	}
+
+	// Only accept real upper memory that cannot wrap the pool's segment
+	// arithmetic. This is the one region large enough for the full-screen
+	// window, so it is kept clear of small chunks.
+	if (umbseg >= 0xA000 && umbseg < 0xF000 &&
+	    (unsigned long)umbseg + umbsize <= 0xF000) {
+		highpool_add_block(umbseg, umbsize, 0);
+	} else if (umbseg > 0x10) {
+		dos_free(umbseg);
+	}
+}
+
+void himem_init(void) {
+	ems_init();
+	umb_init();
+	{ extern void highpool_reserve_window(void); highpool_reserve_window(); }
+}
+
+// The colour text page is 32k of real memory that nothing reads while the
+// game is in mode 13h: the framebuffer is at A000 and BIOS teletype output
+// follows the active mode, so B800 just sits there. Claim it only once the
+// video mode has actually been set, and only for mode 13h - in a text or
+// CGA mode those same bytes are the visible screen. Tools that keep writing
+// to the console (repldump) therefore never gain this block, which is why
+// the replay harness cannot exercise it.
 #else
 void pushregs() {}
 void popregs() {}
@@ -85,6 +276,442 @@ struct MEMCHUNK* resendptr2 = &resources[49]; // ditto
 struct MEMCHUNK* resptr1 = resources;
 struct MEMCHUNK* resptr2 = resources;
 
+// No upper memory outside DOS; every chunk stays in the regular arena.
+void ems_shutdown(void) {}
+void himem_init(void) {}
+
+#endif
+
+#ifdef RESTUNTS_DOS
+
+// High-memory pool core. The pool is a set of fixed upper-memory blocks with
+// a small chunk table, kept fully separate from the resources[] arena table
+// whose invariants assume one contiguous range. Chunks are diverted into the
+// pool by name in mmgr_alloc_pages; every other memory manager entry point
+// recognizes pool chunks by segment and handles them in place (no cache
+// moves and no compaction - all pool consumers hold position-independent far
+// pointers). With no blocks added the pool is inert and every call falls
+// through to the original arena behavior.
+#define HIGHPOOL_MAXBLOCKS 6
+#define HIGHPOOL_MAXCHUNKS 32
+
+struct HIGHBLOCK {
+	unsigned short blockseg;
+	unsigned short blockparas;
+	unsigned short blocklarge; // 1 = video memory, full-screen window only
+};
+
+struct HIGHCHUNK {
+	char resname[12];
+	unsigned short resseg;
+	unsigned short resparas;
+	unsigned short resstate; // 0 = free, 1 = cached, 2 = live, 3 = reserved
+};
+
+// The full-screen window is the largest single allocation the game makes and
+// the last one it asks for, by which time the pool is full of smaller
+// resources and the arena has been whittled down - so it is the one that
+// fails. Set its space aside before anything else can take it. 0xFA2 paras
+// is 320x200 plus the bitmap header.
+#define HIGHPOOL_WINDOW_PARAS 0xFA2
+#define HIGHPOOL_WINDOW_NAME "MCGA WINDOW"
+
+static struct HIGHCHUNK* highpool_reserved_window(void);
+
+static struct HIGHBLOCK highblocks[HIGHPOOL_MAXBLOCKS];
+static struct HIGHCHUNK highchunks[HIGHPOOL_MAXCHUNKS];
+static int highblockcount = 0;
+
+// Chunks allowed in upper memory. The list is deliberately short: it was
+// established by replay regression, not by reasoning about what "looks"
+// render-only. Anything whose bytes can be observed before being written
+// must stay in the conventional arena, because the arena position it would
+// have taken holds remnants of earlier chunks and the original executable
+// observes exactly those remnants.
+//
+// Known to break replays if moved here, do not add them back:
+//  - "trakdata": its address participates in legacy stack residue, and its
+//    23 sub-blocks must also stay one contiguous allocation.
+//  - "cvx": init_game_state only clears one field per entry, so
+//    restore_gamestate copies bytes that were never written.
+//  - "*.vce"/"*.sfx"/"*.drv" and the car "st????.3sh"/".p3s" containers.
+static const char* highpool_names[] = {
+	"MCGA WINDOW",
+	"polyinfo",
+	"sdgame",
+	"main.res",
+	"fontdef.fnt",
+	"fontn.fnt",
+	"fontled.fnt",
+	"game.pre",
+	"game.res",
+	"game1.p3s",
+	"game2.p3s",
+	"game1.3sh",
+	"game2.3sh",
+	"sdgame2.PVS",
+	"city.PVS",
+	"desert.PVS",
+	"alpine.PVS",
+	"country.PVS",
+	"tropical.PVS",
+	0
+};
+
+void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short largeonly) {
+	unsigned short p;
+	unsigned short far* wipe;
+	int i, k;
+
+	if (paras == 0)
+		return;
+
+	// Never hand the same paragraphs out twice: DOS may offer a block that
+	// already belongs to the pool.
+	for (k = 0; k < highblockcount; k++) {
+		if (seg < highblocks[k].blockseg + highblocks[k].blockparas &&
+		    highblocks[k].blockseg < seg + paras)
+			return;
+	}
+
+	if (highblockcount >= HIGHPOOL_MAXBLOCKS)
+		return;
+
+	// Fresh conventional memory is zero-filled at boot; give the pool the
+	// same starting content so reads of never-written chunk bytes see the
+	// same values as they would in the regular arena. Video memory is left
+	// alone: it holds the visible screen, and its only tenant overwrites it
+	// completely anyway.
+	if (!largeonly) {
+		for (p = 0; p < paras; p++) {
+			wipe = MK_FP(seg + p, 0);
+			for (i = 0; i < 8; i++)
+				wipe[i] = 0;
+		}
+	}
+
+	highblocks[highblockcount].blockseg = seg;
+	highblocks[highblockcount].blockparas = paras;
+	highblocks[highblockcount].blocklarge = largeonly;
+	highblockcount++;
+}
+
+int highpool_owns_seg(unsigned short seg) {
+	int i;
+	for (i = 0; i < highblockcount; i++) {
+		if (seg >= highblocks[i].blockseg &&
+		    seg < highblocks[i].blockseg + highblocks[i].blockparas)
+			return 1;
+	}
+	return 0;
+}
+
+static struct HIGHCHUNK* highpool_chunk_by_seg(unsigned short seg) {
+	int i;
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate != 0 && highchunks[i].resseg == seg)
+			return &highchunks[i];
+	}
+	return 0;
+}
+
+int highpool_route(const char* name, unsigned short paras) {
+	int i, j;
+	const char* entry;
+
+	if (highblockcount == 0)
+		return 0;
+
+	// Menus and instruments create many small windows under the same name.
+	// Pool space is zero-sum, and giving it to them only displaces bigger
+	// chunks, so only the full-screen window is worth diverting.
+	if (paras < 0xF00 && name[0] == 'M' && name[1] == 'C')
+		return 0;
+
+	for (i = 0; highpool_names[i] != 0; i++) {
+		entry = highpool_names[i];
+		for (j = 0; ; j++) {
+			if (entry[j] != name[j])
+				break;
+			if (entry[j] == 0)
+				return 1;
+		}
+	}
+	return 0;
+}
+
+// First fit inside one block: bump the candidate past any conflicting chunk
+// until the request fits or the block ends.
+static unsigned short highpool_find_gap(struct HIGHBLOCK* block, unsigned short paras,
+                                        int dropcached) {
+	unsigned short cand, blockend;
+	int i, conflict;
+
+	cand = block->blockseg;
+	blockend = block->blockseg + block->blockparas;
+
+	for (;;) {
+		if (paras > blockend - cand || cand >= blockend)
+			return 0;
+		conflict = 0;
+		for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+			if (highchunks[i].resstate == 0)
+				continue;
+			if (dropcached && highchunks[i].resstate == 1)
+				continue; // discardable, so it does not block the search
+			if (highchunks[i].resseg < cand + paras &&
+			    cand < highchunks[i].resseg + highchunks[i].resparas) {
+				cand = highchunks[i].resseg + highchunks[i].resparas;
+				conflict = 1;
+				break;
+			}
+		}
+		if (!conflict)
+			return cand;
+	}
+}
+
+// Discard cached chunks overlapping a placement, exactly as the arena
+// allocator drops its own cached blocks when it needs the room back.
+static void highpool_drop_cached(unsigned short seg, unsigned short paras) {
+	int i;
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate != 1)
+			continue;
+		if (highchunks[i].resseg < seg + paras &&
+		    seg < highchunks[i].resseg + highchunks[i].resparas)
+			highchunks[i].resstate = 0;
+	}
+}
+
+// Does a chunk of this size fit at exactly this segment?
+static int highpool_fits_at(unsigned short seg, unsigned short paras) {
+	int i, b, inblock;
+
+	inblock = 0;
+	for (b = 0; b < highblockcount; b++) {
+		if (seg >= highblocks[b].blockseg &&
+		    seg + paras <= highblocks[b].blockseg + highblocks[b].blockparas) {
+			inblock = 1;
+			break;
+		}
+	}
+	if (!inblock)
+		return 0;
+
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate == 0)
+			continue;
+		if (highchunks[i].resseg == seg)
+			continue;
+		if (highchunks[i].resseg < seg + paras &&
+		    seg < highchunks[i].resseg + highchunks[i].resparas)
+			return 0;
+	}
+	return 1;
+}
+
+int highpool_can_fit(unsigned short paras) {
+	int i;
+
+	if (paras <= HIGHPOOL_WINDOW_PARAS && highpool_reserved_window() != 0)
+		return 1;
+
+	for (i = 0; i < highblockcount; i++) {
+		if (highblocks[i].blocklarge && paras < 0xF00)
+			continue;
+		if (highpool_find_gap(&highblocks[i], paras, 1) != 0)
+			return 1;
+	}
+	return 0;
+}
+
+static struct HIGHCHUNK* highpool_reserved_window(void) {
+	int i;
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate == 3)
+			return &highchunks[i];
+	}
+	return 0;
+}
+
+void highpool_reserve_window(void) {
+	struct HIGHCHUNK* slot = 0;
+	unsigned short seg;
+	int i, b;
+
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate == 0) {
+			slot = &highchunks[i];
+			break;
+		}
+	}
+	if (slot == 0)
+		return;
+
+	for (b = 0; b < highblockcount; b++) {
+		seg = highpool_find_gap(&highblocks[b], HIGHPOOL_WINDOW_PARAS, 0);
+		if (seg != 0) {
+			const char* nm = HIGHPOOL_WINDOW_NAME;
+			for (i = 0; i < 12; i++) {
+				slot->resname[i] = nm[i];
+				if (nm[i] == 0)
+					break;
+			}
+			for (; i < 12; i++)
+				slot->resname[i] = 0;
+			slot->resseg = seg;
+			slot->resparas = HIGHPOOL_WINDOW_PARAS;
+			slot->resstate = 3;
+			return;
+		}
+	}
+}
+
+void far* highpool_alloc(const char* name, unsigned short paras) {
+	int i, b, dropcached;
+	unsigned short seg;
+	struct HIGHCHUNK* slot = 0;
+
+	// Claim the standing reservation rather than hunting for a gap.
+	if (paras <= HIGHPOOL_WINDOW_PARAS) {
+		struct HIGHCHUNK* res = highpool_reserved_window();
+		if (res != 0) {
+			const char* nm = HIGHPOOL_WINDOW_NAME;
+			for (i = 0; ; i++) {
+				if (nm[i] == 0 && (name[i] == 0 || i == 12)) {
+					res->resstate = 2;
+					return MK_FP(res->resseg, 0);
+				}
+				if (i == 12 || nm[i] != name[i])
+					break;
+			}
+		}
+	}
+
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate == 0) {
+			slot = &highchunks[i];
+			break;
+		}
+	}
+	if (slot == 0)
+		return MK_FP(0, 0);
+
+	// Best fit rather than first fit: put each chunk in the tightest block
+	// that still holds it, so one large run of free space stays intact for
+	// the chunks that actually need it (above all the 62k window). A first
+	// pass leaves cached chunks alone so they can still be revived; only if
+	// nothing fits are they discarded to make room.
+	for (dropcached = 0; dropcached < 2; dropcached++) {
+		unsigned short bestseg = 0, bestslack = 0;
+		int bestb = -1;
+		for (b = 0; b < highblockcount; b++) {
+			unsigned short cand, slack;
+			if (highblocks[b].blocklarge && paras < 0xF00)
+				continue;
+			cand = highpool_find_gap(&highblocks[b], paras, dropcached);
+			if (cand == 0)
+				continue;
+			slack = highblocks[b].blockseg + highblocks[b].blockparas - cand - paras;
+			if (bestb < 0 || slack < bestslack) {
+				bestb = b;
+				bestseg = cand;
+				bestslack = slack;
+			}
+		}
+		if (bestb >= 0) {
+			b = bestb;
+			seg = bestseg;
+			if (dropcached)
+				highpool_drop_cached(seg, paras);
+			break;
+		}
+		b = highblockcount;
+		seg = 0;
+	}
+
+	for (; b < highblockcount; b++) {
+		if (seg != 0) {
+			for (i = 0; i < 12; i++) {
+				slot->resname[i] = name[i];
+				if (name[i] == 0)
+					break;
+			}
+			for (; i < 12; i++)
+				slot->resname[i] = 0;
+			slot->resseg = seg;
+			slot->resparas = paras;
+			slot->resstate = 2;
+			return MK_FP(seg, 0);
+		}
+	}
+	return MK_FP(0, 0);
+}
+
+// Cache lookup mirroring mmgr_get_chunk_by_name: a cached pool chunk is
+// revived in place instead of being copied back into the arena.
+void far* highpool_get_by_name(const char* name) {
+	int i, j, found;
+	struct HIGHCHUNK* chunk;
+
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		chunk = &highchunks[i];
+		if (chunk->resstate != 1)
+			continue;
+		found = 0;
+		for (j = 0; j < 12; j++) {
+			if (name[j] == 0) {
+				if (chunk->resname[j] == '.' || chunk->resname[j] == 0)
+					found = 1;
+				break;
+			}
+			if (name[j] != chunk->resname[j])
+				break;
+		}
+		if (j == 12)
+			found = 1;
+		if (found) {
+			chunk->resstate = 2;
+			return MK_FP(chunk->resseg, 0);
+		}
+	}
+	return MK_FP(0, 0);
+}
+
+#else
+
+// Upper memory is a DOS notion; elsewhere every request simply falls through
+// to the ordinary arena.
+void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short largeonly) {
+	(void)seg; (void)paras; (void)largeonly;
+}
+
+int highpool_owns_seg(unsigned short seg) {
+	(void)seg;
+	return 0;
+}
+
+int highpool_route(const char* name, unsigned short paras) {
+	(void)name; (void)paras;
+	return 0;
+}
+
+int highpool_can_fit(unsigned short paras) {
+	(void)paras;
+	return 0;
+}
+
+void far* highpool_alloc(const char* name, unsigned short paras) {
+	(void)name; (void)paras;
+	return 0;
+}
+
+void far* highpool_get_by_name(const char* name) {
+	(void)name;
+	return 0;
+}
+
 #endif
 
 const char* mmgr_path_to_name(const char* filename) {
@@ -111,6 +738,15 @@ void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
 	struct MEMCHUNK* ressi;
 	const char* chunkname;
 	unsigned rax, rdx;
+
+#ifdef RESTUNTS_DOS
+	if (highpool_route(mmgr_path_to_name(arg_0), arg_2)) {
+		void far* highptr = highpool_alloc(mmgr_path_to_name(arg_0), arg_2);
+		if (FP_SEG(highptr) != 0)
+			return highptr;
+		// The pool is full; fall through to the regular arena.
+	}
+#endif
 
 	resdi = resptr2;
 	ressi = resendptr1;
@@ -224,6 +860,17 @@ void far* mmgr_free(char far* ptr) {
 
 	ressi = resptr2;
 	ptrseg = FP_SEG(ptr);
+
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(ptrseg)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(ptrseg);
+		if (highchunk == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
+		highchunk->resstate =
+			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 1;
+		return MK_FP(ptrseg, FP_OFF(ptr));
+	}
+#endif
 
 	while (1) {
 		if (ressi == resptr1) 
@@ -378,8 +1025,17 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 	struct MEMCHUNK* resdi;
 	int found = 0;
 	
-	ressi = resendptr1;
 	pcdi = mmgr_path_to_name(name);
+
+#ifdef RESTUNTS_DOS
+	{
+		void far* highptr = highpool_get_by_name(pcdi);
+		if (FP_SEG(highptr) != 0)
+			return highptr;
+	}
+#endif
+
+	ressi = resendptr1;
 
 	for (; ressi < resendptr2; ressi++) {
 		regbx = 0;
@@ -442,6 +1098,21 @@ void mmgr_release(char far* ptr) {
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(regax)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+		if (highchunk == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+		highchunk->resstate =
+			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 0;
+		__asm {
+			pop bx
+		}
+		popregs();
+		return;
+	}
+#endif
+
 	for (;;) {
 		if (ressi == resptr1) 
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
@@ -463,6 +1134,34 @@ void mmgr_release(char far* ptr) {
 	popregs();
 }
 
+// Rename a live arena chunk, so a buffer filled under one name can be handed
+// on under the name the caller expects.
+void mmgr_rename_chunk(char far* ptr, const char* name) {
+	int i;
+	unsigned short regax;
+	const char* chunkname;
+	struct MEMCHUNK* ressi;
+
+	regax = FP_SEG(ptr);
+	ressi = resptr2;
+
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(regax))
+		return;
+#endif
+
+	for (;;) {
+		if (ressi == resptr1)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+		if (regax == ressi->resofs) break;
+		ressi--;
+	}
+
+	chunkname = mmgr_path_to_name(name);
+	for (i = 0; i < 0xC; i++)
+		ressi->resname[i] = chunkname[i];
+}
+
 unsigned short mmgr_get_chunk_size(char far* ptr) {
 	int i;
 	unsigned short regax, regbx, regcx, regdx;
@@ -472,6 +1171,15 @@ unsigned short mmgr_get_chunk_size(char far* ptr) {
 
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
+
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(regax)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+		if (highchunk == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+		return highchunk->resparas;
+	}
+#endif
 
 	for (;;) {
 		if (ressi == resptr1) 
@@ -494,6 +1202,25 @@ unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, un
 	(void)arg_0;
 	regax = arg_2;
 	ressi = resptr2;
+
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(regax)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+		if (highchunk == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", arg_2);
+		if (arg_4 <= highchunk->resparas) {
+			highchunk->resparas = arg_4;
+			popregs();
+			return arg_4;
+		}
+		if (highpool_fits_at(regax, arg_4)) {
+			highchunk->resparas = arg_4;
+			popregs();
+			return 0;
+		}
+		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
+	}
+#endif
 
 	for (;;) {
 		if (ressi == resptr1)
@@ -548,6 +1275,15 @@ void far* mmgr_op_unk(char far* ptr) {
 
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
+
+#ifdef RESTUNTS_DOS
+	if (highpool_owns_seg(regax)) {
+		if (highpool_chunk_by_seg(regax) == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+		// Pool chunks are never compacted; they stay where they are.
+		return MK_FP(regax, 0);
+	}
+#endif
 
 	for (;;) {
 		if (ressi == resptr1)

@@ -804,10 +804,13 @@ int setup_player_cars(void) {
 	}
 
 	if (video_flag5_is0 == 0) {
-		
-		var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1);
-		if (mmgr_get_res_ofs_diff_scaled() <= var_8) {
-			return 1;
+		// The free-arena check only applies when the window has to come from
+		// the arena; 0xFA2 paras is the full 320x200 window incl. header.
+		if (!highpool_can_fit(0xFA2)) {
+			var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1);
+			if (mmgr_get_res_ofs_diff_scaled() <= var_8) {
+				return 1;
+			}
 		}
 		wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 	}
@@ -1259,7 +1262,8 @@ void init_main(int argc, char* argv[])
 	video_flag4_is1 = 1;
 
 	mmgr_alloc_a000();
-	
+	himem_init();
+
 	video_flag5_is0 = 0;
 	video_flag6_is1 = 1;
 	

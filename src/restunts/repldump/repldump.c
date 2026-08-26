@@ -345,6 +345,9 @@ int stuntsmain(int argc, char* argv[]) {
 	        kb_exit_handler();
 	        kb_shift_checking1();
 	        video_set_mode7();
+#ifndef RESTUNTS_ORIGINAL
+	        ems_shutdown();
+#endif
 	}
 
 	return 0;
