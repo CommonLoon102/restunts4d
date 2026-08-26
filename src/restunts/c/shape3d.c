@@ -3322,7 +3322,7 @@ asm {
     or      cx, cx
     //jle     short loc_31BA8  // TOO FAR JUMP??
 
-ja _nole
+jg _nole
 jmp loc_31BA8
 	
 
