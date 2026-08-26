@@ -2802,14 +2802,13 @@ void preRender_wheel_helper4(unsigned arg_color, unsigned arg_vertlinecount, str
 extern unsigned word_4031E;
 extern unsigned word_40320;
 
-void preRender_unk(unsigned arg_color, unsigned unk, unsigned arg_vertlinecount, struct POINT2D* arg_vertlines, unsigned unk2) {
-	fatal_error("untested - what causes this?");
+void preRender_unk(unsigned unk, unsigned arg_color, unsigned unk2, unsigned arg_vertlinecount, struct POINT2D* arg_vertlines) {
 	spritefunc = &draw_unknown_lines;
 	imagefunc = &preRender_line;
 
 	word_4031E = unk;
 	word_40320 = unk2;
-	preRender_default_impl(arg_color, arg_vertlinecount, &arg_vertlines, 1);
+	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
 void preRender_patterned(unsigned unk, unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D* arg_vertlines) {
