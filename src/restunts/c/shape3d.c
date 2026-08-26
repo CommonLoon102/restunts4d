@@ -2853,8 +2853,7 @@ void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int*
 	var_10 = arg_vertlines;
 	var_14 = arg_vertlines;
 	if (arg_vertlinecount - 1 == 0) {
-		fatal_error("untested imagefunc");
-		imagefunc(var_vertlineptr[0], var_vertlineptr[1], var_vertlineptr[0], var_vertlineptr[0], arg_color);
+		imagefunc(var_vertlineptr[0], var_vertlineptr[1], var_vertlineptr[0], var_vertlineptr[1], arg_color);
 		return ;
 	}
 
