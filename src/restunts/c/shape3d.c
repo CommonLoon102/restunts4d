@@ -5022,7 +5022,9 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 	int var_8;
 	int var_4;
 	//return ported_sub_204AE_(arg_verts, arg_4, arg_6, arg_8, arg_vecarray, arg_vecptr);
-	if (arg_8[4] != 0) {
+	// arg_8[4] caches the steering angle the wheel vertices were last built
+	// for, so the test is against arg_4, not against zero.
+	if (arg_8[4] != arg_4) {
 		var_C = sin_fast(arg_4 / 2);
 		var_2 = cos_fast(arg_4 / 2);
 
