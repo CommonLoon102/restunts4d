@@ -66,7 +66,7 @@ jobs:
     outputs:
       exe-artifact: ${{ steps.names.outputs.value }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Publish the artifact name
         id: names
@@ -113,7 +113,7 @@ jobs:
           (( missing == 0 )) || exit 1
           ls -l dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.EXE_ARTIFACT }}
           path: dist/*.EXE
@@ -130,14 +130,14 @@ jobs:
       matrix:
         shard: ${{ fromJSON(needs.plan.outputs.shards) }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install DOSBox-X
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends dosbox-x
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: ${{ needs.build.outputs.exe-artifact }}
           path: exes
@@ -202,7 +202,7 @@ jobs:
           mkdir -p partitions
           cp "${GAME_DIR:?}"/partition_*.txt "${GAME_DIR:?}"/log_*.txt partitions/
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: partitions-${{ matrix.shard }}
@@ -219,9 +219,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: partitions-*
           merge-multiple: true
@@ -232,7 +232,7 @@ jobs:
           TOTAL: ${{ needs.plan.outputs.total }}
         run: tools/scripts/rpl2statemerge.sh partitions "$TOTAL" partitions_all.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: partitions_all
           path: partitions_all.txt
