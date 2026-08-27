@@ -197,7 +197,7 @@ loc_100D2:
     add     sp, 4
     mov     word ptr fontnptr, ax
     mov     word ptr fontnptr+2, dx
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
     call    init_polyinfo
     mov     si, 6BF3h       ; bytes to allocate
     mov     ax, si
@@ -1891,7 +1891,7 @@ loc_11210:
     add     sp, 0Ah
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     lea     ax, [bp+var_A]
     push    ax
@@ -1945,7 +1945,7 @@ loc_11210:
     push    ax
     call    font_draw_text
     add     sp, 6
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_112E5:
     mov     ax, offset aTedit; "tedit"
     push    ax
@@ -2484,7 +2484,7 @@ highscore_text_unk proc far
     add     sp, 0Ah
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     mov     [bp+var_A], 0
     jmp     loc_118A0
@@ -2562,7 +2562,7 @@ loc_118C1:
     mov     [bp+var_2], ax
     jmp     loc_1181F
 loc_118CA:
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
     mov     sp, bp
     pop     bp
     retf
@@ -3460,7 +3460,7 @@ loc_120A3:
     add     sp, 4
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     push    dialog_fnt_colour; the graph
     sub     ax, ax
@@ -3507,7 +3507,7 @@ loc_120A3:
     push    ax
     call    font_draw_text
     add     sp, 6
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
     sub     ax, ax
     push    ax
     push    word_407F8
@@ -3706,7 +3706,7 @@ loc_12344:
     mov     framespersec, ax
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     mov     ax, offset aDes_1; "des"
     push    ax
@@ -3750,7 +3750,7 @@ loc_123CB:
     les     bx, [bp+var_FC]
     cmp     byte ptr es:[bx], 0
     jnz     short loc_1237E
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
     call    timer_get_delta_alt
     mov     [bp+var_F2], 0FFh
     mov     [bp+var_104_rc.rc_left], 0
@@ -4594,7 +4594,7 @@ loc_12C66:
     mov     word ptr [bp+var_1A+2], dx
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     push    dialog_fnt_colour
     sub     ax, ax
@@ -4639,7 +4639,7 @@ loc_12CED:
     les     bx, [bp+var_1A]
     cmp     byte ptr es:[bx], 0
     jnz     short loc_12C9D
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_12CFB:
     mov     al, [bp+var_14]
     cmp     [bp+var_1C], al
@@ -6170,7 +6170,7 @@ loc_13B57:
 loc_13B6E:
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
 loc_13B7E:
     les     bx, [bp+var_86]
@@ -6294,7 +6294,7 @@ loc_13CA0:
     jz      short loc_13CA9
     jmp     loc_13B7E
 loc_13CA9:
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
     inc     di
 loc_13CAF:
     cmp     [bp+var_7A], di
@@ -6318,7 +6318,7 @@ loc_13CD0:
     jz      short loc_13D06
     push    word ptr fontnptr+2
     push    word ptr fontnptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     mov     bx, [bp+var_40]
     mov     resID_byte1[bx], 0
@@ -6329,7 +6329,7 @@ loc_13CD0:
     push    ax
     call    font_draw_text
     add     sp, 6
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_13D06:
     mov     [bp+var_14], 0
     cmp     [bp+var_6E], 0

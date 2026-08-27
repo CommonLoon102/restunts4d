@@ -87,8 +87,8 @@ seg008 segment byte public 'STUNTSC' use16
     public mouse_timer_sprite_unk
     public ported_file_load_audiores_
     public audio_unload
-    public font_set_fontdef2
-    public font_set_fontdef
+    public ported_font_set_fontdef2_
+    public ported_font_set_fontdef_
     public format_frame_as_string
     public ported_get_super_random_
     public ported_file_load_resource_
@@ -4334,14 +4334,13 @@ audio_unload proc far
     mov     is_audioloaded, 0
     retf
 audio_unload endp
-font_set_fontdef2 proc far
+ported_font_set_fontdef2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    word ptr [bp+arg_0+2]
+    jmp     font_set_fontdef2
+    nop
     push    word ptr [bp+arg_0]
     call    set_fontdefseg
     add     sp, 4
@@ -4352,16 +4351,18 @@ font_set_fontdef2 proc far
     retf
     ; align 2
     db 144
-font_set_fontdef2 endp
-font_set_fontdef proc far
+ported_font_set_fontdef2_ endp
+ported_font_set_fontdef_ proc far
 
-    push    word ptr fontdefptr+2
-    push    word ptr fontdefptr
+    jmp     font_set_fontdef
+    nop
+    nop
+    nop
     push    cs
-    call near ptr font_set_fontdef2
+    call near ptr ported_font_set_fontdef2_
     add     sp, 4
     retf
-font_set_fontdef endp
+ported_font_set_fontdef_ endp
 format_frame_as_string proc far
     var_16 = word ptr -22
     var_12 = byte ptr -18

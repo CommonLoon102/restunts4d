@@ -74,6 +74,7 @@ extern int dialog_fnt_colour;
 extern char transformedshape_counter;
 extern int word_449FE;
 extern struct SPRITE far* wndsprite;
+extern int fontdef_unk_0E;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 void transformed_shape_add_for_sort(int a, int b);
@@ -84,6 +85,7 @@ struct RECTANGLE* init_crak(int frame, int top, int height);
 struct RECTANGLE* do_sinking(int frame, int top, int height);
 struct RECTANGLE* intro_draw_text(char* str, int a, int b, int c, int d);
 void font_set_fontdef2(void far* data);
+void set_fontdefseg(void far* data);
 void format_frame_as_string(char* s, int time, int c);
 void shape_op_explosion(int a, void far* shp, int x, int y);
 void heapsort_by_order(int n, int* heap, int* data);
@@ -100,6 +102,15 @@ void init_rect_arrays(void) {
 		rect_array_unk[i] = cliprect_unk;
 		rect_array_unk2[i] = cliprect_unk;
 	}
+}
+
+void font_set_fontdef2(void far* data) {
+	set_fontdefseg(data);
+	fontdef_unk_0E = ((unsigned short far*)data)[7];
+}
+
+void font_set_fontdef(void) {
+	font_set_fontdef2(fontdefptr);
 }
 
 void sub_19F14(struct RECTANGLE* cliprect) {

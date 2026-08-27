@@ -3650,7 +3650,7 @@ loc_1C1DA:
     add     sp, 6
     push    word ptr fontledresptr+2
     push    word ptr fontledresptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_1C238
@@ -3690,7 +3690,7 @@ loc_1C238:
     call    intro_draw_text
     add     sp, 0Ah
 loc_1C256:
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_1C25B:
     cmp     slow_video_mgmt_copy, 0
     jnz     short loc_1C265

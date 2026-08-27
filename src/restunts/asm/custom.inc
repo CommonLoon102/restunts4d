@@ -191,6 +191,8 @@ extrn kb_check:proc
 ; externs for implementations in frame.c
 extrn sub_19F14:proc
 extrn init_rect_arrays:proc
+extrn font_set_fontdef2:proc
+extrn font_set_fontdef:proc
 extrn update_frame:proc
 
 ; externs for implementations in state.c

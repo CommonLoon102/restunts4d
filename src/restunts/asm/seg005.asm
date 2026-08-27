@@ -3516,7 +3516,7 @@ loc_23C10:
     add     sp, 4
     push    word ptr fontledresptr+2
     push    word ptr fontledresptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     mov     ax, 0BBh ; '�'
     push    ax
@@ -3526,7 +3526,7 @@ loc_23C10:
     push    ax
     call    sub_345BC
     add     sp, 6
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_23C66:
     mov     ax, [bp+arg_4]
     add     ax, elapsed_time1
@@ -3556,7 +3556,7 @@ loc_23C66:
     call    mouse_draw_opaque_check
     push    word ptr fontledresptr+2
     push    word ptr fontledresptr
-    call    font_set_fontdef2
+    call    ported_font_set_fontdef2_
     add     sp, 4
     mov     ax, 0BBh ; '�'
     push    ax
@@ -3566,7 +3566,7 @@ loc_23C66:
     push    ax
     call    sub_345BC
     add     sp, 6
-    call    font_set_fontdef
+    call    ported_font_set_fontdef_
 loc_23CD7:
     mov     al, byte_4432A
     cbw
