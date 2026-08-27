@@ -316,11 +316,11 @@ loc_10176:
     sub     si, si
     mov     ax, 1
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     mov     ax, 1
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     call    ported_mouse_draw_opaque_check_
     mov     kbormouse, 0
@@ -1430,7 +1430,7 @@ loc_10DA0:
     add     sp, 0Ah
     call    ported_mouse_draw_transparent_check_
     push    [bp+var_40]
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     mov     [bp+var_46], ax
     or      ax, ax
@@ -1484,7 +1484,7 @@ loc_10E66:
     call    timer_get_delta_alt
     mov     [bp+var_40], ax
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     mov     [bp+var_46], ax
     add     si, [bp+var_40]

@@ -251,7 +251,7 @@ loc_21D2C:
 loc_21D5C:
     mov     ax, 1
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     cmp     ax, 1Bh
     jz      short loc_21D7B
@@ -851,7 +851,7 @@ loc_22347:
 loc_2239F:
     mov     ax, 1
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     cmp     ax, 1Bh
     jz      short loc_223CD
@@ -4874,7 +4874,7 @@ loc_248C4:
     call near ptr loop_game
     add     sp, 6
     push    [bp+var_18]
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
 loc_248F4:
     test    byte ptr kbjoyflags, 30h
@@ -4997,7 +4997,7 @@ loc_24A17:
 loc_24A19:
     mov     ax, 3E8h
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     jmp     loc_24D5E
 loc_24A28:
@@ -5077,7 +5077,7 @@ loc_24AB8:
     call near ptr loop_game
     add     sp, 6
     push    [bp+var_18]
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
 loc_24AEA:
     test    byte ptr kbjoyflags, 30h
@@ -5219,7 +5219,7 @@ loc_24BF8:
     add     sp, 6
     mov     ax, 1
     push    ax
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
 loc_24C3A:
     mov     ax, elapsed_time2

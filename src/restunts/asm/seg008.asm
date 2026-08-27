@@ -54,7 +54,7 @@ seg008 segment byte public 'STUNTSC' use16
     public do_savefile_dialog
     public parse_filepath_separators
     public input_checking
-    public input_do_checking
+    public ported_input_do_checking_
     public ported_file_load_resfile_
     public ported_unload_resource_
     public ported_locate_shape_alt_
@@ -2454,14 +2454,13 @@ loc_289D9:
     ; align 2
     db 144
 input_checking endp
-input_do_checking proc far
+ported_input_do_checking_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    [bp+arg_0]
+    jmp     input_do_checking
+    nop
     push    cs
     call near ptr input_checking
     add     sp, 2
@@ -2469,7 +2468,7 @@ input_do_checking proc far
     retf
     ; align 2
     db 144
-input_do_checking endp
+ported_input_do_checking_ endp
 ported_file_load_resfile_ proc far
     var_54 = byte ptr -84
     var_4 = word ptr -4
@@ -3430,7 +3429,7 @@ loc_2914A:
     add     di, ax
     push    ax
     push    cs
-    call near ptr input_do_checking
+    call near ptr ported_input_do_checking_
     add     sp, 2
     mov     si, ax
     or      si, si
@@ -4036,7 +4035,7 @@ loc_29670:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_do_checking
+    call near ptr ported_input_do_checking_
     add     sp, 2
     mov     di, ax
     or      di, di

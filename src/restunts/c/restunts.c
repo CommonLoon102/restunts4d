@@ -449,6 +449,13 @@ int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
 	return -1;
 }
 
+extern int input_checking(int frame_delta);
+
+int input_do_checking(int frame_delta)
+{
+	return input_checking(frame_delta);
+}
+
 extern int font_op2(const char* text);
 
 int font_op2_alt(const char* text)

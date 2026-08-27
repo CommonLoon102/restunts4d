@@ -6773,7 +6773,7 @@ loc_1DDFC:
     call    ported_mouse_draw_transparent_check_
 loc_1DE19:
     push    [bp+var_40]
-    call    input_do_checking
+    call    ported_input_do_checking_
     add     sp, 2
     or      ax, ax
     jz      short loc_1DE2E
