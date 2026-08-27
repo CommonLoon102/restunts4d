@@ -71,7 +71,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_plane_rotate_op_
     public ported_plane_origin_op_
     public ported_vec_normalInnerProduct_
-    public state_op_unk
+    public ported_state_op_unk_
     public sub_19BA0
     public ported_setup_aero_trackdata_
 opponent_op proc far
@@ -3413,7 +3413,7 @@ loc_1667A:
     lea     ax, [si+2]
     push    ax
     push    cs
-    call near ptr state_op_unk
+    call near ptr ported_state_op_unk_
     add     sp, 6
 loc_16710:
     mov     al, startcol2
@@ -8774,7 +8774,7 @@ loc_1967F:
     push    [bx+CARSTATE.car_rotate.vx]
     push    [bp+arg_MplayerFlag]
     push    cs
-    call near ptr state_op_unk
+    call near ptr ported_state_op_unk_
     add     sp, 6
     cmp     [bp+arg_MplayerFlag], 0
     jnz     short loc_196B3
@@ -9213,7 +9213,7 @@ ported_vec_normalInnerProduct_ proc far
     ; align 2
     db 144
 ported_vec_normalInnerProduct_ endp
-state_op_unk proc far
+ported_state_op_unk_ proc far
     var_18 = word ptr -24
     var_16 = word ptr -22
     var_14 = word ptr -20
@@ -9230,10 +9230,10 @@ state_op_unk proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 18h
-    push    di
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     state_op_unk
+    db      144
+    db      144
     push    si
     cmp     [bp+arg_0], 2
     jge     short loc_19A5E
@@ -9383,7 +9383,7 @@ loc_19B99:
     retf
     ; align 2
     db 144
-state_op_unk endp
+ported_state_op_unk_ endp
 sub_19BA0 proc far
     var_14 = word ptr -20
     var_12 = word ptr -18

@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "legacy.h"
 #include "math.h"
 
 extern long gState_travDist;
@@ -14,6 +15,87 @@ extern short gState_jumpCount;
 extern int word_43964;
 extern char byte_459D8;
 extern int word_4408C;
+
+void state_op_unk(int kind_arg, int base_angle_arg, int energy_offset_arg) {
+	legacy_s16 kind;
+	legacy_s16 base_angle;
+	legacy_s16 energy_offset;
+	legacy_s16 angular_range;
+	legacy_s16 type_base;
+	legacy_s16 lifetime_scale;
+	legacy_s16 particle_limit;
+	legacy_s16 free_count;
+	legacy_s16 emitted;
+	legacy_s16 particle_angle;
+	legacy_s16 particle_timer;
+	legacy_s16 particle_lifetime;
+	legacy_s16 random_value;
+	int slot;
+
+	kind = (legacy_s16)kind_arg;
+	base_angle = (legacy_s16)base_angle_arg;
+	energy_offset = (legacy_s16)energy_offset_arg;
+	if (kind < 2) {
+		angular_range = 0x400;
+		particle_limit = 0x12;
+		type_base = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_MUL(kind, 4), 4);
+		lifetime_scale = 6;
+	} else {
+		base_angle = LEGACY_S16_WRAP_SUB(base_angle, 0x60);
+		angular_range = 0xC0;
+		particle_limit = 8;
+		type_base = 0;
+		lifetime_scale = 1;
+	}
+
+	state.field_42A = 1;
+	free_count = 0;
+	for (slot = 0; slot < 24; slot++) {
+		if (state.field_38E[slot] == 0)
+			free_count = LEGACY_S16_WRAP_ADD(free_count, 1);
+	}
+	if (free_count > particle_limit)
+		free_count = particle_limit;
+
+	emitted = 0;
+	for (slot = 0; slot < 24 && emitted < free_count; slot++) {
+		if (state.field_38E[slot] != 0)
+			continue;
+
+		state.field_443[slot] = (legacy_u8)kind;
+		state.field_42B[slot] = (legacy_u8)(
+			((legacy_u8)emitted & 3U) + (legacy_u8)type_base);
+		state.game_longs1[slot] = 0;
+		state.game_longs2[slot] = 0;
+		state.game_longs3[slot] = 0;
+
+		random_value = (legacy_s16)get_kevinrandom();
+		state.field_2FE[slot] = LEGACY_S16_WRAP_MUL(random_value, 4);
+		random_value = (legacy_s16)get_kevinrandom();
+		state.field_32E[slot] = LEGACY_S16_WRAP_MUL(random_value, 4);
+
+		particle_angle = (legacy_s16)(
+			((legacy_s32)angular_range * (legacy_s32)emitted) /
+			(legacy_s32)free_count);
+		particle_angle = LEGACY_S16_WRAP_ADD(particle_angle, base_angle);
+		state.field_35E[slot] = LEGACY_S16_FROM_BITS(
+			(legacy_u16)particle_angle & 0x03FFU);
+
+		random_value = (legacy_s16)get_kevinrandom();
+		particle_timer = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(random_value, 6)),
+			energy_offset);
+		particle_timer = LEGACY_S16_WRAP_ADD(particle_timer, 0x180);
+		state.field_38E[slot] = particle_timer;
+
+		particle_lifetime = LEGACY_S16_SAR2(
+			LEGACY_S16_WRAP_MUL(lifetime_scale, particle_timer));
+		LEGACY_WRITE_U16_LE(
+			&state.field_3BE[slot * 2], particle_lifetime);
+		emitted = LEGACY_S16_WRAP_ADD(emitted, 1);
+	}
+}
 
 // previously set_AV_event_triggers
 void update_crash_state(int arg_someFlag, int arg_MplayerFlag) {

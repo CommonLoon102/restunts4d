@@ -275,6 +275,8 @@ extern struct RECTANGLE* rectptr_unk;
 
 extern void player_op(char);
 extern void opponent_op(void);
+extern void state_op_unk(int, int, int);
+extern int get_kevinrandom(void);
 extern void audio_carstate(void);
 extern void setup_car_shapes(int);
 extern void update_frame(char, struct RECTANGLE* rc);

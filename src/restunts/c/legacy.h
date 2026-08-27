@@ -57,4 +57,12 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_SAR2(value) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR2(value))
 
+#define LEGACY_WRITE_U16_LE(bytes, value) \
+	do { \
+		legacy_u16 legacy_write_u16_value_ = (legacy_u16)(value); \
+		((legacy_u8*)(bytes))[0] = (legacy_u8)legacy_write_u16_value_; \
+		((legacy_u8*)(bytes))[1] = \
+			(legacy_u8)(legacy_write_u16_value_ >> 8); \
+	} while (0)
+
 #endif
