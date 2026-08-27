@@ -450,10 +450,37 @@ int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
 }
 
 extern int input_checking(int frame_delta);
+extern unsigned char byte_3EBD8;
+extern char byte_45D0C[];
+extern char byte_45D14[];
 
 int input_do_checking(int frame_delta)
 {
 	return input_checking(frame_delta);
+}
+
+void input_push_status(void)
+{
+	int index = (signed char)byte_3EBD8;
+
+	byte_45D0C[index] = byte_3B8F7;
+	byte_45D14[index] = kbormouse;
+	byte_3EBD8++;
+}
+
+void input_pop_status(void)
+{
+	int index;
+
+	if (byte_3EBD8 == 0)
+		return;
+
+	byte_3EBD8--;
+	index = (signed char)byte_3EBD8;
+	byte_3B8F7 = byte_45D0C[index];
+	kbormouse = byte_45D14[index];
+	if (kbormouse == 0)
+		mouse_draw_opaque_check();
 }
 
 extern int font_op2(const char* text);

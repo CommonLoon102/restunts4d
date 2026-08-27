@@ -94,8 +94,8 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_file_load_resource_
     public off_29A4E
     public sub_29A86
-    public input_push_status
-    public input_pop_status
+    public ported_input_push_status_
+    public ported_input_pop_status_
     public do_joy_restext
     public do_key_restext
     public do_mou_restext
@@ -4662,12 +4662,10 @@ loc_29ADC:
     pop     bp
     retf
 sub_29A86 endp
-input_push_status proc far
+ported_input_push_status_ proc far
      r = byte ptr 0
 
-    push    si
-    mov     al, byte_3EBD8
-    cbw
+    jmp     input_push_status
     mov     si, ax
     mov     al, byte_3B8F7
     mov     byte_45D0C[si], al
@@ -4678,12 +4676,12 @@ input_push_status proc far
     retf
     ; align 2
     db 144
-input_push_status endp
-input_pop_status proc far
+ported_input_push_status_ endp
+ported_input_pop_status_ proc far
      r = byte ptr 0
 
-    push    si
-    cmp     byte_3EBD8, 0
+    jmp     input_pop_status
+    nop
     jz      short loc_29B30
     dec     byte_3EBD8
     mov     al, byte_3EBD8
@@ -4700,7 +4698,7 @@ input_pop_status proc far
 loc_29B30:
     pop     si
     retf
-input_pop_status endp
+ported_input_pop_status_ endp
 do_joy_restext proc far
     var_56 = word ptr -86
     var_54 = word ptr -84
@@ -4744,7 +4742,7 @@ do_joy_restext proc far
     push    di
     push    si
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     sub     ax, ax
@@ -4980,7 +4978,7 @@ loc_29D7B:
     call    sub_372F4
     mov     word_3F88E, 0
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     pop     si
     pop     di
     mov     sp, bp
@@ -4990,7 +4988,7 @@ do_joy_restext endp
 do_key_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     sub     ax, ax
@@ -5021,13 +5019,13 @@ do_key_restext proc far
     mov     word_3F88E, 0
     call    sub_372F4
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
 do_key_restext endp
 do_mou_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     mov     byte_3B8F2, 1
@@ -5057,7 +5055,7 @@ do_mou_restext proc far
     mov     word_3F88E, 0
     call    sub_372F4
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
     ; align 2
     db 144
@@ -5065,7 +5063,7 @@ do_mou_restext endp
 do_pau_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     sub     ax, ax
@@ -5093,7 +5091,7 @@ do_pau_restext proc far
     mov     word_3F88E, 0
     call    sub_372F4
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
     ; align 2
     db 144
@@ -5101,7 +5099,7 @@ do_pau_restext endp
 do_mof_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
 loc_29E9C:
     mov     word_3F88E, 1
     call    audio_toggle_flag2
@@ -5145,13 +5143,13 @@ loc_29ECE:
     add     sp, 12h
     mov     word_3F88E, 0
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
 do_mof_restext endp
 do_sonsof_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
 loc_29EFE:
     mov     word_3F88E, 1
     call    audio_toggle_flag6
@@ -5198,13 +5196,13 @@ loc_29F30:
     add     sp, 12h
     mov     word_3F88E, 0
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
 do_sonsof_restext endp
 do_dos_restext proc far
 
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     sub     ax, ax
@@ -5237,7 +5235,7 @@ loc_29FA6:
     mov     word_3F88E, 0
     call    sub_372F4
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     retf
 do_dos_restext endp
 show_graphic_levels_menu proc far
@@ -5257,7 +5255,7 @@ show_graphic_levels_menu proc far
     push    di
     push    si
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     mov     word_3F88E, 1
     call    audio_unk
     mov     ax, framespersec2
@@ -5409,7 +5407,7 @@ loc_2A103:
     mov     word_3F88E, 0
     call    sub_372F4
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     pop     si
     pop     di
     mov     sp, bp
@@ -5425,7 +5423,7 @@ do_dea_textres proc far
     mov     bp, sp
     sub     sp, 2
     push    cs
-    call near ptr input_push_status
+    call near ptr ported_input_push_status_
     cmp     g_is_busy, 0
     jz      short loc_2A168
     sub     ax, ax
@@ -5487,7 +5485,7 @@ loc_2A196:
     mov     [bp+var_2], 1
 loc_2A19B:
     push    cs
-    call near ptr input_pop_status
+    call near ptr ported_input_pop_status_
     mov     ax, [bp+var_2]
 loc_2A1A2:
     mov     sp, bp

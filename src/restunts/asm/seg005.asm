@@ -309,7 +309,7 @@ loc_21DEB:
 loc_21DFC:
     cmp     byte_46467, 0
     jz      short loc_21E76
-    call    input_push_status
+    call    ported_input_push_status_
     call    audio_unk
     sub     ax, ax
     push    ax
@@ -339,7 +339,7 @@ loc_21DFC:
 loc_21E49:
     call    sub_372F4
     mov     word_3F88E, 0
-    call    input_pop_status
+    call    ported_input_pop_status_
     or      si, si
     jz      short loc_21E71
     sub     ax, ax
