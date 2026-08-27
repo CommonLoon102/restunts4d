@@ -60,7 +60,7 @@ seg007 segment byte public 'STUNTSC' use16
     public ported_audio_function2_wrap_
     public ported_audio_op_unk3_
     public ported_audio_op_unk4_
-    public audio_op_unk5
+    public ported_audio_op_unk5_
     public audio_op_unk6
     public ported_audio_op_unk7_
     public ported_nopsub_27489_
@@ -1037,15 +1037,14 @@ ported_audio_op_unk4_ proc far
     pop     bp
     retf
 ported_audio_op_unk4_ endp
-audio_op_unk5 proc far
+ported_audio_op_unk5_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     audio_op_unk5
+    nop
     push    di
     push    si
     mov     ax, 4Ch ; 'L'
@@ -1081,7 +1080,7 @@ loc_273DB:
     mov     sp, bp
     pop     bp
     retf
-audio_op_unk5 endp
+ported_audio_op_unk5_ endp
 audio_op_unk6 proc far
     var_2 = word ptr -2
      s = byte ptr 0

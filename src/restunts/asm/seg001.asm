@@ -7603,7 +7603,7 @@ nosmart
     test    [bx+CARSTATE.field_CF], 2
     jz      short loc_18C44
     push    [bp+var_2E]
-    call    audio_op_unk5
+    call    ported_audio_op_unk5_
     add     sp, 2
     add     [bp+var_16], 2
     jmp     short loc_18C7B

@@ -987,6 +987,33 @@ void nopsub_272B0(int index)
 	audio_function2(index);
 }
 
+static void audio_start_secondary_event(int index,
+	unsigned int resource_field)
+{
+	unsigned int offset;
+	unsigned int rate;
+	int channel;
+	void far* resource;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	channel = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE(audiotimers + offset + 0x16U));
+	if (channel != -1)
+		audio_init_chunk2(channel);
+
+	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	resource = audio_read_far_pointer(
+		audiotimers + offset + resource_field);
+	channel = audio_check_flag(resource, -1, 0x40U, rate);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, channel);
+	audiotimers[offset + 0x1AU] = 1;
+}
+
+void audio_op_unk5(int index)
+{
+	audio_start_secondary_event(index, 0x3CU);
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {
