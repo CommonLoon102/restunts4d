@@ -19,7 +19,7 @@ seg001 segment byte public 'STUNTSC' use16
     extrn ported_sub_18D60_:proc
     extrn ported_car_car_coll_detect_maybe_:proc
     extrn ported_init_plantrak_:proc
-    extrn do_opponent_op:proc
+    extrn ported_do_opponent_op_:proc
     extrn ported_update_crash_state_:proc
     extrn ported_plane_rotate_op_:proc
     extrn ported_plane_origin_op_:proc

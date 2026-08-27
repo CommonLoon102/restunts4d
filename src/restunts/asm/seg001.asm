@@ -66,7 +66,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_sub_18D60_
     public ported_car_car_coll_detect_maybe_
     public ported_init_plantrak_
-    public do_opponent_op
+    public ported_do_opponent_op_
     public ported_update_crash_state_
     public ported_plane_rotate_op_
     public ported_plane_origin_op_
@@ -8680,14 +8680,12 @@ loc_1958C:
     pop     bp
     retf
 ported_init_plantrak_ endp
-do_opponent_op proc far
+ported_do_opponent_op_ proc far
 
-    push    cs
-    call near ptr opponent_op
-    retf
+    jmp     do_opponent_op
     ; align 2
     db 144
-do_opponent_op endp
+ported_do_opponent_op_ endp
 ported_update_crash_state_ proc far
     var_cState = word ptr -4
     var_2 = byte ptr -2

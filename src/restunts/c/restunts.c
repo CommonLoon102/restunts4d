@@ -169,6 +169,11 @@ void remove_frame_callback(void)
 	timer_remove_callback(&frame_callback);
 }
 
+void do_opponent_op(void)
+{
+	opponent_op();
+}
+
 #define KEVINRANDOM_SEED_LEN 6
 void init_kevinrandom(const char* seed)
 {

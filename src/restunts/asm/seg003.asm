@@ -6463,7 +6463,7 @@ loc_1DADE:
 loc_1DAEE:
     mov     ax, word_4499C
     sub     word_44DCC, ax
-    call    do_opponent_op
+    call    ported_do_opponent_op_
     mov     [bp+var_2A2], 1
     mov     ax, framespersec
     mov     cx, ax
