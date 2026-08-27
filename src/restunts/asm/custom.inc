@@ -252,6 +252,7 @@ extrn sub_3736A:proc
 extrn audio_check_flag:proc
 extrn audio_init_chunk:proc
 extrn sub_38156:proc
+extrn sub_37868:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

@@ -67,7 +67,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_sub_3771E_
     public ported_nopsub_37750_
     public audio_driver_func3F
-    public sub_37868
+    public ported_sub_37868_
     public nopsub_37898
     public nopsub_378AE
     public nopsub_378BC
@@ -1010,7 +1010,7 @@ loc_37796:
     mov     word_4063A, 1
     push    si
     push    cs
-    call near ptr sub_37868
+    call near ptr ported_sub_37868_
     add     sp, 2
     mov     word_4063A, 0
     push    [bp+var_4]
@@ -1088,15 +1088,14 @@ loc_37862:
     ; align 2
     db 144
 audio_driver_func3F endp
-sub_37868 proc far
+ported_sub_37868_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     sub_37868
+    nop
     push    di
     push    si
     sub     si, si
@@ -1122,7 +1121,7 @@ loc_37883:
     mov     sp, bp
     pop     bp
     retf
-sub_37868 endp
+ported_sub_37868_ endp
 nopsub_37898 proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -1134,7 +1133,7 @@ nopsub_37898 proc far
     mov     byte_45950, al
     push    [bp+arg_0]
     push    cs
-    call near ptr sub_37868
+    call near ptr ported_sub_37868_
     add     sp, 2
     pop     bp
     retf

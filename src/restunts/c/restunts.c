@@ -894,6 +894,16 @@ void sub_38156(int index)
 	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0EU, 0);
 }
 
+int sub_37868(int value)
+{
+	int channel;
+
+	for (channel = 0; channel < (unsigned int)byte_44290; channel++)
+		audio_unk2(channel, value);
+
+	return channel;
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;
