@@ -610,12 +610,12 @@ loc_22126:
 loc_22131:
     cmp     video_flag5_is0, 0
     jz      short loc_22152
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    setup_mcgawnd1
     xor     byte_44346, 1
     mov     al, byte_44346
     mov     byte_4432A, al
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_22152:
     cmp     game_replay_mode, 1
     jnz     short loc_2217D
@@ -757,7 +757,7 @@ loc_22298:
     call    get_0
     or      ax, ax
     jz      short loc_222D3
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    setup_mcgawnd2
     sub     ax, ax
     push    ax
@@ -771,7 +771,7 @@ loc_22298:
     call    sub_35C4E
     add     sp, 0Ah
     call    setup_mcgawnd1
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_222D3:
     call    sprite_copy_2_to_1_2
     mov     is_in_replay, 1
@@ -836,7 +836,7 @@ loc_22347:
     push    ax              ; char *
     call    format_frame_as_string
     add     sp, 6
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     push    word ptr [bp+var_16+2]
     mov     ax, offset resID_byte1
     push    ax
@@ -847,7 +847,7 @@ loc_22347:
     push    ax
     call    sub_345BC
     add     sp, 6
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_2239F:
     mov     ax, 1
     push    ax
@@ -2233,7 +2233,7 @@ loc_22F6A:
     pop     bp
     retf
 loc_22F76:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     ax, offset aRoof_1; "roof"
     push    ax
     push    word ptr stdaresptr+2
@@ -2267,7 +2267,7 @@ loc_22FB1:
     push    word ptr whlshapes+4
     call    shape2d_op_unk3
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     sub     si, si
     mov     al, byte_4432A
     cbw
@@ -2314,7 +2314,7 @@ loc_23030:
     jz      short loc_2309A
     cmp     video_flag5_is0, 0
     jnz     short loc_23057
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_23057:
     push    height_above_replaybar
     sub     ax, ax
@@ -2411,7 +2411,7 @@ loc_23120:
     db 144
 loc_2315E:
     call    sprite_copy_2_to_1_2
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_23168:
     push    height_above_replaybar
     sub     ax, ax
@@ -2463,7 +2463,7 @@ loc_231CE:
 loc_231E7:
     cmp     video_flag5_is0, 0
     jnz     short loc_231F3
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_231F3:
     mov     al, byte_4432A
     cbw
@@ -2576,7 +2576,7 @@ loc_232D0:
 loc_232F7:
     cmp     video_flag5_is0, 0
     jnz     short loc_23303
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_23303:
     mov     al, byte_4432A
     cbw
@@ -2807,7 +2807,7 @@ loc_23540:
 loc_23561:
     cmp     video_flag5_is0, 0
     jnz     short loc_2356D
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_2356D:
     push    height_above_replaybar
     sub     ax, ax
@@ -2922,7 +2922,7 @@ loc_235F9:
     mov     ax, [bp+var_4]
     mov     word_40E00[bx], ax
 loc_236A0:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     pop     si
     pop     di
     mov     sp, bp
@@ -3486,7 +3486,7 @@ loc_23BD0:
     inc     si
     cmp     si, 9
     jl      short loc_23BD0
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     push    word ptr rplyshapes+2
     push    word ptr rplyshapes
     call    shape2d_op_unk
@@ -3553,7 +3553,7 @@ loc_23C66:
     push    dialog_fnt_colour
     call    font_set_unk
     add     sp, 4
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     push    word ptr fontledresptr+2
     push    word ptr fontledresptr
     call    ported_font_set_fontdef2_
@@ -3579,7 +3579,7 @@ loc_23CD7:
     mov     bx, [bp+var_44]
     shl     bx, 1
     mov     word_40E76[bx], 0FFFFh
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, cameramode
     cbw
     mov     bx, ax
@@ -3662,7 +3662,7 @@ loc_23D94:
     cmp     word_40E04[bx], di
     jz      short loc_23E1A
 loc_23DAB:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, byte_4432A
     cbw
     shl     ax, 1
@@ -3711,7 +3711,7 @@ loc_23E1A:
     cmp     byte_40E08[bx], al
     jz      short loc_23E68
 loc_23E29:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, byte_4432A
     cbw
     mov     [bp+var_44], ax
@@ -3867,7 +3867,7 @@ loc_23F6C:
     call    sprite_1_unk4
     add     sp, 0Ah
 loc_23FB0:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     jmp     loc_24D5E
 loc_23FB8:
     mov     al, cameramode

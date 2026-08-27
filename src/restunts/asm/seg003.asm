@@ -144,7 +144,7 @@ loc_19F8B:
     push    ax
     call    rect_array_sort_by_top
     add     sp, 6
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     sub     si, si
     jmp     short loc_1A013
 loc_19FD8:
@@ -195,14 +195,14 @@ loc_1A03E:
     call    sprite_set_1_size
     add     sp, 8
 loc_1A046:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
 loc_1A05E:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_1A090
     mov     ax, word_463D6
@@ -6694,9 +6694,9 @@ loc_1DCFC:
     add     sp, 20h
     cmp     video_flag5_is0, 0
     jz      short loc_1DD7E
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    setup_mcgawnd1
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_1DD77
     mov     bx, [bp+var_rectindex]
@@ -6739,13 +6739,13 @@ loc_1DD7E:
     push    [bp+var_rect2.rc_left]
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     mov     di, offset rect_unk
     lea     si, [bp+var_rect3]
     push    ds
@@ -6764,13 +6764,13 @@ loc_1DD7E:
     ; align 2
     db 144
 loc_1DDFC:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_1DE19:
     push    [bp+var_40]
     call    input_do_checking
@@ -6803,9 +6803,9 @@ loc_1DE3E:
     push    ax
     call    sub_35C4E
     add     sp, 0Ah
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    setup_mcgawnd1
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     jmp     short loc_1DE8C
     ; align 2
     db 144

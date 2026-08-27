@@ -322,7 +322,7 @@ loc_10176:
     push    ax
     call    input_do_checking
     add     sp, 2
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     kbormouse, 0
     mov     passed_security, 1; originally set to 0 - bypasses the copy protection
     push    cs
@@ -625,7 +625,7 @@ _ask_dos:
     jge     short loc_10575
     jmp     _do_intro0
 loc_10575:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    audio_stop_unk
     call    audiodrv_atexit
     call    kb_exit_handler
@@ -747,9 +747,9 @@ run_intro proc far
     mov     bp, sp
     sub     sp, 2
     push    si
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     call    sprite_copy_2_to_1_clear
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     call    sprite_copy_wnd_to_1_clear
     mov     ax, offset aProd; "prod"
     push    ax
@@ -1410,7 +1410,7 @@ loc_10D88:
     ; align 2
     db 144
 loc_10DA0:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     push    [bp+var_4]
     push    si
     push    word ptr [bp+var_30+2]
@@ -1428,7 +1428,7 @@ loc_10DA0:
     push    ax
     call    sprite_1_unk2
     add     sp, 0Ah
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     push    [bp+var_40]
     call    input_do_checking
     add     sp, 2
@@ -1471,13 +1471,13 @@ loc_10DEC:
     push    ax
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     add     [bp+var_36], 5
     jmp     short loc_10E7D
 loc_10E66:
@@ -1509,7 +1509,7 @@ loc_10E91:
     push    ax
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
@@ -3872,13 +3872,13 @@ loc_124FD:
     push    carmenu_buttons_y1
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     call    sprite_copy_2_to_1_2
 loc_12534:
     call    ported_sub_29772_
@@ -4046,7 +4046,7 @@ loc_126D1:
     push    [bp+var_1A_rc.rc_left]
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     cmp     [bp+var_3E], 0FEh ; '�'
     jz      short loc_12710
     mov     al, [bp+var_3E]
@@ -4065,7 +4065,7 @@ loc_12710:
     call    sprite_putimage
     add     sp, 4
 loc_12723:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     mov     al, [bp+var_caridindex]
     mov     [bp+var_prevcaridindex], al
     jmp     loc_124DE
@@ -4125,7 +4125,7 @@ loc_127BC:
     push    [bp+var_36]
     call    mmgr_free
     add     sp, 4
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, [bp+var_caridindex]
     cbw
     mov     di, ax
@@ -4229,7 +4229,7 @@ loc_1287F:
     call    draw_button
     add     sp, 14h
     call    sprite_copy_2_to_1_2
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     sub     ax, ax
     push    ax
     push    word_407F8
@@ -4249,7 +4249,7 @@ loc_1287F:
     push    [bp+var_3C]
     call    draw_button
     add     sp, 14h
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     jmp     loc_11FA5
 _menu_color:
     mov     bx, [bp+arg_materialofs]
@@ -4326,7 +4326,7 @@ run_opponent_menu proc far
     mov     [bp+var_4], 0FFh
     call    ported_sub_29772_
 loc_129A3:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_129A8:
     mov     al, gameconfig.game_opponenttype
     cmp     [bp+var_1E], al
@@ -4761,7 +4761,7 @@ loc_12E14:
     jmp     loc_129A8
 loc_12E1E:
     call    check_input
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
 loc_12E28:
     push    word ptr wndsprite+2
     push    word ptr wndsprite
@@ -4831,7 +4831,7 @@ loc_12ECB:
     push    word ptr miscptr
     call    unload_resource
     add     sp, 4
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     pop     si
     mov     sp, bp
     pop     bp
@@ -6417,7 +6417,7 @@ loc_13DDF:
     mov     al, es:[bx]
     add     al, 30h ; '0'
     mov     byte ptr aOp01+3, al
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     ax, offset aOp01; "op01"
     push    ax
     push    [bp+var_1A]
@@ -6471,7 +6471,7 @@ loc_13E8A:
     call    shape2d_op_unk5
     add     sp, 8
 loc_13EA0:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_13EA5:
     push    di
     call    input_checking
@@ -6520,7 +6520,7 @@ loc_13ECD:
     push    word_407F8
     call    sprite_clear_1_color
     add     sp, 2
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, [bp+var_18]
     cbw
     push    ax
@@ -6541,7 +6541,7 @@ loc_13F48:
     cmp     [bp+var_6E], 0
     jle     short loc_13F84
     call    check_input
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     sub     ax, ax
     push    ax
     mov     ax, offset aInh_0; "inh"
@@ -6560,7 +6560,7 @@ loc_13F48:
     mov     [bp+var_52], 0FEh ; '�'
     jmp     short loc_13FDA
 loc_13F84:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     cmp     [bp+var_6E], 0FFh
     jnz     short loc_13FD6
     mov     ax, offset aHna ; "hna"
@@ -6783,13 +6783,13 @@ loc_14188:
     push    ax
     call    sprite_set_1_size
     add     sp, 8
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     les     bx, wndsprite
     push    word ptr es:[bx+2]
     push    word ptr es:[bx]
     call    sprite_putimage
     add     sp, 4
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     call    timer_get_delta_alt
     call    ported_sub_29772_
 loc_141DC:
@@ -6847,7 +6847,7 @@ loc_1424D:
     mov     al, es:[bx]
     add     al, 30h ; '0'
     mov     byte ptr aOp01+3, al
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     ax, offset aOp01; "op01"
     push    ax
     push    [bp+var_1A]
@@ -6914,7 +6914,7 @@ loc_1430E:
     push    ax
     call    shape2d_op_unk5
     add     sp, 8
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_14337:
     cmp     [bp+var_16], 0
     jz      short loc_14343
@@ -7311,7 +7311,7 @@ loc_146C2:
     jmp     loc_14641
 loc_146C5:
     call    sub_275C6
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_146CF:
     push    [bp+var_40A]
 loc_146D3:

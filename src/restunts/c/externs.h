@@ -458,6 +458,8 @@ extern void do_sonsof_restext(void);
 extern short get_kb_or_joy_flags(void);
 
 extern short mouse_init(short a1, short a2);
+extern void mouse_draw_opaque(void);
+extern void mouse_draw_transparent(void);
 extern void mouse_draw_opaque_check(void);
 extern void mouse_draw_transparent_check(void);
 

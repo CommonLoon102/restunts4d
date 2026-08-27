@@ -61,8 +61,8 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_locate_text_res_
     public copy_string
     public mouse_track_op
-    public mouse_draw_transparent_check
-    public mouse_draw_opaque_check
+    public ported_mouse_draw_transparent_check_
+    public ported_mouse_draw_opaque_check_
     public mouse_draw_opaque
     public mouse_draw_transparent
     public mouse_multi_hittest
@@ -166,7 +166,7 @@ loc_274FD:
     db 144
 loc_27506:
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     ax, 0Fh
     push    ax
     mov     ax, [bp+arg_6]
@@ -257,7 +257,7 @@ sub_275C6 proc far
 loc_275D8:
     dec     byte_3B8FC
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     al, byte_3B8FC
     sub     ah, ah
     mov     si, ax
@@ -323,7 +323,7 @@ loc_27626:
     call    sprite_free_wnd
     add     sp, 4
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
 loc_27680:
     pop     si
     pop     di
@@ -391,7 +391,7 @@ show_dialog proc far
     mov     [bp+var_1C6], 0
     mov     [bp+var_194], 20h ; ' '
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     ax, [bp+arg_4]
     mov     dx, [bp+arg_6]
     mov     word ptr [bp+var_1D0], ax
@@ -819,7 +819,7 @@ loc_27B4B:
     jg      short loc_27B34
 loc_27B56:
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     mov     [bp+var_1D4], 1
     mov     ax, [bp+arg_0]
     or      ax, ax
@@ -889,7 +889,7 @@ loc_27BD4:
     push    cs
     call near ptr ported_timer_get_delta_alt_
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     cmp     [bp+var_140], 2
     jnz     short loc_27C68
     mov     [bp+var_196], 0
@@ -952,7 +952,7 @@ loc_27C77:
     jmp     loc_27D6D
 loc_27C84:
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     [bp+var_196], 0
     jmp     loc_27D25
     ; align 2
@@ -1030,7 +1030,7 @@ loc_27D4A:
     db 144
 loc_27D56:
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     cmp     [bp+var_1C0], 0FFh
     jnz     short loc_27D65
     push    cs
@@ -1374,7 +1374,7 @@ loc_28016:
     add     sp, 6
 loc_28036:
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     mov     [bp+var_714], 0
     push    [bp+arg_4]      ; int
     mov     ax, offset asc_3EB96; "*"
@@ -1625,7 +1625,7 @@ loc_28280:
     mov     al, [bp+var_69A]
     mov     [bp+var_718], al
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     sub     si, si
     jmp     loc_28346
     ; align 2
@@ -1718,7 +1718,7 @@ loc_28360:
     db 144
 loc_2836C:
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
 loc_28370:
     push    cs
     call near ptr ported_timer_get_delta_alt_
@@ -2125,7 +2125,7 @@ loc_28682:
     call    sub_345BC
     add     sp, 6
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     jmp     short loc_2872F
     ; align 2
     db 144
@@ -2827,7 +2827,7 @@ loc_28C7C:
     mov     ax, [bp+var_2]
     mov     [bp+var_C], ax
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     sub     ax, ax
     push    ax
     push    [bp+arg_8]
@@ -2860,7 +2860,7 @@ loc_28CD6:
     call    sprite_1_unk
     add     sp, 0Ah
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
 loc_28CE2:
     test    byte ptr mouse_butstate, 3
     jz      short loc_28CEC
@@ -2907,7 +2907,7 @@ loc_28D0E:
     sub     ax, si
     mov     [bp+var_12], ax
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     sub     ax, ax
     push    ax
     push    [bp+arg_8]
@@ -2940,12 +2940,12 @@ loc_28D8F:
     call    sprite_1_unk
     add     sp, 0Ah
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     jmp     loc_28BC5
 mouse_track_op endp
-mouse_draw_transparent_check proc far
+ported_mouse_draw_transparent_check_ proc far
 
-    mov     byte_3B8F7, 1
+    jmp     mouse_draw_transparent_check
     cmp     kbormouse, 0
     jz      short locret_28DB5
     cmp     mouse_isdirty, 0
@@ -2954,10 +2954,10 @@ mouse_draw_transparent_check proc far
     call near ptr mouse_draw_transparent
 locret_28DB5:
     retf
-mouse_draw_transparent_check endp
-mouse_draw_opaque_check proc far
+ported_mouse_draw_transparent_check_ endp
+ported_mouse_draw_opaque_check_ proc far
 
-    mov     byte_3B8F7, 0
+    jmp     mouse_draw_opaque_check
     cmp     mouse_isdirty, 0
     jz      short locret_28DC6
     push    cs
@@ -2966,7 +2966,7 @@ locret_28DC6:
     retf
     ; align 2
     db 144
-mouse_draw_opaque_check endp
+ported_mouse_draw_opaque_check_ endp
 mouse_draw_opaque proc far
     var_3C = byte ptr -60
      s = byte ptr 0
@@ -3359,7 +3359,7 @@ call_read_line proc far
     sub     sp, 4
     push    si
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     push    [bp+arg_A]      ; int
     push    [bp+arg_8]      ; int
     mov     ax, 2
@@ -3386,7 +3386,7 @@ call_read_line proc far
     add     sp, 16h
     mov     [bp+var_4], ax
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     push    word ptr [bp+arg_0]; char *
     call    _strlen
     add     sp, 2
@@ -4003,7 +4003,7 @@ sprite_blit_to_video proc far
     push    cs
     call near ptr ported_sprite_copy_2_to_1_2_
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     cmp     [bp+arg_4], 0FFFEh
     jnz     short loc_29654
     les     bx, [bp+arg_0]
@@ -4013,7 +4013,7 @@ sprite_blit_to_video proc far
     add     sp, 4
 loc_29648:
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     sub     ax, ax
     pop     si
     pop     di
@@ -4054,7 +4054,7 @@ loc_29670:
     call    sprite_putimage
     add     sp, 4
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
     mov     ax, di
     pop     si
     pop     di
@@ -4089,7 +4089,7 @@ show_waiting proc far
     call near ptr show_dialog
     add     sp, 12h
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     retf
     ; align 2
     db 144
@@ -4237,7 +4237,7 @@ loc_297B5:
     jz      short loc_297F4
     mov     word_45D06, di
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     ax, [bp+arg_0]
 loc_297C6:
     shl     ax, 1
@@ -4261,7 +4261,7 @@ loc_297D8:
     call    sprite_1_unk4
     add     sp, 0Ah
     push    cs
-    call near ptr mouse_draw_transparent_check
+    call near ptr ported_mouse_draw_transparent_check_
 loc_297F4:
     mov     ax, si
     pop     si
@@ -4702,7 +4702,7 @@ input_pop_status proc far
     or      al, al
     jnz     short loc_29B30
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
 loc_29B30:
     pop     si
     retf
@@ -4796,7 +4796,7 @@ loc_29B89:
     jl      short loc_29B89
     mov     byte_3FE00, 1
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     push    dialogarg2
     mov     ax, [bp+var_14]
     sub     ax, [bp+var_28]
@@ -5538,7 +5538,7 @@ loc_2A1D2:
     call near ptr show_dialog
     add     sp, 12h
     push    cs
-    call near ptr mouse_draw_opaque_check
+    call near ptr ported_mouse_draw_opaque_check_
     mov     kbormouse, 0
 loc_2A1E8:
     mov     bx, [bp+arg_0]

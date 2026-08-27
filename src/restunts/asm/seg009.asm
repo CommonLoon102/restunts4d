@@ -1186,7 +1186,7 @@ loc_2AD2B:
     jnz     short loc_2AD38
     jmp     loc_2ADF4
 loc_2AD38:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     sub     ax, ax
     push    ax
     push    dialog_fnt_colour
@@ -1249,7 +1249,7 @@ loc_2AD38:
     call    sprite_1_unk
     add     sp, 0Ah
 loc_2ADE4:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     mov     [bp+var_38], si
     mov     al, [bp+var_182]
     mov     [bp+var_C2], al
@@ -1285,7 +1285,7 @@ loc_2ADF4:
 loc_2AE36:
     mov     [bp+var_3A], 63h ; 'c'
     mov     [bp+var_CC], 0
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     mov     al, [bp+var_34]
     mov     [bp+var_16], al
     or      al, al
@@ -1306,7 +1306,7 @@ loc_2AE73:
     jg      short loc_2AE7C
     jmp     loc_2AF0E
 loc_2AE7C:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     cmp     [bp+var_34], 0
     jnz     short loc_2AED6
     cmp     [bp+var_CC], 0
@@ -1357,7 +1357,7 @@ loc_2AED6:
     call    sub_3702E
     add     sp, 0Ah
 loc_2AEFF:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
     xor     byte ptr [bp+var_CC], 1
     mov     [bp+var_3A], 0
 loc_2AF0E:
@@ -1461,7 +1461,7 @@ loc_2AFF9:
     jnz     short loc_2B003
     jmp     loc_2B2D4
 loc_2B003:
-    call    mouse_draw_opaque_check
+    call    ported_mouse_draw_opaque_check_
     cmp     [bp+var_16], 0
     jz      short loc_2B011
     jmp     loc_2B2A6
@@ -1746,7 +1746,7 @@ loc_2B2A6:
     call    sub_3702E
     add     sp, 0Ah
 loc_2B2CF:
-    call    mouse_draw_transparent_check
+    call    ported_mouse_draw_transparent_check_
 loc_2B2D4:
     cmp     [bp+var_18], 0
     jz      short loc_2B356

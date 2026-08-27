@@ -378,6 +378,8 @@ extern char far* skyboxes[];
 extern int word_45D1C;
 extern int word_45D06;
 extern int idle_counter;
+extern char byte_3B8F7;
+extern char mouse_isdirty;
 
 static char skybox_resource_names[5][9] = {
 	"desert",
@@ -402,6 +404,20 @@ void sub_29772(void)
 	word_45D1C = 0;
 	word_45D06 = 0;
 	idle_counter = 0;
+}
+
+void mouse_draw_transparent_check(void)
+{
+	byte_3B8F7 = 1;
+	if (kbormouse != 0 && mouse_isdirty == 0)
+		mouse_draw_transparent();
+}
+
+void mouse_draw_opaque_check(void)
+{
+	byte_3B8F7 = 0;
+	if (mouse_isdirty != 0)
+		mouse_draw_opaque();
 }
 
 void unload_skybox(void)
