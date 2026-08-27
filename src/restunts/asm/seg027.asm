@@ -50,7 +50,7 @@ seg027 segment byte public 'STUNTSC' use16
     public load_audio_finalize
     public audio_unk
     public sub_372F4
-    public sub_3736A
+    public ported_sub_3736A_
     public ported_audio_enable_flag2_
     public ported_audio_disable_flag2_
     public ported_audio_toggle_flag2_
@@ -195,7 +195,7 @@ load_audio_finalize proc far
     push    si
     mov     word_4063A, 1
     push    cs
-    call near ptr sub_3736A
+    call near ptr ported_sub_3736A_
     mov     ax, word ptr [bp+arg_Mnote]
     or      ax, word ptr [bp+arg_Mnote+2]
     jz      short loc_3720F
@@ -406,9 +406,10 @@ loc_3735A:
     pop     bp
     retf
 sub_372F4 endp
-sub_3736A proc far
+ported_sub_3736A_ proc far
 
-    mov     word_4063A, 1
+    jmp     sub_3736A
+    nop
     mov     byte_40632, 0
     mov     ax, 0Fh
     push    ax
@@ -438,7 +439,7 @@ sub_3736A proc far
     retf
     ; align 2
     db 144
-sub_3736A endp
+ported_sub_3736A_ endp
 ported_audio_enable_flag2_ proc far
 
     jmp     audio_enable_flag2
@@ -1057,7 +1058,7 @@ loc_3781D:
     mov     [bp+var_2], si
 loc_37820:
     push    cs
-    call near ptr sub_3736A
+    call near ptr ported_sub_3736A_
     cmp     byte_40634, 0
     jz      short loc_37862
     mov     ax, 32h ; '2'

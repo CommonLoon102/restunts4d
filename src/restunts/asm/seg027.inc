@@ -3,7 +3,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn load_audio_finalize:proc
     extrn audio_unk:proc
     extrn sub_372F4:proc
-    extrn sub_3736A:proc
+    extrn ported_sub_3736A_:proc
     extrn ported_audio_enable_flag2_:proc
     extrn ported_audio_disable_flag2_:proc
     extrn ported_audio_toggle_flag2_:proc

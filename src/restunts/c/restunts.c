@@ -536,6 +536,8 @@ extern char audioflag6;
 extern int word_4063A;
 extern unsigned char byte_44290;
 extern unsigned char byte_40630;
+extern unsigned char byte_40632;
+extern unsigned char byte_45950;
 extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
@@ -601,6 +603,17 @@ short nopsub_373FE(void)
 	}
 
 	return 1;
+}
+
+void sub_3736A(void)
+{
+	word_4063A = 1;
+	byte_40632 = 0;
+	audio_driver_func1E(0, 0x0F);
+	audio_init_chunk(0, 0x0F, 0, 0, 0, byte_45950, 0);
+	byte_44290 = 0;
+	sub_39700();
+	word_4063A = 0;
 }
 
 void audio_enable_flag6(void)
