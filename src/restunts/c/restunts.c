@@ -1477,6 +1477,33 @@ void far* audioresource_find(void far* resource, const char* chunk_name)
 	return MK_FP(resource_segment, result_offset);
 }
 
+void audioresource_copy_n_bytes(const legacy_u8 far* source,
+	legacy_u8 far* destination, int size)
+{
+	legacy_u16 source_offset;
+	legacy_u16 source_segment;
+	legacy_u16 destination_offset;
+	legacy_u16 destination_segment;
+	legacy_s16 remaining;
+
+	remaining = LEGACY_S16_FROM_BITS(size);
+	if (remaining <= 0)
+		return;
+	source_offset = (legacy_u16)FP_OFF(source);
+	source_segment = (legacy_u16)FP_SEG(source);
+	destination_offset = (legacy_u16)FP_OFF(destination);
+	destination_segment = (legacy_u16)FP_SEG(destination);
+	do {
+		*(legacy_u8 far*)MK_FP(destination_segment,
+			destination_offset) = *(const legacy_u8 far*)MK_FP(
+			source_segment, source_offset);
+		source_offset = LEGACY_U16_WRAP_ADD(source_offset, 1U);
+		destination_offset = LEGACY_U16_WRAP_ADD(
+			destination_offset, 1U);
+		remaining = LEGACY_S16_WRAP_SUB(remaining, 1);
+	} while (remaining != 0);
+}
+
 void audio_op_unk3(int index)
 {
 	audio_start_indexed_event(index, 0x44U, 0x40U);

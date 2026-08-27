@@ -50,7 +50,7 @@ seg029 segment byte public 'STUNTSC' use16
     public byte_39B14
     public ported_audioresource_get_chunk_index_
     public ported_audioresource_find_
-    public audioresource_copy_n_bytes
+    public ported_audioresource_copy_n_bytes_
 algn_39AD1:
     ; align 4
     db 144
@@ -306,7 +306,7 @@ loc_39C7A:
     pop     bp
     retf
 ported_audioresource_find_ endp
-audioresource_copy_n_bytes proc far
+ported_audioresource_copy_n_bytes_ proc far
     var_6 = word ptr -6
     var_2 = word ptr -2
      s = byte ptr 0
@@ -315,9 +315,8 @@ audioresource_copy_n_bytes proc far
     arg_destptr = dword ptr 10
     arg_size = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     audioresource_copy_n_bytes
+    nop
     push    di
     push    si
     mov     [bp+var_2], 0
@@ -359,6 +358,6 @@ loc_39CC8:
     pop     bp
 locret_39CC9:
     retf
-audioresource_copy_n_bytes endp
+ported_audioresource_copy_n_bytes_ endp
 seg029 ends
 end

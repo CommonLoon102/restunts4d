@@ -2366,7 +2366,7 @@ _trkdata_case13:
     push    ax
     push    es
     push    word ptr [bp+var_14]
-    call    audioresource_copy_n_bytes
+    call    ported_audioresource_copy_n_bytes_
     add     sp, 0Ah
     push    [bp+var_chunknamesseg]
     push    [bp+var_chunknamesofs]
@@ -2546,7 +2546,7 @@ loc_38472:
     push    ax
     push    word ptr [bp+var_14+2]
     push    word ptr [bp+var_14]
-    call    audioresource_copy_n_bytes
+    call    ported_audioresource_copy_n_bytes_
     add     sp, 0Ah
     push    [bp+var_chunknamesseg]
     push    [bp+var_chunknamesofs]
