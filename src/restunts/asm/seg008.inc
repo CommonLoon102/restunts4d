@@ -50,7 +50,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_input_push_status_:proc
     extrn ported_input_pop_status_:proc
     extrn do_joy_restext:proc
-    extrn do_key_restext:proc
+    extrn ported_do_key_restext_:proc
     extrn do_mou_restext:proc
     extrn do_pau_restext:proc
     extrn do_mof_restext:proc

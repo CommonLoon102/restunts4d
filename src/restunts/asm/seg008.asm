@@ -97,7 +97,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_input_push_status_
     public ported_input_pop_status_
     public do_joy_restext
-    public do_key_restext
+    public ported_do_key_restext_
     public do_mou_restext
     public do_pau_restext
     public do_mof_restext
@@ -4990,11 +4990,14 @@ loc_29D7B:
     pop     bp
     retf
 do_joy_restext endp
-do_key_restext proc far
+ported_do_key_restext_ proc far
 
-    push    cs
-    call near ptr ported_input_push_status_
-    mov     word_3F88E, 1
+    jmp     do_key_restext
+    nop
+    nop
+    nop
+    nop
+    nop
     call    audio_unk
     sub     ax, ax
     push    ax
@@ -5026,7 +5029,7 @@ do_key_restext proc far
     push    cs
     call near ptr ported_input_pop_status_
     retf
-do_key_restext endp
+ported_do_key_restext_ endp
 do_mou_restext proc far
 
     push    cs

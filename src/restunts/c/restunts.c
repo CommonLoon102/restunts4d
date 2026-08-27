@@ -1566,9 +1566,12 @@ extern char aId1[];
 extern char aId2[];
 extern char aId3[];
 extern char aId4[];
+extern char aKey[];
 extern char aMer[];
 extern char aWai[];
 extern char* findfilenames[];
+extern void audio_unk(void);
+extern void sub_372F4(void);
 
 void ensure_file_exists(int file_index)
 {
@@ -1595,6 +1598,20 @@ void do_mer_restext(void)
 {
 	show_dialog(1, 1, locate_text_res(mainresptr, aMer),
 		-1, -1, dialogarg2, 0, 0);
+}
+
+void do_key_restext(void)
+{
+	input_push_status();
+	word_3F88E = 1;
+	audio_unk();
+	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
+		-1, -1, dialogarg2, 0, 0);
+	byte_3FE00 = 0;
+	byte_3B8F2 = 0;
+	word_3F88E = 0;
+	sub_372F4();
+	input_pop_status();
 }
 
 void read_line_helper(void)
