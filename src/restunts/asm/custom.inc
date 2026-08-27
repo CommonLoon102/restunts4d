@@ -282,6 +282,9 @@ extrn audioresource_compare_chunknames:proc
 extrn audioresource_get_chunk_index:proc
 extrn audioresource_find:proc
 extrn audioresource_copy_n_bytes:proc
+extrn nopsub_367E4:proc
+extrn nopsub_36826:proc
+extrn nopsub_36868:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

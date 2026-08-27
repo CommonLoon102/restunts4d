@@ -1420,6 +1420,31 @@ void locate_many_resources(char far* data, char* names, char far** result) {
 	}
 }
 
+static void locate_many_resources_nofatal(char far* data, char* names,
+	char far** result) {
+	while (*names != 0) {
+		*result = locate_shape_nofatal(data, names);
+		names += 4;
+		result++;
+	}
+}
+
+void nopsub_367E4(char far* data, char* names, char far** result) {
+	locate_many_resources_nofatal(data, names, result);
+}
+
+void nopsub_36826(char far* data, char* names, char far** result) {
+	while (*names != 0) {
+		*result = locate_sound_fatal(data, names);
+		names += 4;
+		result++;
+	}
+}
+
+void nopsub_36868(char far* data, char* names, char far** result) {
+	locate_many_resources_nofatal(data, names, result);
+}
+
 char far* locate_text_res(char far* data, char* name) {
 	char textname[4];
 	textname[0] = textresprefix;

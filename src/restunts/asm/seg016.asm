@@ -47,9 +47,9 @@ seg016 segment byte public 'STUNTSC' use16
     assume cs:seg016
     assume es:nothing, ss:nothing, ds:dseg
     public ported_locate_many_resources_
-    public nopsub_367E4
-    public nopsub_36826
-    public nopsub_36868
+    public ported_nopsub_367E4_
+    public ported_nopsub_36826_
+    public ported_nopsub_36868_
 algn_367B1:
     ; align 2
     db 144
@@ -96,7 +96,7 @@ loc_367DC:
     ; align 2
     db 144
 ported_locate_many_resources_ endp
-nopsub_367E4 proc far
+ported_nopsub_367E4_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
@@ -105,11 +105,10 @@ nopsub_367E4 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
+    jmp     nopsub_367E4
+    nop
 loc_367E5:
-    mov     bp, sp
 loc_367E7:
-    sub     sp, 2
 loc_367EA:
     push    si
 loc_367EB:
@@ -146,8 +145,8 @@ loc_3681C:
 loc_36824:
     pop     bp
     retf
-nopsub_367E4 endp
-nopsub_36826 proc far
+ported_nopsub_367E4_ endp
+ported_nopsub_36826_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
@@ -156,10 +155,9 @@ nopsub_36826 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
+    jmp     nopsub_36826
+    nop
 loc_36827:
-    mov     bp, sp
-    sub     sp, 2
     push    si
     mov     [bp+var_2], 0
     jmp     short loc_3685B
@@ -191,8 +189,8 @@ loc_36864:
 loc_36866:
     pop     bp
     retf
-nopsub_36826 endp
-nopsub_36868 proc far
+ported_nopsub_36826_ endp
+ported_nopsub_36868_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
@@ -201,10 +199,9 @@ nopsub_36868 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
+    jmp     nopsub_36868
+    nop
 loc_3686B:
-    sub     sp, 2
 loc_3686E:
     push    si
 loc_3686F:
@@ -250,6 +247,6 @@ loc_368A8:
     pop     bp
 locret_368A9:
     retf
-nopsub_36868 endp
+ported_nopsub_36868_ endp
 seg016 ends
 end
