@@ -1007,7 +1007,9 @@ void mmgr_find_free(void) {
 			resdi--;
 		}
 		ressi--;
-	} while (ressi > resendptr1);
+	// `cmp si, resendptr1 / jnb` - the entry at resendptr1 is the last one
+	// the original visits, not one past the end.
+	} while (ressi >= resendptr1);
 
 	resdi++;
 	resendptr1 = resdi;
