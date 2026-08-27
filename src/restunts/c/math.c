@@ -725,8 +725,11 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 	// the original code checks for several overflows (in a strange way) - this code does not, but seems to do well anyway
 
 	long proj;
-	long comp;
-	
+	// bx in the original: (proj >> 16) << 1 plus the top bit of the low word,
+	// which is exactly proj >> 15 kept in 16 bits. `cmp cx, bx / jle` then
+	// weighs it against z as a signed word.
+	short comp;
+
 	if (vec->z <= 0) {
 		outpt->px = 0x8000;
 		outpt->py = 0x8000;
@@ -735,11 +738,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 	
 	if (vec->x < 0) {
 		proj = (long)-vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%li  %i", proj, comp);
-			comp++;
-		}
+		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) { 
 			outpt->px = -(proj / vec->z) + projectiondata5;
@@ -747,11 +746,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 			outpt->px = -0x7D00;
 	} else {
 		proj = (long)vec->x * projectiondata9;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
+		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
 			outpt->px = (proj / vec->z) + projectiondata5;
@@ -761,11 +756,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 
 	if (vec->y < 0) {
 		proj = (long)-vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
+		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
 			outpt->py = (proj / vec->z) + projectiondata8;
@@ -773,11 +764,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 			outpt->py = 0x7D00;
 	} else {
 		proj = (long)vec->y * projectiondata10;
-		comp = (proj >> 16) << 1;
-		if (proj & 0xFFFF == 0) {
-			fatal_error("%l  %i", proj, comp);
-			comp++;
-		}
+		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
 			outpt->py = -(proj / vec->z) + projectiondata8;
