@@ -83,7 +83,7 @@ seg008 segment byte public 'STUNTSC' use16
     public sprite_blit_to_video
     public show_waiting
     public print_int_as_string_maybe
-    public sub_29772
+    public ported_sub_29772_
     public mouse_timer_sprite_unk
     public ported_file_load_audiores_
     public audio_unload
@@ -4189,15 +4189,16 @@ loc_2976B:
     ; align 2
     db 144
 print_int_as_string_maybe endp
-sub_29772 proc far
+ported_sub_29772_ proc far
 
-    mov     word_45D1C, 0
+    jmp     sub_29772
+    nop
     mov     word_45D06, 0
     mov     idle_counter, 0
     retf
     ; align 2
     db 144
-sub_29772 endp
+ported_sub_29772_ endp
 mouse_timer_sprite_unk proc far
     var_6 = word ptr -6
      s = byte ptr 0

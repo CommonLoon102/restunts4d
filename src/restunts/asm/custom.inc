@@ -214,6 +214,7 @@ extrn unload_skybox:proc
 extrn free_sdgame2:proc
 extrn load_sdgame2_shapes:proc
 extrn load_skybox:proc
+extrn sub_29772:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

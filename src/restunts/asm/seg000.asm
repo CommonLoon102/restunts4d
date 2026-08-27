@@ -1636,7 +1636,7 @@ loc_10FB9:
     add     sp, 6
     mov     [bp+var_6], 0FEh ; '�'
     call    sprite_copy_2_to_1_2
-    call    sub_29772
+    call    ported_sub_29772_
 loc_10FEF:
     push    word_407D0
     push    word_407CE
@@ -2041,7 +2041,7 @@ loc_113B4:
     add     sp, 6
     mov     [bp+var_6], 0FEh ; '�'
     call    sprite_copy_2_to_1_2
-    call    sub_29772
+    call    ported_sub_29772_
 loc_113E5:
     push    word_407D0
     push    word_407CE
@@ -3314,7 +3314,7 @@ loc_11F50:
     mov     [bp+var_prevcaridindex], 0FFh
     mov     [bp+var_rotation], 0
     mov     [bp+var_106], 0
-    call    sub_29772
+    call    ported_sub_29772_
     mov     [bp+var_rotationdelta], 0
     mov     [bp+var_F2], 0FFh
     mov     ax, 64h ; 'd'
@@ -3881,7 +3881,7 @@ loc_124FD:
     call    mouse_draw_transparent_check
     call    sprite_copy_2_to_1_2
 loc_12534:
-    call    sub_29772
+    call    ported_sub_29772_
     mov     al, [bp+var_106]
     mov     [bp+var_F2], al
 loc_12541:
@@ -4324,7 +4324,7 @@ run_opponent_menu proc far
     mov     [bp+var_6], 0
     mov     [bp+var_1E], 0FFh
     mov     [bp+var_4], 0FFh
-    call    sub_29772
+    call    ported_sub_29772_
 loc_129A3:
     call    mouse_draw_transparent_check
 loc_129A8:
@@ -4655,7 +4655,7 @@ loc_12CFB:
     add     sp, 6
     mov     [bp+var_4], 0FEh ; '�'
     call    timer_get_delta_alt
-    call    sub_29772
+    call    ported_sub_29772_
 loc_12D2C:
     push    word_407D0
     push    word_407CE
@@ -6369,7 +6369,7 @@ loc_13D13:
     call    sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_52], 0FEh ; '�'
-    call    sub_29772
+    call    ported_sub_29772_
     call    check_input
     mov     [bp+var_70], 1
     call    sprite_copy_2_to_1_2
@@ -6603,7 +6603,7 @@ loc_13FD7:
 loc_13FDA:
     mov     [bp+var_selectedmenu], 1
     mov     [bp+var_78], 1
-    call    sub_29772
+    call    ported_sub_29772_
     call    sprite_copy_wnd_to_1
     cmp     [bp+var_16], 0
     jz      short loc_13FF9
@@ -6791,7 +6791,7 @@ loc_14188:
     add     sp, 4
     call    mouse_draw_transparent_check
     call    timer_get_delta_alt
-    call    sub_29772
+    call    ported_sub_29772_
 loc_141DC:
     push    word_407D0
     push    word_407CE

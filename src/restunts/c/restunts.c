@@ -375,6 +375,9 @@ extern int skybox_wat_color;
 extern int dialog_fnt_colour;
 extern int meter_needle_color;
 extern char far* skyboxes[];
+extern int word_45D1C;
+extern int word_45D06;
+extern int idle_counter;
 
 static char skybox_resource_names[5][9] = {
 	"desert",
@@ -392,6 +395,13 @@ void init_unknown(void)
 	byte_449DA = 0;
 	byte_4393C = 0;
 	word_44DCA = 0;
+}
+
+void sub_29772(void)
+{
+	word_45D1C = 0;
+	word_45D06 = 0;
+	idle_counter = 0;
 }
 
 void unload_skybox(void)
