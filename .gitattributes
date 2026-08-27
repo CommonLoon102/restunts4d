@@ -5,3 +5,13 @@
 *.inc text=crlf
 *.ASM text=crlf
 *.INC text=crlf
+*.rpl binary
+*.RPL binary
+*.res binary
+*.RES binary
+*.3sh binary
+*.3SH binary
+*.vsh binary
+*.VSH binary
+*.pvs binary
+*.PVS binary

@@ -1,0 +1,311 @@
+name: Build and validate
+
+# Builds the four DOS executables and replays the golden replay set against
+# them. Called by the pull request check and by the release workflow, so both
+# gate on exactly the same validation.
+on:
+  workflow_call:
+    inputs:
+      shards:
+        description: >-
+          Number of parallel replay jobs. A public repository on the free
+          plan may run 20 jobs at once account wide, so 20 uses the whole
+          allowance and any other workflow queues behind this one.
+        type: number
+        default: 20
+      partitions-per-shard:
+        description: >-
+          Partitions each replay job runs concurrently. DOSBox slows down
+          roughly in proportion to how far the partitions oversubscribe the
+          runner's four vCPUs, so raising this needs replay-timeout-seconds
+          raised to match.
+        type: number
+        default: 12
+      replay-timeout-seconds:
+        description: Seconds each executable gets per replay.
+        type: number
+        default: 30
+    outputs:
+      exe-artifact:
+        description: Artifact holding the four built executables.
+        value: ${{ jobs.build.outputs.exe-artifact }}
+
+env:
+  EXE_ARTIFACT: restunts-exes
+  WINEDEBUG: -all
+  # Keep wineboot from prompting to download Mono and Gecko.
+  WINEDLLOVERRIDES: mscoree,mshtml=
+
+jobs:
+  plan:
+    name: Plan the shards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+      total: ${{ steps.plan.outputs.total }}
+    steps:
+      - name: Split the golden set into shards
+        id: plan
+        env:
+          SHARDS: ${{ inputs.shards }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+        run: |
+          set -u
+          if (( SHARDS < 1 || PARTITIONS_PER_SHARD < 1 )); then
+              echo "::error::shards and partitions-per-shard must both be positive"
+              exit 1
+          fi
+          echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
+          echo "total=$(( SHARDS * PARTITIONS_PER_SHARD ))" >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build executables
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    outputs:
+      exe-artifact: ${{ steps.names.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish the artifact name
+        id: names
+        run: echo "value=$EXE_ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: Install Wine
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          # bcc.exe, tasm32.exe, make.exe and the bundled DOSBox.exe are all
+          # 32 bit PE binaries, so the i386 side of Wine is required.
+          sudo apt-get install -y --no-install-recommends wine wine32:i386 xvfb
+
+      - name: "Create the Wine prefix and map S: to the checkout"
+        run: |
+          xvfb-run -a wineboot --init
+          wineserver -w
+          # Every makefile addresses its sources as s:\..., the drive letter
+          # tools/mount_stunts_to_s.bat creates on Windows.
+          mkdir -p "$HOME/.wine/dosdevices"
+          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.wine/dosdevices/s:"
+
+      - name: Build the four executables
+        run: |
+          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makerepldump"
+
+      - name: Collect the executables
+        run: |
+          set -u
+          mkdir -p dist
+          missing=0
+          # makerepldump.bat never reports failure, and a fresh checkout carries
+          # none of these files, so their presence is the build's pass criteria.
+          for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO; do
+              built=$(find stunts src/restunts/dos src/restunts/repldump \
+                  -maxdepth 1 -iname "$exe.exe" -print -quit)
+              if [[ -z "$built" ]]; then
+                  echo "::error::$exe.EXE was not produced by the build"
+                  missing=1
+                  continue
+              fi
+              cp -- "$built" "dist/$exe.EXE"
+          done
+          (( missing == 0 )) || exit 1
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.EXE_ARTIFACT }}
+          path: dist/*.EXE
+          if-no-files-found: error
+          retention-days: 14
+
+  replay:
+    name: Replays (shard ${{ matrix.shard }})
+    needs: [plan, build]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install DOSBox-X
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dosbox-x
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.build.outputs.exe-artifact }}
+          path: exes
+
+      - name: Smoke test DOSBox-X
+        run: |
+          # Also lets DOSBox-X create its user configuration before several
+          # copies of it start up at once.
+          dosbox-x -silent -conf tools/scripts/dosbox.proc.conf \
+              -c "mount c $RUNNER_TEMP" -c "c:" -c "exit"
+
+      - name: Assemble the game directory
+        run: |
+          set -u
+          game_dir="$RUNNER_TEMP/gamedir"
+          mkdir -p "$game_dir"
+          # rpl2state.sh treats its own directory as the game directory, which
+          # is why the harness is copied next to the game data when it runs.
+          cp -R stunts/. "$game_dir/"
+          cp tools/scripts/cars/*.RES tools/scripts/cars/*.3SH \
+             tools/scripts/cars/*.VSH tools/scripts/cars/*.PVS "$game_dir/"
+          cp tools/scripts/rpls_golden/*.rpl "$game_dir/"
+          cp tools/scripts/rpl2state.sh tools/scripts/dosbox.proc.conf "$game_dir/"
+          cp exes/*.EXE "$game_dir/"
+          chmod +x "$game_dir/rpl2state.sh"
+          echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
+          echo "Replays in the game directory: $(find "$game_dir" -maxdepth 1 -name '*.rpl' | wc -l)"
+
+      - name: Run this shard's partitions
+        env:
+          SHARD: ${{ matrix.shard }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          TOTAL: ${{ needs.plan.outputs.total }}
+          REPLAY_TIMEOUT_SECONDS: ${{ inputs.replay-timeout-seconds }}
+        run: |
+          set -u
+          first=$(( SHARD * PARTITIONS_PER_SHARD ))
+          pids=()
+          partitions=()
+          for (( k = 0; k < PARTITIONS_PER_SHARD; k++ )); do
+              partition=$(( first + k ))
+              # rpl2state.sh only creates its output file when it logs an error,
+              # so create it up front to keep the artifact shape predictable.
+              : > "$GAME_DIR/partition_$partition.txt"
+              "$GAME_DIR/rpl2state.sh" "$partition" "$TOTAL" \
+                  > "$GAME_DIR/log_$partition.txt" 2>&1 &
+              pids+=("$!")
+              partitions+=("$partition")
+          done
+          status=0
+          for i in "${!pids[@]}"; do
+              if ! wait "${pids[$i]}"; then
+                  echo "::error::partition ${partitions[$i]} exited non-zero"
+                  status=1
+              fi
+          done
+          exit "$status"
+
+      - name: Collect this shard's results
+        if: always()
+        run: |
+          mkdir -p partitions
+          cp "${GAME_DIR:?}"/partition_*.txt "${GAME_DIR:?}"/log_*.txt partitions/
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: partitions-${{ matrix.shard }}
+          path: partitions/
+          # A shard that produced nothing is reported by the coverage check in
+          # the report job, which says far more than a failed upload would.
+          if-no-files-found: warn
+          retention-days: 14
+
+  report:
+    name: Replay report
+    needs: [plan, replay]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: partitions-*
+          merge-multiple: true
+          path: partitions
+
+      - name: Merge the partitions
+        env:
+          TOTAL: ${{ needs.plan.outputs.total }}
+        run: tools/scripts/rpl2statemerge.sh partitions "$TOTAL" partitions_all.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: partitions_all
+          path: partitions_all.txt
+          retention-days: 14
+
+      - name: Check for mismatches
+        env:
+          REPLAY_RESULT: ${{ needs.replay.result }}
+        run: |
+          set -u
+          expected=$(find tools/scripts/rpls_golden -maxdepth 1 -name '*.rpl' | wc -l)
+          processed=$(cat partitions/log_*.txt 2>/dev/null | grep -c '^Processing ' || true)
+          errors=$(grep -c '' partitions_all.txt || true)
+
+          types() {
+              awk -F '|' '{
+                  for (i = 1; i <= NF; i++) {
+                      if ($i ~ /^type=/) { print substr($i, 6); next }
+                  }
+              }' partitions_all.txt | sort | uniq -c | sort -rn
+          }
+
+          {
+              echo "## Replay validation"
+              echo
+              echo "| | |"
+              echo "|---|---|"
+              echo "| Replays in the golden set | $expected |"
+              echo "| Replays processed | $processed |"
+              echo "| Errors | $errors |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          status=0
+
+          if [[ "$REPLAY_RESULT" != "success" ]]; then
+              echo "::error::a replay shard did not finish (result: $REPLAY_RESULT)"
+              status=1
+          fi
+
+          if (( processed != expected )); then
+              echo "::error::$processed of $expected replays were processed, so the run is incomplete"
+              printf '\n:x: Only **%s** of **%s** replays were processed.\n' \
+                  "$processed" "$expected" >> "$GITHUB_STEP_SUMMARY"
+              status=1
+          fi
+
+          if (( errors > 0 )); then
+              echo "::error::$errors error(s) in partitions_all.txt"
+              echo
+              echo "Errors by type:"
+              types
+              echo
+              echo "partitions_all.txt:"
+              cat partitions_all.txt
+              {
+                  printf '\n:x: **%s error(s)** — the full report is in the `partitions_all` artifact.\n\n' "$errors"
+                  echo '### Errors by type'
+                  echo '```'
+                  types
+                  echo '```'
+                  echo
+                  echo '### partitions_all.txt (first 200 lines)'
+                  echo '```'
+                  head -n 200 partitions_all.txt
+                  echo '```'
+              } >> "$GITHUB_STEP_SUMMARY"
+              status=1
+          fi
+
+          if (( status == 0 )); then
+              echo "No mismatches: all $processed replays agree byte for byte."
+              printf '\n:white_check_mark: All **%s** replays agree byte for byte.\n' \
+                  "$processed" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          exit "$status"
