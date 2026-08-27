@@ -262,6 +262,20 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 		if ((flag & 0xF0) == 0) {
 			flag = memshape->s2d_unk5 >> 4;
 			if (flag != 0) {
+				// The original does not merely skip an unknown flip type, it
+				// gives up on the whole resource:
+				//
+				//     cmp     al, 4
+				//     jb      short loc_32B5F
+				//     mov     ax, 1
+				//     jmp     short loc_32B58     ; return 1, right now
+				//
+				// so the shapes after this one are left flipped and the
+				// caller is told. This port skips the shape and carries on,
+				// and is declared void. Harmless: the only call site
+				// (asmorig/seg034.asm:237) does `add sp, 8` and goes straight
+				// on to mmgr_release without ever reading ax, and the three
+				// arms below cover every flip type the resources use.
 				if (flag < 4) {
 					width = memshape->s2d_width;
 					height = memshape->s2d_height;
