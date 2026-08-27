@@ -82,7 +82,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_audio_init_chunk_
     public audio_map_song_instruments
     public sub_3803C
-    public sub_38156
+    public ported_sub_38156_
     public sub_38178
     public audio_map_song_tracks
     public off_383A0
@@ -2158,15 +2158,14 @@ loc_3814F:
     ; align 2
     db 144
 sub_3803C endp
-sub_38156 proc far
+ported_sub_38156_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     sub_38156
+    nop
     mov     ax, 2Eh ; '.'
     imul    [bp+arg_0]
     add     ax, offset unk_45A26
@@ -2177,7 +2176,7 @@ sub_38156 proc far
     mov     sp, bp
     pop     bp
     retf
-sub_38156 endp
+ported_sub_38156_ endp
 sub_38178 proc far
     var_10 = dword ptr -16
     var_C = word ptr -12

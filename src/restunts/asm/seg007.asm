@@ -527,7 +527,7 @@ audio_function2 proc far
     cmp     byte ptr [si+1], 1
     jnz     short loc_26F9E
     push    word ptr [si+12h]
-    call    sub_38156
+    call    ported_sub_38156_
     pop     bx
     mov     word ptr [si+12h], 0FFFFh
     mov     byte ptr [si+1], 0

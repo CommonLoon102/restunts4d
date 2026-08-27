@@ -35,7 +35,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn ported_audio_init_chunk_:proc
     extrn audio_map_song_instruments:proc
     extrn sub_3803C:proc
-    extrn sub_38156:proc
+    extrn ported_sub_38156_:proc
     extrn sub_38178:proc
     extrn audio_map_song_tracks:proc
     extrn off_383A0:word

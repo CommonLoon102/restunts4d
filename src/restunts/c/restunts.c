@@ -545,6 +545,7 @@ extern unsigned char byte_45948;
 extern unsigned char byte_45D9A[];
 extern unsigned char byte_44D06[];
 extern unsigned char byte_44ACA[];
+extern unsigned char unk_45A26[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
@@ -882,6 +883,15 @@ void sub_374DE(int channel)
 		byte_45D9A[channel] = 0;
 		audio_init_chunk2(channel);
 	}
+}
+
+void sub_38156(int index)
+{
+	unsigned int offset;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x2EU);
+	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0CU, 1);
+	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0EU, 0);
 }
 
 void load_sdgame2_shapes(void)
