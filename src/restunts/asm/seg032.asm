@@ -47,7 +47,7 @@ seg032 segment byte public 'STUNTSC' use16
     assume cs:seg032
     assume es:nothing, ss:nothing, ds:dseg
     public read_line
-    public read_line_helper
+    public ported_read_line_helper_
     public read_line_helper2
 algn_3A4B5:
     ; align 2
@@ -147,7 +147,7 @@ loc_3A538:
     mov     word_42A1C, 1
     mov     [bp+var_A], 0
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     push    [bp+arg_14]
     push    [bp+arg_12]
     call    timer_copy_counter; Stores a copy of the timer counter with the given ticks added.
@@ -203,7 +203,7 @@ loc_3A5AA:
 loc_3A5B3:
     mov     word_42A1C, 1
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     cmp     [bp+var_4], 0
     jz      short loc_3A5CC
     mov     word_42A1C, 0
@@ -221,7 +221,7 @@ loc_3A5D2:
     jz      short loc_3A568
 loc_3A5E3:
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     mov     ax, [bp+var_8]
     pop     si
     mov     sp, bp
@@ -254,7 +254,7 @@ loc_3A62A:
     cmp     [bp+var_8], 4D00h
     jnz     short loc_3A648
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     mov     ax, word_42A22
     cmp     [bp+arg_6], ax
     jg      short loc_3A640
@@ -268,7 +268,7 @@ loc_3A648:
     cmp     [bp+var_8], 4B00h
     jnz     short loc_3A664
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     cmp     word_42A22, 0
     jnz     short loc_3A65D
     jmp     loc_3A7E9
@@ -279,14 +279,14 @@ loc_3A664:
     cmp     [bp+var_8], 4700h
     jnz     short loc_3A678
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     mov     word_42A22, 0
     jmp     loc_3A7E9
 loc_3A678:
     cmp     [bp+var_8], 4F00h
     jnz     short loc_3A694
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     push    word ptr [bp+arg_2]; char *
     call    _strlen
     add     sp, 2
@@ -296,7 +296,7 @@ loc_3A694:
     cmp     [bp+var_8], 5200h
     jnz     short loc_3A6C2
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     cmp     [bp+var_A], 0
     jnz     short loc_3A6B4
     mov     [bp+var_A], 1
@@ -323,7 +323,7 @@ loc_3A6D4:
     jmp     loc_3A7ED
 loc_3A6E1:
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     mov     ax, word_42A22
     mov     [bp+var_6], ax
     jmp     short loc_3A6FC
@@ -352,7 +352,7 @@ loc_3A710:
     jmp     loc_3A7ED
 loc_3A720:
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
     dec     word_42A22
     mov     ax, word_42A22
     mov     [bp+var_6], ax
@@ -383,7 +383,7 @@ loc_3A75A:
     jmp     loc_3A7ED
 loc_3A765:
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
 loc_3A769:
     cmp     [bp+var_2], 0
     jz      short loc_3A796
@@ -441,23 +441,22 @@ loc_3A7E5:
     call near ptr read_line_helper2
 loc_3A7E9:
     push    cs
-    call near ptr read_line_helper
+    call near ptr ported_read_line_helper_
 loc_3A7ED:
     mov     [bp+var_2], 0
     jmp     loc_3A568
     ; align 2
     db 144
 read_line endp
-read_line_helper proc far
+ported_read_line_helper_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     read_line_helper
+    nop
     cmp     word_42A1C, 0
     jnz     short loc_3A806
     jmp     loc_3A891
@@ -520,7 +519,7 @@ loc_3A891:
     retf
     ; align 2
     db 144
-read_line_helper endp
+ported_read_line_helper_ endp
 read_line_helper2 proc far
     var_6 = word ptr -6
     var_4 = word ptr -4

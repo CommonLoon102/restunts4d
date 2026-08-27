@@ -517,6 +517,14 @@ void input_pop_status(void)
 }
 
 extern int font_op2(const char* text);
+extern int font_op(const char* text, int count);
+extern unsigned int word_42A16;
+extern unsigned int word_42A18;
+extern unsigned int word_42A1A;
+extern unsigned int word_42A1C;
+extern char* off_42A1E;
+extern unsigned int word_42A22;
+extern legacy_u8 far* word_405FE;
 
 int font_op2_alt(const char* text)
 {
@@ -1420,6 +1428,50 @@ void sub_3702E(int left, int top, int right, int bottom, int color)
 		sub_35B76(LEGACY_S16_FROM_BITS(right), y,
 			1, height, color);
 	}
+}
+
+static legacy_u16 legacy_near_string_length(const char* text)
+{
+	legacy_u16 length;
+
+	length = 0;
+	while (*text++ != 0)
+		length = LEGACY_U16_WRAP_ADD(length, 1U);
+	return length;
+}
+
+void read_line_helper(void)
+{
+	static const char space[] = " ";
+	legacy_u8 far* font_definition;
+	legacy_u16 length;
+	legacy_u16 cursor;
+	legacy_u16 cursor_width;
+	legacy_u16 x;
+	legacy_u16 y;
+	legacy_u16 color;
+
+	if (word_42A1C == 0)
+		return;
+	length = legacy_near_string_length(off_42A1E);
+	cursor = (legacy_u16)word_42A22;
+	if (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(cursor)) {
+		cursor = length;
+		word_42A22 = cursor;
+	}
+	cursor_width = (legacy_u16)font_op(off_42A1E + cursor, 1);
+	if (cursor_width == 0)
+		cursor_width = (legacy_u16)font_op2(space);
+	x = LEGACY_U16_WRAP_ADD(font_op(off_42A1E, cursor), word_42A18);
+	font_definition = word_405FE;
+	y = LEGACY_U16_WRAP_ADD(
+		audioresource_get_word(font_definition + 0x12U), word_42A1A);
+	y = LEGACY_U16_WRAP_SUB(y, word_42A16);
+	color = audioresource_get_word(font_definition);
+	sub_35B76(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
+		LEGACY_S16_FROM_BITS(cursor_width),
+		LEGACY_S16_FROM_BITS(word_42A16),
+		LEGACY_S16_FROM_BITS(color));
 }
 
 int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
