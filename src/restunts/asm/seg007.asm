@@ -51,7 +51,7 @@ seg007 segment byte public 'STUNTSC' use16
     public pad_id
     public audio_init_engine
     public audio_op_unk
-    public audio_function2
+    public ported_audio_function2_
     public audio_driver_timer
     public audio_op_unk2
     public nopsub_27220
@@ -510,15 +510,14 @@ loc_26F67:
     pop     bp
     retf
 audio_op_unk endp
-audio_function2 proc far
+ported_audio_function2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    si
-    mov     ax, 4Ch ; 'L'
+    jmp     audio_function2
+    nop
+    nop
     imul    [bp+arg_0]
     mov     si, ax
     add     si, offset audiotimers
@@ -537,7 +536,7 @@ loc_26F9E:
     mov     sp, bp
     pop     bp
     retf
-audio_function2 endp
+ported_audio_function2_ endp
 audio_driver_timer proc far
     var_4 = word ptr -4
     var_1 = byte ptr -1
@@ -900,7 +899,7 @@ nopsub_2726C proc far
     mov     byte ptr [si+1Ah], 1
     push    [bp+arg_0]
     push    cs
-    call near ptr audio_function2
+    call near ptr ported_audio_function2_
     pop     bx
     pop     si
     mov     sp, bp
@@ -936,7 +935,7 @@ nopsub_272B0 proc far
     mov     byte ptr [si+1Ah], 1
     push    [bp+arg_0]
     push    cs
-    call near ptr audio_function2
+    call near ptr ported_audio_function2_
     pop     bx
     pop     si
     mov     sp, bp
@@ -972,7 +971,7 @@ audio_function2_wrap proc far
     mov     byte ptr [si+1Ah], 1
     push    [bp+arg_0]
     push    cs
-    call near ptr audio_function2
+    call near ptr ported_audio_function2_
     pop     bx
     pop     si
     mov     sp, bp

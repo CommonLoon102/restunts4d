@@ -7237,7 +7237,7 @@ loc_188D6:
     test    byte_42D26, 1
     jz      short loc_188E9
     push    word_43964
-    call    audio_function2
+    call    ported_audio_function2_
     add     sp, 2
 loc_188E9:
     cmp     gameconfig.game_opponenttype, 0
@@ -7251,7 +7251,7 @@ loc_18903:
     test    byte_42D2A, 1
     jz      short loc_18916
     push    word_4408C
-    call    audio_function2
+    call    ported_audio_function2_
     add     sp, 2
 loc_18916:
     mov     byte_459D8, 0
@@ -7580,7 +7580,7 @@ loc_18BF4:
     jz      short loc_18C08
     dec     [bp+var_16]
     push    [bp+var_2E]
-    call    audio_function2
+    call    ported_audio_function2_
 loc_18C05:
     add     sp, 2
 loc_18C08:

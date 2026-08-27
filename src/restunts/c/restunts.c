@@ -563,6 +563,7 @@ extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
 extern void audio_op_unk4(int channel);
 extern void sub_39700(void);
+void sub_38156(int index);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
 extern void audio_init_chunk(int first_channel, int last_channel,
@@ -915,6 +916,23 @@ int nopsub_27489(int index)
 		return 1;
 
 	return sub_3771E(channel);
+}
+
+void audio_function2(int index)
+{
+	unsigned int offset;
+	int channel;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	if (audiotimers[offset] != 1 || audiotimers[offset + 1U] != 1)
+		return;
+
+	channel = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE(audiotimers + offset + 0x12U));
+	sub_38156(channel);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x12U, 0xFFFFU);
+	audiotimers[offset + 1U] = 0;
+	audiotimers[offset + 0x1AU] = 1;
 }
 
 void sub_374DE(int channel)
