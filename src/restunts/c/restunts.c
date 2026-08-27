@@ -570,6 +570,12 @@ extern void audio_init_chunk(int first_channel, int last_channel,
 	void far* resource, unsigned int resource_data_offset,
 	unsigned int rate, unsigned char priority);
 
+static void far* audio_read_far_pointer(const unsigned char* source)
+{
+	return MK_FP(LEGACY_READ_U16_LE(source + 2),
+		LEGACY_READ_U16_LE(source));
+}
+
 void audio_unload(void)
 {
 	audio_driver_func3F(2);
@@ -932,6 +938,21 @@ void audio_function2(int index)
 	sub_38156(channel);
 	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x12U, 0xFFFFU);
 	audiotimers[offset + 1U] = 0;
+	audiotimers[offset + 0x1AU] = 1;
+}
+
+void audio_op_unk3(int index)
+{
+	unsigned int offset;
+	unsigned int rate;
+	int channel;
+	void far* resource;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	resource = audio_read_far_pointer(audiotimers + offset + 0x44U);
+	channel = audio_check_flag(resource, -1, 0x40U, rate);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
 	audiotimers[offset + 0x1AU] = 1;
 }
 

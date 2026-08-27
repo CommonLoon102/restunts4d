@@ -7695,7 +7695,7 @@ loc_18CF3:
     test    [bp+arg_0], 20h
     jz      short loc_18D04
     push    [bp+arg_2]
-    call    audio_op_unk3
+    call    ported_audio_op_unk3_
     add     sp, 2
 loc_18D04:
     pop     bp
