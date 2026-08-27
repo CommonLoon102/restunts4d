@@ -911,9 +911,11 @@ loc_31508:
 }
 
 // `paras` is signed here but the original treats it as unsigned: it steps the
-// count down with `sub bx, 1000h` and tests the borrow with jnb, so a count
-// above 7FFFh (512 KB in one call) still chunks correctly there and would go
-// wrong here. Nothing asks either copier for that much at once.
+// count down with `sub bx, 1000h` and tests the borrow with jnb. Counts from
+// 8000h through 8FFFh wrap into the non-negative range after that subtraction
+// and still chunk correctly here; the divergence starts at 9000h (576 KiB),
+// where the signed remainder test is taken despite no unsigned borrow. Nothing
+// asks either copier for that much at once.
 void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras) {
 	unsigned short count; // number of words to copy
 	unsigned short far * srcptr;
