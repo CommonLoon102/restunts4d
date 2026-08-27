@@ -105,7 +105,7 @@ seg008 segment byte public 'STUNTSC' use16
     public do_dos_restext
     public show_graphic_levels_menu
     public do_dea_textres
-    public ensure_file_exists
+    public ported_ensure_file_exists_
     public do_mer_restext
     public ported_timer_get_delta_alt_
     public ported_file_load_3dres_
@@ -5497,14 +5497,12 @@ loc_2A1A2:
     pop     bp
     retf
 do_dea_textres endp
-ensure_file_exists proc far
+ported_ensure_file_exists_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    jmp     short loc_2A1E8
+    jmp     ensure_file_exists
     ; align 2
     db 144
 loc_2A1AC:
@@ -5549,7 +5547,7 @@ loc_2A1E8:
     retf
     ; align 2
     db 144
-ensure_file_exists endp
+ported_ensure_file_exists_ endp
 do_mer_restext proc far
 
     sub     ax, ax

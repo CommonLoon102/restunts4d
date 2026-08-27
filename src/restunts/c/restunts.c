@@ -1562,6 +1562,26 @@ void parse_filepath_separators(char* destination, const char* path)
 	destination[output_index - 1U] = 0;
 }
 
+extern char aId1[];
+extern char aId2[];
+extern char aId3[];
+extern char aId4[];
+extern char* findfilenames[];
+
+void ensure_file_exists(int file_index)
+{
+	static char* const message_ids[] = { aId1, aId2, aId3, aId4 };
+	char* message_id;
+
+	message_id = message_ids[file_index - 1];
+	while (file_find(findfilenames[file_index]) == 0) {
+		show_dialog(1, 1, locate_text_res(mainresptr, message_id),
+			-1, -1, dialogarg2, 0, 0);
+		mouse_draw_opaque_check();
+		kbormouse = 0;
+	}
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
