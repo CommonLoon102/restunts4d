@@ -517,7 +517,11 @@ unsigned short file_load_shape2d_expandedsize(void far* memchunk) {
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d(memchunk, i);
-		size += (memshape->s2d_width * memshape->s2d_height * 8) + sizeof(struct SHAPE2D);
+		// `shl ax, 3` then `sub dx, dx / adc`: the per-shape term is a
+		// 16-bit value ZERO-extended into the accumulator, and the header
+		// size is folded in afterwards with its own carry.
+		size += (unsigned long)(unsigned short)(memshape->s2d_width * memshape->s2d_height * 8)
+		      + sizeof(struct SHAPE2D);
 	}
 
 	return (size + sizeof(struct SHAPE2D)) >> 4;
