@@ -448,7 +448,10 @@ void file_load_shape2d_expand(unsigned char far* memchunk, char far* mempages) {
 		            + ((unsigned long)(unsigned short)(product >> 16) << 16);
 		
 		dstshape = file_get_shape2d(mempages, i);
-		*dstshape = *srcshape;
+		// `mov cx, 6 / rep movsw` - the first six words only, up to and
+		// including s2d_pos_y. s2d_unk3..s2d_unk6 hold the pattern and flip
+		// nibbles and are deliberately left alone in the destination.
+		fmemcpy(dstshape, srcshape, 6 * sizeof(unsigned short));
 		
 		dstshape->s2d_width *= 8;
 
