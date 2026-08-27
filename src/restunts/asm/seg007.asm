@@ -398,7 +398,7 @@ loc_26E61:
     push    ax
     mov     ax, 0FFFFh
     push    ax
-    call    sub_37470
+    call    ported_sub_37470_
     pop     bx
     pop     bx
     mov     [si+2], ax

@@ -539,6 +539,7 @@ extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
 extern unsigned char byte_45948;
+extern unsigned char byte_45D9A[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
@@ -671,6 +672,32 @@ int audio_check_flag2(void far* resource, int channel,
 int nopsub_37456(void far* resource)
 {
 	return audio_check_flag2(resource, -1, 0x40U);
+}
+
+int sub_37470(int channel, unsigned char priority)
+{
+	unsigned int offset;
+	int candidate;
+
+	if (channel == -1) {
+		for (candidate = 0x10; candidate <= 0x17; candidate++) {
+			offset = (unsigned int)(candidate - 0x10) * 0x4CU;
+			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
+				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
+				byte_45D9A[candidate] == 0) {
+				channel = candidate;
+				break;
+			}
+		}
+	}
+
+	if (channel != -1) {
+		byte_45D9A[channel] = 1;
+		offset = (unsigned int)channel * 0x4CU;
+		audiochunks_unk[offset + 0x24U] = priority;
+	}
+
+	return channel;
 }
 
 void load_sdgame2_shapes(void)
