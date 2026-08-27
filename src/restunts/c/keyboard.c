@@ -206,9 +206,16 @@ void kb_exit_handler(void) {
 
 	irqmask = inp(0x21);
 	outp(0x21, irqmask | 0x3);
-	setvect(9, old_kb_int9_handler);
-	setvect(0x16, old_kb_int16_handler);
-	pokeb(0, 0x417, peekb(0, 0x417) & 0xf0);
+
+	// `mov bx, old_kb_intr_ofs / or bx, bx / jz short loc_308C1` - there is
+	// nothing to put back unless kb_init_interrupt saved the old vectors,
+	// and the BIOS shift-state byte is only cleared inside the guard too.
+	if (old_kb_int9_handler != 0) {
+		setvect(9, old_kb_int9_handler);
+		setvect(0x16, old_kb_int16_handler);
+		pokeb(0, 0x417, peekb(0, 0x417) & 0xf0);
+	}
+
 	outp(0x21, irqmask);
 }
 
