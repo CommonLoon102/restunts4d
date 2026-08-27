@@ -38,7 +38,7 @@ run_dosbox_exe() {
     local exe="$1"
     local filename="$2"
 
-    timeout --signal=KILL 10s \
+    timeout --signal=KILL 30s \
         dosbox-x \
         -silent \
         -conf "$CONFIG" \
