@@ -244,6 +244,7 @@ unsigned short file_get_res_shape_count(void far* memchunk) {
 void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 
 	int shapecount, counter, width, height;
+	int evenrows, oddrows;
 	struct SHAPE2D far* memshape;
 	char far* membitmapptr;
 	unsigned char flag;
@@ -284,8 +285,25 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 							}
 							break;
 						case 2:
-							// refer to loc_32BDE in the original function
-							fatal_error("unhandled flip type 2");
+							// loc_32BDE. Even and odd rows are stored as two
+							// separate column-major blocks: the even one holds
+							// ceil(height/2) samples per column from offset 0,
+							// the odd one holds height/2 per column starting at
+							// width * ceil(height/2). The original never reloads
+							// bx between the two halves of a pass, which is what
+							// puts the odd rows at that offset.
+							evenrows = (height + 1) / 2;
+							oddrows = height / 2;
+							for (j = 0; j < height; j += 2) { // even rows
+								for (i = 0; i < width; i++) { // width
+									mempages[i + j * width] = membitmapptr[(j / 2) + i * evenrows];
+								}
+							}
+							for (j = 1; j < height; j += 2) { // odd rows
+								for (i = 0; i < width; i++) { // width
+									mempages[i + j * width] = membitmapptr[width * evenrows + (j / 2) + i * oddrows];
+								}
+							}
 							break;
 					}
 					
@@ -304,7 +322,7 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 	
 /*    asm {
 
-	this is the unimplemented unflip case 2 above:
+	the original of unflip case 2 above:
 
 // switch 2
 loc_32BDE:
