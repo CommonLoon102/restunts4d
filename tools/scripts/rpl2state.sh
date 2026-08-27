@@ -28,6 +28,16 @@ GAME_DIR="$script_dir"
 CONFIG="$GAME_DIR/dosbox.proc.conf"
 output_file="$GAME_DIR/partition_$partition.txt"
 
+# Seconds allowed per executable. A run competing for a core with more
+# partitions than the machine has cores can outlast the limit without
+# hanging, so it is overridable rather than fixed.
+timeout_seconds="${REPLAY_TIMEOUT_SECONDS:-30}"
+
+if [[ ! "$timeout_seconds" =~ ^[1-9][0-9]*$ ]]; then
+    echo "REPLAY_TIMEOUT_SECONDS must be a positive integer." >&2
+    exit 2
+fi
+
 files=()
 
 # Target filenames contain only a numeric counter, such as 0000.rpl.
@@ -54,12 +64,12 @@ log_error() {
     echo "$message" | tee -a "$output_file" >&2
 }
 
-# Run one executable through DOSBox-X with a 10-second timeout.
+# Run one executable through DOSBox-X with a timeout.
 run_dosbox_exe() {
     local exe="$1"
     local filename="$2"
 
-    timeout --signal=KILL 10s \
+    timeout --signal=KILL "${timeout_seconds}s" \
         dosbox-x \
         -silent \
         -conf "$CONFIG" \
@@ -77,7 +87,7 @@ run_dosbox_exe() {
             ;;
 
         124|137)
-            log_error "ERROR|type=timeout|exe=$exe|input=$filename|timeout_seconds=10"
+            log_error "ERROR|type=timeout|exe=$exe|input=$filename|timeout_seconds=$timeout_seconds"
             return 124
             ;;
 

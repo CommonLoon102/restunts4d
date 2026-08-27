@@ -1,0 +1,36 @@
+**************************************************************
+SPEEDGATE XSD 
+
+TECHNICAL FEATURES:
+
+Top Speed: 245 mph
+Powergear: No
+0-60 mph: 3,9 sec
+Transmission: 5 gears (Auto or Manual)
+Max Speed for gear: I = 95 mph - II = 132 mph - III = 182 mph - IV = 219 mph - V = 245 mph
+
+
+TEST DRIVE:
+
+Overview. As technical features show, Speedgate XSD is, for acceleration and maximum speed, a very fast car, decidedly more than Porsche 962 and only a bit less than Porsche March Indy. Not having Powergear, the new car permits to drive, in the complete sense of the term, at very high speed (until 245 mph availing the jumps), making you able to drive some known tracts (small and large curves, fast chicane, up/down corkscrew) with an unconventional speed, higher than normal, but not too much so to appear unreal.
+
+Handling. Speedgate XSD is very manageable, above all at low speed, thanks to a good grip. Increasing the speed, the car replies quite good at steering inputs but at high speed (over 200 mph) it’s obviously not very easy to feel when the grip limit is reached so to correct in time (above all in NORH races) eventual guide errors. 
+
+Brakes. Powered, very suitable to manage high speed.
+
+Engine. The trend of the torque is more similar to a real car than other Stunts cars, so drivers will have to test it accurately to know the best moment to shift to a higher gear instead to wait the red zone of their speedometer…
+
+Bugs. No bugs known at the moment. Please tell me if you find anyone.
+
+Fun, emotions and the taste to discover the limits of this new unexplored creature complete the guide impressions. Above all NORH drivers will find it very exciting to drive.
+
+
+HISTORY:
+
+ 5th Jul 2007 - Speedgate XSD has been presented to the Stunts community.
+ 1st Aug 2007 - First official RH race: “Gate” (SDR)
+ 1st Aug 2007 - First official NORH race: “Emotions” (SDR)
+30th Nov 2008 - Body restyling, no modifies to the technical features
+10th Aug 2013 - Strictly technical fix of the RES file header, no changes to any features. 
+
+**************************************************************

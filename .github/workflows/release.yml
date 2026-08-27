@@ -1,0 +1,102 @@
+name: Release
+
+# Manually publishes the four executables from any branch. The golden replays
+# are validated first, and no release is created unless they all pass.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag to create for this release, for example v1.2.0.
+        type: string
+        required: true
+      title:
+        description: Release title. Defaults to the tag.
+        type: string
+        required: false
+      prerelease:
+        description: Mark the release as a prerelease.
+        type: boolean
+        default: false
+      draft:
+        description: Create the release as a draft.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  check-tag:
+    name: Check the tag
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reject a malformed or already used tag
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -u
+          # Fail before spending a full build and replay run on a tag that
+          # cannot be created anyway.
+          if [[ ! "$TAG" =~ ^[A-Za-z0-9][A-Za-z0-9._/-]*$ ]]; then
+              echo "::error::'$TAG' is not a usable tag name"
+              exit 1
+          fi
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              echo "::error::tag '$TAG' already exists"
+              exit 1
+          fi
+
+  validate:
+    name: Golden replays
+    needs: check-tag
+    uses: ./.github/workflows/build-and-validate.yml
+
+  release:
+    name: Publish the release
+    needs: [check-tag, validate]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.validate.outputs.exe-artifact }}
+          path: dist
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          TITLE: ${{ inputs.title }}
+          DRAFT: ${{ inputs.draft }}
+          PRERELEASE: ${{ inputs.prerelease }}
+        run: |
+          set -u
+          flags=()
+          if [[ "$DRAFT" == "true" ]]; then
+              flags+=(--draft)
+          fi
+          if [[ "$PRERELEASE" == "true" ]]; then
+              flags+=(--prerelease)
+          fi
+          notes=$(printf '%s\n' \
+              "Built from $GITHUB_REF_NAME at commit $GITHUB_SHA." \
+              "" \
+              "The golden replay set was validated against these executables before this release was created.")
+          gh release create "$TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "${TITLE:-$TAG}" \
+              --notes "$notes" \
+              "${flags[@]}" \
+              dist/RESTUNTS.EXE dist/RESTUNTO.EXE dist/REPLDUMP.EXE dist/REPLDUMO.EXE

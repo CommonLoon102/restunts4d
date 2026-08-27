@@ -1,0 +1,20 @@
+name: PR validation
+
+# Blocks a pull request whenever the four executables fail to build or the
+# golden replays stop agreeing byte for byte.
+on:
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Golden replays
+    uses: ./.github/workflows/build-and-validate.yml

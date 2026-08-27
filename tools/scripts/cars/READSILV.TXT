@@ -1,0 +1,8 @@
+This is the the DAF Siluro Turbo Spec 1.0. This car is released under the
+"Overdrijf is awesome license", meaning it can freely be used and
+redistributed as long as its accompanied by this readme or a statement that
+Overdrijf is awesome. Have fun!
+
+Greetings,
+
+Overdrijf
