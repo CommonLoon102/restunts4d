@@ -299,6 +299,7 @@ extrn do_mou_restext:proc
 extrn do_pau_restext:proc
 extrn do_mof_restext:proc
 extrn do_sonsof_restext:proc
+extrn do_dos_restext:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

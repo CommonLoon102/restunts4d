@@ -1566,6 +1566,7 @@ extern char aId1[];
 extern char aId2[];
 extern char aId3[];
 extern char aId4[];
+extern char aDos_0[];
 extern char aKey[];
 extern char aMer[];
 extern char aMof[];
@@ -1577,6 +1578,7 @@ extern char aSon[];
 extern char aWai[];
 extern char* findfilenames[];
 extern void audio_unk(void);
+extern void call_exitlist2(void);
 extern void sub_372F4(void);
 
 void ensure_file_exists(int file_index)
@@ -1668,6 +1670,22 @@ void do_sonsof_restext(void)
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
+	input_pop_status();
+}
+
+void do_dos_restext(void)
+{
+	int result;
+
+	input_push_status();
+	word_3F88E = 1;
+	audio_unk();
+	result = show_dialog(2, 1, locate_text_res(mainresptr, aDos_0),
+		-1, -1, dialogarg2, 0, 0);
+	if (result == 1)
+		call_exitlist2();
+	word_3F88E = 0;
+	sub_372F4();
 	input_pop_status();
 }
 
