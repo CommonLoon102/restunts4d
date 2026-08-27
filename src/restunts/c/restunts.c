@@ -532,9 +532,13 @@ void free_sdgame2(void)
 
 extern void audio_driver_func3F(int command);
 extern char audioflag2;
+extern char audioflag6;
 extern int word_4063A;
 extern unsigned char byte_44290;
+extern unsigned char byte_428D6[];
+extern unsigned char audiochunks_unk2[];
 extern void audio_driver_func1E(int channel, int function);
+extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
 
 void audio_unload(void)
@@ -568,6 +572,44 @@ short audio_toggle_flag2(void)
 	}
 
 	audio_enable_flag2();
+	return 1;
+}
+
+void audio_enable_flag6(void)
+{
+	int channel;
+
+	if (audioflag6 == 1)
+		return;
+
+	for (channel = 0x10; channel < 0x18; channel++)
+		audio_unk2(channel, byte_428D6[channel]);
+	audioflag6 = 1;
+}
+
+void audio_disable_flag6(void)
+{
+	int channel;
+
+	if (audioflag6 == 0)
+		return;
+
+	for (channel = 0x10; channel < 0x18; channel++) {
+		byte_428D6[channel] =
+			audiochunks_unk2[(channel - 0x10) * 0x4C + 0x28];
+		audio_unk2(channel, 0);
+	}
+	audioflag6 = 0;
+}
+
+short audio_toggle_flag6(void)
+{
+	if (audioflag6 == 1) {
+		audio_disable_flag6();
+		return 0;
+	}
+
+	audio_enable_flag6();
 	return 1;
 }
 

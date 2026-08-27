@@ -14,9 +14,9 @@ seg027 segment byte public 'STUNTSC' use16
     extrn audio_check_flag2:proc
     extrn audio_check_flag:proc
     extrn audio_init_chunk2:proc
-    extrn audio_enable_flag6:proc
-    extrn audio_disable_flag6:proc
-    extrn audio_toggle_flag6:proc
+    extrn ported_audio_enable_flag6_:proc
+    extrn ported_audio_disable_flag6_:proc
+    extrn ported_audio_toggle_flag6_:proc
     extrn sub_3771E:proc
     extrn nopsub_37750:proc
     extrn audio_driver_func3F:proc

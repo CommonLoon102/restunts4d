@@ -61,9 +61,9 @@ seg027 segment byte public 'STUNTSC' use16
     public audio_check_flag2
     public audio_check_flag
     public audio_init_chunk2
-    public audio_enable_flag6
-    public audio_disable_flag6
-    public audio_toggle_flag6
+    public ported_audio_enable_flag6_
+    public ported_audio_disable_flag6_
+    public ported_audio_toggle_flag6_
     public sub_3771E
     public nopsub_37750
     public audio_driver_func3F
@@ -853,14 +853,13 @@ loc_37694:
     pop     bp
     retf
 audio_init_chunk2 endp
-audio_enable_flag6 proc far
+ported_audio_enable_flag6_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     audio_enable_flag6
+    nop
     push    si
     cmp     audioflag6, 1
     jz      short loc_376C5
@@ -882,15 +881,14 @@ loc_376C5:
     mov     sp, bp
     pop     bp
     retf
-audio_enable_flag6 endp
-audio_disable_flag6 proc far
+ported_audio_enable_flag6_ endp
+ported_audio_disable_flag6_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     audio_disable_flag6
+    nop
     push    di
     push    si
 loc_376D2:
@@ -918,21 +916,21 @@ loc_37702:
     mov     sp, bp
     pop     bp
     retf
-audio_disable_flag6 endp
-audio_toggle_flag6 proc far
+ported_audio_disable_flag6_ endp
+ported_audio_toggle_flag6_ proc far
 
-    cmp     audioflag6, 1
+    jmp     audio_toggle_flag6
     jnz     short loc_37716
     push    cs
-    call near ptr audio_disable_flag6
+    call near ptr ported_audio_disable_flag6_
     sub     ax, ax
     retf
 loc_37716:
     push    cs
-    call near ptr audio_enable_flag6
+    call near ptr ported_audio_enable_flag6_
     mov     ax, 1
     retf
-audio_toggle_flag6 endp
+ported_audio_toggle_flag6_ endp
 sub_3771E proc far
      s = byte ptr 0
      r = byte ptr 2
