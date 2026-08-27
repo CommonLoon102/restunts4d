@@ -515,11 +515,9 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 
 		fclose(file);
 
-		// Also clears the shim's sticky error flag, so it cannot leak into
-		// the next ferror() somewhere else.
-		if (ferror(file)) {
-			retval = 1;
-		}
+		// The original ignores the close result. Clear the shim's sticky error
+		// state without turning a close failure into a failed write.
+		(void)ferror(file);
 
 		if (retval == 0) {
 			return 0;
