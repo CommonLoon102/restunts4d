@@ -910,6 +910,16 @@ int nopsub_37898(int value)
 	return sub_37868(value);
 }
 
+unsigned int nopsub_378AE(int channel)
+{
+	return (unsigned int)byte_44D06[(unsigned int)channel];
+}
+
+unsigned int nopsub_378BC(int channel)
+{
+	return (unsigned int)byte_44ACA[(unsigned int)channel];
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;
