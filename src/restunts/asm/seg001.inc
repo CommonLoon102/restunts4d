@@ -25,6 +25,6 @@ seg001 segment byte public 'STUNTSC' use16
     extrn ported_plane_origin_op_:proc
     extrn ported_vec_normalInnerProduct_:proc
     extrn ported_state_op_unk_:proc
-    extrn sub_19BA0:proc
+    extrn ported_sub_19BA0_:proc
     extrn ported_setup_aero_trackdata_:proc
 seg001 ends

@@ -57,6 +57,10 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_SAR2(value) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR2(value))
 
+#define LEGACY_READ_U16_LE(bytes) \
+	((legacy_u16)((legacy_u16)((const legacy_u8*)(bytes))[0] | \
+	((legacy_u16)((const legacy_u8*)(bytes))[1] << 8)))
+
 #define LEGACY_WRITE_U16_LE(bytes, value) \
 	do { \
 		legacy_u16 legacy_write_u16_value_ = (legacy_u16)(value); \
@@ -64,5 +68,27 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 		((legacy_u8*)(bytes))[1] = \
 			(legacy_u8)(legacy_write_u16_value_ >> 8); \
 	} while (0)
+
+#if defined(__BORLANDC__)
+#define LEGACY_S32_FROM_BITS(value) ((legacy_s32)(legacy_u32)(value))
+#else
+#define LEGACY_S32_FROM_BITS(value) \
+	((legacy_u32)(value) <= (legacy_u32)0x7FFFFFFFUL ? \
+	(legacy_s32)(legacy_u32)(value) : \
+	(legacy_s32)(-1 - (legacy_s32)( \
+		(legacy_u32)0xFFFFFFFFUL - (legacy_u32)(value))))
+#endif
+
+#define LEGACY_U32_SIGN_EXTEND_S16(value) \
+	((legacy_u32)( \
+		(((legacy_u16)(value) & 0x8000U) != 0 ? \
+		(legacy_u32)0xFFFF0000UL : (legacy_u32)0) | \
+		(legacy_u16)(value)))
+#define LEGACY_S32_WRAP_ADD(left, right) \
+	LEGACY_S32_FROM_BITS( \
+		(legacy_u32)(left) + (legacy_u32)(right))
+#define LEGACY_S32_WRAP_ADD_S16(left, right) \
+	LEGACY_S32_FROM_BITS( \
+		(legacy_u32)(left) + LEGACY_U32_SIGN_EXTEND_S16(right))
 
 #endif

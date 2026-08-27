@@ -72,7 +72,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_plane_origin_op_
     public ported_vec_normalInnerProduct_
     public ported_state_op_unk_
-    public sub_19BA0
+    public ported_sub_19BA0_
     public ported_setup_aero_trackdata_
 opponent_op proc far
     var_40 = word ptr -64
@@ -4486,7 +4486,7 @@ loc_170DC:
     cmp     state.field_42A, 0
     jz      short loc_170EC
     push    cs
-    call near ptr sub_19BA0
+    call near ptr ported_sub_19BA0_
 loc_170EC:
     push    cs
     call near ptr audio_carstate
@@ -9384,7 +9384,7 @@ loc_19B99:
     ; align 2
     db 144
 ported_state_op_unk_ endp
-sub_19BA0 proc far
+ported_sub_19BA0_ proc far
     var_14 = word ptr -20
     var_12 = word ptr -18
     var_E = word ptr -14
@@ -9396,10 +9396,10 @@ sub_19BA0 proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 14h
-    push    di
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     sub_19BA0
+    db      144
+    db      144
     push    si
     mov     [bp+var_2], 0
     sub     si, si
@@ -9505,7 +9505,7 @@ loc_19C96:
     mov     sp, bp
     pop     bp
     retf
-sub_19BA0 endp
+ported_sub_19BA0_ endp
 ported_setup_aero_trackdata_ proc far
      s = byte ptr 0
      r = byte ptr 2

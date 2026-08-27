@@ -97,6 +97,65 @@ void state_op_unk(int kind_arg, int base_angle_arg, int energy_offset_arg) {
 	}
 }
 
+void sub_19BA0(void) {
+	struct VECTOR direction;
+	struct VECTOR movement;
+	struct MATRIX* rotation;
+	legacy_s16 particle_velocity;
+	legacy_s32 ground_position;
+	legacy_u8 any_active;
+	int slot;
+
+	any_active = 0;
+	for (slot = 0; slot < 24; slot++) {
+		if (state.field_38E[slot] == 0)
+			continue;
+
+		direction.x = 0;
+		direction.y = 0;
+		direction.z = state.field_38E[slot];
+		rotation = mat_rot_zxy(0, 0, state.field_35E[slot], 1);
+		mat_mul_vector(&direction, rotation, &movement);
+		state.game_longs1[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_longs1[slot], movement.x);
+		state.game_longs3[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_longs3[slot], movement.z);
+
+		particle_velocity = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
+			&state.field_3BE[slot * 2]));
+		particle_velocity = LEGACY_S16_WRAP_SUB(particle_velocity, 0x13);
+		LEGACY_WRITE_U16_LE(
+			&state.field_3BE[slot * 2], particle_velocity);
+		state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_longs2[slot], particle_velocity);
+
+		if (framespersec == 10) {
+			particle_velocity = LEGACY_S16_WRAP_SUB(
+				particle_velocity, 0x13);
+			LEGACY_WRITE_U16_LE(
+				&state.field_3BE[slot * 2], particle_velocity);
+			state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
+				state.game_longs2[slot], particle_velocity);
+		}
+
+		ground_position = LEGACY_S32_WRAP_ADD(
+			(legacy_s32)state.game_longs2[slot],
+			(legacy_s32)state.playerstate.car_posWorld1.ly);
+		if (ground_position < 0) {
+			state.field_38E[slot] = 0;
+			continue;
+		}
+
+		any_active = 1;
+		state.field_2FE[slot] = LEGACY_S16_WRAP_ADD(
+			state.field_2FE[slot], 0x10);
+		state.field_32E[slot] = LEGACY_S16_WRAP_ADD(
+			state.field_32E[slot], 0x10);
+	}
+
+	state.field_42A = any_active;
+}
+
 // previously set_AV_event_triggers
 void update_crash_state(int arg_someFlag, int arg_MplayerFlag) {
 /*    var_cState = word ptr -4
