@@ -274,6 +274,7 @@ extrn audio_remove_driver_timer:proc
 extrn pad_id:proc
 extrn audio_op_unk:proc
 extrn audio_op_unk2:proc
+extrn audio_init_engine:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

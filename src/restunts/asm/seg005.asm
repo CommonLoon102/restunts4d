@@ -3066,7 +3066,7 @@ loc_237D3:
     push    ax
     mov     ax, 21h ; '!'
     push    ax
-    call    audio_init_engine
+    call    ported_audio_init_engine_
     add     sp, 0Eh
     mov     word_43964, ax
     mov     byte_459D8, 0
@@ -3083,7 +3083,7 @@ loc_237D3:
     push    ax
     mov     ax, 20h ; ' '
     push    ax
-    call    audio_init_engine
+    call    ported_audio_init_engine_
     add     sp, 0Eh
     mov     word_4408C, ax
 loc_23870:
