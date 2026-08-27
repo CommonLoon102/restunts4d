@@ -1572,6 +1572,8 @@ extern char aMof[];
 extern char aMon[];
 extern char aMou[];
 extern char aPau[];
+extern char aSof[];
+extern char aSon[];
 extern char aWai[];
 extern char* findfilenames[];
 extern void audio_unk(void);
@@ -1650,6 +1652,19 @@ void do_mof_restext(void)
 	input_push_status();
 	word_3F88E = 1;
 	message_id = audio_toggle_flag2() != 0 ? aMon : aMof;
+	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
+		-1, -1, dialogarg2, 0, 0);
+	word_3F88E = 0;
+	input_pop_status();
+}
+
+void do_sonsof_restext(void)
+{
+	char* message_id;
+
+	input_push_status();
+	word_3F88E = 1;
+	message_id = audio_toggle_flag6() != 0 ? aSon : aSof;
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
