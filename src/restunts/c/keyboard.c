@@ -105,15 +105,56 @@ void interrupt kb_int9_handler(void) {
 	
 }
 
-// FLAGS bits the INT 16h handler hands back to its caller. The original ends
-// every arm with `sti` and `retf 2`, which discards the flags the INT pushed
-// and leaves the handler's own IF and ZF in place; AH=01 answers "no key
-// available" in ZF and nothing else. A Borland `interrupt` function ends in
-// iret, which restores the caller's flags, so each exit has to write the
-// `flags` pseudo-parameter itself. Live ASM caller: kb_get_char at
-// asm/seg012.asm:3990 does `mov ah,1 / int 16h / jnz`.
-#define FLAG_ZF 0x0040
-#define FLAG_IF 0x0200
+// The original returns with the status flags left by its final XOR, SUB, CMP
+// or OR, plus IF set by STI. Capture those operations directly instead of
+// merging only ZF into the caller's saved flags; Borland's interrupt epilogue
+// will IRET with the value assigned to the `flags` pseudo-parameter.
+static unsigned int kb_flags_after_zero(void) {
+	unsigned int result;
+	__asm {
+		xor ax, ax
+		pushf
+		pop ax
+		mov result, ax
+	}
+	return result;
+}
+
+static unsigned int kb_flags_after_subtract_two(unsigned int value) {
+	unsigned int result;
+	__asm {
+		mov ax, value
+		sub ax, 2
+		pushf
+		pop ax
+		mov result, ax
+	}
+	return result;
+}
+
+static unsigned int kb_flags_after_compare_zero(unsigned int value) {
+	unsigned int result;
+	__asm {
+		mov ax, value
+		cmp ax, 0
+		pushf
+		pop ax
+		mov result, ax
+	}
+	return result;
+}
+
+static unsigned int kb_flags_after_or(unsigned char left, unsigned char right) {
+	unsigned int result;
+	__asm {
+		mov al, left
+		or al, right
+		pushf
+		pop ax
+		mov result, ax
+	}
+	return result;
+}
 
 #pragma argsused   
 void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
@@ -122,13 +163,15 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
                                      unsigned ip, unsigned cs, unsigned flags) {
 
 	unsigned int result, kbdata;
+	unsigned char shiftleft, shiftright;
 	unsigned char bioscall = ax >> 8;
 	disable();
 	if (bioscall == 0) {
-		if (kb_intr_data4 == 0) {
+		kbdata = kb_intr_data4;
+		if (kbdata == 0) {
 			enable();
 			ax = 0;
-			flags = (flags | FLAG_IF) | FLAG_ZF;    // xor ax, ax
+			flags = kb_flags_after_zero();
 			return ;
 		}
 		kbdata = kb_intr_data2;
@@ -137,59 +180,56 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		if (kbdata >= kb_intr_data3)
 			kbdata = 0;
 		kb_intr_data2 = kbdata;
-		kb_intr_data4 = kb_intr_data4 - 2;
+		kbdata = kb_intr_data4;
+		kb_intr_data4 = kbdata - 2;
 		enable();
 		ax = result;
-		// last flag-setting instruction on this path is `sub bx, 2`
-		flags = (flags | FLAG_IF) & ~FLAG_ZF;
-		if (kb_intr_data4 == 0)
-			flags |= FLAG_ZF;
+		flags = kb_flags_after_subtract_two(kbdata);
 		return ;
 	}
 	
 	if (bioscall == 1) {
-		if (kb_intr_data4 == 0) {
+		kbdata = kb_intr_data4;
+		if (kbdata == 0) {
 			enable();
 			ax = 0;
-			flags = (flags | FLAG_IF) | FLAG_ZF;    // no key pending
+			flags = kb_flags_after_zero();
 			return ;
 		}
 		result = kb_intr_data_array[kb_intr_data2 / 2];
 		enable();
 		ax = result;
-		// ZF still carries `cmp kb_intr_data4, 0` finding a non-zero count
-		flags = (flags | FLAG_IF) & ~FLAG_ZF;
+		flags = kb_flags_after_compare_zero(kbdata);
 		return ;
 	}
 	
 	if (bioscall == 2) {
-		result = kbinput[0x2A] | kbinput[0x36];
+		shiftleft = kbinput[0x2A];
+		shiftright = kbinput[0x36];
+		result = shiftleft | shiftright;
 		enable();
 		ax = result & 0xFF;
-		// ZF comes from `mov al, kbinput+2Ah / or al, kbinput+36h`
-		flags = (flags | FLAG_IF) & ~FLAG_ZF;
-		if ((result & 0xFF) == 0)
-			flags |= FLAG_ZF;
+		flags = kb_flags_after_or(shiftleft, shiftright);
 		return ;
 	}
 	enable();
 	ax = 0;
-	flags = (flags | FLAG_IF) | FLAG_ZF;            // xor ax, ax
+	flags = kb_flags_after_zero();
 	//return 0;
 }
 
 void kb_init_interrupt(void) {
 	unsigned char irqmask;
 	int i;
+	voidinterruptfunctype current_kb_int9_handler;
 
 	irqmask = inp(0x21);
 	outp(0x21, irqmask | 0x3);
 
-	// `cmp bx, offset kb_int9_handler / jz short loc_30861` - if the vector
-	// is already ours the whole install is skipped, so a second call cannot
-	// overwrite the saved BIOS vectors with our own handlers.
-	if (getvect(9) != (voidinterruptfunctype)kb_int9_handler) {
-		old_kb_int9_handler = getvect(9);
+	// The original compares only the offset word read from vector 9.
+	current_kb_int9_handler = getvect(9);
+	if (FP_OFF(current_kb_int9_handler) != FP_OFF(kb_int9_handler)) {
+		old_kb_int9_handler = current_kb_int9_handler;
 		setvect(9, kb_int9_handler);
 
 		old_kb_int16_handler = getvect(0x16);
@@ -212,10 +252,8 @@ void kb_exit_handler(void) {
 	irqmask = inp(0x21);
 	outp(0x21, irqmask | 0x3);
 
-	// `mov bx, old_kb_intr_ofs / or bx, bx / jz short loc_308C1` - there is
-	// nothing to put back unless kb_init_interrupt saved the old vectors,
-	// and the BIOS shift-state byte is only cleared inside the guard too.
-	if (old_kb_int9_handler != 0) {
+	// The original guards this block with the saved offset word alone.
+	if (FP_OFF(old_kb_int9_handler) != 0) {
 		setvect(9, old_kb_int9_handler);
 		setvect(0x16, old_kb_int16_handler);
 		pokeb(0, 0x417, peekb(0, 0x417) & 0xf0);
