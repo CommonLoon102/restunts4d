@@ -534,6 +534,7 @@ extern void audio_driver_func3F(int command);
 extern char audioflag2;
 extern char audioflag6;
 extern int word_4063A;
+extern int word_4063C;
 extern unsigned char byte_44290;
 extern unsigned char byte_40630;
 extern unsigned char byte_40632;
@@ -908,6 +909,11 @@ int nopsub_37898(int value)
 {
 	byte_45950 = (unsigned char)value;
 	return sub_37868(value);
+}
+
+void sub_37C38(int value)
+{
+	word_4063C = value;
 }
 
 unsigned int nopsub_378AE(int channel)

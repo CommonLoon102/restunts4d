@@ -74,7 +74,7 @@ seg027 segment byte public 'STUNTSC' use16
     public audio_load_driver
     public audiodrv_atexit
     public load_sfx_ge
-    public sub_37C38
+    public ported_sub_37C38_
     public load_sfx_file
     public load_song_file
     public load_voice_file
@@ -1537,20 +1537,19 @@ loc_37C22:
     or      ax, dx
     jmp     loc_37B3E
 load_sfx_ge endp
-sub_37C38 proc far
+ported_sub_37C38_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     sub_37C38
+    nop
     mov     word_4063C, ax
     pop     bp
     retf
     ; align 2
     db 144
-sub_37C38 endp
+ported_sub_37C38_ endp
 load_sfx_file proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
