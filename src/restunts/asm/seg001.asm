@@ -7231,7 +7231,7 @@ loc_188B6:
     test    byte_42D26, 6
     jz      short loc_188D6
     push    word_43964
-    call    audio_op_unk7
+    call    ported_audio_op_unk7_
     add     sp, 2
 loc_188D6:
     test    byte_42D26, 1
@@ -7245,7 +7245,7 @@ loc_188E9:
     test    byte_42D2A, 6
     jz      short loc_18903
     push    word_4408C
-    call    audio_op_unk7
+    call    ported_audio_op_unk7_
     add     sp, 2
 loc_18903:
     test    byte_42D2A, 1
@@ -7630,7 +7630,7 @@ loc_18C66:
     sub     [bp+var_16], 4
 loc_18C70:
     push    [bp+var_2E]
-    call    audio_op_unk7
+    call    ported_audio_op_unk7_
     add     sp, 2
 loc_18C7B:
     cmp     [bp+var_1E], 0

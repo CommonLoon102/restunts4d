@@ -557,6 +557,7 @@ extern unsigned char byte_45D9A[];
 extern unsigned char byte_44D06[];
 extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
+extern unsigned char audiotimers[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
@@ -888,6 +889,18 @@ void audio_init_chunk2(int channel)
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
 	audio_driver_func1E(channel, channel);
 	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
+}
+
+void audio_op_unk7(int index)
+{
+	unsigned int offset;
+	int channel;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	channel = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE(audiotimers + offset + 0x16U));
+	audio_init_chunk2(channel);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, 0xFFFFU);
 }
 
 void sub_374DE(int channel)
