@@ -956,6 +956,21 @@ void audio_op_unk3(int index)
 	audiotimers[offset + 0x1AU] = 1;
 }
 
+void audio_op_unk4(int index)
+{
+	unsigned int offset;
+	unsigned int rate;
+	int channel;
+	void far* resource;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	resource = audio_read_far_pointer(audiotimers + offset + 0x48U);
+	channel = audio_check_flag(resource, -1, 0x40U, rate);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
+	audiotimers[offset + 0x1AU] = 1;
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {

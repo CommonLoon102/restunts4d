@@ -7689,7 +7689,7 @@ ported_audio_unk3_ proc far
     test    [bp+arg_0], 10h
     jz      short loc_18CF3
     push    [bp+arg_2]
-    call    audio_op_unk4
+    call    ported_audio_op_unk4_
     add     sp, 2
 loc_18CF3:
     test    [bp+arg_0], 20h
