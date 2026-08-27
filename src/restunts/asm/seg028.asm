@@ -1920,7 +1920,7 @@ loc_3952D:
     mov     [bx+5], al
     push    es
     push    word ptr [bp+arg_2]
-    call    audioresource_get_dword
+    call    ported_audioresource_get_dword_
     add     sp, 4
     mov     bx, [bp+arg_0]
     mov     [bx+6], ax
@@ -1952,7 +1952,7 @@ loc_39566:
 loc_3958A:
     push    es
     push    word ptr [bp+arg_2]
-    call    audioresource_get_word
+    call    ported_audioresource_get_word_
     add     sp, 4
     mov     bx, [bp+arg_0]
     mov     [bx+6], ax

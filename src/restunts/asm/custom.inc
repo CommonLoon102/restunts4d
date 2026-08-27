@@ -239,6 +239,8 @@ extrn audio_disable_flag6:proc
 extrn audio_toggle_flag6:proc
 extrn sub_3771E:proc
 extrn nopsub_37750:proc
+extrn audioresource_get_dword:proc
+extrn audioresource_get_word:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

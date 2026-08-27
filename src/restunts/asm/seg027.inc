@@ -39,7 +39,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn sub_38178:proc
     extrn audio_map_song_tracks:proc
     extrn off_383A0:word
-    extrn audioresource_get_dword:proc
-    extrn audioresource_get_word:proc
+    extrn ported_audioresource_get_dword_:proc
+    extrn ported_audioresource_get_word_:proc
     extrn audioresource_copy_4_bytes:proc
 seg027 ends

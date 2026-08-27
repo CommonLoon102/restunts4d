@@ -288,7 +288,7 @@ loc_39C46:
     mov     [bp+var_4], dx
     push    dx
     push    ax
-    call    audioresource_get_dword; read dword from the audio resource buffer
+    call    ported_audioresource_get_dword_; read dword from the audio resource buffer
     add     sp, 4
     mov     [bp+var_E], ax
     mov     [bp+var_C], dx

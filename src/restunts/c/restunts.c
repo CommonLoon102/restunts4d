@@ -635,6 +635,20 @@ void nopsub_37750(int channel, void far* value)
 	*field = value;
 }
 
+legacy_u32 audioresource_get_dword(const legacy_u8 far* source)
+{
+	return (legacy_u32)source[0] |
+		((legacy_u32)source[1] << 8) |
+		((legacy_u32)source[2] << 16) |
+		((legacy_u32)source[3] << 24);
+}
+
+legacy_u16 audioresource_get_word(const legacy_u8 far* source)
+{
+	return (legacy_u16)((legacy_u16)source[0] |
+		((legacy_u16)source[1] << 8));
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;

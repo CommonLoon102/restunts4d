@@ -86,8 +86,8 @@ seg027 segment byte public 'STUNTSC' use16
     public sub_38178
     public audio_map_song_tracks
     public off_383A0
-    public audioresource_get_dword
-    public audioresource_get_word
+    public ported_audioresource_get_dword_
+    public ported_audioresource_get_word_
     public audioresource_copy_4_bytes
 init_audio_resources proc far
     var_titlptr = dword ptr -12
@@ -1827,7 +1827,7 @@ loc_37DE4:
     push    dx
     push    ax
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     add     ax, 4
     mov     [si+5], ax
@@ -1835,7 +1835,7 @@ loc_37DE4:
     push    [bp+var_2]
     push    [bp+var_4]
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     add     ax, 4
     mov     [si], ax
@@ -2321,7 +2321,7 @@ audio_map_song_tracks proc far
     push    dx
     push    ax
     push    cs
-    call near ptr audioresource_get_word
+    call near ptr ported_audioresource_get_word_
     add     sp, 4
     mov     [bp+var_numchunks], ax
     mov     ax, [bp+arg_chunkofs]
@@ -2398,7 +2398,7 @@ _trkdata_case13:
     push    dx
     push    ax
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     mov     [bp+var_1E], ax
     mov     [bp+var_1C], dx
@@ -2490,7 +2490,7 @@ loc_383D4:
     push    dx
     push    ax
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     add     ax, [bp+var_firstchunkdataofs]
     mov     dx, [bp+var_firstchunkdataseg]
@@ -2500,7 +2500,7 @@ loc_383D4:
     push    ss
     push    ax
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     add     ax, word ptr [bp+var_14]
     mov     dx, word ptr [bp+var_14+2]
@@ -2578,7 +2578,7 @@ loc_38472:
     push    dx
     push    ax
     push    cs
-    call near ptr audioresource_get_dword
+    call near ptr ported_audioresource_get_dword_
     add     sp, 4
     mov     [bp+var_1E], ax
     mov     [bp+var_1C], dx
@@ -2610,16 +2610,15 @@ loc_384F4:
     pop     bp
     retf
 audio_map_song_tracks endp
-audioresource_get_dword proc far
+ported_audioresource_get_dword_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_farptr = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     audioresource_get_dword
+    nop
 loc_38500:
     les     bx, [bp+arg_farptr]
     mov     ax, es:[bx]
@@ -2629,16 +2628,15 @@ loc_38500:
     mov     sp, bp
     pop     bp
     retf
-audioresource_get_dword endp
-audioresource_get_word proc far
+ported_audioresource_get_dword_ endp
+ported_audioresource_get_word_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     audioresource_get_word
+    nop
     les     bx, [bp+arg_0]
     mov     ax, es:[bx]
 loc_38520:
@@ -2648,7 +2646,7 @@ loc_38520:
     retf
     ; align 2
     db 144
-audioresource_get_word endp
+ported_audioresource_get_word_ endp
 audioresource_copy_4_bytes proc far
      s = byte ptr 0
      r = byte ptr 2
