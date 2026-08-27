@@ -92,8 +92,10 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 void sprite_free_wnd(struct SPRITE far* wndsprite) {
 	unsigned short spritesize;
 	// The height comes from the bitmap header, not from the SPRITE: the
-	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height,
-	// which no clipping code touches.
+	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height.
+	// sprite_make_wnd initializes both heights alike, and normal clipping edits
+	// the sprite1 working copy rather than the stored window SPRITE, so using
+	// the bitmap field here is structural parity rather than a clipping repair.
 	spritesize = sizeof(struct SPRITE) + wndsprite->sprite_bitmapptr->s2d_height * sizeof(unsigned short);
 	if (FP_OFF(wndsprite) + spritesize != FP_OFF(next_wnd_def)) {
 		fatal_error(aWindowReleased);
