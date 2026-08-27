@@ -722,9 +722,19 @@ int vector_op_unk2(struct VECTOR* vec) {
 extern int projectiondata5, projectiondata8, projectiondata9, projectiondata10;
 
 
-void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
+// Each `add ax, projectiondataN` in the original is followed by `jo`, and on
+// overflow the sum is replaced by the rail it ran past: 7D00h when the true
+// sum was too positive (the wrapped word comes back negative, `or ax,ax / jl`)
+// and 8300h = -7D00h when it was too negative.
+static int saturate_projection(long sum) {
+	if (sum > 32767L)
+		return 0x7D00;
+	if (sum < -32768L)
+		return -0x7D00;
+	return (int)sum;
+}
 
-	// the original code checks for several overflows (in a strange way) - this code does not, but seems to do well anyway
+void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 
 	long proj;
 	// bx in the original: (proj >> 16) << 1 plus the top bit of the low word,
@@ -743,7 +753,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) { 
-			outpt->px = -(proj / vec->z) + projectiondata5;
+			outpt->px = saturate_projection(-(proj / vec->z) + projectiondata5);
 		} else
 			outpt->px = -0x7D00;
 	} else {
@@ -751,7 +761,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->px = (proj / vec->z) + projectiondata5;
+			outpt->px = saturate_projection((proj / vec->z) + projectiondata5);
 		else
 			outpt->px = 0x7D00;
 	}
@@ -761,7 +771,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = (proj / vec->z) + projectiondata8;
+			outpt->py = saturate_projection((proj / vec->z) + projectiondata8);
 		else
 			outpt->py = 0x7D00;
 	} else {
@@ -769,7 +779,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = -(proj / vec->z) + projectiondata8;
+			outpt->py = saturate_projection(-(proj / vec->z) + projectiondata8);
 		else
 			outpt->py = -0x7D00;
 	}
