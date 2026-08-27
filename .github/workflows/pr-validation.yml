@@ -4,7 +4,7 @@ name: PR validation
 # golden replays stop agreeing byte for byte.
 on:
   push:
-    branches: [workflow-t]
+    branches: [workflows-t]
   pull_request:
     branches: [master]
   workflow_dispatch:
