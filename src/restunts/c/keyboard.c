@@ -198,15 +198,22 @@ int kb_read_char(void) {
 
 	inregs.h.ah = 0;
 	int86(0x16, &inregs, &outregs);
+	// AL == 0 marks an extended key, whose scancode kb_int9_handler put in AH.
+	// The original keeps the whole word in that case (or al,al / jz, skipping
+	// the xor ah,ah) and returns AL alone otherwise.
+	if (outregs.h.al == 0)
+		return outregs.x.ax;
 	return outregs.h.al;
 }
 
 int kb_checking(void) {
 	union REGS inregs;
 	union REGS outregs;
-	
+
 	inregs.h.ah = 1;
 	int86(0x16, &inregs, &outregs);
+	if (outregs.h.al == 0)
+		return outregs.x.ax;
 	return outregs.h.al;
 }
 
