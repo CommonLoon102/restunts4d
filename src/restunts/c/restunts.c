@@ -1495,6 +1495,52 @@ void print_int_as_string_maybe(char* destination, int value, int zero_pad,
 	}
 }
 
+static char* legacy_near_string_copy(char* destination, const char* source)
+{
+	while ((*destination = *source) != 0) {
+		destination++;
+		source++;
+	}
+	return destination;
+}
+
+void format_frame_as_string(char* destination, int frame_count,
+	int include_hundredths)
+{
+	char number[18];
+	char* output;
+	legacy_u16 frames;
+	legacy_u16 frame_rate;
+	legacy_u16 frames_per_minute;
+	legacy_u16 minutes;
+	legacy_u16 seconds;
+	legacy_u16 hundredths;
+
+	frames = (legacy_u16)frame_count;
+	frame_rate = (legacy_u16)framespersec;
+	frames_per_minute = LEGACY_U16_WRAP_MUL(60U, frame_rate);
+	minutes = (legacy_u16)(frames / frames_per_minute);
+	frames = LEGACY_U16_WRAP_SUB(frames,
+		LEGACY_U16_WRAP_MUL(frames_per_minute, minutes));
+	seconds = (legacy_u16)(frames / frame_rate);
+	frames = LEGACY_U16_WRAP_SUB(frames,
+		LEGACY_U16_WRAP_MUL(frame_rate, seconds));
+
+	print_int_as_string_maybe(number, minutes, 0, 2);
+	output = legacy_near_string_copy(destination, number);
+	*output++ = ':';
+	print_int_as_string_maybe(number, seconds, 1, 2);
+	output = legacy_near_string_copy(output, number);
+	if (include_hundredths != 0) {
+		*output++ = '.';
+		hundredths = LEGACY_U16_WRAP_MUL(
+			(legacy_u16)(100 / LEGACY_S16_FROM_BITS(frame_rate)),
+			frames);
+		print_int_as_string_maybe(number, hundredths, 1, 2);
+		legacy_near_string_copy(output, number);
+	}
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

@@ -289,6 +289,7 @@ extrn sub_3702E:proc
 extrn read_line_helper:proc
 extrn read_line_helper2:proc
 extrn print_int_as_string_maybe:proc
+extrn format_frame_as_string:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

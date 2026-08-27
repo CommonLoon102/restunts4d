@@ -89,7 +89,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_audio_unload_
     public ported_font_set_fontdef2_
     public ported_font_set_fontdef_
-    public format_frame_as_string
+    public ported_format_frame_as_string_
     public ported_get_super_random_
     public ported_file_load_resource_
     public off_29A4E
@@ -4364,7 +4364,7 @@ ported_font_set_fontdef_ proc far
     add     sp, 4
     retf
 ported_font_set_fontdef_ endp
-format_frame_as_string proc far
+ported_format_frame_as_string_ proc far
     var_16 = word ptr -22
     var_12 = byte ptr -18
      s = byte ptr 0
@@ -4373,9 +4373,8 @@ format_frame_as_string proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 18h
+    jmp     format_frame_as_string
+    nop
     push    di
     push    si
     mov     ax, 3Ch ; '<'
@@ -4464,7 +4463,7 @@ loc_29988:
     mov     sp, bp
     pop     bp
     retf
-format_frame_as_string endp
+ported_format_frame_as_string_ endp
 ported_get_super_random_ proc far
     var_4 = word ptr -4
      s = byte ptr 0
