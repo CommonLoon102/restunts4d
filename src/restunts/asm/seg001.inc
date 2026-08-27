@@ -11,7 +11,7 @@ seg001 segment byte public 'STUNTSC' use16
     extrn ported_update_car_speed_:proc
     extrn update_grip:proc
     extrn car_car_speed_adjust_maybe:proc
-    extrn carState_rc_op:proc
+    extrn ported_carState_rc_op_:proc
     extrn ported_upd_statef20_from_steer_input_:proc
     extrn audio_carstate:proc
     extrn audio_unk3:proc

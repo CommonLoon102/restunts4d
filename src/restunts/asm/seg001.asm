@@ -58,7 +58,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_update_car_speed_
     public update_grip
     public car_car_speed_adjust_maybe
-    public carState_rc_op
+    public ported_carState_rc_op_
     public ported_upd_statef20_from_steer_input_
     public audio_carstate
     public audio_unk3
@@ -2552,7 +2552,7 @@ loc_15E38:
     push    [bx+var_16]     ; var_(16-2*wheelIndex)
     push    [bp+arg_pState]
     push    cs
-    call near ptr carState_rc_op
+    call near ptr ported_carState_rc_op_
     add     sp, 6
     mov     [bp+var_EE], ax
     cmp     pState_minusRotate_z_1, 0
@@ -6861,7 +6861,7 @@ loc_185EE:
     ; align 2
     db 144
 car_car_speed_adjust_maybe endp
-carState_rc_op proc far
+ported_carState_rc_op_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -6871,10 +6871,10 @@ carState_rc_op proc far
     arg_2 = word ptr 8
     arg_wheelIndex = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
-    push    di
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     carState_rc_op
+    db      144
+    db      144
     push    si
     mov     si, [bp+arg_wheelIndex]
     shl     si, 1
@@ -7054,7 +7054,7 @@ loc_187A5:
     retf
     ; align 2
     db 144
-carState_rc_op endp
+ported_carState_rc_op_ endp
 ported_upd_statef20_from_steer_input_ proc far
     var_speed2shr0AandFC = byte ptr -4
      s = byte ptr 0

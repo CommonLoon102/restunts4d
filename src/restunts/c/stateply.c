@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "legacy.h"
 #include "math.h"
 
 extern long pState_lvec1_x;
@@ -56,6 +57,84 @@ static short legacy_wheel_plane_angle_residue[4];
  */
 short legacy_wheel_angle_stack_words[4];
 short legacy_grip_stack_words[4];
+
+int carState_rc_op(
+	struct CARSTATE* carstate,
+	int contact_delta_arg,
+	int wheel_index
+) {
+	legacy_s16 previous_rc2;
+	legacy_s16 contact_delta;
+	legacy_s16 adjustment;
+	legacy_s16 scaled_delta;
+	legacy_s16 target;
+
+	previous_rc2 = (legacy_s16)carstate->car_rc2[wheel_index];
+	contact_delta = (legacy_s16)contact_delta_arg;
+	adjustment = 0;
+
+	/* Decay the per-wheel target by four toward zero each frame. */
+	target = (legacy_s16)carstate->car_rc5[wheel_index];
+	if (target < 0) {
+		target = LEGACY_S16_WRAP_ADD(target, 4);
+		if (target > 0)
+			target = 0;
+	} else if (target > 0) {
+		target = LEGACY_S16_WRAP_SUB(target, 4);
+		if (target < 0)
+			target = 0;
+	}
+	carstate->car_rc5[wheel_index] = target;
+
+	if (contact_delta < 0 &&
+		(legacy_s16)carstate->car_rc2[wheel_index] >
+		LEGACY_S16_WRAP_NEGATE(contact_delta)) {
+		contact_delta = 0;
+	}
+
+	if (contact_delta == 0) {
+		if ((legacy_s16)carstate->car_rc2[wheel_index] > target) {
+			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_SUB(
+				carstate->car_rc2[wheel_index], 0x80);
+			if ((legacy_s16)carstate->car_rc2[wheel_index] < target)
+				carstate->car_rc2[wheel_index] = target;
+			adjustment = LEGACY_S16_WRAP_SUB(
+				previous_rc2, carstate->car_rc2[wheel_index]);
+		} else if ((legacy_s16)carstate->car_rc2[wheel_index] < target) {
+			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_rc2[wheel_index], 0x80);
+			if ((legacy_s16)carstate->car_rc2[wheel_index] > target)
+				carstate->car_rc2[wheel_index] = target;
+		}
+	} else if (contact_delta > 0) {
+		if (contact_delta > 0xC0)
+			contact_delta = 0xC0;
+		carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
+			carstate->car_rc2[wheel_index], contact_delta);
+		if ((legacy_s16)carstate->car_rc2[wheel_index] > 0x180)
+			carstate->car_rc2[wheel_index] = 0x180;
+		carstate->car_rc4[wheel_index] = 0;
+	} else {
+		if (LEGACY_S16_WRAP_ADD(
+			contact_delta, carstate->car_rc2[wheel_index]) > -0x120) {
+			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_rc2[wheel_index], contact_delta);
+		} else {
+			scaled_delta = LEGACY_S16_SAR2(
+				LEGACY_S16_WRAP_MUL(contact_delta, 3));
+			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_rc2[wheel_index], scaled_delta);
+			if ((legacy_s16)carstate->car_rc2[wheel_index] < -0x180)
+				carstate->car_rc2[wheel_index] = -0x180;
+		}
+		adjustment = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_SUB(
+				previous_rc2, carstate->car_rc2[wheel_index]),
+			contact_delta);
+	}
+
+	return LEGACY_S16_WRAP_ADD(previous_rc2, adjustment);
+}
 
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
