@@ -63,8 +63,8 @@ seg008 segment byte public 'STUNTSC' use16
     public mouse_track_op
     public ported_mouse_draw_transparent_check_
     public ported_mouse_draw_opaque_check_
-    public mouse_draw_opaque
-    public mouse_draw_transparent
+    public ported_mouse_draw_opaque_
+    public ported_mouse_draw_transparent_
     public mouse_multi_hittest
     public check_input
     public nopsub_28F26
@@ -2364,10 +2364,10 @@ loc_288D8:
     cmp     mouse_isdirty, 0
     jz      short loc_28901
     push    cs
-    call near ptr mouse_draw_opaque
+    call near ptr ported_mouse_draw_opaque_
 loc_28901:
     push    cs
-    call near ptr mouse_draw_transparent
+    call near ptr ported_mouse_draw_transparent_
     jmp     short loc_28934
     ; align 2
     db 144
@@ -2383,7 +2383,7 @@ loc_28908:
     cmp     mouse_isdirty, 0
     jz      short loc_28934
     push    cs
-    call near ptr mouse_draw_opaque
+    call near ptr ported_mouse_draw_opaque_
 loc_28934:
     cmp     kbormouse, 0
     jz      short _try_ret_joyinput
@@ -2951,7 +2951,7 @@ ported_mouse_draw_transparent_check_ proc far
     cmp     mouse_isdirty, 0
     jnz     short locret_28DB5
     push    cs
-    call near ptr mouse_draw_transparent
+    call near ptr ported_mouse_draw_transparent_
 locret_28DB5:
     retf
 ported_mouse_draw_transparent_check_ endp
@@ -2961,20 +2961,19 @@ ported_mouse_draw_opaque_check_ proc far
     cmp     mouse_isdirty, 0
     jz      short locret_28DC6
     push    cs
-    call near ptr mouse_draw_opaque
+    call near ptr ported_mouse_draw_opaque_
 locret_28DC6:
     retf
     ; align 2
     db 144
 ported_mouse_draw_opaque_check_ endp
-mouse_draw_opaque proc far
+ported_mouse_draw_opaque_ proc far
     var_3C = byte ptr -60
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 3Ch
+    jmp     mouse_draw_opaque
+    nop
     lea     ax, [bp+var_3C]
     push    ax
     call    sprite_copy_both_to_arg
@@ -2992,15 +2991,14 @@ mouse_draw_opaque proc far
     mov     sp, bp
     pop     bp
     retf
-mouse_draw_opaque endp
-mouse_draw_transparent proc far
+ported_mouse_draw_opaque_ endp
+ported_mouse_draw_transparent_ proc far
     var_3C = byte ptr -60
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 3Eh
+    jmp     mouse_draw_transparent
+    nop
     push    si
     mov     si, mouse_xpos
     mov     ax, si
@@ -3045,7 +3043,7 @@ mouse_draw_transparent proc far
     retf
     ; align 2
     db 144
-mouse_draw_transparent endp
+ported_mouse_draw_transparent_ endp
 mouse_multi_hittest proc far
      s = byte ptr 0
      r = byte ptr 2

@@ -22,6 +22,10 @@ extern char* far next_wnd_def; // near pointer relative to seg012 to the current
 extern struct SPRITE far sprite1; // seg012
 extern struct SPRITE far sprite2; // seg012
 extern struct SPRITE far* mcgawndsprite;
+extern struct SPRITE far* mouseunkspriteptr;
+extern struct SPRITE far* mmouspriteptr;
+extern struct SPRITE far* smouspriteptr;
+extern char mouse_isdirty;
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
@@ -136,6 +140,39 @@ void sprite_copy_both_to_arg(struct SPRITE* argsprite) {
 
 void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
 	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * 2);
+}
+
+void mouse_draw_opaque(void) {
+	struct SPRITE saved_sprites[2];
+
+	sprite_copy_both_to_arg(saved_sprites);
+	sprite_copy_2_to_1();
+	sprite_putimage(mouseunkspriteptr->sprite_bitmapptr);
+	sprite_copy_arg_to_both(saved_sprites);
+	mouse_isdirty = 0;
+}
+
+void mouse_draw_transparent(void) {
+	struct SPRITE saved_sprites[2];
+	int aligned_x;
+
+	aligned_x = mouse_xpos - mouse_xpos % video_flag2_is1;
+	sprite_copy_both_to_arg(saved_sprites);
+	sprite_copy_2_to_1();
+	sprite_clear_shape_alt(
+		mouseunkspriteptr->sprite_bitmapptr,
+		aligned_x,
+		mouse_ypos);
+	sprite_putimage_and(
+		mmouspriteptr->sprite_bitmapptr,
+		mouse_xpos,
+		mouse_ypos);
+	sprite_putimage_or(
+		smouspriteptr->sprite_bitmapptr,
+		mouse_xpos,
+		mouse_ypos);
+	sprite_copy_arg_to_both(saved_sprites);
+	mouse_isdirty = 1;
 }
 
 void sprite_clear_1_color(unsigned char color) {

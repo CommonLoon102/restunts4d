@@ -219,6 +219,8 @@ extrn load_skybox:proc
 extrn sub_29772:proc
 extrn mouse_draw_transparent_check:proc
 extrn mouse_draw_opaque_check:proc
+extrn mouse_draw_transparent:proc
+extrn mouse_draw_opaque:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
