@@ -496,13 +496,17 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 	unsigned short wrtlen;
 	FILE* file;
 	
+	retval = 0;
+
 	if ((file = fopen(filename, "wb")) != 0) {
 		// Write one page at a time.
 		while (length != 0) {
 			wrtlen = length > PAGE_SIZE ? PAGE_SIZE : length;
 
 			if (fwrite(src, wrtlen, 1, file) != wrtlen) {
-				retval = -1;
+				// Either int 21h AH=40h set carry, or it wrote fewer bytes
+				// than asked (`cmp ax, cx / jnz` -> `mov ax, 1`).
+				retval = 1;
 				break;
 			}
 			length -= wrtlen;
@@ -510,25 +514,32 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 		}
 
 		fclose(file);
-		
-		if (!ferror(file)) {
+
+		// Also clears the shim's sticky error flag, so it cannot leak into
+		// the next ferror() somewhere else.
+		if (ferror(file)) {
+			retval = 1;
+		}
+
+		if (retval == 0) {
 			return 0;
 		}
 	}
 	else {
-		retval = (short)file;
+		// The create failed. The original enters the error tail with the DOS
+		// error code in ax; the shim does not carry that out, so any non-zero
+		// status stands in for it - every caller only tests for non-zero.
+		retval = 1;
 	}
+
+	// loc_32570 closes the handle and unlinks the file on EVERY error, before
+	// it ever looks at the flag, so a truncated file is never left on disk.
+	remove(filename);
 
 	if (!fatal) {
-		if ((short)file != retval) {
-			fclose(file);
-		}
-
-		remove(filename);
-
 		fatal_error(aSFileError_0, filename);
 	}
-	
+
 	return retval;
 }
 
