@@ -562,9 +562,13 @@ extern unsigned int word_42240;
 extern unsigned int word_42242;
 extern unsigned int word_42244;
 extern unsigned char byte_42246;
-extern void far audio_driver_timer(void);
+extern legacy_s16 word_3EB2A;
+extern unsigned char byte_40634;
+int compare_ds_ss(void);
+void audio_driver_timer(void);
 extern void sub_38CF8(int index, void far* context);
 extern int sub_39050(unsigned int value, int handle);
+extern void sub_39088(int channel, int value);
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
@@ -572,6 +576,8 @@ extern void audio_op_unk4(int channel);
 extern void sub_39700(void);
 int sub_37470(int channel, unsigned char priority);
 void sub_374DE(int channel);
+int sub_3771E(int channel);
+void audio_init_chunk2(int channel);
 void sub_38156(int index);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
@@ -803,6 +809,90 @@ void audio_op_unk2(int index, int base_value,
 		LEGACY_WRITE_U16_LE(timer + 0x0CU, base_rate);
 	}
 	timer[0x0AU] = (legacy_u8)volume;
+}
+
+void audio_driver_timer(void)
+{
+	legacy_u8* timer;
+	legacy_u32 accumulator;
+	legacy_u16 volume_accumulator;
+	legacy_u16 pitch;
+	legacy_u16 index;
+	legacy_u8 volume;
+	legacy_u8 secondary_volume;
+	int channel;
+
+	if (compare_ds_ss() == 0)
+		return;
+
+	word_3EB2A = LEGACY_S16_WRAP_ADD(word_3EB2A, 1);
+	if (word_3EB2A < 2 && byte_40634 != 0)
+		return;
+
+	for (index = 0; index < 25U; index++) {
+		timer = audiotimers + index * 0x4CU;
+		if (timer[0] == 0 || audioflag6 == 0)
+			continue;
+
+		volume_accumulator = LEGACY_U16_WRAP_ADD(
+			(legacy_u16)((legacy_u16)timer[0x0AU] << 4),
+			LEGACY_U16_WRAP_MUL(
+				LEGACY_READ_U16_LE(timer + 4U), 7U));
+		volume_accumulator >>= 3;
+		LEGACY_WRITE_U16_LE(timer + 4U, volume_accumulator);
+		volume = (legacy_u8)(volume_accumulator >> 4);
+		if (volume != timer[0x0EU] || timer[0x1AU] != 0) {
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(timer + 2U));
+			audio_unk2(channel, volume);
+			secondary_volume = volume >= 10U ?
+				(legacy_u8)(volume - 10U) : 0;
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(timer + 0x14U));
+			if (channel != -1)
+				audio_unk2(channel, secondary_volume);
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(timer + 0x16U));
+			if (channel != -1)
+				audio_unk2(channel, secondary_volume);
+			timer[0x0EU] = volume;
+		}
+
+		accumulator = (legacy_u32)LEGACY_READ_U16_LE(timer + 6U) |
+			((legacy_u32)LEGACY_READ_U16_LE(timer + 8U) << 16);
+		accumulator = accumulator * 7UL +
+			((legacy_u32)LEGACY_READ_U16_LE(timer + 0x0CU) << 4);
+		accumulator >>= 3;
+		LEGACY_WRITE_U16_LE(timer + 6U, (legacy_u16)accumulator);
+		LEGACY_WRITE_U16_LE(timer + 8U,
+			(legacy_u16)(accumulator >> 16));
+		pitch = (legacy_u16)(accumulator >> 4);
+		if (pitch != LEGACY_READ_U16_LE(timer + 0x10U) ||
+			timer[0x1AU] != 0) {
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(timer + 0x12U));
+			if (channel != -1) {
+				sub_39088(channel, pitch);
+				LEGACY_WRITE_U16_LE(timer + 0x10U, pitch);
+			}
+		}
+
+		timer[0x1AU] = 0;
+		if (timer[0x1BU] != 0) {
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(timer + 0x14U));
+			if (timer[1] != 0) {
+				audio_init_chunk2(channel);
+				timer[0x1BU] = 0;
+			} else if (sub_3771E(channel) != 0) {
+				audio_op_unk(index);
+				timer[0x1BU] = 0;
+			}
+		}
+	}
+
+	if (word_3EB2A >= 2)
+		word_3EB2A = 0;
 }
 
 void audio_unload(void)

@@ -52,7 +52,7 @@ seg007 segment byte public 'STUNTSC' use16
     public ported_audio_init_engine_
     public ported_audio_op_unk_
     public ported_audio_function2_
-    public audio_driver_timer
+    public ported_audio_driver_timer_
     public ported_audio_op_unk2_
     public nopsub_27220
     public ported_nopsub_2726C_
@@ -526,15 +526,14 @@ loc_26F9E:
     pop     bp
     retf
 ported_audio_function2_ endp
-audio_driver_timer proc far
+ported_audio_driver_timer_ proc far
     var_4 = word ptr -4
     var_1 = byte ptr -1
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     audio_driver_timer
+    nop
     push    di
     push    si
     call    compare_ds_ss
@@ -703,7 +702,7 @@ loc_27127:
     retf
     ; align 2
     db 144
-audio_driver_timer endp
+ported_audio_driver_timer_ endp
 ported_audio_op_unk2_ proc far
     var_16 = word ptr -22
     var_14 = word ptr -20
