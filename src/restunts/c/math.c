@@ -747,7 +747,16 @@ int vector_op_unk2(struct VECTOR* vec) {
 	return result;
 }
 
-extern int projectiondata5, projectiondata8, projectiondata9, projectiondata10;
+// All ten of these are `dw` in dseg and are declared unsigned in shape3d.c,
+// which is also how set_projection produces them. math.c used to declare this
+// subset as int, so projectiondata9/10 - the only ones that can grow past
+// 7FFFh - reached the projection multiply as negative values.
+//
+// The two roles are not the same, and the casts at the use sites say which is
+// which: 9 and 10 are the operands of `mul`, so they stay unsigned there,
+// while 5 and 8 are added with `add ax, .. / jo`, whose overflow test reads
+// both operands as signed words.
+extern unsigned projectiondata5, projectiondata8, projectiondata9, projectiondata10;
 
 
 // Each `add ax, projectiondataN` in the original is followed by `jo`, and on
@@ -787,7 +796,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) { 
-			outpt->px = saturate_projection(-(long)(proj / (unsigned short)vec->z) + projectiondata5);
+			outpt->px = saturate_projection(-(long)(proj / (unsigned short)vec->z) + (int)projectiondata5);
 		} else
 			outpt->px = -0x7D00;
 	} else {
@@ -795,7 +804,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->px = saturate_projection((long)(proj / (unsigned short)vec->z) + projectiondata5);
+			outpt->px = saturate_projection((long)(proj / (unsigned short)vec->z) + (int)projectiondata5);
 		else
 			outpt->px = 0x7D00;
 	}
@@ -805,7 +814,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection((long)(proj / (unsigned short)vec->z) + projectiondata8);
+			outpt->py = saturate_projection((long)(proj / (unsigned short)vec->z) + (int)projectiondata8);
 		else
 			outpt->py = 0x7D00;
 	} else {
@@ -813,7 +822,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection(-(long)(proj / (unsigned short)vec->z) + projectiondata8);
+			outpt->py = saturate_projection(-(long)(proj / (unsigned short)vec->z) + (int)projectiondata8);
 		else
 			outpt->py = -0x7D00;
 	}
