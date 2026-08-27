@@ -572,6 +572,7 @@ void audio_driver_timer(void);
 extern void sub_38CF8(int index, void far* context);
 extern int sub_39050(unsigned int value, int handle);
 extern void sub_39088(int channel, int value);
+extern void sub_35B76(int x, int y, int width, int height, int color);
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
@@ -1394,6 +1395,31 @@ int audioresource_compare_chunknames(int case_sensitive,
 		remaining--;
 	} while (remaining != 0);
 	return 1;
+}
+
+void sub_3702E(int left, int top, int right, int bottom, int color)
+{
+	legacy_s16 x;
+	legacy_s16 y;
+	legacy_s16 width;
+	legacy_s16 height;
+
+	x = LEGACY_S16_FROM_BITS(left);
+	y = LEGACY_S16_FROM_BITS(top);
+	width = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_SUB(right, left), 1);
+	height = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_SUB(bottom, top), 1);
+	if (width > 0) {
+		sub_35B76(x, y, width, 1, color);
+		sub_35B76(x, LEGACY_S16_FROM_BITS(bottom), width, 1, color);
+	}
+	if (height > 0) {
+		y = LEGACY_S16_WRAP_ADD(y, 1);
+		sub_35B76(x, y, 1, height, color);
+		sub_35B76(LEGACY_S16_FROM_BITS(right), y,
+			1, height, color);
+	}
 }
 
 int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,

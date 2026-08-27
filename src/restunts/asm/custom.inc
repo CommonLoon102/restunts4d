@@ -285,6 +285,7 @@ extrn audioresource_copy_n_bytes:proc
 extrn nopsub_367E4:proc
 extrn nopsub_36826:proc
 extrn nopsub_36868:proc
+extrn sub_3702E:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

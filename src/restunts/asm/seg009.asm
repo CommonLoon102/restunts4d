@@ -1354,7 +1354,7 @@ loc_2AED6:
     dec     ax
     push    ax
     push    [bp+var_CA]
-    call    sub_3702E
+    call    ported_sub_3702E_
     add     sp, 0Ah
 loc_2AEFF:
     call    ported_mouse_draw_transparent_check_
@@ -1743,7 +1743,7 @@ loc_2B2A6:
     dec     ax
     push    ax
     push    [bp+var_CA]
-    call    sub_3702E
+    call    ported_sub_3702E_
     add     sp, 0Ah
 loc_2B2CF:
     call    ported_mouse_draw_transparent_check_

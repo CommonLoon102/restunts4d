@@ -1,3 +1,3 @@
 seg025 segment byte public 'STUNTSC' use16
-    extrn sub_3702E:proc
+    extrn ported_sub_3702E_:proc
 seg025 ends

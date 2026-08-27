@@ -46,11 +46,11 @@ nosmart
 seg025 segment byte public 'STUNTSC' use16
     assume cs:seg025
     assume es:nothing, ss:nothing, ds:dseg
-    public sub_3702E
+    public ported_sub_3702E_
 algn_3702D:
     ; align 2
     db 144
-sub_3702E proc far
+ported_sub_3702E_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -61,11 +61,10 @@ sub_3702E proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
+    jmp     sub_3702E
+    nop
 loc_3702F:
-    mov     bp, sp
 loc_37031:
-    sub     sp, 4
 loc_37034:
     push    si
 loc_37035:
@@ -160,6 +159,6 @@ loc_370B8:
     pop     bp
 locret_370B9:
     retf
-sub_3702E endp
+ported_sub_3702E_ endp
 seg025 ends
 end
