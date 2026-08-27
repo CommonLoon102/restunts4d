@@ -364,7 +364,8 @@ void file_build_path(const char* dir, const char* name, const char* ext, char* d
 
 const char* file_combine_and_find(const char* dir, const char* name, const char* ext)
 {
-	char* path;
+	// The original reserves 80 bytes of stack for this (var_50 = byte ptr -80).
+	char path[80];
 
 	file_build_path(dir, name, ext, path);
 	
