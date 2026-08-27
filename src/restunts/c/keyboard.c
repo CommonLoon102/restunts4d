@@ -175,17 +175,29 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 
 void kb_init_interrupt(void) {
 	unsigned char irqmask;
+	int i;
 
 	irqmask = inp(0x21);
 	outp(0x21, irqmask | 0x3);
 
-	old_kb_int9_handler = getvect(9);
-	setvect(9, kb_int9_handler);
+	// `cmp bx, offset kb_int9_handler / jz short loc_30861` - if the vector
+	// is already ours the whole install is skipped, so a second call cannot
+	// overwrite the saved BIOS vectors with our own handlers.
+	if (getvect(9) != (voidinterruptfunctype)kb_int9_handler) {
+		old_kb_int9_handler = getvect(9);
+		setvect(9, kb_int9_handler);
 
-	old_kb_int16_handler = getvect(0x16);
-	setvect(0x16, kb_int16_handler);
+		old_kb_int16_handler = getvect(0x16);
+		setvect(0x16, kb_int16_handler);
+	}
 
 	outp(0x21, irqmask);
+
+	// `mov di, offset kbinput / mov cx, 5Ah / xor ax, ax / cld / rep stosb`
+	for (i = 0; i < 0x5A; i++) {
+		kbinput[i] = 0;
+	}
+
 	add_exit_handler(kb_exit_handler);
 }
 
