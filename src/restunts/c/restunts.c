@@ -1426,6 +1426,57 @@ int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
 	return -1;
 }
 
+static void far* audio_far_pointer_add_normalized(void far* pointer,
+	legacy_u16 increment)
+{
+	legacy_u16 old_offset;
+	legacy_u16 new_offset;
+	legacy_u16 segment;
+
+	old_offset = (legacy_u16)FP_OFF(pointer);
+	segment = (legacy_u16)FP_SEG(pointer);
+	new_offset = LEGACY_U16_WRAP_ADD(old_offset, increment);
+	if (new_offset < old_offset)
+		segment = LEGACY_U16_WRAP_ADD(segment, 0x1000U);
+	return MK_FP(segment, new_offset);
+}
+
+void far* audioresource_find(void far* resource, const char* chunk_name)
+{
+	legacy_u8 far* bytes;
+	legacy_u8 far* offset_entry;
+	legacy_u16 resource_offset;
+	legacy_u16 resource_segment;
+	legacy_u16 chunk_count;
+	legacy_u16 table_offset;
+	legacy_u16 relative_offset;
+	legacy_u16 result_offset;
+	int chunk_index;
+
+	bytes = (legacy_u8 far*)resource;
+	resource_offset = (legacy_u16)FP_OFF(resource);
+	resource_segment = (legacy_u16)FP_SEG(resource);
+	chunk_count = audioresource_get_word(
+		(const legacy_u8 far*)audio_far_pointer_add_normalized(bytes, 4U));
+	chunk_index = audioresource_get_chunk_index(0, chunk_count, chunk_name,
+		(const legacy_u8 far*)audio_far_pointer_add_normalized(bytes, 6U));
+	if (chunk_index < 0)
+		return 0;
+
+	table_offset = LEGACY_U16_WRAP_ADD(resource_offset,
+		LEGACY_U16_WRAP_MUL(chunk_count, 4U));
+	table_offset = LEGACY_U16_WRAP_ADD(table_offset,
+		LEGACY_U16_WRAP_MUL(chunk_index, 4U));
+	table_offset = LEGACY_U16_WRAP_ADD(table_offset, 6U);
+	offset_entry = (legacy_u8 far*)MK_FP(resource_segment, table_offset);
+	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
+	result_offset = LEGACY_U16_WRAP_ADD(resource_offset,
+		LEGACY_U16_WRAP_MUL(chunk_count, 8U));
+	result_offset = LEGACY_U16_WRAP_ADD(result_offset, relative_offset);
+	result_offset = LEGACY_U16_WRAP_ADD(result_offset, 6U);
+	return MK_FP(resource_segment, result_offset);
+}
+
 void audio_op_unk3(int index)
 {
 	audio_start_indexed_event(index, 0x44U, 0x40U);

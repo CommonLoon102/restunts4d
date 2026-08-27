@@ -111,7 +111,7 @@ loc_370DB:
     push    word ptr [bp+arg_songfileptr+2]
 loc_370DE:
     push    word ptr [bp+arg_songfileptr]
-    call    audioresource_find; audio_find_resource?
+    call    ported_audioresource_find_; audio_find_resource?
     add     sp, 6
     mov     word ptr [bp+var_titlptr], ax
     mov     word ptr [bp+var_titlptr+2], dx
@@ -129,7 +129,7 @@ loc_370FA:
     push    ax
     push    word ptr [bp+var_titlptr+2]
     push    word ptr [bp+var_titlptr]
-    call    audioresource_find; audio_find_resource? look up "hdr1" in the "TITL" chunk?
+    call    ported_audioresource_find_; audio_find_resource? look up "hdr1" in the "TITL" chunk?
     add     sp, 6
     mov     word ptr [bp+var_hdrptr], ax
     mov     word ptr [bp+var_hdrptr+2], dx
@@ -1887,7 +1887,7 @@ audio_map_song_instruments proc far
     push    ax
     push    word ptr [bp+arg_songtitlptr+2]
     push    word ptr [bp+arg_songtitlptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr [bp+var_hdrptr], ax
     mov     word ptr [bp+var_hdrptr+2], dx
@@ -1935,7 +1935,7 @@ loc_37F23:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     [bp+var_E], ax
     mov     [bp+var_C], dx
@@ -1958,7 +1958,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr basdres, ax
     mov     word ptr basdres+2, dx
@@ -1966,7 +1966,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr snarres, ax
     mov     word ptr snarres+2, dx
@@ -1974,7 +1974,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr tommres, ax
     mov     word ptr tommres+2, dx
@@ -1982,7 +1982,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr rideres, ax
     mov     word ptr rideres+2, dx
@@ -1990,7 +1990,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr crshres, ax
     mov     word ptr crshres+2, dx
@@ -1998,7 +1998,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr chhtres, ax
     mov     word ptr chhtres+2, dx
@@ -2006,7 +2006,7 @@ loc_37F87:
     push    ax
     push    word ptr [bp+arg_vceptr+2]
     push    word ptr [bp+arg_vceptr]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr ohhtres, ax
     mov     word ptr ohhtres+2, dx
@@ -2085,7 +2085,7 @@ loc_3808E:
     push    ax
     push    word ptr [bp+arg_0+2]
     push    word ptr [bp+arg_0]
-    call    audioresource_find
+    call    ported_audioresource_find_
     add     sp, 6
     mov     word ptr [bp+var_4], ax
     mov     word ptr [bp+var_4+2], dx

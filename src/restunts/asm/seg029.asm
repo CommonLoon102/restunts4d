@@ -49,7 +49,7 @@ seg029 segment byte public 'STUNTSC' use16
     public ported_audioresource_compare_chunknames_
     public byte_39B14
     public ported_audioresource_get_chunk_index_
-    public audioresource_find
+    public ported_audioresource_find_
     public audioresource_copy_n_bytes
 algn_39AD1:
     ; align 4
@@ -219,7 +219,7 @@ loc_39BD3:
     pop     bp
     retf
 ported_audioresource_get_chunk_index_ endp
-audioresource_find proc far
+ported_audioresource_find_ proc far
     var_chunkindex = word ptr -16
     var_E = word ptr -14
     var_C = word ptr -12
@@ -234,9 +234,8 @@ audioresource_find proc far
     arg_chunkseg = word ptr 8
     arg_chunkname = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     audioresource_find
+    nop
 loc_39BE2:
     sub     ax, ax
     mov     [bp+var_8], ax
@@ -306,7 +305,7 @@ loc_39C7A:
     mov     sp, bp
     pop     bp
     retf
-audioresource_find endp
+ported_audioresource_find_ endp
 audioresource_copy_n_bytes proc far
     var_6 = word ptr -6
     var_2 = word ptr -2
