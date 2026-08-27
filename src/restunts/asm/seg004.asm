@@ -5886,7 +5886,7 @@ loc_217D6:
     push    ax
     mov     ax, offset unk_46464
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset aPath; "path"
     push    ax

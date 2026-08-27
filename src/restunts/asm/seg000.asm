@@ -883,7 +883,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407DA
     push    word_407D8
@@ -905,7 +905,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -927,7 +927,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -949,7 +949,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407DE
     push    word_407DC
@@ -971,7 +971,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -993,7 +993,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1015,7 +1015,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1037,7 +1037,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1059,7 +1059,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, 0AC74h
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1081,7 +1081,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407EA
     push    word_407E8
@@ -1103,7 +1103,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1125,7 +1125,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1147,7 +1147,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1169,7 +1169,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407E2
     push    word_407E0
@@ -1191,7 +1191,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1213,7 +1213,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407E2
     push    word_407E0
@@ -1235,7 +1235,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1257,7 +1257,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1279,7 +1279,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407E6
     push    word_407E4
@@ -1301,7 +1301,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1323,7 +1323,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1345,7 +1345,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1367,7 +1367,7 @@ load_intro_resources proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     push    word_407D6
     push    word_407D4
@@ -1873,7 +1873,7 @@ loc_11210:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -2356,7 +2356,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset asc_3BAA2; " '"
     push    ax
@@ -2400,7 +2400,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -2423,7 +2423,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -2446,7 +2446,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -2469,7 +2469,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -4913,7 +4913,7 @@ run_option_menu proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -4941,7 +4941,7 @@ loc_12FCE:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -5271,7 +5271,7 @@ loc_131FC:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     cmp     gState_total_finish_time, 0
     jnz     short loc_13281
@@ -5309,7 +5309,7 @@ loc_13281:
     add     ax, offset resID_byte1
     push    ax
 loc_132D4:
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
 loc_132DC:
     sub     ax, ax
@@ -5340,7 +5340,7 @@ loc_1330D:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 1
     push    ax              ; int
@@ -5373,7 +5373,7 @@ loc_13354:
     add     sp, 2
     add     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
 loc_13380:
     sub     ax, ax
@@ -5408,7 +5408,7 @@ loc_133B5:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset aDnf_0; "dnf"
     push    ax
@@ -5424,7 +5424,7 @@ loc_133B5:
     add     sp, 2
     add     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     jmp     loc_134AA
     ; align 2
@@ -5446,7 +5446,7 @@ loc_1341C:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 1
     push    ax              ; int
@@ -5474,7 +5474,7 @@ loc_13466:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 1
     push    ax              ; int
@@ -5548,7 +5548,7 @@ loc_1351D:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, gState_pEndFrame
     add     ax, elapsed_time1
@@ -5599,7 +5599,7 @@ loc_1356C:
     add     sp, 2
     add     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -5629,7 +5629,7 @@ loc_135ED:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 3
     push    ax              ; int
@@ -5663,7 +5663,7 @@ loc_135ED:
     add     sp, 2
     add     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -5690,7 +5690,7 @@ loc_1368B:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 3
     push    ax              ; int
@@ -5724,7 +5724,7 @@ loc_1368B:
     add     sp, 2
     add     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -5752,7 +5752,7 @@ loc_1368B:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, 3
     push    ax              ; int
@@ -6573,7 +6573,7 @@ loc_13F84:
     push    ax
     mov     ax, 0AC74h
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -7139,7 +7139,7 @@ loc_144F8:
     push    ax
     lea     ax, [bp+var_400]
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset aQ00 ; "q00"
     push    ax
@@ -7152,7 +7152,7 @@ loc_14528:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset unk_463EA
     push    ax
@@ -7233,7 +7233,7 @@ loc_14600:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
 loc_14616:
     mov     ax, [bp+var_41C]

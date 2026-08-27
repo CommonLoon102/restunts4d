@@ -9644,7 +9644,7 @@ loc_19D86:
     mov     ax, offset gsna_string
 loc_19DB6:
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     pop     si
     pop     di

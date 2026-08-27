@@ -59,7 +59,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_unload_resource_
     public ported_locate_shape_alt_
     public ported_locate_text_res_
-    public copy_string
+    public ported_copy_string_
     public mouse_track_op
     public ported_mouse_draw_transparent_check_
     public ported_mouse_draw_opaque_check_
@@ -1304,7 +1304,7 @@ loc_27F1E:
     mov     ax, offset resID_byte1
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     push    [bp+var_710]
     push    [bp+var_712]
@@ -1563,7 +1563,7 @@ loc_281CC:
     mov     ax, offset resID_byte1
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     push    [bp+var_6E0]
     mov     ax, offset resID_byte1
@@ -1588,7 +1588,7 @@ loc_281CC:
     mov     ax, offset resID_byte1
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     mov     ax, [bp+var_6D0]
     dec     ax
@@ -2102,7 +2102,7 @@ loc_28682:
     mov     ax, 0AC74h
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     push    [bp+var_10]
     push    [bp+var_12]
@@ -2605,17 +2605,16 @@ ported_locate_text_res_ proc far
     ; align 2
     db 144
 ported_locate_text_res_ endp
-copy_string proc far
+ported_copy_string_ proc far
     var_4 = dword ptr -4
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = dword ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
-    push    si
+    jmp     copy_string
+    nop
+    nop
     mov     ax, word ptr [bp+arg_2]
     mov     dx, word ptr [bp+arg_2+2]
     mov     word ptr [bp+var_4], ax
@@ -2636,7 +2635,7 @@ loc_28AE9:
     mov     sp, bp
     pop     bp
     retf
-copy_string endp
+ported_copy_string_ endp
 mouse_track_op proc far
     var_16 = word ptr -22
     var_14 = word ptr -20
@@ -3799,7 +3798,7 @@ loc_29466:
     mov     ax, 0AC74h
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     mov     [bp+var_5C], 1
     mov     ax, 0AC74h
@@ -5280,7 +5279,7 @@ loc_29FD9:
     lea     ax, [bp+var_202]
     push    ax
     push    cs
-    call near ptr copy_string
+    call near ptr ported_copy_string_
     add     sp, 6
     sub     si, si
 loc_29FFC:

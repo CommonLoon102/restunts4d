@@ -1218,7 +1218,7 @@ loc_2AD38:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset resID_byte1
     push    ax

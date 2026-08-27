@@ -406,6 +406,17 @@ void sub_29772(void)
 	idle_counter = 0;
 }
 
+void copy_string(char* destination, char far* source)
+{
+	/* Preserve the original post-copy lookahead, including its empty input bug. */
+	do {
+		*destination = *source;
+		destination++;
+		source++;
+	} while (*source != 0);
+	*destination = 0;
+}
+
 void mouse_draw_transparent_check(void)
 {
 	byte_3B8F7 = 1;
@@ -841,8 +852,6 @@ extern int word_443F4;
 
 extern char gnam_string[]; // 40 bytes
 extern char gsna_string[]; // 5 bytes
-
-extern void copy_string(char*, char far*);
 
 void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 	int i;

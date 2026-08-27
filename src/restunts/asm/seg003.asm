@@ -5389,7 +5389,7 @@ loc_1D14E:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5422,7 +5422,7 @@ loc_1D14E:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5456,7 +5456,7 @@ loc_1D1F0:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5482,7 +5482,7 @@ loc_1D234:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5515,7 +5515,7 @@ loc_1D234:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5599,7 +5599,7 @@ loc_1D34A:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax
@@ -5648,7 +5648,7 @@ loc_1D3C7:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
 loc_1D3E6:
     cmp     resID_byte1, 0
@@ -5689,7 +5689,7 @@ loc_1D42C:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     sub     ax, ax
     push    ax              ; int
@@ -5749,7 +5749,7 @@ loc_1D4B0:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     mov     ax, offset rect_ingame_text
     push    ax

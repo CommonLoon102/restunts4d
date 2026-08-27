@@ -221,6 +221,7 @@ extrn mouse_draw_transparent_check:proc
 extrn mouse_draw_opaque_check:proc
 extrn mouse_draw_transparent:proc
 extrn mouse_draw_opaque:proc
+extrn copy_string:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

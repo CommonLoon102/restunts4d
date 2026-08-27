@@ -4940,7 +4940,7 @@ loc_24956:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_249D2
@@ -5135,7 +5135,7 @@ loc_24B4F:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    copy_string
+    call    ported_copy_string_
     add     sp, 6
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_24BB0
