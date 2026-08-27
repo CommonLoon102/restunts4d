@@ -728,10 +728,10 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 	//
 	// The two only differ when the last run overshoots - file_decomp_rle_single
 	// stops on `dst < dstend` and a run that straddles the end writes past it,
-	// so its count can exceed len. file_decomp only uses the return to decide
-	// whether the decompression happened at all, so the difference has no
-	// caller.
-	return file_decomp_rle_single(src, dst, len, esclookup);
+	// so its count can exceed len. The declared length must still be returned:
+	// file_decomp uses it to position the source for a following pass.
+	file_decomp_rle_single(src, dst, len, esclookup);
+	return len;
 }
 
 // Decompress variable-length encoded sub-file.
