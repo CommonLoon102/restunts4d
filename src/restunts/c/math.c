@@ -680,7 +680,9 @@ int vector_op_unk2(struct VECTOR* vec) {
 	
 	y = abs(vec->y);
 	
-	temp = polarRadius2D(abs(vec->x), abs(vec->z));
+	// The original widens the 16-bit radius with an explicit zero high word
+	// (mov [bp+var_4], ax / mov [bp+var_2], 0), not with a sign extension.
+	temp = (unsigned short)polarRadius2D(abs(vec->x), abs(vec->z));
 	
 	if (sin80 != cos80) {
 		//fatal_error("sin80 != cos80 - not observed");
