@@ -290,6 +290,26 @@ void mat_rot_z(struct MATRIX* outmat, int angle) {
 
 // mat_rot_zxy was originally optimized, using pre-calced y-matrices and only 
 // multiplying the non-zero axes. currently not optimized except for the y cache:
+//
+// Checked against asmorig/seg006.asm:2293 and the results are identical, for
+// three reasons worth writing down so the rewrite is not re-examined:
+//
+//  - the shortcut matrices are not constants. mat_y0/mat_y100/mat_y200/
+//    mat_y300 are all zero in dseg and get filled by mat_rot_y itself in
+//    init_polyinfo (shape3d.c:2672-2675), so they hold exactly what this
+//    code recomputes.
+//  - multiplying by the identity is exact here: mat_multiply forms
+//    (a * b) >> 14 and the identity entry is 4000h, so (v * 16384) >> 14
+//    is v with nothing lost. Building all three axes and both products when
+//    the original would have skipped an axis therefore cannot drift.
+//  - the scratch state is private. mat_y_rot, mat_y_rot_angle, mat_z_rot,
+//    mat_x_rot and mat_rot_temp are referenced from nowhere else in the
+//    program, so the extra writes are invisible.
+//
+// What does differ is which of them the returned pointer points at: the
+// original returns mat_y0 / the y matrix / mat_x_rot / mat_rot_temp /
+// mat_z_rot depending on which axes were live. The contents are the same and
+// no caller keeps the pointer across another call.
 
 struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk) {
 	int flag;
