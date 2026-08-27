@@ -88,7 +88,7 @@ seg027 segment byte public 'STUNTSC' use16
     public off_383A0
     public ported_audioresource_get_dword_
     public ported_audioresource_get_word_
-    public audioresource_copy_4_bytes
+    public ported_audioresource_copy_4_bytes_
 init_audio_resources proc far
     var_titlptr = dword ptr -12
     var_8 = word ptr -8
@@ -173,7 +173,7 @@ loc_3713A:
     push    word ptr [bp+var_hdrptr+2]
     push    word ptr [bp+var_hdrptr]
     push    cs
-    call near ptr audioresource_copy_4_bytes
+    call near ptr ported_audioresource_copy_4_bytes_
     add     sp, 8
 loc_37172:
     mov     ax, word ptr [bp+var_hdrptr]
@@ -1955,7 +1955,7 @@ loc_37F23:
     push    [bp+var_2]
     push    [bp+var_4]
     push    cs
-    call near ptr audioresource_copy_4_bytes
+    call near ptr ported_audioresource_copy_4_bytes_
     add     sp, 8
     add     [bp+var_1E], 4
     add     [bp+var_22], 4
@@ -2141,7 +2141,7 @@ loc_380CE:
     push    [bp+var_C]
     push    [bp+var_E]
     push    cs
-    call near ptr audioresource_copy_4_bytes
+    call near ptr ported_audioresource_copy_4_bytes_
     add     sp, 8
     les     bx, [bp+var_4]
     mov     byte ptr es:[bx+0Ah], 0FFh
@@ -2412,7 +2412,7 @@ _trkdata_case13:
     push    word ptr [bp+var_14+2]
     push    word ptr [bp+var_14]
     push    cs
-    call near ptr audioresource_copy_4_bytes
+    call near ptr ported_audioresource_copy_4_bytes_
     add     sp, 8
 loc_3834A:
     add     word ptr [bp+var_14], 4
@@ -2592,7 +2592,7 @@ loc_38472:
     push    word ptr [bp+var_14+2]
     push    word ptr [bp+var_14]
     push    cs
-    call near ptr audioresource_copy_4_bytes
+    call near ptr ported_audioresource_copy_4_bytes_
     add     sp, 8
 loc_384DF:
     add     word ptr [bp+var_14], 5
@@ -2647,15 +2647,14 @@ loc_38520:
     ; align 2
     db 144
 ported_audioresource_get_word_ endp
-audioresource_copy_4_bytes proc far
+ported_audioresource_copy_4_bytes_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
     arg_4 = dword ptr 10
 
-    push    bp
-    mov     bp, sp
-    les     bx, [bp+arg_4]
+    jmp     audioresource_copy_4_bytes
+    nop
     inc     word ptr [bp+arg_4]
     mov     al, es:[bx]
 loc_38534:
@@ -2789,6 +2788,6 @@ loc_38638:
 loc_3863A:
     pop     bp
     retf
-audioresource_copy_4_bytes endp
+ported_audioresource_copy_4_bytes_ endp
 seg027 ends
 end

@@ -241,6 +241,7 @@ extrn sub_3771E:proc
 extrn nopsub_37750:proc
 extrn audioresource_get_dword:proc
 extrn audioresource_get_word:proc
+extrn audioresource_copy_4_bytes:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

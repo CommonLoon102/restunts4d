@@ -649,6 +649,15 @@ legacy_u16 audioresource_get_word(const legacy_u8 far* source)
 		((legacy_u16)source[1] << 8));
 }
 
+void audioresource_copy_4_bytes(legacy_u8 far* destination,
+	const legacy_u8 far* source)
+{
+	destination[0] = source[0];
+	destination[1] = source[1];
+	destination[2] = source[2];
+	destination[3] = source[3];
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;
