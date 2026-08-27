@@ -854,7 +854,7 @@ loc_27233:
     push    word ptr [bx+2Eh]
     push    word ptr [bx+2Ch]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     push    ax
@@ -894,7 +894,7 @@ nopsub_2726C proc far
     push    word ptr [bx+32h]
     push    word ptr [bx+30h]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     mov     byte ptr [si+1Ah], 1
@@ -930,7 +930,7 @@ nopsub_272B0 proc far
     push    word ptr [bx+36h]
     push    word ptr [bx+34h]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     mov     byte ptr [si+1Ah], 1
@@ -966,7 +966,7 @@ audio_function2_wrap proc far
     push    word ptr [bx+3Ah]
     push    word ptr [bx+38h]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     mov     byte ptr [si+1Ah], 1
@@ -1002,7 +1002,7 @@ audio_op_unk3 proc far
     push    word ptr [bx+46h]
     push    word ptr [bx+44h]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     mov     byte ptr [si+1Ah], 1
@@ -1034,7 +1034,7 @@ audio_op_unk4 proc far
     push    word ptr [bx+4Ah]
     push    word ptr [bx+48h]
     mov     si, bx
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+14h], ax
     mov     byte ptr [si+1Ah], 1
@@ -1078,7 +1078,7 @@ loc_273DB:
     mov     es, [bp+var_2]
     push    word ptr es:[di+22h]
     push    word ptr es:[di+20h]
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+16h], ax
     mov     byte ptr [si+1Ah], 1
@@ -1123,7 +1123,7 @@ loc_27436:
     mov     es, [bp+var_2]
     push    word ptr es:[di+26h]
     push    word ptr es:[di+24h]
-    call    audio_check_flag
+    call    ported_audio_check_flag_
     add     sp, 0Ah
     mov     [si+16h], ax
     mov     byte ptr [si+1Ah], 1

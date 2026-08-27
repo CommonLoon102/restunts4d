@@ -549,9 +549,8 @@ extern void sub_39700(void);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
 extern void audio_init_chunk(int first_channel, int last_channel,
-	unsigned int resource_offset, unsigned int resource_segment,
-	unsigned int resource_data_offset, unsigned char rate,
-	unsigned char priority);
+	void far* resource, unsigned int resource_data_offset,
+	unsigned int rate, unsigned char priority);
 
 void audio_unload(void)
 {
@@ -610,7 +609,7 @@ void sub_3736A(void)
 	word_4063A = 1;
 	byte_40632 = 0;
 	audio_driver_func1E(0, 0x0F);
-	audio_init_chunk(0, 0x0F, 0, 0, 0, byte_45950, 0);
+	audio_init_chunk(0, 0x0F, 0, 0, byte_45950, 0);
 	byte_44290 = 0;
 	sub_39700();
 	word_4063A = 0;
@@ -698,6 +697,49 @@ void audioresource_copy_4_bytes(legacy_u8 far* destination,
 	destination[3] = source[3];
 }
 
+int audio_check_flag(void far* resource, int channel,
+	unsigned char priority, unsigned int rate)
+{
+	const legacy_u8 far* bytes;
+	legacy_u16 scaled_rate;
+	unsigned int offset;
+	unsigned int resource_data_offset;
+	int candidate;
+
+	bytes = (const legacy_u8 far*)resource;
+	if (audioflag6 == 0 || resource == 0 || bytes[5] != 1)
+		return -1;
+
+	if (byte_45948 != 0) {
+		scaled_rate = (legacy_u16)((legacy_u32)(legacy_u16)rate *
+			0x80UL);
+		rate = (legacy_u16)((legacy_u16)(scaled_rate /
+			(legacy_u16)byte_45948) - 1U);
+	} else {
+		rate = 0;
+	}
+
+	if (channel == -1) {
+		for (candidate = 0x10; candidate <= 0x17; candidate++) {
+			offset = (unsigned int)(candidate - 0x10) * 0x4CU;
+			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
+				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
+				byte_45D9A[candidate] == 0) {
+				channel = candidate;
+				break;
+			}
+		}
+	}
+
+	if (channel == -1)
+		return -1;
+
+	resource_data_offset = (unsigned int)bytes[6] * 4U + 8U;
+	audio_init_chunk(channel, channel, resource, resource_data_offset,
+		rate, priority);
+	return channel;
+}
+
 int audio_check_flag2(void far* resource, int channel,
 	unsigned char priority)
 {
@@ -747,8 +789,7 @@ void audio_init_chunk2(int channel)
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset, 0);
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
 	audio_driver_func1E(channel, channel);
-	audio_init_chunk(channel, channel, 0, 0, 0,
-		byte_45948, 0);
+	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
 }
 
 void sub_374DE(int channel)
