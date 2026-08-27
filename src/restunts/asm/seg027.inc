@@ -7,7 +7,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn ported_audio_enable_flag2_:proc
     extrn ported_audio_disable_flag2_:proc
     extrn ported_audio_toggle_flag2_:proc
-    extrn nopsub_373FE:proc
+    extrn ported_nopsub_373FE_:proc
     extrn ported_nopsub_37456_:proc
     extrn ported_sub_37470_:proc
     extrn ported_sub_374DE_:proc

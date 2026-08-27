@@ -535,6 +535,7 @@ extern char audioflag2;
 extern char audioflag6;
 extern int word_4063A;
 extern unsigned char byte_44290;
+extern unsigned char byte_40630;
 extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
@@ -581,6 +582,24 @@ short audio_toggle_flag2(void)
 	}
 
 	audio_enable_flag2();
+	return 1;
+}
+
+short nopsub_373FE(void)
+{
+	unsigned int offset;
+	unsigned int channel;
+
+	if (byte_40630 == 1 || audioflag2 == 0)
+		return 1;
+
+	for (channel = 0; channel < (unsigned int)byte_44290; channel++) {
+		offset = (channel + 0x10U) * 0x4CU;
+		if ((LEGACY_READ_U16_LE(audiochunks_unk + offset) |
+			LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) != 0)
+			return 0;
+	}
+
 	return 1;
 }
 

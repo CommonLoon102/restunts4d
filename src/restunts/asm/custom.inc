@@ -247,6 +247,7 @@ extrn nopsub_37456:proc
 extrn sub_37470:proc
 extrn sub_374DE:proc
 extrn audio_init_chunk2:proc
+extrn nopsub_373FE:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

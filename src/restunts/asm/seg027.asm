@@ -54,7 +54,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_audio_enable_flag2_
     public ported_audio_disable_flag2_
     public ported_audio_toggle_flag2_
-    public nopsub_373FE
+    public ported_nopsub_373FE_
     public ported_nopsub_37456_
     public ported_sub_37470_
     public ported_sub_374DE_
@@ -477,14 +477,13 @@ loc_373F6:
     mov     ax, 1
     retf
 ported_audio_toggle_flag2_ endp
-nopsub_373FE proc far
+ported_nopsub_373FE_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     nopsub_373FE
+    nop
     push    di
     push    si
     cmp     byte_40630, 1
@@ -530,7 +529,7 @@ loc_37446:
     jmp     short loc_37414
     ; align 2
     db 144
-nopsub_373FE endp
+ported_nopsub_373FE_ endp
 ported_nopsub_37456_ proc far
      s = byte ptr 0
      r = byte ptr 2
