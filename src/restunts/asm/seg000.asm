@@ -1839,7 +1839,7 @@ loc_110ED:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -1882,7 +1882,7 @@ loc_11210:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -2383,7 +2383,7 @@ highscore_text_unk proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, 0AC74h
@@ -4922,7 +4922,7 @@ run_option_menu proc far
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -4951,7 +4951,7 @@ loc_12FDF:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
 loc_12FF4:
@@ -5318,7 +5318,7 @@ loc_132DC:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5382,7 +5382,7 @@ loc_13380:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5500,7 +5500,7 @@ loc_134B5:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5607,7 +5607,7 @@ loc_1356C:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5671,7 +5671,7 @@ loc_135ED:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5732,7 +5732,7 @@ loc_1368B:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5775,7 +5775,7 @@ loc_1368B:
     push    [bp+var_70]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -6583,7 +6583,7 @@ loc_13FB2:
     push    ax
     mov     ax, 0AC74h
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, 0AC74h

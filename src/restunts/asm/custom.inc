@@ -222,6 +222,7 @@ extrn mouse_draw_opaque_check:proc
 extrn mouse_draw_transparent:proc
 extrn mouse_draw_opaque:proc
 extrn mouse_multi_hittest:proc
+extrn font_op2_alt:proc
 extrn copy_string:proc
 
 extrn timer_get_counter:proc

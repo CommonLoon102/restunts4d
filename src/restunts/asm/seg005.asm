@@ -840,7 +840,7 @@ loc_22347:
     push    word ptr [bp+var_16+2]
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -4952,7 +4952,7 @@ loc_24956:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -4971,7 +4971,7 @@ loc_249D2:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5147,7 +5147,7 @@ loc_24B4F:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5169,7 +5169,7 @@ loc_24BB0:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1

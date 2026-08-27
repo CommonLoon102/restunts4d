@@ -3,6 +3,7 @@
 #include "restunts.h"
 #include "fileio.h"
 #include "keyboard.h"
+#include "legacy.h"
 #include "math.h"
 #include "memmgr.h"
 #include "shape2d.h"
@@ -446,6 +447,17 @@ int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
 	}
 
 	return -1;
+}
+
+extern int font_op2(const char* text);
+
+int font_op2_alt(const char* text)
+{
+	legacy_s16 centered;
+
+	centered = LEGACY_S16_WRAP_NEGATE(
+		LEGACY_S16_WRAP_SUB(font_op2(text), 0x140));
+	return (int)((long)centered / 2L);
 }
 
 void unload_skybox(void)

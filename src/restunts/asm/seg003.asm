@@ -5400,7 +5400,7 @@ loc_1D14E:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5434,7 +5434,7 @@ loc_1D1D5:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     jmp     loc_1D511
     ; align 2
@@ -5493,7 +5493,7 @@ loc_1D234:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5610,7 +5610,7 @@ loc_1D34A:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -5662,7 +5662,7 @@ loc_1D3E6:
     push    ax
     mov     ax, offset resID_byte1
     push    ax
-    call    font_op2_alt
+    call    ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1

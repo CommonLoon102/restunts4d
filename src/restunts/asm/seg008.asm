@@ -79,7 +79,7 @@ seg008 segment byte public 'STUNTSC' use16
     public draw_lines_unk
     public draw_button
     public ported_shape3d_init_shape_
-    public font_op2_alt
+    public ported_font_op2_alt_
     public sprite_blit_to_video
     public show_waiting
     public print_int_as_string_maybe
@@ -1569,7 +1569,7 @@ loc_281CC:
     mov     ax, offset resID_byte1
     push    ax
     push    cs
-    call near ptr font_op2_alt
+    call near ptr ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -1596,7 +1596,7 @@ loc_281CC:
     mov     ax, offset resID_byte1
     push    ax
     push    cs
-    call near ptr font_op2_alt
+    call near ptr ported_font_op2_alt_
     add     sp, 2
     push    ax
     mov     ax, offset resID_byte1
@@ -3967,14 +3967,13 @@ ported_shape3d_init_shape_ proc far
     pop     bp
     retf
 ported_shape3d_init_shape_ endp
-font_op2_alt proc far
+ported_font_op2_alt_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    [bp+arg_0]
+    jmp     font_op2_alt
+    nop
     call    font_op2
     add     sp, 2
     sub     ax, 140h
@@ -3984,7 +3983,7 @@ font_op2_alt proc far
     sar     ax, 1
     pop     bp
     retf
-font_op2_alt endp
+ported_font_op2_alt_ endp
 sprite_blit_to_video proc far
      s = byte ptr 0
      r = byte ptr 2
