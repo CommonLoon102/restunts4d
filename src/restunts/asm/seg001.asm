@@ -61,7 +61,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_carState_rc_op_
     public ported_upd_statef20_from_steer_input_
     public audio_carstate
-    public audio_unk3
+    public ported_audio_unk3_
     public sub_18D06
     public ported_sub_18D60_
     public ported_car_car_coll_detect_maybe_
@@ -2911,7 +2911,7 @@ loc_1624E:
     sub     ah, ah
     push    ax
     push    cs
-    call near ptr audio_unk3
+    call near ptr ported_audio_unk3_
     add     sp, 4
 loc_1625F:
     sub     ax, ax
@@ -7675,15 +7675,16 @@ loc_18CCC:
     pop     bp
     retf
 audio_carstate endp
-audio_unk3 proc far
+ported_audio_unk3_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = byte ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    cmp     byte_459D8, 0
+    jmp     audio_unk3
+    nop
+    nop
+    nop
     jz      short loc_18D04
     test    [bp+arg_0], 10h
     jz      short loc_18CF3
@@ -7699,7 +7700,7 @@ loc_18CF3:
 loc_18D04:
     pop     bp
     retf
-audio_unk3 endp
+ported_audio_unk3_ endp
 sub_18D06 proc far
      s = byte ptr 0
      r = byte ptr 2

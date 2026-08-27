@@ -539,6 +539,7 @@ extern unsigned char byte_44290;
 extern unsigned char byte_40630;
 extern unsigned char byte_40632;
 extern unsigned char byte_45950;
+extern char byte_459D8;
 extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
@@ -549,6 +550,8 @@ extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
+extern void audio_op_unk3(int channel);
+extern void audio_op_unk4(int channel);
 extern void sub_39700(void);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
@@ -924,6 +927,17 @@ unsigned int nopsub_378AE(int channel)
 unsigned int nopsub_378BC(int channel)
 {
 	return (unsigned int)byte_44ACA[(unsigned int)channel];
+}
+
+void audio_unk3(unsigned char flags, int channel)
+{
+	if (byte_459D8 == 0)
+		return;
+
+	if ((flags & 0x10U) != 0)
+		audio_op_unk4(channel);
+	if ((flags & 0x20U) != 0)
+		audio_op_unk3(channel);
 }
 
 void load_sdgame2_shapes(void)
@@ -1324,7 +1338,6 @@ extern void far* wallptr;
 extern void far* planptr;
 extern int word_43964;
 extern char unk_3E7FC[];
-extern char byte_459D8;
 extern char byte_42D26;
 extern char byte_42D2A;
 extern int word_4408C;
