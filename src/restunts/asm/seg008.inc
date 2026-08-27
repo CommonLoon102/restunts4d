@@ -28,7 +28,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn intro_draw_text:proc
     extrn hiscore_draw_text:proc
     extrn call_read_line:proc
-    extrn input_repeat_check:proc
+    extrn ported_input_repeat_check_:proc
     extrn draw_lines_unk:proc
     extrn draw_button:proc
     extrn ported_shape3d_init_shape_:proc

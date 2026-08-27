@@ -1709,6 +1709,25 @@ short do_dea_textres(void)
 	return result;
 }
 
+int input_repeat_check(int duration)
+{
+	legacy_u16 delta;
+	legacy_u16 elapsed;
+	int result;
+
+	elapsed = 0;
+	timer_get_delta_alt();
+	while (LEGACY_S16_FROM_BITS((legacy_u16)duration) >
+		LEGACY_S16_FROM_BITS(elapsed)) {
+		delta = (legacy_u16)timer_get_delta_alt();
+		elapsed = LEGACY_U16_WRAP_ADD(elapsed, delta);
+		result = input_do_checking(LEGACY_S16_FROM_BITS(delta));
+		if (result != 0)
+			return result;
+	}
+	return 0;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
