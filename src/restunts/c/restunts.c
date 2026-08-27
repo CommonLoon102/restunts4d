@@ -904,6 +904,12 @@ int sub_37868(int value)
 	return channel;
 }
 
+int nopsub_37898(int value)
+{
+	byte_45950 = (unsigned char)value;
+	return sub_37868(value);
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;

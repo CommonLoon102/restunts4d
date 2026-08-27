@@ -21,7 +21,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn ported_nopsub_37750_:proc
     extrn audio_driver_func3F:proc
     extrn ported_sub_37868_:proc
-    extrn nopsub_37898:proc
+    extrn ported_nopsub_37898_:proc
     extrn nopsub_378AE:proc
     extrn nopsub_378BC:proc
     extrn audio_load_driver:proc
