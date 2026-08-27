@@ -7571,7 +7571,7 @@ smart
     or      [bp+var_16], 1
 nosmart
     push    [bp+var_2E]
-    call    audio_op_unk
+    call    ported_audio_op_unk_
     jmp     short loc_18C05
     ; align 2
     db 144

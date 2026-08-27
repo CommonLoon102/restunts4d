@@ -563,6 +563,8 @@ extern unsigned int word_42242;
 extern unsigned int word_42244;
 extern unsigned char byte_42246;
 extern void far audio_driver_timer(void);
+extern void sub_38CF8(int index, void far* context);
+extern int sub_39050(unsigned int value, int handle);
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
@@ -623,6 +625,40 @@ char* pad_id(const char far* source)
 	}
 	byte_42246 = 0;
 	return (char*)destination;
+}
+
+void audio_op_unk(int index)
+{
+	legacy_u8* timer;
+	legacy_u8* context;
+	const legacy_u8 far* definition;
+	legacy_u16 offset;
+	legacy_u16 sample_count;
+	legacy_u16 value;
+	legacy_u16 divisor;
+	int handle;
+	int channel;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	timer = audiotimers + offset;
+	if (timer[0] != 1 || timer[1] != 0)
+		return;
+
+	handle = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(timer + 2U));
+	context = timer + 0x1CU;
+	sub_38CF8(handle, (void far*)context);
+	sample_count = LEGACY_READ_U16_LE(context);
+	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
+	divisor = definition[0x0EU];
+	value = (legacy_u16)(sample_count / divisor);
+	value = LEGACY_U16_WRAP_ADD(value,
+		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
+	LEGACY_WRITE_U16_LE(timer + 0x0CU, value);
+	channel = sub_39050(value, handle);
+	LEGACY_WRITE_U16_LE(timer + 0x12U, channel);
+	timer[1] = 1;
+	timer[0x1AU] = 1;
+	audio_unk2(handle, 0);
 }
 
 void audio_unload(void)

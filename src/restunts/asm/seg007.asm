@@ -50,7 +50,7 @@ seg007 segment byte public 'STUNTSC' use16
     public ported_audio_remove_driver_timer_
     public ported_pad_id_
     public audio_init_engine
-    public audio_op_unk
+    public ported_audio_op_unk_
     public ported_audio_function2_
     public audio_driver_timer
     public audio_op_unk2
@@ -445,15 +445,12 @@ loc_26EEE:
     pop     bp
     retf
 audio_init_engine endp
-audio_op_unk proc far
+ported_audio_op_unk_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    di
-    push    si
+    jmp     audio_op_unk
     mov     ax, 4Ch ; 'L'
     imul    [bp+arg_0]
     mov     si, ax
@@ -502,7 +499,7 @@ loc_26F67:
     mov     sp, bp
     pop     bp
     retf
-audio_op_unk endp
+ported_audio_op_unk_ endp
 ported_audio_function2_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -685,7 +682,7 @@ loc_270EE:
     jz      short loc_2710B
     push    [bp+var_4]
     push    cs
-    call near ptr audio_op_unk
+    call near ptr ported_audio_op_unk_
 loc_27104:
     add     sp, 2
     mov     byte ptr [si+1Bh], 0
