@@ -552,7 +552,10 @@ void file_load_shape2d_palmap_apply(unsigned char far* memchunk, unsigned char p
 		memchunkptr = (unsigned char far*)memshape + sizeof(struct SHAPE2D);
 		
 		for (j = 0; j < length; ++j) {
-			*memchunkptr++ = palmap[*memchunkptr];
+			// `mov bl, es:[di] / mov al, [bx+si] / stosb` - the lookup reads
+			// the byte di is on, and only stosb advances di afterwards.
+			*memchunkptr = palmap[*memchunkptr];
+			memchunkptr++;
 		}
 	}
 }
