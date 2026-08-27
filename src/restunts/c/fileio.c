@@ -689,12 +689,11 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 	subhdr = (struct compr_rle_header far*)src;
 	srclen = subhdr->srcsizel | ((long)subhdr->srcsizeh << 16);
 	
-	// MSB denotes skipping the initial pass for byte sequence runs. The
-	// original tests `cmp byte ptr [bp+var_esclen], 80h / ja`, i.e. strictly
-	// above 80h, so at exactly 80h - the flag set with no escape codes at all
-	// - it still runs the pass where this skips it. Degenerate either way:
-	// with no escape codes the pass has nothing to match on.
-	skipseq = (subhdr->esclen & 0x80) == 0x80;
+	// MSB denotes skipping the initial pass for byte sequence runs. Match the
+	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
+	// using the byte in the sequence-escape slot even though the declared
+	// escape-code count is zero.
+	skipseq = subhdr->esclen > 0x80;
 	subhdr->esclen &= ~0x80;
 
 	// Set pos to after escape codes.
