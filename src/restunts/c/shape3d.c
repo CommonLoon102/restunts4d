@@ -5029,8 +5029,9 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 	// arg_8[4] caches the steering angle the wheel vertices were last built
 	// for, so the test is against arg_4, not against zero.
 	if (arg_8[4] != arg_4) {
-		var_C = sin_fast(arg_4 / 2);
-		var_2 = cos_fast(arg_4 / 2);
+		// `sar ax, 1` in the original; car_steeringAngle is signed
+		var_C = sin_fast(arg_4 >> 1);
+		var_2 = cos_fast(arg_4 >> 1);
 
 		for (i = 0; i < 6; i++) {
 			var_14 = multiply_and_scale(arg_vecarray[i].x, var_2);
