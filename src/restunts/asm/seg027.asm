@@ -1241,7 +1241,7 @@ loc_3793B:
     mov     ax, offset aDrv ; "drv"
     push    ax
     push    word ptr [bp+arg_0]; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     mov     [bp+var_6], ax
     push    ax
@@ -1431,7 +1431,7 @@ load_sfx_ge proc far
     push    [bp+arg_4]      ; int
     push    [bp+arg_2]
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_load_binary_nofatal
@@ -1460,7 +1460,7 @@ loc_37B4C:
     lea     ax, [bp+var_8]
     push    ax
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_decomp_nofatal
@@ -1473,7 +1473,7 @@ loc_37B4C:
     push    ax              ; int
     push    [bp+arg_2]
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_load_binary_nofatal
@@ -1487,7 +1487,7 @@ loc_37B4C:
     lea     ax, [bp+var_8]
     push    ax
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_decomp_nofatal
@@ -1502,7 +1502,7 @@ loc_37BD1:
     push    ax              ; int
     push    [bp+arg_2]
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_load_binary_nofatal
@@ -1518,7 +1518,7 @@ loc_37BF9:
     lea     ax, [bp+var_8]
     push    ax
     push    [bp+arg_0]      ; char *
-    call    audio_make_filename
+    call    ported_audio_make_filename_
     add     sp, 6
     push    ax
     call    file_decomp_nofatal

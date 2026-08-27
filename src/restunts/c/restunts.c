@@ -565,6 +565,7 @@ extern unsigned char byte_42246;
 extern legacy_s16 word_3EB2A;
 extern unsigned char byte_40634;
 extern char aStartengineNew[];
+extern char audio_filetemp[];
 int compare_ds_ss(void);
 void nopsub_3219D(const char* format, ...);
 void audio_driver_timer(void);
@@ -1295,6 +1296,66 @@ void nopsub_27220(int index)
 	nopsub_3219D(aStartengineNew, channel);
 	audiotimers[offset + 0x1AU] = 1;
 	audiotimers[offset + 0x1BU] = 1;
+}
+
+static void audio_append_filename_part(char* destination,
+	const char* source)
+{
+	while (*destination != 0)
+		destination++;
+	do {
+		*destination++ = *source;
+	} while (*source++ != 0);
+}
+
+static const char* audio_find_last_backslash(const char* text)
+{
+	const char* match;
+
+	match = 0;
+	while (*text != 0) {
+		if (*text == '\\')
+			match = text;
+		text++;
+	}
+	return match;
+}
+
+char* audio_make_filename(const char* filename, const char* extension,
+	const char* inserted_path)
+{
+	const char* basename;
+	const char* source;
+	char* separator;
+	unsigned int length;
+
+	separator = audio_filetemp;
+	source = filename;
+	do {
+		*separator++ = *source;
+	} while (*source++ != 0);
+	separator = (char*)audio_find_last_backslash(audio_filetemp);
+	if (separator != 0)
+		separator[1] = 0;
+	else
+		audio_filetemp[0] = 0;
+
+	audio_append_filename_part(audio_filetemp, inserted_path);
+	basename = audio_find_last_backslash(filename);
+	if (basename != 0)
+		basename++;
+	else
+		basename = filename;
+	audio_append_filename_part(audio_filetemp, basename);
+
+	length = 0;
+	while (audio_filetemp[length] != 0)
+		length++;
+	if (length <= 4U || audio_filetemp[length - 4U] != '.') {
+		audio_append_filename_part(audio_filetemp, ".");
+		audio_append_filename_part(audio_filetemp, extension);
+	}
+	return audio_filetemp;
 }
 
 void audio_op_unk3(int index)

@@ -48,22 +48,21 @@ seg030 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public byte_39CCA
     public byte_39CCC
-    public audio_make_filename
+    public ported_audio_make_filename_
 byte_39CCA     db 144
     db 144
 byte_39CCC     db 0
     db 0
-audio_make_filename proc far
+ported_audio_make_filename_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
     arg_4 = word ptr 10
 
-    push    bp
+    jmp     audio_make_filename
+    nop
 loc_39CCF:
-    mov     bp, sp
-    sub     sp, 2
     push    di
     push    si
     mov     si, offset audio_filetemp
@@ -232,6 +231,6 @@ loc_39E10:
 loc_39E12:
     pop     bp
     retf
-audio_make_filename endp
+ported_audio_make_filename_ endp
 seg030 ends
 end

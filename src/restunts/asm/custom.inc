@@ -277,6 +277,7 @@ extrn audio_op_unk2:proc
 extrn audio_init_engine:proc
 extrn audio_driver_timer:proc
 extrn nopsub_27220:proc
+extrn audio_make_filename:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
