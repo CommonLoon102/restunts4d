@@ -112,7 +112,7 @@ loc_26BDE:
 loc_26BE0:
     push    word ptr [si+2]
 loc_26BE3:
-    call    sub_374DE
+    call    ported_sub_374DE_
 loc_26BE8:
     pop     bx
 loc_26BE9:

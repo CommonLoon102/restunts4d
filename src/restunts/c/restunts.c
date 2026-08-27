@@ -545,6 +545,7 @@ extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
+extern void audio_init_chunk2(int channel);
 
 void audio_unload(void)
 {
@@ -698,6 +699,14 @@ int sub_37470(int channel, unsigned char priority)
 	}
 
 	return channel;
+}
+
+void sub_374DE(int channel)
+{
+	if (channel > -1) {
+		byte_45D9A[channel] = 0;
+		audio_init_chunk2(channel);
+	}
 }
 
 void load_sdgame2_shapes(void)

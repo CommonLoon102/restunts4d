@@ -57,7 +57,7 @@ seg027 segment byte public 'STUNTSC' use16
     public nopsub_373FE
     public ported_nopsub_37456_
     public ported_sub_37470_
-    public sub_374DE
+    public ported_sub_374DE_
     public ported_audio_check_flag2_
     public audio_check_flag
     public audio_init_chunk2
@@ -610,14 +610,14 @@ loc_374CE:
     ; align 2
     db 144
 ported_sub_37470_ endp
-sub_374DE proc far
+ported_sub_374DE_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    cmp     [bp+arg_0], 0FFFFh
+    jmp     sub_374DE
+    nop
+    nop
     jle     short loc_374F7
     mov     bx, [bp+arg_0]
     mov     byte_45D9A[bx], 0
@@ -630,7 +630,7 @@ loc_374F7:
     retf
     ; align 2
     db 144
-sub_374DE endp
+ported_sub_374DE_ endp
 ported_audio_check_flag2_ proc far
      s = byte ptr 0
      r = byte ptr 2

@@ -245,6 +245,7 @@ extrn audioresource_copy_4_bytes:proc
 extrn audio_check_flag2:proc
 extrn nopsub_37456:proc
 extrn sub_37470:proc
+extrn sub_374DE:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
