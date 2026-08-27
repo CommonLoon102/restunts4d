@@ -5045,8 +5045,15 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 
 	for (j = 0; j < 4; j++) {
 		
-		var_8 = _labs(_labs(arg_6[j]) >> 6);
-		//var_8 = (arg_6[j]) >> 6;
+		// The original takes |x|, shifts that right six, then re-applies the
+		// sign of x (loc_2069F: cwd / xor / sub, sar ax,6, xor / sub).
+		var_8 = arg_6[j];
+		if (var_8 < 0)
+			var_8 = -var_8;
+		var_8 >>= 6;
+		if (arg_6[j] < 0)
+			var_8 = -var_8;
+
 		if (arg_8[j] == var_8)
 			continue;
 		i = j * 6;
