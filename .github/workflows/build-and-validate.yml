@@ -20,7 +20,7 @@ on:
           runner's four vCPUs, so raising this needs replay-timeout-seconds
           raised to match.
         type: number
-        default: 12
+        default: 10
       replay-timeout-seconds:
         description: Seconds each executable gets per replay.
         type: number
