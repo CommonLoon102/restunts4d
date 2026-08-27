@@ -7719,7 +7719,7 @@ sub_18D06 proc far
     push    word ptr [bx+6]
     push    word ptr [bx+1Eh]
     push    word_43964
-    call    audio_op_unk2
+    call    ported_audio_op_unk2_
     add     sp, 12h
     cmp     gameconfig.game_opponenttype, 0
     jz      short loc_18D5E
@@ -7733,7 +7733,7 @@ sub_18D06 proc far
     push    word ptr [bx+12h]
     push    word ptr [bx+20h]
     push    word_4408C
-    call    audio_op_unk2
+    call    ported_audio_op_unk2_
     add     sp, 12h
 loc_18D5E:
     pop     bp

@@ -661,6 +661,61 @@ void audio_op_unk(int index)
 	audio_unk2(handle, 0);
 }
 
+void audio_op_unk2(int index, int base_value,
+	int first_x, int first_y, int first_z,
+	int second_x, int second_y, int second_z,
+	int interval)
+{
+	legacy_u8* timer;
+	legacy_u8* context;
+	const legacy_u8 far* definition;
+	legacy_u16 offset;
+	legacy_u16 first_distance;
+	legacy_u16 second_distance;
+	legacy_u16 distance_delta;
+	legacy_u16 scaled_delta;
+	legacy_u16 volume;
+	legacy_u16 base_rate;
+	legacy_u16 denominator;
+	legacy_u16 divisor;
+	legacy_u16 quotient;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	timer = audiotimers + offset;
+	second_distance = (legacy_u16)polarRadius2D(
+		polarRadius2D(second_x, second_z), second_y);
+	if (LEGACY_S16_FROM_BITS(second_distance) > 0x1770) {
+		timer[0x0AU] = 0;
+		return;
+	}
+
+	first_distance = (legacy_u16)polarRadius2D(
+		polarRadius2D(first_x, first_z), first_y);
+	distance_delta = LEGACY_U16_WRAP_SUB(
+		first_distance, second_distance);
+	quotient = (legacy_u16)(100U / (legacy_u16)interval);
+	scaled_delta = LEGACY_U16_WRAP_MUL(quotient, distance_delta);
+	quotient = (legacy_u16)(((legacy_u32)0x7FU * second_distance) /
+		0x1770UL);
+	volume = LEGACY_U16_WRAP_SUB(0x7FU, quotient);
+	if (LEGACY_S16_FROM_BITS(scaled_delta) > 0)
+		volume = LEGACY_U16_WRAP_SUB(volume, volume >> 4);
+
+	context = timer + 0x1CU;
+	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
+	divisor = definition[0x0EU];
+	base_rate = (legacy_u16)((legacy_u16)base_value / divisor);
+	base_rate = LEGACY_U16_WRAP_ADD(base_rate,
+		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
+	denominator = LEGACY_U16_WRAP_SUB(0x1770U, scaled_delta);
+	if (denominator != 0) {
+		base_rate = (legacy_u16)(((legacy_u32)0x1770U * base_rate) /
+			denominator);
+		LEGACY_WRITE_U16_LE(timer + 0x0CU, base_rate);
+	}
+	timer[0x0AU] = (legacy_u8)volume;
+}
+
 void audio_unload(void)
 {
 	audio_driver_func3F(2);
