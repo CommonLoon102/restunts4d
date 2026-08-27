@@ -1780,7 +1780,7 @@ loc_110ED:
     mov     al, es:[bx+384h]
     sub     ah, ah
     push    ax
-    call    load_skybox
+    call    ported_load_skybox_
     add     sp, 2
     call    shape3d_load_all
     mov     ax, 0C8h ; '�'

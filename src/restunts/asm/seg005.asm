@@ -3155,7 +3155,7 @@ loc_238DE:
     mov     al, es:[bx+384h]; 384h = sky box position in track data
     sub     ah, ah
     push    ax
-    call    load_skybox
+    call    ported_load_skybox_
     add     sp, 2
     call    shape3d_load_all
     or      ax, ax

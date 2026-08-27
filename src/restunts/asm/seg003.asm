@@ -56,7 +56,7 @@ seg003 segment byte public 'STUNTSC' use16
     public draw_ingame_text
     public do_sinking
     public init_crak
-    public load_skybox
+    public ported_load_skybox_
     public ported_unload_skybox_
     public ported_load_sdgame2_shapes_
     public ported_free_sdgame2_
@@ -6081,16 +6081,15 @@ loc_1D798:
     ; align 2
     db 144
 init_crak endp
-load_skybox proc far
+ported_load_skybox_ proc far
     var_4 = word ptr -4
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = byte ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
-    push    si
+    jmp     load_skybox
+    nop
+    nop
     test    [bp+arg_0], 8
     jz      short loc_1D7B6
 smart
@@ -6194,7 +6193,7 @@ loc_1D8AF:
     mov     sp, bp
     pop     bp
     retf
-load_skybox endp
+ported_load_skybox_ endp
 ported_unload_skybox_ proc far
 
     jmp     unload_skybox

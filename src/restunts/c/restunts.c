@@ -362,6 +362,27 @@ extern char far* skybox_res_ofs;
 extern char far* sdgame2ptr;
 extern int sdgame2_widths[];
 extern char far* sdgame2shapes[];
+extern char byte_46167;
+extern unsigned int skybox_ptr1;
+extern unsigned int skybox_ptr2;
+extern unsigned int skybox_ptr3;
+extern unsigned int skybox_ptr4;
+extern unsigned int skybox_current;
+extern unsigned int word_454CE;
+extern int skybox_sky_color;
+extern int skybox_grd_color;
+extern int skybox_wat_color;
+extern int dialog_fnt_colour;
+extern int meter_needle_color;
+extern char far* skyboxes[];
+
+static char skybox_resource_names[5][9] = {
+	"desert",
+	"tropical",
+	"alpine",
+	"city",
+	"country"
+};
 
 void init_unknown(void)
 {
@@ -397,6 +418,60 @@ void load_sdgame2_shapes(void)
 	for (i = 0; i < 3; i++)
 		sdgame2_widths[i] =
 			((struct SHAPE2D far*)sdgame2shapes[i])->s2d_width;
+}
+
+void load_skybox(char skybox_index)
+{
+	unsigned int minimum;
+	unsigned int maximum;
+
+	if (((unsigned char)skybox_index & 8U) == 0) {
+		if (byte_3B8F6 != 0 &&
+			(unsigned char)skybox_index == (unsigned char)byte_46167)
+			return;
+
+		unload_skybox();
+		byte_46167 = skybox_index;
+		byte_3B8F6 = 1;
+		skybox_res_ofs = file_load_shape2d_fatal(
+			skybox_resource_names[(signed char)skybox_index]);
+		locate_many_resources(
+			skybox_res_ofs,
+			"scensce2sce3sce4",
+			skyboxes);
+
+		skybox_ptr1 =
+			((struct SHAPE2D far*)skyboxes[0])->s2d_height;
+		skybox_ptr2 =
+			((struct SHAPE2D far*)skyboxes[1])->s2d_height;
+		skybox_ptr3 =
+			((struct SHAPE2D far*)skyboxes[2])->s2d_height;
+		skybox_ptr4 =
+			((struct SHAPE2D far*)skyboxes[3])->s2d_height;
+
+		minimum = skybox_ptr1;
+		if (minimum > skybox_ptr2)
+			minimum = skybox_ptr2;
+		if (minimum > skybox_ptr3)
+			minimum = skybox_ptr3;
+		if (minimum > skybox_ptr4)
+			minimum = skybox_ptr4;
+		skybox_current = minimum;
+
+		maximum = skybox_ptr1;
+		if (maximum < skybox_ptr2)
+			maximum = skybox_ptr2;
+		if (maximum < skybox_ptr3)
+			maximum = skybox_ptr3;
+		if (maximum < skybox_ptr4)
+			maximum = skybox_ptr4;
+		word_454CE = maximum;
+	}
+
+	skybox_sky_color = material_clrlist_ptr[17];
+	skybox_grd_color = material_clrlist_ptr[16];
+	skybox_wat_color = material_clrlist_ptr[100];
+	meter_needle_color = dialog_fnt_colour;
 }
 
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle)
