@@ -534,7 +534,9 @@ unsigned short file_load_shape2d_expandedsize(void far* memchunk) {
 	
 	shapecount = file_get_res_shape_count(memchunk);
 
-	size = (shapecount * 8) + sizeof(struct SHAPE2D);
+	// The original forms this seed in AX, then uses CWD: both the shift and
+	// header addition wrap to 16 bits before the result is sign-extended.
+	size = (short)(unsigned short)((shapecount * 8) + sizeof(struct SHAPE2D));
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d(memchunk, i);
