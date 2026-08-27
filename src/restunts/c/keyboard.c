@@ -100,6 +100,16 @@ void interrupt kb_int9_handler(void) {
 	
 }
 
+// FLAGS bits the INT 16h handler hands back to its caller. The original ends
+// every arm with `sti` and `retf 2`, which discards the flags the INT pushed
+// and leaves the handler's own IF and ZF in place; AH=01 answers "no key
+// available" in ZF and nothing else. A Borland `interrupt` function ends in
+// iret, which restores the caller's flags, so each exit has to write the
+// `flags` pseudo-parameter itself. Live ASM caller: kb_get_char at
+// asm/seg012.asm:3990 does `mov ah,1 / int 16h / jnz`.
+#define FLAG_ZF 0x0040
+#define FLAG_IF 0x0200
+
 #pragma argsused   
 void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
                                      unsigned ds, unsigned es, unsigned dx,
@@ -113,6 +123,7 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		if (kb_intr_data4 == 0) {
 			enable();
 			ax = 0;
+			flags = (flags | FLAG_IF) | FLAG_ZF;    // xor ax, ax
 			return ;
 		}
 		kbdata = kb_intr_data2;
@@ -124,6 +135,10 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		kb_intr_data4 = kb_intr_data4 - 2;
 		enable();
 		ax = result;
+		// last flag-setting instruction on this path is `sub bx, 2`
+		flags = (flags | FLAG_IF) & ~FLAG_ZF;
+		if (kb_intr_data4 == 0)
+			flags |= FLAG_ZF;
 		return ;
 	}
 	
@@ -131,11 +146,14 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		if (kb_intr_data4 == 0) {
 			enable();
 			ax = 0;
+			flags = (flags | FLAG_IF) | FLAG_ZF;    // no key pending
 			return ;
 		}
 		result = kb_intr_data_array[kb_intr_data2 / 2];
 		enable();
 		ax = result;
+		// ZF still carries `cmp kb_intr_data4, 0` finding a non-zero count
+		flags = (flags | FLAG_IF) & ~FLAG_ZF;
 		return ;
 	}
 	
@@ -143,10 +161,15 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		result = kbinput[0x2A] | kbinput[0x36];
 		enable();
 		ax = result & 0xFF;
+		// ZF comes from `mov al, kbinput+2Ah / or al, kbinput+36h`
+		flags = (flags | FLAG_IF) & ~FLAG_ZF;
+		if ((result & 0xFF) == 0)
+			flags |= FLAG_ZF;
 		return ;
 	}
 	enable();
 	ax = 0;
+	flags = (flags | FLAG_IF) | FLAG_ZF;            // xor ax, ax
 	//return 0;
 }
 
