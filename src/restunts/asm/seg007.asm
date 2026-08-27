@@ -687,7 +687,7 @@ loc_270D4:
     jmp     short loc_27104
 loc_270EE:
     push    word ptr [si+14h]
-    call    sub_3771E
+    call    ported_sub_3771E_
     add     sp, 2
     or      ax, ax
     jz      short loc_2710B
@@ -1169,7 +1169,7 @@ nopsub_27489 proc far
     cmp     si, 0FFFFh
     jle     short loc_274A7
     push    si
-    call    sub_3771E
+    call    ported_sub_3771E_
     pop     bx
     jmp     short loc_274AA
 loc_274A7:

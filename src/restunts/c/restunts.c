@@ -536,6 +536,7 @@ extern char audioflag6;
 extern int word_4063A;
 extern unsigned char byte_44290;
 extern unsigned char byte_428D6[];
+extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
@@ -611,6 +612,18 @@ short audio_toggle_flag6(void)
 
 	audio_enable_flag6();
 	return 1;
+}
+
+int sub_3771E(int channel)
+{
+	unsigned int offset;
+
+	if (audioflag6 == 0 || channel < 0x10 || channel > 0x17)
+		return 1;
+
+	offset = (unsigned int)channel * 0x4CU;
+	return (LEGACY_READ_U16_LE(audiochunks_unk + offset) |
+		LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) == 0;
 }
 
 void load_sdgame2_shapes(void)
