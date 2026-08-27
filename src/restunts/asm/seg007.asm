@@ -683,7 +683,7 @@ loc_270D4:
     cmp     byte ptr [si+1], 0
     jz      short loc_270EE
     push    word ptr [si+14h]
-    call    audio_init_chunk2
+    call    ported_audio_init_chunk2_
     jmp     short loc_27104
 loc_270EE:
     push    word ptr [si+14h]
@@ -1064,7 +1064,7 @@ audio_op_unk5 proc far
     cmp     word ptr [si+16h], 0FFFFh
     jz      short loc_273DB
     push    word ptr [si+16h]
-    call    audio_init_chunk2
+    call    ported_audio_init_chunk2_
     pop     bx
 loc_273DB:
     mov     cl, 4
@@ -1109,7 +1109,7 @@ audio_op_unk6 proc far
     cmp     word ptr [si+16h], 0FFFFh
     jz      short loc_27436
     push    word ptr [si+16h]
-    call    audio_init_chunk2
+    call    ported_audio_init_chunk2_
     pop     bx
 loc_27436:
     mov     cl, 4
@@ -1146,7 +1146,7 @@ audio_op_unk7 proc far
     mov     bx, ax
     push    word ptr (audiotimers+16h)[bx]
     mov     si, ax
-    call    audio_init_chunk2
+    call    ported_audio_init_chunk2_
     pop     bx
     mov     word ptr (audiotimers+16h)[si], 0FFFFh
     pop     si

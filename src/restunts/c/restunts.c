@@ -545,7 +545,10 @@ extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
-extern void audio_init_chunk2(int channel);
+extern void audio_init_chunk(int first_channel, int last_channel,
+	unsigned int resource_offset, unsigned int resource_segment,
+	unsigned int resource_data_offset, unsigned char rate,
+	unsigned char priority);
 
 void audio_unload(void)
 {
@@ -699,6 +702,21 @@ int sub_37470(int channel, unsigned char priority)
 	}
 
 	return channel;
+}
+
+void audio_init_chunk2(int channel)
+{
+	unsigned int offset;
+
+	if (channel < 0x10 || channel > 0x17)
+		return;
+
+	offset = (unsigned int)channel * 0x4CU;
+	LEGACY_WRITE_U16_LE(audiochunks_unk + offset, 0);
+	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
+	audio_driver_func1E(channel, channel);
+	audio_init_chunk(channel, channel, 0, 0, 0,
+		byte_45948, 0);
 }
 
 void sub_374DE(int channel)

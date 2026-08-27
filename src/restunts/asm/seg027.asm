@@ -60,7 +60,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_sub_374DE_
     public ported_audio_check_flag2_
     public audio_check_flag
-    public audio_init_chunk2
+    public ported_audio_init_chunk2_
     public ported_audio_enable_flag6_
     public ported_audio_disable_flag6_
     public ported_audio_toggle_flag6_
@@ -623,7 +623,7 @@ ported_sub_374DE_ proc far
     mov     byte_45D9A[bx], 0
     push    bx
     push    cs
-    call near ptr audio_init_chunk2
+    call near ptr ported_audio_init_chunk2_
     add     sp, 2
 loc_374F7:
     pop     bp
@@ -775,7 +775,7 @@ loc_375CB:
 loc_37601:
     push    bx
     push    cs
-    call near ptr audio_init_chunk2
+    call near ptr ported_audio_init_chunk2_
     add     sp, 2
 loc_37609:
     cmp     [bp+arg_4], 0FFFFh
@@ -810,14 +810,14 @@ loc_37612:
     ; align 2
     db 144
 audio_check_flag endp
-audio_init_chunk2 proc far
+ported_audio_init_chunk2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    cmp     [bp+arg_0], 10h
+    jmp     audio_init_chunk2
+    nop
+    nop
     jl      short loc_37694
     cmp     [bp+arg_0], 17h
     jg      short loc_37694
@@ -849,7 +849,7 @@ loc_3765C:
 loc_37694:
     pop     bp
     retf
-audio_init_chunk2 endp
+ported_audio_init_chunk2_ endp
 ported_audio_enable_flag6_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
