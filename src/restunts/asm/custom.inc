@@ -228,6 +228,8 @@ extrn input_pop_status:proc
 extrn font_op2_alt:proc
 extrn copy_string:proc
 extrn audio_unload:proc
+extrn set_frame_callback:proc
+extrn remove_frame_callback:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

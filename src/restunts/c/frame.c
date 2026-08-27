@@ -28,7 +28,7 @@ extern int custom_camera_azimuth_angle;
 extern int word_44D20;
 extern char detail_threshold_by_level[];
 extern char byte_3C0C6[];
-extern char word_46468;
+extern unsigned int word_46468;
 extern int word_3BE34[];
 extern char* lookahead_tiles_tables[];
 extern struct SHAPE3D* off_3BE44[];

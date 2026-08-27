@@ -283,6 +283,7 @@ extern void setup_car_shapes(int);
 extern void update_frame(char, struct RECTANGLE* rc);
 extern void loop_game(int, int, int);
 extern void set_frame_callback(void);
+extern void remove_frame_callback(void);
 extern void mouse_minmax_position(int);
 extern int kb_get_char(void);
 extern void handle_ingame_kb_shortcuts(int);

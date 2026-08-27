@@ -49,8 +49,8 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_run_game_
     public handle_ingame_kb_shortcuts
     public ported_init_unknown_
-    public set_frame_callback
-    public remove_frame_callback
+    public ported_set_frame_callback_
+    public ported_remove_frame_callback_
     public frame_callback
     public replay_unk2
     public sub_2298C
@@ -147,7 +147,7 @@ loc_21C24:
     mov     byte_449E6, 0
     mov     byte_449DA, 1
     push    cs
-    call near ptr set_frame_callback
+    call near ptr ported_set_frame_callback_
     mov     game_replay_mode_copy, 0FFh
     mov     byte_44346, 0
     mov     byte_4432A, 0
@@ -872,7 +872,7 @@ loc_223CD:
     call near ptr mouse_minmax_position
     add     sp, 2
     push    cs
-    call near ptr remove_frame_callback
+    call near ptr ported_remove_frame_callback_
     push    cs
     call near ptr ported_free_player_cars_
 loc_223E4:
@@ -1063,9 +1063,10 @@ ported_init_unknown_ proc far
     pop     bp
     retf
 ported_init_unknown_ endp
-set_frame_callback proc far
+ported_set_frame_callback_ proc far
 
-    mov     word_46468, 0
+    jmp     set_frame_callback
+    nop
     mov     ax, offset frame_callback
     mov     dx, seg seg005
     push    dx
@@ -1074,12 +1075,10 @@ set_frame_callback proc far
     add     sp, 4
     mov     byte_442E4, 0
     retf
-set_frame_callback endp
-remove_frame_callback proc far
+ported_set_frame_callback_ endp
+ported_remove_frame_callback_ proc far
 
-    mov     ax, 0Ah
-    cwd
-    push    dx
+    jmp     remove_frame_callback
     push    ax
     call    timer_get_counter_unk
     add     sp, 4
@@ -1092,7 +1091,7 @@ remove_frame_callback proc far
     retf
     ; align 2
     db 144
-remove_frame_callback endp
+ported_remove_frame_callback_ endp
 frame_callback proc far
 
     call    compare_ds_ss

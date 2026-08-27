@@ -150,6 +150,25 @@ unsigned long timer_get_counter_unk(unsigned long ticks)
 	return res;
 }
 
+extern unsigned int word_46468;
+extern char byte_442E4;
+extern void far frame_callback(void);
+extern void timer_reg_callback(void (far* callback)(void));
+extern void timer_remove_callback(void (far* callback)(void));
+
+void set_frame_callback(void)
+{
+	word_46468 = 0;
+	timer_reg_callback(&frame_callback);
+	byte_442E4 = 0;
+}
+
+void remove_frame_callback(void)
+{
+	timer_get_counter_unk(10UL);
+	timer_remove_callback(&frame_callback);
+}
+
 #define KEVINRANDOM_SEED_LEN 6
 void init_kevinrandom(const char* seed)
 {
