@@ -6428,7 +6428,7 @@ loc_1D9CF:
     push    [bp+var_A]
     call    unload_resource
     add     sp, 4
-    call    init_plantrak
+    call    ported_init_plantrak_
     call    timer_get_delta
     mov     [bp+var_2AA], 0
     mov     [bp+var_440], 0

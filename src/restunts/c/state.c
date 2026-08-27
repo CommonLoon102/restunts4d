@@ -8,6 +8,8 @@ extern short legacy_grip_stack_words[4];
 extern short grassDecelDivTab[];
 extern struct TRACKOBJECT trkObjectList[215];
 extern unsigned char oppnentSped[];
+extern struct PLANE far* planptr;
+extern struct PLANE far plan_memres;
 
 /*
  * The original player update reuses four words below player_op's stack frame.
@@ -292,6 +294,87 @@ short sub_18D60(
 	if ((route_index & 0x80U) != 0)
 		route_index_word |= 0xFF00U;
 	return LEGACY_U16_WRAP_SUB(arrow_type, 1U) == route_index_word;
+}
+
+void init_plantrak(void) {
+	legacy_s16 path_z;
+	legacy_s16 route_track_index;
+	legacy_u16 route_table_offset;
+	legacy_u8 route_index;
+
+	init_game_state(-3);
+	state.game_inputmode = 2;
+	planptr = &plan_memres;
+	startcol2 = 1;
+	startrow2 = 0x1C;
+
+	td17_trk_elem_ordered[0] = 7;
+	td17_trk_elem_ordered[1] = 6;
+	td17_trk_elem_ordered[2] = 8;
+	td17_trk_elem_ordered[3] = 9;
+	td17_trk_elem_ordered[4] = 7;
+
+	td21_col_from_path[0] = 1;
+	td21_col_from_path[1] = 0;
+	td21_col_from_path[2] = 0;
+	td21_col_from_path[3] = 1;
+	td21_col_from_path[4] = 1;
+
+	td22_row_from_path[0] = startrow2;
+	td22_row_from_path[1] = startrow2;
+	td22_row_from_path[2] = (legacy_u8)startrow2 + 1U;
+	td22_row_from_path[3] = (legacy_u8)startrow2 + 1U;
+	td22_row_from_path[4] = startrow2;
+
+	trackdata18[0] = 0;
+	trackdata18[1] = 0;
+	trackdata18[2] = 0;
+	trackdata18[3] = 0;
+	trackdata18[4] = 0;
+
+	trackdata3[0x00] = 0; trackdata3[0x01] = 0;
+	trackdata3[0x02] = 1; trackdata3[0x03] = 0;
+	trackdata3[0x04] = 2; trackdata3[0x05] = 0;
+	trackdata3[0x06] = 3; trackdata3[0x07] = 0;
+	trackdata3[0x08] = 4; trackdata3[0x09] = 0;
+	trackdata3[0x0A] = 1; trackdata3[0x0B] = 0;
+	trackdata3[0x0C] = 2; trackdata3[0x0D] = 0;
+	trackdata3[0x0E] = 3; trackdata3[0x0F] = 0;
+	trackdata3[0x10] = 4; trackdata3[0x11] = 0;
+	trackdata3[0x12] = 1; trackdata3[0x13] = 0;
+	trackdata3[0x14] = 2; trackdata3[0x15] = 0;
+	trackdata3[0x16] = 3; trackdata3[0x17] = 0;
+	trackdata3[0x18] = 4; trackdata3[0x19] = 0;
+	trackdata3[0x1A] = 0; trackdata3[0x1B] = 0;
+	trackdata3[0x1C] = 1; trackdata3[0x1D] = 0;
+	trackdata3[0x1E] = 2; trackdata3[0x1F] = 0;
+	trackdata3[0x20] = 3; trackdata3[0x21] = 0;
+	trackdata3[0x22] = 0; trackdata3[0x23] = 0;
+
+	oppnentSped[0] = 0xC8;
+	path_z = LEGACY_S16_WRAP_ADD(trackpos[0x1C], 0x012E);
+	init_carstate_from_simd(
+		&state.opponentstate,
+		&simd_opponent,
+		1,
+		(long)0x00017700L,
+		0L,
+		(long)((legacy_s32)path_z * (legacy_s32)64),
+		0);
+
+	route_index = (legacy_u8)state.opponentstate.field_CE;
+	state.opponentstate.field_CE = (legacy_u8)(route_index + 1U);
+	route_table_offset = LEGACY_U16_WRAP_MUL(
+		state.opponentstate.car_trackdata3_index, 2U);
+	route_track_index = LEGACY_S16_FROM_BITS(
+		(legacy_u16)(legacy_u8)trackdata3[route_table_offset] |
+		((legacy_u16)(legacy_u8)trackdata3[
+			LEGACY_U16_WRAP_ADD(route_table_offset, 1U)] << 8));
+	sub_18D60(
+		route_track_index,
+		&state.opponentstate.car_vec_unk3,
+		(short)route_index,
+		(short*)&state.field_3F9);
 }
 
 void player_op(char arg_carInputByte) {

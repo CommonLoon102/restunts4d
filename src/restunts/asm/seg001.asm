@@ -65,7 +65,7 @@ seg001 segment byte public 'STUNTSC' use16
     public sub_18D06
     public ported_sub_18D60_
     public ported_car_car_coll_detect_maybe_
-    public init_plantrak
+    public ported_init_plantrak_
     public do_opponent_op
     public ported_update_crash_state_
     public ported_plane_rotate_op_
@@ -8527,14 +8527,13 @@ loc_193DC:
     ; align 2
     db 144
 ported_car_car_coll_detect_maybe_ endp
-init_plantrak proc far
+ported_init_plantrak_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
-    push    di
+    jmp     init_plantrak
+    nop
+    nop
     push    si
     mov     ax, 0FFFDh
     push    ax
@@ -8680,7 +8679,7 @@ loc_1958C:
     mov     sp, bp
     pop     bp
     retf
-init_plantrak endp
+ported_init_plantrak_ endp
 do_opponent_op proc far
 
     push    cs

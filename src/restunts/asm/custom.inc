@@ -204,6 +204,7 @@ extrn state_op_unk:proc
 extrn sub_19BA0:proc
 extrn car_car_coll_detect_maybe:proc
 extrn sub_18D60:proc
+extrn init_plantrak:proc
 
 ; externs for implementations in restunts.c
 
