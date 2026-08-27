@@ -62,6 +62,8 @@ void mat_rot_z(struct MATRIX* outmat, int angle);
 struct MATRIX* mat_rot_zxy(int z, int x, int y, int unk);
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
+void rectlist_add_rects(char rectcount, char* indices, struct RECTANGLE* first, struct RECTANGLE* second, struct RECTANGLE* clip, char* output_length, struct RECTANGLE* output);
+void rect_array_sort_by_top(char length, struct RECTANGLE* rects, int* indices);
 
 int vector_op_unk2(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);

@@ -408,6 +408,7 @@ extern short sub_18D60(short car_trackdata3_index, struct VECTOR* car_vec_unk3, 
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle);
 extern void init_game_state(short arg);
 extern void init_rect_arrays(void);
+extern void sub_19F14(struct RECTANGLE* rect);
 extern void font_set_fontdef(void);
 extern void init_polyinfo(void);
 extern unsigned short run_intro_looped(void);
@@ -458,6 +459,7 @@ extern short get_kb_or_joy_flags(void);
 
 extern short mouse_init(short a1, short a2);
 extern void mouse_draw_opaque_check(void);
+extern void mouse_draw_transparent_check(void);
 
 extern void video_set_mode4(void);
 extern void video_set_mode7(void);

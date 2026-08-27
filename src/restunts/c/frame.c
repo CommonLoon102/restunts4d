@@ -1,10 +1,15 @@
 #include "externs.h"
 #include "math.h"
+#include "shape2d.h"
 #include "shape3d.h"
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
 extern struct RECTANGLE rect_array_unk2[];
+extern struct RECTANGLE rect_array_unk3[];
+extern char rect_array_unk_indices[];
+extern int rect_array_unk3_indices[];
+extern char rect_array_unk3_length;
 extern struct RECTANGLE rect_unk[];
 extern struct RECTANGLE rect_unk2;
 extern struct RECTANGLE rect_unk6;
@@ -67,6 +72,8 @@ extern void far* sdgame2shapes[];
 extern void far* fontledresptr;
 extern int dialog_fnt_colour;
 extern char transformedshape_counter;
+extern int word_449FE;
+extern struct SPRITE far* wndsprite;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 void transformed_shape_add_for_sort(int a, int b);
@@ -92,6 +99,80 @@ void init_rect_arrays(void) {
 	for (i = 1; i < 15; i++) {
 		rect_array_unk[i] = cliprect_unk;
 		rect_array_unk2[i] = cliprect_unk;
+	}
+}
+
+void sub_19F14(struct RECTANGLE* cliprect) {
+	struct RECTANGLE* dirty_rect;
+	int i;
+
+	if (video_flag5_is0 != 0)
+		return;
+
+	sprite_copy_2_to_1_2();
+	if (byte_454A4 != 0)
+		goto draw_window;
+
+	if (slow_video_mgmt_copy == 0) {
+		sprite_set_1_size(
+			cliprect->left,
+			cliprect->right,
+			cliprect->top,
+			cliprect->bottom);
+		goto draw_window;
+	}
+
+	for (i = 0; i < 15; i++)
+		rect_array_unk_indices[i] = 3;
+	if (detail_level == 4)
+		word_449FE = word_463D6;
+	if (word_449FE == word_463D6 &&
+		rect_array_unk[5].left == rect_array_unk2[5].left &&
+		rect_array_unk[5].right == rect_array_unk2[5].right &&
+		rect_array_unk[5].top == rect_array_unk2[5].top &&
+		rect_array_unk[5].bottom == rect_array_unk2[5].bottom) {
+		rect_array_unk_indices[5] = 0;
+	}
+
+	rect_array_unk3_length = 0;
+	rectlist_add_rects(
+		15,
+		rect_array_unk_indices,
+		rect_array_unk,
+		rect_array_unk2,
+		cliprect,
+		&rect_array_unk3_length,
+		rect_array_unk3);
+	if (rect_array_unk3_length != 0) {
+		rect_array_sort_by_top(
+			rect_array_unk3_length,
+			rect_array_unk3,
+			rect_array_unk3_indices);
+		mouse_draw_opaque_check();
+		for (i = 0; i < rect_array_unk3_length; i++) {
+			dirty_rect = &rect_array_unk3[rect_array_unk3_indices[i]];
+			sprite_set_1_size(
+				dirty_rect->left,
+				dirty_rect->right,
+				dirty_rect->top,
+				dirty_rect->bottom);
+			sprite_putimage(wndsprite->sprite_bitmapptr);
+		}
+		goto finish;
+	}
+
+	sprite_set_1_size(0, 0x140, cliprect->top, cliprect->bottom);
+
+draw_window:
+	mouse_draw_opaque_check();
+	sprite_putimage(wndsprite->sprite_bitmapptr);
+
+finish:
+	mouse_draw_transparent_check();
+	if (slow_video_mgmt_copy != 0) {
+		word_449FE = word_463D6;
+		for (i = 0; i < 15; i++)
+			rect_array_unk2[i] = rect_array_unk[i];
 	}
 }
 

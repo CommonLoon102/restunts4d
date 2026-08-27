@@ -46,7 +46,7 @@ nosmart
 seg003 segment byte public 'STUNTSC' use16
     assume cs:seg003
     assume es:nothing, ss:nothing, ds:dseg
-    public sub_19F14
+    public ported_sub_19F14_
     public ported_init_rect_arrays_
     public ported_update_frame_
     public skybox_op_helper2
@@ -66,16 +66,15 @@ loc_19F12:
     pop     ds
 locret_19F13:
     retf
-sub_19F14 proc far
+ported_sub_19F14_ proc far
     var_rectptr = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_rectptr = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
-    push    di
+    jmp     sub_19F14
+    nop
+    nop
     push    si
     cmp     video_flag5_is0, 0
     jz      short loc_19F26
@@ -235,7 +234,7 @@ loc_1A090:
     mov     sp, bp
     pop     bp
     retf
-sub_19F14 endp
+ported_sub_19F14_ endp
 ported_init_rect_arrays_ proc far
      s = byte ptr 0
      r = byte ptr 2

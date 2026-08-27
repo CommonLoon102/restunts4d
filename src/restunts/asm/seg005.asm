@@ -576,7 +576,7 @@ loc_220BB:
 loc_220DB:
     mov     ax, offset rect_windshield
     push    ax
-    call    sub_19F14
+    call    ported_sub_19F14_
     add     sp, 2
     cmp     byte_449E2, 0
     jz      short loc_22126
