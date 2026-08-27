@@ -300,9 +300,11 @@ loc_2514B:
 	polyvertpointptrtab[i] = &var_vecarr2[i];
 	var_vec2 = transshapeverts[i];
 	if (select_rect_param != 0) {
-		var_vec2.x /= 2;
-		var_vec2.y /= 2;
-		var_vec2.z /= 2;
+		// sar, not idiv: the original floors, so negative coordinates keep
+		// their extra step rather than rounding toward zero.
+		var_vec2.x >>= 1;
+		var_vec2.y >>= 1;
+		var_vec2.z >>= 1;
 	}
 	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
 	var_vec3.x += var_vec.x;
@@ -915,9 +917,11 @@ loc_25370:
 
 	var_vec2 = transshapeverts[temp];
 	if (select_rect_param != 0) {
-		var_vec2.x /= 2;
-		var_vec2.y /= 2;
-		var_vec2.z /= 2;
+		// sar, not idiv: the original floors, so negative coordinates keep
+		// their extra step rather than rounding toward zero.
+		var_vec2.x >>= 1;
+		var_vec2.y >>= 1;
+		var_vec2.z >>= 1;
 	}
 	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
 	var_vec3.x += var_vec.x;
