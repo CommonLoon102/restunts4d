@@ -719,6 +719,18 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 		copy_paras_reverse(FP_SEG(dst), FP_SEG(src), paras);
 	}
 
+	// The original discards the single pass's count and returns the size out
+	// of the compression header instead:
+	//
+	//     call    near ptr file_decomp_rle_single
+	//     mov     ax, [bp+var_lenlo]
+	//     mov     dx, [bp+var_lenhi]
+	//
+	// The two only differ when the last run overshoots - file_decomp_rle_single
+	// stops on `dst < dstend` and a run that straddles the end writes past it,
+	// so its count can exceed len. file_decomp only uses the return to decide
+	// whether the decompression happened at all, so the difference has no
+	// caller.
 	return file_decomp_rle_single(src, dst, len, esclookup);
 }
 
