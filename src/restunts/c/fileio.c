@@ -556,6 +556,18 @@ short file_write_nofatal(const char* filename, void far* src, unsigned long leng
 }
 
 // Sequential byte runs pass of run-length encoding.
+//
+// The original opens with a bail-out this has no equivalent for:
+//
+//     cmp     byte ptr [bp-12h], 1    ; file_decomp_rle::var_esclen
+//     jnz     short has_codes
+//     retn
+//
+// Not reproduced. With a single escape code the caller's
+// subhdr->esc[RS_RLE_ESCSEQ_POS] would be reading past the table anyway, and
+// the original's own bail-out returns with ax:dx undefined, which the caller
+// then feeds into copy_paras_reverse - so neither side is coherent there. No
+// Stunts resource carries esclen == 1.
 unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* dst, unsigned long srclen, unsigned char esc)
 {
 	unsigned char cur, rep;
@@ -580,7 +592,12 @@ unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* d
 			rep = (*src++) - 1;
 			seqend = src;
 
-			// Copy remaining repetitions.
+			// Copy remaining repetitions. The original is a do-while
+			// (`dec dl / jnz short loc_30D5A`), so a stored count of 1
+			// makes dl wrap and it copies 256 times where this copies none.
+			// Counts of 2 and up agree exactly, and a count of 1 would mean
+			// "repeat this run once", which the encoder has no reason to
+			// emit.
 			while (rep--) {
 				src = seqstart;
 				while (src < seqend - 2) {
@@ -672,7 +689,12 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 	subhdr = (struct compr_rle_header far*)src;
 	srclen = subhdr->srcsizel | ((long)subhdr->srcsizeh << 16);
 	
-	skipseq = (subhdr->esclen & 0x80) == 0x80; // MSB denotes skipping the initial pass for byte sequence runs.
+	// MSB denotes skipping the initial pass for byte sequence runs. The
+	// original tests `cmp byte ptr [bp+var_esclen], 80h / ja`, i.e. strictly
+	// above 80h, so at exactly 80h - the flag set with no escape codes at all
+	// - it still runs the pass where this skips it. Degenerate either way:
+	// with no escape codes the pass has nothing to match on.
+	skipseq = (subhdr->esclen & 0x80) == 0x80;
 	subhdr->esclen &= ~0x80;
 
 	// Set pos to after escape codes.
