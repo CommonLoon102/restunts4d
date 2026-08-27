@@ -357,6 +357,9 @@ extern unsigned char far* polyinfoptrs[]; // array size = 0x190
 extern unsigned int poly_linked_list_40ED6[]; // array size = 0x190
 
 extern void preRender_default(int color, int vertlinecount, int* vertlines);
+extern char byte_3B8F6;
+extern char far* skybox_res_ofs;
+extern char far* sdgame2ptr;
 
 void init_unknown(void)
 {
@@ -366,6 +369,18 @@ void init_unknown(void)
 	byte_449DA = 0;
 	byte_4393C = 0;
 	word_44DCA = 0;
+}
+
+void unload_skybox(void)
+{
+	if (byte_3B8F6 != 0)
+		mmgr_free(skybox_res_ofs);
+	byte_3B8F6 = 0;
+}
+
+void free_sdgame2(void)
+{
+	mmgr_free(sdgame2ptr);
 }
 
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle)

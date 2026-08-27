@@ -208,6 +208,9 @@ extrn init_plantrak:proc
 
 ; externs for implementations in restunts.c
 
+extrn unload_skybox:proc
+extrn free_sdgame2:proc
+
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
 extrn timer_get_delta_alt:proc

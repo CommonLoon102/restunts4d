@@ -3224,8 +3224,8 @@ ported_free_player_cars_ proc far
     add     sp, 4
 loc_239D4:
     call    shape3d_free_all
-    call    unload_skybox
-    call    free_sdgame2
+    call    ported_unload_skybox_
+    call    ported_free_sdgame2_
     push    word ptr gameresptr+2
     push    word ptr gameresptr
     call    unload_resource

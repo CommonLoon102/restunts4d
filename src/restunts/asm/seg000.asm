@@ -1812,7 +1812,7 @@ loc_110ED:
     add     sp, 8
     call    draw_track_preview
     call    shape3d_free_all
-    call    unload_skybox
+    call    ported_unload_skybox_
     call    sprite_copy_wnd_to_1
     mov     ax, offset asc_3BA24; "'"
     push    ax

@@ -57,9 +57,9 @@ seg003 segment byte public 'STUNTSC' use16
     public do_sinking
     public init_crak
     public load_skybox
-    public unload_skybox
+    public ported_unload_skybox_
     public load_sdgame2_shapes
-    public free_sdgame2
+    public ported_free_sdgame2_
     public setup_intro
     public intro_op
 loc_19F12:
@@ -6107,7 +6107,7 @@ loc_1D7B6:
     jmp     loc_1D8AF
 loc_1D7C8:
     push    cs
-    call near ptr unload_skybox
+    call near ptr ported_unload_skybox_
     mov     al, [bp+arg_0]
     mov     byte_46167, al
     mov     byte_3B8F6, 1
@@ -6195,10 +6195,11 @@ loc_1D8AF:
     pop     bp
     retf
 load_skybox endp
-unload_skybox proc far
+ported_unload_skybox_ proc far
 
-    cmp     byte_3B8F6, 0
-    jz      short loc_1D8CB
+    jmp     unload_skybox
+    nop
+    nop
     push    skybox_res_seg
     push    skybox_res_ofs
     call    mmgr_free
@@ -6208,7 +6209,7 @@ loc_1D8CB:
     retf
     ; align 2
     db 144
-unload_skybox endp
+ported_unload_skybox_ endp
 load_sdgame2_shapes proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -6255,16 +6256,18 @@ loc_1D908:
     ; align 2
     db 144
 load_sdgame2_shapes endp
-free_sdgame2 proc far
+ported_free_sdgame2_ proc far
 
-    push    word ptr sdgame2ptr+2
-    push    word ptr sdgame2ptr
+    jmp     free_sdgame2
+    nop
+    nop
+    nop
     call    mmgr_free
     add     sp, 4
     retf
     ; align 2
     db 144
-free_sdgame2 endp
+ported_free_sdgame2_ endp
 setup_intro proc far
     var_5D4 = word ptr -1492
     var_5D2 = word ptr -1490

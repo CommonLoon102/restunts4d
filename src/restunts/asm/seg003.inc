@@ -10,9 +10,9 @@ seg003 segment byte public 'STUNTSC' use16
     extrn do_sinking:proc
     extrn init_crak:proc
     extrn load_skybox:proc
-    extrn unload_skybox:proc
+    extrn ported_unload_skybox_:proc
     extrn load_sdgame2_shapes:proc
-    extrn free_sdgame2:proc
+    extrn ported_free_sdgame2_:proc
     extrn setup_intro:proc
     extrn intro_op:proc
 seg003 ends
