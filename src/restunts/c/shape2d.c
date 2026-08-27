@@ -272,15 +272,18 @@ void file_unflip_shape2d(unsigned char far* memchunk, char far* mempages) {
 							}
 							break;
 						case 1:
-							// interlaced flip?
-							for (j = 0; j < height; j += 2) { // height
+							// interlaced: the even rows first, then the odd
+							// ones. loc_32BBA walks the second pass with
+							// dx = 1, 3, .. while dx < height, so an odd
+							// height gets one fewer odd row than even rows.
+							for (j = 0; j < height; j += 2) { // even rows
 								for (i = 0; i < width; i++) { // width
 									mempages[i + j * width] = membitmapptr[(j / 2) + i * height];
 								}
 							}
-							for (j = 0; j < height; j += 2) { // height
+							for (j = 1; j < height; j += 2) { // odd rows
 								for (i = 0; i < width; i++) { // width
-									mempages[width + i + j * width] = membitmapptr[((height + j + 1) / 2) + i * height];
+									mempages[i + j * width] = membitmapptr[((height + j) / 2) + i * height];
 								}
 							}
 							break;
