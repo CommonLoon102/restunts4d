@@ -9,7 +9,7 @@ seg007 segment byte public 'STUNTSC' use16
     extrn audio_op_unk2:proc
     extrn nopsub_27220:proc
     extrn ported_nopsub_2726C_:proc
-    extrn nopsub_272B0:proc
+    extrn ported_nopsub_272B0_:proc
     extrn ported_audio_function2_wrap_:proc
     extrn ported_audio_op_unk3_:proc
     extrn ported_audio_op_unk4_:proc

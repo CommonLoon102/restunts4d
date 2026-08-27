@@ -981,6 +981,12 @@ void nopsub_2726C(int index)
 	audio_function2(index);
 }
 
+void nopsub_272B0(int index)
+{
+	audio_start_indexed_event(index, 0x34U, 0x40U);
+	audio_function2(index);
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {
