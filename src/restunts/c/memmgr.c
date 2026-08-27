@@ -1359,6 +1359,13 @@ char far* locate_resource(char far* data, char* name, unsigned short fatal) {
 		}
 	}
 
+	// The original runs this compare chunks+1 times, not chunks: it counts
+	// down with `dec ax / jge short loc_30FDC`, which still takes the branch
+	// at ax == 0. The extra slot is the four bytes just past the name table,
+	// i.e. the low half of the first offset dword. Not reproduced here - it
+	// reads as 00 00 00 00 for the usual first-chunk-at-zero layout, and the
+	// query is always space-padded above, so only an all-blank name could
+	// match it and no caller passes one.
 	for (j = 0; j < hdr->chunks; j++) {
 		for (i = 0; i < 4; i++) {
 			if (resnames[i] != name[i]) {
