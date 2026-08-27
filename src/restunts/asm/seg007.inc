@@ -7,7 +7,7 @@ seg007 segment byte public 'STUNTSC' use16
     extrn ported_audio_function2_:proc
     extrn ported_audio_driver_timer_:proc
     extrn ported_audio_op_unk2_:proc
-    extrn nopsub_27220:proc
+    extrn ported_nopsub_27220_:proc
     extrn ported_nopsub_2726C_:proc
     extrn ported_nopsub_272B0_:proc
     extrn ported_audio_function2_wrap_:proc

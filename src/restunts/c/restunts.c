@@ -564,7 +564,9 @@ extern unsigned int word_42244;
 extern unsigned char byte_42246;
 extern legacy_s16 word_3EB2A;
 extern unsigned char byte_40634;
+extern char aStartengineNew[];
 int compare_ds_ss(void);
+void nopsub_3219D(const char* format, ...);
 void audio_driver_timer(void);
 extern void sub_38CF8(int index, void far* context);
 extern int sub_39050(unsigned int value, int handle);
@@ -1276,6 +1278,23 @@ static int audio_start_indexed_event(int index,
 	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
 	audiotimers[offset + 0x1AU] = 1;
 	return channel;
+}
+
+void nopsub_27220(int index)
+{
+	unsigned int offset;
+	unsigned int rate;
+	int channel;
+	void far* resource;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	resource = audio_read_far_pointer(audiotimers + offset + 0x2CU);
+	channel = audio_check_flag(resource, -1, 0x40U, rate);
+	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
+	nopsub_3219D(aStartengineNew, channel);
+	audiotimers[offset + 0x1AU] = 1;
+	audiotimers[offset + 0x1BU] = 1;
 }
 
 void audio_op_unk3(int index)
