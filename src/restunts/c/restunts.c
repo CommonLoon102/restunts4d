@@ -431,6 +431,23 @@ void mouse_draw_opaque_check(void)
 		mouse_draw_opaque();
 }
 
+int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
+	int* y1_array, int* y2_array)
+{
+	int i;
+
+	if (kbormouse == 0)
+		return -1;
+
+	for (i = 0; i < count; i++) {
+		if (x1_array[i] <= mouse_xpos && mouse_xpos <= x2_array[i] &&
+			y1_array[i] <= mouse_ypos && mouse_ypos <= y2_array[i])
+			return (signed char)i;
+	}
+
+	return -1;
+}
+
 void unload_skybox(void)
 {
 	if (byte_3B8F6 != 0)

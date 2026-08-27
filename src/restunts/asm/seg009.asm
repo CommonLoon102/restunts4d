@@ -1378,7 +1378,7 @@ loc_2AF0E:
     push    ax
     mov     ax, 5
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_18A], al
     cmp     al, 0FFh

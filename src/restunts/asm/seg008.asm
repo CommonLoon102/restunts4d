@@ -65,7 +65,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_mouse_draw_opaque_check_
     public ported_mouse_draw_opaque_
     public ported_mouse_draw_transparent_
-    public mouse_multi_hittest
+    public ported_mouse_multi_hittest_
     public check_input
     public nopsub_28F26
     public ported_sprite_copy_2_to_1_2_
@@ -1058,7 +1058,7 @@ loc_27D6D:
     cbw
     push    ax
     push    cs
-    call near ptr mouse_multi_hittest
+    call near ptr ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_1C4], al
     cmp     al, 0FFh
@@ -1738,7 +1738,7 @@ loc_28370:
     mov     ax, 0Ah
     push    ax
     push    cs
-    call near ptr mouse_multi_hittest
+    call near ptr ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_6EA], al
     cmp     al, 0FFh
@@ -3043,7 +3043,7 @@ ported_mouse_draw_transparent_ proc far
     ; align 2
     db 144
 ported_mouse_draw_transparent_ endp
-mouse_multi_hittest proc far
+ported_mouse_multi_hittest_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_count = word ptr 6
@@ -3052,10 +3052,9 @@ mouse_multi_hittest proc far
     arg_y1_array = word ptr 12
     arg_y2_array = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
-    push    di
+    jmp     mouse_multi_hittest
+    nop
+    nop
     push    si
     cmp     kbormouse, 0
     jz      short loc_28EDA
@@ -3102,7 +3101,7 @@ loc_28EDA:
     retf
     ; align 2
     db 144
-mouse_multi_hittest endp
+ported_mouse_multi_hittest_ endp
 check_input proc far
     var_2 = byte ptr -2
      s = byte ptr 0

@@ -3910,7 +3910,7 @@ loc_23FEE:
     cbw
     inc     ax
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_counter], al
     cmp     al, 0FFh
@@ -4002,7 +4002,7 @@ loc_240D8:
     push    ax
     mov     ax, 1
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_counter], al
     or      al, al

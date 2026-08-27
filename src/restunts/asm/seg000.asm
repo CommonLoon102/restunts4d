@@ -1668,7 +1668,7 @@ loc_10FEF:
     push    ax
     mov     ax, 5
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_menuhit], al
     cmp     al, 0FFh
@@ -2079,7 +2079,7 @@ loc_11423:
     push    ax
     mov     ax, 3
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_14], al
     cmp     al, 0FFh
@@ -3922,7 +3922,7 @@ loc_12585:
     push    ax
     mov     ax, 5
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_F6], al
     cmp     al, 0FFh
@@ -4687,7 +4687,7 @@ loc_12D2C:
     push    ax
     mov     ax, 5
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_16], al
     cmp     al, 0FFh
@@ -6931,7 +6931,7 @@ loc_14343:
     push    ax
     mov     ax, 3
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
 loc_14360:
     mov     [bp+var_menuhit], al
@@ -6951,7 +6951,7 @@ loc_14374:
     push    ax
     mov     ax, 4
     push    ax
-    call    mouse_multi_hittest
+    call    ported_mouse_multi_hittest_
     add     sp, 0Ah
     mov     [bp+var_menuhit], al
     cmp     al, 0FFh
