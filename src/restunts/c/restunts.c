@@ -1358,6 +1358,44 @@ char* audio_make_filename(const char* filename, const char* extension,
 	return audio_filetemp;
 }
 
+int audioresource_compare_chunknames(int case_sensitive,
+	const char far* first_name, const char far* second_name, int count)
+{
+	legacy_u16 first_offset;
+	legacy_u16 first_segment;
+	legacy_u16 second_offset;
+	legacy_u16 second_segment;
+	legacy_u16 remaining;
+	legacy_u8 first;
+	legacy_u8 second;
+
+	remaining = (legacy_u16)count;
+	if (remaining == 0)
+		return 1;
+	first_offset = (legacy_u16)FP_OFF(first_name);
+	first_segment = (legacy_u16)FP_SEG(first_name);
+	second_offset = (legacy_u16)FP_OFF(second_name);
+	second_segment = (legacy_u16)FP_SEG(second_name);
+	do {
+		first = *(const legacy_u8 far*)MK_FP(
+			first_segment, first_offset);
+		second = *(const legacy_u8 far*)MK_FP(
+			second_segment, second_offset);
+		if (first == 0 || second == 0)
+			return 1;
+		if (case_sensitive != 0) {
+			if (first != second)
+				return 0;
+		} else if (toupper(second) != toupper(first)) {
+			return 0;
+		}
+		first_offset = LEGACY_U16_WRAP_ADD(first_offset, 1U);
+		second_offset = LEGACY_U16_WRAP_ADD(second_offset, 1U);
+		remaining--;
+	} while (remaining != 0);
+	return 1;
+}
+
 void audio_op_unk3(int index)
 {
 	audio_start_indexed_event(index, 0x44U, 0x40U);

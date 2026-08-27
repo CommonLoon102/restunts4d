@@ -46,7 +46,7 @@ nosmart
 seg029 segment byte public 'STUNTSC' use16
     assume cs:seg029
     assume es:nothing, ss:nothing, ds:dseg
-    public audioresource_compare_chunknames
+    public ported_audioresource_compare_chunknames_
     public byte_39B14
     public audioresource_get_chunk_index
     public audioresource_find
@@ -56,7 +56,7 @@ algn_39AD1:
     db 144
     db 0
     db 0
-audioresource_compare_chunknames proc far
+ported_audioresource_compare_chunknames_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
@@ -65,11 +65,10 @@ audioresource_compare_chunknames proc far
     arg_foundname = dword ptr 12
     arg_num = word ptr 16
 
-    push    bp
+    jmp     audioresource_compare_chunknames
+    nop
 loc_39AD5:
-    mov     bp, sp
 loc_39AD7:
-    sub     sp, 2
 loc_39ADA:
     push    di
     push    si
@@ -142,7 +141,7 @@ loc_39B50:
     retf
     ; align 2
     db 144
-audioresource_compare_chunknames endp
+ported_audioresource_compare_chunknames_ endp
 audioresource_get_chunk_index proc far
     var_chunkname = word ptr -14
     var_chunknameseg = word ptr -12
@@ -195,7 +194,7 @@ loc_39B82:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr audioresource_compare_chunknames
+    call near ptr ported_audioresource_compare_chunknames_
     add     sp, 0Ch
     or      ax, ax
     jz      short loc_39BC4 ; if ax = 0, then try next

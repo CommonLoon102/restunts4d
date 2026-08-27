@@ -2509,7 +2509,7 @@ loc_38419:
     push    ax
     sub     ax, ax
     push    ax
-    call    audioresource_compare_chunknames
+    call    ported_audioresource_compare_chunknames_
     add     sp, 0Ch
     or      ax, ax          ; ax = 1, found hdr1 at the counter index
     jnz     short _patch_hdrdata_trackptrs
