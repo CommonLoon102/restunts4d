@@ -481,7 +481,15 @@ void far* file_read_nofatal(const char* filename, void far* dst)
 	return file_read(filename, dst, 0);
 }
 
-// Write given source buffer to file. Returns a non-zero value on errors unless fatal is set.
+// Write given source buffer to file.
+//
+// NOTE the polarity of `fatal`: the original tests it the other way round
+// (`cmp [bp+var_fatal],0 / jnz` jumps to the RETURN), so the entry point named
+// file_write_fatal, which passes 1, hands the DOS error code back to its
+// caller, and file_write_nofatal, which passes 0, is the one that aborts.
+// That looks like a slip in the 1990 code, but the callers are built around
+// it - asmorig/seg009.asm:2299 checks the result and puts up a disk-error
+// panel - so it is reproduced rather than corrected.
 short file_write(const char* filename, void far* src, unsigned long length, int fatal)
 {
 	unsigned short retval;
@@ -511,7 +519,7 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 		retval = (short)file;
 	}
 
-	if (fatal) {
+	if (!fatal) {
 		if ((short)file != retval) {
 			fclose(file);
 		}
