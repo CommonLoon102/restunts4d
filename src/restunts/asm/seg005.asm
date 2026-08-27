@@ -776,7 +776,7 @@ loc_222D3:
     call    sprite_copy_2_to_1_2
     mov     is_in_replay, 1
     call    audio_carstate
-    call    audio_remove_driver_timer
+    call    ported_audio_remove_driver_timer_
     cmp     game_replay_mode, 0
     jz      short loc_222F1
     jmp     loc_223CD
@@ -3245,7 +3245,7 @@ loc_23A15:
     push    word ptr fontledresptr
     call    mmgr_free
     add     sp, 4
-    call    audio_remove_driver_timer
+    call    ported_audio_remove_driver_timer_
     push    word ptr engptr+2
     push    word ptr engptr
     call    mmgr_free

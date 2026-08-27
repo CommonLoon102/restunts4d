@@ -444,6 +444,7 @@ extern void audio_stop_unk(void);
 extern void audiodrv_atexit(void);
 extern void audio_function2_wrap(int index);
 extern void audio_add_driver_timer(void);
+extern void audio_remove_driver_timer(void);
 
 extern void check_input(void);
 extern int input_do_checking(int unk);

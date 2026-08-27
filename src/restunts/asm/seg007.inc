@@ -1,6 +1,6 @@
 seg007 segment byte public 'STUNTSC' use16
     extrn ported_audio_add_driver_timer_:proc
-    extrn audio_remove_driver_timer:proc
+    extrn ported_audio_remove_driver_timer_:proc
     extrn pad_id:proc
     extrn audio_init_engine:proc
     extrn audio_op_unk:proc

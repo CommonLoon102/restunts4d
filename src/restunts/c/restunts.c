@@ -565,6 +565,7 @@ extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
 extern void audio_op_unk4(int channel);
 extern void sub_39700(void);
+void sub_374DE(int channel);
 void sub_38156(int index);
 extern int audio_check_flag(void far* resource, int channel,
 	unsigned char priority, unsigned int rate);
@@ -586,6 +587,24 @@ void audio_add_driver_timer(void)
 		audiotimers[index * 0x4CU] = 0;
 	word_42240 = 0x16U;
 	timer_reg_callback(&audio_driver_timer);
+}
+
+void audio_remove_driver_timer(void)
+{
+	unsigned int index;
+	unsigned int offset;
+	int channel;
+
+	for (index = 0; index < 25U; index++) {
+		offset = index * 0x4CU;
+		if (audiotimers[offset] == 1) {
+			channel = LEGACY_S16_FROM_BITS(
+				LEGACY_READ_U16_LE(audiotimers + offset + 2U));
+			sub_374DE(channel);
+		}
+		audiotimers[offset] = 0;
+	}
+	timer_remove_callback(&audio_driver_timer);
 }
 
 void audio_unload(void)
