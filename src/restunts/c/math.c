@@ -367,6 +367,12 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 		return ;
 	}
 
+	// Unreachable. video_flag2_is1 is written exactly once in the whole
+	// program - init_main sets it to 1 (asmorig/seg031.asm:237,
+	// restunts.c:1260) - and video_flag3_isFFFF alongside it to 0FFFFh.
+	// The suppressed tail is `right = (right + video_flag2_is1 - 1) &
+	// video_flag3_isFFFF`, which at those values is the identity anyway, so
+	// the port loses nothing by not carrying it.
 	fatal_error("rect_union: unexpected code path");
 	/*
 	mov     bx, [bp+arg_outrectptr]
@@ -467,6 +473,8 @@ void rectlist_add_rect(char* arg_rect_array_length_ptr, struct RECTANGLE* arg_re
 	int var_22, var_18, var_12;
 
 	if (video_flag2_is1 != 1) {
+		// Unreachable, for the same reason as the one in rect_union above:
+		// video_flag2_is1 is only ever set to 1, in init_main.
 		fatal_error("rectlist_add_rect: unexpected code path");
 		/*
 		mov     bx, [bp+arg_rectptr]
