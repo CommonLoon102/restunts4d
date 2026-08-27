@@ -762,9 +762,15 @@ static int saturate_projection(long sum) {
 	return (int)sum;
 }
 
+// NEG in the original wraps in AX and is followed by unsigned MUL. In
+// particular, -(-32768) remains 8000h and is used as the magnitude 32768.
+static unsigned short projection_magnitude(short value) {
+	return (unsigned short)(0U - (unsigned short)value);
+}
+
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 
-	long proj;
+	unsigned long proj;
 	// bx in the original: (proj >> 16) << 1 plus the top bit of the low word,
 	// which is exactly proj >> 15 kept in 16 bits. `cmp cx, bx / jle` then
 	// weighs it against z as a signed word.
@@ -777,37 +783,37 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 	}
 	
 	if (vec->x < 0) {
-		proj = (long)-vec->x * projectiondata9;
+		proj = (unsigned long)projection_magnitude(vec->x) * (unsigned short)projectiondata9;
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) { 
-			outpt->px = saturate_projection(-(proj / vec->z) + projectiondata5);
+			outpt->px = saturate_projection(-(long)(proj / (unsigned short)vec->z) + projectiondata5);
 		} else
 			outpt->px = -0x7D00;
 	} else {
-		proj = (long)vec->x * projectiondata9;
+		proj = (unsigned long)(unsigned short)vec->x * (unsigned short)projectiondata9;
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->px = saturate_projection((proj / vec->z) + projectiondata5);
+			outpt->px = saturate_projection((long)(proj / (unsigned short)vec->z) + projectiondata5);
 		else
 			outpt->px = 0x7D00;
 	}
 
 	if (vec->y < 0) {
-		proj = (long)-vec->y * projectiondata10;
+		proj = (unsigned long)projection_magnitude(vec->y) * (unsigned short)projectiondata10;
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection((proj / vec->z) + projectiondata8);
+			outpt->py = saturate_projection((long)(proj / (unsigned short)vec->z) + projectiondata8);
 		else
 			outpt->py = 0x7D00;
 	} else {
-		proj = (long)vec->y * projectiondata10;
+		proj = (unsigned long)(unsigned short)vec->y * (unsigned short)projectiondata10;
 		comp = (short)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection(-(proj / vec->z) + projectiondata8);
+			outpt->py = saturate_projection(-(long)(proj / (unsigned short)vec->z) + projectiondata8);
 		else
 			outpt->py = -0x7D00;
 	}
