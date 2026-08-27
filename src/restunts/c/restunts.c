@@ -668,6 +668,11 @@ int audio_check_flag2(void far* resource, int channel,
 		(unsigned int)byte_45948);
 }
 
+int nopsub_37456(void far* resource)
+{
+	return audio_check_flag2(resource, -1, 0x40U);
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;

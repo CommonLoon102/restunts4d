@@ -243,6 +243,7 @@ extrn audioresource_get_dword:proc
 extrn audioresource_get_word:proc
 extrn audioresource_copy_4_bytes:proc
 extrn audio_check_flag2:proc
+extrn nopsub_37456:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
