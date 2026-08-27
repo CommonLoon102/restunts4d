@@ -1566,6 +1566,7 @@ extern char aId1[];
 extern char aId2[];
 extern char aId3[];
 extern char aId4[];
+extern char aWai[];
 extern char* findfilenames[];
 
 void ensure_file_exists(int file_index)
@@ -1580,6 +1581,13 @@ void ensure_file_exists(int file_index)
 		mouse_draw_opaque_check();
 		kbormouse = 0;
 	}
+}
+
+void show_waiting(void)
+{
+	show_dialog(0, 0, locate_text_res(mainresptr, aWai),
+		-1, waitflag, dialogarg2, 0, 0);
+	mouse_draw_opaque_check();
 }
 
 void read_line_helper(void)

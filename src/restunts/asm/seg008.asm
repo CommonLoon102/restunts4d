@@ -81,7 +81,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_shape3d_init_shape_
     public ported_font_op2_alt_
     public sprite_blit_to_video
-    public show_waiting
+    public ported_show_waiting_
     public ported_print_int_as_string_maybe_
     public ported_sub_29772_
     public mouse_timer_sprite_unk
@@ -4063,12 +4063,12 @@ loc_29670:
     ; align 2
     db 144
 sprite_blit_to_video endp
-show_waiting proc far
+ported_show_waiting_ proc far
 
-    sub     ax, ax
-    push    ax
-    push    ax
-    push    dialogarg2
+    jmp     show_waiting
+    nop
+    nop
+    nop
     push    waitflag
     mov     ax, 0FFFFh
     push    ax
@@ -4092,7 +4092,7 @@ show_waiting proc far
     retf
     ; align 2
     db 144
-show_waiting endp
+ported_show_waiting_ endp
 ported_print_int_as_string_maybe_ proc far
      s = byte ptr 0
      r = byte ptr 2
