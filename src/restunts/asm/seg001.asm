@@ -7611,7 +7611,7 @@ nosmart
     db 144
 loc_18C44:
     push    [bp+var_2E]
-    call    audio_op_unk6
+    call    ported_audio_op_unk6_
     add     sp, 2
     add     [bp+var_16], 4
     jmp     short loc_18C7B

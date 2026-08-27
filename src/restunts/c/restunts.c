@@ -1014,6 +1014,11 @@ void audio_op_unk5(int index)
 	audio_start_secondary_event(index, 0x3CU);
 }
 
+void audio_op_unk6(int index)
+{
+	audio_start_secondary_event(index, 0x40U);
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {
