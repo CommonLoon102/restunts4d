@@ -626,6 +626,15 @@ int sub_3771E(int channel)
 		LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) == 0;
 }
 
+void nopsub_37750(int channel, void far* value)
+{
+	void far* *field;
+
+	field = (void far* *)(audiochunks_unk +
+		(unsigned int)channel * 0x4CU + 0x48U);
+	*field = value;
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;
