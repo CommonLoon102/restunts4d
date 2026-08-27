@@ -202,6 +202,7 @@ extrn carState_rc_op:proc
 extrn car_car_speed_adjust_maybe:proc
 extrn state_op_unk:proc
 extrn sub_19BA0:proc
+extrn car_car_coll_detect_maybe:proc
 
 ; externs for implementations in restunts.c
 

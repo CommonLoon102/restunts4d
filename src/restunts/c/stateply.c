@@ -40,7 +40,6 @@ extern int word_4408C;
 extern int word_43964;
 
 extern void update_crash_state(int, int);
-extern int car_car_coll_detect_maybe(struct POINT2D*, struct VECTOR*, struct POINT2D*, struct VECTOR*);
 
 extern int bto_auxiliary1(int, int, struct VECTOR*);
 
@@ -201,6 +200,149 @@ int car_car_speed_adjust_maybe(
 	first_state->car_speed = first_state->car_speed2;
 	second_state->car_speed = second_state->car_speed2;
 	return relative_speed > 0x1E;
+}
+
+static legacy_s16 collision_axis_distance(legacy_s16 first, legacy_s16 second) {
+	if (first < second)
+		return LEGACY_S16_WRAP_SUB(second, first);
+	return LEGACY_S16_WRAP_SUB(first, second);
+}
+
+static void build_collision_corners(
+	struct POINT2D* collision_points,
+	struct VECTOR* world_coordinates,
+	struct VECTOR corners[4]
+) {
+	struct MATRIX* rotation;
+	struct VECTOR local_corner;
+	int corner;
+
+	rotation = mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(world_coordinates[1].x),
+		LEGACY_S16_WRAP_NEGATE(world_coordinates[1].y),
+		LEGACY_S16_WRAP_NEGATE(world_coordinates[1].z),
+		0);
+	for (corner = 0; corner < 4; corner++) {
+		if (corner == 0 || corner == 3) {
+			local_corner.x = LEGACY_S16_WRAP_NEGATE(
+				collision_points[0].px);
+		} else {
+			local_corner.x = (legacy_s16)collision_points[0].px;
+		}
+		local_corner.y = 0;
+		if (corner >= 2) {
+			local_corner.z = LEGACY_S16_WRAP_NEGATE(
+				collision_points[1].px);
+		} else {
+			local_corner.z = (legacy_s16)collision_points[1].px;
+		}
+
+		mat_mul_vector(&local_corner, rotation, &corners[corner]);
+		corners[corner].x = LEGACY_S16_WRAP_ADD(
+			corners[corner].x, world_coordinates[0].x);
+		corners[corner].y = LEGACY_S16_WRAP_ADD(
+			corners[corner].y, world_coordinates[0].y);
+		corners[corner].z = LEGACY_S16_WRAP_ADD(
+			corners[corner].z, world_coordinates[0].z);
+	}
+}
+
+static int collision_corners_inside(
+	struct VECTOR corners[4],
+	struct POINT2D* collision_points,
+	struct VECTOR* world_coordinates
+) {
+	struct MATRIX* rotation;
+	struct VECTOR relative_corner;
+	struct VECTOR local_corner;
+	legacy_s16 negative_extent;
+	int corner;
+
+	rotation = mat_rot_zxy(
+		world_coordinates[1].x,
+		world_coordinates[1].y,
+		world_coordinates[1].z,
+		1);
+	for (corner = 0; corner < 4; corner++) {
+		relative_corner.x = LEGACY_S16_WRAP_SUB(
+			world_coordinates[0].x, corners[corner].x);
+		relative_corner.y = LEGACY_S16_WRAP_SUB(
+			world_coordinates[0].y, corners[corner].y);
+		relative_corner.z = LEGACY_S16_WRAP_SUB(
+			world_coordinates[0].z, corners[corner].z);
+		mat_mul_vector(&relative_corner, rotation, &local_corner);
+
+		if (local_corner.y < 0 ||
+			local_corner.y > (legacy_s16)collision_points[0].py) {
+			continue;
+		}
+		negative_extent = LEGACY_S16_WRAP_NEGATE(collision_points[0].px);
+		if (local_corner.x < negative_extent ||
+			local_corner.x > (legacy_s16)collision_points[0].px) {
+			continue;
+		}
+		negative_extent = LEGACY_S16_WRAP_NEGATE(collision_points[1].px);
+		if (local_corner.z < negative_extent ||
+			local_corner.z > (legacy_s16)collision_points[1].px) {
+			continue;
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
+int car_car_coll_detect_maybe(
+	struct POINT2D* first_collision_points,
+	struct VECTOR* first_world_coordinates,
+	struct POINT2D* second_collision_points,
+	struct VECTOR* second_world_coordinates
+) {
+	struct VECTOR position_delta;
+	struct VECTOR corners[4];
+	legacy_s16 combined_radius;
+
+	combined_radius = LEGACY_S16_WRAP_ADD(
+		first_collision_points[1].py,
+		second_collision_points[1].py);
+	if (collision_axis_distance(
+		first_world_coordinates[0].x,
+		second_world_coordinates[0].x) > combined_radius) {
+		return 0;
+	}
+	if (collision_axis_distance(
+		first_world_coordinates[0].z,
+		second_world_coordinates[0].z) > combined_radius) {
+		return 0;
+	}
+	if (collision_axis_distance(
+		first_world_coordinates[0].y,
+		second_world_coordinates[0].y) > combined_radius) {
+		return 0;
+	}
+
+	position_delta.x = LEGACY_S16_WRAP_SUB(
+		first_world_coordinates[0].x, second_world_coordinates[0].x);
+	position_delta.y = LEGACY_S16_WRAP_SUB(
+		first_world_coordinates[0].y, second_world_coordinates[0].y);
+	position_delta.z = LEGACY_S16_WRAP_SUB(
+		first_world_coordinates[0].z, second_world_coordinates[0].z);
+	if ((legacy_u16)polarRadius3D(&position_delta) >
+		(legacy_u16)combined_radius) {
+		return 0;
+	}
+
+	build_collision_corners(
+		first_collision_points, first_world_coordinates, corners);
+	if (collision_corners_inside(
+		corners, second_collision_points, second_world_coordinates)) {
+		return 1;
+	}
+
+	build_collision_corners(
+		second_collision_points, second_world_coordinates, corners);
+	return collision_corners_inside(
+		corners, first_collision_points, first_world_coordinates);
 }
 
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {

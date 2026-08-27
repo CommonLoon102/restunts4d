@@ -17,7 +17,7 @@ seg001 segment byte public 'STUNTSC' use16
     extrn audio_unk3:proc
     extrn sub_18D06:proc
     extrn sub_18D60:proc
-    extrn car_car_coll_detect_maybe:proc
+    extrn ported_car_car_coll_detect_maybe_:proc
     extrn init_plantrak:proc
     extrn do_opponent_op:proc
     extrn ported_update_crash_state_:proc

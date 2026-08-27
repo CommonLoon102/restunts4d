@@ -64,7 +64,7 @@ seg001 segment byte public 'STUNTSC' use16
     public audio_unk3
     public sub_18D06
     public sub_18D60
-    public car_car_coll_detect_maybe
+    public ported_car_car_coll_detect_maybe_
     public init_plantrak
     public do_opponent_op
     public ported_update_crash_state_
@@ -3209,7 +3209,7 @@ loc_164EA:
     add     ax, SIMD.collide_points
     push    ax
     push    cs
-    call near ptr car_car_coll_detect_maybe
+    call near ptr ported_car_car_coll_detect_maybe_
     add     sp, 8
     or      al, al
     jz      short loc_16578
@@ -3323,7 +3323,7 @@ loc_165F0:
     add     ax, SIMD.collide_points
     push    ax
     push    cs
-    call near ptr car_car_coll_detect_maybe
+    call near ptr ported_car_car_coll_detect_maybe_
     add     sp, 8
     or      al, al
     jz      short loc_165EA
@@ -3384,7 +3384,7 @@ loc_1667A:
     add     ax, SIMD.collide_points
     push    ax
     push    cs
-    call near ptr car_car_coll_detect_maybe
+    call near ptr ported_car_car_coll_detect_maybe_
     add     sp, 8
     or      al, al
     jz      short loc_16710
@@ -3477,7 +3477,7 @@ loc_1672C:
     add     ax, SIMD.collide_points
     push    ax
     push    cs
-    call near ptr car_car_coll_detect_maybe
+    call near ptr ported_car_car_coll_detect_maybe_
     add     sp, 8
     cbw
 loc_167B1:
@@ -3528,7 +3528,7 @@ loc_167B1:
     add     ax, SIMD.collide_points
     push    ax
     push    cs
-    call near ptr car_car_coll_detect_maybe
+    call near ptr ported_car_car_coll_detect_maybe_
     add     sp, 8
     cbw
     mov     [bp+var_138], ax
@@ -8122,7 +8122,7 @@ loc_1906C:
     pop     bp
     retf
 sub_18D60 endp
-car_car_coll_detect_maybe proc far
+ported_car_car_coll_detect_maybe_ proc far
     var_2A = word ptr -42
     var_28 = word ptr -40
     var_26 = word ptr -38
@@ -8139,10 +8139,10 @@ car_car_coll_detect_maybe proc far
     arg_oCollPoints = word ptr 10
     arg_oWorldCrds = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2Ah
-    push    di
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     car_car_coll_detect_maybe
+    db      144
+    db      144
     push    si
     mov     bx, [bp+arg_pCollPoints]
     mov     si, [bx+6]      ; the 4th field of collPoints
@@ -8526,7 +8526,7 @@ loc_193DC:
     jmp     loc_1935A
     ; align 2
     db 144
-car_car_coll_detect_maybe endp
+ported_car_car_coll_detect_maybe_ endp
 init_plantrak proc far
      s = byte ptr 0
      r = byte ptr 2
