@@ -86,6 +86,10 @@ void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape) {
 	struct SHAPE3DHEADER far* hdr = shapeptr;
 	gameshape->shape3d_numverts = hdr->header_numverts;
 	gameshape->shape3d_numprimitives = hdr->header_numprimitives;
+	// The original stores this one as a byte - `mov byte ptr
+	// [bx+SHAPE3D.shape3d_numpaints], al` - leaving the field's high byte
+	// alone, where this writes the whole word and zeroes it. The field is
+	// only ever read as a count and the shape structs start out zeroed.
 	gameshape->shape3d_numpaints = hdr->header_numpaints;
 	gameshape->shape3d_verts = shapeptr + 4; // TODO: deserialize from 16 bit to "int" (on 32bit)
 	gameshape->shape3d_cull1 = shapeptr + hdr->header_numverts * 6 + 4;

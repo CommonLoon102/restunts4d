@@ -910,6 +910,10 @@ loc_31508:
 	return MK_FP(ptrseg, FP_OFF(ptr));
 }
 
+// `paras` is signed here but the original treats it as unsigned: it steps the
+// count down with `sub bx, 1000h` and tests the borrow with jnb, so a count
+// above 7FFFh (512 KB in one call) still chunks correctly there and would go
+// wrong here. Nothing asks either copier for that much at once.
 void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras) {
 	unsigned short count; // number of words to copy
 	unsigned short far * srcptr;
@@ -938,6 +942,8 @@ void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras)
 }
 
 
+// Same signedness caveat as mmgr_copy_paras above: the original's loop guard
+// is `sub bx, 1000h / jnb`, an unsigned count.
 void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short paras) {
 	unsigned short count, ofs;
 	unsigned short far* destptr;

@@ -76,6 +76,10 @@ struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsi
 	// create a writable far pointer to the line offsets
 	farlineofsptr = MK_FP(wnddefseg, FP_OFF(lineofsptr));
 	lineofs = sizeof(struct SHAPE2D);
+	// One of several counted loops where the original uses `loop`, which runs
+	// 65536 times on a count of zero while this runs none. Reaching it needs a
+	// zero-height window; the same applies to the unflip and palette loops in
+	// this file.
 	for (i = 0; i < height; i++) {
 		*farlineofsptr = lineofs;
 		farlineofsptr++;

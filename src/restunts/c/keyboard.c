@@ -33,6 +33,11 @@ extern unsigned char keymap4[];
 extern unsigned char keymap5[];
 extern unsigned int kblastinput;
 
+// The original opens with `sti` before it touches anything, so the rest of
+// the handler runs with interrupts on and only the buffer update is fenced by
+// cli/sti. A Borland `interrupt` function has no way to say that in its
+// prologue, so this one stays inside the IF=0 the gate left. Latency only -
+// no code here depends on being re-entered.
 void interrupt kb_int9_handler(void) {
 	unsigned char kbc, kbp;
 	unsigned int kbval, kbdata;
