@@ -84,7 +84,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_show_waiting_
     public ported_print_int_as_string_maybe_
     public ported_sub_29772_
-    public mouse_timer_sprite_unk
+    public ported_mouse_timer_sprite_unk_
     public ported_file_load_audiores_
     public ported_audio_unload_
     public ported_font_set_fontdef2_
@@ -4196,7 +4196,7 @@ ported_sub_29772_ proc far
     ; align 2
     db 144
 ported_sub_29772_ endp
-mouse_timer_sprite_unk proc far
+ported_mouse_timer_sprite_unk_ proc far
     var_6 = word ptr -6
      s = byte ptr 0
      r = byte ptr 2
@@ -4208,9 +4208,8 @@ mouse_timer_sprite_unk proc far
     arg_A = word ptr 16
     arg_C = word ptr 18
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     mouse_timer_sprite_unk
+    nop
     push    di
     push    si
     push    cs
@@ -4266,7 +4265,7 @@ loc_297F4:
     mov     sp, bp
     pop     bp
     retf
-mouse_timer_sprite_unk endp
+ported_mouse_timer_sprite_unk_ endp
 ported_file_load_audiores_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

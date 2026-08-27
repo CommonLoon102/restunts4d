@@ -1728,6 +1728,35 @@ int input_repeat_check(int duration)
 	return 0;
 }
 
+extern void sprite_1_unk4(int x, int y, int width, int height, int color);
+
+int mouse_timer_sprite_unk(int item_index, const int* x_values,
+	const int* width_values, const int* y_values, const int* height_values,
+	int second_state, int first_state)
+{
+	legacy_u16 delta;
+	legacy_u16 animation_counter;
+	legacy_s16 selected_state;
+
+	delta = (legacy_u16)timer_get_delta_alt();
+	animation_counter = LEGACY_U16_WRAP_ADD(word_45D1C, delta);
+	while (LEGACY_S16_FROM_BITS(animation_counter) > 60)
+		animation_counter = LEGACY_U16_WRAP_SUB(animation_counter, 60U);
+	word_45D1C = animation_counter;
+	selected_state = LEGACY_S16_FROM_BITS(animation_counter) > 30 ?
+		LEGACY_S16_FROM_BITS((legacy_u16)second_state) :
+		LEGACY_S16_FROM_BITS((legacy_u16)first_state);
+	if (word_45D06 != selected_state) {
+		word_45D06 = selected_state;
+		mouse_draw_opaque_check();
+		sprite_1_unk4(x_values[item_index], y_values[item_index],
+			width_values[item_index], height_values[item_index],
+			selected_state);
+		mouse_draw_transparent_check();
+	}
+	return LEGACY_S16_FROM_BITS(delta);
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
