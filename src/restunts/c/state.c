@@ -1,10 +1,13 @@
 #include "externs.h"
+#include "legacy.h"
 #include "math.h"
 #include "shape3d.h"
 
 extern int penalty_time;
 extern short legacy_grip_stack_words[4];
 extern short grassDecelDivTab[];
+extern struct TRACKOBJECT trkObjectList[215];
+extern unsigned char oppnentSped[];
 
 /*
  * The original player update reuses four words below player_op's stack frame.
@@ -149,6 +152,146 @@ void upd_statef20_from_steer_input(char steering_input) {
 	}
 
 	state.playerstate.car_steeringAngle = steering_angle;
+}
+
+static legacy_s16 route_average(legacy_s16 first, legacy_s16 second) {
+	legacy_s32 sum;
+
+	sum = (legacy_s32)first + (legacy_s32)second;
+	if (sum < 0)
+		return (legacy_s16)(-(((-sum) + 1) / 2));
+	return (legacy_s16)(sum / 2);
+}
+
+short sub_18D60(
+	short track_index_arg,
+	struct VECTOR* output,
+	short route_index_arg,
+	short* optional_speed
+) {
+	struct TRACKOBJECT* track_object;
+	struct TRKOBJINFO* track_info;
+	struct VECTOR* route_vectors;
+	struct VECTOR first_point;
+	struct VECTOR second_point;
+	legacy_s16 track_index;
+	legacy_u16 packed_opponent_offset;
+	legacy_u16 speed_index;
+	legacy_u16 route_index_word;
+	legacy_u8 tile_element;
+	legacy_u8 track_subtype;
+	legacy_u8 connection_status;
+	legacy_u8 arrow_type;
+	legacy_u8 route_index;
+	legacy_u8 vector_index;
+	legacy_u8 column;
+	legacy_u8 row;
+	legacy_u8 has_opponent_path;
+	legacy_s16 base_position;
+	legacy_s16 orientation;
+
+	track_index = (legacy_s16)track_index_arg;
+	tile_element = (legacy_u8)td17_trk_elem_ordered[track_index];
+	track_subtype = (legacy_u8)trackdata18[track_index] & 0x0FU;
+	connection_status = (legacy_u8)trackdata18[track_index] & 0x10U;
+	track_object = &trkObjectList[tile_element];
+	track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
+	arrow_type = (legacy_u8)track_info->si_arrowType;
+	route_index = (legacy_u8)route_index_arg;
+
+	if (connection_status == 0) {
+		vector_index = (legacy_u8)(route_index * 2U);
+	} else {
+		vector_index = (legacy_u8)(arrow_type - route_index);
+		vector_index = (legacy_u8)(vector_index * 2U);
+		vector_index = (legacy_u8)(vector_index - 2U);
+	}
+
+	if (optional_speed != 0) {
+		speed_index = (legacy_u8)track_info->si_oppSpedCode;
+		speed_index = LEGACY_U16_WRAP_ADD(
+			speed_index, (legacy_u8)track_object->ss_surfaceType);
+		((legacy_u8*)optional_speed)[0] = oppnentSped[speed_index];
+	}
+
+	packed_opponent_offset = (legacy_u16)(
+		(legacy_u8)track_info->si_opp1 |
+		((legacy_u16)(legacy_u8)track_info->si_opp2 << 8));
+	has_opponent_path = packed_opponent_offset != 0;
+	if (connection_status != 0 && has_opponent_path != 0) {
+		route_vectors = (struct VECTOR*)packed_opponent_offset;
+	} else {
+		route_vectors = (struct VECTOR*)track_info->si_cameraDataOffset;
+	}
+
+	if (connection_status != 0 && has_opponent_path == 0) {
+		first_point = route_vectors[vector_index + 1];
+		second_point = route_vectors[vector_index];
+	} else {
+		first_point = route_vectors[vector_index];
+		second_point = route_vectors[vector_index + 1];
+	}
+
+	orientation = (legacy_s16)track_info->si_arrowOrient;
+	if (orientation == 0x100) {
+		base_position = first_point.x;
+		first_point.x = first_point.z;
+		first_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
+		base_position = second_point.x;
+		second_point.x = second_point.z;
+		second_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
+	} else if (orientation == 0x200) {
+		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.x);
+		first_point.z = LEGACY_S16_WRAP_NEGATE(first_point.z);
+		second_point.x = LEGACY_S16_WRAP_NEGATE(second_point.x);
+		second_point.z = LEGACY_S16_WRAP_NEGATE(second_point.z);
+	} else if (orientation == 0x300) {
+		base_position = first_point.x;
+		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.z);
+		first_point.z = base_position;
+		base_position = second_point.x;
+		second_point.x = LEGACY_S16_WRAP_NEGATE(second_point.z);
+		second_point.z = base_position;
+	}
+
+	column = (legacy_u8)td21_col_from_path[track_index];
+	row = (legacy_u8)td22_row_from_path[track_index];
+	if (first_point.y != -1 &&
+		td15_terr_map_main[terrainrows[row] + column] == 6) {
+		first_point.y = LEGACY_S16_WRAP_ADD(
+			first_point.y, hillHeightConsts[1]);
+		second_point.y = LEGACY_S16_WRAP_ADD(
+			second_point.y, hillHeightConsts[1]);
+	}
+
+	if (((legacy_u8)track_object->ss_multiTileFlag & 1U) != 0)
+		base_position = (legacy_s16)trackpos[row];
+	else
+		base_position = (legacy_s16)trackcenterpos[row];
+	first_point.z = LEGACY_S16_WRAP_ADD(first_point.z, base_position);
+	second_point.z = LEGACY_S16_WRAP_ADD(second_point.z, base_position);
+
+	if (((legacy_u8)track_object->ss_multiTileFlag & 2U) != 0)
+		base_position = (legacy_s16)trackpos2[column + 1];
+	else
+		base_position = (legacy_s16)trackcenterpos2[column];
+	first_point.x = LEGACY_S16_WRAP_ADD(first_point.x, base_position);
+	second_point.x = LEGACY_S16_WRAP_ADD(second_point.x, base_position);
+
+	output[0].x = route_average(first_point.x, second_point.x);
+	if (first_point.y == -1)
+		output[0].y = -1;
+	else
+		output[0].y = route_average(first_point.y, second_point.y);
+	output[0].z = route_average(first_point.z, second_point.z);
+	output[1] = first_point;
+	output[2] = second_point;
+	LEGACY_WRITE_U16_LE((legacy_u8*)output + 18, has_opponent_path);
+
+	route_index_word = route_index;
+	if ((route_index & 0x80U) != 0)
+		route_index_word |= 0xFF00U;
+	return LEGACY_U16_WRAP_SUB(arrow_type, 1U) == route_index_word;
 }
 
 void player_op(char arg_carInputByte) {

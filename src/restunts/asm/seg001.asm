@@ -63,7 +63,7 @@ seg001 segment byte public 'STUNTSC' use16
     public audio_carstate
     public audio_unk3
     public sub_18D06
-    public sub_18D60
+    public ported_sub_18D60_
     public ported_car_car_coll_detect_maybe_
     public init_plantrak
     public do_opponent_op
@@ -262,7 +262,7 @@ loc_14866:
     push    word ptr es:[bx+di]
     push    cs
 loc_14886:
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     or      al, al
     jz      short loc_148B3
@@ -521,7 +521,7 @@ loc_14AB1:
     les     di, trackdata3
     push    word ptr es:[bx+di]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     or      al, al
     jz      short loc_14B03
@@ -4149,7 +4149,7 @@ loc_16DA4:
     push    ax
     push    state.playerstate.car_trackdata3_index
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
 loc_16E0A:
     mov     ax, 0D2h ; 'Ò'
@@ -4272,7 +4272,7 @@ loc_16EDB:
     mov     es, word ptr trackdata3+2
     push    word ptr es:[bx]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
 loc_16F2F:
     mov     ax, si
@@ -4940,7 +4940,7 @@ loc_174E5:
     push    ax
     push    [bp+var_2]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     mov     [bp+var_2A], al
     push    si
@@ -5035,7 +5035,7 @@ loc_175B8:
     push    ax
     push    [bp+var_2]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     sub     ax, ax
     push    ax
@@ -5054,7 +5054,7 @@ loc_175D0:
     push    ax
     push    [bp+var_2]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     sub     ax, ax
     push    ax
@@ -5066,7 +5066,7 @@ loc_175F0:
     push    ax
     push    [bp+var_2]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     mov     ax, [bp+var_1A.vz]
     sub     ax, [bp+var_52.vz]
@@ -5112,7 +5112,7 @@ loc_1764C:
     push    ax
     push    state.playerstate.car_trackdata3_index
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     or      al, al
     jz      short loc_17699
@@ -7738,7 +7738,7 @@ loc_18D5E:
     pop     bp
     retf
 sub_18D06 endp
-sub_18D60 proc far
+ported_sub_18D60_ proc far
     var_30 = word ptr -48
     var_2E = word ptr -46
     var_2C = word ptr -44
@@ -7769,10 +7769,10 @@ sub_18D60 proc far
     arg_4 = byte ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 30h
-    push    di
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     sub_18D60
+    db      144
+    db      144
     push    si
     mov     bx, [bp+arg_0]
     les     si, td17_trk_elem_ordered
@@ -8121,7 +8121,7 @@ loc_1906C:
     mov     sp, bp
     pop     bp
     retf
-sub_18D60 endp
+ported_sub_18D60_ endp
 ported_car_car_coll_detect_maybe_ proc far
     var_2A = word ptr -42
     var_28 = word ptr -40
@@ -8673,7 +8673,7 @@ loc_1958C:
     les     di, trackdata3
     push    word ptr es:[bx+di]
     push    cs
-    call near ptr sub_18D60
+    call near ptr ported_sub_18D60_
     add     sp, 8
     pop     si
     pop     di
