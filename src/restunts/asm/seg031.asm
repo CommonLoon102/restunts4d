@@ -177,7 +177,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_key_restext
+    mov     ax, offset ported_do_key_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -185,7 +185,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_mof_restext
+    mov     ax, offset ported_do_mof_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -193,7 +193,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_pau_restext
+    mov     ax, offset ported_do_pau_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -201,7 +201,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_pau_restext
+    mov     ax, offset ported_do_pau_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -209,7 +209,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_dos_restext
+    mov     ax, offset ported_do_dos_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -217,7 +217,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_sonsof_restext
+    mov     ax, offset ported_do_sonsof_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -225,7 +225,7 @@ loc_39E79:
     push    ax
     call    kb_reg_callback
     add     sp, 6
-    mov     ax, offset do_dos_restext
+    mov     ax, offset ported_do_dos_restext_
     mov     dx, seg seg008
     push    dx
     push    ax
@@ -413,7 +413,7 @@ loc_3A0C9:
     call    ported_audio_toggle_flag2_
     call    ported_audio_toggle_flag6_
 loc_3A0D9:
-    mov     ax, offset do_dea_textres
+    mov     ax, offset ported_do_dea_textres_
     mov     dx, seg seg008
     push    dx
     push    ax

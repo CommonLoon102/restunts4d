@@ -1567,6 +1567,8 @@ extern char aId2[];
 extern char aId3[];
 extern char aId4[];
 extern char aDos_0[];
+extern char aDea[];
+extern char aDer[];
 extern char aKey[];
 extern char aMer[];
 extern char aMof[];
@@ -1687,6 +1689,24 @@ void do_dos_restext(void)
 	word_3F88E = 0;
 	sub_372F4();
 	input_pop_status();
+}
+
+short do_dea_textres(void)
+{
+	short result;
+
+	input_push_status();
+	if (g_is_busy != 0) {
+		result = show_dialog(2, 1,
+			locate_text_res(mainresptr, aDea),
+			-1, -1, dialogarg2, 0, 0) == 0;
+	} else {
+		show_dialog(0, 1, locate_text_res(mainresptr, aDer),
+			-1, -1, dialogarg2, 0, 0);
+		result = 1;
+	}
+	input_pop_status();
+	return result;
 }
 
 void read_line_helper(void)

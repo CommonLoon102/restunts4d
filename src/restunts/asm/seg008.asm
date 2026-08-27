@@ -104,7 +104,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_do_sonsof_restext_
     public ported_do_dos_restext_
     public show_graphic_levels_menu
-    public do_dea_textres
+    public ported_do_dea_textres_
     public ported_ensure_file_exists_
     public ported_do_mer_restext_
     public ported_timer_get_delta_alt_
@@ -2534,7 +2534,7 @@ loc_28A5E:
     or      ax, dx
     jnz     short loc_28A6E
     push    cs
-    call near ptr do_dea_textres
+    call near ptr ported_do_dea_textres_
     jmp     short loc_289F8
 loc_28A6E:
     mov     ax, [bp+var_4]
@@ -4591,7 +4591,7 @@ loc_29A60:
     retf
 loc_29A72:
     push    cs
-    call near ptr do_dea_textres
+    call near ptr ported_do_dea_textres_
     cmp     ax, 2
     jz      short loc_29A7E
     jmp     loc_299D0
@@ -4658,7 +4658,7 @@ loc_29AC6:
     db 144
 loc_29ADC:
     push    cs
-    call near ptr do_dea_textres
+    call near ptr ported_do_dea_textres_
     cmp     ax, 2
     jnz     short loc_29A8C
     sub     ax, ax
@@ -5435,14 +5435,13 @@ loc_2A103:
     pop     bp
     retf
 show_graphic_levels_menu endp
-do_dea_textres proc far
+ported_do_dea_textres_ proc far
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     do_dea_textres
+    nop
     push    cs
     call near ptr ported_input_push_status_
     cmp     g_is_busy, 0
@@ -5512,7 +5511,7 @@ loc_2A1A2:
     mov     sp, bp
     pop     bp
     retf
-do_dea_textres endp
+ported_do_dea_textres_ endp
 ported_ensure_file_exists_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -5678,7 +5677,7 @@ loc_2A2AA:
 loc_2A2AC:
     push    cs
 loc_2A2AD:
-    call near ptr do_dea_textres
+    call near ptr ported_do_dea_textres_
 loc_2A2B0:
     jmp     short loc_2A23C
 loc_2A2B2:
