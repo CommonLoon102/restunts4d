@@ -1541,6 +1541,27 @@ void format_frame_as_string(char* destination, int frame_count,
 	}
 }
 
+void parse_filepath_separators(char* destination, const char* path)
+{
+	legacy_u16 path_index;
+	legacy_u16 output_index;
+	char current;
+
+	path_index = legacy_near_string_length(path);
+	while (path_index != 0) {
+		current = path[path_index - 1U];
+		if (current == '\\' || current == ':')
+			break;
+		path_index--;
+	}
+	output_index = 0;
+	do {
+		current = path[path_index++];
+		destination[output_index++] = current;
+	} while (current != '.');
+	destination[output_index - 1U] = 0;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

@@ -52,7 +52,7 @@ seg008 segment byte public 'STUNTSC' use16
     public do_fileselect_dialog
     public ported_file_build_path_
     public do_savefile_dialog
-    public parse_filepath_separators
+    public ported_parse_filepath_separators_
     public input_checking
     public ported_input_do_checking_
     public ported_file_load_resfile_
@@ -1417,7 +1417,7 @@ loc_28094:
     lea     ax, [bp+var_698]
     push    ax              ; int
     push    cs
-    call near ptr parse_filepath_separators
+    call near ptr ported_parse_filepath_separators_
     add     sp, 4
     inc     [bp+var_714]
 loc_280A8:
@@ -1438,7 +1438,7 @@ loc_280A8:
     sub     ax, 698h
     push    ax              ; int
     push    cs
-    call near ptr parse_filepath_separators
+    call near ptr ported_parse_filepath_separators_
     add     sp, 4
     inc     [bp+var_714]
     mov     al, [bp+var_714]
@@ -2197,7 +2197,7 @@ loc_28754:
     pop     bp
     retf
 do_savefile_dialog endp
-parse_filepath_separators proc far
+ported_parse_filepath_separators_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = byte ptr -2
@@ -2206,9 +2206,8 @@ parse_filepath_separators proc far
     arg_0 = word ptr 6
     arg_2 = dword ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     parse_filepath_separators
+    nop
     push    si
     push    word ptr [bp+arg_2]; char *
     call    _strlen
@@ -2247,7 +2246,7 @@ loc_28795:
     mov     sp, bp
     pop     bp
     retf
-parse_filepath_separators endp
+ported_parse_filepath_separators_ endp
 input_checking proc far
      s = byte ptr 0
      r = byte ptr 2
