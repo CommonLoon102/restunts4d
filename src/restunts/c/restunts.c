@@ -543,6 +543,8 @@ extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
 extern unsigned char byte_45948;
 extern unsigned char byte_45D9A[];
+extern unsigned char byte_44D06[];
+extern unsigned char byte_44ACA[];
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
@@ -695,6 +697,88 @@ void audioresource_copy_4_bytes(legacy_u8 far* destination,
 	destination[1] = source[1];
 	destination[2] = source[2];
 	destination[3] = source[3];
+}
+
+void audio_init_chunk(int first_channel, int last_channel,
+	void far* resource, unsigned int resource_data_offset,
+	unsigned int rate, unsigned char priority)
+{
+	const legacy_u8 far* resource_data;
+	legacy_u8* chunk;
+	legacy_u32 pointer_value;
+	legacy_s16 channel;
+	legacy_s16 last;
+	legacy_u16 chunk_offset;
+	legacy_u16 pointer_offset;
+	legacy_u16 pointer_segment;
+	legacy_u16 resource_offset;
+	legacy_u16 resource_segment;
+
+	channel = (legacy_s16)first_channel;
+	last = (legacy_s16)last_channel;
+	if (channel > last)
+		return;
+
+	chunk_offset = LEGACY_U16_WRAP_MUL(channel, 0x4CU);
+	resource_offset = (legacy_u16)FP_OFF(resource);
+	resource_segment = (legacy_u16)FP_SEG(resource);
+	do {
+		chunk = audiochunks_unk + chunk_offset;
+		LEGACY_WRITE_U16_LE(chunk + 0x48U, 0);
+		LEGACY_WRITE_U16_LE(chunk + 0x4AU, 0);
+		chunk[0x22] = 0x7F;
+		chunk[0x23] = (legacy_u8)channel;
+		chunk[0x16] = 0x0F;
+		byte_44D06[(legacy_u16)channel] = 0;
+		byte_44ACA[(legacy_u16)channel] = 0;
+		chunk[0x32] = 0;
+		chunk[4] = 0;
+		chunk[0x24] = priority;
+		chunk[0x15] = 0;
+		LEGACY_WRITE_U16_LE(chunk + 0x1AU, 0);
+		LEGACY_WRITE_U16_LE(chunk + 0x18U, 0);
+		chunk[0x1C] = 0;
+		LEGACY_WRITE_U16_LE(chunk + 0x20U, 0);
+		LEGACY_WRITE_U16_LE(chunk + 0x1EU, 0);
+		chunk[0x28] = (legacy_u8)rate;
+		chunk[0x25] = 0;
+		LEGACY_WRITE_U16_LE(chunk + 0x26U, 0);
+		chunk[0x29] = 0;
+		chunk[0x2A] = 0;
+		chunk[0x2B] = 0;
+		chunk[0x2C] = 0;
+		chunk[0x47] = 0xFF;
+
+		if (resource != 0) {
+			resource_data = (const legacy_u8 far*)MK_FP(
+				resource_segment,
+				LEGACY_U16_WRAP_ADD(resource_offset,
+					resource_data_offset));
+			pointer_value = audioresource_get_dword(resource_data);
+			pointer_offset = LEGACY_U16_WRAP_ADD(
+				(legacy_u16)pointer_value, 4U);
+			pointer_segment = (legacy_u16)(pointer_value >> 16);
+			LEGACY_WRITE_U16_LE(chunk + 5U, pointer_offset);
+			LEGACY_WRITE_U16_LE(chunk + 7U, pointer_segment);
+			pointer_value = audioresource_get_dword(resource_data);
+			pointer_offset = LEGACY_U16_WRAP_ADD(
+				(legacy_u16)pointer_value, 4U);
+			pointer_segment = (legacy_u16)(pointer_value >> 16);
+			LEGACY_WRITE_U16_LE(chunk, pointer_offset);
+			LEGACY_WRITE_U16_LE(chunk + 2U, pointer_segment);
+			resource_data_offset = LEGACY_U16_WRAP_ADD(
+				resource_data_offset, 5U);
+			LEGACY_WRITE_U16_LE(chunk + 0x2EU,
+				LEGACY_U16_WRAP_ADD(resource_offset, 7U));
+			LEGACY_WRITE_U16_LE(chunk + 0x30U, resource_segment);
+		} else {
+			LEGACY_WRITE_U16_LE(chunk, 0);
+			LEGACY_WRITE_U16_LE(chunk + 2U, 0);
+		}
+
+		chunk_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 0x4CU);
+		channel = LEGACY_S16_WRAP_ADD(channel, 1);
+	} while (channel <= last);
 }
 
 int audio_check_flag(void far* resource, int channel,

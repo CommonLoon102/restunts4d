@@ -392,7 +392,7 @@ loc_38844:
     push    ax
     push    [bp+arg_0]
     push    [bp+arg_0]
-    call    audio_init_chunk
+    call    ported_audio_init_chunk_
     add     sp, 0Eh
     jmp     loc_387D2
 loc_38886:

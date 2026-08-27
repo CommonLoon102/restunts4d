@@ -79,7 +79,7 @@ seg027 segment byte public 'STUNTSC' use16
     public load_song_file
     public load_voice_file
     public nopsub_37D7A
-    public audio_init_chunk
+    public ported_audio_init_chunk_
     public audio_map_song_instruments
     public sub_3803C
     public sub_38156
@@ -238,7 +238,7 @@ load_audio_finalize proc far
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr audio_init_chunk
+    call near ptr ported_audio_init_chunk_
     add     sp, 0Eh
     mov     byte_40632, 1
     mov     word_4063A, 0
@@ -431,7 +431,7 @@ ported_sub_3736A_ proc far
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr audio_init_chunk
+    call near ptr ported_audio_init_chunk_
     add     sp, 0Eh
     mov     byte_44290, 0
     call    sub_39700
@@ -798,7 +798,7 @@ loc_37612:
     push    [bp+arg_4]
     push    [bp+arg_4]
     push    cs
-    call near ptr audio_init_chunk
+    call near ptr ported_audio_init_chunk_
     add     sp, 0Eh
     mov     ax, [bp+arg_4]
     pop     si
@@ -843,7 +843,7 @@ loc_3765C:
     push    [bp+arg_0]
     push    [bp+arg_0]
     push    cs
-    call near ptr audio_init_chunk
+    call near ptr ported_audio_init_chunk_
     add     sp, 0Eh
 loc_37694:
     pop     bp
@@ -1748,7 +1748,7 @@ loc_37DB2:
     pop     bp
     retf
 nopsub_37D7A endp
-audio_init_chunk proc far
+ported_audio_init_chunk_ proc far
     var_A = word ptr -10
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -1764,9 +1764,8 @@ audio_init_chunk proc far
     arg_A = byte ptr 16
     arg_C = byte ptr 18
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     audio_init_chunk
+    nop
     push    di
     push    si
     mov     ax, [bp+arg_0]
@@ -1862,7 +1861,7 @@ loc_37EBA:
     mov     sp, bp
     pop     bp
     retf
-audio_init_chunk endp
+ported_audio_init_chunk_ endp
 audio_map_song_instruments proc far
     var_22 = word ptr -34
     var_20 = word ptr -32
@@ -2208,7 +2207,7 @@ sub_38178 proc far
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr audio_init_chunk
+    call near ptr ported_audio_init_chunk_
     add     sp, 0Eh
     mov     [bp+var_2], 0
     mov     al, byte_459D2

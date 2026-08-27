@@ -32,7 +32,7 @@ seg027 segment byte public 'STUNTSC' use16
     extrn load_song_file:proc
     extrn load_voice_file:proc
     extrn nopsub_37D7A:proc
-    extrn audio_init_chunk:proc
+    extrn ported_audio_init_chunk_:proc
     extrn audio_map_song_instruments:proc
     extrn sub_3803C:proc
     extrn sub_38156:proc
