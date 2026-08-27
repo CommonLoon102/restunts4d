@@ -1396,6 +1396,36 @@ int audioresource_compare_chunknames(int case_sensitive,
 	return 1;
 }
 
+int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
+	const char* requested_name, const legacy_u8 far* chunk_names)
+{
+	const char far* requested_name_far;
+	const legacy_u8 far* candidate;
+	legacy_u16 names_offset;
+	legacy_u16 names_segment;
+	legacy_s16 count;
+	legacy_s16 index;
+
+	count = LEGACY_S16_FROM_BITS(chunk_count);
+	if (count <= 0)
+		return -1;
+	requested_name_far = (const char far*)MK_FP(
+		FP_SEG(requested_name), FP_OFF(requested_name));
+	names_offset = (legacy_u16)FP_OFF(chunk_names);
+	names_segment = (legacy_u16)FP_SEG(chunk_names);
+	for (index = 0; index < count;
+		index = LEGACY_S16_WRAP_ADD(index, 1)) {
+		candidate = (const legacy_u8 far*)MK_FP(
+			names_segment, names_offset);
+		if (audioresource_compare_chunknames(0,
+			(const char far*)candidate, requested_name_far, 4))
+			return index;
+		names_offset = LEGACY_U16_WRAP_ADD(names_offset,
+			LEGACY_U16_WRAP_ADD(4U, extra_name_stride));
+	}
+	return -1;
+}
+
 void audio_op_unk3(int index)
 {
 	audio_start_indexed_event(index, 0x44U, 0x40U);

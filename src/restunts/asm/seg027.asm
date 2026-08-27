@@ -2375,7 +2375,7 @@ _trkdata_case13:
     push    [bp+var_numchunks]
     sub     ax, ax
     push    ax
-    call    audioresource_get_chunk_index
+    call    ported_audioresource_get_chunk_index_
     add     sp, 0Ah
     mov     [bp+var_2E], ax
     cmp     ax, 0FFFFh
@@ -2555,7 +2555,7 @@ loc_38472:
     push    [bp+var_numchunks]
     sub     ax, ax
     push    ax
-    call    audioresource_get_chunk_index
+    call    ported_audioresource_get_chunk_index_
     add     sp, 0Ah
     mov     si, ax
     cmp     si, 0FFFFh
