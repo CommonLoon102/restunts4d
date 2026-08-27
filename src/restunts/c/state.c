@@ -85,9 +85,71 @@ static void update_legacy_grip_stack_words(
 }
 
 void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
-void upd_statef20_from_steer_input(char);
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd, int);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
+
+void upd_statef20_from_steer_input(char steering_input) {
+	signed char* response_table;
+	short steering_angle;
+	short response;
+	short centering_limit;
+	short response_index;
+	unsigned char speed_index;
+
+	response_table = (signed char*)steerWhlRespTable_ptr;
+	steering_angle = state.playerstate.car_steeringAngle;
+	speed_index = (unsigned char)((state.playerstate.car_speed2 >> 10) & 0xFC);
+	response_index = (short)(speed_index + (signed char)steering_input);
+	response = response_table[response_index];
+
+	/* Turning farther from center gets the original fourfold response. */
+	if ((response > 0 && steering_angle < -1) ||
+		(response < 0 && steering_angle > 1)) {
+		response = (short)(response * 4);
+	}
+
+	/* With no steering input, bring a moving car back toward center. */
+	if (response == 0 && state.playerstate.car_speed2 != 0 &&
+		steering_angle != 0) {
+		centering_limit = (short)(response_table[speed_index + 1] * 2);
+		if (steering_angle < 0) {
+			if ((short)-steering_angle > centering_limit)
+				response = centering_limit;
+			else
+				response = (short)-steering_angle;
+		} else {
+			if (steering_angle > centering_limit)
+				response = (short)-centering_limit;
+			else
+				response = (short)-steering_angle;
+		}
+	}
+
+	if (framespersec == 10) {
+		if (response > 0xA0)
+			response = 0xA0;
+		if (response < -0xA0)
+			response = -0xA0;
+	} else {
+		if (response > 0x50)
+			response = 0x50;
+		if (response < -0x50)
+			response = -0x50;
+	}
+
+	steering_angle = (short)(steering_angle + response);
+	if (steering_angle > 0xF0)
+		steering_angle = 0xF0;
+	if (steering_angle < -0xF0)
+		steering_angle = -0xF0;
+
+	if (response_table[response_index] == 0 &&
+		steering_angle > -8 && steering_angle < 8) {
+		steering_angle = 0;
+	}
+
+	state.playerstate.car_steeringAngle = steering_angle;
+}
 
 void player_op(char arg_carInputByte) {
 	struct VECTOR var_38;

@@ -197,6 +197,7 @@ extrn update_player_state:proc
 extrn update_crash_state:proc
 extrn update_car_speed:proc
 extrn update_rpm_from_speed:proc
+extrn upd_statef20_from_steer_input:proc
 
 ; externs for implementations in restunts.c
 
