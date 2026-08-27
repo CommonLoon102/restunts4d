@@ -47,7 +47,7 @@ seg003 segment byte public 'STUNTSC' use16
     assume cs:seg003
     assume es:nothing, ss:nothing, ds:dseg
     public sub_19F14
-    public init_rect_arrays
+    public ported_init_rect_arrays_
     public ported_update_frame_
     public skybox_op_helper2
     public skybox_op
@@ -236,14 +236,13 @@ loc_1A090:
     pop     bp
     retf
 sub_19F14 endp
-init_rect_arrays proc far
+ported_init_rect_arrays_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
-    push    di
+    jmp     init_rect_arrays
+    nop
+    nop
     push    si
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_1A0EE
@@ -301,7 +300,7 @@ loc_1A0EE:
     mov     sp, bp
     pop     bp
     retf
-init_rect_arrays endp
+ported_init_rect_arrays_ endp
 ported_update_frame_ proc far
     var_lastpos2lookup = dword ptr -340
     var_lastposlookupw = word ptr -336

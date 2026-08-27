@@ -189,6 +189,7 @@ extrn flush_stdin:proc
 extrn kb_check:proc
 
 ; externs for implementations in frame.c
+extrn init_rect_arrays:proc
 extrn update_frame:proc
 
 ; externs for implementations in state.c

@@ -12,6 +12,7 @@ extern struct RECTANGLE rect_unk9;
 extern struct RECTANGLE rect_unk11;
 extern struct RECTANGLE rect_unk12;
 extern struct RECTANGLE rect_unk15;
+extern struct RECTANGLE rect_unk5;
 extern struct RECTANGLE cliprect_unk;
 extern struct VECTOR vec_unk2;
 extern struct VECTOR vec_planerotopresult;
@@ -79,6 +80,20 @@ void font_set_fontdef2(void far* data);
 void format_frame_as_string(char* s, int time, int c);
 void shape_op_explosion(int a, void far* shp, int x, int y);
 void heapsort_by_order(int n, int* heap, int* data);
+
+void init_rect_arrays(void) {
+	int i;
+
+	if (slow_video_mgmt_copy == 0)
+		return;
+
+	rect_array_unk[0] = rect_unk5;
+	rect_array_unk2[0] = rect_unk5;
+	for (i = 1; i < 15; i++) {
+		rect_array_unk[i] = cliprect_unk;
+		rect_array_unk2[i] = cliprect_unk;
+	}
+}
 
 void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 	int si;

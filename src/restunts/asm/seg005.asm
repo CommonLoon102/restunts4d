@@ -305,7 +305,7 @@ loc_21DEB:
     cmp     slow_video_mgmt_copy, ax
     jz      short loc_21DFC
     mov     slow_video_mgmt_copy, ax
-    call    init_rect_arrays
+    call    ported_init_rect_arrays_
 loc_21DFC:
     cmp     byte_46467, 0
     jz      short loc_21E76
@@ -3101,7 +3101,7 @@ loc_23870:
     mov     word ptr fontledresptr+2, dx
     mov     ax, slow_video_mgmt
     mov     slow_video_mgmt_copy, ax
-    call    init_rect_arrays
+    call    ported_init_rect_arrays_
     cmp     idle_expired, 0
     jnz     short loc_238B4
     sub     ax, ax

@@ -407,6 +407,7 @@ extern unsigned short someZeroVideoConst;
 extern short sub_18D60(short car_trackdata3_index, struct VECTOR* car_vec_unk3, short field_CE, short* unk);
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle);
 extern void init_game_state(short arg);
+extern void init_rect_arrays(void);
 extern void font_set_fontdef(void);
 extern void init_polyinfo(void);
 extern unsigned short run_intro_looped(void);
