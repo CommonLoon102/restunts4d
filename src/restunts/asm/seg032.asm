@@ -48,7 +48,7 @@ seg032 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public read_line
     public ported_read_line_helper_
-    public read_line_helper2
+    public ported_read_line_helper2_
 algn_3A4B5:
     ; align 2
     db 144
@@ -141,7 +141,7 @@ loc_3A526:
     cmp     [bp+var_6], ax
     jl      short loc_3A51A
     push    cs
-    call near ptr read_line_helper2
+    call near ptr ported_read_line_helper2_
     mov     word_42A16, 1
 loc_3A538:
     mov     word_42A1C, 1
@@ -438,7 +438,7 @@ loc_3A7CE:
     inc     word_42A22
 loc_3A7E5:
     push    cs
-    call near ptr read_line_helper2
+    call near ptr ported_read_line_helper2_
 loc_3A7E9:
     push    cs
     call near ptr ported_read_line_helper_
@@ -520,16 +520,15 @@ loc_3A891:
     ; align 2
     db 144
 ported_read_line_helper_ endp
-read_line_helper2 proc far
+ported_read_line_helper2_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     read_line_helper2
+    nop
     push    si
     cmp     word_42A20, 0
     jz      short loc_3A8DE
@@ -605,6 +604,6 @@ loc_3A954:
 loc_3A956:
     pop     bp
     retf
-read_line_helper2 endp
+ported_read_line_helper2_ endp
 seg032 ends
 end

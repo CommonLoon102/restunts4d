@@ -523,8 +523,11 @@ extern unsigned int word_42A18;
 extern unsigned int word_42A1A;
 extern unsigned int word_42A1C;
 extern char* off_42A1E;
+extern unsigned int word_42A20;
 extern unsigned int word_42A22;
 extern legacy_u8 far* word_405FE;
+extern void sub_345BC(const char* text, int x, int y);
+extern void sprite_1_unk2(int x, int y, int width, int height, int color);
 
 int font_op2_alt(const char* text)
 {
@@ -1472,6 +1475,46 @@ void read_line_helper(void)
 		LEGACY_S16_FROM_BITS(cursor_width),
 		LEGACY_S16_FROM_BITS(word_42A16),
 		LEGACY_S16_FROM_BITS(color));
+}
+
+void read_line_helper2(void)
+{
+	legacy_u8 far* font_definition;
+	legacy_u16 length;
+	legacy_u16 text_width;
+	legacy_u16 remaining_width;
+
+	if (word_42A20 != 0) {
+		while (LEGACY_S16_FROM_BITS(font_op2(off_42A1E)) >
+			LEGACY_S16_FROM_BITS(word_42A20)) {
+			length = legacy_near_string_length(off_42A1E);
+			if (length == 0)
+				break;
+			off_42A1E[length - 1U] = 0;
+		}
+	}
+	length = legacy_near_string_length(off_42A1E);
+	if (LEGACY_S16_FROM_BITS(length) <
+		LEGACY_S16_FROM_BITS(word_42A22))
+		word_42A22 = length;
+	sub_345BC(off_42A1E, LEGACY_S16_FROM_BITS(word_42A18),
+		LEGACY_S16_FROM_BITS(word_42A1A));
+	if (word_42A20 == 0)
+		return;
+
+	text_width = (legacy_u16)font_op2(off_42A1E);
+	remaining_width = LEGACY_U16_WRAP_SUB(word_42A20, text_width);
+	if (LEGACY_S16_FROM_BITS(remaining_width) <= 0)
+		return;
+	font_definition = word_405FE;
+	sprite_1_unk2(LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(text_width, word_42A18)),
+		LEGACY_S16_FROM_BITS(word_42A1A),
+		LEGACY_S16_FROM_BITS(remaining_width),
+		LEGACY_S16_FROM_BITS(
+			audioresource_get_word(font_definition + 0x12U)),
+		LEGACY_S16_FROM_BITS(
+			audioresource_get_word(font_definition + 2U)));
 }
 
 int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
