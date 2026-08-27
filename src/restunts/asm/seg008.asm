@@ -86,7 +86,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_sub_29772_
     public mouse_timer_sprite_unk
     public ported_file_load_audiores_
-    public audio_unload
+    public ported_audio_unload_
     public ported_font_set_fontdef2_
     public ported_font_set_fontdef_
     public format_frame_as_string
@@ -4311,11 +4311,13 @@ ported_file_load_audiores_ proc far
     ; align 2
     db 144
 ported_file_load_audiores_ endp
-audio_unload proc far
+ported_audio_unload_ proc far
 
-    mov     ax, 2
-    push    ax
-    call    audio_driver_func3F
+    jmp     audio_unload
+    nop
+    nop
+    nop
+    nop
     add     sp, 2
     push    word ptr songfileptr+2
     push    word ptr songfileptr
@@ -4327,7 +4329,7 @@ audio_unload proc far
     add     sp, 4
     mov     is_audioloaded, 0
     retf
-audio_unload endp
+ported_audio_unload_ endp
 ported_font_set_fontdef2_ proc far
      s = byte ptr 0
      r = byte ptr 2

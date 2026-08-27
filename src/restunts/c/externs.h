@@ -387,7 +387,7 @@ extern const char aLocatesound4_4sSoundNotF[];
 extern char audiodriverstring[];
 
 extern unsigned short gState_frame;
-extern short is_audioloaded;
+extern char is_audioloaded;
 extern void far* songfileptr;
 extern void far* voicefileptr;
 extern char textresprefix; // = 'e'

@@ -39,7 +39,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_sub_29772_:proc
     extrn mouse_timer_sprite_unk:proc
     extrn ported_file_load_audiores_:proc
-    extrn audio_unload:proc
+    extrn ported_audio_unload_:proc
     extrn ported_font_set_fontdef2_:proc
     extrn ported_font_set_fontdef_:proc
     extrn format_frame_as_string:proc

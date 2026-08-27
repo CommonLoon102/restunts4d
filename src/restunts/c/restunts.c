@@ -506,6 +506,16 @@ void free_sdgame2(void)
 	mmgr_free(sdgame2ptr);
 }
 
+extern void audio_driver_func3F(int command);
+
+void audio_unload(void)
+{
+	audio_driver_func3F(2);
+	mmgr_free(songfileptr);
+	mmgr_free(voicefileptr);
+	is_audioloaded = 0;
+}
+
 void load_sdgame2_shapes(void)
 {
 	int i;

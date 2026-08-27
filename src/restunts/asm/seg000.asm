@@ -429,7 +429,7 @@ _sec_check1:
     call near ptr security_check
     add     sp, 2
 _init_replay:
-    call    audio_unload
+    call    ported_audio_unload_
     mov     ax, 5780h       ; size to allocate, 20*1120
     cwd
     push    dx
@@ -459,7 +459,7 @@ _find_tedit:
     or      ax, ax
     jnz     short _init_replay
 _prepare_intro:
-    call    audio_unload
+    call    ported_audio_unload_
 _do_intro0:
     sub     si, si
 _do_intro:
@@ -728,7 +728,7 @@ run_intro_looped proc far
     call    mmgr_free
     add     sp, 4
 loc_1068E:
-    call    audio_unload
+    call    ported_audio_unload_
 loc_10693:
     mov     ax, si
     pop     si
@@ -7010,7 +7010,7 @@ loc_14404:
     ; align 2
     db 144
 loc_1440C:
-    call    audio_unload
+    call    ported_audio_unload_
     cmp     [bp+var_16], 0
     jz      short loc_14425
     push    [bp+var_1A]
