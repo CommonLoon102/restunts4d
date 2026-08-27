@@ -16,5 +16,5 @@ seg007 segment byte public 'STUNTSC' use16
     extrn audio_op_unk5:proc
     extrn audio_op_unk6:proc
     extrn ported_audio_op_unk7_:proc
-    extrn nopsub_27489:proc
+    extrn ported_nopsub_27489_:proc
 seg007 ends

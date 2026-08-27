@@ -63,7 +63,7 @@ seg007 segment byte public 'STUNTSC' use16
     public audio_op_unk5
     public audio_op_unk6
     public ported_audio_op_unk7_
-    public nopsub_27489
+    public ported_nopsub_27489_
 algn_26BAD:
     ; align 2
     db 144
@@ -1153,15 +1153,14 @@ ported_audio_op_unk7_ proc far
     pop     bp
     retf
 ported_audio_op_unk7_ endp
-nopsub_27489 proc far
+ported_nopsub_27489_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    si
-    mov     ax, 4Ch ; 'L'
+    jmp     nopsub_27489
+    nop
+    nop
     imul    [bp+arg_0]
     mov     bx, ax
     mov     si, [bx+6378h]
@@ -1180,6 +1179,6 @@ loc_274AA:
     retf
     ; align 2
     db 0
-nopsub_27489 endp
+ported_nopsub_27489_ endp
 seg007 ends
 end

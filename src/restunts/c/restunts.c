@@ -903,6 +903,20 @@ void audio_op_unk7(int index)
 	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, 0xFFFFU);
 }
 
+int nopsub_27489(int index)
+{
+	unsigned int offset;
+	int channel;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
+	channel = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE(audiotimers + offset + 0x14U));
+	if (channel < 0)
+		return 1;
+
+	return sub_3771E(channel);
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {

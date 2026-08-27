@@ -260,6 +260,7 @@ extrn sub_37C38:proc
 extrn audio_unk3:proc
 extrn nopsub_28F26:proc
 extrn audio_op_unk7:proc
+extrn nopsub_27489:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
