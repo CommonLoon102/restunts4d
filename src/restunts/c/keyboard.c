@@ -131,6 +131,7 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 		if (kb_intr_data4 == 0) {
 			enable();
 			ax = 0;
+			return ;
 		}
 		result = kb_intr_data_array[kb_intr_data2 / 2];
 		enable();
