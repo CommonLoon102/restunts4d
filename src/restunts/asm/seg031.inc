@@ -2,8 +2,8 @@ seg031 segment byte public 'STUNTSC' use16
     extrn ported_file_load_shape2d_nofatal2_:proc
     extrn ported_file_combine_and_find_:proc
     extrn ported_file_find_next_alt_:proc
-    extrn nullsub_1:proc
-    extrn nullsub_2:proc
+    extrn ported_nullsub_1_:proc
+    extrn ported_nullsub_2_:proc
     extrn ported_init_main_:proc
     extrn ported_random_wait_:proc
     extrn load_palandcursor:proc

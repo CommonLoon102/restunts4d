@@ -1385,7 +1385,11 @@ loc_28036:
     mov     word ptr [bp+var_6E8], ax
     or      ax, ax
     jnz     short loc_28094
-    call    nullsub_1
+    nop
+    nop
+    nop
+    nop
+    nop
 loc_2805E:
     push    word_3EB90
     push    dialog_fnt_colour
@@ -1442,7 +1446,11 @@ loc_280A8:
     cmp     ax, 80h ; '�'
     jnz     short loc_280A8
 loc_280E2:
-    call    nullsub_1
+    nop
+    nop
+    nop
+    nop
+    nop
     cmp     [bp+var_714], 1
     jg      short loc_280F1
     jmp     loc_281CC

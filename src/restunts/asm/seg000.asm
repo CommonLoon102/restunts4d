@@ -3056,7 +3056,11 @@ loc_11C86:
     mov     [bp+var_findfile], ax
     or      ax, ax
     jnz     short loc_11CB8
-    call    nullsub_1
+    nop
+    nop
+    nop
+    nop
+    nop
     pop     si
     pop     di
     mov     sp, bp
@@ -3110,7 +3114,11 @@ loc_11CE1:
     cmp     [bp+var_46], 20h ; ' '
     jnz     short loc_11CE1
 loc_11D44:
-    call    nullsub_1
+    nop
+    nop
+    nop
+    nop
+    nop
     cmp     [bp+var_46], 1
     jg      short loc_11D52
     jmp     loc_11E10
@@ -3285,7 +3293,11 @@ loc_11EBB:
     push    ax
     push    word ptr opp_res+2
     push    word ptr opp_res
-    call    nullsub_2
+    nop
+    nop
+    nop
+    nop
+    nop
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -4014,7 +4026,11 @@ loc_125FE:
     push    ax
     push    word ptr opp_res+2
     push    word ptr opp_res
-    call    nullsub_2
+    nop
+    nop
+    nop
+    nop
+    nop
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -4396,7 +4412,11 @@ loc_12A4D:
     push    ax
     push    word ptr opp_res+2
     push    word ptr opp_res
-    call    nullsub_2
+    nop
+    nop
+    nop
+    nop
+    nop
     add     sp, 6
     mov     ax, offset aScrn_0; "scrn"
     push    ax
@@ -4534,7 +4554,11 @@ loc_12A4D:
     push    ax
     push    word ptr opp_res+2
     push    word ptr opp_res
-    call    nullsub_2
+    nop
+    nop
+    nop
+    nop
+    nop
     add     sp, 6
     mov     al, gameconfig.game_opponenttype
     cbw
@@ -4549,7 +4573,11 @@ loc_12A4D:
     push    ax
     push    word ptr opp_res+2
     push    word ptr opp_res
-    call    nullsub_2
+    nop
+    nop
+    nop
+    nop
+    nop
     add     sp, 6
     mov     ax, offset aClip; "clip"
     push    ax

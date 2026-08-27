@@ -49,8 +49,8 @@ seg031 segment byte public 'STUNTSC' use16
     public ported_file_load_shape2d_nofatal2_
     public ported_file_combine_and_find_
     public ported_file_find_next_alt_
-    public nullsub_1
-    public nullsub_2
+    public ported_nullsub_1_
+    public ported_nullsub_2_
     public ported_init_main_
     public ported_random_wait_
     public load_palandcursor
@@ -117,18 +117,18 @@ ported_file_find_next_alt_ proc far
     call    file_find_next
     retf
 ported_file_find_next_alt_ endp
-nullsub_1 proc far
+ported_nullsub_1_ proc far
 
     retf
     ; align 2
     db 144
-nullsub_1 endp
-nullsub_2 proc far
+ported_nullsub_1_ endp
+ported_nullsub_2_ proc far
 
     retf
     ; align 2
     db 144
-nullsub_2 endp
+ported_nullsub_2_ endp
 ported_init_main_ proc far
     var_argcmd = word ptr -30
     var_timerdelta3 = word ptr -28
