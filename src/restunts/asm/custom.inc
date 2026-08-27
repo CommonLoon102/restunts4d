@@ -264,6 +264,7 @@ extrn nopsub_27489:proc
 extrn audio_function2:proc
 extrn audio_op_unk3:proc
 extrn audio_op_unk4:proc
+extrn audio_function2_wrap:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

@@ -8797,7 +8797,7 @@ loc_196B3:
 loc_196CE:
     push    word_4408C
 loc_196D2:
-    call    audio_function2_wrap
+    call    ported_audio_function2_wrap_
     add     sp, 2
     jmp     loc_1964E
     ; align 2
@@ -8814,7 +8814,7 @@ loc_196DE:
 loc_196F8:
     push    word_4408C
 loc_196FC:
-    call    audio_function2_wrap
+    call    ported_audio_function2_wrap_
     add     sp, 2
 loc_19704:
     mov     bx, [bp+var_cState]

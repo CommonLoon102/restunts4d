@@ -442,6 +442,7 @@ extern short audio_toggle_flag2(void);
 extern short audio_toggle_flag6(void);
 extern void audio_stop_unk(void);
 extern void audiodrv_atexit(void);
+extern void audio_function2_wrap(int index);
 
 extern void check_input(void);
 extern int input_do_checking(int unk);
