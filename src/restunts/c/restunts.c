@@ -1566,6 +1566,7 @@ extern char aId1[];
 extern char aId2[];
 extern char aId3[];
 extern char aId4[];
+extern char aMer[];
 extern char aWai[];
 extern char* findfilenames[];
 
@@ -1588,6 +1589,12 @@ void show_waiting(void)
 	show_dialog(0, 0, locate_text_res(mainresptr, aWai),
 		-1, waitflag, dialogarg2, 0, 0);
 	mouse_draw_opaque_check();
+}
+
+void do_mer_restext(void)
+{
+	show_dialog(1, 1, locate_text_res(mainresptr, aMer),
+		-1, -1, dialogarg2, 0, 0);
 }
 
 void read_line_helper(void)

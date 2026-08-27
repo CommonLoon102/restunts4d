@@ -293,6 +293,7 @@ extrn format_frame_as_string:proc
 extrn parse_filepath_separators:proc
 extrn ensure_file_exists:proc
 extrn show_waiting:proc
+extrn do_mer_restext:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

@@ -106,7 +106,7 @@ seg008 segment byte public 'STUNTSC' use16
     public show_graphic_levels_menu
     public do_dea_textres
     public ported_ensure_file_exists_
-    public do_mer_restext
+    public ported_do_mer_restext_
     public ported_timer_get_delta_alt_
     public ported_file_load_3dres_
 sub_274B0 proc far
@@ -5548,12 +5548,12 @@ loc_2A1E8:
     ; align 2
     db 144
 ported_ensure_file_exists_ endp
-do_mer_restext proc far
+ported_do_mer_restext_ proc far
 
-    sub     ax, ax
-    push    ax
-    push    ax
-    push    dialogarg2
+    jmp     do_mer_restext
+    nop
+    nop
+    nop
     mov     ax, 0FFFFh
     push    ax
     push    ax
@@ -5575,7 +5575,7 @@ do_mer_restext proc far
     retf
     ; align 2
     db 144
-do_mer_restext endp
+ported_do_mer_restext_ endp
 ported_timer_get_delta_alt_ proc far
 
     call    timer_get_delta

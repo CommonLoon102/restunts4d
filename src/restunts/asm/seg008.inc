@@ -59,7 +59,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn show_graphic_levels_menu:proc
     extrn do_dea_textres:proc
     extrn ported_ensure_file_exists_:proc
-    extrn do_mer_restext:proc
+    extrn ported_do_mer_restext_:proc
     extrn ported_timer_get_delta_alt_:proc
     extrn ported_file_load_3dres_:proc
 seg008 ends
