@@ -410,7 +410,7 @@ loc_3A08A:
 loc_3A0C9:
     cmp     [bp+var_argnosound], 0
     jz      short loc_3A0D9
-    call    audio_toggle_flag2
+    call    ported_audio_toggle_flag2_
     call    audio_toggle_flag6
 loc_3A0D9:
     mov     ax, offset do_dea_textres

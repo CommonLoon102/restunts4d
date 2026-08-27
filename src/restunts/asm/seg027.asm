@@ -51,9 +51,9 @@ seg027 segment byte public 'STUNTSC' use16
     public audio_unk
     public sub_372F4
     public sub_3736A
-    public audio_enable_flag2
-    public audio_disable_flag2
-    public audio_toggle_flag2
+    public ported_audio_enable_flag2_
+    public ported_audio_disable_flag2_
+    public ported_audio_toggle_flag2_
     public nopsub_373FE
     public nopsub_37456
     public sub_37470
@@ -439,14 +439,14 @@ sub_3736A proc far
     ; align 2
     db 144
 sub_3736A endp
-audio_enable_flag2 proc far
+ported_audio_enable_flag2_ proc far
 
-    mov     audioflag2, 1
+    jmp     audio_enable_flag2
     retf
-audio_enable_flag2 endp
-audio_disable_flag2 proc far
+ported_audio_enable_flag2_ endp
+ported_audio_disable_flag2_ proc far
 
-    mov     audioflag2, 0
+    jmp     audio_disable_flag2
     mov     word_4063A, 1
     cmp     byte_44290, 0
     jz      short loc_373DC
@@ -462,21 +462,21 @@ loc_373DC:
     call    sub_39700
     mov     word_4063A, 0
     retf
-audio_disable_flag2 endp
-audio_toggle_flag2 proc far
+ported_audio_disable_flag2_ endp
+ported_audio_toggle_flag2_ proc far
 
-    cmp     audioflag2, 1
+    jmp     audio_toggle_flag2
     jnz     short loc_373F6
     push    cs
-    call near ptr audio_disable_flag2
+    call near ptr ported_audio_disable_flag2_
     sub     ax, ax
     retf
 loc_373F6:
     push    cs
-    call near ptr audio_enable_flag2
+    call near ptr ported_audio_enable_flag2_
     mov     ax, 1
     retf
-audio_toggle_flag2 endp
+ported_audio_toggle_flag2_ endp
 nopsub_373FE proc far
     var_2 = word ptr -2
      s = byte ptr 0

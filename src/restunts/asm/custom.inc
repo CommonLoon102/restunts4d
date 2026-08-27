@@ -231,6 +231,9 @@ extrn audio_unload:proc
 extrn set_frame_callback:proc
 extrn remove_frame_callback:proc
 extrn do_opponent_op:proc
+extrn audio_enable_flag2:proc
+extrn audio_disable_flag2:proc
+extrn audio_toggle_flag2:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

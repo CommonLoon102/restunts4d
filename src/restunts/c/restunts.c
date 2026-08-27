@@ -531,6 +531,11 @@ void free_sdgame2(void)
 }
 
 extern void audio_driver_func3F(int command);
+extern char audioflag2;
+extern int word_4063A;
+extern unsigned char byte_44290;
+extern void audio_driver_func1E(int channel, int function);
+extern void sub_39700(void);
 
 void audio_unload(void)
 {
@@ -538,6 +543,32 @@ void audio_unload(void)
 	mmgr_free(songfileptr);
 	mmgr_free(voicefileptr);
 	is_audioloaded = 0;
+}
+
+void audio_enable_flag2(void)
+{
+	audioflag2 = 1;
+}
+
+void audio_disable_flag2(void)
+{
+	audioflag2 = 0;
+	word_4063A = 1;
+	if (byte_44290 != 0)
+		audio_driver_func1E(0, (unsigned int)byte_44290 - 1U);
+	sub_39700();
+	word_4063A = 0;
+}
+
+short audio_toggle_flag2(void)
+{
+	if (audioflag2 == 1) {
+		audio_disable_flag2();
+		return 0;
+	}
+
+	audio_enable_flag2();
+	return 1;
 }
 
 void load_sdgame2_shapes(void)

@@ -5104,7 +5104,7 @@ do_mof_restext proc far
     call near ptr ported_input_push_status_
 loc_29E9C:
     mov     word_3F88E, 1
-    call    audio_toggle_flag2
+    call    ported_audio_toggle_flag2_
     or      ax, ax
     jz      short loc_29EBE
     sub     ax, ax
