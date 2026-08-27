@@ -57,7 +57,7 @@ seg001 segment byte public 'STUNTSC' use16
     public detect_penalty
     public ported_update_car_speed_
     public update_grip
-    public car_car_speed_adjust_maybe
+    public ported_car_car_speed_adjust_maybe_
     public ported_carState_rc_op_
     public ported_upd_statef20_from_steer_input_
     public audio_carstate
@@ -3221,7 +3221,7 @@ loc_1653E:
     push    [bp+arg_oState]
     push    bx
     push    cs
-    call near ptr car_car_speed_adjust_maybe
+    call near ptr ported_car_car_speed_adjust_maybe_
     add     sp, 4
     or      al, al
     jnz     short loc_16550
@@ -6687,7 +6687,7 @@ loc_18458:
     pop     bp
     retf
 update_grip endp
-car_car_speed_adjust_maybe proc far
+ported_car_car_speed_adjust_maybe_ proc far
     var_18 = word ptr -24
     var_16 = word ptr -22
     var_14 = word ptr -20
@@ -6705,10 +6705,10 @@ car_car_speed_adjust_maybe proc far
     arg_oState = word ptr 6
     arg_pState = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 18h
-    push    si
+    ; Preserve this seven-byte entry width: later seg001 offsets are address-sensitive.
+    jmp     car_car_speed_adjust_maybe
+    db      144
+    db      144
     mov     bx, [bp+arg_oState]
     mov     [bx+CARSTATE.field_C8], 1
     mov     bx, [bp+arg_pState]
@@ -6860,7 +6860,7 @@ loc_185EE:
     retf
     ; align 2
     db 144
-car_car_speed_adjust_maybe endp
+ported_car_car_speed_adjust_maybe_ endp
 ported_carState_rc_op_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4

@@ -136,6 +136,73 @@ int carState_rc_op(
 	return LEGACY_S16_WRAP_ADD(previous_rc2, adjustment);
 }
 
+int car_car_speed_adjust_maybe(
+	struct CARSTATE* first_state,
+	struct CARSTATE* second_state
+) {
+	legacy_s16 first_angle;
+	legacy_s16 second_angle;
+	legacy_s16 first_sin_speed;
+	legacy_s16 second_sin_speed;
+	legacy_s16 first_cos_speed;
+	legacy_s16 second_cos_speed;
+	legacy_s16 relative_speed;
+	legacy_s16 slowdown;
+	legacy_s16 angle_delta;
+
+	first_state->field_C8 = 1;
+	second_state->field_C8 = 1;
+	first_angle = (legacy_s16)first_state->car_rotate.x;
+	second_angle = (legacy_s16)second_state->car_rotate.x;
+
+	first_sin_speed = multiply_and_scale(
+		(legacy_s16)(first_state->car_speed2 >> 8),
+		sin_fast((legacy_u16)first_angle));
+	second_sin_speed = multiply_and_scale(
+		(legacy_s16)(second_state->car_speed2 >> 8),
+		sin_fast((legacy_u16)second_angle));
+	first_cos_speed = multiply_and_scale(
+		(legacy_s16)(first_state->car_speed2 >> 8),
+		cos_fast((legacy_u16)first_angle));
+	second_cos_speed = multiply_and_scale(
+		(legacy_s16)(second_state->car_speed2 >> 8),
+		cos_fast((legacy_u16)second_angle));
+
+	relative_speed = (legacy_s16)polarRadius2D(
+		LEGACY_S16_WRAP_SUB(second_sin_speed, first_sin_speed),
+		LEGACY_S16_WRAP_SUB(second_cos_speed, first_cos_speed));
+	if (relative_speed < 10)
+		relative_speed = 10;
+
+	/* The original keeps only the low product word before shifting it. */
+	slowdown = LEGACY_S16_SAR2(
+		LEGACY_S16_WRAP_MUL(0x300, relative_speed));
+	if ((legacy_u16)first_state->car_speed2 < (legacy_u16)slowdown) {
+		first_state->car_speed2 = 0;
+	} else {
+		first_state->car_speed2 = LEGACY_U16_WRAP_SUB(
+			first_state->car_speed2, slowdown);
+	}
+
+	angle_delta = LEGACY_S16_WRAP_SUB(second_angle, first_angle);
+	if (angle_delta >= 0x200)
+		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, 0x400);
+	if (angle_delta <= -0x200)
+		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, 0x400);
+	first_state->car_36MwhlAngle = angle_delta;
+
+	angle_delta = LEGACY_S16_WRAP_SUB(first_angle, second_angle);
+	if (angle_delta >= 0x200)
+		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, 0x400);
+	if (angle_delta <= -0x200)
+		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, 0x400);
+	second_state->car_36MwhlAngle = angle_delta;
+
+	first_state->car_speed = first_state->car_speed2;
+	second_state->car_speed = second_state->car_speed2;
+	return relative_speed > 0x1E;
+}
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	int var_pSpeed2Scaled;

@@ -199,6 +199,7 @@ extrn update_car_speed:proc
 extrn update_rpm_from_speed:proc
 extrn upd_statef20_from_steer_input:proc
 extrn carState_rc_op:proc
+extrn car_car_speed_adjust_maybe:proc
 
 ; externs for implementations in restunts.c
 
