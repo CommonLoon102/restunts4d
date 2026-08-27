@@ -67,7 +67,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_mouse_draw_transparent_
     public ported_mouse_multi_hittest_
     public check_input
-    public nopsub_28F26
+    public ported_nopsub_28F26_
     public ported_sprite_copy_2_to_1_2_
     public ported_sprite_copy_2_to_1_clear_
     public ported_sprite_copy_wnd_to_1_
@@ -3148,22 +3148,20 @@ loc_28F1C:
     pop     bp
     retf
 check_input endp
-nopsub_28F26 proc far
+ported_nopsub_28F26_ proc far
 
-    push    cs
-    call near ptr ported_timer_get_delta_alt_
-    push    ax
+    jmp     nopsub_28F26
     push    cs
     call near ptr input_checking
     add     sp, 2
     or      ax, ax
-    jz      short near ptr nopsub_28F26
+    jz      short near ptr ported_nopsub_28F26_
     push    cs
     call near ptr check_input
     retf
     ; align 2
     db 144
-nopsub_28F26 endp
+ported_nopsub_28F26_ endp
 ported_sprite_copy_2_to_1_2_ proc far
 
     mov     ax, offset sprite2

@@ -483,6 +483,15 @@ int input_do_checking(int frame_delta)
 	return input_checking(frame_delta);
 }
 
+void nopsub_28F26(void)
+{
+	do {
+		/* Keep advancing input state until an event is reported. */
+	} while (input_checking((int)timer_get_delta_alt()) == 0);
+
+	check_input();
+}
+
 void input_push_status(void)
 {
 	int index = (signed char)byte_3EBD8;
