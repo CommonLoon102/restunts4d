@@ -1443,6 +1443,58 @@ static legacy_u16 legacy_near_string_length(const char* text)
 	return length;
 }
 
+void print_int_as_string_maybe(char* destination, int value, int zero_pad,
+	int width)
+{
+	char digits[5];
+	legacy_s16 signed_value;
+	legacy_u16 magnitude;
+	legacy_u16 digit_count;
+	legacy_u16 length;
+	legacy_u16 index;
+
+	signed_value = LEGACY_S16_FROM_BITS((legacy_u16)value);
+	magnitude = signed_value < 0 ?
+		(legacy_u16)(0U - (legacy_u16)signed_value) :
+		(legacy_u16)signed_value;
+	digit_count = 0;
+	do {
+		digits[digit_count++] = (char)('0' + magnitude % 10U);
+		magnitude /= 10U;
+	} while (magnitude != 0);
+
+	index = 0;
+	if (signed_value < 0)
+		destination[index++] = '-';
+	while (digit_count != 0)
+		destination[index++] = digits[--digit_count];
+	destination[index] = 0;
+	length = index;
+
+	if (width != 0) {
+		while (LEGACY_S16_FROM_BITS((legacy_u16)width) <
+			LEGACY_S16_FROM_BITS(length)) {
+			for (index = 0; index < length; index++)
+				destination[index] = destination[index + 1U];
+			length--;
+		}
+		while (LEGACY_S16_FROM_BITS((legacy_u16)width) >
+			LEGACY_S16_FROM_BITS(length)) {
+			index = length;
+			do {
+				destination[index + 1U] = destination[index];
+			} while (index-- != 0);
+			destination[0] = ' ';
+			length++;
+		}
+	}
+	if (zero_pad != 0) {
+		index = 0;
+		while (destination[index] == ' ')
+			destination[index++] = '0';
+	}
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

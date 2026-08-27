@@ -82,7 +82,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_font_op2_alt_
     public sprite_blit_to_video
     public show_waiting
-    public print_int_as_string_maybe
+    public ported_print_int_as_string_maybe_
     public ported_sub_29772_
     public mouse_timer_sprite_unk
     public ported_file_load_audiores_
@@ -4094,16 +4094,15 @@ show_waiting proc far
     ; align 2
     db 144
 show_waiting endp
-print_int_as_string_maybe proc far
+ported_print_int_as_string_maybe_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     print_int_as_string_maybe
+    nop
     push    di
     push    si
     mov     ax, 0Ah
@@ -4188,7 +4187,7 @@ loc_2976B:
     retf
     ; align 2
     db 144
-print_int_as_string_maybe endp
+ported_print_int_as_string_maybe_ endp
 ported_sub_29772_ proc far
 
     jmp     sub_29772
@@ -4404,7 +4403,7 @@ format_frame_as_string proc far
     lea     ax, [bp+var_12]
     push    ax              ; char *
     push    cs
-    call near ptr print_int_as_string_maybe
+    call near ptr ported_print_int_as_string_maybe_
     add     sp, 8
     lea     ax, [bp+var_12]
     push    ax
@@ -4424,7 +4423,7 @@ format_frame_as_string proc far
     lea     ax, [bp+var_12]
     push    ax              ; char *
     push    cs
-    call near ptr print_int_as_string_maybe
+    call near ptr ported_print_int_as_string_maybe_
     add     sp, 8
     lea     ax, [bp+var_12]
     push    ax
@@ -4452,7 +4451,7 @@ loc_2996E:
     lea     ax, [bp+var_12]
     push    ax              ; char *
     push    cs
-    call near ptr print_int_as_string_maybe
+    call near ptr ported_print_int_as_string_maybe_
     add     sp, 8
     lea     ax, [bp+var_12]
     push    ax
