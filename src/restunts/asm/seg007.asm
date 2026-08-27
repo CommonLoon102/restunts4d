@@ -48,7 +48,7 @@ seg007 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public ported_audio_add_driver_timer_
     public ported_audio_remove_driver_timer_
-    public pad_id
+    public ported_pad_id_
     public audio_init_engine
     public audio_op_unk
     public ported_audio_function2_
@@ -130,16 +130,14 @@ loc_26C04:
     pop     si
     retf
 ported_audio_remove_driver_timer_ endp
-pad_id proc far
+ported_pad_id_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    si
-loc_26C0A:
-    les     bx, [bp+arg_0]
+    jmp     pad_id
+    nop
+    nop
     mov     ax, es:[bx]
     mov     dx, es:[bx+2]
 loc_26C14:
@@ -162,7 +160,7 @@ loc_26C2E:
     mov     sp, bp
     pop     bp
     retf
-pad_id endp
+ported_pad_id_ endp
 audio_init_engine proc far
     var_18 = dword ptr -24
     var_14 = word ptr -20
@@ -247,7 +245,7 @@ loc_26CCB:
     push    word ptr es:[di+8]
     mov     si, es
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -261,7 +259,7 @@ loc_26CCB:
     push    word ptr es:[di+12h]
     push    word ptr es:[di+10h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -277,7 +275,7 @@ loc_26CCB:
     push    word ptr es:[di+16h]
     push    word ptr es:[di+14h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -293,7 +291,7 @@ loc_26CCB:
     push    word ptr es:[di+1Ah]
     push    word ptr es:[di+18h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -309,7 +307,7 @@ loc_26CCB:
     push    word ptr es:[di+1Eh]
     push    word ptr es:[di+1Ch]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -325,7 +323,7 @@ loc_26CCB:
     push    word ptr es:[di+22h]
     push    word ptr es:[di+20h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -341,7 +339,7 @@ loc_26CCB:
     push    word ptr es:[di+26h]
     push    word ptr es:[di+24h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -357,7 +355,7 @@ loc_26CCB:
     push    word ptr es:[di+2Ah]
     push    word ptr es:[di+28h]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax
@@ -373,7 +371,7 @@ loc_26CCB:
     push    word ptr es:[di+2Eh]
     push    word ptr es:[di+2Ch]
     push    cs
-    call near ptr pad_id
+    call near ptr ported_pad_id_
     pop     bx
     pop     bx
     push    ax

@@ -559,6 +559,9 @@ extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
 extern unsigned char audiotimers[];
 extern unsigned int word_42240;
+extern unsigned int word_42242;
+extern unsigned int word_42244;
+extern unsigned char byte_42246;
 extern void far audio_driver_timer(void);
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
@@ -605,6 +608,21 @@ void audio_remove_driver_timer(void)
 		audiotimers[offset] = 0;
 	}
 	timer_remove_callback(&audio_driver_timer);
+}
+
+char* pad_id(const char far* source)
+{
+	unsigned char* destination;
+	unsigned int index;
+
+	destination = (unsigned char*)&word_42242;
+	for (index = 0; index < 4U; index++) {
+		destination[index] = (unsigned char)source[index];
+		if (destination[index] == 0)
+			destination[index] = ' ';
+	}
+	byte_42246 = 0;
+	return (char*)destination;
 }
 
 void audio_unload(void)
