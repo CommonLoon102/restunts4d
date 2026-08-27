@@ -295,6 +295,7 @@ extrn ensure_file_exists:proc
 extrn show_waiting:proc
 extrn do_mer_restext:proc
 extrn do_key_restext:proc
+extrn do_mou_restext:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

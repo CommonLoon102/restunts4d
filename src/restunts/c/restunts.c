@@ -1568,6 +1568,7 @@ extern char aId3[];
 extern char aId4[];
 extern char aKey[];
 extern char aMer[];
+extern char aMou[];
 extern char aWai[];
 extern char* findfilenames[];
 extern void audio_unk(void);
@@ -1609,6 +1610,19 @@ void do_key_restext(void)
 		-1, -1, dialogarg2, 0, 0);
 	byte_3FE00 = 0;
 	byte_3B8F2 = 0;
+	word_3F88E = 0;
+	sub_372F4();
+	input_pop_status();
+}
+
+void do_mou_restext(void)
+{
+	input_push_status();
+	word_3F88E = 1;
+	audio_unk();
+	byte_3B8F2 = 1;
+	show_dialog(4, 1, locate_text_res(mainresptr, aMou),
+		-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
 	sub_372F4();
 	input_pop_status();
