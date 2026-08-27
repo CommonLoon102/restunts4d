@@ -412,6 +412,8 @@ void file_load_shape2d_expand(unsigned char far* memchunk, char far* mempages) {
 	int shapecount, length, i, j, k, l;
 	unsigned char far* memchunkptr, far* mempagesptr, px, pat;
 	unsigned long val;
+	unsigned long product;
+	unsigned short lowterm;
 	unsigned long far* offsets, nextoffset;
 	struct SHAPE2D far* srcshape, far* dstshape;
 
@@ -432,10 +434,18 @@ void file_load_shape2d_expand(unsigned char far* memchunk, char far* mempages) {
 	
 	for (i = 0; i < shapecount; ++i) {
 		srcshape = file_get_shape2d(memchunk, i);
-		length = srcshape->s2d_width * srcshape->s2d_height;
+		product = (unsigned long)srcshape->s2d_width * srcshape->s2d_height;
+		length = (int)(unsigned short)product;
+
+		// dx:ax at this point is HIWORD(w*h) : (LOWORD(w*h)*8 + 16), each
+		// half 16 bits wide and wrapping on its own - the three shl's and
+		// the `add ax, size SHAPE2D` never carry into dx. Only the
+		// `add ax, bx / adc dx, cx` that folds in the running offset does.
+		lowterm = (unsigned short)length * 8 + sizeof(struct SHAPE2D);
 
 		offsets[i] = nextoffset;
-		nextoffset += sizeof(struct SHAPE2D) + length * 8;
+		nextoffset += (unsigned long)lowterm
+		            + ((unsigned long)(unsigned short)(product >> 16) << 16);
 		
 		dstshape = file_get_shape2d(mempages, i);
 		*dstshape = *srcshape;
@@ -476,8 +486,9 @@ void file_load_shape2d_expand(unsigned char far* memchunk, char far* mempages) {
 		}
 	}
 	
-	// Final size.
-	*(unsigned long far*)mempages = 6 + (shapecount * 8) + nextoffset;
+	// Final size. The original folds this in as a 16-bit term too
+	// (bx = shapecount*8 + 6, then `add ax, bx / adc dx, 0`).
+	*(unsigned long far*)mempages = (unsigned short)(6 + (shapecount * 8)) + nextoffset;
 }
 
 unsigned short file_get_unflip_size(char far* memchunk) {
