@@ -21,6 +21,8 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG="$SCRIPT_DIR/dosbox.proc.conf"
 GAME_DIR="$SCRIPT_DIR/../../stunts"
 
+# Output files keep the replay's basename with .BIN and .BNI extensions.
+# Strip the extension case-insensitively: both 0000.rpl and WUT.RPL occur.
 base="${filename%.[rR][pP][lL]}"
 BINFILE="$GAME_DIR/$base.BIN"
 BNIFILE="$GAME_DIR/$base.BNI"
@@ -68,25 +70,18 @@ run_dosbox_exe() {
 run_dosbox_exe "repldumo.exe" "$filename"
 run_dosbox_exe "repldump.exe" "$filename"
 
-base="${filename%.rpl}"
-bin_file="${base}.BIN"
-bni_file="${base}.BNI"
-
 bin_exists=true
 bni_exists=true
 
-BINFILE="$GAME_DIR/$bin_file"
-BNIFILE="$GAME_DIR/$bni_file"
-
 # Check .BIN independently.
 if [[ ! -f "$BINFILE" ]]; then
-    echo "echo repldumo.exe hasn't produced output"
+    echo "repldumo.exe hasn't produced output"
     bin_exists=false
 fi
 
 # Check .BNI independently.
 if [[ ! -f "$BNIFILE" ]]; then
-    echo "echo repldump.exe hasn't produced output"
+    echo "repldump.exe hasn't produced output"
     bni_exists=false
 fi
 
