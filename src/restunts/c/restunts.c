@@ -538,9 +538,12 @@ extern unsigned char byte_44290;
 extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
+extern unsigned char byte_45948;
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void sub_39700(void);
+extern int audio_check_flag(void far* resource, int channel,
+	unsigned char priority, unsigned int rate);
 
 void audio_unload(void)
 {
@@ -656,6 +659,13 @@ void audioresource_copy_4_bytes(legacy_u8 far* destination,
 	destination[1] = source[1];
 	destination[2] = source[2];
 	destination[3] = source[3];
+}
+
+int audio_check_flag2(void far* resource, int channel,
+	unsigned char priority)
+{
+	return audio_check_flag(resource, channel, priority,
+		(unsigned int)byte_45948);
 }
 
 void load_sdgame2_shapes(void)

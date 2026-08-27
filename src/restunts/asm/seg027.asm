@@ -58,7 +58,7 @@ seg027 segment byte public 'STUNTSC' use16
     public nopsub_37456
     public sub_37470
     public sub_374DE
-    public audio_check_flag2
+    public ported_audio_check_flag2_
     public audio_check_flag
     public audio_init_chunk2
     public ported_audio_enable_flag6_
@@ -546,7 +546,7 @@ nopsub_37456 proc far
     push    [bp+arg_2]
     push    [bp+arg_0]
     push    cs
-    call near ptr audio_check_flag2
+    call near ptr ported_audio_check_flag2_
     add     sp, 8
     pop     bp
     retf
@@ -633,7 +633,7 @@ loc_374F7:
     ; align 2
     db 144
 sub_374DE endp
-audio_check_flag2 proc far
+ported_audio_check_flag2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -641,9 +641,8 @@ audio_check_flag2 proc far
     arg_4 = word ptr 10
     arg_6 = byte ptr 12
 
-    push    bp
-    mov     bp, sp
-    mov     al, byte_45948
+    jmp     audio_check_flag2
+    nop
     sub     ah, ah
     push    ax
     mov     al, [bp+arg_6]
@@ -658,7 +657,7 @@ audio_check_flag2 proc far
     retf
     ; align 2
     db 144
-audio_check_flag2 endp
+ported_audio_check_flag2_ endp
 audio_check_flag proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
