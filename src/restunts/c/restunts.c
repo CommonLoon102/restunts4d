@@ -558,6 +558,8 @@ extern unsigned char byte_44D06[];
 extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
 extern unsigned char audiotimers[];
+extern unsigned int word_42240;
+extern void far audio_driver_timer(void);
 extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
@@ -574,6 +576,16 @@ static void far* audio_read_far_pointer(const unsigned char* source)
 {
 	return MK_FP(LEGACY_READ_U16_LE(source + 2),
 		LEGACY_READ_U16_LE(source));
+}
+
+void audio_add_driver_timer(void)
+{
+	unsigned int index;
+
+	for (index = 0; index < 25U; index++)
+		audiotimers[index * 0x4CU] = 0;
+	word_42240 = 0x16U;
+	timer_reg_callback(&audio_driver_timer);
 }
 
 void audio_unload(void)

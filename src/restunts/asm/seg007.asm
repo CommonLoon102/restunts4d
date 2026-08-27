@@ -46,7 +46,7 @@ nosmart
 seg007 segment byte public 'STUNTSC' use16
     assume cs:seg007
     assume es:nothing, ss:nothing, ds:dseg
-    public audio_add_driver_timer
+    public ported_audio_add_driver_timer_
     public audio_remove_driver_timer
     public pad_id
     public audio_init_engine
@@ -67,11 +67,9 @@ seg007 segment byte public 'STUNTSC' use16
 algn_26BAD:
     ; align 2
     db 144
-audio_add_driver_timer proc far
+ported_audio_add_driver_timer_ proc far
 
-    mov     bx, offset audiotimers
-loc_26BB1:
-    jmp     short loc_26BB9
+    jmp     audio_add_driver_timer
 loc_26BB3:
     mov     byte ptr [bx], 0
 loc_26BB6:
@@ -96,7 +94,7 @@ loc_26BD2:
     pop     bx
 locret_26BD4:
     retf
-audio_add_driver_timer endp
+ported_audio_add_driver_timer_ endp
 audio_remove_driver_timer proc far
      r = byte ptr 0
 

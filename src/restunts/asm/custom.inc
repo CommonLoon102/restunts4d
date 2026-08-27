@@ -269,6 +269,7 @@ extrn nopsub_2726C:proc
 extrn nopsub_272B0:proc
 extrn audio_op_unk5:proc
 extrn audio_op_unk6:proc
+extrn audio_add_driver_timer:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

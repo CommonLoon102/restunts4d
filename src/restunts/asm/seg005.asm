@@ -3056,7 +3056,7 @@ loc_237D3:
     add     sp, 4
     mov     word ptr engptr, ax
     mov     word ptr engptr+2, dx
-    call    audio_add_driver_timer
+    call    ported_audio_add_driver_timer_
     push    word ptr engptr+2
     push    word ptr engptr
     push    word ptr eng1ptr+2
