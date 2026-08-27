@@ -3150,7 +3150,7 @@ loc_238DE:
     add     sp, 6
     mov     word ptr wallptr, ax
     mov     word ptr wallptr+2, dx
-    call    load_sdgame2_shapes
+    call    ported_load_sdgame2_shapes_
     les     bx, td14_elem_map_main
     mov     al, es:[bx+384h]; 384h = sky box position in track data
     sub     ah, ah

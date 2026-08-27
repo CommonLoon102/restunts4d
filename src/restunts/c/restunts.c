@@ -360,6 +360,8 @@ extern void preRender_default(int color, int vertlinecount, int* vertlines);
 extern char byte_3B8F6;
 extern char far* skybox_res_ofs;
 extern char far* sdgame2ptr;
+extern int sdgame2_widths[];
+extern char far* sdgame2shapes[];
 
 void init_unknown(void)
 {
@@ -381,6 +383,20 @@ void unload_skybox(void)
 void free_sdgame2(void)
 {
 	mmgr_free(sdgame2ptr);
+}
+
+void load_sdgame2_shapes(void)
+{
+	int i;
+
+	sdgame2ptr = file_load_resource(8, "sdgame2");
+	locate_many_resources(
+		sdgame2ptr,
+		"ex01ex02ex03leftrigh",
+		sdgame2shapes);
+	for (i = 0; i < 3; i++)
+		sdgame2_widths[i] =
+			((struct SHAPE2D far*)sdgame2shapes[i])->s2d_width;
 }
 
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle)

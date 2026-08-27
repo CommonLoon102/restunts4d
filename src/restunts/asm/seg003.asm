@@ -58,7 +58,7 @@ seg003 segment byte public 'STUNTSC' use16
     public init_crak
     public load_skybox
     public ported_unload_skybox_
-    public load_sdgame2_shapes
+    public ported_load_sdgame2_shapes_
     public ported_free_sdgame2_
     public setup_intro
     public intro_op
@@ -6210,14 +6210,13 @@ loc_1D8CB:
     ; align 2
     db 144
 ported_unload_skybox_ endp
-load_sdgame2_shapes proc far
+ported_load_sdgame2_shapes_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
-    push    di
+    jmp     load_sdgame2_shapes
+    nop
+    nop
     push    si
     mov     ax, offset aSdgame2; "sdgame2"
     push    ax              ; char *
@@ -6255,7 +6254,7 @@ loc_1D908:
     retf
     ; align 2
     db 144
-load_sdgame2_shapes endp
+ported_load_sdgame2_shapes_ endp
 ported_free_sdgame2_ proc far
 
     jmp     free_sdgame2
