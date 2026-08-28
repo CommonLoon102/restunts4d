@@ -1,0 +1,108 @@
+#include <assert.h>
+#include <stddef.h>
+
+#include "../../src/restunts/c/legacy.h"
+
+static legacy_u16 reference_sar16(legacy_u16 bits, legacy_u16 count)
+{
+	count &= 0x1FU;
+	while (count-- != 0U)
+		bits = (legacy_u16)((bits >> 1) | (bits & 0x8000U));
+	return bits;
+}
+
+static legacy_u32 reference_sar32(legacy_u32 bits, legacy_u16 count)
+{
+	count &= 0x1FU;
+	while (count-- != 0U)
+		bits = (bits >> 1) | (bits & (legacy_u32)0x80000000UL);
+	return bits;
+}
+
+static void test_word_shifts_and_rotates(void)
+{
+	legacy_u32 value;
+	legacy_u16 count;
+	legacy_u16 bits;
+
+	for (value = 0UL; value <= 0xFFFFUL; value++) {
+		bits = (legacy_u16)value;
+		for (count = 0U; count < 40U; count++) {
+			assert(LEGACY_U16_SAR(bits, count) ==
+				reference_sar16(bits, count));
+			assert(LEGACY_U16_ROL(
+				LEGACY_U16_ROR(bits, count), count) == bits);
+		}
+	}
+}
+
+static void test_dword_shifts_and_rotates(void)
+{
+	static const legacy_u32 values[] = {
+		0UL, 1UL, 0x7FFFFFFFUL, 0x80000000UL, 0x89ABCDEFUL,
+		0xFFFFFFFFUL
+	};
+	size_t index;
+	legacy_u16 count;
+
+	for (index = 0U; index < sizeof(values) / sizeof(values[0]); index++) {
+		for (count = 0U; count < 40U; count++) {
+			assert(LEGACY_U32_SAR(values[index], count) ==
+				reference_sar32(values[index], count));
+			assert(LEGACY_U32_ROL(
+				LEGACY_U32_ROR(values[index], count), count) ==
+				values[index]);
+		}
+	}
+}
+
+static void test_multiply_and_divide(void)
+{
+	assert(LEGACY_S16_WRAP_ADD(32767, 1) == -32768);
+	assert(LEGACY_S16_WRAP_SUB(-32768, 1) == 32767);
+	assert(LEGACY_S32_WRAP_ADD(
+		LEGACY_S32_FROM_BITS(0x7FFFFFFFUL), 1L) ==
+		LEGACY_S32_FROM_BITS(0x80000000UL));
+	assert(LEGACY_S32_WRAP_MUL(
+		LEGACY_S32_FROM_BITS(0x40000000UL), 4L) == 0L);
+	assert(LEGACY_U16_MUL_HIGH(0xFFFFU, 0xFFFFU) == 0xFFFEU);
+	assert(LEGACY_S16_MUL_HIGH(-32768, -32768) == 0x4000);
+	assert(LEGACY_S16_MUL_HIGH(-32768, 2) == -1);
+	assert(LEGACY_U16_DIV_OR_ZERO(0xFFFFU, 2U) == 0x7FFFU);
+	assert(LEGACY_U16_DIV_OR_ZERO(0xFFFFU, 0U) == 0U);
+	assert(LEGACY_S16_DIV_OR_ZERO(7, 3) == 2);
+	assert(LEGACY_S16_DIV_OR_ZERO(-7, 3) == -2);
+	assert(LEGACY_S16_DIV_OR_ZERO(7, 0) == 0);
+	assert(LEGACY_S16_DIV_OR_ZERO(-32768, -1) == 0);
+	assert(LEGACY_U32_DIV_OR_ZERO(0xFFFFFFFFUL, 2UL) == 0x7FFFFFFFUL);
+	assert(LEGACY_U32_DIV_OR_ZERO(0xFFFFFFFFUL, 0UL) == 0UL);
+	assert(LEGACY_S32_DIV_OR_ZERO(7L, -3L) == -2L);
+	assert(LEGACY_S32_DIV_OR_ZERO(7L, 0L) == 0L);
+	assert(LEGACY_S32_DIV_OR_ZERO(
+		LEGACY_S32_FROM_BITS(0x80000000UL), -1L) == 0L);
+}
+
+static void test_little_endian_access(void)
+{
+	legacy_u8 bytes[4];
+
+	LEGACY_WRITE_U16_LE(bytes, 0xFEDCU);
+	assert(bytes[0] == 0xDCU && bytes[1] == 0xFEU);
+	assert(LEGACY_READ_U16_LE(bytes) == 0xFEDCU);
+	assert(LEGACY_READ_S16_LE(bytes) == -292);
+
+	LEGACY_WRITE_U32_LE(bytes, 0x89ABCDEFUL);
+	assert(bytes[0] == 0xEFU && bytes[1] == 0xCDU);
+	assert(bytes[2] == 0xABU && bytes[3] == 0x89U);
+	assert(LEGACY_READ_U32_LE(bytes) == 0x89ABCDEFUL);
+	assert((legacy_u32)LEGACY_READ_S32_LE(bytes) == 0x89ABCDEFUL);
+}
+
+int main(void)
+{
+	test_word_shifts_and_rotates();
+	test_dword_shifts_and_rotates();
+	test_multiply_and_divide();
+	test_little_endian_access();
+	return 0;
+}

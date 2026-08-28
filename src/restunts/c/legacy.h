@@ -56,11 +56,62 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_WRAP_MUL(left, right) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(left, right))
 
-#define LEGACY_U16_SAR2(value) \
-	((legacy_u16)(((legacy_u16)(value) >> 2) | \
-	((((legacy_u16)(value) & 0x8000U) != 0) ? 0xC000U : 0U)))
+/* x86 masks variable shift counts to five bits. */
+#define LEGACY_SHIFT_COUNT(value) ((legacy_u16)(value) & 0x1FU)
+#define LEGACY_ROTATE16_COUNT(value) ((legacy_u16)(value) & 0x0FU)
+
+#define LEGACY_U16_SAR(value, count) \
+	((legacy_u16)(LEGACY_SHIFT_COUNT(count) == 0U ? \
+		(legacy_u16)(value) : \
+		(((legacy_u16)(value) & 0x8000U) != 0U ? \
+			(LEGACY_SHIFT_COUNT(count) >= 16U ? \
+			(legacy_u32)0xFFFFUL : \
+			(legacy_u32)((legacy_u16)(value) >> \
+				LEGACY_SHIFT_COUNT(count)) | \
+			(legacy_u16)((legacy_u32)0xFFFFUL << \
+				(16U - LEGACY_SHIFT_COUNT(count)))) : \
+			(LEGACY_SHIFT_COUNT(count) >= 16U ? 0UL : \
+			(legacy_u32)((legacy_u16)(value) >> \
+				LEGACY_SHIFT_COUNT(count))))))
+#define LEGACY_S16_SAR(value, count) \
+	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR(value, count))
+#define LEGACY_U16_SAR2(value) LEGACY_U16_SAR(value, 2U)
 #define LEGACY_S16_SAR2(value) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR2(value))
+
+#define LEGACY_U16_ROL(value, count) \
+	((legacy_u16)(LEGACY_ROTATE16_COUNT(count) == 0U ? \
+		(legacy_u16)(value) : \
+		((legacy_u32)(legacy_u16)(value) << \
+			LEGACY_ROTATE16_COUNT(count)) | \
+		((legacy_u16)(value) >> \
+			(16U - LEGACY_ROTATE16_COUNT(count)))))
+#define LEGACY_U16_ROR(value, count) \
+	((legacy_u16)(LEGACY_ROTATE16_COUNT(count) == 0U ? \
+		(legacy_u16)(value) : \
+		((legacy_u16)(value) >> LEGACY_ROTATE16_COUNT(count)) | \
+		((legacy_u32)(legacy_u16)(value) << \
+			(16U - LEGACY_ROTATE16_COUNT(count)))))
+
+#define LEGACY_U16_MUL_HIGH(left, right) \
+	((legacy_u16)(((legacy_u32)(legacy_u16)(left) * \
+	(legacy_u32)(legacy_u16)(right)) >> 16))
+#define LEGACY_S16_MUL_HIGH(left, right) \
+	LEGACY_S16_FROM_BITS((legacy_u16)((legacy_u32)( \
+		(legacy_s32)LEGACY_S16_FROM_BITS(left) * \
+		(legacy_s32)LEGACY_S16_FROM_BITS(right)) >> 16))
+
+/* The original #DE recovery skips a faulting division with a zero result. */
+#define LEGACY_U16_DIV_OR_ZERO(numerator, denominator) \
+	((legacy_u16)(denominator) == 0U ? 0U : \
+	(legacy_u16)((legacy_u16)(numerator) / \
+		(legacy_u16)(denominator)))
+#define LEGACY_S16_DIV_OR_ZERO(numerator, denominator) \
+	((((legacy_u16)(denominator) == 0U) || \
+		((legacy_u16)(numerator) == 0x8000U && \
+		LEGACY_S16_FROM_BITS(denominator) == -1)) ? 0 : \
+		(legacy_s16)(LEGACY_S16_FROM_BITS(numerator) / \
+			LEGACY_S16_FROM_BITS(denominator)))
 
 #define LEGACY_READ_U16_LE(bytes) \
 	((legacy_u16)((legacy_u16)((const legacy_u8*)(bytes))[0] | \
@@ -95,5 +146,75 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S32_WRAP_ADD_S16(left, right) \
 	LEGACY_S32_FROM_BITS( \
 		(legacy_u32)(left) + LEGACY_U32_SIGN_EXTEND_S16(right))
+
+#define LEGACY_U32_WRAP_ADD(left, right) \
+	((legacy_u32)((legacy_u32)(left) + (legacy_u32)(right)))
+#define LEGACY_U32_WRAP_SUB(left, right) \
+	((legacy_u32)((legacy_u32)(left) - (legacy_u32)(right)))
+#define LEGACY_U32_WRAP_MUL(left, right) \
+	((legacy_u32)((legacy_u32)(left) * (legacy_u32)(right)))
+#define LEGACY_S32_WRAP_SUB(left, right) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_SUB(left, right))
+#define LEGACY_S32_WRAP_NEGATE(value) \
+	LEGACY_S32_FROM_BITS((legacy_u32)(0UL - (legacy_u32)(value)))
+#define LEGACY_S32_WRAP_MUL(left, right) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_MUL(left, right))
+
+#define LEGACY_U32_SAR(value, count) \
+	((legacy_u32)(LEGACY_SHIFT_COUNT(count) == 0U ? \
+		(legacy_u32)(value) : \
+		(((legacy_u32)(value) & (legacy_u32)0x80000000UL) != 0UL ? \
+			((legacy_u32)(value) >> LEGACY_SHIFT_COUNT(count)) | \
+			((legacy_u32)0xFFFFFFFFUL << \
+				(32U - LEGACY_SHIFT_COUNT(count))) : \
+			(legacy_u32)(value) >> LEGACY_SHIFT_COUNT(count))))
+#define LEGACY_S32_SAR(value, count) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_SAR(value, count))
+
+#define LEGACY_U32_ROL(value, count) \
+	((legacy_u32)(LEGACY_SHIFT_COUNT(count) == 0U ? \
+		(legacy_u32)(value) : \
+		((legacy_u32)(value) << LEGACY_SHIFT_COUNT(count)) | \
+		((legacy_u32)(value) >> \
+			(32U - LEGACY_SHIFT_COUNT(count)))))
+#define LEGACY_U32_ROR(value, count) \
+	((legacy_u32)(LEGACY_SHIFT_COUNT(count) == 0U ? \
+		(legacy_u32)(value) : \
+		((legacy_u32)(value) >> LEGACY_SHIFT_COUNT(count)) | \
+		((legacy_u32)(value) << \
+			(32U - LEGACY_SHIFT_COUNT(count)))))
+
+#define LEGACY_U32_DIV_OR_ZERO(numerator, denominator) \
+	((legacy_u32)(denominator) == 0UL ? 0UL : \
+	(legacy_u32)((legacy_u32)(numerator) / \
+		(legacy_u32)(denominator)))
+#define LEGACY_S32_DIV_OR_ZERO(numerator, denominator) \
+	((((legacy_u32)(denominator) == 0UL) || \
+		((legacy_u32)(numerator) == (legacy_u32)0x80000000UL && \
+		LEGACY_S32_FROM_BITS(denominator) == -1L)) ? 0L : \
+		(legacy_s32)(LEGACY_S32_FROM_BITS(numerator) / \
+			LEGACY_S32_FROM_BITS(denominator)))
+
+#define LEGACY_READ_U32_LE(bytes) \
+	((legacy_u32)((legacy_u32)((const legacy_u8*)(bytes))[0] | \
+	((legacy_u32)((const legacy_u8*)(bytes))[1] << 8) | \
+	((legacy_u32)((const legacy_u8*)(bytes))[2] << 16) | \
+	((legacy_u32)((const legacy_u8*)(bytes))[3] << 24)))
+#define LEGACY_READ_S16_LE(bytes) \
+	LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(bytes))
+#define LEGACY_READ_S32_LE(bytes) \
+	LEGACY_S32_FROM_BITS(LEGACY_READ_U32_LE(bytes))
+
+#define LEGACY_WRITE_U32_LE(bytes, value) \
+	do { \
+		legacy_u32 legacy_write_u32_value_ = (legacy_u32)(value); \
+		((legacy_u8*)(bytes))[0] = (legacy_u8)legacy_write_u32_value_; \
+		((legacy_u8*)(bytes))[1] = \
+			(legacy_u8)(legacy_write_u32_value_ >> 8); \
+		((legacy_u8*)(bytes))[2] = \
+			(legacy_u8)(legacy_write_u32_value_ >> 16); \
+		((legacy_u8*)(bytes))[3] = \
+			(legacy_u8)(legacy_write_u32_value_ >> 24); \
+	} while (0)
 
 #endif

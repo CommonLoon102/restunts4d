@@ -231,8 +231,9 @@ static void update_legacy_grip_stack_words(
 	}
 	grip_speed = speed_before_grip;
 	if (grass_wheels != 0) {
-		speed2_before_grip -=
-			speed2_before_grip / (legacy_u16)grassDecelDivTab[grass_wheels];
+		speed2_before_grip = LEGACY_U16_WRAP_SUB(speed2_before_grip,
+			LEGACY_U16_DIV_OR_ZERO(speed2_before_grip,
+				grassDecelDivTab[grass_wheels]));
 		grip_speed = speed2_before_grip;
 	}
 
@@ -249,26 +250,6 @@ static void update_legacy_grip_stack_words(
 
 void update_car_speed(legacy_s8, legacy_s16, struct CARSTATE* carstate, struct SIMD* simd);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, legacy_s16);
-
-static legacy_s16 grip_sar(legacy_s16 value, legacy_u16 count)
-{
-	legacy_u16 bits;
-
-	bits = (legacy_u16)value;
-	while (count-- != 0)
-		bits = (legacy_u16)((bits >> 1) | (bits & 0x8000U));
-	return LEGACY_S16_FROM_BITS(bits);
-}
-
-static legacy_s32 grip_sar32(legacy_s32 value, legacy_u16 count)
-{
-	legacy_u32 bits;
-
-	bits = (legacy_u32)value;
-	while (count-- != 0)
-		bits = (bits >> 1) | (bits & 0x80000000UL);
-	return LEGACY_S32_FROM_BITS(bits);
-}
 
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s16 player_behavior)
@@ -310,8 +291,8 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	if (grass_wheels != 0) {
 		carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
 			carstate->car_speed2,
-			(legacy_u16)(carstate->car_speed2 /
-				(legacy_u16)grassDecelDivTab[grass_wheels]));
+			LEGACY_U16_DIV_OR_ZERO(carstate->car_speed2,
+				grassDecelDivTab[grass_wheels]));
 		carstate->car_speed = carstate->car_speed2;
 	}
 
@@ -322,7 +303,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	absolute_angle = adjusted_angle;
 	if (absolute_angle < 0)
 		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
-	angle_factor = grip_sar(absolute_angle, 3U);
+	angle_factor = LEGACY_S16_SAR(absolute_angle, 3U);
 	square_low = LEGACY_U16_WRAP_MUL(speed_shr8, speed_shr8);
 	square_low = (legacy_u16)(square_low >> 6);
 	demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
@@ -337,7 +318,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 	product = (legacy_s32)combined_grip * (legacy_s32)sliding_sum;
 	combined_grip = LEGACY_S16_FROM_BITS(
-		(legacy_u16)grip_sar32(product, 10U));
+		(legacy_u16)LEGACY_S32_SAR(product, 10U));
 	carstate->car_demandedGrip = (legacy_s16)demanded_grip;
 	carstate->car_surfacegrip_sum = combined_grip;
 
@@ -345,7 +326,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		carstate->car_40MfrontWhlAngle = LEGACY_S16_FROM_BITS(
 			(legacy_u16)carstate->car_steeringAngle << 2);
 		if (carstate->car_angle_z != 0) {
-			carstate->car_angle_z = grip_sar(
+			carstate->car_angle_z = LEGACY_S16_SAR(
 				LEGACY_S16_WRAP_MUL(carstate->car_angle_z, 15), 4U);
 		}
 		goto finish_angles;
@@ -375,10 +356,10 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		numerator = (legacy_s32)combined_grip * 0x100L;
 		denominator = (legacy_s32)speed_shr8 * (legacy_s32)speed_shr8;
 		adjusted_angle = LEGACY_S16_FROM_BITS(
-			(legacy_u16)(numerator / denominator));
+			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(numerator, denominator));
 		if (initial_angle < 0)
 			adjusted_angle = LEGACY_S16_WRAP_NEGATE(adjusted_angle);
-		adjusted_angle = grip_sar(LEGACY_S16_WRAP_ADD(
+		adjusted_angle = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_MUL(adjusted_angle, 3), initial_angle), 2U);
 		carstate->field_42 = LEGACY_S16_WRAP_SUB(
 			initial_angle, adjusted_angle);
@@ -386,12 +367,14 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		carstate->car_slidingFlag = 0;
 		if (carstate->field_42 != 0) {
 			carstate->field_42 = LEGACY_S16_WRAP_SUB(
-				carstate->field_42, grip_sar(carstate->field_42, 4U));
+				carstate->field_42, LEGACY_S16_SAR(
+					carstate->field_42, 4U));
 			absolute_angle = carstate->field_42;
 			if (absolute_angle < 0)
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			if (absolute_angle < 0x10)
-				carstate->field_42 = grip_sar(carstate->field_42, 1U);
+				carstate->field_42 = LEGACY_S16_SAR(
+					carstate->field_42, 1U);
 		}
 	}
 
@@ -450,7 +433,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 
 finish_angles:
 	if (carstate->car_36MwhlAngle != 0 && carstate->car_angle_z == 0) {
-		carstate->car_36MwhlAngle = grip_sar(
+		carstate->car_36MwhlAngle = LEGACY_S16_SAR(
 			LEGACY_S16_WRAP_MUL(carstate->car_36MwhlAngle, 15), 4U);
 	}
 	if (carstate->car_angle_z != 0) {
@@ -538,7 +521,7 @@ static legacy_s16 opponent_average(legacy_s16 first, legacy_s16 second)
 	legacy_s32 sum;
 
 	sum = (legacy_s32)first + (legacy_s32)second;
-	return LEGACY_S16_FROM_BITS((legacy_u16)grip_sar32(sum, 1U));
+	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, 1U));
 }
 
 void opponent_op(void)
