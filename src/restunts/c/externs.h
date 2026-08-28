@@ -432,7 +432,7 @@ extern void run_car_menu(struct GAMEINFO* unk, char* unk2, char* unk3, unsigned 
 extern void run_game(void);
 extern unsigned end_hiscore(void);
 extern unsigned run_option_menu(void);
-extern void security_check(void);
+extern void security_check(int question_index);
 
 extern void ensure_file_exists(int unk);
 

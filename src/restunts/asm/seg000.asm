@@ -62,7 +62,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_run_option_menu_
     public off_1314A
     public end_hiscore
-    public security_check
+    public ported_security_check_
     public ported_set_default_car_
 ported_stuntsmain_ proc far
     var_12 = word ptr -18
@@ -426,7 +426,7 @@ _sec_check1:
     cbw
     push    ax
     push    cs
-    call near ptr security_check
+    call near ptr ported_security_check_
     add     sp, 2
 _init_replay:
     call    ported_audio_unload_
@@ -7107,7 +7107,7 @@ loc_144C6:
     jmp     loc_14188
     pop     si
 end_hiscore endp
-security_check proc far
+ported_security_check_ proc far
     var_440 = byte ptr -1088
     var_43E = byte ptr -1086
     var_428 = word ptr -1064
@@ -7133,9 +7133,9 @@ security_check proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 440h
+    jmp     security_check
+    nop
+    nop
     push    si
     mov     bx, [bp+arg_0]
     mov     al, byte_3BD34[bx]
@@ -7345,7 +7345,7 @@ loc_146DC:
 loc_146E2:
     pop     bp
     retf
-security_check endp
+ported_security_check_ endp
 ported_set_default_car_ proc far
 
     mov     gameconfig.game_playercarid, 43h ; 'C'

@@ -15,6 +15,6 @@ seg000 segment byte public 'STUNTSC' use16
     extrn ported_run_option_menu_:proc
     extrn off_1314A:word
     extrn end_hiscore:proc
-    extrn security_check:proc
+    extrn ported_security_check_:proc
     extrn ported_set_default_car_:proc
 seg000 ends

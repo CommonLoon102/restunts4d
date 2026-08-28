@@ -34,6 +34,7 @@ extern legacy_u16 word_3FB34;
 extern legacy_u16 word_3FB36;
 extern legacy_u8 byte_3FB38[];
 extern legacy_u8 byte_449CE;
+extern legacy_u8 byte_3BD34[];
 extern legacy_s16 word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
@@ -2487,6 +2488,7 @@ extern char aSon[];
 extern char aSav[];
 extern char aWai[];
 extern char aDefault_1[];
+extern char unk_463EA[];
 extern char* findfilenames[];
 extern void far* miscptr;
 extern int word_407FA;
@@ -3481,6 +3483,68 @@ void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
 	sprite_blit_to_video(wndsprite, -1);
 	highscore_write_b();
 	highscore_text_unk();
+}
+
+void security_check(int question_index)
+{
+	char question_id[4] = "q00";
+	char answer_id[4] = "a00";
+	char question_text[1024];
+	char answer[22];
+	legacy_u8 question_parts[6];
+	int positions[8];
+	void far* resource;
+	legacy_u16 answer_length;
+	legacy_u16 attempts;
+	legacy_u16 i;
+
+	question_id[2] = byte_3BD34[(legacy_u16)question_index];
+	answer_id[2] = question_id[2];
+	resource = file_load_resfile("misc");
+	copy_string(question_text, locate_text_res(resource, "cop"));
+	copy_string(&resID_byte1, locate_text_res(resource, question_id));
+	strcat(question_text, unk_463EA);
+	for (i = 0; i < 6U; i++)
+		question_parts[i] = (legacy_u8)(&resID_byte1)[i];
+
+	show_dialog(3, 1, (void far*)question_text, 0xFFFFU, 0x78U,
+		performGraphColor, positions, 0);
+	(&resID_byte1)[2] = 0;
+	(&resID_byte1)[0] = question_parts[0];
+	(&resID_byte1)[1] = question_parts[1];
+	font_draw_text(&resID_byte1, positions[0], positions[1]);
+	(&resID_byte1)[0] = question_parts[2];
+	(&resID_byte1)[1] = question_parts[3];
+	font_draw_text(&resID_byte1, positions[2], positions[3]);
+	(&resID_byte1)[0] = question_parts[4];
+	(&resID_byte1)[1] = question_parts[5];
+	font_draw_text(&resID_byte1, positions[4], positions[5]);
+
+	copy_string(&resID_byte1, locate_text_res(resource, answer_id));
+	answer_length = (legacy_u16)strlen(&resID_byte1);
+	answer[0] = 0;
+	attempts = 0;
+	for (;;) {
+		call_read_line(answer, answer_length, positions[6], positions[7],
+			0x7530UL);
+		for (i = 0; answer[i] != 0; i++) {
+			legacy_u8 character = (legacy_u8)answer[i];
+
+			if ((g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0)
+				answer[i] = (char)(character + 0x20U);
+		}
+		if (strcmp(answer, &resID_byte1) == 0) {
+			passed_security = 1;
+			break;
+		}
+		attempts++;
+		if (passed_security != 0 || attempts == 3U)
+			break;
+	}
+
+	sub_275C6();
+	mouse_draw_transparent_check();
+	unload_resource(resource);
 }
 
 void replay_unk(void)
