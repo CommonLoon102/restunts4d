@@ -2785,6 +2785,7 @@ void free_player_cars(void) {
 }
 
 void shape2d_render_bmp_as_mask(void far* data);
+void shape2d_op_unk4(unsigned short offset, unsigned short segment);
 
 void run_game(void) {
 	int var_16[2];

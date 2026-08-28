@@ -866,6 +866,95 @@ void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y)
 	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 1);
 }
 
+static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
+	int combine_or)
+{
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* bitmap;
+	legacy_u16 shape_segment;
+	legacy_u16 source;
+	legacy_u16 line_entry;
+	legacy_u16 destination;
+	legacy_u16 x;
+	legacy_u16 y;
+	legacy_u16 width;
+	legacy_u16 remaining;
+	legacy_u16 old_remaining;
+	legacy_u16 count;
+	legacy_u8 control_bits;
+	legacy_s8 control;
+	legacy_u8 value;
+	int literal;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape_segment = FP_SEG(shape);
+	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	x = shape2d_get_word(shape_bytes + 8U);
+	y = shape2d_get_word(shape_bytes + 0x0AU);
+	width = shape2d_get_word(shape_bytes);
+	line_entry = LEGACY_U16_WRAP_ADD(FP_OFF(sprite1.sprite_lineofs),
+		(legacy_u16)(y << 1));
+	destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
+		(legacy_u8 far*)MK_FP(FP_SEG(&sprite1), line_entry)), x);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	remaining = width;
+	for (;;) {
+		source_ptr = (legacy_u8 far*)MK_FP(shape_segment, source);
+		control_bits = *source_ptr;
+		source++;
+		control = LEGACY_S8_FROM_BITS(control_bits);
+		if (control == 0)
+			return;
+		literal = control < 0;
+		if (literal != 0) {
+			count = (legacy_u8)(0U - control_bits);
+		} else {
+			count = control_bits;
+			source_ptr = (legacy_u8 far*)MK_FP(shape_segment, source);
+			value = *source_ptr;
+			source++;
+		}
+		do {
+			if (literal != 0) {
+				source_ptr = (legacy_u8 far*)MK_FP(
+					shape_segment, source);
+				value = *source_ptr;
+				source++;
+			}
+			if (combine_or != 0)
+				bitmap[destination] |= value;
+			else
+				bitmap[destination] &= value;
+			destination++;
+			old_remaining = remaining;
+			remaining = LEGACY_U16_WRAP_SUB(remaining, 1U);
+			if (old_remaining == 0x8000U ||
+				LEGACY_S16_FROM_BITS(remaining) <= 0) {
+				line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
+				destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
+					(legacy_u8 far*)MK_FP(
+						FP_SEG(&sprite1), line_entry)), x);
+				remaining = width;
+			}
+			count--;
+		} while (count != 0);
+	}
+}
+
+void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
+{
+	shape2d_render_rle_combine(shape, 0);
+}
+
+void shape2d_op_unk4(unsigned short offset, unsigned short segment)
+{
+	shape2d_render_rle_combine(
+		(struct SHAPE2D far*)MK_FP(segment, offset), 1);
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;

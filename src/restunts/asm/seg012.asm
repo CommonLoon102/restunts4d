@@ -320,7 +320,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_33A57
     public nopsub_33AC0
     public nopsub_33AE4
-    public shape2d_render_bmp_as_mask
+    public ported_shape2d_render_bmp_as_mask_
     public loc_33B1D
     public nopsub_33B98
     public ported_sprite_putimage_and_alt_
@@ -344,7 +344,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_340BD
     public ported_putpixel_iconFillings_
     public loc_3424B
-    public shape2d_op_unk4
+    public ported_shape2d_op_unk4_
     public loc_34311
     public ported_sprite_putimage_transparent_
     public loc_343E9
@@ -11621,7 +11621,7 @@ nopsub_33AE4 proc far
     ; align 2
     db 144
 nopsub_33AE4 endp
-shape2d_render_bmp_as_mask proc far
+ported_shape2d_render_bmp_as_mask_ proc far
     var_10 = word ptr -16
     var_E = word ptr -14
     var_6 = word ptr -6
@@ -11632,9 +11632,8 @@ shape2d_render_bmp_as_mask proc far
     arg_shapeofs = word ptr 6
     arg_shapeseg = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     shape2d_render_bmp_as_mask
+    nop
     push    ds
     push    si
     push    di
@@ -11706,7 +11705,7 @@ loc_33B7C:
 loc_33B94:
     loop    loc_33B7C
     jmp     short loc_33B48
-shape2d_render_bmp_as_mask endp
+ported_shape2d_render_bmp_as_mask_ endp
 nopsub_33B98 proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -12813,7 +12812,7 @@ loc_342A8:
     ; align 2
     db 144
 ported_putpixel_iconFillings_ endp
-shape2d_op_unk4 proc far
+ported_shape2d_op_unk4_ proc far
     var_10 = word ptr -16
     var_E = word ptr -14
     var_6 = word ptr -6
@@ -12824,9 +12823,8 @@ shape2d_op_unk4 proc far
     arg_shapeofs = word ptr 6
     arg_shapeseg = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     shape2d_op_unk4
+    nop
     push    ds
     push    si
     push    di
@@ -12915,7 +12913,7 @@ loc_34388:
     jmp     short loc_343E9
     ; align 2
     db 144
-shape2d_op_unk4 endp
+ported_shape2d_op_unk4_ endp
 ported_sprite_putimage_transparent_ proc far
     var_bmpptr = word ptr -12
     var_A = word ptr -10
