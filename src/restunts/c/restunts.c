@@ -54,8 +54,6 @@ extern legacy_u8 in_kb_parse_key;
 extern void (far* timerintr[6])(void);
 extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
-extern legacy_u16 word_3F0A0;
-extern legacy_u16 word_3F0A2;
 extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
 
@@ -84,30 +82,6 @@ unsigned const char g_ascii_props[256] = {
 legacy_s16 get_0(void)
 {
 	return 0;
-}
-
-legacy_u16 _abs(legacy_u16 value)
-{
-	if ((legacy_s16)value < 0)
-		return (legacy_u16)(0U - value);
-	return value;
-}
-
-void _srand(legacy_u16 seed)
-{
-	word_3F0A0 = (legacy_u16)seed;
-	word_3F0A2 = 0;
-}
-
-legacy_s16 _rand(void)
-{
-	legacy_u32 seed;
-
-	seed = ((legacy_u32)word_3F0A2 << 16) | word_3F0A0;
-	seed = (legacy_u32)(seed * 214013UL + 2531011UL);
-	word_3F0A0 = (legacy_u16)seed;
-	word_3F0A2 = (legacy_u16)(seed >> 16);
-	return (legacy_s16)(word_3F0A2 & 0x7FFFU);
 }
 
 void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
