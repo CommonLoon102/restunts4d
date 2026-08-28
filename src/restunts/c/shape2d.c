@@ -43,6 +43,18 @@ static void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value)
 	destination[1] = (legacy_u8)(value >> 8);
 }
 
+static legacy_u16 shape2d_get_line_offset(legacy_u16 sprite_segment,
+	legacy_u16 y)
+{
+	legacy_u16 line_entry;
+	legacy_u8 far* line_entry_ptr;
+
+	line_entry = LEGACY_U16_WRAP_ADD(
+		FP_OFF(sprite1.sprite_lineofs), (legacy_u16)(y << 1));
+	line_entry_ptr = (legacy_u8 far*)MK_FP(sprite_segment, line_entry);
+	return shape2d_get_word(line_entry_ptr);
+}
+
 void sprite_set_1_size(unsigned short left, unsigned short right,
 	unsigned short top, unsigned short height)
 {
@@ -348,6 +360,159 @@ void draw_patterned_lines(int* x1arr, int* x2arr, unsigned y,
 	unsigned numlines, unsigned color)
 {
 	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 0);
+}
+
+void putpixel_line1_maybe(int* line)
+{
+	legacy_u16* parameters;
+	legacy_u8 far* bitmap;
+	legacy_u16 sprite_segment;
+	legacy_u16 x_low;
+	legacy_u16 x_high;
+	legacy_u16 y_low;
+	legacy_u16 y_high;
+	legacy_u16 original_y_high;
+	legacy_u16 delta;
+	legacy_u16 count;
+	legacy_u16 remaining;
+	legacy_u16 destination;
+	legacy_u16 old_low;
+	legacy_u16 mode;
+	legacy_u8 color;
+
+	parameters = (legacy_u16*)line;
+	x_low = parameters[0];
+	x_high = parameters[1];
+	old_low = x_low;
+	x_low = LEGACY_U16_WRAP_ADD(x_low, 0x8000U);
+	if (x_low < old_low)
+		x_high++;
+	y_low = parameters[2];
+	y_high = parameters[3];
+	old_low = y_low;
+	y_low = LEGACY_U16_WRAP_ADD(y_low, 0x8000U);
+	if (y_low < old_low)
+		y_high++;
+	original_y_high = parameters[3];
+	delta = parameters[6];
+	count = parameters[7];
+	color = (legacy_u8)parameters[8];
+	mode = parameters[9];
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	sprite_segment = FP_SEG(&sprite1);
+
+	switch (mode) {
+	case 0:
+	case 1:
+		destination = LEGACY_U16_WRAP_ADD(
+			shape2d_get_line_offset(sprite_segment, y_high), x_high);
+		remaining = count;
+		while (remaining != 0) {
+			bitmap[destination] = color;
+			destination++;
+			remaining--;
+		}
+		break;
+	case 2:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, original_y_high),
+				x_high);
+			bitmap[destination] = color;
+			original_y_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 3:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, original_y_high),
+				x_high);
+			bitmap[destination] = color;
+			x_high--;
+			original_y_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 4:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, original_y_high),
+				x_high);
+			bitmap[destination] = color;
+			x_high++;
+			original_y_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 5:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, original_y_high),
+				x_high);
+			bitmap[destination] = color;
+			original_y_high++;
+			old_low = x_low;
+			x_low = LEGACY_U16_WRAP_SUB(x_low, delta);
+			if (old_low < delta)
+				x_high--;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 6:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, original_y_high),
+				x_high);
+			bitmap[destination] = color;
+			original_y_high++;
+			old_low = x_low;
+			x_low = LEGACY_U16_WRAP_ADD(x_low, delta);
+			if (x_low < old_low)
+				x_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 7:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, y_high), x_high);
+			bitmap[destination] = color;
+			x_high--;
+			old_low = y_low;
+			y_low = LEGACY_U16_WRAP_ADD(y_low, delta);
+			if (y_low < old_low)
+				y_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 8:
+		remaining = count;
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(sprite_segment, y_high), x_high);
+			bitmap[destination] = color;
+			x_high++;
+			old_low = y_low;
+			y_low = LEGACY_U16_WRAP_ADD(y_low, delta);
+			if (y_low < old_low)
+				y_high++;
+			remaining--;
+		} while (remaining != 0);
+		break;
+	case 9:
+		destination = LEGACY_U16_WRAP_ADD(
+			shape2d_get_line_offset(sprite_segment, y_high), x_high);
+		bitmap[destination] = color;
+		break;
+	}
 }
 
 void sprite_1_unk3(struct SHAPE2D far* shape, unsigned phase)

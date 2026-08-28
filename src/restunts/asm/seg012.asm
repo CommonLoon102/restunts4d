@@ -291,7 +291,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_clear_1_color_
     public nopsub_33330
     public ported_draw_unknown_lines_
-    public putpixel_line1_maybe
+    public ported_putpixel_line1_maybe_
     public off_3340A
     public ported_sprite_1_unk2_
     public loc_335CF
@@ -10601,7 +10601,7 @@ loc_333B8:
     loop    loc_33393
     jmp     short loc_3339A
 ported_draw_unknown_lines_ endp
-putpixel_line1_maybe proc far
+ported_putpixel_line1_maybe_ proc far
     var_E = byte ptr -14
     var_A = word ptr -10
     var_8 = word ptr -8
@@ -10612,9 +10612,8 @@ putpixel_line1_maybe proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     putpixel_line1_maybe
+    nop
     push    si
     push    di
     mov     si, [bp+arg_0]
@@ -10809,7 +10808,7 @@ loc_33558:
     mov     sp, bp
     pop     bp
     retf
-putpixel_line1_maybe endp
+ported_putpixel_line1_maybe_ endp
 ported_sprite_1_unk2_ proc far
      s = byte ptr 0
      r = byte ptr 2

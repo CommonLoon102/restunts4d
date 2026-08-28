@@ -244,7 +244,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sprite_clear_1_color_:proc
     extrn nopsub_33330:proc
     extrn ported_draw_unknown_lines_:proc
-    extrn putpixel_line1_maybe:proc
+    extrn ported_putpixel_line1_maybe_:proc
     extrn off_3340A:word
     extrn ported_sprite_1_unk2_:proc
     extrn loc_335CF:proc
