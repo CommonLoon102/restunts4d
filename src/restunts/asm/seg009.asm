@@ -49,8 +49,8 @@ seg009 segment byte public 'STUNTSC' use16
     public load_tracks_menu_shapes
     public ported_preRender_icons_
     public draw_2DtrackMap
-    public sub_2C81C
-    public sub_2C9B4
+    public ported_sub_2C81C_
+    public ported_sub_2C9B4_
 load_tracks_menu_shapes proc far
     var_198 = word ptr -408
     var_196 = word ptr -406
@@ -763,7 +763,7 @@ loc_2A8F4:
     jz      short loc_2A905
     mov     [bp+var_30], 0
     push    cs
-    call near ptr sub_2C81C
+    call near ptr ported_sub_2C81C_
     mov     [bp+var_12], al
 loc_2A905:
     cmp     [bp+var_32], 0
@@ -4003,7 +4003,7 @@ loc_2C816:
     pop     bp
     retf
 draw_2DtrackMap endp
-sub_2C81C proc far
+ported_sub_2C81C_ proc far
     var_A = byte ptr -10
     var_8 = byte ptr -8
     var_6 = byte ptr -6
@@ -4012,13 +4012,12 @@ sub_2C81C proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sub_2C81C
+    nop
     push    di
     push    si
     push    cs
-    call near ptr sub_2C9B4
+    call near ptr ported_sub_2C9B4_
     mov     [bp+var_A], 0
     mov     [bp+var_6], 0
     jmp     loc_2C993
@@ -4187,7 +4186,7 @@ loc_2C9A0:
     cmp     [bp+var_A], 0
     jz      short loc_2C9AA
     push    cs
-    call near ptr sub_2C9B4
+    call near ptr ported_sub_2C9B4_
 loc_2C9AA:
     mov     al, [bp+var_A]
     cbw
@@ -4196,8 +4195,8 @@ loc_2C9AA:
     mov     sp, bp
     pop     bp
     retf
-sub_2C81C endp
-sub_2C9B4 proc far
+ported_sub_2C81C_ endp
+ported_sub_2C9B4_ proc far
     var_392 = dword ptr -914
     var_38E = word ptr -910
     var_38C = byte ptr -908
@@ -4208,9 +4207,9 @@ sub_2C9B4 proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 392h
+    jmp     sub_2C9B4
+    nop
+    nop
     push    di
     push    si
     sub     si, si
@@ -4495,6 +4494,6 @@ loc_2CC50:
     pop     bp
 locret_2CC51:
     retf
-sub_2C9B4 endp
+ported_sub_2C9B4_ endp
 seg009 ends
 end

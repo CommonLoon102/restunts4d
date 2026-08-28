@@ -391,6 +391,8 @@ extrn run_menu:proc
 extrn run_option_menu:proc
 extrn security_check:proc
 extrn preRender_icons:proc
+extrn sub_2C81C:proc
+extrn sub_2C9B4:proc
 extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc

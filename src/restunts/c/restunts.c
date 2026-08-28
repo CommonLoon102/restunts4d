@@ -39,6 +39,7 @@ extern legacy_s16 word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
 extern legacy_u8 far* pboxshape;
+extern legacy_s16 word_45D7C;
 extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
@@ -2508,6 +2509,7 @@ legacy_s8 do_fileselect_dialog(char* directory, char* filename,
 	char* extension, char far* prompt);
 struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	int shadow_color);
+legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 void ensure_file_exists(int file_index)
 {
@@ -2946,6 +2948,149 @@ void preRender_icons(legacy_u8 page)
 			putpixel_iconFillings(tracksmenushape2dunk[tile], x, y);
 		}
 	}
+}
+
+static legacy_u16 track_menu_next_row(legacy_u16 row)
+{
+	if (row == 29U)
+		return (legacy_u16)word_45D7C;
+	return (legacy_u16)trackrows[row + 1U];
+}
+
+static legacy_u16 track_menu_previous_row(legacy_u16 row)
+{
+	if (row == 0)
+		return (legacy_u16)word_45D3E;
+	return (legacy_u16)trackrows[row - 1U];
+}
+
+void sub_2C9B4(void)
+{
+	legacy_u8 used[900];
+	legacy_u16 row;
+	legacy_u16 column;
+	legacy_u16 current_index;
+	legacy_u16 next_index;
+	legacy_u16 east_index;
+	legacy_u8 tile;
+	legacy_u8 multi_tile;
+
+	for (current_index = 0; current_index < 900U; current_index++)
+		used[current_index] = 0;
+
+	for (row = 0; row < 30U; row++) {
+		for (column = 0; column < 30U; column++) {
+			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
+				column);
+			tile = td14_elem_map_main[current_index];
+			if (tile == 0)
+				continue;
+			if (tile >= 0xFDU) {
+				if (used[current_index] == 0)
+					td14_elem_map_main[current_index] = 0;
+				continue;
+			}
+
+			multi_tile = trkObjectList[tile].ss_multiTileFlag;
+			switch (multi_tile) {
+			case 1:
+				next_index = LEGACY_U16_WRAP_ADD(
+					track_menu_next_row(row), column);
+				if (used[next_index] != 0 ||
+					td14_elem_map_main[next_index] != 0xFEU)
+					td14_elem_map_main[current_index] = 0;
+				else
+					used[next_index] = 1;
+				break;
+
+			case 2:
+				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
+				if (used[east_index] != 0 ||
+					td14_elem_map_main[east_index] != 0xFFU)
+					td14_elem_map_main[current_index] = 0;
+				else
+					used[east_index] = 1;
+				break;
+
+			case 3:
+				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
+				next_index = LEGACY_U16_WRAP_ADD(
+					track_menu_next_row(row), column);
+				if (used[east_index] != 0 || used[next_index] != 0 ||
+					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0 ||
+					td14_elem_map_main[east_index] != 0xFFU ||
+					td14_elem_map_main[next_index] != 0xFEU ||
+					td14_elem_map_main[
+						LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0xFDU) {
+					td14_elem_map_main[current_index] = 0;
+				} else {
+					used[east_index] = 1;
+					used[next_index] = 1;
+					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] = 1;
+				}
+				break;
+			}
+		}
+	}
+}
+
+int sub_2C81C(void)
+{
+	legacy_u16 row;
+	legacy_u16 column;
+	legacy_u16 current_index;
+	legacy_u16 source_index;
+	legacy_u8 terrain;
+	legacy_u8 tile;
+	legacy_u8 error;
+
+	sub_2C9B4();
+	error = 0;
+	for (row = 0; row < 30U; row++) {
+		for (column = 0; column < 30U; column++) {
+			terrain = td15_terr_map_main[
+				LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
+			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
+				column);
+			tile = td14_elem_map_main[current_index];
+			if (tile == 0 || terrain == 0 || terrain == 6U)
+				continue;
+
+			if (terrain >= 1U && terrain <= 5U) {
+				if (tile == 0xFFU) {
+					source_index = LEGACY_U16_WRAP_SUB(current_index, 1U);
+					tile = td14_elem_map_main[source_index];
+				} else if (tile == 0xFEU) {
+					source_index = LEGACY_U16_WRAP_ADD(
+						track_menu_previous_row(row), column);
+					tile = td14_elem_map_main[source_index];
+				} else if (tile == 0xFDU) {
+					source_index = LEGACY_U16_WRAP_SUB(
+						LEGACY_U16_WRAP_ADD(
+							track_menu_previous_row(row), column), 1U);
+					tile = td14_elem_map_main[source_index];
+				}
+
+				if (!((tile >= 0x22U && tile <= 0x23U) ||
+					(tile >= 0x67U && tile <= 0x6CU) ||
+					(tile >= 0xABU && tile <= 0xAEU))) {
+					td14_elem_map_main[current_index] = 0;
+					error = 0x0C;
+				}
+			} else if (terrain >= 7U && terrain <= 10U) {
+				if (subst_hillroad_track(terrain, tile) == 0) {
+					td14_elem_map_main[current_index] = 0;
+					error = 0x0D;
+				}
+			} else {
+				td14_elem_map_main[current_index] = 0;
+				error = 0x0E;
+			}
+		}
+	}
+	if (error != 0)
+		sub_2C9B4();
+	return error;
 }
 
 short do_dea_textres(void)
