@@ -2637,6 +2637,30 @@ void set_projection(int i1, int i2, int i3, int i4) {
 	
 }
 
+void nopsub_322C0(unsigned i1, unsigned i2) {
+	projectiondata4 = i1;
+	projectiondata5 = projectiondata3 + i1;
+	projectiondata7 = i2;
+	projectiondata8 = projectiondata6 + i2;
+}
+
+void nopsub_322DF(unsigned i1, unsigned i2, unsigned i3, unsigned i4) {
+	projectiondata1 = i1;
+	projectiondata2 = i2;
+	projectiondata3 = i3 >> 1;
+	projectiondata5 = projectiondata3 + projectiondata4;
+	projectiondata6 = i4 >> 1;
+	projectiondata8 = projectiondata6 + projectiondata7;
+	projectiondata9 = (long)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+
+	if (projectiondata2 != 0) {
+		projectiondata10 = (long)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+	} else {
+		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
+		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
+	}
+}
+
 extern struct RECTANGLE select_rect_rc;
 //extern unsigned word_411F6;
 extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;

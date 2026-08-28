@@ -138,6 +138,8 @@ extrn preRender_unk:proc
 extrn preRender_sphere:proc
 extrn preRender_sphere_helper:proc
 extrn preRender_sphere_helper2:proc
+extrn nopsub_322C0:proc
+extrn nopsub_322DF:proc
 extrn set_projection:proc
 extrn select_cliprect_rotate:proc
 extrn polyinfo_reset:proc

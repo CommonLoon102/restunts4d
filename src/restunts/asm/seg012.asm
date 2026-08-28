@@ -233,8 +233,8 @@ seg012 segment byte public 'STUNTSC' use16
     public nopsub_3216C
     public nopsub_3219D
     public nopsub_322B4
-    public nopsub_322C0
-    public nopsub_322DF
+    public ported_nopsub_322C0_
+    public ported_nopsub_322DF_
     public ported_set_projection_
     public loc_32334
     public ported_vector_to_point_
@@ -7998,15 +7998,14 @@ nopsub_322B4 proc far
     ; align 2
     db 0
 nopsub_322B4 endp
-nopsub_322C0 proc far
+ported_nopsub_322C0_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     nopsub_322C0
+    nop
     mov     projectiondata4, ax
     add     ax, projectiondata3
     mov     projectiondata5, ax
@@ -8016,24 +8015,21 @@ nopsub_322C0 proc far
     mov     projectiondata8, ax
     pop     bp
     retf
-nopsub_322C0 endp
-nopsub_322DF proc far
+ported_nopsub_322C0_ endp
+ported_nopsub_322DF_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     nopsub_322DF
     mov     ax, [bp+arg_0]
     mov     projectiondata1, ax
     mov     ax, [bp+arg_2]
     mov     projectiondata2, ax
     jmp     short loc_32334
     db 144
-nopsub_322DF endp
+ported_nopsub_322DF_ endp
 ported_set_projection_ proc far
      s = byte ptr 0
      r = byte ptr 2

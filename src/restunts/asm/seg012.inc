@@ -186,8 +186,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn nopsub_3216C:proc
     extrn nopsub_3219D:proc
     extrn nopsub_322B4:proc
-    extrn nopsub_322C0:proc
-    extrn nopsub_322DF:proc
+    extrn ported_nopsub_322C0_:proc
+    extrn ported_nopsub_322DF_:proc
     extrn ported_set_projection_:proc
     extrn loc_32334:proc
     extrn ported_vector_to_point_:proc
