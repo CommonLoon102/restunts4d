@@ -270,7 +270,6 @@ extern legacy_u16 word_3F1C4;
 extern void (far* exitlistfuncs[])(void);
 extern const legacy_s8 aExitListOverflow[];
 
-extern legacy_u8 g_kevinrandom_seed[];
 extern const legacy_s8 aReservememoryO[];
 extern const legacy_s8 aReservememoryOutOfMemory[];
 extern const legacy_s8 aMemoryManagerB[];

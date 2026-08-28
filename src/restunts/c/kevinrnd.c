@@ -2,6 +2,8 @@
 
 #define KEVINRANDOM_SEED_LEN 6
 
+static legacy_u8 g_kevinrandom_seed[KEVINRANDOM_SEED_LEN];
+
 void init_kevinrandom(const legacy_s8* seed)
 {
 	legacy_s16 i;
