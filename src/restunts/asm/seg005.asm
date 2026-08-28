@@ -60,7 +60,7 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_setup_player_cars_
     public ported_free_player_cars_
     public mouse_minmax_position
-    public replay_unk
+    public ported_replay_unk_
     public loop_game
     public off_2481A
     public off_24D20
@@ -275,7 +275,7 @@ loc_21D92:
     cmp     game_replay_mode, 0
     jnz     short loc_21D9D
     push    cs
-    call near ptr replay_unk
+    call near ptr ported_replay_unk_
 loc_21D9D:
     call    update_gamestate
 loc_21DA2:
@@ -3297,16 +3297,15 @@ loc_23A82:
     pop     bp
     retf
 mouse_minmax_position endp
-replay_unk proc far
+ported_replay_unk_ proc far
     var_A = byte ptr -10
     var_8 = byte ptr -8
     var_6 = byte ptr -6
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     replay_unk
+    nop
     push    di
     push    si
     mov     si, state.game_frame
@@ -3386,7 +3385,7 @@ loc_23B45:
     retf
     ; align 2
     db 144
-replay_unk endp
+ported_replay_unk_ endp
 loop_game proc far
     var_44 = word ptr -68
     var_42 = word ptr -66

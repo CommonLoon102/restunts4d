@@ -33,6 +33,8 @@ extern legacy_u16 word_3FB34;
 extern legacy_u8 byte_3FB38[];
 extern legacy_u8 byte_449CE;
 extern int word_46170[7];
+extern legacy_u8 byte_44292[64];
+extern legacy_u8 byte_442EA[64];
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -1955,6 +1957,49 @@ void highscore_write_b(void)
 	g_is_busy = 1;
 	(void)file_write_fatal(g_path_buf, ordered_scores, 0x16CUL);
 	g_is_busy = 0;
+}
+
+void replay_unk(void)
+{
+	legacy_s16 steering_angle;
+	legacy_s16 target_angle;
+	legacy_s16 response;
+	legacy_s16 adjusted_angle;
+	legacy_u16 frame;
+	legacy_u16 history_index;
+	legacy_u16 speed_index;
+	legacy_u8 action;
+	legacy_s8* response_table;
+
+	frame = state.game_frame;
+	history_index = frame & 0x3FU;
+	if (byte_442EA[history_index] == 0)
+		return;
+
+	target_angle = LEGACY_S8_FROM_BITS(byte_44292[history_index]);
+	steering_angle = state.playerstate.car_steeringAngle;
+	speed_index = (state.playerstate.car_speed2 >> 10) & 0xFCU;
+	response_table = (legacy_s8*)steerWhlRespTable_ptr;
+	response = response_table[speed_index + 1U];
+	if ((steering_angle < target_angle && steering_angle < -1) ||
+		(steering_angle > target_angle && steering_angle > 1)) {
+		response = LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)response << 2));
+	}
+
+	action = 0;
+	if (steering_angle > target_angle) {
+		adjusted_angle = LEGACY_S16_WRAP_SUB(steering_angle, response);
+		if (adjusted_angle >= target_angle)
+			action = 8;
+	} else if (steering_angle < target_angle) {
+		adjusted_angle = LEGACY_S16_WRAP_ADD(steering_angle, response);
+		if (adjusted_angle <= target_angle)
+			action = 4;
+	}
+	if (action != 0)
+		td16_rpl_buffer[frame] |= action;
+	byte_442EA[history_index] = 0;
 }
 
 static int font_measure(const char* text, legacy_u16 remaining, int bounded)

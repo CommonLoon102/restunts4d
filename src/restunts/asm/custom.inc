@@ -239,6 +239,7 @@ extrn sub_274B0:proc
 extrn sub_275C6:proc
 extrn highscore_write_a:proc
 extrn highscore_write_b:proc
+extrn replay_unk:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
