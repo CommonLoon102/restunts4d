@@ -127,13 +127,13 @@ load_tracks_menu_shapes proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
+    jmp     load_tracks_menu_shapes_c
+    nop
+    nop
 loc_2A2BD:
-    mov     bp, sp
 loc_2A2BF:
-    sub     sp, 198h
-    push    di
 loc_2A2C4:
+    push    di
     push    si
 loc_2A2C5:
     mov     ax, offset aSdtedit; "sdtedit"
