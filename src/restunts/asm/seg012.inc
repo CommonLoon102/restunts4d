@@ -325,7 +325,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sprite_set_1_from_argptr_:proc
     extrn ported_sprite_copy_2_to_1_:proc
     extrn ported_putpixel_single_maybe_:proc
-    extrn sub_35B76:proc
+    extrn ported_sub_35B76_:proc
     extrn sub_35C4E:proc
     extrn incnums:byte
     extrn sub_35DC8:proc

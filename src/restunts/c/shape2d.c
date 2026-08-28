@@ -891,6 +891,79 @@ void putpixel_single_maybe(int x, int y, int color)
 	bitmap[destination] = (legacy_u8)color;
 }
 
+void sub_35B76(int x, int y, int width, int height, int color)
+{
+	legacy_u8 far* bitmap;
+	legacy_s16 clipped_x;
+	legacy_s16 clipped_y;
+	legacy_s16 clipped_width;
+	legacy_s16 clipped_height;
+	legacy_s16 difference;
+	legacy_u16 destination;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+	legacy_u16 column_count;
+	legacy_u8 color_bits;
+
+	clipped_x = LEGACY_S16_FROM_BITS(x);
+	clipped_y = LEGACY_S16_FROM_BITS(y);
+	clipped_width = LEGACY_S16_FROM_BITS(width);
+	clipped_height = LEGACY_S16_FROM_BITS(height);
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_left, clipped_x);
+	if (difference > 0) {
+		clipped_x = LEGACY_S16_FROM_BITS(sprite1.sprite_left);
+		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
+		if (clipped_width <= 0)
+			return;
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(clipped_x, clipped_width),
+		sprite1.sprite_right);
+	if (difference > 0) {
+		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
+		if (clipped_width <= 0)
+			return;
+	}
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, clipped_y);
+	if (difference > 0) {
+		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
+		if (clipped_height <= 0)
+			return;
+		clipped_y = LEGACY_S16_FROM_BITS(sprite1.sprite_top);
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(clipped_y, clipped_height),
+		sprite1.sprite_height);
+	if (difference > 0) {
+		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
+		if (clipped_height <= 0)
+			return;
+	}
+	if (clipped_width <= 0 || clipped_height <= 0)
+		return;
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	destination = LEGACY_U16_WRAP_ADD(shape2d_get_line_offset(
+		FP_SEG(&sprite1), (legacy_u16)clipped_y),
+		(legacy_u16)clipped_x);
+	row_count = (legacy_u16)clipped_height;
+	color_bits = (legacy_u8)color;
+	do {
+		column_count = (legacy_u16)clipped_width;
+		do {
+			bitmap[destination] ^= color_bits;
+			destination++;
+			column_count--;
+		} while (column_count != 0);
+		destination = LEGACY_U16_WRAP_ADD(destination,
+			LEGACY_U16_WRAP_SUB(sprite1.sprite_pitch,
+				(legacy_u16)clipped_width));
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
