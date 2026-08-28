@@ -13,7 +13,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_locate_shape_alt_:proc
     extrn ported_locate_text_res_:proc
     extrn ported_copy_string_:proc
-    extrn mouse_track_op:proc
+    extrn ported_mouse_track_op_:proc
     extrn ported_mouse_draw_transparent_check_:proc
     extrn ported_mouse_draw_opaque_check_:proc
     extrn ported_mouse_draw_opaque_:proc

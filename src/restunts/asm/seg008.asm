@@ -60,7 +60,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_locate_shape_alt_
     public ported_locate_text_res_
     public ported_copy_string_
-    public mouse_track_op
+    public ported_mouse_track_op_
     public ported_mouse_draw_transparent_check_
     public ported_mouse_draw_opaque_check_
     public ported_mouse_draw_opaque_
@@ -2639,7 +2639,7 @@ loc_28AE9:
     pop     bp
     retf
 ported_copy_string_ endp
-mouse_track_op proc far
+ported_mouse_track_op_ proc far
     var_16 = word ptr -22
     var_14 = word ptr -20
     var_12 = word ptr -18
@@ -2660,9 +2660,8 @@ mouse_track_op proc far
     arg_C = word ptr 18
     arg_E = word ptr 20
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 16h
+    jmp     mouse_track_op
+    nop
     push    di
     push    si
     mov     ax, [bp+arg_8]
@@ -2944,7 +2943,7 @@ loc_28D8F:
     push    cs
     call near ptr ported_mouse_draw_transparent_check_
     jmp     loc_28BC5
-mouse_track_op endp
+ported_mouse_track_op_ endp
 ported_mouse_draw_transparent_check_ proc far
 
     jmp     mouse_draw_transparent_check

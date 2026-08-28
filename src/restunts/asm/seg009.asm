@@ -756,7 +756,7 @@ loc_2A8D8:
     push    ax
     sub     ax, ax
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
 loc_2A8F4:
     cmp     [bp+var_30], 0
@@ -799,7 +799,7 @@ loc_2A943:
     push    ax
     sub     ax, ax
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
     mov     ax, 1Eh
     push    ax
@@ -818,7 +818,7 @@ loc_2A943:
     push    ax
     sub     ax, ax
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
 loc_2A983:
     mov     ax, 0B3h ; '³'
@@ -1424,7 +1424,7 @@ loc_2AF70:
     push    ax
     mov     ax, 1
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
     mov     [bp+var_186], al
     sub     al, [bp+var_8]
@@ -1503,7 +1503,7 @@ loc_2B042:
     push    ax
     mov     ax, 1
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
     mov     [bp+var_186], al
     sub     al, [bp+var_18C]
@@ -1545,7 +1545,7 @@ loc_2B0AE:
     push    ax
     mov     ax, 1
     push    ax
-    call    mouse_track_op
+    call    far ptr mouse_track_op
     add     sp, 10h
     inc     al
     mov     [bp+var_C6], al

@@ -768,6 +768,134 @@ int input_checking(int frame_delta)
 	return 0;
 }
 
+static legacy_s16 mouse_track_divide(legacy_s16 numerator,
+	legacy_s16 denominator)
+{
+	return (legacy_s16)((long)numerator / (long)denominator);
+}
+
+static legacy_s16 mouse_track_position(legacy_s16 length,
+	legacy_s16 selected, legacy_s16 item_count)
+{
+	legacy_s16 numerator;
+	legacy_s16 denominator;
+
+	numerator = LEGACY_S16_WRAP_MUL(
+		LEGACY_S16_WRAP_SUB(length, 1), selected);
+	numerator = LEGACY_S16_WRAP_MUL(numerator, 4);
+	denominator = LEGACY_S16_WRAP_MUL(item_count, 4);
+	return mouse_track_divide(numerator, denominator);
+}
+
+static void mouse_track_draw(int horizontal, int x, int width, int y,
+	int height, legacy_s16 thumb_start, legacy_s16 thumb_size)
+{
+	sprite_1_unk(x, y, width, height, 0);
+	if (horizontal) {
+		sprite_1_unk(LEGACY_S16_WRAP_ADD(x, thumb_start), y,
+			thumb_size, height, dialog_fnt_colour);
+	} else {
+		sprite_1_unk(x, LEGACY_S16_WRAP_ADD(y, thumb_start),
+			width, thumb_size, dialog_fnt_colour);
+	}
+}
+
+int mouse_track_op(int operation, int x, int width, int y, int height,
+	int selected, int selection_width, int item_count)
+{
+	legacy_s16 length;
+	legacy_s16 thumb_start;
+	legacy_s16 thumb_end;
+	legacy_s16 thumb_size;
+	legacy_s16 coordinate;
+	legacy_s16 current_coordinate;
+	legacy_s16 dragged_start;
+	legacy_s16 previous_start;
+	legacy_s16 quotient;
+	legacy_s16 scaled;
+	int horizontal;
+
+	horizontal = LEGACY_S16_FROM_BITS(width) >
+		LEGACY_S16_FROM_BITS(height);
+	length = horizontal ? (legacy_s16)width : (legacy_s16)height;
+	thumb_start = mouse_track_position(length, (legacy_s16)selected,
+		(legacy_s16)item_count);
+	thumb_end = mouse_track_position(length,
+		LEGACY_S16_WRAP_ADD(selected, selection_width),
+		(legacy_s16)item_count);
+	thumb_size = LEGACY_S16_WRAP_SUB(thumb_end, thumb_start);
+
+	if (operation == 0) {
+		mouse_track_draw(horizontal, x, width, y, height,
+			thumb_start, thumb_size);
+		return selected;
+	}
+	if (operation != 1)
+		return selected;
+
+	coordinate = horizontal ?
+		LEGACY_S16_WRAP_SUB(mouse_xpos, x) :
+		LEGACY_S16_WRAP_SUB(mouse_ypos, y);
+	if (coordinate < thumb_start || coordinate > thumb_end) {
+		do {
+			input_checking((int)timer_get_delta_alt());
+		} while (((legacy_u16)mouse_butstate & 3U) != 0);
+		if (coordinate < thumb_start) {
+			if (selected != 0)
+				selected = LEGACY_S16_WRAP_SUB(selected, 1);
+		} else if (LEGACY_S16_FROM_BITS(selected) <
+			LEGACY_S16_WRAP_SUB(item_count, 1)) {
+			selected = LEGACY_S16_WRAP_ADD(selected, 1);
+		}
+	} else {
+		selected = -1;
+		previous_start = thumb_start;
+		do {
+			input_checking((int)timer_get_delta_alt());
+			current_coordinate = horizontal ?
+				LEGACY_S16_WRAP_SUB(mouse_xpos, x) :
+				LEGACY_S16_WRAP_SUB(mouse_ypos, y);
+			dragged_start = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
+				thumb_start);
+			if (dragged_start < 0)
+				dragged_start = 0;
+			else if (LEGACY_S16_WRAP_ADD(dragged_start, thumb_size) >
+				LEGACY_S16_WRAP_SUB(length, 1))
+				dragged_start = LEGACY_S16_WRAP_SUB(
+					LEGACY_S16_WRAP_SUB(length, thumb_size), 1);
+
+			if (dragged_start != previous_start) {
+				previous_start = dragged_start;
+				mouse_draw_opaque_check();
+				mouse_track_draw(horizontal, x, width, y, height,
+					dragged_start, thumb_size);
+				mouse_draw_transparent_check();
+			}
+		} while (((legacy_u16)mouse_butstate & 3U) != 0);
+	}
+
+	if (selected == -1) {
+		quotient = mouse_track_divide(length, (legacy_s16)item_count);
+		quotient = (legacy_s16)(quotient >> 1);
+		scaled = LEGACY_S16_WRAP_MUL(
+			LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
+		selected = mouse_track_divide(scaled, length);
+	}
+
+	thumb_start = mouse_track_position(length, (legacy_s16)selected,
+		(legacy_s16)item_count);
+	thumb_end = mouse_track_position(length,
+		LEGACY_S16_WRAP_ADD(selected, selection_width),
+		(legacy_s16)item_count);
+	thumb_size = LEGACY_S16_WRAP_SUB(thumb_end, thumb_start);
+	mouse_draw_opaque_check();
+	mouse_track_draw(horizontal, x, width, y, height,
+		thumb_start, thumb_size);
+	mouse_draw_transparent_check();
+	return selected;
+}
+
 int input_do_checking(int frame_delta)
 {
 	return input_checking(frame_delta);

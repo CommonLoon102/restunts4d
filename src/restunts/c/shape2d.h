@@ -48,6 +48,7 @@ void sprite_copy_both_to_arg(struct SPRITE* argsprite);
 void sprite_copy_arg_to_both(struct SPRITE* argsprite);
 
 void sprite_clear_1_color(unsigned char color);
+void sprite_1_unk(int x, int y, int width, int height, int color);
 void sprite_1_unk3(struct SHAPE2D far* shape, unsigned int phase);
 void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
 	unsigned numlines, unsigned color);
