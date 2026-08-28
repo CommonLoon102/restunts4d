@@ -1919,6 +1919,15 @@ void add_exit_handler(void (far* exit_handler)(void))
 	fatal_error(aExitListOverflow);
 }
 
+void call_exitlist(void)
+{
+	int index;
+
+	for (index = 10; index >= 0; index--)
+		if (exitlistfuncs[index] != 0)
+			exitlistfuncs[index]();
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

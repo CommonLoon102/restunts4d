@@ -313,6 +313,7 @@ extrn sub_2EB07:proc
 extrn sub_2EB1E:proc
 extrn preRender_line:proc
 extrn add_exit_handler:proc
+extrn call_exitlist:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

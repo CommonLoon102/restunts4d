@@ -127,7 +127,7 @@ seg012 segment byte public 'STUNTSC' use16
     public word_2FD7C
     public ported_preRender_line_
     public ported_add_exit_handler_
-    public call_exitlist
+    public ported_call_exitlist_
     public call_exitlist2
     public ported_file_paras_
     public ported_file_paras_nofatal_
@@ -2956,7 +2956,7 @@ loc_2FE57:
     pop     bp
     retf
 ported_add_exit_handler_ endp
-call_exitlist proc far
+ported_call_exitlist_ proc far
      r = byte ptr 0
 
     push    di
@@ -2975,7 +2975,7 @@ loc_2FE6B:
 loc_2FE72:
     pop     di
     retf
-call_exitlist endp
+ported_call_exitlist_ endp
 call_exitlist2 proc near
 
     call    call_exitlist
