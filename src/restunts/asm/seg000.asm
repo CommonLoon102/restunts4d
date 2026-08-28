@@ -5192,9 +5192,9 @@ end_hiscore proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 9Eh
+    jmp     end_hiscore_c
+    nop
+    nop
     push    di
     push    si
     mov     ax, 4

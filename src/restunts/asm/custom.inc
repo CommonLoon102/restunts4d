@@ -412,6 +412,7 @@ extrn show_dialog_c:proc
 extrn do_fileselect_dialog_c:proc
 extrn setup_car_shapes_c:proc
 extrn run_car_menu_c:proc
+extrn end_hiscore_c:proc
 extrn sub_2298C:proc
 extrn replay_unk2:proc
 extrn print_highscore_entry:proc
