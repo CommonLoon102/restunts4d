@@ -1722,6 +1722,37 @@ void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
 	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * 2);
 }
 
+int sub_274B0(int left, int right, int top, int bottom)
+{
+	struct SPRITE saved_sprites[2];
+	struct SPRITE far* window;
+	legacy_u16 index;
+	legacy_s16 width;
+	legacy_s16 height;
+	long required;
+
+	width = LEGACY_S16_WRAP_SUB(right, left);
+	height = LEGACY_S16_WRAP_SUB(bottom, top);
+	required = ((long)width * height) /
+		((long)video_flag1_is1 * video_flag4_is1) + 0x12L;
+	if (mmgr_get_res_ofs_diff_scaled() <= (unsigned long)required)
+		return 0;
+
+	mouse_draw_opaque_check();
+	window = sprite_make_wnd((legacy_u16)width, (legacy_u16)height, 0x0FU);
+	index = byte_3B8FC;
+	sprite_ptrs[index] = window;
+	word_4646A[index] = left;
+	word_46486[index] = top;
+	sprite_copy_both_to_arg(saved_sprites);
+	fmemcpy(trackdata12 + index * sizeof(saved_sprites),
+		saved_sprites, sizeof(saved_sprites));
+	sprite_copy_2_to_1();
+	sprite_clear_shape_alt(window->sprite_bitmapptr, left, top);
+	byte_3B8FC++;
+	return 1;
+}
+
 void sub_275C6(void)
 {
 	struct SPRITE saved_sprites[2];

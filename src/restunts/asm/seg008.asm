@@ -46,7 +46,7 @@ nosmart
 seg008 segment byte public 'STUNTSC' use16
     assume cs:seg008
     assume es:nothing, ss:nothing, ds:dseg
-    public sub_274B0
+    public ported_sub_274B0_
     public ported_sub_275C6_
     public show_dialog
     public do_fileselect_dialog
@@ -109,7 +109,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_do_mer_restext_
     public ported_timer_get_delta_alt_
     public ported_file_load_3dres_
-sub_274B0 proc far
+ported_sub_274B0_ proc far
     var_40 = byte ptr -64
     var_22 = byte ptr -34
     var_4 = word ptr -4
@@ -121,9 +121,8 @@ sub_274B0 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 40h
+    jmp     sub_274B0
+    nop
     push    di
     push    si
     mov     ax, video_flag1_is1
@@ -239,7 +238,7 @@ loc_27506:
     retf
     ; align 2
     db 144
-sub_274B0 endp
+ported_sub_274B0_ endp
 ported_sub_275C6_ proc far
     var_3C = byte ptr -60
     var_1E = byte ptr -30
@@ -504,7 +503,7 @@ loc_277A5:
     push    [bp+var_2E]
     push    [bp+var_30]
     push    cs
-    call near ptr sub_274B0
+    call near ptr ported_sub_274B0_
     add     sp, 8
     or      al, al
     jnz     short loc_277F6
