@@ -1844,6 +1844,34 @@ int run_intro(void)
 	return result;
 }
 
+int run_intro_looped(void)
+{
+	int result;
+
+	file_load_audiores("skidtitl", "skidms", "TITL");
+	tempdataptr = file_load_resource(2, "sdtitl");
+	wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
+	result = run_intro();
+	sprite_free_wnd(wndsprite);
+	mmgr_free((char far*)tempdataptr);
+
+	if (result == 0) {
+		result = setup_intro();
+		if (result == 0) {
+			tempdataptr = file_load_resource(2, "sdcred");
+			wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
+			sprite_copy_wnd_to_1_clear();
+			sprite_blit_to_video(wndsprite, 0);
+			result = load_intro_resources();
+			sprite_free_wnd(wndsprite);
+			mmgr_free((char far*)tempdataptr);
+		}
+	}
+
+	audio_unload();
+	return result;
+}
+
 extern void sprite_1_unk4(int x, int y, int width, int height, int color);
 
 int mouse_timer_sprite_unk(int item_index, const int* x_values,

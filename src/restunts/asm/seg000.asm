@@ -47,7 +47,7 @@ seg000 segment byte public 'STUNTSC' use16
     assume cs:seg000
     assume es:nothing, ss:nothing, ds:dseg
     public ported_stuntsmain_
-    public run_intro_looped
+    public ported_run_intro_looped_
     public ported_run_intro_
     public load_intro_resources
     public run_menu
@@ -488,7 +488,7 @@ _do_intro:
 loc_1042D:
     mov     idle_expired, 0
     push    cs
-    call near ptr run_intro_looped
+    call near ptr ported_run_intro_looped_
     mov     di, ax
     cmp     di, 1Bh
     jnz     short _show_menu
@@ -638,13 +638,12 @@ loc_10575:
     retf
     nop
 ported_stuntsmain_ endp
-run_intro_looped proc far
+ported_run_intro_looped_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     run_intro_looped
+    nop
     push    si
     mov     ax, offset aTitl; "TITL"
     push    ax
@@ -738,7 +737,7 @@ loc_10693:
     ; align 4
     db 144
     db 144
-run_intro_looped endp
+ported_run_intro_looped_ endp
 ported_run_intro_ proc far
      s = byte ptr 0
      r = byte ptr 2

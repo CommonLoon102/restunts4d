@@ -240,6 +240,7 @@ extrn replay_unk:proc
 extrn mouse_minmax_position:proc
 extrn check_input:proc
 extrn run_intro:proc
+extrn run_intro_looped:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
