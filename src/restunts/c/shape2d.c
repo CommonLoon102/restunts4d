@@ -27,6 +27,17 @@ extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* smouspriteptr;
 extern char mouse_isdirty;
 
+void sprite_set_1_size(unsigned short left, unsigned short right,
+	unsigned short top, unsigned short height)
+{
+	sprite1.sprite_left2 = left;
+	sprite1.sprite_left = left;
+	sprite1.sprite_widthsum = right;
+	sprite1.sprite_right = right;
+	sprite1.sprite_top = top;
+	sprite1.sprite_height = height;
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;

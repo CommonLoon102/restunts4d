@@ -286,7 +286,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_3301F
     public preRender_sphere
     public nopsub_3320E
-    public sprite_set_1_size
+    public ported_sprite_set_1_size_
     public video_clear_color
     public ported_sprite_clear_1_color_
     public nopsub_33330
@@ -10412,7 +10412,7 @@ loc_3325D:
     pop     bp
     retf
 nopsub_3320E endp
-sprite_set_1_size proc far
+ported_sprite_set_1_size_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -10420,9 +10420,8 @@ sprite_set_1_size proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     sprite_set_1_size
+    nop
     mov     cs:sprite1.sprite_left2, ax
     mov     cs:sprite1.sprite_left, ax
     mov     ax, [bp+arg_2]
@@ -10434,7 +10433,7 @@ sprite_set_1_size proc far
     mov     cs:sprite1.sprite_height, ax
     pop     bp
     retf
-sprite_set_1_size endp
+ported_sprite_set_1_size_ endp
 video_clear_color proc far
      s = byte ptr 0
      r = byte ptr 2
