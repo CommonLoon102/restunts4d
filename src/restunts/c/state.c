@@ -2,10 +2,10 @@
 #include "legacy.h"
 #include "math.h"
 #include "memmgr.h"
+#include "residue.h"
 #include "shape3d.h"
 
 extern legacy_s16 penalty_time;
-extern legacy_s16 legacy_grip_stack_words[4];
 extern legacy_s16 grassDecelDivTab[];
 extern struct TRACKOBJECT trkObjectList[215];
 extern legacy_u8 oppnentSped[];
@@ -192,7 +192,7 @@ static void update_legacy_grip_stack_words(
 	legacy_s16 i;
 
 	/* The original player_op reaches update_grip with SI == 0x50. */
-	legacy_grip_stack_words[3] = 0x50;
+	legacy_execution_residue.grip_stack_words[3] = 0x50;
 	if (carstate->car_sumSurfAllWheels == 0)
 		return;
 
@@ -213,9 +213,10 @@ static void update_legacy_grip_stack_words(
 	}
 
 	/* Operand words left by update_grip's first signed long multiply. */
-	legacy_grip_stack_words[0] = sliding_sum < 0 ? -1 : 0;
-	legacy_grip_stack_words[1] = combined_grip_operand;
-	legacy_grip_stack_words[2] = combined_grip_operand < 0 ? -1 : 0;
+	legacy_execution_residue.grip_stack_words[0] = sliding_sum < 0 ? -1 : 0;
+	legacy_execution_residue.grip_stack_words[1] = combined_grip_operand;
+	legacy_execution_residue.grip_stack_words[2] =
+		combined_grip_operand < 0 ? -1 : 0;
 
 	if (carstate->car_demandedGrip <= carstate->car_surfacegrip_sum)
 		return;
@@ -242,10 +243,11 @@ static void update_legacy_grip_stack_words(
 	speed_squared = (legacy_u32)speed_shr8 * speed_shr8;
 	scaled_combined_grip =
 		(legacy_s32)carstate->car_surfacegrip_sum * 0x100L;
-	legacy_grip_stack_words[0] =
+	legacy_execution_residue.grip_stack_words[0] =
 		(legacy_s16)((legacy_u32)scaled_combined_grip >> 16);
-	legacy_grip_stack_words[1] = (legacy_s16)speed_squared;
-	legacy_grip_stack_words[2] = (legacy_s16)(speed_squared >> 16);
+	legacy_execution_residue.grip_stack_words[1] = (legacy_s16)speed_squared;
+	legacy_execution_residue.grip_stack_words[2] =
+		(legacy_s16)(speed_squared >> 16);
 }
 
 void update_car_speed(legacy_s8, legacy_s16, struct CARSTATE* carstate, struct SIMD* simd);
@@ -1771,9 +1773,12 @@ void player_op(legacy_s8 arg_carInputByte) {
 	}
 
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
-	legacy_grip_stack_words[0] = state.playerstate.car_lastrpm;
-	legacy_grip_stack_words[1] = (legacy_s16)state.playerstate.car_speed;
-	legacy_grip_stack_words[2] = (legacy_s16)state.playerstate.car_gearratio;
+	legacy_execution_residue.grip_stack_words[0] =
+		state.playerstate.car_lastrpm;
+	legacy_execution_residue.grip_stack_words[1] =
+		(legacy_s16)state.playerstate.car_speed;
+	legacy_execution_residue.grip_stack_words[2] =
+		(legacy_s16)state.playerstate.car_gearratio;
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
 	var_speedBeforeGrip = state.playerstate.car_speed;
 	var_speed2BeforeGrip = state.playerstate.car_speed2;
