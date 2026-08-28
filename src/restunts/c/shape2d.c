@@ -1077,10 +1077,10 @@ static int shape2d_clip_blit(struct SHAPE2D far* shape,
 	return 1;
 }
 
-void sprite_putimage(struct SHAPE2D far* shape)
+static void sprite_putimage_at(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y)
 {
 	struct SHAPE2D_CLIP clip;
-	legacy_u8 far* shape_bytes;
 	legacy_u8 far* source_ptr;
 	legacy_u8 far* bitmap;
 	legacy_u16 shape_segment;
@@ -1088,10 +1088,7 @@ void sprite_putimage(struct SHAPE2D far* shape)
 	legacy_u16 row_count;
 	legacy_u16 old_row_count;
 
-	shape_bytes = (legacy_u8 far*)shape;
-	if (!shape2d_clip_blit(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), &clip))
+	if (!shape2d_clip_blit(shape, x, y, &clip))
 		return;
 	shape_segment = FP_SEG(shape);
 	bitmap = (legacy_u8 far*)MK_FP(
@@ -1115,6 +1112,16 @@ void sprite_putimage(struct SHAPE2D far* shape)
 		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
 	} while (old_row_count != 0x8000U &&
 		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
+void sprite_putimage(struct SHAPE2D far* shape)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_putimage_at(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU));
 }
 
 static void sprite_putimage_combine(struct SHAPE2D far* shape,
@@ -1167,6 +1174,31 @@ void sprite_putimage_or(struct SHAPE2D far* shape,
 	unsigned short x, unsigned short y)
 {
 	sprite_putimage_combine(shape, x, y, 1);
+}
+
+void sprite_putimage_and_alt(struct SHAPE2D far* shape, int x, int y)
+{
+	sprite_putimage_at(shape, (legacy_u16)x, (legacy_u16)y);
+}
+
+void sprite_putimage_and_alt2(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_putimage_combine(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)), 0);
+}
+
+void sprite_putimage_or_alt(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_putimage_combine(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)), 1);
 }
 
 void setup_mcgawnd1(void) {

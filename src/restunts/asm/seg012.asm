@@ -312,7 +312,7 @@ seg012 segment byte public 'STUNTSC' use16
     public file_load_shape2d_fatal_thunk
     public file_load_shape2d_nofatal_thunk
     public file_load_shape2d_thunk
-    public sprite_putimage_and_alt2
+    public ported_sprite_putimage_and_alt2_
     public ported_sprite_putimage_and_
     public loc_338C9
     public nopsub_339FA
@@ -323,7 +323,7 @@ seg012 segment byte public 'STUNTSC' use16
     public shape2d_render_bmp_as_mask
     public loc_33B1D
     public nopsub_33B98
-    public sprite_putimage_and_alt
+    public ported_sprite_putimage_and_alt_
     public ported_sprite_putimage_
     public loc_33BF5
     public nopsub_33D0C
@@ -339,7 +339,7 @@ seg012 segment byte public 'STUNTSC' use16
     public shape2d_op_unk2
     public shape2d_op_unk3
     public loc_33EED
-    public sprite_putimage_or_alt
+    public ported_sprite_putimage_or_alt_
     public ported_sprite_putimage_or_
     public loc_340BD
     public putpixel_iconFillings
@@ -11222,7 +11222,7 @@ file_load_shape2d_thunk proc far
     ; align 2
     db 0
 file_load_shape2d_thunk endp
-sprite_putimage_and_alt2 proc far
+ported_sprite_putimage_and_alt2_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11232,9 +11232,8 @@ sprite_putimage_and_alt2 proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage_and_alt2
+    nop
     push    ds
     push    si
     push    di
@@ -11249,7 +11248,7 @@ sprite_putimage_and_alt2 proc far
     jmp     short loc_338C9
     ; align 2
     db 144
-sprite_putimage_and_alt2 endp
+ported_sprite_putimage_and_alt2_ endp
 ported_sprite_putimage_and_ proc far
     var_E = word ptr -14
     var_C = word ptr -12
@@ -11737,7 +11736,7 @@ nopsub_33B98 proc far
     ; align 2
     db 144
 nopsub_33B98 endp
-sprite_putimage_and_alt proc far
+ported_sprite_putimage_and_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11747,9 +11746,8 @@ sprite_putimage_and_alt proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage_and_alt
+    nop
     push    ds
     push    si
     push    di
@@ -11762,7 +11760,7 @@ sprite_putimage_and_alt proc far
     jmp     short loc_33BF5
     ; align 2
     db 144
-sprite_putimage_and_alt endp
+ported_sprite_putimage_and_alt_ endp
 ported_sprite_putimage_ proc far
     var_E = word ptr -14
     var_bitmap = word ptr -12
@@ -12449,7 +12447,7 @@ loc_34057:
     ; align 2
     db 0
 shape2d_op_unk3 endp
-sprite_putimage_or_alt proc far
+ported_sprite_putimage_or_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -12459,9 +12457,8 @@ sprite_putimage_or_alt proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage_or_alt
+    nop
     push    ds
     push    si
     push    di
@@ -12476,7 +12473,7 @@ sprite_putimage_or_alt proc far
     jmp     short loc_340BD ; goto sprite_putimage_or
     ; align 2
     db 144
-sprite_putimage_or_alt endp
+ported_sprite_putimage_or_alt_ endp
 ported_sprite_putimage_or_ proc far
     var_E = word ptr -14
     var_C = word ptr -12

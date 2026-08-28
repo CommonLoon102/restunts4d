@@ -155,6 +155,9 @@ extrn sprite_clear_1_color:proc
 extrn sprite_putimage:proc
 extrn sprite_putimage_and:proc
 extrn sprite_putimage_or:proc
+extrn sprite_putimage_and_alt:proc
+extrn sprite_putimage_and_alt2:proc
+extrn sprite_putimage_or_alt:proc
 extrn setup_mcgawnd1:proc
 extrn setup_mcgawnd2:proc
 extrn file_load_shape2d:proc

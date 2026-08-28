@@ -265,7 +265,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn file_load_shape2d_fatal_thunk:proc
     extrn file_load_shape2d_nofatal_thunk:proc
     extrn file_load_shape2d_thunk:proc
-    extrn sprite_putimage_and_alt2:proc
+    extrn ported_sprite_putimage_and_alt2_:proc
     extrn ported_sprite_putimage_and_:proc
     extrn loc_338C9:proc
     extrn nopsub_339FA:proc
@@ -276,7 +276,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn shape2d_render_bmp_as_mask:proc
     extrn loc_33B1D:proc
     extrn nopsub_33B98:proc
-    extrn sprite_putimage_and_alt:proc
+    extrn ported_sprite_putimage_and_alt_:proc
     extrn ported_sprite_putimage_:proc
     extrn loc_33BF5:proc
     extrn nopsub_33D0C:proc
@@ -292,7 +292,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn shape2d_op_unk2:proc
     extrn shape2d_op_unk3:proc
     extrn loc_33EED:proc
-    extrn sprite_putimage_or_alt:proc
+    extrn ported_sprite_putimage_or_alt_:proc
     extrn ported_sprite_putimage_or_:proc
     extrn loc_340BD:proc
     extrn putpixel_iconFillings:proc
