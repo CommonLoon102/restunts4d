@@ -3,7 +3,7 @@ TARGET ?= ported
 
 SRC = s:\src\restunts
 
-RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj restunts.obj \
+RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj kevinrnd.obj restunts.obj \
                      shape3d.obj shape2d.obj keyboard.obj heapsort.obj \
                      frame.obj state.obj stateply.obj statecrs.obj \
                      statecar.obj trackobj.obj replay.obj stateio.obj

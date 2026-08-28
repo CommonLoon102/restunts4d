@@ -507,43 +507,6 @@ void do_opponent_op(void)
 	opponent_op();
 }
 
-#define KEVINRANDOM_SEED_LEN 6
-void init_kevinrandom(const legacy_s8* seed)
-{
-	legacy_s16 i;
-
-	for (i = 0; i < KEVINRANDOM_SEED_LEN; ++i) {
-		g_kevinrandom_seed[i] = seed[i];
-	}
-}
-
-void get_kevinrandom_seed(legacy_s8* seed)
-{
-	legacy_s16 i;
-
-	for (i = 0; i < KEVINRANDOM_SEED_LEN; ++i) {
-		seed[i] = g_kevinrandom_seed[i];
-	}
-}
-
-legacy_s16 get_kevinrandom(void)
-{
-	g_kevinrandom_seed[4] += g_kevinrandom_seed[5];
-	g_kevinrandom_seed[3] += g_kevinrandom_seed[4];
-	g_kevinrandom_seed[2] += g_kevinrandom_seed[3];
-	g_kevinrandom_seed[1] += g_kevinrandom_seed[2];
-	g_kevinrandom_seed[0] += g_kevinrandom_seed[1];
-	
-	!++g_kevinrandom_seed[5] 
-	&& !++g_kevinrandom_seed[4]
-	&& !++g_kevinrandom_seed[3]
-	&& !++g_kevinrandom_seed[2]
-	&& !++g_kevinrandom_seed[1]
-	&& ++g_kevinrandom_seed[0];
-
-	return g_kevinrandom_seed[0];
-}
-
 legacy_s16 get_super_random(void)
 {
 	legacy_s16 val = rand() + get_kevinrandom() + timer_get_counter() + gState_frame;

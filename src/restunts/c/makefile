@@ -16,7 +16,7 @@ else
   $(error Unsupported C target: $(TARGET))
 endif
 
-C_FILES = fileio.c math.c memmgr.c restunts.c shape3d.c shape2d.c keyboard.c heapsort.c \
+C_FILES = fileio.c math.c memmgr.c kevinrnd.c restunts.c shape3d.c shape2d.c keyboard.c heapsort.c \
 		  frame.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(C_FILES:.c=.obj))

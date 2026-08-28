@@ -162,6 +162,8 @@ extern void player_op(legacy_s8);
 extern void opponent_op(void);
 extern void state_op_unk(legacy_s16, legacy_s16, legacy_s16);
 extern void sub_19BA0(void);
+extern void init_kevinrandom(const legacy_s8* seed);
+extern void get_kevinrandom_seed(legacy_s8* seed);
 extern legacy_s16 get_kevinrandom(void);
 extern void audio_carstate(void);
 extern void setup_car_shapes(legacy_s16);
