@@ -407,7 +407,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     push    word_407F0
     push    word_407EE
@@ -456,7 +456,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -479,7 +479,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -502,7 +502,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -525,7 +525,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -548,7 +548,7 @@ loc_2A50D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
 loc_2A720:
     cmp     [bp+var_A], 0

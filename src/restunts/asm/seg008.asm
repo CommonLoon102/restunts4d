@@ -77,7 +77,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_call_read_line_
     public ported_input_repeat_check_
     public ported_draw_lines_unk_
-    public draw_button
+    public ported_draw_button_
     public ported_shape3d_init_shape_
     public ported_font_op2_alt_
     public ported_sprite_blit_to_video_
@@ -3602,7 +3602,7 @@ ported_draw_lines_unk_ proc far
     pop     bp
     retf
 ported_draw_lines_unk_ endp
-draw_button proc far
+ported_draw_button_ proc far
     var_72 = word ptr -114
     var_70 = word ptr -112
     var_6E = word ptr -110
@@ -3632,9 +3632,8 @@ draw_button proc far
     arg_10 = word ptr 22
     arg_12 = word ptr 24
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 72h
+    jmp     draw_button
+    nop
     push    di
     push    si
     mov     si, [bp+arg_4]
@@ -3884,7 +3883,7 @@ loc_29554:
     mov     sp, bp
     pop     bp
     retf
-draw_button endp
+ported_draw_button_ endp
 ported_shape3d_init_shape_ proc far
      s = byte ptr 0
      r = byte ptr 2

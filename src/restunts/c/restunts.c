@@ -2436,6 +2436,64 @@ void font_set_unk(int color, int unknown)
 	font_definition[3] = 0;
 }
 
+void draw_button(char far* text, int x, int y, int width, int height,
+	int top_color, int bottom_color, int fill_color, int font_color)
+{
+	char line[86];
+	char* copied_text;
+	legacy_u16 length;
+	legacy_u16 source_index;
+	legacy_u16 destination_index;
+	legacy_u16 line_index;
+	legacy_u16 line_count;
+	legacy_s16 vertical_offset;
+	legacy_s16 horizontal_offset;
+	legacy_s16 remaining;
+
+	sprite_1_unk(x, y, width, height, fill_color);
+	draw_lines_unk(x, y, width, height, top_color, top_color,
+		bottom_color);
+
+	if (text == 0)
+		return;
+
+	font_set_unk(font_color, 0);
+	copied_text = &resID_byte1;
+	copy_string(copied_text, text);
+	length = (legacy_u16)strlen(copied_text);
+	line_count = 1;
+	for (source_index = 0; source_index < length; source_index++) {
+		if (copied_text[source_index] == ']')
+			line_count++;
+	}
+
+	remaining = LEGACY_S16_WRAP_SUB(height,
+		LEGACY_U16_WRAP_MUL(line_count, 8U));
+	vertical_offset = LEGACY_S16_WRAP_ADD(
+		(legacy_s16)((long)remaining / 2L), 1);
+	destination_index = 0;
+	line_index = 0;
+	for (source_index = 0; source_index <= length; source_index++) {
+		char character = copied_text[source_index];
+
+		if (character != ']' && character != 0) {
+			line[destination_index++] = character;
+			continue;
+		}
+
+		line[destination_index] = 0;
+		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
+		horizontal_offset = (legacy_s16)((long)remaining / 2L);
+		font_draw_text(line,
+			LEGACY_S16_WRAP_ADD(x, horizontal_offset),
+			LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(y, vertical_offset),
+				LEGACY_U16_WRAP_MUL(line_index, 8U)));
+		line_index++;
+		destination_index = 0;
+	}
+}
+
 struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	int shadow_color)
 {

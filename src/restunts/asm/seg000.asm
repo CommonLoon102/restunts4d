@@ -1972,7 +1972,7 @@ loc_112E5:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -1995,7 +1995,7 @@ loc_112E5:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -2018,7 +2018,7 @@ loc_112E5:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     push    [bp+var_2]
     push    [bp+var_4]
@@ -3418,7 +3418,7 @@ loc_11FC8:
     push    ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -3436,7 +3436,7 @@ loc_11FC8:
     sub     ax, ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -3455,7 +3455,7 @@ loc_120A3:
     sub     ax, ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     ax, offset aGrap; "grap"
     push    ax
@@ -3540,7 +3540,7 @@ loc_120A3:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -3565,7 +3565,7 @@ loc_120A3:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -3590,7 +3590,7 @@ loc_120A3:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     bx, [bp+arg_transmissionofs]
     cmp     byte ptr [bx], 0
@@ -3624,7 +3624,7 @@ loc_12229:
     push    ax
     push    dx
     push    [bp+var_3C]
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -3649,7 +3649,7 @@ loc_12229:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     ax, framespersec
     mov     [bp+var_12], ax
@@ -4239,7 +4239,7 @@ loc_1287F:
     push    ax
     push    dx
     push    [bp+var_3C]
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     call    sprite_copy_2_to_1_2
     call    ported_mouse_draw_opaque_check_
@@ -4260,7 +4260,7 @@ loc_1287F:
     push    ax
     push    [bp+var_3A]
     push    [bp+var_3C]
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     call    ported_mouse_draw_transparent_check_
     jmp     loc_11FA5
@@ -4447,7 +4447,7 @@ loc_12A4D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -4471,7 +4471,7 @@ loc_12A4D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -4495,7 +4495,7 @@ loc_12A4D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -4519,7 +4519,7 @@ loc_12A4D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -4543,7 +4543,7 @@ loc_12A4D:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     al, gameconfig.game_opponenttype
     add     al, 30h ; '0'
@@ -5266,7 +5266,7 @@ loc_131FC:
     push    ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -5283,7 +5283,7 @@ loc_131FC:
     push    ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     [bp+var_70], 6Bh ; 'k'
     mov     ax, offset aElt ; "elt"
@@ -6384,7 +6384,7 @@ loc_13D13:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     al, [bp+var_52]
     cbw
@@ -6530,7 +6530,7 @@ loc_13ECD:
     push    ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     mov     ax, hiscore_buttons_y2
     inc     ax
@@ -6673,7 +6673,7 @@ loc_14017:
     push    ax
     push    dx
     push    [bp+var_7E]
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
 loc_14058:
     sub     ax, ax
@@ -6699,7 +6699,7 @@ loc_14058:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     cmp     [bp+var_16], 0
     jz      short loc_140A4
@@ -6732,7 +6732,7 @@ loc_140A7:
     push    ax
     push    dx
     push    [bp+var_7E]
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     ax, ax
     push    ax
@@ -6757,7 +6757,7 @@ loc_140A7:
     add     sp, 6
     push    dx
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     sub     di, di
 loc_14130:
@@ -7023,7 +7023,7 @@ loc_143C6:
     push    ax
     push    ax
     push    ax
-    call    draw_button
+    call    far ptr draw_button
     add     sp, 14h
     cmp     [bp+var_14], 0
     jz      short loc_14404

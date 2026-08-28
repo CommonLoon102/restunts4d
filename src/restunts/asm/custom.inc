@@ -258,6 +258,7 @@ extrn read_line:proc
 extrn sprite_blit_to_video:proc
 extrn input_checking:proc
 extrn mouse_track_op:proc
+extrn draw_button:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
