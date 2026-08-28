@@ -327,8 +327,8 @@ seg012 segment byte public 'STUNTSC' use16
     public sprite_putimage
     public loc_33BF5
     public nopsub_33D0C
-    public sprite_shape_to_1
-    public sprite_shape_to_1_alt
+    public ported_sprite_shape_to_1_
+    public ported_sprite_shape_to_1_alt_
     public loc_33D69
     public nopsub_33DBE
     public shape2d_op_unk5
@@ -11946,7 +11946,7 @@ nopsub_33D0C proc far
     ; align 2
     db 144
 nopsub_33D0C endp
-sprite_shape_to_1 proc far
+ported_sprite_shape_to_1_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11956,9 +11956,8 @@ sprite_shape_to_1 proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sprite_shape_to_1
+    nop
     push    ds
     push    si
     push    di
@@ -11971,8 +11970,8 @@ sprite_shape_to_1 proc far
     jmp     short loc_33D69
     ; align 2
     db 144
-sprite_shape_to_1 endp
-sprite_shape_to_1_alt proc far
+ported_sprite_shape_to_1_ endp
+ported_sprite_shape_to_1_alt_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -11981,9 +11980,8 @@ sprite_shape_to_1_alt proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sprite_shape_to_1_alt
+    nop
     push    ds
     push    si
     push    di
@@ -12039,7 +12037,7 @@ loc_33DB5:
     jmp     short loc_33DA2
     ; align 2
     db 0
-sprite_shape_to_1_alt endp
+ported_sprite_shape_to_1_alt_ endp
 nopsub_33DBE proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

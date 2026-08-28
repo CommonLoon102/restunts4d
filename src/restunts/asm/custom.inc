@@ -329,6 +329,8 @@ extrn sprite_clear_shape:proc
 extrn draw_unknown_lines:proc
 extrn draw_patterned_lines:proc
 extrn putpixel_line1_maybe:proc
+extrn sprite_shape_to_1:proc
+extrn sprite_shape_to_1_alt:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
