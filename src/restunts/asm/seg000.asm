@@ -3003,9 +3003,9 @@ run_car_menu proc far
     arg_transmissionofs = word ptr 10
     arg_opponenttype = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10Ch
+    jmp     run_car_menu_c
+    nop
+    nop
     push    di
     push    si
     push    si

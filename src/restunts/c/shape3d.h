@@ -36,6 +36,8 @@ struct TRANSFORMEDSHAPE3D {
 
 int shape3d_load_all(void);
 void shape3d_free_all(void);
+void shape3d_load_car_shapes(char* carid, char* opponent_carid);
+void shape3d_free_car_shapes(void);
 void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape);
 unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
 void set_projection(int i1, int i2, int i3, int i4);
