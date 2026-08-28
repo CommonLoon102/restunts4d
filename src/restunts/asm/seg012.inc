@@ -301,7 +301,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn loc_34311:proc
     extrn sprite_putimage_transparent:proc
     extrn loc_343E9:proc
-    extrn sub_34526:proc
+    extrn ported_sub_34526_:proc
     extrn loc_34541:proc
     extrn ported_sub_345BC_:proc
     extrn loc_345E5:proc

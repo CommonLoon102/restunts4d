@@ -323,6 +323,7 @@ extrn font_draw_text:proc
 extrn draw_filled_lines:proc
 extrn sprite_1_unk3:proc
 extrn sub_345BC:proc
+extrn sub_34526:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

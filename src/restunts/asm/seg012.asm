@@ -348,7 +348,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_34311
     public sprite_putimage_transparent
     public loc_343E9
-    public sub_34526
+    public ported_sub_34526_
     public loc_34541
     public ported_sub_345BC_
     public loc_345E5
@@ -13123,7 +13123,7 @@ loc_344DC:
     ; align 2
     db 144
 sprite_putimage_transparent endp
-sub_34526 proc far
+ported_sub_34526_ proc far
     var_8 = word ptr -8
     var_6 = word ptr -6
     var_4 = word ptr -4
@@ -13133,9 +13133,8 @@ sub_34526 proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sub_34526
+    nop
     push    ds
     push    si
     push    di
@@ -13204,7 +13203,7 @@ loc_34586:
     jmp     short loc_345E5
     ; align 2
     db 144
-sub_34526 endp
+ported_sub_34526_ endp
 ported_sub_345BC_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

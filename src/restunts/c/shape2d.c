@@ -28,6 +28,7 @@ extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* smouspriteptr;
 extern char mouse_isdirty;
 extern legacy_u8 far* word_405FE;
+extern legacy_u8 far incnums[];
 
 static legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
@@ -353,6 +354,59 @@ void sprite_1_unk3(struct SHAPE2D far* shape, unsigned phase)
 		}
 		phase++;
 	}
+}
+
+void sub_34526(struct SHAPE2D far* shape)
+{
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* bitmap;
+	legacy_u8 far* source_ptr;
+	legacy_u16 far* line_offsets;
+	legacy_u16 shape_segment;
+	legacy_u16 source;
+	legacy_u16 destination;
+	legacy_u16 destination_advance;
+	legacy_u16 width;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+	legacy_u16 column_count;
+	legacy_u8 source_color;
+	legacy_u8 mapped_color;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape_segment = FP_SEG(shape);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	line_offsets = (legacy_u16 far*)MK_FP(
+		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
+	width = shape2d_get_word(shape_bytes);
+	row_count = shape2d_get_word(shape_bytes + 2U);
+	destination = LEGACY_U16_WRAP_ADD(
+		line_offsets[shape2d_get_word(shape_bytes + 0x0AU)],
+		shape2d_get_word(shape_bytes + 8U));
+	destination_advance = LEGACY_U16_WRAP_SUB(
+		sprite1.sprite_pitch, width);
+	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	do {
+		column_count = width;
+		do {
+			source_ptr = (legacy_u8 far*)MK_FP(
+				shape_segment, source);
+			source_color = *source_ptr;
+			source++;
+			mapped_color = incnums[source_color];
+			if (mapped_color != 0xFFU)
+				bitmap[destination] = mapped_color;
+			destination++;
+			column_count--;
+		} while (column_count != 0);
+		destination = LEGACY_U16_WRAP_ADD(
+			destination, destination_advance);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
