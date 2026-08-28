@@ -3889,7 +3889,7 @@ loc_23FDA:
 loc_23FEE:
     call    timer_get_delta_alt
     push    ax
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     [bp+var_inputcode], ax
     mov     ax, offset game_camera_buttons_y2

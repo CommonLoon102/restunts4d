@@ -53,7 +53,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_file_build_path_
     public do_savefile_dialog
     public ported_parse_filepath_separators_
-    public input_checking
+    public ported_input_checking_
     public ported_input_do_checking_
     public ported_file_load_resfile_
     public ported_unload_resource_
@@ -849,7 +849,7 @@ loc_27B98:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     mov     [bp+var_142], ax
     or      ax, ax
@@ -1041,7 +1041,7 @@ loc_27D6D:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     mov     [bp+var_142], ax
     lea     ax, [bp+var_EE]
@@ -1730,7 +1730,7 @@ loc_28370:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     mov     [bp+var_6CC], ax
     lea     ax, [bp+var_6C8]
@@ -2245,14 +2245,13 @@ loc_28795:
     pop     bp
     retf
 ported_parse_filepath_separators_ endp
-input_checking proc far
+ported_input_checking_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     input_checking
+    nop
     push    di
     push    si
     mov     ax, [bp+arg_0]
@@ -2458,7 +2457,7 @@ loc_289D9:
     retf
     ; align 2
     db 144
-input_checking endp
+ported_input_checking_ endp
 ported_input_do_checking_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -2467,7 +2466,7 @@ ported_input_do_checking_ proc far
     jmp     input_do_checking
     nop
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     pop     bp
     retf
@@ -2764,7 +2763,7 @@ loc_28BED:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     test    byte ptr mouse_butstate, 3
     jnz     short loc_28BED
@@ -2793,7 +2792,7 @@ loc_28C2E:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     cmp     [bp+var_A], 0
     jnz     short loc_28C48
@@ -3127,7 +3126,7 @@ loc_28EFA:
     call near ptr ported_timer_get_delta_alt_
     push    ax
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     or      ax, ax
     jnz     short loc_28EF3
@@ -3148,7 +3147,7 @@ ported_nopsub_28F26_ proc far
 
     jmp     nopsub_28F26
     push    cs
-    call near ptr input_checking
+    call near ptr ported_input_checking_
     add     sp, 2
     or      ax, ax
     jz      short near ptr ported_nopsub_28F26_

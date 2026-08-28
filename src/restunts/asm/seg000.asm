@@ -1653,7 +1653,7 @@ loc_10FEF:
     add     sp, 0Eh
     mov     [bp+var_timedelta], ax
     push    ax
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     [bp+var_keycode], ax
     mov     ax, offset menu_buttons_y2
@@ -2064,7 +2064,7 @@ loc_113E5:
     inc     idle_expired
 loc_11423:
     push    [bp+var_C]
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     [bp+var_E], ax
     mov     ax, offset trackmenu_buttons_y2
@@ -3918,7 +3918,7 @@ loc_12541:
     inc     idle_expired
 loc_12585:
     push    [bp+var_rotationdelta]
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     si, ax
     mov     ax, offset carmenu_buttons_x2
@@ -4699,7 +4699,7 @@ loc_12D2C:
     add     sp, 0Eh
     mov     [bp+var_10], ax
     push    ax
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     si, ax
     mov     ax, offset opponentmenu_buttons_y2
@@ -6499,7 +6499,7 @@ loc_13EA0:
     call    ported_mouse_draw_transparent_check_
 loc_13EA5:
     push    di
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     si, ax
     cmp     si, 0Dh
@@ -6985,7 +6985,7 @@ loc_14391:
     mov     [bp+var_selectedmenu], al
 loc_14395:
     push    [bp+var_72]
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     si, ax
     or      si, si

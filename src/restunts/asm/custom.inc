@@ -256,6 +256,7 @@ extrn audio_map_song_tracks:proc
 extrn call_read_line:proc
 extrn read_line:proc
 extrn sprite_blit_to_video:proc
+extrn input_checking:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

@@ -631,10 +631,142 @@ int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
 	return -1;
 }
 
-extern int input_checking(int frame_delta);
+extern int input_framecount;
+extern int input_framecount2;
+extern int input_framecount3;
+extern int input_framecounter;
+extern int kbjoyflags;
+extern int joyflags;
+extern int newjoyflags;
+extern int joyinputcode;
+extern int mouse_oldx;
+extern int mouse_oldy;
+extern int mouse_oldbut;
+extern int mousebutinputcode;
+extern int get_joy_flags(void);
+extern void mouse_get_state(int* buttons, int* x, int* y);
 extern unsigned char byte_3EBD8;
 extern char byte_45D0C[];
 extern char byte_45D14[];
+
+int input_checking(int frame_delta)
+{
+	legacy_u16 current_joy_flags;
+	legacy_u16 key;
+	int changed_or_repeating;
+
+	input_framecount = LEGACY_U16_WRAP_ADD(input_framecount, frame_delta);
+	if (LEGACY_S16_FROM_BITS(input_framecount) > 20000) {
+		input_framecount = LEGACY_U16_WRAP_SUB(input_framecount, 10000U);
+		input_framecount2 = LEGACY_U16_WRAP_SUB(input_framecount2, 10000U);
+		input_framecount3 = LEGACY_U16_WRAP_SUB(input_framecount3, 10000U);
+	}
+
+	key = (legacy_u16)kb_get_char();
+	if (key != 0)
+		kbormouse = 0;
+	current_joy_flags = (legacy_u16)get_joy_flags();
+	kbjoyflags = get_kb_or_joy_flags();
+	changed_or_repeating = 0;
+	if ((legacy_u16)joyflags != current_joy_flags) {
+		newjoyflags = ((legacy_u16)joyflags ^ current_joy_flags) &
+			current_joy_flags;
+		joyflags = current_joy_flags;
+		changed_or_repeating = 1;
+	} else if (current_joy_flags != 0 &&
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+			input_framecount3, 20U)) <
+		LEGACY_S16_FROM_BITS(input_framecount)) {
+		changed_or_repeating = 1;
+	}
+
+	if (changed_or_repeating) {
+		if (((legacy_u16)newjoyflags & 0x20U) != 0)
+			joyinputcode = 0x0D;
+		else if (((legacy_u16)newjoyflags & 0x10U) != 0)
+			joyinputcode = 0x20;
+		else if (((legacy_u16)newjoyflags & 1U) != 0)
+			joyinputcode = 0x4800;
+		else if (((legacy_u16)newjoyflags & 2U) != 0)
+			joyinputcode = 0x5000;
+		else if (((legacy_u16)newjoyflags & 8U) != 0)
+			joyinputcode = 0x4B00;
+		else if (((legacy_u16)newjoyflags & 4U) != 0)
+			joyinputcode = 0x4D00;
+
+		if (joyinputcode != 0) {
+			input_framecount3 = input_framecount;
+			kbormouse = 0;
+		}
+	}
+
+	mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
+	if (mouse_oldx != mouse_xpos || mouse_oldy != mouse_ypos ||
+		mouse_oldbut != mouse_butstate) {
+		mouse_oldx = mouse_xpos;
+		mouse_oldy = mouse_ypos;
+		kbormouse = 1;
+		input_framecounter = 0;
+		if (byte_3B8F7 != 0) {
+			if (mouse_isdirty != 0)
+				mouse_draw_opaque();
+			mouse_draw_transparent();
+		}
+	} else if (kbormouse != 0) {
+		input_framecounter = LEGACY_U16_WRAP_ADD(
+			input_framecounter, frame_delta);
+		if (LEGACY_S16_FROM_BITS(input_framecounter) > 500) {
+			input_framecounter = 0;
+			kbormouse = 0;
+			if (mouse_isdirty != 0)
+				mouse_draw_opaque();
+		}
+	}
+
+	if (kbormouse != 0) {
+		changed_or_repeating = 0;
+		if (mouse_oldbut != mouse_butstate) {
+			mouse_oldbut = mouse_butstate;
+			changed_or_repeating = 1;
+		} else if (mouse_butstate != 0 &&
+			LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+				input_framecount2, 20U)) <
+			LEGACY_S16_FROM_BITS(input_framecount)) {
+			changed_or_repeating = 1;
+		}
+
+		if (changed_or_repeating) {
+			if (((legacy_u16)mouse_butstate & 1U) != 0)
+				mousebutinputcode = 0x20;
+			else if (((legacy_u16)mouse_butstate & 2U) != 0)
+				mousebutinputcode = 0x0D;
+			if (mousebutinputcode != 0)
+				input_framecount2 = input_framecount;
+			input_framecounter = 0;
+		}
+
+		if (mouse_butstate != 0) {
+			if (((legacy_u16)mouse_butstate & 1U) != 0)
+				kbjoyflags = (legacy_u16)kbjoyflags | 0x20U;
+			else if (((legacy_u16)mouse_butstate & 2U) != 0)
+				kbjoyflags = (legacy_u16)kbjoyflags | 0x10U;
+		}
+	}
+
+	if (key != 0)
+		return key;
+	if (joyinputcode != 0) {
+		key = (legacy_u16)joyinputcode;
+		joyinputcode = 0;
+		return key;
+	}
+	if (mousebutinputcode != 0) {
+		key = (legacy_u16)mousebutinputcode;
+		mousebutinputcode = 0;
+		return key;
+	}
+	return 0;
+}
 
 int input_do_checking(int frame_delta)
 {

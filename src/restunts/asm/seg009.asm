@@ -1365,7 +1365,7 @@ loc_2AF0E:
     mov     di, ax
     add     [bp+var_3A], di
     push    di
-    call    input_checking
+    call    far ptr input_checking
     add     sp, 2
     mov     [bp+var_C8], ax
     mov     ax, offset trackmenu2_buttons_y2
