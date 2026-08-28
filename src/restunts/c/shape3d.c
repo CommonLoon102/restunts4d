@@ -2782,6 +2782,33 @@ void preRender_line(
 		putpixel_line1_maybe((int*)line);
 }
 
+void draw_lines_unk(int x, int y, int width, int height,
+	int outer_color, int inner_color, int opposite_color)
+{
+	int right = x + width;
+	int bottom = y + height;
+
+	preRender_line(x, y, right, y, outer_color);
+	preRender_line(x + 1, y + 1, right - 1, y + 1, outer_color);
+	preRender_line(x + 2, y + 2, right - 2, y + 2, inner_color);
+
+	preRender_line(x, y, x, bottom, outer_color);
+	preRender_line(x + 1, y + 1, x + 1, bottom - 1, outer_color);
+	preRender_line(x + 2, y + 2, x + 2, bottom - 2, inner_color);
+
+	preRender_line(x, bottom, right, bottom, opposite_color);
+	preRender_line(x + 1, bottom - 1, right - 1, bottom - 1,
+		opposite_color);
+	preRender_line(x + 2, bottom - 2, right - 2, bottom - 2,
+		inner_color);
+
+	preRender_line(right, y, right, bottom, opposite_color);
+	preRender_line(right - 1, y + 1, right - 1, bottom - 1,
+		opposite_color);
+	preRender_line(right - 2, y + 2, right - 2, bottom - 2,
+		inner_color);
+}
+
 extern void (*spritefunc)(int*, int*, unsigned, unsigned, unsigned);
 extern void (*imagefunc)(unsigned, unsigned, unsigned, unsigned, unsigned);
 

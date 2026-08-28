@@ -420,7 +420,7 @@ loc_2A50D:
     push    ax
     mov     ax, 5
     push    ax
-    call    draw_lines_unk
+    call    far ptr draw_lines_unk
     add     sp, 0Eh
     push    word_407F0
     push    word_407EE
@@ -433,7 +433,7 @@ loc_2A50D:
     push    ax
     mov     ax, 0D9h ; 'Ù'
     push    ax
-    call    draw_lines_unk
+    call    far ptr draw_lines_unk
     add     sp, 0Eh
     sub     ax, ax
     push    ax

@@ -6124,7 +6124,7 @@ loc_13A4B:
     mov     ax, [bp+var_8C]
     sub     ax, 3
     push    ax
-    call    draw_lines_unk  ; border around opponent animation on eval screen
+    call    far ptr draw_lines_unk  ; border around opponent animation on eval screen
     add     sp, 0Eh
     mov     al, [bp+var_8E]
     cbw
