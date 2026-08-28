@@ -2935,6 +2935,59 @@ void preRender_sphere_helper(unsigned* source, unsigned color)
 	preRender_default_alt(color, 0x20U, vertices);
 }
 
+void preRender_wheel_helper3(unsigned* source, unsigned* destination)
+{
+	legacy_u16 half_x1;
+	legacy_u16 half_y1;
+	legacy_u16 half_x2;
+	legacy_u16 half_y2;
+	legacy_u16 index;
+	legacy_u16 center_x;
+	legacy_u16 center_y;
+
+	destination[0] = LEGACY_U16_WRAP_SUB(source[2], source[0]);
+	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
+	destination[8] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
+	destination[9] = LEGACY_U16_WRAP_SUB(source[5], source[1]);
+	destination[4] = sphere_scale_sum(destination[8], destination[0],
+		0x2D41U);
+	destination[5] = sphere_scale_sum(destination[1], destination[9],
+		0x2D41U);
+	half_x2 = shape3d_sar1((legacy_u16)destination[8]);
+	half_y2 = shape3d_sar1((legacy_u16)destination[9]);
+	destination[2] = sphere_scale_sum(destination[0], half_x2, 0x393EU);
+	destination[3] = sphere_scale_sum(destination[1], half_y2, 0x393EU);
+	half_x1 = shape3d_sar1((legacy_u16)destination[0]);
+	half_y1 = shape3d_sar1((legacy_u16)destination[1]);
+	destination[6] = sphere_scale_sum(destination[8], half_x1, 0x393EU);
+	destination[7] = sphere_scale_sum(destination[9], half_y1, 0x393EU);
+	destination[12] = sphere_scale_difference(destination[8],
+		destination[0], 0x2D41U);
+	destination[13] = sphere_scale_difference(destination[9],
+		destination[1], 0x2D41U);
+	destination[14] = sphere_scale_difference(half_x2,
+		destination[0], 0x393EU);
+	destination[15] = sphere_scale_difference(half_y2,
+		destination[1], 0x393EU);
+	destination[10] = sphere_scale_difference(destination[8], half_x1,
+		0x393EU);
+	destination[11] = sphere_scale_difference(destination[9], half_y1,
+		0x393EU);
+
+	center_x = (legacy_u16)source[0];
+	center_y = (legacy_u16)source[1];
+	for (index = 0; index < 8U; index++) {
+		destination[16U + index * 2U] = LEGACY_U16_WRAP_SUB(
+			center_x, destination[index * 2U]);
+		destination[17U + index * 2U] = LEGACY_U16_WRAP_SUB(
+			center_y, destination[index * 2U + 1U]);
+		destination[index * 2U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U], center_x);
+		destination[index * 2U + 1U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U + 1U], center_y);
+	}
+}
+
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
 void preRender_sphere(int x, int y, unsigned size, unsigned color)
