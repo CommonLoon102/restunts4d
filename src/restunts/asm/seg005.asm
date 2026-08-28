@@ -115,7 +115,7 @@ loc_21BCA:
     jz      short loc_21BE4
     jmp     loc_223F4
 loc_21BE4:
-    call    track_setup
+    call    ported_track_setup_
     jmp     short loc_21C0F
     ; align 2
     db 144
@@ -4496,7 +4496,7 @@ loc_24548:
     mov     gameconfig.game_recordedframes, 0
 loc_2458B:
     mov     dashb_toggle, 0
-    call    track_setup
+    call    ported_track_setup_
     sub     si, si
     les     bx, td14_elem_map_main
     mov     al, es:[bx+384h]

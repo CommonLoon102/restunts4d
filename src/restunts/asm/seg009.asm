@@ -1864,7 +1864,7 @@ loc_2B3DC:
     ; align 2
     db 144
 loc_2B3EA:
-    call    track_setup
+    call    ported_track_setup_
     cbw
     mov     si, ax
     sub     ax, ax
@@ -2202,7 +2202,7 @@ loc_2B725:
     push    ax
     call    file_read_fatal
     add     sp, 6
-    call    track_setup
+    call    ported_track_setup_
     mov     [bp+var_34], 0
     mov     al, byte_45E16
     mov     [bp+var_180], al

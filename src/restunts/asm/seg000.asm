@@ -409,7 +409,7 @@ loc_10346:
     jl      short loc_10346
     cmp     idle_expired, 0
     jnz     short _find_tedit
-    call    track_setup
+    call    ported_track_setup_
     or      al, al
     jz      short _sec_check1
     mov     ax, 1
@@ -2201,7 +2201,7 @@ loc_1156A:
     call    check_input
     call    show_waiting
     mov     waitflag, 82h ; '�'
-    call    track_setup
+    call    ported_track_setup_
     call    load_tracks_menu_shapes
     jmp     loc_110ED
     ; align 2

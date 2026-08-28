@@ -54,7 +54,7 @@ seg004 segment byte public 'STUNTSC' use16
     public ported_shape3d_load_car_shapes_
     public ported_shape3d_free_car_shapes_
     public ported_sub_204AE_
-    public track_setup
+    public ported_track_setup_
     public off_2147C
     public ported_load_opponent_data_
     public ported_subst_hillroad_track_
@@ -4073,7 +4073,7 @@ loc_206CE:
     pop     bp
     retf
 ported_sub_204AE_ endp
-track_setup proc far
+ported_track_setup_ proc far
     var_AF0 = dword ptr -2800
     var_AEC = word ptr -2796
     var_AEA = word ptr -2794
@@ -4124,9 +4124,9 @@ track_setup proc far
      r = byte ptr 2
     arg_2092 = word ptr 8344
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0AF0h
+    jmp     track_setup
+    nop
+    nop
     push    di
     push    si
     mov     ax, 380h
@@ -5837,7 +5837,7 @@ loc_217C2:
     retf
     ; align 2
     db 144
-track_setup endp
+ported_track_setup_ endp
 ported_load_opponent_data_ proc far
     var_F30 = word ptr -3888
     var_B2E = word ptr -2862
