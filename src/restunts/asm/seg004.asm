@@ -57,7 +57,7 @@ seg004 segment byte public 'STUNTSC' use16
     public track_setup
     public off_2147C
     public load_opponent_data
-    public subst_hillroad_track
+    public ported_subst_hillroad_track_
 build_track_object proc far
     var_curr_wallptr = dword ptr -64
     var_misc3C = word ptr -60
@@ -419,7 +419,7 @@ loc_1E464:
     mov     al, [bp+var_tileTerr]
     push    ax
     push    cs
-    call near ptr subst_hillroad_track
+    call near ptr ported_subst_hillroad_track_
     add     sp, 4
     mov     [bp+var_tileElem], al
 loc_1E4B6:
@@ -4536,7 +4536,7 @@ loc_20AC2:
     mov     al, [bp+var_tileTerr]
     push    ax
     push    cs
-    call near ptr subst_hillroad_track
+    call near ptr ported_subst_hillroad_track_
     add     sp, 4
     mov     [bp+var_tileElem], al
 loc_20B30:
@@ -6106,15 +6106,14 @@ loc_21A54:
     mov     si, [bp+var_4]
     jmp     loc_21878
 load_opponent_data endp
-subst_hillroad_track proc far
+ported_subst_hillroad_track_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = byte ptr 6
     arg_2 = byte ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     al, [bp+arg_0]
+    jmp     subst_hillroad_track
+    nop
     sub     ah, ah
     cmp     ax, 7
     jz      short loc_21A80
@@ -6272,6 +6271,6 @@ loc_21B74:
 loc_21B77:
     pop     bp
     retf
-subst_hillroad_track endp
+ported_subst_hillroad_track_ endp
 seg004 ends
 end

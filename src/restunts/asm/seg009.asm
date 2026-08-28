@@ -4106,7 +4106,7 @@ loc_2C8D0:
     push    ax
     mov     al, [bp+var_8]
     push    ax
-    call    subst_hillroad_track
+    call    far ptr subst_hillroad_track
     add     sp, 4
     or      al, al
     jnz     short loc_2C903

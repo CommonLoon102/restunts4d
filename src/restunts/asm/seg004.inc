@@ -10,5 +10,5 @@ seg004 segment byte public 'STUNTSC' use16
     extrn track_setup:proc
     extrn off_2147C:word
     extrn load_opponent_data:proc
-    extrn subst_hillroad_track:proc
+    extrn ported_subst_hillroad_track_:proc
 seg004 ends

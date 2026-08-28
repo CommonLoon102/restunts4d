@@ -1005,7 +1005,7 @@ loc_1A774:
     push    ax
     mov     al, [bp+terr_map_value]
     push    ax
-    call    subst_hillroad_track
+    call    far ptr subst_hillroad_track
     add     sp, 4
     mov     [bp+elem_map_value], al
     mov     [bp+terr_map_value], 0
@@ -5324,7 +5324,7 @@ loc_1D0DF:
     push    ax
     mov     al, [bp+var_3A]
     push    ax
-    call    subst_hillroad_track
+    call    far ptr subst_hillroad_track
     add     sp, 4
     mov     [bp+var_10], al
     mov     [bp+var_3A], 0

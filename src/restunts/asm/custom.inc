@@ -243,6 +243,7 @@ extrn run_intro:proc
 extrn run_intro_looped:proc
 extrn frame_callback:proc
 extrn handle_ingame_kb_shortcuts:proc
+extrn subst_hillroad_track:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
