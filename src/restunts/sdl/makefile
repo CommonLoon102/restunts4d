@@ -4,7 +4,7 @@ LINK = cl
 LINKFLAGS = /link /LIBPATH:$(SDLPATH)\lib /SUBSYSTEM:console /DEBUG
 OBJDIR = build
 
-CTARGETS = $(OBJDIR)\fileio.obj $(OBJDIR)\memmgr.obj $(OBJDIR)\shape3d.obj $(OBJDIR)\math.obj
+CTARGETS = $(OBJDIR)\fileio.obj $(OBJDIR)\memmgr.obj $(OBJDIR)\shape3d.obj $(OBJDIR)\math.obj $(OBJDIR)\replay.obj
 #$(OBJDIR)\shape2d.obj
 #$(OBJDIR)\fileio.obj $(OBJDIR)\math.obj $(OBJDIR)\memmgr.obj $(OBJDIR)\restunts.obj $(OBJDIR)\shape3d.obj $(OBJDIR)\shape2d.obj
 PROJTARGETS = $(OBJDIR)\main.obj $(OBJDIR)\data3d.obj sdl.lib sdlmain.lib

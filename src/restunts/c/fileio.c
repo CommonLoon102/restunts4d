@@ -1108,7 +1108,8 @@ legacy_s16 file_load_replay(const legacy_s8* dir, const legacy_s8* name)
 
 	g_is_busy = 1;
 	file_read_fatal(g_path_buf, td13_rpl_header);
-	gameconfig = *(struct GAMEINFO far*)td13_rpl_header;
+	replay_gameinfo_decode(&gameconfig,
+		(const legacy_u8 far*)td13_rpl_header);
 	g_is_busy = 0;
 	return 0;
 }
@@ -1117,10 +1118,11 @@ legacy_s16 file_write_replay(const legacy_s8* filename)
 {
 	legacy_s16 ret;
 
-	*(struct GAMEINFO far*)td13_rpl_header = gameconfig;
+	replay_gameinfo_encode((legacy_u8 far*)td13_rpl_header, &gameconfig);
 
 	g_is_busy = 1;
-	ret = file_write_fatal(filename, td13_rpl_header, sizeof(struct GAMEINFO) + gameconfig.game_recordedframes);
+	ret = file_write_fatal(filename, td13_rpl_header,
+		REPLAY_GAMEINFO_SIZE + gameconfig.game_recordedframes);
 	g_is_busy = 0;
 	
 	return ret;

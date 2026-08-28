@@ -8,20 +8,9 @@
 #define huge
 #endif
 
-#pragma pack (push, 1)
+#include "replay.h"
 
-struct GAMEINFO {
-	legacy_s8 game_playercarid[4];
-	legacy_s8 game_playermaterial;
-	legacy_s8 game_playertransmission;
-	legacy_s8 game_opponenttype;
-	legacy_s8 game_opponentcarid[4];
-	legacy_s8 game_opponentmaterial;
-	legacy_s8 game_opponenttransmission;
-	legacy_s8 game_trackname[9];
-	legacy_u16 game_framespersec;
-	legacy_u16 game_recordedframes;
-};
+#pragma pack (push, 1)
 
 struct CARSTATE {
 	struct VECTORLONG car_posWorld1;
@@ -200,8 +189,6 @@ struct TRACKOBJECT {
 
 #pragma pack (pop)
 
-typedef char legacy_gameinfo_must_be_26_bytes[
-	(sizeof(struct GAMEINFO) == 26) ? 1 : -1];
 typedef char legacy_carstate_must_be_208_bytes[
 	(sizeof(struct CARSTATE) == 208) ? 1 : -1];
 typedef char legacy_gamestate_must_be_1120_bytes[
