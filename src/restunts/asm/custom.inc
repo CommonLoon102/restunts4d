@@ -387,6 +387,7 @@ extrn ensure_file_exists:proc
 extrn show_waiting:proc
 extrn run_menu:proc
 extrn bto_auxiliary1:proc
+extrn detect_penalty:proc
 extrn do_mer_restext:proc
 extrn do_key_restext:proc
 extrn do_mou_restext:proc

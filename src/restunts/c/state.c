@@ -10,6 +10,122 @@ extern struct TRACKOBJECT trkObjectList[215];
 extern unsigned char oppnentSped[];
 extern struct PLANE far* planptr;
 extern struct PLANE far plan_memres;
+extern int track_pieces_counter;
+
+int detect_penalty(int* current_track, int* penalty_count)
+{
+	legacy_u8 visited[904];
+	legacy_u16 pending_track[128];
+	legacy_s16 pending_distance[128];
+	legacy_u16 pending_count;
+	legacy_u16 track_index;
+	legacy_u16 next_track;
+	legacy_u16 alternate_track;
+	legacy_u16 best_track;
+	legacy_s16 distance;
+	legacy_s16 best_distance;
+	legacy_s16 column;
+	legacy_s16 row;
+	legacy_u8 minimum_column;
+	legacy_u8 maximum_column;
+	legacy_u8 minimum_row;
+	legacy_u8 maximum_row;
+	legacy_u8 tile_element;
+	legacy_u8 multi_tile_flags;
+	legacy_u16 index;
+
+	column = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lx >> 16));
+	row = LEGACY_S8_FROM_BITS((legacy_u8)(0x1DU -
+		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lz >> 16)));
+	if ((column == state.game_startcol || column == state.game_startcol2) &&
+		(row == state.game_startrow || row == state.game_startrow2)) {
+		*penalty_count = 0;
+		return 0;
+	}
+	if (column < 0 || column > 0x1D || row < 0 || row > 0x1D) {
+		*penalty_count = -2;
+		return 1;
+	}
+
+	best_distance = 0;
+	best_track = 0;
+	pending_count = 0;
+	distance = 0;
+	for (index = 0; index < (legacy_u16)track_pieces_counter; index++)
+		visited[index] = 0;
+	track_index = (legacy_u16)*current_track;
+
+	for (;;) {
+		next_track = (legacy_u16)td01_track_file_cpy[track_index];
+		if (visited[next_track] != 0) {
+			if (pending_count != 0) {
+				pending_count--;
+				track_index = pending_track[pending_count];
+				distance = pending_distance[pending_count];
+				continue;
+			}
+			if (best_distance != 0) {
+				*current_track = best_track;
+				*penalty_count = best_distance;
+				return 1;
+			}
+			state.game_startcol = column;
+			state.game_startcol2 = column;
+			state.game_startrow = row;
+			state.game_startrow2 = row;
+			*penalty_count = -2;
+			return 1;
+		}
+
+		visited[next_track] = 1;
+		minimum_row = (legacy_u8)td22_row_from_path[next_track];
+		tile_element = (legacy_u8)td17_trk_elem_ordered[next_track];
+		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+		maximum_row = minimum_row;
+		if ((multi_tile_flags & 1U) != 0)
+			maximum_row++;
+		minimum_column = (legacy_u8)td21_col_from_path[next_track];
+		maximum_column = minimum_column;
+		if ((multi_tile_flags & 2U) != 0)
+			maximum_column++;
+
+		if (((legacy_u8)column == minimum_column ||
+			(legacy_u8)column == maximum_column) &&
+			((legacy_u8)row == minimum_row ||
+			(legacy_u8)row == maximum_row)) {
+			if ((legacy_u16)td02_penalty_related[track_index] != 0xFFFFU)
+				next_track = track_index;
+			state.game_startcol = LEGACY_S8_FROM_BITS(minimum_column);
+			state.game_startcol2 = LEGACY_S8_FROM_BITS(maximum_column);
+			state.game_startrow = LEGACY_S8_FROM_BITS(minimum_row);
+			state.game_startrow2 = LEGACY_S8_FROM_BITS(maximum_row);
+			if (distance <= 0) {
+				*current_track = next_track;
+				*penalty_count = distance;
+				return 1;
+			}
+			if (best_distance == 0 || best_distance > distance) {
+				best_track = next_track;
+				best_distance = distance;
+			}
+		}
+
+		alternate_track = (legacy_u16)
+			td02_penalty_related[track_index];
+		if (alternate_track != 0xFFFFU) {
+			pending_distance[pending_count] = distance;
+			pending_track[pending_count] = alternate_track;
+			pending_count++;
+		}
+		if (next_track == 0) {
+			distance = -1;
+		} else if (distance != -1) {
+			distance = LEGACY_S16_WRAP_ADD(distance, 1);
+		}
+		track_index = next_track;
+	}
+}
 
 /*
  * The original player update reuses four words below player_op's stack frame.

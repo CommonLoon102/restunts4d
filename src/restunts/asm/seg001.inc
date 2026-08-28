@@ -7,7 +7,7 @@ seg001 segment byte public 'STUNTSC' use16
     extrn ported_restore_gamestate_:proc
     extrn ported_update_gamestate_:proc
     extrn ported_player_op_:proc
-    extrn detect_penalty:proc
+    extrn ported_detect_penalty_:proc
     extrn ported_update_car_speed_:proc
     extrn update_grip:proc
     extrn ported_car_car_speed_adjust_maybe_:proc

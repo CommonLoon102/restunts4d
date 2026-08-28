@@ -54,7 +54,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_restore_gamestate_
     public ported_update_gamestate_
     public ported_player_op_
-    public detect_penalty
+    public ported_detect_penalty_
     public ported_update_car_speed_
     public update_grip
     public ported_car_car_speed_adjust_maybe_
@@ -4706,7 +4706,7 @@ nosmart
     lea     ax, [bp+var_2]
     push    ax
     push    cs
-    call near ptr detect_penalty
+    call near ptr ported_detect_penalty_
     add     sp, 4
     cbw
     mov     si, ax
@@ -5305,7 +5305,7 @@ loc_17810:
     pop     bp
     retf
 ported_player_op_ endp
-detect_penalty proc far
+ported_detect_penalty_ proc far
     var_5A4 = word ptr -1444
     var_5A2 = byte ptr -1442
     var_21A = word ptr -538
@@ -5325,9 +5325,9 @@ detect_penalty proc far
     arg_extVar2ptr = word ptr 6
     arg_extVar1Eptr = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 5A4h
+    jmp     detect_penalty
+    nop
+    nop
     push    di
     push    si
     mov     al, byte ptr state.playerstate.car_posWorld1.lx+2
@@ -5585,7 +5585,7 @@ loc_17A71:
     jmp     loc_178B9
     ; align 2
     db 144
-detect_penalty endp
+ported_detect_penalty_ endp
 ported_update_car_speed_ proc far
     var_currTorque = byte ptr -10
     var_deltaSpeed = word ptr -8
