@@ -78,7 +78,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn word_2FCC2:word
     extrn word_2FD1E:word
     extrn word_2FD7C:word
-    extrn preRender_line:proc
+    extrn ported_preRender_line_:proc
     extrn add_exit_handler:proc
     extrn call_exitlist:proc
     extrn call_exitlist2:proc

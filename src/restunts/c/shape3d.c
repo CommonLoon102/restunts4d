@@ -3,6 +3,7 @@
 #include <limits.h>
 #include "externs.h"
 #include "fileio.h"
+#include "legacy.h"
 #include "memmgr.h"
 #include "shape3d.h"
 #include "shape2d.h"
@@ -2763,8 +2764,24 @@ extern void draw_unknown_lines();
 extern void preRender_line();
 extern unsigned draw_line_related(unsigned, unsigned, unsigned, unsigned, int*);
 extern unsigned draw_line_related_alt(unsigned, unsigned, unsigned, unsigned, int*);
+extern void putpixel_line1_maybe(int*);
 void generate_poly_edges(int* var_18, int* regsi, int mode);
 void preRender_default_impl_helper(int* regsi, unsigned var_A, unsigned var_C, int* var_18);
+
+void preRender_line(
+	unsigned start_x,
+	unsigned start_y,
+	unsigned end_x,
+	unsigned end_y,
+	unsigned color
+) {
+	legacy_s16 line[14];
+
+	line[8] = LEGACY_S16_FROM_BITS(color);
+	if (draw_line_related(start_x, start_y, end_x, end_y,
+			(int*)line) == 0 && line[7] > 0)
+		putpixel_line1_maybe((int*)line);
+}
 
 extern void (*spritefunc)(int*, int*, unsigned, unsigned, unsigned);
 extern void (*imagefunc)(unsigned, unsigned, unsigned, unsigned, unsigned);

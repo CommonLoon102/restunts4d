@@ -311,6 +311,7 @@ extrn font_op2:proc
 extrn set_add_value:proc
 extrn sub_2EB07:proc
 extrn sub_2EB1E:proc
+extrn preRender_line:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

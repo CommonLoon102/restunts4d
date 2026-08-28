@@ -125,7 +125,7 @@ seg012 segment byte public 'STUNTSC' use16
     public word_2FCC2
     public word_2FD1E
     public word_2FD7C
-    public preRender_line
+    public ported_preRender_line_
     public add_exit_handler
     public call_exitlist
     public call_exitlist2
@@ -1627,7 +1627,7 @@ loc_2F3FD:
     mov     [bp+arg_4], ax
     mov     ax, offset draw_unknown_lines
     mov     spritefunc, ax
-    mov     ax, offset preRender_line
+    mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
     jmp     loc_3180A
 ported_preRender_unk_ endp
@@ -2888,7 +2888,7 @@ word_2FD7C     dw 64170
     dw 62861
     dw 64198
 nopsub_2F436 endp
-preRender_line proc far
+ported_preRender_line_ proc far
     var_1C = byte ptr -28
      s = byte ptr 0
      r = byte ptr 2
@@ -2898,9 +2898,8 @@ preRender_line proc far
     arg_endY = word ptr 12
     arg_color = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 1Ch
+    jmp     preRender_line
+    nop
     mov     ax, [bp+arg_color]
     lea     bx, [bp+var_1C] ; var_1C is some kind of struct sizeof 0x1C
     mov     [bx+10h], ax
@@ -2923,7 +2922,7 @@ loc_2FE18:
     mov     sp, bp
     pop     bp
     retf
-preRender_line endp
+ported_preRender_line_ endp
 add_exit_handler proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -6496,7 +6495,7 @@ ported_preRender_default_alt_ proc far
 loc_317CE:
     mov     ax, offset draw_filled_lines
     mov     spritefunc, ax
-    mov     ax, offset preRender_line
+    mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
     mov     si, [bp+arg_6]
     jmp     short loc_3180A
@@ -6545,7 +6544,7 @@ ported_preRender_wheel_helper4_ proc far
 loc_317FB:
     mov     ax, offset draw_filled_lines
     mov     spritefunc, ax
-    mov     ax, offset preRender_line
+    mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
     lea     si, [bp+arg_vertlines]
 loc_3180A:
@@ -8936,7 +8935,7 @@ loc_328A8:
     mov     [bp+arg_2], ax
     mov     ax, offset draw_patterned_lines
     mov     spritefunc, ax
-    mov     ax, offset preRender_line
+    mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
     jmp     loc_3180A
 ported_preRender_patterned_ endp
