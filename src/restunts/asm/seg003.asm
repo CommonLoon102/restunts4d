@@ -60,7 +60,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_unload_skybox_
     public ported_load_sdgame2_shapes_
     public ported_free_sdgame2_
-    public setup_intro
+    public ported_setup_intro_
     public ported_intro_op_
 loc_19F12:
     pop     ds
@@ -6259,7 +6259,7 @@ ported_free_sdgame2_ proc far
     ; align 2
     db 144
 ported_free_sdgame2_ endp
-setup_intro proc far
+ported_setup_intro_ proc far
     var_5D4 = word ptr -1492
     var_5D2 = word ptr -1490
     var_5D0 = byte ptr -1488
@@ -6305,9 +6305,9 @@ setup_intro proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 5D4h
+    jmp     setup_intro
+    nop
+    nop
     push    di
     push    si
     mov     [bp+var_38], 0
@@ -6821,7 +6821,7 @@ loc_1DE8C:
     mov     sp, bp
     pop     bp
     retf
-setup_intro endp
+ported_setup_intro_ endp
 ported_intro_op_ proc far
     var_42 = word ptr -66
     var_vec = VECTOR ptr -64

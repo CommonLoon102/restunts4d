@@ -684,7 +684,7 @@ ported_run_intro_looped_ proc far
     add     sp, 4
     or      si, si
     jnz     short loc_1068E
-    call    setup_intro
+    call    ported_setup_intro_
     cbw
     mov     si, ax
     or      si, si
