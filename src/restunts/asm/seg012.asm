@@ -301,7 +301,7 @@ seg012 segment byte public 'STUNTSC' use16
     public byte_33646
     public byte_33652
     public byte_33656
-    public sprite_1_unk3
+    public ported_sprite_1_unk3_
     public loc_33697
     public ported_font_draw_text_
     public video_set_mode_13h
@@ -10961,7 +10961,7 @@ byte_33656     db 3
     ; align 2
     db 144
 ported_sprite_1_unk_ endp
-sprite_1_unk3 proc far
+ported_sprite_1_unk3_ proc far
     var_16 = word ptr -22
     var_14 = word ptr -20
     var_12 = word ptr -18
@@ -10979,9 +10979,8 @@ sprite_1_unk3 proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 16h
+    jmp     sprite_1_unk3
+    nop
     push    ds
     push    si
     push    di
@@ -11063,7 +11062,7 @@ loc_33733:
     mov     sp, bp
     pop     bp
     retf
-sprite_1_unk3 endp
+ported_sprite_1_unk3_ endp
 ported_font_draw_text_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

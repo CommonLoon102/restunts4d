@@ -248,6 +248,99 @@ void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
 		LEGACY_S16_FROM_BITS(line_count) > 0);
 }
 
+void sprite_1_unk3(struct SHAPE2D far* shape, unsigned phase)
+{
+	static const legacy_u8 row_order[12] = {
+		11, 5, 8, 2, 10, 4, 7, 1, 9, 3, 6, 0
+	};
+	static const legacy_u8 skip_count[4] = { 1, 3, 0, 2 };
+	static const legacy_u8 advance_count[4] = { 3, 1, 4, 2 };
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* bitmap;
+	legacy_u8 far* line_entry_ptr;
+	legacy_u8 far* source_ptr;
+	legacy_u16 shape_segment;
+	legacy_u16 sprite_segment;
+	legacy_u16 line_table_start;
+	legacy_u16 line_table_end;
+	legacy_u16 line_entry;
+	legacy_u16 data_start;
+	legacy_u16 row_source;
+	legacy_u16 source;
+	legacy_u16 source_row_step;
+	legacy_u16 destination;
+	legacy_u16 width;
+	legacy_u16 height;
+	legacy_u16 pos_x;
+	legacy_u16 pos_y;
+	legacy_u16 remaining;
+	legacy_u16 row_phase;
+	legacy_u16 pattern;
+	legacy_u16 selector;
+	legacy_u16 skip;
+	legacy_u16 advance;
+	legacy_s16 order_index;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape_segment = FP_SEG(shape);
+	sprite_segment = FP_SEG(&sprite1);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	width = shape2d_get_word(shape_bytes);
+	height = shape2d_get_word(shape_bytes + 2U);
+	pos_x = shape2d_get_word(shape_bytes + 8U);
+	pos_y = shape2d_get_word(shape_bytes + 0x0AU);
+	line_table_start = LEGACY_U16_WRAP_ADD(
+		FP_OFF(sprite1.sprite_lineofs), (legacy_u16)(pos_y << 1));
+	line_table_end = LEGACY_U16_WRAP_ADD(
+		line_table_start, (legacy_u16)(height << 1));
+	data_start = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	source_row_step = (legacy_u16)((legacy_u32)width * 12UL);
+	for (order_index = 11; order_index >= 0; order_index--) {
+		selector = row_order[order_index];
+		line_entry = LEGACY_U16_WRAP_ADD(line_table_start,
+			(legacy_u16)(selector << 1));
+		source = LEGACY_U16_WRAP_ADD(data_start,
+			(legacy_u16)((legacy_u32)width * selector));
+		row_phase = (legacy_u16)phase;
+		while (line_entry < line_table_end) {
+			line_entry_ptr = (legacy_u8 far*)MK_FP(
+				sprite_segment, line_entry);
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_word(line_entry_ptr), pos_x);
+			remaining = width;
+			row_source = source;
+			pattern = row_phase;
+			for (;;) {
+				pattern &= 3U;
+				skip = skip_count[pattern];
+				if (LEGACY_S16_FROM_BITS(remaining) <=
+					(legacy_s16)skip)
+					break;
+				remaining = LEGACY_U16_WRAP_SUB(remaining, skip);
+				source = LEGACY_U16_WRAP_ADD(source, skip);
+				destination = LEGACY_U16_WRAP_ADD(destination, skip);
+				source_ptr = (legacy_u8 far*)MK_FP(
+					shape_segment, source);
+				bitmap[destination] = *source_ptr;
+				advance = advance_count[pattern];
+				source = LEGACY_U16_WRAP_ADD(source, advance);
+				destination = LEGACY_U16_WRAP_ADD(
+					destination, advance);
+				remaining = LEGACY_U16_WRAP_SUB(
+					remaining, advance);
+				pattern++;
+			}
+			row_phase++;
+			line_entry = LEGACY_U16_WRAP_ADD(line_entry, 24U);
+			source = LEGACY_U16_WRAP_ADD(
+				row_source, source_row_step);
+		}
+		phase++;
+	}
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;

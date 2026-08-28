@@ -254,7 +254,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn byte_33646:byte
     extrn byte_33652:byte
     extrn byte_33656:byte
-    extrn sprite_1_unk3:proc
+    extrn ported_sprite_1_unk3_:proc
     extrn loc_33697:proc
     extrn ported_font_draw_text_:proc
     extrn video_set_mode_13h:proc
