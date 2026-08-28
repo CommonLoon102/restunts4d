@@ -356,8 +356,8 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_346A8
     public ported_draw_filled_lines_
     public nopsub_34736
-    public sprite_clear_shape_alt
-    public sprite_clear_shape
+    public ported_sprite_clear_shape_alt_
+    public ported_sprite_clear_shape_
     public loc_34799
     public shape_op_explosion
     public sprite1
@@ -13452,7 +13452,7 @@ nopsub_34736 proc far
     ; align 2
     db 144
 nopsub_34736 endp
-sprite_clear_shape_alt proc far
+ported_sprite_clear_shape_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -13462,9 +13462,8 @@ sprite_clear_shape_alt proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sprite_clear_shape_alt
+    nop
     push    ds
     push    si
     push    di
@@ -13479,8 +13478,8 @@ sprite_clear_shape_alt proc far
     jmp     short loc_34799
     ; align 2
     db 144
-sprite_clear_shape_alt endp
-sprite_clear_shape proc far
+ported_sprite_clear_shape_alt_ endp
+ported_sprite_clear_shape_ proc far
     var_A = word ptr -10
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -13491,9 +13490,8 @@ sprite_clear_shape proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     sprite_clear_shape
+    nop
     push    ds
     push    si
     push    di
@@ -13532,7 +13530,7 @@ loc_347C0:
     mov     sp, bp
     pop     bp
     retf
-sprite_clear_shape endp
+ported_sprite_clear_shape_ endp
 shape_op_explosion proc far
     var_14 = word ptr -20
     var_12 = word ptr -18

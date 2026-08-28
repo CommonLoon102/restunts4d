@@ -409,6 +409,73 @@ void sub_34526(struct SHAPE2D far* shape)
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
+static void sprite_clear_shape_impl(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y)
+{
+	legacy_u8 far* bitmap;
+	legacy_u8 far* destination_ptr;
+	legacy_u8 far* line_entry_ptr;
+	legacy_u16 shape_segment;
+	legacy_u16 sprite_segment;
+	legacy_u16 line_entry;
+	legacy_u16 destination;
+	legacy_u16 source;
+	legacy_u16 width;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+	legacy_u16 column_count;
+
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	shape_segment = FP_SEG(shape);
+	sprite_segment = FP_SEG(&sprite1);
+	line_entry = LEGACY_U16_WRAP_ADD(
+		FP_OFF(sprite1.sprite_lineofs), (legacy_u16)(y << 1));
+	destination = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	width = shape2d_get_word((legacy_u8 far*)shape);
+	row_count = shape2d_get_word((legacy_u8 far*)shape + 2U);
+	do {
+		line_entry_ptr = (legacy_u8 far*)MK_FP(
+			sprite_segment, line_entry);
+		source = LEGACY_U16_WRAP_ADD(
+			shape2d_get_word(line_entry_ptr), x);
+		column_count = width;
+		while (column_count != 0) {
+			destination_ptr = (legacy_u8 far*)MK_FP(
+				shape_segment, destination);
+			*destination_ptr = bitmap[source];
+			destination++;
+			source++;
+			column_count--;
+		}
+		line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
+void sprite_clear_shape_alt(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_put_word(shape_bytes + 8U, (legacy_u16)x);
+	shape2d_put_word(shape_bytes + 0x0AU, (legacy_u16)y);
+	sprite_clear_shape_impl(shape, (legacy_u16)x, (legacy_u16)y);
+}
+
+void sprite_clear_shape(struct SHAPE2D far* shape)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_clear_shape_impl(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU));
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;

@@ -309,8 +309,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn loc_346A8:proc
     extrn ported_draw_filled_lines_:proc
     extrn nopsub_34736:proc
-    extrn sprite_clear_shape_alt:proc
-    extrn sprite_clear_shape:proc
+    extrn ported_sprite_clear_shape_alt_:proc
+    extrn ported_sprite_clear_shape_:proc
     extrn loc_34799:proc
     extrn shape_op_explosion:proc
     extrn sprite1:SPRITE
