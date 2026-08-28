@@ -142,11 +142,6 @@ extern char transprimitivepaintjob;
 extern unsigned char far* transshapeprimindexptr;
 extern char backlights_paint_override;
 
-// ASMVECTOR is used temporarily for the inline assembly since x and y are ambigous struct member names
-struct ASMVECTOR {
-	int vx, vy, vz;
-};
-
 unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	long far* var_cull1;
 	long far* var_cull2;
@@ -216,8 +211,6 @@ unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 
 	unsigned result, i;
 	unsigned temp, temp0, temp1;
-	const char* errorstr = "errorstr %i";
-	const char* errorstr2 = "errorstr2 %i %i";
 
 	//result = ported_transformed_shape_op_(arg_transshapeptr);
 	//return result;
@@ -2306,41 +2299,17 @@ loc_25C92:
 // ------------------------------------ primtype 5 - unknown / particle? ------------------------------------
 
 loc_25CE0:
-asm {
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]     // primitives+ 0 = type
-    sub     ah, ah
-    mov     si, ax
-    cmp     [si+var_vertflagtbl], ah
-    jz      short loc_25CF4
-    jmp     loc_25801
-loc_25CF4:
-    mov     bx, si
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    mov     ax, [bx+offset var_vecarr.z]
-    cwd
-    mov     word ptr [var_18], ax
-    mov     word ptr [var_18+2], dx
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+6], ax
-    mov     es:[bx+8], dx
-    test    transshapeflags, 8
-    jz      short loc_25D34
-    push    word ptr transshaperectptr
-    push    word ptr polyvertpointptrtab
-    ;push    cs
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-loc_25D34:
-    mov     transshapenumvertscopy, 1
-    jmp     loc_25988
-}
+	temp0 = transshapeprimitives[0];
+	if (var_vertflagtbl[temp0] != 0)
+		goto loc_25801;
+	var_18 = var_vecarr[temp0].z;
+	transshapepolyinfopts = (struct POINT2D far*)
+		(transshapepolyinfo + 6);
+	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
+	if ((transshapeflags & 8U) != 0)
+		rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
+	transshapenumvertscopy = 1;
+	goto loc_25988;
 
 
 // ------------------------------------ jumps here from inside the loc_25801-case if var_4 != 0------------------------------------
