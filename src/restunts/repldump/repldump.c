@@ -217,6 +217,12 @@ int stuntsmain(int argc, char* argv[]) {
         }
 
 	init_main(argc, argv);
+#ifndef RESTUNTS_ORIGINAL
+	// REPLDUMP remains in text mode, so the A000 graphics aperture is unused.
+	// Make it available to the high-memory pool as the transitional C port
+	// grows beyond the original executable's conventional-memory footprint.
+	highpool_add_block(0xA000, 0x1000, 0);
+#endif
 	init_div0();
 	init_row_tables();
 
