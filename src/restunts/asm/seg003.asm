@@ -50,7 +50,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_init_rect_arrays_
     public ported_update_frame_
     public ported_skybox_op_helper2_
-    public skybox_op
+    public ported_skybox_op_
     public ported_transformed_shape_add_for_sort_
     public ported_draw_track_preview_
     public ported_draw_ingame_text_
@@ -1917,7 +1917,7 @@ loc_1B03C:
     cbw
     push    ax
     push    cs
-    call near ptr skybox_op
+    call near ptr ported_skybox_op_
     add     sp, 0Eh
     mov     [bp+var_132], ax
     mov     bx, [bp+arg_cliprectptr]
@@ -3936,7 +3936,7 @@ loc_1C46D:
     ; align 2
     db 144
 ported_skybox_op_helper2_ endp
-skybox_op proc far
+ported_skybox_op_ proc far
     var_78 = byte ptr -120
     var_76 = word ptr -118
     var_72 = word ptr -114
@@ -3970,9 +3970,8 @@ skybox_op proc far
     arg_A = word ptr 16
     arg_C = word ptr 18
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 78h
+    jmp     skybox_op
+    nop
     push    di
     push    si
     mov     rect_array_unk3_length, 0
@@ -4699,7 +4698,7 @@ loc_1CB77:
     mov     sp, bp
     pop     bp
     retf
-skybox_op endp
+ported_skybox_op_ endp
 ported_transformed_shape_add_for_sort_ proc far
     transformedpos = VECTOR ptr -12
     shapepos = VECTOR ptr -6

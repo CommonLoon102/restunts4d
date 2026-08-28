@@ -3,7 +3,7 @@ seg003 segment byte public 'STUNTSC' use16
     extrn ported_init_rect_arrays_:proc
     extrn ported_update_frame_:proc
     extrn ported_skybox_op_helper2_:proc
-    extrn skybox_op:proc
+    extrn ported_skybox_op_:proc
     extrn ported_transformed_shape_add_for_sort_:proc
     extrn ported_draw_track_preview_:proc
     extrn ported_draw_ingame_text_:proc
