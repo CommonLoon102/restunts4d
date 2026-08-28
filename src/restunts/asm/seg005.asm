@@ -2020,9 +2020,8 @@ setup_car_shapes proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 20h
+    jmp     setup_car_shapes_c
+    nop
     push    di
     push    si
     mov     ax, [bp+arg_0]

@@ -66,9 +66,17 @@ void sprite_shape_to_1_alt(struct SHAPE2D far* shape);
 void sub_275C6(void);
 void sprite_putimage_and(struct SHAPE2D far* shape, unsigned short a, unsigned short b);
 void sprite_putimage_and_alt(struct SHAPE2D far* shape, int x, int y);
+void sprite_putimage_and_alt2(struct SHAPE2D far* shape, int x, int y);
 void sprite_putimage_or(struct SHAPE2D far* shape, unsigned short a, unsigned short b);
+void sprite_putimage_or_alt(struct SHAPE2D far* shape, int x, int y);
 void sprite_clear_shape_alt(struct SHAPE2D far* shape, int x, int y);
 void sprite_clear_shape(struct SHAPE2D far* shape);
+void shape2d_op_unk(struct SHAPE2D far* shape);
+void shape2d_op_unk2(struct SHAPE2D far* shape, int x, int y);
+void shape2d_op_unk3(struct SHAPE2D far* shape);
+void shape2d_op_unk4(unsigned short offset, unsigned short segment);
+void shape2d_op_unk5(struct SHAPE2D far* shape, int x, int y);
+void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape);
 
 void shape_op_explosion(int scale, struct SHAPE2D far* shape, int x, int y);
 void sub_35E08(int scale, struct SHAPE2D far* shape, int x, int y);
