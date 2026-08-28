@@ -162,7 +162,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sub_307B4_
     public ported_sub_307D2_
     public ported_sub_307E3_
-    public nopsub_307FA
+    public ported_nopsub_307FA_
     public ported_kb_init_interrupt_
     public ported_kb_exit_handler_
     public ported_kb_int9_handler_
@@ -175,8 +175,8 @@ seg012 segment byte public 'STUNTSC' use16
     public nopsub_kb_get_readchar_callback
     public ported_flush_stdin_
     public ported_kb_check_
-    public nopsub_30A77
-    public nopsub_30A97
+    public ported_nopsub_30A77_
+    public ported_nopsub_30A97_
     public ported_file_read_
     public ported_file_read_nofatal_
     public ported_file_read_fatal_
@@ -4319,10 +4319,11 @@ loc_307EE:
     sub     ax, 1Fh
     retf
 ported_sub_307E3_ endp
-nopsub_307FA proc far
+ported_nopsub_307FA_ proc far
 
-    mov     ax, joyflag2
-    sub     ax, word_3FB26
+    jmp     nopsub_307FA
+    nop
+    nop
     jge     short loc_30805
     xor     ax, ax
 loc_30805:
@@ -4333,7 +4334,7 @@ loc_30805:
     retf
     ; align 2
     db 0
-nopsub_307FA endp
+ported_nopsub_307FA_ endp
 ported_kb_init_interrupt_ proc far
      r = byte ptr 0
 
@@ -4654,23 +4655,23 @@ loc_30A71:
     int     16h             ; KEYBOARD - READ CHAR FROM BUFFER, WAIT IF EMPTY
     jmp short near ptr ported_kb_check_ ; (fixed jump to ported self)
 ported_kb_check_ endp
-nopsub_30A77 proc far
+ported_nopsub_30A77_ proc far
 
-    call    kb_call_readchar_callback
+    jmp     nopsub_30A77
     cmp     ax, 0
     jnz     short locret_30A96
     call    timer_get_counter
     cmp     dx, word ptr timer_copy_unk+2
-    jb      short near ptr nopsub_30A77
+    jb      short near ptr ported_nopsub_30A77_
     ja      short loc_30A94
     cmp     ax, word ptr timer_copy_unk
-    jb      short near ptr nopsub_30A77
+    jb      short near ptr ported_nopsub_30A77_
 loc_30A94:
     xor     ax, ax
 locret_30A96:
     retf
-nopsub_30A77 endp
-nopsub_30A97 proc far
+ported_nopsub_30A77_ endp
+ported_nopsub_30A97_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -4678,9 +4679,8 @@ nopsub_30A97 proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     nopsub_30A97
+    nop
     call    timer_get_counter
     add     ax, [bp+arg_0]
     adc     dx, [bp+arg_2]
@@ -4705,7 +4705,7 @@ loc_30ACB:
     retf
     ; align 2
     db 0
-nopsub_30A97 endp
+ported_nopsub_30A97_ endp
 ported_file_read_ proc far
     var_fatal = word ptr -8
      s = byte ptr 0

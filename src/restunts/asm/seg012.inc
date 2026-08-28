@@ -115,7 +115,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sub_307B4_:proc
     extrn ported_sub_307D2_:proc
     extrn ported_sub_307E3_:proc
-    extrn nopsub_307FA:proc
+    extrn ported_nopsub_307FA_:proc
     extrn ported_kb_init_interrupt_:proc
     extrn ported_kb_exit_handler_:proc
     extrn ported_kb_int9_handler_:proc
@@ -128,8 +128,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn nopsub_kb_get_readchar_callback:proc
     extrn ported_flush_stdin_:proc
     extrn ported_kb_check_:proc
-    extrn nopsub_30A77:proc
-    extrn nopsub_30A97:proc
+    extrn ported_nopsub_30A77_:proc
+    extrn ported_nopsub_30A97_:proc
     extrn ported_file_read_:proc
     extrn ported_file_read_nofatal_:proc
     extrn ported_file_read_fatal_:proc
