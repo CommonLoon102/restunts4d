@@ -47,8 +47,11 @@ void sprite_copy_wnd_to_1_clear(void);
 void sprite_copy_both_to_arg(struct SPRITE* argsprite);
 void sprite_copy_arg_to_both(struct SPRITE* argsprite);
 
+int sub_274B0(int left, int right, int top, int bottom);
+
 void sprite_clear_1_color(unsigned char color);
 void sprite_1_unk(int x, int y, int width, int height, int color);
+void sprite_1_unk4(int x1, int y1, int x2, int y2, int color);
 void sprite_1_unk3(struct SHAPE2D far* shape, unsigned int phase);
 void sub_34526(struct SHAPE2D far* shape);
 void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,

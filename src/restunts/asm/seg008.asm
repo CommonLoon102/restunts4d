@@ -378,9 +378,9 @@ show_dialog proc far
     arg_E = word ptr 20
     arg_10 = byte ptr 22
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 1D8h
+    jmp     show_dialog_c
+    nop
+    nop
     push    di
     push    si
     mov     ax, fontdef_unk_0E

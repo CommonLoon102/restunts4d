@@ -2507,14 +2507,334 @@ extern void audio_unk(void);
 extern void call_exitlist2(void);
 extern void sub_372F4(void);
 extern int word_3EB90;
+extern int fontdef_unk_0E;
 void font_set_unk(int color, int unknown);
 int call_read_line(char* text, int max_characters, int x, int y,
 	unsigned long timeout);
 legacy_s8 do_fileselect_dialog(char* directory, char* filename,
 	char* extension, char far* prompt);
+unsigned long sub_2EB1E(unsigned long ticks);
 struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	int shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
+
+static legacy_u16 dialog_ascii_lower(legacy_u16 character)
+{
+	if (character < 256U &&
+		(g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0)
+		character = LEGACY_U16_WRAP_ADD(character, 0x20U);
+	return character;
+}
+
+unsigned short show_dialog_c(
+	int dialog_type,
+	int save_background,
+	void far* text_resource,
+	unsigned short x_argument,
+	unsigned short y_argument,
+	int border_color,
+	void* disabled_choices_argument,
+	int initial_choice
+) {
+	char line_buffer[128];
+	char choice_buffer[80];
+	char far* choice_texts[20];
+	legacy_u8 choice_lengths[20];
+	int choice_left[20];
+	int choice_right[20];
+	int choice_top[20];
+	int choice_bottom[20];
+	int* disabled_choices;
+	char far* cursor;
+	legacy_s16 line_height;
+	legacy_s16 dialog_width;
+	legacy_s16 dialog_height;
+	legacy_s16 measured_width;
+	legacy_s16 x;
+	legacy_s16 y;
+	legacy_s16 left;
+	legacy_s16 right;
+	legacy_s16 top;
+	legacy_s16 bottom;
+	legacy_s16 result;
+	legacy_u16 line_length;
+	legacy_u16 choice_width;
+	legacy_u16 character_count;
+	legacy_u16 input;
+	legacy_u16 first_hotkey;
+	legacy_u16 second_hotkey;
+	legacy_u16 index;
+	legacy_u16 copied;
+	legacy_s16 hit;
+	legacy_u8 character;
+	legacy_u8 choice_count;
+	legacy_u8 placeholder_index;
+	legacy_u8 selected;
+	legacy_u8 previous;
+	legacy_u8 active;
+
+	disabled_choices = (int*)disabled_choices_argument;
+	line_height = LEGACY_S16_WRAP_ADD(fontdef_unk_0E, 2);
+	dialog_height = 0;
+	dialog_width = 0x20;
+	mouse_draw_opaque_check();
+
+	cursor = (char far*)text_resource;
+	line_length = 0;
+	while ((character = (legacy_u8)*cursor) != 0) {
+		if (character == ']' || character == '}') {
+			line_buffer[line_length] = 0;
+			measured_width = (legacy_s16)font_op2(line_buffer);
+			if (measured_width > dialog_width)
+				dialog_width = measured_width;
+			line_length = 0;
+			if (character == ']')
+				dialog_height = LEGACY_S16_WRAP_ADD(
+					dialog_height, line_height);
+			else
+				dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 4);
+		} else {
+			line_buffer[line_length++] = (char)character;
+		}
+		cursor++;
+	}
+
+	dialog_width = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_WRAP_ADD((legacy_u16)dialog_width, 0x18U) & 0xFFF8U);
+	x = LEGACY_S16_FROM_BITS(x_argument);
+	y = LEGACY_S16_FROM_BITS(y_argument);
+	if (x == -1) {
+		x = LEGACY_S16_FROM_BITS((legacy_u16)((0x140 - dialog_width) / 2));
+		x = LEGACY_S16_FROM_BITS((legacy_u16)x & 0xFFF8U);
+	}
+	if (y == -1)
+		y = LEGACY_S16_FROM_BITS((legacy_u16)((0xC8 - dialog_height) / 2));
+
+	left = x;
+	right = LEGACY_S16_WRAP_ADD(x, dialog_width);
+	top = LEGACY_S16_WRAP_SUB(y, 8);
+	bottom = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(y, dialog_height), 8);
+	x = LEGACY_S16_WRAP_ADD(x, 8);
+	dialog_width = LEGACY_S16_WRAP_SUB(dialog_width, 0x10);
+	if (save_background != 0 &&
+		sub_274B0(left, right, top, bottom) == 0)
+		return 0xFFFFU;
+
+	sprite_copy_2_to_1();
+	sprite_set_1_size(left, right, top, bottom);
+	sprite_clear_1_color(0);
+	sprite_1_unk4(LEGACY_S16_WRAP_SUB(x, 4),
+		LEGACY_S16_WRAP_SUB(y, 4),
+		LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(x, dialog_width), 4),
+		LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(y, dialog_height), 4),
+		border_color);
+	font_set_unk(dialog_fnt_colour, 0);
+	word_3EB90 = 0;
+	font_set_unk(dialog_fnt_colour, 0);
+
+	cursor = (char far*)text_resource;
+	line_length = 0;
+	placeholder_index = 0;
+	dialog_height = 1;
+	while ((character = (legacy_u8)*cursor) != 0 && character != '[') {
+		if (character == ']' || character == '}') {
+			line_buffer[line_length] = 0;
+			sub_345BC(line_buffer, x,
+				LEGACY_S16_WRAP_ADD(y, dialog_height));
+			line_length = 0;
+			if (character == ']')
+				dialog_height = LEGACY_S16_WRAP_ADD(
+					dialog_height, line_height);
+			else
+				dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 4);
+		} else if (character == '@') {
+			if (dialog_type == 3) {
+				line_buffer[line_length] = 0;
+				disabled_choices[placeholder_index] =
+					LEGACY_S16_WRAP_ADD(x,
+						(legacy_s16)font_op2(line_buffer));
+				disabled_choices[placeholder_index + 1U] =
+					LEGACY_S16_WRAP_ADD(y, dialog_height);
+				placeholder_index = (legacy_u8)(placeholder_index + 2U);
+			}
+			line_buffer[line_length++] = ' ';
+		} else {
+			line_buffer[line_length++] = (char)character;
+		}
+		cursor++;
+	}
+
+	choice_count = 0;
+	while ((legacy_u8)*cursor == '[') {
+		cursor++;
+		choice_texts[choice_count] = cursor;
+		line_buffer[line_length] = 0;
+		choice_left[choice_count] = LEGACY_S16_WRAP_ADD(
+			x, (legacy_s16)font_op2(line_buffer));
+		choice_top[choice_count] = LEGACY_S16_WRAP_ADD(y, dialog_height);
+		choice_bottom[choice_count] = LEGACY_S16_WRAP_ADD(
+			choice_top[choice_count], line_height);
+		line_buffer[line_length++] = ' ';
+		choice_width = 0;
+		character_count = 0;
+		while ((character = (legacy_u8)*cursor) != 0 && character != '[') {
+			if (character == ']' || character == '}') {
+				line_buffer[line_length] = 0;
+				choice_width = (legacy_u16)font_op2(line_buffer);
+				line_length = 0;
+				if (character == ']')
+					dialog_height = LEGACY_S16_WRAP_ADD(
+						dialog_height, line_height);
+				else
+					dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 3);
+			} else {
+				line_buffer[line_length++] = (char)character;
+				character_count++;
+			}
+			cursor++;
+		}
+		choice_lengths[choice_count] = (legacy_u8)character_count;
+		line_buffer[line_length] = 0;
+		if (choice_width == 0)
+			choice_width = (legacy_u16)font_op2(line_buffer);
+		choice_right[choice_count] = LEGACY_S16_WRAP_ADD(
+			choice_left[choice_count], (legacy_s16)choice_width);
+		choice_count++;
+	}
+
+	if (choice_count > 2U &&
+		choice_left[0] == choice_left[1] &&
+		choice_left[1] == choice_left[2]) {
+		for (index = 0; index < choice_count; index++) {
+			choice_right[index] = LEGACY_S16_WRAP_ADD(
+				choice_left[index], dialog_width);
+		}
+	}
+	mouse_draw_transparent_check();
+
+	result = 1;
+	if (dialog_type == 0)
+		return 0;
+	if (dialog_type == 1) {
+		do {
+			input = (legacy_u16)input_checking(
+				(int)timer_get_delta_alt());
+		} while (input == 0);
+		if (input == 0x1BU)
+			result = 0;
+		check_input();
+		goto dialog_done;
+	}
+	if (dialog_type == 3)
+		return (unsigned short)(placeholder_index / 2U);
+	if (dialog_type == 4) {
+		(void)sub_2EB1E(8UL);
+		goto dialog_done;
+	}
+	if (dialog_type != 2)
+		goto dialog_done;
+
+	selected = (legacy_u8)initial_choice;
+	previous = 0xFFU;
+	(void)timer_get_delta_alt();
+	mouse_draw_opaque_check();
+	first_hotkey = 0;
+	second_hotkey = 0;
+	if (choice_count == 2U) {
+		cursor = choice_texts[0];
+		do {
+			first_hotkey = (legacy_u8)*cursor++;
+		} while (first_hotkey == ' ');
+		first_hotkey = dialog_ascii_lower(first_hotkey);
+		cursor = choice_texts[1];
+		do {
+			second_hotkey = (legacy_u8)*cursor++;
+		} while (second_hotkey == ' ');
+		second_hotkey = dialog_ascii_lower(second_hotkey);
+	}
+
+	active = 1;
+	while (active != 0) {
+		if (selected != previous) {
+			mouse_draw_opaque_check();
+			for (index = 0; index < choice_count; index++) {
+				if (selected == (legacy_u8)index)
+					font_set_unk(word_3EB90, dialog_fnt_colour);
+				else
+					font_set_unk(dialog_fnt_colour, word_3EB90);
+				if (disabled_choices != 0 && disabled_choices[index] != 0)
+					font_set_unk(performGraphColor, word_3EB90);
+				for (copied = 0; copied < choice_lengths[index]; copied++)
+					choice_buffer[copied] = choice_texts[index][copied];
+				choice_buffer[copied] = 0;
+				sub_345BC(choice_buffer, choice_left[index],
+					choice_top[index]);
+			}
+			mouse_draw_transparent_check();
+			if (previous == 0xFFU)
+				check_input();
+			previous = selected;
+		}
+
+		input = (legacy_u16)input_checking((int)timer_get_delta_alt());
+		hit = (legacy_s16)mouse_multi_hittest(choice_count,
+			choice_left, choice_right, choice_top, choice_bottom);
+		if (hit != -1 &&
+			(disabled_choices == 0 || disabled_choices[hit] == 0))
+			selected = (legacy_u8)hit;
+
+		if (choice_count == 2U && input != 0) {
+			input = dialog_ascii_lower(input);
+			if (input == first_hotkey) {
+				selected = 0;
+				input = 0x0DU;
+			} else if (input == second_hotkey) {
+				selected = 1;
+				input = 0x0DU;
+			}
+		}
+
+		if (input == 0)
+			continue;
+		if (input == 0x20U || input == 0x0DU) {
+			active = 0;
+			check_input();
+			continue;
+		}
+		if (input == 0x1BU) {
+			selected = 0xFFU;
+			active = 0;
+			check_input();
+			continue;
+		}
+		if (input == 0x4800U || input == 0x4B00U) {
+			do {
+				selected = selected == 0 ?
+					(legacy_u8)(choice_count - 1U) :
+					(legacy_u8)(selected - 1U);
+			} while (disabled_choices != 0 &&
+				disabled_choices[selected] != 0);
+			continue;
+		}
+		if (input == 0x4D00U || input == 0x5000U) {
+			do {
+				selected = (legacy_u8)(selected + 1U);
+				if (selected >= choice_count)
+					selected = 0;
+			} while (disabled_choices != 0 &&
+				disabled_choices[selected] != 0);
+		}
+	}
+	result = LEGACY_S8_FROM_BITS(selected);
+
+dialog_done:
+	if (save_background != 0)
+		sub_275C6();
+	return (unsigned short)result;
+}
 
 void ensure_file_exists(int file_index)
 {

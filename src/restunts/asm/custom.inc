@@ -408,6 +408,7 @@ extrn track_setup:proc
 extrn run_opponent_menu:proc
 extrn load_intro_resources:proc
 extrn draw_2DtrackMap:proc
+extrn show_dialog_c:proc
 extrn sub_2298C:proc
 extrn replay_unk2:proc
 extrn print_highscore_entry:proc
