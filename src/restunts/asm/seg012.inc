@@ -266,7 +266,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn file_load_shape2d_nofatal_thunk:proc
     extrn file_load_shape2d_thunk:proc
     extrn sprite_putimage_and_alt2:proc
-    extrn sprite_putimage_and:proc
+    extrn ported_sprite_putimage_and_:proc
     extrn loc_338C9:proc
     extrn nopsub_339FA:proc
     extrn putpixel_iconMask:proc

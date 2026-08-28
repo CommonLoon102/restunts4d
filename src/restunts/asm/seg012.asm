@@ -313,7 +313,7 @@ seg012 segment byte public 'STUNTSC' use16
     public file_load_shape2d_nofatal_thunk
     public file_load_shape2d_thunk
     public sprite_putimage_and_alt2
-    public sprite_putimage_and
+    public ported_sprite_putimage_and_
     public loc_338C9
     public nopsub_339FA
     public putpixel_iconMask
@@ -11250,7 +11250,7 @@ sprite_putimage_and_alt2 proc far
     ; align 2
     db 144
 sprite_putimage_and_alt2 endp
-sprite_putimage_and proc far
+ported_sprite_putimage_and_ proc far
     var_E = word ptr -14
     var_C = word ptr -12
     var_A = word ptr -10
@@ -11265,9 +11265,8 @@ sprite_putimage_and proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage_and
+    nop
     push    ds
     push    si
     push    di
@@ -11441,7 +11440,7 @@ loc_339EC:
     jmp     loc_338E8
     ; align 2
     db 0
-sprite_putimage_and endp
+ported_sprite_putimage_and_ endp
 nopsub_339FA proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

@@ -1117,6 +1117,43 @@ void sprite_putimage(struct SHAPE2D far* shape)
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
+void sprite_putimage_and(struct SHAPE2D far* shape,
+	unsigned short x, unsigned short y)
+{
+	struct SHAPE2D_CLIP clip;
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* bitmap;
+	legacy_u16 shape_segment;
+	legacy_u16 column_count;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+
+	if (!shape2d_clip_blit(shape, x, y, &clip))
+		return;
+	shape_segment = FP_SEG(shape);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	row_count = clip.rows;
+	do {
+		column_count = clip.width;
+		do {
+			source_ptr = (legacy_u8 far*)MK_FP(
+				shape_segment, clip.source);
+			bitmap[clip.destination] &= *source_ptr;
+			clip.source++;
+			clip.destination++;
+			column_count--;
+		} while (column_count != 0);
+		clip.source = LEGACY_U16_WRAP_ADD(
+			clip.source, clip.source_advance);
+		clip.destination = LEGACY_U16_WRAP_ADD(
+			clip.destination, clip.destination_advance);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
 void setup_mcgawnd1(void) {
 	if (!mcgawndsprite) {
 		mcgawndsprite = sprite_make_wnd(320, 200, 0x0F);
