@@ -48,7 +48,7 @@ seg009 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public load_tracks_menu_shapes
     public ported_preRender_icons_
-    public draw_2DtrackMap
+    public ported_draw_2DtrackMap_
     public ported_sub_2C81C_
     public ported_sub_2C9B4_
 load_tracks_menu_shapes proc far
@@ -842,7 +842,7 @@ loc_2A983:
     cbw
     push    ax
     push    cs
-    call near ptr draw_2DtrackMap
+    call near ptr ported_draw_2DtrackMap_
     add     sp, 8
     mov     ax, 0C8h ; 'È'
     push    ax
@@ -3175,7 +3175,7 @@ loc_2C0A2:
     ; align 2
     db 144
 ported_preRender_icons_ endp
-draw_2DtrackMap proc far
+ported_draw_2DtrackMap_ proc far
     var_E = word ptr -14
     var_C = byte ptr -12
     var_A = byte ptr -10
@@ -3190,9 +3190,8 @@ draw_2DtrackMap proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     draw_2DtrackMap
+    nop
     push    di
     push    si
     mov     [bp+var_6], 0
@@ -4002,7 +4001,7 @@ loc_2C816:
     mov     sp, bp
     pop     bp
     retf
-draw_2DtrackMap endp
+ported_draw_2DtrackMap_ endp
 ported_sub_2C81C_ proc far
     var_A = byte ptr -10
     var_8 = byte ptr -8
