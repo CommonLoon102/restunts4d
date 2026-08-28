@@ -34,7 +34,7 @@ extern legacy_u16 word_3FB34;
 extern legacy_u16 word_3FB36;
 extern legacy_u8 byte_3FB38[];
 extern legacy_u8 byte_449CE;
-extern int word_46170[7];
+extern legacy_s16 word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
 extern legacy_u8 callbackflags[128];
@@ -3116,6 +3116,54 @@ void highscore_write_b(void)
 	g_is_busy = 1;
 	(void)file_write_fatal(g_path_buf, ordered_scores, 0x16CUL);
 	g_is_busy = 0;
+}
+
+void print_highscore_entry(int entry, legacy_u8* text_offsets)
+{
+	legacy_u8 record[0x34];
+	legacy_u8 far* scores;
+	legacy_u16 record_offset;
+	legacy_u16 copied;
+	legacy_u16 output_offset;
+	legacy_s16 saved_frame_rate;
+	legacy_s16 frame_count;
+	char formatted_time[18];
+	char* output;
+
+	record_offset = LEGACY_U16_WRAP_MUL(
+		(legacy_u16)word_46170[entry], 0x34U);
+	scores = (legacy_u8 far*)td11_highscores;
+	for (copied = 0; copied < sizeof(record); copied++)
+		record[copied] = scores[record_offset + copied];
+
+	text_offsets[0] = 0;
+	strcpy(&resID_byte1, (char*)record);
+	output_offset = (legacy_u16)strlen(&resID_byte1) + 1U;
+	text_offsets[1] = (legacy_u8)output_offset;
+	strcpy(&resID_byte1 + output_offset, (char*)record + 17);
+	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
+		(legacy_u16)strlen(&resID_byte1 + output_offset) + 1U);
+	text_offsets[2] = (legacy_u8)output_offset;
+
+	output = &resID_byte1 + output_offset;
+	*output = 0;
+	if (record[41] == 1)
+		strcat(output, "(");
+	strcat(output, (char*)record + 42);
+	if (record[41] == 1)
+		strcat(output, ")");
+	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
+		(legacy_u16)strlen(output) + 1U);
+
+	saved_frame_rate = framespersec;
+	framespersec = 0x14;
+	frame_count = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE(record + 50));
+	format_frame_as_string(formatted_time,
+		frame_count == -1 ? 0 : frame_count, 1);
+	text_offsets[3] = (legacy_u8)output_offset;
+	strcpy(&resID_byte1 + output_offset, formatted_time);
+	framespersec = saved_frame_rate;
 }
 
 void replay_unk(void)
