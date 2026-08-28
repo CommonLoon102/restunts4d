@@ -3467,157 +3467,54 @@ void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int*
 	spritefunc(&var_798[temp1y], &var_798[480 + temp1y], temp1y, temp0x, arg_color);
 
 }
-
-
-
-extern void _printf(const char*, ...);
-
 // generate_poly_edges is called preRender_helper in the IDB.
 void generate_poly_edges(int* var_18, int* regsi, int mode) {
 
 	int sprite1_sprite_left2 = sprite1.sprite_left2;
 	int sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	int sprite1_sprite_top = sprite1.sprite_top;
-	int sprite1_sprite_height = sprite1.sprite_height;
 	int i, count, ofs;
 	unsigned long value;
 	unsigned long temp;
-	char* errorstr = "%i ";
-	
-	if (mode == 1) asm jmp preRender_helper2;
 
-	//fatal_error("%i %i", sprite1_sprite_left2, sprite1_sprite_widthsum);
-	
-	count = regsi[10];
-	if (count > 0) {
-		ofs = regsi[3] - count; // TODO: 32bit thingy?
-		if (regsi[2] < 0) ofs++;
-		for (i = 0; i < count; i++) {
-			var_18[ofs + i] = sprite1_sprite_left2;
-			var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
+	if (mode != 1) {
+		count = regsi[10];
+		if (count > 0) {
+			ofs = regsi[3] - count;
+			if (regsi[2] < 0) ofs++;
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = sprite1_sprite_left2;
+				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
+			}
+		}
+
+		count = regsi[12];
+		if (count > 0) {
+			ofs = regsi[3] - count;
+			if (regsi[2] < 0) ofs++;
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = sprite1_sprite_widthsum;
+				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
+			}
+		}
+
+		count = regsi[11];
+		if (count > 0) {
+			ofs = regsi[5] + 1;
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = sprite1_sprite_left2;
+				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
+			}
+		}
+
+		count = regsi[13];
+		if (count > 0) {
+			ofs = regsi[5] + 1;
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = sprite1_sprite_widthsum;
+				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
+			}
 		}
 	}
-	
-	count = regsi[12];
-	if (count > 0) {
-		ofs = regsi[3] - count; // TODO: 32bit thingy?
-		if (regsi[2] < 0) ofs++;
-		for (i = 0; i < count; i++) {
-			var_18[ofs + i] = sprite1_sprite_widthsum;
-			var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
-		}
-	}
-	
-	count = regsi[11];
-	if (count > 0) {
-		ofs = regsi[5] + 1;
-		for (i = 0; i < count; i++) {
-			var_18[ofs + i] = sprite1_sprite_left2;
-			var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
-		}
-	}
-	
-	count = regsi[13];
-	if (count > 0) {
-		ofs = regsi[5] + 1;
-		for (i = 0; i < count; i++) {
-			var_18[ofs + i] = sprite1_sprite_widthsum;
-			var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
-		}
-	}
-
-asm {
-    mov     ax, ss
-    mov     es, ax
-
-	mov si, regsi
-/*	mov ax, mode
-	cmp ax, 1
-	jne _allok // cannot je to preRender_helper2, too far. jmp is ok tho
-	jmp preRender_helper2
-
-_allok:
-    mov     cx, [si+14h]
-    or      cx, cx
-    jle     short loc_319F9
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, sprite1_sprite_left2
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_319F9:
-    mov     cx, [si+18h]
-    or      cx, cx
-    jle     short loc_31A25
-loc_31A00:
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_widthsum]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_31A25:
-/*    mov     cx, [si+16h]
-    or      cx, cx
-    jle     short loc_31A46
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-
-loc_31A46:
-    mov     cx, [si+1Ah]
-    or      cx, cx
-    jle     short preRender_helper2		// JLE HERE CALL ABOVE! WTF! THIS JUMP REACHES A RETN WHICH RETURNS FROM _THIS_ FUNCTION
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_widthsum]
-    push    cx
-    push    di
-    rep stosw
-    pop     di
-    pop     cx
-    add     di, 3C0h
-    dec     ax
-    rep stosw
-*/
-}
-
-preRender_helper2:
 
 	count = regsi[7];
 	if (count <= 0) return ;
@@ -3706,119 +3603,12 @@ preRender_helper2:
 					var_18[ofs] = value;
 				}
 				temp = (temp + (unsigned int)regsi[6])  & 0xFFFF;
-			}
-			return ;
-
-			
-		/*case 8:
-			value = regsi[1];
-			temp = regsi[2] + 0x8000;
-			if (temp <= 0)
-				ofs++;
-			var_18[ofs] = value;
-			for (i = 0; i < count; i++) {
-				temp += (unsigned int)regsi[6];
-				if (temp >= 0) {
-					value++;
-				} else {
-					var_18[480 + ofs + i] = value;
-					value++;
-					var_18[ofs + i] = value;
 				}
-				
-			}
-			if (temp > 0) {
-				var_18[480 + ofs + i] = value - 1;
-			}
-			return ;*/
-		case 9:
-		default:
-			return ;
+				return ;
+			case 9:
+			default:
+				return ;
 	}
-	/*
-asm {
-    mov     ax, ss
-    mov     es, ax
-
-	mov si, regsi
-
-    mov     cx, [si+0Eh]
-    or      cx, cx
-    jle     short locret_31AA3
-    mov     di, [si+6]
-    shl     di, 1
-    add     di, [var_18]
-    mov     bl, [si+12h]
-    xor     bh, bh
-    
-cmp bx, 7
-    jne _noo7
-    jmp loc_31B00
-_noo7:
-    cmp bx, 8
-    jne _noo8
-    jmp loc_31B2C
-_noo8:
-    cmp bx, 9
-    jmp locret_31AA3 // same as 0
-
-
-loc_31B00: // case 7
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31B15
-    add     di, 2
-loc_31B15:
-    mov     [di+3C0h], ax
-loc_31B19:
-    add     dx, bx
-    jnb     short loc_31B25 // jnb = Jump short if not below (CF=0) = jump if the adding operation overflowed
-    stosw
-    dec     ax
-    loop    loc_31B15
-    sub     di, 2
-    jmp the_end
-
-loc_31B25: 
-    dec     ax
-    loop    loc_31B19
-    inc     ax
-    mov     [di], ax
-    jmp the_end
-
-loc_31B2C:  // case 8
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31B41
-    add     di, 2
-loc_31B41:
-    mov     [di], ax
-loc_31B43:
-    add     dx, bx
-    jnb     short loc_31B55
-    mov     [di+3C0h], ax
-    add     di, 2
-    inc     ax
-    loop    loc_31B41
-    sub     di, 2
-    jmp the_end
-
-loc_31B55:
-    inc     ax
-    loop    loc_31B43
-    dec     ax
-    mov     [di+3C0h], ax
-    jmp the_end
-    
-    }
-locret_31AA3:
-the_end:*/
 }
 
 
