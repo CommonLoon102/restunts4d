@@ -390,6 +390,7 @@ extrn show_waiting:proc
 extrn run_menu:proc
 extrn run_option_menu:proc
 extrn security_check:proc
+extrn preRender_icons:proc
 extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc

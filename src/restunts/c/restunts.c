@@ -38,6 +38,7 @@ extern legacy_u8 byte_3BD34[];
 extern legacy_s16 word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
+extern legacy_u8 far* pboxshape;
 extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
@@ -2492,6 +2493,10 @@ extern char unk_463EA[];
 extern char* findfilenames[];
 extern void far* miscptr;
 extern int word_407FA;
+extern struct TRACKOBJECT trkObjectList[];
+extern struct SHAPE2D far* tracksmenushapes1[];
+extern struct SHAPE2D far* tracksmenushape2dunk[];
+extern struct SHAPE2D far* tracksmenushape2dunk2[];
 extern void audio_unk(void);
 extern void call_exitlist2(void);
 extern void sub_372F4(void);
@@ -2899,6 +2904,48 @@ unsigned run_option_menu(void)
 option_menu_done:
 	unload_resource(miscptr);
 	return menu_active;
+}
+
+void preRender_icons(legacy_u8 page)
+{
+	legacy_u16 row;
+	legacy_u16 column;
+	legacy_u16 x;
+	legacy_u16 y;
+	legacy_u8 tile;
+	legacy_u8 multi_tile;
+
+	for (row = 0; row < 6U; row++) {
+		for (column = 0; column < 6U; column++) {
+			tile = pboxshape[(legacy_u16)page * 36U + row * 6U +
+				column];
+			x = LEGACY_U16_WRAP_ADD(0x00DCU,
+				LEGACY_U16_WRAP_MUL(column, 16U));
+			y = LEGACY_U16_WRAP_ADD(0x0024U,
+				LEGACY_U16_WRAP_MUL(row, 16U));
+			if (page == 0) {
+				sprite_shape_to_1(tracksmenushapes1[tile], x, y);
+				continue;
+			}
+			if (tile >= 0xFDU)
+				continue;
+
+			sprite_shape_to_1(tracksmenushapes1[0], x, y);
+			multi_tile = trkObjectList[tile].ss_multiTileFlag;
+			if (multi_tile == 2U || multi_tile == 3U)
+				sprite_shape_to_1(tracksmenushapes1[0], x,
+					LEGACY_U16_WRAP_ADD(y, 16U));
+			if (multi_tile == 1U || multi_tile == 3U)
+				sprite_shape_to_1(tracksmenushapes1[0],
+					LEGACY_U16_WRAP_ADD(x, 16U), y);
+			if (multi_tile == 3U)
+				sprite_shape_to_1(tracksmenushapes1[0],
+					LEGACY_U16_WRAP_ADD(x, 16U),
+					LEGACY_U16_WRAP_ADD(y, 16U));
+			putpixel_iconMask(tracksmenushape2dunk2[tile], x, y);
+			putpixel_iconFillings(tracksmenushape2dunk[tile], x, y);
+		}
+	}
 }
 
 short do_dea_textres(void)

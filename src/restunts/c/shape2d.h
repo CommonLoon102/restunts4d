@@ -53,6 +53,8 @@ void sprite_1_unk3(struct SHAPE2D far* shape, unsigned int phase);
 void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
 	unsigned numlines, unsigned color);
 void putpixel_single_maybe(int x, int y, int color);
+void putpixel_iconMask(struct SHAPE2D far* shape, int x, int y);
+void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y);
 
 void sprite_putimage(struct SHAPE2D far* shape);
 void sprite_shape_to_1(struct SHAPE2D far* shape, int x, int y);

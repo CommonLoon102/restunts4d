@@ -47,7 +47,7 @@ seg009 segment byte public 'STUNTSC' use16
     assume cs:seg009
     assume es:nothing, ss:nothing, ds:dseg
     public load_tracks_menu_shapes
-    public preRender_icons
+    public ported_preRender_icons_
     public draw_2DtrackMap
     public sub_2C81C
     public sub_2C9B4
@@ -725,7 +725,7 @@ loc_2A878:
     push    ax
 loc_2A8B2:
     push    cs
-    call near ptr preRender_icons
+    call near ptr ported_preRender_icons_
     add     sp, 2
     cmp     [bp+var_C6], 0
     jnz     short loc_2A8CA
@@ -2951,7 +2951,7 @@ loc_2BE44:
     pop     bp
     retf
 load_tracks_menu_shapes endp
-preRender_icons proc far
+ported_preRender_icons_ proc far
     var_6 = byte ptr -6
     var_4 = byte ptr -4
     var_2 = byte ptr -2
@@ -2959,9 +2959,8 @@ preRender_icons proc far
      r = byte ptr 2
     arg_0 = byte ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
+    jmp     preRender_icons
+    nop
     push    si
     mov     [bp+var_2], 0
     jmp     loc_2C095
@@ -3175,7 +3174,7 @@ loc_2C0A2:
     retf
     ; align 2
     db 144
-preRender_icons endp
+ported_preRender_icons_ endp
 draw_2DtrackMap proc far
     var_E = word ptr -14
     var_C = byte ptr -12
