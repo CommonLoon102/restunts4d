@@ -53,7 +53,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_run_menu_
     public run_tracks_menu
     public ported_highscore_write_a_
-    public highscore_text_unk
+    public ported_highscore_text_unk_
     public ported_print_highscore_entry_
     public enter_hiscore
     public ported_highscore_write_b_
@@ -2327,7 +2327,7 @@ loc_11648:
 loc_1168B:
     jmp     loc_115F9
 ported_highscore_write_a_ endp
-highscore_text_unk proc far
+ported_highscore_text_unk_ proc far
     var_A = byte ptr -10
     var_8 = word ptr -8
     var_6 = byte ptr -6
@@ -2338,9 +2338,8 @@ highscore_text_unk proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     highscore_text_unk
+    nop
     call    sprite_copy_wnd_to_1
     mov     ax, offset aHs1 ; "hs1"
     push    ax
@@ -2564,7 +2563,7 @@ loc_118CA:
     retf
     ; align 2
     db 144
-highscore_text_unk endp
+ported_highscore_text_unk_ endp
 ported_print_highscore_entry_ proc far
     var_4A = byte ptr -74
     var_39 = byte ptr -57
@@ -2833,7 +2832,7 @@ loc_11AED:
     repne movsw
     call    sprite_copy_wnd_to_1
     push    cs
-    call near ptr highscore_text_unk
+    call near ptr ported_highscore_text_unk_
     mov     ax, 0FFFFh
     push    ax
     push    word ptr wndsprite+2
@@ -2882,7 +2881,7 @@ loc_11AED:
     repne movsw
     call    sprite_copy_wnd_to_1
     push    cs
-    call near ptr highscore_text_unk
+    call near ptr ported_highscore_text_unk_
     mov     ax, 0FFFFh
     push    ax
     push    word ptr wndsprite+2
@@ -2893,7 +2892,7 @@ loc_11AED:
     call near ptr ported_highscore_write_b_
 loc_11BAA:
     push    cs
-    call near ptr highscore_text_unk
+    call near ptr ported_highscore_text_unk_
     pop     si
     pop     di
     mov     sp, bp
@@ -6077,7 +6076,7 @@ loc_13A1D:
     mov     [bp+var_6E], 0
     call    sprite_copy_wnd_to_1
     push    cs
-    call near ptr highscore_text_unk
+    call near ptr ported_highscore_text_unk_
     mov     [bp+var_selectedmenu], 1
     mov     [bp+var_14], 1
     jmp     loc_13FDA
@@ -6622,7 +6621,7 @@ loc_13FD0:
 loc_13FD6:
     push    cs
 loc_13FD7:
-    call near ptr highscore_text_unk
+    call near ptr ported_highscore_text_unk_
 loc_13FDA:
     mov     [bp+var_selectedmenu], 1
     mov     [bp+var_78], 1

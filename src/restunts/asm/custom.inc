@@ -392,6 +392,7 @@ extrn load_opponent_data:proc
 extrn sub_2298C:proc
 extrn replay_unk2:proc
 extrn print_highscore_entry:proc
+extrn highscore_text_unk:proc
 extrn do_mer_restext:proc
 extrn do_key_restext:proc
 extrn do_mou_restext:proc

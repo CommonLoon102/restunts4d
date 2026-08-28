@@ -3166,6 +3166,56 @@ void print_highscore_entry(int entry, legacy_u8* text_offsets)
 	framespersec = saved_frame_rate;
 }
 
+extern void font_set_fontdef2(void far* data);
+
+void highscore_text_unk(void)
+{
+	legacy_u8 text_offsets[4];
+	legacy_s16 row;
+	legacy_u16 entry;
+	legacy_s16 color;
+	char far* text;
+
+	sprite_copy_wnd_to_1();
+	copy_string(&resID_byte1, locate_text_res(mainresptr, "hs1"));
+	strcat(&resID_byte1, " '");
+	strcat(&resID_byte1, gameconfig.game_trackname);
+	strcat(&resID_byte1, "'");
+	hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+		5, dialog_fnt_colour, 0);
+
+	text = locate_text_res(mainresptr, "hs2");
+	copy_string(&resID_byte1, text);
+	hiscore_draw_text(&resID_byte1, 0x10, 0x0F,
+		dialog_fnt_colour, 0);
+	text = locate_text_res(mainresptr, "hs3");
+	copy_string(&resID_byte1, text);
+	hiscore_draw_text(&resID_byte1, 0x78, 0x0F,
+		dialog_fnt_colour, 0);
+	text = locate_text_res(mainresptr, "hs5");
+	copy_string(&resID_byte1, text);
+	hiscore_draw_text(&resID_byte1, 0xE0, 0x0F,
+		dialog_fnt_colour, 0);
+	text = locate_text_res(mainresptr, "hs4");
+	copy_string(&resID_byte1, text);
+	hiscore_draw_text(&resID_byte1, 0x110, 0x0F,
+		dialog_fnt_colour, 0);
+
+	font_set_fontdef2(fontnptr);
+	for (entry = 0; entry < 7U; entry++) {
+		print_highscore_entry(entry, text_offsets);
+		row = LEGACY_S16_WRAP_ADD(
+			LEGACY_U16_WRAP_MUL(entry, 10U), 0x19);
+		color = entry == (legacy_u8)byte_449CE ? dialogarg2 : 0;
+		font_set_unk(color, 0);
+		font_draw_text(&resID_byte1 + text_offsets[0], 0x10, row);
+		font_draw_text(&resID_byte1 + text_offsets[1], 0x78, row);
+		font_draw_text(&resID_byte1 + text_offsets[2], 0xE0, row);
+		font_draw_text(&resID_byte1 + text_offsets[3], 0x110, row);
+	}
+	font_set_fontdef();
+}
+
 void replay_unk(void)
 {
 	legacy_s16 steering_angle;
