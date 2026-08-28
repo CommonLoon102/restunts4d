@@ -52,27 +52,27 @@ seg010 segment byte public 'STUNTSC' use16
     extrn __amallocbrk:proc
     extrn _brkctl:proc
     extrn sub_2E290:proc
-    extrn _strcat:proc
-    extrn _strcpy:proc
-    extrn _strcmp:proc
-    extrn _strlen:proc
+    extrn ported_strcat_:proc
+    extrn ported_strcpy_:proc
+    extrn ported_strcmp_:proc
+    extrn ported_strlen_:proc
     extrn _itoa:proc
     extrn _ultoa:proc
     extrn _abort:proc
     extrn _isatty:proc
     extrn _int86:proc
     extrn _sprintf:proc
-    extrn _stricmp:proc
+    extrn ported_stricmp_:proc
     extrn __cltoasub:proc
     extrn __cxtoa:proc
-    extrn _abs:proc
+    extrn ported_abs_:proc
     extrn off_2E59E:word
     extrn _raise:proc
     extrn loc_2E61E:proc
     extrn loc_2E626:proc
     extrn loc_2E635:proc
-    extrn _srand:proc
-    extrn _rand:proc
+    extrn ported_srand_:proc
+    extrn ported_rand_:proc
     extrn _signal:proc
     extrn __sigentry:proc
     extrn _strrchr:proc

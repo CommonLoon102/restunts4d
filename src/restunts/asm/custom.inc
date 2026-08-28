@@ -505,3 +505,11 @@ extrn init_main:proc
 extrn stuntsmain:proc
 
 extrn fatal_error:proc
+extrn _strcat:proc
+extrn _strcpy:proc
+extrn _strcmp:proc
+extrn _strlen:proc
+extrn _stricmp:proc
+extrn _abs:proc
+extrn _srand:proc
+extrn _rand:proc

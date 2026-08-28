@@ -99,27 +99,27 @@ seg010 segment byte public 'STUNTSC' use16
     public __amallocbrk
     public _brkctl
     public sub_2E290
-    public _strcat
-    public _strcpy
-    public _strcmp
-    public _strlen
+    public ported_strcat_
+    public ported_strcpy_
+    public ported_strcmp_
+    public ported_strlen_
     public _itoa
     public _ultoa
     public _abort
     public _isatty
     public _int86
     public _sprintf
-    public _stricmp
+    public ported_stricmp_
     public __cltoasub
     public __cxtoa
-    public _abs
+    public ported_abs_
     public off_2E59E
     public _raise
     public loc_2E61E
     public loc_2E626
     public loc_2E635
-    public _srand
-    public _rand
+    public ported_srand_
+    public ported_rand_
     public _signal
     public __sigentry
     public _strrchr
@@ -1961,7 +1961,7 @@ loc_2D99D:
     cmp     word_428AA, 0
     jz      short loc_2D9DE
     push    di              ; char *
-    call    _strlen
+    call    ported_strlen_
     add     sp, 2
     mov     cx, word_428B2
     sub     cx, ax
@@ -2395,7 +2395,7 @@ loc_2DD05:
 loc_2DD0B:
     mov     di, word_428B8
     push    si              ; char *
-    call    _strlen
+    call    ported_strlen_
     add     sp, 2
     mov     [bp+var_8], ax
     sub     di, ax
@@ -3284,7 +3284,7 @@ loc_2E2E0:
 locret_2E2E5:
     retn
 sub_2E290 endp
-_strcat proc far
+ported_strcat_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3323,8 +3323,8 @@ loc_2E317:
     retf
     ; align 2
     db 0
-_strcat endp
-_strcpy proc far
+ported_strcat_ endp
+ported_strcpy_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3357,8 +3357,8 @@ loc_2E34A:
     mov     di, dx
     pop     bp
     retf
-_strcpy endp
-_strcmp proc far
+ported_strcpy_ endp
+ported_strcmp_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3388,8 +3388,8 @@ loc_2E37D:
     retf
     ; align 2
     db 0
-_strcmp endp
-_strlen proc far
+ported_strcmp_ endp
+ported_strlen_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3411,7 +3411,7 @@ _strlen proc far
     retf
     ; align 2
     db 0
-_strlen endp
+ported_strlen_ endp
 _itoa proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -3618,7 +3618,7 @@ loc_2E4DE:
     pop     bp
     retf
 _sprintf endp
-_stricmp proc far
+ported_stricmp_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3736,8 +3736,8 @@ loc_2E572:
     retf
     ; align 2
     db 0
-_stricmp endp
-_abs proc far
+ported_stricmp_ endp
+ported_abs_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3762,7 +3762,7 @@ off_2E59E     dw offset loc_2E635
     dw offset loc_2E626
     dw offset loc_2E626
     dw offset loc_2E626
-_abs endp
+ported_abs_ endp
 _raise proc far
     var_4 = dword ptr -4
      s = byte ptr 0
@@ -3848,7 +3848,7 @@ loc_2E637:
     ; align 2
     db 0
 _raise endp
-_srand proc far
+ported_srand_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3862,8 +3862,8 @@ _srand proc far
     retf
     ; align 2
     db 144
-_srand endp
-_rand proc far
+ported_srand_ endp
+ported_rand_ proc far
 
     mov     ax, 43FDh
 loc_2E651:
@@ -3891,7 +3891,7 @@ nosmart
     db 11
     db 15
     db 22
-_rand endp
+ported_rand_ endp
 _signal proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

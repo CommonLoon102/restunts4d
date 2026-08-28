@@ -54,6 +54,8 @@ extern legacy_u8 in_kb_parse_key;
 extern void (far* timerintr[6])(void);
 extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
+extern legacy_u16 word_3F0A0;
+extern legacy_u16 word_3F0A2;
 extern char aNoRoomLeftOnTimerInterru[];
 unsigned long timer_get_counter(void);
 
@@ -82,6 +84,95 @@ unsigned const char g_ascii_props[256] = {
 int get_0(void)
 {
 	return 0;
+}
+
+char* _strcpy(char* destination, const char* source)
+{
+	char* result;
+
+	result = destination;
+	do {
+		*destination = *source;
+		destination++;
+	} while (*source++ != '\0');
+	return result;
+}
+
+unsigned _strlen(const char* string)
+{
+	const char* end;
+
+	end = string;
+	while (*end != '\0')
+		end++;
+	return (unsigned)(end - string);
+}
+
+char* _strcat(char* destination, const char* source)
+{
+	_strcpy(destination + _strlen(destination), source);
+	return destination;
+}
+
+int _strcmp(const char* left, const char* right)
+{
+	const unsigned char* left_bytes;
+	const unsigned char* right_bytes;
+
+	left_bytes = (const unsigned char*)left;
+	right_bytes = (const unsigned char*)right;
+	while (*left_bytes == *right_bytes) {
+		if (*left_bytes == '\0')
+			return 0;
+		left_bytes++;
+		right_bytes++;
+	}
+	return *left_bytes < *right_bytes ? -1 : 1;
+}
+
+static unsigned char legacy_ascii_lower(unsigned char character)
+{
+	if (character >= 'A' && character <= 'Z')
+		return (unsigned char)(character + ('a' - 'A'));
+	return character;
+}
+
+int _stricmp(const char* left, const char* right)
+{
+	unsigned char left_character;
+	unsigned char right_character;
+
+	do {
+		left_character = legacy_ascii_lower((unsigned char)*left++);
+		right_character = legacy_ascii_lower((unsigned char)*right++);
+		if (left_character != right_character)
+			return left_character < right_character ? -1 : 1;
+	} while (left_character != '\0');
+	return 0;
+}
+
+unsigned _abs(unsigned value)
+{
+	if ((legacy_s16)value < 0)
+		return (unsigned)(0U - value);
+	return value;
+}
+
+void _srand(unsigned int seed)
+{
+	word_3F0A0 = (legacy_u16)seed;
+	word_3F0A2 = 0;
+}
+
+int _rand(void)
+{
+	legacy_u32 seed;
+
+	seed = ((legacy_u32)word_3F0A2 << 16) | word_3F0A0;
+	seed = (legacy_u32)(seed * 214013UL + 2531011UL);
+	word_3F0A0 = (legacy_u16)seed;
+	word_3F0A2 = (legacy_u16)(seed >> 16);
+	return (int)(word_3F0A2 & 0x7FFFU);
 }
 
 void kb_reg_callback(int code, void (far* callback)(void))
