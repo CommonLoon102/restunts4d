@@ -336,8 +336,8 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_33E1B
     public loc_33E27
     public nopsub_33E90
-    public shape2d_op_unk2
-    public shape2d_op_unk3
+    public ported_shape2d_op_unk2_
+    public ported_shape2d_op_unk3_
     public loc_33EED
     public ported_sprite_putimage_or_alt_
     public ported_sprite_putimage_or_
@@ -12198,7 +12198,7 @@ nopsub_33E90 proc far
     ; align 2
     db 144
 nopsub_33E90 endp
-shape2d_op_unk2 proc far
+ported_shape2d_op_unk2_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -12208,9 +12208,8 @@ shape2d_op_unk2 proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     shape2d_op_unk2
+    nop
     push    ds
     push    si
     push    di
@@ -12223,8 +12222,8 @@ shape2d_op_unk2 proc far
     jmp     short loc_33EED ; goto somewhere inside shape2d_op_unk3
     ; align 2
     db 144
-shape2d_op_unk2 endp
-shape2d_op_unk3 proc far
+ported_shape2d_op_unk2_ endp
+ported_shape2d_op_unk3_ proc far
     var_10 = word ptr -16
     var_E = word ptr -14
     var_C = word ptr -12
@@ -12238,9 +12237,8 @@ shape2d_op_unk3 proc far
     arg_shape2dofs = word ptr 6
     arg_shape2dseg = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     shape2d_op_unk3
+    nop
     push    ds
     push    si
     push    di
@@ -12442,7 +12440,7 @@ loc_34057:
     jmp     short loc_3402F
     ; align 2
     db 0
-shape2d_op_unk3 endp
+ported_shape2d_op_unk3_ endp
 ported_sprite_putimage_or_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

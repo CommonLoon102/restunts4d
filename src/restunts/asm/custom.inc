@@ -165,6 +165,8 @@ extrn shape2d_render_bmp_as_mask:proc
 extrn shape2d_op_unk4:proc
 extrn shape2d_op_unk5:proc
 extrn shape2d_op_unk:proc
+extrn shape2d_op_unk2:proc
+extrn shape2d_op_unk3:proc
 extrn setup_mcgawnd1:proc
 extrn setup_mcgawnd2:proc
 extrn file_load_shape2d:proc

@@ -1276,6 +1276,132 @@ static int shape2d_clip_blit(struct SHAPE2D far* shape,
 	return 1;
 }
 
+struct SHAPE2D_RLE_CURSOR {
+	legacy_u16 shape_segment;
+	legacy_u16 source;
+	legacy_u16 remaining;
+	legacy_u8 value;
+	int literal;
+};
+
+static int shape2d_rle_next(struct SHAPE2D_RLE_CURSOR* cursor,
+	legacy_u8* value)
+{
+	legacy_u8 far* source_ptr;
+	legacy_u8 control_bits;
+	legacy_s8 control;
+
+	if (cursor->remaining == 0) {
+		source_ptr = (legacy_u8 far*)MK_FP(
+			cursor->shape_segment, cursor->source);
+		control_bits = *source_ptr;
+		cursor->source++;
+		control = LEGACY_S8_FROM_BITS(control_bits);
+		if (control == 0)
+			return 0;
+		cursor->literal = control < 0;
+		if (cursor->literal != 0) {
+			cursor->remaining = (legacy_u8)(0U - control_bits);
+		} else {
+			cursor->remaining = control_bits;
+			source_ptr = (legacy_u8 far*)MK_FP(
+				cursor->shape_segment, cursor->source);
+			cursor->value = *source_ptr;
+			cursor->source++;
+		}
+	}
+	if (cursor->literal != 0) {
+		source_ptr = (legacy_u8 far*)MK_FP(
+			cursor->shape_segment, cursor->source);
+		cursor->value = *source_ptr;
+		cursor->source++;
+	}
+	*value = cursor->value;
+	cursor->remaining--;
+	return 1;
+}
+
+static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y)
+{
+	struct SHAPE2D_CLIP clip;
+	struct SHAPE2D_RLE_CURSOR cursor;
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* bitmap;
+	legacy_u16 data_start;
+	legacy_u16 skip;
+	legacy_u16 count;
+	legacy_u16 rows;
+	legacy_u16 destination;
+	legacy_u16 width;
+	legacy_u16 height;
+	legacy_u8 value;
+
+	if (!shape2d_clip_blit(shape, x, y, &clip))
+		return;
+	shape_bytes = (legacy_u8 far*)shape;
+	width = shape2d_get_word(shape_bytes);
+	height = shape2d_get_word(shape_bytes + 2U);
+	data_start = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	if (clip.source == data_start && clip.source_advance == 0 &&
+		clip.width == width && clip.rows == height) {
+		shape2d_render_rle(shape, x, y, SHAPE2D_RLE_COPY);
+		return;
+	}
+	cursor.shape_segment = FP_SEG(shape);
+	cursor.source = data_start;
+	cursor.remaining = 0;
+	cursor.value = 0;
+	cursor.literal = 0;
+	skip = LEGACY_U16_WRAP_SUB(clip.source, data_start);
+	while (skip != 0) {
+		if (!shape2d_rle_next(&cursor, &value))
+			return;
+		skip--;
+	}
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	destination = clip.destination;
+	rows = clip.rows;
+	do {
+		count = clip.width;
+		do {
+			if (!shape2d_rle_next(&cursor, &value))
+				return;
+			bitmap[destination] = value;
+			destination++;
+			count--;
+		} while (count != 0);
+		rows--;
+		if (rows == 0)
+			return;
+		skip = clip.source_advance;
+		while (skip != 0) {
+			if (!shape2d_rle_next(&cursor, &value))
+				return;
+			skip--;
+		}
+		destination = LEGACY_U16_WRAP_ADD(
+			destination, clip.destination_advance);
+	} while (1);
+}
+
+void shape2d_op_unk2(struct SHAPE2D far* shape, int x, int y)
+{
+	shape2d_render_rle_clipped(shape, (legacy_u16)x, (legacy_u16)y);
+}
+
+void shape2d_op_unk3(struct SHAPE2D far* shape)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle_clipped(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU));
+}
+
 static void sprite_putimage_at(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y)
 {
