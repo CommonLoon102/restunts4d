@@ -38,6 +38,8 @@ extern legacy_u8 byte_442EA[64];
 extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
+extern void (far* timerintr[6])(void);
+extern char aNoRoomLeftOnTimerInterru[];
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -90,6 +92,47 @@ void kb_reg_callback(int code, void (far* callback)(void))
 	key_index = (legacy_u16)(code_bits >> 8);
 	if (key_index <= 0x84U)
 		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
+}
+
+void timer_reg_callback(void (far* callback)(void))
+{
+	legacy_u16 callback_index;
+	legacy_u16* callback_words;
+
+	for (callback_index = 0; callback_index < 5U; callback_index++) {
+		if (FP_SEG(timerintr[callback_index]) == 0U)
+			break;
+	}
+	if (callback_index == 5U) {
+		fatal_error(aNoRoomLeftOnTimerInterru);
+		return;
+	}
+
+	callback_words = (legacy_u16*)timerintr + callback_index * 2U;
+	callback_words[0] = FP_OFF(callback);
+	callback_words[1] = 0;
+	callback_words[1] = FP_SEG(callback);
+	callback_words[3] = 0;
+}
+
+void timer_remove_callback(void (far* callback)(void))
+{
+	legacy_u16 callback_index;
+
+	for (callback_index = 0; callback_index < 5U; callback_index++) {
+		if (timerintr[callback_index] == callback)
+			break;
+	}
+	if (callback_index == 5U)
+		return;
+
+	disable();
+	while (callback_index < 4U) {
+		timerintr[callback_index] = timerintr[callback_index + 1U];
+		callback_index++;
+	}
+	timerintr[4] = 0;
+	enable();
 }
 
 void sub_307B4(void)

@@ -98,8 +98,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn timer_setup_interrupt:proc
     extrn loc_301FD:proc
     extrn audio_stop_unk:proc
-    extrn timer_reg_callback:proc
-    extrn timer_remove_callback:proc
+    extrn ported_timer_reg_callback_:proc
+    extrn ported_timer_remove_callback_:proc
     extrn compare_ds_ss:proc
     extrn timer_intr_callback:proc
     extrn sub_303BA:proc

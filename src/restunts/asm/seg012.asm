@@ -145,8 +145,8 @@ seg012 segment byte public 'STUNTSC' use16
     public timer_setup_interrupt
     public loc_301FD
     public audio_stop_unk
-    public timer_reg_callback
-    public timer_remove_callback
+    public ported_timer_reg_callback_
+    public ported_timer_remove_callback_
     public compare_ds_ss
     public timer_intr_callback
     public sub_303BA
@@ -3626,15 +3626,14 @@ nosmart
     out     61h, al         ; PC/XT PPI port B bits:
     retf
 audio_stop_unk endp
-timer_reg_callback proc far
+ported_timer_reg_callback_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     cx, 5
+    jmp     timer_reg_callback
+    nop
     mov     bx, offset timerintr
 loc_302B3:
     cmp     word ptr [bx+2], 0
@@ -3653,16 +3652,15 @@ loc_302C7:
     mov     word ptr [bx+6], 0
     pop     bp
     retf
-timer_reg_callback endp
-timer_remove_callback proc far
+ported_timer_reg_callback_ endp
+ported_timer_remove_callback_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     cx, 5
+    jmp     timer_remove_callback
+    nop
     mov     bx, offset timerintr
     mov     ax, [bp+arg_0]
     mov     dx, [bp+arg_2]
@@ -3693,7 +3691,7 @@ loc_30311:
     sti
     pop     bp
     retf
-timer_remove_callback endp
+ported_timer_remove_callback_ endp
 compare_ds_ss proc far
 
     xor     ax, ax

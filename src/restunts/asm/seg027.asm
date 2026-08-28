@@ -1282,7 +1282,7 @@ loc_379B8:
     mov     dx, seg seg028
     push    dx
     push    ax
-    call    timer_reg_callback
+    call    far ptr timer_reg_callback
     add     sp, 4
     cmp     byte_40634, 0
     jz      short loc_37A35
@@ -1362,7 +1362,7 @@ loc_37A7C:
     mov     dx, seg seg028
     push    dx
     push    ax
-    call    timer_remove_callback
+    call    far ptr timer_remove_callback
     add     sp, 4
     mov     audioflag2, 0
     mov     audioflag6, 0

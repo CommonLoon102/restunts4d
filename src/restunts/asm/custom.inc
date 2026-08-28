@@ -265,6 +265,8 @@ extrn nopsub_19DE8:proc
 extrn nopsub_26552:proc
 extrn kb_reg_callback:proc
 extrn get_kb_or_joy_flags:proc
+extrn timer_reg_callback:proc
+extrn timer_remove_callback:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

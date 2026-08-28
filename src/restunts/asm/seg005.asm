@@ -1070,7 +1070,7 @@ ported_set_frame_callback_ proc far
     mov     dx, seg seg005
     push    dx
     push    ax
-    call    timer_reg_callback
+    call    far ptr timer_reg_callback
     add     sp, 4
     mov     byte_442E4, 0
     retf
@@ -1085,7 +1085,7 @@ ported_remove_frame_callback_ proc far
     mov     dx, seg seg005
     push    dx
     push    ax
-    call    timer_remove_callback
+    call    far ptr timer_remove_callback
     add     sp, 4
     retf
     ; align 2

@@ -88,7 +88,7 @@ loc_26BC8:
 loc_26BCC:
     push    ax
 loc_26BCD:
-    call    timer_reg_callback
+    call    far ptr timer_reg_callback
 loc_26BD2:
     pop     bx
     pop     bx
@@ -123,7 +123,7 @@ loc_26BF3:
     push    dx
 loc_26BFC:
     push    ax
-    call    timer_remove_callback
+    call    far ptr timer_remove_callback
     pop     bx
     pop     bx
 loc_26C04:
