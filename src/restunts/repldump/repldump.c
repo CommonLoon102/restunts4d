@@ -197,6 +197,7 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 
 #ifndef RESTUNTS_ORIGINAL
 extern legacy_s16 setup_player_cars_repldump(void);
+static legacy_u8 serialized_gamestate[GAMESTATE_SERIALIZED_SIZE];
 #endif
 
 // First argument is the filename without the .rpl extension.
@@ -334,14 +335,25 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	}
 	printf("OK\n");
 
+	#ifdef RESTUNTS_ORIGINAL
 	fwrite(&gameconfig.game_recordedframes, sizeof(legacy_u16), 1, fout);
+	#else
+	LEGACY_WRITE_U16_LE(serialized_gamestate,
+		gameconfig.game_recordedframes);
+	fwrite(serialized_gamestate, 2U, 1, fout);
+	#endif
 
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
 
 	while (gameconfig.game_recordedframes > state.game_frame) {
 		input_do_checking(1);
 		update_gamestate();
+	#ifdef RESTUNTS_ORIGINAL
 		fwrite(&state, sizeof(struct GAMESTATE), 1, fout);
+	#else
+		fwrite(serialized_gamestate,
+			gamestate_serialize(serialized_gamestate, &state), 1, fout);
+	#endif
 		//printf("Current frame %d\n", state.frame);
 	}
 

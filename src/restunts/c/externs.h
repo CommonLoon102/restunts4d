@@ -9,122 +9,9 @@
 #endif
 
 #include "replay.h"
+#include "gamestate.h"
 
 #pragma pack (push, 1)
-
-struct CARSTATE {
-	struct VECTORLONG car_posWorld1;
-	struct VECTORLONG car_posWorld2;
-	struct VECTOR car_rotate; // applying the (x, y, z) vector notation to rotation
-                              // angles is a source of confusion.
-	legacy_s16 car_pseudoGravity;
-	legacy_s16 car_steeringAngle;
-	legacy_s16 car_currpm;
-	legacy_s16 car_lastrpm;
-	legacy_s16 car_idlerpm2;
-	legacy_s16 car_speeddiff; // former gripdiff
-	legacy_u16 car_speed;     // former trackgrip
-                         // value is 2^8*(mph value) and unsigned
-	legacy_u16 car_speed2;    // former trackgrip2
-                         // speed is the rev-coupled speed, while speed2 is
-                         // the actual car speed. They are different, for
-                         // instance, during jumps (where accelerating increases
-                         // revs without making the car go faster).
-	legacy_u16 car_lastspeed; // former lasttrackgrip
-	legacy_u16 car_gearratio;
-	legacy_u16 car_gearratioshr8;
-	legacy_s16 car_knob_x;
-	legacy_s16 car_36MwhlAngle;
-	legacy_s16 car_knob_y;
-	legacy_s16 car_knob_x2;
-	legacy_s16 car_knob_y2;
-	legacy_s16 car_angle_z;
-	legacy_s16 car_40MfrontWhlAngle;
-	legacy_s16 field_42;
-	legacy_s16 car_demandedGrip;
-	legacy_s16 car_surfacegrip_sum;
-	legacy_s16 field_48;
-	legacy_s16 car_trackdata3_index;
-	legacy_s16 car_rc1[4]; // four words, one for each wheel.
-	legacy_s16 car_rc2[4];
-	legacy_s16 car_rc3[4];
-	legacy_s16 car_rc4[4];
-	legacy_s16 car_rc5[4];
-	struct VECTOR car_whlWorldCrds1[4];
-	struct VECTOR car_whlWorldCrds2[4];
-	struct VECTOR car_vec_unk3;
-	struct VECTOR car_vec_unk4;
-	struct VECTOR car_vec_unk5;
-	legacy_s16 field_B6;
-	legacy_s16 field_B8;
-	legacy_s16 field_BA;
-	legacy_s8 car_is_braking;
-	legacy_s8 car_is_accelerating;
-	legacy_s8 car_current_gear;
-	legacy_s8 car_sumSurfFrontWheels;
-	legacy_s8 car_sumSurfRearWheels;
-	legacy_s8 car_sumSurfAllWheels; // used as jump flag.
-	legacy_s8 car_surfaceWhl[4];      // surface types for each of the wheels, it seems.
-	legacy_s8 car_engineLimiterTimer;
-	legacy_s8 car_slidingFlag;
-	legacy_s8 field_C8;
-	legacy_s8 car_crashBmpFlag;
-	legacy_s8 car_changing_gear;
-	legacy_s8 car_fpsmul2;
-	legacy_s8 car_transmission;
-	legacy_s8 field_CD;
-	legacy_s8 field_CE; // is added?
-	legacy_s8 field_CF; // is initialized?
-};
-
-struct GAMESTATE {
-	legacy_s32 game_longs1[24]; // x
-	legacy_s32 game_longs2[24]; // y
-	legacy_s32 game_longs3[24]; // z
-	struct VECTOR game_vec1[2]; // 0 = player, 1 = opponent
-	struct VECTOR game_vec3;
-	struct VECTOR game_vec4;
-	legacy_s16 game_frame_in_sec;
-	legacy_s16 game_frames_per_sec;
-	legacy_s32  game_travDist;
-	legacy_s16 game_frame;
-	legacy_s16 game_total_finish; // finish time + penalty when crossed finish line
-	legacy_s16 field_144;
-	legacy_s16 game_pEndFrame;
-	legacy_s16 game_oEndFrame;   // former game_frame2
-	legacy_s16 game_penalty; // probably penalty counter
-	legacy_u16 game_impactSpeed;
-	legacy_u16 game_topSpeed;
-	legacy_s16 game_jumpCount;
-	struct CARSTATE playerstate;
-	struct CARSTATE opponentstate;
-	legacy_s16 field_2F2;
-	legacy_s16 field_2F4;
-	legacy_s16 game_startcol;
-	legacy_s16 game_startcol2;
-	legacy_s16 game_startrow;
-	legacy_s16 game_startrow2;
-	legacy_s16 field_2FE[24];
-	legacy_s16 field_32E[24];
-	legacy_s16 field_35E[24];
-	legacy_s16 field_38E[24];
-	legacy_s8 field_3BE[48];
-	legacy_s8 kevinseed[6];
-	legacy_s8 field_3F4;
-	legacy_s8 game_inputmode; // 0 = waiting for input, 1 = input active, 2 = no input (during the intro)
-	legacy_s8 game_3F6autoLoadEvalFlag;
-	legacy_s8 field_3F7[2]; // 0 = player, 1 = opponent
-	legacy_s8 field_3F9;
-	legacy_s8 field_3FA[48];
-	legacy_s8 field_42A;
-	legacy_s8 field_42B[24];
-	legacy_s8 field_443[24];
-	legacy_s8 field_45B;
-	legacy_s8 field_45C;
-	legacy_s8 field_45D;
-	legacy_s8 field_45E;
-	legacy_s8 field_45F;
-};
 
 struct SIMD {
 	legacy_s8 num_gears;
@@ -188,11 +75,6 @@ struct TRACKOBJECT {
 };
 
 #pragma pack (pop)
-
-typedef char legacy_carstate_must_be_208_bytes[
-	(sizeof(struct CARSTATE) == 208) ? 1 : -1];
-typedef char legacy_gamestate_must_be_1120_bytes[
-	(sizeof(struct GAMESTATE) == 1120) ? 1 : -1];
 
 #ifdef RESTUNTS_DOS
 typedef char legacy_simd_must_be_776_bytes[
