@@ -262,6 +262,7 @@ extrn handle_ingame_kb_shortcuts:proc
 extrn subst_hillroad_track:proc
 extrn draw_lines_unk:proc
 extrn init_audio_resources:proc
+extrn load_audio_finalize:proc
 extrn load_palandcursor:proc
 extrn load_sfx_ge:proc
 extrn load_sfx_file:proc

@@ -1259,6 +1259,9 @@ extern unsigned int word_42244;
 extern unsigned char byte_42246;
 extern legacy_s16 word_3EB2A;
 extern unsigned char byte_40634;
+extern void far* audiodriverbinary;
+extern legacy_u16 word_44D48;
+extern legacy_u16 word_454BA;
 extern char aStartengineNew[];
 extern char audio_filetemp[];
 int compare_ds_ss(void);
@@ -6915,6 +6918,33 @@ void far* init_audio_resources(void far* song, void far* instruments,
 	}
 
 	return header;
+}
+
+void load_audio_finalize(void far* audio_resource)
+{
+	legacy_u8 far* resource;
+	legacy_u16 data_offset;
+	void (far* driver_reset)(void);
+
+	word_4063A = 1;
+	sub_3736A();
+	resource = (legacy_u8 far*)audio_resource;
+	if (resource == 0 || resource[4] != 0 || resource[5] != 1)
+		return;
+
+	driver_reset = (void (far*)(void))MK_FP(FP_SEG(audiodriverbinary),
+		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), 0x18U));
+	driver_reset();
+	word_44D48 = 0;
+	word_454BA = 0x80U;
+	data_offset = LEGACY_U16_WRAP_ADD(
+		(legacy_u16)((legacy_u16)resource[6] << 2), 7U);
+	byte_44290 = resource[data_offset++];
+	audio_init_chunk(0,
+		LEGACY_S16_FROM_BITS((legacy_u16)(byte_44290 - 1U)),
+		resource, data_offset, byte_45950, 0x20U);
+	byte_40632 = 1;
+	word_4063A = 0;
 }
 
 void audioresource_copy_n_bytes(const legacy_u8 far* source,

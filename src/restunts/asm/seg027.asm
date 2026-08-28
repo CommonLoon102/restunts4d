@@ -47,7 +47,7 @@ seg027 segment byte public 'STUNTSC' use16
     assume cs:seg027
     assume es:nothing, ss:nothing, ds:dseg
     public ported_init_audio_resources_
-    public load_audio_finalize
+    public ported_load_audio_finalize_
     public audio_unk
     public sub_372F4
     public ported_sub_3736A_
@@ -181,17 +181,16 @@ loc_37172:
     pop     bp
     retf
 ported_init_audio_resources_ endp
-load_audio_finalize proc far
+ported_load_audio_finalize_ proc far
     var_6 = dword ptr -6
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_Mnote = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 6
-    push    si
+    jmp     load_audio_finalize
+    nop
+    nop
     mov     word_4063A, 1
     push    cs
     call near ptr ported_sub_3736A_
@@ -248,7 +247,7 @@ loc_3720F:
     retf
     db 144
     db 144
-load_audio_finalize endp
+ported_load_audio_finalize_ endp
 audio_unk proc far
     var_C = word ptr -12
     var_A = dword ptr -10

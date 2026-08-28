@@ -104,7 +104,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn timer_intr_callback:proc
     extrn sub_303BA:proc
     extrn set_bios_mode3:proc
-    extrn kb_parse_key:proc
+    extrn ported_kb_parse_key_:proc
     extrn ported_kb_reg_callback_:proc
     extrn ported_nopsub_304AF_:proc
     extrn nopsub_304B6:proc
