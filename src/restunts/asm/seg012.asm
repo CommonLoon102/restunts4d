@@ -316,7 +316,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_putimage_and_
     public loc_338C9
     public nopsub_339FA
-    public putpixel_iconMask
+    public ported_putpixel_iconMask_
     public loc_33A57
     public nopsub_33AC0
     public nopsub_33AE4
@@ -342,7 +342,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_putimage_or_alt_
     public ported_sprite_putimage_or_
     public loc_340BD
-    public putpixel_iconFillings
+    public ported_putpixel_iconFillings_
     public loc_3424B
     public shape2d_op_unk4
     public loc_34311
@@ -11468,7 +11468,7 @@ nopsub_339FA proc far
     ; align 2
     db 144
 nopsub_339FA endp
-putpixel_iconMask proc far
+ported_putpixel_iconMask_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -11479,9 +11479,8 @@ putpixel_iconMask proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     putpixel_iconMask
+    nop
     push    ds
     push    si
     push    di
@@ -11567,7 +11566,7 @@ loc_33AB4:
     jmp     short loc_33A9A
     ; align 2
     db 0
-putpixel_iconMask endp
+ported_putpixel_iconMask_ endp
 nopsub_33AC0 proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -12683,7 +12682,7 @@ loc_341E0:
     ; align 2
     db 144
 ported_sprite_putimage_or_ endp
-putpixel_iconFillings proc far
+ported_putpixel_iconFillings_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -12694,9 +12693,8 @@ putpixel_iconFillings proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     putpixel_iconFillings
+    nop
     push    ds
     push    si
     push    di
@@ -12814,7 +12812,7 @@ loc_342A8:
     jmp     short loc_34311
     ; align 2
     db 144
-putpixel_iconFillings endp
+ported_putpixel_iconFillings_ endp
 shape2d_op_unk4 proc far
     var_10 = word ptr -16
     var_E = word ptr -14

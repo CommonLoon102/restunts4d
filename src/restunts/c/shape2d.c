@@ -785,6 +785,87 @@ void sprite_shape_to_1_alt(struct SHAPE2D far* shape)
 		shape2d_get_word(shape_bytes + 0x0AU));
 }
 
+static void putpixel_icon_combine(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y, int combine_or)
+{
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* bitmap;
+	legacy_u16 shape_segment;
+	legacy_u16 source;
+	legacy_u16 destination;
+	legacy_u16 width;
+	legacy_u16 column_count;
+	legacy_u16 pair_count;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape_segment = FP_SEG(shape);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	destination = LEGACY_U16_WRAP_ADD(
+		shape2d_get_line_offset(FP_SEG(&sprite1), y), x);
+	width = shape2d_get_word(shape_bytes);
+	row_count = shape2d_get_word(shape_bytes + 2U);
+	do {
+		if (width == 0) {
+			pair_count = 0;
+			do {
+				source_ptr = (legacy_u8 far*)MK_FP(
+					shape_segment, source);
+				if (combine_or != 0)
+					bitmap[destination] |= *source_ptr;
+				else
+					bitmap[destination] &= *source_ptr;
+				source++;
+				destination++;
+				source_ptr = (legacy_u8 far*)MK_FP(
+					shape_segment, source);
+				if (combine_or != 0)
+					bitmap[destination] |= *source_ptr;
+				else
+					bitmap[destination] &= *source_ptr;
+				source++;
+				destination++;
+				pair_count--;
+			} while (pair_count != 0);
+		} else {
+			column_count = width;
+			do {
+				source_ptr = (legacy_u8 far*)MK_FP(
+					shape_segment, source);
+				if (combine_or != 0)
+					bitmap[destination] |= *source_ptr;
+				else
+					bitmap[destination] &= *source_ptr;
+				source++;
+				destination++;
+				column_count--;
+			} while (column_count != 0);
+			if (width == 1 && combine_or == 0)
+				bitmap[destination] = 0;
+		}
+		destination = LEGACY_U16_WRAP_ADD(destination,
+			LEGACY_U16_WRAP_SUB(sprite1.sprite_pitch, width));
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
+void putpixel_iconMask(struct SHAPE2D far* shape, int x, int y)
+{
+	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 0);
+}
+
+void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y)
+{
+	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 1);
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;
