@@ -1101,6 +1101,32 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 	return MK_FP(0, 0);
 }
 
+unsigned short nopsub_31429(const char* name) {
+	const char* wanted;
+	int i;
+	struct MEMCHUNK* chunk;
+
+	wanted = mmgr_path_to_name(name);
+	chunk = resendptr1;
+	while (chunk < resendptr2) {
+		if (chunk->resunk == 0)
+			return 0;
+		for (i = 0; i < 12; i++) {
+			if (wanted[i] == 0) {
+				if (chunk->resname[i] == '.' || chunk->resname[i] == 0)
+					return 1;
+				break;
+			}
+			if (wanted[i] != chunk->resname[i])
+				break;
+		}
+		if (i == 12)
+			return 1;
+		chunk++;
+	}
+	return 0;
+}
+
 void mmgr_release(char far* ptr) {
 	int i;
 	unsigned short regax, regbx, regcx, regdx;

@@ -97,6 +97,7 @@ extrn mmgr_copy_paras:proc
 extrn copy_paras_reverse:proc
 
 extrn mmgr_get_chunk_by_name:proc
+extrn nopsub_31429:proc
 
 extrn mmgr_find_free:proc
 extrn mmgr_release:proc

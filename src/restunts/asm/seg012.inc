@@ -158,7 +158,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_mmgr_alloc_pages_:proc
     extrn ported_mmgr_find_free_:proc
     extrn ported_mmgr_get_chunk_by_name_:proc
-    extrn nopsub_31429:proc
+    extrn ported_nopsub_31429_:proc
     extrn ported_mmgr_free_:proc
     extrn loc_31498:proc
     extrn nopsub_31525:proc
