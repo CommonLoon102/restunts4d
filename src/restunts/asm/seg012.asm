@@ -156,7 +156,7 @@ seg012 segment byte public 'STUNTSC' use16
     public nopsub_304AF
     public nopsub_304B6
     public kb_get_char
-    public get_kb_or_joy_flags
+    public ported_get_kb_or_joy_flags_
     public nopsub_305C8
     public get_joy_flags
     public ported_sub_307B4_
@@ -4002,11 +4002,12 @@ loc_30522:
 locret_30537:
     retf
 kb_get_char endp
-get_kb_or_joy_flags proc far
+ported_get_kb_or_joy_flags_ proc far
 
-    xor     ax, ax
-    xor     bx, bx
-    mov     bl, kbscancodes
+    jmp     get_kb_or_joy_flags
+    nop
+    nop
+    nop
     cmp     kbinput[bx], 0
     jz      short loc_30549
     or      al, 10h
@@ -4061,7 +4062,7 @@ loc_305BE:
     call    get_joy_flags
 locret_305C7:
     retf
-get_kb_or_joy_flags endp
+ported_get_kb_or_joy_flags_ endp
 nopsub_305C8 proc far
 
     xor     cx, cx

@@ -109,7 +109,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn nopsub_304AF:proc
     extrn nopsub_304B6:proc
     extrn kb_get_char:proc
-    extrn get_kb_or_joy_flags:proc
+    extrn ported_get_kb_or_joy_flags_:proc
     extrn nopsub_305C8:proc
     extrn get_joy_flags:proc
     extrn ported_sub_307B4_:proc

@@ -675,10 +675,31 @@ extern int mouse_oldy;
 extern int mouse_oldbut;
 extern int mousebutinputcode;
 extern int get_joy_flags(void);
+extern legacy_u8 kbinput[];
+extern legacy_u8 kbscancodes[10];
 extern void mouse_get_state(int* buttons, int* x, int* y);
 extern unsigned char byte_3EBD8;
 extern char byte_45D0C[];
 extern char byte_45D14[];
+
+short get_kb_or_joy_flags(void)
+{
+	static const legacy_u8 action_flags[10] = {
+		0x10, 0x20, 0x09, 0x01, 0x05,
+		0x04, 0x06, 0x02, 0x0A, 0x08
+	};
+	legacy_u16 flags;
+	legacy_u16 index;
+
+	flags = 0;
+	for (index = 0; index < 10U; index++) {
+		if (kbinput[kbscancodes[index]] != 0)
+			flags |= action_flags[index];
+	}
+	if (flags == 0)
+		flags = (legacy_u16)get_joy_flags();
+	return LEGACY_S16_FROM_BITS(flags);
+}
 
 int input_checking(int frame_delta)
 {

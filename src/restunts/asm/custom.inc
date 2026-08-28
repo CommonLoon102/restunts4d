@@ -264,6 +264,7 @@ extrn show_graphic_levels_menu:proc
 extrn nopsub_19DE8:proc
 extrn nopsub_26552:proc
 extrn kb_reg_callback:proc
+extrn get_kb_or_joy_flags:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

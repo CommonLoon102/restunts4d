@@ -643,7 +643,7 @@ loc_22190:
     jz      short loc_2219A
     jmp     loc_22298
 loc_2219A:
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     or      ax, ax
     jnz     short loc_221A6
     jmp     loc_21DA2
@@ -737,7 +737,7 @@ loc_22257:
     add     sp, 6
     test    byte ptr mouse_butstate, 3
     jnz     short loc_2227E
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     test    al, 30h
     jnz     short loc_2227E
     jmp     loc_21DA2
@@ -1343,7 +1343,7 @@ loc_227B0:
 loc_227C5:
     mov     byte_40D6A, al
 loc_227C8:
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     mov     si, ax
 smart
     and     si, 33h
@@ -1360,7 +1360,7 @@ nosmart
     ; align 2
     db 144
 loc_227E8:
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     mov     si, ax
 loc_227EF:
     mov     ax, 1Eh

@@ -2269,7 +2269,7 @@ loc_287ED:
 loc_287FD:
     call    get_joy_flags
     mov     di, ax
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     mov     kbjoyflags, ax
     cmp     joyflags, di
     jnz     short loc_28815
@@ -3111,7 +3111,7 @@ ported_check_input_ proc far
     jmp     check_input
     nop
 loc_28EEA:
-    call    get_kb_or_joy_flags
+    call    far ptr get_kb_or_joy_flags
     test    al, 30h
     jz      short loc_28EFA
 loc_28EF3:
