@@ -127,6 +127,7 @@ extrn preRender_default_alt:proc
 extrn skybox_op_helper:proc
 extrn preRender_wheel_helper4:proc
 extrn preRender_wheel_helper3:proc
+extrn preRender_wheel_helper2:proc
 extrn preRender_patterned:proc
 extrn preRender_unk:proc
 extrn preRender_sphere:proc

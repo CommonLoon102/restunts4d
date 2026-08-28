@@ -47,6 +47,8 @@ void get_a_poly_info(void);
 void preRender_sphere_helper2(unsigned* source, unsigned* destination);
 void preRender_sphere_helper(unsigned* source, unsigned color);
 void preRender_wheel_helper3(unsigned* source, unsigned* destination);
+void preRender_wheel_helper2(unsigned* source, unsigned* destination,
+	unsigned scale);
 void preRender_sphere(int x, int y, unsigned size, unsigned color);
 void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 

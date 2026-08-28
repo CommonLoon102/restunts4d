@@ -2988,6 +2988,39 @@ void preRender_wheel_helper3(unsigned* source, unsigned* destination)
 	}
 }
 
+static legacy_u16 wheel_interpolate(legacy_u16 center,
+	legacy_u16 target, legacy_u16 scale)
+{
+	return LEGACY_U16_WRAP_ADD(center, (legacy_u16)multiply_and_scale(
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(target, center)),
+		LEGACY_S16_FROM_BITS(scale)));
+}
+
+void preRender_wheel_helper2(unsigned* source, unsigned* destination,
+	unsigned scale)
+{
+	unsigned inner_source[6];
+	legacy_u16 center_x;
+	legacy_u16 center_y;
+	legacy_u16 scale_bits;
+
+	center_x = (legacy_u16)source[0];
+	center_y = (legacy_u16)source[1];
+	scale_bits = (legacy_u16)scale;
+	inner_source[0] = center_x;
+	inner_source[1] = center_y;
+	inner_source[2] = wheel_interpolate(center_x,
+		(legacy_u16)source[2], scale_bits);
+	inner_source[3] = wheel_interpolate(center_y,
+		(legacy_u16)source[3], scale_bits);
+	inner_source[4] = wheel_interpolate(center_x,
+		(legacy_u16)source[4], scale_bits);
+	inner_source[5] = wheel_interpolate(center_y,
+		(legacy_u16)source[5], scale_bits);
+	preRender_wheel_helper3(source, destination);
+	preRender_wheel_helper3(inner_source, destination + 32U);
+}
+
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
 void preRender_sphere(int x, int y, unsigned size, unsigned color)
