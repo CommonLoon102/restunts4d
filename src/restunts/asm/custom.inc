@@ -247,6 +247,7 @@ extrn subst_hillroad_track:proc
 extrn draw_lines_unk:proc
 extrn init_audio_resources:proc
 extrn load_palandcursor:proc
+extrn load_sfx_ge:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

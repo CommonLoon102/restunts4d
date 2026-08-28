@@ -73,7 +73,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_nopsub_378BC_
     public audio_load_driver
     public audiodrv_atexit
-    public load_sfx_ge
+    public ported_load_sfx_ge_
     public ported_sub_37C38_
     public load_sfx_file
     public load_song_file
@@ -1411,7 +1411,7 @@ loc_37B09:
     ; align 2
     db 144
 audiodrv_atexit endp
-load_sfx_ge proc far
+ported_load_sfx_ge_ proc far
     var_8 = byte ptr -8
     var_7 = byte ptr -7
     var_6 = byte ptr -6
@@ -1424,9 +1424,8 @@ load_sfx_ge proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 8
+    jmp     load_sfx_ge
+    nop
     push    [bp+arg_4]      ; int
     push    [bp+arg_2]
     push    [bp+arg_0]      ; char *
@@ -1535,7 +1534,7 @@ loc_37C22:
     mov     [bp+var_2], dx
     or      ax, dx
     jmp     loc_37B3E
-load_sfx_ge endp
+ported_load_sfx_ge_ endp
 ported_sub_37C38_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -1570,7 +1569,7 @@ load_sfx_file proc far
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx
@@ -1584,7 +1583,7 @@ loc_37C71:
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx
@@ -1627,7 +1626,7 @@ load_song_file proc far
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx
@@ -1668,7 +1667,7 @@ load_voice_file proc far
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx
@@ -1682,7 +1681,7 @@ loc_37D31:
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx
@@ -1722,7 +1721,7 @@ nopsub_37D7A proc far
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr load_sfx_ge
+    call near ptr ported_load_sfx_ge_
     add     sp, 6
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx

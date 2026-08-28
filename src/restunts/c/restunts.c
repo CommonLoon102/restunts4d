@@ -1620,6 +1620,49 @@ char* audio_make_filename(const char* filename, const char* extension,
 	return audio_filetemp;
 }
 
+void far* load_sfx_ge(const char* filename, const char* extension,
+	const char* inserted_path)
+{
+	char compressed_extension[4];
+	void far* result;
+
+	result = file_load_binary_nofatal(audio_make_filename(
+		filename, extension, inserted_path));
+	if (result != 0)
+		return result;
+
+	compressed_extension[0] = 'P';
+	compressed_extension[1] = extension[0];
+	compressed_extension[2] = extension[1];
+	compressed_extension[3] = 0;
+	result = file_decomp_nofatal(audio_make_filename(
+		filename, compressed_extension, inserted_path));
+	if (result != 0)
+		return result;
+
+	result = file_load_binary_nofatal(audio_make_filename(
+		filename, extension, "ge"));
+	if (result != 0)
+		return result;
+
+	result = file_decomp_nofatal(audio_make_filename(
+		filename, compressed_extension, "ge"));
+	if (result != 0)
+		return result;
+
+	result = file_load_binary_nofatal(audio_make_filename(
+		filename, extension, ""));
+	if (result != 0)
+		return result;
+
+	result = file_decomp_nofatal(audio_make_filename(
+		filename, compressed_extension, ""));
+	if (result != 0)
+		return result;
+
+	return file_load_binary_nofatal(filename);
+}
+
 int audioresource_compare_chunknames(int case_sensitive,
 	const char far* first_name, const char far* second_name, int count)
 {
