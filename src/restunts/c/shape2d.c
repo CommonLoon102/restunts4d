@@ -71,6 +71,20 @@ void sprite_set_1_size(unsigned short left, unsigned short right,
 	sprite1.sprite_height = height;
 }
 
+void nopsub_3320E(struct SPRITE far* sprite, unsigned short left,
+	unsigned short right, unsigned short top, unsigned short height)
+{
+	sprite->sprite_left2 = left;
+	sprite->sprite_left = left;
+	sprite->sprite_widthsum = right;
+	sprite->sprite_right = right;
+	sprite->sprite_top = top;
+	sprite->sprite_height = height;
+
+	if (FP_SEG(sprite->sprite_bitmapptr) == FP_SEG(sprite1.sprite_bitmapptr))
+		sprite_set_1_size(left, right, top, height);
+}
+
 void sprite_1_unk(int x, int y, int width, int height, int color)
 {
 	legacy_u8 far* bitmap;
@@ -377,6 +391,16 @@ void draw_unknown_lines(int* x1arr, int* x2arr, unsigned y,
 	unsigned numlines, unsigned color)
 {
 	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 1);
+}
+
+void nopsub_33330(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color, unsigned alternate_color,
+	unsigned pattern)
+{
+	word_4031E = (legacy_u16)pattern;
+	word_40320 = (legacy_u16)((word_40320 & 0xFF00U) |
+		(legacy_u8)alternate_color);
+	draw_unknown_lines(x1arr, x2arr, y, numlines, color);
 }
 
 void draw_patterned_lines(int* x1arr, int* x2arr, unsigned y,

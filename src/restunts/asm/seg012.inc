@@ -238,11 +238,11 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_vector_op_unk_:proc
     extrn loc_3301F:proc
     extrn ported_preRender_sphere_:proc
-    extrn nopsub_3320E:proc
+    extrn ported_nopsub_3320E_:proc
     extrn ported_sprite_set_1_size_:proc
     extrn video_clear_color:proc
     extrn ported_sprite_clear_1_color_:proc
-    extrn nopsub_33330:proc
+    extrn ported_nopsub_33330_:proc
     extrn ported_draw_unknown_lines_:proc
     extrn ported_putpixel_line1_maybe_:proc
     extrn off_3340A:word

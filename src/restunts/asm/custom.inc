@@ -218,6 +218,8 @@ extrn file_load_shape2d_expandedsize:proc
 extrn file_get_shape2d:proc
 extrn nopsub_326BA:proc
 extrn file_get_res_shape_count:proc
+extrn nopsub_3320E:proc
+extrn nopsub_33330:proc
 
 ; externs for implementations in keyboard.c
 

@@ -285,11 +285,11 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_vector_op_unk_
     public loc_3301F
     public ported_preRender_sphere_
-    public nopsub_3320E
+    public ported_nopsub_3320E_
     public ported_sprite_set_1_size_
     public video_clear_color
     public ported_sprite_clear_1_color_
-    public nopsub_33330
+    public ported_nopsub_33330_
     public ported_draw_unknown_lines_
     public ported_putpixel_line1_maybe_
     public off_3340A
@@ -10342,7 +10342,7 @@ loc_331E9:
     pop     bp
     retf
 ported_preRender_sphere_ endp
-nopsub_3320E proc far
+ported_nopsub_3320E_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -10352,10 +10352,7 @@ nopsub_3320E proc far
     arg_8 = word ptr 14
     arg_A = word ptr 16
 
-    push    bp
-    mov     bp, sp
-    push    ds
-    push    si
+    jmp     nopsub_3320E
     mov     ds, [bp+arg_2]
     mov     si, [bp+arg_0]
     mov     ax, [si+2]
@@ -10396,7 +10393,7 @@ loc_3325D:
     pop     ds
     pop     bp
     retf
-nopsub_3320E endp
+ported_nopsub_3320E_ endp
 ported_sprite_set_1_size_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -10501,16 +10498,13 @@ loc_33325:
     ; align 2
     db 0
 ported_sprite_clear_1_color_ endp
-nopsub_33330 proc far
+ported_nopsub_33330_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_A = word ptr 16
     arg_C = word ptr 18
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     nopsub_33330
     mov     ax, [bp+arg_C]
     mov     word_4031E, ax
     mov     ax, [bp+arg_A]
@@ -10518,7 +10512,7 @@ nopsub_33330 proc far
     jmp     short loc_33349
     ; align 2
     db 144
-nopsub_33330 endp
+ported_nopsub_33330_ endp
 ported_draw_unknown_lines_ proc far
      s = byte ptr 0
      r = byte ptr 2
