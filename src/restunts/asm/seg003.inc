@@ -8,7 +8,7 @@ seg003 segment byte public 'STUNTSC' use16
     extrn draw_track_preview:proc
     extrn draw_ingame_text:proc
     extrn ported_do_sinking_:proc
-    extrn init_crak:proc
+    extrn ported_init_crak_:proc
     extrn ported_load_skybox_:proc
     extrn ported_unload_skybox_:proc
     extrn ported_load_sdgame2_shapes_:proc

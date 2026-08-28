@@ -1,6 +1,7 @@
 #include "externs.h"
 #include "legacy.h"
 #include "math.h"
+#include "memmgr.h"
 #include "shape2d.h"
 #include "shape3d.h"
 
@@ -93,6 +94,8 @@ void transformed_shape_add_for_sort(int z_adjust, int type);
 void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon);
 unsigned char subst_hillroad_track(unsigned char a, unsigned char b);
 int skybox_op(int a, struct RECTANGLE* rectptr, int c, struct MATRIX* matptr, int e, int f, int g);
+void preRender_line(unsigned start_x, unsigned start_y, unsigned end_x,
+	unsigned end_y, unsigned color);
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(int frame, int top, int height);
 struct RECTANGLE* do_sinking(int frame, int top, int height);
@@ -258,6 +261,83 @@ struct RECTANGLE* do_sinking(int frame, int top, int height)
 	sprite_set_1_size(0, 0x140, rect_ingame_text.top,
 		rect_ingame_text.bottom);
 	sprite_clear_1_color((legacy_u8)skybox_wat_color);
+	return &rect_ingame_text;
+}
+
+struct RECTANGLE* init_crak(int frame, int top, int height)
+{
+	legacy_s16 far* crack_lines;
+	legacy_s16 far* crack_info;
+	legacy_s16 frame_index;
+	legacy_s16 line_count;
+	legacy_s16 start_x;
+	legacy_s16 start_y;
+	legacy_s16 end_x;
+	legacy_s16 end_y;
+	legacy_s16 scaled_start_y;
+	legacy_s16 scaled_end_y;
+	struct POINT2D point;
+	legacy_s16 i;
+
+	crack_lines = (legacy_s16 far*)locate_shape_alt(gameresptr, "crak");
+	crack_info = (legacy_s16 far*)locate_shape_alt(gameresptr, "cinf");
+	frame_index = (legacy_s16)((legacy_s16)frame /
+		(legacy_s16)(framespersec / 7U));
+	if (frame_index >= crack_info[0])
+		frame_index = LEGACY_S16_WRAP_SUB(crack_info[0], 1);
+	line_count = crack_info[frame_index + 1];
+	rect_ingame_text = cliprect_unk;
+
+	for (i = 0; i < line_count; i++) {
+		start_x = crack_lines[i * 4];
+		start_y = crack_lines[i * 4 + 1];
+		end_x = crack_lines[i * 4 + 2];
+		end_y = crack_lines[i * 4 + 3];
+		scaled_start_y = (legacy_s16)(((legacy_s32)start_y *
+			(legacy_s16)height) / 200L);
+		scaled_end_y = (legacy_s16)(((legacy_s32)end_y *
+			(legacy_s16)height) / 200L);
+
+		preRender_line(start_x,
+			LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
+			end_x,
+			LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1),
+			0);
+		preRender_line(start_x,
+			LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
+			end_x,
+			LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1),
+			0);
+		preRender_line(start_x,
+			LEGACY_S16_WRAP_ADD(scaled_start_y, top),
+			end_x,
+			LEGACY_S16_WRAP_ADD(scaled_end_y, top),
+			dialog_fnt_colour);
+
+		if (slow_video_mgmt_copy != 0) {
+			point.px = start_x;
+			point.py = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
+			rect_adjust_from_point(&point, &rect_ingame_text);
+			point.px = end_x;
+			point.py = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
+			rect_adjust_from_point(&point, &rect_ingame_text);
+			point.px = start_x;
+			point.py = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
+			rect_adjust_from_point(&point, &rect_ingame_text);
+			point.px = end_x;
+			point.py = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
+			rect_adjust_from_point(&point, &rect_ingame_text);
+		}
+	}
+
 	return &rect_ingame_text;
 }
 

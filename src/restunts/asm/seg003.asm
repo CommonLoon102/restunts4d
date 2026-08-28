@@ -55,7 +55,7 @@ seg003 segment byte public 'STUNTSC' use16
     public draw_track_preview
     public draw_ingame_text
     public ported_do_sinking_
-    public init_crak
+    public ported_init_crak_
     public ported_load_skybox_
     public ported_unload_skybox_
     public ported_load_sdgame2_shapes_
@@ -3575,7 +3575,7 @@ loc_1C128:
     sub     ax, si
     push    ax
     push    cs
-    call near ptr init_crak
+    call near ptr ported_init_crak_
 loc_1C156:
     add     sp, 6
     push    ax
@@ -3593,7 +3593,7 @@ loc_1C162:
     sub     ax, si
     push    ax
     push    cs
-    call near ptr init_crak
+    call near ptr ported_init_crak_
     jmp     short loc_1C1C3
     ; align 2
     db 144
@@ -5848,7 +5848,7 @@ loc_1D54C:
     ; align 2
     db 144
 ported_do_sinking_ endp
-init_crak proc far
+ported_init_crak_ proc far
     var_1A = word ptr -26
     var_18 = word ptr -24
     var_14 = word ptr -20
@@ -5865,9 +5865,8 @@ init_crak proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 1Ah
+    jmp     init_crak
+    nop
     push    di
     push    si
     mov     ax, offset aCrak; "crak"
@@ -6075,7 +6074,7 @@ loc_1D798:
     retf
     ; align 2
     db 144
-init_crak endp
+ported_init_crak_ endp
 ported_load_skybox_ proc far
     var_4 = word ptr -4
      s = byte ptr 0
