@@ -27,7 +27,7 @@ $ScriptDirectory = $PSScriptRoot
 $GameDir = Join-Path $ScriptDirectory 'stunts'
 $Config = Join-Path $ScriptDirectory 'dosbox.proc.conf'
 $OutputFile = Join-Path $ScriptDirectory "partition_$Partition.txt"
-$TimeoutMilliseconds = 10000
+$ReplayTimeoutSeconds = 30
 
 if (-not (Test-Path -LiteralPath $GameDir -PathType Container)) {
     throw "Stunts directory not found: $GameDir"
@@ -80,7 +80,7 @@ function Invoke-DosBoxExecutable {
     $mountCommand = 'mount c "{0}"' -f $GameDir
     $runCommand = '{0} "{1}" 1' -f $Executable, $FileName
     $arguments = @(
-        '-silent'
+        '-noconsole'
         '-conf'
         $Config
         '-c'
@@ -94,12 +94,13 @@ function Invoke-DosBoxExecutable {
     )
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = 'C:\DOSBox-x\dosbox-X.exe'
+    $startInfo.FileName = 'dosbox'
     $startInfo.WorkingDirectory = $GameDir
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
+    $startInfo.Environment['SDL_VIDEODRIVER'] = 'dummy'
 
     foreach ($argument in $arguments) {
         [void]$startInfo.ArgumentList.Add($argument)
@@ -114,15 +115,15 @@ function Invoke-DosBoxExecutable {
     try {
         $started = $process.Start()
         if (-not $started) {
-            throw 'DOSBox-X did not start.'
+            throw 'DOSBox did not start.'
         }
 
         # Drain both streams asynchronously so a full output buffer cannot
-        # block DOSBox-X while its output remains hidden.
+        # block DOSBox while its output remains hidden.
         $standardOutputTask = $process.StandardOutput.ReadToEndAsync()
         $standardErrorTask = $process.StandardError.ReadToEndAsync()
 
-        if (-not $process.WaitForExit($TimeoutMilliseconds)) {
+        if (-not $process.WaitForExit($ReplayTimeoutSeconds * 1000)) {
             try {
                 $process.Kill($true)
             }
@@ -133,7 +134,7 @@ function Invoke-DosBoxExecutable {
 
             Write-ReplayError (
                 "ERROR|type=timeout|exe=$Executable|input=$FileName|" +
-                'timeout_seconds=10'
+                "timeout_seconds=$ReplayTimeoutSeconds"
             )
             return $false
         }
