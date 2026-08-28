@@ -88,9 +88,8 @@ build_track_object proc far
     arg_posWorldCrds = word ptr 6
     arg_nextPosWorldCrds = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 40h
+    jmp     build_track_object_c
+    nop
     push    di
     push    si
     mov     planindex, 0

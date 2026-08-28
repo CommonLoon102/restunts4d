@@ -3417,7 +3417,6 @@ loop_game proc far
 
     jmp     loop_game_c
     nop
-    nop
     push    di
     push    si
     mov     ax, [bp+arg_0]

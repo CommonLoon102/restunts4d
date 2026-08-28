@@ -17,7 +17,7 @@ else
 endif
 
 C_FILES = fileio.c math.c memmgr.c restunts.c shape3d.c shape2d.c keyboard.c heapsort.c \
-          frame.c state.c stateply.c statecrs.c statecar.c
+		  frame.c state.c stateply.c statecrs.c statecar.c trackobj.c
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(C_FILES:.c=.obj))
 OBJ_FILES_BACKSLASH = $(subst /,\,$(OBJ_FILES))
