@@ -49,7 +49,7 @@ seg035 segment byte public 'STUNTSC' use16
     public ported_file_load_shape2d_res_fatal_
     public ported_file_load_shape2d_res_nofatal_
     public ported_file_load_shape2d_res_
-    public parse_shape2d
+    public ported_parse_shape2d_
     public ported_parse_shape2d_helper3_
     ; align 2
     db 144
@@ -167,7 +167,7 @@ loc_3AD4A:
     push    [bp+var_2]
     push    [bp+var_4]
     push    cs
-    call near ptr parse_shape2d
+    call near ptr ported_parse_shape2d_
     add     sp, 8
     push    [bp+var_2]
     push    [bp+var_4]
@@ -181,7 +181,7 @@ loc_3AD4A:
     pop     bp
     retf
 ported_file_load_shape2d_res_ endp
-parse_shape2d proc far
+ported_parse_shape2d_ proc far
     var_chunkptr = dword ptr -56
     var_34 = word ptr -52
     var_32 = word ptr -50
@@ -208,9 +208,8 @@ parse_shape2d proc far
     arg_mempagesofs = word ptr 10
     arg_mempagesseg = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 38h
+    jmp     parse_shape2d
+    nop
     push    di
     push    si
     push    [bp+arg_memchunkseg]
@@ -493,7 +492,7 @@ loc_3B074:
     retf
     ; align 2
     db 144
-parse_shape2d endp
+ported_parse_shape2d_ endp
 ported_parse_shape2d_helper3_ proc far
     var_4 = byte ptr -4
     var_2 = word ptr -2

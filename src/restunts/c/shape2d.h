@@ -78,6 +78,7 @@ void file_load_shape2d_palmap_init(unsigned char far* pal);
 void file_load_shape2d_palmap_apply(unsigned char far* memchunk, unsigned char palmap[]);
 
 void far* file_load_shape2d_esh(void far* memchunk, const char* str);
+void parse_shape2d(void far* memchunk, void far* mempages);
 void far* file_load_shape2d(char* shapename, int fatal);
 
 void far* file_load_shape2d_fatal(char* shapename);

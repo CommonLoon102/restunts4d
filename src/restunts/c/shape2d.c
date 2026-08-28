@@ -1274,6 +1274,217 @@ int parse_shape2d_helper3(void far* data)
 	}
 }
 
+static legacy_u8 shape2d_far_read_byte(legacy_u16 segment,
+	legacy_u16 offset)
+{
+	return *(legacy_u8 far*)MK_FP(segment, offset);
+}
+
+static void shape2d_far_write_byte(legacy_u16 segment,
+	legacy_u16 offset, legacy_u8 value)
+{
+	*(legacy_u8 far*)MK_FP(segment, offset) = value;
+}
+
+static void shape2d_far_write_dword(legacy_u16 segment,
+	legacy_u16 offset, legacy_u32 value)
+{
+	shape2d_far_write_byte(segment, offset, (legacy_u8)value);
+	offset++;
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 8));
+	offset++;
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 16));
+	offset++;
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 24));
+}
+
+static void shape2d_copy_wrapped(legacy_u16 source_segment,
+	legacy_u16* source, legacy_u16 destination_segment,
+	legacy_u16* destination, legacy_u16 count)
+{
+	legacy_u16 copied;
+
+	copied = 0;
+	while (LEGACY_S16_FROM_BITS(copied) <
+		LEGACY_S16_FROM_BITS(count)) {
+		shape2d_far_write_byte(destination_segment, *destination,
+			shape2d_far_read_byte(source_segment, *source));
+		(*source)++;
+		(*destination)++;
+		copied++;
+	}
+}
+
+void parse_shape2d(void far* memchunk, void far* mempages)
+{
+	struct SHAPE2D far* shape;
+	void far* output_pointer;
+	legacy_u32 initial_output_linear;
+	legacy_u32 output_linear;
+	legacy_u32 output_size;
+	legacy_u16 chunk_segment;
+	legacy_u16 chunk_offset;
+	legacy_u16 pages_segment;
+	legacy_u16 pages_offset;
+	legacy_u16 offsets_offset;
+	legacy_u16 output_segment;
+	legacy_u16 output_offset;
+	legacy_u16 source_segment;
+	legacy_u16 source_offset;
+	legacy_u16 scan_offset;
+	legacy_u16 literal_offset;
+	legacy_u16 shape_count;
+	legacy_u16 shape_index;
+	legacy_u16 header_size;
+	legacy_u16 copied;
+	legacy_u16 remaining;
+	legacy_u16 literal_count;
+	legacy_u16 run_count;
+	legacy_u8 value;
+
+	chunk_segment = FP_SEG(memchunk);
+	chunk_offset = FP_OFF(memchunk);
+	pages_segment = FP_SEG(mempages);
+	pages_offset = FP_OFF(mempages);
+	shape_count = file_get_res_shape_count(memchunk);
+	offsets_offset = LEGACY_U16_WRAP_ADD(pages_offset,
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, 4U), 6U));
+	header_size = LEGACY_U16_WRAP_ADD(
+		LEGACY_U16_WRAP_MUL(shape_count, 4U), 6U);
+	copied = 0;
+	while (LEGACY_S16_FROM_BITS(header_size) >
+		LEGACY_S16_FROM_BITS(copied)) {
+		shape2d_far_write_byte(pages_segment, pages_offset,
+			shape2d_far_read_byte(chunk_segment, chunk_offset));
+		chunk_offset++;
+		pages_offset++;
+		copied++;
+	}
+	output_segment = FP_SEG(mempages);
+	output_offset = LEGACY_U16_WRAP_ADD(FP_OFF(mempages),
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, 8U), 6U));
+	initial_output_linear = parse_shape2d_helper(
+		MK_FP(output_segment, output_offset));
+
+	shape_index = 0;
+	while (LEGACY_S16_FROM_BITS(shape_index) <
+		LEGACY_S16_FROM_BITS(shape_count)) {
+		shape = file_get_shape2d((legacy_u8 far*)memchunk, shape_index);
+		output_linear = parse_shape2d_helper(
+			MK_FP(output_segment, output_offset));
+		output_pointer = parse_shape2d_helper2(output_linear);
+		output_segment = FP_SEG(output_pointer);
+		output_offset = FP_OFF(output_pointer);
+		shape2d_far_write_dword(pages_segment, offsets_offset,
+			output_linear - initial_output_linear);
+		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset, 4U);
+
+		source_segment = FP_SEG(shape);
+		source_offset = FP_OFF(shape);
+		shape2d_copy_wrapped(source_segment, &source_offset,
+			output_segment, &output_offset,
+			(legacy_u16)sizeof(struct SHAPE2D));
+		scan_offset = source_offset;
+		literal_offset = scan_offset;
+		literal_count = 0;
+		remaining = LEGACY_U16_WRAP_MUL(
+			shape2d_get_word((legacy_u8 far*)shape),
+			shape2d_get_word((legacy_u8 far*)shape + 2U));
+		scan_offset++;
+		literal_count++;
+
+		if (remaining != 0) {
+			for (;;) {
+				run_count = (legacy_u16)parse_shape2d_helper3(
+					MK_FP(source_segment, scan_offset));
+				if (LEGACY_S16_FROM_BITS(run_count) <= 3 &&
+					literal_count < remaining) {
+					scan_offset++;
+					literal_count++;
+					continue;
+				}
+
+				while (LEGACY_S16_FROM_BITS(literal_count) > 0x7F) {
+					literal_count = LEGACY_U16_WRAP_SUB(
+						literal_count, 0x7FU);
+					remaining = LEGACY_U16_WRAP_SUB(
+						remaining, 0x7FU);
+					shape2d_far_write_byte(output_segment,
+						output_offset, 0x81U);
+					output_offset++;
+					shape2d_copy_wrapped(source_segment,
+						&literal_offset, output_segment,
+						&output_offset, 0x7FU);
+				}
+				if (literal_count != 0) {
+					shape2d_far_write_byte(output_segment,
+						output_offset,
+						(legacy_u8)(0U - literal_count));
+					output_offset++;
+					remaining = LEGACY_U16_WRAP_SUB(
+						remaining, literal_count);
+					shape2d_copy_wrapped(source_segment,
+						&literal_offset, output_segment,
+						&output_offset, literal_count);
+				}
+
+				if (run_count > remaining)
+					run_count = remaining;
+				while (LEGACY_S16_FROM_BITS(run_count) > 0x7F) {
+					run_count = LEGACY_U16_WRAP_SUB(
+						run_count, 0x7FU);
+					remaining = LEGACY_U16_WRAP_SUB(
+						remaining, 0x7FU);
+					shape2d_far_write_byte(output_segment,
+						output_offset, 0x7FU);
+					output_offset++;
+					value = shape2d_far_read_byte(
+						source_segment, scan_offset);
+					shape2d_far_write_byte(output_segment,
+						output_offset, value);
+					output_offset++;
+					scan_offset = LEGACY_U16_WRAP_ADD(
+						scan_offset, 0x7FU);
+				}
+				if (LEGACY_S16_FROM_BITS(run_count) > 3) {
+					shape2d_far_write_byte(output_segment,
+						output_offset, (legacy_u8)run_count);
+					output_offset++;
+					remaining = LEGACY_U16_WRAP_SUB(
+						remaining, run_count);
+					value = shape2d_far_read_byte(
+						source_segment, scan_offset);
+					shape2d_far_write_byte(output_segment,
+						output_offset, value);
+					output_offset++;
+					scan_offset = LEGACY_U16_WRAP_ADD(
+						scan_offset, run_count);
+				}
+
+				literal_offset = scan_offset;
+				literal_count = 0;
+				scan_offset++;
+				literal_count++;
+				if (remaining == 0)
+					break;
+			}
+		}
+		shape2d_far_write_byte(output_segment, output_offset, 0);
+		output_offset++;
+		shape_index++;
+	}
+
+	output_size = parse_shape2d_helper(
+		MK_FP(output_segment, output_offset)) -
+		parse_shape2d_helper(mempages);
+	if ((legacy_u8)output_size & 0x0FU)
+		output_size = (output_size >> 4) + 1UL;
+	else
+		output_size >>= 4;
+	mmgr_resize_memory(FP_OFF(mempages), FP_SEG(mempages),
+		(legacy_u16)output_size);
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
@@ -2445,8 +2656,6 @@ void far* file_load_shape2d_nofatal(char* shapename) {
 void far* file_load_shape2d_nofatal2(char* shapename) {
 	return file_load_shape2d(shapename, 0);
 }
-
-extern void parse_shape2d(void far* memchunk, void far* mempages);
 
 void far* file_load_shape2d_res(char* resname, int fatal) {
 	int chunksize;
