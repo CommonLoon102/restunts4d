@@ -304,6 +304,7 @@ extrn do_dea_textres:proc
 extrn input_repeat_check:proc
 extrn mouse_timer_sprite_unk:proc
 extrn intro_draw_text:proc
+extrn hiscore_draw_text:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

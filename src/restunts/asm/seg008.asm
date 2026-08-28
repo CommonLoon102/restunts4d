@@ -73,7 +73,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_sprite_copy_wnd_to_1_
     public ported_sprite_copy_wnd_to_1_clear_
     public ported_intro_draw_text_
-    public hiscore_draw_text
+    public ported_hiscore_draw_text_
     public call_read_line
     public ported_input_repeat_check_
     public draw_lines_unk
@@ -3260,7 +3260,7 @@ ported_intro_draw_text_ proc far
     pop     bp
     retf
 ported_intro_draw_text_ endp
-hiscore_draw_text proc far
+ported_hiscore_draw_text_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3269,9 +3269,8 @@ hiscore_draw_text proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_4]
+    jmp     hiscore_draw_text
+    nop
     dec     ax
     mov     word_42254, ax
     mov     ax, [bp+arg_4]
@@ -3341,7 +3340,7 @@ hiscore_draw_text proc far
     mov     ax, offset word_42250
     pop     bp
     retf
-hiscore_draw_text endp
+ported_hiscore_draw_text_ endp
 call_read_line proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
