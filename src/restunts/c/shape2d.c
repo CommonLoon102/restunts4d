@@ -206,6 +206,48 @@ void font_draw_text(const char* text, int x, int y)
 	}
 }
 
+void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color)
+{
+	legacy_u8 far* bitmap;
+	legacy_u16 far* line_offsets;
+	legacy_u16 current_y;
+	legacy_u16 line_count;
+	legacy_u16 old_line_count;
+	legacy_u16 left;
+	legacy_u16 right;
+	legacy_u16 width;
+	legacy_u16 destination;
+
+	line_count = (legacy_u16)numlines;
+	if (line_count == 0)
+		return;
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	line_offsets = (legacy_u16 far*)MK_FP(
+		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
+	current_y = (legacy_u16)y;
+	do {
+		left = (legacy_u16)*x1arr++;
+		right = (legacy_u16)*x2arr++;
+		width = LEGACY_U16_WRAP_ADD(
+			LEGACY_U16_WRAP_SUB(right, left), 1U);
+		if (width != 0 && width <= 0x8000U) {
+			destination = LEGACY_U16_WRAP_ADD(
+				line_offsets[current_y], left);
+			do {
+				bitmap[destination] = (legacy_u8)color;
+				destination++;
+				width--;
+			} while (width != 0);
+		}
+		current_y++;
+		old_line_count = line_count;
+		line_count = LEGACY_U16_WRAP_SUB(line_count, 1U);
+	} while (old_line_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(line_count) > 0);
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;

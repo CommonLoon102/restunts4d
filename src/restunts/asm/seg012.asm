@@ -354,7 +354,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_345E5
     public video_set_palette
     public loc_346A8
-    public draw_filled_lines
+    public ported_draw_filled_lines_
     public nopsub_34736
     public sprite_clear_shape_alt
     public sprite_clear_shape
@@ -6492,7 +6492,7 @@ ported_preRender_default_alt_ proc far
     push    di
     mov     [bp+var_A], 0
 loc_317CE:
-    mov     ax, offset draw_filled_lines
+    mov     ax, offset ported_draw_filled_lines_
     mov     spritefunc, ax
     mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
@@ -6541,7 +6541,7 @@ ported_preRender_wheel_helper4_ proc far
     push    di
     mov     [bp+var_A], 0
 loc_317FB:
-    mov     ax, offset draw_filled_lines
+    mov     ax, offset ported_draw_filled_lines_
     mov     spritefunc, ax
     mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
@@ -7492,7 +7492,7 @@ nopsub_31F39 proc far
     push    si
     push    di
     mov     [bp+var_A], 1
-    mov     ax, offset draw_filled_lines
+    mov     ax, offset ported_draw_filled_lines_
     mov     spritefunc, ax
     mov     ax, 49A0h
     mov     imagefunc, ax
@@ -7510,7 +7510,7 @@ nopsub_31F55 proc near
     push    si
     push    di
     mov     [bp+var_A], 0
-    mov     ax, offset draw_filled_lines
+    mov     ax, offset ported_draw_filled_lines_
     mov     spritefunc, ax
     mov     ax, 49A0h
     mov     imagefunc, ax
@@ -13353,7 +13353,7 @@ loc_346A8:
     ; align 2
     db 0
 video_set_palette endp
-draw_filled_lines proc far
+ported_draw_filled_lines_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_x1arr = word ptr 6
@@ -13362,9 +13362,8 @@ draw_filled_lines proc far
     arg_numlines = word ptr 12
     arg_color = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     draw_filled_lines
+    nop
     push    si
     push    di
     cmp     [bp+arg_numlines], 0
@@ -13427,7 +13426,7 @@ loc_34730:
     jmp     short loc_346FC
     ; align 2
     db 0
-draw_filled_lines endp
+ported_draw_filled_lines_ endp
 nopsub_34736 proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
