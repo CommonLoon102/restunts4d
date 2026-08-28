@@ -395,6 +395,7 @@ extrn sub_2C81C:proc
 extrn sub_2C9B4:proc
 extrn intro_op:proc
 extrn setup_intro:proc
+extrn run_tracks_menu:proc
 extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc

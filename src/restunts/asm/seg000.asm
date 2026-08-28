@@ -51,7 +51,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_run_intro_
     public load_intro_resources
     public ported_run_menu_
-    public run_tracks_menu
+    public ported_run_tracks_menu_
     public ported_highscore_write_a_
     public ported_highscore_text_unk_
     public ported_print_highscore_entry_
@@ -335,7 +335,7 @@ _tracks_menu0:
 _tracks_menu_ax:
     push    ax
     push    cs
-    call near ptr run_tracks_menu
+    call near ptr ported_run_tracks_menu_
     add     sp, 2
     jmp     _show_menu
     nop
@@ -1728,7 +1728,7 @@ loc_110BA:
     ; align 2
     db 144
 ported_run_menu_ endp
-run_tracks_menu proc far
+ported_run_tracks_menu_ proc far
     var_16 = byte ptr -22
     var_14 = byte ptr -20
     var_12 = byte ptr -18
@@ -1745,9 +1745,8 @@ run_tracks_menu proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 16h
+    jmp     run_tracks_menu
+    nop
     push    di
     push    si
     mov     ax, 3
@@ -2207,7 +2206,7 @@ loc_1156A:
     jmp     loc_110ED
     ; align 2
     db 144
-run_tracks_menu endp
+ported_run_tracks_menu_ endp
 ported_highscore_write_a_ proc far
     var_3A = word ptr -58
     var_38 = byte ptr -56
