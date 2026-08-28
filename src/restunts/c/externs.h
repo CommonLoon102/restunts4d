@@ -429,7 +429,8 @@ extern void run_tracks_menu(int unk);
 extern int track_setup(void);
 extern void run_opponent_menu(void);
 extern void show_waiting(void);
-extern void run_car_menu(struct GAMEINFO* unk, char* unk2, char* unk3, unsigned int unk4);
+extern void run_car_menu(char* carid, char* material, char* transmission,
+	unsigned int opponent_type);
 extern void run_game(void);
 extern unsigned end_hiscore(void);
 extern unsigned run_option_menu(void);

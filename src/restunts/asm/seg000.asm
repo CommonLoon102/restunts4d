@@ -58,7 +58,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_enter_hiscore_
     public ported_highscore_write_b_
     public run_car_menu
-    public run_opponent_menu
+    public ported_run_opponent_menu_
     public ported_run_option_menu_
     public off_1314A
     public end_hiscore
@@ -343,7 +343,7 @@ _do_opp_menu:
     call    check_input
     call    show_waiting
     push    cs
-    call near ptr run_opponent_menu
+    call near ptr ported_run_opponent_menu_
     jmp     _show_menu
     nop
 _do_option_menu:
@@ -4281,7 +4281,7 @@ loc_12934:
     mov     [bp+var_106], 0
     jmp     loc_11FA5
 run_car_menu endp
-run_opponent_menu proc far
+ported_run_opponent_menu_ proc far
     var_1E = byte ptr -30
     var_1C = byte ptr -28
     var_1A = dword ptr -26
@@ -4298,9 +4298,8 @@ run_opponent_menu proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 1Eh
+    jmp     run_opponent_menu
+    nop
     push    si
     mov     ax, 4
     push    ax
@@ -4902,7 +4901,7 @@ loc_12F43:
     jmp     loc_129A8
     ; align 2
     db 144
-run_opponent_menu endp
+ported_run_opponent_menu_ endp
 ported_run_option_menu_ proc far
     var_6 = byte ptr -6
     var_4 = byte ptr -4

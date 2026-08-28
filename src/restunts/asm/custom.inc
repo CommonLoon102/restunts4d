@@ -405,6 +405,7 @@ extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc
 extrn track_setup:proc
+extrn run_opponent_menu:proc
 extrn sub_2298C:proc
 extrn replay_unk2:proc
 extrn print_highscore_entry:proc
