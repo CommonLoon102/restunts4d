@@ -128,6 +128,7 @@ extrn skybox_op_helper:proc
 extrn preRender_wheel_helper4:proc
 extrn preRender_patterned:proc
 extrn preRender_unk:proc
+extrn preRender_sphere_helper:proc
 extrn set_projection:proc
 extrn select_cliprect_rotate:proc
 extrn polyinfo_reset:proc

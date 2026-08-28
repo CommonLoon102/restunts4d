@@ -2807,6 +2807,16 @@ void preRender_default(unsigned arg_color, unsigned arg_vertlinecount, unsigned*
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
+extern void preRender_sphere_helper2(unsigned* source, unsigned* destination);
+
+void preRender_sphere_helper(unsigned* source, unsigned color)
+{
+	unsigned vertices[64];
+
+	preRender_sphere_helper2(source, vertices);
+	preRender_default_alt(color, 0x20U, vertices);
+}
+
 void skybox_op_helper(unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D arg_vertlines[]) {
 	//return ported_skybox_op_helper_(arg_color, arg_vertlinecount, &arg_vertlines);
 
