@@ -84,7 +84,7 @@ seg027 segment byte public 'STUNTSC' use16
     public sub_3803C
     public ported_sub_38156_
     public sub_38178
-    public audio_map_song_tracks
+    public ported_audio_map_song_tracks_
     public off_383A0
     public ported_audioresource_get_dword_
     public ported_audioresource_get_word_
@@ -152,7 +152,7 @@ loc_37133:
     push    word ptr [bp+var_titlptr]
     push    cs
 loc_3713A:
-    call near ptr audio_map_song_tracks
+    call near ptr ported_audio_map_song_tracks_
     add     sp, 4
     les     bx, [bp+var_hdrptr]
     mov     byte ptr es:[bx+5], 1; set header+5 to 1, = loaded
@@ -2263,7 +2263,7 @@ loc_38221:
     ; align 2
     db 144
 sub_38178 endp
-audio_map_song_tracks proc far
+ported_audio_map_song_tracks_ proc far
     var_counter_shl2 = word ptr -50
     var_30 = word ptr -48
     var_2E = word ptr -46
@@ -2292,9 +2292,8 @@ audio_map_song_tracks proc far
     arg_chunkofs = word ptr 6
     arg_chunkseg = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 32h
+    jmp     audio_map_song_tracks
+    nop
     push    di
     push    si
     mov     [bp+var_8], 0
@@ -2592,7 +2591,7 @@ loc_384F4:
     mov     sp, bp
     pop     bp
     retf
-audio_map_song_tracks endp
+ported_audio_map_song_tracks_ endp
 ported_audioresource_get_dword_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

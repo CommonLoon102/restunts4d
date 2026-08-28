@@ -2657,6 +2657,194 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 	ohhtres = audioresource_find(instruments, "OHHT");
 }
 
+static void audio_write_far_pointer_to_resource(legacy_u8 far* destination,
+	legacy_u16 offset, legacy_u16 segment)
+{
+	destination[0] = (legacy_u8)offset;
+	destination[1] = (legacy_u8)(offset >> 8);
+	destination[2] = (legacy_u8)segment;
+	destination[3] = (legacy_u8)(segment >> 8);
+}
+
+static void audio_patch_song_reference(legacy_u8 far* destination,
+	legacy_u16 name_table_offset, legacy_u16 offset_table_offset,
+	legacy_u16 first_data_offset, legacy_u16 resource_segment,
+	legacy_u16 chunk_count)
+{
+	const legacy_u8 far* names;
+	const legacy_u8 far* offset_entry;
+	char name[4];
+	legacy_u16 relative_offset;
+	int chunk_index;
+
+	name[0] = destination[0];
+	name[1] = destination[1];
+	name[2] = destination[2];
+	name[3] = destination[3];
+	names = (const legacy_u8 far*)MK_FP(resource_segment,
+		name_table_offset);
+	chunk_index = audioresource_get_chunk_index(0, chunk_count, name,
+		names);
+	if (chunk_index < 0)
+		return;
+
+	offset_entry = (const legacy_u8 far*)MK_FP(resource_segment,
+		LEGACY_U16_WRAP_ADD(offset_table_offset,
+			LEGACY_U16_WRAP_MUL((legacy_u16)chunk_index, 4U)));
+	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
+	audio_write_far_pointer_to_resource(destination,
+		LEGACY_U16_WRAP_ADD(first_data_offset, relative_offset),
+		resource_segment);
+}
+
+void audio_map_song_tracks(void far* song)
+{
+	legacy_u8 far* bytes;
+	legacy_u8 far* cursor;
+	legacy_u16 resource_offset;
+	legacy_u16 resource_segment;
+	legacy_u16 chunk_count;
+	legacy_u16 name_table_offset;
+	legacy_u16 offset_table_offset;
+	legacy_u16 first_data_offset;
+	legacy_u16 chunk_offset;
+	legacy_u16 chunk_end_offset;
+	legacy_u16 cursor_offset;
+	legacy_u16 relative_offset;
+	legacy_u16 header_index;
+	legacy_u16 index;
+	legacy_u16 reference_count;
+	legacy_u16 event;
+
+	bytes = (legacy_u8 far*)song;
+	resource_offset = (legacy_u16)FP_OFF(song);
+	resource_segment = (legacy_u16)FP_SEG(song);
+	chunk_count = audioresource_get_word(
+		(const legacy_u8 far*)MK_FP(resource_segment,
+			LEGACY_U16_WRAP_ADD(resource_offset, 4U)));
+	name_table_offset = LEGACY_U16_WRAP_ADD(resource_offset, 6U);
+	offset_table_offset = LEGACY_U16_WRAP_ADD(name_table_offset,
+		LEGACY_U16_WRAP_MUL(chunk_count, 4U));
+	first_data_offset = LEGACY_U16_WRAP_ADD(resource_offset,
+		LEGACY_U16_WRAP_ADD(6U,
+			LEGACY_U16_WRAP_MUL(chunk_count, 8U)));
+	header_index = (legacy_u16)audioresource_get_chunk_index(0,
+		chunk_count, "hdr1", (const legacy_u8 far*)MK_FP(
+			resource_segment, name_table_offset));
+
+	for (index = 0; index < chunk_count; ++index) {
+		relative_offset = (legacy_u16)audioresource_get_dword(
+			(const legacy_u8 far*)MK_FP(resource_segment,
+				LEGACY_U16_WRAP_ADD(offset_table_offset,
+					LEGACY_U16_WRAP_MUL(index, 4U))));
+		chunk_offset = LEGACY_U16_WRAP_ADD(first_data_offset,
+			relative_offset);
+		bytes = (legacy_u8 far*)MK_FP(resource_segment, chunk_offset);
+		chunk_end_offset = LEGACY_U16_WRAP_ADD(chunk_offset,
+			(legacy_u16)audioresource_get_dword(bytes));
+		cursor_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 4U);
+
+		if (index == header_index) {
+			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor_offset);
+			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
+				LEGACY_U16_WRAP_ADD(
+					LEGACY_U16_WRAP_MUL(cursor[0], 4U), 1U));
+			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor_offset);
+			reference_count = cursor[0];
+			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+			while (reference_count != 0) {
+				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor_offset);
+				audio_patch_song_reference(cursor, name_table_offset,
+					offset_table_offset, first_data_offset,
+					resource_segment, chunk_count);
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 5U);
+				reference_count--;
+			}
+			continue;
+		}
+
+		while (cursor_offset < chunk_end_offset) {
+			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor_offset);
+			while ((cursor[0] & 0x80U) != 0) {
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor_offset);
+			}
+			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor_offset);
+			event = cursor[0];
+
+			if (event < 0xD9U || event > 0xEAU) {
+				if (event >= 0x80U)
+					cursor_offset = LEGACY_U16_WRAP_ADD(
+						cursor_offset, 1U);
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor_offset);
+				while ((cursor[0] & 0x80U) != 0) {
+					cursor_offset = LEGACY_U16_WRAP_ADD(
+						cursor_offset, 1U);
+					cursor = (legacy_u8 far*)MK_FP(resource_segment,
+						cursor_offset);
+				}
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				continue;
+			}
+
+			switch (event - 0xD9U) {
+			case 0:
+			case 1:
+			case 2:
+			case 10:
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				break;
+
+			case 3:
+			case 4:
+			case 5:
+			case 7:
+			case 8:
+			case 9:
+			case 11:
+			case 16:
+			case 17:
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+				break;
+
+			case 6:
+			case 12:
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 3U);
+				break;
+
+			case 13:
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor_offset);
+				audio_patch_song_reference(cursor, name_table_offset,
+					offset_table_offset, first_data_offset,
+					resource_segment, chunk_count);
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 4U);
+				break;
+
+			case 14:
+			case 15:
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor_offset);
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
+					LEGACY_U16_WRAP_ADD(cursor[0], 1U));
+				break;
+			}
+		}
+	}
+}
+
 void far* init_audio_resources(void far* song, void far* instruments,
 	const char* name)
 {
