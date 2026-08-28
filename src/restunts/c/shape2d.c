@@ -1067,6 +1067,39 @@ void sub_35DE6(int destination_index, int count, void far* source_data)
 	}
 }
 
+legacy_u32 parse_shape2d_helper(void far* data)
+{
+	return ((legacy_u32)FP_SEG(data) << 4) + FP_OFF(data);
+}
+
+void far* parse_shape2d_helper2(legacy_u32 linear_address)
+{
+	return MK_FP((legacy_u16)(linear_address >> 4),
+		(legacy_u16)linear_address & 0x0FU);
+}
+
+int parse_shape2d_helper3(void far* data)
+{
+	legacy_u8 far* source_ptr;
+	legacy_u16 source_segment;
+	legacy_u16 source;
+	legacy_u16 count;
+	legacy_u8 value;
+
+	source_segment = FP_SEG(data);
+	source = FP_OFF(data);
+	source_ptr = (legacy_u8 far*)MK_FP(source_segment, source);
+	value = *source_ptr;
+	count = 0;
+	for (;;) {
+		source_ptr = (legacy_u8 far*)MK_FP(source_segment, source);
+		source++;
+		if (*source_ptr != value)
+			return count;
+		count++;
+	}
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2

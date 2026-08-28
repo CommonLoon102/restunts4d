@@ -50,7 +50,7 @@ seg035 segment byte public 'STUNTSC' use16
     public ported_file_load_shape2d_res_nofatal_
     public ported_file_load_shape2d_res_
     public parse_shape2d
-    public parse_shape2d_helper3
+    public ported_parse_shape2d_helper3_
     ; align 2
     db 144
 ported_file_load_shape2d_res_fatal_ proc far
@@ -265,7 +265,7 @@ loc_3AE2C:
     push    word ptr [bp+var_2E+2]
     push    word ptr [bp+var_2E]
     push    cs
-    call near ptr parse_shape2d_helper3
+    call near ptr ported_parse_shape2d_helper3_
     add     sp, 4
     mov     [bp+var_10], ax
     cmp     ax, 3
@@ -494,16 +494,15 @@ loc_3B074:
     ; align 2
     db 144
 parse_shape2d endp
-parse_shape2d_helper3 proc far
+ported_parse_shape2d_helper3_ proc far
     var_4 = byte ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     parse_shape2d_helper3
+    nop
     les     bx, [bp+arg_0]
     mov     al, es:[bx]
     mov     [bp+var_4], al
@@ -521,6 +520,6 @@ loc_3B0A5:
     mov     sp, bp
     pop     bp
     retf
-parse_shape2d_helper3 endp
+ported_parse_shape2d_helper3_ endp
 seg035 ends
 end

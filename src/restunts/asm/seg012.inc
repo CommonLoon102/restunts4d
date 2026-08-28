@@ -14,8 +14,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn word_2EDBD:word
     extrn word_2EE82:word
     extrn word_2F02B:word
-    extrn parse_shape2d_helper:proc
-    extrn parse_shape2d_helper2:proc
+    extrn ported_parse_shape2d_helper_:proc
+    extrn ported_parse_shape2d_helper2_:proc
     extrn word_2F354:word
     extrn word_2F356:word
     extrn word_2F358:word

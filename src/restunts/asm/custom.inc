@@ -176,6 +176,9 @@ extrn sub_307B4:proc
 extrn sub_307D2:proc
 extrn sub_307E3:proc
 extrn sprite_1_unk4:proc
+extrn parse_shape2d_helper:proc
+extrn parse_shape2d_helper2:proc
+extrn parse_shape2d_helper3:proc
 extrn setup_mcgawnd1:proc
 extrn setup_mcgawnd2:proc
 extrn file_load_shape2d:proc

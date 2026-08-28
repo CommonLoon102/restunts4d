@@ -61,8 +61,8 @@ seg012 segment byte public 'STUNTSC' use16
     public word_2EDBD
     public word_2EE82
     public word_2F02B
-    public parse_shape2d_helper
-    public parse_shape2d_helper2
+    public ported_parse_shape2d_helper_
+    public ported_parse_shape2d_helper2_
     public word_2F354
     public word_2F356
     public word_2F358
@@ -1464,15 +1464,14 @@ loc_2F30F:
     sub     [si+8], dx
     jmp     short loc_2F2B0
 ported_draw_line_related_ endp
-parse_shape2d_helper proc far
+ported_parse_shape2d_helper_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_2]
+    jmp     parse_shape2d_helper
+    nop
     xor     dx, dx
     shl     ax, 1
     rcl     dx, 1
@@ -1486,16 +1485,15 @@ parse_shape2d_helper proc far
     adc     dx, 0
     pop     bp
     retf
-parse_shape2d_helper endp
-parse_shape2d_helper2 proc far
+ported_parse_shape2d_helper_ endp
+ported_parse_shape2d_helper2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     bx, [bp+arg_2]
+    jmp     parse_shape2d_helper2
+    nop
     mov     dx, [bp+arg_0]
     mov     ax, dx
     shr     bx, 1
@@ -1515,7 +1513,7 @@ word_2F354     dw 0
 word_2F356     dw 0
 word_2F358     dw 0
 word_2F35A     dw 0
-parse_shape2d_helper2 endp
+ported_parse_shape2d_helper2_ endp
 criterr_interrupt_handler proc far
      r = byte ptr 0
 
