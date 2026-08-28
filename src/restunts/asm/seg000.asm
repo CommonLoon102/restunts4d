@@ -49,7 +49,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_stuntsmain_
     public ported_run_intro_looped_
     public ported_run_intro_
-    public load_intro_resources
+    public ported_load_intro_resources_
     public ported_run_menu_
     public ported_run_tracks_menu_
     public ported_highscore_write_a_
@@ -715,7 +715,7 @@ ported_run_intro_looped_ proc far
     call    far ptr sprite_blit_to_video
     add     sp, 6
     push    cs
-    call near ptr load_intro_resources
+    call near ptr ported_load_intro_resources_
     cbw
     mov     si, ax
     push    word ptr wndsprite+2
@@ -823,7 +823,7 @@ loc_1077F:
     pop     bp
     retf
 ported_run_intro_ endp
-load_intro_resources proc far
+ported_load_intro_resources_ proc far
     var_46 = word ptr -70
     var_44 = word ptr -68
     var_40 = word ptr -64
@@ -840,9 +840,8 @@ load_intro_resources proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 46h
+    jmp     load_intro_resources
+    nop
     push    di
     push    si
     mov     ax, offset aCred; "cred"
@@ -1564,7 +1563,7 @@ loc_10F34:
     mov     sp, bp
     pop     bp
     retf
-load_intro_resources endp
+ported_load_intro_resources_ endp
 ported_run_menu_ proc far
     var_selectedmenu = byte ptr -16
     var_menuhit = byte ptr -14

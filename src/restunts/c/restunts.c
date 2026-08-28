@@ -3261,6 +3261,43 @@ extern int opponentmenu_buttons_y1[];
 extern int opponentmenu_buttons_y2[];
 extern char far* opp_res;
 extern char far* oppresources[7];
+extern char aCred[];
+extern char aArowarrwarw1ar[];
+extern char aCre[];
+extern char aGds0[];
+extern char aGds1[];
+extern char aDes[];
+extern char aGdon[];
+extern char aGkev[];
+extern char aGbra[];
+extern char aGrob[];
+extern char aGsta[];
+extern char aMus[];
+extern char aGmsy[];
+extern char aGkri[];
+extern char aGbri[];
+extern char aPro[];
+extern char aGkev_0[];
+extern char aOpr[];
+extern char aGbra_0[];
+extern char aGric[];
+extern char aArt[];
+extern char aGmsm[];
+extern char aGdav[];
+extern char aGnic[];
+extern char aGkev_1[];
+extern int word_407D4;
+extern int word_407D6;
+extern int word_407D8;
+extern int word_407DA;
+extern int word_407DC;
+extern int word_407DE;
+extern int word_407E0;
+extern int word_407E2;
+extern int word_407E4;
+extern int word_407E6;
+extern int word_407E8;
+extern int word_407EA;
 
 void load_skybox(char skybox_index);
 void unload_skybox(void);
@@ -3431,6 +3468,159 @@ struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	font_draw_text(text, LEGACY_S16_FROM_BITS((legacy_u16)x),
 		LEGACY_S16_FROM_BITS((legacy_u16)y));
 	return &word_42248;
+}
+
+static void intro_draw_resource_line(
+	char far* resource,
+	char* resource_id,
+	int is_text,
+	int x,
+	int y,
+	int color,
+	int shadow_color
+) {
+	char far* text;
+
+	if (is_text != 0)
+		text = locate_text_res(resource, resource_id);
+	else
+		text = locate_shape_alt(resource, resource_id);
+	copy_string(&resID_byte1, text);
+	intro_draw_text(&resID_byte1, x, y, color, shadow_color);
+}
+
+signed char load_intro_resources(void)
+{
+	char far* credit_resource;
+	struct SHAPE2D far* credit_shapes[11];
+	struct SHAPE2D far* arrow_shape;
+	legacy_s16 target_x;
+	legacy_s16 arrow_x;
+	legacy_s16 arrow_y;
+	legacy_s16 arrow_width;
+	legacy_s16 arrow_height;
+	legacy_s16 frame_elapsed;
+	legacy_s16 animation_elapsed;
+	legacy_s16 animation_target;
+	legacy_s16 input;
+	legacy_u16 animation_index;
+
+	credit_resource = (char far*)file_load_resfile(aCred);
+	locate_many_resources((char far*)tempdataptr,
+		aArowarrwarw1ar, (char far**)credit_shapes);
+	waitflag = 0x96;
+	sprite_copy_wnd_to_1_clear();
+	arrow_shape = credit_shapes[1];
+	target_x = (legacy_s16)arrow_shape->s2d_pos_x;
+	arrow_y = (legacy_s16)arrow_shape->s2d_pos_y;
+	arrow_width = LEGACY_S16_WRAP_MUL(
+		(legacy_s16)arrow_shape->s2d_width, video_flag1_is1);
+	arrow_height = (legacy_s16)arrow_shape->s2d_height;
+
+	intro_draw_resource_line(credit_resource, aCre, 1,
+		0x78, 0, word_407D8, word_407DA);
+	intro_draw_resource_line(credit_resource, aGds0, 0,
+		0x3C, 0x0C, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGds1, 0,
+		0x68, 0x14, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aDes, 1,
+		0x14, 0x20, word_407DC, word_407DE);
+	intro_draw_resource_line(credit_resource, aGdon, 0,
+		0x14, 0x2C, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGkev, 0,
+		0x14, 0x34, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGbra, 0,
+		0x14, 0x3C, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGrob, 0,
+		0x14, 0x44, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGsta, 0,
+		0x14, 0x4C, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aMus, 1,
+		0x14, 0x5C, word_407E8, word_407EA);
+	intro_draw_resource_line(credit_resource, aGmsy, 0,
+		0x14, 0x68, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGkri, 0,
+		0x14, 0x70, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGbri, 0,
+		0x14, 0x78, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aPro, 1,
+		0xAC, 0x20, word_407E0, word_407E2);
+	intro_draw_resource_line(credit_resource, aGkev_0, 0,
+		0xAC, 0x2C, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aOpr, 1,
+		0xAC, 0x38, word_407E0, word_407E2);
+	intro_draw_resource_line(credit_resource, aGbra_0, 0,
+		0xAC, 0x40, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGric, 0,
+		0xAC, 0x48, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aArt, 1,
+		0xAC, 0x54, word_407E4, word_407E6);
+	intro_draw_resource_line(credit_resource, aGmsm, 0,
+		0xAC, 0x60, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGdav, 0,
+		0xAC, 0x68, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGnic, 0,
+		0xAC, 0x70, word_407D4, word_407D6);
+	intro_draw_resource_line(credit_resource, aGkev_1, 0,
+		0xAC, 0x78, word_407D4, word_407D6);
+	unload_resource(credit_resource);
+
+	(void)sprite_blit_to_video(wndsprite, -1);
+	sprite_copy_2_to_1_2();
+	(void)timer_get_delta_alt();
+	arrow_x = 0x14A;
+	input = 0;
+	for (;;) {
+		frame_elapsed = (legacy_s16)timer_get_delta_alt();
+		arrow_x = LEGACY_S16_WRAP_SUB(arrow_x,
+			LEGACY_S16_WRAP_MUL(frame_elapsed, 2));
+		if (target_x > arrow_x)
+			break;
+		mouse_draw_opaque_check();
+		sprite_putimage_and_alt(arrow_shape, arrow_x, arrow_y);
+		sprite_1_unk2(LEGACY_S16_WRAP_ADD(arrow_width, arrow_x),
+			arrow_y, 0x20, arrow_height, 0);
+		mouse_draw_transparent_check();
+		input = (legacy_s16)input_do_checking(frame_elapsed);
+		if (input != 0)
+			break;
+	}
+
+	arrow_y = (legacy_s16)credit_shapes[0]->s2d_pos_y;
+	animation_target = 0;
+	animation_elapsed = 0;
+	for (animation_index = 2;
+		animation_index < 10U && input == 0;
+		animation_index++) {
+		sprite_copy_wnd_to_1();
+		sprite_set_1_size(0, 0x140, arrow_y, 0xC8);
+		sprite_clear_1_color(0);
+		sprite_shape_to_1_alt(credit_shapes[animation_index]);
+		sprite_copy_2_to_1_2();
+		sprite_set_1_size(0, 0x140, arrow_y, 0xC8);
+		mouse_draw_opaque_check();
+		sprite_putimage(wndsprite->sprite_bitmapptr);
+		mouse_draw_transparent_check();
+		animation_target = LEGACY_S16_WRAP_ADD(animation_target, 5);
+		while (animation_target > animation_elapsed) {
+			frame_elapsed = (legacy_s16)timer_get_delta_alt();
+			input = (legacy_s16)input_do_checking(frame_elapsed);
+			animation_elapsed = LEGACY_S16_WRAP_ADD(
+				animation_elapsed, frame_elapsed);
+		}
+	}
+
+	sprite_set_1_size(0, 0x140, 0, 0xC8);
+	mouse_draw_opaque_check();
+	sprite_clear_shape(wndsprite->sprite_bitmapptr);
+	sprite_copy_wnd_to_1();
+	sprite_set_1_size(0, 0x140, arrow_y, 0xC8);
+	sprite_clear_1_color(0);
+	sprite_shape_to_1_alt(credit_shapes[0]);
+	sprite_shape_to_1_alt(credit_shapes[10]);
+	if (sprite_blit_to_video(wndsprite, 0) != 0)
+		return 1;
+	return input_repeat_check(0x1F4) != 0;
 }
 
 struct RECTANGLE* hiscore_draw_text(char* text, int x, int y, int color,

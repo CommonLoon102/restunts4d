@@ -65,6 +65,7 @@ void sprite_putimage_and(struct SHAPE2D far* shape, unsigned short a, unsigned s
 void sprite_putimage_and_alt(struct SHAPE2D far* shape, int x, int y);
 void sprite_putimage_or(struct SHAPE2D far* shape, unsigned short a, unsigned short b);
 void sprite_clear_shape_alt(struct SHAPE2D far* shape, int x, int y);
+void sprite_clear_shape(struct SHAPE2D far* shape);
 
 void shape_op_explosion(int scale, struct SHAPE2D far* shape, int x, int y);
 void sub_35E08(int scale, struct SHAPE2D far* shape, int x, int y);

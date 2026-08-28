@@ -2,7 +2,7 @@ seg000 segment byte public 'STUNTSC' use16
     extrn ported_stuntsmain_:proc
     extrn ported_run_intro_looped_:proc
     extrn ported_run_intro_:proc
-    extrn load_intro_resources:proc
+    extrn ported_load_intro_resources_:proc
     extrn ported_run_menu_:proc
     extrn ported_run_tracks_menu_:proc
     extrn ported_highscore_write_a_:proc
