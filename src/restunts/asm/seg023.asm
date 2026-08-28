@@ -46,8 +46,8 @@ nosmart
 seg023 segment byte public 'STUNTSC' use16
     assume cs:seg023
     assume es:nothing, ss:nothing, ds:dseg
-    public preRender_wheel_helper
-preRender_wheel_helper proc far
+    public ported_preRender_wheel_helper_
+ported_preRender_wheel_helper_ proc far
     var_A = word ptr -10
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -59,11 +59,10 @@ preRender_wheel_helper proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
+    jmp     preRender_wheel_helper
 loc_36EC1:
-    mov     bp, sp
+    nop
 loc_36EC3:
-    sub     sp, 0Ah
 loc_36EC6:
     push    si
 loc_36EC7:
@@ -133,6 +132,6 @@ loc_36F25:
     pop     bp
 locret_36F28:
     retf
-preRender_wheel_helper endp
+ported_preRender_wheel_helper_ endp
 seg023 ends
 end

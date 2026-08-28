@@ -3021,6 +3021,24 @@ void preRender_wheel_helper2(unsigned* source, unsigned* destination,
 	preRender_wheel_helper3(inner_source, destination + 32U);
 }
 
+void preRender_wheel_helper(unsigned* source, unsigned* destination,
+	unsigned scale)
+{
+	legacy_u16 offset_x;
+	legacy_u16 offset_y;
+	legacy_u16 index;
+
+	preRender_wheel_helper2(source, destination, scale);
+	offset_x = LEGACY_U16_WRAP_SUB(source[6], source[0]);
+	offset_y = LEGACY_U16_WRAP_SUB(source[7], source[1]);
+	for (index = 0; index < 16U; index++) {
+		destination[64U + index * 2U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U], offset_x);
+		destination[65U + index * 2U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U + 1U], offset_y);
+	}
+}
+
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
 void preRender_sphere(int x, int y, unsigned size, unsigned color)
