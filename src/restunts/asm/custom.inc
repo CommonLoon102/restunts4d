@@ -172,6 +172,8 @@ extrn sub_35B76:proc
 extrn sub_35C4E:proc
 extrn set_fontdefseg:proc
 extrn sub_35DE6:proc
+extrn shape_op_explosion:proc
+extrn sub_35E08:proc
 extrn sub_307B4:proc
 extrn sub_307D2:proc
 extrn sub_307E3:proc

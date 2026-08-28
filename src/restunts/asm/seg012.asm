@@ -359,7 +359,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_clear_shape_alt_
     public ported_sprite_clear_shape_
     public loc_34799
-    public shape_op_explosion
+    public ported_shape_op_explosion_
     public sprite1
     public sprite2
     public lineoffsets
@@ -377,7 +377,7 @@ seg012 segment byte public 'STUNTSC' use16
     public incnums
     public sub_35DC8
     public ported_sub_35DE6_
-    public sub_35E08
+    public ported_sub_35E08_
     public loc_35ED9
     public ported_file_load_shape2d_palmap_apply_
     public ported_file_load_shape2d_expand_
@@ -13508,7 +13508,7 @@ loc_347C0:
     pop     bp
     retf
 ported_sprite_clear_shape_ endp
-shape_op_explosion proc far
+ported_shape_op_explosion_ proc far
     var_14 = word ptr -20
     var_12 = word ptr -18
     var_10 = word ptr -16
@@ -13526,9 +13526,8 @@ shape_op_explosion proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 16h
+    jmp     shape_op_explosion
+    nop
     push    ds
     push    si
     push    di
@@ -13950,7 +13949,7 @@ lineoffsets     dw 0
     dw 63040
     dw 63360
     dw 63680
-shape_op_explosion endp
+ported_shape_op_explosion_ endp
 ported_font_set_unk_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -18368,7 +18367,7 @@ loc_35E01:
     pop     bp
     retf
 ported_sub_35DE6_ endp
-sub_35E08 proc far
+ported_sub_35E08_ proc far
     var_14 = word ptr -20
     var_12 = word ptr -18
     var_10 = word ptr -16
@@ -18387,10 +18386,9 @@ sub_35E08 proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
-    mov     bp, sp
+    jmp     sub_35E08
+    nop
 loc_35E0B:
-    sub     sp, 16h
     push    ds
     push    si
     push    di
@@ -18554,7 +18552,7 @@ loc_35F40:
     retf
     ; align 2
     db 0
-sub_35E08 endp
+ported_sub_35E08_ endp
 ported_file_load_shape2d_palmap_apply_ proc far
     shapecounter = word ptr -4
     var_shapecount = word ptr -2

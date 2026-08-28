@@ -312,7 +312,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sprite_clear_shape_alt_:proc
     extrn ported_sprite_clear_shape_:proc
     extrn loc_34799:proc
-    extrn shape_op_explosion:proc
+    extrn ported_shape_op_explosion_:proc
     extrn sprite1:SPRITE
     extrn sprite2:SPRITE
     extrn lineoffsets:word
@@ -330,7 +330,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn incnums:byte
     extrn sub_35DC8:proc
     extrn ported_sub_35DE6_:proc
-    extrn sub_35E08:proc
+    extrn ported_sub_35E08_:proc
     extrn loc_35ED9:proc
     extrn ported_file_load_shape2d_palmap_apply_:proc
     extrn ported_file_load_shape2d_expand_:proc

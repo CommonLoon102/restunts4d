@@ -747,6 +747,180 @@ void sprite_clear_shape(struct SHAPE2D far* shape)
 		shape2d_get_word(shape_bytes + 0x0AU));
 }
 
+static legacy_u16 shape2d_scaled_anchor(legacy_u16 anchor,
+	legacy_u16 scale)
+{
+	legacy_s32 product;
+
+	product = (legacy_s32)LEGACY_S16_FROM_BITS(anchor) *
+		(legacy_s32)LEGACY_S16_FROM_BITS(scale);
+	return (legacy_u16)((legacy_u32)product >> 8);
+}
+
+static void shape2d_scale_transparent_impl(struct SHAPE2D far* shape,
+	legacy_u16 scale, legacy_u16 x, legacy_u16 y, int clipped)
+{
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* bitmap;
+	legacy_u32 product;
+	legacy_u16 shape_segment;
+	legacy_u16 source;
+	legacy_u16 row_source;
+	legacy_u16 destination;
+	legacy_u16 source_width;
+	legacy_u16 scaled_width;
+	legacy_u16 scaled_height;
+	legacy_u16 destination_advance;
+	legacy_u16 step;
+	legacy_u16 horizontal_start;
+	legacy_u16 horizontal_fraction;
+	legacy_u16 vertical_fraction;
+	legacy_u16 center_skip;
+	legacy_u16 skipped;
+	legacy_u16 overflow;
+	legacy_u16 column_count;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+	legacy_u16 source_rows;
+	legacy_u8 color;
+
+	if (scale < 2U)
+		return;
+	shape_bytes = (legacy_u8 far*)shape;
+	shape_segment = FP_SEG(shape);
+	x = LEGACY_U16_WRAP_SUB(x, shape2d_scaled_anchor(
+		shape2d_get_word(shape_bytes + 4U), scale));
+	y = LEGACY_U16_WRAP_SUB(y, shape2d_scaled_anchor(
+		shape2d_get_word(shape_bytes + 6U), scale));
+	source_width = shape2d_get_word(shape_bytes);
+	product = (legacy_u32)shape2d_get_word(shape_bytes + 2U) * scale;
+	scaled_height = (legacy_u16)(product >> 8);
+	if (scaled_height == 0)
+		return;
+	product = (legacy_u32)source_width * scale;
+	scaled_width = (legacy_u16)(product >> 8);
+	if (scaled_width == 0)
+		return;
+	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	step = (legacy_u16)(0x10000UL / scale);
+	horizontal_start = 0;
+	vertical_fraction = 0;
+	center_skip = (legacy_u16)((step >> 8) >> 1);
+	source = LEGACY_U16_WRAP_ADD(source,
+		(legacy_u16)((legacy_u32)center_skip *
+		((legacy_u32)source_width + 1UL)));
+
+	if (clipped != 0) {
+		if (LEGACY_S16_FROM_BITS(x) <
+			LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+			overflow = LEGACY_U16_WRAP_SUB(
+				LEGACY_U16_WRAP_ADD(x, scaled_width),
+				sprite1.sprite_left2);
+			if (LEGACY_S16_FROM_BITS(overflow) <= 0)
+				return;
+			skipped = LEGACY_U16_WRAP_SUB(scaled_width, overflow);
+			scaled_width = overflow;
+			x = sprite1.sprite_left2;
+			product = (legacy_u32)skipped * step;
+			horizontal_start = (legacy_u8)product;
+			source = LEGACY_U16_WRAP_ADD(source,
+				(legacy_u16)(product >> 8));
+		}
+		overflow = LEGACY_U16_WRAP_SUB(
+			LEGACY_U16_WRAP_ADD(x, scaled_width),
+			sprite1.sprite_widthsum);
+		if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
+			scaled_width = LEGACY_U16_WRAP_SUB(
+				scaled_width, overflow);
+			if (LEGACY_S16_FROM_BITS(scaled_width) <= 0)
+				return;
+		}
+		if (LEGACY_S16_FROM_BITS(y) <
+			LEGACY_S16_FROM_BITS(sprite1.sprite_top)) {
+			overflow = LEGACY_U16_WRAP_SUB(
+				LEGACY_U16_WRAP_ADD(y, scaled_height),
+				sprite1.sprite_top);
+			if (LEGACY_S16_FROM_BITS(overflow) <= 0)
+				return;
+			skipped = LEGACY_U16_WRAP_SUB(scaled_height, overflow);
+			scaled_height = overflow;
+			y = sprite1.sprite_top;
+			product = (legacy_u32)skipped * step;
+			vertical_fraction = (legacy_u8)product;
+			source_rows = (legacy_u16)(product >> 8);
+			source = LEGACY_U16_WRAP_ADD(source,
+				LEGACY_U16_WRAP_MUL(source_rows, source_width));
+		}
+		overflow = LEGACY_U16_WRAP_SUB(
+			LEGACY_U16_WRAP_ADD(y, scaled_height),
+			sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
+			scaled_height = LEGACY_U16_WRAP_SUB(
+				scaled_height, overflow);
+			if (LEGACY_S16_FROM_BITS(scaled_height) <= 0)
+				return;
+		}
+	}
+
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	destination = LEGACY_U16_WRAP_ADD(
+		shape2d_get_line_offset(FP_SEG(&sprite1), y), x);
+	destination_advance = LEGACY_U16_WRAP_SUB(
+		sprite1.sprite_pitch, scaled_width);
+	row_source = source;
+	row_count = scaled_height;
+	do {
+		column_count = scaled_width;
+		horizontal_fraction = horizontal_start;
+		do {
+			source_ptr = (legacy_u8 far*)MK_FP(
+				shape_segment, source);
+			color = *source_ptr;
+			if (color != 0xFFU)
+				bitmap[destination] = color;
+			destination++;
+			horizontal_fraction = LEGACY_U16_WRAP_ADD(
+				horizontal_fraction, step);
+			source = LEGACY_U16_WRAP_ADD(source,
+				horizontal_fraction >> 8);
+			horizontal_fraction &= 0x00FFU;
+			column_count--;
+		} while (column_count != 0);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+		if (old_row_count == 0x8000U ||
+			LEGACY_S16_FROM_BITS(row_count) <= 0)
+			break;
+		destination = LEGACY_U16_WRAP_ADD(
+			destination, destination_advance);
+		source = row_source;
+		vertical_fraction = LEGACY_U16_WRAP_ADD(
+			vertical_fraction, step);
+		source_rows = vertical_fraction >> 8;
+		if (source_rows != 0) {
+			source = LEGACY_U16_WRAP_ADD(source,
+				LEGACY_U16_WRAP_MUL(source_rows, source_width));
+			vertical_fraction &= 0x00FFU;
+			row_source = source;
+		}
+	} while (1);
+}
+
+void shape_op_explosion(int scale, struct SHAPE2D far* shape, int x, int y)
+{
+	shape2d_scale_transparent_impl(shape, (legacy_u16)scale,
+		(legacy_u16)x, (legacy_u16)y, 1);
+}
+
+void sub_35E08(int scale, struct SHAPE2D far* shape, int x, int y)
+{
+	shape2d_scale_transparent_impl(shape, (legacy_u16)scale,
+		(legacy_u16)x, (legacy_u16)y, 0);
+}
+
 static void sprite_shape_to_1_impl(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y)
 {

@@ -87,7 +87,6 @@ struct RECTANGLE* intro_draw_text(char* str, int a, int b, int c, int d);
 void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
 void format_frame_as_string(char* s, int time, int c);
-void shape_op_explosion(int a, void far* shp, int x, int y);
 void heapsort_by_order(int n, int* heap, int* data);
 
 void init_rect_arrays(void) {
