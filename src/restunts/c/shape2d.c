@@ -964,6 +964,58 @@ void sub_35B76(int x, int y, int width, int height, int color)
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
+void sub_35C4E(int source_x, int source_y, int width, int height,
+	int destination_shift)
+{
+	legacy_u8 far* source_bitmap;
+	legacy_u8 far* destination_bitmap;
+	legacy_u16 source;
+	legacy_u16 destination;
+	legacy_u16 source_line;
+	legacy_u16 destination_line;
+	legacy_u16 column_count;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
+	legacy_s16 dividend;
+	legacy_s16 divisor;
+	legacy_s16 quotient;
+	legacy_s16 remainder;
+
+	dividend = LEGACY_S16_WRAP_ADD(source_x, destination_shift);
+	divisor = LEGACY_S16_FROM_BITS(sprite1.sprite_width2);
+	quotient = (legacy_s16)(dividend / divisor);
+	remainder = (legacy_s16)(dividend % divisor);
+	source_line = LEGACY_U16_WRAP_ADD(FP_OFF(sprite2.sprite_lineofs),
+		(legacy_u16)((legacy_u16)source_y << 1));
+	destination_line = LEGACY_U16_WRAP_ADD(FP_OFF(sprite1.sprite_lineofs),
+		(legacy_u16)(LEGACY_U16_WRAP_ADD(source_y, quotient) << 1));
+	source_bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite2.sprite_bitmapptr), 0);
+	destination_bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	row_count = (legacy_u16)height;
+	do {
+		source = LEGACY_U16_WRAP_ADD(shape2d_get_word(
+			(legacy_u8 far*)MK_FP(FP_SEG(&sprite2), source_line)),
+			(legacy_u16)source_x);
+		destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
+			(legacy_u8 far*)MK_FP(FP_SEG(&sprite1), destination_line)),
+			(legacy_u16)remainder);
+		column_count = (legacy_u16)width;
+		while (column_count != 0) {
+			destination_bitmap[destination] = source_bitmap[source];
+			source++;
+			destination++;
+			column_count--;
+		}
+		source_line = LEGACY_U16_WRAP_ADD(source_line, 2U);
+		destination_line = LEGACY_U16_WRAP_ADD(destination_line, 2U);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
