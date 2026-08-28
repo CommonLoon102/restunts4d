@@ -4360,6 +4360,12 @@ extern char byte_42D2A;
 extern char unk_3E82C[];
 extern char gnam_string[]; // 40 bytes
 extern char gsna_string[]; // 5 bytes
+extern char aOpp1[];
+extern char aNam[];
+extern char aPath[];
+extern char aSped[];
+extern char unk_46464[];
+extern legacy_u8 oppnentSped[];
 
 void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 	int i;
@@ -4386,6 +4392,97 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 }
 
 extern int audio_init_engine(int, void far*, void far*, void far*);
+
+void load_opponent_data(void)
+{
+	legacy_u16 path[902];
+	legacy_u16 pending_track[258];
+	legacy_u16 pending_path_count[258];
+	legacy_u32 pending_distance[259];
+	void far* resource;
+	legacy_u8 far* speed_data;
+	legacy_u16 far* route_output;
+	legacy_u32 distance;
+	legacy_u32 best_distance;
+	legacy_u16 track_index;
+	legacy_u16 next_track;
+	legacy_u16 alternate_track;
+	legacy_u16 path_count;
+	legacy_u16 pending_count;
+	legacy_u16 index;
+	legacy_u8 speed_index;
+	int terminal;
+	int reaches_finish;
+
+	aOpp1[3] = (char)((legacy_u8)gameconfig.game_opponenttype + '0');
+	resource = file_load_resfile(aOpp1);
+	copy_string(unk_46464,
+		locate_text_res((char far*)resource, aNam));
+	(void)locate_shape_alt((char far*)resource, aPath);
+	speed_data = (legacy_u8 far*)
+		locate_shape_alt((char far*)resource, aSped);
+	for (index = 0; index < 16U; index++)
+		oppnentSped[index] = speed_data[index];
+
+	best_distance = 0x000F423FUL;
+	distance = 0;
+	track_index = 0;
+	path_count = 0;
+	pending_count = 0;
+	route_output = (legacy_u16 far*)trackdata3;
+	for (;;) {
+		terminal = 0;
+		reaches_finish = 0;
+		next_track = (legacy_u16)td01_track_file_cpy[track_index];
+		if (next_track == 0) {
+			terminal = 1;
+			reaches_finish = 1;
+		} else if (next_track == 0xFFFFU) {
+			terminal = 1;
+		} else if (path_count != 0) {
+			for (index = 0; index < path_count; index++) {
+				if (path[index] == track_index) {
+					terminal = 1;
+					break;
+				}
+			}
+		}
+
+		path[path_count] = track_index;
+		path_count++;
+		speed_index = (legacy_u8)td17_trk_elem_ordered[track_index];
+		distance += (legacy_u32)speed_data[speed_index] + 1UL;
+		if (!terminal) {
+			alternate_track = (legacy_u16)
+				td02_penalty_related[track_index];
+			if (alternate_track != 0xFFFFU) {
+				pending_track[pending_count] = alternate_track;
+				pending_path_count[pending_count] = path_count;
+				pending_distance[pending_count] = distance;
+				pending_count++;
+			}
+			track_index = next_track;
+			continue;
+		}
+
+		if (reaches_finish && distance < best_distance) {
+			path[path_count] = 0;
+			path_count++;
+			best_distance = distance;
+			for (index = 0; index < path_count; index++)
+				route_output[index] = path[index];
+			route_output[path_count] = 0;
+			route_output[path_count + 1U] = 1;
+		}
+		if (pending_count == 0)
+			break;
+		pending_count--;
+		track_index = pending_track[pending_count];
+		path_count = pending_path_count[pending_count];
+		distance = pending_distance[pending_count];
+	}
+	unload_resource(resource);
+}
 
 int setup_player_cars(void) {
 	void far* carresptr;

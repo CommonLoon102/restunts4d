@@ -3033,7 +3033,7 @@ ported_setup_player_cars_ proc far
     push    ax
     call    ensure_file_exists
     add     sp, 2
-    call    load_opponent_data
+    call far ptr load_opponent_data
 loc_237D3:
     mov     ax, 3
     push    ax
@@ -4546,7 +4546,7 @@ loc_245D0:
     push    ax
     call    ensure_file_exists
     add     sp, 2
-    call    load_opponent_data
+    call far ptr load_opponent_data
 loc_2460D:
     or      si, si
     jz      short loc_24619
