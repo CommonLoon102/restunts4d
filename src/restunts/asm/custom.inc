@@ -254,6 +254,7 @@ extrn load_voice_file:proc
 extrn audio_map_song_instruments:proc
 extrn audio_map_song_tracks:proc
 extrn call_read_line:proc
+extrn read_line:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

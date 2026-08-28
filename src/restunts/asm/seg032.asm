@@ -46,13 +46,13 @@ nosmart
 seg032 segment byte public 'STUNTSC' use16
     assume cs:seg032
     assume es:nothing, ss:nothing, ds:dseg
-    public read_line
+    public ported_read_line_
     public ported_read_line_helper_
     public ported_read_line_helper2_
 algn_3A4B5:
     ; align 2
     db 144
-read_line proc far
+ported_read_line_ proc far
     var_A = word ptr -10
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -70,11 +70,10 @@ read_line proc far
     arg_12 = word ptr 24
     arg_14 = word ptr 26
 
-    push    bp
+    jmp     read_line
 loc_3A4B7:
-    mov     bp, sp
 loc_3A4B9:
-    sub     sp, 0Ah
+    nop
 loc_3A4BC:
     push    si
 loc_3A4BD:
@@ -447,7 +446,7 @@ loc_3A7ED:
     jmp     loc_3A568
     ; align 2
     db 144
-read_line endp
+ported_read_line_ endp
 ported_read_line_helper_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4

@@ -2465,6 +2465,8 @@ void call_exitlist2(void)
 extern int read_line(int flags, char* text, int initial_key,
 	int max_characters, int max_pixels, int x, int y,
 	void (far* callback)(void), unsigned long timeout);
+void read_line_helper(void);
+void read_line_helper2(void);
 
 int call_read_line(char* text, int max_characters, int x, int y,
 	unsigned long timeout)
@@ -2487,6 +2489,200 @@ int call_read_line(char* text, int max_characters, int x, int y,
 		trim_index = LEGACY_U16_WRAP_SUB(trim_index, 1U);
 	text[LEGACY_U16_WRAP_ADD(trim_index, 1U)] = 0;
 	return result;
+}
+
+int read_line(int flags, char* text, int initial_key, int max_characters,
+	int max_pixels, int x, int y, void (far* callback)(void),
+	unsigned long timeout)
+{
+	legacy_u8 input_flags;
+	legacy_u16 key;
+	legacy_u16 length;
+	legacy_u16 index;
+	legacy_u16 old_cursor_state;
+	int insert_mode;
+	int first_key;
+
+	input_flags = (legacy_u8)flags;
+	sprite_copy_2_to_1();
+	word_42A18 = (legacy_u16)x;
+	word_42A1A = (legacy_u16)y;
+	off_42A1E = text;
+	word_42A20 = (legacy_u16)max_pixels;
+	text[(legacy_u16)max_characters] = 0;
+	if ((input_flags & 1U) != 0)
+		text[0] = 0;
+	if ((input_flags & 2U) != 0)
+		word_42A22 = 0;
+	else
+		word_42A22 = (legacy_u16)strlen(text);
+
+	length = (legacy_u16)strlen(text);
+	while (LEGACY_S16_FROM_BITS(length) <
+		LEGACY_S16_FROM_BITS(max_characters)) {
+		text[length] = ' ';
+		length = LEGACY_U16_WRAP_ADD(length, 1U);
+	}
+	read_line_helper2();
+	word_42A16 = 1;
+	word_42A1C = 1;
+	insert_mode = 0;
+	read_line_helper();
+	timer_copy_counter(timeout);
+	set_add_value(4UL);
+	first_key = 1;
+
+	for (;;) {
+		if ((legacy_u16)initial_key != 0) {
+			key = (legacy_u16)initial_key;
+			initial_key = 0;
+		} else {
+			do {
+				callback();
+				key = (legacy_u16)kb_call_readchar_callback();
+				if (key != 0)
+					break;
+			} while (sub_2EB07() == 0);
+		}
+
+		if (key == 0) {
+			set_add_value(4UL);
+			old_cursor_state = (legacy_u16)word_42A1C;
+			word_42A1C = 1;
+			read_line_helper();
+			word_42A1C = old_cursor_state != 0 ? 0 : 1;
+			if (timeout != 0 && timer_compare_dx()) {
+				read_line_helper();
+				return 0;
+			}
+			continue;
+		}
+
+		timer_copy_counter(timeout);
+		if (key == 0x0DU || key == 0x1BU || key == 0x4800U ||
+			(key == 0x5000U && (input_flags & 8U) == 0) ||
+			(key == 9U && (input_flags & 0x10U) == 0)) {
+			read_line_helper();
+			return key;
+		}
+
+		if (key == 0x4D00U) {
+			read_line_helper();
+			if (LEGACY_S16_FROM_BITS(max_characters) >
+				LEGACY_S16_FROM_BITS(word_42A22))
+				word_42A22 = LEGACY_U16_WRAP_ADD(word_42A22, 1U);
+			read_line_helper();
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 0x4B00U) {
+			read_line_helper();
+			if (word_42A22 != 0)
+				word_42A22 = LEGACY_U16_WRAP_SUB(word_42A22, 1U);
+			read_line_helper();
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 0x4700U) {
+			read_line_helper();
+			word_42A22 = 0;
+			read_line_helper();
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 0x4F00U) {
+			read_line_helper();
+			word_42A22 = (legacy_u16)strlen(text);
+			read_line_helper();
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 0x5200U) {
+			read_line_helper();
+			insert_mode = !insert_mode;
+			word_42A16 = insert_mode ? 8U : 1U;
+			read_line_helper();
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 0x5300U) {
+			if (LEGACY_S16_FROM_BITS(max_characters) >
+				LEGACY_S16_FROM_BITS(word_42A22) &&
+				text[(legacy_u16)word_42A22] != 0) {
+				read_line_helper();
+				index = (legacy_u16)word_42A22;
+				while (LEGACY_S16_FROM_BITS(index) <
+					LEGACY_S16_FROM_BITS(max_characters)) {
+					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
+					index = LEGACY_U16_WRAP_ADD(index, 1U);
+				}
+				text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
+				read_line_helper2();
+				read_line_helper();
+			}
+			first_key = 0;
+			continue;
+		}
+
+		if (key == 8U) {
+			if (word_42A22 != 0) {
+				read_line_helper();
+				word_42A22 = LEGACY_U16_WRAP_SUB(word_42A22, 1U);
+				index = (legacy_u16)word_42A22;
+				while (LEGACY_S16_FROM_BITS(index) <
+					LEGACY_S16_FROM_BITS(max_characters)) {
+					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
+					index = LEGACY_U16_WRAP_ADD(index, 1U);
+				}
+				text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
+				read_line_helper2();
+				read_line_helper();
+			}
+			first_key = 0;
+			continue;
+		}
+
+		if (LEGACY_S16_FROM_BITS(key) >= 0x20 &&
+			LEGACY_S16_FROM_BITS(key) <= 0x7A &&
+			LEGACY_S16_FROM_BITS(max_characters) >
+				LEGACY_S16_FROM_BITS(word_42A22)) {
+			read_line_helper();
+			if (first_key && (input_flags & 4U) == 0) {
+				word_42A22 = 0;
+				for (index = 0;
+					LEGACY_S16_FROM_BITS(index) <
+						LEGACY_S16_FROM_BITS(max_characters);
+					index = LEGACY_U16_WRAP_ADD(index, 1U))
+					text[index] = ' ';
+			}
+
+			index = (legacy_u16)word_42A22;
+			if (text[index] == 0)
+				text[LEGACY_U16_WRAP_ADD(index, 1U)] = 0;
+			if (insert_mode) {
+				legacy_u16 move_index;
+				move_index = LEGACY_U16_WRAP_SUB(max_characters, 2U);
+				while (LEGACY_S16_FROM_BITS(move_index) >=
+					LEGACY_S16_FROM_BITS(word_42A22)) {
+					text[LEGACY_U16_WRAP_ADD(move_index, 1U)] =
+						text[move_index];
+					move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
+				}
+			}
+			text[index] = (char)(legacy_u8)key;
+			if (LEGACY_S16_FROM_BITS(max_characters) >
+				LEGACY_S16_FROM_BITS(word_42A22))
+				word_42A22 = LEGACY_U16_WRAP_ADD(word_42A22, 1U);
+			read_line_helper2();
+			read_line_helper();
+		}
+		first_key = 0;
+	}
 }
 
 void read_line_helper(void)

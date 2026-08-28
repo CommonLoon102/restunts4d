@@ -3376,7 +3376,7 @@ ported_call_read_line_ proc far
     push    word ptr [bp+arg_0]; char *
     mov     ax, 2
     push    ax              ; char
-    call    read_line
+    call    ported_read_line_
     add     sp, 16h
     mov     [bp+var_4], ax
     push    cs
