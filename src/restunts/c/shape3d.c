@@ -3615,594 +3615,332 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 
 
 // aka preRender_helper3 in the IDB
-void preRender_default_impl_helper(int* regsi, unsigned var_A, unsigned var_C, int* var_18) {
-	unsigned sprite1_sprite_left2 = sprite1.sprite_left2;
-	unsigned sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	unsigned sprite1_sprite_top = sprite1.sprite_top;
-	unsigned sprite1_sprite_height = sprite1.sprite_height;
+void preRender_default_impl_helper(int* regsi, unsigned var_A,
+	unsigned var_C, int* var_18)
+{
+	legacy_s16* line = (legacy_s16*)regsi;
+	legacy_s16* left_edges = (legacy_s16*)var_18;
+	legacy_s16* right_edges = left_edges + 480;
+	legacy_s16 value;
+	legacy_u16 fraction;
+	legacy_u16 step;
+	legacy_u16 mode;
+	legacy_u32 fixed;
+	legacy_u32 sum;
+	int count;
+	int index;
+	int target;
+	int carry;
 
-asm {
-    mov     ax, ss
-    mov     es, ax
-	mov si, regsi
-    mov     cx, [si+0Eh]
-    or      cx, cx
-    //jle     short loc_31BA8  // TOO FAR JUMP??
+	count = line[7];
+	index = line[3];
+	mode = ((legacy_u8*)line)[0x12];
 
-jg _nole
-jmp loc_31BA8
-	
+	if (count > 0 && mode >= 2U && mode <= 8U) {
+		value = line[1];
 
-_nole:
-    mov     di, [si+6]
-    shl     di, 1
-    add     di, [var_18]
-    mov     bl, [si+12h]
-    xor     bh, bh
-    //shl     bx, 1
-    cmp     byte ptr [var_A], 0   // var_A is 1 when calling prerender_default, or 0 when calling prerender_default_alt
-    jnz     short loc_31B7F
+		if (var_A != 0U) {
+			switch (mode) {
+			case 2:
+			case 3:
+			case 4:
+				while (count-- > 0) {
+					if (right_edges[index] < value)
+						right_edges[index] = value;
+					else if (left_edges[index] > value)
+						left_edges[index] = value;
+					index++;
+					if (mode == 3U)
+						value = LEGACY_S16_WRAP_SUB(value, 1);
+					else if (mode == 4U)
+						value = LEGACY_S16_WRAP_ADD(value, 1);
+				}
+				break;
 
-    cmp bx, 0
-    jne _noo0
-    jmp locret_31AA3
-_noo0:
-    cmp bx, 1
-    jne _noo1
-    jmp locret_31AA3
-_noo1:
-    cmp bx, 2
-    jne _noo2
-    jmp loc_31D0B
-_noo2:
-    cmp bx, 3
-    jne _noo3
-    jmp loc_31D31
-_noo3:
-    cmp bx, 4
-    jne _noo4
-    jmp loc_31D5C
-_noo4:
-    cmp bx, 5
-    jne _noo5
-    jmp loc_31D87
-_noo5:
-    cmp bx, 6
-    jne _noo6
-    jmp loc_31DCA
-_noo6:
-    cmp bx, 7
-    jne _noo7
-    jmp loc_31E0D
-_noo7:
-    cmp bx, 8
-    jne _noo8
-    jmp loc_31E61
-_noo8:
-    cmp bx, 9	
-	
-    jmp locret_31AA3 // same as 0
+			case 5:
+			case 6:
+				fixed = ((legacy_u32)(legacy_u16)line[1] << 16) |
+					(legacy_u16)line[0];
+				fixed += 0x8000UL;
+				step = (legacy_u16)line[6];
+				while (count-- > 0) {
+					value = LEGACY_S16_FROM_BITS(
+						(legacy_u16)(fixed >> 16));
+					if (right_edges[index] < value)
+						right_edges[index] = value;
+					else if (left_edges[index] > value)
+						left_edges[index] = value;
+					index++;
+					if (mode == 5U)
+						fixed -= step;
+					else
+						fixed += step;
+				}
+				break;
 
+			case 7:
+				step = (legacy_u16)line[6];
+				sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+				fraction = (legacy_u16)sum;
+				if (sum > 0xFFFFUL)
+					index++;
+				if (right_edges[index] < value)
+					right_edges[index] = value;
+				while (count > 0) {
+					sum = (legacy_u32)fraction + step;
+					fraction = (legacy_u16)sum;
+					carry = sum > 0xFFFFUL;
+					if (carry) {
+						if (left_edges[index] > value)
+							left_edges[index] = value;
+						index++;
+						value = LEGACY_S16_WRAP_SUB(value, 1);
+						count--;
+						if (count > 0 &&
+							right_edges[index] < value)
+							right_edges[index] = value;
+					} else {
+						value = LEGACY_S16_WRAP_SUB(value, 1);
+						count--;
+						if (count == 0) {
+							value = LEGACY_S16_WRAP_ADD(value, 1);
+							if (left_edges[index] > value)
+								left_edges[index] = value;
+						}
+					}
+				}
+				break;
 
-loc_31B7F:
+			case 8:
+				step = (legacy_u16)line[6];
+				sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+				fraction = (legacy_u16)sum;
+				if (sum > 0xFFFFUL)
+					index++;
+				if (left_edges[index] > value)
+					left_edges[index] = value;
+				while (count > 0) {
+					sum = (legacy_u32)fraction + step;
+					fraction = (legacy_u16)sum;
+					carry = sum > 0xFFFFUL;
+					if (carry) {
+						if (right_edges[index] < value)
+							right_edges[index] = value;
+						index++;
+						value = LEGACY_S16_WRAP_ADD(value, 1);
+						count--;
+						if (count > 0 &&
+							left_edges[index] > value)
+							left_edges[index] = value;
+					} else {
+						value = LEGACY_S16_WRAP_ADD(value, 1);
+						count--;
+						if (count == 0) {
+							value = LEGACY_S16_WRAP_SUB(value, 1);
+							if (right_edges[index] < value)
+								right_edges[index] = value;
+						}
+					}
+				}
+				break;
+			}
+		} else if (mode <= 6U) {
+			fixed = ((legacy_u32)(legacy_u16)line[1] << 16) |
+				(legacy_u16)line[0];
+			fixed += 0x8000UL;
+			step = (legacy_u16)line[6];
+			target = 0;
 
+			while (count > 0) {
+				value = mode >= 5U ?
+					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
+					line[1];
+				if (mode == 3U)
+					value = LEGACY_S16_WRAP_SUB(value,
+						line[7] - count);
+				else if (mode == 4U)
+					value = LEGACY_S16_WRAP_ADD(value,
+						line[7] - count);
 
-    cmp bx, 0
-    jne _no0
-    jmp locret_31AA3
-_no0:
-    cmp bx, 1
-    jne _no1
-    jmp locret_31AA3
-_no1:
-    cmp bx, 2
-    jne _no2
-    jmp loc_31B98
-_no2:
-    cmp bx, 3
-    jne _no3
-    jmp loc_31BB7
-_no3:
-    cmp bx, 4
-    jne _no4
-    jmp loc_31BDB
-_no4:
-    cmp bx, 5
-    jne _no5
-    jmp loc_31BFF
-_no5:
-    cmp bx, 6
-    jne _no6
-    jmp loc_31C37
-_no6:
-    cmp bx, 7
-    jne _no7
-    jmp loc_31C6F
-_no7:
-    cmp bx, 8
-    jne _no8
-    jmp loc_31CB1
-_no8:
-    cmp bx, 9
-    
-    //je locret_31AA3
-    
-    jmp locret_31AA3 // same as 0
+				if (left_edges[index] > value) {
+					target = 1;
+					break;
+				}
+				if (right_edges[index] < value) {
+					target = 2;
+					break;
+				}
 
-locret_31AA3:
-    //retn
-    jmp the_end
+				index++;
+				count--;
+				if (mode == 5U)
+					fixed -= step;
+				else if (mode == 6U)
+					fixed += step;
+			}
 
+			while (count > 0 && target != 0) {
+				value = mode >= 5U ?
+					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
+					line[1];
+				if (mode == 3U)
+					value = LEGACY_S16_WRAP_SUB(value,
+						line[7] - count);
+				else if (mode == 4U)
+					value = LEGACY_S16_WRAP_ADD(value,
+						line[7] - count);
 
-loc_31B98:
-    mov     ax, [si+2]
-loc_31B9B:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BAB
-    cmp     [di], ax
-    jle     short loc_31BAF
-    stosw
-    loop    loc_31B9B
-loc_31BA8:
-    jmp     loc_31EB9
-loc_31BAB:
-    mov     [di+3C0h], ax
-loc_31BAF:
-    add     di, 2
-    loop    loc_31B9B
-    jmp     loc_31EB9
+				if (target == 1)
+					left_edges[index] = value;
+				else
+					right_edges[index] = value;
+				index++;
+				count--;
+				if (mode == 5U)
+					fixed -= step;
+				else if (mode == 6U)
+					fixed += step;
+			}
+		} else if (mode == 7U) {
+			step = (legacy_u16)line[6];
+			sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+			fraction = (legacy_u16)sum;
+			if (sum > 0xFFFFUL)
+				index++;
 
-loc_31BB7:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31BBD:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BCE
-    cmp     [di], ax
-    jle     short loc_31BD2
-    stosw
-    dec     ax
-    loop    loc_31BBD
-    jmp     loc_31EB9
-loc_31BCE:
-    mov     [di+3C0h], ax
-loc_31BD2:
-    add     di, 2
-    dec     ax
-    loop    loc_31BBD
-    jmp     loc_31EB9
+			while (count > 0) {
+				if (right_edges[index] < value) {
+					right_edges[index++] = value;
+					while (count > 0) {
+						value = LEGACY_S16_WRAP_SUB(value, 1);
+						sum = (legacy_u32)fraction + step;
+						fraction = (legacy_u16)sum;
+						count--;
+						if (count > 0 && sum > 0xFFFFUL)
+							right_edges[index++] = value;
+					}
+					break;
+				}
 
-loc_31BDB:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31BE1:
-    cmp     [di+3C0h], ax
-    jl      short loc_31BF2
-    cmp     [di], ax
-    jle     short loc_31BF6
-    stosw
-    inc     ax
-    loop    loc_31BE1
-    jmp     loc_31EB9
-loc_31BF2:
-    mov     [di+3C0h], ax
-loc_31BF6:
-    add     di, 2
-    inc     ax
-    loop    loc_31BE1
-    jmp     loc_31EB9
+				sum = (legacy_u32)fraction + step;
+				fraction = (legacy_u16)sum;
+				carry = sum > 0xFFFFUL;
+				if (carry && left_edges[index] > value) {
+					left_edges[index++] = value;
+					value = LEGACY_S16_WRAP_SUB(value, 1);
+					count--;
+					while (count > 0) {
+						sum = (legacy_u32)fraction + step;
+						fraction = (legacy_u16)sum;
+						carry = sum > 0xFFFFUL;
+						if (carry)
+							left_edges[index++] = value;
+						value = LEGACY_S16_WRAP_SUB(value, 1);
+						count--;
+						if (count == 0 && !carry) {
+							value = LEGACY_S16_WRAP_ADD(value, 1);
+							left_edges[index] = value;
+						}
+					}
+					break;
+				}
+				if (carry)
+					index++;
+				value = LEGACY_S16_WRAP_SUB(value, 1);
+				count--;
+			}
+		} else {
+			step = (legacy_u16)line[6];
+			sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+			fraction = (legacy_u16)sum;
+			if (sum > 0xFFFFUL)
+				index++;
 
-loc_31BFF:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31C11:
-    cmp     [di+3C0h], ax
-    jl      short loc_31C26
-    cmp     [di], ax
-    jle     short loc_31C2A
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31C11
-    jmp     loc_31EB9
-loc_31C26:
-    mov     [di+3C0h], ax
-loc_31C2A:
-    add     di, 2
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31C11
-    jmp     loc_31EB9
+			while (count > 0) {
+				if (left_edges[index] > value) {
+					left_edges[index++] = value;
+					value = LEGACY_S16_WRAP_ADD(value, 1);
+					count--;
+					while (count > 0) {
+						sum = (legacy_u32)fraction + step;
+						fraction = (legacy_u16)sum;
+						if (sum > 0xFFFFUL)
+							left_edges[index++] = value;
+						value = LEGACY_S16_WRAP_ADD(value, 1);
+						count--;
+					}
+					break;
+				}
 
-loc_31C37:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31C49:
-    cmp     [di+3C0h], ax
-    jl      short loc_31C5E
-    cmp     [di], ax
-    jle     short loc_31C62
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31C49
-    jmp     loc_31EB9
-loc_31C5E:
-    mov     [di+3C0h], ax
-loc_31C62:
-    add     di, 2
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31C49
-    jmp     loc_31EB9
+				sum = (legacy_u32)fraction + step;
+				fraction = (legacy_u16)sum;
+				carry = sum > 0xFFFFUL;
+				if (carry && right_edges[index] < value) {
+					right_edges[index] = value;
+					while (count > 0) {
+						value = LEGACY_S16_WRAP_ADD(value, 1);
+						sum = (legacy_u32)fraction + step;
+						fraction = (legacy_u16)sum;
+						carry = sum > 0xFFFFUL;
+						if (carry)
+							index++;
+						count--;
+						if (count > 0 && carry)
+							right_edges[index] = value;
+						else if (count == 0) {
+							if (!carry)
+								index++;
+							value = LEGACY_S16_WRAP_SUB(value, 1);
+							right_edges[index] = value;
+						}
+					}
+					break;
+				}
+				if (carry)
+					index++;
+				value = LEGACY_S16_WRAP_ADD(value, 1);
+				count--;
+			}
+		}
+	}
 
-loc_31C6F:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31C84
-    add     di, 2
-loc_31C84:
-    cmp     [di+3C0h], ax
-    jge     short loc_31C8E
-    mov     [di+3C0h], ax
-loc_31C8E:
-    add     dx, bx
-    jnb     short loc_31CA4
-    cmp     [di], ax
-    jle     short loc_31C98
-    mov     [di], ax
-loc_31C98:
-    add     di, 2
-    dec     ax
-    loop    loc_31C84
-    sub     di, 2
-    jmp     loc_31EB9
-loc_31CA4:
-    dec     ax
-    loop    loc_31C8E
-    inc     ax
-    cmp     [di], ax
-    jle     short loc_31CAE
-    mov     [di], ax
-loc_31CAE:
-    jmp     loc_31EB9
+	if (var_C == 0U)
+		return;
 
-loc_31CB1:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31CC6
-    add     di, 2
-loc_31CC6:
-    cmp     [di], ax
-    jle     short loc_31CCC
-    mov     [di], ax
-loc_31CCC:
-    add     dx, bx
-    jnb     short loc_31CE6
-    cmp     [di+3C0h], ax
-    jge     short loc_31CDA
-    mov     [di+3C0h], ax
-loc_31CDA:
-    add     di, 2
-    inc     ax
-    loop    loc_31CC6
-    sub     di, 2
-    jmp     loc_31EB9
-loc_31CE6:
-    inc     ax
-    loop    loc_31CCC
-    dec     ax
-    cmp     [di+3C0h], ax
-    jge     short loc_31CAE
-    mov     [di+3C0h], ax
-    jmp     loc_31EB9
+	sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+	carry = sum > 0xFFFFUL;
 
-loc_31D0B:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D11:
-    cmp     [di], ax
-    jg      short loc_31D23
-    cmp     [di+3C0h], ax
-    jl      short loc_31D28
-    add     di, 2
-    loop    loc_31D11
-    jmp     loc_31EB9
-loc_31D23:
-    rep stosw
-    jmp     loc_31EB9
-loc_31D28:
-    add     di, 3C0h
-    rep stosw
-    jmp     loc_31EB9
-loc_31D31:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D37:
-    cmp     [di], ax
-    jg      short loc_31D4A
-    cmp     [di+3C0h], ax
-    jl      short loc_31D51
-    add     di, 2
-    dec     ax
-    loop    loc_31D37
-    jmp     loc_31EB9
-loc_31D4A:
-    stosw
-    dec     ax
-    loop    loc_31D4A
-    jmp     loc_31EB9
-loc_31D51:
-    add     di, 3C0h
-loc_31D55:
-    stosw
-    dec     ax
-    loop    loc_31D55
-    jmp     loc_31EB9
-loc_31D5C:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-loc_31D62:
-    cmp     [di], ax
-    jg      short loc_31D75
-    cmp     [di+3C0h], ax
-    jl      short loc_31D7C
-    add     di, 2
-    inc     ax
-    loop    loc_31D62
-    jmp     loc_31EB9
-loc_31D75:
-    stosw
-    inc     ax
-    loop    loc_31D75
-    jmp     loc_31EB9
-loc_31D7C:
-    add     di, 3C0h
-loc_31D80:
-    stosw
-    inc     ax
-    loop    loc_31D80
-    jmp     loc_31EB9
-loc_31D87:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31D99:
-    cmp     [di], ax
-    jg      short loc_31DB0
-    cmp     [di+3C0h], ax
-    jl      short loc_31DBB
-    add     di, 2
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31D99
-    jmp     loc_31EB9
-loc_31DB0:
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31DB0
-    jmp     loc_31EB9
-loc_31DBB:
-    add     di, 3C0h
-loc_31DBF:
-    stosw
-    sub     dx, bx
-    sbb     ax, 0
-    loop    loc_31DBF
-    jmp     loc_31EB9
-loc_31DCA:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     dx, [si]
-    add     dx, 8000h
-    adc     ax, 0
-    mov     bx, [si+0Ch]
-loc_31DDC:
-    cmp     [di], ax
-    jg      short loc_31DF3
-    cmp     [di+3C0h], ax
-    jl      short loc_31DFE
-    add     di, 2
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31DDC
-    jmp     loc_31EB9
-loc_31DF3:
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31DF3
-    jmp     loc_31EB9
-loc_31DFE:
-    add     di, 3C0h
-loc_31E02:
-    stosw
-    add     dx, bx
-    adc     ax, 0
-    loop    loc_31E02
-    jmp     loc_31EB9
-loc_31E0D:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31E22
-    add     di, 2
-loc_31E22:
-    cmp     [di+3C0h], ax
-    jl      short loc_31E39
-    add     dx, bx
-    jnb     short loc_31E33
-    cmp     [di], ax
-    jg      short loc_31E51
-    add     di, 2
-loc_31E33:
-    dec     ax
-    loop    loc_31E22
-    jmp     loc_31EB9
-loc_31E39:
-    add     di, 3C0h
-loc_31E3D:
-    stosw
-loc_31E3E:
-    dec     ax
-    add     dx, bx
-    jnb     short loc_31E48
-    loop    loc_31E3D
-    jmp     short loc_31EB9
+	count = line[10];
+	if (count > 0) {
+		index = line[3] + carry - count;
+		while (count-- > 0)
+			left_edges[index++] =
+				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+	}
 
-loc_31E48:
-    loop    loc_31E3E
-    jmp     short loc_31EB9
+	count = line[12];
+	if (count > 0) {
+		index = line[3] + carry - count;
+		while (count-- > 0)
+			right_edges[index++] = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
+	}
 
-loc_31E4D:
-    add     dx, bx
-    jnb     short loc_31E58
-loc_31E51:
-    stosw
-    dec     ax
-    loop    loc_31E4D
-    jmp     short loc_31EB9
+	count = line[11];
+	if (count > 0) {
+		index = line[5] + 1;
+		while (count-- > 0)
+			left_edges[index++] =
+				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+	}
 
-loc_31E58:
-    dec     ax
-    loop    loc_31E4D
-    inc     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31E61:
-    mov     cx, [si+0Eh]
-    mov     ax, [si+2]
-    mov     bx, [si+0Ch]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    jnb     short loc_31E76
-    add     di, 2
-loc_31E76:
-    cmp     [di], ax
-    jg      short loc_31EB2
-    add     dx, bx
-    jnb     short loc_31E87
-    cmp     [di+3C0h], ax
-    jl      short loc_31E8D
-    add     di, 2
-loc_31E87:
-    inc     ax
-    loop    loc_31E76
-    jmp     short loc_31EB9
-
-loc_31E8D:
-    add     di, 3C0h
-loc_31E91:
-    mov     [di], ax
-loc_31E93:
-    inc     ax
-    add     dx, bx
-    jnb     short loc_31EA3
-    add     di, 2
-    loop    loc_31E91
-    dec     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31EA3:
-    loop    loc_31E93
-    add     di, 2
-    dec     ax
-    mov     [di], ax
-    jmp     short loc_31EB9
-
-loc_31EAE:
-    add     dx, bx
-    jnb     short loc_31EB3
-loc_31EB2:
-    stosw
-loc_31EB3:
-    inc     ax
-    loop    loc_31EAE
-    jmp     short loc_31EB9
-
-loc_31EB9:
-    cmp     byte ptr [var_C], 0
-    jnz     short loc_31EC0
-    //retn
-    jmp the_end
-loc_31EC0:
-    mov     cx, [si+14h]
-    or      cx, cx
-    jle     short loc_31EE1
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    rep stosw
-loc_31EE1:
-    mov     cx, [si+18h]
-    or      cx, cx
-    jle     short loc_31F07
-    mov     di, [si+6]
-    mov     dx, [si+4]
-    add     dx, 8000h
-    adc     di, 0
-    sub     di, cx
-    shl     di, 1
-    add     di, [var_18]
-    add     di, 3C0h
-    mov     ax, [sprite1_sprite_widthsum]
-    dec     ax
-    rep stosw
-loc_31F07:
-    mov     cx, [si+16h]
-    or      cx, cx
-    jle     short loc_31F1D
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    mov     ax, [sprite1_sprite_left2]
-    rep stosw
-loc_31F1D:
-    mov     cx, [si+1Ah]
-    or      cx, cx
-    jle     short locret_31F38
-    mov     di, [si+0Ah]
-    inc     di
-    shl     di, 1
-    add     di, [var_18]
-    add     di, 3C0h
-    mov     ax, [sprite1_sprite_widthsum]
-    dec     ax
-    rep stosw
-locret_31F38:
-    //retn
-    jmp the_end
-}
-
-the_end:
+	count = line[13];
+	if (count > 0) {
+		index = line[5] + 1;
+		while (count-- > 0)
+			right_edges[index++] = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
+	}
 }
 
 extern unsigned far word_2F448; // seg012
