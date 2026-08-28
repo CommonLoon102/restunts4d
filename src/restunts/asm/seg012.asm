@@ -153,7 +153,7 @@ seg012 segment byte public 'STUNTSC' use16
     public set_bios_mode3
     public kb_parse_key
     public ported_kb_reg_callback_
-    public nopsub_304AF
+    public ported_nopsub_304AF_
     public nopsub_304B6
     public kb_get_char
     public ported_get_kb_or_joy_flags_
@@ -171,8 +171,8 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_kb_call_readchar_callback_
     public ported_kb_read_char_
     public ported_kb_checking_
-    public nopsub_kb_set_readchar_callback
-    public nopsub_kb_get_readchar_callback
+    public ported_nopsub_kb_set_readchar_callback_
+    public ported_nopsub_kb_get_readchar_callback_
     public ported_flush_stdin_
     public ported_kb_check_
     public ported_nopsub_30A77_
@@ -3918,15 +3918,13 @@ loc_3049F:
     pop     bp
     retf
 ported_kb_reg_callback_ endp
-nopsub_304AF proc far
+ported_nopsub_304AF_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    xor     ax, ax
+    jmp     nopsub_304AF
     jmp     short loc_3048D
-nopsub_304AF endp
+ported_nopsub_304AF_ endp
 nopsub_304B6 proc far
 
     mov     ah, 1
@@ -4615,27 +4613,27 @@ loc_30A3D:
 locret_30A43:
     retf
 ported_kb_checking_ endp
-nopsub_kb_set_readchar_callback proc far
+ported_nopsub_kb_set_readchar_callback_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     nopsub_kb_set_readchar_callback
+    nop
     mov     readchar_callback_ofs, ax
     mov     ax, [bp+arg_2]
     mov     readchar_callback_seg, ax
     pop     bp
     retf
-nopsub_kb_set_readchar_callback endp
-nopsub_kb_get_readchar_callback proc far
+ported_nopsub_kb_set_readchar_callback_ endp
+ported_nopsub_kb_get_readchar_callback_ proc far
 
-    mov     ax, readchar_callback_ofs
-    mov     dx, readchar_callback_seg
+    jmp     nopsub_kb_get_readchar_callback
+    nop
+    nop
     retf
-nopsub_kb_get_readchar_callback endp
+ported_nopsub_kb_get_readchar_callback_ endp
 ported_flush_stdin_ proc far
 
     call    kb_call_readchar_callback

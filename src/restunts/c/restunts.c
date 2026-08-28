@@ -41,8 +41,12 @@ extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
 extern void (far* timerintr[6])(void);
+extern legacy_u16 readchar_callback_ofs;
+extern legacy_u16 readchar_callback_seg;
 extern char aNoRoomLeftOnTimerInterru[];
 unsigned long timer_get_counter(void);
+
+typedef int (far* readchar_callback_type)(void);
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -95,6 +99,34 @@ void kb_reg_callback(int code, void (far* callback)(void))
 	key_index = (legacy_u16)(code_bits >> 8);
 	if (key_index <= 0x84U)
 		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
+}
+
+void nopsub_304AF(int code)
+{
+	legacy_u16 code_bits;
+	legacy_u16 key_index;
+
+	code_bits = (legacy_u16)code;
+	if ((code_bits & 0x00FFU) != 0) {
+		if (code_bits <= 0x007FU)
+			callbackflags[code_bits] = 0;
+		return;
+	}
+	key_index = (legacy_u16)(code_bits >> 8);
+	if (key_index <= 0x84U)
+		callbackflags2[key_index] = 0;
+}
+
+void nopsub_kb_set_readchar_callback(readchar_callback_type callback)
+{
+	readchar_callback_ofs = (legacy_u16)FP_OFF(callback);
+	readchar_callback_seg = (legacy_u16)FP_SEG(callback);
+}
+
+readchar_callback_type nopsub_kb_get_readchar_callback(void)
+{
+	return (readchar_callback_type)MK_FP(readchar_callback_seg,
+		readchar_callback_ofs);
 }
 
 void timer_reg_callback(void (far* callback)(void))

@@ -276,6 +276,9 @@ extrn show_graphic_levels_menu:proc
 extrn nopsub_19DE8:proc
 extrn nopsub_26552:proc
 extrn kb_reg_callback:proc
+extrn nopsub_304AF:proc
+extrn nopsub_kb_set_readchar_callback:proc
+extrn nopsub_kb_get_readchar_callback:proc
 extrn get_kb_or_joy_flags:proc
 extrn timer_reg_callback:proc
 extrn timer_remove_callback:proc

@@ -106,7 +106,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn set_bios_mode3:proc
     extrn kb_parse_key:proc
     extrn ported_kb_reg_callback_:proc
-    extrn nopsub_304AF:proc
+    extrn ported_nopsub_304AF_:proc
     extrn nopsub_304B6:proc
     extrn kb_get_char:proc
     extrn ported_get_kb_or_joy_flags_:proc
@@ -124,8 +124,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_kb_call_readchar_callback_:proc
     extrn ported_kb_read_char_:proc
     extrn ported_kb_checking_:proc
-    extrn nopsub_kb_set_readchar_callback:proc
-    extrn nopsub_kb_get_readchar_callback:proc
+    extrn ported_nopsub_kb_set_readchar_callback_:proc
+    extrn ported_nopsub_kb_get_readchar_callback_:proc
     extrn ported_flush_stdin_:proc
     extrn ported_kb_check_:proc
     extrn ported_nopsub_30A77_:proc
