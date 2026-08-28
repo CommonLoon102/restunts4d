@@ -93,7 +93,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_get_super_random_
     public ported_file_load_resource_
     public off_29A4E
-    public sub_29A86
+    public ported_sub_29A86_
     public ported_input_push_status_
     public ported_input_pop_status_
     public do_joy_restext
@@ -4600,7 +4600,7 @@ loc_29A7E:
     ; align 2
     db 144
 ported_file_load_resource_ endp
-sub_29A86 proc far
+ported_sub_29A86_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -4610,9 +4610,8 @@ sub_29A86 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     sub_29A86
+    nop
 loc_29A8C:
     mov     ax, [bp+arg_0]
     cmp     ax, 9
@@ -4662,7 +4661,7 @@ loc_29ADC:
     mov     sp, bp
     pop     bp
     retf
-sub_29A86 endp
+ported_sub_29A86_ endp
 ported_input_push_status_ proc far
      r = byte ptr 0
 

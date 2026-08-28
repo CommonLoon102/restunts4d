@@ -46,7 +46,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_get_super_random_:proc
     extrn ported_file_load_resource_:proc
     extrn off_29A4E:word
-    extrn sub_29A86:proc
+    extrn ported_sub_29A86_:proc
     extrn ported_input_push_status_:proc
     extrn ported_input_pop_status_:proc
     extrn do_joy_restext:proc

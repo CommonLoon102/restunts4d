@@ -1805,6 +1805,23 @@ struct RECTANGLE* hiscore_draw_text(char* text, int x, int y, int color,
 	return &word_42250;
 }
 
+void far* sub_29A86(int operation, const char* filename,
+	void far* destination)
+{
+	void far* result;
+
+	if (operation == 10)
+		return file_read_nofatal(filename, destination);
+	if (operation != 9)
+		return 0;
+	do {
+		result = file_read_nofatal(filename, destination);
+		if (result != 0)
+			return result;
+	} while (do_dea_textres() != 2);
+	return 0;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
