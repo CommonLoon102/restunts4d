@@ -112,9 +112,9 @@ seg012 segment byte public 'STUNTSC' use16
     extrn get_kb_or_joy_flags:proc
     extrn nopsub_305C8:proc
     extrn get_joy_flags:proc
-    extrn sub_307B4:proc
-    extrn sub_307D2:proc
-    extrn sub_307E3:proc
+    extrn ported_sub_307B4_:proc
+    extrn ported_sub_307D2_:proc
+    extrn ported_sub_307E3_:proc
     extrn nopsub_307FA:proc
     extrn ported_kb_init_interrupt_:proc
     extrn ported_kb_exit_handler_:proc

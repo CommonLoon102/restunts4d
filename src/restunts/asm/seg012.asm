@@ -159,9 +159,9 @@ seg012 segment byte public 'STUNTSC' use16
     public get_kb_or_joy_flags
     public nopsub_305C8
     public get_joy_flags
-    public sub_307B4
-    public sub_307D2
-    public sub_307E3
+    public ported_sub_307B4_
+    public ported_sub_307D2_
+    public ported_sub_307E3_
     public nopsub_307FA
     public ported_kb_init_interrupt_
     public ported_kb_exit_handler_
@@ -4285,23 +4285,22 @@ loc_307AD:
     or      joyinput, 1
     jmp     short loc_3079A
 get_joy_flags endp
-sub_307B4 proc far
+ported_sub_307B4_ proc far
 
-    mov     byte_3FE00, 1
+    jmp     sub_307B4
     mov     word_3FB18, 50h ; 'P'
     mov     word_3FB1C, 0
     mov     word_3FB26, 50h ; 'P'
     mov     word_3FB2A, 0
     retf
-sub_307B4 endp
-sub_307D2 proc far
+ported_sub_307B4_ endp
+ported_sub_307D2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    mov     bx, [bp+arg_0]
+    jmp     sub_307D2
+    nop
 smart
     and     bx, 0Fh
 nosmart
@@ -4309,11 +4308,12 @@ nosmart
     xor     ah, ah
     pop     bp
     retf
-sub_307D2 endp
-sub_307E3 proc far
+ported_sub_307D2_ endp
+ported_sub_307E3_ proc far
 
-    mov     ax, joyflag1
-    sub     ax, word_3FB18
+    jmp     sub_307E3
+    nop
+    nop
     jge     short loc_307EE
     xor     ax, ax
 loc_307EE:
@@ -4322,7 +4322,7 @@ loc_307EE:
     mov     ah, dl
     sub     ax, 1Fh
     retf
-sub_307E3 endp
+ported_sub_307E3_ endp
 nopsub_307FA proc far
 
     mov     ax, joyflag2

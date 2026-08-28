@@ -24,6 +24,13 @@
 
 // Use the Stunts' data for now.
 extern unsigned const char* g_ascii_props;
+extern legacy_u16 joyflag1;
+extern legacy_u16 word_3FB18;
+extern legacy_u16 word_3FB1C;
+extern legacy_u16 word_3FB26;
+extern legacy_u16 word_3FB2A;
+extern legacy_u16 word_3FB34;
+extern legacy_u8 byte_3FB38[];
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -48,6 +55,34 @@ unsigned const char g_ascii_props[256] = {
 int get_0(void)
 {
 	return 0;
+}
+
+void sub_307B4(void)
+{
+	byte_3FE00 = 1;
+	word_3FB18 = 0x50U;
+	word_3FB1C = 0;
+	word_3FB26 = 0x50U;
+	word_3FB2A = 0;
+}
+
+int sub_307D2(int index)
+{
+	return byte_3FB38[(legacy_u16)index & 0x0FU];
+}
+
+int sub_307E3(void)
+{
+	legacy_u16 difference;
+	legacy_u32 scaled;
+
+	if (LEGACY_S16_FROM_BITS(joyflag1) <
+		LEGACY_S16_FROM_BITS(word_3FB18))
+		difference = 0;
+	else
+		difference = LEGACY_U16_WRAP_SUB(joyflag1, word_3FB18);
+	scaled = (legacy_u32)difference * word_3FB34;
+	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
 }
 
 unsigned long timer_get_counter(void)
