@@ -204,11 +204,11 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sin_fast_:proc
     extrn off_326F2:word
     extrn ported_cos_fast_:proc
-    extrn nopsub_32738:proc
-    extrn nopsub_32746:proc
-    extrn nopsub_32751:proc
+    extrn ported_nopsub_32738_:proc
+    extrn ported_nopsub_32746_:proc
+    extrn ported_nopsub_32751_:proc
     extrn ported_projectiondata9_times_ratio_:proc
-    extrn nopsub_3276A:proc
+    extrn ported_nopsub_3276A_:proc
     extrn ported_timer_get_counter_:proc
     extrn ported_timer_custom_delta_:proc
     extrn ported_timer_get_delta_:proc

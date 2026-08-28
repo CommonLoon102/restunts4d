@@ -2579,6 +2579,22 @@ unsigned projectiondata9_times_ratio(unsigned i1, int i2) {
 	return projectiondata9 * i1 / i2;
 }
 
+unsigned short nopsub_32738(unsigned long dividend, unsigned short divisor) {
+	return (unsigned short)(dividend / divisor);
+}
+
+unsigned long nopsub_32746(unsigned short value) {
+	return (unsigned long)projectiondata9 * value;
+}
+
+unsigned long nopsub_32751(unsigned short value) {
+	return (unsigned long)projectiondata10 * value;
+}
+
+unsigned short nopsub_3276A(unsigned short value, unsigned short divisor) {
+	return (unsigned short)((unsigned long)projectiondata10 * value / divisor);
+}
+
 extern int poly_linked_list_40ED6[];
 
 extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned arg_0, unsigned arg_2) {

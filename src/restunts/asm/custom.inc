@@ -123,6 +123,10 @@ extrn shape3d_free_all:proc
 extrn shape3d_init_shape:proc
 extrn transformed_shape_op:proc
 extrn projectiondata9_times_ratio:proc
+extrn nopsub_32738:proc
+extrn nopsub_32746:proc
+extrn nopsub_32751:proc
+extrn nopsub_3276A:proc
 extrn is_facing_camera:proc
 ;extrn get_a_poly_info:proc
 extrn preRender_default:proc

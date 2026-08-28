@@ -251,11 +251,11 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sin_fast_
     public off_326F2
     public ported_cos_fast_
-    public nopsub_32738
-    public nopsub_32746
-    public nopsub_32751
+    public ported_nopsub_32738_
+    public ported_nopsub_32746_
+    public ported_nopsub_32751_
     public ported_projectiondata9_times_ratio_
-    public nopsub_3276A
+    public ported_nopsub_3276A_
     public ported_timer_get_counter_
     public ported_timer_custom_delta_
     public ported_timer_get_delta_
@@ -8652,45 +8652,42 @@ ported_cos_fast_ proc far
     ; align 2
     db 0
 ported_cos_fast_ endp
-nopsub_32738 proc far
+ported_nopsub_32738_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    mov     dx, [bp+arg_2]
+    jmp     nopsub_32738
+    nop
     mov     ax, [bp+arg_0]
     div     [bp+arg_4]
     pop     bp
     retf
-nopsub_32738 endp
-nopsub_32746 proc far
+ported_nopsub_32738_ endp
+ported_nopsub_32746_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    mov     ax, projectiondata9
+    jmp     nopsub_32746
+    nop
     mul     [bp+arg_0]
     pop     bp
     retf
-nopsub_32746 endp
-nopsub_32751 proc far
+ported_nopsub_32746_ endp
+ported_nopsub_32751_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    mov     ax, projectiondata10
+    jmp     nopsub_32751
+    nop
     mul     [bp+arg_0]
     pop     bp
     retf
-nopsub_32751 endp
+ported_nopsub_32751_ endp
 ported_projectiondata9_times_ratio_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -8705,20 +8702,19 @@ ported_projectiondata9_times_ratio_ proc far
     pop     bp
     retf
 ported_projectiondata9_times_ratio_ endp
-nopsub_3276A proc far
+ported_nopsub_3276A_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, projectiondata10
+    jmp     nopsub_3276A
+    nop
     mul     [bp+arg_0]
     div     [bp+arg_2]
     pop     bp
     retf
-nopsub_3276A endp
+ported_nopsub_3276A_ endp
 ported_timer_get_counter_ proc far
 
     cli
