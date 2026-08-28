@@ -1245,8 +1245,10 @@ void draw_track_preview(void)
 				track = subst_hillroad_track(terrain, track);
 				terrain = 0;
 			}
-			if (track >= 0xFDU)
+			if (track >= 0xFDU) {
+				track = 0;
 				terrain = 0;
+			}
 
 			terrain_height = 0;
 			if (terrain == 6U) {
