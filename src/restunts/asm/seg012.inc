@@ -149,8 +149,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_mmgr_alloc_a000_:proc
     extrn nopsub_310FE:proc
     extrn nopsub_3111D:proc
-    extrn nopsub_31157:proc
-    extrn nopsub_31169:proc
+    extrn ported_nopsub_31157_:proc
+    extrn ported_nopsub_31169_:proc
     extrn ported_mmgr_get_ofs_diff_:proc
     extrn ported_mmgr_copy_paras_:proc
     extrn ported_copy_paras_reverse_:proc

@@ -196,8 +196,8 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_mmgr_alloc_a000_
     public nopsub_310FE
     public nopsub_3111D
-    public nopsub_31157
-    public nopsub_31169
+    public ported_nopsub_31157_
+    public ported_nopsub_31169_
     public ported_mmgr_get_ofs_diff_
     public ported_mmgr_copy_paras_
     public ported_copy_paras_reverse_
@@ -5623,24 +5623,26 @@ loc_3113E:
     mov     word_3FF82, ax
     jmp     loc_310CD
 nopsub_3111D endp
-nopsub_31157 proc far
+ported_nopsub_31157_ proc far
 
-    mov     bx, resendptr1
-    mov     ax, [bx+MEMCHUNK.resofs]
+    jmp     nopsub_31157
+    nop
+    nop
     mov     bx, resptr2
     sub     ax, [bx+MEMCHUNK.resofs]
     sub     ax, [bx+MEMCHUNK.ressize]
     retf
-nopsub_31157 endp
-nopsub_31169 proc far
+ported_nopsub_31157_ endp
+ported_nopsub_31169_ proc far
 
-    mov     bx, resptr2
-    mov     ax, [bx+MEMCHUNK.resofs]
+    jmp     nopsub_31169
+    nop
+    nop
     add     ax, [bx+MEMCHUNK.ressize]
     mov     bx, resptr1
     sub     ax, [bx+MEMCHUNK.resofs]
     retf
-nopsub_31169 endp
+ported_nopsub_31169_ endp
 ported_mmgr_get_ofs_diff_ proc far
 
     mov     bx, resendptr2

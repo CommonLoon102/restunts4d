@@ -90,6 +90,8 @@ extrn mmgr_alloc_pages:proc
 extrn mmgr_alloc_resmem:proc
 extrn mmgr_alloc_a000:proc
 extrn mmgr_get_ofs_diff:proc
+extrn nopsub_31157:proc
+extrn nopsub_31169:proc
 extrn mmgr_free:proc
 extrn mmgr_copy_paras:proc
 extrn copy_paras_reverse:proc

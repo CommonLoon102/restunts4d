@@ -851,6 +851,14 @@ unsigned short mmgr_get_ofs_diff(void) {
 	return resendptr2->resofs - resptr2->resofs - resptr2->ressize;
 }
 
+unsigned short nopsub_31157(void) {
+	return mmgr_get_ofs_diff();
+}
+
+unsigned short nopsub_31169(void) {
+	return (unsigned short)(resptr2->resofs + resptr2->ressize - resptr1->resofs);
+}
+
 void far* mmgr_free(char far* ptr) {
 	int i;
 	unsigned ax, bx, cx, dx, di;
