@@ -62,7 +62,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_upd_statef20_from_steer_input_
     public audio_carstate
     public ported_audio_unk3_
-    public sub_18D06
+    public ported_sub_18D06_
     public ported_sub_18D60_
     public ported_car_car_coll_detect_maybe_
     public ported_init_plantrak_
@@ -7701,7 +7701,7 @@ loc_18D04:
     pop     bp
     retf
 ported_audio_unk3_ endp
-sub_18D06 proc far
+ported_sub_18D06_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -7738,7 +7738,7 @@ sub_18D06 proc far
 loc_18D5E:
     pop     bp
     retf
-sub_18D06 endp
+ported_sub_18D06_ endp
 ported_sub_18D60_ proc far
     var_30 = word ptr -48
     var_2E = word ptr -46

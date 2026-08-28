@@ -604,6 +604,8 @@ extern unsigned char byte_44D06[];
 extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
 extern unsigned char audiotimers[];
+extern int word_43964;
+extern int word_4408C;
 extern unsigned int word_42240;
 extern unsigned int word_42242;
 extern unsigned int word_42244;
@@ -859,6 +861,30 @@ void audio_op_unk2(int index, int base_value,
 		LEGACY_WRITE_U16_LE(timer + 0x0CU, base_rate);
 	}
 	timer[0x0AU] = (legacy_u8)volume;
+}
+
+void sub_18D06(const legacy_u8* sample, int interval)
+{
+	audio_op_unk2(word_43964,
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1EU)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 6U)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 8U)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0AU)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0CU)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0EU)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x10U)),
+		interval);
+	if (gameconfig.game_opponenttype != 0) {
+		audio_op_unk2(word_4408C,
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x20U)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x12U)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x14U)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x16U)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x18U)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1AU)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1CU)),
+			interval);
+	}
 }
 
 void audio_driver_timer(void)
@@ -2676,11 +2702,9 @@ extern void far* fontledresptr;
 extern void far* sdgameresptr;
 extern void far* wallptr;
 extern void far* planptr;
-extern int word_43964;
 extern char unk_3E7FC[];
 extern char byte_42D26;
 extern char byte_42D2A;
-extern int word_4408C;
 extern char unk_3E82C[];
 extern int word_44D1E;
 extern int word_449E4;

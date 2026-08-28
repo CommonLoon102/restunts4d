@@ -233,6 +233,7 @@ extrn font_set_fontdef:proc
 extrn update_frame:proc
 extrn transformed_shape_add_for_sort:proc
 extrn skybox_op_helper2:proc
+extrn sub_18D06:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
