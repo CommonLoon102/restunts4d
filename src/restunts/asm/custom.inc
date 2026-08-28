@@ -129,7 +129,7 @@ extrn nopsub_32746:proc
 extrn nopsub_32751:proc
 extrn nopsub_3276A:proc
 extrn is_facing_camera:proc
-;extrn get_a_poly_info:proc
+extrn get_a_poly_info:proc
 extrn preRender_default:proc
 extrn preRender_default_alt:proc
 extrn skybox_op_helper:proc

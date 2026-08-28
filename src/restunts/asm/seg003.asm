@@ -1929,7 +1929,7 @@ loc_1B03C:
     push    ax
     call    sprite_set_1_size
     add     sp, 8
-    call    get_a_poly_info
+    call far ptr get_a_poly_info
     sub     si, si
     jmp     loc_1C0C2
     ; align 2
@@ -5283,7 +5283,7 @@ loc_1D07A:
     call    transformed_shape_op
     add     sp, 2
 loc_1D086:
-    call    get_a_poly_info
+    call far ptr get_a_poly_info
     inc     [bp+var_32]
 loc_1D08E:
     cmp     [bp+var_32], 1Eh
@@ -7142,7 +7142,7 @@ loc_1E160:
     mov     bx, [bp+arg_12]
     mov     [bx], di
 loc_1E16C:
-    call    get_a_poly_info
+    call far ptr get_a_poly_info
     cmp     slow_video_mgmt_copy, 0
     jz      short loc_1E19A
     mov     bx, [bp+arg_rectptr]

@@ -3991,7 +3991,7 @@ loc_125FE:
     push    ax
     call    sprite_putimage
     add     sp, 4
-    call    get_a_poly_info
+    call far ptr get_a_poly_info
     call    sprite_copy_wnd_to_1
     push    [bp+var_1A_rc.rc_bottom]
     push    [bp+var_1A_rc.rc_top]

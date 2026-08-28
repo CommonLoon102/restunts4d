@@ -2725,78 +2725,82 @@ void init_polyinfo(void) {
 	calc_sincos80();
 }
 
-#if 0
-void get_a_poly_info(void) {
+void preRender_default(unsigned color, unsigned vertex_count,
+	unsigned* vertices);
+void preRender_line(unsigned start_x, unsigned start_y, unsigned end_x,
+	unsigned end_y, unsigned color);
+void preRender_patterned(unsigned pattern, unsigned color,
+	unsigned vertex_count, struct POINT2D* vertices);
+void preRender_unk(unsigned pattern, unsigned alternate_color,
+	unsigned color, unsigned vertex_count, struct POINT2D* vertices);
 
-	int counter;
-	int materialtype; // var_6
-	int materialcolor; // var_8
-	int materialpattern;
-	int objtype;
-	int somecount; // var_2
-	unsigned int regdi;
-	unsigned char far* polyinfoptr;
-	int far* polyptr;
-	int i;
-	int var_32[256];
+void get_a_poly_info(void)
+{
+	legacy_u8 far* record;
+	unsigned far* record_points;
+	unsigned points[25];
+	legacy_u16 record_index;
+	legacy_u16 primitive_index;
+	legacy_u16 material_type;
+	legacy_u16 material_color;
+	legacy_u16 primitive_type;
+	legacy_u16 vertex_count;
+	legacy_u16 pattern_type;
+	legacy_u16 index;
 
-	return ported_get_a_poly_info_();
-/*
-	regdi = 0x190;
-	counter = 0;
-	while (counter < polyinfonumpolys) {
-		regdi = poly_linked_list_40ED6[regdi];
-		polyinfoptr = polyinfoptrs[regdi];
-		materialtype = polyinfoptr[2];
+	record_index = 0x190U;
+	for (primitive_index = 0; primitive_index < polyinfonumpolys;
+		primitive_index++) {
+		record_index = (legacy_u16)poly_linked_list_40ED6[record_index];
+		record = (legacy_u8 far*)polyinfoptrs[record_index];
+		material_type = record[2];
+		material_color = (legacy_u16)
+			material_clrlist_ptr_cpy[material_type];
+		primitive_type = record[4];
+		record_points = (unsigned far*)(record + 6U);
 
-		materialcolor = material_clrlist_ptr_cpy[materialtype];
-		objtype = polyinfoptr[4];
-
-		if (objtype == 0) {
-			somecount = polyinfoptr[3];
-			polyptr = polyinfoptr + 6;
-			
-			for (i = 0; i < somecount; i++) {
-				var_32[i * 2 + 0] = polyptr[i * 2 + 0];
-				var_32[i * 2 + 1] = polyptr[i * 2 + 1];
+		if (primitive_type == 0U) {
+			vertex_count = record[3];
+			for (index = 0; index < vertex_count * 2U; index++)
+				points[index] = record_points[index];
+			pattern_type = (legacy_u16)
+				material_patlist_ptr_cpy[material_type];
+			if (pattern_type == 0U) {
+				preRender_default(material_color, vertex_count, points);
+			} else if (pattern_type == 1U) {
+				pattern_type = (legacy_u16)
+					material_patlist2_ptr_cpy[material_type];
+				if (pattern_type != 0U)
+					preRender_patterned(pattern_type, material_color,
+						vertex_count, (struct POINT2D*)points);
+			} else if (pattern_type == 2U) {
+				preRender_unk((legacy_u16)
+					material_patlist2_ptr_cpy[material_type],
+					(legacy_u16)material_clrlist2_ptr_cpy[material_type],
+					material_color, vertex_count,
+					(struct POINT2D*)points);
 			}
-			materialpattern = material_patlist_ptr_cpy[materialtype];
-			if (materialpattern == 0) {
-				for (i = 0; i < somecount; i++) {
-					printf("count: %i color: %i, %i, %i\n", somecount, materialcolor, var_32[i * 2 + 0], var_32[i * 2 + 1]);
-				}
-				//printf("somecount %i @ %i", somecount, polyinfonumpolys);
-				preRender_default(materialcolor, somecount, var_32);
-			} else
-			if (materialpattern == 1) {
-				// fill poatterned
-			} else {
-				// fill unk
-			}
-		} else
-		if (objtype == 1) {
-			// goto fill_solid
-		} else
-		if (objtype == 2) {
-			// goto fill_sphere
-		} else
-		if (objtype == 3) {
-			// goto fill_wheel0
-		} else
-		if (objtype == 5) {
-			// goto fill_next
-		} else {
-			// goto fill_pixel
+		} else if (primitive_type == 1U) {
+			preRender_line(record_points[0], record_points[1],
+				record_points[2], record_points[3], material_color);
+		} else if (primitive_type == 2U) {
+			preRender_sphere(LEGACY_S16_FROM_BITS(record_points[0]),
+				LEGACY_S16_FROM_BITS(record_points[1]), record_points[2],
+				material_color);
+		} else if (primitive_type == 3U) {
+			for (index = 0; index < 8U; index++)
+				points[index] = record_points[index];
+			preRender_wheel(points, 0x468U, material_color,
+				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
+				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
+		} else if (primitive_type == 5U) {
+			putpixel_single_maybe(
+				LEGACY_S16_FROM_BITS(record_points[0]),
+				LEGACY_S16_FROM_BITS(record_points[1]), material_color);
 		}
-		
-		counter++;
 	}
-	
-	polyinfo_reset(); // polyinfo_reset();
-*/
+	polyinfo_reset();
 }
-
-#endif
 
 extern void draw_patterned_lines();
 extern void draw_unknown_lines();
