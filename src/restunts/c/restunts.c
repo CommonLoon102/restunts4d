@@ -417,7 +417,12 @@ struct VECTOR carpos = { 0, 0x0FCB8, 0x0B40 }; // from the original
 //struct VECTOR carpos = { 0, 0, 320 };
 
 extern struct SPRITE far* wndsprite;
+extern struct SPRITE far* smouspriteptr;
+extern struct SPRITE far* mmouspriteptr;
+extern struct SPRITE far* mouseunkspriteptr;
 extern void far* tempdataptr;
+extern void video_set_palette(unsigned int start, unsigned int count,
+	unsigned char* palette);
 
 extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
@@ -451,6 +456,44 @@ extern int idle_counter;
 extern char byte_3B8F7;
 extern char mouse_isdirty;
 extern legacy_u8 HKeyFlag;
+
+void load_palandcursor(void)
+{
+	unsigned char palette[0x300];
+	char far* resource;
+	struct SHAPE2D far* mouse_shape;
+	unsigned int mouse_width;
+	unsigned int mouse_height;
+	unsigned int i;
+
+	resource = (char far*)file_load_shape2d_fatal("sdmain");
+	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "!pal");
+	for (i = 0; i < sizeof(palette); ++i)
+		palette[i] = ((unsigned char far*)mouse_shape)[0x10U + i];
+	video_set_palette(0, 0x100, palette);
+
+	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
+	mouse_width = (legacy_u16)(mouse_shape->s2d_width * video_flag2_is1);
+	mouse_height = mouse_shape->s2d_height;
+	mmgr_free(resource);
+
+	smouspriteptr = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
+	mmouspriteptr = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
+	mouseunkspriteptr = sprite_make_wnd(
+		mouse_width + video_flag2_is1, mouse_height, 0x0F);
+
+	resource = (char far*)file_load_shape2d_fatal("sdmain");
+	sprite_set_1_from_argptr(smouspriteptr);
+	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
+	sprite_shape_to_1(mouse_shape, 0, 0);
+
+	sprite_set_1_from_argptr(mmouspriteptr);
+	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "mmou");
+	sprite_shape_to_1(mouse_shape, 0, 0);
+
+	mmgr_free(resource);
+	sprite_copy_2_to_1_2();
+}
 
 static char skybox_resource_names[5][9] = {
 	"desert",

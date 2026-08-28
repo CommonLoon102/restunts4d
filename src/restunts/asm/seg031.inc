@@ -6,7 +6,7 @@ seg031 segment byte public 'STUNTSC' use16
     extrn ported_nullsub_2_:proc
     extrn ported_init_main_:proc
     extrn ported_random_wait_:proc
-    extrn load_palandcursor:proc
+    extrn ported_load_palandcursor_:proc
     extrn ported_get_0_:proc
     extrn ported_mmgr_alloc_resbytes_:proc
     extrn ported_mmgr_get_res_ofs_diff_scaled_:proc

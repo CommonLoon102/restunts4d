@@ -53,7 +53,7 @@ seg031 segment byte public 'STUNTSC' use16
     public ported_nullsub_2_
     public ported_init_main_
     public ported_random_wait_
-    public load_palandcursor
+    public ported_load_palandcursor_
     public ported_get_0_
     public ported_mmgr_alloc_resbytes_
     public ported_mmgr_get_res_ofs_diff_scaled_
@@ -420,7 +420,7 @@ loc_3A0D9:
     call    set_criterr_handler
     add     sp, 4
     push    cs
-    call near ptr load_palandcursor
+    call near ptr ported_load_palandcursor_
     call    sprite_copy_2_to_1
     mov     ax, 120
     push    ax
@@ -637,7 +637,7 @@ loc_3A2B2:
     ; align 2
     db 144
 ported_random_wait_ endp
-load_palandcursor proc far
+ported_load_palandcursor_ proc far
     var_312 = word ptr -786
     var_310 = dword ptr -784
     var_30C = word ptr -780
@@ -649,9 +649,9 @@ load_palandcursor proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 312h
+    jmp     load_palandcursor
+    nop
+    nop
     push    si
     mov     ax, offset aSdmain; "sdmain"
     push    ax
@@ -791,7 +791,7 @@ loc_3A438:
     mov     sp, bp
     pop     bp
     retf
-load_palandcursor endp
+ported_load_palandcursor_ endp
 ported_get_0_ proc far
 
     sub     ax, ax
