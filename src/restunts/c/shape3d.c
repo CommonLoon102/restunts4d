@@ -3912,1005 +3912,688 @@ void preRender_default_impl_helper(int* regsi, unsigned var_A,
 	}
 }
 
-extern unsigned far word_2F448; // seg012
-extern unsigned far off_2F44A[]; // seg012
+extern legacy_u16 far word_2F448; // seg012
+extern legacy_u16 far off_2F44A[]; // seg012
 
 unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4);
 
+static legacy_u16 draw_line_sar1(legacy_u16 value) {
+	return (legacy_u16)((value >> 1) | (value & 0x8000U));
+}
+
+static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) {
+	legacy_u32 quotient;
+	legacy_u16 remainder;
+
+	quotient = numerator / divisor;
+	remainder = (legacy_u16)(numerator % divisor);
+	if ((legacy_u16)(divisor >> 1) < remainder)
+		quotient++;
+	return (legacy_u16)quotient;
+}
+
+static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
+	legacy_u16 far* table;
+
+	if (LEGACY_S16_FROM_BITS(major) < LEGACY_S16_FROM_BITS(word_2F448)) {
+		table = (legacy_u16 far*)MK_FP(FP_SEG(&word_2F448),
+			off_2F44A[major]);
+		return table[minor];
+	}
+	return draw_line_round_div((legacy_u32)minor << 16, major);
+}
+
 unsigned draw_line_related(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8) {
-	//return ported_draw_line_related_(arg_startX, arg_startY, arg_endX, arg_endY, arg_8);
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 0);
 }
 
 unsigned draw_line_related_alt(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8) {
-	//return ported_draw_line_related_alt_(arg_startX, arg_startY, arg_endX, arg_endY, arg_8);
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 1);
 }
 
-
-
 unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4) {
+	legacy_u16* line;
+	legacy_u16 ax;
+	legacy_u16 bx;
+	legacy_u16 cx;
+	legacy_u16 dx;
+	legacy_u16 mode;
+	legacy_u16 clip;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+	legacy_u16 original_count;
+	legacy_u32 value32;
+	legacy_u32 product;
+	legacy_s32 difference;
 
-	//unsigned var_4;
-	unsigned var_2;
+	line = (legacy_u16*)arg_8;
+	line[9] = 0x00FFU;
+	line[0] = 0;
+	line[2] = 0;
+	line[10] = 0;
+	line[11] = 0;
+	line[12] = 0;
+	line[13] = 0;
 
-	unsigned seg012 = FP_SEG(&sprite1);
-	unsigned result;
-	
-	unsigned sprite1_sprite_left2 = sprite1.sprite_left2;
-	unsigned sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	unsigned sprite1_sprite_top = sprite1.sprite_top;
-	unsigned sprite1_sprite_height = sprite1.sprite_height;
+	ax = (legacy_u16)arg_startY;
+	bx = (legacy_u16)arg_endY;
+	cx = (legacy_u16)arg_startX;
+	dx = (legacy_u16)arg_endX;
+	if (LEGACY_S16_FROM_BITS(ax) <= LEGACY_S16_FROM_BITS(bx)) {
+		line[1] = cx;
+		line[3] = ax;
+		line[4] = dx;
+		line[5] = bx;
+	} else {
+		line[1] = dx;
+		line[3] = bx;
+		line[4] = cx;
+		line[5] = ax;
+	}
+	if (ax == bx)
+		goto draw_c_horizontal;
 
-	//ported_draw_line_related_(arg_startX, arg_startY, arg_endX, arg_endY, arg_8);
+draw_c_clip_initial:
+	dx = 0;
+	if ((legacy_u16)var_4 == 0) {
+		ax = line[3];
+		bx = sprite1.sprite_top;
+		cx = sprite1.sprite_height;
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx)) {
+			dx = 8;
+			goto draw_c_reject;
+		}
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
+			dx |= 0x0400U;
 
-asm {
-/*    var_4 = byte ptr -4
-    var_2 = word ptr -2
-     s = byte ptr 0
-     r = byte ptr 2
-    arg_startX = word ptr 6
-    arg_startY = word ptr 8
-    arg_endX = word ptr 10
-    arg_endY = word ptr 12
-    arg_8 = word ptr 14
+		ax = line[5];
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
+			dx = 4;
+			goto draw_c_reject;
+		}
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
+			dx |= 8;
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
-    push    si
-    push    di*/
+		bx = sprite1.sprite_left2;
+		cx = sprite1.sprite_widthsum;
+		ax = line[1];
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
+			dx |= 0x0200U;
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
+			dx |= 0x0100U;
+		ax = line[4];
+		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
+			dx |= 2;
+		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
+			dx |= 1;
+		if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
+			dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
+			goto draw_c_reject;
+		}
+	}
 
-    //mov     word ptr [var_4], 0
-loc_2EB62:
-    mov     si, [arg_8]  // arg_8 is a pointer to something sizeof 0x1C
-    mov     word ptr [si+12h], 0FFh
-    xor     ax, ax
-    mov     [si], ax
-    mov     [si+4], ax
-    mov     [si+14h], ax
-    mov     [si+16h], ax
-    mov     [si+18h], ax
-    mov     [si+1Ah], ax
-    mov     ax, [arg_startY]
-    mov     bx, [arg_endY]
-    mov     cx, [arg_startX]
-    mov     dx, [arg_endX]
-    cmp     ax, bx
-    jg      short loc_2EB9C
-    mov     [si+2], cx
-    mov     [si+6], ax
-    mov     [si+8], dx
-loc_2EB96:
-    mov     [si+0Ah], bx
-    jmp     short loc_2EBA8
-    
-    
-loc_2EB9C:
-    mov     [si+2], dx
-    mov     [si+6], bx
-    mov     [si+8], cx
-    mov     [si+0Ah], ax
-loc_2EBA8:
-    jnz     short loc_2EBAD
-    jmp     loc_2F1A3
-loc_2EBAD:
-    xor     dx, dx
-    cmp     word ptr [var_4], 0
-    jnz     short loc_2EC1A
-    mov     ax, [si+6]
-    mov     bx, sprite1_sprite_top
-    mov     cx, sprite1_sprite_height
-    cmp     ax, cx
-    jl      short loc_2EBCB
-    mov     dl, 8
-    jmp     loc_2EF9B
-loc_2EBCB:
-    cmp     ax, bx
-    jge     short loc_2EBD2
-    or      dh, 4
-loc_2EBD2:
-    mov     ax, [si+0Ah]
-    cmp     ax, bx
-    jge     short loc_2EBDE
-loc_2EBD9:
-    mov     dl, 4
-    jmp     loc_2EF9B
-loc_2EBDE:
-    cmp     ax, cx
-    jl      short loc_2EBE5
-    or      dl, 8
-loc_2EBE5:
-    mov     bx, sprite1_sprite_left2
-    mov     cx, sprite1_sprite_widthsum
-    mov     ax, [si+2]
-    cmp     ax, bx
-    jge     short loc_2EBF9
-    or      dh, 2
-loc_2EBF9:
-    cmp     ax, cx
-    jl      short loc_2EC00
-    or      dh, 1
-loc_2EC00:
-    mov     ax, [si+8]
-    cmp     ax, bx
-    jge     short loc_2EC0A
-    or      dl, 2
-loc_2EC0A:
-    cmp     ax, cx
-    jl      short loc_2EC11
-    or      dl, 1
-loc_2EC11:
-    test    dl, dh
-    jz      short loc_2EC1A
-    and     dl, dh
-    jmp     loc_2EF9B
-loc_2EC1A:
-    or      dl, dh
-    xor     dh, dh
-    mov     [var_2], dx
-    mov     cx, [si+0Ah]
-    sub     cx, [si+6]
-    jno     short loc_2EC2C
-loc_2EC29:
-    jmp     loc_2F253
-loc_2EC2C:
-    mov     dx, [si+8]
-    sub     dx, [si+2]
-    jo      short loc_2EC29
-    jnz     short loc_2EC41
-    inc     cx
-    mov     [si+0Eh], cx
-    mov     byte ptr [si+12h], 2
-    jmp     short loc_2ECAD
+	dx = (legacy_u16)((legacy_u8)dx | (legacy_u8)(dx >> 8));
+	clip = dx;
+	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[5]) - (legacy_s32)LEGACY_S16_FROM_BITS(line[3]);
+	if (difference < -32768L || difference > 32767L)
+		goto draw_c_subdivide;
+	cx = (legacy_u16)difference;
+	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[4]) - (legacy_s32)LEGACY_S16_FROM_BITS(line[1]);
+	if (difference < -32768L || difference > 32767L)
+		goto draw_c_subdivide;
+	dx = (legacy_u16)difference;
+	if (dx == 0) {
+		cx = (legacy_u16)(cx + 1);
+		line[7] = cx;
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 2U);
+		goto draw_c_dispatch_clip;
+	}
 
-loc_2EC41:
-    jl      short loc_2EC8F
-    cmp     dx, cx
-    jb      short loc_2EC82
-    jz      short loc_2EC88
-    mov     byte ptr [si+12h], 8
-loc_2EC4D:
-    xchg    cx, dx
-loc_2EC4F:
-	mov ax, seg012
-	mov es, ax
-    //cmp     cx, cs:word_2F448			// 0x32 <- number of interpolation tables?
-    cmp     cx, es:word_2F448			// 0x32 <- number of interpolation tables?
-    jge     short loc_2EC69
-    mov     bx, cx
-    shl     bx, 1
-//    mov     bx, cs:off_2F44A[bx]		// strange tables at seg012:0A28 - 0x32 interpolation tables?
-    mov     bx, es:off_2F44A[bx]		// strange tables at seg012:0A28 - 0x32 interpolation tables?
-    add     bx, dx
-    add     bx, dx
-    //mov     ax, cs:[bx]
-    mov     ax, es:[bx]
-    jmp     short loc_2EC76
+	if (LEGACY_S16_FROM_BITS(dx) >= 0) {
+		if (dx < cx) {
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 6U);
+			goto draw_c_compute_step;
+		}
+		if (dx == cx) {
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 4U);
+			goto draw_c_count;
+		}
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 8U);
+		bx = cx;
+		cx = dx;
+		dx = bx;
+	} else {
+		if (dx == 0x8000U)
+			goto draw_c_subdivide;
+		dx = (legacy_u16)(0U - dx);
+		if (dx < cx) {
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 5U);
+			goto draw_c_compute_step;
+		}
+		if (dx == cx) {
+			line[9] = (legacy_u16)((line[9] & 0xFF00U) | 3U);
+			goto draw_c_count;
+		}
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 7U);
+		bx = cx;
+		cx = dx;
+		dx = bx;
+	}
 
-loc_2EC69:
-    xor     ax, ax
-    div     cx
-    mov     bx, cx
-    shr     bx, 1
-    sub     bx, dx
-    adc     ax, 0
-loc_2EC76:
-    mov     [si+0Ch], ax
-    inc     cx
-    jo      short loc_2EC29
-    mov     [si+0Eh], cx
-    jmp     short loc_2ECAD
+draw_c_compute_step:
+	line[6] = draw_line_step(dx, cx);
+	if (cx == 0x7FFFU)
+		goto draw_c_subdivide;
+draw_c_count:
+	line[7] = (legacy_u16)(cx + 1);
 
-loc_2EC82:
-    mov     byte ptr [si+12h], 6
-    jmp     short loc_2EC4F
-loc_2EC88:
-    mov     byte ptr [si+12h], 4
-    jmp     short loc_2ECA9
+draw_c_dispatch_clip:
+	switch (clip & 0x0FU) {
+	case 0:
+		return 0;
+	case 1:
+		goto draw_c_clip_right;
+	case 2:
+	case 3:
+		goto draw_c_clip_left;
+	case 8:
+	case 9:
+	case 10:
+	case 11:
+		goto draw_c_clip_bottom;
+	default:
+		goto draw_c_clip_top;
+	}
 
-loc_2EC8F:
-    neg     dx
-    jo      short loc_2EC29
-    cmp     dx, cx
-    jb      short loc_2EC9F
-    jz      short loc_2ECA5
-    mov     byte ptr [si+12h], 7
-    jmp     short loc_2EC4D
-loc_2EC9F:
-    mov     byte ptr [si+12h], 5
-    jmp     short loc_2EC4F
-loc_2ECA5:
-    mov     byte ptr [si+12h], 3
-loc_2ECA9:
-    inc     cx
-    mov     [si+0Eh], cx
-loc_2ECAD:
-    mov     bx, [var_2]
-    
+draw_c_clip_top:
+	ax = line[3];
+	cx = sprite1.sprite_top;
+	line[3] = cx;
+	cx = (legacy_u16)(cx - ax);
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_top;
+	case 3:
+		line[1] = (legacy_u16)(line[1] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_top;
+	case 4:
+		line[1] = (legacy_u16)(line[1] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_top;
+	case 5:
+		product = (legacy_u32)line[6] * cx;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_top;
+	case 6:
+		product = (legacy_u32)line[6] * cx;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 += product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_top;
+	case 7:
+	case 8:
+		line[3] = ax;
+		advance = draw_line_round_div((legacy_u32)cx << 16, line[6]);
+		if (mode == 7)
+			line[1] = (legacy_u16)(line[1] - advance);
+		else
+			line[1] = (legacy_u16)(line[1] + advance);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
+			line[7] = 1;
+			line[3] = sprite1.sprite_top;
+			line[1] = line[4];
+			goto draw_c_after_top;
+		}
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		value32 += product;
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		goto draw_c_after_top;
+	}
+	return 0;
+
+draw_c_after_top:
+	if (clip & 8U)
+		goto draw_c_clip_bottom;
+	goto draw_c_reclip_x;
+
+draw_c_clip_bottom:
+	cx = line[5];
+	dx = (legacy_u16)(sprite1.sprite_height - 1);
+	line[5] = dx;
+	cx = (legacy_u16)(cx - dx);
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_reclip_x;
+	case 3:
+		line[4] = (legacy_u16)(line[4] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_reclip_x;
+	case 4:
+		line[4] = (legacy_u16)(line[4] - cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_reclip_x;
+	case 5:
+		line[7] = (legacy_u16)(line[7] - cx);
+		advance = (legacy_u16)(line[7] - 1);
+		product = (legacy_u32)line[6] * advance;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= product;
+		value32 += 0x8000UL;
+		line[4] = (legacy_u16)(value32 >> 16);
+		goto draw_c_reclip_x;
+	case 6:
+		line[7] = (legacy_u16)(line[7] - cx);
+		advance = (legacy_u16)(line[7] - 1);
+		product = (legacy_u32)line[6] * advance;
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 += product;
+		value32 += 0x8000UL;
+		line[4] = (legacy_u16)(value32 >> 16);
+		goto draw_c_reclip_x;
+	case 7:
+	case 8:
+		value32 = ((legacy_u32)dx << 16) -
+			(((legacy_u32)line[3] << 16) | line[2]);
+		if (((value32 & 0x80000000UL) != 0))
+			advance = 0;
+		else
+			advance = draw_line_round_div(value32, line[6]);
+		if (mode == 7)
+			line[4] = (legacy_u16)(line[1] - advance);
+		else
+			line[4] = (legacy_u16)(line[1] + advance);
+		line[7] = (legacy_u16)(advance + 1);
+		goto draw_c_reclip_x;
+	}
+	return 0;
+
+draw_c_clip_left:
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		goto draw_c_reject_left;
+	case 3:
+		cx = sprite1.sprite_left2;
+		ax = line[4];
+		line[4] = cx;
+		cx = (legacy_u16)(cx - ax);
+		line[11] = (legacy_u16)(line[11] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[5] = (legacy_u16)(line[5] - cx);
+		goto draw_c_after_left;
+	case 4:
+		ax = line[1];
+		cx = sprite1.sprite_left2;
+		line[1] = cx;
+		cx = (legacy_u16)(cx - ax);
+		line[10] = (legacy_u16)(line[10] + cx);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		goto draw_c_after_left;
+	case 5:
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		line[4] = sprite1.sprite_left2;
+		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[1]) - (legacy_s32)LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+		if (difference < 0)
+			advance = 1;
+		else {
+			advance = draw_line_round_div(value32 -
+				((legacy_u32)sprite1.sprite_left2 << 16), line[6]);
+			advance = (legacy_u16)(advance + 1);
+		}
+		original_count = line[7];
+		line[7] = advance;
+		line[11] = (legacy_u16)(line[11] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
+		goto draw_c_after_left;
+	case 6:
+		value32 = ((legacy_u32)sprite1.sprite_left2 << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if (((value32 & 0x80000000UL) != 0))
+			goto draw_c_reject_left;
+		advance = draw_line_round_div(value32, line[6]);
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[10] = (legacy_u16)(line[10] + advance);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
+			goto draw_c_reject_left;
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 += product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		goto draw_c_after_left;
+	case 7:
+		ax = line[1];
+		dx = sprite1.sprite_left2;
+		line[4] = dx;
+		ax = (legacy_u16)(ax - dx);
+		advance = (legacy_u16)(ax + 1);
+		line[7] = advance;
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		value32 += product;
+		value32 += 0x8000UL;
+		old_value = line[5];
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[11] = (legacy_u16)(line[11] + old_value - line[5]);
+		goto draw_c_after_left;
+	case 8:
+		old_value = line[1];
+		line[1] = sprite1.sprite_left2;
+		advance = (legacy_u16)(line[1] - old_value);
+		line[7] = (legacy_u16)(line[7] - advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		value32 += product;
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[10] = (legacy_u16)(line[10] + advance - old_value);
+		goto draw_c_after_left;
+	default:
+		return 0;
+	}
+
+draw_c_after_left:
+	if (clip & 1U)
+		goto draw_c_clip_right;
+	return 0;
+
+draw_c_reject_left:
+	dx = 2;
+	goto draw_c_reject;
+
+draw_c_clip_right:
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		dx = 1;
+		goto draw_c_reject;
+	case 3:
+		cx = line[1];
+		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		line[1] = ax;
+		cx = (legacy_u16)(cx - ax);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[12] = (legacy_u16)(line[12] + cx);
+		return 0;
+	case 4:
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		ax = line[4];
+		line[4] = cx;
+		ax = (legacy_u16)(ax - cx);
+		line[13] = (legacy_u16)(line[13] + ax);
+		line[7] = (legacy_u16)(line[7] - ax);
+		line[5] = (legacy_u16)(line[5] - ax);
+		return 0;
+	case 5:
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= (legacy_u32)(sprite1.sprite_widthsum - 1) << 16;
+		advance = draw_line_round_div(value32, line[6]);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
+			dx = 1;
+			goto draw_c_reject;
+		}
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[12] = (legacy_u16)(line[12] + advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		return 0;
+	case 6:
+		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		value32 = ((legacy_u32)line[4] << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if (((value32 & 0x80000000UL) != 0)) {
+			dx = 1;
+			goto draw_c_reject;
+		}
+		advance = (legacy_u16)(draw_line_round_div(value32, line[6]) + 1);
+		original_count = line[7];
+		line[7] = advance;
+		line[13] = (legacy_u16)(line[13] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
+		return 0;
+	case 7:
+		ax = line[1];
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		ax = (legacy_u16)(ax - cx);
+		line[1] = cx;
+		line[7] = (legacy_u16)(line[7] - ax);
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		value32 += product;
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[12] = (legacy_u16)(line[12] + advance - old_value);
+		return 0;
+	case 8:
+		ax = sprite1.sprite_widthsum;
+		cx = (legacy_u16)(ax - 1);
+		line[4] = cx;
+		ax = (legacy_u16)(ax - line[1]);
+		line[7] = ax;
+		advance = (legacy_u16)(ax - 1);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		value32 += product;
+		value32 += 0x8000UL;
+		old_value = line[5];
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[13] = (legacy_u16)(line[13] + old_value - line[5]);
+		return 0;
+	default:
+		return 0;
+	}
+
+draw_c_reclip_x:
+	dx = 0;
+	ax = line[1];
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+		dx |= 0x0200U;
+	value32 = (legacy_u32)line[0] + 0x8000UL;
+	ax = (legacy_u16)(ax + (legacy_u16)(value32 >> 16));
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum))
+		dx |= 0x0100U;
+	ax = line[4];
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+		dx |= 2;
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum))
+		dx |= 1;
+	if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
+		dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
+		goto draw_c_reject;
+	}
+	dx = (legacy_u16)((legacy_u8)dx | (legacy_u8)(dx >> 8));
+	if (dx != 0) {
+		clip = dx;
+		goto draw_c_dispatch_clip;
+	}
+	return 0;
+
+draw_c_reject:
+	clip = dx & 0x00FFU;
+	line[9] = (legacy_u16)((line[9] & 0x00FFU) | (clip << 8));
+	line[7] = 0;
+	if (clip & 4U) {
+		line[3] = sprite1.sprite_top;
+		line[2] = 0;
+		line[5] = (legacy_u16)(sprite1.sprite_top - 1);
+		return clip;
+	}
+	if (clip & 8U) {
+		line[3] = sprite1.sprite_height;
+		line[2] = 0;
+		return clip;
+	}
+	cx = line[5];
+	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_height))
+		cx = (legacy_u16)(sprite1.sprite_height - 1);
+	value32 = (legacy_u32)line[2] + 0x8000UL;
+	dx = (legacy_u16)(line[3] + (legacy_u16)(value32 >> 16));
+	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_top))
+		dx = sprite1.sprite_top;
+	line[3] = dx;
+	line[2] = 0;
+	cx = (legacy_u16)(cx - dx + 1);
+	line[5] = (legacy_u16)(dx - 1);
+	if (clip & 2U)
+		line[11] = (legacy_u16)(line[11] + cx);
+	else
+		line[13] = (legacy_u16)(line[13] + cx);
+	return clip;
+
+draw_c_horizontal:
+	line[9] = (legacy_u16)((line[9] & 0xFF00U) | 1U);
+	if (cx == dx)
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 9U);
+	if (LEGACY_S16_FROM_BITS(cx) > LEGACY_S16_FROM_BITS(dx)) {
+		line[9] &= 0xFF00U;
+		line[1] = dx;
+		line[4] = cx;
+		bx = cx;
+		cx = dx;
+		dx = bx;
+	}
+	if ((legacy_u16)var_4 != 0) {
+		line[7] = (legacy_u16)(dx - cx + 1);
+		return 0;
+	}
+	bx = sprite1.sprite_top;
+	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
+		line[3] = bx;
+		line[5] = bx;
+		dx = 4;
+		goto draw_c_horizontal_reject;
+	}
+	bx = sprite1.sprite_height;
+	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(bx)) {
+		line[3] = bx;
+		line[5] = bx;
+		dx = 8;
+		goto draw_c_horizontal_reject;
+	}
+	line[7] = (legacy_u16)(dx - cx + 1);
+	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+		line[5] = (legacy_u16)(line[5] - 1);
+		line[11] = 1;
+		dx = 2;
+		goto draw_c_horizontal_reject;
+	}
+	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
+		line[5] = (legacy_u16)(line[5] - 1);
+		line[13] = 1;
+		dx = 1;
+		goto draw_c_horizontal_reject;
+	}
+	ax = (legacy_u16)(sprite1.sprite_left2 - cx);
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		line[1] = sprite1.sprite_left2;
+		line[7] = (legacy_u16)(line[7] - ax);
+	}
+	ax = (legacy_u16)(dx - (sprite1.sprite_widthsum - 1));
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		line[7] = (legacy_u16)(line[7] - ax);
+		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
+	}
+	return 0;
+
+draw_c_horizontal_reject:
+	line[9] = (legacy_u16)((line[9] & 0x00FFU) | ((dx & 0xFFU) << 8));
+	line[7] = 0;
+	return dx & 0xFFU;
+
+draw_c_subdivide:
+	cx = draw_line_sar1(line[5]);
+	ax = draw_line_sar1(line[3]);
+	cx = draw_line_sar1((legacy_u16)(cx - ax));
+	dx = draw_line_sar1(line[4]);
+	ax = draw_line_sar1(line[1]);
+	dx = draw_line_sar1((legacy_u16)(dx - ax));
+
+draw_c_subdivide_top_test:
+	if (LEGACY_S16_FROM_BITS(line[3]) > LEGACY_S16_FROM_BITS(0xC180U))
+		goto draw_c_subdivide_bottom_test;
+draw_c_subdivide_top:
+	ax = (legacy_u16)(line[3] + cx);
+	line[3] = ax;
+	bx = ax;
+	ax = (legacy_u16)(ax - sprite1.sprite_top);
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
+			ax = cx;
+		bx = (legacy_u16)(bx - sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(bx) > 0) {
+			ax = (legacy_u16)(ax - bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+				goto draw_c_subdivide_top_next;
+		}
+		if (LEGACY_S16_FROM_BITS(line[1]) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+			line[10] = (legacy_u16)(line[10] + ax);
+		else
+			line[12] = (legacy_u16)(line[12] + ax);
+	}
+draw_c_subdivide_top_next:
+	line[1] = (legacy_u16)(line[1] + dx);
+	goto draw_c_subdivide_top_test;
+
+draw_c_subdivide_bottom_test:
+	if (LEGACY_S16_FROM_BITS(line[5]) >= LEGACY_S16_FROM_BITS(0x3E80U))
+		goto draw_c_subdivide_bottom;
+	if (LEGACY_S16_FROM_BITS(line[1]) <= LEGACY_S16_FROM_BITS(0xC180U) ||
+		LEGACY_S16_FROM_BITS(line[1]) >= LEGACY_S16_FROM_BITS(0x3E80U))
+		goto draw_c_subdivide_top;
+	if (LEGACY_S16_FROM_BITS(line[4]) <= LEGACY_S16_FROM_BITS(0xC180U) ||
+		LEGACY_S16_FROM_BITS(line[4]) >= LEGACY_S16_FROM_BITS(0x3E80U))
+		goto draw_c_subdivide_bottom;
+	goto draw_c_clip_initial;
+
+draw_c_subdivide_bottom:
+	ax = (legacy_u16)(line[5] - cx);
+	line[5] = ax;
+	bx = ax;
+	ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
+	if (LEGACY_S16_FROM_BITS(ax) < 0) {
+		ax = (legacy_u16)(0U - ax);
+		if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
+			ax = cx;
+		bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
+		if (LEGACY_S16_FROM_BITS(bx) < 0) {
+			ax = (legacy_u16)(ax + bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+				goto draw_c_subdivide_bottom_next;
+		}
+		if (LEGACY_S16_FROM_BITS(line[4]) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2))
+			line[11] = (legacy_u16)(line[11] + ax);
+		else
+			line[13] = (legacy_u16)(line[13] + ax);
+	}
+draw_c_subdivide_bottom_next:
+	line[4] = (legacy_u16)(line[4] - dx);
+	goto draw_c_subdivide_bottom_test;
 }
-#define ASMCASE(prefix, x, y) \
-	asm { cmp bx, x }\
-	asm { jne _no##prefix }\
-	asm { jmp y }\
-	asm { _no##prefix: }\
-
-    ASMCASE(Q1, 0, loc_2ECD9)
-    ASMCASE(Q2, 1, loc_2F01F)
-    ASMCASE(Q3, 2, loc_2EE78)
-    ASMCASE(Q4, 3, loc_2EE78)
-    ASMCASE(Q5, 4, loc_2ECE1)
-    ASMCASE(Q6, 5, loc_2ECE1)
-    ASMCASE(Q7, 6, loc_2ECE1)
-    ASMCASE(Q8, 7, loc_2ECE1)
-    ASMCASE(Q9, 8, loc_2EDA5)
-    ASMCASE(Q0, 9, loc_2EDA5)
-    ASMCASE(QA, 10, loc_2EDA5)
-    ASMCASE(QB, 11, loc_2EDA5)
-    ASMCASE(QC, 12, loc_2ECE1)
-    ASMCASE(QD, 13, loc_2ECE1)
-    ASMCASE(QE, 14, loc_2ECE1)
-    ASMCASE(QF, 15, loc_2ECE1)
-    
-asm {
-    
-    
-/*    shl     bx, 1
-    jz      short loc_2ECD9
-    jmp     cs:off_2ECB9[bx]
-
- off_2ECB9 dw offset loc_2ECD9
-    dw offset loc_2F01F
-    dw offset loc_2EE78
-    dw offset loc_2EE78
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1
-    dw offset loc_2EDA5
-    dw offset loc_2EDA5
-    dw offset loc_2EDA5
-    dw offset loc_2EDA5
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1
-    dw offset loc_2ECE1*/
-}
-loc_2ECD9:
-asm {
-    xor     ax, ax
-    jmp the_end
-
-loc_2ECE1:
-    mov     ax, [si+6]
-    mov     cx, sprite1_sprite_top
-    mov     [si+6], cx
-    sub     cx, ax
-    mov     bl, [si+12h]
-}
-    ASMCASE(WA, 0, 0)
-    ASMCASE(WB, 1, 0)
-    ASMCASE(WC, 2, loc_2ED0A)
-    ASMCASE(WD, 3, loc_2ED10)
-    ASMCASE(WE, 4, loc_2ED19)
-    ASMCASE(WF, 5, loc_2ED22)
-    ASMCASE(WG, 6, loc_2ED32)
-    ASMCASE(WH, 7, loc_2ED42)
-    ASMCASE(WI, 8, loc_2ED7E)
-asm {
-/*    shl     bx, 1
-    jmp     cs:word_2ECF8[bx]
-word_2ECF8     dw 0
-    dw 0
-    dw offset loc_2ED0A
-    dw offset loc_2ED10
-    dw offset loc_2ED19
-    dw offset loc_2ED22
-    dw offset loc_2ED32
-    dw offset loc_2ED42
-    dw offset loc_2ED7E*/
-loc_2ED0A:
-    sub     [si+0Eh], cx
-    jmp     loc_2F13E
-loc_2ED10:
-    sub     [si+2], cx
-    sub     [si+0Eh], cx
-    jmp     loc_2F13E
-loc_2ED19:
-    add     [si+2], cx
-    sub     [si+0Eh], cx
-    jmp     loc_2F13E
-loc_2ED22:
-    mov     ax, [si+0Ch]
-    mul     cx
-    sub     [si], ax
-loc_2ED29:
-    sbb     [si+2], dx
-    sub     [si+0Eh], cx
-    jmp     loc_2F13E
-loc_2ED32:
-    mov     ax, [si+0Ch]
-    mul     cx
-    add     [si], ax
-    adc     [si+2], dx
-    sub     [si+0Eh], cx
-    jmp     loc_2F13E
-loc_2ED42:
-    mov     [si+6], ax
-    mov     dx, cx
-    xor     ax, ax
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    sub     [si+2], ax
-    sub     [si+0Eh], ax
-    jle     short loc_2ED69
-    mul     word ptr [si+0Ch]
-    add     [si+4], ax
-    adc     [si+6], dx
-    jmp     loc_2F13E
-loc_2ED69:
-    mov     word ptr [si+0Eh], 1
-    mov     ax, sprite1_sprite_top
-    mov     [si+6], ax
-    mov     ax, [si+8]
-    mov     [si+2], ax
-    jmp     loc_2F13E
-loc_2ED7E:
-    mov     [si+6], ax
-    mov     dx, cx
-    xor     ax, ax
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    add     [si+2], ax
-    sub     [si+0Eh], ax
-    jle     short loc_2ED69
-    mul     word ptr [si+0Ch]
-    add     [si+4], ax
-    adc     [si+6], dx
-    jmp     loc_2F13E
-loc_2EDA5:
-    mov     cx, [si+0Ah]
-    mov     dx, sprite1_sprite_height
-    dec     dx
-    mov     [si+0Ah], dx
-    sub     cx, dx
-    mov     bl, [si+12h]
-}
-
-
-    ASMCASE(E1, 0, 0)
-    ASMCASE(E2, 1, 0)
-    ASMCASE(E3, 2, loc_2EDCF)
-    ASMCASE(E4, 3, loc_2EDD5)
-    ASMCASE(E5, 4, loc_2EDDE)
-    ASMCASE(E6, 5, loc_2EDE7)
-    ASMCASE(E7, 6, loc_2EE0B)
-    ASMCASE(E8, 7, loc_2EE2A)
-    ASMCASE(E9, 8, loc_2EE53)
-
-asm {
-/*    shl     bx, 1
-    jmp     cs:word_2EDBD[bx]
-word_2EDBD     dw 0
-    dw 0
-    dw offset loc_2EDCF
-    dw offset loc_2EDD5
-    dw offset loc_2EDDE
-    dw offset loc_2EDE7
-    dw offset loc_2EE0B
-    dw offset loc_2EE2A
-    dw offset loc_2EE53*/
-loc_2EDCF:
-    sub     [si+0Eh], cx
-    jmp     loc_2F148
-loc_2EDD5:
-    add     [si+8], cx
-    sub     [si+0Eh], cx
-    jmp     loc_2F148
-loc_2EDDE:
-    sub     [si+8], cx
-    sub     [si+0Eh], cx
-    jmp     loc_2F148
-loc_2EDE7:
-    mov     dx, [si+0Eh]
-    sub     dx, cx
-    mov     [si+0Eh], dx
-    dec     dx
-    mov     ax, [si+0Ch]
-    mul     dx
-    mov     bx, [si]
-    mov     cx, [si+2]
-    sub     bx, ax
-    sbb     cx, dx
-    add     bx, 8000h
-    adc     cx, 0
-    mov     [si+8], cx
-    jmp     loc_2F148
-loc_2EE0B:
-    mov     dx, [si+0Eh]
-    sub     dx, cx
-    mov     [si+0Eh], dx
-    dec     dx
-    mov     ax, [si+0Ch]
-    mul     dx
-    add     ax, [si]
-    adc     dx, [si+2]
-    add     ax, 8000h
-    adc     dx, 0
-    mov     [si+8], dx
-    jmp     loc_2F148
-loc_2EE2A:
-    xor     ax, ax
-    sub     ax, [si+4]
-    sbb     dx, [si+6]
-    jl      short loc_2EE4F
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-loc_2EE40:
-    mov     dx, [si+2]
-    sub     dx, ax
-    mov     [si+8], dx
-    inc     ax
-    mov     [si+0Eh], ax
-    jmp     loc_2F148
-loc_2EE4F:
-    xor     ax, ax
-    jmp     short loc_2EE40
-loc_2EE53:
-    xor     ax, ax
-    sub     ax, [si+4]
-    sbb     dx, [si+6]
-    jl      short loc_2EE4F
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    mov     dx, [si+2]
-    add     dx, ax
-    mov     [si+8], dx
-    inc     ax
-    mov     [si+0Eh], ax
-    jmp     loc_2F148
-loc_2EE78:
-    mov     bl, [si+12h]
-}
-
-    ASMCASE(R1, 0, 0)
-    ASMCASE(R2, 1, 0)
-    ASMCASE(R3, 2, loc_2EF98)
-    ASMCASE(R4, 3, loc_2EE94)
-    ASMCASE(R5, 4, loc_2EEAD)
-    ASMCASE(R6, 5, loc_2EEC6)
-    ASMCASE(R7, 6, loc_2EEFE)
-    ASMCASE(R8, 7, loc_2EF31)
-    ASMCASE(R9, 8, loc_2EF61)
-
-asm {
-/*    shl     bx, 1
-    jmp     cs:word_2EE82[bx]
-word_2EE82     dw 0
-    dw 0
-    dw offset loc_2EF98
-    dw offset loc_2EE94
-    dw offset loc_2EEAD
-    dw offset loc_2EEC6
-    dw offset loc_2EEFE
-    dw offset loc_2EF31
-    dw offset loc_2EF61*/
-loc_2EE94:
-    mov     cx, sprite1_sprite_left2
-    mov     ax, [si+8]
-    mov     [si+8], cx
-    sub     cx, ax
-    add     [si+16h], cx
-    sub     [si+0Eh], cx
-    sub     [si+0Ah], cx
-    jmp     loc_2F196
-loc_2EEAD:
-    mov     ax, [si+2]
-    mov     cx, sprite1_sprite_left2
-    mov     [si+2], cx
-    sub     cx, ax
-    add     [si+14h], cx
-    add     [si+6], cx
-    sub     [si+0Eh], cx
-    jmp     loc_2F196
-loc_2EEC6:
-    mov     ax, [si]
-    mov     dx, [si+2]
-    mov     cx, sprite1_sprite_left2
-    mov     [si+8], cx
-    sub     dx, cx
-    jl      short loc_2EEF9
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    inc     ax
-loc_2EEE4:
-    mov     cx, [si+0Eh]
-    mov     [si+0Eh], ax
-    sub     cx, ax
-    add     [si+16h], cx
-    dec     ax
-    add     ax, [si+6]
-    mov     [si+0Ah], ax
-    jmp     loc_2F196
-loc_2EEF9:
-    mov     ax, 1
-    jmp     short loc_2EEE4
-loc_2EEFE:
-    mov     dx, sprite1_sprite_left2
-    xor     ax, ax
-    sub     ax, [si]
-    sbb     dx, [si+2]
-    jl      short loc_2EF2E
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    add     [si+6], ax
-    add     [si+14h], ax
-    sub     [si+0Eh], ax
-    jle     short loc_2EF98
-    mul     word ptr [si+0Ch]
-    add     [si], ax
-    adc     [si+2], dx
-    jmp     loc_2F196
-loc_2EF2E:
-    jmp     short loc_2EF98
-    nop
-loc_2EF31:
-    mov     ax, [si+2]
-    mov     dx, sprite1_sprite_left2
-    mov     [si+8], dx
-    sub     ax, dx
-    mov     cx, ax
-    inc     cx
-    mov     [si+0Eh], cx
-    mul     word ptr [si+0Ch]
-    add     ax, [si+4]
-    adc     dx, [si+6]
-    add     ax, 8000h
-    adc     dx, 0
-    mov     ax, [si+0Ah]
-    sub     ax, dx
-    mov     [si+0Ah], dx
-    add     [si+16h], ax
-    jmp     loc_2F196
-loc_2EF61:
-    mov     cx, [si+2]
-    mov     ax, sprite1_sprite_left2
-    mov     [si+2], ax
-    sub     ax, cx
-    sub     [si+0Eh], ax
-    mul     word ptr [si+0Ch]
-    mov     bx, [si+4]
-    mov     cx, [si+6]
-    add     ax, bx
-    adc     dx, cx
-    mov     [si+4], ax
-    mov     [si+6], dx
-    add     bx, 8000h
-    adc     cx, 0
-    add     ax, 8000h
-    adc     dx, 0
-    sub     dx, cx
-    add     [si+14h], dx
-    jmp     loc_2F196
-loc_2EF98:
-    mov     dx, 2
-loc_2EF9B:
-    mov     [si+13h], dl
-    mov     word ptr [si+0Eh], 0
-    mov     al, [si+13h]
-    test    al, 4
-    jz      short loc_2EFBE
-    mov     bx, sprite1_sprite_top
-    mov     [si+6], bx
-    mov     word ptr [si+4], 0
-    dec     bx
-    mov     [si+0Ah], bx
-    jmp     short loc_2F017
-
-loc_2EFBE:
-    test    al, 8
-    jz      short loc_2EFD2
-    mov     bx, sprite1_sprite_height
-    mov     [si+6], bx
-    mov     word ptr [si+4], 0
-    jmp     short loc_2F017
-
-loc_2EFD2:
-    mov     cx, [si+0Ah]
-    cmp     cx, sprite1_sprite_height
-    jl      short loc_2EFE2
-    mov     cx, sprite1_sprite_height
-    dec     cx
-loc_2EFE2:
-    mov     dx, [si+6]
-    mov     bx, [si+4]
-    add     bx, 8000h
-    adc     dx, 0
-    cmp     dx, sprite1_sprite_top
-    jge     short loc_2EFFB
-    mov     dx, sprite1_sprite_top
-loc_2EFFB:
-    mov     [si+6], dx
-    mov     word ptr [si+4], 0
-    sub     cx, dx
-    dec     dx
-    inc     cx
-    mov     [si+0Ah], dx
-    test    al, 2
-    jz      short loc_2F014
-    add     [si+16h], cx
-    jmp     short loc_2F017
-
-loc_2F014:
-    add     [si+1Ah], cx
-loc_2F017:
-    xor     ah, ah
-
-    jmp the_end
-
-loc_2F01F:
-    mov     bl, [si+12h]
-loc_2F022:
-    xor     bh, bh
-}    
-    ASMCASE(T1, 0, 0)
-    ASMCASE(T2, 1, 0)
-    ASMCASE(T3, 2, loc_2F03D)
-    ASMCASE(T4, 3, loc_2F043)
-    ASMCASE(T5, 4, loc_2F05C)
-    ASMCASE(T6, 5, loc_2F076)
-    ASMCASE(T7, 6, loc_2F0A3)
-    ASMCASE(T8, 7, loc_2F0D7)
-    ASMCASE(T9, 8, loc_2F110)
-
-asm {
-/*    shl     bx, 1
-    jmp     cs:word_2F02B[bx]
-word_2F02B     dw 0
-    dw 0
-    dw offset loc_2F03D
-    dw offset loc_2F043
-    dw offset loc_2F05C
-    dw offset loc_2F076
-    dw offset loc_2F0A3
-    dw offset loc_2F0D7
-    dw offset loc_2F110*/
-loc_2F03D:
-    mov     dx, 1
-    jmp     loc_2EF9B
-loc_2F043:
-    mov     cx, [si+2]
-    mov     ax, sprite1_sprite_widthsum
-    dec     ax
-    mov     [si+2], ax
-    sub     cx, ax
-    add     [si+6], cx
-    sub     [si+0Eh], cx
-    add     [si+18h], cx
-    jmp     loc_2ECD9
-loc_2F05C:
-    mov     cx, sprite1_sprite_widthsum
-    dec     cx
-    mov     ax, [si+8]
-    mov     [si+8], cx
-    sub     ax, cx
-    add     [si+1Ah], ax
-    sub     [si+0Eh], ax
-    sub     [si+0Ah], ax
-    jmp     loc_2ECD9
-loc_2F076:
-    mov     ax, [si]
-    mov     dx, [si+2]
-    sub     dx, sprite1_sprite_widthsum
-    inc     dx
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    sub     [si+0Eh], ax
-    jle     short loc_2F03D
-    add     [si+6], ax
-    add     [si+18h], ax
-    mul     word ptr [si+0Ch]
-    sub     [si], ax
-    sbb     [si+2], dx
-    jmp     loc_2ECD9
-loc_2F0A3:
-    mov     dx, sprite1_sprite_widthsum
-    dec     dx
-    mov     [si+8], dx
-    xor     ax, ax
-    sub     ax, [si]
-    sbb     dx, [si+2]
-loc_2F0B3:
-    jl      short loc_2F03D
-    mov     cx, [si+0Ch]
-    div     cx
-    shr     cx, 1
-    sub     cx, dx
-    adc     ax, 0
-    inc     ax
-    mov     cx, [si+0Eh]
-    mov     [si+0Eh], ax
-    sub     cx, ax
-    add     [si+1Ah], cx
-    dec     ax
-    add     ax, [si+6]
-    mov     [si+0Ah], ax
-    jmp     loc_2ECD9
-
-loc_2F0D7:
-    mov     ax, [si+2]
-    mov     cx, sprite1_sprite_widthsum
-    dec     cx
-    sub     ax, cx
-    mov     [si+2], cx
-    sub     [si+0Eh], ax
-    mul     word ptr [si+0Ch]
-    mov     bx, [si+4]
-    mov     cx, [si+6]
-    add     ax, bx
-    adc     dx, cx
-    mov     [si+4], ax
-    mov     [si+6], dx
-    add     bx, 8000h
-    adc     cx, 0
-    add     ax, 8000h
-    adc     dx, 0
-    sub     dx, cx
-    add     [si+18h], dx
-    jmp     loc_2ECD9
-loc_2F110:
-    mov     ax, sprite1_sprite_widthsum
-    mov     cx, ax
-    dec     cx
-    mov     [si+8], cx
-    sub     ax, [si+2]
-    mov     [si+0Eh], ax
-    dec     ax
-    mul     word ptr [si+0Ch]
-    add     ax, [si+4]
-    adc     dx, [si+6]
-    add     ax, 8000h
-    adc     dx, 0
-    mov     ax, [si+0Ah]
-    sub     ax, dx
-    mov     [si+0Ah], dx
-    add     [si+1Ah], ax
-    jmp     loc_2ECD9
-
-loc_2F13E:
-    test    word ptr [var_2], 8
-    jz      short loc_2F148
-    jmp     loc_2EDA5
-loc_2F148:
-    xor     dx, dx
-    mov     ax, [si+2]
-    cmp     ax, sprite1_sprite_left2
-    jge     short loc_2F157
-    or      dh, 2
-loc_2F157:
-    mov     bx, [si]
-    add     bx, 8000h
-    adc     ax, 0
-    cmp     ax, sprite1_sprite_widthsum
-    jl      short loc_2F16A
-    or      dh, 1
-loc_2F16A:
-    mov     ax, [si+8]
-    cmp     ax, sprite1_sprite_left2
-    jge     short loc_2F177
-    or      dl, 2
-loc_2F177:
-    cmp     ax, sprite1_sprite_widthsum
-    jl      short loc_2F181
-    or      dl, 1
-loc_2F181:
-    test    dl, dh
-    jz      short loc_2F18A
-    and     dl, dh
-    jmp     loc_2EF9B
-loc_2F18A:
-    or      dl, dh
-    jz      short loc_2F1A0
-    xor     dh, dh
-    mov     [var_2], dx
-    jmp     loc_2ECAD
-loc_2F196:
-    test    word ptr [var_2], 1
-    jz      short loc_2F1A0
-    jmp     loc_2F01F
-loc_2F1A0:
-    jmp     loc_2ECD9
-loc_2F1A3:
-    mov     byte ptr [si+12h], 1
-    cmp     cx, dx
-    jnz     short loc_2F1AF
-    mov     byte ptr [si+12h], 9
-loc_2F1AF:
-    jle     short loc_2F1BD
-    mov     byte ptr [si+12h], 0
-    mov     [si+2], dx
-    mov     [si+8], cx
-    xchg    cx, dx
-loc_2F1BD:
-    cmp     word ptr [var_4], 0
-    jnz     short loc_2F1E4
-    mov     bx, sprite1_sprite_top
-    cmp     ax, bx
-    jge     short loc_2F1ED
-    mov     al, 4
-    mov     [si+6], bx
-    mov     [si+0Ah], bx
-loc_2F1D4:
-    mov     [si+13h], al
-    mov     word ptr [si+0Eh], 0
-    xor     ah, ah
-
-    jmp the_end
-
-loc_2F1E4:
-    sub     dx, cx
-    inc     dx
-    mov     [si+0Eh], dx
-    jmp     loc_2ECD9
-loc_2F1ED:
-    mov     bx, sprite1_sprite_height
-    cmp     ax, bx
-    jl      short loc_2F200
-    mov     al, 8
-    mov     [si+6], bx
-    mov     [si+0Ah], bx
-    jmp     short loc_2F1D4
-loc_2F200:
-    mov     ax, dx
-    sub     ax, cx
-    inc     ax
-    mov     [si+0Eh], ax
-    cmp     dx, sprite1_sprite_left2
-    jge     short loc_2F21B
-    dec     word ptr [si+0Ah]
-    mov     word ptr [si+16h], 1
-    mov     al, 2
-    jmp     short loc_2F1D4
-loc_2F21B:
-    cmp     cx, sprite1_sprite_widthsum
-    jl      short loc_2F22E
-    dec     word ptr [si+0Ah]
-    mov     word ptr [si+1Ah], 1
-    mov     al, 1
-    jmp     short loc_2F1D4
-loc_2F22E:
-    mov     ax, sprite1_sprite_left2
-    mov     bx, ax
-    sub     ax, cx
-    jle     short loc_2F23E
-    mov     [si+2], bx
-    sub     [si+0Eh], ax
-loc_2F23E:
-    mov     ax, dx
-    mov     bx, sprite1_sprite_widthsum
-    dec     bx
-    sub     ax, bx
-    jle     short loc_2F250
-    sub     [si+0Eh], ax
-    mov     [si+8], bx
-loc_2F250:
-    jmp     loc_2ECD9
-loc_2F253:
-    mov     cx, [si+0Ah]
-    sar     cx, 1
-    mov     ax, [si+6]
-    sar     ax, 1
-    sub     cx, ax
-    sar     cx, 1
-    mov     dx, [si+8]
-    sar     dx, 1
-    mov     ax, [si+2]
-    sar     ax, 1
-    sub     dx, ax
-    sar     dx, 1
-loc_2F26F:
-    cmp     word ptr [si+6], 0C180h
-    jg      short loc_2F2B0
-loc_2F276:
-    mov     ax, [si+6]
-    add     ax, cx
-    mov     [si+6], ax
-    mov     bx, ax
-    sub     ax, sprite1_sprite_top
-    jle     short loc_2F2AB
-    cmp     ax, cx
-    jle     short loc_2F28D
-    mov     ax, cx
-loc_2F28D:
-    sub     bx, sprite1_sprite_height
-    jle     short loc_2F298
-    sub     ax, bx
-    jle     short loc_2F2AB
-loc_2F298:
-    mov     bx, [si+2]
-    cmp     bx, sprite1_sprite_left2
-    jge     short loc_2F2A8
-    add     [si+14h], ax
-    jmp     short loc_2F2AB
-
-loc_2F2A8:
-    add     [si+18h], ax
-loc_2F2AB:
-    add     [si+2], dx
-    jmp     short loc_2F26F
-loc_2F2B0:
-    cmp     word ptr [si+0Ah], 3E80h
-    jge     short loc_2F2D6
-    cmp     word ptr [si+2], 0C180h
-    jle     short loc_2F276
-    cmp     word ptr [si+2], 3E80h
-    jge     short loc_2F276
-    cmp     word ptr [si+8], 0C180h
-    jle     short loc_2F2D6
-    cmp     word ptr [si+8], 3E80h
-    jge     short loc_2F2D6
-    jmp     loc_2EBAD
-loc_2F2D6:
-    mov     ax, [si+0Ah]
-    sub     ax, cx
-    mov     [si+0Ah], ax
-    mov     bx, ax
-    sub     ax, sprite1_sprite_height
-    inc     ax
-    jge     short loc_2F30F
-    neg     ax
-    cmp     ax, cx
-    jle     short loc_2F2F0
-    mov     ax, cx
-loc_2F2F0:
-    sub     bx, sprite1_sprite_top
-    inc     bx
-    jge     short loc_2F2FC
-    add     ax, bx
-    jle     short loc_2F30F
-loc_2F2FC:
-    mov     bx, [si+8]
-    cmp     bx, sprite1_sprite_left2
-    jge     short loc_2F30C
-    add     [si+16h], ax
-    jmp     short loc_2F30F
-
-loc_2F30C:
-    add     [si+1Ah], ax
-loc_2F30F:
-    sub     [si+8], dx
-    jmp     short loc_2F2B0
-}
-
-the_end:
-asm {
-	mov result, ax
-}
-	return result;
-}
-
-
 
 extern char aStxxx[];
 extern short far* carresptr;
