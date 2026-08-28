@@ -1,5 +1,5 @@
 seg001 segment byte public 'STUNTSC' use16
-    extrn opponent_op:proc
+    extrn ported_opponent_op_:proc
     extrn ported_mat_mul_vector2_:proc
     extrn ported_update_player_state_:proc
     extrn ported_init_carstate_from_simd_:proc

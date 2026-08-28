@@ -46,7 +46,7 @@ nosmart
 seg001 segment byte public 'STUNTSC' use16
     assume cs:seg001
     assume es:nothing, ss:nothing, ds:dseg
-    public opponent_op
+    public ported_opponent_op_
     public ported_mat_mul_vector2_
     public ported_update_player_state_
     public ported_init_carstate_from_simd_
@@ -74,7 +74,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_state_op_unk_
     public ported_sub_19BA0_
     public ported_setup_aero_trackdata_
-opponent_op proc far
+ported_opponent_op_ proc far
     var_40 = word ptr -64
     var_3E = word ptr -62
     var_3C = word ptr -60
@@ -107,9 +107,8 @@ opponent_op proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 40h
+    jmp     opponent_op
+    nop
     push    di
     push    si
     cmp     framespersec, 14h
@@ -808,7 +807,7 @@ loc_14D66:
     mov     sp, bp
     pop     bp
     retf
-opponent_op endp
+ported_opponent_op_ endp
 ported_mat_mul_vector2_ proc far
     var_mat = byte ptr -18
      s = byte ptr 0
@@ -4480,7 +4479,7 @@ loc_170BE:
     cmp     gameconfig.game_opponenttype, 0
     jz      short loc_170DC
     push    cs
-    call near ptr opponent_op
+    call near ptr ported_opponent_op_
 loc_170DC:
     call far ptr sub_2298C
     cmp     state.field_42A, 0
