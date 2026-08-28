@@ -346,7 +346,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_3424B
     public shape2d_op_unk4
     public loc_34311
-    public sprite_putimage_transparent
+    public ported_sprite_putimage_transparent_
     public loc_343E9
     public ported_sub_34526_
     public loc_34541
@@ -12918,7 +12918,7 @@ loc_34388:
     ; align 2
     db 144
 shape2d_op_unk4 endp
-sprite_putimage_transparent proc far
+ported_sprite_putimage_transparent_ proc far
     var_bmpptr = word ptr -12
     var_A = word ptr -10
     var_8 = word ptr -8
@@ -12931,9 +12931,8 @@ sprite_putimage_transparent proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     sprite_putimage_transparent
+    nop
     push    ds
     push    si
     push    di
@@ -13110,7 +13109,7 @@ loc_344DC:
     jmp     short loc_34541
     ; align 2
     db 144
-sprite_putimage_transparent endp
+ported_sprite_putimage_transparent_ endp
 ported_sub_34526_ proc far
     var_8 = word ptr -8
     var_6 = word ptr -6
