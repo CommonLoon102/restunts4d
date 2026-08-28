@@ -324,7 +324,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_33B1D
     public nopsub_33B98
     public sprite_putimage_and_alt
-    public sprite_putimage
+    public ported_sprite_putimage_
     public loc_33BF5
     public nopsub_33D0C
     public ported_sprite_shape_to_1_
@@ -11764,7 +11764,7 @@ sprite_putimage_and_alt proc far
     ; align 2
     db 144
 sprite_putimage_and_alt endp
-sprite_putimage proc far
+ported_sprite_putimage_ proc far
     var_E = word ptr -14
     var_bitmap = word ptr -12
     var_A = word ptr -10
@@ -11777,9 +11777,8 @@ sprite_putimage proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage
+    nop
     push    ds
     push    si
     push    di
@@ -11917,7 +11916,7 @@ loc_33D02:
     dec     dx
     jg      short loc_33D02
     jmp     loc_33C14
-sprite_putimage endp
+ported_sprite_putimage_ endp
 nopsub_33D0C proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

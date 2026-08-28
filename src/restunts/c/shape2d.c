@@ -965,49 +965,157 @@ void sprite_clear_1_color(unsigned char color) {
 	}
 }
 
-#if 0
-void sprite_putimage(struct SHAPE2D far* shape) {
+struct SHAPE2D_CLIP {
+	legacy_u16 source;
+	legacy_u16 source_advance;
+	legacy_u16 destination;
+	legacy_u16 destination_advance;
+	legacy_u16 width;
+	legacy_u16 rows;
+};
 
-	int lines, widthdiff, i, j;
-	unsigned int ofs;
-	unsigned char far* destbitmapptr;
-	unsigned int far* destlineofs;
-	unsigned char far* srcbitmapptr;
-	ported_sprite_putimage_(shape);
-	return ;
-/*
-	this fails in the opponent car selector on the overlaid opponent bitmap:
+static int shape2d_clip_blit(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y, struct SHAPE2D_CLIP* clip)
+{
+	legacy_u8 far* shape_bytes;
+	legacy_u16 width;
+	legacy_u16 height;
+	legacy_u16 source;
+	legacy_u16 clipped_rows;
+	legacy_u16 visible;
+	legacy_u16 overflow;
+	legacy_u16 sprite_width;
+	legacy_u16 sum;
 
-	destbitmapptr = (unsigned char far*)sprite1.sprite_bitmapptr;
-	destlineofs = MK_FP(FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
-	srcbitmapptr = ((unsigned char far*)shape) + sizeof(struct SHAPE2D);
-
-	if (shape->s2d_pos_y + shape->s2d_height > sprite1.sprite_height) {
-		lines = sprite1.sprite_height - shape->s2d_pos_y;
-	} else {
-		lines = shape->s2d_height;
-	}
-
-	ofs = destlineofs[shape->s2d_pos_y] + shape->s2d_pos_x;
-	widthdiff = sprite1.sprite_pitch - shape->s2d_width;
-
-	for (i = 0; i < lines; i++) {
-		for (j = 0; j < shape->s2d_width; j++) {
-			destbitmapptr[ofs ++] = *srcbitmapptr++;
+	shape_bytes = (legacy_u8 far*)shape;
+	width = shape2d_get_word(shape_bytes);
+	height = shape2d_get_word(shape_bytes + 2U);
+	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
+		(legacy_u16)sizeof(struct SHAPE2D));
+	clipped_rows = height;
+	if (LEGACY_S16_FROM_BITS(y) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_top)) {
+		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
+		if (LEGACY_S16_FROM_BITS(sum) <=
+			LEGACY_S16_FROM_BITS(sprite1.sprite_top))
+			return 0;
+		visible = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_top);
+		overflow = LEGACY_U16_WRAP_SUB(clipped_rows, visible);
+		source = LEGACY_U16_WRAP_ADD(source,
+			(legacy_u16)((legacy_u32)overflow * width));
+		clipped_rows = visible;
+		y = sprite1.sprite_top;
+		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
+		if (LEGACY_S16_FROM_BITS(sum) >
+			LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
+			overflow = LEGACY_U16_WRAP_SUB(
+				sum, sprite1.sprite_height);
+			if (LEGACY_S16_FROM_BITS(clipped_rows) <=
+				LEGACY_S16_FROM_BITS(overflow))
+				return 0;
+			clipped_rows = LEGACY_U16_WRAP_SUB(
+				clipped_rows, overflow);
 		}
-		ofs += widthdiff;
+	} else {
+		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
+		if (LEGACY_S16_FROM_BITS(sum) >
+			LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
+			overflow = LEGACY_U16_WRAP_SUB(
+				sum, sprite1.sprite_height);
+			if (LEGACY_S16_FROM_BITS(clipped_rows) <=
+				LEGACY_S16_FROM_BITS(overflow))
+				return 0;
+			clipped_rows = LEGACY_U16_WRAP_SUB(
+				clipped_rows, overflow);
+		}
 	}
-	*/
+
+	visible = width;
+	clip->source_advance = 0;
+	if (LEGACY_S16_FROM_BITS(x) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_left)) {
+		sum = LEGACY_U16_WRAP_ADD(x, visible);
+		if (LEGACY_S16_FROM_BITS(sum) <=
+			LEGACY_S16_FROM_BITS(sprite1.sprite_left))
+			return 0;
+		visible = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_left);
+		overflow = LEGACY_U16_WRAP_SUB(width, visible);
+		source = LEGACY_U16_WRAP_ADD(source, overflow);
+		sprite_width = LEGACY_U16_WRAP_SUB(
+			sprite1.sprite_right, sprite1.sprite_left);
+		if (LEGACY_S16_FROM_BITS(sprite1.sprite_right) <=
+			LEGACY_S16_FROM_BITS(sprite1.sprite_left))
+			return 0;
+		if (LEGACY_S16_FROM_BITS(visible) >=
+			LEGACY_S16_FROM_BITS(sprite_width))
+			visible = sprite_width;
+		clip->source_advance = LEGACY_U16_WRAP_SUB(width, visible);
+		x = sprite1.sprite_left;
+	} else {
+		sum = LEGACY_U16_WRAP_ADD(x, visible);
+		if (LEGACY_S16_FROM_BITS(sum) >=
+			LEGACY_S16_FROM_BITS(sprite1.sprite_right)) {
+			overflow = LEGACY_U16_WRAP_SUB(
+				sum, sprite1.sprite_right);
+			if (LEGACY_S16_FROM_BITS(visible) <=
+				LEGACY_S16_FROM_BITS(overflow))
+				return 0;
+			visible = LEGACY_U16_WRAP_SUB(visible, overflow);
+			clip->source_advance = overflow;
+		}
+	}
+	if (LEGACY_S16_FROM_BITS(visible) <= 0)
+		return 0;
+
+	clip->source = source;
+	clip->destination = LEGACY_U16_WRAP_ADD(
+		shape2d_get_line_offset(FP_SEG(&sprite1), y), x);
+	clip->destination_advance = LEGACY_U16_WRAP_SUB(
+		sprite1.sprite_pitch, visible);
+	clip->width = visible;
+	clip->rows = clipped_rows;
+	return 1;
 }
 
-void sprite_putimage_and(struct SHAPE2D far* shape, unsigned short a, unsigned short b) {
-	ported_sprite_putimage_and_(shape, a, b);
-}
+void sprite_putimage(struct SHAPE2D far* shape)
+{
+	struct SHAPE2D_CLIP clip;
+	legacy_u8 far* shape_bytes;
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* bitmap;
+	legacy_u16 shape_segment;
+	legacy_u16 column_count;
+	legacy_u16 row_count;
+	legacy_u16 old_row_count;
 
-void sprite_putimage_or(struct SHAPE2D far* shape, unsigned short a, unsigned short b) {
-	ported_sprite_putimage_or_(shape, a, b);
+	shape_bytes = (legacy_u8 far*)shape;
+	if (!shape2d_clip_blit(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU), &clip))
+		return;
+	shape_segment = FP_SEG(shape);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	row_count = clip.rows;
+	do {
+		column_count = clip.width;
+		do {
+			source_ptr = (legacy_u8 far*)MK_FP(
+				shape_segment, clip.source);
+			bitmap[clip.destination] = *source_ptr;
+			clip.source++;
+			clip.destination++;
+			column_count--;
+		} while (column_count != 0);
+		clip.source = LEGACY_U16_WRAP_ADD(
+			clip.source, clip.source_advance);
+		clip.destination = LEGACY_U16_WRAP_ADD(
+			clip.destination, clip.destination_advance);
+		old_row_count = row_count;
+		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
+	} while (old_row_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
-#endif
 
 void setup_mcgawnd1(void) {
 	if (!mcgawndsprite) {

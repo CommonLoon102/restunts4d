@@ -152,7 +152,7 @@ extrn sprite_copy_wnd_to_1_clear:proc
 extrn sprite_copy_both_to_arg:proc
 extrn sprite_copy_arg_to_both:proc
 extrn sprite_clear_1_color:proc
-;extrn sprite_putimage:proc
+extrn sprite_putimage:proc
 ;extrn sprite_putimage_and:proc
 ;extrn sprite_putimage_or:proc
 extrn setup_mcgawnd1:proc
