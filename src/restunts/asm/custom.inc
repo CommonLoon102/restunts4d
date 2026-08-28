@@ -425,6 +425,10 @@ extrn nopsub_339FA:proc
 extrn nopsub_33AC0:proc
 extrn nopsub_33AE4:proc
 extrn nopsub_33B98:proc
+extrn nopsub_33D0C:proc
+extrn nopsub_33DBE:proc
+extrn nopsub_33E90:proc
+extrn nopsub_34736:proc
 extrn sprite_shape_to_1:proc
 extrn sprite_shape_to_1_alt:proc
 

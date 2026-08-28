@@ -279,16 +279,16 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sprite_putimage_and_alt_:proc
     extrn ported_sprite_putimage_:proc
     extrn loc_33BF5:proc
-    extrn nopsub_33D0C:proc
+    extrn ported_nopsub_33D0C_:proc
     extrn ported_sprite_shape_to_1_:proc
     extrn ported_sprite_shape_to_1_alt_:proc
     extrn loc_33D69:proc
-    extrn nopsub_33DBE:proc
+    extrn ported_nopsub_33DBE_:proc
     extrn ported_shape2d_op_unk5_:proc
     extrn ported_shape2d_op_unk_:proc
     extrn loc_33E1B:proc
     extrn loc_33E27:proc
-    extrn nopsub_33E90:proc
+    extrn ported_nopsub_33E90_:proc
     extrn ported_shape2d_op_unk2_:proc
     extrn ported_shape2d_op_unk3_:proc
     extrn loc_33EED:proc
@@ -308,7 +308,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn video_set_palette:proc
     extrn loc_346A8:proc
     extrn ported_draw_filled_lines_:proc
-    extrn nopsub_34736:proc
+    extrn ported_nopsub_34736_:proc
     extrn ported_sprite_clear_shape_alt_:proc
     extrn ported_sprite_clear_shape_:proc
     extrn loc_34799:proc

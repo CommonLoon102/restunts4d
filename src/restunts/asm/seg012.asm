@@ -326,16 +326,16 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_putimage_and_alt_
     public ported_sprite_putimage_
     public loc_33BF5
-    public nopsub_33D0C
+    public ported_nopsub_33D0C_
     public ported_sprite_shape_to_1_
     public ported_sprite_shape_to_1_alt_
     public loc_33D69
-    public nopsub_33DBE
+    public ported_nopsub_33DBE_
     public ported_shape2d_op_unk5_
     public ported_shape2d_op_unk_
     public loc_33E1B
     public loc_33E27
-    public nopsub_33E90
+    public ported_nopsub_33E90_
     public ported_shape2d_op_unk2_
     public ported_shape2d_op_unk3_
     public loc_33EED
@@ -355,7 +355,7 @@ seg012 segment byte public 'STUNTSC' use16
     public video_set_palette
     public loc_346A8
     public ported_draw_filled_lines_
-    public nopsub_34736
+    public ported_nopsub_34736_
     public ported_sprite_clear_shape_alt_
     public ported_sprite_clear_shape_
     public loc_34799
@@ -11884,7 +11884,7 @@ loc_33D02:
     jg      short loc_33D02
     jmp     loc_33C14
 ported_sprite_putimage_ endp
-nopsub_33D0C proc far
+ported_nopsub_33D0C_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11894,9 +11894,8 @@ nopsub_33D0C proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     nopsub_33D0C
+    nop
     push    ds
     push    si
     push    di
@@ -11911,7 +11910,7 @@ nopsub_33D0C proc far
     jmp     short loc_33D69
     ; align 2
     db 144
-nopsub_33D0C endp
+ported_nopsub_33D0C_ endp
 ported_sprite_shape_to_1_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -12004,7 +12003,7 @@ loc_33DB5:
     ; align 2
     db 0
 ported_sprite_shape_to_1_alt_ endp
-nopsub_33DBE proc far
+ported_nopsub_33DBE_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -12014,9 +12013,8 @@ nopsub_33DBE proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     nopsub_33DBE
+    nop
     push    ds
     push    si
     push    di
@@ -12031,7 +12029,7 @@ nopsub_33DBE proc far
     jmp     short loc_33E1B
     ; align 2
     db 144
-nopsub_33DBE endp
+ported_nopsub_33DBE_ endp
 ported_shape2d_op_unk5_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -12142,7 +12140,7 @@ loc_33E8B:
     ; align 2
     db 0
 ported_shape2d_op_unk_ endp
-nopsub_33E90 proc far
+ported_nopsub_33E90_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -12152,9 +12150,8 @@ nopsub_33E90 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     nopsub_33E90
+    nop
     push    ds
     push    si
     push    di
@@ -12169,7 +12166,7 @@ nopsub_33E90 proc far
     jmp     short loc_33EED
     ; align 2
     db 144
-nopsub_33E90 endp
+ported_nopsub_33E90_ endp
 ported_shape2d_op_unk2_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
@@ -13375,7 +13372,7 @@ loc_34730:
     ; align 2
     db 0
 ported_draw_filled_lines_ endp
-nopsub_34736 proc far
+ported_nopsub_34736_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -13385,9 +13382,8 @@ nopsub_34736 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     nopsub_34736
+    nop
     push    ds
     push    si
     push    di
@@ -13402,7 +13398,7 @@ nopsub_34736 proc far
     jmp     short loc_34799
     ; align 2
     db 144
-nopsub_34736 endp
+ported_nopsub_34736_ endp
 ported_sprite_clear_shape_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

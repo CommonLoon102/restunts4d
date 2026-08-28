@@ -775,6 +775,16 @@ void sprite_clear_shape(struct SHAPE2D far* shape)
 		shape2d_get_word(shape_bytes + 0x0AU));
 }
 
+void nopsub_34736(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_clear_shape_impl(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)));
+}
+
 static legacy_u16 shape2d_scaled_anchor(legacy_u16 anchor,
 	legacy_u16 scale)
 {
@@ -1004,6 +1014,16 @@ void sprite_shape_to_1_alt(struct SHAPE2D far* shape)
 	sprite_shape_to_1_impl(shape,
 		shape2d_get_word(shape_bytes + 8U),
 		shape2d_get_word(shape_bytes + 0x0AU));
+}
+
+void nopsub_33D0C(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_shape_to_1_impl(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)));
 }
 
 static void putpixel_icon_combine(struct SHAPE2D far* shape,
@@ -1658,6 +1678,17 @@ void shape2d_op_unk(struct SHAPE2D far* shape)
 		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_COPY);
 }
 
+void nopsub_33DBE(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
+		SHAPE2D_RLE_COPY);
+}
+
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
 	int pages, i;
 	char* wnd;
@@ -2125,6 +2156,16 @@ void shape2d_op_unk3(struct SHAPE2D far* shape)
 	shape2d_render_rle_clipped(shape,
 		shape2d_get_word(shape_bytes + 8U),
 		shape2d_get_word(shape_bytes + 0x0AU));
+}
+
+void nopsub_33E90(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle_clipped(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)));
 }
 
 static void sprite_putimage_at(struct SHAPE2D far* shape,
