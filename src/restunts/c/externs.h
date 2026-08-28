@@ -374,8 +374,6 @@ extern void sprite_set_1_size(legacy_u16 left, legacy_u16 right, legacy_u16 top,
 extern void sprite_clear_1_color(legacy_u8);
 extern legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode);
 
-extern legacy_s16 intr0_handler(void);
-extern legacy_s16 (far* old_intr0_handler)(void);
 extern void timer_setup_interrupt(void);
 extern legacy_u32 timer_get_delta_alt(void);
 extern legacy_u32 sub_2EAD4(void);
