@@ -293,7 +293,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn shape2d_op_unk3:proc
     extrn loc_33EED:proc
     extrn sprite_putimage_or_alt:proc
-    extrn sprite_putimage_or:proc
+    extrn ported_sprite_putimage_or_:proc
     extrn loc_340BD:proc
     extrn putpixel_iconFillings:proc
     extrn loc_3424B:proc

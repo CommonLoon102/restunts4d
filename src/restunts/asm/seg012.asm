@@ -340,7 +340,7 @@ seg012 segment byte public 'STUNTSC' use16
     public shape2d_op_unk3
     public loc_33EED
     public sprite_putimage_or_alt
-    public sprite_putimage_or
+    public ported_sprite_putimage_or_
     public loc_340BD
     public putpixel_iconFillings
     public loc_3424B
@@ -12477,7 +12477,7 @@ sprite_putimage_or_alt proc far
     ; align 2
     db 144
 sprite_putimage_or_alt endp
-sprite_putimage_or proc far
+ported_sprite_putimage_or_ proc far
     var_E = word ptr -14
     var_C = word ptr -12
     var_A = word ptr -10
@@ -12492,9 +12492,8 @@ sprite_putimage_or proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     sprite_putimage_or
+    nop
     push    ds
     push    si
     push    di
@@ -12686,7 +12685,7 @@ loc_341E0:
     jmp     short loc_3424B
     ; align 2
     db 144
-sprite_putimage_or endp
+ported_sprite_putimage_or_ endp
 putpixel_iconFillings proc far
     var_6 = word ptr -6
     var_4 = word ptr -4

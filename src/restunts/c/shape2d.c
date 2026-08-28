@@ -1117,8 +1117,8 @@ void sprite_putimage(struct SHAPE2D far* shape)
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
-void sprite_putimage_and(struct SHAPE2D far* shape,
-	unsigned short x, unsigned short y)
+static void sprite_putimage_combine(struct SHAPE2D far* shape,
+	unsigned short x, unsigned short y, int combine_or)
 {
 	struct SHAPE2D_CLIP clip;
 	legacy_u8 far* source_ptr;
@@ -1139,7 +1139,10 @@ void sprite_putimage_and(struct SHAPE2D far* shape,
 		do {
 			source_ptr = (legacy_u8 far*)MK_FP(
 				shape_segment, clip.source);
-			bitmap[clip.destination] &= *source_ptr;
+			if (combine_or != 0)
+				bitmap[clip.destination] |= *source_ptr;
+			else
+				bitmap[clip.destination] &= *source_ptr;
 			clip.source++;
 			clip.destination++;
 			column_count--;
@@ -1152,6 +1155,18 @@ void sprite_putimage_and(struct SHAPE2D far* shape,
 		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
 	} while (old_row_count != 0x8000U &&
 		LEGACY_S16_FROM_BITS(row_count) > 0);
+}
+
+void sprite_putimage_and(struct SHAPE2D far* shape,
+	unsigned short x, unsigned short y)
+{
+	sprite_putimage_combine(shape, x, y, 0);
+}
+
+void sprite_putimage_or(struct SHAPE2D far* shape,
+	unsigned short x, unsigned short y)
+{
+	sprite_putimage_combine(shape, x, y, 1);
 }
 
 void setup_mcgawnd1(void) {
