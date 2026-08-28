@@ -305,13 +305,13 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_33697
     public ported_font_draw_text_
     public video_set_mode_13h
-    public file_load_shape2d_res_fatal_thunk
-    public file_load_shape2d_res_nofatal_thunk
-    public file_load_shape2d_res_thunk
-    public parse_shape2d_thunk
-    public file_load_shape2d_fatal_thunk
-    public file_load_shape2d_nofatal_thunk
-    public file_load_shape2d_thunk
+    public ported_file_load_shape2d_res_fatal_thunk_
+    public ported_file_load_shape2d_res_nofatal_thunk_
+    public ported_file_load_shape2d_res_thunk_
+    public ported_parse_shape2d_thunk_
+    public ported_file_load_shape2d_fatal_thunk_
+    public ported_file_load_shape2d_nofatal_thunk_
+    public ported_file_load_shape2d_thunk_
     public ported_sprite_putimage_and_alt2_
     public ported_sprite_putimage_and_
     public loc_338C9
@@ -11190,36 +11190,36 @@ nosmart
     add     sp, 4
     retf
 video_set_mode_13h endp
-file_load_shape2d_res_fatal_thunk proc far
+ported_file_load_shape2d_res_fatal_thunk_ proc far
 
     jmp     file_load_shape2d_res_fatal
-file_load_shape2d_res_fatal_thunk endp
-file_load_shape2d_res_nofatal_thunk proc far
+ported_file_load_shape2d_res_fatal_thunk_ endp
+ported_file_load_shape2d_res_nofatal_thunk_ proc far
 
     jmp     file_load_shape2d_res_nofatal
-file_load_shape2d_res_nofatal_thunk endp
-file_load_shape2d_res_thunk proc far
+ported_file_load_shape2d_res_nofatal_thunk_ endp
+ported_file_load_shape2d_res_thunk_ proc far
 
     jmp     file_load_shape2d_res
-file_load_shape2d_res_thunk endp
-parse_shape2d_thunk proc far
+ported_file_load_shape2d_res_thunk_ endp
+ported_parse_shape2d_thunk_ proc far
 
     jmp     parse_shape2d
-parse_shape2d_thunk endp
-file_load_shape2d_fatal_thunk proc far
+ported_parse_shape2d_thunk_ endp
+ported_file_load_shape2d_fatal_thunk_ proc far
 
     jmp     file_load_shape2d_fatal
-file_load_shape2d_fatal_thunk endp
-file_load_shape2d_nofatal_thunk proc far
+ported_file_load_shape2d_fatal_thunk_ endp
+ported_file_load_shape2d_nofatal_thunk_ proc far
 
     jmp     file_load_shape2d_nofatal
-file_load_shape2d_nofatal_thunk endp
-file_load_shape2d_thunk proc far
+ported_file_load_shape2d_nofatal_thunk_ endp
+ported_file_load_shape2d_thunk_ proc far
 
     jmp     file_load_shape2d
     ; align 2
     db 0
-file_load_shape2d_thunk endp
+ported_file_load_shape2d_thunk_ endp
 ported_sprite_putimage_and_alt2_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

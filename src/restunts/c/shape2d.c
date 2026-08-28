@@ -2337,3 +2337,18 @@ void far* file_load_shape2d_res_fatal(char* resname) {
 void far* file_load_shape2d_res_nofatal(char* resname) {
 	return file_load_shape2d_res(resname, 0);
 }
+
+void far* file_load_shape2d_res_nofatal_thunk(const char* resname)
+{
+	return file_load_shape2d_res_nofatal((char*)resname);
+}
+
+void far* file_load_shape2d_fatal_thunk(const char* shapename)
+{
+	return file_load_shape2d_fatal((char*)shapename);
+}
+
+void far* file_load_shape2d_nofatal_thunk(const char* shapename)
+{
+	return file_load_shape2d_nofatal((char*)shapename);
+}

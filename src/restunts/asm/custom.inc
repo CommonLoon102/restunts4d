@@ -179,6 +179,9 @@ extrn sprite_1_unk4:proc
 extrn parse_shape2d_helper:proc
 extrn parse_shape2d_helper2:proc
 extrn parse_shape2d_helper3:proc
+extrn file_load_shape2d_res_nofatal_thunk:proc
+extrn file_load_shape2d_fatal_thunk:proc
+extrn file_load_shape2d_nofatal_thunk:proc
 extrn setup_mcgawnd1:proc
 extrn setup_mcgawnd2:proc
 extrn file_load_shape2d:proc

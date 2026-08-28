@@ -258,13 +258,13 @@ seg012 segment byte public 'STUNTSC' use16
     extrn loc_33697:proc
     extrn ported_font_draw_text_:proc
     extrn video_set_mode_13h:proc
-    extrn file_load_shape2d_res_fatal_thunk:proc
-    extrn file_load_shape2d_res_nofatal_thunk:proc
-    extrn file_load_shape2d_res_thunk:proc
-    extrn parse_shape2d_thunk:proc
-    extrn file_load_shape2d_fatal_thunk:proc
-    extrn file_load_shape2d_nofatal_thunk:proc
-    extrn file_load_shape2d_thunk:proc
+    extrn ported_file_load_shape2d_res_fatal_thunk_:proc
+    extrn ported_file_load_shape2d_res_nofatal_thunk_:proc
+    extrn ported_file_load_shape2d_res_thunk_:proc
+    extrn ported_parse_shape2d_thunk_:proc
+    extrn ported_file_load_shape2d_fatal_thunk_:proc
+    extrn ported_file_load_shape2d_nofatal_thunk_:proc
+    extrn ported_file_load_shape2d_thunk_:proc
     extrn ported_sprite_putimage_and_alt2_:proc
     extrn ported_sprite_putimage_and_:proc
     extrn loc_338C9:proc
