@@ -72,7 +72,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_sprite_copy_2_to_1_clear_
     public ported_sprite_copy_wnd_to_1_
     public ported_sprite_copy_wnd_to_1_clear_
-    public intro_draw_text
+    public ported_intro_draw_text_
     public hiscore_draw_text
     public call_read_line
     public ported_input_repeat_check_
@@ -3209,7 +3209,7 @@ ported_sprite_copy_wnd_to_1_clear_ proc far
     add     sp, 2
     retf
 ported_sprite_copy_wnd_to_1_clear_ endp
-intro_draw_text proc far
+ported_intro_draw_text_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -3218,9 +3218,8 @@ intro_draw_text proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_4]
+    jmp     intro_draw_text
+    nop
     mov     word_4224C, ax
     add     ax, fontdef_unk_0E
     inc     ax
@@ -3260,7 +3259,7 @@ intro_draw_text proc far
     mov     ax, offset word_42248
     pop     bp
     retf
-intro_draw_text endp
+ported_intro_draw_text_ endp
 hiscore_draw_text proc far
      s = byte ptr 0
      r = byte ptr 2

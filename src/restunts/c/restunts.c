@@ -1757,6 +1757,29 @@ int mouse_timer_sprite_unk(int item_index, const int* x_values,
 	return LEGACY_S16_FROM_BITS(delta);
 }
 
+extern int fontdef_unk_0E;
+extern struct RECTANGLE word_42248;
+extern void font_set_unk(int color, int unknown);
+extern void font_draw_text(const char* text, int x, int y);
+
+struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
+	int shadow_color)
+{
+	word_42248.left = LEGACY_S16_FROM_BITS((legacy_u16)x);
+	word_42248.right = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(x, font_op2(text)), 1);
+	word_42248.top = LEGACY_S16_FROM_BITS((legacy_u16)y);
+	word_42248.bottom = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(y, fontdef_unk_0E), 1);
+	font_set_unk(shadow_color, 0);
+	font_draw_text(text, LEGACY_S16_WRAP_ADD(x, 1),
+		LEGACY_S16_WRAP_ADD(y, 1));
+	font_set_unk(color, 0);
+	font_draw_text(text, LEGACY_S16_FROM_BITS((legacy_u16)x),
+		LEGACY_S16_FROM_BITS((legacy_u16)y));
+	return &word_42248;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

@@ -25,7 +25,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_sprite_copy_2_to_1_clear_:proc
     extrn ported_sprite_copy_wnd_to_1_:proc
     extrn ported_sprite_copy_wnd_to_1_clear_:proc
-    extrn intro_draw_text:proc
+    extrn ported_intro_draw_text_:proc
     extrn hiscore_draw_text:proc
     extrn call_read_line:proc
     extrn ported_input_repeat_check_:proc
