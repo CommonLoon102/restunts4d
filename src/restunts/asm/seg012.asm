@@ -152,7 +152,7 @@ seg012 segment byte public 'STUNTSC' use16
     public sub_303BA
     public set_bios_mode3
     public kb_parse_key
-    public kb_reg_callback
+    public ported_kb_reg_callback_
     public nopsub_304AF
     public nopsub_304B6
     public kb_get_char
@@ -3871,16 +3871,15 @@ loc_30454:
     pop     bp
     retf
 kb_parse_key endp
-kb_reg_callback proc far
+ported_kb_reg_callback_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_2]
+    jmp     kb_reg_callback
+    nop
     mov     cx, 40h ; '@'
     mov     bx, offset callbacks
     mov     dx, [bp+arg_4]
@@ -3920,7 +3919,7 @@ loc_3049F:
     mov     callbackflags2[bx], al
     pop     bp
     retf
-kb_reg_callback endp
+ported_kb_reg_callback_ endp
 nopsub_304AF proc far
      s = byte ptr 0
      r = byte ptr 2

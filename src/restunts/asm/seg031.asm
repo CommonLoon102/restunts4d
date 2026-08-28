@@ -167,7 +167,7 @@ loc_39E74:
     mov     ax, 7
     push    ax
 loc_39E79:
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset do_joy_restext
     mov     dx, seg seg008
@@ -175,7 +175,7 @@ loc_39E79:
     push    ax
     mov     ax, 0Ah
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_key_restext_
     mov     dx, seg seg008
@@ -183,7 +183,7 @@ loc_39E79:
     push    ax
     mov     ax, 0Bh
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_mof_restext_
     mov     dx, seg seg008
@@ -191,7 +191,7 @@ loc_39E79:
     push    ax
     mov     ax, 3200h
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_pau_restext_
     mov     dx, seg seg008
@@ -199,7 +199,7 @@ loc_39E79:
     push    ax
     mov     ax, 10h
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_pau_restext_
     mov     dx, seg seg008
@@ -207,7 +207,7 @@ loc_39E79:
     push    ax
     mov     ax, 70h ; 'p'
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_dos_restext_
     mov     dx, seg seg008
@@ -215,7 +215,7 @@ loc_39E79:
     push    ax
     mov     ax, 11h
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_sonsof_restext_
     mov     dx, seg seg008
@@ -223,7 +223,7 @@ loc_39E79:
     push    ax
     mov     ax, 13h
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     ax, offset ported_do_dos_restext_
     mov     dx, seg seg008
@@ -231,7 +231,7 @@ loc_39E79:
     push    ax
     mov     ax, 18h
     push    ax
-    call    kb_reg_callback
+    call    ported_kb_reg_callback_
     add     sp, 6
     mov     video_flag1_is1, 1
     mov     video_flag2_is1, 1

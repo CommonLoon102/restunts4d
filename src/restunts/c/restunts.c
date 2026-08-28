@@ -35,6 +35,9 @@ extern legacy_u8 byte_449CE;
 extern int word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
+extern legacy_u8 callbackflags[128];
+extern legacy_u8 callbackflags2[133];
+extern void (far* callbacks[64])(void);
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -59,6 +62,34 @@ unsigned const char g_ascii_props[256] = {
 int get_0(void)
 {
 	return 0;
+}
+
+void kb_reg_callback(int code, void (far* callback)(void))
+{
+	legacy_u16 code_bits;
+	legacy_u16 callback_index;
+	legacy_u16 key_index;
+
+	for (callback_index = 0; callback_index < 64U; callback_index++) {
+		if (callbacks[callback_index] == callback)
+			break;
+		if (FP_SEG(callbacks[callback_index]) == 0U) {
+			callbacks[callback_index] = callback;
+			break;
+		}
+	}
+	if (callback_index == 64U)
+		return;
+
+	code_bits = (legacy_u16)code;
+	if ((code_bits & 0x00FFU) != 0) {
+		if (code_bits <= 0x007FU)
+			callbackflags[code_bits] = (legacy_u8)(callback_index + 1U);
+		return;
+	}
+	key_index = (legacy_u16)(code_bits >> 8);
+	if (key_index <= 0x84U)
+		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
 }
 
 void sub_307B4(void)
