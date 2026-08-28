@@ -6,9 +6,9 @@
 #define getvect _getvect
 #define setvect _setvect
 #define int86 _int86
-extern void _CType _setvect( int __interruptno, void interrupt( far *__isr )( ) );
-extern void interrupt( far * _CType _getvect( int __interruptno ))( );
-int _Cdecl _int86( int __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs );
+extern void _CType _setvect( legacy_s16 __interruptno, void interrupt( far *__isr )( ) );
+extern void interrupt( far * _CType _getvect( legacy_s16 __interruptno ))( );
+legacy_s16 _Cdecl _int86( legacy_s16 __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs );
 
 typedef void interrupt (far* voidinterruptfunctype)();
 typedef void (far* voidfunctype)();
@@ -20,18 +20,18 @@ extern void add_exit_handler(voidfunctype exitfunc);
 extern void interrupt kb_int16_handler(); // our asm proxy, simply redirects to kb_int16_handler_c
 
 // these data are local to keyboard.c, but kept in their original slots for convencience:
-extern unsigned char kbinput[];
-extern unsigned int kb_intr_data;
-extern unsigned int kb_intr_data2;
-extern unsigned int kb_intr_data3;
-extern unsigned int kb_intr_data4;
-extern unsigned int kb_intr_data_array[];
-extern unsigned char keymap1[];
-extern unsigned char keymap2[];
-extern unsigned char keymap3[];
-extern unsigned char keymap4[];
-extern unsigned char keymap5[];
-extern unsigned int kblastinput;
+extern legacy_u8 kbinput[];
+extern legacy_u16 kb_intr_data;
+extern legacy_u16 kb_intr_data2;
+extern legacy_u16 kb_intr_data3;
+extern legacy_u16 kb_intr_data4;
+extern legacy_u16 kb_intr_data_array[];
+extern legacy_u8 keymap1[];
+extern legacy_u8 keymap2[];
+extern legacy_u8 keymap3[];
+extern legacy_u8 keymap4[];
+extern legacy_u8 keymap5[];
+extern legacy_u16 kblastinput;
 
 // The original opens with `sti` before it touches anything, so the rest of
 // the handler runs with interrupts on and only the buffer update is fenced by
@@ -39,8 +39,8 @@ extern unsigned int kblastinput;
 // prologue, so this one stays inside the IF=0 the gate left. Latency only -
 // no code here depends on being re-entered.
 void interrupt kb_int9_handler(void) {
-	unsigned char kbc, kbp;
-	unsigned int kbval, kbdata;
+	legacy_u8 kbc, kbp;
+	legacy_u16 kbval, kbdata;
 
 	kbc = inp(0x60);
 	kbp = inp(0x61);
@@ -109,8 +109,8 @@ void interrupt kb_int9_handler(void) {
 // or OR, plus IF set by STI. Capture those operations directly instead of
 // merging only ZF into the caller's saved flags; Borland's interrupt epilogue
 // will IRET with the value assigned to the `flags` pseudo-parameter.
-static unsigned int kb_flags_after_zero(void) {
-	unsigned int result;
+static legacy_u16 kb_flags_after_zero(void) {
+	legacy_u16 result;
 	__asm {
 		xor ax, ax
 		pushf
@@ -120,8 +120,8 @@ static unsigned int kb_flags_after_zero(void) {
 	return result;
 }
 
-static unsigned int kb_flags_after_subtract_two(unsigned int value) {
-	unsigned int result;
+static legacy_u16 kb_flags_after_subtract_two(legacy_u16 value) {
+	legacy_u16 result;
 	__asm {
 		mov ax, value
 		sub ax, 2
@@ -132,8 +132,8 @@ static unsigned int kb_flags_after_subtract_two(unsigned int value) {
 	return result;
 }
 
-static unsigned int kb_flags_after_compare_zero(unsigned int value) {
-	unsigned int result;
+static legacy_u16 kb_flags_after_compare_zero(legacy_u16 value) {
+	legacy_u16 result;
 	__asm {
 		mov ax, value
 		cmp ax, 0
@@ -144,8 +144,8 @@ static unsigned int kb_flags_after_compare_zero(unsigned int value) {
 	return result;
 }
 
-static unsigned int kb_flags_after_or(unsigned char left, unsigned char right) {
-	unsigned int result;
+static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right) {
+	legacy_u16 result;
 	__asm {
 		mov al, left
 		or al, right
@@ -157,14 +157,14 @@ static unsigned int kb_flags_after_or(unsigned char left, unsigned char right) {
 }
 
 #pragma argsused   
-void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
-                                     unsigned ds, unsigned es, unsigned dx,
-                                     unsigned cx, unsigned bx, unsigned ax,
-                                     unsigned ip, unsigned cs, unsigned flags) {
+void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
+                                     legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
+                                     legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
+                                     legacy_u16 ip, legacy_u16 cs, legacy_u16 flags) {
 
-	unsigned int result, kbdata;
-	unsigned char shiftleft, shiftright;
-	unsigned char bioscall = ax >> 8;
+	legacy_u16 result, kbdata;
+	legacy_u8 shiftleft, shiftright;
+	legacy_u8 bioscall = ax >> 8;
 	disable();
 	if (bioscall == 0) {
 		kbdata = kb_intr_data4;
@@ -219,8 +219,8 @@ void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
 }
 
 void kb_init_interrupt(void) {
-	unsigned char irqmask;
-	int i;
+	legacy_u8 irqmask;
+	legacy_s16 i;
 	voidinterruptfunctype current_kb_int9_handler;
 
 	irqmask = inp(0x21);
@@ -247,7 +247,7 @@ void kb_init_interrupt(void) {
 }
 
 void kb_exit_handler(void) {
-	unsigned char irqmask;
+	legacy_u8 irqmask;
 
 	irqmask = inp(0x21);
 	outp(0x21, irqmask | 0x3);
@@ -262,17 +262,17 @@ void kb_exit_handler(void) {
 	outp(0x21, irqmask);
 }
 
-int kb_get_key_state(int key) {
+legacy_s16 kb_get_key_state(legacy_s16 key) {
 	return kbinput[key];
 }
 
-int kb_call_readchar_callback(void) {
+legacy_s16 kb_call_readchar_callback(void) {
 	// the orginal code uses a (hard-coded, non-changing) callback for
 	// reading chars.. we just call kb_read_char() directly:
 	return kb_read_char();
 }
 
-int kb_read_char(void) {
+legacy_s16 kb_read_char(void) {
 	// we could've called kb_int16_handler_c() directly
 	union REGS inregs;
 	union REGS outregs;
@@ -291,7 +291,7 @@ int kb_read_char(void) {
 	return outregs.h.al;
 }
 
-int kb_checking(void) {
+legacy_s16 kb_checking(void) {
 	union REGS inregs;
 	union REGS outregs;
 
@@ -303,13 +303,13 @@ int kb_checking(void) {
 }
 
 void flush_stdin(void) {
-	int result;
+	legacy_s16 result;
 	do {
 		result = kb_call_readchar_callback();
 	} while (result == 0);
 }
 
-int kb_check(void) {
+legacy_s16 kb_check(void) {
 	union REGS inregs;
 	union REGS outregs;
 	

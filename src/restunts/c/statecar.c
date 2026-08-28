@@ -1,11 +1,11 @@
 #include "externs.h"
 #include "math.h"
 
-extern unsigned char oppnentSped[10];
+extern legacy_u8 oppnentSped[10];
 
-unsigned int update_rpm_from_speed(unsigned int currpm, unsigned int speed, unsigned int gearratio, int changing_gear, unsigned int idle_rpm) {
+legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
-		currpm = ((unsigned long)speed * gearratio) >> 16;
+		currpm = ((legacy_u32)speed * gearratio) >> 16;
 	}
 
 	if (currpm >= idle_rpm) {
@@ -27,7 +27,7 @@ loc_19DE3:
     mov     ax, cx*/
 }
 
-void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
+void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 /*update_car_speed proc far
     var_currTorque = byte ptr -10
     var_deltaSpeed = word ptr -8
@@ -41,11 +41,11 @@ void update_car_speed(char arg_carInputByte, int arg_MplayerFlag, struct CARSTAT
     arg_carState = word ptr 10
     arg_simd = word ptr 12
 */
-	int var_2;
-	int var_4;
-	unsigned int var_updatedSpeed;
-	int var_deltaSpeed;
-	unsigned char var_currTorque;
+	legacy_s16 var_2;
+	legacy_s16 var_4;
+	legacy_u16 var_updatedSpeed;
+	legacy_s16 var_deltaSpeed;
+	legacy_u8 var_currTorque;
 
 	if (framespersec != 0x14)
 		goto loc_17A8E;
@@ -132,7 +132,7 @@ loc_17AFA:
     jnz     short loc_17B04
     jmp     loc_17B86*/
 loc_17B04:
-	if ((unsigned short)arg_carState->car_currpm <= (unsigned short)arg_simd->upshift_rpm)
+	if ((legacy_u16)arg_carState->car_currpm <= (legacy_u16)arg_simd->upshift_rpm)
 		goto loc_17B20;
 /*    mov     si, [bp+arg_simd]
     mov     ax, [si+SIMD.upshift_rpm]
@@ -150,7 +150,7 @@ loc_17B0F:
     inc     [bx+CARSTATE.car_current_gear]
     jmp     short loc_17B39*/
 loc_17B20:
-	if ((unsigned short)arg_carState->car_currpm >= (unsigned short)arg_simd->downshift_rpm)
+	if ((legacy_u16)arg_carState->car_currpm >= (legacy_u16)arg_simd->downshift_rpm)
 		goto loc_17B86;
 /*    mov     bx, [bp+arg_carState]
     mov     si, [bp+arg_simd]
@@ -374,7 +374,7 @@ loc_17C9E:
 loc_17CAC:
 	var_updatedSpeed = arg_carState->car_speed;
 	var_deltaSpeed = arg_carState->car_pseudoGravity - arg_simd->aerorestable[var_updatedSpeed >> 10];
-	if ((unsigned short)arg_carState->car_currpm <= (unsigned short)arg_simd->max_rpm)
+	if ((legacy_u16)arg_carState->car_currpm <= (legacy_u16)arg_simd->max_rpm)
 		goto loc_17CEA;
 	arg_carState->car_currpm = arg_simd->max_rpm - 1;
 /*    mov     bx, [bp+arg_carState]
@@ -528,7 +528,7 @@ loc_17DB2:
 loc_17DBC:
 	if (arg_carState->car_sumSurfRearWheels != 0)
 		goto loc_17DE6;
-	if ((unsigned short)arg_carState->car_currpm < (unsigned short)arg_simd->max_rpm)
+	if ((legacy_u16)arg_carState->car_currpm < (legacy_u16)arg_simd->max_rpm)
 		goto loc_17DD4;
 	goto loc_17D39;
 /*    mov     bx, [bp+arg_carState]
@@ -568,7 +568,7 @@ loc_17DE6:
     mov     al, [bx+SIMD.idle_torque]
     jmp     short loc_17E0C*/
 loc_17DFC:
-	var_currTorque = arg_simd->torque_curve[(unsigned short)arg_carState->car_currpm >> 7];
+	var_currTorque = arg_simd->torque_curve[(legacy_u16)arg_carState->car_currpm >> 7];
 /*    mov     bx, [bp+arg_carState]
     mov     si, [bx+CARSTATE.car_currpm]
     mov     cl, 7
@@ -582,7 +582,7 @@ loc_17E0C:
 		goto loc_17E34;
 	if (arg_carState->car_currpm >= 0x1388)
 		goto loc_17E34;
-	var_currTorque = ((unsigned char)arg_simd->idle_torque + var_currTorque) >> 1;
+	var_currTorque = ((legacy_u8)arg_simd->idle_torque + var_currTorque) >> 1;
 	/*
     mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_engineLimiterTimer], 0
@@ -599,8 +599,8 @@ loc_17E0C:
     mov     [bp+var_currTorque], al*/
 loc_17E34:
 	var_deltaSpeed += (arg_carState->car_gearratioshr8 * var_currTorque) >> 4;
-	var_deltaSpeed = (unsigned long)((long)var_deltaSpeed * 0x19) /
-		(unsigned short)arg_simd->car_mass;
+	var_deltaSpeed = (legacy_u32)((legacy_s32)var_deltaSpeed * 0x19) /
+		(legacy_u16)arg_simd->car_mass;
 	var_deltaSpeed >>= 1;
 
 /*    mov     al, [bp+var_currTorque]
@@ -632,10 +632,10 @@ loc_17E34:
     mov     [bp+var_deltaSpeed], ax*/
 	if (arg_MplayerFlag == 0)
 		goto loc_17EAD;
-	var_currTorque = (unsigned int)(0xC8 - *oppnentSped) >> 1;
+	var_currTorque = (legacy_u16)(0xC8 - *oppnentSped) >> 1;
 	if (var_currTorque == 0)
 		goto loc_17EAD;
-	var_deltaSpeed -=  ((long)var_currTorque * var_deltaSpeed) / 0xC8;
+	var_deltaSpeed -=  ((legacy_s32)var_currTorque * var_deltaSpeed) / 0xC8;
 /*    cmp     [bp+arg_MplayerFlag], 0
     jz      short loc_17EAD
     mov     al, oppnentSped
@@ -719,7 +719,7 @@ loc_17EF8:
 loc_17EFB:
 	if (var_4 <= 0x1400)
 		goto loc_17F28;
-	arg_carState->car_speed = ((long)arg_carState->car_speed + arg_carState->car_speed2) >> 1;
+	arg_carState->car_speed = ((legacy_s32)arg_carState->car_speed + arg_carState->car_speed2) >> 1;
 	arg_carState->car_speed2 = arg_carState->car_speed;
 	arg_carState->car_engineLimiterTimer = 5;
 	goto loc_17F45;

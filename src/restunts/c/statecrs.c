@@ -2,21 +2,21 @@
 #include "legacy.h"
 #include "math.h"
 
-extern long gState_travDist;
-extern short gState_total_finish_time;
-extern short gState_144;
-extern short gState_pEndFrame;
-extern short gState_oEndFrame;
-extern short gState_penalty;
-extern short gState_impactSpeed;
-extern short gState_topSpeed;
-extern short gState_jumpCount;
+extern legacy_s32 gState_travDist;
+extern legacy_s16 gState_total_finish_time;
+extern legacy_s16 gState_144;
+extern legacy_s16 gState_pEndFrame;
+extern legacy_s16 gState_oEndFrame;
+extern legacy_s16 gState_penalty;
+extern legacy_s16 gState_impactSpeed;
+extern legacy_s16 gState_topSpeed;
+extern legacy_s16 gState_jumpCount;
 
-extern int word_43964;
-extern char byte_459D8;
-extern int word_4408C;
+extern legacy_s16 word_43964;
+extern legacy_s8 byte_459D8;
+extern legacy_s16 word_4408C;
 
-void state_op_unk(int kind_arg, int base_angle_arg, int energy_offset_arg) {
+void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 energy_offset_arg) {
 	legacy_s16 kind;
 	legacy_s16 base_angle;
 	legacy_s16 energy_offset;
@@ -30,7 +30,7 @@ void state_op_unk(int kind_arg, int base_angle_arg, int energy_offset_arg) {
 	legacy_s16 particle_timer;
 	legacy_s16 particle_lifetime;
 	legacy_s16 random_value;
-	int slot;
+	legacy_s16 slot;
 
 	kind = (legacy_s16)kind_arg;
 	base_angle = (legacy_s16)base_angle_arg;
@@ -104,7 +104,7 @@ void sub_19BA0(void) {
 	legacy_s16 particle_velocity;
 	legacy_s32 ground_position;
 	legacy_u8 any_active;
-	int slot;
+	legacy_s16 slot;
 
 	any_active = 0;
 	for (slot = 0; slot < 24; slot++) {
@@ -157,7 +157,7 @@ void sub_19BA0(void) {
 }
 
 // previously set_AV_event_triggers
-void update_crash_state(int arg_someFlag, int arg_MplayerFlag) {
+void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 /*    var_cState = word ptr -4
     var_2 = byte ptr -2
      s = byte ptr 0
@@ -165,7 +165,7 @@ void update_crash_state(int arg_someFlag, int arg_MplayerFlag) {
     arg_someFlag = word ptr 6
     arg_MplayerFlag = word ptr 8
 */
-	char var_2;
+	legacy_s8 var_2;
 	struct CARSTATE* var_cState;
 	
 //	ported_update_crash_state_(arg_someFlag, arg_MplayerFlag);

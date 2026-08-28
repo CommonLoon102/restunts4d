@@ -25,34 +25,33 @@
 
 struct compr_header {
 	union {
-		char passes;
-		char type;
+		legacy_s8 passes;
+		legacy_s8 type;
 	};
-	unsigned short sizel;
-	unsigned char  sizeh;
+	legacy_u16 sizel;
+	legacy_u8  sizeh;
 };
 
 struct compr_rle_header {
-	unsigned short srcsizel;
-	unsigned char  srcsizeh;
-	unsigned char  unk; // Always 0.
-	unsigned char  esclen;
-	unsigned char  esc[RS_VLE_ESC_LEN];
+	legacy_u16 srcsizel;
+	legacy_u8  srcsizeh;
+	legacy_u8  unk; // Always 0.
+	legacy_u8  esclen;
+	legacy_u8  esc[RS_VLE_ESC_LEN];
 };
 
 #ifdef RESTUNTS_DOS
 // Minimal stdio.h "support" until we can link with a real CRT.
 #ifndef __STDIO_H
 #define __STDIO_H
-typedef unsigned size_t;
-typedef int FILE;
+typedef legacy_s16 FILE;
 
-int g_errno;
+legacy_s16 g_errno;
 
-FILE* fopen(const char* path, const char* mode)
+FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 {
-	unsigned short segm = FP_SEG(path);
-	unsigned short offs = FP_OFF(path);
+	legacy_u16 segm = FP_SEG(path);
+	legacy_u16 offs = FP_OFF(path);
 	FILE* handle;
 
 	g_errno = 0;
@@ -93,9 +92,9 @@ FILE* fopen(const char* path, const char* mode)
 	return handle;
 }
 
-int fclose(FILE* file)
+legacy_s16 fclose(FILE* file)
 {
-	int res;
+	legacy_s16 res;
 
 	__asm {
 		mov  ah, 3Eh // Close file
@@ -113,8 +112,8 @@ int fclose(FILE* file)
 
 size_t fread(void far* dst, size_t size, size_t nmemb, FILE* file)
 {
-	unsigned short segm = FP_SEG(dst);
-	unsigned short offs = FP_OFF(dst);
+	legacy_u16 segm = FP_SEG(dst);
+	legacy_u16 offs = FP_OFF(dst);
 
 	size_t res;
 	size *= nmemb;
@@ -140,8 +139,8 @@ size_t fread(void far* dst, size_t size, size_t nmemb, FILE* file)
 
 size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 {
-	unsigned short segm = FP_SEG(src);
-	unsigned short offs = FP_OFF(src);
+	legacy_u16 segm = FP_SEG(src);
+	legacy_u16 offs = FP_OFF(src);
 
 	size_t res;
 	size *= nmemb;
@@ -169,10 +168,10 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 #define SEEK_CUR 1
 #define SEEK_END 2
 
-int fseek(FILE *file, long offset, int origin)
+legacy_s16 fseek(FILE *file, legacy_s32 offset, legacy_s16 origin)
 {
-	unsigned short ol = offset;
-	unsigned short oh = offset >> 16;
+	legacy_u16 ol = offset;
+	legacy_u16 oh = offset >> 16;
 
 	origin |= (0x42 << 8); // Seek file cmd as high byte
 
@@ -189,10 +188,10 @@ int fseek(FILE *file, long offset, int origin)
 
 	return 0;
 }
-long ftell(FILE *file)
+legacy_s32 ftell(FILE *file)
 {
-	unsigned short ol;
-	unsigned short oh;
+	legacy_u16 ol;
+	legacy_u16 oh;
 
 	__asm {
 		mov  ah, 42h // Seek file
@@ -208,22 +207,22 @@ long ftell(FILE *file)
 		mov  ol, ax
 	}
 
-	return ((long)oh << 16) | ol;
+	return ((legacy_s32)oh << 16) | ol;
 }
 
-int ferror(FILE* file)
+legacy_s16 ferror(FILE* file)
 {
-	int res = g_errno;
+	legacy_s16 res = g_errno;
 	(void)file;
 	g_errno = 0;
 	return res;
 }
 
-int remove(const char* path)
+legacy_s16 remove(const legacy_s8* path)
 {
-	unsigned short segm = FP_SEG(path);
-	unsigned short offs = FP_OFF(path);
-	int retval;
+	legacy_u16 segm = FP_SEG(path);
+	legacy_u16 offs = FP_OFF(path);
+	legacy_s16 retval;
 
 	__asm {
 		push ds
@@ -247,19 +246,19 @@ int remove(const char* path)
 
 struct file_find_dos {
 	struct find_t dta; // DOS DTA struct
-	char path[128];    // Full path to found file
-	char* dirdelim;    // Last dir delimiter in path string
+	legacy_s8 path[128];    // Full path to found file
+	legacy_s8* dirdelim;    // Last dir delimiter in path string
 } g_find;
 
 // Find file matching given query. Returns pointer to first matched filename
 // including path from the query. NULL is returned on error/no hits.
 // FIXME: DOS specific implementation.
-const char* file_find(const char* query)
+const legacy_s8* file_find(const legacy_s8* query)
 {
-	char const* chsrc;
-	char* chdst;
-	char attrs = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
-	int retval;
+	legacy_s8 const* chsrc;
+	legacy_s8* chdst;
+	legacy_s8 attrs = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
+	legacy_s16 retval;
 
 	__asm {
 		mov  ah, 1Ah // Set DTA
@@ -302,9 +301,9 @@ const char* file_find(const char* query)
 
 // Returns next found filename from file_find() query.
 // FIXME: DOS specific implementation.
-const char* file_find_next(void)
+const legacy_s8* file_find_next(void)
 {
-	int retval;
+	legacy_s16 retval;
 
 	__asm {
 		mov  ah, 1Ah // Set DTA
@@ -333,16 +332,16 @@ const char* file_find_next(void)
 	return g_find.path;
 }
 
-const char* file_find_next_alt(void)
+const legacy_s8* file_find_next_alt(void)
 {
 	return file_find_next();
 }
 
 #endif // RESTUNTS_DOS
 
-void file_build_path(const char* dir, const char* name, const char* ext, char* dst)
+void file_build_path(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext, legacy_s8* dst)
 {
-	int dirlen;
+	legacy_s16 dirlen;
 
 	if (dir) {
 		strcpy(dst, dir);
@@ -362,10 +361,10 @@ void file_build_path(const char* dir, const char* name, const char* ext, char* d
 	strcat(dst, ext);
 }
 
-const char* file_combine_and_find(const char* dir, const char* name, const char* ext)
+const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext)
 {
 	// The original reserves 80 bytes of stack for this (var_50 = byte ptr -80).
-	char path[80];
+	legacy_s8 path[80];
 
 	file_build_path(dir, name, ext, path);
 	
@@ -373,9 +372,9 @@ const char* file_combine_and_find(const char* dir, const char* name, const char*
 }
 
 // Get number of 16-byte blocks needed to store entire file.
-unsigned short file_paras(const char* filename, int fatal)
+legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
-	long length;
+	legacy_s32 length;
 	FILE* file;
 	
 	if ((file = fopen(filename, "rb")) != 0) {
@@ -396,20 +395,20 @@ unsigned short file_paras(const char* filename, int fatal)
 	return 0;
 }
 
-unsigned short file_paras_fatal(const char* filename)
+legacy_u16 file_paras_fatal(const legacy_s8* filename)
 {
 	return file_paras(filename, 1);
 }
 
-unsigned short file_paras_nofatal(const char* filename)
+legacy_u16 file_paras_nofatal(const legacy_s8* filename)
 {
 	return file_paras(filename, 0);
 }
 
 // Get number of 16-byte blocks needed to store the final result of an assumed compressed file.
-unsigned short file_decomp_paras(const char* filename, int fatal)
+legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
-	long length;
+	legacy_s32 length;
 	FILE* file;
 	struct compr_header hdr;
 	
@@ -419,7 +418,7 @@ unsigned short file_decomp_paras(const char* filename, int fatal)
 		
 		if (!ferror(file)) {
 			// May overflow, but all Stunts files are rather small.
-			length = hdr.sizel | ((long)hdr.sizeh << 16);
+			length = hdr.sizel | ((legacy_s32)hdr.sizeh << 16);
 			return (length >> 4) + (length & 0xF ? 1 : 0);
 		}
 	}
@@ -431,20 +430,20 @@ unsigned short file_decomp_paras(const char* filename, int fatal)
 	return 0;
 }
 
-unsigned short file_decomp_paras_fatal(const char* filename)
+legacy_u16 file_decomp_paras_fatal(const legacy_s8* filename)
 {
 	return file_decomp_paras(filename, 1);
 }
 
-unsigned short file_decomp_paras_nofatal(const char* filename)
+legacy_u16 file_decomp_paras_nofatal(const legacy_s8* filename)
 {
 	return file_decomp_paras(filename, 0);
 }
 
 // Read entire file to given destination. Optionally handle errors as fatal.
-void far* file_read(const char* filename, void far* dst, int fatal)
+void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 {
-	int readlen;
+	legacy_s16 readlen;
 	void far* curdst = dst;
 	FILE* file;
 
@@ -470,13 +469,13 @@ void far* file_read(const char* filename, void far* dst, int fatal)
 }
 
 // Read entire file to given destination, handle errors as fatal.
-void far* file_read_fatal(const char* filename, void far* dst)
+void far* file_read_fatal(const legacy_s8* filename, void far* dst)
 {
 	return file_read(filename, dst, 1);
 }
 
 // Read entire file to given destination, returns NULL pointer if errors occur.
-void far* file_read_nofatal(const char* filename, void far* dst)
+void far* file_read_nofatal(const legacy_s8* filename, void far* dst)
 {
 	return file_read(filename, dst, 0);
 }
@@ -490,10 +489,10 @@ void far* file_read_nofatal(const char* filename, void far* dst)
 // That looks like a slip in the 1990 code, but the callers are built around
 // it - asmorig/seg009.asm:2299 checks the result and puts up a disk-error
 // panel - so it is reproduced rather than corrected.
-short file_write(const char* filename, void far* src, unsigned long length, int fatal)
+legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 length, legacy_s16 fatal)
 {
-	unsigned short retval;
-	unsigned short wrtlen;
+	legacy_u16 retval;
+	legacy_u16 wrtlen;
 	FILE* file;
 	
 	retval = 0;
@@ -542,13 +541,13 @@ short file_write(const char* filename, void far* src, unsigned long length, int 
 }
 
 // Write given source buffer to file, handle errors as fatal.
-short file_write_fatal(const char* filename, void far* src, unsigned long length)
+legacy_s16 file_write_fatal(const legacy_s8* filename, void far* src, legacy_u32 length)
 {
 	return file_write(filename, src, length, 1);
 }
 
 // Write given source buffer to file, returns a non-zero value on error.
-short file_write_nofatal(const char* filename, void far* src, unsigned long length)
+legacy_s16 file_write_nofatal(const legacy_s8* filename, void far* src, legacy_u32 length)
 {
 	return file_write(filename, src, length, 0);
 }
@@ -566,13 +565,13 @@ short file_write_nofatal(const char* filename, void far* src, unsigned long leng
 // the original's own bail-out returns with ax:dx undefined, which the caller
 // then feeds into copy_paras_reverse - so neither side is coherent there. No
 // Stunts resource carries esclen == 1.
-unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* dst, unsigned long srclen, unsigned char esc)
+legacy_u32 file_decomp_rle_seq(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u32 srclen, legacy_u8 esc)
 {
-	unsigned char cur, rep;
-	unsigned char huge* seqstart, huge* seqend;
+	legacy_u8 cur, rep;
+	legacy_u8 huge* seqstart, huge* seqend;
 
-	unsigned char huge* srcend = src + srclen;
-	unsigned char huge* dststart = dst;
+	legacy_u8 huge* srcend = src + srclen;
+	legacy_u8 huge* dststart = dst;
 
 	while (src < srcend) {
 		cur = *src++;
@@ -615,13 +614,13 @@ unsigned long file_decomp_rle_seq(unsigned char huge* src, unsigned char huge* d
 }
 
 // Single byte runs pass of run-length encoding.
-unsigned long file_decomp_rle_single(unsigned char huge* src, unsigned char huge* dst, unsigned long len, unsigned char* esclookup)
+legacy_u32 file_decomp_rle_single(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u32 len, legacy_u8* esclookup)
 {
-	unsigned char cur, rep;
-	unsigned short repw;
+	legacy_u8 cur, rep;
+	legacy_u16 repw;
 
-	unsigned char huge* dststart = dst;
-	unsigned char huge* dstend = dst + len;
+	legacy_u8 huge* dststart = dst;
+	legacy_u8 huge* dstend = dst + len;
 
 	while (dst < dstend) {
 		cur = *src++;
@@ -666,13 +665,13 @@ unsigned long file_decomp_rle_single(unsigned char huge* src, unsigned char huge
 }
 
 // Decompress run-length encoded sub-file.
-unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
+legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 decompparas)
 {
-	unsigned long len, srclen, passlen;
-	unsigned int skipseq, i;
-	unsigned char esclookup[RS_RLE_ESCLOOKUP_LEN];
-	unsigned char huge* origsrc;
-	unsigned short paras;
+	legacy_u32 len, srclen, passlen;
+	legacy_u16 skipseq, i;
+	legacy_u8 esclookup[RS_RLE_ESCLOOKUP_LEN];
+	legacy_u8 huge* origsrc;
+	legacy_u16 paras;
 	struct compr_header far* hdr;
 	struct compr_rle_header far* subhdr;
 
@@ -680,12 +679,12 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 
 	// Get decompressed size from header.
 	hdr = (struct compr_header far*)src;
-	len = hdr->sizel | ((long)hdr->sizeh << 16);
+	len = hdr->sizel | ((legacy_s32)hdr->sizeh << 16);
 	origsrc = src += sizeof(*hdr);
 	
 	// Get source size and escape codes.
 	subhdr = (struct compr_rle_header far*)src;
-	srclen = subhdr->srcsizel | ((long)subhdr->srcsizeh << 16);
+	srclen = subhdr->srcsizel | ((legacy_s32)subhdr->srcsizeh << 16);
 	
 	// MSB denotes skipping the initial pass for byte sequence runs. Match the
 	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
@@ -732,25 +731,25 @@ unsigned long file_decomp_rle(unsigned char huge* src, unsigned char huge* dst, 
 }
 
 // Decompress variable-length encoded sub-file.
-unsigned long file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, unsigned short decompparas)
+legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 decompparas)
 {
-	unsigned long len, lenleft;
-	unsigned int additive, alphlen, width, widthdistr, i, j;
-	unsigned short esc1[RS_VLE_ESC_LEN], esc2[RS_VLE_ESC_LEN];
-	unsigned char alph[RS_VLE_ALPH_LEN], symb[RS_VLE_ALPH_LEN], wdth[RS_VLE_ALPH_LEN];
-	unsigned char esclen, symbwdth, numsymb, numsymbleft, cursymb, tmp;
-	unsigned char curwdt, nextwdt, code;
-	unsigned short curword;
+	legacy_u32 len, lenleft;
+	legacy_u16 additive, alphlen, width, widthdistr, i, j;
+	legacy_u16 esc1[RS_VLE_ESC_LEN], esc2[RS_VLE_ESC_LEN];
+	legacy_u8 alph[RS_VLE_ALPH_LEN], symb[RS_VLE_ALPH_LEN], wdth[RS_VLE_ALPH_LEN];
+	legacy_u8 esclen, symbwdth, numsymb, numsymbleft, cursymb, tmp;
+	legacy_u8 curwdt, nextwdt, code;
+	legacy_u16 curword;
 
-	unsigned char huge* wdtpos;
-	unsigned char huge* codpos;
+	legacy_u8 huge* wdtpos;
+	legacy_u8 huge* codpos;
 	struct compr_header far* hdr;
 
 	(void)decompparas;
 
 	// Get decompressed size from header.
 	hdr = (struct compr_header far*)src;
-	len = lenleft = hdr->sizel | ((long)hdr->sizeh << 16);
+	len = lenleft = hdr->sizel | ((legacy_s32)hdr->sizeh << 16);
 	src += sizeof(*hdr);
 
 	// One-byte escape codes length counter.
@@ -874,14 +873,14 @@ unsigned long file_decomp_vle(unsigned char huge* src, unsigned char huge* dst, 
 }
 
 // Decompress file. Returns pointer to result, NULL or raises fatal error.
-void far* file_decomp(const char* filename, int fatal)
+void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 {
-	unsigned long passlen;
-	unsigned short paras, decompparas;
-	unsigned char passes, type;
-	unsigned char far* src;
-	unsigned char far* dst;
-	int err = 0;
+	legacy_u32 passlen;
+	legacy_u16 paras, decompparas;
+	legacy_u8 passes, type;
+	legacy_u8 far* src;
+	legacy_u8 far* dst;
+	legacy_s16 err = 0;
 
 	// Check if resource archive is already loaded.
 	dst = mmgr_get_chunk_by_name(filename);
@@ -958,20 +957,20 @@ void far* file_decomp(const char* filename, int fatal)
 	return MK_FP(0, 0);
 }
 
-void far* file_decomp_fatal(const char* filename)
+void far* file_decomp_fatal(const legacy_s8* filename)
 {
 	return file_decomp(filename, 1);
 }
 
-void far* file_decomp_nofatal(const char* filename)
+void far* file_decomp_nofatal(const legacy_s8* filename)
 {
 	return file_decomp(filename, 0);
 }
 
 // Allocates, reads and returns a pointer to the contents of a binary file
-void far* file_load_binary(const char* filename, int fatal) {
+void far* file_load_binary(const legacy_s8* filename, legacy_s16 fatal) {
 	void far* memptr;
-	int numparas;
+	legacy_s16 numparas;
 
 	memptr = mmgr_get_chunk_by_name(filename);
 	if (FP_SEG(memptr) != 0) return memptr;
@@ -982,17 +981,17 @@ void far* file_load_binary(const char* filename, int fatal) {
 	return file_read(filename, memptr, fatal);
 }
 
-void far* file_load_binary_nofatal(const char* filename) {
+void far* file_load_binary_nofatal(const legacy_s8* filename) {
 	return file_load_binary(filename, 0);
 }
 
-void far* file_load_binary_fatal(const char* filename) {
+void far* file_load_binary_fatal(const legacy_s8* filename) {
 	return file_load_binary(filename, 1);
 }
 
-void far* file_load_resource(int type, const char* filename) {
+void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 	void far* result;
-	int dearesult;
+	legacy_s16 dearesult;
 	while (1) {
 		switch (type) {
 			case 0:
@@ -1006,13 +1005,13 @@ void far* file_load_resource(int type, const char* filename) {
 
 			case 2:
 				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_nofatal((char*)filename);
+				result = file_load_shape2d_nofatal((legacy_s8*)filename);
 				if (result != 0) return result;
 				break;
 
 			case 3:
 				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_res_nofatal((char*)filename);
+				result = file_load_shape2d_res_nofatal((legacy_s8*)filename);
 				if (result != 0) return result;
 				break;
 
@@ -1053,8 +1052,8 @@ void far* file_load_resource(int type, const char* filename) {
 }
 
 
-void far* file_load_resfile(const char* filename) {
-	char name[0x50];
+void far* file_load_resfile(const legacy_s8* filename) {
+	legacy_s8 name[0x50];
 	void far* result;
 	
 	while (1) {
@@ -1078,8 +1077,8 @@ void unload_resource(void far* resptr) {
 	mmgr_free(resptr);
 }
 
-void far* file_load_3dres(const char* filename) {
-	char name[0x50];
+void far* file_load_3dres(const legacy_s8* filename) {
+	legacy_s8 name[0x50];
 	void far* result;
 	
 	while (1) {
@@ -1099,7 +1098,7 @@ void far* file_load_3dres(const char* filename) {
 	}
 }
 
-void file_load_audiores(const char* songfile, const char* voicefile, const char* name) {
+void file_load_audiores(const legacy_s8* songfile, const legacy_s8* voicefile, const legacy_s8* name) {
 	void far* audiores;
 	voicefileptr = file_load_resource(5, voicefile);
 	songfileptr = file_load_resource(4, songfile);
@@ -1108,7 +1107,7 @@ void file_load_audiores(const char* songfile, const char* voicefile, const char*
 	is_audioloaded = 1;
 }
 
-short file_load_replay(const char* dir, const char* name)
+legacy_s16 file_load_replay(const legacy_s8* dir, const legacy_s8* name)
 {
 	file_build_path(dir, name, ".rpl", g_path_buf);
 
@@ -1119,9 +1118,9 @@ short file_load_replay(const char* dir, const char* name)
 	return 0;
 }
 
-short file_write_replay(const char* filename)
+legacy_s16 file_write_replay(const legacy_s8* filename)
 {
-	short ret;
+	legacy_s16 ret;
 
 	*(struct GAMEINFO far*)td13_rpl_header = gameconfig;
 

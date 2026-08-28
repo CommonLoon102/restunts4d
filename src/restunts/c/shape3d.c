@@ -37,20 +37,20 @@ X     - select_cliprect_rotate (10)
 
 */
 
-extern char far* game1ptr;
-extern char far* game2ptr;
-extern char far* curshapeptr;
+extern legacy_s8 far* game1ptr;
+extern legacy_s8 far* game2ptr;
+extern legacy_s8 far* curshapeptr;
 extern struct SHAPE3D game3dshapes[130];
 
-extern void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape);
-extern unsigned long mmgr_get_res_ofs_diff_scaled(void);
+extern void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape);
+extern legacy_u32 mmgr_get_res_ofs_diff_scaled(void);
 
-extern char aBarn[];
+extern legacy_s8 aBarn[];
 
-int shape3d_load_all() {
-	int i;
-	unsigned long mmgrofsdiff;
-	char* shapename;
+legacy_s16 shape3d_load_all() {
+	legacy_s16 i;
+	legacy_u32 mmgrofsdiff;
+	legacy_s8* shapename;
 
 	game1ptr = 0;
 	game2ptr = 0;
@@ -83,7 +83,7 @@ void shape3d_free_all() {
 		mmgr_free(game2ptr);
 }
 
-void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape) {
+void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape) {
 	struct SHAPE3DHEADER far* hdr = shapeptr;
 	gameshape->shape3d_numverts = hdr->header_numverts;
 	gameshape->shape3d_numprimitives = hdr->header_numprimitives;
@@ -99,54 +99,54 @@ void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape) {
 }
 
 
-extern char is_facing_camera(struct POINT2D far*);
-extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned, unsigned);
-extern unsigned projectiondata9_times_ratio(unsigned, int);
+extern legacy_s8 is_facing_camera(struct POINT2D far*);
+extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16, legacy_u16);
+extern legacy_u16 projectiondata9_times_ratio(legacy_u16, legacy_s16);
 extern void __aFuldiv();
 
-extern unsigned word_40ECE;
-extern unsigned transshapenumverts;
-extern unsigned char far* transshapeprimitives;
+extern legacy_u16 word_40ECE;
+extern legacy_u16 transshapenumverts;
+extern legacy_u8 far* transshapeprimitives;
 extern struct VECTOR far* transshapeverts;
-extern unsigned transshapenumpaints;
-extern unsigned char transshapematerial;
-extern unsigned char transshapeflags;
+extern legacy_u16 transshapenumpaints;
+extern legacy_u8 transshapematerial;
+extern legacy_u8 transshapeflags;
 extern struct RECTANGLE* transshaperectptr;
 extern struct MATRIX mat_temp;
-extern long invpow2tbl[32];
-extern unsigned char byte_4393D;
+extern legacy_s32 invpow2tbl[32];
+extern legacy_u8 byte_4393D;
 
 // Four iterators in the linked list. Their roles are just the best guess
 // Starting index for some kinds of scans
-extern unsigned poly_linklist_40ED6_iter1;
+extern legacy_u16 poly_linklist_40ED6_iter1;
 // Unknown
-extern unsigned poly_linklist_40ED6_iter2;
+extern legacy_u16 poly_linklist_40ED6_iter2;
 // Scan counter
-extern unsigned poly_linklist_40ED6_iter3;
+extern legacy_u16 poly_linklist_40ED6_iter3;
 // After insertion, contains the index of the newly inserted primitive
-extern unsigned poly_linklist_40ED6_iter4;
+extern legacy_u16 poly_linklist_40ED6_iter4;
 
-extern unsigned char transshapenumvertscopy;
+extern legacy_u8 transshapenumvertscopy;
 extern struct POINT2D* polyvertpointptrtab[];
-extern unsigned select_rect_param;
-extern unsigned char primidxcounttab[];
-extern unsigned char primtypetab[];
-extern char far* transshapeprimptr;
-extern unsigned polyinfoptrnext;
-extern char far* polyinfoptr;
-extern char far* transshapepolyinfo;
+extern legacy_u16 select_rect_param;
+extern legacy_u8 primidxcounttab[];
+extern legacy_u8 primtypetab[];
+extern legacy_s8 far* transshapeprimptr;
+extern legacy_u16 polyinfoptrnext;
+extern legacy_s8 far* polyinfoptr;
+extern legacy_s8 far* transshapepolyinfo;
 struct POINT2D far* transshapepolyinfopts;
-extern int far* polyinfoptrs[];
-extern unsigned polyinfonumpolys;
-extern char transprimitivepaintjob;
-extern unsigned char far* transshapeprimindexptr;
-extern char backlights_paint_override;
+extern legacy_s16 far* polyinfoptrs[];
+extern legacy_u16 polyinfonumpolys;
+extern legacy_s8 transprimitivepaintjob;
+extern legacy_u8 far* transshapeprimindexptr;
+extern legacy_s8 backlights_paint_override;
 
-unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
-	long far* var_cull1;
-	long far* var_cull2;
+legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
+	legacy_s32 far* var_cull1;
+	legacy_s32 far* var_cull2;
 		
-	unsigned char var_vertflagtbl[256];
+	legacy_u8 var_vertflagtbl[256];
 	struct MATRIX* var_rotmatptr;
 	struct MATRIX var_mat;
 	struct MATRIX var_mat2;
@@ -154,15 +154,15 @@ unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	struct VECTOR var_vec2;
 	struct VECTOR var_vec3;
 	struct VECTOR var_vec4;
-	long var_45C;
-	long var_A;
-	unsigned var_45E, var_460, var_1A;
-	unsigned char var_ptrectflag, var_primtype;
+	legacy_s32 var_45C;
+	legacy_s32 var_A;
+	legacy_u16 var_45E, var_460, var_1A;
+	legacy_u8 var_ptrectflag, var_primtype;
 	struct VECTOR var_vecarr[255];
-	unsigned var_primitiveflags, var_fileprimtype, var_4, var_polyvertcounter, var_C, var_448, var_B7C, var_462;
-	int var_polyvertX, var_polyvertY;
+	legacy_u16 var_primitiveflags, var_fileprimtype, var_4, var_polyvertcounter, var_C, var_448, var_B7C, var_462;
+	legacy_s16 var_polyvertX, var_polyvertY;
 	struct POINT2D far* var_transshapepolyinfoptptr;
-	long var_18;
+	legacy_s32 var_18;
 	struct POINT2D var_574, var_450;
 	struct POINT2D var_vecarr2[255];
 	struct POINT2D** var_polyvertunktabptr;
@@ -209,8 +209,8 @@ unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
     arg_transshapeptr = word ptr 6
 */
 
-	unsigned result, i;
-	unsigned temp, temp0, temp1;
+	legacy_u16 result, i;
+	legacy_u16 temp, temp0, temp1;
 
 	//result = ported_transformed_shape_op_(arg_transshapeptr);
 	//return result;
@@ -2343,7 +2343,7 @@ loc_25D3C:
 		temp0 = var_18 / transshapenumvertscopy;
 	}
 	
-	((unsigned short far*)transshapepolyinfo)[0] = temp0;
+	((legacy_u16 far*)transshapepolyinfo)[0] = temp0;
 	
 	
 	if ((transshapeflags & 1) != 0 || (var_primitiveflags & 2) != 0) {
@@ -2516,59 +2516,59 @@ return result;
 
 
 // parameter points to a far array of 2d points
-char is_facing_camera(struct POINT2D far* pts) {
-	long dx0, dy0, dx1, dy1;
-	long temp;
+legacy_s8 is_facing_camera(struct POINT2D far* pts) {
+	legacy_s32 dx0, dy0, dx1, dy1;
+	legacy_s32 temp;
 
-	dx0 = (long)pts[0].px - pts[1].px;
-	dx1 = (long)pts[2].px - pts[1].px;
+	dx0 = (legacy_s32)pts[0].px - pts[1].px;
+	dx1 = (legacy_s32)pts[2].px - pts[1].px;
 	
 	if (dx0 == 0 && dx1 == 0) return 0;
 		
-	dy0 = (long)pts[0].py - pts[1].py;
-	dy1 = (long)pts[2].py - pts[1].py;
+	dy0 = (legacy_s32)pts[0].py - pts[1].py;
+	dy1 = (legacy_s32)pts[2].py - pts[1].py;
 
 	if (dy0 == 0 && dy1 == 0) return 0;
 	temp = (dx1 * dy0) - (dx0 * dy1);
 	return temp <= 0 ? 0 : 1;
 }
 
-extern unsigned projectiondata1;
-extern unsigned projectiondata2;
-extern unsigned projectiondata3;
-extern unsigned projectiondata4;
-extern unsigned projectiondata5;
-extern unsigned projectiondata6;
-extern unsigned projectiondata7;
-extern unsigned projectiondata8;
-extern unsigned projectiondata9;
-extern unsigned projectiondata10;
+extern legacy_u16 projectiondata1;
+extern legacy_u16 projectiondata2;
+extern legacy_u16 projectiondata3;
+extern legacy_u16 projectiondata4;
+extern legacy_u16 projectiondata5;
+extern legacy_u16 projectiondata6;
+extern legacy_u16 projectiondata7;
+extern legacy_u16 projectiondata8;
+extern legacy_u16 projectiondata9;
+extern legacy_u16 projectiondata10;
 
-unsigned projectiondata9_times_ratio(unsigned i1, int i2) {
+legacy_u16 projectiondata9_times_ratio(legacy_u16 i1, legacy_s16 i2) {
 	return projectiondata9 * i1 / i2;
 }
 
-unsigned short nopsub_32738(unsigned long dividend, unsigned short divisor) {
-	return (unsigned short)(dividend / divisor);
+legacy_u16 nopsub_32738(legacy_u32 dividend, legacy_u16 divisor) {
+	return (legacy_u16)(dividend / divisor);
 }
 
-unsigned long nopsub_32746(unsigned short value) {
-	return (unsigned long)projectiondata9 * value;
+legacy_u32 nopsub_32746(legacy_u16 value) {
+	return (legacy_u32)projectiondata9 * value;
 }
 
-unsigned long nopsub_32751(unsigned short value) {
-	return (unsigned long)projectiondata10 * value;
+legacy_u32 nopsub_32751(legacy_u16 value) {
+	return (legacy_u32)projectiondata10 * value;
 }
 
-unsigned short nopsub_3276A(unsigned short value, unsigned short divisor) {
-	return (unsigned short)((unsigned long)projectiondata10 * value / divisor);
+legacy_u16 nopsub_3276A(legacy_u16 value, legacy_u16 divisor) {
+	return (legacy_u16)((legacy_u32)projectiondata10 * value / divisor);
 }
 
-extern int poly_linked_list_40ED6[];
+extern legacy_s16 poly_linked_list_40ED6[];
 
-extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned arg_0, unsigned arg_2) {
-	unsigned result;
-	int regdi, regsi, regax;
+extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0, legacy_u16 arg_2) {
+	legacy_u16 result;
+	legacy_s16 regdi, regsi, regax;
 
 	//return ported_insert_newest_poly_in_poly_linked_list_40ED6_(arg_0, arg_2);
 
@@ -2583,7 +2583,7 @@ extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned arg_0, uns
 			regax = regsi;
 			regsi--;
 			if (regax == 0) break;
-			if (polyinfoptrs[regdi][0] < (int)arg_0) break;
+			if (polyinfoptrs[regdi][0] < (legacy_s16)arg_0) break;
 			poly_linklist_40ED6_iter4 = regdi;
 			regdi = poly_linked_list_40ED6[regdi];
 		}
@@ -2603,18 +2603,18 @@ extern unsigned insert_newest_poly_in_poly_linked_list_40ED6(unsigned arg_0, uns
 	return 1;
 }
 
-void set_projection(int i1, int i2, int i3, int i4) {
+void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) {
 	
-	projectiondata1 = (((long)i1 << 11) / 0x168) >> 1;
-	projectiondata2 = (((long)i2 << 11) / 0x168) >> 1;
+	projectiondata1 = (((legacy_s32)i1 << 11) / 0x168) >> 1;
+	projectiondata2 = (((legacy_s32)i2 << 11) / 0x168) >> 1;
 	projectiondata3 = i3 >> 1;
 	projectiondata5 = projectiondata3 + projectiondata4;
 	projectiondata6 = i4 >> 1;
 	projectiondata8 = projectiondata6 + projectiondata7;
-	projectiondata9 = (long)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+	projectiondata9 = (legacy_s32)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
 
 	if (projectiondata2 != 0) {
-		projectiondata10 = (long)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+		projectiondata10 = (legacy_s32)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
 	} else {
 		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
@@ -2622,24 +2622,24 @@ void set_projection(int i1, int i2, int i3, int i4) {
 	
 }
 
-void nopsub_322C0(unsigned i1, unsigned i2) {
+void nopsub_322C0(legacy_u16 i1, legacy_u16 i2) {
 	projectiondata4 = i1;
 	projectiondata5 = projectiondata3 + i1;
 	projectiondata7 = i2;
 	projectiondata8 = projectiondata6 + i2;
 }
 
-void nopsub_322DF(unsigned i1, unsigned i2, unsigned i3, unsigned i4) {
+void nopsub_322DF(legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4) {
 	projectiondata1 = i1;
 	projectiondata2 = i2;
 	projectiondata3 = i3 >> 1;
 	projectiondata5 = projectiondata3 + projectiondata4;
 	projectiondata6 = i4 >> 1;
 	projectiondata8 = projectiondata6 + projectiondata7;
-	projectiondata9 = (long)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+	projectiondata9 = (legacy_s32)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
 
 	if (projectiondata2 != 0) {
-		projectiondata10 = (long)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+		projectiondata10 = (legacy_s32)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
 	} else {
 		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
@@ -2649,9 +2649,9 @@ void nopsub_322DF(unsigned i1, unsigned i2, unsigned i3, unsigned i4) {
 extern struct RECTANGLE select_rect_rc;
 //extern unsigned word_411F6;
 extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
-extern long sin80, cos80, sin80_2, cos80_2;
+extern legacy_s32 sin80, cos80, sin80_2, cos80_2;
 
-unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* cliprect, int unk) {
+legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 unk) {
 	struct MATRIX* matptr;
 	struct VECTOR vec, vec2;
 
@@ -2694,20 +2694,20 @@ void init_polyinfo(void) {
 	calc_sincos80();
 }
 
-void preRender_default(unsigned color, unsigned vertex_count,
-	unsigned* vertices);
-void preRender_line(unsigned start_x, unsigned start_y, unsigned end_x,
-	unsigned end_y, unsigned color);
-void preRender_patterned(unsigned pattern, unsigned color,
-	unsigned vertex_count, struct POINT2D* vertices);
-void preRender_unk(unsigned pattern, unsigned alternate_color,
-	unsigned color, unsigned vertex_count, struct POINT2D* vertices);
+void preRender_default(legacy_u16 color, legacy_u16 vertex_count,
+	legacy_u16* vertices);
+void preRender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
+	legacy_u16 end_y, legacy_u16 color);
+void preRender_patterned(legacy_u16 pattern, legacy_u16 color,
+	legacy_u16 vertex_count, struct POINT2D* vertices);
+void preRender_unk(legacy_u16 pattern, legacy_u16 alternate_color,
+	legacy_u16 color, legacy_u16 vertex_count, struct POINT2D* vertices);
 
 void get_a_poly_info(void)
 {
 	legacy_u8 far* record;
-	unsigned far* record_points;
-	unsigned points[25];
+	legacy_u16 far* record_points;
+	legacy_u16 points[25];
 	legacy_u16 record_index;
 	legacy_u16 primitive_index;
 	legacy_u16 material_type;
@@ -2726,7 +2726,7 @@ void get_a_poly_info(void)
 		material_color = (legacy_u16)
 			material_clrlist_ptr_cpy[material_type];
 		primitive_type = record[4];
-		record_points = (unsigned far*)(record + 6U);
+		record_points = (legacy_u16 far*)(record + 6U);
 
 		if (primitive_type == 0U) {
 			vertex_count = record[3];
@@ -2774,32 +2774,32 @@ void get_a_poly_info(void)
 extern void draw_patterned_lines();
 extern void draw_unknown_lines();
 extern void preRender_line();
-extern unsigned draw_line_related(unsigned, unsigned, unsigned, unsigned, int*);
-extern unsigned draw_line_related_alt(unsigned, unsigned, unsigned, unsigned, int*);
-extern void putpixel_line1_maybe(int*);
-void generate_poly_edges(int* var_18, int* regsi, int mode);
-void preRender_default_impl_helper(int* regsi, unsigned var_A, unsigned var_C, int* var_18);
+extern legacy_u16 draw_line_related(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_s16*);
+extern legacy_u16 draw_line_related_alt(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_s16*);
+extern void putpixel_line1_maybe(legacy_s16*);
+void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode);
+void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A, legacy_u16 var_C, legacy_s16* var_18);
 
 void preRender_line(
-	unsigned start_x,
-	unsigned start_y,
-	unsigned end_x,
-	unsigned end_y,
-	unsigned color
+	legacy_u16 start_x,
+	legacy_u16 start_y,
+	legacy_u16 end_x,
+	legacy_u16 end_y,
+	legacy_u16 color
 ) {
 	legacy_s16 line[14];
 
 	line[8] = LEGACY_S16_FROM_BITS(color);
 	if (draw_line_related(start_x, start_y, end_x, end_y,
-			(int*)line) == 0 && line[7] > 0)
-		putpixel_line1_maybe((int*)line);
+			(legacy_s16*)line) == 0 && line[7] > 0)
+		putpixel_line1_maybe((legacy_s16*)line);
 }
 
-void draw_lines_unk(int x, int y, int width, int height,
-	int outer_color, int inner_color, int opposite_color)
+void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color)
 {
-	int right = x + width;
-	int bottom = y + height;
+	legacy_s16 right = x + width;
+	legacy_s16 bottom = y + height;
 
 	preRender_line(x, y, right, y, outer_color);
 	preRender_line(x + 1, y + 1, right - 1, y + 1, outer_color);
@@ -2822,16 +2822,16 @@ void draw_lines_unk(int x, int y, int width, int height,
 		inner_color);
 }
 
-extern void (*spritefunc)(int*, int*, unsigned, unsigned, unsigned);
-extern void (*imagefunc)(unsigned, unsigned, unsigned, unsigned, unsigned);
+extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16, legacy_u16);
+extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
 
 extern struct SPRITE far sprite1; // seg012
 extern struct SPRITE far sprite2; // seg012
 extern legacy_u8* off_3F3C8[];
 
-void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int* arg_vertlines, unsigned var_A);
+void preRender_default_impl(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines, legacy_u16 var_A);
 
-void preRender_default_alt(unsigned arg_color, unsigned arg_vertlinecount, unsigned* arg_vertlines) {
+void preRender_default_alt(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, legacy_u16* arg_vertlines) {
 	//return ported_preRender_default_alt_(arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
@@ -2839,7 +2839,7 @@ void preRender_default_alt(unsigned arg_color, unsigned arg_vertlinecount, unsig
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 0);
 }
 
-void preRender_default(unsigned arg_color, unsigned arg_vertlinecount, unsigned* arg_vertlines) {
+void preRender_default(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, legacy_u16* arg_vertlines) {
 	//return ported_preRender_default_(arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
@@ -2868,7 +2868,7 @@ static legacy_u16 sphere_scale_difference(legacy_u16 left,
 		LEGACY_S16_FROM_BITS(scale));
 }
 
-void preRender_sphere_helper2(unsigned* source, unsigned* destination)
+void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination)
 {
 	legacy_u16 half_x1;
 	legacy_u16 quarter_x1;
@@ -2967,15 +2967,15 @@ void preRender_sphere_helper2(unsigned* source, unsigned* destination)
 	}
 }
 
-void preRender_sphere_helper(unsigned* source, unsigned color)
+void preRender_sphere_helper(legacy_u16* source, legacy_u16 color)
 {
-	unsigned vertices[64];
+	legacy_u16 vertices[64];
 
 	preRender_sphere_helper2(source, vertices);
 	preRender_default_alt(color, 0x20U, vertices);
 }
 
-void preRender_wheel_helper3(unsigned* source, unsigned* destination)
+void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination)
 {
 	legacy_u16 half_x1;
 	legacy_u16 half_y1;
@@ -3036,10 +3036,10 @@ static legacy_u16 wheel_interpolate(legacy_u16 center,
 		LEGACY_S16_FROM_BITS(scale)));
 }
 
-void preRender_wheel_helper2(unsigned* source, unsigned* destination,
-	unsigned scale)
+void preRender_wheel_helper2(legacy_u16* source, legacy_u16* destination,
+	legacy_u16 scale)
 {
-	unsigned inner_source[6];
+	legacy_u16 inner_source[6];
 	legacy_u16 center_x;
 	legacy_u16 center_y;
 	legacy_u16 scale_bits;
@@ -3061,8 +3061,8 @@ void preRender_wheel_helper2(unsigned* source, unsigned* destination,
 	preRender_wheel_helper3(inner_source, destination + 32U);
 }
 
-void preRender_wheel_helper(unsigned* source, unsigned* destination,
-	unsigned scale)
+void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
+	legacy_u16 scale)
 {
 	legacy_u16 offset_x;
 	legacy_u16 offset_y;
@@ -3079,12 +3079,12 @@ void preRender_wheel_helper(unsigned* source, unsigned* destination,
 	}
 }
 
-void preRender_wheel(unsigned* source, unsigned scale,
-	unsigned outer_color, unsigned side_color, unsigned inner_color)
+void preRender_wheel(legacy_u16* source, legacy_u16 scale,
+	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color)
 {
-	unsigned wheel_points[96];
-	unsigned quad[8];
-	unsigned side[36];
+	legacy_u16 wheel_points[96];
+	legacy_u16 quad[8];
+	legacy_u16 side[36];
 	legacy_u16 index;
 	legacy_u16 next_index;
 	legacy_u16 minimum_index;
@@ -3147,11 +3147,11 @@ void preRender_wheel(unsigned* source, unsigned scale,
 
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
-void preRender_sphere(int x, int y, unsigned size, unsigned color)
+void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color)
 {
-	int left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	int right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	unsigned helper_points[6];
+	legacy_s16 left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	legacy_s16 right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	legacy_u16 helper_points[6];
 	legacy_u16 x_bits;
 	legacy_u16 y_bits;
 	legacy_u16 size_bits;
@@ -3168,7 +3168,7 @@ void preRender_sphere(int x, int y, unsigned size, unsigned color)
 	legacy_u16 output_index;
 	legacy_u8* radii;
 	legacy_u8 radius;
-	int mirror_offset;
+	legacy_s16 mirror_offset;
 	legacy_s16 clip_delta;
 
 	x_bits = (legacy_u16)x;
@@ -3221,7 +3221,7 @@ void preRender_sphere(int x, int y, unsigned size, unsigned color)
 
 	radii = off_3F3C8[half_width];
 	line_count = effective_height;
-	mirror_offset = (int)((effective_height - 1U) << 1);
+	mirror_offset = (legacy_s16)((effective_height - 1U) << 1);
 	output_index = 0;
 	for (;;) {
 		radius = *radii++;
@@ -3246,8 +3246,8 @@ void preRender_sphere(int x, int y, unsigned size, unsigned color)
 			right = right_bound;
 		left_edges[output_index] = left;
 		right_edges[output_index] = right;
-		left_edges[output_index + (unsigned)(mirror_offset >> 1)] = left;
-		right_edges[output_index + (unsigned)(mirror_offset >> 1)] = right;
+		left_edges[output_index + (legacy_u16)(mirror_offset >> 1)] = left;
+		right_edges[output_index + (legacy_u16)(mirror_offset >> 1)] = right;
 		output_index++;
 		mirror_offset -= 4;
 		if (mirror_offset < 0)
@@ -3269,7 +3269,7 @@ void preRender_sphere(int x, int y, unsigned size, unsigned color)
 		top, line_count, color);
 }
 
-void skybox_op_helper(unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D arg_vertlines[]) {
+void skybox_op_helper(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D arg_vertlines[]) {
 	//return ported_skybox_op_helper_(arg_color, arg_vertlinecount, &arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
@@ -3277,7 +3277,7 @@ void skybox_op_helper(unsigned arg_color, unsigned arg_vertlinecount, struct POI
 	preRender_default_impl(arg_color, arg_vertlinecount, &arg_vertlines, 1);
 }
 
-void preRender_wheel_helper4(unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D arg_vertlines[]) {
+void preRender_wheel_helper4(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D arg_vertlines[]) {
 	//return ported_preRender_wheel_helper4_(arg_color, arg_vertlinecount, &arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
@@ -3286,10 +3286,10 @@ void preRender_wheel_helper4(unsigned arg_color, unsigned arg_vertlinecount, str
 }
 
 
-extern unsigned word_4031E;
-extern unsigned word_40320;
+extern legacy_u16 word_4031E;
+extern legacy_u16 word_40320;
 
-void preRender_unk(unsigned unk, unsigned arg_color, unsigned unk2, unsigned arg_vertlinecount, struct POINT2D* arg_vertlines) {
+void preRender_unk(legacy_u16 unk, legacy_u16 arg_color, legacy_u16 unk2, legacy_u16 arg_vertlinecount, struct POINT2D* arg_vertlines) {
 	spritefunc = &draw_unknown_lines;
 	imagefunc = &preRender_line;
 
@@ -3298,7 +3298,7 @@ void preRender_unk(unsigned unk, unsigned arg_color, unsigned unk2, unsigned arg
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
-void preRender_patterned(unsigned unk, unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D* arg_vertlines) {
+void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D* arg_vertlines) {
 	//return ported_preRender_patterned_(unk, arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_patterned_lines;
@@ -3308,27 +3308,27 @@ void preRender_patterned(unsigned unk, unsigned arg_color, unsigned arg_vertline
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
-void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int* arg_vertlines, unsigned var_A) {
-	unsigned short var_798[480 + 480];
-	unsigned char var_7D0[56];
+void preRender_default_impl(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines, legacy_u16 var_A) {
+	legacy_u16 var_798[480 + 480];
+	legacy_u8 var_7D0[56];
 
-	unsigned* var_18;
-	unsigned* var_16;
-	unsigned* var_14;
-	unsigned* var_10;
-	int var_E, var_12;
-	unsigned var_C;
-	unsigned* var_8;
-	int var_4, var_2;
+	legacy_u16* var_18;
+	legacy_u16* var_16;
+	legacy_u16* var_14;
+	legacy_u16* var_10;
+	legacy_s16 var_E, var_12;
+	legacy_u16 var_C;
+	legacy_u16* var_8;
+	legacy_s16 var_4, var_2;
 
-	int* var_vertlineptr;
-	int minx, maxx, i;
-	int temp0x, temp0y, temp1x, temp1y;
+	legacy_s16* var_vertlineptr;
+	legacy_s16 minx, maxx, i;
+	legacy_s16 temp0x, temp0y, temp1x, temp1y;
 
-	int sprite1_sprite_left2 = sprite1.sprite_left2;
-	int sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	int sprite1_sprite_top = sprite1.sprite_top;
-	int sprite1_sprite_height = sprite1.sprite_height;
+	legacy_s16 sprite1_sprite_left2 = sprite1.sprite_left2;
+	legacy_s16 sprite1_sprite_widthsum = sprite1.sprite_widthsum;
+	legacy_s16 sprite1_sprite_top = sprite1.sprite_top;
+	legacy_s16 sprite1_sprite_height = sprite1.sprite_height;
 	
 	var_vertlineptr = arg_vertlines;
 	var_8 = var_vertlineptr + ((arg_vertlinecount - 1) << 1); // asm does shl 2 for byte-offset - points at end of vertptr
@@ -3437,13 +3437,13 @@ void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int*
 
 }
 // generate_poly_edges is called preRender_helper in the IDB.
-void generate_poly_edges(int* var_18, int* regsi, int mode) {
+void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode) {
 
-	int sprite1_sprite_left2 = sprite1.sprite_left2;
-	int sprite1_sprite_widthsum = sprite1.sprite_widthsum;
-	int i, count, ofs;
-	unsigned long value;
-	unsigned long temp;
+	legacy_s16 sprite1_sprite_left2 = sprite1.sprite_left2;
+	legacy_s16 sprite1_sprite_widthsum = sprite1.sprite_widthsum;
+	legacy_s16 i, count, ofs;
+	legacy_u32 value;
+	legacy_u32 temp;
 
 	if (mode != 1) {
 		count = regsi[10];
@@ -3513,31 +3513,31 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 			}
 			return ;
 		case 5:
-			value = ((unsigned long*)regsi)[0] + 0x8000;
+			value = ((legacy_u32*)regsi)[0] + 0x8000;
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = value >> 16;
 				var_18[480 + ofs + i] = value >> 16;
-				value -= (unsigned int)regsi[6];
+				value -= (legacy_u16)regsi[6];
 			}
 			return ;
 		case 6:
-			value = ((unsigned long*)regsi)[0] + 0x8000;
+			value = ((legacy_u32*)regsi)[0] + 0x8000;
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = value >> 16;
 				var_18[480 + ofs + i] = value >> 16;
 				
-				value += (unsigned int)regsi[6];
+				value += (legacy_u16)regsi[6];
 			}
 			return ;
 		case 7:
-			value = (unsigned int)regsi[1];
-			temp = (unsigned int)regsi[2];
+			value = (legacy_u16)regsi[1];
+			temp = (legacy_u16)regsi[2];
 			if (temp + 0x8000 > USHRT_MAX)
 				ofs++;
 			temp = (temp + 0x8000) & 0xFFFF;
 			var_18[480 + ofs] = value;
 			for (i = 0; i < count; i++) {
-				if (temp + (unsigned int)regsi[6] <= USHRT_MAX) {
+				if (temp + (legacy_u16)regsi[6] <= USHRT_MAX) {
 					value--;
 					if (i == count - 1) {
 						var_18[ofs] = value + 1;
@@ -3548,19 +3548,19 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 					ofs++;
 					var_18[480 + ofs] = value;
 				}
-				temp = (temp + (unsigned int)regsi[6])  & 0xFFFF;
+				temp = (temp + (legacy_u16)regsi[6])  & 0xFFFF;
 			}
 			return ;
 
 		case 8:
-			value = (unsigned int)regsi[1];
-			temp = (unsigned int)regsi[2];
+			value = (legacy_u16)regsi[1];
+			temp = (legacy_u16)regsi[2];
 			if (temp + 0x8000 > USHRT_MAX)
 				ofs++;
 			temp = (temp + 0x8000) & 0xFFFF;
 			var_18[ofs] = value;
 			for (i = 0; i < count; i++) {
-				if (temp + (unsigned int)regsi[6] <= USHRT_MAX) {
+				if (temp + (legacy_u16)regsi[6] <= USHRT_MAX) {
 					value++;
 					if (i == count - 1) {
 						var_18[480+ofs] = value - 1;
@@ -3571,7 +3571,7 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 					ofs++;
 					var_18[ofs] = value;
 				}
-				temp = (temp + (unsigned int)regsi[6])  & 0xFFFF;
+				temp = (temp + (legacy_u16)regsi[6])  & 0xFFFF;
 				}
 				return ;
 			case 9:
@@ -3584,8 +3584,8 @@ void generate_poly_edges(int* var_18, int* regsi, int mode) {
 
 
 // aka preRender_helper3 in the IDB
-void preRender_default_impl_helper(int* regsi, unsigned var_A,
-	unsigned var_C, int* var_18)
+void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
+	legacy_u16 var_C, legacy_s16* var_18)
 {
 	legacy_s16* line = (legacy_s16*)regsi;
 	legacy_s16* left_edges = (legacy_s16*)var_18;
@@ -3596,10 +3596,10 @@ void preRender_default_impl_helper(int* regsi, unsigned var_A,
 	legacy_u16 mode;
 	legacy_u32 fixed;
 	legacy_u32 sum;
-	int count;
-	int index;
-	int target;
-	int carry;
+	legacy_s16 count;
+	legacy_s16 index;
+	legacy_s16 target;
+	legacy_s16 carry;
 
 	count = line[7];
 	index = line[3];
@@ -3915,7 +3915,7 @@ void preRender_default_impl_helper(int* regsi, unsigned var_A,
 extern legacy_u16 far word_2F448; // seg012
 extern legacy_u16 far off_2F44A[]; // seg012
 
-unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4);
+legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8, legacy_u16 var_4);
 
 static legacy_u16 draw_line_sar1(legacy_u16 value) {
 	return (legacy_u16)((value >> 1) | (value & 0x8000U));
@@ -3943,15 +3943,15 @@ static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 	return draw_line_round_div((legacy_u32)minor << 16, major);
 }
 
-unsigned draw_line_related(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8) {
+legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8) {
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 0);
 }
 
-unsigned draw_line_related_alt(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8) {
+legacy_u16 draw_line_related_alt(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8) {
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 1);
 }
 
-unsigned draw_line_related_impl(unsigned arg_startX, unsigned arg_startY, unsigned arg_endX, unsigned arg_endY, int* arg_8, unsigned var_4) {
+legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8, legacy_u16 var_4) {
 	legacy_u16* line;
 	legacy_u16 ax;
 	legacy_u16 bx;
@@ -4595,9 +4595,9 @@ draw_c_subdivide_bottom_next:
 	goto draw_c_subdivide_bottom_test;
 }
 
-extern char aStxxx[];
-extern short far* carresptr;
-extern short far* car2resptr;
+extern legacy_s8 aStxxx[];
+extern legacy_s16 far* carresptr;
+extern legacy_s16 far* car2resptr;
 extern struct VECTOR carshapevec;
 extern struct VECTOR carshapevec2;
 extern struct VECTOR carshapevecs[];
@@ -4611,19 +4611,19 @@ extern struct VECTOR oppcarshapevecs[];
 extern struct VECTOR oppcarshapevecs2[];
 extern struct VECTOR oppcarshapevecs3[];
 extern struct VECTOR oppcarshapevecs4[];
-extern int word_443E8[];
-extern int word_4448A[];
+extern legacy_s16 word_443E8[];
+extern legacy_s16 word_4448A[];
 
-void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
-void ported_sub_204AE_(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
+void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
+void ported_sub_204AE_(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
-void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
-	int i;
+void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponentcarid[]) {
+	legacy_s16 i;
 	struct VECTOR far* var_E;
-	unsigned long var_6;
-	unsigned long copy_index;
-	unsigned char far* source_bytes;
-	unsigned char far* destination_bytes;
+	legacy_u32 var_6;
+	legacy_u32 copy_index;
+	legacy_u8 far* source_bytes;
+	legacy_u8 far* destination_bytes;
 	aStxxx[2] = arg_playercarid[0];
 	aStxxx[3] = arg_playercarid[1];
 	aStxxx[4] = arg_playercarid[2];
@@ -4665,11 +4665,11 @@ void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 		{
 			var_6 = mmgr_get_chunk_size_bytes(carresptr);
 			car2resptr = mmgr_alloc_resbytes("car2", var_6);
-			source_bytes = (unsigned char far*)carresptr;
-			destination_bytes = (unsigned char far*)car2resptr;
+			source_bytes = (legacy_u8 far*)carresptr;
+			destination_bytes = (legacy_u8 far*)car2resptr;
 
 			for (copy_index = 0; copy_index < var_6; copy_index++) {
-				destination_bytes[(unsigned short)copy_index] = source_bytes[(unsigned short)copy_index];
+				destination_bytes[(legacy_u16)copy_index] = source_bytes[(legacy_u16)copy_index];
 			}
 		} else {
 			aStxxx[2] = arg_opponentcarid[0];
@@ -4711,14 +4711,14 @@ void shape3d_load_car_shapes(char arg_playercarid[], char arg_opponentcarid[]) {
 	}
 }
 
-void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr) {
-	int i, j;
-	int var_C;
-	int var_2;
-	int var_14;
-	int var_10;
-	int var_8;
-	int var_4;
+void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr) {
+	legacy_s16 i, j;
+	legacy_s16 var_C;
+	legacy_s16 var_2;
+	legacy_s16 var_14;
+	legacy_s16 var_10;
+	legacy_s16 var_8;
+	legacy_s16 var_4;
 	//return ported_sub_204AE_(arg_verts, arg_4, arg_6, arg_8, arg_vecarray, arg_vecptr);
 	// arg_8[4] caches the steering angle the wheel vertices were last built
 	// for, so the test is against arg_4, not against zero.
@@ -4767,7 +4767,7 @@ void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg
 	return ;
 }
 
-extern char unk_3E710[];
+extern legacy_s8 unk_3E710[];
 
 void shape3d_free_car_shapes() {
 	if (car2resptr != 0) {

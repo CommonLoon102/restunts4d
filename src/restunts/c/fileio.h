@@ -1,6 +1,8 @@
 #ifndef RESTUNTS_FILEIO_H
 #define RESTUNTS_FILEIO_H
 
+#include "legacy.h"
+
 #ifdef RESTUNTS_SDL
 #define far
 #endif
@@ -9,45 +11,45 @@
 extern "C" {
 #endif
 
-const char* file_find(const char* query);
-const char* file_find_next(void);
-const char* file_find_next_alt(void);
+const legacy_s8* file_find(const legacy_s8* query);
+const legacy_s8* file_find_next(void);
+const legacy_s8* file_find_next_alt(void);
 
-void file_build_path(const char* dir, const char* name, const char* ext, char* dst);
-const char* file_combine_and_find(const char* dir, const char* name, const char* ext);
+void file_build_path(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext, legacy_s8* dst);
+const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext);
 
-unsigned short file_paras(const char* filename, int fatal);
-unsigned short file_paras_fatal(const char* filename);
-unsigned short file_paras_nofatal(const char* filename);
+legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal);
+legacy_u16 file_paras_fatal(const legacy_s8* filename);
+legacy_u16 file_paras_nofatal(const legacy_s8* filename);
 
-unsigned short file_decomp_paras(const char* filename, int fatal);
-unsigned short file_decomp_paras_fatal(const char* filename);
-unsigned short file_decomp_paras_nofatal(const char* filename);
+legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal);
+legacy_u16 file_decomp_paras_fatal(const legacy_s8* filename);
+legacy_u16 file_decomp_paras_nofatal(const legacy_s8* filename);
 
-void far* file_read(const char* filename, void far* dst, int fatal);
-void far* file_read_fatal(const char* filename, void far* dst);
-void far* file_read_nofatal(const char* filename, void far* dst);
+void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal);
+void far* file_read_fatal(const legacy_s8* filename, void far* dst);
+void far* file_read_nofatal(const legacy_s8* filename, void far* dst);
 
-short file_write(const char* filename, void far* src, unsigned long length, int fatal);
-short file_write_fatal(const char* filename, void far* src, unsigned long length);
-short file_write_nofatal(const char* filename, void far* src, unsigned long length);
+legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 length, legacy_s16 fatal);
+legacy_s16 file_write_fatal(const legacy_s8* filename, void far* src, legacy_u32 length);
+legacy_s16 file_write_nofatal(const legacy_s8* filename, void far* src, legacy_u32 length);
 
-void far* file_decomp(const char* filename, int fatal);
-void far* file_decomp_fatal(const char* filename);
-void far* file_decomp_nofatal(const char* filename);
+void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal);
+void far* file_decomp_fatal(const legacy_s8* filename);
+void far* file_decomp_nofatal(const legacy_s8* filename);
 
-void far* file_load_binary(const char* filename, int fatal);
-void far* file_load_binary_nofatal(const char* filename);
-void far* file_load_binary_fatal(const char* filename);
+void far* file_load_binary(const legacy_s8* filename, legacy_s16 fatal);
+void far* file_load_binary_nofatal(const legacy_s8* filename);
+void far* file_load_binary_fatal(const legacy_s8* filename);
 
-void far* file_load_resfile(const char* filename);
-void far* file_load_resource(int type, const char* filename);
+void far* file_load_resfile(const legacy_s8* filename);
+void far* file_load_resource(legacy_s16 type, const legacy_s8* filename);
 void unload_resource(void far* resptr);
-void file_load_audiores(const char* songfile, const char* voicefile, const char* name);
-void far* file_load_3dres(const char* filename);
+void file_load_audiores(const legacy_s8* songfile, const legacy_s8* voicefile, const legacy_s8* name);
+void far* file_load_3dres(const legacy_s8* filename);
 
-short file_load_replay(const char* dir, const char* name);
-short file_write_replay(const char* filename);
+legacy_s16 file_load_replay(const legacy_s8* dir, const legacy_s8* name);
+legacy_s16 file_write_replay(const legacy_s8* filename);
 
 #ifdef __cplusplus
 }

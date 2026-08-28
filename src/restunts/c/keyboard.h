@@ -1,18 +1,20 @@
 #ifndef RESTUNTS_KEYBOARD_H
 #define RESTUNTS_KEYBOARD_H
 
+#include "legacy.h"
+
 void kb_init_interrupt(void);
 void kb_exit_handler(void);
 void interrupt kb_int9_handler(void);
-void interrupt kb_int16_handler(unsigned bp, unsigned di, unsigned si,
-                                unsigned ds, unsigned es, unsigned dx,
-                                unsigned cx, unsigned bx, unsigned ax,
-                                unsigned ip, unsigned cs, unsigned flags);
-int kb_get_key_state(int key);
-int kb_call_readchar_callback(void);
-int kb_read_char(void);
-int kb_checking(void);
+void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
+                                legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
+                                legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
+                                legacy_u16 ip, legacy_u16 cs, legacy_u16 flags);
+legacy_s16 kb_get_key_state(legacy_s16 key);
+legacy_s16 kb_call_readchar_callback(void);
+legacy_s16 kb_read_char(void);
+legacy_s16 kb_checking(void);
 void flush_stdin(void);
-int kb_check(void);
+legacy_s16 kb_check(void);
 
 #endif

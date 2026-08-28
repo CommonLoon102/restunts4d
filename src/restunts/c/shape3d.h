@@ -6,20 +6,20 @@
 #pragma pack (push, 1)
 
 struct SHAPE3D {
-	unsigned short shape3d_numverts;
+	legacy_u16 shape3d_numverts;
 	struct VECTOR far* shape3d_verts;
-	unsigned short shape3d_numprimitives;
-	unsigned short shape3d_numpaints;
-	char far* shape3d_primitives;
-	char far* shape3d_cull1;
-	char far* shape3d_cull2;
+	legacy_u16 shape3d_numprimitives;
+	legacy_u16 shape3d_numpaints;
+	legacy_s8 far* shape3d_primitives;
+	legacy_s8 far* shape3d_cull1;
+	legacy_s8 far* shape3d_cull2;
 };
 
 struct SHAPE3DHEADER {
-	unsigned char header_numverts;
-	unsigned char header_numprimitives;
-	unsigned char header_numpaints;
-	unsigned char header_reserved;
+	legacy_u8 header_numverts;
+	legacy_u8 header_numprimitives;
+	legacy_u8 header_numpaints;
+	legacy_u8 header_reserved;
 };
 
 struct TRANSFORMEDSHAPE3D {
@@ -27,37 +27,47 @@ struct TRANSFORMEDSHAPE3D {
 	struct SHAPE3D* shapeptr;
 	struct RECTANGLE* rectptr;
 	struct VECTOR rotvec;
-	unsigned short unk;
-	unsigned char ts_flags;
-	unsigned char material;
+	legacy_u16 unk;
+	legacy_u8 ts_flags;
+	legacy_u8 material;
 };
 
 #pragma pack (pop)
 
-int shape3d_load_all(void);
+typedef char legacy_shape3dheader_must_be_4_bytes[
+	(sizeof(struct SHAPE3DHEADER) == 4) ? 1 : -1];
+
+#ifdef RESTUNTS_DOS
+typedef char legacy_shape3d_must_be_22_bytes[
+	(sizeof(struct SHAPE3D) == 22) ? 1 : -1];
+typedef char legacy_transformedshape3d_must_be_20_bytes[
+	(sizeof(struct TRANSFORMEDSHAPE3D) == 20) ? 1 : -1];
+#endif
+
+legacy_s16 shape3d_load_all(void);
 void shape3d_free_all(void);
-void shape3d_load_car_shapes(char* carid, char* opponent_carid);
+void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* opponent_carid);
 void shape3d_free_car_shapes(void);
-void shape3d_init_shape(char far* shapeptr, struct SHAPE3D* gameshape);
-unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
-void set_projection(int i1, int i2, int i3, int i4);
-int polarAngle(int z, int y);
-unsigned select_cliprect_rotate(int angZ, int angX, int angY, struct RECTANGLE* cliprect, int unk);
+void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape);
+legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
+void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4);
+legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
+legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 unk);
 void init_polyinfo(void);
 void polyinfo_reset(void);
 void get_a_poly_info(void);
-void preRender_sphere_helper2(unsigned* source, unsigned* destination);
-void preRender_sphere_helper(unsigned* source, unsigned color);
-void preRender_wheel_helper3(unsigned* source, unsigned* destination);
-void preRender_wheel_helper2(unsigned* source, unsigned* destination,
-	unsigned scale);
-void preRender_wheel_helper(unsigned* source, unsigned* destination,
-	unsigned scale);
-void preRender_wheel(unsigned* source, unsigned scale,
-	unsigned outer_color, unsigned side_color, unsigned inner_color);
-void preRender_sphere(int x, int y, unsigned size, unsigned color);
-void draw_lines_unk(int x, int y, int width, int height,
-	int outer_color, int inner_color, int opposite_color);
-void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
+void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination);
+void preRender_sphere_helper(legacy_u16* source, legacy_u16 color);
+void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination);
+void preRender_wheel_helper2(legacy_u16* source, legacy_u16* destination,
+	legacy_u16 scale);
+void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
+	legacy_u16 scale);
+void preRender_wheel(legacy_u16* source, legacy_u16 scale,
+	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color);
+void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color);
+void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color);
+void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
 #endif

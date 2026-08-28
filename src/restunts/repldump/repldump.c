@@ -2,17 +2,17 @@
 #include <restunts.h>
 #include <memmgr.h>
 
-typedef unsigned size_t;
-typedef int FILE;
+typedef legacy_u16 size_t;
+typedef legacy_s16 FILE;
 
 #ifdef RESTUNTS_ORIGINAL
 
-int g_errno;
+legacy_s16 g_errno;
 
-FILE* fopen(const char* path, const char* mode)
+FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 {
-	unsigned short segm = FP_SEG(path);
-	unsigned short offs = FP_OFF(path);
+	legacy_u16 segm = FP_SEG(path);
+	legacy_u16 offs = FP_OFF(path);
 	FILE* handle;
 
 	g_errno = 0;
@@ -53,9 +53,9 @@ FILE* fopen(const char* path, const char* mode)
 	return handle;
 }
 
-int fclose(FILE* file)
+legacy_s16 fclose(FILE* file)
 {
-	int res;
+	legacy_s16 res;
 
 	__asm {
 		mov  ah, 3Eh // Close file
@@ -73,8 +73,8 @@ int fclose(FILE* file)
 
 size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 {
-	unsigned short segm = FP_SEG(src);
-	unsigned short offs = FP_OFF(src);
+	legacy_u16 segm = FP_SEG(src);
+	legacy_u16 offs = FP_OFF(src);
 
 	size_t res;
 	size *= nmemb;
@@ -99,7 +99,7 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 }
 
 void init_row_tables(void) {
-	int i;
+	legacy_s16 i;
 	for (i = 0; i < 30; i++) {
 		trackrows[i] = 30 * (29 - i);
 		terrainrows[i] = 30 * i;
@@ -116,7 +116,7 @@ void init_row_tables(void) {
 }
 
 void init_trackdata(void) {
-	char far* trkptr;
+	legacy_s8 far* trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
 
 	td01_track_file_cpy = trkptr;
@@ -196,16 +196,16 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 #endif
 
 #ifndef RESTUNTS_ORIGINAL
-extern int setup_player_cars_repldump(void);
+extern legacy_s16 setup_player_cars_repldump(void);
 #endif
 
 // First argument is the filename without the .rpl extension.
 // If there is a second argument (it can by anything, usually 1), then the filename
 // can contain the .rpl extension. It is useful to call this tool via batch files,
 // in that case this tool will terminate normally after done, no need to press any keys.
-int stuntsmain(int argc, char* argv[]) {
-	int i, len;
-	char outname[13], carid[5];
+legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
+	legacy_s16 i, len;
+	legacy_s8 outname[13], carid[5];
 	FILE* fout;
 
 	if (argc < 2) {
@@ -334,7 +334,7 @@ int stuntsmain(int argc, char* argv[]) {
 	}
 	printf("OK\n");
 
-	fwrite(&gameconfig.game_recordedframes, sizeof(unsigned short), 1, fout);
+	fwrite(&gameconfig.game_recordedframes, sizeof(legacy_u16), 1, fout);
 
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
 

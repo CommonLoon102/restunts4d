@@ -2,42 +2,42 @@
 #include "legacy.h"
 #include "math.h"
 
-extern long pState_lvec1_x;
-extern long pState_lvec1_y;
-extern long pState_lvec1_z;
-extern int pState_minusRotate_z_1;
-extern int pState_minusRotate_z_2;
-extern int pState_minusRotate_y_1;
-extern int pState_minusRotate_y_2;
-extern int pState_minusRotate_x_1;
-extern int pState_minusRotate_x_2;
+extern legacy_s32 pState_lvec1_x;
+extern legacy_s32 pState_lvec1_y;
+extern legacy_s32 pState_lvec1_z;
+extern legacy_s16 pState_minusRotate_z_1;
+extern legacy_s16 pState_minusRotate_z_2;
+extern legacy_s16 pState_minusRotate_y_1;
+extern legacy_s16 pState_minusRotate_y_2;
+extern legacy_s16 pState_minusRotate_x_1;
+extern legacy_s16 pState_minusRotate_x_2;
 extern struct MATRIX mat_unk;
 extern struct VECTOR vec_unk2;
-extern int planindex;
-extern int planindex_copy;
-extern int pState_f36Mminf40sar2;
+extern legacy_s16 planindex;
+extern legacy_s16 planindex_copy;
+extern legacy_s16 pState_f36Mminf40sar2;
 extern struct VECTOR vec_planerotopresult;
-extern char current_surf_type;
-extern int nextPosAndNormalIP;
-extern int wallindex;
-extern int elRdWallRelated;
-extern int wallHeight;
-extern int wallStartX;
-extern int wallStartZ;
-extern int wallOrientation;
+extern legacy_s8 current_surf_type;
+extern legacy_s16 nextPosAndNormalIP;
+extern legacy_s16 wallindex;
+extern legacy_s16 elRdWallRelated;
+extern legacy_s16 wallHeight;
+extern legacy_s16 wallStartX;
+extern legacy_s16 wallStartZ;
+extern legacy_s16 wallOrientation;
 extern struct PLANE far* planptr;
 extern struct PLANE far* current_planptr;
-extern int elem_xCenter;
-extern int elem_zCenter;
-extern int terrainHeight;
-extern char byte_4392C;
+extern legacy_s16 elem_xCenter;
+extern legacy_s16 elem_zCenter;
+extern legacy_s16 terrainHeight;
+extern legacy_s8 byte_4392C;
 
 extern struct POINT2D unk_3BD62[2];
 extern struct POINT2D unk_3BD5A[2];
 extern struct POINT2D unk_3BD6A[2];
-extern int word_3BD72[4];
-extern int word_4408C;
-extern int word_43964;
+extern legacy_s16 word_3BD72[4];
+extern legacy_s16 word_4408C;
+extern legacy_s16 word_43964;
 extern struct TRACKOBJECT trkObjectList[215];
 extern struct VECTOR unk_3E640[];
 extern struct VECTOR unk_3E646[];
@@ -46,9 +46,9 @@ extern struct VECTOR unk_3E682[];
 extern struct VECTOR unk_3E68E[];
 extern struct VECTOR unk_3E69A[];
 
-extern void update_crash_state(int, int);
+extern void update_crash_state(legacy_s16, legacy_s16);
 
-int bto_auxiliary1(int column_arg, int row_arg, struct VECTOR* output)
+legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
 {
 	const struct VECTOR* dependency_points;
 	legacy_u16 column;
@@ -175,18 +175,18 @@ int bto_auxiliary1(int column_arg, int row_arg, struct VECTOR* output)
  * contain the angles written by the preceding moving frame. A translated C
  * frame has a different layout, so preserve that legacy residue explicitly.
  */
-static short legacy_wheel_plane_angle_residue[4];
+static legacy_s16 legacy_wheel_plane_angle_residue[4];
 
 /*
  * Explicit models of words which alias across consecutive legacy stack frames.
  */
-short legacy_wheel_angle_stack_words[4];
-short legacy_grip_stack_words[4];
+legacy_s16 legacy_wheel_angle_stack_words[4];
+legacy_s16 legacy_grip_stack_words[4];
 
-int carState_rc_op(
+legacy_s16 carState_rc_op(
 	struct CARSTATE* carstate,
-	int contact_delta_arg,
-	int wheel_index
+	legacy_s16 contact_delta_arg,
+	legacy_s16 wheel_index
 ) {
 	legacy_s16 previous_rc2;
 	legacy_s16 contact_delta;
@@ -261,7 +261,7 @@ int carState_rc_op(
 	return LEGACY_S16_WRAP_ADD(previous_rc2, adjustment);
 }
 
-int car_car_speed_adjust_maybe(
+legacy_s16 car_car_speed_adjust_maybe(
 	struct CARSTATE* first_state,
 	struct CARSTATE* second_state
 ) {
@@ -341,7 +341,7 @@ static void build_collision_corners(
 ) {
 	struct MATRIX* rotation;
 	struct VECTOR local_corner;
-	int corner;
+	legacy_s16 corner;
 
 	rotation = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(world_coordinates[1].x),
@@ -373,7 +373,7 @@ static void build_collision_corners(
 	}
 }
 
-static int collision_corners_inside(
+static legacy_s16 collision_corners_inside(
 	struct VECTOR corners[4],
 	struct POINT2D* collision_points,
 	struct VECTOR* world_coordinates
@@ -382,7 +382,7 @@ static int collision_corners_inside(
 	struct VECTOR relative_corner;
 	struct VECTOR local_corner;
 	legacy_s16 negative_extent;
-	int corner;
+	legacy_s16 corner;
 
 	rotation = mat_rot_zxy(
 		world_coordinates[1].x,
@@ -418,7 +418,7 @@ static int collision_corners_inside(
 	return 0;
 }
 
-int car_car_coll_detect_maybe(
+legacy_s16 car_car_coll_detect_maybe(
 	struct POINT2D* first_collision_points,
 	struct VECTOR* first_world_coordinates,
 	struct POINT2D* second_collision_points,
@@ -471,35 +471,35 @@ int car_car_coll_detect_maybe(
 		corners, first_collision_points, first_world_coordinates);
 }
 
-void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, int arg_MplayerFlag) {
+void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, legacy_s16 arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
-	int var_pSpeed2Scaled;
+	legacy_s16 var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
-	short var_140someWhlData[4];
+	legacy_s16 var_140someWhlData[4];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
-	int pState_f40_sar2;
-	char var_EC;
-	int var_F0;
+	legacy_s16 pState_f40_sar2;
+	legacy_s8 var_EC;
+	legacy_s16 var_F0;
 	struct VECTOR vec_E4;
 	struct VECTORLONG vecl_1C0[4];
 	struct VECTORLONG vecl_176[4];
-	int var_wheelIndex;
-	char var_2;
+	legacy_s16 var_wheelIndex;
+	legacy_s8 var_2;
 	struct VECTOR vec_182, vec_1E4, vec_C, vec_1C, vec_17C, var_122;
 	struct VECTOR var_11ApStateWorldCrds[2], vec_18EoStateWorldCrds[2];
 	struct MATRIX mat_134;
-	char var_136;
-	int var_F4, var_F2, var_EE, var_138;
-	unsigned int var_190;
+	legacy_s8 var_136;
+	legacy_s16 var_F4, var_F2, var_EE, var_138;
+	legacy_u16 var_190;
 	struct MATRIX* var_EA;
-	int si;
-	short var_16[4];
+	legacy_s16 si;
+	legacy_s16 var_16[4];
 	struct PLANE far* var_6;
 	struct VECTOR vec_1DE[4];
-	int var_E;
-	char var_11C;
+	legacy_s16 var_E;
+	legacy_s8 var_11C;
 	struct VECTOR var_DC[32];
 	
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
@@ -540,9 +540,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 
 	/* Convert speed to per-tick travel, accounting for the simulation rate. */
 	if (framespersec == 0xA) {
-		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x1E00;
+		var_pSpeed2Scaled = ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x1E00;
 	} else {
-		var_pSpeed2Scaled = ((long)arg_pState->car_speed2 * 0x580) / 0x3C00;
+		var_pSpeed2Scaled = ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x3C00;
 	}
 
 	/*
@@ -622,8 +622,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * Z coordinate, the first aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		var_140someWhlData[0] = (unsigned int)(
-			(unsigned long)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
+		var_140someWhlData[0] = (legacy_u16)(
+			(legacy_u32)(state.opponentstate.car_posWorld1.lz + vec_FC.z) >> 16
 		);
 		legacy_wheel_plane_angle_residue[0] = var_140someWhlData[0];
 
@@ -640,19 +640,19 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * X coordinate, the second aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		var_140someWhlData[1] = (unsigned int)(
+		var_140someWhlData[1] = (legacy_u16)(
 			state.opponentstate.car_posWorld1.lx + vec_FC.x
 		);
 
 		/* Commit the second word and recover world X's high word as the third. */
 		legacy_wheel_plane_angle_residue[1] = var_140someWhlData[1];
-		var_140someWhlData[2] = (unsigned int)(
-			(unsigned long)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
+		var_140someWhlData[2] = (legacy_u16)(
+			(legacy_u32)(state.opponentstate.car_posWorld1.lx + vec_FC.x) >> 16
 		);
 
 		/* Commit the third word and recover world Y's low word as the fourth. */
 		legacy_wheel_plane_angle_residue[2] = var_140someWhlData[2];
-		var_140someWhlData[3] = (unsigned int)(
+		var_140someWhlData[3] = (legacy_u16)(
 			state.opponentstate.car_posWorld1.ly + vec_FC.y
 		);
 		legacy_wheel_plane_angle_residue[3] = var_140someWhlData[3];
@@ -3647,7 +3647,7 @@ loc_16648:
     ; align 2
     db 144*/
 loc_16650:
-	si = (char)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
+	si = (legacy_s8)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
 	if (si != -1) //0xFF) // note: checking for 0xff elsewhere, should be signed and check for -1
 		goto loc_16670;
 	goto loc_16710;
@@ -3713,7 +3713,7 @@ loc_1667A:
     jz      short loc_16710*/
 	state.field_3FA[si] = 1;
 	
-	state_op_unk(si + 2, -arg_pState->car_rotate.x, ((long)arg_pState->car_speed2 * 0x580) / 0x3C00);
+	state_op_unk(si + 2, -arg_pState->car_rotate.x, ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x3C00);
 	/*
     mov     state.field_3FA[si], 1
     mov     ax, 3C00h       ; 15360 = track grid length / 2

@@ -19,7 +19,7 @@
 	}
 
 void far* dos_get_psp(void) {
-	unsigned short resseg, resofs;
+	legacy_u16 resseg, resofs;
 	__asm {
 		push ds
 		mov ah, 62h
@@ -31,8 +31,8 @@ void far* dos_get_psp(void) {
 	return MK_FP(resseg, resofs);
 }
 
-unsigned short dos_alloc(unsigned short paras) {
-	unsigned short resseg;
+legacy_u16 dos_alloc(legacy_u16 paras) {
+	legacy_u16 resseg;
 	__asm {
 		mov bx, paras
 		mov ah, 48h
@@ -42,8 +42,8 @@ unsigned short dos_alloc(unsigned short paras) {
 	return resseg;
 }
 
-unsigned short dos_setblock(unsigned short blockseg, unsigned short newsize) {
-	unsigned short res;
+legacy_u16 dos_setblock(legacy_u16 blockseg, legacy_u16 newsize) {
+	legacy_u16 res;
 	__asm {
 		mov bx, newsize
 		mov es, blockseg
@@ -54,7 +54,7 @@ unsigned short dos_setblock(unsigned short blockseg, unsigned short newsize) {
 	return res;
 }
 
-void dos_free(unsigned short blockseg) {
+void dos_free(legacy_u16 blockseg) {
 	__asm {
 		mov es, blockseg
 		mov ah, 49h
@@ -68,14 +68,14 @@ void dos_free(unsigned short blockseg) {
 // below A000. Both regions are plain addressable RAM once set up, so far
 // pointers into them behave like ordinary memory everywhere, including in
 // the original asm consumers. See highpool_names for what may go here.
-unsigned short ems_handle = 0;
-unsigned char ems_present = 0;
+legacy_u16 ems_handle = 0;
+legacy_u8 ems_present = 0;
 
 typedef void (far* emsvoidfunctype)();
 extern void add_exit_handler(emsvoidfunctype exitfunc);
 
 void ems_shutdown(void) {
-	unsigned short handle;
+	legacy_u16 handle;
 
 	if (ems_present == 0)
 		return;
@@ -90,11 +90,11 @@ void ems_shutdown(void) {
 }
 
 static void ems_init(void) {
-	unsigned short vecseg, vecofs, frameseg, handle, stat;
-	unsigned char pageno;
-	int i;
-	char far* devname;
-	static char emmname[8] = { 'E', 'M', 'M', 'X', 'X', 'X', 'X', '0' };
+	legacy_u16 vecseg, vecofs, frameseg, handle, stat;
+	legacy_u8 pageno;
+	legacy_s16 i;
+	legacy_s8 far* devname;
+	static legacy_s8 emmname[8] = { 'E', 'M', 'M', 'X', 'X', 'X', 'X', '0' };
 
 	ems_present = 0;
 
@@ -145,7 +145,7 @@ static void ems_init(void) {
 		return;
 
 	for (i = 0; i < 4; i++) {
-		pageno = (unsigned char)i;
+		pageno = (legacy_u8)i;
 		__asm {
 			mov ah, 44h
 			mov al, pageno
@@ -172,7 +172,7 @@ static void ems_init(void) {
 }
 
 static void umb_init(void) {
-	unsigned short oldstrat, oldlink, umbsize, umbseg;
+	legacy_u16 oldstrat, oldlink, umbsize, umbseg;
 
 	__asm {
 		mov ax, 5800h
@@ -225,7 +225,7 @@ static void umb_init(void) {
 	// arithmetic. This is the one region large enough for the full-screen
 	// window, so it is kept clear of small chunks.
 	if (umbseg >= 0xA000 && umbseg < 0xF000 &&
-	    (unsigned long)umbseg + umbsize <= 0xF000) {
+	    (legacy_u32)umbseg + umbsize <= 0xF000) {
 		highpool_add_block(umbseg, umbsize, 0);
 	} else if (umbseg > 0x10) {
 		dos_free(umbseg);
@@ -251,7 +251,7 @@ void popregs() {}
 	
 size_t word_3FF82 = 0; // last para reserved by memmgr
 size_t word_3FF84 = 0; // first para reserved by memmgr
-unsigned short resmaxsize = 0; // size of largest chunk?
+legacy_u16 resmaxsize = 0; // size of largest chunk?
 
 struct MEMCHUNK resources[] = {
 	{ 0, 0, 0, 2 },
@@ -296,16 +296,16 @@ void himem_init(void) {}
 #define HIGHPOOL_MAXCHUNKS 32
 
 struct HIGHBLOCK {
-	unsigned short blockseg;
-	unsigned short blockparas;
-	unsigned short blocklarge; // 1 = video memory, full-screen window only
+	legacy_u16 blockseg;
+	legacy_u16 blockparas;
+	legacy_u16 blocklarge; // 1 = video memory, full-screen window only
 };
 
 struct HIGHCHUNK {
-	char resname[12];
-	unsigned short resseg;
-	unsigned short resparas;
-	unsigned short resstate; // 0 = free, 1 = cached, 2 = live, 3 = reserved
+	legacy_s8 resname[12];
+	legacy_u16 resseg;
+	legacy_u16 resparas;
+	legacy_u16 resstate; // 0 = free, 1 = cached, 2 = live, 3 = reserved
 };
 
 // The full-screen window is the largest single allocation the game makes and
@@ -320,7 +320,7 @@ static struct HIGHCHUNK* highpool_reserved_window(void);
 
 static struct HIGHBLOCK highblocks[HIGHPOOL_MAXBLOCKS];
 static struct HIGHCHUNK highchunks[HIGHPOOL_MAXCHUNKS];
-static int highblockcount = 0;
+static legacy_s16 highblockcount = 0;
 
 // Chunks allowed in upper memory. The list is deliberately short: it was
 // established by replay regression, not by reasoning about what "looks"
@@ -335,7 +335,7 @@ static int highblockcount = 0;
 //  - "cvx": init_game_state only clears one field per entry, so
 //    restore_gamestate copies bytes that were never written.
 //  - "*.vce"/"*.sfx"/"*.drv" and the car "st????.3sh"/".p3s" containers.
-static const char* highpool_names[] = {
+static const legacy_s8* highpool_names[] = {
 	"MCGA WINDOW",
 	"polyinfo",
 	"sdgame",
@@ -358,10 +358,10 @@ static const char* highpool_names[] = {
 	0
 };
 
-void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short largeonly) {
-	unsigned short p;
-	unsigned short far* wipe;
-	int i, k;
+void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) {
+	legacy_u16 p;
+	legacy_u16 far* wipe;
+	legacy_s16 i, k;
 
 	if (paras == 0)
 		return;
@@ -396,8 +396,8 @@ void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short
 	highblockcount++;
 }
 
-int highpool_owns_seg(unsigned short seg) {
-	int i;
+legacy_s16 highpool_owns_seg(legacy_u16 seg) {
+	legacy_s16 i;
 	for (i = 0; i < highblockcount; i++) {
 		if (seg >= highblocks[i].blockseg &&
 		    seg < highblocks[i].blockseg + highblocks[i].blockparas)
@@ -406,8 +406,8 @@ int highpool_owns_seg(unsigned short seg) {
 	return 0;
 }
 
-static struct HIGHCHUNK* highpool_chunk_by_seg(unsigned short seg) {
-	int i;
+static struct HIGHCHUNK* highpool_chunk_by_seg(legacy_u16 seg) {
+	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		if (highchunks[i].resstate != 0 && highchunks[i].resseg == seg)
 			return &highchunks[i];
@@ -415,9 +415,9 @@ static struct HIGHCHUNK* highpool_chunk_by_seg(unsigned short seg) {
 	return 0;
 }
 
-int highpool_route(const char* name, unsigned short paras) {
-	int i, j;
-	const char* entry;
+legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
+	legacy_s16 i, j;
+	const legacy_s8* entry;
 
 	if (highblockcount == 0)
 		return 0;
@@ -442,10 +442,10 @@ int highpool_route(const char* name, unsigned short paras) {
 
 // First fit inside one block: bump the candidate past any conflicting chunk
 // until the request fits or the block ends.
-static unsigned short highpool_find_gap(struct HIGHBLOCK* block, unsigned short paras,
-                                        int dropcached) {
-	unsigned short cand, blockend;
-	int i, conflict;
+static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras,
+                                        legacy_s16 dropcached) {
+	legacy_u16 cand, blockend;
+	legacy_s16 i, conflict;
 
 	cand = block->blockseg;
 	blockend = block->blockseg + block->blockparas;
@@ -473,8 +473,8 @@ static unsigned short highpool_find_gap(struct HIGHBLOCK* block, unsigned short 
 
 // Discard cached chunks overlapping a placement, exactly as the arena
 // allocator drops its own cached blocks when it needs the room back.
-static void highpool_drop_cached(unsigned short seg, unsigned short paras) {
-	int i;
+static void highpool_drop_cached(legacy_u16 seg, legacy_u16 paras) {
+	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		if (highchunks[i].resstate != 1)
 			continue;
@@ -485,8 +485,8 @@ static void highpool_drop_cached(unsigned short seg, unsigned short paras) {
 }
 
 // Does a chunk of this size fit at exactly this segment?
-static int highpool_fits_at(unsigned short seg, unsigned short paras) {
-	int i, b, inblock;
+static legacy_s16 highpool_fits_at(legacy_u16 seg, legacy_u16 paras) {
+	legacy_s16 i, b, inblock;
 
 	inblock = 0;
 	for (b = 0; b < highblockcount; b++) {
@@ -511,8 +511,8 @@ static int highpool_fits_at(unsigned short seg, unsigned short paras) {
 	return 1;
 }
 
-int highpool_can_fit(unsigned short paras) {
-	int i;
+legacy_s16 highpool_can_fit(legacy_u16 paras) {
+	legacy_s16 i;
 
 	if (paras <= HIGHPOOL_WINDOW_PARAS && highpool_reserved_window() != 0)
 		return 1;
@@ -527,7 +527,7 @@ int highpool_can_fit(unsigned short paras) {
 }
 
 static struct HIGHCHUNK* highpool_reserved_window(void) {
-	int i;
+	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		if (highchunks[i].resstate == 3)
 			return &highchunks[i];
@@ -537,8 +537,8 @@ static struct HIGHCHUNK* highpool_reserved_window(void) {
 
 void highpool_reserve_window(void) {
 	struct HIGHCHUNK* slot = 0;
-	unsigned short seg;
-	int i, b;
+	legacy_u16 seg;
+	legacy_s16 i, b;
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		if (highchunks[i].resstate == 0) {
@@ -552,7 +552,7 @@ void highpool_reserve_window(void) {
 	for (b = 0; b < highblockcount; b++) {
 		seg = highpool_find_gap(&highblocks[b], HIGHPOOL_WINDOW_PARAS, 0);
 		if (seg != 0) {
-			const char* nm = HIGHPOOL_WINDOW_NAME;
+			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
 			for (i = 0; i < 12; i++) {
 				slot->resname[i] = nm[i];
 				if (nm[i] == 0)
@@ -568,16 +568,16 @@ void highpool_reserve_window(void) {
 	}
 }
 
-void far* highpool_alloc(const char* name, unsigned short paras) {
-	int i, b, dropcached;
-	unsigned short seg;
+void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
+	legacy_s16 i, b, dropcached;
+	legacy_u16 seg;
 	struct HIGHCHUNK* slot = 0;
 
 	// Claim the standing reservation rather than hunting for a gap.
 	if (paras <= HIGHPOOL_WINDOW_PARAS) {
 		struct HIGHCHUNK* res = highpool_reserved_window();
 		if (res != 0) {
-			const char* nm = HIGHPOOL_WINDOW_NAME;
+			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
 			for (i = 0; ; i++) {
 				if (nm[i] == 0 && (name[i] == 0 || i == 12)) {
 					res->resstate = 2;
@@ -604,10 +604,10 @@ void far* highpool_alloc(const char* name, unsigned short paras) {
 	// pass leaves cached chunks alone so they can still be revived; only if
 	// nothing fits are they discarded to make room.
 	for (dropcached = 0; dropcached < 2; dropcached++) {
-		unsigned short bestseg = 0, bestslack = 0;
-		int bestb = -1;
+		legacy_u16 bestseg = 0, bestslack = 0;
+		legacy_s16 bestb = -1;
 		for (b = 0; b < highblockcount; b++) {
-			unsigned short cand, slack;
+			legacy_u16 cand, slack;
 			if (highblocks[b].blocklarge && paras < 0xF00)
 				continue;
 			cand = highpool_find_gap(&highblocks[b], paras, dropcached);
@@ -651,8 +651,8 @@ void far* highpool_alloc(const char* name, unsigned short paras) {
 
 // Cache lookup mirroring mmgr_get_chunk_by_name: a cached pool chunk is
 // revived in place instead of being copied back into the arena.
-void far* highpool_get_by_name(const char* name) {
-	int i, j, found;
+void far* highpool_get_by_name(const legacy_s8* name) {
+	legacy_s16 i, j, found;
 	struct HIGHCHUNK* chunk;
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
@@ -683,40 +683,40 @@ void far* highpool_get_by_name(const char* name) {
 
 // Upper memory is a DOS notion; elsewhere every request simply falls through
 // to the ordinary arena.
-void highpool_add_block(unsigned short seg, unsigned short paras, unsigned short largeonly) {
+void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) {
 	(void)seg; (void)paras; (void)largeonly;
 }
 
-int highpool_owns_seg(unsigned short seg) {
+legacy_s16 highpool_owns_seg(legacy_u16 seg) {
 	(void)seg;
 	return 0;
 }
 
-int highpool_route(const char* name, unsigned short paras) {
+legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	(void)name; (void)paras;
 	return 0;
 }
 
-int highpool_can_fit(unsigned short paras) {
+legacy_s16 highpool_can_fit(legacy_u16 paras) {
 	(void)paras;
 	return 0;
 }
 
-void far* highpool_alloc(const char* name, unsigned short paras) {
+void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 	(void)name; (void)paras;
 	return 0;
 }
 
-void far* highpool_get_by_name(const char* name) {
+void far* highpool_get_by_name(const legacy_s8* name) {
 	(void)name;
 	return 0;
 }
 
 #endif
 
-const char* mmgr_path_to_name(const char* filename) {
-	const char* c;
-	const char* result;
+const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
+	const legacy_s8* c;
+	const legacy_s8* result;
 
 	pushregs();
 	
@@ -730,14 +730,14 @@ const char* mmgr_path_to_name(const char* filename) {
 	return result;
 }
 
-extern void far* ported_mmgr_alloc_pages_(const char* arg_0, unsigned short arg_2);
+extern void far* ported_mmgr_alloc_pages_(const legacy_s8* arg_0, legacy_u16 arg_2);
 
-void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
-	int i;
+void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
+	legacy_s16 i;
 	struct MEMCHUNK* resdi;
 	struct MEMCHUNK* ressi;
-	const char* chunkname;
-	unsigned rax, rdx;
+	const legacy_s8* chunkname;
+	legacy_u16 rax, rdx;
 
 #ifdef RESTUNTS_DOS
 	if (highpool_route(mmgr_path_to_name(arg_0), arg_2)) {
@@ -794,17 +794,17 @@ void far* mmgr_alloc_pages(const char* arg_0, unsigned short arg_2) {
 	return MK_FP(rdx, 0);
 }
 
-void far* mmgr_alloc_resbytes(const char* name, long int size) {
+void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
 	/* The original allocator always reserves one paragraph after division. */
 	return mmgr_alloc_pages(name, size / 16 + 1);
 }
 
-void mmgr_alloc_resmem(unsigned short arg_0) {
+void mmgr_alloc_resmem(legacy_u16 arg_0) {
 
 	void far* psp;
-	unsigned maxblocks;
+	legacy_u16 maxblocks;
 	struct MEMCHUNK* rp;
-	char* tempptr;
+	legacy_s8* tempptr;
 
 #ifdef RESTUNTS_DOS
 	psp = dos_get_psp();
@@ -847,22 +847,22 @@ void mmgr_alloc_a000(void) {
 	mmgr_alloc_resmem(0xa000);
 }
 
-unsigned short mmgr_get_ofs_diff(void) {
+legacy_u16 mmgr_get_ofs_diff(void) {
 	return resendptr2->resofs - resptr2->resofs - resptr2->ressize;
 }
 
-unsigned short nopsub_31157(void) {
+legacy_u16 nopsub_31157(void) {
 	return mmgr_get_ofs_diff();
 }
 
-unsigned short nopsub_31169(void) {
-	return (unsigned short)(resptr2->resofs + resptr2->ressize - resptr1->resofs);
+legacy_u16 nopsub_31169(void) {
+	return (legacy_u16)(resptr2->resofs + resptr2->ressize - resptr1->resofs);
 }
 
-void far* mmgr_free(char far* ptr) {
-	int i;
-	unsigned ax, bx, cx, dx, di;
-	unsigned ptrseg;
+void far* mmgr_free(legacy_s8 far* ptr) {
+	legacy_s16 i;
+	legacy_u16 ax, bx, cx, dx, di;
+	legacy_u16 ptrseg;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resbx;
 
@@ -924,10 +924,10 @@ loc_31508:
 // and still chunk correctly here; the divergence starts at 9000h (576 KiB),
 // where the signed remainder test is taken despite no unsigned borrow. Nothing
 // asks either copier for that much at once.
-void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras) {
-	unsigned short count; // number of words to copy
-	unsigned short far * srcptr;
-	unsigned short far * destptr;
+void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
+	legacy_u16 count; // number of words to copy
+	legacy_u16 far * srcptr;
+	legacy_u16 far * destptr;
 	
 	while (paras != 0) {
 		count = 0x8000; // 64k in words
@@ -954,10 +954,10 @@ void mmgr_copy_paras(unsigned short srcseg, unsigned short destseg, short paras)
 
 // Same signedness caveat as mmgr_copy_paras above: the original's loop guard
 // is `sub bx, 1000h / jnb`, an unsigned count.
-void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short paras) {
-	unsigned short count, ofs;
-	unsigned short far* destptr;
-	unsigned short far* srcptr;
+void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
+	legacy_u16 count, ofs;
+	legacy_u16 far* destptr;
+	legacy_u16 far* srcptr;
 
 	pushregs();
 
@@ -989,8 +989,8 @@ void copy_paras_reverse(unsigned short srcseg, unsigned short destseg, short par
 }
 
 void mmgr_find_free(void) {
-	int i;
-	unsigned short regax, regdx, resunk;
+	legacy_s16 i;
+	legacy_u16 regax, regdx, resunk;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -1033,15 +1033,15 @@ void mmgr_find_free(void) {
 	popregs();
 }
 
-void far* ported_mmgr_get_chunk_by_name_(const char* name);
+void far* ported_mmgr_get_chunk_by_name_(const legacy_s8* name);
 
-void far* mmgr_get_chunk_by_name(const char* name) {
-	const char* pcdi;
-	int regbx, regax;
-	unsigned short srcofs, srcsize, destofs;
+void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
+	const legacy_s8* pcdi;
+	legacy_s16 regbx, regax;
+	legacy_u16 srcofs, srcsize, destofs;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
-	int found = 0;
+	legacy_s16 found = 0;
 	
 	pcdi = mmgr_path_to_name(name);
 
@@ -1082,7 +1082,7 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 			resdi->resofs = destofs;
 			resdi->ressize = srcsize;
 			resdi->resunk = 2;
-			memcpy(resdi->resname, ressi->resname, sizeof(char[12]));
+			memcpy(resdi->resname, ressi->resname, sizeof(legacy_s8[12]));
 			if (resdi == resendptr1) {
 				resendptr1++;
 			}
@@ -1101,9 +1101,9 @@ void far* mmgr_get_chunk_by_name(const char* name) {
 	return MK_FP(0, 0);
 }
 
-unsigned short nopsub_31429(const char* name) {
-	const char* wanted;
-	int i;
+legacy_u16 nopsub_31429(const legacy_s8* name) {
+	const legacy_s8* wanted;
+	legacy_s16 i;
 	struct MEMCHUNK* chunk;
 
 	wanted = mmgr_path_to_name(name);
@@ -1127,10 +1127,10 @@ unsigned short nopsub_31429(const char* name) {
 	return 0;
 }
 
-void mmgr_release(char far* ptr) {
-	int i;
-	unsigned short regax, regbx, regcx, regdx;
-	char* strdi;
+void mmgr_release(legacy_s8 far* ptr) {
+	legacy_s16 i;
+	legacy_u16 regax, regbx, regcx, regdx;
+	legacy_s8* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -1180,10 +1180,10 @@ void mmgr_release(char far* ptr) {
 
 // Rename a live arena chunk, so a buffer filled under one name can be handed
 // on under the name the caller expects.
-void mmgr_rename_chunk(char far* ptr, const char* name) {
-	int i;
-	unsigned short regax;
-	const char* chunkname;
+void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
+	legacy_s16 i;
+	legacy_u16 regax;
+	const legacy_s8* chunkname;
 	struct MEMCHUNK* ressi;
 
 	regax = FP_SEG(ptr);
@@ -1206,10 +1206,10 @@ void mmgr_rename_chunk(char far* ptr, const char* name) {
 		ressi->resname[i] = chunkname[i];
 }
 
-unsigned short mmgr_get_chunk_size(char far* ptr) {
-	int i;
-	unsigned short regax, regbx, regcx, regdx;
-	char* strdi;
+legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
+	legacy_s16 i;
+	legacy_u16 regax, regbx, regcx, regdx;
+	legacy_s8* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -1234,10 +1234,10 @@ unsigned short mmgr_get_chunk_size(char far* ptr) {
 	return ressi->ressize;
 }
 
-unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, unsigned short arg_4) {
-	int i;
-	unsigned short regax, regbx, regcx, regdx;
-	char* strdi;
+legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg_4) {
+	legacy_s16 i;
+	legacy_u16 regax, regbx, regcx, regdx;
+	legacy_s8* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -1310,10 +1310,10 @@ unsigned short mmgr_resize_memory(unsigned short arg_0, unsigned short arg_2, un
 	return 0;
 }
 
-void far* mmgr_op_unk(char far* ptr) {
-	int i;
-	unsigned short regax, regbx, regcx, regdx;
-	char* strdi;
+void far* mmgr_op_unk(legacy_s8 far* ptr) {
+	legacy_s16 i;
+	legacy_u16 regax, regbx, regcx, regdx;
+	legacy_s8* strdi;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
@@ -1366,28 +1366,28 @@ void far* mmgr_op_unk(char far* ptr) {
 	return MK_FP(resdi->resofs, 0);
 }
 
-unsigned long mmgr_get_res_ofs_diff_scaled(void) {
-	unsigned long result = mmgr_get_ofs_diff();
+legacy_u32 mmgr_get_res_ofs_diff_scaled(void) {
+	legacy_u32 result = mmgr_get_ofs_diff();
 	return result << 4;
 }
 
-unsigned long mmgr_get_chunk_size_bytes(char far* ptr) {
-	unsigned long result = mmgr_get_chunk_size(ptr);
+legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
+	legacy_u32 result = mmgr_get_chunk_size(ptr);
 	return result << 4;
 }
 //#endif
 
 
 struct resheader {
-	unsigned long size;
-	unsigned short chunks;
+	legacy_u32 size;
+	legacy_u16 chunks;
 };
 
-char far* locate_resource(char far* data, char* name, unsigned short fatal) {
-	unsigned int i, j;
+legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 fatal) {
+	legacy_u16 i, j;
 	struct resheader far* hdr = (struct resheader far*)data;
-	char far* resnames = (char far*)data + 6; // point at first 4-byte resource identifier
-	char huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
+	legacy_s8 far* resnames = (legacy_s8 far*)data + 6; // point at first 4-byte resource identifier
+	legacy_s8 huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
 
 	//printf("locate_resource: %s\n", name);
 
@@ -1417,8 +1417,8 @@ char far* locate_resource(char far* data, char* name, unsigned short fatal) {
 		if (i == 4 || (resnames[i] == 0 && name[i] == 0x20)) {
 			result = data;
 			result += hdr->chunks * 8 + 6; // header, names and offsets
-			result += *(unsigned long int far*)(&resnames[hdr->chunks * 4]); // extract the offset
-			return (char far*)result;
+			result += *(legacy_u32 far*)(&resnames[hdr->chunks * 4]); // extract the offset
+			return (legacy_s8 far*)result;
 		}
 		resnames += 4; // move pointer to next 4-byte resource identifier
 	}
@@ -1430,23 +1430,23 @@ char far* locate_resource(char far* data, char* name, unsigned short fatal) {
 	return MK_FP(0, 0);
 }
 
-char far* locate_shape_nofatal(char far* data, char* name) {
+legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data, legacy_s8* name) {
 	return locate_resource(data, name, 0);
 }
 
-char far* locate_shape_fatal(char far* data, char* name) {
+legacy_s8 far* locate_shape_fatal(legacy_s8 far* data, legacy_s8* name) {
 	return locate_resource(data, name, 1);
 }
 
-char far* locate_shape_alt(char far* data, char* name) {
+legacy_s8 far* locate_shape_alt(legacy_s8 far* data, legacy_s8* name) {
 	return locate_shape_fatal(data, name);
 }
 
-char far* locate_sound_fatal(char far* data, char* name) {
+legacy_s8 far* locate_sound_fatal(legacy_s8 far* data, legacy_s8* name) {
 	return locate_resource(data, name, 2);
 }
 
-void locate_many_resources(char far* data, char* names, char far** result) {
+void locate_many_resources(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_fatal(data, names);
 		names += 4;
@@ -1454,8 +1454,8 @@ void locate_many_resources(char far* data, char* names, char far** result) {
 	}
 }
 
-static void locate_many_resources_nofatal(char far* data, char* names,
-	char far** result) {
+static void locate_many_resources_nofatal(legacy_s8 far* data, legacy_s8* names,
+	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_nofatal(data, names);
 		names += 4;
@@ -1463,11 +1463,11 @@ static void locate_many_resources_nofatal(char far* data, char* names,
 	}
 }
 
-void nopsub_367E4(char far* data, char* names, char far** result) {
+void nopsub_367E4(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }
 
-void nopsub_36826(char far* data, char* names, char far** result) {
+void nopsub_36826(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_sound_fatal(data, names);
 		names += 4;
@@ -1475,12 +1475,12 @@ void nopsub_36826(char far* data, char* names, char far** result) {
 	}
 }
 
-void nopsub_36868(char far* data, char* names, char far** result) {
+void nopsub_36868(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }
 
-char far* locate_text_res(char far* data, char* name) {
-	char textname[4];
+legacy_s8 far* locate_text_res(legacy_s8 far* data, legacy_s8* name) {
+	legacy_s8 textname[4];
 	textname[0] = textresprefix;
 	textname[1] = name[0];
 	textname[2] = name[1];

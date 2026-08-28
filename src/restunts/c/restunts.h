@@ -3,6 +3,6 @@
 
 #include "externs.h"
 
-int stuntsmainimpl(int argc, char* argv[]);
+legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]);
 
 #endif

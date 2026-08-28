@@ -6,15 +6,17 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#ifdef RESTUNTS_SDL
 #include <string.h>
+#endif
 
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
 extern struct RECTANGLE rect_array_unk2[];
 extern struct RECTANGLE rect_array_unk3[];
-extern char rect_array_unk_indices[];
-extern int rect_array_unk3_indices[];
-extern char rect_array_unk3_length;
+extern legacy_s8 rect_array_unk_indices[];
+extern legacy_s16 rect_array_unk3_indices[];
+extern legacy_s8 rect_array_unk3_length;
 extern struct RECTANGLE rect_unk[];
 extern struct RECTANGLE rect_unk2;
 extern struct RECTANGLE rect_unk3;
@@ -32,124 +34,124 @@ extern struct RECTANGLE rect_ingame_text4;
 extern struct VECTOR vec_unk2;
 extern struct VECTOR vec_planerotopresult;
 extern struct MATRIX mat_temp;
-extern int custom_camera_distance;
-extern int custom_camera_elevation_angle;
-extern int custom_camera_azimuth_angle;
-extern int word_44D20;
-extern char detail_threshold_by_level[];
-extern char byte_3C0C6[];
-extern unsigned int word_46468;
-extern int word_3BE34[];
-extern char* lookahead_tiles_tables[];
+extern legacy_s16 custom_camera_distance;
+extern legacy_s16 custom_camera_elevation_angle;
+extern legacy_s16 custom_camera_azimuth_angle;
+extern legacy_s16 word_44D20;
+extern legacy_s8 detail_threshold_by_level[];
+extern legacy_s8 byte_3C0C6[];
+extern legacy_u16 word_46468;
+extern legacy_s16 word_3BE34[];
+extern legacy_s8* lookahead_tiles_tables[];
 extern struct SHAPE3D* off_3BE44[];
-extern int terrainHeight;
-extern int planindex;
-extern int planindex_copy;
-extern char byte_4392C;
+extern legacy_s16 terrainHeight;
+extern legacy_s16 planindex;
+extern legacy_s16 planindex_copy;
+extern legacy_s8 byte_4392C;
 extern struct TRANSFORMEDSHAPE3D currenttransshape[29];
 //extern struct TRANSFORMEDSHAPE3D transshapeunk;
 extern struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
 extern struct TRACKOBJECT trkObjectList[215]; // 215 entries
-extern unsigned char fence_TrkObjCodes[];
-extern int pState_minusRotate_z_2, pState_minusRotate_x_2, pState_minusRotate_y_2, pState_f36Mminf40sar2;
+extern legacy_u8 fence_TrkObjCodes[];
+extern legacy_s16 pState_minusRotate_z_2, pState_minusRotate_x_2, pState_minusRotate_y_2, pState_f36Mminf40sar2;
 
-extern char unk_3C0EE[];
-extern char unk_3C0F0[];
-extern char unk_3C0F8[];
-extern char unk_3C0F4[];
-extern int word_3C0D6[];
-extern int unk_3C0A2[];
-extern int unk_3C0A6[];
-extern int unk_3C0AE[];
-extern int unk_3C0B6[];
+extern legacy_s8 unk_3C0EE[];
+extern legacy_s8 unk_3C0F0[];
+extern legacy_s8 unk_3C0F8[];
+extern legacy_s8 unk_3C0F4[];
+extern legacy_s16 word_3C0D6[];
+extern legacy_s16 unk_3C0A2[];
+extern legacy_s16 unk_3C0A6[];
+extern legacy_s16 unk_3C0AE[];
+extern legacy_s16 unk_3C0B6[];
 extern struct TRACKOBJECT sceneshapes2[];
 extern struct TRACKOBJECT sceneshapes3[];
 extern struct SHAPE3D game3dshapes[130];
 extern struct VECTOR carshapevec;
 extern struct VECTOR carshapevecs[6];
-extern short word_443E8[];
+extern legacy_s16 word_443E8[];
 extern struct VECTOR oppcarshapevec;
 extern struct VECTOR oppcarshapevecs[6];
-extern short word_4448A[];
-extern char backlights_paint_override;
-extern int word_449FC[];
-extern int word_463D6;
-extern int transformedshape_zarray[];
-extern int transformedshape_indices[];
-extern char transformedshape_arg2array[];
-extern int sdgame2_widths[];
+extern legacy_s16 word_4448A[];
+extern legacy_s8 backlights_paint_override;
+extern legacy_s16 word_449FC[];
+extern legacy_s16 word_463D6;
+extern legacy_s16 transformedshape_zarray[];
+extern legacy_s16 transformedshape_indices[];
+extern legacy_s8 transformedshape_arg2array[];
+extern legacy_s16 sdgame2_widths[];
 extern void far* sdgame2shapes[];
 extern void far* fontledresptr;
-extern int dialog_fnt_colour;
-extern char transformedshape_counter;
-extern int word_449FE;
+extern legacy_s16 dialog_fnt_colour;
+extern legacy_s8 transformedshape_counter;
+extern legacy_s16 word_449FE;
 extern struct SPRITE far* wndsprite;
-extern int fontdef_unk_0E;
-extern unsigned skybox_current;
-extern unsigned word_454CE;
-extern unsigned skybox_ptr1;
-extern unsigned skybox_ptr2;
-extern unsigned skybox_ptr3;
-extern unsigned skybox_ptr4;
-extern int skybox_sky_color;
-extern int skybox_grd_color;
-extern int skybox_wat_color;
+extern legacy_s16 fontdef_unk_0E;
+extern legacy_u16 skybox_current;
+extern legacy_u16 word_454CE;
+extern legacy_u16 skybox_ptr1;
+extern legacy_u16 skybox_ptr2;
+extern legacy_u16 skybox_ptr3;
+extern legacy_u16 skybox_ptr4;
+extern legacy_s16 skybox_sky_color;
+extern legacy_s16 skybox_grd_color;
+extern legacy_s16 skybox_wat_color;
 extern struct RECTANGLE rect_ingame_text;
 extern struct RECTANGLE intro_cliprect;
 extern struct SHAPE2D far* skyboxes[];
-extern int penalty_time;
-extern int intro_colorvalue;
-extern int word_407CC;
+extern legacy_s16 penalty_time;
+extern legacy_s16 intro_colorvalue;
+extern legacy_s16 word_407CC;
 extern struct SHAPE3D logoshape;
 extern struct SHAPE3D logo2shape;
 extern struct SHAPE3D bravshape;
-extern int word_44DCC;
-extern int word_3C108;
-extern int word_3C10A;
-extern int word_3C10C;
-extern int word_3C10E;
-extern int word_3C110;
-extern int word_3C112;
+extern legacy_s16 word_44DCC;
+extern legacy_s16 word_3C108;
+extern legacy_s16 word_3C10A;
+extern legacy_s16 word_3C10C;
+extern legacy_s16 word_3C10E;
+extern legacy_s16 word_3C110;
+extern legacy_s16 word_3C112;
 extern struct VECTOR unk_3C114;
 extern struct RECTANGLE trackpreview_cliprect;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
-void transformed_shape_add_for_sort(int z_adjust, int type);
-void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon);
-unsigned char subst_hillroad_track(unsigned char a, unsigned char b);
-int skybox_op(int a, struct RECTANGLE* rectptr, int c, struct MATRIX* matptr, int e, int f, int g);
-void skybox_op_helper(unsigned color, unsigned point_count,
+void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
+void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
+legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);
+legacy_s16 skybox_op(legacy_s16 a, struct RECTANGLE* rectptr, legacy_s16 c, struct MATRIX* matptr, legacy_s16 e, legacy_s16 f, legacy_s16 g);
+void skybox_op_helper(legacy_u16 color, legacy_u16 point_count,
 	struct POINT2D points[]);
-unsigned draw_line_related(unsigned start_x, unsigned start_y,
-	unsigned end_x, unsigned end_y, int* line_data);
-void preRender_line(unsigned start_x, unsigned start_y, unsigned end_x,
-	unsigned end_y, unsigned color);
-void sprite_putimage_transparent(struct SHAPE2D far* shape, int x, int y);
-void copy_string(char* destination, char far* source);
-int font_op2_alt(const char* text);
+legacy_u16 draw_line_related(legacy_u16 start_x, legacy_u16 start_y,
+	legacy_u16 end_x, legacy_u16 end_y, legacy_s16* line_data);
+void preRender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
+	legacy_u16 end_y, legacy_u16 color);
+void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
+void copy_string(legacy_s8* destination, legacy_s8 far* source);
+legacy_s16 font_op2_alt(const legacy_s8* text);
 struct RECTANGLE* draw_ingame_text(void);
-struct RECTANGLE* init_crak(int frame, int top, int height);
-struct RECTANGLE* do_sinking(int frame, int top, int height);
-struct RECTANGLE* intro_draw_text(char* str, int a, int b, int c, int d);
-void intro_op(int camera_x, int camera_y, int camera_z, int rotate_y,
-	int rotate_x, int draw_car, int primary_logo, struct VECTOR* stars,
-	struct POINT2D* previous_points, int* previous_point_count,
+struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
+struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
+struct RECTANGLE* intro_draw_text(legacy_s8* str, legacy_s16 a, legacy_s16 b, legacy_s16 c, legacy_s16 d);
+void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
+	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
+	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect);
 void init_plantrak(void);
 void do_opponent_op(void);
-void setup_aero_trackdata(void far* carresptr, int is_opponent);
-unsigned long timer_get_delta(void);
-int get_0(void);
-void sub_35C4E(int source_x, int source_y, int width, int height,
-	int destination_shift);
+void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
+legacy_u32 timer_get_delta(void);
+legacy_s16 get_0(void);
+void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 destination_shift);
 void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
-void format_frame_as_string(char* s, int time, int c);
-void heapsort_by_order(int n, int* heap, int* data);
+void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);
+void heapsort_by_order(legacy_s16 n, legacy_s16* heap, legacy_s16* data);
 
-unsigned char subst_hillroad_track(unsigned char terrain,
-	unsigned char track)
+legacy_u8 subst_hillroad_track(legacy_u8 terrain,
+	legacy_u8 track)
 {
 	switch (terrain) {
 	case 7:
@@ -200,24 +202,24 @@ unsigned char subst_hillroad_track(unsigned char terrain,
 	return 0;
 }
 
-void transformed_shape_add_for_sort(int z_adjust, int type)
+void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type)
 {
 	struct VECTOR transformed_position;
-	int index;
+	legacy_s16 index;
 
 	mat_mul_vector(&curtransshape_ptr->pos, &mat_temp,
 		&transformed_position);
 	index = LEGACY_S8_FROM_BITS((legacy_u8)transformedshape_counter);
 	transformedshape_zarray[index] = LEGACY_S16_WRAP_ADD(
 		transformed_position.z, z_adjust);
-	transformedshape_arg2array[index] = (char)(legacy_u8)type;
+	transformedshape_arg2array[index] = (legacy_s8)(legacy_u8)type;
 	transformedshape_indices[index] = index;
-	transformedshape_counter = (char)(legacy_u8)(
+	transformedshape_counter = (legacy_s8)(legacy_u8)(
 		(legacy_u8)transformedshape_counter + 1U);
 	curtransshape_ptr++;
 }
 
-void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon)
+void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon)
 {
 	legacy_u16 top;
 	legacy_u16 bottom;
@@ -290,7 +292,7 @@ static legacy_s16 skybox_scaled_constant(legacy_u16 value,
 		value, (legacy_u16)scale));
 }
 
-static void skybox_clear_rect(const struct RECTANGLE* rect, int color)
+static void skybox_clear_rect(const struct RECTANGLE* rect, legacy_s16 color)
 {
 	sprite_set_1_size(rect->left, rect->right, rect->top, rect->bottom);
 	sprite_clear_1_color((legacy_u8)color);
@@ -303,8 +305,8 @@ static void skybox_collect_changed_rects(struct RECTANGLE* clip)
 		rect_unk, clip, &rect_array_unk3_length, rect_array_unk3);
 }
 
-int skybox_op(int view_index, struct RECTANGLE* clip, int direction,
-	struct MATRIX* rotation, int roll, int angle, int camera_y)
+legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction,
+	struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y)
 {
 	static const legacy_u16 corner_angles[4] = {
 		0x0080U, 0x0180U, 0x0280U, 0x0380U
@@ -328,7 +330,7 @@ int skybox_op(int view_index, struct RECTANGLE* clip, int direction,
 	legacy_s16 track_view_index;
 	legacy_s16 i;
 	legacy_u8 has_linear_horizon;
-	int fill_color;
+	legacy_s16 fill_color;
 
 	rect_array_unk3_length = 0;
 	sprite_set_1_size(0, 0x140, clip->top, clip->bottom);
@@ -383,7 +385,7 @@ int skybox_op(int view_index, struct RECTANGLE* clip, int direction,
 		if (detail_level != 4 && points[1].px < 0 &&
 			points[0].px > 0x140 &&
 			draw_line_related(points[1].px, points[1].py,
-				points[0].px, points[0].py, (int*)line_data) == 0) {
+				points[0].px, points[0].py, (legacy_s16*)line_data) == 0) {
 			absolute_delta = LEGACY_S16_WRAP_SUB(
 				line_data[3], line_data[5]);
 			if (absolute_delta < 0)
@@ -587,7 +589,7 @@ int skybox_op(int view_index, struct RECTANGLE* clip, int direction,
 	return 1;
 }
 
-struct RECTANGLE* do_sinking(int frame, int top, int height)
+struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
 	legacy_s16 duration;
 	legacy_s16 clipped_frame;
@@ -598,7 +600,7 @@ struct RECTANGLE* do_sinking(int frame, int top, int height)
 	clipped_frame = (legacy_s16)frame;
 	if (clipped_frame > duration)
 		clipped_frame = duration;
-	sink_height = (legacy_s16)(((long)(legacy_s16)height * clipped_frame) /
+	sink_height = (legacy_s16)(((legacy_s32)(legacy_s16)height * clipped_frame) /
 		duration);
 	bottom = LEGACY_S16_WRAP_ADD(top, height);
 	rect_ingame_text.left = 0;
@@ -611,7 +613,7 @@ struct RECTANGLE* do_sinking(int frame, int top, int height)
 	return &rect_ingame_text;
 }
 
-struct RECTANGLE* init_crak(int frame, int top, int height)
+struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
 	legacy_s16 far* crack_lines;
 	legacy_s16 far* crack_info;
@@ -688,7 +690,7 @@ struct RECTANGLE* init_crak(int frame, int top, int height)
 	return &rect_ingame_text;
 }
 
-static void draw_centered_ingame_resource(char* resource_id, int y)
+static void draw_centered_ingame_resource(legacy_s8* resource_id, legacy_s16 y)
 {
 	copy_string(&resID_byte1, locate_text_res(gameresptr, resource_id));
 	rect_union(&rect_ingame_text,
@@ -801,10 +803,10 @@ static legacy_s16 intro_shift_position(legacy_s32 position,
 	return LEGACY_S16_WRAP_SUB((legacy_u16)bits, camera);
 }
 
-static void intro_op_impl(int camera_x, int camera_y, int camera_z,
-	int rotate_y,
-	int rotate_x, int draw_car, int primary_logo, struct VECTOR* stars,
-	struct POINT2D* previous_points, int* previous_point_count,
+static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
+	legacy_s16 rotate_y,
+	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
+	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE* previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect)
 {
@@ -913,9 +915,9 @@ static void intro_op_impl(int camera_x, int camera_y, int camera_z,
 	}
 }
 
-void intro_op(int camera_x, int camera_y, int camera_z, int rotate_y,
-	int rotate_x, int draw_car, int primary_logo, struct VECTOR* stars,
-	struct POINT2D* previous_points, int* previous_point_count,
+void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
+	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
+	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect)
 {
@@ -924,14 +926,14 @@ void intro_op(int camera_x, int camera_y, int camera_z, int rotate_y,
 		previous_point_count, &previous_rect, shape_rect, combined_rect);
 }
 
-signed char setup_intro(void)
+legacy_s8 setup_intro(void)
 {
-	char far* title_resource;
-	char far* title_shapes[3];
+	legacy_s8 far* title_resource;
+	legacy_s8 far* title_shapes[3];
 	void far* opponent_resource;
 	struct VECTOR stars[100];
 	struct POINT2D point_buffers[2][100];
-	int point_counts[2];
+	legacy_s16 point_counts[2];
 	struct RECTANGLE shape_rect;
 	struct RECTANGLE combined_rect;
 	struct RECTANGLE redraw_rect;
@@ -957,12 +959,12 @@ signed char setup_intro(void)
 	legacy_u16 i;
 	legacy_s16 difference;
 	legacy_s16 absolute_difference;
-	int* active_point_count;
+	legacy_s16* active_point_count;
 	struct POINT2D* active_points;
-	signed char interrupted;
+	legacy_s8 interrupted;
 
 	interrupted = 0;
-	title_resource = (char far*)file_load_3dres("title");
+	title_resource = (legacy_s8 far*)file_load_3dres("title");
 	locate_many_resources(title_resource, "logolog2brav", title_shapes);
 	shape3d_init_shape(title_shapes[0], &logoshape);
 	shape3d_init_shape(title_shapes[1], &logo2shape);
@@ -1159,7 +1161,7 @@ static legacy_s16 track_preview_half(legacy_s16 value)
 static void track_preview_draw_terrain(legacy_u8 terrain,
 	legacy_u8 column, legacy_u8 row, legacy_s16 height,
 	legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
-	int use_high_detail, struct TRANSFORMEDSHAPE3D* transformed)
+	legacy_s16 use_high_detail, struct TRANSFORMEDSHAPE3D* transformed)
 {
 	struct TRACKOBJECT* terrain_object;
 
@@ -1347,7 +1349,7 @@ void draw_track_preview(void)
 }
 
 void init_rect_arrays(void) {
-	int i;
+	legacy_s16 i;
 
 	if (slow_video_mgmt_copy == 0)
 		return;
@@ -1362,7 +1364,7 @@ void init_rect_arrays(void) {
 
 void font_set_fontdef2(void far* data) {
 	set_fontdefseg(data);
-	fontdef_unk_0E = ((unsigned short far*)data)[7];
+	fontdef_unk_0E = ((legacy_u16 far*)data)[7];
 }
 
 void font_set_fontdef(void) {
@@ -1371,7 +1373,7 @@ void font_set_fontdef(void) {
 
 void sub_19F14(struct RECTANGLE* cliprect) {
 	struct RECTANGLE* dirty_rect;
-	int i;
+	legacy_s16 i;
 
 	if (video_flag5_is0 != 0)
 		return;
@@ -1443,59 +1445,59 @@ finish:
 	}
 }
 
-void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
-	int si;
-	char var_122;
-	char var_E4;
-	char var_DC[2];
+void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
+	legacy_s16 si;
+	legacy_s8 var_122;
+	legacy_s8 var_E4;
+	legacy_s8 var_DC[2];
 	struct RECTANGLE* var_rectptr;
 	struct MATRIX var_mat, var_mat2;
 	struct MATRIX* car_rot_matrix;
 	struct VECTOR cam_pos, car_pos, offset_vector, car_to_cam_rotated, var_vec8;
-	int car_rot_y, car_rot_x, car_rot_z;
-	int car_rot_y_2, car_rot_x_2, car_rot_z_2;
-	int var_38, car_rot_z_3;
-	int var_transformresult;
-	int heading;
-	char* lookahead_tiles;
-	int skybox_parameter;
-	int var_counter, var_counter2;
-	char cam_tile_south, cam_tile_east;
-	char tile_south, tile_east;
-	char tile_to_draw_south_offset, tile_to_draw_east_offset;
-	char car_tile_east, car_tile_south;
-	unsigned char tiles_to_draw_terr_type_vec[24];
-	char should_skip_tile[24];
-	char tile_detail_level[24];
-	char tiles_to_draw_south[24];
-	char tiles_to_draw_east[24];
-	unsigned char tiles_to_draw_elem_type_vec[24];
-	char detail_threshold;
-	char var_3C;
-	char var_60;
-	char var_6E;
-	char var_4A;
-	char var_4E;
-	int var_6C;
-	int var_A4;
-	int var_hillheight;
-	int idx;
+	legacy_s16 car_rot_y, car_rot_x, car_rot_z;
+	legacy_s16 car_rot_y_2, car_rot_x_2, car_rot_z_2;
+	legacy_s16 var_38, car_rot_z_3;
+	legacy_s16 var_transformresult;
+	legacy_s16 heading;
+	legacy_s8* lookahead_tiles;
+	legacy_s16 skybox_parameter;
+	legacy_s16 var_counter, var_counter2;
+	legacy_s8 cam_tile_south, cam_tile_east;
+	legacy_s8 tile_south, tile_east;
+	legacy_s8 tile_to_draw_south_offset, tile_to_draw_east_offset;
+	legacy_s8 car_tile_east, car_tile_south;
+	legacy_u8 tiles_to_draw_terr_type_vec[24];
+	legacy_s8 should_skip_tile[24];
+	legacy_s8 tile_detail_level[24];
+	legacy_s8 tiles_to_draw_south[24];
+	legacy_s8 tiles_to_draw_east[24];
+	legacy_u8 tiles_to_draw_elem_type_vec[24];
+	legacy_s8 detail_threshold;
+	legacy_s8 var_3C;
+	legacy_s8 var_60;
+	legacy_s8 var_6E;
+	legacy_s8 var_4A;
+	legacy_s8 var_4E;
+	legacy_s16 var_6C;
+	legacy_s16 var_A4;
+	legacy_s16 var_hillheight;
+	legacy_s16 idx;
 	struct TRACKOBJECT* var_trkobjectptr;
 	struct TRACKOBJECT* var_trkobject_ptr; // NOTE: beware of similar names!!
-	char tile_det_level;
-	char* var_10E;
-	int di;
-	int var_132;
-	int var_5E;
-	int var_3A;
-	int* var_DA;
-	int var_12A;
-	unsigned char var_4C;
+	legacy_s8 tile_det_level;
+	legacy_s8* var_10E;
+	legacy_s16 di;
+	legacy_s16 var_132;
+	legacy_s16 var_5E;
+	legacy_s16 var_3A;
+	legacy_s16* var_DA;
+	legacy_s16 var_12A;
+	legacy_u8 var_4C;
 	struct RECTANGLE var_rect, var_rect2;
 	struct VECTOR far* var_108;
 	struct CARSTATE* var_stateptr;
-	unsigned char elem_map_value;
-	unsigned char terr_map_value;
+	legacy_u8 elem_map_value;
+	legacy_u8 terr_map_value;
 
 	var_DC[0] = 0;
 	var_DC[1] = 0;
@@ -2494,7 +2496,7 @@ void update_frame(char arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 
 			di = (state.game_frame >> 2) % 3 ;
-			var_counter = ((long)idx << 8) / (long)sdgame2_widths[di];
+			var_counter = ((legacy_s32)idx << 8) / (legacy_s32)sdgame2_widths[di];
 			shape_op_explosion(var_counter, sdgame2shapes[di], offset_vector.x, offset_vector.y);
 		}
 	}

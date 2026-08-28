@@ -4,14 +4,14 @@
 #include "memmgr.h"
 #include "shape3d.h"
 
-extern int penalty_time;
-extern short legacy_grip_stack_words[4];
-extern short grassDecelDivTab[];
+extern legacy_s16 penalty_time;
+extern legacy_s16 legacy_grip_stack_words[4];
+extern legacy_s16 grassDecelDivTab[];
 extern struct TRACKOBJECT trkObjectList[215];
-extern unsigned char oppnentSped[];
+extern legacy_u8 oppnentSped[];
 extern struct PLANE far* planptr;
 extern struct PLANE far plan_memres;
-extern int track_pieces_counter;
+extern legacy_s16 track_pieces_counter;
 extern legacy_u8 byte_3E71E[];
 extern legacy_u8 byte_3E724[];
 extern legacy_u8 terrConnDataEtoW[];
@@ -45,7 +45,7 @@ static legacy_s16 penalty_route_next(legacy_s16 track_index)
 	return LEGACY_S16_FROM_BITS(value);
 }
 
-int detect_penalty(int* current_track, int* penalty_count)
+legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 {
 	legacy_u8 visited[904];
 	legacy_s16 pending_track[128];
@@ -178,18 +178,18 @@ backtrack:
 static void update_legacy_grip_stack_words(
 	struct CARSTATE* carstate,
 	struct SIMD* simd,
-	unsigned int speed_before_grip,
-	unsigned int speed2_before_grip
+	legacy_u16 speed_before_grip,
+	legacy_u16 speed2_before_grip
 ) {
-	short combined_grip_operand;
-	short sliding_sum;
-	short* sliding_values;
-	unsigned int grip_speed;
-	unsigned int speed_shr8;
-	unsigned long speed_squared;
-	long scaled_combined_grip;
-	int grass_wheels;
-	int i;
+	legacy_s16 combined_grip_operand;
+	legacy_s16 sliding_sum;
+	legacy_s16* sliding_values;
+	legacy_u16 grip_speed;
+	legacy_u16 speed_shr8;
+	legacy_u32 speed_squared;
+	legacy_s32 scaled_combined_grip;
+	legacy_s16 grass_wheels;
+	legacy_s16 i;
 
 	/* The original player_op reaches update_grip with SI == 0x50. */
 	legacy_grip_stack_words[3] = 0x50;
@@ -200,14 +200,14 @@ static void update_legacy_grip_stack_words(
 	 * Reproduce update_grip's first operands: twice the car's base grip and
 	 * the sum of the four surface-specific sliding coefficients.
 	 */
-	combined_grip_operand = (short)((unsigned short)simd->grip << 1);
+	combined_grip_operand = (legacy_s16)((legacy_u16)simd->grip << 1);
 	sliding_sum = 0;
 	sliding_values = &simd->sliding;
 	for (i = 0; i < 4; i++) {
-		sliding_sum = (short)(
-			(unsigned short)sliding_sum +
-			(unsigned short)sliding_values[
-				(unsigned char)carstate->car_surfaceWhl[i]
+		sliding_sum = (legacy_s16)(
+			(legacy_u16)sliding_sum +
+			(legacy_u16)sliding_values[
+				(legacy_u8)carstate->car_surfaceWhl[i]
 			]
 		);
 	}
@@ -232,23 +232,23 @@ static void update_legacy_grip_stack_words(
 	grip_speed = speed_before_grip;
 	if (grass_wheels != 0) {
 		speed2_before_grip -=
-			speed2_before_grip / (unsigned short)grassDecelDivTab[grass_wheels];
+			speed2_before_grip / (legacy_u16)grassDecelDivTab[grass_wheels];
 		grip_speed = speed2_before_grip;
 	}
 
 	/* Operand words left by the sliding-grip signed long division. */
 	speed_shr8 = grip_speed >> 8;
-	speed_squared = (unsigned long)speed_shr8 * speed_shr8;
+	speed_squared = (legacy_u32)speed_shr8 * speed_shr8;
 	scaled_combined_grip =
-		(long)carstate->car_surfacegrip_sum * 0x100L;
+		(legacy_s32)carstate->car_surfacegrip_sum * 0x100L;
 	legacy_grip_stack_words[0] =
-		(short)((unsigned long)scaled_combined_grip >> 16);
-	legacy_grip_stack_words[1] = (short)speed_squared;
-	legacy_grip_stack_words[2] = (short)(speed_squared >> 16);
+		(legacy_s16)((legacy_u32)scaled_combined_grip >> 16);
+	legacy_grip_stack_words[1] = (legacy_s16)speed_squared;
+	legacy_grip_stack_words[2] = (legacy_s16)(speed_squared >> 16);
 }
 
-void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
-void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
+void update_car_speed(legacy_s8, legacy_s16, struct CARSTATE* carstate, struct SIMD* simd);
+void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, legacy_s16);
 
 static legacy_s16 grip_sar(legacy_s16 value, legacy_u16 count)
 {
@@ -271,7 +271,7 @@ static legacy_s32 grip_sar32(legacy_s32 value, legacy_u16 count)
 }
 
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
-	int player_behavior)
+	legacy_s16 player_behavior)
 {
 	legacy_s16 initial_angle;
 	legacy_s16 adjusted_angle;
@@ -519,7 +519,7 @@ static void opponent_advance_route(void)
 	if (sub_18D60(opponent_route_word(
 		state.opponentstate.car_trackdata3_index),
 		&state.opponentstate.car_vec_unk3, route_point,
-		(short*)&state.field_3F9) == 0) {
+		(legacy_s16*)&state.field_3F9) == 0) {
 		return;
 	}
 	state.opponentstate.car_trackdata3_index = LEGACY_S16_WRAP_ADD(
@@ -789,40 +789,40 @@ choose_input:
 	}
 }
 
-void upd_statef20_from_steer_input(char steering_input) {
-	signed char* response_table;
-	short steering_angle;
-	short response;
-	short centering_limit;
-	short response_index;
-	unsigned char speed_index;
+void upd_statef20_from_steer_input(legacy_s8 steering_input) {
+	legacy_s8* response_table;
+	legacy_s16 steering_angle;
+	legacy_s16 response;
+	legacy_s16 centering_limit;
+	legacy_s16 response_index;
+	legacy_u8 speed_index;
 
-	response_table = (signed char*)steerWhlRespTable_ptr;
+	response_table = (legacy_s8*)steerWhlRespTable_ptr;
 	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index = (unsigned char)((state.playerstate.car_speed2 >> 10) & 0xFC);
-	response_index = (short)(speed_index + (signed char)steering_input);
+	speed_index = (legacy_u8)((state.playerstate.car_speed2 >> 10) & 0xFC);
+	response_index = (legacy_s16)(speed_index + (legacy_s8)steering_input);
 	response = response_table[response_index];
 
 	/* Turning farther from center gets the original fourfold response. */
 	if ((response > 0 && steering_angle < -1) ||
 		(response < 0 && steering_angle > 1)) {
-		response = (short)(response * 4);
+		response = (legacy_s16)(response * 4);
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
 	if (response == 0 && state.playerstate.car_speed2 != 0 &&
 		steering_angle != 0) {
-		centering_limit = (short)(response_table[speed_index + 1] * 2);
+		centering_limit = (legacy_s16)(response_table[speed_index + 1] * 2);
 		if (steering_angle < 0) {
-			if ((short)-steering_angle > centering_limit)
+			if ((legacy_s16)-steering_angle > centering_limit)
 				response = centering_limit;
 			else
-				response = (short)-steering_angle;
+				response = (legacy_s16)-steering_angle;
 		} else {
 			if (steering_angle > centering_limit)
-				response = (short)-centering_limit;
+				response = (legacy_s16)-centering_limit;
 			else
-				response = (short)-steering_angle;
+				response = (legacy_s16)-steering_angle;
 		}
 	}
 
@@ -838,7 +838,7 @@ void upd_statef20_from_steer_input(char steering_input) {
 			response = -0x50;
 	}
 
-	steering_angle = (short)(steering_angle + response);
+	steering_angle = (legacy_s16)(steering_angle + response);
 	if (steering_angle > 0xF0)
 		steering_angle = 0xF0;
 	if (steering_angle < -0xF0)
@@ -861,11 +861,11 @@ static legacy_s16 route_average(legacy_s16 first, legacy_s16 second) {
 	return (legacy_s16)(sum / 2);
 }
 
-short sub_18D60(
-	short track_index_arg,
+legacy_s16 sub_18D60(
+	legacy_s16 track_index_arg,
 	struct VECTOR* output,
-	short route_index_arg,
-	short* optional_speed
+	legacy_s16 route_index_arg,
+	legacy_s16* optional_speed
 ) {
 	struct TRACKOBJECT* track_object;
 	struct TRKOBJINFO* track_info;
@@ -1028,7 +1028,7 @@ struct TRACK_SETUP_BRANCH {
 };
 #pragma pack(pop)
 
-typedef char track_setup_branch_must_be_14_bytes[
+typedef legacy_s8 track_setup_branch_must_be_14_bytes[
 	(sizeof(struct TRACK_SETUP_BRANCH) == 14) ? 1 : -1];
 
 static legacy_s8 track_setup_add_s8(legacy_s8 value, legacy_s16 amount)
@@ -1067,7 +1067,7 @@ static void track_setup_link_piece(
 		td02_penalty_related[source_piece] = destination_piece;
 }
 
-int track_setup(void)
+legacy_s16 track_setup(void)
 {
 	struct TRACK_SETUP_BRANCH far* branches;
 	struct TRACK_SETUP_BRANCH far* branch;
@@ -1665,7 +1665,7 @@ track_error:
 	byte_45E16 = (legacy_u8)row;
 
 track_done:
-	mmgr_release((char far*)branches);
+	mmgr_release((legacy_s8 far*)branches);
 	return error_code;
 }
 
@@ -1730,9 +1730,9 @@ void init_plantrak(void) {
 		&state.opponentstate,
 		&simd_opponent,
 		1,
-		(long)0x00017700L,
+		(legacy_s32)0x00017700L,
 		0L,
-		(long)((legacy_s32)path_z * (legacy_s32)64),
+		(legacy_s32)((legacy_s32)path_z * (legacy_s32)64),
 		0);
 
 	route_index = (legacy_u8)state.opponentstate.field_CE;
@@ -1746,26 +1746,26 @@ void init_plantrak(void) {
 	sub_18D60(
 		route_track_index,
 		&state.opponentstate.car_vec_unk3,
-		(short)route_index,
-		(short*)&state.field_3F9);
+		(legacy_s16)route_index,
+		(legacy_s16*)&state.field_3F9);
 }
 
-void player_op(char arg_carInputByte) {
+void player_op(legacy_s8 arg_carInputByte) {
 	struct VECTOR var_38;
 	struct VECTOR var_32;
 	struct VECTOR var_28;
 	struct VECTOR var_1A[4];
 	struct VECTOR var_52[4];
 	struct MATRIX* var_matptr;
-	char var_3A;
-	char var_1C;
-	char var_2A;
-	char var_2C;
-	int var_2;
-	int var_1EpenaltyCounter;
-	unsigned int var_speedBeforeGrip;
-	unsigned int var_speed2BeforeGrip;
-	int si;
+	legacy_s8 var_3A;
+	legacy_s8 var_1C;
+	legacy_s8 var_2A;
+	legacy_s8 var_2C;
+	legacy_s16 var_2;
+	legacy_s16 var_1EpenaltyCounter;
+	legacy_u16 var_speedBeforeGrip;
+	legacy_u16 var_speed2BeforeGrip;
+	legacy_s16 si;
 
 	//return ported_player_op_(arg_carInputByte);
 
@@ -1789,8 +1789,8 @@ void player_op(char arg_carInputByte) {
 
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
 	legacy_grip_stack_words[0] = state.playerstate.car_lastrpm;
-	legacy_grip_stack_words[1] = (short)state.playerstate.car_speed;
-	legacy_grip_stack_words[2] = (short)state.playerstate.car_gearratio;
+	legacy_grip_stack_words[1] = (legacy_s16)state.playerstate.car_speed;
+	legacy_grip_stack_words[2] = (legacy_s16)state.playerstate.car_gearratio;
 	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
 	var_speedBeforeGrip = state.playerstate.car_speed;
 	var_speed2BeforeGrip = state.playerstate.car_speed2;

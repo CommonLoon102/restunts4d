@@ -15,60 +15,60 @@ int game_thread(void* param);
 
 extern "C" {
 
-int stuntsmain(int argc, char** argv);
+legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8** argv);
 
 void far* fontnptr;
 void far* fontdefptr;
 void far* mainresptr;
-short is_audioloaded;
+legacy_s8 is_audioloaded;
 void far* songfileptr;
 void far* voicefileptr;
 
-void fatal_error(const char* fmterr, ...) {
-	printf(fmterr);
+void fatal_error(const legacy_s8* fmterr, ...) {
+	printf((const char*)fmterr);
 }
 
-void far* init_audio_resources(void far* songptr, void far* voiceptr, const char* name) {
+void far* init_audio_resources(void far* songptr, void far* voiceptr, const legacy_s8* name) {
 	return 0;
 }
 
 void load_audio_finalize(void far* audiores) {
 }
 
-void far* load_song_file(const char* filename) {
+void far* load_song_file(const legacy_s8* filename) {
 	return 0;
 }
 
-void far* load_voice_file(const char* filename) {
+void far* load_voice_file(const legacy_s8* filename) {
 	return 0;
 }
 
-void far* load_sfx_file(const char* filename) {
+void far* load_sfx_file(const legacy_s8* filename) {
 	return 0;
 }
 
-void far* file_load_shape2d_nofatal_thunk(const char* filename) {
+void far* file_load_shape2d_nofatal_thunk(const legacy_s8* filename) {
 	return 0;
 }
 
-void far* file_load_shape2d_res_nofatal_thunk(const char* filename) {
+void far* file_load_shape2d_res_nofatal_thunk(const legacy_s8* filename) {
 	return 0;
 }
 
-void far* file_load_shape2d_nofatal(char* shapename) {
+void far* file_load_shape2d_nofatal(legacy_s8* shapename) {
 	return 0;
 }
 
-void far* file_load_shape2d_nofatal2(char* shapename) {
+void far* file_load_shape2d_nofatal2(legacy_s8* shapename) {
 	return 0;
 }
 
-int do_dea_textres(void) {
+legacy_s16 do_dea_textres(void) {
 	printf("do_dea_textres() (insert disk)\n");
 	return 0;
 }
 
-unsigned long file_decomp_rle(void far* src, void far* dst, unsigned paras) {
+legacy_u32 file_decomp_rle(void far* src, void far* dst, legacy_u16 paras) {
 	printf("file_decomp_rle() not implemented!\n");
 	return 0;
 }
@@ -110,12 +110,12 @@ unsigned long mmgr_get_res_ofs_diff_scaled() {
 
 */
 
-extern void draw_filled_lines(unsigned, unsigned, unsigned, unsigned, unsigned);
+extern void draw_filled_lines(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
 
-void (*spritefunc)(unsigned, unsigned, unsigned, unsigned, unsigned);
+void (*spritefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
 
-void preRender_default(int color, int vertlinecount, int* vertlines) {
-	int i;
+void preRender_default(legacy_u16 color, legacy_u16 vertlinecount, legacy_u16* vertlines) {
+	legacy_s16 i;
 	printf("%i lines in color %i:\n", vertlinecount, color);
 	
 	spritefunc = &draw_filled_lines;
@@ -126,10 +126,10 @@ void preRender_default(int color, int vertlinecount, int* vertlines) {
 }
 
 
-extern void shape3d_load_car_shapes(char* carid, char* oppcarid);
+extern void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* oppcarid);
 //void shape3d_load_all();
 
-char textresprefix = 'e';
+legacy_s8 textresprefix = 'e';
 
 struct MATRIX mat_x_rot;
 struct MATRIX mat_y_rot;
@@ -139,56 +139,56 @@ struct MATRIX mat_temp;
 struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
 
 struct RECTANGLE select_rect_rc;
-unsigned mat_y_rot_angle;
-unsigned cos80, sin80, cos80_2, sin80_2;
+legacy_u16 mat_y_rot_angle;
+legacy_u16 cos80, sin80, cos80_2, sin80_2;
 
-unsigned projectiondata1 = 0;
-unsigned projectiondata2 = 0;
-unsigned projectiondata3 = 0x0A;
-unsigned projectiondata4 = 0;
-unsigned projectiondata5 = 0x0A;
-unsigned projectiondata6 = 0x64;
-unsigned projectiondata7 = 0;
-unsigned projectiondata8 = 0x64;
-unsigned projectiondata9 = 0;
-unsigned projectiondata10 = 0;
-char byte_45514;
+legacy_u16 projectiondata1 = 0;
+legacy_u16 projectiondata2 = 0;
+legacy_u16 projectiondata3 = 0x0A;
+legacy_u16 projectiondata4 = 0;
+legacy_u16 projectiondata5 = 0x0A;
+legacy_u16 projectiondata6 = 0x64;
+legacy_u16 projectiondata7 = 0;
+legacy_u16 projectiondata8 = 0x64;
+legacy_u16 projectiondata9 = 0;
+legacy_u16 projectiondata10 = 0;
+legacy_s8 byte_45514;
 
-unsigned word_40ECE;
-unsigned transshapenumverts;
-unsigned char far* transshapeprimitives;
+legacy_u16 word_40ECE;
+legacy_u16 transshapenumverts;
+legacy_u8 far* transshapeprimitives;
 struct VECTOR far* transshapeverts;
-unsigned transshapenumpaints;
-unsigned char transshapematerial;
-unsigned char transshapeflags;
+legacy_u16 transshapenumpaints;
+legacy_u8 transshapematerial;
+legacy_u8 transshapeflags;
 struct RECTANGLE* transshaperectptr;
 
-unsigned char byte_4393D;
-unsigned poly_linklist_40ED6_iter1;
-unsigned poly_linklist_40ED6_iter4;
-unsigned poly_linklist_40ED6_iter3;
-unsigned poly_linklist_40ED6_iter2;
-unsigned char transshapenumvertscopy;
-unsigned select_rect_param;
-char far* transshapeprimptr;
-unsigned polyinfoptrnext;
-char far* polyinfoptr;
-char far* transshapepolyinfo;
+legacy_u8 byte_4393D;
+legacy_u16 poly_linklist_40ED6_iter1;
+legacy_u16 poly_linklist_40ED6_iter4;
+legacy_u16 poly_linklist_40ED6_iter3;
+legacy_u16 poly_linklist_40ED6_iter2;
+legacy_u8 transshapenumvertscopy;
+legacy_u16 select_rect_param;
+legacy_s8 far* transshapeprimptr;
+legacy_u16 polyinfoptrnext;
+legacy_s8 far* polyinfoptr;
+legacy_s8 far* transshapepolyinfo;
 struct POINT2D far* transshapepolyinfopts;
-unsigned polyinfonumpolys;
-char transprimitivepaintjob;
-unsigned char far* transshapeprimindexptr;
+legacy_u16 polyinfonumpolys;
+legacy_s8 transprimitivepaintjob;
+legacy_u8 far* transshapeprimindexptr;
 
-unsigned char far* polyinfoptrs[0x190];
+legacy_u8 far* polyinfoptrs[0x190];
 struct POINT2D* polyvertpointptrtab[10];
-unsigned word_40ED6[0x190 + 1]; // the +1 replaces word_411F6
+legacy_u16 word_40ED6[0x190 + 1]; // the +1 replaces word_411F6
 //unsigned word_411F6;
 
-char primtypetab[] = {
+legacy_u8 primtypetab[] = {
 	0, 5, 1, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 4, 0, 0
 };
 
-long invpow2tbl[] = { 
+legacy_s32 invpow2tbl[] = { 
 	0x80000000, 0x40000000, 0x20000000, 0x10000000, 8000000,
 	0x4000000, 0x2000000, 0x1000000, 0x800000, 
 	0x400000, 0x200000, 0x100000, 0x80000, 
@@ -197,11 +197,11 @@ long invpow2tbl[] = {
 	0x10, 0x8, 0x4, 0x2, 0x1
 };
 
-char primidxcounttab[] = {
+legacy_u8 primidxcounttab[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0x0A, 2, 6, 3, 0, 0
 };
 
-char atantable[] = {
+legacy_u8 atantable[] = {
 	
 	0x0, 0x1, 0x1, 0x2, 0x3, 0x3, 0x4, 0x4, 0x5, 0x6, 0x6, 0x7, 0x8, 0x8, 0x9, 0x0A,
 	0x0A, 0x0B, 0x0B, 0x0C, 0x0D, 0x0D, 0x0E, 0x0F, 0x0F, 0x10, 0x10, 0x11, 0x12, 0x12, 0x13, 0x14,
@@ -223,10 +223,10 @@ char atantable[] = {
 };
 
 extern struct SHAPE3D game3dshapes[130];
-extern unsigned transformed_shape_op(struct TRANSFORMEDSHAPE3D* shape);
+extern legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* shape);
 
 
-unsigned material_color_list[] = {
+legacy_s16 material_color_list[] = {
 	0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7,
 	0x8, 0x9, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
 	0x6C, 0x74, 0x0F, 0x1C, 0x1D, 0x0E, 0x1C, 0x1F,
@@ -246,7 +246,7 @@ unsigned material_color_list[] = {
 	0x11
 };
 
-unsigned material_pattern_list[] = {
+legacy_s16 material_pattern_list[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -257,7 +257,7 @@ unsigned material_pattern_list[] = {
 	1, 0, 0
 };
 
-unsigned material_pattern2_list[] = {
+legacy_s16 material_pattern2_list[] = {
 	0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF,
 	0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF,
 	0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0FFFF, 0x0, 0x0FFFF, 0x0FFFF, 0x0FFFF,
@@ -274,18 +274,18 @@ unsigned material_pattern2_list[] = {
 	0x0, 0x0CC33, 0x33CC, 0x0B66D, 0x4992, 0x0B66D, 0x4992, 0x0B66D,
 	0x4992, 0x0, 0x0
 };
-unsigned* material_clrlist_ptr = material_color_list;
-unsigned* material_clrlist_ptr2 = material_color_list;
-unsigned* material_patlist_ptr = material_pattern_list;
-unsigned* material_patlist2_ptr = material_pattern2_list;
+legacy_s16* material_clrlist_ptr = material_color_list;
+legacy_s16* material_clrlist_ptr2 = material_color_list;
+legacy_s16* material_patlist_ptr = material_pattern_list;
+legacy_s16* material_patlist2_ptr = material_pattern2_list;
 
-unsigned* material_clrlist_ptr_cpy;
-unsigned* material_clrlist_ptr_cpy2;
-unsigned* material_patlist_ptr_cpy;
-unsigned* material_patlist_ptr_cpy2;
-unsigned someZeroVideoConst;
+legacy_s16* material_clrlist_ptr_cpy;
+legacy_s16* material_clrlist_ptr_cpy2;
+legacy_s16* material_patlist_ptr_cpy;
+legacy_s16* material_patlist_ptr_cpy2;
+legacy_u16 someZeroVideoConst;
 
-void copy_material_list_pointers(unsigned* m1, unsigned* m2, unsigned* m3, unsigned* m4, unsigned unk) {
+void copy_material_list_pointers(legacy_s16* m1, legacy_s16* m2, legacy_s16* m3, legacy_s16* m4, legacy_u16 unk) {
 	material_clrlist_ptr_cpy = m1;
 	material_clrlist_ptr_cpy2 = m2;
 	material_patlist_ptr_cpy = m3;
@@ -363,9 +363,9 @@ struct stunts_engine {
 		init_video();
 		
 		printf("hello from game thread\n");
-		mainresptr = file_load_resfile("main");
-		fontdefptr = file_load_resource(0, "fontdef.fnt");
-		fontnptr = file_load_resource(0, "fontn.fnt");
+		mainresptr = file_load_resfile((const legacy_s8*)"main");
+		fontdefptr = file_load_resource(0, (const legacy_s8*)"fontdef.fnt");
+		fontnptr = file_load_resource(0, (const legacy_s8*)"fontn.fnt");
 
 		init_polyinfo();
 		shape3d_load_all();
@@ -378,7 +378,7 @@ struct stunts_engine {
 		struct RECTANGLE shaperect = { 0, 320, 0, 200 };
 		struct RECTANGLE cliprect = { 0, 0x140, 0, 0x5F };
 		struct TRANSFORMEDSHAPE3D transshape;
-		int carposangle;
+		legacy_s16 carposangle;
 		carposangle = polarAngle(carpos.y, carpos.z);
 
 		select_cliprect_rotate(0, carposangle, 0, &cliprect, 0);
@@ -396,7 +396,7 @@ struct stunts_engine {
 
 		transshape.shapeptr = &game3dshapes[32];
 
-		int result = transformed_shape_op(&transshape);
+		legacy_s16 result = transformed_shape_op(&transshape);
 		
 		printf("result %i, polys=%i\n", result, polyinfonumpolys);
 		

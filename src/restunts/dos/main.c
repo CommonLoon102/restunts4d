@@ -2,17 +2,17 @@
 
 #ifdef RESTUNTS_ORIGINAL
 
-int ported_stuntsmain_(int argc, char* argv[]);
+legacy_s16 ported_stuntsmain_(legacy_s16 argc, legacy_s8* argv[]);
 
 // call the implementation in seg010.asm
-int stuntsmain(int argc, char* argv[]) {
+legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	return ported_stuntsmain_(argc, argv);
 }
 
 #else
 
 // call the implementation in restunts.c
-int stuntsmain(int argc, char* argv[]) {
+legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	return stuntsmainimpl(argc, argv);
 }
 

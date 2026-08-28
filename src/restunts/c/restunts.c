@@ -11,9 +11,9 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
-extern int __stbuf(FILE* stream);
-extern void __ftbuf(int buffer_state, FILE* stream);
-extern int __output(FILE* stream, const char* format, void* arguments);
+extern legacy_s16 __stbuf(FILE* stream);
+extern void __ftbuf(legacy_s16 buffer_state, FILE* stream);
+extern legacy_s16 __output(FILE* stream, const legacy_s8* format, void* arguments);
 extern void _abort(void);
 
 // Entries in the CVX gamestate buffer.
@@ -30,7 +30,7 @@ extern void _abort(void);
 #define RST_ASC_HEX        0x80
 
 // Use the Stunts' data for now.
-extern unsigned const char* g_ascii_props;
+extern const legacy_u8* g_ascii_props;
 extern legacy_u16 joyflag1;
 extern legacy_u16 joyflag2;
 extern legacy_u16 word_3FB18;
@@ -56,10 +56,10 @@ extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
 extern legacy_u16 word_3F0A0;
 extern legacy_u16 word_3F0A2;
-extern char aNoRoomLeftOnTimerInterru[];
-unsigned long timer_get_counter(void);
+extern legacy_s8 aNoRoomLeftOnTimerInterru[];
+legacy_u32 timer_get_counter(void);
 
-typedef int (far* readchar_callback_type)(void);
+typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -81,14 +81,14 @@ unsigned const char g_ascii_props[256] = {
 };
 */
 
-int get_0(void)
+legacy_s16 get_0(void)
 {
 	return 0;
 }
 
-char* _strcpy(char* destination, const char* source)
+legacy_s8* _strcpy(legacy_s8* destination, const legacy_s8* source)
 {
-	char* result;
+	legacy_s8* result;
 
 	result = destination;
 	do {
@@ -98,29 +98,29 @@ char* _strcpy(char* destination, const char* source)
 	return result;
 }
 
-unsigned _strlen(const char* string)
+legacy_u16 _strlen(const legacy_s8* string)
 {
-	const char* end;
+	const legacy_s8* end;
 
 	end = string;
 	while (*end != '\0')
 		end++;
-	return (unsigned)(end - string);
+	return (legacy_u16)(end - string);
 }
 
-char* _strcat(char* destination, const char* source)
+legacy_s8* _strcat(legacy_s8* destination, const legacy_s8* source)
 {
 	_strcpy(destination + _strlen(destination), source);
 	return destination;
 }
 
-int _strcmp(const char* left, const char* right)
+legacy_s16 _strcmp(const legacy_s8* left, const legacy_s8* right)
 {
-	const unsigned char* left_bytes;
-	const unsigned char* right_bytes;
+	const legacy_u8* left_bytes;
+	const legacy_u8* right_bytes;
 
-	left_bytes = (const unsigned char*)left;
-	right_bytes = (const unsigned char*)right;
+	left_bytes = (const legacy_u8*)left;
+	right_bytes = (const legacy_u8*)right;
 	while (*left_bytes == *right_bytes) {
 		if (*left_bytes == '\0')
 			return 0;
@@ -130,41 +130,41 @@ int _strcmp(const char* left, const char* right)
 	return *left_bytes < *right_bytes ? -1 : 1;
 }
 
-static unsigned char legacy_ascii_lower(unsigned char character)
+static legacy_u8 legacy_ascii_lower(legacy_u8 character)
 {
 	if (character >= 'A' && character <= 'Z')
-		return (unsigned char)(character + ('a' - 'A'));
+		return (legacy_u8)(character + ('a' - 'A'));
 	return character;
 }
 
-int _stricmp(const char* left, const char* right)
+legacy_s16 _stricmp(const legacy_s8* left, const legacy_s8* right)
 {
-	unsigned char left_character;
-	unsigned char right_character;
+	legacy_u8 left_character;
+	legacy_u8 right_character;
 
 	do {
-		left_character = legacy_ascii_lower((unsigned char)*left++);
-		right_character = legacy_ascii_lower((unsigned char)*right++);
+		left_character = legacy_ascii_lower((legacy_u8)*left++);
+		right_character = legacy_ascii_lower((legacy_u8)*right++);
 		if (left_character != right_character)
 			return left_character < right_character ? -1 : 1;
 	} while (left_character != '\0');
 	return 0;
 }
 
-unsigned _abs(unsigned value)
+legacy_u16 _abs(legacy_u16 value)
 {
 	if ((legacy_s16)value < 0)
-		return (unsigned)(0U - value);
+		return (legacy_u16)(0U - value);
 	return value;
 }
 
-void _srand(unsigned int seed)
+void _srand(legacy_u16 seed)
 {
 	word_3F0A0 = (legacy_u16)seed;
 	word_3F0A2 = 0;
 }
 
-int _rand(void)
+legacy_s16 _rand(void)
 {
 	legacy_u32 seed;
 
@@ -172,10 +172,10 @@ int _rand(void)
 	seed = (legacy_u32)(seed * 214013UL + 2531011UL);
 	word_3F0A0 = (legacy_u16)seed;
 	word_3F0A2 = (legacy_u16)(seed >> 16);
-	return (int)(word_3F0A2 & 0x7FFFU);
+	return (legacy_s16)(word_3F0A2 & 0x7FFFU);
 }
 
-void kb_reg_callback(int code, void (far* callback)(void))
+void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
 {
 	legacy_u16 code_bits;
 	legacy_u16 callback_index;
@@ -203,7 +203,7 @@ void kb_reg_callback(int code, void (far* callback)(void))
 		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
 }
 
-int kb_parse_key(int code)
+legacy_s16 kb_parse_key(legacy_s16 code)
 {
 	legacy_u16 code_bits;
 	legacy_u16 key_index;
@@ -237,7 +237,7 @@ int kb_parse_key(int code)
 	return LEGACY_S16_FROM_BITS(code_bits);
 }
 
-void nopsub_304AF(int code)
+void nopsub_304AF(legacy_s16 code)
 {
 	legacy_u16 code_bits;
 	legacy_u16 key_index;
@@ -315,12 +315,12 @@ void sub_307B4(void)
 	word_3FB2A = 0;
 }
 
-int sub_307D2(int index)
+legacy_s16 sub_307D2(legacy_s16 index)
 {
 	return byte_3FB38[(legacy_u16)index & 0x0FU];
 }
 
-int sub_307E3(void)
+legacy_s16 sub_307E3(void)
 {
 	legacy_u16 difference;
 	legacy_u32 scaled;
@@ -334,7 +334,7 @@ int sub_307E3(void)
 	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
 }
 
-int nopsub_307FA(void)
+legacy_s16 nopsub_307FA(void)
 {
 	legacy_u16 difference;
 	legacy_u32 scaled;
@@ -348,9 +348,9 @@ int nopsub_307FA(void)
 	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
 }
 
-int nopsub_30A77(void)
+legacy_s16 nopsub_30A77(void)
 {
-	int key;
+	legacy_s16 key;
 
 	do {
 		key = kb_call_readchar_callback();
@@ -360,10 +360,10 @@ int nopsub_30A77(void)
 	return 0;
 }
 
-int nopsub_30A97(unsigned long ticks)
+legacy_s16 nopsub_30A97(legacy_u32 ticks)
 {
 	legacy_u32 target;
-	int key;
+	legacy_s16 key;
 
 	target = (legacy_u32)(timer_get_counter() + ticks);
 	do {
@@ -374,7 +374,7 @@ int nopsub_30A97(unsigned long ticks)
 	return 0;
 }
 
-unsigned long timer_get_counter(void)
+legacy_u32 timer_get_counter(void)
 {
 	/*
 	unsigned long val;
@@ -395,7 +395,7 @@ unsigned long timer_get_counter(void)
 	}
 }
 
-unsigned long timer_get_delta(void)
+legacy_u32 timer_get_delta(void)
 {
     /*
 	unsigned long last, curr;
@@ -426,12 +426,12 @@ unsigned long timer_get_delta(void)
 	}
 }
 
-unsigned long timer_get_delta_alt(void)
+legacy_u32 timer_get_delta_alt(void)
 {
 	return timer_get_delta();
 }
 
-unsigned long timer_custom_delta(unsigned long ticks)
+legacy_u32 timer_custom_delta(legacy_u32 ticks)
 {
 	return timer_get_counter() - ticks;
 }
@@ -441,15 +441,15 @@ void timer_reset()
 	timer_callback_counter = 0;
 }
 
-unsigned long timer_copy_counter(unsigned long ticks)
+legacy_u32 timer_copy_counter(legacy_u32 ticks)
 {
 	timer_copy_unk = timer_get_counter() + ticks;
 	return timer_copy_unk;
 }
 
-unsigned long timer_wait_for_dx(void)
+legacy_u32 timer_wait_for_dx(void)
 {
-	unsigned long res;
+	legacy_u32 res;
 	do {
 		res = timer_get_counter();
 	} while (res < timer_copy_unk);
@@ -457,14 +457,14 @@ unsigned long timer_wait_for_dx(void)
 	return res;
 }
 
-int timer_compare_dx(void)
+legacy_s16 timer_compare_dx(void)
 {
 	return timer_get_counter() >= timer_copy_unk;
 }
 
-unsigned long timer_get_counter_unk(unsigned long ticks)
+legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
 {
-	unsigned long target, res;
+	legacy_u32 target, res;
 	target = timer_get_counter() + ticks;
 	
 	do {
@@ -485,7 +485,7 @@ extern legacy_u8 byte_3BE02;
 extern legacy_s8 byte_3E85C[];
 extern legacy_s8 byte_40D6A;
 extern void far frame_callback(void);
-extern void replay_unk2(int mode);
+extern void replay_unk2(legacy_s16 mode);
 extern void timer_reg_callback(void (far* callback)(void));
 extern void timer_remove_callback(void (far* callback)(void));
 
@@ -508,25 +508,25 @@ void do_opponent_op(void)
 }
 
 #define KEVINRANDOM_SEED_LEN 6
-void init_kevinrandom(const char* seed)
+void init_kevinrandom(const legacy_s8* seed)
 {
-	int i;
+	legacy_s16 i;
 
 	for (i = 0; i < KEVINRANDOM_SEED_LEN; ++i) {
 		g_kevinrandom_seed[i] = seed[i];
 	}
 }
 
-void get_kevinrandom_seed(char* seed)
+void get_kevinrandom_seed(legacy_s8* seed)
 {
-	int i;
+	legacy_s16 i;
 
 	for (i = 0; i < KEVINRANDOM_SEED_LEN; ++i) {
 		seed[i] = g_kevinrandom_seed[i];
 	}
 }
 
-int get_kevinrandom(void)
+legacy_s16 get_kevinrandom(void)
 {
 	g_kevinrandom_seed[4] += g_kevinrandom_seed[5];
 	g_kevinrandom_seed[3] += g_kevinrandom_seed[4];
@@ -544,20 +544,20 @@ int get_kevinrandom(void)
 	return g_kevinrandom_seed[0];
 }
 
-int get_super_random(void)
+legacy_s16 get_super_random(void)
 {
-	int val = rand() + get_kevinrandom() + timer_get_counter() + gState_frame;
+	legacy_s16 val = rand() + get_kevinrandom() + timer_get_counter() + gState_frame;
 	return val < 0 ? -val : val;
 }
 
-int video_get_status(void)
+legacy_s16 video_get_status(void)
 {
 	return inport(0x3DA) & 0x8;
 }
 
-int random_wait(void)
+legacy_s16 random_wait(void)
 {
-	int status1, i;
+	legacy_s16 status1, i;
 	
 	status1 = video_get_status();
 	
@@ -582,7 +582,7 @@ int random_wait(void)
 	return 0;
 }
 
-int toupper(int ch)
+legacy_s16 toupper(legacy_s16 ch)
 {
 	if (ch >= 'a' && ch <= 'z') {
 		ch -= ' ';
@@ -592,7 +592,7 @@ int toupper(int ch)
 }
 
 void init_row_tables(void) {
-	int i;
+	legacy_s16 i;
 	for (i = 0; i < 30; i++) {
 		trackrows[i] = 30 * (29 - i);
 		terrainrows[i] = 30 * i;
@@ -618,7 +618,7 @@ void set_default_car(void) {
 }
 
 void init_trackdata(void) {
-	char far* trkptr;
+	legacy_s8 far* trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
 
 	td01_track_file_cpy = trkptr;
@@ -694,10 +694,10 @@ void init_trackdata(void) {
 
 extern struct SHAPE3D game3dshapes[];
 
-extern unsigned select_cliprect_rotate(int angX, int angY, int angZ, struct RECTANGLE* cliprect, int unk);
+extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 unk);
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
 extern void sub_29772(void);
-extern void set_projection(int, int, int, int);
+extern void set_projection(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 
 struct RECTANGLE shaperect = { 0, 320, 0, 200 };
 struct TRANSFORMEDSHAPE3D transshape;
@@ -710,36 +710,36 @@ extern struct SPRITE far* smouspriteptr;
 extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* mouseunkspriteptr;
 extern void far* tempdataptr;
-extern void video_set_palette(unsigned int start, unsigned int count,
-	unsigned char* palette);
+extern void video_set_palette(legacy_u16 start, legacy_u16 count,
+	legacy_u8* palette);
 
 extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
 
-extern int polyinfonumpolys;
-extern unsigned char far* polyinfoptrs[]; // array size = 0x190 
-extern unsigned int poly_linked_list_40ED6[]; // array size = 0x190
+extern legacy_s16 polyinfonumpolys;
+extern legacy_u8 far* polyinfoptrs[]; // array size = 0x190 
+extern legacy_u16 poly_linked_list_40ED6[]; // array size = 0x190
 
-extern void preRender_default(int color, int vertlinecount, int* vertlines);
-extern char byte_3B8F6;
-extern char far* skybox_res_ofs;
-extern char far* sdgame2ptr;
-extern int sdgame2_widths[];
-extern char far* sdgame2shapes[];
-extern char byte_46167;
-extern unsigned int skybox_ptr1;
-extern unsigned int skybox_ptr2;
-extern unsigned int skybox_ptr3;
-extern unsigned int skybox_ptr4;
-extern unsigned int skybox_current;
-extern unsigned int word_454CE;
-extern int skybox_sky_color;
-extern int skybox_grd_color;
-extern int skybox_wat_color;
-extern int dialog_fnt_colour;
-extern int meter_needle_color;
-extern char far* stdaresptr;
-extern char far* stdbresptr;
+extern void preRender_default(legacy_s16 color, legacy_s16 vertlinecount, legacy_s16* vertlines);
+extern legacy_s8 byte_3B8F6;
+extern legacy_s8 far* skybox_res_ofs;
+extern legacy_s8 far* sdgame2ptr;
+extern legacy_s16 sdgame2_widths[];
+extern legacy_s8 far* sdgame2shapes[];
+extern legacy_s8 byte_46167;
+extern legacy_u16 skybox_ptr1;
+extern legacy_u16 skybox_ptr2;
+extern legacy_u16 skybox_ptr3;
+extern legacy_u16 skybox_ptr4;
+extern legacy_u16 skybox_current;
+extern legacy_u16 word_454CE;
+extern legacy_s16 skybox_sky_color;
+extern legacy_s16 skybox_grd_color;
+extern legacy_s16 skybox_wat_color;
+extern legacy_s16 dialog_fnt_colour;
+extern legacy_s16 meter_needle_color;
+extern legacy_s8 far* stdaresptr;
+extern legacy_s8 far* stdbresptr;
 extern struct SHAPE2D far* whlshapes[];
 extern struct SHAPE2D far* gnobshapes[];
 extern struct SHAPE2D far* digshapes[];
@@ -755,36 +755,36 @@ extern legacy_s16 word_40DF6[];
 extern legacy_s16 word_40E00[];
 extern legacy_u8 byte_40DF0[];
 extern legacy_u8 byte_40DFA[];
-extern char aWhl1whl2whl3ins2gboxins1i[];
-extern char aGnobgnabdotDotadot1dot2[];
-extern char aDig0dig1dig2dig3dig4dig5d[];
-extern char aDash[];
-extern char aRoof[];
-extern char aDast[];
-extern char aDasm[];
-extern char aStdaxxxx[];
-extern char aStdbxxxx[];
-extern char far* skyboxes[];
-extern int word_45D1C;
-extern int word_45D06;
-extern int idle_counter;
-extern char byte_3B8F7;
-extern char mouse_isdirty;
+extern legacy_s8 aWhl1whl2whl3ins2gboxins1i[];
+extern legacy_s8 aGnobgnabdotDotadot1dot2[];
+extern legacy_s8 aDig0dig1dig2dig3dig4dig5d[];
+extern legacy_s8 aDash[];
+extern legacy_s8 aRoof[];
+extern legacy_s8 aDast[];
+extern legacy_s8 aDasm[];
+extern legacy_s8 aStdaxxxx[];
+extern legacy_s8 aStdbxxxx[];
+extern legacy_s8 far* skyboxes[];
+extern legacy_s16 word_45D1C;
+extern legacy_s16 word_45D06;
+extern legacy_s16 idle_counter;
+extern legacy_s8 byte_3B8F7;
+extern legacy_s8 mouse_isdirty;
 extern legacy_u8 HKeyFlag;
 
 void load_palandcursor(void)
 {
-	unsigned char palette[0x300];
-	char far* resource;
+	legacy_u8 palette[0x300];
+	legacy_s8 far* resource;
 	struct SHAPE2D far* mouse_shape;
-	unsigned int mouse_width;
-	unsigned int mouse_height;
-	unsigned int i;
+	legacy_u16 mouse_width;
+	legacy_u16 mouse_height;
+	legacy_u16 i;
 
-	resource = (char far*)file_load_shape2d_fatal("sdmain");
+	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "!pal");
 	for (i = 0; i < sizeof(palette); ++i)
-		palette[i] = ((unsigned char far*)mouse_shape)[0x10U + i];
+		palette[i] = ((legacy_u8 far*)mouse_shape)[0x10U + i];
 	video_set_palette(0, 0x100, palette);
 
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
@@ -797,7 +797,7 @@ void load_palandcursor(void)
 	mouseunkspriteptr = sprite_make_wnd(
 		mouse_width + video_flag2_is1, mouse_height, 0x0F);
 
-	resource = (char far*)file_load_shape2d_fatal("sdmain");
+	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
 	sprite_set_1_from_argptr(smouspriteptr);
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
@@ -810,7 +810,7 @@ void load_palandcursor(void)
 	sprite_copy_2_to_1_2();
 }
 
-static char skybox_resource_names[5][9] = {
+static legacy_s8 skybox_resource_names[5][9] = {
 	"desert",
 	"tropical",
 	"alpine",
@@ -828,7 +828,7 @@ void init_unknown(void)
 	word_44DCA = 0;
 }
 
-int handle_ingame_kb_shortcuts(int key)
+legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 {
 	switch (key) {
 	case 0x1B:
@@ -904,7 +904,7 @@ void sub_29772(void)
 	idle_counter = 0;
 }
 
-void copy_string(char* destination, char far* source)
+void copy_string(legacy_s8* destination, legacy_s8 far* source)
 {
 	/* Preserve the original post-copy lookahead, including its empty input bug. */
 	do {
@@ -929,10 +929,10 @@ void mouse_draw_opaque_check(void)
 		mouse_draw_opaque();
 }
 
-int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
-	int* y1_array, int* y2_array)
+legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array, legacy_s16* x2_array,
+	legacy_s16* y1_array, legacy_s16* y2_array)
 {
-	int i;
+	legacy_s16 i;
 
 	if (kbormouse == 0)
 		return -1;
@@ -940,33 +940,33 @@ int mouse_multi_hittest(int count, int* x1_array, int* x2_array,
 	for (i = 0; i < count; i++) {
 		if (x1_array[i] <= mouse_xpos && mouse_xpos <= x2_array[i] &&
 			y1_array[i] <= mouse_ypos && mouse_ypos <= y2_array[i])
-			return (signed char)i;
+			return (legacy_s8)i;
 	}
 
 	return -1;
 }
 
-extern int input_framecount;
-extern int input_framecount2;
-extern int input_framecount3;
-extern int input_framecounter;
-extern int kbjoyflags;
-extern int joyflags;
-extern int newjoyflags;
-extern int joyinputcode;
-extern int mouse_oldx;
-extern int mouse_oldy;
-extern int mouse_oldbut;
-extern int mousebutinputcode;
-extern int get_joy_flags(void);
+extern legacy_s16 input_framecount;
+extern legacy_s16 input_framecount2;
+extern legacy_s16 input_framecount3;
+extern legacy_s16 input_framecounter;
+extern legacy_s16 kbjoyflags;
+extern legacy_s16 joyflags;
+extern legacy_s16 newjoyflags;
+extern legacy_s16 joyinputcode;
+extern legacy_s16 mouse_oldx;
+extern legacy_s16 mouse_oldy;
+extern legacy_s16 mouse_oldbut;
+extern legacy_s16 mousebutinputcode;
+extern legacy_s16 get_joy_flags(void);
 extern legacy_u8 kbinput[];
 extern legacy_u8 kbscancodes[10];
-extern void mouse_get_state(int* buttons, int* x, int* y);
-extern unsigned char byte_3EBD8;
-extern char byte_45D0C[];
-extern char byte_45D14[];
+extern void mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y);
+extern legacy_u8 byte_3EBD8;
+extern legacy_s8 byte_45D0C[];
+extern legacy_s8 byte_45D14[];
 
-short get_kb_or_joy_flags(void)
+legacy_s16 get_kb_or_joy_flags(void)
 {
 	static const legacy_u8 action_flags[10] = {
 		0x10, 0x20, 0x09, 0x01, 0x05,
@@ -985,11 +985,11 @@ short get_kb_or_joy_flags(void)
 	return LEGACY_S16_FROM_BITS(flags);
 }
 
-int input_checking(int frame_delta)
+legacy_s16 input_checking(legacy_s16 frame_delta)
 {
 	legacy_u16 current_joy_flags;
 	legacy_u16 key;
-	int changed_or_repeating;
+	legacy_s16 changed_or_repeating;
 
 	input_framecount = LEGACY_U16_WRAP_ADD(input_framecount, frame_delta);
 	if (LEGACY_S16_FROM_BITS(input_framecount) > 20000) {
@@ -1107,7 +1107,7 @@ int input_checking(int frame_delta)
 static legacy_s16 mouse_track_divide(legacy_s16 numerator,
 	legacy_s16 denominator)
 {
-	return (legacy_s16)((long)numerator / (long)denominator);
+	return (legacy_s16)((legacy_s32)numerator / (legacy_s32)denominator);
 }
 
 static legacy_s16 mouse_track_position(legacy_s16 length,
@@ -1123,8 +1123,8 @@ static legacy_s16 mouse_track_position(legacy_s16 length,
 	return mouse_track_divide(numerator, denominator);
 }
 
-static void mouse_track_draw(int horizontal, int x, int width, int y,
-	int height, legacy_s16 thumb_start, legacy_s16 thumb_size)
+static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 width, legacy_s16 y,
+	legacy_s16 height, legacy_s16 thumb_start, legacy_s16 thumb_size)
 {
 	sprite_1_unk(x, y, width, height, 0);
 	if (horizontal) {
@@ -1136,8 +1136,8 @@ static void mouse_track_draw(int horizontal, int x, int width, int y,
 	}
 }
 
-int mouse_track_op(int operation, int x, int width, int y, int height,
-	int selected, int selection_width, int item_count)
+legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y, legacy_s16 height,
+	legacy_s16 selected, legacy_s16 selection_width, legacy_s16 item_count)
 {
 	legacy_s16 length;
 	legacy_s16 thumb_start;
@@ -1149,7 +1149,7 @@ int mouse_track_op(int operation, int x, int width, int y, int height,
 	legacy_s16 previous_start;
 	legacy_s16 quotient;
 	legacy_s16 scaled;
-	int horizontal;
+	legacy_s16 horizontal;
 
 	horizontal = LEGACY_S16_FROM_BITS(width) >
 		LEGACY_S16_FROM_BITS(height);
@@ -1174,7 +1174,7 @@ int mouse_track_op(int operation, int x, int width, int y, int height,
 		LEGACY_S16_WRAP_SUB(mouse_ypos, y);
 	if (coordinate < thumb_start || coordinate > thumb_end) {
 		do {
-			input_checking((int)timer_get_delta_alt());
+			input_checking((legacy_s16)timer_get_delta_alt());
 		} while (((legacy_u16)mouse_butstate & 3U) != 0);
 		if (coordinate < thumb_start) {
 			if (selected != 0)
@@ -1187,7 +1187,7 @@ int mouse_track_op(int operation, int x, int width, int y, int height,
 		selected = -1;
 		previous_start = thumb_start;
 		do {
-			input_checking((int)timer_get_delta_alt());
+			input_checking((legacy_s16)timer_get_delta_alt());
 			current_coordinate = horizontal ?
 				LEGACY_S16_WRAP_SUB(mouse_xpos, x) :
 				LEGACY_S16_WRAP_SUB(mouse_ypos, y);
@@ -1232,20 +1232,20 @@ int mouse_track_op(int operation, int x, int width, int y, int height,
 	return selected;
 }
 
-int input_do_checking(int frame_delta)
+legacy_s16 input_do_checking(legacy_s16 frame_delta)
 {
 	return input_checking(frame_delta);
 }
 
 void check_input(void)
 {
-	int pressed;
+	legacy_s16 pressed;
 
 	do {
 		pressed = (get_kb_or_joy_flags() & 0x30) != 0;
 		if (!pressed) {
 			pressed = input_checking(
-				(int)timer_get_delta_alt()) != 0;
+				(legacy_s16)timer_get_delta_alt()) != 0;
 		}
 		if (!pressed && kbormouse != 0 && (mouse_butstate & 3) != 0)
 			pressed = 1;
@@ -1256,14 +1256,14 @@ void nopsub_28F26(void)
 {
 	do {
 		/* Keep advancing input state until an event is reported. */
-	} while (input_checking((int)timer_get_delta_alt()) == 0);
+	} while (input_checking((legacy_s16)timer_get_delta_alt()) == 0);
 
 	check_input();
 }
 
 void input_push_status(void)
 {
-	int index = (signed char)byte_3EBD8;
+	legacy_s16 index = (legacy_s8)byte_3EBD8;
 
 	byte_45D0C[index] = byte_3B8F7;
 	byte_45D14[index] = kbormouse;
@@ -1272,39 +1272,39 @@ void input_push_status(void)
 
 void input_pop_status(void)
 {
-	int index;
+	legacy_s16 index;
 
 	if (byte_3EBD8 == 0)
 		return;
 
 	byte_3EBD8--;
-	index = (signed char)byte_3EBD8;
+	index = (legacy_s8)byte_3EBD8;
 	byte_3B8F7 = byte_45D0C[index];
 	kbormouse = byte_45D14[index];
 	if (kbormouse == 0)
 		mouse_draw_opaque_check();
 }
 
-extern int font_op2(const char* text);
-extern int font_op(const char* text, int count);
-extern unsigned int word_42A16;
-extern unsigned int word_42A18;
-extern unsigned int word_42A1A;
-extern unsigned int word_42A1C;
-extern char* off_42A1E;
-extern unsigned int word_42A20;
-extern unsigned int word_42A22;
+extern legacy_s16 font_op2(const legacy_s8* text);
+extern legacy_s16 font_op(const legacy_s8* text, legacy_s16 count);
+extern legacy_u16 word_42A16;
+extern legacy_u16 word_42A18;
+extern legacy_u16 word_42A1A;
+extern legacy_u16 word_42A1C;
+extern legacy_s8* off_42A1E;
+extern legacy_u16 word_42A20;
+extern legacy_u16 word_42A22;
 extern legacy_u8 far* word_405FE;
-extern void sub_345BC(const char* text, int x, int y);
-extern void sprite_1_unk2(int x, int y, int width, int height, int color);
+extern void sub_345BC(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
+extern void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
-int font_op2_alt(const char* text)
+legacy_s16 font_op2_alt(const legacy_s8* text)
 {
 	legacy_s16 centered;
 
 	centered = LEGACY_S16_WRAP_NEGATE(
 		LEGACY_S16_WRAP_SUB(font_op2(text), 0x140));
-	return (int)((long)centered / 2L);
+	return (legacy_s16)((legacy_s32)centered / 2L);
 }
 
 void unload_skybox(void)
@@ -1319,29 +1319,29 @@ void free_sdgame2(void)
 	mmgr_free(sdgame2ptr);
 }
 
-extern void audio_driver_func3F(int command);
-extern char audioflag2;
-extern char audioflag6;
-extern int word_4063A;
-extern int word_4063C;
-extern unsigned char byte_40635;
-extern char audiodriverstring2[];
-extern unsigned char byte_44290;
-extern unsigned char byte_40630;
-extern unsigned char byte_40632;
-extern unsigned char byte_45950;
-extern char byte_459D8;
-extern char byte_42D26;
-extern char byte_42D2A;
-extern unsigned char byte_428D6[];
-extern unsigned char audiochunks_unk[];
-extern unsigned char audiochunks_unk2[];
-extern unsigned char byte_45948;
-extern unsigned char byte_45D9A[];
-extern unsigned char byte_44D06[];
-extern unsigned char byte_44ACA[];
-extern unsigned char unk_45A26[];
-extern unsigned char audiotimers[];
+extern void audio_driver_func3F(legacy_s16 command);
+extern legacy_s8 audioflag2;
+extern legacy_s8 audioflag6;
+extern legacy_s16 word_4063A;
+extern legacy_s16 word_4063C;
+extern legacy_u8 byte_40635;
+extern legacy_s8 audiodriverstring2[];
+extern legacy_u8 byte_44290;
+extern legacy_u8 byte_40630;
+extern legacy_u8 byte_40632;
+extern legacy_u8 byte_45950;
+extern legacy_s8 byte_459D8;
+extern legacy_s8 byte_42D26;
+extern legacy_s8 byte_42D2A;
+extern legacy_u8 byte_428D6[];
+extern legacy_u8 audiochunks_unk[];
+extern legacy_u8 audiochunks_unk2[];
+extern legacy_u8 byte_45948;
+extern legacy_u8 byte_45D9A[];
+extern legacy_u8 byte_44D06[];
+extern legacy_u8 byte_44ACA[];
+extern legacy_u8 unk_45A26[];
+extern legacy_u8 audiotimers[];
 extern void far* basdres;
 extern void far* snarres;
 extern void far* tommres;
@@ -1349,53 +1349,53 @@ extern void far* rideres;
 extern void far* crshres;
 extern void far* chhtres;
 extern void far* ohhtres;
-extern int word_43964;
-extern int word_4408C;
-extern unsigned int word_42240;
-extern unsigned int word_42242;
-extern unsigned int word_42244;
-extern unsigned char byte_42246;
+extern legacy_s16 word_43964;
+extern legacy_s16 word_4408C;
+extern legacy_u16 word_42240;
+extern legacy_u16 word_42242;
+extern legacy_u16 word_42244;
+extern legacy_u8 byte_42246;
 extern legacy_s16 word_3EB2A;
-extern unsigned char byte_40634;
+extern legacy_u8 byte_40634;
 extern void far* audiodriverbinary;
 extern legacy_u16 word_44D48;
 extern legacy_u16 word_454BA;
-extern char aStartengineNew[];
-extern char audio_filetemp[];
-int compare_ds_ss(void);
-void nopsub_3219D(const char* format, ...);
+extern legacy_s8 aStartengineNew[];
+extern legacy_s8 audio_filetemp[];
+legacy_s16 compare_ds_ss(void);
+void nopsub_3219D(const legacy_s8* format, ...);
 void audio_driver_timer(void);
-extern void sub_38CF8(int index, void far* context);
+extern void sub_38CF8(legacy_s16 index, void far* context);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
-extern int sub_39050(unsigned int value, int handle);
-extern void sub_39088(int channel, int value);
-extern void sub_35B76(int x, int y, int width, int height, int color);
-extern void audio_driver_func1E(int channel, int function);
-extern void audio_unk2(int channel, int value);
-extern void audio_op_unk3(int channel);
-extern void audio_op_unk4(int channel);
+extern legacy_s16 sub_39050(legacy_u16 value, legacy_s16 handle);
+extern void sub_39088(legacy_s16 channel, legacy_s16 value);
+extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
+extern void audio_driver_func1E(legacy_s16 channel, legacy_s16 function);
+extern void audio_unk2(legacy_s16 channel, legacy_s16 value);
+extern void audio_op_unk3(legacy_s16 channel);
+extern void audio_op_unk4(legacy_s16 channel);
 extern void sub_38178(void);
 extern void sub_39700(void);
-int sub_37470(int channel, unsigned char priority);
-void sub_374DE(int channel);
-int sub_3771E(int channel);
-void audio_init_chunk2(int channel);
-void sub_38156(int index);
-extern int audio_check_flag(void far* resource, int channel,
-	unsigned char priority, unsigned int rate);
-extern void audio_init_chunk(int first_channel, int last_channel,
-	void far* resource, unsigned int resource_data_offset,
-	unsigned int rate, unsigned char priority);
+legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
+void sub_374DE(legacy_s16 channel);
+legacy_s16 sub_3771E(legacy_s16 channel);
+void audio_init_chunk2(legacy_s16 channel);
+void sub_38156(legacy_s16 index);
+extern legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
+	legacy_u8 priority, legacy_u16 rate);
+extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
+	void far* resource, legacy_u16 resource_data_offset,
+	legacy_u16 rate, legacy_u8 priority);
 
-static void far* audio_read_far_pointer(const unsigned char* source)
+static void far* audio_read_far_pointer(const legacy_u8* source)
 {
 	return MK_FP(LEGACY_READ_U16_LE(source + 2),
 		LEGACY_READ_U16_LE(source));
 }
 
-static void audio_write_far_pointer(unsigned char* destination,
+static void audio_write_far_pointer(legacy_u8* destination,
 	const void far* value)
 {
 	LEGACY_WRITE_U16_LE(destination, FP_OFF(value));
@@ -1404,7 +1404,7 @@ static void audio_write_far_pointer(unsigned char* destination,
 
 void audio_add_driver_timer(void)
 {
-	unsigned int index;
+	legacy_u16 index;
 
 	for (index = 0; index < 25U; index++)
 		audiotimers[index * 0x4CU] = 0;
@@ -1414,9 +1414,9 @@ void audio_add_driver_timer(void)
 
 void audio_remove_driver_timer(void)
 {
-	unsigned int index;
-	unsigned int offset;
-	int channel;
+	legacy_u16 index;
+	legacy_u16 offset;
+	legacy_s16 channel;
 
 	for (index = 0; index < 25U; index++) {
 		offset = index * 0x4CU;
@@ -1430,22 +1430,22 @@ void audio_remove_driver_timer(void)
 	timer_remove_callback(&audio_driver_timer);
 }
 
-char* pad_id(const char far* source)
+legacy_s8* pad_id(const legacy_s8 far* source)
 {
-	unsigned char* destination;
-	unsigned int index;
+	legacy_u8* destination;
+	legacy_u16 index;
 
-	destination = (unsigned char*)&word_42242;
+	destination = (legacy_u8*)&word_42242;
 	for (index = 0; index < 4U; index++) {
-		destination[index] = (unsigned char)source[index];
+		destination[index] = (legacy_u8)source[index];
 		if (destination[index] == 0)
 			destination[index] = ' ';
 	}
 	byte_42246 = 0;
-	return (char*)destination;
+	return (legacy_s8*)destination;
 }
 
-int audio_init_engine(int unused_type, void far* source_pointer,
+legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 	void far* shape_resources, void far* audio_resources)
 {
 	const legacy_u8 far* source;
@@ -1457,9 +1457,9 @@ int audio_init_engine(int unused_type, void far* source_pointer,
 	legacy_u16 source_segment;
 	legacy_u16 rate;
 	legacy_u16 divisor;
-	unsigned int index;
-	unsigned int field;
-	int channel;
+	legacy_u16 index;
+	legacy_u16 field;
+	legacy_s16 channel;
 
 	(void)unused_type;
 	for (index = 0; index < 25U; index++) {
@@ -1486,14 +1486,14 @@ int audio_init_engine(int unused_type, void far* source_pointer,
 	}
 
 	if (context[6] == 0) {
-		resource = locate_shape_fatal((char far*)shape_resources,
-			pad_id((const char far*)audio_read_far_pointer(
+		resource = locate_shape_fatal((legacy_s8 far*)shape_resources,
+			pad_id((const legacy_s8 far*)audio_read_far_pointer(
 				context + 8U)));
 		audio_write_far_pointer(context + 8U, resource);
 		for (field = 0x10U; field <= 0x2CU; field += 4U) {
 			resource = init_audio_resources(audio_resources,
 				shape_resources,
-				pad_id((const char far*)audio_read_far_pointer(
+				pad_id((const legacy_s8 far*)audio_read_far_pointer(
 					context + field)));
 			audio_write_far_pointer(context + field, resource);
 		}
@@ -1523,10 +1523,10 @@ int audio_init_engine(int unused_type, void far* source_pointer,
 	timer[0x1AU] = 0;
 	timer[0x1BU] = 0;
 	timer[0] = 1;
-	return (int)index;
+	return (legacy_s16)index;
 }
 
-void audio_op_unk(int index)
+void audio_op_unk(legacy_s16 index)
 {
 	legacy_u8* timer;
 	legacy_u8* context;
@@ -1535,8 +1535,8 @@ void audio_op_unk(int index)
 	legacy_u16 sample_count;
 	legacy_u16 value;
 	legacy_u16 divisor;
-	int handle;
-	int channel;
+	legacy_s16 handle;
+	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	timer = audiotimers + offset;
@@ -1560,10 +1560,10 @@ void audio_op_unk(int index)
 	audio_unk2(handle, 0);
 }
 
-void audio_op_unk2(int index, int base_value,
-	int first_x, int first_y, int first_z,
-	int second_x, int second_y, int second_z,
-	int interval)
+void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
+	legacy_s16 first_x, legacy_s16 first_y, legacy_s16 first_z,
+	legacy_s16 second_x, legacy_s16 second_y, legacy_s16 second_z,
+	legacy_s16 interval)
 {
 	legacy_u8* timer;
 	legacy_u8* context;
@@ -1615,7 +1615,7 @@ void audio_op_unk2(int index, int base_value,
 	timer[0x0AU] = (legacy_u8)volume;
 }
 
-void sub_18D06(const legacy_u8* sample, int interval)
+void sub_18D06(const legacy_u8* sample, legacy_s16 interval)
 {
 	audio_op_unk2(word_43964,
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1EU)),
@@ -1687,7 +1687,7 @@ void frame_callback(void)
 	byte_442E4--;
 }
 
-void replay_unk2(int mode)
+void replay_unk2(legacy_s16 mode)
 {
 	legacy_s16 input_flags;
 	legacy_s16 steering;
@@ -1829,7 +1829,7 @@ void audio_driver_timer(void)
 	legacy_u16 index;
 	legacy_u8 volume;
 	legacy_u8 secondary_volume;
-	int channel;
+	legacy_s16 channel;
 
 	if (compare_ds_ss() == 0)
 		return;
@@ -1922,12 +1922,12 @@ void audio_disable_flag2(void)
 	audioflag2 = 0;
 	word_4063A = 1;
 	if (byte_44290 != 0)
-		audio_driver_func1E(0, (unsigned int)byte_44290 - 1U);
+		audio_driver_func1E(0, (legacy_u16)byte_44290 - 1U);
 	sub_39700();
 	word_4063A = 0;
 }
 
-short audio_toggle_flag2(void)
+legacy_s16 audio_toggle_flag2(void)
 {
 	if (audioflag2 == 1) {
 		audio_disable_flag2();
@@ -1938,15 +1938,15 @@ short audio_toggle_flag2(void)
 	return 1;
 }
 
-short nopsub_373FE(void)
+legacy_s16 nopsub_373FE(void)
 {
-	unsigned int offset;
-	unsigned int channel;
+	legacy_u16 offset;
+	legacy_u16 channel;
 
 	if (byte_40630 == 1 || audioflag2 == 0)
 		return 1;
 
-	for (channel = 0; channel < (unsigned int)byte_44290; channel++) {
+	for (channel = 0; channel < (legacy_u16)byte_44290; channel++) {
 		offset = (channel + 0x10U) * 0x4CU;
 		if ((LEGACY_READ_U16_LE(audiochunks_unk + offset) |
 			LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) != 0)
@@ -1969,7 +1969,7 @@ void sub_3736A(void)
 
 void audio_enable_flag6(void)
 {
-	int channel;
+	legacy_s16 channel;
 
 	if (audioflag6 == 1)
 		return;
@@ -1981,7 +1981,7 @@ void audio_enable_flag6(void)
 
 void audio_disable_flag6(void)
 {
-	int channel;
+	legacy_s16 channel;
 
 	if (audioflag6 == 0)
 		return;
@@ -1994,7 +1994,7 @@ void audio_disable_flag6(void)
 	audioflag6 = 0;
 }
 
-short audio_toggle_flag6(void)
+legacy_s16 audio_toggle_flag6(void)
 {
 	if (audioflag6 == 1) {
 		audio_disable_flag6();
@@ -2005,24 +2005,24 @@ short audio_toggle_flag6(void)
 	return 1;
 }
 
-int sub_3771E(int channel)
+legacy_s16 sub_3771E(legacy_s16 channel)
 {
-	unsigned int offset;
+	legacy_u16 offset;
 
 	if (audioflag6 == 0 || channel < 0x10 || channel > 0x17)
 		return 1;
 
-	offset = (unsigned int)channel * 0x4CU;
+	offset = (legacy_u16)channel * 0x4CU;
 	return (LEGACY_READ_U16_LE(audiochunks_unk + offset) |
 		LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) == 0;
 }
 
-void nopsub_37750(int channel, void far* value)
+void nopsub_37750(legacy_s16 channel, void far* value)
 {
 	void far* *field;
 
 	field = (void far* *)(audiochunks_unk +
-		(unsigned int)channel * 0x4CU + 0x48U);
+		(legacy_u16)channel * 0x4CU + 0x48U);
 	*field = value;
 }
 
@@ -2049,9 +2049,9 @@ void audioresource_copy_4_bytes(legacy_u8 far* destination,
 	destination[3] = source[3];
 }
 
-void audio_init_chunk(int first_channel, int last_channel,
-	void far* resource, unsigned int resource_data_offset,
-	unsigned int rate, unsigned char priority)
+void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
+	void far* resource, legacy_u16 resource_data_offset,
+	legacy_u16 rate, legacy_u8 priority)
 {
 	const legacy_u8 far* resource_data;
 	legacy_u8* chunk;
@@ -2131,14 +2131,14 @@ void audio_init_chunk(int first_channel, int last_channel,
 	} while (channel <= last);
 }
 
-int audio_check_flag(void far* resource, int channel,
-	unsigned char priority, unsigned int rate)
+legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
+	legacy_u8 priority, legacy_u16 rate)
 {
 	const legacy_u8 far* bytes;
 	legacy_u16 scaled_rate;
-	unsigned int offset;
-	unsigned int resource_data_offset;
-	int candidate;
+	legacy_u16 offset;
+	legacy_u16 resource_data_offset;
+	legacy_s16 candidate;
 
 	bytes = (const legacy_u8 far*)resource;
 	if (audioflag6 == 0 || resource == 0 || bytes[5] != 1)
@@ -2155,7 +2155,7 @@ int audio_check_flag(void far* resource, int channel,
 
 	if (channel == -1) {
 		for (candidate = 0x10; candidate <= 0x17; candidate++) {
-			offset = (unsigned int)(candidate - 0x10) * 0x4CU;
+			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
 			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
 				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
 				byte_45D9A[candidate] == 0) {
@@ -2168,32 +2168,32 @@ int audio_check_flag(void far* resource, int channel,
 	if (channel == -1)
 		return -1;
 
-	resource_data_offset = (unsigned int)bytes[6] * 4U + 8U;
+	resource_data_offset = (legacy_u16)bytes[6] * 4U + 8U;
 	audio_init_chunk(channel, channel, resource, resource_data_offset,
 		rate, priority);
 	return channel;
 }
 
-int audio_check_flag2(void far* resource, int channel,
-	unsigned char priority)
+legacy_s16 audio_check_flag2(void far* resource, legacy_s16 channel,
+	legacy_u8 priority)
 {
 	return audio_check_flag(resource, channel, priority,
-		(unsigned int)byte_45948);
+		(legacy_u16)byte_45948);
 }
 
-int nopsub_37456(void far* resource)
+legacy_s16 nopsub_37456(void far* resource)
 {
 	return audio_check_flag2(resource, -1, 0x40U);
 }
 
-int sub_37470(int channel, unsigned char priority)
+legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 {
-	unsigned int offset;
-	int candidate;
+	legacy_u16 offset;
+	legacy_s16 candidate;
 
 	if (channel == -1) {
 		for (candidate = 0x10; candidate <= 0x17; candidate++) {
-			offset = (unsigned int)(candidate - 0x10) * 0x4CU;
+			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
 			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
 				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
 				byte_45D9A[candidate] == 0) {
@@ -2205,31 +2205,31 @@ int sub_37470(int channel, unsigned char priority)
 
 	if (channel != -1) {
 		byte_45D9A[channel] = 1;
-		offset = (unsigned int)channel * 0x4CU;
+		offset = (legacy_u16)channel * 0x4CU;
 		audiochunks_unk[offset + 0x24U] = priority;
 	}
 
 	return channel;
 }
 
-void audio_init_chunk2(int channel)
+void audio_init_chunk2(legacy_s16 channel)
 {
-	unsigned int offset;
+	legacy_u16 offset;
 
 	if (channel < 0x10 || channel > 0x17)
 		return;
 
-	offset = (unsigned int)channel * 0x4CU;
+	offset = (legacy_u16)channel * 0x4CU;
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset, 0);
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
 	audio_driver_func1E(channel, channel);
 	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
 }
 
-void audio_op_unk7(int index)
+void audio_op_unk7(legacy_s16 index)
 {
-	unsigned int offset;
-	int channel;
+	legacy_u16 offset;
+	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	channel = LEGACY_S16_FROM_BITS(
@@ -2238,10 +2238,10 @@ void audio_op_unk7(int index)
 	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, 0xFFFFU);
 }
 
-int nopsub_27489(int index)
+legacy_s16 nopsub_27489(legacy_s16 index)
 {
-	unsigned int offset;
-	int channel;
+	legacy_u16 offset;
+	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	channel = LEGACY_S16_FROM_BITS(
@@ -2252,10 +2252,10 @@ int nopsub_27489(int index)
 	return sub_3771E(channel);
 }
 
-void audio_function2(int index)
+void audio_function2(legacy_s16 index)
 {
-	unsigned int offset;
-	int channel;
+	legacy_u16 offset;
+	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	if (audiotimers[offset] != 1 || audiotimers[offset + 1U] != 1)
@@ -2269,12 +2269,12 @@ void audio_function2(int index)
 	audiotimers[offset + 0x1AU] = 1;
 }
 
-static int audio_start_indexed_event(int index,
-	unsigned int resource_field, unsigned char priority)
+static legacy_s16 audio_start_indexed_event(legacy_s16 index,
+	legacy_u16 resource_field, legacy_u8 priority)
 {
-	unsigned int offset;
-	unsigned int rate;
-	int channel;
+	legacy_u16 offset;
+	legacy_u16 rate;
+	legacy_s16 channel;
 	void far* resource;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
@@ -2287,11 +2287,11 @@ static int audio_start_indexed_event(int index,
 	return channel;
 }
 
-void nopsub_27220(int index)
+void nopsub_27220(legacy_s16 index)
 {
-	unsigned int offset;
-	unsigned int rate;
-	int channel;
+	legacy_u16 offset;
+	legacy_u16 rate;
+	legacy_s16 channel;
 	void far* resource;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
@@ -2304,8 +2304,8 @@ void nopsub_27220(int index)
 	audiotimers[offset + 0x1BU] = 1;
 }
 
-static void audio_append_filename_part(char* destination,
-	const char* source)
+static void audio_append_filename_part(legacy_s8* destination,
+	const legacy_s8* source)
 {
 	while (*destination != 0)
 		destination++;
@@ -2314,9 +2314,9 @@ static void audio_append_filename_part(char* destination,
 	} while (*source++ != 0);
 }
 
-static const char* audio_find_last_backslash(const char* text)
+static const legacy_s8* audio_find_last_backslash(const legacy_s8* text)
 {
-	const char* match;
+	const legacy_s8* match;
 
 	match = 0;
 	while (*text != 0) {
@@ -2327,20 +2327,20 @@ static const char* audio_find_last_backslash(const char* text)
 	return match;
 }
 
-char* audio_make_filename(const char* filename, const char* extension,
-	const char* inserted_path)
+legacy_s8* audio_make_filename(const legacy_s8* filename, const legacy_s8* extension,
+	const legacy_s8* inserted_path)
 {
-	const char* basename;
-	const char* source;
-	char* separator;
-	unsigned int length;
+	const legacy_s8* basename;
+	const legacy_s8* source;
+	legacy_s8* separator;
+	legacy_u16 length;
 
 	separator = audio_filetemp;
 	source = filename;
 	do {
 		*separator++ = *source;
 	} while (*source++ != 0);
-	separator = (char*)audio_find_last_backslash(audio_filetemp);
+	separator = (legacy_s8*)audio_find_last_backslash(audio_filetemp);
 	if (separator != 0)
 		separator[1] = 0;
 	else
@@ -2364,10 +2364,10 @@ char* audio_make_filename(const char* filename, const char* extension,
 	return audio_filetemp;
 }
 
-void far* load_sfx_ge(const char* filename, const char* extension,
-	const char* inserted_path)
+void far* load_sfx_ge(const legacy_s8* filename, const legacy_s8* extension,
+	const legacy_s8* inserted_path)
 {
-	char compressed_extension[4];
+	legacy_s8 compressed_extension[4];
 	void far* result;
 
 	result = file_load_binary_nofatal(audio_make_filename(
@@ -2407,7 +2407,7 @@ void far* load_sfx_ge(const char* filename, const char* extension,
 	return file_load_binary_nofatal(filename);
 }
 
-void far* load_sfx_file(const char* filename)
+void far* load_sfx_file(const legacy_s8* filename)
 {
 	void far* result;
 
@@ -2421,7 +2421,7 @@ void far* load_sfx_file(const char* filename)
 	return result;
 }
 
-void far* load_song_file(const char* filename)
+void far* load_song_file(const legacy_s8* filename)
 {
 	void far* result;
 
@@ -2431,7 +2431,7 @@ void far* load_song_file(const char* filename)
 	return result;
 }
 
-void far* load_voice_file(const char* filename)
+void far* load_voice_file(const legacy_s8* filename)
 {
 	void far* result;
 
@@ -2445,8 +2445,8 @@ void far* load_voice_file(const char* filename)
 	return result;
 }
 
-int audioresource_compare_chunknames(int case_sensitive,
-	const char far* first_name, const char far* second_name, int count)
+legacy_s16 audioresource_compare_chunknames(legacy_s16 case_sensitive,
+	const legacy_s8 far* first_name, const legacy_s8 far* second_name, legacy_s16 count)
 {
 	legacy_u16 first_offset;
 	legacy_u16 first_segment;
@@ -2483,7 +2483,7 @@ int audioresource_compare_chunknames(int case_sensitive,
 	return 1;
 }
 
-void sub_3702E(int left, int top, int right, int bottom, int color)
+void sub_3702E(legacy_s16 left, legacy_s16 top, legacy_s16 right, legacy_s16 bottom, legacy_s16 color)
 {
 	legacy_s16 x;
 	legacy_s16 y;
@@ -2508,7 +2508,7 @@ void sub_3702E(int left, int top, int right, int bottom, int color)
 	}
 }
 
-static legacy_u16 legacy_near_string_length(const char* text)
+static legacy_u16 legacy_near_string_length(const legacy_s8* text)
 {
 	legacy_u16 length;
 
@@ -2518,10 +2518,10 @@ static legacy_u16 legacy_near_string_length(const char* text)
 	return length;
 }
 
-void print_int_as_string_maybe(char* destination, int value, int zero_pad,
-	int width)
+void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value, legacy_s16 zero_pad,
+	legacy_s16 width)
 {
-	char digits[5];
+	legacy_s8 digits[5];
 	legacy_s16 signed_value;
 	legacy_u16 magnitude;
 	legacy_u16 digit_count;
@@ -2534,7 +2534,7 @@ void print_int_as_string_maybe(char* destination, int value, int zero_pad,
 		(legacy_u16)signed_value;
 	digit_count = 0;
 	do {
-		digits[digit_count++] = (char)('0' + magnitude % 10U);
+		digits[digit_count++] = (legacy_s8)('0' + magnitude % 10U);
 		magnitude /= 10U;
 	} while (magnitude != 0);
 
@@ -2570,7 +2570,7 @@ void print_int_as_string_maybe(char* destination, int value, int zero_pad,
 	}
 }
 
-static char* legacy_near_string_copy(char* destination, const char* source)
+static legacy_s8* legacy_near_string_copy(legacy_s8* destination, const legacy_s8* source)
 {
 	while ((*destination = *source) != 0) {
 		destination++;
@@ -2579,11 +2579,11 @@ static char* legacy_near_string_copy(char* destination, const char* source)
 	return destination;
 }
 
-void format_frame_as_string(char* destination, int frame_count,
-	int include_hundredths)
+void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
+	legacy_s16 include_hundredths)
 {
-	char number[18];
-	char* output;
+	legacy_s8 number[18];
+	legacy_s8* output;
 	legacy_u16 frames;
 	legacy_u16 frame_rate;
 	legacy_u16 frames_per_minute;
@@ -2616,11 +2616,11 @@ void format_frame_as_string(char* destination, int frame_count,
 	}
 }
 
-void parse_filepath_separators(char* destination, const char* path)
+void parse_filepath_separators(legacy_s8* destination, const legacy_s8* path)
 {
 	legacy_u16 path_index;
 	legacy_u16 output_index;
-	char current;
+	legacy_s8 current;
 
 	path_index = legacy_near_string_length(path);
 	while (path_index != 0) {
@@ -2637,33 +2637,33 @@ void parse_filepath_separators(char* destination, const char* path)
 	destination[output_index - 1U] = 0;
 }
 
-extern char aId1[];
-extern char aId2[];
-extern char aId3[];
-extern char aId4[];
-extern char aDos_0[];
-extern char aDea[];
-extern char aDer[];
-extern char aKey[];
-extern char aMer[];
-extern char aMof[];
-extern char aMon[];
-extern char aMrl[];
-extern char aMrs[];
-extern char aMou[];
-extern char aPau[];
-extern char aSof[];
-extern char aSon[];
-extern char aSav[];
-extern char aWai[];
-extern char aDefault_1[];
-extern char aLoa[];
-extern char aLsu[];
-extern char aLsd[];
-extern char unk_463EA[];
-extern char* findfilenames[];
+extern legacy_s8 aId1[];
+extern legacy_s8 aId2[];
+extern legacy_s8 aId3[];
+extern legacy_s8 aId4[];
+extern legacy_s8 aDos_0[];
+extern legacy_s8 aDea[];
+extern legacy_s8 aDer[];
+extern legacy_s8 aKey[];
+extern legacy_s8 aMer[];
+extern legacy_s8 aMof[];
+extern legacy_s8 aMon[];
+extern legacy_s8 aMrl[];
+extern legacy_s8 aMrs[];
+extern legacy_s8 aMou[];
+extern legacy_s8 aPau[];
+extern legacy_s8 aSof[];
+extern legacy_s8 aSon[];
+extern legacy_s8 aSav[];
+extern legacy_s8 aWai[];
+extern legacy_s8 aDefault_1[];
+extern legacy_s8 aLoa[];
+extern legacy_s8 aLsu[];
+extern legacy_s8 aLsd[];
+extern legacy_s8 unk_463EA[];
+extern legacy_s8* findfilenames[];
 extern void far* miscptr;
-extern int word_407FA;
+extern legacy_s16 word_407FA;
 extern struct TRACKOBJECT trkObjectList[];
 extern struct SHAPE2D far* tracksmenushapes1[];
 extern struct SHAPE2D far* tracksmenushape2dunk[];
@@ -2671,18 +2671,18 @@ extern struct SHAPE2D far* tracksmenushape2dunk2[];
 extern void audio_unk(void);
 extern void call_exitlist2(void);
 extern void sub_372F4(void);
-extern int word_3EB90;
-extern int fontdef_unk_0E;
-void font_set_unk(int color, int unknown);
-int call_read_line(char* text, int max_characters, int x, int y,
-	unsigned long timeout);
-legacy_s8 do_fileselect_dialog(char* directory, char* filename,
-	char* extension, char far* prompt);
-unsigned long sub_2EB1E(unsigned long ticks);
-void preRender_line(unsigned int x1, unsigned int y1,
-	unsigned int x2, unsigned int y2, int color);
-struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
-	int shadow_color);
+extern legacy_s16 word_3EB90;
+extern legacy_s16 fontdef_unk_0E;
+void font_set_unk(legacy_s16 color, legacy_s16 unknown);
+legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
+	legacy_u32 timeout);
+legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
+	legacy_s8* extension, legacy_s8 far* prompt);
+legacy_u32 sub_2EB1E(legacy_u32 ticks);
+void preRender_line(legacy_u16 x1, legacy_u16 y1,
+	legacy_u16 x2, legacy_u16 y2, legacy_s16 color);
+struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
+	legacy_s16 shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 static legacy_u16 dialog_ascii_lower(legacy_u16 character)
@@ -2693,26 +2693,26 @@ static legacy_u16 dialog_ascii_lower(legacy_u16 character)
 	return character;
 }
 
-unsigned short show_dialog(
-	int dialog_type,
-	int save_background,
+legacy_u16 show_dialog(
+	legacy_s16 dialog_type,
+	legacy_s16 save_background,
 	void far* text_resource,
-	unsigned short x_argument,
-	unsigned short y_argument,
-	int border_color,
+	legacy_u16 x_argument,
+	legacy_u16 y_argument,
+	legacy_s16 border_color,
 	void* disabled_choices_argument,
-	int initial_choice
+	legacy_s16 initial_choice
 ) {
-	char line_buffer[128];
-	char choice_buffer[80];
-	char far* choice_texts[20];
+	legacy_s8 line_buffer[128];
+	legacy_s8 choice_buffer[80];
+	legacy_s8 far* choice_texts[20];
 	legacy_u8 choice_lengths[20];
-	int choice_left[20];
-	int choice_right[20];
-	int choice_top[20];
-	int choice_bottom[20];
-	int* disabled_choices;
-	char far* cursor;
+	legacy_s16 choice_left[20];
+	legacy_s16 choice_right[20];
+	legacy_s16 choice_top[20];
+	legacy_s16 choice_bottom[20];
+	legacy_s16* disabled_choices;
+	legacy_s8 far* cursor;
 	legacy_s16 line_height;
 	legacy_s16 dialog_width;
 	legacy_s16 dialog_height;
@@ -2740,13 +2740,13 @@ unsigned short show_dialog(
 	legacy_u8 previous;
 	legacy_u8 active;
 
-	disabled_choices = (int*)disabled_choices_argument;
+	disabled_choices = (legacy_s16*)disabled_choices_argument;
 	line_height = LEGACY_S16_WRAP_ADD(fontdef_unk_0E, 2);
 	dialog_height = 0;
 	dialog_width = 0x20;
 	mouse_draw_opaque_check();
 
-	cursor = (char far*)text_resource;
+	cursor = (legacy_s8 far*)text_resource;
 	line_length = 0;
 	while ((character = (legacy_u8)*cursor) != 0) {
 		if (character == ']' || character == '}') {
@@ -2761,7 +2761,7 @@ unsigned short show_dialog(
 			else
 				dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 4);
 		} else {
-			line_buffer[line_length++] = (char)character;
+			line_buffer[line_length++] = (legacy_s8)character;
 		}
 		cursor++;
 	}
@@ -2802,7 +2802,7 @@ unsigned short show_dialog(
 	word_3EB90 = 0;
 	font_set_unk(dialog_fnt_colour, 0);
 
-	cursor = (char far*)text_resource;
+	cursor = (legacy_s8 far*)text_resource;
 	line_length = 0;
 	placeholder_index = 0;
 	dialog_height = 1;
@@ -2829,7 +2829,7 @@ unsigned short show_dialog(
 			}
 			line_buffer[line_length++] = ' ';
 		} else {
-			line_buffer[line_length++] = (char)character;
+			line_buffer[line_length++] = (legacy_s8)character;
 		}
 		cursor++;
 	}
@@ -2858,7 +2858,7 @@ unsigned short show_dialog(
 				else
 					dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 3);
 			} else {
-				line_buffer[line_length++] = (char)character;
+				line_buffer[line_length++] = (legacy_s8)character;
 				character_count++;
 			}
 			cursor++;
@@ -2888,7 +2888,7 @@ unsigned short show_dialog(
 	if (dialog_type == 1) {
 		do {
 			input = (legacy_u16)input_checking(
-				(int)timer_get_delta_alt());
+				(legacy_s16)timer_get_delta_alt());
 		} while (input == 0);
 		if (input == 0x1BU)
 			result = 0;
@@ -2896,7 +2896,7 @@ unsigned short show_dialog(
 		goto dialog_done;
 	}
 	if (dialog_type == 3)
-		return (unsigned short)(placeholder_index / 2U);
+		return (legacy_u16)(placeholder_index / 2U);
 	if (dialog_type == 4) {
 		(void)sub_2EB1E(8UL);
 		goto dialog_done;
@@ -2946,7 +2946,7 @@ unsigned short show_dialog(
 			previous = selected;
 		}
 
-		input = (legacy_u16)input_checking((int)timer_get_delta_alt());
+		input = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
 		hit = (legacy_s16)mouse_multi_hittest(choice_count,
 			choice_left, choice_right, choice_top, choice_bottom);
 		if (hit != -1 &&
@@ -3000,22 +3000,22 @@ unsigned short show_dialog(
 dialog_done:
 	if (save_background != 0)
 		sub_275C6();
-	return (unsigned short)result;
+	return (legacy_u16)result;
 }
 
 legacy_s8 do_fileselect_dialog(
-	char* directory,
-	char* filename,
-	char* extension,
-	char far* prompt
+	legacy_s8* directory,
+	legacy_s8* filename,
+	legacy_s8* extension,
+	legacy_s8 far* prompt
 ) {
-	int positions[40];
-	int hit_left[10];
-	int hit_right[10];
-	int hit_top[10];
-	int hit_bottom[10];
-	char filenames[128][13];
-	const char* found_path;
+	legacy_s16 positions[40];
+	legacy_s16 hit_left[10];
+	legacy_s16 hit_right[10];
+	legacy_s16 hit_top[10];
+	legacy_s16 hit_bottom[10];
+	legacy_s8 filenames[128][13];
+	const legacy_s8* found_path;
 	legacy_u16 index;
 	legacy_u16 compare_index;
 	legacy_u16 visible_row;
@@ -3131,7 +3131,7 @@ restart_search:
 			mouse_draw_transparent_check();
 		}
 
-		key = (legacy_u16)input_checking((int)timer_get_delta_alt());
+		key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
 		hit = (legacy_s16)mouse_multi_hittest(10,
 			hit_left, hit_right, hit_top, hit_bottom);
 		if (hit != -1) {
@@ -3216,10 +3216,10 @@ file_dialog_done:
 	return result;
 }
 
-void ensure_file_exists(int file_index)
+void ensure_file_exists(legacy_s16 file_index)
 {
-	static char* const message_ids[] = { aId1, aId2, aId3, aId4 };
-	char* message_id;
+	static legacy_s8* const message_ids[] = { aId1, aId2, aId3, aId4 };
+	legacy_s8* message_id;
 
 	message_id = message_ids[file_index - 1];
 	while (file_find(findfilenames[file_index]) == 0) {
@@ -3259,7 +3259,7 @@ void do_key_restext(void)
 
 void do_joy_restext(void)
 {
-	int positions[15];
+	legacy_s16 positions[15];
 	legacy_s16 button_x[9];
 	legacy_s16 button_y[9];
 	legacy_u8 visited[9];
@@ -3383,7 +3383,7 @@ void do_pau_restext(void)
 
 void do_mof_restext(void)
 {
-	char* message_id;
+	legacy_s8* message_id;
 
 	input_push_status();
 	word_3F88E = 1;
@@ -3396,7 +3396,7 @@ void do_mof_restext(void)
 
 void do_sonsof_restext(void)
 {
-	char* message_id;
+	legacy_s8* message_id;
 
 	input_push_status();
 	word_3F88E = 1;
@@ -3409,7 +3409,7 @@ void do_sonsof_restext(void)
 
 void do_dos_restext(void)
 {
-	int result;
+	legacy_s16 result;
 
 	input_push_status();
 	word_3F88E = 1;
@@ -3423,10 +3423,10 @@ void do_dos_restext(void)
 	input_pop_status();
 }
 
-int do_savefile_dialog(char* primary, char* secondary, char far* prompt)
+legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s8 far* prompt)
 {
-	int positions[6];
-	int character_index;
+	legacy_s16 positions[6];
+	legacy_s16 character_index;
 	legacy_s16 key;
 	legacy_s16 result;
 
@@ -3471,8 +3471,8 @@ int do_savefile_dialog(char* primary, char* secondary, char far* prompt)
 
 void show_graphic_levels_menu(void)
 {
-	char selected_options[9];
-	char menu_text[512];
+	legacy_s8 selected_options[9];
+	legacy_s8 menu_text[512];
 	legacy_u16 original_frame_rate;
 	legacy_u16 option_index;
 	legacy_u16 text_index;
@@ -3502,7 +3502,7 @@ void show_graphic_levels_menu(void)
 
 		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
 			(void far*)menu_text, -1, -1, performGraphColor, 0,
-			(int)selected));
+			(legacy_s16)selected));
 		if (selected == -1 || selected == 9)
 			break;
 		switch (selected) {
@@ -3532,12 +3532,12 @@ void show_graphic_levels_menu(void)
 	input_pop_status();
 }
 
-unsigned run_option_menu(void)
+legacy_u16 run_option_menu(void)
 {
 	legacy_s8 selected;
 	legacy_s8 initial_input;
 	legacy_u8 menu_active;
-	char far* prompt;
+	legacy_s8 far* prompt;
 
 	miscptr = file_load_resfile("misc");
 	sprite_copy_2_to_1_2();
@@ -3896,7 +3896,7 @@ void sub_2C9B4(void)
 	}
 }
 
-int sub_2C81C(void)
+legacy_s16 sub_2C81C(void)
 {
 	legacy_u16 row;
 	legacy_u16 column;
@@ -3955,9 +3955,9 @@ int sub_2C81C(void)
 	return error;
 }
 
-short do_dea_textres(void)
+legacy_s16 do_dea_textres(void)
 {
-	short result;
+	legacy_s16 result;
 
 	input_push_status();
 	if (g_is_busy != 0) {
@@ -3973,11 +3973,11 @@ short do_dea_textres(void)
 	return result;
 }
 
-int input_repeat_check(int duration)
+legacy_s16 input_repeat_check(legacy_s16 duration)
 {
 	legacy_u16 delta;
 	legacy_u16 elapsed;
-	int result;
+	legacy_s16 result;
 
 	elapsed = 0;
 	timer_get_delta_alt();
@@ -3992,10 +3992,10 @@ int input_repeat_check(int duration)
 	return 0;
 }
 
-int run_intro(void)
+legacy_s16 run_intro(void)
 {
 	struct SHAPE2D far* shape;
-	int result;
+	legacy_s16 result;
 
 	mouse_draw_opaque_check();
 	sprite_copy_2_to_1_clear();
@@ -4003,11 +4003,11 @@ int run_intro(void)
 	sprite_copy_wnd_to_1_clear();
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
-		(char far*)tempdataptr, "prod");
+		(legacy_s8 far*)tempdataptr, "prod");
 	waitflag = shape->s2d_pos_y != 0 ? 0xA0 : 0xB4;
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
-		(char far*)tempdataptr, "prod");
+		(legacy_s8 far*)tempdataptr, "prod");
 	sprite_shape_to_1_alt(shape);
 	result = sprite_blit_to_video(wndsprite, -1);
 	if (result == 0)
@@ -4017,7 +4017,7 @@ int run_intro(void)
 		sprite_copy_wnd_to_1_clear();
 		waitflag = 0xB4;
 		shape = (struct SHAPE2D far*)locate_shape_fatal(
-			(char far*)tempdataptr, "titl");
+			(legacy_s8 far*)tempdataptr, "titl");
 		sprite_shape_to_1_alt(shape);
 		result = sprite_blit_to_video(wndsprite, -1);
 		if (result == 0)
@@ -4027,16 +4027,16 @@ int run_intro(void)
 	return result;
 }
 
-int run_intro_looped(void)
+legacy_s16 run_intro_looped(void)
 {
-	int result;
+	legacy_s16 result;
 
 	file_load_audiores("skidtitl", "skidms", "TITL");
 	tempdataptr = file_load_resource(2, "sdtitl");
 	wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 	result = run_intro();
 	sprite_free_wnd(wndsprite);
-	mmgr_free((char far*)tempdataptr);
+	mmgr_free((legacy_s8 far*)tempdataptr);
 
 	if (result == 0) {
 		result = setup_intro();
@@ -4047,7 +4047,7 @@ int run_intro_looped(void)
 			sprite_blit_to_video(wndsprite, 0);
 			result = load_intro_resources();
 			sprite_free_wnd(wndsprite);
-			mmgr_free((char far*)tempdataptr);
+			mmgr_free((legacy_s8 far*)tempdataptr);
 		}
 	}
 
@@ -4055,11 +4055,11 @@ int run_intro_looped(void)
 	return result;
 }
 
-extern void sprite_1_unk4(int x, int y, int width, int height, int color);
+extern void sprite_1_unk4(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
-int mouse_timer_sprite_unk(int item_index, const int* x_values,
-	const int* width_values, const int* y_values, const int* height_values,
-	int second_state, int first_state)
+legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index, const legacy_s16* x_values,
+	const legacy_s16* width_values, const legacy_s16* y_values, const legacy_s16* height_values,
+	legacy_s16 second_state, legacy_s16 first_state)
 {
 	legacy_u16 delta;
 	legacy_u16 animation_counter;
@@ -4084,121 +4084,121 @@ int mouse_timer_sprite_unk(int item_index, const int* x_values,
 	return LEGACY_S16_FROM_BITS(delta);
 }
 
-extern char aSdmsel[];
-extern char aScrn[];
-extern int menu_buttons_x1[];
-extern int menu_buttons_x2[];
-extern int menu_buttons_y1[];
-extern int menu_buttons_y2[];
-extern int word_407CE;
-extern int word_407D0;
-extern int word_407F4;
-extern int word_407F6;
-extern int word_407F8;
-extern int trackmenu_buttons_x1[];
-extern int trackmenu_buttons_x2[];
-extern int trackmenu_buttons_y1[];
-extern int trackmenu_buttons_y2[];
-extern char aMisc[];
-extern char aSdosel[];
-extern char aOpp0opp1opp2op[];
-extern char aScrn_0[];
-extern char aBla[];
-extern char aBnx[];
-extern char aBcl[];
-extern char aBca[];
-extern char aBdo[];
-extern char aClip[];
-extern char aDes_0[];
-extern char aRac[];
-extern char aOpp1[];
-extern int opponentmenu_buttons_x1[];
-extern int opponentmenu_buttons_x2[];
-extern int opponentmenu_buttons_y1[];
-extern int opponentmenu_buttons_y2[];
-extern char far* opp_res;
-extern char far* oppresources[7];
-extern char a_res_0[];
-extern char aCar[];
-extern char aSdcsel[];
-extern char aMisc_0[];
-extern char aGrap[];
-extern char a150[];
-extern char a100[];
-extern char a50[];
-extern char a0[];
-extern char a02040[];
-extern char aBdo_0[];
-extern char aBnx_0[];
-extern char aBla_0[];
-extern char aBau[];
-extern char aBma[];
-extern char aBco[];
-extern char aDes_1[];
-extern char aStop_1[];
-extern char aBau_0[];
-extern char aBma_0[];
-extern int carmenu_buttons_x1[];
-extern int carmenu_buttons_x2[];
-extern int carmenu_buttons_y1[];
-extern int carmenu_buttons_y2[];
+extern legacy_s8 aSdmsel[];
+extern legacy_s8 aScrn[];
+extern legacy_s16 menu_buttons_x1[];
+extern legacy_s16 menu_buttons_x2[];
+extern legacy_s16 menu_buttons_y1[];
+extern legacy_s16 menu_buttons_y2[];
+extern legacy_s16 word_407CE;
+extern legacy_s16 word_407D0;
+extern legacy_s16 word_407F4;
+extern legacy_s16 word_407F6;
+extern legacy_s16 word_407F8;
+extern legacy_s16 trackmenu_buttons_x1[];
+extern legacy_s16 trackmenu_buttons_x2[];
+extern legacy_s16 trackmenu_buttons_y1[];
+extern legacy_s16 trackmenu_buttons_y2[];
+extern legacy_s8 aMisc[];
+extern legacy_s8 aSdosel[];
+extern legacy_s8 aOpp0opp1opp2op[];
+extern legacy_s8 aScrn_0[];
+extern legacy_s8 aBla[];
+extern legacy_s8 aBnx[];
+extern legacy_s8 aBcl[];
+extern legacy_s8 aBca[];
+extern legacy_s8 aBdo[];
+extern legacy_s8 aClip[];
+extern legacy_s8 aDes_0[];
+extern legacy_s8 aRac[];
+extern legacy_s8 aOpp1[];
+extern legacy_s16 opponentmenu_buttons_x1[];
+extern legacy_s16 opponentmenu_buttons_x2[];
+extern legacy_s16 opponentmenu_buttons_y1[];
+extern legacy_s16 opponentmenu_buttons_y2[];
+extern legacy_s8 far* opp_res;
+extern legacy_s8 far* oppresources[7];
+extern legacy_s8 a_res_0[];
+extern legacy_s8 aCar[];
+extern legacy_s8 aSdcsel[];
+extern legacy_s8 aMisc_0[];
+extern legacy_s8 aGrap[];
+extern legacy_s8 a150[];
+extern legacy_s8 a100[];
+extern legacy_s8 a50[];
+extern legacy_s8 a0[];
+extern legacy_s8 a02040[];
+extern legacy_s8 aBdo_0[];
+extern legacy_s8 aBnx_0[];
+extern legacy_s8 aBla_0[];
+extern legacy_s8 aBau[];
+extern legacy_s8 aBma[];
+extern legacy_s8 aBco[];
+extern legacy_s8 aDes_1[];
+extern legacy_s8 aStop_1[];
+extern legacy_s8 aBau_0[];
+extern legacy_s8 aBma_0[];
+extern legacy_s16 carmenu_buttons_x1[];
+extern legacy_s16 carmenu_buttons_x2[];
+extern legacy_s16 carmenu_buttons_y1[];
+extern legacy_s16 carmenu_buttons_y2[];
 extern struct RECTANGLE carmenu_cliprect;
 extern struct RECTANGLE rect_unk16;
 extern struct VECTOR carmenu_carpos;
-extern char backlights_paint_override;
-extern char aMisc_2[];
-extern char aElt[];
-extern char aCon[];
-extern char aPpt[];
-extern char aDnf[];
-extern char aOlt[];
-extern char aDnf_0[];
-extern char aOwt[];
-extern char aOlt_0[];
-extern char aVict[];
-extern char aSkidms_1[];
-extern char aSkidvict[];
-extern char aOver[];
-extern char aSkidms_2[];
-extern char aSkidover[];
-extern char aAvs[];
-extern char aMph[];
-extern char aImp[];
-extern char aMph_0[];
-extern char aTop[];
-extern char aMph_1[];
-extern char aJum[];
-extern char aWinn[];
-extern char aLose[];
-extern char a_trk_5[];
-extern char aIhd[];
-extern char aD4a[];
-extern char aBct[];
-extern char aInh[];
-extern char aInh_0[];
-extern char aHna[];
-extern char aBev[];
-extern char aBhi[];
-extern char aBrp[];
-extern char aBra[];
-extern char aBdr[];
-extern char aBmm_0[];
-extern char aOpp2win[];
-extern char aOpp2lose[];
-extern char aOp01[];
-extern int word_3BCDE[];
-extern int word_3BCE4[];
-extern int word_3BCEC[];
-extern int word_3BCF6[];
-extern int hiscore_buttons_y1[];
-extern int hiscore_buttons_y2[];
+extern legacy_s8 backlights_paint_override;
+extern legacy_s8 aMisc_2[];
+extern legacy_s8 aElt[];
+extern legacy_s8 aCon[];
+extern legacy_s8 aPpt[];
+extern legacy_s8 aDnf[];
+extern legacy_s8 aOlt[];
+extern legacy_s8 aDnf_0[];
+extern legacy_s8 aOwt[];
+extern legacy_s8 aOlt_0[];
+extern legacy_s8 aVict[];
+extern legacy_s8 aSkidms_1[];
+extern legacy_s8 aSkidvict[];
+extern legacy_s8 aOver[];
+extern legacy_s8 aSkidms_2[];
+extern legacy_s8 aSkidover[];
+extern legacy_s8 aAvs[];
+extern legacy_s8 aMph[];
+extern legacy_s8 aImp[];
+extern legacy_s8 aMph_0[];
+extern legacy_s8 aTop[];
+extern legacy_s8 aMph_1[];
+extern legacy_s8 aJum[];
+extern legacy_s8 aWinn[];
+extern legacy_s8 aLose[];
+extern legacy_s8 a_trk_5[];
+extern legacy_s8 aIhd[];
+extern legacy_s8 aD4a[];
+extern legacy_s8 aBct[];
+extern legacy_s8 aInh[];
+extern legacy_s8 aInh_0[];
+extern legacy_s8 aHna[];
+extern legacy_s8 aBev[];
+extern legacy_s8 aBhi[];
+extern legacy_s8 aBrp[];
+extern legacy_s8 aBra[];
+extern legacy_s8 aBdr[];
+extern legacy_s8 aBmm_0[];
+extern legacy_s8 aOpp2win[];
+extern legacy_s8 aOpp2lose[];
+extern legacy_s8 aOp01[];
+extern legacy_s16 word_3BCDE[];
+extern legacy_s16 word_3BCE4[];
+extern legacy_s16 word_3BCEC[];
+extern legacy_s16 word_3BCF6[];
+extern legacy_s16 hiscore_buttons_y1[];
+extern legacy_s16 hiscore_buttons_y2[];
 extern legacy_s16 word_40D3A;
 extern legacy_s16 word_40D3C;
 extern legacy_s16 word_40D3E;
 extern legacy_s16 word_40D40;
 extern legacy_s16 end_hiscore_random;
 extern legacy_s16 word_40D44;
-extern int word_407D2;
+extern legacy_s16 word_407D2;
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
 extern legacy_s16 gState_144;
@@ -4208,52 +4208,52 @@ extern legacy_s16 gState_penalty;
 extern legacy_s16 gState_impactSpeed;
 extern legacy_s16 gState_topSpeed;
 extern legacy_s16 gState_jumpCount;
-extern char aCred[];
-extern char aArowarrwarw1ar[];
-extern char aCre[];
-extern char aGds0[];
-extern char aGds1[];
-extern char aDes[];
-extern char aGdon[];
-extern char aGkev[];
-extern char aGbra[];
-extern char aGrob[];
-extern char aGsta[];
-extern char aMus[];
-extern char aGmsy[];
-extern char aGkri[];
-extern char aGbri[];
-extern char aPro[];
-extern char aGkev_0[];
-extern char aOpr[];
-extern char aGbra_0[];
-extern char aGric[];
-extern char aArt[];
-extern char aGmsm[];
-extern char aGdav[];
-extern char aGnic[];
-extern char aGkev_1[];
-extern int word_407D4;
-extern int word_407D6;
-extern int word_407D8;
-extern int word_407DA;
-extern int word_407DC;
-extern int word_407DE;
-extern int word_407E0;
-extern int word_407E2;
-extern int word_407E4;
-extern int word_407E6;
-extern int word_407E8;
-extern int word_407EA;
+extern legacy_s8 aCred[];
+extern legacy_s8 aArowarrwarw1ar[];
+extern legacy_s8 aCre[];
+extern legacy_s8 aGds0[];
+extern legacy_s8 aGds1[];
+extern legacy_s8 aDes[];
+extern legacy_s8 aGdon[];
+extern legacy_s8 aGkev[];
+extern legacy_s8 aGbra[];
+extern legacy_s8 aGrob[];
+extern legacy_s8 aGsta[];
+extern legacy_s8 aMus[];
+extern legacy_s8 aGmsy[];
+extern legacy_s8 aGkri[];
+extern legacy_s8 aGbri[];
+extern legacy_s8 aPro[];
+extern legacy_s8 aGkev_0[];
+extern legacy_s8 aOpr[];
+extern legacy_s8 aGbra_0[];
+extern legacy_s8 aGric[];
+extern legacy_s8 aArt[];
+extern legacy_s8 aGmsm[];
+extern legacy_s8 aGdav[];
+extern legacy_s8 aGnic[];
+extern legacy_s8 aGkev_1[];
+extern legacy_s16 word_407D4;
+extern legacy_s16 word_407D6;
+extern legacy_s16 word_407D8;
+extern legacy_s16 word_407DA;
+extern legacy_s16 word_407DC;
+extern legacy_s16 word_407DE;
+extern legacy_s16 word_407E0;
+extern legacy_s16 word_407E2;
+extern legacy_s16 word_407E4;
+extern legacy_s16 word_407E6;
+extern legacy_s16 word_407E8;
+extern legacy_s16 word_407EA;
 
-void load_skybox(char skybox_index);
+void load_skybox(legacy_s8 skybox_index);
 void unload_skybox(void);
 void draw_track_preview(void);
-int track_setup(void);
+legacy_s16 track_setup(void);
 void load_tracks_menu_shapes(void);
-void draw_button(char far* text, int x, int y, int width, int height,
-	int top_color, int bottom_color, int fill_color, int font_color);
-int highscore_write_a(int create_default);
+void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
+legacy_s16 highscore_write_a(legacy_s16 create_default);
 extern struct SHAPE2D far* tracksmenushapes2[];
 extern struct SHAPE2D far* tracksmenushapes3[];
 extern legacy_s16 word_407F2;
@@ -4289,25 +4289,25 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 	return tile;
 }
 
-static void track_editor_show_message(char far* text_resource,
-	const char* resource_id)
+static void track_editor_show_message(legacy_s8 far* text_resource,
+	const legacy_s8* resource_id)
 {
-	show_dialog(1, 1, locate_text_res(text_resource, (char*)resource_id),
+	show_dialog(1, 1, locate_text_res(text_resource, (legacy_s8*)resource_id),
 		0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
 }
 
 void load_tracks_menu_shapes(void)
 {
-	static char terrain_shape_names[] =
+	static legacy_s8 terrain_shape_names[] =
 		"flatlakelak1lak2lak3lak4highgoungouwgousgouegou1gou2gou3gou4gou5gou6gou7gou8";
-	static char cursor_shape_names[] = "crs0crs1crs2crs3";
-	static char under_cursor_shape_names[] = "ucr0ucr1ucr2ucr3";
-	static const char error_resource_ids[] =
+	static legacy_s8 cursor_shape_names[] = "crs0crs1crs2crs3";
+	static legacy_s8 under_cursor_shape_names[] = "ucr0ucr1ucr2ucr3";
+	static const legacy_s8 error_resource_ids[] =
 		"eokenseieemseedewwefuenpestejsejdeteewaefteat";
-	static int button_x1[5] = { 9, 202, 220, 8, 220 };
-	static int button_x2[5] = { 199, 206, 315, 199, 315 };
-	static int button_y1[5] = { 181, 4, 132, 4, 36 };
-	static int button_y2[5] = { 187, 179, 139, 179, 187 };
+	static legacy_s16 button_x1[5] = { 9, 202, 220, 8, 220 };
+	static legacy_s16 button_x2[5] = { 199, 206, 315, 199, 315 };
+	static legacy_s16 button_y1[5] = { 181, 4, 132, 4, 36 };
+	static legacy_s16 button_y2[5] = { 187, 179, 139, 179, 187 };
 	static const legacy_u16 page_keys[10] = {
 		0x3B00U, 0x3C00U, 0x3D00U, 0x3E00U, 0x3F00U,
 		0x4000U, 0x4100U, 0x4200U, 0x4300U, 0x4400U
@@ -4317,12 +4317,12 @@ void load_tracks_menu_shapes(void)
 	legacy_u8 cached_track[132];
 	legacy_u8 cached_terrain[132];
 	struct SPRITE far* cursor_sprites[4];
-	char far* shape_resource;
-	char far* text_resource;
-	char far* shape_name_resource;
-	char far* mask_name_resource;
-	char far* text_name_resource;
-	char far* text;
+	legacy_s8 far* shape_resource;
+	legacy_s8 far* text_resource;
+	legacy_s8 far* shape_name_resource;
+	legacy_s8 far* mask_name_resource;
+	legacy_s8 far* text_name_resource;
+	legacy_s8 far* text;
 	struct SHAPE2D far* terrain_shape;
 	legacy_u8 selection_column[2];
 	legacy_u8 selection_row[2];
@@ -4375,16 +4375,16 @@ void load_tracks_menu_shapes(void)
 	legacy_s16 cursor_y;
 	legacy_s16 result;
 	legacy_s16 write_result;
-	char terrain_id[5];
-	char* resource_id;
+	legacy_s8 terrain_id[5];
+	legacy_s8* resource_id;
 
-	shape_resource = (char far*)file_load_shape2d_fatal("sdtedit");
+	shape_resource = (legacy_s8 far*)file_load_shape2d_fatal("sdtedit");
 	locate_many_resources(shape_resource, terrain_shape_names,
-		(char far**)tracksmenushapes1);
+		(legacy_s8 far**)tracksmenushapes1);
 	locate_many_resources(shape_resource, cursor_shape_names,
-		(char far**)tracksmenushapes2);
+		(legacy_s8 far**)tracksmenushapes2);
 	locate_many_resources(shape_resource, under_cursor_shape_names,
-		(char far**)tracksmenushapes3);
+		(legacy_s8 far**)tracksmenushapes3);
 	for (index = 0; index < 4U; index++) {
 		cursor_sprites[index] = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(tracksmenushapes2[index]->s2d_width,
@@ -4392,7 +4392,7 @@ void load_tracks_menu_shapes(void)
 			tracksmenushapes2[index]->s2d_height, 0x0FU);
 	}
 
-	text_resource = (char far*)file_load_resfile("tedit");
+	text_resource = (legacy_s8 far*)file_load_resfile("tedit");
 	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 	pboxshape = (legacy_u8 far*)locate_shape_alt(text_resource, "pbox");
 	shape_name_resource = locate_shape_alt(text_resource, "snam");
@@ -4635,7 +4635,7 @@ void load_tracks_menu_shapes(void)
 		}
 
 		if (validation_error != 0) {
-			resource_id = (char*)error_resource_ids +
+			resource_id = (legacy_s8*)error_resource_ids +
 				(legacy_u16)validation_error * 3U;
 			__fmemcpy(&resID_byte1, resource_id, 3U);
 			*(&resID_byte1 + 3) = 0;
@@ -4811,7 +4811,7 @@ void load_tracks_menu_shapes(void)
 
 		if (key == 0x63U || key == 0x43U) {
 			result = (legacy_s8)track_setup();
-			resource_id = (char*)error_resource_ids +
+			resource_id = (legacy_s8*)error_resource_ids +
 				(legacy_u16)(legacy_u8)result * 3U;
 			__fmemcpy(&resID_byte1, resource_id, 3U);
 			*(&resID_byte1 + 3) = 0;
@@ -4874,7 +4874,7 @@ void load_tracks_menu_shapes(void)
 						terrain_id[0] = 't';
 						terrain_id[1] = 'e';
 						terrain_id[2] = 'r';
-						terrain_id[3] = (char)('0' + dialog_result);
+						terrain_id[3] = (legacy_s8)('0' + dialog_result);
 						terrain_id[4] = 0;
 						terrain_shape = (struct SHAPE2D far*)
 							locate_shape_alt(text_resource, terrain_id);
@@ -4894,7 +4894,7 @@ void load_tracks_menu_shapes(void)
 						goto track_editor_save;
 					g_is_busy = 1;
 					map_dirty = 1;
-					text = locate_text_res((char far*)mainresptr, "trk");
+					text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
 					result = do_fileselect_dialog(byte_3B80C,
 						gameconfig.game_trackname, ".trk", text);
 					file_build_path(byte_3B80C, gameconfig.game_trackname,
@@ -4916,7 +4916,7 @@ track_editor_save:
 					while (save_status == 0) {
 						sprite_copy_2_to_1_2();
 						map_dirty = 1;
-						text = locate_text_res((char far*)mainresptr, "trk");
+						text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
 						if (do_savefile_dialog(byte_3B80C,
 							gameconfig.game_trackname, text) == 0) {
 							save_status = 0xFFU;
@@ -4927,7 +4927,7 @@ track_editor_save:
 						save_status = 1;
 						if (file_find(g_path_buf) != 0) {
 							result = LEGACY_S16_FROM_BITS(show_dialog(2, 1,
-								locate_text_res((char far*)mainresptr, "fex"),
+								locate_text_res((legacy_s8 far*)mainresptr, "fex"),
 								0xFFFFU, 0xFFFFU, performGraphColor, 0, 0));
 							if (result == -1) {
 								save_status = 0xFFU;
@@ -4943,7 +4943,7 @@ track_editor_save:
 						if (write_result == 0)
 							highscore_write_a(1);
 						if (write_result != 0) {
-							track_editor_show_message((char far*)mainresptr, "ser");
+							track_editor_show_message((legacy_s8 far*)mainresptr, "ser");
 							save_status = 0;
 						} else {
 							track_changed = 0;
@@ -5144,11 +5144,11 @@ track_editor_next:
 	unload_resource(text_resource);
 	mmgr_free(shape_resource);
 }
-char run_menu(void)
+legacy_s8 run_menu(void)
 {
 	static const legacy_u8 previous_selection[5] = { 0, 1, 2, 4, 0 };
 	static const legacy_u8 next_selection[5] = { 3, 0, 1, 4, 2 };
-	char far* resource;
+	legacy_s8 far* resource;
 	struct SHAPE2D far* shape;
 	legacy_u8 selected;
 	legacy_u8 previous;
@@ -5163,7 +5163,7 @@ char run_menu(void)
 	show_waiting();
 	waitflag = 0xB4;
 	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
-	resource = (char far*)file_load_resource(2, aSdmsel);
+	resource = (legacy_s8 far*)file_load_resource(2, aSdmsel);
 	sprite_copy_wnd_to_1();
 	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, aScrn);
 	sprite_shape_to_1_alt(shape);
@@ -5217,12 +5217,12 @@ char run_menu(void)
 	return LEGACY_S8_FROM_BITS(selected);
 }
 
-extern int fontdef_unk_0E;
+extern legacy_s16 fontdef_unk_0E;
 extern struct RECTANGLE word_42248;
 extern struct RECTANGLE word_42250;
-extern void font_draw_text(const char* text, int x, int y);
+extern void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
 
-void font_set_unk(int color, int unknown)
+void font_set_unk(legacy_s16 color, legacy_s16 unknown)
 {
 	legacy_u8 far* font_definition;
 
@@ -5233,11 +5233,11 @@ void font_set_unk(int color, int unknown)
 	font_definition[3] = 0;
 }
 
-void draw_button(char far* text, int x, int y, int width, int height,
-	int top_color, int bottom_color, int fill_color, int font_color)
+void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color)
 {
-	char line[86];
-	char* copied_text;
+	legacy_s8 line[86];
+	legacy_s8* copied_text;
 	legacy_u16 length;
 	legacy_u16 source_index;
 	legacy_u16 destination_index;
@@ -5267,11 +5267,11 @@ void draw_button(char far* text, int x, int y, int width, int height,
 	remaining = LEGACY_S16_WRAP_SUB(height,
 		LEGACY_U16_WRAP_MUL(line_count, 8U));
 	vertical_offset = LEGACY_S16_WRAP_ADD(
-		(legacy_s16)((long)remaining / 2L), 1);
+		(legacy_s16)((legacy_s32)remaining / 2L), 1);
 	destination_index = 0;
 	line_index = 0;
 	for (source_index = 0; source_index <= length; source_index++) {
-		char character = copied_text[source_index];
+		legacy_s8 character = copied_text[source_index];
 
 		if (character != ']' && character != 0) {
 			line[destination_index++] = character;
@@ -5280,7 +5280,7 @@ void draw_button(char far* text, int x, int y, int width, int height,
 
 		line[destination_index] = 0;
 		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
-		horizontal_offset = (legacy_s16)((long)remaining / 2L);
+		horizontal_offset = (legacy_s16)((legacy_s32)remaining / 2L);
 		font_draw_text(line,
 			LEGACY_S16_WRAP_ADD(x, horizontal_offset),
 			LEGACY_S16_WRAP_ADD(
@@ -5291,8 +5291,8 @@ void draw_button(char far* text, int x, int y, int width, int height,
 	}
 }
 
-struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
-	int shadow_color)
+struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
+	legacy_s16 shadow_color)
 {
 	word_42248.left = LEGACY_S16_FROM_BITS((legacy_u16)x);
 	word_42248.right = LEGACY_S16_WRAP_ADD(
@@ -5310,15 +5310,15 @@ struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 }
 
 static void intro_draw_resource_line(
-	char far* resource,
-	char* resource_id,
-	int is_text,
-	int x,
-	int y,
-	int color,
-	int shadow_color
+	legacy_s8 far* resource,
+	legacy_s8* resource_id,
+	legacy_s16 is_text,
+	legacy_s16 x,
+	legacy_s16 y,
+	legacy_s16 color,
+	legacy_s16 shadow_color
 ) {
-	char far* text;
+	legacy_s8 far* text;
 
 	if (is_text != 0)
 		text = locate_text_res(resource, resource_id);
@@ -5328,9 +5328,9 @@ static void intro_draw_resource_line(
 	intro_draw_text(&resID_byte1, x, y, color, shadow_color);
 }
 
-signed char load_intro_resources(void)
+legacy_s8 load_intro_resources(void)
 {
-	char far* credit_resource;
+	legacy_s8 far* credit_resource;
 	struct SHAPE2D far* credit_shapes[11];
 	struct SHAPE2D far* arrow_shape;
 	legacy_s16 target_x;
@@ -5344,9 +5344,9 @@ signed char load_intro_resources(void)
 	legacy_s16 input;
 	legacy_u16 animation_index;
 
-	credit_resource = (char far*)file_load_resfile(aCred);
-	locate_many_resources((char far*)tempdataptr,
-		aArowarrwarw1ar, (char far**)credit_shapes);
+	credit_resource = (legacy_s8 far*)file_load_resfile(aCred);
+	locate_many_resources((legacy_s8 far*)tempdataptr,
+		aArowarrwarw1ar, (legacy_s8 far**)credit_shapes);
 	waitflag = 0x96;
 	sprite_copy_wnd_to_1_clear();
 	arrow_shape = credit_shapes[1];
@@ -5462,8 +5462,8 @@ signed char load_intro_resources(void)
 	return input_repeat_check(0x1F4) != 0;
 }
 
-struct RECTANGLE* hiscore_draw_text(char* text, int x, int y, int color,
-	int shadow_color)
+struct RECTANGLE* hiscore_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
+	legacy_s16 shadow_color)
 {
 	word_42250.left = LEGACY_S16_WRAP_SUB(x, 1);
 	word_42250.right = LEGACY_S16_WRAP_ADD(
@@ -5486,7 +5486,7 @@ struct RECTANGLE* hiscore_draw_text(char* text, int x, int y, int color,
 	return &word_42250;
 }
 
-void far* sub_29A86(int operation, const char* filename,
+void far* sub_29A86(legacy_s16 operation, const legacy_s8* filename,
 	void far* destination)
 {
 	void far* result;
@@ -5503,7 +5503,7 @@ void far* sub_29A86(int operation, const char* filename,
 	return 0;
 }
 
-int highscore_write_a(int create_default)
+legacy_s16 highscore_write_a(legacy_s16 create_default)
 {
 	legacy_u8 record[0x34];
 	legacy_u8 far* scores;
@@ -5565,7 +5565,7 @@ void highscore_write_b(void)
 	g_is_busy = 0;
 }
 
-void print_highscore_entry(int entry, legacy_u8* text_offsets)
+void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 {
 	legacy_u8 record[0x34];
 	legacy_u8 far* scores;
@@ -5574,8 +5574,8 @@ void print_highscore_entry(int entry, legacy_u8* text_offsets)
 	legacy_u16 output_offset;
 	legacy_s16 saved_frame_rate;
 	legacy_s16 frame_count;
-	char formatted_time[18];
-	char* output;
+	legacy_s8 formatted_time[18];
+	legacy_s8* output;
 
 	record_offset = LEGACY_U16_WRAP_MUL(
 		(legacy_u16)word_46170[entry], 0x34U);
@@ -5584,10 +5584,10 @@ void print_highscore_entry(int entry, legacy_u8* text_offsets)
 		record[copied] = scores[record_offset + copied];
 
 	text_offsets[0] = 0;
-	strcpy(&resID_byte1, (char*)record);
+	strcpy(&resID_byte1, (legacy_s8*)record);
 	output_offset = (legacy_u16)strlen(&resID_byte1) + 1U;
 	text_offsets[1] = (legacy_u8)output_offset;
-	strcpy(&resID_byte1 + output_offset, (char*)record + 17);
+	strcpy(&resID_byte1 + output_offset, (legacy_s8*)record + 17);
 	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
 		(legacy_u16)strlen(&resID_byte1 + output_offset) + 1U);
 	text_offsets[2] = (legacy_u8)output_offset;
@@ -5596,7 +5596,7 @@ void print_highscore_entry(int entry, legacy_u8* text_offsets)
 	*output = 0;
 	if (record[41] == 1)
 		strcat(output, "(");
-	strcat(output, (char*)record + 42);
+	strcat(output, (legacy_s8*)record + 42);
 	if (record[41] == 1)
 		strcat(output, ")");
 	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
@@ -5621,7 +5621,7 @@ void highscore_text_unk(void)
 	legacy_s16 row;
 	legacy_u16 entry;
 	legacy_s16 color;
-	char far* text;
+	legacy_s8 far* text;
 
 	sprite_copy_wnd_to_1();
 	copy_string(&resID_byte1, locate_text_res(mainresptr, "hs1"));
@@ -5663,10 +5663,10 @@ void highscore_text_unk(void)
 	font_set_fontdef();
 }
 
-void run_tracks_menu(int reload_track)
+void run_tracks_menu(legacy_s16 reload_track)
 {
-	char far* text_resource;
-	char far* prompt;
+	legacy_s8 far* text_resource;
+	legacy_s8 far* prompt;
 	legacy_u8 far* scores;
 	legacy_u8 text_offsets[4];
 	legacy_u8 selected;
@@ -5678,7 +5678,7 @@ void run_tracks_menu(int reload_track)
 	legacy_u16 score;
 	legacy_s16 hit;
 	legacy_s8 chosen;
-	int needs_track_setup;
+	legacy_s16 needs_track_setup;
 
 	ensure_file_exists(3);
 	needs_track_setup = reload_track != 0;
@@ -5698,7 +5698,7 @@ void run_tracks_menu(int reload_track)
 		show_waiting();
 		waitflag = 0x9B;
 		wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
-		load_skybox((char)td14_elem_map_main[0x384]);
+		load_skybox((legacy_s8)td14_elem_map_main[0x384]);
 		shape3d_load_all();
 		set_projection(0x28, 0x28, 0x140, 0xC8);
 		init_game_state(-2);
@@ -5743,7 +5743,7 @@ void run_tracks_menu(int reload_track)
 			}
 		}
 
-		text_resource = (char far*)file_load_resfile("tedit");
+		text_resource = (legacy_s8 far*)file_load_resfile("tedit");
 		draw_button(locate_text_res(text_resource, "bmt"),
 			0x11, 0xAC, 0x5E, 0x18, word_407F4, word_407F6,
 			word_407F8, 0);
@@ -5831,11 +5831,11 @@ void run_tracks_menu(int reload_track)
 
 void run_opponent_menu(void)
 {
-	static char* button_resource_ids[5] = {
+	static legacy_s8* button_resource_ids[5] = {
 		aBla, aBnx, aBcl, aBca, aBdo
 	};
-	char far* opponent_resource;
-	char far* description;
+	legacy_s8 far* opponent_resource;
+	legacy_s8 far* description;
 	struct SHAPE2D far* shape;
 	legacy_u8 selected;
 	legacy_u8 previous_selection;
@@ -5852,7 +5852,7 @@ void run_opponent_menu(void)
 
 	ensure_file_exists(4);
 	miscptr = file_load_resfile(aMisc);
-	opp_res = (char far*)file_load_resource(8, aSdosel);
+	opp_res = (legacy_s8 far*)file_load_resource(8, aSdosel);
 	locate_many_resources(opp_res, aOpp0opp1opp2op, oppresources);
 	selected = 0;
 	resource_loaded = 0;
@@ -5874,9 +5874,9 @@ opponent_menu_refresh:
 
 			ensure_file_exists(4);
 			if ((legacy_u8)gameconfig.game_opponenttype != 0) {
-				aOpp1[3] = (char)(
+				aOpp1[3] = (legacy_s8)(
 					(legacy_u8)gameconfig.game_opponenttype + '0');
-				opponent_resource = (char far*)file_load_resfile(aOpp1);
+				opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
 				resource_loaded = 1;
 			} else {
 				resource_loaded = 0;
@@ -5896,7 +5896,7 @@ opponent_menu_refresh:
 				opp_res, aScrn_0);
 			sub_34526(shape);
 			for (index = 0; index < 5U; index++) {
-				draw_button(locate_text_res((char far*)miscptr,
+				draw_button(locate_text_res((legacy_s8 far*)miscptr,
 					button_resource_ids[index]),
 					LEGACY_S16_WRAP_ADD(0x15,
 						LEGACY_U16_WRAP_MUL(index, 0x38U)),
@@ -5921,7 +5921,7 @@ opponent_menu_refresh:
 					opponent_resource, aDes_0);
 			else
 				description = locate_text_res(
-					(char far*)miscptr, aRac);
+					(legacy_s8 far*)miscptr, aRac);
 			font_set_fontdef2(fontnptr);
 			font_set_unk(0, dialog_fnt_colour);
 			line_length = 0;
@@ -5938,7 +5938,7 @@ opponent_menu_refresh:
 					line_y = LEGACY_S16_WRAP_ADD(
 						line_y, fontdef_unk_0E);
 				} else {
-					*(&resID_byte1 + line_length++) = (char)character;
+					*(&resID_byte1 + line_length++) = (legacy_s8)character;
 				}
 				if (*description == 0)
 					break;
@@ -5990,7 +5990,7 @@ opponent_menu_refresh:
 			goto opponent_menu_refresh;
 
 		if (selected == 0) {
-			gameconfig.game_opponenttype = (char)(
+			gameconfig.game_opponenttype = (legacy_s8)(
 				(legacy_u8)gameconfig.game_opponenttype - 1U);
 			if (LEGACY_S8_FROM_BITS(
 				(legacy_u8)gameconfig.game_opponenttype) < 1)
@@ -5998,7 +5998,7 @@ opponent_menu_refresh:
 			goto opponent_menu_refresh;
 		}
 		if (selected == 1) {
-			gameconfig.game_opponenttype = (char)(
+			gameconfig.game_opponenttype = (legacy_s8)(
 				(legacy_u8)gameconfig.game_opponenttype + 1U);
 			if ((legacy_u8)gameconfig.game_opponenttype == 7)
 				gameconfig.game_opponenttype = 1;
@@ -6029,12 +6029,12 @@ opponent_menu_refresh:
 				for (index = 0; index < 4U; index++)
 					gameconfig.game_opponentcarid[index] =
 						gameconfig.game_playercarid[index];
-				gameconfig.game_opponentmaterial = (char)(
+				gameconfig.game_opponentmaterial = (legacy_s8)(
 					(((legacy_u8)gameconfig.game_playermaterial & 1U) ^ 1U));
 				gameconfig.game_opponenttransmission = 0;
 			}
 		} else {
-			gameconfig.game_opponentcarid[0] = (char)0xFFU;
+			gameconfig.game_opponentcarid[0] = (legacy_s8)0xFFU;
 		}
 
 		sprite_free_wnd(wndsprite);
@@ -6047,10 +6047,10 @@ opponent_menu_refresh:
 	}
 }
 
-extern char gnam_string[];
-extern char gsna_string[];
-extern char unk_46464[];
-extern char byte_459E0[];
+extern legacy_s8 gnam_string[];
+extern legacy_s8 gsna_string[];
+extern legacy_s8 unk_46464[];
+extern legacy_s8 byte_459E0[];
 
 static legacy_u16 read_highscore_u16(legacy_u8 far* address)
 {
@@ -6058,7 +6058,7 @@ static legacy_u16 read_highscore_u16(legacy_u8 far* address)
 		((legacy_u16)address[1] << 8));
 }
 
-void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
+void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 {
 	legacy_u8 record[0x34];
 	legacy_u8 far* scores;
@@ -6095,14 +6095,14 @@ void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
 
 	for (copied = 0; copied < sizeof(record); copied++)
 		record[copied] = 0;
-	strcpy((char*)record + 17, gnam_string);
+	strcpy((legacy_s8*)record + 17, gnam_string);
 	record[41] = car_flag;
 	if (gameconfig.game_opponenttype != 0) {
-		strcpy((char*)record + 42, unk_46464);
+		strcpy((legacy_s8*)record + 42, unk_46464);
 		record[44] = '/';
-		strcpy((char*)record + 45, gsna_string);
+		strcpy((legacy_s8*)record + 45, gsna_string);
 	} else {
-		strcpy((char*)record + 42, " ");
+		strcpy((legacy_s8*)record + 42, " ");
 	}
 	LEGACY_WRITE_U16_LE(record + 50, time_bits);
 	for (copied = 0; copied < sizeof(record); copied++)
@@ -6116,7 +6116,7 @@ void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
 	check_input();
 	call_read_line(byte_459E0, 0x10, positions[0], positions[1],
 		0x7530UL);
-	strcpy((char*)record, byte_459E0);
+	strcpy((legacy_s8*)record, byte_459E0);
 	for (copied = 0; copied < sizeof(record); copied++)
 		scores[0x138U + copied] = record[copied];
 
@@ -6127,14 +6127,14 @@ void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
 	highscore_text_unk();
 }
 
-void security_check(int question_index)
+void security_check(legacy_s16 question_index)
 {
-	char question_id[4] = "q00";
-	char answer_id[4] = "a00";
-	char question_text[1024];
-	char answer[22];
+	legacy_s8 question_id[4] = "q00";
+	legacy_s8 answer_id[4] = "a00";
+	legacy_s8 question_text[1024];
+	legacy_s8 answer[22];
 	legacy_u8 question_parts[6];
-	int positions[8];
+	legacy_s16 positions[8];
 	void far* resource;
 	legacy_u16 answer_length;
 	legacy_u16 attempts;
@@ -6173,7 +6173,7 @@ void security_check(int question_index)
 			legacy_u8 character = (legacy_u8)answer[i];
 
 			if ((g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0)
-				answer[i] = (char)(character + 0x20U);
+				answer[i] = (legacy_s8)(character + 0x20U);
 		}
 		if (strcmp(answer, &resID_byte1) == 0) {
 			passed_security = 1;
@@ -6232,7 +6232,7 @@ void replay_unk(void)
 	byte_442EA[history_index] = 0;
 }
 
-void mouse_minmax_position(int inset)
+void mouse_minmax_position(legacy_s16 inset)
 {
 	if (inset != 0) {
 		mouse_set_minmax(0x0F, 0, 0x131, 0xC8);
@@ -6242,7 +6242,7 @@ void mouse_minmax_position(int inset)
 	}
 }
 
-static int font_measure(const char* text, legacy_u16 remaining, int bounded)
+static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, legacy_s16 bounded)
 {
 	legacy_u8 far* font_definition;
 	legacy_u16 glyph_offset;
@@ -6272,12 +6272,12 @@ static int font_measure(const char* text, legacy_u16 remaining, int bounded)
 	return LEGACY_S16_FROM_BITS(total_width);
 }
 
-int font_op(const char* text, int glyph_count)
+legacy_s16 font_op(const legacy_s8* text, legacy_s16 glyph_count)
 {
 	return font_measure(text, (legacy_u16)glyph_count, 1);
 }
 
-int font_op2(const char* text)
+legacy_s16 font_op2(const legacy_s8* text)
 {
 	return font_measure(text, 0, 0);
 }
@@ -6287,7 +6287,7 @@ static legacy_u32 secondary_timer_target(void)
 	return ((legacy_u32)word_3F1C4 << 16) | word_3F1C2;
 }
 
-static int secondary_timer_target_reached(
+static legacy_s16 secondary_timer_target_reached(
 	legacy_u32 current,
 	legacy_u32 target
 ) {
@@ -6295,7 +6295,7 @@ static int secondary_timer_target_reached(
 		(legacy_u16)current >= (legacy_u16)target;
 }
 
-unsigned long set_add_value(unsigned long ticks)
+legacy_u32 set_add_value(legacy_u32 ticks)
 {
 	legacy_u32 target;
 
@@ -6305,13 +6305,13 @@ unsigned long set_add_value(unsigned long ticks)
 	return target;
 }
 
-int sub_2EB07(void)
+legacy_s16 sub_2EB07(void)
 {
 	return secondary_timer_target_reached(
 		sub_2EAD4(), secondary_timer_target());
 }
 
-unsigned long sub_2EB1E(unsigned long ticks)
+legacy_u32 sub_2EB1E(legacy_u32 ticks)
 {
 	legacy_u32 current;
 	legacy_u32 target;
@@ -6325,7 +6325,7 @@ unsigned long sub_2EB1E(unsigned long ticks)
 
 void add_exit_handler(void (far* exit_handler)(void))
 {
-	int index;
+	legacy_s16 index;
 
 	for (index = 0; index < 10; index++) {
 		if (exitlistfuncs[index] == exit_handler)
@@ -6341,7 +6341,7 @@ void add_exit_handler(void (far* exit_handler)(void))
 
 void call_exitlist(void)
 {
-	int index;
+	legacy_s16 index;
 
 	for (index = 10; index >= 0; index--)
 		if (exitlistfuncs[index] != 0)
@@ -6354,16 +6354,16 @@ void call_exitlist2(void)
 	libsub_quit_to_dos_alt(0);
 }
 
-static void fatal_vprintf(const char* format, unsigned int argument_offset)
+static void fatal_vprintf(const legacy_s8* format, legacy_u16 argument_offset)
 {
-	int buffer_state;
+	legacy_s16 buffer_state;
 
 	buffer_state = __stbuf(stdout);
 	__output(stdout, format, (void*)argument_offset);
 	__ftbuf(buffer_state, stdout);
 }
 
-void fatal_error(const char* format, ...)
+void fatal_error(const legacy_s8* format, ...)
 {
 	va_list arguments;
 
@@ -6379,19 +6379,19 @@ void fatal_error(const char* format, ...)
 	_abort();
 }
 
-extern int read_line(int flags, char* text, int initial_key,
-	int max_characters, int max_pixels, int x, int y,
-	void (far* callback)(void), unsigned long timeout);
+extern legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key,
+	legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
+	void (far* callback)(void), legacy_u32 timeout);
 void read_line_helper(void);
 void read_line_helper2(void);
 
-int call_read_line(char* text, int max_characters, int x, int y,
-	unsigned long timeout)
+legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
+	legacy_u32 timeout)
 {
 	legacy_u16 length;
 	legacy_u16 trim_index;
 	legacy_u16 max_pixels;
-	int result;
+	legacy_s16 result;
 
 	mouse_draw_opaque_check();
 	max_pixels = LEGACY_U16_WRAP_ADD(
@@ -6408,10 +6408,10 @@ int call_read_line(char* text, int max_characters, int x, int y,
 	return result;
 }
 
-int sprite_blit_to_video(struct SPRITE far* sprite, int mode)
+legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 {
-	int result;
-	unsigned int phase;
+	legacy_s16 result;
+	legacy_u16 phase;
 
 	sprite_copy_2_to_1_2();
 	mouse_draw_opaque_check();
@@ -6423,7 +6423,7 @@ int sprite_blit_to_video(struct SPRITE far* sprite, int mode)
 
 	result = 0;
 	for (phase = 0; phase < 4U; ++phase) {
-		result = input_do_checking((int)timer_get_delta_alt());
+		result = input_do_checking((legacy_s16)timer_get_delta_alt());
 		if (result != 0)
 			break;
 		sprite_1_unk3(sprite->sprite_bitmapptr, phase);
@@ -6436,17 +6436,17 @@ int sprite_blit_to_video(struct SPRITE far* sprite, int mode)
 	return result;
 }
 
-int read_line(int flags, char* text, int initial_key, int max_characters,
-	int max_pixels, int x, int y, void (far* callback)(void),
-	unsigned long timeout)
+legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, legacy_s16 max_characters,
+	legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y, void (far* callback)(void),
+	legacy_u32 timeout)
 {
 	legacy_u8 input_flags;
 	legacy_u16 key;
 	legacy_u16 length;
 	legacy_u16 index;
 	legacy_u16 old_cursor_state;
-	int insert_mode;
-	int first_key;
+	legacy_s16 insert_mode;
+	legacy_s16 first_key;
 
 	input_flags = (legacy_u8)flags;
 	sprite_copy_2_to_1();
@@ -6619,7 +6619,7 @@ int read_line(int flags, char* text, int initial_key, int max_characters,
 					move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
 				}
 			}
-			text[index] = (char)(legacy_u8)key;
+			text[index] = (legacy_s8)(legacy_u8)key;
 			if (LEGACY_S16_FROM_BITS(max_characters) >
 				LEGACY_S16_FROM_BITS(word_42A22))
 				word_42A22 = LEGACY_U16_WRAP_ADD(word_42A22, 1U);
@@ -6632,7 +6632,7 @@ int read_line(int flags, char* text, int initial_key, int max_characters,
 
 void read_line_helper(void)
 {
-	static const char space[] = " ";
+	static const legacy_s8 space[] = " ";
 	legacy_u8 far* font_definition;
 	legacy_u16 length;
 	legacy_u16 cursor;
@@ -6704,10 +6704,10 @@ void read_line_helper2(void)
 			audioresource_get_word(font_definition + 2U)));
 }
 
-int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
-	const char* requested_name, const legacy_u8 far* chunk_names)
+legacy_s16 audioresource_get_chunk_index(legacy_s16 extra_name_stride, legacy_s16 chunk_count,
+	const legacy_s8* requested_name, const legacy_u8 far* chunk_names)
 {
-	const char far* requested_name_far;
+	const legacy_s8 far* requested_name_far;
 	const legacy_u8 far* candidate;
 	legacy_u16 names_offset;
 	legacy_u16 names_segment;
@@ -6717,7 +6717,7 @@ int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
 	count = LEGACY_S16_FROM_BITS(chunk_count);
 	if (count <= 0)
 		return -1;
-	requested_name_far = (const char far*)MK_FP(
+	requested_name_far = (const legacy_s8 far*)MK_FP(
 		FP_SEG(requested_name), FP_OFF(requested_name));
 	names_offset = (legacy_u16)FP_OFF(chunk_names);
 	names_segment = (legacy_u16)FP_SEG(chunk_names);
@@ -6726,7 +6726,7 @@ int audioresource_get_chunk_index(int extra_name_stride, int chunk_count,
 		candidate = (const legacy_u8 far*)MK_FP(
 			names_segment, names_offset);
 		if (audioresource_compare_chunknames(0,
-			(const char far*)candidate, requested_name_far, 4))
+			(const legacy_s8 far*)candidate, requested_name_far, 4))
 			return index;
 		names_offset = LEGACY_U16_WRAP_ADD(names_offset,
 			LEGACY_U16_WRAP_ADD(4U, extra_name_stride));
@@ -6749,7 +6749,7 @@ static void far* audio_far_pointer_add_normalized(void far* pointer,
 	return MK_FP(segment, new_offset);
 }
 
-void far* audioresource_find(void far* resource, const char* chunk_name)
+void far* audioresource_find(void far* resource, const legacy_s8* chunk_name)
 {
 	legacy_u8 far* bytes;
 	legacy_u8 far* offset_entry;
@@ -6759,7 +6759,7 @@ void far* audioresource_find(void far* resource, const char* chunk_name)
 	legacy_u16 table_offset;
 	legacy_u16 relative_offset;
 	legacy_u16 result_offset;
-	int chunk_index;
+	legacy_s16 chunk_index;
 
 	bytes = (legacy_u8 far*)resource;
 	resource_offset = (legacy_u16)FP_OFF(resource);
@@ -6789,12 +6789,12 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 {
 	legacy_u8 far* header;
 	void far* instrument;
-	char name[4];
+	legacy_s8 name[4];
 	legacy_u16 pointer_offset;
 	legacy_u16 pointer_segment;
-	unsigned int count;
-	unsigned int index;
-	unsigned int name_offset;
+	legacy_u16 count;
+	legacy_u16 index;
+	legacy_u16 name_offset;
 
 	header = (legacy_u8 far*)audioresource_find(song, "hdr1");
 	if (header == 0)
@@ -6841,9 +6841,9 @@ static void audio_patch_song_reference(legacy_u8 far* destination,
 {
 	const legacy_u8 far* names;
 	const legacy_u8 far* offset_entry;
-	char name[4];
+	legacy_s8 name[4];
 	legacy_u16 relative_offset;
-	int chunk_index;
+	legacy_s16 chunk_index;
 
 	name[0] = destination[0];
 	name[1] = destination[1];
@@ -7014,7 +7014,7 @@ void audio_map_song_tracks(void far* song)
 }
 
 void far* init_audio_resources(void far* song, void far* instruments,
-	const char* name)
+	const legacy_s8* name)
 {
 	legacy_u8 far* song_chunk;
 	legacy_u8 far* header;
@@ -7071,7 +7071,7 @@ void load_audio_finalize(void far* audio_resource)
 }
 
 void audioresource_copy_n_bytes(const legacy_u8 far* source,
-	legacy_u8 far* destination, int size)
+	legacy_u8 far* destination, legacy_s16 size)
 {
 	legacy_u16 source_offset;
 	legacy_u16 source_segment;
@@ -7097,40 +7097,40 @@ void audioresource_copy_n_bytes(const legacy_u8 far* source,
 	} while (remaining != 0);
 }
 
-void audio_op_unk3(int index)
+void audio_op_unk3(legacy_s16 index)
 {
 	audio_start_indexed_event(index, 0x44U, 0x40U);
 }
 
-void audio_op_unk4(int index)
+void audio_op_unk4(legacy_s16 index)
 {
 	audio_start_indexed_event(index, 0x48U, 0x40U);
 }
 
-void audio_function2_wrap(int index)
+void audio_function2_wrap(legacy_s16 index)
 {
 	audio_start_indexed_event(index, 0x38U, 0x64U);
 	audio_function2(index);
 }
 
-void nopsub_2726C(int index)
+void nopsub_2726C(legacy_s16 index)
 {
 	audio_start_indexed_event(index, 0x30U, 0x40U);
 	audio_function2(index);
 }
 
-void nopsub_272B0(int index)
+void nopsub_272B0(legacy_s16 index)
 {
 	audio_start_indexed_event(index, 0x34U, 0x40U);
 	audio_function2(index);
 }
 
-static void audio_start_secondary_event(int index,
-	unsigned int resource_field)
+static void audio_start_secondary_event(legacy_s16 index,
+	legacy_u16 resource_field)
 {
-	unsigned int offset;
-	unsigned int rate;
-	int channel;
+	legacy_u16 offset;
+	legacy_u16 rate;
+	legacy_s16 channel;
 	void far* resource;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
@@ -7147,12 +7147,12 @@ static void audio_start_secondary_event(int index,
 	audiotimers[offset + 0x1AU] = 1;
 }
 
-void audio_op_unk5(int index)
+void audio_op_unk5(legacy_s16 index)
 {
 	audio_start_secondary_event(index, 0x3CU);
 }
 
-void audio_op_unk6(int index)
+void audio_op_unk6(legacy_s16 index)
 {
 	audio_start_secondary_event(index, 0x40U);
 }
@@ -7174,7 +7174,7 @@ static void audio_carstate_write(legacy_u8* record, legacy_u16 offset,
 }
 
 static legacy_u8 audio_carstate_update_flags(struct CARSTATE* carstate,
-	int channel, legacy_u8 flags)
+	legacy_s16 channel, legacy_u8 flags)
 {
 	legacy_u8 desired;
 
@@ -7226,7 +7226,7 @@ void audio_carstate(void)
 	legacy_s16 car_count;
 	legacy_s16 car_index;
 	legacy_u8 flags;
-	int channel;
+	legacy_s16 channel;
 
 	if (is_in_replay != 0) {
 		if (byte_459D8 != 0) {
@@ -7348,9 +7348,9 @@ void audio_carstate(void)
 		}
 		flags = audio_carstate_update_flags(carstate, channel, flags);
 		if (car_index == 0)
-			byte_42D26 = (char)flags;
+			byte_42D26 = (legacy_s8)flags;
 		else
-			byte_42D2A = (char)flags;
+			byte_42D2A = (legacy_s8)flags;
 	}
 
 	byte_459D8 = 1;
@@ -7360,7 +7360,7 @@ void audio_carstate(void)
 	byte_3BE02 = (legacy_u8)is_in_replay;
 }
 
-void sub_374DE(int channel)
+void sub_374DE(legacy_s16 channel)
 {
 	if (channel > -1) {
 		byte_45D9A[channel] = 0;
@@ -7368,47 +7368,47 @@ void sub_374DE(int channel)
 	}
 }
 
-void sub_38156(int index)
+void sub_38156(legacy_s16 index)
 {
-	unsigned int offset;
+	legacy_u16 offset;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x2EU);
 	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0CU, 1);
 	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0EU, 0);
 }
 
-int sub_37868(int value)
+legacy_s16 sub_37868(legacy_s16 value)
 {
-	int channel;
+	legacy_s16 channel;
 
-	for (channel = 0; channel < (unsigned int)byte_44290; channel++)
+	for (channel = 0; channel < (legacy_u16)byte_44290; channel++)
 		audio_unk2(channel, value);
 
 	return channel;
 }
 
-int nopsub_37898(int value)
+legacy_s16 nopsub_37898(legacy_s16 value)
 {
-	byte_45950 = (unsigned char)value;
+	byte_45950 = (legacy_u8)value;
 	return sub_37868(value);
 }
 
-void sub_37C38(int value)
+void sub_37C38(legacy_s16 value)
 {
 	word_4063C = value;
 }
 
-unsigned int nopsub_378AE(int channel)
+legacy_u16 nopsub_378AE(legacy_s16 channel)
 {
-	return (unsigned int)byte_44D06[(unsigned int)channel];
+	return (legacy_u16)byte_44D06[(legacy_u16)channel];
 }
 
-unsigned int nopsub_378BC(int channel)
+legacy_u16 nopsub_378BC(legacy_s16 channel)
 {
-	return (unsigned int)byte_44ACA[(unsigned int)channel];
+	return (legacy_u16)byte_44ACA[(legacy_u16)channel];
 }
 
-void audio_unk3(unsigned char flags, int channel)
+void audio_unk3(legacy_u8 flags, legacy_s16 channel)
 {
 	if (byte_459D8 == 0)
 		return;
@@ -7421,7 +7421,7 @@ void audio_unk3(unsigned char flags, int channel)
 
 void load_sdgame2_shapes(void)
 {
-	int i;
+	legacy_s16 i;
 
 	sdgame2ptr = file_load_resource(8, "sdgame2");
 	locate_many_resources(
@@ -7433,21 +7433,21 @@ void load_sdgame2_shapes(void)
 			((struct SHAPE2D far*)sdgame2shapes[i])->s2d_width;
 }
 
-void load_skybox(char skybox_index)
+void load_skybox(legacy_s8 skybox_index)
 {
-	unsigned int minimum;
-	unsigned int maximum;
+	legacy_u16 minimum;
+	legacy_u16 maximum;
 
-	if (((unsigned char)skybox_index & 8U) == 0) {
+	if (((legacy_u8)skybox_index & 8U) == 0) {
 		if (byte_3B8F6 != 0 &&
-			(unsigned char)skybox_index == (unsigned char)byte_46167)
+			(legacy_u8)skybox_index == (legacy_u8)byte_46167)
 			return;
 
 		unload_skybox();
 		byte_46167 = skybox_index;
 		byte_3B8F6 = 1;
 		skybox_res_ofs = file_load_shape2d_fatal(
-			skybox_resource_names[(signed char)skybox_index]);
+			skybox_resource_names[(legacy_s8)skybox_index]);
 		locate_many_resources(
 			skybox_res_ofs,
 			"scensce2sce3sce4",
@@ -7487,9 +7487,9 @@ void load_skybox(char skybox_index)
 	meter_needle_color = dialog_fnt_colour;
 }
 
-void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, char transmission, long posX, long posY, long posZ, short track_angle)
+void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle)
 {
-	int i;
+	legacy_s16 i;
 	struct VECTOR whlPos;
 
 	playerstate->car_posWorld1.lx = posX;
@@ -7560,9 +7560,9 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd, ch
 	playerstate->field_CF = 1;
 }
 
-void init_game_state(short arg)
+void init_game_state(legacy_s16 arg)
 {
-	int i, tmpcol, tmprow;
+	legacy_s16 i, tmpcol, tmprow;
 
 	if (arg == -1) {
 		elapsed_time1 = 0;
@@ -7605,7 +7605,7 @@ void init_game_state(short arg)
 		state.game_vec1[0].x =
 			  multiply_and_scale(sin_fast(track_angle + 0x300),  512)
 			+ multiply_and_scale(sin_fast(track_angle + 0x200), 4096)
-			+ ((short)startcol2 << 10);
+			+ ((legacy_s16)startcol2 << 10);
 
 		state.game_vec1[0].y = hillHeightConsts[hillFlag] + 960;
 
@@ -7642,9 +7642,9 @@ void init_game_state(short arg)
 			&state.playerstate,
 			&simd_player,
 			gameconfig.game_playertransmission,
-			(long)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(long)hillHeightConsts[hillFlag] * 64L,
-			(long)(trackcenterpos[startrow2] + tmprow) * 64L,
+			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64L,
+			(legacy_s32)hillHeightConsts[hillFlag] * 64L,
+			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64L,
 			-track_angle);
 
 		state.field_2F2 = 0;
@@ -7681,9 +7681,9 @@ void init_game_state(short arg)
 			&state.opponentstate,
 			&simd_opponent,
 			1,
-			(long)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(long)hillHeightConsts[hillFlag] * 64L,
-			(long)(trackcenterpos[startrow2] + tmprow) * 64L,
+			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64L,
+			(legacy_s32)hillHeightConsts[hillFlag] * 64L,
+			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64L,
 			-track_angle);
 
 		if (gameconfig.game_opponenttype && arg != -2) {
@@ -7700,9 +7700,9 @@ void init_game_state(short arg)
 	}
 }
 
-void restore_gamestate(unsigned short frame)
+void restore_gamestate(legacy_u16 frame)
 {
-	unsigned short curframe;
+	legacy_u16 curframe;
 
 	if (frame == 0 && elapsed_time1 == 0) {
 		init_game_state(0);
@@ -7840,7 +7840,7 @@ void sub_2298C(void)
 			distance = (legacy_s16)polarRadius2D(
 				(legacy_s16)delta_x, (legacy_s16)delta_z);
 			if (distance < nearest_distance) {
-				state.field_3F7[car_index] = (char)candidate;
+				state.field_3F7[car_index] = (legacy_s8)candidate;
 				nearest_distance = distance;
 			}
 		}
@@ -7849,7 +7849,7 @@ void sub_2298C(void)
 
 
 void update_gamestate() {
-	char var_carInputByte;
+	legacy_s8 var_carInputByte;
 
 	var_carInputByte = td16_rpl_buffer[state.game_frame];
 	if (var_carInputByte != 0) {
@@ -7920,25 +7920,25 @@ void update_gamestate() {
 	}
 }
 
-extern char aCarcoun[];
+extern legacy_s8 aCarcoun[];
 extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
 extern void far* sdgameresptr;
 extern void far* wallptr;
 extern void far* planptr;
-extern char unk_3E7FC[];
-extern char unk_3E82C[];
-extern char gnam_string[]; // 40 bytes
-extern char gsna_string[]; // 5 bytes
-extern char aNam[];
-extern char aPath[];
-extern char aSped[];
-extern char unk_46464[];
+extern legacy_s8 unk_3E7FC[];
+extern legacy_s8 unk_3E82C[];
+extern legacy_s8 gnam_string[]; // 40 bytes
+extern legacy_s8 gsna_string[]; // 5 bytes
+extern legacy_s8 aNam[];
+extern legacy_s8 aPath[];
+extern legacy_s8 aSped[];
+extern legacy_s8 unk_46464[];
 extern legacy_u8 oppnentSped[];
 
-void setup_aero_trackdata(void far* carresptr, int is_opponent) {
-	int i;
+void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent) {
+	legacy_s16 i;
 	if (is_opponent == 0) {
 		fmemcpy(MK_FP(FP_SEG(&simd_player), FP_OFF(&simd_player)), locate_shape_alt(carresptr, "simd"), sizeof(struct SIMD));
 		simd_player.aerorestable = td04_aerotable_pl;
@@ -7946,7 +7946,7 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 		// Division by 2^9.
 		// 2^8 shifts one fullbyte, and it is known there is a 1/2 factor in FDrag.
 		for (i = 0; i < 0x40; i++) {
-			td04_aerotable_pl[i] = ((long)simd_player.aero_resistance * (long)i * (long)i) >> 9;
+			td04_aerotable_pl[i] = ((legacy_s32)simd_player.aero_resistance * (legacy_s32)i * (legacy_s32)i) >> 9;
 		}
 
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
@@ -7955,13 +7955,13 @@ void setup_aero_trackdata(void far* carresptr, int is_opponent) {
 		simd_opponent.aerorestable = td05_aerotable_op;
 
 		for (i = 0; i < 0x40; i++) {
-			td05_aerotable_op[i] = ((long)simd_opponent.aero_resistance * (long)i * (long)i) >> 9;
+			td05_aerotable_op[i] = ((legacy_s32)simd_opponent.aero_resistance * (legacy_s32)i * (legacy_s32)i) >> 9;
 		}
 		copy_string(gsna_string, locate_shape_alt(carresptr, "gsna"));
 	}
 }
 
-extern int audio_init_engine(int, void far*, void far*, void far*);
+extern legacy_s16 audio_init_engine(legacy_s16, void far*, void far*, void far*);
 
 void load_opponent_data(void)
 {
@@ -7981,16 +7981,16 @@ void load_opponent_data(void)
 	legacy_u16 pending_count;
 	legacy_u16 index;
 	legacy_u8 speed_index;
-	int terminal;
-	int reaches_finish;
+	legacy_s16 terminal;
+	legacy_s16 reaches_finish;
 
-	aOpp1[3] = (char)((legacy_u8)gameconfig.game_opponenttype + '0');
+	aOpp1[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
 	resource = file_load_resfile(aOpp1);
 	copy_string(unk_46464,
-		locate_text_res((char far*)resource, aNam));
-	(void)locate_shape_alt((char far*)resource, aPath);
+		locate_text_res((legacy_s8 far*)resource, aNam));
+	(void)locate_shape_alt((legacy_s8 far*)resource, aPath);
 	speed_data = (legacy_u8 far*)
-		locate_shape_alt((char far*)resource, aSped);
+		locate_shape_alt((legacy_s8 far*)resource, aSped);
 	for (index = 0; index < 16U; index++)
 		oppnentSped[index] = speed_data[index];
 
@@ -8054,9 +8054,9 @@ void load_opponent_data(void)
 	unload_resource(resource);
 }
 
-static int setup_player_cars_impl(int load_dashboard_shapes) {
+static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	void far* carresptr;
-	unsigned long var_8;
+	legacy_u32 var_8;
 
 	wndsprite = 0;
 	ensure_file_exists(2);
@@ -8140,11 +8140,11 @@ static int setup_player_cars_impl(int load_dashboard_shapes) {
 	return 0;
 }
 
-int setup_player_cars(void) {
+legacy_s16 setup_player_cars(void) {
 	return setup_player_cars_impl(1);
 }
 
-int setup_player_cars_repldump(void) {
+legacy_s16 setup_player_cars_repldump(void) {
 	return setup_player_cars_impl(0);
 }
 
@@ -8199,7 +8199,7 @@ static void dashboard_set_viewport(void)
 	sprite_set_1_size(0, 0x140, 0, height_above_replaybar);
 }
 
-void setup_car_shapes(int operation)
+void setup_car_shapes(legacy_s16 operation)
 {
 	struct SHAPE2D far* shape;
 	struct SHAPE2D far* dashboard_shape;
@@ -8226,15 +8226,15 @@ void setup_car_shapes(int operation)
 			aStdaxxxx[index + 4U] = gameconfig.game_playercarid[index];
 			aStdbxxxx[index + 4U] = gameconfig.game_playercarid[index];
 		}
-		stdaresptr = (char far*)file_load_resource(3, aStdaxxxx);
-		stdbresptr = (char far*)file_load_resource(2, aStdbxxxx);
+		stdaresptr = (legacy_s8 far*)file_load_resource(3, aStdaxxxx);
+		stdbresptr = (legacy_s8 far*)file_load_resource(2, aStdbxxxx);
 		locate_many_resources(stdaresptr, aWhl1whl2whl3ins2gboxins1i,
-			(char far**)whlshapes);
+			(legacy_s8 far**)whlshapes);
 		locate_many_resources(stdbresptr, aGnobgnabdotDotadot1dot2,
-			(char far**)gnobshapes);
+			(legacy_s8 far**)gnobshapes);
 		if (simd_player.spdcenter.py == 0) {
 			locate_many_resources(stdbresptr,
-				aDig0dig1dig2dig3dig4dig5d, (char far**)digshapes);
+				aDig0dig1dig2dig3dig4dig5d, (legacy_s8 far**)digshapes);
 		}
 
 		whlsprite1 = sprite_make_wnd(
@@ -8488,10 +8488,10 @@ void setup_car_shapes(int operation)
 	mouse_draw_transparent_check();
 }
 
-extern void update_car_speed(char input, int multiplayer,
+extern void update_car_speed(legacy_s8 input, legacy_s16 multiplayer,
 	struct CARSTATE* carstate, struct SIMD* simd);
 
-static void car_menu_draw_standard_button(char far* text,
+static void car_menu_draw_standard_button(legacy_s8 far* text,
 	legacy_u16 button_index)
 {
 	draw_button(text,
@@ -8500,15 +8500,15 @@ static void car_menu_draw_standard_button(char far* text,
 		0x56, 0x10, word_407F4, word_407F6, word_407F8, 0);
 }
 
-void run_car_menu(char* car_id, char* material, char* transmission,
-	unsigned int opponent_type)
+void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmission,
+	legacy_u16 opponent_type)
 {
-	char car_ids[32][5];
-	char swap_id[5];
-	const char* found_path;
-	char far* car_resource;
-	char far* description;
-	char far* transmission_text;
+	legacy_s8 car_ids[32][5];
+	legacy_s8 swap_id[5];
+	const legacy_s8* found_path;
+	legacy_s8 far* car_resource;
+	legacy_s8 far* description;
+	legacy_s8 far* transmission_text;
 	void far* selector_resource;
 	struct SHAPE2D far* opponent_shape;
 	struct SHAPE2D far* shape;
@@ -8636,7 +8636,7 @@ car_menu_top:
 			gameconfig.game_opponentcarid);
 		for (i = 0; i < 4U; i++)
 			aCarcoun[i + 3U] = car_ids[car_index][i];
-		car_resource = (char far*)file_load_resfile(aCarcoun);
+		car_resource = (legacy_s8 far*)file_load_resfile(aCarcoun);
 		setup_aero_trackdata(car_resource, 0);
 
 		sprite_copy_wnd_to_1_clear();
@@ -8680,10 +8680,10 @@ car_menu_top:
 			update_car_speed(1, 0, &state.playerstate, &simd_player);
 			speed = (legacy_u16)state.playerstate.car_speed >> 8;
 			graph_y = LEGACY_U16_WRAP_SUB(0xB5U,
-				(legacy_u16)(((unsigned long)speed << 6) / 0x96UL));
+				(legacy_u16)(((legacy_u32)speed << 6) / 0x96UL));
 			if (graph_y < 0x75U)
 				break;
-			graph_x = (legacy_u16)(((unsigned long)0x26U *
+			graph_x = (legacy_u16)(((legacy_u32)0x26U *
 				graph_step) / 0x320UL) + 0x1CU;
 			putpixel_single_maybe(graph_x, graph_y,
 				performGraphColor);
@@ -8708,7 +8708,7 @@ car_menu_top:
 				text_y = LEGACY_S16_WRAP_ADD(text_y,
 					fontdef_unk_0E);
 			} else {
-				(&resID_byte1)[line_length++] = (char)character;
+				(&resID_byte1)[line_length++] = (legacy_s8)character;
 			}
 		} while (*description != 0);
 		font_set_fontdef();
@@ -8854,7 +8854,7 @@ car_menu_input:
 			(legacy_u8)(car_count - 1U) : (legacy_u8)(car_index - 1U);
 		goto car_menu_top;
 	} else if (selected == 3) {
-		*transmission = (char)((legacy_u8)*transmission ^ 1U);
+		*transmission = (legacy_s8)((legacy_u8)*transmission ^ 1U);
 		sprite_copy_wnd_to_1();
 		transmission_text = locate_text_res(miscptr,
 			*transmission != 0 ? aBau_0 : aBma_0);
@@ -8865,7 +8865,7 @@ car_menu_input:
 		mouse_draw_transparent_check();
 		goto car_menu_top;
 	} else if (selected == 4) {
-		*material = (char)((legacy_u8)*material + 1U);
+		*material = (legacy_s8)((legacy_u8)*material + 1U);
 		render_phase = 3;
 		goto car_menu_top;
 	} else {
@@ -8879,19 +8879,19 @@ car_menu_input:
 		sprite_free_wnd(opponent_sprite);
 	if (opponent_type == 0)
 		unload_resource(miscptr);
-	mmgr_free((char far*)selector_resource);
+	mmgr_free((legacy_s8 far*)selector_resource);
 	mouse_draw_opaque_check();
 	for (i = 0; i < 4U; i++)
 		car_id[i] = car_ids[car_index][i];
 	idle_expired = 0;
 }
 
-static void end_hiscore_set_text(char far* resource, char* text_id)
+static void end_hiscore_set_text(legacy_s8 far* resource, legacy_s8* text_id)
 {
 	copy_string(&resID_byte1, locate_text_res(resource, text_id));
 }
 
-static void end_hiscore_append_text(char far* resource, char* text_id)
+static void end_hiscore_append_text(legacy_s8 far* resource, legacy_s8* text_id)
 {
 	copy_string(&resID_byte1 + strlen(&resID_byte1),
 		locate_text_res(resource, text_id));
@@ -8904,14 +8904,14 @@ static void end_hiscore_draw_current_text(legacy_s16* y)
 	*y = LEGACY_S16_WRAP_ADD(*y, 10);
 }
 
-static void end_hiscore_draw_animation_frame(char far* animation_resource,
+static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 	legacy_u8 far* frame_sequence, legacy_u8 frame_index,
 	legacy_s16 animation_x, legacy_s16 animation_y,
 	struct SPRITE far* animation_sprite, legacy_u8 draw_direct_copy)
 {
 	struct SHAPE2D far* frame_shape;
 
-	aOp01[3] = (char)(frame_sequence[frame_index] + '0');
+	aOp01[3] = (legacy_s8)(frame_sequence[frame_index] + '0');
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01);
 	mouse_draw_opaque_check();
@@ -8937,12 +8937,12 @@ static void end_hiscore_draw_animation_frame(char far* animation_resource,
 	mouse_draw_transparent_check();
 }
 
-static void end_hiscore_draw_opponent_text(char far* opponent_resource,
+static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	legacy_u8 outcome, legacy_u8 text_prefix, legacy_s16 animation_x)
 {
-	char word[32];
-	char text_id[4];
-	char far* text;
+	legacy_s8 word[32];
+	legacy_s8 text_id[4];
+	legacy_s8 far* text;
 	legacy_u8 character;
 	legacy_u16 resource_index;
 	legacy_u16 resource_count;
@@ -8965,15 +8965,15 @@ static void end_hiscore_draw_opponent_text(char far* opponent_resource,
 		if (outcome == 2) {
 			text = locate_text_res(opponent_resource, aD4a);
 		} else {
-			text_id[0] = (char)text_prefix;
-			text_id[1] = (char)('1' + resource_index);
+			text_id[0] = (legacy_s8)text_prefix;
+			text_id[1] = (legacy_s8)('1' + resource_index);
 			if (resource_index == 0)
 				selector = word_40D40;
 			else if (resource_index == 1)
 				selector = end_hiscore_random;
 			else
 				selector = word_40D44;
-			text_id[2] = (char)('a' + selector);
+			text_id[2] = (legacy_s8)('a' + selector);
 			text_id[3] = 0;
 			text = locate_text_res(opponent_resource, text_id);
 		}
@@ -8982,7 +8982,7 @@ static void end_hiscore_draw_opponent_text(char far* opponent_resource,
 		for (;;) {
 			character = (legacy_u8)*text++;
 			if (character != ' ' && character != 0) {
-				word[word_length++] = (char)character;
+				word[word_length++] = (legacy_s8)character;
 				continue;
 			}
 
@@ -9028,19 +9028,19 @@ static void end_hiscore_draw_opponent_text(char far* opponent_resource,
 	}
 }
 
-unsigned end_hiscore(void)
+legacy_u16 end_hiscore(void)
 {
-	char number[18];
-	char far* misc_resource;
-	char far* opponent_resource;
-	char far* animation_resource;
+	legacy_s8 number[18];
+	legacy_s8 far* misc_resource;
+	legacy_s8 far* opponent_resource;
+	legacy_s8 far* animation_resource;
 	legacy_u8 far* animation_sequence;
 	legacy_u8 far* track_resource;
 	legacy_u8 far* scores;
 	struct SPRITE far* animation_sprite;
 	struct SHAPE2D far* frame_shape;
-	int button_x1[4];
-	int button_x2[4];
+	legacy_s16 button_x1[4];
+	legacy_s16 button_x2[4];
 	legacy_s8 score_status;
 	legacy_u8 outcome;
 	legacy_u8 opponent_active;
@@ -9066,14 +9066,14 @@ unsigned end_hiscore(void)
 	legacy_s16 menu_offset;
 	legacy_s16 hit;
 	legacy_s16 random_value;
-	unsigned result;
+	legacy_u16 result;
 
 	ensure_file_exists(4);
-	misc_resource = (char far*)file_load_resfile(aMisc_2);
+	misc_resource = (legacy_s8 far*)file_load_resfile(aMisc_2);
 	opponent_resource = 0;
 	if (gameconfig.game_opponenttype != 0) {
-		aOpp1[3] = (char)((legacy_u8)gameconfig.game_opponenttype + '0');
-		opponent_resource = (char far*)file_load_resfile(aOpp1);
+		aOpp1[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
+		opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
 	}
 
 	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
@@ -9209,8 +9209,8 @@ unsigned end_hiscore(void)
 		}
 
 		if (outcome == 1) {
-			aOpp2win[3] = (char)(opponent_active + '0');
-			animation_resource = (char far*)file_load_resource(
+			aOpp2win[3] = (legacy_s8)(opponent_active + '0');
+			animation_resource = (legacy_s8 far*)file_load_resource(
 				3, aOpp2win);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
 				opponent_resource, aWinn);
@@ -9221,8 +9221,8 @@ unsigned end_hiscore(void)
 					end_hiscore_random, 2);
 			text_prefix = 'v';
 		} else {
-			aOpp2lose[3] = (char)(opponent_active + '0');
-			animation_resource = (char far*)file_load_resource(
+			aOpp2lose[3] = (legacy_s8)(opponent_active + '0');
+			animation_resource = (legacy_s8 far*)file_load_resource(
 				3, aOpp2lose);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
 				opponent_resource, aLose);
@@ -9251,7 +9251,7 @@ unsigned end_hiscore(void)
 				break;
 			}
 		}
-		mmgr_release((char far*)track_resource);
+		mmgr_release((legacy_s8 far*)track_resource);
 	} else {
 		score_status = -1;
 	}
@@ -9322,7 +9322,7 @@ end_hiscore_start:
 		LEGACY_S16_WRAP_ADD(animation_width, 5),
 		LEGACY_S16_WRAP_ADD(frame_shape->s2d_height, 5),
 		dialog_fnt_colour, 0, word_407D2);
-	aOp01[3] = (char)(animation_sequence[animation_frame] + '0');
+	aOp01[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
 	shape2d_op_unk5((struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01), animation_x, animation_y);
 	previous_animation_frame = animation_frame;
@@ -9508,7 +9508,7 @@ end_hiscore_menu_loop:
 	if (gameconfig.game_opponenttype != 0)
 		unload_resource(opponent_resource);
 	unload_resource(misc_resource);
-	return (unsigned)(selected - 1U);
+	return (legacy_u16)(selected - 1U);
 }
 
 extern legacy_u8 byte_3E9DB;
@@ -9517,20 +9517,20 @@ extern legacy_u8 byte_3E9E6[10];
 extern legacy_u8 byte_3E9F0[10];
 extern legacy_u8 byte_3E9FA[10];
 extern legacy_u8 game_camera_buttons_count[4];
-extern int game_camera_buttons_x1[9];
-extern int game_camera_buttons_x2[9];
-extern int game_camera_buttons_y1[9];
-extern int game_camera_buttons_y2[9];
-extern int word_3EA18;
-extern int word_3EA2A;
-extern int word_3EA3A;
-extern int word_3EA3C;
-extern int word_3EA4C;
-extern int word_3EA4E;
-extern int gameunk_button_x1;
-extern int gameunk_button_x2;
-extern int gameunk_button_y1;
-extern int gameunk_button_y2;
+extern legacy_s16 game_camera_buttons_x1[9];
+extern legacy_s16 game_camera_buttons_x2[9];
+extern legacy_s16 game_camera_buttons_y1[9];
+extern legacy_s16 game_camera_buttons_y2[9];
+extern legacy_s16 word_3EA18;
+extern legacy_s16 word_3EA2A;
+extern legacy_s16 word_3EA3A;
+extern legacy_s16 word_3EA3C;
+extern legacy_s16 word_3EA4C;
+extern legacy_s16 word_3EA4E;
+extern legacy_s16 gameunk_button_x1;
+extern legacy_s16 gameunk_button_x2;
+extern legacy_s16 gameunk_button_y1;
+extern legacy_s16 gameunk_button_y2;
 extern legacy_s16 custom_camera_distance;
 extern legacy_s16 custom_camera_azimuth_angle;
 extern legacy_s16 custom_camera_elevation_angle;
@@ -9545,16 +9545,16 @@ extern legacy_u8 byte_40E74[2];
 extern legacy_s16 word_40E76[2];
 extern legacy_u8 byte_40E7A[18];
 extern struct RECTANGLE* rectptr_unk2;
-extern int word_407FC;
-extern int word_407FE;
-extern char aRplyrpicrpacrpmcrptcbof6bof5b[];
-extern char aMen_0[];
-extern char aCon_0[];
-extern char aRep_1[];
-extern char a_rpl_2[];
-extern char aFex_0[];
-extern char aSer_0[];
-extern char aMdo[];
+extern legacy_s16 word_407FC;
+extern legacy_s16 word_407FE;
+extern legacy_s8 aRplyrpicrpacrpmcrptcbof6bof5b[];
+extern legacy_s8 aMen_0[];
+extern legacy_s8 aCon_0[];
+extern legacy_s8 aRep_1[];
+extern legacy_s8 a_rpl_2[];
+extern legacy_s8 aFex_0[];
+extern legacy_s8 aSer_0[];
+extern legacy_s8 aMdo[];
 
 static void replay_controls_select(legacy_u8 selection)
 {
@@ -9565,7 +9565,7 @@ static void replay_controls_select(legacy_u8 selection)
 	byte_40E6A[selection] = 1;
 }
 
-static void replay_controls_draw(int recorded_frame, int current_frame)
+static void replay_controls_draw(legacy_s16 recorded_frame, legacy_s16 current_frame)
 {
 	legacy_u16 player_index;
 	legacy_u16 index;
@@ -9711,8 +9711,8 @@ static void replay_pause_menu(void)
 	legacy_s8 save_status;
 	legacy_u16 index;
 	legacy_u8 saved_track;
-	int resources_changed;
-	int opponent_changed;
+	legacy_s16 resources_changed;
+	legacy_s16 opponent_changed;
 
 	is_in_replay = 1;
 	audio_carstate();
@@ -9879,7 +9879,7 @@ replay_pause_resume_driving:
 			replaybar_toggle ^= 1;
 			break;
 		case 2:
-			cameramode = (char)(((legacy_u8)cameramode + 1U) & 3U);
+			cameramode = (legacy_s8)(((legacy_u8)cameramode + 1U) & 3U);
 			break;
 		case 3:
 			show_graphic_levels_menu();
@@ -10020,7 +10020,7 @@ static void replay_rewind(void)
 	input_do_checking(1000);
 }
 
-void loop_game(int operation, int recorded_frame, int current_frame)
+void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 current_frame)
 {
 	legacy_u16 input;
 	legacy_s16 delta;
@@ -10033,9 +10033,9 @@ void loop_game(int operation, int recorded_frame, int current_frame)
 	legacy_u8 custom_camera;
 
 	if (operation == 0) {
-		locate_many_resources((char far*)sdgameresptr,
+		locate_many_resources((legacy_s8 far*)sdgameresptr,
 			aRplyrpicrpacrpmcrptcbof6bof5b,
-			(char far**)rplyshapes);
+			(legacy_s8 far**)rplyshapes);
 		replay_controls_select(4);
 		return;
 	}
@@ -10113,7 +10113,7 @@ replay_input_loop:
 		return;
 	}
 	if (replaybar_enabled == 0) {
-		is_in_replay_copy = (char)0xFF;
+		is_in_replay_copy = (legacy_s8)0xFF;
 		word_449EA = -1;
 	}
 	if (is_in_replay != 0 && (byte_40E6D != 0 || byte_40E6C != 0))
@@ -10271,11 +10271,11 @@ replay_redraw:
 }
 
 void run_game(void) {
-	int var_16[2];
-	int var_12, var_E, var_C;
+	legacy_s16 var_16[2];
+	legacy_s16 var_12, var_E, var_C;
 	struct RECTANGLE var_rect;
-	int var_2;
-	int regsi;
+	legacy_s16 var_2;
+	legacy_s16 regsi;
 
 	var_C = -1;
 	rect_windshield.left = 0;
@@ -10335,7 +10335,7 @@ void run_game(void) {
 				gameconfig.game_framespersec = framespersec2;
 				init_game_state(-1);
 				word_45D94 = 0;
-				*(char*)&word_45D3E = 0; // byte ptr!
+				*(legacy_s8*)&word_45D3E = 0; // byte ptr!
 				byte_4393C = 1;
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = 1;
@@ -10586,7 +10586,7 @@ void run_game(void) {
 		audio_remove_driver_timer();
 		if (game_replay_mode == 0 && gameconfig.game_opponenttype != 0 && state.opponentstate.car_crashBmpFlag == 0) {
 			show_dialog(3, 0, locate_text_res(gameresptr, "cop"), -1, 0x50, performGraphColor, &var_16, 0);
-			*(char*)&word_45D3E = 1;
+			*(legacy_s8*)&word_45D3E = 1;
 			regsi = framespersec;
 			regsi--;
 
@@ -10611,7 +10611,7 @@ void run_game(void) {
 			}
 		}
 
-		*(char*)&word_45D3E = 0; // byte ptr 
+		*(legacy_s8*)&word_45D3E = 0; // byte ptr 
 		mouse_minmax_position(0);
 		remove_frame_callback();
 		free_player_cars();
@@ -10649,7 +10649,7 @@ void init_div0(void)
 	*/
 }
 
-void copy_material_list_pointers(void* clrlist, void* clrlist2, void* patlist, void* patlist2, unsigned short videoConst)
+void copy_material_list_pointers(void* clrlist, void* clrlist2, void* patlist, void* patlist2, legacy_u16 videoConst)
 {
 	material_clrlist_ptr_cpy = clrlist;
 	material_clrlist2_ptr_cpy = clrlist2;
@@ -10658,11 +10658,11 @@ void copy_material_list_pointers(void* clrlist, void* clrlist2, void* patlist, v
 	someZeroVideoConst = videoConst;
 }
 
-void init_main(int argc, char* argv[])
+void init_main(legacy_s16 argc, legacy_s8* argv[])
 {
-	unsigned int i, j;
-	unsigned char argmode4, argnosound, argnounknown;
-	unsigned long timerdelta1, timerdelta2, timerdelta3;
+	legacy_u16 i, j;
+	legacy_u8 argmode4, argnosound, argnounknown;
+	legacy_u32 timerdelta1, timerdelta2, timerdelta3;
 	struct POINT2D tmppoint;
 	struct RECTANGLE tmprect;
 
@@ -10830,14 +10830,14 @@ void init_main(int argc, char* argv[])
 	copy_material_list_pointers(material_clrlist_ptr, material_clrlist2_ptr, material_patlist_ptr, material_patlist2_ptr, 0);
 }
 
-int stuntsmain2(int argc, char* argv[]) {
-	int result;
-	char far* textresptr;
-	int carposangle;
+legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
+	legacy_s16 result;
+	legacy_s8 far* textresptr;
+	legacy_s16 carposangle;
 	struct SPRITE far* var42wnd;
-	int counter;
-	int inch;
-	int shapeindex;
+	legacy_s16 counter;
+	legacy_s16 inch;
+	legacy_s16 shapeindex;
 
 	// initialization
 	init_main(argc, argv);
@@ -10960,13 +10960,13 @@ int stuntsmain2(int argc, char* argv[]) {
 	return 0;
 }
 
-int stuntsmainimpl(int argc, char* argv[]) {
+legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 
-	int i, result;
-	int regax, regsi;
-	char var_A;
-	char far* trkptr;
-	char far* textresptr;
+	legacy_s16 i, result;
+	legacy_s16 regax, regsi;
+	legacy_s8 var_A;
+	legacy_s8 far* trkptr;
+	legacy_s8 far* textresptr;
 	
 	//return ported_stuntsmain_(argc, argv);
 
