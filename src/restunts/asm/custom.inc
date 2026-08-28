@@ -251,6 +251,7 @@ extrn load_sfx_ge:proc
 extrn load_sfx_file:proc
 extrn load_song_file:proc
 extrn load_voice_file:proc
+extrn audio_map_song_instruments:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

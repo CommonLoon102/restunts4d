@@ -80,7 +80,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_load_voice_file_
     public nopsub_37D7A
     public ported_audio_init_chunk_
-    public audio_map_song_instruments
+    public ported_audio_map_song_instruments_
     public sub_3803C
     public ported_sub_38156_
     public sub_38178
@@ -145,7 +145,7 @@ loc_37123:
     push    word ptr [bp+var_titlptr]
 loc_3712C:
     push    cs
-    call near ptr audio_map_song_instruments
+    call near ptr ported_audio_map_song_instruments_
     add     sp, 8
 loc_37133:
     push    word ptr [bp+var_titlptr+2]
@@ -1852,7 +1852,7 @@ loc_37EBA:
     pop     bp
     retf
 ported_audio_init_chunk_ endp
-audio_map_song_instruments proc far
+ported_audio_map_song_instruments_ proc far
     var_22 = word ptr -34
     var_20 = word ptr -32
     var_1E = word ptr -30
@@ -1872,9 +1872,8 @@ audio_map_song_instruments proc far
     arg_songtitlptr = dword ptr 6
     arg_vceptr = dword ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 22h
+    jmp     audio_map_song_instruments
+    nop
     push    di
     push    si
     mov     [bp+var_6], 0
@@ -2011,7 +2010,7 @@ loc_38036:
     mov     sp, bp
     pop     bp
     retf
-audio_map_song_instruments endp
+ported_audio_map_song_instruments_ endp
 sub_3803C proc far
     var_22 = word ptr -34
     var_20 = word ptr -32

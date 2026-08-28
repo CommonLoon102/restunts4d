@@ -744,6 +744,13 @@ extern unsigned char byte_44D06[];
 extern unsigned char byte_44ACA[];
 extern unsigned char unk_45A26[];
 extern unsigned char audiotimers[];
+extern void far* basdres;
+extern void far* snarres;
+extern void far* tommres;
+extern void far* rideres;
+extern void far* crshres;
+extern void far* chhtres;
+extern void far* ohhtres;
 extern int word_43964;
 extern int word_4408C;
 extern unsigned int word_42240;
@@ -2608,6 +2615,46 @@ void far* audioresource_find(void far* resource, const char* chunk_name)
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, relative_offset);
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, 6U);
 	return MK_FP(resource_segment, result_offset);
+}
+
+void audio_map_song_instruments(void far* song, void far* instruments)
+{
+	legacy_u8 far* header;
+	void far* instrument;
+	char name[4];
+	legacy_u16 pointer_offset;
+	legacy_u16 pointer_segment;
+	unsigned int count;
+	unsigned int index;
+	unsigned int name_offset;
+
+	header = (legacy_u8 far*)audioresource_find(song, "hdr1");
+	if (header == 0)
+		return;
+
+	count = header[6];
+	for (index = 0; index < count; ++index) {
+		name_offset = 7U + index * 4U;
+		name[0] = header[name_offset];
+		name[1] = header[name_offset + 1U];
+		name[2] = header[name_offset + 2U];
+		name[3] = header[name_offset + 3U];
+		instrument = audioresource_find(instruments, name);
+		pointer_offset = (legacy_u16)FP_OFF(instrument);
+		pointer_segment = (legacy_u16)FP_SEG(instrument);
+		header[name_offset] = (legacy_u8)pointer_offset;
+		header[name_offset + 1U] = (legacy_u8)(pointer_offset >> 8);
+		header[name_offset + 2U] = (legacy_u8)pointer_segment;
+		header[name_offset + 3U] = (legacy_u8)(pointer_segment >> 8);
+	}
+
+	basdres = audioresource_find(instruments, "BASD");
+	snarres = audioresource_find(instruments, "SNAR");
+	tommres = audioresource_find(instruments, "TOMM");
+	rideres = audioresource_find(instruments, "RIDE");
+	crshres = audioresource_find(instruments, "CRSH");
+	chhtres = audioresource_find(instruments, "CHHT");
+	ohhtres = audioresource_find(instruments, "OHHT");
 }
 
 void far* init_audio_resources(void far* song, void far* instruments,
