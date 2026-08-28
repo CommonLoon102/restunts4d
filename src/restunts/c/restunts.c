@@ -344,6 +344,8 @@ extern legacy_s16 word_44D1E;
 extern legacy_s16 word_449E4;
 extern legacy_s16 word_443F4;
 extern legacy_u8 unk_44F4C[];
+extern legacy_s8 byte_3E85C[];
+extern legacy_s8 byte_40D6A;
 extern void far frame_callback(void);
 extern void replay_unk2(int mode);
 extern void timer_reg_callback(void (far* callback)(void));
@@ -1513,6 +1515,139 @@ void frame_callback(void)
 	}
 
 	byte_442E4--;
+}
+
+void replay_unk2(int mode)
+{
+	legacy_s16 input_flags;
+	legacy_s16 steering;
+	legacy_s16 snapshot_index;
+	legacy_u16 history_index;
+	legacy_u16 recording_chunk;
+	legacy_u16 recording_limit;
+	legacy_u16 elapsed_total;
+	legacy_u16 input_index;
+	legacy_s8 mapped_steering;
+
+	if (mode != 0) {
+		input_flags = 0;
+	} else if (game_replay_mode == 2) {
+		if (gameconfig.game_recordedframes > elapsed_time2) {
+			elapsed_time2++;
+			return;
+		}
+		if (byte_449DA != 0)
+			return;
+		is_in_replay = 1;
+		audio_carstate();
+		byte_449DA = 1;
+		return;
+	} else if (byte_449DA == 0 &&
+		state.game_3F6autoLoadEvalFlag == 0 &&
+		game_replay_mode != 1) {
+		if (passed_security == 0 && byte_4393C == 0 &&
+			(legacy_u16)state.game_frame >
+				LEGACY_U16_WRAP_MUL(framespersec, 4U))
+			update_crash_state(1, 0);
+
+		if (byte_3B8F2 != 0 || byte_3FE00 != 0) {
+			if (byte_3B8F2 != 0) {
+				mouse_get_state(
+					&mouse_butstate, &mouse_xpos, &mouse_ypos);
+				steering = LEGACY_S16_WRAP_SUB(mouse_xpos, 0xA0);
+				if (steering > -0x12 && steering < 0x12) {
+					steering = 0;
+				} else if (steering > 0) {
+					steering = LEGACY_S16_WRAP_SUB(steering, 0x12);
+				} else {
+					steering = LEGACY_S16_WRAP_ADD(steering, 0x12);
+				}
+				byte_40D6A = LEGACY_S8_FROM_BITS(steering);
+				if (((legacy_u16)mouse_butstate & 1U) != 0)
+					input_flags = 2;
+				else if (((legacy_u16)mouse_butstate & 2U) != 0)
+					input_flags = 1;
+				else
+					input_flags = 0;
+			} else {
+				mapped_steering = LEGACY_S8_FROM_BITS(sub_307E3());
+				byte_40D6A = mapped_steering;
+				if (mapped_steering > 0) {
+					byte_40D6A = byte_3E85C[
+						(legacy_u8)mapped_steering];
+				} else if (mapped_steering < 0) {
+					byte_40D6A = LEGACY_S8_FROM_BITS(
+						(legacy_u8)(0U - (legacy_u8)byte_3E85C[
+							(legacy_u8)(0U -
+								(legacy_u8)mapped_steering)]));
+				}
+				input_flags = (legacy_s16)
+					((legacy_u16)get_kb_or_joy_flags() & 0x33U);
+			}
+			history_index = (legacy_u16)elapsed_time2 & 0x3FU;
+			byte_44292[history_index] = (legacy_u8)byte_40D6A;
+			byte_442EA[history_index] = 1;
+		} else {
+			input_flags = get_kb_or_joy_flags();
+		}
+
+		if (kb_get_key_state(0x1E) != 0)
+			input_flags = (legacy_s16)
+				((legacy_u16)input_flags | 0x10U);
+		if (kb_get_key_state(0x2C) != 0)
+			input_flags = (legacy_s16)
+				((legacy_u16)input_flags | 0x20U);
+	} else {
+		input_flags = 0;
+	}
+
+	recording_limit = LEGACY_U16_WRAP_MUL(0x5DCU, framespersec);
+	elapsed_total = LEGACY_U16_WRAP_ADD(elapsed_time2, elapsed_time1);
+	if (recording_limit <= elapsed_total) {
+		update_crash_state(4, 0);
+		byte_449DA = 1;
+		return;
+	}
+
+	if (elapsed_time2 == 0x2EE0U) {
+		if (elapsed_time1 == 0 &&
+			*(legacy_u8*)&word_45D3E == 0) {
+			*(legacy_u8*)&word_45D3E = 1;
+			byte_46467 = 1;
+			return;
+		}
+
+		recording_chunk = LEGACY_U16_WRAP_MUL(0x1EU, framespersec);
+		for (snapshot_index = 0;
+			snapshot_index <
+				(legacy_s16)(0x2EE0 / recording_chunk) - 1;
+			snapshot_index++) {
+			cvxptr[snapshot_index + 1].game_frame =
+				LEGACY_S16_WRAP_SUB(
+					cvxptr[snapshot_index + 1].game_frame,
+					recording_chunk);
+			fmemcpy(&cvxptr[snapshot_index],
+				&cvxptr[snapshot_index + 1],
+				sizeof(struct GAMESTATE));
+		}
+		for (input_index = 0;
+			input_index < (legacy_u16)(0x2EE0U - recording_chunk);
+			input_index++)
+			td16_rpl_buffer[input_index] =
+				td16_rpl_buffer[input_index + recording_chunk];
+		elapsed_time2 = LEGACY_U16_WRAP_SUB(
+			elapsed_time2, recording_chunk);
+		gameconfig.game_recordedframes = LEGACY_U16_WRAP_SUB(
+			gameconfig.game_recordedframes, recording_chunk);
+		elapsed_time1 = LEGACY_U16_WRAP_ADD(
+			elapsed_time1, recording_chunk);
+		state.game_frame = LEGACY_S16_WRAP_SUB(
+			state.game_frame, recording_chunk);
+	}
+
+	td16_rpl_buffer[elapsed_time2] = (legacy_u8)input_flags;
+	elapsed_time2++;
+	gameconfig.game_recordedframes++;
 }
 
 void audio_driver_timer(void)

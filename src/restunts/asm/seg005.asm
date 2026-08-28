@@ -52,7 +52,7 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_set_frame_callback_
     public ported_remove_frame_callback_
     public ported_frame_callback_
-    public replay_unk2
+    public ported_replay_unk2_
     public ported_sub_2298C_
     public ported_file_load_replay_
     public ported_file_write_replay_
@@ -819,7 +819,7 @@ loc_22347:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr replay_unk2
+    call near ptr ported_replay_unk2_
     add     sp, 2
     call    update_gamestate
     inc     si
@@ -1173,7 +1173,7 @@ loc_22666:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr replay_unk2
+    call near ptr ported_replay_unk2_
     add     sp, 2
     mov     byte_4552F, 2
     jmp     short loc_22692
@@ -1183,13 +1183,13 @@ loc_2267E:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr replay_unk2
+    call near ptr ported_replay_unk2_
     add     sp, 2
 loc_22688:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr replay_unk2
+    call near ptr ported_replay_unk2_
     add     sp, 2
 loc_22692:
     dec     byte_442E4
@@ -1198,7 +1198,7 @@ locret_22696:
     ; align 2
     db 144
 ported_frame_callback_ endp
-replay_unk2 proc far
+ported_replay_unk2_ proc far
     var_A = word ptr -10
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -1206,9 +1206,8 @@ replay_unk2 proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     replay_unk2
+    nop
     push    di
     push    si
     cmp     [bp+arg_0], 0
@@ -1546,7 +1545,7 @@ loc_22985:
     retf
     ; align 2
     db 144
-replay_unk2 endp
+ported_replay_unk2_ endp
 ported_sub_2298C_ proc far
     var_34 = dword ptr -52
     var_30 = word ptr -48
