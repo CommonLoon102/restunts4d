@@ -61,7 +61,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_load_sdgame2_shapes_
     public ported_free_sdgame2_
     public setup_intro
-    public intro_op
+    public ported_intro_op_
 loc_19F12:
     pop     ds
 locret_19F13:
@@ -6685,7 +6685,7 @@ loc_1DCFC:
     push    [bp+var_3C]
     push    [bp+var_3E]
     push    cs
-    call near ptr intro_op
+    call near ptr ported_intro_op_
     add     sp, 20h
     cmp     video_flag5_is0, 0
     jz      short loc_1DD7E
@@ -6822,7 +6822,7 @@ loc_1DE8C:
     pop     bp
     retf
 setup_intro endp
-intro_op proc far
+ported_intro_op_ proc far
     var_42 = word ptr -66
     var_vec = VECTOR ptr -64
     var_point = POINT2D ptr -58
@@ -6849,9 +6849,8 @@ intro_op proc far
     arg_rectptr = word ptr 34
     arg_rectptr2 = word ptr 36
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 42h
+    jmp     intro_op
+    nop
     push    di
     push    si
     push    si
@@ -7173,6 +7172,6 @@ loc_1E19A:
     mov     sp, bp
     pop     bp
     retf
-intro_op endp
+ported_intro_op_ endp
 seg003 ends
 end

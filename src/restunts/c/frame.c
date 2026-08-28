@@ -16,6 +16,7 @@ extern int rect_array_unk3_indices[];
 extern char rect_array_unk3_length;
 extern struct RECTANGLE rect_unk[];
 extern struct RECTANGLE rect_unk2;
+extern struct RECTANGLE rect_unk3;
 extern struct RECTANGLE rect_unk6;
 extern struct RECTANGLE rect_unk9;
 extern struct RECTANGLE rect_unk11;
@@ -92,8 +93,14 @@ extern int skybox_sky_color;
 extern int skybox_grd_color;
 extern int skybox_wat_color;
 extern struct RECTANGLE rect_ingame_text;
+extern struct RECTANGLE intro_cliprect;
 extern struct SHAPE2D far* skyboxes[];
 extern int penalty_time;
+extern int intro_colorvalue;
+extern int word_407CC;
+extern struct SHAPE3D logoshape;
+extern struct SHAPE3D logo2shape;
+extern struct SHAPE3D bravshape;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 void transformed_shape_add_for_sort(int z_adjust, int type);
@@ -109,6 +116,11 @@ struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(int frame, int top, int height);
 struct RECTANGLE* do_sinking(int frame, int top, int height);
 struct RECTANGLE* intro_draw_text(char* str, int a, int b, int c, int d);
+void intro_op(int camera_x, int camera_y, int camera_z, int rotate_y,
+	int rotate_x, int draw_car, int primary_logo, struct VECTOR* stars,
+	struct POINT2D* previous_points, int* previous_point_count,
+	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
+	struct RECTANGLE* combined_rect);
 void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
 void format_frame_as_string(char* s, int time, int c);
@@ -450,6 +462,128 @@ struct RECTANGLE* draw_ingame_text(void)
 	}
 
 	return &rect_ingame_text;
+}
+
+static legacy_s16 intro_shift_position(legacy_s32 position,
+	legacy_s16 camera)
+{
+	legacy_u32 bits;
+
+	bits = (legacy_u32)position;
+	bits = (bits >> 6) |
+		((bits & 0x80000000UL) != 0 ? 0xFC000000UL : 0);
+	return LEGACY_S16_WRAP_SUB((legacy_u16)bits, camera);
+}
+
+void intro_op(int camera_x, int camera_y, int camera_z, int rotate_y,
+	int rotate_x, int draw_car, int primary_logo, struct VECTOR* stars,
+	struct POINT2D* previous_points, int* previous_point_count,
+	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
+	struct RECTANGLE* combined_rect)
+{
+	struct TRANSFORMEDSHAPE3D transformed;
+	struct VECTOR translated;
+	struct VECTOR projected;
+	struct POINT2D point;
+	struct RECTANGLE current_shape_rect;
+	struct RECTANGLE point_rect;
+	struct RECTANGLE redraw_rect;
+	legacy_u16 old_point_count;
+	legacy_u16 new_point_count;
+	legacy_u16 i;
+
+	current_shape_rect = cliprect_unk;
+	select_cliprect_rotate(0, rotate_x, rotate_y, &intro_cliprect, 0);
+	transformed.shapeptr = primary_logo != 0 ? &logoshape : &logo2shape;
+	transformed.pos.x = LEGACY_S16_WRAP_SUB(0x400, camera_x);
+	transformed.pos.y = LEGACY_S16_WRAP_NEGATE(camera_y);
+	transformed.pos.z = LEGACY_S16_WRAP_SUB(0x400, camera_z);
+	if (slow_video_mgmt_copy != 0) {
+		transformed.rectptr = &current_shape_rect;
+		transformed.ts_flags = 0x0C;
+	} else {
+		transformed.ts_flags = 4;
+	}
+	transformed.rotvec.x = 0;
+	transformed.rotvec.y = 0;
+	transformed.rotvec.z = 0;
+	transformed.unk = 0x400;
+	transformed.material = 0;
+	transformed_shape_op(&transformed);
+
+	if (draw_car != 0) {
+		transformed.pos.x = intro_shift_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.lx,
+			(legacy_s16)camera_x);
+		transformed.pos.y = intro_shift_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.ly,
+			(legacy_s16)camera_y);
+		transformed.pos.z = intro_shift_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.lz,
+			(legacy_s16)camera_z);
+		transformed.shapeptr = &bravshape;
+		if (slow_video_mgmt_copy != 0) {
+			transformed.rectptr = &current_shape_rect;
+			transformed.ts_flags = 0x0C;
+		} else {
+			transformed.ts_flags = 4;
+		}
+		transformed.rotvec.x = 0;
+		transformed.rotvec.y = 0;
+		transformed.rotvec.z = LEGACY_S16_WRAP_NEGATE(
+			state.opponentstate.car_rotate.x);
+		transformed.unk = 0x400;
+		transformed.material = 0;
+		transformed_shape_op(&transformed);
+	}
+
+	if (slow_video_mgmt_copy != 0) {
+		old_point_count = (legacy_u16)*previous_point_count;
+		for (i = 0; i < old_point_count; i++)
+			putpixel_single_maybe(previous_points[i].px,
+				previous_points[i].py, 0);
+		rect_union(shape_rect, &previous_rect, &redraw_rect);
+		if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
+			sprite_set_1_size(redraw_rect.left, redraw_rect.right,
+				redraw_rect.top, redraw_rect.bottom);
+			sprite_clear_1_color(0);
+		}
+		point_rect = current_shape_rect;
+	} else {
+		sprite_set_1_size(intro_cliprect.left, intro_cliprect.right,
+			intro_cliprect.top, intro_cliprect.bottom);
+		sprite_clear_1_color(0);
+	}
+
+	sprite_set_1_size(intro_cliprect.left, intro_cliprect.right,
+		intro_cliprect.top, intro_cliprect.bottom);
+	new_point_count = 0;
+	for (i = 0; i < 100U; i++) {
+		translated.x = LEGACY_S16_WRAP_SUB(stars[i].x, camera_x);
+		translated.y = LEGACY_S16_WRAP_SUB(stars[i].y, camera_y);
+		translated.z = LEGACY_S16_WRAP_SUB(stars[i].z, camera_z);
+		mat_mul_vector(&translated, &mat_temp, &projected);
+		if (projected.z <= 0xC8)
+			continue;
+		vector_to_point(&projected, &point);
+		putpixel_single_maybe(point.px, point.py, intro_colorvalue);
+		if (slow_video_mgmt_copy != 0) {
+			previous_points[new_point_count] = point;
+			new_point_count++;
+			rect_adjust_from_point(&point, &point_rect);
+		}
+		intro_colorvalue = LEGACY_S16_WRAP_ADD(intro_colorvalue, 1);
+		if (intro_colorvalue == word_407CC)
+			intro_colorvalue = 1;
+	}
+	if (slow_video_mgmt_copy != 0)
+		*previous_point_count = new_point_count;
+
+	get_a_poly_info();
+	if (slow_video_mgmt_copy != 0) {
+		*shape_rect = current_shape_rect;
+		*combined_rect = point_rect;
+	}
 }
 
 void init_rect_arrays(void) {
