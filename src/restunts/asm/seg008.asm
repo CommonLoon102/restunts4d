@@ -51,7 +51,7 @@ seg008 segment byte public 'STUNTSC' use16
     public show_dialog
     public do_fileselect_dialog
     public ported_file_build_path_
-    public do_savefile_dialog
+    public ported_do_savefile_dialog_
     public ported_parse_filepath_separators_
     public ported_input_checking_
     public ported_input_do_checking_
@@ -2046,7 +2046,7 @@ loc_28618:
     ; align 2
     db 144
 ported_file_build_path_ endp
-do_savefile_dialog proc far
+ported_do_savefile_dialog_ proc far
     var_12 = word ptr -18
     var_10 = word ptr -16
     var_E = word ptr -14
@@ -2060,9 +2060,8 @@ do_savefile_dialog proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 12h
+    jmp     do_savefile_dialog
+    nop
     push    di
     push    si
     sub     ax, ax
@@ -2194,7 +2193,7 @@ loc_28754:
     mov     sp, bp
     pop     bp
     retf
-do_savefile_dialog endp
+ported_do_savefile_dialog_ endp
 ported_parse_filepath_separators_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4

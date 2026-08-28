@@ -2238,7 +2238,7 @@ loc_2B774:
     push    ax
     mov     ax, offset byte_3B80C
     push    ax              ; char *
-    call    do_savefile_dialog
+    call    far ptr do_savefile_dialog
     add     sp, 8
     or      al, al
     jz      short loc_2B80D

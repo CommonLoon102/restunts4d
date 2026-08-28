@@ -2177,11 +2177,16 @@ extern char aMou[];
 extern char aPau[];
 extern char aSof[];
 extern char aSon[];
+extern char aSav[];
 extern char aWai[];
 extern char* findfilenames[];
 extern void audio_unk(void);
 extern void call_exitlist2(void);
 extern void sub_372F4(void);
+extern int word_3EB90;
+void font_set_unk(int color, int unknown);
+int call_read_line(char* text, int max_characters, int x, int y,
+	unsigned long timeout);
 
 void ensure_file_exists(int file_index)
 {
@@ -2289,6 +2294,52 @@ void do_dos_restext(void)
 	word_3F88E = 0;
 	sub_372F4();
 	input_pop_status();
+}
+
+int do_savefile_dialog(char* primary, char* secondary, char far* prompt)
+{
+	int positions[6];
+	int character_index;
+	legacy_s16 key;
+	legacy_s16 result;
+
+	result = LEGACY_S16_FROM_BITS(show_dialog(3, 1,
+		locate_text_res(mainresptr, aSav), -1, -1, dialogarg2,
+		positions, 0));
+	if (result < 0)
+		return 0;
+
+	font_set_unk(dialog_fnt_colour, word_3EB90);
+	copy_string(&resID_byte1, prompt);
+	sub_345BC(&resID_byte1, positions[0], positions[1]);
+	font_set_unk(dialog_fnt_colour, word_3EB90);
+	sub_345BC(primary, positions[2], positions[3]);
+	sub_345BC(secondary, positions[4], positions[5]);
+	mouse_draw_transparent_check();
+
+	result = 0;
+	for (;;) {
+		key = LEGACY_S16_FROM_BITS(call_read_line(secondary, 8,
+			positions[4], positions[5], 0x7530UL));
+		for (character_index = 0; secondary[character_index] != 0;
+			character_index++) {
+			if (secondary[character_index] == ' ')
+				secondary[character_index] = '_';
+		}
+		if (key == 0x1B)
+			break;
+		if (key == 0x0D) {
+			result = 1;
+			break;
+		}
+		key = LEGACY_S16_FROM_BITS(call_read_line(primary, 0x12,
+			positions[2], positions[3], 0x7530UL));
+		if (key == 0x1B)
+			break;
+	}
+
+	sub_275C6();
+	return result;
 }
 
 short do_dea_textres(void)

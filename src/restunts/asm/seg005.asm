@@ -4586,7 +4586,7 @@ loc_24642:
     push    ax
     mov     ax, 0EEh ; '�'
     push    ax              ; char *
-    call    do_savefile_dialog
+    call    far ptr do_savefile_dialog
     add     sp, 8
     or      al, al
     jnz     short loc_2466F
