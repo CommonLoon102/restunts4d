@@ -1,5 +1,5 @@
 seg012 segment byte public 'STUNTSC' use16
-    extrn fatal_error:proc
+    extrn ported_fatal_error_:proc
     extrn ported_polarAngle_:proc
     extrn off_2EA9B:word
     extrn sub_2EAD4:proc

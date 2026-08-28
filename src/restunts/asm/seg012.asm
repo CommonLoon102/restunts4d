@@ -46,7 +46,7 @@ nosmart
 seg012 segment byte public 'STUNTSC' use16
     assume cs:seg012
     assume es:nothing, ss:nothing, ds:dseg
-    public fatal_error
+    public ported_fatal_error_
     public ported_polarAngle_
     public off_2EA9B
     public sub_2EAD4
@@ -385,7 +385,7 @@ seg012 segment byte public 'STUNTSC' use16
 algn_2EA29:
     ; align 2
     db 144
-fatal_error proc near
+ported_fatal_error_ proc near
 
     pop     ax
     pop     ax
@@ -405,7 +405,7 @@ loc_2EA48:
     call    _abort
     ; align 2
     db 0
-fatal_error endp
+ported_fatal_error_ endp
 ported_polarAngle_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -2944,7 +2944,7 @@ loc_2FE34:
     loop    loc_2FE2B
     mov     ax, offset aExitListOverflow; "EXIT LIST OVERFLOW\r\n"
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_2FE48:
     mov     word ptr [bx+2], 0
     mov     [bx], ax
@@ -3059,7 +3059,7 @@ loc_2FECD:
     mov     ds, bx
     push    [bp+arg_filename]
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_2FEDD:
     mov     [bp+var_filehandle], ax
     mov     bx, ax
@@ -3231,7 +3231,7 @@ loc_2FFC4:
     push    [bp+arg_filename]
     push    ax
 loc_2FFCF:
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 ported_file_decomp_paras_fatal_ endp
 ported_file_find_ proc far
      s = byte ptr 0
@@ -3642,7 +3642,7 @@ loc_302B3:
     loop    loc_302B3
     mov     ax, offset aNoRoomLeftOnTimerInterru; "NO ROOM LEFT ON TIMER INTERRUPT ROUTINE"...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_302C7:
     mov     ax, [bp+arg_0]
     mov     [bx], ax
@@ -4796,7 +4796,7 @@ fatal:
     mov     ds, bx
     push    [bp+arg_filename]
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 ported_file_read_fatal_ endp
 ported_file_decomp_rle_ proc far
     var_lenlo = word ptr -26
@@ -5312,7 +5312,7 @@ loc_30F1F:
     push    [bp+arg_filename]
     mov     ax, offset aSInvalidPackTy; "%s INVALID PACK TYPE\r"
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 fd_done:
     mov     ax, [bp+var_decomp_paras]
     sub     ax, 4
@@ -5456,7 +5456,7 @@ loc_3100F:
     mov     ds, ax
     push    [bp+arg_4]
     push    dx
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
     int     20h             ; DOS - PROGRAM TERMINATION
 loc_3101F:
     xor     ax, ax
@@ -5839,7 +5839,7 @@ loc_312B6:
     push    [bp+arg_0]
     mov     ax, offset aReservememoryO; "reservememory - OUT OF MEMORY SLOTS RES"...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_312C2:
     mov     si, resendptr1
     mov     di, resptr2
@@ -5861,7 +5861,7 @@ loc_312E9:
     push    [bp+arg_0]
     mov     ax, offset aReservememoryOutOfMemory; "reservememory - OUT OF MEMORY RESERVING"...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 ported_mmgr_alloc_pages_ endp
 ported_mmgr_find_free_ proc far
      r = byte ptr 0
@@ -6080,7 +6080,7 @@ loc_31498:
     push    [bp+arg_2]
     mov     ax, offset aMemoryManagerB; "memory manager - BLOCK NOT FOUND at SEG"...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_314A4:
     mov     [bp+arg_2], 0
     mov     [si+MEMCHUNK.resunk], 0
@@ -6372,7 +6372,7 @@ loc_316EE:
 loc_316F4:
     mov     ax, offset aResizememoryCa; "resizememory - CANNOT EXPAND BLOCK NOT "...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_316FD:
     mov     si, resendptr1
     mov     di, resptr2
@@ -6392,7 +6392,7 @@ loc_31724:
     push    bx
     mov     ax, offset aResizememoryNo; "resizememory - NO MEMORY LEFT TO EXPAND"...
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 ported_mmgr_resize_memory_ endp
 ported_mmgr_op_unk_ proc far
      s = byte ptr 0
@@ -8297,7 +8297,7 @@ loc_324EC:
     mov     ds, ax
     lea     ax, aWindowReleased; "Window Released Out of Order\r\n"
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 ported_sprite_free_wnd_ endp
 ported_file_write_nofatal_ proc far
     var_fatal = word ptr -4
@@ -8386,7 +8386,7 @@ loc_32570:
     mov     ax, offset aSFileError_0; "%s FILE ERROR\r"
     push    [bp+arg_filename]
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
 loc_3259E:
     mov     bx, [bp+var_filehandle]
     mov     ah, 3Eh
@@ -14160,7 +14160,7 @@ loc_34CD6:
     mov     ds, ax
     mov     ax, offset aWindowdefOutOfRowTableSpa; "windowdef - OUT OF ROW TABLE SPACE\r"
     push    ax
-    call    far ptr fatal_error
+    call    far ptr ported_fatal_error_
     ; align 2
     db 144
 next_wnd_def     dw offset wnd_defs

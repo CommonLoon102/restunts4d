@@ -504,4 +504,4 @@ extrn set_default_car:proc
 extrn init_main:proc
 extrn stuntsmain:proc
 
-;extrn fatal_error:proc
+extrn fatal_error:proc

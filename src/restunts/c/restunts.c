@@ -1,5 +1,7 @@
 #include <dos.h>
 #include <stddef.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include "restunts.h"
 #include "fileio.h"
 #include "keyboard.h"
@@ -8,6 +10,11 @@
 #include "memmgr.h"
 #include "shape2d.h"
 #include "shape3d.h"
+
+extern int __stbuf(FILE* stream);
+extern void __ftbuf(int buffer_state, FILE* stream);
+extern int __output(FILE* stream, const char* format, void* arguments);
+extern void _abort(void);
 
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
@@ -6254,6 +6261,31 @@ void call_exitlist2(void)
 {
 	call_exitlist();
 	libsub_quit_to_dos_alt(0);
+}
+
+static void fatal_vprintf(const char* format, unsigned int argument_offset)
+{
+	int buffer_state;
+
+	buffer_state = __stbuf(stdout);
+	__output(stdout, format, (void*)argument_offset);
+	__ftbuf(buffer_state, stdout);
+}
+
+void fatal_error(const char* format, ...)
+{
+	va_list arguments;
+
+	sprite_copy_2_to_1();
+	va_start(arguments, format);
+	fatal_vprintf(format, FP_OFF(arguments));
+	va_end(arguments);
+	flush_stdin();
+	call_exitlist();
+	va_start(arguments, format);
+	fatal_vprintf(format, FP_OFF(arguments));
+	va_end(arguments);
+	_abort();
 }
 
 extern int read_line(int flags, char* text, int initial_key,

@@ -754,6 +754,7 @@ dseg segment byte public 'STUNTSD' use16
     public word_3EE24
     public dword_3EE26
     public word_3EE3E
+    public _streams
     public word_3EF58
     public aNull
     public aNull_0
@@ -15047,6 +15048,7 @@ dword_3EE26     dd 0
     db 2
     db 255
 word_3EE3E     dw 0
+_streams label byte
     db 118
     db 147
     db 0
