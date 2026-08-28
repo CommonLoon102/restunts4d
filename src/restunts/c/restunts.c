@@ -1822,18 +1822,16 @@ void far* sub_29A86(int operation, const char* filename,
 	return 0;
 }
 
-int font_op(const char* text, int glyph_count)
+static int font_measure(const char* text, legacy_u16 remaining, int bounded)
 {
 	legacy_u8 far* font_definition;
 	legacy_u16 glyph_offset;
 	legacy_u16 glyph_width;
-	legacy_u16 remaining;
 	legacy_u16 total_width;
 	legacy_u8 character;
 	legacy_u8 has_glyph_widths;
 
-	remaining = (legacy_u16)glyph_count;
-	if (remaining == 0)
+	if (bounded != 0 && remaining == 0)
 		return 0;
 	font_definition = word_405FE;
 	has_glyph_widths = font_definition[0x14U];
@@ -1852,6 +1850,16 @@ int font_op(const char* text, int glyph_count)
 			break;
 	}
 	return LEGACY_S16_FROM_BITS(total_width);
+}
+
+int font_op(const char* text, int glyph_count)
+{
+	return font_measure(text, (legacy_u16)glyph_count, 1);
+}
+
+int font_op2(const char* text)
+{
+	return font_measure(text, 0, 0);
 }
 
 void read_line_helper(void)

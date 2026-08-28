@@ -265,7 +265,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_timer_compare_dx_
     public ported_timer_get_counter_unk_
     public ported_font_op_
-    public font_op2
+    public ported_font_op2_
     public loc_3284A
     public loc_32882
     public ported_preRender_patterned_
@@ -8864,15 +8864,12 @@ ported_font_op_ proc far
     jmp     short loc_32882
     db 144
 ported_font_op_ endp
-font_op2 proc far
+ported_font_op2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     font_op2
     xor     dx, dx
 loc_3284A:
     mov     es, fontdefseg
@@ -8905,7 +8902,7 @@ loc_32882:
     pop     si
     pop     bp
     retf
-font_op2 endp
+ported_font_op2_ endp
 ported_preRender_patterned_ proc far
     var_A = byte ptr -10
      s = byte ptr 0
