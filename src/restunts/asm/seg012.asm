@@ -293,9 +293,9 @@ seg012 segment byte public 'STUNTSC' use16
     public draw_unknown_lines
     public putpixel_line1_maybe
     public off_3340A
-    public sprite_1_unk2
+    public ported_sprite_1_unk2_
     public loc_335CF
-    public sprite_1_unk
+    public ported_sprite_1_unk_
     public loc_335D7
     public loc_33622
     public byte_33646
@@ -10813,7 +10813,7 @@ loc_33558:
     pop     bp
     retf
 putpixel_line1_maybe endp
-sprite_1_unk2 proc far
+ported_sprite_1_unk2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_2 = word ptr 6
@@ -10821,10 +10821,7 @@ sprite_1_unk2 proc far
     arg_6 = word ptr 10
     arg_8 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     sprite_1_unk2
     mov     dx, cs:sprite1.sprite_left
     mov     ax, dx
     sub     ax, [bp+arg_2]
@@ -10861,8 +10858,8 @@ loc_335CF:
     jmp     short loc_33622
     ; align 2
     db 144
-sprite_1_unk2 endp
-sprite_1_unk proc far
+ported_sprite_1_unk2_ endp
+ported_sprite_1_unk_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -10871,10 +10868,7 @@ sprite_1_unk proc far
     arg_6 = word ptr 12
     arg_8 = byte ptr 14
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     sprite_1_unk
 loc_335D7:
     cld
     cmp     [bp+arg_4], 0
@@ -10966,7 +10960,7 @@ byte_33656     db 3
     jmp     short loc_33697
     ; align 2
     db 144
-sprite_1_unk endp
+ported_sprite_1_unk_ endp
 sprite_1_unk3 proc far
     var_16 = word ptr -22
     var_14 = word ptr -20

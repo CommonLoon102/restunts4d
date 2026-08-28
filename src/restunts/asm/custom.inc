@@ -317,6 +317,8 @@ extrn call_exitlist:proc
 extrn call_exitlist2:proc
 extrn font_set_unk:proc
 extrn sprite_set_1_size:proc
+extrn sprite_1_unk2:proc
+extrn sprite_1_unk:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

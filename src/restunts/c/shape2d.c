@@ -10,6 +10,7 @@
 #include "externs.h"
 #include "memmgr.h"
 #include "fileio.h"
+#include "legacy.h"
 #include "shape2d.h"
 
 extern char aWindowdefOutOfRowTableSpa[];
@@ -36,6 +37,79 @@ void sprite_set_1_size(unsigned short left, unsigned short right,
 	sprite1.sprite_right = right;
 	sprite1.sprite_top = top;
 	sprite1.sprite_height = height;
+}
+
+void sprite_1_unk(int x, int y, int width, int height, int color)
+{
+	legacy_u8 far* bitmap;
+	legacy_u16 far* line_offsets;
+	legacy_u16 offset;
+	legacy_u16 row;
+	legacy_u16 column;
+	legacy_u16 row_count;
+	legacy_u16 column_count;
+
+	if (LEGACY_S16_FROM_BITS(width) <= 0 ||
+		LEGACY_S16_FROM_BITS(height) <= 0)
+		return;
+	bitmap = (legacy_u8 far*)sprite1.sprite_bitmapptr;
+	line_offsets = (legacy_u16 far*)MK_FP(
+		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
+	offset = LEGACY_U16_WRAP_ADD(
+		line_offsets[(legacy_u16)y], (legacy_u16)x);
+	row_count = (legacy_u16)height;
+	column_count = (legacy_u16)width;
+	for (row = 0; row < row_count; row++) {
+		for (column = 0; column < column_count; column++)
+			bitmap[LEGACY_U16_WRAP_ADD(offset, column)] =
+				(legacy_u8)color;
+		offset = LEGACY_U16_WRAP_ADD(offset, sprite1.sprite_pitch);
+	}
+}
+
+void sprite_1_unk2(int x, int y, int width, int height, int color)
+{
+	legacy_s16 clipped_x;
+	legacy_s16 clipped_y;
+	legacy_s16 clipped_width;
+	legacy_s16 clipped_height;
+	legacy_s16 difference;
+
+	clipped_x = LEGACY_S16_FROM_BITS(x);
+	clipped_y = LEGACY_S16_FROM_BITS(y);
+	clipped_width = LEGACY_S16_FROM_BITS(width);
+	clipped_height = LEGACY_S16_FROM_BITS(height);
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_left, clipped_x);
+	if (difference > 0) {
+		clipped_x = LEGACY_S16_FROM_BITS(sprite1.sprite_left);
+		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
+		if (clipped_width <= 0)
+			return;
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(clipped_x, clipped_width),
+		sprite1.sprite_right);
+	if (difference > 0) {
+		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
+		if (clipped_width <= 0)
+			return;
+	}
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, clipped_y);
+	if (difference > 0) {
+		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
+		if (clipped_height <= 0)
+			return;
+		clipped_y = LEGACY_S16_FROM_BITS(sprite1.sprite_top);
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(clipped_y, clipped_height),
+		sprite1.sprite_height);
+	if (difference > 0) {
+		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
+		if (clipped_height <= 0)
+			return;
+	}
+	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
 }
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {
