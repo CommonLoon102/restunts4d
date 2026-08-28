@@ -4482,7 +4482,7 @@ loc_170BE:
     push    cs
     call near ptr opponent_op
 loc_170DC:
-    call    sub_2298C
+    call far ptr sub_2298C
     cmp     state.field_42A, 0
     jz      short loc_170EC
     push    cs

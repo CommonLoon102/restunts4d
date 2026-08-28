@@ -4274,6 +4274,118 @@ void restore_gamestate(unsigned short frame)
 	elapsed_time2 = state.game_frame;
 }
 
+extern legacy_u8 byte_4616E;
+
+void sub_2298C(void)
+{
+	struct VECTOR* previous_position;
+	struct CARSTATE* carstate;
+	struct VECTOR target;
+	legacy_s16 car_x;
+	legacy_s16 car_y;
+	legacy_s16 car_z;
+	legacy_s16 target_y;
+	legacy_s16 delta_y;
+	legacy_s16 angle;
+	legacy_s16 distance;
+	legacy_s16 adjustment;
+	legacy_s16 nearest_distance;
+	legacy_s32 delta_x;
+	legacy_s32 delta_z;
+	legacy_s32 absolute_x;
+	legacy_s32 absolute_z;
+	legacy_u16 car_index;
+	legacy_u16 car_count;
+	legacy_u16 divisor;
+	legacy_u8 candidate;
+
+	car_count = gameconfig.game_opponenttype == 0 ? 1U : 2U;
+	for (car_index = 0; car_index < car_count; car_index++) {
+		previous_position = car_index == 0 ?
+			&state.game_vec3 : &state.game_vec4;
+		*previous_position = state.game_vec1[car_index];
+		carstate = car_index == 0 ?
+			&state.playerstate : &state.opponentstate;
+		car_x = (legacy_s16)(carstate->car_posWorld1.lx >> 6);
+		car_y = (legacy_s16)(carstate->car_posWorld1.ly >> 6);
+		car_z = (legacy_s16)(carstate->car_posWorld1.lz >> 6);
+		target = carstate->car_vec_unk3;
+		if ((car_index == 0 &&
+			(state.field_45B != 0 || state.field_45C != 0)) ||
+			carstate->field_B6 != 0 ||
+			carstate->car_crashBmpFlag != 0 ||
+			carstate->car_trackdata3_index == -1 ||
+			(carstate->field_48 > 0x80 &&
+			carstate->field_48 < 0x380)) {
+			target.x = car_x;
+			target.y = car_y;
+			target.z = car_z;
+		}
+
+		target_y = LEGACY_S16_WRAP_ADD(car_y, 0x10E);
+		delta_y = LEGACY_S16_WRAP_SUB(
+			state.game_vec1[car_index].y, target_y);
+		if (delta_y != 0) {
+			if (delta_y > 0x1E)
+				delta_y = 0x1E;
+			else if (delta_y < -0x1E)
+				delta_y = -0x1E;
+			state.game_vec1[car_index].y = LEGACY_S16_WRAP_SUB(
+				state.game_vec1[car_index].y, delta_y);
+		}
+
+		angle = (legacy_s16)polarAngle(
+			LEGACY_S16_WRAP_SUB(target.x, state.game_vec1[car_index].x),
+			LEGACY_S16_WRAP_SUB(target.z, state.game_vec1[car_index].z));
+		distance = (legacy_s16)polarRadius2D(
+			LEGACY_S16_WRAP_SUB(car_x, state.game_vec1[car_index].x),
+			LEGACY_S16_WRAP_SUB(car_z, state.game_vec1[car_index].z));
+		if (distance > 0x1C2) {
+			adjustment = LEGACY_S16_WRAP_SUB(distance, 0x1C2);
+			if (framespersec == 0x14) {
+				if (adjustment > 0x78)
+					adjustment = 0x78;
+			} else if (adjustment > 0xF0) {
+				adjustment = 0xF0;
+			}
+			state.game_vec1[car_index].x = LEGACY_S16_WRAP_ADD(
+				state.game_vec1[car_index].x,
+				multiply_and_scale(adjustment,
+					sin_fast((legacy_u16)angle)));
+			state.game_vec1[car_index].z = LEGACY_S16_WRAP_ADD(
+				state.game_vec1[car_index].z,
+				multiply_and_scale(adjustment,
+					cos_fast((legacy_u16)angle)));
+		}
+
+		divisor = (legacy_u16)framespersec >> 1;
+		if ((legacy_u16)state.game_frame % divisor != 0)
+			continue;
+		nearest_distance = 0x2710;
+		for (candidate = 0;
+			LEGACY_S8_FROM_BITS(candidate) <
+				LEGACY_S8_FROM_BITS(byte_4616E);
+			candidate++) {
+			delta_x = (legacy_s32)(legacy_s16)
+				trackdata9[candidate * 3U] - (legacy_s32)car_x;
+			delta_z = (legacy_s32)(legacy_s16)
+				trackdata9[candidate * 3U + 2U] - (legacy_s32)car_z;
+			absolute_x = delta_x < 0 ? -delta_x : delta_x;
+			if (absolute_x >= nearest_distance)
+				continue;
+			absolute_z = delta_z < 0 ? -delta_z : delta_z;
+			if (absolute_z >= nearest_distance)
+				continue;
+			distance = (legacy_s16)polarRadius2D(
+				(legacy_s16)delta_x, (legacy_s16)delta_z);
+			if (distance < nearest_distance) {
+				state.field_3F7[car_index] = (char)candidate;
+				nearest_distance = distance;
+			}
+		}
+	}
+}
+
 
 void update_gamestate() {
 	char var_carInputByte;

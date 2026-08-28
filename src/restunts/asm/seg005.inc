@@ -6,7 +6,7 @@ seg005 segment byte public 'STUNTSC' use16
     extrn ported_remove_frame_callback_:proc
     extrn ported_frame_callback_:proc
     extrn replay_unk2:proc
-    extrn sub_2298C:proc
+    extrn ported_sub_2298C_:proc
     extrn ported_file_load_replay_:proc
     extrn ported_file_write_replay_:proc
     extrn setup_car_shapes:proc

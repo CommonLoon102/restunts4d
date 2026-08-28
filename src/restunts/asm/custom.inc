@@ -389,6 +389,7 @@ extrn run_menu:proc
 extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc
+extrn sub_2298C:proc
 extrn do_mer_restext:proc
 extrn do_key_restext:proc
 extrn do_mou_restext:proc

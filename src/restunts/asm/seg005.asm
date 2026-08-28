@@ -53,7 +53,7 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_remove_frame_callback_
     public ported_frame_callback_
     public replay_unk2
-    public sub_2298C
+    public ported_sub_2298C_
     public ported_file_load_replay_
     public ported_file_write_replay_
     public setup_car_shapes
@@ -1547,7 +1547,7 @@ loc_22985:
     ; align 2
     db 144
 replay_unk2 endp
-sub_2298C proc far
+ported_sub_2298C_ proc far
     var_34 = dword ptr -52
     var_30 = word ptr -48
     var_2E = word ptr -46
@@ -1573,9 +1573,8 @@ sub_2298C proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 34h
+    jmp     sub_2298C
+    nop
     push    di
     push    si
     mov     [bp+var_2A], 1
@@ -1919,7 +1918,7 @@ loc_22C8C:
     mov     sp, bp
     pop     bp
     retf
-sub_2298C endp
+ported_sub_2298C_ endp
 ported_file_load_replay_ proc far
      s = byte ptr 0
      r = byte ptr 2
