@@ -344,9 +344,11 @@ unsigned long timer_get_counter_unk(unsigned long ticks)
 extern legacy_u16 word_46468;
 extern legacy_u8 byte_442E4;
 extern legacy_s16 word_44D1E;
+extern legacy_s16 word_44D20;
 extern legacy_s16 word_449E4;
 extern legacy_s16 word_443F4;
 extern legacy_u8 unk_44F4C[];
+extern legacy_u8 byte_3BE02;
 extern legacy_s8 byte_3E85C[];
 extern legacy_s8 byte_40D6A;
 extern void far frame_callback(void);
@@ -1170,6 +1172,8 @@ extern unsigned char byte_40630;
 extern unsigned char byte_40632;
 extern unsigned char byte_45950;
 extern char byte_459D8;
+extern char byte_42D26;
+extern char byte_42D2A;
 extern unsigned char byte_428D6[];
 extern unsigned char audiochunks_unk[];
 extern unsigned char audiochunks_unk2[];
@@ -1210,6 +1214,7 @@ extern void audio_driver_func1E(int channel, int function);
 extern void audio_unk2(int channel, int value);
 extern void audio_op_unk3(int channel);
 extern void audio_op_unk4(int channel);
+extern void sub_38178(void);
 extern void sub_39700(void);
 int sub_37470(int channel, unsigned char priority);
 void sub_374DE(int channel);
@@ -4834,6 +4839,209 @@ void audio_op_unk6(int index)
 	audio_start_secondary_event(index, 0x40U);
 }
 
+static legacy_s16 audio_carstate_position(legacy_s32 position)
+{
+	legacy_u32 bits;
+
+	bits = (legacy_u32)position;
+	bits = (bits >> 6) |
+		((bits & 0x80000000UL) != 0 ? 0xFC000000UL : 0);
+	return LEGACY_S16_FROM_BITS((legacy_u16)bits);
+}
+
+static void audio_carstate_write(legacy_u8* record, legacy_u16 offset,
+	legacy_s16 value)
+{
+	LEGACY_WRITE_U16_LE(record + offset, (legacy_u16)value);
+}
+
+static legacy_u8 audio_carstate_update_flags(struct CARSTATE* carstate,
+	int channel, legacy_u8 flags)
+{
+	legacy_u8 desired;
+
+	desired = (legacy_u8)carstate->field_CF;
+	if ((desired & 1U) != 0) {
+		if ((flags & 1U) == 0) {
+			flags = (legacy_u8)(flags | 1U);
+			audio_op_unk(channel);
+		}
+	} else if ((flags & 1U) != 0) {
+		flags = (legacy_u8)(flags - 1U);
+		audio_function2(channel);
+	}
+
+	if ((desired & 6U) != 0) {
+		if ((flags & 6U) == (desired & 6U))
+			return flags;
+		if ((flags & 6U) == 0) {
+			if ((desired & 2U) != 0) {
+				audio_op_unk5(channel);
+				return (legacy_u8)(flags + 2U);
+			}
+			audio_op_unk6(channel);
+			return (legacy_u8)(flags + 4U);
+		}
+	} else if ((flags & 6U) == 0) {
+		return flags;
+	}
+
+	if ((flags & 2U) != 0)
+		flags = (legacy_u8)(flags - 2U);
+	if ((flags & 4U) != 0)
+		flags = (legacy_u8)(flags - 4U);
+	audio_op_unk7(channel);
+	return flags;
+}
+
+void audio_carstate(void)
+{
+	struct VECTOR player_previous;
+	struct VECTOR player_current;
+	struct VECTOR opponent_previous;
+	struct VECTOR opponent_current;
+	struct VECTOR camera_previous;
+	struct VECTOR camera_current;
+	struct CARSTATE* carstate;
+	legacy_u8* record;
+	legacy_s16 track_index;
+	legacy_s16 car_count;
+	legacy_s16 car_index;
+	legacy_u8 flags;
+	int channel;
+
+	if (is_in_replay != 0) {
+		if (byte_459D8 != 0) {
+			word_44D1E = word_449E4;
+			if (((legacy_u8)byte_42D26 & 6U) != 0)
+				audio_op_unk7(word_43964);
+			if (((legacy_u8)byte_42D26 & 1U) != 0)
+				audio_function2(word_43964);
+			if (gameconfig.game_opponenttype != 0) {
+				if (((legacy_u8)byte_42D2A & 6U) != 0)
+					audio_op_unk7(word_4408C);
+				if (((legacy_u8)byte_42D2A & 1U) != 0)
+					audio_function2(word_4408C);
+			}
+			byte_459D8 = 0;
+			byte_42D26 = 0;
+			byte_42D2A = 0;
+		}
+		if ((legacy_u8)byte_3BE02 != (legacy_u8)is_in_replay)
+			sub_38178();
+		byte_3BE02 = (legacy_u8)is_in_replay;
+		return;
+	}
+
+	player_previous.x = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld2.lx);
+	player_previous.y = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld2.ly);
+	player_previous.z = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld2.lz);
+	player_current.x = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld1.lx);
+	player_current.y = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld1.ly);
+	player_current.z = audio_carstate_position(
+		(legacy_s32)state.playerstate.car_posWorld1.lz);
+
+	if (gameconfig.game_opponenttype != 0) {
+		opponent_previous.x = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld2.lx);
+		opponent_previous.y = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld2.ly);
+		opponent_previous.z = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld2.lz);
+		opponent_current.x = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.lx);
+		opponent_current.y = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.ly);
+		opponent_current.z = audio_carstate_position(
+			(legacy_s32)state.opponentstate.car_posWorld1.lz);
+	}
+
+	if (cameramode == 1) {
+		camera_current = state.game_vec1[(legacy_u8)followOpponentFlag];
+		camera_previous = followOpponentFlag != 0 ?
+			state.game_vec4 : state.game_vec3;
+	} else if (cameramode == 3) {
+		track_index = LEGACY_S16_FROM_BITS((legacy_u16)(legacy_s8)
+			state.field_3F7[(legacy_u8)followOpponentFlag]);
+		camera_current.x = trackdata9[track_index * 3];
+		camera_current.y = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(trackdata9[track_index * 3 + 1],
+				word_44D20), 0x5A);
+		camera_current.z = trackdata9[track_index * 3 + 2];
+		camera_previous = camera_current;
+	} else if (followOpponentFlag != 0) {
+		camera_current = opponent_current;
+		camera_previous = opponent_previous;
+	} else {
+		camera_current = player_current;
+		camera_previous = player_previous;
+	}
+
+	record = unk_44F4C + LEGACY_U16_WRAP_MUL(
+		(legacy_u16)word_449E4, 0x22U);
+	audio_carstate_write(record, 6U, LEGACY_S16_WRAP_SUB(
+		camera_previous.x, player_previous.x));
+	audio_carstate_write(record, 8U, LEGACY_S16_WRAP_SUB(
+		camera_previous.y, player_previous.y));
+	audio_carstate_write(record, 0x0AU, LEGACY_S16_WRAP_SUB(
+		camera_previous.z, player_previous.z));
+	audio_carstate_write(record, 0x0CU, LEGACY_S16_WRAP_SUB(
+		camera_current.x, player_current.x));
+	audio_carstate_write(record, 0x0EU, LEGACY_S16_WRAP_SUB(
+		camera_current.y, player_current.y));
+	audio_carstate_write(record, 0x10U, LEGACY_S16_WRAP_SUB(
+		camera_current.z, player_current.z));
+	audio_carstate_write(record, 0x1EU,
+		state.playerstate.car_currpm);
+
+	car_count = 1;
+	if (gameconfig.game_opponenttype != 0) {
+		audio_carstate_write(record, 0x12U, LEGACY_S16_WRAP_SUB(
+			camera_previous.x, opponent_previous.x));
+		audio_carstate_write(record, 0x14U, LEGACY_S16_WRAP_SUB(
+			camera_previous.y, opponent_previous.y));
+		audio_carstate_write(record, 0x16U, LEGACY_S16_WRAP_SUB(
+			camera_previous.z, opponent_previous.z));
+		audio_carstate_write(record, 0x18U, LEGACY_S16_WRAP_SUB(
+			camera_current.x, opponent_current.x));
+		audio_carstate_write(record, 0x1AU, LEGACY_S16_WRAP_SUB(
+			camera_current.y, opponent_current.y));
+		audio_carstate_write(record, 0x1CU, LEGACY_S16_WRAP_SUB(
+			camera_current.z, opponent_current.z));
+		audio_carstate_write(record, 0x20U,
+			state.opponentstate.car_currpm);
+		car_count = 2;
+	}
+
+	for (car_index = 0; car_index < car_count; car_index++) {
+		if (car_index == 0) {
+			carstate = &state.playerstate;
+			channel = word_43964;
+			flags = (legacy_u8)byte_42D26;
+		} else {
+			carstate = &state.opponentstate;
+			channel = word_4408C;
+			flags = (legacy_u8)byte_42D2A;
+		}
+		flags = audio_carstate_update_flags(carstate, channel, flags);
+		if (car_index == 0)
+			byte_42D26 = (char)flags;
+		else
+			byte_42D2A = (char)flags;
+	}
+
+	byte_459D8 = 1;
+	word_449E4 = LEGACY_S16_WRAP_ADD(word_449E4, 1);
+	if (word_449E4 == 0x28)
+		word_449E4 = 0;
+	byte_3BE02 = (legacy_u8)is_in_replay;
+}
+
 void sub_374DE(int channel)
 {
 	if (channel > -1) {
@@ -5402,8 +5610,6 @@ extern void far* sdgameresptr;
 extern void far* wallptr;
 extern void far* planptr;
 extern char unk_3E7FC[];
-extern char byte_42D26;
-extern char byte_42D2A;
 extern char unk_3E82C[];
 extern char gnam_string[]; // 40 bytes
 extern char gsna_string[]; // 5 bytes

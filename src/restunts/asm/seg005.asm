@@ -689,7 +689,7 @@ loc_221CC:
     add     sp, 6
     mov     is_in_replay, 1
 loc_22203:
-    call    audio_carstate
+    call    ported_audio_carstate_
 loc_22208:
     cmp     game_replay_mode, 2
     jnz     short loc_22222
@@ -775,7 +775,7 @@ loc_22298:
 loc_222D3:
     call    sprite_copy_2_to_1_2
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     call    ported_audio_remove_driver_timer_
     cmp     game_replay_mode, 0
     jz      short loc_222F1
@@ -1146,7 +1146,7 @@ loc_22620:
     cmp     state.game_frame_in_sec, ax
     jl      short loc_2263E
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     jmp     short loc_22692
     db 144
     db 144
@@ -1235,7 +1235,7 @@ loc_226C6:
     jmp     loc_22985
 loc_226D0:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
 loc_226DA:
     mov     byte_449DA, 1
     pop     si
@@ -4271,7 +4271,7 @@ loc_24334:
     db 144
 loc_24346:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     sub     ax, ax
     push    ax
     mov     ax, 4
@@ -4445,7 +4445,7 @@ loc_244B0:
     db 144
 loc_2450A:
     mov     byte_43966, 0
-    call    audio_carstate
+    call    ported_audio_carstate_
     mov     ax, offset aRep ; "rep"
     push    ax
     push    word ptr mainresptr+2
@@ -4564,7 +4564,7 @@ loc_24619:
     ; align 2
     db 144
 loc_24630:
-    call    audio_carstate
+    call    ported_audio_carstate_
 loc_24635:
     mov     [bp+var_1E], 0
 loc_24639:
@@ -4794,7 +4794,7 @@ loc_24828:
     jmp     loc_24D5E
 loc_24830:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     sub     ax, ax
     push    ax
     push    ax
@@ -4997,7 +4997,7 @@ loc_24A19:
     jmp     loc_24D5E
 loc_24A28:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     sub     ax, ax
     push    ax
     mov     ax, 1
@@ -5245,7 +5245,7 @@ loc_24C5A:
     jmp     loc_24D18
 loc_24C74:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     sub     ax, ax
     push    ax
     mov     ax, 4
@@ -5265,7 +5265,7 @@ loc_24C74:
     jmp     loc_242E7
 loc_24CA6:
     mov     is_in_replay, 1
-    call    audio_carstate
+    call    ported_audio_carstate_
     sub     ax, ax
     push    ax
     mov     ax, 5
