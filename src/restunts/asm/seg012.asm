@@ -284,7 +284,7 @@ seg012 segment byte public 'STUNTSC' use16
     public nopsub_33006
     public ported_vector_op_unk_
     public loc_3301F
-    public preRender_sphere
+    public ported_preRender_sphere_
     public nopsub_3320E
     public ported_sprite_set_1_size_
     public video_clear_color
@@ -10151,7 +10151,7 @@ loc_33040:
     mov     ax, [bp+6]
     mov     ds:4E92h, ax
 ported_vector_op_unk_ endp
-preRender_sphere proc far
+ported_preRender_sphere_ proc far
     var_79A = byte ptr -1946
     var_3DA = byte ptr -986
     var_1A = word ptr -26
@@ -10174,9 +10174,8 @@ preRender_sphere proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 79Ah
+    jmp     preRender_sphere
+    db      2 dup (144)
     push    si
     push    di
     mov     dx, [bp+arg_4]
@@ -10354,7 +10353,7 @@ loc_331E9:
     mov     sp, bp
     pop     bp
     retf
-preRender_sphere endp
+ported_preRender_sphere_ endp
 nopsub_3320E proc far
      s = byte ptr 0
      r = byte ptr 2

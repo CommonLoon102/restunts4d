@@ -48,6 +48,9 @@ void sprite_copy_both_to_arg(struct SPRITE* argsprite);
 void sprite_copy_arg_to_both(struct SPRITE* argsprite);
 
 void sprite_clear_1_color(unsigned char color);
+void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color);
+void putpixel_single_maybe(int x, int y, int color);
 
 void sprite_putimage(struct SHAPE2D far* shape);
 void sprite_putimage_and(struct SHAPE2D far* shape, unsigned short a, unsigned short b);

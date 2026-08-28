@@ -2758,7 +2758,6 @@ void get_a_poly_info(void) {
 
 #endif
 
-extern void draw_filled_lines();
 extern void draw_patterned_lines();
 extern void draw_unknown_lines();
 extern void preRender_line();
@@ -2788,6 +2787,7 @@ extern void (*imagefunc)(unsigned, unsigned, unsigned, unsigned, unsigned);
 
 extern struct SPRITE far sprite1; // seg012
 extern struct SPRITE far sprite2; // seg012
+extern legacy_u8* off_3F3C8[];
 
 void preRender_default_impl(unsigned arg_color, unsigned arg_vertlinecount, int* arg_vertlines, unsigned var_A);
 
@@ -2933,6 +2933,130 @@ void preRender_sphere_helper(unsigned* source, unsigned color)
 
 	preRender_sphere_helper2(source, vertices);
 	preRender_default_alt(color, 0x20U, vertices);
+}
+
+#define SPHERE_RASTER_TABLE_LIMIT 40U
+
+void preRender_sphere(int x, int y, unsigned size, unsigned color)
+{
+	int left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	int right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	unsigned helper_points[6];
+	legacy_u16 x_bits;
+	legacy_u16 y_bits;
+	legacy_u16 size_bits;
+	legacy_u16 effective_height;
+	legacy_u16 half_height;
+	legacy_u16 half_width;
+	legacy_u16 top;
+	legacy_u16 line_count;
+	legacy_u16 left_bound;
+	legacy_u16 right_bound;
+	legacy_u16 left;
+	legacy_u16 right;
+	legacy_u16 skip_lines;
+	legacy_u16 output_index;
+	legacy_u8* radii;
+	legacy_u8 radius;
+	int mirror_offset;
+	legacy_s16 clip_delta;
+
+	x_bits = (legacy_u16)x;
+	y_bits = (legacy_u16)y;
+	size_bits = (legacy_u16)size;
+	effective_height = LEGACY_U16_WRAP_SUB(size_bits,
+		(legacy_u16)(size_bits >> 2));
+	effective_height = LEGACY_U16_WRAP_ADD(effective_height,
+		(legacy_u16)(size_bits >> 4));
+	if (LEGACY_S16_FROM_BITS(effective_height) <= 0)
+		return;
+
+	half_height = (legacy_u16)(effective_height >> 1);
+	if (half_height == 0) {
+		putpixel_single_maybe(LEGACY_S16_FROM_BITS(x_bits),
+			LEGACY_S16_FROM_BITS(y_bits), color);
+		return;
+	}
+	half_width = LEGACY_U16_WRAP_SUB(effective_height, half_height);
+	left_bound = sprite1.sprite_left2;
+	right_bound = LEGACY_U16_WRAP_SUB(sprite1.sprite_widthsum, 1U);
+	top = LEGACY_U16_WRAP_SUB(y_bits, half_height);
+	if (LEGACY_S16_FROM_BITS(top) >=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_height))
+		return;
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(y_bits, half_width)) <=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_top))
+		return;
+	half_width = LEGACY_U16_WRAP_ADD(half_width,
+		(legacy_u16)(half_width >> 2));
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(x_bits, half_width)) >
+		LEGACY_S16_FROM_BITS(right_bound))
+		return;
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(x_bits, half_width)) <
+		LEGACY_S16_FROM_BITS(left_bound))
+		return;
+
+	half_width = LEGACY_U16_WRAP_SUB(effective_height, half_height);
+	if (half_width >= SPHERE_RASTER_TABLE_LIMIT) {
+		helper_points[0] = x_bits;
+		helper_points[1] = y_bits;
+		helper_points[2] = x_bits;
+		helper_points[3] = LEGACY_U16_WRAP_ADD(y_bits, half_height);
+		helper_points[4] = LEGACY_U16_WRAP_ADD(x_bits,
+			(legacy_u16)(size_bits >> 1));
+		helper_points[5] = y_bits;
+		preRender_sphere_helper(helper_points, color);
+		return;
+	}
+
+	radii = off_3F3C8[half_width];
+	line_count = effective_height;
+	mirror_offset = (int)((effective_height - 1U) << 1);
+	output_index = 0;
+	for (;;) {
+		radius = *radii++;
+		left = LEGACY_U16_WRAP_SUB(x_bits, radius);
+		right = LEGACY_U16_WRAP_ADD(x_bits, radius);
+		if (LEGACY_S16_FROM_BITS(left) >
+				LEGACY_S16_FROM_BITS(right_bound) ||
+			LEGACY_S16_FROM_BITS(right) <
+				LEGACY_S16_FROM_BITS(left_bound)) {
+			top = LEGACY_U16_WRAP_ADD(top, 1U);
+			line_count = LEGACY_U16_WRAP_SUB(line_count, 2U);
+			mirror_offset -= 4;
+			if (mirror_offset < 0)
+				return;
+			continue;
+		}
+		if (LEGACY_S16_FROM_BITS(left) <
+			LEGACY_S16_FROM_BITS(left_bound))
+			left = left_bound;
+		if (LEGACY_S16_FROM_BITS(right) >
+			LEGACY_S16_FROM_BITS(right_bound))
+			right = right_bound;
+		left_edges[output_index] = left;
+		right_edges[output_index] = right;
+		left_edges[output_index + (unsigned)(mirror_offset >> 1)] = left;
+		right_edges[output_index + (unsigned)(mirror_offset >> 1)] = right;
+		output_index++;
+		mirror_offset -= 4;
+		if (mirror_offset < 0)
+			break;
+	}
+
+	skip_lines = 0;
+	clip_delta = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, top);
+	if (clip_delta > 0) {
+		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
+		skip_lines = (legacy_u16)clip_delta;
+		top = sprite1.sprite_top;
+	}
+	clip_delta = LEGACY_S16_WRAP_SUB(
+		LEGACY_U16_WRAP_ADD(top, line_count), sprite1.sprite_height);
+	if (clip_delta > 0)
+		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
+	draw_filled_lines(&left_edges[skip_lines], &right_edges[skip_lines],
+		top, line_count, color);
 }
 
 void skybox_op_helper(unsigned arg_color, unsigned arg_vertlinecount, struct POINT2D arg_vertlines[]) {
