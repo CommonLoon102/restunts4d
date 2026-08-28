@@ -820,8 +820,9 @@ track_contact_vertical_corkscrew:
 		corkFlag = 1;
 		if (position.z < 0 &&
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) < 0x64 &&
-			value > 0 && value > 0x188 && value < 0x278) {
+				terrainHeight) < 0x64 && value > 0) {
+			if (value >= 0x278 || value <= 0x188)
+				break;
 			current_surf_type = (legacy_u8)surface_type;
 			planindex = value2;
 			break;
