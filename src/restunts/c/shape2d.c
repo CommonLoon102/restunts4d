@@ -140,6 +140,24 @@ void sprite_1_unk2(int x, int y, int width, int height, int color)
 	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
 }
 
+void sprite_1_unk4(int x1, int y1, int x2, int y2, int color)
+{
+	legacy_s16 width;
+	legacy_s16 height;
+
+	width = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_SUB(x2, x1), 1);
+	height = LEGACY_S16_WRAP_SUB(y2, y1);
+	if (width > 0) {
+		sprite_1_unk2(x1, y1, width, 1, color);
+		sprite_1_unk2(x1, y2, width, 1, color);
+	}
+	if (height > 0) {
+		sprite_1_unk2(x1, y1, 1, height, color);
+		sprite_1_unk2(x2, y1, 1, height, color);
+	}
+}
+
 static void font_draw_text_impl(const char* text, int x, int y, int opaque)
 {
 	legacy_u8 far* font_definition;
