@@ -3415,9 +3415,9 @@ loop_game proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 44h
+    jmp     loop_game_c
+    nop
+    nop
     push    di
     push    si
     mov     ax, [bp+arg_0]
