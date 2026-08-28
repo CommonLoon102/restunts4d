@@ -1,3 +1,3 @@
 seg022 segment byte public 'STUNTSC' use16
-    extrn preRender_wheel:proc
+    extrn ported_preRender_wheel_:proc
 seg022 ends

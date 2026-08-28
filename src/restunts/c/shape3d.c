@@ -3039,6 +3039,72 @@ void preRender_wheel_helper(unsigned* source, unsigned* destination,
 	}
 }
 
+void preRender_wheel(unsigned* source, unsigned scale,
+	unsigned outer_color, unsigned side_color, unsigned inner_color)
+{
+	unsigned wheel_points[96];
+	unsigned quad[8];
+	unsigned side[36];
+	legacy_u16 index;
+	legacy_u16 next_index;
+	legacy_u16 minimum_index;
+	legacy_u16 step;
+	legacy_u16 point_index;
+	legacy_u16 destination_index;
+	legacy_u16 minimum_y;
+
+	preRender_wheel_helper(source, wheel_points, scale);
+	for (index = 0; index < 16U; index++) {
+		next_index = (legacy_u16)((index + 1U) & 0x0FU);
+		quad[0] = wheel_points[index * 2U];
+		quad[1] = wheel_points[index * 2U + 1U];
+		quad[2] = wheel_points[next_index * 2U];
+		quad[3] = wheel_points[next_index * 2U + 1U];
+		quad[4] = wheel_points[64U + next_index * 2U];
+		quad[5] = wheel_points[65U + next_index * 2U];
+		quad[6] = wheel_points[64U + index * 2U];
+		quad[7] = wheel_points[65U + index * 2U];
+		preRender_default_alt(outer_color, 4U, quad);
+	}
+
+	minimum_index = 0;
+	minimum_y = (legacy_u16)wheel_points[1];
+	for (index = 1; index < 16U; index++) {
+		if (LEGACY_S16_FROM_BITS(wheel_points[index * 2U + 1U]) <
+			LEGACY_S16_FROM_BITS(minimum_y)) {
+			minimum_y = (legacy_u16)wheel_points[index * 2U + 1U];
+			minimum_index = index;
+		}
+	}
+
+	for (step = 0; step < 9U; step++) {
+		point_index = (legacy_u16)((minimum_index + step) & 0x0FU);
+		destination_index = (legacy_u16)(step * 2U);
+		side[destination_index] = wheel_points[point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[point_index * 2U + 1U];
+		destination_index = (legacy_u16)((17U - step) * 2U);
+		side[destination_index] = wheel_points[32U + point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[33U + point_index * 2U];
+	}
+	preRender_default_alt(side_color, 18U, side);
+
+	for (step = 0; step < 9U; step++) {
+		point_index = (legacy_u16)((minimum_index + 16U - step) & 0x0FU);
+		destination_index = (legacy_u16)(step * 2U);
+		side[destination_index] = wheel_points[point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[point_index * 2U + 1U];
+		destination_index = (legacy_u16)((17U - step) * 2U);
+		side[destination_index] = wheel_points[32U + point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[33U + point_index * 2U];
+	}
+	preRender_default_alt(side_color, 18U, side);
+	preRender_default_alt(inner_color, 16U, &wheel_points[32]);
+}
+
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
 void preRender_sphere(int x, int y, unsigned size, unsigned color)

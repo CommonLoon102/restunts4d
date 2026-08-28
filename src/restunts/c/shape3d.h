@@ -51,6 +51,8 @@ void preRender_wheel_helper2(unsigned* source, unsigned* destination,
 	unsigned scale);
 void preRender_wheel_helper(unsigned* source, unsigned* destination,
 	unsigned scale);
+void preRender_wheel(unsigned* source, unsigned scale,
+	unsigned outer_color, unsigned side_color, unsigned inner_color);
 void preRender_sphere(int x, int y, unsigned size, unsigned color);
 void sub_204AE(struct VECTOR far* arg_verts, int arg_4, short* arg_6, short* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
