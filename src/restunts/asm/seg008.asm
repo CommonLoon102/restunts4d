@@ -1238,9 +1238,9 @@ do_fileselect_dialog proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 71Ch
+    jmp     do_fileselect_dialog_c
+    nop
+    nop
     push    di
     push    si
     sub     ax, ax

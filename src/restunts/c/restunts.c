@@ -2495,6 +2495,9 @@ extern char aSon[];
 extern char aSav[];
 extern char aWai[];
 extern char aDefault_1[];
+extern char aLoa[];
+extern char aLsu[];
+extern char aLsd[];
 extern char unk_463EA[];
 extern char* findfilenames[];
 extern void far* miscptr;
@@ -2514,6 +2517,8 @@ int call_read_line(char* text, int max_characters, int x, int y,
 legacy_s8 do_fileselect_dialog(char* directory, char* filename,
 	char* extension, char far* prompt);
 unsigned long sub_2EB1E(unsigned long ticks);
+void preRender_line(unsigned int x1, unsigned int y1,
+	unsigned int x2, unsigned int y2, int color);
 struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	int shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
@@ -2834,6 +2839,219 @@ dialog_done:
 	if (save_background != 0)
 		sub_275C6();
 	return (unsigned short)result;
+}
+
+legacy_s8 do_fileselect_dialog_c(
+	char* directory,
+	char* filename,
+	char* extension,
+	char far* prompt
+) {
+	int positions[40];
+	int hit_left[10];
+	int hit_right[10];
+	int hit_top[10];
+	int hit_bottom[10];
+	char filenames[128][13];
+	const char* found_path;
+	legacy_u16 index;
+	legacy_u16 compare_index;
+	legacy_u16 visible_row;
+	legacy_u16 text_width;
+	legacy_u16 key;
+	legacy_s16 dialog_result;
+	legacy_s16 hit;
+	legacy_s16 candidate;
+	legacy_s8 selected;
+	legacy_s8 scroll;
+	legacy_s8 previous_selected;
+	legacy_s8 previous_scroll;
+	legacy_s8 result;
+	legacy_u8 file_count;
+	legacy_u8 saved_busy;
+	legacy_u8 character;
+
+	dialog_result = LEGACY_S16_FROM_BITS(show_dialog(3, 1,
+		locate_text_res(mainresptr, aLoa), 0xFFFFU, 0xFFFFU,
+		dialogarg2, positions, 0));
+	if (dialog_result < 0)
+		return 0;
+
+	saved_busy = g_is_busy;
+	g_is_busy = 1;
+	preRender_line(positions[4] - 4, positions[5] + 4,
+		positions[4] + 0xAB, positions[5] + 4, dialogarg2);
+	font_set_unk(dialog_fnt_colour, word_3EB90);
+	copy_string(&resID_byte1, prompt);
+	sub_345BC(&resID_byte1, positions[0], positions[1]);
+
+	for (index = 0; index < 10U; index++) {
+		hit_left[index] = positions[2];
+		hit_right[index] = positions[2] + 0xA2;
+		if (index == 9U)
+			hit_top[index] = hit_top[index - 1U] + 10;
+		else
+			hit_top[index] = positions[3U + index * 2U];
+		hit_bottom[index] = hit_top[index] + 10;
+	}
+	font_set_unk(dialog_fnt_colour, word_3EB90);
+	sub_345BC(directory, positions[2], positions[3]);
+
+restart_search:
+	mouse_draw_transparent_check();
+	file_count = 0;
+	found_path = file_combine_and_find(directory, "*", extension);
+	if (found_path == 0) {
+		font_set_unk(dialog_fnt_colour, word_3EB90);
+		key = (legacy_u16)call_read_line(directory, 0x12,
+			positions[2], positions[3], 0x7530UL);
+		if (key == 0x1BU) {
+			result = 0;
+			goto file_dialog_done;
+		}
+		goto restart_search;
+	}
+
+	parse_filepath_separators(filenames[file_count++], found_path);
+	while (file_count < 128U && (found_path = file_find_next_alt()) != 0)
+		parse_filepath_separators(filenames[file_count++], found_path);
+
+	for (index = 0; index + 1U < file_count; index++) {
+		for (compare_index = index + 1U;
+			compare_index < file_count; compare_index++) {
+			if (strcmp(filenames[index], filenames[compare_index]) > 0) {
+				strcpy(&resID_byte1, filenames[index]);
+				strcpy(filenames[index], filenames[compare_index]);
+				strcpy(filenames[compare_index], &resID_byte1);
+			}
+		}
+	}
+
+	if (file_count > 7U) {
+		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsu));
+		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), positions[25]);
+		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsd));
+		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1),
+			positions[33] - 1);
+	}
+
+	selected = 0;
+	scroll = 0;
+	previous_selected = -1;
+	previous_scroll = -1;
+	(void)timer_get_delta_alt();
+	result = 0;
+	for (;;) {
+		if (selected != previous_selected || scroll != previous_scroll) {
+			previous_selected = selected;
+			previous_scroll = scroll;
+			mouse_draw_opaque_check();
+			for (visible_row = 0; visible_row < 7U; visible_row++) {
+				candidate = (legacy_s16)(scroll + (legacy_s16)visible_row);
+				if (candidate == selected)
+					font_set_unk(word_3EB90, dialog_fnt_colour);
+				else
+					font_set_unk(dialog_fnt_colour, word_3EB90);
+				if (candidate < (legacy_s16)file_count) {
+					strcpy(&resID_byte1, filenames[(legacy_u8)candidate]);
+					sub_345BC(&resID_byte1, positions[2],
+						hit_top[visible_row + 2U]);
+				} else {
+					sub_345BC("        ", positions[2],
+						hit_top[visible_row + 2U]);
+				}
+				text_width = (legacy_u16)font_op2(&resID_byte1);
+				sprite_1_unk(positions[2] + text_width,
+					hit_top[visible_row + 2U],
+					positions[2] + 0xA2 - text_width - positions[2],
+					8, word_3EB90);
+			}
+			mouse_draw_transparent_check();
+		}
+
+		key = (legacy_u16)input_checking((int)timer_get_delta_alt());
+		hit = (legacy_s16)mouse_multi_hittest(10,
+			hit_left, hit_right, hit_top, hit_bottom);
+		if (hit != -1) {
+			if (hit == 0) {
+				if ((mouse_butstate & 3U) != 0) {
+					selected = 0;
+					scroll = -1;
+					key = 0;
+				}
+			} else if (hit == 1) {
+				if ((mouse_butstate & 3U) != 0) {
+					if ((legacy_s16)selected + scroll != 0)
+						selected--;
+					if (selected < scroll)
+						scroll = selected;
+					key = 0;
+				}
+			} else if (hit == 9) {
+				if ((mouse_butstate & 3U) != 0) {
+					if (selected != (legacy_s8)(file_count - 1U))
+						selected++;
+					key = 0;
+				}
+			} else {
+				candidate = (legacy_s16)(scroll + hit - 2);
+				if (candidate < (legacy_s16)file_count)
+					selected = (legacy_s8)candidate;
+			}
+		}
+
+		if (key == 0x0DU || key == 0x20U) {
+			result = 1;
+		} else if (key == 0x1BU) {
+			result = -1;
+		} else if (key == 0x4800U) {
+			selected--;
+		} else if (key == 0x5000U) {
+			if (selected != (legacy_s8)(file_count - 1U))
+				selected++;
+		} else if (key < 256U &&
+			(g_ascii_props[key] &
+				(RST_ASC_CHAR_UPPER | RST_ASC_CHAR_LOWER)) != 0) {
+			character = (legacy_u8)dialog_ascii_lower(key);
+			for (index = 0; index < file_count; index++) {
+				if ((legacy_u8)dialog_ascii_lower(
+					(legacy_u8)filenames[index][0]) == character) {
+					selected = (legacy_s8)index;
+					break;
+				}
+			}
+		}
+
+		if (selected < scroll)
+			scroll = selected;
+		if (scroll < 0) {
+			font_set_unk(dialog_fnt_colour, word_3EB90);
+			key = (legacy_u16)call_read_line(directory, 0x12,
+				positions[2], positions[3], 0x7530UL);
+			if (key == 0x1BU) {
+				result = 0;
+				goto file_dialog_done;
+			}
+			goto restart_search;
+		}
+		while ((legacy_s16)(scroll + 6) < selected)
+			scroll++;
+
+		if (result == 0)
+			continue;
+		if (result < 0) {
+			result = 0;
+			goto file_dialog_done;
+		}
+		strcpy(filename, filenames[(legacy_u8)selected]);
+		result = 1;
+		goto file_dialog_done;
+	}
+
+file_dialog_done:
+	sub_275C6();
+	g_is_busy = saved_busy;
+	return result;
 }
 
 void ensure_file_exists(int file_index)
