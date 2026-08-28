@@ -46,8 +46,8 @@ nosmart
 seg015 segment byte public 'STUNTSC' use16
     assume cs:seg015
     assume es:nothing, ss:nothing, ds:dseg
-    public preRender_sphere_helper2
-preRender_sphere_helper2 proc far
+    public ported_preRender_sphere_helper2_
+ported_preRender_sphere_helper2_ proc far
     var_1A = word ptr -26
     var_18 = word ptr -24
     var_16 = word ptr -22
@@ -66,11 +66,10 @@ preRender_sphere_helper2 proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
+    jmp     preRender_sphere_helper2
 loc_36413:
-    mov     bp, sp
+    nop
 loc_36415:
-    sub     sp, 1Ah
 loc_36418:
     push    di
 loc_36419:
@@ -437,6 +436,6 @@ loc_367AD:
     pop     bp
 locret_367B0:
     retf
-preRender_sphere_helper2 endp
+ported_preRender_sphere_helper2_ endp
 seg015 ends
 end

@@ -2807,7 +2807,125 @@ void preRender_default(unsigned arg_color, unsigned arg_vertlinecount, unsigned*
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
-extern void preRender_sphere_helper2(unsigned* source, unsigned* destination);
+static legacy_u16 shape3d_sar1(legacy_u16 value)
+{
+	return (legacy_u16)((value >> 1) | (value & 0x8000U));
+}
+
+static legacy_u16 sphere_scale_sum(legacy_u16 left, legacy_u16 right,
+	legacy_u16 scale)
+{
+	return (legacy_u16)multiply_and_scale(
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(left, right)),
+		LEGACY_S16_FROM_BITS(scale));
+}
+
+static legacy_u16 sphere_scale_difference(legacy_u16 left,
+	legacy_u16 right, legacy_u16 scale)
+{
+	return (legacy_u16)multiply_and_scale(
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(left, right)),
+		LEGACY_S16_FROM_BITS(scale));
+}
+
+void preRender_sphere_helper2(unsigned* source, unsigned* destination)
+{
+	legacy_u16 half_x1;
+	legacy_u16 quarter_x1;
+	legacy_u16 three_quarters_x1;
+	legacy_u16 half_y1;
+	legacy_u16 quarter_y1;
+	legacy_u16 three_quarters_y1;
+	legacy_u16 half_x2;
+	legacy_u16 quarter_x2;
+	legacy_u16 three_quarters_x2;
+	legacy_u16 half_y2;
+	legacy_u16 quarter_y2;
+	legacy_u16 three_quarters_y2;
+	legacy_u16 negative_x1;
+	legacy_u16 negative_y1;
+	legacy_u16 index;
+	legacy_u16 center_x;
+	legacy_u16 center_y;
+
+	destination[0] = LEGACY_U16_WRAP_SUB(source[2], source[0]);
+	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
+	destination[16] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
+	destination[17] = LEGACY_U16_WRAP_SUB(source[5], source[1]);
+	half_x1 = shape3d_sar1((legacy_u16)destination[0]);
+	quarter_x1 = shape3d_sar1(half_x1);
+	three_quarters_x1 = LEGACY_U16_WRAP_ADD(half_x1, quarter_x1);
+	half_y1 = shape3d_sar1((legacy_u16)destination[1]);
+	quarter_y1 = shape3d_sar1(half_y1);
+	three_quarters_y1 = LEGACY_U16_WRAP_ADD(half_y1, quarter_y1);
+	half_x2 = shape3d_sar1((legacy_u16)destination[16]);
+	quarter_x2 = shape3d_sar1(half_x2);
+	three_quarters_x2 = LEGACY_U16_WRAP_ADD(half_x2, quarter_x2);
+	half_y2 = shape3d_sar1((legacy_u16)destination[17]);
+	quarter_y2 = shape3d_sar1(half_y2);
+	three_quarters_y2 = LEGACY_U16_WRAP_ADD(half_y2, quarter_y2);
+
+	destination[8] = sphere_scale_sum(destination[16], destination[0],
+		0x2D41U);
+	destination[9] = sphere_scale_sum(destination[1], destination[17],
+		0x2D41U);
+	destination[4] = sphere_scale_sum(destination[0], half_x2, 0x393EU);
+	destination[5] = sphere_scale_sum(destination[1], half_y2, 0x393EU);
+	destination[12] = sphere_scale_sum(destination[16], half_x1, 0x393EU);
+	destination[13] = sphere_scale_sum(destination[17], half_y1, 0x393EU);
+	destination[2] = sphere_scale_sum(destination[0], quarter_x2, 0x3E17U);
+	destination[3] = sphere_scale_sum(destination[1], quarter_y2, 0x3E17U);
+	destination[14] = sphere_scale_sum(destination[16], quarter_x1, 0x3E17U);
+	destination[15] = sphere_scale_sum(destination[17], quarter_y1, 0x3E17U);
+	destination[6] = sphere_scale_sum(destination[0], three_quarters_x2,
+		0x3333U);
+	destination[7] = sphere_scale_sum(destination[1], three_quarters_y2,
+		0x3333U);
+	destination[10] = sphere_scale_sum(destination[16], three_quarters_x1,
+		0x3333U);
+	destination[11] = sphere_scale_sum(destination[17], three_quarters_y1,
+		0x3333U);
+
+	negative_x1 = LEGACY_U16_WRAP_SUB(0, destination[0]);
+	negative_y1 = LEGACY_U16_WRAP_SUB(0, destination[1]);
+	destination[24] = sphere_scale_sum(destination[16], negative_x1,
+		0x2D41U);
+	destination[25] = sphere_scale_sum(destination[17], negative_y1,
+		0x2D41U);
+	destination[28] = sphere_scale_sum(half_x2, negative_x1, 0x393EU);
+	destination[29] = sphere_scale_sum(half_y2, negative_y1, 0x393EU);
+	destination[20] = sphere_scale_difference(destination[16], half_x1,
+		0x393EU);
+	destination[21] = sphere_scale_difference(destination[17], half_y1,
+		0x393EU);
+	destination[30] = sphere_scale_sum(quarter_x2, negative_x1, 0x3E17U);
+	destination[31] = sphere_scale_sum(quarter_y2, negative_y1, 0x3E17U);
+	destination[18] = sphere_scale_difference(destination[16], quarter_x1,
+		0x3E17U);
+	destination[19] = sphere_scale_difference(destination[17], quarter_y1,
+		0x3E17U);
+	destination[26] = sphere_scale_sum(three_quarters_x2, negative_x1,
+		0x3333U);
+	destination[27] = sphere_scale_sum(three_quarters_y2, negative_y1,
+		0x3333U);
+	destination[22] = sphere_scale_difference(destination[16],
+		three_quarters_x1, 0x3333U);
+	destination[23] = sphere_scale_difference(destination[17],
+		three_quarters_y1, 0x3333U);
+
+	center_x = (legacy_u16)source[0];
+	center_y = (legacy_u16)source[1];
+	for (index = 0; index < 16U; index++) {
+		destination[32U + index * 2U] = LEGACY_U16_WRAP_SUB(
+			center_x, destination[index * 2U]);
+		destination[33U + index * 2U] = LEGACY_U16_WRAP_SUB(
+			center_y, destination[index * 2U + 1U]);
+		destination[index * 2U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U], center_x);
+		destination[index * 2U + 1U] = LEGACY_U16_WRAP_ADD(
+			destination[index * 2U + 1U], center_y);
+	}
+}
 
 void preRender_sphere_helper(unsigned* source, unsigned color)
 {
