@@ -2543,6 +2543,105 @@ void do_key_restext(void)
 	input_pop_status();
 }
 
+void do_joy_restext(void)
+{
+	int positions[15];
+	legacy_s16 button_x[9];
+	legacy_s16 button_y[9];
+	legacy_u8 visited[9];
+	legacy_s16 button_width;
+	legacy_s16 button_height;
+	legacy_s16 line_width;
+	legacy_s16 line_height;
+	legacy_s16 selected;
+	legacy_s16 next_selected;
+	legacy_u16 joy_flags;
+	legacy_u16 i;
+
+	input_push_status();
+	word_3F88E = 1;
+	audio_unk();
+	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
+		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
+		dialogarg2, positions, 0)) <= 0) {
+		byte_3FE00 = 0;
+		goto joy_dialog_done;
+	}
+
+	for (i = 0; i < 9U; i++)
+		visited[i] = 0;
+	byte_3FE00 = 1;
+	mouse_draw_opaque_check();
+	line_height = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
+	sprite_1_unk(LEGACY_S16_WRAP_SUB(positions[2], 4), positions[3],
+		1, line_height, dialogarg2);
+	sprite_1_unk(LEGACY_S16_WRAP_SUB(positions[4], 4), positions[5],
+		1, line_height, dialogarg2);
+	line_width = LEGACY_S16_WRAP_SUB(positions[6], positions[0]);
+	sprite_1_unk(positions[0], LEGACY_S16_WRAP_SUB(positions[9], 4),
+		line_width, 1, dialogarg2);
+	sprite_1_unk(positions[0], LEGACY_S16_WRAP_SUB(positions[11], 4),
+		line_width, 1, dialogarg2);
+
+	button_x[0] = positions[2];
+	button_x[1] = positions[2];
+	button_x[5] = positions[2];
+	button_x[2] = positions[4];
+	button_x[3] = positions[4];
+	button_x[4] = positions[4];
+	button_x[6] = positions[0];
+	button_x[7] = positions[0];
+	button_x[8] = positions[0];
+	button_y[0] = positions[9];
+	button_y[3] = positions[9];
+	button_y[7] = positions[9];
+	button_y[1] = positions[3];
+	button_y[2] = positions[3];
+	button_y[8] = positions[3];
+	button_y[4] = positions[11];
+	button_y[5] = positions[11];
+	button_y[6] = positions[11];
+	button_width = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_SUB(positions[2], positions[0]), 8);
+	button_height = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_SUB(positions[9], positions[1]), 8);
+
+	selected = -1;
+	sub_307B4();
+	for (;;) {
+		if (kb_read_char() != 0)
+			break;
+		joy_flags = (legacy_u16)get_joy_flags();
+		if ((joy_flags & 0x30U) != 0)
+			break;
+		next_selected = (legacy_s16)sub_307D2(joy_flags);
+		if (next_selected == selected)
+			continue;
+		for (i = 0; i < 9U; i++)
+			sprite_1_unk(button_x[i], button_y[i], button_width,
+				button_height, word_3EB90);
+		sprite_1_unk(button_x[next_selected], button_y[next_selected],
+			button_width, button_height, dialog_fnt_colour);
+		selected = next_selected;
+		visited[next_selected] = 1;
+	}
+
+	for (i = 0; i < 9U; i++)
+		byte_3FE00 = (legacy_u8)byte_3FE00 & visited[i];
+	sub_275C6();
+	if (byte_3FE00 == 0)
+		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
+			0xFFFFU, 0xFFFFU, dialogarg2, 0, 0);
+
+joy_dialog_done:
+	kb_check();
+	byte_3B8F2 = 0;
+	sub_372F4();
+	word_3F88E = 0;
+	input_pop_status();
+}
+
 void do_mou_restext(void)
 {
 	input_push_status();

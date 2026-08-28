@@ -5065,7 +5065,7 @@ loc_130BA:
     call    do_key_restext
     jmp     loc_1315A
 loc_130C2:
-    call    do_joy_restext
+    call    ported_do_joy_restext_
     jmp     loc_1315A
 loc_130CA:
     call    do_mou_restext

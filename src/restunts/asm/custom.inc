@@ -399,6 +399,7 @@ extrn highscore_text_unk:proc
 extrn enter_hiscore:proc
 extrn do_mer_restext:proc
 extrn do_key_restext:proc
+extrn do_joy_restext:proc
 extrn do_mou_restext:proc
 extrn do_pau_restext:proc
 extrn do_mof_restext:proc

@@ -169,7 +169,7 @@ loc_39E74:
 loc_39E79:
     call    ported_kb_reg_callback_
     add     sp, 6
-    mov     ax, offset do_joy_restext
+    mov     ax, offset ported_do_joy_restext_
     mov     dx, seg seg008
     push    dx
     push    ax

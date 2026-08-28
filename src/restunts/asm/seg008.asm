@@ -96,7 +96,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_sub_29A86_
     public ported_input_push_status_
     public ported_input_pop_status_
-    public do_joy_restext
+    public ported_do_joy_restext_
     public ported_do_key_restext_
     public ported_do_mou_restext_
     public ported_do_pau_restext_
@@ -4689,7 +4689,7 @@ loc_29B30:
     pop     si
     retf
 ported_input_pop_status_ endp
-do_joy_restext proc far
+ported_do_joy_restext_ proc far
     var_56 = word ptr -86
     var_54 = word ptr -84
     var_52 = word ptr -82
@@ -4726,9 +4726,8 @@ do_joy_restext proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 56h
+    jmp     do_joy_restext
+    nop
     push    di
     push    si
     push    cs
@@ -4974,7 +4973,7 @@ loc_29D7B:
     mov     sp, bp
     pop     bp
     retf
-do_joy_restext endp
+ported_do_joy_restext_ endp
 ported_do_key_restext_ proc far
 
     jmp     do_key_restext
