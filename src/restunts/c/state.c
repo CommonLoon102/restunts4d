@@ -235,8 +235,245 @@ static void update_legacy_grip_stack_words(
 }
 
 void update_car_speed(char, int, struct CARSTATE* carstate, struct SIMD* simd);
-void update_grip(struct CARSTATE* carstate, struct SIMD* simd, int);
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, int);
+
+static legacy_s16 grip_sar(legacy_s16 value, legacy_u16 count)
+{
+	legacy_u16 bits;
+
+	bits = (legacy_u16)value;
+	while (count-- != 0)
+		bits = (legacy_u16)((bits >> 1) | (bits & 0x8000U));
+	return LEGACY_S16_FROM_BITS(bits);
+}
+
+static legacy_s32 grip_sar32(legacy_s32 value, legacy_u16 count)
+{
+	legacy_u32 bits;
+
+	bits = (legacy_u32)value;
+	while (count-- != 0)
+		bits = (bits >> 1) | (bits & 0x80000000UL);
+	return LEGACY_S32_FROM_BITS(bits);
+}
+
+void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
+	int player_behavior)
+{
+	legacy_s16 initial_angle;
+	legacy_s16 adjusted_angle;
+	legacy_s16 absolute_angle;
+	legacy_s16 angle_factor;
+	legacy_s16 combined_grip;
+	legacy_s16 sliding_sum;
+	legacy_s16 correction;
+	legacy_s16 rotation_low;
+	legacy_s16 penalty;
+	legacy_s16 quotient;
+	legacy_s16* sliding_values;
+	legacy_u16 speed_shr8;
+	legacy_u16 demanded_grip;
+	legacy_u16 square_low;
+	legacy_u16 grass_wheels;
+	legacy_u16 i;
+	legacy_u8 tile_x;
+	legacy_u8 tile_z;
+	legacy_u8 track;
+	legacy_s32 product;
+	legacy_s32 numerator;
+	legacy_s32 denominator;
+
+	if (carstate->car_sumSurfAllWheels == 0) {
+		carstate->car_40MfrontWhlAngle = 0;
+		carstate->car_slidingFlag = 0;
+		return;
+	}
+
+	grass_wheels = 0;
+	for (i = 0; i < 4U; i++) {
+		if (carstate->car_surfaceWhl[i] == 4)
+			grass_wheels++;
+	}
+	if (grass_wheels != 0) {
+		carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
+			carstate->car_speed2,
+			(legacy_u16)(carstate->car_speed2 /
+				(legacy_u16)grassDecelDivTab[grass_wheels]));
+		carstate->car_speed = carstate->car_speed2;
+	}
+
+	initial_angle = LEGACY_S16_WRAP_ADD(carstate->car_steeringAngle,
+		carstate->car_36MwhlAngle);
+	adjusted_angle = initial_angle;
+	speed_shr8 = (legacy_u16)(carstate->car_speed >> 8);
+	absolute_angle = adjusted_angle;
+	if (absolute_angle < 0)
+		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+	angle_factor = grip_sar(absolute_angle, 3U);
+	square_low = LEGACY_U16_WRAP_MUL(speed_shr8, speed_shr8);
+	square_low = (legacy_u16)(square_low >> 6);
+	demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
+
+	combined_grip = LEGACY_S16_FROM_BITS(
+		(legacy_u16)simd->grip << 1);
+	sliding_sum = 0;
+	sliding_values = &simd->sliding;
+	for (i = 0; i < 4U; i++) {
+		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
+			sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
+	}
+	product = (legacy_s32)combined_grip * (legacy_s32)sliding_sum;
+	combined_grip = LEGACY_S16_FROM_BITS(
+		(legacy_u16)grip_sar32(product, 10U));
+	carstate->car_demandedGrip = (legacy_s16)demanded_grip;
+	carstate->car_surfacegrip_sum = combined_grip;
+
+	if (player_behavior == 0) {
+		carstate->car_40MfrontWhlAngle = LEGACY_S16_FROM_BITS(
+			(legacy_u16)carstate->car_steeringAngle << 2);
+		if (carstate->car_angle_z != 0) {
+			carstate->car_angle_z = grip_sar(
+				LEGACY_S16_WRAP_MUL(carstate->car_angle_z, 15), 4U);
+		}
+		goto finish_angles;
+	}
+
+	if (carstate->car_steeringAngle == 0) {
+		rotation_low = LEGACY_S8_FROM_BITS(
+			(legacy_u8)carstate->car_rotate.x);
+		if (rotation_low != 0) {
+			absolute_angle = rotation_low;
+			if (absolute_angle < 0)
+				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+			if (absolute_angle < 8) {
+				if (rotation_low > 0) {
+					carstate->car_rotate.x = LEGACY_S16_WRAP_SUB(
+						carstate->car_rotate.x, 1);
+				} else {
+					carstate->car_rotate.x = LEGACY_S16_WRAP_ADD(
+						carstate->car_rotate.x, 1);
+				}
+			}
+		}
+	}
+
+	if (LEGACY_S16_FROM_BITS(demanded_grip) > combined_grip) {
+		carstate->car_slidingFlag = 1;
+		numerator = (legacy_s32)combined_grip * 0x100L;
+		denominator = (legacy_s32)speed_shr8 * (legacy_s32)speed_shr8;
+		adjusted_angle = LEGACY_S16_FROM_BITS(
+			(legacy_u16)(numerator / denominator));
+		if (initial_angle < 0)
+			adjusted_angle = LEGACY_S16_WRAP_NEGATE(adjusted_angle);
+		adjusted_angle = grip_sar(LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_MUL(adjusted_angle, 3), initial_angle), 2U);
+		carstate->field_42 = LEGACY_S16_WRAP_SUB(
+			initial_angle, adjusted_angle);
+	} else {
+		carstate->car_slidingFlag = 0;
+		if (carstate->field_42 != 0) {
+			carstate->field_42 = LEGACY_S16_WRAP_SUB(
+				carstate->field_42, grip_sar(carstate->field_42, 4U));
+			absolute_angle = carstate->field_42;
+			if (absolute_angle < 0)
+				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+			if (absolute_angle < 0x10)
+				carstate->field_42 = grip_sar(carstate->field_42, 1U);
+		}
+	}
+
+	if (carstate->car_angle_z == 0 && carstate->car_crashBmpFlag != 1)
+		carstate->car_40MfrontWhlAngle = adjusted_angle;
+	else
+		carstate->car_40MfrontWhlAngle = 0;
+
+	absolute_angle = carstate->car_rotate.z;
+	if (absolute_angle < 0)
+		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+	if (absolute_angle > 4) {
+		tile_x = (legacy_u8)((legacy_u32)
+			carstate->car_posWorld1.lx >> 16);
+		tile_z = (legacy_u8)((legacy_u32)
+			carstate->car_posWorld1.lz >> 16);
+		track = td14_elem_map_main[
+			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
+		if (track == 0xFDU) {
+			tile_x = (legacy_u8)(tile_x - 1U);
+			tile_z = (legacy_u8)(tile_z + 1U);
+		} else if (track == 0xFEU) {
+			tile_z = (legacy_u8)(tile_z + 1U);
+		} else if (track == 0xFFU) {
+			tile_x = (legacy_u8)(tile_x - 1U);
+		}
+		track = td14_elem_map_main[
+			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
+		if (track >= 0x34U && track <= 0x37U) {
+			carstate->car_40MfrontWhlAngle = LEGACY_S16_WRAP_ADD(
+				carstate->car_40MfrontWhlAngle,
+				(legacy_s16)(carstate->car_rotate.z / 5));
+		}
+	}
+
+	correction = (legacy_s16)(LEGACY_S16_WRAP_SUB(
+		adjusted_angle, initial_angle) / 0x0E);
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
+		combined_grip, 0x3E8U)) < LEGACY_S16_FROM_BITS(demanded_grip)) {
+		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
+			carstate->car_angle_z, correction);
+		carstate->car_angle_z = (legacy_s16)(carstate->car_angle_z / 2);
+	} else if (carstate->car_angle_z != 0) {
+		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
+			carstate->car_angle_z, correction);
+		carstate->car_angle_z = (legacy_s16)(carstate->car_angle_z / 2);
+		if (carstate->car_angle_z == 0) {
+			carstate->car_speed2 = (legacy_u16)multiply_and_scale(
+				cos_fast(carstate->car_36MwhlAngle),
+				carstate->car_speed2);
+			if (cos_fast(carstate->car_36MwhlAngle) < 0)
+				carstate->car_speed2 = 0;
+			carstate->car_36MwhlAngle = 0;
+		}
+	}
+
+finish_angles:
+	if (carstate->car_36MwhlAngle != 0 && carstate->car_angle_z == 0) {
+		carstate->car_36MwhlAngle = grip_sar(
+			LEGACY_S16_WRAP_MUL(carstate->car_36MwhlAngle, 15), 4U);
+	}
+	if (carstate->car_angle_z != 0) {
+		carstate->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
+			carstate->car_36MwhlAngle, carstate->car_angle_z);
+	}
+
+	if (carstate->car_slidingFlag != 0) {
+		absolute_angle = carstate->field_42;
+		if (absolute_angle < 0)
+			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+		penalty = LEGACY_S16_FROM_BITS((legacy_u16)absolute_angle << 1);
+		if (carstate->car_speed <= (legacy_u16)penalty) {
+			carstate->car_speed = 0;
+			carstate->car_speed2 = 0;
+		} else if (carstate->car_speed2 > (legacy_u16)penalty) {
+			carstate->car_speed = LEGACY_U16_WRAP_SUB(
+				carstate->car_speed, penalty);
+			carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
+				carstate->car_speed2, penalty);
+		} else {
+			carstate->car_speed = 0;
+			carstate->car_speed2 = 0;
+		}
+
+		if (carstate->car_crashBmpFlag == 0) {
+			for (i = 0; i < 4U; i++) {
+				if (carstate->car_surfaceWhl[i] == 1)
+					break;
+			}
+			carstate->field_CF = (legacy_u8)carstate->field_CF |
+				(i < 4U ? 2U : 4U);
+		}
+	}
+	carstate->field_42 = 0;
+}
 
 void upd_statef20_from_steer_input(char steering_input) {
 	signed char* response_table;

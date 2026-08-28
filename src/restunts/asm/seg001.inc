@@ -9,7 +9,7 @@ seg001 segment byte public 'STUNTSC' use16
     extrn ported_player_op_:proc
     extrn ported_detect_penalty_:proc
     extrn ported_update_car_speed_:proc
-    extrn update_grip:proc
+    extrn ported_update_grip_:proc
     extrn ported_car_car_speed_adjust_maybe_:proc
     extrn ported_carState_rc_op_:proc
     extrn ported_upd_statef20_from_steer_input_:proc

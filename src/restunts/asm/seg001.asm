@@ -56,7 +56,7 @@ seg001 segment byte public 'STUNTSC' use16
     public ported_player_op_
     public ported_detect_penalty_
     public ported_update_car_speed_
-    public update_grip
+    public ported_update_grip_
     public ported_car_car_speed_adjust_maybe_
     public ported_carState_rc_op_
     public ported_upd_statef20_from_steer_input_
@@ -662,7 +662,7 @@ loc_14BFA:
     mov     ax, offset state.opponentstate
     push    ax
     push    cs
-    call near ptr update_grip
+    call near ptr ported_update_grip_
     add     sp, 6
     mov     ax, 1
     push    ax
@@ -4678,7 +4678,7 @@ nosmart
     mov     ax, offset state.playerstate
     push    ax
     push    cs
-    call near ptr update_grip
+    call near ptr ported_update_grip_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -6169,7 +6169,7 @@ loc_17FD0:
     pop     bp
     retf
 ported_update_car_speed_ endp
-update_grip proc far
+ported_update_grip_ proc far
     var_addf20f36Initial = word ptr -16
     var_E = byte ptr -14
     var_C = word ptr -12
@@ -6184,9 +6184,8 @@ update_grip proc far
     arg_simd = word ptr 8
     arg_isOpponent = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     update_grip
+    nop
     push    di
     push    si
     mov     bx, [bp+arg_cState]
@@ -6686,7 +6685,7 @@ loc_18458:
     mov     sp, bp
     pop     bp
     retf
-update_grip endp
+ported_update_grip_ endp
 ported_car_car_speed_adjust_maybe_ proc far
     var_18 = word ptr -24
     var_16 = word ptr -22

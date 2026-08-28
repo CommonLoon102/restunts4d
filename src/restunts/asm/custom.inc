@@ -397,6 +397,7 @@ extrn intro_op:proc
 extrn setup_intro:proc
 extrn run_tracks_menu:proc
 extrn draw_track_preview:proc
+extrn update_grip:proc
 extrn bto_auxiliary1:proc
 extrn detect_penalty:proc
 extrn load_opponent_data:proc
