@@ -3283,7 +3283,7 @@ loc_165C8:
     push    ax
     push    [bp+vec_FC.vz]
     push    [bp+vec_FC.vx]
-    call    bto_auxiliary1
+    call far ptr bto_auxiliary1
     add     sp, 6
     mov     [bp+var_EC], al
     or      al, al

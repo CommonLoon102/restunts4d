@@ -38,10 +38,136 @@ extern struct POINT2D unk_3BD6A[2];
 extern int word_3BD72[4];
 extern int word_4408C;
 extern int word_43964;
+extern struct TRACKOBJECT trkObjectList[215];
+extern struct VECTOR unk_3E640[];
+extern struct VECTOR unk_3E646[];
+extern struct VECTOR unk_3E676[];
+extern struct VECTOR unk_3E682[];
+extern struct VECTOR unk_3E68E[];
+extern struct VECTOR unk_3E69A[];
 
 extern void update_crash_state(int, int);
 
-extern int bto_auxiliary1(int, int, struct VECTOR*);
+int bto_auxiliary1(int column_arg, int row_arg, struct VECTOR* output)
+{
+	const struct VECTOR* dependency_points;
+	legacy_u16 column;
+	legacy_u16 row;
+	legacy_u16 previous_row_base;
+	legacy_u16 center_x;
+	legacy_u16 center_z;
+	legacy_u16 terrain_height;
+	legacy_u16 orientation;
+	legacy_u16 count;
+	legacy_u16 index;
+	legacy_u8 tile_element;
+	legacy_u8 multi_tile_flags;
+	legacy_s8 physical_model;
+
+	column = (legacy_u16)column_arg;
+	row = (legacy_u16)row_arg;
+	tile_element = td14_elem_map_main[trackrows[row] + column];
+	if (tile_element == 0)
+		return 0;
+
+	center_x = (legacy_u16)trackcenterpos2[column];
+	center_z = (legacy_u16)trackcenterpos[row];
+	previous_row_base = row == 0 ? (legacy_u16)word_45D3E :
+		(legacy_u16)trackrows[row - 1U];
+	if (tile_element == 0xFDU) {
+		tile_element = td14_elem_map_main[
+			LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
+		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+		if ((multi_tile_flags & 1U) != 0)
+			center_z = (legacy_u16)trackpos[row + 1U];
+		if ((multi_tile_flags & 2U) != 0)
+			center_x = (legacy_u16)trackpos2[column];
+	} else if (tile_element == 0xFEU) {
+		tile_element = td14_elem_map_main[previous_row_base + column];
+		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+		if ((multi_tile_flags & 1U) != 0)
+			center_z = (legacy_u16)trackpos[row + 1U];
+		if ((multi_tile_flags & 2U) != 0)
+			center_x = (legacy_u16)trackpos2[column + 1U];
+	} else if (tile_element == 0xFFU) {
+		tile_element = td14_elem_map_main[
+			LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
+		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+		if ((multi_tile_flags & 1U) != 0)
+			center_z = (legacy_u16)trackpos[row];
+		if ((multi_tile_flags & 2U) != 0)
+			center_x = (legacy_u16)trackpos2[column];
+	} else {
+		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+		if ((multi_tile_flags & 1U) != 0)
+			center_z = (legacy_u16)trackpos[row];
+		if ((multi_tile_flags & 2U) != 0)
+			center_x = (legacy_u16)trackpos2[column + 1U];
+	}
+
+	dependency_points = 0;
+	count = 0;
+	physical_model = (legacy_s8)trkObjectList[tile_element].ss_physicalModel;
+	if (physical_model == 0x0B ||
+		(physical_model >= 0x47 && physical_model <= 0x4A)) {
+		dependency_points = unk_3E640;
+		count = 1;
+	} else if (physical_model == 0x12) {
+		dependency_points = unk_3E646;
+		count = 8;
+	} else if (physical_model == 0x20) {
+		dependency_points = unk_3E682;
+		count = 2;
+	} else if (physical_model == 0x21) {
+		dependency_points = unk_3E68E;
+		count = 2;
+	} else if (physical_model == 0x22) {
+		dependency_points = unk_3E69A;
+		count = 4;
+	} else if (physical_model == 0x23) {
+		dependency_points = unk_3E676;
+		count = 2;
+	}
+	if (count == 0)
+		return 0;
+
+	terrain_height = td15_terr_map_main[terrainrows[row] + column] == 6 ?
+		(legacy_u16)hillHeightConsts[1] : 0;
+	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
+	for (index = 0; index < count; index++) {
+		legacy_u16 source_x;
+		legacy_u16 source_y;
+		legacy_u16 source_z;
+		legacy_u16 rotated_x;
+		legacy_u16 rotated_z;
+
+		source_x = (legacy_u16)dependency_points[index].x;
+		source_y = (legacy_u16)dependency_points[index].y;
+		source_z = (legacy_u16)dependency_points[index].z;
+		if (orientation == 0) {
+			rotated_x = source_x;
+			rotated_z = source_z;
+		} else if (orientation == 0x100U) {
+			rotated_x = source_z;
+			rotated_z = LEGACY_U16_WRAP_SUB(0, source_x);
+		} else if (orientation == 0x200U) {
+			rotated_x = LEGACY_U16_WRAP_SUB(0, source_x);
+			rotated_z = LEGACY_U16_WRAP_SUB(0, source_z);
+		} else if (orientation == 0x300U) {
+			rotated_x = LEGACY_U16_WRAP_SUB(0, source_z);
+			rotated_z = source_x;
+		} else {
+			continue;
+		}
+		output[index].x = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(rotated_x, center_x));
+		output[index].y = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(source_y, terrain_height));
+		output[index].z = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(rotated_z, center_z));
+	}
+	return count;
+}
 
 /*
  * The original assembly skips initialization of var_140someWhlData when the

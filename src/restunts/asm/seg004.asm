@@ -48,7 +48,7 @@ seg004 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public build_track_object
     public off_1F87E
-    public bto_auxiliary1
+    public ported_bto_auxiliary1_
     public ported_shape3d_load_all_
     public ported_shape3d_free_all_
     public ported_shape3d_load_car_shapes_
@@ -2753,7 +2753,7 @@ loc_1FADE:
     pop     bp
     retf
 build_track_object endp
-bto_auxiliary1 proc far
+ported_bto_auxiliary1_ proc far
     var_14 = word ptr -20
     var_10 = byte ptr -16
     var_C = word ptr -12
@@ -2768,9 +2768,8 @@ bto_auxiliary1 proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 14h
+    jmp     bto_auxiliary1
+    nop
     push    di
     push    si
     mov     bx, [bp+arg_2]
@@ -3179,7 +3178,7 @@ loc_1FE8C:
     mov     sp, bp
     pop     bp
     retf
-bto_auxiliary1 endp
+ported_bto_auxiliary1_ endp
 ported_shape3d_load_all_ proc far
      s = byte ptr 0
      r = byte ptr 2
