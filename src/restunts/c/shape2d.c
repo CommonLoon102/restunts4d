@@ -28,6 +28,7 @@ extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* smouspriteptr;
 extern char mouse_isdirty;
 extern legacy_u8 far* word_405FE;
+extern legacy_u16 fontdefseg;
 extern legacy_u8 far incnums[];
 extern legacy_u16 word_4031E;
 extern legacy_u16 word_40320;
@@ -889,6 +890,11 @@ void putpixel_single_maybe(int x, int y, int color)
 	destination = LEGACY_U16_WRAP_ADD(
 		shape2d_get_line_offset(FP_SEG(&sprite1), y_bits), x_bits);
 	bitmap[destination] = (legacy_u8)color;
+}
+
+void set_fontdefseg(void far* data)
+{
+	fontdefseg = FP_SEG(data);
 }
 
 void sub_35B76(int x, int y, int width, int height, int color)

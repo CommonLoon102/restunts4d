@@ -364,7 +364,7 @@ seg012 segment byte public 'STUNTSC' use16
     public sprite2
     public lineoffsets
     public ported_font_set_unk_
-    public set_fontdefseg
+    public ported_set_fontdefseg_
     public ported_draw_patterned_lines_
     public ported_sprite_make_wnd_
     public next_wnd_def
@@ -14015,14 +14015,13 @@ ported_font_set_unk_ proc far
     pop     bp
     retf
 ported_font_set_unk_ endp
-set_fontdefseg proc far
+ported_set_fontdefseg_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_2]
+    jmp     set_fontdefseg
+    nop
     mov     fontdefseg, ax
     pop     bp
     retf
@@ -14037,7 +14036,7 @@ set_fontdefseg proc far
     jmp     short loc_34B9B
     ; align 2
     db 144
-set_fontdefseg endp
+ported_set_fontdefseg_ endp
 ported_draw_patterned_lines_ proc far
      s = byte ptr 0
      r = byte ptr 2
