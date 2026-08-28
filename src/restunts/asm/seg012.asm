@@ -315,14 +315,14 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_putimage_and_alt2_
     public ported_sprite_putimage_and_
     public loc_338C9
-    public nopsub_339FA
+    public ported_nopsub_339FA_
     public ported_putpixel_iconMask_
     public loc_33A57
-    public nopsub_33AC0
-    public nopsub_33AE4
+    public ported_nopsub_33AC0_
+    public ported_nopsub_33AE4_
     public ported_shape2d_render_bmp_as_mask_
     public loc_33B1D
-    public nopsub_33B98
+    public ported_nopsub_33B98_
     public ported_sprite_putimage_and_alt_
     public ported_sprite_putimage_
     public loc_33BF5
@@ -11416,7 +11416,7 @@ loc_339EC:
     ; align 2
     db 0
 ported_sprite_putimage_and_ endp
-nopsub_339FA proc far
+ported_nopsub_339FA_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11426,9 +11426,8 @@ nopsub_339FA proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ah
+    jmp     nopsub_339FA
+    nop
     push    ds
     push    si
     push    di
@@ -11443,7 +11442,7 @@ nopsub_339FA proc far
     jmp     short loc_33A57
     ; align 2
     db 144
-nopsub_339FA endp
+ported_nopsub_339FA_ endp
 ported_putpixel_iconMask_ proc far
     var_6 = word ptr -6
     var_4 = word ptr -4
@@ -11543,7 +11542,7 @@ loc_33AB4:
     ; align 2
     db 0
 ported_putpixel_iconMask_ endp
-nopsub_33AC0 proc far
+ported_nopsub_33AC0_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11553,9 +11552,8 @@ nopsub_33AC0 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     nopsub_33AC0
+    nop
     push    ds
     push    si
     push    di
@@ -11570,8 +11568,8 @@ nopsub_33AC0 proc far
     jmp     short loc_33B1D
     ; align 2
     db 144
-nopsub_33AC0 endp
-nopsub_33AE4 proc far
+ported_nopsub_33AC0_ endp
+ported_nopsub_33AE4_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11581,9 +11579,8 @@ nopsub_33AE4 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     nopsub_33AE4
+    nop
     push    ds
     push    si
     push    di
@@ -11596,7 +11593,7 @@ nopsub_33AE4 proc far
     jmp     short loc_33B1D
     ; align 2
     db 144
-nopsub_33AE4 endp
+ported_nopsub_33AE4_ endp
 ported_shape2d_render_bmp_as_mask_ proc far
     var_10 = word ptr -16
     var_E = word ptr -14
@@ -11682,7 +11679,7 @@ loc_33B94:
     loop    loc_33B7C
     jmp     short loc_33B48
 ported_shape2d_render_bmp_as_mask_ endp
-nopsub_33B98 proc far
+ported_nopsub_33B98_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11692,9 +11689,8 @@ nopsub_33B98 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Eh
+    jmp     nopsub_33B98
+    nop
     push    ds
     push    si
     push    di
@@ -11709,7 +11705,7 @@ nopsub_33B98 proc far
     jmp     short loc_33BF5
     ; align 2
     db 144
-nopsub_33B98 endp
+ported_nopsub_33B98_ endp
 ported_sprite_putimage_and_alt_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

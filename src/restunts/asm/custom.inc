@@ -421,6 +421,10 @@ extrn sprite_clear_shape:proc
 extrn draw_unknown_lines:proc
 extrn draw_patterned_lines:proc
 extrn putpixel_line1_maybe:proc
+extrn nopsub_339FA:proc
+extrn nopsub_33AC0:proc
+extrn nopsub_33AE4:proc
+extrn nopsub_33B98:proc
 extrn sprite_shape_to_1:proc
 extrn sprite_shape_to_1_alt:proc
 

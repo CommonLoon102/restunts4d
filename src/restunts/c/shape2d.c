@@ -1082,6 +1082,16 @@ void putpixel_iconMask(struct SHAPE2D far* shape, int x, int y)
 	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 0);
 }
 
+void nopsub_339FA(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	putpixel_icon_combine(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)), 0);
+}
+
 void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y)
 {
 	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 1);
@@ -1601,6 +1611,23 @@ void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 	shape2d_render_rle(shape,
 		shape2d_get_word(shape_bytes + 8U),
 		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_AND);
+}
+
+void nopsub_33AC0(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
+		SHAPE2D_RLE_AND);
+}
+
+void nopsub_33AE4(struct SHAPE2D far* shape, int x, int y)
+{
+	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
+		SHAPE2D_RLE_AND);
 }
 
 void shape2d_op_unk4(unsigned short offset, unsigned short segment)
@@ -2145,6 +2172,16 @@ void sprite_putimage(struct SHAPE2D far* shape)
 	sprite_putimage_at(shape,
 		shape2d_get_word(shape_bytes + 8U),
 		shape2d_get_word(shape_bytes + 0x0AU));
+}
+
+void nopsub_33B98(struct SHAPE2D far* shape, int x, int y)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_putimage_at(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)));
 }
 
 static void sprite_putimage_combine(struct SHAPE2D far* shape,
