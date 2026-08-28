@@ -217,7 +217,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_timer_wait_for_dx_:proc
     extrn ported_timer_compare_dx_:proc
     extrn ported_timer_get_counter_unk_:proc
-    extrn font_op:proc
+    extrn ported_font_op_:proc
     extrn font_op2:proc
     extrn loc_3284A:proc
     extrn loc_32882:proc

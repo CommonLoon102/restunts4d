@@ -1822,6 +1822,38 @@ void far* sub_29A86(int operation, const char* filename,
 	return 0;
 }
 
+int font_op(const char* text, int glyph_count)
+{
+	legacy_u8 far* font_definition;
+	legacy_u16 glyph_offset;
+	legacy_u16 glyph_width;
+	legacy_u16 remaining;
+	legacy_u16 total_width;
+	legacy_u8 character;
+	legacy_u8 has_glyph_widths;
+
+	remaining = (legacy_u16)glyph_count;
+	if (remaining == 0)
+		return 0;
+	font_definition = word_405FE;
+	has_glyph_widths = font_definition[0x14U];
+	glyph_width = audioresource_get_word(font_definition + 0x10U);
+	total_width = 0;
+	while ((character = (legacy_u8)*text++) != 0) {
+		glyph_offset = audioresource_get_word(font_definition + 0x16U +
+			(legacy_u16)character * 2U);
+		if (glyph_offset == 0)
+			continue;
+		if (has_glyph_widths != 0)
+			glyph_width = font_definition[glyph_offset];
+		total_width = LEGACY_U16_WRAP_ADD(total_width, glyph_width);
+		remaining--;
+		if (remaining == 0)
+			break;
+	}
+	return LEGACY_S16_FROM_BITS(total_width);
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

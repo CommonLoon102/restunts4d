@@ -264,7 +264,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_timer_wait_for_dx_
     public ported_timer_compare_dx_
     public ported_timer_get_counter_unk_
-    public font_op
+    public ported_font_op_
     public font_op2
     public loc_3284A
     public loc_32882
@@ -8851,22 +8851,19 @@ loc_3282D:
     ; align 2
     db 0
 ported_timer_get_counter_unk_ endp
-font_op proc far
+ported_font_op_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_4 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     font_op
     mov     dx, [bp+arg_4]
     or      dx, dx
     jnz     short loc_3284A
     xor     ax, ax
     jmp     short loc_32882
     db 144
-font_op endp
+ported_font_op_ endp
 font_op2 proc far
      s = byte ptr 0
      r = byte ptr 2
