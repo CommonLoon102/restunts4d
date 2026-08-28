@@ -47,7 +47,7 @@ seg005 segment byte public 'STUNTSC' use16
     assume cs:seg005
     assume es:nothing, ss:nothing, ds:dseg
     public ported_run_game_
-    public handle_ingame_kb_shortcuts
+    public ported_handle_ingame_kb_shortcuts_
     public ported_init_unknown_
     public ported_set_frame_callback_
     public ported_remove_frame_callback_
@@ -711,7 +711,7 @@ loc_22222:
     jz      short loc_22236
     push    ax
     push    cs
-    call near ptr handle_ingame_kb_shortcuts
+    call near ptr ported_handle_ingame_kb_shortcuts_
     add     sp, 2
 loc_22236:
     mov     ax, [bp+var_12]
@@ -887,14 +887,13 @@ loc_223F4:
     ; align 2
     db 144
 ported_run_game_ endp
-handle_ingame_kb_shortcuts proc far
+ported_handle_ingame_kb_shortcuts_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     handle_ingame_kb_shortcuts
+    nop
     cmp     ax, 64h ; 'd'
     jz      short loc_22470
     jbe     short loc_2240A
@@ -1041,7 +1040,7 @@ loc_22528:
     jmp     loc_2244E
 loc_22530:
     jmp     short loc_224C0
-handle_ingame_kb_shortcuts endp
+ported_handle_ingame_kb_shortcuts_ endp
 ported_init_unknown_ proc far
      s = byte ptr 0
      r = byte ptr 2
@@ -4018,7 +4017,7 @@ loc_2410C:
     jz      short loc_24129
     push    [bp+var_inputcode]
     push    cs
-    call near ptr handle_ingame_kb_shortcuts
+    call near ptr ported_handle_ingame_kb_shortcuts_
     add     sp, 2
     or      al, al
     jz      short loc_24129

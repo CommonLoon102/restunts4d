@@ -288,7 +288,8 @@ extern void mouse_minmax_position(int);
 extern void mouse_set_minmax(int, int, int, int);
 extern void mouse_set_position(int, int);
 extern int kb_get_char(void);
-extern void handle_ingame_kb_shortcuts(int);
+extern int handle_ingame_kb_shortcuts(int key);
+extern void update_crash_state(int state, int multiplayer);
 
 extern int mouse_butstate;
 extern int mouse_xpos;
@@ -462,6 +463,7 @@ extern void kb_reg_callback(int code, void (far* callback)(void));
 extern void show_graphic_levels_menu(void);
 extern void do_joy_restext(void);
 extern void do_key_restext(void);
+extern void do_mou_restext(void);
 extern void do_mof_restext(void);
 extern void do_pau_restext(void);
 extern void do_dos_restext(void);

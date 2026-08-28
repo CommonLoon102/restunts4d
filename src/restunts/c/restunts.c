@@ -450,6 +450,7 @@ extern int word_45D06;
 extern int idle_counter;
 extern char byte_3B8F7;
 extern char mouse_isdirty;
+extern legacy_u8 HKeyFlag;
 
 static char skybox_resource_names[5][9] = {
 	"desert",
@@ -467,6 +468,75 @@ void init_unknown(void)
 	byte_449DA = 0;
 	byte_4393C = 0;
 	word_44DCA = 0;
+}
+
+int handle_ingame_kb_shortcuts(int key)
+{
+	switch (key) {
+	case 0x1B:
+		if (game_replay_mode == 0)
+			update_crash_state(4, 0);
+		byte_449DA = 1;
+		return 1;
+
+	case 'D':
+	case 'd':
+		dashb_toggle ^= 1;
+		return 1;
+
+	case 'H':
+	case 'h':
+		HKeyFlag ^= 1;
+		return 1;
+
+	case 'M':
+	case 'm':
+		do_mou_restext();
+		mouse_minmax_position(LEGACY_S8_FROM_BITS(byte_3B8F2));
+		return 1;
+
+	case 'R':
+	case 'r':
+		replaybar_toggle ^= 1;
+		return 1;
+
+	case 'C':
+	case 'c':
+		if (game_replay_mode != 1) {
+			cameramode++;
+			if (cameramode == 4)
+				cameramode = 0;
+		}
+		return 1;
+
+	case 't':
+		if (gameconfig.game_opponenttype != 0)
+			followOpponentFlag ^= 1;
+		return 1;
+
+	case 0x3B00:
+		cameramode = 0;
+		return 1;
+	case 0x3C00:
+		cameramode = 1;
+		return 1;
+	case 0x3D00:
+		cameramode = 2;
+		return 1;
+	case 0x3E00:
+		cameramode = 3;
+		return 1;
+	}
+
+	if (game_replay_mode != 1)
+		return 0;
+
+	game_replay_mode = 0;
+	byte_4393C = 0;
+	framespersec = framespersec2;
+	*(legacy_u8*)&gameconfig.game_framespersec = (legacy_u8)framespersec2;
+	init_game_state(-1);
+	return 1;
 }
 
 void sub_29772(void)
