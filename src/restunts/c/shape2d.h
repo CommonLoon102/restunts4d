@@ -54,6 +54,7 @@ void putpixel_single_maybe(int x, int y, int color);
 
 void sprite_putimage(struct SHAPE2D far* shape);
 void sprite_putimage_and(struct SHAPE2D far* shape, unsigned short a, unsigned short b);
+void sprite_putimage_and_alt(struct SHAPE2D far* shape, int x, int y);
 void sprite_putimage_or(struct SHAPE2D far* shape, unsigned short a, unsigned short b);
 void sprite_clear_shape_alt(struct SHAPE2D far* shape, int x, int y);
 

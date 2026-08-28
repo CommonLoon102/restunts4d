@@ -76,9 +76,19 @@ extern char transformedshape_counter;
 extern int word_449FE;
 extern struct SPRITE far* wndsprite;
 extern int fontdef_unk_0E;
+extern unsigned skybox_current;
+extern unsigned word_454CE;
+extern unsigned skybox_ptr1;
+extern unsigned skybox_ptr2;
+extern unsigned skybox_ptr3;
+extern unsigned skybox_ptr4;
+extern int skybox_sky_color;
+extern int skybox_grd_color;
+extern struct SHAPE2D far* skyboxes[];
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 void transformed_shape_add_for_sort(int z_adjust, int type);
+void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon);
 unsigned char subst_hillroad_track(unsigned char a, unsigned char b);
 int skybox_op(int a, struct RECTANGLE* rectptr, int c, struct MATRIX* matptr, int e, int f, int g);
 struct RECTANGLE* draw_ingame_text(void);
@@ -105,6 +115,72 @@ void transformed_shape_add_for_sort(int z_adjust, int type)
 	transformedshape_counter = (char)(legacy_u8)(
 		(legacy_u8)transformedshape_counter + 1U);
 	curtransshape_ptr++;
+}
+
+void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon)
+{
+	legacy_u16 top;
+	legacy_u16 bottom;
+	legacy_u16 left;
+	legacy_u16 right;
+	legacy_u16 sky_lines;
+	legacy_u16 rect_height;
+	legacy_u16 image_x;
+	legacy_u16 ground_top;
+	legacy_u16 ground_lines;
+	legacy_u16 horizon_bits;
+
+	top = (legacy_u16)rect->top;
+	bottom = (legacy_u16)rect->bottom;
+	left = (legacy_u16)rect->left;
+	right = (legacy_u16)rect->right;
+	horizon_bits = (legacy_u16)horizon;
+	sky_lines = LEGACY_U16_WRAP_SUB(horizon_bits, top);
+	if (detail_level != 4)
+		sky_lines = LEGACY_U16_WRAP_SUB(sky_lines, skybox_current);
+	rect_height = LEGACY_U16_WRAP_SUB(bottom, top);
+	if (LEGACY_S16_FROM_BITS(rect_height) <
+		LEGACY_S16_FROM_BITS(sky_lines))
+		sky_lines = rect_height;
+	if (LEGACY_S16_FROM_BITS(sky_lines) > 0) {
+		sprite_set_1_size(left, right, top,
+			LEGACY_U16_WRAP_ADD(top, sky_lines));
+		sprite_clear_1_color((legacy_u8)skybox_sky_color);
+	}
+
+	if (detail_level != 4 &&
+		LEGACY_S16_FROM_BITS(top) < LEGACY_S16_FROM_BITS(horizon_bits) &&
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
+			horizon_bits, word_454CE)) <= LEGACY_S16_FROM_BITS(bottom)) {
+		sprite_set_1_size(left, right, top, bottom);
+		image_x = LEGACY_U16_WRAP_SUB(
+			LEGACY_U16_WRAP_ADD(angle, 0x200U) & 0x03FFU, 0x0400U);
+		sprite_putimage_and_alt(skyboxes[0],
+			LEGACY_S16_FROM_BITS(image_x), LEGACY_S16_WRAP_SUB(
+				horizon_bits, skybox_ptr1));
+		sprite_putimage_and_alt(skyboxes[1], LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(image_x, 0x0140U)),
+			LEGACY_S16_WRAP_SUB(horizon_bits, skybox_ptr2));
+		sprite_putimage_and_alt(skyboxes[2], LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(image_x, 0x0200U)),
+			LEGACY_S16_WRAP_SUB(horizon_bits, skybox_ptr3));
+		sprite_putimage_and_alt(skyboxes[3], LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(image_x, 0x0340U)),
+			LEGACY_S16_WRAP_SUB(horizon_bits, skybox_ptr4));
+		sprite_putimage_and_alt(skyboxes[0], LEGACY_S16_FROM_BITS(
+			LEGACY_U16_WRAP_ADD(image_x, 0x0400U)),
+			LEGACY_S16_WRAP_SUB(horizon_bits, skybox_ptr1));
+	}
+
+	ground_top = horizon_bits;
+	if (LEGACY_S16_FROM_BITS(top) > LEGACY_S16_FROM_BITS(horizon_bits))
+		ground_top = top;
+	ground_lines = LEGACY_U16_WRAP_SUB(bottom, ground_top);
+	if (LEGACY_S16_FROM_BITS(ground_lines) > 0) {
+		sprite_set_1_size(left, right, ground_top,
+			LEGACY_U16_WRAP_ADD(ground_top, ground_lines));
+		sprite_clear_1_color((legacy_u8)skybox_grd_color);
+	}
 }
 
 void init_rect_arrays(void) {

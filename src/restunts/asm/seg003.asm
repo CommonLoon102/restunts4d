@@ -49,7 +49,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_sub_19F14_
     public ported_init_rect_arrays_
     public ported_update_frame_
-    public skybox_op_helper2
+    public ported_skybox_op_helper2_
     public skybox_op
     public ported_transformed_shape_add_for_sort_
     public draw_track_preview
@@ -3787,16 +3787,15 @@ loc_1C2F8:
     pop     bp
     retf
 ported_update_frame_ endp
-skybox_op_helper2 proc far
+ported_skybox_op_helper2_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_rectptr = word ptr 6
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     skybox_op_helper2
+    nop
     push    di
     push    si
     cmp     detail_level, 4
@@ -3936,7 +3935,7 @@ loc_1C46D:
     retf
     ; align 2
     db 144
-skybox_op_helper2 endp
+ported_skybox_op_helper2_ endp
 skybox_op proc far
     var_78 = byte ptr -120
     var_76 = word ptr -118
@@ -4365,7 +4364,7 @@ loc_1C80A:
     lea     ax, [bp+var_rect]
     push    ax
     push    cs
-    call near ptr skybox_op_helper2
+    call near ptr ported_skybox_op_helper2_
     add     sp, 6
     mov     ax, [bp+var_rect.rc_right]
     mov     [bp+var_34], ax
@@ -4566,7 +4565,7 @@ loc_1CA25:
     lea     ax, [bp+var_rect]
     push    ax
     push    cs
-    call near ptr skybox_op_helper2
+    call near ptr ported_skybox_op_helper2_
     add     sp, 6
     jmp     loc_1CB77
 loc_1CA52:
@@ -4636,7 +4635,7 @@ loc_1CADE:
     add     ax, offset rect_array_unk3
     push    ax
     push    cs
-    call near ptr skybox_op_helper2
+    call near ptr ported_skybox_op_helper2_
     add     sp, 6
     inc     di
 loc_1CAF6:
