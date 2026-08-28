@@ -2486,7 +2486,10 @@ extern char aSof[];
 extern char aSon[];
 extern char aSav[];
 extern char aWai[];
+extern char aDefault_1[];
 extern char* findfilenames[];
+extern void far* miscptr;
+extern int word_407FA;
 extern void audio_unk(void);
 extern void call_exitlist2(void);
 extern void sub_372F4(void);
@@ -2494,6 +2497,10 @@ extern int word_3EB90;
 void font_set_unk(int color, int unknown);
 int call_read_line(char* text, int max_characters, int x, int y,
 	unsigned long timeout);
+legacy_s8 do_fileselect_dialog(char* directory, char* filename,
+	char* extension, char far* prompt);
+struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
+	int shadow_color);
 
 void ensure_file_exists(int file_index)
 {
@@ -2710,6 +2717,87 @@ void show_graphic_levels_menu(void)
 	word_3F88E = 0;
 	sub_372F4();
 	input_pop_status();
+}
+
+unsigned run_option_menu(void)
+{
+	legacy_s8 selected;
+	legacy_s8 initial_input;
+	legacy_u8 menu_active;
+	char far* prompt;
+
+	miscptr = file_load_resfile("misc");
+	sprite_copy_2_to_1_2();
+	sprite_clear_1_color((legacy_u8)word_407FA);
+	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gstu"));
+	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 6,
+		dialog_fnt_colour, 0);
+	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gver"));
+	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 0x10,
+		dialog_fnt_colour, 0);
+
+	menu_active = 1;
+	while (menu_active != 0) {
+		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+			locate_text_res(miscptr, "mop"), 0xFFFFU, 0xFFFFU,
+			dialogarg2, 0, 0));
+		switch (selected) {
+		case -1:
+		case 6:
+			menu_active = 0;
+			break;
+
+		case 0:
+			if (byte_3B8F2 != 0)
+				initial_input = 2;
+			else if (byte_3FE00 != 0)
+				initial_input = 1;
+			else
+				initial_input = 0;
+			selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+				locate_text_res(miscptr, "mid"), 0xFFFFU,
+				0xFFFFU, performGraphColor, 0, initial_input));
+			if (selected == 0)
+				do_key_restext();
+			else if (selected == 1)
+				do_joy_restext();
+			else if (selected == 2)
+				do_mou_restext();
+			break;
+
+		case 1:
+			do_mof_restext();
+			break;
+
+		case 2:
+			do_sonsof_restext();
+			break;
+
+		case 3:
+			prompt = locate_text_res(mainresptr, "rep");
+			if (do_fileselect_dialog(byte_3B85E, aDefault_1,
+				".rpl", prompt) != 0) {
+				waitflag = 0x96;
+				show_waiting();
+				file_load_replay(byte_3B85E, aDefault_1);
+				menu_active = 1;
+				goto option_menu_done;
+			}
+			break;
+
+		case 4:
+			show_graphic_levels_menu();
+			break;
+
+		case 5:
+			do_dos_restext();
+			break;
+		}
+	}
+
+option_menu_done:
+	unload_resource(miscptr);
+	return menu_active;
 }
 
 short do_dea_textres(void)
