@@ -5737,7 +5737,7 @@ void load_opponent_data(void)
 	unload_resource(resource);
 }
 
-int setup_player_cars(void) {
+static int setup_player_cars_impl(int load_dashboard_shapes) {
 	void far* carresptr;
 	unsigned long var_8;
 
@@ -5784,7 +5784,11 @@ int setup_player_cars(void) {
 	fontledresptr = file_load_resource(0, "fontled.fnt");//aFontled_fnt); // "fontled.fnt"
 	slow_video_mgmt_copy = slow_video_mgmt;
 	init_rect_arrays();
-	if (idle_expired == 0) {
+	/* REPLDUMP advances simulation without rendering the dashboard.  Keep the
+	 * car 3D container in its original arena position because later legacy
+	 * state still observes that memory layout, but avoid the much larger 2D
+	 * dashboard allocation that memory-heavy custom cars cannot afford. */
+	if (idle_expired == 0 && load_dashboard_shapes) {
 		setup_car_shapes(0);
 	}
 
@@ -5817,6 +5821,14 @@ int setup_player_cars(void) {
 	followOpponentFlag = 0;
 	is_in_replay_copy = -1;
 	return 0;
+}
+
+int setup_player_cars(void) {
+	return setup_player_cars_impl(1);
+}
+
+int setup_player_cars_repldump(void) {
+	return setup_player_cars_impl(0);
 }
 
 void free_player_cars(void) {

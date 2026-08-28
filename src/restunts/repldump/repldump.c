@@ -195,6 +195,10 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 
 #endif
 
+#ifndef RESTUNTS_ORIGINAL
+extern int setup_player_cars_repldump(void);
+#endif
+
 // First argument is the filename without the .rpl extension.
 // If there is a second argument (it can by anything, usually 1), then the filename
 // can contain the .rpl extension. It is useful to call this tool via batch files,
@@ -282,7 +286,11 @@ int stuntsmain(int argc, char* argv[]) {
 	is_in_replay = 1;
 
 	printf("Setup player cars... ");
+#ifdef RESTUNTS_ORIGINAL
 	if (setup_player_cars() != 0) {
+#else
+	if (setup_player_cars_repldump() != 0) {
+#endif
 		printf("FAIL (out of memory)\n");
 		return 1;
 	}
