@@ -50,7 +50,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_run_intro_looped_
     public ported_run_intro_
     public load_intro_resources
-    public run_menu
+    public ported_run_menu_
     public run_tracks_menu
     public ported_highscore_write_a_
     public highscore_text_unk
@@ -510,7 +510,7 @@ _show_menu:
     add     sp, 6
 loc_10467:
     push    cs
-    call near ptr run_menu
+    call near ptr ported_run_menu_
     cbw
     cmp     ax, 0FFFFh
     jnz     short loc_10474
@@ -1565,7 +1565,7 @@ loc_10F34:
     pop     bp
     retf
 load_intro_resources endp
-run_menu proc far
+ported_run_menu_ proc far
     var_selectedmenu = byte ptr -16
     var_menuhit = byte ptr -14
     var_C = byte ptr -12
@@ -1577,9 +1577,8 @@ run_menu proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 10h
+    jmp     run_menu
+    nop
     mov     [bp+var_6], 0FFh
     mov     [bp+var_selectedmenu], 0
     mov     [bp+var_C], 0FFh
@@ -1728,7 +1727,7 @@ loc_110BA:
     retf
     ; align 2
     db 144
-run_menu endp
+ported_run_menu_ endp
 run_tracks_menu proc far
     var_16 = byte ptr -22
     var_14 = byte ptr -20
