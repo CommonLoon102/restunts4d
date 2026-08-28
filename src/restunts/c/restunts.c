@@ -554,20 +554,6 @@ legacy_s16 toupper(legacy_s16 ch)
 	return ch;
 }
 
-void init_row_tables(void) {
-	legacy_s16 i;
-	for (i = 0; i < 30; i++) {
-		trackrows[i] = 30 * (29 - i);
-		terrainrows[i] = 30 * i;
-		trackpos[i] = (29 - i) << 10;
-		trackpos2[i] = i << 10;
-		trackcenterpos[i] = ((29 - i) << 10) + 0x200;
-		terrainpos[i] = i << 10;
-		terraincenterpos[i] = (i << 10) + 0x200;
-		trackcenterpos2[i] = (i << 10) + 0x200;
-	}
-}
-
 void set_default_car(void) {
 	gameconfig.game_playercarid[0]     = 'C';
 	gameconfig.game_playercarid[1]     = 'O';
@@ -578,81 +564,6 @@ void set_default_car(void) {
 	gameconfig.game_opponenttype       = 0;
 	gameconfig.game_opponentmaterial   = 0;
 	gameconfig.game_opponentcarid[0]   = 0xFF;
-}
-
-void init_trackdata(void) {
-	legacy_s8 far* trkptr;
-	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
-
-	td01_track_file_cpy = trkptr;
-	
-	trkptr += 0x70a;
-	td02_penalty_related = trkptr;
-	
-	trkptr += 0x70a;
-	trackdata3 = trkptr;
-
-	trkptr += 0x70a;
-	td04_aerotable_pl = trkptr;
-
-	trkptr += 0x80;
-	td05_aerotable_op = trkptr;
-
-	trkptr += 0x80;
-	trackdata6 = trkptr;
-
-	trkptr += 0x80;
-	trackdata7 = trkptr;
-
-	trkptr += 0x80;
-	td08_direction_related = trkptr;
-
-	trkptr += 0x60;
-	trackdata9 = trkptr;
-
-	trkptr += 0x180;
-	td10_track_check_rel = trkptr;
-
-	trkptr += 0x120;
-	td11_highscores = trkptr;
-
-	trkptr += 0x16c;
-	trackdata12 = trkptr;
-
-	trkptr += 0x0f0;
-	td13_rpl_header = trkptr;
-
-	trkptr += 0x1a;
-	td14_elem_map_main = trkptr;
-
-	trkptr += 0x385;
-	td15_terr_map_main = trkptr;
-
-	trkptr += 0x385;
-	td16_rpl_buffer = trkptr;
-
-	trkptr += 0x2ee0;
-	td17_trk_elem_ordered = trkptr;
-
-	trkptr += 0x385;
-	trackdata18 = trkptr;
-
-	trkptr += 0x385;
-	trackdata19 = trkptr;
-
-	trkptr += 0x385;
-	td20_trk_file_appnd = trkptr;
-
-	trkptr += 0x7ac;
-	td21_col_from_path = trkptr;
-
-	trkptr += 0x385;
-	td22_row_from_path = trkptr;
-
-	trkptr += 0x385;
-	trackdata23 = trkptr;
-
-	trkptr += 0x30;
 }
 
 extern struct SHAPE3D game3dshapes[];
@@ -780,16 +691,6 @@ static legacy_s8 skybox_resource_names[5][9] = {
 	"city",
 	"country"
 };
-
-void init_unknown(void)
-{
-	byte_44A8A = 1;
-	byte_4552F = 2;
-	elapsed_time2 = 0;
-	byte_449DA = 0;
-	byte_4393C = 0;
-	word_44DCA = 0;
-}
 
 legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 {
