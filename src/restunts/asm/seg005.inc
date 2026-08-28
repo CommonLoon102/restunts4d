@@ -12,7 +12,7 @@ seg005 segment byte public 'STUNTSC' use16
     extrn setup_car_shapes:proc
     extrn ported_setup_player_cars_:proc
     extrn ported_free_player_cars_:proc
-    extrn mouse_minmax_position:proc
+    extrn ported_mouse_minmax_position_:proc
     extrn ported_replay_unk_:proc
     extrn loop_game:proc
     extrn off_2481A:word

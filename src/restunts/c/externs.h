@@ -285,6 +285,8 @@ extern void loop_game(int, int, int);
 extern void set_frame_callback(void);
 extern void remove_frame_callback(void);
 extern void mouse_minmax_position(int);
+extern void mouse_set_minmax(int, int, int, int);
+extern void mouse_set_position(int, int);
 extern int kb_get_char(void);
 extern void handle_ingame_kb_shortcuts(int);
 

@@ -2002,6 +2002,16 @@ void replay_unk(void)
 	byte_442EA[history_index] = 0;
 }
 
+void mouse_minmax_position(int inset)
+{
+	if (inset != 0) {
+		mouse_set_minmax(0x0F, 0, 0x131, 0xC8);
+		mouse_set_position(0xA0, 0x64);
+	} else {
+		mouse_set_minmax(0, 0, 0x140, 0xC8);
+	}
+}
+
 static int font_measure(const char* text, legacy_u16 remaining, int bounded)
 {
 	legacy_u8 far* font_definition;

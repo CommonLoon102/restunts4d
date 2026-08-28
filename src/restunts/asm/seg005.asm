@@ -59,7 +59,7 @@ seg005 segment byte public 'STUNTSC' use16
     public setup_car_shapes
     public ported_setup_player_cars_
     public ported_free_player_cars_
-    public mouse_minmax_position
+    public ported_mouse_minmax_position_
     public ported_replay_unk_
     public loop_game
     public off_2481A
@@ -189,7 +189,7 @@ loc_21C78:
     cbw
     push    ax
     push    cs
-    call near ptr mouse_minmax_position
+    call near ptr ported_mouse_minmax_position_
     add     sp, 2
     mov     game_replay_mode, 1
     mov     ax, 0FF10h
@@ -669,7 +669,7 @@ loc_221CC:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr mouse_minmax_position
+    call near ptr ported_mouse_minmax_position_
     add     sp, 2
     sub     ax, ax
     push    ax
@@ -869,7 +869,7 @@ loc_223CD:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr mouse_minmax_position
+    call near ptr ported_mouse_minmax_position_
     add     sp, 2
     push    cs
     call near ptr ported_remove_frame_callback_
@@ -941,7 +941,7 @@ loc_2245E:
     cbw
     push    ax
     push    cs
-    call near ptr mouse_minmax_position
+    call near ptr ported_mouse_minmax_position_
     jmp     short loc_224E6
     ; align 4
     db 144
@@ -3257,14 +3257,14 @@ loc_23A15:
     call    shape3d_free_car_shapes
     retf
 ported_free_player_cars_ endp
-mouse_minmax_position proc far
+ported_mouse_minmax_position_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    cmp     [bp+arg_0], 0
+    jmp     mouse_minmax_position
+    nop
+    nop
     jz      short loc_23A82
     mov     ax, 0C8h ; '�'
     push    ax
@@ -3296,7 +3296,7 @@ loc_23A82:
     add     sp, 8
     pop     bp
     retf
-mouse_minmax_position endp
+ported_mouse_minmax_position_ endp
 ported_replay_unk_ proc far
     var_A = byte ptr -10
     var_8 = byte ptr -8
@@ -4439,7 +4439,7 @@ loc_244B0:
     cbw
     push    ax
     push    cs
-    call near ptr mouse_minmax_position
+    call near ptr ported_mouse_minmax_position_
     add     sp, 2
     call    check_input
     mov     kbormouse, 0
