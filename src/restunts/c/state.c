@@ -1474,7 +1474,7 @@ track_record_piece:
 			else
 				arrow_code = byte_3E71E[
 					LEGACY_S8_FROM_BITS(arrow_code)];
-			orientation = (legacy_s16)current_info->si_arrowOrient;
+			orientation = (legacy_s16)previous_info->si_arrowOrient;
 			track_setup_rotate_vector(&camera_vector, orientation);
 			td08_direction_related[byte_45635] =
 				previous_connection_status != 0 ?
