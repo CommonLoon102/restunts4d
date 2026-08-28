@@ -307,7 +307,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	printf("OK\n");
 
 	printf("Set frame callback... ");
+#ifdef RESTUNTS_ORIGINAL
 	set_frame_callback();
+#endif
 	game_replay_mode_copy = 0xFF;
 	byte_44346 = 0;
 	byte_4432A = 0;
@@ -352,7 +354,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
 
 	while (gameconfig.game_recordedframes > state.game_frame) {
+#ifdef RESTUNTS_ORIGINAL
 		input_do_checking(1);
+#endif
 		update_gamestate();
 	#ifdef RESTUNTS_ORIGINAL
 		fwrite(&state, sizeof(struct GAMESTATE), 1, fout);
@@ -367,6 +371,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	fclose(fout);
 
+#ifdef RESTUNTS_ORIGINAL
 	if (argc == 2) {
 	        input_do_checking(1);
 	        fatal_error("\nDone.\n");
@@ -377,10 +382,10 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	        kb_exit_handler();
 	        kb_shift_checking1();
 	        video_set_mode7();
-#ifndef RESTUNTS_ORIGINAL
-	        ems_shutdown();
-#endif
 	}
+#else
+	ems_shutdown();
+#endif
 
 	return 0;
 }
