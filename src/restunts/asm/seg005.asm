@@ -51,7 +51,7 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_init_unknown_
     public ported_set_frame_callback_
     public ported_remove_frame_callback_
-    public frame_callback
+    public ported_frame_callback_
     public replay_unk2
     public sub_2298C
     public ported_file_load_replay_
@@ -1092,9 +1092,9 @@ ported_remove_frame_callback_ proc far
     ; align 2
     db 144
 ported_remove_frame_callback_ endp
-frame_callback proc far
+ported_frame_callback_ proc far
 
-    call    compare_ds_ss
+    jmp     frame_callback
     or      ax, ax
     jnz     short loc_225A2
     jmp     locret_22696
@@ -1198,7 +1198,7 @@ locret_22696:
     retf
     ; align 2
     db 144
-frame_callback endp
+ported_frame_callback_ endp
 replay_unk2 proc far
     var_A = word ptr -10
     var_8 = word ptr -8

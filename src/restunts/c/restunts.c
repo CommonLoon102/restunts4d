@@ -189,9 +189,14 @@ unsigned long timer_get_counter_unk(unsigned long ticks)
 	return res;
 }
 
-extern unsigned int word_46468;
-extern char byte_442E4;
+extern legacy_u16 word_46468;
+extern legacy_u8 byte_442E4;
+extern legacy_s16 word_44D1E;
+extern legacy_s16 word_449E4;
+extern legacy_s16 word_443F4;
+extern legacy_u8 unk_44F4C[];
 extern void far frame_callback(void);
+extern void replay_unk2(int mode);
 extern void timer_reg_callback(void (far* callback)(void));
 extern void timer_remove_callback(void (far* callback)(void));
 
@@ -905,6 +910,54 @@ void sub_18D06(const legacy_u8* sample, int interval)
 			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1CU)),
 			interval);
 	}
+}
+
+void frame_callback(void)
+{
+	if (compare_ds_ss() == 0 || byte_442E4 != 0)
+		return;
+
+	byte_442E4 = 1;
+	word_443F4 = LEGACY_S16_WRAP_ADD(word_443F4, 1);
+	if (word_443F4 >= word_4499C && word_44D1E != word_449E4) {
+		sub_18D06(unk_44F4C + 0x22U * (legacy_u16)word_44D1E,
+			word_443F4);
+		word_443F4 = 0;
+		word_44D1E = LEGACY_S16_WRAP_ADD(word_44D1E, 1);
+		if (word_44D1E == 0x28)
+			word_44D1E = 0;
+	}
+
+	if (byte_449DA == 0 && byte_46467 == 0 &&
+		(is_in_replay == 0 || game_replay_mode != 2)) {
+		if (game_replay_mode == 0 &&
+			LEGACY_S16_FROM_BITS(state.game_frame_in_sec) >=
+			LEGACY_S16_FROM_BITS(state.game_frames_per_sec)) {
+			is_in_replay = 1;
+			audio_carstate();
+		} else {
+			byte_44A8A = (legacy_u8)(byte_44A8A - 1U);
+			if (byte_44A8A == 0) {
+				byte_44A8A = (legacy_u8)word_4499C;
+				word_46468 = LEGACY_U16_WRAP_ADD(word_46468, 1U);
+				if (game_replay_mode == 2 &&
+					LEGACY_S8_FROM_BITS(byte_449E6) == 2) {
+					byte_4552F = (legacy_u8)(byte_4552F - 1U);
+					if (byte_4552F == 0) {
+						replay_unk2(0);
+						byte_4552F = 2;
+					}
+				} else {
+					if (game_replay_mode == 2 &&
+						LEGACY_S8_FROM_BITS(byte_449E6) == 3)
+						replay_unk2(0);
+					replay_unk2(0);
+				}
+			}
+		}
+	}
+
+	byte_442E4--;
 }
 
 void audio_driver_timer(void)
@@ -2904,10 +2957,6 @@ extern char unk_3E7FC[];
 extern char byte_42D26;
 extern char byte_42D2A;
 extern char unk_3E82C[];
-extern int word_44D1E;
-extern int word_449E4;
-extern int word_443F4;
-
 extern char gnam_string[]; // 40 bytes
 extern char gsna_string[]; // 5 bytes
 

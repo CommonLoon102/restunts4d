@@ -4,7 +4,7 @@ seg005 segment byte public 'STUNTSC' use16
     extrn ported_init_unknown_:proc
     extrn ported_set_frame_callback_:proc
     extrn ported_remove_frame_callback_:proc
-    extrn frame_callback:proc
+    extrn ported_frame_callback_:proc
     extrn replay_unk2:proc
     extrn sub_2298C:proc
     extrn ported_file_load_replay_:proc
