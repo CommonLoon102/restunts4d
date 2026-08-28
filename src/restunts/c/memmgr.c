@@ -1378,16 +1378,13 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 //#endif
 
 
-struct resheader {
-	legacy_u32 size;
-	legacy_u16 chunks;
-};
-
 legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 fatal) {
-	legacy_u16 i, j;
-	struct resheader far* hdr = (struct resheader far*)data;
+	legacy_u16 chunk_count, i, j;
 	legacy_s8 far* resnames = (legacy_s8 far*)data + 6; // point at first 4-byte resource identifier
 	legacy_s8 huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
+	legacy_u8 far* offset;
+
+	chunk_count = LEGACY_READ_U16_LE((legacy_u8 far*)data + 4);
 
 	//printf("locate_resource: %s\n", name);
 
@@ -1408,7 +1405,7 @@ legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 
 	// reads as 00 00 00 00 for the usual first-chunk-at-zero layout, and the
 	// query is always space-padded above, so only an all-blank name could
 	// match it and no caller passes one.
-	for (j = 0; j < hdr->chunks; j++) {
+	for (j = 0; j < chunk_count; j++) {
 		for (i = 0; i < 4; i++) {
 			if (resnames[i] != name[i]) {
 				break;
@@ -1416,8 +1413,9 @@ legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 
 		}
 		if (i == 4 || (resnames[i] == 0 && name[i] == 0x20)) {
 			result = data;
-			result += hdr->chunks * 8 + 6; // header, names and offsets
-			result += *(legacy_u32 far*)(&resnames[hdr->chunks * 4]); // extract the offset
+			result += chunk_count * 8 + 6; // header, names and offsets
+			offset = (legacy_u8 far*)resnames + chunk_count * 4;
+			result += LEGACY_READ_U32_LE(offset);
 			return (legacy_s8 far*)result;
 		}
 		resnames += 4; // move pointer to next 4-byte resource identifier

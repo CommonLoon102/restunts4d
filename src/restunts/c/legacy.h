@@ -114,14 +114,14 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 			LEGACY_S16_FROM_BITS(denominator)))
 
 #define LEGACY_READ_U16_LE(bytes) \
-	((legacy_u16)((legacy_u16)((const legacy_u8*)(bytes))[0] | \
-	((legacy_u16)((const legacy_u8*)(bytes))[1] << 8)))
+	((legacy_u16)((legacy_u16)(legacy_u8)(bytes)[0] | \
+	((legacy_u16)(legacy_u8)(bytes)[1] << 8)))
 
 #define LEGACY_WRITE_U16_LE(bytes, value) \
 	do { \
 		legacy_u16 legacy_write_u16_value_ = (legacy_u16)(value); \
-		((legacy_u8*)(bytes))[0] = (legacy_u8)legacy_write_u16_value_; \
-		((legacy_u8*)(bytes))[1] = \
+		(bytes)[0] = (legacy_u8)legacy_write_u16_value_; \
+		(bytes)[1] = \
 			(legacy_u8)(legacy_write_u16_value_ >> 8); \
 	} while (0)
 
@@ -196,10 +196,10 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 			LEGACY_S32_FROM_BITS(denominator)))
 
 #define LEGACY_READ_U32_LE(bytes) \
-	((legacy_u32)((legacy_u32)((const legacy_u8*)(bytes))[0] | \
-	((legacy_u32)((const legacy_u8*)(bytes))[1] << 8) | \
-	((legacy_u32)((const legacy_u8*)(bytes))[2] << 16) | \
-	((legacy_u32)((const legacy_u8*)(bytes))[3] << 24)))
+	((legacy_u32)((legacy_u32)(legacy_u8)(bytes)[0] | \
+	((legacy_u32)(legacy_u8)(bytes)[1] << 8) | \
+	((legacy_u32)(legacy_u8)(bytes)[2] << 16) | \
+	((legacy_u32)(legacy_u8)(bytes)[3] << 24)))
 #define LEGACY_READ_S16_LE(bytes) \
 	LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(bytes))
 #define LEGACY_READ_S32_LE(bytes) \
@@ -208,12 +208,12 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_WRITE_U32_LE(bytes, value) \
 	do { \
 		legacy_u32 legacy_write_u32_value_ = (legacy_u32)(value); \
-		((legacy_u8*)(bytes))[0] = (legacy_u8)legacy_write_u32_value_; \
-		((legacy_u8*)(bytes))[1] = \
+		(bytes)[0] = (legacy_u8)legacy_write_u32_value_; \
+		(bytes)[1] = \
 			(legacy_u8)(legacy_write_u32_value_ >> 8); \
-		((legacy_u8*)(bytes))[2] = \
+		(bytes)[2] = \
 			(legacy_u8)(legacy_write_u32_value_ >> 16); \
-		((legacy_u8*)(bytes))[3] = \
+		(bytes)[3] = \
 			(legacy_u8)(legacy_write_u32_value_ >> 24); \
 	} while (0)
 

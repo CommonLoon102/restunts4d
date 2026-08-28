@@ -23,22 +23,13 @@
 #define RS_VLE_ESC_WIDTH 0x40
 #define RS_VLE_NUM_SYMB  0x80
 
-struct compr_header {
-	union {
-		legacy_s8 passes;
-		legacy_s8 type;
-	};
-	legacy_u16 sizel;
-	legacy_u8  sizeh;
-};
+#define COMPR_HEADER_SIZE 4U
+#define COMPR_SIZE_LOW_OFFSET 1U
+#define COMPR_SIZE_HIGH_OFFSET 3U
 
-struct compr_rle_header {
-	legacy_u16 srcsizel;
-	legacy_u8  srcsizeh;
-	legacy_u8  unk; // Always 0.
-	legacy_u8  esclen;
-	legacy_u8  esc[RS_VLE_ESC_LEN];
-};
+#define COMPR_RLE_HEADER_SIZE 5U
+#define COMPR_RLE_SIZE_HIGH_OFFSET 2U
+#define COMPR_RLE_ESCLEN_OFFSET 4U
 
 #ifdef RESTUNTS_DOS
 // Minimal stdio.h "support" until we can link with a real CRT.
@@ -410,15 +401,17 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
 	legacy_s32 length;
 	FILE* file;
-	struct compr_header hdr;
+	legacy_u8 header[COMPR_HEADER_SIZE];
 	
 	if ((file = fopen(filename, "rb")) != 0) {
-		fread(&hdr, sizeof(hdr), 1, file);
+		fread(header, sizeof(header), 1, file);
 		fclose(file);
 		
 		if (!ferror(file)) {
 			// May overflow, but all Stunts files are rather small.
-			length = hdr.sizel | ((legacy_s32)hdr.sizeh << 16);
+			length = (legacy_s32)LEGACY_READ_U16_LE(
+				header + COMPR_SIZE_LOW_OFFSET) |
+				((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] << 16);
 			return (length >> 4) + (length & 0xF ? 1 : 0);
 		}
 	}
@@ -671,42 +664,45 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	legacy_u16 skipseq, i;
 	legacy_u8 esclookup[RS_RLE_ESCLOOKUP_LEN];
 	legacy_u8 huge* origsrc;
+	legacy_u8 huge* escapes;
 	legacy_u16 paras;
-	struct compr_header far* hdr;
-	struct compr_rle_header far* subhdr;
+	legacy_u8 esclen;
 
 	(void)decompparas;
 
 	// Get decompressed size from header.
-	hdr = (struct compr_header far*)src;
-	len = hdr->sizel | ((legacy_s32)hdr->sizeh << 16);
-	origsrc = src += sizeof(*hdr);
+	len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
+		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << 16);
+	origsrc = src += COMPR_HEADER_SIZE;
 	
 	// Get source size and escape codes.
-	subhdr = (struct compr_rle_header far*)src;
-	srclen = subhdr->srcsizel | ((legacy_s32)subhdr->srcsizeh << 16);
+	srclen = LEGACY_READ_U16_LE(src) |
+		((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] << 16);
+	esclen = src[COMPR_RLE_ESCLEN_OFFSET];
+	escapes = src + COMPR_RLE_HEADER_SIZE;
 	
 	// MSB denotes skipping the initial pass for byte sequence runs. Match the
 	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
 	// using the byte in the sequence-escape slot even though the declared
 	// escape-code count is zero.
-	skipseq = subhdr->esclen > 0x80;
-	subhdr->esclen &= ~0x80;
+	skipseq = esclen > 0x80;
+	esclen &= (legacy_u8)~0x80U;
 
 	// Set pos to after escape codes.
-	src = origsrc + 5 + subhdr->esclen;
+	src = origsrc + COMPR_RLE_HEADER_SIZE + esclen;
 
 	// Escape code lookup.
 	for (i = 0; i < RS_RLE_ESCLOOKUP_LEN; ++i) {
 		esclookup[i] = 0;
 	}
 
-	for (i = 0; i < subhdr->esclen; ++i) {
-		esclookup[subhdr->esc[i]] = i + 1;		
+	for (i = 0; i < esclen; ++i) {
+		esclookup[escapes[i]] = i + 1;
 	}
 
 	if (!skipseq) {
-		passlen = file_decomp_rle_seq(src, dst, srclen, subhdr->esc[RS_RLE_ESCSEQ_POS]);
+		passlen = file_decomp_rle_seq(
+			src, dst, srclen, escapes[RS_RLE_ESCSEQ_POS]);
 
 		paras = (passlen >> 4) + (passlen & 0xF ? 1 : 0);
 
@@ -743,14 +739,13 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 
 	legacy_u8 huge* wdtpos;
 	legacy_u8 huge* codpos;
-	struct compr_header far* hdr;
 
 	(void)decompparas;
 
 	// Get decompressed size from header.
-	hdr = (struct compr_header far*)src;
-	len = lenleft = hdr->sizel | ((legacy_s32)hdr->sizeh << 16);
-	src += sizeof(*hdr);
+	len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
+		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << 16);
+	src += COMPR_HEADER_SIZE;
 
 	// One-byte escape codes length counter.
 	esclen = *src++;

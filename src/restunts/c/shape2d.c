@@ -2364,21 +2364,21 @@ struct SHAPE2D far* file_get_shape2d(legacy_u8 far* memchunk, legacy_s16 index) 
 	legacy_u32 chunkofs;
 	legacy_u8 huge* result;
 	
-	shapecount = *(legacy_u16 far*)&memchunk[4];
+	shapecount = LEGACY_READ_U16_LE(memchunk + 4);
 	offsetofs = (index << 2) + (shapecount << 2) + 6;
 	dataofs = (shapecount << 3) + 6;
-	chunkofs = *(legacy_u32 far*)(&memchunk[offsetofs]);
+	chunkofs = LEGACY_READ_U32_LE(memchunk + offsetofs);
 	result = memchunk;
 	result += dataofs + chunkofs;
 	return (struct SHAPE2D far*)result;
 }
 
 void nopsub_326BA(legacy_u8 far* memchunk, legacy_u16 index, legacy_u32* result) {
-	*result = *(legacy_u32 far*)(memchunk + (index << 2) + 6);
+	*result = LEGACY_READ_U32_LE(memchunk + (index << 2) + 6);
 }
 
 legacy_u16 file_get_res_shape_count(void far* memchunk) {
-	return ((legacy_u16 far*)memchunk)[2];
+	return LEGACY_READ_U16_LE((legacy_u8 far*)memchunk + 4);
 }
 
 void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
@@ -2390,7 +2390,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	legacy_u8 flag;
 	legacy_s16 i, j;
 
-	shapecount = *(legacy_u16 far*)&memchunk[4];
+	shapecount = LEGACY_READ_U16_LE(memchunk + 4);
 	counter = 0;
 	do {
 		memshape = file_get_shape2d(memchunk, counter);
@@ -2565,7 +2565,8 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	legacy_u32 val;
 	legacy_u32 product;
 	legacy_u16 lowterm;
-	legacy_u32 far* offsets, nextoffset;
+	legacy_u32 nextoffset;
+	legacy_u8 far* offsets;
 	struct SHAPE2D far* srcshape, far* dstshape;
 
 	shapecount = file_get_res_shape_count(memchunk);
@@ -2575,12 +2576,11 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	mempagesptr = mempages + 4;
 	
 	// Copy count and ids.
-	for (i = 0; i < (shapecount * 2 + 1); ++i) {
-		*((legacy_u16 far*)mempagesptr)++ = *((legacy_u16 far*)memchunkptr)++;
-	}
+	fmemcpy(mempagesptr, memchunkptr, shapecount * 4 + 2);
+	mempagesptr += shapecount * 4 + 2;
 	
 	// Store pointer to offset table.
-	offsets = (legacy_u32 far*)mempagesptr;
+	offsets = mempagesptr;
 	nextoffset = 0;
 	
 	for (i = 0; i < shapecount; ++i) {
@@ -2594,7 +2594,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 		// `add ax, bx / adc dx, cx` that folds in the running offset does.
 		lowterm = (legacy_u16)length * 8 + sizeof(struct SHAPE2D);
 
-		offsets[i] = nextoffset;
+		LEGACY_WRITE_U32_LE(offsets + (i << 2), nextoffset);
 		nextoffset += (legacy_u32)lowterm
 		            + ((legacy_u32)(legacy_u16)(product >> 16) << 16);
 		
@@ -2642,7 +2642,8 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	
 	// Final size. The original folds this in as a 16-bit term too
 	// (bx = shapecount*8 + 6, then `add ax, bx / adc dx, 0`).
-	*(legacy_u32 far*)mempages = (legacy_u16)(6 + (shapecount * 8)) + nextoffset;
+	LEGACY_WRITE_U32_LE((legacy_u8 far*)mempages,
+		(legacy_u16)(6 + (shapecount * 8)) + nextoffset);
 }
 
 legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
@@ -2728,7 +2729,8 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 	
 	mempages = mmgr_alloc_pages(str, expandedsize);
 
-	*(legacy_s32 far*)mempages = (legacy_s32)expandedsize * 16;
+	LEGACY_WRITE_U32_LE((legacy_u8 far*)mempages,
+		(legacy_u32)expandedsize * 16U);
 	
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);

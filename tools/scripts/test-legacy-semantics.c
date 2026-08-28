@@ -84,7 +84,10 @@ static void test_multiply_and_divide(void)
 
 static void test_little_endian_access(void)
 {
-	legacy_u8 bytes[4];
+	legacy_u8 storage[6];
+	legacy_u8* bytes;
+
+	bytes = storage + 1;
 
 	LEGACY_WRITE_U16_LE(bytes, 0xFEDCU);
 	assert(bytes[0] == 0xDCU && bytes[1] == 0xFEU);
