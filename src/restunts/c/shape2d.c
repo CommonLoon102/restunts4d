@@ -1022,6 +1022,33 @@ void sub_35C4E(int source_x, int source_y, int width, int height,
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
+void sub_35DE6(int destination_index, int count, void far* source_data)
+{
+	legacy_u8 far* source_ptr;
+	legacy_u8 far* destination_ptr;
+	legacy_u16 source_segment;
+	legacy_u16 source;
+	legacy_u16 destination_segment;
+	legacy_u16 destination;
+	legacy_u16 remaining;
+
+	source_segment = FP_SEG(source_data);
+	source = FP_OFF(source_data);
+	destination_segment = FP_SEG(incnums);
+	destination = LEGACY_U16_WRAP_ADD(
+		FP_OFF(incnums), (legacy_u16)destination_index);
+	remaining = (legacy_u16)count;
+	while (remaining != 0) {
+		source_ptr = (legacy_u8 far*)MK_FP(source_segment, source);
+		destination_ptr = (legacy_u8 far*)MK_FP(
+			destination_segment, destination);
+		*destination_ptr = *source_ptr;
+		source++;
+		destination++;
+		remaining--;
+	}
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2

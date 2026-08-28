@@ -329,7 +329,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sub_35C4E_:proc
     extrn incnums:byte
     extrn sub_35DC8:proc
-    extrn sub_35DE6:proc
+    extrn ported_sub_35DE6_:proc
     extrn sub_35E08:proc
     extrn loc_35ED9:proc
     extrn ported_file_load_shape2d_palmap_apply_:proc

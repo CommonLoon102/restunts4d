@@ -171,6 +171,7 @@ extrn putpixel_single_maybe:proc
 extrn sub_35B76:proc
 extrn sub_35C4E:proc
 extrn set_fontdefseg:proc
+extrn sub_35DE6:proc
 extrn setup_mcgawnd1:proc
 extrn setup_mcgawnd2:proc
 extrn file_load_shape2d:proc

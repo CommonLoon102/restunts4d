@@ -376,7 +376,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sub_35C4E_
     public incnums
     public sub_35DC8
-    public sub_35DE6
+    public ported_sub_35DE6_
     public sub_35E08
     public loc_35ED9
     public ported_file_load_shape2d_palmap_apply_
@@ -18343,7 +18343,7 @@ sub_35DC8 proc far
     pop     bp
     retf
 sub_35DC8 endp
-sub_35DE6 proc far
+ported_sub_35DE6_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -18351,10 +18351,7 @@ sub_35DE6 proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    push    ds
-    push    si
+    jmp     sub_35DE6
     push    di
     mov     cx, [bp+arg_2]
     mov     ds, [bp+arg_6]
@@ -18372,7 +18369,7 @@ loc_35E01:
     pop     ds
     pop     bp
     retf
-sub_35DE6 endp
+ported_sub_35DE6_ endp
 sub_35E08 proc far
     var_14 = word ptr -20
     var_12 = word ptr -18
