@@ -231,6 +231,7 @@ extrn init_rect_arrays:proc
 extrn font_set_fontdef2:proc
 extrn font_set_fontdef:proc
 extrn update_frame:proc
+extrn transformed_shape_add_for_sort:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

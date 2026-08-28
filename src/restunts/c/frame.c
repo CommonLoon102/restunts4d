@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "legacy.h"
 #include "math.h"
 #include "shape2d.h"
 #include "shape3d.h"
@@ -77,7 +78,7 @@ extern struct SPRITE far* wndsprite;
 extern int fontdef_unk_0E;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
-void transformed_shape_add_for_sort(int a, int b);
+void transformed_shape_add_for_sort(int z_adjust, int type);
 unsigned char subst_hillroad_track(unsigned char a, unsigned char b);
 int skybox_op(int a, struct RECTANGLE* rectptr, int c, struct MATRIX* matptr, int e, int f, int g);
 struct RECTANGLE* draw_ingame_text(void);
@@ -88,6 +89,23 @@ void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
 void format_frame_as_string(char* s, int time, int c);
 void heapsort_by_order(int n, int* heap, int* data);
+
+void transformed_shape_add_for_sort(int z_adjust, int type)
+{
+	struct VECTOR transformed_position;
+	int index;
+
+	mat_mul_vector(&curtransshape_ptr->pos, &mat_temp,
+		&transformed_position);
+	index = LEGACY_S8_FROM_BITS((legacy_u8)transformedshape_counter);
+	transformedshape_zarray[index] = LEGACY_S16_WRAP_ADD(
+		transformed_position.z, z_adjust);
+	transformedshape_arg2array[index] = (char)(legacy_u8)type;
+	transformedshape_indices[index] = index;
+	transformedshape_counter = (char)(legacy_u8)(
+		(legacy_u8)transformedshape_counter + 1U);
+	curtransshape_ptr++;
+}
 
 void init_rect_arrays(void) {
 	int i;

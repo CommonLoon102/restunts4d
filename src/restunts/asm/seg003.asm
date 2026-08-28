@@ -51,7 +51,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_update_frame_
     public skybox_op_helper2
     public skybox_op
-    public transformed_shape_add_for_sort
+    public ported_transformed_shape_add_for_sort_
     public draw_track_preview
     public draw_ingame_text
     public do_sinking
@@ -2298,7 +2298,7 @@ loc_1B408:
     push    ax
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
     cmp     [bp+var_4E], 0
     jz      short loc_1B449
@@ -2308,7 +2308,7 @@ loc_1B408:
     mov     ax, 0F800h
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
     cmp     [bp+var_6C], 0
     jz      short loc_1B43C
@@ -2492,7 +2492,7 @@ loc_1B575:
     push    ax
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1B61A:
     inc     di
@@ -2584,7 +2584,7 @@ loc_1B626:
     push    ax
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
     jmp     short loc_1B72E
 loc_1B71E:
@@ -2719,7 +2719,7 @@ loc_1B808:
     and     ax, [bp+var_12A]
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1B896:
     inc     di
@@ -2851,7 +2851,7 @@ loc_1B990:
     and     ax, [bp+var_12A]
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1B9DA:
     mov     al, [bp+var_pos2lookup]
@@ -2980,7 +2980,7 @@ loc_1BAB4:
     and     ax, [bp+var_12A]
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1BB43:
     inc     di
@@ -3110,7 +3110,7 @@ loc_1BC3E:
     and     ax, [bp+var_12A]
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1BC89:
     cmp     state.game_inputmode, 0
@@ -3289,7 +3289,7 @@ smart
 nosmart
     push    ax
     push    cs
-    call near ptr transformed_shape_add_for_sort
+    call near ptr ported_transformed_shape_add_for_sort_
     add     sp, 4
 loc_1BEAA:
     cmp     transformedshape_counter, 0
@@ -4701,7 +4701,7 @@ loc_1CB77:
     pop     bp
     retf
 skybox_op endp
-transformed_shape_add_for_sort proc far
+ported_transformed_shape_add_for_sort_ proc far
     transformedpos = VECTOR ptr -12
     shapepos = VECTOR ptr -6
      s = byte ptr 0
@@ -4709,9 +4709,8 @@ transformed_shape_add_for_sort proc far
     arg_zadjust = word ptr 6
     arg_2 = byte ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 0Ch
+    jmp     transformed_shape_add_for_sort
+    nop
     push    di
     push    si
     mov     ax, curtransshape_ptr
@@ -4754,7 +4753,7 @@ transformed_shape_add_for_sort proc far
     retf
     ; align 2
     db 144
-transformed_shape_add_for_sort endp
+ported_transformed_shape_add_for_sort_ endp
 draw_track_preview proc far
     var_42 = word ptr -66
     var_40 = word ptr -64
