@@ -151,7 +151,7 @@ seg012 segment byte public 'STUNTSC' use16
     public timer_intr_callback
     public sub_303BA
     public set_bios_mode3
-    public kb_parse_key
+    public ported_kb_parse_key_
     public ported_kb_reg_callback_
     public ported_nopsub_304AF_
     public nopsub_304B6
@@ -3816,15 +3816,16 @@ nosmart
     int     10h             ; - VIDEO - SET COLOR PALETTE
     retf
 set_bios_mode3 endp
-kb_parse_key proc far
+ported_kb_parse_key_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    cli
-    cmp     in_kb_parse_key, 0
+    jmp     kb_parse_key
+    nop
+    nop
+    nop
+    nop
     jz      short loc_30412
     sti
     pop     bp
@@ -3868,7 +3869,7 @@ loc_30454:
     mov     in_kb_parse_key, 0
     pop     bp
     retf
-kb_parse_key endp
+ported_kb_parse_key_ endp
 ported_kb_reg_callback_ proc far
      s = byte ptr 0
      r = byte ptr 2

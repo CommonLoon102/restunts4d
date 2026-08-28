@@ -43,6 +43,7 @@ extern legacy_s16 word_45D7C;
 extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
+extern legacy_u8 in_kb_parse_key;
 extern void (far* timerintr[6])(void);
 extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
@@ -102,6 +103,40 @@ void kb_reg_callback(int code, void (far* callback)(void))
 	key_index = (legacy_u16)(code_bits >> 8);
 	if (key_index <= 0x84U)
 		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
+}
+
+int kb_parse_key(int code)
+{
+	legacy_u16 code_bits;
+	legacy_u16 key_index;
+	legacy_u8 callback_number;
+
+	code_bits = (legacy_u16)code;
+	disable();
+	if (in_kb_parse_key != 0) {
+		enable();
+		return LEGACY_S16_FROM_BITS(code_bits);
+	}
+	in_kb_parse_key = 1;
+	enable();
+
+	if ((code_bits & 0x00FFU) != 0) {
+		key_index = code_bits & 0x007FU;
+		callback_number = callbackflags[key_index];
+		code_bits = key_index;
+	} else {
+		key_index = code_bits >> 8;
+		if (key_index >= 0x84U)
+			key_index = 0x84U;
+		callback_number = callbackflags2[key_index];
+	}
+
+	if (callback_number != 0) {
+		callbacks[(legacy_u16)callback_number - 1U]();
+		code_bits = 0;
+	}
+	in_kb_parse_key = 0;
+	return LEGACY_S16_FROM_BITS(code_bits);
 }
 
 void nopsub_304AF(int code)

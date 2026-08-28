@@ -224,6 +224,7 @@ extrn nopsub_33330:proc
 
 ; externs for implementations in keyboard.c
 
+extrn kb_parse_key:proc
 extrn kb_init_interrupt:proc
 extrn kb_exit_handler:proc
 extrn kb_int9_handler:proc
