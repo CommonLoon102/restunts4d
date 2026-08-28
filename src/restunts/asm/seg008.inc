@@ -19,7 +19,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn ported_mouse_draw_opaque_:proc
     extrn ported_mouse_draw_transparent_:proc
     extrn ported_mouse_multi_hittest_:proc
-    extrn check_input:proc
+    extrn ported_check_input_:proc
     extrn ported_nopsub_28F26_:proc
     extrn ported_sprite_copy_2_to_1_2_:proc
     extrn ported_sprite_copy_2_to_1_clear_:proc

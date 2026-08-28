@@ -241,6 +241,7 @@ extrn highscore_write_a:proc
 extrn highscore_write_b:proc
 extrn replay_unk:proc
 extrn mouse_minmax_position:proc
+extrn check_input:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

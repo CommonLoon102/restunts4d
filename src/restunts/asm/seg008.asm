@@ -66,7 +66,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_mouse_draw_opaque_
     public ported_mouse_draw_transparent_
     public ported_mouse_multi_hittest_
-    public check_input
+    public ported_check_input_
     public ported_nopsub_28F26_
     public ported_sprite_copy_2_to_1_2_
     public ported_sprite_copy_2_to_1_clear_
@@ -859,7 +859,7 @@ loc_27B98:
     mov     [bp+var_1D4], 0
 loc_27BB6:
     push    cs
-    call near ptr check_input
+    call near ptr ported_check_input_
     jmp     short loc_27B88
 loc_27BBC:
     sub     ax, ax
@@ -1032,7 +1032,7 @@ loc_27D56:
     cmp     [bp+var_1C0], 0FFh
     jnz     short loc_27D65
     push    cs
-    call near ptr check_input
+    call near ptr ported_check_input_
 loc_27D65:
     mov     al, [bp+var_1D4]
     mov     [bp+var_1C0], al
@@ -1181,7 +1181,7 @@ loc_27EA4:
 loc_27EA9:
     mov     [bp+var_84], 0
     push    cs
-    call near ptr check_input
+    call near ptr ported_check_input_
     jmp     loc_27C6D
     ; align 2
     db 144
@@ -3106,14 +3106,13 @@ loc_28EDA:
     ; align 2
     db 144
 ported_mouse_multi_hittest_ endp
-check_input proc far
+ported_check_input_ proc far
     var_2 = byte ptr -2
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     check_input
+    nop
 loc_28EEA:
     call    get_kb_or_joy_flags
     test    al, 30h
@@ -3144,7 +3143,7 @@ loc_28F1C:
     mov     sp, bp
     pop     bp
     retf
-check_input endp
+ported_check_input_ endp
 ported_nopsub_28F26_ proc far
 
     jmp     nopsub_28F26
@@ -3154,7 +3153,7 @@ ported_nopsub_28F26_ proc far
     or      ax, ax
     jz      short near ptr ported_nopsub_28F26_
     push    cs
-    call near ptr check_input
+    call near ptr ported_check_input_
     retf
     ; align 2
     db 144

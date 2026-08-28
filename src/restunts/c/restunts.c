@@ -522,6 +522,21 @@ int input_do_checking(int frame_delta)
 	return input_checking(frame_delta);
 }
 
+void check_input(void)
+{
+	int pressed;
+
+	do {
+		pressed = (get_kb_or_joy_flags() & 0x30) != 0;
+		if (!pressed) {
+			pressed = input_checking(
+				(int)timer_get_delta_alt()) != 0;
+		}
+		if (!pressed && kbormouse != 0 && (mouse_butstate & 3) != 0)
+			pressed = 1;
+	} while (pressed);
+}
+
 void nopsub_28F26(void)
 {
 	do {
