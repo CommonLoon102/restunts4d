@@ -54,7 +54,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_transformed_shape_add_for_sort_
     public draw_track_preview
     public draw_ingame_text
-    public do_sinking
+    public ported_do_sinking_
     public init_crak
     public ported_load_skybox_
     public ported_unload_skybox_
@@ -3615,7 +3615,7 @@ loc_1C17C:
     sub     ax, si
     push    ax
     push    cs
-    call near ptr do_sinking
+    call near ptr ported_do_sinking_
     jmp     short loc_1C156
 loc_1C1AC:
     mov     bx, [bp+arg_cliprectptr]
@@ -3627,7 +3627,7 @@ loc_1C1AC:
     sub     ax, si
     push    ax
     push    cs
-    call near ptr do_sinking
+    call near ptr ported_do_sinking_
 loc_1C1C3:
     add     sp, 6
 loc_1C1C6:
@@ -5783,16 +5783,15 @@ loc_1D52B:
     pop     bp
     retf
 draw_ingame_text endp
-do_sinking proc far
+ported_do_sinking_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     do_sinking
+    nop
     push    di
     push    si
     mov     di, framespersec
@@ -5848,7 +5847,7 @@ loc_1D54C:
     retf
     ; align 2
     db 144
-do_sinking endp
+ported_do_sinking_ endp
 init_crak proc far
     var_1A = word ptr -26
     var_18 = word ptr -24

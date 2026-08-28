@@ -84,6 +84,8 @@ extern unsigned skybox_ptr3;
 extern unsigned skybox_ptr4;
 extern int skybox_sky_color;
 extern int skybox_grd_color;
+extern int skybox_wat_color;
+extern struct RECTANGLE rect_ingame_text;
 extern struct SHAPE2D far* skyboxes[];
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
@@ -181,6 +183,30 @@ void skybox_op_helper2(struct RECTANGLE* rect, int angle, int horizon)
 			LEGACY_U16_WRAP_ADD(ground_top, ground_lines));
 		sprite_clear_1_color((legacy_u8)skybox_grd_color);
 	}
+}
+
+struct RECTANGLE* do_sinking(int frame, int top, int height)
+{
+	legacy_s16 duration;
+	legacy_s16 clipped_frame;
+	legacy_s16 sink_height;
+	legacy_s16 bottom;
+
+	duration = (legacy_s16)((legacy_u16)framespersec << 2);
+	clipped_frame = (legacy_s16)frame;
+	if (clipped_frame > duration)
+		clipped_frame = duration;
+	sink_height = (legacy_s16)(((long)(legacy_s16)height * clipped_frame) /
+		duration);
+	bottom = LEGACY_S16_WRAP_ADD(top, height);
+	rect_ingame_text.left = 0;
+	rect_ingame_text.right = 0x140;
+	rect_ingame_text.top = LEGACY_S16_WRAP_SUB(bottom, sink_height);
+	rect_ingame_text.bottom = bottom;
+	sprite_set_1_size(0, 0x140, rect_ingame_text.top,
+		rect_ingame_text.bottom);
+	sprite_clear_1_color((legacy_u8)skybox_wat_color);
+	return &rect_ingame_text;
 }
 
 void init_rect_arrays(void) {
