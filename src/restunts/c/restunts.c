@@ -2173,6 +2173,8 @@ extern char aKey[];
 extern char aMer[];
 extern char aMof[];
 extern char aMon[];
+extern char aMrl[];
+extern char aMrs[];
 extern char aMou[];
 extern char aPau[];
 extern char aSof[];
@@ -2340,6 +2342,69 @@ int do_savefile_dialog(char* primary, char* secondary, char far* prompt)
 
 	sub_275C6();
 	return result;
+}
+
+void show_graphic_levels_menu(void)
+{
+	char selected_options[9];
+	char menu_text[512];
+	legacy_u16 original_frame_rate;
+	legacy_u16 option_index;
+	legacy_u16 text_index;
+	legacy_s8 selected;
+
+	input_push_status();
+	word_3F88E = 1;
+	audio_unk();
+	original_frame_rate = framespersec2;
+	selected = 0;
+	for (;;) {
+		copy_string(menu_text, locate_text_res(mainresptr, aMrl));
+		for (option_index = 0; option_index < 9U; option_index++)
+			selected_options[option_index] = 0;
+		selected_options[detail_level] = 1;
+		selected_options[5U + slow_video_mgmt] = 1;
+		selected_options[framespersec2 == 10U ? 7 : 8] = 1;
+
+		text_index = 0;
+		for (option_index = 0; option_index < 9U; option_index++) {
+			while (menu_text[text_index] != '[')
+				text_index++;
+			if (selected_options[option_index] != 0)
+				menu_text[text_index + 1U] = '*';
+			text_index++;
+		}
+
+		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+			(void far*)menu_text, -1, -1, performGraphColor, 0,
+			(int)selected));
+		if (selected == -1 || selected == 9)
+			break;
+		switch (selected) {
+		case 5:
+			slow_video_mgmt = 0;
+			break;
+		case 6:
+			slow_video_mgmt = 1;
+			break;
+		case 7:
+			framespersec2 = 10;
+			break;
+		case 8:
+			framespersec2 = 20;
+			break;
+		default:
+			detail_level = (legacy_u8)selected;
+			break;
+		}
+	}
+
+	if (original_frame_rate != framespersec2)
+		show_dialog(1, 1, locate_text_res(mainresptr, aMrs),
+			-1, -1, dialogarg2, 0, 0);
+	word_3F88E = 0;
+	sub_372F4();
+	input_pop_status();
 }
 
 short do_dea_textres(void)

@@ -159,7 +159,7 @@ loc_39E63:
     call    kb_shift_checking2
 loc_39E68:
     call    kb_call_readchar_callback
-    mov     ax, offset show_graphic_levels_menu
+    mov     ax, offset ported_show_graphic_levels_menu_
     mov     dx, seg seg008
     push    dx
 loc_39E74:

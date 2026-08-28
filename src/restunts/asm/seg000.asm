@@ -5114,7 +5114,7 @@ loc_130E2:
     mov     [bp+var_4], 1
     jmp     short loc_13163
 loc_13134:
-    call    show_graphic_levels_menu
+    call    far ptr show_graphic_levels_menu
     jmp     short loc_1315A
     ; align 2
     db 144

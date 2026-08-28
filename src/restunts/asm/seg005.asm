@@ -4775,7 +4775,7 @@ loc_247F8:
     mov     cameramode, 0
     jmp     short loc_24828
 loc_2480A:
-    call    show_graphic_levels_menu
+    call    far ptr show_graphic_levels_menu
     jmp     short loc_24828
     ; align 2
     db 144
