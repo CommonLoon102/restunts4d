@@ -50,9 +50,9 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_polarAngle_
     public off_2EA9B
     public sub_2EAD4
-    public set_add_value
-    public sub_2EB07
-    public sub_2EB1E
+    public ported_set_add_value_
+    public ported_sub_2EB07_
+    public ported_sub_2EB1E_
     public ported_draw_line_related_alt_
     public ported_draw_line_related_
     public loc_2EB62
@@ -504,17 +504,18 @@ loc_2EADC:
 locret_2EADD:
     retf
 sub_2EAD4 endp
-set_add_value proc far
+ported_set_add_value_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
+    jmp     set_add_value
+    nop
+    nop
+    nop
 loc_2EADF:
-    mov     bp, sp
 loc_2EAE1:
-    call    sub_2EAD4
 loc_2EAE6:
     add     ax, [bp+arg_0]
 loc_2EAE9:
@@ -532,10 +533,10 @@ loc_2EAF5:
     cmp     ax, word_3F1C2
     jb      short loc_2EAF5
     retf
-set_add_value endp
-sub_2EB07 proc far
+ported_set_add_value_ endp
+ported_sub_2EB07_ proc far
 
-    call    sub_2EAD4
+    jmp     sub_2EB07
     xor     cx, cx
     cmp     dx, word_3F1C4
     jb      short loc_2EB1B
@@ -545,8 +546,8 @@ sub_2EB07 proc far
 loc_2EB1B:
     mov     ax, cx
     retf
-sub_2EB07 endp
-sub_2EB1E proc far
+ported_sub_2EB07_ endp
+ported_sub_2EB1E_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -554,9 +555,8 @@ sub_2EB1E proc far
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     sub_2EB1E
+    nop
     call    sub_2EAD4
     add     ax, [bp+arg_0]
     adc     dx, [bp+arg_2]
@@ -571,7 +571,7 @@ loc_2EB35:
     mov     sp, bp
     pop     bp
     retf
-sub_2EB1E endp
+ported_sub_2EB1E_ endp
 ported_draw_line_related_alt_ proc far
     var_4 = byte ptr -4
      s = byte ptr 0

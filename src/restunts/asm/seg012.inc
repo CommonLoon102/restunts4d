@@ -3,9 +3,9 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_polarAngle_:proc
     extrn off_2EA9B:word
     extrn sub_2EAD4:proc
-    extrn set_add_value:proc
-    extrn sub_2EB07:proc
-    extrn sub_2EB1E:proc
+    extrn ported_set_add_value_:proc
+    extrn ported_sub_2EB07_:proc
+    extrn ported_sub_2EB1E_:proc
     extrn ported_draw_line_related_alt_:proc
     extrn ported_draw_line_related_:proc
     extrn loc_2EB62:proc

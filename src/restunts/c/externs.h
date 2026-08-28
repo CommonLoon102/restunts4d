@@ -372,6 +372,8 @@ extern unsigned short resmaxsize;
 extern unsigned long timer_callback_counter;
 extern unsigned long last_timer_callback_counter;
 extern unsigned long timer_copy_unk;
+extern unsigned short word_3F1C2;
+extern unsigned short word_3F1C4;
 
 extern unsigned char g_kevinrandom_seed[];
 extern const char aReservememoryO[];
@@ -482,6 +484,7 @@ extern short intr0_handler(void);
 extern short (far* old_intr0_handler)(void);
 extern void timer_setup_interrupt(void);
 extern unsigned long timer_get_delta_alt(void);
+extern unsigned long sub_2EAD4(void);
 
 extern short set_criterr_handler(short (far* callback)(void));
 extern void libsub_quit_to_dos_alt(short a1);

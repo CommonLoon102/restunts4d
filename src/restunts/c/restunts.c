@@ -1862,6 +1862,47 @@ int font_op2(const char* text)
 	return font_measure(text, 0, 0);
 }
 
+static legacy_u32 secondary_timer_target(void)
+{
+	return ((legacy_u32)word_3F1C4 << 16) | word_3F1C2;
+}
+
+static int secondary_timer_target_reached(
+	legacy_u32 current,
+	legacy_u32 target
+) {
+	return (legacy_u16)(current >> 16) >= (legacy_u16)(target >> 16) &&
+		(legacy_u16)current >= (legacy_u16)target;
+}
+
+unsigned long set_add_value(unsigned long ticks)
+{
+	legacy_u32 target;
+
+	target = (legacy_u32)(sub_2EAD4() + ticks);
+	word_3F1C2 = (legacy_u16)target;
+	word_3F1C4 = (legacy_u16)(target >> 16);
+	return target;
+}
+
+int sub_2EB07(void)
+{
+	return secondary_timer_target_reached(
+		sub_2EAD4(), secondary_timer_target());
+}
+
+unsigned long sub_2EB1E(unsigned long ticks)
+{
+	legacy_u32 current;
+	legacy_u32 target;
+
+	target = (legacy_u32)(sub_2EAD4() + ticks);
+	do {
+		current = sub_2EAD4();
+	} while (!secondary_timer_target_reached(current, target));
+	return current;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
