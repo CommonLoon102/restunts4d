@@ -712,7 +712,7 @@ ported_run_intro_looped_ proc far
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     push    cs
     call near ptr load_intro_resources
@@ -778,7 +778,7 @@ loc_106E4:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     si, ax
     or      si, si
@@ -806,7 +806,7 @@ loc_106E4:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     si, ax
     or      si, si
@@ -1385,7 +1385,7 @@ load_intro_resources proc far
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     call    sprite_copy_2_to_1_2
     call    timer_get_delta_alt
@@ -1539,7 +1539,7 @@ loc_10E91:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_46], ax
     or      ax, ax
@@ -1630,7 +1630,7 @@ loc_10FB9:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_6], 0FEh ; '�'
     call    sprite_copy_2_to_1_2
@@ -2035,7 +2035,7 @@ loc_113B4:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_6], 0FEh ; '�'
     call    sprite_copy_2_to_1_2
@@ -2840,7 +2840,7 @@ loc_11AED:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -2889,7 +2889,7 @@ loc_11AED:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     push    cs
     call near ptr ported_highscore_write_b_
@@ -4067,7 +4067,7 @@ loc_126D1:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_3E], 0FEh ; '�'
     jmp     short loc_12723
@@ -4676,7 +4676,7 @@ loc_12CFB:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_4], 0FEh ; '�'
     call    timer_get_delta_alt
@@ -6391,7 +6391,7 @@ loc_13D13:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_52], 0FEh ; '�'
     call    ported_sub_29772_
@@ -6787,7 +6787,7 @@ loc_1416E:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_52], 0FEh ; '�'
     call    sprite_copy_2_to_1_2

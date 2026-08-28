@@ -2491,6 +2491,34 @@ int call_read_line(char* text, int max_characters, int x, int y,
 	return result;
 }
 
+int sprite_blit_to_video(struct SPRITE far* sprite, int mode)
+{
+	int result;
+	unsigned int phase;
+
+	sprite_copy_2_to_1_2();
+	mouse_draw_opaque_check();
+	if ((legacy_u16)mode == 0xFFFEU) {
+		sprite_putimage(sprite->sprite_bitmapptr);
+		mouse_draw_transparent_check();
+		return 0;
+	}
+
+	result = 0;
+	for (phase = 0; phase < 4U; ++phase) {
+		result = input_do_checking((int)timer_get_delta_alt());
+		if (result != 0)
+			break;
+		sprite_1_unk3(sprite->sprite_bitmapptr, phase);
+	}
+	if (result != 0) {
+		sprite_copy_2_to_1_2();
+		sprite_putimage(sprite->sprite_bitmapptr);
+	}
+	mouse_draw_transparent_check();
+	return result;
+}
+
 int read_line(int flags, char* text, int initial_key, int max_characters,
 	int max_pixels, int x, int y, void (far* callback)(void),
 	unsigned long timeout)

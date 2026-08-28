@@ -80,7 +80,7 @@ seg008 segment byte public 'STUNTSC' use16
     public draw_button
     public ported_shape3d_init_shape_
     public ported_font_op2_alt_
-    public sprite_blit_to_video
+    public ported_sprite_blit_to_video_
     public ported_show_waiting_
     public ported_print_int_as_string_maybe_
     public ported_sub_29772_
@@ -3980,15 +3980,14 @@ ported_font_op2_alt_ proc far
     pop     bp
     retf
 ported_font_op2_alt_ endp
-sprite_blit_to_video proc far
+ported_sprite_blit_to_video_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     sprite_blit_to_video
+    nop
     push    di
     push    si
     push    cs
@@ -4054,7 +4053,7 @@ loc_29670:
     retf
     ; align 2
     db 144
-sprite_blit_to_video endp
+ported_sprite_blit_to_video_ endp
 ported_show_waiting_ proc far
 
     jmp     show_waiting

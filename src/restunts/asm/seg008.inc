@@ -33,7 +33,7 @@ seg008 segment byte public 'STUNTSC' use16
     extrn draw_button:proc
     extrn ported_shape3d_init_shape_:proc
     extrn ported_font_op2_alt_:proc
-    extrn sprite_blit_to_video:proc
+    extrn ported_sprite_blit_to_video_:proc
     extrn ported_show_waiting_:proc
     extrn ported_print_int_as_string_maybe_:proc
     extrn ported_sub_29772_:proc

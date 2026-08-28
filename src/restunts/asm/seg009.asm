@@ -975,7 +975,7 @@ loc_2AAF0:
     push    ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
-    call    sprite_blit_to_video
+    call    far ptr sprite_blit_to_video
     add     sp, 6
     mov     [bp+var_36], 0FEh ; 'þ'
     mov     [bp+var_C2], 0FFh
