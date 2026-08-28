@@ -128,7 +128,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_preRender_line_
     public ported_add_exit_handler_
     public ported_call_exitlist_
-    public call_exitlist2
+    public ported_call_exitlist2_
     public ported_file_paras_
     public ported_file_paras_nofatal_
     public ported_file_paras_fatal_
@@ -2976,15 +2976,15 @@ loc_2FE72:
     pop     di
     retf
 ported_call_exitlist_ endp
-call_exitlist2 proc near
+ported_call_exitlist2_ proc near
 
-    call    call_exitlist
+    jmp     call_exitlist2
     xor     ax, ax
     push    ax
     call    far ptr libsub_quit_to_dos_alt
     ; align 2
     db 0
-call_exitlist2 endp
+ported_call_exitlist2_ endp
 ported_file_paras_ proc far
     var_fatal = word ptr -6
     var_length = word ptr -4

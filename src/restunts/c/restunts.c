@@ -1928,6 +1928,12 @@ void call_exitlist(void)
 			exitlistfuncs[index]();
 }
 
+void call_exitlist2(void)
+{
+	call_exitlist();
+	libsub_quit_to_dos_alt(0);
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";
