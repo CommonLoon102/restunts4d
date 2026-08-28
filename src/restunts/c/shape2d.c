@@ -29,6 +29,8 @@ extern struct SPRITE far* smouspriteptr;
 extern char mouse_isdirty;
 extern legacy_u8 far* word_405FE;
 extern legacy_u8 far incnums[];
+extern legacy_u16 word_4031E;
+extern legacy_u16 word_40320;
 
 static legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
@@ -261,6 +263,91 @@ void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
 		line_count = LEGACY_U16_WRAP_SUB(line_count, 1U);
 	} while (old_line_count != 0x8000U &&
 		LEGACY_S16_FROM_BITS(line_count) > 0);
+}
+
+static legacy_u8 shape2d_rotate_left_8(legacy_u8 value, legacy_u8 count)
+{
+	count &= 7U;
+	if (count == 0)
+		return value;
+	return (legacy_u8)((value << count) | (value >> (8U - count)));
+}
+
+static void draw_pattern_lines(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color, int two_colors)
+{
+	legacy_u8 far* bitmap;
+	legacy_u8 far* line_entry_ptr;
+	legacy_u16 sprite_segment;
+	legacy_u16 line_entry;
+	legacy_u16 line_count;
+	legacy_u16 old_line_count;
+	legacy_u16 left;
+	legacy_u16 right;
+	legacy_u16 width;
+	legacy_u16 destination;
+	legacy_u8 pattern;
+	legacy_u8 alternate_color;
+	legacy_u16 swapped_pattern;
+
+	if (((legacy_u16)y & 1U) == 0) {
+		word_4031E = (legacy_u16)((word_4031E << 8) |
+			(word_4031E >> 8));
+	}
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	sprite_segment = FP_SEG(&sprite1);
+	line_entry = LEGACY_U16_WRAP_ADD(
+		FP_OFF(sprite1.sprite_lineofs),
+		(legacy_u16)((legacy_u16)y << 1));
+	line_count = (legacy_u16)numlines;
+	do {
+		left = (legacy_u16)*x1arr++;
+		right = (legacy_u16)*x2arr++;
+		pattern = (legacy_u8)word_4031E;
+		pattern = shape2d_rotate_left_8(pattern, (legacy_u8)left);
+		alternate_color = (legacy_u8)word_40320;
+		width = LEGACY_U16_WRAP_ADD(
+			LEGACY_U16_WRAP_SUB(right, left), 1U);
+		if (width != 0 && width <= 0x8000U) {
+			line_entry_ptr = (legacy_u8 far*)MK_FP(
+				sprite_segment, line_entry);
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_word(line_entry_ptr), left);
+			do {
+				pattern = shape2d_rotate_left_8(pattern, 1U);
+				if ((pattern & 1U) != 0) {
+					if (two_colors != 0)
+						bitmap[destination] = alternate_color;
+					else
+						bitmap[destination] = (legacy_u8)color;
+				} else if (two_colors != 0) {
+					bitmap[destination] = (legacy_u8)color;
+				}
+				destination++;
+				width--;
+			} while (width != 0);
+		}
+		line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
+		swapped_pattern = (legacy_u16)((word_4031E << 8) |
+			(word_4031E >> 8));
+		word_4031E = swapped_pattern;
+		old_line_count = line_count;
+		line_count = LEGACY_U16_WRAP_SUB(line_count, 1U);
+	} while (old_line_count != 0x8000U &&
+		LEGACY_S16_FROM_BITS(line_count) > 0);
+}
+
+void draw_unknown_lines(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color)
+{
+	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 1);
+}
+
+void draw_patterned_lines(int* x1arr, int* x2arr, unsigned y,
+	unsigned numlines, unsigned color)
+{
+	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 0);
 }
 
 void sprite_1_unk3(struct SHAPE2D far* shape, unsigned phase)

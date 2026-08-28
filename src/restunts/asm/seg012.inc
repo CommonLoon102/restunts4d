@@ -243,7 +243,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn video_clear_color:proc
     extrn ported_sprite_clear_1_color_:proc
     extrn nopsub_33330:proc
-    extrn draw_unknown_lines:proc
+    extrn ported_draw_unknown_lines_:proc
     extrn putpixel_line1_maybe:proc
     extrn off_3340A:word
     extrn ported_sprite_1_unk2_:proc
@@ -318,7 +318,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn lineoffsets:word
     extrn ported_font_set_unk_:proc
     extrn set_fontdefseg:proc
-    extrn draw_patterned_lines:proc
+    extrn ported_draw_patterned_lines_:proc
     extrn ported_sprite_make_wnd_:proc
     extrn next_wnd_def:word
     extrn wnd_defs:byte

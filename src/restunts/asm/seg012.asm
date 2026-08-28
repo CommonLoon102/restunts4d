@@ -290,7 +290,7 @@ seg012 segment byte public 'STUNTSC' use16
     public video_clear_color
     public ported_sprite_clear_1_color_
     public nopsub_33330
-    public draw_unknown_lines
+    public ported_draw_unknown_lines_
     public putpixel_line1_maybe
     public off_3340A
     public ported_sprite_1_unk2_
@@ -365,7 +365,7 @@ seg012 segment byte public 'STUNTSC' use16
     public lineoffsets
     public ported_font_set_unk_
     public set_fontdefseg
-    public draw_patterned_lines
+    public ported_draw_patterned_lines_
     public ported_sprite_make_wnd_
     public next_wnd_def
     public wnd_defs
@@ -1625,7 +1625,7 @@ loc_2F3FD:
     mov     [bp+arg_2], ax
     mov     ax, [bp+arg_6]
     mov     [bp+arg_4], ax
-    mov     ax, offset draw_unknown_lines
+    mov     ax, offset ported_draw_unknown_lines_
     mov     spritefunc, ax
     mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
@@ -8932,7 +8932,7 @@ loc_328A8:
     mov     [bp+arg_0], ax
     mov     ax, [bp+arg_4]
     mov     [bp+arg_2], ax
-    mov     ax, offset draw_patterned_lines
+    mov     ax, offset ported_draw_patterned_lines_
     mov     spritefunc, ax
     mov     ax, offset ported_preRender_line_
     mov     imagefunc, ax
@@ -10534,7 +10534,7 @@ nopsub_33330 proc far
     ; align 2
     db 144
 nopsub_33330 endp
-draw_unknown_lines proc far
+ported_draw_unknown_lines_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -10543,10 +10543,7 @@ draw_unknown_lines proc far
     arg_6 = word ptr 12
     arg_8 = byte ptr 14
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     draw_unknown_lines
 loc_33349:
     cld
     mov     si, [bp+arg_4]
@@ -10603,7 +10600,7 @@ loc_333B8:
     inc     di
     loop    loc_33393
     jmp     short loc_3339A
-draw_unknown_lines endp
+ported_draw_unknown_lines_ endp
 putpixel_line1_maybe proc far
     var_E = byte ptr -14
     var_A = word ptr -10
@@ -14059,7 +14056,7 @@ set_fontdefseg proc far
     ; align 2
     db 144
 set_fontdefseg endp
-draw_patterned_lines proc far
+ported_draw_patterned_lines_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -14068,10 +14065,7 @@ draw_patterned_lines proc far
     arg_6 = word ptr 12
     arg_8 = byte ptr 14
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     draw_patterned_lines
 loc_34B9B:
     cld
     mov     si, [bp+arg_4]
@@ -14128,7 +14122,7 @@ loc_34C06:
     jmp     short loc_34BE8
     ; align 2
     db 0
-draw_patterned_lines endp
+ported_draw_patterned_lines_ endp
 ported_sprite_make_wnd_ proc far
     var_8 = word ptr -8
     var_6 = word ptr -6
