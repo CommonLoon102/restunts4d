@@ -247,7 +247,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_sprite_copy_arg_to_both_
     public ported_file_get_res_shape_count_
     public ported_file_get_shape2d_
-    public nopsub_326BA
+    public ported_nopsub_326BA_
     public ported_sin_fast_
     public off_326F2
     public ported_cos_fast_
@@ -8566,7 +8566,7 @@ nosmart
     pop     bp
     retf
 ported_file_get_shape2d_ endp
-nopsub_326BA proc far
+ported_nopsub_326BA_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
@@ -8574,10 +8574,9 @@ nopsub_326BA proc far
     arg_4 = word ptr 10
     arg_6 = word ptr 12
 
-    push    bp
-    mov     bp, sp
-    push    si
-    mov     es, [bp+arg_2]
+    jmp     nopsub_326BA
+    nop
+    nop
     mov     si, [bp+arg_0]
     mov     bx, [bp+arg_4]
     shl     bx, 1
@@ -8590,7 +8589,7 @@ nopsub_326BA proc far
     pop     si
     pop     bp
     retf
-nopsub_326BA endp
+ported_nopsub_326BA_ endp
 ported_sin_fast_ proc far
      s = byte ptr 0
      r = byte ptr 2

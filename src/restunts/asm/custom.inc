@@ -212,6 +212,7 @@ extrn file_unflip_shape2d_pes:proc
 extrn file_get_unflip_size:proc
 extrn file_load_shape2d_expandedsize:proc
 extrn file_get_shape2d:proc
+extrn nopsub_326BA:proc
 extrn file_get_res_shape_count:proc
 
 ; externs for implementations in keyboard.c

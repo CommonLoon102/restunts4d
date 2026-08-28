@@ -2271,6 +2271,10 @@ struct SHAPE2D far* file_get_shape2d(unsigned char far* memchunk, int index) {
 	return (struct SHAPE2D far*)result;
 }
 
+void nopsub_326BA(unsigned char far* memchunk, unsigned index, unsigned long* result) {
+	*result = *(unsigned long far*)(memchunk + (index << 2) + 6);
+}
+
 unsigned short file_get_res_shape_count(void far* memchunk) {
 	return ((unsigned short far*)memchunk)[2];
 }
