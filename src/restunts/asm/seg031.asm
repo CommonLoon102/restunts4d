@@ -69,7 +69,7 @@ loc_39E15:
 loc_39E17:
     push    [bp+arg_0]
 loc_39E1A:
-    call    file_load_shape2d_nofatal_thunk
+    call    file_load_shape2d_nofatal
 loc_39E1F:
     add     sp, 2
     pop     bp
@@ -656,7 +656,7 @@ load_palandcursor proc far
     mov     ax, offset aSdmain; "sdmain"
     push    ax
 loc_3A2CC:
-    call    file_load_shape2d_fatal_thunk
+    call    file_load_shape2d_fatal
     add     sp, 2
     mov     [bp+var_30C], ax
     mov     [bp+var_30A], dx
@@ -742,7 +742,7 @@ loc_3A3BB:
     mov     ax, offset aSdmain_0; "sdmain"
     push    ax
 loc_3A3CE:
-    call    file_load_shape2d_fatal_thunk
+    call    file_load_shape2d_fatal
     add     sp, 2
     mov     [bp+var_30C], ax
     mov     [bp+var_30A], dx

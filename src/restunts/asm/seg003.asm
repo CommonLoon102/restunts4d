@@ -6113,7 +6113,7 @@ loc_1D7C8:
     add     ax, cx
     add     ax, offset aDesert; "desert"
     push    ax
-    call    file_load_shape2d_fatal_thunk
+    call    file_load_shape2d_fatal
     add     sp, 2
     mov     skybox_res_ofs, ax
     mov     skybox_res_seg, dx

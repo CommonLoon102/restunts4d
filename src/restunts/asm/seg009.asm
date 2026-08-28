@@ -140,7 +140,7 @@ loc_2A2C5:
 loc_2A2C8:
     push    ax
 loc_2A2C9:
-    call    file_load_shape2d_fatal_thunk
+    call    file_load_shape2d_fatal
 loc_2A2CE:
     add     sp, 2
 loc_2A2D1:

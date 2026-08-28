@@ -4542,11 +4542,11 @@ loc_29A08:
     jmp     short loc_29A00
 loc_29A12:
     push    word ptr [bp+arg_2]
-    call    file_load_shape2d_nofatal_thunk
+    call    file_load_shape2d_nofatal
     jmp     short loc_299EC
 loc_29A1C:
     push    word ptr [bp+arg_2]
-    call    file_load_shape2d_res_nofatal_thunk
+    call    file_load_shape2d_res_nofatal
     jmp     short loc_299EC
 loc_29A26:
     push    word ptr [bp+arg_2]; char *

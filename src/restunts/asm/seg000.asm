@@ -3243,7 +3243,7 @@ loc_11E68:
     mov     backlights_paint_override, 2Dh ; '-'; default backlights paintjob 2Dh
     mov     ax, offset aSdcsel; "sdcsel"
     push    ax
-    call    file_load_shape2d_fatal_thunk
+    call    file_load_shape2d_fatal
     add     sp, 2
     mov     [bp+var_36], ax
     mov     [bp+var_34], dx

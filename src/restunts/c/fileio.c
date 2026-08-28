@@ -1006,13 +1006,13 @@ void far* file_load_resource(int type, const char* filename) {
 
 			case 2:
 				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_nofatal_thunk(filename);
+				result = file_load_shape2d_nofatal((char*)filename);
 				if (result != 0) return result;
 				break;
 
 			case 3:
 				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_res_nofatal_thunk(filename);
+				result = file_load_shape2d_res_nofatal((char*)filename);
 				if (result != 0) return result;
 				break;
 
