@@ -197,6 +197,7 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 
 #ifndef RESTUNTS_ORIGINAL
 extern legacy_s16 setup_player_cars_repldump(void);
+extern legacy_s8 far* polyinfoptr;
 static legacy_u8 serialized_gamestate[GAMESTATE_SERIALIZED_SIZE];
 #endif
 
@@ -231,13 +232,18 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	init_div0();
 	init_row_tables();
 
+#ifdef RESTUNTS_ORIGINAL
+	/* The original oracle retains its display-resource allocation order. */
 	mainresptr = file_load_resfile("main");
-
 	fontdefptr = file_load_resource(0, "fontdef.fnt");
 	fontnptr = file_load_resource(0, "fontn.fnt");
-
 	font_set_fontdef();
 	init_polyinfo();
+#else
+	/* Shape loading still uses this arena; the matrices and display fonts do not
+	 * participate in headless replay simulation. */
+	polyinfoptr = mmgr_alloc_resbytes("polyinfo", 0x28A0);
+#endif
 
 	init_trackdata();
 
