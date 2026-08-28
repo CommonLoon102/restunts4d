@@ -46,7 +46,7 @@ nosmart
 seg027 segment byte public 'STUNTSC' use16
     assume cs:seg027
     assume es:nothing, ss:nothing, ds:dseg
-    public init_audio_resources
+    public ported_init_audio_resources_
     public load_audio_finalize
     public audio_unk
     public sub_372F4
@@ -89,7 +89,7 @@ seg027 segment byte public 'STUNTSC' use16
     public ported_audioresource_get_dword_
     public ported_audioresource_get_word_
     public ported_audioresource_copy_4_bytes_
-init_audio_resources proc far
+ported_init_audio_resources_ proc far
     var_titlptr = dword ptr -12
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -100,11 +100,10 @@ init_audio_resources proc far
     arg_vcefileptr = dword ptr 10
     arg_8 = word ptr 14
 
-    push    bp
+    jmp     init_audio_resources
 loc_370D3:
-    mov     bp, sp
+    nop
 loc_370D5:
-    sub     sp, 0Ch
 loc_370D8:
     push    [bp+arg_8]      ; arg_8 is a string, e.g "TITL"
 loc_370DB:
@@ -181,7 +180,7 @@ loc_37172:
     mov     sp, bp
     pop     bp
     retf
-init_audio_resources endp
+ported_init_audio_resources_ endp
 load_audio_finalize proc far
     var_6 = dword ptr -6
     var_2 = word ptr -2

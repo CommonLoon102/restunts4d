@@ -266,7 +266,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+10h], ax
@@ -282,7 +282,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+14h], ax
@@ -298,7 +298,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+18h], ax
@@ -314,7 +314,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+1Ch], ax
@@ -330,7 +330,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+20h], ax
@@ -346,7 +346,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+24h], ax
@@ -362,7 +362,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+28h], ax
@@ -378,7 +378,7 @@ loc_26CCB:
     push    [bp+arg_6]
     push    [bp+arg_C]
     push    [bp+arg_A]
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     es, si
     mov     es:[di+2Ch], ax

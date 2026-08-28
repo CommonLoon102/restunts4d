@@ -1,5 +1,5 @@
 seg027 segment byte public 'STUNTSC' use16
-    extrn init_audio_resources:proc
+    extrn ported_init_audio_resources_:proc
     extrn load_audio_finalize:proc
     extrn audio_unk:proc
     extrn sub_372F4:proc

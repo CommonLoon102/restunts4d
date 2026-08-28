@@ -4293,7 +4293,7 @@ ported_file_load_audiores_ proc far
     push    word ptr voicefileptr
     push    dx
     push    ax
-    call    init_audio_resources
+    call    far ptr init_audio_resources
     add     sp, 0Ah
     mov     [bp+var_4], ax
     mov     [bp+var_2], dx

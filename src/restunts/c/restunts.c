@@ -713,6 +713,9 @@ int compare_ds_ss(void);
 void nopsub_3219D(const char* format, ...);
 void audio_driver_timer(void);
 extern void sub_38CF8(int index, void far* context);
+extern void audio_map_song_instruments(void far* song,
+	void far* instruments);
+extern void audio_map_song_tracks(void far* song);
 extern int sub_39050(unsigned int value, int handle);
 extern void sub_39088(int channel, int value);
 extern void sub_35B76(int x, int y, int width, int height, int color);
@@ -2479,6 +2482,36 @@ void far* audioresource_find(void far* resource, const char* chunk_name)
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, relative_offset);
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, 6U);
 	return MK_FP(resource_segment, result_offset);
+}
+
+void far* init_audio_resources(void far* song, void far* instruments,
+	const char* name)
+{
+	legacy_u8 far* song_chunk;
+	legacy_u8 far* header;
+	legacy_u16 data_offset;
+	void far* data;
+
+	song_chunk = (legacy_u8 far*)audioresource_find(song, name);
+	if (song_chunk == 0)
+		return 0;
+	header = (legacy_u8 far*)audioresource_find(song_chunk, "hdr1");
+	if (header == 0)
+		return 0;
+
+	if (header[5] != 1) {
+		audio_map_song_instruments(song_chunk, instruments);
+		audio_map_song_tracks(song_chunk);
+		header[5] = 1;
+		data_offset = LEGACY_U16_WRAP_ADD(
+			(legacy_u16)FP_OFF(song_chunk),
+			(legacy_u16)((legacy_u16)song_chunk[4] << 3));
+		data_offset = LEGACY_U16_WRAP_ADD(data_offset, 1U);
+		data = MK_FP(FP_SEG(song_chunk), data_offset);
+		audio_write_far_pointer(header, data);
+	}
+
+	return header;
 }
 
 void audioresource_copy_n_bytes(const legacy_u8 far* source,
