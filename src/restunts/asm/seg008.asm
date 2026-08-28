@@ -74,7 +74,7 @@ seg008 segment byte public 'STUNTSC' use16
     public ported_sprite_copy_wnd_to_1_clear_
     public ported_intro_draw_text_
     public ported_hiscore_draw_text_
-    public call_read_line
+    public ported_call_read_line_
     public ported_input_repeat_check_
     public ported_draw_lines_unk_
     public draw_button
@@ -1403,7 +1403,7 @@ loc_2805E:
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr call_read_line
+    call near ptr ported_call_read_line_
     add     sp, 0Ch
     cmp     ax, 1Bh
     jnz     short loc_28036
@@ -2160,7 +2160,7 @@ loc_286FE:
     push    ax
     push    word ptr [bp+arg_0]; char *
     push    cs
-    call near ptr call_read_line
+    call near ptr ported_call_read_line_
     add     sp, 0Ch
     cmp     ax, 1Bh
     jz      short loc_28754
@@ -2175,7 +2175,7 @@ loc_2872F:
     push    ax
     push    word ptr [bp+arg_0+2]; char *
     push    cs
-    call near ptr call_read_line
+    call near ptr ported_call_read_line_
     add     sp, 0Ch
     mov     si, ax
     sub     di, di
@@ -3338,7 +3338,7 @@ ported_hiscore_draw_text_ proc far
     pop     bp
     retf
 ported_hiscore_draw_text_ endp
-call_read_line proc far
+ported_call_read_line_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -3349,9 +3349,8 @@ call_read_line proc far
     arg_8 = word ptr 14
     arg_A = word ptr 16
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     call_read_line
+    nop
     push    si
     push    cs
     call near ptr ported_mouse_draw_opaque_check_
@@ -3406,7 +3405,7 @@ loc_2911D:
     retf
     ; align 2
     db 144
-call_read_line endp
+ported_call_read_line_ endp
 ported_input_repeat_check_ proc far
     var_4 = word ptr -4
      s = byte ptr 0

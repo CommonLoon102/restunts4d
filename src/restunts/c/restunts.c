@@ -2462,6 +2462,33 @@ void call_exitlist2(void)
 	libsub_quit_to_dos_alt(0);
 }
 
+extern int read_line(int flags, char* text, int initial_key,
+	int max_characters, int max_pixels, int x, int y,
+	void (far* callback)(void), unsigned long timeout);
+
+int call_read_line(char* text, int max_characters, int x, int y,
+	unsigned long timeout)
+{
+	legacy_u16 length;
+	legacy_u16 trim_index;
+	legacy_u16 max_pixels;
+	int result;
+
+	mouse_draw_opaque_check();
+	max_pixels = LEGACY_U16_WRAP_ADD(
+		LEGACY_U16_WRAP_MUL(max_characters, 9U), 9U);
+	result = read_line(2, text, 0, max_characters, max_pixels, x, y,
+		&kb_shift_checking2, timeout);
+	mouse_draw_transparent_check();
+
+	length = (legacy_u16)strlen(text);
+	trim_index = LEGACY_U16_WRAP_SUB(length, 1U);
+	while (text[trim_index] == ' ')
+		trim_index = LEGACY_U16_WRAP_SUB(trim_index, 1U);
+	text[LEGACY_U16_WRAP_ADD(trim_index, 1U)] = 0;
+	return result;
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

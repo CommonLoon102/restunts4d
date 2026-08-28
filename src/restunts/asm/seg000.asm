@@ -2869,7 +2869,7 @@ loc_11AED:
     push    ax
     mov     ax, offset byte_459E0
     push    ax              ; char *
-    call    call_read_line
+    call    far ptr call_read_line
     add     sp, 0Ch
     mov     ax, offset byte_459E0
     push    ax
@@ -7284,7 +7284,7 @@ loc_14641:
     push    [bp+var_408]
     lea     ax, [bp+var_43E]
     push    ax              ; char *
-    call    call_read_line
+    call    far ptr call_read_line
     add     sp, 0Ch
     sub     si, si
     jmp     short loc_1468D
