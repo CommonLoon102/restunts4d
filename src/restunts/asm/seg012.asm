@@ -371,7 +371,7 @@ seg012 segment byte public 'STUNTSC' use16
     public wnd_defs
     public ported_sprite_set_1_from_argptr_
     public ported_sprite_copy_2_to_1_
-    public putpixel_single_maybe
+    public ported_putpixel_single_maybe_
     public sub_35B76
     public sub_35C4E
     public incnums
@@ -17835,17 +17835,14 @@ ported_sprite_copy_2_to_1_ proc far
     ; align 2
     db 0
 ported_sprite_copy_2_to_1_ endp
-putpixel_single_maybe proc far
+ported_putpixel_single_maybe_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0x = word ptr 6
     arg_2y = word ptr 8
     arg_4col = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    push    si
-    push    di
+    jmp     putpixel_single_maybe
     mov     ax, [bp+arg_0x]
     cmp     ax, cs:sprite1.sprite_left
     jl      short loc_35B4D
@@ -17880,7 +17877,7 @@ loc_35B56:
     retf
     ; align 2
     db 0
-putpixel_single_maybe endp
+ported_putpixel_single_maybe_ endp
 sub_35B76 proc far
      s = byte ptr 0
      r = byte ptr 2

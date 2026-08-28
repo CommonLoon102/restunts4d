@@ -866,6 +866,31 @@ void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y)
 	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 1);
 }
 
+void putpixel_single_maybe(int x, int y, int color)
+{
+	legacy_u8 far* bitmap;
+	legacy_u16 x_bits;
+	legacy_u16 y_bits;
+	legacy_u16 destination;
+
+	x_bits = (legacy_u16)x;
+	y_bits = (legacy_u16)y;
+	if (LEGACY_S16_FROM_BITS(x_bits) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_left) ||
+		LEGACY_S16_FROM_BITS(x_bits) >=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_right) ||
+		LEGACY_S16_FROM_BITS(y_bits) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_top) ||
+		LEGACY_S16_FROM_BITS(y_bits) >=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_height))
+		return;
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	destination = LEGACY_U16_WRAP_ADD(
+		shape2d_get_line_offset(FP_SEG(&sprite1), y_bits), x_bits);
+	bitmap[destination] = (legacy_u8)color;
+}
+
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
