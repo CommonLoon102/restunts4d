@@ -1903,6 +1903,22 @@ unsigned long sub_2EB1E(unsigned long ticks)
 	return current;
 }
 
+void add_exit_handler(void (far* exit_handler)(void))
+{
+	int index;
+
+	for (index = 0; index < 10; index++) {
+		if (exitlistfuncs[index] == exit_handler)
+			return;
+		if (exitlistfuncs[index] == 0) {
+			exitlistfuncs[index] = exit_handler;
+			exitlistfuncs[index + 1] = 0;
+			return;
+		}
+	}
+	fatal_error(aExitListOverflow);
+}
+
 void read_line_helper(void)
 {
 	static const char space[] = " ";

@@ -374,6 +374,8 @@ extern unsigned long last_timer_callback_counter;
 extern unsigned long timer_copy_unk;
 extern unsigned short word_3F1C2;
 extern unsigned short word_3F1C4;
+extern void (far* exitlistfuncs[])(void);
+extern const char aExitListOverflow[];
 
 extern unsigned char g_kevinrandom_seed[];
 extern const char aReservememoryO[];

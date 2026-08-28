@@ -126,7 +126,7 @@ seg012 segment byte public 'STUNTSC' use16
     public word_2FD1E
     public word_2FD7C
     public ported_preRender_line_
-    public add_exit_handler
+    public ported_add_exit_handler_
     public call_exitlist
     public call_exitlist2
     public ported_file_paras_
@@ -2923,15 +2923,14 @@ loc_2FE18:
     pop     bp
     retf
 ported_preRender_line_ endp
-add_exit_handler proc far
+ported_add_exit_handler_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    mov     ax, [bp+arg_0]
+    jmp     add_exit_handler
+    nop
     mov     cx, 0Ah
     mov     bx, offset exitlistfuncs
     mov     dx, [bp+arg_2]
@@ -2956,7 +2955,7 @@ loc_2FE48:
 loc_2FE57:
     pop     bp
     retf
-add_exit_handler endp
+ported_add_exit_handler_ endp
 call_exitlist proc far
      r = byte ptr 0
 
