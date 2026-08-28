@@ -866,8 +866,12 @@ void putpixel_iconFillings(struct SHAPE2D far* shape, int x, int y)
 	putpixel_icon_combine(shape, (legacy_u16)x, (legacy_u16)y, 1);
 }
 
-static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
-	int combine_or)
+#define SHAPE2D_RLE_AND 0
+#define SHAPE2D_RLE_OR 1
+#define SHAPE2D_RLE_COPY 2
+
+static void shape2d_render_rle(struct SHAPE2D far* shape,
+	legacy_u16 x, legacy_u16 y, int operation)
 {
 	legacy_u8 far* shape_bytes;
 	legacy_u8 far* source_ptr;
@@ -876,8 +880,6 @@ static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
 	legacy_u16 source;
 	legacy_u16 line_entry;
 	legacy_u16 destination;
-	legacy_u16 x;
-	legacy_u16 y;
 	legacy_u16 width;
 	legacy_u16 remaining;
 	legacy_u16 old_remaining;
@@ -891,8 +893,6 @@ static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
 	shape_segment = FP_SEG(shape);
 	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
 		(legacy_u16)sizeof(struct SHAPE2D));
-	x = shape2d_get_word(shape_bytes + 8U);
-	y = shape2d_get_word(shape_bytes + 0x0AU);
 	width = shape2d_get_word(shape_bytes);
 	line_entry = LEGACY_U16_WRAP_ADD(FP_OFF(sprite1.sprite_lineofs),
 		(legacy_u16)(y << 1));
@@ -924,8 +924,10 @@ static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
 				value = *source_ptr;
 				source++;
 			}
-			if (combine_or != 0)
+			if (operation == SHAPE2D_RLE_OR)
 				bitmap[destination] |= value;
+			else if (operation == SHAPE2D_RLE_COPY)
+				bitmap[destination] = value;
 			else
 				bitmap[destination] &= value;
 			destination++;
@@ -946,13 +948,40 @@ static void shape2d_render_rle_combine(struct SHAPE2D far* shape,
 
 void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 {
-	shape2d_render_rle_combine(shape, 0);
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_AND);
 }
 
 void shape2d_op_unk4(unsigned short offset, unsigned short segment)
 {
-	shape2d_render_rle_combine(
-		(struct SHAPE2D far*)MK_FP(segment, offset), 1);
+	struct SHAPE2D far* shape;
+	legacy_u8 far* shape_bytes;
+
+	shape = (struct SHAPE2D far*)MK_FP(segment, offset);
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_OR);
+}
+
+void shape2d_op_unk5(struct SHAPE2D far* shape, int x, int y)
+{
+	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
+		SHAPE2D_RLE_COPY);
+}
+
+void shape2d_op_unk(struct SHAPE2D far* shape)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	shape2d_render_rle(shape,
+		shape2d_get_word(shape_bytes + 8U),
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_COPY);
 }
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {

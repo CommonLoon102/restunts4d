@@ -284,8 +284,8 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_sprite_shape_to_1_alt_:proc
     extrn loc_33D69:proc
     extrn nopsub_33DBE:proc
-    extrn shape2d_op_unk5:proc
-    extrn shape2d_op_unk:proc
+    extrn ported_shape2d_op_unk5_:proc
+    extrn ported_shape2d_op_unk_:proc
     extrn loc_33E1B:proc
     extrn loc_33E27:proc
     extrn nopsub_33E90:proc
