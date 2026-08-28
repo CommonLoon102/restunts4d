@@ -48,7 +48,7 @@ seg000 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public ported_stuntsmain_
     public run_intro_looped
-    public run_intro
+    public ported_run_intro_
     public load_intro_resources
     public run_menu
     public run_tracks_menu
@@ -673,7 +673,7 @@ run_intro_looped proc far
     mov     word ptr wndsprite, ax
     mov     word ptr wndsprite+2, dx
     push    cs
-    call near ptr run_intro
+    call near ptr ported_run_intro_
     mov     si, ax
     push    word ptr wndsprite+2
     push    word ptr wndsprite
@@ -739,13 +739,12 @@ loc_10693:
     db 144
     db 144
 run_intro_looped endp
-run_intro proc far
+ported_run_intro_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     run_intro
+    nop
     push    si
     call    ported_mouse_draw_opaque_check_
     call    sprite_copy_2_to_1_clear
@@ -824,7 +823,7 @@ loc_1077F:
     mov     sp, bp
     pop     bp
     retf
-run_intro endp
+ported_run_intro_ endp
 load_intro_resources proc far
     var_46 = word ptr -70
     var_44 = word ptr -68

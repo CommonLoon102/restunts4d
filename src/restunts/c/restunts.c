@@ -412,6 +412,7 @@ struct VECTOR carpos = { 0, 0x0FCB8, 0x0B40 }; // from the original
 //struct VECTOR carpos = { 0, 0, 320 };
 
 extern struct SPRITE far* wndsprite;
+extern void far* tempdataptr;
 
 extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
@@ -1806,6 +1807,41 @@ int input_repeat_check(int duration)
 			return result;
 	}
 	return 0;
+}
+
+int run_intro(void)
+{
+	struct SHAPE2D far* shape;
+	int result;
+
+	mouse_draw_opaque_check();
+	sprite_copy_2_to_1_clear();
+	mouse_draw_transparent_check();
+	sprite_copy_wnd_to_1_clear();
+
+	shape = (struct SHAPE2D far*)locate_shape_fatal(
+		(char far*)tempdataptr, "prod");
+	waitflag = shape->s2d_pos_y != 0 ? 0xA0 : 0xB4;
+
+	shape = (struct SHAPE2D far*)locate_shape_fatal(
+		(char far*)tempdataptr, "prod");
+	sprite_shape_to_1_alt(shape);
+	result = sprite_blit_to_video(wndsprite, -1);
+	if (result == 0)
+		result = input_repeat_check(0x190);
+
+	if (result == 0) {
+		sprite_copy_wnd_to_1_clear();
+		waitflag = 0xB4;
+		shape = (struct SHAPE2D far*)locate_shape_fatal(
+			(char far*)tempdataptr, "titl");
+		sprite_shape_to_1_alt(shape);
+		result = sprite_blit_to_video(wndsprite, -1);
+		if (result == 0)
+			result = input_repeat_check(0x190);
+	}
+
+	return result;
 }
 
 extern void sprite_1_unk4(int x, int y, int width, int height, int color);
@@ -3623,7 +3659,7 @@ int stuntsmain2(int argc, char* argv[]) {
 		get_a_poly_info(); // renders to sprite1
 	
 		//sprite_copy_2_to_1_2();
-		sprite_blit_to_video(wndsprite); // sprite_blit_to_video(wndsprite);
+		sprite_blit_to_video(wndsprite, 0);
 		
 		inch = get_kb_or_joy_flags();//kb_get_char();
 		if (inch == 4) { // right

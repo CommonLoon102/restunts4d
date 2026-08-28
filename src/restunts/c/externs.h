@@ -481,7 +481,7 @@ extern void shape3d_load_car_shapes(char* carid, char* oppcarid);
 extern void load_palandcursor(void);
 extern void sprite_set_1_size(unsigned short left, unsigned short right, unsigned short top, unsigned short height);
 extern void sprite_clear_1_color(unsigned char);
-extern void sprite_blit_to_video(struct SPRITE far* sprite);
+extern int sprite_blit_to_video(struct SPRITE far* sprite, int mode);
 
 extern short intr0_handler(void);
 extern short (far* old_intr0_handler)(void);
