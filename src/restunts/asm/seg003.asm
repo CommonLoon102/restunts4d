@@ -53,7 +53,7 @@ seg003 segment byte public 'STUNTSC' use16
     public skybox_op
     public ported_transformed_shape_add_for_sort_
     public draw_track_preview
-    public draw_ingame_text
+    public ported_draw_ingame_text_
     public ported_do_sinking_
     public ported_init_crak_
     public ported_load_skybox_
@@ -3700,7 +3700,7 @@ loc_1C265:
     push    ax
     push    ax
     push    cs
-    call near ptr draw_ingame_text
+    call near ptr ported_draw_ingame_text_
     push    ax
     call    rect_union
     add     sp, 6
@@ -3780,7 +3780,7 @@ loc_1C2B0:
     db 144
 loc_1C2F8:
     push    cs
-    call near ptr draw_ingame_text
+    call near ptr ported_draw_ingame_text_
     pop     si
     pop     di
     mov     sp, bp
@@ -5354,13 +5354,12 @@ loc_1D128:
     pop     bp
     retf
 draw_track_preview endp
-draw_ingame_text proc far
+ported_draw_ingame_text_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 2
+    jmp     draw_ingame_text
+    nop
     push    di
     push    si
     push    si
@@ -5782,7 +5781,7 @@ loc_1D52B:
     mov     sp, bp
     pop     bp
     retf
-draw_ingame_text endp
+ported_draw_ingame_text_ endp
 ported_do_sinking_ proc far
      s = byte ptr 0
      r = byte ptr 2

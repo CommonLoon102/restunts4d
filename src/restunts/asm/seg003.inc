@@ -6,7 +6,7 @@ seg003 segment byte public 'STUNTSC' use16
     extrn skybox_op:proc
     extrn ported_transformed_shape_add_for_sort_:proc
     extrn draw_track_preview:proc
-    extrn draw_ingame_text:proc
+    extrn ported_draw_ingame_text_:proc
     extrn ported_do_sinking_:proc
     extrn ported_init_crak_:proc
     extrn ported_load_skybox_:proc

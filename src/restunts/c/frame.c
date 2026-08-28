@@ -5,6 +5,8 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#include <string.h>
+
 extern struct RECTANGLE* rectptr_unk2;
 extern struct RECTANGLE rect_array_unk[];
 extern struct RECTANGLE rect_array_unk2[];
@@ -21,6 +23,9 @@ extern struct RECTANGLE rect_unk12;
 extern struct RECTANGLE rect_unk15;
 extern struct RECTANGLE rect_unk5;
 extern struct RECTANGLE cliprect_unk;
+extern struct RECTANGLE rect_ingame_text2;
+extern struct RECTANGLE rect_ingame_text3;
+extern struct RECTANGLE rect_ingame_text4;
 extern struct VECTOR vec_unk2;
 extern struct VECTOR vec_planerotopresult;
 extern struct MATRIX mat_temp;
@@ -88,6 +93,7 @@ extern int skybox_grd_color;
 extern int skybox_wat_color;
 extern struct RECTANGLE rect_ingame_text;
 extern struct SHAPE2D far* skyboxes[];
+extern int penalty_time;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 void transformed_shape_add_for_sort(int z_adjust, int type);
@@ -96,6 +102,9 @@ unsigned char subst_hillroad_track(unsigned char a, unsigned char b);
 int skybox_op(int a, struct RECTANGLE* rectptr, int c, struct MATRIX* matptr, int e, int f, int g);
 void preRender_line(unsigned start_x, unsigned start_y, unsigned end_x,
 	unsigned end_y, unsigned color);
+void sprite_putimage_transparent(struct SHAPE2D far* shape, int x, int y);
+void copy_string(char* destination, char far* source);
+int font_op2_alt(const char* text);
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(int frame, int top, int height);
 struct RECTANGLE* do_sinking(int frame, int top, int height);
@@ -336,6 +345,108 @@ struct RECTANGLE* init_crak(int frame, int top, int height)
 				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
 		}
+	}
+
+	return &rect_ingame_text;
+}
+
+static void draw_centered_ingame_resource(char* resource_id, int y)
+{
+	copy_string(&resID_byte1, locate_text_res(gameresptr, resource_id));
+	rect_union(&rect_ingame_text,
+		intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), y,
+			dialog_fnt_colour, 0),
+		&rect_ingame_text);
+}
+
+struct RECTANGLE* draw_ingame_text(void)
+{
+	legacy_u16 replay_frame;
+	legacy_s16 replay_x;
+
+	rect_ingame_text = cliprect_unk;
+	if (idle_expired != 0) {
+		draw_centered_ingame_resource("dm1", 0xAA);
+		draw_centered_ingame_resource("dm2", 0xB6);
+		return &rect_ingame_text;
+	}
+
+	if (game_replay_mode != 0) {
+		if (game_replay_mode != 2)
+			return &rect_ingame_text;
+		replay_frame = (legacy_u16)state.game_frame % framespersec;
+		if (replay_frame >= (legacy_u16)(framespersec >> 1))
+			return &rect_ingame_text;
+		copy_string(&resID_byte1, locate_text_res(gameresptr, "rpl"));
+		replay_x = LEGACY_S16_WRAP_SUB(0x138,
+			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1), 8U));
+		rect_union(&rect_ingame_text,
+			intro_draw_text(&resID_byte1, replay_x, 0x0F,
+				dialog_fnt_colour, 0),
+			&rect_ingame_text);
+		return &rect_ingame_text;
+	}
+
+	if (state.game_inputmode == 0) {
+		draw_centered_ingame_resource("pre", 0x5A);
+		return &rect_ingame_text;
+	}
+	if (passed_security == 0) {
+		draw_centered_ingame_resource("se1", 0x5D);
+		draw_centered_ingame_resource("se2", 0x69);
+		return &rect_ingame_text;
+	}
+	if (followOpponentFlag != 0 || cameramode != 0 ||
+		state.playerstate.car_crashBmpFlag != 0)
+		return &rect_ingame_text;
+
+	switch (state.field_45D) {
+	case 1:
+		sprite_putimage_transparent(sdgame2shapes[3], 0x94, 0x5D);
+		rect_union(&rect_ingame_text, &rect_ingame_text2,
+			&rect_ingame_text);
+		break;
+	case 2:
+		sprite_putimage_transparent(sdgame2shapes[4], 0x94, 0x5D);
+		rect_union(&rect_ingame_text, &rect_ingame_text2,
+			&rect_ingame_text);
+		break;
+	case 3:
+		draw_centered_ingame_resource("www", 0x5D);
+		break;
+	}
+
+	resID_byte1 = 0;
+	switch (state.field_45E) {
+	case 1:
+		sprite_putimage_transparent(sdgame2shapes[3], 0x44, 0x71);
+		rect_union(&rect_ingame_text, &rect_ingame_text3,
+			&rect_ingame_text);
+		copy_string(&resID_byte1,
+			locate_text_res(gameresptr, "opp"));
+		break;
+	case 2:
+		sprite_putimage_transparent(sdgame2shapes[4], 0xE4, 0x71);
+		rect_union(&rect_ingame_text, &rect_ingame_text4,
+			&rect_ingame_text);
+		copy_string(&resID_byte1,
+			locate_text_res(gameresptr, "opp"));
+		break;
+	}
+	if (resID_byte1 != 0)
+		rect_union(&rect_ingame_text,
+			intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+				0x74, dialog_fnt_colour, 0),
+			&rect_ingame_text);
+
+	if (show_penalty_counter != 0) {
+		copy_string(&resID_byte1, locate_text_res(gameresptr, "pen"));
+		format_frame_as_string(&resID_byte1 + strlen(&resID_byte1),
+			penalty_time, 0);
+		rect_union(&rect_ingame_text,
+			intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+				0x66, dialog_fnt_colour, 0),
+			&rect_ingame_text);
 	}
 
 	return &rect_ingame_text;
