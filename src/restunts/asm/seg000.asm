@@ -55,7 +55,7 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_highscore_write_a_
     public ported_highscore_text_unk_
     public ported_print_highscore_entry_
-    public enter_hiscore
+    public ported_enter_hiscore_
     public ported_highscore_write_b_
     public run_car_menu
     public run_opponent_menu
@@ -2714,7 +2714,7 @@ loc_119E7:
     pop     bp
     retf
 ported_print_highscore_entry_ endp
-enter_hiscore proc far
+ported_enter_hiscore_ proc far
     var_3C = word ptr -60
     var_3A = word ptr -58
     var_38 = byte ptr -56
@@ -2733,9 +2733,8 @@ enter_hiscore proc far
     arg_4 = word ptr 10
     arg_6 = byte ptr 12
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 3Ch
+    jmp     enter_hiscore
+    nop
     push    di
     push    si
     cmp     framespersec, 0Ah
@@ -2898,7 +2897,7 @@ loc_11BAA:
     mov     sp, bp
     pop     bp
     retf
-enter_hiscore endp
+ported_enter_hiscore_ endp
 ported_highscore_write_b_ proc far
     var_16E = word ptr -366
     var_16C = byte ptr -364
@@ -6556,7 +6555,7 @@ loc_13ECD:
     push    ax
     push    [bp+var_88]
     push    cs
-    call near ptr enter_hiscore
+    call near ptr ported_enter_hiscore_
     add     sp, 8
     jmp     loc_13FDA
 loc_13F48:
@@ -6576,7 +6575,7 @@ loc_13F48:
     push    ax
     push    [bp+var_88]
     push    cs
-    call near ptr enter_hiscore
+    call near ptr ported_enter_hiscore_
     add     sp, 8
     mov     [bp+var_6E], 0
     mov     [bp+var_52], 0FEh ; '�'

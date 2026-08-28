@@ -3216,6 +3216,86 @@ void highscore_text_unk(void)
 	font_set_fontdef();
 }
 
+extern char gnam_string[];
+extern char gsna_string[];
+extern char unk_46464[];
+extern char byte_459E0[];
+
+static legacy_u16 read_highscore_u16(legacy_u8 far* address)
+{
+	return (legacy_u16)((legacy_u16)address[0] |
+		((legacy_u16)address[1] << 8));
+}
+
+void enter_hiscore(int frame_count, void far* prompt, legacy_u8 car_flag)
+{
+	legacy_u8 record[0x34];
+	legacy_u8 far* scores;
+	legacy_u16 entry;
+	legacy_u16 copied;
+	legacy_u16 rank;
+	legacy_u16 time_bits;
+	legacy_s16 positions[2];
+
+	time_bits = (legacy_u16)frame_count;
+	if (framespersec == 0x0A)
+		time_bits = LEGACY_U16_WRAP_MUL(time_bits, 2U);
+	scores = (legacy_u8 far*)td11_highscores;
+	if (read_highscore_u16(scores + 0x16AU) <= time_bits) {
+		highscore_text_unk();
+		return;
+	}
+
+	entry = 0;
+	while (read_highscore_u16(scores + entry * 0x34U + 0x32U) <=
+		time_bits) {
+		if (entry >= 7U)
+			break;
+		word_46170[entry] = (legacy_s16)entry;
+		entry++;
+	}
+	rank = entry;
+	byte_449CE = (legacy_u8)rank;
+	while (entry < 6U) {
+		word_46170[entry + 1U] = (legacy_s16)entry;
+		entry++;
+	}
+	word_46170[rank] = 6;
+
+	for (copied = 0; copied < sizeof(record); copied++)
+		record[copied] = 0;
+	strcpy((char*)record + 17, gnam_string);
+	record[41] = car_flag;
+	if (gameconfig.game_opponenttype != 0) {
+		strcpy((char*)record + 42, unk_46464);
+		record[44] = '/';
+		strcpy((char*)record + 45, gsna_string);
+	} else {
+		strcpy((char*)record + 42, " ");
+	}
+	LEGACY_WRITE_U16_LE(record + 50, time_bits);
+	for (copied = 0; copied < sizeof(record); copied++)
+		scores[0x138U + copied] = record[copied];
+
+	sprite_copy_wnd_to_1();
+	highscore_text_unk();
+	sprite_blit_to_video(wndsprite, -1);
+	show_dialog(3, 0, prompt, 0xFFFFU, 0xFFFFU,
+		dialogarg2, positions, 0);
+	check_input();
+	call_read_line(byte_459E0, 0x10, positions[0], positions[1],
+		0x7530UL);
+	strcpy((char*)record, byte_459E0);
+	for (copied = 0; copied < sizeof(record); copied++)
+		scores[0x138U + copied] = record[copied];
+
+	sprite_copy_wnd_to_1();
+	highscore_text_unk();
+	sprite_blit_to_video(wndsprite, -1);
+	highscore_write_b();
+	highscore_text_unk();
+}
+
 void replay_unk(void)
 {
 	legacy_s16 steering_angle;

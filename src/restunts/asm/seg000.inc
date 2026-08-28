@@ -8,7 +8,7 @@ seg000 segment byte public 'STUNTSC' use16
     extrn ported_highscore_write_a_:proc
     extrn ported_highscore_text_unk_:proc
     extrn ported_print_highscore_entry_:proc
-    extrn enter_hiscore:proc
+    extrn ported_enter_hiscore_:proc
     extrn ported_highscore_write_b_:proc
     extrn run_car_menu:proc
     extrn run_opponent_menu:proc
