@@ -316,7 +316,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn sprite1:SPRITE
     extrn sprite2:SPRITE
     extrn lineoffsets:word
-    extrn font_set_unk:proc
+    extrn ported_font_set_unk_:proc
     extrn set_fontdefseg:proc
     extrn draw_patterned_lines:proc
     extrn ported_sprite_make_wnd_:proc

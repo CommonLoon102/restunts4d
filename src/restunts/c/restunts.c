@@ -1760,8 +1760,18 @@ int mouse_timer_sprite_unk(int item_index, const int* x_values,
 extern int fontdef_unk_0E;
 extern struct RECTANGLE word_42248;
 extern struct RECTANGLE word_42250;
-extern void font_set_unk(int color, int unknown);
 extern void font_draw_text(const char* text, int x, int y);
+
+void font_set_unk(int color, int unknown)
+{
+	legacy_u8 far* font_definition;
+
+	font_definition = word_405FE;
+	font_definition[0] = (legacy_u8)color;
+	font_definition[1] = 0;
+	font_definition[2] = (legacy_u8)unknown;
+	font_definition[3] = 0;
+}
 
 struct RECTANGLE* intro_draw_text(char* text, int x, int y, int color,
 	int shadow_color)

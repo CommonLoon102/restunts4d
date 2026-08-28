@@ -315,6 +315,7 @@ extrn preRender_line:proc
 extrn add_exit_handler:proc
 extrn call_exitlist:proc
 extrn call_exitlist2:proc
+extrn font_set_unk:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc
