@@ -1,5 +1,26 @@
 #include "externs.h"
+#include "legacy.h"
 #include "math.h"
+
+int nopsub_19DE8(int value)
+{
+	legacy_s16 signed_value;
+
+	signed_value = LEGACY_S16_FROM_BITS(value);
+	if (signed_value < 0)
+		return -1;
+	return signed_value != 0;
+}
+
+long nopsub_26552(long value)
+{
+	legacy_u32 bits;
+
+	bits = (legacy_u32)value;
+	if ((bits & 0x80000000UL) != 0)
+		bits = (legacy_u32)(0UL - bits);
+	return LEGACY_S32_FROM_BITS(bits);
+}
 
 extern struct RECTANGLE select_rect_rc;
 extern struct MATRIX mat_z_rot;

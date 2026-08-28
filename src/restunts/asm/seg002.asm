@@ -47,7 +47,7 @@ seg002 segment byte public 'STUNTSC' use16
     assume cs:seg002
     assume es:nothing, ss:nothing, ds:dseg
     public ported_update_rpm_from_speed_
-    public nopsub_19DE8
+    public ported_nopsub_19DE8_
     public nopsub_19DFF
     public nopsub_19E09
     public nopsub_19E13
@@ -88,17 +88,13 @@ loc_19DE3:
     pop     bp
     retf
 ported_update_rpm_from_speed_ endp
-nopsub_19DE8 proc far
+ported_nopsub_19DE8_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-loc_19DE9:
-    mov     bp, sp
-    push    bp
-loc_19DEC:
-    xor     ax, ax
+    jmp     nopsub_19DE8
+    nop
 loc_19DEE:
     mov     bx, [bp+arg_0]
 loc_19DF1:
@@ -121,7 +117,7 @@ loc_19DFC:
     pop     bp
 locret_19DFE:
     retf
-nopsub_19DE8 endp
+ported_nopsub_19DE8_ endp
 nopsub_19DFF proc far
      s = byte ptr 0
      r = byte ptr 2

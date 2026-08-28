@@ -59,7 +59,7 @@ seg006 segment byte public 'STUNTSC' use16
     public ported_rect_adjust_from_point_
     public ported_vector_op_unk2_
     public ported_calc_sincos80_
-    public nopsub_26552
+    public ported_nopsub_26552_
     public ported_rect_union_
     public ported_rect_intersect_
     public ported_rectlist_add_rect_
@@ -2733,15 +2733,15 @@ ported_calc_sincos80_ proc far
     ; align 2
     db 144
 ported_calc_sincos80_ endp
-nopsub_26552 proc far
+ported_nopsub_26552_ proc far
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = word ptr 6
     arg_2 = word ptr 8
 
-    push    bp
-    mov     bp, sp
-    cmp     [bp+arg_2], 0
+    jmp     nopsub_26552
+    nop
+    nop
     jge     short loc_2656A
     mov     ax, [bp+arg_0]
     mov     dx, [bp+arg_2]
@@ -2755,7 +2755,7 @@ loc_2656A:
     mov     dx, [bp+arg_2]
     pop     bp
     retf
-nopsub_26552 endp
+ported_nopsub_26552_ endp
 ported_rect_union_ proc far
      s = byte ptr 0
      r = byte ptr 2

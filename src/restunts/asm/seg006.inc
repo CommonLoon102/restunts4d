@@ -12,7 +12,7 @@ seg006 segment byte public 'STUNTSC' use16
     extrn ported_rect_adjust_from_point_:proc
     extrn ported_vector_op_unk2_:proc
     extrn ported_calc_sincos80_:proc
-    extrn nopsub_26552:proc
+    extrn ported_nopsub_26552_:proc
     extrn ported_rect_union_:proc
     extrn ported_rect_intersect_:proc
     extrn ported_rectlist_add_rect_:proc

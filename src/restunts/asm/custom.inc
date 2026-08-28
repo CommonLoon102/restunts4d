@@ -261,6 +261,8 @@ extrn mouse_track_op:proc
 extrn draw_button:proc
 extrn do_savefile_dialog:proc
 extrn show_graphic_levels_menu:proc
+extrn nopsub_19DE8:proc
+extrn nopsub_26552:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc
