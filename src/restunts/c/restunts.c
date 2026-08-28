@@ -2595,7 +2595,7 @@ static legacy_u16 dialog_ascii_lower(legacy_u16 character)
 	return character;
 }
 
-unsigned short show_dialog_c(
+unsigned short show_dialog(
 	int dialog_type,
 	int save_background,
 	void far* text_resource,
@@ -2905,7 +2905,7 @@ dialog_done:
 	return (unsigned short)result;
 }
 
-legacy_s8 do_fileselect_dialog_c(
+legacy_s8 do_fileselect_dialog(
 	char* directory,
 	char* filename,
 	char* extension,
@@ -4198,7 +4198,7 @@ static void track_editor_show_message(char far* text_resource,
 		0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
 }
 
-void load_tracks_menu_shapes_c(void)
+void load_tracks_menu_shapes(void)
 {
 	static char terrain_shape_names[] =
 		"flatlakelak1lak2lak3lak4highgoungouwgousgouegou1gou2gou3gou4gou5gou6gou7gou8";
@@ -8076,7 +8076,7 @@ static void dashboard_set_viewport(void)
 	sprite_set_1_size(0, 0x140, 0, height_above_replaybar);
 }
 
-void setup_car_shapes_c(int operation)
+void setup_car_shapes(int operation)
 {
 	struct SHAPE2D far* shape;
 	struct SHAPE2D far* dashboard_shape;
@@ -8377,8 +8377,8 @@ static void car_menu_draw_standard_button(char far* text,
 		0x56, 0x10, word_407F4, word_407F6, word_407F8, 0);
 }
 
-void run_car_menu_c(char* car_id, char* material, char* transmission,
-	int opponent_type)
+void run_car_menu(char* car_id, char* material, char* transmission,
+	unsigned int opponent_type)
 {
 	char car_ids[32][5];
 	char swap_id[5];
@@ -8905,7 +8905,7 @@ static void end_hiscore_draw_opponent_text(char far* opponent_resource,
 	}
 }
 
-unsigned end_hiscore_c(void)
+unsigned end_hiscore(void)
 {
 	char number[18];
 	char far* misc_resource;
@@ -9897,7 +9897,7 @@ static void replay_rewind(void)
 	input_do_checking(1000);
 }
 
-void loop_game_c(int operation, int recorded_frame, int current_frame)
+void loop_game(int operation, int recorded_frame, int current_frame)
 {
 	legacy_u16 input;
 	legacy_s16 delta;

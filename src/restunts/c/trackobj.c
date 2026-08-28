@@ -95,7 +95,7 @@ static void track_rotate_local(struct VECTOR* position,
 	}
 }
 
-void build_track_object_c(struct VECTOR* world_position,
+void build_track_object(struct VECTOR* world_position,
 	struct VECTOR* next_world_position)
 {
 	struct VECTOR position;

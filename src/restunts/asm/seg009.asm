@@ -46,12 +46,12 @@ nosmart
 seg009 segment byte public 'STUNTSC' use16
     assume cs:seg009
     assume es:nothing, ss:nothing, ds:dseg
-    public load_tracks_menu_shapes
+    public ported_load_tracks_menu_shapes_
     public ported_preRender_icons_
     public ported_draw_2DtrackMap_
     public ported_sub_2C81C_
     public ported_sub_2C9B4_
-load_tracks_menu_shapes proc far
+ported_load_tracks_menu_shapes_ proc far
     var_198 = word ptr -408
     var_196 = word ptr -406
     var_194 = word ptr -404
@@ -127,7 +127,7 @@ load_tracks_menu_shapes proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    jmp     load_tracks_menu_shapes_c
+    jmp     load_tracks_menu_shapes
     nop
     nop
 loc_2A2BD:
@@ -2950,7 +2950,7 @@ loc_2BE44:
     mov     sp, bp
     pop     bp
     retf
-load_tracks_menu_shapes endp
+ported_load_tracks_menu_shapes_ endp
 ported_preRender_icons_ proc far
     var_6 = byte ptr -6
     var_4 = byte ptr -4

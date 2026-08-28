@@ -46,7 +46,7 @@ nosmart
 seg004 segment byte public 'STUNTSC' use16
     assume cs:seg004
     assume es:nothing, ss:nothing, ds:dseg
-    public build_track_object
+    public ported_build_track_object_
     public off_1F87E
     public ported_bto_auxiliary1_
     public ported_shape3d_load_all_
@@ -58,7 +58,7 @@ seg004 segment byte public 'STUNTSC' use16
     public off_2147C
     public ported_load_opponent_data_
     public ported_subst_hillroad_track_
-build_track_object proc far
+ported_build_track_object_ proc far
     var_curr_wallptr = dword ptr -64
     var_misc3C = word ptr -60
     var_trkObjList = word ptr -58
@@ -88,7 +88,7 @@ build_track_object proc far
     arg_posWorldCrds = word ptr 6
     arg_nextPosWorldCrds = word ptr 8
 
-    jmp     build_track_object_c
+    jmp     build_track_object
     nop
     push    di
     push    si
@@ -2751,7 +2751,7 @@ loc_1FADE:
     mov     sp, bp
     pop     bp
     retf
-build_track_object endp
+ported_build_track_object_ endp
 ported_bto_auxiliary1_ proc far
     var_14 = word ptr -20
     var_10 = byte ptr -16

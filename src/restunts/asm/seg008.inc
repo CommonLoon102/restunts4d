@@ -1,8 +1,8 @@
 seg008 segment byte public 'STUNTSC' use16
     extrn ported_sub_274B0_:proc
     extrn ported_sub_275C6_:proc
-    extrn show_dialog:proc
-    extrn do_fileselect_dialog:proc
+    extrn ported_show_dialog_:proc
+    extrn ported_do_fileselect_dialog_:proc
     extrn ported_file_build_path_:proc
     extrn ported_do_savefile_dialog_:proc
     extrn ported_parse_filepath_separators_:proc

@@ -57,11 +57,11 @@ seg000 segment byte public 'STUNTSC' use16
     public ported_print_highscore_entry_
     public ported_enter_hiscore_
     public ported_highscore_write_b_
-    public run_car_menu
+    public ported_run_car_menu_
     public ported_run_opponent_menu_
     public ported_run_option_menu_
     public off_1314A
-    public end_hiscore
+    public ported_end_hiscore_
     public ported_security_check_
     public ported_set_default_car_
 ported_stuntsmain_ proc far
@@ -370,7 +370,7 @@ _do_car_menu:
     mov     ax, offset gameconfig
     push    ax
     push    cs
-    call near ptr run_car_menu
+    call near ptr ported_run_car_menu_
     add     sp, 8
     jmp     _show_menu
     nop
@@ -552,7 +552,7 @@ loc_104AC:
     cmp     byte_43966, 0
     jz      short loc_104D2
     push    cs
-    call near ptr end_hiscore
+    call near ptr ported_end_hiscore_
     cbw
     or      ax, ax
     jz      short loc_1049E
@@ -2963,7 +2963,7 @@ loc_11BC3:
     ; align 2
     db 144
 ported_highscore_write_b_ endp
-run_car_menu proc far
+ported_run_car_menu_ proc far
     var_10C = dword ptr -268
     var_108 = byte ptr -264
     var_106 = byte ptr -262
@@ -3003,7 +3003,7 @@ run_car_menu proc far
     arg_transmissionofs = word ptr 10
     arg_opponenttype = word ptr 12
 
-    jmp     run_car_menu_c
+    jmp     run_car_menu
     nop
     nop
     push    di
@@ -4279,7 +4279,7 @@ loc_12926:
 loc_12934:
     mov     [bp+var_106], 0
     jmp     loc_11FA5
-run_car_menu endp
+ported_run_car_menu_ endp
 ported_run_opponent_menu_ proc far
     var_1E = byte ptr -30
     var_1C = byte ptr -28
@@ -4800,7 +4800,7 @@ loc_12E28:
     mov     ax, offset gameconfig.game_opponentcarid
     push    ax
     push    cs
-    call near ptr run_car_menu
+    call near ptr ported_run_car_menu_
     add     sp, 8
     mov     [bp+var_1E], 0FFh
     jmp     loc_129A3
@@ -5140,7 +5140,7 @@ loc_13163:
     pop     bp
     retf
 ported_run_option_menu_ endp
-end_hiscore proc far
+ported_end_hiscore_ proc far
     var_9E = word ptr -158
     var_9C = word ptr -156
     var_9A = byte ptr -154
@@ -5192,7 +5192,7 @@ end_hiscore proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    jmp     end_hiscore_c
+    jmp     end_hiscore
     nop
     nop
     push    di
@@ -7103,7 +7103,7 @@ loc_144C6:
     mov     [bp+var_selectedmenu], 0
     jmp     loc_14188
     pop     si
-end_hiscore endp
+ported_end_hiscore_ endp
 ported_security_check_ proc far
     var_440 = byte ptr -1088
     var_43E = byte ptr -1086

@@ -56,12 +56,12 @@ seg005 segment byte public 'STUNTSC' use16
     public ported_sub_2298C_
     public ported_file_load_replay_
     public ported_file_write_replay_
-    public setup_car_shapes
+    public ported_setup_car_shapes_
     public ported_setup_player_cars_
     public ported_free_player_cars_
     public ported_mouse_minmax_position_
     public ported_replay_unk_
-    public loop_game
+    public ported_loop_game_
     public off_2481A
     public off_24D20
     public off_24D22
@@ -466,7 +466,7 @@ loc_21F84:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr setup_car_shapes
+    call near ptr ported_setup_car_shapes_
     add     sp, 2
 loc_21FB8:
     cmp     replaybar_enabled, 0
@@ -488,7 +488,7 @@ loc_21FC2:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     short loc_22064
     ; align 2
@@ -591,7 +591,7 @@ loc_220DB:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr setup_car_shapes
+    call near ptr ported_setup_car_shapes_
     add     sp, 2
     mov     ax, 0C8h ; '�'
     push    ax
@@ -676,7 +676,7 @@ loc_221CC:
     push    ax
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -685,7 +685,7 @@ loc_221CC:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     is_in_replay, 1
 loc_22203:
@@ -699,7 +699,7 @@ loc_22208:
     mov     ax, 3
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_21DA2
     ; align 2
@@ -2002,7 +2002,7 @@ ported_file_write_replay_ proc far
     ; align 2
     db 144
 ported_file_write_replay_ endp
-setup_car_shapes proc far
+ported_setup_car_shapes_ proc far
     var_20 = word ptr -32
     var_1E = word ptr -30
     var_1C = byte ptr -28
@@ -2020,7 +2020,7 @@ setup_car_shapes proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    jmp     setup_car_shapes_c
+    jmp     setup_car_shapes
     nop
     push    di
     push    si
@@ -2951,7 +2951,7 @@ loc_236AC:
     mov     sp, bp
     pop     bp
     retf
-setup_car_shapes endp
+ported_setup_car_shapes_ endp
 ported_setup_player_cars_ proc far
     var_8 = word ptr -8
     var_6 = word ptr -6
@@ -3102,7 +3102,7 @@ loc_23870:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr setup_car_shapes
+    call near ptr ported_setup_car_shapes_
     add     sp, 2
 loc_238B4:
     cmp     idle_expired, 0
@@ -3120,7 +3120,7 @@ loc_238B4:
     push    ax
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
 loc_238DE:
     mov     ax, offset aGame; "game"
@@ -3234,7 +3234,7 @@ loc_239D4:
     mov     ax, 3
     push    ax
     push    cs
-    call near ptr setup_car_shapes
+    call near ptr ported_setup_car_shapes_
     add     sp, 2
 loc_23A15:
     push    word ptr fontledresptr+2
@@ -3382,7 +3382,7 @@ loc_23B45:
     ; align 2
     db 144
 ported_replay_unk_ endp
-loop_game proc far
+ported_loop_game_ proc far
     var_44 = word ptr -68
     var_42 = word ptr -66
     var_40 = byte ptr -64
@@ -3415,7 +3415,7 @@ loop_game proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    jmp     loop_game_c
+    jmp     loop_game
     nop
     push    di
     push    si
@@ -4032,7 +4032,7 @@ loc_24140:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     pop     si
     pop     di
@@ -4061,7 +4061,7 @@ loc_24181:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
 loc_24193:
     push    state.game_frame
@@ -4069,7 +4069,7 @@ loc_24193:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     [bp+var_40], 0
     mov     ax, 1Dh
@@ -4226,7 +4226,7 @@ loc_242E7:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_23FEE
     ; align 2
@@ -4277,14 +4277,14 @@ loc_24346:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     push    state.game_frame
     push    state.game_frame
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     sub     si, si
 loc_24377:
@@ -4427,7 +4427,7 @@ loc_244B0:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     is_in_replay, 0
     mov     al, byte_3B8F2
@@ -4799,7 +4799,7 @@ loc_24830:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     call    timer_get_delta_alt
     mov     [bp+var_24], 14h
@@ -4864,7 +4864,7 @@ loc_248C4:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     push    [bp+var_18]
     call    ported_input_do_checking_
@@ -4921,7 +4921,7 @@ loc_24956:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     ax, offset aWai_0; "wai"
     push    ax
@@ -4979,7 +4979,7 @@ loc_249F8:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
 loc_24A0D:
     add     sp, 6
 loc_24A10:
@@ -5003,7 +5003,7 @@ loc_24A28:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     call    timer_get_delta_alt
     mov     [bp+var_24], 14h
@@ -5067,7 +5067,7 @@ loc_24AB8:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     push    [bp+var_18]
     call    ported_input_do_checking_
@@ -5112,7 +5112,7 @@ loc_24B23:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     or      di, di
     jnz     short loc_24B4F
@@ -5208,7 +5208,7 @@ loc_24BF8:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     ax, 1
     push    ax
@@ -5224,7 +5224,7 @@ loc_24C43:
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_24A19
     ; align 2
@@ -5238,7 +5238,7 @@ loc_24C5A:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_24D18
 loc_24C74:
@@ -5251,14 +5251,14 @@ loc_24C74:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     push    state.game_frame
     push    state.game_frame
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_242E7
 loc_24CA6:
@@ -5271,14 +5271,14 @@ loc_24CA6:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     push    state.game_frame
     push    state.game_frame
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     sub     ax, ax
     push    ax
@@ -5297,7 +5297,7 @@ loc_24CA6:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     jmp     loc_24140
     ; align 2
@@ -5309,7 +5309,7 @@ loc_24D04:
     push    ax
     push    ax
     push    cs
-    call near ptr loop_game
+    call near ptr ported_loop_game_
     add     sp, 6
     mov     byte_449E6, 3
 loc_24D18:
@@ -5355,6 +5355,6 @@ loc_24D5E:
     mov     sp, bp
     pop     bp
     retf
-loop_game endp
+ported_loop_game_ endp
 seg005 ends
 end

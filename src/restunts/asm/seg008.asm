@@ -48,8 +48,8 @@ seg008 segment byte public 'STUNTSC' use16
     assume es:nothing, ss:nothing, ds:dseg
     public ported_sub_274B0_
     public ported_sub_275C6_
-    public show_dialog
-    public do_fileselect_dialog
+    public ported_show_dialog_
+    public ported_do_fileselect_dialog_
     public ported_file_build_path_
     public ported_do_savefile_dialog_
     public ported_parse_filepath_separators_
@@ -329,7 +329,7 @@ loc_27680:
     pop     bp
     retf
 ported_sub_275C6_ endp
-show_dialog proc far
+ported_show_dialog_ proc far
     var_1D8 = byte ptr -472
     var_1D6 = word ptr -470
     var_1D4 = byte ptr -468
@@ -378,7 +378,7 @@ show_dialog proc far
     arg_E = word ptr 20
     arg_10 = byte ptr 22
 
-    jmp     show_dialog_c
+    jmp     show_dialog
     nop
     nop
     push    di
@@ -1201,8 +1201,8 @@ loc_27EC6:
     jmp     loc_27C6D
     ; align 2
     db 144
-show_dialog endp
-do_fileselect_dialog proc far
+ported_show_dialog_ endp
+ported_do_fileselect_dialog_ proc far
     var_71C = word ptr -1820
     var_71A = word ptr -1818
     var_718 = byte ptr -1816
@@ -1238,7 +1238,7 @@ do_fileselect_dialog proc far
     arg_6 = word ptr 12
     arg_8 = word ptr 14
 
-    jmp     do_fileselect_dialog_c
+    jmp     do_fileselect_dialog
     nop
     nop
     push    di
@@ -1265,7 +1265,7 @@ do_fileselect_dialog proc far
     mov     ax, 3
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     or      ax, ax
     jge     short loc_27F1E
@@ -1987,7 +1987,7 @@ loc_285AC:
     retf
     ; align 2
     db 144
-do_fileselect_dialog endp
+ported_do_fileselect_dialog_ endp
 ported_file_build_path_ proc far
     var_2 = byte ptr -2
      s = byte ptr 0
@@ -2086,7 +2086,7 @@ ported_do_savefile_dialog_ proc far
     mov     ax, 3
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     or      ax, ax
     jge     short loc_28682
@@ -4072,7 +4072,7 @@ ported_show_waiting_ proc far
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     push    cs
     call near ptr ported_mouse_draw_opaque_check_
@@ -4761,7 +4761,7 @@ loc_29B6E:
 loc_29B76:
     push    cs
 loc_29B77:
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     or      ax, ax
     jg      short loc_29B84
@@ -4954,7 +4954,7 @@ loc_29D3A:
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     jmp     short loc_29D7B
     ; align 2
@@ -5004,7 +5004,7 @@ ported_do_key_restext_ proc far
     mov     ax, 4
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     byte_3FE00, 0
     mov     byte_3B8F2, 0
@@ -5045,7 +5045,7 @@ ported_do_mou_restext_ proc far
     mov     ax, 4
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     word_3F88E, 0
     call    sub_372F4
@@ -5084,7 +5084,7 @@ ported_do_pau_restext_ proc far
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     word_3F88E, 0
     call    sub_372F4
@@ -5139,7 +5139,7 @@ loc_29ECE:
     mov     ax, 4
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     word_3F88E, 0
     push    cs
@@ -5194,7 +5194,7 @@ loc_29F30:
     mov     ax, 4
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     word_3F88E, 0
     push    cs
@@ -5231,7 +5231,7 @@ ported_do_dos_restext_ proc far
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     cmp     ax, 1
     jnz     short loc_29FA6
@@ -5339,7 +5339,7 @@ loc_2A050:
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     [bp+var_2], al
     cbw
@@ -5406,7 +5406,7 @@ loc_2A0EE:
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
 loc_2A103:
     mov     word_3F88E, 0
@@ -5451,7 +5451,7 @@ ported_do_dea_textres_ proc far
     mov     ax, 2
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     mov     [bp+var_2], ax
     or      ax, ax
@@ -5482,7 +5482,7 @@ loc_2A182:
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
 loc_2A193:
     add     sp, 12h
 loc_2A196:
@@ -5529,7 +5529,7 @@ loc_2A1D2:
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     push    cs
     call near ptr ported_mouse_draw_opaque_check_
@@ -5569,7 +5569,7 @@ ported_do_mer_restext_ proc far
     push    ax
     push    ax
     push    cs
-    call near ptr show_dialog
+    call near ptr ported_show_dialog_
     add     sp, 12h
     retf
     ; align 2

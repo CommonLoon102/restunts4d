@@ -1,5 +1,5 @@
 seg004 segment byte public 'STUNTSC' use16
-    extrn build_track_object:proc
+    extrn ported_build_track_object_:proc
     extrn off_1F87E:word
     extrn ported_bto_auxiliary1_:proc
     extrn ported_shape3d_load_all_:proc

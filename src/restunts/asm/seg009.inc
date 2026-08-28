@@ -1,5 +1,5 @@
 seg009 segment byte public 'STUNTSC' use16
-    extrn load_tracks_menu_shapes:proc
+    extrn ported_load_tracks_menu_shapes_:proc
     extrn ported_preRender_icons_:proc
     extrn ported_draw_2DtrackMap_:proc
     extrn ported_sub_2C81C_:proc
