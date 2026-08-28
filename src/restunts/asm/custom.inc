@@ -319,6 +319,7 @@ extrn font_set_unk:proc
 extrn sprite_set_1_size:proc
 extrn sprite_1_unk2:proc
 extrn sprite_1_unk:proc
+extrn font_draw_text:proc
 
 extrn timer_get_counter:proc
 extrn timer_get_delta:proc

@@ -27,6 +27,18 @@ extern struct SPRITE far* mouseunkspriteptr;
 extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* smouspriteptr;
 extern char mouse_isdirty;
+extern legacy_u8 far* word_405FE;
+
+static legacy_u16 shape2d_get_word(const legacy_u8 far* source)
+{
+	return (legacy_u16)source[0] | ((legacy_u16)source[1] << 8);
+}
+
+static void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value)
+{
+	destination[0] = (legacy_u8)value;
+	destination[1] = (legacy_u8)(value >> 8);
+}
 
 void sprite_set_1_size(unsigned short left, unsigned short right,
 	unsigned short top, unsigned short height)
@@ -110,6 +122,88 @@ void sprite_1_unk2(int x, int y, int width, int height, int color)
 			return;
 	}
 	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
+}
+
+void font_draw_text(const char* text, int x, int y)
+{
+	legacy_u8 far* font_definition;
+	legacy_u8 far* glyph_data;
+	legacy_u8 far* bitmap;
+	legacy_u16 far* line_offsets;
+	legacy_u16 glyph_offset;
+	legacy_u16 current_x;
+	legacy_u16 current_y;
+	legacy_u16 destination;
+	legacy_u16 glyph_width;
+	legacy_u16 row_index;
+	legacy_u8 character;
+	legacy_u8 color;
+	legacy_u8 bits;
+	legacy_u8 bit;
+	legacy_s8 byte_count;
+	legacy_s8 old_byte_count;
+	legacy_s16 row_count;
+	legacy_s16 old_row_count;
+
+	font_definition = word_405FE;
+	shape2d_put_word(font_definition + 8U, (legacy_u16)x);
+	shape2d_put_word(font_definition + 0x0AU, (legacy_u16)y);
+	bitmap = (legacy_u8 far*)MK_FP(
+		FP_SEG(sprite1.sprite_bitmapptr), 0);
+	line_offsets = (legacy_u16 far*)MK_FP(
+		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
+	while ((character = (legacy_u8)*text++) != 0) {
+		glyph_offset = shape2d_get_word(font_definition + 0x16U +
+			(legacy_u16)character * 2U);
+		if (glyph_offset == 0) {
+			if (character == '\r' || character == '\n') {
+				shape2d_put_word(font_definition + 8U,
+					shape2d_get_word(font_definition + 4U));
+				shape2d_put_word(font_definition + 0x0AU,
+					LEGACY_U16_WRAP_ADD(
+						shape2d_get_word(font_definition + 0x0AU),
+						shape2d_get_word(font_definition + 0x12U)));
+			}
+			continue;
+		}
+		glyph_data = font_definition + glyph_offset;
+		current_x = shape2d_get_word(font_definition + 8U);
+		if (font_definition[0x14U] != 0) {
+			glyph_width = *glyph_data++;
+			shape2d_put_word(font_definition + 0x10U, glyph_width);
+			font_definition[0x0CU] = (legacy_u8)((glyph_width + 7U) >> 3);
+		}
+		color = font_definition[0];
+		current_y = shape2d_get_word(font_definition + 0x0AU);
+		row_index = current_y;
+		row_count = LEGACY_S16_FROM_BITS(
+			shape2d_get_word(font_definition + 0x0EU));
+		do {
+			destination = LEGACY_U16_WRAP_ADD(
+				line_offsets[row_index], current_x);
+			byte_count = LEGACY_S8_FROM_BITS(font_definition[0x0CU]);
+			do {
+				bits = *glyph_data++;
+				for (bit = 0; bit < 8U; bit++) {
+					if ((bits & 0x80U) != 0)
+						bitmap[destination] = color;
+					bits <<= 1;
+					destination++;
+				}
+				old_byte_count = byte_count;
+				byte_count = LEGACY_S8_FROM_BITS(
+					(legacy_u8)((legacy_u8)byte_count - 1U));
+			} while (old_byte_count != LEGACY_S8_FROM_BITS(0x80U) &&
+				byte_count > 0);
+			row_index++;
+			old_row_count = row_count;
+			row_count = LEGACY_S16_WRAP_SUB(row_count, 1);
+		} while (old_row_count != LEGACY_S16_FROM_BITS(0x8000U) &&
+			row_count > 0);
+		shape2d_put_word(font_definition + 8U,
+			LEGACY_U16_WRAP_ADD(current_x,
+				shape2d_get_word(font_definition + 0x10U)));
+	}
 }
 
 struct SPRITE far* sprite_make_wnd(unsigned int width, unsigned int height, unsigned int unk) {

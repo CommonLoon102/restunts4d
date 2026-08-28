@@ -303,7 +303,7 @@ seg012 segment byte public 'STUNTSC' use16
     public byte_33656
     public sprite_1_unk3
     public loc_33697
-    public font_draw_text
+    public ported_font_draw_text_
     public video_set_mode_13h
     public file_load_shape2d_res_fatal_thunk
     public file_load_shape2d_res_nofatal_thunk
@@ -11064,7 +11064,7 @@ loc_33733:
     pop     bp
     retf
 sprite_1_unk3 endp
-font_draw_text proc far
+ported_font_draw_text_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -11073,9 +11073,8 @@ font_draw_text proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     font_draw_text
+    nop
     push    ds
     push    si
     push    di
@@ -11173,7 +11172,7 @@ loc_337FD:
     mov     ax, word ptr aMsRunTimeLibraryCop+8
     add     word ptr aMsRunTimeLibraryCop, ax; "MS Run-Time Library - Copyright (c) 198"...
     jmp     loc_33771
-font_draw_text endp
+ported_font_draw_text_ endp
 video_set_mode_13h proc far
 
     call    video_add_exithandler

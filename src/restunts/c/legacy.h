@@ -27,8 +27,13 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 
 /* Pass side-effect-free values to these legacy word operations. */
 #if defined(__BORLANDC__)
+#define LEGACY_S8_FROM_BITS(value) ((legacy_s8)(legacy_u8)(value))
 #define LEGACY_S16_FROM_BITS(value) ((legacy_s16)(legacy_u16)(value))
 #else
+#define LEGACY_S8_FROM_BITS(value) \
+	((legacy_u8)(value) <= 0x7FU ? \
+	(legacy_s8)(legacy_u8)(value) : \
+	(legacy_s8)(-1 - (legacy_s8)(0xFFU - (legacy_u8)(value))))
 #define LEGACY_S16_FROM_BITS(value) \
 	((legacy_u16)(value) <= 0x7FFFU ? \
 	(legacy_s16)(legacy_u16)(value) : \
