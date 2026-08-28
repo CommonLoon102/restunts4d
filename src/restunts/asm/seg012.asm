@@ -281,7 +281,7 @@ seg012 segment byte public 'STUNTSC' use16
     public ported_file_decomp_vle_
     public nopsub_32FEE
     public ported_video_get_status_
-    public nopsub_33006
+    public ported_nopsub_33006_
     public ported_vector_op_unk_
     public loc_3301F
     public ported_preRender_sphere_
@@ -10070,20 +10070,19 @@ nosmart
     ; align 2
     db 0
 ported_video_get_status_ endp
-nopsub_33006 proc far
+ported_nopsub_33006_ proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     nopsub_33006
+    nop
     push    si
     push    di
     mov     ax, ds:4E92h
     jmp     short loc_3301F
     ; align 2
     db 144
-nopsub_33006 endp
+ported_nopsub_33006_ endp
 ported_vector_op_unk_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

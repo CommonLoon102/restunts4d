@@ -869,6 +869,20 @@ void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outv
 	outvec->y = (short)(((long)delta * var_4) / var_2 + vec2->y);
 }
 
+extern legacy_u8 byte_4032A;
+extern legacy_u8 byte_4032B;
+
+void nopsub_33006(struct VECTOR* vec1, struct VECTOR* vec2,
+	struct VECTOR* outvec)
+{
+	legacy_u16 interpolation_z;
+
+	interpolation_z = (legacy_u16)(byte_4032A |
+		((legacy_u16)byte_4032B << 8));
+	vector_op_unk(vec1, vec2, outvec,
+		LEGACY_S16_FROM_BITS(interpolation_z));
+}
+
 short multiply_and_scale(short a1, short a2)
 {
 	long mul = (long)a1 * (long)a2 * 4L;

@@ -234,7 +234,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn ported_file_decomp_vle_:proc
     extrn nopsub_32FEE:proc
     extrn ported_video_get_status_:proc
-    extrn nopsub_33006:proc
+    extrn ported_nopsub_33006_:proc
     extrn ported_vector_op_unk_:proc
     extrn loc_3301F:proc
     extrn ported_preRender_sphere_:proc

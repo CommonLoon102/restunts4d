@@ -33,6 +33,7 @@ extrn mat_rot_y:proc
 extrn mat_rot_z:proc
 extrn mat_rot_zxy:proc
 extrn vector_op_unk:proc
+extrn nopsub_33006:proc
 extrn vector_op_unk2:proc
 extrn vector_to_point:proc
 extrn multiply_and_scale:proc
