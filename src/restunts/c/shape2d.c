@@ -32,6 +32,10 @@ extern legacy_u16 fontdefseg;
 extern legacy_u8 far incnums[];
 extern legacy_u16 word_4031E;
 extern legacy_u16 word_40320;
+extern legacy_u8 byte_3B8FC;
+extern struct SPRITE far* sprite_ptrs[4];
+extern int word_4646A[4];
+extern int word_46486[4];
 
 static legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
@@ -1716,6 +1720,26 @@ void sprite_copy_both_to_arg(struct SPRITE* argsprite) {
 
 void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
 	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * 2);
+}
+
+void sub_275C6(void)
+{
+	struct SPRITE saved_sprites[2];
+	legacy_u16 index;
+
+	if (byte_3B8FC == 0)
+		return;
+	byte_3B8FC--;
+	index = byte_3B8FC;
+	mouse_draw_opaque_check();
+	sprite_shape_to_1(sprite_ptrs[index]->sprite_bitmapptr,
+		word_4646A[index], word_46486[index]);
+	fmemcpy(saved_sprites,
+		trackdata12 + index * sizeof(saved_sprites),
+		sizeof(saved_sprites));
+	sprite_copy_arg_to_both(saved_sprites);
+	sprite_free_wnd(sprite_ptrs[index]);
+	mouse_draw_transparent_check();
 }
 
 void mouse_draw_opaque(void) {

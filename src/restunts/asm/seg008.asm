@@ -47,7 +47,7 @@ seg008 segment byte public 'STUNTSC' use16
     assume cs:seg008
     assume es:nothing, ss:nothing, ds:dseg
     public sub_274B0
-    public sub_275C6
+    public ported_sub_275C6_
     public show_dialog
     public do_fileselect_dialog
     public ported_file_build_path_
@@ -240,15 +240,14 @@ loc_27506:
     ; align 2
     db 144
 sub_274B0 endp
-sub_275C6 proc far
+ported_sub_275C6_ proc far
     var_3C = byte ptr -60
     var_1E = byte ptr -30
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 3Ch
+    jmp     sub_275C6
+    nop
     push    di
     push    si
     cmp     byte_3B8FC, 0
@@ -330,7 +329,7 @@ loc_27680:
     mov     sp, bp
     pop     bp
     retf
-sub_275C6 endp
+ported_sub_275C6_ endp
 show_dialog proc far
     var_1D8 = byte ptr -472
     var_1D6 = word ptr -470
@@ -842,7 +841,7 @@ loc_27B88:
     cmp     [bp+arg_2], 0
     jz      short loc_27B92
     push    cs
-    call near ptr sub_275C6
+    call near ptr ported_sub_275C6_
 loc_27B92:
     mov     al, [bp+var_1D4]
     jmp     short loc_27BCD
@@ -1977,7 +1976,7 @@ loc_28589:
     mov     [bp+var_6A0], 1
 loc_285AC:
     push    cs
-    call near ptr sub_275C6
+    call near ptr ported_sub_275C6_
     mov     al, [bp+var_18]
     mov     g_is_busy, al
     mov     al, [bp+var_6A0]
@@ -2188,7 +2187,7 @@ loc_28750:
     mov     [bp+var_4], 1
 loc_28754:
     push    cs
-    call near ptr sub_275C6
+    call near ptr ported_sub_275C6_
     mov     al, [bp+var_4]
     cbw
     pop     si
@@ -4942,7 +4941,7 @@ loc_29D25:
     db 144
 loc_29D3A:
     push    cs
-    call near ptr sub_275C6
+    call near ptr ported_sub_275C6_
     cmp     byte_3FE00, 0
     jnz     short loc_29D7B
     sub     ax, ax
