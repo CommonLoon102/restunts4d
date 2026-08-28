@@ -52,7 +52,7 @@ seg003 segment byte public 'STUNTSC' use16
     public ported_skybox_op_helper2_
     public skybox_op
     public ported_transformed_shape_add_for_sort_
-    public draw_track_preview
+    public ported_draw_track_preview_
     public ported_draw_ingame_text_
     public ported_do_sinking_
     public ported_init_crak_
@@ -4753,7 +4753,7 @@ ported_transformed_shape_add_for_sort_ proc far
     ; align 2
     db 144
 ported_transformed_shape_add_for_sort_ endp
-draw_track_preview proc far
+ported_draw_track_preview_ proc far
     var_42 = word ptr -66
     var_40 = word ptr -64
     var_3E = word ptr -62
@@ -4777,9 +4777,8 @@ draw_track_preview proc far
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 42h
+    jmp     draw_track_preview
+    nop
     push    di
     push    si
     mov     ax, word_3C112
@@ -5353,7 +5352,7 @@ loc_1D128:
     mov     sp, bp
     pop     bp
     retf
-draw_track_preview endp
+ported_draw_track_preview_ endp
 ported_draw_ingame_text_ proc far
      s = byte ptr 0
      r = byte ptr 2

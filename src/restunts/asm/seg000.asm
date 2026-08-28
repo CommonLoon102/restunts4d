@@ -1806,7 +1806,7 @@ loc_110ED:
     push    ax
     call    sprite_set_1_size
     add     sp, 8
-    call    draw_track_preview
+    call    ported_draw_track_preview_
     call    shape3d_free_all
     call    ported_unload_skybox_
     call    sprite_copy_wnd_to_1
