@@ -75,9 +75,9 @@ seg027 segment byte public 'STUNTSC' use16
     public audiodrv_atexit
     public ported_load_sfx_ge_
     public ported_sub_37C38_
-    public load_sfx_file
-    public load_song_file
-    public load_voice_file
+    public ported_load_sfx_file_
+    public ported_load_song_file_
+    public ported_load_voice_file_
     public nopsub_37D7A
     public ported_audio_init_chunk_
     public audio_map_song_instruments
@@ -1548,16 +1548,15 @@ ported_sub_37C38_ proc far
     ; align 2
     db 144
 ported_sub_37C38_ endp
-load_sfx_file proc far
+ported_load_sfx_file_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     load_sfx_file
+    nop
     sub     ax, ax
     mov     [bp+var_2], ax
     mov     [bp+var_4], ax
@@ -1606,17 +1605,16 @@ loc_37CAF:
     retf
     ; align 2
     db 144
-load_sfx_file endp
-load_song_file proc far
+ported_load_sfx_file_ endp
+ported_load_song_file_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     load_song_file
+    nop
     sub     ax, ax
     mov     [bp+var_2], ax
     mov     [bp+var_4], ax
@@ -1645,17 +1643,16 @@ loc_37CFA:
     mov     sp, bp
     pop     bp
     retf
-load_song_file endp
-load_voice_file proc far
+ported_load_song_file_ endp
+ported_load_voice_file_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
      r = byte ptr 2
     arg_0 = dword ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     load_voice_file
+    nop
     sub     ax, ax
     mov     [bp+var_2], ax
     mov     [bp+var_4], ax
@@ -1704,7 +1701,7 @@ loc_37D6F:
     retf
     ; align 2
     db 144
-load_voice_file endp
+ported_load_voice_file_ endp
 nopsub_37D7A proc far
     var_4 = word ptr -4
     var_2 = word ptr -2

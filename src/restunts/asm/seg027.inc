@@ -28,9 +28,9 @@ seg027 segment byte public 'STUNTSC' use16
     extrn audiodrv_atexit:proc
     extrn ported_load_sfx_ge_:proc
     extrn ported_sub_37C38_:proc
-    extrn load_sfx_file:proc
-    extrn load_song_file:proc
-    extrn load_voice_file:proc
+    extrn ported_load_sfx_file_:proc
+    extrn ported_load_song_file_:proc
+    extrn ported_load_voice_file_:proc
     extrn nopsub_37D7A:proc
     extrn ported_audio_init_chunk_:proc
     extrn audio_map_song_instruments:proc

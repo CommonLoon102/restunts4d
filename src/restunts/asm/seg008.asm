@@ -4549,15 +4549,15 @@ loc_29A1C:
     jmp     short loc_299EC
 loc_29A26:
     push    word ptr [bp+arg_2]; char *
-    call    load_song_file
+    call    far ptr load_song_file
     jmp     short loc_299EC
 loc_29A30:
     push    word ptr [bp+arg_2]; char *
-    call    load_voice_file
+    call    far ptr load_voice_file
     jmp     short loc_299EC
 loc_29A3A:
     push    word ptr [bp+arg_2]; char *
-    call    load_sfx_file
+    call    far ptr load_sfx_file
     jmp     short loc_299EC
 loc_29A44:
     push    word ptr [bp+arg_2]

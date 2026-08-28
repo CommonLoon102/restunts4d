@@ -248,6 +248,9 @@ extrn draw_lines_unk:proc
 extrn init_audio_resources:proc
 extrn load_palandcursor:proc
 extrn load_sfx_ge:proc
+extrn load_sfx_file:proc
+extrn load_song_file:proc
+extrn load_voice_file:proc
 
 ; externs for implementations in state.c
 extrn player_op:proc

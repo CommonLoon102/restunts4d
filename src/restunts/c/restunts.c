@@ -728,6 +728,8 @@ extern char audioflag2;
 extern char audioflag6;
 extern int word_4063A;
 extern int word_4063C;
+extern unsigned char byte_40635;
+extern char audiodriverstring2[];
 extern unsigned char byte_44290;
 extern unsigned char byte_40630;
 extern unsigned char byte_40632;
@@ -1661,6 +1663,44 @@ void far* load_sfx_ge(const char* filename, const char* extension,
 		return result;
 
 	return file_load_binary_nofatal(filename);
+}
+
+void far* load_sfx_file(const char* filename)
+{
+	void far* result;
+
+	result = 0;
+	if (byte_40635 != 0)
+		result = load_sfx_ge(filename, "dsf", audiodriverstring2);
+	if (result == 0)
+		result = load_sfx_ge(filename, "sfx", audiodriverstring2);
+	if (result == 0 && word_4063C != 0)
+		fatal_error("cannot load sfx file %s", filename);
+	return result;
+}
+
+void far* load_song_file(const char* filename)
+{
+	void far* result;
+
+	result = load_sfx_ge(filename, "kms", audiodriverstring2);
+	if (result == 0 && word_4063C != 0)
+		fatal_error("cannot load song file %s", filename);
+	return result;
+}
+
+void far* load_voice_file(const char* filename)
+{
+	void far* result;
+
+	result = 0;
+	if (byte_40635 != 0)
+		result = load_sfx_ge(filename, "dvc", audiodriverstring2);
+	if (result == 0)
+		result = load_sfx_ge(filename, "vce", audiodriverstring2);
+	if (result == 0 && word_4063C != 0)
+		fatal_error("cannot load voice file %s", filename);
+	return result;
 }
 
 int audioresource_compare_chunknames(int case_sensitive,
