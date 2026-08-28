@@ -303,7 +303,7 @@ seg012 segment byte public 'STUNTSC' use16
     extrn loc_343E9:proc
     extrn sub_34526:proc
     extrn loc_34541:proc
-    extrn sub_345BC:proc
+    extrn ported_sub_345BC_:proc
     extrn loc_345E5:proc
     extrn video_set_palette:proc
     extrn loc_346A8:proc

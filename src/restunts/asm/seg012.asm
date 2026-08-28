@@ -350,7 +350,7 @@ seg012 segment byte public 'STUNTSC' use16
     public loc_343E9
     public sub_34526
     public loc_34541
-    public sub_345BC
+    public ported_sub_345BC_
     public loc_345E5
     public video_set_palette
     public loc_346A8
@@ -13205,7 +13205,7 @@ loc_34586:
     ; align 2
     db 144
 sub_34526 endp
-sub_345BC proc far
+ported_sub_345BC_ proc far
     var_4 = word ptr -4
     var_2 = word ptr -2
      s = byte ptr 0
@@ -13214,9 +13214,8 @@ sub_345BC proc far
     arg_2 = word ptr 8
     arg_4 = word ptr 10
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 4
+    jmp     sub_345BC
+    nop
     push    ds
     push    si
     push    di
@@ -13328,7 +13327,7 @@ loc_3468C:
     mov     ax, [bp+0Ch]
     jmp     short loc_346A8
     db 144
-sub_345BC endp
+ported_sub_345BC_ endp
 video_set_palette proc far
      s = byte ptr 0
      r = byte ptr 2

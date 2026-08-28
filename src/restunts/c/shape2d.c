@@ -124,7 +124,7 @@ void sprite_1_unk2(int x, int y, int width, int height, int color)
 	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
 }
 
-void font_draw_text(const char* text, int x, int y)
+static void font_draw_text_impl(const char* text, int x, int y, int opaque)
 {
 	legacy_u8 far* font_definition;
 	legacy_u8 far* glyph_data;
@@ -138,6 +138,7 @@ void font_draw_text(const char* text, int x, int y)
 	legacy_u16 row_index;
 	legacy_u8 character;
 	legacy_u8 color;
+	legacy_u8 background;
 	legacy_u8 bits;
 	legacy_u8 bit;
 	legacy_s8 byte_count;
@@ -174,6 +175,7 @@ void font_draw_text(const char* text, int x, int y)
 			font_definition[0x0CU] = (legacy_u8)((glyph_width + 7U) >> 3);
 		}
 		color = font_definition[0];
+		background = font_definition[2];
 		current_y = shape2d_get_word(font_definition + 0x0AU);
 		row_index = current_y;
 		row_count = LEGACY_S16_FROM_BITS(
@@ -187,6 +189,8 @@ void font_draw_text(const char* text, int x, int y)
 				for (bit = 0; bit < 8U; bit++) {
 					if ((bits & 0x80U) != 0)
 						bitmap[destination] = color;
+					else if (opaque != 0)
+						bitmap[destination] = background;
 					bits <<= 1;
 					destination++;
 				}
@@ -204,6 +208,16 @@ void font_draw_text(const char* text, int x, int y)
 			LEGACY_U16_WRAP_ADD(current_x,
 				shape2d_get_word(font_definition + 0x10U)));
 	}
+}
+
+void font_draw_text(const char* text, int x, int y)
+{
+	font_draw_text_impl(text, x, y, 0);
+}
+
+void sub_345BC(const char* text, int x, int y)
+{
+	font_draw_text_impl(text, x, y, 1);
 }
 
 void draw_filled_lines(int* x1arr, int* x2arr, unsigned y,
