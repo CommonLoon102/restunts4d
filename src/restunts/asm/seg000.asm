@@ -56,7 +56,7 @@ seg000 segment byte public 'STUNTSC' use16
     public highscore_text_unk
     public print_highscore_entry
     public enter_hiscore
-    public highscore_write_b
+    public ported_highscore_write_b_
     public run_car_menu
     public run_opponent_menu
     public run_option_menu
@@ -2894,7 +2894,7 @@ loc_11AED:
     call    sprite_blit_to_video
     add     sp, 6
     push    cs
-    call near ptr highscore_write_b
+    call near ptr ported_highscore_write_b_
 loc_11BAA:
     push    cs
     call near ptr highscore_text_unk
@@ -2904,15 +2904,15 @@ loc_11BAA:
     pop     bp
     retf
 enter_hiscore endp
-highscore_write_b proc far
+ported_highscore_write_b_ proc far
     var_16E = word ptr -366
     var_16C = byte ptr -364
      s = byte ptr 0
      r = byte ptr 2
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 16Eh
+    jmp     highscore_write_b
+    nop
+    nop
     push    di
     push    si
     mov     [bp+var_16E], 0
@@ -2970,7 +2970,7 @@ loc_11BC3:
     retf
     ; align 2
     db 144
-highscore_write_b endp
+ported_highscore_write_b_ endp
 run_car_menu proc far
     var_10C = dword ptr -268
     var_108 = byte ptr -264

@@ -1934,6 +1934,29 @@ int highscore_write_a(int create_default)
 	return file_write_fatal(g_path_buf, td11_highscores, 0x16CUL) != 0;
 }
 
+void highscore_write_b(void)
+{
+	legacy_u8 ordered_scores[0x16C];
+	legacy_u8 far* scores;
+	legacy_u16 entry;
+	legacy_u16 offset;
+	legacy_u16 source_entry;
+
+	scores = (legacy_u8 far*)td11_highscores;
+	for (entry = 0; entry < 7U; entry++) {
+		source_entry = (legacy_u16)word_46170[entry];
+		for (offset = 0; offset < 0x34U; offset++) {
+			ordered_scores[entry * 0x34U + offset] =
+				scores[source_entry * 0x34U + offset];
+		}
+	}
+	file_build_path(byte_3B80C, gameconfig.game_trackname,
+		".hig", g_path_buf);
+	g_is_busy = 1;
+	(void)file_write_fatal(g_path_buf, ordered_scores, 0x16CUL);
+	g_is_busy = 0;
+}
+
 static int font_measure(const char* text, legacy_u16 remaining, int bounded)
 {
 	legacy_u8 far* font_definition;
