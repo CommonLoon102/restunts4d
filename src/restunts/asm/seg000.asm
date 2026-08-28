@@ -52,7 +52,7 @@ seg000 segment byte public 'STUNTSC' use16
     public load_intro_resources
     public run_menu
     public run_tracks_menu
-    public highscore_write_a
+    public ported_highscore_write_a_
     public highscore_text_unk
     public print_highscore_entry
     public enter_hiscore
@@ -1849,7 +1849,7 @@ loc_110ED:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr highscore_write_a
+    call near ptr ported_highscore_write_a_
     add     sp, 2
     or      al, al
     jz      short loc_111F9
@@ -2211,7 +2211,7 @@ loc_1156A:
     ; align 2
     db 144
 run_tracks_menu endp
-highscore_write_a proc far
+ported_highscore_write_a_ proc far
     var_3A = word ptr -58
     var_38 = byte ptr -56
     var_27 = byte ptr -39
@@ -2224,9 +2224,8 @@ highscore_write_a proc far
      r = byte ptr 2
     arg_0 = word ptr 6
 
-    push    bp
-    mov     bp, sp
-    sub     sp, 3Ah
+    jmp     highscore_write_a
+    nop
     push    di
     push    si
     mov     byte_449CE, 0FFh
@@ -2330,7 +2329,7 @@ loc_11648:
     jmp     loc_11602
 loc_1168B:
     jmp     loc_115F9
-highscore_write_a endp
+ported_highscore_write_a_ endp
 highscore_text_unk proc far
     var_A = byte ptr -10
     var_8 = word ptr -8
@@ -6043,14 +6042,14 @@ loc_139BA:
     sub     ax, ax
     push    ax
     push    cs
-    call near ptr highscore_write_a
+    call near ptr ported_highscore_write_a_
     add     sp, 2
     or      al, al
     jz      short loc_139E1
     mov     ax, 1
     push    ax
     push    cs
-    call near ptr highscore_write_a
+    call near ptr ported_highscore_write_a_
     add     sp, 2
     or      al, al
     jz      short loc_139E1

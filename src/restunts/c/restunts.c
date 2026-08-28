@@ -31,6 +31,8 @@ extern legacy_u16 word_3FB26;
 extern legacy_u16 word_3FB2A;
 extern legacy_u16 word_3FB34;
 extern legacy_u8 byte_3FB38[];
+extern legacy_u8 byte_449CE;
+extern int word_46170[7];
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -1891,6 +1893,45 @@ void far* sub_29A86(int operation, const char* filename,
 			return result;
 	} while (do_dea_textres() != 2);
 	return 0;
+}
+
+int highscore_write_a(int create_default)
+{
+	legacy_u8 record[0x34];
+	legacy_u8 far* scores;
+	void far* read_result;
+	legacy_u16 entry;
+	legacy_u16 offset;
+
+	byte_449CE = 0xFFU;
+	for (entry = 0; entry < 7U; entry++)
+		word_46170[entry] = entry;
+	file_build_path(byte_3B80C, gameconfig.game_trackname,
+		".hig", g_path_buf);
+	if (create_default == 0) {
+		g_is_busy = 1;
+		read_result = sub_29A86(10, g_path_buf, td11_highscores);
+		g_is_busy = 0;
+		return read_result == 0 ? 1 : 0;
+	}
+
+	for (offset = 0; offset < 40U; offset++)
+		record[offset] = '.';
+	record[40] = 0;
+	record[41] = 0;
+	record[42] = '.';
+	record[43] = '.';
+	record[44] = '/';
+	for (offset = 45U; offset < 49U; offset++)
+		record[offset] = '.';
+	record[49] = 0;
+	LEGACY_WRITE_U16_LE(record + 50U, 0xFFFFU);
+	scores = (legacy_u8 far*)td11_highscores;
+	for (entry = 0; entry < 7U; entry++) {
+		for (offset = 0; offset < sizeof(record); offset++)
+			scores[entry * sizeof(record) + offset] = record[offset];
+	}
+	return file_write_fatal(g_path_buf, td11_highscores, 0x16CUL) != 0;
 }
 
 static int font_measure(const char* text, legacy_u16 remaining, int bounded)
