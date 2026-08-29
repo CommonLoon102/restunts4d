@@ -99,6 +99,8 @@ void sub_35E08(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy
 
 void setup_mcgawnd1(void);
 void setup_mcgawnd2(void);
+void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y,
+	legacy_s16 width, legacy_s16 height, legacy_s16 destination_shift);
 
 struct SHAPE2D far* file_get_shape2d(legacy_u8 far* memchunk, legacy_s16 index);
 

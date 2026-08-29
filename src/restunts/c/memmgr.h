@@ -29,7 +29,7 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras);
 void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras);
 void mmgr_find_free();
 void far* mmgr_get_chunk_by_name(const legacy_s8* arg_0);
-void mmgr_release(legacy_s8 far* ptr);
+void mmgr_release(void far* ptr);
 legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr);
 legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg_4);
 void far* mmgr_op_unk(legacy_s8 far* ptr);

@@ -898,7 +898,7 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 	return 0;
 }
 
-void mmgr_release(legacy_s8 far* ptr) {
+void mmgr_release(void far* ptr) {
 	legacy_s16 i;
 	legacy_u16 regax, regbx, regcx, regdx;
 	legacy_s8* strdi;

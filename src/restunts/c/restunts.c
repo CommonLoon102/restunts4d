@@ -1133,13 +1133,13 @@ extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
 
-static void far* audio_read_far_pointer(const legacy_u8* source)
+static void far* audio_read_far_pointer(const legacy_u8 far* source)
 {
 	return MK_FP(LEGACY_READ_U16_LE(source + 2),
 		LEGACY_READ_U16_LE(source));
 }
 
-static void audio_write_far_pointer(legacy_u8* destination,
+static void audio_write_far_pointer(legacy_u8 far* destination,
 	const void far* value)
 {
 	LEGACY_WRITE_U16_LE(destination, FP_OFF(value));
@@ -10631,7 +10631,7 @@ void run_game(void) {
 		audio_carstate();
 		audio_remove_driver_timer();
 		if (game_replay_mode == 0 && gameconfig.game_opponenttype != 0 && state.opponentstate.car_crashBmpFlag == 0) {
-			show_dialog(3, 0, locate_text_res(gameresptr, "cop"), -1, 0x50, performGraphColor, &var_16, 0);
+			show_dialog(3, 0, locate_text_res(gameresptr, "cop"), -1, 0x50, performGraphColor, var_16, 0);
 			word_45D3E = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 1U));
 			regsi = framespersec;
@@ -11074,7 +11074,9 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			} else if (result == 1) {
 				check_input();
 				show_waiting();
-				run_car_menu(&gameconfig, &gameconfig.game_playermaterial, &gameconfig.game_playertransmission, 0);
+				run_car_menu(&gameconfig.game_playercarid[0],
+					&gameconfig.game_playermaterial,
+					&gameconfig.game_playertransmission, 0);
 				continue;
 			} else if (result == 2) {
 				check_input();
