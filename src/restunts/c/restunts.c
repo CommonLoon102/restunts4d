@@ -58,6 +58,8 @@ extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
 legacy_u32 timer_get_delta(void);
 legacy_u32 timer_get_slow_counter(void);
+void dos_timer_setup_interrupt(void);
+void dos_timer_shutdown(void);
 legacy_s16 dos_video_get_status(void);
 void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
 	legacy_u8* palette);
@@ -9906,7 +9908,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 		dos_video_set_mode4();
 	}
 
-	timer_setup_interrupt();
+	dos_timer_setup_interrupt();
 
 	sprite_copy_2_to_1_clear();
 
@@ -9914,7 +9916,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 
 	// Audio driver.
 	if (audio_load_driver(audiodriverstring, 0, 0)) {
-		audio_stop_unk();
+		dos_timer_shutdown();
 		libsub_quit_to_dos_alt(1);
 	}
 	
@@ -10109,7 +10111,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 
 	// shutdown
 	mouse_draw_opaque_check();
-	audio_stop_unk();
+	dos_timer_shutdown();
 	audiodrv_atexit();
 	kb_exit_handler();
 	dos_kb_set_numlock();
@@ -10178,7 +10180,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			result = show_dialog(2, 1, textresptr, 0xFFFF, 0xFFFF, dialogarg2, 0, 0);
 			if (result >= 1) {
 				mouse_draw_opaque_check();
-				audio_stop_unk();
+				dos_timer_shutdown();
 				audiodrv_atexit();
 				kb_exit_handler();
 				dos_kb_set_numlock();
