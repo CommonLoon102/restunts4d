@@ -1080,7 +1080,8 @@ extern legacy_u16 word_454BA;
 extern legacy_s8 audio_filetemp[];
 legacy_s16 dos_data_stack_segments_match(void);
 void audio_driver_timer(void);
-extern void sub_38CF8(legacy_s16 index, void far* context);
+extern void dos_audio_bind_channel_context(legacy_s16 channel,
+	void far* resource);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
@@ -1261,7 +1262,8 @@ void audio_op_unk(legacy_s16 index)
 
 	handle = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(timer + 2U));
 	context = timer + 0x1CU;
-	sub_38CF8(handle, audio_read_far_pointer(context + 8U));
+	dos_audio_bind_channel_context(handle,
+		audio_read_far_pointer(context + 8U));
 	sample_count = LEGACY_READ_U16_LE(context);
 	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
 	divisor = definition[0x0EU];
