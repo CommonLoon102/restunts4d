@@ -354,7 +354,7 @@ legacy_s16 random_wait(void)
 	return 0;
 }
 
-legacy_s16 toupper(legacy_s16 ch)
+static legacy_s16 legacy_toupper(legacy_s16 ch)
 {
 	if (ch >= 'a' && ch <= 'z') {
 		ch -= ' ';
@@ -2732,7 +2732,7 @@ legacy_s16 audioresource_compare_chunknames(legacy_s16 case_sensitive,
 		if (case_sensitive != 0) {
 			if (first != second)
 				return 0;
-		} else if (toupper(second) != toupper(first)) {
+		} else if (legacy_toupper(second) != legacy_toupper(first)) {
 			return 0;
 		}
 		first_offset = LEGACY_U16_WRAP_ADD(first_offset, 1U);
