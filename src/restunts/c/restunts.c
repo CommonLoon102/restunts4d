@@ -6558,7 +6558,7 @@ void replay_unk(void)
 	target_angle = LEGACY_S8_FROM_BITS(input_steering_history[history_index]);
 	steering_angle = state.playerstate.car_steeringAngle;
 	speed_index = (state.playerstate.car_speed2 >> 10) & 0xFCU;
-	response_table = (legacy_s8*)steerWhlRespTable_ptr;
+	response_table = steerWhlRespTable_ptr;
 	response = response_table[speed_index + 1U];
 	if ((steering_angle < target_angle && steering_angle < -1) ||
 		(steering_angle > target_angle && steering_angle > 1)) {

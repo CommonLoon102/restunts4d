@@ -104,7 +104,7 @@ void init_game_state(legacy_s16 arg)
 	if (arg == -1) {
 		elapsed_time1 = 0;
 		for (i = 0; i < RST_CVX_NUM; ++i)
-			((struct GAMESTATE far*)cvxptr)[i].field_3F4 = 0;
+			cvxptr[i].field_3F4 = 0;
 	}
 
 	if (framespersec == 10)
@@ -266,13 +266,13 @@ void restore_gamestate(legacy_u16 frame)
 			if (LEGACY_U16_WRAP_MUL(curframe, word_45A00) <=
 				state.game_frame)
 				return;
-			if (((struct GAMESTATE far*)cvxptr)[curframe].field_3F4 != 0)
+			if (cvxptr[curframe].field_3F4 != 0)
 				break;
 			curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
 		}
 	}
 
-	state = ((struct GAMESTATE far*)cvxptr)[curframe];
+	state = cvxptr[curframe];
 	init_kevinrandom(state.kevinseed);
 	elapsed_time2 = state.game_frame;
 }

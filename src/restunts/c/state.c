@@ -791,7 +791,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	legacy_s16 response_index;
 	legacy_u8 speed_index;
 
-	response_table = (legacy_s8*)steerWhlRespTable_ptr;
+	response_table = steerWhlRespTable_ptr;
 	steering_angle = state.playerstate.car_steeringAngle;
 	speed_index = (legacy_u8)((state.playerstate.car_speed2 >> 10) & 0xFC);
 	response_index = LEGACY_S16_WRAP_ADD(
@@ -1459,8 +1459,7 @@ track_record_piece:
 				camera_vectors = track_vector_from_legacy_offset(
 					opponent_path_offset);
 			else
-				camera_vectors = (struct VECTOR*)
-					previous_info->si_cameraDataOffset;
+				camera_vectors = previous_info->si_cameraDataOffset;
 			index = LEGACY_U16_WRAP_MUL(
 				(legacy_u8)previous_info->si_arrowType, 2U);
 			if (previous_connection_status != 0)
@@ -1627,8 +1626,7 @@ track_build_cameras:
 			camera_vectors = track_vector_from_legacy_offset(
 				opponent_path_offset);
 		else
-			camera_vectors = (struct VECTOR*)
-				current_info->si_cameraDataOffset;
+			camera_vectors = current_info->si_cameraDataOffset;
 		index = LEGACY_U16_WRAP_MUL(
 			(legacy_u8)current_info->si_arrowType, 2U);
 		camera_vector = camera_vectors[index];
