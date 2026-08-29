@@ -36,57 +36,53 @@ static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
 #define COMPR_RLE_SIZE_HIGH_OFFSET 2U
 #define COMPR_RLE_ESCLEN_OFFSET 4U
 
-// Minimal stdio.h "support" until we can link with a real CRT.
-#ifndef __STDIO_H
-#define __STDIO_H
-typedef legacy_u16 FILE;
+typedef legacy_u16 fileio_handle;
 
-FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
+#define FILEIO_INVALID_HANDLE 0U
+#define FILEIO_SEEK_END 2
+
+static fileio_handle fileio_open(const legacy_s8* path, legacy_s16 create)
 {
-	return (FILE*)dos_file_open(path, mode[0] == 'w');
+	return dos_file_open(path, create);
 }
 
-legacy_s16 fclose(FILE* file)
+static legacy_s16 fileio_close(fileio_handle file)
 {
-	return dos_file_close((legacy_u16)file);
+	return dos_file_close(file);
 }
 
-size_t fread(void far* dst, size_t size, size_t nmemb, FILE* file)
+static size_t fileio_read(void far* dst, size_t size, size_t nmemb,
+	fileio_handle file)
 {
-	return dos_file_read((legacy_u16)file, dst,
-		(legacy_u16)(size * nmemb));
+	return dos_file_read(file, dst, (legacy_u16)(size * nmemb));
 }
 
-size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
+static size_t fileio_write(const void far* src, size_t size, size_t nmemb,
+	fileio_handle file)
 {
-	return dos_file_write((legacy_u16)file, src,
-		(legacy_u16)(size * nmemb));
+	return dos_file_write(file, src, (legacy_u16)(size * nmemb));
 }
 
-#define SEEK_SET 0
-#define SEEK_CUR 1
-#define SEEK_END 2
-
-legacy_s16 fseek(FILE *file, legacy_s32 offset, legacy_s16 origin)
+static legacy_s16 fileio_seek(fileio_handle file, legacy_s32 offset,
+	legacy_s16 origin)
 {
-	return dos_file_seek((legacy_u16)file, offset, origin);
-}
-legacy_s32 ftell(FILE *file)
-{
-	return dos_file_tell((legacy_u16)file);
+	return dos_file_seek(file, offset, origin);
 }
 
-legacy_s16 ferror(FILE* file)
+static legacy_s32 fileio_tell(fileio_handle file)
 {
-	(void)file;
+	return dos_file_tell(file);
+}
+
+static legacy_s16 fileio_error(void)
+{
 	return dos_file_error();
 }
 
-legacy_s16 remove(const legacy_s8* path)
+static legacy_s16 fileio_remove(const legacy_s8* path)
 {
 	return dos_file_remove(path);
 }
-#endif
 
 struct file_find_dos {
 	legacy_s8 path[128];
@@ -181,13 +177,13 @@ const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* na
 legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
 	legacy_s32 length;
-	FILE* file;
-	if ((file = fopen(filename, "rb")) != 0) {
-		fseek(file, 0, SEEK_END);
-		length = ftell(file);
-		fclose(file);
-		
-		if (!ferror(file)) {
+	fileio_handle file;
+	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
+		fileio_seek(file, 0, FILEIO_SEEK_END);
+		length = fileio_tell(file);
+		fileio_close(file);
+
+		if (!fileio_error()) {
 			// May overflow, but all Stunts files are rather small.
 			return (length >> 4) + (length & 0xF ? 1 : 0);
 		}
@@ -214,13 +210,13 @@ legacy_u16 file_paras_nofatal(const legacy_s8* filename)
 legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
 	legacy_s32 length;
-	FILE* file;
+	fileio_handle file;
 	legacy_u8 header[COMPR_HEADER_SIZE];
-	if ((file = fopen(filename, "rb")) != 0) {
-		fread(header, sizeof(header), 1, file);
-		fclose(file);
-		
-		if (!ferror(file)) {
+	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
+		fileio_read(header, sizeof(header), 1, file);
+		fileio_close(file);
+
+		if (!fileio_error()) {
 			// May overflow, but all Stunts files are rather small.
 			length = (legacy_s32)LEGACY_READ_U16_LE(
 				header + COMPR_SIZE_LOW_OFFSET) |
@@ -251,20 +247,20 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 {
 	legacy_s16 readlen;
 	void far* curdst = dst;
-	FILE* file;
+	fileio_handle file;
 
-	if ((file = fopen(filename, "rb")) != 0) {
+	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
 		// Read one page at a time.
 		do {
-			readlen = fread(curdst, PAGE_SIZE, 1, file);
+			readlen = fileio_read(curdst, PAGE_SIZE, 1, file);
 			curdst = dos_memory_make_pointer(
 				dos_memory_pointer_segment(curdst) + PAGE_GAP,
 				dos_memory_pointer_offset(dst));
 		} while (readlen == PAGE_SIZE);
 
-		fclose(file);
+		fileio_close(file);
 
-		if (!ferror(file)) {
+		if (!fileio_error()) {
 			return dst;
 		}
 	}
@@ -301,16 +297,16 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 {
 	legacy_u16 retval;
 	legacy_u16 wrtlen;
-	FILE* file;
+	fileio_handle file;
 	
 	retval = 0;
 
-	if ((file = fopen(filename, "wb")) != 0) {
+	if ((file = fileio_open(filename, 1)) != FILEIO_INVALID_HANDLE) {
 		// Write one page at a time.
 		while (length != 0) {
 			wrtlen = length > PAGE_SIZE ? PAGE_SIZE : length;
 
-			if (fwrite(src, wrtlen, 1, file) != wrtlen) {
+			if (fileio_write(src, wrtlen, 1, file) != wrtlen) {
 				// Either int 21h AH=40h set carry, or it wrote fewer bytes
 				// than asked (`cmp ax, cx / jnz` -> `mov ax, 1`).
 				retval = 1;
@@ -322,11 +318,11 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 				dos_memory_pointer_offset(src));
 		}
 
-		fclose(file);
+		fileio_close(file);
 
 		// The original ignores the close result. Clear the shim's sticky error
 		// state without turning a close failure into a failed write.
-		(void)ferror(file);
+		(void)fileio_error();
 
 		if (retval == 0) {
 			return 0;
@@ -341,7 +337,7 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 
 	// loc_32570 closes the handle and unlinks the file on EVERY error, before
 	// it ever looks at the flag, so a truncated file is never left on disk.
-	remove(filename);
+	fileio_remove(filename);
 
 	if (!fatal) {
 		fatal_error(aSFileError_0, filename);
