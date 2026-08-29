@@ -7,21 +7,6 @@ typedef void (far* exit_handler_type)(void);
 
 extern void add_exit_handler(exit_handler_type exit_handler);
 
-void far* dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset)
-{
-	return MK_FP(segment, offset);
-}
-
-legacy_u16 dos_memory_pointer_segment(const void far* pointer)
-{
-	return FP_SEG(pointer);
-}
-
-legacy_u16 dos_memory_pointer_offset(const void far* pointer)
-{
-	return FP_OFF(pointer);
-}
-
 void far* dos_memory_get_psp(void)
 {
 	legacy_u16 segment;

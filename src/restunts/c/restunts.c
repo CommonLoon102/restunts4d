@@ -1,4 +1,3 @@
-#include <dos.h>
 #include <stddef.h>
 #include <stdarg.h>
 #include "restunts.h"
@@ -84,7 +83,7 @@ void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
 	for (callback_index = 0; callback_index < 64U; callback_index++) {
 		if (input_callbacks[callback_index] == callback)
 			break;
-		if (FP_SEG(input_callbacks[callback_index]) == 0U) {
+		if (dos_memory_pointer_segment(input_callbacks[callback_index]) == 0U) {
 			input_callbacks[callback_index] = callback;
 			break;
 		}
@@ -1052,15 +1051,15 @@ extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 
 static void far* audio_read_far_pointer(const legacy_u8 far* source)
 {
-	return MK_FP(LEGACY_READ_U16_LE(source + 2),
+	return dos_memory_make_pointer(LEGACY_READ_U16_LE(source + 2),
 		LEGACY_READ_U16_LE(source));
 }
 
 static void audio_write_far_pointer(legacy_u8 far* destination,
 	const void far* value)
 {
-	LEGACY_WRITE_U16_LE(destination, FP_OFF(value));
-	LEGACY_WRITE_U16_LE(destination + 2, FP_SEG(value));
+	LEGACY_WRITE_U16_LE(destination, dos_memory_pointer_offset(value));
+	LEGACY_WRITE_U16_LE(destination + 2, dos_memory_pointer_segment(value));
 }
 
 void audio_add_driver_timer(void)
@@ -1134,10 +1133,10 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 
 	timer = audio_timers + index * 0x4CU;
 	context = timer + 0x1CU;
-	source_offset = (legacy_u16)FP_OFF(source_pointer);
-	source_segment = (legacy_u16)FP_SEG(source_pointer);
+	source_offset = (legacy_u16)dos_memory_pointer_offset(source_pointer);
+	source_segment = (legacy_u16)dos_memory_pointer_segment(source_pointer);
 	for (field = 0; field < 0x30U; field++) {
-		source = (const legacy_u8 far*)MK_FP(
+		source = (const legacy_u8 far*)dos_memory_make_pointer(
 			source_segment, source_offset);
 		context[field] = *source;
 		source_offset++;
@@ -1736,8 +1735,8 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		return;
 
 	chunk_offset = LEGACY_U16_WRAP_MUL(channel, 0x4CU);
-	resource_offset = (legacy_u16)FP_OFF(resource);
-	resource_segment = (legacy_u16)FP_SEG(resource);
+	resource_offset = (legacy_u16)dos_memory_pointer_offset(resource);
+	resource_segment = (legacy_u16)dos_memory_pointer_segment(resource);
 	do {
 		chunk = audio_channels + chunk_offset;
 		LEGACY_WRITE_U16_LE(chunk + 0x48U, 0);
@@ -1766,7 +1765,7 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		chunk[0x47] = 0xFF;
 
 		if (resource != 0) {
-			resource_data = (const legacy_u8 far*)MK_FP(
+			resource_data = (const legacy_u8 far*)dos_memory_make_pointer(
 				resource_segment,
 				LEGACY_U16_WRAP_ADD(resource_offset,
 					resource_data_offset));
@@ -1999,7 +1998,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	if (dos_audio_uses_direct_channels == 0 && restrict_to_timer == 0) {
 		old_timer = audio_timers + LEGACY_U16_WRAP_SUB(
 			LEGACY_READ_U16_LE(context + 0x2AU),
-			FP_OFF(audio_timers));
+			dos_memory_pointer_offset(audio_timers));
 		if (old_timer != timer) {
 			old_timer[0x15U]--;
 			timer[0x15U]++;
@@ -2036,8 +2035,8 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	context_offset = LEGACY_U16_WRAP_MUL(
 		(legacy_u16)context_index, 0x2EU);
 	context = dos_audio_contexts + context_offset;
-	if (LEGACY_READ_U16_LE(context + 0x10U) != FP_OFF(resource) ||
-		LEGACY_READ_U16_LE(context + 0x12U) != FP_SEG(resource)) {
+	if (LEGACY_READ_U16_LE(context + 0x10U) != dos_memory_pointer_offset(resource) ||
+		LEGACY_READ_U16_LE(context + 0x12U) != dos_memory_pointer_segment(resource)) {
 		audio_write_far_pointer(context + 0x10U, resource);
 		if (dos_audio_uses_direct_channels == 0)
 			dos_audio_driver_prepare_context(context_index,
@@ -2069,7 +2068,7 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	context[0x27U] = 0;
 	context[0x28U] = 0;
 	context[0x29U] = 0;
-	LEGACY_WRITE_U16_LE(context + 0x2AU, FP_OFF(timer));
+	LEGACY_WRITE_U16_LE(context + 0x2AU, dos_memory_pointer_offset(timer));
 	driver_channel = dos_audio_uses_direct_channels == 0 ? context_index : timer[0x47U];
 	context[0x2CU] = (legacy_u8)driver_channel;
 
@@ -2719,14 +2718,14 @@ legacy_s16 audioresource_compare_chunknames(legacy_s16 case_sensitive,
 	remaining = (legacy_u16)count;
 	if (remaining == 0)
 		return 1;
-	first_offset = (legacy_u16)FP_OFF(first_name);
-	first_segment = (legacy_u16)FP_SEG(first_name);
-	second_offset = (legacy_u16)FP_OFF(second_name);
-	second_segment = (legacy_u16)FP_SEG(second_name);
+	first_offset = (legacy_u16)dos_memory_pointer_offset(first_name);
+	first_segment = (legacy_u16)dos_memory_pointer_segment(first_name);
+	second_offset = (legacy_u16)dos_memory_pointer_offset(second_name);
+	second_segment = (legacy_u16)dos_memory_pointer_segment(second_name);
 	do {
-		first = *(const legacy_u8 far*)MK_FP(
+		first = *(const legacy_u8 far*)dos_memory_make_pointer(
 			first_segment, first_offset);
-		second = *(const legacy_u8 far*)MK_FP(
+		second = *(const legacy_u8 far*)dos_memory_make_pointer(
 			second_segment, second_offset);
 		if (first == 0 || second == 0)
 			return 1;
@@ -7156,13 +7155,13 @@ legacy_s16 audioresource_get_chunk_index(legacy_s16 extra_name_stride, legacy_s1
 	count = LEGACY_S16_FROM_BITS(chunk_count);
 	if (count <= 0)
 		return -1;
-	requested_name_far = (const legacy_s8 far*)MK_FP(
-		FP_SEG(requested_name), FP_OFF(requested_name));
-	names_offset = (legacy_u16)FP_OFF(chunk_names);
-	names_segment = (legacy_u16)FP_SEG(chunk_names);
+	requested_name_far = (const legacy_s8 far*)dos_memory_make_pointer(
+		dos_memory_pointer_segment(requested_name), dos_memory_pointer_offset(requested_name));
+	names_offset = (legacy_u16)dos_memory_pointer_offset(chunk_names);
+	names_segment = (legacy_u16)dos_memory_pointer_segment(chunk_names);
 	for (index = 0; index < count;
 		index = LEGACY_S16_WRAP_ADD(index, 1)) {
-		candidate = (const legacy_u8 far*)MK_FP(
+		candidate = (const legacy_u8 far*)dos_memory_make_pointer(
 			names_segment, names_offset);
 		if (audioresource_compare_chunknames(0,
 			(const legacy_s8 far*)candidate, requested_name_far, 4))
@@ -7180,12 +7179,12 @@ static void far* audio_far_pointer_add_normalized(void far* pointer,
 	legacy_u16 new_offset;
 	legacy_u16 segment;
 
-	old_offset = (legacy_u16)FP_OFF(pointer);
-	segment = (legacy_u16)FP_SEG(pointer);
+	old_offset = (legacy_u16)dos_memory_pointer_offset(pointer);
+	segment = (legacy_u16)dos_memory_pointer_segment(pointer);
 	new_offset = LEGACY_U16_WRAP_ADD(old_offset, increment);
 	if (new_offset < old_offset)
 		segment = LEGACY_U16_WRAP_ADD(segment, 0x1000U);
-	return MK_FP(segment, new_offset);
+	return dos_memory_make_pointer(segment, new_offset);
 }
 
 void far* audioresource_find(void far* resource, const legacy_s8* chunk_name)
@@ -7201,8 +7200,8 @@ void far* audioresource_find(void far* resource, const legacy_s8* chunk_name)
 	legacy_s16 chunk_index;
 
 	bytes = (legacy_u8 far*)resource;
-	resource_offset = (legacy_u16)FP_OFF(resource);
-	resource_segment = (legacy_u16)FP_SEG(resource);
+	resource_offset = (legacy_u16)dos_memory_pointer_offset(resource);
+	resource_segment = (legacy_u16)dos_memory_pointer_segment(resource);
 	chunk_count = audioresource_get_word(
 		(const legacy_u8 far*)audio_far_pointer_add_normalized(bytes, 4U));
 	chunk_index = audioresource_get_chunk_index(0, chunk_count, chunk_name,
@@ -7215,13 +7214,13 @@ void far* audioresource_find(void far* resource, const legacy_s8* chunk_name)
 	table_offset = LEGACY_U16_WRAP_ADD(table_offset,
 		LEGACY_U16_WRAP_MUL(chunk_index, 4U));
 	table_offset = LEGACY_U16_WRAP_ADD(table_offset, 6U);
-	offset_entry = (legacy_u8 far*)MK_FP(resource_segment, table_offset);
+	offset_entry = (legacy_u8 far*)dos_memory_make_pointer(resource_segment, table_offset);
 	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
 	result_offset = LEGACY_U16_WRAP_ADD(resource_offset,
 		LEGACY_U16_WRAP_MUL(chunk_count, 8U));
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, relative_offset);
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, 6U);
-	return MK_FP(resource_segment, result_offset);
+	return dos_memory_make_pointer(resource_segment, result_offset);
 }
 
 void audio_map_song_instruments(void far* song, void far* instruments)
@@ -7247,8 +7246,8 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 		name[2] = header[name_offset + 2U];
 		name[3] = header[name_offset + 3U];
 		instrument = audioresource_find(instruments, name);
-		pointer_offset = (legacy_u16)FP_OFF(instrument);
-		pointer_segment = (legacy_u16)FP_SEG(instrument);
+		pointer_offset = (legacy_u16)dos_memory_pointer_offset(instrument);
+		pointer_segment = (legacy_u16)dos_memory_pointer_segment(instrument);
 		header[name_offset] = (legacy_u8)pointer_offset;
 		header[name_offset + 1U] = (legacy_u8)(pointer_offset >> 8);
 		header[name_offset + 2U] = (legacy_u8)pointer_segment;
@@ -7288,14 +7287,14 @@ static void audio_patch_song_reference(legacy_u8 far* destination,
 	name[1] = destination[1];
 	name[2] = destination[2];
 	name[3] = destination[3];
-	names = (const legacy_u8 far*)MK_FP(resource_segment,
+	names = (const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 		name_table_offset);
 	chunk_index = audioresource_get_chunk_index(0, chunk_count, name,
 		names);
 	if (chunk_index < 0)
 		return;
 
-	offset_entry = (const legacy_u8 far*)MK_FP(resource_segment,
+	offset_entry = (const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 		LEGACY_U16_WRAP_ADD(offset_table_offset,
 			LEGACY_U16_WRAP_MUL((legacy_u16)chunk_index, 4U)));
 	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
@@ -7324,10 +7323,10 @@ void audio_map_song_tracks(void far* song)
 	legacy_u16 event;
 
 	bytes = (legacy_u8 far*)song;
-	resource_offset = (legacy_u16)FP_OFF(song);
-	resource_segment = (legacy_u16)FP_SEG(song);
+	resource_offset = (legacy_u16)dos_memory_pointer_offset(song);
+	resource_segment = (legacy_u16)dos_memory_pointer_segment(song);
 	chunk_count = audioresource_get_word(
-		(const legacy_u8 far*)MK_FP(resource_segment,
+		(const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 			LEGACY_U16_WRAP_ADD(resource_offset, 4U)));
 	name_table_offset = LEGACY_U16_WRAP_ADD(resource_offset, 6U);
 	offset_table_offset = LEGACY_U16_WRAP_ADD(name_table_offset,
@@ -7336,34 +7335,34 @@ void audio_map_song_tracks(void far* song)
 		LEGACY_U16_WRAP_ADD(6U,
 			LEGACY_U16_WRAP_MUL(chunk_count, 8U)));
 	header_index = (legacy_u16)audioresource_get_chunk_index(0,
-		chunk_count, "hdr1", (const legacy_u8 far*)MK_FP(
+		chunk_count, "hdr1", (const legacy_u8 far*)dos_memory_make_pointer(
 			resource_segment, name_table_offset));
 
 	for (index = 0; index < chunk_count; ++index) {
 		relative_offset = (legacy_u16)audioresource_get_dword(
-			(const legacy_u8 far*)MK_FP(resource_segment,
+			(const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				LEGACY_U16_WRAP_ADD(offset_table_offset,
 					LEGACY_U16_WRAP_MUL(index, 4U))));
 		chunk_offset = LEGACY_U16_WRAP_ADD(first_data_offset,
 			relative_offset);
-		bytes = (legacy_u8 far*)MK_FP(resource_segment, chunk_offset);
+		bytes = (legacy_u8 far*)dos_memory_make_pointer(resource_segment, chunk_offset);
 		chunk_end_offset = LEGACY_U16_WRAP_ADD(chunk_offset,
 			(legacy_u16)audioresource_get_dword(bytes));
 		cursor_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 4U);
 
 		if (index == header_index) {
 			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
-			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
 				LEGACY_U16_WRAP_ADD(
 					LEGACY_U16_WRAP_MUL(cursor[0], 4U), 1U));
-			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			reference_count = cursor[0];
 			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
 			while (reference_count != 0) {
-				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				audio_patch_song_reference(cursor, name_table_offset,
 					offset_table_offset, first_data_offset,
@@ -7375,15 +7374,15 @@ void audio_map_song_tracks(void far* song)
 		}
 
 		while (cursor_offset < chunk_end_offset) {
-			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			while ((cursor[0] & 0x80U) != 0) {
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 			}
 			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-			cursor = (legacy_u8 far*)MK_FP(resource_segment,
+			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			event = cursor[0];
 
@@ -7392,12 +7391,12 @@ void audio_map_song_tracks(void far* song)
 					cursor_offset = LEGACY_U16_WRAP_ADD(
 						cursor_offset, 1U);
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				while ((cursor[0] & 0x80U) != 0) {
 					cursor_offset = LEGACY_U16_WRAP_ADD(
 						cursor_offset, 1U);
-					cursor = (legacy_u8 far*)MK_FP(resource_segment,
+					cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 						cursor_offset);
 				}
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
@@ -7431,7 +7430,7 @@ void audio_map_song_tracks(void far* song)
 
 			case 13:
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
-				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				audio_patch_song_reference(cursor, name_table_offset,
 					offset_table_offset, first_data_offset,
@@ -7442,7 +7441,7 @@ void audio_map_song_tracks(void far* song)
 			case 14:
 			case 15:
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				cursor = (legacy_u8 far*)MK_FP(resource_segment,
+				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
 					LEGACY_U16_WRAP_ADD(cursor[0], 1U));
@@ -7472,10 +7471,10 @@ void far* init_audio_resources(void far* song, void far* instruments,
 		audio_map_song_tracks(song_chunk);
 		header[5] = 1;
 		data_offset = LEGACY_U16_WRAP_ADD(
-			(legacy_u16)FP_OFF(song_chunk),
+			(legacy_u16)dos_memory_pointer_offset(song_chunk),
 			(legacy_u16)((legacy_u16)song_chunk[4] << 3));
 		data_offset = LEGACY_U16_WRAP_ADD(data_offset, 1U);
-		data = MK_FP(FP_SEG(song_chunk), data_offset);
+		data = dos_memory_make_pointer(dos_memory_pointer_segment(song_chunk), data_offset);
 		audio_write_far_pointer(header, data);
 	}
 
@@ -7518,13 +7517,13 @@ void audioresource_copy_n_bytes(const legacy_u8 far* source,
 	remaining = LEGACY_S16_FROM_BITS(size);
 	if (remaining <= 0)
 		return;
-	source_offset = (legacy_u16)FP_OFF(source);
-	source_segment = (legacy_u16)FP_SEG(source);
-	destination_offset = (legacy_u16)FP_OFF(destination);
-	destination_segment = (legacy_u16)FP_SEG(destination);
+	source_offset = (legacy_u16)dos_memory_pointer_offset(source);
+	source_segment = (legacy_u16)dos_memory_pointer_segment(source);
+	destination_offset = (legacy_u16)dos_memory_pointer_offset(destination);
+	destination_segment = (legacy_u16)dos_memory_pointer_segment(destination);
 	do {
-		*(legacy_u8 far*)MK_FP(destination_segment,
-			destination_offset) = *(const legacy_u8 far*)MK_FP(
+		*(legacy_u8 far*)dos_memory_make_pointer(destination_segment,
+			destination_offset) = *(const legacy_u8 far*)dos_memory_make_pointer(
 			source_segment, source_offset);
 		source_offset = LEGACY_U16_WRAP_ADD(source_offset, 1U);
 		destination_offset = LEGACY_U16_WRAP_ADD(
@@ -8200,8 +8199,8 @@ void setup_car_shapes(legacy_s16 operation)
 		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aDast);
 		if (shape != 0) {
 			dastbmp_y = shape2d_get_pos_y(shape);
-			dastbmp_y2 = FP_OFF(shape);
-			dastseg = FP_SEG(shape);
+			dastbmp_y2 = dos_memory_pointer_offset(shape);
+			dastseg = dos_memory_pointer_segment(shape);
 			dasmshapeptr = locate_shape_fatal(stdaresptr, aDasm);
 		} else {
 			dastbmp_y = 0;
@@ -8370,10 +8369,10 @@ void setup_car_shapes(legacy_s16 operation)
 			meter_needle_color);
 		if (wheel_state == 0) {
 			shape2d_render_bmp_as_mask(whlshapes[7]);
-			shape2d_op_unk4(FP_OFF(whlshapes[5]), FP_SEG(whlshapes[5]));
+			shape2d_op_unk4(dos_memory_pointer_offset(whlshapes[5]), dos_memory_pointer_segment(whlshapes[5]));
 		} else if (wheel_state == 2) {
 			shape2d_render_bmp_as_mask(whlshapes[8]);
-			shape2d_op_unk4(FP_OFF(whlshapes[6]), FP_SEG(whlshapes[6]));
+			shape2d_op_unk4(dos_memory_pointer_offset(whlshapes[6]), dos_memory_pointer_segment(whlshapes[6]));
 		}
 		if (video_flag5_is0 != 0)
 			setup_mcgawnd2();
