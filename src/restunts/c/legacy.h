@@ -25,6 +25,15 @@ typedef char legacy_u16_must_be_2_bytes[(sizeof(legacy_u16) == 2) ? 1 : -1];
 typedef char legacy_s32_must_be_4_bytes[(sizeof(legacy_s32) == 4) ? 1 : -1];
 typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 
+legacy_u16 legacy_u16_div_or_zero(
+	legacy_u16 numerator, legacy_u16 denominator);
+legacy_s16 legacy_s16_div_or_zero(
+	legacy_s16 numerator, legacy_s16 denominator);
+legacy_u32 legacy_u32_div_or_zero(
+	legacy_u32 numerator, legacy_u32 denominator);
+legacy_s32 legacy_s32_div_or_zero(
+	legacy_s32 numerator, legacy_s32 denominator);
+
 /* Pass side-effect-free values to these legacy word operations. */
 #if defined(__BORLANDC__)
 #define LEGACY_S8_FROM_BITS(value) ((legacy_s8)(legacy_u8)(value))
@@ -131,15 +140,11 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 
 /* The original #DE recovery skips a faulting division with a zero result. */
 #define LEGACY_U16_DIV_OR_ZERO(numerator, denominator) \
-	((legacy_u16)(denominator) == 0U ? 0U : \
-	(legacy_u16)((legacy_u16)(numerator) / \
-		(legacy_u16)(denominator)))
+	legacy_u16_div_or_zero((legacy_u16)(numerator), \
+		(legacy_u16)(denominator))
 #define LEGACY_S16_DIV_OR_ZERO(numerator, denominator) \
-	((((legacy_u16)(denominator) == 0U) || \
-		((legacy_u16)(numerator) == 0x8000U && \
-		LEGACY_S16_FROM_BITS(denominator) == -1)) ? 0 : \
-		(legacy_s16)(LEGACY_S16_FROM_BITS(numerator) / \
-			LEGACY_S16_FROM_BITS(denominator)))
+	legacy_s16_div_or_zero(LEGACY_S16_FROM_BITS(numerator), \
+		LEGACY_S16_FROM_BITS(denominator))
 
 #define LEGACY_READ_U16_LE(bytes) \
 	((legacy_u16)((legacy_u16)(legacy_u8)(bytes)[0] | \
@@ -225,16 +230,11 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 			(32U - LEGACY_SHIFT_COUNT(count)))))
 
 #define LEGACY_U32_DIV_OR_ZERO(numerator, denominator) \
-	((legacy_u32)(denominator) == (legacy_u32)0 ? (legacy_u32)0 : \
-	(legacy_u32)((legacy_u32)(numerator) / \
-		(legacy_u32)(denominator)))
+	legacy_u32_div_or_zero((legacy_u32)(numerator), \
+		(legacy_u32)(denominator))
 #define LEGACY_S32_DIV_OR_ZERO(numerator, denominator) \
-	((((legacy_u32)(denominator) == (legacy_u32)0) || \
-		((legacy_u32)(numerator) == (legacy_u32)0x80000000UL && \
-		LEGACY_S32_FROM_BITS(denominator) == (legacy_s32)-1)) ? \
-		(legacy_s32)0 : \
-		(legacy_s32)(LEGACY_S32_FROM_BITS(numerator) / \
-			LEGACY_S32_FROM_BITS(denominator)))
+	legacy_s32_div_or_zero(LEGACY_S32_FROM_BITS(numerator), \
+		LEGACY_S32_FROM_BITS(denominator))
 
 #define LEGACY_READ_U32_LE(bytes) \
 	((legacy_u32)((legacy_u32)(legacy_u8)(bytes)[0] | \

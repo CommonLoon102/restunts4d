@@ -2416,8 +2416,8 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	if (audio_effect_rate != 0) {
 		scaled_rate = (legacy_u16)((legacy_u32)(legacy_u16)rate *
 			0x80UL);
-		rate = (legacy_u16)((legacy_u16)(scaled_rate /
-			(legacy_u16)audio_effect_rate) - 1U);
+		rate = LEGACY_U16_WRAP_SUB(LEGACY_U16_DIV_OR_ZERO(
+			scaled_rate, (legacy_u16)audio_effect_rate), 1U);
 	} else {
 		rate = 0;
 	}
@@ -9161,8 +9161,8 @@ legacy_u16 end_hiscore(void)
 	end_hiscore_set_text(misc_resource, aAvs);
 	duration = LEGACY_U16_WRAP_ADD(gState_pEndFrame, elapsed_time1);
 	if (duration != 0) {
-		average_speed = (legacy_u16)(((legacy_u32)gState_travDist /
-			(legacy_u32)duration) >> 8);
+		average_speed = (legacy_u16)(LEGACY_U32_DIV_OR_ZERO(
+			(legacy_u32)gState_travDist, (legacy_u32)duration) >> 8);
 	} else {
 		average_speed = 0;
 	}
@@ -9641,11 +9641,13 @@ static void replay_controls_draw(legacy_s16 recorded_frame, legacy_s16 current_f
 		recorded_position = 0;
 		current_position = 0;
 	} else {
-		recorded_position = (legacy_s16)(((legacy_s32)(legacy_s16)
-			recorded_frame * 110L) /
+		recorded_position = (legacy_s16)LEGACY_S32_DIV_OR_ZERO(
+			LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_s16)
+				recorded_frame, 110L),
 			(legacy_s32)(legacy_s16)gameconfig.game_recordedframes);
-		current_position = (legacy_s16)(((legacy_s32)(legacy_s16)
-			current_frame * 110L) /
+		current_position = (legacy_s16)LEGACY_S32_DIV_OR_ZERO(
+			LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_s16)
+				current_frame, 110L),
 			(legacy_s32)(legacy_s16)gameconfig.game_recordedframes);
 	}
 	if (word_40E76[player_index] != recorded_position ||
