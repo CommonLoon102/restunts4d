@@ -2,6 +2,8 @@
 
 extern legacy_u32 timer_callback_counter;
 extern legacy_u32 last_timer_callback_counter;
+extern legacy_u16 word_3F87C;
+extern legacy_u16 word_3F87E;
 
 legacy_u32 timer_get_counter(void)
 {
@@ -30,5 +32,17 @@ legacy_u32 timer_get_delta(void)
 		mov     word ptr last_timer_callback_counter+2, dx
 		sub     ax, bx
 		sbb     dx, cx
+	}
+}
+
+legacy_u32 timer_get_slow_counter(void)
+{
+	/* This counter advances when the interrupt divider expires, rather than
+	 * on every hardware timer interrupt. */
+	__asm {
+		cli
+		mov     ax, word_3F87C
+		mov     dx, word_3F87E
+		sti
 	}
 }

@@ -386,7 +386,6 @@ extern legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mod
 
 extern void timer_setup_interrupt(void);
 extern legacy_u32 timer_get_delta_alt(void);
-extern legacy_u32 sub_2EAD4(void);
 
 extern legacy_s16 set_criterr_handler(legacy_s16 (far* callback)(void));
 extern void libsub_quit_to_dos_alt(legacy_s16 a1);

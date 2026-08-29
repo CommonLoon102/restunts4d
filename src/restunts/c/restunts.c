@@ -57,6 +57,7 @@ extern legacy_u16 readchar_callback_seg;
 extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
 legacy_u32 timer_get_delta(void);
+legacy_u32 timer_get_slow_counter(void);
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -6010,7 +6011,7 @@ legacy_u32 set_add_value(legacy_u32 ticks)
 {
 	legacy_u32 target;
 
-	target = (legacy_u32)(sub_2EAD4() + ticks);
+	target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	word_3F1C2 = (legacy_u16)target;
 	word_3F1C4 = (legacy_u16)(target >> 16);
 	return target;
@@ -6019,7 +6020,7 @@ legacy_u32 set_add_value(legacy_u32 ticks)
 legacy_s16 sub_2EB07(void)
 {
 	return secondary_timer_target_reached(
-		sub_2EAD4(), secondary_timer_target());
+		timer_get_slow_counter(), secondary_timer_target());
 }
 
 legacy_u32 sub_2EB1E(legacy_u32 ticks)
@@ -6027,9 +6028,9 @@ legacy_u32 sub_2EB1E(legacy_u32 ticks)
 	legacy_u32 current;
 	legacy_u32 target;
 
-	target = (legacy_u32)(sub_2EAD4() + ticks);
+	target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	do {
-		current = sub_2EAD4();
+		current = timer_get_slow_counter();
 	} while (!secondary_timer_target_reached(current, target));
 	return current;
 }
