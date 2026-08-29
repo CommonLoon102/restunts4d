@@ -6133,11 +6133,9 @@ void run_opponent_menu(void)
 	displayed_opponent = 0xFFU;
 	blit_mode = 0xFFU;
 	sub_29772();
+	mouse_draw_transparent_check();
 
 	for (;;) {
-		mouse_draw_transparent_check();
-
-opponent_menu_refresh:
 		if (displayed_opponent !=
 			(legacy_u8)gameconfig.game_opponenttype) {
 			if (displayed_opponent != 0xFFU) {
@@ -6243,14 +6241,14 @@ opponent_menu_refresh:
 			selected = (legacy_u8)hit;
 
 		if (key == 0)
-			goto opponent_menu_refresh;
+			continue;
 		if (key == 0x4B00U) {
 			selected = selected == 0 ? 4U :
 				(legacy_u8)(selected - 1U);
 			if ((legacy_u8)gameconfig.game_opponenttype == 0 &&
 				selected == 3)
 				selected--;
-			goto opponent_menu_refresh;
+			continue;
 		}
 		if (key == 0x4D00U) {
 			selected = selected < 4U ?
@@ -6258,10 +6256,10 @@ opponent_menu_refresh:
 			if ((legacy_u8)gameconfig.game_opponenttype == 0 &&
 				selected == 3)
 				selected++;
-			goto opponent_menu_refresh;
+			continue;
 		}
 		if (key != 0x0DU && key != 0x1BU && key != 0x20U)
-			goto opponent_menu_refresh;
+			continue;
 
 		if (selected == 0) {
 			gameconfig.game_opponenttype = (legacy_s8)(
@@ -6269,22 +6267,22 @@ opponent_menu_refresh:
 			if (LEGACY_S8_FROM_BITS(
 				(legacy_u8)gameconfig.game_opponenttype) < 1)
 				gameconfig.game_opponenttype = 6;
-			goto opponent_menu_refresh;
+			continue;
 		}
 		if (selected == 1) {
 			gameconfig.game_opponenttype = (legacy_s8)(
 				(legacy_u8)gameconfig.game_opponenttype + 1U);
 			if ((legacy_u8)gameconfig.game_opponenttype == 7)
 				gameconfig.game_opponenttype = 1;
-			goto opponent_menu_refresh;
+			continue;
 		}
 		if (selected == 2) {
 			gameconfig.game_opponenttype = 0;
-			goto opponent_menu_refresh;
+			continue;
 		}
 		if (selected == 3) {
 			if ((legacy_u8)gameconfig.game_opponenttype == 0)
-				goto opponent_menu_refresh;
+				continue;
 			check_input();
 			mouse_draw_opaque_check();
 			sprite_free_wnd(render_window_sprite);
@@ -6295,6 +6293,7 @@ opponent_menu_refresh:
 				&gameconfig.game_opponenttransmission,
 				(legacy_u8)gameconfig.game_opponenttype);
 			displayed_opponent = 0xFFU;
+			mouse_draw_transparent_check();
 			continue;
 		}
 
@@ -9704,25 +9703,25 @@ static void replay_pause_menu(void)
 		word_45D3E = LEGACY_S16_FROM_BITS(
 			LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
 		byte_43966 = 1;
-		goto replay_pause_resume_driving;
+		/* fall through */
 
 	case 3:
-		if (((legacy_u8)byte_43966 & 2U) != 0) {
-			byte_43966 = 3;
-		} else if (gameconfig.game_recordedframes != elapsed_time2) {
-			dialog_result = LEGACY_S16_FROM_BITS(show_dialog(2, 0,
-				locate_text_res(gameresptr, aCon_0), 0xFFFFU,
-				0xFFFFU, performGraphColor, 0, 0));
-			if (dialog_result < 1)
-				break;
-			byte_43966 = 3;
-		} else {
-			byte_43966 = 1;
+		if (menu_result == 3) {
+			if (((legacy_u8)byte_43966 & 2U) != 0) {
+				byte_43966 = 3;
+			} else if (gameconfig.game_recordedframes != elapsed_time2) {
+				dialog_result = LEGACY_S16_FROM_BITS(show_dialog(2, 0,
+					locate_text_res(gameresptr, aCon_0), 0xFFFFU,
+					0xFFFFU, performGraphColor, 0, 0));
+				if (dialog_result < 1)
+					break;
+				byte_43966 = 3;
+			} else {
+				byte_43966 = 1;
+			}
+			elapsed_time2 = (legacy_u16)state.game_frame;
+			gameconfig.game_recordedframes = (legacy_u16)state.game_frame;
 		}
-		elapsed_time2 = (legacy_u16)state.game_frame;
-		gameconfig.game_recordedframes = (legacy_u16)state.game_frame;
-
-replay_pause_resume_driving:
 		dashb_toggle = 1;
 		show_penalty_counter = 0;
 		followOpponentFlag = 0;
