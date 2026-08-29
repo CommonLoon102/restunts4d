@@ -360,13 +360,8 @@ legacy_s16 file_write_nofatal(const legacy_s8* filename, void far* src, legacy_u
 
 // Sequential byte runs pass of run-length encoding.
 //
-// The original opens with a bail-out this has no equivalent for:
-//
-//     cmp     byte ptr [bp-12h], 1    ; file_decomp_rle::var_esclen
-//     jnz     short has_codes
-//     retn
-//
-// Not reproduced. With a single escape code the caller's
+// The original opens with a bail-out this has no equivalent for. It is not
+// reproduced. With a single escape code the caller's
 // subhdr->esc[RS_RLE_ESCSEQ_POS] would be reading past the table anyway, and
 // the original's own bail-out returns with ax:dx undefined, which the caller
 // then feeds into copy_paras_reverse - so neither side is coherent there. No
@@ -528,13 +523,8 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	}
 
 	// The original discards the single pass's count and returns the size out
-	// of the compression header instead:
-	//
-	//     call    near ptr file_decomp_rle_single
-	//     mov     ax, [bp+var_lenlo]
-	//     mov     dx, [bp+var_lenhi]
-	//
-	// The two only differ when the last run overshoots - file_decomp_rle_single
+	// of the compression header instead. The two only differ when the last
+	// run overshoots - file_decomp_rle_single
 	// stops on `dst < dstend` and a run that straddles the end writes past it,
 	// so its count can exceed len. The declared length must still be returned:
 	// file_decomp uses it to position the source for a following pass.

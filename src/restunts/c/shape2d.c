@@ -2426,14 +2426,8 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 			flag = memshape[SHAPE2D_UNK5_OFFSET] >> 4;
 			if (flag != 0) {
 				// The original does not merely skip an unknown flip type, it
-				// gives up on the whole resource:
-				//
-				//     cmp     al, 4
-				//     jb      short loc_32B5F
-				//     mov     ax, 1
-				//     jmp     short loc_32B58     ; return 1, right now
-				//
-				// so the shapes after this one are left flipped and the
+				// gives up on the whole resource, so the shapes after this
+				// one are left flipped and the
 				// caller is told. This port skips the shape and carries on,
 				// and is declared void. Harmless: the only call site
 				// (asmorig/seg034.asm:237) does `add sp, 8` and goes straight
@@ -2512,45 +2506,6 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 		counter++;
 		shapecount--;
 	} while (shapecount > 0);
-	
-/*    asm {
-
-	the original of unflip case 2 above:
-
-// switch 2
-loc_32BDE:
-    mov     bx, dx // dx = row counter
-    shr     bx, 1
-    add     bx, 10h
-    add     bx, [var_6]
-    mov     cx, [var_C] // width
-    mov     si, [var_E]  // height
-    shr     si, 1
-    adc     si, 0		// si = (height + 1) / 2
-
-loc_32BF3:
-    mov     al, [bx]
-    stosb
-    add     bx, si
-    loop    loc_32BF3
-
-    inc     dx
-    cmp     dx, [var_E]
-    jz      short loc_32C15 // done
-
-    mov     cx, [var_C]
-    mov     si, [var_E]
-    shr     si, 1
-loc_32C08:
-    mov     al, [bx]
-    stosb
-    add     bx, si
-    loop    loc_32C08
-    inc     dx
-    cmp     dx, [var_E]
-    jnz     short loc_32BDE
-    */
-
 }
 
 void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
