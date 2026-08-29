@@ -88,7 +88,6 @@ void nopsub_3320E(struct SPRITE far* sprite, legacy_u16 left,
 void sprite_1_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
 {
 	legacy_u8 far* bitmap;
-	legacy_u16 far* line_offsets;
 	legacy_u16 offset;
 	legacy_u16 row;
 	legacy_u16 column;
@@ -99,10 +98,9 @@ void sprite_1_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 heigh
 		LEGACY_S16_FROM_BITS(height) <= 0)
 		return;
 	bitmap = (legacy_u8 far*)sprite1.sprite_bitmapptr;
-	line_offsets = (legacy_u16 far*)MK_FP(
-		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
 	offset = LEGACY_U16_WRAP_ADD(
-		line_offsets[(legacy_u16)y], (legacy_u16)x);
+		shape2d_get_line_offset(FP_SEG(&sprite1), (legacy_u16)y),
+		(legacy_u16)x);
 	row_count = (legacy_u16)height;
 	column_count = (legacy_u16)width;
 	for (row = 0; row < row_count; row++) {
@@ -181,7 +179,6 @@ static void font_draw_text_impl(const legacy_s8* text, legacy_s16 x, legacy_s16 
 	legacy_u8 far* font_definition;
 	legacy_u8 far* glyph_data;
 	legacy_u8 far* bitmap;
-	legacy_u16 far* line_offsets;
 	legacy_u16 glyph_offset;
 	legacy_u16 current_x;
 	legacy_u16 current_y;
@@ -203,8 +200,6 @@ static void font_draw_text_impl(const legacy_s8* text, legacy_s16 x, legacy_s16 
 	shape2d_put_word(font_definition + 0x0AU, (legacy_u16)y);
 	bitmap = (legacy_u8 far*)MK_FP(
 		FP_SEG(sprite1.sprite_bitmapptr), 0);
-	line_offsets = (legacy_u16 far*)MK_FP(
-		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
 	while ((character = (legacy_u8)*text++) != 0) {
 		glyph_offset = shape2d_get_word(font_definition + 0x16U +
 			(legacy_u16)character * 2U);
@@ -234,7 +229,8 @@ static void font_draw_text_impl(const legacy_s8* text, legacy_s16 x, legacy_s16 
 			shape2d_get_word(font_definition + 0x0EU));
 		do {
 			destination = LEGACY_U16_WRAP_ADD(
-				line_offsets[row_index], current_x);
+				shape2d_get_line_offset(FP_SEG(&sprite1), row_index),
+				current_x);
 			byte_count = LEGACY_S8_FROM_BITS(font_definition[0x0CU]);
 			do {
 				bits = *glyph_data++;
@@ -276,7 +272,6 @@ void draw_filled_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	legacy_u16 numlines, legacy_u16 color)
 {
 	legacy_u8 far* bitmap;
-	legacy_u16 far* line_offsets;
 	legacy_u16 current_y;
 	legacy_u16 line_count;
 	legacy_u16 old_line_count;
@@ -290,8 +285,6 @@ void draw_filled_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 		return;
 	bitmap = (legacy_u8 far*)MK_FP(
 		FP_SEG(sprite1.sprite_bitmapptr), 0);
-	line_offsets = (legacy_u16 far*)MK_FP(
-		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
 	current_y = (legacy_u16)y;
 	do {
 		left = (legacy_u16)*x1arr++;
@@ -300,7 +293,8 @@ void draw_filled_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 			LEGACY_U16_WRAP_SUB(right, left), 1U);
 		if (width != 0 && width <= 0x8000U) {
 			destination = LEGACY_U16_WRAP_ADD(
-				line_offsets[current_y], left);
+				shape2d_get_line_offset(FP_SEG(&sprite1), current_y),
+				left);
 			do {
 				bitmap[destination] = (legacy_u8)color;
 				destination++;
@@ -411,7 +405,6 @@ void draw_patterned_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 
 void putpixel_line1_maybe(legacy_s16* line)
 {
-	legacy_u16* parameters;
 	legacy_u8 far* bitmap;
 	legacy_u16 sprite_segment;
 	legacy_u16 x_low;
@@ -427,24 +420,23 @@ void putpixel_line1_maybe(legacy_s16* line)
 	legacy_u16 mode;
 	legacy_u8 color;
 
-	parameters = (legacy_u16*)line;
-	x_low = parameters[0];
-	x_high = parameters[1];
+	x_low = (legacy_u16)line[0];
+	x_high = (legacy_u16)line[1];
 	old_low = x_low;
 	x_low = LEGACY_U16_WRAP_ADD(x_low, 0x8000U);
 	if (x_low < old_low)
 		x_high++;
-	y_low = parameters[2];
-	y_high = parameters[3];
+	y_low = (legacy_u16)line[2];
+	y_high = (legacy_u16)line[3];
 	old_low = y_low;
 	y_low = LEGACY_U16_WRAP_ADD(y_low, 0x8000U);
 	if (y_low < old_low)
 		y_high++;
-	original_y_high = parameters[3];
-	delta = parameters[6];
-	count = parameters[7];
-	color = (legacy_u8)parameters[8];
-	mode = parameters[9];
+	original_y_high = (legacy_u16)line[3];
+	delta = (legacy_u16)line[6];
+	count = (legacy_u16)line[7];
+	color = (legacy_u8)line[8];
+	mode = (legacy_u16)line[9];
 	bitmap = (legacy_u8 far*)MK_FP(
 		FP_SEG(sprite1.sprite_bitmapptr), 0);
 	sprite_segment = FP_SEG(&sprite1);
@@ -660,7 +652,6 @@ void sub_34526(struct SHAPE2D far* shape)
 	legacy_u8 far* shape_bytes;
 	legacy_u8 far* bitmap;
 	legacy_u8 far* source_ptr;
-	legacy_u16 far* line_offsets;
 	legacy_u16 shape_segment;
 	legacy_u16 source;
 	legacy_u16 destination;
@@ -676,12 +667,11 @@ void sub_34526(struct SHAPE2D far* shape)
 	shape_segment = FP_SEG(shape);
 	bitmap = (legacy_u8 far*)MK_FP(
 		FP_SEG(sprite1.sprite_bitmapptr), 0);
-	line_offsets = (legacy_u16 far*)MK_FP(
-		FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
 	width = shape2d_get_word(shape_bytes);
 	row_count = shape2d_get_word(shape_bytes + 2U);
 	destination = LEGACY_U16_WRAP_ADD(
-		line_offsets[shape2d_get_word(shape_bytes + 0x0AU)],
+		shape2d_get_line_offset(FP_SEG(&sprite1),
+			shape2d_get_word(shape_bytes + 0x0AU)),
 		shape2d_get_word(shape_bytes + 8U));
 	destination_advance = LEGACY_U16_WRAP_SUB(
 		sprite1.sprite_pitch, width);
@@ -2627,7 +2617,8 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 			val |= val << 8;
 
 			for (j = 0; j < length * 4; ++j) {
-				*((legacy_u16 far*)mempagesptr)++ = val;
+				shape2d_put_word(mempagesptr, val);
+				mempagesptr += 2U;
 			}
 			memchunkptr = (legacy_u8 far*)srcshape + sizeof(struct SHAPE2D);
 			
