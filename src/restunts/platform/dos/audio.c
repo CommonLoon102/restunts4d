@@ -16,6 +16,9 @@ typedef void (far* driver_master_state_type)(legacy_s16 operation,
 	void far* state);
 typedef legacy_u8 (far* driver_initialize_type)(void);
 typedef void (far* driver_load_bank_type)(void far* bank);
+typedef void (far* driver_activate_context_type)(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
+	legacy_u16 parameter, void far* resource);
 
 extern legacy_u8 audiotimers[];
 extern legacy_u8 audiochunks_unk[];
@@ -64,7 +67,7 @@ static void dos_audio_driver_set_volume(legacy_s16 driver_channel,
 	set_volume(driver_channel, context, volume);
 }
 
-static void dos_audio_driver_bind_context(legacy_s16 driver_channel,
+void dos_audio_driver_prepare_context(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource)
 {
 	driver_bind_context_type bind_context;
@@ -72,6 +75,27 @@ static void dos_audio_driver_bind_context(legacy_s16 driver_channel,
 	bind_context =
 		(driver_bind_context_type)dos_audio_driver_entry(0x21U);
 	bind_context(driver_channel, driver_context, timer, resource);
+}
+
+void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value)
+{
+	driver_set_volume_type set_value;
+
+	set_value = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
+	set_value(driver_channel, driver_context, value);
+}
+
+void dos_audio_driver_activate_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
+	legacy_u16 parameter, void far* resource)
+{
+	driver_activate_context_type activate_context;
+
+	activate_context = (driver_activate_context_type)
+		dos_audio_driver_entry(9U);
+	activate_context(driver_channel, driver_context, timer, pitch,
+		parameter, resource);
 }
 
 void dos_audio_driver_release_channel(legacy_s16 driver_channel)
@@ -197,7 +221,7 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 	timer[0x47U] = driver_channel;
 
 	if (byte_40634 != 0) {
-		dos_audio_driver_bind_context(
+		dos_audio_driver_prepare_context(
 			driver_channel, 0, timer, resource);
 		return;
 	}
@@ -206,7 +230,7 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 	for (context_index = 0; context_index < byte_459D2;
 		context_index++) {
 		if ((legacy_u16)driver_context[0] == (legacy_u16)channel)
-			dos_audio_driver_bind_context((legacy_s16)context_index,
+			dos_audio_driver_prepare_context((legacy_s16)context_index,
 				driver_context, timer, resource);
 		driver_context += 0x2EU;
 	}
