@@ -422,21 +422,23 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		if (track >= 0x34U && track <= 0x37U) {
 			carstate->car_40MfrontWhlAngle = LEGACY_S16_WRAP_ADD(
 				carstate->car_40MfrontWhlAngle,
-				(legacy_s16)(carstate->car_rotate.z / 5));
+				LEGACY_S16_DIV_OR_ZERO(carstate->car_rotate.z, 5));
 		}
 	}
 
-	correction = (legacy_s16)(LEGACY_S16_WRAP_SUB(
-		adjusted_angle, initial_angle) / 0x0E);
+	correction = LEGACY_S16_DIV_OR_ZERO(
+		LEGACY_S16_WRAP_SUB(adjusted_angle, initial_angle), 0x0E);
 	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
 		combined_grip, 0x3E8U)) < LEGACY_S16_FROM_BITS(demanded_grip)) {
 		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
 			carstate->car_angle_z, correction);
-		carstate->car_angle_z = (legacy_s16)(carstate->car_angle_z / 2);
+		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
+			carstate->car_angle_z, 2);
 	} else if (carstate->car_angle_z != 0) {
 		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
 			carstate->car_angle_z, correction);
-		carstate->car_angle_z = (legacy_s16)(carstate->car_angle_z / 2);
+		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
+			carstate->car_angle_z, 2);
 		if (carstate->car_angle_z == 0) {
 			carstate->car_speed2 = (legacy_u16)multiply_and_scale(
 				cos_fast(carstate->car_36MwhlAngle),
@@ -1599,9 +1601,12 @@ track_build_cameras:
 		subtype_by_piece[index] = 0;
 	camera_index = 0;
 	for (sample_index = 0; sample_index < byte_4616E; sample_index++) {
-		sampled_piece = (legacy_s16)(
-			((legacy_s32)track_pieces_counter * sample_index) /
-			byte_4616E);
+		sampled_piece = LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_S32_DIV_OR_ZERO(
+				LEGACY_S32_WRAP_MUL(
+					(legacy_s32)track_pieces_counter,
+					(legacy_s32)sample_index),
+				(legacy_s32)(legacy_u16)byte_4616E));
 		column = LEGACY_S8_FROM_BITS(
 			(legacy_u8)td21_col_from_path[sampled_piece]);
 		row = LEGACY_S8_FROM_BITS(
