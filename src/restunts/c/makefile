@@ -22,7 +22,7 @@ else
   $(error Unsupported C target: $(TARGET))
 endif
 
-C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c carsetup.c trkutil.c restunts.c shape3d.c shape2d.c keyboard.c heapsort.c \
+C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c carsetup.c trkutil.c restunts.c shape3d.c shape2d.c heapsort.c \
 		  frame.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
 
 ifeq ($(TARGET),dosstage)

@@ -11,7 +11,7 @@ endif
 ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
 CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS
 
-all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
+all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/keyboard.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
 
 $(OBJDIR)/%.obj: %.asm
 	$(ASM) $<, $(subst /,\,$@)
@@ -27,6 +27,9 @@ $(OBJDIR)/memory.obj: memory.c ../../c/legacy.h ../../c/memmgr.h ../../c/platfor
 
 $(OBJDIR)/file.obj: file.c ../../c/legacy.h ../../c/platform.h
 	$(CC) -I../../c file.c
+
+$(OBJDIR)/keyboard.obj: keyboard.c ../../c/legacy.h ../../c/keyboard.h
+	$(CC) -I../../c keyboard.c
 
 $(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h
 	$(CC) joystick.c
@@ -50,6 +53,7 @@ clean:
 	del $(OBJDIR)\runtime.obj
 	del $(OBJDIR)\memory.obj
 	del $(OBJDIR)\file.obj
+	del $(OBJDIR)\keyboard.obj
 	del $(OBJDIR)\joystick.obj
 	del $(OBJDIR)\mouse.obj
 	del $(OBJDIR)\video.obj
