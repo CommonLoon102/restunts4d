@@ -1470,6 +1470,7 @@ void replay_unk2(legacy_s16 mode)
 	legacy_s16 input_flags;
 	legacy_s16 steering;
 	legacy_s16 snapshot_index;
+	legacy_s16 snapshot_count;
 	legacy_u16 history_index;
 	legacy_u16 recording_chunk;
 	legacy_u16 recording_limit;
@@ -1566,9 +1567,11 @@ void replay_unk2(legacy_s16 mode)
 		}
 
 		recording_chunk = LEGACY_U16_WRAP_MUL(0x1EU, framespersec);
+		snapshot_count = LEGACY_S16_WRAP_SUB(
+			LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(
+				0x2EE0U, recording_chunk)), 1);
 		for (snapshot_index = 0;
-			snapshot_index <
-				(legacy_s16)(0x2EE0 / recording_chunk) - 1;
+			snapshot_index < snapshot_count;
 			snapshot_index++) {
 			cvxptr[snapshot_index + 1].game_frame =
 				LEGACY_S16_WRAP_SUB(
@@ -2971,10 +2974,10 @@ void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	frames = (legacy_u16)frame_count;
 	frame_rate = (legacy_u16)framespersec;
 	frames_per_minute = LEGACY_U16_WRAP_MUL(60U, frame_rate);
-	minutes = (legacy_u16)(frames / frames_per_minute);
+	minutes = LEGACY_U16_DIV_OR_ZERO(frames, frames_per_minute);
 	frames = LEGACY_U16_WRAP_SUB(frames,
 		LEGACY_U16_WRAP_MUL(frames_per_minute, minutes));
-	seconds = (legacy_u16)(frames / frame_rate);
+	seconds = LEGACY_U16_DIV_OR_ZERO(frames, frame_rate);
 	frames = LEGACY_U16_WRAP_SUB(frames,
 		LEGACY_U16_WRAP_MUL(frame_rate, seconds));
 
@@ -2986,8 +2989,7 @@ void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	if (include_hundredths != 0) {
 		*output++ = '.';
 		hundredths = LEGACY_U16_WRAP_MUL(
-			(legacy_u16)(100 / LEGACY_S16_FROM_BITS(frame_rate)),
-			frames);
+			LEGACY_U16_DIV_OR_ZERO(100U, frame_rate), frames);
 		print_int_as_string_maybe(number, hundredths, 1, 2);
 		legacy_near_string_copy(output, number);
 	}
