@@ -25,6 +25,7 @@ extern legacy_u8 byte_40634;
 extern legacy_u8 byte_40635;
 extern legacy_u8 byte_40639;
 extern legacy_u8 byte_459D2;
+extern legacy_u8 unk_40636[];
 extern legacy_u8 unk_45A26[];
 extern void far* audiodriverbinary;
 extern legacy_s16 word_4063A;
@@ -165,7 +166,7 @@ void dos_audio_shutdown(void)
 		if (byte_40634 != 0) {
 			byte_40639 = 0x64U;
 			dos_audio_driver_set_master_state(
-				4, (void far*)&word_4063A);
+				4, (void far*)unk_40636);
 		}
 		dos_audio_driver_start();
 		dos_audio_driver_shutdown();
