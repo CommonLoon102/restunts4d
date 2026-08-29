@@ -155,8 +155,8 @@ static legacy_s16 shape3d_absolute_word(legacy_s16 value)
 }
 
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
-	legacy_s32 far* var_cull1;
-	legacy_s32 far* var_cull2;
+	legacy_u8 far* var_cull1;
+	legacy_u8 far* var_cull2;
 		
 	legacy_u8 var_vertflagtbl[256];
 	struct MATRIX* var_rotmatptr;
@@ -232,8 +232,10 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	transshapeprimitives = arg_transshapeptr->shapeptr->shape3d_primitives;
 	transshapeverts = arg_transshapeptr->shapeptr->shape3d_verts;
 	transshapenumpaints = arg_transshapeptr->shapeptr->shape3d_numpaints;
-	var_cull1 = arg_transshapeptr->shapeptr->shape3d_cull1;
-	var_cull2 = arg_transshapeptr->shapeptr->shape3d_cull2;
+	var_cull1 = (legacy_u8 far*)
+		arg_transshapeptr->shapeptr->shape3d_cull1;
+	var_cull2 = (legacy_u8 far*)
+		arg_transshapeptr->shapeptr->shape3d_cull2;
 	transshapematerial = arg_transshapeptr->material;
 	if (transshapematerial >= transshapenumpaints)
 		transshapematerial = 0;
@@ -745,7 +747,7 @@ loc_25233:
 	transshapeprimptr = transshapeprimitives + primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
 	var_primitiveflags = transshapeprimitives[1];
 	var_4 = 0;
-	if ((var_cull1[0] & var_45C) != 0) {
+	if ((LEGACY_READ_U32_LE(var_cull1) & (legacy_u32)var_45C) != 0UL) {
 		goto loc_25282;
 	}
 	goto loc_25801;
@@ -1501,7 +1503,8 @@ loc_2571A:
 	if (transshapenumvertscopy == 0) goto loc_25801;
 	if (var_ptrectflag != 0) goto loc_25801;
 	if ((var_primitiveflags & 1) != 0) goto loc_25760;
-	if ((var_A & *var_cull2) != 0) goto loc_25760;
+	if (((legacy_u32)var_A & LEGACY_READ_U32_LE(var_cull2)) != 0UL)
+		goto loc_25760;
 	
 	if (is_facing_camera(transshapepolyinfo + 6) == 0) goto loc_25763;
 
@@ -1643,16 +1646,16 @@ loc_257F7:
 loc_25801:
 
 	transshapeprimitives = transshapeprimptr;
-	var_cull1++;
-	var_cull2++;
+	var_cull1 += 4U;
+	var_cull2 += 4U;
 	if (var_4 != 0) goto loc_25D3C;
 	if ((var_primitiveflags & 2) != 0) goto loc_25E04;
 loc_2582B:
 
 	if ((transshapeprimitives[1] & 2) == 0) goto loc_25E04;
 	transshapeprimitives += primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
-	var_cull1++;
-	var_cull2++;
+	var_cull1 += 4U;
+	var_cull2 += 4U;
 	goto loc_2582B;
 
 /*asm {
