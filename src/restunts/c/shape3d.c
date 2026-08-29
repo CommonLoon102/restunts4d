@@ -52,9 +52,9 @@ legacy_s16 shape3d_load_all() {
 
 	game1ptr = 0;
 	game2ptr = 0;
-	
+
 	mmgrofsdiff = mmgr_get_res_ofs_diff_scaled();
-	
+
 	// The original only had the arena to draw on. The track shapes loaded
 	// below can come out of upper memory instead, so the arena check only
 	// has to hold when the pool cannot cover the same amount.
@@ -63,7 +63,7 @@ legacy_s16 shape3d_load_all() {
 
 	game1ptr = file_load_3dres("game1");
 	game2ptr = file_load_3dres("game2");
-	
+
 	for (i = 0; i < 0x74; i++) {
 		shapename = &aBarn[i * 5];
 		curshapeptr = locate_shape_nofatal(game1ptr, shapename);
@@ -252,7 +252,7 @@ static legacy_s8 polyinfo_is_facing_camera(const legacy_u8 far* record)
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
-		
+
 	legacy_u8 var_vertflagtbl[256];
 	struct MATRIX* var_rotmatptr;
 	struct MATRIX var_mat;
@@ -276,46 +276,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	struct POINT2D var_vecarr2[255];
 	struct POINT2D** var_polyvertunktabptr;
 
-	/*
-    var_B7C = word ptr -2940
-    var_polyvertunktabptr = word ptr -2938
-    var_cull1 = dword ptr -2936
-    var_vec4 = VECTOR ptr -2932
-    var_vecarr = VECTOR ptr -2926
-    var_574 = POINT2D ptr -1396
-    var_polyvertY = word ptr -1392
-    var_polyvertsptr = dword ptr -1390
-    var_vec3 = VECTOR ptr -1386
-    var_polyvertX = word ptr -1380
-    var_vertflagtbl = byte ptr -1378
-    var_462 = word ptr -1122
-    var_460 = word ptr -1120
-    var_45E = word ptr -1118
-    var_45C = dword ptr -1116
-    var_vec2 = VECTOR ptr -1112
-    var_450 = POINT2D ptr -1104
-    var_ptrectflag = byte ptr -1098
-    var_448 = word ptr -1096
-    var_mat = MATRIX ptr -1094
-    var_cull2 = dword ptr -1076
-    var_transshapepolyinfoptptr = dword ptr -1072
-    var_rotmatptr = word ptr -1068
-    var_mat2 = MATRIX ptr -1066
-    var_fileprimtype = word ptr -1048
-    var_vecarr2 = VECTOR ptr -1046
-    var_1A = word ptr -26
-    var_18 = dword ptr -24
-    var_vec = VECTOR ptr -20
-    var_polyvertcounter = word ptr -14
-    var_C = word ptr -12
-    var_A = dword ptr -10
-    var_primtype = byte ptr -6
-    var_4 = word ptr -4
-    var_primitiveflags = word ptr -2
-     s = byte ptr 0
-     r = byte ptr 2
-    arg_transshapeptr = word ptr 6
-*/
+
 
 	legacy_u16 i;
 	legacy_u16 temp, temp0, temp1;
@@ -333,15 +294,15 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	if (transshapematerial >= transshapenumpaints)
 		transshapematerial = 0;
 	transshapeflags = arg_transshapeptr->ts_flags;
-	
+
 	if ((transshapeflags & 8) != 0) {
 		transshaperectptr = arg_transshapeptr->rectptr;
 	}
-	
+
 	for (i = 0; i < transshapenumverts; i++) {
 		var_vertflagtbl[i] = 0xff;
 	}
-	
+
 	if ((transshapeflags & 2) == 0) {
 		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x, arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z, 0);
 		mat_mul_vector(&arg_transshapeptr->pos, &mat_temp, &var_vec);
@@ -370,19 +331,18 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		var_45C = -1;
 		var_A = 0;
 	}
-	
-// loc_250A3:
+
 	poly_linklist_40ED6_iter1 = poly_linklist_40ED6_iter2;
 	poly_linklist_40ED6_iter4 = poly_linklist_40ED6_iter2;
 	poly_linklist_40ED6_iter3 = 0;
 	var_45E = 0;
-	
+
 	if (transshapenumverts <= 8) {
 		transshapenumvertscopy = transshapenumverts;
 	} else {
 		transshapenumvertscopy = 8;
 	}
-	
+
 	if (transshapenumvertscopy > 4) {
 		shape3d_vertex_read(arg_transshapeptr->shapeptr, 0U, &var_vec2);
 		shape3d_vertex_read(arg_transshapeptr->shapeptr, 4U, &var_vec3);
@@ -403,7 +363,6 @@ loc_2513E:
 	i = LEGACY_U16_WRAP_ADD(i, 1U);
 loc_2513F:
 	if (transshapenumvertscopy > i) goto loc_2514B;
-	//goto loc_251F6;
 	if (var_460 != 0 || var_1A == 0 ||
 		LEGACY_S16_FROM_BITS(arg_transshapeptr->unk) <
 			shape3d_absolute_word(var_vec.x)) return (legacy_u16)-1;
@@ -431,7 +390,7 @@ loc_2514B:
 		goto loc_2513E;
 	}
 	goto loc_250FA;
-	
+
 loc_250FA:
 	var_460 = 0;
 	var_vertflagtbl[i] = 0;
@@ -442,402 +401,15 @@ loc_250FA:
 		goto loc_2513E;
 	goto loc_25220;
 
-	
-	
-/*
-asm {
-    cmp     word_40ECE, 0
-    jz      short loc_24EB8
-loc_24EAE:
-    mov     ax, 1
-
-    jmp the_end
-    retf
-
-loc_24EB8:
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx + .shapeptr]
-    mov     ax, [bx + .shape3d_numverts]
-    mov     transshapenumverts, ax
-
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     ax, word ptr [bx+.shape3d_primitives]
-    mov     dx, word ptr [bx+(.shape3d_primitives+2)]
-    mov     word ptr transshapeprimitives, ax
-    mov     word ptr transshapeprimitives+2, dx
-
-loc_24ED6:
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     ax, word ptr [bx+.shape3d_verts]
-    mov     dx, word ptr [bx+(.shape3d_verts+2)]
-    mov     word ptr transshapeverts, ax
-    mov     word ptr transshapeverts+2, dx
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     al, byte ptr [bx+.shape3d_numpaints]
-    cbw
-    mov     transshapenumpaints, ax
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     ax, word ptr [bx+.shape3d_cull1]
-    mov     dx, word ptr [bx+(.shape3d_cull1+2)]
-    mov     word ptr [var_cull1], ax
-    mov     word ptr [var_cull1+2], dx
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     ax, word ptr [bx+.shape3d_cull2]
-    mov     dx, word ptr [bx+(.shape3d_cull2+2)]
-    mov     word ptr [var_cull2], ax
-    mov     word ptr [var_cull2+2], dx
-    mov     bx, [arg_transshapeptr]
-    mov     al, [bx+.material]
-    mov     transshapematerial, al
-    cmp     byte ptr transshapenumpaints, al
-    ja      short loc_24F32
-    mov     transshapematerial, 0
-loc_24F32:
-    mov     al, [bx+.ts_flags]
-    mov     transshapeflags, al
-    test    transshapeflags, 8
-    jz      short loc_24F45
-    mov     ax, [bx+.rectptr]
-    mov     transshaperectptr, ax
-
-loc_24F45:
-    sub     si, si
-    jmp     short loc_24F50
-
-loc_24F4A:
-    mov     byte ptr [si+var_vertflagtbl], 0FFh
-    inc     si
-
-loc_24F50:
-
-    mov     ax, si
-    cmp     ax, transshapenumverts
-    jb      short loc_24F4A
-
-    test    byte ptr transshapeflags, 2
-    jz      short loc_24FB6
-    sub     ax, ax
-    push    ax
-    mov     bx, [arg_transshapeptr]
-    push    word ptr [bx+.rotvec.z]
-    push    word ptr [bx+.rotvec.y]
-    push    word ptr [bx+.rotvec.x]
-    //push    cs
-
-    call far ptr mat_rot_zxy
-    add     sp, 8
-    mov     [var_rotmatptr], ax
-    lea     ax, [var_mat2]
-    push    ax
-    mov     ax, offset mat_temp
-    push    ax
-    push    word ptr [var_rotmatptr]
-    call    far ptr mat_multiply
-    add     sp, 6
-    mov     ax, [arg_transshapeptr]
-    push    si
-    push    di
-    lea     di, [var_vec]
-    mov     si, ax
-    push    ss
-    pop     es
-    movsw
-    movsw
-    movsw
-    pop     di
-    pop     si
-loc_24F9F:
-    mov     word ptr [var_45C], 0FFFFh
-    mov     word ptr [var_45C+2], 0FFFFh
-    sub     ax, ax
-    mov     word ptr [var_A+2], ax
-    mov     word ptr [var_A], ax
-    jmp     loc_250A3
-loc_24FB6:
-    sub     ax, ax
-    push    ax
-    mov     bx, [arg_transshapeptr]
-    push    word ptr [bx+.rotvec.z]
-    push    word ptr [bx+.rotvec.y]
-    push    word ptr [bx+.rotvec.x]
-    //push    cs
-    call far ptr mat_rot_zxy
-    add     sp, 8
-
-    mov     [var_rotmatptr], ax
-    lea     ax, [var_vec]
-    push    ax
-    mov     ax, offset mat_temp
-    push    ax
-    push    word ptr [arg_transshapeptr]
-    call    far ptr mat_mul_vector
-    add     sp, 6
-    lea     ax, [var_mat2]
-    push    ax
-    mov     ax, offset mat_temp
-    push    ax
-    push    word ptr [var_rotmatptr]
-    call    far ptr mat_multiply
-    add     sp, 6
-    lea     ax, [var_mat]
-    push    ax
-    lea     ax, [var_mat2]
-    push    ax
-    call    far ptr mat_invert
-    add     sp, 4
-    mov     word ptr [var_vec2.vx], 0
-    mov     word ptr [var_vec2.vy], 0
-    mov     word ptr [var_vec2.vz], 1000h
-    lea     ax, [var_vec3]
-    push    ax
-    lea     ax, [var_mat]
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr mat_mul_vector
-    add     sp, 6
-    cmp     word ptr [var_vec3.y], 0
-    jle     short loc_25046
-    mov     bx, [arg_transshapeptr]
-    cmp     word ptr [bx+.pos.y], 0
-    jge     short loc_25046
-    jmp     loc_24F9F
-loc_25046:
-    push    word ptr [var_vec.vx] // int
-    call    far ptr abs
-    add     sp, 2
-    mov     bx, [arg_transshapeptr]
-    mov     cx, [bx+.unk]
-    shl     cx, 1
-    cmp     cx, ax
-    jle     short loc_25077
-    push    word ptr [var_vec.z] // int
-    call    far ptr abs
-    add     sp, 2
-    mov     bx, [arg_transshapeptr]
-    mov     cx, [bx+.unk]
-    shl     cx, 1
-    cmp     cx, ax
-    jle     short loc_25077
-    jmp     loc_24F9F
-loc_25077:
-    lea     ax, [var_vec3]
-    push    ax
-    //push    cs
-    call far ptr vector_op_unk2
-    add     sp, 2
-    mov     byte_4393D, al
-    cbw
-    mov     bx, ax
-    shl     bx, 1
-    shl     bx, 1
-    mov     ax, word ptr invpow2tbl[bx]
-    mov     dx, word ptr (invpow2tbl+2)[bx]
-    mov     word ptr [var_45C], ax
-    mov     word ptr [var_45C+2], dx
-    mov     word ptr [var_A], ax
-    mov     word ptr [var_A+2], dx
-
-loc_250A3:
-    mov     ax, poly_linklist_40ED6_iter2
-    mov     poly_linklist_40ED6_iter1, ax
-    mov     poly_linklist_40ED6_iter4, ax
-    mov     poly_linklist_40ED6_iter3, 0
-    mov     word ptr [var_45E], 0
-    cmp     transshapenumverts, 8
-    jbe     short loc_250C6
-    mov     transshapenumvertscopy, 8
-    jmp     short loc_250CC
-
-loc_250C6:
-    mov     al, byte ptr transshapenumverts
-    mov     transshapenumvertscopy, al
-loc_250CC:
-    cmp     transshapenumvertscopy, 4
-    jbe     short loc_250E6
-    les     bx, transshapeverts
-    mov     ax, es:[bx+1Ah]
-    cmp     es:[bx+2], ax
-    jnz     short loc_250E6
-    mov     transshapenumvertscopy, 4
-
-}
-
-loc_250E6:
-	asm {
-    mov     byte ptr [var_ptrectflag], 0Fh
-    mov     word ptr [var_460], 1
-    mov     word ptr [var_1A], 0
-    sub     si, si
-    jmp     short loc_2513F
 
 
-loc_2513E:
-    inc     si
-loc_2513F:
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     ax, si
-    ja      short loc_2514B
-    jmp     loc_251F6
-loc_2514B:
 
-    mov     bx, si
-    shl     bx, 1 // * 2 = sizeof ptr
-
-    mov     ax, si
-    shl     ax, 1
-    shl     ax, 1 // * 4? (sizeof(POINT2D)) ??
-    
-    add ax, bp
-    add ax, offset var_vecarr2 // LOOKS STRANGE IN ASSEMBEL - this is maybe similar to sub ax, 0xyxy
-    //add     ax, bp
-    //sub     ax, 416h        // array access in var_416, but dunno how to make IDA show this
-
-	mov     polyvertpointptrtab[bx], ax
-    
-
-    mov     ax, si
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1 // * 6 = sizeof(VECTOR)
-    add     ax, word ptr transshapeverts
-    mov     dx, word ptr transshapeverts+2
-    push    si
-    push    di
-    lea     di, [var_vec2]
-    mov     si, ax
-    push    ss
-    pop     es
-    push    ds
-    mov     ds, dx
-    movsw
-    movsw
-    movsw
-    pop     ds
-    pop     di
-    pop     si
-    cmp     select_rect_param, 0
-    jz      short loc_25196
-    sar     word ptr [var_vec2.vx], 1
-    sar     word ptr [var_vec2.vy], 1
-    sar     word ptr [var_vec2.vz], 1
-loc_25196:
-
-    lea     ax, [var_vec3]
-    push    ax
-    lea     ax, [var_mat2]
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr mat_mul_vector
-    add     sp, 6
-    mov     ax, word ptr [var_vec.vx]  // DOES NOT APPEAR IN ASSEMBLE WO word ptr
-    add     word ptr [var_vec3.vx], ax
-    mov     ax, word ptr [var_vec.vy]
-    add     word ptr [var_vec3.vy], ax
-    mov     ax, word ptr [var_vec.vz]
-    add     word ptr [var_vec3.vz], ax
-    mov     bx, si
-    mov     ax, bx
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1           // bx = vertex index * 6
-    add     bx, bp
-    push    si
-    push    di
-    lea     di, [bx+offset var_vecarr] // DOES NOT APPEAR IN ASSEMBEL
-    lea     si, [var_vec3]
-    push    ss
-    pop     es
-    movsw
-    movsw
-    movsw
-    pop     di
-    pop     si
-    cmp     word ptr [var_vec3.vz], 0Ch
-    jl      short loc_251E9
-//    jmp     loc_250FA
-
-//loc_250FA:
-
-    mov     word ptr [var_460], 0
-    mov     byte ptr [si+var_vertflagtbl], 0
-    mov     bx, si
-    shl     bx, 1
-    push    word ptr polyvertpointptrtab[bx]
-    lea     ax, [var_vec3]
-    push    ax
-    call    far ptr vector_to_point
-    add     sp, 4
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_25134
-    mov     bx, si
-    shl     bx, 1
-    push    word ptr polyvertpointptrtab[bx]
-    //push    cs
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     byte ptr [var_ptrectflag], al
-loc_25134:
-    cmp     byte ptr [var_ptrectflag], 0
-    jnz     short loc_2513E
-    jmp     loc_25220
-
-}
-
-loc_251E9:
-asm {
-
-    mov     byte ptr [si+var_vertflagtbl], 1
-    mov     word ptr [var_1A], 1
-    jmp     loc_2513E // continue
-}
-    
-// end of loop, for i = 0 .. transshapenumvertscopy
-
-loc_251F6:
-	asm {
-
-    cmp     word ptr [var_460], 0
-    jnz     short _done_ret_neg1
-    cmp     word ptr [var_1A], 0
-    jz      short _done_ret_neg1
-    push    word ptr [var_vec.vx] // int
-    call    far ptr abs
-    add     sp, 2
-    mov     bx, [arg_transshapeptr]
-    cmp     [bx+.unk], ax
-    jge     short loc_25220
-
-asm {
-_done_ret_neg1:
-    mov     ax, 0FFFFh
-    //pop     si
-    //pop     di
-    jmp the_end
-    retf
-	}
-*/
 
 loc_25220: // // in the loop, for i = 0 .. transshapenumvertscopy
-	
+
 	transshapeprimitives = arg_transshapeptr->shapeptr->shape3d_primitives;
-	
-/*		
-	asm {
-    mov     bx, [arg_transshapeptr]
-    mov     bx, [bx+.shapeptr]
-    mov     ax, word ptr [bx+.shape3d_primitives]
-    mov     dx, word ptr [bx+(.shape3d_primitives+2)]
-    mov     word ptr transshapeprimitives, ax
-    mov     word ptr transshapeprimitives+2, dx*/
+
+
 
 loc_25233:
 	transshapeprimptr = transshapeprimitives + primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
@@ -847,35 +419,7 @@ loc_25233:
 		goto loc_25282;
 	}
 	goto loc_25801;
-/*
-asm {
-	les     bx, transshapeprimitives
-    mov     bl, es:[bx]     // primitives+0 = primitive type
-    sub     bh, bh
 
-    mov     al, primidxcounttab[bx] // look up maybe indexcount from a table? FELL OUT OF ASSEMBY
-    sub     ah, ah
-    add     ax, transshapenumpaints
-    add     ax, word ptr transshapeprimitives
-    mov     dx, es
-    add     ax, 2
-    mov     word ptr transshapeprimptr, ax
-    mov     word ptr transshapeprimptr+2, dx
-    mov     bx, word ptr transshapeprimitives
-    mov     al, es:[bx+1]   // primitives+1 = primitive flags
-    sub     ah, ah
-    mov     [var_primitiveflags], ax
-    mov     word ptr [var_4], 0
-    les     bx, [var_cull1]
-    mov     ax, es:[bx]
-    mov     dx, es:[bx+2]
-    and     ax, word ptr [var_45C]
-    and     dx, word ptr [var_45C+2]
-    or      dx, ax
-    jnz     short loc_25282
-
-    jmp     loc_25801
-}*/
 loc_25282:
 
 	var_fileprimtype = transshapeprimitives[0];
@@ -895,92 +439,27 @@ loc_25282:
 	var_polyvertcounter = 0;
 	goto loc_25328;
 
-/*
-asm {
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]     // primitives+0 = type
-    sub     ah, ah
-    mov     [var_fileprimtype], ax
-    mov     bx, ax
-    mov     al, primidxcounttab[bx]
-    mov     transshapenumvertscopy, al
-    mov     al, primtypetab[bx]
-    mov     [var_primtype], al   // primunktab maps from file-based primitive type to internal type:
 
-    mov     ax, polyinfoptrnext
-    add     ax, word ptr polyinfoptr
-    mov     dx, word ptr polyinfoptr+2
-    mov     word ptr transshapepolyinfo, ax
-    mov     word ptr transshapepolyinfo+2, dx
-
-    mov     bx, polyinfonumpolys
-    shl     bx, 1
-    shl     bx, 1
-    mov     word ptr polyinfoptrs[bx], ax
-    mov     word ptr (polyinfoptrs+2)[bx], dx
-
-    mov     bl, transshapematerial
-    sub     bh, bh
-    add     bx, word ptr transshapeprimitives
-    mov     es, word ptr transshapeprimitives+2
-    mov     al, es:[bx+2]   // primitives+2+X = paint job color, X in [0..numpaints]
-    mov     transprimitivepaintjob, al
-
-    mov     ax, transshapenumpaints
-    add     ax, 2
-    add     word ptr transshapeprimitives, ax // <- skip header and materials, -> point at indices
-
-    mov     byte ptr [var_ptrectflag], 0Fh
-    mov     word ptr [var_460], 1
-    mov     word ptr [var_1A], 0
-    mov     ax, word ptr transshapeprimitives
-    mov     dx, es
-    mov     word ptr transshapeprimindexptr, ax
-    mov     word ptr transshapeprimindexptr+2, dx
-    mov     word ptr [var_polyvertcounter], 0
-    jmp     short loc_25328
-*/
 loc_25304:
 	var_460 = 0;
-/*asm {
-    mov     word ptr [var_460], 0
-}*/
+
 loc_2530A:
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(polyvertpointptrtab[var_polyvertcounter]);
 	}
-/*asm {
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_25325
-    mov     bx, [var_polyvertcounter]
-    shl     bx, 1
-    push    word ptr polyvertpointptrtab[bx]
-    //push    cs
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     [var_ptrectflag], al
-}*/
+
 loc_25325:
 	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
-/*asm {
-    inc     word ptr [var_polyvertcounter]
-}*/
+
 loc_25328:
 	if (var_polyvertcounter >= transshapenumvertscopy) goto loc_2542A;
-/*asm {
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     [var_polyvertcounter], ax
-    jb      short loc_25335
 
-    jmp     loc_2542A
-}*/
 
 	temp = transshapeprimindexptr[0];
 	//fatal_error("%i", temp);
 	transshapeprimindexptr++;
 	polyvertpointptrtab[var_polyvertcounter] = &var_vecarr2[temp];
-	
+
 	if (var_vertflagtbl[temp] == 0xff) { 
 		goto loc_25370; 
 	}
@@ -991,41 +470,10 @@ loc_25328:
 		var_1A = 1;
 		goto loc_25325;
 	}
-	//goto loc_2536E; ->
 	goto loc_25325;
 
 
-/*asm {
-	//mov si, temp
-	//sub ah,ah
-    mov     bx, word ptr transshapeprimindexptr
-    inc     word ptr transshapeprimindexptr
-    mov     es, word ptr transshapeprimindexptr+2
-    mov     al, es:[bx]
-    mov     si, ax
-    mov     bx, [var_polyvertcounter]
-    shl     bx, 1
-    shl     ax, 1
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr2
-    //add     ax, bp
-    //sub     ax, 416h
-    mov     polyvertpointptrtab[bx], ax
-    mov     al, [si+var_vertflagtbl]
-    cbw
-    cmp     ax, 0FFFFh
-    jz      short loc_25370
-    or      ax, ax
-    jz      short loc_25304
-    cmp     ax, 1
-    jnz     short loc_2536E
-    //jmp     loc_253FD
-    mov word ptr [var_1A], 1
-loc_2536E:
-    jmp     short loc_25325
-}
-*/
+
 loc_25370:
 
 	shape3d_vertex_read(arg_transshapeptr->shapeptr, temp, &var_vec2);
@@ -1043,7 +491,6 @@ loc_25370:
 	var_vecarr[temp] = var_vec3;
 
 	if (var_vec3.z >= 0xc) {
-		// goto loc_25406; ->
 		var_460 = 0;
 		var_vertflagtbl[temp] = 0;
 		vector_to_point(&var_vec3, polyvertpointptrtab[var_polyvertcounter]);
@@ -1054,95 +501,7 @@ loc_25370:
 	var_1A = 1;
 	goto loc_25325;
 
-/*	
-asm {
-	mov si, temp
-    mov     ax, si
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add     ax, word ptr transshapeverts
-    mov     dx, word ptr transshapeverts+2
-    push    si
-    push    di
-    lea     di, [var_vec2]
-    mov     si, ax
-    push    ss
-    pop     es
-    push    ds
-    mov     ds, dx
-    movsw
-    movsw
-    movsw
-    pop     ds
-    pop     di
-    pop     si
-    cmp     select_rect_param, 0
-    jz      short loc_253A8
-    sar     word ptr [var_vec2.vx], 1
-    sar     word ptr [var_vec2.vy], 1
-    sar     word ptr [var_vec2.vz], 1
 
-loc_253A8:
-    lea     ax, [var_vec3]
-    push    ax
-    lea     ax, [var_mat2]
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr mat_mul_vector
-    add     sp, 6
-
-    mov     ax, word ptr [var_vec.vx]
-    add     word ptr [var_vec3.vx], ax
-    mov     ax, word ptr [var_vec.vy]
-    add     word ptr [var_vec3.vy], ax
-    mov     ax, word ptr [var_vec.vz]
-    add     word ptr [var_vec3.vz], ax
-    mov     bx, si
-    mov     ax, bx
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    push    si
-    push    di
-    lea     di, [bx+offset var_vecarr]
-    lea     si, [var_vec3]
-    push    ss
-    pop     es
-    movsw
-    movsw
-    movsw
-    pop     di
-    pop     si
-
-    cmp     word ptr [var_vec3.z], 0Ch
-    jge     short loc_25406
-    mov     byte ptr [si+var_vertflagtbl], 1
-}
-
-loc_253FD:
-asm {
-    mov     word ptr [var_1A], 1
-    jmp     loc_25325
-}
-
-loc_25406:
-asm {
-	mov si, temp
-    mov     word ptr [var_460], 0
-    mov     byte ptr [si+var_vertflagtbl], 0
-    mov     bx, [var_polyvertcounter]
-    shl     bx, 1
-    push    word ptr polyvertpointptrtab[bx]
-    lea     ax, [var_vec3]
-    push    ax
-    call    far ptr vector_to_point
-    add     sp, 4
-    jmp     loc_2530A
-}*/
 
 // end of 2nd loop
 
@@ -1158,43 +517,7 @@ loc_2542A:
 	if (var_primtype == 5) goto loc_25CE0;
 	goto loc_25801;
 
-/*
-asm {
-    cmp     word ptr [var_460], 0
-    jz      short loc_25434
-    jmp     loc_25801
-loc_25434:
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_25444
-    cmp     word ptr [var_1A], 0
-    jnz     short loc_25444
-    jmp     loc_25801
-loc_25444:
-    mov     al, [var_primtype]
-    sub     ah, ah
-    or      ax, ax
-    jz      short _primtype_poly  // al = 0 for polygons,
-    cmp     ax, 1           // 1 = lines
-    jnz     short loc_25455
-    jmp     _primtype_line
-loc_25455:
-    cmp     ax, 2
-    jnz     short loc_2545D
-    jmp     _primtype_sphere // 2 = sphere
-loc_2545D:
-    cmp     ax, 3
-    jnz     short loc_25465
-    jmp     _primtype_wheel // 3 = wheel
-loc_25465:
-    cmp     ax, 5
-    jnz     short loc_2546D
-    jmp     loc_25CE0       // 5 = particle
-loc_2546D:
-    jmp     loc_25801       // everything else? (4?)
 
-// ------------------------------------ primtype_poly ------------------------------------
-}
-*/
 
 _primtype_poly:
 	var_transshapepolyinfoptindex = 0U;
@@ -1219,97 +542,19 @@ loc_254A7:
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(*var_polyvertunktabptr);
 	}
-	
+
 	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
 		var_transshapepolyinfoptindex, 1U);
 	goto loc_254A6;
 
-	/*
-asm {
-    mov     ax, word ptr transshapepolyinfo
-    mov     dx, word ptr transshapepolyinfo+2
-    add     ax, 6
-    mov     word ptr [var_transshapepolyinfoptptr], ax
-    mov     word ptr [var_transshapepolyinfoptptr+2], dx
-    mov     ax, word ptr transshapeprimitives
-    mov     dx, word ptr transshapeprimitives+2
-    mov     word ptr transshapeprimindexptr, ax
-    mov     word ptr transshapeprimindexptr+2, dx
-    sub     ax, ax
-    mov     word ptr [var_18+2], ax
-    mov     word ptr [var_18], ax
-    mov     byte ptr [var_ptrectflag], 0Fh
-    cmp     [var_1A], ax
-    jnz     short loc_25518
-    sub     si, si
-    jmp     short loc_254A7
-loc_254A6:
-    inc     si
-loc_254A7:
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     ax, si
-    ja      short loc_254B3
-    jmp     loc_2571A
 
-loc_254B3:
-//	mov ax, [var_polyvertunktabptr]
-    mov     bx, word ptr transshapeprimindexptr
-    inc     word ptr transshapeprimindexptr
-    mov     es, word ptr transshapeprimindexptr+2
-    mov     al, es:[bx]
-    mov     [var_C], ax
-    mov     bx, ax
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    mov     ax, [bx+offset var_vecarr.z]
-    cwd
-    add     word ptr [var_18], ax
-    adc     word ptr [var_18+2], dx
-    mov     ax, si
-    shl     ax, 1
-    add     ax, offset polyvertpointptrtab
-    mov     [var_polyvertunktabptr], ax // 
-    mov     bx, ax // ax = bx = POINT2D**
-    mov     bx, [bx] // bx = POINT2D*
-    mov     ax, [bx] // ax = x
-    mov     dx, [bx+2] // dx = y
-    les     bx, [var_transshapepolyinfoptptr]
-    mov     es:[bx], ax
-    mov     es:[bx+2], dx
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_25511
-    mov     bx, [var_polyvertunktabptr]
-    push    word ptr [bx]
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     [var_ptrectflag], al
-loc_25511:
-    add     word ptr [var_transshapepolyinfoptptr], 4
-    jmp     short loc_254A6
-}
-*/
 loc_25518:
 
 	var_polyvertcounter = 0;
 	var_448 = transshapeprimitives[transshapenumvertscopy - 1];
 	i = 0;
 	goto loc_255EE;
-/*
-asm {
-    mov     word ptr [var_polyvertcounter], 0
-    mov     bl, transshapenumvertscopy
-    sub     bh, bh
-    add     bx, word ptr transshapeprimitives
-    mov     es, word ptr transshapeprimitives+2
-    mov     al, es:[bx-1]
-    sub     ah, ah
-    mov     [var_448], ax
-    sub     si, si
-    jmp     loc_255EE
-}*/
+
 loc_2553A:
 
 
@@ -1323,100 +568,20 @@ loc_2553A:
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(&var_574);
 	}
-	
+
 	polyinfo_write_point(transshapepolyinfo,
 		var_transshapepolyinfoptindex, &var_574);
-	
+
 loc_255DE:
 	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
 		var_transshapepolyinfoptindex, 1U);
 	var_polyvertcounter++;
-/*	
-	asm {
-    mov     bx, [var_448]
-    add     bx, bp
 
-    add bx, offset var_vertflagtbl
-    mov al, [bx]
-    cmp     al, 0  // does not compile!!!
-    jz      short loc_2554A
-    jmp     loc_255E6
-loc_2554A:
-    mov     ax, 0Ch
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    mov     ax, [var_C]
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    mov     ax, [var_448]
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    call    far ptr vector_op_unk
-    add     sp, 8
-    lea     ax, [var_574]
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr vector_to_point
-    add     sp, 4
-    mov     ax, [var_448]
-    shl     ax, 1
-    shl     ax, 1
-    add     ax, bp
-    mov     [var_B7C], ax
-mov ax, var_B7C
-    mov     bx, ax
-    mov     ax, word ptr [var_574.px]
-    cmp     [bx+offset var_vecarr2.vx], ax
-    jnz     short loc_255B4
-    mov     ax, word ptr [var_574.py]
-    cmp     [bx+offset var_vecarr2.y], ax
-    jz      short loc_255E6
-loc_255B4:
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_255CB
-    lea     ax, [var_574]
-    push    ax
-    ;push    cs
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     [var_ptrectflag], al
-
-loc_255CB:
-    les     bx, [var_transshapepolyinfoptptr]
-    mov     ax, word ptr [var_574.px]
-    mov     dx, word ptr [var_574.py]
-    mov     es:[bx], ax
-    mov     es:[bx+2], dx
-loc_255DE:
-    add     word ptr [var_transshapepolyinfoptptr], 4
-    inc     word ptr [var_polyvertcounter]
-}
-*/
 
 loc_255E6:
 	var_448 = var_C;
 	i = LEGACY_U16_WRAP_ADD(i, 1U);
-/*asm {
-    mov     ax, [var_C]
-    mov     [var_448], ax
-    inc     si
-}*/
+
 loc_255EE:
 
 	if (transshapenumvertscopy <= i) goto loc_25714;
@@ -1428,60 +593,7 @@ loc_255EE:
 	if (var_vertflagtbl[var_C] != 0) goto loc_2553A;
 
 	if (var_vertflagtbl[var_448] == 0) goto loc_256D7;
-/*asm {
-	
-mov si, i
-	
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     ax, si
-    ja      short loc_255FA
-    jmp     loc_25714
-loc_255FA:
-    mov     bx, word ptr transshapeprimindexptr
-    inc     word ptr transshapeprimindexptr
-    mov     es, word ptr transshapeprimindexptr+2
-    mov     al, es:[bx]
-    mov     [var_C], ax
 
-//mov ax, var_C
-//mov si, i
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add     ax, bp
-    mov     [var_polyvertunktabptr], ax
-
-mov cx, var_C
-    mov     ax, [var_polyvertunktabptr]
-    mov     bx, ax
-    mov     ax, [bx+offset var_vecarr.z]
-    cwd
-    add     word ptr [var_18], ax
-    adc     word ptr [var_18+2], dx
-
-mov cx, var_C
-    mov     bx, cx
-    add     bx, bp
-    add bx, offset var_vertflagtbl
-    mov al, [bx]
-    cmp     al, 0 // issue
-    jz      short loc_25635
-    jmp     loc_2553A
-
-loc_25635:
-    mov     bx, [var_448]
-    add     bx, bp
-    add bx, offset var_vertflagtbl
-    mov al, [bx]
-    cmp     al, 0 // issue
-    jnz     short loc_25645
-    jmp     loc_256D7
-loc_25645:
-
-}
-*/
 // &var_vecarr[var_C] is equivalent to var_polyvertunktabptr-stuff+var_vecarr... becoz var_polyvertunktabptr is an array-indexer relative to the stack frame
 	vector_op_unk(&var_vecarr[var_C], &var_vecarr[var_448], &var_vec2, 0x0C);
 	vector_to_point(&var_vec2, &var_574);
@@ -1491,74 +603,13 @@ loc_25645:
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(&var_574);
 	}
-	
+
 	polyinfo_write_point(transshapepolyinfo,
 		var_transshapepolyinfoptindex, &var_574);
 	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
 		var_transshapepolyinfoptindex, 1U);
 	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
-/*
-asm {
-    mov     ax, 0Ch
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    mov     ax, [var_448]
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    mov     ax, [var_polyvertunktabptr]
-    ;sub     ax, 0B6Eh
-    add ax, offset var_vecarr
-    push    ax
-    call    far ptr vector_op_unk
-    add     sp, 8
-    lea     ax, [var_574]
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr vector_to_point
-    add     sp, 4
-    mov     ax, [var_C]
-    shl     ax, 1
-    shl     ax, 1
-    add     ax, bp
-    mov     [var_B7C], ax // another wicked bp-relative indexer thingy
-    
-mov ax, var_B7C
-    mov     bx, ax
-    mov     ax, word ptr [var_574.px]
-    cmp     [bx+offset var_vecarr2.vx], ax
-    jnz     short loc_256A5
-    mov     ax, word ptr [var_574.py]
-    cmp     [bx+offset var_vecarr2.y], ax
-    jz      short loc_256D7
-loc_256A5:
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_256BC
-    lea     ax, [var_574]
-    push    ax
-    ;push    cs
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     [var_ptrectflag], al
-loc_256BC:
-    les     bx, [var_transshapepolyinfoptptr]
-    mov     ax, word ptr [var_574.px]
-    mov     dx, word ptr [var_574.py]
-    mov     es:[bx], ax
-    mov     es:[bx+2], dx
-    add     word ptr [var_transshapepolyinfoptptr], 4
-    inc     word ptr [var_polyvertcounter]
 
-}
-*/
 loc_256D7:
 	polyinfo_write_point(transshapepolyinfo,
 		var_transshapepolyinfoptindex, polyvertpointptrtab[i]);
@@ -1566,40 +617,11 @@ loc_256D7:
 		var_ptrectflag &= rect_compare_point(polyvertpointptrtab[i]);
 	}
 	goto loc_255DE;
-/*asm {
-mov si, i
-    mov     ax, si
-    shl     ax, 1
-    add     ax, offset polyvertpointptrtab
-    mov     [var_B7C], ax
-    mov     bx, ax
-    mov     bx, [bx]
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, [var_transshapepolyinfoptptr]
-    mov     es:[bx], ax
-    mov     es:[bx+2], dx
-    cmp     byte ptr [var_ptrectflag], 0
-    jnz     short loc_25700
-    jmp     loc_255DE
-loc_25700:
-    mov     bx, [var_B7C]
-    push    word ptr [bx]
-    ;push    cs
-    call far ptr rect_compare_point
-    add     sp, 2
-    and     [var_ptrectflag], al
-    jmp     loc_255DE
-}*/
+
 loc_25714:
 	transshapenumvertscopy = var_polyvertcounter;
-	
-/*asm {
-	mov si, i
-	
-    mov     al, byte ptr [var_polyvertcounter]
-    mov     transshapenumvertscopy, al
-}*/
+
+
 loc_2571A:
 
 	if (transshapenumvertscopy == 0) goto loc_25801;
@@ -1607,141 +629,53 @@ loc_2571A:
 	if ((var_primitiveflags & 1) != 0) goto loc_25760;
 	if (((legacy_u32)var_A & LEGACY_READ_U32_LE(var_cull2)) != 0UL)
 		goto loc_25760;
-	
+
 	if (polyinfo_is_facing_camera(transshapepolyinfo) == 0)
 		goto loc_25763;
 
-/*asm {
-    cmp     transshapenumvertscopy, 0
-    jnz     short loc_25724
-    jmp     loc_25801
-loc_25724:
-    cmp     byte ptr [var_ptrectflag], 0
-    jz      short loc_2572E
-    jmp     loc_25801
-loc_2572E:
-    test    byte ptr [var_primitiveflags], 1
-    jnz     short loc_25760
-    les     bx, [var_cull2]
-    mov     ax, es:[bx]
-    mov     dx, es:[bx+2]
-    and     ax, word ptr [var_A]
-    and     dx, word ptr [var_A+2]
-    or      dx, ax
-    jnz     short loc_25760
-    mov     ax, word ptr transshapepolyinfo
-    mov     dx, word ptr transshapepolyinfo+2
-    add     ax, 6
-    push    dx
-    push    ax
-    ;push    cs
-    call far ptr is_facing_camera
-    add     sp, 4
-    or      al, al
-    jz      short loc_25763
-}*/
+
 loc_25760:
 	var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
-/*asm {
-    inc     word ptr [var_4]
-}*/
+
 loc_25763:
 
 	if (var_4 == 0) goto loc_25801;
 	if ((transshapeflags & 8) == 0) goto loc_25801;
-	
+
 	var_polyvertcounter = 0;
 	goto loc_257F7;
 
-/*asm {
-    cmp     word ptr [var_4], 0
-    jnz     short loc_2576C
-    jmp     loc_25801
-loc_2576C:
-    test    transshapeflags, 8
-    jnz     short loc_25776
-    jmp     loc_25801
-loc_25776:
-    mov     ax, word ptr transshapepolyinfo
-    mov     dx, word ptr transshapepolyinfo+2
-    add     ax, 6
-    mov     word ptr [var_polyvertsptr], ax
-    mov     word ptr [var_polyvertsptr+2], dx
-    mov     word ptr [var_polyvertcounter], 0
-    jmp     short loc_257F7
-}*/
+
 
 loc_25790:
 
 	polyinfo_read_point(transshapepolyinfo, var_polyvertcounter, &var_574);
 	var_polyvertX = var_574.px;
 	var_polyvertY = var_574.py;
-	
+
 	if (var_polyvertX < transshaperectptr->left) {
 		transshaperectptr->left = var_polyvertX;
 	}
-	
+
 	if (transshaperectptr->right < var_polyvertX + 1) {
 		transshaperectptr->right = var_polyvertX + 1;
 	}
-	
+
 	if (transshaperectptr->top > var_polyvertY) {
 		transshaperectptr->top = var_polyvertY;
 	}
-	
+
 	if (transshaperectptr->bottom < var_polyvertY + 1) {
 		transshaperectptr->bottom = var_polyvertY + 1;
 	}
-	
+
 	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
 
-/*asm {
-    les     bx, [var_polyvertsptr]
-    mov     ax, es:[bx+.px] // x2 in point2d
-    mov     [var_polyvertX], ax
-    mov     ax, es:[bx+.py]
-    mov     [var_polyvertY], ax
-    add     word ptr [var_polyvertsptr], 4
-    mov     bx, transshaperectptr
-    mov     ax, [bx+.x1]
-    cmp     [var_polyvertX], ax
-    jge     short loc_257BA
-    mov     ax, [var_polyvertX]
-    mov     [bx+.x1], ax
-loc_257BA:
-    mov     ax, [var_polyvertX]
-    inc     ax
-    mov     [var_B7C], ax
-    mov     bx, transshaperectptr
-    cmp     [bx+.y1], ax
-    jge     short loc_257CF
-    mov     [bx+.y1], ax
-loc_257CF:
-    mov     bx, transshaperectptr
-    mov     ax, [var_polyvertY]
-    cmp     [bx+.x2], ax
-    jle     short loc_257DF
-    mov     [bx+.x2], ax
-loc_257DF:
-    mov     ax, [var_polyvertY]
-    inc     ax
-    mov     [var_B7C], ax
-    mov     bx, transshaperectptr
-    cmp     [bx+.y2], ax
-    jge     short loc_257F4
-    mov     [bx+.y2], ax
-loc_257F4:
-    inc     word ptr [var_polyvertcounter]
-}*/
+
 loc_257F7:
 	if (var_polyvertcounter < transshapenumvertscopy) goto loc_25790;
 
-/*asm {
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     [var_polyvertcounter], ax
-    jb      short loc_25790
-}*/
+
 
 // ------------------------------------ no primtype or unknown- skip this ------------------------------------
 
@@ -1760,44 +694,7 @@ loc_2582B:
 	var_cull2 += 4U;
 	goto loc_2582B;
 
-/*asm {
-    mov     ax, word ptr transshapeprimptr
-    mov     dx, word ptr transshapeprimptr+2
 
-    mov     word ptr transshapeprimitives, ax
-    mov     word ptr transshapeprimitives+2, dx
-    add     word ptr [var_cull2], 4
-    add     word ptr [var_cull1], 4
-    cmp     word ptr [var_4], 0
-    jz      short loc_25822
-    jmp     loc_25D3C
-loc_25822:
-    test    byte ptr [var_primitiveflags], 2
-    jz      short loc_2582B
-    jmp     loc_25E04
-loc_2582B:
-
-    les     bx, transshapeprimitives
-    test    byte ptr es:[bx+1], 2
-    jnz     short loc_25839
-
-    jmp     loc_25E04
-
-loc_25839:
-
-    mov     bl, es:[bx]
-    sub     bh, bh
-    mov     al, primidxcounttab[bx]
-    sub     ah, ah
-    add     ax, transshapenumpaints
-    add     ax, 2
-    add     word ptr transshapeprimitives, ax
-    add     word ptr [var_cull1], 4
-    add     word ptr [var_cull2], 4
-    jmp     short loc_2582B
-
-// ------------------------------------ primtype_line ------------------------------------
-}*/
 _primtype_line:
 
 	temp0 = transshapeprimitives[0];
@@ -1812,123 +709,20 @@ _primtype_line:
 	temp = temp0;
 	goto loc_258F6;
 
-/*
-asm {
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]
-    sub     ah, ah
-    mov     si, ax
-    mov     al, es:[bx+1]
-    mov     di, ax
-    mov     al, [di+var_vertflagtbl]
-    cbw
-    mov     cx, ax
-    mov     al, [si+var_vertflagtbl]
-    cbw
-    add     ax, cx
-    cmp     ax, 2
-    jz      short loc_25801
-    cmp     byte ptr [si+var_vertflagtbl], 0
-    jz      short loc_258BC
-    mov     ax, 0Ch
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    mov     ax, si
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    mov     ax, di
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    call    far ptr vector_op_unk
-    add     sp, 8
-    mov     ax, si
-    jmp     short loc_258F6
-}
-*/
+
 loc_258BC:
 
 	if (var_vertflagtbl[temp1] == 0) goto loc_2590D;
 	vector_op_unk(&var_vecarr[temp0], &var_vecarr[temp1], &var_vec2, 0x0C);
 
 	temp = temp1;
-/*	
-asm {
-	
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]
-    sub     ah, ah
-    mov     si, ax
-    mov     al, es:[bx+1]
-    mov     di, ax
 
-	
-	
-    cmp     byte ptr [di+var_vertflagtbl], 0
-    jz      short loc_2590D
-    mov     ax, 0Ch
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    mov     ax, di
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    mov     ax, si
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr
-    ;add     ax, bp
-    ;sub     ax, 0B6Eh
-    push    ax
-    call    far ptr vector_op_unk
-    add     sp, 8
-    mov     ax, di
-}
-*/
 loc_258F6:
 
 	vector_to_point(&var_vec2, &var_vecarr2[temp]);
-/*
-asm {
-    shl     ax, 1
-    shl     ax, 1
-    add ax, bp
-    add ax, offset var_vecarr2
-    ;add     ax, bp
-    ;sub     ax, 416h
-    push    ax
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr vector_to_point
-    add     sp, 4
-}
-*/
+
 loc_2590D:
-	
+
 	// NOTE: when temp0 and temp1 were negative (ie bogus var_18), there was a sorting error with some of the wheels on the lamborghini LM-002
 	var_18 = (legacy_s32)LEGACY_S16_WRAP_ADD(
 		var_vecarr[temp0].z, var_vecarr[temp1].z);
@@ -1939,84 +733,22 @@ loc_2590D:
 	rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
 	rect_adjust_from_point(polyvertpointptrtab[1], transshaperectptr);
 
-/*asm {
-	
-	
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]
-    sub     ah, ah
-    mov     si, ax
-    mov     al, es:[bx+1]
-    mov     di, ax
 
-
-    mov     bx, si
-    mov     ax, bx
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    mov     ax, [bx+offset var_vecarr.z]
-    mov     bx, di
-    mov     cx, bx
-    shl     bx, 1
-    add     bx, cx
-    shl     bx, 1
-    add     bx, bp
-    add     ax, [bx+offset var_vecarr.z]
-    cwd
-    mov     word ptr [var_18], ax
-    mov     word ptr [var_18+2], dx
-
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+6], ax
-    mov     es:[bx+8], dx
-    mov     bx, polyvertpointptrtab+2
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Ah], ax
-    mov     es:[bx+0Ch], dx
-    test    transshapeflags, 8
-    jz      short loc_25983
-    push    word ptr transshaperectptr
-    push    word ptr polyvertpointptrtab
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-    push    word ptr transshaperectptr
-    push    word ptr polyvertpointptrtab+2
-// injected start
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-// injected end
-
-loc_2597C:
-    //call far ptr rect_adjust_from_point // been injected in respective calls
-    //add     sp, 4
-}*/
 
 loc_25983:
 	transshapenumvertscopy = 2;
-/*asm {
-    mov     transshapenumvertscopy, 2
-}*/
+
 
 loc_25988:
 	var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 	goto loc_25801;
-/*asm {
-    inc     word ptr [var_4]
-    jmp     loc_25801
-}*/
+
 // ------------------------------------ primtype_wheel ------------------------------------
 
 _primtype_wheel:
 
 	if (var_1A != 0) goto loc_25801;
-	
+
 	for (i = 0; i < 4; i++) {
 		polyinfo_points[i] = *polyvertpointptrtab[i];
 		polyinfo_write_point(transshapepolyinfo, (legacy_u16)i,
@@ -2036,108 +768,11 @@ _primtype_wheel:
 	var_18 = LEGACY_S32_SHL((legacy_s32)
 		var_vecarr[transshapeprimitives[3]].z, 2U);
 	goto loc_25A9E;
-/*	
-asm {
-    cmp     word ptr [var_1A], 0
-    jz      short loc_25997
-    jmp     loc_25801
-loc_25997:
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+6], ax
-    mov     es:[bx+8], dx
-    mov     bx, polyvertpointptrtab+2
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Ah], ax
-    mov     es:[bx+0Ch], dx
-    mov     bx, polyvertpointptrtab+4
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Eh], ax
-    mov     es:[bx+10h], dx
-    mov     bx, polyvertpointptrtab+6
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+12h], ax
-    mov     es:[bx+14h], dx
-    mov     ax, word ptr transshapepolyinfo
-    mov     dx, word ptr transshapepolyinfo+2
-    add     ax, 6
-    push    dx
-    push    ax
-    call far ptr is_facing_camera
-    add     sp, 4
-    or      al, al
-    jnz     short loc_25A7C
-    mov     bx, polyvertpointptrtab+6
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+6], ax
-    mov     es:[bx+8], dx
-    mov     bx, polyvertpointptrtab+8
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Ah], ax
-    mov     es:[bx+0Ch], dx
-    mov     bx, polyvertpointptrtab+0Ah
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Eh], ax
-    mov     es:[bx+10h], dx
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+12h], ax
-    mov     es:[bx+14h], dx
-    les     bx, transshapeprimitives
-    mov     al, es:[bx+3]   // primitives+3 = paintjob 1? [0..x]
-    sub     ah, ah
-    mov     bx, ax
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    mov     ax, [bx+offset var_vecarr.z]
-    cwd
-    mov     cl, 2
-loc_25A71:
-    shl     ax, 1
-    rcl     dx, 1
-    dec     cl
-    jnz     short loc_25A71
-    jmp     short loc_25A9E
-}*/
+
 loc_25A7C:
 	var_18 = LEGACY_S32_SHL((legacy_s32)
 		var_vecarr[transshapeprimitives[0]].z, 2U);
-/*asm {
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]     // primitives+0 = primitivetype
-    sub     ah, ah
-    mov     bx, ax
-    shl     bx, 1
-    add     bx, ax
-    shl     bx, 1
-    add     bx, bp
-    mov     ax, [bx+offset var_vecarr.z]
-    cwd
-    mov     cl, 2
-loc_25A96:
-    shl     ax, 1
-    rcl     dx, 1
-    dec     cl
-    jnz     short loc_25A96
-}*/
+
 loc_25A9E:
 
 	temp = polarRadius2D(
@@ -2150,11 +785,11 @@ loc_25A9E:
 			polyinfo_points[2].px),
 		LEGACY_S16_WRAP_SUB(polyinfo_points[0].py,
 			polyinfo_points[2].py));
-	
+
 	if (temp1 > temp) temp = temp1;
 
 	if ((transshapeflags & 8) == 0) goto loc_25B9C;
-	
+
 	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
 		polyinfo_points[0].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
@@ -2166,7 +801,7 @@ loc_25A9E:
 	var_450.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 		polyinfo_points[0].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
-	
+
 	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
 		polyinfo_points[3].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
@@ -2179,108 +814,13 @@ loc_25A9E:
 		polyinfo_points[3].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
-/*
-asm {
-    mov     word ptr [var_18], ax
-    mov     word ptr [var_18+2], dx
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+8]
-    sub     ax, es:[bx+0Ch]
-    push    ax
-    mov     ax, es:[bx+6]
-    sub     ax, es:[bx+0Ah]
-    push    ax
-    call    far ptr polarRadius2D
-    add     sp, 4
-    mov     si, ax
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+8]
-    sub     ax, es:[bx+10h]
-    push    ax
-    mov     ax, es:[bx+6]
-    sub     ax, es:[bx+0Eh]
-    push    ax
-    call    far ptr polarRadius2D
-    add     sp, 4
-    mov     di, ax
-    cmp     di, si
-    jle     short loc_25AEA
-    mov     si, di
-loc_25AEA:
-    test    transshapeflags, 8
-    jnz     short loc_25AF4
-    jmp     loc_25B9C
-loc_25AF4:
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+6]
-    sub     ax, si
-    dec     ax
-    mov     word ptr [var_450+.vx], ax
-    mov     ax, es:[bx+8]
-    sub     ax, si
-    dec     ax
-    mov     word ptr [var_450+.vy], ax
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+8]
-    add     ax, si
-    inc     ax
-    mov     word ptr [var_450+.vy], ax
-    mov     ax, es:[bx+6]
-    add     ax, si
-    inc     ax
-    mov     word ptr [var_450+.vx], ax
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+12h]
-    sub     ax, si
-    dec     ax
-    mov     word ptr [var_450+.vx], ax
-    mov     ax, es:[bx+14h]
-    sub     ax, si
-    dec     ax
-    mov     word ptr [var_450+.vy], ax
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-    les     bx, transshapepolyinfo
-    mov     ax, es:[bx+14h]
-    add     ax, si
-    inc     ax
-    mov     word ptr [var_450+.vy], ax
-    mov     ax, es:[bx+12h]
-    add     ax, si
-    inc     ax
-    mov     word ptr [var_450+.vx], ax
 
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-    ;push    cs
-    call far ptr rect_adjust_from_point   // denne fucker opppppp litt inni
-    add     sp, 4
-}*/
 loc_25B9C:
 	transshapenumvertscopy = 4;
 	var_4 = 1;
 	goto loc_25801;
 
-/*asm {
-    mov     transshapenumvertscopy, 4
-    mov     word ptr [var_4], 1
-    jmp     loc_25801
 
-}*/
 
 // ------------------------------------ primtype_sphere ------------------------------------
 _primtype_sphere:
@@ -2317,132 +857,7 @@ _primtype_sphere:
 
 	rect_adjust_from_point(&var_450, transshaperectptr);
 	goto loc_25983;
-/*	
-asm {
-    les     bx, transshapeprimitives
-    mov     al, es:[bx]
-    sub     ah, ah
-    mov     si, ax
-    mov     al, es:[bx+1]
-    mov     di, ax
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add     ax, bp
-    mov     [var_B7C], ax
-    mov     ax, si
-    mov     cx, ax
-    shl     ax, 1
-    add     ax, cx
-    shl     ax, 1
-    add     ax, bp
-    mov     [var_polyvertunktabptr], ax
-    mov     bx, ax
-    mov     ax, [bx+offset var_vecarr.z]
-    mov     bx, [var_B7C]
-    add     ax, [bx+offset var_vecarr.z]
-    cwd
-    mov     word ptr [var_18], ax
-    mov     word ptr [var_18+2], dx
-    mov     al, [di+var_vertflagtbl]
-    cbw
-    mov     cx, ax
-    mov     al, [si+var_vertflagtbl]
-    cbw
-    add     ax, cx
-    jz      short loc_25C01
-    jmp     loc_25801
-loc_25C01:
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx]
-    mov     dx, [bx+2]
-    les     bx, transshapepolyinfo
-    mov     es:[bx+6], ax
-    mov     es:[bx+8], dx
-    mov     bx, [var_polyvertunktabptr]
-    push    si
-    push    di
-    lea     di, [var_vec3]
-    lea     si, [bx+offset var_vecarr]
-    push    ss
-    pop     es
-    movsw
-    movsw
-    movsw
-    pop     di
-    pop     si
-    mov     bx, [var_B7C]
-    push    si
-    push    di
-    lea     di, [var_vec4]
-    lea     si, [bx + offset var_vecarr]
-    //lea     si, [bx-0B6Eh]
-    movsw
-    movsw
-    movsw
-    pop     di
-    pop     si
 
-    mov     ax, word ptr [var_vec3.vx]
-    sub     ax, word ptr [var_vec4.vx]
-    mov     word ptr [var_vec2.vx], ax
-
-    mov     ax, word ptr [var_vec3.y]
-    sub     ax, word ptr [var_vec4.y]
-    mov     word ptr [var_vec2.y], ax
-
-    mov     ax, word ptr [var_vec3.z]
-    sub     ax, word ptr [var_vec4.z]
-    mov     word ptr [var_vec2.z], ax
-
-    push    word ptr [var_vec3.z]
-    lea     ax, [var_vec2]
-    push    ax
-    call    far ptr polarRadius3D
-    add     sp, 2
-    push    ax
-    call    far ptr projectiondata9_times_ratio
-    add     sp, 4
-    mov     [var_462], ax
-    
-    les     bx, transshapepolyinfo
-    mov     es:[bx+0Ah], ax
-    test    transshapeflags, 8
-    jnz     short loc_25C92
-    jmp     loc_25983
-loc_25C92:
-
-    mov     bx, polyvertpointptrtab
-    mov     ax, [bx+2]
-    sub     ax, [var_462]
-    mov     word ptr [var_450+.vy], ax
-    mov     ax, [bx]
-    sub     ax, [var_462]
-    mov     word ptr [var_450+.vx], ax
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-    ;push    cs
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-    mov     ax, [var_462]
-    mov     bx, polyvertpointptrtab
-    add     ax, [bx]
-    mov     word ptr [var_450+.vx], ax
-    mov     ax, [bx+2]
-    add     ax, [var_462]
-    mov     word ptr [var_450+.vx], ax
-    push    word ptr transshaperectptr
-    lea     ax, [var_450]
-    push    ax
-// injected start
-    call far ptr rect_adjust_from_point
-    add     sp, 4
-// injected end
-    jmp     loc_25983
-}
-*/
 // ------------------------------------ primtype 5 - unknown / particle? ------------------------------------
 
 loc_25CE0:
@@ -2468,135 +883,23 @@ loc_25D3C:
 	} else {
 		transshapepolyinfo[2] = transprimitivepaintjob;
 	}
-	
+
 	temp0 = shape3d_average_depth(var_18, transshapenumvertscopy);
-	
+
 	polyinfo_write_word(transshapepolyinfo, 0U, temp0);
-	
-	
+
+
 	if ((transshapeflags & 1) != 0 || (var_primitiveflags & 2) != 0) {
 		temp = 0;
 	} else
 		temp = 1;
 
 	word_40ECE = insert_newest_poly_in_poly_linked_list_40ED6(temp0, temp);
-	
+
 	if (word_40ECE == 0) goto loc_25E04;
 	return 1;
 
-/*	
-asm {
-    inc     word ptr [var_45E]
-    les     bx, transshapepolyinfo
-    mov     al, transshapenumvertscopy
-    mov     es:[bx+3], al   // polyinfo+3 = numverts
-    les     bx, transshapepolyinfo
-    mov     al, [var_primtype]
-    mov     es:[bx+4], al   // polyinfo+4 = primtype
-    cmp     transprimitivepaintjob, 2Dh // '-'
-    jnz     short loc_25D66
-    les     bx, transshapepolyinfo
-    mov     al, byte_45514
-    jmp     short loc_25D6D
-loc_25D66:
-    les     bx, transshapepolyinfo
-    mov     al, transprimitivepaintjob
-loc_25D6D:
-    mov     es:[bx+2], al   // polyinfo+2 = paintjob
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
-    cmp     ax, 1
-    jz      short loc_25D9C
-    cmp     ax, 2
-    jz      short loc_25DB8
-    cmp     ax, 4
-    jz      short loc_25DC6
-    cmp     ax, 8
-    jz      short loc_25DDA
-    
-    mov     al, transshapenumvertscopy
-    sub     ah, ah
 
-    sub     cx, cx
-    push    cx
-    push    ax
-    push    word ptr [var_18+2]
-    push    word ptr [var_18]
-    call    far ptr __aFuldiv
-    jmp     short loc_25DC2
-}
-loc_25D9C:
-asm {
-    mov     si, word ptr [var_18]
-
-loc_25D9F:
-
-    les     bx, transshapepolyinfo
-    mov     es:[bx], si     // polyinfo+0 = ???
-
-    test    transshapeflags, 1
-    jnz     short loc_25DB3
-    test    byte ptr [var_primitiveflags], 2
-    jz      short loc_25DEE
-loc_25DB3:
-    sub     ax, ax
-    jmp     short loc_25DF1
-}
-
-loc_25DB8:
-asm {
-    mov     ax, word ptr [var_18]
-    mov     dx, word ptr [var_18+2]
-    sar     dx, 1
-    rcr     ax, 1
-loc_25DC2:
-    mov     si, ax
-    jmp     short loc_25D9F
-}
-loc_25DC6:
-asm {
-    mov     ax, word ptr [var_18]
-    mov     dx, word ptr [var_18+2]
-    mov     cl, 2
-loc_25DCE:
-    or      cl, cl
-    jz      short loc_25DC2
-    sar     dx, 1
-    rcr     ax, 1
-    dec     cl
-    jmp     short loc_25DCE
-}
-loc_25DDA:
-asm {
-    mov     ax, word ptr [var_18]
-    mov     dx, word ptr [var_18+2]
-    mov     cl, 3
-loc_25DE2:
-    or      cl, cl
-    jz      short loc_25DC2
-    sar     dx, 1
-    rcr     ax, 1
-    dec     cl
-    jmp     short loc_25DE2
-    
-loc_25DEE:
-    mov     ax, 1
-loc_25DF1:
-    push    ax
-    push    si
-    call far ptr insert_newest_poly_in_poly_linked_list_40ED6
-    add     sp, 4
-    mov     word_40ECE, ax
-    or      ax, ax
-    jz      short loc_25E04
-    
-    //jmp     loc_24EAE // inject:
-//loc_24EAE:
-    mov     ax, 1
-
-    jmp the_end
-}
-*/
 
 loc_25E04:
 
@@ -2604,40 +907,7 @@ loc_25E04:
 
 	if (var_45E != 0) return 0;
 	return -1;
-/*	
-asm {
-    les     bx, transshapeprimitives
-    cmp     byte ptr es:[bx], 0
-    jz      short _transform_done
-    jmp     loc_25233
 
-
-_transform_done:
-    cmp     word ptr [var_45E], 0
-    jnz     short _done_ret_0
-
-    //jmp     _done_ret_neg1
-    mov     ax, 0FFFFh
-    jmp the_end
-
-_done_ret_0:
-    sub     ax, ax
-    //pop     si
-    //pop     di
-    jmp the_end
-    retf
-
-}
-
-the_end:
-asm {
-	mov result, ax
-}
-//fatal_error("result %i", result);
-	//fatal_error("%i %i %i %i", transshaperectptr->x1, transshaperectptr->y1, transshaperectptr->x2, transshaperectptr->y2);
-	//return result;
-return result;
-*/
 }
 
 
@@ -2650,9 +920,9 @@ legacy_s8 is_facing_camera(struct POINT2D far* pts) {
 
 	dx0 = (legacy_s32)pts[0].px - pts[1].px;
 	dx1 = (legacy_s32)pts[2].px - pts[1].px;
-	
+
 	if (dx0 == 0 && dx1 == 0) return 0;
-		
+
 	dy0 = (legacy_s32)pts[0].py - pts[1].py;
 	dy1 = (legacy_s32)pts[2].py - pts[1].py;
 
@@ -2761,7 +1031,7 @@ static legacy_u16 projection_scale_for_angle(legacy_u16 angle,
 }
 
 void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) {
-	
+
 	projectiondata1 = projection_angle_from_extent(i1);
 	projectiondata2 = projection_angle_from_extent(i2);
 	projectiondata3 = (legacy_u16)LEGACY_S16_SAR(i3, 1U);
@@ -2782,7 +1052,7 @@ void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) 
 			projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
 	}
-	
+
 }
 
 void nopsub_322C0(legacy_u16 i1, legacy_u16 i2) {
@@ -2825,7 +1095,7 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 	struct VECTOR vec, vec2;
 
 	//return ported_select_cliprect_rotate_(angX, angY, angZ, cliprect, unk);
-	
+
 	mat_temp = *mat_rot_zxy(angZ, angX, angY, 1);
 	polyinfo_reset();
 	select_rect_rc = *cliprect;
@@ -2855,7 +1125,7 @@ void calc_sincos80(void) {
 
 void init_polyinfo(void) {
 	polyinfoptr = mmgr_alloc_resbytes("polyinfo", 0x28A0);
-	
+
 	mat_rot_y(&mat_y0, 0);
 	mat_rot_y(&mat_y100, 0x100);
 	mat_rot_y(&mat_y200, 0x200);
@@ -3500,7 +1770,7 @@ void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color,
 	spritefunc = &draw_patterned_lines;
 	imagefunc = &preRender_line;
 	word_4031E = unk;
-	
+
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
@@ -3527,7 +1797,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_s16 sprite1_sprite_widthsum = sprite1.sprite_widthsum;
 	legacy_s16 sprite1_sprite_top = sprite1.sprite_top;
 	legacy_s16 sprite1_sprite_height = sprite1.sprite_height;
-	
+
 	if (arg_vertlinecount == 0U)
 		return;
 	var_vertlineptr = arg_vertlines;
@@ -3554,14 +1824,14 @@ static void preRender_default_impl(legacy_u16 arg_color,
 			var_12 = arg_vertlines[i].py;
 			var_14 = &arg_vertlines[i];
 		}
-		
+
 		if (arg_vertlines[i].px < minx) {
 			minx = arg_vertlines[i].px;
 		}
 		if (arg_vertlines[i].px > maxx) {
 			maxx = arg_vertlines[i].px;
 		}
-		
+
 	}
 
 	if (maxx < var_2) return;
@@ -3579,18 +1849,18 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	}
 
 	var_16 = var_10;
-	
+
 	do {
 		temp0x = var_16->px;
 		temp0y = var_16->py;
 		var_16++;
 		if (var_16 > var_8)
 			var_16 = var_vertlineptr;
-		
+
 		temp1x = var_16->px;
 		temp1y = var_16->py;
 		if (temp1y > temp0y) {
-			
+
 			if (var_C != 0) {
 				draw_line_related(temp0x, temp0y, temp1x, temp1y, var_7D0);
 				generate_poly_edges(var_18, var_7D0, 0);
@@ -3599,7 +1869,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 				generate_poly_edges(var_18, var_7D0, 1);
 			}
 		}
-		
+
 	} while (var_16 != var_14);
 
 	var_16 = var_10;
@@ -3613,7 +1883,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 		temp1x = var_16->px;
 		temp1y = var_16->py;
 		if (temp1y > temp0y) {
-			
+
 			if (var_C != 0) {
 				draw_line_related(temp0x, temp0y, temp1x, temp1y, var_7D0);
 			} else {
@@ -3630,11 +1900,11 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	temp1y = var_E;
 	if (temp1y < sprite1_sprite_top)
 		temp1y = sprite1_sprite_top;
-	
+
 	temp0x = temp0y - temp1y;
 	if (temp0x <= 0) return ;
 	temp0x++;
-	
+
 	spritefunc(&var_798[temp1y], &var_798[480 + temp1y], temp1y, temp0x, arg_color);
 
 }
@@ -3697,7 +1967,7 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 	if (count <= 0) return ;
 
 	ofs = LEGACY_S16_FROM_BITS(regsi[3]);
-	
+
 	switch ((legacy_u8)regsi[9]) {
 		case 0:
 		case 1:
@@ -4993,7 +3263,7 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 	}
 
 	for (j = 0; j < 4; j++) {
-		
+
 		// The original takes |x|, shifts that right six, then re-applies the
 		// sign of x (loc_2069F: cwd / xor / sub, sar ax,6, xor / sub).
 		var_8 = arg_6[j];
