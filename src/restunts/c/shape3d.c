@@ -165,7 +165,6 @@ extern legacy_u8 far* transshapeprimptr;
 extern legacy_u16 polyinfoptrnext;
 extern legacy_u8 far* polyinfoptr;
 extern legacy_u8 far* transshapepolyinfo;
-struct POINT2D far* transshapepolyinfopts;
 extern legacy_u8 far* polyinfoptrs[];
 extern legacy_u16 polyinfonumpolys;
 extern legacy_s8 transprimitivepaintjob;
@@ -213,6 +212,41 @@ static void polyinfo_write_word(legacy_u8 far* record,
 		LEGACY_U16_WRAP_MUL(word_index, 2U), value);
 }
 
+static void polyinfo_read_point(const legacy_u8 far* record,
+	legacy_u16 point_index, struct POINT2D* point)
+{
+	legacy_u16 word_index;
+
+	word_index = LEGACY_U16_WRAP_ADD(3U,
+		LEGACY_U16_WRAP_MUL(point_index, 2U));
+	point->px = LEGACY_S16_FROM_BITS(
+		polyinfo_read_word(record, word_index));
+	point->py = LEGACY_S16_FROM_BITS(polyinfo_read_word(record,
+		LEGACY_U16_WRAP_ADD(word_index, 1U)));
+}
+
+static void polyinfo_write_point(legacy_u8 far* record,
+	legacy_u16 point_index, const struct POINT2D* point)
+{
+	legacy_u16 word_index;
+
+	word_index = LEGACY_U16_WRAP_ADD(3U,
+		LEGACY_U16_WRAP_MUL(point_index, 2U));
+	polyinfo_write_word(record, word_index, (legacy_u16)point->px);
+	polyinfo_write_word(record, LEGACY_U16_WRAP_ADD(word_index, 1U),
+		(legacy_u16)point->py);
+}
+
+static legacy_s8 polyinfo_is_facing_camera(const legacy_u8 far* record)
+{
+	struct POINT2D points[3];
+	legacy_u16 index;
+
+	for (index = 0; index < 3U; index++)
+		polyinfo_read_point(record, index, &points[index]);
+	return is_facing_camera(points);
+}
+
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
@@ -233,12 +267,12 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u16 var_primitiveflags, var_fileprimtype, var_4;
 	legacy_u16 var_polyvertcounter, var_C, var_448, var_462;
 	legacy_s16 var_polyvertX, var_polyvertY;
-	struct POINT2D far* var_transshapepolyinfoptptr;
+	legacy_u16 var_transshapepolyinfoptindex;
 	legacy_s32 var_18;
 	struct POINT2D var_574, var_450;
+	struct POINT2D polyinfo_points[4];
 	struct POINT2D var_vecarr2[255];
 	struct POINT2D** var_polyvertunktabptr;
-	struct POINT2D far* var_polyvertsptr;
 
 	/*
     var_B7C = word ptr -2940
@@ -1161,8 +1195,7 @@ loc_2546D:
 */
 
 _primtype_poly:
-	var_transshapepolyinfoptptr = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
+	var_transshapepolyinfoptindex = 0U;
 	transshapeprimindexptr = transshapeprimitives;
 
 	var_18 = 0;
@@ -1179,12 +1212,14 @@ loc_254A7:
 	transshapeprimindexptr++;
 	var_18 = LEGACY_S32_WRAP_ADD_S16(var_18, var_vecarr[var_C].z);
 	var_polyvertunktabptr = &polyvertpointptrtab[i];
-	*var_transshapepolyinfoptptr = **var_polyvertunktabptr;
+	polyinfo_write_point(transshapepolyinfo,
+		var_transshapepolyinfoptindex, *var_polyvertunktabptr);
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(*var_polyvertunktabptr);
 	}
 	
-	var_transshapepolyinfoptptr++;
+	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
+		var_transshapepolyinfoptindex, 1U);
 	goto loc_254A6;
 
 	/*
@@ -1287,10 +1322,12 @@ loc_2553A:
 		var_ptrectflag &= rect_compare_point(&var_574);
 	}
 	
-	*var_transshapepolyinfoptptr = var_574;
+	polyinfo_write_point(transshapepolyinfo,
+		var_transshapepolyinfoptindex, &var_574);
 	
 loc_255DE:
-	var_transshapepolyinfoptptr++;
+	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
+		var_transshapepolyinfoptindex, 1U);
 	var_polyvertcounter++;
 /*	
 	asm {
@@ -1453,8 +1490,10 @@ loc_25645:
 		var_ptrectflag &= rect_compare_point(&var_574);
 	}
 	
-	*var_transshapepolyinfoptptr = var_574;
-	var_transshapepolyinfoptptr++;
+	polyinfo_write_point(transshapepolyinfo,
+		var_transshapepolyinfoptindex, &var_574);
+	var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
+		var_transshapepolyinfoptindex, 1U);
 	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
 /*
 asm {
@@ -1519,7 +1558,8 @@ loc_256BC:
 }
 */
 loc_256D7:
-	*var_transshapepolyinfoptptr = *polyvertpointptrtab[i];
+	polyinfo_write_point(transshapepolyinfo,
+		var_transshapepolyinfoptindex, polyvertpointptrtab[i]);
 	if (var_ptrectflag != 0) {
 		var_ptrectflag &= rect_compare_point(polyvertpointptrtab[i]);
 	}
@@ -1566,8 +1606,8 @@ loc_2571A:
 	if (((legacy_u32)var_A & LEGACY_READ_U32_LE(var_cull2)) != 0UL)
 		goto loc_25760;
 	
-	if (is_facing_camera((struct POINT2D far*)
-		(transshapepolyinfo + 6U)) == 0) goto loc_25763;
+	if (polyinfo_is_facing_camera(transshapepolyinfo) == 0)
+		goto loc_25763;
 
 /*asm {
     cmp     transshapenumvertscopy, 0
@@ -1608,8 +1648,6 @@ loc_25763:
 	if (var_4 == 0) goto loc_25801;
 	if ((transshapeflags & 8) == 0) goto loc_25801;
 	
-	var_polyvertsptr = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
 	var_polyvertcounter = 0;
 	goto loc_257F7;
 
@@ -1633,9 +1671,9 @@ loc_25776:
 
 loc_25790:
 
-	var_polyvertX = var_polyvertsptr->px;
-	var_polyvertY = var_polyvertsptr->py;
-	var_polyvertsptr++;
+	polyinfo_read_point(transshapepolyinfo, var_polyvertcounter, &var_574);
+	var_polyvertX = var_574.px;
+	var_polyvertY = var_574.py;
 	
 	if (var_polyvertX < transshaperectptr->left) {
 		transshaperectptr->left = var_polyvertX;
@@ -1892,10 +1930,8 @@ loc_2590D:
 	// NOTE: when temp0 and temp1 were negative (ie bogus var_18), there was a sorting error with some of the wheels on the lamborghini LM-002
 	var_18 = (legacy_s32)LEGACY_S16_WRAP_ADD(
 		var_vecarr[temp0].z, var_vecarr[temp1].z);
-	transshapepolyinfopts = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
-	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
-	transshapepolyinfopts[1] = *polyvertpointptrtab[1];
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
+	polyinfo_write_point(transshapepolyinfo, 1U, polyvertpointptrtab[1]);
 
 	if ((transshapeflags & 8) == 0) goto loc_25983;
 	rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
@@ -1979,19 +2015,21 @@ _primtype_wheel:
 
 	if (var_1A != 0) goto loc_25801;
 	
-	transshapepolyinfopts = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
-	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
-	transshapepolyinfopts[1] = *polyvertpointptrtab[1];
-	transshapepolyinfopts[2] = *polyvertpointptrtab[2];
-	transshapepolyinfopts[3] = *polyvertpointptrtab[3];
+	for (i = 0; i < 4; i++) {
+		polyinfo_points[i] = *polyvertpointptrtab[i];
+		polyinfo_write_point(transshapepolyinfo, (legacy_u16)i,
+			&polyinfo_points[i]);
+	}
 
-	if (is_facing_camera(transshapepolyinfopts) != 0) goto loc_25A7C;
+	if (is_facing_camera(polyinfo_points) != 0) goto loc_25A7C;
 
-	transshapepolyinfopts[0] = *polyvertpointptrtab[3];
-	transshapepolyinfopts[1] = *polyvertpointptrtab[4];
-	transshapepolyinfopts[2] = *polyvertpointptrtab[5];
-	transshapepolyinfopts[3] = *polyvertpointptrtab[0];
+	polyinfo_points[0] = *polyvertpointptrtab[3];
+	polyinfo_points[1] = *polyvertpointptrtab[4];
+	polyinfo_points[2] = *polyvertpointptrtab[5];
+	polyinfo_points[3] = *polyvertpointptrtab[0];
+	for (i = 0; i < 4; i++)
+		polyinfo_write_point(transshapepolyinfo, (legacy_u16)i,
+			&polyinfo_points[i]);
 
 	var_18 = LEGACY_S32_SHL((legacy_s32)
 		var_vecarr[transshapeprimitives[3]].z, 2U);
@@ -2100,45 +2138,43 @@ loc_25A96:
 }*/
 loc_25A9E:
 
-	transshapepolyinfopts = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
 	temp = polarRadius2D(
-		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].px,
-			transshapepolyinfopts[1].px),
-		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].py,
-			transshapepolyinfopts[1].py));
+		LEGACY_S16_WRAP_SUB(polyinfo_points[0].px,
+			polyinfo_points[1].px),
+		LEGACY_S16_WRAP_SUB(polyinfo_points[0].py,
+			polyinfo_points[1].py));
 	temp1 = polarRadius2D(
-		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].px,
-			transshapepolyinfopts[2].px),
-		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].py,
-			transshapepolyinfopts[2].py));
+		LEGACY_S16_WRAP_SUB(polyinfo_points[0].px,
+			polyinfo_points[2].px),
+		LEGACY_S16_WRAP_SUB(polyinfo_points[0].py,
+			polyinfo_points[2].py));
 	
 	if (temp1 > temp) temp = temp1;
 
 	if ((transshapeflags & 8) == 0) goto loc_25B9C;
 	
 	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
-		transshapepolyinfopts[0].px, temp), 1);
+		polyinfo_points[0].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
-		transshapepolyinfopts[0].py, temp), 1);
+		polyinfo_points[0].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
 	var_450.px = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-		transshapepolyinfopts[0].px, temp), 1);
+		polyinfo_points[0].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-		transshapepolyinfopts[0].py, temp), 1);
+		polyinfo_points[0].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 	
 	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
-		transshapepolyinfopts[3].px, temp), 1);
+		polyinfo_points[3].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
-		transshapepolyinfopts[3].py, temp), 1);
+		polyinfo_points[3].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
 	var_450.px = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-		transshapepolyinfopts[3].px, temp), 1);
+		polyinfo_points[3].px, temp), 1);
 	var_450.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-		transshapepolyinfopts[3].py, temp), 1);
+		polyinfo_points[3].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
 /*
@@ -2254,9 +2290,7 @@ _primtype_sphere:
 		var_vecarr[temp0].z, var_vecarr[temp1].z);
 	if (var_vertflagtbl[temp0] + var_vertflagtbl[temp1] != 0) goto loc_25801;
 
-	transshapepolyinfopts = (struct POINT2D far*)
-		(transshapepolyinfo + 6U);
-	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
 	var_vec3 = var_vecarr[temp0];
 	var_vec4 = var_vecarr[temp1];
 
@@ -2264,7 +2298,7 @@ _primtype_sphere:
 	var_vec2.y = LEGACY_S16_WRAP_SUB(var_vec3.y, var_vec4.y);
 	var_vec2.z = LEGACY_S16_WRAP_SUB(var_vec3.z, var_vec4.z);
 	var_462 = projectiondata9_times_ratio(polarRadius3D(&var_vec2), var_vec3.z);
-	transshapepolyinfopts[1].px = var_462;
+	polyinfo_write_word(transshapepolyinfo, 5U, var_462);
 	if ((transshapeflags & 8) == 0) goto loc_25983;
 
 	var_450.py = LEGACY_S16_WRAP_SUB(
@@ -2414,9 +2448,7 @@ loc_25CE0:
 	if (var_vertflagtbl[temp0] != 0)
 		goto loc_25801;
 	var_18 = var_vecarr[temp0].z;
-	transshapepolyinfopts = (struct POINT2D far*)
-		(transshapepolyinfo + 6);
-	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
 	if ((transshapeflags & 8U) != 0)
 		rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
 	transshapenumvertscopy = 1;
