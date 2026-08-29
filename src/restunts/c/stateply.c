@@ -73,6 +73,25 @@ static legacy_s16 scale_speed_to_travel(legacy_u16 speed,
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
+static legacy_s16 physics_position_word(legacy_s32 position)
+{
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_SAR(position, 6U));
+}
+
+static legacy_s16 physics_difference_word(legacy_s32 left, legacy_s32 right)
+{
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_WRAP_SUB(left, right));
+}
+
+static legacy_s16 wheel_pair_delta(legacy_s16 first, legacy_s16 second,
+	legacy_s16 third, legacy_s16 fourth)
+{
+	return LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(first, second), third), fourth);
+}
+
 legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
 {
 	const struct VECTOR* dependency_points;
@@ -600,9 +619,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * reuse opponent wheel-coordinate words left at the same stack addresses.
 		 */
 		mat_unk = *mat_rot_zxy(
-			-state.opponentstate.car_rotate.z,
-			-state.opponentstate.car_rotate.y,
-			-state.opponentstate.car_rotate.x,
+			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
+			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
+			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
 			0
 		);
 		/*
@@ -627,7 +646,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 
 		/* Prepare the optional auxiliary wheel rotation once for both wheels. */
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
-			var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -state.opponentstate.car_angle_z, 0);
+			var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
+				LEGACY_S16_WRAP_NEGATE(
+					state.opponentstate.car_angle_z), 0);
 		}
 
 		/*
@@ -635,7 +656,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * and the low-speed inverted-car adjustment.
 		 */
 		vec_1C6 = simd_opponent.wheel_coords[2];
-		vec_1C6.y = -(state.opponentstate.car_rc2[2] + 0x180) + var_F0;
+		vec_1C6.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
+			LEGACY_S16_WRAP_ADD(
+				state.opponentstate.car_rc2[2], 0x180)), var_F0);
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
 			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
 			vec_1C6 = vec_FC;
@@ -655,7 +678,9 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 
 		/* Rebuild wheel 3 using the same local-coordinate adjustments. */
 		vec_1C6 = simd_opponent.wheel_coords[3];
-		vec_1C6.y = -(state.opponentstate.car_rc2[3] + 0x180) + var_F0;
+		vec_1C6.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
+			LEGACY_S16_WRAP_ADD(
+				state.opponentstate.car_rc2[3], 0x180)), var_F0);
 		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
 			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
 			vec_1C6 = vec_FC;
@@ -666,9 +691,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * X coordinate, the second aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		var_140someWhlData[1] = (legacy_u16)(
-			state.opponentstate.car_posWorld1.lx + vec_FC.x
-		);
+		var_140someWhlData[1] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+			state.opponentstate.car_posWorld1.lx, vec_FC.x);
 
 		/* Commit the second word and recover world X's high word as the third. */
 		legacy_execution_residue.wheel_plane_angles[1] =
@@ -681,27 +705,30 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		/* Commit the third word and recover world Y's low word as the fourth. */
 		legacy_execution_residue.wheel_plane_angles[2] =
 			var_140someWhlData[2];
-		var_140someWhlData[3] = (legacy_u16)(
-			state.opponentstate.car_posWorld1.ly + vec_FC.y
-		);
+		var_140someWhlData[3] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+			state.opponentstate.car_posWorld1.ly, vec_FC.y);
 		legacy_execution_residue.wheel_plane_angles[3] =
 			var_140someWhlData[3];
 	}
 
-	mat_unk = *mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
+	mat_unk = *mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
 		vec_1C6.x = 0;
 		vec_1C6.y = 0;
 		vec_1C6.z = 0x82;
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		arg_pState->car_pseudoGravity = -vec_FC.y;
+		arg_pState->car_pseudoGravity = LEGACY_S16_WRAP_NEGATE(vec_FC.y);
 	} else {
 		arg_pState->car_pseudoGravity = 0;
 	}
 
 	if ((arg_pState->car_angle_z & 0x3FF) != 0) {
 		var_EC = 1;
-		var_MmatFromAngleZ = *mat_rot_zxy(0, 0, -arg_pState->car_angle_z, 0);
+		var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
+			LEGACY_S16_WRAP_NEGATE(arg_pState->car_angle_z), 0);
 	} else {
 		var_EC = 0;
 	}
@@ -838,10 +865,11 @@ loc_14FFA:
     jmp     loc_1513E*/
 loc_15004:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
-	vec_1C6.y = -(arg_pState->car_rc2[var_wheelIndex] + 0x180);
+	vec_1C6.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
+		arg_pState->car_rc2[var_wheelIndex], 0x180));
 	if (var_F0 >= 0)
 		goto loc_1504A;
-	vec_1C6.y -= var_F0;
+	vec_1C6.y = LEGACY_S16_WRAP_SUB(vec_1C6.y, var_F0);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -899,9 +927,12 @@ loc_1504A:
     pop     si*/
 loc_15077:
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-	var_DEptrTo1C0->lx = vec_FC.x + pState_lvec1_x;
-	var_DEptrTo1C0->ly = vec_FC.y + pState_lvec1_y;
-	var_DEptrTo1C0->lz = vec_FC.z + pState_lvec1_z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_x, vec_FC.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_y, vec_FC.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		pState_lvec1_z, vec_FC.z);
 /*    lea     ax, [bp+vec_FC]
     push    ax
     mov     ax, offset mat_unk
@@ -977,7 +1008,8 @@ loc_15126:
     jl      short loc_15130
     jmp     loc_14FA6*/
 loc_15130:
-	pState_f36Mminf40sar2 = arg_pState->car_36MwhlAngle - pState_f40_sar2;
+	pState_f36Mminf40sar2 = LEGACY_S16_WRAP_SUB(
+		arg_pState->car_36MwhlAngle, pState_f40_sar2);
 	goto loc_14FAC;
 /*
     mov     bx, [bp+arg_pState]
@@ -989,7 +1021,7 @@ loc_15130:
 loc_1513E:
     var_2 = 0;
 loc_15142:
-	var_2++;
+	var_2 = LEGACY_S8_FROM_BITS((legacy_u8)((legacy_u8)var_2 + 1U));
 	if (var_2 != 5)
 		goto loc_151A2;
 	arg_pState->car_36MwhlAngle = 0x200;
@@ -1070,9 +1102,9 @@ loc_151BA:
     add     sp, 4*/
 loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
-	vec_1C6.x = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lx, 6U);
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
-	vec_1C6.z = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lz, 6U);
+	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 	
 	if (state.game_inputmode != 2)
 		goto loc_15240;
@@ -1153,14 +1185,16 @@ loc_15270:
     jl      short loc_1527C
     jmp     loc_15950*/
 loc_1527C:
-	vec_182.x = arg_pState->car_whlWorldCrds1[var_wheelIndex].x - wallStartX;
+	vec_182.x = LEGACY_S16_WRAP_SUB(
+		arg_pState->car_whlWorldCrds1[var_wheelIndex].x, wallStartX);
 	vec_182.y = 0;
-	vec_182.z = arg_pState->car_whlWorldCrds1[var_wheelIndex].z - wallStartZ;
-	vec_1E4.x = (legacy_s16)LEGACY_S32_SAR(
-		var_DEptrTo1C0->lx, 6U) - wallStartX;
+	vec_182.z = LEGACY_S16_WRAP_SUB(
+		arg_pState->car_whlWorldCrds1[var_wheelIndex].z, wallStartZ);
+	vec_1E4.x = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_DEptrTo1C0->lx), wallStartX);
 	vec_1E4.y = 0;
-	vec_1E4.z = (legacy_s16)LEGACY_S32_SAR(
-		var_DEptrTo1C0->lz, 6U) - wallStartZ;
+	vec_1E4.z = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_DEptrTo1C0->lz), wallStartZ);
 /*
     mov     al, [bp+var_wheelIndex]
     cbw
@@ -1200,7 +1234,8 @@ loc_152D7:
     jnz     short loc_152D7
     sub     ax, wallStartZ
     mov     [bp+vec_1E4.vz], ax*/
-	mat_rot_y(&mat_134, -wallOrientation - 0x100);
+	mat_rot_y(&mat_134, LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(wallOrientation), 0x100));
 	if (arg_MplayerFlag == 0) {
 		legacy_execution_residue.wheel_angle_stack_words[0] = mat_134.vals[4];
 		legacy_execution_residue.wheel_angle_stack_words[1] = mat_134.vals[5];
@@ -1331,7 +1366,7 @@ loc_153AE:
 	vec_17C.z = LEGACY_S16_SHL(
 		LEGACY_S16_WRAP_SUB(vec_1C.z, vec_FC.z), 6U);
 	var_F2 = polarRadius3D(&vec_17C);
-	var_F4 = var_pSpeed2Scaled - var_F2;
+	var_F4 = LEGACY_S16_WRAP_SUB(var_pSpeed2Scaled, var_F2);
 /*    sub     ax, ax
     push    ax
     lea     ax, [bp+vec_FC]
@@ -1364,7 +1399,9 @@ loc_153AE:
     sub     ax, [bp+var_F2]
     mov     [bp+var_F4], ax*/
 loc_1540C:
-	var_EE = (-pState_minusRotate_y_1 - wallOrientation) & 0x3FF;
+	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1),
+		wallOrientation) & 0x3FFU);
 	vec_FC.z = var_F2;
 	vec_FC.y = 0;
 	if (var_EE < 0x100)
@@ -1396,7 +1433,8 @@ loc_1543A:
     ; align 2
     db 144*/
 loc_1544A:
-	var_EE = (wallOrientation + 0x200) & 0x3FF;
+	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)
+		LEGACY_S16_WRAP_ADD(wallOrientation, 0x200) & 0x3FFU);
 	vec_FC.x = -768;//0xFD00; // TODO: a negative number
 /*    mov     ax, wallOrientation
     add     ah, 2
@@ -1408,20 +1446,24 @@ nosmart
 loc_1545D:
 	if (var_136 == 0)
 		goto loc_1546E;
-	vec_FC.x = -vec_FC.x;
+	vec_FC.x = LEGACY_S16_WRAP_NEGATE(vec_FC.x);
 /*    cmp     [bp+var_136], 0
     jz      short loc_1546E
     mov     ax, [bp+vec_FC.vx]
     neg     ax
     mov     [bp+vec_FC.vx], ax*/
 loc_1546E:
-	var_EA = mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, var_EE, 0);
+	var_EA = mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE, 0);
 	mat_mul_vector(&vec_FC, var_EA, &vec_1C);
-	si = (-pState_minusRotate_y_1 - var_EE) & 0x3FF;
+	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), var_EE) &
+		0x3FFU);
 	var_138 = 0;
 	if (si <= 0x100)
 		goto loc_154CA;
-	si = 0x400 - si;
+		si = LEGACY_S16_WRAP_SUB(0x400, si);
 	var_138 = 1;
 /*    sub     ax, ax
     push    ax
@@ -1532,9 +1574,15 @@ loc_15530:
     mov     [bp+vec_C.vy], 0
     mov     [bp+vec_C.vz], 0*/
 loc_1553F:
-	var_DEptrTo1C0->lx = vec_C.x + vec_1C.x + var_146ptrTo176->lx;
-	var_DEptrTo1C0->ly = vec_C.y + vec_1C.y + var_146ptrTo176->ly;
-	var_DEptrTo1C0->lz = vec_C.z + vec_1C.z + var_146ptrTo176->lz;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(var_146ptrTo176->lx, vec_C.x),
+		vec_1C.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(var_146ptrTo176->ly, vec_C.y),
+		vec_1C.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(var_146ptrTo176->lz, vec_C.z),
+		vec_1C.z);
 	var_DEptrTo1C0++;
 	var_146ptrTo176++;
 	si++;
@@ -1652,12 +1700,16 @@ loc_155A1:
     mov     [bp+vec_C.vz], ax
     jmp     loc_1553F*/
 loc_15642:
-	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
+	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_rc1[var_wheelIndex],
+		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 	if (framespersec != 0xA)
 		goto loc_156A3;
-	arg_pState->car_rc1[var_wheelIndex] += word_3BD72[var_wheelIndex];
+	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_rc1[var_wheelIndex],
+		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 /*
@@ -1698,7 +1750,7 @@ loc_15642:
     sub     word ptr [bx+VECTORLONG.ly], ax
     sbb     word ptr [bx+(VECTORLONG.ly+2)], dx*/
 loc_156A3:
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
+	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	if (state.game_inputmode == 2) {
 		nextPosAndNormalIP = vec_1C6.y;
 		//goto loc_156D6;
@@ -1760,9 +1812,12 @@ loc_15703:
     jmp     loc_15D2B*/
 loc_1570A:
 	var_6 = &planptr[planindex];
-	var_122.x = var_6->plane_origin.x + elem_xCenter;
-	var_122.y = var_6->plane_origin.y + terrainHeight;
-	var_122.z = var_6->plane_origin.z + elem_zCenter;
+	var_122.x = LEGACY_S16_WRAP_ADD(
+		var_6->plane_origin.x, elem_xCenter);
+	var_122.y = LEGACY_S16_WRAP_ADD(
+		var_6->plane_origin.y, terrainHeight);
+	var_122.z = LEGACY_S16_WRAP_ADD(
+		var_6->plane_origin.z, elem_zCenter);
 /*    mov     ax, 22h ; '"'
     imul    planindex
     add     ax, word ptr planptr
@@ -1780,12 +1835,12 @@ loc_1570A:
     add     ax, elem_zCenter
     mov     [bp+var_122.vz], ax
 */
-	vec_182.x = (legacy_s16)LEGACY_S32_SAR(
-		var_146ptrTo176->lx, 6U) - var_122.x;
-	vec_182.y = (legacy_s16)LEGACY_S32_SAR(
-		var_146ptrTo176->ly, 6U) - var_122.y;
-	vec_182.z = (legacy_s16)LEGACY_S32_SAR(
-		var_146ptrTo176->lz, 6U) - var_122.z;
+	vec_182.x = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_146ptrTo176->lx), var_122.x);
+	vec_182.y = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_146ptrTo176->ly), var_122.y);
+	vec_182.z = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_146ptrTo176->lz), var_122.z);
 /*
     mov     bx, [bp+var_146ptrTo176]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -1820,12 +1875,12 @@ loc_15789:
     jnz     short loc_15789
     sub     ax, [bp+var_122.vz]
     mov     [bp+vec_182.vz], ax*/
-	vec_1E4.x = (legacy_s16)LEGACY_S32_SAR(
-		var_DEptrTo1C0->lx, 6U) - var_122.x;
-	vec_1E4.y = (legacy_s16)LEGACY_S32_SAR(
-		var_DEptrTo1C0->ly, 6U) - var_122.y;
-	vec_1E4.z = (legacy_s16)LEGACY_S32_SAR(
-		var_DEptrTo1C0->lz, 6U) - var_122.z;
+	vec_1E4.x = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_DEptrTo1C0->lx), var_122.x);
+	vec_1E4.y = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_DEptrTo1C0->ly), var_122.y);
+	vec_1E4.z = LEGACY_S16_WRAP_SUB(
+		physics_position_word(var_DEptrTo1C0->lz), var_122.z);
 /*
     mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -1990,9 +2045,9 @@ loc_158DA:
 	planindex = 0;
 	current_planptr = planptr;
 	byte_4392C = 1;
-	vec_1C6.x = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lx, 6U);
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
-	vec_1C6.z = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lz, 6U);
+	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 /*    mov     planindex, 0
     mov     ax, word ptr planptr
     mov     dx, word ptr planptr+2
@@ -2104,9 +2159,12 @@ loc_159AD:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_planerotopresult.x;
-	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_planerotopresult.y;
-	var_DEptrTo1C0->lz = var_146ptrTo176->lz + vec_planerotopresult.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->lx, vec_planerotopresult.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->ly, vec_planerotopresult.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		var_146ptrTo176->lz, vec_planerotopresult.z);
 	goto loc_15C04;
 /*    mov     vec_unk2.vx, 0
     mov     vec_unk2.vy, 0
@@ -2157,11 +2215,11 @@ loc_159AD:
     db 144*/
 loc_15A30:
 	var_EE = vec_C.z;
-	vec_C.z = -vec_C.y;
+	vec_C.z = LEGACY_S16_WRAP_NEGATE(vec_C.y);
 	vec_C.y = var_EE;
 
 	var_EE = vec_1C.z;
-	vec_1C.z = -vec_1C.y;
+	vec_1C.z = LEGACY_S16_WRAP_NEGATE(vec_1C.y);
 	vec_1C.y = var_EE;
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
 	vec_17C.x = LEGACY_S16_SHL(
@@ -2211,8 +2269,9 @@ loc_15A30:
     shl     ax, cl
     mov     [bp+vec_17C.vz], ax*/
 	var_EE = polarRadius3D(&vec_17C);
-	var_F4 = arg_pState->car_rc1[var_wheelIndex] + var_pSpeed2Scaled;
-	var_F2 = var_F4 - var_EE;
+	var_F4 = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_rc1[var_wheelIndex], var_pSpeed2Scaled);
+	var_F2 = LEGACY_S16_WRAP_SUB(var_F4, var_EE);
 	vec_C.x = scale_position_delta(var_DEptrTo1C0->lx,
 		var_146ptrTo176->lx, var_F2, var_F4);
 	vec_C.y = scale_position_delta(var_DEptrTo1C0->ly,
@@ -2303,9 +2362,18 @@ loc_15A30:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx = var_146ptrTo176->lx + vec_C.x + vec_planerotopresult.x;
-	var_DEptrTo1C0->ly = var_146ptrTo176->ly + vec_C.y + vec_planerotopresult.y;
-	var_DEptrTo1C0->lz = var_146ptrTo176->lz + vec_C.z + vec_planerotopresult.z;
+	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(
+			var_146ptrTo176->lx, vec_C.x),
+		vec_planerotopresult.x);
+	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(
+			var_146ptrTo176->ly, vec_C.y),
+		vec_planerotopresult.y);
+	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+		LEGACY_S32_WRAP_ADD_S16(
+			var_146ptrTo176->lz, vec_C.z),
+		vec_planerotopresult.z);
 /*
     mov     vec_unk2.vx, 0
     mov     vec_unk2.vy, 0
@@ -2369,9 +2437,9 @@ loc_15A30:
     mov     word ptr [bx+VECTORLONG.lz], cx
     mov     word ptr [bx+(VECTORLONG.lz+2)], ax*/
 loc_15C04:
-	vec_1C6.x = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lx, 6U);
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
-	vec_1C6.z = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lz, 6U);
+	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 /*    mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
     mov     dx, word ptr [bx+(VECTORLONG.lx+2)]
@@ -2407,7 +2475,8 @@ loc_15C3F:
 		goto loc_15CDF;
 	if (var_136 == 0)
 		goto loc_15C75;
-	nextPosAndNormalIP = (-nextPosAndNormalIP) + 6;
+	nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6);
 /*    push    ax
     push    [bp+vec_1C6.vy]
     push    [bp+vec_1C6.vx]
@@ -2532,9 +2601,9 @@ loc_15D39:
     jl      short loc_15D43
     jmp     loc_15163*/
 loc_15D43:
-	vec_1C6.x = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lx, 6U);
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
-	vec_1C6.z = (legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lz, 6U);
+	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 /*
     mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
@@ -2609,11 +2678,11 @@ loc_15DD1:
     jmp     code_update_globalPos*/
 loc_15DDB:
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].x =
-		(legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lx, 6U);
+		physics_position_word(var_DEptrTo1C0->lx);
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].y =
-		(legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->ly, 6U);
+		physics_position_word(var_DEptrTo1C0->ly);
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].z =
-		(legacy_s16)LEGACY_S32_SAR(var_DEptrTo1C0->lz, 6U);
+		physics_position_word(var_DEptrTo1C0->lz);
 /*    mov     bx, [bp+var_DEptrTo1C0]
     mov     ax, word ptr [bx+VECTORLONG.lx]
     mov     dx, word ptr [bx+(VECTORLONG.lx+2)]
@@ -2696,7 +2765,7 @@ loc_15E38:
 loc_15E85:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
-	vec_1C6.y = var_EE + 0x180;
+	vec_1C6.y = LEGACY_S16_WRAP_ADD(var_EE, 0x180);
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_182);
 	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lx, vec_182.x);
@@ -2800,9 +2869,12 @@ loc_15F66:
     mov     [bp+var_DEptrTo1C0], ax
     mov     [bp+var_wheelIndex], 0*/
 code_update_rotCoords:
-	vec_1DE[var_wheelIndex].x = var_DEptrTo1C0->lx - pState_lvec1_x;
-	vec_1DE[var_wheelIndex].y = var_DEptrTo1C0->ly - pState_lvec1_y;
-	vec_1DE[var_wheelIndex].z = var_DEptrTo1C0->lz - pState_lvec1_z;
+	vec_1DE[var_wheelIndex].x = physics_difference_word(
+		var_DEptrTo1C0->lx, pState_lvec1_x);
+	vec_1DE[var_wheelIndex].y = physics_difference_word(
+		var_DEptrTo1C0->ly, pState_lvec1_y);
+	vec_1DE[var_wheelIndex].z = physics_difference_word(
+		var_DEptrTo1C0->lz, pState_lvec1_z);
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
 	if (var_wheelIndex < 4)
@@ -2921,9 +2993,12 @@ loc_1604B:
 /*    mov     pState_lvec1_z_ax, 0F00h
     mov     pState_lvec1_z_dx, 0*/
 loc_16057:
-	var_EE = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
-	var_F2 = vec_1DE[3].z + vec_1DE[2].z - vec_1DE[0].z - vec_1DE[1].z;
-	pState_minusRotate_y_1 = polarAngle(var_EE, -var_F2) & 0x3FF;
+	var_EE = wheel_pair_delta(vec_1DE[3].x, vec_1DE[2].x,
+		vec_1DE[0].x, vec_1DE[1].x);
+	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
+		vec_1DE[0].z, vec_1DE[1].z);
+	pState_minusRotate_y_1 = LEGACY_S16_FROM_BITS((legacy_u16)
+		polarAngle(var_EE, LEGACY_S16_WRAP_NEGATE(var_F2)) & 0x3FFU);
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
 	var_wheelIndex = 0;
 /*    mov     ax, [bp+vec_1CC.vx]
@@ -2987,8 +3062,10 @@ loc_160A7:
     inc     [bp+var_wheelIndex]
     cmp     [bp+var_wheelIndex], 4
     jl      short loc_160A7*/
-	var_F2 = vec_1DE[3].z + vec_1DE[2].z - vec_1DE[0].z - vec_1DE[1].z;
-	var_F4 = vec_1DE[3].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[1].y;
+	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
+		vec_1DE[0].z, vec_1DE[1].z);
+	var_F4 = wheel_pair_delta(vec_1DE[3].y, vec_1DE[2].y,
+		vec_1DE[0].y, vec_1DE[1].y);
 	//var_F2 = vec_1CC.z + vec_1D2.z - vec_1DE.z - vec_1D8.z;
 	//var_F4 = vec_1CC.y + vec_1D2.y - vec_1DE.y - vec_1D8.y;
 	if (var_F4 != 0)
@@ -3010,7 +3087,8 @@ loc_160A7:
     cmp     [bp+var_F2], 0
     jl      short loc_16146*/
 loc_1611C:
-	pState_minusRotate_x_1 = polarAngle(-var_F2, var_F4) - 0x100;
+	pState_minusRotate_x_1 = LEGACY_S16_WRAP_SUB(
+		polarAngle(LEGACY_S16_WRAP_NEGATE(var_F2), var_F4), 0x100);
 	if (pState_minusRotate_x_1 >= 0)
 		goto loc_1613E;
 	goto loc_16141;
@@ -3036,7 +3114,7 @@ loc_1613E:
 	goto loc_16146;
     //mov     ax, pState_minusRotate_x_1
 loc_16141:
-	if (-pState_minusRotate_x_1 >= 2)
+	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1) >= 2)
 		goto loc_1614C;
 	/*cmp     ax, 2
     jge     short loc_1614C*/
@@ -3092,8 +3170,10 @@ loc_16169:
     cmp     [bp+var_wheelIndex], 4
     jl      short loc_16169*/
 loc_161AB:
-	var_F2 = vec_1DE[1].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[3].x;
-	var_F4 = vec_1DE[1].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[3].y;
+	var_F2 = wheel_pair_delta(vec_1DE[1].x, vec_1DE[2].x,
+		vec_1DE[0].x, vec_1DE[3].x);
+	var_F4 = wheel_pair_delta(vec_1DE[1].y, vec_1DE[2].y,
+		vec_1DE[0].y, vec_1DE[3].y);
 
 	//var_F2 = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
 	//var_F4 = vec_1DE[3].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[1].y;
@@ -3119,7 +3199,8 @@ loc_161AB:
     cmp     [bp+var_F2], 0
     jg      short loc_16204*/
 loc_161DE:
-	pState_minusRotate_z_1 = polarAngle(var_F2, var_F4) - 0x100;
+	pState_minusRotate_z_1 = LEGACY_S16_WRAP_SUB(
+		polarAngle(var_F2, var_F4), 0x100);
 	if (pState_minusRotate_z_1 >= 0)
 		goto loc_161FC;
 	goto loc_161FF;
@@ -3139,15 +3220,19 @@ loc_161FC:
 	goto loc_16204;
     //mov     ax, pState_minusRotate_z_1
 loc_161FF:
-	if (-pState_minusRotate_z_1 >= 2)
+	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >= 2)
 		goto loc_1620A;
     //cmp     ax, 2
     //jge     short loc_1620A
 loc_16204:
     pState_minusRotate_z_1 = 0;
 loc_1620A:
-	arg_pState->car_sumSurfFrontWheels = arg_pState->car_surfaceWhl[0] + arg_pState->car_surfaceWhl[1];
-	arg_pState->car_sumSurfRearWheels = arg_pState->car_surfaceWhl[2] + arg_pState->car_surfaceWhl[3];
+	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_pState->car_surfaceWhl[0] +
+			(legacy_u8)arg_pState->car_surfaceWhl[1]));
+	arg_pState->car_sumSurfRearWheels = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_pState->car_surfaceWhl[2] +
+			(legacy_u8)arg_pState->car_surfaceWhl[3]));
 	if (state.game_inputmode != 2)
 		goto loc_16236;
 	goto loc_16840;
@@ -3194,7 +3279,10 @@ loc_1624E:
     call near ptr audio_unk3
     add     sp, 4*/
 loc_1625F:
-	var_EA = mat_rot_zxy(-pState_minusRotate_z_1, -pState_minusRotate_x_1, -pState_minusRotate_y_1, 0);
+	var_EA = mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
 	var_wheelIndex = 0;
 	goto loc_1632C;
 /*    sub     ax, ax
@@ -3347,12 +3435,12 @@ loc_16336:
     push    ax
     call    mat_mul_vector
     add     sp, 6*/
-	vec_1C6.x = (legacy_s16)LEGACY_S32_SAR(
-		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_x, vec_FC.x), 6U);
-	vec_1C6.y = (legacy_s16)LEGACY_S32_SAR(
-		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_y, vec_FC.y), 6U);
-	vec_1C6.z = (legacy_s16)LEGACY_S32_SAR(
-		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_z, vec_FC.z), 6U);
+	vec_1C6.x = physics_position_word(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_x, vec_FC.x));
+	vec_1C6.y = physics_position_word(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_y, vec_FC.y));
+	vec_1C6.z = physics_position_word(
+		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_z, vec_FC.z));
 /*    mov     ax, [bp+vec_FC.vx]
     cwd
     add     ax, pState_lvec1_x_ax
@@ -3435,14 +3523,16 @@ loc_1641E:
 loc_16425:
     goto     loc_162F9;
 loc_16428:
-	var_11C = arg_pState->car_sumSurfFrontWheels + arg_pState->car_sumSurfRearWheels;
+	var_11C = LEGACY_S8_FROM_BITS((legacy_u8)(
+		(legacy_u8)arg_pState->car_sumSurfFrontWheels +
+		(legacy_u8)arg_pState->car_sumSurfRearWheels));
 	if (arg_MplayerFlag != 0)
 		goto loc_1644C;
 	if (var_11C != 0)
 		goto loc_1644C;
 	if (arg_pState->car_sumSurfAllWheels == 0)
 		goto loc_1644C;
-	state.game_jumpCount++;
+	state.game_jumpCount = LEGACY_S16_WRAP_ADD(state.game_jumpCount, 1);
 /*    mov     bx, [bp+arg_pState]
     mov     al, [bx+CARSTATE.car_sumSurfFrontWheels]
     add     al, [bx+CARSTATE.car_sumSurfRearWheels]
@@ -3456,12 +3546,9 @@ loc_16428:
     inc     state.game_jumpCount*/
 loc_1644C:
 	arg_pState->car_sumSurfAllWheels = var_11C;
-	var_11ApStateWorldCrds[0].x =
-		(legacy_s16)LEGACY_S32_SAR(pState_lvec1_x, 6U);
-	var_11ApStateWorldCrds[0].y =
-		(legacy_s16)LEGACY_S32_SAR(pState_lvec1_y, 6U);
-	var_11ApStateWorldCrds[0].z =
-		(legacy_s16)LEGACY_S32_SAR(pState_lvec1_z, 6U);
+	var_11ApStateWorldCrds[0].x = physics_position_word(pState_lvec1_x);
+	var_11ApStateWorldCrds[0].y = physics_position_word(pState_lvec1_y);
+	var_11ApStateWorldCrds[0].z = physics_position_word(pState_lvec1_z);
 /*    mov     al, [bp+var_11C]
     mov     [bx+CARSTATE.car_sumSurfAllWheels], al
     mov     ax, pState_lvec1_x_ax
@@ -3507,12 +3594,12 @@ loc_16487:
     jnz     short loc_164B2
     jmp     loc_16578*/
 loc_164B2:
-	vec_18EoStateWorldCrds[0].x = (legacy_s16)LEGACY_S32_SAR(
-		arg_oState->car_posWorld1.lx, 6U);
-	vec_18EoStateWorldCrds[0].y = (legacy_s16)LEGACY_S32_SAR(
-		arg_oState->car_posWorld1.ly, 6U);
-	vec_18EoStateWorldCrds[0].z = (legacy_s16)LEGACY_S32_SAR(
-		arg_oState->car_posWorld1.lz, 6U);
+	vec_18EoStateWorldCrds[0].x = physics_position_word(
+		arg_oState->car_posWorld1.lx);
+	vec_18EoStateWorldCrds[0].y = physics_position_word(
+		arg_oState->car_posWorld1.ly);
+	vec_18EoStateWorldCrds[0].z = physics_position_word(
+		arg_oState->car_posWorld1.lz);
 /*    mov     bx, [bp+arg_oState]
     mov     ax, word ptr [bx+CARSTATE.car_posWorld1.lx]
     mov     dx, word ptr [bx+(CARSTATE.car_posWorld1.lx+2)]
@@ -3619,8 +3706,8 @@ loc_16566:
     retf*/
 loc_16578:
 	vec_FC.x = LEGACY_S16_SAR(var_11ApStateWorldCrds[0].x, 10U);
-	vec_FC.z = -(
-		LEGACY_S16_SAR(var_11ApStateWorldCrds[0].z, 10U) - 0x1D);
+	vec_FC.z = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_SAR(var_11ApStateWorldCrds[0].z, 10U), 0x1D));
 	vec_18EoStateWorldCrds[1].x = 0;
 	vec_18EoStateWorldCrds[1].y = 0;
 	vec_18EoStateWorldCrds[1].z = 0;
@@ -3697,7 +3784,8 @@ loc_165F0:
 	vec_18EoStateWorldCrds[0].z = var_DC[si].z;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD6A, vec_18EoStateWorldCrds) == 0)
 		goto loc_165EA;
-	arg_pState->car_36MwhlAngle -= 0x200;
+	arg_pState->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
+		arg_pState->car_36MwhlAngle, 0x200);
 /*    mov     al, [bp+var_EC]
     sub     ah, ah
     cmp     ax, si
@@ -3807,7 +3895,7 @@ loc_1667A:
     jz      short loc_16710*/
 	state.field_3FA[si] = 1;
 	
-	state_op_unk(si + 2,
+	state_op_unk(LEGACY_S16_WRAP_ADD(si, 2),
 		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
 		scale_speed_to_travel(arg_pState->car_speed2, 0x3C00U));
 	/*
@@ -3860,9 +3948,13 @@ loc_1671F:
     jz      short loc_1672C
     jmp     loc_16840*/
 loc_1672C:
-	vec_18EoStateWorldCrds[0].x = trackcenterpos2[startcol2] + multiply_and_scale(sin_fast(track_angle + 0x100), 0x7E);
+	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
+		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
+			LEGACY_S16_WRAP_ADD(track_angle, 0x100)), 0x7E));
 	vec_18EoStateWorldCrds[0].y = hillHeightConsts[hillFlag];
-	vec_18EoStateWorldCrds[0].z = trackcenterpos[startrow2] + multiply_and_scale(cos_fast(track_angle + 0x100), 0x7E);
+	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
+		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
+			LEGACY_S16_WRAP_ADD(track_angle, 0x100)), 0x7E));
 /*    mov     ax, 7Eh ; '~'
     push    ax
     mov     ax, track_angle
@@ -3921,8 +4013,12 @@ loc_1672C:
     mov     [bp+var_138], ax
     or      ax, ax
     jnz     short loc_16836*/
-	vec_18EoStateWorldCrds[0].x = trackcenterpos2[startcol2] + multiply_and_scale(sin_fast(track_angle + 0x300), 0x7E);
-	vec_18EoStateWorldCrds[0].z = trackcenterpos[startrow2] + multiply_and_scale(cos_fast(track_angle + 0x300), 0x7E);
+	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
+		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
+			LEGACY_S16_WRAP_ADD(track_angle, 0x300)), 0x7E));
+	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
+		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
+			LEGACY_S16_WRAP_ADD(track_angle, 0x300)), 0x7E));
 /*
     mov     ax, 7Eh ; '~'
     push    ax
