@@ -155,6 +155,28 @@ static legacy_s16 shape3d_absolute_word(legacy_s16 value)
 	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
 }
 
+static legacy_u16 shape3d_average_depth(legacy_s32 sum,
+	legacy_u16 vertex_count)
+{
+	legacy_u32 divisor_bits;
+	legacy_s32 divisor;
+
+	switch (vertex_count) {
+	case 1U:
+		return (legacy_u16)sum;
+	case 2U:
+		return (legacy_u16)LEGACY_S32_SAR(sum, 1U);
+	case 4U:
+		return (legacy_u16)LEGACY_S32_SAR(sum, 2U);
+	case 8U:
+		return (legacy_u16)LEGACY_S32_SAR(sum, 3U);
+	default:
+		divisor_bits = (legacy_u32)vertex_count;
+		divisor = LEGACY_S32_FROM_BITS(divisor_bits);
+		return (legacy_u16)LEGACY_S32_DIV_OR_ZERO(sum, divisor);
+	}
+}
+
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
@@ -172,7 +194,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u16 var_45E, var_460, var_1A;
 	legacy_u8 var_ptrectflag, var_primtype;
 	struct VECTOR var_vecarr[255];
-	legacy_u16 var_primitiveflags, var_fileprimtype, var_4, var_polyvertcounter, var_C, var_448, var_B7C, var_462;
+	legacy_u16 var_primitiveflags, var_fileprimtype, var_4;
+	legacy_u16 var_polyvertcounter, var_C, var_448, var_462;
 	legacy_s16 var_polyvertX, var_polyvertY;
 	struct POINT2D far* var_transshapepolyinfoptptr;
 	legacy_s32 var_18;
@@ -222,7 +245,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
     arg_transshapeptr = word ptr 6
 */
 
-	legacy_u16 result, i;
+	legacy_u16 i;
 	legacy_u16 temp, temp0, temp1;
 
 	//result = ported_transformed_shape_op_(arg_transshapeptr);
@@ -879,7 +902,6 @@ loc_25328:
     jmp     loc_2542A
 }*/
 
-loc_25335:
 	temp = transshapeprimindexptr[0];
 	//fatal_error("%i", temp);
 	transshapeprimindexptr++;
@@ -2375,25 +2397,7 @@ loc_25D3C:
 		transshapepolyinfo[2] = transprimitivepaintjob;
 	}
 	
-	if (transshapenumvertscopy == 1) {
-		// goto loc_25D9C;
-		temp0 = var_18;
-	} else 
-	if (transshapenumvertscopy == 2) {
-		//goto loc_25DB8;
-		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 1U);
-	} else
-	if (transshapenumvertscopy == 4) {
-		//goto loc_25DC6;
-		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 2U);
-	} else
-	if (transshapenumvertscopy == 8) {
-		// goto loc_25DDA;
-		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 3U);
-	} else {
-		temp0 = (legacy_u16)LEGACY_S32_DIV_OR_ZERO(
-			var_18, (legacy_s32)(legacy_u16)transshapenumvertscopy);
-	}
+	temp0 = shape3d_average_depth(var_18, transshapenumvertscopy);
 	
 	((legacy_u16 far*)transshapepolyinfo)[0] = temp0;
 	
@@ -2622,7 +2626,6 @@ legacy_u16 nopsub_3276A(legacy_u16 value, legacy_u16 divisor) {
 extern legacy_s16 poly_linked_list_40ED6[];
 
 extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0, legacy_u16 arg_2) {
-	legacy_u16 result;
 	legacy_s16 regdi, regsi, regax;
 
 	//return ported_insert_newest_poly_in_poly_linked_list_40ED6_(arg_0, arg_2);
