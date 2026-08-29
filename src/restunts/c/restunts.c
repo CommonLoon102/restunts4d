@@ -9941,6 +9941,20 @@ static legacy_s32 replay_scrub_accumulate(legacy_s32 accumulated,
 	return LEGACY_S32_WRAP_ADD_S16(accumulated, increment);
 }
 
+static legacy_s16 replay_scrub_speed(legacy_s32 accumulated)
+{
+	legacy_s32 quotient;
+
+	quotient = LEGACY_S32_DIV_OR_ZERO(accumulated, 50L);
+	return LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_FROM_BITS((legacy_u16)quotient), 3);
+}
+
+static legacy_u16 replay_scrub_amount(legacy_s32 accumulated)
+{
+	return (legacy_u16)LEGACY_S32_DIV_OR_ZERO(accumulated, 20L);
+}
+
 static void replay_fast_forward(void)
 {
 	legacy_s32 accumulated;
@@ -9956,17 +9970,18 @@ static void replay_fast_forward(void)
 	(void)timer_get_delta_alt();
 	accumulated = 20L;
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
-		speed = (legacy_s16)(accumulated / 50L + 3L);
+		speed = replay_scrub_speed(accumulated);
 		if (speed > 100)
 			speed = 100;
 		delta = (legacy_u16)timer_get_delta_alt();
 		accumulated = replay_scrub_accumulate(accumulated, speed, delta);
 		remaining = LEGACY_U16_WRAP_SUB(
 			gameconfig.game_recordedframes, elapsed_time2);
-		amount = (legacy_u16)(accumulated / 20L);
+		amount = replay_scrub_amount(accumulated);
 		if (amount > remaining)
-			accumulated = (legacy_s32)remaining * 20L;
-		amount = (legacy_u16)(accumulated / 20L);
+			accumulated = LEGACY_S32_WRAP_MUL(
+				(legacy_s32)remaining, 20L);
+		amount = replay_scrub_amount(accumulated);
 		replay_controls_draw(state.game_frame,
 			LEGACY_U16_WRAP_ADD(elapsed_time2, amount));
 		input_do_checking(LEGACY_S16_FROM_BITS(delta));
@@ -9974,9 +9989,10 @@ static void replay_fast_forward(void)
 
 	remaining = LEGACY_U16_WRAP_SUB(
 		gameconfig.game_recordedframes, elapsed_time2);
-	amount = (legacy_u16)(accumulated / 20L);
+	amount = replay_scrub_amount(accumulated);
 	if (amount > remaining) {
-		accumulated = (legacy_s32)remaining * 20L;
+		accumulated = LEGACY_S32_WRAP_MUL(
+			(legacy_s32)remaining, 20L);
 		amount = remaining;
 	}
 	target = LEGACY_U16_WRAP_ADD(elapsed_time2, amount);
@@ -10012,21 +10028,22 @@ static void replay_rewind(void)
 	(void)timer_get_delta_alt();
 	accumulated = 20L;
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
-		speed = (legacy_s16)(accumulated / 50L + 3L);
+		speed = replay_scrub_speed(accumulated);
 		if (speed > 100)
 			speed = 100;
 		delta = (legacy_u16)timer_get_delta_alt();
 		accumulated = replay_scrub_accumulate(accumulated, speed, delta);
-		amount = (legacy_u16)(accumulated / 20L);
+		amount = replay_scrub_amount(accumulated);
 		if (amount > elapsed_time2)
-			accumulated = (legacy_s32)elapsed_time2 * 20L;
-		amount = (legacy_u16)(accumulated / 20L);
+			accumulated = LEGACY_S32_WRAP_MUL(
+				(legacy_s32)elapsed_time2, 20L);
+		amount = replay_scrub_amount(accumulated);
 		replay_controls_draw(state.game_frame,
 			LEGACY_U16_WRAP_SUB(elapsed_time2, amount));
 		input_do_checking(LEGACY_S16_FROM_BITS(delta));
 	}
 
-	amount = (legacy_u16)(accumulated / 20L);
+	amount = replay_scrub_amount(accumulated);
 	if (amount > elapsed_time2)
 		amount = elapsed_time2;
 	replay_controls_select(4);
@@ -10041,8 +10058,11 @@ static void replay_rewind(void)
 		while ((legacy_u16)state.game_frame != elapsed_time2) {
 			update_gamestate();
 			frames_remaining = LEGACY_S16_WRAP_SUB(frames_remaining, 1);
-			interpolation = ((legacy_s32)frames_to_catch_up *
-				(legacy_s32)frames_remaining) / (legacy_s32)amount;
+			interpolation = LEGACY_S32_DIV_OR_ZERO(
+				LEGACY_S32_WRAP_MUL(
+					(legacy_s32)frames_to_catch_up,
+					(legacy_s32)frames_remaining),
+				(legacy_s32)amount);
 			displayed_frame = LEGACY_U16_WRAP_ADD(elapsed_time2,
 				(legacy_u16)interpolation);
 			replay_controls_draw(displayed_frame, elapsed_time2);
