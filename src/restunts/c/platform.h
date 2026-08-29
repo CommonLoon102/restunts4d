@@ -48,6 +48,8 @@ legacy_u16 dos_mouse_get_button_count(void);
 
 legacy_s16 dos_timer_register_callback(void (far* callback)(void));
 void dos_timer_unregister_callback(void (far* callback)(void));
+void dos_timer_reset_counter(void);
+void dos_timer_set_callbacks_suspended(legacy_s16 suspended);
 legacy_u32 timer_get_counter(void);
 legacy_u32 timer_get_delta(void);
 legacy_u32 timer_get_slow_counter(void);

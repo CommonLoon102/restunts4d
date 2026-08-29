@@ -27,9 +27,6 @@
 #define AUDIO_CAR_STATE_RECORD_COUNT 0x28U
 #define AUDIO_CAR_STATE_RECORD_SIZE  0x22U
 
-extern legacy_u32 dos_timer_counter;
-extern legacy_s16 dos_timer_callbacks_suspended;
-
 static legacy_u32 timer_wait_target;
 
 static const legacy_u8 far input_direction_table[16] = {
@@ -236,7 +233,7 @@ legacy_u32 timer_custom_delta(legacy_u32 ticks)
 
 void timer_reset()
 {
-	dos_timer_counter = 0;
+	dos_timer_reset_counter();
 }
 
 legacy_u32 timer_copy_counter(legacy_u32 ticks)
@@ -3532,13 +3529,13 @@ void do_mer_restext(void)
 void do_key_restext(void)
 {
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
 	dos_joystick_set_enabled(0);
 	byte_3B8F2 = 0;
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
@@ -3559,7 +3556,7 @@ void do_joy_restext(void)
 	legacy_u16 i;
 
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
@@ -3639,19 +3636,19 @@ joy_dialog_done:
 	kb_check();
 	byte_3B8F2 = 0;
 	audio_resume();
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
 }
 
 void do_mou_restext(void)
 {
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	byte_3B8F2 = 1;
 	show_dialog(4, 1, locate_text_res(mainresptr, aMou),
 		-1, -1, dialogarg2, 0, 0);
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
@@ -3659,11 +3656,11 @@ void do_mou_restext(void)
 void do_pau_restext(void)
 {
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(0, 1, locate_text_res(mainresptr, aPau),
 		-1, -1, dialogarg2, 0, 0);
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
@@ -3673,11 +3670,11 @@ void do_mof_restext(void)
 	legacy_s8* message_id;
 
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	message_id = audio_toggle_flag2() != 0 ? aMon : aMof;
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
 }
 
@@ -3686,11 +3683,11 @@ void do_sonsof_restext(void)
 	legacy_s8* message_id;
 
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	message_id = audio_toggle_flag6() != 0 ? aSon : aSof;
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
 }
 
@@ -3699,13 +3696,13 @@ void do_dos_restext(void)
 	legacy_s16 result;
 
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	result = show_dialog(2, 1, locate_text_res(mainresptr, aDos_0),
 		-1, -1, dialogarg2, 0, 0);
 	if (result == 1)
 		call_exitlist2();
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
@@ -3766,7 +3763,7 @@ void show_graphic_levels_menu(void)
 	legacy_s8 selected;
 
 	input_push_status();
-	dos_timer_callbacks_suspended = 1;
+	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	original_frame_rate = framespersec2;
 	selected = 0;
@@ -3814,7 +3811,7 @@ void show_graphic_levels_menu(void)
 	if (original_frame_rate != framespersec2)
 		show_dialog(1, 1, locate_text_res(mainresptr, aMrs),
 			-1, -1, dialogarg2, 0, 0);
-	dos_timer_callbacks_suspended = 0;
+	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
@@ -10399,7 +10396,7 @@ void run_game(void) {
 					regsi = 0;
 
 				audio_resume();
-				dos_timer_callbacks_suspended = 0;
+				dos_timer_set_callbacks_suspended(0);
 				input_pop_status();
 				if (regsi != 0) {
 					update_crash_state(4, 0);

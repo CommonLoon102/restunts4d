@@ -16,8 +16,8 @@ all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/r
 $(OBJDIR)/%.obj: %.asm
 	$(ASM) $<, $(subst /,\,$@)
 
-$(OBJDIR)/timer.obj: timer.c ../../c/legacy.h
-	$(CC) timer.c
+$(OBJDIR)/timer.obj: timer.c ../../c/legacy.h ../../c/platform.h
+	$(CC) -I../../c timer.c
 
 $(OBJDIR)/runtime.obj: runtime.c ../../c/legacy.h
 	$(CC) runtime.c

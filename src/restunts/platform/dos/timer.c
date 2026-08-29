@@ -1,4 +1,4 @@
-#include "../../c/legacy.h"
+#include "../../c/platform.h"
 
 #include <dos.h>
 
@@ -9,8 +9,8 @@ typedef void interrupt (far* interrupt_handler_type)(void);
 
 extern void add_exit_handler(void (far* exit_handler)(void));
 
-legacy_u32 dos_timer_counter;
-legacy_s16 dos_timer_callbacks_suspended;
+static legacy_u32 dos_timer_counter;
+static legacy_s16 dos_timer_callbacks_suspended;
 void (far* dos_timer_callbacks[6])(void);
 
 static legacy_u32 dos_timer_last_counter;
@@ -79,6 +79,16 @@ void dos_timer_unregister_callback(void (far* callback)(void))
 	}
 	dos_timer_callbacks[4] = 0;
 	enable();
+}
+
+void dos_timer_reset_counter(void)
+{
+	dos_timer_counter = 0;
+}
+
+void dos_timer_set_callbacks_suspended(legacy_s16 suspended)
+{
+	dos_timer_callbacks_suspended = suspended;
 }
 
 static void interrupt dos_timer_interrupt(void)
