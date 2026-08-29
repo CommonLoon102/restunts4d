@@ -23,6 +23,10 @@ const legacy_s8* dos_file_find_next(void);
 
 void dos_install_divide_error_handler(void);
 
+void dos_interrupts_disable(void);
+void dos_interrupts_enable(void);
+void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
+
 legacy_s16 dos_write_stdout(const legacy_s8* text, legacy_u16 length);
 legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length);
 void dos_process_exit(legacy_s16 status);
@@ -30,5 +34,17 @@ legacy_s16 dos_data_stack_segments_match(void);
 
 legacy_s16 dos_timer_register_callback(void (far* callback)(void));
 void dos_timer_unregister_callback(void (far* callback)(void));
+legacy_u32 timer_get_counter(void);
+legacy_u32 timer_get_delta(void);
+legacy_u32 timer_get_slow_counter(void);
+void dos_timer_setup_interrupt(void);
+void dos_timer_shutdown(void);
+
+legacy_s16 dos_video_get_status(void);
+void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
+	legacy_u8* palette);
+void dos_video_set_mode_13h(void);
+void dos_video_set_mode4(void);
+void dos_video_set_mode7(void);
 
 #endif

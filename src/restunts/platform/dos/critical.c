@@ -14,6 +14,16 @@ extern interrupt_handler_type _CType _getvect(legacy_s16 interrupt_number);
 static interrupt_handler_type previous_critical_error_handler;
 static critical_error_callback_type critical_error_callback;
 
+void dos_interrupts_disable(void)
+{
+	disable();
+}
+
+void dos_interrupts_enable(void)
+{
+	enable();
+}
+
 static void far dos_critical_error_restore(void)
 {
 	if (previous_critical_error_handler != 0)

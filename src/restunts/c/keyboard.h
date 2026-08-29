@@ -5,11 +5,6 @@
 
 void kb_init_interrupt(void);
 void kb_exit_handler(void);
-void interrupt kb_int9_handler(void);
-void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
-                                legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
-                                legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
-                                legacy_u16 ip, legacy_u16 cs, legacy_u16 flags);
 legacy_s16 kb_get_key_state(legacy_s16 key);
 legacy_s16 dos_kb_get_char(void);
 void dos_kb_set_numlock(void);
