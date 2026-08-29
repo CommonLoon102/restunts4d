@@ -515,8 +515,9 @@ void load_palandcursor(void)
 	dos_video_set_palette(0, 0x100, palette);
 
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
-	mouse_width = (legacy_u16)(mouse_shape->s2d_width * video_flag2_is1);
-	mouse_height = mouse_shape->s2d_height;
+	mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) *
+		video_flag2_is1);
+	mouse_height = shape2d_get_height(mouse_shape);
 	mmgr_free(resource);
 
 	mouse_small_sprite = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
@@ -4350,7 +4351,7 @@ legacy_s16 run_intro(void)
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
 		(legacy_s8 far*)ui_temp_resource, "prod");
-	waitflag = shape->s2d_pos_y != 0 ? 0xA0 : 0xB4;
+	waitflag = shape2d_get_pos_y(shape) != 0 ? 0xA0 : 0xB4;
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
 		(legacy_s8 far*)ui_temp_resource, "prod");
@@ -4733,9 +4734,10 @@ void load_tracks_menu_shapes(void)
 		(legacy_s8 far**)tracksmenushapes3);
 	for (index = 0; index < 4U; index++) {
 		cursor_sprites[index] = sprite_make_wnd(
-			LEGACY_U16_WRAP_MUL(tracksmenushapes2[index]->s2d_width,
+			LEGACY_U16_WRAP_MUL(shape2d_get_width(
+				tracksmenushapes2[index]),
 				(legacy_u16)video_flag1_is1),
-			tracksmenushapes2[index]->s2d_height, 0x0FU);
+			shape2d_get_height(tracksmenushapes2[index]), 0x0FU);
 	}
 
 	text_resource = (legacy_s8 far*)file_load_resfile("tedit");
@@ -5701,11 +5703,11 @@ legacy_s8 load_intro_resources(void)
 	waitflag = 0x96;
 	sprite_copy_wnd_to_1_clear();
 	arrow_shape = credit_shapes[1];
-	target_x = (legacy_s16)arrow_shape->s2d_pos_x;
-	arrow_y = (legacy_s16)arrow_shape->s2d_pos_y;
+	target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
+	arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
 	arrow_width = LEGACY_S16_WRAP_MUL(
-		(legacy_s16)arrow_shape->s2d_width, video_flag1_is1);
-	arrow_height = (legacy_s16)arrow_shape->s2d_height;
+		(legacy_s16)shape2d_get_width(arrow_shape), video_flag1_is1);
+	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
 
 	intro_draw_resource_line(credit_resource, aCre, 1,
 		0x78, 0, word_407D8, word_407DA);
@@ -5776,7 +5778,7 @@ legacy_s8 load_intro_resources(void)
 			break;
 	}
 
-	arrow_y = (legacy_s16)credit_shapes[0]->s2d_pos_y;
+	arrow_y = (legacy_s16)shape2d_get_pos_y(credit_shapes[0]);
 	animation_target = 0;
 	animation_elapsed = 0;
 	for (animation_index = 2;
@@ -7997,8 +7999,8 @@ void load_sdgame2_shapes(void)
 		"ex01ex02ex03leftrigh",
 		sdgame2shapes);
 	for (i = 0; i < 3; i++)
-		sdgame2_widths[i] =
-			((struct SHAPE2D far*)sdgame2shapes[i])->s2d_width;
+		sdgame2_widths[i] = shape2d_get_width(
+			(struct SHAPE2D far*)sdgame2shapes[i]);
 }
 
 void load_skybox(legacy_s8 skybox_index)
@@ -8021,14 +8023,14 @@ void load_skybox(legacy_s8 skybox_index)
 			"scensce2sce3sce4",
 			skyboxes);
 
-		skybox_ptr1 =
-			((struct SHAPE2D far*)skyboxes[0])->s2d_height;
-		skybox_ptr2 =
-			((struct SHAPE2D far*)skyboxes[1])->s2d_height;
-		skybox_ptr3 =
-			((struct SHAPE2D far*)skyboxes[2])->s2d_height;
-		skybox_ptr4 =
-			((struct SHAPE2D far*)skyboxes[3])->s2d_height;
+		skybox_ptr1 = shape2d_get_height(
+			(struct SHAPE2D far*)skyboxes[0]);
+		skybox_ptr2 = shape2d_get_height(
+			(struct SHAPE2D far*)skyboxes[1]);
+		skybox_ptr3 = shape2d_get_height(
+			(struct SHAPE2D far*)skyboxes[2]);
+		skybox_ptr4 = shape2d_get_height(
+			(struct SHAPE2D far*)skyboxes[3]);
 
 		minimum = skybox_ptr1;
 		if (minimum > skybox_ptr2)
@@ -8255,17 +8257,17 @@ void setup_car_shapes(legacy_s16 operation)
 		}
 
 		whlsprite1 = sprite_make_wnd(
-			LEGACY_U16_WRAP_MUL(whlshapes[3]->s2d_width,
+			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[3]),
 				(legacy_u16)video_flag1_is1),
-			whlshapes[3]->s2d_height, 0x0FU);
+			shape2d_get_height(whlshapes[3]), 0x0FU);
 		whlsprite2 = sprite_make_wnd(
-			LEGACY_U16_WRAP_MUL(whlshapes[4]->s2d_width,
+			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[4]),
 				(legacy_u16)video_flag1_is1),
-			whlshapes[4]->s2d_height, 0x0FU);
+			shape2d_get_height(whlshapes[4]), 0x0FU);
 		whlsprite3 = sprite_make_wnd(
-			LEGACY_U16_WRAP_MUL(whlshapes[4]->s2d_width,
+			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[4]),
 				(legacy_u16)video_flag1_is1),
-			whlshapes[4]->s2d_height, 0x0FU);
+			shape2d_get_height(whlshapes[4]), 0x0FU);
 
 		dashboard_shape = (struct SHAPE2D far*)
 			locate_shape_fatal(stdaresptr, aDash);
@@ -8273,25 +8275,25 @@ void setup_car_shapes(legacy_s16 operation)
 		sprite_set_1_from_argptr(whlsprite3);
 		shape2d_op_unk2(dashboard_shape,
 			LEGACY_S16_WRAP_SUB(
-				(legacy_s16)dashboard_shape->s2d_pos_x,
-				(legacy_s16)gearbox_shape->s2d_pos_x),
+				(legacy_s16)shape2d_get_pos_x(dashboard_shape),
+				(legacy_s16)shape2d_get_pos_x(gearbox_shape)),
 			LEGACY_S16_WRAP_SUB(
-				(legacy_s16)dashboard_shape->s2d_pos_y,
-				(legacy_s16)gearbox_shape->s2d_pos_y));
+				(legacy_s16)shape2d_get_pos_y(dashboard_shape),
+				(legacy_s16)shape2d_get_pos_y(gearbox_shape)));
 		sprite_copy_2_to_1();
-		dashbmp_y = dashboard_shape->s2d_pos_y;
+		dashbmp_y = shape2d_get_pos_y(dashboard_shape);
 
 		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aRoof);
 		if (shape != 0) {
 			shape = (struct SHAPE2D far*)locate_shape_fatal(stdaresptr, aRoof);
-			roofbmpheight = shape->s2d_height;
+			roofbmpheight = shape2d_get_height(shape);
 		} else {
 			roofbmpheight = 0;
 		}
 
 		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aDast);
 		if (shape != 0) {
-			dastbmp_y = shape->s2d_pos_y;
+			dastbmp_y = shape2d_get_pos_y(shape);
 			dastbmp_y2 = FP_OFF(shape);
 			dastseg = FP_SEG(shape);
 			dasmshapeptr = locate_shape_fatal(stdaresptr, aDasm);
@@ -8343,7 +8345,8 @@ void setup_car_shapes(legacy_s16 operation)
 			mouse_draw_opaque_check();
 		dashboard_set_viewport();
 		sprite_putimage_and_alt(whlsprite3->sprite_bitmapptr,
-			whlshapes[4]->s2d_pos_x, whlshapes[4]->s2d_pos_y);
+			shape2d_get_pos_x(whlshapes[4]),
+			shape2d_get_pos_y(whlshapes[4]));
 		byte_40DFA[player_index] = 0;
 	} else if (byte_40DFA[player_index] !=
 			(legacy_u8)state.playerstate.car_changing_gear ||
@@ -8368,7 +8371,8 @@ void setup_car_shapes(legacy_s16 operation)
 		}
 		dashboard_set_viewport();
 		sprite_putimage_and_alt(whlsprite2->sprite_bitmapptr,
-			whlshapes[4]->s2d_pos_x, whlshapes[4]->s2d_pos_y);
+			shape2d_get_pos_x(whlshapes[4]),
+			shape2d_get_pos_y(whlshapes[4]));
 	}
 
 	steering_position = dashboard_steering_position(
@@ -8471,7 +8475,8 @@ void setup_car_shapes(legacy_s16 operation)
 			sprite_copy_2_to_1_2();
 		dashboard_set_viewport();
 		sprite_putimage_and_alt(whlsprite1->sprite_bitmapptr,
-			whlshapes[3]->s2d_pos_x, whlshapes[3]->s2d_pos_y);
+			shape2d_get_pos_x(whlshapes[3]),
+			shape2d_get_pos_y(whlshapes[3]));
 	}
 
 	if (word_40E00[player_index] != steering_position ||
@@ -8491,11 +8496,12 @@ void setup_car_shapes(legacy_s16 operation)
 				(legacy_u8)((legacy_u8)(dot_x - steering_dots[0]) << 1));
 		}
 		word_40DF2[player_index] = LEGACY_S16_FROM_BITS(
-			((legacy_u16)((legacy_u8)dot_x - gnobshapes[2]->s2d_unk1)) &
+			((legacy_u16)((legacy_u8)dot_x -
+				shape2d_get_unk1(gnobshapes[2]))) &
 			(legacy_u16)video_flag3_isFFFF);
 		word_40DF6[player_index] = LEGACY_S16_FROM_BITS(
 			LEGACY_U16_WRAP_SUB((legacy_u8)dot_y,
-				gnobshapes[2]->s2d_unk2));
+				shape2d_get_unk2(gnobshapes[2])));
 		sprite_clear_shape_alt(
 			gnobshapes[4U + (legacy_u8)byte_44346],
 			word_40DF2[player_index], word_40DF6[player_index]);
@@ -8621,8 +8627,9 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		if (video_flag5_is0 != 0) {
 			opponent_shape = (struct SHAPE2D far*)
 				oppresources[(legacy_u16)opponent_type];
-			opponent_sprite = sprite_make_wnd(opponent_shape->s2d_width,
-				opponent_shape->s2d_height, 0x0FU);
+			opponent_sprite = sprite_make_wnd(
+				shape2d_get_width(opponent_shape),
+				shape2d_get_height(opponent_shape), 0x0FU);
 			setup_mcgawnd2();
 			sprite_clear_1_color(0);
 			sprite_putimage_transparent(opponent_shape, 0, 0);
@@ -8943,11 +8950,11 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 		sprite_copy_2_to_1_2();
 		sprite_set_1_size(animation_x,
 			LEGACY_S16_WRAP_ADD(animation_x,
-				LEGACY_S16_WRAP_MUL(frame_shape->s2d_width,
+				LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
 					video_flag1_is1)),
 			animation_y,
 			LEGACY_S16_WRAP_ADD(animation_y,
-				frame_shape->s2d_height));
+				shape2d_get_height(frame_shape)));
 		sprite_putimage_and_alt(animation_sprite->sprite_bitmapptr,
 			animation_x, animation_y);
 		sprite_copy_2_to_1_2();
@@ -9332,17 +9339,18 @@ end_hiscore_start:
 	aOp01[3] = '1';
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01);
-	animation_width = LEGACY_S16_WRAP_MUL(frame_shape->s2d_width,
+	animation_width = LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
 		video_flag1_is1);
 	animation_x = LEGACY_S16_WRAP_SUB(0x138, animation_width);
-	animation_y = LEGACY_S16_WRAP_SUB(0x63, frame_shape->s2d_height);
+	animation_y = LEGACY_S16_WRAP_SUB(
+		0x63, shape2d_get_height(frame_shape));
 	animation_y = LEGACY_S16_FROM_BITS(
 		((legacy_u16)animation_y >> 1) |
 		((legacy_u16)animation_y & 0x8000U));
 	draw_lines_unk(LEGACY_S16_WRAP_SUB(animation_x, 3),
 		LEGACY_S16_WRAP_SUB(animation_y, 3),
 		LEGACY_S16_WRAP_ADD(animation_width, 5),
-		LEGACY_S16_WRAP_ADD(frame_shape->s2d_height, 5),
+		LEGACY_S16_WRAP_ADD(shape2d_get_height(frame_shape), 5),
 		dialog_fnt_colour, 0, word_407D2);
 	aOp01[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
 	shape2d_op_unk5((struct SHAPE2D far*)locate_shape_fatal(

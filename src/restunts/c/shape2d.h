@@ -50,6 +50,13 @@ struct SPRITE {
 typedef char legacy_shape2d_must_be_16_bytes[
 	(sizeof(struct SHAPE2D) == SHAPE2D_HEADER_SIZE) ? 1 : -1];
 
+legacy_u16 shape2d_get_width(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_get_height(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_get_unk1(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_get_pos_y(const struct SHAPE2D far* shape);
+
 #ifdef RESTUNTS_DOS
 typedef char legacy_sprite_must_be_30_bytes[
 	(sizeof(struct SPRITE) == 30) ? 1 : -1];
