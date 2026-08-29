@@ -852,7 +852,9 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 static legacy_s16 mouse_track_divide(legacy_s16 numerator,
 	legacy_s16 denominator)
 {
-	return (legacy_s16)((legacy_s32)numerator / (legacy_s32)denominator);
+	return LEGACY_S16_FROM_BITS((legacy_u16)
+		LEGACY_S32_DIV_OR_ZERO(
+			(legacy_s32)numerator, (legacy_s32)denominator));
 }
 
 static legacy_s16 mouse_track_position(legacy_s16 length,
@@ -1281,7 +1283,8 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 	timer[0x0AU] = 0;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
 	divisor = definition[0x0EU];
-	rate = (legacy_u16)(LEGACY_READ_U16_LE(context) / divisor);
+	rate = LEGACY_U16_DIV_OR_ZERO(
+		LEGACY_READ_U16_LE(context), divisor);
 	rate = LEGACY_U16_WRAP_ADD(rate,
 		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
 	LEGACY_WRITE_U16_LE(timer + 0x0CU, rate);
@@ -1322,7 +1325,7 @@ void audio_op_unk(legacy_s16 index)
 	sample_count = LEGACY_READ_U16_LE(context);
 	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
 	divisor = definition[0x0EU];
-	value = (legacy_u16)(sample_count / divisor);
+	value = LEGACY_U16_DIV_OR_ZERO(sample_count, divisor);
 	value = LEGACY_U16_WRAP_ADD(value,
 		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
 	LEGACY_WRITE_U16_LE(timer + 0x0CU, value);
@@ -1365,10 +1368,10 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 		polarRadius2D(first_x, first_z), first_y);
 	distance_delta = LEGACY_U16_WRAP_SUB(
 		first_distance, second_distance);
-	quotient = (legacy_u16)(100U / (legacy_u16)interval);
+	quotient = LEGACY_U16_DIV_OR_ZERO(100U, (legacy_u16)interval);
 	scaled_delta = LEGACY_U16_WRAP_MUL(quotient, distance_delta);
-	quotient = (legacy_u16)(((legacy_u32)0x7FU * second_distance) /
-		0x1770UL);
+	quotient = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+		LEGACY_U32_WRAP_MUL(0x7FUL, second_distance), 0x1770UL);
 	volume = LEGACY_U16_WRAP_SUB(0x7FU, quotient);
 	if (LEGACY_S16_FROM_BITS(scaled_delta) > 0)
 		volume = LEGACY_U16_WRAP_SUB(volume, volume >> 4);
@@ -1376,13 +1379,14 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	context = timer + 0x1CU;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(context + 8U);
 	divisor = definition[0x0EU];
-	base_rate = (legacy_u16)((legacy_u16)base_value / divisor);
+	base_rate = LEGACY_U16_DIV_OR_ZERO(
+		(legacy_u16)base_value, divisor);
 	base_rate = LEGACY_U16_WRAP_ADD(base_rate,
 		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
 	denominator = LEGACY_U16_WRAP_SUB(0x1770U, scaled_delta);
 	if (denominator != 0) {
-		base_rate = (legacy_u16)(((legacy_u32)0x1770U * base_rate) /
-			denominator);
+		base_rate = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+			LEGACY_U32_WRAP_MUL(0x1770UL, base_rate), denominator);
 		LEGACY_WRITE_U16_LE(timer + 0x0CU, base_rate);
 	}
 	timer[0x0AU] = (legacy_u8)volume;
