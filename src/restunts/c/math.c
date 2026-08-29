@@ -92,7 +92,9 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 			y = temp;
 			flag |= 1;
 		}
-		index = (((legacy_u32)z << 16) / y);
+		index = LEGACY_U32_DIV_OR_ZERO(
+			(legacy_u32)(legacy_u16)z << 16,
+			(legacy_u16)y);
 		if ((index & 0xFF) >= 0x80) // round upwards
 			index += 0x100;
 		result = atantable[index >> 8];
@@ -136,13 +138,19 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 	if (result <= 0x80) {
 		result = cos_fast(result);
 		if (y < 0)
-			y = -y;
-		return (((legacy_u32)y) << 14) / result;
+			y = LEGACY_S16_WRAP_NEGATE(y);
+		return LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_U32_DIV_OR_ZERO(
+				(legacy_u32)(legacy_u16)y << 14,
+				(legacy_u16)result));
 	} else {
 		result = sin_fast(result);
 		if (z < 0)
-			z = -z;
-		return (((legacy_u32)z) << 14) / result;
+			z = LEGACY_S16_WRAP_NEGATE(z);
+		return LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_U32_DIV_OR_ZERO(
+				(legacy_u32)(legacy_u16)z << 14,
+				(legacy_u16)result));
 	}
 }
 
@@ -833,7 +841,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (legacy_s16)(proj >> 15);
 
 		if (vec->z > comp) { 
-			outpt->px = saturate_projection(-(legacy_s32)(proj / (legacy_u16)vec->z) + (legacy_s16)projectiondata5);
+			outpt->px = saturate_projection(
+				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
+					proj, (legacy_u16)vec->z) +
+				(legacy_s16)projectiondata5);
 		} else
 			outpt->px = -0x7D00;
 	} else {
@@ -841,7 +852,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (legacy_s16)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->px = saturate_projection((legacy_s32)(proj / (legacy_u16)vec->z) + (legacy_s16)projectiondata5);
+			outpt->px = saturate_projection(
+				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
+					proj, (legacy_u16)vec->z) +
+				(legacy_s16)projectiondata5);
 		else
 			outpt->px = 0x7D00;
 	}
@@ -851,7 +865,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (legacy_s16)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection((legacy_s32)(proj / (legacy_u16)vec->z) + (legacy_s16)projectiondata8);
+			outpt->py = saturate_projection(
+				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
+					proj, (legacy_u16)vec->z) +
+				(legacy_s16)projectiondata8);
 		else
 			outpt->py = 0x7D00;
 	} else {
@@ -859,7 +876,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		comp = (legacy_s16)(proj >> 15);
 
 		if (vec->z > comp) 
-			outpt->py = saturate_projection(-(legacy_s32)(proj / (legacy_u16)vec->z) + (legacy_s16)projectiondata8);
+			outpt->py = saturate_projection(
+				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
+					proj, (legacy_u16)vec->z) +
+				(legacy_s16)projectiondata8);
 		else
 			outpt->py = -0x7D00;
 	}
