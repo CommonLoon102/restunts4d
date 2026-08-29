@@ -599,9 +599,7 @@ void opponent_op(void)
 	if (state.opponentstate.car_crashBmpFlag != 0) {
 		if (state.opponentstate.car_speed2 == 0)
 			state.opponentstate.field_CF = 0;
-		goto choose_input;
-	}
-
+	} else {
 	route_target = state.opponentstate.car_vec_unk3;
 	if (route_target.y != -1) {
 		relative.x = LEGACY_S16_WRAP_SUB(route_target.x, opponent_x);
@@ -617,7 +615,7 @@ void opponent_op(void)
 		opponent_advance_route();
 	}
 
-select_route_target:
+	for (;;) {
 	route_target = state.opponentstate.car_vec_unk3;
 	if (state.game_inputmode != 2) {
 		relative.x = LEGACY_S16_WRAP_SUB(player_x, opponent_x);
@@ -690,14 +688,14 @@ select_route_target:
 		if (forced_route == 0) {
 			forced_route = 1;
 			opponent_advance_route();
-			goto select_route_target;
+			continue;
 		}
 		steering_target = 0x41;
 	} else if (steering_target < -0x41) {
 		if (forced_route == 0) {
 			forced_route = 1;
 			opponent_advance_route();
-			goto select_route_target;
+			continue;
 		}
 		steering_target = -0x41;
 	}
@@ -719,8 +717,10 @@ select_route_target:
 	} else {
 		state.opponentstate.car_steeringAngle = steering_target;
 	}
+	break;
+	}
+	}
 
-choose_input:
 	input = 0;
 	if (state.opponentstate.car_sumSurfRearWheels != 0) {
 		if (state.opponentstate.car_crashBmpFlag != 0) {
