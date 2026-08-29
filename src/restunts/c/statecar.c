@@ -41,6 +41,11 @@ static legacy_s8 gear_change_delay(legacy_u16 frame_rate)
 		(legacy_u8)half_rate, (legacy_u8)frame_rate));
 }
 
+static legacy_s16 car_absolute_word(legacy_s16 value)
+{
+	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
+}
+
 legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
 		currpm = (legacy_u16)(
@@ -105,13 +110,15 @@ loc_17A8E:
 loc_17A93:
 	if (arg_carState->car_engineLimiterTimer == 0)
 		goto loc_17AA1;
-	arg_carState->car_engineLimiterTimer--;
+	arg_carState->car_engineLimiterTimer = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_carState->car_engineLimiterTimer - 1U));
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_engineLimiterTimer], 0
     jz      short loc_17AA1
     dec     [bx+CARSTATE.car_engineLimiterTimer]*/
 loc_17AA1:
-	arg_carState->car_speeddiff = arg_carState->car_speed2 - arg_carState->car_lastspeed;
+	arg_carState->car_speeddiff = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_speed2, arg_carState->car_lastspeed);
 	arg_carState->car_lastspeed = arg_carState->car_speed2;
 	arg_carState->car_lastrpm = arg_carState->car_currpm;
 	if (arg_carState->car_transmission != 0)
@@ -248,7 +255,8 @@ loc_17B86:
 loc_17B93:
 	if (arg_carState->car_knob_x != arg_carState->car_knob_x2)
 		goto loc_17C0C;
-	var_4 = arg_carState->car_knob_y2 - arg_carState->car_knob_y;
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_y2, arg_carState->car_knob_y);
 	if (var_4 != 0)
 		goto loc_17BDA;
 	arg_carState->car_changing_gear = 0;
@@ -284,7 +292,7 @@ loc_17B93:
     ; align 2
     db 144*/
 loc_17BDA:
-	if (abs(var_4) > var_2)
+	if (car_absolute_word(var_4) > var_2)
 		goto loc_17BF6;
 	arg_carState->car_knob_y = arg_carState->car_knob_y2;
 	goto loc_17C84;
@@ -307,7 +315,8 @@ loc_17BF6:
     jle     short loc_17BFF
     jmp     loc_17C93*/
 loc_17BFF:
-	arg_carState->car_knob_y -= var_2;
+	arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_y, var_2);
 	goto loc_17CAC;
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
@@ -318,8 +327,9 @@ loc_17BFF:
 loc_17C0C:
 	if (arg_simd->knob_points[0].py != arg_carState->car_knob_y)
 		goto loc_17C5E;
-	var_4 = arg_carState->car_knob_x2 - arg_carState->car_knob_x;
-	if (abs(var_4) > var_2)
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_x2, arg_carState->car_knob_x);
+	if (car_absolute_word(var_4) > var_2)
 		goto loc_17C40;
 	arg_carState->car_knob_x = arg_carState->car_knob_x2;
 	goto loc_17CAC;
@@ -345,7 +355,8 @@ loc_17C0C:
 loc_17C40:
 	if (var_4 <= 0)
 		goto loc_17C52;
-	arg_carState->car_knob_x += var_2;
+	arg_carState->car_knob_x = LEGACY_S16_WRAP_ADD(
+		arg_carState->car_knob_x, var_2);
 	goto loc_17CAC;
 /*    cmp     [bp+var_4], 0
     jle     short loc_17C52
@@ -356,7 +367,8 @@ loc_17C40:
     ; align 2
     db 144*/
 loc_17C52:
-	arg_carState->car_knob_x -= var_2;
+	arg_carState->car_knob_x = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_knob_x, var_2);
 	goto loc_17CAC;
     /*mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
@@ -365,8 +377,9 @@ loc_17C52:
     ; align 2
     db 144*/
 loc_17C5E:
-	var_4 = arg_simd->knob_points[0].py - arg_carState->car_knob_y;
-	if (abs(var_4) > var_2)
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_simd->knob_points[0].py, arg_carState->car_knob_y);
+	if (car_absolute_word(var_4) > var_2)
 		goto loc_17C8A;
 	arg_carState->car_knob_y = arg_simd->knob_points[0].py;
 /*    mov     bx, [bp+arg_simd]
@@ -396,7 +409,8 @@ loc_17C8A:
     jg      short loc_17C93
     jmp     loc_17BFF*/
 loc_17C93:
-	arg_carState->car_knob_y += var_2;
+	arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
+		arg_carState->car_knob_y, var_2);
 	goto loc_17CAC;
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bp+var_2]
@@ -405,17 +419,21 @@ loc_17C93:
 loc_17C9E:
 	if (arg_carState->car_fpsmul2 == 0)
 		goto loc_17CAC;
-	arg_carState->car_fpsmul2--;
+	arg_carState->car_fpsmul2 = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_carState->car_fpsmul2 - 1U));
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_fpsmul2], 0
     jz      short loc_17CAC
     dec     [bx+CARSTATE.car_fpsmul2]*/
 loc_17CAC:
 	var_updatedSpeed = arg_carState->car_speed;
-	var_deltaSpeed = arg_carState->car_pseudoGravity - arg_simd->aerorestable[var_updatedSpeed >> 10];
+	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_pseudoGravity,
+		arg_simd->aerorestable[var_updatedSpeed >> 10]);
 	if ((legacy_u16)arg_carState->car_currpm <= (legacy_u16)arg_simd->max_rpm)
 		goto loc_17CEA;
-	arg_carState->car_currpm = arg_simd->max_rpm - 1;
+	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+		arg_simd->max_rpm, 1);
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bx+CARSTATE.car_speed]
     mov     [bp+var_updatedSpeed], ax
@@ -437,7 +455,8 @@ loc_17CAC:
     dec     ax
     mov     [bx+CARSTATE.car_currpm], ax*/
 loc_17CE1:
-	var_deltaSpeed -= arg_simd->braking_eff;
+	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
+		var_deltaSpeed, arg_simd->braking_eff);
 	goto loc_17D36;
 /*    mov     bx, [bp+arg_simd]
     mov     ax, [bx+SIMD.braking_eff]
@@ -513,7 +532,8 @@ loc_17D4F:
     jb      short loc_17D59
     jmp     loc_17EC2*/
 loc_17D59:
-	var_updatedSpeed += var_deltaSpeed;
+	var_updatedSpeed = LEGACY_U16_WRAP_ADD(
+		var_updatedSpeed, var_deltaSpeed);
 /*    mov     ax, [bp+var_deltaSpeed]
     add     [bp+var_updatedSpeed], ax*/
 loc_17D5F:
@@ -525,7 +545,8 @@ loc_17D5F:
     jnz     short loc_17D6C
     jmp     loc_17F3C*/
 loc_17D6C:
-	var_4 = arg_carState->car_speed2 - var_updatedSpeed;
+	var_4 = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_speed2, var_updatedSpeed);
 	if (var_4 < 0)
 		goto loc_17D7C;
 	goto loc_17EF8;
@@ -536,7 +557,7 @@ loc_17D6C:
     jl      short loc_17D7C
     jmp     loc_17EF8*/
 loc_17D7C:
-	var_4 = -var_4;
+	var_4 = LEGACY_S16_WRAP_NEGATE(var_4);
 	goto loc_17EFB;
 /*    neg     ax
     jmp     loc_17EFB*/
@@ -548,7 +569,8 @@ loc_17D82:
 	arg_carState->car_engineLimiterTimer = 0;
 	if (framespersec != 0xA)
 		goto loc_17DB2;
-	arg_carState->car_currpm -= 0x50;
+	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_currpm, 0x50);
 	goto loc_17D39;
 /*    mov     bx, [bp+arg_carState]
     mov     [bx+CARSTATE.car_is_braking], 0
@@ -561,7 +583,8 @@ loc_17D82:
     sub     [bx+CARSTATE.car_currpm], 50h ; 'P'
     jmp     short loc_17D39*/
 loc_17DB2:
-	arg_carState->car_currpm -= 0x28;
+	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+		arg_carState->car_currpm, 0x28);
 	goto loc_17D39;
 /*    mov     bx, [bp+arg_carState]
     sub     [bx+CARSTATE.car_currpm], 28h ; '('
@@ -721,7 +744,8 @@ loc_17EB7:
     mov     [bx+CARSTATE.car_engineLimiterTimer], 5
     jmp     loc_17D39*/
 loc_17EC2:
-	var_updatedSpeed += var_deltaSpeed;
+	var_updatedSpeed = LEGACY_U16_WRAP_ADD(
+		var_updatedSpeed, var_deltaSpeed);
 	if (var_updatedSpeed < 0x8000)
 		goto loc_17ED9;
 	if (var_updatedSpeed > 0xF500)
@@ -742,7 +766,8 @@ loc_17ED9:
     ; align 2
     db 144*/
 loc_17EE2:
-	if (-var_deltaSpeed > var_updatedSpeed)
+	if ((legacy_u16)LEGACY_S16_WRAP_NEGATE(var_deltaSpeed) >
+		var_updatedSpeed)
 		goto loc_17EEF;
 	goto loc_17D59;
 /*    mov     ax, [bp+var_deltaSpeed]
@@ -820,7 +845,8 @@ loc_17F45:
 		goto loc_17FBF;
 	if (arg_carState->car_lastrpm <= arg_carState->car_currpm)
 		goto loc_17FBF;
-	if (arg_carState->car_lastrpm - arg_carState->car_currpm <= 0x7D0)
+	if (LEGACY_S16_WRAP_SUB(arg_carState->car_lastrpm,
+		arg_carState->car_currpm) <= 0x7D0)
 		goto loc_17FA4;
 	if (arg_simd->idle_torque * arg_carState->car_gearratioshr8 <= 0x2EE0)
 		goto loc_17FBF;
@@ -850,9 +876,11 @@ loc_17F45:
     db 144*/
 loc_17FA4:
 	// NOTE: signed comparison:
-	if (arg_carState->car_currpm - arg_carState->car_lastrpm > 0x7D0) {
+	if (LEGACY_S16_WRAP_SUB(arg_carState->car_currpm,
+		arg_carState->car_lastrpm) > 0x7D0) {
 		arg_carState->car_engineLimiterTimer = 0xA;
-		arg_carState->car_speed2 -= 0x500;
+		arg_carState->car_speed2 = LEGACY_U16_WRAP_SUB(
+			arg_carState->car_speed2, 0x500U);
 	}
 /*    mov     bx, [bp+arg_carState]
     mov     ax, [bx+CARSTATE.car_currpm]
