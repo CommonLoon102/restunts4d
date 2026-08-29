@@ -1052,7 +1052,7 @@ legacy_s16 font_op2_alt(const legacy_s8* text)
 
 	centered = LEGACY_S16_WRAP_NEGATE(
 		LEGACY_S16_WRAP_SUB(font_op2(text), 0x140));
-	return (legacy_s16)((legacy_s32)centered / 2L);
+	return LEGACY_S16_DIV_OR_ZERO(centered, 2);
 }
 
 void unload_skybox(void)
@@ -2915,7 +2915,7 @@ void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value, legacy_
 	digit_count = 0;
 	do {
 		digits[digit_count++] = (legacy_s8)('0' + magnitude % 10U);
-		magnitude /= 10U;
+		magnitude = LEGACY_U16_DIV_OR_ZERO(magnitude, 10U);
 	} while (magnitude != 0);
 
 	index = 0;
@@ -3148,11 +3148,13 @@ legacy_u16 show_dialog(
 	x = LEGACY_S16_FROM_BITS(x_argument);
 	y = LEGACY_S16_FROM_BITS(y_argument);
 	if (x == -1) {
-		x = LEGACY_S16_FROM_BITS((legacy_u16)((0x140 - dialog_width) / 2));
+		x = LEGACY_S16_DIV_OR_ZERO(
+			LEGACY_S16_WRAP_SUB(0x140, dialog_width), 2);
 		x = LEGACY_S16_FROM_BITS((legacy_u16)x & 0xFFF8U);
 	}
 	if (y == -1)
-		y = LEGACY_S16_FROM_BITS((legacy_u16)((0xC8 - dialog_height) / 2));
+		y = LEGACY_S16_DIV_OR_ZERO(
+			LEGACY_S16_WRAP_SUB(0xC8, dialog_height), 2);
 
 	left = x;
 	right = LEGACY_S16_WRAP_ADD(x, dialog_width);
@@ -3273,7 +3275,7 @@ legacy_u16 show_dialog(
 		goto dialog_done;
 	}
 	if (dialog_type == 3)
-		return (legacy_u16)(placeholder_index / 2U);
+		return LEGACY_U16_DIV_OR_ZERO(placeholder_index, 2U);
 	if (dialog_type == 4) {
 		(void)sub_2EB1E(8UL);
 		goto dialog_done;
@@ -5082,8 +5084,10 @@ void load_tracks_menu_shapes(void)
 						key = 1;
 					}
 				} else if (hit == 3U) {
-					clicked_column = (legacy_u8)((mouse_xpos - 8) / 16);
-					clicked_row = (legacy_u8)((mouse_ypos - 4) / 16);
+					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+						LEGACY_S16_WRAP_SUB(mouse_xpos, 8), 16);
+					clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+						LEGACY_S16_WRAP_SUB(mouse_ypos, 4), 16);
 					if (page != 0) {
 						if (clicked_row == 10U &&
 							((legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag & 1U) != 0)
@@ -5105,8 +5109,10 @@ void load_tracks_menu_shapes(void)
 					if (key == 0x20U)
 						key = 0x0DU;
 				} else if (hit == 4U) {
-					clicked_column = (legacy_u8)((mouse_xpos - 0xDC) / 16);
-					clicked_row = (legacy_u8)((mouse_ypos - 0x24) / 16);
+					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+						LEGACY_S16_WRAP_SUB(mouse_xpos, 0xDC), 16);
+					clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+						LEGACY_S16_WRAP_SUB(mouse_ypos, 0x24), 16);
 					if (clicked_row < 6U) {
 						if (track_editor_palette_tile(page, clicked_row,
 							clicked_column) == 0xFEU)
@@ -5115,7 +5121,8 @@ void load_tracks_menu_shapes(void)
 							clicked_column) == 0xFFU)
 							clicked_column--;
 					} else {
-						clicked_row = (legacy_u8)((mouse_ypos - 0x1C) / 16);
+						clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+							LEGACY_S16_WRAP_SUB(mouse_ypos, 0x1C), 16);
 						if (clicked_row == 7U)
 							clicked_column = 0;
 						else if (clicked_column >= 3U)
@@ -5644,7 +5651,7 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	remaining = LEGACY_S16_WRAP_SUB(height,
 		LEGACY_U16_WRAP_MUL(line_count, 8U));
 	vertical_offset = LEGACY_S16_WRAP_ADD(
-		(legacy_s16)((legacy_s32)remaining / 2L), 1);
+		LEGACY_S16_DIV_OR_ZERO(remaining, 2), 1);
 	destination_index = 0;
 	line_index = 0;
 	for (source_index = 0; source_index <= length; source_index++) {
@@ -5657,7 +5664,7 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 
 		line[destination_index] = 0;
 		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
-		horizontal_offset = (legacy_s16)((legacy_s32)remaining / 2L);
+		horizontal_offset = LEGACY_S16_DIV_OR_ZERO(remaining, 2);
 		font_draw_text(line,
 			LEGACY_S16_WRAP_ADD(x, horizontal_offset),
 			LEGACY_S16_WRAP_ADD(
@@ -6795,8 +6802,13 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE* output, legacy_u32 valu
 	alphabet = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
 	digit_count = 0;
 	do {
-		digits[digit_count++] = alphabet[(legacy_u16)(value % radix)];
-		value /= radix;
+		if (radix == 0U) {
+			digits[digit_count++] = alphabet[0];
+			value = 0UL;
+		} else {
+			digits[digit_count++] = alphabet[(legacy_u16)(value % radix)];
+			value = LEGACY_U32_DIV_OR_ZERO(value, radix);
+		}
 	} while (value != 0);
 	zero_count = precision > digit_count ? precision - digit_count : 0;
 	if (zero_padded && precision < 0 && !left_aligned) {
