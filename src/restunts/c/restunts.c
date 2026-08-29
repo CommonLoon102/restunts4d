@@ -1072,10 +1072,8 @@ extern legacy_u8 byte_40634;
 extern void far* audiodriverbinary;
 extern legacy_u16 word_44D48;
 extern legacy_u16 word_454BA;
-extern legacy_s8 aStartengineNew[];
 extern legacy_s8 audio_filetemp[];
 legacy_s16 dos_data_stack_segments_match(void);
-void nopsub_3219D(const legacy_s8* format, ...);
 void audio_driver_timer(void);
 extern void sub_38CF8(legacy_s16 index, void far* context);
 extern void audio_map_song_instruments(void far* song,
@@ -2011,7 +2009,6 @@ void nopsub_27220(legacy_s16 index)
 	resource = audio_read_far_pointer(audiotimers + offset + 0x2CU);
 	channel = audio_check_flag(resource, -1, 0x40U, rate);
 	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
-	nopsub_3219D(aStartengineNew, channel);
 	audiotimers[offset + 0x1AU] = 1;
 	audiotimers[offset + 0x1BU] = 1;
 }
