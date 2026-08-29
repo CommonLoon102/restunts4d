@@ -131,12 +131,6 @@ void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
 void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
 legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);
 legacy_s16 skybox_op(legacy_s16 a, struct RECTANGLE* rectptr, legacy_s16 c, struct MATRIX* matptr, legacy_s16 e, legacy_s16 f, legacy_s16 g);
-void skybox_op_helper(legacy_u16 color, legacy_u16 point_count,
-	struct POINT2D points[]);
-legacy_u16 draw_line_related(legacy_u16 start_x, legacy_u16 start_y,
-	legacy_u16 end_x, legacy_u16 end_y, legacy_s16* line_data);
-void preRender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
-	legacy_u16 end_y, legacy_u16 color);
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void copy_string(legacy_s8* destination, legacy_s8 far* source);
 legacy_s16 font_op2_alt(const legacy_s8* text);

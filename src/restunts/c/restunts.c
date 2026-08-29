@@ -479,7 +479,6 @@ extern legacy_s16 polyinfonumpolys;
 extern legacy_u8 far* polyinfoptrs[]; // array size = 0x190 
 extern legacy_u16 poly_linked_list_40ED6[]; // array size = 0x190
 
-extern void preRender_default(legacy_s16 color, legacy_s16 vertlinecount, legacy_s16* vertlines);
 extern legacy_s8 byte_3B8F6;
 extern legacy_s8 far* skybox_res_ofs;
 extern legacy_s8 far* sdgame2ptr;
@@ -3056,8 +3055,6 @@ legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16
 legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
 	legacy_s8* extension, legacy_s8 far* prompt);
 legacy_u32 sub_2EB1E(legacy_u32 ticks);
-void preRender_line(legacy_u16 x1, legacy_u16 y1,
-	legacy_u16 x2, legacy_u16 y2, legacy_s16 color);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 	legacy_s16 shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);

@@ -66,6 +66,11 @@ void sprite_1_unk3(struct SHAPE2D far* shape, legacy_u16 phase);
 void sub_34526(struct SHAPE2D far* shape);
 void draw_filled_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	legacy_u16 numlines, legacy_u16 color);
+void draw_unknown_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
+	legacy_u16 numlines, legacy_u16 color);
+void draw_patterned_lines(legacy_s16* x1arr, legacy_s16* x2arr,
+	legacy_u16 y, legacy_u16 numlines, legacy_u16 color);
+void putpixel_line1_maybe(legacy_s16* line);
 void putpixel_single_maybe(legacy_s16 x, legacy_s16 y, legacy_s16 color);
 void putpixel_iconMask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void putpixel_iconFillings(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
