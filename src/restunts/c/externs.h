@@ -327,7 +327,7 @@ extern void init_polyinfo(void);
 extern legacy_s16 run_intro_looped(void);
 extern legacy_s8 setup_intro(void);
 extern legacy_s8 load_intro_resources(void);
-extern legacy_u16 show_dialog(legacy_s16 unk1, legacy_s16 unk2, void far* textresptr, legacy_u16 unk3, legacy_u16 unk4, legacy_s16 arg, void* unk5, legacy_s16 unk6);
+extern legacy_u16 show_dialog(legacy_s16 unk1, legacy_s16 unk2, void far* textresptr, legacy_u16 unk3, legacy_u16 unk4, legacy_s16 arg, legacy_s16* disabled_choices, legacy_s16 unk6);
 extern legacy_s8 run_menu(void);
 extern legacy_s8 setup_track(void);
 extern void run_tracks_menu(legacy_s16 unk);

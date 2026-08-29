@@ -3074,7 +3074,7 @@ legacy_u16 show_dialog(
 	legacy_u16 x_argument,
 	legacy_u16 y_argument,
 	legacy_s16 border_color,
-	void* disabled_choices_argument,
+	legacy_s16* disabled_choices,
 	legacy_s16 initial_choice
 ) {
 	legacy_s8 line_buffer[128];
@@ -3085,7 +3085,6 @@ legacy_u16 show_dialog(
 	legacy_s16 choice_right[20];
 	legacy_s16 choice_top[20];
 	legacy_s16 choice_bottom[20];
-	legacy_s16* disabled_choices;
 	legacy_s8 far* cursor;
 	legacy_s16 line_height;
 	legacy_s16 dialog_width;
@@ -3114,7 +3113,6 @@ legacy_u16 show_dialog(
 	legacy_u8 previous;
 	legacy_u8 active;
 
-	disabled_choices = (legacy_s16*)disabled_choices_argument;
 	line_height = LEGACY_S16_WRAP_ADD(fontdef_unk_0E, 2);
 	dialog_height = 0;
 	dialog_width = 0x20;
