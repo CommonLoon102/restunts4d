@@ -60,97 +60,59 @@ legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16
 }
 
 void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
-/*update_car_speed proc far
-    var_currTorque = byte ptr -10
-    var_deltaSpeed = word ptr -8
-    var_updatedSpeed = word ptr -6
-    var_4 = word ptr -4
-    var_2 = word ptr -2
-     s = byte ptr 0
-     r = byte ptr 2
-    arg_carInputByte = byte ptr 6
-    arg_MplayerFlag = byte ptr 8
-    arg_carState = word ptr 10
-    arg_simd = word ptr 12
-*/
 	legacy_s16 var_2;
 	legacy_s16 var_4;
 	legacy_u16 var_updatedSpeed;
 	legacy_s16 var_deltaSpeed;
 	legacy_u8 var_currTorque;
 
-	if (framespersec != 0x14)
-		goto loc_17A8E;
-	var_2 = 6;
-	goto loc_17A93;
+	var_2 = framespersec == 0x14 ? 6 : 0xC;
+	if (arg_carState->car_engineLimiterTimer != 0) {
+		arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
+			arg_carState->car_engineLimiterTimer, 1);
+	}
 
-loc_17A8E:
-	var_2 = 0xC;
-loc_17A93:
-	if (arg_carState->car_engineLimiterTimer == 0)
-		goto loc_17AA1;
-	arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
-		arg_carState->car_engineLimiterTimer, 1);
-
-loc_17AA1:
 	arg_carState->car_speeddiff = LEGACY_S16_WRAP_SUB(
 		arg_carState->car_speed2, arg_carState->car_lastspeed);
 	arg_carState->car_lastspeed = arg_carState->car_speed2;
 	arg_carState->car_lastrpm = arg_carState->car_currpm;
-	if (arg_carState->car_transmission != 0)
-		goto loc_17AE6;
-	if (arg_carState->car_changing_gear != 0)
-		goto loc_17AE6;
-	if ((arg_carInputByte & 0x10) != 0)
-		goto loc_17B0F;
-	if ((arg_carInputByte & 0x20) != 0)
-		goto loc_17B2E;
-	goto loc_17B86;
+	var_4 = 0;
+	if (arg_carState->car_transmission == 0 &&
+		arg_carState->car_changing_gear == 0) {
+		if ((arg_carInputByte & 0x10) != 0)
+			var_4 = 1;
+		else if ((arg_carInputByte & 0x20) != 0)
+			var_4 = -1;
+	} else if (arg_carState->car_current_gear != 0 &&
+		arg_carState->car_changing_gear == 0 &&
+		arg_carState->car_sumSurfRearWheels != 0) {
+		if ((legacy_u16)arg_carState->car_currpm >
+			(legacy_u16)arg_simd->upshift_rpm) {
+			var_4 = 1;
+		} else if ((legacy_u16)arg_carState->car_currpm <
+			(legacy_u16)arg_simd->downshift_rpm) {
+			var_4 = -1;
+		}
+	}
+	if (var_4 > 0 &&
+		arg_carState->car_current_gear != arg_simd->num_gears) {
+		arg_carState->car_current_gear = LEGACY_S8_WRAP_ADD(
+			arg_carState->car_current_gear, 1);
+	} else if (var_4 < 0 && arg_carState->car_current_gear > 1) {
+		arg_carState->car_current_gear = LEGACY_S8_WRAP_SUB(
+			arg_carState->car_current_gear, 1);
+	} else {
+		var_4 = 0;
+	}
+	if (var_4 != 0) {
+		arg_carState->car_changing_gear = 1;
+		arg_carState->car_fpsmul2 = gear_change_delay(framespersec);
+		arg_carState->car_knob_x2 =
+			arg_simd->knob_points[arg_carState->car_current_gear].px;
+		arg_carState->car_knob_y2 =
+			arg_simd->knob_points[arg_carState->car_current_gear].py;
+	}
 
-loc_17AE6:
-	if (arg_carState->car_current_gear != 0)
-		goto loc_17AF0;
-	goto loc_17B86;
-
-loc_17AF0:
-	if (arg_carState->car_changing_gear == 0)
-		goto loc_17AFA;
-	goto loc_17B86;
-
-loc_17AFA:
-	if (arg_carState->car_sumSurfRearWheels != 0)
-		goto loc_17B04;
-	goto loc_17B86;
-
-loc_17B04:
-	if ((legacy_u16)arg_carState->car_currpm <= (legacy_u16)arg_simd->upshift_rpm)
-		goto loc_17B20;
-
-loc_17B0F:
-	if (arg_carState->car_current_gear == arg_simd->num_gears)
-		goto loc_17B86;
-	arg_carState->car_current_gear = LEGACY_S8_WRAP_ADD(
-		arg_carState->car_current_gear, 1);
-	goto loc_17B39;
-
-loc_17B20:
-	if ((legacy_u16)arg_carState->car_currpm >= (legacy_u16)arg_simd->downshift_rpm)
-		goto loc_17B86;
-
-loc_17B2E:
-	if (arg_carState->car_current_gear <= 1)
-		goto loc_17B86;
-	arg_carState->car_current_gear = LEGACY_S8_WRAP_SUB(
-		arg_carState->car_current_gear, 1);
-
-loc_17B39:
-	arg_carState->car_changing_gear = 1;
-	arg_carState->car_fpsmul2 = gear_change_delay(framespersec);
-	arg_carState->car_knob_x2 = arg_simd->knob_points[arg_carState->car_current_gear].px;
-	arg_carState->car_knob_y2 = arg_simd->knob_points[arg_carState->car_current_gear].py;
-
-
-loc_17B86:
 	if (arg_carState->car_changing_gear != 0)
 		goto loc_17B93;
 	goto loc_17C9E;
