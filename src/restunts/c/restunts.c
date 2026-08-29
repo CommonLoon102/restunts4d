@@ -56,6 +56,7 @@ extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
 extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
+legacy_u32 timer_get_delta(void);
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -281,58 +282,6 @@ legacy_s16 nopsub_30A97(legacy_u32 ticks)
 			return key;
 	} while ((legacy_u32)timer_get_counter() < target);
 	return 0;
-}
-
-legacy_u32 timer_get_counter(void)
-{
-	/*
-	unsigned long val;
-
-	disable();
-	val = timer_callback_counter;
-	enable();
-
-	return val;
-	*/
-
-	// Compiler produces too sloppy code; stick to asm for now...
-	__asm {
-		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
-		sti
-	}
-}
-
-legacy_u32 timer_get_delta(void)
-{
-    /*
-	unsigned long last, curr;
-	
-	last = last_timer_callback_counter;
-	
-	disable();
-	curr = timer_get_counter();
-	enable();
-	
-	last_timer_callback_counter = curr;
-
-	return curr - last;
-	*/
-	
-	// Compiler produces too sloppy code; stick to asm for now...
-	__asm {
-		mov     bx, word ptr last_timer_callback_counter
-		mov     cx, word ptr last_timer_callback_counter+2
-		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
-		sti
-		mov     word ptr last_timer_callback_counter, ax
-		mov     word ptr last_timer_callback_counter+2, dx
-		sub     ax, bx
-		sbb     dx, cx
-	}
 }
 
 legacy_u32 timer_get_delta_alt(void)

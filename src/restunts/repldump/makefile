@@ -19,6 +19,7 @@ ASM_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.
 # only the DOS linker's required stack segment remains platform assembly.
 DOS_BSS_START_OBJ_FILE = dosbss.obj
 DOS_PLATFORM_OBJ_FILES = dosstack.obj
+DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj
 
 ifeq ($(TARGET), stage)
   RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj \
@@ -47,13 +48,14 @@ RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
 ASM_OBJFILES = $(addprefix $(ASM_OBJDIR)\, $(ASM_OBJ_FILES))
 ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
 DOS_PLATFORM_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_OBJ_FILES))
+DOS_PLATFORM_RUNTIME_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_RUNTIME_OBJ_FILES))
 DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\$(DOS_BSS_START_OBJ_FILE)
 
 # C Compiler Flags und Linker
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
 
 ifeq ($(TARGET), ported)
-  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
+  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
   CFLAGS = 
   OUTFILE = repldump.exe
 endif

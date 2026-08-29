@@ -24,17 +24,19 @@ CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
 RESTUNTS_OBJDIR = $(SRC)\c\build\dos
 ASM_OBJDIR = $(SRC)\asm\build
 ASMORIG_OBJDIR = $(SRC)\asmorig\build
+DOS_PLATFORM_OBJDIR = $(SRC)\platform\dos\build
 OBJDIR = $(SRC)\dos\build\$(TARGET)
 
 RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
 ASM_OBJFILES = $(addprefix $(ASM_OBJDIR)\, $(ASM_OBJ_FILES))
 ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
+DOS_PLATFORM_RUNTIME_OBJFILES = $(DOS_PLATFORM_OBJDIR)\timer.obj
 
 # C Compiler Flags und Linker
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
 
 ifeq ($(TARGET), ported)
-  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\main.obj $(CM_LIB_FILES)
+  ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(OBJDIR)\main.obj $(CM_LIB_FILES)
   CFLAGS = 
   OUTFILE = restunts.exe
 endif

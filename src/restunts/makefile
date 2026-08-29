@@ -37,7 +37,7 @@ endif
 
 MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
 
-restunts: asm c
+restunts: asm c dosplatform
 	make -C dos $(MAKE_PARAMS)
 
 restunts-original: asmorig
@@ -61,7 +61,7 @@ c-stage: force_me
 restunts-sdl:
 	make -C sdl $(MAKE_PARAMS)
 
-repldump: asm c
+repldump: asm c dosplatform
 	make -C repldump $(MAKE_PARAMS)
 
 repldump-original: asmorig
