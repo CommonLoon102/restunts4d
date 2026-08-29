@@ -31,10 +31,11 @@ endif
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(C_FILES:.c=.obj)) $(DOS_STARTUP_OBJ)
 OBJ_FILES_BACKSLASH = $(subst /,\,$(OBJ_FILES))
+C_HEADERS = $(wildcard *.h)
 
 all: $(OBJ_FILES)
 
-$(OBJDIR)/%.obj: %.c
+$(OBJDIR)/%.obj: %.c $(C_HEADERS)
   # c file name
 	$(eval C_FILE = $<)
   # compiler run
