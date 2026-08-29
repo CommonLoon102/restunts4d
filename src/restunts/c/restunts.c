@@ -47,16 +47,9 @@ extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
 extern legacy_u8 far* pboxshape;
 extern legacy_s16 dos_mouse_button_count;
-extern legacy_u8 callbackflags[128];
-extern legacy_u8 callbackflags2[133];
-extern void (far* callbacks[64])(void);
-extern legacy_u8 in_kb_parse_key;
 extern void (far* dos_timer_callbacks[6])(void);
 extern legacy_u32 dos_timer_counter;
 extern legacy_s16 dos_timer_callbacks_suspended;
-extern legacy_u16 readchar_callback_ofs;
-extern legacy_u16 readchar_callback_seg;
-extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
 legacy_u32 timer_get_delta(void);
 legacy_u32 timer_get_slow_counter(void);
@@ -74,6 +67,14 @@ void dos_process_exit(legacy_s16 status);
 static legacy_u32 timer_wait_target;
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
+
+static legacy_u8 input_callback_flags[128];
+static legacy_u8 input_extended_callback_flags[133];
+static void (far* input_callbacks[64])(void);
+static legacy_u8 input_callback_dispatching;
+static readchar_callback_type input_readchar_callback = kb_read_char;
+static legacy_s8 input_callback_overflow_message[] =
+	"NO ROOM LEFT ON TIMER INTERRUPT ROUTINE LIST\r";
 /*
 unsigned const char g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
@@ -107,10 +108,10 @@ void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
 	legacy_u16 key_index;
 
 	for (callback_index = 0; callback_index < 64U; callback_index++) {
-		if (callbacks[callback_index] == callback)
+		if (input_callbacks[callback_index] == callback)
 			break;
-		if (FP_SEG(callbacks[callback_index]) == 0U) {
-			callbacks[callback_index] = callback;
+		if (FP_SEG(input_callbacks[callback_index]) == 0U) {
+			input_callbacks[callback_index] = callback;
 			break;
 		}
 	}
@@ -120,12 +121,12 @@ void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
 	code_bits = (legacy_u16)code;
 	if ((code_bits & 0x00FFU) != 0) {
 		if (code_bits <= 0x007FU)
-			callbackflags[code_bits] = (legacy_u8)(callback_index + 1U);
+			input_callback_flags[code_bits] = (legacy_u8)(callback_index + 1U);
 		return;
 	}
 	key_index = (legacy_u16)(code_bits >> 8);
 	if (key_index <= 0x84U)
-		callbackflags2[key_index] = (legacy_u8)(callback_index + 1U);
+		input_extended_callback_flags[key_index] = (legacy_u8)(callback_index + 1U);
 }
 
 legacy_s16 kb_parse_key(legacy_s16 code)
@@ -136,29 +137,29 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 
 	code_bits = (legacy_u16)code;
 	disable();
-	if (in_kb_parse_key != 0) {
+	if (input_callback_dispatching != 0) {
 		enable();
 		return LEGACY_S16_FROM_BITS(code_bits);
 	}
-	in_kb_parse_key = 1;
+	input_callback_dispatching = 1;
 	enable();
 
 	if ((code_bits & 0x00FFU) != 0) {
 		key_index = code_bits & 0x007FU;
-		callback_number = callbackflags[key_index];
+		callback_number = input_callback_flags[key_index];
 		code_bits = key_index;
 	} else {
 		key_index = code_bits >> 8;
 		if (key_index >= 0x84U)
 			key_index = 0x84U;
-		callback_number = callbackflags2[key_index];
+		callback_number = input_extended_callback_flags[key_index];
 	}
 
 	if (callback_number != 0) {
-		callbacks[(legacy_u16)callback_number - 1U]();
+		input_callbacks[(legacy_u16)callback_number - 1U]();
 		code_bits = 0;
 	}
-	in_kb_parse_key = 0;
+	input_callback_dispatching = 0;
 	return LEGACY_S16_FROM_BITS(code_bits);
 }
 
@@ -170,24 +171,22 @@ void nopsub_304AF(legacy_s16 code)
 	code_bits = (legacy_u16)code;
 	if ((code_bits & 0x00FFU) != 0) {
 		if (code_bits <= 0x007FU)
-			callbackflags[code_bits] = 0;
+			input_callback_flags[code_bits] = 0;
 		return;
 	}
 	key_index = (legacy_u16)(code_bits >> 8);
 	if (key_index <= 0x84U)
-		callbackflags2[key_index] = 0;
+		input_extended_callback_flags[key_index] = 0;
 }
 
 void nopsub_kb_set_readchar_callback(readchar_callback_type callback)
 {
-	readchar_callback_ofs = (legacy_u16)FP_OFF(callback);
-	readchar_callback_seg = (legacy_u16)FP_SEG(callback);
+	input_readchar_callback = callback;
 }
 
 readchar_callback_type nopsub_kb_get_readchar_callback(void)
 {
-	return (readchar_callback_type)MK_FP(readchar_callback_seg,
-		readchar_callback_ofs);
+	return input_readchar_callback;
 }
 
 void timer_reg_callback(void (far* callback)(void))
@@ -200,7 +199,7 @@ void timer_reg_callback(void (far* callback)(void))
 			break;
 	}
 	if (callback_index == 5U) {
-		fatal_error(aNoRoomLeftOnTimerInterru);
+		fatal_error(input_callback_overflow_message);
 		return;
 	}
 
