@@ -37,13 +37,6 @@ extern legacy_u16 dos_joystick_axis2_min;
 extern legacy_u16 dos_joystick_axis2_max;
 extern legacy_u16 dos_joystick_axis1_scale;
 extern legacy_u16 dos_joystick_axis2_scale;
-extern legacy_u8 byte_3FB38[];
-extern legacy_u8 byte_449CE;
-extern legacy_u8 byte_3BD34[];
-extern legacy_s16 word_46170[7];
-extern legacy_u8 byte_44292[64];
-extern legacy_u8 byte_442EA[64];
-extern legacy_u8 far* pboxshape;
 extern legacy_s16 dos_mouse_button_count;
 extern void (far* dos_timer_callbacks[6])(void);
 extern legacy_u32 dos_timer_counter;
@@ -63,6 +56,19 @@ void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
 void dos_process_exit(legacy_s16 status);
 
 static legacy_u32 timer_wait_target;
+
+static const legacy_u8 input_direction_table[16] = {
+	0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0
+};
+static const legacy_u8 quiz_question_suffixes[20] = {
+	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'
+};
+static legacy_u8 input_steering_history[64];
+static legacy_u8 input_steering_history_valid[64];
+static legacy_u8 ranking_highlight;
+static legacy_s16 ranking_entry_order[7];
+static legacy_u8 far* progress_box_shape;
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 
@@ -237,7 +243,7 @@ void sub_307B4(void)
 
 legacy_s16 sub_307D2(legacy_s16 index)
 {
-	return byte_3FB38[(legacy_u16)index & 0x0FU];
+	return input_direction_table[(legacy_u16)index & 0x0FU];
 }
 
 legacy_s16 sub_307E3(void)
@@ -1504,8 +1510,8 @@ void replay_unk2(legacy_s16 mode)
 					((legacy_u16)get_kb_or_joy_flags() & 0x33U);
 			}
 			history_index = (legacy_u16)elapsed_time2 & 0x3FU;
-			byte_44292[history_index] = (legacy_u8)byte_40D6A;
-			byte_442EA[history_index] = 1;
+			input_steering_history[history_index] = (legacy_u8)byte_40D6A;
+			input_steering_history_valid[history_index] = 1;
 		} else {
 			input_flags = get_kb_or_joy_flags();
 		}
@@ -3970,7 +3976,7 @@ void preRender_icons(legacy_u8 page)
 
 	for (row = 0; row < 6U; row++) {
 		for (column = 0; column < 6U; column++) {
-			tile = pboxshape[(legacy_u16)page * 36U + row * 6U +
+			tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U +
 				column];
 			x = LEGACY_U16_WRAP_ADD(0x00DCU,
 				LEGACY_U16_WRAP_MUL(column, 16U));
@@ -4610,7 +4616,7 @@ extern legacy_u8 byte_45E16;
 static legacy_u8 track_editor_palette_tile(legacy_u8 page,
 	legacy_u8 row, legacy_u8 column)
 {
-	return pboxshape[(legacy_u16)page * 36U +
+	return progress_box_shape[(legacy_u16)page * 36U +
 		(legacy_u16)row * 6U + column];
 }
 
@@ -4740,7 +4746,7 @@ void load_tracks_menu_shapes(void)
 
 	text_resource = (legacy_s8 far*)file_load_resfile("tedit");
 	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
-	pboxshape = (legacy_u8 far*)locate_shape_alt(text_resource, "pbox");
+	progress_box_shape = (legacy_u8 far*)locate_shape_alt(text_resource, "pbox");
 	shape_name_resource = locate_shape_alt(text_resource, "snam");
 	mask_name_resource = locate_shape_alt(text_resource, "mnam");
 	text_name_resource = locate_shape_alt(text_resource, "tnam");
@@ -5857,9 +5863,9 @@ legacy_s16 highscore_write_a(legacy_s16 create_default)
 	legacy_u16 entry;
 	legacy_u16 offset;
 
-	byte_449CE = 0xFFU;
+	ranking_highlight = 0xFFU;
 	for (entry = 0; entry < 7U; entry++)
-		word_46170[entry] = entry;
+		ranking_entry_order[entry] = entry;
 	file_build_path(byte_3B80C, gameconfig.game_trackname,
 		".hig", g_path_buf);
 	if (create_default == 0) {
@@ -5898,7 +5904,7 @@ void highscore_write_b(void)
 
 	scores = (legacy_u8 far*)td11_highscores;
 	for (entry = 0; entry < 7U; entry++) {
-		source_entry = (legacy_u16)word_46170[entry];
+		source_entry = (legacy_u16)ranking_entry_order[entry];
 		for (offset = 0; offset < 0x34U; offset++) {
 			ordered_scores[entry * 0x34U + offset] =
 				scores[source_entry * 0x34U + offset];
@@ -5924,7 +5930,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 	legacy_s8* output;
 
 	record_offset = LEGACY_U16_WRAP_MUL(
-		(legacy_u16)word_46170[entry], 0x34U);
+		(legacy_u16)ranking_entry_order[entry], 0x34U);
 	scores = (legacy_u8 far*)td11_highscores;
 	for (copied = 0; copied < sizeof(record); copied++)
 		record[copied] = scores[record_offset + copied];
@@ -5999,7 +6005,7 @@ void highscore_text_unk(void)
 		print_highscore_entry(entry, text_offsets);
 		row = LEGACY_S16_WRAP_ADD(
 			LEGACY_U16_WRAP_MUL(entry, 10U), 0x19);
-		color = entry == (legacy_u8)byte_449CE ? dialogarg2 : 0;
+		color = entry == (legacy_u8)ranking_highlight ? dialogarg2 : 0;
 		font_set_unk(color, 0);
 		font_draw_text(&resID_byte1 + text_offsets[0], 0x10, row);
 		font_draw_text(&resID_byte1 + text_offsets[1], 0x78, row);
@@ -6063,7 +6069,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 			dialog_fnt_colour, 0);
 		if (highscore_write_a(0) == 0) {
 			score_offset = LEGACY_U16_WRAP_ADD(
-				LEGACY_U16_WRAP_MUL(word_46170[0], 0x34U), 0x32U);
+				LEGACY_U16_WRAP_MUL(ranking_entry_order[0], 0x34U), 0x32U);
 			scores = (legacy_u8 far*)td11_highscores;
 			score = (legacy_u16)scores[score_offset] |
 				((legacy_u16)scores[
@@ -6428,16 +6434,16 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 		time_bits) {
 		if (entry >= 7U)
 			break;
-		word_46170[entry] = (legacy_s16)entry;
+		ranking_entry_order[entry] = (legacy_s16)entry;
 		entry++;
 	}
 	rank = entry;
-	byte_449CE = (legacy_u8)rank;
+	ranking_highlight = (legacy_u8)rank;
 	while (entry < 6U) {
-		word_46170[entry + 1U] = (legacy_s16)entry;
+		ranking_entry_order[entry + 1U] = (legacy_s16)entry;
 		entry++;
 	}
-	word_46170[rank] = 6;
+	ranking_entry_order[rank] = 6;
 
 	for (copied = 0; copied < sizeof(record); copied++)
 		record[copied] = 0;
@@ -6486,7 +6492,7 @@ void security_check(legacy_s16 question_index)
 	legacy_u16 attempts;
 	legacy_u16 i;
 
-	question_id[2] = byte_3BD34[(legacy_u16)question_index];
+	question_id[2] = quiz_question_suffixes[(legacy_u16)question_index];
 	answer_id[2] = question_id[2];
 	resource = file_load_resfile("misc");
 	copy_string(question_text, locate_text_res(resource, "cop"));
@@ -6549,10 +6555,10 @@ void replay_unk(void)
 
 	frame = state.game_frame;
 	history_index = frame & 0x3FU;
-	if (byte_442EA[history_index] == 0)
+	if (input_steering_history_valid[history_index] == 0)
 		return;
 
-	target_angle = LEGACY_S8_FROM_BITS(byte_44292[history_index]);
+	target_angle = LEGACY_S8_FROM_BITS(input_steering_history[history_index]);
 	steering_angle = state.playerstate.car_steeringAngle;
 	speed_index = (state.playerstate.car_speed2 >> 10) & 0xFCU;
 	response_table = (legacy_s8*)steerWhlRespTable_ptr;
@@ -6575,7 +6581,7 @@ void replay_unk(void)
 	}
 	if (action != 0)
 		td16_rpl_buffer[frame] |= action;
-	byte_442EA[history_index] = 0;
+	input_steering_history_valid[history_index] = 0;
 }
 
 void mouse_minmax_position(legacy_s16 inset)
