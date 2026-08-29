@@ -1,8 +1,7 @@
 #include "externs.h"
+#include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
-
-#include <dos.h>
 
 /* Renderer work areas formerly reserved as anonymous spans in dseg.asm. */
 struct SHAPE3D game3dshapes[130];
@@ -533,11 +532,13 @@ struct FULL_AUDIO_ENGINE_DEFINITION unk_3E82C = {
 
 static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 {
-	sprite->sprite_bitmapptr = (struct SHAPE2D far*)MK_FP(0xA000, 0);
+	sprite->sprite_bitmapptr = (struct SHAPE2D far*)
+		dos_memory_make_pointer(0xA000, 0);
 	sprite->sprite_unk1 = 0;
 	sprite->sprite_unk2 = 0;
 	sprite->sprite_unk3 = 0;
-	sprite->sprite_lineofs = (legacy_u8*)FP_OFF(full_screen_line_offsets);
+	sprite->sprite_lineofs = (legacy_u8*)
+		dos_memory_pointer_offset(full_screen_line_offsets);
 	sprite->sprite_left = 0;
 	sprite->sprite_right = 320;
 	sprite->sprite_top = 0;
@@ -557,7 +558,7 @@ void full_data_initialize(void)
 		full_screen_line_offsets[index] = (legacy_u16)(index * 320U);
 	for (index = 0; index < 0xE10U; index++)
 		wnd_defs[index] = 0;
-	next_wnd_def = (legacy_s8*)FP_OFF(wnd_defs);
+	next_wnd_def = (legacy_s8*)dos_memory_pointer_offset(wnd_defs);
 	full_initialize_screen_sprite(&sprite1);
 	full_initialize_screen_sprite(&sprite2);
 }
