@@ -622,8 +622,9 @@ struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height
 
 struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
-	legacy_s16 far* crack_lines;
-	legacy_s16 far* crack_info;
+	legacy_u8 far* crack_lines;
+	legacy_u8 far* crack_info;
+	legacy_s16 frame_count;
 	legacy_s16 frame_index;
 	legacy_s16 line_count;
 	legacy_s16 start_x;
@@ -637,21 +638,25 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 	struct POINT2D point;
 	legacy_s16 i;
 
-	crack_lines = (legacy_s16 far*)locate_shape_alt(gameresptr, "crak");
-	crack_info = (legacy_s16 far*)locate_shape_alt(gameresptr, "cinf");
+	crack_lines = (legacy_u8 far*)locate_shape_alt(gameresptr, "crak");
+	crack_info = (legacy_u8 far*)locate_shape_alt(gameresptr, "cinf");
 	frame_divisor = LEGACY_S16_FROM_BITS(
 		LEGACY_U16_DIV_OR_ZERO(framespersec, 7U));
 	frame_index = LEGACY_S16_DIV_OR_ZERO(frame, frame_divisor);
-	if (frame_index >= crack_info[0])
-		frame_index = LEGACY_S16_WRAP_SUB(crack_info[0], 1);
-	line_count = crack_info[frame_index + 1];
+	frame_count = LEGACY_READ_S16_LE(crack_info);
+	if (frame_index >= frame_count)
+		frame_index = LEGACY_S16_WRAP_SUB(frame_count, 1);
+	line_count = LEGACY_READ_S16_LE(crack_info +
+		((legacy_u16)LEGACY_S16_WRAP_ADD(frame_index, 1) << 1));
 	rect_ingame_text = cliprect_unk;
 
 	for (i = 0; i < line_count; i++) {
-		start_x = crack_lines[i * 4];
-		start_y = crack_lines[i * 4 + 1];
-		end_x = crack_lines[i * 4 + 2];
-		end_y = crack_lines[i * 4 + 3];
+		legacy_u16 line_offset = (legacy_u16)i << 3;
+
+		start_x = LEGACY_READ_S16_LE(crack_lines + line_offset);
+		start_y = LEGACY_READ_S16_LE(crack_lines + line_offset + 2U);
+		end_x = LEGACY_READ_S16_LE(crack_lines + line_offset + 4U);
+		end_y = LEGACY_READ_S16_LE(crack_lines + line_offset + 6U);
 		scaled_coordinate = LEGACY_S32_WRAP_MUL(
 			(legacy_s32)start_y, (legacy_s32)height);
 		scaled_start_y = LEGACY_S16_FROM_BITS((legacy_u16)
