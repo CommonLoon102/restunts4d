@@ -18,8 +18,8 @@ ASM_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.
 # Transitional headless platform: gameplay and game data are supplied by C;
 # only the DOS linker's required stack segment remains platform assembly.
 DOS_BSS_START_OBJ_FILE = dosbss.obj
-DOS_PLATFORM_OBJ_FILES = memory.obj dosstack.obj
-DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj runtime.obj memory.obj joystick.obj mouse.obj video.obj audio.obj critical.obj
+DOS_PLATFORM_OBJ_FILES = memory.obj file.obj dosstack.obj
+DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj runtime.obj memory.obj file.obj joystick.obj mouse.obj video.obj audio.obj critical.obj
 
 ifeq ($(TARGET), stage)
   RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj \
@@ -92,7 +92,7 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
+repldump.exe: force_me $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
   ifeq ($(LINKER), wlink)
 		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS)
   else
@@ -103,6 +103,8 @@ repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
 		del lscript.txt
   endif
 	copy $(OUTFILE) s:\stunts
+
+force_me: ;
 
 $(OBJDIR)/repldump.obj: repldump.c
 	$(CC) -I../c $?

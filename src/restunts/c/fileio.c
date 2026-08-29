@@ -9,6 +9,7 @@
 #include "externs.h"
 #include "fileio.h"
 #include "memmgr.h"
+#include "platform.h"
 
 #ifdef RESTUNTS_HEADLESS
 static const legacy_s8 headless_file_error[] = "File error: %s";
@@ -46,117 +47,28 @@ static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
 // Minimal stdio.h "support" until we can link with a real CRT.
 #ifndef __STDIO_H
 #define __STDIO_H
-typedef legacy_s16 FILE;
-
-legacy_s16 g_errno;
+typedef legacy_u16 FILE;
 
 FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 {
-	legacy_u16 offs = FP_OFF(path);
-	FILE* handle;
-
-	g_errno = 0;
-
-	if (mode[0] == 'w') { // Create new file for writing
-		__asm {
-			mov  ah, 3Ch // Create file
-			mov  cx, 0 // No attributes
-			mov  dx, offs
-			int  21h
-			jnc  short create_ok
-			mov  ax, 0
-			mov  g_errno, 1
-		create_ok:
-			mov  handle, ax
-		}
-	}
-	else { // Open existing file for reading
-		__asm {
-			mov  ah, 3Dh // Open file
-			mov  al, 0 // Read only
-			mov  dx, offs
-			int  21h
-			jnc  short open_ok
-			mov  ax, 0
-			mov  g_errno, 1
-		open_ok:
-			mov  handle, ax
-		}
-	}
-
-	return handle;
+	return (FILE*)dos_file_open(path, mode[0] == 'w');
 }
 
 legacy_s16 fclose(FILE* file)
 {
-	legacy_s16 res;
-
-	__asm {
-		mov  ah, 3Eh // Close file
-		mov  bx, file
-		int  21h
-		jnc  short close_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	close_ok:
-		mov  res, ax
-	}
-	
-	return res;
+	return dos_file_close((legacy_u16)file);
 }
 
 size_t fread(void far* dst, size_t size, size_t nmemb, FILE* file)
 {
-	legacy_u16 segm = FP_SEG(dst);
-	legacy_u16 offs = FP_OFF(dst);
-
-	size_t res;
-	size *= nmemb;
-	
-	__asm {
-		push ds
-		mov  ah, 3Fh // Read from file
-		mov  bx, file
-		mov  ds, segm
-		mov  dx, offs
-		mov  cx, size
-		int  21h
-		jnc  short read_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	read_ok:
-		mov  res, ax
-		pop  ds
-	}
-	
-	return res;
+	return dos_file_read((legacy_u16)file, dst,
+		(legacy_u16)(size * nmemb));
 }
 
 size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 {
-	legacy_u16 segm = FP_SEG(src);
-	legacy_u16 offs = FP_OFF(src);
-
-	size_t res;
-	size *= nmemb;
-	
-	__asm {
-		push ds
-		mov  ah, 40h // Write to file
-		mov  bx, file
-		mov  ds, segm
-		mov  dx, offs
-		mov  cx, size
-		int  21h
-		jnc  short write_ok
-		mov  ax, 0
-		mov  g_errno, 1
-	write_ok:
-		mov  res, ax
-		pop  ds
-	}
-	
-	return res;
+	return dos_file_write((legacy_u16)file, src,
+		(legacy_u16)(size * nmemb));
 }
 
 #define SEEK_SET 0
@@ -165,84 +77,28 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 
 legacy_s16 fseek(FILE *file, legacy_s32 offset, legacy_s16 origin)
 {
-	legacy_u16 ol = offset;
-	legacy_u16 oh = offset >> 16;
-
-	origin |= (0x42 << 8); // Seek file cmd as high byte
-
-	__asm {
-		mov  ax, origin
-		mov  bx, file
-		mov  cx, oh
-		mov  dx, ol
-		int  21h
-		jnc  short seek_ok
-		mov  g_errno, 1
-	seek_ok:
-	}
-
-	return 0;
+	return dos_file_seek((legacy_u16)file, offset, origin);
 }
 legacy_s32 ftell(FILE *file)
 {
-	legacy_u16 ol;
-	legacy_u16 oh;
-
-	__asm {
-		mov  ah, 42h // Seek file
-		mov  al, SEEK_CUR
-		mov  bx, file
-		mov  cx, 0
-		mov  dx, 0
-		int  21h
-		jnc  short tell_ok
-		mov  word ptr g_errno, 1
-	tell_ok:
-		mov  oh, dx
-		mov  ol, ax
-	}
-
-	return ((legacy_s32)oh << 16) | ol;
+	return dos_file_tell((legacy_u16)file);
 }
 
 legacy_s16 ferror(FILE* file)
 {
-	legacy_s16 res = g_errno;
 	(void)file;
-	g_errno = 0;
-	return res;
+	return dos_file_error();
 }
 
 legacy_s16 remove(const legacy_s8* path)
 {
-	legacy_u16 segm = FP_SEG(path);
-	legacy_u16 offs = FP_OFF(path);
-	legacy_s16 retval;
-
-	__asm {
-		push ds
-		mov  ah, 41h // Unlink file
-		mov  ds, segm
-		mov  dx, offs
-		int  21h
-		jnc  short unlink_ok
-		mov  word ptr retval, -1
-		mov  g_errno, ax
-		jmp  short unlink_done
-	unlink_ok:
-		mov  word ptr retval, 0
-	unlink_done:
-		pop ds
-	}
-	
-	return retval;
+	return dos_file_remove(path);
 }
 #endif
 
 struct file_find_dos {
-	struct find_t dta; // DOS DTA struct
-	legacy_s8 path[128];    // Full path to found file
-	legacy_s8* dirdelim;    // Last dir delimiter in path string
+	legacy_s8 path[128];
+	legacy_s8* dirdelim;
 } g_find;
 
 // Find file matching given query. Returns pointer to first matched filename
@@ -252,29 +108,10 @@ const legacy_s8* file_find(const legacy_s8* query)
 {
 	legacy_s8 const* chsrc;
 	legacy_s8* chdst;
-	legacy_s8 attrs = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
-	legacy_s16 retval;
+	const legacy_s8* found_name;
 
-	__asm {
-		mov  ah, 1Ah // Set DTA
-		mov  dx, offset g_find.dta
-		int  21h
-
-		mov  ah, 4Eh // Find first file
-		mov  cl, attrs
-		mov  dx, query
-		int  21h
-
-		jnc  short find_ok
-		mov  word ptr retval, -1
-		jmp  short find_done
-	find_ok:
-		mov  word ptr retval, 0
-	find_done:
-	}
-
-	// Find failed.
-	if (retval) {
+	found_name = dos_file_find_first(query);
+	if (found_name == 0) {
 		return  0;
 	}
 
@@ -289,7 +126,7 @@ const legacy_s8* file_find(const legacy_s8* query)
 	}
 
 	// Copy found filename to result path.
-	memcpy(g_find.dirdelim, g_find.dta.name, FILENAME_LEN);
+	memcpy(g_find.dirdelim, found_name, FILENAME_LEN);
 
 	return g_find.path;
 }
@@ -298,31 +135,15 @@ const legacy_s8* file_find(const legacy_s8* query)
 // FIXME: DOS specific implementation.
 const legacy_s8* file_find_next(void)
 {
-	legacy_s16 retval;
+	const legacy_s8* found_name;
 
-	__asm {
-		mov  ah, 1Ah // Set DTA
-		mov  dx, offset g_find.dta
-		int  21h
-
-		mov  ah, 4Fh // Find next file
-		int  21h
-
-		jnc  short findnext_ok
-		mov  word ptr retval, -1
-		jmp  short findnext_done
-	findnext_ok:
-		mov  word ptr retval, 0
-	findnext_done:
-	}
-
-	// Find next failed.
-	if (retval) {
+	found_name = dos_file_find_next();
+	if (found_name == 0) {
 		return  0;
 	}
 
 	// Copy found filename to result path.
-	memcpy(g_find.dirdelim, g_find.dta.name, FILENAME_LEN);
+	memcpy(g_find.dirdelim, found_name, FILENAME_LEN);
 
 	return g_find.path;
 }

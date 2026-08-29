@@ -7,6 +7,20 @@
 void far* dos_memory_get_psp(void);
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs);
 legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs);
+
+legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create);
+legacy_s16 dos_file_close(legacy_u16 handle);
+legacy_u16 dos_file_read(legacy_u16 handle, void far* destination,
+	legacy_u16 length);
+legacy_u16 dos_file_write(legacy_u16 handle, const void far* source,
+	legacy_u16 length);
+legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset,
+	legacy_s16 origin);
+legacy_s32 dos_file_tell(legacy_u16 handle);
+legacy_s16 dos_file_error(void);
+legacy_s16 dos_file_remove(const legacy_s8* path);
+const legacy_s8* dos_file_find_first(const legacy_s8* query);
+const legacy_s8* dos_file_find_next(void);
 #endif
 
 #endif
