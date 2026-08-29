@@ -2330,17 +2330,18 @@ loc_25D3C:
 	} else 
 	if (transshapenumvertscopy == 2) {
 		//goto loc_25DB8;
-		temp0 = var_18 >> 1;
+		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 1U);
 	} else
 	if (transshapenumvertscopy == 4) {
 		//goto loc_25DC6;
-		temp0 = var_18 >> 2;
+		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 2U);
 	} else
 	if (transshapenumvertscopy == 8) {
 		// goto loc_25DDA;
-		temp0 = var_18 >> 3;
+		temp0 = (legacy_u16)LEGACY_S32_SAR(var_18, 3U);
 	} else {
-		temp0 = var_18 / transshapenumvertscopy;
+		temp0 = (legacy_u16)LEGACY_S32_DIV_OR_ZERO(
+			var_18, (legacy_s32)(legacy_u16)transshapenumvertscopy);
 	}
 	
 	((legacy_u16 far*)transshapepolyinfo)[0] = temp0;
@@ -3957,8 +3958,9 @@ static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) 
 	legacy_u32 quotient;
 	legacy_u16 remainder;
 
-	quotient = numerator / divisor;
-	remainder = (legacy_u16)(numerator % divisor);
+	quotient = LEGACY_U32_DIV_OR_ZERO(numerator, divisor);
+	remainder = divisor == 0U ? 0U :
+		(legacy_u16)(numerator % divisor);
 	if ((legacy_u16)(divisor >> 1) < remainder)
 		quotient++;
 	return (legacy_u16)quotient;
@@ -3971,7 +3973,8 @@ static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 	 * sentinel; retain it for the degenerate calls as well. */
 	if (major < 2U)
 		return 0x135CU;
-	return (legacy_u16)(((legacy_u32)minor << 16) / major);
+	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+		(legacy_u32)minor << 16, major);
 #else
 	legacy_u16 far* table;
 
