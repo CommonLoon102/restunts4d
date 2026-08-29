@@ -914,7 +914,7 @@ legacy_s16 sub_18D60(
 		route_vectors = track_vector_from_legacy_offset(
 			packed_opponent_offset);
 	} else {
-		route_vectors = (struct VECTOR*)track_info->si_cameraDataOffset;
+		route_vectors = track_info->si_cameraDataOffset;
 	}
 
 	if (connection_status != 0 && has_opponent_path == 0) {

@@ -54,7 +54,7 @@ struct TRKOBJINFO {
 	legacy_s8  si_exitType;
 	legacy_s8  si_arrowType;        // Type of the element for determining penalty-arrow behaviour.
 	legacy_s16 si_arrowOrient;      // Orientation angle for penalty-arrow purposes
-	legacy_s16* si_cameraDataOffset; // offset (0003B770)
+	struct VECTOR* si_cameraDataOffset; // offset (0003B770)
 	legacy_s8  si_opp1;             //Appears to affect how the opponent AI approaches an element.
 	legacy_s8  si_opp2;
 	legacy_s8  si_opp3;
