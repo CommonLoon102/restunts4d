@@ -4,10 +4,9 @@
 #include <stdarg.h>
 #include "externs.h"
 #include "memmgr.h"
+#include "platform.h"
 
 #ifdef RESTUNTS_HEADLESS
-extern legacy_u16 word_3BE30;
-extern legacy_u16 word_3BE32;
 extern void headless_exit(legacy_s16 result);
 
 void add_exit_handler(void (far* exit_handler)(void))
@@ -56,31 +55,10 @@ void fatal_error(const legacy_s8* format, ...)
 	headless_exit(1);
 }
 
-#ifdef RESTUNTS_DOS
-extern void _CType _setvect(legacy_s16 interrupt_number,
-	void interrupt (far* handler)());
-extern void interrupt (far* _CType _getvect(
-	legacy_s16 interrupt_number))();
-static void interrupt (far* old_intr0_handler)();
-
-#pragma argsused
-static void interrupt headless_intr0_handler(legacy_u16 bp, legacy_u16 di,
-	legacy_u16 si, legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
-	legacy_u16 cx, legacy_u16 bx, legacy_u16 ax, legacy_u16 ip,
-	legacy_u16 cs, legacy_u16 flags)
-{
-	word_3BE30 = cs;
-	word_3BE32 = ip;
-	ip = LEGACY_U16_WRAP_ADD(ip, 2U);
-	ax = 0;
-}
-#endif
-
 void init_div0(void)
 {
 #ifdef RESTUNTS_DOS
-	old_intr0_handler = _getvect(0);
-	_setvect(0, headless_intr0_handler);
+	dos_install_divide_error_handler();
 #endif
 }
 
