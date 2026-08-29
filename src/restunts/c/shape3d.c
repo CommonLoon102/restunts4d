@@ -3630,20 +3630,28 @@ void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode)
 			}
 			return ;
 		case 5:
-			value = ((legacy_u32*)regsi)[0] + 0x8000;
+			value = LEGACY_U32_WRAP_ADD(
+				LEGACY_U32_FROM_WORDS(regsi[0], regsi[1]), 0x8000UL);
 			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = value >> 16;
-				var_18[480 + ofs + i] = value >> 16;
-				value -= (legacy_u16)regsi[6];
+				var_18[ofs + i] = LEGACY_S16_FROM_BITS(
+					(legacy_u16)(value >> 16));
+				var_18[480 + ofs + i] = LEGACY_S16_FROM_BITS(
+					(legacy_u16)(value >> 16));
+				value = LEGACY_U32_WRAP_SUB(value,
+					(legacy_u16)regsi[6]);
 			}
 			return ;
 		case 6:
-			value = ((legacy_u32*)regsi)[0] + 0x8000;
+			value = LEGACY_U32_WRAP_ADD(
+				LEGACY_U32_FROM_WORDS(regsi[0], regsi[1]), 0x8000UL);
 			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = value >> 16;
-				var_18[480 + ofs + i] = value >> 16;
-				
-				value += (legacy_u16)regsi[6];
+				var_18[ofs + i] = LEGACY_S16_FROM_BITS(
+					(legacy_u16)(value >> 16));
+				var_18[480 + ofs + i] = LEGACY_S16_FROM_BITS(
+					(legacy_u16)(value >> 16));
+
+				value = LEGACY_U32_WRAP_ADD(value,
+					(legacy_u16)regsi[6]);
 			}
 			return ;
 		case 7:

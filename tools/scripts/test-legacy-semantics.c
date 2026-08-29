@@ -125,6 +125,10 @@ static void test_little_endian_access(void)
 	assert(bytes[2] == 0xABU && bytes[3] == 0x89U);
 	assert(LEGACY_READ_U32_LE(bytes) == 0x89ABCDEFUL);
 	assert((legacy_u32)LEGACY_READ_S32_LE(bytes) == 0x89ABCDEFUL);
+	assert(LEGACY_U32_FROM_WORDS(0xCDEFU, 0x89ABU) ==
+		0x89ABCDEFUL);
+	assert(LEGACY_U32_FROM_WORDS(-1, LEGACY_S16_FROM_BITS(0x8000U)) ==
+		0x8000FFFFUL);
 }
 
 int main(void)
