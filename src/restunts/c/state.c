@@ -856,10 +856,8 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 static legacy_s16 route_average(legacy_s16 first, legacy_s16 second) {
 	legacy_s32 sum;
 
-	sum = (legacy_s32)first + (legacy_s32)second;
-	if (sum < 0)
-		return (legacy_s16)(-(((-sum) + 1) / 2));
-	return (legacy_s16)(sum / 2);
+	sum = LEGACY_S32_WRAP_ADD(first, second);
+	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, 1U));
 }
 
 legacy_s16 sub_18D60(
@@ -1593,7 +1591,8 @@ track_record_piece:
 track_build_cameras:
 	byte_45D90 = (legacy_u8)startcol2;
 	byte_45E16 = (legacy_u8)startrow2;
-	camera_count = (legacy_u16)(track_pieces_counter / 3);
+	camera_count = (legacy_u16)LEGACY_S16_DIV_OR_ZERO(
+		track_pieces_counter, 3);
 	if (camera_count > 0x40U)
 		camera_count = 0x40U;
 	byte_4616E = (legacy_u8)camera_count;
