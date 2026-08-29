@@ -795,29 +795,31 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	response_table = (legacy_s8*)steerWhlRespTable_ptr;
 	steering_angle = state.playerstate.car_steeringAngle;
 	speed_index = (legacy_u8)((state.playerstate.car_speed2 >> 10) & 0xFC);
-	response_index = (legacy_s16)(speed_index + (legacy_s8)steering_input);
+	response_index = LEGACY_S16_WRAP_ADD(
+		(legacy_s16)speed_index, (legacy_s16)steering_input);
 	response = response_table[response_index];
 
 	/* Turning farther from center gets the original fourfold response. */
 	if ((response > 0 && steering_angle < -1) ||
 		(response < 0 && steering_angle > 1)) {
-		response = (legacy_s16)(response * 4);
+		response = LEGACY_S16_SHL(response, 2U);
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
 	if (response == 0 && state.playerstate.car_speed2 != 0 &&
 		steering_angle != 0) {
-		centering_limit = (legacy_s16)(response_table[speed_index + 1] * 2);
+		centering_limit = LEGACY_S16_SHL(
+			(legacy_s16)response_table[speed_index + 1U], 1U);
 		if (steering_angle < 0) {
-			if ((legacy_s16)-steering_angle > centering_limit)
+			if (LEGACY_S16_WRAP_NEGATE(steering_angle) > centering_limit)
 				response = centering_limit;
 			else
-				response = (legacy_s16)-steering_angle;
+				response = LEGACY_S16_WRAP_NEGATE(steering_angle);
 		} else {
 			if (steering_angle > centering_limit)
-				response = (legacy_s16)-centering_limit;
+				response = LEGACY_S16_WRAP_NEGATE(centering_limit);
 			else
-				response = (legacy_s16)-steering_angle;
+				response = LEGACY_S16_WRAP_NEGATE(steering_angle);
 		}
 	}
 
@@ -833,7 +835,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 			response = -0x50;
 	}
 
-	steering_angle = (legacy_s16)(steering_angle + response);
+	steering_angle = LEGACY_S16_WRAP_ADD(steering_angle, response);
 	if (steering_angle > 0xF0)
 		steering_angle = 0xF0;
 	if (steering_angle < -0xF0)
@@ -1963,7 +1965,9 @@ loc_174DD:
     var_2A = 0;
     var_2C = 0;
 loc_174E5:
-	var_2A = sub_18D60(var_2, &state.playerstate.car_vec_unk3, var_2C, 0);
+	var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
+		var_2, &state.playerstate.car_vec_unk3,
+		(legacy_s16)(legacy_u8)var_2C, 0));
 	var_28 = state.playerstate.car_vec_unk3;
 	var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
 		world_position_word(state.playerstate.car_posWorld1.lx));
@@ -2001,15 +2005,16 @@ loc_175A5:
 loc_175AF:
 	if (var_3A != 0)
 		goto loc_175D0;
-	sub_18D60(var_2, &var_52, 0, 0);
+	sub_18D60(var_2, var_52, 0, 0);
 	
-	sub_18D60(var_2, &var_1A, 1, 0);
+	sub_18D60(var_2, var_1A, 1, 0);
 	goto loc_175F0;
 loc_175D0:
-	sub_18D60(var_2, &var_52,
-		LEGACY_S16_WRAP_SUB((legacy_s16)var_3A, 1), 0);
+	sub_18D60(var_2, var_52,
+		(legacy_s16)LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)var_3A - 1U)), 0);
 
-	sub_18D60(var_2, &var_1A, var_3A, 0);
+	sub_18D60(var_2, var_1A, (legacy_s16)(legacy_u8)var_3A, 0);
 loc_175F0:
 
 	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
