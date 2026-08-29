@@ -27,6 +27,17 @@ static void opponent_route_write(legacy_u16 index, legacy_u16 value)
 	LEGACY_WRITE_U16_LE((legacy_u8 far*)trackdata3 + offset, value);
 }
 
+static legacy_s16 aero_resistance_at(legacy_s16 resistance,
+	legacy_s16 speed_index)
+{
+	legacy_s32 product;
+
+	product = LEGACY_S32_WRAP_MUL(resistance, speed_index);
+	product = LEGACY_S32_WRAP_MUL(product, speed_index);
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_SAR(product, 9U));
+}
+
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 {
 	legacy_s16 i;
@@ -38,18 +49,16 @@ void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 	if (is_opponent == 0) {
 		(void)simd_decode(&simd_player, simd_resource);
 		simd_player.aerorestable = td04_aerotable_pl;
-		for (i = 0; i < 0x40; i++) {
-			td04_aerotable_pl[i] = ((legacy_s32)simd_player.aero_resistance *
-				(legacy_s32)i * (legacy_s32)i) >> 9;
-		}
+		for (i = 0; i < 0x40; i++)
+			td04_aerotable_pl[i] = aero_resistance_at(
+				simd_player.aero_resistance, i);
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
 	} else {
 		(void)simd_decode(&simd_opponent, simd_resource);
 		simd_opponent.aerorestable = td05_aerotable_op;
-		for (i = 0; i < 0x40; i++) {
-			td05_aerotable_op[i] = ((legacy_s32)simd_opponent.aero_resistance *
-				(legacy_s32)i * (legacy_s32)i) >> 9;
-		}
+		for (i = 0; i < 0x40; i++)
+			td05_aerotable_op[i] = aero_resistance_at(
+				simd_opponent.aero_resistance, i);
 		copy_string(gsna_string, locate_shape_alt(carresptr, "gsna"));
 	}
 }
