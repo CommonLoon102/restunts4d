@@ -14,7 +14,6 @@
 extern legacy_s16 __stbuf(FILE* stream);
 extern void __ftbuf(legacy_s16 buffer_state, FILE* stream);
 extern legacy_s16 __output(FILE* stream, const legacy_s8* format, void* arguments);
-extern void _abort(void);
 
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
@@ -67,6 +66,7 @@ void dos_video_set_mode_13h(void);
 void dos_video_set_mode4(void);
 void dos_video_set_mode7(void);
 void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
+void dos_process_exit(legacy_s16 status);
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -6695,7 +6695,7 @@ void call_exitlist(void)
 void call_exitlist2(void)
 {
 	call_exitlist();
-	libsub_quit_to_dos_alt(0);
+	dos_process_exit(0);
 }
 
 static void fatal_vprintf(const legacy_s8* format, legacy_u16 argument_offset)
@@ -6720,7 +6720,7 @@ void fatal_error(const legacy_s8* format, ...)
 	va_start(arguments, format);
 	fatal_vprintf(format, FP_OFF(arguments));
 	va_end(arguments);
-	_abort();
+	dos_process_exit(1);
 }
 
 extern legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key,
@@ -10583,7 +10583,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	// Audio driver.
 	if (audio_load_dos_driver(audiodriverstring, 0, 0)) {
 		dos_timer_shutdown();
-		libsub_quit_to_dos_alt(1);
+		dos_process_exit(1);
 	}
 	
 	if (argnosound) {
