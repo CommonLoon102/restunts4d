@@ -70,6 +70,13 @@ static void test_dword_shifts_and_rotates(void)
 
 static void test_multiply_and_divide(void)
 {
+	assert(LEGACY_S8_WRAP_ADD(127, 1) == -128);
+	assert(LEGACY_S8_WRAP_SUB(-128, 1) == 127);
+	assert(LEGACY_S8_WRAP_NEGATE(-128) == -128);
+	assert(LEGACY_S8_WRAP_MUL(64, 4) == 0);
+	assert(LEGACY_U8_WRAP_ADD(0xFFU, 1U) == 0U);
+	assert(LEGACY_U8_WRAP_SUB(0U, 1U) == 0xFFU);
+	assert(LEGACY_U8_WRAP_MUL(0xFFU, 2U) == 0xFEU);
 	assert(LEGACY_S16_WRAP_ADD(32767, 1) == -32768);
 	assert(LEGACY_S16_WRAP_SUB(-32768, 1) == 32767);
 	assert(LEGACY_S32_WRAP_ADD(

@@ -1023,7 +1023,7 @@ loc_15130:
 loc_1513E:
     var_2 = 0;
 loc_15142:
-	var_2 = LEGACY_S8_FROM_BITS((legacy_u8)((legacy_u8)var_2 + 1U));
+	var_2 = LEGACY_S8_WRAP_ADD(var_2, 1);
 	if (var_2 != 5)
 		goto loc_151A2;
 	arg_pState->car_36MwhlAngle = 0x200;
@@ -3229,12 +3229,10 @@ loc_161FF:
 loc_16204:
     pState_minusRotate_z_1 = 0;
 loc_1620A:
-	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_pState->car_surfaceWhl[0] +
-			(legacy_u8)arg_pState->car_surfaceWhl[1]));
-	arg_pState->car_sumSurfRearWheels = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_pState->car_surfaceWhl[2] +
-			(legacy_u8)arg_pState->car_surfaceWhl[3]));
+	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
+		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
+	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
+		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
 	if (state.game_inputmode != 2)
 		goto loc_16236;
 	goto loc_16840;
@@ -3525,9 +3523,9 @@ loc_1641E:
 loc_16425:
     goto     loc_162F9;
 loc_16428:
-	var_11C = LEGACY_S8_FROM_BITS((legacy_u8)(
-		(legacy_u8)arg_pState->car_sumSurfFrontWheels +
-		(legacy_u8)arg_pState->car_sumSurfRearWheels));
+	var_11C = LEGACY_S8_WRAP_ADD(
+		arg_pState->car_sumSurfFrontWheels,
+		arg_pState->car_sumSurfRearWheels);
 	if (arg_MplayerFlag != 0)
 		goto loc_1644C;
 	if (var_11C != 0)

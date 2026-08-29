@@ -110,8 +110,8 @@ loc_17A8E:
 loc_17A93:
 	if (arg_carState->car_engineLimiterTimer == 0)
 		goto loc_17AA1;
-	arg_carState->car_engineLimiterTimer = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_carState->car_engineLimiterTimer - 1U));
+	arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
+		arg_carState->car_engineLimiterTimer, 1);
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_engineLimiterTimer], 0
     jz      short loc_17AA1
@@ -187,8 +187,8 @@ loc_17B04:
 loc_17B0F:
 	if (arg_carState->car_current_gear == arg_simd->num_gears)
 		goto loc_17B86;
-	arg_carState->car_current_gear = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_carState->car_current_gear + 1U));
+	arg_carState->car_current_gear = LEGACY_S8_WRAP_ADD(
+		arg_carState->car_current_gear, 1);
 	goto loc_17B39;
 /*    mov     si, [bp+arg_simd]
     mov     al, [si+SIMD.num_gears]
@@ -207,8 +207,8 @@ loc_17B20:
 loc_17B2E:
 	if (arg_carState->car_current_gear <= 1)
 		goto loc_17B86;
-	arg_carState->car_current_gear = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_carState->car_current_gear - 1U));
+	arg_carState->car_current_gear = LEGACY_S8_WRAP_SUB(
+		arg_carState->car_current_gear, 1);
 /*    cmp     [bx+CARSTATE.car_current_gear], 1
     jle     short loc_17B86
     dec     [bx+CARSTATE.car_current_gear]*/
@@ -421,8 +421,8 @@ loc_17C93:
 loc_17C9E:
 	if (arg_carState->car_fpsmul2 == 0)
 		goto loc_17CAC;
-	arg_carState->car_fpsmul2 = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u8)arg_carState->car_fpsmul2 - 1U));
+	arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
+		arg_carState->car_fpsmul2, 1);
 /*    mov     bx, [bp+arg_carState]
     cmp     [bx+CARSTATE.car_fpsmul2], 0
     jz      short loc_17CAC

@@ -183,8 +183,7 @@ void update_gamestate(void)
 			if (word_44DCA < 0x1C2)
 				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA, 8);
 			if (byte_4393C == 1 && word_44DCA > 0x180)
-				byte_4393C = LEGACY_S8_FROM_BITS(
-					(legacy_u8)((legacy_u8)byte_4393C + 1U));
+				byte_4393C = LEGACY_S8_WRAP_ADD(byte_4393C, 1);
 			if (byte_4393C == 2) {
 				if (LEGACY_S16_WRAP_ADD(
 					multiply_and_scale(cos_fast(track_angle),

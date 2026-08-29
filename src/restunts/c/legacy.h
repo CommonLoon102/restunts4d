@@ -40,6 +40,22 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	(legacy_s16)(-1 - (legacy_s16)(0xFFFFU - (legacy_u16)(value))))
 #endif
 
+#define LEGACY_U8_WRAP_ADD(left, right) \
+	((legacy_u8)((legacy_u8)(left) + (legacy_u8)(right)))
+#define LEGACY_U8_WRAP_SUB(left, right) \
+	((legacy_u8)((legacy_u8)(left) - (legacy_u8)(right)))
+#define LEGACY_U8_WRAP_MUL(left, right) \
+	((legacy_u8)((legacy_u16)(legacy_u8)(left) * \
+	(legacy_u16)(legacy_u8)(right)))
+#define LEGACY_S8_WRAP_ADD(left, right) \
+	LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_ADD(left, right))
+#define LEGACY_S8_WRAP_SUB(left, right) \
+	LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_SUB(left, right))
+#define LEGACY_S8_WRAP_NEGATE(value) \
+	LEGACY_S8_FROM_BITS((legacy_u8)(0U - (legacy_u8)(value)))
+#define LEGACY_S8_WRAP_MUL(left, right) \
+	LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_MUL(left, right))
+
 #define LEGACY_U16_WRAP_ADD(left, right) \
 	((legacy_u16)((legacy_u16)(left) + (legacy_u16)(right)))
 #define LEGACY_U16_WRAP_SUB(left, right) \

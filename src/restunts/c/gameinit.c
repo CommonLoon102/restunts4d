@@ -204,8 +204,8 @@ void init_game_state(legacy_s16 arg)
 				&state.playerstate.car_vec_unk3,
 				(legacy_s16)route_point,
 				0);
-			state.playerstate.field_CE = LEGACY_S8_FROM_BITS(
-				(legacy_u8)(route_point + 1U));
+			state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(
+				route_point, 1);
 		}
 
 		tmpcol = LEGACY_S16_WRAP_ADD(
@@ -241,8 +241,8 @@ void init_game_state(legacy_s16 arg)
 				&state.opponentstate.car_vec_unk3,
 				(legacy_s16)route_point,
 				(legacy_s16*)&state.field_3F9);
-			state.opponentstate.field_CE = LEGACY_S8_FROM_BITS(
-				(legacy_u8)(route_point + 1U));
+			state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
+				route_point, 1);
 		}
 
 		state.field_42A = 0;
