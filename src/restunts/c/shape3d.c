@@ -350,62 +350,44 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			transshapenumvertscopy = 4;
 	}
 
-	goto loc_250E6;
-
-loc_250E6:
 	var_ptrectflag = 0x0f;
 	var_460 = 1;
 	var_1A = 0;
-	i = 0;
-	goto loc_2513F;
-
-loc_2513E:
-	i = LEGACY_U16_WRAP_ADD(i, 1U);
-loc_2513F:
-	if (transshapenumvertscopy > i) goto loc_2514B;
-	if (var_460 != 0 || var_1A == 0 ||
+	for (i = 0; i < transshapenumvertscopy;
+		i = LEGACY_U16_WRAP_ADD(i, 1U)) {
+		polyvertpointptrtab[i] = &var_vecarr2[i];
+		shape3d_vertex_read(arg_transshapeptr->shapeptr, i, &var_vec2);
+		if (select_rect_param != 0) {
+			// sar, not idiv: the original floors, so negative coordinates keep
+			// their extra step rather than rounding toward zero.
+			var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
+			var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
+			var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
+		}
+		mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
+		var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
+		var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
+		var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
+		var_vecarr[i] = var_vec3;
+		if (var_vec3.z < 0x0C) {
+			var_vertflagtbl[i] = 1;
+			var_1A = 1;
+			continue;
+		}
+		var_460 = 0;
+		var_vertflagtbl[i] = 0;
+		vector_to_point(&var_vec3, polyvertpointptrtab[i]);
+		if (var_ptrectflag != 0)
+			var_ptrectflag &= rect_compare_point(polyvertpointptrtab[i]);
+		if (var_ptrectflag == 0)
+			break;
+	}
+	if (i == transshapenumvertscopy &&
+		(var_460 != 0 || var_1A == 0 ||
 		LEGACY_S16_FROM_BITS(arg_transshapeptr->unk) <
-			shape3d_absolute_word(var_vec.x)) return (legacy_u16)-1;
-	goto loc_25220;
-
-loc_2514B:	
-
-	polyvertpointptrtab[i] = &var_vecarr2[i];
-	shape3d_vertex_read(arg_transshapeptr->shapeptr, i, &var_vec2);
-	if (select_rect_param != 0) {
-		// sar, not idiv: the original floors, so negative coordinates keep
-		// their extra step rather than rounding toward zero.
-		var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
-		var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
-		var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
+			shape3d_absolute_word(var_vec.x))) {
+		return (legacy_u16)-1;
 	}
-	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-	var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
-	var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
-	var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
-	var_vecarr[i] = var_vec3;
-	if (var_vec3.z < 0xc) {
-		var_vertflagtbl[i] = 1;
-		var_1A = 1;
-		goto loc_2513E;
-	}
-	goto loc_250FA;
-
-loc_250FA:
-	var_460 = 0;
-	var_vertflagtbl[i] = 0;
-	vector_to_point(&var_vec3, polyvertpointptrtab[i]);
-	if (var_ptrectflag != 0)
-		var_ptrectflag &= rect_compare_point(polyvertpointptrtab[i]);
-	if (var_ptrectflag != 0) 
-		goto loc_2513E;
-	goto loc_25220;
-
-
-
-
-
-loc_25220: // // in the loop, for i = 0 .. transshapenumvertscopy
 
 	transshapeprimitives = arg_transshapeptr->shapeptr->shape3d_primitives;
 
@@ -437,76 +419,48 @@ loc_25282:
 	var_1A = 0;
 	transshapeprimindexptr = transshapeprimitives;
 	var_polyvertcounter = 0;
-	goto loc_25328;
+	while (var_polyvertcounter < transshapenumvertscopy) {
+		temp = transshapeprimindexptr[0];
+		transshapeprimindexptr++;
+		polyvertpointptrtab[var_polyvertcounter] = &var_vecarr2[temp];
 
+		if (var_vertflagtbl[temp] == 0xFFU) {
+			shape3d_vertex_read(
+				arg_transshapeptr->shapeptr, temp, &var_vec2);
+			if (select_rect_param != 0) {
+				// sar, not idiv: the original floors, so negative coordinates keep
+				// their extra step rather than rounding toward zero.
+				var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
+				var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
+				var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
+			}
+			mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
+			var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
+			var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
+			var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
+			var_vecarr[temp] = var_vec3;
+			if (var_vec3.z >= 0x0C) {
+				var_460 = 0;
+				var_vertflagtbl[temp] = 0;
+				vector_to_point(&var_vec3,
+					polyvertpointptrtab[var_polyvertcounter]);
+			} else {
+				var_vertflagtbl[temp] = 1;
+				var_1A = 1;
+			}
+		} else if (var_vertflagtbl[temp] == 0) {
+			var_460 = 0;
+		} else if (var_vertflagtbl[temp] == 1) {
+			var_1A = 1;
+		}
 
-loc_25304:
-	var_460 = 0;
-
-loc_2530A:
-	if (var_ptrectflag != 0) {
-		var_ptrectflag &= rect_compare_point(polyvertpointptrtab[var_polyvertcounter]);
+		if (var_vertflagtbl[temp] == 0 && var_ptrectflag != 0) {
+			var_ptrectflag &= rect_compare_point(
+				polyvertpointptrtab[var_polyvertcounter]);
+		}
+		var_polyvertcounter = LEGACY_U16_WRAP_ADD(
+			var_polyvertcounter, 1U);
 	}
-
-loc_25325:
-	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
-
-loc_25328:
-	if (var_polyvertcounter >= transshapenumvertscopy) goto loc_2542A;
-
-
-	temp = transshapeprimindexptr[0];
-	//fatal_error("%i", temp);
-	transshapeprimindexptr++;
-	polyvertpointptrtab[var_polyvertcounter] = &var_vecarr2[temp];
-
-	if (var_vertflagtbl[temp] == 0xff) { 
-		goto loc_25370; 
-	}
-	if (var_vertflagtbl[temp] == 0) { 
-		goto loc_25304;
-	}
-	if (var_vertflagtbl[temp] == 1) { 
-		var_1A = 1;
-		goto loc_25325;
-	}
-	goto loc_25325;
-
-
-
-loc_25370:
-
-	shape3d_vertex_read(arg_transshapeptr->shapeptr, temp, &var_vec2);
-	if (select_rect_param != 0) {
-		// sar, not idiv: the original floors, so negative coordinates keep
-		// their extra step rather than rounding toward zero.
-		var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
-		var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
-		var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
-	}
-	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-	var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
-	var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
-	var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
-	var_vecarr[temp] = var_vec3;
-
-	if (var_vec3.z >= 0xc) {
-		var_460 = 0;
-		var_vertflagtbl[temp] = 0;
-		vector_to_point(&var_vec3, polyvertpointptrtab[var_polyvertcounter]);
-		goto loc_2530A;
-
-	}
-	var_vertflagtbl[temp] = 1;
-	var_1A = 1;
-	goto loc_25325;
-
-
-
-// end of 2nd loop
-
-
-loc_2542A:
 
 	if (var_460 != 0) goto loc_25801;
 	if (var_ptrectflag != 0 && var_1A == 0) goto loc_25801;
