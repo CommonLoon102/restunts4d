@@ -214,16 +214,13 @@ static void update_legacy_grip_stack_words(
 	 * Reproduce update_grip's first operands: twice the car's base grip and
 	 * the sum of the four surface-specific sliding coefficients.
 	 */
-	combined_grip_operand = (legacy_s16)((legacy_u16)simd->grip << 1);
+	combined_grip_operand = LEGACY_S16_SHL(simd->grip, 1U);
 	sliding_sum = 0;
 	sliding_values = &simd->sliding;
 	for (i = 0; i < 4; i++) {
-		sliding_sum = (legacy_s16)(
-			(legacy_u16)sliding_sum +
-			(legacy_u16)sliding_values[
-				(legacy_u8)carstate->car_surfaceWhl[i]
-			]
-		);
+		sliding_sum = LEGACY_S16_WRAP_ADD(
+			sliding_sum,
+			sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
 	}
 
 	/* Operand words left by update_grip's first signed long multiply. */
@@ -254,9 +251,10 @@ static void update_legacy_grip_stack_words(
 
 	/* Operand words left by the sliding-grip signed long division. */
 	speed_shr8 = grip_speed >> 8;
-	speed_squared = (legacy_u32)speed_shr8 * speed_shr8;
-	scaled_combined_grip =
-		(legacy_s32)carstate->car_surfacegrip_sum * 0x100L;
+	speed_squared = LEGACY_U32_WRAP_MUL(
+		(legacy_u32)speed_shr8, (legacy_u32)speed_shr8);
+	scaled_combined_grip = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)carstate->car_surfacegrip_sum, 0x100L);
 	legacy_execution_residue.grip_stack_words[0] =
 		(legacy_s16)((legacy_u32)scaled_combined_grip >> 16);
 	legacy_execution_residue.grip_stack_words[1] = (legacy_s16)speed_squared;
@@ -324,23 +322,23 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	square_low = (legacy_u16)(square_low >> 6);
 	demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
 
-	combined_grip = LEGACY_S16_FROM_BITS(
-		(legacy_u16)simd->grip << 1);
+	combined_grip = LEGACY_S16_SHL(simd->grip, 1U);
 	sliding_sum = 0;
 	sliding_values = &simd->sliding;
 	for (i = 0; i < 4U; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
 			sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
 	}
-	product = (legacy_s32)combined_grip * (legacy_s32)sliding_sum;
+	product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)combined_grip, (legacy_s32)sliding_sum);
 	combined_grip = LEGACY_S16_FROM_BITS(
 		(legacy_u16)LEGACY_S32_SAR(product, 10U));
-	carstate->car_demandedGrip = (legacy_s16)demanded_grip;
+	carstate->car_demandedGrip = LEGACY_S16_FROM_BITS(demanded_grip);
 	carstate->car_surfacegrip_sum = combined_grip;
 
 	if (player_behavior == 0) {
-		carstate->car_40MfrontWhlAngle = LEGACY_S16_FROM_BITS(
-			(legacy_u16)carstate->car_steeringAngle << 2);
+		carstate->car_40MfrontWhlAngle = LEGACY_S16_SHL(
+			carstate->car_steeringAngle, 2U);
 		if (carstate->car_angle_z != 0) {
 			carstate->car_angle_z = LEGACY_S16_SAR(
 				LEGACY_S16_WRAP_MUL(carstate->car_angle_z, 15), 4U);
@@ -369,8 +367,10 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 
 	if (LEGACY_S16_FROM_BITS(demanded_grip) > combined_grip) {
 		carstate->car_slidingFlag = 1;
-		numerator = (legacy_s32)combined_grip * 0x100L;
-		denominator = (legacy_s32)speed_shr8 * (legacy_s32)speed_shr8;
+		numerator = LEGACY_S32_WRAP_MUL(
+			(legacy_s32)combined_grip, 0x100L);
+		denominator = LEGACY_S32_WRAP_MUL(
+			(legacy_s32)speed_shr8, (legacy_s32)speed_shr8);
 		adjusted_angle = LEGACY_S16_FROM_BITS(
 			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(numerator, denominator));
 		if (initial_angle < 0)
@@ -463,7 +463,7 @@ finish_angles:
 		absolute_angle = carstate->field_42;
 		if (absolute_angle < 0)
 			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
-		penalty = LEGACY_S16_FROM_BITS((legacy_u16)absolute_angle << 1);
+		penalty = LEGACY_S16_SHL(absolute_angle, 1U);
 		if (carstate->car_speed <= (legacy_u16)penalty) {
 			carstate->car_speed = 0;
 			carstate->car_speed2 = 0;
