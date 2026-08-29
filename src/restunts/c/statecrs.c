@@ -77,9 +77,11 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 		random_value = (legacy_s16)get_kevinrandom();
 		state.field_32E[slot] = LEGACY_S16_WRAP_MUL(random_value, 4);
 
-		particle_angle = (legacy_s16)(
-			((legacy_s32)angular_range * (legacy_s32)emitted) /
-			(legacy_s32)free_count);
+		particle_angle = LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_S32_DIV_OR_ZERO(
+				LEGACY_S32_WRAP_MUL(
+					(legacy_s32)angular_range, (legacy_s32)emitted),
+				(legacy_s32)free_count));
 		particle_angle = LEGACY_S16_WRAP_ADD(particle_angle, base_angle);
 		state.field_35E[slot] = LEGACY_S16_FROM_BITS(
 			(legacy_u16)particle_angle & 0x03FFU);
@@ -280,7 +282,8 @@ loc_1967F:
 	if (arg_MplayerFlag != 0)
 		goto loc_196B3;
 	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = framespersec << 2;
+	state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_SHL(framespersec, 2U));
 /*    mov     bx, [bp+var_cState]
     mov     [bx+CARSTATE.car_crashBmpFlag], 1
     sub     ax, ax
@@ -370,7 +373,8 @@ loc_19704:
     jmp     loc_1964E*/
 loc_19719:
 	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = framespersec << 2;
+	state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_SHL(framespersec, 2U));
 /*    mov     bx, [bp+var_cState]
     mov     ax, [bx+CARSTATE.car_speed2]
     mov     state.game_impactSpeed, ax
@@ -387,7 +391,9 @@ loc_19730:
 	var_cState->car_crashBmpFlag = 3;
 	if (arg_MplayerFlag != 0)
 		goto loc_19752;
-	state.game_total_finish = state.game_frame + state.game_penalty + elapsed_time1;
+	state.game_total_finish = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(state.game_frame, state.game_penalty),
+		elapsed_time1);
 	state.game_frames_per_sec = framespersec;
 	goto loc_19729;
 /*    mov     bx, [bp+var_cState]
@@ -403,7 +409,8 @@ loc_19730:
     ; align 2
     db 144*/
 loc_19752:
-	state.field_144 = state.game_frame + elapsed_time1;
+	state.field_144 = LEGACY_S16_WRAP_ADD(
+		state.game_frame, elapsed_time1);
 	goto loc_1964E;
 /*    mov     ax, state.game_frame
     add     ax, elapsed_time1

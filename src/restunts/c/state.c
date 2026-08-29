@@ -509,7 +509,8 @@ static void opponent_advance_route(void)
 	legacy_u8 route_point;
 
 	route_point = (legacy_u8)state.opponentstate.field_CE;
-	state.opponentstate.field_CE = (legacy_u8)(route_point + 1U);
+	state.opponentstate.field_CE = LEGACY_S8_FROM_BITS(
+		(legacy_u8)(route_point + 1U));
 	if (sub_18D60(opponent_route_word(
 		state.opponentstate.car_trackdata3_index),
 		&state.opponentstate.car_vec_unk3, route_point,
@@ -520,8 +521,8 @@ static void opponent_advance_route(void)
 		state.opponentstate.car_trackdata3_index, 1);
 	if (opponent_route_word(
 		state.opponentstate.car_trackdata3_index) == 0) {
-		state.opponentstate.field_CD =
-			(legacy_u8)(state.opponentstate.field_CD + 1U);
+		state.opponentstate.field_CD = LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)state.opponentstate.field_CD + 1U));
 		state.opponentstate.car_trackdata3_index = 0;
 	}
 	state.opponentstate.field_CE = 0;
@@ -1731,11 +1732,12 @@ void init_plantrak(void) {
 		1,
 		(legacy_s32)0x00017700L,
 		0L,
-		(legacy_s32)((legacy_s32)path_z * (legacy_s32)64),
+		LEGACY_S32_SHL((legacy_s32)path_z, 6U),
 		0);
 
 	route_index = (legacy_u8)state.opponentstate.field_CE;
-	state.opponentstate.field_CE = (legacy_u8)(route_index + 1U);
+	state.opponentstate.field_CE = LEGACY_S8_FROM_BITS(
+		(legacy_u8)(route_index + 1U));
 	route_table_offset = LEGACY_U16_WRAP_MUL(
 		state.opponentstate.car_trackdata3_index, 2U);
 	route_track_index = LEGACY_READ_S16_LE(
@@ -1762,12 +1764,14 @@ void player_op(legacy_s8 arg_carInputByte) {
 	legacy_s16 var_1EpenaltyCounter;
 	legacy_u16 var_speedBeforeGrip;
 	legacy_u16 var_speed2BeforeGrip;
+	legacy_u8 route_point;
 	legacy_s16 si;
 
 	//return ported_player_op_(arg_carInputByte);
 
 	if (show_penalty_counter != 0) {
-		show_penalty_counter--;
+		show_penalty_counter = LEGACY_S8_FROM_BITS(
+			(legacy_u8)((legacy_u8)show_penalty_counter - 1U));
 	}
 
 	state.playerstate.field_CF = 1;
@@ -1791,7 +1795,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 		(legacy_s16)state.playerstate.car_speed;
 	legacy_execution_residue.grip_stack_words[2] =
 		(legacy_s16)state.playerstate.car_gearratio;
-	upd_statef20_from_steer_input((arg_carInputByte >> 2) & 3);
+	upd_statef20_from_steer_input(
+		LEGACY_S16_SAR((legacy_s16)arg_carInputByte, 2U) & 3);
 	var_speedBeforeGrip = state.playerstate.car_speed;
 	var_speed2BeforeGrip = state.playerstate.car_speed2;
 	update_grip(&state.playerstate, &simd_player, 1);
@@ -1802,7 +1807,9 @@ void player_op(legacy_s8 arg_carInputByte) {
 		var_speed2BeforeGrip
 	);
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
-	state.game_travDist += state.playerstate.car_speed2;
+	state.game_travDist = LEGACY_S32_WRAP_ADD(
+		state.game_travDist,
+		(legacy_s32)(legacy_u16)state.playerstate.car_speed2);
 	var_1C = state.field_45B;
 	var_2 = state.field_2F2;
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
@@ -1829,7 +1836,8 @@ loc_172F3:
 		goto loc_17308;
 	if (state.field_2F4 == 0)
 		goto loc_17308;
-	state.playerstate.field_CD++;
+	state.playerstate.field_CD = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)state.playerstate.field_CD + 1U));
 	goto loc_1737B;
 loc_17308:
 	if (var_1EpenaltyCounter < 0)
@@ -1851,7 +1859,8 @@ loc_1732E:
 	if (td02_penalty_related[state.field_2F4] != var_2)
 		goto loc_17350;
 loc_17349:
-	state.field_45C++;
+	state.field_45C = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)state.field_45C + 1U));
 	goto loc_17374;
 loc_17350:
 	if (td01_track_file_cpy[var_2] == state.field_2F4)
@@ -1871,9 +1880,12 @@ loc_1737B:
 	if (var_1EpenaltyCounter <= 0)
 		goto loc_173AD;
 		
-	penalty_time = var_1EpenaltyCounter * framespersec * 3;
-	show_penalty_counter = framespersec << 2;
-	state.game_penalty += penalty_time;
+	penalty_time = LEGACY_S16_WRAP_MUL(
+		LEGACY_S16_WRAP_MUL(var_1EpenaltyCounter, framespersec), 3);
+	show_penalty_counter = LEGACY_S8_FROM_BITS(
+		(legacy_u8)LEGACY_U16_SHL(framespersec, 2U));
+	state.game_penalty = LEGACY_S16_WRAP_ADD(
+		state.game_penalty, penalty_time);
 	
 loc_173AD:
 	state.field_2F4 = var_2;
@@ -1976,7 +1988,8 @@ loc_1758D:
 	var_3A = var_2C;
 	var_32.z = var_38.z;
 loc_17599:
-	var_2C++;
+	var_2C = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)var_2C + 1U));
 	if (var_2A != 0)
 		goto loc_175A5;
 	goto loc_174E5;
@@ -1992,12 +2005,17 @@ loc_175AF:
 	sub_18D60(var_2, &var_1A, 1, 0);
 	goto loc_175F0;
 loc_175D0:
-	sub_18D60(var_2, &var_52, var_3A - 1, 0);
+	sub_18D60(var_2, &var_52,
+		LEGACY_S16_WRAP_SUB((legacy_s16)var_3A, 1), 0);
 
 	sub_18D60(var_2, &var_1A, var_3A, 0);
 loc_175F0:
 
-	si = (state.playerstate.car_rotate.x - polarAngle(var_52[0].x - var_1A[0].x, var_1A[0].z - var_52[0].z) & 0x3FF) & 0x3FF;
+	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+		state.playerstate.car_rotate.x,
+		polarAngle(
+			LEGACY_S16_WRAP_SUB(var_52[0].x, var_1A[0].x),
+			LEGACY_S16_WRAP_SUB(var_1A[0].z, var_52[0].z))) & 0x3FFU);
 	if (si > 0x380)
 		goto loc_17631;
 	if (si >= 0x80)
@@ -2012,8 +2030,11 @@ loc_17640:
 loc_17643:
 	state.playerstate.field_CE = var_3A;
 loc_1764C:
-	// NOTE: note the ++
-	if (sub_18D60(state.playerstate.car_trackdata3_index, &state.playerstate.car_vec_unk3, state.playerstate.field_CE++, 0) == 0)
+	route_point = (legacy_u8)state.playerstate.field_CE;
+	state.playerstate.field_CE = LEGACY_S8_FROM_BITS(
+		(legacy_u8)(route_point + 1U));
+	if (sub_18D60(state.playerstate.car_trackdata3_index,
+		&state.playerstate.car_vec_unk3, (legacy_s16)route_point, 0) == 0)
 		goto loc_17699;
 	if (td02_penalty_related[state.field_2F2] == -1)
 		goto loc_17684;
@@ -2047,13 +2068,17 @@ loc_176F0:
 		world_position_word(state.playerstate.car_posWorld1.lz));
 	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
 	mat_mul_vector(&var_28, var_matptr, &var_38);
-	state.playerstate.field_48 = polarAngle(-var_38.x, var_38.z) & 0x3FF;
+	state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
+		(legacy_u16)polarAngle(
+			LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & 0x3FFU);
 	if (state.playerstate.car_crashBmpFlag != 0)
 		goto loc_17771;
 
-	if (((state.playerstate.field_48 + 0x80) & 0x3FF) >> 8 == 1)
+	if (LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
+		state.playerstate.field_48, 0x80U) & 0x3FFU, 8U) == 1U)
 		goto loc_1776C;
-	if (((state.playerstate.field_48 + 0x80) & 0x3FF) >> 8 == 3)
+	if (LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
+		state.playerstate.field_48, 0x80U) & 0x3FFU, 8U) == 3U)
 		goto loc_1779E;
 
 loc_17764:
