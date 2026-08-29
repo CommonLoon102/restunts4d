@@ -10019,6 +10019,36 @@ static void replay_rewind(void)
 	input_do_checking(1000);
 }
 
+static legacy_s16 replay_try_zoom(legacy_u16 input)
+{
+	if (input == '-') {
+		if (cameramode == 3) {
+			if (camera_track_height_offset <= 0)
+				return 0;
+			camera_track_height_offset = LEGACY_S16_WRAP_SUB(
+				camera_track_height_offset, 0x1E);
+		} else {
+			if (custom_camera_distance >= 0x5DC)
+				return 0;
+			custom_camera_distance = LEGACY_S16_WRAP_ADD(
+				custom_camera_distance, 0x1E);
+		}
+	} else {
+		if (cameramode == 3) {
+			if (camera_track_height_offset >= 0x384)
+				return 0;
+			camera_track_height_offset = LEGACY_S16_WRAP_ADD(
+				camera_track_height_offset, 0x1E);
+		} else {
+			if (custom_camera_distance <= 0x78)
+				return 0;
+			custom_camera_distance = LEGACY_S16_WRAP_SUB(
+				custom_camera_distance, 0x1E);
+		}
+	}
+	return 1;
+}
+
 void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 current_frame)
 {
 	legacy_u16 input;
@@ -10057,7 +10087,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	if (video_flag5_is0 != 0)
 		byte_4432A = byte_44346 ^ 1;
 
-replay_input_loop:
+	for (;;) {
 	delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta_alt());
 	input = (legacy_u16)input_checking(delta);
 	hit = (legacy_u8)mouse_multi_hittest(
@@ -10163,39 +10193,14 @@ replay_input_loop:
 		}
 	}
 
-	if (input == '-' || input == '+') {
-replay_zoom:
-		if (input == '-') {
-			if (cameramode == 3) {
-				if (camera_track_height_offset <= 0)
-					goto replay_redraw;
-				camera_track_height_offset = LEGACY_S16_WRAP_SUB(camera_track_height_offset, 0x1E);
-			} else {
-				if (custom_camera_distance >= 0x5DC)
-					goto replay_redraw;
-				custom_camera_distance = LEGACY_S16_WRAP_ADD(
-					custom_camera_distance, 0x1E);
-			}
-		} else {
-			if (cameramode == 3) {
-				if (camera_track_height_offset >= 0x384)
-					goto replay_redraw;
-				camera_track_height_offset = LEGACY_S16_WRAP_ADD(camera_track_height_offset, 0x1E);
-			} else {
-				if (custom_camera_distance <= 0x78)
-					goto replay_redraw;
-				custom_camera_distance = LEGACY_S16_WRAP_SUB(
-					custom_camera_distance, 0x1E);
-			}
-		}
+	if ((input == '-' || input == '+') && replay_try_zoom(input) != 0)
 		return;
-	}
 
 	switch (input) {
 	case 0x0DU:
 	case 0x20U:
 		if (byte_3E9DB > 6U)
-			goto replay_redraw;
+			break;
 		switch (byte_3E9DB) {
 		case 0:
 			replay_fast_forward();
@@ -10207,18 +10212,18 @@ replay_zoom:
 			replay_controls_select(2);
 			byte_449E6 = 3;
 			is_in_replay = 0;
-			goto replay_redraw;
+			break;
 		case 3:
 			byte_449E6 = 0;
 			replay_controls_select(3);
 			is_in_replay = 0;
-			goto replay_redraw;
+			break;
 		case 4:
 			is_in_replay = 1;
 			audio_carstate();
 			replay_controls_select(4);
 			replay_controls_draw(state.game_frame, state.game_frame);
-			goto replay_redraw;
+			break;
 		case 5:
 			is_in_replay = 1;
 			audio_carstate();
@@ -10244,32 +10249,33 @@ replay_zoom:
 		if (next_selection <=
 			game_camera_buttons_count[(legacy_u8)cameramode])
 			byte_3E9DB = next_selection;
-		goto replay_redraw;
+		break;
 
 	case 0x4D00U:
 		byte_3E9DB = byte_3E9E6[byte_3E9DB];
-		goto replay_redraw;
+		break;
 
 	case 0x4800U:
 		if (byte_3E9DB == 7U) {
-			input = '+';
-			goto replay_zoom;
+			if (replay_try_zoom('+') != 0)
+				return;
+			break;
 		}
 		byte_3E9DB = byte_3E9F0[byte_3E9DB];
-		goto replay_redraw;
+		break;
 
 	case 0x5000U:
 		if (byte_3E9DB == 7U) {
-			input = '-';
-			goto replay_zoom;
+			if (replay_try_zoom('-') != 0)
+				return;
+			break;
 		}
 		byte_3E9DB = byte_3E9FA[byte_3E9DB];
-		goto replay_redraw;
+		break;
 	}
 
-replay_redraw:
 	replay_controls_draw(state.game_frame, state.game_frame);
-	goto replay_input_loop;
+	}
 }
 
 void run_game(void) {
@@ -11055,7 +11061,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 				if (result == 0) {
 					continue;
 				} else {
-					// goto replay-mode if option-menu-result != 0
+					// Enter replay mode if the option-menu result is nonzero.
 					var_A = 1;
 				}
 			} else {
