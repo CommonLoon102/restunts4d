@@ -2864,7 +2864,7 @@ void init_polyinfo(void) {
 void get_a_poly_info(void)
 {
 	legacy_u8 far* record;
-	legacy_s16 points[25];
+	struct POINT2D points[13];
 	legacy_u16 record_index;
 	legacy_u16 primitive_index;
 	legacy_u16 material_type;
@@ -2886,10 +2886,16 @@ void get_a_poly_info(void)
 
 		if (primitive_type == 0U) {
 			vertex_count = record[3];
-			for (index = 0; index < vertex_count * 2U; index++)
-				points[index] = LEGACY_S16_FROM_BITS(
+			for (index = 0; index < vertex_count; index++) {
+				points[index].px = LEGACY_S16_FROM_BITS(
 					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(3U, index)));
+						LEGACY_U16_WRAP_ADD(3U,
+							LEGACY_U16_WRAP_MUL(index, 2U))));
+				points[index].py = LEGACY_S16_FROM_BITS(
+					polyinfo_read_word(record,
+						LEGACY_U16_WRAP_ADD(4U,
+							LEGACY_U16_WRAP_MUL(index, 2U))));
+			}
 			pattern_type = (legacy_u16)
 				material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
@@ -2918,11 +2924,17 @@ void get_a_poly_info(void)
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 				polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == 3U) {
-			for (index = 0; index < 8U; index++)
-				points[index] = LEGACY_S16_FROM_BITS(
+			for (index = 0; index < 4U; index++) {
+				points[index].px = LEGACY_S16_FROM_BITS(
 					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(3U, index)));
-			preRender_wheel((legacy_u16*)points, 0x468U, material_color,
+						LEGACY_U16_WRAP_ADD(3U,
+							LEGACY_U16_WRAP_MUL(index, 2U))));
+				points[index].py = LEGACY_S16_FROM_BITS(
+					polyinfo_read_word(record,
+						LEGACY_U16_WRAP_ADD(4U,
+							LEGACY_U16_WRAP_MUL(index, 2U))));
+			}
+			preRender_wheel(points, 0x468U, material_color,
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == 5U) {
@@ -2988,11 +3000,11 @@ extern struct SPRITE far sprite2; // seg012
 extern legacy_u8* off_3F3C8[];
 
 static void preRender_default_impl(legacy_u16 arg_color,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines,
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines,
 	legacy_u16 var_A);
 
 void preRender_default_alt(legacy_u16 arg_color,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines) {
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines) {
 	//return ported_preRender_default_alt_(arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
@@ -3001,12 +3013,25 @@ void preRender_default_alt(legacy_u16 arg_color,
 }
 
 void preRender_default(legacy_u16 arg_color,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines) {
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines) {
 	//return ported_preRender_default_(arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_filled_lines;
 	imagefunc = &preRender_line;
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
+}
+
+static void preRender_default_alt_words(legacy_u16 color,
+	legacy_u16 vertex_count, const legacy_u16* words)
+{
+	struct POINT2D vertices[32];
+	legacy_u16 index;
+
+	for (index = 0; index < vertex_count; index++) {
+		vertices[index].px = LEGACY_S16_FROM_BITS(words[index * 2U]);
+		vertices[index].py = LEGACY_S16_FROM_BITS(words[index * 2U + 1U]);
+	}
+	preRender_default_alt(color, vertex_count, vertices);
 }
 
 static legacy_u16 shape3d_sar1(legacy_u16 value)
@@ -3134,7 +3159,7 @@ void preRender_sphere_helper(legacy_u16* source, legacy_u16 color)
 	legacy_u16 vertices[64];
 
 	preRender_sphere_helper2(source, vertices);
-	preRender_default_alt(color, 0x20U, (legacy_s16*)vertices);
+	preRender_default_alt_words(color, 0x20U, vertices);
 }
 
 void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination)
@@ -3241,9 +3266,10 @@ void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
 	}
 }
 
-void preRender_wheel(legacy_u16* source, legacy_u16 scale,
+void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color)
 {
+	legacy_u16 source_words[8];
 	legacy_u16 wheel_points[96];
 	legacy_u16 quad[8];
 	legacy_u16 side[36];
@@ -3255,7 +3281,11 @@ void preRender_wheel(legacy_u16* source, legacy_u16 scale,
 	legacy_u16 destination_index;
 	legacy_u16 minimum_y;
 
-	preRender_wheel_helper(source, wheel_points, scale);
+	for (index = 0; index < 4U; index++) {
+		source_words[index * 2U] = (legacy_u16)source[index].px;
+		source_words[index * 2U + 1U] = (legacy_u16)source[index].py;
+	}
+	preRender_wheel_helper(source_words, wheel_points, scale);
 	for (index = 0; index < 16U; index++) {
 		next_index = (legacy_u16)((index + 1U) & 0x0FU);
 		quad[0] = wheel_points[index * 2U];
@@ -3266,7 +3296,7 @@ void preRender_wheel(legacy_u16* source, legacy_u16 scale,
 		quad[5] = wheel_points[65U + next_index * 2U];
 		quad[6] = wheel_points[64U + index * 2U];
 		quad[7] = wheel_points[65U + index * 2U];
-		preRender_default_alt(outer_color, 4U, (legacy_s16*)quad);
+		preRender_default_alt_words(outer_color, 4U, quad);
 	}
 
 	minimum_index = 0;
@@ -3290,7 +3320,7 @@ void preRender_wheel(legacy_u16* source, legacy_u16 scale,
 		side[destination_index + 1U] =
 			wheel_points[33U + point_index * 2U];
 	}
-	preRender_default_alt(side_color, 18U, (legacy_s16*)side);
+	preRender_default_alt_words(side_color, 18U, side);
 
 	for (step = 0; step < 9U; step++) {
 		point_index = (legacy_u16)((minimum_index + 16U - step) & 0x0FU);
@@ -3303,9 +3333,8 @@ void preRender_wheel(legacy_u16* source, legacy_u16 scale,
 		side[destination_index + 1U] =
 			wheel_points[33U + point_index * 2U];
 	}
-	preRender_default_alt(side_color, 18U, (legacy_s16*)side);
-	preRender_default_alt(inner_color, 16U,
-		(legacy_s16*)&wheel_points[32]);
+	preRender_default_alt_words(side_color, 18U, side);
+	preRender_default_alt_words(inner_color, 16U, &wheel_points[32]);
 }
 
 #define SPHERE_RASTER_TABLE_LIMIT 40U
@@ -3437,8 +3466,7 @@ void skybox_op_helper(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct
 
 	spritefunc = &draw_filled_lines;
 	imagefunc = &preRender_line;
-	preRender_default_impl(arg_color, arg_vertlinecount,
-		(legacy_s16*)arg_vertlines, 1);
+	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
 void preRender_wheel_helper4(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D arg_vertlines[]) {
@@ -3446,8 +3474,7 @@ void preRender_wheel_helper4(legacy_u16 arg_color, legacy_u16 arg_vertlinecount,
 
 	spritefunc = &draw_filled_lines;
 	imagefunc = &preRender_line;
-	preRender_default_impl(arg_color, arg_vertlinecount,
-		(legacy_s16*)arg_vertlines, 0);
+	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 0);
 }
 
 
@@ -3455,7 +3482,7 @@ extern legacy_u16 word_4031E;
 extern legacy_u16 word_40320;
 
 void preRender_unk(legacy_u16 unk, legacy_u16 arg_color, legacy_u16 unk2,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines) {
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines) {
 	spritefunc = &draw_unknown_lines;
 	imagefunc = &preRender_line;
 
@@ -3465,7 +3492,7 @@ void preRender_unk(legacy_u16 unk, legacy_u16 arg_color, legacy_u16 unk2,
 }
 
 void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines) {
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines) {
 	//return ported_preRender_patterned_(unk, arg_color, arg_vertlinecount, arg_vertlines);
 
 	spritefunc = &draw_patterned_lines;
@@ -3476,21 +3503,21 @@ void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color,
 }
 
 static void preRender_default_impl(legacy_u16 arg_color,
-	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines,
+	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines,
 	legacy_u16 var_A) {
 	legacy_s16 var_798[480 + 480];
 	legacy_u16 var_7D0[28];
 
 	legacy_s16* var_18;
-	legacy_s16* var_16;
-	legacy_s16* var_14;
-	legacy_s16* var_10;
+	const struct POINT2D* var_16;
+	const struct POINT2D* var_14;
+	const struct POINT2D* var_10;
 	legacy_s16 var_E, var_12;
 	legacy_u16 var_C;
-	legacy_s16* var_8;
+	const struct POINT2D* var_8;
 	legacy_s16 var_4, var_2;
 
-	legacy_s16* var_vertlineptr;
+	const struct POINT2D* var_vertlineptr;
 	legacy_s16 minx, maxx, i;
 	legacy_s16 temp0x, temp0y, temp1x, temp1y;
 
@@ -3499,35 +3526,38 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_s16 sprite1_sprite_top = sprite1.sprite_top;
 	legacy_s16 sprite1_sprite_height = sprite1.sprite_height;
 	
+	if (arg_vertlinecount == 0U)
+		return;
 	var_vertlineptr = arg_vertlines;
-	var_8 = var_vertlineptr + ((arg_vertlinecount - 1) << 1); // asm does shl 2 for byte-offset - points at end of vertptr
+	var_8 = var_vertlineptr + arg_vertlinecount - 1U;
 	var_18 = var_798;
 	var_2 = sprite1_sprite_left2;
 	var_4 = sprite1_sprite_widthsum - 1;
-	var_12 = var_E = var_vertlineptr[1];
-	maxx = minx = var_vertlineptr[0];
+	var_12 = var_E = var_vertlineptr->py;
+	maxx = minx = var_vertlineptr->px;
 	var_10 = arg_vertlines;
 	var_14 = arg_vertlines;
-	if (arg_vertlinecount - 1 == 0) {
-		imagefunc(var_vertlineptr[0], var_vertlineptr[1], var_vertlineptr[0], var_vertlineptr[1], arg_color);
+	if (arg_vertlinecount == 1U) {
+		imagefunc(var_vertlineptr->px, var_vertlineptr->py,
+			var_vertlineptr->px, var_vertlineptr->py, arg_color);
 		return ;
 	}
 
 	for (i = 1; i < arg_vertlinecount; i++) {
-		if (arg_vertlines[i * 2 + 1] <= var_E) {
-			var_E = arg_vertlines[i*2 + 1];
-			var_10 = &arg_vertlines[i * 2];
+		if (arg_vertlines[i].py <= var_E) {
+			var_E = arg_vertlines[i].py;
+			var_10 = &arg_vertlines[i];
 		}
-		if (arg_vertlines[i * 2 + 1] > var_12) {
-			var_12 = arg_vertlines[i * 2 + 1];
-			var_14 = &arg_vertlines[i * 2];
+		if (arg_vertlines[i].py > var_12) {
+			var_12 = arg_vertlines[i].py;
+			var_14 = &arg_vertlines[i];
 		}
 		
-		if (arg_vertlines[i * 2 + 0] < minx) {
-			minx = arg_vertlines[i * 2 + 0];
+		if (arg_vertlines[i].px < minx) {
+			minx = arg_vertlines[i].px;
 		}
-		if (arg_vertlines[i * 2 + 0] > maxx) {
-			maxx = arg_vertlines[i * 2 + 0];
+		if (arg_vertlines[i].px > maxx) {
+			maxx = arg_vertlines[i].px;
 		}
 		
 	}
@@ -3549,14 +3579,14 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	var_16 = var_10;
 	
 	do {
-		temp0x = var_16[0];
-		temp0y = var_16[1];
-		var_16+=2;
+		temp0x = var_16->px;
+		temp0y = var_16->py;
+		var_16++;
 		if (var_16 > var_8)
 			var_16 = var_vertlineptr;
 		
-		temp1x = var_16[0];
-		temp1y = var_16[1];
+		temp1x = var_16->px;
+		temp1y = var_16->py;
 		if (temp1y > temp0y) {
 			
 			if (var_C != 0) {
@@ -3572,13 +3602,14 @@ static void preRender_default_impl(legacy_u16 arg_color,
 
 	var_16 = var_10;
 	do {
-		temp0x = var_16[0];
-		temp0y = var_16[1];
-		var_16-=2;
-		if (var_16 < var_vertlineptr)
+		temp0x = var_16->px;
+		temp0y = var_16->py;
+		if (var_16 == var_vertlineptr)
 			var_16 = var_8;
-		temp1x = var_16[0];
-		temp1y = var_16[1];
+		else
+			var_16--;
+		temp1x = var_16->px;
+		temp1y = var_16->py;
 		if (temp1y > temp0y) {
 			
 			if (var_C != 0) {

@@ -61,13 +61,14 @@ void init_polyinfo(void);
 void polyinfo_reset(void);
 void get_a_poly_info(void);
 void preRender_default(legacy_u16 color, legacy_u16 vertex_count,
-	legacy_s16* vertices);
+	const struct POINT2D* vertices);
 void preRender_default_alt(legacy_u16 color, legacy_u16 vertex_count,
-	legacy_s16* vertices);
+	const struct POINT2D* vertices);
 void preRender_patterned(legacy_u16 pattern, legacy_u16 color,
-	legacy_u16 vertex_count, legacy_s16* vertices);
+	legacy_u16 vertex_count, const struct POINT2D* vertices);
 void preRender_unk(legacy_u16 pattern, legacy_u16 alternate_color,
-	legacy_u16 color, legacy_u16 vertex_count, legacy_s16* vertices);
+	legacy_u16 color, legacy_u16 vertex_count,
+	const struct POINT2D* vertices);
 void preRender_line(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16 color);
 legacy_u16 draw_line_related(legacy_u16 start_x, legacy_u16 start_y,
@@ -83,7 +84,7 @@ void preRender_wheel_helper2(legacy_u16* source, legacy_u16* destination,
 	legacy_u16 scale);
 void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
 	legacy_u16 scale);
-void preRender_wheel(legacy_u16* source, legacy_u16 scale,
+void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color);
 void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color);
 void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
