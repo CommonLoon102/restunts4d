@@ -663,30 +663,33 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array, legacy_s1
 	return -1;
 }
 
-extern legacy_s16 input_framecount;
-extern legacy_s16 input_framecount2;
-extern legacy_s16 input_framecount3;
-extern legacy_s16 input_framecounter;
-extern legacy_s16 kbjoyflags;
-extern legacy_s16 joyflags;
-extern legacy_s16 newjoyflags;
-extern legacy_s16 joyinputcode;
-extern legacy_s16 mouse_oldx;
-extern legacy_s16 mouse_oldy;
-extern legacy_s16 mouse_oldbut;
-extern legacy_s16 mousebutinputcode;
 extern legacy_s16 dos_get_joy_flags(void);
 extern legacy_u8 dos_kb_input[];
-extern legacy_u8 kbscancodes[10];
 extern legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height);
 extern void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
 	legacy_s16 maximum_x, legacy_s16 maximum_y);
 extern void dos_mouse_set_position(legacy_s16 x, legacy_s16 y);
 extern void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x,
 	legacy_s16* y);
-extern legacy_u8 byte_3EBD8;
-extern legacy_s8 byte_45D0C[];
-extern legacy_s8 byte_45D14[];
+
+static legacy_s16 input_elapsed_frames;
+static legacy_s16 input_mouse_repeat_at;
+static legacy_s16 input_joystick_repeat_at;
+static legacy_s16 input_mouse_idle_frames;
+static legacy_s16 input_combined_flags;
+static legacy_s16 input_joystick_flags;
+static legacy_s16 input_new_joystick_flags;
+static legacy_s16 input_joystick_keycode;
+static legacy_s16 input_mouse_previous_x;
+static legacy_s16 input_mouse_previous_y;
+static legacy_s16 input_mouse_previous_buttons;
+static legacy_s16 input_mouse_keycode;
+static const legacy_u8 input_key_scancodes[10] = {
+	57, 28, 71, 72, 73, 77, 81, 80, 79, 75
+};
+static legacy_u8 input_mode_stack_depth;
+static legacy_s8 input_draw_mode_stack[8];
+static legacy_s8 input_device_mode_stack[8];
 
 legacy_s16 get_kb_or_joy_flags(void)
 {
@@ -699,7 +702,7 @@ legacy_s16 get_kb_or_joy_flags(void)
 
 	flags = 0;
 	for (index = 0; index < 10U; index++) {
-		if (dos_kb_input[kbscancodes[index]] != 0)
+		if (dos_kb_input[input_key_scancodes[index]] != 0)
 			flags |= action_flags[index];
 	}
 	if (flags == 0)
@@ -713,68 +716,68 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 	legacy_u16 key;
 	legacy_s16 changed_or_repeating;
 
-	input_framecount = LEGACY_U16_WRAP_ADD(input_framecount, frame_delta);
-	if (LEGACY_S16_FROM_BITS(input_framecount) > 20000) {
-		input_framecount = LEGACY_U16_WRAP_SUB(input_framecount, 10000U);
-		input_framecount2 = LEGACY_U16_WRAP_SUB(input_framecount2, 10000U);
-		input_framecount3 = LEGACY_U16_WRAP_SUB(input_framecount3, 10000U);
+	input_elapsed_frames = LEGACY_U16_WRAP_ADD(input_elapsed_frames, frame_delta);
+	if (LEGACY_S16_FROM_BITS(input_elapsed_frames) > 20000) {
+		input_elapsed_frames = LEGACY_U16_WRAP_SUB(input_elapsed_frames, 10000U);
+		input_mouse_repeat_at = LEGACY_U16_WRAP_SUB(input_mouse_repeat_at, 10000U);
+		input_joystick_repeat_at = LEGACY_U16_WRAP_SUB(input_joystick_repeat_at, 10000U);
 	}
 
 	key = (legacy_u16)dos_kb_get_char();
 	if (key != 0)
 		kbormouse = 0;
 	current_joy_flags = (legacy_u16)dos_get_joy_flags();
-	kbjoyflags = get_kb_or_joy_flags();
+	input_combined_flags = get_kb_or_joy_flags();
 	changed_or_repeating = 0;
-	if ((legacy_u16)joyflags != current_joy_flags) {
-		newjoyflags = ((legacy_u16)joyflags ^ current_joy_flags) &
+	if ((legacy_u16)input_joystick_flags != current_joy_flags) {
+		input_new_joystick_flags = ((legacy_u16)input_joystick_flags ^ current_joy_flags) &
 			current_joy_flags;
-		joyflags = current_joy_flags;
+		input_joystick_flags = current_joy_flags;
 		changed_or_repeating = 1;
 	} else if (current_joy_flags != 0 &&
 		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
-			input_framecount3, 20U)) <
-		LEGACY_S16_FROM_BITS(input_framecount)) {
+			input_joystick_repeat_at, 20U)) <
+		LEGACY_S16_FROM_BITS(input_elapsed_frames)) {
 		changed_or_repeating = 1;
 	}
 
 	if (changed_or_repeating) {
-		if (((legacy_u16)newjoyflags & 0x20U) != 0)
-			joyinputcode = 0x0D;
-		else if (((legacy_u16)newjoyflags & 0x10U) != 0)
-			joyinputcode = 0x20;
-		else if (((legacy_u16)newjoyflags & 1U) != 0)
-			joyinputcode = 0x4800;
-		else if (((legacy_u16)newjoyflags & 2U) != 0)
-			joyinputcode = 0x5000;
-		else if (((legacy_u16)newjoyflags & 8U) != 0)
-			joyinputcode = 0x4B00;
-		else if (((legacy_u16)newjoyflags & 4U) != 0)
-			joyinputcode = 0x4D00;
+		if (((legacy_u16)input_new_joystick_flags & 0x20U) != 0)
+			input_joystick_keycode = 0x0D;
+		else if (((legacy_u16)input_new_joystick_flags & 0x10U) != 0)
+			input_joystick_keycode = 0x20;
+		else if (((legacy_u16)input_new_joystick_flags & 1U) != 0)
+			input_joystick_keycode = 0x4800;
+		else if (((legacy_u16)input_new_joystick_flags & 2U) != 0)
+			input_joystick_keycode = 0x5000;
+		else if (((legacy_u16)input_new_joystick_flags & 8U) != 0)
+			input_joystick_keycode = 0x4B00;
+		else if (((legacy_u16)input_new_joystick_flags & 4U) != 0)
+			input_joystick_keycode = 0x4D00;
 
-		if (joyinputcode != 0) {
-			input_framecount3 = input_framecount;
+		if (input_joystick_keycode != 0) {
+			input_joystick_repeat_at = input_elapsed_frames;
 			kbormouse = 0;
 		}
 	}
 
 	dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
-	if (mouse_oldx != mouse_xpos || mouse_oldy != mouse_ypos ||
-		mouse_oldbut != mouse_butstate) {
-		mouse_oldx = mouse_xpos;
-		mouse_oldy = mouse_ypos;
+	if (input_mouse_previous_x != mouse_xpos || input_mouse_previous_y != mouse_ypos ||
+		input_mouse_previous_buttons != mouse_butstate) {
+		input_mouse_previous_x = mouse_xpos;
+		input_mouse_previous_y = mouse_ypos;
 		kbormouse = 1;
-		input_framecounter = 0;
+		input_mouse_idle_frames = 0;
 		if (byte_3B8F7 != 0) {
 			if (mouse_isdirty != 0)
 				mouse_draw_opaque();
 			mouse_draw_transparent();
 		}
 	} else if (kbormouse != 0) {
-		input_framecounter = LEGACY_U16_WRAP_ADD(
-			input_framecounter, frame_delta);
-		if (LEGACY_S16_FROM_BITS(input_framecounter) > 500) {
-			input_framecounter = 0;
+		input_mouse_idle_frames = LEGACY_U16_WRAP_ADD(
+			input_mouse_idle_frames, frame_delta);
+		if (LEGACY_S16_FROM_BITS(input_mouse_idle_frames) > 500) {
+			input_mouse_idle_frames = 0;
 			kbormouse = 0;
 			if (mouse_isdirty != 0)
 				mouse_draw_opaque();
@@ -783,44 +786,44 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 
 	if (kbormouse != 0) {
 		changed_or_repeating = 0;
-		if (mouse_oldbut != mouse_butstate) {
-			mouse_oldbut = mouse_butstate;
+		if (input_mouse_previous_buttons != mouse_butstate) {
+			input_mouse_previous_buttons = mouse_butstate;
 			changed_or_repeating = 1;
 		} else if (mouse_butstate != 0 &&
 			LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
-				input_framecount2, 20U)) <
-			LEGACY_S16_FROM_BITS(input_framecount)) {
+				input_mouse_repeat_at, 20U)) <
+			LEGACY_S16_FROM_BITS(input_elapsed_frames)) {
 			changed_or_repeating = 1;
 		}
 
 		if (changed_or_repeating) {
 			if (((legacy_u16)mouse_butstate & 1U) != 0)
-				mousebutinputcode = 0x20;
+				input_mouse_keycode = 0x20;
 			else if (((legacy_u16)mouse_butstate & 2U) != 0)
-				mousebutinputcode = 0x0D;
-			if (mousebutinputcode != 0)
-				input_framecount2 = input_framecount;
-			input_framecounter = 0;
+				input_mouse_keycode = 0x0D;
+			if (input_mouse_keycode != 0)
+				input_mouse_repeat_at = input_elapsed_frames;
+			input_mouse_idle_frames = 0;
 		}
 
 		if (mouse_butstate != 0) {
 			if (((legacy_u16)mouse_butstate & 1U) != 0)
-				kbjoyflags = (legacy_u16)kbjoyflags | 0x20U;
+				input_combined_flags = (legacy_u16)input_combined_flags | 0x20U;
 			else if (((legacy_u16)mouse_butstate & 2U) != 0)
-				kbjoyflags = (legacy_u16)kbjoyflags | 0x10U;
+				input_combined_flags = (legacy_u16)input_combined_flags | 0x10U;
 		}
 	}
 
 	if (key != 0)
 		return key;
-	if (joyinputcode != 0) {
-		key = (legacy_u16)joyinputcode;
-		joyinputcode = 0;
+	if (input_joystick_keycode != 0) {
+		key = (legacy_u16)input_joystick_keycode;
+		input_joystick_keycode = 0;
 		return key;
 	}
-	if (mousebutinputcode != 0) {
-		key = (legacy_u16)mousebutinputcode;
-		mousebutinputcode = 0;
+	if (input_mouse_keycode != 0) {
+		key = (legacy_u16)input_mouse_keycode;
+		input_mouse_keycode = 0;
 		return key;
 	}
 	return 0;
@@ -985,24 +988,24 @@ void nopsub_28F26(void)
 
 void input_push_status(void)
 {
-	legacy_s16 index = (legacy_s8)byte_3EBD8;
+	legacy_s16 index = (legacy_s8)input_mode_stack_depth;
 
-	byte_45D0C[index] = byte_3B8F7;
-	byte_45D14[index] = kbormouse;
-	byte_3EBD8++;
+	input_draw_mode_stack[index] = byte_3B8F7;
+	input_device_mode_stack[index] = kbormouse;
+	input_mode_stack_depth++;
 }
 
 void input_pop_status(void)
 {
 	legacy_s16 index;
 
-	if (byte_3EBD8 == 0)
+	if (input_mode_stack_depth == 0)
 		return;
 
-	byte_3EBD8--;
-	index = (legacy_s8)byte_3EBD8;
-	byte_3B8F7 = byte_45D0C[index];
-	kbormouse = byte_45D14[index];
+	input_mode_stack_depth--;
+	index = (legacy_s8)input_mode_stack_depth;
+	byte_3B8F7 = input_draw_mode_stack[index];
+	kbormouse = input_device_mode_stack[index];
 	if (kbormouse == 0)
 		mouse_draw_opaque_check();
 }
@@ -9750,7 +9753,7 @@ static void replay_fast_forward(void)
 	replay_controls_select(0);
 	(void)timer_get_delta_alt();
 	accumulated = 20L;
-	while (((legacy_u8)kbjoyflags & 0x30U) != 0) {
+	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
 		speed = (legacy_s16)(accumulated / 50L + 3L);
 		if (speed > 100)
 			speed = 100;
@@ -9806,7 +9809,7 @@ static void replay_rewind(void)
 	replay_controls_select(1);
 	(void)timer_get_delta_alt();
 	accumulated = 20L;
-	while (((legacy_u8)kbjoyflags & 0x30U) != 0) {
+	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
 		speed = (legacy_s16)(accumulated / 50L + 3L);
 		if (speed > 100)
 			speed = 100;
@@ -9950,7 +9953,7 @@ replay_input_loop:
 
 	custom_camera = 0;
 	if (kb_get_key_state(0x1D) != 0 ||
-		(byte_3E9DB == 8U && ((legacy_u8)kbjoyflags & 0x30U) != 0))
+		(byte_3E9DB == 8U && ((legacy_u8)input_combined_flags & 0x30U) != 0))
 		custom_camera = 1;
 	if (custom_camera != 0) {
 		switch (input) {
