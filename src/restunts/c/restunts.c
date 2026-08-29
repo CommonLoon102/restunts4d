@@ -8093,14 +8093,14 @@ extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
 extern void far* sdgameresptr;
-extern void far* wallptr;
-extern void far* planptr;
 extern legacy_s8 unk_3E7FC[];
 extern legacy_s8 unk_3E82C[];
 extern legacy_s16 audio_init_engine(legacy_s16, void far*, void far*, void far*);
 
 static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	void far* carresptr;
+	const legacy_u8 far* plane_resource;
+	const legacy_u8 far* wall_resource;
 	legacy_u32 var_8;
 
 	render_window_sprite = 0;
@@ -8160,8 +8160,11 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	}
 
 	gameresptr = file_load_resfile("game");
-	planptr = locate_shape_alt(gameresptr, "plan");//aPlan); // "plan"
-	wallptr = locate_shape_alt(gameresptr, "wall");//aWall); // "wall"
+	plane_resource = (const legacy_u8 far*)locate_shape_alt(
+		gameresptr, "plan");
+	wall_resource = (const legacy_u8 far*)locate_shape_alt(
+		gameresptr, "wall");
+	track_collision_resources_decode(plane_resource, wall_resource);
 	load_sdgame2_shapes();
 	load_skybox(td14_elem_map_main[0x384]);
 	if (shape3d_load_all() != 0) {

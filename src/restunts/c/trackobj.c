@@ -5,14 +5,6 @@
 #define SURFACE_GRASS 4
 #define SURFACE_WATER 5
 
-#pragma pack (push, 1)
-struct TRACK_WALL {
-	legacy_s16 orientation;
-	legacy_s16 x;
-	legacy_s16 z;
-};
-#pragma pack (pop)
-
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
 extern legacy_s16 wallHeight;

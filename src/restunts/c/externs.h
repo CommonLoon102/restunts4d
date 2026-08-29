@@ -61,6 +61,12 @@ struct TRKOBJINFO {
 	legacy_s8  si_oppSpedCode;
 };
 
+struct TRACK_WALL {
+	legacy_s16 orientation;
+	legacy_s16 x;
+	legacy_s16 z;
+};
+
 struct TRACKOBJECT {
 	struct TRKOBJINFO* ss_trkObjInfoPtr; // offset (0003B770)
 	legacy_s16 ss_rotY;           // Horizontal orientation of the element.
@@ -76,6 +82,9 @@ struct TRACKOBJECT {
 
 #pragma pack (pop)
 
+typedef char legacy_track_wall_must_be_6_bytes[
+	(sizeof(struct TRACK_WALL) == 6) ? 1 : -1];
+
 #ifdef RESTUNTS_DOS
 typedef char legacy_simd_must_be_776_bytes[
 	(sizeof(struct SIMD) == 776) ? 1 : -1];
@@ -88,6 +97,11 @@ typedef char legacy_trackobject_must_be_14_bytes[
 #define SIMD_RESOURCE_SIZE 772U
 legacy_u16 simd_decode(struct SIMD* destination,
 	const legacy_u8 far* source);
+
+#define TRACK_PLAN_RESOURCE_COUNT 134U
+#define TRACK_WALL_RESOURCE_COUNT 190U
+void track_collision_resources_decode(const legacy_u8 far* plane_source,
+	const legacy_u8 far* wall_source);
 
 extern struct GAMEINFO gameconfig;
 extern struct GAMEINFO gameconfigcopy;
