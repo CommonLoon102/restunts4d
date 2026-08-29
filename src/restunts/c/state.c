@@ -54,8 +54,8 @@ static legacy_s16 penalty_route_next(legacy_s16 track_index)
 	route_bytes = (legacy_u8 far*)td01_track_file_cpy;
 	byte_offset = LEGACY_U16_WRAP_MUL(track_index, 2U);
 	value = (legacy_u16)route_bytes[byte_offset];
-	value |= (legacy_u16)route_bytes[
-		LEGACY_U16_WRAP_ADD(byte_offset, 1U)] << 8;
+	value |= LEGACY_U16_SHL((legacy_u8)route_bytes[
+		LEGACY_U16_WRAP_ADD(byte_offset, 1U)], 8U);
 	return LEGACY_S16_FROM_BITS(value);
 }
 
@@ -718,7 +718,7 @@ choose_input:
 		if (state.opponentstate.car_crashBmpFlag != 0) {
 			input = 2;
 		} else if (state.opponentstate.car_36MwhlAngle != 0) {
-			speed_threshold = (legacy_u16)speed_step << 9;
+			speed_threshold = LEGACY_U16_SHL(speed_step, 9U);
 			if (speed_threshold > state.opponentstate.car_speed2) {
 				state.opponentstate.car_speed2 = 0;
 				state.opponentstate.car_36MwhlAngle = 0;
@@ -729,7 +729,7 @@ choose_input:
 		} else if (state.opponentstate.car_demandedGrip <=
 			state.opponentstate.car_surfacegrip_sum) {
 			target_speed = state.game_inputmode == 2 ? 0x4000U :
-				(legacy_u16)(legacy_u8)state.field_3F9 << 8;
+				LEGACY_U16_SHL((legacy_u8)state.field_3F9, 8U);
 			if (LEGACY_U16_WRAP_SUB(target_speed, 0x100U) >
 				state.opponentstate.car_speed) {
 				input = 1;
@@ -907,7 +907,7 @@ legacy_s16 sub_18D60(
 
 	packed_opponent_offset = (legacy_u16)(
 		(legacy_u8)track_info->si_opp1 |
-		((legacy_u16)(legacy_u8)track_info->si_opp2 << 8));
+		LEGACY_U16_SHL((legacy_u8)track_info->si_opp2, 8U));
 	has_opponent_path = packed_opponent_offset != 0;
 	if (connection_status != 0 && has_opponent_path != 0) {
 		route_vectors = track_vector_from_legacy_offset(
@@ -1433,7 +1433,7 @@ track_record_piece:
 	td21_col_from_path[track_pieces_counter] = column;
 	td22_row_from_path[track_pieces_counter] = row;
 	trackdata18[track_pieces_counter] = (legacy_u8)(
-		((legacy_u8)connection_status << 4) + subtype);
+		LEGACY_U16_SHL((legacy_u8)connection_status, 4U) + subtype);
 	td17_trk_elem_ordered[track_pieces_counter] = tile_element;
 
 	track_info = trkObjectList[tile_element].ss_trkObjInfoPtr;
@@ -1449,7 +1449,8 @@ track_record_piece:
 				ss_trkObjInfoPtr[previous_subtype];
 			opponent_path_offset = (legacy_u16)(
 				(legacy_u8)previous_info->si_opp1 |
-				((legacy_u16)(legacy_u8)previous_info->si_opp2 << 8));
+				LEGACY_U16_SHL(
+					(legacy_u8)previous_info->si_opp2, 8U));
 			if (previous_connection_status != 0 &&
 				opponent_path_offset != 0)
 				camera_vectors = track_vector_from_legacy_offset(
@@ -1616,7 +1617,7 @@ track_build_cameras:
 		current_info = &track_object->ss_trkObjInfoPtr[subtype];
 		opponent_path_offset = (legacy_u16)(
 			(legacy_u8)current_info->si_opp1 |
-			((legacy_u16)(legacy_u8)current_info->si_opp2 << 8));
+			LEGACY_U16_SHL((legacy_u8)current_info->si_opp2, 8U));
 		if (connection_status != 0 && opponent_path_offset != 0)
 			camera_vectors = track_vector_from_legacy_offset(
 				opponent_path_offset);
