@@ -1088,7 +1088,8 @@ extern legacy_s16 sub_39050(legacy_u16 value, legacy_s16 handle);
 extern void sub_39088(legacy_s16 channel, legacy_s16 value);
 extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 extern void audio_driver_func1E(legacy_s16 channel, legacy_s16 function);
-extern void audio_unk2(legacy_s16 channel, legacy_s16 value);
+extern void dos_audio_set_channel_volume(legacy_s16 channel,
+	legacy_s16 volume);
 extern void audio_op_unk3(legacy_s16 channel);
 extern void audio_op_unk4(legacy_s16 channel);
 extern void sub_38178(void);
@@ -1272,7 +1273,7 @@ void audio_op_unk(legacy_s16 index)
 	LEGACY_WRITE_U16_LE(timer + 0x12U, channel);
 	timer[1] = 1;
 	timer[0x1AU] = 1;
-	audio_unk2(handle, 0);
+	dos_audio_set_channel_volume(handle, 0);
 }
 
 void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
@@ -1568,17 +1569,17 @@ void audio_driver_timer(void)
 		if (volume != timer[0x0EU] || timer[0x1AU] != 0) {
 			channel = LEGACY_S16_FROM_BITS(
 				LEGACY_READ_U16_LE(timer + 2U));
-			audio_unk2(channel, volume);
+			dos_audio_set_channel_volume(channel, volume);
 			secondary_volume = volume >= 10U ?
 				(legacy_u8)(volume - 10U) : 0;
 			channel = LEGACY_S16_FROM_BITS(
 				LEGACY_READ_U16_LE(timer + 0x14U));
 			if (channel != -1)
-				audio_unk2(channel, secondary_volume);
+				dos_audio_set_channel_volume(channel, secondary_volume);
 			channel = LEGACY_S16_FROM_BITS(
 				LEGACY_READ_U16_LE(timer + 0x16U));
 			if (channel != -1)
-				audio_unk2(channel, secondary_volume);
+				dos_audio_set_channel_volume(channel, secondary_volume);
 			timer[0x0EU] = volume;
 		}
 
@@ -1690,7 +1691,7 @@ void audio_enable_flag6(void)
 		return;
 
 	for (channel = 0x10; channel < 0x18; channel++)
-		audio_unk2(channel, byte_428D6[channel]);
+		dos_audio_set_channel_volume(channel, byte_428D6[channel]);
 	audioflag6 = 1;
 }
 
@@ -1704,7 +1705,7 @@ void audio_disable_flag6(void)
 	for (channel = 0x10; channel < 0x18; channel++) {
 		byte_428D6[channel] =
 			audiochunks_unk2[(channel - 0x10) * 0x4C + 0x28];
-		audio_unk2(channel, 0);
+		dos_audio_set_channel_volume(channel, 0);
 	}
 	audioflag6 = 0;
 }
@@ -7096,7 +7097,7 @@ legacy_s16 sub_37868(legacy_s16 value)
 	legacy_s16 channel;
 
 	for (channel = 0; channel < (legacy_u16)byte_44290; channel++)
-		audio_unk2(channel, value);
+		dos_audio_set_channel_volume(channel, value);
 
 	return channel;
 }
