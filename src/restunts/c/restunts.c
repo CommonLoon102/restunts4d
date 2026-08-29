@@ -1043,30 +1043,30 @@ void free_sdgame2(void)
 }
 
 void audio_fade_out(legacy_s16 delay_ticks);
-extern legacy_s8 audioflag2;
-extern legacy_s8 audioflag6;
-extern legacy_s16 word_4063A;
+extern legacy_s8 audio_music_enabled;
+extern legacy_s8 audio_effects_enabled;
+extern legacy_s16 audio_update_lock;
 extern legacy_s16 word_4063C;
-extern legacy_u8 byte_40635;
+extern legacy_u8 dos_audio_special_mode;
 extern legacy_s8 audiodriverstring2[];
 extern legacy_u8 byte_44290;
 extern legacy_u8 byte_40630;
 extern legacy_u8 byte_40632;
 extern legacy_u8 byte_45950;
-extern legacy_u8 byte_459D2;
+extern legacy_u8 dos_audio_context_count;
 extern legacy_s8 byte_459D8;
 extern legacy_s8 byte_42D26;
 extern legacy_s8 byte_42D2A;
 extern legacy_u8 byte_428BE[];
 extern legacy_u8 byte_428D6[];
-extern legacy_u8 audiochunks_unk[];
-extern legacy_u8 audiochunks_unk2[];
+extern legacy_u8 audio_channels[];
+extern legacy_u8* audio_sfx_channels;
 extern legacy_u8 byte_45948;
 extern legacy_u8 byte_45D9A[];
 extern legacy_u8 byte_44D06[];
 extern legacy_u8 byte_44ACA[];
-extern legacy_u8 unk_45A26[];
-extern legacy_u8 audiotimers[];
+extern legacy_u8 dos_audio_contexts[];
+extern legacy_u8 audio_timers[];
 extern void far* basdres;
 extern void far* snarres;
 extern void far* tommres;
@@ -1081,10 +1081,10 @@ extern legacy_u16 word_42242;
 extern legacy_u16 word_42244;
 extern legacy_u8 byte_42246;
 extern legacy_s16 word_3EB2A;
-extern legacy_u8 byte_40634;
-extern legacy_u8 unk_40636[];
-extern legacy_u8 byte_40639;
-extern void far* audiodriverbinary;
+extern legacy_u8 dos_audio_uses_direct_channels;
+extern legacy_u8 dos_audio_master_state[];
+extern legacy_u8 dos_audio_master_volume;
+extern void far* dos_audio_driver_binary;
 extern legacy_u16 word_44D48;
 extern legacy_u16 word_454BA;
 extern legacy_s8 audio_filetemp[];
@@ -1158,7 +1158,7 @@ void audio_add_driver_timer(void)
 	legacy_u16 index;
 
 	for (index = 0; index < 25U; index++)
-		audiotimers[index * 0x4CU] = 0;
+		audio_timers[index * 0x4CU] = 0;
 	word_42240 = 0x16U;
 	timer_reg_callback(&audio_driver_timer);
 }
@@ -1171,12 +1171,12 @@ void audio_remove_driver_timer(void)
 
 	for (index = 0; index < 25U; index++) {
 		offset = index * 0x4CU;
-		if (audiotimers[offset] == 1) {
+		if (audio_timers[offset] == 1) {
 			channel = LEGACY_S16_FROM_BITS(
-				LEGACY_READ_U16_LE(audiotimers + offset + 2U));
+				LEGACY_READ_U16_LE(audio_timers + offset + 2U));
 			sub_374DE(channel);
 		}
-		audiotimers[offset] = 0;
+		audio_timers[offset] = 0;
 	}
 	timer_remove_callback(&audio_driver_timer);
 }
@@ -1214,7 +1214,7 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 
 	(void)unused_type;
 	for (index = 0; index < 25U; index++) {
-		if (audiotimers[index * 0x4CU] == 0)
+		if (audio_timers[index * 0x4CU] == 0)
 			break;
 	}
 	if (index == 25U) {
@@ -1222,7 +1222,7 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 		return -1;
 	}
 
-	timer = audiotimers + index * 0x4CU;
+	timer = audio_timers + index * 0x4CU;
 	context = timer + 0x1CU;
 	source_offset = (legacy_u16)FP_OFF(source_pointer);
 	source_segment = (legacy_u16)FP_SEG(source_pointer);
@@ -1290,7 +1290,7 @@ void audio_op_unk(legacy_s16 index)
 	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
-	timer = audiotimers + offset;
+	timer = audio_timers + offset;
 	if (timer[0] != 1 || timer[1] != 0)
 		return;
 
@@ -1332,7 +1332,7 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	legacy_u16 quotient;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
-	timer = audiotimers + offset;
+	timer = audio_timers + offset;
 	second_distance = (legacy_u16)polarRadius2D(
 		polarRadius2D(second_x, second_z), second_y);
 	if (LEGACY_S16_FROM_BITS(second_distance) > 0x1770) {
@@ -1587,12 +1587,12 @@ void audio_driver_timer(void)
 		return;
 
 	word_3EB2A = LEGACY_S16_WRAP_ADD(word_3EB2A, 1);
-	if (word_3EB2A < 2 && byte_40634 != 0)
+	if (word_3EB2A < 2 && dos_audio_uses_direct_channels != 0)
 		return;
 
 	for (index = 0; index < 25U; index++) {
-		timer = audiotimers + index * 0x4CU;
-		if (timer[0] == 0 || audioflag6 == 0)
+		timer = audio_timers + index * 0x4CU;
+		if (timer[0] == 0 || audio_effects_enabled == 0)
 			continue;
 
 		volume_accumulator = LEGACY_U16_WRAP_ADD(
@@ -1666,23 +1666,23 @@ void audio_unload(void)
 
 void audio_enable_flag2(void)
 {
-	audioflag2 = 1;
+	audio_music_enabled = 1;
 }
 
 void audio_disable_flag2(void)
 {
-	audioflag2 = 0;
-	word_4063A = 1;
+	audio_music_enabled = 0;
+	audio_update_lock = 1;
 	if (byte_44290 != 0)
 		audio_release_channel_range(
 			0, (legacy_u16)byte_44290 - 1U);
 	audio_update_driver_contexts();
-	word_4063A = 0;
+	audio_update_lock = 0;
 }
 
 legacy_s16 audio_toggle_flag2(void)
 {
-	if (audioflag2 == 1) {
+	if (audio_music_enabled == 1) {
 		audio_disable_flag2();
 		return 0;
 	}
@@ -1696,13 +1696,13 @@ legacy_s16 nopsub_373FE(void)
 	legacy_u16 offset;
 	legacy_u16 channel;
 
-	if (byte_40630 == 1 || audioflag2 == 0)
+	if (byte_40630 == 1 || audio_music_enabled == 0)
 		return 1;
 
 	for (channel = 0; channel < (legacy_u16)byte_44290; channel++) {
 		offset = (channel + 0x10U) * 0x4CU;
-		if ((LEGACY_READ_U16_LE(audiochunks_unk + offset) |
-			LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) != 0)
+		if ((LEGACY_READ_U16_LE(audio_channels + offset) |
+			LEGACY_READ_U16_LE(audio_channels + offset + 2)) != 0)
 			return 0;
 	}
 
@@ -1711,45 +1711,45 @@ legacy_s16 nopsub_373FE(void)
 
 void sub_3736A(void)
 {
-	word_4063A = 1;
+	audio_update_lock = 1;
 	byte_40632 = 0;
 	audio_release_channel_range(0, 0x0F);
 	audio_init_chunk(0, 0x0F, 0, 0, byte_45950, 0);
 	byte_44290 = 0;
 	audio_update_driver_contexts();
-	word_4063A = 0;
+	audio_update_lock = 0;
 }
 
 void audio_enable_flag6(void)
 {
 	legacy_s16 channel;
 
-	if (audioflag6 == 1)
+	if (audio_effects_enabled == 1)
 		return;
 
 	for (channel = 0x10; channel < 0x18; channel++)
 		dos_audio_set_channel_volume(channel, byte_428D6[channel]);
-	audioflag6 = 1;
+	audio_effects_enabled = 1;
 }
 
 void audio_disable_flag6(void)
 {
 	legacy_s16 channel;
 
-	if (audioflag6 == 0)
+	if (audio_effects_enabled == 0)
 		return;
 
 	for (channel = 0x10; channel < 0x18; channel++) {
 		byte_428D6[channel] =
-			audiochunks_unk2[(channel - 0x10) * 0x4C + 0x28];
+			audio_sfx_channels[(channel - 0x10) * 0x4C + 0x28];
 		dos_audio_set_channel_volume(channel, 0);
 	}
-	audioflag6 = 0;
+	audio_effects_enabled = 0;
 }
 
 legacy_s16 audio_toggle_flag6(void)
 {
-	if (audioflag6 == 1) {
+	if (audio_effects_enabled == 1) {
 		audio_disable_flag6();
 		return 0;
 	}
@@ -1762,19 +1762,19 @@ legacy_s16 sub_3771E(legacy_s16 channel)
 {
 	legacy_u16 offset;
 
-	if (audioflag6 == 0 || channel < 0x10 || channel > 0x17)
+	if (audio_effects_enabled == 0 || channel < 0x10 || channel > 0x17)
 		return 1;
 
 	offset = (legacy_u16)channel * 0x4CU;
-	return (LEGACY_READ_U16_LE(audiochunks_unk + offset) |
-		LEGACY_READ_U16_LE(audiochunks_unk + offset + 2)) == 0;
+	return (LEGACY_READ_U16_LE(audio_channels + offset) |
+		LEGACY_READ_U16_LE(audio_channels + offset + 2)) == 0;
 }
 
 void nopsub_37750(legacy_s16 channel, void far* value)
 {
 	void far* *field;
 
-	field = (void far* *)(audiochunks_unk +
+	field = (void far* *)(audio_channels +
 		(legacy_u16)channel * 0x4CU + 0x48U);
 	*field = value;
 }
@@ -1826,7 +1826,7 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	resource_offset = (legacy_u16)FP_OFF(resource);
 	resource_segment = (legacy_u16)FP_SEG(resource);
 	do {
-		chunk = audiochunks_unk + chunk_offset;
+		chunk = audio_channels + chunk_offset;
 		LEGACY_WRITE_U16_LE(chunk + 0x48U, 0);
 		LEGACY_WRITE_U16_LE(chunk + 0x4AU, 0);
 		chunk[0x22] = 0x7F;
@@ -1889,10 +1889,10 @@ void audio_reset_channels(void)
 	legacy_u8* context;
 	legacy_u16 context_index;
 
-	word_4063A = 1;
+	audio_update_lock = 1;
 	audio_init_chunk(0, 0x17, 0, 0, 0x7FU, 0);
-	context = unk_45A26;
-	for (context_index = 0; context_index < byte_459D2;
+	context = dos_audio_contexts;
+	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		dos_audio_driver_release_channel((legacy_s16)context_index);
 		context[0] = 0xFFU;
@@ -1905,7 +1905,7 @@ void audio_reset_channels(void)
 	}
 	dos_audio_driver_reset();
 	dos_audio_driver_start();
-	word_4063A = 0;
+	audio_update_lock = 0;
 }
 
 static void audio_clear_driver_context(legacy_u8* context)
@@ -1926,9 +1926,9 @@ void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_u16 channel_bits;
 	legacy_s16 channel;
 
-	if (byte_40634 == 0) {
-		context = unk_45A26;
-		for (context_index = 0; context_index < byte_459D2;
+	if (dos_audio_uses_direct_channels == 0) {
+		context = dos_audio_contexts;
+		for (context_index = 0; context_index < dos_audio_context_count;
 			context_index++) {
 			channel_bits = context[0];
 			if (channel_bits >= (legacy_u16)first_channel &&
@@ -1942,12 +1942,12 @@ void audio_release_channel_range(legacy_s16 first_channel,
 	} else {
 		channel = first_channel;
 		while (channel <= last_channel) {
-			chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(
+			chunk = audio_channels + LEGACY_U16_WRAP_MUL(
 				(legacy_u16)channel, 0x4CU);
 			if (chunk[0x47U] < 0x10U)
 				dos_audio_driver_release_channel(chunk[0x47U]);
 
-			context = unk_45A26;
+			context = dos_audio_contexts;
 			for (context_index = 0; context_index < 0x10U;
 				context_index++) {
 				if ((legacy_u16)context[0] == (legacy_u16)channel)
@@ -1960,7 +1960,7 @@ void audio_release_channel_range(legacy_s16 first_channel,
 
 	channel = first_channel;
 	while (channel <= last_channel) {
-		chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(
+		chunk = audio_channels + LEGACY_U16_WRAP_MUL(
 			(legacy_u16)channel, 0x4CU);
 		chunk[0x15U] = 0;
 		channel = LEGACY_S16_WRAP_ADD(channel, 1);
@@ -2038,18 +2038,18 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	oldest_state1_age = 0;
 	oldest_state2_age = 0;
 
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		context_count = 0x10U;
 		restrict_to_timer = 0;
 	} else {
-		context_count = byte_459D2;
+		context_count = dos_audio_context_count;
 		restrict_to_timer = timer[0x15U] < timer[0x16U];
 	}
 
-	context = unk_45A26;
+	context = dos_audio_contexts;
 	for (context_index = 0; context_index < context_count;
 		context_index++) {
-		if (byte_40634 == 0) {
+		if (dos_audio_uses_direct_channels == 0) {
 			context_mask = context_index < 16U ?
 				(legacy_u16)(1U << context_index) : 0;
 			if ((resource_mask & context_mask) == 0 ||
@@ -2061,11 +2061,11 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 		}
 
 		if (context[1] == 0) {
-			if (byte_40634 == 0)
+			if (dos_audio_uses_direct_channels == 0)
 				timer[0x15U]++;
 			return (legacy_s16)context_index;
 		}
-		if (byte_40634 == 0 && timer[0x24U] < context[2]) {
+		if (dos_audio_uses_direct_channels == 0 && timer[0x24U] < context[2]) {
 			context += 0x2EU;
 			continue;
 		}
@@ -2085,12 +2085,12 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	selected = oldest_state2 != -1 ? oldest_state2 : oldest_state1;
 	if (selected == -1)
 		return -1;
-	context = unk_45A26 +
+	context = dos_audio_contexts +
 		LEGACY_U16_WRAP_MUL((legacy_u16)selected, 0x2EU);
-	if (byte_40634 == 0 && restrict_to_timer == 0) {
-		old_timer = audiotimers + LEGACY_U16_WRAP_SUB(
+	if (dos_audio_uses_direct_channels == 0 && restrict_to_timer == 0) {
+		old_timer = audio_timers + LEGACY_U16_WRAP_SUB(
 			LEGACY_READ_U16_LE(context + 0x2AU),
-			FP_OFF(audiotimers));
+			FP_OFF(audio_timers));
 		if (old_timer != timer) {
 			old_timer[0x15U]--;
 			timer[0x15U]++;
@@ -2114,7 +2114,7 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	legacy_s16 context_index;
 
 	timer_offset = LEGACY_U16_WRAP_MUL((legacy_u16)handle, 0x4CU);
-	timer = audiotimers + timer_offset;
+	timer = audio_timers + timer_offset;
 	resource = (legacy_u8 far*)audio_read_far_pointer(timer + 0x1EU);
 	note = 0xFFU;
 	resource = (legacy_u8 far*)audio_select_sample_resource(resource, note);
@@ -2126,11 +2126,11 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 		return -1;
 	context_offset = LEGACY_U16_WRAP_MUL(
 		(legacy_u16)context_index, 0x2EU);
-	context = unk_45A26 + context_offset;
+	context = dos_audio_contexts + context_offset;
 	if (LEGACY_READ_U16_LE(context + 0x10U) != FP_OFF(resource) ||
 		LEGACY_READ_U16_LE(context + 0x12U) != FP_SEG(resource)) {
 		audio_write_far_pointer(context + 0x10U, resource);
-		if (byte_40634 == 0)
+		if (dos_audio_uses_direct_channels == 0)
 			dos_audio_driver_prepare_context(context_index,
 				context, timer, resource);
 	}
@@ -2161,12 +2161,12 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	context[0x28U] = 0;
 	context[0x29U] = 0;
 	LEGACY_WRITE_U16_LE(context + 0x2AU, FP_OFF(timer));
-	driver_channel = byte_40634 == 0 ? context_index : timer[0x47U];
+	driver_channel = dos_audio_uses_direct_channels == 0 ? context_index : timer[0x47U];
 	context[0x2CU] = (legacy_u8)driver_channel;
 
 	if (note == 0xFFU) {
 		dos_audio_driver_set_context_value(driver_channel, context, value);
-		if (byte_40634 != 0)
+		if (dos_audio_uses_direct_channels != 0)
 			note = 0x3CU;
 	}
 	pitch = LEGACY_S16_WRAP_ADD(
@@ -2193,7 +2193,7 @@ static void audio_advance_driver_context(legacy_u8* context)
 
 	dos_audio_driver_start_context(context[0x2CU], context);
 	context[1] = 2U;
-	chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(context[0], 0x4CU);
+	chunk = audio_channels + LEGACY_U16_WRAP_MUL(context[0], 0x4CU);
 	context[0x16U] = chunk[0x15U] != 0 ? 3U : 4U;
 }
 
@@ -2217,8 +2217,8 @@ void audio_update_driver_contexts(void)
 	legacy_u16 context_index;
 	legacy_u8 sequence_index;
 
-	context = unk_45A26;
-	for (context_index = 0; context_index < byte_459D2;
+	context = dos_audio_contexts;
+	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		if (context[1] == 0) {
 			context += 0x2EU;
@@ -2272,7 +2272,7 @@ void audio_update_driver_contexts(void)
 				LEGACY_WRITE_U16_LE(context + 0x14U, 0);
 				context[0x16U] = 0;
 				context[1] = 0;
-				chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(
+				chunk = audio_channels + LEGACY_U16_WRAP_MUL(
 					context[0], 0x4CU);
 				chunk[0x15U]--;
 				dos_audio_driver_end_context(context[0x2CU], context);
@@ -2347,7 +2347,7 @@ void audio_update_driver_contexts(void)
 			LEGACY_READ_U16_LE(context + 0x2AU), resource);
 		context += 0x2EU;
 	}
-	dos_audio_driver_suspend_all(unk_45A26);
+	dos_audio_driver_suspend_all(dos_audio_contexts);
 }
 
 void audio_suspend(void)
@@ -2358,24 +2358,24 @@ void audio_suspend(void)
 	legacy_u16 context_index;
 
 	byte_40630 = 1;
-	word_4063A = 1;
-	if (byte_40634 != 0) {
-		byte_40639 = 0;
-		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
-		word_4063A = 0;
+	audio_update_lock = 1;
+	if (dos_audio_uses_direct_channels != 0) {
+		dos_audio_master_volume = 0;
+		dos_audio_driver_set_master_state(4, (void far*)dos_audio_master_state);
+		audio_update_lock = 0;
 		return;
 	}
 
-	chunk = audiochunks_unk;
+	chunk = audio_channels;
 	for (channel = 0; channel < 0x18U; channel++) {
-		if (audioflag6 == 1 || channel < 0x10U) {
+		if (audio_effects_enabled == 1 || channel < 0x10U) {
 			byte_428BE[channel] = chunk[0x28U];
 			dos_audio_set_channel_volume((legacy_s16)channel, 0);
 		}
 		chunk += 0x4CU;
 	}
 
-	context = unk_45A26;
+	context = dos_audio_contexts;
 	for (context_index = 0; context_index < 0x10U;
 		context_index++) {
 		dos_audio_driver_suspend_context(context[0x2CU], context,
@@ -2383,8 +2383,8 @@ void audio_suspend(void)
 			audio_read_far_pointer(context + 0x10U));
 		context += 0x2EU;
 	}
-	dos_audio_driver_suspend_all(unk_45A26);
-	word_4063A = 0;
+	dos_audio_driver_suspend_all(dos_audio_contexts);
+	audio_update_lock = 0;
 }
 
 void audio_resume(void)
@@ -2392,18 +2392,18 @@ void audio_resume(void)
 	legacy_u16 channel;
 
 	byte_40630 = 1;
-	word_4063A = 1;
-	if (byte_40634 != 0) {
-		byte_40639 = 0x64U;
-		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
+	audio_update_lock = 1;
+	if (dos_audio_uses_direct_channels != 0) {
+		dos_audio_master_volume = 0x64U;
+		dos_audio_driver_set_master_state(4, (void far*)dos_audio_master_state);
 	} else {
 		for (channel = 0; channel < 0x18U; channel++) {
-			if (audioflag6 == 1 || channel < 0x10U)
+			if (audio_effects_enabled == 1 || channel < 0x10U)
 				dos_audio_set_channel_volume((legacy_s16)channel,
 					byte_428BE[channel]);
 		}
 	}
-	word_4063A = 0;
+	audio_update_lock = 0;
 	byte_40630 = 0;
 }
 
@@ -2417,7 +2417,7 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_s16 candidate;
 
 	bytes = (const legacy_u8 far*)resource;
-	if (audioflag6 == 0 || resource == 0 || bytes[5] != 1)
+	if (audio_effects_enabled == 0 || resource == 0 || bytes[5] != 1)
 		return -1;
 
 	if (byte_45948 != 0) {
@@ -2432,8 +2432,8 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	if (channel == -1) {
 		for (candidate = 0x10; candidate <= 0x17; candidate++) {
 			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
-			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
-				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
+			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
+				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
 				byte_45D9A[candidate] == 0) {
 				channel = candidate;
 				break;
@@ -2470,8 +2470,8 @@ legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 	if (channel == -1) {
 		for (candidate = 0x10; candidate <= 0x17; candidate++) {
 			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
-			if ((LEGACY_READ_U16_LE(audiochunks_unk2 + offset) |
-				LEGACY_READ_U16_LE(audiochunks_unk2 + offset + 2)) == 0 &&
+			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
+				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
 				byte_45D9A[candidate] == 0) {
 				channel = candidate;
 				break;
@@ -2482,7 +2482,7 @@ legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 	if (channel != -1) {
 		byte_45D9A[channel] = 1;
 		offset = (legacy_u16)channel * 0x4CU;
-		audiochunks_unk[offset + 0x24U] = priority;
+		audio_channels[offset + 0x24U] = priority;
 	}
 
 	return channel;
@@ -2496,8 +2496,8 @@ void audio_init_chunk2(legacy_s16 channel)
 		return;
 
 	offset = (legacy_u16)channel * 0x4CU;
-	LEGACY_WRITE_U16_LE(audiochunks_unk + offset, 0);
-	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
+	LEGACY_WRITE_U16_LE(audio_channels + offset, 0);
+	LEGACY_WRITE_U16_LE(audio_channels + offset + 2, 0);
 	audio_release_channel_range(channel, channel);
 	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
 }
@@ -2509,9 +2509,9 @@ void audio_op_unk7(legacy_s16 index)
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	channel = LEGACY_S16_FROM_BITS(
-		LEGACY_READ_U16_LE(audiotimers + offset + 0x16U));
+		LEGACY_READ_U16_LE(audio_timers + offset + 0x16U));
 	audio_init_chunk2(channel);
-	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, 0xFFFFU);
+	LEGACY_WRITE_U16_LE(audio_timers + offset + 0x16U, 0xFFFFU);
 }
 
 legacy_s16 nopsub_27489(legacy_s16 index)
@@ -2521,7 +2521,7 @@ legacy_s16 nopsub_27489(legacy_s16 index)
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	channel = LEGACY_S16_FROM_BITS(
-		LEGACY_READ_U16_LE(audiotimers + offset + 0x14U));
+		LEGACY_READ_U16_LE(audio_timers + offset + 0x14U));
 	if (channel < 0)
 		return 1;
 
@@ -2534,15 +2534,15 @@ void audio_function2(legacy_s16 index)
 	legacy_s16 channel;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
-	if (audiotimers[offset] != 1 || audiotimers[offset + 1U] != 1)
+	if (audio_timers[offset] != 1 || audio_timers[offset + 1U] != 1)
 		return;
 
 	channel = LEGACY_S16_FROM_BITS(
-		LEGACY_READ_U16_LE(audiotimers + offset + 0x12U));
+		LEGACY_READ_U16_LE(audio_timers + offset + 0x12U));
 	sub_38156(channel);
-	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x12U, 0xFFFFU);
-	audiotimers[offset + 1U] = 0;
-	audiotimers[offset + 0x1AU] = 1;
+	LEGACY_WRITE_U16_LE(audio_timers + offset + 0x12U, 0xFFFFU);
+	audio_timers[offset + 1U] = 0;
+	audio_timers[offset + 0x1AU] = 1;
 }
 
 static legacy_s16 audio_start_indexed_event(legacy_s16 index,
@@ -2554,12 +2554,12 @@ static legacy_s16 audio_start_indexed_event(legacy_s16 index,
 	void far* resource;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
-	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	rate = LEGACY_READ_U16_LE(audio_timers + offset + 4U) >> 4;
 	resource = audio_read_far_pointer(
-		audiotimers + offset + resource_field);
+		audio_timers + offset + resource_field);
 	channel = audio_check_flag(resource, -1, priority, rate);
-	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
-	audiotimers[offset + 0x1AU] = 1;
+	LEGACY_WRITE_U16_LE(audio_timers + offset + 0x14U, channel);
+	audio_timers[offset + 0x1AU] = 1;
 	return channel;
 }
 
@@ -2571,12 +2571,12 @@ void nopsub_27220(legacy_s16 index)
 	void far* resource;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
-	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
-	resource = audio_read_far_pointer(audiotimers + offset + 0x2CU);
+	rate = LEGACY_READ_U16_LE(audio_timers + offset + 4U) >> 4;
+	resource = audio_read_far_pointer(audio_timers + offset + 0x2CU);
 	channel = audio_check_flag(resource, -1, 0x40U, rate);
-	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x14U, channel);
-	audiotimers[offset + 0x1AU] = 1;
-	audiotimers[offset + 0x1BU] = 1;
+	LEGACY_WRITE_U16_LE(audio_timers + offset + 0x14U, channel);
+	audio_timers[offset + 0x1AU] = 1;
+	audio_timers[offset + 0x1BU] = 1;
 }
 
 static void audio_append_filename_part(legacy_s8* destination,
@@ -2655,12 +2655,12 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 
 	(void)unused;
 	if (mode == 0x473A)
-		byte_40635 = 1;
-	if (audiodriverbinary != 0)
+		dos_audio_special_mode = 1;
+	if (dos_audio_driver_binary != 0)
 		dos_audio_shutdown();
 	else
 		add_exit_handler(dos_audio_shutdown);
-	audiodriverbinary = 0;
+	dos_audio_driver_binary = 0;
 
 	driver_length = 0;
 	while (driver[driver_length] != 0)
@@ -2676,42 +2676,42 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 	audiodriverstring2[1] = driver[basename_offset + 1U];
 	audiodriverstring2[2] = 0;
 
-	audiodriverbinary = file_load_binary_nofatal(audio_make_filename(
+	dos_audio_driver_binary = file_load_binary_nofatal(audio_make_filename(
 		driver, driver_extension, empty_path));
 	byte_45950 = 0x7FU;
 	byte_45948 = 0x7FU;
-	if (audiodriverbinary == 0) {
+	if (dos_audio_driver_binary == 0) {
 		fatal_error(missing_driver_message);
 		return 2;
 	}
 
 	channel_count = dos_audio_driver_initialize();
-	byte_459D2 = channel_count;
+	dos_audio_context_count = channel_count;
 	if (channel_count == 0 || channel_count == 0xFFU)
 		return 2;
 	if (channel_count > 0x7FU) {
-		byte_459D2 = 0x10U;
-		byte_40634 = 1;
-		byte_40635 = 0;
+		dos_audio_context_count = 0x10U;
+		dos_audio_uses_direct_channels = 1;
+		dos_audio_special_mode = 0;
 	}
 
 	audio_reset_channels();
 	timer_reg_callback(audio_driver_timer);
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		bank = file_load_binary_nofatal(mt32_bank_filename);
 		if (bank != 0) {
 			dos_audio_driver_load_bank(bank);
 			mmgr_release((legacy_s8 far*)bank);
-			byte_40639 = 0x64U;
+			dos_audio_master_volume = 0x64U;
 			dos_audio_driver_set_master_state(
-				4, (void far*)unk_40636);
+				4, (void far*)dos_audio_master_state);
 		}
 	}
 
 	byte_40630 = 0;
-	audioflag2 = 1;
+	audio_music_enabled = 1;
 	byte_40632 = 0;
-	audioflag6 = 1;
+	audio_effects_enabled = 1;
 	return 0;
 }
 
@@ -2763,7 +2763,7 @@ void far* load_sfx_file(const legacy_s8* filename)
 	void far* result;
 
 	result = 0;
-	if (byte_40635 != 0)
+	if (dos_audio_special_mode != 0)
 		result = load_sfx_ge(filename, "dsf", audiodriverstring2);
 	if (result == 0)
 		result = load_sfx_ge(filename, "sfx", audiodriverstring2);
@@ -2787,7 +2787,7 @@ void far* load_voice_file(const legacy_s8* filename)
 	void far* result;
 
 	result = 0;
-	if (byte_40635 != 0)
+	if (dos_audio_special_mode != 0)
 		result = load_sfx_ge(filename, "dvc", audiodriverstring2);
 	if (result == 0)
 		result = load_sfx_ge(filename, "vce", audiodriverstring2);
@@ -7397,7 +7397,7 @@ void load_audio_finalize(void far* audio_resource)
 	legacy_u8 far* resource;
 	legacy_u16 data_offset;
 
-	word_4063A = 1;
+	audio_update_lock = 1;
 	sub_3736A();
 	resource = (legacy_u8 far*)audio_resource;
 	if (resource == 0 || resource[4] != 0 || resource[5] != 1)
@@ -7413,7 +7413,7 @@ void load_audio_finalize(void far* audio_resource)
 		LEGACY_S16_FROM_BITS((legacy_u16)(byte_44290 - 1U)),
 		resource, data_offset, byte_45950, 0x20U);
 	byte_40632 = 1;
-	word_4063A = 0;
+	audio_update_lock = 0;
 }
 
 void audioresource_copy_n_bytes(const legacy_u8 far* source,
@@ -7481,16 +7481,16 @@ static void audio_start_secondary_event(legacy_s16 index,
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x4CU);
 	channel = LEGACY_S16_FROM_BITS(
-		LEGACY_READ_U16_LE(audiotimers + offset + 0x16U));
+		LEGACY_READ_U16_LE(audio_timers + offset + 0x16U));
 	if (channel != -1)
 		audio_init_chunk2(channel);
 
-	rate = LEGACY_READ_U16_LE(audiotimers + offset + 4U) >> 4;
+	rate = LEGACY_READ_U16_LE(audio_timers + offset + 4U) >> 4;
 	resource = audio_read_far_pointer(
-		audiotimers + offset + resource_field);
+		audio_timers + offset + resource_field);
 	channel = audio_check_flag(resource, -1, 0x40U, rate);
-	LEGACY_WRITE_U16_LE(audiotimers + offset + 0x16U, channel);
-	audiotimers[offset + 0x1AU] = 1;
+	LEGACY_WRITE_U16_LE(audio_timers + offset + 0x16U, channel);
+	audio_timers[offset + 0x1AU] = 1;
 }
 
 void audio_op_unk5(legacy_s16 index)
@@ -7719,8 +7719,8 @@ void sub_38156(legacy_s16 index)
 	legacy_u16 offset;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 0x2EU);
-	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0CU, 1);
-	LEGACY_WRITE_U16_LE(unk_45A26 + offset + 0x0EU, 0);
+	LEGACY_WRITE_U16_LE(dos_audio_contexts + offset + 0x0CU, 1);
+	LEGACY_WRITE_U16_LE(dos_audio_contexts + offset + 0x0EU, 0);
 }
 
 legacy_s16 sub_37868(legacy_s16 value)
@@ -7739,14 +7739,14 @@ void audio_fade_out(legacy_s16 delay_ticks)
 	legacy_u32 delay;
 
 	delay = (legacy_u32)(legacy_s32)delay_ticks;
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		volume = 0x64;
 		do {
-			word_4063A = 1;
-			byte_40639 = (legacy_u8)volume;
+			audio_update_lock = 1;
+			dos_audio_master_volume = (legacy_u8)volume;
 			dos_audio_driver_set_master_state(
-				4, (void far*)unk_40636);
-			word_4063A = 0;
+				4, (void far*)dos_audio_master_state);
+			audio_update_lock = 0;
 			timer_copy_counter(delay);
 			timer_wait_for_dx();
 			volume = LEGACY_S16_WRAP_SUB(volume, 2);
@@ -7754,9 +7754,9 @@ void audio_fade_out(legacy_s16 delay_ticks)
 	} else {
 		volume = byte_45950;
 		while (volume > 0) {
-			word_4063A = 1;
+			audio_update_lock = 1;
 			sub_37868(volume);
-			word_4063A = 0;
+			audio_update_lock = 0;
 			timer_copy_counter(delay);
 			timer_wait_for_dx();
 			volume = LEGACY_S16_WRAP_SUB(volume, 2);
@@ -7764,11 +7764,11 @@ void audio_fade_out(legacy_s16 delay_ticks)
 	}
 
 	sub_3736A();
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		timer_copy_counter(0x32UL);
 		timer_wait_for_dx();
-		byte_40639 = 0x64U;
-		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
+		dos_audio_master_volume = 0x64U;
+		dos_audio_driver_set_master_state(4, (void far*)dos_audio_master_state);
 	}
 }
 

@@ -20,26 +20,28 @@ typedef void (far* driver_activate_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
 	legacy_u16 parameter, void far* resource);
 
-extern legacy_u8 audiotimers[];
-extern legacy_u8 audiochunks_unk[];
-extern legacy_s8 audioflag2;
-extern legacy_s8 audioflag6;
-extern legacy_u8 byte_40634;
-extern legacy_u8 byte_40635;
-extern legacy_u8 byte_40639;
-extern legacy_u8 byte_459D2;
-extern legacy_u8 unk_40636[];
-extern legacy_u8 unk_45A26[];
-extern void far* audiodriverbinary;
-extern legacy_s16 word_4063A;
 extern void audio_driver_timer(void);
 extern void timer_remove_callback(void (far* callback)(void));
 extern void mmgr_release(void far* memory);
 
+legacy_u8 audio_timers[25U * 0x4CU];
+legacy_u8 audio_channels[24U * 0x4CU];
+legacy_u8* audio_sfx_channels = audio_channels + 16U * 0x4CU;
+legacy_u8 dos_audio_contexts[16U * 0x2EU];
+legacy_u8 dos_audio_master_state[3] = { 16U, 0, 22U };
+void far* dos_audio_driver_binary;
+legacy_s16 audio_update_lock = 1;
+legacy_s8 audio_music_enabled = 1;
+legacy_s8 audio_effects_enabled = 1;
+legacy_u8 dos_audio_uses_direct_channels;
+legacy_u8 dos_audio_special_mode;
+legacy_u8 dos_audio_master_volume;
+legacy_u8 dos_audio_context_count;
+
 static void far* dos_audio_driver_entry(legacy_u16 offset)
 {
-	return MK_FP(FP_SEG(audiodriverbinary),
-		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), offset));
+	return MK_FP(FP_SEG(dos_audio_driver_binary),
+		LEGACY_U16_WRAP_ADD(FP_OFF(dos_audio_driver_binary), offset));
 }
 
 legacy_u8 dos_audio_driver_initialize(void)
@@ -182,24 +184,24 @@ void dos_audio_driver_set_master_state(legacy_s16 operation,
 
 void dos_audio_shutdown(void)
 {
-	word_4063A = 1;
-	if (audiodriverbinary != 0) {
+	audio_update_lock = 1;
+	if (dos_audio_driver_binary != 0) {
 		timer_remove_callback(audio_driver_timer);
-		audioflag2 = 0;
-		audioflag6 = 0;
-		if (byte_40634 != 0) {
-			byte_40639 = 0x64U;
+		audio_music_enabled = 0;
+		audio_effects_enabled = 0;
+		if (dos_audio_uses_direct_channels != 0) {
+			dos_audio_master_volume = 0x64U;
 			dos_audio_driver_set_master_state(
-				4, (void far*)unk_40636);
+				4, (void far*)dos_audio_master_state);
 		}
 		dos_audio_driver_start();
 		dos_audio_driver_shutdown();
-		mmgr_release(audiodriverbinary);
-		audiodriverbinary = 0;
-		byte_40634 = 0;
-		byte_40635 = 0;
+		mmgr_release(dos_audio_driver_binary);
+		dos_audio_driver_binary = 0;
+		dos_audio_uses_direct_channels = 0;
+		dos_audio_special_mode = 0;
 	}
-	word_4063A = 0;
+	audio_update_lock = 0;
 }
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
@@ -211,7 +213,7 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 	legacy_u8 driver_channel;
 
 	timer_offset = LEGACY_U16_WRAP_MUL((legacy_u16)channel, 0x4CU);
-	timer = audiotimers + timer_offset;
+	timer = audio_timers + timer_offset;
 	LEGACY_WRITE_U16_LE(timer + 0x1EU, FP_OFF(resource));
 	LEGACY_WRITE_U16_LE(timer + 0x20U, FP_SEG(resource));
 	if (((legacy_u8 far*)resource)[0x43U] < 0x10U)
@@ -220,14 +222,14 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 		driver_channel = (legacy_u8)(((legacy_u16)channel & 0x0FU) + 1U);
 	timer[0x47U] = driver_channel;
 
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_driver_prepare_context(
 			driver_channel, 0, timer, resource);
 		return;
 	}
 
-	driver_context = unk_45A26;
-	for (context_index = 0; context_index < byte_459D2;
+	driver_context = dos_audio_contexts;
+	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		if ((legacy_u16)driver_context[0] == (legacy_u16)channel)
 			dos_audio_driver_prepare_context((legacy_s16)context_index,
@@ -245,17 +247,17 @@ void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 	legacy_u16 volume_bits;
 
 	chunk_offset = LEGACY_U16_WRAP_MUL((legacy_u16)channel, 0x4CU);
-	chunk = audiochunks_unk + chunk_offset;
+	chunk = audio_channels + chunk_offset;
 	volume_bits = (legacy_u8)volume;
 	chunk[0x28U] = (legacy_u8)volume_bits;
 
-	if (byte_40634 != 0) {
+	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_driver_set_volume(chunk[0x47U], 0, volume_bits);
 		return;
 	}
 
-	context = unk_45A26;
-	for (context_index = 0; context_index < byte_459D2;
+	context = dos_audio_contexts;
+	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		if ((legacy_u16)context[0] == (legacy_u16)channel)
 			dos_audio_driver_set_volume(
@@ -272,7 +274,7 @@ void dos_audio_set_context_pitch(legacy_s16 context_index, legacy_s16 pitch)
 
 	context_offset = LEGACY_U16_WRAP_MUL(
 		(legacy_u16)context_index, 0x2EU);
-	context = unk_45A26 + context_offset;
+	context = dos_audio_contexts + context_offset;
 	set_pitch = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
 	set_pitch(context[0x2CU], context, (legacy_u16)pitch);
 }
