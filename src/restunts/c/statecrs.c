@@ -280,28 +280,22 @@ loc_19752:
 loc_19760:
 	state.game_pEndFrame = state.game_frame;
 loc_19766:
-	if (state.game_3F6autoLoadEvalFlag != 0)
-		goto loc_19779;
-	if (arg_MplayerFlag != 0)
-		goto loc_19779;
-	state.game_3F6autoLoadEvalFlag = arg_someFlag ;
-loc_19779:
+	if (state.game_3F6autoLoadEvalFlag == 0 && arg_MplayerFlag == 0)
+		state.game_3F6autoLoadEvalFlag = arg_someFlag;
 #ifndef RESTUNTS_HEADLESS
-	if ((byte_43966 & 4) != 0)
-		goto loc_1978D;
-	// TODO: these fields are orignally in a separate struct copied with a one-liner; gStats = state.stats;
-	// This seems to be very very important! It seems these copied variables are used in the evaluation screen.
-	gState_travDist = state.game_travDist;
-	gState_frame = state.game_frame;
-	gState_total_finish_time = state.game_total_finish;
-	gState_144 = state.field_144;
-	gState_pEndFrame = state.game_pEndFrame;
-	gState_oEndFrame = state.game_oEndFrame;
-	gState_penalty = state.game_penalty;
-	gState_impactSpeed = state.game_impactSpeed;
-	gState_topSpeed = state.game_topSpeed;
-	gState_jumpCount = state.game_jumpCount;
-loc_1978D:
+	if ((byte_43966 & 4) == 0) {
+		// These copied values are used by the evaluation screen.
+		gState_travDist = state.game_travDist;
+		gState_frame = state.game_frame;
+		gState_total_finish_time = state.game_total_finish;
+		gState_144 = state.field_144;
+		gState_pEndFrame = state.game_pEndFrame;
+		gState_oEndFrame = state.game_oEndFrame;
+		gState_penalty = state.game_penalty;
+		gState_impactSpeed = state.game_impactSpeed;
+		gState_topSpeed = state.game_topSpeed;
+		gState_jumpCount = state.game_jumpCount;
+	}
 #endif
 	return;
 }
