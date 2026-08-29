@@ -2545,11 +2545,13 @@ extern legacy_u16 projectiondata9;
 extern legacy_u16 projectiondata10;
 
 legacy_u16 projectiondata9_times_ratio(legacy_u16 i1, legacy_s16 i2) {
-	return projectiondata9 * i1 / i2;
+	return LEGACY_U16_DIV_OR_ZERO(
+		LEGACY_U16_WRAP_MUL(projectiondata9, i1),
+		(legacy_u16)i2);
 }
 
 legacy_u16 nopsub_32738(legacy_u32 dividend, legacy_u16 divisor) {
-	return (legacy_u16)(dividend / divisor);
+	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(dividend, divisor);
 }
 
 legacy_u32 nopsub_32746(legacy_u16 value) {
@@ -2561,7 +2563,8 @@ legacy_u32 nopsub_32751(legacy_u16 value) {
 }
 
 legacy_u16 nopsub_3276A(legacy_u16 value, legacy_u16 divisor) {
-	return (legacy_u16)((legacy_u32)projectiondata10 * value / divisor);
+	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+		LEGACY_U32_WRAP_MUL(projectiondata10, value), divisor);
 }
 
 extern legacy_s16 poly_linked_list_40ED6[];
@@ -2603,18 +2606,43 @@ extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0,
 	return 1;
 }
 
+static legacy_u16 projection_angle_from_extent(legacy_s16 extent)
+{
+	legacy_s32 scaled;
+	legacy_s32 quotient;
+
+	scaled = LEGACY_S32_WRAP_MUL((legacy_s32)extent, 0x800L);
+	quotient = LEGACY_S32_DIV_OR_ZERO(scaled, 0x168L);
+	return (legacy_u16)LEGACY_S32_SAR(quotient, 1U);
+}
+
+static legacy_u16 projection_scale_for_angle(legacy_u16 angle,
+	legacy_u16 extent)
+{
+	legacy_s32 product;
+	legacy_s32 quotient;
+
+	product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)cos_fast(angle), (legacy_s32)extent);
+	quotient = LEGACY_S32_DIV_OR_ZERO(
+		product, (legacy_s32)sin_fast(angle));
+	return (legacy_u16)quotient;
+}
+
 void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) {
 	
-	projectiondata1 = (((legacy_s32)i1 << 11) / 0x168) >> 1;
-	projectiondata2 = (((legacy_s32)i2 << 11) / 0x168) >> 1;
-	projectiondata3 = i3 >> 1;
+	projectiondata1 = projection_angle_from_extent(i1);
+	projectiondata2 = projection_angle_from_extent(i2);
+	projectiondata3 = (legacy_u16)LEGACY_S16_SAR(i3, 1U);
 	projectiondata5 = projectiondata3 + projectiondata4;
-	projectiondata6 = i4 >> 1;
+	projectiondata6 = (legacy_u16)LEGACY_S16_SAR(i4, 1U);
 	projectiondata8 = projectiondata6 + projectiondata7;
-	projectiondata9 = (legacy_s32)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+	projectiondata9 = projection_scale_for_angle(
+		projectiondata1, projectiondata3);
 
 	if (projectiondata2 != 0) {
-		projectiondata10 = (legacy_s32)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+		projectiondata10 = projection_scale_for_angle(
+			projectiondata2, projectiondata6);
 	} else {
 		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
@@ -2636,10 +2664,12 @@ void nopsub_322DF(legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4) {
 	projectiondata5 = projectiondata3 + projectiondata4;
 	projectiondata6 = i4 >> 1;
 	projectiondata8 = projectiondata6 + projectiondata7;
-	projectiondata9 = (legacy_s32)cos_fast(projectiondata1) * projectiondata3 / sin_fast(projectiondata1);
+	projectiondata9 = projection_scale_for_angle(
+		projectiondata1, projectiondata3);
 
 	if (projectiondata2 != 0) {
-		projectiondata10 = (legacy_s32)cos_fast(projectiondata2) * projectiondata6 / sin_fast(projectiondata2);
+		projectiondata10 = projection_scale_for_angle(
+			projectiondata2, projectiondata6);
 	} else {
 		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
