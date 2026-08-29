@@ -14,9 +14,9 @@ extern legacy_s16 gState_topSpeed;
 extern legacy_s16 gState_jumpCount;
 #endif
 
-extern legacy_s16 word_43964;
-extern legacy_s8 byte_459D8;
-extern legacy_s16 word_4408C;
+extern legacy_s16 audio_player_engine_channel;
+extern legacy_s8 audio_car_state_ready;
+extern legacy_s16 audio_opponent_engine_channel;
 
 void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 energy_offset_arg) {
 	legacy_s16 kind;
@@ -304,25 +304,25 @@ loc_196B3:
 #ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		goto loc_1964E;
-	if (byte_459D8 == 0)
+	if (audio_car_state_ready == 0)
 		goto loc_1964E;
 	if (arg_MplayerFlag != 0)
 		goto loc_196CE;
-	audio_function2_wrap(word_43964);
+	audio_function2_wrap(audio_player_engine_channel);
 	goto loc_196D2;
 /*    cmp     is_in_replay, 0
     jnz     short loc_1964E
-    cmp     byte_459D8, 0
+    cmp     audio_car_state_ready, 0
     jz      short loc_1964E
     cmp     [bp+arg_MplayerFlag], 0
     jnz     short loc_196CE
-    push    word_43964
+    push    audio_player_engine_channel
     jmp     short loc_196D2
     ; align 2
     db 144*/
 loc_196CE:
-    //push    word_4408C
-	audio_function2_wrap(word_4408C);
+    //push    audio_opponent_engine_channel
+	audio_function2_wrap(audio_opponent_engine_channel);
 loc_196D2:
 #endif
 	goto loc_1964E;
@@ -335,23 +335,23 @@ loc_196DE:
 #ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		goto loc_19704;
-	if (byte_459D8 == 0)
+	if (audio_car_state_ready == 0)
 		goto loc_19704;
 	if (arg_MplayerFlag != 0)
 		goto loc_196F8;
-	audio_function2_wrap(word_43964);
+	audio_function2_wrap(audio_player_engine_channel);
 	goto loc_196FC;
 /*    cmp     is_in_replay, 0
     jnz     short loc_19704
-    cmp     byte_459D8, 0
+    cmp     audio_car_state_ready, 0
     jz      short loc_19704
     cmp     [bp+arg_MplayerFlag], 0
     jnz     short loc_196F8
-    push    word_43964
+    push    audio_player_engine_channel
     jmp     short loc_196FC*/
 loc_196F8:
-	audio_function2_wrap(word_4408C);
-    //push    word_4408C
+	audio_function2_wrap(audio_opponent_engine_channel);
+    //push    audio_opponent_engine_channel
 loc_196FC:
 	//call    audio_function2_wrap
 	//add     sp, 2

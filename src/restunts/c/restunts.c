@@ -1048,48 +1048,47 @@ void audio_fade_out(legacy_s16 delay_ticks);
 extern legacy_s8 audio_music_enabled;
 extern legacy_s8 audio_effects_enabled;
 extern legacy_s16 audio_update_lock;
-extern legacy_s16 word_4063C;
 extern legacy_u8 dos_audio_special_mode;
-extern legacy_s8 audiodriverstring2[];
-extern legacy_u8 byte_44290;
-extern legacy_u8 byte_40630;
-extern legacy_u8 byte_40632;
-extern legacy_u8 byte_45950;
 extern legacy_u8 dos_audio_context_count;
-extern legacy_s8 byte_459D8;
-extern legacy_s8 byte_42D26;
-extern legacy_s8 byte_42D2A;
-extern legacy_u8 byte_428BE[];
-extern legacy_u8 byte_428D6[];
 extern legacy_u8 audio_channels[];
 extern legacy_u8* audio_sfx_channels;
-extern legacy_u8 byte_45948;
-extern legacy_u8 byte_45D9A[];
-extern legacy_u8 byte_44D06[];
-extern legacy_u8 byte_44ACA[];
 extern legacy_u8 dos_audio_contexts[];
 extern legacy_u8 audio_timers[];
-extern void far* basdres;
-extern void far* snarres;
-extern void far* tommres;
-extern void far* rideres;
-extern void far* crshres;
-extern void far* chhtres;
-extern void far* ohhtres;
-extern legacy_s16 word_43964;
-extern legacy_s16 word_4408C;
-extern legacy_u16 word_42240;
-extern legacy_u16 word_42242;
-extern legacy_u16 word_42244;
-extern legacy_u8 byte_42246;
-extern legacy_s16 word_3EB2A;
 extern legacy_u8 dos_audio_uses_direct_channels;
 extern legacy_u8 dos_audio_master_state[];
 extern legacy_u8 dos_audio_master_volume;
 extern void far* dos_audio_driver_binary;
-extern legacy_u16 word_44D48;
-extern legacy_u16 word_454BA;
-extern legacy_s8 audio_filetemp[];
+
+static legacy_s16 audio_missing_file_fatal;
+static legacy_s8 audio_driver_prefix[14];
+static legacy_u8 audio_music_channel_count;
+static legacy_u8 audio_suspended;
+static legacy_u8 audio_music_active;
+static legacy_u8 audio_music_rate;
+legacy_s8 audio_car_state_ready;
+static legacy_s8 audio_player_car_flags;
+static legacy_s8 audio_opponent_car_flags;
+static legacy_u8 audio_saved_channel_volumes[24];
+static legacy_u8 audio_effect_channel_volumes[24];
+static legacy_u8 audio_effect_rate;
+static legacy_u8 audio_channel_reserved[24];
+static legacy_u8 audio_channel_values[24];
+static legacy_u8 audio_channel_notes[24];
+static void far* audio_bass_drum_resource;
+static void far* audio_snare_resource;
+static void far* audio_tom_resource;
+static void far* audio_ride_resource;
+static void far* audio_crash_resource;
+static void far* audio_closed_hihat_resource;
+static void far* audio_open_hihat_resource;
+legacy_s16 audio_player_engine_channel;
+legacy_s16 audio_opponent_engine_channel;
+static legacy_u16 audio_driver_timer_rate;
+static legacy_u8 audio_padded_id[5];
+static legacy_s16 audio_driver_timer_divider;
+static legacy_u16 audio_engine_value_44d48;
+static legacy_u16 audio_engine_value_454ba;
+static legacy_s8 audio_filename_buffer[34];
 legacy_s16 dos_data_stack_segments_match(void);
 void audio_driver_timer(void);
 extern void dos_audio_bind_channel_context(legacy_s16 channel,
@@ -1161,7 +1160,7 @@ void audio_add_driver_timer(void)
 
 	for (index = 0; index < 25U; index++)
 		audio_timers[index * 0x4CU] = 0;
-	word_42240 = 0x16U;
+	audio_driver_timer_rate = 0x16U;
 	timer_reg_callback(&audio_driver_timer);
 }
 
@@ -1188,13 +1187,13 @@ legacy_s8* pad_id(const legacy_s8 far* source)
 	legacy_u8* destination;
 	legacy_u16 index;
 
-	destination = (legacy_u8*)&word_42242;
+	destination = audio_padded_id;
 	for (index = 0; index < 4U; index++) {
 		destination[index] = (legacy_u8)source[index];
 		if (destination[index] == 0)
 			destination[index] = ' ';
 	}
-	byte_42246 = 0;
+	audio_padded_id[4] = 0;
 	return (legacy_s8*)destination;
 }
 
@@ -1371,7 +1370,7 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 
 void sub_18D06(const legacy_u8* sample, legacy_s16 interval)
 {
-	audio_op_unk2(word_43964,
+	audio_op_unk2(audio_player_engine_channel,
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1EU)),
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 6U)),
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 8U)),
@@ -1381,7 +1380,7 @@ void sub_18D06(const legacy_u8* sample, legacy_s16 interval)
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x10U)),
 		interval);
 	if (gameconfig.game_opponenttype != 0) {
-		audio_op_unk2(word_4408C,
+		audio_op_unk2(audio_opponent_engine_channel,
 			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x20U)),
 			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x12U)),
 			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x14U)),
@@ -1588,8 +1587,8 @@ void audio_driver_timer(void)
 	if (dos_data_stack_segments_match() == 0)
 		return;
 
-	word_3EB2A = LEGACY_S16_WRAP_ADD(word_3EB2A, 1);
-	if (word_3EB2A < 2 && dos_audio_uses_direct_channels != 0)
+	audio_driver_timer_divider = LEGACY_S16_WRAP_ADD(audio_driver_timer_divider, 1);
+	if (audio_driver_timer_divider < 2 && dos_audio_uses_direct_channels != 0)
 		return;
 
 	for (index = 0; index < 25U; index++) {
@@ -1654,8 +1653,8 @@ void audio_driver_timer(void)
 		}
 	}
 
-	if (word_3EB2A >= 2)
-		word_3EB2A = 0;
+	if (audio_driver_timer_divider >= 2)
+		audio_driver_timer_divider = 0;
 }
 
 void audio_unload(void)
@@ -1675,9 +1674,9 @@ void audio_disable_flag2(void)
 {
 	audio_music_enabled = 0;
 	audio_update_lock = 1;
-	if (byte_44290 != 0)
+	if (audio_music_channel_count != 0)
 		audio_release_channel_range(
-			0, (legacy_u16)byte_44290 - 1U);
+			0, (legacy_u16)audio_music_channel_count - 1U);
 	audio_update_driver_contexts();
 	audio_update_lock = 0;
 }
@@ -1698,10 +1697,10 @@ legacy_s16 nopsub_373FE(void)
 	legacy_u16 offset;
 	legacy_u16 channel;
 
-	if (byte_40630 == 1 || audio_music_enabled == 0)
+	if (audio_suspended == 1 || audio_music_enabled == 0)
 		return 1;
 
-	for (channel = 0; channel < (legacy_u16)byte_44290; channel++) {
+	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++) {
 		offset = (channel + 0x10U) * 0x4CU;
 		if ((LEGACY_READ_U16_LE(audio_channels + offset) |
 			LEGACY_READ_U16_LE(audio_channels + offset + 2)) != 0)
@@ -1714,10 +1713,10 @@ legacy_s16 nopsub_373FE(void)
 void sub_3736A(void)
 {
 	audio_update_lock = 1;
-	byte_40632 = 0;
+	audio_music_active = 0;
 	audio_release_channel_range(0, 0x0F);
-	audio_init_chunk(0, 0x0F, 0, 0, byte_45950, 0);
-	byte_44290 = 0;
+	audio_init_chunk(0, 0x0F, 0, 0, audio_music_rate, 0);
+	audio_music_channel_count = 0;
 	audio_update_driver_contexts();
 	audio_update_lock = 0;
 }
@@ -1730,7 +1729,7 @@ void audio_enable_flag6(void)
 		return;
 
 	for (channel = 0x10; channel < 0x18; channel++)
-		dos_audio_set_channel_volume(channel, byte_428D6[channel]);
+		dos_audio_set_channel_volume(channel, audio_effect_channel_volumes[channel]);
 	audio_effects_enabled = 1;
 }
 
@@ -1742,7 +1741,7 @@ void audio_disable_flag6(void)
 		return;
 
 	for (channel = 0x10; channel < 0x18; channel++) {
-		byte_428D6[channel] =
+		audio_effect_channel_volumes[channel] =
 			audio_sfx_channels[(channel - 0x10) * 0x4C + 0x28];
 		dos_audio_set_channel_volume(channel, 0);
 	}
@@ -1834,8 +1833,8 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		chunk[0x22] = 0x7F;
 		chunk[0x23] = (legacy_u8)channel;
 		chunk[0x16] = 0x0F;
-		byte_44D06[(legacy_u16)channel] = 0;
-		byte_44ACA[(legacy_u16)channel] = 0;
+		audio_channel_values[(legacy_u16)channel] = 0;
+		audio_channel_notes[(legacy_u16)channel] = 0;
 		chunk[0x32] = 0;
 		chunk[4] = 0;
 		chunk[0x24] = priority;
@@ -2002,16 +2001,16 @@ static void far* audio_select_sample_resource(void far* original_resource,
 
 	if (((legacy_u8 far*)original_resource)[5] != 5U)
 		return original_resource;
-	resources[0] = basdres;
-	resources[1] = snarres;
-	resources[2] = tommres;
-	resources[3] = rideres;
-	resources[4] = crshres;
-	resources[5] = chhtres;
-	resources[6] = ohhtres;
+	resources[0] = audio_bass_drum_resource;
+	resources[1] = audio_snare_resource;
+	resources[2] = audio_tom_resource;
+	resources[3] = audio_ride_resource;
+	resources[4] = audio_crash_resource;
+	resources[5] = audio_closed_hihat_resource;
+	resources[6] = audio_open_hihat_resource;
 	note_index = LEGACY_U16_WRAP_SUB(note, 0x18U);
 	if (note_index >= 16U)
-		return tommres;
+		return audio_tom_resource;
 	return resources[percussion_resource_indices[note_index]];
 }
 
@@ -2175,7 +2174,7 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 		(legacy_s8)resource[0x10U], (legacy_s8)note);
 	dos_audio_driver_activate_context(driver_channel, context, timer,
 		pitch, 0, resource);
-	byte_44ACA[(legacy_u16)handle] = note;
+	audio_channel_notes[(legacy_u16)handle] = note;
 	return context_index;
 }
 
@@ -2278,7 +2277,7 @@ void audio_update_driver_contexts(void)
 					context[0], 0x4CU);
 				chunk[0x15U]--;
 				dos_audio_driver_end_context(context[0x2CU], context);
-				byte_44ACA[context[0]] = 0;
+				audio_channel_notes[context[0]] = 0;
 			}
 		}
 
@@ -2359,7 +2358,7 @@ void audio_suspend(void)
 	legacy_u16 channel;
 	legacy_u16 context_index;
 
-	byte_40630 = 1;
+	audio_suspended = 1;
 	audio_update_lock = 1;
 	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_master_volume = 0;
@@ -2371,7 +2370,7 @@ void audio_suspend(void)
 	chunk = audio_channels;
 	for (channel = 0; channel < 0x18U; channel++) {
 		if (audio_effects_enabled == 1 || channel < 0x10U) {
-			byte_428BE[channel] = chunk[0x28U];
+			audio_saved_channel_volumes[channel] = chunk[0x28U];
 			dos_audio_set_channel_volume((legacy_s16)channel, 0);
 		}
 		chunk += 0x4CU;
@@ -2393,7 +2392,7 @@ void audio_resume(void)
 {
 	legacy_u16 channel;
 
-	byte_40630 = 1;
+	audio_suspended = 1;
 	audio_update_lock = 1;
 	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_master_volume = 0x64U;
@@ -2402,11 +2401,11 @@ void audio_resume(void)
 		for (channel = 0; channel < 0x18U; channel++) {
 			if (audio_effects_enabled == 1 || channel < 0x10U)
 				dos_audio_set_channel_volume((legacy_s16)channel,
-					byte_428BE[channel]);
+					audio_saved_channel_volumes[channel]);
 		}
 	}
 	audio_update_lock = 0;
-	byte_40630 = 0;
+	audio_suspended = 0;
 }
 
 legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
@@ -2422,11 +2421,11 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	if (audio_effects_enabled == 0 || resource == 0 || bytes[5] != 1)
 		return -1;
 
-	if (byte_45948 != 0) {
+	if (audio_effect_rate != 0) {
 		scaled_rate = (legacy_u16)((legacy_u32)(legacy_u16)rate *
 			0x80UL);
 		rate = (legacy_u16)((legacy_u16)(scaled_rate /
-			(legacy_u16)byte_45948) - 1U);
+			(legacy_u16)audio_effect_rate) - 1U);
 	} else {
 		rate = 0;
 	}
@@ -2436,7 +2435,7 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
 			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
 				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
-				byte_45D9A[candidate] == 0) {
+				audio_channel_reserved[candidate] == 0) {
 				channel = candidate;
 				break;
 			}
@@ -2456,7 +2455,7 @@ legacy_s16 audio_check_flag2(void far* resource, legacy_s16 channel,
 	legacy_u8 priority)
 {
 	return audio_check_flag(resource, channel, priority,
-		(legacy_u16)byte_45948);
+		(legacy_u16)audio_effect_rate);
 }
 
 legacy_s16 nopsub_37456(void far* resource)
@@ -2474,7 +2473,7 @@ legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
 			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
 				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
-				byte_45D9A[candidate] == 0) {
+				audio_channel_reserved[candidate] == 0) {
 				channel = candidate;
 				break;
 			}
@@ -2482,7 +2481,7 @@ legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 	}
 
 	if (channel != -1) {
-		byte_45D9A[channel] = 1;
+		audio_channel_reserved[channel] = 1;
 		offset = (legacy_u16)channel * 0x4CU;
 		audio_channels[offset + 0x24U] = priority;
 	}
@@ -2501,7 +2500,7 @@ void audio_init_chunk2(legacy_s16 channel)
 	LEGACY_WRITE_U16_LE(audio_channels + offset, 0);
 	LEGACY_WRITE_U16_LE(audio_channels + offset + 2, 0);
 	audio_release_channel_range(channel, channel);
-	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
+	audio_init_chunk(channel, channel, 0, 0, audio_effect_rate, 0);
 }
 
 void audio_op_unk7(legacy_s16 index)
@@ -2612,33 +2611,33 @@ legacy_s8* audio_make_filename(const legacy_s8* filename, const legacy_s8* exten
 	legacy_s8* separator;
 	legacy_u16 length;
 
-	separator = audio_filetemp;
+	separator = audio_filename_buffer;
 	source = filename;
 	do {
 		*separator++ = *source;
 	} while (*source++ != 0);
-	separator = (legacy_s8*)audio_find_last_backslash(audio_filetemp);
+	separator = (legacy_s8*)audio_find_last_backslash(audio_filename_buffer);
 	if (separator != 0)
 		separator[1] = 0;
 	else
-		audio_filetemp[0] = 0;
+		audio_filename_buffer[0] = 0;
 
-	audio_append_filename_part(audio_filetemp, inserted_path);
+	audio_append_filename_part(audio_filename_buffer, inserted_path);
 	basename = audio_find_last_backslash(filename);
 	if (basename != 0)
 		basename++;
 	else
 		basename = filename;
-	audio_append_filename_part(audio_filetemp, basename);
+	audio_append_filename_part(audio_filename_buffer, basename);
 
 	length = 0;
-	while (audio_filetemp[length] != 0)
+	while (audio_filename_buffer[length] != 0)
 		length++;
-	if (length <= 4U || audio_filetemp[length - 4U] != '.') {
-		audio_append_filename_part(audio_filetemp, ".");
-		audio_append_filename_part(audio_filetemp, extension);
+	if (length <= 4U || audio_filename_buffer[length - 4U] != '.') {
+		audio_append_filename_part(audio_filename_buffer, ".");
+		audio_append_filename_part(audio_filename_buffer, extension);
 	}
-	return audio_filetemp;
+	return audio_filename_buffer;
 }
 
 legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
@@ -2674,14 +2673,14 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 			break;
 		}
 	}
-	audiodriverstring2[0] = driver[basename_offset];
-	audiodriverstring2[1] = driver[basename_offset + 1U];
-	audiodriverstring2[2] = 0;
+	audio_driver_prefix[0] = driver[basename_offset];
+	audio_driver_prefix[1] = driver[basename_offset + 1U];
+	audio_driver_prefix[2] = 0;
 
 	dos_audio_driver_binary = file_load_binary_nofatal(audio_make_filename(
 		driver, driver_extension, empty_path));
-	byte_45950 = 0x7FU;
-	byte_45948 = 0x7FU;
+	audio_music_rate = 0x7FU;
+	audio_effect_rate = 0x7FU;
 	if (dos_audio_driver_binary == 0) {
 		fatal_error(missing_driver_message);
 		return 2;
@@ -2710,9 +2709,9 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 		}
 	}
 
-	byte_40630 = 0;
+	audio_suspended = 0;
 	audio_music_enabled = 1;
-	byte_40632 = 0;
+	audio_music_active = 0;
 	audio_effects_enabled = 1;
 	return 0;
 }
@@ -2766,10 +2765,10 @@ void far* load_sfx_file(const legacy_s8* filename)
 
 	result = 0;
 	if (dos_audio_special_mode != 0)
-		result = load_sfx_ge(filename, "dsf", audiodriverstring2);
+		result = load_sfx_ge(filename, "dsf", audio_driver_prefix);
 	if (result == 0)
-		result = load_sfx_ge(filename, "sfx", audiodriverstring2);
-	if (result == 0 && word_4063C != 0)
+		result = load_sfx_ge(filename, "sfx", audio_driver_prefix);
+	if (result == 0 && audio_missing_file_fatal != 0)
 		fatal_error("cannot load sfx file %s", filename);
 	return result;
 }
@@ -2778,8 +2777,8 @@ void far* load_song_file(const legacy_s8* filename)
 {
 	void far* result;
 
-	result = load_sfx_ge(filename, "kms", audiodriverstring2);
-	if (result == 0 && word_4063C != 0)
+	result = load_sfx_ge(filename, "kms", audio_driver_prefix);
+	if (result == 0 && audio_missing_file_fatal != 0)
 		fatal_error("cannot load song file %s", filename);
 	return result;
 }
@@ -2790,10 +2789,10 @@ void far* load_voice_file(const legacy_s8* filename)
 
 	result = 0;
 	if (dos_audio_special_mode != 0)
-		result = load_sfx_ge(filename, "dvc", audiodriverstring2);
+		result = load_sfx_ge(filename, "dvc", audio_driver_prefix);
 	if (result == 0)
-		result = load_sfx_ge(filename, "vce", audiodriverstring2);
-	if (result == 0 && word_4063C != 0)
+		result = load_sfx_ge(filename, "vce", audio_driver_prefix);
+	if (result == 0 && audio_missing_file_fatal != 0)
 		fatal_error("cannot load voice file %s", filename);
 	return result;
 }
@@ -7167,13 +7166,13 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 		header[name_offset + 3U] = (legacy_u8)(pointer_segment >> 8);
 	}
 
-	basdres = audioresource_find(instruments, "BASD");
-	snarres = audioresource_find(instruments, "SNAR");
-	tommres = audioresource_find(instruments, "TOMM");
-	rideres = audioresource_find(instruments, "RIDE");
-	crshres = audioresource_find(instruments, "CRSH");
-	chhtres = audioresource_find(instruments, "CHHT");
-	ohhtres = audioresource_find(instruments, "OHHT");
+	audio_bass_drum_resource = audioresource_find(instruments, "BASD");
+	audio_snare_resource = audioresource_find(instruments, "SNAR");
+	audio_tom_resource = audioresource_find(instruments, "TOMM");
+	audio_ride_resource = audioresource_find(instruments, "RIDE");
+	audio_crash_resource = audioresource_find(instruments, "CRSH");
+	audio_closed_hihat_resource = audioresource_find(instruments, "CHHT");
+	audio_open_hihat_resource = audioresource_find(instruments, "OHHT");
 }
 
 static void audio_write_far_pointer_to_resource(legacy_u8 far* destination,
@@ -7406,15 +7405,15 @@ void load_audio_finalize(void far* audio_resource)
 		return;
 
 	dos_audio_driver_reset();
-	word_44D48 = 0;
-	word_454BA = 0x80U;
+	audio_engine_value_44d48 = 0;
+	audio_engine_value_454ba = 0x80U;
 	data_offset = LEGACY_U16_WRAP_ADD(
 		(legacy_u16)((legacy_u16)resource[6] << 2), 7U);
-	byte_44290 = resource[data_offset++];
+	audio_music_channel_count = resource[data_offset++];
 	audio_init_chunk(0,
-		LEGACY_S16_FROM_BITS((legacy_u16)(byte_44290 - 1U)),
-		resource, data_offset, byte_45950, 0x20U);
-	byte_40632 = 1;
+		LEGACY_S16_FROM_BITS((legacy_u16)(audio_music_channel_count - 1U)),
+		resource, data_offset, audio_music_rate, 0x20U);
+	audio_music_active = 1;
 	audio_update_lock = 0;
 }
 
@@ -7577,21 +7576,21 @@ void audio_carstate(void)
 	legacy_s16 channel;
 
 	if (is_in_replay != 0) {
-		if (byte_459D8 != 0) {
+		if (audio_car_state_ready != 0) {
 			word_44D1E = word_449E4;
-			if (((legacy_u8)byte_42D26 & 6U) != 0)
-				audio_op_unk7(word_43964);
-			if (((legacy_u8)byte_42D26 & 1U) != 0)
-				audio_function2(word_43964);
+			if (((legacy_u8)audio_player_car_flags & 6U) != 0)
+				audio_op_unk7(audio_player_engine_channel);
+			if (((legacy_u8)audio_player_car_flags & 1U) != 0)
+				audio_function2(audio_player_engine_channel);
 			if (gameconfig.game_opponenttype != 0) {
-				if (((legacy_u8)byte_42D2A & 6U) != 0)
-					audio_op_unk7(word_4408C);
-				if (((legacy_u8)byte_42D2A & 1U) != 0)
-					audio_function2(word_4408C);
+				if (((legacy_u8)audio_opponent_car_flags & 6U) != 0)
+					audio_op_unk7(audio_opponent_engine_channel);
+				if (((legacy_u8)audio_opponent_car_flags & 1U) != 0)
+					audio_function2(audio_opponent_engine_channel);
 			}
-			byte_459D8 = 0;
-			byte_42D26 = 0;
-			byte_42D2A = 0;
+			audio_car_state_ready = 0;
+			audio_player_car_flags = 0;
+			audio_opponent_car_flags = 0;
 		}
 		if ((legacy_u8)byte_3BE02 != (legacy_u8)is_in_replay)
 			audio_reset_channels();
@@ -7687,21 +7686,21 @@ void audio_carstate(void)
 	for (car_index = 0; car_index < car_count; car_index++) {
 		if (car_index == 0) {
 			carstate = &state.playerstate;
-			channel = word_43964;
-			flags = (legacy_u8)byte_42D26;
+			channel = audio_player_engine_channel;
+			flags = (legacy_u8)audio_player_car_flags;
 		} else {
 			carstate = &state.opponentstate;
-			channel = word_4408C;
-			flags = (legacy_u8)byte_42D2A;
+			channel = audio_opponent_engine_channel;
+			flags = (legacy_u8)audio_opponent_car_flags;
 		}
 		flags = audio_carstate_update_flags(carstate, channel, flags);
 		if (car_index == 0)
-			byte_42D26 = (legacy_s8)flags;
+			audio_player_car_flags = (legacy_s8)flags;
 		else
-			byte_42D2A = (legacy_s8)flags;
+			audio_opponent_car_flags = (legacy_s8)flags;
 	}
 
-	byte_459D8 = 1;
+	audio_car_state_ready = 1;
 	word_449E4 = LEGACY_S16_WRAP_ADD(word_449E4, 1);
 	if (word_449E4 == 0x28)
 		word_449E4 = 0;
@@ -7711,7 +7710,7 @@ void audio_carstate(void)
 void sub_374DE(legacy_s16 channel)
 {
 	if (channel > -1) {
-		byte_45D9A[channel] = 0;
+		audio_channel_reserved[channel] = 0;
 		audio_init_chunk2(channel);
 	}
 }
@@ -7729,7 +7728,7 @@ legacy_s16 sub_37868(legacy_s16 value)
 {
 	legacy_s16 channel;
 
-	for (channel = 0; channel < (legacy_u16)byte_44290; channel++)
+	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++)
 		dos_audio_set_channel_volume(channel, value);
 
 	return channel;
@@ -7754,7 +7753,7 @@ void audio_fade_out(legacy_s16 delay_ticks)
 			volume = LEGACY_S16_WRAP_SUB(volume, 2);
 		} while (volume > 0);
 	} else {
-		volume = byte_45950;
+		volume = audio_music_rate;
 		while (volume > 0) {
 			audio_update_lock = 1;
 			sub_37868(volume);
@@ -7776,28 +7775,28 @@ void audio_fade_out(legacy_s16 delay_ticks)
 
 legacy_s16 nopsub_37898(legacy_s16 value)
 {
-	byte_45950 = (legacy_u8)value;
+	audio_music_rate = (legacy_u8)value;
 	return sub_37868(value);
 }
 
 void sub_37C38(legacy_s16 value)
 {
-	word_4063C = value;
+	audio_missing_file_fatal = value;
 }
 
 legacy_u16 nopsub_378AE(legacy_s16 channel)
 {
-	return (legacy_u16)byte_44D06[(legacy_u16)channel];
+	return (legacy_u16)audio_channel_values[(legacy_u16)channel];
 }
 
 legacy_u16 nopsub_378BC(legacy_s16 channel)
 {
-	return (legacy_u16)byte_44ACA[(legacy_u16)channel];
+	return (legacy_u16)audio_channel_notes[(legacy_u16)channel];
 }
 
 void audio_unk3(legacy_u8 flags, legacy_s16 channel)
 {
-	if (byte_459D8 == 0)
+	if (audio_car_state_ready == 0)
 		return;
 
 	if ((flags & 0x10U) != 0)
@@ -7917,13 +7916,13 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	eng1ptr = file_load_resource(5, "eng1");//aEng1); // "eng1"
 	engptr = file_load_resource(6, "eng");//aEng); // "eng"
 	audio_add_driver_timer();
-	word_43964 = audio_init_engine(0x21, &unk_3E7FC, eng1ptr, engptr);
+	audio_player_engine_channel = audio_init_engine(0x21, &unk_3E7FC, eng1ptr, engptr);
 
-	byte_459D8 = 0;
-	byte_42D26 = 0;
-	byte_42D2A = 0;
+	audio_car_state_ready = 0;
+	audio_player_car_flags = 0;
+	audio_opponent_car_flags = 0;
 	if (gameconfig.game_opponenttype != 0) {
-		word_4408C = audio_init_engine(0x20, &unk_3E82C, eng1ptr, engptr);
+		audio_opponent_engine_channel = audio_init_engine(0x20, &unk_3E82C, eng1ptr, engptr);
 	}
 
 	word_44D1E = 0;

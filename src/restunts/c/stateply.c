@@ -37,8 +37,8 @@ extern struct POINT2D unk_3BD62[2];
 extern struct POINT2D unk_3BD5A[2];
 extern struct POINT2D unk_3BD6A[2];
 extern legacy_s16 word_3BD72[4];
-extern legacy_s16 word_4408C;
-extern legacy_s16 word_43964;
+extern legacy_s16 audio_opponent_engine_channel;
+extern legacy_s16 audio_player_engine_channel;
 extern struct TRACKOBJECT trkObjectList[215];
 extern struct VECTOR unk_3E640[];
 extern struct VECTOR unk_3E646[];
@@ -3113,19 +3113,19 @@ loc_16236:
 		goto loc_1625F;
 	if (arg_MplayerFlag == 0)
 		goto loc_1624A;
-	audio_unk3(arg_pState->field_CF, word_4408C);
+	audio_unk3(arg_pState->field_CF, audio_opponent_engine_channel);
 	goto loc_1624E;
 /*    cmp     is_in_replay, 0
     jnz     short loc_1625F
     cmp     [bp+arg_MplayerFlag], 0
     jz      short loc_1624A
-    push    word_4408C
+    push    audio_opponent_engine_channel
     jmp     short loc_1624E
     ; align 2
     db 144*/
 loc_1624A:
-	audio_unk3(arg_pState->field_CF, word_43964);
-    //push    word_43964
+	audio_unk3(arg_pState->field_CF, audio_player_engine_channel);
+    //push    audio_player_engine_channel
 loc_1624E:
 	//audio_unk3(arg_pState->field_CF, );
 #endif
