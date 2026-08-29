@@ -8488,6 +8488,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	legacy_u8 blit_mode;
 	legacy_u8 render_phase;
 	legacy_u8 car_ready;
+	legacy_u8 render_deferred;
 	legacy_u8 character;
 	legacy_u16 i;
 	legacy_u16 j;
@@ -8589,7 +8590,8 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	(void)timer_get_delta_alt();
 	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 
-car_menu_top:
+	for (;;) {
+	render_deferred = 0;
 	if (previous_car_index != car_index) {
 		if (previous_car_index != 0xFFU) {
 			unload_resource(car_resource);
@@ -8710,11 +8712,12 @@ car_menu_top:
 		rect_union(&current_rect, &previous_rect, &union_rect);
 		if (render_phase != 3) {
 			render_phase = 1;
-			goto car_menu_input;
+			render_deferred = 1;
 		}
 	}
 
-	if (render_phase == 1 || render_phase == 3) {
+	if (render_deferred == 0 &&
+		(render_phase == 1 || render_phase == 3)) {
 		render_phase = 0;
 		car_ready = 1;
 		sprite_copy_wnd_to_1();
@@ -8755,7 +8758,6 @@ car_menu_top:
 		previous_car_index = car_index;
 	}
 
-car_menu_input:
 	if (previous_selected != selected) {
 		if (previous_selected != 0xFFU) {
 			sprite_copy_2_to_1_2();
@@ -8797,30 +8799,31 @@ car_menu_input:
 	}
 
 	if (input == 0)
-		goto car_menu_top;
+		continue;
 	if (input == 0x4800U) {
 		selected = selected == 0 ? 4U : (legacy_u8)(selected - 1U);
-		goto car_menu_top;
+		continue;
 	}
 	if (input == 0x5000U) {
 		selected = selected >= 4U ? 0U : (legacy_u8)(selected + 1U);
-		goto car_menu_top;
+		continue;
 	}
 	if (input != 0x0DU && input != 0x1BU && input != 0x20U)
-		goto car_menu_top;
+		continue;
 
 	if (selected == 0) {
 		if (car_ready == 0)
-			goto car_menu_top;
+			continue;
+		break;
 	} else if (selected == 1) {
 		car_index++;
 		if (car_index == car_count)
 			car_index = 0;
-		goto car_menu_top;
+		continue;
 	} else if (selected == 2) {
 		car_index = car_index == 0 ?
 			(legacy_u8)(car_count - 1U) : (legacy_u8)(car_index - 1U);
-		goto car_menu_top;
+		continue;
 	} else if (selected == 3) {
 		*transmission = (legacy_s8)((legacy_u8)*transmission ^ 1U);
 		sprite_copy_wnd_to_1();
@@ -8831,13 +8834,14 @@ car_menu_input:
 		mouse_draw_opaque_check();
 		car_menu_draw_standard_button(transmission_text, 3);
 		mouse_draw_transparent_check();
-		goto car_menu_top;
+		continue;
 	} else if (selected == 4) {
 		*material = (legacy_s8)((legacy_u8)*material + 1U);
 		render_phase = 3;
-		goto car_menu_top;
+		continue;
 	} else {
-		goto car_menu_top;
+		continue;
+	}
 	}
 
 	sprite_free_wnd(render_window_sprite);
