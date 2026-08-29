@@ -515,8 +515,11 @@ struct FULL_AUDIO_ENGINE_DEFINITION {
 };
 #pragma pack (pop)
 
+/* The resource-id fields are 16-bit far pointers in the DOS ABI. */
+#if defined(__BORLANDC__)
 typedef char full_audio_engine_definition_must_be_48_bytes[
 	(sizeof(struct FULL_AUDIO_ENGINE_DEFINITION) == 48) ? 1 : -1];
+#endif
 
 struct FULL_AUDIO_ENGINE_DEFINITION unk_3E7FC = {
 	{ 0xF4, 0x01, 0x10, 0x27, 0x28, 0x23, 0, 0 },
