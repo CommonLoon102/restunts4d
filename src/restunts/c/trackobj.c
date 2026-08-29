@@ -132,9 +132,8 @@ void build_track_object(struct VECTOR* world_position,
 	track_column = LEGACY_S16_SAR(world_position->x, 10U);
 	track_row = LEGACY_S16_SAR(world_position->z, 10U);
 	physical_model = -1;
-	if (track_column < 0 || track_column > 0x1D ||
-		track_row < 0 || track_row > 0x1D)
-		goto track_contact_finalize;
+	if (track_column >= 0 && track_column <= 0x1D &&
+		track_row >= 0 && track_row <= 0x1D) {
 
 	elem_xCenter = (legacy_s16)trackcenterpos2[track_column];
 	elem_zCenter = (legacy_s16)terraincenterpos[track_row];
@@ -174,8 +173,9 @@ void build_track_object(struct VECTOR* world_position,
 
 	track_tile = td14_elem_map_main[
 		terrainrows[track_row] + track_column];
+	do {
 	if (track_tile == 0)
-		goto track_contact_model_done;
+		break;
 	if (track_tile == 0xFDU) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row + 1] + track_column - 1];
@@ -232,7 +232,7 @@ void build_track_object(struct VECTOR* world_position,
 	absolute_x = track_abs(position.x);
 	absolute_z = track_abs(position.z);
 	if (physical_model < 0 || physical_model > 0x4A)
-		goto track_contact_model_done;
+		break;
 
 	switch (physical_model) {
 	case 0: /* Start/finish line. */
@@ -967,8 +967,8 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 	}
+	} while (0);
 
-track_contact_model_done:
 	if (terrain_tile >= 7U) {
 		position.x = LEGACY_S16_WRAP_SUB(world_position->x,
 			(legacy_s16)trackcenterpos2[track_column]);
@@ -1013,8 +1013,8 @@ track_contact_model_done:
 			}
 		}
 	}
+	}
 
-track_contact_finalize:
 	if (planindex > 0) {
 		planindex = LEGACY_S16_WRAP_MUL(planindex, 4);
 		switch ((legacy_u16)element_orientation) {
