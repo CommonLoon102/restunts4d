@@ -353,8 +353,6 @@ extern void audio_remove_driver_timer(void);
 extern void check_input(void);
 extern legacy_s16 input_do_checking(legacy_s16 unk);
 extern void kb_exit_handler(void);
-extern void kb_shift_checking1(void);
-extern void kb_shift_checking2(void);
 extern void kb_reg_callback(legacy_s16 code, void (far* callback)(void));
 extern void show_graphic_levels_menu(void);
 extern void do_joy_restext(void);

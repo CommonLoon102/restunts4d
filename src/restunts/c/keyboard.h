@@ -12,6 +12,8 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
                                 legacy_u16 ip, legacy_u16 cs, legacy_u16 flags);
 legacy_s16 kb_get_key_state(legacy_s16 key);
 legacy_s16 dos_kb_get_char(void);
+void dos_kb_set_numlock(void);
+void dos_kb_clear_numlock(void);
 legacy_s16 kb_call_readchar_callback(void);
 legacy_s16 kb_read_char(void);
 legacy_s16 kb_checking(void);

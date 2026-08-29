@@ -288,6 +288,18 @@ legacy_s16 dos_kb_get_char(void)
 	return kb_parse_key(outregs.x.ax);
 }
 
+void dos_kb_set_numlock(void)
+{
+	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) | 0x20U);
+	(void)kb_checking();
+}
+
+void dos_kb_clear_numlock(void)
+{
+	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) & 0xDFU);
+	(void)kb_checking();
+}
+
 legacy_s16 kb_call_readchar_callback(void) {
 	// the orginal code uses a (hard-coded, non-changing) callback for
 	// reading chars.. we just call kb_read_char() directly:

@@ -6106,7 +6106,7 @@ legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16
 	max_pixels = LEGACY_U16_WRAP_ADD(
 		LEGACY_U16_WRAP_MUL(max_characters, 9U), 9U);
 	result = read_line(2, text, 0, max_characters, max_pixels, x, y,
-		&kb_shift_checking2, timeout);
+		&dos_kb_clear_numlock, timeout);
 	mouse_draw_transparent_check();
 
 	length = (legacy_u16)strlen(text);
@@ -9825,7 +9825,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 
 	// Keyboard
 	kb_init_interrupt();
-	kb_shift_checking2();
+	dos_kb_clear_numlock();
 	kb_call_readchar_callback();
 
 	kb_reg_callback(0x0007, &show_graphic_levels_menu);
@@ -10109,7 +10109,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	audio_stop_unk();
 	audiodrv_atexit();
 	kb_exit_handler();
-	kb_shift_checking1();
+	dos_kb_set_numlock();
 	video_set_mode7();
 	
 	fatal_error("err %i", inch);
@@ -10178,7 +10178,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 				audio_stop_unk();
 				audiodrv_atexit();
 				kb_exit_handler();
-				kb_shift_checking1();
+				dos_kb_set_numlock();
 				video_set_mode7();
 				return result;
 			}
