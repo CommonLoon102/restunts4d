@@ -1,6 +1,4 @@
-#include <mem.h>
 #include <stddef.h>
-#include <stdlib.h>
 
 #include "externs.h"
 #include "memmgr.h"
@@ -2705,7 +2703,8 @@ legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
 		size = (shape2d_get_word(memshape + SHAPE2D_WIDTH_OFFSET) *
 			shape2d_get_word(memshape + SHAPE2D_HEIGHT_OFFSET) +
 			0x20) >> 4;
-		maxsize = max(maxsize, size);
+		if (size > maxsize)
+			maxsize = size;
 	}
 	return maxsize;
 }

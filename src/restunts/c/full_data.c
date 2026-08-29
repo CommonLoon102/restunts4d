@@ -285,7 +285,6 @@ legacy_s8 far* oppresources[7];
 legacy_s8 is_audioloaded;
 
 void (far* exitlistfuncs[11])(void);
-void interrupt (far* old_intr0_handler)();
 legacy_s16 waitflag;
 
 /* Menu and overlay resources. */
