@@ -10,6 +10,17 @@
 #include "fileio.h"
 #include "memmgr.h"
 
+#ifdef RESTUNTS_HEADLESS
+static const legacy_s8 headless_file_error[] = "File error: %s";
+static const legacy_s8 headless_write_error[] = "File write error: %s";
+static const legacy_s8 headless_size_error[] = "File size error: %s";
+static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
+#define aSFileError headless_file_error
+#define aSFileError_0 headless_write_error
+#define aSFileError_1 headless_size_error
+#define aSInvalidPackTy headless_pack_error
+#endif
+
 #define PAGE_SIZE 0x4000
 #define PAGE_GAP  0x400
 #define FILENAME_LEN 13
@@ -986,6 +997,17 @@ void far* file_load_binary_fatal(const legacy_s8* filename) {
 
 void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 	void far* result;
+#ifdef RESTUNTS_HEADLESS
+	if (type == 0 || type == 1)
+		result = file_load_binary_nofatal(filename);
+	else if (type == 7)
+		result = file_decomp_nofatal(filename);
+	else
+		result = 0;
+	if (result == 0 && type == 0)
+		fatal_error(headless_file_error, filename);
+	return result;
+#else
 	legacy_s16 dearesult;
 	while (1) {
 		switch (type) {
@@ -1044,6 +1066,7 @@ void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 		dearesult = do_dea_textres();
 		if (dearesult == 2) return 0;
 	}
+#endif
 }
 
 
@@ -1051,6 +1074,19 @@ void far* file_load_resfile(const legacy_s8* filename) {
 	legacy_s8 name[0x50];
 	void far* result;
 	
+#ifdef RESTUNTS_HEADLESS
+	strcpy(name, filename);
+	strcat(name, ".res");
+	result = file_load_resource(1, name);
+	if (result != 0)
+		return result;
+	strcpy(name, filename);
+	strcat(name, ".pre");
+	result = file_load_resource(7, name);
+	if (result == 0)
+		fatal_error(headless_file_error, filename);
+	return result;
+#else
 	while (1) {
 		strcpy(name, filename);
 		strcat(name, ".res");
@@ -1066,12 +1102,14 @@ void far* file_load_resfile(const legacy_s8* filename) {
 			
 		do_dea_textres();
 	}
+#endif
 }
 
 void unload_resource(void far* resptr) {
 	mmgr_free(resptr);
 }
 
+#ifndef RESTUNTS_HEADLESS
 void far* file_load_3dres(const legacy_s8* filename) {
 	legacy_s8 name[0x50];
 	void far* result;
@@ -1101,6 +1139,7 @@ void file_load_audiores(const legacy_s8* songfile, const legacy_s8* voicefile, c
 	load_audio_finalize(audiores);
 	is_audioloaded = 1;
 }
+#endif
 
 legacy_s16 file_load_replay(const legacy_s8* dir, const legacy_s8* name)
 {

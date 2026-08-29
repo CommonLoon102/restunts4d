@@ -150,58 +150,6 @@ void set_fontdefseg(void far* data);
 void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);
 void heapsort_by_order(legacy_s16 n, legacy_s16* heap, legacy_s16* data);
 
-legacy_u8 subst_hillroad_track(legacy_u8 terrain,
-	legacy_u8 track)
-{
-	switch (terrain) {
-	case 7:
-		switch (track) {
-		case 4: return 0xB6;
-		case 0x0E: return 0xBA;
-		case 0x18: return 0xBE;
-		case 0x27:
-		case 0x3B:
-		case 0x62: return 0xC2;
-		}
-		break;
-
-	case 8:
-		switch (track) {
-		case 5: return 0xB7;
-		case 0x0F: return 0xBB;
-		case 0x19: return 0xBF;
-		case 0x24:
-		case 0x38:
-		case 0x5F: return 0xC3;
-		}
-		break;
-
-	case 9:
-		switch (track) {
-		case 4: return 0xB8;
-		case 0x0E: return 0xBC;
-		case 0x18: return 0xC0;
-		case 0x26:
-		case 0x3A:
-		case 0x61: return 0xC4;
-		}
-		break;
-
-	case 10:
-		switch (track) {
-		case 5: return 0xB9;
-		case 0x0F: return 0xBD;
-		case 0x19: return 0xC1;
-		case 0x25:
-		case 0x39:
-		case 0x60: return 0xC5;
-		}
-		break;
-	}
-
-	return 0;
-}
-
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type)
 {
 	struct VECTOR transformed_position;

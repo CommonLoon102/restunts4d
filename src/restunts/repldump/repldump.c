@@ -227,7 +227,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	// REPLDUMP remains in text mode, so the A000 graphics aperture is unused.
 	// Make it available to the high-memory pool as the transitional C port
 	// grows beyond the original executable's conventional-memory footprint.
+#ifndef RESTUNTS_HEADLESS
 	highpool_add_block(0xA000, 0x1000, 0);
+#endif
 #endif
 	init_div0();
 	init_row_tables();
@@ -242,7 +244,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 #else
 	/* Shape loading still uses this arena; the matrices and display fonts do not
 	 * participate in headless replay simulation. */
+#ifndef RESTUNTS_HEADLESS
 	polyinfoptr = mmgr_alloc_resbytes("polyinfo", 0x28A0);
+#endif
 #endif
 
 	init_trackdata();

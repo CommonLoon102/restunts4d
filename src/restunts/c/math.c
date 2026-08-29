@@ -79,7 +79,9 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 	}
 	
 	if (z == y) {
-		if (z == 0) return result; // orig code has undefined return value here as well!
+		/* The legacy callers treat a zero-length direction as angle zero. */
+		if (z == 0)
+			return 0;
 		result = 0x80;
 	} else {
 		if (z > y) {

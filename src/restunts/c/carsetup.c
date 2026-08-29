@@ -15,6 +15,12 @@ extern legacy_s8 aSped[];
 extern legacy_s8 unk_46464[];
 extern legacy_u8 oppnentSped[];
 
+#ifdef RESTUNTS_HEADLESS
+extern void far* gameresptr;
+extern void far* planptr;
+extern void far* wallptr;
+#endif
+
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 {
 	legacy_s16 i;
@@ -151,6 +157,11 @@ legacy_s16 setup_player_cars_repldump(void)
 		unload_resource(car_resource);
 		load_opponent_data();
 	}
+
+	/* These GAME resources are collision geometry, not renderer state. */
+	gameresptr = file_load_resfile("game");
+	planptr = locate_shape_alt(gameresptr, "plan");
+	wallptr = locate_shape_alt(gameresptr, "wall");
 
 	followOpponentFlag = 0;
 	is_in_replay_copy = -1;
