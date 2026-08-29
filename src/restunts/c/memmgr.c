@@ -1143,23 +1143,28 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 //#endif
 
 
-legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 fatal) {
+legacy_s8 far* locate_resource(legacy_s8 far* data,
+	const legacy_s8* name, legacy_u16 fatal) {
 	legacy_u16 chunk_count, i, j;
 	legacy_s8 far* resnames = (legacy_s8 far*)data + 6; // point at first 4-byte resource identifier
 	legacy_s8 huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
 	legacy_u8 far* offset;
+	legacy_s8 padded_name[4];
+	legacy_u16 padding;
 
 	chunk_count = LEGACY_READ_U16_LE((legacy_u8 far*)data + 4);
 
 	//printf("locate_resource: %s\n", name);
 
-	// pad name with spaces
+	// Compare through a local padded key.  Several callers pass string
+	// literals, so the original in-place padding is not portable.
+	padding = 0;
 	for (i = 0; i < 4; i++) {
-		if (name[i] == 0) {
-			for (; i < 4; i++) {
-				name[i] = 0x20;
-			}
-			break;
+		if (padding == 0 && name[i] != 0)
+			padded_name[i] = name[i];
+		else {
+			padding = 1;
+			padded_name[i] = 0x20;
 		}
 	}
 
@@ -1172,11 +1177,12 @@ legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 
 	// match it and no caller passes one.
 	for (j = 0; j < chunk_count; j++) {
 		for (i = 0; i < 4; i++) {
-			if (resnames[i] != name[i]) {
+			if (resnames[i] != padded_name[i]) {
 				break;
 			}
 		}
-		if (i == 4 || (resnames[i] == 0 && name[i] == 0x20)) {
+		if (i == 4 ||
+			(resnames[i] == 0 && padded_name[i] == 0x20)) {
 			result = data;
 			result += chunk_count * 8 + 6; // header, names and offsets
 			offset = (legacy_u8 far*)resnames + chunk_count * 4;
@@ -1193,23 +1199,28 @@ legacy_s8 far* locate_resource(legacy_s8 far* data, legacy_s8* name, legacy_u16 
 	return MK_FP(0, 0);
 }
 
-legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data, legacy_s8* name) {
+legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
+	const legacy_s8* name) {
 	return locate_resource(data, name, 0);
 }
 
-legacy_s8 far* locate_shape_fatal(legacy_s8 far* data, legacy_s8* name) {
+legacy_s8 far* locate_shape_fatal(legacy_s8 far* data,
+	const legacy_s8* name) {
 	return locate_resource(data, name, 1);
 }
 
-legacy_s8 far* locate_shape_alt(legacy_s8 far* data, legacy_s8* name) {
+legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
+	const legacy_s8* name) {
 	return locate_shape_fatal(data, name);
 }
 
-legacy_s8 far* locate_sound_fatal(legacy_s8 far* data, legacy_s8* name) {
+legacy_s8 far* locate_sound_fatal(legacy_s8 far* data,
+	const legacy_s8* name) {
 	return locate_resource(data, name, 2);
 }
 
-void locate_many_resources(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
+void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
+	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_fatal(data, names);
 		names += 4;
@@ -1217,8 +1228,8 @@ void locate_many_resources(legacy_s8 far* data, legacy_s8* names, legacy_s8 far*
 	}
 }
 
-static void locate_many_resources_nofatal(legacy_s8 far* data, legacy_s8* names,
-	legacy_s8 far** result) {
+static void locate_many_resources_nofatal(legacy_s8 far* data,
+	const legacy_s8* names, legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_nofatal(data, names);
 		names += 4;
@@ -1226,11 +1237,13 @@ static void locate_many_resources_nofatal(legacy_s8 far* data, legacy_s8* names,
 	}
 }
 
-void nopsub_367E4(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
+void nopsub_367E4(legacy_s8 far* data, const legacy_s8* names,
+	legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }
 
-void nopsub_36826(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
+void nopsub_36826(legacy_s8 far* data, const legacy_s8* names,
+	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_sound_fatal(data, names);
 		names += 4;
@@ -1238,11 +1251,12 @@ void nopsub_36826(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result)
 	}
 }
 
-void nopsub_36868(legacy_s8 far* data, legacy_s8* names, legacy_s8 far** result) {
+void nopsub_36868(legacy_s8 far* data, const legacy_s8* names,
+	legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }
 
-legacy_s8 far* locate_text_res(legacy_s8 far* data, legacy_s8* name) {
+legacy_s8 far* locate_text_res(legacy_s8 far* data, const legacy_s8* name) {
 	legacy_s8 textname[4];
 	textname[0] = textresprefix;
 	textname[1] = name[0];
