@@ -179,8 +179,6 @@ extern void loop_game(legacy_s16, legacy_s16, legacy_s16);
 extern void set_frame_callback(void);
 extern void remove_frame_callback(void);
 extern void mouse_minmax_position(legacy_s16);
-extern void mouse_set_minmax(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
-extern void mouse_set_position(legacy_s16, legacy_s16);
 extern legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key);
 extern void update_crash_state(legacy_s16 state, legacy_s16 multiplayer);
 
@@ -364,7 +362,6 @@ extern void do_dos_restext(void);
 extern void do_sonsof_restext(void);
 extern legacy_s16 get_kb_or_joy_flags(void);
 
-extern legacy_s16 mouse_init(legacy_s16 a1, legacy_s16 a2);
 extern void mouse_draw_opaque(void);
 extern void mouse_draw_transparent(void);
 extern void mouse_draw_opaque_check(void);

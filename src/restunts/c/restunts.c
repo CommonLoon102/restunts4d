@@ -673,7 +673,12 @@ extern legacy_s16 mousebutinputcode;
 extern legacy_s16 dos_get_joy_flags(void);
 extern legacy_u8 kbinput[];
 extern legacy_u8 kbscancodes[10];
-extern void mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y);
+extern legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height);
+extern void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
+	legacy_s16 maximum_x, legacy_s16 maximum_y);
+extern void dos_mouse_set_position(legacy_s16 x, legacy_s16 y);
+extern void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x,
+	legacy_s16* y);
 extern legacy_u8 byte_3EBD8;
 extern legacy_s8 byte_45D0C[];
 extern legacy_s8 byte_45D14[];
@@ -748,7 +753,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		}
 	}
 
-	mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
+	dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
 	if (mouse_oldx != mouse_xpos || mouse_oldy != mouse_ypos ||
 		mouse_oldbut != mouse_butstate) {
 		mouse_oldx = mouse_xpos;
@@ -1432,7 +1437,7 @@ void replay_unk2(legacy_s16 mode)
 
 		if (byte_3B8F2 != 0 || byte_3FE00 != 0) {
 			if (byte_3B8F2 != 0) {
-				mouse_get_state(
+				dos_mouse_get_state(
 					&mouse_butstate, &mouse_xpos, &mouse_ypos);
 				steering = LEGACY_S16_WRAP_SUB(mouse_xpos, 0xA0);
 				if (steering > -0x12 && steering < 0x12) {
@@ -5944,10 +5949,10 @@ void replay_unk(void)
 void mouse_minmax_position(legacy_s16 inset)
 {
 	if (inset != 0) {
-		mouse_set_minmax(0x0F, 0, 0x131, 0xC8);
-		mouse_set_position(0xA0, 0x64);
+		dos_mouse_set_minmax(0x0F, 0, 0x131, 0xC8);
+		dos_mouse_set_position(0xA0, 0x64);
 	} else {
-		mouse_set_minmax(0, 0, 0x140, 0xC8);
+		dos_mouse_set_minmax(0, 0, 0x140, 0xC8);
 	}
 }
 
@@ -9708,7 +9713,7 @@ void run_game(void) {
 				} while (var_12 == 0x4800 || var_12 == 0x4B00 || var_12 == 0x4D00 || var_12 == 0x5000);
 
 				if (game_replay_mode == 1) {
-					mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
+					dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
 					if (((mouse_butstate & 3) != 0) || ((get_kb_or_joy_flags() & 0x30) != 0)) {
 						game_replay_mode = 0;
 						byte_4393C = 0;
@@ -9907,7 +9912,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 
 	sprite_copy_2_to_1_clear();
 
-	mouse_init(0x0140, 0x00C8);
+	dos_mouse_init(0x0140, 0x00C8);
 
 	// Audio driver.
 	if (audio_load_driver(audiodriverstring, 0, 0)) {
