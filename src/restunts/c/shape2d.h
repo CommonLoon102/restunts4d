@@ -133,14 +133,14 @@ void file_load_shape2d_palmap_apply(legacy_u8 far* memchunk, legacy_u8 palmap[])
 
 void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str);
 void parse_shape2d(void far* memchunk, void far* mempages);
-void far* file_load_shape2d(legacy_s8* shapename, legacy_s16 fatal);
+void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal);
 
-void far* file_load_shape2d_fatal(legacy_s8* shapename);
-void far* file_load_shape2d_nofatal(legacy_s8* shapename);
-void far* file_load_shape2d_nofatal2(legacy_s8* shapename);
+void far* file_load_shape2d_fatal(const legacy_s8* shapename);
+void far* file_load_shape2d_nofatal(const legacy_s8* shapename);
+void far* file_load_shape2d_nofatal2(const legacy_s8* shapename);
 
-void far* file_load_shape2d_res(legacy_s8* resname, legacy_s16 fatal);
-void far* file_load_shape2d_res_fatal(legacy_s8* resname);
-void far* file_load_shape2d_res_nofatal(legacy_s8* resname);
+void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal);
+void far* file_load_shape2d_res_fatal(const legacy_s8* resname);
+void far* file_load_shape2d_res_nofatal(const legacy_s8* resname);
 
 #endif

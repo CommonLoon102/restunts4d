@@ -2770,7 +2770,7 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 	return memchunk;
 }
 
-void far* file_load_shape2d(legacy_s8* shapename, legacy_s16 fatal) {
+void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 	legacy_s8 str[100];
 	legacy_s8* strptr;
 	legacy_s16 counter;
@@ -2838,21 +2838,21 @@ void far* file_load_shape2d(legacy_s8* shapename, legacy_s16 fatal) {
 	}
 }
 
-void far* file_load_shape2d_fatal(legacy_s8* shapename) {
+void far* file_load_shape2d_fatal(const legacy_s8* shapename) {
 	return file_load_shape2d(shapename, 1);
 }
 
-void far* file_load_shape2d_nofatal(legacy_s8* shapename) {
+void far* file_load_shape2d_nofatal(const legacy_s8* shapename) {
 	return file_load_shape2d(shapename, 0);
 }
 
-void far* file_load_shape2d_nofatal2(legacy_s8* shapename) {
+void far* file_load_shape2d_nofatal2(const legacy_s8* shapename) {
 	return file_load_shape2d(shapename, 0);
 }
 
-void far* file_load_shape2d_res(legacy_s8* resname, legacy_s16 fatal) {
+void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	legacy_s16 chunksize;
-	legacy_s8* shapename = mmgr_path_to_name(resname);
+	const legacy_s8* shapename = mmgr_path_to_name(resname);
 	void far* mempages;
 	void far* memchunk = mmgr_get_chunk_by_name(shapename);
 	legacy_u16 freeparas, margin, rawseg;
@@ -2906,10 +2906,10 @@ void far* file_load_shape2d_res(legacy_s8* resname, legacy_s16 fatal) {
 	return mmgr_op_unk(mempages);
 }
 
-void far* file_load_shape2d_res_fatal(legacy_s8* resname) {
+void far* file_load_shape2d_res_fatal(const legacy_s8* resname) {
 	return file_load_shape2d_res(resname, 1);
 }
 
-void far* file_load_shape2d_res_nofatal(legacy_s8* resname) {
+void far* file_load_shape2d_res_nofatal(const legacy_s8* resname) {
 	return file_load_shape2d_res(resname, 0);
 }

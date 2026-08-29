@@ -23,7 +23,7 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename);
 void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2);
 void mmgr_alloc_resmem(legacy_u16 arg_0);
 void mmgr_alloc_a000(void);
-legacy_u16 mmgr_get_ofs_diff();
+legacy_u16 mmgr_get_ofs_diff(void);
 void far* mmgr_free(legacy_s8 far* ptr);
 void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras);
 void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras);
