@@ -71,8 +71,13 @@ ifeq ($(TARGET), stage)
   # DOS startup uses those bounds and releases memory through the final stack.
   ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES) $(DOS_PLATFORM_OBJFILES)
   CFLAGS = -DRESTUNTS_HEADLESS
-  OUTFILE = repldumh.exe
-  WLINK_OPTIONS = option START=headless_start option MAP=repldumh.map
+  STAGE_OUTFILE ?= repldumh.exe
+  STAGE_MAP ?= repldumh.map
+  OUTFILE = $(STAGE_OUTFILE)
+  WLINK_OPTIONS = option START=headless_start option MAP=$(STAGE_MAP)
+  ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)
+    $(error Headless target must not link game assembly objects)
+  endif
 endif
 
 # set linker separator

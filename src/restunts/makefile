@@ -67,7 +67,10 @@ restunts-full: dosplatform c-full
 restunts-sdl:
 	make -C sdl $(MAKE_PARAMS)
 
-repldump: asm c dosplatform
+repldump: dosplatform c-stage
+	make -C repldump TARGET=stage STAGE_OUTFILE=repldump.exe STAGE_MAP=repldump.map CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+
+repldump-legacy: asm c dosplatform
 	make -C repldump $(MAKE_PARAMS)
 
 repldump-original: asmorig
