@@ -54,6 +54,8 @@ legacy_s16 sin_fast(legacy_u16 s) {
 		case 3:
 			return -sintab[0x100 - c];
 	}
+
+	return 0;
 }
 
 legacy_s16 cos_fast(legacy_u16 s) {
@@ -70,12 +72,12 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 	
 	if (z < 0) {
 		flag |= 4;
-		z = -z;
+		z = LEGACY_S16_WRAP_NEGATE(z);
 	}
 	
 	if (y < 0) {
 		flag |= 2;
-		y = -y;
+		y = LEGACY_S16_WRAP_NEGATE(y);
 	}
 	
 	if (z == y) {
@@ -114,7 +116,8 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 		case 7:
 			return -(result + 0x100);
 	}
-	
+
+	return 0;
 }
 
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
@@ -863,8 +866,21 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 }
 #endif
 
+static legacy_s16 vector_interpolate_axis(legacy_s16 first,
+	legacy_s16 second, legacy_s16 factor, legacy_s16 divisor)
+{
+	legacy_s32 product;
+	legacy_s32 quotient;
+
+	product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)LEGACY_S16_WRAP_SUB(first, second),
+		(legacy_s32)factor);
+	quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
+	return LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_FROM_BITS((legacy_u16)quotient), second);
+}
+
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i) {
-	legacy_s16 delta;
 	legacy_s16 var_4, var_2;
 	
 	outvec->z = i;
@@ -877,10 +893,10 @@ void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outv
 		var_2 = (legacy_s16)((legacy_u16)var_2 >> 1);
 	}
 	
-	delta = (legacy_s16)(vec1->x - vec2->x);
-	outvec->x = (legacy_s16)(((legacy_s32)delta * var_4) / var_2 + vec2->x);
-	delta = (legacy_s16)(vec1->y - vec2->y);
-	outvec->y = (legacy_s16)(((legacy_s32)delta * var_4) / var_2 + vec2->y);
+	outvec->x = vector_interpolate_axis(
+		vec1->x, vec2->x, var_4, var_2);
+	outvec->y = vector_interpolate_axis(
+		vec1->y, vec2->y, var_4, var_2);
 }
 
 extern legacy_u8 byte_4032A;
