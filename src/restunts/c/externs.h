@@ -181,7 +181,6 @@ extern void remove_frame_callback(void);
 extern void mouse_minmax_position(legacy_s16);
 extern void mouse_set_minmax(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 extern void mouse_set_position(legacy_s16, legacy_s16);
-extern legacy_s16 kb_get_char(void);
 extern legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key);
 extern void update_crash_state(legacy_s16 state, legacy_s16 multiplayer);
 

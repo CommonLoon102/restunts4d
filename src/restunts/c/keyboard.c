@@ -18,6 +18,8 @@ voidinterruptfunctype old_kb_int16_handler;
 
 extern void add_exit_handler(voidfunctype exitfunc);
 extern void interrupt kb_int16_handler(); // our asm proxy, simply redirects to kb_int16_handler_c
+extern legacy_s16 kb_parse_key(legacy_s16 key);
+extern legacy_s16 dos_data_stack_segments_match(void);
 
 // these data are local to keyboard.c, but kept in their original slots for convencience:
 extern legacy_u8 kbinput[];
@@ -264,6 +266,26 @@ void kb_exit_handler(void) {
 
 legacy_s16 kb_get_key_state(legacy_s16 key) {
 	return kbinput[key];
+}
+
+legacy_s16 dos_kb_get_char(void)
+{
+	union REGS inregs;
+	union REGS outregs;
+
+	inregs.h.ah = 1;
+	int86(0x16, &inregs, &outregs);
+	if ((outregs.x.flags & 0x0040U) != 0)
+		return 0;
+
+	/* A timer callback may ask while a foreign stack is active.  The original
+	 * reports the pending key but postpones consuming and dispatching it. */
+	if (dos_data_stack_segments_match() == 0)
+		return outregs.x.ax;
+
+	inregs.h.ah = 0;
+	int86(0x16, &inregs, &outregs);
+	return kb_parse_key(outregs.x.ax);
 }
 
 legacy_s16 kb_call_readchar_callback(void) {

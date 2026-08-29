@@ -710,7 +710,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		input_framecount3 = LEGACY_U16_WRAP_SUB(input_framecount3, 10000U);
 	}
 
-	key = (legacy_u16)kb_get_char();
+	key = (legacy_u16)dos_kb_get_char();
 	if (key != 0)
 		kbormouse = 0;
 	current_joy_flags = (legacy_u16)get_joy_flags();
@@ -9700,7 +9700,7 @@ void run_game(void) {
 				}
 
 				do {
-					var_12 = kb_get_char();
+					var_12 = dos_kb_get_char();
 					if (var_12 != 0) {
 						handle_ingame_kb_shortcuts(var_12);
 					}
@@ -9719,7 +9719,7 @@ void run_game(void) {
 				}
 
 			} else {
-				if (kb_get_char() != 0 || byte_449DA != 0 || get_kb_or_joy_flags() != 0) {
+				if (dos_kb_get_char() != 0 || byte_449DA != 0 || get_kb_or_joy_flags() != 0) {
 					break;
 				}
 			}
