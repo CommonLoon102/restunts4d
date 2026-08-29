@@ -2438,12 +2438,16 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 							// height gets one fewer odd row than even rows.
 							for (j = 0; j < height; j += 2) { // even rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[(j / 2) + i * height];
+									mempages[i + j * width] = membitmapptr[
+										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * height];
 								}
 							}
 							for (j = 1; j < height; j += 2) { // odd rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[((height + j) / 2) + i * height];
+									mempages[i + j * width] = membitmapptr[
+										LEGACY_S16_DIV_OR_ZERO(
+											LEGACY_S16_WRAP_ADD(height, j), 2) +
+										i * height];
 								}
 							}
 							break;
@@ -2455,16 +2459,20 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 							// width * ceil(height/2). The original never reloads
 							// bx between the two halves of a pass, which is what
 							// puts the odd rows at that offset.
-							evenrows = (height + 1) / 2;
-							oddrows = height / 2;
+							evenrows = LEGACY_S16_DIV_OR_ZERO(
+								LEGACY_S16_WRAP_ADD(height, 1), 2);
+							oddrows = LEGACY_S16_DIV_OR_ZERO(height, 2);
 							for (j = 0; j < height; j += 2) { // even rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[(j / 2) + i * evenrows];
+									mempages[i + j * width] = membitmapptr[
+										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * evenrows];
 								}
 							}
 							for (j = 1; j < height; j += 2) { // odd rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[width * evenrows + (j / 2) + i * oddrows];
+									mempages[i + j * width] = membitmapptr[
+										width * evenrows +
+										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * oddrows];
 								}
 							}
 							break;

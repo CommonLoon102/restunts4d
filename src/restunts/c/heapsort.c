@@ -6,7 +6,7 @@ void heapsort_by_order(legacy_s16 count, legacy_s16* values, legacy_s16* order) 
 	legacy_s16 index;
 	legacy_s16 temp;
 
-	gap = count / 2;
+	gap = LEGACY_S16_DIV_OR_ZERO(count, 2);
 	while (gap > 0) {
 		counter = gap;
 		while (counter < count) {
@@ -23,6 +23,6 @@ void heapsort_by_order(legacy_s16 count, legacy_s16* values, legacy_s16* order) 
 			}
 			counter++;
 		}
-		gap /= 2;
+		gap = LEGACY_S16_DIV_OR_ZERO(gap, 2);
 	}
 }
