@@ -1117,8 +1117,8 @@ legacy_s16 track_setup(void)
 	if (branches == 0)
 		return 2;
 
-	camera_height = (legacy_s16 far*)trackdata7;
-	camera_unknown = (legacy_s16 far*)trackdata6;
+	camera_height = trackdata7;
+	camera_unknown = trackdata6;
 	start_finish_count = 0;
 	jump_length = 0;
 	track_pieces_counter = 0;
