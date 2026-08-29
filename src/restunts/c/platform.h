@@ -23,6 +23,11 @@ const legacy_s8* dos_file_find_first(const legacy_s8* query);
 const legacy_s8* dos_file_find_next(void);
 
 void dos_install_divide_error_handler(void);
+
+legacy_s16 dos_write_stdout(const legacy_s8* text, legacy_u16 length);
+legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length);
+void dos_process_exit(legacy_s16 status);
+legacy_s16 dos_data_stack_segments_match(void);
 #endif
 
 #endif

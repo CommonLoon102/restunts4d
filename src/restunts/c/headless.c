@@ -17,20 +17,12 @@ void add_exit_handler(void (far* exit_handler)(void))
 static void headless_write_text(const legacy_s8* text)
 {
 	legacy_u16 length;
-	legacy_u16 message_offset;
 
 	length = 0;
 	while (text[length] != 0)
 		length++;
-	message_offset = FP_OFF(text);
 #ifdef RESTUNTS_DOS
-	__asm {
-		mov ah, 40h
-		mov bx, 1
-		mov cx, length
-		mov dx, message_offset
-		int 21h
-	}
+	(void)dos_write_stdout(text, length);
 #endif
 }
 

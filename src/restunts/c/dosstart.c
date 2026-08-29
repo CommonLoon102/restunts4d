@@ -1,4 +1,5 @@
 #include "legacy.h"
+#include "platform.h"
 
 #if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 
@@ -28,14 +29,7 @@ static legacy_s8* headless_argv[HEADLESS_MAX_ARGS];
 
 void headless_exit(legacy_s16 result)
 {
-	__asm {
-		mov ax, result
-		mov ah, 4Ch
-		int 21h
-	}
-
-	for (;;) {
-	}
+	dos_process_exit(result);
 }
 
 static void headless_release_extra_memory(void)

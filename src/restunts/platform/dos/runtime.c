@@ -5,14 +5,15 @@
  * target supplies the same runtime storage explicitly. */
 legacy_s16 _errno;
 
-legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length)
+static legacy_s16 dos_write_handle(legacy_u16 handle,
+	const legacy_s8* text, legacy_u16 length)
 {
 	legacy_s16 result;
 
 	__asm {
 		push    ds
 		mov     ah, 40h
-		mov     bx, 2
+		mov     bx, handle
 		mov     cx, length
 		mov     dx, text
 		int     21h
@@ -24,6 +25,16 @@ legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length)
 	}
 
 	return result;
+}
+
+legacy_s16 dos_write_stdout(const legacy_s8* text, legacy_u16 length)
+{
+	return dos_write_handle(1U, text, length);
+}
+
+legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length)
+{
+	return dos_write_handle(2U, text, length);
 }
 
 void dos_process_exit(legacy_s16 status)

@@ -52,7 +52,6 @@ void dos_video_set_mode_13h(void);
 void dos_video_set_mode4(void);
 void dos_video_set_mode7(void);
 void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
-void dos_process_exit(legacy_s16 status);
 
 static legacy_u32 timer_wait_target;
 
@@ -1111,7 +1110,6 @@ static legacy_s16 audio_driver_timer_divider;
 static legacy_u16 audio_engine_value_44d48;
 static legacy_u16 audio_engine_value_454ba;
 static legacy_s8 audio_filename_buffer[34];
-legacy_s16 dos_data_stack_segments_match(void);
 void audio_driver_timer(void);
 extern void dos_audio_bind_channel_context(legacy_s16 channel,
 	void far* resource);
@@ -6733,8 +6731,6 @@ struct FATAL_OUTPUT_STATE {
 	legacy_s8 buffer[FATAL_OUTPUT_BUFFER_SIZE];
 	legacy_u16 length;
 };
-
-extern legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length);
 
 static void fatal_flush_output(struct FATAL_OUTPUT_STATE* output)
 {
