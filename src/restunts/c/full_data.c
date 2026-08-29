@@ -14,7 +14,7 @@ struct TRANSFORMEDSHAPE3D currenttransshape[29];
 struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
 
 legacy_s16 poly_linked_list_40ED6[401];
-legacy_s16 far* polyinfoptrs[400];
+legacy_u8 far* polyinfoptrs[400];
 
 struct RECTANGLE rect_unk[15];
 struct RECTANGLE rect_unk3;
@@ -167,9 +167,9 @@ legacy_u16 projectiondata10;
 legacy_u16 select_rect_param;
 struct RECTANGLE select_rect_rc;
 legacy_u16 polyinfoptrnext;
-legacy_s8 far* polyinfoptr;
-legacy_s8 far* transshapepolyinfo;
-legacy_s8 far* transshapeprimptr;
+legacy_u8 far* polyinfoptr;
+legacy_u8 far* transshapepolyinfo;
+legacy_u8 far* transshapeprimptr;
 legacy_u8 far* transshapeprimindexptr;
 legacy_s8 transprimitivepaintjob;
 legacy_u16 polyinfonumpolys;

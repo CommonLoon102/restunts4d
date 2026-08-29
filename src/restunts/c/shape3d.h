@@ -10,9 +10,9 @@ struct SHAPE3D {
 	struct VECTOR far* shape3d_verts;
 	legacy_u16 shape3d_numprimitives;
 	legacy_u16 shape3d_numpaints;
-	legacy_s8 far* shape3d_primitives;
-	legacy_s8 far* shape3d_cull1;
-	legacy_s8 far* shape3d_cull2;
+	legacy_u8 far* shape3d_primitives;
+	legacy_u8 far* shape3d_cull1;
+	legacy_u8 far* shape3d_cull2;
 };
 
 struct SHAPE3DHEADER {
