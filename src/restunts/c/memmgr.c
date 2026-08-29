@@ -737,8 +737,6 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	return result;
 }
 
-extern void far* ported_mmgr_alloc_pages_(const legacy_s8* arg_0, legacy_u16 arg_2);
-
 void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 	legacy_s16 i;
 	struct MEMCHUNK* resdi;
@@ -1039,8 +1037,6 @@ void mmgr_find_free(void) {
 
 	popregs();
 }
-
-void far* ported_mmgr_get_chunk_by_name_(const legacy_s8* name);
 
 void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	const legacy_s8* pcdi;

@@ -4615,8 +4615,6 @@ extern legacy_s16 word_443E8[];
 extern legacy_s16 word_4448A[];
 
 void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
-void ported_sub_204AE_(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
-
 void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponentcarid[]) {
 	legacy_s16 i;
 	struct VECTOR far* var_E;
