@@ -66,6 +66,7 @@ void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
 void dos_video_set_mode_13h(void);
 void dos_video_set_mode4(void);
 void dos_video_set_mode7(void);
+void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -10590,7 +10591,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 		audio_toggle_flag6();
 	}
 	
-	set_criterr_handler(&do_dea_textres);
+	dos_set_critical_error_handler(&do_dea_textres);
 	
 	load_palandcursor();
 	
