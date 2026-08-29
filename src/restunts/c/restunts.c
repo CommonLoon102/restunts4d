@@ -8172,7 +8172,9 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 		// The free-arena check only applies when the window has to come from
 		// the arena; 0xFA2 paras is the full 320x200 window incl. header.
 		if (!highpool_can_fit(0xFA2)) {
-			var_8 = 0xFA00 / (video_flag1_is1 * video_flag4_is1);
+			var_8 = LEGACY_U16_DIV_OR_ZERO(0xFA00U,
+				LEGACY_U16_WRAP_MUL(
+					video_flag1_is1, video_flag4_is1));
 			if (mmgr_get_res_ofs_diff_scaled() <= var_8) {
 				return 1;
 			}
@@ -8424,7 +8426,8 @@ void setup_car_shapes(legacy_s16 operation)
 		speed_index = (legacy_u16)state.playerstate.car_speed >> 8;
 		gauge_mode = 1;
 	} else {
-		speed_index = (legacy_u16)state.playerstate.car_speed / 0x280U;
+		speed_index = LEGACY_U16_DIV_OR_ZERO(
+			state.playerstate.car_speed, 0x280U);
 		if ((legacy_s16)speed_index >= simd_player.spdnumpoints)
 			speed_index = (legacy_u16)(simd_player.spdnumpoints - 1);
 		gauge_mode = 0;
@@ -8461,7 +8464,7 @@ void setup_car_shapes(legacy_s16 operation)
 					(legacy_u8)simd_player.spdpoints[1]);
 				digit_started = 1;
 			}
-			digit = speed_index / 10U;
+			digit = LEGACY_U16_DIV_OR_ZERO(speed_index, 10U);
 			if (digit != 0 || digit_started != 0) {
 				sprite_putimage_or(digshapes[digit],
 					(legacy_u8)simd_player.spdpoints[2],
@@ -8725,11 +8728,15 @@ car_menu_top:
 			update_car_speed(1, 0, &state.playerstate, &simd_player);
 			speed = (legacy_u16)state.playerstate.car_speed >> 8;
 			graph_y = LEGACY_U16_WRAP_SUB(0xB5U,
-				(legacy_u16)(((legacy_u32)speed << 6) / 0x96UL));
+				(legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+					LEGACY_U32_WRAP_MUL(speed, 64UL), 0x96UL));
 			if (graph_y < 0x75U)
 				break;
-			graph_x = (legacy_u16)(((legacy_u32)0x26U *
-				graph_step) / 0x320UL) + 0x1CU;
+			graph_x = LEGACY_U16_WRAP_ADD(
+				(legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+					LEGACY_U32_WRAP_MUL(0x26UL, graph_step),
+					0x320UL),
+				0x1CU);
 			putpixel_single_maybe(graph_x, graph_y,
 				performGraphColor);
 			graph_step++;
@@ -10522,7 +10529,9 @@ void run_game(void) {
 
 				if (var_2 != roofbmpheight_copy || dashbmp_y_copy != word_449EA || var_E != height_above_replaybar) {
 					byte_454A4 = video_flag6_is1;
-					set_projection(0x23, dashbmp_y_copy / 6, 0x140, dashbmp_y_copy);
+					set_projection(0x23,
+						LEGACY_S16_DIV_OR_ZERO(dashbmp_y_copy, 6),
+						0x140, dashbmp_y_copy);
 					rect_windshield.top = roofbmpheight_copy;
 					rect_windshield.bottom = dashbmp_y_copy;
 					var_2 = roofbmpheight_copy;
