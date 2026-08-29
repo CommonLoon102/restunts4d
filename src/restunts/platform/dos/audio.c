@@ -5,6 +5,8 @@ typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
 	legacy_u8* context, legacy_u16 volume);
 typedef void (far* driver_bind_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
+typedef void (far* driver_channel_operation_type)(legacy_s16 driver_channel);
+typedef void (far* driver_operation_type)(void);
 
 extern legacy_u8 audiotimers[];
 extern legacy_u8 audiochunks_unk[];
@@ -13,13 +15,18 @@ extern legacy_u8 byte_459D2;
 extern legacy_u8 unk_45A26[];
 extern void far* audiodriverbinary;
 
+static void far* dos_audio_driver_entry(legacy_u16 offset)
+{
+	return MK_FP(FP_SEG(audiodriverbinary),
+		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), offset));
+}
+
 static void dos_audio_driver_set_volume(legacy_s16 driver_channel,
 	legacy_u8* context, legacy_u16 volume)
 {
 	driver_set_volume_type set_volume;
 
-	set_volume = (driver_set_volume_type)MK_FP(FP_SEG(audiodriverbinary),
-		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), 0x12U));
+	set_volume = (driver_set_volume_type)dos_audio_driver_entry(0x12U);
 	set_volume(driver_channel, context, volume);
 }
 
@@ -28,10 +35,34 @@ static void dos_audio_driver_bind_context(legacy_s16 driver_channel,
 {
 	driver_bind_context_type bind_context;
 
-	bind_context = (driver_bind_context_type)MK_FP(
-		FP_SEG(audiodriverbinary), LEGACY_U16_WRAP_ADD(
-			FP_OFF(audiodriverbinary), 0x21U));
+	bind_context =
+		(driver_bind_context_type)dos_audio_driver_entry(0x21U);
 	bind_context(driver_channel, driver_context, timer, resource);
+}
+
+void dos_audio_driver_release_channel(legacy_s16 driver_channel)
+{
+	driver_channel_operation_type release_channel;
+
+	release_channel = (driver_channel_operation_type)
+		dos_audio_driver_entry(0x1EU);
+	release_channel(driver_channel);
+}
+
+void dos_audio_driver_reset(void)
+{
+	driver_operation_type reset;
+
+	reset = (driver_operation_type)dos_audio_driver_entry(0x18U);
+	reset();
+}
+
+void dos_audio_driver_start(void)
+{
+	driver_operation_type start;
+
+	start = (driver_operation_type)dos_audio_driver_entry(6U);
+	start();
 }
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)

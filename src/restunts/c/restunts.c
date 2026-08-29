@@ -1047,6 +1047,7 @@ extern legacy_u8 byte_44290;
 extern legacy_u8 byte_40630;
 extern legacy_u8 byte_40632;
 extern legacy_u8 byte_45950;
+extern legacy_u8 byte_459D2;
 extern legacy_s8 byte_459D8;
 extern legacy_s8 byte_42D26;
 extern legacy_s8 byte_42D2A;
@@ -1093,7 +1094,9 @@ extern void dos_audio_set_channel_volume(legacy_s16 channel,
 	legacy_s16 volume);
 extern void audio_op_unk3(legacy_s16 channel);
 extern void audio_op_unk4(legacy_s16 channel);
-extern void sub_38178(void);
+extern void dos_audio_driver_release_channel(legacy_s16 driver_channel);
+extern void dos_audio_driver_reset(void);
+extern void dos_audio_driver_start(void);
 extern void sub_39700(void);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
 void sub_374DE(legacy_s16 channel);
@@ -1847,6 +1850,30 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		chunk_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 0x4CU);
 		channel = LEGACY_S16_WRAP_ADD(channel, 1);
 	} while (channel <= last);
+}
+
+void audio_reset_channels(void)
+{
+	legacy_u8* context;
+	legacy_u16 context_index;
+
+	word_4063A = 1;
+	audio_init_chunk(0, 0x17, 0, 0, 0x7FU, 0);
+	context = unk_45A26;
+	for (context_index = 0; context_index < byte_459D2;
+		context_index++) {
+		dos_audio_driver_release_channel((legacy_s16)context_index);
+		context[0] = 0xFFU;
+		context[1] = 0;
+		context[2] = 0;
+		LEGACY_WRITE_U16_LE(context + 0x10U, 0);
+		LEGACY_WRITE_U16_LE(context + 0x12U, 0);
+		context[0x2CU] = 0xFFU;
+		context += 0x2EU;
+	}
+	dos_audio_driver_reset();
+	dos_audio_driver_start();
+	word_4063A = 0;
 }
 
 legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
@@ -6764,7 +6791,6 @@ void load_audio_finalize(void far* audio_resource)
 {
 	legacy_u8 far* resource;
 	legacy_u16 data_offset;
-	void (far* driver_reset)(void);
 
 	word_4063A = 1;
 	sub_3736A();
@@ -6772,9 +6798,7 @@ void load_audio_finalize(void far* audio_resource)
 	if (resource == 0 || resource[4] != 0 || resource[5] != 1)
 		return;
 
-	driver_reset = (void (far*)(void))MK_FP(FP_SEG(audiodriverbinary),
-		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), 0x18U));
-	driver_reset();
+	dos_audio_driver_reset();
 	word_44D48 = 0;
 	word_454BA = 0x80U;
 	data_offset = LEGACY_U16_WRAP_ADD(
@@ -6963,7 +6987,7 @@ void audio_carstate(void)
 			byte_42D2A = 0;
 		}
 		if ((legacy_u8)byte_3BE02 != (legacy_u8)is_in_replay)
-			sub_38178();
+			audio_reset_channels();
 		byte_3BE02 = (legacy_u8)is_in_replay;
 		return;
 	}
