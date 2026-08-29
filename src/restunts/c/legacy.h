@@ -152,6 +152,9 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S32_WRAP_ADD_S16(left, right) \
 	LEGACY_S32_FROM_BITS( \
 		(legacy_u32)(left) + LEGACY_U32_SIGN_EXTEND_S16(right))
+#define LEGACY_S32_WRAP_SUB_S16(left, right) \
+	LEGACY_S32_FROM_BITS( \
+		(legacy_u32)(left) - LEGACY_U32_SIGN_EXTEND_S16(right))
 
 #define LEGACY_U32_WRAP_ADD(left, right) \
 	((legacy_u32)((legacy_u32)(left) + (legacy_u32)(right)))
