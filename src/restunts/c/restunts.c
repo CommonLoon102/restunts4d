@@ -9247,14 +9247,15 @@ legacy_u16 end_hiscore(void)
 	animation_timer = 0x1E;
 	evaluation_screen = 1;
 
-end_hiscore_start:
+	for (;;) {
+	do {
 	if (opponent_active != 0 && score_status == 2) {
 		score_status = 0;
 		sprite_copy_wnd_to_1();
 		highscore_text_unk();
 		selected = 1;
 		evaluation_screen = 1;
-		goto end_hiscore_menu_draw;
+		break;
 	}
 
 	if (opponent_active == 0) {
@@ -9276,7 +9277,7 @@ end_hiscore_start:
 				highscore_text_unk();
 			}
 		}
-		goto end_hiscore_menu_draw;
+		break;
 	}
 
 	aOp01[3] = '1';
@@ -9304,7 +9305,7 @@ end_hiscore_start:
 		text_prefix, animation_x);
 	evaluation_screen = 0;
 	if (score_status <= 0)
-		goto end_hiscore_menu_draw;
+		break;
 
 	score_status = 0;
 	evaluation_screen = 1;
@@ -9352,7 +9353,7 @@ end_hiscore_start:
 	enter_hiscore(finish_time,
 		locate_text_res(misc_resource, aInh), outcome);
 
-end_hiscore_menu_draw:
+	} while (0);
 	selected = 1;
 	previous_selection = 1;
 	sub_29772();
@@ -9393,7 +9394,7 @@ end_hiscore_menu_draw:
 	blit_mode = 0xFEU;
 	sprite_copy_2_to_1_2();
 
-end_hiscore_menu_loop:
+	for (;;) {
 	if (previous_selection != selected) {
 		previous_selection = selected;
 		sprite_copy_2_to_1_2();
@@ -9442,7 +9443,7 @@ end_hiscore_menu_loop:
 
 	input = (legacy_u16)input_checking(delta);
 	if (input == 0)
-		goto end_hiscore_menu_loop;
+		continue;
 	if (input == 0x4B00U) {
 		if (opponent_active == 0 || score_status == -1) {
 			selected = selected <= 1 ? 3U :
@@ -9451,7 +9452,7 @@ end_hiscore_menu_loop:
 			selected = selected == 0 ? 3U :
 				(legacy_u8)(selected - 1U);
 		}
-		goto end_hiscore_menu_loop;
+		continue;
 	}
 	if (input == 0x4D00U) {
 		if (selected < 3U)
@@ -9459,17 +9460,17 @@ end_hiscore_menu_loop:
 		else
 			selected = (opponent_active == 0 ||
 				score_status == -1) ? 1U : 0U;
-		goto end_hiscore_menu_loop;
+		continue;
 	}
 	if (input != 0x0DU && input != 0x20U)
-		goto end_hiscore_menu_loop;
+		continue;
 
 	if (selected == 0) {
 		sprite_copy_wnd_to_1();
 		draw_button(0, 0, 0, 0x140, 0x64,
 			word_407F4, word_407F6, word_407F8, 0);
 		score_status = evaluation_screen != 0 ? 0 : 2;
-		goto end_hiscore_start;
+		break;
 	}
 
 	audio_unload();
@@ -9482,6 +9483,8 @@ end_hiscore_menu_loop:
 		unload_resource(opponent_resource);
 	unload_resource(misc_resource);
 	return (legacy_u16)(selected - 1U);
+	}
+	}
 }
 
 extern legacy_u8 byte_3E9DB;
