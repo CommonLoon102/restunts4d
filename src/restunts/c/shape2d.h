@@ -22,7 +22,7 @@ struct SPRITE {
 	legacy_u16 sprite_unk1;
 	legacy_u16 sprite_unk2;
 	legacy_u16 sprite_unk3;
-	legacy_u16* sprite_lineofs;
+	legacy_u8* sprite_lineofs;
 	legacy_u16 sprite_left;
 	legacy_u16 sprite_right;
 	legacy_u16 sprite_top;

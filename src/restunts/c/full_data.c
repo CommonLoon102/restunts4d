@@ -541,7 +541,7 @@ static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 	sprite->sprite_unk1 = 0;
 	sprite->sprite_unk2 = 0;
 	sprite->sprite_unk3 = 0;
-	sprite->sprite_lineofs = (legacy_u16*)FP_OFF(full_screen_line_offsets);
+	sprite->sprite_lineofs = (legacy_u8*)FP_OFF(full_screen_line_offsets);
 	sprite->sprite_left = 0;
 	sprite->sprite_right = 320;
 	sprite->sprite_top = 0;

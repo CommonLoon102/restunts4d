@@ -1693,8 +1693,8 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	legacy_s8 far* shapebuf;
 	struct SHAPE2D far* hdr;
 	legacy_u16 lineofs;
-	legacy_u16* lineofsptr;
-	legacy_u16 far* farlineofsptr;
+	legacy_u8* lineofsptr;
+	legacy_u8 far* farlineofsptr;
 	legacy_u16 wnddefseg;
 	
 	(void)unk;
@@ -1723,7 +1723,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	// get a writable far pointer to the render_window_sprite
 	farwnd = MK_FP(wnddefseg, FP_OFF(wnd));
 
-	lineofsptr = (legacy_u16*)(wnd + sizeof(struct SPRITE));
+	lineofsptr = (legacy_u8*)(wnd + sizeof(struct SPRITE));
 	farwnd->sprite_bitmapptr = hdr;
 	farwnd->sprite_lineofs = lineofsptr;
 	farwnd->sprite_left = 0;
@@ -1736,15 +1736,16 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	farwnd->sprite_widthsum = width;
 	
 	// create a writable far pointer to the line offsets
-	farlineofsptr = MK_FP(wnddefseg, FP_OFF(lineofsptr));
+	farlineofsptr = (legacy_u8 far*)MK_FP(
+		wnddefseg, FP_OFF(lineofsptr));
 	lineofs = sizeof(struct SHAPE2D);
 	// One of several counted loops where the original uses `loop`, which runs
 	// 65536 times on a count of zero while this runs none. Reaching it needs a
 	// zero-height window; the same applies to the unflip and palette loops in
 	// this file.
 	for (i = 0; i < height; i++) {
-		*farlineofsptr = lineofs;
-		farlineofsptr++;
+		shape2d_put_word(farlineofsptr, lineofs);
+		farlineofsptr += 2U;
 		lineofs += width;
 	}
 
@@ -1889,19 +1890,19 @@ void sprite_clear_1_color(legacy_u8 color) {
 	legacy_s16 height, top, left, right, pitch, lines, width, widthdiff, i, j;
 	legacy_u16 ofs;
 	legacy_u8 far* bitmapptr;
-	legacy_u16 far* lineofs;
 
 	top = sprite1.sprite_top;
 	left = sprite1.sprite_left;
 	right = sprite1.sprite_right;
 	pitch = sprite1.sprite_pitch;
 	bitmapptr = (legacy_u8 far*)sprite1.sprite_bitmapptr;
-	lineofs = MK_FP(FP_SEG(&sprite1), FP_OFF(sprite1.sprite_lineofs));
 
 	lines = sprite1.sprite_height - top;
 	if (lines <= 0) return;
 
-	ofs = lineofs[top] + left;
+	ofs = LEGACY_U16_WRAP_ADD(
+		shape2d_get_line_offset(FP_SEG(&sprite1), (legacy_u16)top),
+		(legacy_u16)left);
 
 	width = right - left;
 	if (width <= 0) return ;
