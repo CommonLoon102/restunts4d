@@ -201,6 +201,14 @@ extern legacy_s8 far* polyinfoptr;
 static legacy_u8 serialized_gamestate[GAMESTATE_SERIALIZED_SIZE];
 #endif
 
+#ifdef RESTUNTS_HEADLESS
+static void headless_status(const legacy_s8* format, ...)
+{
+	(void)format;
+}
+#define printf headless_status
+#endif
+
 // First argument is the filename without the .rpl extension.
 // If there is a second argument (it can by anything, usually 1), then the filename
 // can contain the .rpl extension. It is useful to call this tool via batch files,

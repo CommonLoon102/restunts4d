@@ -15,14 +15,15 @@ ASM_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.
                 seg027.obj seg028.obj seg029.obj seg030.obj seg031.obj seg032.obj seg033.obj \
                 seg034.obj seg035.obj seg036.obj seg037.obj seg038.obj seg039.obj seg041.obj dseg.obj
 
-# Transitional headless platform: the compiler runtime/startup and legacy data
-# remain while gameplay code is supplied exclusively by C objects.
-STAGE_ASM_OBJ_FILES = segments.obj seg010.obj seg041.obj dseg.obj
+# Transitional headless platform: gameplay and game data are supplied by C;
+# only the DOS linker's required stack segment remains platform assembly.
+DOS_BSS_START_OBJ_FILE = dosbss.obj
+DOS_PLATFORM_OBJ_FILES = dosstack.obj
 
 ifeq ($(TARGET), stage)
   RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj \
                        kevinrnd.obj replinit.obj gameinit.obj gamestep.obj \
-                       carsetup.obj trkutil.obj headless.obj state.obj stateply.obj \
+                       carsetup.obj trkutil.obj headless.obj dosstart.obj headless_data.obj headless_trackdata.obj state.obj stateply.obj \
                        statecrs.obj statecar.obj trackobj.obj replay.obj stateio.obj
 endif
 
@@ -35,6 +36,7 @@ CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
 RESTUNTS_OBJDIR = $(SRC)\c\build\dos
 ASM_OBJDIR = $(SRC)\asm\build
 ASMORIG_OBJDIR = $(SRC)\asmorig\build
+DOS_PLATFORM_OBJDIR = $(SRC)\platform\dos\build
 OBJDIR = $(SRC)\repldump\build\$(TARGET)
 
 ifeq ($(TARGET), stage)
@@ -44,7 +46,8 @@ endif
 RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
 ASM_OBJFILES = $(addprefix $(ASM_OBJDIR)\, $(ASM_OBJ_FILES))
 ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
-STAGE_ASM_OBJFILES = $(addprefix $(ASM_OBJDIR)\, $(STAGE_ASM_OBJ_FILES))
+DOS_PLATFORM_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_OBJ_FILES))
+DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\$(DOS_BSS_START_OBJ_FILE)
 
 # C Compiler Flags und Linker
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
@@ -62,9 +65,12 @@ ifeq ($(TARGET), original)
 endif
 
 ifeq ($(TARGET), stage)
-  ALL_OBJ_FILES = $(STAGE_ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
+  # Keep the BSS start marker first and STACK/BSS end marker last.  The custom
+  # DOS startup uses those bounds and releases memory through the final stack.
+  ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES) $(DOS_PLATFORM_OBJFILES)
   CFLAGS = -DRESTUNTS_HEADLESS
   OUTFILE = repldumh.exe
+  WLINK_OPTIONS = option START=headless_start option MAP=repldumh.map
 endif
 
 # set linker separator
@@ -86,7 +92,7 @@ TOOLS_LIB = s:\tools\lib
 
 repldump.exe: $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
   ifeq ($(LINKER), wlink)
-		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT PATH $(TOOLS_LIB) file $(CTARGETS)
+		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS)
   else
     # create linker script for tlink
 		echo $(CTARGETS) > lscript.txt

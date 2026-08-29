@@ -88,9 +88,9 @@ void init_game_state(legacy_s16 arg)
 	}
 
 	if (framespersec == 10)
-		steerWhlRespTable_ptr = &steerWhlRespTable_10fps;
+		steerWhlRespTable_ptr = steerWhlRespTable_10fps;
 	else
-		steerWhlRespTable_ptr = &steerWhlRespTable_20fps;
+		steerWhlRespTable_ptr = steerWhlRespTable_20fps;
 
 	word_45A00 = framespersec * 30;
 	word_4499C = 100 / framespersec;

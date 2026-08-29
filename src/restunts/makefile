@@ -52,6 +52,12 @@ asmorig: force_me
 c: force_me
 	make -C c $(MAKE_PARAMS)
 
+dosplatform: force_me
+	make -C platform/dos $(MAKE_PARAMS)
+
+c-stage: force_me
+	make -C c TARGET=dosstage $(MAKE_PARAMS)
+
 restunts-sdl:
 	make -C sdl $(MAKE_PARAMS)
 
@@ -61,10 +67,14 @@ repldump: asm c
 repldump-original: asmorig
 	make -C repldump TARGET=original $(MAKE_PARAMS)
 
+repldump-stage: dosplatform c-stage
+	make -C repldump TARGET=stage CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+
 clean:
 	make -C dos $(MAKE_PARAMS) clean
 	make -C asm $(MAKE_PARAMS) clean
 	make -C asmorig $(MAKE_PARAMS) clean
+	make -C platform/dos $(MAKE_PARAMS) clean
 	make -C c $(MAKE_PARAMS) clean
 	make -C sdl $(MAKE_PARAMS) clean
 	make -C repldump clean

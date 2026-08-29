@@ -16,8 +16,11 @@ src/restunts/dos/*MAP
 src/restunts/dos/build/original/*obj
 src/restunts/dos/build/ported/*obj
 src/restunts/dos/build/sight/*obj
+src/restunts/platform/dos/build/*obj
 src/restunts/repldump/*EXE
 src/restunts/repldump/*MAP
+src/restunts/repldump/*exe
+src/restunts/repldump/*map
 src/restunts/repldump/build/original/*obj
 src/restunts/repldump/build/ported/*obj
 src/restunts/repldump/build/stage/*obj

@@ -116,9 +116,9 @@ extern legacy_s16 word_45A24; // current frame?
 extern legacy_s16 word_45A00; // fps * 30
 extern legacy_s16 word_4499C; // 100 / fps
 extern legacy_s16 track_angle;
-extern void* steerWhlRespTable_ptr;
-extern void* steerWhlRespTable_10fps;
-extern void* steerWhlRespTable_20fps;
+extern legacy_s8* steerWhlRespTable_ptr;
+extern legacy_s8 steerWhlRespTable_10fps[62];
+extern legacy_s8 steerWhlRespTable_20fps[64];
 extern legacy_s8 startcol2, startrow2;
 extern legacy_s8 hillFlag;
 extern legacy_s16 hillHeightConsts[];

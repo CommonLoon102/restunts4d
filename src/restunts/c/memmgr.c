@@ -248,13 +248,18 @@ void himem_init(void) {
 #else
 void pushregs() {}
 void popregs() {}
-	
-size_t word_3FF82 = 0; // last para reserved by memmgr
-size_t word_3FF84 = 0; // first para reserved by memmgr
+#endif
+
+#if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS)
+legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
+legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
 legacy_u16 resmaxsize = 0; // size of largest chunk?
+legacy_u16 pspofs = 0;
+legacy_u16 pspseg = 0;
 
 struct MEMCHUNK resources[] = {
-	{ 0, 0, 0, 2 },
+	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		0, 0, 2 },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
@@ -268,18 +273,20 @@ struct MEMCHUNK resources[] = {
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 1 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
+		0, 0, 1 },
 };
 struct MEMCHUNK* resendptr1 = &resources[49]; // eller 49?
 struct MEMCHUNK* resendptr2 = &resources[49]; // ditto
 struct MEMCHUNK* resptr1 = resources;
 struct MEMCHUNK* resptr2 = resources;
+#endif
 
+#ifndef RESTUNTS_DOS
 // No upper memory outside DOS; every chunk stays in the regular arena.
 void ems_shutdown(void) {}
 void himem_init(void) {}
-
 #endif
 
 #ifdef RESTUNTS_DOS

@@ -2,6 +2,7 @@
 #include "legacy.h"
 #include "math.h"
 
+#ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
 extern legacy_s16 gState_144;
@@ -11,6 +12,7 @@ extern legacy_s16 gState_penalty;
 extern legacy_s16 gState_impactSpeed;
 extern legacy_s16 gState_topSpeed;
 extern legacy_s16 gState_jumpCount;
+#endif
 
 extern legacy_s16 word_43964;
 extern legacy_s8 byte_459D8;
@@ -427,6 +429,7 @@ loc_19766:
     mov     al, byte ptr [bp+arg_someFlag]
     mov     state.game_3F6autoLoadEvalFlag, al*/
 loc_19779:
+#ifndef RESTUNTS_HEADLESS
 	if ((byte_43966 & 4) != 0)
 		goto loc_1978D;
 
@@ -443,6 +446,7 @@ loc_19779:
 	gState_topSpeed = state.game_topSpeed;
 	gState_jumpCount = state.game_jumpCount;
 loc_1978D:
+#endif
 	return;
 }
 /*

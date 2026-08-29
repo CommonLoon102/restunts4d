@@ -24,7 +24,7 @@ C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gamei
 
 ifeq ($(TARGET),dosstage)
   C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c carsetup.c trkutil.c headless.c \
-			state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
+			dosstart.c headless_data.c headless_trackdata.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
 endif
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(C_FILES:.c=.obj))

@@ -2,35 +2,58 @@
 #include <dos.h>
 #endif
 #include <stdarg.h>
-#include <stdio.h>
 #include "externs.h"
 #include "memmgr.h"
 
 #ifdef RESTUNTS_HEADLESS
-extern void _abort(void);
-extern legacy_s16 __stbuf(FILE* stream);
-extern void __ftbuf(legacy_s16 buffer_state, FILE* stream);
-extern legacy_s16 __output(FILE* stream, const legacy_s8* format,
-	void* arguments);
 extern legacy_u16 word_3BE30;
 extern legacy_u16 word_3BE32;
+extern void headless_exit(legacy_s16 result);
 
 void add_exit_handler(void (far* exit_handler)(void))
 {
 	(void)exit_handler;
 }
 
+static void headless_write_text(const legacy_s8* text)
+{
+	legacy_u16 length;
+	legacy_u16 message_offset;
+
+	length = 0;
+	while (text[length] != 0)
+		length++;
+	message_offset = FP_OFF(text);
+#ifdef RESTUNTS_DOS
+	__asm {
+		mov ah, 40h
+		mov bx, 1
+		mov cx, length
+		mov dx, message_offset
+		int 21h
+	}
+#endif
+}
+
 void fatal_error(const legacy_s8* format, ...)
 {
-	legacy_s16 buffer_state;
+	legacy_u16 index;
 	va_list arguments;
+	const legacy_s8* detail;
 
-	buffer_state = __stbuf(stdout);
-	va_start(arguments, format);
-	__output(stdout, format, (void*)FP_OFF(arguments));
-	va_end(arguments);
-	__ftbuf(buffer_state, stdout);
-	_abort();
+	headless_write_text(format);
+	for (index = 0; format[index] != 0; index++) {
+		if (format[index] == '%' && format[index + 1] == 's') {
+			va_start(arguments, format);
+			detail = va_arg(arguments, const legacy_s8*);
+			va_end(arguments);
+			headless_write_text(" ");
+			headless_write_text(detail);
+			break;
+		}
+	}
+	headless_write_text("\r\n");
+	headless_exit(1);
 }
 
 #ifdef RESTUNTS_DOS

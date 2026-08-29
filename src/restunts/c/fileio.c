@@ -52,7 +52,6 @@ legacy_s16 g_errno;
 
 FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 {
-	legacy_u16 segm = FP_SEG(path);
 	legacy_u16 offs = FP_OFF(path);
 	FILE* handle;
 
@@ -60,10 +59,8 @@ FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 
 	if (mode[0] == 'w') { // Create new file for writing
 		__asm {
-			push ds
 			mov  ah, 3Ch // Create file
 			mov  cx, 0 // No attributes
-			mov  ds, segm
 			mov  dx, offs
 			int  21h
 			jnc  short create_ok
@@ -71,15 +68,12 @@ FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 			mov  g_errno, 1
 		create_ok:
 			mov  handle, ax
-			pop  ds
 		}
 	}
 	else { // Open existing file for reading
 		__asm {
-			push ds
 			mov  ah, 3Dh // Open file
 			mov  al, 0 // Read only
-			mov  ds, segm
 			mov  dx, offs
 			int  21h
 			jnc  short open_ok
@@ -87,7 +81,6 @@ FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 			mov  g_errno, 1
 		open_ok:
 			mov  handle, ax
-			pop  ds
 		}
 	}
 
@@ -378,7 +371,6 @@ legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
 	legacy_s32 length;
 	FILE* file;
-	
 	if ((file = fopen(filename, "rb")) != 0) {
 		fseek(file, 0, SEEK_END);
 		length = ftell(file);
@@ -413,7 +405,6 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 	legacy_s32 length;
 	FILE* file;
 	legacy_u8 header[COMPR_HEADER_SIZE];
-	
 	if ((file = fopen(filename, "rb")) != 0) {
 		fread(header, sizeof(header), 1, file);
 		fclose(file);
