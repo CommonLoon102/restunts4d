@@ -167,45 +167,79 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 		arg_carState->car_pseudoGravity,
 		arg_simd->aerorestable[var_updatedSpeed >> 10]);
-	if ((legacy_u16)arg_carState->car_currpm <= (legacy_u16)arg_simd->max_rpm)
-		goto loc_17CEA;
-	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-		arg_simd->max_rpm, 1);
+	if ((legacy_u16)arg_carState->car_currpm >
+		(legacy_u16)arg_simd->max_rpm) {
+		arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+			arg_simd->max_rpm, 1);
+		var_deltaSpeed = LEGACY_S16_WRAP_SUB(
+			var_deltaSpeed, arg_simd->braking_eff);
+	} else if ((arg_carInputByte & 3) == 1) {
+		arg_carState->car_is_braking = 0;
+		arg_carState->car_is_accelerating = 1;
+		if (arg_carState->car_changing_gear != 0) {
+			arg_carState->car_engineLimiterTimer = 0;
+			if (framespersec == 0xA) {
+				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+					arg_carState->car_currpm, 0x50);
+			} else {
+				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
+					arg_carState->car_currpm, 0x28);
+			}
+		} else if (arg_carState->car_sumSurfRearWheels == 0) {
+			if ((legacy_u16)arg_carState->car_currpm <
+				(legacy_u16)arg_simd->max_rpm &&
+				var_updatedSpeed < 0xFA00) {
+				var_deltaSpeed = LEGACY_S16_WRAP_ADD(
+					var_deltaSpeed, 0x300);
+			}
+		} else {
+			if (arg_carState->car_current_gear <= 1 &&
+				arg_carState->car_currpm < 0xA28) {
+				var_currTorque = arg_simd->idle_torque;
+			} else {
+				var_currTorque = arg_simd->torque_curve[
+					(legacy_u16)arg_carState->car_currpm >> 7];
+			}
+			if (arg_carState->car_engineLimiterTimer != 0 &&
+				arg_carState->car_currpm < 0x1388) {
+				var_currTorque = ((legacy_u8)arg_simd->idle_torque +
+					var_currTorque) >> 1;
+			}
+			var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed,
+				LEGACY_S16_FROM_BITS((legacy_u16)(LEGACY_U16_WRAP_MUL(
+					arg_carState->car_gearratioshr8, var_currTorque) >> 4)));
+			var_deltaSpeed = scale_acceleration_by_mass(
+				var_deltaSpeed, arg_simd->car_mass);
+			if (arg_MplayerFlag != 0) {
+				var_currTorque = (legacy_u16)(0xC8 - *oppnentSped) >> 1;
+				if (var_currTorque != 0) {
+					var_deltaSpeed = apply_opponent_acceleration_drag(
+						var_deltaSpeed, var_currTorque);
+				}
+			}
+			if (var_deltaSpeed > 0x128)
+				arg_carState->car_engineLimiterTimer = 5;
+		}
+	} else if ((arg_carInputByte & 3) == 2) {
+		arg_carState->car_is_accelerating = 0;
+		arg_carState->car_engineLimiterTimer = 0;
+		arg_carState->car_is_braking = 1;
+		if (arg_MplayerFlag == 0) {
+			var_deltaSpeed = LEGACY_S16_WRAP_SUB(
+				var_deltaSpeed, arg_simd->braking_eff);
+		} else {
+			var_deltaSpeed = LEGACY_S16_WRAP_SUB(var_deltaSpeed,
+				LEGACY_S16_WRAP_MUL(arg_simd->braking_eff, 2));
+		}
+	} else {
+		arg_carState->car_is_accelerating = 0;
+		arg_carState->car_is_braking = 0;
+	}
+	if (framespersec == 0xA) {
+		var_deltaSpeed = LEGACY_S16_WRAP_ADD(
+			var_deltaSpeed, var_deltaSpeed);
+	}
 
-loc_17CE1:
-	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
-		var_deltaSpeed, arg_simd->braking_eff);
-	goto loc_17D36;
-
-loc_17CEA:
-	if ((arg_carInputByte & 3) != 1)
-		goto loc_17CF8;
-	goto loc_17D82;
-
-loc_17CF8:
-	if ((arg_carInputByte & 3) == 2)
-		goto loc_17D10;
-	arg_carState->car_is_accelerating = 0;
-	arg_carState->car_is_braking = 0;
-	goto loc_17D39;
-
-loc_17D10:
-	arg_carState->car_is_accelerating = 0;
-	arg_carState->car_engineLimiterTimer = 0;
-	arg_carState->car_is_braking = 1;
-	if (arg_MplayerFlag == 0)
-		goto loc_17CE1;
-	var_deltaSpeed = LEGACY_S16_WRAP_SUB(var_deltaSpeed,
-		LEGACY_S16_WRAP_MUL(arg_simd->braking_eff, 2));
-
-loc_17D36:
-loc_17D39:
-	if (framespersec != 0xA)
-		goto loc_17D46;
-	var_deltaSpeed = LEGACY_S16_WRAP_ADD(
-		var_deltaSpeed, var_deltaSpeed);
-
-loc_17D46:
 	if (var_deltaSpeed >= 0)
 		goto loc_17D4F;
 	goto loc_17EE2;
@@ -234,83 +268,6 @@ loc_17D6C:
 loc_17D7C:
 	var_4 = LEGACY_S16_WRAP_NEGATE(var_4);
 	goto loc_17EFB;
-
-loc_17D82:
-	arg_carState->car_is_braking = 0;
-	arg_carState->car_is_accelerating = 1;
-	if (arg_carState->car_changing_gear == 0)
-		goto loc_17DBC;
-	arg_carState->car_engineLimiterTimer = 0;
-	if (framespersec != 0xA)
-		goto loc_17DB2;
-	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_currpm, 0x50);
-	goto loc_17D39;
-
-loc_17DB2:
-	arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_currpm, 0x28);
-	goto loc_17D39;
-
-loc_17DBC:
-	if (arg_carState->car_sumSurfRearWheels != 0)
-		goto loc_17DE6;
-	if ((legacy_u16)arg_carState->car_currpm < (legacy_u16)arg_simd->max_rpm)
-		goto loc_17DD4;
-	goto loc_17D39;
-
-loc_17DD4:
-	if (var_updatedSpeed < 0xFA00)
-		goto loc_17DDE;
-	goto loc_17D39;
-
-loc_17DDE:
-	var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed, 0x300);
-	goto loc_17D39;
-
-loc_17DE6:
-	if (arg_carState->car_current_gear > 1)
-		goto loc_17DFC;
-	if (arg_carState->car_currpm >= 0xA28)
-		goto loc_17DFC;
-	var_currTorque = arg_simd->idle_torque;
-	goto loc_17E0C;
-
-loc_17DFC:
-	var_currTorque = arg_simd->torque_curve[(legacy_u16)arg_carState->car_currpm >> 7];
-
-loc_17E0C:
-
-	if (arg_carState->car_engineLimiterTimer == 0)
-		goto loc_17E34;
-	if (arg_carState->car_currpm >= 0x1388)
-		goto loc_17E34;
-	var_currTorque = ((legacy_u8)arg_simd->idle_torque + var_currTorque) >> 1;
-
-loc_17E34:
-	var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed,
-		LEGACY_S16_FROM_BITS((legacy_u16)(LEGACY_U16_WRAP_MUL(
-			arg_carState->car_gearratioshr8, var_currTorque) >> 4)));
-	var_deltaSpeed = scale_acceleration_by_mass(
-		var_deltaSpeed, arg_simd->car_mass);
-
-
-	if (arg_MplayerFlag == 0)
-		goto loc_17EAD;
-	var_currTorque = (legacy_u16)(0xC8 - *oppnentSped) >> 1;
-	if (var_currTorque == 0)
-		goto loc_17EAD;
-	var_deltaSpeed = apply_opponent_acceleration_drag(
-		var_deltaSpeed, var_currTorque);
-
-loc_17EAD:
-	if (var_deltaSpeed > 0x128)
-		goto loc_17EB7;
-	goto loc_17D39;
-
-loc_17EB7:
-	arg_carState->car_engineLimiterTimer = 5;
-	goto loc_17D39;
 
 loc_17EC2:
 	var_updatedSpeed = LEGACY_U16_WRAP_ADD(
