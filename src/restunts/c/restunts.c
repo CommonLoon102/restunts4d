@@ -27,16 +27,6 @@
 #define AUDIO_CAR_STATE_RECORD_COUNT 0x28U
 #define AUDIO_CAR_STATE_RECORD_SIZE  0x22U
 
-extern legacy_u8 dos_joystick_enabled;
-extern legacy_u16 dos_joystick_axis1;
-extern legacy_u16 dos_joystick_axis2;
-extern legacy_u16 dos_joystick_axis1_min;
-extern legacy_u16 dos_joystick_axis1_max;
-extern legacy_u16 dos_joystick_axis2_min;
-extern legacy_u16 dos_joystick_axis2_max;
-extern legacy_u16 dos_joystick_axis1_scale;
-extern legacy_u16 dos_joystick_axis2_scale;
-extern legacy_s16 dos_mouse_button_count;
 extern legacy_u32 dos_timer_counter;
 extern legacy_s16 dos_timer_callbacks_suspended;
 
@@ -190,11 +180,7 @@ void timer_remove_callback(void (far* callback)(void))
 
 void sub_307B4(void)
 {
-	dos_joystick_enabled = 1;
-	dos_joystick_axis1_min = 0x50U;
-	dos_joystick_axis1_max = 0;
-	dos_joystick_axis2_min = 0x50U;
-	dos_joystick_axis2_max = 0;
+	dos_joystick_reset_calibration();
 }
 
 legacy_s16 sub_307D2(legacy_s16 index)
@@ -204,30 +190,12 @@ legacy_s16 sub_307D2(legacy_s16 index)
 
 legacy_s16 sub_307E3(void)
 {
-	legacy_u16 difference;
-	legacy_u32 scaled;
-
-	if (LEGACY_S16_FROM_BITS(dos_joystick_axis1) <
-		LEGACY_S16_FROM_BITS(dos_joystick_axis1_min))
-		difference = 0;
-	else
-		difference = LEGACY_U16_WRAP_SUB(dos_joystick_axis1, dos_joystick_axis1_min);
-	scaled = (legacy_u32)difference * dos_joystick_axis1_scale;
-	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
+	return dos_joystick_get_scaled_axis(0U);
 }
 
 legacy_s16 nopsub_307FA(void)
 {
-	legacy_u16 difference;
-	legacy_u32 scaled;
-
-	if (LEGACY_S16_FROM_BITS(dos_joystick_axis2) <
-		LEGACY_S16_FROM_BITS(dos_joystick_axis2_min))
-		difference = 0;
-	else
-		difference = LEGACY_U16_WRAP_SUB(dos_joystick_axis2, dos_joystick_axis2_min);
-	scaled = (legacy_u32)difference * dos_joystick_axis2_scale;
-	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
+	return dos_joystick_get_scaled_axis(1U);
 }
 
 legacy_s16 nopsub_30A77(void)
@@ -642,15 +610,6 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array, legacy_s1
 	return -1;
 }
 
-extern legacy_s16 dos_get_joy_flags(void);
-extern legacy_u8 dos_kb_input[];
-extern legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height);
-extern void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
-	legacy_s16 maximum_x, legacy_s16 maximum_y);
-extern void dos_mouse_set_position(legacy_s16 x, legacy_s16 y);
-extern void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x,
-	legacy_s16* y);
-
 static legacy_s16 input_elapsed_frames;
 static legacy_s16 input_mouse_repeat_at;
 static legacy_s16 input_joystick_repeat_at;
@@ -681,7 +640,7 @@ legacy_s16 get_kb_or_joy_flags(void)
 
 	flags = 0;
 	for (index = 0; index < 10U; index++) {
-		if (dos_kb_input[input_key_scancodes[index]] != 0)
+		if (kb_get_key_state(input_key_scancodes[index]) != 0)
 			flags |= action_flags[index];
 	}
 	if (flags == 0)
@@ -1458,7 +1417,7 @@ void replay_unk2(legacy_s16 mode)
 				LEGACY_U16_WRAP_MUL(framespersec, 4U))
 			update_crash_state(1, 0);
 
-		if (byte_3B8F2 != 0 || dos_joystick_enabled != 0) {
+		if (byte_3B8F2 != 0 || dos_joystick_is_enabled() != 0) {
 			if (byte_3B8F2 != 0) {
 				dos_mouse_get_state(
 					&mouse_butstate, &mouse_xpos, &mouse_ypos);
@@ -3577,7 +3536,7 @@ void do_key_restext(void)
 	audio_suspend();
 	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
-	dos_joystick_enabled = 0;
+	dos_joystick_set_enabled(0);
 	byte_3B8F2 = 0;
 	dos_timer_callbacks_suspended = 0;
 	audio_resume();
@@ -3605,13 +3564,13 @@ void do_joy_restext(void)
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
 		dialogarg2, positions, 0)) <= 0) {
-		dos_joystick_enabled = 0;
+		dos_joystick_set_enabled(0);
 		goto joy_dialog_done;
 	}
 
 	for (i = 0; i < 9U; i++)
 		visited[i] = 0;
-	dos_joystick_enabled = 1;
+	dos_joystick_set_enabled(1);
 	mouse_draw_opaque_check();
 	line_height = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
@@ -3669,9 +3628,10 @@ void do_joy_restext(void)
 	}
 
 	for (i = 0; i < 9U; i++)
-		dos_joystick_enabled = (legacy_u8)dos_joystick_enabled & visited[i];
+		dos_joystick_set_enabled(
+			dos_joystick_is_enabled() & visited[i]);
 	sub_275C6();
-	if (dos_joystick_enabled == 0)
+	if (dos_joystick_is_enabled() == 0)
 		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
 			0xFFFFU, 0xFFFFU, dialogarg2, 0, 0);
 
@@ -3890,7 +3850,7 @@ legacy_u16 run_option_menu(void)
 		case 0:
 			if (byte_3B8F2 != 0)
 				initial_input = 2;
-			else if (dos_joystick_enabled != 0)
+			else if (dos_joystick_is_enabled() != 0)
 				initial_input = 1;
 			else
 				initial_input = 0;
@@ -4142,7 +4102,7 @@ void draw_2DtrackMap(
 static legacy_u16 track_menu_next_row(legacy_u16 row)
 {
 	if (row == 29U)
-		return (legacy_u16)dos_mouse_button_count;
+		return dos_mouse_get_button_count();
 	return (legacy_u16)trackrows[row + 1U];
 }
 
@@ -10406,7 +10366,7 @@ void run_game(void) {
 		while (1) {
 
 			if (state.game_frame != elapsed_time2) {
-				if ((byte_3B8F2 != 0 || dos_joystick_enabled != 0) && game_replay_mode == 0) {
+				if ((byte_3B8F2 != 0 || dos_joystick_is_enabled() != 0) && game_replay_mode == 0) {
 					replay_unk();
 				}
 				update_gamestate();

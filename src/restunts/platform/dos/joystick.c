@@ -1,15 +1,15 @@
 #include <dos.h>
-#include "../../c/legacy.h"
+#include "../../c/platform.h"
 
-legacy_u8 dos_joystick_enabled;
-legacy_u16 dos_joystick_axis1;
-legacy_u16 dos_joystick_axis2;
-legacy_u16 dos_joystick_axis1_min = 80U;
-legacy_u16 dos_joystick_axis1_max;
-legacy_u16 dos_joystick_axis2_min = 80U;
-legacy_u16 dos_joystick_axis2_max;
-legacy_u16 dos_joystick_axis1_scale;
-legacy_u16 dos_joystick_axis2_scale;
+static legacy_u8 dos_joystick_enabled;
+static legacy_u16 dos_joystick_axis1;
+static legacy_u16 dos_joystick_axis2;
+static legacy_u16 dos_joystick_axis1_min = 80U;
+static legacy_u16 dos_joystick_axis1_max;
+static legacy_u16 dos_joystick_axis2_min = 80U;
+static legacy_u16 dos_joystick_axis2_max;
+static legacy_u16 dos_joystick_axis1_scale;
+static legacy_u16 dos_joystick_axis2_scale;
 
 static legacy_u8 dos_joystick_button_mask;
 static legacy_u8 dos_joystick_input;
@@ -116,6 +116,51 @@ static void joystick_reset_axis2_candidates(void)
 	dos_joystick_axis2_candidate_ticks = 0x14U;
 	dos_joystick_axis2_high_candidate = 0x4E20U;
 	dos_joystick_axis2_low_candidate = 0;
+}
+
+void dos_joystick_reset_calibration(void)
+{
+	dos_joystick_enabled = 1;
+	dos_joystick_axis1_min = 0x50U;
+	dos_joystick_axis1_max = 0;
+	dos_joystick_axis2_min = 0x50U;
+	dos_joystick_axis2_max = 0;
+}
+
+void dos_joystick_set_enabled(legacy_u8 enabled)
+{
+	dos_joystick_enabled = enabled;
+}
+
+legacy_u8 dos_joystick_is_enabled(void)
+{
+	return dos_joystick_enabled;
+}
+
+legacy_s16 dos_joystick_get_scaled_axis(legacy_u16 axis_index)
+{
+	legacy_u16 axis;
+	legacy_u16 minimum;
+	legacy_u16 scale;
+	legacy_u16 difference;
+	legacy_u32 scaled;
+
+	if (axis_index == 0U) {
+		axis = dos_joystick_axis1;
+		minimum = dos_joystick_axis1_min;
+		scale = dos_joystick_axis1_scale;
+	} else {
+		axis = dos_joystick_axis2;
+		minimum = dos_joystick_axis2_min;
+		scale = dos_joystick_axis2_scale;
+	}
+	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(minimum))
+		difference = 0;
+	else
+		difference = LEGACY_U16_WRAP_SUB(axis, minimum);
+	scaled = (legacy_u32)difference * scale;
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU));
 }
 
 legacy_s16 dos_get_joy_flags(void)

@@ -1,11 +1,11 @@
 #include <dos.h>
-#include "../../c/legacy.h"
+#include "../../c/platform.h"
 
 #define int86 _int86
 extern legacy_s16 _Cdecl _int86(legacy_s16 interrupt_number,
 	union REGS far* input, union REGS far* output);
 
-legacy_u16 dos_mouse_button_count;
+static legacy_u16 dos_mouse_button_count;
 
 static legacy_u8 dos_mouse_horizontal_scale;
 static legacy_u16 dos_mouse_available;
@@ -93,4 +93,9 @@ void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y)
 	*buttons = (legacy_s16)registers.x.bx;
 	*x = (legacy_s16)(registers.x.cx >> dos_mouse_horizontal_scale);
 	*y = (legacy_s16)registers.x.dx;
+}
+
+legacy_u16 dos_mouse_get_button_count(void)
+{
+	return dos_mouse_button_count;
 }

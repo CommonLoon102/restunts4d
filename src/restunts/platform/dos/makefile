@@ -34,11 +34,11 @@ $(OBJDIR)/keyboard.obj: keyboard.c ../../c/legacy.h ../../c/keyboard.h
 $(OBJDIR)/divide.obj: divide.c ../../c/legacy.h ../../c/platform.h
 	$(CC) -I../../c divide.c
 
-$(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h
-	$(CC) joystick.c
+$(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h ../../c/platform.h
+	$(CC) -I../../c joystick.c
 
-$(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h
-	$(CC) mouse.c
+$(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h ../../c/platform.h
+	$(CC) -I../../c mouse.c
 
 $(OBJDIR)/video.obj: video.c ../../c/legacy.h
 	$(CC) video.c

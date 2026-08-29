@@ -19,7 +19,7 @@ extern void add_exit_handler(voidfunctype exitfunc);
 extern legacy_s16 kb_parse_key(legacy_s16 key);
 extern legacy_s16 dos_data_stack_segments_match(void);
 
-legacy_u8 dos_kb_input[90];
+static legacy_u8 dos_kb_input[90];
 
 static legacy_u16 dos_kb_buffer_write;
 static legacy_u16 dos_kb_buffer_read;

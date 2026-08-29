@@ -32,6 +32,20 @@ legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length);
 void dos_process_exit(legacy_s16 status);
 legacy_s16 dos_data_stack_segments_match(void);
 
+legacy_s16 dos_get_joy_flags(void);
+void dos_joystick_reset_calibration(void);
+void dos_joystick_set_enabled(legacy_u8 enabled);
+legacy_u8 dos_joystick_is_enabled(void);
+legacy_s16 dos_joystick_get_scaled_axis(legacy_u16 axis_index);
+
+legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height);
+void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
+	legacy_s16 maximum_x, legacy_s16 maximum_y);
+void dos_mouse_set_position(legacy_s16 x, legacy_s16 y);
+void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x,
+	legacy_s16* y);
+legacy_u16 dos_mouse_get_button_count(void);
+
 legacy_s16 dos_timer_register_callback(void (far* callback)(void));
 void dos_timer_unregister_callback(void (far* callback)(void));
 legacy_u32 timer_get_counter(void);
