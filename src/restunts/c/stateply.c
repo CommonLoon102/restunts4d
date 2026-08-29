@@ -48,6 +48,8 @@ extern struct VECTOR unk_3E68E[];
 extern struct VECTOR unk_3E69A[];
 
 extern void update_crash_state(legacy_s16, legacy_s16);
+extern void build_track_object(struct VECTOR*, struct VECTOR*);
+extern void audio_unk3(legacy_u8, legacy_s16);
 
 static legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor)

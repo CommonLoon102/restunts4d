@@ -187,7 +187,8 @@ loc_17B04:
 loc_17B0F:
 	if (arg_carState->car_current_gear == arg_simd->num_gears)
 		goto loc_17B86;
-	arg_carState->car_current_gear++;
+	arg_carState->car_current_gear = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_carState->car_current_gear + 1U));
 	goto loc_17B39;
 /*    mov     si, [bp+arg_simd]
     mov     al, [si+SIMD.num_gears]
@@ -206,7 +207,8 @@ loc_17B20:
 loc_17B2E:
 	if (arg_carState->car_current_gear <= 1)
 		goto loc_17B86;
-	arg_carState->car_current_gear--;
+	arg_carState->car_current_gear = LEGACY_S8_FROM_BITS(
+		(legacy_u8)((legacy_u8)arg_carState->car_current_gear - 1U));
 /*    cmp     [bx+CARSTATE.car_current_gear], 1
     jle     short loc_17B86
     dec     [bx+CARSTATE.car_current_gear]*/
