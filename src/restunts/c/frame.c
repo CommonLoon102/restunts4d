@@ -320,7 +320,7 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 	struct VECTOR vectors[2];
 	struct POINT2D points[6];
 	struct RECTANGLE work_rect;
-	legacy_s16 line_data[14];
+	legacy_u16 line_data[14];
 	legacy_s16 base_horizon;
 	legacy_s16 horizon_delta;
 	legacy_s16 horizon;
@@ -390,19 +390,19 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 		if (detail_level != 4 && points[1].px < 0 &&
 			points[0].px > 0x140 &&
 			draw_line_related(points[1].px, points[1].py,
-				points[0].px, points[0].py, (legacy_s16*)line_data) == 0) {
+				points[0].px, points[0].py, line_data) == 0) {
 			absolute_delta = LEGACY_S16_WRAP_SUB(
 				line_data[3], line_data[5]);
 			if (absolute_delta < 0)
 				absolute_delta = LEGACY_S16_WRAP_NEGATE(absolute_delta);
 			if (absolute_delta < 0x60) {
 				if (line_data[1] == 0) {
-					base_horizon = line_data[3];
+					base_horizon = LEGACY_S16_FROM_BITS(line_data[3]);
 					horizon_delta = LEGACY_S16_WRAP_SUB(
 						line_data[5], base_horizon);
 					has_linear_horizon = 1;
 				} else if (line_data[1] == 0x13F) {
-					base_horizon = line_data[5];
+					base_horizon = LEGACY_S16_FROM_BITS(line_data[5]);
 					horizon_delta = LEGACY_S16_WRAP_SUB(
 						line_data[3], base_horizon);
 					has_linear_horizon = 1;

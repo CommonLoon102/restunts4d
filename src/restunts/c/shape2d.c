@@ -403,7 +403,7 @@ void draw_patterned_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 0);
 }
 
-void putpixel_line1_maybe(legacy_s16* line)
+void putpixel_line1_maybe(const legacy_u16* line)
 {
 	legacy_u8 far* bitmap;
 	legacy_u16 sprite_segment;

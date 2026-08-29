@@ -2935,8 +2935,8 @@ void get_a_poly_info(void)
 	polyinfo_reset();
 }
 
-void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode);
-void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A, legacy_u16 var_C, legacy_s16* var_18);
+void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16 mode);
+void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A, legacy_u16 var_C, legacy_s16* var_18);
 
 void preRender_line(
 	legacy_u16 start_x,
@@ -2945,12 +2945,12 @@ void preRender_line(
 	legacy_u16 end_y,
 	legacy_u16 color
 ) {
-	legacy_s16 line[14];
+	legacy_u16 line[14];
 
-	line[8] = LEGACY_S16_FROM_BITS(color);
-	if (draw_line_related(start_x, start_y, end_x, end_y,
-			(legacy_s16*)line) == 0 && line[7] > 0)
-		putpixel_line1_maybe((legacy_s16*)line);
+	line[8] = color;
+	if (draw_line_related(start_x, start_y, end_x, end_y, line) == 0 &&
+			LEGACY_S16_FROM_BITS(line[7]) > 0)
+		putpixel_line1_maybe(line);
 }
 
 void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
@@ -3479,7 +3479,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_u16 arg_vertlinecount, legacy_s16* arg_vertlines,
 	legacy_u16 var_A) {
 	legacy_s16 var_798[480 + 480];
-	legacy_s16 var_7D0[28];
+	legacy_u16 var_7D0[28];
 
 	legacy_s16* var_18;
 	legacy_s16* var_16;
@@ -3606,7 +3606,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 
 }
 // generate_poly_edges is called preRender_helper in the IDB.
-void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode) {
+void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16 mode) {
 
 	legacy_s16 sprite1_sprite_left2 = sprite1.sprite_left2;
 	legacy_s16 sprite1_sprite_widthsum = sprite1.sprite_widthsum;
@@ -3615,38 +3615,44 @@ void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode)
 	legacy_u32 temp;
 
 	if (mode != 1) {
-		count = regsi[10];
+		count = LEGACY_S16_FROM_BITS(regsi[10]);
 		if (count > 0) {
-			ofs = regsi[3] - count;
-			if (regsi[2] < 0) ofs++;
+			ofs = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_FROM_BITS(regsi[3]), count);
+			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
+				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = sprite1_sprite_left2;
 				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
 			}
 		}
 
-		count = regsi[12];
+		count = LEGACY_S16_FROM_BITS(regsi[12]);
 		if (count > 0) {
-			ofs = regsi[3] - count;
-			if (regsi[2] < 0) ofs++;
+			ofs = LEGACY_S16_WRAP_SUB(
+				LEGACY_S16_FROM_BITS(regsi[3]), count);
+			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
+				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = sprite1_sprite_widthsum;
 				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
 			}
 		}
 
-		count = regsi[11];
+		count = LEGACY_S16_FROM_BITS(regsi[11]);
 		if (count > 0) {
-			ofs = regsi[5] + 1;
+			ofs = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_FROM_BITS(regsi[5]), 1);
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = sprite1_sprite_left2;
 				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
 			}
 		}
 
-		count = regsi[13];
+		count = LEGACY_S16_FROM_BITS(regsi[13]);
 		if (count > 0) {
-			ofs = regsi[5] + 1;
+			ofs = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_FROM_BITS(regsi[5]), 1);
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = sprite1_sprite_widthsum;
 				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
@@ -3654,31 +3660,36 @@ void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode)
 		}
 	}
 
-	count = regsi[7];
+	count = LEGACY_S16_FROM_BITS(regsi[7]);
 	if (count <= 0) return ;
 
-	ofs = regsi[3];
+	ofs = LEGACY_S16_FROM_BITS(regsi[3]);
 	
-	switch (regsi[9]) {
+	switch ((legacy_u8)regsi[9]) {
 		case 0:
 		case 1:
 			return;
 		case 2:
 			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = regsi[1];
-				var_18[480 + ofs + i] = regsi[1];
+				var_18[ofs + i] = LEGACY_S16_FROM_BITS(regsi[1]);
+				var_18[480 + ofs + i] =
+					LEGACY_S16_FROM_BITS(regsi[1]);
 			}
 			return ;
 		case 3:
 			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = regsi[1] - i;
-				var_18[480 + ofs + i] = regsi[1] - i;
+				var_18[ofs + i] = LEGACY_S16_WRAP_SUB(
+					LEGACY_S16_FROM_BITS(regsi[1]), i);
+				var_18[480 + ofs + i] = LEGACY_S16_WRAP_SUB(
+					LEGACY_S16_FROM_BITS(regsi[1]), i);
 			}
 			return ;
 		case 4:
 			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = regsi[1] + i;
-				var_18[480 + ofs + i] = regsi[1] + i;
+				var_18[ofs + i] = LEGACY_S16_WRAP_ADD(
+					LEGACY_S16_FROM_BITS(regsi[1]), i);
+				var_18[480 + ofs + i] = LEGACY_S16_WRAP_ADD(
+					LEGACY_S16_FROM_BITS(regsi[1]), i);
 			}
 			return ;
 		case 5:
@@ -3761,11 +3772,11 @@ void generate_poly_edges(legacy_s16* var_18, legacy_s16* regsi, legacy_s16 mode)
 
 
 // aka preRender_helper3 in the IDB
-void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
+void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	legacy_u16 var_C, legacy_s16* var_18)
 {
-	legacy_s16* line = (legacy_s16*)regsi;
-	legacy_s16* left_edges = (legacy_s16*)var_18;
+	const legacy_u16* line = regsi;
+	legacy_s16* left_edges = var_18;
 	legacy_s16* right_edges = left_edges + 480;
 	legacy_s16 value;
 	legacy_u16 fraction;
@@ -3778,12 +3789,12 @@ void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
 	legacy_s16 target;
 	legacy_s16 carry;
 
-	count = line[7];
-	index = line[3];
-	mode = ((legacy_u8*)line)[0x12];
+	count = LEGACY_S16_FROM_BITS(line[7]);
+	index = LEGACY_S16_FROM_BITS(line[3]);
+	mode = (legacy_u8)line[9];
 
 	if (count > 0 && mode >= 2U && mode <= 8U) {
-		value = line[1];
+		value = LEGACY_S16_FROM_BITS(line[1]);
 
 		if (var_A != 0U) {
 			switch (mode) {
@@ -3900,13 +3911,15 @@ void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
 			while (count > 0) {
 				value = mode >= 5U ?
 					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
-					line[1];
+					LEGACY_S16_FROM_BITS(line[1]);
 				if (mode == 3U)
 					value = LEGACY_S16_WRAP_SUB(value,
-						line[7] - count);
+						LEGACY_S16_WRAP_SUB(
+							LEGACY_S16_FROM_BITS(line[7]), count));
 				else if (mode == 4U)
 					value = LEGACY_S16_WRAP_ADD(value,
-						line[7] - count);
+						LEGACY_S16_WRAP_SUB(
+							LEGACY_S16_FROM_BITS(line[7]), count));
 
 				if (left_edges[index] > value) {
 					target = 1;
@@ -3928,13 +3941,15 @@ void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
 			while (count > 0 && target != 0) {
 				value = mode >= 5U ?
 					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
-					line[1];
+					LEGACY_S16_FROM_BITS(line[1]);
 				if (mode == 3U)
 					value = LEGACY_S16_WRAP_SUB(value,
-						line[7] - count);
+						LEGACY_S16_WRAP_SUB(
+							LEGACY_S16_FROM_BITS(line[7]), count));
 				else if (mode == 4U)
 					value = LEGACY_S16_WRAP_ADD(value,
-						line[7] - count);
+						LEGACY_S16_WRAP_SUB(
+							LEGACY_S16_FROM_BITS(line[7]), count));
 
 				if (target == 1)
 					left_edges[index] = value;
@@ -4056,33 +4071,37 @@ void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
 	sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
 	carry = sum > 0xFFFFUL;
 
-	count = line[10];
+	count = LEGACY_S16_FROM_BITS(line[10]);
 	if (count > 0) {
-		index = line[3] + carry - count;
+		index = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line[3]), carry), count);
 		while (count-- > 0)
 			left_edges[index++] =
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
 	}
 
-	count = line[12];
+	count = LEGACY_S16_FROM_BITS(line[12]);
 	if (count > 0) {
-		index = line[3] + carry - count;
+		index = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line[3]), carry), count);
 		while (count-- > 0)
 			right_edges[index++] = LEGACY_S16_WRAP_SUB(
 				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
 	}
 
-	count = line[11];
+	count = LEGACY_S16_FROM_BITS(line[11]);
 	if (count > 0) {
-		index = line[5] + 1;
+		index = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line[5]), 1);
 		while (count-- > 0)
 			left_edges[index++] =
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
 	}
 
-	count = line[13];
+	count = LEGACY_S16_FROM_BITS(line[13]);
 	if (count > 0) {
-		index = line[5] + 1;
+		index = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line[5]), 1);
 		while (count-- > 0)
 			right_edges[index++] = LEGACY_S16_WRAP_SUB(
 				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
@@ -4094,7 +4113,7 @@ extern legacy_u16 far word_2F448; // seg012
 extern legacy_u16 far off_2F44A[]; // seg012
 #endif
 
-legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8, legacy_u16 var_4);
+legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line, legacy_u16 var_4);
 
 static legacy_u16 draw_line_sar1(legacy_u16 value) {
 	return (legacy_u16)((value >> 1) | (value & 0x8000U));
@@ -4133,16 +4152,15 @@ static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 #endif
 }
 
-legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8) {
-	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 0);
+legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
+	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 0);
 }
 
-legacy_u16 draw_line_related_alt(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8) {
-	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, arg_8, 1);
+legacy_u16 draw_line_related_alt(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
+	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 1);
 }
 
-legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_s16* arg_8, legacy_u16 var_4) {
-	legacy_u16* line;
+legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line, legacy_u16 var_4) {
 	legacy_u16 ax;
 	legacy_u16 bx;
 	legacy_u16 cx;
@@ -4156,7 +4174,6 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 	legacy_u32 product;
 	legacy_s32 difference;
 
-	line = (legacy_u16*)arg_8;
 	line[9] = 0x00FFU;
 	line[0] = 0;
 	line[2] = 0;

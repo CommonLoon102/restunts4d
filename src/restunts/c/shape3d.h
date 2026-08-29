@@ -71,9 +71,9 @@ void preRender_unk(legacy_u16 pattern, legacy_u16 alternate_color,
 void preRender_line(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16 color);
 legacy_u16 draw_line_related(legacy_u16 start_x, legacy_u16 start_y,
-	legacy_u16 end_x, legacy_u16 end_y, legacy_s16* line_data);
+	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line_data);
 legacy_u16 draw_line_related_alt(legacy_u16 start_x, legacy_u16 start_y,
-	legacy_u16 end_x, legacy_u16 end_y, legacy_s16* line_data);
+	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line_data);
 void skybox_op_helper(legacy_u16 color, legacy_u16 vertex_count,
 	struct POINT2D vertices[]);
 void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination);
