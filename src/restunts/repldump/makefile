@@ -61,7 +61,7 @@ ifeq ($(TARGET), headless)
   OUTFILE = repldump.exe
   WLINK_OPTIONS = option START=headless_start option MAP=repldump.map
   REPLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES)
-  ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)
+  ifneq ($(findstring \asmorig\build,$(ALL_OBJ_FILES)),)
     $(error Headless target must not link game assembly objects)
   endif
 endif

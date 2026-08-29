@@ -54,7 +54,7 @@ ifeq ($(TARGET), full)
   WLINK_OPTIONS = option START=headless_start option MAP=restunts.map
   WLINK_LIBRARIES = library s:\tools\lib\cm.lib
   ENTRY_DEP =
-  ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)
+  ifneq ($(findstring \asmorig\build,$(ALL_OBJ_FILES)),)
     $(error Full target must not link game assembly objects)
   endif
 else
