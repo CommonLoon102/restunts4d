@@ -1037,16 +1037,17 @@ void input_pop_status(void)
 
 extern legacy_s16 font_op2(const legacy_s8* text);
 extern legacy_s16 font_op(const legacy_s8* text, legacy_s16 count);
-extern legacy_u16 word_42A16;
-extern legacy_u16 word_42A18;
-extern legacy_u16 word_42A1A;
-extern legacy_u16 word_42A1C;
-extern legacy_s8* off_42A1E;
-extern legacy_u16 word_42A20;
-extern legacy_u16 word_42A22;
-extern legacy_u8 far* word_405FE;
 extern void sub_345BC(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
 extern void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
+
+legacy_u8 far* active_font_definition;
+static legacy_u16 text_edit_cursor_width;
+static legacy_u16 text_edit_x;
+static legacy_u16 text_edit_y;
+static legacy_u16 text_edit_cursor_visible;
+static legacy_s8* text_edit_buffer;
+static legacy_u16 text_edit_max_pixels;
+static legacy_u16 text_edit_cursor;
 
 legacy_s16 font_op2_alt(const legacy_s8* text)
 {
@@ -5602,7 +5603,7 @@ void font_set_unk(legacy_s16 color, legacy_s16 unknown)
 {
 	legacy_u8 far* font_definition;
 
-	font_definition = word_405FE;
+	font_definition = active_font_definition;
 	font_definition[0] = (legacy_u8)color;
 	font_definition[1] = 0;
 	font_definition[2] = (legacy_u8)unknown;
@@ -6629,7 +6630,7 @@ static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, lega
 
 	if (bounded != 0 && remaining == 0)
 		return 0;
-	font_definition = word_405FE;
+	font_definition = active_font_definition;
 	has_glyph_widths = font_definition[0x14U];
 	glyph_width = audioresource_get_word(font_definition + 0x10U);
 	total_width = 0;
@@ -6826,17 +6827,17 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 	input_flags = (legacy_u8)flags;
 	sprite_copy_2_to_1();
-	word_42A18 = (legacy_u16)x;
-	word_42A1A = (legacy_u16)y;
-	off_42A1E = text;
-	word_42A20 = (legacy_u16)max_pixels;
+	text_edit_x = (legacy_u16)x;
+	text_edit_y = (legacy_u16)y;
+	text_edit_buffer = text;
+	text_edit_max_pixels = (legacy_u16)max_pixels;
 	text[(legacy_u16)max_characters] = 0;
 	if ((input_flags & 1U) != 0)
 		text[0] = 0;
 	if ((input_flags & 2U) != 0)
-		word_42A22 = 0;
+		text_edit_cursor = 0;
 	else
-		word_42A22 = (legacy_u16)strlen(text);
+		text_edit_cursor = (legacy_u16)strlen(text);
 
 	length = (legacy_u16)strlen(text);
 	while (LEGACY_S16_FROM_BITS(length) <
@@ -6845,8 +6846,8 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		length = LEGACY_U16_WRAP_ADD(length, 1U);
 	}
 	read_line_helper2();
-	word_42A16 = 1;
-	word_42A1C = 1;
+	text_edit_cursor_width = 1;
+	text_edit_cursor_visible = 1;
 	insert_mode = 0;
 	read_line_helper();
 	timer_copy_counter(timeout);
@@ -6868,10 +6869,10 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == 0) {
 			set_add_value(4UL);
-			old_cursor_state = (legacy_u16)word_42A1C;
-			word_42A1C = 1;
+			old_cursor_state = (legacy_u16)text_edit_cursor_visible;
+			text_edit_cursor_visible = 1;
 			read_line_helper();
-			word_42A1C = old_cursor_state != 0 ? 0 : 1;
+			text_edit_cursor_visible = old_cursor_state != 0 ? 0 : 1;
 			if (timeout != 0 && timer_compare_dx()) {
 				read_line_helper();
 				return 0;
@@ -6890,8 +6891,8 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		if (key == 0x4D00U) {
 			read_line_helper();
 			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(word_42A22))
-				word_42A22 = LEGACY_U16_WRAP_ADD(word_42A22, 1U);
+				LEGACY_S16_FROM_BITS(text_edit_cursor))
+				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
 			read_line_helper();
 			first_key = 0;
 			continue;
@@ -6899,8 +6900,8 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == 0x4B00U) {
 			read_line_helper();
-			if (word_42A22 != 0)
-				word_42A22 = LEGACY_U16_WRAP_SUB(word_42A22, 1U);
+			if (text_edit_cursor != 0)
+				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
 			read_line_helper();
 			first_key = 0;
 			continue;
@@ -6908,7 +6909,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == 0x4700U) {
 			read_line_helper();
-			word_42A22 = 0;
+			text_edit_cursor = 0;
 			read_line_helper();
 			first_key = 0;
 			continue;
@@ -6916,7 +6917,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == 0x4F00U) {
 			read_line_helper();
-			word_42A22 = (legacy_u16)strlen(text);
+			text_edit_cursor = (legacy_u16)strlen(text);
 			read_line_helper();
 			first_key = 0;
 			continue;
@@ -6925,7 +6926,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		if (key == 0x5200U) {
 			read_line_helper();
 			insert_mode = !insert_mode;
-			word_42A16 = insert_mode ? 8U : 1U;
+			text_edit_cursor_width = insert_mode ? 8U : 1U;
 			read_line_helper();
 			first_key = 0;
 			continue;
@@ -6933,10 +6934,10 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == 0x5300U) {
 			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(word_42A22) &&
-				text[(legacy_u16)word_42A22] != 0) {
+				LEGACY_S16_FROM_BITS(text_edit_cursor) &&
+				text[(legacy_u16)text_edit_cursor] != 0) {
 				read_line_helper();
-				index = (legacy_u16)word_42A22;
+				index = (legacy_u16)text_edit_cursor;
 				while (LEGACY_S16_FROM_BITS(index) <
 					LEGACY_S16_FROM_BITS(max_characters)) {
 					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
@@ -6951,10 +6952,10 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		}
 
 		if (key == 8U) {
-			if (word_42A22 != 0) {
+			if (text_edit_cursor != 0) {
 				read_line_helper();
-				word_42A22 = LEGACY_U16_WRAP_SUB(word_42A22, 1U);
-				index = (legacy_u16)word_42A22;
+				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
+				index = (legacy_u16)text_edit_cursor;
 				while (LEGACY_S16_FROM_BITS(index) <
 					LEGACY_S16_FROM_BITS(max_characters)) {
 					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
@@ -6971,10 +6972,10 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		if (LEGACY_S16_FROM_BITS(key) >= 0x20 &&
 			LEGACY_S16_FROM_BITS(key) <= 0x7A &&
 			LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(word_42A22)) {
+				LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 			read_line_helper();
 			if (first_key && (input_flags & 4U) == 0) {
-				word_42A22 = 0;
+				text_edit_cursor = 0;
 				for (index = 0;
 					LEGACY_S16_FROM_BITS(index) <
 						LEGACY_S16_FROM_BITS(max_characters);
@@ -6982,14 +6983,14 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 					text[index] = ' ';
 			}
 
-			index = (legacy_u16)word_42A22;
+			index = (legacy_u16)text_edit_cursor;
 			if (text[index] == 0)
 				text[LEGACY_U16_WRAP_ADD(index, 1U)] = 0;
 			if (insert_mode) {
 				legacy_u16 move_index;
 				move_index = LEGACY_U16_WRAP_SUB(max_characters, 2U);
 				while (LEGACY_S16_FROM_BITS(move_index) >=
-					LEGACY_S16_FROM_BITS(word_42A22)) {
+					LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 					text[LEGACY_U16_WRAP_ADD(move_index, 1U)] =
 						text[move_index];
 					move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
@@ -6997,8 +6998,8 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			}
 			text[index] = (legacy_s8)(legacy_u8)key;
 			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(word_42A22))
-				word_42A22 = LEGACY_U16_WRAP_ADD(word_42A22, 1U);
+				LEGACY_S16_FROM_BITS(text_edit_cursor))
+				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
 			read_line_helper2();
 			read_line_helper();
 		}
@@ -7017,26 +7018,26 @@ void read_line_helper(void)
 	legacy_u16 y;
 	legacy_u16 color;
 
-	if (word_42A1C == 0)
+	if (text_edit_cursor_visible == 0)
 		return;
-	length = legacy_near_string_length(off_42A1E);
-	cursor = (legacy_u16)word_42A22;
+	length = legacy_near_string_length(text_edit_buffer);
+	cursor = (legacy_u16)text_edit_cursor;
 	if (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(cursor)) {
 		cursor = length;
-		word_42A22 = cursor;
+		text_edit_cursor = cursor;
 	}
-	cursor_width = (legacy_u16)font_op(off_42A1E + cursor, 1);
+	cursor_width = (legacy_u16)font_op(text_edit_buffer + cursor, 1);
 	if (cursor_width == 0)
 		cursor_width = (legacy_u16)font_op2(space);
-	x = LEGACY_U16_WRAP_ADD(font_op(off_42A1E, cursor), word_42A18);
-	font_definition = word_405FE;
+	x = LEGACY_U16_WRAP_ADD(font_op(text_edit_buffer, cursor), text_edit_x);
+	font_definition = active_font_definition;
 	y = LEGACY_U16_WRAP_ADD(
-		audioresource_get_word(font_definition + 0x12U), word_42A1A);
-	y = LEGACY_U16_WRAP_SUB(y, word_42A16);
+		audioresource_get_word(font_definition + 0x12U), text_edit_y);
+	y = LEGACY_U16_WRAP_SUB(y, text_edit_cursor_width);
 	color = audioresource_get_word(font_definition);
 	sub_35B76(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
 		LEGACY_S16_FROM_BITS(cursor_width),
-		LEGACY_S16_FROM_BITS(word_42A16),
+		LEGACY_S16_FROM_BITS(text_edit_cursor_width),
 		LEGACY_S16_FROM_BITS(color));
 }
 
@@ -7047,32 +7048,32 @@ void read_line_helper2(void)
 	legacy_u16 text_width;
 	legacy_u16 remaining_width;
 
-	if (word_42A20 != 0) {
-		while (LEGACY_S16_FROM_BITS(font_op2(off_42A1E)) >
-			LEGACY_S16_FROM_BITS(word_42A20)) {
-			length = legacy_near_string_length(off_42A1E);
+	if (text_edit_max_pixels != 0) {
+		while (LEGACY_S16_FROM_BITS(font_op2(text_edit_buffer)) >
+			LEGACY_S16_FROM_BITS(text_edit_max_pixels)) {
+			length = legacy_near_string_length(text_edit_buffer);
 			if (length == 0)
 				break;
-			off_42A1E[length - 1U] = 0;
+			text_edit_buffer[length - 1U] = 0;
 		}
 	}
-	length = legacy_near_string_length(off_42A1E);
+	length = legacy_near_string_length(text_edit_buffer);
 	if (LEGACY_S16_FROM_BITS(length) <
-		LEGACY_S16_FROM_BITS(word_42A22))
-		word_42A22 = length;
-	sub_345BC(off_42A1E, LEGACY_S16_FROM_BITS(word_42A18),
-		LEGACY_S16_FROM_BITS(word_42A1A));
-	if (word_42A20 == 0)
+		LEGACY_S16_FROM_BITS(text_edit_cursor))
+		text_edit_cursor = length;
+	sub_345BC(text_edit_buffer, LEGACY_S16_FROM_BITS(text_edit_x),
+		LEGACY_S16_FROM_BITS(text_edit_y));
+	if (text_edit_max_pixels == 0)
 		return;
 
-	text_width = (legacy_u16)font_op2(off_42A1E);
-	remaining_width = LEGACY_U16_WRAP_SUB(word_42A20, text_width);
+	text_width = (legacy_u16)font_op2(text_edit_buffer);
+	remaining_width = LEGACY_U16_WRAP_SUB(text_edit_max_pixels, text_width);
 	if (LEGACY_S16_FROM_BITS(remaining_width) <= 0)
 		return;
-	font_definition = word_405FE;
+	font_definition = active_font_definition;
 	sprite_1_unk2(LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(text_width, word_42A18)),
-		LEGACY_S16_FROM_BITS(word_42A1A),
+			LEGACY_U16_WRAP_ADD(text_width, text_edit_x)),
+		LEGACY_S16_FROM_BITS(text_edit_y),
 		LEGACY_S16_FROM_BITS(remaining_width),
 		LEGACY_S16_FROM_BITS(
 			audioresource_get_word(font_definition + 0x12U)),

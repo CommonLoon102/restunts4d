@@ -27,7 +27,7 @@ extern struct SPRITE far* mouse_background_sprite;
 extern struct SPRITE far* mouse_medium_sprite;
 extern struct SPRITE far* mouse_small_sprite;
 extern legacy_s8 mouse_background_dirty;
-extern legacy_u8 far* word_405FE;
+extern legacy_u8 far* active_font_definition;
 extern legacy_u16 fontdefseg;
 extern legacy_u8 far incnums[];
 extern legacy_u16 word_4031E;
@@ -198,7 +198,7 @@ static void font_draw_text_impl(const legacy_s8* text, legacy_s16 x, legacy_s16 
 	legacy_s16 row_count;
 	legacy_s16 old_row_count;
 
-	font_definition = word_405FE;
+	font_definition = active_font_definition;
 	shape2d_put_word(font_definition + 8U, (legacy_u16)x);
 	shape2d_put_word(font_definition + 0x0AU, (legacy_u16)y);
 	bitmap = (legacy_u8 far*)MK_FP(
