@@ -240,7 +240,7 @@ void init_game_state(legacy_s16 arg)
 				route_track_index,
 				&state.opponentstate.car_vec_unk3,
 				(legacy_s16)route_point,
-				(legacy_s16*)&state.field_3F9);
+				&state.field_3F9);
 			state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
 				route_point, 1);
 		}

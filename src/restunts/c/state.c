@@ -513,7 +513,7 @@ static void opponent_advance_route(void)
 	if (sub_18D60(opponent_route_word(
 		state.opponentstate.car_trackdata3_index),
 		&state.opponentstate.car_vec_unk3, route_point,
-		(legacy_s16*)&state.field_3F9) == 0) {
+		&state.field_3F9) == 0) {
 		return;
 	}
 	state.opponentstate.car_trackdata3_index = LEGACY_S16_WRAP_ADD(
@@ -859,7 +859,7 @@ legacy_s16 sub_18D60(
 	legacy_s16 track_index_arg,
 	struct VECTOR* output,
 	legacy_s16 route_index_arg,
-	legacy_s16* optional_speed
+	legacy_s8* optional_speed
 ) {
 	struct TRACKOBJECT* track_object;
 	struct TRKOBJINFO* track_info;
@@ -903,7 +903,7 @@ legacy_s16 sub_18D60(
 		speed_index = (legacy_u8)track_info->si_oppSpedCode;
 		speed_index = LEGACY_U8_WRAP_ADD(
 			speed_index, (legacy_u8)track_object->ss_surfaceType);
-		((legacy_u8*)optional_speed)[0] = oppnentSped[speed_index];
+		*optional_speed = LEGACY_S8_FROM_BITS(oppnentSped[speed_index]);
 	}
 
 	packed_opponent_offset = (legacy_u16)(
@@ -1752,7 +1752,7 @@ void init_plantrak(void) {
 		route_track_index,
 		&state.opponentstate.car_vec_unk3,
 		(legacy_s16)route_index,
-		(legacy_s16*)&state.field_3F9);
+		&state.field_3F9);
 }
 
 void player_op(legacy_s8 arg_carInputByte) {
