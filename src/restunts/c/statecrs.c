@@ -164,23 +164,13 @@ void sub_19BA0(void) {
 void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 	legacy_s8 var_2;
 	struct CARSTATE* var_cState;
-//	ported_update_crash_state_(arg_someFlag, arg_MplayerFlag);
-//	return;
 	if (arg_MplayerFlag == 0)
-		goto loc_195FC;
-	if (arg_MplayerFlag == 1)
-		goto loc_19612;
-	goto loc_19601;
-loc_195FC:
-    var_cState = &state.playerstate;
-loc_19601:
-	if (var_cState->car_crashBmpFlag == 0)
-		goto loc_1961A;
-	return ;
-loc_19612:
-	var_cState = &state.opponentstate;
-    goto loc_19601;
-loc_1961A:
+		var_cState = &state.playerstate;
+	else if (arg_MplayerFlag == 1)
+		var_cState = &state.opponentstate;
+	if (var_cState->car_crashBmpFlag != 0)
+		return;
+
 	var_2 = 0;
 	if (arg_someFlag == 1)
 		goto loc_1967F;
