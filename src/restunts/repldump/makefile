@@ -50,6 +50,7 @@ ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
 DOS_PLATFORM_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_OBJ_FILES))
 DOS_PLATFORM_RUNTIME_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_RUNTIME_OBJ_FILES))
 DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\$(DOS_BSS_START_OBJ_FILE)
+REPLDUMP_LINK_DEPS =
 
 # C Compiler Flags und Linker
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
@@ -58,6 +59,7 @@ ifeq ($(TARGET), ported)
   ALL_OBJ_FILES = $(ASM_OBJFILES) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
   CFLAGS = 
   OUTFILE = repldump.exe
+  REPLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES)
 endif
 
 ifeq ($(TARGET), original)
@@ -75,6 +77,7 @@ ifeq ($(TARGET), stage)
   STAGE_MAP ?= repldumh.map
   OUTFILE = $(STAGE_OUTFILE)
   WLINK_OPTIONS = option START=headless_start option MAP=$(STAGE_MAP)
+  REPLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES)
   ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)
     $(error Headless target must not link game assembly objects)
   endif
@@ -97,7 +100,7 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-repldump.exe: force_me $(OBJDIR)/repldump.obj $(RESTUNTS_OBJFILES)
+repldump.exe: force_me $(OBJDIR)/repldump.obj $(REPLDUMP_LINK_DEPS)
   ifeq ($(LINKER), wlink)
 		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS)
   else

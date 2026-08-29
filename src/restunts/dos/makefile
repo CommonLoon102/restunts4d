@@ -108,3 +108,5 @@ clean:
 	del restunts.map
 	del restunto.exe
 	del restunto.map
+	del restuntsc.exe
+	del restuntsc.map

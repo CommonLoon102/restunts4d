@@ -88,6 +88,8 @@ clean:
 	make -C asmorig $(MAKE_PARAMS) clean
 	make -C platform/dos $(MAKE_PARAMS) clean
 	make -C c $(MAKE_PARAMS) clean
+	make -C c TARGET=dosstage $(MAKE_PARAMS) clean
+	make -C c TARGET=dosfull $(MAKE_PARAMS) clean
 	make -C sdl $(MAKE_PARAMS) clean
 	make -C repldump clean
 
