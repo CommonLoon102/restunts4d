@@ -78,11 +78,11 @@ extern legacy_s16 unk_3C0B6[];
 extern struct TRACKOBJECT sceneshapes2[];
 extern struct TRACKOBJECT sceneshapes3[];
 extern struct SHAPE3D game3dshapes[130];
-extern struct VECTOR carshapevec;
-extern struct VECTOR carshapevecs[6];
+extern struct VECTOR carshapevec[2];
+extern struct VECTOR carshapevecs[24];
 extern legacy_s16 word_443E8[];
-extern struct VECTOR oppcarshapevec;
-extern struct VECTOR oppcarshapevecs[6];
+extern struct VECTOR oppcarshapevec[2];
+extern struct VECTOR oppcarshapevecs[24];
 extern legacy_s16 word_4448A[];
 extern legacy_s8 backlights_paint_override;
 extern legacy_s16 word_449FC[];
@@ -1501,6 +1501,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s8 tile_det_level;
 	legacy_s8* var_10E;
 	legacy_s16 di;
+	legacy_u16 vertex_index;
 	legacy_s16 var_132;
 	legacy_s16 var_5E;
 	legacy_s16 var_3A;
@@ -1508,7 +1509,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 var_12A;
 	legacy_u8 var_4C;
 	struct RECTANGLE var_rect, var_rect2;
-	struct VECTOR far* var_108;
+	struct VECTOR var_108[4];
 	struct CARSTATE* var_stateptr;
 	legacy_u8 elem_map_value;
 	legacy_u8 terr_map_value;
@@ -2405,7 +2406,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_loShapePtr;
 			} else {
 				curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-				sub_204AE(&game3dshapes[0x0AD4 / sizeof(struct SHAPE3D)].shape3d_verts[8], state.playerstate.car_steeringAngle, state.playerstate.car_rc2, word_443E8, carshapevecs, &carshapevec);
+				sub_204AE(&game3dshapes[0x0AD4 / sizeof(struct SHAPE3D)],
+					8U, state.playerstate.car_steeringAngle,
+					state.playerstate.car_rc2, word_443E8,
+					carshapevecs, carshapevec);
 			}
 
 			if (slow_video_mgmt_copy != 0) {
@@ -2474,7 +2478,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_loShapePtr;
 				} else {
 					curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-					sub_204AE(&game3dshapes[0x0AEA / sizeof(struct SHAPE3D)].shape3d_verts[8], state.opponentstate.car_steeringAngle, state.opponentstate.car_rc2, word_4448A, oppcarshapevecs, &oppcarshapevec);
+					sub_204AE(&game3dshapes[0x0AEA / sizeof(struct SHAPE3D)],
+						8U, state.opponentstate.car_steeringAngle,
+						state.opponentstate.car_rc2, word_4448A,
+						oppcarshapevecs, oppcarshapevec);
 				}
 
 				if (slow_video_mgmt_copy != 0) {
@@ -2509,7 +2516,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				var_counter = LEGACY_S16_WRAP_ADD(
 					multiply_and_scale(sin_fast(word_44DCA), 0x24), 0x38);
 
-				var_108 = &game3dshapes[0x98A / sizeof(struct SHAPE3D)].shape3d_verts[8];
+				for (vertex_index = 0; vertex_index < 4U; vertex_index++)
+					shape3d_vertex_read(
+						&game3dshapes[0x98A / sizeof(struct SHAPE3D)],
+						LEGACY_U16_WRAP_ADD(8U, vertex_index),
+						&var_108[vertex_index]);
 				var_108[0].x = LEGACY_S16_WRAP_SUB(idx, 0x24);
 				var_108[1].x = LEGACY_S16_WRAP_SUB(idx, 0x24);
 				var_108[2].x = LEGACY_S16_WRAP_SUB(0x24, idx);
@@ -2519,6 +2530,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				var_108[1].z = var_counter;
 				var_108[2].z = var_counter;
 				var_108[3].z = var_counter;
+				for (vertex_index = 0; vertex_index < 4U; vertex_index++)
+					shape3d_vertex_write(
+						&game3dshapes[0x98A / sizeof(struct SHAPE3D)],
+						LEGACY_U16_WRAP_ADD(8U, vertex_index),
+						&var_108[vertex_index]);
 				 
 				curtransshape_ptr->pos.x = LEGACY_S16_WRAP_SUB(
 					LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(

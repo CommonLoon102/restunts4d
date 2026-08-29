@@ -139,7 +139,6 @@ struct SHAPE3D* off_3BE44[8] = {
 /* Shape transformation and rasterizer state. */
 legacy_u16 transshapenumverts;
 legacy_u8 far* transshapeprimitives;
-struct VECTOR far* transshapeverts;
 legacy_u16 transshapenumpaints;
 legacy_u8 transshapeflags;
 legacy_u8 transshapematerial;
@@ -210,18 +209,10 @@ legacy_s16 word_449FE;
 legacy_s16 word_44DCC;
 legacy_s16 word_463D6;
 
-struct VECTOR carshapevec;
-struct VECTOR carshapevec2;
-struct VECTOR carshapevecs[6];
-struct VECTOR carshapevecs2[6];
-struct VECTOR carshapevecs3[6];
-struct VECTOR carshapevecs4[6];
-struct VECTOR oppcarshapevec;
-struct VECTOR oppcarshapevec2;
-struct VECTOR oppcarshapevecs[6];
-struct VECTOR oppcarshapevecs2[6];
-struct VECTOR oppcarshapevecs3[6];
-struct VECTOR oppcarshapevecs4[6];
+struct VECTOR carshapevec[2];
+struct VECTOR carshapevecs[24];
+struct VECTOR oppcarshapevec[2];
+struct VECTOR oppcarshapevecs[24];
 legacy_s16 unk_3E710[4];
 
 struct SHAPE3D logoshape;

@@ -7,7 +7,7 @@
 
 struct SHAPE3D {
 	legacy_u16 shape3d_numverts;
-	struct VECTOR far* shape3d_verts;
+	legacy_u8 far* shape3d_vertex_bytes;
 	legacy_u16 shape3d_numprimitives;
 	legacy_u16 shape3d_numpaints;
 	legacy_u8 far* shape3d_primitives;
@@ -46,6 +46,10 @@ typedef char legacy_transformedshape3d_must_be_20_bytes[
 
 legacy_s16 shape3d_load_all(void);
 void shape3d_free_all(void);
+void shape3d_vertex_read(const struct SHAPE3D* shape, legacy_u16 index,
+	struct VECTOR* destination);
+void shape3d_vertex_write(struct SHAPE3D* shape, legacy_u16 index,
+	const struct VECTOR* source);
 void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* opponent_carid);
 void shape3d_free_car_shapes(void);
 void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape);
@@ -84,6 +88,8 @@ void preRender_wheel(legacy_u16* source, legacy_u16 scale,
 void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color);
 void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color);
-void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8, struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
+void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
+	legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8,
+	struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
 
 #endif
