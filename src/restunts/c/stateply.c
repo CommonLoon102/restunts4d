@@ -49,6 +49,19 @@ extern struct VECTOR unk_3E69A[];
 
 extern void update_crash_state(legacy_s16, legacy_s16);
 
+static legacy_s16 scale_position_delta(legacy_s32 current,
+	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor)
+{
+	legacy_s32 delta;
+	legacy_s32 product;
+	legacy_s32 quotient;
+
+	delta = LEGACY_S32_WRAP_SUB(current, previous);
+	product = LEGACY_S32_WRAP_MUL(delta, (legacy_s32)factor);
+	quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
+	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
+}
+
 legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
 {
 	const struct VECTOR* dependency_points;
@@ -1546,9 +1559,12 @@ loc_15599:
 loc_155A1:
 	if (var_F4 == 0)
 		goto loc_15530;
-	vec_C.x = ((var_DEptrTo1C0->lx - var_146ptrTo176->lx) * var_F4) / var_pSpeed2Scaled;
-	vec_C.y = ((var_DEptrTo1C0->ly - var_146ptrTo176->ly) * var_F4) / var_pSpeed2Scaled;
-	vec_C.z = ((var_DEptrTo1C0->lz - var_146ptrTo176->lz) * var_F4) / var_pSpeed2Scaled;
+	vec_C.x = scale_position_delta(var_DEptrTo1C0->lx,
+		var_146ptrTo176->lx, var_F4, var_pSpeed2Scaled);
+	vec_C.y = scale_position_delta(var_DEptrTo1C0->ly,
+		var_146ptrTo176->ly, var_F4, var_pSpeed2Scaled);
+	vec_C.z = scale_position_delta(var_DEptrTo1C0->lz,
+		var_146ptrTo176->lz, var_F4, var_pSpeed2Scaled);
 	goto loc_1553F;
 /*    cmp     [bp+var_F4], 0
     jz      short loc_15530
@@ -2167,9 +2183,12 @@ loc_15A30:
 	var_EE = polarRadius3D(&vec_17C);
 	var_F4 = arg_pState->car_rc1[var_wheelIndex] + var_pSpeed2Scaled;
 	var_F2 = var_F4 - var_EE;
-	vec_C.x = ((var_DEptrTo1C0->lx - var_146ptrTo176->lx) * var_F2) / var_F4;
-	vec_C.y = ((var_DEptrTo1C0->ly - var_146ptrTo176->ly) * var_F2) / var_F4;
-	vec_C.z = ((var_DEptrTo1C0->lz - var_146ptrTo176->lz) * var_F2) / var_F4;
+	vec_C.x = scale_position_delta(var_DEptrTo1C0->lx,
+		var_146ptrTo176->lx, var_F2, var_F4);
+	vec_C.y = scale_position_delta(var_DEptrTo1C0->ly,
+		var_146ptrTo176->ly, var_F2, var_F4);
+	vec_C.z = scale_position_delta(var_DEptrTo1C0->lz,
+		var_146ptrTo176->lz, var_F2, var_F4);
 /*    lea     ax, [bp+vec_17C]
     push    ax
     call    polarRadius3D
