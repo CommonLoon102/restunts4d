@@ -1,4 +1,3 @@
-#include <dos.h>
 #include "restunts.h"
 
 extern legacy_u8 byte_4616E;
@@ -142,7 +141,7 @@ void update_gamestate(void)
 		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(
 			state.game_frame, word_45A00);
 		fmemcpy(&cvxptr[checkpoint_index],
-			MK_FP(FP_SEG(&state), FP_OFF(&state)),
+			&state,
 			sizeof(struct GAMESTATE));
 	}
 
