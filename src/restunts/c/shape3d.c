@@ -1,4 +1,6 @@
+#ifdef RESTUNTS_DOS
 #include <dos.h>
+#endif
 #include <stddef.h>
 #include <limits.h>
 #include "externs.h"
@@ -84,18 +86,24 @@ void shape3d_free_all() {
 }
 
 void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape) {
-	struct SHAPE3DHEADER far* hdr = shapeptr;
-	gameshape->shape3d_numverts = hdr->header_numverts;
-	gameshape->shape3d_numprimitives = hdr->header_numprimitives;
+	legacy_u16 vertex_bytes;
+	legacy_u16 primitive_count;
+
+	gameshape->shape3d_numverts = (legacy_u8)shapeptr[0];
+	primitive_count = (legacy_u8)shapeptr[1];
+	gameshape->shape3d_numprimitives = primitive_count;
 	// The original stores this one as a byte - `mov byte ptr
 	// [bx+SHAPE3D.shape3d_numpaints], al` - leaving the field's high byte
 	// alone, where this writes the whole word and zeroes it. The field is
 	// only ever read as a count and the shape structs start out zeroed.
-	gameshape->shape3d_numpaints = hdr->header_numpaints;
-	gameshape->shape3d_verts = shapeptr + 4; // TODO: deserialize from 16 bit to "int" (on 32bit)
-	gameshape->shape3d_cull1 = shapeptr + hdr->header_numverts * 6 + 4;
-	gameshape->shape3d_cull2 = shapeptr + hdr->header_numprimitives * 4 + hdr->header_numverts * 6 + 4;
-	gameshape->shape3d_primitives = shapeptr + hdr->header_numprimitives * 8 + hdr->header_numverts * 6 + 4;
+	gameshape->shape3d_numpaints = (legacy_u8)shapeptr[2];
+	vertex_bytes = LEGACY_U16_WRAP_MUL(gameshape->shape3d_numverts, 6U);
+	gameshape->shape3d_verts = (struct VECTOR far*)(shapeptr + 4);
+	gameshape->shape3d_cull1 = shapeptr + vertex_bytes + 4U;
+	gameshape->shape3d_cull2 = shapeptr +
+		LEGACY_U16_WRAP_MUL(primitive_count, 4U) + vertex_bytes + 4U;
+	gameshape->shape3d_primitives = shapeptr +
+		LEGACY_U16_WRAP_MUL(primitive_count, 8U) + vertex_bytes + 4U;
 }
 
 
@@ -141,6 +149,11 @@ extern legacy_u16 polyinfonumpolys;
 extern legacy_s8 transprimitivepaintjob;
 extern legacy_u8 far* transshapeprimindexptr;
 extern legacy_s8 backlights_paint_override;
+
+static legacy_s16 shape3d_absolute_word(legacy_s16 value)
+{
+	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
+}
 
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_s32 far* var_cull1;
@@ -244,7 +257,11 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		var_vec2.y = 0;
 		var_vec2.z = 0x1000;
 		mat_mul_vector(&var_vec2, &var_mat, &var_vec3);
-		if ((var_vec3.y <= 0 || arg_transshapeptr->pos.y >= 0) && (arg_transshapeptr->unk * 2 <= abs(var_vec.x) || arg_transshapeptr->unk * 2 <= abs(var_vec.z))) {
+		if ((var_vec3.y <= 0 || arg_transshapeptr->pos.y >= 0) &&
+			(LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
+				shape3d_absolute_word(var_vec.x) ||
+			LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
+				shape3d_absolute_word(var_vec.z))) {
 			byte_4393D = vector_op_unk2(&var_vec3);
 			var_45C = invpow2tbl[byte_4393D];
 			var_A = invpow2tbl[byte_4393D];
@@ -286,11 +303,13 @@ loc_250E6:
 	goto loc_2513F;
 
 loc_2513E:
-	i++;
+	i = LEGACY_U16_WRAP_ADD(i, 1U);
 loc_2513F:
 	if (transshapenumvertscopy > i) goto loc_2514B;
 	//goto loc_251F6;
-	if (var_460 != 0 || var_1A == 0 || arg_transshapeptr->unk < abs(var_vec.x)) return -1;
+	if (var_460 != 0 || var_1A == 0 ||
+		LEGACY_S16_FROM_BITS(arg_transshapeptr->unk) <
+			shape3d_absolute_word(var_vec.x)) return (legacy_u16)-1;
 	goto loc_25220;
 
 loc_2514B:	
@@ -300,14 +319,14 @@ loc_2514B:
 	if (select_rect_param != 0) {
 		// sar, not idiv: the original floors, so negative coordinates keep
 		// their extra step rather than rounding toward zero.
-		var_vec2.x >>= 1;
-		var_vec2.y >>= 1;
-		var_vec2.z >>= 1;
+		var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
+		var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
+		var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
 	}
 	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-	var_vec3.x += var_vec.x;
-	var_vec3.y += var_vec.y;
-	var_vec3.z += var_vec.z;
+	var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
+	var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
+	var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
 	var_vecarr[i] = var_vec3;
 	if (var_vec3.z < 0xc) {
 		var_vertflagtbl[i] = 1;
@@ -845,7 +864,7 @@ loc_2530A:
     and     [var_ptrectflag], al
 }*/
 loc_25325:
-	var_polyvertcounter++;
+	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
 /*asm {
     inc     word ptr [var_polyvertcounter]
 }*/
@@ -917,14 +936,14 @@ loc_25370:
 	if (select_rect_param != 0) {
 		// sar, not idiv: the original floors, so negative coordinates keep
 		// their extra step rather than rounding toward zero.
-		var_vec2.x >>= 1;
-		var_vec2.y >>= 1;
-		var_vec2.z >>= 1;
+		var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
+		var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
+		var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
 	}
 	mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-	var_vec3.x += var_vec.x;
-	var_vec3.y += var_vec.y;
-	var_vec3.z += var_vec.z;
+	var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
+	var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
+	var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
 	var_vecarr[temp] = var_vec3;
 
 	if (var_vec3.z >= 0xc) {
@@ -1097,7 +1116,7 @@ loc_254A7:
 	if (transshapenumvertscopy <= i) goto loc_2571A;
 	var_C = transshapeprimindexptr[0];
 	transshapeprimindexptr++;
-	var_18 += var_vecarr[var_C].z;
+	var_18 = LEGACY_S32_WRAP_ADD_S16(var_18, var_vecarr[var_C].z);
 	var_polyvertunktabptr = &polyvertpointptrtab[i];
 	*var_transshapepolyinfoptptr = **var_polyvertunktabptr;
 	if (var_ptrectflag != 0) {
@@ -1292,7 +1311,7 @@ loc_255DE:
 
 loc_255E6:
 	var_448 = var_C;
-	i++;
+	i = LEGACY_U16_WRAP_ADD(i, 1U);
 /*asm {
     mov     ax, [var_C]
     mov     [var_448], ax
@@ -1304,7 +1323,7 @@ loc_255EE:
 	var_C = transshapeprimindexptr[0];
 	transshapeprimindexptr++;
 
-	var_18 += var_vecarr[var_C].z;
+	var_18 = LEGACY_S32_WRAP_ADD_S16(var_18, var_vecarr[var_C].z);
 
 	if (var_vertflagtbl[var_C] != 0) goto loc_2553A;
 
@@ -1375,7 +1394,7 @@ loc_25645:
 	
 	*var_transshapepolyinfoptptr = var_574;
 	var_transshapepolyinfoptptr++;
-	var_polyvertcounter++;
+	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
 /*
 asm {
     mov     ax, 0Ch
@@ -1517,7 +1536,7 @@ loc_2572E:
     jz      short loc_25763
 }*/
 loc_25760:
-	var_4++;
+	var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 /*asm {
     inc     word ptr [var_4]
 }*/
@@ -1570,7 +1589,7 @@ loc_25790:
 		transshaperectptr->bottom = var_polyvertY + 1;
 	}
 	
-	var_polyvertcounter++;
+	var_polyvertcounter = LEGACY_U16_WRAP_ADD(var_polyvertcounter, 1U);
 
 /*asm {
     les     bx, [var_polyvertsptr]
@@ -1807,7 +1826,8 @@ asm {
 loc_2590D:
 	
 	// NOTE: when temp0 and temp1 were negative (ie bogus var_18), there was a sorting error with some of the wheels on the lamborghini LM-002
-	var_18 = var_vecarr[temp0].z + var_vecarr[temp1].z;
+	var_18 = (legacy_s32)LEGACY_S16_WRAP_ADD(
+		var_vecarr[temp0].z, var_vecarr[temp1].z);
 	transshapepolyinfopts = transshapepolyinfo +6;
 	transshapepolyinfopts[0] = *polyvertpointptrtab[0];
 	transshapepolyinfopts[1] = *polyvertpointptrtab[1];
@@ -1882,7 +1902,7 @@ loc_25983:
 }*/
 
 loc_25988:
-	var_4++;
+	var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 	goto loc_25801;
 /*asm {
     inc     word ptr [var_4]
@@ -1907,7 +1927,8 @@ _primtype_wheel:
 	transshapepolyinfopts[2] = *polyvertpointptrtab[5];
 	transshapepolyinfopts[3] = *polyvertpointptrtab[0];
 
-	var_18 = var_vecarr[transshapeprimitives[3]].z << 2;
+	var_18 = LEGACY_S32_SHL((legacy_s32)
+		var_vecarr[transshapeprimitives[3]].z, 2U);
 	goto loc_25A9E;
 /*	
 asm {
@@ -1991,7 +2012,8 @@ loc_25A71:
     jmp     short loc_25A9E
 }*/
 loc_25A7C:
-	var_18 = var_vecarr[transshapeprimitives[0]].z << 2;
+	var_18 = LEGACY_S32_SHL((legacy_s32)
+		var_vecarr[transshapeprimitives[0]].z, 2U);
 /*asm {
     les     bx, transshapeprimitives
     mov     al, es:[bx]     // primitives+0 = primitivetype
@@ -2013,27 +2035,43 @@ loc_25A96:
 loc_25A9E:
 
 	transshapepolyinfopts = transshapepolyinfo +6;
-	temp = polarRadius2D(transshapepolyinfopts[0].px - transshapepolyinfopts[1].px, transshapepolyinfopts[0].py - transshapepolyinfopts[1].py);
-	temp1 = polarRadius2D(transshapepolyinfopts[0].px - transshapepolyinfopts[2].px, transshapepolyinfopts[0].py - transshapepolyinfopts[2].py);
+	temp = polarRadius2D(
+		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].px,
+			transshapepolyinfopts[1].px),
+		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].py,
+			transshapepolyinfopts[1].py));
+	temp1 = polarRadius2D(
+		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].px,
+			transshapepolyinfopts[2].px),
+		LEGACY_S16_WRAP_SUB(transshapepolyinfopts[0].py,
+			transshapepolyinfopts[2].py));
 	
 	if (temp1 > temp) temp = temp1;
 
 	if ((transshapeflags & 8) == 0) goto loc_25B9C;
 	
-	var_450.px = transshapepolyinfopts[0].px - temp - 1;
-	var_450.py = transshapepolyinfopts[0].py - temp - 1;
+	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
+		transshapepolyinfopts[0].px, temp), 1);
+	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
+		transshapepolyinfopts[0].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
-	var_450.px = transshapepolyinfopts[0].px + temp + 1;
-	var_450.py = transshapepolyinfopts[0].py + temp + 1;
+	var_450.px = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+		transshapepolyinfopts[0].px, temp), 1);
+	var_450.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+		transshapepolyinfopts[0].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 	
-	var_450.px = transshapepolyinfopts[3].px - temp - 1;
-	var_450.py = transshapepolyinfopts[3].py - temp - 1;
+	var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
+		transshapepolyinfopts[3].px, temp), 1);
+	var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
+		transshapepolyinfopts[3].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
-	var_450.px = transshapepolyinfopts[3].px + temp + 1;
-	var_450.py = transshapepolyinfopts[3].py + temp + 1;
+	var_450.px = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+		transshapepolyinfopts[3].px, temp), 1);
+	var_450.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+		transshapepolyinfopts[3].py, temp), 1);
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
 /*
@@ -2145,7 +2183,8 @@ _primtype_sphere:
 	temp0 = transshapeprimitives[0];
 	temp1 = transshapeprimitives[1];
 //fatal_error("anders: %i %i", temp0, temp1);
-	var_18 = var_vecarr[temp0].z + var_vecarr[temp1].z;
+	var_18 = (legacy_s32)LEGACY_S16_WRAP_ADD(
+		var_vecarr[temp0].z, var_vecarr[temp1].z);
 	if (var_vertflagtbl[temp0] + var_vertflagtbl[temp1] != 0) goto loc_25801;
 
 	transshapepolyinfopts = transshapepolyinfo +6;
@@ -2153,20 +2192,24 @@ _primtype_sphere:
 	var_vec3 = var_vecarr[temp0];
 	var_vec4 = var_vecarr[temp1];
 
-	var_vec2.x = var_vec3.x - var_vec4.x;
-	var_vec2.y = var_vec3.y - var_vec4.y;
-	var_vec2.z = var_vec3.z - var_vec4.z;
+	var_vec2.x = LEGACY_S16_WRAP_SUB(var_vec3.x, var_vec4.x);
+	var_vec2.y = LEGACY_S16_WRAP_SUB(var_vec3.y, var_vec4.y);
+	var_vec2.z = LEGACY_S16_WRAP_SUB(var_vec3.z, var_vec4.z);
 	var_462 = projectiondata9_times_ratio(polarRadius3D(&var_vec2), var_vec3.z);
 	transshapepolyinfopts[1].px = var_462;
 	if ((transshapeflags & 8) == 0) goto loc_25983;
 
-	var_450.py = polyvertpointptrtab[0]->py - var_462;
-	var_450.px = polyvertpointptrtab[0]->px - var_462;
+	var_450.py = LEGACY_S16_WRAP_SUB(
+		polyvertpointptrtab[0]->py, var_462);
+	var_450.px = LEGACY_S16_WRAP_SUB(
+		polyvertpointptrtab[0]->px, var_462);
 
 	rect_adjust_from_point(&var_450, transshaperectptr);
 
-	var_450.py = polyvertpointptrtab[0]->py + var_462;
-	var_450.px = polyvertpointptrtab[0]->px + var_462;
+	var_450.py = LEGACY_S16_WRAP_ADD(
+		polyvertpointptrtab[0]->py, var_462);
+	var_450.px = LEGACY_S16_WRAP_ADD(
+		polyvertpointptrtab[0]->px, var_462);
 
 	rect_adjust_from_point(&var_450, transshaperectptr);
 	goto loc_25983;
@@ -2315,7 +2358,7 @@ loc_25CE0:
 // ------------------------------------ jumps here from inside the loc_25801-case if var_4 != 0------------------------------------
 
 loc_25D3C:
-	var_45E++;
+	var_45E = LEGACY_U16_WRAP_ADD(var_45E, 1U);
 	transshapepolyinfo[3] = transshapenumvertscopy;
 	transshapepolyinfo[4] = var_primtype;
 	if (transprimitivepaintjob == 0x2D) {
@@ -2595,13 +2638,16 @@ extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0,
 
 	poly_linked_list_40ED6[polyinfonumpolys] = regdi;
 	poly_linked_list_40ED6[poly_linklist_40ED6_iter4] = polyinfonumpolys;
-	poly_linklist_40ED6_iter3++;
+	poly_linklist_40ED6_iter3 = LEGACY_U16_WRAP_ADD(
+		poly_linklist_40ED6_iter3, 1U);
 	if (regdi < 0) {
 		poly_linklist_40ED6_iter2 = polyinfonumpolys;
 	}
 	poly_linklist_40ED6_iter4 = poly_linked_list_40ED6[poly_linklist_40ED6_iter4];
-	polyinfonumpolys++;
-	polyinfoptrnext += (transshapenumvertscopy * sizeof(struct POINT2D)) + 6; // TODO: sizeof POINT2D?
+	polyinfonumpolys = LEGACY_U16_WRAP_ADD(polyinfonumpolys, 1U);
+	polyinfoptrnext = LEGACY_U16_WRAP_ADD(polyinfoptrnext,
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(
+			transshapenumvertscopy, sizeof(struct POINT2D)), 6U));
 	if (polyinfonumpolys == 0x190) return 1;
 	if (polyinfoptrnext <= 0x2872) return 0;
 	return 1;
@@ -2635,9 +2681,11 @@ void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) 
 	projectiondata1 = projection_angle_from_extent(i1);
 	projectiondata2 = projection_angle_from_extent(i2);
 	projectiondata3 = (legacy_u16)LEGACY_S16_SAR(i3, 1U);
-	projectiondata5 = projectiondata3 + projectiondata4;
+	projectiondata5 = LEGACY_U16_WRAP_ADD(
+		projectiondata3, projectiondata4);
 	projectiondata6 = (legacy_u16)LEGACY_S16_SAR(i4, 1U);
-	projectiondata8 = projectiondata6 + projectiondata7;
+	projectiondata8 = LEGACY_U16_WRAP_ADD(
+		projectiondata6, projectiondata7);
 	projectiondata9 = projection_scale_for_angle(
 		projectiondata1, projectiondata3);
 
@@ -2645,7 +2693,9 @@ void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) 
 		projectiondata10 = projection_scale_for_angle(
 			projectiondata2, projectiondata6);
 	} else {
-		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
+		projectiondata10 = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_SUB(
+			projectiondata9, projectiondata9 >> 3),
+			projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
 	}
 	
@@ -2653,18 +2703,20 @@ void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) 
 
 void nopsub_322C0(legacy_u16 i1, legacy_u16 i2) {
 	projectiondata4 = i1;
-	projectiondata5 = projectiondata3 + i1;
+	projectiondata5 = LEGACY_U16_WRAP_ADD(projectiondata3, i1);
 	projectiondata7 = i2;
-	projectiondata8 = projectiondata6 + i2;
+	projectiondata8 = LEGACY_U16_WRAP_ADD(projectiondata6, i2);
 }
 
 void nopsub_322DF(legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4) {
 	projectiondata1 = i1;
 	projectiondata2 = i2;
 	projectiondata3 = i3 >> 1;
-	projectiondata5 = projectiondata3 + projectiondata4;
+	projectiondata5 = LEGACY_U16_WRAP_ADD(
+		projectiondata3, projectiondata4);
 	projectiondata6 = i4 >> 1;
-	projectiondata8 = projectiondata6 + projectiondata7;
+	projectiondata8 = LEGACY_U16_WRAP_ADD(
+		projectiondata6, projectiondata7);
 	projectiondata9 = projection_scale_for_angle(
 		projectiondata1, projectiondata3);
 
@@ -2672,7 +2724,9 @@ void nopsub_322DF(legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4) {
 		projectiondata10 = projection_scale_for_angle(
 			projectiondata2, projectiondata6);
 	} else {
-		projectiondata10 = projectiondata9 - (projectiondata9 >> 3) - (projectiondata9 >> 4);
+		projectiondata10 = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_SUB(
+			projectiondata9, projectiondata9 >> 3),
+			projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
 	}
 }
@@ -3943,7 +3997,7 @@ void preRender_default_impl_helper(legacy_s16* regsi, legacy_u16 var_A,
 	}
 }
 
-#ifndef RESTUNTS_FULL
+#if !defined(RESTUNTS_FULL) && defined(RESTUNTS_DOS)
 extern legacy_u16 far word_2F448; // seg012
 extern legacy_u16 far off_2F44A[]; // seg012
 #endif
@@ -3967,7 +4021,7 @@ static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) 
 }
 
 static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
-#ifdef RESTUNTS_FULL
+#if defined(RESTUNTS_FULL) || !defined(RESTUNTS_DOS)
 	/* The legacy code-segment table contains this truncated quotient for
 	 * major values below 50.  Its first shared entry is an otherwise unused
 	 * sentinel; retain it for the degenerate calls as well. */
