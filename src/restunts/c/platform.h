@@ -4,6 +4,9 @@
 #include "legacy.h"
 
 void far* dos_memory_get_psp(void);
+void far* dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset);
+legacy_u16 dos_memory_pointer_segment(const void far* pointer);
+legacy_u16 dos_memory_pointer_offset(const void far* pointer);
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs);
 legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs);
 

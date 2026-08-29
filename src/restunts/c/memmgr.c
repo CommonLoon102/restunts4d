@@ -1,4 +1,3 @@
-#include <dos.h>
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
@@ -134,7 +133,7 @@ void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) 
 	// completely anyway.
 	if (!largeonly) {
 		for (p = 0; p < paras; p++) {
-			wipe = MK_FP(seg + p, 0);
+			wipe = dos_memory_make_pointer(seg + p, 0);
 			for (i = 0; i < 8; i++)
 				wipe[i] = 0;
 		}
@@ -331,7 +330,7 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 			for (i = 0; ; i++) {
 				if (nm[i] == 0 && (name[i] == 0 || i == 12)) {
 					res->resstate = 2;
-					return MK_FP(res->resseg, 0);
+					return dos_memory_make_pointer(res->resseg, 0);
 				}
 				if (i == 12 || nm[i] != name[i])
 					break;
@@ -346,7 +345,7 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 		}
 	}
 	if (slot == 0)
-		return MK_FP(0, 0);
+		return 0;
 
 	// Best fit rather than first fit: put each chunk in the tightest block
 	// that still holds it, so one large run of free space stays intact for
@@ -393,10 +392,10 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 			slot->resseg = seg;
 			slot->resparas = paras;
 			slot->resstate = 2;
-			return MK_FP(seg, 0);
+			return dos_memory_make_pointer(seg, 0);
 		}
 	}
-	return MK_FP(0, 0);
+	return 0;
 }
 
 // Cache lookup mirroring mmgr_get_chunk_by_name: a cached pool chunk is
@@ -423,10 +422,10 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 			found = 1;
 		if (found) {
 			chunk->resstate = 2;
-			return MK_FP(chunk->resseg, 0);
+			return dos_memory_make_pointer(chunk->resseg, 0);
 		}
 	}
-	return MK_FP(0, 0);
+	return 0;
 }
 const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	const legacy_s8* c;
@@ -450,7 +449,7 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 
 	if (highpool_route(mmgr_path_to_name(arg_0), arg_2)) {
 		void far* highptr = highpool_alloc(mmgr_path_to_name(arg_0), arg_2);
-		if (FP_SEG(highptr) != 0)
+		if (dos_memory_pointer_segment(highptr) != 0)
 			return highptr;
 		// The pool is full; fall through to the regular arena.
 	}
@@ -498,7 +497,7 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 		}
 	}
 
-	return MK_FP(rdx, 0);
+	return dos_memory_make_pointer(rdx, 0);
 }
 
 void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
@@ -514,8 +513,8 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	struct MEMCHUNK* rp;
 
 	psp = dos_memory_get_psp();
-	pspseg = FP_SEG(psp);
-	pspofs = FP_OFF(psp);
+	pspseg = dos_memory_pointer_segment(psp);
+	pspofs = dos_memory_pointer_offset(psp);
 	
 	if (word_3FF82 == 0) {
 		resptr1->resofs = dos_memory_allocate(0x64);
@@ -562,7 +561,7 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	struct MEMCHUNK* resbx;
 
 	ressi = resptr2;
-	ptrseg = FP_SEG(ptr);
+	ptrseg = dos_memory_pointer_segment(ptr);
 
 	if (highpool_owns_seg(ptrseg)) {
 		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(ptrseg);
@@ -570,7 +569,8 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
 		highchunk->resstate =
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 1;
-		return MK_FP(ptrseg, FP_OFF(ptr));
+		return dos_memory_make_pointer(
+			ptrseg, dos_memory_pointer_offset(ptr));
 	}
 
 	while (1) {
@@ -608,7 +608,7 @@ loc_31508:
 		resptr2 = ressi;
 	}
 
-	return MK_FP(ptrseg, FP_OFF(ptr));
+	return dos_memory_make_pointer(ptrseg, dos_memory_pointer_offset(ptr));
 }
 
 // `paras` is signed here but the original treats it as unsigned: it steps the
@@ -629,8 +629,8 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 			count = (paras + 0x1000) << 3;  // count = remaining paras < 0x1000 in words
 			paras = 0;
 		}
-		srcptr = MK_FP(srcseg, 0);
-		destptr = MK_FP(destseg, 0);
+		srcptr = dos_memory_make_pointer(srcseg, 0);
+		destptr = dos_memory_make_pointer(destseg, 0);
 
 		while (count) {
 			*destptr = *srcptr;
@@ -667,8 +667,8 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 		count <<= 3;
 		ofs = (count << 1) - 2;
 
-		srcptr = MK_FP(srcseg, ofs);
-		destptr = MK_FP(destseg, ofs);
+		srcptr = dos_memory_make_pointer(srcseg, ofs);
+		destptr = dos_memory_make_pointer(destseg, ofs);
 		while (count) {
 			*destptr = *srcptr;
 			srcptr--;
@@ -732,7 +732,7 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 
 	{
 		void far* highptr = highpool_get_by_name(pcdi);
-		if (FP_SEG(highptr) != 0)
+		if (dos_memory_pointer_segment(highptr) != 0)
 			return highptr;
 	}
 
@@ -741,7 +741,7 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	for (; ressi < resendptr2; ressi++) {
 		regbx = 0;
 		if (ressi->resunk == 0) {
-			return MK_FP(0, 0);
+			return 0;
 		}
 
 		for (; regbx < 0xC; regbx++) {
@@ -776,12 +776,12 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 				resendptr1++;
 			}
 			mmgr_find_free();
-			return MK_FP(resdi->resofs, 0);
+			return dos_memory_make_pointer(resdi->resofs, 0);
 		}
 
 	}
 
-	return MK_FP(0, 0);
+	return 0;
 }
 
 legacy_u16 nopsub_31429(const legacy_s8* name) {
@@ -817,7 +817,7 @@ void mmgr_release(void far* ptr) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	regax = FP_SEG(ptr);
+	regax = dos_memory_pointer_segment(ptr);
 	ressi = resptr2;
 
 	if (highpool_owns_seg(regax)) {
@@ -854,7 +854,7 @@ void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
 	const legacy_s8* chunkname;
 	struct MEMCHUNK* ressi;
 
-	regax = FP_SEG(ptr);
+	regax = dos_memory_pointer_segment(ptr);
 	ressi = resptr2;
 
 	if (highpool_owns_seg(regax))
@@ -879,7 +879,7 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	regax = FP_SEG(ptr);
+	regax = dos_memory_pointer_segment(ptr);
 	ressi = resptr2;
 
 	if (highpool_owns_seg(regax)) {
@@ -972,14 +972,14 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	regax = FP_SEG(ptr);
+	regax = dos_memory_pointer_segment(ptr);
 	ressi = resptr2;
 
 	if (highpool_owns_seg(regax)) {
 		if (highpool_chunk_by_seg(regax) == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		// Pool chunks are never compacted; they stay where they are.
-		return MK_FP(regax, 0);
+		return dos_memory_make_pointer(regax, 0);
 	}
 
 	for (;;) {
@@ -1016,7 +1016,7 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 		resdi = ressi;
 	}
 
-	return MK_FP(resdi->resofs, 0);
+	return dos_memory_make_pointer(resdi->resofs, 0);
 }
 
 legacy_u32 mmgr_get_res_ofs_diff_scaled(void) {
