@@ -1,6 +1,6 @@
 #include "legacy.h"
 
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 
 #include <dos.h>
 
@@ -8,7 +8,14 @@
 #define HEADLESS_COMMAND_LINE_SIZE 128
 #define HEADLESS_STACK_PARAGRAPHS 0x200
 
+#ifdef RESTUNTS_FULL
+extern legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]);
+extern void full_data_initialize(void);
+#define dos_program_main stuntsmainimpl
+#else
 extern legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]);
+#define dos_program_main stuntsmain
+#endif
 extern legacy_u8 headless_bss_start;
 extern legacy_u8 headless_bss_end;
 extern legacy_u8 headless_stack_top;
@@ -86,8 +93,11 @@ static void headless_run(void)
 	legacy_s16 result;
 
 	headless_release_extra_memory();
+#ifdef RESTUNTS_FULL
+	full_data_initialize();
+#endif
 	argc = headless_parse_command_line();
-	result = stuntsmain(argc, headless_argv);
+	result = dos_program_main(argc, headless_argv);
 	headless_exit(result);
 }
 

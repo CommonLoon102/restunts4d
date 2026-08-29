@@ -10,9 +10,12 @@ src/restunts/asmorig/TASMBOX.OUT
 src/restunts/*/tasm.dosbox.conf
 src/restunts/c/build/dos/*obj
 src/restunts/c/build/dosstage/*obj
+src/restunts/c/build/dosfull/*obj
 src/restunts/c2/build/dos/*obj
 src/restunts/dos/*EXE
 src/restunts/dos/*MAP
+src/restunts/dos/*exe
+src/restunts/dos/*map
 src/restunts/dos/build/original/*obj
 src/restunts/dos/build/ported/*obj
 src/restunts/dos/build/sight/*obj
@@ -27,6 +30,7 @@ src/restunts/repldump/build/stage/*obj
 **/stderr.txt
 **/stdout.txt
 stunts/*.EXE
+stunts/*.exe
 stunts/*.3SH
 stunts/*.BIN
 stunts/*.BNI

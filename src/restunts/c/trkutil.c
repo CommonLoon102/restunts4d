@@ -51,7 +51,7 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 	return 0;
 }
 
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 struct PLANE far plan_memres = {
 	0, 0,
 	{ 0, 0, 0 },

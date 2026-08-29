@@ -23,14 +23,14 @@ extern legacy_u8 byte_45D90;
 extern legacy_u8 byte_45E16;
 extern legacy_u8 byte_4616E;
 
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 extern struct VECTOR* headless_track_vector_from_legacy_offset(
 	legacy_u16 offset);
 #endif
 
 static struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset)
 {
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 	return headless_track_vector_from_legacy_offset(offset);
 #else
 	return (struct VECTOR*)offset;

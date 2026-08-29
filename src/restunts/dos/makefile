@@ -31,6 +31,8 @@ RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
 ASM_OBJFILES = $(addprefix $(ASM_OBJDIR)\, $(ASM_OBJ_FILES))
 ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASM_OBJ_FILES))
 DOS_PLATFORM_RUNTIME_OBJFILES = $(DOS_PLATFORM_OBJDIR)\timer.obj $(DOS_PLATFORM_OBJDIR)\runtime.obj $(DOS_PLATFORM_OBJDIR)\joystick.obj $(DOS_PLATFORM_OBJDIR)\mouse.obj $(DOS_PLATFORM_OBJDIR)\video.obj $(DOS_PLATFORM_OBJDIR)\audio.obj $(DOS_PLATFORM_OBJDIR)\critical.obj
+DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosbss.obj
+DOS_STACK_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosstack.obj
 
 # C Compiler Flags und Linker
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
@@ -45,6 +47,23 @@ ifeq ($(TARGET), original)
   ALL_OBJ_FILES = $(ASMORIG_OBJFILES) $(OBJDIR)\main.obj
   CFLAGS = -DRESTUNTS_ORIGINAL
   OUTFILE = restunto.exe
+endif
+
+ifeq ($(TARGET), full)
+  RESTUNTS_OBJDIR = $(SRC)\c\build\dosfull
+  RESTUNTS_OBJ_FILES += dosstart.obj headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
+  RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
+  ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(CM_LIB_FILES) $(DOS_STACK_OBJFILE)
+  CFLAGS = -DRESTUNTS_FULL
+  OUTFILE = restuntsc.exe
+  WLINK_OPTIONS = option START=headless_start option MAP=restuntsc.map
+  WLINK_LIBRARIES = library s:\tools\lib\cm.lib
+  ENTRY_DEP =
+  ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)
+    $(error Full target must not link game assembly objects)
+  endif
+else
+  ENTRY_DEP = $(OBJDIR)/main.obj
 endif
 
 # set linker separator
@@ -64,9 +83,9 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-restunts: $(OBJDIR)/main.obj
+restunts: $(ENTRY_DEP)
   ifeq ($(LINKER), wlink)
-		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT PATH $(TOOLS_LIB) file $(CTARGETS)
+		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS) $(WLINK_LIBRARIES)
   else
     # create linker script for tlink
 		echo $(CTARGETS) > lscript.txt

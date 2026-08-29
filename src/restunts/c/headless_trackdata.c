@@ -1,6 +1,6 @@
 #include "externs.h"
 
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 
 #define LEGACY_TRACK_VECTOR_BASE 0x0C94U
 #define LEGACY_TRACK_INFO_BASE 0x1A08U

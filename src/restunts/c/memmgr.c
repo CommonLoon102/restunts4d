@@ -250,7 +250,8 @@ void pushregs() {}
 void popregs() {}
 #endif
 
-#if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS)
+#if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS) || \
+	defined(RESTUNTS_FULL)
 legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
 legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
 legacy_u16 resmaxsize = 0; // size of largest chunk?

@@ -1,6 +1,6 @@
 #include "externs.h"
 
-#ifdef RESTUNTS_HEADLESS
+#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 
 /* Mutable engine state formerly allocated by dseg.asm. */
 struct GAMEINFO gameconfig;

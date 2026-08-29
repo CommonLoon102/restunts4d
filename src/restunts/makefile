@@ -58,6 +58,12 @@ dosplatform: force_me
 c-stage: force_me
 	make -C c TARGET=dosstage $(MAKE_PARAMS)
 
+c-full: force_me
+	make -C c TARGET=dosfull $(MAKE_PARAMS)
+
+restunts-full: dosplatform c-full
+	make -C dos TARGET=full CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+
 restunts-sdl:
 	make -C sdl $(MAKE_PARAMS)
 

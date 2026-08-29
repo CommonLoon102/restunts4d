@@ -18,15 +18,26 @@ extern legacy_s8 rect_array_unk_indices[];
 extern legacy_s16 rect_array_unk3_indices[];
 extern legacy_s8 rect_array_unk3_length;
 extern struct RECTANGLE rect_unk[];
+#ifdef RESTUNTS_FULL
+/* These legacy labels were views into consecutive elements of rect_unk. */
+#define rect_unk2  rect_unk[1]
+#define rect_unk6  rect_unk[2]
+#define rect_unk12 rect_unk[3]
+#define rect_unk15 rect_unk[4]
+#define rect_skybox rect_unk[5]
+#define rect_unk11 rect_unk[6]
+#define rect_unk9  rect_unk[7]
+#else
 extern struct RECTANGLE rect_unk2;
-extern struct RECTANGLE rect_unk3;
 extern struct RECTANGLE rect_unk6;
 extern struct RECTANGLE rect_unk9;
 extern struct RECTANGLE rect_unk11;
 extern struct RECTANGLE rect_unk12;
 extern struct RECTANGLE rect_unk15;
-extern struct RECTANGLE rect_unk5;
 extern struct RECTANGLE rect_skybox;
+#endif
+extern struct RECTANGLE rect_unk3;
+extern struct RECTANGLE rect_unk5;
 extern struct RECTANGLE cliprect_unk;
 extern struct RECTANGLE rect_ingame_text2;
 extern struct RECTANGLE rect_ingame_text3;
