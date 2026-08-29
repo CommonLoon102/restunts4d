@@ -2,6 +2,9 @@
 #include "legacy.h"
 #include "math.h"
 
+void heapsort_by_order(legacy_s16 count, legacy_s16* values,
+	legacy_s16* order);
+
 legacy_s16 nopsub_19DE8(legacy_s16 value)
 {
 	legacy_s16 signed_value;
@@ -59,7 +62,7 @@ legacy_s16 sin_fast(legacy_u16 s) {
 }
 
 legacy_s16 cos_fast(legacy_u16 s) {
-	return sin_fast(s + 0x100);
+	return sin_fast(LEGACY_U16_WRAP_ADD(s, 0x100U));
 }
 
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
@@ -93,7 +96,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 			flag |= 1;
 		}
 		index = LEGACY_U32_DIV_OR_ZERO(
-			(legacy_u32)(legacy_u16)z << 16,
+			LEGACY_U32_SHL((legacy_u16)z, 16U),
 			(legacy_u16)y);
 		if ((index & 0xFF) >= 0x80) // round upwards
 			index += 0x100;
@@ -141,7 +144,7 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 			y = LEGACY_S16_WRAP_NEGATE(y);
 		return LEGACY_S16_FROM_BITS((legacy_u16)
 			LEGACY_U32_DIV_OR_ZERO(
-				(legacy_u32)(legacy_u16)y << 14,
+				LEGACY_U32_SHL((legacy_u16)y, 14U),
 				(legacy_u16)result));
 	} else {
 		result = sin_fast(result);
@@ -149,7 +152,7 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 			z = LEGACY_S16_WRAP_NEGATE(z);
 		return LEGACY_S16_FROM_BITS((legacy_u16)
 			LEGACY_U32_DIV_OR_ZERO(
-				(legacy_u32)(legacy_u16)z << 14,
+				LEGACY_U32_SHL((legacy_u16)z, 14U),
 				(legacy_u16)result));
 	}
 }
@@ -178,42 +181,58 @@ legacy_u16 rect_compare_point(struct POINT2D* pt) {
 }
 #endif
 
+static legacy_s16 matrix_scaled_product(legacy_s16 left, legacy_s16 right)
+{
+	legacy_s32 product;
+	legacy_u32 scaled_bits;
+
+	product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
+	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, 2U);
+	return LEGACY_S16_FROM_BITS((legacy_u16)(scaled_bits >> 16));
+}
+
 void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* outvec) {
 
 	if (mat->m._11 != 0 && invec->x != 0)
-		outvec->x = ((legacy_s32)mat->m._11 * invec->x) >> 14;
+		outvec->x = matrix_scaled_product(mat->m._11, invec->x);
 	else
 		outvec->x = 0;
 
 	if (mat->m._12 != 0 && invec->y != 0)
-		outvec->x += ((legacy_s32)mat->m._12 * invec->y) >> 14;
+		outvec->x = LEGACY_S16_WRAP_ADD(outvec->x,
+			matrix_scaled_product(mat->m._12, invec->y));
 
 	if (mat->m._13 != 0 && invec->z != 0)
-		outvec->x += ((legacy_s32)mat->m._13 * invec->z) >> 14;
+		outvec->x = LEGACY_S16_WRAP_ADD(outvec->x,
+			matrix_scaled_product(mat->m._13, invec->z));
 
 
 	if (mat->m._21 != 0 && invec->x != 0)
-		outvec->y = ((legacy_s32)mat->m._21 * invec->x) >> 14;
+		outvec->y = matrix_scaled_product(mat->m._21, invec->x);
 	else
 		outvec->y = 0;
 
 	if (mat->m._22 != 0 && invec->y != 0)
-		outvec->y += ((legacy_s32)mat->m._22 * invec->y) >> 14;
+		outvec->y = LEGACY_S16_WRAP_ADD(outvec->y,
+			matrix_scaled_product(mat->m._22, invec->y));
 
 	if (mat->m._23 != 0 && invec->z != 0)
-		outvec->y += ((legacy_s32)mat->m._23 * invec->z) >> 14;
+		outvec->y = LEGACY_S16_WRAP_ADD(outvec->y,
+			matrix_scaled_product(mat->m._23, invec->z));
 
 
 	if (mat->m._31 != 0 && invec->x != 0)
-		outvec->z = ((legacy_s32)mat->m._31 * invec->x) >> 14;
+		outvec->z = matrix_scaled_product(mat->m._31, invec->x);
 	else
 		outvec->z = 0;
 
 	if (mat->m._32 != 0 && invec->y != 0)
-		outvec->z += ((legacy_s32)mat->m._32 * invec->y) >> 14;
+		outvec->z = LEGACY_S16_WRAP_ADD(outvec->z,
+			matrix_scaled_product(mat->m._32, invec->y));
 
 	if (mat->m._33 != 0 && invec->z != 0)
-		outvec->z += ((legacy_s32)mat->m._33 * invec->z) >> 14;
+		outvec->z = LEGACY_S16_WRAP_ADD(outvec->z,
+			matrix_scaled_product(mat->m._33, invec->z));
 
 }
 
@@ -233,14 +252,17 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 	counter = 9;
 	while (counter > 0) {
 		if (rmatvals[0] != 0 && lmatvals[0] != 0)
-			outmatvals[0] = ((legacy_s32)rmatvals[0] * lmatvals[0]) >> 14; else
+			outmatvals[0] = matrix_scaled_product(
+				rmatvals[0], lmatvals[0]); else
 			outmatvals[0] = 0;
 
 		if (rmatvals[1] != 0 && lmatvals[3] != 0)
-			outmatvals[0] += ((legacy_s32)rmatvals[1] * lmatvals[3]) >> 14;
+			outmatvals[0] = LEGACY_S16_WRAP_ADD(outmatvals[0],
+				matrix_scaled_product(rmatvals[1], lmatvals[3]));
 
 		if (rmatvals[2] != 0 && lmatvals[6] != 0)
-			outmatvals[0] += ((legacy_s32)rmatvals[2] * lmatvals[6]) >> 14;
+			outmatvals[0] = LEGACY_S16_WRAP_ADD(outmatvals[0],
+				matrix_scaled_product(rmatvals[2], lmatvals[6]));
 		
 		outmatvals++;
 		if (counter != 7 && counter != 4) {
@@ -249,7 +271,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 			lmatvals -= 2;
 			rmatvals += 3;
 		}
-		counter--;
+		counter = LEGACY_S16_WRAP_SUB(counter, 1);
 	}
 	
 }
@@ -356,8 +378,6 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 // no caller keeps the pointer across another call.
 
 struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 unk) {
-	legacy_s16 flag;
-	
 	mat_rot_z(&math_mat_z_rot, z);
 	mat_rot_x(&math_mat_x_rot, x);
 	
@@ -438,7 +458,7 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 	// The suppressed tail is `right = (right + video_flag2_is1 - 1) &
 	// video_flag3_isFFFF`, which at those values is the identity anyway, so
 	// the port loses nothing by not carrying it.
-	fatal_error("rect_union: unexpected code path");
+	fatal_error((const legacy_s8*)"rect_union: unexpected code path");
 	/*
 	mov     bx, [bp+arg_outrectptr]
 	mov     si, bx
@@ -540,7 +560,8 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 	if (video_flag2_is1 != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
 		// video_flag2_is1 is only ever set to 1, in init_main.
-		fatal_error("rectlist_add_rect: unexpected code path");
+		fatal_error((const legacy_s8*)
+			"rectlist_add_rect: unexpected code path");
 		/*
 		mov     bx, [bp+arg_rectptr]
 		mov     si, bx
@@ -682,7 +703,6 @@ void rectlist_add_rects(legacy_s8 arg_rectcount, legacy_s8* arg_rectarray_indice
 	struct RECTANGLE var_rect2;
 	legacy_s16 var_2, var_rectcounter;
 	legacy_s16 var_rectarray_index;
-	struct RECTANGLE* temprectptr;
 /*
 	return ported_rect_clip_combined_(
 		arg_rectcount, arg_rectarray_indices, arg_rectarray1, arg_rectarray2, arg_rectptr,
@@ -743,6 +763,12 @@ void rect_array_sort_by_top(legacy_s8 arg_array_length, struct RECTANGLE* arg_re
 	}
 }
 
+static legacy_u16 math_word_magnitude(legacy_s16 value)
+{
+	if (value < 0)
+		return (legacy_u16)(0U - (legacy_u16)value);
+	return (legacy_u16)value;
+}
 
 legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	legacy_s32 y;
@@ -751,11 +777,13 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	legacy_s16 result;
 	legacy_s32 angle;
 	
-	y = abs(vec->y);
+	y = (legacy_s32)math_word_magnitude(vec->y);
 	
 	// The original widens the 16-bit radius with an explicit zero high word
 	// (mov [bp+var_4], ax / mov [bp+var_2], 0), not with a sign extension.
-	temp = (legacy_u16)polarRadius2D(abs(vec->x), abs(vec->z));
+	temp = (legacy_u16)polarRadius2D(
+		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->x)),
+		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->z)));
 	
 	if (sin80 != cos80) {
 		//fatal_error("sin80 != cos80 - not observed");
@@ -905,12 +933,12 @@ void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outv
 	
 	outvec->z = i;
 
-	var_4 = (legacy_s16)(outvec->z - vec2->z);
-	var_2 = (legacy_s16)(vec1->z - vec2->z);
+	var_4 = LEGACY_S16_WRAP_SUB(outvec->z, vec2->z);
+	var_2 = LEGACY_S16_WRAP_SUB(vec1->z, vec2->z);
 	if (var_2 < 0) {
 		/* The original uses a 16-bit logical SHR for both values. */
-		var_4 = (legacy_s16)((legacy_u16)var_4 >> 1);
-		var_2 = (legacy_s16)((legacy_u16)var_2 >> 1);
+		var_4 = LEGACY_S16_FROM_BITS((legacy_u16)var_4 >> 1);
+		var_2 = LEGACY_S16_FROM_BITS((legacy_u16)var_2 >> 1);
 	}
 	
 	outvec->x = vector_interpolate_axis(
@@ -928,15 +956,24 @@ void nopsub_33006(struct VECTOR* vec1, struct VECTOR* vec2,
 	legacy_u16 interpolation_z;
 
 	interpolation_z = (legacy_u16)(byte_4032A |
-		((legacy_u16)byte_4032B << 8));
+		LEGACY_U16_SHL(byte_4032B, 8U));
 	vector_op_unk(vec1, vec2, outvec,
 		LEGACY_S16_FROM_BITS(interpolation_z));
 }
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
 {
-	legacy_s32 mul = (legacy_s32)a1 * (legacy_s32)a2 * 4L;
-	return (mul >> 16) + ((mul & 0x8000) >> 15);
+	legacy_s32 product;
+	legacy_u32 scaled_bits;
+	legacy_u16 high_word;
+	legacy_u16 round_up;
+
+	product = LEGACY_S32_WRAP_MUL((legacy_s32)a1, (legacy_s32)a2);
+	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, 2U);
+	high_word = (legacy_u16)(scaled_bits >> 16);
+	round_up = (legacy_u16)((scaled_bits & 0x8000UL) >> 15);
+	return LEGACY_S16_FROM_BITS(
+		LEGACY_U16_WRAP_ADD(high_word, round_up));
 }
 
 extern legacy_s16 planindex;
