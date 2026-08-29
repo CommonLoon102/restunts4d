@@ -1,7 +1,7 @@
 #include "gamestate.h"
 
 struct GAMESTATE_WRITER {
-	legacy_u8* destination;
+	legacy_u8 far* destination;
 	legacy_u16 offset;
 };
 
@@ -135,7 +135,7 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->field_CF);
 }
 
-legacy_u16 gamestate_serialize(legacy_u8* destination,
+legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	const struct GAMESTATE* source)
 {
 	struct GAMESTATE_WRITER writer;

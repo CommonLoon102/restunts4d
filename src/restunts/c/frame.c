@@ -37,10 +37,10 @@ extern struct MATRIX mat_temp;
 extern legacy_s16 custom_camera_distance;
 extern legacy_s16 custom_camera_elevation_angle;
 extern legacy_s16 custom_camera_azimuth_angle;
-extern legacy_s16 word_44D20;
+extern legacy_s16 camera_track_height_offset;
 extern legacy_s8 detail_threshold_by_level[];
 extern legacy_s8 byte_3C0C6[];
-extern legacy_u16 word_46468;
+extern legacy_u16 frame_callback_count;
 extern legacy_s16 word_3BE34[];
 extern legacy_s8* lookahead_tiles_tables[];
 extern struct SHAPE3D* off_3BE44[];
@@ -1524,7 +1524,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.z = car_pos.z + car_to_cam_rotated.z;
 	} else if (cameramode == 3) {
 		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 0];
-		cam_pos.y = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 1] + word_44D20 + 0x5A;
+		cam_pos.y = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 1] + camera_track_height_offset + 0x5A;
 		cam_pos.z = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 2];
 	}
 
@@ -1565,7 +1565,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	}
 
 	if (state.game_frame == 0) {
-		var_E4 = byte_3C0C6[word_46468&0xF];
+		var_E4 = byte_3C0C6[frame_callback_count&0xF];
 	} else {
 		var_E4 = byte_3C0C6[state.game_frame&0xF];
 	}

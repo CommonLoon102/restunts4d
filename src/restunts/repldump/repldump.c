@@ -198,7 +198,10 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
 #ifndef RESTUNTS_ORIGINAL
 extern legacy_s16 setup_player_cars_repldump(void);
 extern legacy_s8 far* polyinfoptr;
-static legacy_u8 serialized_gamestate[GAMESTATE_SERIALIZED_SIZE];
+static legacy_u8 far* serialized_gamestate;
+static const legacy_s8 serialized_state_chunk_name[12] = {
+	'g', 'a', 'm', 'e', 's', 't', 'a', 't', 'e', 0, 0, 0
+};
 #endif
 
 #ifdef RESTUNTS_HEADLESS
@@ -232,6 +235,8 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	init_main(argc, argv);
 #ifndef RESTUNTS_ORIGINAL
+	serialized_gamestate = (legacy_u8 far*)mmgr_alloc_resbytes(
+		serialized_state_chunk_name, GAMESTATE_SERIALIZED_SIZE);
 	// REPLDUMP remains in text mode, so the A000 graphics aperture is unused.
 	// Make it available to the high-memory pool as the transitional C port
 	// grows beyond the original executable's conventional-memory footprint.

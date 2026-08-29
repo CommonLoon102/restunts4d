@@ -28,6 +28,9 @@ extern legacy_s16 __output(FILE* stream, const legacy_s8* format, void* argument
 #define RST_ASC_SPACE      0x40
 #define RST_ASC_HEX        0x80
 
+#define AUDIO_CAR_STATE_RECORD_COUNT 0x28U
+#define AUDIO_CAR_STATE_RECORD_SIZE  0x22U
+
 extern legacy_u8 dos_joystick_enabled;
 extern legacy_u16 dos_joystick_axis1;
 extern legacy_u16 dos_joystick_axis2;
@@ -57,10 +60,10 @@ void dos_process_exit(legacy_s16 status);
 
 static legacy_u32 timer_wait_target;
 
-static const legacy_u8 input_direction_table[16] = {
+static const legacy_u8 far input_direction_table[16] = {
 	0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0
 };
-static const legacy_u8 quiz_question_suffixes[20] = {
+static const legacy_u8 far quiz_question_suffixes[20] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'
 };
@@ -79,7 +82,7 @@ static legacy_u8 input_callback_dispatching;
 static readchar_callback_type input_readchar_callback = kb_read_char;
 static legacy_s8 input_callback_overflow_message[] =
 	"NO ROOM LEFT ON TIMER INTERRUPT ROUTINE LIST\r";
-static const legacy_u8 g_ascii_props[256] = {
+static const legacy_u8 far g_ascii_props[256] = {
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x28, 0x28, 0x28, 0x28, 0x28, 0x20, 0x20,
 	0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
 	0x48, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10,
@@ -348,26 +351,46 @@ legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
 	return res;
 }
 
-extern legacy_u16 word_46468;
-extern legacy_u8 byte_442E4;
-extern legacy_s16 word_44D1E;
-extern legacy_s16 word_44D20;
-extern legacy_s16 word_449E4;
-extern legacy_s16 word_443F4;
-extern legacy_u8 unk_44F4C[];
-extern legacy_u8 byte_3BE02;
-extern legacy_s8 byte_3E85C[];
-extern legacy_s8 byte_40D6A;
 extern void far frame_callback(void);
 extern void replay_unk2(legacy_s16 mode);
 extern void timer_reg_callback(void (far* callback)(void));
 extern void timer_remove_callback(void (far* callback)(void));
 
+legacy_u16 frame_callback_count;
+legacy_s16 camera_track_height_offset;
+static legacy_u8 frame_callback_active;
+static legacy_s16 audio_car_state_read_index;
+static legacy_s16 audio_car_state_write_index;
+static legacy_s16 audio_car_state_interval;
+static legacy_u8 far* audio_car_state_records;
+static legacy_u8 audio_previous_replay_mode = 0xFFU;
+static const legacy_s8 far joystick_steering_table[34] = {
+	0, 0, 0, 0, 0, 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40,
+	44, 48, 52, 56, 60, 64, 68, 72, 76, 84, 90, 98, 106, 114,
+	121, 127, 127, 127
+};
+static legacy_s8 input_steering_value;
+
+static void audio_allocate_car_state_records(void)
+{
+	static const legacy_s8 chunk_name[12] =
+		{ 'a', 'u', 'd', 'i', 'o', 's', 't', 'a', 't', 'e', 0, 0 };
+	legacy_u16 index;
+
+	audio_car_state_records = (legacy_u8 far*)mmgr_alloc_resbytes(
+		chunk_name, (legacy_s32)AUDIO_CAR_STATE_RECORD_COUNT *
+		AUDIO_CAR_STATE_RECORD_SIZE);
+	for (index = 0;
+		index < AUDIO_CAR_STATE_RECORD_COUNT * AUDIO_CAR_STATE_RECORD_SIZE;
+		index++)
+		audio_car_state_records[index] = 0;
+}
+
 void set_frame_callback(void)
 {
-	word_46468 = 0;
+	frame_callback_count = 0;
 	timer_reg_callback(&frame_callback);
-	byte_442E4 = 0;
+	frame_callback_active = 0;
 }
 
 void remove_frame_callback(void)
@@ -1370,7 +1393,7 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	timer[0x0AU] = (legacy_u8)volume;
 }
 
-void sub_18D06(const legacy_u8* sample, legacy_s16 interval)
+void sub_18D06(const legacy_u8 far* sample, legacy_s16 interval)
 {
 	audio_op_unk2(audio_player_engine_channel,
 		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1EU)),
@@ -1396,18 +1419,19 @@ void sub_18D06(const legacy_u8* sample, legacy_s16 interval)
 
 void frame_callback(void)
 {
-	if (dos_data_stack_segments_match() == 0 || byte_442E4 != 0)
+	if (dos_data_stack_segments_match() == 0 || frame_callback_active != 0)
 		return;
 
-	byte_442E4 = 1;
-	word_443F4 = LEGACY_S16_WRAP_ADD(word_443F4, 1);
-	if (word_443F4 >= word_4499C && word_44D1E != word_449E4) {
-		sub_18D06(unk_44F4C + 0x22U * (legacy_u16)word_44D1E,
-			word_443F4);
-		word_443F4 = 0;
-		word_44D1E = LEGACY_S16_WRAP_ADD(word_44D1E, 1);
-		if (word_44D1E == 0x28)
-			word_44D1E = 0;
+	frame_callback_active = 1;
+	audio_car_state_interval = LEGACY_S16_WRAP_ADD(audio_car_state_interval, 1);
+	if (audio_car_state_interval >= word_4499C && audio_car_state_read_index != audio_car_state_write_index) {
+		sub_18D06(audio_car_state_records + AUDIO_CAR_STATE_RECORD_SIZE *
+			(legacy_u16)audio_car_state_read_index,
+			audio_car_state_interval);
+		audio_car_state_interval = 0;
+		audio_car_state_read_index = LEGACY_S16_WRAP_ADD(audio_car_state_read_index, 1);
+		if (audio_car_state_read_index == AUDIO_CAR_STATE_RECORD_COUNT)
+			audio_car_state_read_index = 0;
 	}
 
 	if (byte_449DA == 0 && byte_46467 == 0 &&
@@ -1421,7 +1445,7 @@ void frame_callback(void)
 			byte_44A8A = (legacy_u8)(byte_44A8A - 1U);
 			if (byte_44A8A == 0) {
 				byte_44A8A = (legacy_u8)word_4499C;
-				word_46468 = LEGACY_U16_WRAP_ADD(word_46468, 1U);
+				frame_callback_count = LEGACY_U16_WRAP_ADD(frame_callback_count, 1U);
 				if (game_replay_mode == 2 &&
 					LEGACY_S8_FROM_BITS(byte_449E6) == 2) {
 					byte_4552F = (legacy_u8)(byte_4552F - 1U);
@@ -1439,7 +1463,7 @@ void frame_callback(void)
 		}
 	}
 
-	byte_442E4--;
+	frame_callback_active--;
 }
 
 void replay_unk2(legacy_s16 mode)
@@ -1487,7 +1511,7 @@ void replay_unk2(legacy_s16 mode)
 				} else {
 					steering = LEGACY_S16_WRAP_ADD(steering, 0x12);
 				}
-				byte_40D6A = LEGACY_S8_FROM_BITS(steering);
+				input_steering_value = LEGACY_S8_FROM_BITS(steering);
 				if (((legacy_u16)mouse_butstate & 1U) != 0)
 					input_flags = 2;
 				else if (((legacy_u16)mouse_butstate & 2U) != 0)
@@ -1496,13 +1520,13 @@ void replay_unk2(legacy_s16 mode)
 					input_flags = 0;
 			} else {
 				mapped_steering = LEGACY_S8_FROM_BITS(sub_307E3());
-				byte_40D6A = mapped_steering;
+				input_steering_value = mapped_steering;
 				if (mapped_steering > 0) {
-					byte_40D6A = byte_3E85C[
+					input_steering_value = joystick_steering_table[
 						(legacy_u8)mapped_steering];
 				} else if (mapped_steering < 0) {
-					byte_40D6A = LEGACY_S8_FROM_BITS(
-						(legacy_u8)(0U - (legacy_u8)byte_3E85C[
+					input_steering_value = LEGACY_S8_FROM_BITS(
+						(legacy_u8)(0U - (legacy_u8)joystick_steering_table[
 							(legacy_u8)(0U -
 								(legacy_u8)mapped_steering)]));
 				}
@@ -1510,7 +1534,7 @@ void replay_unk2(legacy_s16 mode)
 					((legacy_u16)get_kb_or_joy_flags() & 0x33U);
 			}
 			history_index = (legacy_u16)elapsed_time2 & 0x3FU;
-			input_steering_history[history_index] = (legacy_u8)byte_40D6A;
+			input_steering_history[history_index] = (legacy_u8)input_steering_value;
 			input_steering_history_valid[history_index] = 1;
 		} else {
 			input_flags = get_kb_or_joy_flags();
@@ -7516,7 +7540,7 @@ static legacy_s16 audio_carstate_position(legacy_s32 position)
 	return LEGACY_S16_FROM_BITS((legacy_u16)bits);
 }
 
-static void audio_carstate_write(legacy_u8* record, legacy_u16 offset,
+static void audio_carstate_write(legacy_u8 far* record, legacy_u16 offset,
 	legacy_s16 value)
 {
 	LEGACY_WRITE_U16_LE(record + offset, (legacy_u16)value);
@@ -7570,7 +7594,7 @@ void audio_carstate(void)
 	struct VECTOR camera_previous;
 	struct VECTOR camera_current;
 	struct CARSTATE* carstate;
-	legacy_u8* record;
+	legacy_u8 far* record;
 	legacy_s16 track_index;
 	legacy_s16 car_count;
 	legacy_s16 car_index;
@@ -7579,7 +7603,7 @@ void audio_carstate(void)
 
 	if (is_in_replay != 0) {
 		if (audio_car_state_ready != 0) {
-			word_44D1E = word_449E4;
+			audio_car_state_read_index = audio_car_state_write_index;
 			if (((legacy_u8)audio_player_car_flags & 6U) != 0)
 				audio_op_unk7(audio_player_engine_channel);
 			if (((legacy_u8)audio_player_car_flags & 1U) != 0)
@@ -7594,9 +7618,9 @@ void audio_carstate(void)
 			audio_player_car_flags = 0;
 			audio_opponent_car_flags = 0;
 		}
-		if ((legacy_u8)byte_3BE02 != (legacy_u8)is_in_replay)
+		if ((legacy_u8)audio_previous_replay_mode != (legacy_u8)is_in_replay)
 			audio_reset_channels();
-		byte_3BE02 = (legacy_u8)is_in_replay;
+		audio_previous_replay_mode = (legacy_u8)is_in_replay;
 		return;
 	}
 
@@ -7638,7 +7662,7 @@ void audio_carstate(void)
 		camera_current.x = trackdata9[track_index * 3];
 		camera_current.y = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(trackdata9[track_index * 3 + 1],
-				word_44D20), 0x5A);
+				camera_track_height_offset), 0x5A);
 		camera_current.z = trackdata9[track_index * 3 + 2];
 		camera_previous = camera_current;
 	} else if (followOpponentFlag != 0) {
@@ -7649,8 +7673,9 @@ void audio_carstate(void)
 		camera_previous = player_previous;
 	}
 
-	record = unk_44F4C + LEGACY_U16_WRAP_MUL(
-		(legacy_u16)word_449E4, 0x22U);
+	record = audio_car_state_records + LEGACY_U16_WRAP_MUL(
+		(legacy_u16)audio_car_state_write_index,
+		AUDIO_CAR_STATE_RECORD_SIZE);
 	audio_carstate_write(record, 6U, LEGACY_S16_WRAP_SUB(
 		camera_previous.x, player_previous.x));
 	audio_carstate_write(record, 8U, LEGACY_S16_WRAP_SUB(
@@ -7703,10 +7728,10 @@ void audio_carstate(void)
 	}
 
 	audio_car_state_ready = 1;
-	word_449E4 = LEGACY_S16_WRAP_ADD(word_449E4, 1);
-	if (word_449E4 == 0x28)
-		word_449E4 = 0;
-	byte_3BE02 = (legacy_u8)is_in_replay;
+	audio_car_state_write_index = LEGACY_S16_WRAP_ADD(audio_car_state_write_index, 1);
+	if (audio_car_state_write_index == AUDIO_CAR_STATE_RECORD_COUNT)
+		audio_car_state_write_index = 0;
+	audio_previous_replay_mode = (legacy_u8)is_in_replay;
 }
 
 void sub_374DE(legacy_s16 channel)
@@ -7927,9 +7952,9 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 		audio_opponent_engine_channel = audio_init_engine(0x20, &unk_3E82C, eng1ptr, engptr);
 	}
 
-	word_44D1E = 0;
-	word_449E4 = 0;
-	word_443F4 = 0;
+	audio_car_state_read_index = 0;
+	audio_car_state_write_index = 0;
+	audio_car_state_interval = 0;
 	fontledresptr = file_load_resource(0, "fontled.fnt");//aFontled_fnt); // "fontled.fnt"
 	slow_video_mgmt_copy = slow_video_mgmt;
 	init_rect_arrays();
@@ -9997,9 +10022,9 @@ replay_input_loop:
 replay_zoom:
 		if (input == '-') {
 			if (cameramode == 3) {
-				if (word_44D20 <= 0)
+				if (camera_track_height_offset <= 0)
 					goto replay_redraw;
-				word_44D20 = LEGACY_S16_WRAP_SUB(word_44D20, 0x1E);
+				camera_track_height_offset = LEGACY_S16_WRAP_SUB(camera_track_height_offset, 0x1E);
 			} else {
 				if (custom_camera_distance >= 0x5DC)
 					goto replay_redraw;
@@ -10008,9 +10033,9 @@ replay_zoom:
 			}
 		} else {
 			if (cameramode == 3) {
-				if (word_44D20 >= 0x384)
+				if (camera_track_height_offset >= 0x384)
 					goto replay_redraw;
-				word_44D20 = LEGACY_S16_WRAP_ADD(word_44D20, 0x1E);
+				camera_track_height_offset = LEGACY_S16_WRAP_ADD(camera_track_height_offset, 0x1E);
 			} else {
 				if (custom_camera_distance <= 0x78)
 					goto replay_redraw;
@@ -10525,6 +10550,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 
 	mmgr_alloc_a000();
 	himem_init();
+	audio_allocate_car_state_records();
 
 	video_flag5_is0 = 0;
 	video_flag6_is1 = 1;

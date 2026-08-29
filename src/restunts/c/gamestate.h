@@ -128,7 +128,7 @@ typedef char legacy_carstate_must_be_208_bytes[
 typedef char legacy_gamestate_must_be_1120_bytes[
 	(sizeof(struct GAMESTATE) == GAMESTATE_SERIALIZED_SIZE) ? 1 : -1];
 
-legacy_u16 gamestate_serialize(legacy_u8* destination,
+legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	const struct GAMESTATE* source);
 
 #endif
