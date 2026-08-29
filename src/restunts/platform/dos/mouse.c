@@ -5,11 +5,12 @@
 extern legacy_s16 _Cdecl _int86(legacy_s16 interrupt_number,
 	union REGS far* input, union REGS far* output);
 
-extern legacy_u8 mousehorscale;
-extern legacy_u16 word_45D7C;
-extern legacy_u16 word_40318;
-extern legacy_u16 word_44D3C;
-extern legacy_u16 word_44D62;
+legacy_u16 dos_mouse_button_count;
+
+static legacy_u8 dos_mouse_horizontal_scale;
+static legacy_u16 dos_mouse_available;
+static legacy_u16 dos_mouse_last_x;
+static legacy_u16 dos_mouse_last_y;
 
 static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal,
 	legacy_u16 vertical)
@@ -28,7 +29,7 @@ void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
 	union REGS registers;
 	legacy_u16 scale;
 
-	scale = mousehorscale;
+	scale = dos_mouse_horizontal_scale;
 	registers.x.ax = 7;
 	registers.x.cx = (legacy_u16)minimum_x << scale;
 	registers.x.dx = (legacy_u16)maximum_x << scale;
@@ -59,14 +60,14 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	registers.x.ax = 0;
 	int86(0x33, &registers, &registers);
 	installed = (legacy_s16)registers.x.ax;
-	word_45D7C = registers.x.bx;
+	dos_mouse_button_count = registers.x.bx;
 	if (installed != 0) {
-		mousehorscale = width == 0x140 ? 1U : 0U;
+		dos_mouse_horizontal_scale = width == 0x140 ? 1U : 0U;
 		dos_mouse_set_minmax(0, 0,
 			LEGACY_S16_WRAP_SUB(width, 1),
 			LEGACY_S16_WRAP_SUB(height, 1));
 		dos_mouse_set_pixel_ratio(0x10U, 0x10U);
-		word_40318 = 0xFFFFU;
+		dos_mouse_available = 0xFFFFU;
 	}
 	return installed;
 }
@@ -76,10 +77,10 @@ void dos_mouse_set_position(legacy_s16 x, legacy_s16 y)
 	union REGS registers;
 
 	registers.x.ax = 4;
-	word_44D3C = (legacy_u16)x;
-	registers.x.cx = (legacy_u16)x << mousehorscale;
+	dos_mouse_last_x = (legacy_u16)x;
+	registers.x.cx = (legacy_u16)x << dos_mouse_horizontal_scale;
 	registers.x.dx = (legacy_u16)y;
-	word_44D62 = (legacy_u16)y;
+	dos_mouse_last_y = (legacy_u16)y;
 	int86(0x33, &registers, &registers);
 }
 
@@ -90,6 +91,6 @@ void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y)
 	registers.x.ax = 3;
 	int86(0x33, &registers, &registers);
 	*buttons = (legacy_s16)registers.x.bx;
-	*x = (legacy_s16)(registers.x.cx >> mousehorscale);
+	*x = (legacy_s16)(registers.x.cx >> dos_mouse_horizontal_scale);
 	*y = (legacy_s16)registers.x.dx;
 }

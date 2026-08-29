@@ -46,7 +46,7 @@ extern legacy_s16 word_46170[7];
 extern legacy_u8 byte_44292[64];
 extern legacy_u8 byte_442EA[64];
 extern legacy_u8 far* pboxshape;
-extern legacy_s16 word_45D7C;
+extern legacy_s16 dos_mouse_button_count;
 extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
@@ -4164,7 +4164,7 @@ void draw_2DtrackMap(
 static legacy_u16 track_menu_next_row(legacy_u16 row)
 {
 	if (row == 29U)
-		return (legacy_u16)word_45D7C;
+		return (legacy_u16)dos_mouse_button_count;
 	return (legacy_u16)trackrows[row + 1U];
 }
 
