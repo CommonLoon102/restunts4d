@@ -1781,6 +1781,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 	legacy_u16 var_speedBeforeGrip;
 	legacy_u16 var_speed2BeforeGrip;
 	legacy_u8 route_point;
+	legacy_u8 commit_penalty;
 	legacy_s16 si;
 
 	//return ported_player_op_(arg_carInputByte);
@@ -1829,87 +1830,60 @@ void player_op(legacy_s8 arg_carInputByte) {
 	var_1C = state.field_45B;
 	var_2 = state.field_2F2;
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
-	if (si != 0)
-		goto loc_172CB;
-	goto loc_173B3;
-loc_172CB:
-	if (var_1EpenaltyCounter != -2)
-		goto loc_172D8;
-	state.field_45B = 1;
-	goto loc_172E4;
-loc_172D8:
-	if (state.field_45B != 1)
-		goto loc_172E9;
-	state.field_45B = 0;
-loc_172E4:
-	state.field_45C = 0;
-loc_172E9:
-	if (state.field_45B == 0)
-		goto loc_172F3;
-	goto loc_173AD;
-loc_172F3:
-	if (var_2 != 0)
-		goto loc_17308;
-	if (state.field_2F4 == 0)
-		goto loc_17308;
-	state.playerstate.field_CD = LEGACY_S8_WRAP_ADD(
-		state.playerstate.field_CD, 1);
-	goto loc_1737B;
-loc_17308:
-	if (var_1EpenaltyCounter < 0)
-		goto loc_17322;
-	if (var_1EpenaltyCounter >= 3)
-		goto loc_17322;
-	state.field_45C = 0;
-	state.field_2F2 = var_2;
-	goto loc_173AD;
-loc_17322:
-	if (var_1EpenaltyCounter == -1)//0xFFFF)
-		goto loc_1732E;
-	if (var_1EpenaltyCounter <= 3)
-		goto loc_173AD;
-	
-loc_1732E:
-	if (td01_track_file_cpy[state.field_2F4] == var_2)
-		goto loc_17349;
-	if (td02_penalty_related[state.field_2F4] != var_2)
-		goto loc_17350;
-loc_17349:
-	state.field_45C = LEGACY_S8_WRAP_ADD(state.field_45C, 1);
-	goto loc_17374;
-loc_17350:
-	if (td01_track_file_cpy[var_2] == state.field_2F4)
-		goto loc_1736A;
-	if (td02_penalty_related[var_2] != state.field_2F4)
-		goto loc_1736F;
-loc_1736A:
-    state.field_45B = 2;
-loc_1736F:
-    state.field_45C = 1;
-loc_17374:
-	if (state.field_45C < 3)
-		goto loc_173AD;
-loc_1737B:
-	state.field_2F2 = var_2;
-	state.field_45C = 0;
-	if (var_1EpenaltyCounter <= 0)
-		goto loc_173AD;
-		
-	penalty_time = LEGACY_S16_WRAP_MUL(
-		LEGACY_S16_WRAP_MUL(var_1EpenaltyCounter, framespersec), 3);
-	show_penalty_counter = LEGACY_S8_FROM_BITS(
-		(legacy_u8)LEGACY_U16_SHL(framespersec, 2U));
-	state.game_penalty = LEGACY_S16_WRAP_ADD(
-		state.game_penalty, penalty_time);
-	
-loc_173AD:
-	state.field_2F4 = var_2;
-loc_173B3:
+	if (si != 0) {
+		commit_penalty = 0;
+		if (var_1EpenaltyCounter == -2) {
+			state.field_45B = 1;
+			state.field_45C = 0;
+		} else {
+			if (state.field_45B == 1) {
+				state.field_45B = 0;
+				state.field_45C = 0;
+			}
+			if (state.field_45B == 0) {
+				if (var_2 == 0 && state.field_2F4 != 0) {
+					state.playerstate.field_CD = LEGACY_S8_WRAP_ADD(
+						state.playerstate.field_CD, 1);
+					commit_penalty = 1;
+				} else if (var_1EpenaltyCounter >= 0 &&
+					var_1EpenaltyCounter < 3) {
+					state.field_45C = 0;
+					state.field_2F2 = var_2;
+				} else if (var_1EpenaltyCounter == -1 ||
+					var_1EpenaltyCounter > 3) {
+					if (td01_track_file_cpy[state.field_2F4] == var_2 ||
+						td02_penalty_related[state.field_2F4] == var_2) {
+						state.field_45C = LEGACY_S8_WRAP_ADD(
+							state.field_45C, 1);
+					} else {
+						if (td01_track_file_cpy[var_2] == state.field_2F4 ||
+							td02_penalty_related[var_2] == state.field_2F4) {
+							state.field_45B = 2;
+						}
+						state.field_45C = 1;
+					}
+					if (state.field_45C >= 3)
+						commit_penalty = 1;
+				}
+			}
+		}
+		if (commit_penalty != 0) {
+			state.field_2F2 = var_2;
+			state.field_45C = 0;
+			if (var_1EpenaltyCounter > 0) {
+				penalty_time = LEGACY_S16_WRAP_MUL(
+					LEGACY_S16_WRAP_MUL(
+						var_1EpenaltyCounter, framespersec), 3);
+				show_penalty_counter = LEGACY_S8_FROM_BITS(
+					(legacy_u8)LEGACY_U16_SHL(framespersec, 2U));
+				state.game_penalty = LEGACY_S16_WRAP_ADD(
+					state.game_penalty, penalty_time);
+			}
+		}
+		state.field_2F4 = var_2;
+	}
 	state.field_45D = 0;
-	if (state.field_45B != 1)
-		goto loc_173C2;
-	goto loc_17810;
-loc_173C2:
+	if (state.field_45B != 1) {
 	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
 	if (state.field_45B != 2)
 		goto loc_173F6;
@@ -2126,4 +2100,5 @@ loc_177AC:
 		goto loc_17810;
 	update_crash_state(3, 0);
 loc_17810:
+	}
 }
