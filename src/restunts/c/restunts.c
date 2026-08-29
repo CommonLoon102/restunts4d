@@ -1092,7 +1092,8 @@ extern void audio_map_song_tracks(void far* song);
 extern legacy_s16 sub_39050(legacy_u16 value, legacy_s16 handle);
 extern void sub_39088(legacy_s16 channel, legacy_s16 value);
 extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
-extern void audio_driver_func1E(legacy_s16 channel, legacy_s16 function);
+void audio_release_channel_range(legacy_s16 first_channel,
+	legacy_s16 last_channel);
 extern void dos_audio_set_channel_volume(legacy_s16 channel,
 	legacy_s16 volume);
 extern void audio_op_unk3(legacy_s16 channel);
@@ -1655,7 +1656,8 @@ void audio_disable_flag2(void)
 	audioflag2 = 0;
 	word_4063A = 1;
 	if (byte_44290 != 0)
-		audio_driver_func1E(0, (legacy_u16)byte_44290 - 1U);
+		audio_release_channel_range(
+			0, (legacy_u16)byte_44290 - 1U);
 	sub_39700();
 	word_4063A = 0;
 }
@@ -1693,7 +1695,7 @@ void sub_3736A(void)
 {
 	word_4063A = 1;
 	byte_40632 = 0;
-	audio_driver_func1E(0, 0x0F);
+	audio_release_channel_range(0, 0x0F);
 	audio_init_chunk(0, 0x0F, 0, 0, byte_45950, 0);
 	byte_44290 = 0;
 	sub_39700();
@@ -1888,6 +1890,65 @@ void audio_reset_channels(void)
 	word_4063A = 0;
 }
 
+static void audio_clear_driver_context(legacy_u8* context)
+{
+	context[0] = 0xFFU;
+	context[1] = 0;
+	context[2] = 0;
+	LEGACY_WRITE_U16_LE(context + 0x10U, 0);
+	LEGACY_WRITE_U16_LE(context + 0x12U, 0);
+}
+
+void audio_release_channel_range(legacy_s16 first_channel,
+	legacy_s16 last_channel)
+{
+	legacy_u8* chunk;
+	legacy_u8* context;
+	legacy_u16 context_index;
+	legacy_u16 channel_bits;
+	legacy_s16 channel;
+
+	if (byte_40634 == 0) {
+		context = unk_45A26;
+		for (context_index = 0; context_index < byte_459D2;
+			context_index++) {
+			channel_bits = context[0];
+			if (channel_bits >= (legacy_u16)first_channel &&
+				channel_bits <= (legacy_u16)last_channel) {
+				dos_audio_driver_release_channel(
+					(legacy_s16)context_index);
+				audio_clear_driver_context(context);
+			}
+			context += 0x2EU;
+		}
+	} else {
+		channel = first_channel;
+		while (channel <= last_channel) {
+			chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(
+				(legacy_u16)channel, 0x4CU);
+			if (chunk[0x47U] < 0x10U)
+				dos_audio_driver_release_channel(chunk[0x47U]);
+
+			context = unk_45A26;
+			for (context_index = 0; context_index < 0x10U;
+				context_index++) {
+				if ((legacy_u16)context[0] == (legacy_u16)channel)
+					audio_clear_driver_context(context);
+				context += 0x2EU;
+			}
+			channel = LEGACY_S16_WRAP_ADD(channel, 1);
+		}
+	}
+
+	channel = first_channel;
+	while (channel <= last_channel) {
+		chunk = audiochunks_unk + LEGACY_U16_WRAP_MUL(
+			(legacy_u16)channel, 0x4CU);
+		chunk[0x15U] = 0;
+		channel = LEGACY_S16_WRAP_ADD(channel, 1);
+	}
+}
+
 void audio_suspend(void)
 {
 	legacy_u8* chunk;
@@ -2036,7 +2097,7 @@ void audio_init_chunk2(legacy_s16 channel)
 	offset = (legacy_u16)channel * 0x4CU;
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset, 0);
 	LEGACY_WRITE_U16_LE(audiochunks_unk + offset + 2, 0);
-	audio_driver_func1E(channel, channel);
+	audio_release_channel_range(channel, channel);
 	audio_init_chunk(channel, channel, 0, 0, byte_45948, 0);
 }
 
