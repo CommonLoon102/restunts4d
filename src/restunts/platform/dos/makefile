@@ -11,7 +11,7 @@ endif
 ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
 CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS
 
-all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
+all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
 
 $(OBJDIR)/%.obj: %.asm
 	$(ASM) $<, $(subst /,\,$@)
@@ -21,6 +21,9 @@ $(OBJDIR)/timer.obj: timer.c ../../c/legacy.h
 
 $(OBJDIR)/runtime.obj: runtime.c ../../c/legacy.h
 	$(CC) runtime.c
+
+$(OBJDIR)/memory.obj: memory.c ../../c/legacy.h ../../c/memmgr.h ../../c/platform.h
+	$(CC) -I../../c memory.c
 
 $(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h
 	$(CC) joystick.c
@@ -42,6 +45,7 @@ clean:
 	del $(OBJDIR)\dosstack.obj
 	del $(OBJDIR)\timer.obj
 	del $(OBJDIR)\runtime.obj
+	del $(OBJDIR)\memory.obj
 	del $(OBJDIR)\joystick.obj
 	del $(OBJDIR)\mouse.obj
 	del $(OBJDIR)\video.obj

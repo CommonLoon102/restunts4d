@@ -40,6 +40,7 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr);
 void himem_init(void);
 void ems_shutdown(void);
 void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly);
+void highpool_reserve_window(void);
 legacy_s16 highpool_owns_seg(legacy_u16 seg);
 legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras);
 legacy_s16 highpool_can_fit(legacy_u16 paras);

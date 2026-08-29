@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include "externs.h"
 #include "memmgr.h"
+#include "platform.h"
 
-#ifdef RESTUNTS_DOS
+#if defined(RESTUNTS_DOS) && !defined(RESTUNTS_HEADLESS) && \
+	!defined(RESTUNTS_FULL)
 
 #define pushregs()\
 	_asm {\
@@ -18,236 +20,20 @@
 		pop dx\
 	}
 
-void far* dos_get_psp(void) {
-	legacy_u16 resseg, resofs;
-	__asm {
-		push ds
-		mov ah, 62h
-		int 21h
-		mov resseg, ds
-		mov resofs, bx
-		pop ds
-	}
-	return MK_FP(resseg, resofs);
-}
-
-legacy_u16 dos_alloc(legacy_u16 paras) {
-	legacy_u16 resseg;
-	__asm {
-		mov bx, paras
-		mov ah, 48h
-		int 21h
-		mov resseg, ax
-	}
-	return resseg;
-}
-
-legacy_u16 dos_setblock(legacy_u16 blockseg, legacy_u16 newsize) {
-	legacy_u16 res;
-	__asm {
-		mov bx, newsize
-		mov es, blockseg
-		mov ah, 4ah
-		int 21h
-		mov res, bx	// bx = max blocks
-	}
-	return res;
-}
-
-void dos_free(legacy_u16 blockseg) {
-	__asm {
-		mov es, blockseg
-		mov ah, 49h
-		int 21h
-	}
-}
-
-// High-memory pool. A few render-only chunks are served from upper memory
-// (the fixed-mapped 64k EMS page frame and/or a DOS upper memory block) so
-// they stop competing with the car resources for the conventional arena
-// below A000. Both regions are plain addressable RAM once set up, so far
-// pointers into them behave like ordinary memory everywhere, including in
-// the original asm consumers. See highpool_names for what may go here.
-legacy_u16 ems_handle = 0;
-legacy_u8 ems_present = 0;
-
-typedef void (far* emsvoidfunctype)();
-extern void add_exit_handler(emsvoidfunctype exitfunc);
-
-void ems_shutdown(void) {
-	legacy_u16 handle;
-
-	if (ems_present == 0)
-		return;
-	ems_present = 0;
-	handle = ems_handle;
-	ems_handle = 0;
-	__asm {
-		mov ah, 45h
-		mov dx, handle
-		int 67h
-	}
-}
-
-static void ems_init(void) {
-	legacy_u16 vecseg, vecofs, frameseg, handle, stat;
-	legacy_u8 pageno;
-	legacy_s16 i;
-	legacy_s8 far* devname;
-	static legacy_s8 emmname[8] = { 'E', 'M', 'M', 'X', 'X', 'X', 'X', '0' };
-
-	ems_present = 0;
-
-	__asm {
-		push es
-		mov ax, 3567h
-		int 21h
-		mov vecseg, es
-		mov vecofs, bx
-		pop es
-	}
-	if (vecseg == 0 && vecofs == 0)
-		return;
-
-	// The int 67h vector points into the EMM device driver; its header
-	// carries the device name at offset 0Ah.
-	devname = MK_FP(vecseg, 0x0A);
-	for (i = 0; i < 8; i++) {
-		if (devname[i] != emmname[i])
-			return;
+#define pushbx()\
+	_asm {\
+		push bx\
 	}
 
-	__asm {
-		mov ah, 40h
-		int 67h
-		mov stat, ax
+#define popbx()\
+	_asm {\
+		pop bx\
 	}
-	if (stat & 0xFF00)
-		return;
-
-	__asm {
-		mov ah, 41h
-		int 67h
-		mov stat, ax
-		mov frameseg, bx
-	}
-	if (stat & 0xFF00)
-		return;
-
-	__asm {
-		mov ah, 43h
-		mov bx, 4
-		int 67h
-		mov stat, ax
-		mov handle, dx
-	}
-	if (stat & 0xFF00)
-		return;
-
-	for (i = 0; i < 4; i++) {
-		pageno = (legacy_u8)i;
-		__asm {
-			mov ah, 44h
-			mov al, pageno
-			mov bl, pageno
-			xor bh, bh
-			mov dx, handle
-			int 67h
-			mov stat, ax
-		}
-		if (stat & 0xFF00) {
-			__asm {
-				mov ah, 45h
-				mov dx, handle
-				int 67h
-			}
-			return;
-		}
-	}
-
-	ems_handle = handle;
-	ems_present = 1;
-	add_exit_handler(ems_shutdown);
-	highpool_add_block(frameseg, 0x1000, 0);
-}
-
-static void umb_init(void) {
-	legacy_u16 oldstrat, oldlink, umbsize, umbseg;
-
-	__asm {
-		mov ax, 5800h
-		int 21h
-		mov oldstrat, ax
-	}
-	__asm {
-		mov ax, 5802h
-		int 21h
-		xor ah, ah
-		mov oldlink, ax
-	}
-	__asm {
-		mov ax, 5803h
-		mov bx, 1
-		int 21h
-	}
-	__asm {
-		mov ax, 5801h
-		mov bx, 40h		// first fit, high memory only
-		int 21h
-	}
-
-	// Probing with an impossible size makes DOS report the largest free
-	// block, which under the high-only strategy is the largest UMB.
-	umbsize = 0;
-	__asm {
-		mov ah, 48h
-		mov bx, 0FFFFh
-		int 21h
-		mov umbsize, bx
-	}
-
-	umbseg = 0;
-	if (umbsize >= 0x100)
-		umbseg = dos_alloc(umbsize);
-
-	__asm {
-		mov ax, 5801h
-		mov bx, oldstrat
-		int 21h
-	}
-	__asm {
-		mov ax, 5803h
-		mov bx, oldlink
-		int 21h
-	}
-
-	// Only accept real upper memory that cannot wrap the pool's segment
-	// arithmetic. This is the one region large enough for the full-screen
-	// window, so it is kept clear of small chunks.
-	if (umbseg >= 0xA000 && umbseg < 0xF000 &&
-	    (legacy_u32)umbseg + umbsize <= 0xF000) {
-		highpool_add_block(umbseg, umbsize, 0);
-	} else if (umbseg > 0x10) {
-		dos_free(umbseg);
-	}
-}
-
-void himem_init(void) {
-	ems_init();
-	umb_init();
-	{ extern void highpool_reserve_window(void); highpool_reserve_window(); }
-}
-
-// The colour text page is 32k of real memory that nothing reads while the
-// game is in mode 13h: the framebuffer is at A000 and BIOS teletype output
-// follows the active mode, so B800 just sits there. Claim it only once the
-// video mode has actually been set, and only for mode 13h - in a text or
-// CGA mode those same bytes are the visible screen. Tools that keep writing
-// to the console (repldump) therefore never gain this block, which is why
-// the replay harness cannot exercise it.
 #else
-void pushregs() {}
-void popregs() {}
+#define pushregs() ((void)0)
+#define popregs() ((void)0)
+#define pushbx() ((void)0)
+#define popbx() ((void)0)
 #endif
 
 #if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS) || \
@@ -813,15 +599,16 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	legacy_s8* tempptr;
 
 #ifdef RESTUNTS_DOS
-	psp = dos_get_psp();
+	psp = dos_memory_get_psp();
 	pspseg = FP_SEG(psp);
 	pspofs = FP_OFF(psp);
 	
 	if (word_3FF82 == 0) {
-		resptr1->resofs = dos_alloc(0x64);
+		resptr1->resofs = dos_memory_allocate(0x64);
 		word_3FF84 = resptr1->resofs;
-		maxblocks = dos_setblock(resptr1->resofs, arg_0 - resptr1->resofs);
-		maxblocks = dos_setblock(resptr1->resofs, maxblocks);
+		maxblocks = dos_memory_resize(resptr1->resofs,
+			arg_0 - resptr1->resofs);
+		maxblocks = dos_memory_resize(resptr1->resofs, maxblocks);
 		resendptr2->resofs = word_3FF84 + maxblocks;
 		word_3FF82 = resendptr2->resofs;
 		//fatal_error("%u\n", word_3FF82 - word_3FF84);
@@ -1139,9 +926,7 @@ void mmgr_release(legacy_s8 far* ptr) {
 	struct MEMCHUNK* resdi;
 
 	pushregs();
-	__asm {
-		push bx
-	}
+	pushbx();
 	
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
@@ -1153,9 +938,7 @@ void mmgr_release(legacy_s8 far* ptr) {
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		highchunk->resstate =
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 0;
-		__asm {
-			pop bx
-		}
+		popbx();
 		popregs();
 		return;
 	}
@@ -1176,9 +959,7 @@ void mmgr_release(legacy_s8 far* ptr) {
 		resptr2 = ressi;
 	}
 
-	__asm {
-		pop bx
-	}
+	popbx();
 	popregs();
 }
 
