@@ -240,105 +240,63 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 			var_deltaSpeed, var_deltaSpeed);
 	}
 
-	if (var_deltaSpeed >= 0)
-		goto loc_17D4F;
-	goto loc_17EE2;
-
-loc_17D4F:
-	if (var_updatedSpeed < 0x8000)
-		goto loc_17D59;
-	goto loc_17EC2;
-
-loc_17D59:
-	var_updatedSpeed = LEGACY_U16_WRAP_ADD(
-		var_updatedSpeed, var_deltaSpeed);
-
-loc_17D5F:
-	if (arg_carState->car_sumSurfRearWheels != 0)
-		goto loc_17D6C;
-	goto loc_17F3C;
-
-loc_17D6C:
-	var_4 = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_speed2, var_updatedSpeed);
-	if (var_4 < 0)
-		goto loc_17D7C;
-	goto loc_17EF8;
-
-loc_17D7C:
-	var_4 = LEGACY_S16_WRAP_NEGATE(var_4);
-	goto loc_17EFB;
-
-loc_17EC2:
-	var_updatedSpeed = LEGACY_U16_WRAP_ADD(
-		var_updatedSpeed, var_deltaSpeed);
-	if (var_updatedSpeed < 0x8000)
-		goto loc_17ED9;
-	if (var_updatedSpeed > 0xF500)
-		goto loc_17ED9;
-	goto loc_17D5F;
-
-loc_17ED9:
-	var_updatedSpeed = 0xF500;
-	goto loc_17D5F;
-
-loc_17EE2:
-	if ((legacy_u16)LEGACY_S16_WRAP_NEGATE(var_deltaSpeed) >
-		var_updatedSpeed)
-		goto loc_17EEF;
-	goto loc_17D59;
-
-loc_17EEF:
-	var_updatedSpeed = 0;
-	goto loc_17D5F;
-
-loc_17EF8:
-loc_17EFB:
-	if (var_4 <= 0x1400)
-		goto loc_17F28;
-	arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
-		arg_carState->car_speed, arg_carState->car_speed2) >> 1);
-	arg_carState->car_speed2 = arg_carState->car_speed;
-	arg_carState->car_engineLimiterTimer = 5;
-	goto loc_17F45;
-
-loc_17F28:
-	arg_carState->car_speed = var_updatedSpeed;
-	arg_carState->car_speed2 = var_updatedSpeed;
-	goto loc_17F45;
-
-loc_17F3C:
-	arg_carState->car_speed = var_updatedSpeed;
-
-loc_17F45:
-	arg_carState->car_currpm = update_rpm_from_speed(arg_carState->car_currpm, arg_carState->car_speed, arg_carState->car_gearratio, arg_carState->car_changing_gear, arg_simd->idle_rpm);
-
-	if (arg_carState->car_sumSurfAllWheels == 0)
-		goto loc_17FBF;
-	if (arg_carState->car_lastrpm <= arg_carState->car_currpm)
-		goto loc_17FBF;
-	if (LEGACY_S16_WRAP_SUB(arg_carState->car_lastrpm,
-		arg_carState->car_currpm) <= 0x7D0)
-		goto loc_17FA4;
-	if (arg_simd->idle_torque * arg_carState->car_gearratioshr8 <= 0x2EE0)
-		goto loc_17FBF;
-	arg_carState->car_engineLimiterTimer = 0x1E;
-	goto loc_17FBF;
-
-loc_17FA4:
-	// NOTE: signed comparison:
-	if (LEGACY_S16_WRAP_SUB(arg_carState->car_currpm,
-		arg_carState->car_lastrpm) > 0x7D0) {
-		arg_carState->car_engineLimiterTimer = 0xA;
-		arg_carState->car_speed2 = LEGACY_U16_WRAP_SUB(
-			arg_carState->car_speed2, 0x500U);
+	if (var_deltaSpeed >= 0) {
+		if (var_updatedSpeed < 0x8000) {
+			var_updatedSpeed = LEGACY_U16_WRAP_ADD(
+				var_updatedSpeed, var_deltaSpeed);
+		} else {
+			var_updatedSpeed = LEGACY_U16_WRAP_ADD(
+				var_updatedSpeed, var_deltaSpeed);
+			if (var_updatedSpeed < 0x8000 || var_updatedSpeed > 0xF500)
+				var_updatedSpeed = 0xF500;
+		}
+	} else if ((legacy_u16)LEGACY_S16_WRAP_NEGATE(var_deltaSpeed) >
+		var_updatedSpeed) {
+		var_updatedSpeed = 0;
+	} else {
+		var_updatedSpeed = LEGACY_U16_WRAP_ADD(
+			var_updatedSpeed, var_deltaSpeed);
 	}
 
-loc_17FBF:
+	if (arg_carState->car_sumSurfRearWheels == 0) {
+		arg_carState->car_speed = var_updatedSpeed;
+	} else {
+		var_4 = car_absolute_word(LEGACY_S16_WRAP_SUB(
+			arg_carState->car_speed2, var_updatedSpeed));
+		if (var_4 > 0x1400) {
+			arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
+				arg_carState->car_speed,
+				arg_carState->car_speed2) >> 1);
+			arg_carState->car_speed2 = arg_carState->car_speed;
+			arg_carState->car_engineLimiterTimer = 5;
+		} else {
+			arg_carState->car_speed = var_updatedSpeed;
+			arg_carState->car_speed2 = var_updatedSpeed;
+		}
+	}
+
+	arg_carState->car_currpm = update_rpm_from_speed(
+		arg_carState->car_currpm, arg_carState->car_speed,
+		arg_carState->car_gearratio, arg_carState->car_changing_gear,
+		arg_simd->idle_rpm);
+
+	if (arg_carState->car_sumSurfAllWheels != 0 &&
+		arg_carState->car_lastrpm > arg_carState->car_currpm) {
+		if (LEGACY_S16_WRAP_SUB(arg_carState->car_lastrpm,
+			arg_carState->car_currpm) > 0x7D0) {
+			if (arg_simd->idle_torque *
+				arg_carState->car_gearratioshr8 > 0x2EE0) {
+				arg_carState->car_engineLimiterTimer = 0x1E;
+			}
+		} else if (LEGACY_S16_WRAP_SUB(arg_carState->car_currpm,
+			arg_carState->car_lastrpm) > 0x7D0) {
+			arg_carState->car_engineLimiterTimer = 0xA;
+			arg_carState->car_speed2 = LEGACY_U16_WRAP_SUB(
+				arg_carState->car_speed2, 0x500U);
+		}
+	}
+
 	if (arg_carState->car_speed2 > state.game_topSpeed) {
 		state.game_topSpeed = arg_carState->car_speed2;
 	}
-
-loc_17FD0:
-	return;
 }
