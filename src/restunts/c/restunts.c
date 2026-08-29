@@ -670,7 +670,7 @@ extern legacy_s16 mouse_oldx;
 extern legacy_s16 mouse_oldy;
 extern legacy_s16 mouse_oldbut;
 extern legacy_s16 mousebutinputcode;
-extern legacy_s16 get_joy_flags(void);
+extern legacy_s16 dos_get_joy_flags(void);
 extern legacy_u8 kbinput[];
 extern legacy_u8 kbscancodes[10];
 extern void mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y);
@@ -693,7 +693,7 @@ legacy_s16 get_kb_or_joy_flags(void)
 			flags |= action_flags[index];
 	}
 	if (flags == 0)
-		flags = (legacy_u16)get_joy_flags();
+		flags = (legacy_u16)dos_get_joy_flags();
 	return LEGACY_S16_FROM_BITS(flags);
 }
 
@@ -713,7 +713,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 	key = (legacy_u16)dos_kb_get_char();
 	if (key != 0)
 		kbormouse = 0;
-	current_joy_flags = (legacy_u16)get_joy_flags();
+	current_joy_flags = (legacy_u16)dos_get_joy_flags();
 	kbjoyflags = get_kb_or_joy_flags();
 	changed_or_repeating = 0;
 	if ((legacy_u16)joyflags != current_joy_flags) {
@@ -3035,7 +3035,7 @@ void do_joy_restext(void)
 	for (;;) {
 		if (kb_read_char() != 0)
 			break;
-		joy_flags = (legacy_u16)get_joy_flags();
+		joy_flags = (legacy_u16)dos_get_joy_flags();
 		if ((joy_flags & 0x30U) != 0)
 			break;
 		next_selected = (legacy_s16)sub_307D2(joy_flags);
