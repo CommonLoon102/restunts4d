@@ -15,20 +15,9 @@
 #define SHAPE2D_UNK5_OFFSET   14U
 #define SHAPE2D_UNK6_OFFSET   15U
 
-#pragma pack (push, 1)
-struct SHAPE2D {
-	legacy_u16 s2d_width;
-	legacy_u16 s2d_height;
-	legacy_u16 s2d_unk1;
-	legacy_u16 s2d_unk2;
-	legacy_u16 s2d_pos_x;
-	legacy_u16 s2d_pos_y;
-	legacy_u8 s2d_unk3;
-	legacy_u8 s2d_unk4;
-	legacy_u8 s2d_unk5;
-	legacy_u8 s2d_unk6;
-};
+struct SHAPE2D;
 
+#pragma pack (push, 1)
 struct SPRITE {
 	struct SHAPE2D far* sprite_bitmapptr;
 	legacy_u16 sprite_unk1;
@@ -46,9 +35,6 @@ struct SPRITE {
 	legacy_u16 sprite_widthsum;
 };
 #pragma pack (pop)
-
-typedef char legacy_shape2d_must_be_16_bytes[
-	(sizeof(struct SHAPE2D) == SHAPE2D_HEADER_SIZE) ? 1 : -1];
 
 legacy_u16 shape2d_get_width(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_height(const struct SHAPE2D far* shape);
