@@ -842,7 +842,7 @@ static void shape2d_scale_transparent_impl(struct SHAPE2D far* shape,
 		return;
 	source = LEGACY_U16_WRAP_ADD(FP_OFF(shape),
 		(legacy_u16)sizeof(struct SHAPE2D));
-	step = (legacy_u16)(0x10000UL / scale);
+	step = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(0x10000UL, scale);
 	horizontal_start = 0;
 	vertical_fraction = 0;
 	center_skip = (legacy_u16)((step >> 8) >> 1);
@@ -1239,8 +1239,14 @@ void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legac
 
 	dividend = LEGACY_S16_WRAP_ADD(source_x, destination_shift);
 	divisor = LEGACY_S16_FROM_BITS(sprite1.sprite_width2);
-	quotient = (legacy_s16)(dividend / divisor);
-	remainder = (legacy_s16)(dividend % divisor);
+	if ((legacy_u16)divisor == 0U ||
+		((legacy_u16)dividend == 0x8000U && divisor == -1)) {
+		quotient = 0;
+		remainder = 0;
+	} else {
+		quotient = LEGACY_S16_DIV_OR_ZERO(dividend, divisor);
+		remainder = (legacy_s16)(dividend % divisor);
+	}
 	source_line = LEGACY_U16_WRAP_ADD(FP_OFF(sprite2.sprite_lineofs),
 		(legacy_u16)((legacy_u16)source_y << 1));
 	destination_line = LEGACY_U16_WRAP_ADD(FP_OFF(sprite1.sprite_lineofs),
