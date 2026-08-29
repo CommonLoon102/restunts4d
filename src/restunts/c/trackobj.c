@@ -376,13 +376,12 @@ void build_track_object(struct VECTOR* world_position,
 			byte_4392C = 0;
 		else if (next_position.z >= 0)
 			wallindex = 0x66;
-		goto track_contact_ramp_surface;
+		/* fall through */
 
 	case 17: /* Solid ramp. */
-		if (next_position.z >= 0x1DC)
+		if (physical_model == 17 && next_position.z >= 0x1DC)
 			wallindex = 0x67;
 
-track_contact_ramp_surface:
 		if (track_abs(next_position.x) < 0x78) {
 			planindex = 3;
 			current_surf_type = (legacy_u8)surface_type;
@@ -402,13 +401,22 @@ track_contact_ramp_surface:
 
 	case 18: /* Elevated road. */
 	case 19: /* Elevated span. */
-		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) <= 0x186)
-			break;
-		byte_4392C = 0;
-		/* fall through */
 	case 20: /* Solid road. */
-track_contact_solid_road:
+	case 22: /* Overpass. */
+		if (physical_model == 22) {
+			if (LEGACY_S16_WRAP_SUB(world_position->y,
+				terrainHeight) <= 0x186) {
+				if (absolute_z <= 0x78)
+					current_surf_type = (legacy_u8)surface_type;
+				break;
+			}
+			byte_4392C = 0;
+		} else if (physical_model != 20) {
+			if (LEGACY_S16_WRAP_SUB(world_position->y,
+				terrainHeight) <= 0x186)
+				break;
+			byte_4392C = 0;
+		}
 		if (track_abs(next_position.x) <= 0x78) {
 			planindex = 2;
 			current_surf_type = (legacy_u8)surface_type;
@@ -456,28 +464,18 @@ track_contact_solid_road:
 			radius < 0 ? 0x69 : 0x7B);
 		break;
 
-	case 22: /* Overpass. */
-		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) <= 0x186) {
-			if (absolute_z <= 0x78)
-				current_surf_type = (legacy_u8)surface_type;
-			break;
-		}
-		byte_4392C = 0;
-		goto track_contact_solid_road;
-
 	case 24: /* Banked-road entrance A. */
 		value = 0x23;
 		value2 = 0;
 		terrain_angle = -0x2A0;
-		goto track_contact_banked_entrance;
+		/* fall through */
 
 	case 23: /* Banked-road entrance B. */
-		value = 0x19;
-		value2 = 1;
-		terrain_angle = 0xA0;
-
-track_contact_banked_entrance:
+		if (physical_model == 23) {
+			value = 0x19;
+			value2 = 1;
+			terrain_angle = 0xA0;
+		}
 		if (absolute_x > 0x78)
 			break;
 		if (value2 == 0 && next_position.x <= -0x78) {
@@ -718,12 +716,11 @@ track_contact_loop_base:
 
 	case 31: /* Half-pipe. */
 		value = 1;
-		goto track_contact_pipe;
+		/* fall through */
 
 	case 30: /* Pipe. */
-		value = 0;
-
-track_contact_pipe:
+		if (physical_model == 30)
+			value = 0;
 		if (track_abs(next_position.x) >= 0xA4 && absolute_x <= 0xA4) {
 			wallHeight = 0x97;
 			wallindex = next_position.x <= 0 ? 0x9C : 0x9B;
@@ -802,15 +799,15 @@ track_contact_pipe:
 		value2 = 0x4F;
 		value3 = 0x32;
 		terrain_angle = 0x4B;
-		goto track_contact_vertical_corkscrew;
+		/* fall through */
 
 	case 33: /* Up/down corkscrew B. */
-		value = position.x;
-		value2 = 0x69;
-		value3 = 0;
-		terrain_angle = 0x19;
-
-track_contact_vertical_corkscrew:
+		if (physical_model == 33) {
+			value = position.x;
+			value2 = 0x69;
+			value3 = 0;
+			terrain_angle = 0x19;
+		}
 		corkFlag = 1;
 		if (position.z < 0 &&
 			LEGACY_S16_WRAP_SUB(world_position->y,
