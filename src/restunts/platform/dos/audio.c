@@ -15,10 +15,18 @@ typedef void (far* driver_master_state_type)(legacy_s16 operation,
 
 extern legacy_u8 audiotimers[];
 extern legacy_u8 audiochunks_unk[];
+extern legacy_s8 audioflag2;
+extern legacy_s8 audioflag6;
 extern legacy_u8 byte_40634;
+extern legacy_u8 byte_40635;
+extern legacy_u8 byte_40639;
 extern legacy_u8 byte_459D2;
 extern legacy_u8 unk_45A26[];
 extern void far* audiodriverbinary;
+extern legacy_s16 word_4063A;
+extern void audio_driver_timer(void);
+extern void timer_remove_callback(void (far* callback)(void));
+extern void mmgr_release(void far* memory);
 
 static void far* dos_audio_driver_entry(legacy_u16 offset)
 {
@@ -70,6 +78,14 @@ void dos_audio_driver_start(void)
 	start();
 }
 
+static void dos_audio_driver_shutdown(void)
+{
+	driver_operation_type shutdown;
+
+	shutdown = (driver_operation_type)dos_audio_driver_entry(3U);
+	shutdown();
+}
+
 void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u16 value, void far* resource)
 {
@@ -97,6 +113,28 @@ void dos_audio_driver_set_master_state(legacy_s16 operation,
 	set_master_state = (driver_master_state_type)
 		dos_audio_driver_entry(0x3FU);
 	set_master_state(operation, state);
+}
+
+void dos_audio_shutdown(void)
+{
+	word_4063A = 1;
+	if (audiodriverbinary != 0) {
+		timer_remove_callback(audio_driver_timer);
+		audioflag2 = 0;
+		audioflag6 = 0;
+		if (byte_40634 != 0) {
+			byte_40639 = 0x64U;
+			dos_audio_driver_set_master_state(
+				4, (void far*)&word_4063A);
+		}
+		dos_audio_driver_start();
+		dos_audio_driver_shutdown();
+		mmgr_release(audiodriverbinary);
+		audiodriverbinary = 0;
+		byte_40634 = 0;
+		byte_40635 = 0;
+	}
+	word_4063A = 0;
 }
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)

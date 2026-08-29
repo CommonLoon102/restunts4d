@@ -1105,6 +1105,7 @@ extern void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
 extern void dos_audio_driver_suspend_all(legacy_u8* contexts);
 extern void dos_audio_driver_set_master_state(legacy_s16 operation,
 	void far* state);
+extern void dos_audio_shutdown(void);
 extern void sub_39700(void);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
 void sub_374DE(legacy_s16 channel);
@@ -10048,6 +10049,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 		dos_timer_shutdown();
 		libsub_quit_to_dos_alt(1);
 	}
+	add_exit_handler(dos_audio_shutdown);
 	
 	if (argnosound) {
 		audio_toggle_flag2();
@@ -10241,7 +10243,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	// shutdown
 	mouse_draw_opaque_check();
 	dos_timer_shutdown();
-	audiodrv_atexit();
+	dos_audio_shutdown();
 	kb_exit_handler();
 	dos_kb_set_numlock();
 	dos_video_set_mode7();
@@ -10310,7 +10312,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			if (result >= 1) {
 				mouse_draw_opaque_check();
 				dos_timer_shutdown();
-				audiodrv_atexit();
+				dos_audio_shutdown();
 				kb_exit_handler();
 				dos_kb_set_numlock();
 				dos_video_set_mode7();
