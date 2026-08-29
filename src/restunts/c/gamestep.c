@@ -162,9 +162,13 @@ void update_gamestate(void)
 		sub_2298C();
 		if (state.field_42A != 0)
 			sub_19BA0();
+#ifndef RESTUNTS_HEADLESS
 		audio_carstate();
+#endif
 	} else if (game_replay_mode == 1) {
+#ifndef RESTUNTS_HEADLESS
 		audio_carstate();
+#endif
 		if (byte_4393C != 0) {
 			if (word_44DCA < 0x1C2)
 				word_44DCA += 8;

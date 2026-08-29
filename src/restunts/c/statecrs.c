@@ -299,6 +299,7 @@ loc_1967F:
     shl     ax, 1
     mov     state.game_frames_per_sec, ax*/
 loc_196B3:
+#ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		goto loc_1964E;
 	if (byte_459D8 == 0)
@@ -321,13 +322,15 @@ loc_196CE:
     //push    word_4408C
 	audio_function2_wrap(word_4408C);
 loc_196D2:
-    goto loc_1964E;
+#endif
+	goto loc_1964E;
 /*	call    audio_function2_wrap
     add     sp, 2
     jmp     loc_1964E
     ; align 2
     db 144*/
 loc_196DE:
+#ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		goto loc_19704;
 	if (byte_459D8 == 0)
@@ -348,8 +351,9 @@ loc_196F8:
 	audio_function2_wrap(word_4408C);
     //push    word_4408C
 loc_196FC:
-    //call    audio_function2_wrap
-    //add     sp, 2
+	//call    audio_function2_wrap
+	//add     sp, 2
+#endif
 loc_19704:
 	var_cState->car_crashBmpFlag = 2;
 	var_2 = 1;

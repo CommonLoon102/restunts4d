@@ -92,6 +92,10 @@ extern struct GAMESTATE state;
 extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
 
+void copy_string(legacy_s8* destination, legacy_s8 far* source);
+void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
+void load_opponent_data(void);
+
 extern legacy_s16 video_flag1_is1;
 extern legacy_s16 video_flag2_is1;
 extern legacy_s16 video_flag3_isFFFF;

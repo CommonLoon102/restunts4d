@@ -3108,6 +3108,7 @@ loc_1620A:
     jnz     short loc_16236
     jmp     loc_16840*/
 loc_16236:
+#ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		goto loc_1625F;
 	if (arg_MplayerFlag == 0)
@@ -3127,6 +3128,7 @@ loc_1624A:
     //push    word_43964
 loc_1624E:
 	//audio_unk3(arg_pState->field_CF, );
+#endif
 /*    mov     bx, [bp+arg_pState]
     mov     al, [bx+CARSTATE.field_CF]
     sub     ah, ah

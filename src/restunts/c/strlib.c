@@ -1,5 +1,16 @@
 #include "restunts.h"
 
+void copy_string(legacy_s8* destination, legacy_s8 far* source)
+{
+	/* Preserve the original post-copy lookahead, including its empty input bug. */
+	do {
+		*destination = *source;
+		destination++;
+		source++;
+	} while (*source != 0);
+	*destination = 0;
+}
+
 legacy_s8* _strcpy(legacy_s8* destination, const legacy_s8* source)
 {
 	legacy_s8* result;
