@@ -1,11 +1,12 @@
 #include <dos.h>
 #include <restunts.h>
+#include <fileio.h>
 #include <memmgr.h>
-
-typedef legacy_u16 size_t;
-typedef legacy_s16 FILE;
+#include <platform.h>
 
 #ifdef RESTUNTS_ORIGINAL
+typedef legacy_u16 size_t;
+typedef legacy_s16 FILE;
 
 legacy_s16 g_errno;
 
@@ -191,8 +192,32 @@ void init_trackdata(void) {
 }
 #else
 
-size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file);
+typedef legacy_u16 REPLDUMP_OUTPUT;
 
+static REPLDUMP_OUTPUT repldump_output_open(const legacy_s8* path)
+{
+	return dos_file_open(path, 1);
+}
+
+static legacy_u16 repldump_output_write(REPLDUMP_OUTPUT output,
+	const void far* source, legacy_u16 length)
+{
+	return dos_file_write(output, source, length);
+}
+
+static void repldump_output_close(REPLDUMP_OUTPUT output)
+{
+	(void)dos_file_close(output);
+}
+
+#endif
+
+#ifdef RESTUNTS_ORIGINAL
+typedef FILE* REPLDUMP_OUTPUT;
+#define repldump_output_open(path) fopen(path, "w")
+#define repldump_output_write(output, source, length) \
+	fwrite(source, length, 1U, output)
+#define repldump_output_close(output) fclose(output)
 #endif
 
 #ifndef RESTUNTS_ORIGINAL
@@ -209,6 +234,7 @@ static void headless_status(const legacy_s8* format, ...)
 {
 	(void)format;
 }
+#undef printf
 #define printf headless_status
 #endif
 
@@ -219,7 +245,7 @@ static void headless_status(const legacy_s8* format, ...)
 legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	legacy_s16 i, len;
 	legacy_s8 outname[13], carid[5];
-	FILE* fout;
+	REPLDUMP_OUTPUT fout;
 
 	if (argc < 2) {
 		printf("Usage: %s REPLNAME\n\n", argv[0]);
@@ -301,7 +327,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	// Inits from run_game()...
 	word_449EA = 0xFFFF;
-	run_game_random = get_kevinrandom() << 3;
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), 3U);
 	replaybar_toggle = 1;
 	is_in_replay = 0;
 	idle_expired = 0;
@@ -353,7 +379,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	outname[12] = 0;
 	printf("Creating output file '%s'... ", outname);
 
-	fout = fopen(outname, "w");
+	fout = repldump_output_open(outname);
 	if (!fout) {
 		printf("FAIL\n");
 		return 1;
@@ -361,11 +387,12 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	printf("OK\n");
 
 	#ifdef RESTUNTS_ORIGINAL
-	fwrite(&gameconfig.game_recordedframes, sizeof(legacy_u16), 1, fout);
+	repldump_output_write(fout, &gameconfig.game_recordedframes,
+		sizeof(legacy_u16));
 	#else
 	LEGACY_WRITE_U16_LE(serialized_gamestate,
 		gameconfig.game_recordedframes);
-	fwrite(serialized_gamestate, 2U, 1, fout);
+	repldump_output_write(fout, serialized_gamestate, 2U);
 	#endif
 
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
@@ -376,17 +403,17 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 #endif
 		update_gamestate();
 	#ifdef RESTUNTS_ORIGINAL
-		fwrite(&state, sizeof(struct GAMESTATE), 1, fout);
+		repldump_output_write(fout, &state, sizeof(struct GAMESTATE));
 	#else
-		fwrite(serialized_gamestate,
-			gamestate_serialize(serialized_gamestate, &state), 1, fout);
+		repldump_output_write(fout, serialized_gamestate,
+			gamestate_serialize(serialized_gamestate, &state));
 	#endif
 		//printf("Current frame %d\n", state.frame);
 	}
 
 	printf("OK\n");
 
-	fclose(fout);
+	repldump_output_close(fout);
 
 #ifdef RESTUNTS_ORIGINAL
 	if (argc == 2) {
