@@ -3,6 +3,33 @@
 
 extern legacy_u8 oppnentSped[10];
 
+static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
+	legacy_s16 mass)
+{
+	legacy_u32 product;
+	legacy_u32 quotient;
+	legacy_s16 low_word;
+
+	product = (legacy_u32)LEGACY_S32_WRAP_MUL(
+		(legacy_s32)acceleration, 0x19L);
+	quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
+	low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
+	return LEGACY_S16_SAR(low_word, 1U);
+}
+
+static legacy_s16 apply_opponent_acceleration_drag(
+	legacy_s16 acceleration, legacy_u8 drag)
+{
+	legacy_s32 product;
+	legacy_s32 reduction;
+
+	product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)(legacy_u16)drag, (legacy_s32)acceleration);
+	reduction = LEGACY_S32_DIV_OR_ZERO(product, 0xC8L);
+	return LEGACY_S16_WRAP_SUB(acceleration,
+		LEGACY_S16_FROM_BITS((legacy_u16)reduction));
+}
+
 legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
 		currpm = ((legacy_u32)speed * gearratio) >> 16;
@@ -599,9 +626,8 @@ loc_17E0C:
     mov     [bp+var_currTorque], al*/
 loc_17E34:
 	var_deltaSpeed += (arg_carState->car_gearratioshr8 * var_currTorque) >> 4;
-	var_deltaSpeed = (legacy_u32)((legacy_s32)var_deltaSpeed * 0x19) /
-		(legacy_u16)arg_simd->car_mass;
-	var_deltaSpeed >>= 1;
+	var_deltaSpeed = scale_acceleration_by_mass(
+		var_deltaSpeed, arg_simd->car_mass);
 
 /*    mov     al, [bp+var_currTorque]
     sub     ah, ah
@@ -635,7 +661,8 @@ loc_17E34:
 	var_currTorque = (legacy_u16)(0xC8 - *oppnentSped) >> 1;
 	if (var_currTorque == 0)
 		goto loc_17EAD;
-	var_deltaSpeed -=  ((legacy_s32)var_currTorque * var_deltaSpeed) / 0xC8;
+	var_deltaSpeed = apply_opponent_acceleration_drag(
+		var_deltaSpeed, var_currTorque);
 /*    cmp     [bp+arg_MplayerFlag], 0
     jz      short loc_17EAD
     mov     al, oppnentSped
