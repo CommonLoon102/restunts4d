@@ -6,34 +6,13 @@
 #include "memmgr.h"
 #include "platform.h"
 
-#if defined(RESTUNTS_DOS) && !defined(RESTUNTS_HEADLESS) && \
-	!defined(RESTUNTS_FULL)
-
-#define pushregs()\
-	_asm {\
-		push dx\
-	}\
-
-
-#define popregs()\
-	_asm {\
-		pop dx\
-	}
-
-#define pushbx()\
-	_asm {\
-		push bx\
-	}
-
-#define popbx()\
-	_asm {\
-		pop bx\
-	}
+#ifdef RESTUNTS_DOS
+#include "../platform/dos/legacy_registers.h"
 #else
-#define pushregs() ((void)0)
-#define popregs() ((void)0)
-#define pushbx() ((void)0)
-#define popbx() ((void)0)
+#define LEGACY_SAVE_DX() ((void)0)
+#define LEGACY_RESTORE_DX() ((void)0)
+#define LEGACY_SAVE_BX() ((void)0)
+#define LEGACY_RESTORE_BX() ((void)0)
 #endif
 
 #if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS) || \
@@ -512,7 +491,7 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	const legacy_s8* c;
 	const legacy_s8* result;
 
-	pushregs();
+	LEGACY_SAVE_DX();
 	
 	result = filename;
 	for (c = filename; *c; c++) {
@@ -520,7 +499,7 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 			result = c + 1;
 	}
 	
-	popregs();
+	LEGACY_RESTORE_DX();
 	return result;
 }
 
@@ -752,7 +731,7 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 	legacy_u16 far* destptr;
 	legacy_u16 far* srcptr;
 
-	pushregs();
+	LEGACY_SAVE_DX();
 
 	srcseg += paras;
 	destseg += paras;
@@ -778,7 +757,7 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 			count--;
 		}
 	}
-	popregs();
+	LEGACY_RESTORE_DX();
 }
 
 void mmgr_find_free(void) {
@@ -787,7 +766,7 @@ void mmgr_find_free(void) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	pushregs();
+	LEGACY_SAVE_DX();
 
 	ressi = resendptr2;
 	resdi = ressi;
@@ -823,7 +802,7 @@ void mmgr_find_free(void) {
 	resdi++;
 	resendptr1 = resdi;
 
-	popregs();
+	LEGACY_RESTORE_DX();
 }
 
 void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
@@ -925,8 +904,8 @@ void mmgr_release(legacy_s8 far* ptr) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	pushregs();
-	pushbx();
+	LEGACY_SAVE_DX();
+	LEGACY_SAVE_BX();
 	
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
@@ -938,8 +917,8 @@ void mmgr_release(legacy_s8 far* ptr) {
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		highchunk->resstate =
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 0;
-		popbx();
-		popregs();
+		LEGACY_RESTORE_BX();
+		LEGACY_RESTORE_DX();
 		return;
 	}
 #endif
@@ -959,8 +938,8 @@ void mmgr_release(legacy_s8 far* ptr) {
 		resptr2 = ressi;
 	}
 
-	popbx();
-	popregs();
+	LEGACY_RESTORE_BX();
+	LEGACY_RESTORE_DX();
 }
 
 // Rename a live arena chunk, so a buffer filled under one name can be handed
@@ -1026,7 +1005,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	pushregs();
+	LEGACY_SAVE_DX();
 
 	(void)arg_0;
 	regax = arg_2;
@@ -1039,12 +1018,12 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", arg_2);
 		if (arg_4 <= highchunk->resparas) {
 			highchunk->resparas = arg_4;
-			popregs();
+			LEGACY_RESTORE_DX();
 			return arg_4;
 		}
 		if (highpool_fits_at(regax, arg_4)) {
 			highchunk->resparas = arg_4;
-			popregs();
+			LEGACY_RESTORE_DX();
 			return 0;
 		}
 		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
@@ -1061,7 +1040,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 	regax = arg_4;
 	if (regax <= ressi->ressize) {
 		ressi->ressize = regax;
-		popregs();
+		LEGACY_RESTORE_DX();
 		return regax;
 	}
 
@@ -1074,7 +1053,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		resmaxsize = regax;
 
 	if (regax <= resdi->resofs) {
-		popregs();
+		LEGACY_RESTORE_DX();
 		return 0;
 	}
 
@@ -1091,7 +1070,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		ressi++;
 		resendptr1 = ressi;
 	}
-	popregs();
+	LEGACY_RESTORE_DX();
 	return 0;
 }
 
