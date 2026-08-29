@@ -584,13 +584,16 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 	legacy_s16 end_y;
 	legacy_s16 scaled_start_y;
 	legacy_s16 scaled_end_y;
+	legacy_s16 frame_divisor;
+	legacy_s32 scaled_coordinate;
 	struct POINT2D point;
 	legacy_s16 i;
 
 	crack_lines = (legacy_s16 far*)locate_shape_alt(gameresptr, "crak");
 	crack_info = (legacy_s16 far*)locate_shape_alt(gameresptr, "cinf");
-	frame_index = (legacy_s16)((legacy_s16)frame /
-		(legacy_s16)(framespersec / 7U));
+	frame_divisor = LEGACY_S16_FROM_BITS(
+		LEGACY_U16_DIV_OR_ZERO(framespersec, 7U));
+	frame_index = LEGACY_S16_DIV_OR_ZERO(frame, frame_divisor);
 	if (frame_index >= crack_info[0])
 		frame_index = LEGACY_S16_WRAP_SUB(crack_info[0], 1);
 	line_count = crack_info[frame_index + 1];
@@ -601,10 +604,14 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 		start_y = crack_lines[i * 4 + 1];
 		end_x = crack_lines[i * 4 + 2];
 		end_y = crack_lines[i * 4 + 3];
-		scaled_start_y = (legacy_s16)(((legacy_s32)start_y *
-			(legacy_s16)height) / 200L);
-		scaled_end_y = (legacy_s16)(((legacy_s32)end_y *
-			(legacy_s16)height) / 200L);
+		scaled_coordinate = LEGACY_S32_WRAP_MUL(
+			(legacy_s32)start_y, (legacy_s32)height);
+		scaled_start_y = LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, 200L));
+		scaled_coordinate = LEGACY_S32_WRAP_MUL(
+			(legacy_s32)end_y, (legacy_s32)height);
+		scaled_end_y = LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, 200L));
 
 		preRender_line(start_x,
 			LEGACY_S16_WRAP_SUB(
@@ -2455,7 +2462,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 
 			di = (state.game_frame >> 2) % 3 ;
-			var_counter = ((legacy_s32)idx << 8) / (legacy_s32)sdgame2_widths[di];
+			var_counter = LEGACY_S16_FROM_BITS((legacy_u16)
+				LEGACY_S32_DIV_OR_ZERO(
+					LEGACY_S32_WRAP_MUL((legacy_s32)idx, 0x100L),
+					(legacy_s32)sdgame2_widths[di]));
 			shape_op_explosion(var_counter, sdgame2shapes[di], offset_vector.x, offset_vector.y);
 		}
 	}
