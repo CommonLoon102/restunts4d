@@ -36,13 +36,12 @@ extern legacy_s16 word_46486[4];
 
 static legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
-	return (legacy_u16)source[0] | ((legacy_u16)source[1] << 8);
+	return LEGACY_READ_U16_LE(source);
 }
 
 static void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value)
 {
-	destination[0] = (legacy_u8)value;
-	destination[1] = (legacy_u8)(value >> 8);
+	LEGACY_WRITE_U16_LE(destination, value);
 }
 
 legacy_u16 shape2d_get_width(const struct SHAPE2D far* shape)

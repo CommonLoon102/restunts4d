@@ -1782,16 +1782,12 @@ void nopsub_37750(legacy_s16 channel, void far* value)
 
 legacy_u32 audioresource_get_dword(const legacy_u8 far* source)
 {
-	return (legacy_u32)source[0] |
-		((legacy_u32)source[1] << 8) |
-		((legacy_u32)source[2] << 16) |
-		((legacy_u32)source[3] << 24);
+	return LEGACY_READ_U32_LE(source);
 }
 
 legacy_u16 audioresource_get_word(const legacy_u8 far* source)
 {
-	return (legacy_u16)((legacy_u16)source[0] |
-		((legacy_u16)source[1] << 8));
+	return LEGACY_READ_U16_LE(source);
 }
 
 void audioresource_copy_4_bytes(legacy_u8 far* destination,
@@ -1970,23 +1966,19 @@ void audio_release_channel_range(legacy_s16 first_channel,
 
 static legacy_u16 audio_far_read_u16(const legacy_u8 far* source)
 {
-	return (legacy_u16)((legacy_u16)source[0] |
-		((legacy_u16)source[1] << 8));
+	return LEGACY_READ_U16_LE(source);
 }
 
 static legacy_u32 audio_context_read_u32(const legacy_u8* context,
 	legacy_u16 offset)
 {
-	return (legacy_u32)LEGACY_READ_U16_LE(context + offset) |
-		((legacy_u32)LEGACY_READ_U16_LE(context + offset + 2U) << 16);
+	return LEGACY_READ_U32_LE(context + offset);
 }
 
 static void audio_context_write_u32(legacy_u8* context, legacy_u16 offset,
 	legacy_u32 value)
 {
-	LEGACY_WRITE_U16_LE(context + offset, (legacy_u16)value);
-	LEGACY_WRITE_U16_LE(context + offset + 2U,
-		(legacy_u16)(value >> 16));
+	LEGACY_WRITE_U32_LE(context + offset, value);
 }
 
 static void far* audio_select_sample_resource(void far* original_resource,
@@ -6072,9 +6064,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 			score_offset = LEGACY_U16_WRAP_ADD(
 				LEGACY_U16_WRAP_MUL(ranking_entry_order[0], 0x34U), 0x32U);
 			scores = (legacy_u8 far*)td11_highscores;
-			score = (legacy_u16)scores[score_offset] |
-				((legacy_u16)scores[
-					LEGACY_U16_WRAP_ADD(score_offset, 1U)] << 8);
+			score = LEGACY_READ_U16_LE(scores + score_offset);
 			if (score != 0xFFFFU) {
 				copy_string(&resID_byte1,
 					locate_text_res(mainresptr, "hs0"));
@@ -6407,8 +6397,7 @@ extern legacy_s8 byte_459E0[];
 
 static legacy_u16 read_highscore_u16(legacy_u8 far* address)
 {
-	return (legacy_u16)((legacy_u16)address[0] |
-		((legacy_u16)address[1] << 8));
+	return LEGACY_READ_U16_LE(address);
 }
 
 void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
