@@ -739,73 +739,30 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	vec_1C6.y = 0x7530;
 	vec_1C6.z = 0;
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-	if (arg_pState->car_sumSurfAllWheels == 0)
-		goto loc_14F76;
-	if (vec_FC.y >= 0)
-		goto loc_14F76;
-	if (arg_pState->car_speed2 <= 0x1E00)
-		goto loc_14F6E;
-	var_F0 = 192;
-	vec_1C6.y = -192; // 0xFF40
-	mat_mul_vector(&vec_1C6, &mat_unk, &vec_E4);
-	goto loc_14F7C;
-
-loc_14F6E:
-	var_F0 = -192; // 0FF40h
-	goto loc_14F7C;
-loc_14F76:
-    var_F0 = 0;
-loc_14F7C:
+	if (arg_pState->car_sumSurfAllWheels == 0 || vec_FC.y >= 0) {
+		var_F0 = 0;
+	} else if (arg_pState->car_speed2 <= 0x1E00) {
+		var_F0 = -192;
+	} else {
+		var_F0 = 192;
+		vec_1C6.y = -192;
+		mat_mul_vector(&vec_1C6, &mat_unk, &vec_E4);
+	}
 	vec_unk2.x = 0;
 	vec_unk2.y = 0;
 	planindex_copy = -1;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
-	var_wheelIndex = 0;
-	goto loc_14FFA;
-
-loc_14FA6:
-	pState_f36Mminf40sar2 = arg_pState->car_36MwhlAngle;
-loc_14FAC:
-	var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
-	legacy_execution_residue.wheel_plane_angles[var_wheelIndex] =
-		pState_f36Mminf40sar2;
-	if (arg_MplayerFlag != 0)
-		legacy_execution_residue.wheel_angle_stack_words[var_wheelIndex] =
-			pState_f36Mminf40sar2;
-	plane_rotate_op();
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lx, vec_planerotopresult.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->ly, vec_planerotopresult.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lz, vec_planerotopresult.z);
-
-loc_14FEC:
-	var_DEptrTo1C0++;
-	var_146ptrTo176++;
-	var_wheelIndex++;
-
-loc_14FFA:
-	if (var_wheelIndex < 4)
-		goto loc_15004;
-	goto loc_1513E;
-
-loc_15004:
+	for (var_wheelIndex = 0; var_wheelIndex < 4; var_wheelIndex++) {
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
 	vec_1C6.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc2[var_wheelIndex], 0x180));
-	if (var_F0 >= 0)
-		goto loc_1504A;
-	vec_1C6.y = LEGACY_S16_WRAP_SUB(vec_1C6.y, var_F0);
-
-loc_1504A:
-	if (var_EC == 0)
-		goto loc_15077;
-	mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
-	vec_1C6 = vec_FC;
-
-loc_15077:
+	if (var_F0 < 0)
+		vec_1C6.y = LEGACY_S16_WRAP_SUB(vec_1C6.y, var_F0);
+	if (var_EC != 0) {
+		mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
+		vec_1C6 = vec_FC;
+	}
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
 		pState_lvec1_x, vec_FC.x);
@@ -817,27 +774,31 @@ loc_15077:
 	var_146ptrTo176->lx = var_DEptrTo1C0->lx;
 	var_146ptrTo176->ly = var_DEptrTo1C0->ly;
 	var_146ptrTo176->lz = var_DEptrTo1C0->lz;
-	if (var_pSpeed2Scaled != 0)
-		goto loc_15115;
-	goto loc_14FEC;
-
-loc_15115:
-	vec_unk2.z = var_pSpeed2Scaled;
-	if (pState_f40_sar2 != 0)
-		goto loc_15126;
-	goto loc_14FA6;
-
-loc_15126:
-	if (var_wheelIndex < 2)
-		goto loc_15130;
-	goto loc_14FA6;
-
-loc_15130:
-	pState_f36Mminf40sar2 = LEGACY_S16_WRAP_SUB(
-		arg_pState->car_36MwhlAngle, pState_f40_sar2);
-	goto loc_14FAC;
-
-loc_1513E:
+	if (var_pSpeed2Scaled != 0) {
+		vec_unk2.z = var_pSpeed2Scaled;
+		pState_f36Mminf40sar2 = arg_pState->car_36MwhlAngle;
+		if (pState_f40_sar2 != 0 && var_wheelIndex < 2) {
+			pState_f36Mminf40sar2 = LEGACY_S16_WRAP_SUB(
+				arg_pState->car_36MwhlAngle, pState_f40_sar2);
+		}
+		var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
+		legacy_execution_residue.wheel_plane_angles[var_wheelIndex] =
+			pState_f36Mminf40sar2;
+		if (arg_MplayerFlag != 0) {
+			legacy_execution_residue.wheel_angle_stack_words[
+				var_wheelIndex] = pState_f36Mminf40sar2;
+		}
+		plane_rotate_op();
+		var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
+			var_DEptrTo1C0->lx, vec_planerotopresult.x);
+		var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
+			var_DEptrTo1C0->ly, vec_planerotopresult.y);
+		var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
+			var_DEptrTo1C0->lz, vec_planerotopresult.z);
+	}
+	var_DEptrTo1C0++;
+	var_146ptrTo176++;
+	}
     var_2 = 0;
 loc_15142:
 	var_2 = LEGACY_S8_WRAP_ADD(var_2, 1);
