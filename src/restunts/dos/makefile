@@ -55,8 +55,10 @@ ifeq ($(TARGET), full)
   RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
   ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(CM_LIB_FILES) $(DOS_STACK_OBJFILE)
   CFLAGS = -DRESTUNTS_FULL
-  OUTFILE = restuntsc.exe
-  WLINK_OPTIONS = option START=headless_start option MAP=restuntsc.map
+  FULL_OUTFILE ?= restuntsc.exe
+  FULL_MAP ?= restuntsc.map
+  OUTFILE = $(FULL_OUTFILE)
+  WLINK_OPTIONS = option START=headless_start option MAP=$(FULL_MAP)
   WLINK_LIBRARIES = library s:\tools\lib\cm.lib
   ENTRY_DEP =
   ifneq ($(findstring \asm\build,$(ALL_OBJ_FILES)),)

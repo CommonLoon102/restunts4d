@@ -37,7 +37,10 @@ endif
 
 MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
 
-restunts: asm c dosplatform
+restunts: dosplatform c-full
+	make -C dos TARGET=full FULL_OUTFILE=restunts.exe FULL_MAP=restunts.map CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+
+restunts-legacy: asm c dosplatform
 	make -C dos $(MAKE_PARAMS)
 
 restunts-original: asmorig
