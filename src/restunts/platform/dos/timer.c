@@ -38,12 +38,47 @@ static void dos_timer_chain_previous_handler(void)
 
 static void dos_timer_increment_counter(legacy_u32* counter)
 {
-	legacy_u16* words;
+	*counter = LEGACY_U32_WRAP_ADD(*counter, 1UL);
+}
 
-	words = (legacy_u16*)counter;
-	words[0] = (legacy_u16)(words[0] + 1U);
-	if (words[0] == 0)
-		words[1] = (legacy_u16)(words[1] + 1U);
+legacy_s16 dos_timer_register_callback(void (far* callback)(void))
+{
+	legacy_u16 callback_index;
+
+	for (callback_index = 0; callback_index < 5U; callback_index++) {
+		if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
+			break;
+	}
+	if (callback_index == 5U)
+		return 0;
+
+	disable();
+	dos_timer_callbacks[callback_index] = 0;
+	dos_timer_callbacks[callback_index] = callback;
+	dos_timer_callbacks[callback_index + 1U] = 0;
+	enable();
+	return 1;
+}
+
+void dos_timer_unregister_callback(void (far* callback)(void))
+{
+	legacy_u16 callback_index;
+
+	for (callback_index = 0; callback_index < 5U; callback_index++) {
+		if (dos_timer_callbacks[callback_index] == callback)
+			break;
+	}
+	if (callback_index == 5U)
+		return;
+
+	disable();
+	while (callback_index < 4U) {
+		dos_timer_callbacks[callback_index] =
+			dos_timer_callbacks[callback_index + 1U];
+		callback_index++;
+	}
+	dos_timer_callbacks[4] = 0;
+	enable();
 }
 
 static void interrupt dos_timer_interrupt(void)

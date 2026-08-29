@@ -37,7 +37,6 @@ extern legacy_u16 dos_joystick_axis2_max;
 extern legacy_u16 dos_joystick_axis1_scale;
 extern legacy_u16 dos_joystick_axis2_scale;
 extern legacy_s16 dos_mouse_button_count;
-extern void (far* dos_timer_callbacks[6])(void);
 extern legacy_u32 dos_timer_counter;
 extern legacy_s16 dos_timer_callbacks_suspended;
 legacy_u32 timer_get_counter(void);
@@ -191,43 +190,14 @@ readchar_callback_type nopsub_kb_get_readchar_callback(void)
 
 void timer_reg_callback(void (far* callback)(void))
 {
-	legacy_u16 callback_index;
-	legacy_u16* callback_words;
-
-	for (callback_index = 0; callback_index < 5U; callback_index++) {
-		if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
-			break;
-	}
-	if (callback_index == 5U) {
+	if (dos_timer_register_callback(callback) == 0) {
 		fatal_error(input_callback_overflow_message);
-		return;
 	}
-
-	callback_words = (legacy_u16*)dos_timer_callbacks + callback_index * 2U;
-	callback_words[0] = FP_OFF(callback);
-	callback_words[1] = 0;
-	callback_words[1] = FP_SEG(callback);
-	callback_words[3] = 0;
 }
 
 void timer_remove_callback(void (far* callback)(void))
 {
-	legacy_u16 callback_index;
-
-	for (callback_index = 0; callback_index < 5U; callback_index++) {
-		if (dos_timer_callbacks[callback_index] == callback)
-			break;
-	}
-	if (callback_index == 5U)
-		return;
-
-	disable();
-	while (callback_index < 4U) {
-		dos_timer_callbacks[callback_index] = dos_timer_callbacks[callback_index + 1U];
-		callback_index++;
-	}
-	dos_timer_callbacks[4] = 0;
-	enable();
+	dos_timer_unregister_callback(callback);
 }
 
 void sub_307B4(void)
