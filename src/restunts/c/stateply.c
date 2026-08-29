@@ -1321,9 +1321,12 @@ loc_15398:
     jmp     short loc_1540C*/
 loc_153AE:
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = (vec_1C.x - vec_FC.x) << 6;
-	vec_17C.y = (vec_1C.y - vec_FC.y) << 6;
-	vec_17C.z = (vec_1C.z - vec_FC.z) << 6;
+	vec_17C.x = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.x, vec_FC.x), 6U);
+	vec_17C.y = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.y, vec_FC.y), 6U);
+	vec_17C.z = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.z, vec_FC.z), 6U);
 	var_F2 = polarRadius3D(&vec_17C);
 	var_F4 = var_pSpeed2Scaled - var_F2;
 /*    sub     ax, ax
@@ -1451,15 +1454,15 @@ nosmart
     mov     si, ax
     mov     [bp+var_138], 1*/
 loc_154CA:
-	var_190 = (legacy_u16)(legacy_u8)LEGACY_S16_WRAP_NEGATE(
-		LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
-			LEGACY_S16_WRAP_MUL(si, 0x46), 8U), 0x64)) << 8;
+	var_190 = LEGACY_U16_SHL(
+		(legacy_u8)LEGACY_S16_WRAP_NEGATE(
+			LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
+				LEGACY_S16_WRAP_MUL(si, 0x46), 8U), 0x64)), 8U);
 	if (arg_pState->car_speed2 <= var_190)
 		goto loc_15513;
 	if (var_138 == 0)
 		goto loc_154F8;
-	var_138 = LEGACY_S16_FROM_BITS(
-		(legacy_u16)LEGACY_S16_WRAP_NEGATE(si) << 1);
+	var_138 = LEGACY_S16_SHL(LEGACY_S16_WRAP_NEGATE(si), 1U);
 	goto loc_154FA;
 /*
     mov     ax, 46h ; 'F'
@@ -1484,7 +1487,7 @@ loc_154CA:
     db 144*/
 loc_154F8:
     //mov     ax, si
-	var_138 = si << 1;
+	var_138 = LEGACY_S16_SHL(si, 1U);
 loc_154FA:
     //shl     ax, 1
     //mov     [bp+var_138], ax
@@ -2150,9 +2153,12 @@ loc_15A30:
 	vec_1C.z = -vec_1C.y;
 	vec_1C.y = var_EE;
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = (vec_1C.x - vec_FC.x) << 6;
-	vec_17C.y = (vec_1C.y - vec_FC.y) << 6;
-	vec_17C.z = (vec_1C.z - vec_FC.z) << 6;
+	vec_17C.x = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.x, vec_FC.x), 6U);
+	vec_17C.y = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.y, vec_FC.y), 6U);
+	vec_17C.z = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(vec_1C.z, vec_FC.z), 6U);
 /*
     mov     ax, [bp+vec_C.vz]
     mov     [bp+var_EE], ax
@@ -2409,7 +2415,8 @@ loc_15C3F:
 loc_15C75:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
-	vec_1C6.y = (-nextPosAndNormalIP) << 6;
+	vec_1C6.y = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6U);
 	mat_mul_vector2(&vec_1C6, &planptr[planindex].plane_rotation, &vec_FC);
 /*
     mov     [bp+vec_1C6.vz], 0
@@ -3291,7 +3298,8 @@ loc_1632C:
     jmp     loc_16428*/
 loc_16336:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
-	vec_1C6.y = arg_pSimd->collide_points[0].py << 6;
+	vec_1C6.y = LEGACY_S16_SHL(
+		arg_pSimd->collide_points[0].py, 6U);
 	mat_mul_vector(&vec_1C6, var_EA, &vec_FC);
 /*    mov     al, [bp+var_wheelIndex]
     cbw

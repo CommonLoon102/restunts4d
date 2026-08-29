@@ -79,6 +79,12 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_SAR2(value) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_SAR2(value))
 
+#define LEGACY_U16_SHL(value, count) \
+	((legacy_u16)(LEGACY_SHIFT_COUNT(count) >= 16U ? 0UL : \
+	(legacy_u32)(legacy_u16)(value) << LEGACY_SHIFT_COUNT(count)))
+#define LEGACY_S16_SHL(value, count) \
+	LEGACY_S16_FROM_BITS(LEGACY_U16_SHL(value, count))
+
 #define LEGACY_U16_ROL(value, count) \
 	((legacy_u16)(LEGACY_ROTATE16_COUNT(count) == 0U ? \
 		(legacy_u16)(value) : \
@@ -170,6 +176,11 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 			(legacy_u32)(value) >> LEGACY_SHIFT_COUNT(count))))
 #define LEGACY_S32_SAR(value, count) \
 	LEGACY_S32_FROM_BITS(LEGACY_U32_SAR(value, count))
+
+#define LEGACY_U32_SHL(value, count) \
+	((legacy_u32)(value) << LEGACY_SHIFT_COUNT(count))
+#define LEGACY_S32_SHL(value, count) \
+	LEGACY_S32_FROM_BITS(LEGACY_U32_SHL(value, count))
 
 #define LEGACY_U32_ROL(value, count) \
 	((legacy_u32)(LEGACY_SHIFT_COUNT(count) == 0U ? \

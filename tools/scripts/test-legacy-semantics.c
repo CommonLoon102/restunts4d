@@ -19,6 +19,14 @@ static legacy_u32 reference_sar32(legacy_u32 bits, legacy_u16 count)
 	return bits;
 }
 
+static legacy_u16 reference_shl16(legacy_u16 bits, legacy_u16 count)
+{
+	count &= 0x1FU;
+	while (count-- != 0U)
+		bits = (legacy_u16)(bits << 1);
+	return bits;
+}
+
 static void test_word_shifts_and_rotates(void)
 {
 	legacy_u32 value;
@@ -30,6 +38,8 @@ static void test_word_shifts_and_rotates(void)
 		for (count = 0U; count < 40U; count++) {
 			assert(LEGACY_U16_SAR(bits, count) ==
 				reference_sar16(bits, count));
+			assert(LEGACY_U16_SHL(bits, count) ==
+				reference_shl16(bits, count));
 			assert(LEGACY_U16_ROL(
 				LEGACY_U16_ROR(bits, count), count) == bits);
 		}
@@ -49,6 +59,8 @@ static void test_dword_shifts_and_rotates(void)
 		for (count = 0U; count < 40U; count++) {
 			assert(LEGACY_U32_SAR(values[index], count) ==
 				reference_sar32(values[index], count));
+			assert(LEGACY_U32_SHL(values[index], count) ==
+				(values[index] << (count & 0x1FU)));
 			assert(LEGACY_U32_ROL(
 				LEGACY_U32_ROR(values[index], count), count) ==
 				values[index]);
