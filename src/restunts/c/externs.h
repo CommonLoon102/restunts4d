@@ -139,7 +139,6 @@ extern legacy_s8 show_penalty_counter;
 extern legacy_s16 word_45D94;
 extern legacy_s16 word_45D3E;
 extern legacy_s8 byte_3B8F2;
-extern legacy_s8 byte_3FE00;
 extern void far* gameresptr;
 extern void far* dasmshapeptr;
 extern legacy_s8 dashb_toggle_copy;

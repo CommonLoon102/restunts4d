@@ -30,14 +30,15 @@ extern legacy_s16 __output(FILE* stream, const legacy_s8* format, void* argument
 
 // Use the Stunts' data for now.
 extern const legacy_u8* g_ascii_props;
-extern legacy_u16 joyflag1;
-extern legacy_u16 joyflag2;
-extern legacy_u16 word_3FB18;
-extern legacy_u16 word_3FB1C;
-extern legacy_u16 word_3FB26;
-extern legacy_u16 word_3FB2A;
-extern legacy_u16 word_3FB34;
-extern legacy_u16 word_3FB36;
+extern legacy_u8 dos_joystick_enabled;
+extern legacy_u16 dos_joystick_axis1;
+extern legacy_u16 dos_joystick_axis2;
+extern legacy_u16 dos_joystick_axis1_min;
+extern legacy_u16 dos_joystick_axis1_max;
+extern legacy_u16 dos_joystick_axis2_min;
+extern legacy_u16 dos_joystick_axis2_max;
+extern legacy_u16 dos_joystick_axis1_scale;
+extern legacy_u16 dos_joystick_axis2_scale;
 extern legacy_u8 byte_3FB38[];
 extern legacy_u8 byte_449CE;
 extern legacy_u8 byte_3BD34[];
@@ -232,11 +233,11 @@ void timer_remove_callback(void (far* callback)(void))
 
 void sub_307B4(void)
 {
-	byte_3FE00 = 1;
-	word_3FB18 = 0x50U;
-	word_3FB1C = 0;
-	word_3FB26 = 0x50U;
-	word_3FB2A = 0;
+	dos_joystick_enabled = 1;
+	dos_joystick_axis1_min = 0x50U;
+	dos_joystick_axis1_max = 0;
+	dos_joystick_axis2_min = 0x50U;
+	dos_joystick_axis2_max = 0;
 }
 
 legacy_s16 sub_307D2(legacy_s16 index)
@@ -249,12 +250,12 @@ legacy_s16 sub_307E3(void)
 	legacy_u16 difference;
 	legacy_u32 scaled;
 
-	if (LEGACY_S16_FROM_BITS(joyflag1) <
-		LEGACY_S16_FROM_BITS(word_3FB18))
+	if (LEGACY_S16_FROM_BITS(dos_joystick_axis1) <
+		LEGACY_S16_FROM_BITS(dos_joystick_axis1_min))
 		difference = 0;
 	else
-		difference = LEGACY_U16_WRAP_SUB(joyflag1, word_3FB18);
-	scaled = (legacy_u32)difference * word_3FB34;
+		difference = LEGACY_U16_WRAP_SUB(dos_joystick_axis1, dos_joystick_axis1_min);
+	scaled = (legacy_u32)difference * dos_joystick_axis1_scale;
 	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
 }
 
@@ -263,12 +264,12 @@ legacy_s16 nopsub_307FA(void)
 	legacy_u16 difference;
 	legacy_u32 scaled;
 
-	if (LEGACY_S16_FROM_BITS(joyflag2) <
-		LEGACY_S16_FROM_BITS(word_3FB26))
+	if (LEGACY_S16_FROM_BITS(dos_joystick_axis2) <
+		LEGACY_S16_FROM_BITS(dos_joystick_axis2_min))
 		difference = 0;
 	else
-		difference = LEGACY_U16_WRAP_SUB(joyflag2, word_3FB26);
-	scaled = (legacy_u32)difference * word_3FB36;
+		difference = LEGACY_U16_WRAP_SUB(dos_joystick_axis2, dos_joystick_axis2_min);
+	scaled = (legacy_u32)difference * dos_joystick_axis2_scale;
 	return (legacy_u16)((legacy_u16)(scaled >> 8) - 0x1FU);
 }
 
@@ -1471,7 +1472,7 @@ void replay_unk2(legacy_s16 mode)
 				LEGACY_U16_WRAP_MUL(framespersec, 4U))
 			update_crash_state(1, 0);
 
-		if (byte_3B8F2 != 0 || byte_3FE00 != 0) {
+		if (byte_3B8F2 != 0 || dos_joystick_enabled != 0) {
 			if (byte_3B8F2 != 0) {
 				dos_mouse_get_state(
 					&mouse_butstate, &mouse_xpos, &mouse_ypos);
@@ -3598,7 +3599,7 @@ void do_key_restext(void)
 	audio_suspend();
 	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
-	byte_3FE00 = 0;
+	dos_joystick_enabled = 0;
 	byte_3B8F2 = 0;
 	dos_timer_callbacks_suspended = 0;
 	audio_resume();
@@ -3626,13 +3627,13 @@ void do_joy_restext(void)
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
 		dialogarg2, positions, 0)) <= 0) {
-		byte_3FE00 = 0;
+		dos_joystick_enabled = 0;
 		goto joy_dialog_done;
 	}
 
 	for (i = 0; i < 9U; i++)
 		visited[i] = 0;
-	byte_3FE00 = 1;
+	dos_joystick_enabled = 1;
 	mouse_draw_opaque_check();
 	line_height = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
@@ -3690,9 +3691,9 @@ void do_joy_restext(void)
 	}
 
 	for (i = 0; i < 9U; i++)
-		byte_3FE00 = (legacy_u8)byte_3FE00 & visited[i];
+		dos_joystick_enabled = (legacy_u8)dos_joystick_enabled & visited[i];
 	sub_275C6();
-	if (byte_3FE00 == 0)
+	if (dos_joystick_enabled == 0)
 		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
 			0xFFFFU, 0xFFFFU, dialogarg2, 0, 0);
 
@@ -3911,7 +3912,7 @@ legacy_u16 run_option_menu(void)
 		case 0:
 			if (byte_3B8F2 != 0)
 				initial_input = 2;
-			else if (byte_3FE00 != 0)
+			else if (dos_joystick_enabled != 0)
 				initial_input = 1;
 			else
 				initial_input = 0;
@@ -10193,7 +10194,7 @@ void run_game(void) {
 		while (1) {
 
 			if (state.game_frame != elapsed_time2) {
-				if ((byte_3B8F2 != 0 || byte_3FE00 != 0) && game_replay_mode == 0) {
+				if ((byte_3B8F2 != 0 || dos_joystick_enabled != 0) && game_replay_mode == 0) {
 					replay_unk();
 				}
 				update_gamestate();
