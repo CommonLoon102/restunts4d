@@ -129,8 +129,8 @@ void build_track_object(struct VECTOR* world_position,
 	terrainHeight = 0;
 	terrain_tile = 0;
 
-	track_column = (legacy_s16)(world_position->x >> 10);
-	track_row = (legacy_s16)(world_position->z >> 10);
+	track_column = LEGACY_S16_SAR(world_position->x, 10U);
+	track_row = LEGACY_S16_SAR(world_position->z, 10U);
 	physical_model = -1;
 	if (track_column < 0 || track_column > 0x1D ||
 		track_row < 0 || track_row > 0x1D)
@@ -1035,7 +1035,7 @@ track_contact_finalize:
 		value = LEGACY_S16_FROM_BITS(
 			(legacy_u16)(world_position->z ^ world_position->x));
 		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight,
-			(legacy_s16)(((legacy_u16)(value >> 8)) & 1U));
+			(legacy_s16)(LEGACY_U16_SAR(value, 8U) & 1U));
 	} else {
 		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight, 2);
 	}
