@@ -926,14 +926,19 @@ struct TRACKOBJECT trkObjectList[215] = {
 struct VECTOR* headless_track_vector_from_legacy_offset(legacy_u16 offset)
 {
 	legacy_u16 relative_offset;
+	legacy_u16 vector_index;
 
 	if (offset < LEGACY_TRACK_VECTOR_BASE)
 		return 0;
-	relative_offset = (legacy_u16)(offset - LEGACY_TRACK_VECTOR_BASE);
-	if (relative_offset % sizeof(struct VECTOR) != 0 ||
-		relative_offset / sizeof(struct VECTOR) >= 574U)
+	relative_offset = LEGACY_U16_WRAP_SUB(
+		offset, LEGACY_TRACK_VECTOR_BASE);
+	if (relative_offset % (legacy_u16)sizeof(struct VECTOR) != 0U)
 		return 0;
-	return &legacy_track_vectors[relative_offset / sizeof(struct VECTOR)];
+	vector_index = LEGACY_U16_DIV_OR_ZERO(
+		relative_offset, (legacy_u16)sizeof(struct VECTOR));
+	if (vector_index >= 574U)
+		return 0;
+	return &legacy_track_vectors[vector_index];
 }
 
 #endif

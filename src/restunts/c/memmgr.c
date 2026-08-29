@@ -567,7 +567,8 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 
 void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
 	/* The original allocator always reserves one paragraph after division. */
-	return mmgr_alloc_pages(name, size / 16 + 1);
+	return mmgr_alloc_pages(name, (legacy_u16)LEGACY_S32_WRAP_ADD(
+		LEGACY_S32_DIV_OR_ZERO(size, 16L), 1L));
 }
 
 void mmgr_alloc_resmem(legacy_u16 arg_0) {
