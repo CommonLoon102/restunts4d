@@ -172,93 +172,75 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		return;
 
 	var_2 = 0;
-	if (arg_someFlag == 1)
-		goto loc_1967F;
-	if (arg_someFlag != 2)
-		goto loc_1962E;
-	goto loc_196DE;
-loc_1962E:
-	if (arg_someFlag != 3)
-		goto loc_19636;
-	goto loc_19730;
-loc_19636:
-	if (arg_someFlag == 4)
-		goto loc_19642;
-	if (arg_someFlag == 5)
-		goto loc_19676;
-	goto loc_1964E;
-loc_19642:
-    state.game_frame_in_sec = 1;
-    state.game_frames_per_sec = 1;
-loc_1964E:
-	if (var_2 == 0)
-		goto loc_19664;
-	var_cState->car_speed2 = 0;
-	var_cState->car_speed = 0;
-loc_19664:
-	if (arg_MplayerFlag != 0)
-		goto loc_1966D;
-	goto loc_19760;
-loc_1966D:
-	state.game_oEndFrame = state.game_frame;
-	goto loc_19766;
-loc_19676:
-    arg_someFlag = 1;
-    var_2 = 1;
-loc_1967F:
-	var_cState->car_crashBmpFlag = 1;
-	state_op_unk(arg_MplayerFlag, var_cState->car_rotate.x, 0);
-	if (arg_MplayerFlag != 0)
-		goto loc_196B3;
-	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_SHL(framespersec, 2U));
-loc_196B3:
+	switch (arg_someFlag) {
+	case 5:
+		arg_someFlag = 1;
+		var_2 = 1;
+		/* fall through */
+	case 1:
+		var_cState->car_crashBmpFlag = 1;
+		state_op_unk(arg_MplayerFlag, var_cState->car_rotate.x, 0);
+		if (arg_MplayerFlag == 0) {
+			state.game_impactSpeed = var_cState->car_speed2;
+			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
+				LEGACY_U16_SHL(framespersec, 2U));
+		}
 #ifndef RESTUNTS_HEADLESS
-	if (is_in_replay == 0 && audio_car_state_ready != 0) {
-		if (arg_MplayerFlag == 0)
-			audio_function2_wrap(audio_player_engine_channel);
-		else
-			audio_function2_wrap(audio_opponent_engine_channel);
-	}
+		if (is_in_replay == 0 && audio_car_state_ready != 0) {
+			if (arg_MplayerFlag == 0)
+				audio_function2_wrap(audio_player_engine_channel);
+			else
+				audio_function2_wrap(audio_opponent_engine_channel);
+		}
 #endif
-	goto loc_1964E;
-loc_196DE:
+		break;
+
+	case 2:
 #ifndef RESTUNTS_HEADLESS
-	if (is_in_replay == 0 && audio_car_state_ready != 0) {
-		if (arg_MplayerFlag == 0)
-			audio_function2_wrap(audio_player_engine_channel);
-		else
-			audio_function2_wrap(audio_opponent_engine_channel);
-	}
+		if (is_in_replay == 0 && audio_car_state_ready != 0) {
+			if (arg_MplayerFlag == 0)
+				audio_function2_wrap(audio_player_engine_channel);
+			else
+				audio_function2_wrap(audio_opponent_engine_channel);
+		}
 #endif
-	var_cState->car_crashBmpFlag = 2;
-	var_2 = 1;
+		var_cState->car_crashBmpFlag = 2;
+		var_2 = 1;
+		if (arg_MplayerFlag == 0) {
+			state.game_impactSpeed = var_cState->car_speed2;
+			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
+				LEGACY_U16_SHL(framespersec, 2U));
+		}
+		break;
+
+	case 3:
+		var_cState->car_crashBmpFlag = 3;
+		if (arg_MplayerFlag == 0) {
+			state.game_total_finish = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_ADD(
+					state.game_frame, state.game_penalty),
+				elapsed_time1);
+			state.game_frames_per_sec = framespersec;
+		} else {
+			state.field_144 = LEGACY_S16_WRAP_ADD(
+				state.game_frame, elapsed_time1);
+		}
+		break;
+
+	case 4:
+		state.game_frame_in_sec = 1;
+		state.game_frames_per_sec = 1;
+		break;
+	}
+
+	if (var_2 != 0) {
+		var_cState->car_speed2 = 0;
+		var_cState->car_speed = 0;
+	}
 	if (arg_MplayerFlag == 0)
-		goto loc_19719;
-	goto loc_1964E;
-loc_19719:
-	state.game_impactSpeed = var_cState->car_speed2;
-	state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_SHL(framespersec, 2U));
-loc_19729:
-	goto loc_1964E;
-loc_19730:
-	var_cState->car_crashBmpFlag = 3;
-	if (arg_MplayerFlag != 0)
-		goto loc_19752;
-	state.game_total_finish = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_ADD(state.game_frame, state.game_penalty),
-		elapsed_time1);
-	state.game_frames_per_sec = framespersec;
-	goto loc_19729;
-loc_19752:
-	state.field_144 = LEGACY_S16_WRAP_ADD(
-		state.game_frame, elapsed_time1);
-	goto loc_1964E;
-loc_19760:
-	state.game_pEndFrame = state.game_frame;
-loc_19766:
+		state.game_pEndFrame = state.game_frame;
+	else
+		state.game_oEndFrame = state.game_frame;
 	if (state.game_3F6autoLoadEvalFlag == 0 && arg_MplayerFlag == 0)
 		state.game_3F6autoLoadEvalFlag = arg_someFlag;
 #ifndef RESTUNTS_HEADLESS
