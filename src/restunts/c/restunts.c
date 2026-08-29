@@ -10325,7 +10325,7 @@ void run_game(void) {
 	rect_windshield.right = 320;
 	var_2 = -1;
 	word_449EA = -1;
-	run_game_random = get_kevinrandom() << 3;
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), 3U);
 	replaybar_toggle = 1;
 	is_in_replay = 0;
 	if (idle_expired == 0) {
@@ -10384,9 +10384,16 @@ void run_game(void) {
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = 1;
 				
-				state.playerstate.car_posWorld1.lx += multiply_and_scale(sin_fast(track_angle), -240) << 6;
-				state.playerstate.car_posWorld1.lz += multiply_and_scale(cos_fast(track_angle), -240) << 6;
-				state.playerstate.car_posWorld1.ly += 0x580;
+				state.playerstate.car_posWorld1.lx = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_posWorld1.lx,
+					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
+						sin_fast(track_angle), -240), 6U));
+				state.playerstate.car_posWorld1.lz = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_posWorld1.lz,
+					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
+						cos_fast(track_angle), -240), 6U));
+				state.playerstate.car_posWorld1.ly = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_posWorld1.ly, 0x580L);
 				byte_43966 = 1;
 			} else {
 				cameramode = 0;
