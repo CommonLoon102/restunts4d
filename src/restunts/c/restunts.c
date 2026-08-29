@@ -1051,6 +1051,7 @@ extern legacy_u8 byte_459D2;
 extern legacy_s8 byte_459D8;
 extern legacy_s8 byte_42D26;
 extern legacy_s8 byte_42D2A;
+extern legacy_u8 byte_428BE[];
 extern legacy_u8 byte_428D6[];
 extern legacy_u8 audiochunks_unk[];
 extern legacy_u8 audiochunks_unk2[];
@@ -1075,6 +1076,8 @@ extern legacy_u16 word_42244;
 extern legacy_u8 byte_42246;
 extern legacy_s16 word_3EB2A;
 extern legacy_u8 byte_40634;
+extern legacy_u8 unk_40636[];
+extern legacy_u8 byte_40639;
 extern void far* audiodriverbinary;
 extern legacy_u16 word_44D48;
 extern legacy_u16 word_454BA;
@@ -1097,6 +1100,11 @@ extern void audio_op_unk4(legacy_s16 channel);
 extern void dos_audio_driver_release_channel(legacy_s16 driver_channel);
 extern void dos_audio_driver_reset(void);
 extern void dos_audio_driver_start(void);
+extern void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value, void far* resource);
+extern void dos_audio_driver_suspend_all(legacy_u8* contexts);
+extern void dos_audio_driver_set_master_state(legacy_s16 operation,
+	void far* state);
 extern void sub_39700(void);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
 void sub_374DE(legacy_s16 channel);
@@ -1876,6 +1884,63 @@ void audio_reset_channels(void)
 	word_4063A = 0;
 }
 
+void audio_suspend(void)
+{
+	legacy_u8* chunk;
+	legacy_u8* context;
+	legacy_u16 channel;
+	legacy_u16 context_index;
+
+	byte_40630 = 1;
+	word_4063A = 1;
+	if (byte_40634 != 0) {
+		byte_40639 = 0;
+		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
+		word_4063A = 0;
+		return;
+	}
+
+	chunk = audiochunks_unk;
+	for (channel = 0; channel < 0x18U; channel++) {
+		if (audioflag6 == 1 || channel < 0x10U) {
+			byte_428BE[channel] = chunk[0x28U];
+			dos_audio_set_channel_volume((legacy_s16)channel, 0);
+		}
+		chunk += 0x4CU;
+	}
+
+	context = unk_45A26;
+	for (context_index = 0; context_index < 0x10U;
+		context_index++) {
+		dos_audio_driver_suspend_context(context[0x2CU], context,
+			LEGACY_READ_U16_LE(context + 0x2AU),
+			audio_read_far_pointer(context + 0x10U));
+		context += 0x2EU;
+	}
+	dos_audio_driver_suspend_all(unk_45A26);
+	word_4063A = 0;
+}
+
+void audio_resume(void)
+{
+	legacy_u16 channel;
+
+	byte_40630 = 1;
+	word_4063A = 1;
+	if (byte_40634 != 0) {
+		byte_40639 = 0x64U;
+		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
+	} else {
+		for (channel = 0; channel < 0x18U; channel++) {
+			if (audioflag6 == 1 || channel < 0x10U)
+				dos_audio_set_channel_volume((legacy_s16)channel,
+					byte_428BE[channel]);
+		}
+	}
+	word_4063A = 0;
+	byte_40630 = 0;
+}
+
 legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_u8 priority, legacy_u16 rate)
 {
@@ -2412,9 +2477,7 @@ extern struct TRACKOBJECT trkObjectList[];
 extern struct SHAPE2D far* tracksmenushapes1[];
 extern struct SHAPE2D far* tracksmenushape2dunk[];
 extern struct SHAPE2D far* tracksmenushape2dunk2[];
-extern void audio_unk(void);
 extern void call_exitlist2(void);
-extern void sub_372F4(void);
 extern legacy_s16 word_3EB90;
 extern legacy_s16 fontdef_unk_0E;
 void font_set_unk(legacy_s16 color, legacy_s16 unknown);
@@ -2991,13 +3054,13 @@ void do_key_restext(void)
 {
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
 	byte_3FE00 = 0;
 	byte_3B8F2 = 0;
 	word_3F88E = 0;
-	sub_372F4();
+	audio_resume();
 	input_pop_status();
 }
 
@@ -3018,7 +3081,7 @@ void do_joy_restext(void)
 
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
 		dialogarg2, positions, 0)) <= 0) {
@@ -3095,7 +3158,7 @@ void do_joy_restext(void)
 joy_dialog_done:
 	kb_check();
 	byte_3B8F2 = 0;
-	sub_372F4();
+	audio_resume();
 	word_3F88E = 0;
 	input_pop_status();
 }
@@ -3104,12 +3167,12 @@ void do_mou_restext(void)
 {
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	byte_3B8F2 = 1;
 	show_dialog(4, 1, locate_text_res(mainresptr, aMou),
 		-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
-	sub_372F4();
+	audio_resume();
 	input_pop_status();
 }
 
@@ -3117,11 +3180,11 @@ void do_pau_restext(void)
 {
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	show_dialog(0, 1, locate_text_res(mainresptr, aPau),
 		-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
-	sub_372F4();
+	audio_resume();
 	input_pop_status();
 }
 
@@ -3157,13 +3220,13 @@ void do_dos_restext(void)
 
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	result = show_dialog(2, 1, locate_text_res(mainresptr, aDos_0),
 		-1, -1, dialogarg2, 0, 0);
 	if (result == 1)
 		call_exitlist2();
 	word_3F88E = 0;
-	sub_372F4();
+	audio_resume();
 	input_pop_status();
 }
 
@@ -3224,7 +3287,7 @@ void show_graphic_levels_menu(void)
 
 	input_push_status();
 	word_3F88E = 1;
-	audio_unk();
+	audio_suspend();
 	original_frame_rate = framespersec2;
 	selected = 0;
 	for (;;) {
@@ -3272,7 +3335,7 @@ void show_graphic_levels_menu(void)
 		show_dialog(1, 1, locate_text_res(mainresptr, aMrs),
 			-1, -1, dialogarg2, 0, 0);
 	word_3F88E = 0;
-	sub_372F4();
+	audio_resume();
 	input_pop_status();
 }
 
@@ -9577,12 +9640,12 @@ void run_game(void) {
 
 			if (byte_46467 != 0) {
 				input_push_status();
-				audio_unk();
+				audio_suspend();
 				regsi = show_dialog(2, 1, locate_text_res(gameresptr, "rbf"), -1, -1, dialogarg2, 0, 0);
 				if (regsi == -1)
 					regsi = 0;
 
-				sub_372F4();
+				audio_resume();
 				word_3F88E = 0;
 				input_pop_status();
 				if (regsi != 0) {

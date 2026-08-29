@@ -7,6 +7,11 @@ typedef void (far* driver_bind_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
 typedef void (far* driver_channel_operation_type)(legacy_s16 driver_channel);
 typedef void (far* driver_operation_type)(void);
+typedef void (far* driver_suspend_context_type)(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value, void far* resource);
+typedef void (far* driver_contexts_operation_type)(legacy_u8* contexts);
+typedef void (far* driver_master_state_type)(legacy_s16 operation,
+	void far* state);
 
 extern legacy_u8 audiotimers[];
 extern legacy_u8 audiochunks_unk[];
@@ -63,6 +68,35 @@ void dos_audio_driver_start(void)
 
 	start = (driver_operation_type)dos_audio_driver_entry(6U);
 	start();
+}
+
+void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value, void far* resource)
+{
+	driver_suspend_context_type suspend_context;
+
+	suspend_context = (driver_suspend_context_type)
+		dos_audio_driver_entry(0x27U);
+	suspend_context(driver_channel, driver_context, value, resource);
+}
+
+void dos_audio_driver_suspend_all(legacy_u8* contexts)
+{
+	driver_contexts_operation_type suspend_all;
+
+	suspend_all = (driver_contexts_operation_type)
+		dos_audio_driver_entry(0x30U);
+	suspend_all(contexts);
+}
+
+void dos_audio_driver_set_master_state(legacy_s16 operation,
+	void far* state)
+{
+	driver_master_state_type set_master_state;
+
+	set_master_state = (driver_master_state_type)
+		dos_audio_driver_entry(0x3FU);
+	set_master_state(operation, state);
 }
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
