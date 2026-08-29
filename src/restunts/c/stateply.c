@@ -62,6 +62,17 @@ static legacy_s16 scale_position_delta(legacy_s32 current,
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
+static legacy_s16 scale_speed_to_travel(legacy_u16 speed,
+	legacy_u16 divisor)
+{
+	legacy_u32 product;
+	legacy_u32 quotient;
+
+	product = LEGACY_U32_WRAP_MUL((legacy_u32)speed, 0x580UL);
+	quotient = LEGACY_U32_DIV_OR_ZERO(product, divisor);
+	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
+}
+
 legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
 {
 	const struct VECTOR* dependency_points;
@@ -543,9 +554,11 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 
 	/* Convert speed to per-tick travel, accounting for the simulation rate. */
 	if (framespersec == 0xA) {
-		var_pSpeed2Scaled = ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x1E00;
+		var_pSpeed2Scaled = scale_speed_to_travel(
+			arg_pState->car_speed2, 0x1E00U);
 	} else {
-		var_pSpeed2Scaled = ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x3C00;
+		var_pSpeed2Scaled = scale_speed_to_travel(
+			arg_pState->car_speed2, 0x3C00U);
 	}
 
 	/*
@@ -3768,7 +3781,9 @@ loc_1667A:
     jz      short loc_16710*/
 	state.field_3FA[si] = 1;
 	
-	state_op_unk(si + 2, -arg_pState->car_rotate.x, ((legacy_s32)arg_pState->car_speed2 * 0x580) / 0x3C00);
+	state_op_unk(si + 2,
+		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
+		scale_speed_to_travel(arg_pState->car_speed2, 0x3C00U));
 	/*
     mov     state.field_3FA[si], 1
     mov     ax, 3C00h       ; 15360 = track grid length / 2
