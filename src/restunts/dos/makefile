@@ -54,8 +54,9 @@ ifeq ($(TARGET), full)
   WLINK_OPTIONS = option START=headless_start option MAP=restunts.map
   WLINK_LIBRARIES = library s:\tools\lib\cm.lib
   ENTRY_DEP =
-  ifneq ($(findstring \asmorig\build,$(ALL_OBJ_FILES)),)
-    $(error Full target must not link game assembly objects)
+  FORBIDDEN_GAME_ASM_REFERENCES = $(foreach obj,$(ASMORIG_OBJ_FILES),$(findstring $(obj),$(ALL_OBJ_FILES)))
+  ifneq (,$(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
+    $(error Full target must not link game assembly objects: $(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
   endif
 else
   ENTRY_DEP = $(OBJDIR)/main.obj

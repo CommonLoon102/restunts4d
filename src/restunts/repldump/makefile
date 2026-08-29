@@ -24,7 +24,6 @@ ASMORIG_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg
 # only the DOS linker's required stack segment remains platform assembly.
 DOS_BSS_START_OBJ_FILE = dosbss.obj
 DOS_PLATFORM_OBJ_FILES = runtime.obj memory.obj file.obj divide.obj dosstack.obj
-DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj runtime.obj memory.obj file.obj keyboard.obj divide.obj joystick.obj mouse.obj video.obj audio.obj critical.obj
 
 CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
                fmemcpy.obj h_ldiv.obj f_lxmul.obj f_scopy.obj \
@@ -40,7 +39,6 @@ OBJDIR = $(SRC)\repldump\build\$(TARGET)
 RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
 ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASMORIG_OBJ_FILES))
 DOS_PLATFORM_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_OBJ_FILES))
-DOS_PLATFORM_RUNTIME_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_RUNTIME_OBJ_FILES))
 DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\$(DOS_BSS_START_OBJ_FILE)
 REPLDUMP_LINK_DEPS =
 
@@ -61,8 +59,9 @@ ifeq ($(TARGET), headless)
   OUTFILE = repldump.exe
   WLINK_OPTIONS = option START=headless_start option MAP=repldump.map
   REPLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES)
-  ifneq ($(findstring \asmorig\build,$(ALL_OBJ_FILES)),)
-    $(error Headless target must not link game assembly objects)
+  FORBIDDEN_GAME_ASM_REFERENCES = $(foreach obj,$(ASMORIG_OBJ_FILES),$(findstring $(obj),$(ALL_OBJ_FILES)))
+  ifneq (,$(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
+    $(error Headless target must not link game assembly objects: $(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
   endif
 endif
 
