@@ -3291,6 +3291,7 @@ legacy_s8 do_fileselect_dialog(
 	legacy_u8 file_count;
 	legacy_u8 saved_busy;
 	legacy_u8 character;
+	legacy_u8 search_again;
 
 	dialog_result = LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, aLoa), 0xFFFFU, 0xFFFFU,
@@ -3318,7 +3319,7 @@ legacy_s8 do_fileselect_dialog(
 	font_set_unk(dialog_fnt_colour, word_3EB90);
 	sub_345BC(directory, positions[2], positions[3]);
 
-restart_search:
+	for (;;) {
 	mouse_draw_transparent_check();
 	file_count = 0;
 	found_path = file_combine_and_find(directory, "*", extension);
@@ -3328,9 +3329,9 @@ restart_search:
 			positions[2], positions[3], 0x7530UL);
 		if (key == 0x1BU) {
 			result = 0;
-			goto file_dialog_done;
+			break;
 		}
-		goto restart_search;
+		continue;
 	}
 
 	parse_filepath_separators(filenames[file_count++], found_path);
@@ -3362,6 +3363,7 @@ restart_search:
 	previous_scroll = -1;
 	(void)timer_get_delta_alt();
 	result = 0;
+	search_again = 0;
 	for (;;) {
 		if (selected != previous_selected || scroll != previous_scroll) {
 			previous_selected = selected;
@@ -3451,9 +3453,10 @@ restart_search:
 				positions[2], positions[3], 0x7530UL);
 			if (key == 0x1BU) {
 				result = 0;
-				goto file_dialog_done;
+			} else {
+				search_again = 1;
 			}
-			goto restart_search;
+			break;
 		}
 		while ((legacy_s16)(scroll + 6) < selected)
 			scroll++;
@@ -3462,14 +3465,16 @@ restart_search:
 			continue;
 		if (result < 0) {
 			result = 0;
-			goto file_dialog_done;
+			break;
 		}
 		strcpy(filename, filenames[(legacy_u8)selected]);
 		result = 1;
-		goto file_dialog_done;
+		break;
+	}
+	if (search_again == 0)
+		break;
 	}
 
-file_dialog_done:
 	sub_275C6();
 	g_is_busy = saved_busy;
 	return result;
