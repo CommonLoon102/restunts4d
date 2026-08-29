@@ -947,10 +947,22 @@ extern legacy_s16 elem_zCenter;
 extern legacy_s16 terrainHeight;
 
 legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z, struct VECTOR far* normal) {
-	return (
-		((legacy_s32)normal->x * x) + 
-		((legacy_s32)normal->z * z) +
-		((legacy_s32)normal->y * y)) / 0x2000;
+	legacy_s32 x_product;
+	legacy_s32 y_product;
+	legacy_s32 z_product;
+	legacy_s32 sum;
+	legacy_s32 quotient;
+
+	x_product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)normal->x, (legacy_s32)x);
+	y_product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)normal->y, (legacy_s32)y);
+	z_product = LEGACY_S32_WRAP_MUL(
+		(legacy_s32)normal->z, (legacy_s32)z);
+	sum = LEGACY_S32_WRAP_ADD(
+		LEGACY_S32_WRAP_ADD(x_product, z_product), y_product);
+	quotient = LEGACY_S32_DIV_OR_ZERO(sum, 0x2000L);
+	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
 legacy_s16 plane_origin_op(legacy_s16 arg_planindex, legacy_s16 x, legacy_s16 y, legacy_s16 z) {
