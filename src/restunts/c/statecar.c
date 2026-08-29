@@ -113,87 +113,56 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 			arg_simd->knob_points[arg_carState->car_current_gear].py;
 	}
 
-	if (arg_carState->car_changing_gear != 0)
-		goto loc_17B93;
-	goto loc_17C9E;
+	if (arg_carState->car_changing_gear != 0) {
+		if (arg_carState->car_knob_x == arg_carState->car_knob_x2) {
+			var_4 = LEGACY_S16_WRAP_SUB(
+				arg_carState->car_knob_y2, arg_carState->car_knob_y);
+			if (var_4 == 0) {
+				arg_carState->car_changing_gear = 0;
+				arg_carState->car_gearratio =
+					arg_simd->gear_ratios[arg_carState->car_current_gear];
+				arg_carState->car_gearratioshr8 =
+					arg_carState->car_gearratio >> 8;
+			} else if (car_absolute_word(var_4) <= var_2) {
+				arg_carState->car_knob_y = arg_carState->car_knob_y2;
+			} else if (var_4 > 0) {
+				arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
+					arg_carState->car_knob_y, var_2);
+			} else {
+				arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
+					arg_carState->car_knob_y, var_2);
+			}
+		} else if (arg_simd->knob_points[0].py ==
+			arg_carState->car_knob_y) {
+			var_4 = LEGACY_S16_WRAP_SUB(
+				arg_carState->car_knob_x2, arg_carState->car_knob_x);
+			if (car_absolute_word(var_4) <= var_2) {
+				arg_carState->car_knob_x = arg_carState->car_knob_x2;
+			} else if (var_4 > 0) {
+				arg_carState->car_knob_x = LEGACY_S16_WRAP_ADD(
+					arg_carState->car_knob_x, var_2);
+			} else {
+				arg_carState->car_knob_x = LEGACY_S16_WRAP_SUB(
+					arg_carState->car_knob_x, var_2);
+			}
+		} else {
+			var_4 = LEGACY_S16_WRAP_SUB(
+				arg_simd->knob_points[0].py, arg_carState->car_knob_y);
+			if (car_absolute_word(var_4) <= var_2) {
+				arg_carState->car_knob_y = arg_simd->knob_points[0].py;
+			} else if (var_4 > 0) {
+				arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
+					arg_carState->car_knob_y, var_2);
+			} else {
+				arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
+					arg_carState->car_knob_y, var_2);
+			}
+		}
+	} else if (arg_carState->car_fpsmul2 != 0) {
+		arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
+			arg_carState->car_fpsmul2, 1);
+	}
 
-loc_17B93:
-	if (arg_carState->car_knob_x != arg_carState->car_knob_x2)
-		goto loc_17C0C;
-	var_4 = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_knob_y2, arg_carState->car_knob_y);
-	if (var_4 != 0)
-		goto loc_17BDA;
-	arg_carState->car_changing_gear = 0;
-	arg_carState->car_gearratio = arg_simd->gear_ratios[arg_carState->car_current_gear];
-	arg_carState->car_gearratioshr8 = arg_carState->car_gearratio >> 8;
-	goto loc_17CAC;
-
-loc_17BDA:
-	if (car_absolute_word(var_4) > var_2)
-		goto loc_17BF6;
-	arg_carState->car_knob_y = arg_carState->car_knob_y2;
-	goto loc_17C84;
-
-loc_17BF6:
-	if (var_4 <= 0)
-		goto loc_17BFF;
-	goto loc_17C93;
-
-loc_17BFF:
-	arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_knob_y, var_2);
-	goto loc_17CAC;
-
-loc_17C0C:
-	if (arg_simd->knob_points[0].py != arg_carState->car_knob_y)
-		goto loc_17C5E;
-	var_4 = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_knob_x2, arg_carState->car_knob_x);
-	if (car_absolute_word(var_4) > var_2)
-		goto loc_17C40;
-	arg_carState->car_knob_x = arg_carState->car_knob_x2;
-	goto loc_17CAC;
-
-loc_17C40:
-	if (var_4 <= 0)
-		goto loc_17C52;
-	arg_carState->car_knob_x = LEGACY_S16_WRAP_ADD(
-		arg_carState->car_knob_x, var_2);
-	goto loc_17CAC;
-
-loc_17C52:
-	arg_carState->car_knob_x = LEGACY_S16_WRAP_SUB(
-		arg_carState->car_knob_x, var_2);
-	goto loc_17CAC;
-
-loc_17C5E:
-	var_4 = LEGACY_S16_WRAP_SUB(
-		arg_simd->knob_points[0].py, arg_carState->car_knob_y);
-	if (car_absolute_word(var_4) > var_2)
-		goto loc_17C8A;
-	arg_carState->car_knob_y = arg_simd->knob_points[0].py;
-
-loc_17C84:
-	goto loc_17CAC;
-
-loc_17C8A:
-	if (var_4 > 0)
-		goto loc_17C93;
-	goto loc_17BFF;
-
-loc_17C93:
-	arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
-		arg_carState->car_knob_y, var_2);
-	goto loc_17CAC;
-
-loc_17C9E:
-	if (arg_carState->car_fpsmul2 == 0)
-		goto loc_17CAC;
-	arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
-		arg_carState->car_fpsmul2, 1);
-
-loc_17CAC:
 	var_updatedSpeed = arg_carState->car_speed;
 	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 		arg_carState->car_pseudoGravity,
