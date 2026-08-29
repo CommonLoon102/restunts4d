@@ -4692,8 +4692,8 @@ draw_c_subdivide_bottom_next:
 }
 
 extern legacy_s8 aStxxx[];
-extern legacy_s16 far* carresptr;
-extern legacy_s16 far* car2resptr;
+extern legacy_s8 far* carresptr;
+extern legacy_s8 far* car2resptr;
 extern struct VECTOR carshapevec;
 extern struct VECTOR carshapevec2;
 extern struct VECTOR carshapevecs[];
@@ -4861,7 +4861,7 @@ void sub_204AE(struct VECTOR far* arg_verts, legacy_s16 arg_4, legacy_s16* arg_6
 	return ;
 }
 
-extern legacy_s8 unk_3E710[];
+extern legacy_s16 unk_3E710[];
 
 void shape3d_free_car_shapes() {
 	if (car2resptr != 0) {
