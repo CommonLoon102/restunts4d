@@ -560,71 +560,73 @@ void build_track_object(struct VECTOR* world_position,
 			effective_x = position.x;
 			effective_z = position.z;
 		}
-		if (effective_z > LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1)) {
-			if (effective_z >
-				LEGACY_S16_WRAP_ADD(loopSurface_maxZ, 0x64))
-				goto track_contact_loop_base;
-			value2 = LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1);
-		} else {
-			value2 = effective_z;
-		}
-		index = 0;
-		while (loopSurface_ZBounds1[index] < value2)
-			index++;
-		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) > 0x20C) {
-			index = (legacy_u16)(5U - index);
-			if (effective_x < loopSurface_XBounds0[index] ||
-				effective_x > LEGACY_S16_WRAP_ADD(
-					loopSurface_XBounds1[index], 0x190))
-				break;
-			if (effective_x <= loopSurface_XBounds1[index] ||
-				effective_x >= LEGACY_S16_WRAP_ADD(
-					loopSurface_XBounds0[index], 0x190)) {
-				value3 = track_interpolate(value2,
-					loopSurface_ZBounds0[index],
-					loopSurface_ZBounds1[index],
-					loopSurface_XBounds0[index],
-					loopSurface_XBounds1[index]);
-				if (effective_x <= value3 || effective_x >=
-					LEGACY_S16_WRAP_ADD(value3, 0x190))
+		if (effective_z <=
+			LEGACY_S16_WRAP_ADD(loopSurface_maxZ, 0x64)) {
+			if (effective_z > LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1))
+				value2 = LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1);
+			else
+				value2 = effective_z;
+			index = 0;
+			while (loopSurface_ZBounds1[index] < value2)
+				index++;
+			if (LEGACY_S16_WRAP_SUB(world_position->y,
+				terrainHeight) > 0x20C) {
+				index = (legacy_u16)(5U - index);
+				if (effective_x < loopSurface_XBounds0[index] ||
+					effective_x > LEGACY_S16_WRAP_ADD(
+						loopSurface_XBounds1[index], 0x190))
 					break;
+				if (effective_x <= loopSurface_XBounds1[index] ||
+					effective_x >= LEGACY_S16_WRAP_ADD(
+						loopSurface_XBounds0[index], 0x190)) {
+					value3 = track_interpolate(value2,
+						loopSurface_ZBounds0[index],
+						loopSurface_ZBounds1[index],
+						loopSurface_XBounds0[index],
+						loopSurface_XBounds1[index]);
+					if (effective_x <= value3 || effective_x >=
+						LEGACY_S16_WRAP_ADD(value3, 0x190))
+						break;
+				}
+				planindex = LEGACY_S16_WRAP_ADD(
+					value, (legacy_s16)index);
+				current_surf_type = (legacy_u8)surface_type;
+				byte_4392C = 0;
+				break;
 			}
-			planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-			current_surf_type = (legacy_u8)surface_type;
-			byte_4392C = 0;
-			break;
-		}
-		if (index > 1U && LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) < 0x64)
-			goto track_contact_loop_base;
-		if (effective_x < loopSurface_XBounds0[index] ||
-			effective_x > LEGACY_S16_WRAP_ADD(
-				loopSurface_XBounds1[index], 0x190))
-			goto track_contact_loop_base;
-		if (effective_x > loopSurface_XBounds1[index] &&
-			effective_x < LEGACY_S16_WRAP_ADD(
-				loopSurface_XBounds0[index], 0x190)) {
-			planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-			current_surf_type = (legacy_u8)surface_type;
-			byte_4392C = 0;
-			break;
-		}
-		if (loopSurface_XBounds0[index] ==
-			loopSurface_XBounds1[index])
-			goto track_contact_loop_base;
-		value3 = track_interpolate(value2,
-			loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
-			loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
-		if (effective_x > value3 && effective_x <
-			LEGACY_S16_WRAP_ADD(value3, 0x190)) {
-			planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-			current_surf_type = (legacy_u8)surface_type;
-			byte_4392C = 0;
-			break;
+			if (!((index > 1U && LEGACY_S16_WRAP_SUB(
+					world_position->y, terrainHeight) < 0x64) ||
+				effective_x < loopSurface_XBounds0[index] ||
+				effective_x > LEGACY_S16_WRAP_ADD(
+					loopSurface_XBounds1[index], 0x190))) {
+				if (effective_x > loopSurface_XBounds1[index] &&
+					effective_x < LEGACY_S16_WRAP_ADD(
+						loopSurface_XBounds0[index], 0x190)) {
+					planindex = LEGACY_S16_WRAP_ADD(
+						value, (legacy_s16)index);
+					current_surf_type = (legacy_u8)surface_type;
+					byte_4392C = 0;
+					break;
+				}
+				if (loopSurface_XBounds0[index] !=
+					loopSurface_XBounds1[index]) {
+					value3 = track_interpolate(value2,
+						loopSurface_ZBounds0[index],
+						loopSurface_ZBounds1[index],
+						loopSurface_XBounds0[index],
+						loopSurface_XBounds1[index]);
+					if (effective_x > value3 && effective_x <
+						LEGACY_S16_WRAP_ADD(value3, 0x190)) {
+						planindex = LEGACY_S16_WRAP_ADD(
+							value, (legacy_s16)index);
+						current_surf_type = (legacy_u8)surface_type;
+						byte_4392C = 0;
+						break;
+					}
+				}
+			}
 		}
 
-track_contact_loop_base:
 		index = 0;
 		while (loopBase_ZBounds1[index] < effective_z)
 			index++;
