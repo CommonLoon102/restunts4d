@@ -199,6 +199,20 @@ static legacy_u16 shape3d_average_depth(legacy_s32 sum,
 	}
 }
 
+static legacy_u16 polyinfo_read_word(const legacy_u8 far* record,
+	legacy_u16 word_index)
+{
+	return LEGACY_READ_U16_LE(record +
+		LEGACY_U16_WRAP_MUL(word_index, 2U));
+}
+
+static void polyinfo_write_word(legacy_u8 far* record,
+	legacy_u16 word_index, legacy_u16 value)
+{
+	LEGACY_WRITE_U16_LE(record +
+		LEGACY_U16_WRAP_MUL(word_index, 2U), value);
+}
+
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
@@ -2423,7 +2437,7 @@ loc_25D3C:
 	
 	temp0 = shape3d_average_depth(var_18, transshapenumvertscopy);
 	
-	((legacy_u16 far*)transshapepolyinfo)[0] = temp0;
+	polyinfo_write_word(transshapepolyinfo, 0U, temp0);
 	
 	
 	if ((transshapeflags & 1) != 0 || (var_primitiveflags & 2) != 0) {
@@ -2665,7 +2679,7 @@ extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0,
 			regax = regsi;
 			regsi--;
 			if (regax == 0) break;
-			if (((legacy_s16 far*)polyinfoptrs[regdi])[0] <
+			if (LEGACY_READ_S16_LE(polyinfoptrs[regdi]) <
 				(legacy_s16)arg_0) break;
 			poly_linklist_40ED6_iter4 = regdi;
 			regdi = poly_linked_list_40ED6[regdi];
@@ -2818,7 +2832,6 @@ void init_polyinfo(void) {
 void get_a_poly_info(void)
 {
 	legacy_u8 far* record;
-	legacy_u16 far* record_points;
 	legacy_s16 points[25];
 	legacy_u16 record_index;
 	legacy_u16 primitive_index;
@@ -2838,12 +2851,13 @@ void get_a_poly_info(void)
 		material_color = (legacy_u16)
 			material_clrlist_ptr_cpy[material_type];
 		primitive_type = record[4];
-		record_points = (legacy_u16 far*)(record + 6U);
 
 		if (primitive_type == 0U) {
 			vertex_count = record[3];
 			for (index = 0; index < vertex_count * 2U; index++)
-				points[index] = LEGACY_S16_FROM_BITS(record_points[index]);
+				points[index] = LEGACY_S16_FROM_BITS(
+					polyinfo_read_word(record,
+						LEGACY_U16_WRAP_ADD(3U, index)));
 			pattern_type = (legacy_u16)
 				material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
@@ -2859,25 +2873,31 @@ void get_a_poly_info(void)
 					material_patlist2_ptr_cpy[material_type],
 					(legacy_u16)material_clrlist2_ptr_cpy[material_type],
 					material_color, vertex_count,
-					points);
+						points);
 			}
 		} else if (primitive_type == 1U) {
-			preRender_line(record_points[0], record_points[1],
-				record_points[2], record_points[3], material_color);
+			preRender_line(polyinfo_read_word(record, 3U),
+				polyinfo_read_word(record, 4U),
+				polyinfo_read_word(record, 5U),
+				polyinfo_read_word(record, 6U), material_color);
 		} else if (primitive_type == 2U) {
-			preRender_sphere(LEGACY_S16_FROM_BITS(record_points[0]),
-				LEGACY_S16_FROM_BITS(record_points[1]), record_points[2],
-				material_color);
+			preRender_sphere(LEGACY_S16_FROM_BITS(
+				polyinfo_read_word(record, 3U)),
+				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
+				polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == 3U) {
 			for (index = 0; index < 8U; index++)
-				points[index] = record_points[index];
+				points[index] = LEGACY_S16_FROM_BITS(
+					polyinfo_read_word(record,
+						LEGACY_U16_WRAP_ADD(3U, index)));
 			preRender_wheel((legacy_u16*)points, 0x468U, material_color,
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == 5U) {
 			putpixel_single_maybe(
-				LEGACY_S16_FROM_BITS(record_points[0]),
-				LEGACY_S16_FROM_BITS(record_points[1]), material_color);
+				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
+				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
+				material_color);
 		}
 	}
 	polyinfo_reset();
