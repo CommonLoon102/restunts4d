@@ -2,6 +2,7 @@
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
+#include "resource.h"
 
 legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
 legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
@@ -1034,20 +1035,18 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 legacy_s8 far* locate_resource(legacy_s8 far* data,
 	const legacy_s8* name, legacy_u16 fatal) {
 	legacy_u16 chunk_count, i, j;
-	legacy_s8 far* resnames = (legacy_s8 far*)data + 6; // point at first 4-byte resource identifier
-	legacy_s8 huge* result = data; // cannot add >64k on a far pointer, use a huge pointer instead
-	legacy_u8 far* offset;
-	legacy_s8 padded_name[4];
+	const legacy_u8 far* identifier;
+	legacy_s8 padded_name[RESOURCE_FILE_IDENTIFIER_SIZE];
 	legacy_u16 padding;
 
-	chunk_count = LEGACY_READ_U16_LE((legacy_u8 far*)data + 4);
+	chunk_count = resource_file_count((const legacy_u8 far*)data);
 
 	//printf("locate_resource: %s\n", name);
 
 	// Compare through a local padded key.  Several callers pass string
 	// literals, so the original in-place padding is not portable.
 	padding = 0;
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < RESOURCE_FILE_IDENTIFIER_SIZE; i++) {
 		if (padding == 0 && name[i] != 0)
 			padded_name[i] = name[i];
 		else {
@@ -1064,20 +1063,18 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 	// query is always space-padded above, so only an all-blank name could
 	// match it and no caller passes one.
 	for (j = 0; j < chunk_count; j++) {
-		for (i = 0; i < 4; i++) {
-			if (resnames[i] != padded_name[i]) {
+		identifier = resource_file_identifier(
+			(const legacy_u8 far*)data, j);
+		for (i = 0; i < RESOURCE_FILE_IDENTIFIER_SIZE; i++) {
+			if (identifier[i] != (legacy_u8)padded_name[i]) {
 				break;
 			}
 		}
-		if (i == 4 ||
-			(resnames[i] == 0 && padded_name[i] == 0x20)) {
-			result = data;
-			result += chunk_count * 8 + 6; // header, names and offsets
-			offset = (legacy_u8 far*)resnames + chunk_count * 4;
-			result += LEGACY_READ_U32_LE(offset);
-			return (legacy_s8 far*)result;
+		if (i == RESOURCE_FILE_IDENTIFIER_SIZE ||
+			(identifier[i] == 0 && padded_name[i] == 0x20)) {
+			return (legacy_s8 far*)resource_file_data(
+				(legacy_u8 far*)data, j);
 		}
-		resnames += 4; // move pointer to next 4-byte resource identifier
 	}
 
 	if (fatal > 1)

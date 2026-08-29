@@ -7,6 +7,7 @@
 #include "memmgr.h"
 #include "fileio.h"
 #include "legacy.h"
+#include "resource.h"
 #include "shape2d.h"
 
 extern legacy_s8 aWindowdefOutOfRowTableSpa[];
@@ -2391,17 +2392,7 @@ void setup_mcgawnd2(void) {
 static legacy_u8 far* file_get_shape2d_bytes(legacy_u8 far* memchunk,
 	legacy_s16 index)
 {
-	legacy_u16 shapecount, offsetofs, dataofs;
-	legacy_u32 chunkofs;
-	legacy_u8 huge* result;
-	
-	shapecount = LEGACY_READ_U16_LE(memchunk + 4);
-	offsetofs = (index << 2) + (shapecount << 2) + 6;
-	dataofs = (shapecount << 3) + 6;
-	chunkofs = LEGACY_READ_U32_LE(memchunk + offsetofs);
-	result = memchunk;
-	result += dataofs + chunkofs;
-	return (legacy_u8 far*)result;
+	return resource_file_data(memchunk, (legacy_u16)index);
 }
 
 // like locate_resource_by_index()
@@ -2412,11 +2403,11 @@ struct SHAPE2D far* file_get_shape2d(legacy_u8 far* memchunk,
 }
 
 void nopsub_326BA(legacy_u8 far* memchunk, legacy_u16 index, legacy_u32* result) {
-	*result = LEGACY_READ_U32_LE(memchunk + (index << 2) + 6);
+	*result = LEGACY_READ_U32_LE(resource_file_identifier(memchunk, index));
 }
 
 legacy_u16 file_get_res_shape_count(void far* memchunk) {
-	return LEGACY_READ_U16_LE((legacy_u8 far*)memchunk + 4);
+	return resource_file_count((const legacy_u8 far*)memchunk);
 }
 
 void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
@@ -2428,7 +2419,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	legacy_u8 flag;
 	legacy_s16 i, j;
 
-	shapecount = LEGACY_READ_U16_LE(memchunk + 4);
+	shapecount = resource_file_count(memchunk);
 	counter = 0;
 	do {
 		memshape = file_get_shape2d_bytes(memchunk, counter);
@@ -2615,6 +2606,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	legacy_u32 val;
 	legacy_u32 product;
 	legacy_u16 lowterm;
+	legacy_u16 directory_prefix_size;
 	legacy_u32 nextoffset;
 	legacy_u8 far* offsets;
 	legacy_u8 far* srcshape;
@@ -2623,12 +2615,15 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	shapecount = file_get_res_shape_count(memchunk);
 	
 	// Skip size.
-	memchunkptr = memchunk + 4;
-	mempagesptr = mempages + 4;
-	
+	memchunkptr = memchunk + RESOURCE_FILE_COUNT_OFFSET;
+	mempagesptr = mempages + RESOURCE_FILE_COUNT_OFFSET;
+
 	// Copy count and ids.
-	fmemcpy(mempagesptr, memchunkptr, shapecount * 4 + 2);
-	mempagesptr += shapecount * 4 + 2;
+	directory_prefix_size = LEGACY_U16_WRAP_ADD(RESOURCE_FILE_COUNT_SIZE,
+		LEGACY_U16_WRAP_MUL(shapecount,
+			RESOURCE_FILE_IDENTIFIER_SIZE));
+	fmemcpy(mempagesptr, memchunkptr, directory_prefix_size);
+	mempagesptr += directory_prefix_size;
 	
 	// Store pointer to offset table.
 	offsets = mempagesptr;
