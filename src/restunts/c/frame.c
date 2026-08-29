@@ -1378,7 +1378,8 @@ void init_rect_arrays(void) {
 
 void font_set_fontdef2(void far* data) {
 	set_fontdefseg(data);
-	fontdef_unk_0E = ((legacy_u16 far*)data)[7];
+	fontdef_unk_0E = LEGACY_S16_FROM_BITS(
+		LEGACY_READ_U16_LE((legacy_u8 far*)data + 14U));
 }
 
 void font_set_fontdef(void) {
