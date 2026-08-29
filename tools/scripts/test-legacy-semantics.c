@@ -70,6 +70,9 @@ static void test_dword_shifts_and_rotates(void)
 
 static void test_multiply_and_divide(void)
 {
+	assert(LEGACY_U16_LOW_BYTE(0xABCDU) == 0xCDU);
+	assert(LEGACY_U16_REPLACE_LOW_BYTE(0xABCDU, 0x12U) == 0xAB12U);
+	assert(LEGACY_U16_REPLACE_LOW_BYTE(0xABCDU, 0x1234U) == 0xAB34U);
 	assert(LEGACY_S8_WRAP_ADD(127, 1) == -128);
 	assert(LEGACY_S8_WRAP_SUB(-128, 1) == 127);
 	assert(LEGACY_S8_WRAP_NEGATE(-128) == -128);

@@ -609,7 +609,8 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 	game_replay_mode = 0;
 	byte_4393C = 0;
 	framespersec = framespersec2;
-	*(legacy_u8*)&gameconfig.game_framespersec = (legacy_u8)framespersec2;
+	gameconfig.game_framespersec = LEGACY_U16_REPLACE_LOW_BYTE(
+		gameconfig.game_framespersec, framespersec2);
 	init_game_state(-1);
 	return 1;
 }
@@ -1529,8 +1530,9 @@ void replay_unk2(legacy_s16 mode)
 
 	if (elapsed_time2 == 0x2EE0U) {
 		if (elapsed_time1 == 0 &&
-			*(legacy_u8*)&word_45D3E == 0) {
-			*(legacy_u8*)&word_45D3E = 1;
+			LEGACY_U16_LOW_BYTE(word_45D3E) == 0) {
+			word_45D3E = LEGACY_S16_FROM_BITS(
+				LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 1U));
 			byte_46467 = 1;
 			return;
 		}
@@ -9764,12 +9766,13 @@ static void replay_pause_menu(void)
 	case 2:
 		check_input();
 		framespersec = framespersec2;
-		*(legacy_u8*)&gameconfig.game_framespersec =
-			(legacy_u8)framespersec2;
+		gameconfig.game_framespersec = LEGACY_U16_REPLACE_LOW_BYTE(
+			gameconfig.game_framespersec, framespersec2);
 		init_game_state(-1);
 		elapsed_time2 = 0;
 		gameconfig.game_recordedframes = 0;
-		*(legacy_u8*)&word_45D3E = 0;
+		word_45D3E = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
 		byte_43966 = 1;
 		goto replay_pause_resume_driving;
 
@@ -9847,7 +9850,7 @@ replay_pause_resume_driving:
 			setup_player_cars();
 		}
 		framespersec = (legacy_s16)LEGACY_S8_FROM_BITS(
-			*(legacy_u8*)&gameconfig.game_framespersec);
+			LEGACY_U16_LOW_BYTE(gameconfig.game_framespersec));
 		init_game_state(-1);
 		break;
 
@@ -10375,7 +10378,8 @@ void run_game(void) {
 				gameconfig.game_framespersec = framespersec2;
 				init_game_state(-1);
 				word_45D94 = 0;
-				*(legacy_s8*)&word_45D3E = 0; // byte ptr!
+				word_45D3E = LEGACY_S16_FROM_BITS(
+					LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
 				byte_4393C = 1;
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = 1;
@@ -10628,7 +10632,8 @@ void run_game(void) {
 		audio_remove_driver_timer();
 		if (game_replay_mode == 0 && gameconfig.game_opponenttype != 0 && state.opponentstate.car_crashBmpFlag == 0) {
 			show_dialog(3, 0, locate_text_res(gameresptr, "cop"), -1, 0x50, performGraphColor, &var_16, 0);
-			*(legacy_s8*)&word_45D3E = 1;
+			word_45D3E = LEGACY_S16_FROM_BITS(
+				LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 1U));
 			regsi = framespersec;
 			regsi--;
 
@@ -10653,7 +10658,8 @@ void run_game(void) {
 			}
 		}
 
-		*(legacy_s8*)&word_45D3E = 0; // byte ptr 
+		word_45D3E = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
 		mouse_minmax_position(0);
 		remove_frame_callback();
 		free_player_cars();

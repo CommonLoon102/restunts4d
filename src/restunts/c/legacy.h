@@ -72,6 +72,12 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S16_WRAP_MUL(left, right) \
 	LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(left, right))
 
+#define LEGACY_U16_LOW_BYTE(value) \
+	((legacy_u8)(legacy_u16)(value))
+#define LEGACY_U16_REPLACE_LOW_BYTE(word, value) \
+	((legacy_u16)(((legacy_u16)(word) & 0xFF00U) | \
+	(legacy_u16)(legacy_u8)(value)))
+
 /* x86 masks variable shift counts to five bits. */
 #define LEGACY_SHIFT_COUNT(value) ((legacy_u16)(value) & 0x1FU)
 #define LEGACY_ROTATE16_COUNT(value) ((legacy_u16)(value) & 0x0FU)
