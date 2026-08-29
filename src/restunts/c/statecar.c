@@ -30,9 +30,21 @@ static legacy_s16 apply_opponent_acceleration_drag(
 		LEGACY_S16_FROM_BITS((legacy_u16)reduction));
 }
 
+static legacy_s8 gear_change_delay(legacy_u16 frame_rate)
+{
+	legacy_s16 signed_rate;
+	legacy_s16 half_rate;
+
+	signed_rate = LEGACY_S8_FROM_BITS((legacy_u8)frame_rate);
+	half_rate = LEGACY_S16_SAR(signed_rate, 1U);
+	return LEGACY_S8_FROM_BITS((legacy_u8)LEGACY_U16_WRAP_ADD(
+		(legacy_u8)half_rate, (legacy_u8)frame_rate));
+}
+
 legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
-		currpm = ((legacy_u32)speed * gearratio) >> 16;
+		currpm = (legacy_u16)(
+			LEGACY_U32_WRAP_MUL(speed, gearratio) >> 16);
 	}
 
 	if (currpm >= idle_rpm) {
@@ -193,7 +205,7 @@ loc_17B2E:
     dec     [bx+CARSTATE.car_current_gear]*/
 loc_17B39:
 	arg_carState->car_changing_gear = 1;
-	arg_carState->car_fpsmul2 = (framespersec >> 1) + framespersec; // 1.5sec in frames
+	arg_carState->car_fpsmul2 = gear_change_delay(framespersec);
 	arg_carState->car_knob_x2 = arg_simd->knob_points[arg_carState->car_current_gear].px;
 	arg_carState->car_knob_y2 = arg_simd->knob_points[arg_carState->car_current_gear].py;
 	
@@ -464,7 +476,8 @@ loc_17D10:
 	arg_carState->car_is_braking = 1;
 	if (arg_MplayerFlag == 0)
 		goto loc_17CE1;
-	var_deltaSpeed -= arg_simd->braking_eff << 1;
+	var_deltaSpeed = LEGACY_S16_WRAP_SUB(var_deltaSpeed,
+		LEGACY_S16_WRAP_MUL(arg_simd->braking_eff, 2));
 /*  mov     bx, [bp+arg_carState]
     mov     [bx+CARSTATE.car_is_accelerating], 0
     mov     [bx+CARSTATE.car_engineLimiterTimer], 0
@@ -479,7 +492,8 @@ loc_17D36:
 loc_17D39:
 	if (framespersec != 0xA)
 		goto loc_17D46;
-	var_deltaSpeed += var_deltaSpeed;
+	var_deltaSpeed = LEGACY_S16_WRAP_ADD(
+		var_deltaSpeed, var_deltaSpeed);
 /*    cmp     framespersec, 0Ah
     jnz     short loc_17D46
     mov     ax, [bp+var_deltaSpeed]
@@ -574,7 +588,7 @@ loc_17DD4:
     jb      short loc_17DDE
     jmp     loc_17D39*/
 loc_17DDE:
-	var_deltaSpeed += 0x300;
+	var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed, 0x300);
 	goto loc_17D39;
 /*    add     byte ptr [bp+var_deltaSpeed+1], 3
     jmp     loc_17D39
@@ -625,7 +639,9 @@ loc_17E0C:
     shr     ax, 1
     mov     [bp+var_currTorque], al*/
 loc_17E34:
-	var_deltaSpeed += (arg_carState->car_gearratioshr8 * var_currTorque) >> 4;
+	var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed,
+		LEGACY_S16_FROM_BITS((legacy_u16)(LEGACY_U16_WRAP_MUL(
+			arg_carState->car_gearratioshr8, var_currTorque) >> 4)));
 	var_deltaSpeed = scale_acceleration_by_mass(
 		var_deltaSpeed, arg_simd->car_mass);
 
@@ -746,7 +762,8 @@ loc_17EF8:
 loc_17EFB:
 	if (var_4 <= 0x1400)
 		goto loc_17F28;
-	arg_carState->car_speed = ((legacy_s32)arg_carState->car_speed + arg_carState->car_speed2) >> 1;
+	arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
+		arg_carState->car_speed, arg_carState->car_speed2) >> 1);
 	arg_carState->car_speed2 = arg_carState->car_speed;
 	arg_carState->car_engineLimiterTimer = 5;
 	goto loc_17F45;
