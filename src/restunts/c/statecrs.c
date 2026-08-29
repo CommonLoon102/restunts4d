@@ -215,34 +215,23 @@ loc_1967F:
 		LEGACY_U16_SHL(framespersec, 2U));
 loc_196B3:
 #ifndef RESTUNTS_HEADLESS
-	if (is_in_replay != 0)
-		goto loc_1964E;
-	if (audio_car_state_ready == 0)
-		goto loc_1964E;
-	if (arg_MplayerFlag != 0)
-		goto loc_196CE;
-	audio_function2_wrap(audio_player_engine_channel);
-	goto loc_196D2;
-loc_196CE:
-	audio_function2_wrap(audio_opponent_engine_channel);
-loc_196D2:
+	if (is_in_replay == 0 && audio_car_state_ready != 0) {
+		if (arg_MplayerFlag == 0)
+			audio_function2_wrap(audio_player_engine_channel);
+		else
+			audio_function2_wrap(audio_opponent_engine_channel);
+	}
 #endif
 	goto loc_1964E;
 loc_196DE:
 #ifndef RESTUNTS_HEADLESS
-	if (is_in_replay != 0)
-		goto loc_19704;
-	if (audio_car_state_ready == 0)
-		goto loc_19704;
-	if (arg_MplayerFlag != 0)
-		goto loc_196F8;
-	audio_function2_wrap(audio_player_engine_channel);
-	goto loc_196FC;
-loc_196F8:
-	audio_function2_wrap(audio_opponent_engine_channel);
-loc_196FC:
+	if (is_in_replay == 0 && audio_car_state_ready != 0) {
+		if (arg_MplayerFlag == 0)
+			audio_function2_wrap(audio_player_engine_channel);
+		else
+			audio_function2_wrap(audio_opponent_engine_channel);
+	}
 #endif
-loc_19704:
 	var_cState->car_crashBmpFlag = 2;
 	var_2 = 1;
 	if (arg_MplayerFlag == 0)
