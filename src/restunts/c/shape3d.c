@@ -2526,6 +2526,208 @@ static legacy_u8 draw_line_clip_bottom(legacy_u16* line)
 	return 1;
 }
 
+static legacy_s16 draw_line_clip_left(legacy_u16* line)
+{
+	legacy_u16 ax;
+	legacy_u16 cx;
+	legacy_u16 dx;
+	legacy_u16 mode;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+	legacy_u16 original_count;
+	legacy_u32 value32;
+	legacy_u32 product;
+	legacy_s32 difference;
+
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		return 2;
+	case 3:
+		cx = sprite1.sprite_left2;
+		ax = line[4];
+		line[4] = cx;
+		cx = (legacy_u16)(cx - ax);
+		line[11] = (legacy_u16)(line[11] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[5] = (legacy_u16)(line[5] - cx);
+		break;
+	case 4:
+		ax = line[1];
+		cx = sprite1.sprite_left2;
+		line[1] = cx;
+		cx = (legacy_u16)(cx - ax);
+		line[10] = (legacy_u16)(line[10] + cx);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		break;
+	case 5:
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		line[4] = sprite1.sprite_left2;
+		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[1]) -
+			(legacy_s32)LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+		if (difference < 0) {
+			advance = 1;
+		} else {
+			advance = draw_line_round_div(value32 -
+				((legacy_u32)sprite1.sprite_left2 << 16), line[6]);
+			advance = (legacy_u16)(advance + 1);
+		}
+		original_count = line[7];
+		line[7] = advance;
+		line[11] = (legacy_u16)(
+			line[11] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
+		break;
+	case 6:
+		value32 = ((legacy_u32)sprite1.sprite_left2 << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if ((value32 & 0x80000000UL) != 0)
+			return 2;
+		advance = draw_line_round_div(value32, line[6]);
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[10] = (legacy_u16)(line[10] + advance);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
+			return 2;
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 += product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		break;
+	case 7:
+		ax = line[1];
+		dx = sprite1.sprite_left2;
+		line[4] = dx;
+		ax = (legacy_u16)(ax - dx);
+		advance = (legacy_u16)(ax + 1);
+		line[7] = advance;
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		value32 += product;
+		value32 += 0x8000UL;
+		old_value = line[5];
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[11] = (legacy_u16)(line[11] + old_value - line[5]);
+		break;
+	case 8:
+		old_value = line[1];
+		line[1] = sprite1.sprite_left2;
+		advance = (legacy_u16)(line[1] - old_value);
+		line[7] = (legacy_u16)(line[7] - advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		value32 += product;
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[10] = (legacy_u16)(line[10] + advance - old_value);
+		break;
+	default:
+		return 0;
+	}
+	return 1;
+}
+
+static legacy_u16 draw_line_clip_right(legacy_u16* line)
+{
+	legacy_u16 ax;
+	legacy_u16 cx;
+	legacy_u16 mode;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+	legacy_u16 original_count;
+	legacy_u32 value32;
+	legacy_u32 product;
+
+	mode = line[9] & 0x00FFU;
+	switch (mode) {
+	case 2:
+		return draw_line_reject(line, 1U);
+	case 3:
+		cx = line[1];
+		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		line[1] = ax;
+		cx = (legacy_u16)(cx - ax);
+		line[3] = (legacy_u16)(line[3] + cx);
+		line[7] = (legacy_u16)(line[7] - cx);
+		line[12] = (legacy_u16)(line[12] + cx);
+		return 0;
+	case 4:
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		ax = line[4];
+		line[4] = cx;
+		ax = (legacy_u16)(ax - cx);
+		line[13] = (legacy_u16)(line[13] + ax);
+		line[7] = (legacy_u16)(line[7] - ax);
+		line[5] = (legacy_u16)(line[5] - ax);
+		return 0;
+	case 5:
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= (legacy_u32)(sprite1.sprite_widthsum - 1) << 16;
+		advance = draw_line_round_div(value32, line[6]);
+		line[7] = (legacy_u16)(line[7] - advance);
+		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
+			return draw_line_reject(line, 1U);
+		line[3] = (legacy_u16)(line[3] + advance);
+		line[12] = (legacy_u16)(line[12] + advance);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[1] << 16) | line[0];
+		value32 -= product;
+		line[0] = (legacy_u16)value32;
+		line[1] = (legacy_u16)(value32 >> 16);
+		return 0;
+	case 6:
+		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		value32 = ((legacy_u32)line[4] << 16) -
+			(((legacy_u32)line[1] << 16) | line[0]);
+		if ((value32 & 0x80000000UL) != 0)
+			return draw_line_reject(line, 1U);
+		advance = (legacy_u16)(
+			draw_line_round_div(value32, line[6]) + 1);
+		original_count = line[7];
+		line[7] = advance;
+		line[13] = (legacy_u16)(
+			line[13] + original_count - advance);
+		line[5] = (legacy_u16)(line[3] + advance - 1);
+		return 0;
+	case 7:
+		ax = line[1];
+		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		ax = (legacy_u16)(ax - cx);
+		line[1] = cx;
+		line[7] = (legacy_u16)(line[7] - ax);
+		product = (legacy_u32)ax * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		value32 += product;
+		line[2] = (legacy_u16)value32;
+		line[3] = (legacy_u16)(value32 >> 16);
+		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
+		line[12] = (legacy_u16)(line[12] + advance - old_value);
+		return 0;
+	case 8:
+		ax = sprite1.sprite_widthsum;
+		cx = (legacy_u16)(ax - 1);
+		line[4] = cx;
+		ax = (legacy_u16)(ax - line[1]);
+		line[7] = ax;
+		advance = (legacy_u16)(ax - 1);
+		product = (legacy_u32)advance * line[6];
+		value32 = ((legacy_u32)line[3] << 16) | line[2];
+		value32 += product;
+		value32 += 0x8000UL;
+		old_value = line[5];
+		line[5] = (legacy_u16)(value32 >> 16);
+		line[13] = (legacy_u16)(line[13] + old_value - line[5]);
+		return 0;
+	default:
+		return 0;
+	}
+}
+
 legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 0);
 }
@@ -2547,6 +2749,7 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 	legacy_u32 value32;
 	legacy_u32 product;
 	legacy_s32 difference;
+	legacy_s16 clip_result;
 
 	line[9] = 0x00FFU;
 	line[0] = 0;
@@ -2699,187 +2902,17 @@ draw_c_clip_bottom:
 	goto draw_c_reclip_x;
 
 draw_c_clip_left:
-	mode = line[9] & 0x00FFU;
-	switch (mode) {
-	case 2:
+	clip_result = draw_line_clip_left(line);
+	if (clip_result == 2)
 		return draw_line_reject(line, 2U);
-	case 3:
-		cx = sprite1.sprite_left2;
-		ax = line[4];
-		line[4] = cx;
-		cx = (legacy_u16)(cx - ax);
-		line[11] = (legacy_u16)(line[11] + cx);
-		line[7] = (legacy_u16)(line[7] - cx);
-		line[5] = (legacy_u16)(line[5] - cx);
-		goto draw_c_after_left;
-	case 4:
-		ax = line[1];
-		cx = sprite1.sprite_left2;
-		line[1] = cx;
-		cx = (legacy_u16)(cx - ax);
-		line[10] = (legacy_u16)(line[10] + cx);
-		line[3] = (legacy_u16)(line[3] + cx);
-		line[7] = (legacy_u16)(line[7] - cx);
-		goto draw_c_after_left;
-	case 5:
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		line[4] = sprite1.sprite_left2;
-		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[1]) - (legacy_s32)LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
-		if (difference < 0)
-			advance = 1;
-		else {
-			advance = draw_line_round_div(value32 -
-				((legacy_u32)sprite1.sprite_left2 << 16), line[6]);
-			advance = (legacy_u16)(advance + 1);
-		}
-		original_count = line[7];
-		line[7] = advance;
-		line[11] = (legacy_u16)(line[11] + original_count - advance);
-		line[5] = (legacy_u16)(line[3] + advance - 1);
-		goto draw_c_after_left;
-	case 6:
-		value32 = ((legacy_u32)sprite1.sprite_left2 << 16) -
-			(((legacy_u32)line[1] << 16) | line[0]);
-		if (((value32 & 0x80000000UL) != 0))
-			return draw_line_reject(line, 2U);
-		advance = draw_line_round_div(value32, line[6]);
-		line[3] = (legacy_u16)(line[3] + advance);
-		line[10] = (legacy_u16)(line[10] + advance);
-		line[7] = (legacy_u16)(line[7] - advance);
-		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
-			return draw_line_reject(line, 2U);
-		product = (legacy_u32)advance * line[6];
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 += product;
-		line[0] = (legacy_u16)value32;
-		line[1] = (legacy_u16)(value32 >> 16);
-		goto draw_c_after_left;
-	case 7:
-		ax = line[1];
-		dx = sprite1.sprite_left2;
-		line[4] = dx;
-		ax = (legacy_u16)(ax - dx);
-		advance = (legacy_u16)(ax + 1);
-		line[7] = advance;
-		product = (legacy_u32)ax * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		value32 += product;
-		value32 += 0x8000UL;
-		old_value = line[5];
-		line[5] = (legacy_u16)(value32 >> 16);
-		line[11] = (legacy_u16)(line[11] + old_value - line[5]);
-		goto draw_c_after_left;
-	case 8:
-		old_value = line[1];
-		line[1] = sprite1.sprite_left2;
-		advance = (legacy_u16)(line[1] - old_value);
-		line[7] = (legacy_u16)(line[7] - advance);
-		product = (legacy_u32)advance * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
-		value32 += product;
-		line[2] = (legacy_u16)value32;
-		line[3] = (legacy_u16)(value32 >> 16);
-		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
-		line[10] = (legacy_u16)(line[10] + advance - old_value);
-		goto draw_c_after_left;
-	default:
+	if (clip_result == 0)
 		return 0;
-	}
-
-draw_c_after_left:
 	if (clip & 1U)
-		goto draw_c_clip_right;
+		return draw_line_clip_right(line);
 	return 0;
 
 draw_c_clip_right:
-	mode = line[9] & 0x00FFU;
-	switch (mode) {
-	case 2:
-		dx = 1;
-		return draw_line_reject(line, dx);
-	case 3:
-		cx = line[1];
-		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		line[1] = ax;
-		cx = (legacy_u16)(cx - ax);
-		line[3] = (legacy_u16)(line[3] + cx);
-		line[7] = (legacy_u16)(line[7] - cx);
-		line[12] = (legacy_u16)(line[12] + cx);
-		return 0;
-	case 4:
-		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		ax = line[4];
-		line[4] = cx;
-		ax = (legacy_u16)(ax - cx);
-		line[13] = (legacy_u16)(line[13] + ax);
-		line[7] = (legacy_u16)(line[7] - ax);
-		line[5] = (legacy_u16)(line[5] - ax);
-		return 0;
-	case 5:
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 -= (legacy_u32)(sprite1.sprite_widthsum - 1) << 16;
-		advance = draw_line_round_div(value32, line[6]);
-		line[7] = (legacy_u16)(line[7] - advance);
-		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
-			dx = 1;
-			return draw_line_reject(line, dx);
-		}
-		line[3] = (legacy_u16)(line[3] + advance);
-		line[12] = (legacy_u16)(line[12] + advance);
-		product = (legacy_u32)advance * line[6];
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 -= product;
-		line[0] = (legacy_u16)value32;
-		line[1] = (legacy_u16)(value32 >> 16);
-		return 0;
-	case 6:
-		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		value32 = ((legacy_u32)line[4] << 16) -
-			(((legacy_u32)line[1] << 16) | line[0]);
-		if (((value32 & 0x80000000UL) != 0)) {
-			dx = 1;
-			return draw_line_reject(line, dx);
-		}
-		advance = (legacy_u16)(draw_line_round_div(value32, line[6]) + 1);
-		original_count = line[7];
-		line[7] = advance;
-		line[13] = (legacy_u16)(line[13] + original_count - advance);
-		line[5] = (legacy_u16)(line[3] + advance - 1);
-		return 0;
-	case 7:
-		ax = line[1];
-		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		ax = (legacy_u16)(ax - cx);
-		line[1] = cx;
-		line[7] = (legacy_u16)(line[7] - ax);
-		product = (legacy_u32)ax * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		old_value = (legacy_u16)((value32 + 0x8000UL) >> 16);
-		value32 += product;
-		line[2] = (legacy_u16)value32;
-		line[3] = (legacy_u16)(value32 >> 16);
-		advance = (legacy_u16)((value32 + 0x8000UL) >> 16);
-		line[12] = (legacy_u16)(line[12] + advance - old_value);
-		return 0;
-	case 8:
-		ax = sprite1.sprite_widthsum;
-		cx = (legacy_u16)(ax - 1);
-		line[4] = cx;
-		ax = (legacy_u16)(ax - line[1]);
-		line[7] = ax;
-		advance = (legacy_u16)(ax - 1);
-		product = (legacy_u32)advance * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		value32 += product;
-		value32 += 0x8000UL;
-		old_value = line[5];
-		line[5] = (legacy_u16)(value32 >> 16);
-		line[13] = (legacy_u16)(line[13] + old_value - line[5]);
-		return 0;
-	default:
-		return 0;
-	}
+	return draw_line_clip_right(line);
 
 draw_c_reclip_x:
 	dx = 0;
