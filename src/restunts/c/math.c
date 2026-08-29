@@ -459,15 +459,6 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 	// video_flag3_isFFFF`, which at those values is the identity anyway, so
 	// the port loses nothing by not carrying it.
 	fatal_error((const legacy_s8*)"rect_union: unexpected code path");
-	/*
-	mov     bx, [bp+arg_outrectptr]
-	mov     si, bx
-	mov     ax, [si+RECTANGLE.rc_right]
-	add     ax, video_flag2_is1
-	dec     ax
-	and     ax, video_flag3_isFFFF
-	mov     [bx+RECTANGLE.rc_right], ax
-*/
 }
 
 legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
@@ -562,14 +553,6 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 		// video_flag2_is1 is only ever set to 1, in init_main.
 		fatal_error((const legacy_s8*)
 			"rectlist_add_rect: unexpected code path");
-		/*
-		mov     bx, [bp+arg_rectptr]
-		mov     si, bx
-		mov     ax, [si+RECTANGLE.rc_right]
-		add     ax, video_flag2_is1
-		dec     ax
-		and     ax, video_flag3_isFFFF
-		mov     [bx+RECTANGLE.rc_right], ax*/
 	}
 	
 	for (var_counter = 0; var_counter < *arg_rect_array_length_ptr; var_counter++) {
@@ -1045,241 +1028,50 @@ extern legacy_s16 pState_f36Mminf40sar2;
 extern legacy_s16 f36f40_whlData;
 
 void plane_rotate_op(void) {
-/*    var_planptr = dword ptr -54
-    var_32 = word ptr -50
-    var_2E = word ptr -46
-    var_2C = byte ptr -44
-    var_1A = byte ptr -26
-    var_8 = byte ptr -8
-     s = byte ptr 0
-     r = byte ptr 2
-*/
-    struct PLANE far* var_planptr;
-    struct VECTOR var_32;
-    struct MATRIX var_2C;
-    struct MATRIX var_1A;
-    struct VECTOR var_8;
+	struct PLANE far* var_planptr;
+	struct VECTOR var_32;
+	struct MATRIX var_2C;
+	struct MATRIX var_1A;
+	struct VECTOR var_8;
 	legacy_s16 si;
 
-	//return ported_plane_rotate_op_();
-	if (planindex_copy != -1)
-		goto loc_197A6;
-	goto loc_198C2;
-/*    push    bp
-    mov     bp, sp
-    sub     sp, 36h
-    push    di
-    push    si
-    cmp     planindex_copy, 0FFFFh
-    jnz     short loc_197A6
-    jmp     loc_198C2
-*/
-loc_197A6:
-	var_planptr = &planptr[planindex_copy];
-	if (var_planptr->plane_xy != pState_minusRotate_x_2)
-		goto loc_197D6;
-	if (var_planptr->plane_yz != pState_minusRotate_z_2)
-		goto loc_197D6;
-	si = pState_minusRotate_y_2;
-	goto loc_19845;
-/*    mov     ax, 22h ; '"'
-    imul    planindex_copy
-    add     ax, word ptr planptr
-    mov     dx, word ptr planptr+2
-    mov     word ptr [bp+var_planptr], ax
-    mov     word ptr [bp+var_planptr+2], dx
-    les     bx, [bp+var_planptr]
-    mov     ax, pState_minusRotate_x_2
-    cmp     es:[bx+2], ax
-    jnz     short loc_197D6
-    mov     ax, pState_minusRotate_z_2
-    cmp     es:[bx], ax
-    jnz     short loc_197D6
-    mov     si, pState_minusRotate_y_2
-    jmp     short loc_19845
-    ; align 2
-    db 144*/
-loc_197D6:
-	mat_mul_vector(&vec_unk2, &mat_unk, &var_8);
-	var_1A = planptr[planindex_copy].plane_rotation;
-	mat_invert(&var_1A, &var_2C);
-/*    lea     ax, [bp+var_8]
-    push    ax
-    mov     ax, offset mat_unk
-    push    ax
-    mov     ax, offset vec_unk2
-    push    ax
-    call    mat_mul_vector
-    add     sp, 6
-    mov     ax, 22h ; '"'
-    imul    planindex_copy
-    add     ax, word ptr planptr
-    mov     dx, word ptr planptr+2
-    add     ax, 10h         ; plane rotation matrix
-    push    si
-    lea     di, [bp+var_1A]
-    mov     si, ax
-    push    ss
-    pop     es
-    push    ds
-    mov     ds, dx
-    mov     cx, 9
-    repne movsw
-    pop     ds
-    pop     si
-    lea     ax, [bp+var_2C]
-    push    ax
-    lea     ax, [bp+var_1A]
-    push    ax
-    call    mat_invert
-    add     sp, 4*/
+	if (planindex_copy != -1) {
+		var_planptr = &planptr[planindex_copy];
+		if (var_planptr->plane_xy == pState_minusRotate_x_2 &&
+			var_planptr->plane_yz == pState_minusRotate_z_2) {
+			si = pState_minusRotate_y_2;
+		} else {
+			mat_mul_vector(&vec_unk2, &mat_unk, &var_8);
+			var_1A = var_planptr->plane_rotation;
+			mat_invert(&var_1A, &var_2C);
+			mat_mul_vector(&var_8, &var_2C, &var_32);
+			si = polarAngle(-var_32.x, var_32.z);
+		}
 
-	mat_mul_vector(&var_8, &var_2C, &var_32);
-	si = polarAngle(-var_32.x, var_32.z);
-/*    lea     ax, [bp+var_32]
-    push    ax
-    lea     ax, [bp+var_2C]
-    push    ax
-    lea     ax, [bp+var_8]
-    push    ax
-    call    mat_mul_vector
-    add     sp, 6
-    push    [bp+var_32.vz]
-    mov     ax, [bp+var_32.vx]
-    neg     ax
-    push    ax
-    call    polarAngle
-    add     sp, 4
-    mov     si, ax*/
-loc_19845:
-	si += pState_f36Mminf40sar2;
-	if (si == 0)
-		goto loc_198A4;
-	if (word_3BE16 == si)
-		goto loc_19866;
-	mat_rot_y(&mat_planetmp, -si);
-	word_3BE16 = si;
-    /*add     si, pState_f36Mminf40sar2
-    jz      short loc_198A4
-    cmp     word_3BE16, si
-    jz      short loc_19866
-    mov     ax, si
-    neg     ax
-    push    ax
-    mov     ax, offset unk_40D58
-    push    ax
-    call    mat_rot_y
-    add     sp, 4
-    mov     word_3BE16, si*/
-loc_19866:
-	mat_mul_vector(&vec_unk2, &mat_planetmp, &var_32);
-	mat_mul_vector2(&var_32, &planptr[planindex_copy].plane_rotation, &vec_planerotopresult);
-	return ;
-/*    lea     ax, [bp+var_32]
-    push    ax
-    mov     ax, offset unk_40D58
-    push    ax
-    mov     ax, offset vec_unk2
-    push    ax
-    call    mat_mul_vector
-    add     sp, 6
-    mov     ax, offset vec_planerotopresult
-    push    ax
-    mov     ax, 22h ; '"'
-    imul    planindex_copy
-    add     ax, word ptr planptr
-    mov     dx, word ptr planptr+2
-    add     ax, 10h         ; plane rotation matrix.
-    push    dx
-    push    ax
-    lea     ax, [bp+var_32]
-loc_19895:
-    push    ax
-    push    cs
-    call near ptr ported_mat_mul_vector2_
-    add     sp, 8
-    pop     si
-    pop     di
-    mov     sp, bp
-    pop     bp
-    retf
-    ; align 2
-    db 144*/
-loc_198A4:
-/*    mov     ax, offset vec_planerotopresult
-    push    ax
-    mov     ax, 22h         ; sizeof plane
-    imul    planindex_copy
-    add     ax, word ptr planptr
-    mov     dx, word ptr planptr+2
-    add     ax, 10h
-    push    dx
-    push    ax
-    mov     ax, offset vec_unk2
-	*/
-	mat_mul_vector2(&vec_unk2, &planptr[planindex_copy].plane_rotation, &vec_planerotopresult);
-	return ;
-/*    jmp     short loc_19895
-    ; align 2
-    db 144*/
-loc_198C2:
-	if (pState_f36Mminf40sar2 == 0)
-		goto loc_1990C;
-	if (pState_f36Mminf40sar2 == f36f40_whlData)
-		goto loc_198EA;
-	mat_rot_y(&mat_unk2, -pState_f36Mminf40sar2);
-	f36f40_whlData = pState_f36Mminf40sar2;
-/*    cmp     pState_f36Mminf40sar2, 0
-    jz      short loc_1990C
-    mov     ax, f36f40_whlData
-    cmp     pState_f36Mminf40sar2, ax
-    jz      short loc_198EA
-    mov     ax, pState_f36Mminf40sar2
-    neg     ax
-    push    ax
-    mov     ax, offset mat_unk2
-    push    ax
-    call    mat_rot_y
-    add     sp, 4
-    mov     ax, pState_f36Mminf40sar2
-    mov     f36f40_whlData, ax*/
-loc_198EA:
+		si += pState_f36Mminf40sar2;
+		if (si == 0) {
+			mat_mul_vector2(&vec_unk2, &var_planptr->plane_rotation,
+				&vec_planerotopresult);
+			return;
+		}
+		if (word_3BE16 != si) {
+			mat_rot_y(&mat_planetmp, -si);
+			word_3BE16 = si;
+		}
+		mat_mul_vector(&vec_unk2, &mat_planetmp, &var_32);
+		mat_mul_vector2(&var_32, &var_planptr->plane_rotation,
+			&vec_planerotopresult);
+		return;
+	}
+
+	if (pState_f36Mminf40sar2 == 0) {
+		mat_mul_vector(&vec_unk2, &mat_unk, &vec_planerotopresult);
+		return;
+	}
+	if (pState_f36Mminf40sar2 != f36f40_whlData) {
+		mat_rot_y(&mat_unk2, -pState_f36Mminf40sar2);
+		f36f40_whlData = pState_f36Mminf40sar2;
+	}
 	mat_mul_vector(&vec_unk2, &mat_unk2, &var_32);
 	mat_mul_vector(&var_32, &mat_unk, &vec_planerotopresult);
-	return ;
-/*    lea     ax, [bp+var_32]
-    push    ax
-    mov     ax, offset mat_unk2
-    push    ax
-    mov     ax, offset vec_unk2
-    push    ax
-    call    mat_mul_vector
-    add     sp, 6
-    mov     ax, offset vec_planerotopresult
-    push    ax
-    mov     ax, offset mat_unk
-    push    ax
-    lea     ax, [bp+var_32]
-    jmp     short loc_19917
-    ; align 2
-    db 144*/
-loc_1990C:
-	mat_mul_vector(&vec_unk2, &mat_unk, &vec_planerotopresult);
 }
-/*
-    mov     ax, offset vec_planerotopresult
-    push    ax
-    mov     ax, offset mat_unk
-    push    ax
-    mov     ax, offset vec_unk2
-loc_19917:
-    push    ax
-    call    mat_mul_vector
-    add     sp, 6
-    pop     si
-    pop     di
-    mov     sp, bp
-    pop     bp
-    retf
-plane_rotate_op endp
-*/
