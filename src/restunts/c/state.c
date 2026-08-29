@@ -1138,6 +1138,7 @@ legacy_s16 track_setup(void)
 	legacy_u8 jump_length;
 	legacy_u8 path_closed;
 	legacy_u8 match_count;
+	legacy_u8 backtrack_required;
 	legacy_u8 arrow_code;
 
 	branches = (struct TRACK_SETUP_BRANCH far*)
@@ -1248,11 +1249,13 @@ legacy_s16 track_setup(void)
 	previous_connection_code = 0;
 	previous_piece = -1;
 
-track_next_tile:
+	for (;;) {
 	match_count = 0;
+	backtrack_required = 0;
 	if (column < 0 || row < 0 || column > 0x1D || row > 0x1D)
-		goto track_backtrack;
+		backtrack_required = 1;
 
+	if (backtrack_required == 0) {
 	tile_element = td14_elem_map_main[trackrows[row] + column];
 	tile_terrain = td15_terr_map_main[terrainrows[row] + column];
 	if (tile_element != 0 && tile_terrain >= 7U && tile_terrain < 0x0BU)
@@ -1392,67 +1395,65 @@ track_next_tile:
 
 	if (match_count != 0) {
 		connection_status = selected_connection_status;
-		goto track_record_piece;
-	}
-
-	if (previous_connection_code != 1)
-		goto track_backtrack;
-	if (jump_length >= 2)
-		goto track_backtrack;
-	if (runway_length < 2) {
-		return track_setup_error(branches,
-			TRACK_SETUP_NO_RUNWAY, column, row);
-	}
-	runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
-	jump_length = LEGACY_U8_WRAP_ADD(jump_length, 1U);
-	if (orientation == 0) {
-		column = previous_column;
-		row = track_setup_add_s8(previous_row,
-			-(legacy_s16)jump_length - 1);
-	} else if (orientation == 0x100) {
-		row = previous_row;
-		column = track_setup_add_s8(previous_column,
-			(legacy_s16)jump_length + 1);
-	} else if (orientation == 0x200) {
-		column = previous_column;
-		row = track_setup_add_s8(previous_row,
-			(legacy_s16)jump_length + 1);
-	} else if (orientation == 0x300) {
-		row = previous_row;
-		column = track_setup_add_s8(previous_column,
-			-(legacy_s16)jump_length - 1);
-	}
-	goto track_next_tile;
-
-track_backtrack:
-	if (branch_count == 0) {
-		if (path_closed == 0) {
+	} else if (previous_connection_code != 1 || jump_length >= 2) {
+		backtrack_required = 1;
+	} else {
+		if (runway_length < 2) {
 			return track_setup_error(branches,
-				TRACK_SETUP_NO_PATH, column, row);
+				TRACK_SETUP_NO_RUNWAY, column, row);
 		}
-		goto track_build_cameras;
+		runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
+		jump_length = LEGACY_U8_WRAP_ADD(jump_length, 1U);
+		if (orientation == 0) {
+			column = previous_column;
+			row = track_setup_add_s8(previous_row,
+				-(legacy_s16)jump_length - 1);
+		} else if (orientation == 0x100) {
+			row = previous_row;
+			column = track_setup_add_s8(previous_column,
+				(legacy_s16)jump_length + 1);
+		} else if (orientation == 0x200) {
+			column = previous_column;
+			row = track_setup_add_s8(previous_row,
+				(legacy_s16)jump_length + 1);
+		} else if (orientation == 0x300) {
+			row = previous_row;
+			column = track_setup_add_s8(previous_column,
+				-(legacy_s16)jump_length - 1);
+		}
+		continue;
 	}
-	branch_count = LEGACY_U16_WRAP_SUB(branch_count, 1U);
-	branch = &branches[branch_count];
-	column = branch->column;
-	row = branch->row;
-	tile_element = branch->tile_element;
-	subtype = branch->subtype;
-	connection_status = branch->connection_status;
-	previous_connection_code = branch->previous_connection_code;
-	previous_piece = branch->previous_piece;
-	runway_length = branch->runway_length;
-	previous_column = branch->previous_column;
-	previous_row = branch->previous_row;
-	previous_tile_element = branch->previous_tile_element;
-	previous_subtype = branch->previous_subtype;
-	previous_connection_status = branch->previous_connection_status;
-	if (jump_length > 1) {
-		return track_setup_error(branches,
-			TRACK_SETUP_LONG_JUMP, column, row);
 	}
 
-track_record_piece:
+	if (backtrack_required != 0) {
+		if (branch_count == 0) {
+			if (path_closed == 0) {
+				return track_setup_error(branches,
+					TRACK_SETUP_NO_PATH, column, row);
+			}
+			break;
+		}
+		branch_count = LEGACY_U16_WRAP_SUB(branch_count, 1U);
+		branch = &branches[branch_count];
+		column = branch->column;
+		row = branch->row;
+		tile_element = branch->tile_element;
+		subtype = branch->subtype;
+		connection_status = branch->connection_status;
+		previous_connection_code = branch->previous_connection_code;
+		previous_piece = branch->previous_piece;
+		runway_length = branch->runway_length;
+		previous_column = branch->previous_column;
+		previous_row = branch->previous_row;
+		previous_tile_element = branch->previous_tile_element;
+		previous_subtype = branch->previous_subtype;
+		previous_connection_status = branch->previous_connection_status;
+		if (jump_length > 1) {
+			return track_setup_error(branches,
+				TRACK_SETUP_LONG_JUMP, column, row);
+		}
+	}
+
 	jump_length = 0;
 	visited_tiles[trackrows[row] + column] = 1;
 	subtype_by_piece[track_pieces_counter] = subtype;
@@ -1613,9 +1614,8 @@ track_record_piece:
 		orientation = 0x200;
 		break;
 	}
-	goto track_next_tile;
+	}
 
-track_build_cameras:
 	byte_45D90 = (legacy_u8)startcol2;
 	byte_45E16 = (legacy_u8)startrow2;
 	camera_count = (legacy_u16)LEGACY_S16_DIV_OR_ZERO(
