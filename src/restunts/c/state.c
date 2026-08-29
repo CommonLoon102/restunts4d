@@ -1782,6 +1782,9 @@ void player_op(legacy_s8 arg_carInputByte) {
 	legacy_u16 var_speed2BeforeGrip;
 	legacy_u8 route_point;
 	legacy_u8 commit_penalty;
+	legacy_u8 route_selection_required;
+	legacy_u8 route_advance_required;
+	legacy_u8 guidance_required;
 	legacy_s16 si;
 
 	//return ported_player_op_(arg_carInputByte);
@@ -1884,221 +1887,191 @@ void player_op(legacy_s8 arg_carInputByte) {
 	}
 	state.field_45D = 0;
 	if (state.field_45B != 1) {
-	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
-	if (state.field_45B != 2)
-		goto loc_173F6;
-	if (state.playerstate.car_crashBmpFlag != 0)
-		goto loc_173F0;
-	state.field_45D = 3;
-loc_173F0:
-	var_2 = state.field_2F4;
-	goto loc_174C9;
-loc_173F6:
-	if (state.playerstate.car_trackdata3_index != -1)
-		goto loc_17402;
-loc_173FD:
-	si = 0;
-	goto loc_174B3;
-loc_17402:
-	if (var_1C == 0)
-		goto loc_1740F;
-	if (state.field_45B == 0)
-		goto loc_17431;
-loc_1740F:
-	if (state.playerstate.car_trackdata3_index == state.field_2F2)
-		goto loc_1743A;
-	if (td01_track_file_cpy[state.field_2F2] == state.playerstate.car_trackdata3_index)
-		goto loc_1743A;
-	if (td02_penalty_related[state.field_2F2] == state.playerstate.car_trackdata3_index)
-		goto loc_1743A;
-loc_17431:
-	state.playerstate.car_trackdata3_index = -1;
-	goto loc_173FD;
-loc_1743A:
-	var_32.x = LEGACY_S16_WRAP_SUB(
-		state.playerstate.car_vec_unk3.x,
-		world_position_word(state.playerstate.car_posWorld1.lx));
-	if (state.playerstate.car_vec_unk3.y == -1)
-		goto loc_1747C;
-	var_32.y = LEGACY_S16_WRAP_SUB(
-		state.playerstate.car_vec_unk3.y,
-		world_position_word(state.playerstate.car_posWorld1.ly));
-	goto loc_17481;
-loc_1747C:
-    var_32.y = 0;
-loc_17481:
-	var_32.z = LEGACY_S16_WRAP_SUB(
-		state.playerstate.car_vec_unk3.z,
-		world_position_word(state.playerstate.car_posWorld1.lz));
+		var_matptr = mat_rot_zxy(
+			state.playerstate.car_rotate.z,
+			state.playerstate.car_rotate.y,
+			state.playerstate.car_rotate.x, 1);
+		route_selection_required = 0;
+		route_advance_required = 0;
+		guidance_required = 1;
 
-	mat_mul_vector(&var_32, var_matptr, &var_38);
-	si = var_38.z;
-loc_174B3:
-	if (si < 0x113)
-		goto loc_174BC;
-	goto loc_17699;
-loc_174BC:
-	if (state.playerstate.car_trackdata3_index == -1)
-		goto loc_174C6;
-	goto loc_1764C;
-loc_174C6:
-	var_2 = state.field_2F2;
-loc_174C9:
-	if (td02_penalty_related[var_2] == -1)
-		goto loc_174DD;
-	goto loc_17771;
-loc_174DD:
-    var_2A = 0;
-    var_2C = 0;
-loc_174E5:
-	var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
-		var_2, &state.playerstate.car_vec_unk3,
-		(legacy_s16)(legacy_u8)var_2C, 0));
-	var_28 = state.playerstate.car_vec_unk3;
-	var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
-		world_position_word(state.playerstate.car_posWorld1.lx));
-	if (var_28.y != -1)
-		goto loc_1753E;
-	var_28.y = LEGACY_S16_WRAP_NEGATE(
-		world_position_word(state.playerstate.car_posWorld1.ly));
-	goto loc_17552;
-loc_1753E:
-	var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
-		world_position_word(state.playerstate.car_posWorld1.ly));
-loc_17552:
-	var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
-		world_position_word(state.playerstate.car_posWorld1.lz));
-	mat_mul_vector(&var_28, var_matptr, &var_38);
-	if (var_2C == 0)
-		goto loc_1758D;
-	if (var_38.z >= var_32.z)
-		goto loc_17599;
-	if (var_38.z <= 0)
-		goto loc_17599;
-loc_1758D:
-	var_3A = var_2C;
-	var_32.z = var_38.z;
-loc_17599:
-	var_2C = LEGACY_S8_WRAP_ADD(var_2C, 1);
-	if (var_2A != 0)
-		goto loc_175A5;
-	goto loc_174E5;
-loc_175A5:
-	if (state.field_45B == 2)
-		goto loc_175AF;
-	goto loc_17640;
-loc_175AF:
-	if (var_3A != 0)
-		goto loc_175D0;
-	sub_18D60(var_2, var_52, 0, 0);
-	
-	sub_18D60(var_2, var_1A, 1, 0);
-	goto loc_175F0;
-loc_175D0:
-	sub_18D60(var_2, var_52,
-		(legacy_s16)LEGACY_S8_WRAP_SUB(var_3A, 1), 0);
+		if (state.field_45B == 2) {
+			if (state.playerstate.car_crashBmpFlag == 0)
+				state.field_45D = 3;
+			var_2 = state.field_2F4;
+			route_selection_required = 1;
+		} else {
+			si = 0;
+			if (state.playerstate.car_trackdata3_index != -1) {
+				if ((var_1C == 0 || state.field_45B != 0) &&
+					(state.playerstate.car_trackdata3_index ==
+						state.field_2F2 ||
+					td01_track_file_cpy[state.field_2F2] ==
+						state.playerstate.car_trackdata3_index ||
+					td02_penalty_related[state.field_2F2] ==
+						state.playerstate.car_trackdata3_index)) {
+					var_32.x = LEGACY_S16_WRAP_SUB(
+						state.playerstate.car_vec_unk3.x,
+						world_position_word(
+							state.playerstate.car_posWorld1.lx));
+					if (state.playerstate.car_vec_unk3.y == -1) {
+						var_32.y = 0;
+					} else {
+						var_32.y = LEGACY_S16_WRAP_SUB(
+							state.playerstate.car_vec_unk3.y,
+							world_position_word(
+								state.playerstate.car_posWorld1.ly));
+					}
+					var_32.z = LEGACY_S16_WRAP_SUB(
+						state.playerstate.car_vec_unk3.z,
+						world_position_word(
+							state.playerstate.car_posWorld1.lz));
+					mat_mul_vector(&var_32, var_matptr, &var_38);
+					si = var_38.z;
+				} else {
+					state.playerstate.car_trackdata3_index = -1;
+				}
+			}
+			if (si < 0x113) {
+				if (state.playerstate.car_trackdata3_index == -1) {
+					var_2 = state.field_2F2;
+					route_selection_required = 1;
+				} else {
+					route_advance_required = 1;
+				}
+			}
+		}
 
-	sub_18D60(var_2, var_1A, (legacy_s16)(legacy_u8)var_3A, 0);
-loc_175F0:
+		if (route_selection_required != 0) {
+			if (td02_penalty_related[var_2] != -1) {
+				guidance_required = 0;
+			} else {
+				var_2A = 0;
+				var_2C = 0;
+				do {
+					var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
+						var_2, &state.playerstate.car_vec_unk3,
+						(legacy_s16)(legacy_u8)var_2C, 0));
+					var_28 = state.playerstate.car_vec_unk3;
+					var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
+						world_position_word(
+							state.playerstate.car_posWorld1.lx));
+					if (var_28.y == -1) {
+						var_28.y = LEGACY_S16_WRAP_NEGATE(
+							world_position_word(
+								state.playerstate.car_posWorld1.ly));
+					} else {
+						var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
+							world_position_word(
+								state.playerstate.car_posWorld1.ly));
+					}
+					var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
+						world_position_word(
+							state.playerstate.car_posWorld1.lz));
+					mat_mul_vector(&var_28, var_matptr, &var_38);
+					if (var_2C == 0 ||
+						(var_38.z < var_32.z && var_38.z > 0)) {
+						var_3A = var_2C;
+						var_32.z = var_38.z;
+					}
+					var_2C = LEGACY_S8_WRAP_ADD(var_2C, 1);
+				} while (var_2A == 0);
 
-	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
-		state.playerstate.car_rotate.x,
-		polarAngle(
-			LEGACY_S16_WRAP_SUB(var_52[0].x, var_1A[0].x),
-			LEGACY_S16_WRAP_SUB(var_1A[0].z, var_52[0].z))) & 0x3FFU);
-	if (si > 0x380)
-		goto loc_17631;
-	if (si >= 0x80)
-		goto loc_1764C;
-loc_17631:
-	state.field_45B = 0;
-	state.field_45C = 1;
-	state.playerstate.car_trackdata3_index = var_2;
-	goto loc_17643;
-loc_17640:
-	state.playerstate.car_trackdata3_index = state.field_2F2;
-loc_17643:
-	state.playerstate.field_CE = var_3A;
-loc_1764C:
-	route_point = (legacy_u8)state.playerstate.field_CE;
-	state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(route_point, 1);
-	if (sub_18D60(state.playerstate.car_trackdata3_index,
-		&state.playerstate.car_vec_unk3, (legacy_s16)route_point, 0) == 0)
-		goto loc_17699;
-	if (td02_penalty_related[state.field_2F2] == -1)
-		goto loc_17684;
-	state.playerstate.car_trackdata3_index = -1;
-	goto loc_17694;
-loc_17684:
-	state.playerstate.car_trackdata3_index = td01_track_file_cpy[state.field_2F2];
-loc_17694:
-	state.playerstate.field_CE = 0;
-loc_17699:
-	var_28 = state.playerstate.car_vec_unk3;
-	if (state.playerstate.car_trackdata3_index != -1)
-		goto loc_176B0;
-	goto loc_17771;
-loc_176B0:
-	if (state.field_45B == 0)
-		goto loc_176BA;
-	goto loc_17771;
-loc_176BA:
-	var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
-		world_position_word(state.playerstate.car_posWorld1.lx));
-	if (var_28.y != -1)
-		goto loc_176DC;
-	var_28.y = 0;
-	goto loc_176F0;
-loc_176DC:
-	var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
-		world_position_word(state.playerstate.car_posWorld1.ly));
-loc_176F0:
-	var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
-		world_position_word(state.playerstate.car_posWorld1.lz));
-	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
-	mat_mul_vector(&var_28, var_matptr, &var_38);
-	state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
-		(legacy_u16)polarAngle(
-			LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & 0x3FFU);
-	if (state.playerstate.car_crashBmpFlag != 0)
-		goto loc_17771;
+				if (state.field_45B == 2) {
+					if (var_3A == 0) {
+						sub_18D60(var_2, var_52, 0, 0);
+						sub_18D60(var_2, var_1A, 1, 0);
+					} else {
+						sub_18D60(var_2, var_52,
+							(legacy_s16)LEGACY_S8_WRAP_SUB(var_3A, 1), 0);
+						sub_18D60(var_2, var_1A,
+							(legacy_s16)(legacy_u8)var_3A, 0);
+					}
+					si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+						state.playerstate.car_rotate.x,
+						polarAngle(
+							LEGACY_S16_WRAP_SUB(
+								var_52[0].x, var_1A[0].x),
+							LEGACY_S16_WRAP_SUB(
+								var_1A[0].z, var_52[0].z))) & 0x3FFU);
+					if (si > 0x380 || si < 0x80) {
+						state.field_45B = 0;
+						state.field_45C = 1;
+						state.playerstate.car_trackdata3_index = var_2;
+						state.playerstate.field_CE = var_3A;
+					}
+				} else {
+					state.playerstate.car_trackdata3_index =
+						state.field_2F2;
+					state.playerstate.field_CE = var_3A;
+				}
+				route_advance_required = 1;
+			}
+		}
 
-	if (LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
-		state.playerstate.field_48, 0x80U) & 0x3FFU, 8U) == 1U)
-		goto loc_1776C;
-	if (LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
-		state.playerstate.field_48, 0x80U) & 0x3FFU, 8U) == 3U)
-		goto loc_1779E;
+		if (route_advance_required != 0) {
+			route_point = (legacy_u8)state.playerstate.field_CE;
+			state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(route_point, 1);
+			if (sub_18D60(state.playerstate.car_trackdata3_index,
+				&state.playerstate.car_vec_unk3,
+				(legacy_s16)route_point, 0) != 0) {
+				if (td02_penalty_related[state.field_2F2] != -1) {
+					state.playerstate.car_trackdata3_index = -1;
+				} else {
+					state.playerstate.car_trackdata3_index =
+						td01_track_file_cpy[state.field_2F2];
+				}
+				state.playerstate.field_CE = 0;
+			}
+		}
 
-loc_17764:
-	state.field_45D = 0;
-	goto loc_17771;
-loc_1776C:
-	state.field_45D = 1;
-loc_17771:
-	if (state.playerstate.field_CD != 0)
-		goto loc_1777B;
-	goto loc_17810;
-loc_1777B:
-	si = multiply_and_scale(cos_fast(track_angle),
-		LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
-			world_position_word(state.playerstate.car_posWorld1.lz)));
-	goto loc_177AC;
+		if (guidance_required != 0 &&
+			state.playerstate.car_trackdata3_index != -1 &&
+			state.field_45B == 0) {
+			var_28 = state.playerstate.car_vec_unk3;
+			var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
+				world_position_word(state.playerstate.car_posWorld1.lx));
+			if (var_28.y == -1) {
+				var_28.y = 0;
+			} else {
+				var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
+					world_position_word(state.playerstate.car_posWorld1.ly));
+			}
+			var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
+				world_position_word(state.playerstate.car_posWorld1.lz));
+			var_matptr = mat_rot_zxy(
+				state.playerstate.car_rotate.z,
+				state.playerstate.car_rotate.y,
+				state.playerstate.car_rotate.x, 1);
+			mat_mul_vector(&var_28, var_matptr, &var_38);
+			state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
+				(legacy_u16)polarAngle(
+					LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & 0x3FFU);
+			if (state.playerstate.car_crashBmpFlag == 0) {
+				si = LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
+					state.playerstate.field_48, 0x80U) & 0x3FFU, 8U);
+				if (si == 1) {
+					state.field_45D = 1;
+				} else if (si == 3 && state.playerstate.field_B6 == 0) {
+					state.field_45D = 2;
+				} else {
+					state.field_45D = 0;
+				}
+			}
+		}
 
-loc_1779E:
-	if (state.playerstate.field_B6 != 0)
-		goto loc_17764;
-	state.field_45D = 2;
-	goto loc_17771;
-loc_177AC:
-	si = LEGACY_S16_WRAP_ADD(si,
-		multiply_and_scale(sin_fast(track_angle),
-			LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
-				world_position_word(state.playerstate.car_posWorld1.lx))));
-	
-	if (si >= 0)
-		goto loc_17810;
-	update_crash_state(3, 0);
-loc_17810:
+		if (state.playerstate.field_CD != 0) {
+			si = multiply_and_scale(cos_fast(track_angle),
+				LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+					world_position_word(
+						state.playerstate.car_posWorld1.lz)));
+			si = LEGACY_S16_WRAP_ADD(si,
+				multiply_and_scale(sin_fast(track_angle),
+					LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+						world_position_word(
+							state.playerstate.car_posWorld1.lx))));
+			if (si < 0)
+				update_crash_state(3, 0);
+		}
 	}
 }
