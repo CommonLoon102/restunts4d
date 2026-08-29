@@ -7,22 +7,24 @@ extern void interrupt (far* _CType _getvect(legacy_s16 interrupt_number))(void);
 
 typedef void interrupt (far* interrupt_handler_type)(void);
 
-extern legacy_u32 timer_callback_counter;
-extern legacy_u32 last_timer_callback_counter;
-extern legacy_u16 word_3F87C;
-extern legacy_u16 word_3F87E;
-extern legacy_u8 byte_3F880;
-extern legacy_u8 byte_3F881;
-extern legacy_u16 word_3F882;
-extern legacy_u16 word_3F884;
-extern legacy_u16 word_3F886;
-extern legacy_u16 word_3F888;
-extern legacy_u16 word_3F88A;
-extern legacy_u8 byte_3F88C;
-extern legacy_s16 word_3F88E;
-extern void (far* timerintr[6])(void);
-extern interrupt_handler_type dword_3F874;
 extern void add_exit_handler(void (far* exit_handler)(void));
+
+legacy_u32 dos_timer_counter;
+legacy_s16 dos_timer_callbacks_suspended;
+void (far* dos_timer_callbacks[6])(void);
+
+static legacy_u32 dos_timer_last_counter;
+static legacy_u16 dos_timer_slow_low;
+static legacy_u16 dos_timer_slow_high;
+static legacy_u8 dos_timer_chain_timeout_active;
+static legacy_u8 dos_timer_chain_enabled;
+static legacy_u16 dos_timer_chain_timeout;
+static legacy_u16 dos_timer_divider_period;
+static legacy_u16 dos_timer_divider;
+static legacy_u16 dos_timer_max_reentry;
+static legacy_u16 dos_timer_reentry;
+static legacy_u8 dos_timer_in_callbacks;
+static interrupt_handler_type previous_timer_interrupt;
 
 static void interrupt dos_timer_interrupt(void);
 
@@ -30,7 +32,7 @@ static void dos_timer_chain_previous_handler(void)
 {
 	__asm {
 		pushf
-		call dword ptr dword_3F874
+		call dword ptr previous_timer_interrupt
 	}
 }
 
@@ -52,19 +54,19 @@ static void interrupt dos_timer_interrupt(void)
 	/* Match the original IRQ0 handler: allow nested interrupts after the
 	 * compiler's interrupt prologue has saved the interrupted registers. */
 	enable();
-	word_3F886 = (legacy_u16)(word_3F886 - 1U);
-	if (LEGACY_S16_FROM_BITS(word_3F886) <= 0) {
-		word_3F87C = (legacy_u16)(word_3F87C + 1U);
-		if (word_3F87C == 0)
-			word_3F87E = (legacy_u16)(word_3F87E + 1U);
-		word_3F886 = word_3F884;
+	dos_timer_divider = (legacy_u16)(dos_timer_divider - 1U);
+	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <= 0) {
+		dos_timer_slow_low = (legacy_u16)(dos_timer_slow_low + 1U);
+		if (dos_timer_slow_low == 0)
+			dos_timer_slow_high = (legacy_u16)(dos_timer_slow_high + 1U);
+		dos_timer_divider = dos_timer_divider_period;
 
-		if (byte_3F881 != 0) {
-			if (byte_3F880 != 0) {
-				word_3F882 = (legacy_u16)(word_3F882 - 1U);
-				if (LEGACY_S16_FROM_BITS(word_3F882) <= 0) {
-					byte_3F880 = 0;
-					byte_3F881 = 0;
+		if (dos_timer_chain_enabled != 0) {
+			if (dos_timer_chain_timeout_active != 0) {
+				dos_timer_chain_timeout = (legacy_u16)(dos_timer_chain_timeout - 1U);
+				if (LEGACY_S16_FROM_BITS(dos_timer_chain_timeout) <= 0) {
+					dos_timer_chain_timeout_active = 0;
+					dos_timer_chain_enabled = 0;
 				}
 			}
 			dos_timer_chain_previous_handler();
@@ -75,32 +77,32 @@ static void interrupt dos_timer_interrupt(void)
 		outp(0x20U, 0x20U);
 	}
 
-	if (((legacy_u16)word_3F88E & 0x00FFU) != 0)
+	if (((legacy_u16)dos_timer_callbacks_suspended & 0x00FFU) != 0)
 		goto callbacks_finished;
 
-	dos_timer_increment_counter(&timer_callback_counter);
+	dos_timer_increment_counter(&dos_timer_counter);
 	disable();
-	if (byte_3F88C == 0) {
-		byte_3F88C = 1U;
+	if (dos_timer_in_callbacks == 0) {
+		dos_timer_in_callbacks = 1U;
 		enable();
 		for (callback_index = 0; callback_index < 6U;
 			callback_index++) {
-			if (FP_SEG(timerintr[callback_index]) == 0U)
+			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
 				break;
-			timerintr[callback_index]();
+			dos_timer_callbacks[callback_index]();
 		}
 		goto callbacks_finished;
 	}
 
-	word_3F88A = (legacy_u16)(word_3F88A + 1U);
-	reentry_count = LEGACY_S16_FROM_BITS(word_3F88A);
-	if (LEGACY_S16_FROM_BITS(word_3F888) < reentry_count)
-		word_3F888 = word_3F88A;
+	dos_timer_reentry = (legacy_u16)(dos_timer_reentry + 1U);
+	reentry_count = LEGACY_S16_FROM_BITS(dos_timer_reentry);
+	if (LEGACY_S16_FROM_BITS(dos_timer_max_reentry) < reentry_count)
+		dos_timer_max_reentry = dos_timer_reentry;
 	return;
 
 callbacks_finished:
-	byte_3F88C = 0;
-	word_3F88A = 0;
+	dos_timer_in_callbacks = 0;
+	dos_timer_reentry = 0;
 }
 
 static void dos_timer_write_vector(interrupt_handler_type handler)
@@ -135,7 +137,7 @@ void dos_timer_shutdown(void)
 
 	interrupt_mask = (legacy_u8)inp(0x21U);
 	outp(0x21U, interrupt_mask | 3U);
-	dos_timer_write_vector(dword_3F874);
+	dos_timer_write_vector(previous_timer_interrupt);
 	interrupt_mask = (legacy_u8)inp(0x21U);
 	outp(0x21U, interrupt_mask & 0xFCU);
 	outp(0x40U, 0);
@@ -148,14 +150,14 @@ void dos_timer_setup_interrupt(void)
 	interrupt_handler_type installed_handler;
 	legacy_u8 interrupt_mask;
 
-	word_3F884 = 5U;
-	word_3F886 = 5U;
-	byte_3F880 = 0;
-	byte_3F881 = 1U;
+	dos_timer_divider_period = 5U;
+	dos_timer_divider = 5U;
+	dos_timer_chain_timeout_active = 0;
+	dos_timer_chain_enabled = 1U;
 
 	disable();
-	byte_3F88C = 0;
-	timerintr[0] = 0;
+	dos_timer_in_callbacks = 0;
+	dos_timer_callbacks[0] = 0;
 	enable();
 
 	outp(0x61U, inp(0x61U) & 0xFCU);
@@ -165,7 +167,7 @@ void dos_timer_setup_interrupt(void)
 
 	installed_handler = getvect(8);
 	if (installed_handler != dos_timer_interrupt) {
-		dword_3F874 = installed_handler;
+		previous_timer_interrupt = installed_handler;
 		dos_timer_write_vector(dos_timer_interrupt);
 	}
 
@@ -182,8 +184,8 @@ legacy_u32 timer_get_counter(void)
 	 * loads.  Keep interrupts disabled for the paired 16-bit read. */
 	__asm {
 		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
+		mov     ax, word ptr dos_timer_counter
+		mov     dx, word ptr dos_timer_counter+2
 		sti
 	}
 }
@@ -193,14 +195,14 @@ legacy_u32 timer_get_delta(void)
 	/* Read and update the 32-bit counters as the original 8086 routine did;
 	 * Borland otherwise emits two independently interruptible word loads. */
 	__asm {
-		mov     bx, word ptr last_timer_callback_counter
-		mov     cx, word ptr last_timer_callback_counter+2
+		mov     bx, word ptr dos_timer_last_counter
+		mov     cx, word ptr dos_timer_last_counter+2
 		cli
-		mov     ax, word ptr timer_callback_counter
-		mov     dx, word ptr timer_callback_counter+2
+		mov     ax, word ptr dos_timer_counter
+		mov     dx, word ptr dos_timer_counter+2
 		sti
-		mov     word ptr last_timer_callback_counter, ax
-		mov     word ptr last_timer_callback_counter+2, dx
+		mov     word ptr dos_timer_last_counter, ax
+		mov     word ptr dos_timer_last_counter+2, dx
 		sub     ax, bx
 		sbb     dx, cx
 	}
@@ -212,8 +214,8 @@ legacy_u32 timer_get_slow_counter(void)
 	 * on every hardware timer interrupt. */
 	__asm {
 		cli
-		mov     ax, word_3F87C
-		mov     dx, word_3F87E
+		mov     ax, dos_timer_slow_low
+		mov     dx, dos_timer_slow_high
 		sti
 	}
 }

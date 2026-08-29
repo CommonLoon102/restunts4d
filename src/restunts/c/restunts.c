@@ -50,7 +50,9 @@ extern legacy_u8 callbackflags[128];
 extern legacy_u8 callbackflags2[133];
 extern void (far* callbacks[64])(void);
 extern legacy_u8 in_kb_parse_key;
-extern void (far* timerintr[6])(void);
+extern void (far* dos_timer_callbacks[6])(void);
+extern legacy_u32 dos_timer_counter;
+extern legacy_s16 dos_timer_callbacks_suspended;
 extern legacy_u16 readchar_callback_ofs;
 extern legacy_u16 readchar_callback_seg;
 extern legacy_s8 aNoRoomLeftOnTimerInterru[];
@@ -67,6 +69,8 @@ void dos_video_set_mode4(void);
 void dos_video_set_mode7(void);
 void dos_set_critical_error_handler(legacy_s16 (far* callback)(void));
 void dos_process_exit(legacy_s16 status);
+
+static legacy_u32 timer_wait_target;
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -191,7 +195,7 @@ void timer_reg_callback(void (far* callback)(void))
 	legacy_u16* callback_words;
 
 	for (callback_index = 0; callback_index < 5U; callback_index++) {
-		if (FP_SEG(timerintr[callback_index]) == 0U)
+		if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
 			break;
 	}
 	if (callback_index == 5U) {
@@ -199,7 +203,7 @@ void timer_reg_callback(void (far* callback)(void))
 		return;
 	}
 
-	callback_words = (legacy_u16*)timerintr + callback_index * 2U;
+	callback_words = (legacy_u16*)dos_timer_callbacks + callback_index * 2U;
 	callback_words[0] = FP_OFF(callback);
 	callback_words[1] = 0;
 	callback_words[1] = FP_SEG(callback);
@@ -211,7 +215,7 @@ void timer_remove_callback(void (far* callback)(void))
 	legacy_u16 callback_index;
 
 	for (callback_index = 0; callback_index < 5U; callback_index++) {
-		if (timerintr[callback_index] == callback)
+		if (dos_timer_callbacks[callback_index] == callback)
 			break;
 	}
 	if (callback_index == 5U)
@@ -219,10 +223,10 @@ void timer_remove_callback(void (far* callback)(void))
 
 	disable();
 	while (callback_index < 4U) {
-		timerintr[callback_index] = timerintr[callback_index + 1U];
+		dos_timer_callbacks[callback_index] = dos_timer_callbacks[callback_index + 1U];
 		callback_index++;
 	}
-	timerintr[4] = 0;
+	dos_timer_callbacks[4] = 0;
 	enable();
 }
 
@@ -276,7 +280,7 @@ legacy_s16 nopsub_30A77(void)
 		key = kb_call_readchar_callback();
 		if (key != 0)
 			return key;
-	} while (timer_get_counter() < timer_copy_unk);
+	} while (timer_get_counter() < timer_wait_target);
 	return 0;
 }
 
@@ -306,13 +310,13 @@ legacy_u32 timer_custom_delta(legacy_u32 ticks)
 
 void timer_reset()
 {
-	timer_callback_counter = 0;
+	dos_timer_counter = 0;
 }
 
 legacy_u32 timer_copy_counter(legacy_u32 ticks)
 {
-	timer_copy_unk = timer_get_counter() + ticks;
-	return timer_copy_unk;
+	timer_wait_target = timer_get_counter() + ticks;
+	return timer_wait_target;
 }
 
 legacy_u32 timer_wait_for_dx(void)
@@ -320,14 +324,14 @@ legacy_u32 timer_wait_for_dx(void)
 	legacy_u32 res;
 	do {
 		res = timer_get_counter();
-	} while (res < timer_copy_unk);
+	} while (res < timer_wait_target);
 	
 	return res;
 }
 
 legacy_s16 timer_compare_dx(void)
 {
-	return timer_get_counter() >= timer_copy_unk;
+	return timer_get_counter() >= timer_wait_target;
 }
 
 legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
@@ -3590,13 +3594,13 @@ void do_mer_restext(void)
 void do_key_restext(void)
 {
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
 	byte_3FE00 = 0;
 	byte_3B8F2 = 0;
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	audio_resume();
 	input_pop_status();
 }
@@ -3617,7 +3621,7 @@ void do_joy_restext(void)
 	legacy_u16 i;
 
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
@@ -3696,19 +3700,19 @@ joy_dialog_done:
 	kb_check();
 	byte_3B8F2 = 0;
 	audio_resume();
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	input_pop_status();
 }
 
 void do_mou_restext(void)
 {
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	byte_3B8F2 = 1;
 	show_dialog(4, 1, locate_text_res(mainresptr, aMou),
 		-1, -1, dialogarg2, 0, 0);
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	audio_resume();
 	input_pop_status();
 }
@@ -3716,11 +3720,11 @@ void do_mou_restext(void)
 void do_pau_restext(void)
 {
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	show_dialog(0, 1, locate_text_res(mainresptr, aPau),
 		-1, -1, dialogarg2, 0, 0);
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	audio_resume();
 	input_pop_status();
 }
@@ -3730,11 +3734,11 @@ void do_mof_restext(void)
 	legacy_s8* message_id;
 
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	message_id = audio_toggle_flag2() != 0 ? aMon : aMof;
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	input_pop_status();
 }
 
@@ -3743,11 +3747,11 @@ void do_sonsof_restext(void)
 	legacy_s8* message_id;
 
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	message_id = audio_toggle_flag6() != 0 ? aSon : aSof;
 	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	input_pop_status();
 }
 
@@ -3756,13 +3760,13 @@ void do_dos_restext(void)
 	legacy_s16 result;
 
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	result = show_dialog(2, 1, locate_text_res(mainresptr, aDos_0),
 		-1, -1, dialogarg2, 0, 0);
 	if (result == 1)
 		call_exitlist2();
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	audio_resume();
 	input_pop_status();
 }
@@ -3823,7 +3827,7 @@ void show_graphic_levels_menu(void)
 	legacy_s8 selected;
 
 	input_push_status();
-	word_3F88E = 1;
+	dos_timer_callbacks_suspended = 1;
 	audio_suspend();
 	original_frame_rate = framespersec2;
 	selected = 0;
@@ -3871,7 +3875,7 @@ void show_graphic_levels_menu(void)
 	if (original_frame_rate != framespersec2)
 		show_dialog(1, 1, locate_text_res(mainresptr, aMrs),
 			-1, -1, dialogarg2, 0, 0);
-	word_3F88E = 0;
+	dos_timer_callbacks_suspended = 0;
 	audio_resume();
 	input_pop_status();
 }
@@ -10222,7 +10226,7 @@ void run_game(void) {
 					regsi = 0;
 
 				audio_resume();
-				word_3F88E = 0;
+				dos_timer_callbacks_suspended = 0;
 				input_pop_status();
 				if (regsi != 0) {
 					update_crash_state(4, 0);

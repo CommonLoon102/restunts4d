@@ -142,7 +142,6 @@ extern legacy_s8 byte_3B8F2;
 extern legacy_s8 byte_3FE00;
 extern void far* gameresptr;
 extern void far* dasmshapeptr;
-extern legacy_s16 word_3F88E;
 extern legacy_s8 dashb_toggle_copy;
 extern legacy_s8 replaybar_toggle_copy;
 extern legacy_s8 is_in_replay_copy;
@@ -263,9 +262,6 @@ extern struct MEMCHUNK* resendptr1;
 extern struct MEMCHUNK* resendptr2;
 extern legacy_u16 resmaxsize;
 
-extern legacy_u32 timer_callback_counter;
-extern legacy_u32 last_timer_callback_counter;
-extern legacy_u32 timer_copy_unk;
 extern legacy_u16 word_3F1C2;
 extern legacy_u16 word_3F1C4;
 extern void (far* exitlistfuncs[])(void);
