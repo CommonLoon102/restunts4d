@@ -4566,6 +4566,56 @@ static void track_editor_show_message(legacy_s8 far* text_resource,
 		0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
 }
 
+static void track_editor_save_track(legacy_u8* track_changed,
+	legacy_u8* map_dirty)
+{
+	legacy_s8 far* text;
+	legacy_u8 save_status;
+	legacy_s16 result;
+	legacy_s16 write_result;
+
+	save_status = 0;
+	g_is_busy = 1;
+	while (save_status == 0) {
+		sprite_copy_2_to_1_2();
+		*map_dirty = 1;
+		text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
+		if (do_savefile_dialog(byte_3B80C,
+			gameconfig.game_trackname, text) == 0) {
+			save_status = 0xFFU;
+			break;
+		}
+		file_build_path(byte_3B80C,
+			gameconfig.game_trackname, ".trk", g_path_buf);
+		save_status = 1;
+		if (file_find(g_path_buf) != 0) {
+			result = LEGACY_S16_FROM_BITS(show_dialog(2, 1,
+				locate_text_res((legacy_s8 far*)mainresptr, "fex"),
+				0xFFFFU, 0xFFFFU, performGraphColor, 0, 0));
+			if (result == -1) {
+				save_status = 0xFFU;
+				break;
+			}
+			if (result == 0) {
+				save_status = 0;
+				continue;
+			}
+		}
+		write_result = file_write_fatal(g_path_buf,
+			td14_elem_map_main, 0x70AUL);
+		if (write_result == 0)
+			highscore_write_a(1);
+		if (write_result != 0) {
+			track_editor_show_message(
+				(legacy_s8 far*)mainresptr, "ser");
+			save_status = 0;
+		} else {
+			*track_changed = 0;
+		}
+	}
+	g_is_busy = 0;
+}
+
 void load_tracks_menu_shapes(void)
 {
 	static legacy_s8 terrain_shape_names[] =
@@ -4627,7 +4677,6 @@ void load_tracks_menu_shapes(void)
 	legacy_u8 hit;
 	legacy_u8 clicked_column;
 	legacy_u8 clicked_row;
-	legacy_u8 save_status;
 	legacy_u8 dialog_result;
 	legacy_u8 step;
 	legacy_u8 value;
@@ -4644,7 +4693,6 @@ void load_tracks_menu_shapes(void)
 	legacy_s16 cursor_x;
 	legacy_s16 cursor_y;
 	legacy_s16 result;
-	legacy_s16 write_result;
 	legacy_s8 terrain_id[5];
 	legacy_s8* resource_id;
 
@@ -5074,7 +5122,9 @@ void load_tracks_menu_shapes(void)
 				selected_tile = animation_saved_tile;
 				path_animation_index = 0;
 			}
-			goto track_editor_next;
+			palette_dirty = 1;
+			map_dirty = 1;
+			continue;
 		}
 
 		for (key_index = 0; key_index < 10U; key_index++) {
@@ -5166,66 +5216,32 @@ void load_tracks_menu_shapes(void)
 							locate_text_res(text_resource, "chl"),
 							0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
 					}
-					if (result == 0)
-						goto track_editor_save;
-					g_is_busy = 1;
-					map_dirty = 1;
-					text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
-					result = do_fileselect_dialog(byte_3B80C,
-						gameconfig.game_trackname, ".trk", text);
-					file_build_path(byte_3B80C, gameconfig.game_trackname,
-						".trk", g_path_buf);
-					if (result > 0) {
-						file_read_fatal(g_path_buf, td14_elem_map_main);
-						track_setup();
-						focus = 0;
-						selection_column[0] = byte_45D90;
-						selection_row[0] = byte_45E16;
-						track_changed = 0;
+					if (result == 0) {
+						track_editor_save_track(
+							&track_changed, &map_dirty);
+					} else {
+						g_is_busy = 1;
 						map_dirty = 1;
-					}
-					g_is_busy = 0;
-				} else if (selection_column[1] == 0) {
-track_editor_save:
-					save_status = 0;
-					g_is_busy = 1;
-					while (save_status == 0) {
-						sprite_copy_2_to_1_2();
-						map_dirty = 1;
-						text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
-						if (do_savefile_dialog(byte_3B80C,
-							gameconfig.game_trackname, text) == 0) {
-							save_status = 0xFFU;
-							break;
-						}
+						text = locate_text_res(
+							(legacy_s8 far*)mainresptr, "trk");
+						result = do_fileselect_dialog(byte_3B80C,
+							gameconfig.game_trackname, ".trk", text);
 						file_build_path(byte_3B80C,
 							gameconfig.game_trackname, ".trk", g_path_buf);
-						save_status = 1;
-						if (file_find(g_path_buf) != 0) {
-							result = LEGACY_S16_FROM_BITS(show_dialog(2, 1,
-								locate_text_res((legacy_s8 far*)mainresptr, "fex"),
-								0xFFFFU, 0xFFFFU, performGraphColor, 0, 0));
-							if (result == -1) {
-								save_status = 0xFFU;
-								break;
-							}
-							if (result == 0) {
-								save_status = 0;
-								continue;
-							}
-						}
-						write_result = file_write_fatal(g_path_buf,
-							td14_elem_map_main, 0x70AUL);
-						if (write_result == 0)
-							highscore_write_a(1);
-						if (write_result != 0) {
-							track_editor_show_message((legacy_s8 far*)mainresptr, "ser");
-							save_status = 0;
-						} else {
+						if (result > 0) {
+							file_read_fatal(g_path_buf, td14_elem_map_main);
+							track_setup();
+							focus = 0;
+							selection_column[0] = byte_45D90;
+							selection_row[0] = byte_45E16;
 							track_changed = 0;
+							map_dirty = 1;
 						}
+						g_is_busy = 0;
 					}
-					g_is_busy = 0;
+				} else if (selection_column[1] == 0) {
+					track_editor_save_track(
+						&track_changed, &map_dirty);
 				} else {
 					result = 1;
 					if (track_changed != 0) {
@@ -5234,8 +5250,10 @@ track_editor_save:
 							0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
 					}
 					if (result == 0)
-						goto track_editor_save;
-					menu_active = 0;
+						track_editor_save_track(
+							&track_changed, &map_dirty);
+					else
+						menu_active = 0;
 				}
 			} else if (page == 0) {
 				if (selection_column[0] == last_column &&
@@ -5262,8 +5280,11 @@ track_editor_save:
 				multi_tile = (legacy_u8)
 					trkObjectList[selected_tile].ss_multiTileFlag;
 				if (((multi_tile & 1U) != 0 && selection_row[0] > 28U) ||
-					((multi_tile & 2U) != 0 && selection_column[0] > 28U))
-					goto track_editor_next;
+					((multi_tile & 2U) != 0 && selection_column[0] > 28U)) {
+					palette_dirty = 1;
+					map_dirty = 1;
+					continue;
+				}
 				if (selection_column[0] == last_column &&
 					selection_row[0] == last_row) {
 					value = selected_tile;
@@ -5407,7 +5428,6 @@ track_editor_save:
 			}
 		}
 
-track_editor_next:
 		if (menu_active != 0) {
 			palette_dirty = 1;
 			map_dirty = 1;
