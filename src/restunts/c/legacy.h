@@ -3,6 +3,14 @@
 
 #include <limits.h>
 
+/* Borland's segmented-memory qualifier has no meaning on flat-memory hosts. */
+#if !defined(__BORLANDC__) && !defined(far)
+#define far
+#endif
+#if !defined(__BORLANDC__) && !defined(huge)
+#define huge
+#endif
+
 /* Exact-width integers for behavior inherited from the 16-bit executable. */
 typedef signed char legacy_s8;
 typedef unsigned char legacy_u8;

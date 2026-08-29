@@ -2,6 +2,7 @@
 #define RESTUNTS_MEMMGR_H
 
 #include "legacy.h"
+#include "resource.h"
 
 #pragma pack (push, 1)
 struct MEMCHUNK {
@@ -44,16 +45,6 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras);
 void far* highpool_get_by_name(const legacy_s8* name);
 void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name);
 
-legacy_s8 far* locate_resource(legacy_s8 far* data,
-	const legacy_s8* name, legacy_u16 fatal);
-legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
-	const legacy_s8* name);
-legacy_s8 far* locate_shape_fatal(legacy_s8 far* data,
-	const legacy_s8* name);
-legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
-	const legacy_s8* name);
-legacy_s8 far* locate_sound_fatal(legacy_s8 far* data,
-	const legacy_s8* name);
 void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result);
 legacy_s8 far* locate_text_res(legacy_s8 far* data,

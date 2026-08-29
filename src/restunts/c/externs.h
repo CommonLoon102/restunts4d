@@ -80,12 +80,16 @@ struct TRACKOBJECT {
 typedef char legacy_track_wall_must_be_6_bytes[
 	(sizeof(struct TRACK_WALL) == 6) ? 1 : -1];
 
+/* These records contain 16-bit near/far pointers.  Their DOS ABI layout is
+ * meaningful only when the Borland memory model supplies those pointer sizes. */
+#if defined(__BORLANDC__)
 typedef char legacy_simd_must_be_776_bytes[
 	(sizeof(struct SIMD) == 776) ? 1 : -1];
 typedef char legacy_trkobjinfo_must_be_14_bytes[
 	(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1];
 typedef char legacy_trackobject_must_be_14_bytes[
 	(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1];
+#endif
 
 #define SIMD_RESOURCE_SIZE 772U
 legacy_u16 simd_decode(struct SIMD* destination,

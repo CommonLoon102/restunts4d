@@ -43,8 +43,11 @@ legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_pos_y(const struct SHAPE2D far* shape);
 
+/* SPRITE contains both 16-bit near and far pointers. */
+#if defined(__BORLANDC__)
 typedef char legacy_sprite_must_be_30_bytes[
 	(sizeof(struct SPRITE) == 30) ? 1 : -1];
+#endif
 
 struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16);
 void sprite_free_wnd(struct SPRITE far* wndsprite);

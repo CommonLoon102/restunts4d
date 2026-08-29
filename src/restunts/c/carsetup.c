@@ -1,4 +1,3 @@
-#include <dos.h>
 #include "externs.h"
 #include "fileio.h"
 #include "memmgr.h"

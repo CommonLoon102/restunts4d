@@ -1,4 +1,3 @@
-#include <dos.h>
 #include <stdarg.h>
 #include "externs.h"
 #include "memmgr.h"

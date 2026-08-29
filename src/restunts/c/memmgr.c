@@ -2,7 +2,6 @@
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
-#include "resource.h"
 
 legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
 legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
@@ -1032,77 +1031,6 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 //#endif
 
 
-legacy_s8 far* locate_resource(legacy_s8 far* data,
-	const legacy_s8* name, legacy_u16 fatal) {
-	legacy_u16 chunk_count, i, j;
-	const legacy_u8 far* identifier;
-	legacy_s8 padded_name[RESOURCE_FILE_IDENTIFIER_SIZE];
-	legacy_u16 padding;
-
-	chunk_count = resource_file_count((const legacy_u8 far*)data);
-
-	//printf("locate_resource: %s\n", name);
-
-	// Compare through a local padded key.  Several callers pass string
-	// literals, so the original in-place padding is not portable.
-	padding = 0;
-	for (i = 0; i < RESOURCE_FILE_IDENTIFIER_SIZE; i++) {
-		if (padding == 0 && name[i] != 0)
-			padded_name[i] = name[i];
-		else {
-			padding = 1;
-			padded_name[i] = 0x20;
-		}
-	}
-
-	// The original runs this compare chunks+1 times, not chunks: it counts
-	// down with `dec ax / jge short loc_30FDC`, which still takes the branch
-	// at ax == 0. The extra slot is the four bytes just past the name table,
-	// i.e. the entire first offset dword. Not reproduced here - it
-	// reads as 00 00 00 00 for the usual first-chunk-at-zero layout, and the
-	// query is always space-padded above, so only an all-blank name could
-	// match it and no caller passes one.
-	for (j = 0; j < chunk_count; j++) {
-		identifier = resource_file_identifier(
-			(const legacy_u8 far*)data, j);
-		for (i = 0; i < RESOURCE_FILE_IDENTIFIER_SIZE; i++) {
-			if (identifier[i] != (legacy_u8)padded_name[i]) {
-				break;
-			}
-		}
-		if (i == RESOURCE_FILE_IDENTIFIER_SIZE ||
-			(identifier[i] == 0 && padded_name[i] == 0x20)) {
-			return (legacy_s8 far*)resource_file_data(
-				(legacy_u8 far*)data, j);
-		}
-	}
-
-	if (fatal > 1)
-		fatal_error(aLocatesound4_4sSoundNotF, name);
-	if (fatal == 1)
-		fatal_error(aLocateshape4_4sShapeNotF, name);
-	return MK_FP(0, 0);
-}
-
-legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
-	const legacy_s8* name) {
-	return locate_resource(data, name, 0);
-}
-
-legacy_s8 far* locate_shape_fatal(legacy_s8 far* data,
-	const legacy_s8* name) {
-	return locate_resource(data, name, 1);
-}
-
-legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
-	const legacy_s8* name) {
-	return locate_shape_fatal(data, name);
-}
-
-legacy_s8 far* locate_sound_fatal(legacy_s8 far* data,
-	const legacy_s8* name) {
-	return locate_resource(data, name, 2);
-}
 
 void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {

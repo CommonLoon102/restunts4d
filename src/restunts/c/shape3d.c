@@ -1,4 +1,3 @@
-#include <dos.h>
 #include <stddef.h>
 #include <limits.h>
 #include "externs.h"

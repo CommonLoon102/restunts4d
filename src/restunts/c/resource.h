@@ -21,4 +21,15 @@ legacy_u16 resource_file_data_start(legacy_u16 count);
 legacy_u8 far* resource_file_data(
 	legacy_u8 far* resource, legacy_u16 index);
 
+legacy_s8 far* locate_resource(legacy_s8 far* data,
+	const legacy_s8* name, legacy_u16 fatal);
+legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
+	const legacy_s8* name);
+legacy_s8 far* locate_shape_fatal(legacy_s8 far* data,
+	const legacy_s8* name);
+legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
+	const legacy_s8* name);
+legacy_s8 far* locate_sound_fatal(legacy_s8 far* data,
+	const legacy_s8* name);
+
 #endif
