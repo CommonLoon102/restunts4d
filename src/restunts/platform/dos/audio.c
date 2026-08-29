@@ -6,6 +6,8 @@ typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
 typedef void (far* driver_bind_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
 typedef void (far* driver_channel_operation_type)(legacy_s16 driver_channel);
+typedef void (far* driver_context_operation_type)(legacy_s16 driver_channel,
+	legacy_u8* driver_context);
 typedef void (far* driver_operation_type)(void);
 typedef void (far* driver_suspend_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u16 value, void far* resource);
@@ -78,6 +80,26 @@ void dos_audio_driver_release_channel(legacy_s16 driver_channel)
 	release_channel = (driver_channel_operation_type)
 		dos_audio_driver_entry(0x1EU);
 	release_channel(driver_channel);
+}
+
+void dos_audio_driver_start_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context)
+{
+	driver_context_operation_type start_context;
+
+	start_context = (driver_context_operation_type)
+		dos_audio_driver_entry(0x0CU);
+	start_context(driver_channel, driver_context);
+}
+
+void dos_audio_driver_end_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context)
+{
+	driver_context_operation_type end_context;
+
+	end_context = (driver_context_operation_type)
+		dos_audio_driver_entry(0x0FU);
+	end_context(driver_channel, driver_context);
 }
 
 void dos_audio_driver_reset(void)
