@@ -2281,6 +2281,118 @@ static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 		(legacy_u32)minor << 16, major);
 }
 
+static legacy_u16 draw_line_reject(legacy_u16* line, legacy_u16 reject)
+{
+	legacy_u16 clip;
+	legacy_u16 bottom;
+	legacy_u16 top;
+	legacy_u32 value32;
+
+	clip = reject & 0x00FFU;
+	line[9] = (legacy_u16)((line[9] & 0x00FFU) | (clip << 8));
+	line[7] = 0;
+	if (clip & 4U) {
+		line[3] = sprite1.sprite_top;
+		line[2] = 0;
+		line[5] = (legacy_u16)(sprite1.sprite_top - 1);
+		return clip;
+	}
+	if (clip & 8U) {
+		line[3] = sprite1.sprite_height;
+		line[2] = 0;
+		return clip;
+	}
+	bottom = line[5];
+	if (LEGACY_S16_FROM_BITS(bottom) >=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
+		bottom = (legacy_u16)(sprite1.sprite_height - 1);
+	}
+	value32 = (legacy_u32)line[2] + 0x8000UL;
+	top = (legacy_u16)(line[3] + (legacy_u16)(value32 >> 16));
+	if (LEGACY_S16_FROM_BITS(top) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_top)) {
+		top = sprite1.sprite_top;
+	}
+	line[3] = top;
+	line[2] = 0;
+	bottom = (legacy_u16)(bottom - top + 1);
+	line[5] = (legacy_u16)(top - 1);
+	if (clip & 2U)
+		line[11] = (legacy_u16)(line[11] + bottom);
+	else
+		line[13] = (legacy_u16)(line[13] + bottom);
+	return clip;
+}
+
+static legacy_u16 draw_line_horizontal(
+	legacy_u16 y,
+	legacy_u16 start_x,
+	legacy_u16 end_x,
+	legacy_u16* line,
+	legacy_u16 unclipped
+) {
+	legacy_u16 temporary;
+	legacy_u16 amount;
+	legacy_u16 reject;
+
+	line[9] = (legacy_u16)((line[9] & 0xFF00U) | 1U);
+	if (start_x == end_x)
+		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 9U);
+	if (LEGACY_S16_FROM_BITS(start_x) > LEGACY_S16_FROM_BITS(end_x)) {
+		line[9] &= 0xFF00U;
+		line[1] = end_x;
+		line[4] = start_x;
+		temporary = start_x;
+		start_x = end_x;
+		end_x = temporary;
+	}
+	if (unclipped != 0) {
+		line[7] = (legacy_u16)(end_x - start_x + 1);
+		return 0;
+	}
+	if (LEGACY_S16_FROM_BITS(y) <
+		LEGACY_S16_FROM_BITS(sprite1.sprite_top)) {
+		line[3] = sprite1.sprite_top;
+		line[5] = sprite1.sprite_top;
+		reject = 4;
+	} else if (LEGACY_S16_FROM_BITS(y) >=
+		LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
+		line[3] = sprite1.sprite_height;
+		line[5] = sprite1.sprite_height;
+		reject = 8;
+	} else {
+		line[7] = (legacy_u16)(end_x - start_x + 1);
+		if (LEGACY_S16_FROM_BITS(end_x) <
+			LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+			line[5] = (legacy_u16)(line[5] - 1);
+			line[11] = 1;
+			reject = 2;
+		} else if (LEGACY_S16_FROM_BITS(start_x) >=
+			LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
+			line[5] = (legacy_u16)(line[5] - 1);
+			line[13] = 1;
+			reject = 1;
+		} else {
+			amount = (legacy_u16)(sprite1.sprite_left2 - start_x);
+			if (LEGACY_S16_FROM_BITS(amount) > 0) {
+				line[1] = sprite1.sprite_left2;
+				line[7] = (legacy_u16)(line[7] - amount);
+			}
+			amount = (legacy_u16)(
+				end_x - (sprite1.sprite_widthsum - 1));
+			if (LEGACY_S16_FROM_BITS(amount) > 0) {
+				line[7] = (legacy_u16)(line[7] - amount);
+				line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
+			}
+			return 0;
+		}
+	}
+	line[9] = (legacy_u16)(
+		(line[9] & 0x00FFU) | ((reject & 0xFFU) << 8));
+	line[7] = 0;
+	return reject & 0xFFU;
+}
+
 legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
 	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 0);
 }
@@ -2327,7 +2439,7 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 		line[5] = ax;
 	}
 	if (ax == bx)
-		goto draw_c_horizontal;
+		return draw_line_horizontal(ax, cx, dx, line, var_4);
 
 draw_c_clip_initial:
 	dx = 0;
@@ -2337,7 +2449,7 @@ draw_c_clip_initial:
 		cx = sprite1.sprite_height;
 		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx)) {
 			dx = 8;
-			goto draw_c_reject;
+			return draw_line_reject(line, dx);
 		}
 		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
 			dx |= 0x0400U;
@@ -2345,7 +2457,7 @@ draw_c_clip_initial:
 		ax = line[5];
 		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
 			dx = 4;
-			goto draw_c_reject;
+			return draw_line_reject(line, dx);
 		}
 		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
 			dx |= 8;
@@ -2364,7 +2476,7 @@ draw_c_clip_initial:
 			dx |= 1;
 		if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
 			dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
-			goto draw_c_reject;
+			return draw_line_reject(line, dx);
 		}
 	}
 
@@ -2561,7 +2673,7 @@ draw_c_clip_left:
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
-		goto draw_c_reject_left;
+		return draw_line_reject(line, 2U);
 	case 3:
 		cx = sprite1.sprite_left2;
 		ax = line[4];
@@ -2600,13 +2712,13 @@ draw_c_clip_left:
 		value32 = ((legacy_u32)sprite1.sprite_left2 << 16) -
 			(((legacy_u32)line[1] << 16) | line[0]);
 		if (((value32 & 0x80000000UL) != 0))
-			goto draw_c_reject_left;
+			return draw_line_reject(line, 2U);
 		advance = draw_line_round_div(value32, line[6]);
 		line[3] = (legacy_u16)(line[3] + advance);
 		line[10] = (legacy_u16)(line[10] + advance);
 		line[7] = (legacy_u16)(line[7] - advance);
 		if (LEGACY_S16_FROM_BITS(line[7]) <= 0)
-			goto draw_c_reject_left;
+			return draw_line_reject(line, 2U);
 		product = (legacy_u32)advance * line[6];
 		value32 = ((legacy_u32)line[1] << 16) | line[0];
 		value32 += product;
@@ -2651,16 +2763,12 @@ draw_c_after_left:
 		goto draw_c_clip_right;
 	return 0;
 
-draw_c_reject_left:
-	dx = 2;
-	goto draw_c_reject;
-
 draw_c_clip_right:
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
 		dx = 1;
-		goto draw_c_reject;
+		return draw_line_reject(line, dx);
 	case 3:
 		cx = line[1];
 		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
@@ -2686,7 +2794,7 @@ draw_c_clip_right:
 		line[7] = (legacy_u16)(line[7] - advance);
 		if (LEGACY_S16_FROM_BITS(line[7]) <= 0) {
 			dx = 1;
-			goto draw_c_reject;
+			return draw_line_reject(line, dx);
 		}
 		line[3] = (legacy_u16)(line[3] + advance);
 		line[12] = (legacy_u16)(line[12] + advance);
@@ -2702,7 +2810,7 @@ draw_c_clip_right:
 			(((legacy_u32)line[1] << 16) | line[0]);
 		if (((value32 & 0x80000000UL) != 0)) {
 			dx = 1;
-			goto draw_c_reject;
+			return draw_line_reject(line, dx);
 		}
 		advance = (legacy_u16)(draw_line_round_div(value32, line[6]) + 1);
 		original_count = line[7];
@@ -2760,7 +2868,7 @@ draw_c_reclip_x:
 		dx |= 1;
 	if ((legacy_u8)dx & (legacy_u8)(dx >> 8)) {
 		dx = (legacy_u8)dx & (legacy_u8)(dx >> 8);
-		goto draw_c_reject;
+		return draw_line_reject(line, dx);
 	}
 	dx = (legacy_u16)((legacy_u8)dx | (legacy_u8)(dx >> 8));
 	if (dx != 0) {
@@ -2768,98 +2876,6 @@ draw_c_reclip_x:
 		goto draw_c_dispatch_clip;
 	}
 	return 0;
-
-draw_c_reject:
-	clip = dx & 0x00FFU;
-	line[9] = (legacy_u16)((line[9] & 0x00FFU) | (clip << 8));
-	line[7] = 0;
-	if (clip & 4U) {
-		line[3] = sprite1.sprite_top;
-		line[2] = 0;
-		line[5] = (legacy_u16)(sprite1.sprite_top - 1);
-		return clip;
-	}
-	if (clip & 8U) {
-		line[3] = sprite1.sprite_height;
-		line[2] = 0;
-		return clip;
-	}
-	cx = line[5];
-	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_height))
-		cx = (legacy_u16)(sprite1.sprite_height - 1);
-	value32 = (legacy_u32)line[2] + 0x8000UL;
-	dx = (legacy_u16)(line[3] + (legacy_u16)(value32 >> 16));
-	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_top))
-		dx = sprite1.sprite_top;
-	line[3] = dx;
-	line[2] = 0;
-	cx = (legacy_u16)(cx - dx + 1);
-	line[5] = (legacy_u16)(dx - 1);
-	if (clip & 2U)
-		line[11] = (legacy_u16)(line[11] + cx);
-	else
-		line[13] = (legacy_u16)(line[13] + cx);
-	return clip;
-
-draw_c_horizontal:
-	line[9] = (legacy_u16)((line[9] & 0xFF00U) | 1U);
-	if (cx == dx)
-		line[9] = (legacy_u16)((line[9] & 0xFF00U) | 9U);
-	if (LEGACY_S16_FROM_BITS(cx) > LEGACY_S16_FROM_BITS(dx)) {
-		line[9] &= 0xFF00U;
-		line[1] = dx;
-		line[4] = cx;
-		bx = cx;
-		cx = dx;
-		dx = bx;
-	}
-	if ((legacy_u16)var_4 != 0) {
-		line[7] = (legacy_u16)(dx - cx + 1);
-		return 0;
-	}
-	bx = sprite1.sprite_top;
-	if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
-		line[3] = bx;
-		line[5] = bx;
-		dx = 4;
-		goto draw_c_horizontal_reject;
-	}
-	bx = sprite1.sprite_height;
-	if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(bx)) {
-		line[3] = bx;
-		line[5] = bx;
-		dx = 8;
-		goto draw_c_horizontal_reject;
-	}
-	line[7] = (legacy_u16)(dx - cx + 1);
-	if (LEGACY_S16_FROM_BITS(dx) < LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-		line[5] = (legacy_u16)(line[5] - 1);
-		line[11] = 1;
-		dx = 2;
-		goto draw_c_horizontal_reject;
-	}
-	if (LEGACY_S16_FROM_BITS(cx) >= LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
-		line[5] = (legacy_u16)(line[5] - 1);
-		line[13] = 1;
-		dx = 1;
-		goto draw_c_horizontal_reject;
-	}
-	ax = (legacy_u16)(sprite1.sprite_left2 - cx);
-	if (LEGACY_S16_FROM_BITS(ax) > 0) {
-		line[1] = sprite1.sprite_left2;
-		line[7] = (legacy_u16)(line[7] - ax);
-	}
-	ax = (legacy_u16)(dx - (sprite1.sprite_widthsum - 1));
-	if (LEGACY_S16_FROM_BITS(ax) > 0) {
-		line[7] = (legacy_u16)(line[7] - ax);
-		line[4] = (legacy_u16)(sprite1.sprite_widthsum - 1);
-	}
-	return 0;
-
-draw_c_horizontal_reject:
-	line[9] = (legacy_u16)((line[9] & 0x00FFU) | ((dx & 0xFFU) << 8));
-	line[7] = 0;
-	return dx & 0xFFU;
 
 draw_c_subdivide:
 	cx = draw_line_sar1(line[5]);
