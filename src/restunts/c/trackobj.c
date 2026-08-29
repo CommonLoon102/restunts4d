@@ -64,13 +64,15 @@ static legacy_s16 track_interpolate(legacy_s16 position,
 	legacy_s16 value0, legacy_s16 value1)
 {
 	legacy_s32 numerator;
+	legacy_s32 quotient;
 	legacy_s16 denominator;
 
 	numerator = (legacy_s32)LEGACY_S16_WRAP_SUB(position, position0) *
 		(legacy_s32)LEGACY_S16_WRAP_SUB(value1, value0);
 	denominator = LEGACY_S16_WRAP_SUB(position1, position0);
+	quotient = LEGACY_S32_DIV_OR_ZERO(numerator, (legacy_s32)denominator);
 	return LEGACY_S16_WRAP_ADD(value0,
-		(legacy_s16)(numerator / denominator));
+		LEGACY_S16_FROM_BITS((legacy_u16)quotient));
 }
 
 static void track_rotate_local(struct VECTOR* position,
