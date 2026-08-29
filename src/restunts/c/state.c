@@ -102,13 +102,28 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 	for (;;) {
 		next_track = penalty_route_next(track_index);
 		if (next_track == -1) {
-			if (sentinel_visited != 0)
-				goto backtrack;
-			sentinel_visited = 1;
+			if (sentinel_visited == 0) {
+				sentinel_visited = 1;
+			} else if (pending_count != 0) {
+				pending_count = LEGACY_U16_WRAP_SUB(pending_count, 1U);
+				track_index = pending_track[pending_count];
+				distance = pending_distance[pending_count];
+				continue;
+			} else if (best_distance != 0) {
+				*current_track = best_track;
+				*penalty_count = best_distance;
+				return 1;
+			} else {
+				state.game_startcol = column;
+				state.game_startcol2 = column;
+				state.game_startrow = row;
+				state.game_startrow2 = row;
+				*penalty_count = -2;
+				return 1;
+			}
 		} else if (next_track < 0 ||
 			next_track >= track_pieces_counter ||
 			visited[next_track] != 0) {
-backtrack:
 			if (pending_count != 0) {
 				pending_count = LEGACY_U16_WRAP_SUB(pending_count, 1U);
 				track_index = pending_track[pending_count];
@@ -337,9 +352,9 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_angle_z = LEGACY_S16_SAR(
 				LEGACY_S16_WRAP_MUL(carstate->car_angle_z, 15), 4U);
 		}
-		goto finish_angles;
 	}
 
+	if (player_behavior != 0) {
 	if (carstate->car_steeringAngle == 0) {
 		rotation_low = LEGACY_S8_FROM_BITS(
 			(legacy_u8)carstate->car_rotate.x);
@@ -442,8 +457,8 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_36MwhlAngle = 0;
 		}
 	}
+	}
 
-finish_angles:
 	if (carstate->car_36MwhlAngle != 0 && carstate->car_angle_z == 0) {
 		carstate->car_36MwhlAngle = LEGACY_S16_SAR(
 			LEGACY_S16_WRAP_MUL(carstate->car_36MwhlAngle, 15), 4U);
