@@ -1,12 +1,9 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
 #include <stdarg.h>
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
 
-#ifdef RESTUNTS_HEADLESS
 extern void headless_exit(legacy_s16 result);
 
 void add_exit_handler(void (far* exit_handler)(void))
@@ -21,9 +18,7 @@ static void headless_write_text(const legacy_s8* text)
 	length = 0;
 	while (text[length] != 0)
 		length++;
-#ifdef RESTUNTS_DOS
 	(void)dos_write_stdout(text, length);
-#endif
 }
 
 void fatal_error(const legacy_s8* format, ...)
@@ -49,9 +44,7 @@ void fatal_error(const legacy_s8* format, ...)
 
 void init_div0(void)
 {
-#ifdef RESTUNTS_DOS
 	dos_install_divide_error_handler();
-#endif
 }
 
 void init_main(legacy_s16 argc, legacy_s8* argv[])
@@ -74,4 +67,3 @@ legacy_s16 kb_read_char(void)
 {
 	return 0;
 }
-#endif

@@ -3,12 +3,6 @@
 
 #include "legacy.h"
 
-#ifdef RESTUNTS_SDL
-#ifndef far
-#define far
-#endif
-#endif
-
 #define REPLAY_GAMEINFO_SIZE 26U
 
 #pragma pack (push, 1)

@@ -1,6 +1,4 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
 #include "externs.h"
 #include "fileio.h"
 #include "memmgr.h"

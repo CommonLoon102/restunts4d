@@ -1,4 +1,3 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
 #include "keyboard.h"
 
@@ -397,5 +396,3 @@ legacy_s16 kb_check(void) {
 		int86(0x16, &inregs, &outregs);
 	}
 }
-
-#endif

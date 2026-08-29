@@ -1,6 +1,4 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
 #include "restunts.h"
 
 extern legacy_u8 byte_4616E;

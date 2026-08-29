@@ -1,9 +1,5 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
 #include <mem.h>
-#elif RESTUNTS_SDL
-
-#endif
 #include <stddef.h>
 #include <stdlib.h>
 

@@ -1,7 +1,5 @@
 #include "externs.h"
 
-#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
-
 #define LEGACY_TRACK_VECTOR_BASE 0x0C94U
 #define LEGACY_TRACK_INFO_BASE 0x1A08U
 
@@ -940,5 +938,3 @@ struct VECTOR* headless_track_vector_from_legacy_offset(legacy_u16 offset)
 		return 0;
 	return &legacy_track_vectors[vector_index];
 }
-
-#endif

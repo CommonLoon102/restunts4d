@@ -10681,9 +10681,7 @@ void run_game(void) {
 }
 void init_div0(void)
 {
-#ifdef RESTUNTS_DOS
 	dos_install_divide_error_handler();
-#endif
 }
 
 void copy_material_list_pointers(void* clrlist, void* clrlist2, void* patlist, void* patlist2, legacy_u16 videoConst)
@@ -11006,8 +11004,6 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 	legacy_s8 far* trkptr;
 	legacy_s8 far* textresptr;
 	
-	//return ported_stuntsmain_(argc, argv);
-
 	init_main(argc, argv);
 	init_div0();
 	init_row_tables();

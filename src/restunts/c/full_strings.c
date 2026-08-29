@@ -1,7 +1,5 @@
 #include "externs.h"
 
-#ifdef RESTUNTS_FULL
-
 /* Exact resource identifiers and messages formerly stored in dseg.asm. */
 
 legacy_s8 a0[4] = {
@@ -637,5 +635,3 @@ legacy_s8 a_trk_5[5] = {
 legacy_s8 audiodriverstring[5] = {
 	0x70, 0x63, 0x31, 0x35, 0x00
 };
-
-#endif

@@ -23,18 +23,12 @@ extern legacy_u8 byte_45D90;
 extern legacy_u8 byte_45E16;
 extern legacy_u8 byte_4616E;
 
-#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 extern struct VECTOR* headless_track_vector_from_legacy_offset(
 	legacy_u16 offset);
-#endif
 
 static struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset)
 {
-#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
 	return headless_track_vector_from_legacy_offset(offset);
-#else
-	return (struct VECTOR*)offset;
-#endif
 }
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);

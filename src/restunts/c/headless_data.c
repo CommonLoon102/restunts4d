@@ -1,7 +1,5 @@
 #include "externs.h"
 
-#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
-
 /* Mutable engine state formerly allocated by dseg.asm. */
 struct GAMEINFO gameconfig;
 struct GAMEINFO gameconfigcopy;
@@ -255,5 +253,3 @@ legacy_s16 highEntrXInnBounds0[6] = { 0, 0, 0, 0, 0, 120 };
 legacy_s16 highEntrXInnBounds1[6] = { 0, 0, 0, 0, 120, 120 };
 legacy_s16 highEntrXOutBounds0[6] = { 120, 168, 216, 264, 312, 360 };
 legacy_s16 highEntrXOutBounds1[6] = { 168, 216, 264, 312, 360, 360 };
-
-#endif

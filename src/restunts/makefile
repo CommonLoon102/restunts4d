@@ -38,59 +38,35 @@ endif
 MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
 
 restunts: dosplatform c-full
-	make -C dos TARGET=full FULL_OUTFILE=restunts.exe FULL_MAP=restunts.map CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
-
-restunts-legacy: asm c dosplatform
-	make -C dos $(MAKE_PARAMS)
+	make -C dos TARGET=full CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
 
 restunts-original: asmorig
 	make -C dos TARGET=original $(MAKE_PARAMS)
 
-asm: force_me
-	make -C asm $(MAKE_PARAMS)
-
 asmorig: force_me
 	make -C asmorig $(MAKE_PARAMS)
-
-c: force_me
-	make -C c $(MAKE_PARAMS)
 
 dosplatform: force_me
 	make -C platform/dos $(MAKE_PARAMS)
 
-c-stage: force_me
-	make -C c TARGET=dosstage $(MAKE_PARAMS)
+c-headless: force_me
+	make -C c TARGET=dosheadless $(MAKE_PARAMS)
 
 c-full: force_me
 	make -C c TARGET=dosfull $(MAKE_PARAMS)
 
-restunts-full: dosplatform c-full
-	make -C dos TARGET=full CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
-
-restunts-sdl:
-	make -C sdl $(MAKE_PARAMS)
-
-repldump: dosplatform c-stage
-	make -C repldump TARGET=stage STAGE_OUTFILE=repldump.exe STAGE_MAP=repldump.map CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
-
-repldump-legacy: asm c dosplatform
-	make -C repldump $(MAKE_PARAMS)
+repldump: dosplatform c-headless
+	make -C repldump TARGET=headless CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
 
 repldump-original: asmorig
 	make -C repldump TARGET=original $(MAKE_PARAMS)
 
-repldump-stage: dosplatform c-stage
-	make -C repldump TARGET=stage CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
-
 clean:
 	make -C dos $(MAKE_PARAMS) clean
-	make -C asm $(MAKE_PARAMS) clean
 	make -C asmorig $(MAKE_PARAMS) clean
 	make -C platform/dos $(MAKE_PARAMS) clean
-	make -C c $(MAKE_PARAMS) clean
-	make -C c TARGET=dosstage $(MAKE_PARAMS) clean
+	make -C c TARGET=dosheadless $(MAKE_PARAMS) clean
 	make -C c TARGET=dosfull $(MAKE_PARAMS) clean
-	make -C sdl $(MAKE_PARAMS) clean
 	make -C repldump clean
 
 # i have no idea why i need to force pre-targets with an empty target

@@ -3,7 +3,6 @@
 
 #include "legacy.h"
 
-#ifdef RESTUNTS_DOS
 void far* dos_memory_get_psp(void);
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs);
 legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs);
@@ -31,6 +30,5 @@ legacy_s16 dos_data_stack_segments_match(void);
 
 legacy_s16 dos_timer_register_callback(void (far* callback)(void));
 void dos_timer_unregister_callback(void (far* callback)(void));
-#endif
 
 #endif

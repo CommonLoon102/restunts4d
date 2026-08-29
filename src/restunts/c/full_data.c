@@ -2,11 +2,7 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
-
-#ifdef RESTUNTS_FULL
 
 /* Renderer work areas formerly reserved as anonymous spans in dseg.asm. */
 struct SHAPE3D game3dshapes[130];
@@ -565,5 +561,3 @@ void full_data_initialize(void)
 	full_initialize_screen_sprite(&sprite1);
 	full_initialize_screen_sprite(&sprite2);
 }
-
-#endif

@@ -1,6 +1,4 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
 #include <stddef.h>
 #include <limits.h>
 #include "externs.h"
@@ -4144,11 +4142,6 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	}
 }
 
-#if !defined(RESTUNTS_FULL) && defined(RESTUNTS_DOS)
-extern legacy_u16 far word_2F448; // seg012
-extern legacy_u16 far off_2F44A[]; // seg012
-#endif
-
 legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line, legacy_u16 var_4);
 
 static legacy_u16 draw_line_sar1(legacy_u16 value) {
@@ -4168,7 +4161,6 @@ static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) 
 }
 
 static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
-#if defined(RESTUNTS_FULL) || !defined(RESTUNTS_DOS)
 	/* The legacy code-segment table contains this truncated quotient for
 	 * major values below 50.  Its first shared entry is an otherwise unused
 	 * sentinel; retain it for the degenerate calls as well. */
@@ -4176,16 +4168,6 @@ static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 		return 0x135CU;
 	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
 		(legacy_u32)minor << 16, major);
-#else
-	legacy_u16 far* table;
-
-	if (LEGACY_S16_FROM_BITS(major) < LEGACY_S16_FROM_BITS(word_2F448)) {
-		table = (legacy_u16 far*)MK_FP(FP_SEG(&word_2F448),
-			off_2F44A[major]);
-		return table[minor];
-	}
-	return draw_line_round_div((legacy_u32)minor << 16, major);
-#endif
 }
 
 legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {

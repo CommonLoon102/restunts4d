@@ -1,22 +1,8 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
-#include <stdlib.h>
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
 
-#ifdef RESTUNTS_DOS
-#include "../platform/dos/legacy_registers.h"
-#else
-#define LEGACY_SAVE_DX() ((void)0)
-#define LEGACY_RESTORE_DX() ((void)0)
-#define LEGACY_SAVE_BX() ((void)0)
-#define LEGACY_RESTORE_BX() ((void)0)
-#endif
-
-#if !defined(RESTUNTS_DOS) || defined(RESTUNTS_HEADLESS) || \
-	defined(RESTUNTS_FULL)
 legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
 legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
 legacy_u16 resmaxsize = 0; // size of largest chunk?
@@ -47,15 +33,6 @@ struct MEMCHUNK* resendptr1 = &resources[49]; // eller 49?
 struct MEMCHUNK* resendptr2 = &resources[49]; // ditto
 struct MEMCHUNK* resptr1 = resources;
 struct MEMCHUNK* resptr2 = resources;
-#endif
-
-#ifndef RESTUNTS_DOS
-// No upper memory outside DOS; every chunk stays in the regular arena.
-void ems_shutdown(void) {}
-void himem_init(void) {}
-#endif
-
-#ifdef RESTUNTS_DOS
 
 // High-memory pool core. The pool is a set of fixed upper-memory blocks with
 // a small chunk table, kept fully separate from the resources[] arena table
@@ -451,55 +428,16 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 	}
 	return MK_FP(0, 0);
 }
-
-#else
-
-// Upper memory is a DOS notion; elsewhere every request simply falls through
-// to the ordinary arena.
-void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) {
-	(void)seg; (void)paras; (void)largeonly;
-}
-
-legacy_s16 highpool_owns_seg(legacy_u16 seg) {
-	(void)seg;
-	return 0;
-}
-
-legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
-	(void)name; (void)paras;
-	return 0;
-}
-
-legacy_s16 highpool_can_fit(legacy_u16 paras) {
-	(void)paras;
-	return 0;
-}
-
-void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
-	(void)name; (void)paras;
-	return 0;
-}
-
-void far* highpool_get_by_name(const legacy_s8* name) {
-	(void)name;
-	return 0;
-}
-
-#endif
-
 const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	const legacy_s8* c;
 	const legacy_s8* result;
 
-	LEGACY_SAVE_DX();
-	
 	result = filename;
 	for (c = filename; *c; c++) {
 		if (*c == ':' || *c == '\\') 
 			result = c + 1;
 	}
 	
-	LEGACY_RESTORE_DX();
 	return result;
 }
 
@@ -510,14 +448,12 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 	const legacy_s8* chunkname;
 	legacy_u16 rax, rdx;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_route(mmgr_path_to_name(arg_0), arg_2)) {
 		void far* highptr = highpool_alloc(mmgr_path_to_name(arg_0), arg_2);
 		if (FP_SEG(highptr) != 0)
 			return highptr;
 		// The pool is full; fall through to the regular arena.
 	}
-#endif
 
 	resdi = resptr2;
 	ressi = resendptr1;
@@ -576,9 +512,7 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	void far* psp;
 	legacy_u16 maxblocks;
 	struct MEMCHUNK* rp;
-	legacy_s8* tempptr;
 
-#ifdef RESTUNTS_DOS
 	psp = dos_memory_get_psp();
 	pspseg = FP_SEG(psp);
 	pspofs = FP_OFF(psp);
@@ -593,18 +527,6 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 		word_3FF82 = resendptr2->resofs;
 		//fatal_error("%u\n", word_3FF82 - word_3FF84);
 	}
-#else
-	if (word_3FF82 == 0) {
-		// assume 640k is enough for anybody:
-		maxblocks = (640 * 1024) >> 4;
-		tempptr = malloc((maxblocks << 4) + 16);
-		resptr1->resofs = (((size_t)tempptr) + 16)>>4;
-		word_3FF84 = resptr1->resofs;
-		resendptr2->resofs = word_3FF84 + maxblocks;
-		word_3FF82 = resendptr2->resofs;
-		
-	}
-#endif
 	resendptr1 = resendptr2;
 	resptr2 = resptr1;
 	
@@ -642,7 +564,6 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	ressi = resptr2;
 	ptrseg = FP_SEG(ptr);
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(ptrseg)) {
 		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(ptrseg);
 		if (highchunk == 0)
@@ -651,7 +572,6 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 1;
 		return MK_FP(ptrseg, FP_OFF(ptr));
 	}
-#endif
 
 	while (1) {
 		if (ressi == resptr1) 
@@ -732,8 +652,6 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 	legacy_u16 far* destptr;
 	legacy_u16 far* srcptr;
 
-	LEGACY_SAVE_DX();
-
 	srcseg += paras;
 	destseg += paras;
 
@@ -758,7 +676,6 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 			count--;
 		}
 	}
-	LEGACY_RESTORE_DX();
 }
 
 void mmgr_find_free(void) {
@@ -766,8 +683,6 @@ void mmgr_find_free(void) {
 	legacy_u16 regax, regdx, resunk;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
-
-	LEGACY_SAVE_DX();
 
 	ressi = resendptr2;
 	resdi = ressi;
@@ -803,7 +718,6 @@ void mmgr_find_free(void) {
 	resdi++;
 	resendptr1 = resdi;
 
-	LEGACY_RESTORE_DX();
 }
 
 void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
@@ -816,13 +730,11 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	
 	pcdi = mmgr_path_to_name(name);
 
-#ifdef RESTUNTS_DOS
 	{
 		void far* highptr = highpool_get_by_name(pcdi);
 		if (FP_SEG(highptr) != 0)
 			return highptr;
 	}
-#endif
 
 	ressi = resendptr1;
 
@@ -905,24 +817,17 @@ void mmgr_release(void far* ptr) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	LEGACY_SAVE_DX();
-	LEGACY_SAVE_BX();
-	
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(regax)) {
 		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
 		if (highchunk == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		highchunk->resstate =
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 0;
-		LEGACY_RESTORE_BX();
-		LEGACY_RESTORE_DX();
 		return;
 	}
-#endif
 
 	for (;;) {
 		if (ressi == resptr1) 
@@ -939,8 +844,6 @@ void mmgr_release(void far* ptr) {
 		resptr2 = ressi;
 	}
 
-	LEGACY_RESTORE_BX();
-	LEGACY_RESTORE_DX();
 }
 
 // Rename a live arena chunk, so a buffer filled under one name can be handed
@@ -954,10 +857,8 @@ void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(regax))
 		return;
-#endif
 
 	for (;;) {
 		if (ressi == resptr1)
@@ -981,14 +882,12 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(regax)) {
 		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
 		if (highchunk == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		return highchunk->resparas;
 	}
-#endif
 
 	for (;;) {
 		if (ressi == resptr1) 
@@ -1006,30 +905,24 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 
-	LEGACY_SAVE_DX();
-
 	(void)arg_0;
 	regax = arg_2;
 	ressi = resptr2;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(regax)) {
 		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
 		if (highchunk == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", arg_2);
 		if (arg_4 <= highchunk->resparas) {
 			highchunk->resparas = arg_4;
-			LEGACY_RESTORE_DX();
 			return arg_4;
 		}
 		if (highpool_fits_at(regax, arg_4)) {
 			highchunk->resparas = arg_4;
-			LEGACY_RESTORE_DX();
 			return 0;
 		}
 		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
 	}
-#endif
 
 	for (;;) {
 		if (ressi == resptr1)
@@ -1041,7 +934,6 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 	regax = arg_4;
 	if (regax <= ressi->ressize) {
 		ressi->ressize = regax;
-		LEGACY_RESTORE_DX();
 		return regax;
 	}
 
@@ -1054,7 +946,6 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		resmaxsize = regax;
 
 	if (regax <= resdi->resofs) {
-		LEGACY_RESTORE_DX();
 		return 0;
 	}
 
@@ -1071,7 +962,6 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		ressi++;
 		resendptr1 = ressi;
 	}
-	LEGACY_RESTORE_DX();
 	return 0;
 }
 
@@ -1085,14 +975,12 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 	regax = FP_SEG(ptr);
 	ressi = resptr2;
 
-#ifdef RESTUNTS_DOS
 	if (highpool_owns_seg(regax)) {
 		if (highpool_chunk_by_seg(regax) == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		// Pool chunks are never compacted; they stay where they are.
 		return MK_FP(regax, 0);
 	}
-#endif
 
 	for (;;) {
 		if (ressi == resptr1)

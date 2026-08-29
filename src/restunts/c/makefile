@@ -1,21 +1,12 @@
-TARGET ?= dos
+TARGET ?= dosfull
 
 OBJDIR = build\$(TARGET)
 
-# Set up tools for DOS
-ifeq ($(TARGET),dos)
-  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS
-
-else ifeq ($(TARGET),dosstage)
+ifeq ($(TARGET),dosheadless)
   CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS /DRESTUNTS_HEADLESS
 
 else ifeq ($(TARGET),dosfull)
   CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS /DRESTUNTS_FULL
-
-# Set up tools for SDL
-else ifeq ($(TARGET),sdl)
-  SDLPATH = s:/src/sdl
-  CC = cl /Zi /MD /c /I$(SDLPATH)/include /DRESTUNTS_SDL /Fo$(OBJDIR)/$?
 
 # Unsupported target
 else
@@ -27,7 +18,7 @@ C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gamei
 
 DOS_STARTUP_OBJ =
 
-ifeq ($(TARGET),dosstage)
+ifeq ($(TARGET),dosheadless)
   C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c simd.c carsetup.c trkutil.c trackres.c headless.c \
 			headless_data.c headless_trackdata.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
   DOS_STARTUP_OBJ = $(OBJDIR)/dosstart.obj

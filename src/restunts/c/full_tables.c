@@ -1,7 +1,5 @@
 #include "legacy.h"
 
-#ifdef RESTUNTS_FULL
-
 static legacy_u8 sphere_radii_data[780] = {
 	1, 2, 3, 3, 4, 4, 3, 4, 5, 5, 4, 5, 6, 6, 6, 4,
 	6, 6, 7, 7, 8, 5, 6, 7, 8, 8, 9, 9, 5, 7, 8, 9,
@@ -132,5 +130,3 @@ static legacy_s8 lookahead_table_3C03E[70] = {
 legacy_s8* lookahead_tiles_tables[8] = {
 	lookahead_table_3BE9A, lookahead_table_3BEE0, lookahead_table_3BF26, lookahead_table_3BF6C, lookahead_table_3BFB2, lookahead_table_3BFF8, lookahead_table_3C03E, lookahead_table_3BE54
 };
-
-#endif

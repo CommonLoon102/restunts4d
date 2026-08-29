@@ -1,12 +1,6 @@
 #ifndef RESTUNTS_GAMESTATE_H
 #define RESTUNTS_GAMESTATE_H
 
-#ifdef RESTUNTS_SDL
-#ifndef far
-#define far
-#endif
-#endif
-
 #include "math.h"
 
 #define GAMESTATE_SERIALIZED_SIZE 1120U

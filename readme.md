@@ -85,22 +85,20 @@ makefiles, and is also mounted inside DOSBox as a fixed point of reference.
 The makefile supports the following targets:
 
 	make <OPTIONS> restunts
-		The default restunts target builds an executable based on ported C code
-		and patched disassembly.
+		Builds RESTUNTS.EXE from the ported C game and the DOS platform layer.
 
 	make <OPTIONS> restunts-original
 		Builds an executable based on unpatched disassembly with the original
 		codepaths intact. Does not use any of the ported C code.
 
 	make <OPTIONS> repldump
-		Builds the replay dump tool using ported C code and patched
-		disassembly.
+		Builds the C-only headless replay engine as REPLDUMP.EXE.
 
 	make <OPTIONS> repldump-original
-		Builds the replay dump tool without ported C code.
+		Builds the replay dump oracle from the unpatched disassembly.
 
 
-**NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker compains about “fixup overflow” errors when building, try cleaning the build space by manually erasing the build products (`src/restunts/asm/build/*` and `src/restunts/c/build/dos/*`). Note that, if you are editing the code, these fixus overflow might very well be real errors, indicating you are exceeding the allowed memory limits.
+**NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
 ```
 
 ## Build options

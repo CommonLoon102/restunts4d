@@ -1,10 +1,4 @@
-#ifdef RESTUNTS_DOS
 #include <dos.h>
-#endif
-#ifdef RESTUNTS_SDL
-#include <stdio.h>
-#define huge 
-#endif
 #include <stddef.h>
 #include "externs.h"
 #include "fileio.h"
@@ -43,7 +37,6 @@ static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
 #define COMPR_RLE_SIZE_HIGH_OFFSET 2U
 #define COMPR_RLE_ESCLEN_OFFSET 4U
 
-#ifdef RESTUNTS_DOS
 // Minimal stdio.h "support" until we can link with a real CRT.
 #ifndef __STDIO_H
 #define __STDIO_H
@@ -152,8 +145,6 @@ const legacy_s8* file_find_next_alt(void)
 {
 	return file_find_next();
 }
-
-#endif // RESTUNTS_DOS
 
 void file_build_path(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext, legacy_s8* dst)
 {

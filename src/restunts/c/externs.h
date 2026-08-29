@@ -1,11 +1,6 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
-#ifdef RESTUNTS_SDL
-#define far
-#define huge
-#endif
-
 #include "math.h"
 
 #include "replay.h"
@@ -85,14 +80,12 @@ struct TRACKOBJECT {
 typedef char legacy_track_wall_must_be_6_bytes[
 	(sizeof(struct TRACK_WALL) == 6) ? 1 : -1];
 
-#ifdef RESTUNTS_DOS
 typedef char legacy_simd_must_be_776_bytes[
 	(sizeof(struct SIMD) == 776) ? 1 : -1];
 typedef char legacy_trkobjinfo_must_be_14_bytes[
 	(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1];
 typedef char legacy_trackobject_must_be_14_bytes[
 	(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1];
-#endif
 
 #define SIMD_RESOURCE_SIZE 772U
 legacy_u16 simd_decode(struct SIMD* destination,
@@ -409,7 +402,6 @@ extern legacy_u16 _abs(legacy_u16);
 extern legacy_s16 _rand(void);
 extern void _srand(legacy_u16);
 
-#ifdef RESTUNTS_DOS
 #define memcpy _memcpy
 #define strcpy _strcpy
 #define strcat _strcat
@@ -421,10 +413,5 @@ extern void _srand(legacy_u16);
 #define printf _printf
 #define rand _rand
 #define srand _srand
-#else
-#define MK_FP(x, y) ((x << 4) + y)
-#define FP_SEG(x) 0
-#define FP_OFF(x) (size_t)x
-#endif
 
 #endif

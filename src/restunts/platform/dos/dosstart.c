@@ -1,8 +1,6 @@
 #include "legacy.h"
 #include "platform.h"
 
-#if defined(RESTUNTS_HEADLESS) || defined(RESTUNTS_FULL)
-
 #include <dos.h>
 
 #define HEADLESS_MAX_ARGS 3
@@ -23,7 +21,7 @@ extern legacy_u8 headless_stack_top;
 
 static legacy_u16 headless_psp_segment;
 static legacy_u16 headless_program_paragraphs;
-static legacy_s8 headless_program_name[] = "REPLDUMH";
+static legacy_s8 headless_program_name[] = "REPLDUMP";
 static legacy_s8 headless_command_line[HEADLESS_COMMAND_LINE_SIZE];
 static legacy_s8* headless_argv[HEADLESS_MAX_ARGS];
 
@@ -139,5 +137,3 @@ void headless_start(void)
 
 	headless_run();
 }
-
-#endif

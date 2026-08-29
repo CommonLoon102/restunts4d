@@ -3,10 +3,6 @@
 
 #include "legacy.h"
 
-#ifdef RESTUNTS_SDL
-#define far
-#endif
-
 #pragma pack (push, 1)
 struct MEMCHUNK {
 	legacy_s8 resname[12];

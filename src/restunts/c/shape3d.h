@@ -32,12 +32,10 @@ struct TRANSFORMEDSHAPE3D {
 
 #pragma pack (pop)
 
-#ifdef RESTUNTS_DOS
 typedef char legacy_shape3d_must_be_22_bytes[
 	(sizeof(struct SHAPE3D) == 22) ? 1 : -1];
 typedef char legacy_transformedshape3d_must_be_20_bytes[
 	(sizeof(struct TRANSFORMEDSHAPE3D) == 20) ? 1 : -1];
-#endif
 
 legacy_s16 shape3d_load_all(void);
 void shape3d_free_all(void);

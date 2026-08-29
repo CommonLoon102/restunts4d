@@ -3,10 +3,6 @@
 
 #include "legacy.h"
 
-#ifdef RESTUNTS_SDL
-#define far
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
