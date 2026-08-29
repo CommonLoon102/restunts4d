@@ -3,7 +3,7 @@ TARGET ?= ported
 
 SRC = s:\src\restunts
 
-RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj kevinrnd.obj replinit.obj gameinit.obj gamestep.obj carsetup.obj trkutil.obj restunts.obj \
+RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj kevinrnd.obj replinit.obj gameinit.obj gamestep.obj simd.obj carsetup.obj trkutil.obj restunts.obj \
                      shape3d.obj shape2d.obj heapsort.obj \
                      frame.obj state.obj stateply.obj statecrs.obj \
                      statecar.obj trackobj.obj replay.obj stateio.obj
@@ -24,7 +24,7 @@ DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj runtime.obj memory.obj file.obj keybo
 ifeq ($(TARGET), stage)
   RESTUNTS_OBJ_FILES = fileio.obj math.obj memmgr.obj strlib.obj numlib.obj \
                        kevinrnd.obj replinit.obj gameinit.obj gamestep.obj \
-                       carsetup.obj trkutil.obj headless.obj dosstart.obj headless_data.obj headless_trackdata.obj state.obj stateply.obj \
+                       simd.obj carsetup.obj trkutil.obj headless.obj dosstart.obj headless_data.obj headless_trackdata.obj state.obj stateply.obj \
                        statecrs.obj statecar.obj trackobj.obj replay.obj stateio.obj
 endif
 

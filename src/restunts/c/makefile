@@ -22,13 +22,13 @@ else
   $(error Unsupported C target: $(TARGET))
 endif
 
-C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c carsetup.c trkutil.c restunts.c shape3d.c shape2d.c heapsort.c \
+C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c simd.c carsetup.c trkutil.c restunts.c shape3d.c shape2d.c heapsort.c \
 		  frame.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
 
 DOS_STARTUP_OBJ =
 
 ifeq ($(TARGET),dosstage)
-  C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c carsetup.c trkutil.c headless.c \
+  C_FILES = fileio.c math.c memmgr.c strlib.c numlib.c kevinrnd.c replinit.c gameinit.c gamestep.c simd.c carsetup.c trkutil.c headless.c \
 			headless_data.c headless_trackdata.c state.c stateply.c statecrs.c statecar.c trackobj.c replay.c stateio.c
   DOS_STARTUP_OBJ = $(OBJDIR)/dosstart.obj
 endif

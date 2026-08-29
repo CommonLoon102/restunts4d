@@ -1,12 +1,12 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
-#include "math.h"
-
 #ifdef RESTUNTS_SDL
 #define far
 #define huge
 #endif
+
+#include "math.h"
 
 #include "replay.h"
 #include "gamestate.h"
@@ -84,6 +84,10 @@ typedef char legacy_trkobjinfo_must_be_14_bytes[
 typedef char legacy_trackobject_must_be_14_bytes[
 	(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1];
 #endif
+
+#define SIMD_RESOURCE_SIZE 772U
+legacy_u16 simd_decode(struct SIMD* destination,
+	const legacy_u8 far* source);
 
 extern struct GAMEINFO gameconfig;
 extern struct GAMEINFO gameconfigcopy;
@@ -371,6 +375,7 @@ extern void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* oppcarid);
 extern void load_palandcursor(void);
 extern void sprite_set_1_size(legacy_u16 left, legacy_u16 right, legacy_u16 top, legacy_u16 height);
 extern void sprite_clear_1_color(legacy_u8);
+struct SPRITE;
 extern legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode);
 
 extern void timer_setup_interrupt(void);

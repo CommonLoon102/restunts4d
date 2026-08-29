@@ -24,10 +24,13 @@ extern void far* wallptr;
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 {
 	legacy_s16 i;
+	const legacy_u8 far* simd_resource;
+
+	simd_resource = (const legacy_u8 far*)locate_shape_alt(
+		carresptr, "simd");
 
 	if (is_opponent == 0) {
-		fmemcpy(MK_FP(FP_SEG(&simd_player), FP_OFF(&simd_player)),
-			locate_shape_alt(carresptr, "simd"), sizeof(struct SIMD));
+		(void)simd_decode(&simd_player, simd_resource);
 		simd_player.aerorestable = td04_aerotable_pl;
 		for (i = 0; i < 0x40; i++) {
 			td04_aerotable_pl[i] = ((legacy_s32)simd_player.aero_resistance *
@@ -35,8 +38,7 @@ void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 		}
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
 	} else {
-		fmemcpy(MK_FP(FP_SEG(&simd_opponent), FP_OFF(&simd_opponent)),
-			locate_shape_alt(carresptr, "simd"), sizeof(struct SIMD));
+		(void)simd_decode(&simd_opponent, simd_resource);
 		simd_opponent.aerorestable = td05_aerotable_op;
 		for (i = 0; i < 0x40; i++) {
 			td05_aerotable_op[i] = ((legacy_s32)simd_opponent.aero_resistance *
