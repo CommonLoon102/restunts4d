@@ -58,6 +58,12 @@ extern legacy_s8 aNoRoomLeftOnTimerInterru[];
 legacy_u32 timer_get_counter(void);
 legacy_u32 timer_get_delta(void);
 legacy_u32 timer_get_slow_counter(void);
+legacy_s16 dos_video_get_status(void);
+void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
+	legacy_u8* palette);
+void dos_video_set_mode_13h(void);
+void dos_video_set_mode4(void);
+void dos_video_set_mode7(void);
 
 typedef legacy_s16 (far* readchar_callback_type)(void);
 /*
@@ -372,18 +378,13 @@ legacy_s16 get_super_random(void)
 	return val < 0 ? -val : val;
 }
 
-legacy_s16 video_get_status(void)
-{
-	return inport(0x3DA) & 0x8;
-}
-
 legacy_s16 random_wait(void)
 {
 	legacy_s16 status1, i;
 	
-	status1 = video_get_status();
+	status1 = dos_video_get_status();
 	
-	for (i = 0; status1 == video_get_status() && i < 12000; ++i);
+	for (i = 0; status1 == dos_video_get_status() && i < 12000; ++i);
 	
 	if (i == 1024) {
 		i = aMisc_1[0];
@@ -443,9 +444,6 @@ extern struct SPRITE far* smouspriteptr;
 extern struct SPRITE far* mmouspriteptr;
 extern struct SPRITE far* mouseunkspriteptr;
 extern void far* tempdataptr;
-extern void video_set_palette(legacy_u16 start, legacy_u16 count,
-	legacy_u8* palette);
-
 extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
 
@@ -518,7 +516,7 @@ void load_palandcursor(void)
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "!pal");
 	for (i = 0; i < sizeof(palette); ++i)
 		palette[i] = ((legacy_u8 far*)mouse_shape)[0x10U + i];
-	video_set_palette(0, 0x100, palette);
+	dos_video_set_palette(0, 0x100, palette);
 
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
 	mouse_width = (legacy_u16)(mouse_shape->s2d_width * video_flag2_is1);
@@ -9903,9 +9901,9 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	(void)argnounknown;
 
 	// Video mode.
-	video_set_mode_13h();
+	dos_video_set_mode_13h();
 	if (argmode4) {
-		video_set_mode4();
+		dos_video_set_mode4();
 	}
 
 	timer_setup_interrupt();
@@ -10115,7 +10113,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	audiodrv_atexit();
 	kb_exit_handler();
 	dos_kb_set_numlock();
-	video_set_mode7();
+	dos_video_set_mode7();
 	
 	fatal_error("err %i", inch);
 
@@ -10184,7 +10182,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 				audiodrv_atexit();
 				kb_exit_handler();
 				dos_kb_set_numlock();
-				video_set_mode7();
+				dos_video_set_mode7();
 				return result;
 			}
 			regsi = 0;

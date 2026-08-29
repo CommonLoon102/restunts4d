@@ -11,7 +11,7 @@ endif
 ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
 CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS
 
-all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj
+all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj
 
 $(OBJDIR)/%.obj: %.asm
 	$(ASM) $<, $(subst /,\,$@)
@@ -28,6 +28,9 @@ $(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h
 $(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h
 	$(CC) mouse.c
 
+$(OBJDIR)/video.obj: video.c ../../c/legacy.h
+	$(CC) video.c
+
 clean:
 	del $(OBJDIR)\dosbss.obj
 	del $(OBJDIR)\dosstack.obj
@@ -35,3 +38,4 @@ clean:
 	del $(OBJDIR)\runtime.obj
 	del $(OBJDIR)\joystick.obj
 	del $(OBJDIR)\mouse.obj
+	del $(OBJDIR)\video.obj
