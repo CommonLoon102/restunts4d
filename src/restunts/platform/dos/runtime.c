@@ -51,6 +51,8 @@ void dos_process_exit(legacy_s16 status)
 
 legacy_s16 dos_data_stack_segments_match(void)
 {
+	legacy_s16 result;
+
 	/* Interrupt callbacks can arrive while foreign code owns SS.  Game code
 	 * may only touch near data when Borland's medium-model DS and SS agree. */
 	__asm {
@@ -61,5 +63,8 @@ legacy_s16 dos_data_stack_segments_match(void)
 		jne     segments_differ
 		inc     ax
 	segments_differ:
+		mov     result, ax
 	}
+
+	return result;
 }

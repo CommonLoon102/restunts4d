@@ -180,6 +180,8 @@ void dos_timer_setup_interrupt(void)
 
 legacy_u32 timer_get_counter(void)
 {
+	legacy_u32 result;
+
 	/* The DOS timer interrupt can update either half between ordinary C
 	 * loads.  Keep interrupts disabled for the paired 16-bit read. */
 	__asm {
@@ -187,11 +189,17 @@ legacy_u32 timer_get_counter(void)
 		mov     ax, word ptr dos_timer_counter
 		mov     dx, word ptr dos_timer_counter+2
 		sti
+		mov     word ptr result, ax
+		mov     word ptr result+2, dx
 	}
+
+	return result;
 }
 
 legacy_u32 timer_get_delta(void)
 {
+	legacy_u32 result;
+
 	/* Read and update the 32-bit counters as the original 8086 routine did;
 	 * Borland otherwise emits two independently interruptible word loads. */
 	__asm {
@@ -205,11 +213,17 @@ legacy_u32 timer_get_delta(void)
 		mov     word ptr dos_timer_last_counter+2, dx
 		sub     ax, bx
 		sbb     dx, cx
+		mov     word ptr result, ax
+		mov     word ptr result+2, dx
 	}
+
+	return result;
 }
 
 legacy_u32 timer_get_slow_counter(void)
 {
+	legacy_u32 result;
+
 	/* This counter advances when the interrupt divider expires, rather than
 	 * on every hardware timer interrupt. */
 	__asm {
@@ -217,5 +231,9 @@ legacy_u32 timer_get_slow_counter(void)
 		mov     ax, dos_timer_slow_low
 		mov     dx, dos_timer_slow_high
 		sti
+		mov     word ptr result, ax
+		mov     word ptr result+2, dx
 	}
+
+	return result;
 }
