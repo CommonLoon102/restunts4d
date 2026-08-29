@@ -1,5 +1,7 @@
 #include "restunts.h"
 
+#define RST_CVX_NUM 20
+
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
 	legacy_s32 posZ, legacy_s16 track_angle)
@@ -73,4 +75,32 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->field_CD = 0;
 	playerstate->field_CE = 0;
 	playerstate->field_CF = 1;
+}
+
+void restore_gamestate(legacy_u16 frame)
+{
+	legacy_u16 curframe;
+
+	if (frame == 0 && elapsed_time1 == 0)
+		init_game_state(0);
+
+	curframe = LEGACY_U16_DIV_OR_ZERO(frame, word_45A00);
+	if (curframe == RST_CVX_NUM)
+		curframe--;
+
+	/* Find the newest valid checkpoint preceding the requested frame. */
+	if (frame >= state.game_frame) {
+		while (1) {
+			if (LEGACY_U16_WRAP_MUL(curframe, word_45A00) <=
+				state.game_frame)
+				return;
+			if (((struct GAMESTATE far*)cvxptr)[curframe].field_3F4 != 0)
+				break;
+			curframe--;
+		}
+	}
+
+	state = ((struct GAMESTATE far*)cvxptr)[curframe];
+	init_kevinrandom(state.kevinseed);
+	elapsed_time2 = state.game_frame;
 }

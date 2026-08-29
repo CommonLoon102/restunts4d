@@ -7400,41 +7400,6 @@ void init_game_state(legacy_s16 arg)
 	}
 }
 
-void restore_gamestate(legacy_u16 frame)
-{
-	legacy_u16 curframe;
-
-	if (frame == 0 && elapsed_time1 == 0) {
-		init_game_state(0);
-	}
-	
-	curframe = frame / word_45A00;
-	
-	if (curframe == RST_CVX_NUM) {
-		curframe--;
-	}
-	
-	// Find last gamestate in cvx.
-	if (frame >= state.game_frame) {
-		while (1) {
-			if (curframe * word_45A00 <= state.game_frame) {
-				return;
-			}
-			else if (((struct GAMESTATE far*)cvxptr)[curframe].field_3F4 != 0) {
-				break;
-			}
-			
-			curframe--;
-		}
-	}
-	
-	// Copy last gamestate from cvx.
-	state = ((struct GAMESTATE far*)cvxptr)[curframe];
-
-	init_kevinrandom(state.kevinseed);
-	elapsed_time2 = state.game_frame;
-}
-
 extern legacy_u8 byte_4616E;
 
 void sub_2298C(void)

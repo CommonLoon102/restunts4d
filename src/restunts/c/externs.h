@@ -304,6 +304,7 @@ extern legacy_u16 someZeroVideoConst;
 extern legacy_s16 sub_18D60(legacy_s16 car_trackdata3_index, struct VECTOR* car_vec_unk3, legacy_s16 field_CE, legacy_s16* unk);
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle);
 extern void init_game_state(legacy_s16 arg);
+extern void restore_gamestate(legacy_u16 frame);
 extern void init_rect_arrays(void);
 extern void sub_19F14(struct RECTANGLE* rect);
 extern void font_set_fontdef(void);
