@@ -1,5 +1,5 @@
 #include <dos.h>
-#include "../../c/legacy.h"
+#include "../../c/platform.h"
 
 typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
 	legacy_u8* context, legacy_u16 volume);

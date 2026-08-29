@@ -63,4 +63,33 @@ void dos_video_set_mode_13h(void);
 void dos_video_set_mode4(void);
 void dos_video_set_mode7(void);
 
+legacy_u8 dos_audio_driver_initialize(void);
+void dos_audio_driver_load_bank(void far* bank);
+void dos_audio_driver_prepare_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
+void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value);
+void dos_audio_driver_activate_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
+	legacy_u16 parameter, void far* resource);
+void dos_audio_driver_release_channel(legacy_s16 driver_channel);
+void dos_audio_driver_start_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context);
+void dos_audio_driver_end_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context);
+void dos_audio_driver_reset(void);
+void dos_audio_driver_start(void);
+void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 value, void far* resource);
+void dos_audio_driver_suspend_all(legacy_u8* contexts);
+void dos_audio_driver_set_master_state(legacy_s16 operation,
+	void far* state);
+void dos_audio_bind_channel_context(legacy_s16 channel,
+	void far* resource);
+void dos_audio_set_channel_volume(legacy_s16 channel,
+	legacy_s16 volume);
+void dos_audio_set_context_pitch(legacy_s16 context_index,
+	legacy_s16 pitch);
+void dos_audio_shutdown(void);
+
 #endif

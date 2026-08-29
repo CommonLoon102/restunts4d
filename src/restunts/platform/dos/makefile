@@ -43,8 +43,8 @@ $(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h ../../c/platform.h
 $(OBJDIR)/video.obj: video.c ../../c/legacy.h
 	$(CC) video.c
 
-$(OBJDIR)/audio.obj: audio.c ../../c/legacy.h
-	$(CC) audio.c
+$(OBJDIR)/audio.obj: audio.c ../../c/legacy.h ../../c/platform.h
+	$(CC) -I../../c audio.c
 
 $(OBJDIR)/critical.obj: critical.c ../../c/legacy.h
 	$(CC) critical.c

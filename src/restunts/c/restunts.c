@@ -1028,43 +1028,15 @@ static legacy_u16 audio_engine_value_44d48;
 static legacy_u16 audio_engine_value_454ba;
 static legacy_s8 audio_filename_buffer[34];
 void audio_driver_timer(void);
-extern void dos_audio_bind_channel_context(legacy_s16 channel,
-	void far* resource);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
 legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle);
-extern void dos_audio_set_context_pitch(legacy_s16 context_index,
-	legacy_s16 pitch);
 extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
-extern void dos_audio_set_channel_volume(legacy_s16 channel,
-	legacy_s16 volume);
 extern void audio_op_unk3(legacy_s16 channel);
 extern void audio_op_unk4(legacy_s16 channel);
-extern void dos_audio_driver_release_channel(legacy_s16 driver_channel);
-extern void dos_audio_driver_start_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context);
-extern void dos_audio_driver_end_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context);
-extern void dos_audio_driver_prepare_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
-extern void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u16 value);
-extern void dos_audio_driver_activate_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
-	legacy_u16 parameter, void far* resource);
-extern void dos_audio_driver_reset(void);
-extern void dos_audio_driver_start(void);
-extern void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u16 value, void far* resource);
-extern void dos_audio_driver_suspend_all(legacy_u8* contexts);
-extern void dos_audio_driver_set_master_state(legacy_s16 operation,
-	void far* state);
-extern legacy_u8 dos_audio_driver_initialize(void);
-extern void dos_audio_driver_load_bank(void far* bank);
-extern void dos_audio_shutdown(void);
 void add_exit_handler(void (far* exit_handler)(void));
 void audio_update_driver_contexts(void);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
