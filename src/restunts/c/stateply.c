@@ -505,6 +505,129 @@ legacy_s16 car_car_coll_detect_maybe(
 		corners, first_collision_points, first_world_coordinates);
 }
 
+enum PLAYER_PHYSICS_FLOW {
+	PLAYER_FLOW_loc_15142,
+	PLAYER_FLOW_loc_15163,
+	PLAYER_FLOW_loc_15192,
+	PLAYER_FLOW_loc_151A2,
+	PLAYER_FLOW_loc_151BA,
+	PLAYER_FLOW_loc_151DB,
+	PLAYER_FLOW_loc_15240,
+	PLAYER_FLOW_loc_15257,
+	PLAYER_FLOW_loc_15264,
+	PLAYER_FLOW_loc_15270,
+	PLAYER_FLOW_loc_1527C,
+	PLAYER_FLOW_loc_15338,
+	PLAYER_FLOW_loc_15347,
+	PLAYER_FLOW_loc_1537C,
+	PLAYER_FLOW_loc_15381,
+	PLAYER_FLOW_loc_15398,
+	PLAYER_FLOW_loc_153AE,
+	PLAYER_FLOW_loc_1540C,
+	PLAYER_FLOW_loc_1543A,
+	PLAYER_FLOW_loc_1544A,
+	PLAYER_FLOW_loc_1545D,
+	PLAYER_FLOW_loc_1546E,
+	PLAYER_FLOW_loc_154CA,
+	PLAYER_FLOW_loc_154F8,
+	PLAYER_FLOW_loc_154FA,
+	PLAYER_FLOW_loc_15513,
+	PLAYER_FLOW_loc_15530,
+	PLAYER_FLOW_loc_1553F,
+	PLAYER_FLOW_loc_15599,
+	PLAYER_FLOW_loc_155A1,
+	PLAYER_FLOW_loc_15642,
+	PLAYER_FLOW_loc_156A3,
+	PLAYER_FLOW_loc_156D6,
+	PLAYER_FLOW_loc_156ED,
+	PLAYER_FLOW_loc_15703,
+	PLAYER_FLOW_loc_1570A,
+	PLAYER_FLOW_loc_15879,
+	PLAYER_FLOW_loc_15882,
+	PLAYER_FLOW_loc_158DA,
+	PLAYER_FLOW_loc_15950,
+	PLAYER_FLOW_loc_1595A,
+	PLAYER_FLOW_loc_15964,
+	PLAYER_FLOW_loc_1596E,
+	PLAYER_FLOW_loc_1599E,
+	PLAYER_FLOW_loc_159AD,
+	PLAYER_FLOW_loc_15A30,
+	PLAYER_FLOW_loc_15C04,
+	PLAYER_FLOW_loc_15C75,
+	PLAYER_FLOW_loc_15CDF,
+	PLAYER_FLOW_loc_15CE8,
+	PLAYER_FLOW_loc_15CF7,
+	PLAYER_FLOW_loc_15D1A,
+	PLAYER_FLOW_loc_15D2B,
+	PLAYER_FLOW_loc_15D39,
+	PLAYER_FLOW_loc_15D43,
+	PLAYER_FLOW_loc_15D94,
+	PLAYER_FLOW_loc_15DB6,
+	PLAYER_FLOW_loc_15DC8,
+	PLAYER_FLOW_loc_15DD1,
+	PLAYER_FLOW_loc_15DDB,
+	PLAYER_FLOW_loc_15E85,
+	PLAYER_FLOW_code_update_globalPos,
+	PLAYER_FLOW_code_update_rotCoords,
+	PLAYER_FLOW_loc_15FDE,
+	PLAYER_FLOW_loc_15FEF,
+	PLAYER_FLOW_loc_15FFE,
+	PLAYER_FLOW_loc_1600F,
+	PLAYER_FLOW_loc_1601B,
+	PLAYER_FLOW_loc_1602C,
+	PLAYER_FLOW_loc_1603A,
+	PLAYER_FLOW_loc_1604B,
+	PLAYER_FLOW_loc_16057,
+	PLAYER_FLOW_loc_160A7,
+	PLAYER_FLOW_loc_1611C,
+	PLAYER_FLOW_loc_1613E,
+	PLAYER_FLOW_loc_16141,
+	PLAYER_FLOW_loc_16146,
+	PLAYER_FLOW_loc_1614C,
+	PLAYER_FLOW_loc_16169,
+	PLAYER_FLOW_loc_161AB,
+	PLAYER_FLOW_loc_161DE,
+	PLAYER_FLOW_loc_161FC,
+	PLAYER_FLOW_loc_161FF,
+	PLAYER_FLOW_loc_16204,
+	PLAYER_FLOW_loc_1620A,
+	PLAYER_FLOW_loc_16236,
+	PLAYER_FLOW_loc_1624A,
+	PLAYER_FLOW_loc_1624E,
+	PLAYER_FLOW_loc_1625F,
+	PLAYER_FLOW_loc_16288,
+	PLAYER_FLOW_loc_162EE,
+	PLAYER_FLOW_loc_162F9,
+	PLAYER_FLOW_loc_16309,
+	PLAYER_FLOW_loc_1632C,
+	PLAYER_FLOW_loc_16336,
+	PLAYER_FLOW_loc_1641E,
+	PLAYER_FLOW_loc_16425,
+	PLAYER_FLOW_loc_16428,
+	PLAYER_FLOW_loc_1644C,
+	PLAYER_FLOW_loc_164B2,
+	PLAYER_FLOW_loc_1653E,
+	PLAYER_FLOW_loc_16550,
+	PLAYER_FLOW_loc_16566,
+	PLAYER_FLOW_loc_16578,
+	PLAYER_FLOW_loc_165AF,
+	PLAYER_FLOW_loc_165B9,
+	PLAYER_FLOW_loc_165C0,
+	PLAYER_FLOW_loc_165C8,
+	PLAYER_FLOW_loc_165EA,
+	PLAYER_FLOW_loc_165F0,
+	PLAYER_FLOW_loc_16648,
+	PLAYER_FLOW_loc_16650,
+	PLAYER_FLOW_loc_16670,
+	PLAYER_FLOW_loc_1667A,
+	PLAYER_FLOW_loc_16710,
+	PLAYER_FLOW_loc_1671F,
+	PLAYER_FLOW_loc_1672C,
+	PLAYER_FLOW_loc_16836,
+	PLAYER_FLOW_loc_16840,
+	PLAYER_FLOW_loc_16892,
+};
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, legacy_s16 arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -535,6 +658,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	legacy_s16 var_E;
 	legacy_s8 var_11C;
 	struct VECTOR var_DC[32];
+	enum PLAYER_PHYSICS_FLOW physics_flow;
 
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
 
@@ -800,68 +924,71 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	var_146ptrTo176++;
 	}
     var_2 = 0;
-loc_15142:
+	physics_flow = PLAYER_FLOW_loc_15142;
+	for (;;) {
+	switch (physics_flow) {
+case PLAYER_FLOW_loc_15142:
 	var_2 = LEGACY_S8_WRAP_ADD(var_2, 1);
 	if (var_2 != 5)
-		goto loc_151A2;
+		{ physics_flow = PLAYER_FLOW_loc_151A2; continue; }
 	arg_pState->car_36MwhlAngle = 0x200;
 	update_crash_state(1, arg_MplayerFlag);
 
-loc_15163:
+case PLAYER_FLOW_loc_15163:
 	if (arg_pState->car_surfaceWhl[0] != 5)
-		goto loc_15192;
+		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	if (arg_pState->car_surfaceWhl[1] != 5)
-		goto loc_15192;
+		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	if (arg_pState->car_surfaceWhl[2] != 5)
-		goto loc_15192;
+		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	if (arg_pState->car_surfaceWhl[3] != 5)
-		goto loc_15192;
+		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	update_crash_state(2, arg_MplayerFlag);
 
-loc_15192:
+case PLAYER_FLOW_loc_15192:
 	var_DEptrTo1C0 = vecl_1C0;
 	var_wheelIndex = 0;
-	goto loc_15DD1;
+	{ physics_flow = PLAYER_FLOW_loc_15DD1; continue; }
 
-loc_151A2:
+case PLAYER_FLOW_loc_151A2:
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
 	var_wheelIndex = 0;
-	goto loc_15D39;
+	{ physics_flow = PLAYER_FLOW_loc_15D39; continue; }
 
-loc_151BA:
+case PLAYER_FLOW_loc_151BA:
 	build_track_object(&vec_1C6, &arg_pState->car_whlWorldCrds1[var_wheelIndex]);
 
-loc_151DB:
+case PLAYER_FLOW_loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
 	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
 	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 
 	if (state.game_inputmode != 2)
-		goto loc_15240;
+		{ physics_flow = PLAYER_FLOW_loc_15240; continue; }
 	nextPosAndNormalIP = vec_1C6.y;
-	goto loc_15257;
+	{ physics_flow = PLAYER_FLOW_loc_15257; continue; }
 
-loc_15240:
+case PLAYER_FLOW_loc_15240:
 	nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
-loc_15257:
+case PLAYER_FLOW_loc_15257:
 	if (wallindex != -1)
-		goto loc_15264;
-	goto loc_15950;
+		{ physics_flow = PLAYER_FLOW_loc_15264; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
-loc_15264:
+case PLAYER_FLOW_loc_15264:
 	if (nextPosAndNormalIP > elRdWallRelated)
-		goto loc_15270;
-	goto loc_15950;
+		{ physics_flow = PLAYER_FLOW_loc_15270; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
-loc_15270:
+case PLAYER_FLOW_loc_15270:
 	if (nextPosAndNormalIP < wallHeight)
-		goto loc_1527C;
-	goto loc_15950;
+		{ physics_flow = PLAYER_FLOW_loc_1527C; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
-loc_1527C:
+case PLAYER_FLOW_loc_1527C:
 	vec_182.x = LEGACY_S16_WRAP_SUB(
 		arg_pState->car_whlWorldCrds1[var_wheelIndex].x, wallStartX);
 	vec_182.y = 0;
@@ -884,44 +1011,44 @@ loc_1527C:
 	mat_mul_vector(&vec_182, &mat_134, &vec_C);
 	mat_mul_vector(&vec_1E4, &mat_134, &vec_1C);
 	if (vec_1C.z <= 0)
-		goto loc_15338;
+		{ physics_flow = PLAYER_FLOW_loc_15338; continue; }
 	if (vec_C.z <= 0)
-		goto loc_15338;
-	goto loc_15950;
+		{ physics_flow = PLAYER_FLOW_loc_15338; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
-loc_15338:
+case PLAYER_FLOW_loc_15338:
 	if (vec_1C.z >= 0)
-		goto loc_15347;
+		{ physics_flow = PLAYER_FLOW_loc_15347; continue; }
 	if (vec_C.z >= 0)
-		goto loc_15347;
-	goto loc_15950;
+		{ physics_flow = PLAYER_FLOW_loc_15347; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
-loc_15347:
+case PLAYER_FLOW_loc_15347:
 	if (vec_1C.z <= vec_C.z)
-		goto loc_1537C;
+		{ physics_flow = PLAYER_FLOW_loc_1537C; continue; }
 	var_136 = 1;
 	vec_FC = vec_1C;
 	vec_1C = vec_C;
 	vec_C = vec_FC;
-	goto loc_15381;
+	{ physics_flow = PLAYER_FLOW_loc_15381; continue; }
 
-loc_1537C:
+case PLAYER_FLOW_loc_1537C:
     var_136 = 0;
-loc_15381:
+case PLAYER_FLOW_loc_15381:
 	if (vec_1C.z != 0)
-		goto loc_15398;
+		{ physics_flow = PLAYER_FLOW_loc_15398; continue; }
 	var_F4 = var_pSpeed2Scaled;
 	var_F2 = 0;
-	goto loc_1540C;
+	{ physics_flow = PLAYER_FLOW_loc_1540C; continue; }
 
-loc_15398:
+case PLAYER_FLOW_loc_15398:
 	if (vec_C.z != 0)
-		goto loc_153AE;
+		{ physics_flow = PLAYER_FLOW_loc_153AE; continue; }
 	var_F4 = 0;
 	var_F2 = var_pSpeed2Scaled;
-	goto loc_1540C;
+	{ physics_flow = PLAYER_FLOW_loc_1540C; continue; }
 
-loc_153AE:
+case PLAYER_FLOW_loc_153AE:
 	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
 	vec_17C.x = LEGACY_S16_SHL(
 		LEGACY_S16_WRAP_SUB(vec_1C.x, vec_FC.x), 6U);
@@ -932,33 +1059,33 @@ loc_153AE:
 	var_F2 = polarRadius3D(&vec_17C);
 	var_F4 = LEGACY_S16_WRAP_SUB(var_pSpeed2Scaled, var_F2);
 
-loc_1540C:
+case PLAYER_FLOW_loc_1540C:
 	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1),
 		wallOrientation) & 0x3FFU);
 	vec_FC.z = var_F2;
 	vec_FC.y = 0;
 	if (var_EE < 0x100)
-		goto loc_1543A;
+		{ physics_flow = PLAYER_FLOW_loc_1543A; continue; }
 	if (var_EE <= 0x300)
-		goto loc_1544A;
+		{ physics_flow = PLAYER_FLOW_loc_1544A; continue; }
 
-loc_1543A:
+case PLAYER_FLOW_loc_1543A:
 	var_EE = wallOrientation;
 	vec_FC.x = 768;//0x300;
-	goto loc_1545D;
+	{ physics_flow = PLAYER_FLOW_loc_1545D; continue; }
 
-loc_1544A:
+case PLAYER_FLOW_loc_1544A:
 	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)
 		LEGACY_S16_WRAP_ADD(wallOrientation, 0x200) & 0x3FFU);
 	vec_FC.x = -768;//0xFD00; // TODO: a negative number
 
-loc_1545D:
+case PLAYER_FLOW_loc_1545D:
 	if (var_136 == 0)
-		goto loc_1546E;
+		{ physics_flow = PLAYER_FLOW_loc_1546E; continue; }
 	vec_FC.x = LEGACY_S16_WRAP_NEGATE(vec_FC.x);
 
-loc_1546E:
+case PLAYER_FLOW_loc_1546E:
 	var_EA = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE, 0);
@@ -968,41 +1095,41 @@ loc_1546E:
 		0x3FFU);
 	var_138 = 0;
 	if (si <= 0x100)
-		goto loc_154CA;
+		{ physics_flow = PLAYER_FLOW_loc_154CA; continue; }
 		si = LEGACY_S16_WRAP_SUB(0x400, si);
 	var_138 = 1;
 
-loc_154CA:
+case PLAYER_FLOW_loc_154CA:
 	var_190 = LEGACY_U16_SHL(
 		(legacy_u8)LEGACY_S16_WRAP_NEGATE(
 			LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
 				LEGACY_S16_WRAP_MUL(si, 0x46), 8U), 0x64)), 8U);
 	if (arg_pState->car_speed2 <= var_190)
-		goto loc_15513;
+		{ physics_flow = PLAYER_FLOW_loc_15513; continue; }
 	if (var_138 == 0)
-		goto loc_154F8;
+		{ physics_flow = PLAYER_FLOW_loc_154F8; continue; }
 	var_138 = LEGACY_S16_SHL(LEGACY_S16_WRAP_NEGATE(si), 1U);
-	goto loc_154FA;
+	{ physics_flow = PLAYER_FLOW_loc_154FA; continue; }
 
-loc_154F8:
+case PLAYER_FLOW_loc_154F8:
 	var_138 = LEGACY_S16_SHL(si, 1U);
-loc_154FA:
+case PLAYER_FLOW_loc_154FA:
 	arg_pState->car_36MwhlAngle = var_138;
 	update_crash_state(1, arg_MplayerFlag);
 
-loc_15513:
+case PLAYER_FLOW_loc_15513:
 	arg_pState->field_CF |= 0x10;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
 	si = 0;
-	goto loc_15599;
+	{ physics_flow = PLAYER_FLOW_loc_15599; continue; }
 
-loc_15530:
+case PLAYER_FLOW_loc_15530:
 	vec_C.x = 0;
 	vec_C.y = 0;
 	vec_C.z = 0;
 
-loc_1553F:
+case PLAYER_FLOW_loc_1553F:
 	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
 		LEGACY_S32_WRAP_ADD_S16(var_146ptrTo176->lx, vec_C.x),
 		vec_1C.x);
@@ -1016,37 +1143,37 @@ loc_1553F:
 	var_146ptrTo176++;
 	si++;
 
-loc_15599:
+case PLAYER_FLOW_loc_15599:
 	if (si < 4)
-		goto loc_155A1;
-	goto loc_15142;
+		{ physics_flow = PLAYER_FLOW_loc_155A1; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15142; continue; }
 
-loc_155A1:
+case PLAYER_FLOW_loc_155A1:
 	if (var_F4 == 0)
-		goto loc_15530;
+		{ physics_flow = PLAYER_FLOW_loc_15530; continue; }
 	vec_C.x = scale_position_delta(var_DEptrTo1C0->lx,
 		var_146ptrTo176->lx, var_F4, var_pSpeed2Scaled);
 	vec_C.y = scale_position_delta(var_DEptrTo1C0->ly,
 		var_146ptrTo176->ly, var_F4, var_pSpeed2Scaled);
 	vec_C.z = scale_position_delta(var_DEptrTo1C0->lz,
 		var_146ptrTo176->lz, var_F4, var_pSpeed2Scaled);
-	goto loc_1553F;
+	{ physics_flow = PLAYER_FLOW_loc_1553F; continue; }
 
-loc_15642:
+case PLAYER_FLOW_loc_15642:
 	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc1[var_wheelIndex],
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 	if (framespersec != 0xA)
-		goto loc_156A3;
+		{ physics_flow = PLAYER_FLOW_loc_156A3; continue; }
 	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc1[var_wheelIndex],
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 
-loc_156A3:
+case PLAYER_FLOW_loc_156A3:
 	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	if (state.game_inputmode == 2) {
 		nextPosAndNormalIP = vec_1C6.y;
@@ -1054,23 +1181,23 @@ loc_156A3:
 		nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	}
 
-loc_156D6:
+case PLAYER_FLOW_loc_156D6:
 	if (nextPosAndNormalIP <= 0xC)
-		goto loc_156ED;
+		{ physics_flow = PLAYER_FLOW_loc_156ED; continue; }
 	arg_pState->car_surfaceWhl[var_wheelIndex] = 0;
 
-loc_156ED:
+case PLAYER_FLOW_loc_156ED:
 	var_16[var_wheelIndex] = nextPosAndNormalIP;
 	if (nextPosAndNormalIP != 0)
-		goto loc_15703;
-	goto loc_15CE8;
+		{ physics_flow = PLAYER_FLOW_loc_15703; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15CE8; continue; }
 
-loc_15703:
+case PLAYER_FLOW_loc_15703:
 	if (nextPosAndNormalIP < 0)
-		goto loc_1570A;
-	goto loc_15D2B;
+		{ physics_flow = PLAYER_FLOW_loc_1570A; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15D2B; continue; }
 
-loc_1570A:
+case PLAYER_FLOW_loc_1570A:
 	var_6 = &planptr[planindex];
 	var_122.x = LEGACY_S16_WRAP_ADD(
 		var_6->plane_origin.x, elem_xCenter);
@@ -1106,22 +1233,22 @@ loc_1570A:
 	mat_mul_vector(&vec_1E4, &var_MmatFromAngleZ, &vec_1C);
 	var_136 = 0;
 	if (byte_4392C != 0)
-		goto loc_15879;
+		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
 	if (vec_C.y >= -12)//0xFFF4)
-		goto loc_15879;
+		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
 	if (vec_1C.y >= -12)//0xFFF4)
-		goto loc_15879;
+		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
 	if (vec_1C.y <= -24)//0xFFE8)
-		goto loc_158DA;
+		{ physics_flow = PLAYER_FLOW_loc_158DA; continue; }
 	update_crash_state(5, arg_MplayerFlag);
 	var_136 = 1;
 
-loc_15879:
+case PLAYER_FLOW_loc_15879:
 	if (vec_1C.y == 0)
-		goto loc_15882;
-	goto loc_1599E;
+		{ physics_flow = PLAYER_FLOW_loc_15882; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_1599E; continue; }
 
-loc_15882:
+case PLAYER_FLOW_loc_15882:
 	vec_unk2.x = 0;
 	vec_unk2.y = 0;
 	vec_unk2.z = 0x40;
@@ -1134,9 +1261,9 @@ loc_15882:
 		var_DEptrTo1C0->ly, vec_planerotopresult.y);
 	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->lz, vec_planerotopresult.z);
-	goto loc_15CDF;
+	{ physics_flow = PLAYER_FLOW_loc_15CDF; continue; }
 
-loc_158DA:
+case PLAYER_FLOW_loc_158DA:
 	planindex = 0;
 	current_planptr = planptr;
 	byte_4392C = 1;
@@ -1146,38 +1273,38 @@ loc_158DA:
 
 	nextPosAndNormalIP = plane_origin_op(0, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
-loc_15950:
+case PLAYER_FLOW_loc_15950:
 	if (nextPosAndNormalIP > 0)
-		goto loc_1595A;
-	goto loc_156ED;
+		{ physics_flow = PLAYER_FLOW_loc_1595A; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_156ED; continue; }
 
-loc_1595A:
+case PLAYER_FLOW_loc_1595A:
 	if (var_F0 > 0)
-		goto loc_15964;
-	goto loc_15642;
+		{ physics_flow = PLAYER_FLOW_loc_15964; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15642; continue; }
 
-loc_15964:
+case PLAYER_FLOW_loc_15964:
 	if (nextPosAndNormalIP < 0x18)
-		goto loc_1596E;
-	goto loc_15642;
+		{ physics_flow = PLAYER_FLOW_loc_1596E; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15642; continue; }
 
-loc_1596E:
+case PLAYER_FLOW_loc_1596E:
 	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lx, vec_E4.x);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->ly, vec_E4.y);
 	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lz, vec_E4.z);
-	goto loc_156ED;
+	{ physics_flow = PLAYER_FLOW_loc_156ED; continue; }
 
-loc_1599E:
+case PLAYER_FLOW_loc_1599E:
 	if (vec_C.y <= 0)
-		goto loc_159AD;
+		{ physics_flow = PLAYER_FLOW_loc_159AD; continue; }
 	if (vec_1C.y >= 0)
-		goto loc_159AD;
-	goto loc_15A30;
+		{ physics_flow = PLAYER_FLOW_loc_159AD; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15A30; continue; }
 
-loc_159AD:
+case PLAYER_FLOW_loc_159AD:
 	vec_unk2.x = 0;
 	vec_unk2.y = 0;
 	vec_unk2.z = var_pSpeed2Scaled;
@@ -1190,9 +1317,9 @@ loc_159AD:
 		var_146ptrTo176->ly, vec_planerotopresult.y);
 	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
 		var_146ptrTo176->lz, vec_planerotopresult.z);
-	goto loc_15C04;
+	{ physics_flow = PLAYER_FLOW_loc_15C04; continue; }
 
-loc_15A30:
+case PLAYER_FLOW_loc_15A30:
 	var_EE = vec_C.z;
 	vec_C.z = LEGACY_S16_WRAP_NEGATE(vec_C.y);
 	vec_C.y = var_EE;
@@ -1238,20 +1365,20 @@ loc_15A30:
 			var_146ptrTo176->lz, vec_C.z),
 		vec_planerotopresult.z);
 
-loc_15C04:
+case PLAYER_FLOW_loc_15C04:
 	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
 	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 
 	nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	if (nextPosAndNormalIP >= 0)
-		goto loc_15CDF;
+		{ physics_flow = PLAYER_FLOW_loc_15CDF; continue; }
 	if (var_136 == 0)
-		goto loc_15C75;
+		{ physics_flow = PLAYER_FLOW_loc_15C75; continue; }
 	nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
 		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6);
 
-loc_15C75:
+case PLAYER_FLOW_loc_15C75:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
 	vec_1C6.y = LEGACY_S16_SHL(
@@ -1265,61 +1392,61 @@ loc_15C75:
 	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lz, vec_FC.z);
 
-loc_15CDF:
-loc_15CE8:
+case PLAYER_FLOW_loc_15CDF:
+case PLAYER_FLOW_loc_15CE8:
 	if (arg_pState->car_rc1[var_wheelIndex] <= 0xFA)
-		goto loc_15CF7;
+		{ physics_flow = PLAYER_FLOW_loc_15CF7; continue; }
 	arg_pState->field_CF |= 0x20;
 
 
-loc_15CF7:
+case PLAYER_FLOW_loc_15CF7:
 	if (arg_pState->car_rc1[var_wheelIndex] <= 0x5AEB)
-		goto loc_15D1A;
+		{ physics_flow = PLAYER_FLOW_loc_15D1A; continue; }
 	update_crash_state(1, arg_MplayerFlag);
 
-loc_15D1A:
+case PLAYER_FLOW_loc_15D1A:
 	arg_pState->car_rc1[var_wheelIndex] = 0;
 
-loc_15D2B:
+case PLAYER_FLOW_loc_15D2B:
 	var_DEptrTo1C0++;
 	var_146ptrTo176++;
 	var_wheelIndex++;
 
-loc_15D39:
+case PLAYER_FLOW_loc_15D39:
 	if (var_wheelIndex < 4)
-		goto loc_15D43;
-	goto loc_15163;
+		{ physics_flow = PLAYER_FLOW_loc_15D43; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15163; continue; }
 
-loc_15D43:
+case PLAYER_FLOW_loc_15D43:
 	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
 	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
 
 	if (state.game_inputmode == 2)
-		goto loc_15D94;
-	goto loc_151BA;
+		{ physics_flow = PLAYER_FLOW_loc_15D94; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_151BA; continue; }
 
-loc_15D94:
+case PLAYER_FLOW_loc_15D94:
 	wallindex = -1;
 	current_surf_type = 1; //tarmac;
 	planindex = 0;
 	current_planptr = planptr;
-	goto loc_151DB;
+	{ physics_flow = PLAYER_FLOW_loc_151DB; continue; }
 
-loc_15DB6:
+case PLAYER_FLOW_loc_15DB6:
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->ly, LEGACY_S16_WRAP_ADD(var_EE, 0x180));
 
-loc_15DC8:
+case PLAYER_FLOW_loc_15DC8:
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
 
-loc_15DD1:
+case PLAYER_FLOW_loc_15DD1:
 	if (var_wheelIndex < 4)
-		goto loc_15DDB;
-	goto code_update_globalPos;
+		{ physics_flow = PLAYER_FLOW_loc_15DDB; continue; }
+	{ physics_flow = PLAYER_FLOW_code_update_globalPos; continue; }
 
-loc_15DDB:
+case PLAYER_FLOW_loc_15DDB:
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].x =
 		physics_position_word(var_DEptrTo1C0->lx);
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].y =
@@ -1330,12 +1457,12 @@ loc_15DDB:
 
 	var_EE = carState_rc_op(arg_pState, var_16[var_wheelIndex], var_wheelIndex);
 	if (pState_minusRotate_z_1 != 0)
-		goto loc_15E85;
+		{ physics_flow = PLAYER_FLOW_loc_15E85; continue; }
 	if (pState_minusRotate_x_1 != 0)
-		goto loc_15E85;
-	goto loc_15DB6;
+		{ physics_flow = PLAYER_FLOW_loc_15E85; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_15DB6; continue; }
 
-loc_15E85:
+case PLAYER_FLOW_loc_15E85:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
 	vec_1C6.y = LEGACY_S16_WRAP_ADD(var_EE, 0x180);
@@ -1346,9 +1473,9 @@ loc_15E85:
 		var_DEptrTo1C0->ly, vec_182.y);
 	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
 		var_DEptrTo1C0->lz, vec_182.z);
-	goto loc_15DC8;
+	{ physics_flow = PLAYER_FLOW_loc_15DC8; continue; }
 
-code_update_globalPos:
+case PLAYER_FLOW_code_update_globalPos:
 	pState_lvec1_x = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
 		LEGACY_S32_WRAP_ADD(vecl_1C0[0].lx, vecl_1C0[1].lx),
 		LEGACY_S32_WRAP_ADD(vecl_1C0[2].lx, vecl_1C0[3].lx)), 2U);
@@ -1362,7 +1489,7 @@ code_update_globalPos:
 	var_DEptrTo1C0 = vecl_1C0;
 	var_wheelIndex = 0;
 
-code_update_rotCoords:
+case PLAYER_FLOW_code_update_rotCoords:
 	vec_1DE[var_wheelIndex].x = physics_difference_word(
 		var_DEptrTo1C0->lx, pState_lvec1_x);
 	vec_1DE[var_wheelIndex].y = physics_difference_word(
@@ -1372,46 +1499,46 @@ code_update_rotCoords:
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
 	if (var_wheelIndex < 4)
-		goto code_update_rotCoords;
+		{ physics_flow = PLAYER_FLOW_code_update_rotCoords; continue; }
 	if (pState_lvec1_y >= 0)
-		goto loc_15FDE;
+		{ physics_flow = PLAYER_FLOW_loc_15FDE; continue; }
 	pState_lvec1_y = 0;
 
-loc_15FDE:
+case PLAYER_FLOW_loc_15FDE:
 	if (pState_lvec1_x <= 0x1DF100)
-		goto loc_15FFE;
+		{ physics_flow = PLAYER_FLOW_loc_15FFE; continue; }
 
 
-loc_15FEF:
+case PLAYER_FLOW_loc_15FEF:
 	pState_lvec1_x = 0x1DF0FF;
-	goto loc_1601B;
+	{ physics_flow = PLAYER_FLOW_loc_1601B; continue; }
 
-loc_15FFE:
+case PLAYER_FLOW_loc_15FFE:
 	if (pState_lvec1_x >= 0xF00)
-		goto loc_1601B;
+		{ physics_flow = PLAYER_FLOW_loc_1601B; continue; }
 
 
-loc_1600F:
+case PLAYER_FLOW_loc_1600F:
 	pState_lvec1_x = 0xF00;
-loc_1601B:
+case PLAYER_FLOW_loc_1601B:
 	if (pState_lvec1_z <= 0x1DF100)
-		goto loc_1603A;
+		{ physics_flow = PLAYER_FLOW_loc_1603A; continue; }
 
 
 
-loc_1602C:
+case PLAYER_FLOW_loc_1602C:
 	pState_lvec1_z = 0x1DF0FF;
-	goto loc_16057;
+	{ physics_flow = PLAYER_FLOW_loc_16057; continue; }
 
-loc_1603A:
+case PLAYER_FLOW_loc_1603A:
 	if (pState_lvec1_z >= 0xF00)
-		goto loc_16057;
+		{ physics_flow = PLAYER_FLOW_loc_16057; continue; }
 
 
-loc_1604B:
+case PLAYER_FLOW_loc_1604B:
 	pState_lvec1_z = 0xF00;
 
-loc_16057:
+case PLAYER_FLOW_loc_16057:
 	var_EE = wheel_pair_delta(vec_1DE[3].x, vec_1DE[2].x,
 		vec_1DE[0].x, vec_1DE[1].x);
 	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
@@ -1421,12 +1548,12 @@ loc_16057:
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
 	var_wheelIndex = 0;
 
-loc_160A7:
+case PLAYER_FLOW_loc_160A7:
 	vec_FC = vec_1DE[var_wheelIndex];
 	mat_mul_vector(&vec_FC, &var_MmatFromAngleZ, &vec_1DE[var_wheelIndex]);
 	var_wheelIndex++;
 	if (var_wheelIndex < 4)
-		goto loc_160A7;
+		{ physics_flow = PLAYER_FLOW_loc_160A7; continue; }
 
 	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
 		vec_1DE[0].z, vec_1DE[1].z);
@@ -1435,41 +1562,41 @@ loc_160A7:
 	//var_F2 = vec_1CC.z + vec_1D2.z - vec_1DE.z - vec_1D8.z;
 	//var_F4 = vec_1CC.y + vec_1D2.y - vec_1DE.y - vec_1D8.y;
 	if (var_F4 != 0)
-		goto loc_1611C;
+		{ physics_flow = PLAYER_FLOW_loc_1611C; continue; }
 	if (var_F2 < 0)
-		goto loc_16146;
+		{ physics_flow = PLAYER_FLOW_loc_16146; continue; }
 
-loc_1611C:
+case PLAYER_FLOW_loc_1611C:
 	pState_minusRotate_x_1 = LEGACY_S16_WRAP_SUB(
 		polarAngle(LEGACY_S16_WRAP_NEGATE(var_F2), var_F4), 0x100);
 	if (pState_minusRotate_x_1 >= 0)
-		goto loc_1613E;
-	goto loc_16141;
+		{ physics_flow = PLAYER_FLOW_loc_1613E; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16141; continue; }
 
-loc_1613E:
+case PLAYER_FLOW_loc_1613E:
 	if (pState_minusRotate_x_1 >= 2)
-		goto loc_1614C;
-	goto loc_16146;
-loc_16141:
+		{ physics_flow = PLAYER_FLOW_loc_1614C; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16146; continue; }
+case PLAYER_FLOW_loc_16141:
 	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1) >= 2)
-		goto loc_1614C;
+		{ physics_flow = PLAYER_FLOW_loc_1614C; continue; }
 
-loc_16146:
+case PLAYER_FLOW_loc_16146:
     pState_minusRotate_x_1 = 0;
-loc_1614C:
+case PLAYER_FLOW_loc_1614C:
 	if (pState_minusRotate_x_1 == 0)
-		goto loc_161AB;
+		{ physics_flow = PLAYER_FLOW_loc_161AB; continue; }
 	mat_rot_x(&var_MmatFromAngleZ, pState_minusRotate_x_1);
 	var_wheelIndex = 0;
 
-loc_16169:
+case PLAYER_FLOW_loc_16169:
 	vec_FC = vec_1DE[var_wheelIndex];
 	mat_mul_vector(&vec_FC, &var_MmatFromAngleZ, &vec_1DE[var_wheelIndex]);
 	var_wheelIndex++;
 	if (var_wheelIndex < 4)
-		goto loc_16169;
+		{ physics_flow = PLAYER_FLOW_loc_16169; continue; }
 
-loc_161AB:
+case PLAYER_FLOW_loc_161AB:
 	var_F2 = wheel_pair_delta(vec_1DE[1].x, vec_1DE[2].x,
 		vec_1DE[0].x, vec_1DE[3].x);
 	var_F4 = wheel_pair_delta(vec_1DE[1].y, vec_1DE[2].y,
@@ -1481,91 +1608,91 @@ loc_161AB:
 	//var_F2 = vec_1D8.x + vec_1D2.x - vec_1DE.x - vec_1CC.x;
 	//var_F4 = vec_1D8.y + vec_1D2.y - vec_1DE.y - vec_1CC.y;
 	if (var_F4 != 0)
-		goto loc_161DE;
+		{ physics_flow = PLAYER_FLOW_loc_161DE; continue; }
 	if (var_F2 > 0)
-		goto loc_16204;
+		{ physics_flow = PLAYER_FLOW_loc_16204; continue; }
 
-loc_161DE:
+case PLAYER_FLOW_loc_161DE:
 	pState_minusRotate_z_1 = LEGACY_S16_WRAP_SUB(
 		polarAngle(var_F2, var_F4), 0x100);
 	if (pState_minusRotate_z_1 >= 0)
-		goto loc_161FC;
-	goto loc_161FF;
+		{ physics_flow = PLAYER_FLOW_loc_161FC; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_161FF; continue; }
 
-loc_161FC:
+case PLAYER_FLOW_loc_161FC:
 	if (pState_minusRotate_z_1 >= 2)
-		goto loc_1620A;
-	goto loc_16204;
-loc_161FF:
+		{ physics_flow = PLAYER_FLOW_loc_1620A; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16204; continue; }
+case PLAYER_FLOW_loc_161FF:
 	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >= 2)
-		goto loc_1620A;
-loc_16204:
+		{ physics_flow = PLAYER_FLOW_loc_1620A; continue; }
+case PLAYER_FLOW_loc_16204:
     pState_minusRotate_z_1 = 0;
-loc_1620A:
+case PLAYER_FLOW_loc_1620A:
 	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
 	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
 	if (state.game_inputmode != 2)
-		goto loc_16236;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_16236; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_16236:
+case PLAYER_FLOW_loc_16236:
 #ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
-		goto loc_1625F;
+		{ physics_flow = PLAYER_FLOW_loc_1625F; continue; }
 	if (arg_MplayerFlag == 0)
-		goto loc_1624A;
+		{ physics_flow = PLAYER_FLOW_loc_1624A; continue; }
 	audio_unk3(arg_pState->field_CF, audio_opponent_engine_channel);
-	goto loc_1624E;
+	{ physics_flow = PLAYER_FLOW_loc_1624E; continue; }
 
-loc_1624A:
+case PLAYER_FLOW_loc_1624A:
 	audio_unk3(arg_pState->field_CF, audio_player_engine_channel);
-loc_1624E:
+case PLAYER_FLOW_loc_1624E:
 	//audio_unk3(arg_pState->field_CF, );
 #endif
 
-loc_1625F:
+case PLAYER_FLOW_loc_1625F:
 	var_EA = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
 	var_wheelIndex = 0;
-	goto loc_1632C;
+	{ physics_flow = PLAYER_FLOW_loc_1632C; continue; }
 
-loc_16288:
+case PLAYER_FLOW_loc_16288:
 	var_E = planindex;
 	vec_1C6 = arg_pState->car_whlWorldCrds2[var_wheelIndex];
 	build_track_object(&vec_1C6, &vec_17C);
 	if (var_E != planindex)
-		goto loc_16309;
+		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 	var_138 = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	if (game_replay_mode == 1)
-		goto loc_16309;
+		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 	if (si >= 0)
-		goto loc_162EE;
+		{ physics_flow = PLAYER_FLOW_loc_162EE; continue; }
 	if (var_138 > 0)
-		goto loc_162F9;
+		{ physics_flow = PLAYER_FLOW_loc_162F9; continue; }
 
-loc_162EE:
+case PLAYER_FLOW_loc_162EE:
 	if (si <= 0)
-		goto loc_16309;
+		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 	if (var_138 >= 0)
-		goto loc_16309;
+		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
-loc_162F9:
+case PLAYER_FLOW_loc_162F9:
 	update_crash_state(5, arg_MplayerFlag);
 
-loc_16309:
+case PLAYER_FLOW_loc_16309:
 	arg_pState->car_whlWorldCrds2[var_wheelIndex] = vec_17C;
 	var_wheelIndex++;
 
-loc_1632C:
+case PLAYER_FLOW_loc_1632C:
 	if (var_wheelIndex < 4)
-		goto loc_16336;
-	goto loc_16428;
+		{ physics_flow = PLAYER_FLOW_loc_16336; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16428; continue; }
 
-loc_16336:
+case PLAYER_FLOW_loc_16336:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
 	vec_1C6.y = LEGACY_S16_SHL(
 		arg_pSimd->collide_points[0].py, 6U);
@@ -1582,29 +1709,29 @@ loc_16336:
 	build_track_object(&vec_1C6, &arg_pState->car_whlWorldCrds2[var_wheelIndex]);
 	si = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	if (planindex < 4)
-		goto loc_1641E;
-	goto loc_16288;
+		{ physics_flow = PLAYER_FLOW_loc_1641E; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16288; continue; }
 
-loc_1641E:
+case PLAYER_FLOW_loc_1641E:
 	if (si <= 0)
-		goto loc_16425;
-	goto loc_16309;
+		{ physics_flow = PLAYER_FLOW_loc_16425; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
-loc_16425:
-    goto     loc_162F9;
-loc_16428:
+case PLAYER_FLOW_loc_16425:
+    { physics_flow = PLAYER_FLOW_loc_162F9; continue; }
+case PLAYER_FLOW_loc_16428:
 	var_11C = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_sumSurfFrontWheels,
 		arg_pState->car_sumSurfRearWheels);
 	if (arg_MplayerFlag != 0)
-		goto loc_1644C;
+		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	if (var_11C != 0)
-		goto loc_1644C;
+		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	if (arg_pState->car_sumSurfAllWheels == 0)
-		goto loc_1644C;
+		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	state.game_jumpCount = LEGACY_S16_WRAP_ADD(state.game_jumpCount, 1);
 
-loc_1644C:
+case PLAYER_FLOW_loc_1644C:
 	arg_pState->car_sumSurfAllWheels = var_11C;
 	var_11ApStateWorldCrds[0].x = physics_position_word(pState_lvec1_x);
 	var_11ApStateWorldCrds[0].y = physics_position_word(pState_lvec1_y);
@@ -1614,10 +1741,10 @@ loc_1644C:
 	var_11ApStateWorldCrds[1].y = pState_minusRotate_x_1;
 	var_11ApStateWorldCrds[1].z = pState_minusRotate_y_1;
 	if (gameconfig.game_opponenttype != 0)
-		goto loc_164B2;
-	goto loc_16578;
+		{ physics_flow = PLAYER_FLOW_loc_164B2; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
 
-loc_164B2:
+case PLAYER_FLOW_loc_164B2:
 	vec_18EoStateWorldCrds[0].x = physics_position_word(
 		arg_oState->car_posWorld1.lx);
 	vec_18EoStateWorldCrds[0].y = physics_position_word(
@@ -1629,25 +1756,25 @@ loc_164B2:
 	vec_18EoStateWorldCrds[1].y = arg_oState->car_rotate.y;
 	vec_18EoStateWorldCrds[1].z = arg_oState->car_rotate.x;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, arg_oSimd->collide_points, vec_18EoStateWorldCrds) == 0)
-		goto loc_16578;
+		{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
 	if (arg_pState->field_C8 == 0)
-		goto loc_1653E;
-	goto loc_16892;
+		{ physics_flow = PLAYER_FLOW_loc_1653E; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
-loc_1653E:
+case PLAYER_FLOW_loc_1653E:
 	if (car_car_speed_adjust_maybe(arg_pState, arg_oState) != 0)
-		goto loc_16550;
-	goto loc_16892;
+		{ physics_flow = PLAYER_FLOW_loc_16550; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
-loc_16550:
+case PLAYER_FLOW_loc_16550:
 	update_crash_state(1, arg_MplayerFlag);
 	update_crash_state(1, arg_MplayerFlag ^ 1);
 	return;
 
-loc_16566:
+case PLAYER_FLOW_loc_16566:
 	return;
 
-loc_16578:
+case PLAYER_FLOW_loc_16578:
 	vec_FC.x = LEGACY_S16_SAR(var_11ApStateWorldCrds[0].x, 10U);
 	vec_FC.z = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_SAR(var_11ApStateWorldCrds[0].z, 10U), 0x1D));
@@ -1655,69 +1782,69 @@ loc_16578:
 	vec_18EoStateWorldCrds[1].y = 0;
 	vec_18EoStateWorldCrds[1].z = 0;
 	if (vec_FC.x >= 0)
-		goto loc_165AF;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_165AF; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_165AF:
+case PLAYER_FLOW_loc_165AF:
 	if (vec_FC.x < 0x1E)
-		goto loc_165B9;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_165B9; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_165B9:
+case PLAYER_FLOW_loc_165B9:
 	if (vec_FC.z >= 0)
-		goto loc_165C0;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_165C0; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_165C0:
+case PLAYER_FLOW_loc_165C0:
 	if (vec_FC.z < 0x1E)
-		goto loc_165C8;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_165C8; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_165C8:
+case PLAYER_FLOW_loc_165C8:
 	var_EC = bto_auxiliary1(vec_FC.x, vec_FC.z, var_DC);
 	if (var_EC == 0)
-		goto loc_16650;
+		{ physics_flow = PLAYER_FLOW_loc_16650; continue; }
 	si = 0;
-	goto loc_165F0;
+	{ physics_flow = PLAYER_FLOW_loc_165F0; continue; }
 
-loc_165EA:
+case PLAYER_FLOW_loc_165EA:
 	// NOTE: var_144 is unused
 	// var_144 += 6;
 	si++;
 
-loc_165F0:
+case PLAYER_FLOW_loc_165F0:
 	if (var_EC <= si)
-		goto loc_16650;
+		{ physics_flow = PLAYER_FLOW_loc_16650; continue; }
 	vec_18EoStateWorldCrds[0].x = var_DC[si].x;
 	vec_18EoStateWorldCrds[0].y = var_DC[si].y;
 	vec_18EoStateWorldCrds[0].z = var_DC[si].z;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD6A, vec_18EoStateWorldCrds) == 0)
-		goto loc_165EA;
+		{ physics_flow = PLAYER_FLOW_loc_165EA; continue; }
 	arg_pState->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
 		arg_pState->car_36MwhlAngle, 0x200);
 
-loc_16648:
+case PLAYER_FLOW_loc_16648:
 	// crash with start/finish pole
 	update_crash_state(1, arg_MplayerFlag);
 	return ;
 
-loc_16650:
+case PLAYER_FLOW_loc_16650:
 	si = (legacy_s8)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
 	if (si != -1) //0xFF) // note: checking for 0xff elsewhere, should be signed and check for -1
-		goto loc_16670;
-	goto loc_16710;
+		{ physics_flow = PLAYER_FLOW_loc_16670; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
-loc_16670:
+case PLAYER_FLOW_loc_16670:
 	if (state.field_3FA[si] == 0)
-		goto loc_1667A;
-	goto loc_16710;
+		{ physics_flow = PLAYER_FLOW_loc_1667A; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
-loc_1667A:
+case PLAYER_FLOW_loc_1667A:
 	vec_18EoStateWorldCrds[0].x = td10_track_check_rel[si * 3 + 0];
 	vec_18EoStateWorldCrds[0].y = td10_track_check_rel[si * 3 + 1];
 	vec_18EoStateWorldCrds[0].z = td10_track_check_rel[si * 3 + 2];
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD5A, vec_18EoStateWorldCrds) == 0)
-		goto loc_16710;
+		{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
 	state.field_3FA[si] = 1;
 
@@ -1725,18 +1852,18 @@ loc_1667A:
 		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
 		scale_speed_to_travel(arg_pState->car_speed2, 0x3C00U));
 
-loc_16710:
+case PLAYER_FLOW_loc_16710:
 	// following looks like collision detection against right and left start/finish poles
 	if (vec_FC.x == startcol2)
-		goto loc_1671F;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_1671F; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_1671F:
+case PLAYER_FLOW_loc_1671F:
 	if (vec_FC.z == startrow2)
-		goto loc_1672C;
-	goto loc_16840;
+		{ physics_flow = PLAYER_FLOW_loc_1672C; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
-loc_1672C:
+case PLAYER_FLOW_loc_1672C:
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
 			LEGACY_S16_WRAP_ADD(track_angle, 0x100)), 0x7E));
@@ -1747,7 +1874,7 @@ loc_1672C:
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 	if (var_138 != 0)
-		goto loc_16836;
+		{ physics_flow = PLAYER_FLOW_loc_16836; continue; }
 
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
@@ -1758,12 +1885,12 @@ loc_1672C:
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 
-loc_16836:
+case PLAYER_FLOW_loc_16836:
 	if (var_138 == 0)
-		goto loc_16840;
-	goto loc_16648;
+		{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_16648; continue; }
 
-loc_16840:
+case PLAYER_FLOW_loc_16840:
 	arg_pState->car_posWorld1.lx = pState_lvec1_x;
 	arg_pState->car_posWorld1.ly = pState_lvec1_y;
 	arg_pState->car_posWorld1.lz = pState_lvec1_z;
@@ -1772,7 +1899,9 @@ loc_16840:
 	arg_pState->car_rotate.x = pState_minusRotate_y_1;
 	arg_pState->field_C8 = 0;
 
-loc_16892:
+case PLAYER_FLOW_loc_16892:
 	return ;
 
+	}
+	}
 }
