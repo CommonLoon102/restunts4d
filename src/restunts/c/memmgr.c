@@ -582,25 +582,22 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 
 	ptrseg = 0;
 	ressi->resunk = 0;
-	if (ressi != resptr2) {
-		if (ressi == resendptr1) goto loc_31508;
-		ax = resendptr1->resofs - resptr2->resofs - resptr2->ressize;
-		if (ax < ressi->ressize) goto loc_31508;
+	ax = resendptr1->resofs - resptr2->resofs - resptr2->ressize;
+	if (ressi == resptr2 ||
+		(ressi != resendptr1 && ax >= ressi->ressize)) {
+		ptrseg = resendptr1->resofs - ressi->ressize;
+		resendptr1--;
+		resendptr1->resofs = ptrseg;
+		resendptr1->ressize = ressi->ressize;
+		resendptr1->resunk = 1;
+
+		for (i = 0; i < 0xC; i++) {
+			resendptr1->resname[i] = ressi->resname[i];
+		}
+
+		copy_paras_reverse(ressi->resofs, ptrseg, ressi->ressize);
 	}
 
-	ptrseg = resendptr1->resofs - ressi->ressize;
-	resendptr1--;
-	resendptr1->resofs = ptrseg;
-	resendptr1->ressize = ressi->ressize;
-	resendptr1->resunk = 1;
-
-	for (i = 0; i < 0xC; i++) {
-		resendptr1->resname[i] = ressi->resname[i];
-	}
-
-	copy_paras_reverse(ressi->resofs, ptrseg, ressi->ressize);
-
-loc_31508:
 	if (ressi == resptr2) {
 		do {
 			ressi--;
