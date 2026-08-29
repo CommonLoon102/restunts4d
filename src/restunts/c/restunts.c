@@ -676,7 +676,7 @@ extern legacy_s16 mouse_oldy;
 extern legacy_s16 mouse_oldbut;
 extern legacy_s16 mousebutinputcode;
 extern legacy_s16 dos_get_joy_flags(void);
-extern legacy_u8 kbinput[];
+extern legacy_u8 dos_kb_input[];
 extern legacy_u8 kbscancodes[10];
 extern legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height);
 extern void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
@@ -699,7 +699,7 @@ legacy_s16 get_kb_or_joy_flags(void)
 
 	flags = 0;
 	for (index = 0; index < 10U; index++) {
-		if (kbinput[kbscancodes[index]] != 0)
+		if (dos_kb_input[kbscancodes[index]] != 0)
 			flags |= action_flags[index];
 	}
 	if (flags == 0)

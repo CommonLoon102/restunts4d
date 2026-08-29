@@ -13,27 +13,68 @@ legacy_s16 _Cdecl _int86( legacy_s16 __intno, union REGS _FAR *__inregs, union R
 typedef void interrupt (far* voidinterruptfunctype)();
 typedef void (far* voidfunctype)();
 
-voidinterruptfunctype old_kb_int9_handler;
-voidinterruptfunctype old_kb_int16_handler;
+static voidinterruptfunctype old_kb_int9_handler;
+static voidinterruptfunctype old_kb_int16_handler;
 
 extern void add_exit_handler(voidfunctype exitfunc);
-extern void interrupt kb_int16_handler(); // our asm proxy, simply redirects to kb_int16_handler_c
 extern legacy_s16 kb_parse_key(legacy_s16 key);
 extern legacy_s16 dos_data_stack_segments_match(void);
 
-// these data are local to keyboard.c, but kept in their original slots for convencience:
-extern legacy_u8 kbinput[];
-extern legacy_u16 kb_intr_data;
-extern legacy_u16 kb_intr_data2;
-extern legacy_u16 kb_intr_data3;
-extern legacy_u16 kb_intr_data4;
-extern legacy_u16 kb_intr_data_array[];
-extern legacy_u8 keymap1[];
-extern legacy_u8 keymap2[];
-extern legacy_u8 keymap3[];
-extern legacy_u8 keymap4[];
-extern legacy_u8 keymap5[];
-extern legacy_u16 kblastinput;
+legacy_u8 dos_kb_input[90];
+
+static legacy_u16 dos_kb_buffer_write;
+static legacy_u16 dos_kb_buffer_read;
+static legacy_u16 dos_kb_buffer_size = 2U;
+static legacy_u16 dos_kb_buffer_count;
+static legacy_u16 dos_kb_buffer[64];
+static legacy_u16 dos_kb_last_input;
+
+static const legacy_u8 dos_kb_keymap1[91] = {
+	0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 9,
+	113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 91, 93, 13, 0,
+	97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39, 96, 0, 92,
+	122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 0, 42, 0, 32, 0,
+	187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 0, 0, 199, 200,
+	201, 45, 203, 204, 205, 43, 207, 208, 209, 210, 211, 0, 0, 0, 0,
+	0, 0, 0
+};
+
+static const legacy_u8 dos_kb_keymap2[91] = {
+	0, 27, 33, 64, 35, 36, 37, 94, 38, 42, 40, 41, 95, 43, 8, 143,
+	81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 123, 125, 13, 0, 65, 83,
+	68, 70, 71, 72, 74, 75, 76, 58, 34, 126, 0, 124, 90, 88, 67, 86,
+	66, 78, 77, 60, 62, 63, 0, 0, 0, 32, 0, 212, 213, 214, 215, 216,
+	217, 218, 219, 220, 221, 0, 0, 199, 200, 201, 45, 203, 204, 205,
+	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const legacy_u8 dos_kb_keymap3[91] = {
+	0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 143,
+	81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 13, 0, 65, 83,
+	68, 70, 71, 72, 74, 75, 76, 59, 39, 96, 0, 92, 90, 88, 67, 86,
+	66, 78, 77, 44, 46, 47, 0, 0, 0, 32, 0, 212, 213, 214, 215, 216,
+	217, 218, 219, 220, 221, 0, 0, 199, 200, 201, 45, 203, 204, 205,
+	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const legacy_u8 dos_kb_keymap4[91] = {
+	0, 27, 33, 0, 35, 36, 37, 30, 38, 42, 40, 41, 31, 43, 127, 9,
+	17, 23, 5, 18, 20, 25, 21, 9, 15, 16, 27, 29, 13, 0, 1, 19,
+	4, 6, 7, 8, 10, 11, 12, 59, 44, 96, 0, 28, 26, 24, 3, 22,
+	2, 14, 178, 60, 62, 63, 0, 0, 0, 32, 0, 222, 223, 224, 225, 226,
+	227, 228, 229, 230, 231, 0, 0, 199, 200, 201, 45, 203, 204, 205,
+	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
+};
+
+static const legacy_u8 dos_kb_keymap5[92] = {
+	0, 27, 33, 64, 35, 36, 37, 94, 38, 42, 40, 41, 95, 43, 8, 143,
+	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 123, 125, 13, 0,
+	158, 159, 160, 161, 162, 163, 164, 165, 166, 58, 34, 126, 0, 124,
+	172, 173, 174, 175, 176, 177, 178, 60, 62, 63, 0, 0, 0, 32, 0,
+	248, 249, 250, 251, 252, 253, 254, 255, 128, 129, 0, 0, 199, 200,
+	201, 45, 203, 204, 205, 43, 207, 208, 209, 210, 211, 0, 0, 0, 0,
+	0, 0, 0, 0
+};
 
 // The original opens with `sti` before it touches anything, so the rest of
 // the handler runs with interrupts on and only the buffer update is fenced by
@@ -52,25 +93,25 @@ void interrupt kb_int9_handler(void) {
 	if ((kbc & 0x80) == 0) {
 		if (kbc >= 0x5a) 
 			kbc = 0;
-		kblastinput = kbc;
-		kbinput[kbc] = 1;
+		dos_kb_last_input = kbc;
+		dos_kb_input[kbc] = 1;
 		
-		if (kbinput[0x38] == 1) {
-			kbval = keymap5[kbc];
+		if (dos_kb_input[0x38] == 1) {
+			kbval = dos_kb_keymap5[kbc];
 		} else
-		if (kbinput[0x1D] == 1) {
-			kbval = keymap4[kbc];
+		if (dos_kb_input[0x1D] == 1) {
+			kbval = dos_kb_keymap4[kbc];
 		} else
-		if (kbinput[0x2A] == 1) {
-			kbval = keymap2[kbc];
+		if (dos_kb_input[0x2A] == 1) {
+			kbval = dos_kb_keymap2[kbc];
 		} else
-		if (kbinput[0x36] == 1) {
-			kbval = keymap2[kbc];
+		if (dos_kb_input[0x36] == 1) {
+			kbval = dos_kb_keymap2[kbc];
 		} else
-		if (kbinput[0x3A] == 1) {
-			kbval = keymap3[kbc];
+		if (dos_kb_input[0x3A] == 1) {
+			kbval = dos_kb_keymap3[kbc];
 		} else {
-			kbval = keymap1[kbc];
+			kbval = dos_kb_keymap1[kbc];
 		}
 		
 		if ((kbval & 0x80) != 0) {
@@ -79,28 +120,28 @@ void interrupt kb_int9_handler(void) {
 			kbval <<= 8;
 		}
 
-		kbdata = kb_intr_data;
+		kbdata = dos_kb_buffer_write;
 		disable();
-		kb_intr_data_array[kbdata / 2] = kbval;
+		dos_kb_buffer[kbdata / 2] = kbval;
 		kbdata+=2;
-		if (kbdata >= kb_intr_data3) // data3 = kb_buffer_pos
+		if (kbdata >= dos_kb_buffer_size) // data3 = kb_buffer_pos
 			kbdata = 0;
-		kb_intr_data = kbdata;
+		dos_kb_buffer_write = kbdata;
 		
-		kbdata = kb_intr_data4;
+		kbdata = dos_kb_buffer_count;
 		kbdata+=2;
-		if (kbdata > kb_intr_data3) {
-			kbdata = kb_intr_data3;
-			kb_intr_data2 = kb_intr_data;
+		if (kbdata > dos_kb_buffer_size) {
+			kbdata = dos_kb_buffer_size;
+			dos_kb_buffer_read = dos_kb_buffer_write;
 		}
-		kb_intr_data4 = kbdata;
+		dos_kb_buffer_count = kbdata;
 		enable();
 		
 	} else {
 		kbc &= 0x7F;
 		if (kbc >= 0x5a) // 0x5a = 90, keymaps are 90 bytes?
 			kbc = 0;
-		kbinput[kbc] = 0;
+		dos_kb_input[kbc] = 0;
 	}
 	
 	outp(0x20, 0x20);
@@ -169,21 +210,21 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 	legacy_u8 bioscall = ax >> 8;
 	disable();
 	if (bioscall == 0) {
-		kbdata = kb_intr_data4;
+		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
 			ax = 0;
 			flags = kb_flags_after_zero();
 			return ;
 		}
-		kbdata = kb_intr_data2;
-		result = kb_intr_data_array[kbdata / 2];
+		kbdata = dos_kb_buffer_read;
+		result = dos_kb_buffer[kbdata / 2];
 		kbdata+=2;
-		if (kbdata >= kb_intr_data3)
+		if (kbdata >= dos_kb_buffer_size)
 			kbdata = 0;
-		kb_intr_data2 = kbdata;
-		kbdata = kb_intr_data4;
-		kb_intr_data4 = kbdata - 2;
+		dos_kb_buffer_read = kbdata;
+		kbdata = dos_kb_buffer_count;
+		dos_kb_buffer_count = kbdata - 2;
 		enable();
 		ax = result;
 		flags = kb_flags_after_subtract_two(kbdata);
@@ -191,14 +232,14 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 	}
 	
 	if (bioscall == 1) {
-		kbdata = kb_intr_data4;
+		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
 			ax = 0;
 			flags = kb_flags_after_zero();
 			return ;
 		}
-		result = kb_intr_data_array[kb_intr_data2 / 2];
+		result = dos_kb_buffer[dos_kb_buffer_read / 2];
 		enable();
 		ax = result;
 		flags = kb_flags_after_compare_zero(kbdata);
@@ -206,8 +247,8 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 	}
 	
 	if (bioscall == 2) {
-		shiftleft = kbinput[0x2A];
-		shiftright = kbinput[0x36];
+		shiftleft = dos_kb_input[0x2A];
+		shiftright = dos_kb_input[0x36];
 		result = shiftleft | shiftright;
 		enable();
 		ax = result & 0xFF;
@@ -240,9 +281,9 @@ void kb_init_interrupt(void) {
 
 	outp(0x21, irqmask);
 
-	// `mov di, offset kbinput / mov cx, 5Ah / xor ax, ax / cld / rep stosb`
+	// `mov di, offset dos_kb_input / mov cx, 5Ah / xor ax, ax / cld / rep stosb`
 	for (i = 0; i < 0x5A; i++) {
-		kbinput[i] = 0;
+		dos_kb_input[i] = 0;
 	}
 
 	add_exit_handler(kb_exit_handler);
@@ -265,7 +306,7 @@ void kb_exit_handler(void) {
 }
 
 legacy_s16 kb_get_key_state(legacy_s16 key) {
-	return kbinput[key];
+	return dos_kb_input[key];
 }
 
 legacy_s16 dos_kb_get_char(void)
