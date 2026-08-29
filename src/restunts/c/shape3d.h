@@ -3,6 +3,11 @@
 
 #include "math.h"
 
+#define SHAPE3D_HEADER_SIZE              4U
+#define SHAPE3D_VERTEX_COUNT_OFFSET      0U
+#define SHAPE3D_PRIMITIVE_COUNT_OFFSET   1U
+#define SHAPE3D_PAINT_COUNT_OFFSET       2U
+
 #pragma pack (push, 1)
 
 struct SHAPE3D {
@@ -13,13 +18,6 @@ struct SHAPE3D {
 	legacy_u8 far* shape3d_primitives;
 	legacy_u8 far* shape3d_cull1;
 	legacy_u8 far* shape3d_cull2;
-};
-
-struct SHAPE3DHEADER {
-	legacy_u8 header_numverts;
-	legacy_u8 header_numprimitives;
-	legacy_u8 header_numpaints;
-	legacy_u8 header_reserved;
 };
 
 struct TRANSFORMEDSHAPE3D {
@@ -33,9 +31,6 @@ struct TRANSFORMEDSHAPE3D {
 };
 
 #pragma pack (pop)
-
-typedef char legacy_shape3dheader_must_be_4_bytes[
-	(sizeof(struct SHAPE3DHEADER) == 4) ? 1 : -1];
 
 #ifdef RESTUNTS_DOS
 typedef char legacy_shape3d_must_be_22_bytes[
