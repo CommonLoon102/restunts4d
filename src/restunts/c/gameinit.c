@@ -2,6 +2,20 @@
 
 #define RST_CVX_NUM 20
 
+static legacy_s16 angle_with_offset(legacy_s16 angle, legacy_s16 offset)
+{
+	return LEGACY_S16_WRAP_ADD(angle, offset);
+}
+
+static legacy_s32 track_coordinate_to_world(legacy_s16 base,
+	legacy_s16 offset)
+{
+	legacy_s16 coordinate;
+
+	coordinate = LEGACY_S16_WRAP_ADD(base, offset);
+	return LEGACY_S32_SHL((legacy_s32)coordinate, 6U);
+}
+
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
 	legacy_s32 posZ, legacy_s16 track_angle)
@@ -83,6 +97,9 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 void init_game_state(legacy_s16 arg)
 {
 	legacy_s16 i, tmpcol, tmprow;
+	legacy_s16 route_track_index;
+	legacy_u16 route_table_offset;
+	legacy_u8 route_point;
 
 	if (arg == -1) {
 		elapsed_time1 = 0;
@@ -118,14 +135,21 @@ void init_game_state(legacy_s16 arg)
 			state.field_38E[i] = 0;
 
 		state.game_vec1[0].x =
-			multiply_and_scale(sin_fast(track_angle + 0x300), 512) +
-			multiply_and_scale(sin_fast(track_angle + 0x200), 4096) +
-			((legacy_s16)startcol2 << 10);
-		state.game_vec1[0].y = hillHeightConsts[hillFlag] + 960;
+			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+				multiply_and_scale(sin_fast(angle_with_offset(
+					track_angle, 0x300)), 512),
+				multiply_and_scale(sin_fast(angle_with_offset(
+					track_angle, 0x200)), 4096)),
+				LEGACY_S16_SHL((legacy_s16)startcol2, 10U));
+		state.game_vec1[0].y = LEGACY_S16_WRAP_ADD(
+			hillHeightConsts[hillFlag], 960);
 		state.game_vec1[0].z =
-			multiply_and_scale(cos_fast(track_angle + 0x300), 512) +
-			multiply_and_scale(cos_fast(track_angle + 0x200), 4096) +
-			trackpos[startrow2];
+			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
+				multiply_and_scale(cos_fast(angle_with_offset(
+					track_angle, 0x200)), 4096),
+				trackpos[startrow2]),
+				multiply_and_scale(cos_fast(angle_with_offset(
+					track_angle, 0x300)), 512));
 
 		state.game_vec1[1] = state.game_vec1[0];
 		state.game_vec3 = state.game_vec1[0];
@@ -141,21 +165,27 @@ void init_game_state(legacy_s16 arg)
 		state.game_topSpeed = 0;
 		state.game_jumpCount = 0;
 
-		tmpcol =
-			multiply_and_scale(sin_fast(track_angle + 0x200), 210) +
-			multiply_and_scale(sin_fast(track_angle + 0x100), 36);
-		tmprow =
-			multiply_and_scale(cos_fast(track_angle + 0x200), 210) +
-			multiply_and_scale(cos_fast(track_angle + 0x100), 36);
+		tmpcol = LEGACY_S16_WRAP_ADD(
+			multiply_and_scale(sin_fast(angle_with_offset(
+				track_angle, 0x200)), 210),
+			multiply_and_scale(sin_fast(angle_with_offset(
+				track_angle, 0x100)), 36));
+		tmprow = LEGACY_S16_WRAP_ADD(
+			multiply_and_scale(cos_fast(angle_with_offset(
+				track_angle, 0x200)), 210),
+			multiply_and_scale(cos_fast(angle_with_offset(
+				track_angle, 0x100)), 36));
 
 		init_carstate_from_simd(
 			&state.playerstate,
 			&simd_player,
 			gameconfig.game_playertransmission,
-			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(legacy_s32)hillHeightConsts[hillFlag] * 64L,
-			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64L,
-			-track_angle);
+			track_coordinate_to_world(
+				trackcenterpos2[startcol2], tmpcol),
+			LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], 6U),
+			track_coordinate_to_world(
+				trackcenterpos[startrow2], tmprow),
+			LEGACY_S16_WRAP_NEGATE(track_angle));
 
 		state.field_2F2 = 0;
 		state.field_45D = 0;
@@ -168,37 +198,51 @@ void init_game_state(legacy_s16 arg)
 		state.game_startrow2 = startrow2;
 
 		if (arg != -2) {
+			route_point = (legacy_u8)state.playerstate.field_CE;
 			sub_18D60(
 				state.playerstate.car_trackdata3_index,
 				&state.playerstate.car_vec_unk3,
-				state.playerstate.field_CE,
+				(legacy_s16)route_point,
 				0);
-			state.playerstate.field_CE++;
+			state.playerstate.field_CE = LEGACY_S8_FROM_BITS(
+				(legacy_u8)(route_point + 1U));
 		}
 
-		tmpcol =
-			multiply_and_scale(sin_fast(track_angle + 0x200), 210) +
-			multiply_and_scale(sin_fast(track_angle + 0x300), 36);
-		tmprow =
-			multiply_and_scale(cos_fast(track_angle + 0x200), 210) +
-			multiply_and_scale(cos_fast(track_angle + 0x300), 36);
+		tmpcol = LEGACY_S16_WRAP_ADD(
+			multiply_and_scale(sin_fast(angle_with_offset(
+				track_angle, 0x200)), 210),
+			multiply_and_scale(sin_fast(angle_with_offset(
+				track_angle, 0x300)), 36));
+		tmprow = LEGACY_S16_WRAP_ADD(
+			multiply_and_scale(cos_fast(angle_with_offset(
+				track_angle, 0x200)), 210),
+			multiply_and_scale(cos_fast(angle_with_offset(
+				track_angle, 0x300)), 36));
 
 		init_carstate_from_simd(
 			&state.opponentstate,
 			&simd_opponent,
 			1,
-			(legacy_s32)(trackcenterpos2[startcol2] + tmpcol) * 64L,
-			(legacy_s32)hillHeightConsts[hillFlag] * 64L,
-			(legacy_s32)(trackcenterpos[startrow2] + tmprow) * 64L,
-			-track_angle);
+			track_coordinate_to_world(
+				trackcenterpos2[startcol2], tmpcol),
+			LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], 6U),
+			track_coordinate_to_world(
+				trackcenterpos[startrow2], tmprow),
+			LEGACY_S16_WRAP_NEGATE(track_angle));
 
 		if (gameconfig.game_opponenttype && arg != -2) {
+			route_point = (legacy_u8)state.opponentstate.field_CE;
+			route_table_offset = LEGACY_U16_WRAP_MUL(
+				state.opponentstate.car_trackdata3_index, 2U);
+			route_track_index = LEGACY_READ_S16_LE(
+				(const legacy_u8 far*)trackdata3 + route_table_offset);
 			sub_18D60(
-				trackdata3[state.opponentstate.car_trackdata3_index],
+				route_track_index,
 				&state.opponentstate.car_vec_unk3,
-				state.opponentstate.field_CE,
-				&state.field_3F9);
-			state.opponentstate.field_CE++;
+				(legacy_s16)route_point,
+				(legacy_s16*)&state.field_3F9);
+			state.opponentstate.field_CE = LEGACY_S8_FROM_BITS(
+				(legacy_u8)(route_point + 1U));
 		}
 
 		state.field_42A = 0;
@@ -214,7 +258,7 @@ void restore_gamestate(legacy_u16 frame)
 
 	curframe = LEGACY_U16_DIV_OR_ZERO(frame, word_45A00);
 	if (curframe == RST_CVX_NUM)
-		curframe--;
+		curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
 
 	/* Find the newest valid checkpoint preceding the requested frame. */
 	if (frame >= state.game_frame) {
@@ -224,7 +268,7 @@ void restore_gamestate(legacy_u16 frame)
 				return;
 			if (((struct GAMESTATE far*)cvxptr)[curframe].field_3F4 != 0)
 				break;
-			curframe--;
+			curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
 		}
 	}
 

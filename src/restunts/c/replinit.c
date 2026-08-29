@@ -4,16 +4,25 @@
 void init_row_tables(void)
 {
 	legacy_s16 i;
+	legacy_s16 inverse_row;
+	legacy_s16 track_position;
+	legacy_s16 terrain_position;
 
 	for (i = 0; i < 30; i++) {
-		trackrows[i] = 30 * (29 - i);
-		terrainrows[i] = 30 * i;
-		trackpos[i] = (29 - i) << 10;
-		trackpos2[i] = i << 10;
-		trackcenterpos[i] = ((29 - i) << 10) + 0x200;
-		terrainpos[i] = i << 10;
-		terraincenterpos[i] = (i << 10) + 0x200;
-		trackcenterpos2[i] = (i << 10) + 0x200;
+		inverse_row = LEGACY_S16_WRAP_SUB(29, i);
+		track_position = LEGACY_S16_SHL(inverse_row, 10U);
+		terrain_position = LEGACY_S16_SHL(i, 10U);
+		trackrows[i] = LEGACY_S16_WRAP_MUL(30, inverse_row);
+		terrainrows[i] = LEGACY_S16_WRAP_MUL(30, i);
+		trackpos[i] = track_position;
+		trackpos2[i] = terrain_position;
+		trackcenterpos[i] = LEGACY_S16_WRAP_ADD(
+			track_position, 0x200);
+		terrainpos[i] = terrain_position;
+		terraincenterpos[i] = LEGACY_S16_WRAP_ADD(
+			terrain_position, 0x200);
+		trackcenterpos2[i] = LEGACY_S16_WRAP_ADD(
+			terrain_position, 0x200);
 	}
 }
 
