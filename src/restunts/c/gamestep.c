@@ -1,4 +1,6 @@
+#ifdef RESTUNTS_DOS
 #include <dos.h>
+#endif
 #include "restunts.h"
 
 extern legacy_u8 byte_4616E;
@@ -33,12 +35,12 @@ void sub_2298C(void)
 		*previous_position = state.game_vec1[car_index];
 		carstate = car_index == 0 ?
 			&state.playerstate : &state.opponentstate;
-		car_x = (legacy_s16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lx, 6U);
-		car_y = (legacy_s16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.ly, 6U);
-		car_z = (legacy_s16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lz, 6U);
+		car_x = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+			carstate->car_posWorld1.lx, 6U));
+		car_y = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+			carstate->car_posWorld1.ly, 6U));
+		car_z = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+			carstate->car_posWorld1.lz, 6U));
 		target = carstate->car_vec_unk3;
 		if ((car_index == 0 &&
 			(state.field_45B != 0 || state.field_45C != 0)) ||
@@ -92,7 +94,7 @@ void sub_2298C(void)
 					cos_fast((legacy_u16)angle)));
 		}
 
-		divisor = (legacy_u16)framespersec >> 1;
+		divisor = LEGACY_U16_SAR(framespersec, 1U);
 		if (divisor != 0 &&
 			(legacy_u16)state.game_frame % divisor != 0)
 			continue;
@@ -101,20 +103,26 @@ void sub_2298C(void)
 			LEGACY_S8_FROM_BITS(candidate) <
 				LEGACY_S8_FROM_BITS(byte_4616E);
 			candidate++) {
-			delta_x = (legacy_s32)(legacy_s16)
-				trackdata9[candidate * 3U] - (legacy_s32)car_x;
-			delta_z = (legacy_s32)(legacy_s16)
-				trackdata9[candidate * 3U + 2U] - (legacy_s32)car_z;
-			absolute_x = delta_x < 0 ? -delta_x : delta_x;
+			delta_x = LEGACY_S32_WRAP_SUB(
+				(legacy_s32)trackdata9[candidate * 3U],
+				(legacy_s32)car_x);
+			delta_z = LEGACY_S32_WRAP_SUB(
+				(legacy_s32)trackdata9[candidate * 3U + 2U],
+				(legacy_s32)car_z);
+			absolute_x = delta_x < 0 ?
+				LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
 			if (absolute_x >= nearest_distance)
 				continue;
-			absolute_z = delta_z < 0 ? -delta_z : delta_z;
+			absolute_z = delta_z < 0 ?
+				LEGACY_S32_WRAP_NEGATE(delta_z) : delta_z;
 			if (absolute_z >= nearest_distance)
 				continue;
-			distance = (legacy_s16)polarRadius2D(
-				(legacy_s16)delta_x, (legacy_s16)delta_z);
+			distance = polarRadius2D(
+				LEGACY_S16_FROM_BITS((legacy_u16)delta_x),
+				LEGACY_S16_FROM_BITS((legacy_u16)delta_z));
 			if (distance < nearest_distance) {
-				state.field_3F7[car_index] = (legacy_s8)candidate;
+				state.field_3F7[car_index] =
+					LEGACY_S8_FROM_BITS(candidate);
 				nearest_distance = distance;
 			}
 		}
@@ -126,7 +134,7 @@ void update_gamestate(void)
 	legacy_s8 car_input;
 	legacy_u16 checkpoint_index;
 
-	car_input = td16_rpl_buffer[state.game_frame];
+	car_input = td16_rpl_buffer[(legacy_u16)state.game_frame];
 	if (car_input != 0)
 		state.game_inputmode = 1;
 
@@ -140,15 +148,17 @@ void update_gamestate(void)
 			sizeof(struct GAMESTATE));
 	}
 
-	state.game_frame++;
+	state.game_frame = LEGACY_S16_WRAP_ADD(state.game_frame, 1);
 	if (state.game_3F6autoLoadEvalFlag != 0 &&
 		state.game_frame_in_sec < state.game_frames_per_sec) {
-		state.game_frame_in_sec++;
+		state.game_frame_in_sec = LEGACY_S16_WRAP_ADD(
+			state.game_frame_in_sec, 1);
 		if (state.game_frame_in_sec == state.game_frames_per_sec &&
 			byte_449DA == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 &&
 				state.playerstate.car_speed2 != 0) {
-				state.game_frames_per_sec++;
+				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
+					state.game_frames_per_sec, 1);
 			} else if (game_replay_mode == 0) {
 				byte_449DA = 1;
 			}
@@ -171,18 +181,23 @@ void update_gamestate(void)
 #endif
 		if (byte_4393C != 0) {
 			if (word_44DCA < 0x1C2)
-				word_44DCA += 8;
+				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA, 8);
 			if (byte_4393C == 1 && word_44DCA > 0x180)
-				byte_4393C++;
+				byte_4393C = LEGACY_S8_FROM_BITS(
+					(legacy_u8)((legacy_u8)byte_4393C + 1U));
 			if (byte_4393C == 2) {
-				if (multiply_and_scale(cos_fast(track_angle),
-					trackcenterpos[startrow2] -
-					(legacy_s16)LEGACY_S32_SAR(
-						state.playerstate.car_posWorld1.lz, 6U)) +
+				if (LEGACY_S16_WRAP_ADD(
+					multiply_and_scale(cos_fast(track_angle),
+						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+							LEGACY_S16_FROM_BITS((legacy_u16)
+								LEGACY_S32_SAR(
+									state.playerstate.car_posWorld1.lz, 6U)))),
 					multiply_and_scale(sin_fast(track_angle),
-					trackcenterpos2[startcol2] -
-					(legacy_s16)LEGACY_S32_SAR(
-						state.playerstate.car_posWorld1.lx, 6U)) <= 0xE4) {
+						LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+							LEGACY_S16_FROM_BITS((legacy_u16)
+								LEGACY_S32_SAR(
+									state.playerstate.car_posWorld1.lx, 6U))))) <=
+					0xE4) {
 					if (state.playerstate.car_speed != 0)
 						player_op(2);
 					else
