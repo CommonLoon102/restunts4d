@@ -1,4 +1,3 @@
-#include <dos.h>
 #include <stddef.h>
 #include "externs.h"
 #include "fileio.h"
@@ -258,7 +257,9 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 		// Read one page at a time.
 		do {
 			readlen = fread(curdst, PAGE_SIZE, 1, file);
-			curdst = MK_FP(FP_SEG(curdst) + PAGE_GAP, FP_OFF(dst));
+			curdst = dos_memory_make_pointer(
+				dos_memory_pointer_segment(curdst) + PAGE_GAP,
+				dos_memory_pointer_offset(dst));
 		} while (readlen == PAGE_SIZE);
 
 		fclose(file);
@@ -272,7 +273,7 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 		fatal_error(aSFileError, filename);
 	}
 
-	return MK_FP(0, 0);
+	return 0;
 }
 
 // Read entire file to given destination, handle errors as fatal.
@@ -316,7 +317,9 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 				break;
 			}
 			length -= wrtlen;
-			src = MK_FP(FP_SEG(src) + PAGE_GAP, FP_OFF(src));
+			src = dos_memory_make_pointer(
+				dos_memory_pointer_segment(src) + PAGE_GAP,
+				dos_memory_pointer_offset(src));
 		}
 
 		fclose(file);
@@ -521,8 +524,11 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 		paras = (passlen >> 4) + (passlen & 0xF ? 1 : 0);
 
 		// In main decomp func:
-		src = MK_FP(decompparas - paras + FP_SEG(dst), FP_OFF(dst));
-		copy_paras_reverse(FP_SEG(dst), FP_SEG(src), paras);
+		src = dos_memory_make_pointer(
+			decompparas - paras + dos_memory_pointer_segment(dst),
+			dos_memory_pointer_offset(dst));
+		copy_paras_reverse(dos_memory_pointer_segment(dst),
+			dos_memory_pointer_segment(src), paras);
 	}
 
 	// The original discards the single pass's count and returns the size out
@@ -707,7 +713,9 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 
 		paras = file_paras(filename, fatal);
 		if (paras) {
-			src = MK_FP(decompparas - paras + FP_SEG(dst), FP_OFF(dst));
+			src = dos_memory_make_pointer(
+				decompparas - paras + dos_memory_pointer_segment(dst),
+				dos_memory_pointer_offset(dst));
 			src = file_read(filename, src, fatal);
 			if (src) {
 				passes = *src;
@@ -743,15 +751,21 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 					// Set source for next pass.
 					if (!err && (--passes != 0)) {
 						paras = (passlen >> 4) + (passlen & 0xF ? 1 : 0);
-						src = MK_FP(decompparas - paras + FP_SEG(dst), FP_OFF(dst));
-						copy_paras_reverse(FP_SEG(dst), FP_SEG(src), paras);
+						src = dos_memory_make_pointer(
+							decompparas - paras +
+								dos_memory_pointer_segment(dst),
+							dos_memory_pointer_offset(dst));
+						copy_paras_reverse(
+							dos_memory_pointer_segment(dst),
+							dos_memory_pointer_segment(src), paras);
 					}
 				}
 
 				// Free unneeded overhead.
 				if (!err) {
 					decompparas -= 4;
-					mmgr_resize_memory(FP_OFF(dst), FP_SEG(dst), decompparas);
+					mmgr_resize_memory(dos_memory_pointer_offset(dst),
+						dos_memory_pointer_segment(dst), decompparas);
 
 					return dst;
 				}
@@ -763,7 +777,7 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 		fatal_error(aSInvalidPackTy, filename);
 	}
 
-	return MK_FP(0, 0);
+	return 0;
 }
 
 void far* file_decomp_fatal(const legacy_s8* filename)
@@ -782,10 +796,10 @@ void far* file_load_binary(const legacy_s8* filename, legacy_s16 fatal) {
 	legacy_s16 numparas;
 
 	memptr = mmgr_get_chunk_by_name(filename);
-	if (FP_SEG(memptr) != 0) return memptr;
+	if (dos_memory_pointer_segment(memptr) != 0) return memptr;
 	
 	numparas = file_paras(filename, fatal);
-	if (numparas == 0) return MK_FP(0, 0);
+	if (numparas == 0) return 0;
 	memptr = mmgr_alloc_pages(filename, numparas);
 	return file_read(filename, memptr, fatal);
 }
