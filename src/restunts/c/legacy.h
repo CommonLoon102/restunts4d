@@ -125,9 +125,9 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 	((legacy_u16)(((legacy_u32)(legacy_u16)(left) * \
 	(legacy_u32)(legacy_u16)(right)) >> 16))
 #define LEGACY_S16_MUL_HIGH(left, right) \
-	LEGACY_S16_FROM_BITS((legacy_u16)((legacy_u32)( \
+	LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_U32_SAR((legacy_u32)( \
 		(legacy_s32)LEGACY_S16_FROM_BITS(left) * \
-		(legacy_s32)LEGACY_S16_FROM_BITS(right)) >> 16))
+		(legacy_s32)LEGACY_S16_FROM_BITS(right)), 16U))
 
 /* The original #DE recovery skips a faulting division with a zero result. */
 #define LEGACY_U16_DIV_OR_ZERO(numerator, denominator) \
@@ -190,7 +190,8 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 #define LEGACY_S32_WRAP_SUB(left, right) \
 	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_SUB(left, right))
 #define LEGACY_S32_WRAP_NEGATE(value) \
-	LEGACY_S32_FROM_BITS((legacy_u32)(0UL - (legacy_u32)(value)))
+	LEGACY_S32_FROM_BITS((legacy_u32)((legacy_u32)0 - \
+		(legacy_u32)(value)))
 #define LEGACY_S32_WRAP_MUL(left, right) \
 	LEGACY_S32_FROM_BITS(LEGACY_U32_WRAP_MUL(left, right))
 
@@ -224,13 +225,14 @@ typedef char legacy_u32_must_be_4_bytes[(sizeof(legacy_u32) == 4) ? 1 : -1];
 			(32U - LEGACY_SHIFT_COUNT(count)))))
 
 #define LEGACY_U32_DIV_OR_ZERO(numerator, denominator) \
-	((legacy_u32)(denominator) == 0UL ? 0UL : \
+	((legacy_u32)(denominator) == (legacy_u32)0 ? (legacy_u32)0 : \
 	(legacy_u32)((legacy_u32)(numerator) / \
 		(legacy_u32)(denominator)))
 #define LEGACY_S32_DIV_OR_ZERO(numerator, denominator) \
-	((((legacy_u32)(denominator) == 0UL) || \
+	((((legacy_u32)(denominator) == (legacy_u32)0) || \
 		((legacy_u32)(numerator) == (legacy_u32)0x80000000UL && \
-		LEGACY_S32_FROM_BITS(denominator) == -1L)) ? 0L : \
+		LEGACY_S32_FROM_BITS(denominator) == (legacy_s32)-1)) ? \
+		(legacy_s32)0 : \
 		(legacy_s32)(LEGACY_S32_FROM_BITS(numerator) / \
 			LEGACY_S32_FROM_BITS(denominator)))
 

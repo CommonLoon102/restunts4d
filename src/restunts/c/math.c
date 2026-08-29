@@ -773,6 +773,7 @@ static legacy_u16 math_word_magnitude(legacy_s16 value)
 legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	legacy_s32 y;
 	legacy_s32 temp;
+	legacy_s32 scaled_angle;
 	legacy_s16 flag;
 	legacy_s16 result;
 	legacy_s32 angle;
@@ -815,7 +816,10 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 		angle += 0x400;
 	}
 	
-	result += (((angle << 4) - angle) >> 10);
+	scaled_angle = LEGACY_S32_WRAP_SUB(
+		LEGACY_S32_SHL(angle, 4U), angle);
+	result = LEGACY_S16_WRAP_ADD(result,
+		(legacy_s16)LEGACY_S32_SAR(scaled_angle, 10U));
 	
 	return result;
 }

@@ -27,6 +27,15 @@ static legacy_u16 reference_shl16(legacy_u16 bits, legacy_u16 count)
 	return bits;
 }
 
+static legacy_s16 reference_smul_high(legacy_s16 left, legacy_s16 right)
+{
+	legacy_s32 product;
+
+	product = (legacy_s32)left * (legacy_s32)right;
+	return LEGACY_S16_FROM_BITS((legacy_u16)reference_sar32(
+		(legacy_u32)product, 16U));
+}
+
 static void test_word_shifts_and_rotates(void)
 {
 	legacy_u32 value;
@@ -70,6 +79,12 @@ static void test_dword_shifts_and_rotates(void)
 
 static void test_multiply_and_divide(void)
 {
+	static const legacy_s16 multiply_values[] = {
+		-32768, -32767, -1, 0, 1, 32766, 32767
+	};
+	size_t left_index;
+	size_t right_index;
+
 	assert(LEGACY_U16_LOW_BYTE(0xABCDU) == 0xCDU);
 	assert(LEGACY_U16_REPLACE_LOW_BYTE(0xABCDU, 0x12U) == 0xAB12U);
 	assert(LEGACY_U16_REPLACE_LOW_BYTE(0xABCDU, 0x1234U) == 0xAB34U);
@@ -95,8 +110,17 @@ static void test_multiply_and_divide(void)
 	assert(LEGACY_S32_WRAP_MUL(
 		LEGACY_S32_FROM_BITS(0x40000000UL), 4L) == 0L);
 	assert(LEGACY_U16_MUL_HIGH(0xFFFFU, 0xFFFFU) == 0xFFFEU);
-	assert(LEGACY_S16_MUL_HIGH(-32768, -32768) == 0x4000);
-	assert(LEGACY_S16_MUL_HIGH(-32768, 2) == -1);
+	for (left_index = 0U; left_index < sizeof(multiply_values) /
+		sizeof(multiply_values[0]); left_index++) {
+		for (right_index = 0U; right_index < sizeof(multiply_values) /
+			sizeof(multiply_values[0]); right_index++) {
+			assert(LEGACY_S16_MUL_HIGH(
+				multiply_values[left_index],
+				multiply_values[right_index]) == reference_smul_high(
+				multiply_values[left_index],
+				multiply_values[right_index]));
+		}
+	}
 	assert(LEGACY_U16_DIV_OR_ZERO(0xFFFFU, 2U) == 0x7FFFU);
 	assert(LEGACY_U16_DIV_OR_ZERO(0xFFFFU, 0U) == 0U);
 	assert(LEGACY_S16_DIV_OR_ZERO(7, 3) == 2);

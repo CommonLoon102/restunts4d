@@ -931,7 +931,7 @@ legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x, legacy_s16 width, 
 
 	if (selected == -1) {
 		quotient = mouse_track_divide(length, (legacy_s16)item_count);
-		quotient = (legacy_s16)(quotient >> 1);
+		quotient = LEGACY_S16_SAR(quotient, 1U);
 		scaled = LEGACY_S16_WRAP_MUL(
 			LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
 		selected = mouse_track_divide(scaled, length);
@@ -10111,14 +10111,17 @@ replay_input_loop:
 		byte_3E9DB = hit;
 		if ((input == 0x0DU || input == 0x20U) && byte_3E9DB >= 7U) {
 			if (byte_3E9DB == 7U) {
-				midpoint = (legacy_s16)((word_3EA3A + word_3EA4C) >> 1);
+				midpoint = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
+					word_3EA3A, word_3EA4C), 1U);
 				input = midpoint < mouse_ypos ? 0x5000U : 0x4800U;
 			} else {
 				y_delta = LEGACY_S16_WRAP_SUB(
-					(legacy_s16)((word_3EA3C + word_3EA4E) >> 1),
+					LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
+						word_3EA3C, word_3EA4E), 1U),
 					(legacy_s16)mouse_ypos);
 				x_delta = LEGACY_S16_WRAP_SUB((legacy_s16)mouse_xpos,
-					(legacy_s16)((word_3EA18 + word_3EA2A) >> 1));
+					LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
+						word_3EA18, word_3EA2A), 1U));
 				angle = (legacy_u16)polarAngle(x_delta, y_delta);
 				switch (((angle + 0x80U) >> 8) & 3U) {
 				case 0:
