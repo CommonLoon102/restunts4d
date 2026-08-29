@@ -1036,7 +1036,7 @@ void free_sdgame2(void)
 	mmgr_free(sdgame2ptr);
 }
 
-extern void audio_driver_func3F(legacy_s16 command);
+void audio_fade_out(legacy_s16 delay_ticks);
 extern legacy_s8 audioflag2;
 extern legacy_s8 audioflag6;
 extern legacy_s16 word_4063A;
@@ -1635,7 +1635,7 @@ void audio_driver_timer(void)
 
 void audio_unload(void)
 {
-	audio_driver_func3F(2);
+	audio_fade_out(2);
 	mmgr_free(songfileptr);
 	mmgr_free(voicefileptr);
 	is_audioloaded = 0;
@@ -7189,6 +7189,45 @@ legacy_s16 sub_37868(legacy_s16 value)
 		dos_audio_set_channel_volume(channel, value);
 
 	return channel;
+}
+
+void audio_fade_out(legacy_s16 delay_ticks)
+{
+	legacy_s16 volume;
+	legacy_u32 delay;
+
+	delay = (legacy_u32)(legacy_s32)delay_ticks;
+	if (byte_40634 != 0) {
+		volume = 0x64;
+		do {
+			word_4063A = 1;
+			byte_40639 = (legacy_u8)volume;
+			dos_audio_driver_set_master_state(
+				4, (void far*)unk_40636);
+			word_4063A = 0;
+			timer_copy_counter(delay);
+			timer_wait_for_dx();
+			volume = LEGACY_S16_WRAP_SUB(volume, 2);
+		} while (volume > 0);
+	} else {
+		volume = byte_45950;
+		while (volume > 0) {
+			word_4063A = 1;
+			sub_37868(volume);
+			word_4063A = 0;
+			timer_copy_counter(delay);
+			timer_wait_for_dx();
+			volume = LEGACY_S16_WRAP_SUB(volume, 2);
+		}
+	}
+
+	sub_3736A();
+	if (byte_40634 != 0) {
+		timer_copy_counter(0x32UL);
+		timer_wait_for_dx();
+		byte_40639 = 0x64U;
+		dos_audio_driver_set_master_state(4, (void far*)unk_40636);
+	}
 }
 
 legacy_s16 nopsub_37898(legacy_s16 value)
