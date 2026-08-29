@@ -1070,6 +1070,26 @@ static void track_setup_link_piece(
 		td02_penalty_related[source_piece] = destination_piece;
 }
 
+static legacy_s16 track_setup_error(
+	struct TRACK_SETUP_BRANCH far* branches,
+	legacy_u8 error_code,
+	legacy_s8 column,
+	legacy_s8 row
+) {
+	if (column == -1)
+		column = 0;
+	else if (column == 0x1E)
+		column = 0x1D;
+	if (row == -1)
+		row = 0;
+	else if (row == 0x1E)
+		row = 0x1D;
+	byte_45D90 = (legacy_u8)column;
+	byte_45E16 = (legacy_u8)row;
+	mmgr_release((legacy_s8 far*)branches);
+	return error_code;
+}
+
 legacy_s16 track_setup(void)
 {
 	struct TRACK_SETUP_BRANCH far* branches;
@@ -1119,7 +1139,6 @@ legacy_s16 track_setup(void)
 	legacy_u8 path_closed;
 	legacy_u8 match_count;
 	legacy_u8 arrow_code;
-	legacy_u8 error_code;
 
 	branches = (struct TRACK_SETUP_BRANCH far*)
 		mmgr_alloc_resbytes("tcomp", 0x380L);
@@ -1142,8 +1161,8 @@ legacy_s16 track_setup(void)
 			if (terrConnDataEtoW[tile_terrain] !=
 				previous_connection_code &&
 				previous_connection_code != 0x63U) {
-				error_code = TRACK_SETUP_TERRAIN_MISMATCH;
-				goto track_error;
+				return track_setup_error(branches,
+					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
 			}
 			previous_connection_code = terrConnDataWtoE[tile_terrain];
 		}
@@ -1157,8 +1176,8 @@ legacy_s16 track_setup(void)
 			if (terrConnDataNtoS[tile_terrain] !=
 				previous_connection_code &&
 				previous_connection_code != 0x63U) {
-				error_code = TRACK_SETUP_TERRAIN_MISMATCH;
-				goto track_error;
+				return track_setup_error(branches,
+					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
 			}
 			previous_connection_code = terrConnDataStoN[tile_terrain];
 		}
@@ -1192,8 +1211,8 @@ legacy_s16 track_setup(void)
 			if (orientation != -1) {
 				track_angle = orientation;
 				if (start_finish_count != 0) {
-					error_code = TRACK_SETUP_MANY_START_FINISH;
-					goto track_error;
+					return track_setup_error(branches,
+						TRACK_SETUP_MANY_START_FINISH, column, row);
 				}
 				startcol2 = column;
 				startrow2 = row;
@@ -1207,8 +1226,8 @@ legacy_s16 track_setup(void)
 	}
 
 	if (start_finish_count == 0) {
-		error_code = TRACK_SETUP_NO_START_FINISH;
-		goto track_error;
+		return track_setup_error(branches,
+			TRACK_SETUP_NO_START_FINISH, column, row);
 	}
 
 	track_pieces_counter = 0;
@@ -1285,8 +1304,8 @@ track_next_tile:
 	}
 
 	if (jump_length == 0 && tile_entry_point == 0) {
-		error_code = TRACK_SETUP_INTERNAL_ERROR;
-		goto track_error;
+		return track_setup_error(branches,
+			TRACK_SETUP_INTERNAL_ERROR, column, row);
 	}
 
 	track_object = &trkObjectList[tile_element];
@@ -1301,16 +1320,16 @@ track_next_tile:
 				tile_entry_point) {
 				if ((legacy_u8)current_info->si_entryType !=
 					previous_connection_code) {
-					error_code = TRACK_SETUP_ELEMENT_MISMATCH;
-					goto track_error;
+					return track_setup_error(branches,
+						TRACK_SETUP_ELEMENT_MISMATCH, column, row);
 				}
 				connection_status = 0;
 			} else if ((legacy_u8)current_info->si_exitPoint ==
 				tile_entry_point) {
 				if ((legacy_u8)current_info->si_exitType !=
 					previous_connection_code) {
-					error_code = TRACK_SETUP_ELEMENT_MISMATCH;
-					goto track_error;
+					return track_setup_error(branches,
+						TRACK_SETUP_ELEMENT_MISMATCH, column, row);
 				}
 				connection_status = 1;
 			}
@@ -1344,8 +1363,8 @@ track_next_tile:
 					selected_connection_status = connection_status;
 				} else {
 					if (branch_count == TRACK_SETUP_BRANCH_COUNT) {
-						error_code = TRACK_SETUP_MANY_PATHS;
-						goto track_error;
+						return track_setup_error(branches,
+							TRACK_SETUP_MANY_PATHS, column, row);
 					}
 					branch = &branches[branch_count];
 					branch->column = column;
@@ -1381,8 +1400,8 @@ track_next_tile:
 	if (jump_length >= 2)
 		goto track_backtrack;
 	if (runway_length < 2) {
-		error_code = TRACK_SETUP_NO_RUNWAY;
-		goto track_error;
+		return track_setup_error(branches,
+			TRACK_SETUP_NO_RUNWAY, column, row);
 	}
 	runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
 	jump_length = LEGACY_U8_WRAP_ADD(jump_length, 1U);
@@ -1408,8 +1427,8 @@ track_next_tile:
 track_backtrack:
 	if (branch_count == 0) {
 		if (path_closed == 0) {
-			error_code = TRACK_SETUP_NO_PATH;
-			goto track_error;
+			return track_setup_error(branches,
+				TRACK_SETUP_NO_PATH, column, row);
 		}
 		goto track_build_cameras;
 	}
@@ -1429,8 +1448,8 @@ track_backtrack:
 	previous_subtype = branch->previous_subtype;
 	previous_connection_status = branch->previous_connection_status;
 	if (jump_length > 1) {
-		error_code = TRACK_SETUP_LONG_JUMP;
-		goto track_error;
+		return track_setup_error(branches,
+			TRACK_SETUP_LONG_JUMP, column, row);
 	}
 
 track_record_piece:
@@ -1521,8 +1540,8 @@ track_record_piece:
 	track_pieces_counter = LEGACY_S16_WRAP_ADD(
 		track_pieces_counter, 1);
 	if (track_pieces_counter == TRACK_SETUP_TILE_COUNT) {
-		error_code = TRACK_SETUP_MANY_ELEMENTS;
-		goto track_error;
+		return track_setup_error(branches,
+			TRACK_SETUP_MANY_ELEMENTS, column, row);
 	}
 	current_info = &track_info[subtype];
 	if (connection_status != 0) {
@@ -1663,24 +1682,8 @@ track_build_cameras:
 		camera_index = LEGACY_S16_WRAP_ADD(camera_index, 1);
 	}
 	byte_4616E = (legacy_u8)camera_index;
-	error_code = TRACK_SETUP_OK;
-	goto track_done;
-
-track_error:
-	if (column == -1)
-		column = 0;
-	else if (column == 0x1E)
-		column = 0x1D;
-	if (row == -1)
-		row = 0;
-	else if (row == 0x1E)
-		row = 0x1D;
-	byte_45D90 = (legacy_u8)column;
-	byte_45E16 = (legacy_u8)row;
-
-track_done:
 	mmgr_release((legacy_s8 far*)branches);
-	return error_code;
+	return TRACK_SETUP_OK;
 }
 
 void init_plantrak(void) {
