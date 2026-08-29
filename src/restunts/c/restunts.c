@@ -1090,7 +1090,8 @@ extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
 extern legacy_s16 sub_39050(legacy_u16 value, legacy_s16 handle);
-extern void sub_39088(legacy_s16 channel, legacy_s16 value);
+extern void dos_audio_set_context_pitch(legacy_s16 context_index,
+	legacy_s16 pitch);
 extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
@@ -1615,7 +1616,7 @@ void audio_driver_timer(void)
 			channel = LEGACY_S16_FROM_BITS(
 				LEGACY_READ_U16_LE(timer + 0x12U));
 			if (channel != -1) {
-				sub_39088(channel, pitch);
+				dos_audio_set_context_pitch(channel, pitch);
 				LEGACY_WRITE_U16_LE(timer + 0x10U, pitch);
 			}
 		}

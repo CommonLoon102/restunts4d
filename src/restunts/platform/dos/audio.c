@@ -216,3 +216,16 @@ void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 		context += 0x2EU;
 	}
 }
+
+void dos_audio_set_context_pitch(legacy_s16 context_index, legacy_s16 pitch)
+{
+	driver_set_volume_type set_pitch;
+	legacy_u8* context;
+	legacy_u16 context_offset;
+
+	context_offset = LEGACY_U16_WRAP_MUL(
+		(legacy_u16)context_index, 0x2EU);
+	context = unk_45A26 + context_offset;
+	set_pitch = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
+	set_pitch(context[0x2CU], context, (legacy_u16)pitch);
+}
