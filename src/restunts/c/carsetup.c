@@ -19,6 +19,14 @@ extern legacy_u8 oppnentSped[];
 extern void far* gameresptr;
 #endif
 
+static void opponent_route_write(legacy_u16 index, legacy_u16 value)
+{
+	legacy_u16 offset;
+
+	offset = LEGACY_U16_WRAP_MUL(index, 2U);
+	LEGACY_WRITE_U16_LE((legacy_u8 far*)trackdata3 + offset, value);
+}
+
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 {
 	legacy_s16 i;
@@ -54,7 +62,6 @@ void load_opponent_data(void)
 	legacy_u32 pending_distance[259];
 	void far* resource;
 	legacy_u8 far* speed_data;
-	legacy_u16 far* route_output;
 	legacy_u32 distance;
 	legacy_u32 best_distance;
 	legacy_u16 track_index;
@@ -82,7 +89,6 @@ void load_opponent_data(void)
 	track_index = 0;
 	path_count = 0;
 	pending_count = 0;
-	route_output = (legacy_u16 far*)trackdata3;
 	for (;;) {
 		terminal = 0;
 		reaches_finish = 0;
@@ -123,9 +129,10 @@ void load_opponent_data(void)
 			path_count++;
 			best_distance = distance;
 			for (index = 0; index < path_count; index++)
-				route_output[index] = path[index];
-			route_output[path_count] = 0;
-			route_output[path_count + 1U] = 1;
+				opponent_route_write(index, path[index]);
+			opponent_route_write(path_count, 0U);
+			opponent_route_write(
+				LEGACY_U16_WRAP_ADD(path_count, 1U), 1U);
 		}
 		if (pending_count == 0)
 			break;

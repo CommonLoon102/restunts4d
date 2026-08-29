@@ -502,13 +502,10 @@ static legacy_s16 opponent_position(legacy_s32 position)
 static legacy_s16 opponent_route_word(legacy_s16 index)
 {
 	legacy_u16 offset;
-	legacy_u16 value;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 2U);
-	value = (legacy_u8)trackdata3[offset];
-	value |= (legacy_u16)(legacy_u8)trackdata3[
-		LEGACY_U16_WRAP_ADD(offset, 1U)] << 8;
-	return LEGACY_S16_FROM_BITS(value);
+	return LEGACY_READ_S16_LE(
+		(const legacy_u8 far*)trackdata3 + offset);
 }
 
 static void opponent_advance_route(void)
@@ -1745,10 +1742,8 @@ void init_plantrak(void) {
 	state.opponentstate.field_CE = (legacy_u8)(route_index + 1U);
 	route_table_offset = LEGACY_U16_WRAP_MUL(
 		state.opponentstate.car_trackdata3_index, 2U);
-	route_track_index = LEGACY_S16_FROM_BITS(
-		(legacy_u16)(legacy_u8)trackdata3[route_table_offset] |
-		((legacy_u16)(legacy_u8)trackdata3[
-			LEGACY_U16_WRAP_ADD(route_table_offset, 1U)] << 8));
+	route_track_index = LEGACY_READ_S16_LE(
+		(const legacy_u8 far*)trackdata3 + route_table_offset);
 	sub_18D60(
 		route_track_index,
 		&state.opponentstate.car_vec_unk3,
