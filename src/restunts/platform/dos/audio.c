@@ -12,6 +12,8 @@ typedef void (far* driver_suspend_context_type)(legacy_s16 driver_channel,
 typedef void (far* driver_contexts_operation_type)(legacy_u8* contexts);
 typedef void (far* driver_master_state_type)(legacy_s16 operation,
 	void far* state);
+typedef legacy_u8 (far* driver_initialize_type)(void);
+typedef void (far* driver_load_bank_type)(void far* bank);
 
 extern legacy_u8 audiotimers[];
 extern legacy_u8 audiochunks_unk[];
@@ -32,6 +34,22 @@ static void far* dos_audio_driver_entry(legacy_u16 offset)
 {
 	return MK_FP(FP_SEG(audiodriverbinary),
 		LEGACY_U16_WRAP_ADD(FP_OFF(audiodriverbinary), offset));
+}
+
+legacy_u8 dos_audio_driver_initialize(void)
+{
+	driver_initialize_type initialize;
+
+	initialize = (driver_initialize_type)dos_audio_driver_entry(0);
+	return initialize();
+}
+
+void dos_audio_driver_load_bank(void far* bank)
+{
+	driver_load_bank_type load_bank;
+
+	load_bank = (driver_load_bank_type)dos_audio_driver_entry(0x42U);
+	load_bank(bank);
 }
 
 static void dos_audio_driver_set_volume(legacy_s16 driver_channel,

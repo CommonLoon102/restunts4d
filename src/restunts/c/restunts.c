@@ -1105,7 +1105,10 @@ extern void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
 extern void dos_audio_driver_suspend_all(legacy_u8* contexts);
 extern void dos_audio_driver_set_master_state(legacy_s16 operation,
 	void far* state);
+extern legacy_u8 dos_audio_driver_initialize(void);
+extern void dos_audio_driver_load_bank(void far* bank);
 extern void dos_audio_shutdown(void);
+void add_exit_handler(void (far* exit_handler)(void));
 extern void sub_39700(void);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
 void sub_374DE(legacy_s16 channel);
@@ -2172,6 +2175,82 @@ legacy_s8* audio_make_filename(const legacy_s8* filename, const legacy_s8* exten
 		audio_append_filename_part(audio_filetemp, extension);
 	}
 	return audio_filetemp;
+}
+
+legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
+	legacy_s16 unused, legacy_s16 mode)
+{
+	static const legacy_s8 driver_extension[] = "drv";
+	static const legacy_s8 empty_path[] = "";
+	static const legacy_s8 mt32_bank_filename[] = "mt32.plb";
+	static const legacy_s8 missing_driver_message[] =
+		"Can't find driver!\n";
+	void far* bank;
+	legacy_u16 driver_length;
+	legacy_u16 basename_offset;
+	legacy_u16 scan_offset;
+	legacy_u8 channel_count;
+
+	(void)unused;
+	if (mode == 0x473A)
+		byte_40635 = 1;
+	if (audiodriverbinary != 0)
+		dos_audio_shutdown();
+	else
+		add_exit_handler(dos_audio_shutdown);
+	audiodriverbinary = 0;
+
+	driver_length = 0;
+	while (driver[driver_length] != 0)
+		driver_length++;
+	basename_offset = 0;
+	for (scan_offset = driver_length; scan_offset != 0; scan_offset--) {
+		if (driver[scan_offset] == '\\' || driver[scan_offset] == ':') {
+			basename_offset = LEGACY_U16_WRAP_ADD(scan_offset, 1U);
+			break;
+		}
+	}
+	audiodriverstring2[0] = driver[basename_offset];
+	audiodriverstring2[1] = driver[basename_offset + 1U];
+	audiodriverstring2[2] = 0;
+
+	audiodriverbinary = file_load_binary_nofatal(audio_make_filename(
+		driver, driver_extension, empty_path));
+	byte_45950 = 0x7FU;
+	byte_45948 = 0x7FU;
+	if (audiodriverbinary == 0) {
+		fatal_error(missing_driver_message);
+		return 2;
+	}
+
+	channel_count = dos_audio_driver_initialize();
+	byte_459D2 = channel_count;
+	if (channel_count == 0 || channel_count == 0xFFU)
+		return 2;
+	if (channel_count > 0x7FU) {
+		byte_459D2 = 0x10U;
+		byte_40634 = 1;
+		byte_40635 = 0;
+	}
+
+	audio_reset_channels();
+	timer_reg_callback(audio_driver_timer);
+	if (byte_40634 != 0) {
+		bank = file_load_binary_nofatal(mt32_bank_filename);
+		if (bank != 0) {
+			dos_audio_driver_load_bank(bank);
+			mmgr_release((legacy_s8 far*)bank);
+			byte_40639 = 0x64U;
+			dos_audio_driver_set_master_state(
+				4, (void far*)unk_40636);
+		}
+	}
+
+	byte_40630 = 0;
+	audioflag2 = 1;
+	byte_40632 = 0;
+	audioflag6 = 1;
+	return 0;
 }
 
 void far* load_sfx_ge(const legacy_s8* filename, const legacy_s8* extension,
@@ -10045,11 +10124,10 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	dos_mouse_init(0x0140, 0x00C8);
 
 	// Audio driver.
-	if (audio_load_driver(audiodriverstring, 0, 0)) {
+	if (audio_load_dos_driver(audiodriverstring, 0, 0)) {
 		dos_timer_shutdown();
 		libsub_quit_to_dos_alt(1);
 	}
-	add_exit_handler(dos_audio_shutdown);
 	
 	if (argnosound) {
 		audio_toggle_flag2();
