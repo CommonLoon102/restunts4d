@@ -539,8 +539,8 @@ static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 	sprite->sprite_unk1 = 0;
 	sprite->sprite_unk2 = 0;
 	sprite->sprite_unk3 = 0;
-	sprite->sprite_lineofs = (legacy_u8*)
-		dos_memory_pointer_offset(full_screen_line_offsets);
+	sprite->sprite_lineofs = (legacy_u8*)dos_memory_make_near_pointer(
+		dos_memory_pointer_offset(full_screen_line_offsets));
 	sprite->sprite_left = 0;
 	sprite->sprite_right = 320;
 	sprite->sprite_top = 0;
@@ -560,7 +560,8 @@ void full_data_initialize(void)
 		full_screen_line_offsets[index] = (legacy_u16)(index * 320U);
 	for (index = 0; index < 0xE10U; index++)
 		wnd_defs[index] = 0;
-	next_wnd_def = (legacy_s8*)dos_memory_pointer_offset(wnd_defs);
+	next_wnd_def = (legacy_s8*)dos_memory_make_near_pointer(
+		dos_memory_pointer_offset(wnd_defs));
 	full_initialize_screen_sprite(&sprite1);
 	full_initialize_screen_sprite(&sprite2);
 }
