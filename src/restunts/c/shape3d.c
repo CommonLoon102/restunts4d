@@ -393,16 +393,11 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 
 
 
-loc_25233:
+	for (;;) {
 	transshapeprimptr = transshapeprimitives + primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
 	var_primitiveflags = transshapeprimitives[1];
 	var_4 = 0;
 	if ((LEGACY_READ_U32_LE(var_cull1) & (legacy_u32)var_45C) != 0UL) {
-		goto loc_25282;
-	}
-	goto loc_25801;
-
-loc_25282:
 
 	var_fileprimtype = transshapeprimitives[0];
 	transshapenumvertscopy = primidxcounttab[var_fileprimtype];
@@ -462,18 +457,8 @@ loc_25282:
 			var_polyvertcounter, 1U);
 	}
 
-	if (var_460 != 0) goto loc_25801;
-	if (var_ptrectflag != 0 && var_1A == 0) goto loc_25801;
-	if (var_primtype == 0) goto _primtype_poly;
-	if (var_primtype == 1) goto _primtype_line;
-	if (var_primtype == 2) goto _primtype_sphere;
-	if (var_primtype == 3) goto _primtype_wheel;
-	if (var_primtype == 5) goto loc_25CE0;
-	goto loc_25801;
-
-
-
-_primtype_poly:
+	if (var_460 == 0 && (var_ptrectflag == 0 || var_1A != 0)) {
+	if (var_primtype == 0) {
 	var_transshapepolyinfoptindex = 0U;
 	transshapeprimindexptr = transshapeprimitives;
 	var_18 = 0;
@@ -583,24 +568,7 @@ _primtype_poly:
 			}
 		}
 	}
-
-loc_25801:
-
-	transshapeprimitives = transshapeprimptr;
-	var_cull1 += 4U;
-	var_cull2 += 4U;
-	if (var_4 != 0) goto loc_25D3C;
-	if ((var_primitiveflags & 2) != 0) goto loc_25E04;
-loc_2582B:
-
-	if ((transshapeprimitives[1] & 2) == 0) goto loc_25E04;
-	transshapeprimitives += primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
-	var_cull1 += 4U;
-	var_cull2 += 4U;
-	goto loc_2582B;
-
-
-_primtype_line:
+	} else if (var_primtype == 1) {
 	temp0 = transshapeprimitives[0];
 	temp1 = transshapeprimitives[1];
 	if (var_vertflagtbl[temp0] + var_vertflagtbl[temp1] != 2) {
@@ -633,11 +601,7 @@ _primtype_line:
 		transshapenumvertscopy = 2;
 		var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 	}
-	goto loc_25801;
-
-// ------------------------------------ primtype_wheel ------------------------------------
-
-_primtype_wheel:
+	} else if (var_primtype == 3) {
 	if (var_1A == 0) {
 		for (i = 0; i < 4; i++) {
 			polyinfo_points[i] = *polyvertpointptrtab[i];
@@ -698,13 +662,7 @@ _primtype_wheel:
 		transshapenumvertscopy = 4;
 		var_4 = 1;
 	}
-	goto loc_25801;
-
-
-
-// ------------------------------------ primtype_sphere ------------------------------------
-_primtype_sphere:
-
+	} else if (var_primtype == 2) {
 	temp0 = transshapeprimitives[0];
 	temp1 = transshapeprimitives[1];
 //fatal_error("anders: %i %i", temp0, temp1);
@@ -736,11 +694,7 @@ _primtype_sphere:
 		transshapenumvertscopy = 2;
 		var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 	}
-	goto loc_25801;
-
-// ------------------------------------ primtype 5 - unknown / particle? ------------------------------------
-
-loc_25CE0:
+	} else if (var_primtype == 5) {
 	temp0 = transshapeprimitives[0];
 	if (var_vertflagtbl[temp0] == 0) {
 		var_18 = var_vecarr[temp0].z;
@@ -753,12 +707,14 @@ loc_25CE0:
 		transshapenumvertscopy = 1;
 		var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 	}
-	goto loc_25801;
+	}
+	}
+	}
 
-
-// ------------------------------------ jumps here from inside the loc_25801-case if var_4 != 0------------------------------------
-
-loc_25D3C:
+	transshapeprimitives = transshapeprimptr;
+	var_cull1 += 4U;
+	var_cull2 += 4U;
+	if (var_4 != 0) {
 	var_45E = LEGACY_U16_WRAP_ADD(var_45E, 1U);
 	transshapepolyinfo[3] = transshapenumvertscopy;
 	transshapepolyinfo[4] = var_primtype;
@@ -779,19 +735,21 @@ loc_25D3C:
 		temp = 1;
 
 	word_40ECE = insert_newest_poly_in_poly_linked_list_40ED6(temp0, temp);
+	if (word_40ECE != 0)
+		return 1;
+	} else if ((var_primitiveflags & 2) == 0) {
+		while ((transshapeprimitives[1] & 2) != 0) {
+			transshapeprimitives +=
+				primidxcounttab[transshapeprimitives[0]] +
+				transshapenumpaints + 2;
+			var_cull1 += 4U;
+			var_cull2 += 4U;
+		}
+	}
 
-	if (word_40ECE == 0) goto loc_25E04;
-	return 1;
-
-
-
-loc_25E04:
-
-	if (transshapeprimitives[0] != 0) goto loc_25233;
-
-	if (var_45E != 0) return 0;
-	return -1;
-
+	if (transshapeprimitives[0] == 0)
+		return var_45E != 0 ? 0 : (legacy_u16)-1;
+	}
 }
 
 
