@@ -3,6 +3,18 @@
 
 #include "legacy.h"
 
+#define SHAPE2D_HEADER_SIZE   16U
+#define SHAPE2D_WIDTH_OFFSET   0U
+#define SHAPE2D_HEIGHT_OFFSET  2U
+#define SHAPE2D_UNK1_OFFSET    4U
+#define SHAPE2D_UNK2_OFFSET    6U
+#define SHAPE2D_POS_X_OFFSET   8U
+#define SHAPE2D_POS_Y_OFFSET  10U
+#define SHAPE2D_UNK3_OFFSET   12U
+#define SHAPE2D_UNK4_OFFSET   13U
+#define SHAPE2D_UNK5_OFFSET   14U
+#define SHAPE2D_UNK6_OFFSET   15U
+
 #pragma pack (push, 1)
 struct SHAPE2D {
 	legacy_u16 s2d_width;
@@ -36,7 +48,7 @@ struct SPRITE {
 #pragma pack (pop)
 
 typedef char legacy_shape2d_must_be_16_bytes[
-	(sizeof(struct SHAPE2D) == 16) ? 1 : -1];
+	(sizeof(struct SHAPE2D) == SHAPE2D_HEADER_SIZE) ? 1 : -1];
 
 #ifdef RESTUNTS_DOS
 typedef char legacy_sprite_must_be_30_bytes[
