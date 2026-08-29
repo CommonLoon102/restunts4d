@@ -2947,6 +2947,14 @@ static legacy_u16 dialog_ascii_lower(legacy_u16 character)
 	return character;
 }
 
+static legacy_u16 dialog_finish(legacy_s16 result,
+	legacy_s16 save_background)
+{
+	if (save_background != 0)
+		sub_275C6();
+	return (legacy_u16)result;
+}
+
 legacy_u16 show_dialog(
 	legacy_s16 dialog_type,
 	legacy_s16 save_background,
@@ -3147,16 +3155,16 @@ legacy_u16 show_dialog(
 		if (input == 0x1BU)
 			result = 0;
 		check_input();
-		goto dialog_done;
+		return dialog_finish(result, save_background);
 	}
 	if (dialog_type == 3)
 		return LEGACY_U16_DIV_OR_ZERO(placeholder_index, 2U);
 	if (dialog_type == 4) {
 		(void)sub_2EB1E(8UL);
-		goto dialog_done;
+		return dialog_finish(result, save_background);
 	}
 	if (dialog_type != 2)
-		goto dialog_done;
+		return dialog_finish(result, save_background);
 
 	selected = (legacy_u8)initial_choice;
 	previous = 0xFFU;
@@ -3251,10 +3259,7 @@ legacy_u16 show_dialog(
 	}
 	result = LEGACY_S8_FROM_BITS(selected);
 
-dialog_done:
-	if (save_background != 0)
-		sub_275C6();
-	return (legacy_u16)result;
+	return dialog_finish(result, save_background);
 }
 
 legacy_s8 do_fileselect_dialog(
@@ -3511,6 +3516,15 @@ void do_key_restext(void)
 	input_pop_status();
 }
 
+static void joy_dialog_finish(void)
+{
+	kb_check();
+	byte_3B8F2 = 0;
+	audio_resume();
+	dos_timer_set_callbacks_suspended(0);
+	input_pop_status();
+}
+
 void do_joy_restext(void)
 {
 	legacy_s16 positions[15];
@@ -3533,7 +3547,8 @@ void do_joy_restext(void)
 		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
 		dialogarg2, positions, 0)) <= 0) {
 		dos_joystick_set_enabled(0);
-		goto joy_dialog_done;
+		joy_dialog_finish();
+		return;
 	}
 
 	for (i = 0; i < 9U; i++)
@@ -3603,12 +3618,7 @@ void do_joy_restext(void)
 		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
 			0xFFFFU, 0xFFFFU, dialogarg2, 0, 0);
 
-joy_dialog_done:
-	kb_check();
-	byte_3B8F2 = 0;
-	audio_resume();
-	dos_timer_set_callbacks_suspended(0);
-	input_pop_status();
+	joy_dialog_finish();
 }
 
 void do_mou_restext(void)
@@ -3849,7 +3859,8 @@ legacy_u16 run_option_menu(void)
 				show_waiting();
 				file_load_replay(byte_3B85E, aDefault_1);
 				menu_active = 1;
-				goto option_menu_done;
+				unload_resource(miscptr);
+				return menu_active;
 			}
 			break;
 
@@ -3863,7 +3874,6 @@ legacy_u16 run_option_menu(void)
 		}
 	}
 
-option_menu_done:
 	unload_resource(miscptr);
 	return menu_active;
 }
