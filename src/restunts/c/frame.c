@@ -85,7 +85,7 @@ extern void far* fontledresptr;
 extern legacy_s16 dialog_fnt_colour;
 extern legacy_s8 transformedshape_counter;
 extern legacy_s16 word_449FE;
-extern struct SPRITE far* wndsprite;
+extern struct SPRITE far* render_window_sprite;
 extern legacy_s16 fontdef_unk_0E;
 extern legacy_u16 skybox_current;
 extern legacy_u16 word_454CE;
@@ -918,7 +918,7 @@ legacy_s8 setup_intro(void)
 	shape3d_init_shape(title_shapes[1], &logo2shape);
 	shape3d_init_shape(title_shapes[2], &bravshape);
 	if (video_flag5_is0 == 0)
-		wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+		render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 
 	for (i = 0; i < 100U; i++) {
 		stars[i].x = LEGACY_S16_WRAP_SUB(
@@ -1061,14 +1061,14 @@ legacy_s8 setup_intro(void)
 					sprite_set_1_size(redraw_rect.left, redraw_rect.right,
 						redraw_rect.top, redraw_rect.bottom);
 					mouse_draw_opaque_check();
-					sprite_putimage(wndsprite->sprite_bitmapptr);
+					sprite_putimage(render_window_sprite->sprite_bitmapptr);
 					mouse_draw_transparent_check();
 					rect_unk[0] = shape_rect;
 					rect_unk6 = combined_rect;
 				}
 			} else {
 				mouse_draw_opaque_check();
-				sprite_putimage(wndsprite->sprite_bitmapptr);
+				sprite_putimage(render_window_sprite->sprite_bitmapptr);
 				mouse_draw_transparent_check();
 			}
 		}
@@ -1092,7 +1092,7 @@ check_input:
 			mouse_draw_transparent_check();
 		}
 	} else {
-		sprite_free_wnd(wndsprite);
+		sprite_free_wnd(render_window_sprite);
 	}
 	mmgr_free(title_resource);
 	return interrupted;
@@ -1373,7 +1373,7 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 				dirty_rect->right,
 				dirty_rect->top,
 				dirty_rect->bottom);
-			sprite_putimage(wndsprite->sprite_bitmapptr);
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		}
 		goto finish;
 	}
@@ -1382,7 +1382,7 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 
 draw_window:
 	mouse_draw_opaque_check();
-	sprite_putimage(wndsprite->sprite_bitmapptr);
+	sprite_putimage(render_window_sprite->sprite_bitmapptr);
 
 finish:
 	mouse_draw_transparent_check();

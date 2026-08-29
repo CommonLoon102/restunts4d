@@ -16,17 +16,17 @@
 extern legacy_s8 aWindowdefOutOfRowTableSpa[];
 extern legacy_s8 aMcgaWindow[];
 extern legacy_s8 aWindowReleased[];
-extern struct SPRITE far* wndsprite;
+extern struct SPRITE far* render_window_sprite;
 
 extern legacy_u8* far wnd_defs; // a reserved memory chunk of 0xE10 bytes in seg012. contents are SPRITE structs followed by lineoffsets. cast to a far pointer for access to the contents in other segments.
 extern legacy_s8* far next_wnd_def; // near pointer relative to seg012 to the current SPRITE in wnd_defs. cast to a far pointer for access to the contents in other segments
 extern struct SPRITE far sprite1; // seg012
 extern struct SPRITE far sprite2; // seg012
 extern struct SPRITE far* mcgawndsprite;
-extern struct SPRITE far* mouseunkspriteptr;
-extern struct SPRITE far* mmouspriteptr;
-extern struct SPRITE far* smouspriteptr;
-extern legacy_s8 mouse_isdirty;
+extern struct SPRITE far* mouse_background_sprite;
+extern struct SPRITE far* mouse_medium_sprite;
+extern struct SPRITE far* mouse_small_sprite;
+extern legacy_s8 mouse_background_dirty;
 extern legacy_u8 far* word_405FE;
 extern legacy_u16 fontdefseg;
 extern legacy_u8 far incnums[];
@@ -1724,7 +1724,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	}
 	next_wnd_def = nextwnd;
 
-	// get a writable far pointer to the wndsprite
+	// get a writable far pointer to the render_window_sprite
 	farwnd = MK_FP(wnddefseg, FP_OFF(wnd));
 
 	lineofsptr = (legacy_u16*)(wnd + sizeof(struct SPRITE));
@@ -1755,19 +1755,19 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	return farwnd;
 }
 
-void sprite_free_wnd(struct SPRITE far* wndsprite) {
+void sprite_free_wnd(struct SPRITE far* render_window_sprite) {
 	legacy_u16 spritesize;
 	// The height comes from the bitmap header, not from the SPRITE: the
 	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height.
 	// sprite_make_wnd initializes both heights alike, and normal clipping edits
 	// the sprite1 working copy rather than the stored window SPRITE, so using
 	// the bitmap field here is structural parity rather than a clipping repair.
-	spritesize = sizeof(struct SPRITE) + wndsprite->sprite_bitmapptr->s2d_height * sizeof(legacy_u16);
-	if (FP_OFF(wndsprite) + spritesize != FP_OFF(next_wnd_def)) {
+	spritesize = sizeof(struct SPRITE) + render_window_sprite->sprite_bitmapptr->s2d_height * sizeof(legacy_u16);
+	if (FP_OFF(render_window_sprite) + spritesize != FP_OFF(next_wnd_def)) {
 		fatal_error(aWindowReleased);
 	}
 	next_wnd_def = next_wnd_def - spritesize;
-	mmgr_release((void far*)wndsprite->sprite_bitmapptr);
+	mmgr_release((void far*)render_window_sprite->sprite_bitmapptr);
 }
 
 void sprite_set_1_from_argptr(struct SPRITE far* argsprite) {
@@ -1788,11 +1788,11 @@ void sprite_copy_2_to_1_clear(void) {
 }
 
 void sprite_copy_wnd_to_1(void) {
-	sprite_set_1_from_argptr(wndsprite);
+	sprite_set_1_from_argptr(render_window_sprite);
 }
 
 void sprite_copy_wnd_to_1_clear(void) {
-	sprite_set_1_from_argptr(wndsprite);
+	sprite_set_1_from_argptr(render_window_sprite);
 	sprite_clear_1_color(0);
 }
 
@@ -1860,9 +1860,9 @@ void mouse_draw_opaque(void) {
 
 	sprite_copy_both_to_arg(saved_sprites);
 	sprite_copy_2_to_1();
-	sprite_putimage(mouseunkspriteptr->sprite_bitmapptr);
+	sprite_putimage(mouse_background_sprite->sprite_bitmapptr);
 	sprite_copy_arg_to_both(saved_sprites);
-	mouse_isdirty = 0;
+	mouse_background_dirty = 0;
 }
 
 void mouse_draw_transparent(void) {
@@ -1873,19 +1873,19 @@ void mouse_draw_transparent(void) {
 	sprite_copy_both_to_arg(saved_sprites);
 	sprite_copy_2_to_1();
 	sprite_clear_shape_alt(
-		mouseunkspriteptr->sprite_bitmapptr,
+		mouse_background_sprite->sprite_bitmapptr,
 		aligned_x,
 		mouse_ypos);
 	sprite_putimage_and(
-		mmouspriteptr->sprite_bitmapptr,
+		mouse_medium_sprite->sprite_bitmapptr,
 		mouse_xpos,
 		mouse_ypos);
 	sprite_putimage_or(
-		smouspriteptr->sprite_bitmapptr,
+		mouse_small_sprite->sprite_bitmapptr,
 		mouse_xpos,
 		mouse_ypos);
 	sprite_copy_arg_to_both(saved_sprites);
-	mouse_isdirty = 1;
+	mouse_background_dirty = 1;
 }
 
 void sprite_clear_1_color(legacy_u8 color) {

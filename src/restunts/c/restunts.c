@@ -471,11 +471,12 @@ struct RECTANGLE cliprect = { 0, 0x140, 0, 0x5F };
 struct VECTOR carpos = { 0, 0x0FCB8, 0x0B40 }; // from the original
 //struct VECTOR carpos = { 0, 0, 320 };
 
-extern struct SPRITE far* wndsprite;
-extern struct SPRITE far* smouspriteptr;
-extern struct SPRITE far* mmouspriteptr;
-extern struct SPRITE far* mouseunkspriteptr;
-extern void far* tempdataptr;
+struct SPRITE far* render_window_sprite;
+struct SPRITE far* mouse_small_sprite;
+struct SPRITE far* mouse_medium_sprite;
+struct SPRITE far* mouse_background_sprite;
+legacy_s8 mouse_background_dirty;
+static void far* ui_temp_resource;
 extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
 
@@ -528,12 +529,11 @@ extern legacy_s8 aDasm[];
 extern legacy_s8 aStdaxxxx[];
 extern legacy_s8 aStdbxxxx[];
 extern legacy_s8 far* skyboxes[];
-extern legacy_s16 word_45D1C;
-extern legacy_s16 word_45D06;
-extern legacy_s16 idle_counter;
-extern legacy_s8 byte_3B8F7;
-extern legacy_s8 mouse_isdirty;
-extern legacy_u8 HKeyFlag;
+static legacy_s16 menu_animation_counter;
+static legacy_s16 menu_animation_state;
+static legacy_s16 menu_idle_counter;
+static legacy_s8 mouse_transparent_mode;
+static legacy_u8 h_key_toggle;
 
 void load_palandcursor(void)
 {
@@ -555,17 +555,17 @@ void load_palandcursor(void)
 	mouse_height = mouse_shape->s2d_height;
 	mmgr_free(resource);
 
-	smouspriteptr = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
-	mmouspriteptr = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
-	mouseunkspriteptr = sprite_make_wnd(
+	mouse_small_sprite = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
+	mouse_medium_sprite = sprite_make_wnd(mouse_width, mouse_height, 0x0F);
+	mouse_background_sprite = sprite_make_wnd(
 		mouse_width + video_flag2_is1, mouse_height, 0x0F);
 
 	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
-	sprite_set_1_from_argptr(smouspriteptr);
+	sprite_set_1_from_argptr(mouse_small_sprite);
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
-	sprite_set_1_from_argptr(mmouspriteptr);
+	sprite_set_1_from_argptr(mouse_medium_sprite);
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "mmou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
@@ -597,7 +597,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 	case 'H':
 	case 'h':
-		HKeyFlag ^= 1;
+		h_key_toggle ^= 1;
 		return 1;
 
 	case 'M':
@@ -652,22 +652,22 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 void sub_29772(void)
 {
-	word_45D1C = 0;
-	word_45D06 = 0;
-	idle_counter = 0;
+	menu_animation_counter = 0;
+	menu_animation_state = 0;
+	menu_idle_counter = 0;
 }
 
 void mouse_draw_transparent_check(void)
 {
-	byte_3B8F7 = 1;
-	if (kbormouse != 0 && mouse_isdirty == 0)
+	mouse_transparent_mode = 1;
+	if (kbormouse != 0 && mouse_background_dirty == 0)
 		mouse_draw_transparent();
 }
 
 void mouse_draw_opaque_check(void)
 {
-	byte_3B8F7 = 0;
-	if (mouse_isdirty != 0)
+	mouse_transparent_mode = 0;
+	if (mouse_background_dirty != 0)
 		mouse_draw_opaque();
 }
 
@@ -793,8 +793,8 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		input_mouse_previous_y = mouse_ypos;
 		kbormouse = 1;
 		input_mouse_idle_frames = 0;
-		if (byte_3B8F7 != 0) {
-			if (mouse_isdirty != 0)
+		if (mouse_transparent_mode != 0) {
+			if (mouse_background_dirty != 0)
 				mouse_draw_opaque();
 			mouse_draw_transparent();
 		}
@@ -804,7 +804,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		if (LEGACY_S16_FROM_BITS(input_mouse_idle_frames) > 500) {
 			input_mouse_idle_frames = 0;
 			kbormouse = 0;
-			if (mouse_isdirty != 0)
+			if (mouse_background_dirty != 0)
 				mouse_draw_opaque();
 		}
 	}
@@ -1015,7 +1015,7 @@ void input_push_status(void)
 {
 	legacy_s16 index = (legacy_s8)input_mode_stack_depth;
 
-	input_draw_mode_stack[index] = byte_3B8F7;
+	input_draw_mode_stack[index] = mouse_transparent_mode;
 	input_device_mode_stack[index] = kbormouse;
 	input_mode_stack_depth++;
 }
@@ -1029,7 +1029,7 @@ void input_pop_status(void)
 
 	input_mode_stack_depth--;
 	index = (legacy_s8)input_mode_stack_depth;
-	byte_3B8F7 = input_draw_mode_stack[index];
+	mouse_transparent_mode = input_draw_mode_stack[index];
 	kbormouse = input_device_mode_stack[index];
 	if (kbormouse == 0)
 		mouse_draw_opaque_check();
@@ -4379,13 +4379,13 @@ legacy_s16 run_intro(void)
 	sprite_copy_wnd_to_1_clear();
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
-		(legacy_s8 far*)tempdataptr, "prod");
+		(legacy_s8 far*)ui_temp_resource, "prod");
 	waitflag = shape->s2d_pos_y != 0 ? 0xA0 : 0xB4;
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
-		(legacy_s8 far*)tempdataptr, "prod");
+		(legacy_s8 far*)ui_temp_resource, "prod");
 	sprite_shape_to_1_alt(shape);
-	result = sprite_blit_to_video(wndsprite, -1);
+	result = sprite_blit_to_video(render_window_sprite, -1);
 	if (result == 0)
 		result = input_repeat_check(0x190);
 
@@ -4393,9 +4393,9 @@ legacy_s16 run_intro(void)
 		sprite_copy_wnd_to_1_clear();
 		waitflag = 0xB4;
 		shape = (struct SHAPE2D far*)locate_shape_fatal(
-			(legacy_s8 far*)tempdataptr, "titl");
+			(legacy_s8 far*)ui_temp_resource, "titl");
 		sprite_shape_to_1_alt(shape);
-		result = sprite_blit_to_video(wndsprite, -1);
+		result = sprite_blit_to_video(render_window_sprite, -1);
 		if (result == 0)
 			result = input_repeat_check(0x190);
 	}
@@ -4408,22 +4408,22 @@ legacy_s16 run_intro_looped(void)
 	legacy_s16 result;
 
 	file_load_audiores("skidtitl", "skidms", "TITL");
-	tempdataptr = file_load_resource(2, "sdtitl");
-	wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
+	ui_temp_resource = file_load_resource(2, "sdtitl");
+	render_window_sprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 	result = run_intro();
-	sprite_free_wnd(wndsprite);
-	mmgr_free((legacy_s8 far*)tempdataptr);
+	sprite_free_wnd(render_window_sprite);
+	mmgr_free((legacy_s8 far*)ui_temp_resource);
 
 	if (result == 0) {
 		result = setup_intro();
 		if (result == 0) {
-			tempdataptr = file_load_resource(2, "sdcred");
-			wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
+			ui_temp_resource = file_load_resource(2, "sdcred");
+			render_window_sprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 			sprite_copy_wnd_to_1_clear();
-			sprite_blit_to_video(wndsprite, 0);
+			sprite_blit_to_video(render_window_sprite, 0);
 			result = load_intro_resources();
-			sprite_free_wnd(wndsprite);
-			mmgr_free((legacy_s8 far*)tempdataptr);
+			sprite_free_wnd(render_window_sprite);
+			mmgr_free((legacy_s8 far*)ui_temp_resource);
 		}
 	}
 
@@ -4442,15 +4442,15 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index, const legacy_s16* x_val
 	legacy_s16 selected_state;
 
 	delta = (legacy_u16)timer_get_delta_alt();
-	animation_counter = LEGACY_U16_WRAP_ADD(word_45D1C, delta);
+	animation_counter = LEGACY_U16_WRAP_ADD(menu_animation_counter, delta);
 	while (LEGACY_S16_FROM_BITS(animation_counter) > 60)
 		animation_counter = LEGACY_U16_WRAP_SUB(animation_counter, 60U);
-	word_45D1C = animation_counter;
+	menu_animation_counter = animation_counter;
 	selected_state = LEGACY_S16_FROM_BITS(animation_counter) > 30 ?
 		LEGACY_S16_FROM_BITS((legacy_u16)second_state) :
 		LEGACY_S16_FROM_BITS((legacy_u16)first_state);
-	if (word_45D06 != selected_state) {
-		word_45D06 = selected_state;
+	if (menu_animation_state != selected_state) {
+		menu_animation_state = selected_state;
 		mouse_draw_opaque_check();
 		sprite_1_unk4(x_values[item_index], y_values[item_index],
 			width_values[item_index], height_values[item_index],
@@ -4769,7 +4769,7 @@ void load_tracks_menu_shapes(void)
 	}
 
 	text_resource = (legacy_s8 far*)file_load_resfile("tedit");
-	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 	progress_box_shape = (legacy_u8 far*)locate_shape_alt(text_resource, "pbox");
 	shape_name_resource = locate_shape_alt(text_resource, "snam");
 	mask_name_resource = locate_shape_alt(text_resource, "mnam");
@@ -4939,7 +4939,7 @@ void load_tracks_menu_shapes(void)
 				}
 			}
 
-			sprite_blit_to_video(wndsprite, LEGACY_S8_FROM_BITS(blit_mode));
+			sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = 0xFEU;
 			previous_hovered_tile = 0xFFU;
 		}
@@ -5514,7 +5514,7 @@ track_editor_next:
 		}
 	}
 
-	sprite_free_wnd(wndsprite);
+	sprite_free_wnd(render_window_sprite);
 	for (index = 4U; index != 0; index--)
 		sprite_free_wnd(cursor_sprites[index - 1U]);
 	unload_resource(text_resource);
@@ -5538,7 +5538,7 @@ legacy_s8 run_menu(void)
 	blit_mode = 0xFFU;
 	show_waiting();
 	waitflag = 0xB4;
-	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 	resource = (legacy_s8 far*)file_load_resource(2, aSdmsel);
 	sprite_copy_wnd_to_1();
 	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, aScrn);
@@ -5549,7 +5549,7 @@ legacy_s8 run_menu(void)
 		if (selected != previous) {
 			previous = selected;
 			sprite_copy_wnd_to_1();
-			sprite_blit_to_video(wndsprite,
+			sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = 0xFEU;
 			sprite_copy_2_to_1_2();
@@ -5565,9 +5565,9 @@ legacy_s8 run_menu(void)
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 
-		idle_counter = LEGACY_U16_WRAP_ADD(idle_counter, elapsed);
-		if (LEGACY_S16_FROM_BITS((legacy_u16)idle_counter) > 0x1770) {
-			idle_counter = 0;
+		menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, elapsed);
+		if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > 0x1770) {
+			menu_idle_counter = 0;
 			idle_expired = (legacy_u8)(idle_expired + 1U);
 		}
 		if (idle_expired != 0) {
@@ -5589,7 +5589,7 @@ legacy_s8 run_menu(void)
 			selected = next_selection[selected];
 	}
 
-	sprite_free_wnd(wndsprite);
+	sprite_free_wnd(render_window_sprite);
 	return LEGACY_S8_FROM_BITS(selected);
 }
 
@@ -5721,7 +5721,7 @@ legacy_s8 load_intro_resources(void)
 	legacy_u16 animation_index;
 
 	credit_resource = (legacy_s8 far*)file_load_resfile(aCred);
-	locate_many_resources((legacy_s8 far*)tempdataptr,
+	locate_many_resources((legacy_s8 far*)ui_temp_resource,
 		aArowarrwarw1ar, (legacy_s8 far**)credit_shapes);
 	waitflag = 0x96;
 	sprite_copy_wnd_to_1_clear();
@@ -5780,7 +5780,7 @@ legacy_s8 load_intro_resources(void)
 		0xAC, 0x78, word_407D4, word_407D6);
 	unload_resource(credit_resource);
 
-	(void)sprite_blit_to_video(wndsprite, -1);
+	(void)sprite_blit_to_video(render_window_sprite, -1);
 	sprite_copy_2_to_1_2();
 	(void)timer_get_delta_alt();
 	arrow_x = 0x14A;
@@ -5814,7 +5814,7 @@ legacy_s8 load_intro_resources(void)
 		sprite_copy_2_to_1_2();
 		sprite_set_1_size(0, 0x140, arrow_y, 0xC8);
 		mouse_draw_opaque_check();
-		sprite_putimage(wndsprite->sprite_bitmapptr);
+		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		mouse_draw_transparent_check();
 		animation_target = LEGACY_S16_WRAP_ADD(animation_target, 5);
 		while (animation_target > animation_elapsed) {
@@ -5827,13 +5827,13 @@ legacy_s8 load_intro_resources(void)
 
 	sprite_set_1_size(0, 0x140, 0, 0xC8);
 	mouse_draw_opaque_check();
-	sprite_clear_shape(wndsprite->sprite_bitmapptr);
+	sprite_clear_shape(render_window_sprite->sprite_bitmapptr);
 	sprite_copy_wnd_to_1();
 	sprite_set_1_size(0, 0x140, arrow_y, 0xC8);
 	sprite_clear_1_color(0);
 	sprite_shape_to_1_alt(credit_shapes[0]);
 	sprite_shape_to_1_alt(credit_shapes[10]);
-	if (sprite_blit_to_video(wndsprite, 0) != 0)
+	if (sprite_blit_to_video(render_window_sprite, 0) != 0)
 		return 1;
 	return input_repeat_check(0x1F4) != 0;
 }
@@ -6073,7 +6073,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		blit_mode = 0xFFU;
 		show_waiting();
 		waitflag = 0x9B;
-		wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+		render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 		load_skybox((legacy_s8)td14_elem_map_main[0x384]);
 		shape3d_load_all();
 		set_projection(0x28, 0x28, 0x140, 0xC8);
@@ -6134,7 +6134,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		for (;;) {
 			if (selected != previous) {
 				previous = selected;
-				sprite_blit_to_video(wndsprite,
+				sprite_blit_to_video(render_window_sprite,
 					LEGACY_S8_FROM_BITS(blit_mode));
 				blit_mode = 0xFEU;
 				sprite_copy_2_to_1_2();
@@ -6145,10 +6145,10 @@ void run_tracks_menu(legacy_s16 reload_track)
 				trackmenu_buttons_x1, trackmenu_buttons_x2,
 				trackmenu_buttons_y1, trackmenu_buttons_y2,
 				word_407CE, word_407D0);
-			idle_counter = LEGACY_U16_WRAP_ADD(idle_counter, elapsed);
-			if (LEGACY_S16_FROM_BITS((legacy_u16)idle_counter) >
+			menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, elapsed);
+			if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) >
 				0x1770) {
-				idle_counter = 0;
+				menu_idle_counter = 0;
 				idle_expired = (legacy_u8)(idle_expired + 1U);
 			}
 			key = (legacy_u16)input_checking(
@@ -6188,14 +6188,14 @@ void run_tracks_menu(legacy_s16 reload_track)
 					gameconfig.game_trackname, ".trk", g_path_buf);
 				if (chosen != 0) {
 					file_read_fatal(g_path_buf, td14_elem_map_main);
-					sprite_free_wnd(wndsprite);
+					sprite_free_wnd(render_window_sprite);
 					break;
 				}
 				previous = 0xFFU;
 				continue;
 			}
 
-			sprite_free_wnd(wndsprite);
+			sprite_free_wnd(render_window_sprite);
 			if (selected == 1)
 				needs_track_setup = 1;
 			else
@@ -6243,7 +6243,7 @@ opponent_menu_refresh:
 		if (displayed_opponent !=
 			(legacy_u8)gameconfig.game_opponenttype) {
 			if (displayed_opponent != 0xFFU) {
-				sprite_free_wnd(wndsprite);
+				sprite_free_wnd(render_window_sprite);
 				if (resource_loaded != 0)
 					unload_resource(opponent_resource);
 			}
@@ -6258,7 +6258,7 @@ opponent_menu_refresh:
 				resource_loaded = 0;
 			}
 
-			wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+			render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 			displayed_opponent =
 				(legacy_u8)gameconfig.game_opponenttype;
 			previous_selection = 0xFFU;
@@ -6288,7 +6288,7 @@ opponent_menu_refresh:
 			sub_34526(shape);
 			if (video_flag5_is0 != 0) {
 				sprite_clear_shape_alt(
-					wndsprite->sprite_bitmapptr, 0, 0);
+					render_window_sprite->sprite_bitmapptr, 0, 0);
 				sprite_copy_wnd_to_1();
 			}
 
@@ -6324,7 +6324,7 @@ opponent_menu_refresh:
 
 		if (selected != previous_selection) {
 			previous_selection = selected;
-			sprite_blit_to_video(wndsprite,
+			sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = 0xFEU;
 			(void)timer_get_delta_alt();
@@ -6389,7 +6389,7 @@ opponent_menu_refresh:
 				goto opponent_menu_refresh;
 			check_input();
 			mouse_draw_opaque_check();
-			sprite_free_wnd(wndsprite);
+			sprite_free_wnd(render_window_sprite);
 			unload_resource(opponent_resource);
 			show_waiting();
 			run_car_menu(&gameconfig.game_opponentcarid[0],
@@ -6413,7 +6413,7 @@ opponent_menu_refresh:
 			gameconfig.game_opponentcarid[0] = (legacy_s8)0xFFU;
 		}
 
-		sprite_free_wnd(wndsprite);
+		sprite_free_wnd(render_window_sprite);
 		if (resource_loaded != 0)
 			unload_resource(opponent_resource);
 		mmgr_free(opp_res);
@@ -6486,7 +6486,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 
 	sprite_copy_wnd_to_1();
 	highscore_text_unk();
-	sprite_blit_to_video(wndsprite, -1);
+	sprite_blit_to_video(render_window_sprite, -1);
 	show_dialog(3, 0, prompt, 0xFFFFU, 0xFFFFU,
 		dialogarg2, positions, 0);
 	check_input();
@@ -6498,7 +6498,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 
 	sprite_copy_wnd_to_1();
 	highscore_text_unk();
-	sprite_blit_to_video(wndsprite, -1);
+	sprite_blit_to_video(render_window_sprite, -1);
 	highscore_write_b();
 	highscore_text_unk();
 }
@@ -7915,7 +7915,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	void far* carresptr;
 	legacy_u32 var_8;
 
-	wndsprite = 0;
+	render_window_sprite = 0;
 	ensure_file_exists(2);
 	shape3d_load_car_shapes(gameconfig.game_playercarid, gameconfig.game_opponentcarid);
 	aCarcoun[3] = gameconfig.game_playercarid[0];
@@ -7989,7 +7989,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 				return 1;
 			}
 		}
-		wndsprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
+		render_window_sprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 	}
 
 	followOpponentFlag = 0;
@@ -8007,8 +8007,8 @@ legacy_s16 setup_player_cars_repldump(void) {
 
 void free_player_cars(void) {
 	if (video_flag5_is0 == 0) {
-		if (wndsprite != 0) {
-			sprite_free_wnd(wndsprite);
+		if (render_window_sprite != 0) {
+			sprite_free_wnd(render_window_sprite);
 		}
 	}
 	shape3d_free_all();
@@ -8480,7 +8480,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	previous_selected = 0xFFU;
 	set_projection(0x24, 0x11, 0x140, 0x64);
 	(void)timer_get_delta_alt();
-	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 
 car_menu_top:
 	if (previous_car_index != car_index) {
@@ -8634,11 +8634,11 @@ car_menu_top:
 			union_rect.top, union_rect.bottom);
 		mouse_draw_opaque_check();
 		if (blit_mode != 0xFEU) {
-			(void)sprite_blit_to_video(wndsprite,
+			(void)sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = 0xFEU;
 		} else {
-			sprite_putimage(wndsprite->sprite_bitmapptr);
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		}
 		mouse_draw_transparent_check();
 		previous_car_index = car_index;
@@ -8656,7 +8656,7 @@ car_menu_input:
 				carmenu_buttons_x1[0],
 				LEGACY_S16_WRAP_ADD(carmenu_buttons_x2[4], 1));
 			mouse_draw_opaque_check();
-			sprite_putimage(wndsprite->sprite_bitmapptr);
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 			mouse_draw_transparent_check();
 			sprite_copy_2_to_1_2();
 		}
@@ -8669,9 +8669,9 @@ car_menu_input:
 		carmenu_buttons_y1, carmenu_buttons_y2,
 		carmenu_buttons_x1, carmenu_buttons_x2,
 		word_407CE, word_407D0);
-	idle_counter = LEGACY_U16_WRAP_ADD(idle_counter, rotation_delta);
-	if (LEGACY_S16_FROM_BITS((legacy_u16)idle_counter) > 0x2EE0) {
-		idle_counter = 0;
+	menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, rotation_delta);
+	if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > 0x2EE0) {
+		menu_idle_counter = 0;
 		idle_expired = (legacy_u8)(idle_expired + 1U);
 	}
 	input = (legacy_u16)input_checking(rotation_delta);
@@ -8729,7 +8729,7 @@ car_menu_input:
 		goto car_menu_top;
 	}
 
-	sprite_free_wnd(wndsprite);
+	sprite_free_wnd(render_window_sprite);
 	unload_resource(car_resource);
 	shape3d_free_car_shapes();
 	if (opponent_type != 0 && video_flag5_is0 != 0)
@@ -8933,7 +8933,7 @@ legacy_u16 end_hiscore(void)
 		opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
 	}
 
-	wndsprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
 	animation_sprite = 0;
 	if (video_flag5_is0 != 0)
 		animation_sprite = sprite_make_wnd(0xC8U, 0x64U, 0x0FU);
@@ -9195,7 +9195,7 @@ end_hiscore_start:
 	draw_button(locate_text_res(misc_resource, aBct),
 		0x81, 0xAF, 0x46, 0x15,
 		word_407F4, word_407F6, word_407F8, 0);
-	(void)sprite_blit_to_video(wndsprite,
+	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
 	blit_mode = 0xFEU;
 	sub_29772();
@@ -9272,7 +9272,7 @@ end_hiscore_menu_draw:
 		button_x2[i] = LEGACY_S16_WRAP_ADD(word_3BCF6[i], menu_offset);
 	}
 	check_input();
-	(void)sprite_blit_to_video(wndsprite,
+	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
 	blit_mode = 0xFEU;
 	sprite_copy_2_to_1_2();
@@ -9285,7 +9285,7 @@ end_hiscore_menu_loop:
 			hiscore_buttons_y1[0],
 			LEGACY_S16_WRAP_ADD(hiscore_buttons_y2[0], 1));
 		mouse_draw_opaque_check();
-		sprite_putimage(wndsprite->sprite_bitmapptr);
+		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		mouse_draw_transparent_check();
 		(void)timer_get_delta_alt();
 		sub_29772();
@@ -9361,7 +9361,7 @@ end_hiscore_menu_loop:
 		mmgr_release(animation_resource);
 	if (video_flag5_is0 != 0)
 		sprite_free_wnd(animation_sprite);
-	sprite_free_wnd(wndsprite);
+	sprite_free_wnd(render_window_sprite);
 	if (gameconfig.game_opponenttype != 0)
 		unload_resource(opponent_resource);
 	unload_resource(misc_resource);
@@ -10732,7 +10732,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	sub_29772();
 	set_projection(0x24, 0x11, 0x140, 0x64);	// would at best draw just a pixel without this - camera projection??
 
-	wndsprite = sprite_make_wnd(320, 100, 0x0F);
+	render_window_sprite = sprite_make_wnd(320, 100, 0x0F);
 
 	//run_intro_looped();
 	
@@ -10775,7 +10775,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 		get_a_poly_info(); // renders to sprite1
 	
 		//sprite_copy_2_to_1_2();
-		sprite_blit_to_video(wndsprite, 0);
+		sprite_blit_to_video(render_window_sprite, 0);
 		
 		inch = get_kb_or_joy_flags();//kb_get_char();
 		if (inch == 4) { // right
@@ -10803,7 +10803,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 		//sprite_copy_wnd_to_1();
 		//sprite_copy_2_to_1_2();
 	
-		//sprite_putimage(wndsprite->sprite_bitmapptr);
+		//sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		//sprite_putimage(var42wnd->sprite_bitmapptr);
 	
 	//fatal_error("happy yet?");
