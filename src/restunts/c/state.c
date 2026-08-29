@@ -489,14 +489,10 @@ finish_angles:
 	carstate->field_42 = 0;
 }
 
-static legacy_s16 opponent_position(legacy_s32 position)
+static legacy_s16 world_position_word(legacy_s32 position)
 {
-	legacy_u32 bits;
-
-	bits = (legacy_u32)position;
-	bits = (bits >> 6) |
-		((bits & 0x80000000UL) != 0 ? 0xFC000000UL : 0);
-	return LEGACY_S16_FROM_BITS((legacy_u16)bits);
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_SAR(position, 6U));
 }
 
 static legacy_s16 opponent_route_word(legacy_s16 index)
@@ -573,17 +569,17 @@ void opponent_op(void)
 	}
 	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
 		state.game_inputmode == 2;
-	opponent_x = opponent_position(
+	opponent_x = world_position_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lx);
-	opponent_y = opponent_position(
+	opponent_y = world_position_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.ly);
-	opponent_z = opponent_position(
+	opponent_z = world_position_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lz);
-	player_x = opponent_position(
+	player_x = world_position_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lx);
-	player_y = opponent_position(
+	player_y = world_position_word(
 		(legacy_s32)state.playerstate.car_posWorld1.ly);
-	player_z = opponent_position(
+	player_z = world_position_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lz);
 	state.opponentstate.field_CF = 0;
 	state.field_45E = 0;
@@ -752,15 +748,15 @@ choose_input:
 	if (state.opponentstate.car_crashBmpFlag == 0) {
 		relative.x = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.x,
-			opponent_position((legacy_s32)
+			world_position_word((legacy_s32)
 				state.opponentstate.car_posWorld1.lx));
 		relative.y = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.y,
-			opponent_position((legacy_s32)
+			world_position_word((legacy_s32)
 				state.opponentstate.car_posWorld1.ly));
 		relative.z = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.z,
-			opponent_position((legacy_s32)
+			world_position_word((legacy_s32)
 				state.opponentstate.car_posWorld1.lz));
 		rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 			state.opponentstate.car_rotate.y,
@@ -775,12 +771,12 @@ choose_input:
 	if (state.opponentstate.field_CD != 0) {
 		finish_distance = multiply_and_scale(cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
-				opponent_position((legacy_s32)
+				world_position_word((legacy_s32)
 					state.opponentstate.car_posWorld1.lz)));
 		finish_distance = LEGACY_S16_WRAP_ADD(finish_distance,
 			multiply_and_scale(sin_fast(track_angle),
 				LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
-					opponent_position((legacy_s32)
+					world_position_word((legacy_s32)
 						state.opponentstate.car_posWorld1.lx))));
 		if (finish_distance < 0)
 			update_crash_state(3, 1);
@@ -1918,15 +1914,21 @@ loc_17431:
 	state.playerstate.car_trackdata3_index = -1;
 	goto loc_173FD;
 loc_1743A:
-	var_32.x = state.playerstate.car_vec_unk3.x - (state.playerstate.car_posWorld1.lx >> 6);
+	var_32.x = LEGACY_S16_WRAP_SUB(
+		state.playerstate.car_vec_unk3.x,
+		world_position_word(state.playerstate.car_posWorld1.lx));
 	if (state.playerstate.car_vec_unk3.y == -1)
 		goto loc_1747C;
-	var_32.y = state.playerstate.car_vec_unk3.y - (state.playerstate.car_posWorld1.ly >> 6);
+	var_32.y = LEGACY_S16_WRAP_SUB(
+		state.playerstate.car_vec_unk3.y,
+		world_position_word(state.playerstate.car_posWorld1.ly));
 	goto loc_17481;
 loc_1747C:
     var_32.y = 0;
 loc_17481:
-	var_32.z = state.playerstate.car_vec_unk3.z - (state.playerstate.car_posWorld1.lz >> 6);
+	var_32.z = LEGACY_S16_WRAP_SUB(
+		state.playerstate.car_vec_unk3.z,
+		world_position_word(state.playerstate.car_posWorld1.lz));
 
 	mat_mul_vector(&var_32, var_matptr, &var_38);
 	si = var_38.z;
@@ -1950,15 +1952,19 @@ loc_174DD:
 loc_174E5:
 	var_2A = sub_18D60(var_2, &state.playerstate.car_vec_unk3, var_2C, 0);
 	var_28 = state.playerstate.car_vec_unk3;
-	var_28.x -= state.playerstate.car_posWorld1.lx >> 6;
+	var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
+		world_position_word(state.playerstate.car_posWorld1.lx));
 	if (var_28.y != -1)
 		goto loc_1753E;
-	var_28.y = -(state.playerstate.car_posWorld1.ly >> 6);
+	var_28.y = LEGACY_S16_WRAP_NEGATE(
+		world_position_word(state.playerstate.car_posWorld1.ly));
 	goto loc_17552;
 loc_1753E:
-	var_28.y -= state.playerstate.car_posWorld1.ly >> 6;
+	var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
+		world_position_word(state.playerstate.car_posWorld1.ly));
 loc_17552:
-	var_28.z -= state.playerstate.car_posWorld1.lz >> 6;
+	var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
+		world_position_word(state.playerstate.car_posWorld1.lz));
 	mat_mul_vector(&var_28, var_matptr, &var_38);
 	if (var_2C == 0)
 		goto loc_1758D;
@@ -2027,15 +2033,18 @@ loc_176B0:
 		goto loc_176BA;
 	goto loc_17771;
 loc_176BA:
-	var_28.x -= (state.playerstate.car_posWorld1.lx >> 6);
+	var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
+		world_position_word(state.playerstate.car_posWorld1.lx));
 	if (var_28.y != -1)
 		goto loc_176DC;
 	var_28.y = 0;
 	goto loc_176F0;
 loc_176DC:
-	var_28.y -= state.playerstate.car_posWorld1.ly >> 6;
+	var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
+		world_position_word(state.playerstate.car_posWorld1.ly));
 loc_176F0:
-	var_28.z -= state.playerstate.car_posWorld1.lz >> 6;
+	var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
+		world_position_word(state.playerstate.car_posWorld1.lz));
 	var_matptr = mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y, state.playerstate.car_rotate.x, 1);
 	mat_mul_vector(&var_28, var_matptr, &var_38);
 	state.playerstate.field_48 = polarAngle(-var_38.x, var_38.z) & 0x3FF;
@@ -2057,7 +2066,9 @@ loc_17771:
 		goto loc_1777B;
 	goto loc_17810;
 loc_1777B:
-	si = multiply_and_scale(cos_fast(track_angle), trackcenterpos[startrow2] - (state.playerstate.car_posWorld1.lz >> 6));
+	si = multiply_and_scale(cos_fast(track_angle),
+		LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+			world_position_word(state.playerstate.car_posWorld1.lz)));
 	goto loc_177AC;
 
 loc_1779E:
@@ -2066,7 +2077,10 @@ loc_1779E:
 	state.field_45D = 2;
 	goto loc_17771;
 loc_177AC:
-	si += multiply_and_scale(sin_fast(track_angle), trackcenterpos2[startcol2] - (state.playerstate.car_posWorld1.lx >> 6));
+	si = LEGACY_S16_WRAP_ADD(si,
+		multiply_and_scale(sin_fast(track_angle),
+			LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+				world_position_word(state.playerstate.car_posWorld1.lx))));
 	
 	if (si >= 0)
 		goto loc_17810;
