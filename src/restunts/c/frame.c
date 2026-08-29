@@ -1046,91 +1046,90 @@ legacy_s8 setup_intro(void)
 			}
 		}
 
-		if (needs_render == 0)
-			goto check_input;
-		needs_render = 0;
-		if (video_flag5_is0 != 0)
-			setup_mcgawnd2();
-		else
-			sprite_copy_wnd_to_1();
-		draw_car = 1;
-		horizontal_angle = -1;
-		opponent_x = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lx, 0);
-		opponent_y = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.ly, 0);
-		opponent_z = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lz, 0);
+		if (needs_render != 0) {
+			needs_render = 0;
+			if (video_flag5_is0 != 0)
+				setup_mcgawnd2();
+			else
+				sprite_copy_wnd_to_1();
+			draw_car = 1;
+			horizontal_angle = -1;
+			opponent_x = intro_shift_position(
+				(legacy_s32)state.opponentstate.car_posWorld1.lx, 0);
+			opponent_y = intro_shift_position(
+				(legacy_s32)state.opponentstate.car_posWorld1.ly, 0);
+			opponent_z = intro_shift_position(
+				(legacy_s32)state.opponentstate.car_posWorld1.lz, 0);
 
-		elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 6);
-		if (frame_count < elapsed_limit) {
-			draw_car = 0;
-			horizontal_angle = LEGACY_S16_FROM_BITS(
-				(legacy_u16)state.opponentstate.car_rotate.x & 0x03FFU);
-			vertical_angle = 0;
-			camera_x = opponent_x;
-			camera_y = LEGACY_S16_WRAP_ADD(opponent_y, 0x14);
-			camera_z = opponent_z;
-		} else {
-			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 11);
+			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 6);
 			if (frame_count < elapsed_limit) {
-				camera_x = 0x400;
-				camera_y = 0x5A;
-				camera_z = 0x400;
-				target_x = opponent_x;
-				target_y = opponent_y;
-				target_z = opponent_z;
+				draw_car = 0;
+				horizontal_angle = LEGACY_S16_FROM_BITS(
+					(legacy_u16)state.opponentstate.car_rotate.x & 0x03FFU);
+				vertical_angle = 0;
+				camera_x = opponent_x;
+				camera_y = LEGACY_S16_WRAP_ADD(opponent_y, 0x14);
+				camera_z = opponent_z;
+			} else {
+				elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 11);
+				if (frame_count < elapsed_limit) {
+					camera_x = 0x400;
+					camera_y = 0x5A;
+					camera_z = 0x400;
+					target_x = opponent_x;
+					target_y = opponent_y;
+					target_z = opponent_z;
+				}
 			}
-		}
 
-		if (horizontal_angle == -1) {
-			horizontal_angle = LEGACY_S16_FROM_BITS(
-				(legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
+			if (horizontal_angle == -1) {
+				horizontal_angle = LEGACY_S16_FROM_BITS(
+					(legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
+						LEGACY_S16_WRAP_SUB(target_x, camera_x),
+						LEGACY_S16_WRAP_SUB(target_z, camera_z))) & 0x03FFU);
+				target_distance = (legacy_s16)polarRadius2D(
 					LEGACY_S16_WRAP_SUB(target_x, camera_x),
-					LEGACY_S16_WRAP_SUB(target_z, camera_z))) & 0x03FFU);
-			target_distance = (legacy_s16)polarRadius2D(
-				LEGACY_S16_WRAP_SUB(target_x, camera_x),
-				LEGACY_S16_WRAP_SUB(target_z, camera_z));
-			vertical_angle = LEGACY_S16_FROM_BITS((legacy_u16)polarAngle(
-				LEGACY_S16_WRAP_SUB(target_y, camera_y),
-				target_distance) & 0x03FFU);
-		}
+					LEGACY_S16_WRAP_SUB(target_z, camera_z));
+				vertical_angle = LEGACY_S16_FROM_BITS((legacy_u16)polarAngle(
+					LEGACY_S16_WRAP_SUB(target_y, camera_y),
+					target_distance) & 0x03FFU);
+			}
 
-		active_points = point_buffers[rect_index];
-		active_point_count = &point_counts[rect_index];
-		intro_op_impl(camera_x, camera_y, camera_z, horizontal_angle,
-			vertical_angle, draw_car, logo_changed, stars,
-			active_points, active_point_count, &rect_unk[rect_index],
-			&shape_rect, &combined_rect);
+			active_points = point_buffers[rect_index];
+			active_point_count = &point_counts[rect_index];
+			intro_op_impl(camera_x, camera_y, camera_z, horizontal_angle,
+				vertical_angle, draw_car, logo_changed, stars,
+				active_points, active_point_count, &rect_unk[rect_index],
+				&shape_rect, &combined_rect);
 
-		if (video_flag5_is0 != 0) {
-			mouse_draw_opaque_check();
-			setup_mcgawnd1();
-			mouse_draw_transparent_check();
-			if (slow_video_mgmt_copy != 0)
-				rect_unk[rect_index] = shape_rect;
-			rect_index ^= 1U;
-		} else {
-			sprite_copy_2_to_1_2();
-			if (slow_video_mgmt_copy != 0) {
-				rect_union(&combined_rect, &rect_unk6, &redraw_rect);
-				if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
-					sprite_set_1_size(redraw_rect.left, redraw_rect.right,
-						redraw_rect.top, redraw_rect.bottom);
+			if (video_flag5_is0 != 0) {
+				mouse_draw_opaque_check();
+				setup_mcgawnd1();
+				mouse_draw_transparent_check();
+				if (slow_video_mgmt_copy != 0)
+					rect_unk[rect_index] = shape_rect;
+				rect_index ^= 1U;
+			} else {
+				sprite_copy_2_to_1_2();
+				if (slow_video_mgmt_copy != 0) {
+					rect_union(&combined_rect, &rect_unk6, &redraw_rect);
+					if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
+						sprite_set_1_size(redraw_rect.left, redraw_rect.right,
+							redraw_rect.top, redraw_rect.bottom);
+						mouse_draw_opaque_check();
+						sprite_putimage(render_window_sprite->sprite_bitmapptr);
+						mouse_draw_transparent_check();
+						rect_unk[0] = shape_rect;
+						rect_unk6 = combined_rect;
+					}
+				} else {
 					mouse_draw_opaque_check();
 					sprite_putimage(render_window_sprite->sprite_bitmapptr);
 					mouse_draw_transparent_check();
-					rect_unk[0] = shape_rect;
-					rect_unk6 = combined_rect;
 				}
-			} else {
-				mouse_draw_opaque_check();
-				sprite_putimage(render_window_sprite->sprite_bitmapptr);
-				mouse_draw_transparent_check();
 			}
 		}
 
-check_input:
 		if (input_do_checking(delta) != 0) {
 			interrupted = 1;
 			break;
@@ -1385,64 +1384,61 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 		return;
 
 	sprite_copy_2_to_1_2();
-	if (byte_454A4 != 0)
-		goto draw_window;
-
-	if (slow_video_mgmt_copy == 0) {
+	if (byte_454A4 != 0) {
+		mouse_draw_opaque_check();
+		sprite_putimage(render_window_sprite->sprite_bitmapptr);
+	} else if (slow_video_mgmt_copy == 0) {
 		sprite_set_1_size(
 			cliprect->left,
 			cliprect->right,
 			cliprect->top,
 			cliprect->bottom);
-		goto draw_window;
-	}
-
-	for (i = 0; i < 15; i++)
-		rect_array_unk_indices[i] = 3;
-	if (detail_level == 4)
-		word_449FE = word_463D6;
-	if (word_449FE == word_463D6 &&
-		rect_array_unk[5].left == rect_array_unk2[5].left &&
-		rect_array_unk[5].right == rect_array_unk2[5].right &&
-		rect_array_unk[5].top == rect_array_unk2[5].top &&
-		rect_array_unk[5].bottom == rect_array_unk2[5].bottom) {
-		rect_array_unk_indices[5] = 0;
-	}
-
-	rect_array_unk3_length = 0;
-	rectlist_add_rects(
-		15,
-		rect_array_unk_indices,
-		rect_array_unk,
-		rect_array_unk2,
-		cliprect,
-		&rect_array_unk3_length,
-		rect_array_unk3);
-	if (rect_array_unk3_length != 0) {
-		rect_array_sort_by_top(
-			rect_array_unk3_length,
-			rect_array_unk3,
-			rect_array_unk3_indices);
 		mouse_draw_opaque_check();
-		for (i = 0; i < rect_array_unk3_length; i++) {
-			dirty_rect = &rect_array_unk3[rect_array_unk3_indices[i]];
-			sprite_set_1_size(
-				dirty_rect->left,
-				dirty_rect->right,
-				dirty_rect->top,
-				dirty_rect->bottom);
+		sprite_putimage(render_window_sprite->sprite_bitmapptr);
+	} else {
+		for (i = 0; i < 15; i++)
+			rect_array_unk_indices[i] = 3;
+		if (detail_level == 4)
+			word_449FE = word_463D6;
+		if (word_449FE == word_463D6 &&
+			rect_array_unk[5].left == rect_array_unk2[5].left &&
+			rect_array_unk[5].right == rect_array_unk2[5].right &&
+			rect_array_unk[5].top == rect_array_unk2[5].top &&
+			rect_array_unk[5].bottom == rect_array_unk2[5].bottom) {
+			rect_array_unk_indices[5] = 0;
+		}
+
+		rect_array_unk3_length = 0;
+		rectlist_add_rects(
+			15,
+			rect_array_unk_indices,
+			rect_array_unk,
+			rect_array_unk2,
+			cliprect,
+			&rect_array_unk3_length,
+			rect_array_unk3);
+		if (rect_array_unk3_length != 0) {
+			rect_array_sort_by_top(
+				rect_array_unk3_length,
+				rect_array_unk3,
+				rect_array_unk3_indices);
+			mouse_draw_opaque_check();
+			for (i = 0; i < rect_array_unk3_length; i++) {
+				dirty_rect = &rect_array_unk3[rect_array_unk3_indices[i]];
+				sprite_set_1_size(
+					dirty_rect->left,
+					dirty_rect->right,
+					dirty_rect->top,
+					dirty_rect->bottom);
+				sprite_putimage(render_window_sprite->sprite_bitmapptr);
+			}
+		} else {
+			sprite_set_1_size(0, 0x140, cliprect->top, cliprect->bottom);
+			mouse_draw_opaque_check();
 			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		}
-		goto finish;
 	}
 
-	sprite_set_1_size(0, 0x140, cliprect->top, cliprect->bottom);
-
-draw_window:
-	mouse_draw_opaque_check();
-	sprite_putimage(render_window_sprite->sprite_bitmapptr);
-
-finish:
 	mouse_draw_transparent_check();
 	if (slow_video_mgmt_copy != 0) {
 		word_449FE = word_463D6;
