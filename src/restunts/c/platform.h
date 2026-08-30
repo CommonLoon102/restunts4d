@@ -82,6 +82,11 @@ void dos_audio_driver_prepare_context(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
 void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u16 value);
+void dos_audio_driver_set_control(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 control, legacy_u16 value);
+void dos_audio_driver_set_pitch(legacy_u8* timer, legacy_s16 pitch,
+	legacy_s16 driver_channel);
+void dos_audio_driver_send_data(legacy_u16 length, legacy_u8* data);
 void dos_audio_driver_activate_context(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
 	legacy_u16 parameter, void far* resource);

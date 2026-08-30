@@ -998,17 +998,17 @@ extern void far* dos_audio_driver_binary;
 
 static legacy_s16 audio_missing_file_fatal;
 static legacy_s8 audio_driver_prefix[14];
-static legacy_u8 audio_music_channel_count;
-static legacy_u8 audio_suspended;
-static legacy_u8 audio_music_active;
+legacy_u8 audio_music_channel_count;
+legacy_u8 audio_suspended;
+legacy_u8 audio_music_active;
 static legacy_u8 audio_music_rate;
 legacy_s8 audio_car_state_ready;
 static legacy_s8 audio_player_car_flags;
 static legacy_s8 audio_opponent_car_flags;
 static legacy_u8 audio_saved_channel_volumes[24];
 static legacy_u8 audio_effect_channel_volumes[24];
-static legacy_u8 audio_effect_rate;
-static legacy_u8 audio_channel_reserved[24];
+legacy_u8 audio_effect_rate;
+legacy_u8 audio_channel_reserved[24];
 static legacy_u8 audio_channel_values[24];
 static legacy_u8 audio_channel_notes[24];
 static void far* audio_bass_drum_resource;
@@ -1023,10 +1023,11 @@ legacy_s16 audio_opponent_engine_channel;
 static legacy_u16 audio_driver_timer_rate;
 static legacy_u8 audio_padded_id[5];
 static legacy_s16 audio_driver_timer_divider;
-static legacy_u16 audio_engine_value_44d48;
-static legacy_u16 audio_engine_value_454ba;
+legacy_u16 audio_engine_value_44d48;
+legacy_u16 audio_engine_value_454ba;
 static legacy_s8 audio_filename_buffer[34];
 void audio_driver_timer(void);
+void audio_sequence_timer(void);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
@@ -1049,13 +1050,13 @@ extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
 
-static void far* audio_read_far_pointer(const legacy_u8 far* source)
+void far* audio_read_far_pointer(const legacy_u8 far* source)
 {
 	return dos_memory_make_pointer(LEGACY_READ_U16_LE(source + 2),
 		LEGACY_READ_U16_LE(source));
 }
 
-static void audio_write_far_pointer(legacy_u8 far* destination,
+void audio_write_far_pointer(legacy_u8 far* destination,
 	const void far* value)
 {
 	LEGACY_WRITE_U16_LE(destination, dos_memory_pointer_offset(value));
@@ -1951,7 +1952,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 		restrict_to_timer = 0;
 	} else {
 		context_count = dos_audio_context_count;
-		restrict_to_timer = timer[0x15U] < timer[0x16U];
+		restrict_to_timer = timer[0x15U] >= timer[0x16U];
 	}
 
 	context = dos_audio_contexts;
@@ -2009,26 +2010,21 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	return selected;
 }
 
-legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
+legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
+	legacy_u32 duration, legacy_u8 note, legacy_u16 parameter,
+	legacy_s16 handle)
 {
-	legacy_u8* timer;
 	legacy_u8* context;
 	legacy_u8 far* resource;
-	legacy_u16 timer_offset;
 	legacy_u16 context_offset;
-	legacy_u8 note;
 	legacy_s16 driver_channel;
 	legacy_s16 pitch;
 	legacy_s16 context_index;
 
-	timer_offset = LEGACY_U16_WRAP_MUL((legacy_u16)handle, 0x4CU);
-	timer = audio_timers + timer_offset;
 	resource = (legacy_u8 far*)audio_read_far_pointer(timer + 0x1EU);
-	note = 0xFFU;
 	resource = (legacy_u8 far*)audio_select_sample_resource(resource, note);
 	if (resource == 0)
 		return -1;
-
 	context_index = audio_find_driver_context(resource, timer);
 	if (context_index == -1)
 		return -1;
@@ -2048,7 +2044,8 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	context[2] = timer[0x24U];
 	LEGACY_WRITE_U16_LE(context + 8U, 0);
 	LEGACY_WRITE_U16_LE(context + 0x0AU, 0);
-	audio_context_write_u32(context, 0x0CU, 0xFFFFFFDFUL);
+	audio_context_write_u32(context, 0x0CU,
+		LEGACY_U32_WRAP_SUB(duration, 1UL));
 	LEGACY_WRITE_U16_LE(context + 0x14U,
 		audio_far_read_u16(resource + 0x1CU));
 	context[0x16U] = 1U;
@@ -2080,12 +2077,21 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 	pitch = LEGACY_S16_WRAP_ADD(
 		(legacy_s8)resource[0x10U], (legacy_s8)note);
 	dos_audio_driver_activate_context(driver_channel, context, timer,
-		pitch, 0, resource);
+		pitch, parameter, resource);
 	audio_channel_notes[(legacy_u16)handle] = note;
 	return context_index;
 }
 
-static void audio_advance_driver_context(legacy_u8* context)
+legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
+{
+	legacy_u8* timer;
+
+	timer = audio_timers +
+		LEGACY_U16_WRAP_MUL((legacy_u16)handle, 0x4CU);
+	return audio_start_note(timer, value, 0xFFFFFFE0UL, 0xFFU, 0, handle);
+}
+
+void audio_advance_driver_context(legacy_u8* context)
 {
 	legacy_u8* chunk;
 	legacy_u32 value;
@@ -2102,7 +2108,7 @@ static void audio_advance_driver_context(legacy_u8* context)
 	dos_audio_driver_start_context(context[0x2CU], context);
 	context[1] = 2U;
 	chunk = audio_channels + LEGACY_U16_WRAP_MUL(context[0], 0x4CU);
-	context[0x16U] = chunk[0x15U] != 0 ? 3U : 4U;
+	context[0x16U] = chunk[0x25U] != 0 ? 3U : 4U;
 }
 
 static legacy_u16 audio_absolute_word(legacy_s16 value)
@@ -2257,6 +2263,7 @@ void audio_update_driver_contexts(void)
 	}
 	dos_audio_driver_suspend_all(dos_audio_contexts);
 }
+
 
 void audio_suspend(void)
 {
@@ -2604,7 +2611,7 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 	}
 
 	audio_reset_channels();
-	timer_reg_callback(audio_driver_timer);
+	timer_reg_callback(audio_sequence_timer);
 	if (dos_audio_uses_direct_channels != 0) {
 		bank = file_load_binary_nofatal(mt32_bank_filename);
 		if (bank != 0) {
