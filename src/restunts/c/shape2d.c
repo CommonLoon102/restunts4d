@@ -1165,6 +1165,7 @@ void putpixel_single_maybe(legacy_s16 x, legacy_s16 y, legacy_s16 color)
 void set_fontdefseg(void far* data)
 {
 	fontdefseg = dos_memory_pointer_segment(data);
+	active_font_definition = (legacy_u8 far*)data;
 }
 
 void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
