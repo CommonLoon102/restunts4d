@@ -3,10 +3,10 @@ TARGET ?= dosfull
 OBJDIR = build\$(TARGET)
 
 ifeq ($(TARGET),dosheadless)
-  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS /DRESTUNTS_HEADLESS
+  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_HEADLESS
 
 else ifeq ($(TARGET),dosfull)
-  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS /DRESTUNTS_FULL
+  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_FULL
 
 # Unsupported target
 else

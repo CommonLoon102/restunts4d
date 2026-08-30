@@ -9,7 +9,7 @@ ifeq ($(CONFIG),debug)
 endif
 
 ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
-CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_DOS
+CC = bcc /c /u- /mm /v /n$(OBJDIR)
 
 all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/keyboard.obj $(OBJDIR)/divide.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
 
