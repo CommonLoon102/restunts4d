@@ -1,8 +1,8 @@
 name: Build and validate
 
-# Builds the four DOS executables and replays the golden replay set against
-# them. Called by the pull request check and by the release workflow, so both
-# gate on exactly the same validation.
+# Runs the host regression tests, builds the four DOS executables and replays
+# the golden replay set against them. Called by the pull request check and by
+# the release workflow, so both gate on exactly the same validation.
 on:
   workflow_call:
     inputs:
@@ -58,6 +58,16 @@ jobs:
           fi
           echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
           echo "total=$(( SHARDS * PARTITIONS_PER_SHARD ))" >> "$GITHUB_OUTPUT"
+
+  host-tests:
+    name: Host regression tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Compile and run the host tests
+        run: bash src/restunts/tests/run-host-tests.sh
 
   build:
     name: Build executables
