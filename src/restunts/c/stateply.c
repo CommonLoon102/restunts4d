@@ -923,7 +923,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	var_DEptrTo1C0++;
 	var_146ptrTo176++;
 	}
-    var_2 = 0;
+	var_2 = 0;
 	physics_flow = PLAYER_FLOW_loc_15142;
 	for (;;) {
 	switch (physics_flow) {
@@ -1033,7 +1033,7 @@ case PLAYER_FLOW_loc_15347:
 	{ physics_flow = PLAYER_FLOW_loc_15381; continue; }
 
 case PLAYER_FLOW_loc_1537C:
-    var_136 = 0;
+	var_136 = 0;
 case PLAYER_FLOW_loc_15381:
 	if (vec_1C.z != 0)
 		{ physics_flow = PLAYER_FLOW_loc_15398; continue; }
@@ -1177,7 +1177,7 @@ case PLAYER_FLOW_loc_156A3:
 	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
 	if (state.game_inputmode == 2) {
 		nextPosAndNormalIP = vec_1C6.y;
-	} else { 
+	} else {
 		nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	}
 
@@ -1582,7 +1582,7 @@ case PLAYER_FLOW_loc_16141:
 		{ physics_flow = PLAYER_FLOW_loc_1614C; continue; }
 
 case PLAYER_FLOW_loc_16146:
-    pState_minusRotate_x_1 = 0;
+	pState_minusRotate_x_1 = 0;
 case PLAYER_FLOW_loc_1614C:
 	if (pState_minusRotate_x_1 == 0)
 		{ physics_flow = PLAYER_FLOW_loc_161AB; continue; }
@@ -1627,7 +1627,7 @@ case PLAYER_FLOW_loc_161FF:
 	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >= 2)
 		{ physics_flow = PLAYER_FLOW_loc_1620A; continue; }
 case PLAYER_FLOW_loc_16204:
-    pState_minusRotate_z_1 = 0;
+	pState_minusRotate_z_1 = 0;
 case PLAYER_FLOW_loc_1620A:
 	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
@@ -1718,7 +1718,7 @@ case PLAYER_FLOW_loc_1641E:
 	{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
 case PLAYER_FLOW_loc_16425:
-    { physics_flow = PLAYER_FLOW_loc_162F9; continue; }
+	{ physics_flow = PLAYER_FLOW_loc_162F9; continue; }
 case PLAYER_FLOW_loc_16428:
 	var_11C = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_sumSurfFrontWheels,

@@ -107,7 +107,7 @@ const legacy_s8* file_find(const legacy_s8* query)
 	chdst = g_find.dirdelim = g_find.path;
 	for (chsrc = query; *chsrc; ++chsrc, ++chdst) {
 		*chdst = *chsrc;
-		
+
 		if (*chdst == ':' || *chdst == '\\') {
 			g_find.dirdelim = chdst + 1;
 		}
@@ -153,12 +153,12 @@ void file_build_path(const legacy_s8* dir, const legacy_s8* name, const legacy_s
 		dst[0] = 0;
 		dirlen = 0;
 	}
-	
+
 	// Add directory separator if needed.
 	if (dirlen && dir[dirlen - 1] != ':' && dir[dirlen - 1] != '\\') {
 		strcat(dst, "\\");
 	}
-	
+
 	strcat(dst, name);
 	strcat(dst, ext);
 }
@@ -169,7 +169,7 @@ const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* na
 	legacy_s8 path[80];
 
 	file_build_path(dir, name, ext, path);
-	
+
 	return file_find(path);
 }
 
@@ -298,7 +298,7 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 	legacy_u16 retval;
 	legacy_u16 wrtlen;
 	fileio_handle file;
-	
+
 	retval = 0;
 
 	if ((file = fileio_open(filename, 1)) != FILEIO_INVALID_HANDLE) {
@@ -482,13 +482,13 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
 		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << 16);
 	origsrc = src += COMPR_HEADER_SIZE;
-	
+
 	// Get source size and escape codes.
 	srclen = LEGACY_READ_U16_LE(src) |
 		((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] << 16);
 	esclen = src[COMPR_RLE_ESCLEN_OFFSET];
 	escapes = src + COMPR_RLE_HEADER_SIZE;
-	
+
 	// MSB denotes skipping the initial pass for byte sequence runs. Match the
 	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
 	// using the byte in the sequence-escape slot even though the declared
@@ -783,7 +783,7 @@ void far* file_load_binary(const legacy_s8* filename, legacy_s16 fatal) {
 
 	memptr = mmgr_get_chunk_by_name(filename);
 	if (dos_memory_pointer_segment(memptr) != 0) return memptr;
-	
+
 	numparas = file_paras(filename, fatal);
 	if (numparas == 0) return 0;
 	memptr = mmgr_alloc_pages(filename, numparas);
@@ -876,7 +876,7 @@ void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 void far* file_load_resfile(const legacy_s8* filename) {
 	legacy_s8 name[0x50];
 	void far* result;
-	
+
 #ifdef RESTUNTS_HEADLESS
 	strcpy(name, filename);
 	strcat(name, ".res");
@@ -893,16 +893,16 @@ void far* file_load_resfile(const legacy_s8* filename) {
 	while (1) {
 		strcpy(name, filename);
 		strcat(name, ".res");
-		
+
 		result = file_load_resource(1, name);
 		if (result != 0) return result;
-	
+
 		strcpy(name, filename);
 		strcat(name, ".pre");
-		
+
 		result = file_load_resource(7, name);
 		if (result != 0) return result;
-			
+
 		do_dea_textres();
 	}
 #endif
@@ -916,20 +916,20 @@ void unload_resource(void far* resptr) {
 void far* file_load_3dres(const legacy_s8* filename) {
 	legacy_s8 name[0x50];
 	void far* result;
-	
+
 	while (1) {
 		strcpy(name, filename);
 		strcat(name, ".p3s");
-		
+
 		result = file_load_resource(7, name);
 		if (result != 0) return result;
-			
+
 		strcpy(name, filename);
 		strcat(name, ".3sh");
-		
+
 		result = file_load_resource(1, name);
 		if (result != 0) return result;
-	
+
 		do_dea_textres();
 	}
 }
@@ -966,6 +966,6 @@ legacy_s16 file_write_replay(const legacy_s8* filename)
 	ret = file_write_fatal(filename, td13_rpl_header,
 		REPLAY_GAMEINFO_SIZE + gameconfig.game_recordedframes);
 	g_is_busy = 0;
-	
+
 	return ret;
 }

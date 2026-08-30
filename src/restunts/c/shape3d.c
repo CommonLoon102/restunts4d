@@ -1737,7 +1737,7 @@ static void preRender_default_impl(legacy_u16 arg_color,
 
 	temp0y = var_12;
 
-	if (temp0y >= sprite1_sprite_height) 
+	if (temp0y >= sprite1_sprite_height)
 		temp0y = sprite1_sprite_height - 1;
 	temp1y = var_E;
 	if (temp1y < sprite1_sprite_top)

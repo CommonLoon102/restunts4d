@@ -254,10 +254,10 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		return 1;
 	}
 
-        len = strlen(argv[1]);
-        if (len >= 4 && ((strcmp(argv[1] + len - 4, ".rpl") == 0) || strcmp(argv[1] + len - 4, ".RPL") == 0)) {
-                argv[1][len - 4] = '\0';
-        }
+	len = strlen(argv[1]);
+	if (len >= 4 && ((strcmp(argv[1] + len - 4, ".rpl") == 0) || strcmp(argv[1] + len - 4, ".RPL") == 0)) {
+		argv[1][len - 4] = '\0';
+	}
 
 	init_main(argc, argv);
 #ifndef RESTUNTS_ORIGINAL
@@ -417,15 +417,15 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 #ifdef RESTUNTS_ORIGINAL
 	if (argc == 2) {
-	        input_do_checking(1);
-	        fatal_error("\nDone.\n");
+		input_do_checking(1);
+		fatal_error("\nDone.\n");
 	}
 	else {
-	        audio_stop_unk();
-	        audiodrv_atexit();
-	        kb_exit_handler();
-	        kb_shift_checking1();
-	        video_set_mode7();
+		audio_stop_unk();
+		audiodrv_atexit();
+		kb_exit_handler();
+		kb_shift_checking1();
+		video_set_mode7();
 	}
 #else
 	ems_shutdown();

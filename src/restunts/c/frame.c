@@ -1524,7 +1524,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	}
 
 	// Set car position (own or opponent's)
-	if (followOpponentFlag == 0) {		
+	if (followOpponentFlag == 0) {
 		car_pos.x = frame_position_word(
 			state.playerstate.car_posWorld1.lx);
 		car_pos.y = frame_position_word(
@@ -1548,7 +1548,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	car_rot_x_2 = -1;
 	car_rot_z_2 = 0;
-	
+
 	// Set camera position, based on the car position and the camera mode
 	if (cameramode == 0) {
 		car_rot_x_2 = car_rot_x & 0x3ff;
@@ -1610,9 +1610,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			cam_pos.y = terrainHeight;
 		}
 
-		if (byte_4392C != 0) {		
+		if (byte_4392C != 0) {
 			si = plane_origin_op(planindex, cam_pos.x, cam_pos.y, cam_pos.z);
-			if (si < 0xC) {			
+			if (si < 0xC) {
 				vec_unk2.x = 0;
 				vec_unk2.y = LEGACY_S16_WRAP_SUB(0xC, si);
 				vec_unk2.z = 0;
@@ -1745,7 +1745,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Select the detail level (FULL if 1st or 2nd option in the graphics menu
 	// were chosen, MEDIUM if the 3rd, FASTEST if 4th or 5th)
 	detail_threshold = detail_threshold_by_level[detail_level];
-	
+
 	// Cycle on the 23 tiles to draw, determine if they really need to be drawn
 	for (si = 0x16; si >= 0; si--) {
 
@@ -1765,7 +1765,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			if (tile_east >= 0 && tile_east <= 0x1D && tile_south >= 0 && tile_south <= 0x1D) {
 				elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 				terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
-				
+
 				if (elem_map_value != 0) {
 
 					if (terr_map_value >= 7 && terr_map_value < 0xB) {
@@ -1840,7 +1840,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						}
 					}
 				}
-				
+
 			} else {
 				should_skip_tile[si] = 2;
 			}
@@ -1848,9 +1848,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			should_skip_tile[si] = 2;
 		}
 	}
-	
+
 //; -----------------------------------------------------------------------------
-	
+
 	// Draw own wheels
 	var_3C = -1;
 	var_6C = 0;
@@ -1936,7 +1936,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 
 				if (di != -1) {
-						
+
 					if (state.opponentstate.car_surfaceWhl[0] != 4 || state.opponentstate.car_surfaceWhl[1] != 4 || state.opponentstate.car_surfaceWhl[2] != 4 || state.opponentstate.car_surfaceWhl[3] != 4) {
 						offset_vector.x = 0;
 						offset_vector.z = 0;
@@ -1958,7 +1958,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	var_4E = 0;
 	si = 0;
-	
+
 	// With the information collected by the previus tile-scan algorithm,
 	// proceed to draw the shapes in each tile. Start from the farthest
 	// (painter's algorithm)
@@ -1998,7 +1998,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				var_10E[idx * 2], tile_east);
 			tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
 				var_10E[idx * 2 + 1], tile_south);
-			
+
 			if (detail_level == 0 || (tile_to_draw_east_offset == car_tile_east && tile_to_draw_south_offset == car_tile_south)) {
 				if (tile_to_draw_east_offset == 0) {
 					if (tile_to_draw_south_offset == 0) {
@@ -2062,7 +2062,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 		}
 
-		// terrain type 0x06: a flat piece of land at an elevated level  
+		// terrain type 0x06: a flat piece of land at an elevated level
 		if (terr_map_value != 6) {
 			var_hillheight = 0;
 
@@ -2107,7 +2107,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							break;
 					}
 				}
-				
+
 				terr_map_value = 0;
 			}
 		} else {
@@ -2389,7 +2389,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				state.playerstate.car_posWorld1.ly, cam_pos.y);
 			curtransshape_ptr->pos.z = frame_relative_position(
 				state.playerstate.car_posWorld1.lz, cam_pos.z);
-			
+
 			if (tile_det_level != 0 || detail_level > 2) {
 				curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_loShapePtr;
 			} else {
@@ -2421,7 +2421,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			curtransshape_ptr->material = gameconfig.game_playermaterial;
 			transformed_shape_add_for_sort(var_6C & var_12A, 2);
 		}
-		
+
 		if ((var_4A == tile_east) || (var_4A == tile_to_draw_east_offset)) {
 			if ((var_6E == tile_south) || (var_6E == tile_to_draw_south_offset)) {
 				if (state.field_42A != 0) {
@@ -2523,7 +2523,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						&game3dshapes[0x98A / sizeof(struct SHAPE3D)],
 						LEGACY_U16_WRAP_ADD(8U, vertex_index),
 						&var_108[vertex_index]);
-				 
+
 				curtransshape_ptr->pos.x = LEGACY_S16_WRAP_SUB(
 					LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 						multiply_and_scale(sin_fast(LEGACY_S16_WRAP_ADD(

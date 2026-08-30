@@ -1798,10 +1798,10 @@ void player_op(legacy_s8 arg_carInputByte) {
 	if (state.playerstate.car_crashBmpFlag != 0) {
 		state.field_45D = 0;
 		arg_carInputByte = 2;
-		
+
 		if (state.playerstate.car_speed2 == 0) {
 			state.playerstate.field_CF = 0;
-			
+
 			if (state.playerstate.car_speed == 0 && state.playerstate.car_rc1[0] == 0 && state.playerstate.car_rc1[1] == 0 && state.playerstate.car_rc1[2] == 0 && state.playerstate.car_rc1[3] == 0) {
 				return ;
 			}

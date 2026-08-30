@@ -1726,14 +1726,14 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	legacy_u8* lineofsptr;
 	legacy_u8 far* farlineofsptr;
 	legacy_u16 wnddefseg;
-	
+
 	(void)unk;
 
 	wnddefseg = dos_memory_pointer_segment(&wnd_defs);
 
 	pages = ((width * height + SHAPE2D_HEADER_SIZE) >> 4) + 1;
 	shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
-	
+
 	header = (legacy_u8 far*)dos_memory_make_pointer(dos_memory_pointer_segment(shapebuf), 0);
 	shape2d_put_word(header + SHAPE2D_WIDTH_OFFSET, width);
 	shape2d_put_word(header + SHAPE2D_HEIGHT_OFFSET, height);
@@ -1764,7 +1764,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	farwnd->sprite_height = height;
 	farwnd->sprite_width2 = width;
 	farwnd->sprite_widthsum = width;
-	
+
 	// create a writable far pointer to the line offsets
 	farlineofsptr = (legacy_u8 far*)dos_memory_make_pointer(
 		wnddefseg, dos_memory_pointer_offset(lineofsptr));
@@ -1917,7 +1917,7 @@ void mouse_draw_transparent(void) {
 }
 
 void sprite_clear_1_color(legacy_u8 color) {
-	
+
 	legacy_s16 height, top, left, right, pitch, lines, width, widthdiff, i, j;
 	legacy_u16 ofs;
 	legacy_u8 far* bitmapptr;
@@ -1937,7 +1937,7 @@ void sprite_clear_1_color(legacy_u8 color) {
 
 	width = right - left;
 	if (width <= 0) return ;
-	
+
 	widthdiff = pitch - width;
 
 	for (i = 0; i < lines; i++) {
@@ -2382,7 +2382,7 @@ void setup_mcgawnd2(void) {
 	if (!mcgawndsprite) {
 		mcgawndsprite = sprite_make_wnd(320, 200, 0x0F);
 	}
-	
+
 	sprite_set_1_from_argptr(mcgawndsprite);
 }
 
@@ -2493,7 +2493,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 							}
 							break;
 					}
-					
+
 					// copy flipped bits from mempages -> subres
 					for (j = 0; j < height; j++) { // height
 						for (i = 0; i < width; i++) { // width
@@ -2528,7 +2528,7 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 				height = shape2d_get_word(
 					memshape + SHAPE2D_HEIGHT_OFFSET);
 				membitmapptr = memshape + SHAPE2D_HEADER_SIZE;
-				
+
 				for (j = 0; j < 4; ++j) {
 					if (val & 0x01) {
 						for (y = 0; y < height; ++y) {
@@ -2536,7 +2536,7 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 								mempages[y * width + x] = membitmapptr[x * height + y];
 							}
 						}
-						
+
 						// Copy flipped data from mempages -> subres
 						for (y = 0; y < height; ++y) {
 							for (x = 0; x < width; ++x) {
@@ -2564,7 +2564,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	legacy_u8 far* dstshape;
 
 	shapecount = file_get_res_shape_count(memchunk);
-	
+
 	// Skip size.
 	memchunkptr = memchunk + RESOURCE_FILE_COUNT_OFFSET;
 	mempagesptr = mempages + RESOURCE_FILE_COUNT_OFFSET;
@@ -2575,7 +2575,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 			RESOURCE_FILE_IDENTIFIER_SIZE));
 	fmemcpy(mempagesptr, memchunkptr, directory_prefix_size);
 	nextoffset = 0;
-	
+
 	for (i = 0; i < shapecount; ++i) {
 		srcshape = file_get_shape2d_bytes(memchunk, i);
 		product = (legacy_u32)shape2d_get_word(
@@ -2592,21 +2592,21 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 		resource_file_set_offset((legacy_u8 far*)mempages,
 			(legacy_u16)shapecount, (legacy_u16)i, nextoffset);
 		nextoffset += (legacy_u32)lowterm
-		            + ((legacy_u32)(legacy_u16)(product >> 16) << 16);
-		
+					+ ((legacy_u32)(legacy_u16)(product >> 16) << 16);
+
 		dstshape = file_get_shape2d_bytes((legacy_u8 far*)mempages, i);
 		// `mov cx, 6 / rep movsw` - the first six words only, up to and
 		// including s2d_pos_y. s2d_unk3..s2d_unk6 hold the pattern and flip
 		// nibbles and are deliberately left alone in the destination.
 		fmemcpy(dstshape, srcshape, 6 * sizeof(legacy_u16));
-		
+
 		shape2d_put_word(dstshape + SHAPE2D_WIDTH_OFFSET,
 			LEGACY_U16_WRAP_MUL(shape2d_get_word(
 				dstshape + SHAPE2D_WIDTH_OFFSET), 8U));
 
 		if (length && length <= 8000) {
 			mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
-			
+
 			val = srcshape[SHAPE2D_UNK4_OFFSET] >> 4;
 			val |= val << 8;
 
@@ -2615,7 +2615,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 				mempagesptr += 2U;
 			}
 			memchunkptr = srcshape + SHAPE2D_HEADER_SIZE;
-			
+
 			for (j = 0; j < 4; ++j) {
 				pat = srcshape[SHAPE2D_UNK3_OFFSET + j] & 0x0F;
 
@@ -2638,7 +2638,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 			}
 		}
 	}
-	
+
 	// Final size. The original folds this in as a 16-bit term too
 	// (bx = shapecount*8 + 6, then `add ax, bx / adc dx, 0`).
 	resource_file_set_size((legacy_u8 far*)mempages,
@@ -2652,7 +2652,7 @@ legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
 
 	shapecount = file_get_res_shape_count(memchunk);
 	maxsize = 0;
-	
+
 	for (i = 0; i < shapecount; i++) {
 		memshape = file_get_shape2d_bytes((legacy_u8 far*)memchunk, i);
 		size = (shape2d_get_word(memshape + SHAPE2D_WIDTH_OFFSET) *
@@ -2668,7 +2668,7 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 	legacy_u16 shapecount, i;
 	legacy_s32 size;
 	legacy_u8 far* memshape;
-	
+
 	shapecount = file_get_res_shape_count(memchunk);
 
 	// The original forms this seed in AX, then uses CWD: both the shift and
@@ -2684,7 +2684,7 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 		size += (legacy_u32)(legacy_u16)(shape2d_get_word(
 			memshape + SHAPE2D_WIDTH_OFFSET) * shape2d_get_word(
 			memshape + SHAPE2D_HEIGHT_OFFSET) * 8)
-		      + SHAPE2D_HEADER_SIZE;
+			  + SHAPE2D_HEADER_SIZE;
 	}
 
 	return (size + SHAPE2D_HEADER_SIZE) >> 4;
@@ -2692,7 +2692,7 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 
 void file_load_shape2d_palmap_init(legacy_u8 far* pal) {
 	legacy_s16 i;
-	
+
 	for (i = 0; i < 0x10; ++i) {
 		palmap[i] = pal[i];
 	}
@@ -2702,16 +2702,16 @@ void file_load_shape2d_palmap_apply(legacy_u8 far* memchunk, legacy_u8 palmap[])
 	legacy_u16 shapecount, length, i, j;
 	legacy_u8 far* memchunkptr;
 	legacy_u8 far* memshape;
-	
+
 	shapecount = file_get_res_shape_count(memchunk);
-	
+
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
 		length = shape2d_get_word(memshape + SHAPE2D_WIDTH_OFFSET) *
 			shape2d_get_word(memshape + SHAPE2D_HEIGHT_OFFSET);
-		
+
 		memchunkptr = memshape + SHAPE2D_HEADER_SIZE;
-		
+
 		for (j = 0; j < length; ++j) {
 			// `mov bl, es:[di] / mov al, [bx+si] / stosb` - the lookup reads
 			// the byte di is on, and only stosb advances di afterwards.
@@ -2729,22 +2729,22 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 	expandedsize = file_load_shape2d_expandedsize(memchunk);
 
 	palmapres = locate_shape_nofatal(memchunk, "!MGA");
-	
+
 	if (palmapres) {
 		file_load_shape2d_palmap_init((legacy_u8 far*)palmapres +
 			SHAPE2D_HEADER_SIZE);
 	}
-	
+
 	mempages = mmgr_alloc_pages(str, expandedsize);
 
 	resource_file_set_size((legacy_u8 far*)mempages,
 		(legacy_u32)expandedsize * 16U);
-	
+
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);
 	memchunk = mmgr_op_unk(mempages);
 	file_load_shape2d_palmap_apply(memchunk, palmap);
-	
+
 	return memchunk;
 }
 
@@ -2758,11 +2758,11 @@ void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 
 	strcpy(str, shapename);
 	strptr = str;
-	
+
 	while (*strptr != '.' && *strptr) {
 		strptr++;
 	}
-	
+
 	if (*strptr != 0) {
 		memchunk = mmgr_get_chunk_by_name(str);
 		if (memchunk) return memchunk; // return existing chunk with same name
@@ -2859,8 +2859,8 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	// and name as the two-buffer path would have produced.
 	freeparas = mmgr_get_ofs_diff();
 	if (freeparas < (legacy_u16)chunksize + 2 &&
-	    !(highpool_route(resname, (legacy_u16)chunksize) &&
-	      highpool_can_fit((legacy_u16)chunksize))) {
+		!(highpool_route(resname, (legacy_u16)chunksize) &&
+		  highpool_can_fit((legacy_u16)chunksize))) {
 		margin = ((legacy_u16)chunksize >> 1) + ((legacy_u16)chunksize >> 2);
 		if (margin > freeparas - (freeparas >> 3))
 			margin = freeparas - (freeparas >> 3);

@@ -90,11 +90,11 @@ void interrupt kb_int9_handler(void) {
 	outp(0x61, kbp);
 
 	if ((kbc & 0x80) == 0) {
-		if (kbc >= 0x5a) 
+		if (kbc >= 0x5a)
 			kbc = 0;
 		dos_kb_last_input = kbc;
 		dos_kb_input[kbc] = 1;
-		
+
 		if (dos_kb_input[0x38] == 1) {
 			kbval = dos_kb_keymap5[kbc];
 		} else
@@ -112,7 +112,7 @@ void interrupt kb_int9_handler(void) {
 		} else {
 			kbval = dos_kb_keymap1[kbc];
 		}
-		
+
 		if ((kbval & 0x80) != 0) {
 			if (kbval >= 0x85)
 				kbval &= 0x7F;
@@ -126,7 +126,7 @@ void interrupt kb_int9_handler(void) {
 		if (kbdata >= dos_kb_buffer_size) // data3 = kb_buffer_pos
 			kbdata = 0;
 		dos_kb_buffer_write = kbdata;
-		
+
 		kbdata = dos_kb_buffer_count;
 		kbdata+=2;
 		if (kbdata > dos_kb_buffer_size) {
@@ -135,16 +135,16 @@ void interrupt kb_int9_handler(void) {
 		}
 		dos_kb_buffer_count = kbdata;
 		enable();
-		
+
 	} else {
 		kbc &= 0x7F;
 		if (kbc >= 0x5a) // 0x5a = 90, keymaps are 90 bytes?
 			kbc = 0;
 		dos_kb_input[kbc] = 0;
 	}
-	
+
 	outp(0x20, 0x20);
-	
+
 }
 
 // The original returns with the status flags left by its final XOR, SUB, CMP
@@ -198,11 +198,11 @@ static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right) {
 	return result;
 }
 
-#pragma argsused   
+#pragma argsused
 void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
-                                     legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
-                                     legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
-                                     legacy_u16 ip, legacy_u16 cs, legacy_u16 flags) {
+	legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
+	legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
+	legacy_u16 ip, legacy_u16 cs, legacy_u16 flags) {
 
 	legacy_u16 result, kbdata;
 	legacy_u8 shiftleft, shiftright;
@@ -229,7 +229,7 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 		flags = kb_flags_after_subtract_two(kbdata);
 		return ;
 	}
-	
+
 	if (bioscall == 1) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
@@ -244,7 +244,7 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 		flags = kb_flags_after_compare_zero(kbdata);
 		return ;
 	}
-	
+
 	if (bioscall == 2) {
 		shiftleft = dos_kb_input[0x2A];
 		shiftright = dos_kb_input[0x36];
@@ -350,7 +350,7 @@ legacy_s16 kb_read_char(void) {
 	// we could've called kb_int16_handler_c() directly
 	union REGS inregs;
 	union REGS outregs;
-	
+
 	inregs.h.ah = 1;
 	int86(0x16, &inregs, &outregs);
 	if (!outregs.x.ax) return 0;
@@ -386,12 +386,12 @@ void flush_stdin(void) {
 legacy_s16 kb_check(void) {
 	union REGS inregs;
 	union REGS outregs;
-	
+
 	while (1) {
 		inregs.h.ah = 1;
 		int86(0x16, &inregs, &outregs);
 		if (!outregs.x.ax) return 0;
-	
+
 		inregs.h.ah = 0;
 		int86(0x16, &inregs, &outregs);
 	}

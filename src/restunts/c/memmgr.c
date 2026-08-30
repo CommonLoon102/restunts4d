@@ -11,19 +11,19 @@ legacy_u16 pspseg = 0;
 struct MEMCHUNK resources[] = {
 	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		0, 0, 2 },
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
-	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, 
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		0, 0, 1 },
@@ -118,8 +118,7 @@ void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) 
 	// Never hand the same paragraphs out twice: DOS may offer a block that
 	// already belongs to the pool.
 	for (k = 0; k < highblockcount; k++) {
-		if (seg < highblocks[k].blockseg + highblocks[k].blockparas &&
-		    highblocks[k].blockseg < seg + paras)
+		if (seg < highblocks[k].blockseg + highblocks[k].blockparas && highblocks[k].blockseg < seg + paras)
 			return;
 	}
 
@@ -148,8 +147,7 @@ void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) 
 legacy_s16 highpool_owns_seg(legacy_u16 seg) {
 	legacy_s16 i;
 	for (i = 0; i < highblockcount; i++) {
-		if (seg >= highblocks[i].blockseg &&
-		    seg < highblocks[i].blockseg + highblocks[i].blockparas)
+		if (seg >= highblocks[i].blockseg && seg < highblocks[i].blockseg + highblocks[i].blockparas)
 			return 1;
 	}
 	return 0;
@@ -191,8 +189,7 @@ legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 
 // First fit inside one block: bump the candidate past any conflicting chunk
 // until the request fits or the block ends.
-static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras,
-                                        legacy_s16 dropcached) {
+static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras, legacy_s16 dropcached) {
 	legacy_u16 cand, blockend;
 	legacy_s16 i, conflict;
 
@@ -208,8 +205,7 @@ static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras,
 				continue;
 			if (dropcached && highchunks[i].resstate == 1)
 				continue; // discardable, so it does not block the search
-			if (highchunks[i].resseg < cand + paras &&
-			    cand < highchunks[i].resseg + highchunks[i].resparas) {
+			if (highchunks[i].resseg < cand + paras && cand < highchunks[i].resseg + highchunks[i].resparas) {
 				cand = highchunks[i].resseg + highchunks[i].resparas;
 				conflict = 1;
 				break;
@@ -227,8 +223,7 @@ static void highpool_drop_cached(legacy_u16 seg, legacy_u16 paras) {
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		if (highchunks[i].resstate != 1)
 			continue;
-		if (highchunks[i].resseg < seg + paras &&
-		    seg < highchunks[i].resseg + highchunks[i].resparas)
+		if (highchunks[i].resseg < seg + paras && seg < highchunks[i].resseg + highchunks[i].resparas)
 			highchunks[i].resstate = 0;
 	}
 }
@@ -239,8 +234,7 @@ static legacy_s16 highpool_fits_at(legacy_u16 seg, legacy_u16 paras) {
 
 	inblock = 0;
 	for (b = 0; b < highblockcount; b++) {
-		if (seg >= highblocks[b].blockseg &&
-		    seg + paras <= highblocks[b].blockseg + highblocks[b].blockparas) {
+		if (seg >= highblocks[b].blockseg && seg + paras <= highblocks[b].blockseg + highblocks[b].blockparas) {
 			inblock = 1;
 			break;
 		}
@@ -253,8 +247,7 @@ static legacy_s16 highpool_fits_at(legacy_u16 seg, legacy_u16 paras) {
 			continue;
 		if (highchunks[i].resseg == seg)
 			continue;
-		if (highchunks[i].resseg < seg + paras &&
-		    seg < highchunks[i].resseg + highchunks[i].resparas)
+		if (highchunks[i].resseg < seg + paras && seg < highchunks[i].resseg + highchunks[i].resparas)
 			return 0;
 	}
 	return 1;
@@ -433,10 +426,10 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 
 	result = filename;
 	for (c = filename; *c; c++) {
-		if (*c == ':' || *c == '\\') 
+		if (*c == ':' || *c == '\\')
 			result = c + 1;
 	}
-	
+
 	return result;
 }
 
@@ -460,7 +453,7 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 
 	resdi++;
 	if (ressi <= resdi) {
-		if (ressi == resendptr2) 
+		if (ressi == resendptr2)
 			fatal_error("reservememory - OUT OF MEMORY SLOTS RESERVING %s", arg_0);
 
 		ressi++;
@@ -478,14 +471,14 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 	resdi->resunk = 2;
 
 	rax += rdx;
-	if (rax > resmaxsize) 
+	if (rax > resmaxsize)
 		resmaxsize = rax;
 
 	if (rax > ressi->resofs) {
 		ressi = resendptr1;
 		resdi = resptr2;
 		rax = resdi->resofs + resdi->ressize;
-	
+
 		while (rax > ressi->resofs) {
 			if (ressi == resendptr2) {
 				fatal_error("reservememory - OUT OF MEMORY RESERVING %s P=%x HW=%x\r\n", arg_0, resdi->ressize, resmaxsize);
@@ -515,7 +508,7 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	psp = dos_memory_get_psp();
 	pspseg = dos_memory_pointer_segment(psp);
 	pspofs = dos_memory_pointer_offset(psp);
-	
+
 	if (word_3FF82 == 0) {
 		resptr1->resofs = dos_memory_allocate(0x64);
 		word_3FF84 = resptr1->resofs;
@@ -528,7 +521,7 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	}
 	resendptr1 = resendptr2;
 	resptr2 = resptr1;
-	
+
 	rp = resptr1;
 	for (;;) {
 		rp++;
@@ -574,7 +567,7 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	}
 
 	while (1) {
-		if (ressi == resptr1) 
+		if (ressi == resptr1)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
 		if (ressi->resofs == ptrseg) break;
 		ressi--;
@@ -618,7 +611,7 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 	legacy_u16 count; // number of words to copy
 	legacy_u16 far * srcptr;
 	legacy_u16 far * destptr;
-	
+
 	while (paras != 0) {
 		count = 0x8000; // 64k in words
 		paras -= 0x1000; // 64k in paras
@@ -689,7 +682,7 @@ void mmgr_find_free(void) {
 		if ((ressi->resunk & 1) == 0) {
 			regdx += ressi->ressize;
 		} else {
-		
+
 			if (regdx != 0) {
 				resdi++;
 				regax = resdi->resofs - ressi->ressize;
@@ -704,7 +697,7 @@ void mmgr_find_free(void) {
 				}
 				copy_paras_reverse(ressi->resofs, regax, ressi->ressize);
 			}
-		
+
 			resdi--;
 		}
 		ressi--;
@@ -724,7 +717,7 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
 	legacy_s16 found = 0;
-	
+
 	pcdi = mmgr_path_to_name(name);
 
 	{
@@ -827,12 +820,12 @@ void mmgr_release(void far* ptr) {
 	}
 
 	for (;;) {
-		if (ressi == resptr1) 
+		if (ressi == resptr1)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		if (regax == ressi->resofs) break;
 		ressi--;
 	}
-	
+
 	ressi->resunk = 0;
 	if (ressi == resptr2) {
 		do {
@@ -887,7 +880,7 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
 	}
 
 	for (;;) {
-		if (ressi == resptr1) 
+		if (ressi == resptr1)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		if (regax == ressi->resofs) break;
 		ressi--;
@@ -952,9 +945,9 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 
 	for (;;) {
 		if (regax <= ressi->resofs) break;
-		if (ressi == resendptr2) 
+		if (ressi == resendptr2)
 			fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
-	
+
 		ressi->resunk = 0;
 		ressi++;
 		resendptr1 = ressi;
@@ -989,18 +982,18 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 	resdi = ressi;
 	resdi--;
 	if (resdi->resunk == 0) {
-	
+
 		do {
 			resdi--;
 		} while (resdi->resunk == 0);
-	
+
 		ressi->resunk = 0;
 		regax = resdi->resofs + resdi->ressize;
 		resdi++;
 		if (ressi == resptr2) {
 			resptr2 = resdi;
 		}
-	
+
 		resdi->resofs = regax;
 		resdi->ressize = ressi->ressize;
 		resdi->resunk = 2;

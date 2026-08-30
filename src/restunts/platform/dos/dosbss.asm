@@ -4,7 +4,7 @@
 _DATA segment word public 'DATA'
 _DATA ends
 _BSS segment word public 'BSS'
-    public headless_bss_start
+	public headless_bss_start
 headless_bss_start label byte
 _BSS ends
 end

@@ -66,23 +66,23 @@ legacy_s16 cos_fast(legacy_u16 s) {
 }
 
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
-	
+
 	legacy_u16 flag;
 	legacy_s16 temp, result;
 	legacy_u32 index;
-	
+
 	flag = 0;
-	
+
 	if (z < 0) {
 		flag |= 4;
 		z = LEGACY_S16_WRAP_NEGATE(z);
 	}
-	
+
 	if (y < 0) {
 		flag |= 2;
 		y = LEGACY_S16_WRAP_NEGATE(y);
 	}
-	
+
 	if (z == y) {
 		/* The legacy callers treat a zero-length direction as angle zero. */
 		if (z == 0)
@@ -102,7 +102,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 			index += 0x100;
 		result = atantable[index >> 8];
 	}
-	
+
 	switch (flag) {
 		case 0:
 			return result;
@@ -127,17 +127,17 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 	legacy_s32 result;
-	
+
 	result = polarAngle(z, y);
-	
+
 	if (result < 0) {
 		result = -result;
 	}
-	
+
 	if (result >= 0x100) {
 		result = -(result - 0x200);
 	}
-	
+
 	if (result <= 0x80) {
 		result = cos_fast(result);
 		if (y < 0)
@@ -169,10 +169,10 @@ legacy_u16 rect_compare_point(struct POINT2D* pt) {
 	if (pt->py < select_rect_rc.top)
 		flag = 1;
 	else if (pt->py > select_rect_rc.bottom)
-		flag = 2; 
+		flag = 2;
 	else
 		flag = 0;
-	
+
 	if (pt->px < select_rect_rc.left)
 		flag |= 4;
 	else if (pt->px > select_rect_rc.right)
@@ -239,7 +239,7 @@ void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* out
 void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR* outvec)
 {
 	struct MATRIX tmpmat = *mat;
-	
+
 	mat_mul_vector(invec, &tmpmat, outvec);
 }
 
@@ -248,7 +248,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 	legacy_s16* rmatvals = rmat->vals;
 	legacy_s16* lmatvals = lmat->vals;
 	legacy_s16* outmatvals = outmat->vals;
-	
+
 	counter = 9;
 	while (counter > 0) {
 		if (rmatvals[0] != 0 && lmatvals[0] != 0)
@@ -263,7 +263,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 		if (rmatvals[2] != 0 && lmatvals[6] != 0)
 			outmatvals[0] = LEGACY_S16_WRAP_ADD(outmatvals[0],
 				matrix_scaled_product(rmatvals[2], lmatvals[6]));
-		
+
 		outmatvals++;
 		if (counter != 7 && counter != 4) {
 			lmatvals++;
@@ -273,7 +273,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 		}
 		counter = LEGACY_S16_WRAP_SUB(counter, 1);
 	}
-	
+
 }
 
 void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat) {
@@ -308,7 +308,7 @@ void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat) {
 
 void mat_rot_x(struct MATRIX* outmat, legacy_s16 angle) {
 	legacy_s16 c, s;
-	
+
 	c = cos_fast(angle);
 	s = sin_fast(angle);
 	outmat->m._11 = 0x4000;
@@ -324,7 +324,7 @@ void mat_rot_x(struct MATRIX* outmat, legacy_s16 angle) {
 
 void mat_rot_y(struct MATRIX* outmat, legacy_s16 angle) {
 	legacy_s16 c, s;
-	
+
 	c = cos_fast(angle);
 	s = sin_fast(angle);
 	outmat->m._11 = c;
@@ -340,7 +340,7 @@ void mat_rot_y(struct MATRIX* outmat, legacy_s16 angle) {
 
 void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 	legacy_s16 c, s;
-	
+
 	c = cos_fast(angle);
 	s = sin_fast(angle);
 	outmat->m._11 = c;
@@ -354,7 +354,7 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 	outmat->m._33 = 0x4000;
 }
 
-// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only 
+// mat_rot_zxy was originally optimized, using pre-calced y-matrices and only
 // multiplying the non-zero axes. currently not optimized except for the y cache:
 //
 // Checked against asmorig/seg006.asm:2293 and the results are identical, for
@@ -380,7 +380,7 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 unk) {
 	mat_rot_z(&math_mat_z_rot, z);
 	mat_rot_x(&math_mat_x_rot, x);
-	
+
 	// y rotation matrix cache
 	/*if (mat_y_rot_angle != y) {
 		mat_rot_y(&mat_y_rot, y);
@@ -403,20 +403,20 @@ struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 
 #ifndef RESTUNTS_HEADLESS
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
 	legacy_s16 temp;
-	
+
 	if (rc->left > pt->px) {
 		rc->left = pt->px;
 	}
-	
+
 	temp = pt->px + 1;
 	if (rc->right < temp) {
 		rc->right = temp;
 	}
-	
+
 	if (rc->top > pt->py) {
 		rc->top = pt->py;
 	}
-	
+
 	temp = pt->py + 1;
 	if (rc->bottom < temp) {
 		rc->bottom = temp;
@@ -435,7 +435,7 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 	} else {
 		outrc->right = r2->right;
 	}
-	
+
 	if (r1->top <= r2->top) {
 		outrc->top = r1->top;
 	} else {
@@ -447,7 +447,7 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 	} else {
 		outrc->bottom = r2->bottom;
 	}
-	
+
 	if (video_flag2_is1 == 1) {
 		return ;
 	}
@@ -467,19 +467,19 @@ legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->right <= r2->left) return 1;
 	if (r1->top >= r2->bottom) return 1;
 	if (r1->bottom <= r2->top) return 1;
-	
+
 	if (r1->left < r2->left) {
 		r1->left = r2->left;
 	}
-	
+
 	if (r1->right > r2->right) {
 		r1->right = r2->right;
 	}
-	
+
 	if (r1->top < r2->top) {
 		r1->top = r2->top;
 	}
-	
+
 	if (r1->bottom > r2->bottom) {
 		r1->bottom = r2->bottom;
 	}
@@ -490,19 +490,19 @@ legacy_s16 rect_is_inside(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->right > r2->right) {
 		return 0;
 	}
-	
+
 	if (r1->left < r2->left) {
 		return 0;
 	}
-	
+
 	if (r1->top < r2->top) {
 		return 0;
 	}
-	
+
 	if (r1->bottom > r2->bottom) {
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -510,19 +510,19 @@ legacy_s16 rect_is_overlapping(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	if (r1->right <= r2->left) {
 		return 0;
 	}
-	
+
 	if (r2->right <= r1->left) {
 		return 0;
 	}
-	
+
 	if (r1->top >= r2->bottom) {
 		return 0;
 	}
-	
+
 	if (r1->bottom <= r2->top) {
 		return 0;
 	}
-	
+
 	return 1;
 }
 
@@ -540,7 +540,7 @@ legacy_s16 rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 0;
 }
 
-void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr, struct RECTANGLE* rect) {	
+void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr, struct RECTANGLE* rect) {
 	legacy_s16 var_counter;
 	struct RECTANGLE var_rect;
 	struct RECTANGLE var_rect2;
@@ -554,7 +554,7 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 		fatal_error((const legacy_s8*)
 			"rectlist_add_rect: unexpected code path");
 	}
-	
+
 	for (var_counter = 0; var_counter < *arg_rect_array_length_ptr; var_counter++) {
 		var_rectptr = &arg_rect_array_ptr[var_counter];
 		if (rect_is_overlapping(rect, var_rectptr) == 0)
@@ -582,7 +582,7 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 			} else {
 				var_18 = 0;
 			}
-		} else {	
+		} else {
 			var_rect2 = *var_rectptr;
 			var_rect2.bottom = rect->top;
 			var_rect.top = rect->top;
@@ -653,7 +653,7 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 			var_rect.top = var_rectptr->top;
 		else
 			var_rect.top = rect->top;
-		
+
 		if (var_rectptr->bottom >= rect->bottom)
 			var_rect.bottom = var_rectptr->bottom;
 		else
@@ -675,9 +675,9 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 }
 
 
-void rectlist_add_rects(legacy_s8 arg_rectcount, legacy_s8* arg_rectarray_indices, 
-	struct RECTANGLE* arg_rectarray1, struct RECTANGLE* arg_rectarray2, 
-	struct RECTANGLE* arg_rectptr, legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr) 
+void rectlist_add_rects(legacy_s8 arg_rectcount, legacy_s8* arg_rectarray_indices,
+	struct RECTANGLE* arg_rectarray1, struct RECTANGLE* arg_rectarray2,
+	struct RECTANGLE* arg_rectptr, legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr)
 {
 	struct RECTANGLE* var_rectptr3;
 	struct RECTANGLE* var_rectptr;
@@ -760,27 +760,27 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	legacy_s16 flag;
 	legacy_s16 result;
 	legacy_s32 angle;
-	
+
 	y = (legacy_s32)math_word_magnitude(vec->y);
-	
+
 	// The original widens the 16-bit radius with an explicit zero high word
 	// (mov [bp+var_4], ax / mov [bp+var_2], 0), not with a sign extension.
 	temp = (legacy_u16)polarRadius2D(
 		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->x)),
 		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->z)));
-	
+
 	if (sin80 != cos80) {
 		//fatal_error("sin80 != cos80 - not observed");
 		y = y * sin80;
 		temp = temp * cos80;
-	} 
+	}
 
 	if (temp >= y) {
 		flag = 0;
 	} else {
 		flag = 1;
 	}
-	
+
 	if (vec->y < 0) {
 		if (flag != 0) return 0x1E;
 	} else
@@ -793,17 +793,17 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	} else {
 		result = 0;
 	}
-	
+
 	angle = -polarAngle(vec->z, -vec->x);
 	if (angle < 0) {
 		angle += 0x400;
 	}
-	
+
 	scaled_angle = LEGACY_S32_WRAP_SUB(
 		LEGACY_S32_SHL(angle, 4U), angle);
 	result = LEGACY_S16_WRAP_ADD(result,
 		(legacy_s16)LEGACY_S32_SAR(scaled_angle, 10U));
-	
+
 	return result;
 }
 
@@ -850,12 +850,12 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		outpt->py = 0x8000;
 		return;
 	}
-	
+
 	if (vec->x < 0) {
 		proj = (legacy_u32)projection_magnitude(vec->x) * (legacy_u16)projectiondata9;
 		comp = (legacy_s16)(proj >> 15);
 
-		if (vec->z > comp) { 
+		if (vec->z > comp) {
 			outpt->px = saturate_projection(
 				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
@@ -866,7 +866,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		proj = (legacy_u32)(legacy_u16)vec->x * (legacy_u16)projectiondata9;
 		comp = (legacy_s16)(proj >> 15);
 
-		if (vec->z > comp) 
+		if (vec->z > comp)
 			outpt->px = saturate_projection(
 				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
@@ -879,7 +879,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		proj = (legacy_u32)projection_magnitude(vec->y) * (legacy_u16)projectiondata10;
 		comp = (legacy_s16)(proj >> 15);
 
-		if (vec->z > comp) 
+		if (vec->z > comp)
 			outpt->py = saturate_projection(
 				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
@@ -890,7 +890,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 		proj = (legacy_u32)(legacy_u16)vec->y * (legacy_u16)projectiondata10;
 		comp = (legacy_s16)(proj >> 15);
 
-		if (vec->z > comp) 
+		if (vec->z > comp)
 			outpt->py = saturate_projection(
 				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
@@ -917,7 +917,7 @@ static legacy_s16 vector_interpolate_axis(legacy_s16 first,
 
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i) {
 	legacy_s16 var_4, var_2;
-	
+
 	outvec->z = i;
 
 	var_4 = LEGACY_S16_WRAP_SUB(outvec->z, vec2->z);
@@ -927,7 +927,7 @@ void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outv
 		var_4 = LEGACY_S16_FROM_BITS((legacy_u16)var_4 >> 1);
 		var_2 = LEGACY_S16_FROM_BITS((legacy_u16)var_2 >> 1);
 	}
-	
+
 	outvec->x = vector_interpolate_axis(
 		vec1->x, vec2->x, var_4, var_2);
 	outvec->y = vector_interpolate_axis(
@@ -993,7 +993,7 @@ legacy_s16 plane_origin_op(legacy_s16 arg_planindex, legacy_s16 x, legacy_s16 y,
 	struct PLANE far* curplane;
 	struct VECTOR a;
 	struct VECTOR b;
-	
+
 	if (arg_planindex == planindex) {
 		curplane = current_planptr;
 	} else {
