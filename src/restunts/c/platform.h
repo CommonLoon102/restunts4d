@@ -4,7 +4,7 @@
 #include "legacy.h"
 
 void far* dos_memory_get_psp(void);
-#if defined(__BORLANDC__) && defined(RESTUNTS_DOS)
+#if defined(__BORLANDC__)
 #define dos_memory_make_pointer(segment, offset) \
 	((void _seg*)(segment) + (void near*)(offset))
 #define dos_memory_make_near_pointer(offset) ((void near*)(offset))

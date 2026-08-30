@@ -36,7 +36,7 @@ DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosbss.obj
 DOS_STACK_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosstack.obj
 
 # C Compiler Flags und Linker
-RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v -DRESTUNTS_DOS
+RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v
 
 ifeq ($(TARGET), original)
   ALL_OBJ_FILES = $(ASMORIG_OBJFILES) $(OBJDIR)\main.obj
