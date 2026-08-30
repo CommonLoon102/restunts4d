@@ -3,6 +3,11 @@
 
 typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
 	legacy_u8* context, legacy_u16 volume);
+typedef void (far* driver_control_type)(legacy_s16 driver_channel,
+	legacy_u8* context, legacy_u16 control, legacy_u16 value);
+typedef void (far* driver_pitch_type)(legacy_u8* timer, legacy_s16 pitch,
+	legacy_s16 driver_channel);
+typedef void (far* driver_data_type)(legacy_u16 length, legacy_u8* data);
 typedef void (far* driver_bind_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, void far* resource);
 typedef void (far* driver_channel_operation_type)(legacy_s16 driver_channel);
@@ -20,7 +25,7 @@ typedef void (far* driver_activate_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
 	legacy_u16 parameter, void far* resource);
 
-extern void audio_driver_timer(void);
+extern void audio_sequence_timer(void);
 extern void timer_remove_callback(void (far* callback)(void));
 extern void mmgr_release(void far* memory);
 
@@ -29,6 +34,7 @@ legacy_u8 audio_channels[24U * 0x4CU];
 legacy_u8* audio_sfx_channels = audio_channels + 16U * 0x4CU;
 legacy_u8 dos_audio_contexts[16U * 0x2EU];
 legacy_u8 dos_audio_master_state[3] = { 16U, 0, 22U };
+legacy_u8 dos_audio_driver_data[256];
 void far* dos_audio_driver_binary;
 legacy_s16 audio_update_lock = 1;
 legacy_s8 audio_music_enabled = 1;
@@ -86,6 +92,32 @@ void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
 
 	set_value = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
 	set_value(driver_channel, driver_context, value);
+}
+
+void dos_audio_driver_set_control(legacy_s16 driver_channel,
+	legacy_u8* driver_context, legacy_u16 control, legacy_u16 value)
+{
+	driver_control_type set_control;
+
+	set_control = (driver_control_type)dos_audio_driver_entry(0x15U);
+	set_control(driver_channel, driver_context, control, value);
+}
+
+void dos_audio_driver_set_pitch(legacy_u8* timer, legacy_s16 pitch,
+	legacy_s16 driver_channel)
+{
+	driver_pitch_type set_pitch;
+
+	set_pitch = (driver_pitch_type)dos_audio_driver_entry(0x1BU);
+	set_pitch(timer, pitch, driver_channel);
+}
+
+void dos_audio_driver_send_data(legacy_u16 length, legacy_u8* data)
+{
+	driver_data_type send_data;
+
+	send_data = (driver_data_type)dos_audio_driver_entry(0x39U);
+	send_data(length, data);
 }
 
 void dos_audio_driver_activate_context(legacy_s16 driver_channel,
@@ -186,7 +218,7 @@ void dos_audio_shutdown(void)
 {
 	audio_update_lock = 1;
 	if (dos_audio_driver_binary != 0) {
-		timer_remove_callback(audio_driver_timer);
+		timer_remove_callback(audio_sequence_timer);
 		audio_music_enabled = 0;
 		audio_effects_enabled = 0;
 		if (dos_audio_uses_direct_channels != 0) {
