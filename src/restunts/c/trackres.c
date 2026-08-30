@@ -1,7 +1,9 @@
 #include "externs.h"
 
+#ifndef RESTUNTS_DOS
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
 static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
+#endif
 
 extern struct PLANE far* planptr;
 extern struct TRACK_WALL far* wallptr;
@@ -15,6 +17,13 @@ static legacy_s16 track_resource_read_s16(const legacy_u8 far* source,
 void track_collision_resources_decode(const legacy_u8 far* plane_source,
 	const legacy_u8 far* wall_source)
 {
+#ifdef RESTUNTS_DOS
+	/* DOS is little-endian and these packed records have their original ABI
+	 * sizes. Keep the resource-backed tables instead of duplicating nearly
+	 * 19 KiB in scarce conventional memory. */
+	planptr = (struct PLANE far*)plane_source;
+	wallptr = (struct TRACK_WALL far*)wall_source;
+#else
 	legacy_u16 index;
 	legacy_u16 component;
 	legacy_u16 offset;
@@ -60,4 +69,5 @@ void track_collision_resources_decode(const legacy_u8 far* plane_source,
 
 	planptr = decoded_planes;
 	wallptr = decoded_walls;
+#endif
 }

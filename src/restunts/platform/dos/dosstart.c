@@ -52,6 +52,8 @@ static legacy_s16 headless_parse_command_line(void)
 	legacy_u16 source_index;
 	legacy_u16 destination_index;
 	legacy_s16 argc;
+	legacy_u8 character;
+	legacy_u8 quoted;
 
 	source = (legacy_u8 far*)MK_FP(headless_psp_segment, 0x80);
 	source_length = source[0];
@@ -60,7 +62,8 @@ static legacy_s16 headless_parse_command_line(void)
 	argc = 1;
 	headless_argv[0] = headless_program_name;
 
-	while (source_index <= source_length && argc < HEADLESS_MAX_ARGS) {
+	while (source_index <= source_length && argc < HEADLESS_MAX_ARGS &&
+		destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
 		while (source_index <= source_length &&
 			(source[source_index] == ' ' || source[source_index] == '\t'))
 			source_index++;
@@ -68,10 +71,17 @@ static legacy_s16 headless_parse_command_line(void)
 			break;
 
 		headless_argv[argc++] = &headless_command_line[destination_index];
-		while (source_index <= source_length &&
-			source[source_index] != ' ' && source[source_index] != '\t' &&
-			destination_index + 1 < HEADLESS_COMMAND_LINE_SIZE) {
-			headless_command_line[destination_index++] = source[source_index++];
+		quoted = 0;
+		while (source_index <= source_length) {
+			character = source[source_index++];
+			if (character == '"') {
+				quoted ^= 1U;
+				continue;
+			}
+			if (!quoted && (character == ' ' || character == '\t'))
+				break;
+			if (destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE)
+				headless_command_line[destination_index++] = character;
 		}
 		headless_command_line[destination_index++] = 0;
 	}

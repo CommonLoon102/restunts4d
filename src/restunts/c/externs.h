@@ -95,8 +95,9 @@ typedef char legacy_trackobject_must_be_14_bytes[
 legacy_u16 simd_decode(struct SIMD* destination,
 	const legacy_u8 far* source);
 
-#define TRACK_PLAN_RESOURCE_COUNT 134U
-#define TRACK_WALL_RESOURCE_COUNT 190U
+#define OPPONENT_SPEED_COUNT 16U
+#define TRACK_PLAN_RESOURCE_COUNT 536U
+#define TRACK_WALL_RESOURCE_COUNT 191U
 void track_collision_resources_decode(const legacy_u8 far* plane_source,
 	const legacy_u8 far* wall_source);
 
@@ -108,6 +109,7 @@ extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
 
 void copy_string(legacy_s8* destination, legacy_s8 far* source);
+void setup_legacy_penalty_route_word(void);
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
 void load_opponent_data(void);
 

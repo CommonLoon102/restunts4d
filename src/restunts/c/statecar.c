@@ -1,7 +1,7 @@
 #include "externs.h"
 #include "math.h"
 
-extern legacy_u8 oppnentSped[10];
+extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)

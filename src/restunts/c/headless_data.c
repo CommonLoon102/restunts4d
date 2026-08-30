@@ -221,7 +221,8 @@ legacy_u8 byte_45635;
 legacy_u8 byte_45D90;
 legacy_u8 byte_45E16;
 legacy_u8 byte_4616E;
-legacy_u8 oppnentSped[10];
+/* The original DGROUP reserves sixteen consecutive opponent-speed bytes. */
+legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 legacy_u8 byte_4032A;
 legacy_u8 byte_4032B;
 legacy_u16 word_3BE30;
