@@ -1,9 +1,6 @@
+#define int86 _int86
 #include <dos.h>
 #include "../../c/legacy.h"
-
-#define int86 _int86
-extern legacy_s16 _Cdecl _int86(legacy_s16 interrupt_number,
-	union REGS far* input, union REGS far* output);
 
 extern void add_exit_handler(void (far* exit_handler)(void));
 
