@@ -1,10 +1,10 @@
-*.md text=crlf
-*.c text=crlf
-*.h text=crlf
-*.asm text=crlf
-*.inc text=crlf
-*.ASM text=crlf
-*.INC text=crlf
+*.md text eol=crlf
+*.c text eol=crlf
+*.h text eol=crlf
+*.asm text eol=crlf
+*.inc text eol=crlf
+*.ASM text eol=crlf
+*.INC text eol=crlf
 *.ps1 text eol=crlf
 *.PS1 text eol=crlf
 *.rpl binary
