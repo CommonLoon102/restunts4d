@@ -1082,31 +1082,40 @@ void preRender_line(
 		putpixel_line1_maybe(line);
 }
 
-void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
-	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color)
+void draw_beveled_border(legacy_s16 x, legacy_s16 y,
+	legacy_s16 width, legacy_s16 height,
+	legacy_s16 top_outer_color, legacy_s16 top_inner_color,
+	legacy_s16 bottom_outer_color, legacy_s16 bottom_inner_color)
 {
 	legacy_s16 right = x + width;
 	legacy_s16 bottom = y + height;
 
-	preRender_line(x, y, right, y, outer_color);
-	preRender_line(x + 1, y + 1, right - 1, y + 1, outer_color);
-	preRender_line(x + 2, y + 2, right - 2, y + 2, inner_color);
+	preRender_line(x, y, right, y, top_outer_color);
+	preRender_line(x + 1, y + 1, right - 1, y + 1, top_outer_color);
+	preRender_line(x + 2, y + 2, right - 2, y + 2, top_inner_color);
 
-	preRender_line(x, y, x, bottom, outer_color);
-	preRender_line(x + 1, y + 1, x + 1, bottom - 1, outer_color);
-	preRender_line(x + 2, y + 2, x + 2, bottom - 2, inner_color);
+	preRender_line(x, y, x, bottom, top_outer_color);
+	preRender_line(x + 1, y + 1, x + 1, bottom - 1, top_outer_color);
+	preRender_line(x + 2, y + 2, x + 2, bottom - 2, top_inner_color);
 
-	preRender_line(x, bottom, right, bottom, opposite_color);
+	preRender_line(x, bottom, right, bottom, bottom_outer_color);
 	preRender_line(x + 1, bottom - 1, right - 1, bottom - 1,
-		opposite_color);
+		bottom_outer_color);
 	preRender_line(x + 2, bottom - 2, right - 2, bottom - 2,
-		inner_color);
+		bottom_inner_color);
 
-	preRender_line(right, y, right, bottom, opposite_color);
+	preRender_line(right, y, right, bottom, bottom_outer_color);
 	preRender_line(right - 1, y + 1, right - 1, bottom - 1,
-		opposite_color);
+		bottom_outer_color);
 	preRender_line(right - 2, y + 2, right - 2, bottom - 2,
-		inner_color);
+		bottom_inner_color);
+}
+
+void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color)
+{
+	draw_beveled_border(x, y, width, height,
+		outer_color, inner_color, opposite_color, inner_color);
 }
 
 extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16, legacy_u16);

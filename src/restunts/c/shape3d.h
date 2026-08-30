@@ -84,6 +84,10 @@ void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
 void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color);
 void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color);
+void draw_beveled_border(legacy_s16 x, legacy_s16 y,
+	legacy_s16 width, legacy_s16 height,
+	legacy_s16 top_outer_color, legacy_s16 top_inner_color,
+	legacy_s16 bottom_outer_color, legacy_s16 bottom_inner_color);
 void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color);
 void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,

@@ -5551,8 +5551,8 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	legacy_s16 remaining;
 
 	sprite_1_unk(x, y, width, height, fill_color);
-	draw_lines_unk(x, y, width, height, top_color, top_color,
-		bottom_color);
+	draw_beveled_border(x, y, width, height,
+		top_color, top_color, bottom_color, bottom_color);
 
 	if (text == 0)
 		return;
