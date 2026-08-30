@@ -113,9 +113,11 @@ Other error responses are:
 - `500 Internal Server Error` if processing fails or the result is missing
 - `504 Gateway Timeout` after 30 minutes of processing
 
-After a successful script exit and successful response, every `.txt` file in
-the service directory is deleted non-recursively. No TXT files are deleted on
-failure, timeout, missing output, or a failed response.
+After a successful script exit and successful response, every `.bni` file in
+the `stunts` directory and every `.txt` file in the service directory is
+deleted non-recursively. These files are not deleted on failure, timeout,
+missing output, or a failed response. Existing `.bin` files are reused because
+`REPLDUMO.EXE` output does not change between requests.
 
 This service uses plain HTTP. The API key prevents unauthenticated use, but it
 is visible to anyone able to capture traffic on the local network.

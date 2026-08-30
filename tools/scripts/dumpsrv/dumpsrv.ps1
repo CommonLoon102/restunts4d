@@ -292,21 +292,43 @@ $requestHandler = {
         $response.Close()
         $responseClosed = $true
 
+        # Keep generated files available until the successful response closes.
+        $cleanupErrors = @()
+
+        try {
+            Get-ChildItem -LiteralPath $StuntsDirectory -File |
+                Where-Object { $_.Extension -ieq '.bni' } |
+                Remove-Item -Force
+        }
+        catch {
+            $cleanupErrors += (
+                'BNI cleanup failed: {0}' -f $_.Exception.Message
+            )
+        }
+
         try {
             Get-ChildItem -LiteralPath (
                 [System.IO.Path]::GetDirectoryName($ProcessingScript)
             ) -File |
                 Where-Object { $_.Extension -ieq '.txt' } |
                 Remove-Item -Force
+        }
+        catch {
+            $cleanupErrors += (
+                'TXT cleanup failed: {0}' -f $_.Exception.Message
+            )
+        }
+
+        if ($cleanupErrors.Count -eq 0) {
             Write-Output (
-                '[{0:O}] Result sent; removed all TXT files.' -f
+                '[{0:O}] Result sent; removed all BNI and TXT files.' -f
                 [DateTime]::UtcNow
             )
         }
-        catch {
+        else {
             Write-Warning (
-                'The response was sent, but TXT cleanup failed: {0}' -f
-                $_.Exception.Message
+                'The response was sent, but cleanup failed: {0}' -f
+                ($cleanupErrors -join '; ')
             )
         }
     }

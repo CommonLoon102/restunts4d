@@ -2,7 +2,8 @@
 
 <#
 .SYNOPSIS
-Generates and compares .BIN and .BNI files for one replay partition.
+Generates or reuses .BIN files and compares them with .BNI files for one
+replay partition.
 #>
 
 [CmdletBinding()]
@@ -243,20 +244,23 @@ $processed = 0
 foreach ($file in $ReplayFiles) {
     $processed++
     $fileName = $file.Name
+    $basePath = Join-Path $file.DirectoryName $file.BaseName
+    $binFile = "$basePath.BIN"
+    $bniFile = "$basePath.BNI"
 
     Write-Output ('Processing {0}/{1}: {2}' -f $processed, $total, $fileName)
 
-    if (-not (Invoke-DosBoxExecutable 'repldumo.exe' $fileName)) {
-        continue
+    # REPLDUMPO.EXE produces stable output, so retain and reuse an existing BIN.
+    if (-not (Test-Path -LiteralPath $binFile -PathType Leaf)) {
+        if (-not (Invoke-DosBoxExecutable 'repldumo.exe' $fileName)) {
+            continue
+        }
     }
 
     if (-not (Invoke-DosBoxExecutable 'repldump.exe' $fileName)) {
         continue
     }
 
-    $basePath = Join-Path $file.DirectoryName $file.BaseName
-    $binFile = "$basePath.BIN"
-    $bniFile = "$basePath.BNI"
     $binExists = Test-Path -LiteralPath $binFile -PathType Leaf
     $bniExists = Test-Path -LiteralPath $bniFile -PathType Leaf
 
