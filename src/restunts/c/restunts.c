@@ -5449,7 +5449,7 @@ void load_tracks_menu_shapes(void)
 }
 legacy_s8 run_menu(void)
 {
-	static const legacy_u8 previous_selection[5] = { 0, 1, 2, 4, 0 };
+	static const legacy_u8 previous_selection[5] = { 1, 2, 4, 0, 3 };
 	static const legacy_u8 next_selection[5] = { 3, 0, 1, 4, 2 };
 	legacy_s8 far* resource;
 	struct SHAPE2D far* shape;
