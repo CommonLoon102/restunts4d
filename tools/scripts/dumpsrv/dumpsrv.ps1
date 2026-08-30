@@ -6,7 +6,7 @@ Receives REPLDUMP.EXE, runs rpl2statemain.ps1, and returns partitions_all.txt.
 
 .EXAMPLE
 $env:DUMPSRV_API_KEY = 'replace-with-a-long-random-secret'
-./dumpsrv.ps1 -PartitionCount 12
+./dumpsrv.ps1 -PartitionCount 12 -DosBoxTimeoutSeconds 30
 #>
 
 [CmdletBinding()]
@@ -20,7 +20,11 @@ param(
 
     [Parameter()]
     [ValidateRange(1, 65535)]
-    [int]$Port = 8080
+    [int]$Port = 8080,
+
+    [Parameter()]
+    [ValidateRange(1, 2147483)]
+    [int]$DosBoxTimeoutSeconds = 30
 )
 
 Set-StrictMode -Version Latest
@@ -129,6 +133,7 @@ $requestHandler = {
         [string]$UploadPath,
         [string]$ResultPath,
         [int]$PartitionCount,
+        [int]$DosBoxTimeoutSeconds,
         [long]$MaximumUploadBytes,
         [int]$ProcessingTimeoutMilliseconds
     )
@@ -217,7 +222,9 @@ $requestHandler = {
                 '-File',
                 $ProcessingScript,
                 '-PartitionCount',
-                [string]$PartitionCount
+                [string]$PartitionCount,
+                '-DosBoxTimeoutSeconds',
+                [string]$DosBoxTimeoutSeconds
             )) {
             [void]$startInfo.ArgumentList.Add($argument)
         }
@@ -465,6 +472,7 @@ try {
                     $uploadPath,
                     $resultPath,
                     $PartitionCount,
+                    $DosBoxTimeoutSeconds,
                     $maximumUploadBytes,
                     $processingTimeoutMilliseconds
                 )

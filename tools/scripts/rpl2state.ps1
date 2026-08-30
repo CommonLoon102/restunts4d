@@ -14,7 +14,11 @@ param(
 
     [Parameter(Mandatory, Position = 1)]
     [ValidateRange(1, 64)]
-    [int]$PartitionCount
+    [int]$PartitionCount,
+
+    [Parameter()]
+    [ValidateRange(1, 2147483)]
+    [int]$DosBoxTimeoutSeconds = 30
 )
 
 Set-StrictMode -Version Latest
@@ -28,7 +32,7 @@ $ScriptDirectory = $PSScriptRoot
 $GameDir = Join-Path $ScriptDirectory 'stunts'
 $Config = Join-Path $ScriptDirectory 'dosbox.proc.conf'
 $OutputFile = Join-Path $ScriptDirectory "partition_$Partition.txt"
-$TimeoutMilliseconds = 10000
+$TimeoutMilliseconds = $DosBoxTimeoutSeconds * 1000
 
 if (-not (Test-Path -LiteralPath $GameDir -PathType Container)) {
     throw "Stunts directory not found: $GameDir"
@@ -134,7 +138,7 @@ function Invoke-DosBoxExecutable {
 
             Write-ReplayError (
                 "ERROR|type=timeout|exe=$Executable|input=$FileName|" +
-                'timeout_seconds=10'
+                "timeout_seconds=$DosBoxTimeoutSeconds"
             )
             return $false
         }

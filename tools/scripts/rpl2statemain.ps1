@@ -12,7 +12,11 @@ Runs the requested number of rpl2state.ps1 replay partitions concurrently.
 param(
     [Parameter(Mandatory, Position = 0)]
     [ValidateRange(1, 64)]
-    [int]$PartitionCount
+    [int]$PartitionCount,
+
+    [Parameter()]
+    [ValidateRange(1, 2147483)]
+    [int]$DosBoxTimeoutSeconds = 30
 )
 
 Set-StrictMode -Version Latest
@@ -41,12 +45,14 @@ try {
                 param(
                     [string]$WorkerScript,
                     [int]$Partition,
-                    [int]$PartitionCount
+                    [int]$PartitionCount,
+                    [int]$DosBoxTimeoutSeconds
                 )
 
                 $workerParameters = @{
                     Partition = $Partition
                     PartitionCount = $PartitionCount
+                    DosBoxTimeoutSeconds = $DosBoxTimeoutSeconds
                 }
                 & $WorkerScript @workerParameters
             }
@@ -54,6 +60,7 @@ try {
                 $workerScript
                 $partition
                 $PartitionCount
+                $DosBoxTimeoutSeconds
             )
         }
 

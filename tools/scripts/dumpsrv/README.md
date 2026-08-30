@@ -57,11 +57,15 @@ New-NetFirewallRule `
 ## Start the service
 
 Set a long, random API key and choose the partition count expected by
-`rpl2statemain.ps1`:
+`rpl2statemain.ps1`. `DosBoxTimeoutSeconds` is the maximum time allowed for
+each DOSBox execution and defaults to 30 seconds:
 
 ```powershell
 $env:DUMPSRV_API_KEY = 'replace-with-a-long-random-secret'
-./dumpsrv.ps1 -PartitionCount 12 -Port 8080
+./dumpsrv.ps1 `
+    -PartitionCount 12 `
+    -Port 8080 `
+    -DosBoxTimeoutSeconds 30
 ```
 
 The service listens on all local interfaces. On Windows, `HttpListener` may

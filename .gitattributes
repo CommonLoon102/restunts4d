@@ -5,6 +5,8 @@
 *.inc text=crlf
 *.ASM text=crlf
 *.INC text=crlf
+*.ps1 text eol=crlf
+*.PS1 text eol=crlf
 *.rpl binary
 *.RPL binary
 *.res binary
