@@ -2925,7 +2925,6 @@ extern legacy_s8 aDefault_1[];
 extern legacy_s8 aLoa[];
 extern legacy_s8 aLsu[];
 extern legacy_s8 aLsd[];
-extern legacy_s8 unk_463EA[];
 extern legacy_s8* findfilenames[];
 extern void far* miscptr;
 extern legacy_s16 word_407FA;

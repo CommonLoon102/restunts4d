@@ -199,7 +199,12 @@ extern legacy_s16 mouse_butstate;
 extern legacy_s16 mouse_xpos;
 extern legacy_s16 mouse_ypos;
 extern legacy_s16 performGraphColor;
-extern legacy_s8 resID_byte1;
+#define RESID_BUFFER_SIZE 80
+#define RESID_TEXT_OFFSET 6
+extern legacy_s8 resID_buffer[RESID_BUFFER_SIZE];
+/* Legacy labels for byte 0 and byte 6 of the same scratch buffer. */
+#define resID_byte1 resID_buffer[0]
+#define unk_463EA (resID_buffer + RESID_TEXT_OFFSET)
 extern legacy_s16 waitflag;
 
 extern void far* fontnptr;
