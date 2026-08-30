@@ -173,6 +173,9 @@ extern legacy_s8 transprimitivepaintjob;
 extern legacy_u8 far* transshapeprimindexptr;
 extern legacy_s8 backlights_paint_override;
 
+/* 14-bit fixed point: the inner radius is 37/64 of the outer radius. */
+#define WHEEL_INNER_RADIUS_SCALE 0x2500U
+
 static legacy_s16 shape3d_absolute_word(legacy_s16 value)
 {
 	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
@@ -1048,7 +1051,7 @@ void get_a_poly_info(void)
 						LEGACY_U16_WRAP_ADD(4U,
 							LEGACY_U16_WRAP_MUL(index, 2U))));
 			}
-			preRender_wheel(points, 0x468U, material_color,
+			preRender_wheel(points, WHEEL_INNER_RADIUS_SCALE, material_color,
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == 5U) {
