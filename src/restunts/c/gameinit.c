@@ -268,6 +268,10 @@ void restore_gamestate(legacy_u16 frame)
 				return;
 			if (cvxptr[curframe].field_3F4 != 0)
 				break;
+			/* A newly loaded replay has no checkpoints yet.  Stop at the
+			 * initial state instead of wrapping before the checkpoint array. */
+			if (curframe == 0)
+				return;
 			curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
 		}
 	}

@@ -2048,7 +2048,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 
 				if (di != -1) {
-					var_trkobjectptr = &trkObjectList[fence_TrkObjCodes[di]];
+					var_trkobjectptr = frame_track_object_from_legacy_index(
+						fence_TrkObjCodes[di]);
 					if (tile_det_level == 0) {
 						currenttransshape->shapeptr = var_trkobjectptr->ss_shapePtr;
 					} else {
