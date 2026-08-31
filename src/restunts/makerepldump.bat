@@ -3,7 +3,7 @@ call setpath.bat
 set "target=S:\src\restunts\c\makefile"
 set "temp=%target%.tmp-%RANDOM%"
 
-make clean
+make clean-legacy
 
 make restunts-original
 make repldump-original
@@ -19,15 +19,15 @@ copy /b "%target%" "%temp%" >nul ^
 
 make repldump-original
 
-make clean
+make clean-legacy
 
-make restunts
-make repldump
+make restunts-borland
+make repldump-borland
 
 rem This below is here intentionally. It is very hard to get all 4 exes to compile.
 copy /b "%target%" "%temp%" >nul ^
   && del "%target%" ^
   && move "%temp%" "%target%" >nul
 
-make repldump
+make repldump-borland
 make repldump-original

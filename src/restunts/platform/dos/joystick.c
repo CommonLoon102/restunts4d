@@ -1,5 +1,5 @@
-#include <dos.h>
 #include "../../c/platform.h"
+#include "doscompat.h"
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;

@@ -82,6 +82,22 @@ jobs:
         id: names
         run: echo "value=$EXE_ARTIFACT" >> "$GITHUB_OUTPUT"
 
+      - name: Install Open Watcom 2 portable snapshot
+        run: |
+          mkdir -p "$RUNNER_TEMP/open-watcom"
+          curl --fail --location --retry 3 \
+            https://github.com/open-watcom/open-watcom-v2/releases/download/Current-build/ow-snapshot.tar.xz \
+            | tar -xJ -C "$RUNNER_TEMP/open-watcom"
+
+      - name: Build the ported executables with Open Watcom 2
+        run: |
+          make -C src/restunts clean
+          WATCOM="$RUNNER_TEMP/open-watcom" make -C src/restunts -j2 all
+          file src/restunts/dos/restunts.exe src/restunts/repldump/repldump.exe
+          mkdir -p dist
+          cp src/restunts/dos/restunts.exe dist/RESTUNTS.EXE
+          cp src/restunts/repldump/repldump.exe dist/REPLDUMP.EXE
+
       - name: Install Wine
         run: |
           sudo dpkg --add-architecture i386
@@ -106,11 +122,11 @@ jobs:
       - name: Collect the executables
         run: |
           set -u
-          mkdir -p dist
           missing=0
           # makerepldump.bat never reports failure, and a fresh checkout carries
-          # none of these files, so their presence is the build's pass criteria.
-          for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO; do
+          # neither original executable, so their presence is the legacy build's
+          # pass criterion. The ported Open Watcom executables are already in dist.
+          for exe in RESTUNTO REPLDUMO; do
               built=$(find stunts src/restunts/dos src/restunts/repldump \
                   -maxdepth 1 -iname "$exe.exe" -print -quit)
               if [[ -z "$built" ]]; then

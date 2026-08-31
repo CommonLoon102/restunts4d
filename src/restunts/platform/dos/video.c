@@ -1,6 +1,4 @@
-#define int86 _int86
-#include <dos.h>
-#include "../../c/legacy.h"
+#include "doscompat.h"
 
 extern void add_exit_handler(void (far* exit_handler)(void));
 
@@ -22,9 +20,9 @@ static void dos_video_set_equipment_bits(legacy_u16 display_bits)
 {
 	legacy_u16 equipment;
 
-	equipment = (legacy_u16)peek(0x40U, 0x10U);
+	equipment = dos_peek_word(0x40U, 0x10U);
 	equipment = (legacy_u16)((equipment & 0xFFCFU) | display_bits);
-	poke(0x40U, 0x10U, equipment);
+	dos_poke_word(0x40U, 0x10U, equipment);
 }
 
 static void dos_video_set_bios_mode(legacy_u8 mode)
@@ -33,7 +31,7 @@ static void dos_video_set_bios_mode(legacy_u8 mode)
 
 	registers.h.ah = 0;
 	registers.h.al = mode;
-	int86(0x10, &registers, &registers);
+	dos_int86(0x10, &registers, &registers);
 }
 
 static void dos_video_reset_palette(void)
@@ -42,7 +40,7 @@ static void dos_video_reset_palette(void)
 
 	registers.h.ah = 0x0BU;
 	registers.x.bx = 0;
-	int86(0x10, &registers, &registers);
+	dos_int86(0x10, &registers, &registers);
 }
 
 static void dos_video_fill(legacy_u16 segment, legacy_u16 value,
@@ -70,9 +68,9 @@ static void far dos_video_on_exit(void)
 {
 	legacy_u8 equipment;
 
-	pokeb(0x40U, 0x10U, saved_equipment_byte);
+	dos_poke_byte(0x40U, 0x10U, saved_equipment_byte);
 	dos_video_set_bios_mode(saved_video_mode);
-	pokeb(0x40U, 0x10U, saved_equipment_byte);
+	dos_poke_byte(0x40U, 0x10U, saved_equipment_byte);
 	equipment = saved_equipment_byte;
 	if ((equipment & 0x30U) == 0x30U)
 		dos_video_fill(0xA000U, 0, 0xFA00U);
@@ -86,9 +84,9 @@ static void dos_video_add_exit_handler(void)
 	if (saved_video_mode != 0)
 		return;
 	registers.h.ah = 0x0FU;
-	int86(0x10, &registers, &registers);
+	dos_int86(0x10, &registers, &registers);
 	saved_video_mode = registers.h.al;
-	saved_equipment_byte = (legacy_u8)peekb(0x40U, 0x10U);
+	saved_equipment_byte = dos_peek_byte(0x40U, 0x10U);
 	add_exit_handler(dos_video_on_exit);
 }
 
@@ -102,7 +100,7 @@ static void dos_video_set_mode3(void)
 
 legacy_s16 dos_video_get_status(void)
 {
-	return (legacy_s16)(inport(0x3DAU) & 8U);
+	return (legacy_s16)(dos_inport_word(0x3DAU) & 8U);
 }
 
 /* A dormant translated-assembly fallback still imports this legacy name. */

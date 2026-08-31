@@ -34,7 +34,7 @@ struct TRANSFORMEDSHAPE3D {
 
 /* These records mix 16-bit near and far pointers, so their original layout is
  * a DOS-compiler property rather than a portable resource representation. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_16BIT_DOS_COMPILER)
 typedef char legacy_shape3d_must_be_22_bytes[
 	(sizeof(struct SHAPE3D) == 22) ? 1 : -1];
 typedef char legacy_transformedshape3d_must_be_20_bytes[

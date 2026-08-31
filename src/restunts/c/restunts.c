@@ -1303,7 +1303,7 @@ void sub_18D06(const legacy_u8 far* sample, legacy_s16 interval)
 	}
 }
 
-void frame_callback(void)
+void far frame_callback(void)
 {
 	if (dos_data_stack_segments_match() == 0 || frame_callback_active != 0)
 		return;

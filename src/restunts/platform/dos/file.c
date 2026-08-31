@@ -1,6 +1,5 @@
-#include <dos.h>
-
 #include "platform.h"
+#include "doscompat.h"
 
 static legacy_s16 dos_file_errno;
 static struct find_t dos_find_data;
@@ -60,6 +59,15 @@ legacy_s16 dos_file_close(legacy_u16 handle)
 legacy_u16 dos_file_read(legacy_u16 handle, void far* destination,
 	legacy_u16 length)
 {
+#if defined(__WATCOMC__)
+	unsigned result;
+
+	if (_dos_read(handle, destination, length, &result) != 0U) {
+		dos_file_errno = 1;
+		return 0;
+	}
+	return (legacy_u16)result;
+#else
 	legacy_u16 segment;
 	legacy_u16 buffer_offset;
 	legacy_u16 result;
@@ -85,11 +93,21 @@ legacy_u16 dos_file_read(legacy_u16 handle, void far* destination,
 	read_done:
 	}
 	return result;
+#endif
 }
 
 legacy_u16 dos_file_write(legacy_u16 handle, const void far* source,
 	legacy_u16 length)
 {
+#if defined(__WATCOMC__)
+	unsigned result;
+
+	if (_dos_write(handle, source, length, &result) != 0U) {
+		dos_file_errno = 1;
+		return 0;
+	}
+	return (legacy_u16)result;
+#else
 	legacy_u16 segment;
 	legacy_u16 buffer_offset;
 	legacy_u16 result;
@@ -115,6 +133,7 @@ legacy_u16 dos_file_write(legacy_u16 handle, const void far* source,
 	write_done:
 	}
 	return result;
+#endif
 }
 
 legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset,
@@ -201,7 +220,8 @@ const legacy_s8* dos_file_find_first(const legacy_s8* query)
 	legacy_u8 attributes;
 	legacy_s16 result;
 
-	attributes = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
+	attributes = DOS_FILE_ATTRIBUTE_NORMAL | DOS_FILE_ATTRIBUTE_HIDDEN |
+		DOS_FILE_ATTRIBUTE_SYSTEM;
 	__asm {
 		mov ah, 1Ah
 		mov dx, offset dos_find_data

@@ -1,6 +1,6 @@
 #include "externs.h"
 
-#if !defined(__BORLANDC__)
+#if !defined(RESTUNTS_16BIT_DOS_COMPILER)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
 static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
 #endif
@@ -17,7 +17,7 @@ static legacy_s16 track_resource_read_s16(const legacy_u8 far* source,
 void track_collision_resources_decode(const legacy_u8 far* plane_source,
 	const legacy_u8 far* wall_source)
 {
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_16BIT_DOS_COMPILER)
 	/* DOS is little-endian and these packed records have their original ABI
 	 * sizes. Keep the resource-backed tables instead of duplicating nearly
 	 * 19 KiB in scarce conventional memory. */

@@ -57,9 +57,9 @@ void init_trackdata(void)
 	trkptr += 0xF0;
 	td13_rpl_header = trkptr;
 	trkptr += 0x1A;
-	td14_elem_map_main = trkptr;
+	td14_elem_map_main = (legacy_u8 far*)trkptr;
 	trkptr += 0x385;
-	td15_terr_map_main = trkptr;
+	td15_terr_map_main = (legacy_u8 far*)trkptr;
 	trkptr += 0x385;
 	td16_rpl_buffer = trkptr;
 	trkptr += 0x2EE0;
@@ -67,7 +67,7 @@ void init_trackdata(void)
 	trkptr += 0x385;
 	trackdata18 = trkptr;
 	trkptr += 0x385;
-	trackdata19 = trkptr;
+	trackdata19 = (legacy_u8 far*)trkptr;
 	trkptr += 0x385;
 	td20_trk_file_appnd = trkptr;
 	trkptr += 0x7AC;
@@ -75,7 +75,7 @@ void init_trackdata(void)
 	trkptr += 0x385;
 	td22_row_from_path = trkptr;
 	trkptr += 0x385;
-	trackdata23 = trkptr;
+	trackdata23 = (legacy_u8 far*)trkptr;
 	trkptr += 0x30;
 }
 

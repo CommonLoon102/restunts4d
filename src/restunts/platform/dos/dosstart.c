@@ -19,6 +19,12 @@ extern legacy_u8 headless_bss_start;
 extern legacy_u8 headless_bss_end;
 extern legacy_u8 headless_stack_top;
 
+#if defined(__WATCOMC__)
+#pragma aux headless_bss_start "headless_bss_start"
+#pragma aux headless_bss_end "headless_bss_end"
+#pragma aux headless_stack_top "headless_stack_top"
+#endif
+
 static legacy_u16 headless_psp_segment;
 static legacy_u16 headless_program_paragraphs;
 static legacy_s8 headless_program_name[] = "REPLDUMP";

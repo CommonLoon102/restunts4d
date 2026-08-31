@@ -11,6 +11,14 @@ void far* dos_memory_get_psp(void);
 #define dos_memory_pointer_segment(pointer) \
 	((legacy_u16)(void _seg*)(void far*)(pointer))
 #define dos_memory_pointer_offset(pointer) ((legacy_u16)(pointer))
+#elif defined(__WATCOMC__)
+#define dos_memory_make_pointer(segment, offset) \
+	(((legacy_u16)(segment)):>((void __near*)(legacy_u16)(offset)))
+#define dos_memory_make_near_pointer(offset) \
+	((void __near*)(legacy_u16)(offset))
+#define dos_memory_pointer_segment(pointer) \
+	((legacy_u16)((legacy_u32)(void far*)(pointer) >> 16))
+#define dos_memory_pointer_offset(pointer) ((legacy_u16)(pointer))
 #else
 void far* dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset);
 void* dos_memory_make_near_pointer(legacy_u16 offset);

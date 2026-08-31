@@ -2553,7 +2553,7 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	}
 }
 
-void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
+void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_u8 far* mempages) {
 	legacy_s16 shapecount, length, i, j, k, l;
 	legacy_u8 far* memchunkptr, far* mempagesptr, px, pat;
 	legacy_u32 val;

@@ -55,111 +55,86 @@ Main repository: https://github.com/4d-stunts/restunts
 
 ## How to build
 
-### On Windows
-	1) Double click tools\mount_stunts_to_s.bat (only needed once per reboot)
-	2) Start cmd.exe and enter the following commands:
-		S:
-		cd \src\restunts
-		setpath
-		make
+### Ported C executables with Open Watcom 2
 
-### On Linux
-	0) You might want to set `git config --worktree core.autocrlf false` before
-	   you make any change, lest git meddles with the DOS newlines
-	1) Install Wine
-	2) Mount the restunts dir as drive S using `winecfg`
-	3) In the Linux console type `wineconsole cmd`
-	4) In the resulting Wine console type (mind the inverted slashes and the lack of tab completion):
-	```
-	s:
-	cd src\restunts
-	setpath
-	```
+The default GNU Make build now uses Open Watcom 2's Linux-hosted 16-bit DOS
+compiler, assembler, and linker. Download and extract an official portable
+snapshot from the [Open Watcom 2 releases](https://github.com/open-watcom/open-watcom-v2/releases),
+then point `WATCOM` at it:
 
-### On both platforms
-
-If everything went fine, there should be a new s:\stunts\restunts.exe which can
-be run in DOSBox. Note that the drive letter S: is hardcoded many places in the
-makefiles, and is also mounted inside DOSBox as a fixed point of reference.
-
-The makefile supports the following targets:
-
-	make <OPTIONS> restunts
-		Builds RESTUNTS.EXE from the ported C game and the DOS platform layer.
-
-	make <OPTIONS> restunts-original
-		Builds an executable based on unpatched disassembly with the original
-		codepaths intact. Does not use any of the ported C code.
-
-	make <OPTIONS> repldump
-		Builds the C-only headless replay engine as REPLDUMP.EXE.
-
-	make <OPTIONS> repldump-original
-		Builds the replay dump oracle from the unpatched disassembly.
-
-
-**NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
+```sh
+export WATCOM=/path/to/open-watcom-2
+make -C src/restunts -j"$(nproc)"
 ```
+
+No Wine, Borland compiler, TASM, or DOSBox is needed to compile. The build
+creates `src/restunts/dos/restunts.exe` and
+`src/restunts/repldump/repldump.exe`, then copies both into `stunts/`.
+
+The modern targets are:
+
+	make restunts
+		Build RESTUNTS.EXE from the ported C game and DOS platform layer.
+
+	make repldump
+		Build the C-only headless replay engine as REPLDUMP.EXE.
+
+	make
+		Build both ported executables.
+
+The portable 64-bit Linux tools are expected in `$WATCOM/binl64`. Set
+`OW_BIN=/another/tool/directory` when using another host package layout.
+
+### Original reconstruction with the historical toolchain
+
+`RESTUNTO.EXE` and `REPLDUMO.EXE` still reproduce the unported assembly and
+therefore retain the bundled Borland/TASM Windows/Wine build:
+
+	make restunts-original
+	make repldump-original
+
+On Windows, mount the checkout as drive S with
+`tools\mount_stunts_to_s.bat`, run `src\restunts\setpath.bat`, and invoke the
+targets above. On Linux, the same legacy path requires Wine with the checkout
+mapped as drive S. The compatibility targets `restunts-borland` and
+`repldump-borland` remain available for comparing the old compiler's ported
+build with Open Watcom's output.
 
 ## Build options
 
-### Assembler selection
-
-Restunts builds per default with TASM32 for Windows, but it can be changed to using
-the a 16-bit TASMX by using option `ASSEMBLER=tasmbox` before the target name (or
-`ASSEMBLER=tasmx` if one really likes seeing pop-up windows).
-
-E.g. to build restunts with TASMX, type
-
-	make ASSEMBLER=tasmbox restunts 
-
-Building with TASMX is much slower since DOSBox is involved, but it allows to include 
-debugging symbols (s. below)
-
-### Linker selection
-
-Restunts links per default with TLINK using dosbox but that can changed to using
-the native WLINK executable by using option `LINKER=wlink` before the target name
-
-E.g. to build Restunts with wlink, type
-
-	make LINKER=wlink restunts 
-
-Note that `WLINK` is experimental, and it does not allow to include debug symbols. Its
-use can slightly speed up the build process since it avoids calling DOSBox.
-
 ### Debugging symbols
 
-The executable can be built with debug symbols by means of the `CONFIG=debug`
-option. Note that this requires using TASMX as assembler and TLINK as linker
-(TLINK is currently the default but this might change in future)
+The Open Watcom build accepts `CONFIG=release` (the default) or `CONFIG=debug`:
 
-E.g. to build Restunts with debug symbols, type
+	make CONFIG=debug restunts
 
-	make ASSEMBLER=tasmbox LINKER=tlink CONFIG=debug restunts 
+The legacy original targets continue to accept `ASSEMBLER=tasmbox`,
+`ASSEMBLER=tasmx`, `ASSEMBLER=tasm32`, and `LINKER=tlinkbox`, `LINKER=tlink`,
+or `LINKER=wlink` where the historical component makefiles support them.
 
 
 ## The toolchain
 
-The toolchain has evolved over the years and it can now (2025) use either
-Borland tools or alternative ones. For various reasons, the build process can
-uses both 16 and 32-bit tools. In order to compile on modern 64 bit systems,
-the 16-bit apps run via DOSBox. A couple of batch files (in
-`tools\bin\*box.bat`) take care of starting DOSBox in headless mode to prevent
-pop-ups, and copy the output into the Windows console.
+The ported targets use Open Watcom 2 end to end: WCC compiles 16-bit
+medium-model DOS C, WASM assembles the two startup markers, and WLINK creates
+the executables. All three tools run natively on a modern 64-bit Linux host.
+The exact original reconstruction remains on the historical toolchain, where
+16-bit utilities run through DOSBox when necessary.
 
 ### Tools used
 Assemblers:
+	- Open Watcom 2 WASM (ported targets)
 	- TASMX (16-bit, from Borland Turbo Assembler 4.0)
 	- TASM32 (32-bit)
 
 Linkers:
+	- Open Watcom 2 WLINK (ported targets)
 	- TLINK (16-bit)
-	- WLINK (32-bit, experimental)
 
 Other:
+	- Open Watcom 2 WCC (ported targets)
 	- Borland C++ 5.2 (Win32)
-	- GNU Make 4.4.1 (Win32) - from the Chocolatey Windows Packages
+	- GNU Make
 
 ## Analysis in IDA and the development cycle
 
@@ -183,10 +158,10 @@ symbols in case a symbol was renamed in IDA, but not in the C files.
 
 ## Debugging restunts.exe
 
-Restunts can be debugged with Turbo Debugger inside DOSBox. In orger to do
-that, the target program must be built with debug symbols, which is possible by
-setting the option `CONFIG=debug` when calling make (see paragraph “Debugging
-symbols” above).
+The historical Borland build can be debugged with Turbo Debugger inside
+DOSBox. Build `restunts-borland` with `CONFIG=debug`, TASMX, and TLINK as in the
+legacy workflow; Open Watcom's debug output is not intended for Turbo
+Debugger.
 
 The DOSBox debugging environment is an extension of the build environment
 described above:

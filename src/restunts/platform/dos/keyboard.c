@@ -1,15 +1,7 @@
-#include <dos.h>
 #include "keyboard.h"
+#include "doscompat.h"
 
-// need these since we are referncing external symbols without an underscore
-#define getvect _getvect
-#define setvect _setvect
-#define int86 _int86
-extern void _CType _setvect( legacy_s16 __interruptno, void interrupt( far *__isr )( ) );
-extern void interrupt( far * _CType _getvect( legacy_s16 __interruptno ))( );
-legacy_s16 _Cdecl _int86( legacy_s16 __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs );
-
-typedef void interrupt (far* voidinterruptfunctype)();
+typedef dos_interrupt_handler_type voidinterruptfunctype;
 typedef void (far* voidfunctype)();
 
 static voidinterruptfunctype old_kb_int9_handler;
@@ -27,6 +19,38 @@ static legacy_u16 dos_kb_buffer_size = 2U;
 static legacy_u16 dos_kb_buffer_count;
 static legacy_u16 dos_kb_buffer[64];
 static legacy_u16 dos_kb_last_input;
+
+static legacy_u16 dos_kb_interrupt(union REGS* input, union REGS* output)
+{
+#if defined(__WATCOMC__)
+	union REGPACK registers;
+	struct SREGS segments;
+
+	segread(&segments);
+	registers.w.ax = input->x.ax;
+	registers.w.bx = input->x.bx;
+	registers.w.cx = input->x.cx;
+	registers.w.dx = input->x.dx;
+	registers.w.bp = 0;
+	registers.w.si = input->x.si;
+	registers.w.di = input->x.di;
+	registers.w.ds = segments.ds;
+	registers.w.es = segments.es;
+	registers.w.flags = 0;
+	intr(0x16, &registers);
+	output->x.ax = registers.w.ax;
+	output->x.bx = registers.w.bx;
+	output->x.cx = registers.w.cx;
+	output->x.dx = registers.w.dx;
+	output->x.si = registers.w.si;
+	output->x.di = registers.w.di;
+	output->x.cflag = registers.w.flags & 1U;
+	return (legacy_u16)registers.w.flags;
+#else
+	dos_int86(0x16, input, output);
+	return output->x.flags;
+#endif
+}
 
 static const legacy_u8 dos_kb_keymap1[91] = {
 	0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 9,
@@ -120,7 +144,7 @@ void interrupt kb_int9_handler(void) {
 		}
 
 		kbdata = dos_kb_buffer_write;
-		disable();
+		dos_disable_interrupts();
 		dos_kb_buffer[kbdata / 2] = kbval;
 		kbdata+=2;
 		if (kbdata >= dos_kb_buffer_size) // data3 = kb_buffer_pos
@@ -134,7 +158,7 @@ void interrupt kb_int9_handler(void) {
 			dos_kb_buffer_read = dos_kb_buffer_write;
 		}
 		dos_kb_buffer_count = kbdata;
-		enable();
+		dos_enable_interrupts();
 
 	} else {
 		kbc &= 0x7F;
@@ -199,21 +223,29 @@ static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right) {
 }
 
 #pragma argsused
+#if defined(__WATCOMC__)
+static void interrupt kb_int16_handler(union INTPACK registers) {
+#define KB_INTERRUPT_AX registers.w.ax
+#define KB_INTERRUPT_FLAGS registers.w.flags
+#else
 void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 	legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
 	legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
 	legacy_u16 ip, legacy_u16 cs, legacy_u16 flags) {
+#define KB_INTERRUPT_AX ax
+#define KB_INTERRUPT_FLAGS flags
+#endif
 
 	legacy_u16 result, kbdata;
 	legacy_u8 shiftleft, shiftright;
-	legacy_u8 bioscall = ax >> 8;
-	disable();
+	legacy_u8 bioscall = KB_INTERRUPT_AX >> 8;
+	dos_disable_interrupts();
 	if (bioscall == 0) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
-			enable();
-			ax = 0;
-			flags = kb_flags_after_zero();
+			dos_enable_interrupts();
+			KB_INTERRUPT_AX = 0;
+			KB_INTERRUPT_FLAGS = kb_flags_after_zero();
 			return ;
 		}
 		kbdata = dos_kb_buffer_read;
@@ -224,24 +256,24 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 		dos_kb_buffer_read = kbdata;
 		kbdata = dos_kb_buffer_count;
 		dos_kb_buffer_count = kbdata - 2;
-		enable();
-		ax = result;
-		flags = kb_flags_after_subtract_two(kbdata);
+		dos_enable_interrupts();
+		KB_INTERRUPT_AX = result;
+		KB_INTERRUPT_FLAGS = kb_flags_after_subtract_two(kbdata);
 		return ;
 	}
 
 	if (bioscall == 1) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
-			enable();
-			ax = 0;
-			flags = kb_flags_after_zero();
+			dos_enable_interrupts();
+			KB_INTERRUPT_AX = 0;
+			KB_INTERRUPT_FLAGS = kb_flags_after_zero();
 			return ;
 		}
 		result = dos_kb_buffer[dos_kb_buffer_read / 2];
-		enable();
-		ax = result;
-		flags = kb_flags_after_compare_zero(kbdata);
+		dos_enable_interrupts();
+		KB_INTERRUPT_AX = result;
+		KB_INTERRUPT_FLAGS = kb_flags_after_compare_zero(kbdata);
 		return ;
 	}
 
@@ -249,16 +281,18 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 		shiftleft = dos_kb_input[0x2A];
 		shiftright = dos_kb_input[0x36];
 		result = shiftleft | shiftright;
-		enable();
-		ax = result & 0xFF;
-		flags = kb_flags_after_or(shiftleft, shiftright);
+		dos_enable_interrupts();
+		KB_INTERRUPT_AX = result & 0xFF;
+		KB_INTERRUPT_FLAGS = kb_flags_after_or(shiftleft, shiftright);
 		return ;
 	}
-	enable();
-	ax = 0;
-	flags = kb_flags_after_zero();
+	dos_enable_interrupts();
+	KB_INTERRUPT_AX = 0;
+	KB_INTERRUPT_FLAGS = kb_flags_after_zero();
 	//return 0;
 }
+#undef KB_INTERRUPT_AX
+#undef KB_INTERRUPT_FLAGS
 
 void kb_init_interrupt(void) {
 	legacy_u8 irqmask;
@@ -269,13 +303,13 @@ void kb_init_interrupt(void) {
 	outp(0x21, irqmask | 0x3);
 
 	// The original compares only the offset word read from vector 9.
-	current_kb_int9_handler = getvect(9);
+	current_kb_int9_handler = dos_getvect(9);
 	if (FP_OFF(current_kb_int9_handler) != FP_OFF(kb_int9_handler)) {
 		old_kb_int9_handler = current_kb_int9_handler;
-		setvect(9, kb_int9_handler);
+		dos_setvect(9, kb_int9_handler);
 
-		old_kb_int16_handler = getvect(0x16);
-		setvect(0x16, kb_int16_handler);
+		old_kb_int16_handler = dos_getvect(0x16);
+		dos_setvect(0x16, kb_int16_handler);
 	}
 
 	outp(0x21, irqmask);
@@ -296,9 +330,9 @@ void kb_exit_handler(void) {
 
 	// The original guards this block with the saved offset word alone.
 	if (FP_OFF(old_kb_int9_handler) != 0) {
-		setvect(9, old_kb_int9_handler);
-		setvect(0x16, old_kb_int16_handler);
-		pokeb(0, 0x417, peekb(0, 0x417) & 0xf0);
+		dos_setvect(9, old_kb_int9_handler);
+		dos_setvect(0x16, old_kb_int16_handler);
+		dos_poke_byte(0, 0x417, dos_peek_byte(0, 0x417) & 0xf0);
 	}
 
 	outp(0x21, irqmask);
@@ -314,8 +348,7 @@ legacy_s16 dos_kb_get_char(void)
 	union REGS outregs;
 
 	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
-	if ((outregs.x.flags & 0x0040U) != 0)
+	if ((dos_kb_interrupt(&inregs, &outregs) & 0x0040U) != 0)
 		return 0;
 
 	/* A timer callback may ask while a foreign stack is active.  The original
@@ -324,19 +357,21 @@ legacy_s16 dos_kb_get_char(void)
 		return outregs.x.ax;
 
 	inregs.h.ah = 0;
-	int86(0x16, &inregs, &outregs);
+	(void)dos_kb_interrupt(&inregs, &outregs);
 	return kb_parse_key(outregs.x.ax);
 }
 
 void dos_kb_set_numlock(void)
 {
-	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) | 0x20U);
+	dos_poke_byte(0x40U, 0x17U,
+		dos_peek_byte(0x40U, 0x17U) | 0x20U);
 	(void)kb_checking();
 }
 
 void dos_kb_clear_numlock(void)
 {
-	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) & 0xDFU);
+	dos_poke_byte(0x40U, 0x17U,
+		dos_peek_byte(0x40U, 0x17U) & 0xDFU);
 	(void)kb_checking();
 }
 
@@ -352,11 +387,11 @@ legacy_s16 kb_read_char(void) {
 	union REGS outregs;
 
 	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
+	(void)dos_kb_interrupt(&inregs, &outregs);
 	if (!outregs.x.ax) return 0;
 
 	inregs.h.ah = 0;
-	int86(0x16, &inregs, &outregs);
+	(void)dos_kb_interrupt(&inregs, &outregs);
 	// AL == 0 marks an extended key, whose scancode kb_int9_handler put in AH.
 	// The original keeps the whole word in that case (or al,al / jz, skipping
 	// the xor ah,ah) and returns AL alone otherwise.
@@ -370,7 +405,7 @@ legacy_s16 kb_checking(void) {
 	union REGS outregs;
 
 	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
+	(void)dos_kb_interrupt(&inregs, &outregs);
 	if (outregs.h.al == 0)
 		return outregs.x.ax;
 	return outregs.h.al;
@@ -389,10 +424,10 @@ legacy_s16 kb_check(void) {
 
 	while (1) {
 		inregs.h.ah = 1;
-		int86(0x16, &inregs, &outregs);
+		(void)dos_kb_interrupt(&inregs, &outregs);
 		if (!outregs.x.ax) return 0;
 
 		inregs.h.ah = 0;
-		int86(0x16, &inregs, &outregs);
+		(void)dos_kb_interrupt(&inregs, &outregs);
 	}
 }

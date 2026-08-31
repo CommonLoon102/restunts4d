@@ -1,9 +1,5 @@
 #include "../../c/platform.h"
-
-#include <dos.h>
-
-#define getvect _getvect
-extern void interrupt (far* _CType _getvect(legacy_s16 interrupt_number))(void);
+#include "doscompat.h"
 
 typedef void interrupt (far* interrupt_handler_type)(void);
 
@@ -52,11 +48,11 @@ legacy_s16 dos_timer_register_callback(void (far* callback)(void))
 	if (callback_index == 5U)
 		return 0;
 
-	disable();
+	dos_disable_interrupts();
 	dos_timer_callbacks[callback_index] = 0;
 	dos_timer_callbacks[callback_index] = callback;
 	dos_timer_callbacks[callback_index + 1U] = 0;
-	enable();
+	dos_enable_interrupts();
 	return 1;
 }
 
@@ -71,14 +67,14 @@ void dos_timer_unregister_callback(void (far* callback)(void))
 	if (callback_index == 5U)
 		return;
 
-	disable();
+	dos_disable_interrupts();
 	while (callback_index < 4U) {
 		dos_timer_callbacks[callback_index] =
 			dos_timer_callbacks[callback_index + 1U];
 		callback_index++;
 	}
 	dos_timer_callbacks[4] = 0;
-	enable();
+	dos_enable_interrupts();
 }
 
 void dos_timer_reset_counter(void)
@@ -98,7 +94,7 @@ static void interrupt dos_timer_interrupt(void)
 
 	/* Match the original IRQ0 handler: allow nested interrupts after the
 	 * compiler's interrupt prologue has saved the interrupted registers. */
-	enable();
+	dos_enable_interrupts();
 	dos_timer_divider = (legacy_u16)(dos_timer_divider - 1U);
 	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <= 0) {
 		dos_timer_slow_low = (legacy_u16)(dos_timer_slow_low + 1U);
@@ -126,10 +122,10 @@ static void interrupt dos_timer_interrupt(void)
 		goto callbacks_finished;
 
 	dos_timer_increment_counter(&dos_timer_counter);
-	disable();
+	dos_disable_interrupts();
 	if (dos_timer_in_callbacks == 0) {
 		dos_timer_in_callbacks = 1U;
-		enable();
+		dos_enable_interrupts();
 		for (callback_index = 0; callback_index < 6U;
 			callback_index++) {
 			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
@@ -176,7 +172,7 @@ void dos_timer_shutdown(void)
 	interrupt_handler_type installed_handler;
 	legacy_u8 interrupt_mask;
 
-	installed_handler = getvect(8);
+	installed_handler = dos_getvect(8);
 	if (installed_handler != dos_timer_interrupt)
 		return;
 
@@ -200,17 +196,17 @@ void dos_timer_setup_interrupt(void)
 	dos_timer_chain_timeout_active = 0;
 	dos_timer_chain_enabled = 1U;
 
-	disable();
+	dos_disable_interrupts();
 	dos_timer_in_callbacks = 0;
 	dos_timer_callbacks[0] = 0;
-	enable();
+	dos_enable_interrupts();
 
 	outp(0x61U, inp(0x61U) & 0xFCU);
 	outp(0x43U, 0xB6U);
 	interrupt_mask = (legacy_u8)inp(0x21U);
 	outp(0x21U, interrupt_mask | 3U);
 
-	installed_handler = getvect(8);
+	installed_handler = dos_getvect(8);
 	if (installed_handler != dos_timer_interrupt) {
 		previous_timer_interrupt = installed_handler;
 		dos_timer_write_vector(dos_timer_interrupt);

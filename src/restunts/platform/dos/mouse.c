@@ -1,6 +1,5 @@
-#define int86 _int86
-#include <dos.h>
 #include "../../c/platform.h"
+#include "doscompat.h"
 
 static legacy_u16 dos_mouse_button_count;
 
@@ -17,7 +16,7 @@ static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal,
 	registers.x.ax = 0x000FU;
 	registers.x.cx = horizontal;
 	registers.x.dx = vertical;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 }
 
 void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
@@ -30,12 +29,12 @@ void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
 	registers.x.ax = 7;
 	registers.x.cx = (legacy_u16)minimum_x << scale;
 	registers.x.dx = (legacy_u16)maximum_x << scale;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 
 	registers.x.ax = 8;
 	registers.x.cx = (legacy_u16)minimum_y;
 	registers.x.dx = (legacy_u16)maximum_y;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 }
 
 legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
@@ -50,12 +49,14 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	registers.x.si = 0;
 	registers.x.di = 0;
 	registers.x.cflag = 0;
+#if defined(__BORLANDC__)
 	registers.x.flags = 0;
+#endif
 	registers.x.ax = 0xC201U;
-	int86(0x15, &registers, &registers);
+	dos_int86(0x15, &registers, &registers);
 
 	registers.x.ax = 0;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 	installed = (legacy_s16)registers.x.ax;
 	dos_mouse_button_count = registers.x.bx;
 	if (installed != 0) {
@@ -78,7 +79,7 @@ void dos_mouse_set_position(legacy_s16 x, legacy_s16 y)
 	registers.x.cx = (legacy_u16)x << dos_mouse_horizontal_scale;
 	registers.x.dx = (legacy_u16)y;
 	dos_mouse_last_y = (legacy_u16)y;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 }
 
 void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y)
@@ -86,7 +87,7 @@ void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y)
 	union REGS registers;
 
 	registers.x.ax = 3;
-	int86(0x33, &registers, &registers);
+	dos_int86(0x33, &registers, &registers);
 	*buttons = (legacy_s16)registers.x.bx;
 	*x = (legacy_s16)(registers.x.cx >> dos_mouse_horizontal_scale);
 	*y = (legacy_s16)registers.x.dx;

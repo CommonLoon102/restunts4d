@@ -3,11 +3,22 @@
 
 #include <limits.h>
 
-/* Borland's segmented-memory qualifier has no meaning on flat-memory hosts. */
-#if !defined(__BORLANDC__) && !defined(far)
+/* Compilers targeting 16-bit DOS provide meaningful segmented pointers. */
+#if defined(__BORLANDC__) || defined(__WATCOMC__)
+#define RESTUNTS_16BIT_DOS_COMPILER 1
+#endif
+
+/* The original assembly and Borland /u- build use undecorated C function
+ * names. Keep that object ABI while using Open Watcom's cdecl convention. */
+#if defined(__WATCOMC__)
+#pragma aux default "*"
+#endif
+
+/* Segmented-memory qualifiers have no meaning on flat-memory hosts. */
+#if !defined(RESTUNTS_16BIT_DOS_COMPILER) && !defined(far)
 #define far
 #endif
-#if !defined(__BORLANDC__) && !defined(huge)
+#if !defined(RESTUNTS_16BIT_DOS_COMPILER) && !defined(huge)
 #define huge
 #endif
 
@@ -43,7 +54,7 @@ legacy_s32 legacy_s32_div_or_zero(
 	legacy_s32 numerator, legacy_s32 denominator);
 
 /* Pass side-effect-free values to these legacy word operations. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_16BIT_DOS_COMPILER)
 #define LEGACY_S8_FROM_BITS(value) ((legacy_s8)(legacy_u8)(value))
 #define LEGACY_S16_FROM_BITS(value) ((legacy_s16)(legacy_u16)(value))
 #else
@@ -166,7 +177,7 @@ legacy_s32 legacy_s32_div_or_zero(
 			(legacy_u8)(legacy_write_u16_value_ >> 8); \
 	} while (0)
 
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_16BIT_DOS_COMPILER)
 #define LEGACY_S32_FROM_BITS(value) ((legacy_s32)(legacy_u32)(value))
 #else
 #define LEGACY_S32_FROM_BITS(value) \

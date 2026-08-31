@@ -44,7 +44,7 @@ legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_pos_y(const struct SHAPE2D far* shape);
 
 /* SPRITE contains both 16-bit near and far pointers. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_16BIT_DOS_COMPILER)
 typedef char legacy_sprite_must_be_30_bytes[
 	(sizeof(struct SPRITE) == 30) ? 1 : -1];
 #endif
@@ -116,7 +116,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages);
 
 void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages);
 
-void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages);
+void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_u8 far* mempages);
 
 legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk);
 

@@ -1,7 +1,6 @@
-#include <dos.h>
-
 #include "memmgr.h"
 #include "platform.h"
+#include "doscompat.h"
 
 typedef void (far* exit_handler_type)(void);
 
@@ -9,40 +8,42 @@ extern void add_exit_handler(exit_handler_type exit_handler);
 
 void far* dos_memory_get_psp(void)
 {
-	legacy_u16 segment;
-	legacy_u16 offset;
+	legacy_u16 psp_segment;
+	legacy_u16 psp_offset;
 
 	__asm {
 		push ds
 		mov ah, 62h
 		int 21h
-		mov segment, ds
-		mov offset, bx
+		mov ax, ds
+		mov psp_segment, ax
+		mov psp_offset, bx
 		pop ds
 	}
-	return dos_memory_make_pointer(segment, offset);
+	return dos_memory_make_pointer(psp_segment, psp_offset);
 }
 
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs)
 {
-	legacy_u16 segment;
+	legacy_u16 allocated_segment;
 
 	__asm {
 		mov bx, paragraphs
 		mov ah, 48h
 		int 21h
-		mov segment, ax
+		mov allocated_segment, ax
 	}
-	return segment;
+	return allocated_segment;
 }
 
-legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs)
+legacy_u16 dos_memory_resize(legacy_u16 memory_segment,
+	legacy_u16 paragraphs)
 {
 	legacy_u16 maximum;
 
 	__asm {
 		mov bx, paragraphs
-		mov es, segment
+		mov es, memory_segment
 		mov ah, 4ah
 		int 21h
 		mov maximum, bx
@@ -50,10 +51,10 @@ legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs)
 	return maximum;
 }
 
-static void dos_memory_free(legacy_u16 segment)
+static void dos_memory_free(legacy_u16 memory_segment)
 {
 	__asm {
-		mov es, segment
+		mov es, memory_segment
 		mov ah, 49h
 		int 21h
 	}

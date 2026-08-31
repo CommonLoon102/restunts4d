@@ -5,6 +5,7 @@ src/restunts/*/tasm.dosbox.conf
 src/restunts/c/build/dosheadless/*obj
 src/restunts/c/build/dosfull/*obj
 src/restunts/c/build/dos/*obj
+src/restunts/build/openwatcom/
 src/restunts/dos/*EXE
 src/restunts/dos/*MAP
 src/restunts/dos/*exe

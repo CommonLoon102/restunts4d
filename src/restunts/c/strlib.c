@@ -1,5 +1,32 @@
 #include "restunts.h"
 
+#if defined(__WATCOMC__)
+void* _memcpy(void* destination, const void* source, legacy_u16 length)
+{
+	legacy_u8* destination_bytes;
+	const legacy_u8* source_bytes;
+
+	destination_bytes = (legacy_u8*)destination;
+	source_bytes = (const legacy_u8*)source;
+	while (length-- != 0U)
+		*destination_bytes++ = *source_bytes++;
+	return destination;
+}
+
+void far* __fmemcpy(void far* destination, const void far* source,
+	legacy_u16 length)
+{
+	legacy_u8 far* destination_bytes;
+	const legacy_u8 far* source_bytes;
+
+	destination_bytes = (legacy_u8 far*)destination;
+	source_bytes = (const legacy_u8 far*)source;
+	while (length-- != 0U)
+		*destination_bytes++ = *source_bytes++;
+	return destination;
+}
+#endif
+
 void copy_string(legacy_s8* destination, legacy_s8 far* source)
 {
 	/* Preserve the original post-copy lookahead, including its empty input bug. */
