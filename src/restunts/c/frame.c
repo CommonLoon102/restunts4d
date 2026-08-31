@@ -320,6 +320,7 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 	struct VECTOR source;
 	struct VECTOR vectors[2];
 	struct POINT2D points[6];
+	struct POINT2D point_swap;
 	struct RECTANGLE work_rect;
 	legacy_u16 line_data[14];
 	legacy_s16 base_horizon;
@@ -507,6 +508,10 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 						corner_angles[point_index], angle_offset)),
 					0x3E80));
 		}
+		/* The original inline stack arguments order these vertices 0,1,3,2. */
+		point_swap = points[2];
+		points[2] = points[3];
+		points[3] = point_swap;
 		skybox_op_helper(skybox_sky_color, 4, points);
 		points[2] = points[4];
 		points[3] = points[5];
