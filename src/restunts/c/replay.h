@@ -29,5 +29,9 @@ void replay_gameinfo_decode(struct GAMEINFO* destination,
 	const legacy_u8 far* source);
 void replay_gameinfo_encode(legacy_u8 far* destination,
 	const struct GAMEINFO* source);
+legacy_u16 replay_timeline_position(legacy_u16 frame,
+	legacy_u16 recorded_frames, legacy_u16 width);
+legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount,
+	legacy_u16 frames_remaining, legacy_u16 checkpoint_distance);
 
 #endif

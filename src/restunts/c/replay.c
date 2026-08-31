@@ -76,3 +76,24 @@ void replay_gameinfo_encode(legacy_u8 far* destination,
 	LEGACY_WRITE_U16_LE(destination + REPLAY_RECORDED_FRAMES_OFFSET,
 		source->game_recordedframes);
 }
+
+legacy_u16 replay_timeline_position(legacy_u16 frame,
+	legacy_u16 recorded_frames, legacy_u16 width)
+{
+	if (recorded_frames == 0U)
+		return 0U;
+	if (frame > recorded_frames)
+		frame = recorded_frames;
+	return (legacy_u16)(((legacy_u32)frame * (legacy_u32)width) /
+		(legacy_u32)recorded_frames);
+}
+
+legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount,
+	legacy_u16 frames_remaining, legacy_u16 checkpoint_distance)
+{
+	if (checkpoint_distance == 0U)
+		return 0U;
+	return (legacy_u16)(((legacy_u32)rewind_amount *
+		(legacy_u32)frames_remaining) /
+		(legacy_u32)checkpoint_distance);
+}

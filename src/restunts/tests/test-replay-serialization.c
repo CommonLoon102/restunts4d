@@ -55,6 +55,32 @@ static void assert_gameinfo_equal(const struct GAMEINFO* left,
 	assert(left->game_recordedframes == right->game_recordedframes);
 }
 
+static void test_replay_ui_math(void)
+{
+	legacy_u16 amount;
+	legacy_u16 distance;
+	legacy_u16 remaining;
+
+	assert(replay_timeline_position(0U, 0U, 110U) == 0U);
+	assert(replay_timeline_position(50U, 100U, 110U) == 55U);
+	assert(replay_timeline_position(100U, 100U, 110U) == 110U);
+	assert(replay_timeline_position(101U, 100U, 110U) == 110U);
+
+	assert(replay_rewind_interpolate(1U, 99U, 100U) == 0U);
+	assert(replay_rewind_interpolate(100U, 50U, 100U) == 50U);
+	assert(replay_rewind_interpolate(12000U, 50U, 100U) == 6000U);
+	assert(replay_rewind_interpolate(5U, 1U, 0U) == 0U);
+
+	for (amount = 1U; amount <= 100U; amount++) {
+		for (distance = 1U; distance <= 100U; distance++) {
+			for (remaining = 0U; remaining <= distance; remaining++) {
+				assert(replay_rewind_interpolate(amount, remaining,
+					distance) <= amount);
+			}
+		}
+	}
+}
+
 int main(void)
 {
 	static const legacy_u8 expected[REPLAY_GAMEINFO_SIZE] = {
@@ -76,5 +102,6 @@ int main(void)
 	memset(&decoded, 0, sizeof(decoded));
 	replay_gameinfo_decode(&decoded, bytes);
 	assert_gameinfo_equal(&encoded, &decoded);
+	test_replay_ui_math();
 	return 0;
 }
