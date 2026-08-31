@@ -87,7 +87,7 @@ void load_opponent_data(void)
 	(void)locate_shape_alt((legacy_s8 far*)resource, aPath);
 	speed_data = (legacy_u8 far*)locate_shape_alt(
 		(legacy_s8 far*)resource, aSped);
-	for (index = 0; index < 16U; index++)
+	for (index = 0; index < OPPONENT_SPEED_COUNT; index++)
 		oppnentSped[index] = speed_data[index];
 
 	best_distance = 0x000F423FUL;

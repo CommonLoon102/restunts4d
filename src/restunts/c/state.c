@@ -864,6 +864,22 @@ static legacy_s16 route_average(legacy_s16 first, legacy_s16 second) {
 	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, 1U));
 }
 
+static legacy_u8 opponent_speed_at(legacy_u16 index)
+{
+	if (index < OPPONENT_SPEED_COUNT)
+		return oppnentSped[index];
+
+	/*
+	 * The assembly adds two zero-extended bytes as a 16-bit address; it does
+	 * not wrap the sum to a byte.  The built-in surface -1 track objects use
+	 * offset 268, in the original zero-filled rectangle workspace after the
+	 * speed table.  Null track-info aliases similarly reach an unused zero
+	 * byte in the path workspace.  Keep those reads deterministic instead of
+	 * indexing beyond the C array.
+	 */
+	return 0;
+}
+
 legacy_s16 sub_18D60(
 	legacy_s16 track_index_arg,
 	struct VECTOR* output,
@@ -910,9 +926,10 @@ legacy_s16 sub_18D60(
 
 	if (optional_speed != 0) {
 		speed_index = (legacy_u8)track_info->si_oppSpedCode;
-		speed_index = LEGACY_U8_WRAP_ADD(
+		speed_index = LEGACY_U16_WRAP_ADD(
 			speed_index, (legacy_u8)track_object->ss_surfaceType);
-		*optional_speed = LEGACY_S8_FROM_BITS(oppnentSped[speed_index]);
+		*optional_speed = LEGACY_S8_FROM_BITS(
+			opponent_speed_at(speed_index));
 	}
 
 	packed_opponent_offset = (legacy_u16)(
