@@ -2086,7 +2086,7 @@ legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 {
 	legacy_u8* timer;
 
-	timer = audio_timers +
+	timer = audio_channels +
 		LEGACY_U16_WRAP_MUL((legacy_u16)handle, 0x4CU);
 	return audio_start_note(timer, value, 0xFFFFFFE0UL, 0xFFU, 0, handle);
 }
@@ -2329,7 +2329,9 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_u16 scaled_rate;
 	legacy_u16 offset;
 	legacy_u16 resource_data_offset;
+	legacy_u8 lowest_priority;
 	legacy_s16 candidate;
+	legacy_s16 replacement;
 
 	bytes = (const legacy_u8 far*)resource;
 	if (audio_effects_enabled == 0 || resource == 0 || bytes[5] != 1)
@@ -2353,6 +2355,22 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 				channel = candidate;
 				break;
 			}
+		}
+	}
+	if (channel == -1) {
+		lowest_priority = 0xFFU;
+		replacement = -1;
+		for (candidate = 0x10; candidate <= 0x17; candidate++) {
+			offset = (legacy_u16)candidate * 0x4CU;
+			if (audio_channel_reserved[candidate] == 0 &&
+				audio_channels[offset + 0x24U] <= lowest_priority) {
+				lowest_priority = audio_channels[offset + 0x24U];
+				replacement = candidate;
+			}
+		}
+		if (replacement != -1 && lowest_priority <= priority) {
+			audio_init_chunk2(replacement);
+			channel = replacement;
 		}
 	}
 
