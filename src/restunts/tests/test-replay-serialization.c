@@ -81,6 +81,14 @@ static void test_replay_ui_math(void)
 	}
 }
 
+static void test_replay_file_size(void)
+{
+	assert(REPLAY_INPUT_OFFSET == 0x724U);
+	assert(replay_file_size(0U) == 0x724UL);
+	assert(replay_file_size(244U) == 2072UL);
+	assert(replay_file_size(0xFFFFU) == 67363UL);
+}
+
 int main(void)
 {
 	static const legacy_u8 expected[REPLAY_GAMEINFO_SIZE] = {
@@ -102,6 +110,7 @@ int main(void)
 	memset(&decoded, 0, sizeof(decoded));
 	replay_gameinfo_decode(&decoded, bytes);
 	assert_gameinfo_equal(&encoded, &decoded);
+	test_replay_file_size();
 	test_replay_ui_math();
 	return 0;
 }
