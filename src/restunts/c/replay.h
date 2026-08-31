@@ -4,6 +4,8 @@
 #include "legacy.h"
 
 #define REPLAY_GAMEINFO_SIZE 26U
+#define REPLAY_TRACK_SIZE 1802U
+#define REPLAY_INPUT_OFFSET (REPLAY_GAMEINFO_SIZE + REPLAY_TRACK_SIZE)
 
 #pragma pack (push, 1)
 
@@ -29,6 +31,7 @@ void replay_gameinfo_decode(struct GAMEINFO* destination,
 	const legacy_u8 far* source);
 void replay_gameinfo_encode(legacy_u8 far* destination,
 	const struct GAMEINFO* source);
+legacy_u32 replay_file_size(legacy_u16 recorded_frames);
 legacy_u16 replay_timeline_position(legacy_u16 frame,
 	legacy_u16 recorded_frames, legacy_u16 width);
 legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount,

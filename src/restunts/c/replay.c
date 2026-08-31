@@ -77,6 +77,11 @@ void replay_gameinfo_encode(legacy_u8 far* destination,
 		source->game_recordedframes);
 }
 
+legacy_u32 replay_file_size(legacy_u16 recorded_frames)
+{
+	return (legacy_u32)REPLAY_INPUT_OFFSET + (legacy_u32)recorded_frames;
+}
+
 legacy_u16 replay_timeline_position(legacy_u16 frame,
 	legacy_u16 recorded_frames, legacy_u16 width)
 {

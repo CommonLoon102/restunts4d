@@ -964,7 +964,7 @@ legacy_s16 file_write_replay(const legacy_s8* filename)
 
 	g_is_busy = 1;
 	ret = file_write_fatal(filename, td13_rpl_header,
-		REPLAY_GAMEINFO_SIZE + gameconfig.game_recordedframes);
+		replay_file_size(gameconfig.game_recordedframes));
 	g_is_busy = 0;
 
 	return ret;
