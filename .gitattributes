@@ -1,12 +1,40 @@
+# Store all recognized text as canonical LF in Git. The rules below control
+# which line endings are materialized in the working tree.
+* text=auto
+
+# Project sources, documentation, and DOS/Windows-facing files.
 *.md text eol=crlf
+*.txt text eol=crlf
+*.TXT text eol=crlf
+*.html text eol=crlf
 *.c text eol=crlf
+*.C text eol=crlf
 *.h text eol=crlf
+*.H text eol=crlf
 *.asm text eol=crlf
 *.inc text eol=crlf
 *.ASM text eol=crlf
 *.INC text eol=crlf
+*.bat text eol=crlf
+*.BAT text eol=crlf
+*.cfg text eol=crlf
+*.CFG text eol=crlf
+*.lnk text eol=crlf
+*.LNK text eol=crlf
 *.ps1 text eol=crlf
 *.PS1 text eol=crlf
+
+# Unix-facing scripts, CI configuration, and repository metadata.
+.gitattributes text eol=lf
+.gitignore text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.conf text eol=lf
+*.php text eol=lf
+makefile text eol=lf
+
+# Formats that must never pass through text conversion.
 *.rpl binary
 *.RPL binary
 *.res binary
