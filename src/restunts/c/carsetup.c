@@ -1,6 +1,8 @@
 #include "externs.h"
 #include "fileio.h"
 #include "memmgr.h"
+#include "platform.h"
+#include "residue.h"
 
 extern legacy_s8 aCarcoun[];
 extern legacy_s8 aOpp1[];
@@ -15,6 +17,127 @@ extern legacy_u8 oppnentSped[];
 #ifdef RESTUNTS_HEADLESS
 extern void far* gameresptr;
 #endif
+
+#define LEGACY_TRACKDATA_PARAGRAPHS 0x6C0U
+#define LEGACY_CVX_PARAGRAPHS 0x579U
+#define LEGACY_PENALTY_ALIAS_OFFSET 0xFFFEUL
+
+static void legacy_car_filename(legacy_s8* destination,
+	const legacy_s8 car_id[4], const legacy_s8 extension[5])
+{
+	legacy_u16 index;
+
+	destination[0] = 's';
+	destination[1] = 't';
+	for (index = 0U; index < 4U; index++)
+		destination[index + 2U] = car_id[index];
+	for (index = 0U; index < 5U; index++)
+		destination[index + 6U] = extension[index];
+}
+
+static legacy_u16 legacy_car_model_paragraphs(const legacy_s8 car_id[4])
+{
+	legacy_s8 filename[11];
+	static const legacy_s8 compressed_extension[5] = {
+		'.', 'p', '3', 's', 0
+	};
+	static const legacy_s8 raw_extension[5] = {
+		'.', '3', 's', 'h', 0
+	};
+	legacy_u16 paragraphs;
+
+	legacy_car_filename(filename, car_id, compressed_extension);
+	paragraphs = file_decomp_paras_nofatal(filename);
+	if (paragraphs != 0U)
+		return paragraphs;
+	legacy_car_filename(filename, car_id, raw_extension);
+	return file_paras_nofatal(filename);
+}
+
+static legacy_s16 legacy_raw_resource_word(const legacy_s8* filename,
+	legacy_u32 offset, legacy_s16* value)
+{
+	legacy_u8 bytes[2];
+	legacy_u16 handle;
+
+	handle = dos_file_open(filename, 0);
+	if (handle == 0U)
+		return 0;
+	if (dos_file_seek(handle, (legacy_s32)offset, 0) != 0 ||
+		dos_file_read(handle, bytes, 2U) != 2U) {
+		(void)dos_file_close(handle);
+		return 0;
+	}
+	(void)dos_file_close(handle);
+	*value = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(bytes));
+	return 1;
+}
+
+static legacy_s16 legacy_alias_from_raw_resource(
+	const legacy_s8* filename, legacy_u32* cursor, legacy_s16* value)
+{
+	legacy_u16 paragraphs;
+	legacy_u32 length;
+	legacy_u32 resource_offset;
+
+	paragraphs = file_paras_nofatal(filename);
+	length = (legacy_u32)paragraphs * 16UL;
+	if (LEGACY_PENALTY_ALIAS_OFFSET >= *cursor &&
+		LEGACY_PENALTY_ALIAS_OFFSET + 1UL < *cursor + length) {
+		resource_offset = LEGACY_PENALTY_ALIAS_OFFSET - *cursor;
+		return legacy_raw_resource_word(filename, resource_offset, value);
+	}
+	*cursor += length;
+	return 0;
+}
+
+/*
+ * detect_penalty in the original executable indexes td01 with route -1.
+ * Its 16-bit offset wraps to FFFEh in the trakdata segment, aliasing a word
+ * in resources allocated later. Reconstruct the original low-arena offsets
+ * without loading the dashboard or the menu-only car shapes. Words in an
+ * unmodeled compressed/render resource are treated as an invalid route; the
+ * observed stock and custom resources in that position contain out-of-range
+ * values, while valid aliases occur in the small raw resources handled here.
+ */
+void setup_legacy_penalty_route_word(void)
+{
+	legacy_u32 cursor;
+	legacy_u16 player_model_paragraphs;
+	legacy_u16 opponent_model_paragraphs;
+	legacy_u16 index;
+	legacy_s16 same_car;
+	legacy_s16 value;
+
+	value = 0x7FFF;
+	cursor = (legacy_u32)(LEGACY_TRACKDATA_PARAGRAPHS +
+		LEGACY_CVX_PARAGRAPHS) * 16UL;
+	player_model_paragraphs = legacy_car_model_paragraphs(
+		gameconfig.game_playercarid);
+	cursor += (legacy_u32)player_model_paragraphs * 16UL;
+
+	if ((legacy_u8)gameconfig.game_opponentcarid[0] != 0xFFU) {
+		same_car = 1;
+		for (index = 0U; index < 4U; index++) {
+			if (gameconfig.game_playercarid[index] !=
+				gameconfig.game_opponentcarid[index])
+				same_car = 0;
+		}
+		if (same_car != 0) {
+			cursor += (legacy_u32)LEGACY_U16_WRAP_ADD(
+				player_model_paragraphs, 1U) * 16UL;
+		} else {
+			opponent_model_paragraphs = legacy_car_model_paragraphs(
+				gameconfig.game_opponentcarid);
+			cursor += (legacy_u32)opponent_model_paragraphs * 16UL;
+		}
+	}
+
+	if (legacy_alias_from_raw_resource("pceng1.vce", &cursor, &value) == 0 &&
+		legacy_alias_from_raw_resource("geeng.sfx", &cursor, &value) == 0)
+		(void)legacy_alias_from_raw_resource("fontled.fnt", &cursor, &value);
+	legacy_execution_residue.penalty_route_word = value;
+}
 
 static void opponent_route_write(legacy_u16 index, legacy_u16 value)
 {
@@ -157,6 +280,8 @@ legacy_s16 setup_player_cars_repldump(void)
 	const legacy_u8 far* plane_resource;
 	const legacy_u8 far* wall_resource;
 	legacy_u16 index;
+
+	setup_legacy_penalty_route_word();
 
 	for (index = 0; index < 4U; index++)
 		aCarcoun[index + 3U] = gameconfig.game_playercarid[index];

@@ -8017,6 +8017,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	const legacy_u8 far* wall_resource;
 	legacy_u32 var_8;
 
+	setup_legacy_penalty_route_word();
 	render_window_sprite = 0;
 	ensure_file_exists(2);
 	shape3d_load_car_shapes(gameconfig.game_playercarid, gameconfig.game_opponentcarid);

@@ -109,6 +109,7 @@ extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
 
 void copy_string(legacy_s8* destination, legacy_s8 far* source);
+void setup_legacy_penalty_route_word(void);
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
 void load_opponent_data(void);
 

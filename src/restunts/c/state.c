@@ -23,6 +23,129 @@ extern legacy_u8 byte_45D90;
 extern legacy_u8 byte_45E16;
 extern legacy_u8 byte_4616E;
 
+/*
+ * Track object zero has no info record.  In the original executable its null
+ * near pointer aliases the fixed DGROUP prefix.  The camera pointer found
+ * there reaches an unrelated 256-vector data window; the tail of that window
+ * is zero-filled.  Preserve the exact legacy alias explicitly so changing the
+ * C-only data layout cannot change route physics.
+ */
+static struct VECTOR legacy_null_track_vectors[256] = {
+	{ 0, 0, 0 },
+	{ -8960, -137, -1 },
+	{ -1, -1, -1 },
+	{ -1, -1, -1 },
+	{ -1, -1, -1 },
+	{ 255, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 13056, -13108 },
+	{ 27955, -27978, 27977 },
+	{ -27978, 27977, -27978 },
+	{ 73, 0, -27648 },
+	{ -27568, -27056, -26543 },
+	{ 28754, 12643, 53 },
+	{ 25715, 24941, 28265 },
+	{ 8448, 24944, 108 },
+	{ 28019, 30063, 29440 },
+	{ 28004, 26977, 110 },
+	{ 28019, 30063, 27904 },
+	{ 28525, 117, 8192 },
+	{ 768, 0, 17152 },
+	{ 28783, 29305, 26473 },
+	{ 29800, 10272, 10563 },
+	{ 21792, 27758, 28009 },
+	{ 29801, 25701, 21280 },
+	{ 26223, 30580, 29281 },
+	{ 8293, 28233, 11875 },
+	{ 12576, 14393, 11321 },
+	{ 14641, 12345, 8238 },
+	{ 16672, 27756, 29216 },
+	{ 26473, 29800, 8307 },
+	{ 25970, 25971, 30322 },
+	{ 25701, 46, 0 },
+	{ 0, 19712, 18243 },
+	{ 8257, 18775, 17486 },
+	{ 22351, 30464, 28265 },
+	{ 28516, 25719, 26213 },
+	{ 11552, 20256, 21589 },
+	{ 20256, 8262, 20306 },
+	{ 8279, 16724, 19522 },
+	{ 8261, 20563, 17217 },
+	{ 3397, 11776, 22096 },
+	{ 83, 22574, 21334 },
+	{ 11776, 21334, 72 },
+	{ 20526, 21317, 11776 },
+	{ 21317, 72, 19456 },
+	{ 20820, 22100, 23380 },
+	{ 24660, 25940, 84 },
+	{ 513, 1027, 1541 },
+	{ 2055, 2569, 3083 },
+	{ 3597, 11791, 22096 },
+	{ 83, 20053, 19526 },
+	{ 20553, 11776, 22104 },
+	{ 83, 20526, 21317 },
+	{ 21760, 17998, 18764 },
+	{ 80, 17710, 18515 },
+	{ 8448, 18253, 65 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, -26624 },
+	{ 22789, 15367, 20028 },
+	{ 21325, 15943, 62 },
+	{ 20992, 12342, 12336 },
+	{ 2573, 8237, 29811 },
+	{ 25441, 8299, 30319 },
+	{ 29285, 27750, 30575 },
+	{ 2573, 768, 20992 },
+	{ 12342, 13104, 2573 },
+	{ 8237, 28265, 25972 },
+	{ 25959, 8306, 26980 },
+	{ 26998, 25956, 25120 },
+	{ 8313, 3376, 10 },
+	{ 9, 13906, 12336 },
+	{ 3385, 11530, 28192 },
+	{ 29807, 25888, 28526 },
+	{ 26485, 8296, 28787 },
+	{ 25441, 8293, 28518 },
+	{ 8306, 28261, 26998 },
+	{ 28530, 28014, 28261 },
+	{ 3444, 10, 252 },
+	{ 2573, -256, 29184 },
+	{ 28277, 29741, 28009 },
+	{ 8293, 29285, 28530 },
+	{ 8306, 512, 20992 },
+	{ 12342, 12848, 2573 },
+	{ 8237, 27750, 24943 },
+	{ 26996, 26478, 28704 },
+	{ 26991, 29806, 28192 },
+	{ 29807, 27680, 24943 },
+	{ 25956, 3428, 10 },
+	{ 1, 13906, 12336 },
+	{ 3377, 11530, 28192 },
+	{ 27765, 8300, 28528 },
+	{ 28265, 25972, 8306 },
+	{ 29537, 26995, 28263 },
+	{ 25965, 29806, 2573 },
+	{ 2560, 2560, 25153 },
+	{ 28526, 28018, 27745 },
+	{ 28704, 28530, 29287 },
+	{ 28001, 29728, 29285 },
+	{ 26989, 24942, 26996 },
+	{ 28271, 10, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, -256 }
+};
+
+/* Bytes 8-13 of the legacy DGROUP prefix read as "MS Run". */
+static struct TRKOBJINFO legacy_null_track_info = {
+	0, 0, 0, 0, 0, 0, 0,
+	legacy_null_track_vectors,
+	0x20, 0x52, 0x75, 0x6E
+};
+
 extern struct VECTOR* headless_track_vector_from_legacy_offset(
 	legacy_u16 offset);
 
@@ -35,22 +158,18 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 static legacy_s16 penalty_route_next(legacy_s16 track_index)
 {
-	legacy_u8 far* route_bytes;
-	legacy_u16 byte_offset;
-	legacy_u16 value;
+	if (track_index == -1)
+		return legacy_execution_residue.penalty_route_word;
+	if (track_index < 0 || track_index >= track_pieces_counter)
+		return -1;
+	return td01_track_file_cpy[track_index];
+}
 
-	/*
-	 * The original instruction sequence doubles the 16-bit index and adds
-	 * it to the far pointer's offset without normalizing the segment.  In
-	 * particular, route index -1 reads offset FFFEh in the same segment.
-	 * Express that wrap explicitly so DOS and flat-memory builds agree.
-	 */
-	route_bytes = (legacy_u8 far*)td01_track_file_cpy;
-	byte_offset = LEGACY_U16_WRAP_MUL(track_index, 2U);
-	value = (legacy_u16)route_bytes[byte_offset];
-	value |= LEGACY_U16_SHL((legacy_u8)route_bytes[
-		LEGACY_U16_WRAP_ADD(byte_offset, 1U)], 8U);
-	return LEGACY_S16_FROM_BITS(value);
+static legacy_s16 penalty_route_alternate(legacy_s16 track_index)
+{
+	if (track_index == -1)
+		return td01_track_file_cpy[0x384];
+	return td02_penalty_related[track_index];
 }
 
 legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
@@ -145,13 +264,21 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			visited[next_track] = 1;
 		}
 
-		minimum_row = (legacy_u8)td22_row_from_path[next_track];
-		tile_element = (legacy_u8)td17_trk_elem_ordered[next_track];
+		if (next_track == -1) {
+			minimum_row = (legacy_u8)td21_col_from_path[0x384];
+			tile_element = (legacy_u8)td16_rpl_buffer[0x2EDF];
+		} else {
+			minimum_row = (legacy_u8)td22_row_from_path[next_track];
+			tile_element = (legacy_u8)td17_trk_elem_ordered[next_track];
+		}
 		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 		maximum_row = minimum_row;
 		if ((multi_tile_flags & 1U) != 0)
 			maximum_row = LEGACY_U8_WRAP_ADD(maximum_row, 1U);
-		minimum_column = (legacy_u8)td21_col_from_path[next_track];
+		if (next_track == -1)
+			minimum_column = (legacy_u8)td20_trk_file_appnd[0x7AB];
+		else
+			minimum_column = (legacy_u8)td21_col_from_path[next_track];
 		maximum_column = minimum_column;
 		if ((multi_tile_flags & 2U) != 0)
 			maximum_column = LEGACY_U8_WRAP_ADD(maximum_column, 1U);
@@ -160,7 +287,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			(legacy_u8)column == maximum_column) &&
 			((legacy_u8)row == minimum_row ||
 			(legacy_u8)row == maximum_row)) {
-			if (td02_penalty_related[track_index] != -1)
+			if (penalty_route_alternate(track_index) != -1)
 				next_track = track_index;
 			state.game_startcol = LEGACY_S8_FROM_BITS(minimum_column);
 			state.game_startcol2 = LEGACY_S8_FROM_BITS(maximum_column);
@@ -177,7 +304,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			}
 		}
 
-		alternate_track = td02_penalty_related[track_index];
+		alternate_track = penalty_route_alternate(track_index);
 		if (alternate_track != -1) {
 			pending_distance[pending_count] = distance;
 			pending_track[pending_count] = alternate_track;
@@ -912,7 +1039,10 @@ legacy_s16 sub_18D60(
 	track_subtype = (legacy_u8)trackdata18[track_index] & 0x0FU;
 	connection_status = (legacy_u8)trackdata18[track_index] & 0x10U;
 	track_object = &trkObjectList[tile_element];
-	track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
+	if (track_object->ss_trkObjInfoPtr == 0)
+		track_info = &legacy_null_track_info;
+	else
+		track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
 	arrow_type = (legacy_u8)track_info->si_arrowType;
 	route_index = (legacy_u8)route_index_arg;
 
