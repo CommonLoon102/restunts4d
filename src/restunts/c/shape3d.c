@@ -289,6 +289,10 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 
 	if (word_40ECE != 0) return 1;
 	transshapenumverts = arg_transshapeptr->shapeptr->shape3d_numverts;
+	/* Shape files store this count in one byte.  Reject a damaged descriptor
+	 * before it can overrun the fixed-size transformation work arrays. */
+	if (transshapenumverts > 0xFFU)
+		return 1;
 	transshapeprimitives = arg_transshapeptr->shapeptr->shape3d_primitives;
 	transshapenumpaints = arg_transshapeptr->shapeptr->shape3d_numpaints;
 	var_cull1 = arg_transshapeptr->shapeptr->shape3d_cull1;
