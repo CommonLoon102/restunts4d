@@ -9548,7 +9548,7 @@ static void replay_controls_select(legacy_u8 selection)
 	byte_40E6A[selection] = 1;
 }
 
-static void replay_controls_draw(legacy_s16 recorded_frame, legacy_s16 current_frame)
+static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_frame)
 {
 	legacy_u16 player_index;
 	legacy_u16 index;
@@ -9601,19 +9601,10 @@ static void replay_controls_draw(legacy_s16 recorded_frame, legacy_s16 current_f
 			byte_40E08[player_index] = 0xFFU;
 	}
 
-	if (gameconfig.game_recordedframes == 0) {
-		recorded_position = 0;
-		current_position = 0;
-	} else {
-		recorded_position = (legacy_s16)LEGACY_S32_DIV_OR_ZERO(
-			LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_s16)
-				recorded_frame, 110L),
-			(legacy_s32)(legacy_s16)gameconfig.game_recordedframes);
-		current_position = (legacy_s16)LEGACY_S32_DIV_OR_ZERO(
-			LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_s16)
-				current_frame, 110L),
-			(legacy_s32)(legacy_s16)gameconfig.game_recordedframes);
-	}
+	recorded_position = (legacy_s16)replay_timeline_position(
+		recorded_frame, gameconfig.game_recordedframes, 110U);
+	current_position = (legacy_s16)replay_timeline_position(
+		current_frame, gameconfig.game_recordedframes, 110U);
 	if (word_40E76[player_index] != recorded_position ||
 		word_40E04[player_index] != current_position) {
 		mouse_draw_opaque_check();
@@ -9966,7 +9957,6 @@ static void replay_fast_forward(void)
 static void replay_rewind(void)
 {
 	legacy_s32 accumulated;
-	legacy_s32 interpolation;
 	legacy_s16 speed;
 	legacy_s16 frames_to_catch_up;
 	legacy_s16 frames_remaining;
@@ -10011,13 +10001,10 @@ static void replay_rewind(void)
 		while ((legacy_u16)state.game_frame != elapsed_time2) {
 			update_gamestate();
 			frames_remaining = LEGACY_S16_WRAP_SUB(frames_remaining, 1);
-			interpolation = LEGACY_S32_DIV_OR_ZERO(
-				LEGACY_S32_WRAP_MUL(
-					(legacy_s32)frames_to_catch_up,
-					(legacy_s32)frames_remaining),
-				(legacy_s32)amount);
 			displayed_frame = LEGACY_U16_WRAP_ADD(elapsed_time2,
-				(legacy_u16)interpolation);
+				replay_rewind_interpolate(amount,
+					(legacy_u16)frames_remaining,
+					(legacy_u16)frames_to_catch_up));
 			replay_controls_draw(displayed_frame, elapsed_time2);
 			input_do_checking(1);
 		}
