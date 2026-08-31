@@ -3357,10 +3357,10 @@ legacy_s8 do_fileselect_dialog(
 
 	if (file_count > 7U) {
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsu));
-		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), positions[25]);
+		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), hit_top[1]);
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsd));
 		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1),
-			positions[33] - 1);
+			hit_top[9] - 1);
 	}
 
 	selected = 0;
