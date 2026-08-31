@@ -141,6 +141,21 @@ void set_fontdefseg(void far* data);
 void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);
 void heapsort_by_order(legacy_s16 n, legacy_s16* heap, legacy_s16* data);
 
+#define TRACK_OBJECT_COUNT 215U
+
+/*
+ * In the original dseg, sceneshapes2 immediately follows trkObjectList.
+ * Some track objects store overlay indices into that combined legacy table,
+ * so indices beyond trkObjectList intentionally address sceneshapes2.
+ */
+static struct TRACKOBJECT* frame_track_object_from_legacy_index(
+	legacy_u8 index)
+{
+	if (index < TRACK_OBJECT_COUNT)
+		return &trkObjectList[index];
+	return &sceneshapes2[(legacy_u16)index - TRACK_OBJECT_COUNT];
+}
+
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type)
 {
 	struct VECTOR transformed_position;
@@ -1323,8 +1338,8 @@ void draw_track_preview(void)
 			}
 
 			if (track_object->ss_ssOvelay != 0) {
-				overlay_object = &trkObjectList[
-					track_object->ss_ssOvelay];
+				overlay_object = frame_track_object_from_legacy_index(
+					track_object->ss_ssOvelay);
 				if (overlay_object->ss_loShapePtr != 0) {
 					transformed.shapeptr =
 						overlay_object->ss_loShapePtr;
@@ -2215,7 +2230,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 
 			if (var_trkobject_ptr->ss_ssOvelay != 0) {
-				var_trkobjectptr = &trkObjectList[var_trkobject_ptr->ss_ssOvelay];
+				var_trkobjectptr = frame_track_object_from_legacy_index(
+					var_trkobject_ptr->ss_ssOvelay);
 				if (tile_det_level != 0) {
 					currenttransshape[1].shapeptr = var_trkobjectptr->ss_loShapePtr;
 				} else {
