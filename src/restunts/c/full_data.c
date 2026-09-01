@@ -367,7 +367,8 @@ legacy_s16 gameunk_button_y2 = 200;
 
 legacy_s16 word_3BCDE[3] = { 2, 0, 1 };
 legacy_s16 word_3BCE4[4] = { 1, 0, 3, 2 };
-legacy_s16 word_3BCEC[4] = { 4, 84, 164, 244 };
+/* The fifth slot is the centered Continue button on the result screen. */
+legacy_s16 word_3BCEC[5] = { 4, 84, 164, 244, 128 };
 legacy_s16 word_3BCF6[5] = { 75, 155, 235, 315, 199 };
 
 legacy_s16 word_407CE = 5;
