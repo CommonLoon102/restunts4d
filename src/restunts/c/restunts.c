@@ -10714,6 +10714,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	argmode4 = 0;
 	argnosound = 0;
 	argnounknown = 0;
+	configure_powergear_bug(argc, argv);
 
 	for (i = 1; argc > i; ++i) {
 		if (argv[i][0] == '/') {

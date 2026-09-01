@@ -101,6 +101,23 @@ The makefile supports the following targets:
 **NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
 ```
 
+## Runtime options
+
+The ported executables support an explicit switch for the original power-gear
+physics bug:
+
+	/pg:on
+		Enable the original unsigned-division behavior. This is the default so
+		that existing replays remain compatible.
+
+	/pg:off
+		Use signed division for mass-scaled acceleration, preventing power gear
+		and restoring aerodynamic and surface deceleration at high speed.
+
+For example, run `RESTUNTS /pg:off` to play with corrected physics. The ported
+`REPLDUMP` accepts the same switch after the replay name, for example
+`REPLDUMP 0681 /pg:off`.
+
 ## Build options
 
 ### Assembler selection

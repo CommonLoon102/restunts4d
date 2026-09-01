@@ -48,8 +48,7 @@ void init_div0(void)
 
 void init_main(legacy_s16 argc, legacy_s8* argv[])
 {
-	(void)argc;
-	(void)argv;
+	configure_powergear_bug(argc, argv);
 	video_flag1_is1 = 1;
 	video_flag2_is1 = 1;
 	video_flag3_isFFFF = -1;

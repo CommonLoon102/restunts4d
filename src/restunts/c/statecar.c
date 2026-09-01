@@ -3,19 +3,49 @@
 
 extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 
+static const legacy_s8 powergear_bug_on_option[] = "/pg:on";
+static const legacy_s8 powergear_bug_off_option[] = "/pg:off";
+
+void configure_powergear_bug(legacy_s16 argc, legacy_s8* argv[])
+{
+	legacy_s16 index;
+
+	for (index = 1; index < argc; index++) {
+		if (stricmp(argv[index], powergear_bug_on_option) == 0)
+			powergear_bug_enabled = 1;
+		else if (stricmp(argv[index], powergear_bug_off_option) == 0)
+			powergear_bug_enabled = 0;
+	}
+}
+
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)
 {
-	legacy_u32 product;
-	legacy_u32 quotient;
+	legacy_s32 product;
+	legacy_s32 quotient;
 	legacy_s16 low_word;
 
-	product = (legacy_u32)LEGACY_S32_WRAP_MUL(
+	product = LEGACY_S32_WRAP_MUL(
 		(legacy_s32)acceleration, 0x19L);
-	quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
+	if (powergear_bug_enabled != 0) {
+		/* The original unsigned divide turns deceleration into power gear
+		 * for most non-power-of-two car masses. */
+		quotient = LEGACY_S32_FROM_BITS(LEGACY_U32_DIV_OR_ZERO(
+			(legacy_u32)product, (legacy_u16)mass));
+	} else {
+		quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)mass);
+	}
 	low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 	return LEGACY_S16_SAR(low_word, 1U);
 }
+
+#ifdef RESTUNTS_TEST
+legacy_s16 scale_acceleration_by_mass_for_test(legacy_s16 acceleration,
+	legacy_s16 mass)
+{
+	return scale_acceleration_by_mass(acceleration, mass);
+}
+#endif
 
 static legacy_s16 apply_opponent_acceleration_drag(
 	legacy_s16 acceleration, legacy_u8 drag)

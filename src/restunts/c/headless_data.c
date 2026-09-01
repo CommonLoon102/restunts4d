@@ -6,6 +6,7 @@ struct GAMEINFO gameconfigcopy;
 struct GAMESTATE state;
 struct SIMD simd_player;
 struct SIMD simd_opponent;
+legacy_s16 powergear_bug_enabled = 1;
 
 legacy_s16 video_flag1_is1;
 legacy_s16 video_flag2_is1;

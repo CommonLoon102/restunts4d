@@ -25,11 +25,23 @@ test_link_flags=(-Wl,--gc-sections)
 run_host_test() {
     local test_name="$1"
     local source_file="$2"
+    local argument
+    local extra_sources=()
+    local extra_flags=()
     shift 2
 
+    for argument in "$@"; do
+        if [[ "$argument" == *.c ]]; then
+            extra_sources+=("$test_source_dir/$argument")
+        else
+            extra_flags+=("$argument")
+        fi
+    done
+
     echo "Building $test_name"
-    "$test_compiler" "${test_compile_flags[@]}" "$@" \
+    "$test_compiler" "${test_compile_flags[@]}" "${extra_flags[@]}" \
         "$test_script_dir/$test_name.c" "$test_source_dir/$source_file" \
+        "${extra_sources[@]}" \
         "${test_link_flags[@]}" -o "$test_build_dir/$test_name"
 
     echo "Running $test_name"
@@ -39,6 +51,7 @@ run_host_test() {
 run_host_test test-gamestate-serialization stateio.c
 run_host_test test-legacy-semantics legacy.c
 run_host_test test-matrix-semantics math.c
+run_host_test test-powergear statecar.c legacy.c strlib.c -DRESTUNTS_TEST
 run_host_test test-replay-serialization replay.c
 run_host_test test-resource-lookup resource.c
 run_host_test test-shape3d-vertices shape3d.c \

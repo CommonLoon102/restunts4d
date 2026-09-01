@@ -107,8 +107,10 @@ extern struct GAMEINFO gameconfigcopy;
 extern struct GAMESTATE state;
 extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
+extern legacy_s16 powergear_bug_enabled;
 
 void copy_string(legacy_s8* destination, legacy_s8 far* source);
+void configure_powergear_bug(legacy_s16 argc, legacy_s8* argv[]);
 void setup_legacy_penalty_route_word(void);
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
 void load_opponent_data(void);
