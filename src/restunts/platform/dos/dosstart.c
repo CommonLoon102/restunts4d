@@ -3,7 +3,7 @@
 
 #include <dos.h>
 
-#define HEADLESS_MAX_ARGS 3
+#define HEADLESS_MAX_ARGS 16
 #define HEADLESS_COMMAND_LINE_SIZE 128
 #define HEADLESS_STACK_PARAGRAPHS 0x200
 

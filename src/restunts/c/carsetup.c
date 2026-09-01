@@ -281,7 +281,8 @@ legacy_s16 setup_player_cars_repldump(void)
 	const legacy_u8 far* wall_resource;
 	legacy_u16 index;
 
-	setup_legacy_penalty_route_word();
+	if (legacy_penalty_route_enabled != 0)
+		setup_legacy_penalty_route_word();
 
 	for (index = 0; index < 4U; index++)
 		aCarcoun[index + 3U] = gameconfig.game_playercarid[index];

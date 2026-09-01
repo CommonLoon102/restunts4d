@@ -7994,7 +7994,8 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	const legacy_u8 far* wall_resource;
 	legacy_u32 var_8;
 
-	setup_legacy_penalty_route_word();
+	if (legacy_penalty_route_enabled != 0)
+		setup_legacy_penalty_route_word();
 	render_window_sprite = 0;
 	ensure_file_exists(2);
 	shape3d_load_car_shapes(gameconfig.game_playercarid, gameconfig.game_opponentcarid);
@@ -10635,6 +10636,8 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	legacy_u32 timerdelta1, timerdelta2, timerdelta3;
 	struct POINT2D tmppoint;
 	struct RECTANGLE tmprect;
+
+	parse_penalty_route_mode(argc, argv);
 
 	// Keyboard
 	kb_init_interrupt();

@@ -8,7 +8,7 @@ endif
 
 SRC = s:\src\restunts
 
-RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj kevinrnd.obj replinit.obj gameinit.obj gamestep.obj simd.obj carsetup.obj trkutil.obj trackres.obj restunts.obj audio_sequence.obj \
+RESTUNTS_OBJ_FILES = fileio.obj legacy.obj options.obj penaltyroute.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj kevinrnd.obj replinit.obj gameinit.obj gamestep.obj simd.obj carsetup.obj trkutil.obj trackres.obj restunts.obj audio_sequence.obj \
                      shape3d.obj shape2d.obj heapsort.obj \
                      frame.obj state.obj stateply.obj statecrs.obj \
                      statecar.obj trackobj.obj replay.obj
