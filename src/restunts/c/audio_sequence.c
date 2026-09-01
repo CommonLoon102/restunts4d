@@ -1,10 +1,10 @@
+#include "audio.h"
 #include "legacy.h"
 #include "platform.h"
 
 extern legacy_s8 audio_music_enabled;
 extern legacy_s16 audio_update_lock;
 extern legacy_u8 audio_channels[];
-extern legacy_u8 dos_audio_contexts[];
 extern legacy_u8 dos_audio_context_count;
 extern legacy_u8 dos_audio_uses_direct_channels;
 extern void far* dos_audio_driver_binary;
@@ -24,7 +24,7 @@ extern void audio_write_far_pointer(legacy_u8 far* destination,
 extern legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	legacy_u32 duration, legacy_u8 note, legacy_u16 parameter,
 	legacy_s16 handle);
-extern void audio_advance_driver_context(legacy_u8* context);
+extern void audio_advance_driver_context(struct AUDIO_CONTEXT* context);
 extern void audio_update_driver_contexts(void);
 extern void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
@@ -157,7 +157,7 @@ static void audio_sequence_bind_instrument(legacy_s16 channel,
 static void audio_sequence_set_control(legacy_u8* chunk,
 	legacy_u8 control, legacy_u16 value)
 {
-	legacy_u8* context;
+	struct AUDIO_CONTEXT* context;
 	legacy_u16 context_index;
 
 	if (control == 0x40U)
@@ -170,14 +170,14 @@ static void audio_sequence_set_control(legacy_u8* chunk,
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
-		if (context[0] == chunk[0x23U]) {
+		if (context->channel == chunk[0x23U]) {
 			if (dos_audio_uses_direct_channels == 0)
 				dos_audio_driver_set_control((legacy_s16)context_index,
 					context, control, value);
-			if (control == 0x40U && value == 0 && context[1] == 2U)
-				context[0x16U] = 4U;
+			if (control == 0x40U && value == 0 && context->state == 2U)
+				context->envelope_state = 4U;
 		}
-		context += 0x2EU;
+		context++;
 	}
 }
 
@@ -351,15 +351,15 @@ static void audio_service_sequence_channel(legacy_s16 channel)
 
 static void audio_advance_music_contexts(void)
 {
-	legacy_u8* context;
+	struct AUDIO_CONTEXT* context;
 	legacy_u16 context_index;
 
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
-		if (context[1] != 0 && context[0] < 0x10U)
+		if (context->state != 0 && context->channel < 0x10U)
 			audio_advance_driver_context(context);
-		context += 0x2EU;
+		context++;
 	}
 }
 

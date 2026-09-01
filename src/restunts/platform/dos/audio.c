@@ -1,4 +1,5 @@
 #include <dos.h>
+#include "../../c/audio.h"
 #include "../../c/platform.h"
 
 typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
@@ -29,10 +30,10 @@ extern void audio_sequence_timer(void);
 extern void timer_remove_callback(void (far* callback)(void));
 extern void mmgr_release(void far* memory);
 
-legacy_u8 audio_timers[25U * 0x4CU];
+struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
 legacy_u8 audio_channels[24U * 0x4CU];
 legacy_u8* audio_sfx_channels = audio_channels + 16U * 0x4CU;
-legacy_u8 dos_audio_contexts[16U * 0x2EU];
+struct AUDIO_CONTEXT dos_audio_contexts[AUDIO_CONTEXT_COUNT];
 legacy_u8 dos_audio_master_state[3] = { 16U, 0, 22U };
 legacy_u8 dos_audio_driver_data[256];
 void far* dos_audio_driver_binary;
@@ -67,40 +68,42 @@ void dos_audio_driver_load_bank(void far* bank)
 }
 
 static void dos_audio_driver_set_volume(legacy_s16 driver_channel,
-	legacy_u8* context, legacy_u16 volume)
+	struct AUDIO_CONTEXT* context, legacy_u16 volume)
 {
 	driver_set_volume_type set_volume;
 
 	set_volume = (driver_set_volume_type)dos_audio_driver_entry(0x12U);
-	set_volume(driver_channel, context, volume);
+	set_volume(driver_channel, (legacy_u8*)context, volume);
 }
 
 void dos_audio_driver_prepare_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u8* timer, void far* resource)
+	struct AUDIO_CONTEXT* driver_context, legacy_u8* timer,
+	void far* resource)
 {
 	driver_bind_context_type bind_context;
 
 	bind_context =
 		(driver_bind_context_type)dos_audio_driver_entry(0x21U);
-	bind_context(driver_channel, driver_context, timer, resource);
+	bind_context(driver_channel, (legacy_u8*)driver_context, timer, resource);
 }
 
 void dos_audio_driver_set_context_value(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u16 value)
+	struct AUDIO_CONTEXT* driver_context, legacy_u16 value)
 {
 	driver_set_volume_type set_value;
 
 	set_value = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
-	set_value(driver_channel, driver_context, value);
+	set_value(driver_channel, (legacy_u8*)driver_context, value);
 }
 
 void dos_audio_driver_set_control(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u16 control, legacy_u16 value)
+	struct AUDIO_CONTEXT* driver_context, legacy_u16 control,
+	legacy_u16 value)
 {
 	driver_control_type set_control;
 
 	set_control = (driver_control_type)dos_audio_driver_entry(0x15U);
-	set_control(driver_channel, driver_context, control, value);
+	set_control(driver_channel, (legacy_u8*)driver_context, control, value);
 }
 
 void dos_audio_driver_set_pitch(legacy_u8* timer, legacy_s16 pitch,
@@ -121,14 +124,14 @@ void dos_audio_driver_send_data(legacy_u16 length, legacy_u8* data)
 }
 
 void dos_audio_driver_activate_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
+	struct AUDIO_CONTEXT* driver_context, legacy_u8* timer, legacy_s16 pitch,
 	legacy_u16 parameter, void far* resource)
 {
 	driver_activate_context_type activate_context;
 
 	activate_context = (driver_activate_context_type)
 		dos_audio_driver_entry(9U);
-	activate_context(driver_channel, driver_context, timer, pitch,
+	activate_context(driver_channel, (legacy_u8*)driver_context, timer, pitch,
 		parameter, resource);
 }
 
@@ -142,23 +145,23 @@ void dos_audio_driver_release_channel(legacy_s16 driver_channel)
 }
 
 void dos_audio_driver_start_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context)
+	struct AUDIO_CONTEXT* driver_context)
 {
 	driver_context_operation_type start_context;
 
 	start_context = (driver_context_operation_type)
 		dos_audio_driver_entry(0x0CU);
-	start_context(driver_channel, driver_context);
+	start_context(driver_channel, (legacy_u8*)driver_context);
 }
 
 void dos_audio_driver_end_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context)
+	struct AUDIO_CONTEXT* driver_context)
 {
 	driver_context_operation_type end_context;
 
 	end_context = (driver_context_operation_type)
 		dos_audio_driver_entry(0x0FU);
-	end_context(driver_channel, driver_context);
+	end_context(driver_channel, (legacy_u8*)driver_context);
 }
 
 void dos_audio_driver_reset(void)
@@ -186,22 +189,24 @@ static void dos_audio_driver_shutdown(void)
 }
 
 void dos_audio_driver_suspend_context(legacy_s16 driver_channel,
-	legacy_u8* driver_context, legacy_u16 value, void far* resource)
+	struct AUDIO_CONTEXT* driver_context, legacy_u16 value,
+	void far* resource)
 {
 	driver_suspend_context_type suspend_context;
 
 	suspend_context = (driver_suspend_context_type)
 		dos_audio_driver_entry(0x27U);
-	suspend_context(driver_channel, driver_context, value, resource);
+	suspend_context(driver_channel, (legacy_u8*)driver_context,
+		value, resource);
 }
 
-void dos_audio_driver_suspend_all(legacy_u8* contexts)
+void dos_audio_driver_suspend_all(struct AUDIO_CONTEXT* contexts)
 {
 	driver_contexts_operation_type suspend_all;
 
 	suspend_all = (driver_contexts_operation_type)
 		dos_audio_driver_entry(0x30U);
-	suspend_all(contexts);
+	suspend_all((legacy_u8*)contexts);
 }
 
 void dos_audio_driver_set_master_state(legacy_s16 operation,
@@ -239,7 +244,7 @@ void dos_audio_shutdown(void)
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 {
 	legacy_u8* channel_state;
-	legacy_u8* driver_context;
+	struct AUDIO_CONTEXT* driver_context;
 	legacy_u16 context_index;
 	legacy_u16 channel_offset;
 	legacy_u8 driver_channel;
@@ -263,17 +268,17 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 	driver_context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
-		if ((legacy_u16)driver_context[0] == (legacy_u16)channel)
+		if ((legacy_u16)driver_context->channel == (legacy_u16)channel)
 			dos_audio_driver_prepare_context((legacy_s16)context_index,
 				driver_context, channel_state, resource);
-		driver_context += 0x2EU;
+		driver_context++;
 	}
 }
 
 void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 {
 	legacy_u8* chunk;
-	legacy_u8* context;
+	struct AUDIO_CONTEXT* context;
 	legacy_u16 context_index;
 	legacy_u16 chunk_offset;
 	legacy_u16 volume_bits;
@@ -291,22 +296,20 @@ void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
-		if ((legacy_u16)context[0] == (legacy_u16)channel)
+		if ((legacy_u16)context->channel == (legacy_u16)channel)
 			dos_audio_driver_set_volume(
 				(legacy_s16)context_index, context, volume_bits);
-		context += 0x2EU;
+		context++;
 	}
 }
 
 void dos_audio_set_context_pitch(legacy_s16 context_index, legacy_s16 pitch)
 {
 	driver_set_volume_type set_pitch;
-	legacy_u8* context;
-	legacy_u16 context_offset;
+	struct AUDIO_CONTEXT* context;
 
-	context_offset = LEGACY_U16_WRAP_MUL(
-		(legacy_u16)context_index, 0x2EU);
-	context = dos_audio_contexts + context_offset;
+	context = &dos_audio_contexts[context_index];
 	set_pitch = (driver_set_volume_type)dos_audio_driver_entry(0x24U);
-	set_pitch(context[0x2CU], context, (legacy_u16)pitch);
+	set_pitch(context->driver_channel, (legacy_u8*)context,
+		(legacy_u16)pitch);
 }
