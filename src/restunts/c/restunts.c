@@ -4583,6 +4583,15 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 	return tile;
 }
 
+static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y,
+	legacy_u8 width, legacy_u8 height)
+{
+	sub_3702E(x, LEGACY_S16_WRAP_SUB(y, 1),
+		LEGACY_S16_WRAP_ADD(x, width),
+		LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(y, height), 1),
+		word_407F2);
+}
+
 static void track_editor_show_message(legacy_s8 far* text_resource,
 	const legacy_s8* resource_id)
 {
@@ -5007,11 +5016,8 @@ void load_tracks_menu_shapes(void)
 							cursor_sprites[multi_tile]->sprite_bitmapptr,
 							cursor_x, cursor_y);
 				} else {
-					sub_3702E(cursor_x, cursor_y,
-						LEGACY_S16_WRAP_ADD(cursor_x, cursor_width),
-						LEGACY_S16_WRAP_SUB(
-							LEGACY_S16_WRAP_ADD(cursor_y, cursor_height), 1),
-						word_407F2);
+					track_editor_toggle_highlight(cursor_x, cursor_y,
+						cursor_width, cursor_height);
 				}
 				mouse_draw_transparent_check();
 				cursor_drawn ^= 1U;
@@ -5120,11 +5126,8 @@ void load_tracks_menu_shapes(void)
 				sprite_shape_to_1(tracksmenushapes3[multi_tile],
 					cursor_x, cursor_y);
 			} else {
-				sub_3702E(cursor_x, cursor_y,
-					LEGACY_S16_WRAP_ADD(cursor_x, cursor_width),
-					LEGACY_S16_WRAP_SUB(
-						LEGACY_S16_WRAP_ADD(cursor_y, cursor_height), 1),
-					word_407F2);
+				track_editor_toggle_highlight(cursor_x, cursor_y,
+					cursor_width, cursor_height);
 			}
 			mouse_draw_transparent_check();
 		}
