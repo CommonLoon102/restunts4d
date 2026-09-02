@@ -42,14 +42,19 @@ if (-not (Test-Path -LiteralPath $Config -PathType Leaf)) {
     throw "DOSBox configuration not found: $Config"
 }
 
-# Target filenames contain only a numeric counter, such as 0000.rpl.
-# Calculate each file's partition from that counter at runtime.
+# Target filenames end with a four-digit counter, such as 0000.rpl or
+# sl0000.RPL. Calculate each file's partition from that counter at runtime.
+$ReplayFilePattern = [regex]::new(
+    '([0-9]{4})\.rpl$',
+    [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
+)
 $ReplayFiles = @(
     Get-ChildItem -LiteralPath $GameDir -File |
         Where-Object {
-            $_.Extension -ieq '.rpl' -and
-            $_.BaseName -match '^\d+$' -and
-            ([long]$_.BaseName % $PartitionCount) -eq $Partition
+            $suffixMatch = $ReplayFilePattern.Match($_.Name)
+            $suffixMatch.Success -and
+            ([long]$suffixMatch.Groups[1].Value % $PartitionCount) -eq
+                $Partition
         } |
         Sort-Object -Property Name
 )

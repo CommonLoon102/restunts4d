@@ -40,13 +40,18 @@ fi
 
 files=()
 
-# Target filenames contain only a numeric counter, such as 0000.rpl.
-# Calculate each file's partition from that counter at runtime.
+# Target filenames end with a four-digit counter, such as 0000.rpl or
+# sl0000.RPL. Calculate each file's partition from that counter at runtime.
 shopt -s nullglob
-for file in "$GAME_DIR"/*.rpl; do
-    filename=$(basename "$file" .rpl)
-    if [[ "$filename" =~ ^[0-9]+$ ]] &&
-        (( 10#$filename % 10#$partition_count == 10#$partition )); then
+for file in "$GAME_DIR"/*.[rR][pP][lL]; do
+    filename=${file##*/}
+    if [[ "$filename" =~ ([0-9]{4})\.[rR][pP][lL]$ ]]; then
+        counter=${BASH_REMATCH[1]}
+    else
+        continue
+    fi
+
+    if (( 10#$counter % 10#$partition_count == 10#$partition )); then
         files+=("$file")
     fi
 done
@@ -121,7 +126,7 @@ for file in "${files[@]}"; do
 
     # Output files have the same basename as the input,
     # but with .BIN and .BNI extensions.
-    base="${file%.rpl}"
+    base="${file%.*}"
     bin_file="${base}.BIN"
     bni_file="${base}.BNI"
 

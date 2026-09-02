@@ -167,14 +167,21 @@ jobs:
           # rpl2state.sh treats its own directory as the game directory, which
           # is why the harness is copied next to the game data when it runs.
           cp -R stunts/. "$game_dir/"
+          # Only the archived golden set belongs in the desync run. In
+          # particular, remove replay files copied from stunts before the
+          # archive is extracted in the next step.
+          find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp tools/scripts/cars/*.RES tools/scripts/cars/*.3SH \
              tools/scripts/cars/*.VSH tools/scripts/cars/*.PVS "$game_dir/"
-          cp tools/scripts/rpls_golden/*.rpl "$game_dir/"
           cp tools/scripts/rpl2state.sh tools/scripts/dosbox.proc.conf "$game_dir/"
           cp exes/*.EXE "$game_dir/"
           chmod +x "$game_dir/rpl2state.sh"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
-          echo "Replays in the game directory: $(find "$game_dir" -maxdepth 1 -name '*.rpl' | wc -l)"
+
+      - name: Extract the golden replays
+        run: |
+          unzip -q tools/scripts/rpls_golden/replays.zip -d "${GAME_DIR:?}"
+          echo "Replays in the game directory: $(find "$GAME_DIR" -maxdepth 1 -type f -iname '*.rpl' | wc -l)"
 
       - name: Run this shard's partitions
         env:
@@ -253,7 +260,8 @@ jobs:
           REPLAY_RESULT: ${{ needs.replay.result }}
         run: |
           set -u
-          expected=$(find tools/scripts/rpls_golden -maxdepth 1 -name '*.rpl' | wc -l)
+          expected=$(unzip -Z1 tools/scripts/rpls_golden/replays.zip | \
+              grep -Eic '[0-9]{4}\.rpl$')
           processed=$(cat partitions/log_*.txt 2>/dev/null | grep -c '^Processing ' || true)
           errors=$(grep -c '' partitions_all.txt || true)
 
