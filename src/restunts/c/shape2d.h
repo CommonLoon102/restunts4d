@@ -66,7 +66,10 @@ void sprite_copy_arg_to_both(struct SPRITE* argsprite);
 legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom);
 
 void sprite_clear_1_color(legacy_u8 color);
+void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width,
+	legacy_s16 height, legacy_s16 color);
 void sprite_1_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
+void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void sprite_1_unk4(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legacy_s16 y2, legacy_s16 color);
 void sprite_1_unk3(struct SHAPE2D far* shape, legacy_u16 phase);
 void sub_34526(struct SHAPE2D far* shape);
@@ -93,6 +96,7 @@ void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_clear_shape_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_clear_shape(struct SHAPE2D far* shape);
+void sub_345BC(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
 void shape2d_op_unk(struct SHAPE2D far* shape);
 void shape2d_op_unk2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void shape2d_op_unk3(struct SHAPE2D far* shape);
