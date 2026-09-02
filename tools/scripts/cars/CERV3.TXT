@@ -1,0 +1,38 @@
+--------------------------------------
+Chevrolet Corvette CERV III for Stunts
+--------------------------------------
+
+Version: 1.0
+Release Date: 1/10/2021
+
+For decades, the only way you could drive this amazing prototype vehicle was
+to fire up Test Drive III: The Passion.  But let's face it, while the open
+world in that game was impressive for its time, the driving experience left a
+lot to be desired.  However, that all changes with the release of the
+Chevrolet Corvette CERV III for Stunts!
+
+It was no easy feat to bring this car into the Stunts world.  While basic
+specifications were readily available, things like gear ratios and road test
+information were impossible to find.  Therefore, I tried to create a
+believable driving experience while remaining faithful to the specifications
+that WERE available.
+
+Even though I was the leader of this project, it was a combined effort from
+the following people:
+
+   Cas: Extracting the original assets from Test Drive III: The Passion
+ KyLiE: Dashboard Graphics and Performance Data
+Zapper: 3D Modelling
+
+Features:
+
+- 8 Available Colours
+- Low, Medium and High Detail Models
+- Optimised CGA and EGA Dashboard Palettes
+
+I hope you enjoy this car and I look forward to seeing it on the tarmac for
+many races in the future.  Now...
+
+Fasten your Seatbelt!
+
+Mark Ceccato (KyLiE)

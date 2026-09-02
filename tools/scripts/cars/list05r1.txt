@@ -1,0 +1,9 @@
+Custom Car Championship car pack
+
+Race: 05R3 - Triple-Tip by stanceboyCZ, 2026-08-16 to 2026-09-12
+
+Included cars:
+
+- 190E: Ryoma's Mercedes 190 E 2.5-16 Evolution II (2025-01-22 version), sourced from Ryoma's collection
+- NSKY: Nissan Skyline R32 GT-R (version 1.1.1), sourced from scr.stunts.hu
+- P928: Ryoma's Porsche 928 GTS (2026-03-27 version), sourced from Ryoma's collection

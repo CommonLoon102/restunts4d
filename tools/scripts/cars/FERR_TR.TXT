@@ -1,0 +1,14 @@
+-----------------------------
+Ferrari Testarossa for Stunts
+-----------------------------
+
+Author: Ryoma
+Version: 26/7/2025
+
+This version differs from the 12/2/2022 version in that it has an improved
+dashboard and 3D model, the latter of which includes 4 new paint jobs.  Only
+one of these is a new colour, with the remaining 3 accounting for the
+different side mirror configurations.  The second paint job is also different
+between the two versions, which means that in replays recorded with the
+12/2/2022 version, yellow cars will appear red when played back with this
+version.
