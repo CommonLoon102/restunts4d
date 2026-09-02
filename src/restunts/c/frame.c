@@ -1845,7 +1845,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							}
 						} else if (idx == 2) {
 							for (di = 0; di < si; di++) {
-								if (lookahead_tiles[si * 3 + 1] == tile_to_draw_south_offset && (lookahead_tiles[si * 3] == tile_to_draw_east_offset || lookahead_tiles[si * 3] != tile_to_draw_east_offset + 1)) {
+								if (lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset && (lookahead_tiles[di * 3] == tile_to_draw_east_offset || lookahead_tiles[di * 3] == tile_to_draw_east_offset + 1)) {
 									should_skip_tile[di] = 1;
 								}
 							}
