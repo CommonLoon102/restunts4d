@@ -52,6 +52,10 @@ Main repository: https://github.com/4d-stunts/restunts
 		Tool based on the original game code, loads replays and dumps the game
 		state contents at each frame in a file for further analysis.
 
+	src\restunts\pixldump
+		Replay-driven renderer test tool. It hashes the selected 320x200 camera
+		framebuffer at frame 0 and every fifth frame thereafter.
+
 
 ## How to build
 
@@ -64,17 +68,19 @@ Main repository: https://github.com/4d-stunts/restunts
 		make
 
 ### On Linux
-	0) You might want to set `git config --worktree core.autocrlf false` before
-	   you make any change, lest git meddles with the DOS newlines
-	1) Install Wine
-	2) Mount the restunts dir as drive S using `winecfg`
-	3) In the Linux console type `wineconsole cmd`
-	4) In the resulting Wine console type (mind the inverted slashes and the lack of tab completion):
-	```
-	s:
-	cd src\restunts
-	setpath
-	```
+
+0. You might want to set `git config --worktree core.autocrlf false` before
+   making changes, lest Git meddle with the DOS newlines.
+1. Install Wine.
+2. Mount the restunts directory as drive S using `winecfg`.
+3. In the Linux console, run `wineconsole cmd`.
+4. In the resulting Wine console, run:
+
+   ```text
+   s:
+   cd src\restunts
+   setpath
+   ```
 
 ### On both platforms
 
@@ -97,9 +103,105 @@ The makefile supports the following targets:
 	make <OPTIONS> repldump-original
 		Builds the replay dump oracle from the unpatched disassembly.
 
+	make <OPTIONS> pixldump
+		Builds the ported renderer test tool as PIXLDUMP.EXE.
+
+	make <OPTIONS> pixldump-original
+		Builds the original renderer oracle as PIXLDUMO.EXE.
+
+### PIXLDUMP parameters
+
+PIXLDUMP and PIXLDUMO use the same mandatory parameters. The number of
+parameters selects the output mode:
+
+```text
+PIXLDUMP.EXE <replay> <camera> <target>
+PIXLDUMP.EXE <replay> <camera> <target> <frame>
+
+PIXLDUMO.EXE <replay> <camera> <target>
+PIXLDUMO.EXE <replay> <camera> <target> <frame>
+```
+
+| Parameter | Accepted values | Description |
+| --- | --- | --- |
+| `replay` | Replay base name, `.rpl`, or `.RPL` filename | Replay to render. The extension may be omitted. |
+| `camera` | `1`, `2`, `3`, or `4` | Selects F1, F2, F3, or F4 respectively. |
+| `target` | `0` or `1` | Selects the player (`0`) or opponent (`1`). Opponent mode requires a replay containing an opponent. |
+| `frame` | `0` through `65535` | Exact frame to render. It must not exceed the replay's final frame. Supplying it selects BMP mode. |
+
+With three parameters, the tools generate the normal hash dump. PIXLDUMO writes
+`<replay>.PDO` and PIXLDUMP writes `<replay>.PDD`. Each CRLF-terminated row
+contains the decimal frame number, one space, and the lowercase MD5 of the raw
+64,000-byte Mode 13h framebuffer. The tools sample frames 0, 5, 10, ...
+
+With four parameters, the tools generate only the requested 320x200 indexed BMP
+using the game's VGA palette. The filename includes the camera, target, frame,
+and renderer:
+
+```text
+<replay>.<camera>.<target>.<frame>.PDO.bmp
+<replay>.<camera>.<target>.<frame>.PDD.bmp
+```
+
+For example, `default.2.0.5.PDD.bmp` is frame 5 from the ported renderer, using
+the F2 helicopter camera and following the player.
+
+Examples:
+
+```text
+REM Generate a player/F2 hash dump.
+PIXLDUMP.EXE default.rpl 2 0
+
+REM Generate an opponent/F4 hash dump with the original renderer.
+PIXLDUMO.EXE default.rpl 4 1
+
+REM Generate a player/F1 BMP at frame 5.
+PIXLDUMP.EXE default.rpl 1 0 5
+```
+
+Both modes force maximum graphical detail and hide the dashboard and replay
+controls. Invalid arguments are rejected before an output file is created. The
+complete output path, including its generated suffix, must fit in 127
+characters. BMP filenames require DOS long-filename support; the supplied
+`tools/scripts/dosbox.proc.conf` enables it for DOSBox-X.
+
+### pixelcheck parameters
+
+On Linux, `pixelcheck.sh` builds or reuses both executables, runs them with the
+same replay, camera, target, and optional BMP frame, and compares the resulting
+files:
+
+```text
+tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target>
+tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target> <frame>
+```
+
+| Parameter | Accepted values | Description |
+| --- | --- | --- |
+| `replay-file` | Replay filename under `stunts/` | Replay passed to both executables. |
+| `rebuild` | `true` or `false` | `true` rebuilds both executables first; `false` reuses the existing executables in `stunts/`. |
+| `camera` | `1`, `2`, `3`, or `4` | Camera passed to both executables: F1, F2, F3, or F4 respectively. |
+| `target` | `0` or `1` | Player (`0`) or opponent (`1`) passed to both executables. |
+| `frame` | `0` through `65535` | Present in the BMP form only. It selects the exact frame compared by both executables. |
+
+Examples:
+
+```text
+# Rebuild both executables and compare player/F2 hash dumps.
+tools/scripts/pixelcheck.sh 0610.rpl true 2 0
+
+# Reuse existing executables and compare opponent/F4 hash dumps.
+tools/scripts/pixelcheck.sh 0610.rpl false 4 1
+
+# Reuse existing executables and compare player/F1 BMPs at frame 5.
+tools/scripts/pixelcheck.sh 0610.rpl false 1 0 5
+```
+
+Set the `PIXELDUMP_TIMEOUT_SECONDS` environment variable to a positive integer
+to override the default 120-second timeout for each DOSBox run.
+
 
 **NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
-```
 
 ## Build options
 

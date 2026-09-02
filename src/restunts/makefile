@@ -61,6 +61,12 @@ repldump: dosplatform c-headless
 repldump-original: asmorig
 	make -C repldump TARGET=original $(MAKE_PARAMS)
 
+pixldump: dosplatform c-full
+	make -C pixldump TARGET=ported CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+
+pixldump-original: asmorig dosplatform
+	make -C pixldump TARGET=original $(MAKE_PARAMS)
+
 clean:
 	make -C dos $(MAKE_PARAMS) clean
 	make -C asmorig $(MAKE_PARAMS) clean
@@ -68,6 +74,7 @@ clean:
 	make -C c TARGET=dosheadless $(MAKE_PARAMS) clean
 	make -C c TARGET=dosfull $(MAKE_PARAMS) clean
 	make -C repldump clean
+	make -C pixldump clean
 
 # i have no idea why i need to force pre-targets with an empty target
 force_me: ;

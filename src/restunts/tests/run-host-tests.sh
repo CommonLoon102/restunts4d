@@ -39,6 +39,7 @@ run_host_test() {
 run_host_test test-gamestate-serialization stateio.c
 run_host_test test-legacy-semantics legacy.c
 run_host_test test-matrix-semantics math.c
+run_host_test test-pixldump-md5 ../pixldump/md5.c
 run_host_test test-replay-serialization replay.c
 run_host_test test-resource-lookup resource.c
 run_host_test test-shape3d-vertices shape3d.c \

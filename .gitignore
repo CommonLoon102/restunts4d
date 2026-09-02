@@ -17,6 +17,12 @@ src/restunts/repldump/*exe
 src/restunts/repldump/*map
 src/restunts/repldump/build/original/*obj
 src/restunts/repldump/build/headless/*obj
+src/restunts/pixldump/*EXE
+src/restunts/pixldump/*MAP
+src/restunts/pixldump/*exe
+src/restunts/pixldump/*map
+src/restunts/pixldump/build/original/*obj
+src/restunts/pixldump/build/ported/*obj
 **/stderr.txt
 **/stdout.txt
 stunts/*.EXE
@@ -26,6 +32,10 @@ stunts/*.BIN
 stunts/*.BNI
 stunts/*.HIG
 stunts/*.P3S
+stunts/*.PDD
+stunts/*.PDO
+stunts/*.PDD.bmp
+stunts/*.PDO.bmp
 stunts/*.3SH
 stunts/*.PVS
 stunts/*.RES
@@ -38,6 +48,10 @@ stunts/*.bni
 stunts/*.hig
 stunts/*.res
 stunts/*.rpl
+stunts/*.pdd
+stunts/*.pdo
+stunts/*.pdd.bmp
+stunts/*.pdo.bmp
 stunts/*.trk
 stunts/*.txt
 stunts/*.vsh

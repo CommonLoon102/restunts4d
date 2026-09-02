@@ -5,6 +5,37 @@
 static legacy_s16 dos_file_errno;
 static struct find_t dos_find_data;
 
+static legacy_u16 dos_file_open_lfn(const legacy_s8* path,
+	legacy_s16 create)
+{
+	legacy_u16 path_offset;
+	legacy_u16 access_mode;
+	legacy_u16 action;
+	legacy_u16 handle;
+
+	path_offset = FP_OFF(path);
+	access_mode = create != 0 ? 2U : 0U;
+	action = create != 0 ? 0x12U : 1U;
+	handle = 0;
+	__asm {
+		push si
+		push di
+		mov ax, 716Ch
+		mov bx, access_mode
+		mov cx, 0
+		mov dx, action
+		mov si, path_offset
+		mov di, 0
+		int 21h
+		jc short lfn_open_done
+		mov handle, ax
+	lfn_open_done:
+		pop di
+		pop si
+	}
+	return handle;
+}
+
 legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create)
 {
 	legacy_u16 path_offset;
@@ -12,6 +43,9 @@ legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create)
 
 	path_offset = FP_OFF(path);
 	dos_file_errno = 0;
+	handle = dos_file_open_lfn(path, create);
+	if (handle != 0)
+		return handle;
 	if (create != 0) {
 		__asm {
 			mov ah, 3Ch
