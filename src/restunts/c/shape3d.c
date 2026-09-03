@@ -1005,10 +1005,5 @@ void get_a_poly_info(void)
 	polyinfo_reset();
 }
 
-extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16, legacy_u16);
-extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
-
-extern legacy_u8* off_3F3C8[];
-
 // generate_poly_edges is called preRender_helper in the IDB.
 // aka preRender_helper3 in the IDB

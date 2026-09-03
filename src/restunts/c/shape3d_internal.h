@@ -14,5 +14,10 @@ extern struct VECTOR oppcarshapevecs[];
 extern legacy_s16 word_443E8[];
 extern legacy_s16 word_4448A[];
 extern legacy_s16 unk_3E710[];
+extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16,
+	legacy_u16, legacy_u16);
+extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16,
+	legacy_u16, legacy_u16);
+extern legacy_u8* off_3F3C8[];
 
 #endif
