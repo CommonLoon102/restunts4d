@@ -11,25 +11,6 @@
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
 
-extern legacy_s8 aWindowdefOutOfRowTableSpa[];
-extern legacy_s8 aMcgaWindow[];
-extern legacy_s8 aWindowReleased[];
-extern struct SPRITE far* render_window_sprite;
-extern legacy_u8* far wnd_defs;
-extern legacy_s8* far next_wnd_def;
-extern struct SPRITE far sprite1;
-extern struct SPRITE far sprite2;
-extern struct SPRITE far* mcgawndsprite;
-extern struct SPRITE far* mouse_background_sprite;
-extern struct SPRITE far* mouse_medium_sprite;
-extern struct SPRITE far* mouse_small_sprite;
-extern legacy_s8 mouse_background_dirty;
-extern legacy_u8 byte_3B8FC;
-extern struct SPRITE far* sprite_ptrs[4];
-extern legacy_s16 word_4646A[4];
-extern legacy_s16 word_46486[4];
-extern legacy_u8 far incnums[];
-
 struct SHAPE2D_CLIP {
 	legacy_u16 source;
 	legacy_u16 source_advance;

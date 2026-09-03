@@ -9,29 +9,10 @@
 #include "shape2d.h"
 #include "shape2d_internal.h"
 
-extern legacy_s8 aWindowdefOutOfRowTableSpa[];
-extern legacy_s8 aMcgaWindow[];
-extern legacy_s8 aWindowReleased[];
-extern struct SPRITE far* render_window_sprite;
-
-extern legacy_u8* far wnd_defs; // a reserved memory chunk of 0xE10 bytes in seg012. contents are SPRITE structs followed by lineoffsets. cast to a far pointer for access to the contents in other segments.
-extern legacy_s8* far next_wnd_def; // near pointer relative to seg012 to the current SPRITE in wnd_defs. cast to a far pointer for access to the contents in other segments
-extern struct SPRITE far sprite1; // seg012
-extern struct SPRITE far sprite2; // seg012
-extern struct SPRITE far* mcgawndsprite;
-extern struct SPRITE far* mouse_background_sprite;
-extern struct SPRITE far* mouse_medium_sprite;
-extern struct SPRITE far* mouse_small_sprite;
-extern legacy_s8 mouse_background_dirty;
 extern legacy_u8 far* active_font_definition;
 extern legacy_u16 fontdefseg;
-extern legacy_u8 far incnums[];
 extern legacy_u16 word_4031E;
 extern legacy_u16 word_40320;
-extern legacy_u8 byte_3B8FC;
-extern struct SPRITE far* sprite_ptrs[4];
-extern legacy_s16 word_4646A[4];
-extern legacy_s16 word_46486[4];
 
 legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
