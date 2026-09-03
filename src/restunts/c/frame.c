@@ -59,6 +59,25 @@ static legacy_s16 frame_relative_track_position(legacy_s32 offset,
 		frame_position_word(offset), track_position), camera_position);
 }
 
+static legacy_s16 frame_car_z_adjust(const legacy_s8* wheel_surfaces,
+	struct MATRIX* rotation)
+{
+	struct VECTOR offset_vector;
+	struct VECTOR rotated_vector;
+
+	if (wheel_surfaces[0] == 4 && wheel_surfaces[1] == 4 &&
+		wheel_surfaces[2] == 4 && wheel_surfaces[3] == 4)
+		return 0;
+	offset_vector.x = 0;
+	offset_vector.z = 0;
+	offset_vector.y = 0x7530;
+	mat_mul_vector(&offset_vector, rotation, &rotated_vector);
+	mat_mul_vector(&rotated_vector, &mat_temp, &offset_vector);
+	if (offset_vector.z <= 0)
+		return -0x800;
+	return 0x800;
+}
+
 static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
 	legacy_s16 state_index, legacy_s16 flags, legacy_s16 material,
 	legacy_s16 z_adjust)
@@ -633,20 +652,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 			}
 
-			if (di != -1) {
-				if (state.playerstate.car_surfaceWhl[0] != 4 || state.playerstate.car_surfaceWhl[1] != 4 || state.playerstate.car_surfaceWhl[2] != 4 || state.playerstate.car_surfaceWhl[3] != 4) {
-					offset_vector.x = 0;
-					offset_vector.z = 0;
-					offset_vector.y = 0x7530;
-					mat_mul_vector(&offset_vector, car_rot_matrix, &var_vec8);
-					mat_mul_vector(&var_vec8, &mat_temp, &offset_vector);
-					if (offset_vector.z <= 0) {
-						var_6C = -0x800 ;
-					} else {
-						var_6C = 0x800;
-					}
-				}
-			}
+			if (di != -1)
+				var_6C = frame_car_z_adjust(
+					state.playerstate.car_surfaceWhl, car_rot_matrix);
 		}
 	}
 
@@ -685,21 +693,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					}
 				}
 
-				if (di != -1) {
-
-					if (state.opponentstate.car_surfaceWhl[0] != 4 || state.opponentstate.car_surfaceWhl[1] != 4 || state.opponentstate.car_surfaceWhl[2] != 4 || state.opponentstate.car_surfaceWhl[3] != 4) {
-						offset_vector.x = 0;
-						offset_vector.z = 0;
-						offset_vector.y = 0x7530;
-						mat_mul_vector(&offset_vector, car_rot_matrix, &var_vec8);
-						mat_mul_vector(&var_vec8, &mat_temp, &offset_vector);
-						if (offset_vector.z <= 0) {
-							var_A4 = -0x800; //0xF800; // signed number!
-						} else {
-							var_A4 = 0x800;
-						}
-					}
-				}
+				if (di != -1)
+					var_A4 = frame_car_z_adjust(
+						state.opponentstate.car_surfaceWhl,
+						car_rot_matrix);
 			}
 		}
 	}
