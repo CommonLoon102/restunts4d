@@ -142,48 +142,60 @@ void sprite_1_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 heigh
 	}
 }
 
+static legacy_s16 sprite_clip_rectangle(legacy_s16 x, legacy_s16 y,
+	legacy_s16 width, legacy_s16 height, legacy_s16* clipped_x,
+	legacy_s16* clipped_y, legacy_s16* clipped_width,
+	legacy_s16* clipped_height)
+{
+	legacy_s16 difference;
+
+	*clipped_x = LEGACY_S16_FROM_BITS(x);
+	*clipped_y = LEGACY_S16_FROM_BITS(y);
+	*clipped_width = LEGACY_S16_FROM_BITS(width);
+	*clipped_height = LEGACY_S16_FROM_BITS(height);
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_left, *clipped_x);
+	if (difference > 0) {
+		*clipped_x = LEGACY_S16_FROM_BITS(sprite1.sprite_left);
+		*clipped_width = LEGACY_S16_WRAP_SUB(*clipped_width, difference);
+		if (*clipped_width <= 0)
+			return 0;
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(*clipped_x, *clipped_width),
+		sprite1.sprite_right);
+	if (difference > 0) {
+		*clipped_width = LEGACY_S16_WRAP_SUB(*clipped_width, difference);
+		if (*clipped_width <= 0)
+			return 0;
+	}
+	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, *clipped_y);
+	if (difference > 0) {
+		*clipped_height = LEGACY_S16_WRAP_SUB(*clipped_height, difference);
+		if (*clipped_height <= 0)
+			return 0;
+		*clipped_y = LEGACY_S16_FROM_BITS(sprite1.sprite_top);
+	}
+	difference = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_ADD(*clipped_y, *clipped_height),
+		sprite1.sprite_height);
+	if (difference > 0) {
+		*clipped_height = LEGACY_S16_WRAP_SUB(*clipped_height, difference);
+		if (*clipped_height <= 0)
+			return 0;
+	}
+	return 1;
+}
+
 void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
 {
 	legacy_s16 clipped_x;
 	legacy_s16 clipped_y;
 	legacy_s16 clipped_width;
 	legacy_s16 clipped_height;
-	legacy_s16 difference;
 
-	clipped_x = LEGACY_S16_FROM_BITS(x);
-	clipped_y = LEGACY_S16_FROM_BITS(y);
-	clipped_width = LEGACY_S16_FROM_BITS(width);
-	clipped_height = LEGACY_S16_FROM_BITS(height);
-	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_left, clipped_x);
-	if (difference > 0) {
-		clipped_x = LEGACY_S16_FROM_BITS(sprite1.sprite_left);
-		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
-		if (clipped_width <= 0)
-			return;
-	}
-	difference = LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_ADD(clipped_x, clipped_width),
-		sprite1.sprite_right);
-	if (difference > 0) {
-		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
-		if (clipped_width <= 0)
-			return;
-	}
-	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, clipped_y);
-	if (difference > 0) {
-		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
-		if (clipped_height <= 0)
-			return;
-		clipped_y = LEGACY_S16_FROM_BITS(sprite1.sprite_top);
-	}
-	difference = LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_ADD(clipped_y, clipped_height),
-		sprite1.sprite_height);
-	if (difference > 0) {
-		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
-		if (clipped_height <= 0)
-			return;
-	}
+	if (!sprite_clip_rectangle(x, y, width, height, &clipped_x,
+		&clipped_y, &clipped_width, &clipped_height))
+		return;
 	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
 }
 
@@ -1176,47 +1188,15 @@ void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, 
 	legacy_s16 clipped_y;
 	legacy_s16 clipped_width;
 	legacy_s16 clipped_height;
-	legacy_s16 difference;
 	legacy_u16 destination;
 	legacy_u16 row_count;
 	legacy_u16 old_row_count;
 	legacy_u16 column_count;
 	legacy_u8 color_bits;
 
-	clipped_x = LEGACY_S16_FROM_BITS(x);
-	clipped_y = LEGACY_S16_FROM_BITS(y);
-	clipped_width = LEGACY_S16_FROM_BITS(width);
-	clipped_height = LEGACY_S16_FROM_BITS(height);
-	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_left, clipped_x);
-	if (difference > 0) {
-		clipped_x = LEGACY_S16_FROM_BITS(sprite1.sprite_left);
-		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
-		if (clipped_width <= 0)
-			return;
-	}
-	difference = LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_ADD(clipped_x, clipped_width),
-		sprite1.sprite_right);
-	if (difference > 0) {
-		clipped_width = LEGACY_S16_WRAP_SUB(clipped_width, difference);
-		if (clipped_width <= 0)
-			return;
-	}
-	difference = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, clipped_y);
-	if (difference > 0) {
-		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
-		if (clipped_height <= 0)
-			return;
-		clipped_y = LEGACY_S16_FROM_BITS(sprite1.sprite_top);
-	}
-	difference = LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_ADD(clipped_y, clipped_height),
-		sprite1.sprite_height);
-	if (difference > 0) {
-		clipped_height = LEGACY_S16_WRAP_SUB(clipped_height, difference);
-		if (clipped_height <= 0)
-			return;
-	}
+	if (!sprite_clip_rectangle(x, y, width, height, &clipped_x,
+		&clipped_y, &clipped_width, &clipped_height))
+		return;
 	if (clipped_width <= 0 || clipped_height <= 0)
 		return;
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
