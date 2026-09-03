@@ -465,6 +465,21 @@ legacy_u32 file_decomp_rle_single(legacy_u8 huge* src, legacy_u8 huge* dst, lega
 	return dst - dststart;
 }
 
+static void far* file_relocate_decomp_output(void far* destination,
+	legacy_u16 decompparas, legacy_u32 length)
+{
+	legacy_u16 paras;
+	void far* source;
+
+	paras = (legacy_u16)((length >> 4) + ((length & 0xFU) != 0));
+	source = dos_memory_make_pointer(
+		decompparas - paras + dos_memory_pointer_segment(destination),
+		dos_memory_pointer_offset(destination));
+	copy_paras_reverse(dos_memory_pointer_segment(destination),
+		dos_memory_pointer_segment(source), paras);
+	return source;
+}
+
 // Decompress run-length encoded sub-file.
 legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 decompparas)
 {
@@ -473,7 +488,6 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	legacy_u8 esclookup[RS_RLE_ESCLOOKUP_LEN];
 	legacy_u8 huge* origsrc;
 	legacy_u8 huge* escapes;
-	legacy_u16 paras;
 	legacy_u8 esclen;
 
 	(void)decompparas;
@@ -512,14 +526,8 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 		passlen = file_decomp_rle_seq(
 			src, dst, srclen, escapes[RS_RLE_ESCSEQ_POS]);
 
-		paras = (passlen >> 4) + (passlen & 0xF ? 1 : 0);
-
 		// In main decomp func:
-		src = dos_memory_make_pointer(
-			decompparas - paras + dos_memory_pointer_segment(dst),
-			dos_memory_pointer_offset(dst));
-		copy_paras_reverse(dos_memory_pointer_segment(dst),
-			dos_memory_pointer_segment(src), paras);
+		src = file_relocate_decomp_output(dst, decompparas, passlen);
 	}
 
 	// The original discards the single pass's count and returns the size out
@@ -736,14 +744,8 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 
 					// Set source for next pass.
 					if (!err && (--passes != 0)) {
-						paras = (passlen >> 4) + (passlen & 0xF ? 1 : 0);
-						src = dos_memory_make_pointer(
-							decompparas - paras +
-								dos_memory_pointer_segment(dst),
-							dos_memory_pointer_offset(dst));
-						copy_paras_reverse(
-							dos_memory_pointer_segment(dst),
-							dos_memory_pointer_segment(src), paras);
+						src = file_relocate_decomp_output(
+							dst, decompparas, passlen);
 					}
 				}
 
