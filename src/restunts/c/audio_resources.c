@@ -488,6 +488,21 @@ static void audio_patch_song_reference(legacy_u8 far* destination,
 		resource_segment);
 }
 
+static legacy_u16 audio_skip_variable_length_field(
+	legacy_u16 resource_segment, legacy_u16 cursor_offset)
+{
+	legacy_u8 far* cursor;
+
+	cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
+		cursor_offset);
+	while ((cursor[0] & 0x80U) != 0) {
+		cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+		cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
+			cursor_offset);
+	}
+	return LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+}
+
 void audio_map_song_tracks(void far* song)
 {
 	legacy_u8 far* bytes;
@@ -559,14 +574,8 @@ void audio_map_song_tracks(void far* song)
 		}
 
 		while (cursor_offset < chunk_end_offset) {
-			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
-				cursor_offset);
-			while ((cursor[0] & 0x80U) != 0) {
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
-					cursor_offset);
-			}
-			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+			cursor_offset = audio_skip_variable_length_field(
+				resource_segment, cursor_offset);
 			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			event = cursor[0];
@@ -576,15 +585,8 @@ void audio_map_song_tracks(void far* song)
 					cursor_offset = LEGACY_U16_WRAP_ADD(
 						cursor_offset, 1U);
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
-					cursor_offset);
-				while ((cursor[0] & 0x80U) != 0) {
-					cursor_offset = LEGACY_U16_WRAP_ADD(
-						cursor_offset, 1U);
-					cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
-						cursor_offset);
-				}
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+				cursor_offset = audio_skip_variable_length_field(
+					resource_segment, cursor_offset);
 				continue;
 			}
 
