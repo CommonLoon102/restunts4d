@@ -213,12 +213,6 @@ extern legacy_s8 gsna_string[];
 extern legacy_s8 unk_46464[];
 extern legacy_s8 byte_459E0[];
 
-extern legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key,
-	legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
-	void (far* callback)(void), legacy_u32 timeout);
-void read_line_helper(void);
-void read_line_helper2(void);
-
 extern legacy_s8 aCarcoun[];
 extern void far* engptr;
 extern void far* eng1ptr;
