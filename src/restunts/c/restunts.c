@@ -126,17 +126,6 @@ extern void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s
 
 
 void audio_fade_out(legacy_s16 delay_ticks);
-extern legacy_s8 audio_music_enabled;
-extern legacy_s8 audio_effects_enabled;
-extern legacy_s16 audio_update_lock;
-extern legacy_u8 dos_audio_special_mode;
-extern legacy_u8 dos_audio_context_count;
-extern legacy_u8 audio_channels[];
-extern legacy_u8* audio_sfx_channels;
-extern legacy_u8 dos_audio_uses_direct_channels;
-extern legacy_u8 dos_audio_master_state[];
-extern legacy_u8 dos_audio_master_volume;
-extern void far* dos_audio_driver_binary;
 
 void audio_driver_timer(void);
 void audio_sequence_timer(void);
