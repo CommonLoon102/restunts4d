@@ -482,13 +482,80 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 	}
 }
 
-static void draw_line_subdivide(legacy_u16* line)
+static void draw_line_subdivide_advance_start(legacy_u16* line,
+	legacy_u16 vertical_step, legacy_u16 horizontal_step)
 {
 	legacy_u16 ax;
 	legacy_u16 bx;
+	legacy_u8 update_counter;
+
+	ax = (legacy_u16)(line[3] + vertical_step);
+	line[3] = ax;
+	bx = ax;
+	ax = (legacy_u16)(ax - sprite1.sprite_top);
+	if (LEGACY_S16_FROM_BITS(ax) > 0) {
+		if (LEGACY_S16_FROM_BITS(ax) >
+			LEGACY_S16_FROM_BITS(vertical_step))
+			ax = vertical_step;
+		update_counter = 1;
+		bx = (legacy_u16)(bx - sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(bx) > 0) {
+			ax = (legacy_u16)(ax - bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+				update_counter = 0;
+		}
+		if (update_counter != 0) {
+			if (LEGACY_S16_FROM_BITS(line[1]) <
+				LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+				line[10] = (legacy_u16)(line[10] + ax);
+			} else {
+				line[12] = (legacy_u16)(line[12] + ax);
+			}
+		}
+	}
+	line[1] = (legacy_u16)(line[1] + horizontal_step);
+}
+
+static void draw_line_subdivide_advance_end(legacy_u16* line,
+	legacy_u16 vertical_step, legacy_u16 horizontal_step)
+{
+	legacy_u16 ax;
+	legacy_u16 bx;
+	legacy_u8 update_counter;
+
+	ax = (legacy_u16)(line[5] - vertical_step);
+	line[5] = ax;
+	bx = ax;
+	ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
+	if (LEGACY_S16_FROM_BITS(ax) < 0) {
+		ax = (legacy_u16)(0U - ax);
+		if (LEGACY_S16_FROM_BITS(ax) >
+			LEGACY_S16_FROM_BITS(vertical_step))
+			ax = vertical_step;
+		update_counter = 1;
+		bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
+		if (LEGACY_S16_FROM_BITS(bx) < 0) {
+			ax = (legacy_u16)(ax + bx);
+			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+				update_counter = 0;
+		}
+		if (update_counter != 0) {
+			if (LEGACY_S16_FROM_BITS(line[4]) <
+				LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
+				line[11] = (legacy_u16)(line[11] + ax);
+			} else {
+				line[13] = (legacy_u16)(line[13] + ax);
+			}
+		}
+	}
+	line[4] = (legacy_u16)(line[4] - horizontal_step);
+}
+
+static void draw_line_subdivide(legacy_u16* line)
+{
+	legacy_u16 ax;
 	legacy_u16 cx;
 	legacy_u16 dx;
-	legacy_u8 update_counter;
 
 	cx = draw_line_sar1(line[5]);
 	ax = draw_line_sar1(line[3]);
@@ -500,120 +567,26 @@ static void draw_line_subdivide(legacy_u16* line)
 	for (;;) {
 		while (LEGACY_S16_FROM_BITS(line[3]) <=
 			LEGACY_S16_FROM_BITS(0xC180U)) {
-			ax = (legacy_u16)(line[3] + cx);
-			line[3] = ax;
-			bx = ax;
-			ax = (legacy_u16)(ax - sprite1.sprite_top);
-			if (LEGACY_S16_FROM_BITS(ax) > 0) {
-				if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
-					ax = cx;
-				update_counter = 1;
-				bx = (legacy_u16)(bx - sprite1.sprite_height);
-				if (LEGACY_S16_FROM_BITS(bx) > 0) {
-					ax = (legacy_u16)(ax - bx);
-					if (LEGACY_S16_FROM_BITS(ax) <= 0)
-						update_counter = 0;
-				}
-				if (update_counter != 0) {
-					if (LEGACY_S16_FROM_BITS(line[1]) <
-						LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-						line[10] = (legacy_u16)(line[10] + ax);
-					} else {
-						line[12] = (legacy_u16)(line[12] + ax);
-					}
-				}
-			}
-			line[1] = (legacy_u16)(line[1] + dx);
+			draw_line_subdivide_advance_start(line, cx, dx);
 		}
 
 		if (LEGACY_S16_FROM_BITS(line[5]) >=
 			LEGACY_S16_FROM_BITS(0x3E80U)) {
-			ax = (legacy_u16)(line[5] - cx);
-			line[5] = ax;
-			bx = ax;
-			ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
-			if (LEGACY_S16_FROM_BITS(ax) < 0) {
-				ax = (legacy_u16)(0U - ax);
-				if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
-					ax = cx;
-				update_counter = 1;
-				bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
-				if (LEGACY_S16_FROM_BITS(bx) < 0) {
-					ax = (legacy_u16)(ax + bx);
-					if (LEGACY_S16_FROM_BITS(ax) <= 0)
-						update_counter = 0;
-				}
-				if (update_counter != 0) {
-					if (LEGACY_S16_FROM_BITS(line[4]) <
-						LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-						line[11] = (legacy_u16)(line[11] + ax);
-					} else {
-						line[13] = (legacy_u16)(line[13] + ax);
-					}
-				}
-			}
-			line[4] = (legacy_u16)(line[4] - dx);
+			draw_line_subdivide_advance_end(line, cx, dx);
 			continue;
 		}
 		if (LEGACY_S16_FROM_BITS(line[1]) <=
 			LEGACY_S16_FROM_BITS(0xC180U) ||
 			LEGACY_S16_FROM_BITS(line[1]) >=
 			LEGACY_S16_FROM_BITS(0x3E80U)) {
-			ax = (legacy_u16)(line[3] + cx);
-			line[3] = ax;
-			bx = ax;
-			ax = (legacy_u16)(ax - sprite1.sprite_top);
-			if (LEGACY_S16_FROM_BITS(ax) > 0) {
-				if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
-					ax = cx;
-				update_counter = 1;
-				bx = (legacy_u16)(bx - sprite1.sprite_height);
-				if (LEGACY_S16_FROM_BITS(bx) > 0) {
-					ax = (legacy_u16)(ax - bx);
-					if (LEGACY_S16_FROM_BITS(ax) <= 0)
-						update_counter = 0;
-				}
-				if (update_counter != 0) {
-					if (LEGACY_S16_FROM_BITS(line[1]) <
-						LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-						line[10] = (legacy_u16)(line[10] + ax);
-					} else {
-						line[12] = (legacy_u16)(line[12] + ax);
-					}
-				}
-			}
-			line[1] = (legacy_u16)(line[1] + dx);
+			draw_line_subdivide_advance_start(line, cx, dx);
 			continue;
 		}
 		if (LEGACY_S16_FROM_BITS(line[4]) <=
 			LEGACY_S16_FROM_BITS(0xC180U) ||
 			LEGACY_S16_FROM_BITS(line[4]) >=
 			LEGACY_S16_FROM_BITS(0x3E80U)) {
-			ax = (legacy_u16)(line[5] - cx);
-			line[5] = ax;
-			bx = ax;
-			ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
-			if (LEGACY_S16_FROM_BITS(ax) < 0) {
-				ax = (legacy_u16)(0U - ax);
-				if (LEGACY_S16_FROM_BITS(ax) > LEGACY_S16_FROM_BITS(cx))
-					ax = cx;
-				update_counter = 1;
-				bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
-				if (LEGACY_S16_FROM_BITS(bx) < 0) {
-					ax = (legacy_u16)(ax + bx);
-					if (LEGACY_S16_FROM_BITS(ax) <= 0)
-						update_counter = 0;
-				}
-				if (update_counter != 0) {
-					if (LEGACY_S16_FROM_BITS(line[4]) <
-						LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-						line[11] = (legacy_u16)(line[11] + ax);
-					} else {
-						line[13] = (legacy_u16)(line[13] + ax);
-					}
-				}
-			}
-			line[4] = (legacy_u16)(line[4] - dx);
+			draw_line_subdivide_advance_end(line, cx, dx);
 			continue;
 		}
 		return;
