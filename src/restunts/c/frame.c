@@ -59,43 +59,6 @@ static legacy_s16 frame_relative_track_position(legacy_s32 offset,
 		frame_position_word(offset), track_position), camera_position);
 }
 
-static legacy_s16 frame_car_z_adjust(const legacy_s8* wheel_surfaces,
-	struct MATRIX* rotation)
-{
-	struct VECTOR offset_vector;
-	struct VECTOR rotated_vector;
-
-	if (wheel_surfaces[0] == 4 && wheel_surfaces[1] == 4 &&
-		wheel_surfaces[2] == 4 && wheel_surfaces[3] == 4)
-		return 0;
-	offset_vector.x = 0;
-	offset_vector.z = 0;
-	offset_vector.y = 0x7530;
-	mat_mul_vector(&offset_vector, rotation, &rotated_vector);
-	mat_mul_vector(&rotated_vector, &mat_temp, &offset_vector);
-	if (offset_vector.z <= 0)
-		return -0x800;
-	return 0x800;
-}
-
-static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
-	legacy_s16 state_index, legacy_s16 flags, legacy_s16 material,
-	legacy_s16 z_adjust)
-{
-	curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
-	curtransshape_ptr->rectptr = &rect_unk6;
-	curtransshape_ptr->ts_flags = flags;
-	curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-		state.field_2FE[state_index]);
-	curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-		state.field_32E[state_index]);
-	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-		state.field_35E[state_index]);
-	curtransshape_ptr->unk = 0x400;
-	curtransshape_ptr->material = material;
-	transformed_shape_add_for_sort(z_adjust, 0);
-}
-
 static legacy_s8 frame_tile_from_world(legacy_s32 position)
 {
 	return LEGACY_S8_FROM_BITS(
@@ -119,6 +82,91 @@ static legacy_s8 frame_south_tile_from_world_offset(legacy_s32 position,
 {
 	return LEGACY_S8_WRAP_SUB(0x1D,
 		frame_tile_from_world_offset(position, offset));
+}
+
+static legacy_s16 frame_car_z_adjust(const legacy_s8* wheel_surfaces,
+	struct MATRIX* rotation)
+{
+	struct VECTOR offset_vector;
+	struct VECTOR rotated_vector;
+
+	if (wheel_surfaces[0] == 4 && wheel_surfaces[1] == 4 &&
+		wheel_surfaces[2] == 4 && wheel_surfaces[3] == 4)
+		return 0;
+	offset_vector.x = 0;
+	offset_vector.z = 0;
+	offset_vector.y = 0x7530;
+	mat_mul_vector(&offset_vector, rotation, &rotated_vector);
+	mat_mul_vector(&rotated_vector, &mat_temp, &offset_vector);
+	if (offset_vector.z <= 0)
+		return -0x800;
+	return 0x800;
+}
+
+static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
+	const struct SIMD* simd, const legacy_s8* should_skip_tile,
+	const legacy_s8* lookahead_tiles, legacy_s8 camera_tile_east,
+	legacy_s8 camera_tile_south, legacy_s8* result_tile_east,
+	legacy_s8* result_tile_south)
+{
+	struct MATRIX* rotation;
+	struct VECTOR offset_vector;
+	struct VECTOR rotated_vector;
+	legacy_s16 wheel;
+	legacy_s16 tile_index;
+	legacy_s16 best_tile_index;
+	legacy_s16 matched_wheel;
+	legacy_s8 tile_east;
+	legacy_s8 tile_south;
+
+	rotation = mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.z),
+		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.y),
+		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x), 0);
+	best_tile_index = -1;
+	matched_wheel = -1;
+	for (wheel = 0; wheel < 4; wheel++) {
+		offset_vector = simd->wheel_coords[wheel];
+		mat_mul_vector(&offset_vector, rotation, &rotated_vector);
+		tile_east = frame_tile_from_world_offset(
+			carstate->car_posWorld1.lx, rotated_vector.x);
+		tile_south = frame_south_tile_from_world_offset(
+			carstate->car_posWorld1.lz, rotated_vector.z);
+		for (tile_index = 0x16; tile_index > best_tile_index;
+			tile_index--) {
+			if (should_skip_tile[tile_index] != 2 &&
+				lookahead_tiles[tile_index * 3] + camera_tile_east ==
+					tile_east &&
+				lookahead_tiles[tile_index * 3 + 1] + camera_tile_south ==
+					tile_south) {
+				*result_tile_east = tile_east;
+				*result_tile_south = tile_south;
+				best_tile_index = tile_index;
+				matched_wheel = wheel;
+			}
+		}
+	}
+	if (matched_wheel != -1)
+		return frame_car_z_adjust(carstate->car_surfaceWhl, rotation);
+	return 0;
+}
+
+static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
+	legacy_s16 state_index, legacy_s16 flags, legacy_s16 material,
+	legacy_s16 z_adjust)
+{
+	curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
+	curtransshape_ptr->rectptr = &rect_unk6;
+	curtransshape_ptr->ts_flags = flags;
+	curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
+		state.field_2FE[state_index]);
+	curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
+		state.field_32E[state_index]);
+	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
+		state.field_35E[state_index]);
+	curtransshape_ptr->unk = 0x400;
+	curtransshape_ptr->material = material;
+	transformed_shape_add_for_sort(z_adjust, 0);
 }
 
 void init_rect_arrays(void) {
@@ -232,7 +280,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 heading;
 	legacy_s8* lookahead_tiles;
 	legacy_s16 skybox_parameter;
-	legacy_s16 var_counter, var_counter2;
+	legacy_s16 var_counter;
 	legacy_s8 cam_tile_south, cam_tile_east;
 	legacy_s8 tile_south, tile_east;
 	legacy_s8 tile_to_draw_south_offset, tile_to_draw_east_offset;
@@ -627,34 +675,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		if (state.playerstate.car_crashBmpFlag != 2) {
 
-			car_rot_matrix = mat_rot_zxy(
-				LEGACY_S16_WRAP_NEGATE(state.playerstate.car_rotate.z),
-				LEGACY_S16_WRAP_NEGATE(state.playerstate.car_rotate.y),
-				LEGACY_S16_WRAP_NEGATE(state.playerstate.car_rotate.x), 0);
-			idx = -1;
-			di = -1;
-			for (var_counter2 = 0; var_counter2 < 4; var_counter2++) {
-				offset_vector = simd_player.wheel_coords[var_counter2];
-				mat_mul_vector(&offset_vector, car_rot_matrix, &var_vec8); //; rotating car wheels, maybe?
-				// Tile where the wheel is standing
-				tile_east = frame_tile_from_world_offset(
-					state.playerstate.car_posWorld1.lx, var_vec8.x);
-				tile_south = frame_south_tile_from_world_offset(
-					state.playerstate.car_posWorld1.lz, var_vec8.z);
-
-				for (si = 0x16; si > idx; si--) {
-					if (should_skip_tile[si] != 2 && lookahead_tiles[si * 3] + cam_tile_east == tile_east && lookahead_tiles[si * 3 + 1] + cam_tile_south == tile_south) {
-						var_3C = tile_east;
-						var_60 = tile_south;
-						idx = si;
-						di = var_counter2;
-					}
-				}
-			}
-
-			if (di != -1)
-				var_6C = frame_car_z_adjust(
-					state.playerstate.car_surfaceWhl, car_rot_matrix);
+			var_6C = frame_find_car_wheel(&state.playerstate,
+				&simd_player, should_skip_tile, lookahead_tiles,
+				cam_tile_east, cam_tile_south, &var_3C, &var_60);
 		}
 	}
 
@@ -665,38 +688,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		if (cameramode != 0 || followOpponentFlag == 0) {
 			if (state.opponentstate.car_crashBmpFlag != 2) {
-				car_rot_matrix = mat_rot_zxy(
-					LEGACY_S16_WRAP_NEGATE(
-						state.opponentstate.car_rotate.z),
-					LEGACY_S16_WRAP_NEGATE(
-						state.opponentstate.car_rotate.y),
-					LEGACY_S16_WRAP_NEGATE(
-						state.opponentstate.car_rotate.x), 0);
-				idx = -1;
-				di = -1;
-
-				for (var_counter2 = 0; var_counter2 < 4; var_counter2++) {
-					offset_vector = simd_opponent.wheel_coords[var_counter2];
-					mat_mul_vector(&offset_vector, car_rot_matrix, &var_vec8); //; rotating car wheels, maybe?
-					tile_east = frame_tile_from_world_offset(
-						state.opponentstate.car_posWorld1.lx, var_vec8.x);
-					tile_south = frame_south_tile_from_world_offset(
-						state.opponentstate.car_posWorld1.lz, var_vec8.z);
-
-					for (si = 0x16; si > idx; si--) {
-						if (should_skip_tile[si] != 2 && lookahead_tiles[si * 3] + cam_tile_east == tile_east && lookahead_tiles[si * 3 + 1] + cam_tile_south == tile_south) {
-							var_4A = tile_east;
-							var_6E = tile_south;
-							idx = si;
-							di = var_counter2;
-						}
-					}
-				}
-
-				if (di != -1)
-					var_A4 = frame_car_z_adjust(
-						state.opponentstate.car_surfaceWhl,
-						car_rot_matrix);
+				var_A4 = frame_find_car_wheel(&state.opponentstate,
+					&simd_opponent, should_skip_tile, lookahead_tiles,
+					cam_tile_east, cam_tile_south, &var_4A, &var_6E);
 			}
 		}
 	}
