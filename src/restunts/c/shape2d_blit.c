@@ -10,6 +10,7 @@
 #define SHAPE2D_RLE_AND 0
 #define SHAPE2D_RLE_OR 1
 #define SHAPE2D_RLE_COPY 2
+#define SHAPE2D_RLE_MAP 3
 
 struct SHAPE2D_CLIP {
 	legacy_u16 source;
@@ -644,6 +645,7 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 	legacy_u16 column_count;
 	legacy_u16 row_count;
 	legacy_u16 old_row_count;
+	legacy_u8 mapped_color;
 
 	if (!shape2d_clip_blit(shape, x, y, &clip))
 		return;
@@ -656,12 +658,17 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 		do {
 			source_ptr = (legacy_u8 far*)dos_memory_make_pointer(
 				shape_segment, clip.source);
-			if (operation == SHAPE2D_RLE_OR)
+			if (operation == SHAPE2D_RLE_MAP) {
+				mapped_color = incnums[*source_ptr];
+				if (mapped_color != 0xFFU)
+					bitmap[clip.destination] = mapped_color;
+			} else if (operation == SHAPE2D_RLE_OR) {
 				bitmap[clip.destination] |= *source_ptr;
-			else if (operation == SHAPE2D_RLE_COPY)
+			} else if (operation == SHAPE2D_RLE_COPY) {
 				bitmap[clip.destination] = *source_ptr;
-			else
+			} else {
 				bitmap[clip.destination] &= *source_ptr;
+			}
 			clip.source++;
 			clip.destination++;
 			column_count--;
@@ -739,41 +746,8 @@ void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 
 
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	struct SHAPE2D_CLIP clip;
-	legacy_u8 far* source_ptr;
-	legacy_u8 far* bitmap;
-	legacy_u16 shape_segment;
-	legacy_u16 column_count;
-	legacy_u16 row_count;
-	legacy_u16 old_row_count;
-	legacy_u8 mapped_color;
-
-	if (!shape2d_clip_blit(shape, (legacy_u16)x, (legacy_u16)y, &clip))
-		return;
-	shape_segment = dos_memory_pointer_segment(shape);
-	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
-		dos_memory_pointer_segment(sprite1.sprite_bitmapptr), 0);
-	row_count = clip.rows;
-	do {
-		column_count = clip.width;
-		do {
-			source_ptr = (legacy_u8 far*)dos_memory_make_pointer(
-				shape_segment, clip.source);
-			mapped_color = incnums[*source_ptr];
-			if (mapped_color != 0xFFU)
-				bitmap[clip.destination] = mapped_color;
-			clip.source++;
-			clip.destination++;
-			column_count--;
-		} while (column_count != 0);
-		clip.source = LEGACY_U16_WRAP_ADD(
-			clip.source, clip.source_advance);
-		clip.destination = LEGACY_U16_WRAP_ADD(
-			clip.destination, clip.destination_advance);
-		old_row_count = row_count;
-		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
-	} while (old_row_count != 0x8000U &&
-		LEGACY_S16_FROM_BITS(row_count) > 0);
+	sprite_putimage_at(shape, (legacy_u16)x, (legacy_u16)y,
+		SHAPE2D_RLE_MAP);
 }
 
 void setup_mcgawnd1(void) {
