@@ -5,6 +5,7 @@
 #include "legacy.h"
 #include "memmgr.h"
 #include "shape3d.h"
+#include "shape3d_internal.h"
 #include "shape2d.h"
 
 /*
@@ -39,7 +40,6 @@ X     - select_cliprect_rotate (10)
 extern legacy_s8 far* game1ptr;
 extern legacy_s8 far* game2ptr;
 extern legacy_s8 far* curshapeptr;
-extern struct SHAPE3D game3dshapes[130];
 
 extern legacy_u32 mmgr_get_res_ofs_diff_scaled(void);
 
@@ -1016,15 +1016,3 @@ extern legacy_u16 word_40320;
 
 // generate_poly_edges is called preRender_helper in the IDB.
 // aka preRender_helper3 in the IDB
-extern legacy_s8 aStxxx[];
-extern legacy_s8 far* carresptr;
-extern legacy_s8 far* car2resptr;
-extern struct VECTOR carshapevec[2];
-extern struct VECTOR carshapevecs[];
-
-extern struct VECTOR oppcarshapevec[2];
-extern struct VECTOR oppcarshapevecs[];
-extern legacy_s16 word_443E8[];
-extern legacy_s16 word_4448A[];
-
-extern legacy_s16 unk_3E710[];
