@@ -59,6 +59,24 @@ static legacy_s16 frame_relative_track_position(legacy_s32 offset,
 		frame_position_word(offset), track_position), camera_position);
 }
 
+static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
+	legacy_s16 state_index, legacy_s16 flags, legacy_s16 material,
+	legacy_s16 z_adjust)
+{
+	curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
+	curtransshape_ptr->rectptr = &rect_unk6;
+	curtransshape_ptr->ts_flags = flags;
+	curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
+		state.field_2FE[state_index]);
+	curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
+		state.field_32E[state_index]);
+	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
+		state.field_35E[state_index]);
+	curtransshape_ptr->unk = 0x400;
+	curtransshape_ptr->material = material;
+	transformed_shape_add_for_sort(z_adjust, 0);
+}
+
 static legacy_s8 frame_tile_from_world(legacy_s32 position)
 {
 	return LEGACY_S8_FROM_BITS(
@@ -1068,18 +1086,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							curtransshape_ptr->pos.z = frame_relative_track_position(
 								state.game_longs3[di],
 								td10_track_check_rel[var_4C * 3 + 2], cam_pos.z);
-							curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-							curtransshape_ptr->rectptr = &rect_unk6;
-							curtransshape_ptr->ts_flags = var_122 | 5;
-							curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-								state.field_2FE[di]);
-							curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-								state.field_32E[di]);
-							curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-								state.field_35E[di]);
-							curtransshape_ptr->unk = 0x400;
-							curtransshape_ptr->material = 0;
-							transformed_shape_add_for_sort(0, 0);
+							frame_add_dynamic_shape(var_trkobject_ptr, di,
+								var_122 | 5, 0, 0);
 						}
 					}
 				}
@@ -1100,18 +1108,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						curtransshape_ptr->pos.z = frame_relative_position_sum(
 							state.game_longs3[di],
 							state.playerstate.car_posWorld1.lz, cam_pos.z);
-						curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-						curtransshape_ptr->rectptr = &rect_unk6;
-						curtransshape_ptr->ts_flags = var_122 | 5;
-						curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-							state.field_2FE[di]);
-						curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-							state.field_32E[di]);
-						curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-							state.field_35E[di]);
-						curtransshape_ptr->unk = 0x400;
-						curtransshape_ptr->material = gameconfig.game_playermaterial;
-						transformed_shape_add_for_sort(var_6C & var_12A, 0);
+						frame_add_dynamic_shape(var_trkobject_ptr, di,
+							var_122 | 5, gameconfig.game_playermaterial,
+							var_6C & var_12A);
 					}
 				}
 			}
@@ -1172,18 +1171,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 								curtransshape_ptr->pos.z = frame_relative_position_sum(
 									state.game_longs3[di],
 									state.opponentstate.car_posWorld1.lz, cam_pos.z);
-								curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-								curtransshape_ptr->rectptr = &rect_unk6;
-								curtransshape_ptr->ts_flags = var_122 | 5;
-								curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-									state.field_2FE[di]);
-								curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-									state.field_32E[di]);
-								curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-									state.field_35E[di]);
-								curtransshape_ptr->unk = 0x400;
-								curtransshape_ptr->material = gameconfig.game_opponentmaterial;
-								transformed_shape_add_for_sort(var_A4 & var_12A, 0);
+								frame_add_dynamic_shape(var_trkobject_ptr, di,
+									var_122 | 5, gameconfig.game_opponentmaterial,
+									var_A4 & var_12A);
 							}
 						}
 					}
