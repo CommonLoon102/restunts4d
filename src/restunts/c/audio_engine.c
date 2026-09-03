@@ -1069,6 +1069,21 @@ void audio_resume(void)
 	audio_suspended = 0;
 }
 
+static legacy_s16 audio_find_free_sfx_channel(void)
+{
+	legacy_u16 offset;
+	legacy_s16 candidate;
+
+	for (candidate = 0x10; candidate <= 0x17; candidate++) {
+		offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
+		if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
+			LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
+			audio_channel_reserved[candidate] == 0)
+			return candidate;
+	}
+	return -1;
+}
+
 legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_u8 priority, legacy_u16 rate)
 {
@@ -1093,17 +1108,8 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 		rate = 0;
 	}
 
-	if (channel == -1) {
-		for (candidate = 0x10; candidate <= 0x17; candidate++) {
-			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
-			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
-				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
-				audio_channel_reserved[candidate] == 0) {
-				channel = candidate;
-				break;
-			}
-		}
-	}
+	if (channel == -1)
+		channel = audio_find_free_sfx_channel();
 	if (channel == -1) {
 		lowest_priority = 0xFFU;
 		replacement = -1;
@@ -1145,19 +1151,9 @@ legacy_s16 nopsub_37456(void far* resource)
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 {
 	legacy_u16 offset;
-	legacy_s16 candidate;
 
-	if (channel == -1) {
-		for (candidate = 0x10; candidate <= 0x17; candidate++) {
-			offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
-			if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
-				LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
-				audio_channel_reserved[candidate] == 0) {
-				channel = candidate;
-				break;
-			}
-		}
-	}
+	if (channel == -1)
+		channel = audio_find_free_sfx_channel();
 
 	if (channel != -1) {
 		audio_channel_reserved[channel] = 1;
