@@ -3,10 +3,7 @@
 #include "shape2d.h"
 #include "shape2d_internal.h"
 #include "shape3d.h"
-
-extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16, legacy_u16);
-extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
-extern legacy_u8* off_3F3C8[];
+#include "shape3d_internal.h"
 
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
