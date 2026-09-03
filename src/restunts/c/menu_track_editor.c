@@ -365,6 +365,20 @@ static legacy_u8 track_editor_palette_tile(legacy_u8 page,
 		(legacy_u16)row * 6U + column];
 }
 
+static void track_editor_skip_previous_placeholders(legacy_u8 page,
+	legacy_u8* row, legacy_u8* column)
+{
+	legacy_u8 tile;
+
+	while (track_editor_palette_tile(page, *row, *column) >= 0xFEU) {
+		tile = track_editor_palette_tile(page, *row, *column);
+		if (tile == 0xFFU)
+			(*column)--;
+		else
+			(*row)--;
+	}
+}
+
 static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 {
 	legacy_u16 source_index;
@@ -1182,15 +1196,8 @@ void load_tracks_menu_shapes(void)
 				last_column = 0xFFU;
 				selection_row[focus]--;
 				if (focus != 0 && selection_row[1] < 6U) {
-					while (track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]) >= 0xFEU) {
-						value = track_editor_palette_tile(page,
-							selection_row[1], selection_column[1]);
-						if (value == 0xFFU)
-							selection_column[1]--;
-						else
-							selection_row[1]--;
-					}
+					track_editor_skip_previous_placeholders(page,
+						&selection_row[1], &selection_column[1]);
 				}
 			}
 		} else if (key == 0x5000U) {
@@ -1217,15 +1224,8 @@ void load_tracks_menu_shapes(void)
 					if (selection_row[1] > 5U) {
 						selection_column[1] = 0;
 					} else {
-						while (track_editor_palette_tile(page,
-							selection_row[1], selection_column[1]) >= 0xFEU) {
-							value = track_editor_palette_tile(page,
-								selection_row[1], selection_column[1]);
-							if (value == 0xFFU)
-								selection_column[1]--;
-							else
-								selection_row[1]--;
-						}
+						track_editor_skip_previous_placeholders(page,
+							&selection_row[1], &selection_column[1]);
 					}
 				}
 			}
