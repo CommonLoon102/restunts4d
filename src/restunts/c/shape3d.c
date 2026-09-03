@@ -814,19 +814,14 @@ static legacy_u16 projection_scale_for_angle(legacy_u16 angle,
 	return (legacy_u16)quotient;
 }
 
-void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) {
-
-	projectiondata1 = projection_angle_from_extent(i1);
-	projectiondata2 = projection_angle_from_extent(i2);
-	projectiondata3 = (legacy_u16)LEGACY_S16_SAR(i3, 1U);
+static void projection_update_derived(void)
+{
 	projectiondata5 = LEGACY_U16_WRAP_ADD(
 		projectiondata3, projectiondata4);
-	projectiondata6 = (legacy_u16)LEGACY_S16_SAR(i4, 1U);
 	projectiondata8 = LEGACY_U16_WRAP_ADD(
 		projectiondata6, projectiondata7);
 	projectiondata9 = projection_scale_for_angle(
 		projectiondata1, projectiondata3);
-
 	if (projectiondata2 != 0) {
 		projectiondata10 = projection_scale_for_angle(
 			projectiondata2, projectiondata6);
@@ -836,7 +831,15 @@ void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) 
 			projectiondata9 >> 4);
 		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
 	}
+}
 
+void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4) {
+
+	projectiondata1 = projection_angle_from_extent(i1);
+	projectiondata2 = projection_angle_from_extent(i2);
+	projectiondata3 = (legacy_u16)LEGACY_S16_SAR(i3, 1U);
+	projectiondata6 = (legacy_u16)LEGACY_S16_SAR(i4, 1U);
+	projection_update_derived();
 }
 
 void nopsub_322C0(legacy_u16 i1, legacy_u16 i2) {
@@ -850,23 +853,8 @@ void nopsub_322DF(legacy_u16 i1, legacy_u16 i2, legacy_u16 i3, legacy_u16 i4) {
 	projectiondata1 = i1;
 	projectiondata2 = i2;
 	projectiondata3 = i3 >> 1;
-	projectiondata5 = LEGACY_U16_WRAP_ADD(
-		projectiondata3, projectiondata4);
 	projectiondata6 = i4 >> 1;
-	projectiondata8 = LEGACY_U16_WRAP_ADD(
-		projectiondata6, projectiondata7);
-	projectiondata9 = projection_scale_for_angle(
-		projectiondata1, projectiondata3);
-
-	if (projectiondata2 != 0) {
-		projectiondata10 = projection_scale_for_angle(
-			projectiondata2, projectiondata6);
-	} else {
-		projectiondata10 = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_SUB(
-			projectiondata9, projectiondata9 >> 3),
-			projectiondata9 >> 4);
-		projectiondata2 = polarAngle(projectiondata10, projectiondata6);
-	}
+	projection_update_derived();
 }
 
 extern struct RECTANGLE select_rect_rc;
