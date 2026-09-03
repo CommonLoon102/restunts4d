@@ -141,6 +141,20 @@ static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 	}
 }
 
+static legacy_s16 scaled_vector_separation(struct VECTOR* first,
+	struct VECTOR* second, struct VECTOR* intersection,
+	struct VECTOR* delta)
+{
+	vector_op_unk(first, second, intersection, 0);
+	delta->x = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(first->x, intersection->x), 6U);
+	delta->y = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(first->y, intersection->y), 6U);
+	delta->z = LEGACY_S16_SHL(
+		LEGACY_S16_WRAP_SUB(first->z, intersection->z), 6U);
+	return polarRadius3D(delta);
+}
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, legacy_s16 arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -551,14 +565,8 @@ case PLAYER_FLOW_loc_15398:
 	{ physics_flow = PLAYER_FLOW_loc_1540C; continue; }
 
 case PLAYER_FLOW_loc_153AE:
-	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.x, vec_FC.x), 6U);
-	vec_17C.y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.y, vec_FC.y), 6U);
-	vec_17C.z = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.z, vec_FC.z), 6U);
-	var_F2 = polarRadius3D(&vec_17C);
+	var_F2 = scaled_vector_separation(
+		&vec_1C, &vec_C, &vec_FC, &vec_17C);
 	var_F4 = LEGACY_S16_WRAP_SUB(var_pSpeed2Scaled, var_F2);
 
 case PLAYER_FLOW_loc_1540C:
@@ -829,15 +837,8 @@ case PLAYER_FLOW_loc_15A30:
 	var_EE = vec_1C.z;
 	vec_1C.z = LEGACY_S16_WRAP_NEGATE(vec_1C.y);
 	vec_1C.y = var_EE;
-	vector_op_unk(&vec_1C, &vec_C, &vec_FC, 0);
-	vec_17C.x = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.x, vec_FC.x), 6U);
-	vec_17C.y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.y, vec_FC.y), 6U);
-	vec_17C.z = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(vec_1C.z, vec_FC.z), 6U);
-
-	var_EE = polarRadius3D(&vec_17C);
+	var_EE = scaled_vector_separation(
+		&vec_1C, &vec_C, &vec_FC, &vec_17C);
 	var_F4 = LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc1[var_wheelIndex], var_pSpeed2Scaled);
 	var_F2 = LEGACY_S16_WRAP_SUB(var_F4, var_EE);
