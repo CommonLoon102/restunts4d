@@ -189,6 +189,25 @@ static legacy_s8 polyinfo_is_facing_camera(const legacy_u8 far* record)
 	return is_facing_camera(points);
 }
 
+static void shape3d_transform_vertex(const struct SHAPE3D* shape,
+	legacy_u16 index, legacy_s16 half_scale, struct MATRIX* matrix,
+	struct VECTOR* translation, struct VECTOR* transformed)
+{
+	struct VECTOR source;
+
+	shape3d_vertex_read(shape, index, &source);
+	if (half_scale != 0) {
+		/* Arithmetic shifts preserve the original flooring for negatives. */
+		source.x = LEGACY_S16_SAR(source.x, 1U);
+		source.y = LEGACY_S16_SAR(source.y, 1U);
+		source.z = LEGACY_S16_SAR(source.z, 1U);
+	}
+	mat_mul_vector(&source, matrix, transformed);
+	transformed->x = LEGACY_S16_WRAP_ADD(transformed->x, translation->x);
+	transformed->y = LEGACY_S16_WRAP_ADD(transformed->y, translation->y);
+	transformed->z = LEGACY_S16_WRAP_ADD(transformed->z, translation->z);
+}
+
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
@@ -300,18 +319,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	for (i = 0; i < transshapenumvertscopy;
 		i = LEGACY_U16_WRAP_ADD(i, 1U)) {
 		polyvertpointptrtab[i] = &var_vecarr2[i];
-		shape3d_vertex_read(arg_transshapeptr->shapeptr, i, &var_vec2);
-		if (select_rect_param != 0) {
-			// sar, not idiv: the original floors, so negative coordinates keep
-			// their extra step rather than rounding toward zero.
-			var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
-			var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
-			var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
-		}
-		mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-		var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
-		var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
-		var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
+		shape3d_transform_vertex(arg_transshapeptr->shapeptr, i,
+			select_rect_param, &var_mat2, &var_vec, &var_vec3);
 		var_vecarr[i] = var_vec3;
 		if (var_vec3.z < 0x0C) {
 			var_vertflagtbl[i] = 1;
@@ -364,19 +373,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		polyvertpointptrtab[var_polyvertcounter] = &var_vecarr2[temp];
 
 		if (var_vertflagtbl[temp] == 0xFFU) {
-			shape3d_vertex_read(
-				arg_transshapeptr->shapeptr, temp, &var_vec2);
-			if (select_rect_param != 0) {
-				// sar, not idiv: the original floors, so negative coordinates keep
-				// their extra step rather than rounding toward zero.
-				var_vec2.x = LEGACY_S16_SAR(var_vec2.x, 1U);
-				var_vec2.y = LEGACY_S16_SAR(var_vec2.y, 1U);
-				var_vec2.z = LEGACY_S16_SAR(var_vec2.z, 1U);
-			}
-			mat_mul_vector(&var_vec2, &var_mat2, &var_vec3);
-			var_vec3.x = LEGACY_S16_WRAP_ADD(var_vec3.x, var_vec.x);
-			var_vec3.y = LEGACY_S16_WRAP_ADD(var_vec3.y, var_vec.y);
-			var_vec3.z = LEGACY_S16_WRAP_ADD(var_vec3.z, var_vec.z);
+			shape3d_transform_vertex(arg_transshapeptr->shapeptr,
+				temp, select_rect_param, &var_mat2, &var_vec, &var_vec3);
 			var_vecarr[temp] = var_vec3;
 			if (var_vec3.z >= 0x0C) {
 				var_460 = 0;
