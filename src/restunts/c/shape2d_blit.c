@@ -7,11 +7,6 @@
 #include "shape2d.h"
 #include "shape2d_internal.h"
 
-#define SHAPE2D_RLE_AND 0
-#define SHAPE2D_RLE_OR 1
-#define SHAPE2D_RLE_COPY 2
-#define SHAPE2D_RLE_MAP 3
-
 struct SHAPE2D_CLIP {
 	legacy_u16 source;
 	legacy_u16 source_advance;
@@ -83,9 +78,9 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 				value = *source_ptr;
 				source++;
 			}
-			if (operation == SHAPE2D_RLE_OR)
+			if (operation == SHAPE2D_RASTER_OR)
 				bitmap[destination] |= value;
-			else if (operation == SHAPE2D_RLE_COPY)
+			else if (operation == SHAPE2D_RASTER_COPY)
 				bitmap[destination] = value;
 			else
 				bitmap[destination] &= value;
@@ -112,7 +107,7 @@ void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
 		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_AND);
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_AND);
 }
 
 void nopsub_33AC0(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -123,13 +118,13 @@ void nopsub_33AC0(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 	shape2d_render_rle(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RLE_AND);
+		SHAPE2D_RASTER_AND);
 }
 
 void nopsub_33AE4(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
-		SHAPE2D_RLE_AND);
+		SHAPE2D_RASTER_AND);
 }
 
 void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
@@ -141,13 +136,13 @@ void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
 	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
 		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_OR);
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_OR);
 }
 
 void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
-		SHAPE2D_RLE_COPY);
+		SHAPE2D_RASTER_COPY);
 }
 
 void shape2d_op_unk(struct SHAPE2D far* shape)
@@ -157,7 +152,7 @@ void shape2d_op_unk(struct SHAPE2D far* shape)
 	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
 		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_COPY);
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_COPY);
 }
 
 void nopsub_33DBE(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -168,7 +163,7 @@ void nopsub_33DBE(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 	shape2d_render_rle(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RLE_COPY);
+		SHAPE2D_RASTER_COPY);
 }
 
 struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16 unk) {
@@ -569,7 +564,7 @@ static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
 		SHAPE2D_HEADER_SIZE);
 	if (clip.source == data_start && clip.source_advance == 0 &&
 		clip.width == width && clip.rows == height) {
-		shape2d_render_rle(shape, x, y, SHAPE2D_RLE_COPY);
+		shape2d_render_rle(shape, x, y, SHAPE2D_RASTER_COPY);
 		return;
 	}
 	cursor.shape_segment = dos_memory_pointer_segment(shape);
@@ -658,13 +653,13 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 		do {
 			source_ptr = (legacy_u8 far*)dos_memory_make_pointer(
 				shape_segment, clip.source);
-			if (operation == SHAPE2D_RLE_MAP) {
+			if (operation == SHAPE2D_RASTER_MAP) {
 				mapped_color = incnums[*source_ptr];
 				if (mapped_color != 0xFFU)
 					bitmap[clip.destination] = mapped_color;
-			} else if (operation == SHAPE2D_RLE_OR) {
+			} else if (operation == SHAPE2D_RASTER_OR) {
 				bitmap[clip.destination] |= *source_ptr;
-			} else if (operation == SHAPE2D_RLE_COPY) {
+			} else if (operation == SHAPE2D_RASTER_COPY) {
 				bitmap[clip.destination] = *source_ptr;
 			} else {
 				bitmap[clip.destination] &= *source_ptr;
@@ -690,7 +685,7 @@ void sprite_putimage(struct SHAPE2D far* shape)
 	shape_bytes = (legacy_u8 far*)shape;
 	sprite_putimage_at(shape,
 		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RLE_COPY);
+		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_COPY);
 }
 
 void nopsub_33B98(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -701,25 +696,25 @@ void nopsub_33B98(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 	sprite_putimage_at(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RLE_COPY);
+		SHAPE2D_RASTER_COPY);
 }
 
 void sprite_putimage_and(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y)
 {
-	sprite_putimage_at(shape, x, y, SHAPE2D_RLE_AND);
+	sprite_putimage_at(shape, x, y, SHAPE2D_RASTER_AND);
 }
 
 void sprite_putimage_or(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y)
 {
-	sprite_putimage_at(shape, x, y, SHAPE2D_RLE_OR);
+	sprite_putimage_at(shape, x, y, SHAPE2D_RASTER_OR);
 }
 
 void sprite_putimage_and_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at(shape, (legacy_u16)x, (legacy_u16)y,
-		SHAPE2D_RLE_COPY);
+		SHAPE2D_RASTER_COPY);
 }
 
 void sprite_putimage_and_alt2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -730,7 +725,7 @@ void sprite_putimage_and_alt2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s1
 	sprite_putimage_at(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RLE_AND);
+		SHAPE2D_RASTER_AND);
 }
 
 void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -741,13 +736,13 @@ void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 
 	sprite_putimage_at(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RLE_OR);
+		SHAPE2D_RASTER_OR);
 }
 
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at(shape, (legacy_u16)x, (legacy_u16)y,
-		SHAPE2D_RLE_MAP);
+		SHAPE2D_RASTER_MAP);
 }
 
 void setup_mcgawnd1(void) {
