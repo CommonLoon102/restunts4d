@@ -2,6 +2,29 @@
 #define RESTUNTS_STATE_INTERNAL_H
 
 #include "externs.h"
+#include "legacy.h"
+#include "math.h"
+#include "memmgr.h"
+#include "residue.h"
+#include "shape3d.h"
+
+extern legacy_s16 penalty_time;
+extern legacy_s16 grassDecelDivTab[];
+extern struct TRACKOBJECT trkObjectList[215];
+extern legacy_u8 oppnentSped[];
+extern struct PLANE far* planptr;
+extern struct PLANE far plan_memres;
+extern legacy_s16 track_pieces_counter;
+extern legacy_u8 byte_3E71E[];
+extern legacy_u8 byte_3E724[];
+extern legacy_u8 terrConnDataEtoW[];
+extern legacy_u8 terrConnDataWtoE[];
+extern legacy_u8 terrConnDataNtoS[];
+extern legacy_u8 terrConnDataStoN[];
+extern legacy_u8 byte_45635;
+extern legacy_u8 byte_45D90;
+extern legacy_u8 byte_45E16;
+extern legacy_u8 byte_4616E;
 
 legacy_s16 detect_penalty(legacy_s16* current_track,
 	legacy_s16* penalty_count);
