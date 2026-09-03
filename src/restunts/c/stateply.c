@@ -126,6 +126,21 @@ enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_16892,
 };
 
+static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
+	struct VECTOR* rotated, struct MATRIX* angle_rotation,
+	legacy_s16 wheel_index, legacy_s16 y_adjustment)
+{
+	*wheel = simd_opponent.wheel_coords[wheel_index];
+	wheel->y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
+		LEGACY_S16_WRAP_ADD(
+			state.opponentstate.car_rc2[wheel_index], 0x180)),
+		y_adjustment);
+	if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+		mat_mul_vector(wheel, angle_rotation, rotated);
+		*wheel = *rotated;
+	}
+}
+
 void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, legacy_s16 arg_MplayerFlag) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
@@ -280,14 +295,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * Rebuild wheel 2 in car-local coordinates, including suspension travel
 		 * and the low-speed inverted-car adjustment.
 		 */
-		vec_1C6 = simd_opponent.wheel_coords[2];
-		vec_1C6.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
-			LEGACY_S16_WRAP_ADD(
-				state.opponentstate.car_rc2[2], 0x180)), var_F0);
-		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
-			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
-			vec_1C6 = vec_FC;
-		}
+		prepare_opponent_rear_wheel(&vec_1C6, &vec_FC,
+			&var_MmatFromAngleZ, 2, var_F0);
 
 		/*
 		 * Rotate wheel 2 into world axes and recover the high word of its world
@@ -302,14 +311,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 			var_140someWhlData[0];
 
 		/* Rebuild wheel 3 using the same local-coordinate adjustments. */
-		vec_1C6 = simd_opponent.wheel_coords[3];
-		vec_1C6.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
-			LEGACY_S16_WRAP_ADD(
-				state.opponentstate.car_rc2[3], 0x180)), var_F0);
-		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
-			mat_mul_vector(&vec_1C6, &var_MmatFromAngleZ, &vec_FC);
-			vec_1C6 = vec_FC;
-		}
+		prepare_opponent_rear_wheel(&vec_1C6, &vec_FC,
+			&var_MmatFromAngleZ, 3, var_F0);
 
 		/*
 		 * Rotate wheel 3 into world axes and recover the low word of its world
