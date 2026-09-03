@@ -9,18 +9,6 @@
 #include "platform.h"
 #include "resource.h"
 
-extern legacy_s8 audio_music_enabled;
-extern legacy_s8 audio_effects_enabled;
-extern legacy_s16 audio_update_lock;
-extern legacy_u8 dos_audio_special_mode;
-extern legacy_u8 dos_audio_context_count;
-extern legacy_u8 audio_channels[];
-extern legacy_u8* audio_sfx_channels;
-extern legacy_u8 dos_audio_uses_direct_channels;
-extern legacy_u8 dos_audio_master_state[];
-extern legacy_u8 dos_audio_master_volume;
-extern void far* dos_audio_driver_binary;
-
 void audio_sequence_timer(void);
 void timer_reg_callback(void (far* callback)(void));
 

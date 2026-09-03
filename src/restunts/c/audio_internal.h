@@ -7,6 +7,17 @@
 #define AUDIO_CAR_STATE_RECORD_COUNT 0x28U
 #define AUDIO_CAR_STATE_RECORD_SIZE  0x22U
 
+extern legacy_s8 audio_music_enabled;
+extern legacy_s8 audio_effects_enabled;
+extern legacy_s16 audio_update_lock;
+extern legacy_u8 dos_audio_special_mode;
+extern legacy_u8 dos_audio_context_count;
+extern legacy_u8 audio_channels[];
+extern legacy_u8* audio_sfx_channels;
+extern legacy_u8 dos_audio_uses_direct_channels;
+extern legacy_u8 dos_audio_master_state[];
+extern legacy_u8 dos_audio_master_volume;
+extern void far* dos_audio_driver_binary;
 extern legacy_s8 audio_car_state_ready;
 extern legacy_s8 audio_player_car_flags;
 extern legacy_s8 audio_opponent_car_flags;
