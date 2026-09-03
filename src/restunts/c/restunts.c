@@ -412,16 +412,8 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	copy_material_list_pointers(material_clrlist_ptr, material_clrlist2_ptr, material_patlist_ptr, material_patlist2_ptr, 0);
 }
 
-legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
-	legacy_s16 result;
-	legacy_s8 far* textresptr;
-	legacy_s16 carposangle;
-	struct SPRITE far* var42wnd;
-	legacy_s16 counter;
-	legacy_s16 inch;
-	legacy_s16 shapeindex;
-
-	// initialization
+static void init_full_game(legacy_s16 argc, legacy_s8* argv[])
+{
 	init_main(argc, argv);
 	init_div0();
 	init_row_tables();
@@ -439,6 +431,19 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	init_kevinrandom("kevin");
 
 	strcpy(gameconfig.game_trackname, "DEFAULT");
+}
+
+legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
+	legacy_s16 result;
+	legacy_s8 far* textresptr;
+	legacy_s16 carposangle;
+	struct SPRITE far* var42wnd;
+	legacy_s16 counter;
+	legacy_s16 inch;
+	legacy_s16 shapeindex;
+
+	// initialization
+	init_full_game(argc, argv);
 
 	input_do_checking(1);
 	input_do_checking(1);
@@ -550,25 +555,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 	legacy_s8 far* trkptr;
 	legacy_s8 far* textresptr;
 
-	init_main(argc, argv);
-	init_div0();
-	init_row_tables();
-
-	mainresptr = file_load_resfile("main");
-
-	fontdefptr = file_load_resource(0, "fontdef.fnt");
-	fontnptr = file_load_resource(0, "fontn.fnt");
-
-	font_set_fontdef();
-	init_polyinfo();
-
-	init_trackdata();
-
-	init_unknown();
-
-	init_kevinrandom("kevin");
-
-	strcpy(gameconfig.game_trackname, "DEFAULT");
+	init_full_game(argc, argv);
 
 	//fatal_error("ai");
 
