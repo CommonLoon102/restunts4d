@@ -546,6 +546,14 @@ legacy_u16 nopsub_31169(void) {
 	return (legacy_u16)(resptr2->resofs + resptr2->ressize - resptr1->resofs);
 }
 
+#define MMGR_FIND_ARENA_CHUNK(chunk, segment) \
+	while (1) { \
+		if (chunk == resptr1) \
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment); \
+		if (chunk->resofs == segment) break; \
+		chunk--; \
+	}
+
 void far* mmgr_free(legacy_s8 far* ptr) {
 	legacy_s16 i;
 	legacy_u16 ax, bx, cx, dx, di;
@@ -566,12 +574,7 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 			ptrseg, dos_memory_pointer_offset(ptr));
 	}
 
-	while (1) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
-		if (ressi->resofs == ptrseg) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, ptrseg);
 
 	ptrseg = 0;
 	ressi->resunk = 0;
@@ -819,12 +822,7 @@ void mmgr_release(void far* ptr) {
 		return;
 	}
 
-	for (;;) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
-		if (regax == ressi->resofs) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 
 	ressi->resunk = 0;
 	if (ressi == resptr2) {
@@ -850,12 +848,7 @@ void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
 	if (highpool_owns_seg(regax))
 		return;
 
-	for (;;) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
-		if (regax == ressi->resofs) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 
 	chunkname = mmgr_path_to_name(name);
 	for (i = 0; i < 0xC; i++)
@@ -879,12 +872,7 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
 		return highchunk->resparas;
 	}
 
-	for (;;) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
-		if (regax == ressi->resofs) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 	return ressi->ressize;
 }
 
@@ -914,12 +902,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
 	}
 
-	for (;;) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", arg_2);
-		if (regax == ressi->resofs) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, arg_2);
 
 	regax = arg_4;
 	if (regax <= ressi->ressize) {
@@ -972,12 +955,7 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 		return dos_memory_make_pointer(regax, 0);
 	}
 
-	for (;;) {
-		if (ressi == resptr1)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
-		if (regax == ressi->resofs) break;
-		ressi--;
-	}
+	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 
 	resdi = ressi;
 	resdi--;
