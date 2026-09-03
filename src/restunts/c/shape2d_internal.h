@@ -3,6 +3,11 @@
 
 #include "legacy.h"
 
+#define SHAPE2D_RASTER_AND 0
+#define SHAPE2D_RASTER_OR 1
+#define SHAPE2D_RASTER_COPY 2
+#define SHAPE2D_RASTER_MAP 3
+
 struct SPRITE;
 
 extern legacy_s8 aWindowdefOutOfRowTableSpa[];
