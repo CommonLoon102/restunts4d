@@ -329,19 +329,40 @@ void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
 	}
 }
 
+static void preRender_wheel_side(const legacy_u16* wheel_points,
+	legacy_u16 minimum_index, legacy_u16 reverse, legacy_u16 color)
+{
+	legacy_u16 side[36];
+	legacy_u16 step;
+	legacy_u16 point_index;
+	legacy_u16 destination_index;
+
+	for (step = 0; step < 9U; step++) {
+		if (reverse == 0U)
+			point_index = (legacy_u16)((minimum_index + step) & 0x0FU);
+		else
+			point_index = (legacy_u16)((minimum_index + 16U - step) & 0x0FU);
+		destination_index = (legacy_u16)(step * 2U);
+		side[destination_index] = wheel_points[point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[point_index * 2U + 1U];
+		destination_index = (legacy_u16)((17U - step) * 2U);
+		side[destination_index] = wheel_points[32U + point_index * 2U];
+		side[destination_index + 1U] =
+			wheel_points[33U + point_index * 2U];
+	}
+	preRender_default_alt_words(color, 18U, side);
+}
+
 void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color)
 {
 	legacy_u16 source_words[8];
 	legacy_u16 wheel_points[96];
 	legacy_u16 quad[8];
-	legacy_u16 side[36];
 	legacy_u16 index;
 	legacy_u16 next_index;
 	legacy_u16 minimum_index;
-	legacy_u16 step;
-	legacy_u16 point_index;
-	legacy_u16 destination_index;
 	legacy_u16 minimum_y;
 
 	for (index = 0; index < 4U; index++) {
@@ -372,31 +393,8 @@ void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 		}
 	}
 
-	for (step = 0; step < 9U; step++) {
-		point_index = (legacy_u16)((minimum_index + step) & 0x0FU);
-		destination_index = (legacy_u16)(step * 2U);
-		side[destination_index] = wheel_points[point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[point_index * 2U + 1U];
-		destination_index = (legacy_u16)((17U - step) * 2U);
-		side[destination_index] = wheel_points[32U + point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[33U + point_index * 2U];
-	}
-	preRender_default_alt_words(side_color, 18U, side);
-
-	for (step = 0; step < 9U; step++) {
-		point_index = (legacy_u16)((minimum_index + 16U - step) & 0x0FU);
-		destination_index = (legacy_u16)(step * 2U);
-		side[destination_index] = wheel_points[point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[point_index * 2U + 1U];
-		destination_index = (legacy_u16)((17U - step) * 2U);
-		side[destination_index] = wheel_points[32U + point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[33U + point_index * 2U];
-	}
-	preRender_default_alt_words(side_color, 18U, side);
+	preRender_wheel_side(wheel_points, minimum_index, 0U, side_color);
+	preRender_wheel_side(wheel_points, minimum_index, 1U, side_color);
 	preRender_default_alt_words(inner_color, 16U, &wheel_points[32]);
 }
 
