@@ -1,57 +1,7 @@
-#include "externs.h"
 #include "legacy.h"
 #include "math.h"
-#include "residue.h"
-
-extern legacy_s32 pState_lvec1_x;
-extern legacy_s32 pState_lvec1_y;
-extern legacy_s32 pState_lvec1_z;
-extern legacy_s16 pState_minusRotate_z_1;
-extern legacy_s16 pState_minusRotate_z_2;
-extern legacy_s16 pState_minusRotate_y_1;
-extern legacy_s16 pState_minusRotate_y_2;
-extern legacy_s16 pState_minusRotate_x_1;
-extern legacy_s16 pState_minusRotate_x_2;
-extern struct MATRIX mat_unk;
-extern struct VECTOR vec_unk2;
-extern legacy_s16 planindex;
-extern legacy_s16 planindex_copy;
-extern legacy_s16 pState_f36Mminf40sar2;
-extern struct VECTOR vec_planerotopresult;
-extern legacy_s8 current_surf_type;
-extern legacy_s16 nextPosAndNormalIP;
-extern legacy_s16 wallindex;
-extern legacy_s16 elRdWallRelated;
-extern legacy_s16 wallHeight;
-extern legacy_s16 wallStartX;
-extern legacy_s16 wallStartZ;
-extern legacy_s16 wallOrientation;
-extern struct PLANE far* planptr;
-extern struct PLANE far* current_planptr;
-extern legacy_s16 elem_xCenter;
-extern legacy_s16 elem_zCenter;
-extern legacy_s16 terrainHeight;
-extern legacy_s8 byte_4392C;
-
-extern struct POINT2D unk_3BD62[2];
-extern struct POINT2D unk_3BD5A[2];
-extern struct POINT2D unk_3BD6A[2];
-extern legacy_s16 word_3BD72[4];
-extern legacy_s16 audio_opponent_engine_channel;
-extern legacy_s16 audio_player_engine_channel;
-extern struct TRACKOBJECT trkObjectList[215];
-extern struct VECTOR unk_3E640[];
-extern struct VECTOR unk_3E646[];
-extern struct VECTOR unk_3E676[];
-extern struct VECTOR unk_3E682[];
-extern struct VECTOR unk_3E68E[];
-extern struct VECTOR unk_3E69A[];
-
-extern void update_crash_state(legacy_s16, legacy_s16);
-extern void build_track_object(struct VECTOR*, struct VECTOR*);
-extern void audio_unk3(legacy_u8, legacy_s16);
-
 #include "physics_internal.h"
+#include "residue.h"
 
 legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor)
