@@ -18,11 +18,6 @@ legacy_u32 timer_copy_counter(legacy_u32 ticks);
 legacy_s16 timer_compare_dx(void);
 legacy_u32 set_add_value(legacy_u32 ticks);
 legacy_s16 sub_2EB07(void);
-legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key,
-	legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
-	void (far* callback)(void), legacy_u32 timeout);
-void read_line_helper(void);
-void read_line_helper2(void);
 
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout)
