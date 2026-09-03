@@ -692,6 +692,18 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	spritefunc(&var_798[temp1y], &var_798[480 + temp1y], temp1y, temp0x, arg_color);
 
 }
+
+static void generate_poly_edge_fill(legacy_s16* edges,
+	legacy_s16 offset, legacy_s16 count, legacy_s16 boundary)
+{
+	legacy_s16 index;
+
+	for (index = 0; index < count; index++) {
+		edges[offset + index] = boundary;
+		edges[480 + offset + index] = boundary - 1;
+	}
+}
+
 void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16 mode) {
 
 	legacy_s16 sprite1_sprite_left2 = sprite1.sprite_left2;
@@ -707,10 +719,8 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 				LEGACY_S16_FROM_BITS(regsi[3]), count);
 			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
 				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = sprite1_sprite_left2;
-				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
-			}
+			generate_poly_edge_fill(var_18, ofs, count,
+				sprite1_sprite_left2);
 		}
 
 		count = LEGACY_S16_FROM_BITS(regsi[12]);
@@ -719,30 +729,24 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 				LEGACY_S16_FROM_BITS(regsi[3]), count);
 			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
 				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = sprite1_sprite_widthsum;
-				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
-			}
+			generate_poly_edge_fill(var_18, ofs, count,
+				sprite1_sprite_widthsum);
 		}
 
 		count = LEGACY_S16_FROM_BITS(regsi[11]);
 		if (count > 0) {
 			ofs = LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_FROM_BITS(regsi[5]), 1);
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = sprite1_sprite_left2;
-				var_18[480 + ofs + i] = sprite1_sprite_left2 - 1;
-			}
+			generate_poly_edge_fill(var_18, ofs, count,
+				sprite1_sprite_left2);
 		}
 
 		count = LEGACY_S16_FROM_BITS(regsi[13]);
 		if (count > 0) {
 			ofs = LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_FROM_BITS(regsi[5]), 1);
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = sprite1_sprite_widthsum;
-				var_18[480 + ofs + i] = sprite1_sprite_widthsum - 1;
-			}
+			generate_poly_edge_fill(var_18, ofs, count,
+				sprite1_sprite_widthsum);
 		}
 	}
 
