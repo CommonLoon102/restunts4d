@@ -45,5 +45,7 @@ makefile text eol=lf
 *.VSH binary
 *.pvs binary
 *.PVS binary
+*.pdx binary
+*.PDX binary
 *.zip binary
 *.ZIP binary

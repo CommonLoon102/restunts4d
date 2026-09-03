@@ -2,7 +2,7 @@
 
 <#
 .SYNOPSIS
-Generates or reuses .BIN files and compares them with .BNI files for one
+Generates .PDD files and compares them with .PDX reference files for one
 replay partition.
 #>
 
@@ -42,16 +42,16 @@ if (-not (Test-Path -LiteralPath $Config -PathType Leaf)) {
     throw "DOSBox configuration not found: $Config"
 }
 
-# Target filenames end with a four-digit counter, such as 0000.rpl or
-# sl0000.RPL. Calculate each file's partition from that counter at runtime.
-$ReplayFilePattern = [regex]::new(
-    '([0-9]{4})\.rpl$',
+# Reference filenames end with a four-digit counter, such as 0000.PDX or
+# sl0000.pdx. Calculate each file's partition from that counter at runtime.
+$ReferenceFilePattern = [regex]::new(
+    '([0-9]{4})\.pdx$',
     [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 )
-$ReplayFiles = @(
+$ReferenceFiles = @(
     Get-ChildItem -LiteralPath $GameDir -File |
         Where-Object {
-            $suffixMatch = $ReplayFilePattern.Match($_.Name)
+            $suffixMatch = $ReferenceFilePattern.Match($_.Name)
             $suffixMatch.Success -and
             ([long]$suffixMatch.Groups[1].Value % $PartitionCount) -eq
                 $Partition
@@ -59,9 +59,22 @@ $ReplayFiles = @(
         Sort-Object -Property Name
 )
 
-if ($ReplayFiles.Count -eq 0) {
+if ($ReferenceFiles.Count -eq 0) {
     Write-Output 'No matching files found.'
     return
+}
+
+$ReplayFilesByBaseName = [System.Collections.Generic.Dictionary[string, object]]::new(
+        [System.StringComparer]::OrdinalIgnoreCase
+    )
+foreach ($replayFile in @(
+        Get-ChildItem -LiteralPath $GameDir -File |
+            Where-Object { $_.Extension -ieq '.rpl' } |
+            Sort-Object -Property Name
+    )) {
+    if (-not $ReplayFilesByBaseName.ContainsKey($replayFile.BaseName)) {
+        $ReplayFilesByBaseName.Add($replayFile.BaseName, $replayFile)
+    }
 }
 
 function Write-ReplayError {
@@ -88,7 +101,7 @@ function Invoke-DosBoxExecutable {
     )
 
     $mountCommand = 'mount c "{0}"' -f $GameDir
-    $runCommand = '{0} "{1}" 1' -f $Executable, $FileName
+    $runCommand = '{0} "{1}" 2 0' -f $Executable, $FileName
     $arguments = @(
         '-silent'
         '-conf'
@@ -127,8 +140,6 @@ function Invoke-DosBoxExecutable {
             throw 'DOSBox-X did not start.'
         }
 
-        # Drain both streams asynchronously so a full output buffer cannot
-        # block DOSBox-X while its output remains hidden.
         $standardOutputTask = $process.StandardOutput.ReadToEndAsync()
         $standardErrorTask = $process.StandardError.ReadToEndAsync()
 
@@ -247,52 +258,53 @@ function Test-FilesEqual {
     }
 }
 
-$total = $ReplayFiles.Count
+$total = $ReferenceFiles.Count
 $processed = 0
 
-foreach ($file in $ReplayFiles) {
+foreach ($referenceFile in $ReferenceFiles) {
     $processed++
-    $fileName = $file.Name
-    $basePath = Join-Path $file.DirectoryName $file.BaseName
-    $binFile = "$basePath.BIN"
-    $bniFile = "$basePath.BNI"
+    $expectedReplayName = $referenceFile.BaseName + '.rpl'
 
-    Write-Output ('Processing {0}/{1}: {2}' -f $processed, $total, $fileName)
+    Write-Output (
+        'Processing renderer reference {0}/{1}: {2}' -f
+        $processed,
+        $total,
+        $referenceFile.Name
+    )
 
-    # REPLDUMPO.EXE produces stable output, so retain and reuse an existing BIN.
-    if (-not (Test-Path -LiteralPath $binFile -PathType Leaf)) {
-        if (-not (Invoke-DosBoxExecutable 'repldumo.exe' $fileName)) {
-            continue
-        }
-    }
-
-    if (-not (Invoke-DosBoxExecutable 'repldump.exe' $fileName)) {
+    if (-not $ReplayFilesByBaseName.ContainsKey($referenceFile.BaseName)) {
+        Write-ReplayError (
+            "ERROR|type=missing_input|input=$expectedReplayName|" +
+            "reference=$($referenceFile.Name)"
+        )
         continue
     }
 
-    $binExists = Test-Path -LiteralPath $binFile -PathType Leaf
-    $bniExists = Test-Path -LiteralPath $bniFile -PathType Leaf
+    $replayFile = $ReplayFilesByBaseName[$referenceFile.BaseName]
+    $pddFile = Join-Path $GameDir ($replayFile.BaseName + '.PDD')
 
-    if (-not $binExists) {
-        Write-ReplayError (
-            "ERROR|type=missing_output|input=$fileName|" +
-            "output=$([System.IO.Path]::GetFileName($binFile))"
-        )
+    # Prevent output from an earlier failed invocation from being accepted.
+    if (Test-Path -LiteralPath $pddFile -PathType Leaf) {
+        Remove-Item -LiteralPath $pddFile -Force
     }
 
-    if (-not $bniExists) {
-        Write-ReplayError (
-            "ERROR|type=missing_output|input=$fileName|" +
-            "output=$([System.IO.Path]::GetFileName($bniFile))"
-        )
+    if (-not (Invoke-DosBoxExecutable 'pixldump.exe' $replayFile.Name)) {
+        continue
     }
 
-    if ($binExists -and $bniExists -and
-        -not (Test-FilesEqual $binFile $bniFile)) {
+    if (-not (Test-Path -LiteralPath $pddFile -PathType Leaf)) {
         Write-ReplayError (
-            "ERROR|type=file_mismatch|input=$fileName|" +
-            "bin=$([System.IO.Path]::GetFileName($binFile))|" +
-            "bni=$([System.IO.Path]::GetFileName($bniFile))"
+            "ERROR|type=missing_output|input=$($replayFile.Name)|" +
+            "output=$([System.IO.Path]::GetFileName($pddFile))"
+        )
+        continue
+    }
+
+    if (-not (Test-FilesEqual $referenceFile.FullName $pddFile)) {
+        Write-ReplayError (
+            "ERROR|type=file_mismatch|input=$($replayFile.Name)|" +
+            "pdx=$($referenceFile.Name)|" +
+            "pdd=$([System.IO.Path]::GetFileName($pddFile))"
         )
     }
 }

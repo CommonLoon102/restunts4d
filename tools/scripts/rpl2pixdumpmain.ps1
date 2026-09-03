@@ -2,10 +2,11 @@
 
 <#
 .SYNOPSIS
-Runs the requested number of rpl2state.ps1 replay partitions concurrently.
+Runs the requested number of rpl2pixdump.ps1 partitions concurrently and
+merges their errors into the existing state comparison report.
 
 .EXAMPLE
-.\rpl2statemain.ps1 -PartitionCount 12
+.\rpl2pixdumpmain.ps1 -PartitionCount 12
 #>
 
 [CmdletBinding()]
@@ -25,8 +26,7 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
 
 $scriptDirectory = $PSScriptRoot
 $stuntsDirectory = Join-Path $scriptDirectory 'stunts'
-$workerScript = Join-Path $scriptDirectory 'rpl2state.ps1'
-$combinedOutputFile = Join-Path $scriptDirectory 'partitions_all.txt'
+$workerScript = Join-Path $scriptDirectory 'rpl2pixdump.ps1'
 if (-not (Test-Path -LiteralPath $workerScript -PathType Leaf)) {
     throw "Worker script not found: $workerScript"
 }
@@ -35,25 +35,13 @@ if (-not (Test-Path -LiteralPath $stuntsDirectory -PathType Container)) {
     throw "Stunts directory not found: $stuntsDirectory"
 }
 
-# Start each run with a clean report. This is also important after an earlier
-# request failed, because the service intentionally retains diagnostics then.
-for ($partition = 0; $partition -lt $PartitionCount; $partition++) {
-    $partitionFile = Join-Path $scriptDirectory "partition_$partition.txt"
-    if (Test-Path -LiteralPath $partitionFile -PathType Leaf) {
-        Remove-Item -LiteralPath $partitionFile -Force
-    }
-}
-
-$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
-[System.IO.File]::WriteAllText($combinedOutputFile, '', $utf8NoBom)
-
 $jobs = @()
 $failedJobs = @()
 
 try {
     for ($partition = 0; $partition -lt $PartitionCount; $partition++) {
         $jobParameters = @{
-            Name = "rpl2state-$partition"
+            Name = "rpl2pixdump-$partition"
             ScriptBlock = {
                 param(
                     [string]$WorkerScript,
@@ -79,14 +67,12 @@ try {
 
         $jobs += Start-Job @jobParameters
         Write-Output (
-            'Started replay partition {0} of {1}.' -f
+            'Started renderer partition {0} of {1}.' -f
             $partition,
             $PartitionCount
         )
     }
 
-    # Receive each job's unread output while the workers are still running.
-    # Without this loop, Start-Job buffers all progress until Wait-Job returns.
     do {
         foreach ($job in $jobs) {
             Receive-Job -Job $job -ErrorAction Continue
@@ -103,7 +89,6 @@ try {
         }
     } while ($unfinishedJobs.Count -gt 0)
 
-    # Drain output produced between the last polling pass and job completion.
     foreach ($job in $jobs) {
         Receive-Job -Job $job -ErrorAction Continue
     }
@@ -118,6 +103,7 @@ finally {
     }
 }
 
+$combinedOutputFile = Join-Path $scriptDirectory 'partitions_all.txt'
 $uniqueLines = [System.Collections.Generic.HashSet[string]]::new(
     [System.StringComparer]::Ordinal
 )
@@ -155,6 +141,7 @@ $sortedLines = @(
         Sort-Object -Property InputName, Sequence |
         ForEach-Object { $_.Line }
 )
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
 [System.IO.File]::WriteAllLines(
     $combinedOutputFile,
     [string[]]$sortedLines,
@@ -163,7 +150,7 @@ $sortedLines = @(
 
 if ($failedJobs.Count -gt 0) {
     $failedNames = $failedJobs.Name -join ', '
-    throw "One or more replay jobs failed: $failedNames"
+    throw "One or more renderer jobs failed: $failedNames"
 }
 
 $stopwatch.Stop()

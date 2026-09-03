@@ -3,16 +3,84 @@
 set -eu
 
 usage() {
-    echo "Usage: DUMPSRV_API_KEY=<secret> $0 <service-url>" >&2
-    echo "Example: DUMPSRV_API_KEY=<secret> $0 http://server:8080/process" >&2
+    echo "Usage: DUMPSRV_API_KEY=<secret> $0 [--physics-tests true|false] [--renderer-tests true|false] [service-url]" >&2
+    echo "Example: DUMPSRV_API_KEY=<secret> $0 --physics-tests false http://server:8080/process" >&2
 }
 
-if [ "$#" -gt 1 ]; then
-    usage
-    exit 2
-fi
+service_url=
+physics_tests=true
+renderer_tests=true
 
-service_url=${1:-${DUMPSRV_URL:-}}
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --physics-tests)
+            if [ "$#" -lt 2 ]; then
+                echo "--physics-tests requires true or false." >&2
+                usage
+                exit 2
+            fi
+            physics_tests=$2
+            shift 2
+            ;;
+        --physics-tests=*)
+            physics_tests=${1#*=}
+            shift
+            ;;
+        --renderer-tests)
+            if [ "$#" -lt 2 ]; then
+                echo "--renderer-tests requires true or false." >&2
+                usage
+                exit 2
+            fi
+            renderer_tests=$2
+            shift 2
+            ;;
+        --renderer-tests=*)
+            renderer_tests=${1#*=}
+            shift
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            usage
+            exit 2
+            ;;
+        *)
+            if [ -n "$service_url" ]; then
+                echo "Only one service URL may be provided." >&2
+                usage
+                exit 2
+            fi
+            service_url=$1
+            shift
+            ;;
+    esac
+done
+
+case "$physics_tests" in
+    true|false)
+        ;;
+    *)
+        echo "--physics-tests must be true or false." >&2
+        usage
+        exit 2
+        ;;
+esac
+
+case "$renderer_tests" in
+    true|false)
+        ;;
+    *)
+        echo "--renderer-tests must be true or false." >&2
+        usage
+        exit 2
+        ;;
+esac
+
+service_url=${service_url:-${DUMPSRV_URL:-}}
 api_key=${DUMPSRV_API_KEY:-}
 
 if [ -z "$service_url" ]; then
@@ -32,7 +100,8 @@ if ! command -v curl >/dev/null 2>&1; then
 fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-input_file=$script_directory/REPLDUMP.EXE
+repldump_file=$script_directory/REPLDUMP.EXE
+pixldump_file=$script_directory/PIXLDUMP.EXE
 output_file=$script_directory/partitions_all.txt
 temporary_output=
 
@@ -44,10 +113,12 @@ cleanup() {
 
 trap cleanup 0 HUP INT TERM
 
-if [ ! -f "$input_file" ]; then
-    echo "Upload file not found: $input_file" >&2
-    exit 2
-fi
+for input_file in "$repldump_file" "$pixldump_file"; do
+    if [ ! -f "$input_file" ]; then
+        echo "Upload file not found: $input_file" >&2
+        exit 2
+    fi
+done
 
 temporary_output=$(mktemp "$script_directory/.partitions_all.txt.XXXXXX")
 
@@ -59,8 +130,10 @@ if ! curl \
     --max-time 2100 \
     --request POST \
     --header "X-API-Key: $api_key" \
-    --header "Content-Type: application/octet-stream" \
-    --data-binary "@$input_file" \
+    --form "repldump=@$repldump_file;type=application/octet-stream;filename=REPLDUMP.EXE" \
+    --form "pixldump=@$pixldump_file;type=application/octet-stream;filename=PIXLDUMP.EXE" \
+    --form-string "physics_tests=$physics_tests" \
+    --form-string "renderer_tests=$renderer_tests" \
     --output "$temporary_output" \
     "$service_url"; then
     echo "Request failed; the existing result was not changed." >&2
