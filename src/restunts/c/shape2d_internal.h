@@ -25,6 +25,8 @@ extern struct SPRITE far* sprite_ptrs[4];
 extern legacy_s16 word_4646A[4];
 extern legacy_s16 word_46486[4];
 extern legacy_u8 far incnums[];
+extern legacy_u16 word_4031E;
+extern legacy_u16 word_40320;
 
 legacy_u16 shape2d_get_word(const legacy_u8 far* source);
 void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value);

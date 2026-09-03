@@ -1,15 +1,12 @@
 #include "externs.h"
 #include "legacy.h"
 #include "shape2d.h"
+#include "shape2d_internal.h"
 #include "shape3d.h"
 
 extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16, legacy_u16);
 extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
-extern struct SPRITE far sprite1;
-extern struct SPRITE far sprite2;
 extern legacy_u8* off_3F3C8[];
-extern legacy_u16 word_4031E;
-extern legacy_u16 word_40320;
 
 #define SPHERE_RASTER_TABLE_LIMIT 40U
 
