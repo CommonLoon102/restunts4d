@@ -282,11 +282,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 
 	/*
-	 * On the first stopped frame of a player crash, the retained words come
-	 * from rear-opponent wheel coordinates rather than ordinary wheel angles.
-	 * Reconstruct those words from explicit game state.
+	 * On the first stopped frame of a player crash in an opponent race, the
+	 * retained words come from rear-opponent wheel coordinates rather than
+	 * ordinary wheel angles. Reconstruct those words from explicit game state.
 	 */
-	if (arg_MplayerFlag == 0 && var_pSpeed2Scaled == 0 &&
+	if (arg_MplayerFlag == 0 && gameconfig.game_opponenttype != 0 &&
+		var_pSpeed2Scaled == 0 &&
 		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
 		/*
 		 * On the zero-speed crash transition, the original wheel-angle locals
