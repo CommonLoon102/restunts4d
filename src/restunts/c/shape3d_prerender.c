@@ -998,39 +998,15 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 						LEGACY_S16_WRAP_SUB(
 							LEGACY_S16_FROM_BITS(line[7]), count));
 
-				if (left_edges[index] > value) {
-					target = 1;
-					break;
+				if (target == 0) {
+					if (left_edges[index] > value)
+						target = 1;
+					else if (right_edges[index] < value)
+						target = 2;
 				}
-				if (right_edges[index] < value) {
-					target = 2;
-					break;
-				}
-
-				index++;
-				count--;
-				if (mode == 5U)
-					fixed -= step;
-				else if (mode == 6U)
-					fixed += step;
-			}
-
-			while (count > 0 && target != 0) {
-				value = mode >= 5U ?
-					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
-					LEGACY_S16_FROM_BITS(line[1]);
-				if (mode == 3U)
-					value = LEGACY_S16_WRAP_SUB(value,
-						LEGACY_S16_WRAP_SUB(
-							LEGACY_S16_FROM_BITS(line[7]), count));
-				else if (mode == 4U)
-					value = LEGACY_S16_WRAP_ADD(value,
-						LEGACY_S16_WRAP_SUB(
-							LEGACY_S16_FROM_BITS(line[7]), count));
-
 				if (target == 1)
 					left_edges[index] = value;
-				else
+				else if (target == 2)
 					right_edges[index] = value;
 				index++;
 				count--;
