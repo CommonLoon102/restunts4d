@@ -243,20 +243,15 @@ static legacy_u8 draw_line_clip_bottom(legacy_u16* line)
 		line[7] = (legacy_u16)(line[7] - cx);
 		break;
 	case 5:
-		line[7] = (legacy_u16)(line[7] - cx);
-		advance = (legacy_u16)(line[7] - 1);
-		product = (legacy_u32)line[6] * advance;
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 -= product;
-		value32 += 0x8000UL;
-		line[4] = (legacy_u16)(value32 >> 16);
-		break;
 	case 6:
 		line[7] = (legacy_u16)(line[7] - cx);
 		advance = (legacy_u16)(line[7] - 1);
 		product = (legacy_u32)line[6] * advance;
 		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 += product;
+		if (mode == 5)
+			value32 -= product;
+		else
+			value32 += product;
 		value32 += 0x8000UL;
 		line[4] = (legacy_u16)(value32 >> 16);
 		break;
