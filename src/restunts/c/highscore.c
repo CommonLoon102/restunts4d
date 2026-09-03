@@ -346,6 +346,18 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 	mouse_draw_transparent_check();
 }
 
+static void end_hiscore_advance_animation(legacy_s16 delta,
+	legacy_s16* timer, legacy_u8* frame, const legacy_u8 far* frame_sequence)
+{
+	*timer = LEGACY_S16_WRAP_ADD(*timer, delta);
+	if (*timer >= 0x1E) {
+		*timer = LEGACY_S16_WRAP_SUB(*timer, 0x1E);
+		(*frame)++;
+		if (frame_sequence[*frame] == 0)
+			*frame = 0;
+	}
+}
+
 static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	legacy_u8 outcome, legacy_u8 text_prefix, legacy_s16 animation_x)
 {
@@ -761,13 +773,8 @@ legacy_u16 end_hiscore(void)
 			word_3BCEC, word_3BCF6,
 			hiscore_buttons_y1, hiscore_buttons_y2,
 			word_407CE, word_407D0);
-		animation_timer = LEGACY_S16_WRAP_ADD(animation_timer, delta);
-		if (animation_timer >= 0x1E) {
-			animation_timer = LEGACY_S16_WRAP_SUB(animation_timer, 0x1E);
-			animation_frame++;
-			if (animation_sequence[animation_frame] == 0)
-				animation_frame = 0;
-		}
+		end_hiscore_advance_animation(delta, &animation_timer,
+			&animation_frame, animation_sequence);
 		if (previous_animation_frame != animation_frame) {
 			previous_animation_frame = animation_frame;
 			end_hiscore_draw_animation_frame(animation_resource,
@@ -845,24 +852,19 @@ legacy_u16 end_hiscore(void)
 		sub_29772();
 	}
 
-	delta = (legacy_s16)mouse_timer_sprite_unk(selected,
-		button_x1, button_x2, hiscore_buttons_y1, hiscore_buttons_y2,
-		word_407CE, word_407D0);
-	if (evaluation_screen == 0 && outcome != 2) {
-		animation_timer = LEGACY_S16_WRAP_ADD(animation_timer, delta);
-		if (animation_timer >= 0x1E) {
-			animation_timer = LEGACY_S16_WRAP_SUB(animation_timer, 0x1E);
-			animation_frame++;
-			if (animation_sequence[animation_frame] == 0)
-				animation_frame = 0;
+		delta = (legacy_s16)mouse_timer_sprite_unk(selected,
+			button_x1, button_x2, hiscore_buttons_y1, hiscore_buttons_y2,
+			word_407CE, word_407D0);
+		if (evaluation_screen == 0 && outcome != 2) {
+			end_hiscore_advance_animation(delta, &animation_timer,
+				&animation_frame, animation_sequence);
+			if (previous_animation_frame != animation_frame) {
+				previous_animation_frame = animation_frame;
+				end_hiscore_draw_animation_frame(animation_resource,
+					animation_sequence, animation_frame,
+					animation_x, animation_y, animation_sprite, 1);
+			}
 		}
-		if (previous_animation_frame != animation_frame) {
-			previous_animation_frame = animation_frame;
-			end_hiscore_draw_animation_frame(animation_resource,
-				animation_sequence, animation_frame,
-				animation_x, animation_y, animation_sprite, 1);
-		}
-	}
 
 	if (opponent_active == 0 || score_status == -1) {
 		hit = (legacy_s16)mouse_multi_hittest(3,
