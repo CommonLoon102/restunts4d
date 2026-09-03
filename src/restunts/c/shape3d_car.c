@@ -1,18 +1,7 @@
 #include "fileio.h"
 #include "memmgr.h"
 #include "shape3d.h"
-
-extern struct SHAPE3D game3dshapes[130];
-extern legacy_s8 aStxxx[];
-extern legacy_s8 far* carresptr;
-extern legacy_s8 far* car2resptr;
-extern struct VECTOR carshapevec[2];
-extern struct VECTOR carshapevecs[];
-extern struct VECTOR oppcarshapevec[2];
-extern struct VECTOR oppcarshapevecs[];
-extern legacy_s16 word_443E8[];
-extern legacy_s16 word_4448A[];
-extern legacy_s16 unk_3E710[];
+#include "shape3d_internal.h"
 
 static void shape3d_init_car_wheel_vertices(const struct SHAPE3D* shape,
 	struct VECTOR centers[2], struct VECTOR vertices[24])
