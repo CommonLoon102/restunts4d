@@ -75,6 +75,21 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 	return result;
 }
 
+static void read_line_delete_character(legacy_s8* text,
+	legacy_s16 max_characters)
+{
+	legacy_u16 index;
+
+	index = (legacy_u16)text_edit_cursor;
+	while (LEGACY_S16_FROM_BITS(index) <
+		LEGACY_S16_FROM_BITS(max_characters)) {
+		text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
+		index = LEGACY_U16_WRAP_ADD(index, 1U);
+	}
+	text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
+	read_line_helper2();
+}
+
 legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, legacy_s16 max_characters,
 	legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y, void (far* callback)(void),
 	legacy_u32 timeout)
@@ -199,14 +214,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 				LEGACY_S16_FROM_BITS(text_edit_cursor) &&
 				text[(legacy_u16)text_edit_cursor] != 0) {
 				read_line_helper();
-				index = (legacy_u16)text_edit_cursor;
-				while (LEGACY_S16_FROM_BITS(index) <
-					LEGACY_S16_FROM_BITS(max_characters)) {
-					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
-					index = LEGACY_U16_WRAP_ADD(index, 1U);
-				}
-				text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
-				read_line_helper2();
+				read_line_delete_character(text, max_characters);
 				read_line_helper();
 			}
 			first_key = 0;
@@ -217,14 +225,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			if (text_edit_cursor != 0) {
 				read_line_helper();
 				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
-				index = (legacy_u16)text_edit_cursor;
-				while (LEGACY_S16_FROM_BITS(index) <
-					LEGACY_S16_FROM_BITS(max_characters)) {
-					text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
-					index = LEGACY_U16_WRAP_ADD(index, 1U);
-				}
-				text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
-				read_line_helper2();
+				read_line_delete_character(text, max_characters);
 				read_line_helper();
 			}
 			first_key = 0;
