@@ -1,9 +1,8 @@
 #include "externs.h"
 #include "legacy.h"
 #include "shape2d.h"
+#include "shape2d_internal.h"
 #include "shape3d.h"
-
-extern struct SPRITE far sprite1;
 
 legacy_u16 draw_line_related_impl(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line,

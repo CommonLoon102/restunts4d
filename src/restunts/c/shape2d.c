@@ -11,8 +11,6 @@
 
 extern legacy_u8 far* active_font_definition;
 extern legacy_u16 fontdefseg;
-extern legacy_u16 word_4031E;
-extern legacy_u16 word_40320;
 
 legacy_u16 shape2d_get_word(const legacy_u8 far* source)
 {
