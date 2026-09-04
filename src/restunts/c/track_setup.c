@@ -39,6 +39,29 @@ struct TRACK_SETUP_BRANCH {
 typedef legacy_s8 track_setup_branch_must_be_14_bytes[
 	(sizeof(struct TRACK_SETUP_BRANCH) == 14) ? 1 : -1];
 
+/* Arriving on a tile, the entry point the walk uses depends on the direction
+   of travel and on which continuation marker (if any) sent it here. Each row
+   is indexed by orientation / 0x100; a zero means the combination does not
+   occur, exactly as the original chains fell through to zero. */
+static const legacy_u8 track_entry_points_northwest[4] = { 0x0C, 0, 0, 9 };
+static const legacy_u8 track_entry_points_north[4] = { 0x0B, 6, 0, 7 };
+static const legacy_u8 track_entry_points_west[4] = { 0x0A, 0, 5, 8 };
+static const legacy_u8 track_entry_points_owner[4] = { 2, 4, 1, 3 };
+
+static legacy_u8 track_setup_entry_point(const legacy_u8* points,
+	legacy_s16 orientation)
+{
+	if (orientation == 0x000)
+		return points[0];
+	if (orientation == 0x100)
+		return points[1];
+	if (orientation == 0x200)
+		return points[2];
+	if (orientation == 0x300)
+		return points[3];
+	return 0;
+}
+
 /* Leaving a piece through one of its exit points steps on to the neighbour
    tile and fixes the orientation the next piece is entered with. Entry 0 is
    never used: the original switch had no case for it and left the position
@@ -309,46 +332,22 @@ legacy_s16 track_setup(void)
 	if (tile_element == 0xFDU) {
 		column = track_setup_add_s8(column, -1);
 		row = track_setup_add_s8(row, -1);
-		if (orientation == 0)
-			tile_entry_point = 0x0CU;
-		else if (orientation == 0x300)
-			tile_entry_point = 9;
-		else
-			tile_entry_point = 0;
+		tile_entry_point = track_setup_entry_point(
+			track_entry_points_northwest, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
 	} else if (tile_element == 0xFEU) {
 		row = track_setup_add_s8(row, -1);
-		if (orientation == 0)
-			tile_entry_point = 0x0BU;
-		else if (orientation == 0x100)
-			tile_entry_point = 6;
-		else if (orientation == 0x300)
-			tile_entry_point = 7;
-		else
-			tile_entry_point = 0;
+		tile_entry_point = track_setup_entry_point(
+			track_entry_points_north, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
 	} else if (tile_element == 0xFFU) {
 		column = track_setup_add_s8(column, -1);
-		if (orientation == 0)
-			tile_entry_point = 0x0AU;
-		else if (orientation == 0x200)
-			tile_entry_point = 5;
-		else if (orientation == 0x300)
-			tile_entry_point = 8;
-		else
-			tile_entry_point = 0;
+		tile_entry_point = track_setup_entry_point(
+			track_entry_points_west, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
 	} else {
-		if (orientation == 0)
-			tile_entry_point = 2;
-		else if (orientation == 0x100)
-			tile_entry_point = 4;
-		else if (orientation == 0x200)
-			tile_entry_point = 1;
-		else if (orientation == 0x300)
-			tile_entry_point = 3;
-		else
-			tile_entry_point = 0;
+		tile_entry_point = track_setup_entry_point(
+			track_entry_points_owner, orientation);
 	}
 
 	if (jump_length == 0 && tile_entry_point == 0) {
