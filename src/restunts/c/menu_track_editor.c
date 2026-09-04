@@ -59,6 +59,7 @@ void preRender_icons(legacy_u8 page)
 }
 
 static legacy_u16 track_menu_previous_row(legacy_u16 row);
+static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row);
 
 void draw_2DtrackMap(
 	legacy_u8 column_offset,
@@ -304,7 +305,6 @@ legacy_s16 sub_2C81C(void)
 	legacy_u16 row;
 	legacy_u16 column;
 	legacy_u16 current_index;
-	legacy_u16 source_index;
 	legacy_u8 terrain;
 	legacy_u8 tile;
 	legacy_u8 error;
@@ -322,19 +322,8 @@ legacy_s16 sub_2C81C(void)
 				continue;
 
 			if (terrain >= 1U && terrain <= 5U) {
-				if (tile == 0xFFU) {
-					source_index = LEGACY_U16_WRAP_SUB(current_index, 1U);
-					tile = td14_elem_map_main[source_index];
-				} else if (tile == 0xFEU) {
-					source_index = LEGACY_U16_WRAP_ADD(
-						track_menu_previous_row(row), column);
-					tile = td14_elem_map_main[source_index];
-				} else if (tile == 0xFDU) {
-					source_index = LEGACY_U16_WRAP_SUB(
-						LEGACY_U16_WRAP_ADD(
-							track_menu_previous_row(row), column), 1U);
-					tile = td14_elem_map_main[source_index];
-				}
+				tile = track_editor_map_tile((legacy_u8)column,
+					(legacy_u8)row);
 
 				if (!((tile >= 0x22U && tile <= 0x23U) ||
 					(tile >= 0x67U && tile <= 0x6CU) ||
