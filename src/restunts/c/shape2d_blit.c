@@ -162,7 +162,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	legacy_s8* nextwnd;
 	struct SPRITE far * farwnd;
 	legacy_s8 far* shapebuf;
-	legacy_u8 far* header;
+	struct SHAPE2D far* header;
 	legacy_u16 lineofs;
 	legacy_u8* lineofsptr;
 	legacy_u8 far* farlineofsptr;
@@ -175,13 +175,14 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	pages = ((width * height + SHAPE2D_HEADER_SIZE) >> 4) + 1;
 	shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
 
-	header = (legacy_u8 far*)dos_memory_make_pointer(dos_memory_pointer_segment(shapebuf), 0);
-	shape2d_put_word(header + SHAPE2D_WIDTH_OFFSET, width);
-	shape2d_put_word(header + SHAPE2D_HEIGHT_OFFSET, height);
-	shape2d_put_word(header + SHAPE2D_POS_X_OFFSET, 0U);
-	shape2d_put_word(header + SHAPE2D_POS_Y_OFFSET, 0U);
-	shape2d_put_word(header + SHAPE2D_UNK1_OFFSET, 0U);
-	shape2d_put_word(header + SHAPE2D_UNK2_OFFSET, 0U);
+	header = (struct SHAPE2D far*)dos_memory_make_pointer(
+		dos_memory_pointer_segment(shapebuf), 0);
+	header->width = width;
+	header->height = height;
+	header->position_x = 0U;
+	header->position_y = 0U;
+	header->centre_x = 0U;
+	header->centre_y = 0U;
 
 	// it is safe to read/write the pointers to next_wnd_def/wnd_defs, but not the contents
 	wnd = next_wnd_def;
@@ -195,7 +196,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	farwnd = dos_memory_make_pointer(wnddefseg, dos_memory_pointer_offset(wnd));
 
 	lineofsptr = (legacy_u8*)(wnd + sizeof(struct SPRITE));
-	farwnd->sprite_bitmapptr = (struct SHAPE2D far*)header;
+	farwnd->sprite_bitmapptr = header;
 	farwnd->sprite_lineofs = lineofsptr;
 	farwnd->sprite_left = 0;
 	farwnd->sprite_left2 = 0;

@@ -1,21 +1,37 @@
 #ifndef RESTUNTS_SHAPE2D_H
 #define RESTUNTS_SHAPE2D_H
 
+#include <stddef.h>
 #include "legacy.h"
 
-#define SHAPE2D_HEADER_SIZE   16U
-#define SHAPE2D_WIDTH_OFFSET   0U
-#define SHAPE2D_HEIGHT_OFFSET  2U
-#define SHAPE2D_UNK1_OFFSET    4U
-#define SHAPE2D_UNK2_OFFSET    6U
-#define SHAPE2D_POS_X_OFFSET   8U
-#define SHAPE2D_POS_Y_OFFSET  10U
-#define SHAPE2D_UNK3_OFFSET   12U
-#define SHAPE2D_UNK4_OFFSET   13U
-#define SHAPE2D_UNK5_OFFSET   14U
-#define SHAPE2D_UNK6_OFFSET   15U
+#pragma pack (push, 1)
 
-struct SHAPE2D;
+/* Header of a VGA/EGA bitmap resource, followed directly by the pixel data.
+   The layout is the on-disk resource format, so it is fixed. centre_x and
+   centre_y are the anchor a shape is drawn around; the unknown bytes carry
+   the channel mapping and the transposed/interlaced flags. */
+struct SHAPE2D {
+	legacy_u16 width;
+	legacy_u16 height;
+	legacy_u16 centre_x;
+	legacy_u16 centre_y;
+	legacy_u16 position_x;
+	legacy_u16 position_y;
+	legacy_u8 unknown[4];
+};
+
+#pragma pack (pop)
+
+#define SHAPE2D_HEADER_SIZE (sizeof(struct SHAPE2D))
+
+typedef char shape2d_header_must_be_16_bytes[
+	(sizeof(struct SHAPE2D) == 16) ? 1 : -1];
+typedef char shape2d_centre_x_must_be_at_04[
+	(offsetof(struct SHAPE2D, centre_x) == 4) ? 1 : -1];
+typedef char shape2d_position_x_must_be_at_08[
+	(offsetof(struct SHAPE2D, position_x) == 8) ? 1 : -1];
+typedef char shape2d_unknown_must_be_at_0C[
+	(offsetof(struct SHAPE2D, unknown) == 12) ? 1 : -1];
 
 #pragma pack (push, 1)
 struct SPRITE {

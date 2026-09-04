@@ -24,26 +24,22 @@ void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value)
 
 legacy_u16 shape2d_get_width(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_WIDTH_OFFSET);
+	return shape->width;
 }
 
 legacy_u16 shape2d_get_height(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_HEIGHT_OFFSET);
+	return shape->height;
 }
 
 legacy_u16 shape2d_get_unk1(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_UNK1_OFFSET);
+	return shape->centre_x;
 }
 
 legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_UNK2_OFFSET);
+	return shape->centre_y;
 }
 
 /* An anchored draw puts the sprite's stored anchor point on (x, y), so the
@@ -60,14 +56,12 @@ legacy_u16 shape2d_anchored_y(const struct SHAPE2D far* shape, legacy_s16 y)
 
 legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_POS_X_OFFSET);
+	return shape->position_x;
 }
 
 legacy_u16 shape2d_get_pos_y(const struct SHAPE2D far* shape)
 {
-	return shape2d_get_word((const legacy_u8 far*)shape +
-		SHAPE2D_POS_Y_OFFSET);
+	return shape->position_y;
 }
 
 legacy_u16 shape2d_get_line_offset(legacy_u16 sprite_segment,

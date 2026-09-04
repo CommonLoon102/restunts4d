@@ -273,6 +273,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	legacy_s16 shapecount, counter, width, height;
 	legacy_s16 evenrows, oddrows;
 	legacy_u8 far* memshape;
+	struct SHAPE2D far* shape_header;
 	legacy_s8 far* membitmapptr;
 	legacy_u8 flag;
 	legacy_s16 i, j;
@@ -281,10 +282,11 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	counter = 0;
 	do {
 		memshape = file_get_shape2d_bytes(memchunk, counter);
+		shape_header = (struct SHAPE2D far*)memshape;
 		membitmapptr = (legacy_s8 far*)memshape + SHAPE2D_HEADER_SIZE;
-		flag = memshape[SHAPE2D_UNK6_OFFSET];
+		flag = shape_header->unknown[3];
 		if ((flag & 0xF0) == 0) {
-			flag = memshape[SHAPE2D_UNK5_OFFSET] >> 4;
+			flag = shape_header->unknown[2] >> 4;
 			if (flag != 0) {
 				// The original does not merely skip an unknown flip type, it
 				// gives up on the whole resource, so the shapes after this
@@ -295,10 +297,8 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 				// on to mmgr_release without ever reading ax, and the three
 				// arms below cover every flip type the resources use.
 				if (flag < 4) {
-					width = shape2d_get_word(
-						memshape + SHAPE2D_WIDTH_OFFSET);
-					height = shape2d_get_word(
-						memshape + SHAPE2D_HEIGHT_OFFSET);
+					width = shape_header->width;
+					height = shape_header->height;
 					switch (flag - 1) {
 						case 0:
 							// regular flip
@@ -374,20 +374,20 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	legacy_u8 val;
 	legacy_u8 far* membitmapptr;
 	legacy_u8 far* memshape;
+	struct SHAPE2D far* shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
+		shape_header = (struct SHAPE2D far*)memshape;
 
-		if (!(memshape[SHAPE2D_UNK6_OFFSET] & 0xF0)) {
-			val = (memshape[SHAPE2D_UNK5_OFFSET] >> 4) & 0x0F;
+		if (!(shape_header->unknown[3] & 0xF0)) {
+			val = (shape_header->unknown[2] >> 4) & 0x0F;
 
 			if (val) {
-				width = shape2d_get_word(
-					memshape + SHAPE2D_WIDTH_OFFSET);
-				height = shape2d_get_word(
-					memshape + SHAPE2D_HEIGHT_OFFSET);
+				width = shape_header->width;
+				height = shape_header->height;
 				membitmapptr = memshape + SHAPE2D_HEADER_SIZE;
 
 				for (j = 0; j < 4; ++j) {
@@ -422,7 +422,9 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	legacy_u16 directory_prefix_size;
 	legacy_u32 nextoffset;
 	legacy_u8 far* srcshape;
+	struct SHAPE2D far* source_header;
 	legacy_u8 far* dstshape;
+	struct SHAPE2D far* destination_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
@@ -439,9 +441,9 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 
 	for (i = 0; i < shapecount; ++i) {
 		srcshape = file_get_shape2d_bytes(memchunk, i);
-		product = (legacy_u32)shape2d_get_word(
-			srcshape + SHAPE2D_WIDTH_OFFSET) *
-			shape2d_get_word(srcshape + SHAPE2D_HEIGHT_OFFSET);
+		source_header = (struct SHAPE2D far*)srcshape;
+		product = (legacy_u32)source_header->width *
+			source_header->height;
 		length = (legacy_s16)(legacy_u16)product;
 
 		// dx:ax at this point is HIWORD(w*h) : (LOWORD(w*h)*8 + 16), each
@@ -456,19 +458,19 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 					+ ((legacy_u32)(legacy_u16)(product >> 16) << 16);
 
 		dstshape = file_get_shape2d_bytes((legacy_u8 far*)mempages, i);
+		destination_header = (struct SHAPE2D far*)dstshape;
 		// `mov cx, 6 / rep movsw` - the first six words only, up to and
 		// including s2d_pos_y. s2d_unk3..s2d_unk6 hold the pattern and flip
 		// nibbles and are deliberately left alone in the destination.
 		fmemcpy(dstshape, srcshape, 6 * sizeof(legacy_u16));
 
-		shape2d_put_word(dstshape + SHAPE2D_WIDTH_OFFSET,
-			LEGACY_U16_WRAP_MUL(shape2d_get_word(
-				dstshape + SHAPE2D_WIDTH_OFFSET), 8U));
+		destination_header->width = LEGACY_U16_WRAP_MUL(
+			destination_header->width, 8U);
 
 		if (length && length <= 8000) {
 			mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
 
-			val = srcshape[SHAPE2D_UNK4_OFFSET] >> 4;
+			val = source_header->unknown[1] >> 4;
 			val |= val << 8;
 
 			for (j = 0; j < length * 4; ++j) {
@@ -478,7 +480,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 			memchunkptr = srcshape + SHAPE2D_HEADER_SIZE;
 
 			for (j = 0; j < 4; ++j) {
-				pat = srcshape[SHAPE2D_UNK3_OFFSET + j] & 0x0F;
+				pat = source_header->unknown[j] & 0x0F;
 
 				if (pat) {
 					mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
@@ -510,14 +512,16 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
 	legacy_u16 i, shapecount, size, maxsize;
 	legacy_u8 far* memshape;
+	struct SHAPE2D far* shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 	maxsize = 0;
 
 	for (i = 0; i < shapecount; i++) {
 		memshape = file_get_shape2d_bytes((legacy_u8 far*)memchunk, i);
-		size = (shape2d_get_word(memshape + SHAPE2D_WIDTH_OFFSET) *
-			shape2d_get_word(memshape + SHAPE2D_HEIGHT_OFFSET) +
+		shape_header = (struct SHAPE2D far*)memshape;
+		size = (shape_header->width *
+			shape_header->height +
 			0x20) >> 4;
 		if (size > maxsize)
 			maxsize = size;
@@ -529,6 +533,7 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 	legacy_u16 shapecount, i;
 	legacy_s32 size;
 	legacy_u8 far* memshape;
+	struct SHAPE2D far* shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
@@ -539,12 +544,11 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes((legacy_u8 far*)memchunk, i);
+		shape_header = (struct SHAPE2D far*)memshape;
 		// `shl ax, 3` then `sub dx, dx / adc`: the per-shape term is a
 		// 16-bit value ZERO-extended into the accumulator, and the header
 		// size is folded in afterwards with its own carry.
-		size += (legacy_u32)(legacy_u16)(shape2d_get_word(
-			memshape + SHAPE2D_WIDTH_OFFSET) * shape2d_get_word(
-			memshape + SHAPE2D_HEIGHT_OFFSET) * 8)
+		size += (legacy_u32)(legacy_u16)(shape_header->width * shape_header->height * 8)
 			  + SHAPE2D_HEADER_SIZE;
 	}
 
@@ -563,13 +567,15 @@ void file_load_shape2d_palmap_apply(legacy_u8 far* memchunk, legacy_u8 palmap[])
 	legacy_u16 shapecount, length, i, j;
 	legacy_u8 far* memchunkptr;
 	legacy_u8 far* memshape;
+	struct SHAPE2D far* shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
-		length = shape2d_get_word(memshape + SHAPE2D_WIDTH_OFFSET) *
-			shape2d_get_word(memshape + SHAPE2D_HEIGHT_OFFSET);
+		shape_header = (struct SHAPE2D far*)memshape;
+		length = shape_header->width *
+			shape_header->height;
 
 		memchunkptr = memshape + SHAPE2D_HEADER_SIZE;
 
