@@ -541,26 +541,16 @@ void putpixel_line1_maybe(const legacy_u16* line)
 		} while (remaining != 0);
 		break;
 	case 7:
-		remaining = count;
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(sprite_segment, y_high), x_high);
-			bitmap[destination] = color;
-			x_high--;
-			old_low = y_low;
-			y_low = LEGACY_U16_WRAP_ADD(y_low, delta);
-			if (y_low < old_low)
-				y_high++;
-			remaining--;
-		} while (remaining != 0);
-		break;
 	case 8:
 		remaining = count;
 		do {
 			destination = LEGACY_U16_WRAP_ADD(
 				shape2d_get_line_offset(sprite_segment, y_high), x_high);
 			bitmap[destination] = color;
-			x_high++;
+			if (mode == 7U)
+				x_high--;
+			else
+				x_high++;
 			old_low = y_low;
 			y_low = LEGACY_U16_WRAP_ADD(y_low, delta);
 			if (y_low < old_low)
