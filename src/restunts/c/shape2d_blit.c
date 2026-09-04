@@ -107,11 +107,18 @@ static void shape2d_render_rle_at_anchor(struct SHAPE2D far* shape,
 		operation);
 }
 
+/* Several entry points differ only in the raster operation they apply at
+   the position stored in the sprite header. */
+static void shape2d_render_rle_at_position(struct SHAPE2D far* shape,
+	legacy_s16 operation)
+{
+	shape2d_render_rle(shape, shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape), operation);
+}
+
 void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 {
-	shape2d_render_rle(shape,
-		shape2d_get_pos_x(shape),
-		shape2d_get_pos_y(shape), SHAPE2D_RASTER_AND);
+	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_AND);
 }
 
 void nopsub_33AC0(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -130,9 +137,7 @@ void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
 	struct SHAPE2D far* shape;
 
 	shape = (struct SHAPE2D far*)dos_memory_make_pointer(segment, offset);
-	shape2d_render_rle(shape,
-		shape2d_get_pos_x(shape),
-		shape2d_get_pos_y(shape), SHAPE2D_RASTER_OR);
+	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_OR);
 }
 
 void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -143,9 +148,7 @@ void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 
 void shape2d_op_unk(struct SHAPE2D far* shape)
 {
-	shape2d_render_rle(shape,
-		shape2d_get_pos_x(shape),
-		shape2d_get_pos_y(shape), SHAPE2D_RASTER_COPY);
+	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_COPY);
 }
 
 void nopsub_33DBE(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
