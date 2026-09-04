@@ -370,6 +370,15 @@ static legacy_s16 frame_border_index(legacy_s8 offset)
 	return 2;
 }
 
+/* The camera looks out of the car, so it uses the car's rotation inverted. */
+static struct MATRIX* frame_car_rotation(legacy_s16 rot_x, legacy_s16 rot_y,
+	legacy_s16 rot_z)
+{
+	return mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(rot_z),
+		LEGACY_S16_WRAP_NEGATE(rot_y),
+		LEGACY_S16_WRAP_NEGATE(rot_x), 0);
+}
+
 void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 si;
 	legacy_s8 var_122;
@@ -477,10 +486,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		car_rot_x_2 = car_rot_x & 0x3ff;
 		car_rot_y_2 = car_rot_y & 0x3ff;
 		car_rot_z_2   = car_rot_z & 0x3ff;
-		car_rot_matrix = mat_rot_zxy(
-			LEGACY_S16_WRAP_NEGATE(car_rot_z),
-			LEGACY_S16_WRAP_NEGATE(car_rot_y),
-			LEGACY_S16_WRAP_NEGATE(car_rot_x), 0);
+		car_rot_matrix = frame_car_rotation(car_rot_x, car_rot_y,
+			car_rot_z);
 		offset_vector.x = 0;
 		offset_vector.z = 0;
 		offset_vector.y = LEGACY_S16_WRAP_SUB(simd_player.car_height, 6);
@@ -500,10 +507,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		offset_vector.x = 0;
 		offset_vector.y = 0;
 		offset_vector.z = 0x4000;
-		car_rot_matrix = mat_rot_zxy(
-			LEGACY_S16_WRAP_NEGATE(car_rot_z),
-			LEGACY_S16_WRAP_NEGATE(car_rot_y),
-			LEGACY_S16_WRAP_NEGATE(car_rot_x), 0);
+		car_rot_matrix = frame_car_rotation(car_rot_x, car_rot_y,
+			car_rot_z);
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
 
 		offset_vector.x = 0;
