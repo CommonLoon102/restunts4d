@@ -358,6 +358,21 @@ static void end_hiscore_advance_animation(legacy_s16 delta,
 	}
 }
 
+static void end_hiscore_update_animation(legacy_s16 delta,
+	legacy_s16* timer, legacy_u8* frame, legacy_u8* previous_frame,
+	legacy_s8 far* animation_resource, legacy_u8 far* frame_sequence,
+	legacy_s16 animation_x, legacy_s16 animation_y,
+	struct SPRITE far* animation_sprite, legacy_u8 draw_direct_copy)
+{
+	end_hiscore_advance_animation(delta, timer, frame, frame_sequence);
+	if (*previous_frame != *frame) {
+		*previous_frame = *frame;
+		end_hiscore_draw_animation_frame(animation_resource,
+			frame_sequence, *frame, animation_x, animation_y,
+			animation_sprite, draw_direct_copy);
+	}
+}
+
 static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	legacy_u8 outcome, legacy_u8 text_prefix, legacy_s16 animation_x)
 {
@@ -773,14 +788,10 @@ legacy_u16 end_hiscore(void)
 			word_3BCEC, word_3BCF6,
 			hiscore_buttons_y1, hiscore_buttons_y2,
 			word_407CE, word_407D0);
-		end_hiscore_advance_animation(delta, &animation_timer,
-			&animation_frame, animation_sequence);
-		if (previous_animation_frame != animation_frame) {
-			previous_animation_frame = animation_frame;
-			end_hiscore_draw_animation_frame(animation_resource,
-				animation_sequence, animation_frame,
-				animation_x, animation_y, animation_sprite, 0);
-		}
+		end_hiscore_update_animation(delta, &animation_timer,
+			&animation_frame, &previous_animation_frame,
+			animation_resource, animation_sequence, animation_x,
+			animation_y, animation_sprite, 0);
 		input = (legacy_u16)input_checking(
 			(legacy_s16)text_resource_count);
 		if (input == 0x0DU || input == 0x20U || input == 0x1BU)
@@ -856,14 +867,10 @@ legacy_u16 end_hiscore(void)
 			button_x1, button_x2, hiscore_buttons_y1, hiscore_buttons_y2,
 			word_407CE, word_407D0);
 		if (evaluation_screen == 0 && outcome != 2) {
-			end_hiscore_advance_animation(delta, &animation_timer,
-				&animation_frame, animation_sequence);
-			if (previous_animation_frame != animation_frame) {
-				previous_animation_frame = animation_frame;
-				end_hiscore_draw_animation_frame(animation_resource,
-					animation_sequence, animation_frame,
-					animation_x, animation_y, animation_sprite, 1);
-			}
+			end_hiscore_update_animation(delta, &animation_timer,
+				&animation_frame, &previous_animation_frame,
+				animation_resource, animation_sequence, animation_x,
+				animation_y, animation_sprite, 1);
 		}
 
 	if (opponent_active == 0 || score_status == -1) {
