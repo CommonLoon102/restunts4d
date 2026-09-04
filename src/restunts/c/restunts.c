@@ -263,10 +263,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	kb_reg_callback(0x0018, &do_dos_restext);
 
 	// Video
-	video_flag1_is1 = 1;
-	video_flag2_is1 = 1;
-	video_flag3_isFFFF = -1;
-	video_flag4_is1 = 1;
+	init_video_geometry_flags();
 
 	mmgr_alloc_a000();
 	himem_init();

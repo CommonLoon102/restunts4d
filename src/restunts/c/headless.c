@@ -50,10 +50,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 {
 	(void)argc;
 	(void)argv;
-	video_flag1_is1 = 1;
-	video_flag2_is1 = 1;
-	video_flag3_isFFFF = -1;
-	video_flag4_is1 = 1;
+	init_video_geometry_flags();
 	video_flag5_is0 = 0;
 	video_flag6_is1 = 1;
 	textresprefix = 'e';

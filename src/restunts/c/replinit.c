@@ -1,6 +1,14 @@
 #include "restunts.h"
 #include "memmgr.h"
 
+void init_video_geometry_flags(void)
+{
+	video_flag1_is1 = 1;
+	video_flag2_is1 = 1;
+	video_flag3_isFFFF = -1;
+	video_flag4_is1 = 1;
+}
+
 void init_row_tables(void)
 {
 	legacy_s16 i;

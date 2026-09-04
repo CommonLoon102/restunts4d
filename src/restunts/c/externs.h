@@ -188,6 +188,7 @@ extern legacy_s16 get_kevinrandom(void);
 extern void init_row_tables(void);
 extern void init_trackdata(void);
 extern void init_unknown(void);
+extern void init_video_geometry_flags(void);
 extern void audio_carstate(void);
 extern void setup_car_shapes(legacy_s16);
 extern void update_frame(legacy_s8, struct RECTANGLE* rc);
