@@ -622,25 +622,7 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 		if (rect_is_adjacent(var_rectptr, rect) == 0) {
 			continue;
 		}
-		if (var_rectptr->left <= rect->left)
-			var_rect.left = var_rectptr->left;
-		else
-			var_rect.left = rect->left;
-
-		if (var_rectptr->right >= rect->right)
-			var_rect.right = var_rectptr->right;
-		else
-			var_rect.right = rect->right;
-
-		if (var_rectptr->top <= rect->top)
-			var_rect.top = var_rectptr->top;
-		else
-			var_rect.top = rect->top;
-
-		if (var_rectptr->bottom >= rect->bottom)
-			var_rect.bottom = var_rectptr->bottom;
-		else
-			var_rect.bottom = rect->bottom;
+		rect_union(var_rectptr, rect, &var_rect);
 
 		rectlist_remove_at(arg_rect_array_length_ptr,
 			arg_rect_array_ptr, var_counter);
