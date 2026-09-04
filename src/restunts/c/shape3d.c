@@ -188,6 +188,17 @@ static void polyinfo_write_point(legacy_u8 far* record,
 		(legacy_u16)point->py);
 }
 
+/* Emitting a polygon point always appends it to the polyinfo record and
+   narrows the clip flags by the same test. */
+static void polyinfo_emit_point(legacy_u16* point_index,
+	legacy_u8* rect_flags, struct POINT2D* point)
+{
+	polyinfo_write_point(transshapepolyinfo, *point_index, point);
+	if (*rect_flags != 0)
+		*rect_flags &= rect_compare_point(point);
+	*point_index = LEGACY_U16_WRAP_ADD(*point_index, 1U);
+}
+
 static legacy_s8 polyinfo_is_facing_camera(const legacy_u8 far* record)
 {
 	struct POINT2D points[3];
@@ -421,14 +432,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			var_18 = LEGACY_S32_WRAP_ADD_S16(
 				var_18, var_vecarr[var_C].z);
 			var_polyvertunktabptr = &polyvertpointptrtab[i];
-			polyinfo_write_point(transshapepolyinfo,
-				var_transshapepolyinfoptindex, *var_polyvertunktabptr);
-			if (var_ptrectflag != 0) {
-				var_ptrectflag &= rect_compare_point(
-					*var_polyvertunktabptr);
-			}
-			var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
-				var_transshapepolyinfoptindex, 1U);
+			polyinfo_emit_point(&var_transshapepolyinfoptindex,
+				&var_ptrectflag, *var_polyvertunktabptr);
 		}
 	} else {
 		var_polyvertcounter = 0;
@@ -447,14 +452,9 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 					vector_to_point(&var_vec2, &var_574);
 					if (var_574.px != var_vecarr2[var_448].px ||
 						var_574.py != var_vecarr2[var_448].py) {
-						if (var_ptrectflag != 0) {
-							var_ptrectflag &= rect_compare_point(&var_574);
-						}
-						polyinfo_write_point(transshapepolyinfo,
-							var_transshapepolyinfoptindex, &var_574);
-						var_transshapepolyinfoptindex =
-							LEGACY_U16_WRAP_ADD(
-								var_transshapepolyinfoptindex, 1U);
+						polyinfo_emit_point(
+							&var_transshapepolyinfoptindex,
+							&var_ptrectflag, &var_574);
 						var_polyvertcounter++;
 					}
 				}
@@ -465,27 +465,15 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 					vector_to_point(&var_vec2, &var_574);
 					if (var_574.px != var_vecarr2[var_C].px ||
 						var_574.py != var_vecarr2[var_C].py) {
-						if (var_ptrectflag != 0) {
-							var_ptrectflag &= rect_compare_point(&var_574);
-						}
-						polyinfo_write_point(transshapepolyinfo,
-							var_transshapepolyinfoptindex, &var_574);
-						var_transshapepolyinfoptindex =
-							LEGACY_U16_WRAP_ADD(
-								var_transshapepolyinfoptindex, 1U);
+						polyinfo_emit_point(
+							&var_transshapepolyinfoptindex,
+							&var_ptrectflag, &var_574);
 						var_polyvertcounter = LEGACY_U16_WRAP_ADD(
 							var_polyvertcounter, 1U);
 					}
 				}
-				polyinfo_write_point(transshapepolyinfo,
-					var_transshapepolyinfoptindex,
-					polyvertpointptrtab[i]);
-				if (var_ptrectflag != 0) {
-					var_ptrectflag &= rect_compare_point(
-						polyvertpointptrtab[i]);
-				}
-				var_transshapepolyinfoptindex = LEGACY_U16_WRAP_ADD(
-					var_transshapepolyinfoptindex, 1U);
+				polyinfo_emit_point(&var_transshapepolyinfoptindex,
+					&var_ptrectflag, polyvertpointptrtab[i]);
 				var_polyvertcounter++;
 			}
 			var_448 = var_C;
