@@ -381,6 +381,15 @@ static legacy_u16 replay_scrub_amount(legacy_s32 accumulated)
 	return (legacy_u16)LEGACY_S32_DIV_OR_ZERO(accumulated, 20L);
 }
 
+static legacy_s32 replay_scrub_begin(legacy_u8 selection)
+{
+	is_in_replay = 1;
+	audio_carstate();
+	replay_controls_select(selection);
+	(void)timer_get_delta_alt();
+	return 20L;
+}
+
 static void replay_fast_forward(void)
 {
 	legacy_s32 accumulated;
@@ -390,11 +399,7 @@ static void replay_fast_forward(void)
 	legacy_u16 amount;
 	legacy_u16 target;
 
-	is_in_replay = 1;
-	audio_carstate();
-	replay_controls_select(0);
-	(void)timer_get_delta_alt();
-	accumulated = 20L;
+	accumulated = replay_scrub_begin(0);
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
 		speed = replay_scrub_speed(accumulated);
 		if (speed > 100)
@@ -447,11 +452,7 @@ static void replay_rewind(void)
 	legacy_u16 target;
 	legacy_u16 displayed_frame;
 
-	is_in_replay = 1;
-	audio_carstate();
-	replay_controls_select(1);
-	(void)timer_get_delta_alt();
-	accumulated = 20L;
+	accumulated = replay_scrub_begin(1);
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
 		speed = replay_scrub_speed(accumulated);
 		if (speed > 100)
