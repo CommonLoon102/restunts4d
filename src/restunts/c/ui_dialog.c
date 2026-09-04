@@ -97,6 +97,15 @@ static legacy_u16 dialog_finish(legacy_s16 result,
 	return (legacy_u16)result;
 }
 
+static legacy_s16 dialog_advance_height(legacy_s16 dialog_height,
+	legacy_s16 line_height, legacy_u8 separator,
+	legacy_s16 paragraph_height)
+{
+	if (separator == ']')
+		return LEGACY_S16_WRAP_ADD(dialog_height, line_height);
+	return LEGACY_S16_WRAP_ADD(dialog_height, paragraph_height);
+}
+
 legacy_u16 show_dialog(
 	legacy_s16 dialog_type,
 	legacy_s16 save_background,
@@ -157,11 +166,8 @@ legacy_u16 show_dialog(
 			if (measured_width > dialog_width)
 				dialog_width = measured_width;
 			line_length = 0;
-			if (character == ']')
-				dialog_height = LEGACY_S16_WRAP_ADD(
-					dialog_height, line_height);
-			else
-				dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 4);
+			dialog_height = dialog_advance_height(dialog_height,
+				line_height, character, 4);
 		} else {
 			line_buffer[line_length++] = (legacy_s8)character;
 		}
@@ -216,11 +222,8 @@ legacy_u16 show_dialog(
 			sub_345BC(line_buffer, x,
 				LEGACY_S16_WRAP_ADD(y, dialog_height));
 			line_length = 0;
-			if (character == ']')
-				dialog_height = LEGACY_S16_WRAP_ADD(
-					dialog_height, line_height);
-			else
-				dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 4);
+			dialog_height = dialog_advance_height(dialog_height,
+				line_height, character, 4);
 		} else if (character == '@') {
 			if (dialog_type == 3) {
 				line_buffer[line_length] = 0;
@@ -256,11 +259,8 @@ legacy_u16 show_dialog(
 				line_buffer[line_length] = 0;
 				choice_width = (legacy_u16)font_op2(line_buffer);
 				line_length = 0;
-				if (character == ']')
-					dialog_height = LEGACY_S16_WRAP_ADD(
-						dialog_height, line_height);
-				else
-					dialog_height = LEGACY_S16_WRAP_ADD(dialog_height, 3);
+				dialog_height = dialog_advance_height(dialog_height,
+					line_height, character, 3);
 			} else {
 				line_buffer[line_length++] = (legacy_s8)character;
 				character_count++;
