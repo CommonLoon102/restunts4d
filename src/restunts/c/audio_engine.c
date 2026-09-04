@@ -1208,19 +1208,26 @@ void audio_function2(legacy_s16 index)
 	audio_timers[index].parameters_changed = 1;
 }
 
+static legacy_s16 audio_start_timer_resource(struct AUDIO_TIMER* timer,
+	legacy_u16 resource_index, legacy_u8 priority)
+{
+	legacy_u16 rate;
+	void far* resource;
+
+	rate = timer->current_volume >> 4;
+	resource = audio_read_far_pointer(
+		(legacy_u8*)&timer->definition.resources[resource_index]);
+	return audio_check_flag(resource, -1, priority, rate);
+}
+
 static legacy_s16 audio_start_indexed_event(legacy_s16 index,
 	legacy_u16 resource_index, legacy_u8 priority)
 {
 	struct AUDIO_TIMER* timer;
-	legacy_u16 rate;
 	legacy_s16 channel;
-	void far* resource;
 
 	timer = &audio_timers[index];
-	rate = timer->current_volume >> 4;
-	resource = audio_read_far_pointer(
-		(legacy_u8*)&timer->definition.resources[resource_index]);
-	channel = audio_check_flag(resource, -1, priority, rate);
+	channel = audio_start_timer_resource(timer, resource_index, priority);
 	timer->effect_channel = channel;
 	timer->parameters_changed = 1;
 	return channel;
@@ -1264,19 +1271,14 @@ static void audio_start_secondary_event(legacy_s16 index,
 	legacy_u16 resource_index)
 {
 	struct AUDIO_TIMER* timer;
-	legacy_u16 rate;
 	legacy_s16 channel;
-	void far* resource;
 
 	timer = &audio_timers[index];
 	channel = timer->secondary_effect_channel;
 	if (channel != -1)
 		audio_init_chunk2(channel);
 
-	rate = timer->current_volume >> 4;
-	resource = audio_read_far_pointer(
-		(legacy_u8*)&timer->definition.resources[resource_index]);
-	channel = audio_check_flag(resource, -1, 0x40U, rate);
+	channel = audio_start_timer_resource(timer, resource_index, 0x40U);
 	timer->secondary_effect_channel = channel;
 	timer->parameters_changed = 1;
 }
