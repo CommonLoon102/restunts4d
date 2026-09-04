@@ -167,6 +167,15 @@ static void polyinfo_read_point(const legacy_u8 far* record,
 		LEGACY_U16_WRAP_ADD(word_index, 1U)));
 }
 
+static void polyinfo_read_points(const legacy_u8 far* record,
+	struct POINT2D* points, legacy_u16 point_count)
+{
+	legacy_u16 index;
+
+	for (index = 0; index < point_count; index++)
+		polyinfo_read_point(record, index, &points[index]);
+}
+
 static void polyinfo_write_point(legacy_u8 far* record,
 	legacy_u16 point_index, const struct POINT2D* point)
 {
@@ -916,7 +925,6 @@ void get_a_poly_info(void)
 	legacy_u16 primitive_type;
 	legacy_u16 vertex_count;
 	legacy_u16 pattern_type;
-	legacy_u16 index;
 
 	record_index = 0x190U;
 	for (primitive_index = 0; primitive_index < polyinfonumpolys;
@@ -930,16 +938,7 @@ void get_a_poly_info(void)
 
 		if (primitive_type == 0U) {
 			vertex_count = record[3];
-			for (index = 0; index < vertex_count; index++) {
-				points[index].px = LEGACY_S16_FROM_BITS(
-					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(3U,
-							LEGACY_U16_WRAP_MUL(index, 2U))));
-				points[index].py = LEGACY_S16_FROM_BITS(
-					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(4U,
-							LEGACY_U16_WRAP_MUL(index, 2U))));
-			}
+			polyinfo_read_points(record, points, vertex_count);
 			pattern_type = (legacy_u16)
 				material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
@@ -968,16 +967,7 @@ void get_a_poly_info(void)
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 				polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == 3U) {
-			for (index = 0; index < 4U; index++) {
-				points[index].px = LEGACY_S16_FROM_BITS(
-					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(3U,
-							LEGACY_U16_WRAP_MUL(index, 2U))));
-				points[index].py = LEGACY_S16_FROM_BITS(
-					polyinfo_read_word(record,
-						LEGACY_U16_WRAP_ADD(4U,
-							LEGACY_U16_WRAP_MUL(index, 2U))));
-			}
+			polyinfo_read_points(record, points, 4U);
 			preRender_wheel(points, WHEEL_INNER_RADIUS_SCALE, material_color,
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
