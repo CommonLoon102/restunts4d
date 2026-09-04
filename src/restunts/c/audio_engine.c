@@ -648,11 +648,6 @@ void audio_release_channel_range(legacy_s16 first_channel,
 	}
 }
 
-static legacy_u16 audio_far_read_u16(const legacy_u8 far* source)
-{
-	return LEGACY_READ_U16_LE(source);
-}
-
 static void far* audio_select_sample_resource(void far* original_resource,
 	legacy_u8 note)
 {
@@ -695,7 +690,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	legacy_s16 selected;
 	legacy_s16 restrict_to_timer;
 
-	resource_mask = audio_far_read_u16(resource + 0x0CU);
+	resource_mask = audioresource_get_word(resource + 0x0CU);
 	if (resource_mask == 0)
 		return -1;
 	oldest_state1 = -1;
@@ -798,15 +793,15 @@ legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	context->age = 0;
 	context->fade_out_flag = LEGACY_U32_WRAP_SUB(duration, 1UL);
 	context->level = LEGACY_S16_FROM_BITS(
-		audio_far_read_u16(resource + 0x1CU));
+		audioresource_get_word(resource + 0x1CU));
 	context->envelope_state = 1U;
-	context->modulation_delay = audio_far_read_u16(resource + 0x2AU);
-	context->modulation_count = audio_far_read_u16(resource + 0x2CU);
+	context->modulation_delay = audioresource_get_word(resource + 0x2AU);
+	context->modulation_count = audioresource_get_word(resource + 0x2CU);
 	context->modulation = 0;
-	context->sequence_delay = audio_far_read_u16(resource + 0x36U);
-	context->sequence_count = audio_far_read_u16(resource + 0x38U);
+	context->sequence_delay = audioresource_get_word(resource + 0x36U);
+	context->sequence_count = audioresource_get_word(resource + 0x38U);
 	context->sequence_value = 0;
-	context->modulation_step = audio_far_read_u16(resource + 0x30U);
+	context->modulation_step = audioresource_get_word(resource + 0x30U);
 	context->modulation_direction = resource[0x34U];
 	context->modulation_tick = 0;
 	context->sequence_tick = 0;
@@ -892,14 +887,14 @@ void audio_update_driver_contexts(void)
 		if (context->envelope_state == 1U) {
 			level = LEGACY_S16_WRAP_ADD(
 				context->level,
-				LEGACY_S16_FROM_BITS(audio_far_read_u16(
+				LEGACY_S16_FROM_BITS(audioresource_get_word(
 					resource + 0x20U)));
 			context->level = level;
-			value = audio_far_read_u16(resource + 0x1EU);
+			value = audioresource_get_word(resource + 0x1EU);
 			if (level >= LEGACY_S16_FROM_BITS(value)) {
 				context->level = LEGACY_S16_FROM_BITS(value);
 				context->envelope_state =
-					LEGACY_S16_FROM_BITS(audio_far_read_u16(
+					LEGACY_S16_FROM_BITS(audioresource_get_word(
 						resource + 0x24U)) >=
 					LEGACY_S16_FROM_BITS(value) ? 3U : 2U;
 			}
@@ -907,22 +902,22 @@ void audio_update_driver_contexts(void)
 		if (context->envelope_state == 2U) {
 			level = LEGACY_S16_WRAP_SUB(
 				context->level,
-				LEGACY_S16_FROM_BITS(audio_far_read_u16(
+				LEGACY_S16_FROM_BITS(audioresource_get_word(
 					resource + 0x22U)));
 			context->level = level;
-			value = audio_far_read_u16(resource + 0x24U);
+			value = audioresource_get_word(resource + 0x24U);
 			if (level <= LEGACY_S16_FROM_BITS(value)) {
 				context->envelope_state = 3U;
 				context->level = LEGACY_S16_FROM_BITS(value);
 			}
 		}
 		if (context->envelope_state == 3U &&
-			audio_far_read_u16(resource + 0x24U) == 0)
+			audioresource_get_word(resource + 0x24U) == 0)
 			context->envelope_state = 4U;
 		if (context->envelope_state == 4U) {
 			level = LEGACY_S16_WRAP_SUB(
 				context->level,
-				LEGACY_S16_FROM_BITS(audio_far_read_u16(
+				LEGACY_S16_FROM_BITS(audioresource_get_word(
 					resource + 0x26U)));
 			context->level = level;
 			if (level <= 0) {
@@ -962,7 +957,7 @@ void audio_update_driver_contexts(void)
 								context->modulation_step);
 						context->modulation = modulation;
 						magnitude = audio_absolute_word(modulation);
-						threshold = audio_far_read_u16(resource + 0x2EU);
+						threshold = audioresource_get_word(resource + 0x2EU);
 						if (magnitude >= threshold) {
 							if (context->modulation_direction == 2U &&
 								(resource[0x34U] & 1U) != 0)
