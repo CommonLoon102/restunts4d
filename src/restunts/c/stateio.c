@@ -54,11 +54,49 @@ static void gamestate_write_vectorlong(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s32(writer, vector->lz);
 }
 
-static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
-	const struct CARSTATE* carstate)
+static void gamestate_write_s8_array(struct GAMESTATE_WRITER* writer,
+	const legacy_s8* values, legacy_u16 count)
 {
 	legacy_u16 index;
 
+	for (index = 0U; index < count; index++) {
+		gamestate_write_s8(writer, values[index]);
+	}
+}
+
+static void gamestate_write_s16_array(struct GAMESTATE_WRITER* writer,
+	const legacy_s16* values, legacy_u16 count)
+{
+	legacy_u16 index;
+
+	for (index = 0U; index < count; index++) {
+		gamestate_write_s16(writer, values[index]);
+	}
+}
+
+static void gamestate_write_s32_array(struct GAMESTATE_WRITER* writer,
+	const legacy_s32* values, legacy_u16 count)
+{
+	legacy_u16 index;
+
+	for (index = 0U; index < count; index++) {
+		gamestate_write_s32(writer, values[index]);
+	}
+}
+
+static void gamestate_write_vector_array(struct GAMESTATE_WRITER* writer,
+	const struct VECTOR* vectors, legacy_u16 count)
+{
+	legacy_u16 index;
+
+	for (index = 0U; index < count; index++) {
+		gamestate_write_vector(writer, &vectors[index]);
+	}
+}
+
+static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
+	const struct CARSTATE* carstate)
+{
 	gamestate_write_vectorlong(writer, &carstate->car_posWorld1);
 	gamestate_write_vectorlong(writer, &carstate->car_posWorld2);
 	gamestate_write_vector(writer, &carstate->car_rotate);
@@ -85,29 +123,13 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s16(writer, carstate->car_surfacegrip_sum);
 	gamestate_write_s16(writer, carstate->field_48);
 	gamestate_write_s16(writer, carstate->car_trackdata3_index);
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s16(writer, carstate->car_rc1[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s16(writer, carstate->car_rc2[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s16(writer, carstate->car_rc3[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s16(writer, carstate->car_rc4[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s16(writer, carstate->car_rc5[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_vector(writer,
-			&carstate->car_whlWorldCrds1[index]);
-	}
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_vector(writer,
-			&carstate->car_whlWorldCrds2[index]);
-	}
+	gamestate_write_s16_array(writer, carstate->car_rc1, 4U);
+	gamestate_write_s16_array(writer, carstate->car_rc2, 4U);
+	gamestate_write_s16_array(writer, carstate->car_rc3, 4U);
+	gamestate_write_s16_array(writer, carstate->car_rc4, 4U);
+	gamestate_write_s16_array(writer, carstate->car_rc5, 4U);
+	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds1, 4U);
+	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds2, 4U);
 	gamestate_write_vector(writer, &carstate->car_vec_unk3);
 	gamestate_write_vector(writer, &carstate->car_vec_unk4);
 	gamestate_write_vector(writer, &carstate->car_vec_unk5);
@@ -120,9 +142,7 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->car_sumSurfFrontWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfRearWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfAllWheels);
-	for (index = 0U; index < 4U; index++) {
-		gamestate_write_s8(writer, carstate->car_surfaceWhl[index]);
-	}
+	gamestate_write_s8_array(writer, carstate->car_surfaceWhl, 4U);
 	gamestate_write_s8(writer, carstate->car_engineLimiterTimer);
 	gamestate_write_s8(writer, carstate->car_slidingFlag);
 	gamestate_write_s8(writer, carstate->field_C8);
@@ -139,23 +159,14 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	const struct GAMESTATE* source)
 {
 	struct GAMESTATE_WRITER writer;
-	legacy_u16 index;
 
 	writer.destination = destination;
 	writer.offset = 0U;
 
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s32(&writer, source->game_longs1[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s32(&writer, source->game_longs2[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s32(&writer, source->game_longs3[index]);
-	}
-	for (index = 0U; index < 2U; index++) {
-		gamestate_write_vector(&writer, &source->game_vec1[index]);
-	}
+	gamestate_write_s32_array(&writer, source->game_longs1, 24U);
+	gamestate_write_s32_array(&writer, source->game_longs2, 24U);
+	gamestate_write_s32_array(&writer, source->game_longs3, 24U);
+	gamestate_write_vector_array(&writer, source->game_vec1, 2U);
 	gamestate_write_vector(&writer, &source->game_vec3);
 	gamestate_write_vector(&writer, &source->game_vec4);
 	gamestate_write_s16(&writer, source->game_frame_in_sec);
@@ -178,41 +189,21 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	gamestate_write_s16(&writer, source->game_startcol2);
 	gamestate_write_s16(&writer, source->game_startrow);
 	gamestate_write_s16(&writer, source->game_startrow2);
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s16(&writer, source->field_2FE[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s16(&writer, source->field_32E[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s16(&writer, source->field_35E[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s16(&writer, source->field_38E[index]);
-	}
-	for (index = 0U; index < 48U; index++) {
-		gamestate_write_s8(&writer, source->field_3BE[index]);
-	}
-	for (index = 0U; index < 6U; index++) {
-		gamestate_write_s8(&writer, source->kevinseed[index]);
-	}
+	gamestate_write_s16_array(&writer, source->field_2FE, 24U);
+	gamestate_write_s16_array(&writer, source->field_32E, 24U);
+	gamestate_write_s16_array(&writer, source->field_35E, 24U);
+	gamestate_write_s16_array(&writer, source->field_38E, 24U);
+	gamestate_write_s8_array(&writer, source->field_3BE, 48U);
+	gamestate_write_s8_array(&writer, source->kevinseed, 6U);
 	gamestate_write_s8(&writer, source->field_3F4);
 	gamestate_write_s8(&writer, source->game_inputmode);
 	gamestate_write_s8(&writer, source->game_3F6autoLoadEvalFlag);
-	for (index = 0U; index < 2U; index++) {
-		gamestate_write_s8(&writer, source->field_3F7[index]);
-	}
+	gamestate_write_s8_array(&writer, source->field_3F7, 2U);
 	gamestate_write_s8(&writer, source->field_3F9);
-	for (index = 0U; index < 48U; index++) {
-		gamestate_write_s8(&writer, source->field_3FA[index]);
-	}
+	gamestate_write_s8_array(&writer, source->field_3FA, 48U);
 	gamestate_write_s8(&writer, source->field_42A);
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s8(&writer, source->field_42B[index]);
-	}
-	for (index = 0U; index < 24U; index++) {
-		gamestate_write_s8(&writer, source->field_443[index]);
-	}
+	gamestate_write_s8_array(&writer, source->field_42B, 24U);
+	gamestate_write_s8_array(&writer, source->field_443, 24U);
 	gamestate_write_s8(&writer, source->field_45B);
 	gamestate_write_s8(&writer, source->field_45C);
 	gamestate_write_s8(&writer, source->field_45D);
