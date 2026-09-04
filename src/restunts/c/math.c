@@ -540,13 +540,23 @@ legacy_s16 rect_is_adjacent(struct RECTANGLE* r1, struct RECTANGLE* r2) {
 	return 0;
 }
 
+static void rectlist_remove_at(legacy_s8* length,
+	struct RECTANGLE* rectangles, legacy_s16 index)
+{
+	while (((*length) - 1) > index) {
+		rectangles[index] = rectangles[index + 1];
+		index++;
+	}
+	(*length)--;
+}
+
 void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr, struct RECTANGLE* rect) {
 	legacy_s16 var_counter;
 	struct RECTANGLE var_rect;
 	struct RECTANGLE var_rect2;
 	struct RECTANGLE var_rect3;
 	struct RECTANGLE* var_rectptr;
-	legacy_s16 var_22, var_18, var_12;
+	legacy_s16 var_22, var_18;
 
 	if (video_flag2_is1 != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
@@ -563,13 +573,8 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 			return ;
 
 		if (rect_is_inside(var_rectptr, rect) != 0) {
-			var_12 = var_counter;
-
-			while (((*arg_rect_array_length_ptr) - 1) > var_12) {
-				arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-				var_12++;
-			}
-			(*arg_rect_array_length_ptr)--;
+			rectlist_remove_at(arg_rect_array_length_ptr,
+				arg_rect_array_ptr, var_counter);
 			continue;
 		}
 
@@ -614,13 +619,8 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 		else
 			var_rect.right = var_rectptr->right;
 
-		var_12 = var_counter;
-
-		while (((*arg_rect_array_length_ptr) - 1) > var_12) {
-			arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-			var_12 ++;
-		}
-		(*arg_rect_array_length_ptr)--;
+		rectlist_remove_at(arg_rect_array_length_ptr,
+			arg_rect_array_ptr, var_counter);
 		if (var_18 != 0) {
 			rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect2);
 		}
@@ -659,13 +659,8 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 		else
 			var_rect.bottom = rect->bottom;
 
-		var_12 = var_counter;
-
-		while (((*arg_rect_array_length_ptr) - 1) > var_12) {
-			arg_rect_array_ptr[var_12] = arg_rect_array_ptr[var_12 + 1];
-			var_12 ++;
-		}
-		(*arg_rect_array_length_ptr)--;
+		rectlist_remove_at(arg_rect_array_length_ptr,
+			arg_rect_array_ptr, var_counter);
 		rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect);
 		return ;
 	}
