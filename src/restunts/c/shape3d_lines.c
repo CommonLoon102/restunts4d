@@ -158,28 +158,22 @@ static legacy_u8 draw_line_clip_top(legacy_u16* line)
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
-		line[7] = (legacy_u16)(line[7] - cx);
-		break;
 	case 3:
-		line[1] = (legacy_u16)(line[1] - cx);
-		line[7] = (legacy_u16)(line[7] - cx);
-		break;
 	case 4:
-		line[1] = (legacy_u16)(line[1] + cx);
+		if (mode == 3)
+			line[1] = (legacy_u16)(line[1] - cx);
+		else if (mode == 4)
+			line[1] = (legacy_u16)(line[1] + cx);
 		line[7] = (legacy_u16)(line[7] - cx);
 		break;
 	case 5:
-		product = (legacy_u32)line[6] * cx;
-		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 -= product;
-		line[0] = (legacy_u16)value32;
-		line[1] = (legacy_u16)(value32 >> 16);
-		line[7] = (legacy_u16)(line[7] - cx);
-		break;
 	case 6:
 		product = (legacy_u32)line[6] * cx;
 		value32 = ((legacy_u32)line[1] << 16) | line[0];
-		value32 += product;
+		if (mode == 5)
+			value32 -= product;
+		else
+			value32 += product;
 		line[0] = (legacy_u16)value32;
 		line[1] = (legacy_u16)(value32 >> 16);
 		line[7] = (legacy_u16)(line[7] - cx);
@@ -227,14 +221,12 @@ static legacy_u8 draw_line_clip_bottom(legacy_u16* line)
 	mode = line[9] & 0x00FFU;
 	switch (mode) {
 	case 2:
-		line[7] = (legacy_u16)(line[7] - cx);
-		break;
 	case 3:
-		line[4] = (legacy_u16)(line[4] + cx);
-		line[7] = (legacy_u16)(line[7] - cx);
-		break;
 	case 4:
-		line[4] = (legacy_u16)(line[4] - cx);
+		if (mode == 3)
+			line[4] = (legacy_u16)(line[4] + cx);
+		else if (mode == 4)
+			line[4] = (legacy_u16)(line[4] - cx);
 		line[7] = (legacy_u16)(line[7] - cx);
 		break;
 	case 5:
