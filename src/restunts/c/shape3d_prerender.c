@@ -97,11 +97,6 @@ static void preRender_default_alt_words(legacy_u16 color,
 	preRender_default_alt(color, vertex_count, vertices);
 }
 
-static legacy_u16 shape3d_sar1(legacy_u16 value)
-{
-	return (legacy_u16)((value >> 1) | (value & 0x8000U));
-}
-
 static legacy_u16 sphere_scale_sum(legacy_u16 left, legacy_u16 right,
 	legacy_u16 scale)
 {
@@ -142,17 +137,17 @@ void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination)
 	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
 	destination[16] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
 	destination[17] = LEGACY_U16_WRAP_SUB(source[5], source[1]);
-	half_x1 = shape3d_sar1((legacy_u16)destination[0]);
-	quarter_x1 = shape3d_sar1(half_x1);
+	half_x1 = sar1_word((legacy_u16)destination[0]);
+	quarter_x1 = sar1_word(half_x1);
 	three_quarters_x1 = LEGACY_U16_WRAP_ADD(half_x1, quarter_x1);
-	half_y1 = shape3d_sar1((legacy_u16)destination[1]);
-	quarter_y1 = shape3d_sar1(half_y1);
+	half_y1 = sar1_word((legacy_u16)destination[1]);
+	quarter_y1 = sar1_word(half_y1);
 	three_quarters_y1 = LEGACY_U16_WRAP_ADD(half_y1, quarter_y1);
-	half_x2 = shape3d_sar1((legacy_u16)destination[16]);
-	quarter_x2 = shape3d_sar1(half_x2);
+	half_x2 = sar1_word((legacy_u16)destination[16]);
+	quarter_x2 = sar1_word(half_x2);
 	three_quarters_x2 = LEGACY_U16_WRAP_ADD(half_x2, quarter_x2);
-	half_y2 = shape3d_sar1((legacy_u16)destination[17]);
-	quarter_y2 = shape3d_sar1(half_y2);
+	half_y2 = sar1_word((legacy_u16)destination[17]);
+	quarter_y2 = sar1_word(half_y2);
 	three_quarters_y2 = LEGACY_U16_WRAP_ADD(half_y2, quarter_y2);
 
 	destination[8] = sphere_scale_sum(destination[16], destination[0],
@@ -243,12 +238,12 @@ void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination)
 		0x2D41U);
 	destination[5] = sphere_scale_sum(destination[1], destination[9],
 		0x2D41U);
-	half_x2 = shape3d_sar1((legacy_u16)destination[8]);
-	half_y2 = shape3d_sar1((legacy_u16)destination[9]);
+	half_x2 = sar1_word((legacy_u16)destination[8]);
+	half_y2 = sar1_word((legacy_u16)destination[9]);
 	destination[2] = sphere_scale_sum(destination[0], half_x2, 0x393EU);
 	destination[3] = sphere_scale_sum(destination[1], half_y2, 0x393EU);
-	half_x1 = shape3d_sar1((legacy_u16)destination[0]);
-	half_y1 = shape3d_sar1((legacy_u16)destination[1]);
+	half_x1 = sar1_word((legacy_u16)destination[0]);
+	half_y1 = sar1_word((legacy_u16)destination[1]);
 	destination[6] = sphere_scale_sum(destination[8], half_x1, 0x393EU);
 	destination[7] = sphere_scale_sum(destination[9], half_y1, 0x393EU);
 	destination[12] = sphere_scale_difference(destination[8],

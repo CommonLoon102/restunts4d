@@ -157,6 +157,12 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 	}
 }
 
+/* Arithmetic shift right by one: the sign bit is kept as x86 SAR does. */
+legacy_u16 sar1_word(legacy_u16 value)
+{
+	return (legacy_u16)((value >> 1) | (value & 0x8000U));
+}
+
 legacy_s16 absolute_word(legacy_s16 value)
 {
 	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;

@@ -8,10 +8,6 @@ legacy_u16 draw_line_related_impl(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line,
 	legacy_u16 alternate);
 
-static legacy_u16 draw_line_sar1(legacy_u16 value) {
-	return (legacy_u16)((value >> 1) | (value & 0x8000U));
-}
-
 static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) {
 	legacy_u32 quotient;
 	legacy_u16 remainder;
@@ -554,12 +550,12 @@ static void draw_line_subdivide(legacy_u16* line)
 	legacy_u16 cx;
 	legacy_u16 dx;
 
-	cx = draw_line_sar1(line[5]);
-	ax = draw_line_sar1(line[3]);
-	cx = draw_line_sar1((legacy_u16)(cx - ax));
-	dx = draw_line_sar1(line[4]);
-	ax = draw_line_sar1(line[1]);
-	dx = draw_line_sar1((legacy_u16)(dx - ax));
+	cx = sar1_word(line[5]);
+	ax = sar1_word(line[3]);
+	cx = sar1_word((legacy_u16)(cx - ax));
+	dx = sar1_word(line[4]);
+	ax = sar1_word(line[1]);
+	dx = sar1_word((legacy_u16)(dx - ax));
 
 	for (;;) {
 		while (LEGACY_S16_FROM_BITS(line[3]) <=
