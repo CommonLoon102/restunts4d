@@ -101,10 +101,8 @@ void interrupt kb_int9_handler(void) {
 		if (dos_kb_input[0x1D] == 1) {
 			kbval = dos_kb_keymap4[kbc];
 		} else
-		if (dos_kb_input[0x2A] == 1) {
-			kbval = dos_kb_keymap2[kbc];
-		} else
-		if (dos_kb_input[0x36] == 1) {
+		if (dos_kb_input[0x2A] == 1 || dos_kb_input[0x36] == 1) {
+			/* Either shift key. */
 			kbval = dos_kb_keymap2[kbc];
 		} else
 		if (dos_kb_input[0x3A] == 1) {
