@@ -251,10 +251,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 	game_replay_mode = 0;
 	byte_4393C = 0;
-	framespersec = framespersec2;
-	gameconfig.game_framespersec = LEGACY_U16_REPLACE_LOW_BYTE(
-		gameconfig.game_framespersec, framespersec2);
-	init_game_state(-1);
+	init_game_state_with_frame_rate_byte(framespersec2);
 	return 1;
 }
 

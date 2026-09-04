@@ -201,10 +201,7 @@ static void replay_pause_menu(void)
 
 	case 2:
 		check_input();
-		framespersec = framespersec2;
-		gameconfig.game_framespersec = LEGACY_U16_REPLACE_LOW_BYTE(
-			gameconfig.game_framespersec, framespersec2);
-		init_game_state(-1);
+		init_game_state_with_frame_rate_byte(framespersec2);
 		elapsed_time2 = 0;
 		gameconfig.game_recordedframes = 0;
 		word_45D3E = LEGACY_S16_FROM_BITS(

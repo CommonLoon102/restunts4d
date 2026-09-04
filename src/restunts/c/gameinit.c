@@ -249,11 +249,24 @@ void init_game_state(legacy_s16 arg)
 	}
 }
 
-void init_game_state_with_frame_rate(legacy_u16 frame_rate)
+static void init_game_state_with_rates(legacy_u16 frame_rate,
+	legacy_u16 stored_frame_rate)
 {
 	framespersec = frame_rate;
-	gameconfig.game_framespersec = frame_rate;
+	gameconfig.game_framespersec = stored_frame_rate;
 	init_game_state(-1);
+}
+
+void init_game_state_with_frame_rate(legacy_u16 frame_rate)
+{
+	init_game_state_with_rates(frame_rate, frame_rate);
+}
+
+void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate)
+{
+	init_game_state_with_rates(frame_rate,
+		LEGACY_U16_REPLACE_LOW_BYTE(
+			gameconfig.game_framespersec, frame_rate));
 }
 
 void restore_gamestate(legacy_u16 frame)
