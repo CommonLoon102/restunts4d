@@ -239,18 +239,29 @@ void far* load_sfx_ge(const legacy_s8* filename, const legacy_s8* extension,
 	return file_load_binary_nofatal(filename);
 }
 
-void far* load_sfx_file(const legacy_s8* filename)
+/* The special audio modes keep their samples under their own extension and
+   fall back to the standard one before the load counts as a failure. */
+static void far* load_audio_file(const legacy_s8* filename,
+	const legacy_s8* special_extension, const legacy_s8* extension,
+	const legacy_s8* error_message)
 {
 	void far* result;
 
 	result = 0;
 	if (dos_audio_special_mode != 0)
-		result = load_sfx_ge(filename, "dsf", audio_driver_prefix);
+		result = load_sfx_ge(filename, special_extension,
+			audio_driver_prefix);
 	if (result == 0)
-		result = load_sfx_ge(filename, "sfx", audio_driver_prefix);
+		result = load_sfx_ge(filename, extension, audio_driver_prefix);
 	if (result == 0 && audio_missing_file_fatal != 0)
-		fatal_error("cannot load sfx file %s", filename);
+		fatal_error(error_message, filename);
 	return result;
+}
+
+void far* load_sfx_file(const legacy_s8* filename)
+{
+	return load_audio_file(filename, "dsf", "sfx",
+		"cannot load sfx file %s");
 }
 
 void far* load_song_file(const legacy_s8* filename)
@@ -265,16 +276,8 @@ void far* load_song_file(const legacy_s8* filename)
 
 void far* load_voice_file(const legacy_s8* filename)
 {
-	void far* result;
-
-	result = 0;
-	if (dos_audio_special_mode != 0)
-		result = load_sfx_ge(filename, "dvc", audio_driver_prefix);
-	if (result == 0)
-		result = load_sfx_ge(filename, "vce", audio_driver_prefix);
-	if (result == 0 && audio_missing_file_fatal != 0)
-		fatal_error("cannot load voice file %s", filename);
-	return result;
+	return load_audio_file(filename, "dvc", "vce",
+		"cannot load voice file %s");
 }
 
 legacy_s16 audioresource_compare_chunknames(legacy_s16 case_sensitive,
