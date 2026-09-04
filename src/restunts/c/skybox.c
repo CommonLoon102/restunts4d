@@ -86,6 +86,18 @@ static void skybox_collect_changed_rects(struct RECTANGLE* clip)
 		rect_unk, clip, &rect_array_unk3_length, rect_array_unk3);
 }
 
+static void skybox_clear_changed_rects(struct RECTANGLE* rect,
+	struct RECTANGLE* clip, legacy_s16 color)
+{
+	legacy_s16 i;
+
+	if (rect_intersect(rect, clip) != 0)
+		return;
+	skybox_collect_changed_rects(rect);
+	for (i = 0; i < (legacy_s8)rect_array_unk3_length; i++)
+		skybox_clear_rect(&rect_array_unk3[i], color);
+}
+
 legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction,
 	struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y)
 {
@@ -213,25 +225,13 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 
 					work_rect.top = 0;
 					work_rect.bottom = rect_skybox.top;
-					if (rect_intersect(&work_rect, clip) == 0) {
-						skybox_collect_changed_rects(&work_rect);
-						for (i = 0;
-							i < (legacy_s8)rect_array_unk3_length;
-							i++)
-							skybox_clear_rect(&rect_array_unk3[i],
-								skybox_sky_color);
-					}
+					skybox_clear_changed_rects(&work_rect, clip,
+						skybox_sky_color);
 
 					work_rect.top = rect_skybox.bottom;
 					work_rect.bottom = 0xC8;
-					if (rect_intersect(&work_rect, clip) == 0) {
-						skybox_collect_changed_rects(&work_rect);
-						for (i = 0;
-							i < (legacy_s8)rect_array_unk3_length;
-							i++)
-							skybox_clear_rect(&rect_array_unk3[i],
-								skybox_grd_color);
-					}
+					skybox_clear_changed_rects(&work_rect, clip,
+						skybox_grd_color);
 				}
 				work_rect.top = rect_skybox.top;
 				work_rect.bottom = rect_skybox.bottom;
