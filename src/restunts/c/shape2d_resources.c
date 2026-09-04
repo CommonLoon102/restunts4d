@@ -82,6 +82,19 @@ static void shape2d_copy_wrapped(legacy_u16 source_segment,
 	}
 }
 
+static void shape2d_write_run(legacy_u16 source_segment,
+	legacy_u16* source, legacy_u16 destination_segment,
+	legacy_u16* destination, legacy_u16 count)
+{
+	shape2d_far_write_byte(destination_segment, *destination,
+		(legacy_u8)count);
+	(*destination)++;
+	shape2d_far_write_byte(destination_segment, *destination,
+		shape2d_far_read_byte(source_segment, *source));
+	(*destination)++;
+	*source = LEGACY_U16_WRAP_ADD(*source, count);
+}
+
 void parse_shape2d(void far* memchunk, void far* mempages)
 {
 	struct SHAPE2D far* shape;
@@ -107,7 +120,6 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	legacy_u16 remaining;
 	legacy_u16 literal_count;
 	legacy_u16 run_count;
-	legacy_u8 value;
 
 	chunk_segment = dos_memory_pointer_segment(memchunk);
 	chunk_offset = dos_memory_pointer_offset(memchunk);
@@ -202,30 +214,14 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 						run_count, 0x7FU);
 					remaining = LEGACY_U16_WRAP_SUB(
 						remaining, 0x7FU);
-					shape2d_far_write_byte(output_segment,
-						output_offset, 0x7FU);
-					output_offset++;
-					value = shape2d_far_read_byte(
-						source_segment, scan_offset);
-					shape2d_far_write_byte(output_segment,
-						output_offset, value);
-					output_offset++;
-					scan_offset = LEGACY_U16_WRAP_ADD(
-						scan_offset, 0x7FU);
+					shape2d_write_run(source_segment, &scan_offset,
+						output_segment, &output_offset, 0x7FU);
 				}
 				if (LEGACY_S16_FROM_BITS(run_count) > 3) {
-					shape2d_far_write_byte(output_segment,
-						output_offset, (legacy_u8)run_count);
-					output_offset++;
 					remaining = LEGACY_U16_WRAP_SUB(
 						remaining, run_count);
-					value = shape2d_far_read_byte(
-						source_segment, scan_offset);
-					shape2d_far_write_byte(output_segment,
-						output_offset, value);
-					output_offset++;
-					scan_offset = LEGACY_U16_WRAP_ADD(
-						scan_offset, run_count);
+					shape2d_write_run(source_segment, &scan_offset,
+						output_segment, &output_offset, run_count);
 				}
 
 				literal_offset = scan_offset;
