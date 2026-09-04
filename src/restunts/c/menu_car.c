@@ -334,11 +334,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		carmenu_buttons_y1, carmenu_buttons_y2,
 		carmenu_buttons_x1, carmenu_buttons_x2,
 		word_407CE, word_407D0);
-	menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, rotation_delta);
-	if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > 0x2EE0) {
-		menu_idle_counter = 0;
-		idle_expired = (legacy_u8)(idle_expired + 1U);
-	}
+	menu_update_idle_counter((legacy_u16)rotation_delta, 0x2EE0);
 	input = (legacy_u16)input_checking(rotation_delta);
 	mouse_hit = (legacy_s16)mouse_multi_hittest(5,
 		carmenu_buttons_y1, carmenu_buttons_y2,

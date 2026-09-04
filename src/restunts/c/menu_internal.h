@@ -220,6 +220,7 @@ extern legacy_s8 aSof[];
 extern legacy_s8 aSon[];
 
 void sub_29772(void);
+void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
 legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 	const legacy_s16* x_values, const legacy_s16* width_values,
 	const legacy_s16* y_values, const legacy_s16* height_values,

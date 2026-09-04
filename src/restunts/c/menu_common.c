@@ -17,6 +17,15 @@ void sub_29772(void)
 	menu_idle_counter = 0;
 }
 
+void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit)
+{
+	menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, elapsed);
+	if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > limit) {
+		menu_idle_counter = 0;
+		idle_expired = (legacy_u8)(idle_expired + 1U);
+	}
+}
+
 legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index, const legacy_s16* x_values,
 	const legacy_s16* width_values, const legacy_s16* y_values, const legacy_s16* height_values,
 	legacy_s16 second_state, legacy_s16 first_state)

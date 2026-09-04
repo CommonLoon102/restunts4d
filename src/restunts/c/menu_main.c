@@ -51,11 +51,7 @@ legacy_s8 run_menu(void)
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 
-		menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, elapsed);
-		if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > 0x1770) {
-			menu_idle_counter = 0;
-			idle_expired = (legacy_u8)(idle_expired + 1U);
-		}
+		menu_update_idle_counter(elapsed, 0x1770);
 		if (idle_expired != 0) {
 			selected = 0;
 			key = 0x0DU;
