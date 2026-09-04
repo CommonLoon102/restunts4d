@@ -3,9 +3,42 @@
 
 #include "audio.h"
 #include "legacy.h"
+#include "math.h"
 
 #define AUDIO_CAR_STATE_RECORD_COUNT 0x28U
 #define AUDIO_CAR_STATE_RECORD_SIZE  0x22U
+
+#pragma pack (push, 1)
+
+/* One entry of the ring buffer the engine sound is driven from: each car's
+   position relative to the camera before and after the frame, plus its rev
+   counter. The asm mixer reads these records, so the layout is fixed. */
+struct AUDIO_CAR_STATE {
+	legacy_u8 unknown_00[6];
+	struct VECTOR player_previous;
+	struct VECTOR player_current;
+	struct VECTOR opponent_previous;
+	struct VECTOR opponent_current;
+	legacy_s16 player_rpm;
+	legacy_s16 opponent_rpm;
+};
+
+#pragma pack (pop)
+
+typedef char audio_car_state_must_be_34_bytes[
+	(sizeof(struct AUDIO_CAR_STATE) == AUDIO_CAR_STATE_RECORD_SIZE) ? 1 : -1];
+typedef char audio_car_state_player_previous_must_be_at_06[
+	(offsetof(struct AUDIO_CAR_STATE, player_previous) == 0x06) ? 1 : -1];
+typedef char audio_car_state_player_current_must_be_at_0C[
+	(offsetof(struct AUDIO_CAR_STATE, player_current) == 0x0C) ? 1 : -1];
+typedef char audio_car_state_opponent_previous_must_be_at_12[
+	(offsetof(struct AUDIO_CAR_STATE, opponent_previous) == 0x12) ? 1 : -1];
+typedef char audio_car_state_opponent_current_must_be_at_18[
+	(offsetof(struct AUDIO_CAR_STATE, opponent_current) == 0x18) ? 1 : -1];
+typedef char audio_car_state_player_rpm_must_be_at_1E[
+	(offsetof(struct AUDIO_CAR_STATE, player_rpm) == 0x1E) ? 1 : -1];
+typedef char audio_car_state_opponent_rpm_must_be_at_20[
+	(offsetof(struct AUDIO_CAR_STATE, opponent_rpm) == 0x20) ? 1 : -1];
 
 extern legacy_s8 audio_music_enabled;
 extern legacy_s8 audio_effects_enabled;
@@ -38,7 +71,7 @@ extern void far* audio_open_hihat_resource;
 extern legacy_s16 audio_car_state_read_index;
 extern legacy_s16 audio_car_state_write_index;
 extern legacy_s16 audio_car_state_interval;
-extern legacy_u8 far* audio_car_state_records;
+extern struct AUDIO_CAR_STATE far* audio_car_state_records;
 extern legacy_u8 audio_previous_replay_mode;
 
 void far* audio_read_far_pointer(const legacy_u8 far* source);

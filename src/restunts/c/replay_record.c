@@ -15,7 +15,7 @@ static legacy_u8 frame_callback_active;
 legacy_s16 audio_car_state_read_index;
 legacy_s16 audio_car_state_write_index;
 legacy_s16 audio_car_state_interval;
-legacy_u8 far* audio_car_state_records;
+struct AUDIO_CAR_STATE far* audio_car_state_records;
 legacy_u8 audio_previous_replay_mode = 0xFFU;
 static const legacy_s8 far joystick_steering_table[34] = {
 	0, 0, 0, 0, 0, 0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40,
@@ -28,15 +28,18 @@ void audio_allocate_car_state_records(void)
 {
 	static const legacy_s8 chunk_name[12] =
 		{ 'a', 'u', 'd', 'i', 'o', 's', 't', 'a', 't', 'e', 0, 0 };
+	legacy_u8 far* bytes;
 	legacy_u16 index;
 
-	audio_car_state_records = (legacy_u8 far*)mmgr_alloc_resbytes(
-		chunk_name, (legacy_s32)AUDIO_CAR_STATE_RECORD_COUNT *
-		AUDIO_CAR_STATE_RECORD_SIZE);
+	audio_car_state_records =
+		(struct AUDIO_CAR_STATE far*)mmgr_alloc_resbytes(
+			chunk_name, (legacy_s32)AUDIO_CAR_STATE_RECORD_COUNT *
+			AUDIO_CAR_STATE_RECORD_SIZE);
+	bytes = (legacy_u8 far*)audio_car_state_records;
 	for (index = 0;
 		index < AUDIO_CAR_STATE_RECORD_COUNT * AUDIO_CAR_STATE_RECORD_SIZE;
 		index++)
-		audio_car_state_records[index] = 0;
+		bytes[index] = 0;
 }
 
 void set_frame_callback(void)
@@ -60,8 +63,8 @@ void frame_callback(void)
 	frame_callback_active = 1;
 	audio_car_state_interval = LEGACY_S16_WRAP_ADD(audio_car_state_interval, 1);
 	if (audio_car_state_interval >= word_4499C && audio_car_state_read_index != audio_car_state_write_index) {
-		sub_18D06(audio_car_state_records + AUDIO_CAR_STATE_RECORD_SIZE *
-			(legacy_u16)audio_car_state_read_index,
+		sub_18D06((legacy_u8 far*)
+			&audio_car_state_records[audio_car_state_read_index],
 			audio_car_state_interval);
 		audio_car_state_interval = 0;
 		audio_car_state_read_index = LEGACY_S16_WRAP_ADD(audio_car_state_read_index, 1);
