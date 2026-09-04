@@ -22,26 +22,17 @@ void get_kevinrandom_seed(legacy_s8* seed)
 
 legacy_s16 get_kevinrandom(void)
 {
-	g_kevinrandom_seed[4] += g_kevinrandom_seed[5];
-	g_kevinrandom_seed[3] += g_kevinrandom_seed[4];
-	g_kevinrandom_seed[2] += g_kevinrandom_seed[3];
-	g_kevinrandom_seed[1] += g_kevinrandom_seed[2];
-	g_kevinrandom_seed[0] += g_kevinrandom_seed[1];
+	legacy_s16 i;
 
-	g_kevinrandom_seed[5]++;
-	if (g_kevinrandom_seed[5] == 0) {
-		g_kevinrandom_seed[4]++;
-		if (g_kevinrandom_seed[4] == 0) {
-			g_kevinrandom_seed[3]++;
-			if (g_kevinrandom_seed[3] == 0) {
-				g_kevinrandom_seed[2]++;
-				if (g_kevinrandom_seed[2] == 0) {
-					g_kevinrandom_seed[1]++;
-					if (g_kevinrandom_seed[1] == 0)
-						g_kevinrandom_seed[0]++;
-				}
-			}
-		}
+	/* Fold every byte into the one below it, then count the seed up as one
+	   big-endian number, carrying while a byte wraps to zero. */
+	for (i = KEVINRANDOM_SEED_LEN - 2; i >= 0; --i)
+		g_kevinrandom_seed[i] += g_kevinrandom_seed[i + 1];
+
+	for (i = KEVINRANDOM_SEED_LEN - 1; i >= 0; --i) {
+		g_kevinrandom_seed[i]++;
+		if (g_kevinrandom_seed[i] != 0)
+			break;
 	}
 
 	return g_kevinrandom_seed[0];
