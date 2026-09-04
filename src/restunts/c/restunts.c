@@ -30,8 +30,6 @@
 #define RST_CVX_NUM 20
 
 
-
-
 legacy_s16 get_0(void)
 {
 	return 0;
@@ -104,7 +102,6 @@ void set_default_car(void) {
 	gameconfig.game_opponentcarid[0]   = 0xFF;
 }
 
-extern struct SHAPE3D game3dshapes[];
 
 extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 unk);
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
@@ -118,15 +115,11 @@ struct VECTOR carpos = { 0, 0x0FCB8, 0x0B40 }; // from the original
 //struct VECTOR carpos = { 0, 0, 320 };
 
 struct SPRITE far* render_window_sprite;
-extern struct RECTANGLE cliprect_unk;
 //cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
 
 extern legacy_s16 polyinfonumpolys;
 extern legacy_u8 far* polyinfoptrs[]; // array size = 0x190
 extern legacy_u16 poly_linked_list_40ED6[]; // array size = 0x190
-
-extern legacy_s16 skybox_grd_color;
-extern legacy_s16 dialog_fnt_colour;
 
 
 extern legacy_s16 font_op2(const legacy_s8* text);
@@ -165,35 +158,19 @@ extern legacy_s8 aId1[];
 extern legacy_s8 aId2[];
 extern legacy_s8 aId3[];
 extern legacy_s8 aId4[];
-extern legacy_s8 aDos_0[];
 extern legacy_s8 aDea[];
 extern legacy_s8 aDer[];
-extern legacy_s8 aKey[];
-extern legacy_s8 aMer[];
-extern legacy_s8 aMof[];
-extern legacy_s8 aMon[];
-extern legacy_s8 aMrl[];
-extern legacy_s8 aMrs[];
-extern legacy_s8 aMou[];
-extern legacy_s8 aPau[];
-extern legacy_s8 aSof[];
-extern legacy_s8 aSon[];
 extern legacy_s8 aSav[];
 extern legacy_s8 aWai[];
-extern legacy_s8 aDefault_1[];
 extern legacy_s8 aLoa[];
 extern legacy_s8 aLsu[];
 extern legacy_s8 aLsd[];
 extern legacy_s8* findfilenames[];
-extern void far* miscptr;
-extern legacy_s16 word_407FA;
 extern struct TRACKOBJECT trkObjectList[];
 extern struct SHAPE2D far* tracksmenushapes1[];
 extern struct SHAPE2D far* tracksmenushape2dunk[];
 extern struct SHAPE2D far* tracksmenushape2dunk2[];
 extern void call_exitlist2(void);
-extern legacy_s16 word_3EB90;
-extern legacy_s16 fontdef_unk_0E;
 void font_set_unk(legacy_s16 color, legacy_s16 unknown);
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout);
@@ -211,9 +188,6 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 extern void sprite_1_unk4(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
-extern legacy_s16 fontdef_unk_0E;
-extern struct RECTANGLE word_42248;
-extern struct RECTANGLE word_42250;
 extern void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
 
 extern void font_set_fontdef2(void far* data);
@@ -223,7 +197,6 @@ extern legacy_s8 gsna_string[];
 extern legacy_s8 unk_46464[];
 extern legacy_s8 byte_459E0[];
 
-extern legacy_s8 aCarcoun[];
 extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
