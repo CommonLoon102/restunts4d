@@ -16,6 +16,23 @@ static legacy_s16 penalty_route_alternate(legacy_s16 track_index)
 	return td02_penalty_related[track_index];
 }
 
+static legacy_s16 finish_penalty_route(legacy_s16* current_track,
+	legacy_s16* penalty_count, legacy_s16 best_track,
+	legacy_s16 best_distance, legacy_s16 column, legacy_s16 row)
+{
+	if (best_distance != 0) {
+		*current_track = best_track;
+		*penalty_count = best_distance;
+	} else {
+		state.game_startcol = column;
+		state.game_startcol2 = column;
+		state.game_startrow = row;
+		state.game_startrow2 = row;
+		*penalty_count = -2;
+	}
+	return 1;
+}
+
 legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 {
 	legacy_u8 visited[904];
@@ -72,17 +89,9 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 				track_index = pending_track[pending_count];
 				distance = pending_distance[pending_count];
 				continue;
-			} else if (best_distance != 0) {
-				*current_track = best_track;
-				*penalty_count = best_distance;
-				return 1;
 			} else {
-				state.game_startcol = column;
-				state.game_startcol2 = column;
-				state.game_startrow = row;
-				state.game_startrow2 = row;
-				*penalty_count = -2;
-				return 1;
+				return finish_penalty_route(current_track, penalty_count,
+					best_track, best_distance, column, row);
 			}
 		} else if (next_track < 0 ||
 			next_track >= track_pieces_counter ||
@@ -93,17 +102,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 				distance = pending_distance[pending_count];
 				continue;
 			}
-			if (best_distance != 0) {
-				*current_track = best_track;
-				*penalty_count = best_distance;
-				return 1;
-			}
-			state.game_startcol = column;
-			state.game_startcol2 = column;
-			state.game_startrow = row;
-			state.game_startrow2 = row;
-			*penalty_count = -2;
-			return 1;
+			return finish_penalty_route(current_track, penalty_count,
+				best_track, best_distance, column, row);
 		} else {
 			visited[next_track] = 1;
 		}
