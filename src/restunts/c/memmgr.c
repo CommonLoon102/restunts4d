@@ -185,11 +185,11 @@ static void highpool_set_name(struct HIGHCHUNK* chunk,
 		chunk->resname[i] = 0;
 }
 
-#define MMGR_COMPARE_NAME(index, found, wanted, stored) \
-	for ((index) = 0; (index) < 12; (index)++) { \
+#define MMGR_COMPARE_NAME(index, wanted, stored, on_match) \
+	for (; (index) < 12; (index)++) { \
 		if ((wanted)[index] == 0) { \
 			if ((stored)[index] == '.' || (stored)[index] == 0) \
-				(found) = 1; \
+				on_match; \
 			break; \
 		} \
 		if ((wanted)[index] != (stored)[index]) \
@@ -413,7 +413,8 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 		if (chunk->resstate != 1)
 			continue;
 		found = 0;
-		MMGR_COMPARE_NAME(j, found, name, chunk->resname);
+		j = 0;
+		MMGR_COMPARE_NAME(j, name, chunk->resname, found = 1);
 		if (j == 12)
 			found = 1;
 		if (found) {
@@ -735,11 +736,12 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	ressi = resendptr1;
 
 	for (; ressi < resendptr2; ressi++) {
+		regbx = 0;
 		if (ressi->resunk == 0) {
 			return 0;
 		}
 
-		MMGR_COMPARE_NAME(regbx, found, pcdi, ressi->resname);
+		MMGR_COMPARE_NAME(regbx, pcdi, ressi->resname, found = 1);
 		if (regbx == 12 || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
 			srcofs = ressi->resofs;
@@ -772,7 +774,7 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 
 legacy_u16 nopsub_31429(const legacy_s8* name) {
 	const legacy_s8* wanted;
-	legacy_s16 i, found;
+	legacy_s16 i;
 	struct MEMCHUNK* chunk;
 
 	wanted = mmgr_path_to_name(name);
@@ -780,9 +782,9 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 	while (chunk < resendptr2) {
 		if (chunk->resunk == 0)
 			return 0;
-		found = 0;
-		MMGR_COMPARE_NAME(i, found, wanted, chunk->resname);
-		if (i == 12 || found != 0)
+		i = 0;
+		MMGR_COMPARE_NAME(i, wanted, chunk->resname, return 1);
+		if (i == 12)
 			return 1;
 		chunk++;
 	}
