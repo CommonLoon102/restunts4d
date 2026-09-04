@@ -162,6 +162,16 @@ static struct HIGHCHUNK* highpool_chunk_by_seg(legacy_u16 seg) {
 	return 0;
 }
 
+static struct HIGHCHUNK* highpool_free_slot(void) {
+	legacy_s16 i;
+
+	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
+		if (highchunks[i].resstate == 0)
+			return &highchunks[i];
+	}
+	return 0;
+}
+
 legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	legacy_s16 i, j;
 	const legacy_s8* entry;
@@ -278,16 +288,11 @@ static struct HIGHCHUNK* highpool_reserved_window(void) {
 }
 
 void highpool_reserve_window(void) {
-	struct HIGHCHUNK* slot = 0;
+	struct HIGHCHUNK* slot;
 	legacy_u16 seg;
 	legacy_s16 i, b;
 
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 0) {
-			slot = &highchunks[i];
-			break;
-		}
-	}
+	slot = highpool_free_slot();
 	if (slot == 0)
 		return;
 
@@ -313,7 +318,7 @@ void highpool_reserve_window(void) {
 void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 	legacy_s16 i, b, dropcached;
 	legacy_u16 seg;
-	struct HIGHCHUNK* slot = 0;
+	struct HIGHCHUNK* slot;
 
 	// Claim the standing reservation rather than hunting for a gap.
 	if (paras <= HIGHPOOL_WINDOW_PARAS) {
@@ -331,12 +336,7 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 		}
 	}
 
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 0) {
-			slot = &highchunks[i];
-			break;
-		}
-	}
+	slot = highpool_free_slot();
 	if (slot == 0)
 		return 0;
 
