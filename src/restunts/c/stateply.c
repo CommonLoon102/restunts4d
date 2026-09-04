@@ -1327,9 +1327,9 @@ case PLAYER_FLOW_loc_16670:
 	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
 case PLAYER_FLOW_loc_1667A:
-	vec_18EoStateWorldCrds[0].x = td10_track_check_rel[si * 3 + 0];
-	vec_18EoStateWorldCrds[0].y = td10_track_check_rel[si * 3 + 1];
-	vec_18EoStateWorldCrds[0].z = td10_track_check_rel[si * 3 + 2];
+	vec_18EoStateWorldCrds[0].x = td10_track_check_rel[si].x;
+	vec_18EoStateWorldCrds[0].y = td10_track_check_rel[si].y;
+	vec_18EoStateWorldCrds[0].z = td10_track_check_rel[si].z;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD5A, vec_18EoStateWorldCrds) == 0)
 		{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 

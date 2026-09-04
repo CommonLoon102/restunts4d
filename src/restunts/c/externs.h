@@ -236,8 +236,10 @@ extern legacy_s16 far* td05_aerotable_op; //trackdata5;
 extern legacy_s16 far* trackdata6;
 extern legacy_s16 far* trackdata7;
 extern legacy_s16 far* td08_direction_related; //trackdata8;
-extern legacy_s16 far* trackdata9;
-extern legacy_s16 far* td10_track_check_rel;// trackdata10;
+/* TV camera positions, one vector per camera. */
+extern struct VECTOR far* trackdata9;
+/* Point each TV camera looks at, one vector per camera. */
+extern struct VECTOR far* td10_track_check_rel;// trackdata10;
 extern legacy_s8 far* td11_highscores; //trackdata11;
 extern legacy_s8 far* trackdata12;
 extern legacy_s8 far* td13_rpl_header; //trackdata13;

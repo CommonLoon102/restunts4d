@@ -101,10 +101,10 @@ void sub_2298C(void)
 				LEGACY_S8_FROM_BITS(byte_4616E);
 			candidate++) {
 			delta_x = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackdata9[candidate * 3U],
+				(legacy_s32)trackdata9[candidate].x,
 				(legacy_s32)car_x);
 			delta_z = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackdata9[candidate * 3U + 2U],
+				(legacy_s32)trackdata9[candidate].z,
 				(legacy_s32)car_z);
 			absolute_x = delta_x < 0 ?
 				LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;

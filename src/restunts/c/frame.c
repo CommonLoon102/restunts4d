@@ -524,11 +524,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
 	} else if (cameramode == 3) {
-		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 0];
+		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag]].x;
 		cam_pos.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-			trackdata9[state.field_3F7[followOpponentFlag] * 3 + 1],
+			trackdata9[state.field_3F7[followOpponentFlag]].y,
 			camera_track_height_offset), 0x5A);
-		cam_pos.z = trackdata9[state.field_3F7[followOpponentFlag] * 3 + 2];
+		cam_pos.z = trackdata9[state.field_3F7[followOpponentFlag]].z;
 	}
 
 	// Unknown part; seems to be performing some initialization
@@ -1124,11 +1124,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				if (state.field_3FA[var_4C] == 0) {
 					var_trkobject_ptr = &trkObjectList[212 + trackdata23[var_4C]];
 					curtransshape_ptr->pos.x = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[var_4C * 3], cam_pos.x);
+						td10_track_check_rel[var_4C].x, cam_pos.x);
 					curtransshape_ptr->pos.y = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[var_4C * 3 + 1], cam_pos.y);
+						td10_track_check_rel[var_4C].y, cam_pos.y);
 					curtransshape_ptr->pos.z = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[var_4C * 3 + 2], cam_pos.z);
+						td10_track_check_rel[var_4C].z, cam_pos.z);
 					curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
 					curtransshape_ptr->rectptr = &rect_unk6;
 					curtransshape_ptr->ts_flags = var_122 | 4;
@@ -1144,13 +1144,13 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							var_trkobject_ptr = &sceneshapes3[state.field_42B[di]];
 							curtransshape_ptr->pos.x = frame_relative_track_position(
 								state.game_longs1[di],
-								td10_track_check_rel[var_4C * 3], cam_pos.x);
+								td10_track_check_rel[var_4C].x, cam_pos.x);
 							curtransshape_ptr->pos.y = frame_relative_track_position(
 								state.game_longs2[di],
-								td10_track_check_rel[var_4C * 3 + 1], cam_pos.y);
+								td10_track_check_rel[var_4C].y, cam_pos.y);
 							curtransshape_ptr->pos.z = frame_relative_track_position(
 								state.game_longs3[di],
-								td10_track_check_rel[var_4C * 3 + 2], cam_pos.z);
+								td10_track_check_rel[var_4C].z, cam_pos.z);
 							frame_add_dynamic_shape(var_trkobject_ptr, di,
 								var_122 | 5, 0, 0);
 						}

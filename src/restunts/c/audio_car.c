@@ -153,11 +153,11 @@ void audio_carstate(void)
 	} else if (cameramode == 3) {
 		track_index = LEGACY_S16_FROM_BITS((legacy_u16)(legacy_s8)
 			state.field_3F7[(legacy_u8)followOpponentFlag]);
-		camera_current.x = trackdata9[track_index * 3];
+		camera_current.x = trackdata9[track_index].x;
 		camera_current.y = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_WRAP_ADD(trackdata9[track_index * 3 + 1],
+			LEGACY_S16_WRAP_ADD(trackdata9[track_index].y,
 				camera_track_height_offset), 0x5A);
-		camera_current.z = trackdata9[track_index * 3 + 2];
+		camera_current.z = trackdata9[track_index].z;
 		camera_previous = camera_current;
 	} else if (followOpponentFlag != 0) {
 		camera_current = opponent_current;

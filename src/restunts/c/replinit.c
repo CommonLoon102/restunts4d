@@ -55,9 +55,9 @@ void init_trackdata(void)
 	trkptr += 0x80;
 	td08_direction_related = (legacy_s16 far*)trkptr;
 	trkptr += 0x60;
-	trackdata9 = (legacy_s16 far*)trkptr;
+	trackdata9 = (struct VECTOR far*)trkptr;
 	trkptr += 0x180;
-	td10_track_check_rel = (legacy_s16 far*)trkptr;
+	td10_track_check_rel = (struct VECTOR far*)trkptr;
 	trkptr += 0x120;
 	td11_highscores = trkptr;
 	trkptr += 0x16C;
