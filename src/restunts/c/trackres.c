@@ -1,4 +1,6 @@
 #include "externs.h"
+#include "fileio.h"
+#include "resource.h"
 
 #if !defined(__BORLANDC__)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
@@ -7,6 +9,19 @@ static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
 
 extern struct PLANE far* planptr;
 extern struct TRACK_WALL far* wallptr;
+
+void load_track_collision_resources(void)
+{
+	const legacy_u8 far* plane_resource;
+	const legacy_u8 far* wall_resource;
+
+	gameresptr = file_load_resfile("game");
+	plane_resource = (const legacy_u8 far*)locate_shape_alt(
+		gameresptr, "plan");
+	wall_resource = (const legacy_u8 far*)locate_shape_alt(
+		gameresptr, "wall");
+	track_collision_resources_decode(plane_resource, wall_resource);
+}
 
 static legacy_s16 track_resource_read_s16(const legacy_u8 far* source,
 	legacy_u16 offset)

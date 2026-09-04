@@ -108,8 +108,6 @@ void load_skybox(legacy_s8 skybox_index)
 
 static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	void far* carresptr;
-	const legacy_u8 far* plane_resource;
-	const legacy_u8 far* wall_resource;
 	legacy_u32 var_8;
 
 	setup_legacy_penalty_route_word();
@@ -169,12 +167,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 		loop_game(0, 0, 0);
 	}
 
-	gameresptr = file_load_resfile("game");
-	plane_resource = (const legacy_u8 far*)locate_shape_alt(
-		gameresptr, "plan");
-	wall_resource = (const legacy_u8 far*)locate_shape_alt(
-		gameresptr, "wall");
-	track_collision_resources_decode(plane_resource, wall_resource);
+	load_track_collision_resources();
 	load_sdgame2_shapes();
 	load_skybox(td14_elem_map_main[0x384]);
 	if (shape3d_load_all() != 0) {

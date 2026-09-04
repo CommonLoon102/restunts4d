@@ -14,10 +14,6 @@ extern legacy_s8 aSped[];
 extern legacy_s8 unk_46464[];
 extern legacy_u8 oppnentSped[];
 
-#ifdef RESTUNTS_HEADLESS
-extern void far* gameresptr;
-#endif
-
 #define LEGACY_TRACKDATA_PARAGRAPHS 0x6C0U
 #define LEGACY_CVX_PARAGRAPHS 0x579U
 #define LEGACY_PENALTY_ALIAS_OFFSET 0xFFFEUL
@@ -277,8 +273,6 @@ void load_opponent_data(void)
 legacy_s16 setup_player_cars_repldump(void)
 {
 	void far* car_resource;
-	const legacy_u8 far* plane_resource;
-	const legacy_u8 far* wall_resource;
 	legacy_u16 index;
 
 	setup_legacy_penalty_route_word();
@@ -299,12 +293,7 @@ legacy_s16 setup_player_cars_repldump(void)
 	}
 
 	/* These GAME resources are collision geometry, not renderer state. */
-	gameresptr = file_load_resfile("game");
-	plane_resource = (const legacy_u8 far*)locate_shape_alt(
-		gameresptr, "plan");
-	wall_resource = (const legacy_u8 far*)locate_shape_alt(
-		gameresptr, "wall");
-	track_collision_resources_decode(plane_resource, wall_resource);
+	load_track_collision_resources();
 
 	followOpponentFlag = 0;
 	is_in_replay_copy = -1;

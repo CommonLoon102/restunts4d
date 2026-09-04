@@ -98,6 +98,7 @@ legacy_u16 simd_decode(struct SIMD* destination,
 #define OPPONENT_SPEED_COUNT 16U
 #define TRACK_PLAN_RESOURCE_COUNT 536U
 #define TRACK_WALL_RESOURCE_COUNT 191U
+void load_track_collision_resources(void);
 void track_collision_resources_decode(const legacy_u8 far* plane_source,
 	const legacy_u8 far* wall_source);
 
