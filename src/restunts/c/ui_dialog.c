@@ -31,7 +31,6 @@ extern legacy_s8 byte_459E0[];
 
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters,
 	legacy_s16 x, legacy_s16 y, legacy_u32 timeout);
-legacy_u32 sub_2EB1E(legacy_u32 ticks);
 
 static const legacy_u8 far quiz_question_suffixes[20] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

@@ -131,8 +131,6 @@ struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset)
 	return headless_track_vector_from_legacy_offset(offset);
 }
 
-legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
-
 static legacy_s16 opponent_route_word(legacy_s16 index)
 {
 	legacy_u16 offset;

@@ -42,8 +42,6 @@ extern legacy_s8 far* game1ptr;
 extern legacy_s8 far* game2ptr;
 extern legacy_s8 far* curshapeptr;
 
-extern legacy_u32 mmgr_get_res_ofs_diff_scaled(void);
-
 extern legacy_s8 aBarn[];
 
 void shape3d_vertex_read(const struct SHAPE3D* shape, legacy_u16 index,

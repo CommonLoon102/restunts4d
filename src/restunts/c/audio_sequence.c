@@ -4,14 +4,12 @@
 extern legacy_u8 audio_channel_reserved[];
 extern legacy_u8 dos_audio_driver_data[];
 
-extern void far* audio_read_far_pointer(const legacy_u8 far* source);
 extern void audio_write_far_pointer(legacy_u8 far* destination,
 	const void far* value);
 extern legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	legacy_u32 duration, legacy_u8 note, legacy_u16 parameter,
 	legacy_s16 handle);
 extern void audio_advance_driver_context(struct AUDIO_CONTEXT* context);
-extern void audio_update_driver_contexts(void);
 extern void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
 extern void audio_init_chunk(legacy_s16 first_channel,

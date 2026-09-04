@@ -17,8 +17,6 @@ extern void far* fontledresptr;
 extern void far* sdgameresptr;
 extern legacy_s16 camera_track_height_offset;
 
-void mouse_minmax_position(legacy_s16 inset);
-legacy_u32 timer_get_counter_unk(legacy_u32 ticks);
 
 static void replay_controls_select(legacy_u8 selection)
 {

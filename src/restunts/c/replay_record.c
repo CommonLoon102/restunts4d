@@ -7,11 +7,6 @@
 #include "replay_record.h"
 #include "timing.h"
 
-legacy_s16 get_kb_or_joy_flags(void);
-legacy_s16 sub_307E3(void);
-void timer_reg_callback(void (far* callback)(void));
-void timer_remove_callback(void (far* callback)(void));
-legacy_u32 timer_get_counter_unk(legacy_u32 ticks);
 
 static legacy_u8 input_steering_history[64];
 static legacy_u8 input_steering_history_valid[64];

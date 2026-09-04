@@ -14,10 +14,6 @@ static legacy_u16 text_edit_max_pixels;
 static legacy_u16 text_edit_cursor;
 
 legacy_u16 audioresource_get_word(const legacy_u8 far* source);
-legacy_u32 timer_copy_counter(legacy_u32 ticks);
-legacy_s16 timer_compare_dx(void);
-legacy_u32 set_add_value(legacy_u32 ticks);
-legacy_s16 sub_2EB07(void);
 
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout)

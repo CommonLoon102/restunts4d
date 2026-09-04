@@ -12,7 +12,6 @@
 #include "shape2d.h"
 #include "ui_dialog.h"
 
-void mouse_minmax_position(legacy_s16 inset);
 legacy_s16 get_0(void);
 void do_mer_restext(void);
 

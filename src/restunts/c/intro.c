@@ -7,7 +7,6 @@
 
 static void far* ui_temp_resource;
 
-legacy_s16 input_repeat_check(legacy_s16 duration);
 
 legacy_s16 run_intro(void)
 {

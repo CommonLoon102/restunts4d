@@ -46,9 +46,6 @@ static void shutdown_dos_game(void)
 }
 
 extern void far frame_callback(void);
-extern void replay_unk2(legacy_s16 mode);
-extern void timer_reg_callback(void (far* callback)(void));
-extern void timer_remove_callback(void (far* callback)(void));
 
 legacy_s16 camera_track_height_offset;
 
@@ -105,7 +102,6 @@ void set_default_car(void) {
 
 extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 unk);
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
-extern void sub_29772(void);
 extern void set_projection(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 
 struct RECTANGLE shaperect = { 0, 320, 0, 200 };
@@ -122,32 +118,18 @@ extern legacy_u8 far* polyinfoptrs[]; // array size = 0x190
 extern legacy_u16 poly_linked_list_40ED6[]; // array size = 0x190
 
 
-extern legacy_s16 font_op2(const legacy_s8* text);
 extern legacy_s16 font_op(const legacy_s8* text, legacy_s16 count);
-extern void sub_345BC(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
-extern void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
 
-void audio_fade_out(legacy_s16 delay_ticks);
-
-void audio_driver_timer(void);
 void audio_sequence_timer(void);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
-legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle);
 extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
 extern void audio_op_unk3(legacy_s16 channel);
 extern void audio_op_unk4(legacy_s16 channel);
-void add_exit_handler(void (far* exit_handler)(void));
-void audio_update_driver_contexts(void);
-legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
-void sub_374DE(legacy_s16 channel);
-legacy_s16 sub_3771E(legacy_s16 channel);
-void audio_init_chunk2(legacy_s16 channel);
-void sub_38156(legacy_s16 index);
 extern legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_u8 priority, legacy_u16 rate);
 extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
@@ -170,8 +152,6 @@ extern struct TRACKOBJECT trkObjectList[];
 extern struct SHAPE2D far* tracksmenushapes1[];
 extern struct SHAPE2D far* tracksmenushape2dunk[];
 extern struct SHAPE2D far* tracksmenushape2dunk2[];
-extern void call_exitlist2(void);
-void font_set_unk(legacy_s16 color, legacy_s16 unknown);
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout);
 legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
@@ -181,16 +161,12 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 	const legacy_s16* y_values, const legacy_s16* height_values,
 	legacy_s16 second_state, legacy_s16 first_state);
 void do_mer_restext(void);
-legacy_u32 sub_2EB1E(legacy_u32 ticks);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 	legacy_s16 shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 extern void sprite_1_unk4(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
-extern void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
-
-extern void font_set_fontdef2(void far* data);
 
 extern legacy_s8 gnam_string[];
 extern legacy_s8 gsna_string[];
