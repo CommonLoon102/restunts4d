@@ -466,6 +466,17 @@ static void track_editor_save_track(legacy_u8* track_changed,
 	g_is_busy = 0;
 }
 
+static void track_editor_swap_tiles(legacy_u8* selected_tile,
+	legacy_u8* saved_tile, legacy_u8* palette_dirty)
+{
+	legacy_u8 value;
+
+	value = *selected_tile;
+	*selected_tile = *saved_tile;
+	*saved_tile = value;
+	*palette_dirty = 1;
+}
+
 void load_tracks_menu_shapes(void)
 {
 	static legacy_s8 terrain_shape_names[] =
@@ -1102,10 +1113,8 @@ void load_tracks_menu_shapes(void)
 			} else if (page == 0) {
 				if (selection_column[0] == last_column &&
 					selection_row[0] == last_row) {
-					value = selected_tile;
-					selected_tile = saved_tile;
-					saved_tile = value;
-					palette_dirty = 1;
+					track_editor_swap_tiles(&selected_tile,
+						&saved_tile, &palette_dirty);
 				} else {
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[selection_row[0]],
@@ -1131,10 +1140,8 @@ void load_tracks_menu_shapes(void)
 				}
 				if (selection_column[0] == last_column &&
 					selection_row[0] == last_row) {
-					value = selected_tile;
-					selected_tile = saved_tile;
-					saved_tile = value;
-					palette_dirty = 1;
+					track_editor_swap_tiles(&selected_tile,
+						&saved_tile, &palette_dirty);
 				} else {
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[selection_row[0]],
