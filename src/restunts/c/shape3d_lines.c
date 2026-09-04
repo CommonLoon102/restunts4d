@@ -8,6 +8,22 @@ legacy_u16 draw_line_related_impl(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line,
 	legacy_u16 alternate);
 
+/* Walk the line's far end forward by `steps` and carry the same correction
+   into the span counter the caller names. */
+static void draw_line_advance_end(legacy_u16* line, legacy_u16 steps,
+	legacy_u16 span_index)
+{
+	legacy_u32 value32;
+	legacy_u16 old_value;
+
+	value32 = ((legacy_u32)line[3] << 16) | line[2];
+	value32 += (legacy_u32)steps * line[6];
+	value32 += 0x8000UL;
+	old_value = line[5];
+	line[5] = (legacy_u16)(value32 >> 16);
+	line[span_index] = (legacy_u16)(line[span_index] + old_value - line[5]);
+}
+
 static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) {
 	legacy_u32 quotient;
 	legacy_u16 remainder;
@@ -356,13 +372,7 @@ static legacy_s16 draw_line_clip_left(legacy_u16* line)
 		ax = (legacy_u16)(ax - dx);
 		advance = (legacy_u16)(ax + 1);
 		line[7] = advance;
-		product = (legacy_u32)ax * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		value32 += product;
-		value32 += 0x8000UL;
-		old_value = line[5];
-		line[5] = (legacy_u16)(value32 >> 16);
-		line[11] = (legacy_u16)(line[11] + old_value - line[5]);
+		draw_line_advance_end(line, ax, 11);
 		break;
 	case 8:
 		old_value = line[1];
@@ -454,13 +464,7 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 		ax = (legacy_u16)(ax - line[1]);
 		line[7] = ax;
 		advance = (legacy_u16)(ax - 1);
-		product = (legacy_u32)advance * line[6];
-		value32 = ((legacy_u32)line[3] << 16) | line[2];
-		value32 += product;
-		value32 += 0x8000UL;
-		old_value = line[5];
-		line[5] = (legacy_u16)(value32 >> 16);
-		line[13] = (legacy_u16)(line[13] + old_value - line[5]);
+		draw_line_advance_end(line, advance, 13);
 		return 0;
 	default:
 		return 0;
