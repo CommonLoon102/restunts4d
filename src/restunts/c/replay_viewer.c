@@ -390,10 +390,21 @@ static legacy_s32 replay_scrub_begin(legacy_u8 selection)
 	return 20L;
 }
 
+static legacy_s32 replay_scrub_advance(legacy_s32 accumulated,
+	legacy_u16* delta)
+{
+	legacy_s16 speed;
+
+	speed = replay_scrub_speed(accumulated);
+	if (speed > 100)
+		speed = 100;
+	*delta = (legacy_u16)timer_get_delta_alt();
+	return replay_scrub_accumulate(accumulated, speed, *delta);
+}
+
 static void replay_fast_forward(void)
 {
 	legacy_s32 accumulated;
-	legacy_s16 speed;
 	legacy_u16 delta;
 	legacy_u16 remaining;
 	legacy_u16 amount;
@@ -401,11 +412,7 @@ static void replay_fast_forward(void)
 
 	accumulated = replay_scrub_begin(0);
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
-		speed = replay_scrub_speed(accumulated);
-		if (speed > 100)
-			speed = 100;
-		delta = (legacy_u16)timer_get_delta_alt();
-		accumulated = replay_scrub_accumulate(accumulated, speed, delta);
+		accumulated = replay_scrub_advance(accumulated, &delta);
 		remaining = LEGACY_U16_WRAP_SUB(
 			gameconfig.game_recordedframes, elapsed_time2);
 		amount = replay_scrub_amount(accumulated);
@@ -444,7 +451,6 @@ static void replay_fast_forward(void)
 static void replay_rewind(void)
 {
 	legacy_s32 accumulated;
-	legacy_s16 speed;
 	legacy_s16 frames_to_catch_up;
 	legacy_s16 frames_remaining;
 	legacy_u16 delta;
@@ -454,11 +460,7 @@ static void replay_rewind(void)
 
 	accumulated = replay_scrub_begin(1);
 	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
-		speed = replay_scrub_speed(accumulated);
-		if (speed > 100)
-			speed = 100;
-		delta = (legacy_u16)timer_get_delta_alt();
-		accumulated = replay_scrub_accumulate(accumulated, speed, delta);
+		accumulated = replay_scrub_advance(accumulated, &delta);
 		amount = replay_scrub_amount(accumulated);
 		if (amount > elapsed_time2)
 			accumulated = LEGACY_S32_WRAP_MUL(
