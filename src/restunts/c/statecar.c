@@ -46,6 +46,19 @@ static legacy_s16 car_absolute_word(legacy_s16 value)
 	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
 }
 
+static legacy_s16 move_gear_knob_toward(legacy_s16 current,
+	legacy_s16 target, legacy_s16 step)
+{
+	legacy_s16 difference;
+
+	difference = LEGACY_S16_WRAP_SUB(target, current);
+	if (car_absolute_word(difference) <= step)
+		return target;
+	if (difference > 0)
+		return LEGACY_S16_WRAP_ADD(current, step);
+	return LEGACY_S16_WRAP_SUB(current, step);
+}
+
 legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
 		currpm = (legacy_u16)(
@@ -123,40 +136,20 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 					arg_simd->gear_ratios[arg_carState->car_current_gear];
 				arg_carState->car_gearratioshr8 =
 					arg_carState->car_gearratio >> 8;
-			} else if (car_absolute_word(var_4) <= var_2) {
-				arg_carState->car_knob_y = arg_carState->car_knob_y2;
-			} else if (var_4 > 0) {
-				arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
-					arg_carState->car_knob_y, var_2);
 			} else {
-				arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
-					arg_carState->car_knob_y, var_2);
+				arg_carState->car_knob_y = move_gear_knob_toward(
+					arg_carState->car_knob_y,
+					arg_carState->car_knob_y2, var_2);
 			}
 		} else if (arg_simd->knob_points[0].py ==
 			arg_carState->car_knob_y) {
-			var_4 = LEGACY_S16_WRAP_SUB(
-				arg_carState->car_knob_x2, arg_carState->car_knob_x);
-			if (car_absolute_word(var_4) <= var_2) {
-				arg_carState->car_knob_x = arg_carState->car_knob_x2;
-			} else if (var_4 > 0) {
-				arg_carState->car_knob_x = LEGACY_S16_WRAP_ADD(
-					arg_carState->car_knob_x, var_2);
-			} else {
-				arg_carState->car_knob_x = LEGACY_S16_WRAP_SUB(
-					arg_carState->car_knob_x, var_2);
-			}
+			arg_carState->car_knob_x = move_gear_knob_toward(
+				arg_carState->car_knob_x,
+				arg_carState->car_knob_x2, var_2);
 		} else {
-			var_4 = LEGACY_S16_WRAP_SUB(
-				arg_simd->knob_points[0].py, arg_carState->car_knob_y);
-			if (car_absolute_word(var_4) <= var_2) {
-				arg_carState->car_knob_y = arg_simd->knob_points[0].py;
-			} else if (var_4 > 0) {
-				arg_carState->car_knob_y = LEGACY_S16_WRAP_ADD(
-					arg_carState->car_knob_y, var_2);
-			} else {
-				arg_carState->car_knob_y = LEGACY_S16_WRAP_SUB(
-					arg_carState->car_knob_y, var_2);
-			}
+			arg_carState->car_knob_y = move_gear_knob_toward(
+				arg_carState->car_knob_y,
+				arg_simd->knob_points[0].py, var_2);
 		}
 	} else if (arg_carState->car_fpsmul2 != 0) {
 		arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
