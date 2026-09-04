@@ -1039,7 +1039,8 @@ void sprite_shape_to_1_alt(struct SHAPE2D far* shape)
 		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_COPY);
 }
 
-void nopsub_33D0C(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+static void sprite_shape_to_1_at_anchor(struct SHAPE2D far* shape,
+	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
 	legacy_u8 far* shape_bytes;
 
@@ -1047,7 +1048,12 @@ void nopsub_33D0C(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 	sprite_shape_to_1_impl(shape,
 		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
 		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RASTER_COPY);
+		operation);
+}
+
+void nopsub_33D0C(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+{
+	sprite_shape_to_1_at_anchor(shape, x, y, SHAPE2D_RASTER_COPY);
 }
 
 void putpixel_iconMask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -1058,13 +1064,7 @@ void putpixel_iconMask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 
 void nopsub_339FA(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
-	sprite_shape_to_1_impl(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RASTER_AND);
+	sprite_shape_to_1_at_anchor(shape, x, y, SHAPE2D_RASTER_AND);
 }
 
 void putpixel_iconFillings(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
