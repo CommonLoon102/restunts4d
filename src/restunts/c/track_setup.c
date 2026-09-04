@@ -94,6 +94,41 @@ static legacy_s16 track_setup_error(
 	return error_code;
 }
 
+/* Neighbouring terrain tiles have to agree on the connection code of the
+   edge they share. The map is walked twice the same way: once west to east
+   along every row, once north to south down every column. Returns 0 when
+   every seam matches, otherwise the reported error code. */
+static legacy_s16 track_setup_terrain_seams(
+	struct TRACK_SETUP_BRANCH far* branches,
+	const legacy_u8* incoming, const legacy_u8* outgoing,
+	legacy_s16 along_row)
+{
+	legacy_u8 previous_connection_code;
+	legacy_u8 tile_terrain;
+	legacy_s8 column;
+	legacy_s8 row;
+	legacy_s8 outer;
+	legacy_s8 inner;
+
+	for (outer = 0; outer < 0x1E; outer++) {
+		previous_connection_code = 0x63U;
+		for (inner = 0; inner < 0x1E; inner++) {
+			row = along_row ? outer : inner;
+			column = along_row ? inner : outer;
+			tile_terrain = td15_terr_map_main[
+				terrainrows[row] + column];
+			if (incoming[tile_terrain] != previous_connection_code &&
+				previous_connection_code != 0x63U) {
+				return track_setup_error(branches,
+					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
+			}
+			previous_connection_code = outgoing[tile_terrain];
+		}
+	}
+
+	return 0;
+}
+
 legacy_s16 track_setup(void)
 {
 	struct TRACK_SETUP_BRANCH far* branches;
@@ -144,6 +179,7 @@ legacy_s16 track_setup(void)
 	legacy_u8 match_count;
 	legacy_u8 backtrack_required;
 	legacy_u8 arrow_code;
+	legacy_s16 seam_status;
 
 	branches = (struct TRACK_SETUP_BRANCH far*)
 		mmgr_alloc_resbytes("tcomp", 0x380L);
@@ -158,35 +194,14 @@ legacy_s16 track_setup(void)
 	for (index = 0; index < TRACK_SETUP_TILE_COUNT; index++)
 		trackdata19[index] = 0xFFU;
 
-	for (row = 0; row < 0x1E; row++) {
-		previous_connection_code = 0x63U;
-		for (column = 0; column < 0x1E; column++) {
-			tile_terrain = td15_terr_map_main[
-				terrainrows[row] + column];
-			if (terrConnDataEtoW[tile_terrain] !=
-				previous_connection_code &&
-				previous_connection_code != 0x63U) {
-				return track_setup_error(branches,
-					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
-			}
-			previous_connection_code = terrConnDataWtoE[tile_terrain];
-		}
-	}
-
-	for (column = 0; column < 0x1E; column++) {
-		previous_connection_code = 0x63U;
-		for (row = 0; row < 0x1E; row++) {
-			tile_terrain = td15_terr_map_main[
-				terrainrows[row] + column];
-			if (terrConnDataNtoS[tile_terrain] !=
-				previous_connection_code &&
-				previous_connection_code != 0x63U) {
-				return track_setup_error(branches,
-					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
-			}
-			previous_connection_code = terrConnDataStoN[tile_terrain];
-		}
-	}
+	seam_status = track_setup_terrain_seams(branches,
+		terrConnDataEtoW, terrConnDataWtoE, 1);
+	if (seam_status != 0)
+		return seam_status;
+	seam_status = track_setup_terrain_seams(branches,
+		terrConnDataNtoS, terrConnDataStoN, 0);
+	if (seam_status != 0)
+		return seam_status;
 
 	for (row = 0; row < 0x1E; row++) {
 		for (column = 0; column < 0x1E; column++) {
