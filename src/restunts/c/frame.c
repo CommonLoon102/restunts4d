@@ -32,6 +32,14 @@ void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type)
 	curtransshape_ptr++;
 }
 
+/* Each lookahead table is a run of three-byte records: the tile offset from
+   the camera tile, and the detail level to draw that tile at. */
+struct FRAME_LOOKAHEAD_TILE {
+	legacy_s8 east;
+	legacy_s8 south;
+	legacy_s8 detail;
+};
+
 static legacy_s16 frame_relative_position(legacy_s32 position,
 	legacy_s16 camera_position)
 {
@@ -99,7 +107,8 @@ static legacy_s16 frame_car_z_adjust(const legacy_s8* wheel_surfaces,
 
 static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
 	const struct SIMD* simd, const legacy_s8* should_skip_tile,
-	const legacy_s8* lookahead_tiles, legacy_s8 camera_tile_east,
+	const struct FRAME_LOOKAHEAD_TILE* lookahead_tiles,
+	legacy_s8 camera_tile_east,
 	legacy_s8 camera_tile_south, legacy_s8* result_tile_east,
 	legacy_s8* result_tile_south)
 {
@@ -129,9 +138,9 @@ static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
 		for (tile_index = 0x16; tile_index > best_tile_index;
 			tile_index--) {
 			if (should_skip_tile[tile_index] != 2 &&
-				lookahead_tiles[tile_index * 3] + camera_tile_east ==
+				lookahead_tiles[tile_index].east + camera_tile_east ==
 					tile_east &&
-				lookahead_tiles[tile_index * 3 + 1] + camera_tile_south ==
+				lookahead_tiles[tile_index].south + camera_tile_south ==
 					tile_south) {
 				*result_tile_east = tile_east;
 				*result_tile_south = tile_south;
@@ -393,7 +402,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 var_38, car_rot_z_3;
 	legacy_s16 var_transformresult;
 	legacy_s16 heading;
-	legacy_s8* lookahead_tiles;
+	const struct FRAME_LOOKAHEAD_TILE* lookahead_tiles;
 	legacy_s16 skybox_parameter;
 	legacy_s16 var_counter;
 	legacy_s8 cam_tile_south, cam_tile_east;
@@ -604,7 +613,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// algo will draw the NW tile before the NE, and vice-versa
 
 	heading = select_cliprect_rotate(car_rot_z_3, car_rot_y_2, car_rot_x_2, arg_cliprectptr, 0);
-	lookahead_tiles = lookahead_tiles_tables[(heading & 0x3FF) >> 7];
+	lookahead_tiles = (const struct FRAME_LOOKAHEAD_TILE*)
+		lookahead_tiles_tables[(heading & 0x3FF) >> 7];
 
 	var_mat = *mat_rot_zxy(car_rot_z_3, car_rot_y_2, 0, 1);
 	offset_vector.x = 0;
@@ -683,11 +693,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			continue;
 
 		// Skip if detail threshold not met (e.g. far tiles in FASTEST detail)
-		if (lookahead_tiles[si * 3 + 2] <= detail_threshold) {
+		if (lookahead_tiles[si].detail <= detail_threshold) {
 			tile_east = LEGACY_S8_WRAP_ADD(
-				lookahead_tiles[si * 3], cam_tile_east);
+				lookahead_tiles[si].east, cam_tile_east);
 			tile_south = LEGACY_S8_WRAP_ADD(
-				lookahead_tiles[si * 3 + 1], cam_tile_south);
+				lookahead_tiles[si].south, cam_tile_south);
 
 			// Skip if tile is out of bounds
 			if (tile_east >= 0 && tile_east <= 0x1D && tile_south >= 0 && tile_south <= 0x1D) {
@@ -720,7 +730,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 
 				tiles_to_draw_terr_type_vec[si] = terr_map_value;
-				tile_detail_level[si] = lookahead_tiles[si * 3 + 2];
+				tile_detail_level[si] = lookahead_tiles[si].detail;
 
 				if (elem_map_value != 0 && detail_level != 0 &&
 					trkObjectList[elem_map_value].ss_physicalModel >= 0x40 &&
@@ -747,20 +757,20 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							tile_south, cam_tile_south);
 						if (idx == 1) {
 							for (di = 0; di < si; di++) {
-								if (lookahead_tiles[di * 3] == tile_to_draw_east_offset && (lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset || lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset + 1)) {
+								if (lookahead_tiles[di].east == tile_to_draw_east_offset && (lookahead_tiles[di].south == tile_to_draw_south_offset || lookahead_tiles[di].south == tile_to_draw_south_offset + 1)) {
 									should_skip_tile[di] = 1;
 								}
 							}
 						} else if (idx == 2) {
 							for (di = 0; di < si; di++) {
-								if (lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset && (lookahead_tiles[di * 3] == tile_to_draw_east_offset || lookahead_tiles[di * 3] == tile_to_draw_east_offset + 1)) {
+								if (lookahead_tiles[di].south == tile_to_draw_south_offset && (lookahead_tiles[di].east == tile_to_draw_east_offset || lookahead_tiles[di].east == tile_to_draw_east_offset + 1)) {
 									should_skip_tile[di] = 1;
 								}
 							}
 						} else if (idx == 3) {
 							for (di = 0; di < si; di++) {
-								if ((lookahead_tiles[di * 3] == tile_to_draw_east_offset || lookahead_tiles[di * 3] == tile_to_draw_east_offset + 1) &&
-									(lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset || lookahead_tiles[di * 3 + 1] == tile_to_draw_south_offset + 1))
+								if ((lookahead_tiles[di].east == tile_to_draw_east_offset || lookahead_tiles[di].east == tile_to_draw_east_offset + 1) &&
+									(lookahead_tiles[di].south == tile_to_draw_south_offset || lookahead_tiles[di].south == tile_to_draw_south_offset + 1))
 								{
 									should_skip_tile[di] = 1;
 								}
