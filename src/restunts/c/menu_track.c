@@ -10,14 +10,13 @@ void run_tracks_menu(legacy_s16 reload_track)
 {
 	legacy_s8 far* text_resource;
 	legacy_s8 far* prompt;
-	legacy_u8 far* scores;
+	struct HIGHSCORE_ENTRY far* scores;
 	legacy_u8 text_offsets[4];
 	legacy_u8 selected;
 	legacy_u8 previous;
 	legacy_u8 blit_mode;
 	legacy_u16 elapsed;
 	legacy_u16 key;
-	legacy_u16 score_offset;
 	legacy_u16 score;
 	legacy_s16 hit;
 	legacy_s8 chosen;
@@ -59,10 +58,8 @@ void run_tracks_menu(legacy_s16 reload_track)
 		intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 6,
 			dialog_fnt_colour, 0);
 		if (highscore_write_a(0) == 0) {
-			score_offset = LEGACY_U16_WRAP_ADD(
-				LEGACY_U16_WRAP_MUL(ranking_entry_order[0], 0x34U), 0x32U);
-			scores = (legacy_u8 far*)td11_highscores;
-			score = LEGACY_READ_U16_LE(scores + score_offset);
+			scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+			score = scores[ranking_entry_order[0]].time;
 			if (score != 0xFFFFU) {
 				copy_string(&resID_byte1,
 					locate_text_res(mainresptr, "hs0"));

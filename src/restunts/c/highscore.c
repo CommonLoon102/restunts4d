@@ -65,8 +65,9 @@ void far* sub_29A86(legacy_s16 operation, const legacy_s8* filename,
 
 legacy_s16 highscore_write_a(legacy_s16 create_default)
 {
-	legacy_u8 record[0x34];
-	legacy_u8 far* scores;
+	struct HIGHSCORE_ENTRY record;
+	legacy_u8* record_bytes;
+	struct HIGHSCORE_ENTRY far* scores;
 	void far* read_result;
 	legacy_u16 entry;
 	legacy_u16 offset;
@@ -83,40 +84,35 @@ legacy_s16 highscore_write_a(legacy_s16 create_default)
 		return read_result == 0 ? 1 : 0;
 	}
 
+	record_bytes = (legacy_u8*)&record;
 	for (offset = 0; offset < 40U; offset++)
-		record[offset] = '.';
-	record[40] = 0;
-	record[41] = 0;
-	record[42] = '.';
-	record[43] = '.';
-	record[44] = '/';
-	for (offset = 45U; offset < 49U; offset++)
-		record[offset] = '.';
-	record[49] = 0;
-	LEGACY_WRITE_U16_LE(record + 50U, 0xFFFFU);
-	scores = (legacy_u8 far*)td11_highscores;
-	for (entry = 0; entry < 7U; entry++) {
-		for (offset = 0; offset < sizeof(record); offset++)
-			scores[entry * sizeof(record) + offset] = record[offset];
-	}
+		record_bytes[offset] = '.';
+	record_bytes[40] = 0;
+	record.car_flag = 0;
+	record.opponent[0] = '.';
+	record.opponent[1] = '.';
+	record.opponent[2] = '/';
+	for (offset = 3U; offset < 7U; offset++)
+		record.opponent[offset] = '.';
+	record.opponent[7] = 0;
+	record.time = 0xFFFFU;
+	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++)
+		scores[entry] = record;
 	return file_write_fatal(g_path_buf, td11_highscores, 0x16CUL) != 0;
 }
 
 void highscore_write_b(void)
 {
-	legacy_u8 ordered_scores[0x16C];
-	legacy_u8 far* scores;
+	struct HIGHSCORE_ENTRY ordered_scores[HIGHSCORE_ENTRY_COUNT];
+	struct HIGHSCORE_ENTRY far* scores;
 	legacy_u16 entry;
-	legacy_u16 offset;
 	legacy_u16 source_entry;
 
-	scores = (legacy_u8 far*)td11_highscores;
-	for (entry = 0; entry < 7U; entry++) {
+	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		source_entry = (legacy_u16)ranking_entry_order[entry];
-		for (offset = 0; offset < 0x34U; offset++) {
-			ordered_scores[entry * 0x34U + offset] =
-				scores[source_entry * 0x34U + offset];
-		}
+		ordered_scores[entry] = scores[source_entry];
 	}
 	file_build_path(byte_3B80C, gameconfig.game_trackname,
 		".hig", g_path_buf);
@@ -127,45 +123,39 @@ void highscore_write_b(void)
 
 void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 {
-	legacy_u8 record[0x34];
-	legacy_u8 far* scores;
-	legacy_u16 record_offset;
-	legacy_u16 copied;
+	struct HIGHSCORE_ENTRY record;
+	struct HIGHSCORE_ENTRY far* scores;
 	legacy_u16 output_offset;
 	legacy_s16 saved_frame_rate;
 	legacy_s16 frame_count;
 	legacy_s8 formatted_time[18];
 	legacy_s8* output;
 
-	record_offset = LEGACY_U16_WRAP_MUL(
-		(legacy_u16)ranking_entry_order[entry], 0x34U);
-	scores = (legacy_u8 far*)td11_highscores;
-	for (copied = 0; copied < sizeof(record); copied++)
-		record[copied] = scores[record_offset + copied];
+	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	record = scores[ranking_entry_order[entry]];
 
 	text_offsets[0] = 0;
-	strcpy(&resID_byte1, (legacy_s8*)record);
+	strcpy(&resID_byte1, record.player_name);
 	output_offset = (legacy_u16)strlen(&resID_byte1) + 1U;
 	text_offsets[1] = (legacy_u8)output_offset;
-	strcpy(&resID_byte1 + output_offset, (legacy_s8*)record + 17);
+	strcpy(&resID_byte1 + output_offset, record.car_name);
 	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
 		(legacy_u16)strlen(&resID_byte1 + output_offset) + 1U);
 	text_offsets[2] = (legacy_u8)output_offset;
 
 	output = &resID_byte1 + output_offset;
 	*output = 0;
-	if (record[41] == 1)
+	if (record.car_flag == 1)
 		strcat(output, "(");
-	strcat(output, (legacy_s8*)record + 42);
-	if (record[41] == 1)
+	strcat(output, record.opponent);
+	if (record.car_flag == 1)
 		strcat(output, ")");
 	output_offset = LEGACY_U16_WRAP_ADD(output_offset,
 		(legacy_u16)strlen(output) + 1U);
 
 	saved_frame_rate = framespersec;
 	framespersec = 0x14;
-	frame_count = LEGACY_S16_FROM_BITS(
-		LEGACY_READ_U16_LE(record + 50));
+	frame_count = LEGACY_S16_FROM_BITS(record.time);
 	format_frame_as_string(formatted_time,
 		frame_count == -1 ? 0 : frame_count, 1);
 	text_offsets[3] = (legacy_u8)output_offset;
@@ -228,8 +218,9 @@ static legacy_u16 read_highscore_u16(legacy_u8 far* address)
 
 void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 {
-	legacy_u8 record[0x34];
-	legacy_u8 far* scores;
+	struct HIGHSCORE_ENTRY record;
+	legacy_u8* record_bytes;
+	struct HIGHSCORE_ENTRY far* scores;
 	legacy_u16 entry;
 	legacy_u16 copied;
 	legacy_u16 rank;
@@ -239,15 +230,14 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	time_bits = (legacy_u16)frame_count;
 	if (framespersec == 0x0A)
 		time_bits = LEGACY_U16_WRAP_MUL(time_bits, 2U);
-	scores = (legacy_u8 far*)td11_highscores;
-	if (read_highscore_u16(scores + 0x16AU) <= time_bits) {
+	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	if (scores[HIGHSCORE_ENTRY_COUNT - 1U].time <= time_bits) {
 		highscore_text_unk();
 		return;
 	}
 
 	entry = 0;
-	while (read_highscore_u16(scores + entry * 0x34U + 0x32U) <=
-		time_bits) {
+	while (scores[entry].time <= time_bits) {
 		if (entry >= 7U)
 			break;
 		ranking_entry_order[entry] = (legacy_s16)entry;
@@ -261,20 +251,20 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	}
 	ranking_entry_order[rank] = 6;
 
+	record_bytes = (legacy_u8*)&record;
 	for (copied = 0; copied < sizeof(record); copied++)
-		record[copied] = 0;
-	strcpy((legacy_s8*)record + 17, gnam_string);
-	record[41] = car_flag;
+		record_bytes[copied] = 0;
+	strcpy(record.car_name, gnam_string);
+	record.car_flag = car_flag;
 	if (gameconfig.game_opponenttype != 0) {
-		strcpy((legacy_s8*)record + 42, unk_46464);
-		record[44] = '/';
-		strcpy((legacy_s8*)record + 45, gsna_string);
+		strcpy(record.opponent, unk_46464);
+		record.opponent[2] = '/';
+		strcpy(&record.opponent[3], gsna_string);
 	} else {
-		strcpy((legacy_s8*)record + 42, " ");
+		strcpy(record.opponent, " ");
 	}
-	LEGACY_WRITE_U16_LE(record + 50, time_bits);
-	for (copied = 0; copied < sizeof(record); copied++)
-		scores[0x138U + copied] = record[copied];
+	record.time = time_bits;
+	scores[HIGHSCORE_ENTRY_COUNT - 1U] = record;
 
 	sprite_copy_wnd_to_1();
 	highscore_text_unk();
@@ -284,9 +274,8 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	check_input();
 	call_read_line(byte_459E0, 0x10, positions[0], positions[1],
 		0x7530UL);
-	strcpy((legacy_s8*)record, byte_459E0);
-	for (copied = 0; copied < sizeof(record); copied++)
-		scores[0x138U + copied] = record[copied];
+	strcpy(record.player_name, byte_459E0);
+	scores[HIGHSCORE_ENTRY_COUNT - 1U] = record;
 
 	sprite_copy_wnd_to_1();
 	highscore_text_unk();
@@ -472,7 +461,7 @@ legacy_u16 end_hiscore(void)
 	legacy_s8 far* animation_resource;
 	legacy_u8 far* animation_sequence;
 	legacy_u8 far* track_resource;
-	legacy_u8 far* scores;
+	struct HIGHSCORE_ENTRY far* scores;
 	struct SPRITE far* animation_sprite;
 	struct SHAPE2D far* frame_shape;
 	legacy_s16 button_x1[4];
@@ -699,9 +688,9 @@ legacy_u16 end_hiscore(void)
 	finish_time = 0;
 	if (score_status == 0 && gState_total_finish_time != 0) {
 		finish_time = gState_total_finish_time;
-		scores = (legacy_u8 far*)td11_highscores;
+		scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 		if (((legacy_u8)byte_43966 & 6U) == 0 &&
-			read_highscore_u16(scores + 0x16AU) >
+			scores[HIGHSCORE_ENTRY_COUNT - 1U].time >
 				(legacy_u16)finish_time) {
 			score_status = 1;
 		}

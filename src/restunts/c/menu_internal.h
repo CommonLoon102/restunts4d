@@ -1,6 +1,7 @@
 #ifndef RESTUNTS_MENU_INTERNAL_H
 #define RESTUNTS_MENU_INTERNAL_H
 
+#include <stddef.h>
 #include "externs.h"
 #include "game_input.h"
 #include "keyboard.h"
@@ -122,6 +123,34 @@ extern legacy_s16 hiscore_buttons_y2[5];
 extern legacy_s16 word_40D3A;
 extern legacy_s16 word_40D3C;
 extern legacy_s16 word_40D3E;
+#define HIGHSCORE_ENTRY_COUNT 7U
+
+#pragma pack (push, 1)
+
+/* One line of a track's .HIG table. The file is the raw array, so the
+   layout is fixed by the on-disk format. The two name areas each hold a
+   pair of strings laid end to end. */
+struct HIGHSCORE_ENTRY {
+	legacy_s8 player_name[17];
+	legacy_s8 car_name[24];
+	legacy_u8 car_flag;
+	legacy_s8 opponent[8];
+	legacy_u16 time;
+};
+
+#pragma pack (pop)
+
+typedef char highscore_entry_must_be_52_bytes[
+	(sizeof(struct HIGHSCORE_ENTRY) == 0x34) ? 1 : -1];
+typedef char highscore_entry_car_name_must_be_at_11[
+	(offsetof(struct HIGHSCORE_ENTRY, car_name) == 0x11) ? 1 : -1];
+typedef char highscore_entry_car_flag_must_be_at_29[
+	(offsetof(struct HIGHSCORE_ENTRY, car_flag) == 0x29) ? 1 : -1];
+typedef char highscore_entry_opponent_must_be_at_2A[
+	(offsetof(struct HIGHSCORE_ENTRY, opponent) == 0x2A) ? 1 : -1];
+typedef char highscore_entry_time_must_be_at_32[
+	(offsetof(struct HIGHSCORE_ENTRY, time) == 0x32) ? 1 : -1];
+
 extern legacy_s16 word_40D40;
 extern legacy_s16 end_hiscore_random;
 extern legacy_s16 word_40D44;
