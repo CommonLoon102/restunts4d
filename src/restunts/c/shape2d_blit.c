@@ -27,7 +27,6 @@ struct SHAPE2D_RLE_CURSOR {
 static void shape2d_render_rle(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y, legacy_s16 operation)
 {
-	legacy_u8 far* shape_bytes;
 	legacy_u8 far* source_ptr;
 	legacy_u8 far* bitmap;
 	legacy_u16 shape_segment;
@@ -43,11 +42,10 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 	legacy_u8 value;
 	legacy_s16 literal;
 
-	shape_bytes = (legacy_u8 far*)shape;
 	shape_segment = dos_memory_pointer_segment(shape);
 	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape),
 		SHAPE2D_HEADER_SIZE);
-	width = shape2d_get_word(shape_bytes);
+	width = shape2d_get_width(shape);
 	line_entry = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(sprite1.sprite_lineofs),
 		(legacy_u16)(y << 1));
 	destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
@@ -103,23 +101,17 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 static void shape2d_render_rle_at_anchor(struct SHAPE2D far* shape,
 	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)),
 		operation);
 }
 
 void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_AND);
+		shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape), SHAPE2D_RASTER_AND);
 }
 
 void nopsub_33AC0(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -136,13 +128,11 @@ void nopsub_33AE4(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
 {
 	struct SHAPE2D far* shape;
-	legacy_u8 far* shape_bytes;
 
 	shape = (struct SHAPE2D far*)dos_memory_make_pointer(segment, offset);
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_OR);
+		shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape), SHAPE2D_RASTER_OR);
 }
 
 void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -153,12 +143,9 @@ void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 
 void shape2d_op_unk(struct SHAPE2D far* shape)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_COPY);
+		shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape), SHAPE2D_RASTER_COPY);
 }
 
 void nopsub_33DBE(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
@@ -235,6 +222,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 
 void sprite_free_wnd(struct SPRITE far* render_window_sprite) {
 	legacy_u16 spritesize;
+
 	// The height comes from the bitmap header, not from the SPRITE: the
 	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height.
 	// sprite_make_wnd initializes both heights alike, and normal clipping edits
@@ -402,7 +390,6 @@ void sprite_clear_1_color(legacy_u8 color) {
 static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 	legacy_u16 x, legacy_u16 y, struct SHAPE2D_CLIP* clip)
 {
-	legacy_u8 far* shape_bytes;
 	legacy_u16 width;
 	legacy_u16 height;
 	legacy_u16 source;
@@ -412,9 +399,8 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 	legacy_u16 sprite_width;
 	legacy_u16 sum;
 
-	shape_bytes = (legacy_u8 far*)shape;
-	width = shape2d_get_word(shape_bytes);
-	height = shape2d_get_word(shape_bytes + 2U);
+	width = shape2d_get_width(shape);
+	height = shape2d_get_height(shape);
 	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape),
 		SHAPE2D_HEADER_SIZE);
 	clipped_rows = height;
@@ -530,7 +516,6 @@ static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
 {
 	struct SHAPE2D_CLIP clip;
 	struct SHAPE2D_RLE_CURSOR cursor;
-	legacy_u8 far* shape_bytes;
 	legacy_u8 far* bitmap;
 	legacy_u16 data_start;
 	legacy_u16 skip;
@@ -543,9 +528,8 @@ static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
 
 	if (!shape2d_clip_blit(shape, x, y, &clip))
 		return;
-	shape_bytes = (legacy_u8 far*)shape;
-	width = shape2d_get_word(shape_bytes);
-	height = shape2d_get_word(shape_bytes + 2U);
+	width = shape2d_get_width(shape);
+	height = shape2d_get_height(shape);
 	data_start = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape),
 		SHAPE2D_HEADER_SIZE);
 	if (clip.source == data_start && clip.source_advance == 0 &&
@@ -598,22 +582,16 @@ void shape2d_op_unk2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 
 void shape2d_op_unk3(struct SHAPE2D far* shape)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle_clipped(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU));
+		shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape));
 }
 
 void nopsub_33E90(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	shape2d_render_rle_clipped(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)));
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)));
 }
 
 static void sprite_putimage_at(struct SHAPE2D far* shape,
@@ -667,23 +645,17 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 static void sprite_putimage_at_anchor(struct SHAPE2D far* shape,
 	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	sprite_putimage_at(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)),
 		operation);
 }
 
 void sprite_putimage(struct SHAPE2D far* shape)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
 	sprite_putimage_at(shape,
-		shape2d_get_word(shape_bytes + 8U),
-		shape2d_get_word(shape_bytes + 0x0AU), SHAPE2D_RASTER_COPY);
+		shape2d_get_pos_x(shape),
+		shape2d_get_pos_y(shape), SHAPE2D_RASTER_COPY);
 }
 
 void nopsub_33B98(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
