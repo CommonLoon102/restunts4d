@@ -683,16 +683,9 @@ void load_tracks_menu_shapes(void)
 			if (page != previous_page) {
 				palette_dirty = 1;
 				previous_page = page;
-				while (selection_row[1] < 6U &&
-					track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]) >= 0xFEU) {
-					value = track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]);
-					if (value == 0xFFU)
-						selection_column[1]--;
-					else
-						selection_row[1]--;
-				}
+				if (selection_row[1] < 6U)
+					track_editor_skip_previous_placeholders(page,
+						&selection_row[1], &selection_column[1]);
 				sprite_copy_wnd_to_1();
 				preRender_icons(page);
 				if (page == 0)
