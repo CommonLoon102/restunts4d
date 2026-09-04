@@ -1233,19 +1233,8 @@ static legacy_s16 audio_start_indexed_event(legacy_s16 index,
 
 void nopsub_27220(legacy_s16 index)
 {
-	struct AUDIO_TIMER* timer;
-	legacy_u16 rate;
-	legacy_s16 channel;
-	void far* resource;
-
-	timer = &audio_timers[index];
-	rate = timer->current_volume >> 4;
-	resource = audio_read_far_pointer(
-		(legacy_u8*)&timer->definition.resources[2]);
-	channel = audio_check_flag(resource, -1, 0x40U, rate);
-	timer->effect_channel = channel;
-	timer->parameters_changed = 1;
-	timer->restart_engine = 1;
+	audio_start_indexed_event(index, 2U, 0x40U);
+	audio_timers[index].restart_engine = 1;
 }
 
 void audio_op_unk3(legacy_s16 index)
