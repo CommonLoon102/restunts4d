@@ -238,8 +238,8 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 		for (i = 0; i < 15; i++)
 			rect_array_unk_indices[i] = 3;
 		if (detail_level == 4)
-			word_449FE = word_463D6;
-		if (word_449FE == word_463D6 &&
+			word_449FC[1] = word_463D6;
+		if (word_449FC[1] == word_463D6 &&
 			rect_array_unk[5].left == rect_array_unk2[5].left &&
 			rect_array_unk[5].right == rect_array_unk2[5].right &&
 			rect_array_unk[5].top == rect_array_unk2[5].top &&
@@ -280,7 +280,7 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 
 	mouse_draw_transparent_check();
 	if (slow_video_mgmt_copy != 0) {
-		word_449FE = word_463D6;
+		word_449FC[1] = word_463D6;
 		for (i = 0; i < 15; i++)
 			rect_array_unk2[i] = rect_array_unk[i];
 	}

@@ -197,8 +197,9 @@ legacy_s8 transshapenumvertscopy;
 legacy_s8 backlights_paint_override;
 legacy_s16 word_443E8[5];
 legacy_s16 word_4448A[5];
-legacy_s16 word_449FC;
-legacy_s16 word_449FE;
+/* One entry per view. The disassembler named the two words separately, but
+   the renderer indexes them as a pair, so they have to stay one array. */
+legacy_s16 word_449FC[2];
 legacy_s16 word_44DCC;
 legacy_s16 word_463D6;
 

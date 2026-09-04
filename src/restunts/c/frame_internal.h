@@ -81,7 +81,6 @@ extern void far* sdgame2shapes[];
 extern void far* fontledresptr;
 extern legacy_s16 dialog_fnt_colour;
 extern legacy_s8 transformedshape_counter;
-extern legacy_s16 word_449FE;
 extern struct SPRITE far* render_window_sprite;
 extern legacy_s16 fontdef_unk_0E;
 extern legacy_u16 skybox_current;
