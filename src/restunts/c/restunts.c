@@ -37,6 +37,16 @@ legacy_s16 get_0(void)
 	return 0;
 }
 
+static void shutdown_dos_game(void)
+{
+	mouse_draw_opaque_check();
+	dos_timer_shutdown();
+	dos_audio_shutdown();
+	kb_exit_handler();
+	dos_kb_set_numlock();
+	dos_video_set_mode7();
+}
+
 extern void far frame_callback(void);
 extern void replay_unk2(legacy_s16 mode);
 extern void timer_reg_callback(void (far* callback)(void));
@@ -532,12 +542,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 
 
 	// shutdown
-	mouse_draw_opaque_check();
-	dos_timer_shutdown();
-	dos_audio_shutdown();
-	kb_exit_handler();
-	dos_kb_set_numlock();
-	dos_video_set_mode7();
+	shutdown_dos_game();
 
 	fatal_error("err %i", inch);
 
@@ -581,12 +586,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			textresptr = locate_text_res(mainresptr, "dos");
 			result = show_dialog(2, 1, textresptr, 0xFFFF, 0xFFFF, dialogarg2, 0, 0);
 			if (result >= 1) {
-				mouse_draw_opaque_check();
-				dos_timer_shutdown();
-				dos_audio_shutdown();
-				kb_exit_handler();
-				dos_kb_set_numlock();
-				dos_video_set_mode7();
+				shutdown_dos_game();
 				return result;
 			}
 			regsi = 0;
