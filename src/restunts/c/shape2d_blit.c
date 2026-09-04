@@ -430,29 +430,15 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 			(legacy_u16)((legacy_u32)overflow * width));
 		clipped_rows = visible;
 		y = sprite1.sprite_top;
-		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
-		if (LEGACY_S16_FROM_BITS(sum) >
-			LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
-			overflow = LEGACY_U16_WRAP_SUB(
-				sum, sprite1.sprite_height);
-			if (LEGACY_S16_FROM_BITS(clipped_rows) <=
-				LEGACY_S16_FROM_BITS(overflow))
-				return 0;
-			clipped_rows = LEGACY_U16_WRAP_SUB(
-				clipped_rows, overflow);
-		}
-	} else {
-		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
-		if (LEGACY_S16_FROM_BITS(sum) >
-			LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
-			overflow = LEGACY_U16_WRAP_SUB(
-				sum, sprite1.sprite_height);
-			if (LEGACY_S16_FROM_BITS(clipped_rows) <=
-				LEGACY_S16_FROM_BITS(overflow))
-				return 0;
-			clipped_rows = LEGACY_U16_WRAP_SUB(
-				clipped_rows, overflow);
-		}
+	}
+	sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
+	if (LEGACY_S16_FROM_BITS(sum) >
+		LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
+		overflow = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(clipped_rows) <=
+			LEGACY_S16_FROM_BITS(overflow))
+			return 0;
+		clipped_rows = LEGACY_U16_WRAP_SUB(clipped_rows, overflow);
 	}
 
 	visible = width;
