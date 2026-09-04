@@ -249,6 +249,13 @@ void init_game_state(legacy_s16 arg)
 	}
 }
 
+void init_game_state_with_frame_rate(legacy_u16 frame_rate)
+{
+	framespersec = frame_rate;
+	gameconfig.game_framespersec = frame_rate;
+	init_game_state(-1);
+}
+
 void restore_gamestate(legacy_u16 frame)
 {
 	legacy_u16 curframe;

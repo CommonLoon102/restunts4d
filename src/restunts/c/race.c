@@ -77,9 +77,7 @@ void run_game(void) {
 				cameramode = 0;
 				dashb_toggle = 1;
 				show_penalty_counter = 0;
-				framespersec = framespersec2;
-				gameconfig.game_framespersec = framespersec2;
-				init_game_state(-1);
+				init_game_state_with_frame_rate(framespersec2);
 				word_45D94 = 0;
 				word_45D3E = LEGACY_S16_FROM_BITS(
 					LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
@@ -276,9 +274,7 @@ void run_game(void) {
 
 			if (game_replay_mode == 1 && byte_4393C == 0) {
 				game_replay_mode = 0;
-				framespersec = framespersec2;
-				gameconfig.game_framespersec = framespersec2;
-				init_game_state(-1);
+				init_game_state_with_frame_rate(framespersec2);
 			}
 
 			if (idle_expired == 0) {
@@ -315,9 +311,7 @@ void run_game(void) {
 					if (((mouse_butstate & 3) != 0) || ((get_kb_or_joy_flags() & 0x30) != 0)) {
 						game_replay_mode = 0;
 						byte_4393C = 0;
-						framespersec = framespersec2;
-						gameconfig.game_framespersec = framespersec2;
-						init_game_state(-1);
+						init_game_state_with_frame_rate(framespersec2);
 					}
 				}
 
