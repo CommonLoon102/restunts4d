@@ -806,6 +806,42 @@ void far* file_load_binary_fatal(const legacy_s8* filename) {
 	return file_load_binary(filename, 1);
 }
 
+#ifndef RESTUNTS_HEADLESS
+// One attempt at loading a resource of the given type; 0 means it failed.
+static void far* file_try_load_resource(legacy_s16 type,
+	const legacy_s8* filename)
+{
+	switch (type) {
+		case 0:
+		case 1:
+			return file_load_binary_nofatal(filename);
+
+		case 2:
+			return file_load_shape2d_nofatal(filename);
+
+		case 3:
+			return file_load_shape2d_res_nofatal(filename);
+
+		case 4:
+			return load_song_file(filename);
+
+		case 5:
+			return load_voice_file(filename);
+
+		case 6:
+			return load_sfx_file(filename);
+
+		case 7:
+			return file_decomp_nofatal(filename);
+
+		case 8:
+			return file_load_shape2d_nofatal2(filename);
+	}
+
+	return 0;
+}
+#endif
+
 void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 	void far* result;
 #ifdef RESTUNTS_HEADLESS
@@ -821,58 +857,10 @@ void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 #else
 	legacy_s16 dearesult;
 	while (1) {
-		switch (type) {
-			case 0:
-				// try load the file, if it fails, show a dialog, and retry
-				result = file_load_binary_nofatal(filename);
-				if (result != 0) return result;
-				break;
-
-			case 1:
-				return file_load_binary_nofatal(filename);
-
-			case 2:
-				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_nofatal(filename);
-				if (result != 0) return result;
-				break;
-
-			case 3:
-				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_res_nofatal(filename);
-				if (result != 0) return result;
-				break;
-
-			case 4:
-				// try load a song file and retry if it failed
-				result = load_song_file(filename);
-				if (result != 0) return result;
-				break;
-
-			case 5:
-				// try load a voice file and retry if it failed
-				result = load_voice_file(filename);
-				if (result != 0) return result;
-				break;
-
-			case 6:
-				// try load an sfx file and retry if it failed
-				result = load_sfx_file(filename);
-				if (result != 0) return result;
-				break;
-
-			case 7:
-				// try load a compressed file
-				return file_decomp_nofatal(filename);
-
-			case 8:
-				// try load a 2d shape and retry if it failed
-				result = file_load_shape2d_nofatal2(filename);
-				if (result != 0) return result;
-				break;
-			default:
-				break;
-		}
+		result = file_try_load_resource(type, filename);
+		// Types 1 and 7 report the failure to the caller; every other type
+		// shows a dialog and retries until the dialog gives up.
+		if (result != 0 || type == 1 || type == 7) return result;
 
 		dearesult = do_dea_textres();
 		if (dearesult == 2) return 0;
