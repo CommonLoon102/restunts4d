@@ -445,6 +445,16 @@ static legacy_s16 mouse_track_position(legacy_s16 length,
 	return mouse_track_divide(numerator, denominator);
 }
 
+static legacy_s16 mouse_track_thumb_size(legacy_s16 length,
+	legacy_s16 selected, legacy_s16 selection_width, legacy_s16 item_count,
+	legacy_s16* thumb_start, legacy_s16* thumb_end)
+{
+	*thumb_start = mouse_track_position(length, selected, item_count);
+	*thumb_end = mouse_track_position(length,
+		LEGACY_S16_WRAP_ADD(selected, selection_width), item_count);
+	return LEGACY_S16_WRAP_SUB(*thumb_end, *thumb_start);
+}
+
 static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 width, legacy_s16 y,
 	legacy_s16 height, legacy_s16 thumb_start, legacy_s16 thumb_size)
 {
@@ -476,12 +486,8 @@ legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x, legacy_s16 width, 
 	horizontal = LEGACY_S16_FROM_BITS(width) >
 		LEGACY_S16_FROM_BITS(height);
 	length = horizontal ? (legacy_s16)width : (legacy_s16)height;
-	thumb_start = mouse_track_position(length, (legacy_s16)selected,
-		(legacy_s16)item_count);
-	thumb_end = mouse_track_position(length,
-		LEGACY_S16_WRAP_ADD(selected, selection_width),
-		(legacy_s16)item_count);
-	thumb_size = LEGACY_S16_WRAP_SUB(thumb_end, thumb_start);
+	thumb_size = mouse_track_thumb_size(length, selected, selection_width,
+		item_count, &thumb_start, &thumb_end);
 
 	if (operation == 0) {
 		mouse_track_draw(horizontal, x, width, y, height,
@@ -541,12 +547,8 @@ legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x, legacy_s16 width, 
 		selected = mouse_track_divide(scaled, length);
 	}
 
-	thumb_start = mouse_track_position(length, (legacy_s16)selected,
-		(legacy_s16)item_count);
-	thumb_end = mouse_track_position(length,
-		LEGACY_S16_WRAP_ADD(selected, selection_width),
-		(legacy_s16)item_count);
-	thumb_size = LEGACY_S16_WRAP_SUB(thumb_end, thumb_start);
+	thumb_size = mouse_track_thumb_size(length, selected, selection_width,
+		item_count, &thumb_start, &thumb_end);
 	mouse_draw_opaque_check();
 	mouse_track_draw(horizontal, x, width, y, height,
 		thumb_start, thumb_size);
