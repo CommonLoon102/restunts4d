@@ -116,6 +116,7 @@ extern struct VECTOR unk_3C114;
 extern struct RECTANGLE trackpreview_cliprect;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
+struct TRACKOBJECT* frame_track_object_from_legacy_index(legacy_u8 index);
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
 void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
 legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);

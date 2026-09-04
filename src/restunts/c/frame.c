@@ -7,7 +7,7 @@
  * Some track objects store overlay indices into that combined legacy table,
  * so indices beyond trkObjectList intentionally address sceneshapes2.
  */
-static struct TRACKOBJECT* frame_track_object_from_legacy_index(
+struct TRACKOBJECT* frame_track_object_from_legacy_index(
 	legacy_u8 index)
 {
 	if (index < TRACK_OBJECT_COUNT)

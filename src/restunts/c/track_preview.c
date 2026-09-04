@@ -1,20 +1,5 @@
 #include "frame_internal.h"
 
-#define TRACK_OBJECT_COUNT 215U
-
-/*
- * In the original dseg, sceneshapes2 immediately follows trkObjectList.
- * Some track objects store overlay indices into that combined legacy table,
- * so indices beyond trkObjectList intentionally address sceneshapes2.
- */
-static struct TRACKOBJECT* frame_track_object_from_legacy_index(
-	legacy_u8 index)
-{
-	if (index < TRACK_OBJECT_COUNT)
-		return &trkObjectList[index];
-	return &sceneshapes2[(legacy_u16)index - TRACK_OBJECT_COUNT];
-}
-
 static legacy_s16 track_preview_half(legacy_s16 value)
 {
 	legacy_u16 bits;
