@@ -191,49 +191,32 @@ static legacy_s16 matrix_scaled_product(legacy_s16 left, legacy_s16 right)
 	return LEGACY_S16_FROM_BITS((legacy_u16)(scaled_bits >> 16));
 }
 
+static legacy_s16 matrix_row_product(legacy_s16 row_x, legacy_s16 row_y,
+	legacy_s16 row_z, struct VECTOR* invec)
+{
+	legacy_s16 result;
+
+	if (row_x != 0 && invec->x != 0)
+		result = matrix_scaled_product(row_x, invec->x);
+	else
+		result = 0;
+
+	if (row_y != 0 && invec->y != 0)
+		result = LEGACY_S16_WRAP_ADD(result,
+			matrix_scaled_product(row_y, invec->y));
+
+	if (row_z != 0 && invec->z != 0)
+		result = LEGACY_S16_WRAP_ADD(result,
+			matrix_scaled_product(row_z, invec->z));
+
+	return result;
+}
+
 void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* outvec) {
 
-	if (mat->m._11 != 0 && invec->x != 0)
-		outvec->x = matrix_scaled_product(mat->m._11, invec->x);
-	else
-		outvec->x = 0;
-
-	if (mat->m._12 != 0 && invec->y != 0)
-		outvec->x = LEGACY_S16_WRAP_ADD(outvec->x,
-			matrix_scaled_product(mat->m._12, invec->y));
-
-	if (mat->m._13 != 0 && invec->z != 0)
-		outvec->x = LEGACY_S16_WRAP_ADD(outvec->x,
-			matrix_scaled_product(mat->m._13, invec->z));
-
-
-	if (mat->m._21 != 0 && invec->x != 0)
-		outvec->y = matrix_scaled_product(mat->m._21, invec->x);
-	else
-		outvec->y = 0;
-
-	if (mat->m._22 != 0 && invec->y != 0)
-		outvec->y = LEGACY_S16_WRAP_ADD(outvec->y,
-			matrix_scaled_product(mat->m._22, invec->y));
-
-	if (mat->m._23 != 0 && invec->z != 0)
-		outvec->y = LEGACY_S16_WRAP_ADD(outvec->y,
-			matrix_scaled_product(mat->m._23, invec->z));
-
-
-	if (mat->m._31 != 0 && invec->x != 0)
-		outvec->z = matrix_scaled_product(mat->m._31, invec->x);
-	else
-		outvec->z = 0;
-
-	if (mat->m._32 != 0 && invec->y != 0)
-		outvec->z = LEGACY_S16_WRAP_ADD(outvec->z,
-			matrix_scaled_product(mat->m._32, invec->y));
-
-	if (mat->m._33 != 0 && invec->z != 0)
-		outvec->z = LEGACY_S16_WRAP_ADD(outvec->z,
-			matrix_scaled_product(mat->m._33, invec->z));
-
+	outvec->x = matrix_row_product(mat->m._11, mat->m._12, mat->m._13, invec);
+	outvec->y = matrix_row_product(mat->m._21, mat->m._22, mat->m._23, invec);
+	outvec->z = matrix_row_product(mat->m._31, mat->m._32, mat->m._33, invec);
 }
 
 void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR* outvec)
