@@ -185,24 +185,16 @@ static void highpool_set_name(struct HIGHCHUNK* chunk,
 		chunk->resname[i] = 0;
 }
 
-#define MMGR_NAMES_MATCH(result, wanted, stored) \
-	do { \
-		legacy_s16 mmgr_name_index; \
-		(result) = 0; \
-		for (mmgr_name_index = 0; mmgr_name_index < 12; \
-			mmgr_name_index++) { \
-			if ((wanted)[mmgr_name_index] == 0) { \
-				if ((stored)[mmgr_name_index] == '.' || \
-					(stored)[mmgr_name_index] == 0) \
-					(result) = 1; \
-				break; \
-			} \
-			if ((wanted)[mmgr_name_index] != (stored)[mmgr_name_index]) \
-				break; \
+#define MMGR_COMPARE_NAME(index, found, wanted, stored) \
+	for ((index) = 0; (index) < 12; (index)++) { \
+		if ((wanted)[index] == 0) { \
+			if ((stored)[index] == '.' || (stored)[index] == 0) \
+				(found) = 1; \
+			break; \
 		} \
-		if (mmgr_name_index == 12) \
-			(result) = 1; \
-	} while (0)
+		if ((wanted)[index] != (stored)[index]) \
+			break; \
+	}
 
 legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	legacy_s16 i, j;
@@ -413,14 +405,17 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 // Cache lookup mirroring mmgr_get_chunk_by_name: a cached pool chunk is
 // revived in place instead of being copied back into the arena.
 void far* highpool_get_by_name(const legacy_s8* name) {
-	legacy_s16 i, found;
+	legacy_s16 i, j, found;
 	struct HIGHCHUNK* chunk;
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		chunk = &highchunks[i];
 		if (chunk->resstate != 1)
 			continue;
-		MMGR_NAMES_MATCH(found, name, chunk->resname);
+		found = 0;
+		MMGR_COMPARE_NAME(j, found, name, chunk->resname);
+		if (j == 12)
+			found = 1;
 		if (found) {
 			chunk->resstate = 2;
 			return dos_memory_make_pointer(chunk->resseg, 0);
@@ -723,10 +718,11 @@ void mmgr_find_free(void) {
 
 void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	const legacy_s8* pcdi;
-	legacy_s16 regax, found;
+	legacy_s16 regbx, regax;
 	legacy_u16 srcofs, srcsize, destofs;
 	struct MEMCHUNK* ressi;
 	struct MEMCHUNK* resdi;
+	legacy_s16 found = 0;
 
 	pcdi = mmgr_path_to_name(name);
 
@@ -743,8 +739,8 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 			return 0;
 		}
 
-		MMGR_NAMES_MATCH(found, pcdi, ressi->resname);
-		if (found) {
+		MMGR_COMPARE_NAME(regbx, found, pcdi, ressi->resname);
+		if (regbx == 12 || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
 			srcofs = ressi->resofs;
 			srcsize = ressi->ressize;
@@ -776,7 +772,7 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 
 legacy_u16 nopsub_31429(const legacy_s8* name) {
 	const legacy_s8* wanted;
-	legacy_s16 found;
+	legacy_s16 i, found;
 	struct MEMCHUNK* chunk;
 
 	wanted = mmgr_path_to_name(name);
@@ -784,8 +780,9 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 	while (chunk < resendptr2) {
 		if (chunk->resunk == 0)
 			return 0;
-		MMGR_NAMES_MATCH(found, wanted, chunk->resname);
-		if (found)
+		found = 0;
+		MMGR_COMPARE_NAME(i, found, wanted, chunk->resname);
+		if (i == 12 || found != 0)
 			return 1;
 		chunk++;
 	}
