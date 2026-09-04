@@ -126,6 +126,24 @@ enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_16892,
 };
 
+/* Wheel positions are long-precision; the forces acting on them arrive as
+   word-precision vectors, so every step shifts the position the same way. */
+static void physics_position_offset(struct VECTORLONG* destination,
+	const struct VECTORLONG* source, const struct VECTOR* offset)
+{
+	destination->lx = LEGACY_S32_WRAP_ADD_S16(source->lx, offset->x);
+	destination->ly = LEGACY_S32_WRAP_ADD_S16(source->ly, offset->y);
+	destination->lz = LEGACY_S32_WRAP_ADD_S16(source->lz, offset->z);
+}
+
+static void physics_position_pull_back(struct VECTORLONG* position,
+	const struct VECTOR* offset)
+{
+	position->lx = LEGACY_S32_WRAP_SUB_S16(position->lx, offset->x);
+	position->ly = LEGACY_S32_WRAP_SUB_S16(position->ly, offset->y);
+	position->lz = LEGACY_S32_WRAP_SUB_S16(position->lz, offset->z);
+}
+
 static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 	struct VECTOR* rotated, struct MATRIX* angle_rotation,
 	legacy_s16 wheel_index, legacy_s16 y_adjustment)
@@ -429,12 +447,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 				var_wheelIndex] = pState_f36Mminf40sar2;
 		}
 		plane_rotate_op();
-		var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-			var_DEptrTo1C0->lx, vec_planerotopresult.x);
-		var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-			var_DEptrTo1C0->ly, vec_planerotopresult.y);
-		var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-			var_DEptrTo1C0->lz, vec_planerotopresult.z);
+		physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0,
+			&vec_planerotopresult);
 	}
 	var_DEptrTo1C0++;
 	var_146ptrTo176++;
@@ -765,12 +779,7 @@ case PLAYER_FLOW_loc_15882:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_SUB_S16(
-		var_DEptrTo1C0->lx, vec_planerotopresult.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
-		var_DEptrTo1C0->ly, vec_planerotopresult.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_SUB_S16(
-		var_DEptrTo1C0->lz, vec_planerotopresult.z);
+	physics_position_pull_back(var_DEptrTo1C0, &vec_planerotopresult);
 	{ physics_flow = PLAYER_FLOW_loc_15CDF; continue; }
 
 case PLAYER_FLOW_loc_158DA:
@@ -799,12 +808,7 @@ case PLAYER_FLOW_loc_15964:
 	{ physics_flow = PLAYER_FLOW_loc_15642; continue; }
 
 case PLAYER_FLOW_loc_1596E:
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lx, vec_E4.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->ly, vec_E4.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lz, vec_E4.z);
+	physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0, &vec_E4);
 	{ physics_flow = PLAYER_FLOW_loc_156ED; continue; }
 
 case PLAYER_FLOW_loc_1599E:
@@ -821,12 +825,8 @@ case PLAYER_FLOW_loc_159AD:
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
 	plane_rotate_op();
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-		var_146ptrTo176->lx, vec_planerotopresult.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_146ptrTo176->ly, vec_planerotopresult.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-		var_146ptrTo176->lz, vec_planerotopresult.z);
+	physics_position_offset(var_DEptrTo1C0, var_146ptrTo176,
+		&vec_planerotopresult);
 	{ physics_flow = PLAYER_FLOW_loc_15C04; continue; }
 
 case PLAYER_FLOW_loc_15A30:
@@ -888,12 +888,7 @@ case PLAYER_FLOW_loc_15C75:
 		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6U);
 	mat_mul_vector2(&vec_1C6, &planptr[planindex].plane_rotation, &vec_FC);
 
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lx, vec_FC.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->ly, vec_FC.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lz, vec_FC.z);
+	physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0, &vec_FC);
 
 case PLAYER_FLOW_loc_15CDF:
 case PLAYER_FLOW_loc_15CE8:
@@ -970,12 +965,7 @@ case PLAYER_FLOW_loc_15E85:
 	vec_1C6.x = 0;
 	vec_1C6.y = LEGACY_S16_WRAP_ADD(var_EE, 0x180);
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_182);
-	var_DEptrTo1C0->lx = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lx, vec_182.x);
-	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->ly, vec_182.y);
-	var_DEptrTo1C0->lz = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->lz, vec_182.z);
+	physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0, &vec_182);
 	{ physics_flow = PLAYER_FLOW_loc_15DC8; continue; }
 
 case PLAYER_FLOW_code_update_globalPos:
