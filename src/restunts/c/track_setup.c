@@ -39,6 +39,32 @@ struct TRACK_SETUP_BRANCH {
 typedef legacy_s8 track_setup_branch_must_be_14_bytes[
 	(sizeof(struct TRACK_SETUP_BRANCH) == 14) ? 1 : -1];
 
+/* Leaving a piece through one of its exit points steps on to the neighbour
+   tile and fixes the orientation the next piece is entered with. Entry 0 is
+   never used: the original switch had no case for it and left the position
+   and the orientation untouched. */
+struct TRACK_SETUP_STEP {
+	legacy_s16 column;
+	legacy_s16 row;
+	legacy_s16 orientation;
+};
+
+static const struct TRACK_SETUP_STEP track_setup_steps[13] = {
+	{  0,  0, 0x000 },
+	{  0, -1, 0x000 },
+	{  0,  1, 0x200 },
+	{  1,  0, 0x100 },
+	{ -1,  0, 0x300 },
+	{  1, -1, 0x000 },
+	{ -1,  1, 0x300 },
+	{  1,  1, 0x100 },
+	{  2,  0, 0x100 },
+	{  2,  1, 0x100 },
+	{  1,  1, 0x200 },
+	{  0,  2, 0x200 },
+	{  1,  2, 0x200 }
+};
+
 static legacy_s8 track_setup_add_s8(legacy_s8 value, legacy_s16 amount)
 {
 	return LEGACY_S8_WRAP_ADD(value, amount);
@@ -569,61 +595,13 @@ legacy_s16 track_setup(void)
 	previous_subtype = subtype;
 	previous_tile_element = tile_element;
 
-	switch (tile_entry_point) {
-	case 1:
-		row = track_setup_add_s8(row, -1);
-		orientation = 0;
-		break;
-	case 2:
-		row = track_setup_add_s8(row, 1);
-		orientation = 0x200;
-		break;
-	case 3:
-		column = track_setup_add_s8(column, 1);
-		orientation = 0x100;
-		break;
-	case 4:
-		column = track_setup_add_s8(column, -1);
-		orientation = 0x300;
-		break;
-	case 5:
-		row = track_setup_add_s8(row, -1);
-		column = track_setup_add_s8(column, 1);
-		orientation = 0;
-		break;
-	case 6:
-		row = track_setup_add_s8(row, 1);
-		column = track_setup_add_s8(column, -1);
-		orientation = 0x300;
-		break;
-	case 7:
-		column = track_setup_add_s8(column, 1);
-		row = track_setup_add_s8(row, 1);
-		orientation = 0x100;
-		break;
-	case 8:
-		column = track_setup_add_s8(column, 2);
-		orientation = 0x100;
-		break;
-	case 9:
-		column = track_setup_add_s8(column, 2);
-		row = track_setup_add_s8(row, 1);
-		orientation = 0x100;
-		break;
-	case 10:
-		column = track_setup_add_s8(column, 1);
-		row = track_setup_add_s8(row, 1);
-		orientation = 0x200;
-		break;
-	case 11:
-		row = track_setup_add_s8(row, 2);
-		orientation = 0x200;
-		break;
-	case 12:
-		column = track_setup_add_s8(column, 1);
-		row = track_setup_add_s8(row, 2);
-		orientation = 0x200;
-		break;
+	if (tile_entry_point >= 1U && tile_entry_point <= 12U) {
+		const struct TRACK_SETUP_STEP* step =
+			&track_setup_steps[tile_entry_point];
+
+		column = track_setup_add_s8(column, step->column);
+		row = track_setup_add_s8(row, step->row);
+		orientation = step->orientation;
 	}
 	}
 
