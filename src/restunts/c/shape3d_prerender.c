@@ -848,6 +848,19 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 
 
 
+/* right_edges keeps the largest x seen on a row, left_edges the smallest. */
+static void prerender_extend_edge(legacy_s16* left_edges,
+	legacy_s16* right_edges, legacy_s16 index, legacy_s16 value,
+	legacy_s16 to_left)
+{
+	if (to_left) {
+		if (left_edges[index] > value)
+			left_edges[index] = value;
+	} else if (right_edges[index] < value) {
+		right_edges[index] = value;
+	}
+}
+
 void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	legacy_u16 var_C, legacy_s16* var_18)
 {
@@ -864,6 +877,8 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	legacy_s16 index;
 	legacy_s16 target;
 	legacy_s16 carry;
+	legacy_s16 to_left;
+	legacy_s16 value_step;
 
 	count = LEGACY_S16_FROM_BITS(line[7]);
 	index = LEGACY_S16_FROM_BITS(line[3]);
@@ -912,66 +927,44 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 				break;
 
 			case 7:
-				step = (legacy_u16)line[6];
-				sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
-				fraction = (legacy_u16)sum;
-				if (sum > 0xFFFFUL)
-					index++;
-				if (right_edges[index] < value)
-					right_edges[index] = value;
-				while (count > 0) {
-					sum = (legacy_u32)fraction + step;
-					fraction = (legacy_u16)sum;
-					carry = sum > 0xFFFFUL;
-					if (carry) {
-						if (left_edges[index] > value)
-							left_edges[index] = value;
-						index++;
-						value = LEGACY_S16_WRAP_SUB(value, 1);
-						count--;
-						if (count > 0 &&
-							right_edges[index] < value)
-							right_edges[index] = value;
-					} else {
-						value = LEGACY_S16_WRAP_SUB(value, 1);
-						count--;
-						if (count == 0) {
-							value = LEGACY_S16_WRAP_ADD(value, 1);
-							if (left_edges[index] > value)
-								left_edges[index] = value;
-						}
-					}
-				}
-				break;
-
 			case 8:
+				/* Mode 7 walks the span right-to-left and mode 8
+				   left-to-right, which only swaps which edge array
+				   opens a row and which one closes it. */
+				to_left = mode == 7U ? 1 : 0;
+				value_step = to_left ? -1 : 1;
 				step = (legacy_u16)line[6];
 				sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
 				fraction = (legacy_u16)sum;
 				if (sum > 0xFFFFUL)
 					index++;
-				if (left_edges[index] > value)
-					left_edges[index] = value;
+				prerender_extend_edge(left_edges, right_edges, index,
+					value, !to_left);
 				while (count > 0) {
 					sum = (legacy_u32)fraction + step;
 					fraction = (legacy_u16)sum;
 					carry = sum > 0xFFFFUL;
 					if (carry) {
-						if (right_edges[index] < value)
-							right_edges[index] = value;
+						prerender_extend_edge(left_edges,
+							right_edges, index, value, to_left);
 						index++;
-						value = LEGACY_S16_WRAP_ADD(value, 1);
+						value = LEGACY_S16_WRAP_ADD(value,
+							value_step);
 						count--;
-						if (count > 0 &&
-							left_edges[index] > value)
-							left_edges[index] = value;
+						if (count > 0)
+							prerender_extend_edge(left_edges,
+								right_edges, index, value,
+								!to_left);
 					} else {
-						value = LEGACY_S16_WRAP_ADD(value, 1);
+						value = LEGACY_S16_WRAP_ADD(value,
+							value_step);
 						count--;
 						if (count == 0) {
-							value = LEGACY_S16_WRAP_SUB(value, 1);
-							if (right_edges[index] < value)
-								right_edges[index] = value;
+							value = LEGACY_S16_WRAP_SUB(value,
+								value_step);
+							prerender_extend_edge(left_edges,
+								right_edges, index, value,
+								to_left);
 						}
 					}
 				}
