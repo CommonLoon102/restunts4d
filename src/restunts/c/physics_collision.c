@@ -46,6 +46,21 @@ legacy_s16 wheel_pair_delta(legacy_s16 first, legacy_s16 second,
 		LEGACY_S16_WRAP_ADD(first, second), third), fourth);
 }
 
+/* A multi-tile element anchors its collision box on the shared tile edge
+   rather than on the centre of the tile the car happens to be standing on. */
+static void collision_tile_center(legacy_u8 tile_element,
+	legacy_u16 row_index, legacy_u16 column_index,
+	legacy_u16* center_z, legacy_u16* center_x)
+{
+	legacy_u8 multi_tile_flags;
+
+	multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+	if ((multi_tile_flags & 1U) != 0)
+		*center_z = (legacy_u16)trackpos[row_index];
+	if ((multi_tile_flags & 2U) != 0)
+		*center_x = (legacy_u16)trackpos2[column_index];
+}
+
 legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
 {
 	const struct VECTOR* dependency_points;
@@ -59,7 +74,6 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 	legacy_u16 count;
 	legacy_u16 index;
 	legacy_u8 tile_element;
-	legacy_u8 multi_tile_flags;
 	legacy_s8 physical_model;
 
 	column = (legacy_u16)column_arg;
@@ -75,32 +89,20 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 	if (tile_element == 0xFDU) {
 		tile_element = td14_elem_map_main[
 			LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
-		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
-		if ((multi_tile_flags & 1U) != 0)
-			center_z = (legacy_u16)trackpos[row + 1U];
-		if ((multi_tile_flags & 2U) != 0)
-			center_x = (legacy_u16)trackpos2[column];
+		collision_tile_center(tile_element, row + 1U, column,
+			&center_z, &center_x);
 	} else if (tile_element == 0xFEU) {
 		tile_element = td14_elem_map_main[previous_row_base + column];
-		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
-		if ((multi_tile_flags & 1U) != 0)
-			center_z = (legacy_u16)trackpos[row + 1U];
-		if ((multi_tile_flags & 2U) != 0)
-			center_x = (legacy_u16)trackpos2[column + 1U];
+		collision_tile_center(tile_element, row + 1U, column + 1U,
+			&center_z, &center_x);
 	} else if (tile_element == 0xFFU) {
 		tile_element = td14_elem_map_main[
 			LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
-		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
-		if ((multi_tile_flags & 1U) != 0)
-			center_z = (legacy_u16)trackpos[row];
-		if ((multi_tile_flags & 2U) != 0)
-			center_x = (legacy_u16)trackpos2[column];
+		collision_tile_center(tile_element, row, column,
+			&center_z, &center_x);
 	} else {
-		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
-		if ((multi_tile_flags & 1U) != 0)
-			center_z = (legacy_u16)trackpos[row];
-		if ((multi_tile_flags & 2U) != 0)
-			center_x = (legacy_u16)trackpos2[column + 1U];
+		collision_tile_center(tile_element, row, column + 1U,
+			&center_z, &center_x);
 	}
 
 	dependency_points = 0;
