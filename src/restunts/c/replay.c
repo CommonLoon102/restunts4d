@@ -11,33 +11,44 @@
 #define REPLAY_FRAMES_PER_SECOND_OFFSET 22U
 #define REPLAY_RECORDED_FRAMES_OFFSET 24U
 
-void replay_gameinfo_decode(struct GAMEINFO* destination,
-	const legacy_u8 far* source)
+/* The header stores the ids and the track name as plain byte runs. */
+static void replay_read_bytes(legacy_s8* destination,
+	const legacy_u8 far* source, legacy_u16 count)
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < 4U; index++) {
-		destination->game_playercarid[index] = LEGACY_S8_FROM_BITS(
-			source[REPLAY_PLAYER_CAR_OFFSET + index]);
-	}
+	for (index = 0U; index < count; index++)
+		destination[index] = LEGACY_S8_FROM_BITS(source[index]);
+}
+
+static void replay_write_bytes(legacy_u8 far* destination,
+	const legacy_s8* source, legacy_u16 count)
+{
+	legacy_u16 index;
+
+	for (index = 0U; index < count; index++)
+		destination[index] = (legacy_u8)source[index];
+}
+
+void replay_gameinfo_decode(struct GAMEINFO* destination,
+	const legacy_u8 far* source)
+{
+	replay_read_bytes(destination->game_playercarid,
+		source + REPLAY_PLAYER_CAR_OFFSET, 4U);
 	destination->game_playermaterial = LEGACY_S8_FROM_BITS(
 		source[REPLAY_PLAYER_MATERIAL_OFFSET]);
 	destination->game_playertransmission = LEGACY_S8_FROM_BITS(
 		source[REPLAY_PLAYER_TRANSMISSION_OFFSET]);
 	destination->game_opponenttype = LEGACY_S8_FROM_BITS(
 		source[REPLAY_OPPONENT_TYPE_OFFSET]);
-	for (index = 0U; index < 4U; index++) {
-		destination->game_opponentcarid[index] = LEGACY_S8_FROM_BITS(
-			source[REPLAY_OPPONENT_CAR_OFFSET + index]);
-	}
+	replay_read_bytes(destination->game_opponentcarid,
+		source + REPLAY_OPPONENT_CAR_OFFSET, 4U);
 	destination->game_opponentmaterial = LEGACY_S8_FROM_BITS(
 		source[REPLAY_OPPONENT_MATERIAL_OFFSET]);
 	destination->game_opponenttransmission = LEGACY_S8_FROM_BITS(
 		source[REPLAY_OPPONENT_TRANSMISSION_OFFSET]);
-	for (index = 0U; index < 9U; index++) {
-		destination->game_trackname[index] = LEGACY_S8_FROM_BITS(
-			source[REPLAY_TRACK_NAME_OFFSET + index]);
-	}
+	replay_read_bytes(destination->game_trackname,
+		source + REPLAY_TRACK_NAME_OFFSET, 9U);
 	destination->game_framespersec = LEGACY_READ_U16_LE(
 		source + REPLAY_FRAMES_PER_SECOND_OFFSET);
 	destination->game_recordedframes = LEGACY_READ_U16_LE(
@@ -47,30 +58,22 @@ void replay_gameinfo_decode(struct GAMEINFO* destination,
 void replay_gameinfo_encode(legacy_u8 far* destination,
 	const struct GAMEINFO* source)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < 4U; index++) {
-		destination[REPLAY_PLAYER_CAR_OFFSET + index] =
-			(legacy_u8)source->game_playercarid[index];
-	}
+	replay_write_bytes(destination + REPLAY_PLAYER_CAR_OFFSET,
+		source->game_playercarid, 4U);
 	destination[REPLAY_PLAYER_MATERIAL_OFFSET] =
 		(legacy_u8)source->game_playermaterial;
 	destination[REPLAY_PLAYER_TRANSMISSION_OFFSET] =
 		(legacy_u8)source->game_playertransmission;
 	destination[REPLAY_OPPONENT_TYPE_OFFSET] =
 		(legacy_u8)source->game_opponenttype;
-	for (index = 0U; index < 4U; index++) {
-		destination[REPLAY_OPPONENT_CAR_OFFSET + index] =
-			(legacy_u8)source->game_opponentcarid[index];
-	}
+	replay_write_bytes(destination + REPLAY_OPPONENT_CAR_OFFSET,
+		source->game_opponentcarid, 4U);
 	destination[REPLAY_OPPONENT_MATERIAL_OFFSET] =
 		(legacy_u8)source->game_opponentmaterial;
 	destination[REPLAY_OPPONENT_TRANSMISSION_OFFSET] =
 		(legacy_u8)source->game_opponenttransmission;
-	for (index = 0U; index < 9U; index++) {
-		destination[REPLAY_TRACK_NAME_OFFSET + index] =
-			(legacy_u8)source->game_trackname[index];
-	}
+	replay_write_bytes(destination + REPLAY_TRACK_NAME_OFFSET,
+		source->game_trackname, 9U);
 	LEGACY_WRITE_U16_LE(destination + REPLAY_FRAMES_PER_SECOND_OFFSET,
 		source->game_framespersec);
 	LEGACY_WRITE_U16_LE(destination + REPLAY_RECORDED_FRAMES_OFFSET,
