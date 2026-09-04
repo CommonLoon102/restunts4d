@@ -103,6 +103,26 @@ static void track_object_tile_center(legacy_u8 track_tile,
 		elem_xCenter = (legacy_s16)trackpos2[column_index];
 }
 
+/* Rectangular buildings share one wall test: the wall the car meets is the
+   side of the footprint its next position crosses. The two x tests and the
+   two z tests are mutually exclusive, so their order does not matter. */
+static void track_object_building_wall(const struct VECTOR* next_position,
+	legacy_s16 height, legacy_s16 x_min, legacy_s16 x_max,
+	legacy_s16 z_min, legacy_s16 z_max,
+	legacy_s16 wall_z_min, legacy_s16 wall_z_max,
+	legacy_s16 wall_x_min, legacy_s16 wall_x_max)
+{
+	wallHeight = height;
+	if (next_position->z <= z_min)
+		wallindex = wall_z_min;
+	else if (next_position->z >= z_max)
+		wallindex = wall_z_max;
+	else if (next_position->x <= x_min)
+		wallindex = wall_x_min;
+	else if (next_position->x >= x_max)
+		wallindex = wall_x_max;
+}
+
 void build_track_object(struct VECTOR* world_position,
 	struct VECTOR* next_world_position)
 {
@@ -876,89 +896,47 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 65: /* Barn. */
-		if (absolute_x <= 0x96 && absolute_z <= 0x96) {
-			wallHeight = 0x1A9;
-			if (next_position.z <= -0x96)
-				wallindex = 0xA1;
-			else if (next_position.z >= 0x96)
-				wallindex = 0xA2;
-			else if (next_position.x >= 0x96)
-				wallindex = 0xA3;
-			else if (next_position.x <= -0x96)
-				wallindex = 0xA4;
-		}
+		if (absolute_x <= 0x96 && absolute_z <= 0x96)
+			track_object_building_wall(&next_position, 0x1A9,
+				-0x96, 0x96, -0x96, 0x96,
+				0xA1, 0xA2, 0xA4, 0xA3);
 		break;
 
 	case 66: /* Gas station. */
 		if (position.x >= -0xC8 && position.x <= 0x104 &&
-			absolute_z <= 0x50) {
-			wallHeight = 0xE6;
-			if (next_position.z <= -0x50)
-				wallindex = 0xA5;
-			else if (next_position.z >= 0x50)
-				wallindex = 0xA8;
-			else if (next_position.x <= -0xC8)
-				wallindex = 0xA6;
-			else if (next_position.x >= 0x104)
-				wallindex = 0xA7;
-		}
+			absolute_z <= 0x50)
+			track_object_building_wall(&next_position, 0xE6,
+				-0xC8, 0x104, -0x50, 0x50,
+				0xA5, 0xA8, 0xA6, 0xA7);
 		break;
 
 	case 67: /* Joe's. */
-		if (absolute_x <= 0xB4 && absolute_z <= 0x64) {
-			wallHeight = 0xF8;
-			if (next_position.z <= -0x64)
-				wallindex = 0xA9;
-			else if (next_position.z >= 0x64)
-				wallindex = 0xAC;
-			else if (next_position.x <= -0xB4)
-				wallindex = 0xAB;
-			else if (next_position.x >= 0xB4)
-				wallindex = 0xAA;
-		}
+		if (absolute_x <= 0xB4 && absolute_z <= 0x64)
+			track_object_building_wall(&next_position, 0xF8,
+				-0xB4, 0xB4, -0x64, 0x64,
+				0xA9, 0xAC, 0xAB, 0xAA);
 		break;
 
 	case 68: /* Office. */
-		if (absolute_x <= 0xC8 && absolute_z <= 0xC8) {
-			wallHeight = 0x226;
-			if (next_position.z <= -0xC8)
-				wallindex = 0xAD;
-			else if (next_position.z >= 0xC8)
-				wallindex = 0xAE;
-			else if (next_position.x <= -0xC8)
-				wallindex = 0xAF;
-			else if (next_position.x >= 0xC8)
-				wallindex = 0xB0;
-		}
+		if (absolute_x <= 0xC8 && absolute_z <= 0xC8)
+			track_object_building_wall(&next_position, 0x226,
+				-0xC8, 0xC8, -0xC8, 0xC8,
+				0xAD, 0xAE, 0xAF, 0xB0);
 		break;
 
 	case 69: /* Windmill. */
-		if (absolute_x <= 0x72 && absolute_z <= 0x72) {
-			wallHeight = 0x1EF;
-			if (next_position.z <= -0x72)
-				wallindex = 0xB4;
-			else if (next_position.z >= 0x72)
-				wallindex = 0xB2;
-			else if (next_position.x <= -0x72)
-				wallindex = 0xB1;
-			else if (next_position.x >= 0x72)
-				wallindex = 0xB3;
-		}
+		if (absolute_x <= 0x72 && absolute_z <= 0x72)
+			track_object_building_wall(&next_position, 0x1EF,
+				-0x72, 0x72, -0x72, 0x72,
+				0xB4, 0xB2, 0xB1, 0xB3);
 		break;
 
 	case 70: /* Ship. */
 		if (position.x >= -0xAA && position.x <= 0x104 &&
-			absolute_z <= 0x6E) {
-			wallHeight = 0xE6;
-			if (next_position.z <= -0x6E)
-				wallindex = 0xB5;
-			else if (next_position.z >= 0x6E)
-				wallindex = 0xB8;
-			else if (next_position.x <= -0xAA)
-				wallindex = 0xB7;
-			else if (next_position.x >= 0x104)
-				wallindex = 0xB6;
-		}
+			absolute_z <= 0x6E)
+			track_object_building_wall(&next_position, 0xE6,
+				-0xAA, 0x104, -0x6E, 0x6E,
+				0xB5, 0xB8, 0xB7, 0xB6);
 		break;
 	}
 	} while (0);
