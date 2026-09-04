@@ -89,6 +89,20 @@ static void track_rotate_local(struct VECTOR* position,
 	}
 }
 
+/* A multi-tile element keeps its origin on the shared tile edge, so the
+   flags decide whether the centre comes from the tile border or its middle. */
+static void track_object_tile_center(legacy_u8 track_tile,
+	legacy_s16 row_index, legacy_s16 column_index)
+{
+	legacy_u8 multi_tile;
+
+	multi_tile = (legacy_u8)trkObjectList[track_tile].ss_multiTileFlag;
+	if ((multi_tile & 1U) != 0)
+		elem_zCenter = (legacy_s16)terrainpos[row_index];
+	if ((multi_tile & 2U) != 0)
+		elem_xCenter = (legacy_s16)trackpos2[column_index];
+}
+
 void build_track_object(struct VECTOR* world_position,
 	struct VECTOR* next_world_position)
 {
@@ -115,7 +129,6 @@ void build_track_object(struct VECTOR* world_position,
 	legacy_u16 index;
 	legacy_u8 terrain_tile;
 	legacy_u8 track_tile;
-	legacy_u8 multi_tile;
 
 	planindex = 0;
 	wallindex = -1;
@@ -179,37 +192,18 @@ void build_track_object(struct VECTOR* world_position,
 	if (track_tile == 0xFDU) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row + 1] + track_column - 1];
-		multi_tile = (legacy_u8)
-			trkObjectList[track_tile].ss_multiTileFlag;
-		if ((multi_tile & 1U) != 0)
-			elem_zCenter = (legacy_s16)terrainpos[track_row + 1];
-		if ((multi_tile & 2U) != 0)
-			elem_xCenter = (legacy_s16)trackpos2[track_column];
+		track_object_tile_center(track_tile, track_row + 1, track_column);
 	} else if (track_tile == 0xFEU) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row + 1] + track_column];
-		multi_tile = (legacy_u8)
-			trkObjectList[track_tile].ss_multiTileFlag;
-		if ((multi_tile & 1U) != 0)
-			elem_zCenter = (legacy_s16)terrainpos[track_row + 1];
-		if ((multi_tile & 2U) != 0)
-			elem_xCenter = (legacy_s16)trackpos2[track_column + 1];
+		track_object_tile_center(track_tile, track_row + 1,
+			track_column + 1);
 	} else if (track_tile == 0xFFU) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row] + track_column - 1];
-		multi_tile = (legacy_u8)
-			trkObjectList[track_tile].ss_multiTileFlag;
-		if ((multi_tile & 1U) != 0)
-			elem_zCenter = (legacy_s16)terrainpos[track_row];
-		if ((multi_tile & 2U) != 0)
-			elem_xCenter = (legacy_s16)trackpos2[track_column];
+		track_object_tile_center(track_tile, track_row, track_column);
 	} else {
-		multi_tile = (legacy_u8)
-			trkObjectList[track_tile].ss_multiTileFlag;
-		if ((multi_tile & 1U) != 0)
-			elem_zCenter = (legacy_s16)terrainpos[track_row];
-		if ((multi_tile & 2U) != 0)
-			elem_xCenter = (legacy_s16)trackpos2[track_column + 1];
+		track_object_tile_center(track_tile, track_row, track_column + 1);
 	}
 
 	position.x = LEGACY_S16_WRAP_SUB(world_position->x, elem_xCenter);
