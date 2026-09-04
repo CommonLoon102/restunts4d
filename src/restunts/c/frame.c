@@ -283,6 +283,81 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 	}
 }
 
+/* The player and the opponent are drawn identically: first the debris
+   attached to that car, then the car body itself with its wheels, clip
+   rectangle and rotation. Only the shapes, buffers and material differ. */
+static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
+	legacy_u16 car_object, struct SHAPE3D* wheel_shape,
+	legacy_s16* wheel_angles, struct VECTOR* wheel_vectors,
+	struct VECTOR* wheel_vector, struct RECTANGLE* slow_rect,
+	struct RECTANGLE* crash_rect, const struct VECTOR* camera_position,
+	legacy_s8 tile_detail, legacy_s8 flags, legacy_s16 material,
+	legacy_s16 z_adjust)
+{
+	struct TRACKOBJECT* track_object;
+	legacy_s16 index;
+
+	if (state.field_42A != 0) {
+		for (index = 0; index < 0x18; index++) {
+			if (state.field_38E[index] != 0 &&
+				state.field_443[index] == debris_owner) {
+				track_object = &sceneshapes3[state.field_42B[index]];
+				curtransshape_ptr->pos.x = frame_relative_position_sum(
+					state.game_longs1[index],
+					carstate->car_posWorld1.lx, camera_position->x);
+				curtransshape_ptr->pos.y = frame_relative_position_sum(
+					state.game_longs2[index],
+					carstate->car_posWorld1.ly, camera_position->y);
+				curtransshape_ptr->pos.z = frame_relative_position_sum(
+					state.game_longs3[index],
+					carstate->car_posWorld1.lz, camera_position->z);
+				frame_add_dynamic_shape(track_object, index,
+					flags | 5, material, z_adjust);
+			}
+		}
+	}
+
+	track_object = &trkObjectList[car_object];
+	curtransshape_ptr->pos.x = frame_relative_position(
+		carstate->car_posWorld1.lx, camera_position->x);
+	curtransshape_ptr->pos.y = frame_relative_position(
+		carstate->car_posWorld1.ly, camera_position->y);
+	curtransshape_ptr->pos.z = frame_relative_position(
+		carstate->car_posWorld1.lz, camera_position->z);
+
+	if (tile_detail != 0 || detail_level > 2) {
+		curtransshape_ptr->shapeptr = track_object->ss_loShapePtr;
+	} else {
+		curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
+		sub_204AE(wheel_shape, 8U, carstate->car_steeringAngle,
+			carstate->car_rc2, wheel_angles, wheel_vectors,
+			wheel_vector);
+	}
+
+	if (slow_video_mgmt_copy != 0) {
+		curtransshape_ptr->rectptr = slow_rect;
+		curtransshape_ptr->ts_flags = 0xC;
+	} else if (carstate->car_crashBmpFlag != 1) {
+		curtransshape_ptr->ts_flags = 4;
+	} else {
+		*crash_rect = cliprect_unk;
+		curtransshape_ptr->rectptr = crash_rect;
+		curtransshape_ptr->ts_flags = 0xC;
+	}
+
+	curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
+		carstate->car_rotate.z);
+	curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
+		carstate->car_rotate.y);
+	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
+		carstate->car_rotate.x);
+	curtransshape_ptr->unk = 0x12C;
+	curtransshape_ptr->material = material;
+	/* The sort slot carries the same id as the track object: 2 for the
+	   player, 3 for the opponent. */
+	transformed_shape_add_for_sort(z_adjust, (legacy_s16)car_object);
+}
+
 void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 si;
 	legacy_s8 var_122;
@@ -1091,129 +1166,22 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		if ((var_3C == tile_east || var_3C == tile_to_draw_east_offset) && (var_60 == tile_south || var_60 == tile_to_draw_south_offset)) {
-			if (state.field_42A != 0) {
-				for (di = 0; di < 0x18; di++) {
-					if (state.field_38E[di] != 0 && state.field_443[di] == 0) {
-						var_trkobject_ptr = &sceneshapes3[state.field_42B[di]];
-						curtransshape_ptr->pos.x = frame_relative_position_sum(
-							state.game_longs1[di],
-							state.playerstate.car_posWorld1.lx, cam_pos.x);
-						curtransshape_ptr->pos.y = frame_relative_position_sum(
-							state.game_longs2[di],
-							state.playerstate.car_posWorld1.ly, cam_pos.y);
-						curtransshape_ptr->pos.z = frame_relative_position_sum(
-							state.game_longs3[di],
-							state.playerstate.car_posWorld1.lz, cam_pos.z);
-						frame_add_dynamic_shape(var_trkobject_ptr, di,
-							var_122 | 5, gameconfig.game_playermaterial,
-							var_6C & var_12A);
-					}
-				}
-			}
-
-			var_trkobject_ptr = &trkObjectList[2];//0x1C / sizeof(struct TRACKOBJECT)];
-			curtransshape_ptr->pos.x = frame_relative_position(
-				state.playerstate.car_posWorld1.lx, cam_pos.x);
-			curtransshape_ptr->pos.y = frame_relative_position(
-				state.playerstate.car_posWorld1.ly, cam_pos.y);
-			curtransshape_ptr->pos.z = frame_relative_position(
-				state.playerstate.car_posWorld1.lz, cam_pos.z);
-
-			if (tile_det_level != 0 || detail_level > 2) {
-				curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_loShapePtr;
-			} else {
-				curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-				sub_204AE(&game3dshapes[0x0AD4 / sizeof(struct SHAPE3D)],
-					8U, state.playerstate.car_steeringAngle,
-					state.playerstate.car_rc2, word_443E8,
-					carshapevecs, carshapevec);
-			}
-
-			if (slow_video_mgmt_copy != 0) {
-				curtransshape_ptr->rectptr = &rect_unk12;
-				curtransshape_ptr->ts_flags = 0xC;
-			} else if (state.playerstate.car_crashBmpFlag != 1) {
-				curtransshape_ptr->ts_flags = 4;
-			} else {
-				var_rect = cliprect_unk;
-				curtransshape_ptr->rectptr = &var_rect;
-				curtransshape_ptr->ts_flags = 0xC;
-			}
-
-			curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-				state.playerstate.car_rotate.z);
-			curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-				state.playerstate.car_rotate.y);
-			curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-				state.playerstate.car_rotate.x);
-			curtransshape_ptr->unk = 0x12C;
-			curtransshape_ptr->material = gameconfig.game_playermaterial;
-			transformed_shape_add_for_sort(var_6C & var_12A, 2);
+			frame_add_car(&state.playerstate, 0, 2,
+				&game3dshapes[0x0AD4 / sizeof(struct SHAPE3D)],
+				word_443E8, carshapevecs, carshapevec,
+				&rect_unk12, &var_rect, &cam_pos, tile_det_level,
+				var_122, gameconfig.game_playermaterial,
+				var_6C & var_12A);
 		}
 
 		if ((var_4A == tile_east) || (var_4A == tile_to_draw_east_offset)) {
 			if ((var_6E == tile_south) || (var_6E == tile_to_draw_south_offset)) {
-				if (state.field_42A != 0) {
-					for (di = 0; di < 0x18; di++) {
-						if (state.field_38E[di] != 0) {
-							if (state.field_443[di] == 1) {
-								var_trkobject_ptr = &sceneshapes3[state.field_42B[di]];
-								curtransshape_ptr->pos.x = frame_relative_position_sum(
-									state.game_longs1[di],
-									state.opponentstate.car_posWorld1.lx, cam_pos.x);
-								curtransshape_ptr->pos.y = frame_relative_position_sum(
-									state.game_longs2[di],
-									state.opponentstate.car_posWorld1.ly, cam_pos.y);
-								curtransshape_ptr->pos.z = frame_relative_position_sum(
-									state.game_longs3[di],
-									state.opponentstate.car_posWorld1.lz, cam_pos.z);
-								frame_add_dynamic_shape(var_trkobject_ptr, di,
-									var_122 | 5, gameconfig.game_opponentmaterial,
-									var_A4 & var_12A);
-							}
-						}
-					}
-				}
-				var_trkobject_ptr = &trkObjectList[3];//0x2A / sizeof(struct TRACKOBJECT)];
-				curtransshape_ptr->pos.x = frame_relative_position(
-					state.opponentstate.car_posWorld1.lx, cam_pos.x);
-				curtransshape_ptr->pos.y = frame_relative_position(
-					state.opponentstate.car_posWorld1.ly, cam_pos.y);
-				curtransshape_ptr->pos.z = frame_relative_position(
-					state.opponentstate.car_posWorld1.lz, cam_pos.z);
-
-				if (tile_det_level != 0 || detail_level > 2) {
-					curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_loShapePtr;
-				} else {
-					curtransshape_ptr->shapeptr = var_trkobject_ptr->ss_shapePtr;
-					sub_204AE(&game3dshapes[0x0AEA / sizeof(struct SHAPE3D)],
-						8U, state.opponentstate.car_steeringAngle,
-						state.opponentstate.car_rc2, word_4448A,
-						oppcarshapevecs, oppcarshapevec);
-				}
-
-				if (slow_video_mgmt_copy != 0) {
-					curtransshape_ptr->rectptr = &rect_unk15;
-					curtransshape_ptr->ts_flags = 0xC;
-				} else {
-					if (state.opponentstate.car_crashBmpFlag != 1) {
-						curtransshape_ptr->ts_flags = 4;
-					} else {
-						var_rect2 = cliprect_unk;
-						curtransshape_ptr->rectptr = &var_rect2;
-						curtransshape_ptr->ts_flags = 0xC;
-					}
-				}
-
-				curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-					state.opponentstate.car_rotate.z);
-				curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-					state.opponentstate.car_rotate.y);
-				curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-					state.opponentstate.car_rotate.x);
-				curtransshape_ptr->unk = 0x12C;
-				curtransshape_ptr->material = gameconfig.game_opponentmaterial;
-				transformed_shape_add_for_sort(var_A4 & var_12A, 3);
+				frame_add_car(&state.opponentstate, 1, 3,
+					&game3dshapes[0x0AEA / sizeof(struct SHAPE3D)],
+					word_4448A, oppcarshapevecs, oppcarshapevec,
+					&rect_unk15, &var_rect2, &cam_pos, tile_det_level,
+					var_122, gameconfig.game_opponentmaterial,
+					var_A4 & var_12A);
 			}
 		}
 
