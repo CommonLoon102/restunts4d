@@ -1,5 +1,4 @@
-#include "audio.h"
-#include "legacy.h"
+#include "audio_internal.h"
 #include "platform.h"
 
 extern legacy_s8 audio_music_enabled;
@@ -45,6 +44,25 @@ struct audio_sequence_event {
 
 typedef void (far* audio_channel_callback_type)(legacy_s16 channel);
 
+legacy_s16 audio_sequence_command_has_byte_argument(
+	legacy_u8 command_index)
+{
+	switch (command_index) {
+	case 3:
+	case 4:
+	case 5:
+	case 7:
+	case 8:
+	case 9:
+	case 11:
+	case 16:
+	case 17:
+		return 1;
+	default:
+		return 0;
+	}
+}
+
 static legacy_u32 audio_parse_variable_length(
 	const legacy_u8 far* source, legacy_u16* size)
 {
@@ -77,44 +95,37 @@ static void audio_parse_sequence_event(const legacy_u8 far* source,
 
 	if (event->command >= 0xD9U && event->command <= 0xEAU) {
 		command_index = (legacy_u8)(event->command - 0xD9U);
-		switch (command_index) {
-		case 3:
-		case 4:
-		case 5:
-		case 7:
-		case 8:
-		case 9:
-		case 11:
-		case 16:
-		case 17:
+		if (audio_sequence_command_has_byte_argument(command_index)) {
 			event->argument = source[size++];
-			break;
-		case 6:
-			event->argument = source[size++];
-			event->value = source[size++];
-			break;
-		case 12:
-			event->value = LEGACY_READ_U16_LE(source + size);
-			size = LEGACY_U16_WRAP_ADD(size, 2U);
-			break;
-		case 13:
-			event->argument = source[size++];
-			event->value = LEGACY_READ_U32_LE(source + size);
-			size = LEGACY_U16_WRAP_ADD(size, 4U);
-			break;
-		case 14:
-			payload_size = source[size];
-			size = LEGACY_U16_WRAP_ADD(size,
-				LEGACY_U16_WRAP_ADD(payload_size, 1U));
-			break;
-		case 15:
-			payload_size = source[size++];
-			for (index = 0; index < payload_size; index++)
-				dos_audio_driver_data[index] = source[size + index];
-			size = LEGACY_U16_WRAP_ADD(size, payload_size);
-			break;
-		default:
-			break;
+		} else {
+			switch (command_index) {
+			case 6:
+				event->argument = source[size++];
+				event->value = source[size++];
+				break;
+			case 12:
+				event->value = LEGACY_READ_U16_LE(source + size);
+				size = LEGACY_U16_WRAP_ADD(size, 2U);
+				break;
+			case 13:
+				event->argument = source[size++];
+				event->value = LEGACY_READ_U32_LE(source + size);
+				size = LEGACY_U16_WRAP_ADD(size, 4U);
+				break;
+			case 14:
+				payload_size = source[size];
+				size = LEGACY_U16_WRAP_ADD(size,
+					LEGACY_U16_WRAP_ADD(payload_size, 1U));
+				break;
+			case 15:
+				payload_size = source[size++];
+				for (index = 0; index < payload_size; index++)
+					dos_audio_driver_data[index] = source[size + index];
+				size = LEGACY_U16_WRAP_ADD(size, payload_size);
+				break;
+			default:
+				break;
+			}
 		}
 	} else {
 		if (event->command > 0x80U)

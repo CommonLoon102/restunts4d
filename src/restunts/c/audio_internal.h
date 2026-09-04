@@ -67,6 +67,8 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
 void audio_init_chunk2(legacy_s16 channel);
+legacy_s16 audio_sequence_command_has_byte_argument(
+	legacy_u8 command_index);
 legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle);
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
 void sub_374DE(legacy_s16 channel);

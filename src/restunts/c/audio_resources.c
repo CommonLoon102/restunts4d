@@ -577,6 +577,11 @@ void audio_map_song_tracks(void far* song)
 					resource_segment, cursor_offset);
 				continue;
 			}
+			if (audio_sequence_command_has_byte_argument(
+				(legacy_u8)(event - 0xD9U))) {
+				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+				continue;
+			}
 
 			switch (event - 0xD9U) {
 			case 0:
@@ -584,18 +589,6 @@ void audio_map_song_tracks(void far* song)
 			case 2:
 			case 10:
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
-				break;
-
-			case 3:
-			case 4:
-			case 5:
-			case 7:
-			case 8:
-			case 9:
-			case 11:
-			case 16:
-			case 17:
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
 				break;
 
 			case 6:
