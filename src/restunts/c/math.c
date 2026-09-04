@@ -157,6 +157,11 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 	}
 }
 
+legacy_s16 absolute_word(legacy_s16 value)
+{
+	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
+}
+
 /* World coordinates are kept as 26.6 fixed point longs; the engine works on
    the whole-unit word. */
 legacy_s16 position_to_word(legacy_s32 position)

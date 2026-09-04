@@ -85,6 +85,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
 void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i);
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
+legacy_s16 absolute_word(legacy_s16 value);
 legacy_s16 position_to_word(legacy_s32 position);
 
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);

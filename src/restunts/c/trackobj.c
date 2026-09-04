@@ -46,11 +46,6 @@ extern legacy_s16 highEntrXInnBounds1[];
 extern legacy_s16 highEntrXOutBounds0[];
 extern legacy_s16 highEntrXOutBounds1[];
 
-static legacy_s16 track_abs(legacy_s16 value)
-{
-	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
-}
-
 static legacy_s16 track_interpolate(legacy_s16 position,
 	legacy_s16 position0, legacy_s16 position1,
 	legacy_s16 value0, legacy_s16 value1)
@@ -274,8 +269,8 @@ void build_track_object(struct VECTOR* world_position,
 	surface_type = (legacy_s8)((legacy_u8)track_object->ss_surfaceType + 1U);
 	if (surface_type < 1)
 		surface_type = 1;
-	absolute_x = track_abs(position.x);
-	absolute_z = track_abs(position.z);
+	absolute_x = absolute_word(position.x);
+	absolute_z = absolute_word(position.z);
 	if (physical_model < 0 || physical_model > 0x4A)
 		break;
 
@@ -362,7 +357,7 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 10: /* Highway entrance. */
-		value = track_abs(position.x);
+		value = absolute_word(position.x);
 		index = 0;
 		while (highEntrZBounds1[index] < position.z)
 			index++;
@@ -422,7 +417,7 @@ void build_track_object(struct VECTOR* world_position,
 		if (physical_model == 17 && next_position.z >= 0x1DC)
 			wallindex = 0x67;
 
-		if (track_abs(next_position.x) < 0x78) {
+		if (absolute_word(next_position.x) < 0x78) {
 			planindex = 3;
 			current_surf_type = (legacy_u8)surface_type;
 			if (wallindex < 0 && position.z >= 0 && absolute_x >= 0x78) {
@@ -457,7 +452,7 @@ void build_track_object(struct VECTOR* world_position,
 				break;
 			byte_4392C = 0;
 		}
-		if (track_abs(next_position.x) <= 0x78) {
+		if (absolute_word(next_position.x) <= 0x78) {
 			planindex = 2;
 			current_surf_type = (legacy_u8)surface_type;
 			if (byte_4392C != 0) {
@@ -702,7 +697,7 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 29: /* Pipe entrance. */
-		if (track_abs(next_position.x) >= 0x73 && absolute_x <= 0xA4) {
+		if (absolute_word(next_position.x) >= 0x73 && absolute_x <= 0xA4) {
 			wallHeight = 0x97;
 			wallindex = next_position.x <= 0 ? 0xA0 : 0x9F;
 			break;
@@ -749,7 +744,7 @@ void build_track_object(struct VECTOR* world_position,
 	case 30: /* Pipe. */
 		if (physical_model == 30)
 			value = 0;
-		if (track_abs(next_position.x) >= 0xA4 && absolute_x <= 0xA4) {
+		if (absolute_word(next_position.x) >= 0xA4 && absolute_x <= 0xA4) {
 			wallHeight = 0x97;
 			wallindex = next_position.x <= 0 ? 0x9C : 0x9B;
 			break;

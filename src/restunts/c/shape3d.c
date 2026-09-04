@@ -113,11 +113,6 @@ extern legacy_s8 backlights_paint_override;
 /* 14-bit fixed point: the inner radius is 37/64 of the outer radius. */
 #define WHEEL_INNER_RADIUS_SCALE 0x2500U
 
-static legacy_s16 shape3d_absolute_word(legacy_s16 value)
-{
-	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
-}
-
 static legacy_u16 shape3d_average_depth(legacy_s32 sum,
 	legacy_u16 vertex_count)
 {
@@ -297,9 +292,9 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		mat_mul_vector(&var_vec2, &var_mat, &var_vec3);
 		if ((var_vec3.y <= 0 || arg_transshapeptr->pos.y >= 0) &&
 			(LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
-				shape3d_absolute_word(var_vec.x) ||
+				absolute_word(var_vec.x) ||
 			LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
-				shape3d_absolute_word(var_vec.z))) {
+				absolute_word(var_vec.z))) {
 			byte_4393D = vector_op_unk2(&var_vec3);
 			var_45C = invpow2tbl[byte_4393D];
 			var_A = invpow2tbl[byte_4393D];
@@ -358,7 +353,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	if (i == transshapenumvertscopy &&
 		(var_460 != 0 || var_1A == 0 ||
 		LEGACY_S16_FROM_BITS(arg_transshapeptr->unk) <
-			shape3d_absolute_word(var_vec.x))) {
+			absolute_word(var_vec.x))) {
 		return (legacy_u16)-1;
 	}
 

@@ -41,18 +41,13 @@ static legacy_s8 gear_change_delay(legacy_u16 frame_rate)
 		(legacy_u8)half_rate, (legacy_u8)frame_rate));
 }
 
-static legacy_s16 car_absolute_word(legacy_s16 value)
-{
-	return value < 0 ? LEGACY_S16_WRAP_NEGATE(value) : value;
-}
-
 static legacy_s16 move_gear_knob_toward(legacy_s16 current,
 	legacy_s16 target, legacy_s16 step)
 {
 	legacy_s16 difference;
 
 	difference = LEGACY_S16_WRAP_SUB(target, current);
-	if (car_absolute_word(difference) <= step)
+	if (absolute_word(difference) <= step)
 		return target;
 	if (difference > 0)
 		return LEGACY_S16_WRAP_ADD(current, step);
@@ -254,7 +249,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	if (arg_carState->car_sumSurfRearWheels == 0) {
 		arg_carState->car_speed = var_updatedSpeed;
 	} else {
-		var_4 = car_absolute_word(LEGACY_S16_WRAP_SUB(
+		var_4 = absolute_word(LEGACY_S16_WRAP_SUB(
 			arg_carState->car_speed2, var_updatedSpeed));
 		if (var_4 > 0x1400) {
 			arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
