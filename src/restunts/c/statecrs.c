@@ -18,6 +18,18 @@ extern legacy_s16 audio_player_engine_channel;
 extern legacy_s8 audio_car_state_ready;
 extern legacy_s16 audio_opponent_engine_channel;
 
+#ifndef RESTUNTS_HEADLESS
+static void stop_car_engine_audio(legacy_s16 player_flag) {
+	if (is_in_replay != 0 || audio_car_state_ready == 0)
+		return;
+
+	if (player_flag == 0)
+		audio_function2_wrap(audio_player_engine_channel);
+	else
+		audio_function2_wrap(audio_opponent_engine_channel);
+}
+#endif
+
 void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 energy_offset_arg) {
 	legacy_s16 kind;
 	legacy_s16 base_angle;
@@ -186,23 +198,13 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 				LEGACY_U16_SHL(framespersec, 2U));
 		}
 #ifndef RESTUNTS_HEADLESS
-		if (is_in_replay == 0 && audio_car_state_ready != 0) {
-			if (arg_MplayerFlag == 0)
-				audio_function2_wrap(audio_player_engine_channel);
-			else
-				audio_function2_wrap(audio_opponent_engine_channel);
-		}
+		stop_car_engine_audio(arg_MplayerFlag);
 #endif
 		break;
 
 	case 2:
 #ifndef RESTUNTS_HEADLESS
-		if (is_in_replay == 0 && audio_car_state_ready != 0) {
-			if (arg_MplayerFlag == 0)
-				audio_function2_wrap(audio_player_engine_channel);
-			else
-				audio_function2_wrap(audio_opponent_engine_channel);
-		}
+		stop_car_engine_audio(arg_MplayerFlag);
 #endif
 		var_cState->car_crashBmpFlag = 2;
 		var_2 = 1;
