@@ -569,6 +569,15 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	} while (channel <= last);
 }
 
+static void audio_clear_driver_context(struct AUDIO_CONTEXT* context)
+{
+	context->channel = 0xFFU;
+	context->state = 0;
+	context->priority = 0;
+	context->resource.offset = 0;
+	context->resource.segment = 0;
+}
+
 void audio_reset_channels(void)
 {
 	struct AUDIO_CONTEXT* context;
@@ -580,11 +589,7 @@ void audio_reset_channels(void)
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		dos_audio_driver_release_channel((legacy_s16)context_index);
-		context->channel = 0xFFU;
-		context->state = 0;
-		context->priority = 0;
-		context->resource.offset = 0;
-		context->resource.segment = 0;
+		audio_clear_driver_context(context);
 		context->driver_channel = 0xFFU;
 		context++;
 	}
@@ -592,16 +597,6 @@ void audio_reset_channels(void)
 	dos_audio_driver_start();
 	audio_update_lock = 0;
 }
-
-static void audio_clear_driver_context(struct AUDIO_CONTEXT* context)
-{
-	context->channel = 0xFFU;
-	context->state = 0;
-	context->priority = 0;
-	context->resource.offset = 0;
-	context->resource.segment = 0;
-}
-
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel)
 {
