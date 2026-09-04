@@ -172,6 +172,19 @@ static struct HIGHCHUNK* highpool_free_slot(void) {
 	return 0;
 }
 
+static void highpool_set_name(struct HIGHCHUNK* chunk,
+	const legacy_s8* name) {
+	legacy_s16 i;
+
+	for (i = 0; i < 12; i++) {
+		chunk->resname[i] = name[i];
+		if (name[i] == 0)
+			break;
+	}
+	for (; i < 12; i++)
+		chunk->resname[i] = 0;
+}
+
 legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	legacy_s16 i, j;
 	const legacy_s8* entry;
@@ -290,7 +303,7 @@ static struct HIGHCHUNK* highpool_reserved_window(void) {
 void highpool_reserve_window(void) {
 	struct HIGHCHUNK* slot;
 	legacy_u16 seg;
-	legacy_s16 i, b;
+	legacy_s16 b;
 
 	slot = highpool_free_slot();
 	if (slot == 0)
@@ -299,14 +312,7 @@ void highpool_reserve_window(void) {
 	for (b = 0; b < highblockcount; b++) {
 		seg = highpool_find_gap(&highblocks[b], HIGHPOOL_WINDOW_PARAS, 0);
 		if (seg != 0) {
-			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
-			for (i = 0; i < 12; i++) {
-				slot->resname[i] = nm[i];
-				if (nm[i] == 0)
-					break;
-			}
-			for (; i < 12; i++)
-				slot->resname[i] = 0;
+			highpool_set_name(slot, HIGHPOOL_WINDOW_NAME);
 			slot->resseg = seg;
 			slot->resparas = HIGHPOOL_WINDOW_PARAS;
 			slot->resstate = 3;
@@ -375,13 +381,7 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 
 	for (; b < highblockcount; b++) {
 		if (seg != 0) {
-			for (i = 0; i < 12; i++) {
-				slot->resname[i] = name[i];
-				if (name[i] == 0)
-					break;
-			}
-			for (; i < 12; i++)
-				slot->resname[i] = 0;
+			highpool_set_name(slot, name);
 			slot->resseg = seg;
 			slot->resparas = paras;
 			slot->resstate = 2;
