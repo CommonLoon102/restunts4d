@@ -294,9 +294,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		carstate->car_36MwhlAngle);
 	adjusted_angle = initial_angle;
 	speed_shr8 = (legacy_u16)(carstate->car_speed >> 8);
-	absolute_angle = adjusted_angle;
-	if (absolute_angle < 0)
-		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
+	absolute_angle = absolute_word(adjusted_angle);
 	angle_factor = LEGACY_S16_SAR(absolute_angle, 3U);
 	square_low = LEGACY_U16_WRAP_MUL(speed_shr8, speed_shr8);
 	square_low = (legacy_u16)(square_low >> 6);

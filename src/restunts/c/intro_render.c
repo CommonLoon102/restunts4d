@@ -230,10 +230,7 @@ legacy_s8 setup_intro(void)
 				camera_y = LEGACY_S16_WRAP_ADD(camera_y, 0x14);
 				camera_z = LEGACY_S16_WRAP_SUB(camera_z, 5);
 				difference = LEGACY_S16_WRAP_SUB(camera_x, 0x400);
-				absolute_difference = difference;
-				if (absolute_difference < 0)
-					absolute_difference = LEGACY_S16_WRAP_NEGATE(
-						absolute_difference);
+				absolute_difference = absolute_word(difference);
 				if (absolute_difference < 10)
 					camera_x = 0x400;
 				else if (difference > 0)
