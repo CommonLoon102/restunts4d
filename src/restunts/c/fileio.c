@@ -173,6 +173,12 @@ const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* na
 	return file_find(path);
 }
 
+// Round a byte count up to the number of whole 16-byte paragraphs holding it.
+static legacy_u16 file_bytes_to_paras(legacy_s32 length)
+{
+	return (legacy_u16)((length >> 4) + (length & 0xF ? 1 : 0));
+}
+
 // Get number of 16-byte blocks needed to store entire file.
 legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
@@ -185,7 +191,7 @@ legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 
 		if (!fileio_error()) {
 			// May overflow, but all Stunts files are rather small.
-			return (length >> 4) + (length & 0xF ? 1 : 0);
+			return file_bytes_to_paras(length);
 		}
 	}
 
@@ -221,7 +227,7 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 			length = (legacy_s32)LEGACY_READ_U16_LE(
 				header + COMPR_SIZE_LOW_OFFSET) |
 				((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] << 16);
-			return (length >> 4) + (length & 0xF ? 1 : 0);
+			return file_bytes_to_paras(length);
 		}
 	}
 
@@ -471,7 +477,7 @@ static void far* file_relocate_decomp_output(void far* destination,
 	legacy_u16 paras;
 	void far* source;
 
-	paras = (legacy_u16)((length >> 4) + ((length & 0xFU) != 0));
+	paras = file_bytes_to_paras((legacy_s32)length);
 	source = dos_memory_make_pointer(
 		decompparas - paras + dos_memory_pointer_segment(destination),
 		dos_memory_pointer_offset(destination));
