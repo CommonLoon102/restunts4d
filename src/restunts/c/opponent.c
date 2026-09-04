@@ -621,17 +621,11 @@ legacy_s16 sub_18D60(
 			second_point.y, hillHeightConsts[1]);
 	}
 
-	if (((legacy_u8)track_object->ss_multiTileFlag & 1U) != 0)
-		base_position = (legacy_s16)trackpos[row];
-	else
-		base_position = (legacy_s16)trackcenterpos[row];
+	base_position = track_object_base_z(track_object, row);
 	first_point.z = LEGACY_S16_WRAP_ADD(first_point.z, base_position);
 	second_point.z = LEGACY_S16_WRAP_ADD(second_point.z, base_position);
 
-	if (((legacy_u8)track_object->ss_multiTileFlag & 2U) != 0)
-		base_position = (legacy_s16)trackpos2[column + 1];
-	else
-		base_position = (legacy_s16)trackcenterpos2[column];
+	base_position = track_object_base_x(track_object, column);
 	first_point.x = LEGACY_S16_WRAP_ADD(first_point.x, base_position);
 	second_point.x = LEGACY_S16_WRAP_ADD(second_point.x, base_position);
 

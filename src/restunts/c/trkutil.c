@@ -1,5 +1,21 @@
 #include "externs.h"
 
+legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
+	legacy_u8 column)
+{
+	if (((legacy_u8)track_object->ss_multiTileFlag & 2U) != 0)
+		return trackpos2[column + 1U];
+	return trackcenterpos2[column];
+}
+
+legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
+	legacy_u8 row)
+{
+	if (((legacy_u8)track_object->ss_multiTileFlag & 1U) != 0)
+		return trackpos[row];
+	return trackcenterpos[row];
+}
+
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 {
 	switch (terrain) {

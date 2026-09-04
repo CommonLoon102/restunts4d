@@ -120,6 +120,10 @@ extern legacy_s16 video_flag3_isFFFF;
 extern legacy_s16 video_flag4_is1;
 extern legacy_s16 video_flag5_is0;
 extern legacy_s16 video_flag6_is1;
+legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
+	legacy_u8 column);
+legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
+	legacy_u8 row);
 
 extern legacy_u8 byte_44A8A;
 extern legacy_u8 byte_4552F;

@@ -519,20 +519,12 @@ legacy_s16 track_setup(void)
 			camera_index = (legacy_s16)byte_45635;
 			td10_track_check_rel[camera_index * 3 + 1] =
 				camera_vector.y;
-			if (((legacy_u8)previous_track_object->ss_multiTileFlag &
-				1U) != 0)
-				base_position = (legacy_s16)trackpos[previous_row];
-			else
-				base_position = (legacy_s16)trackcenterpos[previous_row];
+			base_position = track_object_base_z(
+				previous_track_object, (legacy_u8)previous_row);
 			td10_track_check_rel[camera_index * 3 + 2] =
 				LEGACY_S16_WRAP_ADD(camera_vector.z, base_position);
-			if (((legacy_u8)previous_track_object->ss_multiTileFlag &
-				2U) != 0)
-				base_position = (legacy_s16)
-					trackpos2[(legacy_u8)previous_column + 1U];
-			else
-				base_position = (legacy_s16)
-					trackcenterpos2[previous_column];
+			base_position = track_object_base_x(
+				previous_track_object, (legacy_u8)previous_column);
 			td10_track_check_rel[camera_index * 3] =
 				LEGACY_S16_WRAP_ADD(camera_vector.x, base_position);
 			trackdata19[trackrows[previous_row] + previous_column] =
@@ -671,16 +663,12 @@ legacy_s16 track_setup(void)
 		camera_unknown[camera_index] = 0;
 		trackdata9[camera_index * 3 + 1] = LEGACY_S16_WRAP_ADD(
 			camera_height[camera_index], camera_vector.y);
-		if (((legacy_u8)track_object->ss_multiTileFlag & 1U) != 0)
-			base_position = (legacy_s16)trackpos[row];
-		else
-			base_position = (legacy_s16)trackcenterpos[row];
+		base_position = track_object_base_z(
+			track_object, (legacy_u8)row);
 		trackdata9[camera_index * 3 + 2] = LEGACY_S16_WRAP_ADD(
 			base_position, camera_vector.z);
-		if (((legacy_u8)track_object->ss_multiTileFlag & 2U) != 0)
-			base_position = (legacy_s16)trackpos2[(legacy_u8)column + 1U];
-		else
-			base_position = (legacy_s16)trackcenterpos2[column];
+		base_position = track_object_base_x(
+			track_object, (legacy_u8)column);
 		trackdata9[camera_index * 3] = LEGACY_S16_WRAP_ADD(
 			base_position, camera_vector.x);
 		camera_index = LEGACY_S16_WRAP_ADD(camera_index, 1);

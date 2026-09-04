@@ -151,15 +151,13 @@ void draw_track_preview(void)
 			track_object = &trkObjectList[track];
 			track_position.x = track_preview_half(
 				LEGACY_S16_WRAP_SUB(
-					(track_object->ss_multiTileFlag & 2U) != 0 ?
-					trackpos2[column + 1U] : trackcenterpos2[column],
+					track_object_base_x(track_object, column),
 					camera_x));
 			track_position.y = track_preview_half(
 				LEGACY_S16_WRAP_SUB(terrain_height, camera_y));
 			track_position.z = track_preview_half(
 				LEGACY_S16_WRAP_SUB(
-					(track_object->ss_multiTileFlag & 1U) != 0 ?
-					trackpos[row] : trackcenterpos[row], camera_z));
+					track_object_base_z(track_object, row), camera_z));
 
 			if (terrain_height != 0) {
 				switch (track_object->ss_multiTileFlag) {
