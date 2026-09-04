@@ -1316,32 +1316,26 @@ legacy_s16 sub_37868(legacy_s16 value)
 
 void audio_fade_out(legacy_s16 delay_ticks)
 {
+	legacy_u8 uses_direct_channels;
 	legacy_s16 volume;
 	legacy_u32 delay;
 
 	delay = (legacy_u32)(legacy_s32)delay_ticks;
-	if (dos_audio_uses_direct_channels != 0) {
-		volume = 0x64;
-		do {
-			audio_update_lock = 1;
+	uses_direct_channels = dos_audio_uses_direct_channels;
+	volume = uses_direct_channels != 0 ? 0x64 : audio_music_rate;
+	while (volume > 0) {
+		audio_update_lock = 1;
+		if (uses_direct_channels != 0) {
 			dos_audio_master_volume = (legacy_u8)volume;
 			dos_audio_driver_set_master_state(
 				4, (void far*)dos_audio_master_state);
-			audio_update_lock = 0;
-			timer_copy_counter(delay);
-			timer_wait_for_dx();
-			volume = LEGACY_S16_WRAP_SUB(volume, 2);
-		} while (volume > 0);
-	} else {
-		volume = audio_music_rate;
-		while (volume > 0) {
-			audio_update_lock = 1;
+		} else {
 			sub_37868(volume);
-			audio_update_lock = 0;
-			timer_copy_counter(delay);
-			timer_wait_for_dx();
-			volume = LEGACY_S16_WRAP_SUB(volume, 2);
 		}
+		audio_update_lock = 0;
+		timer_copy_counter(delay);
+		timer_wait_for_dx();
+		volume = LEGACY_S16_WRAP_SUB(volume, 2);
 	}
 
 	sub_3736A();
