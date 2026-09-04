@@ -124,6 +124,7 @@ legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
 	legacy_u8 column);
 legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
 	legacy_u8 row);
+void opponent_route_advance(legacy_s16 route_point);
 
 extern legacy_u8 byte_44A8A;
 extern legacy_u8 byte_4552F;

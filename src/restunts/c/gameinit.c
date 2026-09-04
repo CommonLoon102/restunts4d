@@ -238,15 +238,7 @@ void init_game_state(legacy_s16 arg)
 
 		if (gameconfig.game_opponenttype && arg != -2) {
 			route_point = (legacy_u8)state.opponentstate.field_CE;
-			route_table_offset = LEGACY_U16_WRAP_MUL(
-				state.opponentstate.car_trackdata3_index, 2U);
-			route_track_index = LEGACY_READ_S16_LE(
-				(const legacy_u8 far*)trackdata3 + route_table_offset);
-			sub_18D60(
-				route_track_index,
-				&state.opponentstate.car_vec_unk3,
-				(legacy_s16)route_point,
-				&state.field_3F9);
+			opponent_route_advance((legacy_s16)route_point);
 			state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
 				route_point, 1);
 		}

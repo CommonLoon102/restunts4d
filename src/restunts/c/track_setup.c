@@ -761,13 +761,5 @@ void init_plantrak(void) {
 
 	route_index = (legacy_u8)state.opponentstate.field_CE;
 	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(route_index, 1);
-	route_table_offset = LEGACY_U16_WRAP_MUL(
-		state.opponentstate.car_trackdata3_index, 2U);
-	route_track_index = LEGACY_READ_S16_LE(
-		(const legacy_u8 far*)trackdata3 + route_table_offset);
-	sub_18D60(
-		route_track_index,
-		&state.opponentstate.car_vec_unk3,
-		(legacy_s16)route_index,
-		&state.field_3F9);
+	opponent_route_advance((legacy_s16)route_index);
 }

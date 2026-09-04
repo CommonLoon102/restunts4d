@@ -16,6 +16,22 @@ legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
 	return trackcenterpos[row];
 }
 
+/* Hand the opponent its next route point: the route index table in
+   trackdata3 is looked up through the car's current entry, and the route
+   walker is given that track piece. */
+void opponent_route_advance(legacy_s16 route_point)
+{
+	legacy_u16 route_table_offset;
+	legacy_s16 route_track_index;
+
+	route_table_offset = LEGACY_U16_WRAP_MUL(
+		state.opponentstate.car_trackdata3_index, 2U);
+	route_track_index = LEGACY_READ_S16_LE(
+		(const legacy_u8 far*)trackdata3 + route_table_offset);
+	sub_18D60(route_track_index, &state.opponentstate.car_vec_unk3,
+		route_point, &state.field_3F9);
+}
+
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 {
 	switch (terrain) {
