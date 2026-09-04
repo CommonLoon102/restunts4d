@@ -40,6 +40,21 @@ legacy_s16 wheel_pair_delta(legacy_s16 first, legacy_s16 second,
 		LEGACY_S16_WRAP_ADD(first, second), third), fourth);
 }
 
+/* Most physical models bring a fixed set of collision points with them. */
+struct COLLISION_MODEL {
+	legacy_s8 physical_model;
+	const struct VECTOR* points;
+	legacy_u16 count;
+};
+
+static const struct COLLISION_MODEL collision_models[5] = {
+	{ 0x12, unk_3E646, 8 },
+	{ 0x20, unk_3E682, 2 },
+	{ 0x21, unk_3E68E, 2 },
+	{ 0x22, unk_3E69A, 4 },
+	{ 0x23, unk_3E676, 2 }
+};
+
 /* A multi-tile element anchors its collision box on the shared tile edge
    rather than on the centre of the tile the car happens to be standing on. */
 static void collision_tile_center(legacy_u8 tile_element,
@@ -106,21 +121,15 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 		(physical_model >= 0x47 && physical_model <= 0x4A)) {
 		dependency_points = unk_3E640;
 		count = 1;
-	} else if (physical_model == 0x12) {
-		dependency_points = unk_3E646;
-		count = 8;
-	} else if (physical_model == 0x20) {
-		dependency_points = unk_3E682;
-		count = 2;
-	} else if (physical_model == 0x21) {
-		dependency_points = unk_3E68E;
-		count = 2;
-	} else if (physical_model == 0x22) {
-		dependency_points = unk_3E69A;
-		count = 4;
-	} else if (physical_model == 0x23) {
-		dependency_points = unk_3E676;
-		count = 2;
+	} else {
+		for (index = 0U; index < 5U; index++) {
+			if (collision_models[index].physical_model ==
+				physical_model) {
+				dependency_points = collision_models[index].points;
+				count = collision_models[index].count;
+				break;
+			}
+		}
 	}
 	if (count == 0)
 		return 0;
