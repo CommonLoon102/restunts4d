@@ -23,6 +23,14 @@ legacy_s8 mouse_background_dirty;
 static legacy_s8 mouse_transparent_mode;
 static legacy_u8 h_key_toggle;
 static legacy_s16 input_elapsed_frames;
+
+/* A control that has not changed still fires again once its 20-frame repeat
+   delay has elapsed. */
+static legacy_s16 input_repeat_due(legacy_s16 repeat_at)
+{
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(repeat_at, 20U)) <
+		LEGACY_S16_FROM_BITS(input_elapsed_frames);
+}
 static legacy_s16 input_mouse_repeat_at;
 static legacy_s16 input_joystick_repeat_at;
 static legacy_s16 input_mouse_idle_frames;
@@ -330,9 +338,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		input_joystick_flags = current_joy_flags;
 		changed_or_repeating = 1;
 	} else if (current_joy_flags != 0 &&
-		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
-			input_joystick_repeat_at, 20U)) <
-		LEGACY_S16_FROM_BITS(input_elapsed_frames)) {
+		input_repeat_due(input_joystick_repeat_at)) {
 		changed_or_repeating = 1;
 	}
 
@@ -385,9 +391,7 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 			input_mouse_previous_buttons = mouse_butstate;
 			changed_or_repeating = 1;
 		} else if (mouse_butstate != 0 &&
-			LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
-				input_mouse_repeat_at, 20U)) <
-			LEGACY_S16_FROM_BITS(input_elapsed_frames)) {
+			input_repeat_due(input_mouse_repeat_at)) {
 			changed_or_repeating = 1;
 		}
 
