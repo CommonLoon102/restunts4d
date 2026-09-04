@@ -16,6 +16,22 @@ static legacy_s32 track_coordinate_to_world(legacy_s16 base,
 	return LEGACY_S32_SHL((legacy_s32)coordinate, 6U);
 }
 
+static void calculate_car_start_offset(legacy_s16 track_direction,
+	legacy_s16 side_direction, legacy_s16* column_offset,
+	legacy_s16* row_offset)
+{
+	*column_offset = LEGACY_S16_WRAP_ADD(
+		multiply_and_scale(sin_fast(angle_with_offset(
+			track_direction, 0x200)), 210),
+		multiply_and_scale(sin_fast(angle_with_offset(
+			track_direction, side_direction)), 36));
+	*row_offset = LEGACY_S16_WRAP_ADD(
+		multiply_and_scale(cos_fast(angle_with_offset(
+			track_direction, 0x200)), 210),
+		multiply_and_scale(cos_fast(angle_with_offset(
+			track_direction, side_direction)), 36));
+}
+
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
 	legacy_s32 posZ, legacy_s16 track_angle)
@@ -165,16 +181,7 @@ void init_game_state(legacy_s16 arg)
 		state.game_topSpeed = 0;
 		state.game_jumpCount = 0;
 
-		tmpcol = LEGACY_S16_WRAP_ADD(
-			multiply_and_scale(sin_fast(angle_with_offset(
-				track_angle, 0x200)), 210),
-			multiply_and_scale(sin_fast(angle_with_offset(
-				track_angle, 0x100)), 36));
-		tmprow = LEGACY_S16_WRAP_ADD(
-			multiply_and_scale(cos_fast(angle_with_offset(
-				track_angle, 0x200)), 210),
-			multiply_and_scale(cos_fast(angle_with_offset(
-				track_angle, 0x100)), 36));
+		calculate_car_start_offset(track_angle, 0x100, &tmpcol, &tmprow);
 
 		init_carstate_from_simd(
 			&state.playerstate,
@@ -208,16 +215,7 @@ void init_game_state(legacy_s16 arg)
 				route_point, 1);
 		}
 
-		tmpcol = LEGACY_S16_WRAP_ADD(
-			multiply_and_scale(sin_fast(angle_with_offset(
-				track_angle, 0x200)), 210),
-			multiply_and_scale(sin_fast(angle_with_offset(
-				track_angle, 0x300)), 36));
-		tmprow = LEGACY_S16_WRAP_ADD(
-			multiply_and_scale(cos_fast(angle_with_offset(
-				track_angle, 0x200)), 210),
-			multiply_and_scale(cos_fast(angle_with_offset(
-				track_angle, 0x300)), 36));
+		calculate_car_start_offset(track_angle, 0x300, &tmpcol, &tmprow);
 
 		init_carstate_from_simd(
 			&state.opponentstate,
