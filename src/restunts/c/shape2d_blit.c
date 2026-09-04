@@ -102,8 +102,8 @@ static void shape2d_render_rle_at_anchor(struct SHAPE2D far* shape,
 	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
 	shape2d_render_rle(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)),
+		shape2d_anchored_x(shape, x),
+		shape2d_anchored_y(shape, y),
 		operation);
 }
 
@@ -593,8 +593,8 @@ void shape2d_op_unk3(struct SHAPE2D far* shape)
 void nopsub_33E90(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle_clipped(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)));
+		shape2d_anchored_x(shape, x),
+		shape2d_anchored_y(shape, y));
 }
 
 static void sprite_putimage_at(struct SHAPE2D far* shape,
@@ -649,8 +649,8 @@ static void sprite_putimage_at_anchor(struct SHAPE2D far* shape,
 	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
 	sprite_putimage_at(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)),
+		shape2d_anchored_x(shape, x),
+		shape2d_anchored_y(shape, y),
 		operation);
 }
 

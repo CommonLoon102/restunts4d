@@ -42,6 +42,8 @@ legacy_u16 shape2d_get_unk1(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape);
 legacy_u16 shape2d_get_pos_y(const struct SHAPE2D far* shape);
+legacy_u16 shape2d_anchored_x(const struct SHAPE2D far* shape, legacy_s16 x);
+legacy_u16 shape2d_anchored_y(const struct SHAPE2D far* shape, legacy_s16 y);
 
 /* SPRITE contains both 16-bit near and far pointers. */
 #if defined(__BORLANDC__)

@@ -46,6 +46,18 @@ legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape)
 		SHAPE2D_UNK2_OFFSET);
 }
 
+/* An anchored draw puts the sprite's stored anchor point on (x, y), so the
+   blit origin is the requested point minus that anchor. */
+legacy_u16 shape2d_anchored_x(const struct SHAPE2D far* shape, legacy_s16 x)
+{
+	return LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape));
+}
+
+legacy_u16 shape2d_anchored_y(const struct SHAPE2D far* shape, legacy_s16 y)
+{
+	return LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape));
+}
+
 legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape)
 {
 	return shape2d_get_word((const legacy_u8 far*)shape +
@@ -741,8 +753,8 @@ void sprite_clear_shape(struct SHAPE2D far* shape)
 void nopsub_34736(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_clear_shape_impl(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)));
+		shape2d_anchored_x(shape, x),
+		shape2d_anchored_y(shape, y));
 }
 
 static legacy_u16 shape2d_scaled_anchor(legacy_u16 anchor,
@@ -984,8 +996,8 @@ static void sprite_shape_to_1_at_anchor(struct SHAPE2D far* shape,
 	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
 {
 	sprite_shape_to_1_impl(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape)),
+		shape2d_anchored_x(shape, x),
+		shape2d_anchored_y(shape, y),
 		operation);
 }
 
