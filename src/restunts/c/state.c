@@ -1,5 +1,24 @@
 #include "state_internal.h"
 
+/* Vector from the player's car to its current route point. A y of -1 marks
+   a route point with no height of its own: the route search still measures
+   the drop to the car, the steering hint treats the point as level. */
+static void route_point_delta(struct VECTOR* delta, legacy_s16 level)
+{
+	*delta = state.playerstate.car_vec_unk3;
+	delta->x = LEGACY_S16_WRAP_SUB(delta->x,
+		position_to_word(state.playerstate.car_posWorld1.lx));
+	if (delta->y == -1) {
+		delta->y = level ? 0 : LEGACY_S16_WRAP_NEGATE(
+			position_to_word(state.playerstate.car_posWorld1.ly));
+	} else {
+		delta->y = LEGACY_S16_WRAP_SUB(delta->y,
+			position_to_word(state.playerstate.car_posWorld1.ly));
+	}
+	delta->z = LEGACY_S16_WRAP_SUB(delta->z,
+		position_to_word(state.playerstate.car_posWorld1.lz));
+}
+
 void player_op(legacy_s8 arg_carInputByte) {
 	struct VECTOR var_38;
 	struct VECTOR var_32;
@@ -187,22 +206,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
 						var_2, &state.playerstate.car_vec_unk3,
 						(legacy_s16)(legacy_u8)var_2C, 0));
-					var_28 = state.playerstate.car_vec_unk3;
-					var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
-						position_to_word(
-							state.playerstate.car_posWorld1.lx));
-					if (var_28.y == -1) {
-						var_28.y = LEGACY_S16_WRAP_NEGATE(
-							position_to_word(
-								state.playerstate.car_posWorld1.ly));
-					} else {
-						var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
-							position_to_word(
-								state.playerstate.car_posWorld1.ly));
-					}
-					var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
-						position_to_word(
-							state.playerstate.car_posWorld1.lz));
+					route_point_delta(&var_28, 0);
 					mat_mul_vector(&var_28, var_matptr, &var_38);
 					if (var_2C == 0 ||
 						(var_38.z < var_32.z && var_38.z > 0)) {
@@ -263,17 +267,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		if (guidance_required != 0 &&
 			state.playerstate.car_trackdata3_index != -1 &&
 			state.field_45B == 0) {
-			var_28 = state.playerstate.car_vec_unk3;
-			var_28.x = LEGACY_S16_WRAP_SUB(var_28.x,
-				position_to_word(state.playerstate.car_posWorld1.lx));
-			if (var_28.y == -1) {
-				var_28.y = 0;
-			} else {
-				var_28.y = LEGACY_S16_WRAP_SUB(var_28.y,
-					position_to_word(state.playerstate.car_posWorld1.ly));
-			}
-			var_28.z = LEGACY_S16_WRAP_SUB(var_28.z,
-				position_to_word(state.playerstate.car_posWorld1.lz));
+			route_point_delta(&var_28, 1);
 			var_matptr = mat_rot_zxy(
 				state.playerstate.car_rotate.z,
 				state.playerstate.car_rotate.y,
