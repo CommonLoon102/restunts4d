@@ -137,6 +137,16 @@ void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, leg
 		previous_point_count, &previous_rect, shape_rect, combined_rect);
 }
 
+/* Creep one unit towards the wanted value, and stop once it is reached. */
+static legacy_s16 intro_step_towards(legacy_s16 value, legacy_s16 target)
+{
+	if (value > target)
+		return LEGACY_S16_WRAP_SUB(value, 1);
+	if (value < target)
+		return LEGACY_S16_WRAP_ADD(value, 1);
+	return value;
+}
+
 legacy_s8 setup_intro(void)
 {
 	legacy_s8 far* title_resource;
@@ -238,14 +248,8 @@ legacy_s8 setup_intro(void)
 				else if (difference < 0)
 					camera_x = LEGACY_S16_WRAP_ADD(camera_x, 10);
 
-				if (target_x > 0x400)
-					target_x = LEGACY_S16_WRAP_SUB(target_x, 1);
-				else if (target_x < 0x400)
-					target_x = LEGACY_S16_WRAP_ADD(target_x, 1);
-				if (target_z > 0x400)
-					target_z = LEGACY_S16_WRAP_SUB(target_z, 1);
-				else if (target_z < 0x400)
-					target_z = LEGACY_S16_WRAP_ADD(target_z, 1);
+				target_x = intro_step_towards(target_x, 0x400);
+				target_z = intro_step_towards(target_z, 0x400);
 			}
 		}
 
