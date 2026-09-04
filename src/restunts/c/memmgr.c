@@ -185,16 +185,14 @@ static void highpool_set_name(struct HIGHCHUNK* chunk,
 		chunk->resname[i] = 0;
 }
 
-#define MMGR_COMPARE_NAME(index, wanted, stored, on_match) \
-	for (; (index) < 12; (index)++) { \
-		if ((wanted)[index] == 0) { \
-			if ((stored)[index] == '.' || (stored)[index] == 0) \
-				on_match; \
-			break; \
-		} \
-		if ((wanted)[index] != (stored)[index]) \
-			break; \
-	}
+#define MMGR_COMPARE_NAME_CHARACTER(index, wanted, stored, on_match) \
+	if ((wanted)[index] == 0) { \
+		if ((stored)[index] == '.' || (stored)[index] == 0) \
+			on_match; \
+		break; \
+	} \
+	if ((wanted)[index] != (stored)[index]) \
+		break
 
 legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	legacy_s16 i, j;
@@ -413,8 +411,10 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 		if (chunk->resstate != 1)
 			continue;
 		found = 0;
-		j = 0;
-		MMGR_COMPARE_NAME(j, name, chunk->resname, found = 1);
+		for (j = 0; j < 12; j++) {
+			MMGR_COMPARE_NAME_CHARACTER(
+				j, name, chunk->resname, found = 1);
+		}
 		if (j == 12)
 			found = 1;
 		if (found) {
@@ -741,8 +741,11 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 			return 0;
 		}
 
-		MMGR_COMPARE_NAME(regbx, pcdi, ressi->resname, found = 1);
-		if (regbx == 12 || found == 1) {
+		for (; regbx < 0xC; regbx++) {
+			MMGR_COMPARE_NAME_CHARACTER(
+				regbx, pcdi, ressi->resname, found = 1);
+		}
+		if (regbx == 0xC || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
 			srcofs = ressi->resofs;
 			srcsize = ressi->ressize;
@@ -782,8 +785,10 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 	while (chunk < resendptr2) {
 		if (chunk->resunk == 0)
 			return 0;
-		i = 0;
-		MMGR_COMPARE_NAME(i, wanted, chunk->resname, return 1);
+		for (i = 0; i < 12; i++) {
+			MMGR_COMPARE_NAME_CHARACTER(
+				i, wanted, chunk->resname, return 1);
+		}
 		if (i == 12)
 			return 1;
 		chunk++;
