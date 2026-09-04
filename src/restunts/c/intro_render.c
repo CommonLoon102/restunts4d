@@ -18,6 +18,24 @@ static legacy_s16 intro_shift_position(legacy_s32 position,
 	return LEGACY_S16_WRAP_SUB((legacy_u16)bits, camera);
 }
 
+static void intro_draw_transformed_shape(
+	struct TRANSFORMEDSHAPE3D* transformed,
+	struct RECTANGLE* shape_rect, legacy_s16 rotation_z)
+{
+	if (slow_video_mgmt_copy != 0) {
+		transformed->rectptr = shape_rect;
+		transformed->ts_flags = 0x0C;
+	} else {
+		transformed->ts_flags = 4;
+	}
+	transformed->rotvec.x = 0;
+	transformed->rotvec.y = 0;
+	transformed->rotvec.z = rotation_z;
+	transformed->unk = 0x400;
+	transformed->material = 0;
+	transformed_shape_op(transformed);
+}
+
 static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
 	legacy_s16 rotate_y,
 	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
@@ -42,18 +60,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	transformed.pos.x = LEGACY_S16_WRAP_SUB(0x400, camera_x);
 	transformed.pos.y = LEGACY_S16_WRAP_NEGATE(camera_y);
 	transformed.pos.z = LEGACY_S16_WRAP_SUB(0x400, camera_z);
-	if (slow_video_mgmt_copy != 0) {
-		transformed.rectptr = &current_shape_rect;
-		transformed.ts_flags = 0x0C;
-	} else {
-		transformed.ts_flags = 4;
-	}
-	transformed.rotvec.x = 0;
-	transformed.rotvec.y = 0;
-	transformed.rotvec.z = 0;
-	transformed.unk = 0x400;
-	transformed.material = 0;
-	transformed_shape_op(&transformed);
+	intro_draw_transformed_shape(&transformed, &current_shape_rect, 0);
 
 	if (draw_car != 0) {
 		transformed.pos.x = intro_shift_position(
@@ -66,19 +73,8 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 			(legacy_s32)state.opponentstate.car_posWorld1.lz,
 			(legacy_s16)camera_z);
 		transformed.shapeptr = &bravshape;
-		if (slow_video_mgmt_copy != 0) {
-			transformed.rectptr = &current_shape_rect;
-			transformed.ts_flags = 0x0C;
-		} else {
-			transformed.ts_flags = 4;
-		}
-		transformed.rotvec.x = 0;
-		transformed.rotvec.y = 0;
-		transformed.rotvec.z = LEGACY_S16_WRAP_NEGATE(
-			state.opponentstate.car_rotate.x);
-		transformed.unk = 0x400;
-		transformed.material = 0;
-		transformed_shape_op(&transformed);
+		intro_draw_transformed_shape(&transformed, &current_shape_rect,
+			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x));
 	}
 
 	if (slow_video_mgmt_copy != 0) {
