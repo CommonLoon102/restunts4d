@@ -704,6 +704,28 @@ static void generate_poly_edge_fill(legacy_s16* edges,
 	}
 }
 
+static void generate_poly_edge_padding(legacy_s16* edges,
+	const legacy_u16* setup, legacy_u16 count_index,
+	legacy_s16 boundary, legacy_s16 leading)
+{
+	legacy_s16 count;
+	legacy_s16 offset;
+
+	count = LEGACY_S16_FROM_BITS(setup[count_index]);
+	if (count <= 0)
+		return;
+	if (leading != 0) {
+		offset = LEGACY_S16_WRAP_SUB(
+			LEGACY_S16_FROM_BITS(setup[3]), count);
+		if (LEGACY_S16_FROM_BITS(setup[2]) < 0)
+			offset = LEGACY_S16_WRAP_ADD(offset, 1);
+	} else {
+		offset = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(setup[5]), 1);
+	}
+	generate_poly_edge_fill(edges, offset, count, boundary);
+}
+
 void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16 mode) {
 
 	legacy_s16 sprite1_sprite_left2 = sprite1.sprite_left2;
@@ -713,41 +735,14 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 	legacy_u32 temp;
 
 	if (mode != 1) {
-		count = LEGACY_S16_FROM_BITS(regsi[10]);
-		if (count > 0) {
-			ofs = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_FROM_BITS(regsi[3]), count);
-			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
-				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
-			generate_poly_edge_fill(var_18, ofs, count,
-				sprite1_sprite_left2);
-		}
-
-		count = LEGACY_S16_FROM_BITS(regsi[12]);
-		if (count > 0) {
-			ofs = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_FROM_BITS(regsi[3]), count);
-			if (LEGACY_S16_FROM_BITS(regsi[2]) < 0)
-				ofs = LEGACY_S16_WRAP_ADD(ofs, 1);
-			generate_poly_edge_fill(var_18, ofs, count,
-				sprite1_sprite_widthsum);
-		}
-
-		count = LEGACY_S16_FROM_BITS(regsi[11]);
-		if (count > 0) {
-			ofs = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_FROM_BITS(regsi[5]), 1);
-			generate_poly_edge_fill(var_18, ofs, count,
-				sprite1_sprite_left2);
-		}
-
-		count = LEGACY_S16_FROM_BITS(regsi[13]);
-		if (count > 0) {
-			ofs = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_FROM_BITS(regsi[5]), 1);
-			generate_poly_edge_fill(var_18, ofs, count,
-				sprite1_sprite_widthsum);
-		}
+		generate_poly_edge_padding(var_18, regsi, 10,
+			sprite1_sprite_left2, 1);
+		generate_poly_edge_padding(var_18, regsi, 12,
+			sprite1_sprite_widthsum, 1);
+		generate_poly_edge_padding(var_18, regsi, 11,
+			sprite1_sprite_left2, 0);
+		generate_poly_edge_padding(var_18, regsi, 13,
+			sprite1_sprite_widthsum, 0);
 	}
 
 	count = LEGACY_S16_FROM_BITS(regsi[7]);
