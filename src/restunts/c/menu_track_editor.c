@@ -370,7 +370,8 @@ static void track_editor_skip_previous_placeholders(legacy_u8 page,
 {
 	legacy_u8 tile;
 
-	while (track_editor_palette_tile(page, *row, *column) >= 0xFEU) {
+	while (*row < 6U &&
+		track_editor_palette_tile(page, *row, *column) >= 0xFEU) {
 		tile = track_editor_palette_tile(page, *row, *column);
 		if (tile == 0xFFU)
 			(*column)--;
