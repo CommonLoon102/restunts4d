@@ -501,10 +501,10 @@ static legacy_s16 replay_try_zoom(legacy_u16 input)
 			camera_track_height_offset = LEGACY_S16_WRAP_SUB(
 				camera_track_height_offset, 0x1E);
 		} else {
-			if (custom_camera_distance >= 0x5DC)
+			if (custom_camera.distance >= 0x5DC)
 				return 0;
-			custom_camera_distance = LEGACY_S16_WRAP_ADD(
-				custom_camera_distance, 0x1E);
+			custom_camera.distance = LEGACY_S16_WRAP_ADD(
+				custom_camera.distance, 0x1E);
 		}
 	} else {
 		if (cameramode == 3) {
@@ -513,10 +513,10 @@ static legacy_s16 replay_try_zoom(legacy_u16 input)
 			camera_track_height_offset = LEGACY_S16_WRAP_ADD(
 				camera_track_height_offset, 0x1E);
 		} else {
-			if (custom_camera_distance <= 0x78)
+			if (custom_camera.distance <= 0x78)
 				return 0;
-			custom_camera_distance = LEGACY_S16_WRAP_SUB(
-				custom_camera_distance, 0x1E);
+			custom_camera.distance = LEGACY_S16_WRAP_SUB(
+				custom_camera.distance, 0x1E);
 		}
 	}
 	return 1;
@@ -532,7 +532,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	legacy_u16 angle;
 	legacy_u8 hit;
 	legacy_u8 next_selection;
-	legacy_u8 custom_camera;
+	legacy_u8 custom_camera_active;
 
 	if (operation == 0) {
 		locate_many_resources((legacy_s8 far*)sdgameresptr,
@@ -625,34 +625,34 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		replay_controls_select(4);
 	replay_controls_draw(state.game_frame, state.game_frame);
 
-	custom_camera = 0;
+	custom_camera_active = 0;
 	if (kb_get_key_state(0x1D) != 0 ||
 		(byte_3E9DB == 8U && ((legacy_u8)input_combined_flags & 0x30U) != 0))
-		custom_camera = 1;
-	if (custom_camera != 0) {
+		custom_camera_active = 1;
+	if (custom_camera_active != 0) {
 		switch (input) {
 		case 0x4D00U:
-			custom_camera_azimuth_angle = LEGACY_S16_WRAP_ADD(
-				custom_camera_azimuth_angle, 0x10);
+			custom_camera.azimuth_angle = LEGACY_S16_WRAP_ADD(
+				custom_camera.azimuth_angle, 0x10);
 			return;
 		case 0x4B00U:
-			custom_camera_azimuth_angle = LEGACY_S16_WRAP_SUB(
-				custom_camera_azimuth_angle, 0x10);
+			custom_camera.azimuth_angle = LEGACY_S16_WRAP_SUB(
+				custom_camera.azimuth_angle, 0x10);
 			return;
 		case 0x4800U:
-			if (LEGACY_S16_WRAP_ADD(custom_camera_elevation_angle,
+			if (LEGACY_S16_WRAP_ADD(custom_camera.elevation_angle,
 				0x10) < 0x100) {
-				custom_camera_elevation_angle = LEGACY_S16_WRAP_ADD(
-					custom_camera_elevation_angle, 0x10);
+				custom_camera.elevation_angle = LEGACY_S16_WRAP_ADD(
+					custom_camera.elevation_angle, 0x10);
 				return;
 			}
 			input = 0;
 			break;
 		case 0x5000U:
-			if (LEGACY_S16_WRAP_SUB(custom_camera_elevation_angle,
+			if (LEGACY_S16_WRAP_SUB(custom_camera.elevation_angle,
 				0x10) > -0x100) {
-				custom_camera_elevation_angle = LEGACY_S16_WRAP_SUB(
-					custom_camera_elevation_angle, 0x10);
+				custom_camera.elevation_angle = LEGACY_S16_WRAP_SUB(
+					custom_camera.elevation_angle, 0x10);
 				return;
 			}
 			input = 0;

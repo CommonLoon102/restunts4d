@@ -24,9 +24,7 @@ struct RECTANGLE* rectptr_unk;
 struct RECTANGLE* rectptr_unk2;
 
 /* Camera, menu, and renderer constants. */
-legacy_s16 custom_camera_distance = 0x00D2;
-legacy_s16 custom_camera_azimuth_angle = 0x01D0;
-legacy_s16 custom_camera_elevation_angle = 0x0050;
+struct CUSTOM_CAMERA custom_camera = { 0x00D2, 0x0050, 0x01D0 };
 
 legacy_s16 menu_buttons_x1[5] = { 105, 66, 5, 190, 255 };
 legacy_s16 menu_buttons_x2[5] = { 208, 107, 67, 253, 312 };

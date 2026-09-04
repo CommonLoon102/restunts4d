@@ -120,6 +120,15 @@ extern legacy_s16 video_flag3_isFFFF;
 extern legacy_s16 video_flag4_is1;
 extern legacy_s16 video_flag5_is0;
 extern legacy_s16 video_flag6_is1;
+/* The free camera the player steers with the keypad in replay mode. */
+struct CUSTOM_CAMERA {
+	legacy_s16 distance;
+	legacy_s16 elevation_angle;
+	legacy_s16 azimuth_angle;
+};
+
+extern struct CUSTOM_CAMERA custom_camera;
+
 legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
 	legacy_u8 column);
 legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,

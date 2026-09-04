@@ -522,11 +522,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		offset_vector.x = 0;
 		offset_vector.y = 0;
-		offset_vector.z = custom_camera_distance;
+		offset_vector.z = custom_camera.distance;
 		car_rot_matrix = mat_rot_zxy(0,
-			LEGACY_S16_WRAP_NEGATE(custom_camera_elevation_angle),
+			LEGACY_S16_WRAP_NEGATE(custom_camera.elevation_angle),
 			LEGACY_S16_WRAP_SUB(polarAngle(car_to_cam_rotated.x,
-				car_to_cam_rotated.z), custom_camera_azimuth_angle), 0);
+				car_to_cam_rotated.z), custom_camera.azimuth_angle), 0);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
 		cam_pos.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
