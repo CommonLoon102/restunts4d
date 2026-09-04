@@ -686,7 +686,7 @@ void far* file_load_shape2d_nofatal(const legacy_s8* shapename) {
 }
 
 void far* file_load_shape2d_nofatal2(const legacy_s8* shapename) {
-	return file_load_shape2d(shapename, 0);
+	return file_load_shape2d_nofatal(shapename);
 }
 
 void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {

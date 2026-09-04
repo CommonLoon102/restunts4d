@@ -516,19 +516,11 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 }
 
 void skybox_op_helper(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D arg_vertlines[]) {
-	//return ported_skybox_op_helper_(arg_color, arg_vertlinecount, &arg_vertlines);
-
-	spritefunc = &draw_filled_lines;
-	imagefunc = &preRender_line;
-	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
+	preRender_default(arg_color, arg_vertlinecount, arg_vertlines);
 }
 
 void preRender_wheel_helper4(legacy_u16 arg_color, legacy_u16 arg_vertlinecount, struct POINT2D arg_vertlines[]) {
-	//return ported_preRender_wheel_helper4_(arg_color, arg_vertlinecount, &arg_vertlines);
-
-	spritefunc = &draw_filled_lines;
-	imagefunc = &preRender_line;
-	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 0);
+	preRender_default_alt(arg_color, arg_vertlinecount, arg_vertlines);
 }
 
 

@@ -249,11 +249,11 @@ void sprite_copy_2_to_1(void) {
 }
 
 void sprite_copy_2_to_1_2(void) {
-	sprite_set_1_from_argptr(&sprite2);
+	sprite_copy_2_to_1();
 }
 
 void sprite_copy_2_to_1_clear(void) {
-	sprite_set_1_from_argptr(&sprite2);
+	sprite_copy_2_to_1();
 	sprite_clear_1_color(0);
 }
 
@@ -262,7 +262,7 @@ void sprite_copy_wnd_to_1(void) {
 }
 
 void sprite_copy_wnd_to_1_clear(void) {
-	sprite_set_1_from_argptr(render_window_sprite);
+	sprite_copy_wnd_to_1();
 	sprite_clear_1_color(0);
 }
 
