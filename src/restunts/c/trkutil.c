@@ -32,52 +32,36 @@ void opponent_route_advance(legacy_s16 route_point)
 		route_point, &state.field_3F9);
 }
 
+/* Hill terrain 7..10 replaces a flat road piece with the sloped variant that
+   matches the hill. Each terrain row lists the road pieces it accepts: the
+   first three map one-to-one, the last three are the alternative spellings of
+   one and the same piece. */
+static const legacy_u8 hillroad_pieces[4][6] = {
+	{ 0x04, 0x0E, 0x18, 0x27, 0x3B, 0x62 },
+	{ 0x05, 0x0F, 0x19, 0x24, 0x38, 0x5F },
+	{ 0x04, 0x0E, 0x18, 0x26, 0x3A, 0x61 },
+	{ 0x05, 0x0F, 0x19, 0x25, 0x39, 0x60 }
+};
+
+static const legacy_u8 hillroad_shapes[4][4] = {
+	{ 0xB6, 0xBA, 0xBE, 0xC2 },
+	{ 0xB7, 0xBB, 0xBF, 0xC3 },
+	{ 0xB8, 0xBC, 0xC0, 0xC4 },
+	{ 0xB9, 0xBD, 0xC1, 0xC5 }
+};
+
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 {
-	switch (terrain) {
-	case 7:
-		switch (track) {
-		case 4: return 0xB6;
-		case 0x0E: return 0xBA;
-		case 0x18: return 0xBE;
-		case 0x27:
-		case 0x3B:
-		case 0x62: return 0xC2;
-		}
-		break;
+	legacy_u16 row;
+	legacy_u16 piece;
 
-	case 8:
-		switch (track) {
-		case 5: return 0xB7;
-		case 0x0F: return 0xBB;
-		case 0x19: return 0xBF;
-		case 0x24:
-		case 0x38:
-		case 0x5F: return 0xC3;
-		}
-		break;
+	if (terrain < 7U || terrain > 10U)
+		return 0;
 
-	case 9:
-		switch (track) {
-		case 4: return 0xB8;
-		case 0x0E: return 0xBC;
-		case 0x18: return 0xC0;
-		case 0x26:
-		case 0x3A:
-		case 0x61: return 0xC4;
-		}
-		break;
-
-	case 10:
-		switch (track) {
-		case 5: return 0xB9;
-		case 0x0F: return 0xBD;
-		case 0x19: return 0xC1;
-		case 0x25:
-		case 0x39:
-		case 0x60: return 0xC5;
-		}
-		break;
+	row = terrain - 7U;
+	for (piece = 0U; piece < 6U; piece++) {
+		if (hillroad_pieces[row][piece] == track)
+			return hillroad_shapes[row][piece < 3U ? piece : 3U];
 	}
 
 	return 0;
