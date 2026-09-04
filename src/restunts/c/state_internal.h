@@ -39,7 +39,6 @@ void update_player_state(struct CARSTATE* playerstate,
 	struct SIMD* playersimd, struct CARSTATE* opponentstate,
 	struct SIMD* opponentsimd, legacy_s16 is_opponent);
 
-legacy_s16 world_position_word(legacy_s32 position);
 struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset);
 void upd_statef20_from_steer_input(legacy_s8 steering_input);
 

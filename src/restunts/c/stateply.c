@@ -477,9 +477,9 @@ case PLAYER_FLOW_loc_151BA:
 
 case PLAYER_FLOW_loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
-	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
+	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
 
 	if (state.game_inputmode != 2)
 		{ physics_flow = PLAYER_FLOW_loc_15240; continue; }
@@ -511,10 +511,10 @@ case PLAYER_FLOW_loc_1527C:
 	vec_182.z = LEGACY_S16_WRAP_SUB(
 		arg_pState->car_whlWorldCrds1[var_wheelIndex].z, wallStartZ);
 	vec_1E4.x = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_DEptrTo1C0->lx), wallStartX);
+		position_to_word(var_DEptrTo1C0->lx), wallStartX);
 	vec_1E4.y = 0;
 	vec_1E4.z = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_DEptrTo1C0->lz), wallStartZ);
+		position_to_word(var_DEptrTo1C0->lz), wallStartZ);
 
 	mat_rot_y(&mat_134, LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(wallOrientation), 0x100));
@@ -684,7 +684,7 @@ case PLAYER_FLOW_loc_15642:
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
 
 case PLAYER_FLOW_loc_156A3:
-	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
+	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
 	if (state.game_inputmode == 2) {
 		nextPosAndNormalIP = vec_1C6.y;
 	} else {
@@ -717,18 +717,18 @@ case PLAYER_FLOW_loc_1570A:
 		var_6->plane_origin.z, elem_zCenter);
 
 	vec_182.x = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_146ptrTo176->lx), var_122.x);
+		position_to_word(var_146ptrTo176->lx), var_122.x);
 	vec_182.y = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_146ptrTo176->ly), var_122.y);
+		position_to_word(var_146ptrTo176->ly), var_122.y);
 	vec_182.z = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_146ptrTo176->lz), var_122.z);
+		position_to_word(var_146ptrTo176->lz), var_122.z);
 
 	vec_1E4.x = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_DEptrTo1C0->lx), var_122.x);
+		position_to_word(var_DEptrTo1C0->lx), var_122.x);
 	vec_1E4.y = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_DEptrTo1C0->ly), var_122.y);
+		position_to_word(var_DEptrTo1C0->ly), var_122.y);
 	vec_1E4.z = LEGACY_S16_WRAP_SUB(
-		physics_position_word(var_DEptrTo1C0->lz), var_122.z);
+		position_to_word(var_DEptrTo1C0->lz), var_122.z);
 
 	mat_134 = var_6->plane_rotation;
 	if (arg_MplayerFlag == 0) {
@@ -777,9 +777,9 @@ case PLAYER_FLOW_loc_158DA:
 	planindex = 0;
 	current_planptr = planptr;
 	byte_4392C = 1;
-	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
+	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
 
 	nextPosAndNormalIP = plane_origin_op(0, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
@@ -869,9 +869,9 @@ case PLAYER_FLOW_loc_15A30:
 		vec_planerotopresult.z);
 
 case PLAYER_FLOW_loc_15C04:
-	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
+	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
 
 	nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	if (nextPosAndNormalIP >= 0)
@@ -921,9 +921,9 @@ case PLAYER_FLOW_loc_15D39:
 	{ physics_flow = PLAYER_FLOW_loc_15163; continue; }
 
 case PLAYER_FLOW_loc_15D43:
-	vec_1C6.x = physics_position_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = physics_position_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = physics_position_word(var_DEptrTo1C0->lz);
+	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
+	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
+	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
 
 	if (state.game_inputmode == 2)
 		{ physics_flow = PLAYER_FLOW_loc_15D94; continue; }
@@ -951,11 +951,11 @@ case PLAYER_FLOW_loc_15DD1:
 
 case PLAYER_FLOW_loc_15DDB:
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].x =
-		physics_position_word(var_DEptrTo1C0->lx);
+		position_to_word(var_DEptrTo1C0->lx);
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].y =
-		physics_position_word(var_DEptrTo1C0->ly);
+		position_to_word(var_DEptrTo1C0->ly);
 	arg_pState->car_whlWorldCrds1[var_wheelIndex].z =
-		physics_position_word(var_DEptrTo1C0->lz);
+		position_to_word(var_DEptrTo1C0->lz);
 
 
 	var_EE = carState_rc_op(arg_pState, var_16[var_wheelIndex], var_wheelIndex);
@@ -1201,11 +1201,11 @@ case PLAYER_FLOW_loc_16336:
 		arg_pSimd->collide_points[0].py, 6U);
 	mat_mul_vector(&vec_1C6, var_EA, &vec_FC);
 
-	vec_1C6.x = physics_position_word(
+	vec_1C6.x = position_to_word(
 		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_x, vec_FC.x));
-	vec_1C6.y = physics_position_word(
+	vec_1C6.y = position_to_word(
 		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_y, vec_FC.y));
-	vec_1C6.z = physics_position_word(
+	vec_1C6.z = position_to_word(
 		LEGACY_S32_WRAP_ADD_S16(pState_lvec1_z, vec_FC.z));
 
 	vec_17C = vec_1C6;
@@ -1236,9 +1236,9 @@ case PLAYER_FLOW_loc_16428:
 
 case PLAYER_FLOW_loc_1644C:
 	arg_pState->car_sumSurfAllWheels = var_11C;
-	var_11ApStateWorldCrds[0].x = physics_position_word(pState_lvec1_x);
-	var_11ApStateWorldCrds[0].y = physics_position_word(pState_lvec1_y);
-	var_11ApStateWorldCrds[0].z = physics_position_word(pState_lvec1_z);
+	var_11ApStateWorldCrds[0].x = position_to_word(pState_lvec1_x);
+	var_11ApStateWorldCrds[0].y = position_to_word(pState_lvec1_y);
+	var_11ApStateWorldCrds[0].z = position_to_word(pState_lvec1_z);
 
 	var_11ApStateWorldCrds[1].x = pState_minusRotate_z_1;
 	var_11ApStateWorldCrds[1].y = pState_minusRotate_x_1;
@@ -1248,11 +1248,11 @@ case PLAYER_FLOW_loc_1644C:
 	{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
 
 case PLAYER_FLOW_loc_164B2:
-	vec_18EoStateWorldCrds[0].x = physics_position_word(
+	vec_18EoStateWorldCrds[0].x = position_to_word(
 		arg_oState->car_posWorld1.lx);
-	vec_18EoStateWorldCrds[0].y = physics_position_word(
+	vec_18EoStateWorldCrds[0].y = position_to_word(
 		arg_oState->car_posWorld1.ly);
-	vec_18EoStateWorldCrds[0].z = physics_position_word(
+	vec_18EoStateWorldCrds[0].z = position_to_word(
 		arg_oState->car_posWorld1.lz);
 
 	vec_18EoStateWorldCrds[1].x = arg_oState->car_rotate.z;

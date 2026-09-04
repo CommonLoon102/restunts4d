@@ -27,12 +27,6 @@ legacy_s16 scale_speed_to_travel(legacy_u16 speed,
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
-legacy_s16 physics_position_word(legacy_s32 position)
-{
-	return LEGACY_S16_FROM_BITS(
-		(legacy_u16)LEGACY_S32_SAR(position, 6U));
-}
-
 legacy_s16 physics_difference_word(legacy_s32 left, legacy_s32 right)
 {
 	return LEGACY_S16_FROM_BITS(

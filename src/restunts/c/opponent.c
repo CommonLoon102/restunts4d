@@ -133,12 +133,6 @@ struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset)
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
-legacy_s16 world_position_word(legacy_s32 position)
-{
-	return LEGACY_S16_FROM_BITS(
-		(legacy_u16)LEGACY_S32_SAR(position, 6U));
-}
-
 static legacy_s16 opponent_route_word(legacy_s16 index)
 {
 	legacy_u16 offset;
@@ -213,17 +207,17 @@ void opponent_op(void)
 	}
 	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
 		state.game_inputmode == 2;
-	opponent_x = world_position_word(
+	opponent_x = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lx);
-	opponent_y = world_position_word(
+	opponent_y = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.ly);
-	opponent_z = world_position_word(
+	opponent_z = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lz);
-	player_x = world_position_word(
+	player_x = position_to_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lx);
-	player_y = world_position_word(
+	player_y = position_to_word(
 		(legacy_s32)state.playerstate.car_posWorld1.ly);
-	player_z = world_position_word(
+	player_z = position_to_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lz);
 	state.opponentstate.field_CF = 0;
 	state.field_45E = 0;
@@ -392,15 +386,15 @@ void opponent_op(void)
 	if (state.opponentstate.car_crashBmpFlag == 0) {
 		relative.x = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.x,
-			world_position_word((legacy_s32)
+			position_to_word((legacy_s32)
 				state.opponentstate.car_posWorld1.lx));
 		relative.y = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.y,
-			world_position_word((legacy_s32)
+			position_to_word((legacy_s32)
 				state.opponentstate.car_posWorld1.ly));
 		relative.z = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.z,
-			world_position_word((legacy_s32)
+			position_to_word((legacy_s32)
 				state.opponentstate.car_posWorld1.lz));
 		rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 			state.opponentstate.car_rotate.y,
@@ -415,12 +409,12 @@ void opponent_op(void)
 	if (state.opponentstate.field_CD != 0) {
 		finish_distance = multiply_and_scale(cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
-				world_position_word((legacy_s32)
+				position_to_word((legacy_s32)
 					state.opponentstate.car_posWorld1.lz)));
 		finish_distance = LEGACY_S16_WRAP_ADD(finish_distance,
 			multiply_and_scale(sin_fast(track_angle),
 				LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
-					world_position_word((legacy_s32)
+					position_to_word((legacy_s32)
 						state.opponentstate.car_posWorld1.lx))));
 		if (finish_distance < 0)
 			update_crash_state(3, 1);

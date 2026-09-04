@@ -32,17 +32,11 @@ void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type)
 	curtransshape_ptr++;
 }
 
-static legacy_s16 frame_position_word(legacy_s32 position)
-{
-	return LEGACY_S16_FROM_BITS(
-		(legacy_u16)LEGACY_S32_SAR(position, 6U));
-}
-
 static legacy_s16 frame_relative_position(legacy_s32 position,
 	legacy_s16 camera_position)
 {
 	return LEGACY_S16_WRAP_SUB(
-		frame_position_word(position), camera_position);
+		position_to_word(position), camera_position);
 }
 
 static legacy_s16 frame_relative_position_sum(legacy_s32 first,
@@ -56,7 +50,7 @@ static legacy_s16 frame_relative_track_position(legacy_s32 offset,
 	legacy_s16 track_position, legacy_s16 camera_position)
 {
 	return LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(
-		frame_position_word(offset), track_position), camera_position);
+		position_to_word(offset), track_position), camera_position);
 }
 
 static legacy_s8 frame_tile_from_world(legacy_s32 position)
@@ -436,21 +430,21 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	// Set car position (own or opponent's)
 	if (followOpponentFlag == 0) {
-		car_pos.x = frame_position_word(
+		car_pos.x = position_to_word(
 			state.playerstate.car_posWorld1.lx);
-		car_pos.y = frame_position_word(
+		car_pos.y = position_to_word(
 			state.playerstate.car_posWorld1.ly);
-		car_pos.z = frame_position_word(
+		car_pos.z = position_to_word(
 			state.playerstate.car_posWorld1.lz);
 		car_rot_y = state.playerstate.car_rotate.y;
 		car_rot_z = state.playerstate.car_rotate.z;
 		car_rot_x = state.playerstate.car_rotate.x;
 	} else {
-		car_pos.x = frame_position_word(
+		car_pos.x = position_to_word(
 			state.opponentstate.car_posWorld1.lx);
-		car_pos.y = frame_position_word(
+		car_pos.y = position_to_word(
 			state.opponentstate.car_posWorld1.ly);
-		car_pos.z = frame_position_word(
+		car_pos.z = position_to_word(
 			state.opponentstate.car_posWorld1.lz);
 		car_rot_y = state.opponentstate.car_rotate.y;
 		car_rot_z = state.opponentstate.car_rotate.z;

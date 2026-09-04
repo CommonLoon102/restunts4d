@@ -55,7 +55,6 @@ legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor);
 legacy_s16 scale_speed_to_travel(legacy_u16 speed,
 	legacy_u16 divisor);
-legacy_s16 physics_position_word(legacy_s32 position);
 legacy_s16 physics_difference_word(legacy_s32 left, legacy_s32 right);
 legacy_s16 wheel_pair_delta(legacy_s16 first, legacy_s16 second,
 	legacy_s16 third, legacy_s16 fourth);

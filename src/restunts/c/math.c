@@ -157,6 +157,14 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 	}
 }
 
+/* World coordinates are kept as 26.6 fixed point longs; the engine works on
+   the whole-unit word. */
+legacy_s16 position_to_word(legacy_s32 position)
+{
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_SAR(position, 6U));
+}
+
 legacy_s16 polarRadius3D(struct VECTOR* vec) {
 	return polarRadius2D( polarRadius2D(vec->x, vec->y), vec->z );
 }
