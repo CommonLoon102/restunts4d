@@ -664,6 +664,18 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
+static void sprite_putimage_at_anchor(struct SHAPE2D far* shape,
+	legacy_s16 x, legacy_s16 y, legacy_s16 operation)
+{
+	legacy_u8 far* shape_bytes;
+
+	shape_bytes = (legacy_u8 far*)shape;
+	sprite_putimage_at(shape,
+		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
+		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
+		operation);
+}
+
 void sprite_putimage(struct SHAPE2D far* shape)
 {
 	legacy_u8 far* shape_bytes;
@@ -676,13 +688,7 @@ void sprite_putimage(struct SHAPE2D far* shape)
 
 void nopsub_33B98(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
-	sprite_putimage_at(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RASTER_COPY);
+	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_COPY);
 }
 
 void sprite_putimage_and(struct SHAPE2D far* shape,
@@ -705,24 +711,12 @@ void sprite_putimage_and_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16
 
 void sprite_putimage_and_alt2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
-	sprite_putimage_at(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RASTER_AND);
+	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_AND);
 }
 
 void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
-	legacy_u8 far* shape_bytes;
-
-	shape_bytes = (legacy_u8 far*)shape;
-	sprite_putimage_at(shape,
-		LEGACY_U16_WRAP_SUB(x, shape2d_get_word(shape_bytes + 4U)),
-		LEGACY_U16_WRAP_SUB(y, shape2d_get_word(shape_bytes + 6U)),
-		SHAPE2D_RASTER_OR);
+	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_OR);
 }
 
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
