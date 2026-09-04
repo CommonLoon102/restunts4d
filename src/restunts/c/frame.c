@@ -169,6 +169,25 @@ static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
 	transformed_shape_add_for_sort(z_adjust, 0);
 }
 
+static void frame_prepare_flat_track_shape(struct TRANSFORMEDSHAPE3D* shape,
+	legacy_s8 tile_east, legacy_s8 tile_south,
+	const struct VECTOR* camera_position, legacy_s16 flags,
+	legacy_s16 rotation)
+{
+	shape->pos.x = LEGACY_S16_WRAP_SUB(
+		trackcenterpos2[tile_east], camera_position->x);
+	shape->pos.y = LEGACY_S16_WRAP_NEGATE(camera_position->y);
+	shape->pos.z = LEGACY_S16_WRAP_SUB(
+		trackcenterpos[tile_south], camera_position->z);
+	shape->rectptr = &rect_unk2;
+	shape->ts_flags = flags;
+	shape->rotvec.x = 0;
+	shape->rotvec.y = 0;
+	shape->rotvec.z = rotation;
+	shape->unk = 0x400;
+	shape->material = 0;
+}
+
 void init_rect_arrays(void) {
 	legacy_s16 i;
 
@@ -777,18 +796,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						currenttransshape->shapeptr = var_trkobjectptr->ss_loShapePtr;
 					}
 
-					currenttransshape->pos.x = LEGACY_S16_WRAP_SUB(
-						trackcenterpos2[tile_to_draw_east_offset], cam_pos.x);
-					currenttransshape->pos.y = LEGACY_S16_WRAP_NEGATE(cam_pos.y);
-					currenttransshape->pos.z = LEGACY_S16_WRAP_SUB(
-						trackcenterpos[tile_to_draw_south_offset], cam_pos.z);
-					currenttransshape->rectptr = &rect_unk2;
-					currenttransshape->ts_flags = var_122 | 5;
-					currenttransshape->rotvec.x = 0;
-					currenttransshape->rotvec.y = 0;
-					currenttransshape->rotvec.z = word_3C0D6[di];
-					currenttransshape->unk = 0x400;
-					currenttransshape->material = 0;
+					frame_prepare_flat_track_shape(currenttransshape,
+						tile_to_draw_east_offset,
+						tile_to_draw_south_offset,
+						&cam_pos, (legacy_s16)(var_122 | 5),
+						word_3C0D6[di]);
 					var_transformresult = transformed_shape_op(&currenttransshape[0]);
 					if (var_transformresult > 0) {
 						// if the return value is > 0, we are out of memory
@@ -832,18 +844,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					if (terr_map_value != 0) {
 						var_trkobject_ptr = &sceneshapes2[terr_map_value];
 						currenttransshape->shapeptr = var_trkobject_ptr->ss_shapePtr;
-						currenttransshape->pos.x = LEGACY_S16_WRAP_SUB(
-							trackcenterpos2[tile_to_draw_east_offset], cam_pos.x);
-						currenttransshape->pos.y = LEGACY_S16_WRAP_NEGATE(cam_pos.y);
-						currenttransshape->pos.z = LEGACY_S16_WRAP_SUB(
-							trackcenterpos[tile_to_draw_south_offset], cam_pos.z);
-						currenttransshape->rectptr = &rect_unk2;
-						currenttransshape->ts_flags = var_122 | 5;
-						currenttransshape->rotvec.x = 0;
-						currenttransshape->rotvec.y = 0;
-						currenttransshape->rotvec.z = var_trkobject_ptr->ss_rotY;
-						currenttransshape->unk = 0x400;
-						currenttransshape->material = 0;
+						frame_prepare_flat_track_shape(currenttransshape,
+							tile_to_draw_east_offset,
+							tile_to_draw_south_offset,
+							&cam_pos, (legacy_s16)(var_122 | 5),
+							var_trkobject_ptr->ss_rotY);
 						var_transformresult = transformed_shape_op(&currenttransshape[0]);
 						if (var_transformresult > 0)
 							break;
