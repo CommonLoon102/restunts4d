@@ -126,6 +126,16 @@ enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_16892,
 };
 
+/* Hand a long-precision position back as the word-precision vector the rest
+   of the engine works with. */
+static void physics_position_to_vector(struct VECTOR* destination,
+	const struct VECTORLONG* source)
+{
+	destination->x = position_to_word(source->lx);
+	destination->y = position_to_word(source->ly);
+	destination->z = position_to_word(source->lz);
+}
+
 /* Wheel positions are long-precision; the forces acting on them arrive as
    word-precision vectors, so every step shifts the position the same way. */
 static void physics_position_offset(struct VECTORLONG* destination,
@@ -491,9 +501,7 @@ case PLAYER_FLOW_loc_151BA:
 
 case PLAYER_FLOW_loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
-	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
+	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
 	if (state.game_inputmode != 2)
 		{ physics_flow = PLAYER_FLOW_loc_15240; continue; }
@@ -786,9 +794,7 @@ case PLAYER_FLOW_loc_158DA:
 	planindex = 0;
 	current_planptr = planptr;
 	byte_4392C = 1;
-	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
+	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
 	nextPosAndNormalIP = plane_origin_op(0, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
@@ -869,9 +875,7 @@ case PLAYER_FLOW_loc_15A30:
 		vec_planerotopresult.z);
 
 case PLAYER_FLOW_loc_15C04:
-	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
+	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
 	nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	if (nextPosAndNormalIP >= 0)
@@ -916,9 +920,7 @@ case PLAYER_FLOW_loc_15D39:
 	{ physics_flow = PLAYER_FLOW_loc_15163; continue; }
 
 case PLAYER_FLOW_loc_15D43:
-	vec_1C6.x = position_to_word(var_DEptrTo1C0->lx);
-	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	vec_1C6.z = position_to_word(var_DEptrTo1C0->lz);
+	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
 	if (state.game_inputmode == 2)
 		{ physics_flow = PLAYER_FLOW_loc_15D94; continue; }
@@ -945,12 +947,8 @@ case PLAYER_FLOW_loc_15DD1:
 	{ physics_flow = PLAYER_FLOW_code_update_globalPos; continue; }
 
 case PLAYER_FLOW_loc_15DDB:
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].x =
-		position_to_word(var_DEptrTo1C0->lx);
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].y =
-		position_to_word(var_DEptrTo1C0->ly);
-	arg_pState->car_whlWorldCrds1[var_wheelIndex].z =
-		position_to_word(var_DEptrTo1C0->lz);
+	physics_position_to_vector(
+		&arg_pState->car_whlWorldCrds1[var_wheelIndex], var_DEptrTo1C0);
 
 
 	var_EE = carState_rc_op(arg_pState, var_16[var_wheelIndex], var_wheelIndex);
@@ -1238,12 +1236,8 @@ case PLAYER_FLOW_loc_1644C:
 	{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
 
 case PLAYER_FLOW_loc_164B2:
-	vec_18EoStateWorldCrds[0].x = position_to_word(
-		arg_oState->car_posWorld1.lx);
-	vec_18EoStateWorldCrds[0].y = position_to_word(
-		arg_oState->car_posWorld1.ly);
-	vec_18EoStateWorldCrds[0].z = position_to_word(
-		arg_oState->car_posWorld1.lz);
+	physics_position_to_vector(&vec_18EoStateWorldCrds[0],
+		&arg_oState->car_posWorld1);
 
 	vec_18EoStateWorldCrds[1].x = arg_oState->car_rotate.z;
 	vec_18EoStateWorldCrds[1].y = arg_oState->car_rotate.y;
