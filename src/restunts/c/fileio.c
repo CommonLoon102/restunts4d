@@ -874,35 +874,33 @@ void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 #endif
 }
 
+static void far* file_load_suffixed_resource(legacy_s16 type,
+	const legacy_s8* filename, const legacy_s8* suffix, legacy_s8* name)
+{
+	strcpy(name, filename);
+	strcat(name, suffix);
+	return file_load_resource(type, name);
+}
+
 
 void far* file_load_resfile(const legacy_s8* filename) {
 	legacy_s8 name[0x50];
 	void far* result;
 
 #ifdef RESTUNTS_HEADLESS
-	strcpy(name, filename);
-	strcat(name, ".res");
-	result = file_load_resource(1, name);
+	result = file_load_suffixed_resource(1, filename, ".res", name);
 	if (result != 0)
 		return result;
-	strcpy(name, filename);
-	strcat(name, ".pre");
-	result = file_load_resource(7, name);
+	result = file_load_suffixed_resource(7, filename, ".pre", name);
 	if (result == 0)
 		fatal_error(headless_file_error, filename);
 	return result;
 #else
 	while (1) {
-		strcpy(name, filename);
-		strcat(name, ".res");
-
-		result = file_load_resource(1, name);
+		result = file_load_suffixed_resource(1, filename, ".res", name);
 		if (result != 0) return result;
 
-		strcpy(name, filename);
-		strcat(name, ".pre");
-
-		result = file_load_resource(7, name);
+		result = file_load_suffixed_resource(7, filename, ".pre", name);
 		if (result != 0) return result;
 
 		do_dea_textres();
@@ -920,16 +918,10 @@ void far* file_load_3dres(const legacy_s8* filename) {
 	void far* result;
 
 	while (1) {
-		strcpy(name, filename);
-		strcat(name, ".p3s");
-
-		result = file_load_resource(7, name);
+		result = file_load_suffixed_resource(7, filename, ".p3s", name);
 		if (result != 0) return result;
 
-		strcpy(name, filename);
-		strcat(name, ".3sh");
-
-		result = file_load_resource(1, name);
+		result = file_load_suffixed_resource(1, filename, ".3sh", name);
 		if (result != 0) return result;
 
 		do_dea_textres();
