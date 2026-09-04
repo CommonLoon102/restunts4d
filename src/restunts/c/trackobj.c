@@ -123,6 +123,37 @@ static void track_object_building_wall(const struct VECTOR* next_position,
 		wallindex = wall_x_max;
 }
 
+/* A corner surface is the ring between two radii around the arc centre. */
+static legacy_s16 track_radius_in_band(legacy_s16 x, legacy_s16 z,
+	legacy_s16 low, legacy_s16 high)
+{
+	legacy_s16 radius;
+
+	radius = (legacy_s16)polarRadius2D(x, z);
+	return radius > low && radius < high;
+}
+
+/* Elevated and banked corners share one arc, centred on the tile corner:
+   the radius is measured against the 0x600 centre line, and the shape index
+   comes from the same angle quantised into the 18 segments of the arc. */
+static legacy_s16 track_arc_radius(const struct VECTOR* position)
+{
+	return LEGACY_S16_WRAP_SUB((legacy_s16)polarRadius2D(
+		LEGACY_S16_WRAP_ADD(position->x, 0x400),
+		LEGACY_S16_WRAP_ADD(position->z, 0x400)), 0x600);
+}
+
+static legacy_s16 track_arc_segment(const struct VECTOR* position)
+{
+	legacy_s16 value;
+
+	value = (legacy_s16)((((legacy_u16)polarAngle(
+		LEGACY_S16_WRAP_ADD(position->x, 0x400),
+		LEGACY_S16_WRAP_ADD(position->z, 0x400)) & 0x00FFU) *
+		18U) >> 8);
+	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value, 0x11));
+}
+
 void build_track_object(struct VECTOR* world_position,
 	struct VECTOR* next_world_position)
 {
@@ -278,10 +309,9 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		/* fall through */
 	case 3: /* Large corner. */
-		radius = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400));
-		if (radius > 0x588 && radius < 0x678)
+		if (track_radius_in_band(
+				LEGACY_S16_WRAP_ADD(position.x, 0x400),
+				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -292,10 +322,9 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		/* fall through */
 	case 2: /* Sharp corner. */
-		radius = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_ADD(position.x, 0x200),
-			LEGACY_S16_WRAP_ADD(position.z, 0x200));
-		if (radius > 0x188 && radius < 0x278)
+		if (track_radius_in_band(
+				LEGACY_S16_WRAP_ADD(position.x, 0x200),
+				LEGACY_S16_WRAP_ADD(position.z, 0x200), 0x188, 0x278))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -304,10 +333,9 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
-		radius = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_SUB(0x200, position.x),
-			LEGACY_S16_WRAP_ADD(position.z, 0x200));
-		if (radius > 0x188 && radius < 0x278)
+		if (track_radius_in_band(
+				LEGACY_S16_WRAP_SUB(0x200, position.x),
+				LEGACY_S16_WRAP_ADD(position.z, 0x200), 0x188, 0x278))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -316,10 +344,9 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
-		radius = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400));
-		if (radius > 0x588 && radius < 0x678)
+		if (track_radius_in_band(
+				LEGACY_S16_WRAP_ADD(position.x, 0x400),
+				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -328,10 +355,9 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
-		radius = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_SUB(0x400, position.x),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400));
-		if (radius > 0x588 && radius < 0x678)
+		if (track_radius_in_band(
+				LEGACY_S16_WRAP_SUB(0x400, position.x),
+				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -456,9 +482,7 @@ void build_track_object(struct VECTOR* world_position,
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
 			terrainHeight) <= 0x186)
 			break;
-		radius = LEGACY_S16_WRAP_SUB((legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400)), 0x600);
+		radius = track_arc_radius(&position);
 		if (radius <= -0x96 || radius >= 0x96)
 			break;
 		current_surf_type = (legacy_u8)surface_type;
@@ -466,12 +490,7 @@ void build_track_object(struct VECTOR* world_position,
 		byte_4392C = 0;
 		if (radius >= -0x6C && radius <= 0x6C)
 			break;
-		value = (legacy_s16)((((legacy_u16)polarAngle(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400)) & 0x00FFU) *
-			18U) >> 8);
-		value = LEGACY_S16_WRAP_NEGATE(
-			LEGACY_S16_WRAP_SUB(value, 0x11));
+		value = track_arc_segment(&position);
 		wallHeight = 0x2A;
 		elRdWallRelated = -12;
 		wallindex = LEGACY_S16_WRAP_ADD(value,
@@ -544,17 +563,10 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 26: /* Banked corner. */
-		radius = LEGACY_S16_WRAP_SUB((legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400)), 0x600);
+		radius = track_arc_radius(&position);
 		if (radius <= -0x78 || radius >= 0x7E)
 			break;
-		value = (legacy_s16)((((legacy_u16)polarAngle(
-			LEGACY_S16_WRAP_ADD(position.x, 0x400),
-			LEGACY_S16_WRAP_ADD(position.z, 0x400)) & 0x00FFU) *
-			18U) >> 8);
-		value = LEGACY_S16_WRAP_NEGATE(
-			LEGACY_S16_WRAP_SUB(value, 0x11));
+		value = track_arc_segment(&position);
 		planindex = LEGACY_S16_WRAP_ADD(value, 7);
 		current_surf_type = (legacy_u8)surface_type;
 		if (radius > 0x66) {
