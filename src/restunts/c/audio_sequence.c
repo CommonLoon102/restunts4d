@@ -1,20 +1,7 @@
 #include "audio_internal.h"
 #include "platform.h"
 
-extern legacy_s8 audio_music_enabled;
-extern legacy_s16 audio_update_lock;
-extern legacy_u8 audio_channels[];
-extern legacy_u8 dos_audio_context_count;
-extern legacy_u8 dos_audio_uses_direct_channels;
-extern void far* dos_audio_driver_binary;
-
-extern legacy_u8 audio_music_channel_count;
-extern legacy_u8 audio_suspended;
-extern legacy_u8 audio_music_active;
-extern legacy_u8 audio_effect_rate;
 extern legacy_u8 audio_channel_reserved[];
-extern legacy_u16 audio_engine_value_44d48;
-extern legacy_u16 audio_engine_value_454ba;
 extern legacy_u8 dos_audio_driver_data[];
 
 extern void far* audio_read_far_pointer(const legacy_u8 far* source);

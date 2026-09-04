@@ -8,10 +8,6 @@
 #include "platform.h"
 #include "resource.h"
 
-extern legacy_s16 audio_car_state_read_index;
-extern legacy_s16 audio_car_state_write_index;
-extern legacy_u8 far* audio_car_state_records;
-extern legacy_u8 audio_previous_replay_mode;
 extern legacy_s16 camera_track_height_offset;
 
 void audio_sequence_timer(void);

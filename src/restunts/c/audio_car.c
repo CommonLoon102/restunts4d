@@ -5,7 +5,6 @@
 #include "math.h"
 #include "platform.h"
 
-extern legacy_s16 audio_update_lock;
 extern legacy_s16 camera_track_height_offset;
 
 void audio_op_unk3(legacy_s16 channel);

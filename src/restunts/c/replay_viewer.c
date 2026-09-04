@@ -15,7 +15,6 @@
 
 extern void far* fontledresptr;
 extern void far* sdgameresptr;
-extern legacy_s16 input_combined_flags;
 extern legacy_s16 camera_track_height_offset;
 
 void mouse_minmax_position(legacy_s16 inset);

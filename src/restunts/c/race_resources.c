@@ -10,7 +10,6 @@
 #include "shape3d.h"
 #include "ui_dialog.h"
 
-extern legacy_s16 meter_needle_color;
 extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
