@@ -404,9 +404,8 @@ legacy_s16 nopsub_373FE(void)
 		return 1;
 
 	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++) {
-		offset = (channel + 0x10U) * 0x4CU;
-		if ((LEGACY_READ_U16_LE(audio_channels + offset) |
-			LEGACY_READ_U16_LE(audio_channels + offset + 2)) != 0)
+		if ((audio_channels[channel + 0x10U].cursor.offset |
+			audio_channels[channel + 0x10U].cursor.segment) != 0)
 			return 0;
 	}
 
@@ -445,7 +444,7 @@ void audio_disable_flag6(void)
 
 	for (channel = 0x10; channel < 0x18; channel++) {
 		audio_effect_channel_volumes[channel] =
-			audio_sfx_channels[(channel - 0x10) * 0x4C + 0x28];
+			audio_sfx_channels[channel - 0x10].volume;
 		dos_audio_set_channel_volume(channel, 0);
 	}
 	audio_effects_enabled = 0;
@@ -469,17 +468,15 @@ legacy_s16 sub_3771E(legacy_s16 channel)
 	if (audio_effects_enabled == 0 || channel < 0x10 || channel > 0x17)
 		return 1;
 
-	offset = (legacy_u16)channel * 0x4CU;
-	return (LEGACY_READ_U16_LE(audio_channels + offset) |
-		LEGACY_READ_U16_LE(audio_channels + offset + 2)) == 0;
+	return (audio_channels[channel].cursor.offset |
+		audio_channels[channel].cursor.segment) == 0;
 }
 
 void nopsub_37750(legacy_s16 channel, void far* value)
 {
 	void far* *field;
 
-	field = (void far* *)(audio_channels +
-		(legacy_u16)channel * 0x4CU + 0x48U);
+	field = (void far* *)&audio_channels[channel].finish_callback;
 	*field = value;
 }
 
@@ -488,11 +485,10 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	legacy_u16 rate, legacy_u8 priority)
 {
 	const legacy_u8 far* resource_data;
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	legacy_u32 pointer_value;
 	legacy_s16 channel;
 	legacy_s16 last;
-	legacy_u16 chunk_offset;
 	legacy_u16 pointer_offset;
 	legacy_u16 pointer_segment;
 	legacy_u16 resource_offset;
@@ -503,35 +499,33 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 	if (channel > last)
 		return;
 
-	chunk_offset = LEGACY_U16_WRAP_MUL(channel, 0x4CU);
 	resource_offset = (legacy_u16)dos_memory_pointer_offset(resource);
 	resource_segment = (legacy_u16)dos_memory_pointer_segment(resource);
 	do {
-		chunk = audio_channels + chunk_offset;
-		LEGACY_WRITE_U16_LE(chunk + 0x48U, 0);
-		LEGACY_WRITE_U16_LE(chunk + 0x4AU, 0);
-		chunk[0x22] = 0x7F;
-		chunk[0x23] = (legacy_u8)channel;
-		chunk[0x16] = 0x0F;
+		chunk = &audio_channels[channel];
+		chunk->finish_callback.offset = 0;
+		chunk->finish_callback.segment = 0;
+		chunk->note_velocity = 0x7F;
+		chunk->channel = (legacy_u8)channel;
+		chunk->note_limit = 0x0F;
 		audio_channel_values[(legacy_u16)channel] = 0;
 		audio_channel_notes[(legacy_u16)channel] = 0;
-		chunk[0x32] = 0;
-		chunk[4] = 0;
-		chunk[0x24] = priority;
-		chunk[0x15] = 0;
-		LEGACY_WRITE_U16_LE(chunk + 0x1AU, 0);
-		LEGACY_WRITE_U16_LE(chunk + 0x18U, 0);
-		chunk[0x1C] = 0;
-		LEGACY_WRITE_U16_LE(chunk + 0x20U, 0);
-		LEGACY_WRITE_U16_LE(chunk + 0x1EU, 0);
-		chunk[0x28] = (legacy_u8)rate;
-		chunk[0x25] = 0;
-		LEGACY_WRITE_U16_LE(chunk + 0x26U, 0);
-		chunk[0x29] = 0;
-		chunk[0x2A] = 0;
-		chunk[0x2B] = 0;
-		chunk[0x2C] = 0;
-		chunk[0x47] = 0xFF;
+		chunk->stack_depth = 0;
+		chunk->call_depth = 0;
+		chunk->priority = priority;
+		chunk->active_notes = 0;
+		chunk->delay = 0;
+		chunk->unknown_1C = 0;
+		chunk->resource.segment = 0;
+		chunk->resource.offset = 0;
+		chunk->volume = (legacy_u8)rate;
+		chunk->sustain = 0;
+		chunk->pitch = 0;
+		chunk->unknown_29[0] = 0;
+		chunk->unknown_29[1] = 0;
+		chunk->unknown_29[2] = 0;
+		chunk->unknown_29[3] = 0;
+		chunk->driver_channel = 0xFF;
 
 		if (resource != 0) {
 			resource_data = (const legacy_u8 far*)dos_memory_make_pointer(
@@ -542,25 +536,24 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 			pointer_offset = LEGACY_U16_WRAP_ADD(
 				(legacy_u16)pointer_value, 4U);
 			pointer_segment = (legacy_u16)(pointer_value >> 16);
-			LEGACY_WRITE_U16_LE(chunk + 5U, pointer_offset);
-			LEGACY_WRITE_U16_LE(chunk + 7U, pointer_segment);
+			chunk->call_stack[0].offset = pointer_offset;
+			chunk->call_stack[0].segment = pointer_segment;
 			pointer_value = audioresource_get_dword(resource_data);
 			pointer_offset = LEGACY_U16_WRAP_ADD(
 				(legacy_u16)pointer_value, 4U);
 			pointer_segment = (legacy_u16)(pointer_value >> 16);
-			LEGACY_WRITE_U16_LE(chunk, pointer_offset);
-			LEGACY_WRITE_U16_LE(chunk + 2U, pointer_segment);
+			chunk->cursor.offset = pointer_offset;
+			chunk->cursor.segment = pointer_segment;
 			resource_data_offset = LEGACY_U16_WRAP_ADD(
 				resource_data_offset, 5U);
-			LEGACY_WRITE_U16_LE(chunk + 0x2EU,
-				LEGACY_U16_WRAP_ADD(resource_offset, 7U));
-			LEGACY_WRITE_U16_LE(chunk + 0x30U, resource_segment);
+			chunk->instruments.offset =
+				LEGACY_U16_WRAP_ADD(resource_offset, 7U);
+			chunk->instruments.segment = resource_segment;
 		} else {
-			LEGACY_WRITE_U16_LE(chunk, 0);
-			LEGACY_WRITE_U16_LE(chunk + 2U, 0);
+			chunk->cursor.offset = 0;
+			chunk->cursor.segment = 0;
 		}
 
-		chunk_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 0x4CU);
 		channel = LEGACY_S16_WRAP_ADD(channel, 1);
 	} while (channel <= last);
 }
@@ -596,7 +589,7 @@ void audio_reset_channels(void)
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel)
 {
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	struct AUDIO_CONTEXT* context;
 	legacy_u16 context_index;
 	legacy_u16 channel_bits;
@@ -618,10 +611,9 @@ void audio_release_channel_range(legacy_s16 first_channel,
 	} else {
 		channel = first_channel;
 		while (channel <= last_channel) {
-			chunk = audio_channels + LEGACY_U16_WRAP_MUL(
-				(legacy_u16)channel, 0x4CU);
-			if (chunk[0x47U] < 0x10U)
-				dos_audio_driver_release_channel(chunk[0x47U]);
+			chunk = &audio_channels[channel];
+			if (chunk->driver_channel < 0x10U)
+				dos_audio_driver_release_channel(chunk->driver_channel);
 
 			context = dos_audio_contexts;
 			for (context_index = 0; context_index < AUDIO_CONTEXT_COUNT;
@@ -637,9 +629,8 @@ void audio_release_channel_range(legacy_s16 first_channel,
 
 	channel = first_channel;
 	while (channel <= last_channel) {
-		chunk = audio_channels + LEGACY_U16_WRAP_MUL(
-			(legacy_u16)channel, 0x4CU);
-		chunk[0x15U] = 0;
+		chunk = &audio_channels[channel];
+		chunk->active_notes = 0;
 		channel = LEGACY_S16_WRAP_ADD(channel, 1);
 	}
 }
@@ -670,10 +661,10 @@ static void far* audio_select_sample_resource(void far* original_resource,
 }
 
 static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
-	legacy_u8* timer)
+	struct AUDIO_CHANNEL* timer)
 {
 	struct AUDIO_CONTEXT* context;
-	legacy_u8* old_timer;
+	struct AUDIO_CHANNEL* old_timer;
 	legacy_u32 oldest_state1_age;
 	legacy_u32 oldest_state2_age;
 	legacy_u32 age;
@@ -699,7 +690,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 		restrict_to_timer = 0;
 	} else {
 		context_count = dos_audio_context_count;
-		restrict_to_timer = timer[0x15U] >= timer[0x16U];
+		restrict_to_timer = timer->active_notes >= timer->note_limit;
 	}
 
 	context = dos_audio_contexts;
@@ -710,7 +701,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 				(legacy_u16)(1U << context_index) : 0;
 			if ((resource_mask & context_mask) == 0 ||
 				(restrict_to_timer != 0 &&
-					timer[0x23U] != context->channel)) {
+					timer->channel != context->channel)) {
 				context++;
 				continue;
 			}
@@ -718,11 +709,11 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 
 		if (context->state == 0) {
 			if (dos_audio_uses_direct_channels == 0)
-				timer[0x15U]++;
+				timer->active_notes++;
 			return (legacy_s16)context_index;
 		}
 		if (dos_audio_uses_direct_channels == 0 &&
-			timer[0x24U] < context->priority) {
+			timer->priority < context->priority) {
 			context++;
 			continue;
 		}
@@ -744,12 +735,14 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 		return -1;
 	context = &dos_audio_contexts[selected];
 	if (dos_audio_uses_direct_channels == 0 && restrict_to_timer == 0) {
-		old_timer = (legacy_u8*)audio_timers + LEGACY_U16_WRAP_SUB(
-			context->timer_offset,
-			dos_memory_pointer_offset(audio_timers));
+		/* The stored offset is a plain data-segment offset, so the old
+		   record is recovered relative to any object in that segment. */
+		old_timer = (struct AUDIO_CHANNEL*)((legacy_u8*)audio_timers +
+			LEGACY_U16_WRAP_SUB(context->timer_offset,
+				dos_memory_pointer_offset(audio_timers)));
 		if (old_timer != timer) {
-			old_timer[0x15U]--;
-			timer[0x15U]++;
+			old_timer->active_notes--;
+			timer->active_notes++;
 		}
 	}
 	dos_audio_driver_start_context(context->driver_channel, context);
@@ -757,7 +750,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	return selected;
 }
 
-legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
+legacy_s16 audio_start_note(struct AUDIO_CHANNEL* timer, legacy_u16 value,
 	legacy_u32 duration, legacy_u8 note, legacy_u16 parameter,
 	legacy_s16 handle)
 {
@@ -767,7 +760,8 @@ legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	legacy_s16 pitch;
 	legacy_s16 context_index;
 
-	resource = (legacy_u8 far*)audio_read_far_pointer(timer + 0x1EU);
+	resource = (legacy_u8 far*)audio_read_far_pointer(
+		(legacy_u8*)&timer->resource);
 	resource = (legacy_u8 far*)audio_select_sample_resource(resource, note);
 	if (resource == 0)
 		return -1;
@@ -780,12 +774,12 @@ legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 		audio_write_far_pointer((legacy_u8*)&context->resource, resource);
 		if (dos_audio_uses_direct_channels == 0)
 			dos_audio_driver_prepare_context(context_index,
-				context, timer, resource);
+				context, (legacy_u8*)timer, resource);
 	}
 
 	context->channel = (legacy_u8)handle;
 	context->state = 1U;
-	context->priority = timer[0x24U];
+	context->priority = timer->priority;
 	context->age = 0;
 	context->fade_out_flag = LEGACY_U32_WRAP_SUB(duration, 1UL);
 	context->level = LEGACY_S16_FROM_BITS(
@@ -804,7 +798,7 @@ legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	context->sequence_index = 0;
 	context->timer_offset = dos_memory_pointer_offset(timer);
 	driver_channel = dos_audio_uses_direct_channels == 0 ?
-		context_index : timer[0x47U];
+		context_index : timer->driver_channel;
 	context->driver_channel = (legacy_u8)driver_channel;
 
 	if (note == 0xFFU) {
@@ -814,24 +808,23 @@ legacy_s16 audio_start_note(legacy_u8* timer, legacy_u16 value,
 	}
 	pitch = LEGACY_S16_WRAP_ADD(
 		(legacy_s8)resource[0x10U], (legacy_s8)note);
-	dos_audio_driver_activate_context(driver_channel, context, timer,
-		pitch, parameter, resource);
+	dos_audio_driver_activate_context(driver_channel, context,
+		(legacy_u8*)timer, pitch, parameter, resource);
 	audio_channel_notes[(legacy_u16)handle] = note;
 	return context_index;
 }
 
 legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle)
 {
-	legacy_u8* timer;
+	struct AUDIO_CHANNEL* timer;
 
-	timer = audio_channels +
-		LEGACY_U16_WRAP_MUL((legacy_u16)handle, 0x4CU);
+	timer = &audio_channels[handle];
 	return audio_start_note(timer, value, 0xFFFFFFE0UL, 0xFFU, 0, handle);
 }
 
 void audio_advance_driver_context(struct AUDIO_CONTEXT* context)
 {
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	legacy_u32 value;
 
 	context->age = LEGACY_U32_WRAP_ADD(context->age, 1UL);
@@ -843,9 +836,8 @@ void audio_advance_driver_context(struct AUDIO_CONTEXT* context)
 
 	dos_audio_driver_start_context(context->driver_channel, context);
 	context->state = 2U;
-	chunk = audio_channels +
-		LEGACY_U16_WRAP_MUL(context->channel, 0x4CU);
-	context->envelope_state = chunk[0x25U] != 0 ? 3U : 4U;
+	chunk = &audio_channels[context->channel];
+	context->envelope_state = chunk->sustain != 0 ? 3U : 4U;
 }
 
 static legacy_u16 audio_absolute_word(legacy_s16 value)
@@ -858,7 +850,7 @@ static legacy_u16 audio_absolute_word(legacy_s16 value)
 void audio_update_driver_contexts(void)
 {
 	struct AUDIO_CONTEXT* context;
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	legacy_u8 far* resource;
 	legacy_s16 level;
 	legacy_s16 modulation;
@@ -920,9 +912,8 @@ void audio_update_driver_contexts(void)
 				context->level = 0;
 				context->envelope_state = 0;
 				context->state = 0;
-				chunk = audio_channels + LEGACY_U16_WRAP_MUL(
-					context->channel, 0x4CU);
-				chunk[0x15U]--;
+				chunk = &audio_channels[context->channel];
+				chunk->active_notes--;
 				dos_audio_driver_end_context(
 					context->driver_channel, context);
 				audio_channel_notes[context->channel] = 0;
@@ -1000,7 +991,7 @@ void audio_update_driver_contexts(void)
 
 void audio_suspend(void)
 {
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	struct AUDIO_CONTEXT* context;
 	legacy_u16 channel;
 	legacy_u16 context_index;
@@ -1017,10 +1008,10 @@ void audio_suspend(void)
 	chunk = audio_channels;
 	for (channel = 0; channel < 0x18U; channel++) {
 		if (audio_effects_enabled == 1 || channel < 0x10U) {
-			audio_saved_channel_volumes[channel] = chunk[0x28U];
+			audio_saved_channel_volumes[channel] = chunk->volume;
 			dos_audio_set_channel_volume((legacy_s16)channel, 0);
 		}
-		chunk += 0x4CU;
+		chunk++;
 	}
 
 	context = dos_audio_contexts;
@@ -1061,9 +1052,8 @@ static legacy_s16 audio_find_free_sfx_channel(void)
 	legacy_s16 candidate;
 
 	for (candidate = 0x10; candidate <= 0x17; candidate++) {
-		offset = (legacy_u16)(candidate - 0x10) * 0x4CU;
-		if ((LEGACY_READ_U16_LE(audio_sfx_channels + offset) |
-			LEGACY_READ_U16_LE(audio_sfx_channels + offset + 2)) == 0 &&
+		if ((audio_sfx_channels[candidate - 0x10].cursor.offset |
+			audio_sfx_channels[candidate - 0x10].cursor.segment) == 0 &&
 			audio_channel_reserved[candidate] == 0)
 			return candidate;
 	}
@@ -1075,7 +1065,6 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 {
 	const legacy_u8 far* bytes;
 	legacy_u16 scaled_rate;
-	legacy_u16 offset;
 	legacy_u16 resource_data_offset;
 	legacy_u8 lowest_priority;
 	legacy_s16 candidate;
@@ -1100,10 +1089,9 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 		lowest_priority = 0xFFU;
 		replacement = -1;
 		for (candidate = 0x10; candidate <= 0x17; candidate++) {
-			offset = (legacy_u16)candidate * 0x4CU;
 			if (audio_channel_reserved[candidate] == 0 &&
-				audio_channels[offset + 0x24U] <= lowest_priority) {
-				lowest_priority = audio_channels[offset + 0x24U];
+				audio_channels[candidate].priority <= lowest_priority) {
+				lowest_priority = audio_channels[candidate].priority;
 				replacement = candidate;
 			}
 		}
@@ -1136,15 +1124,13 @@ legacy_s16 nopsub_37456(void far* resource)
 
 legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority)
 {
-	legacy_u16 offset;
 
 	if (channel == -1)
 		channel = audio_find_free_sfx_channel();
 
 	if (channel != -1) {
 		audio_channel_reserved[channel] = 1;
-		offset = (legacy_u16)channel * 0x4CU;
-		audio_channels[offset + 0x24U] = priority;
+		audio_channels[channel].priority = priority;
 	}
 
 	return channel;
@@ -1157,9 +1143,8 @@ void audio_init_chunk2(legacy_s16 channel)
 	if (channel < 0x10 || channel > 0x17)
 		return;
 
-	offset = (legacy_u16)channel * 0x4CU;
-	LEGACY_WRITE_U16_LE(audio_channels + offset, 0);
-	LEGACY_WRITE_U16_LE(audio_channels + offset + 2, 0);
+	audio_channels[channel].cursor.offset = 0;
+	audio_channels[channel].cursor.segment = 0;
 	audio_release_channel_range(channel, channel);
 	audio_init_chunk(channel, channel, 0, 0, audio_effect_rate, 0);
 }

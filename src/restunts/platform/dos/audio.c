@@ -31,8 +31,8 @@ extern void timer_remove_callback(void (far* callback)(void));
 extern void mmgr_release(void far* memory);
 
 struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
-legacy_u8 audio_channels[24U * 0x4CU];
-legacy_u8* audio_sfx_channels = audio_channels + 16U * 0x4CU;
+struct AUDIO_CHANNEL audio_channels[AUDIO_CHANNEL_COUNT];
+struct AUDIO_CHANNEL* audio_sfx_channels = audio_channels + 16U;
 struct AUDIO_CONTEXT dos_audio_contexts[AUDIO_CONTEXT_COUNT];
 legacy_u8 dos_audio_master_state[3] = { 16U, 0, 22U };
 legacy_u8 dos_audio_driver_data[256];
@@ -243,25 +243,23 @@ void dos_audio_shutdown(void)
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 {
-	legacy_u8* channel_state;
+	struct AUDIO_CHANNEL* channel_state;
 	struct AUDIO_CONTEXT* driver_context;
 	legacy_u16 context_index;
-	legacy_u16 channel_offset;
 	legacy_u8 driver_channel;
 
-	channel_offset = LEGACY_U16_WRAP_MUL((legacy_u16)channel, 0x4CU);
-	channel_state = audio_channels + channel_offset;
-	LEGACY_WRITE_U16_LE(channel_state + 0x1EU, FP_OFF(resource));
-	LEGACY_WRITE_U16_LE(channel_state + 0x20U, FP_SEG(resource));
+	channel_state = &audio_channels[channel];
+	channel_state->resource.offset = FP_OFF(resource);
+	channel_state->resource.segment = FP_SEG(resource);
 	if (((legacy_u8 far*)resource)[0x43U] < 0x10U)
 		driver_channel = ((legacy_u8 far*)resource)[0x43U];
 	else
 		driver_channel = (legacy_u8)(((legacy_u16)channel & 0x0FU) + 1U);
-	channel_state[0x47U] = driver_channel;
+	channel_state->driver_channel = driver_channel;
 
 	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_driver_prepare_context(
-			driver_channel, 0, channel_state, resource);
+			driver_channel, 0, (legacy_u8*)channel_state, resource);
 		return;
 	}
 
@@ -270,26 +268,24 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 		context_index++) {
 		if ((legacy_u16)driver_context->channel == (legacy_u16)channel)
 			dos_audio_driver_prepare_context((legacy_s16)context_index,
-				driver_context, channel_state, resource);
+				driver_context, (legacy_u8*)channel_state, resource);
 		driver_context++;
 	}
 }
 
 void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 {
-	legacy_u8* chunk;
+	struct AUDIO_CHANNEL* chunk;
 	struct AUDIO_CONTEXT* context;
 	legacy_u16 context_index;
-	legacy_u16 chunk_offset;
 	legacy_u16 volume_bits;
 
-	chunk_offset = LEGACY_U16_WRAP_MUL((legacy_u16)channel, 0x4CU);
-	chunk = audio_channels + chunk_offset;
+	chunk = &audio_channels[channel];
 	volume_bits = (legacy_u8)volume;
-	chunk[0x28U] = (legacy_u8)volume_bits;
+	chunk->volume = (legacy_u8)volume_bits;
 
 	if (dos_audio_uses_direct_channels != 0) {
-		dos_audio_driver_set_volume(chunk[0x47U], 0, volume_bits);
+		dos_audio_driver_set_volume(chunk->driver_channel, 0, volume_bits);
 		return;
 	}
 
