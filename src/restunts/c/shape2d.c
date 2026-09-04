@@ -476,56 +476,13 @@ void putpixel_line1_maybe(const legacy_u16* line)
 		}
 		break;
 	case 2:
-		remaining = count;
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(sprite_segment, original_y_high),
-				x_high);
-			bitmap[destination] = color;
-			original_y_high++;
-			remaining--;
-		} while (remaining != 0);
-		break;
 	case 3:
-		remaining = count;
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(sprite_segment, original_y_high),
-				x_high);
-			bitmap[destination] = color;
-			x_high--;
-			original_y_high++;
-			remaining--;
-		} while (remaining != 0);
-		break;
 	case 4:
-		remaining = count;
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(sprite_segment, original_y_high),
-				x_high);
-			bitmap[destination] = color;
-			x_high++;
-			original_y_high++;
-			remaining--;
-		} while (remaining != 0);
-		break;
 	case 5:
-		remaining = count;
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(sprite_segment, original_y_high),
-				x_high);
-			bitmap[destination] = color;
-			original_y_high++;
-			old_low = x_low;
-			x_low = LEGACY_U16_WRAP_SUB(x_low, delta);
-			if (old_low < delta)
-				x_high--;
-			remaining--;
-		} while (remaining != 0);
-		break;
 	case 6:
+		/* All five walk one row per step; only the horizontal advance
+		   differs - none, a whole pixel either way, or a fractional
+		   slope carried in x_low. */
 		remaining = count;
 		do {
 			destination = LEGACY_U16_WRAP_ADD(
@@ -533,10 +490,21 @@ void putpixel_line1_maybe(const legacy_u16* line)
 				x_high);
 			bitmap[destination] = color;
 			original_y_high++;
-			old_low = x_low;
-			x_low = LEGACY_U16_WRAP_ADD(x_low, delta);
-			if (x_low < old_low)
+			if (mode == 3U) {
+				x_high--;
+			} else if (mode == 4U) {
 				x_high++;
+			} else if (mode == 5U) {
+				old_low = x_low;
+				x_low = LEGACY_U16_WRAP_SUB(x_low, delta);
+				if (old_low < delta)
+					x_high--;
+			} else if (mode == 6U) {
+				old_low = x_low;
+				x_low = LEGACY_U16_WRAP_ADD(x_low, delta);
+				if (x_low < old_low)
+					x_high++;
+			}
 			remaining--;
 		} while (remaining != 0);
 		break;
