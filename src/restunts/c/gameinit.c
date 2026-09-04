@@ -32,6 +32,22 @@ static void calculate_car_start_offset(legacy_s16 track_direction,
 			track_direction, side_direction)), 36));
 }
 
+static void init_car_at_start(struct CARSTATE* carstate, struct SIMD* simd,
+	legacy_s8 transmission, legacy_s16 column_offset,
+	legacy_s16 row_offset)
+{
+	init_carstate_from_simd(
+		carstate,
+		simd,
+		transmission,
+		track_coordinate_to_world(
+			trackcenterpos2[startcol2], column_offset),
+		LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], 6U),
+		track_coordinate_to_world(
+			trackcenterpos[startrow2], row_offset),
+		LEGACY_S16_WRAP_NEGATE(track_angle));
+}
+
 void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
 	legacy_s32 posZ, legacy_s16 track_angle)
@@ -183,16 +199,12 @@ void init_game_state(legacy_s16 arg)
 
 		calculate_car_start_offset(track_angle, 0x100, &tmpcol, &tmprow);
 
-		init_carstate_from_simd(
+		init_car_at_start(
 			&state.playerstate,
 			&simd_player,
 			gameconfig.game_playertransmission,
-			track_coordinate_to_world(
-				trackcenterpos2[startcol2], tmpcol),
-			LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], 6U),
-			track_coordinate_to_world(
-				trackcenterpos[startrow2], tmprow),
-			LEGACY_S16_WRAP_NEGATE(track_angle));
+			tmpcol,
+			tmprow);
 
 		state.field_2F2 = 0;
 		state.field_45D = 0;
@@ -217,16 +229,12 @@ void init_game_state(legacy_s16 arg)
 
 		calculate_car_start_offset(track_angle, 0x300, &tmpcol, &tmprow);
 
-		init_carstate_from_simd(
+		init_car_at_start(
 			&state.opponentstate,
 			&simd_opponent,
 			1,
-			track_coordinate_to_world(
-				trackcenterpos2[startcol2], tmpcol),
-			LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], 6U),
-			track_coordinate_to_world(
-				trackcenterpos[startrow2], tmprow),
-			LEGACY_S16_WRAP_NEGATE(track_angle));
+			tmpcol,
+			tmprow);
 
 		if (gameconfig.game_opponenttype && arg != -2) {
 			route_point = (legacy_u8)state.opponentstate.field_CE;
