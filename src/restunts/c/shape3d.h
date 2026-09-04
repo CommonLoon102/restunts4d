@@ -52,7 +52,6 @@ void shape3d_free_car_shapes(void);
 void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape);
 legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
 void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4);
-legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y);
 legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 unk);
 void init_polyinfo(void);
 void polyinfo_reset(void);

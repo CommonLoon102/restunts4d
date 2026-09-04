@@ -176,7 +176,6 @@ extern legacy_s16 word_407EA;
 void load_skybox(legacy_s8 skybox_index);
 void unload_skybox(void);
 void draw_track_preview(void);
-legacy_s16 track_setup(void);
 void load_tracks_menu_shapes(void);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
@@ -228,25 +227,11 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y,
 	legacy_s16 width, legacy_s16 height, legacy_s16 top_color,
 	legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
-void font_set_unk(legacy_s16 color, legacy_s16 unknown);
-struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x,
-	legacy_s16 y, legacy_s16 color, legacy_s16 shadow_color);
-legacy_s16 font_op2_alt(const legacy_s8* text);
-legacy_s16 font_op2(const legacy_s8* text);
 void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
 void font_set_fontdef2(void far* data);
-void input_push_status(void);
-void input_pop_status(void);
-legacy_s16 input_checking(legacy_s16 frame_delta);
-legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array,
-	legacy_s16* x2_array, legacy_s16* y1_array, legacy_s16* y2_array);
-legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
-	legacy_s8* extension, legacy_s8 far* prompt);
 void audio_suspend(void);
 void audio_resume(void);
 void call_exitlist2(void);
-void sub_307B4(void);
-legacy_s16 sub_307D2(legacy_s16 index);
 void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets);
 void update_car_speed(legacy_s8 input, legacy_s16 multiplayer,
 	struct CARSTATE* carstate, struct SIMD* simd);

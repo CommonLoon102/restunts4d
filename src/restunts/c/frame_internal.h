@@ -121,8 +121,6 @@ void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
 void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
 legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);
 legacy_s16 skybox_op(legacy_s16 a, struct RECTANGLE* rectptr, legacy_s16 c, struct MATRIX* matptr, legacy_s16 e, legacy_s16 f, legacy_s16 g);
-void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
-void copy_string(legacy_s8* destination, legacy_s8 far* source);
 legacy_s16 font_op2_alt(const legacy_s8* text);
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
@@ -135,11 +133,8 @@ void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, leg
 	struct RECTANGLE* combined_rect);
 void init_plantrak(void);
 void do_opponent_op(void);
-void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
 legacy_u32 timer_get_delta(void);
 legacy_s16 get_0(void);
-void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legacy_s16 height,
-	legacy_s16 destination_shift);
 void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
 void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);
