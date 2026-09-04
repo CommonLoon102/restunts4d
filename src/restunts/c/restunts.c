@@ -440,6 +440,15 @@ static void init_full_game(legacy_s16 argc, legacy_s8* argv[])
 	strcpy(gameconfig.game_trackname, "DEFAULT");
 }
 
+static void init_main_input_state(void)
+{
+	input_do_checking(1);
+	input_do_checking(1);
+	mouse_draw_opaque_check();
+	kbormouse = 0;
+	passed_security = 1;  // set to 0 for the original copy protection
+}
+
 legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	legacy_s16 result;
 	legacy_s8 far* textresptr;
@@ -451,13 +460,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 
 	// initialization
 	init_full_game(argc, argv);
-
-	input_do_checking(1);
-	input_do_checking(1);
-	mouse_draw_opaque_check();
-
-	kbormouse = 0;
-	passed_security = 1;  // set to 0 for the original copy protection
+	init_main_input_state();
 	//set_default_car();
 
 	// try do something
@@ -560,13 +563,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 	init_full_game(argc, argv);
 
 	//fatal_error("ai");
-
-	input_do_checking(1);
-	input_do_checking(1);
-	mouse_draw_opaque_check();
-
-	kbormouse = 0;
-	passed_security = 1;  // set to 0 for the original copy protection
+	init_main_input_state();
 	set_default_car();
 
 	regsi = 1;
