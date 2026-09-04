@@ -352,6 +352,24 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 	transformed_shape_add_for_sort(z_adjust, (legacy_s16)car_object);
 }
 
+/* Border fences: a tile sits on the low edge (0), the high edge (1) or in
+   between (2) along each axis, and the pair picks the fence piece. -1 means
+   the tile is not on the border at all. */
+static const legacy_s8 fence_by_edge[3][3] = {
+	{ 7, 5, 6 },
+	{ 1, 3, 2 },
+	{ 0, 4, -1 }
+};
+
+static legacy_s16 frame_border_index(legacy_s8 offset)
+{
+	if (offset == 0)
+		return 0;
+	if (offset == 0x1D)
+		return 1;
+	return 2;
+}
+
 void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 si;
 	legacy_s8 var_122;
@@ -829,32 +847,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				var_10E[idx * 2 + 1], tile_south);
 
 			if (detail_level == 0 || (tile_to_draw_east_offset == car_tile_east && tile_to_draw_south_offset == car_tile_south)) {
-				if (tile_to_draw_east_offset == 0) {
-					if (tile_to_draw_south_offset == 0) {
-						di = 7;
-					} else if (tile_to_draw_south_offset == 0x1D) {
-						di = 5;
-					} else {
-						di = 6;
-					}
-				} else if (tile_to_draw_east_offset == 0x1D) {
-					if (tile_to_draw_south_offset == 0) {
-						di = 1;
-					} else
-					if (tile_to_draw_south_offset == 0x1D) {
-						di = 3;
-					} else {
-						di = 2;
-					}
-				} else {
-					if (tile_to_draw_south_offset == 0) {
-						di = 0;
-					} else if (tile_to_draw_south_offset == 0x1D) {
-						di = 4;
-					} else {
-						di = -1;
-					}
-				}
+				di = fence_by_edge[frame_border_index(
+					tile_to_draw_east_offset)][frame_border_index(
+					tile_to_draw_south_offset)];
 
 				if (di != -1) {
 					var_trkobjectptr = frame_track_object_from_legacy_index(
