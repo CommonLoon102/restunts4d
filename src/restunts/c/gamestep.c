@@ -1,4 +1,27 @@
 #include "restunts.h"
+#include "game_input.h"
+
+#define ACTIVE_CAR_COUNT_WITHOUT_OPPONENT 1U
+#define ACTIVE_CAR_COUNT_WITH_OPPONENT 2U
+#define PLAYER_CAR_INDEX 0U
+#define CAR_WORLD_POSITION_SHIFT 6U
+#define CAMERA_TARGET_OVERRIDE_FIELD_MIN 128
+#define CAMERA_TARGET_OVERRIDE_FIELD_END 896
+#define CAMERA_TARGET_HEIGHT 270
+#define CAMERA_VERTICAL_STEP_LIMIT 30
+#define CAMERA_FOLLOW_DISTANCE 450
+#define FULL_GAME_FRAMES_PER_SECOND 20U
+#define CAMERA_FULL_RATE_STEP_LIMIT 120
+#define CAMERA_REDUCED_RATE_STEP_LIMIT 240
+#define TRACK_POINT_UPDATE_DIVISOR_SHIFT 1U
+#define TRACK_POINT_INITIAL_DISTANCE 10000
+#define REPLAY_MODE_LIVE 0U
+#define REPLAY_MODE_PAUSED 1U
+#define CRASH_ROLL_DISTANCE_LIMIT 450
+#define CRASH_ROLL_STAGE_THRESHOLD 384
+#define CRASH_ROLL_ADVANCE_STEP 8
+#define CRASH_ROLL_APPROACH_DISTANCE 228
+#define CRASH_ROLL_SPEED_LIMIT 1280
 
 extern legacy_u8 byte_4616E;
 
@@ -25,40 +48,41 @@ void sub_2298C(void)
 	legacy_u16 divisor;
 	legacy_u8 candidate;
 
-	car_count = gameconfig.game_opponenttype == 0 ? 1U : 2U;
+	car_count = gameconfig.game_opponenttype == 0 ?
+		ACTIVE_CAR_COUNT_WITHOUT_OPPONENT : ACTIVE_CAR_COUNT_WITH_OPPONENT;
 	for (car_index = 0; car_index < car_count; car_index++) {
-		previous_position = car_index == 0 ?
+		previous_position = car_index == PLAYER_CAR_INDEX ?
 			&state.game_vec3 : &state.game_vec4;
 		*previous_position = state.game_vec1[car_index];
-		carstate = car_index == 0 ?
+		carstate = car_index == PLAYER_CAR_INDEX ?
 			&state.playerstate : &state.opponentstate;
 		car_x = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lx, 6U));
+			carstate->car_posWorld1.lx, CAR_WORLD_POSITION_SHIFT));
 		car_y = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.ly, 6U));
+			carstate->car_posWorld1.ly, CAR_WORLD_POSITION_SHIFT));
 		car_z = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lz, 6U));
+			carstate->car_posWorld1.lz, CAR_WORLD_POSITION_SHIFT));
 		target = carstate->car_vec_unk3;
-		if ((car_index == 0 &&
+		if ((car_index == PLAYER_CAR_INDEX &&
 			(state.field_45B != 0 || state.field_45C != 0)) ||
 			carstate->field_B6 != 0 ||
 			carstate->car_crashBmpFlag != 0 ||
 			carstate->car_trackdata3_index == -1 ||
-			(carstate->field_48 > 0x80 &&
-			carstate->field_48 < 0x380)) {
+			(carstate->field_48 > CAMERA_TARGET_OVERRIDE_FIELD_MIN &&
+			carstate->field_48 < CAMERA_TARGET_OVERRIDE_FIELD_END)) {
 			target.x = car_x;
 			target.y = car_y;
 			target.z = car_z;
 		}
 
-		target_y = LEGACY_S16_WRAP_ADD(car_y, 0x10E);
+		target_y = LEGACY_S16_WRAP_ADD(car_y, CAMERA_TARGET_HEIGHT);
 		delta_y = LEGACY_S16_WRAP_SUB(
 			state.game_vec1[car_index].y, target_y);
 		if (delta_y != 0) {
-			if (delta_y > 0x1E)
-				delta_y = 0x1E;
-			else if (delta_y < -0x1E)
-				delta_y = -0x1E;
+			if (delta_y > CAMERA_VERTICAL_STEP_LIMIT)
+				delta_y = CAMERA_VERTICAL_STEP_LIMIT;
+			else if (delta_y < -CAMERA_VERTICAL_STEP_LIMIT)
+				delta_y = -CAMERA_VERTICAL_STEP_LIMIT;
 			state.game_vec1[car_index].y = LEGACY_S16_WRAP_SUB(
 				state.game_vec1[car_index].y, delta_y);
 		}
@@ -73,13 +97,14 @@ void sub_2298C(void)
 				car_x, state.game_vec1[car_index].x),
 			LEGACY_S16_WRAP_SUB(
 				car_z, state.game_vec1[car_index].z));
-		if (distance > 0x1C2) {
-			adjustment = LEGACY_S16_WRAP_SUB(distance, 0x1C2);
-			if (framespersec == 0x14) {
-				if (adjustment > 0x78)
-					adjustment = 0x78;
-			} else if (adjustment > 0xF0) {
-				adjustment = 0xF0;
+		if (distance > CAMERA_FOLLOW_DISTANCE) {
+			adjustment = LEGACY_S16_WRAP_SUB(distance,
+				CAMERA_FOLLOW_DISTANCE);
+			if (framespersec == FULL_GAME_FRAMES_PER_SECOND) {
+				if (adjustment > CAMERA_FULL_RATE_STEP_LIMIT)
+					adjustment = CAMERA_FULL_RATE_STEP_LIMIT;
+			} else if (adjustment > CAMERA_REDUCED_RATE_STEP_LIMIT) {
+				adjustment = CAMERA_REDUCED_RATE_STEP_LIMIT;
 			}
 			state.game_vec1[car_index].x = LEGACY_S16_WRAP_ADD(
 				state.game_vec1[car_index].x,
@@ -91,11 +116,12 @@ void sub_2298C(void)
 					cos_fast((legacy_u16)angle)));
 		}
 
-		divisor = LEGACY_U16_SAR(framespersec, 1U);
+		divisor = LEGACY_U16_SAR(framespersec,
+			TRACK_POINT_UPDATE_DIVISOR_SHIFT);
 		if (divisor != 0 &&
 			(legacy_u16)state.game_frame % divisor != 0)
 			continue;
-		nearest_distance = 0x2710;
+		nearest_distance = TRACK_POINT_INITIAL_DISTANCE;
 		for (candidate = 0;
 			LEGACY_S8_FROM_BITS(candidate) <
 				LEGACY_S8_FROM_BITS(byte_4616E);
@@ -156,7 +182,7 @@ void update_gamestate(void)
 				state.playerstate.car_speed2 != 0) {
 				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
 					state.game_frames_per_sec, 1);
-			} else if (game_replay_mode == 0) {
+			} else if (game_replay_mode == REPLAY_MODE_LIVE) {
 				byte_449DA = 1;
 			}
 		}
@@ -172,14 +198,16 @@ void update_gamestate(void)
 #ifndef RESTUNTS_HEADLESS
 		audio_carstate();
 #endif
-	} else if (game_replay_mode == 1) {
+	} else if (game_replay_mode == REPLAY_MODE_PAUSED) {
 #ifndef RESTUNTS_HEADLESS
 		audio_carstate();
 #endif
 		if (byte_4393C != 0) {
-			if (word_44DCA < 0x1C2)
-				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA, 8);
-			if (byte_4393C == 1 && word_44DCA > 0x180)
+			if (word_44DCA < CRASH_ROLL_DISTANCE_LIMIT)
+				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA,
+					CRASH_ROLL_ADVANCE_STEP);
+			if (byte_4393C == 1 &&
+				word_44DCA > CRASH_ROLL_STAGE_THRESHOLD)
 				byte_4393C = LEGACY_S8_WRAP_ADD(byte_4393C, 1);
 			if (byte_4393C == 2) {
 				if (LEGACY_S16_WRAP_ADD(
@@ -187,19 +215,22 @@ void update_gamestate(void)
 						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
-									state.playerstate.car_posWorld1.lz, 6U)))),
+									state.playerstate.car_posWorld1.lz,
+									CAR_WORLD_POSITION_SHIFT)))),
 					multiply_and_scale(sin_fast(track_angle),
 						LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
-									state.playerstate.car_posWorld1.lx, 6U))))) <=
-					0xE4) {
+									state.playerstate.car_posWorld1.lx,
+									CAR_WORLD_POSITION_SHIFT))))) <=
+					CRASH_ROLL_APPROACH_DISTANCE) {
 					if (state.playerstate.car_speed != 0)
-						player_op(2);
+						player_op(INPUT_BRAKE_FLAG);
 					else
 						byte_4393C = 0;
-				} else if (state.playerstate.car_speed < 0x500) {
-					player_op(1);
+				} else if (state.playerstate.car_speed <
+					CRASH_ROLL_SPEED_LIMIT) {
+					player_op(INPUT_ACCELERATE_FLAG);
 				} else {
 					player_op(0);
 				}
