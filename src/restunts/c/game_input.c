@@ -32,6 +32,7 @@
 #define MCGA_SCREEN_CENTER_X 160
 #define MCGA_SCREEN_CENTER_Y 100
 #define MOUSE_SCREEN_INSET 15
+#define MOUSE_TRACK_POSITION_SCALE 4
 
 static const legacy_u8 far input_direction_table[INPUT_DIRECTION_COUNT] = {
 	0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0
@@ -49,7 +50,7 @@ static legacy_s8 mouse_transparent_mode;
 static legacy_u8 h_key_toggle;
 static legacy_s16 input_elapsed_frames;
 
-/* A control that has not changed still fires again once its 20-frame repeat
+/* A control that has not changed still fires again once the configured repeat
    delay has elapsed. */
 static legacy_s16 input_repeat_due(legacy_s16 repeat_at)
 {
@@ -99,7 +100,7 @@ void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
 			input_callback_flags[code_bits] = (legacy_u8)(callback_index + 1U);
 		return;
 	}
-	key_index = (legacy_u16)(code_bits >> 8);
+	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
 	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX)
 		input_extended_callback_flags[key_index] = (legacy_u8)(callback_index + 1U);
 }
@@ -124,7 +125,7 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 		callback_number = input_callback_flags[key_index];
 		code_bits = key_index;
 	} else {
-		key_index = code_bits >> 8;
+		key_index = code_bits >> LEGACY_BYTE_BITS;
 		if (key_index >= INPUT_EXTENDED_KEY_MAX_INDEX)
 			key_index = INPUT_EXTENDED_KEY_MAX_INDEX;
 		callback_number = input_extended_callback_flags[key_index];
@@ -149,7 +150,7 @@ void nopsub_304AF(legacy_s16 code)
 			input_callback_flags[code_bits] = 0;
 		return;
 	}
-	key_index = (legacy_u16)(code_bits >> 8);
+	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
 	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX)
 		input_extended_callback_flags[key_index] = 0;
 }
@@ -494,8 +495,9 @@ static legacy_s16 mouse_track_position(legacy_s16 length,
 
 	numerator = LEGACY_S16_WRAP_MUL(
 		LEGACY_S16_WRAP_SUB(length, 1), selected);
-	numerator = LEGACY_S16_WRAP_MUL(numerator, 4);
-	denominator = LEGACY_S16_WRAP_MUL(item_count, 4);
+	numerator = LEGACY_S16_WRAP_MUL(numerator, MOUSE_TRACK_POSITION_SCALE);
+	denominator = LEGACY_S16_WRAP_MUL(
+		item_count, MOUSE_TRACK_POSITION_SCALE);
 	return mouse_track_divide(numerator, denominator);
 }
 
