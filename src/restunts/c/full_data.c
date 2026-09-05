@@ -77,7 +77,12 @@ legacy_s16 unk_3C0B6[8] = {
 legacy_s8 byte_3C0C6[16] = {
 	0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3
 };
-legacy_s16 word_3C0D6[8] = { 0, 0, 256, 256, 512, 512, 768, 768 };
+legacy_s16 word_3C0D6[8] = {
+	0, 0,
+	ANGLE_QUARTER_TURN, ANGLE_QUARTER_TURN,
+	ANGLE_HALF_TURN, ANGLE_HALF_TURN,
+	ANGLE_THREE_QUARTER_TURN, ANGLE_THREE_QUARTER_TURN
+};
 legacy_u8 fence_TrkObjCodes[8] = {
 	0xD6, 0xD7, 0xD6, 0xD7, 0xD6, 0xD7, 0xD6, 0xD7
 };

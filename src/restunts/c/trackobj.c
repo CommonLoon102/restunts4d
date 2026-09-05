@@ -69,15 +69,15 @@ static void track_rotate_local(struct VECTOR* position,
 
 	old_x = position->x;
 	switch ((legacy_u16)orientation) {
-	case 0x100U:
+	case ANGLE_QUARTER_TURN:
 		position->x = LEGACY_S16_WRAP_NEGATE(position->z);
 		position->z = old_x;
 		break;
-	case 0x200U:
+	case ANGLE_HALF_TURN:
 		position->x = LEGACY_S16_WRAP_NEGATE(position->x);
 		position->z = LEGACY_S16_WRAP_NEGATE(position->z);
 		break;
-	case 0x300U:
+	case ANGLE_THREE_QUARTER_TURN:
 		position->x = position->z;
 		position->z = LEGACY_S16_WRAP_NEGATE(old_x);
 		break;
@@ -144,7 +144,7 @@ static legacy_s16 track_arc_segment(const struct VECTOR* position)
 
 	value = (legacy_s16)((((legacy_u16)polarAngle(
 		LEGACY_S16_WRAP_ADD(position->x, 0x400),
-		LEGACY_S16_WRAP_ADD(position->z, 0x400)) & 0x00FFU) *
+		LEGACY_S16_WRAP_ADD(position->z, 0x400)) & ANGLE_QUARTER_MASK) *
 		18U) >> 8);
 	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value, 0x11));
 }
@@ -428,7 +428,7 @@ void build_track_object(struct VECTOR* world_position,
 		} else if (byte_4392C != 0 && absolute_x <= 0x78) {
 			planindex = 3;
 			if (wallindex < 0) {
-				wall_orientation_modifier = 0x200;
+				wall_orientation_modifier = ANGLE_HALF_TURN;
 				wallindex = position.x < 0 ? 0x64 : 0x65;
 			}
 		}
@@ -468,7 +468,7 @@ void build_track_object(struct VECTOR* world_position,
 		} else if (byte_4392C != 0 && absolute_x <= 0x78) {
 			planindex = 2;
 			wallHeight = 0x2A;
-			wall_orientation_modifier = 0x200;
+			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = next_position.x < 0 ? 0x64 : 0x65;
 		}
 		break;
@@ -507,10 +507,10 @@ void build_track_object(struct VECTOR* world_position,
 		if (absolute_x > 0x78)
 			break;
 		if (value2 == 0 && next_position.x <= -0x78) {
-			wall_orientation_modifier = 0x200;
+			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = 0x64;
 		} else if (value2 != 0 && next_position.x >= 0x78) {
-			wall_orientation_modifier = 0x200;
+			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = 0x65;
 		}
 		current_surf_type = (legacy_u8)surface_type;
@@ -551,7 +551,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 			planindex = 6;
 			if (next_position.x >= 0x78) {
-				wall_orientation_modifier = 0x200;
+				wall_orientation_modifier = ANGLE_HALF_TURN;
 				wallindex = 0x65;
 			}
 		}
@@ -565,7 +565,7 @@ void build_track_object(struct VECTOR* world_position,
 		planindex = LEGACY_S16_WRAP_ADD(value, 7);
 		current_surf_type = (legacy_u8)surface_type;
 		if (radius > 0x66) {
-			wall_orientation_modifier = 0x200;
+			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = LEGACY_S16_WRAP_ADD(value, 0x7B);
 			byte_4392C = 0;
 		}
@@ -859,8 +859,8 @@ void build_track_object(struct VECTOR* world_position,
 			break;
 		angle_step = (legacy_s16)((((legacy_u16)
 			LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-				(legacy_s16)polarAngle(value, position.z), 0x100)) &
-				0x03FFU) * 24U) >> 10);
+				(legacy_s16)polarAngle(value, position.z),
+				ANGLE_QUARTER_TURN)) & ANGLE_MASK) * 24U) >> 10);
 		planindex = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(value2, angle_step), 1);
 		current_surf_type = (legacy_u8)surface_type;
@@ -959,16 +959,16 @@ void build_track_object(struct VECTOR* world_position,
 				element_orientation = 0;
 				break;
 			case 1:
-				element_orientation = 0x300;
-				track_rotate_local(&position, 0x300);
+				element_orientation = ANGLE_THREE_QUARTER_TURN;
+				track_rotate_local(&position, ANGLE_THREE_QUARTER_TURN);
 				break;
 			case 2:
-				element_orientation = 0x200;
-				track_rotate_local(&position, 0x200);
+				element_orientation = ANGLE_HALF_TURN;
+				track_rotate_local(&position, ANGLE_HALF_TURN);
 				break;
 			default:
-				element_orientation = 0x100;
-				track_rotate_local(&position, 0x100);
+				element_orientation = ANGLE_QUARTER_TURN;
+				track_rotate_local(&position, ANGLE_QUARTER_TURN);
 				break;
 			}
 		}
@@ -997,13 +997,13 @@ void build_track_object(struct VECTOR* world_position,
 	if (planindex > 0) {
 		planindex = LEGACY_S16_WRAP_MUL(planindex, 4);
 		switch ((legacy_u16)element_orientation) {
-		case 0x100U:
+		case ANGLE_QUARTER_TURN:
 			planindex = LEGACY_S16_WRAP_ADD(planindex, 3);
 			break;
-		case 0x200U:
+		case ANGLE_HALF_TURN:
 			planindex = LEGACY_S16_WRAP_ADD(planindex, 2);
 			break;
-		case 0x300U:
+		case ANGLE_THREE_QUARTER_TURN:
 			planindex = LEGACY_S16_WRAP_ADD(planindex, 1);
 			break;
 		}
@@ -1024,17 +1024,17 @@ void build_track_object(struct VECTOR* world_position,
 	wallOrientation = (legacy_s16)((
 		LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_NEGATE(wall->orientation),
-			element_orientation), wall_orientation_modifier)) & 0x3FF);
+			element_orientation), wall_orientation_modifier)) & ANGLE_MASK);
 	switch ((legacy_u16)element_orientation) {
-	case 0x100U:
+	case ANGLE_QUARTER_TURN:
 		wallStartX = wall->z;
 		wallStartZ = LEGACY_S16_WRAP_NEGATE(wall->x);
 		break;
-	case 0x200U:
+	case ANGLE_HALF_TURN:
 		wallStartX = LEGACY_S16_WRAP_NEGATE(wall->x);
 		wallStartZ = LEGACY_S16_WRAP_NEGATE(wall->z);
 		break;
-	case 0x300U:
+	case ANGLE_THREE_QUARTER_TURN:
 		wallStartX = LEGACY_S16_WRAP_NEGATE(wall->z);
 		wallStartZ = wall->x;
 		break;

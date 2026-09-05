@@ -163,7 +163,7 @@ static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 		LEGACY_S16_WRAP_ADD(
 			state.opponentstate.car_rc2[wheel_index], 0x180)),
 		y_adjustment);
-	if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+	if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
 		mat_mul_vector(wheel, angle_rotation, rotated);
 		*wheel = *rotated;
 	}
@@ -327,7 +327,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		}
 
 		/* Prepare the optional auxiliary wheel rotation once for both wheels. */
-		if ((state.opponentstate.car_angle_z & 0x3FF) != 0) {
+		if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
 			var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
 				LEGACY_S16_WRAP_NEGATE(
 					state.opponentstate.car_angle_z), 0);
@@ -395,7 +395,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		arg_pState->car_pseudoGravity = 0;
 	}
 
-	if ((arg_pState->car_angle_z & 0x3FF) != 0) {
+	if ((arg_pState->car_angle_z & ANGLE_MASK) != 0) {
 		var_EC = 1;
 		var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
 			LEGACY_S16_WRAP_NEGATE(arg_pState->car_angle_z), 0);
@@ -471,7 +471,7 @@ case PLAYER_FLOW_loc_15142:
 	var_2 = LEGACY_S8_WRAP_ADD(var_2, 1);
 	if (var_2 != 5)
 		{ physics_flow = PLAYER_FLOW_loc_151A2; continue; }
-	arg_pState->car_36MwhlAngle = 0x200;
+	arg_pState->car_36MwhlAngle = ANGLE_HALF_TURN;
 	update_crash_state(1, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15163:
@@ -539,7 +539,7 @@ case PLAYER_FLOW_loc_1527C:
 		position_to_word(var_DEptrTo1C0->lz), wallStartZ);
 
 	mat_rot_y(&mat_134, LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(wallOrientation), 0x100));
+		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
 	if (arg_MplayerFlag == 0) {
 		legacy_execution_residue.wheel_angle_stack_words[0] = mat_134.vals[4];
 		legacy_execution_residue.wheel_angle_stack_words[1] = mat_134.vals[5];
@@ -594,12 +594,12 @@ case PLAYER_FLOW_loc_153AE:
 case PLAYER_FLOW_loc_1540C:
 	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1),
-		wallOrientation) & 0x3FFU);
+		wallOrientation) & ANGLE_MASK);
 	vec_FC.z = var_F2;
 	vec_FC.y = 0;
-	if (var_EE < 0x100)
+	if (var_EE < ANGLE_QUARTER_TURN)
 		{ physics_flow = PLAYER_FLOW_loc_1543A; continue; }
-	if (var_EE <= 0x300)
+	if (var_EE <= ANGLE_THREE_QUARTER_TURN)
 		{ physics_flow = PLAYER_FLOW_loc_1544A; continue; }
 
 case PLAYER_FLOW_loc_1543A:
@@ -609,7 +609,7 @@ case PLAYER_FLOW_loc_1543A:
 
 case PLAYER_FLOW_loc_1544A:
 	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S16_WRAP_ADD(wallOrientation, 0x200) & 0x3FFU);
+		LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
 	vec_FC.x = -768;//0xFD00; // TODO: a negative number
 
 case PLAYER_FLOW_loc_1545D:
@@ -624,11 +624,11 @@ case PLAYER_FLOW_loc_1546E:
 	mat_mul_vector(&vec_FC, var_EA, &vec_1C);
 	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), var_EE) &
-		0x3FFU);
+		ANGLE_MASK);
 	var_138 = 0;
-	if (si <= 0x100)
+	if (si <= ANGLE_QUARTER_TURN)
 		{ physics_flow = PLAYER_FLOW_loc_154CA; continue; }
-		si = LEGACY_S16_WRAP_SUB(0x400, si);
+		si = LEGACY_S16_WRAP_SUB(ANGLE_FULL_TURN, si);
 	var_138 = 1;
 
 case PLAYER_FLOW_loc_154CA:
@@ -1035,7 +1035,7 @@ case PLAYER_FLOW_loc_16057:
 	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
 		vec_1DE[0].z, vec_1DE[1].z);
 	pState_minusRotate_y_1 = LEGACY_S16_FROM_BITS((legacy_u16)
-		polarAngle(var_EE, LEGACY_S16_WRAP_NEGATE(var_F2)) & 0x3FFU);
+		polarAngle(var_EE, LEGACY_S16_WRAP_NEGATE(var_F2)) & ANGLE_MASK);
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
 	var_wheelIndex = 0;
 
@@ -1059,7 +1059,8 @@ case PLAYER_FLOW_loc_160A7:
 
 case PLAYER_FLOW_loc_1611C:
 	pState_minusRotate_x_1 = LEGACY_S16_WRAP_SUB(
-		polarAngle(LEGACY_S16_WRAP_NEGATE(var_F2), var_F4), 0x100);
+		polarAngle(LEGACY_S16_WRAP_NEGATE(var_F2), var_F4),
+		ANGLE_QUARTER_TURN);
 	if (pState_minusRotate_x_1 >= 0)
 		{ physics_flow = PLAYER_FLOW_loc_1613E; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16141; continue; }
@@ -1105,7 +1106,7 @@ case PLAYER_FLOW_loc_161AB:
 
 case PLAYER_FLOW_loc_161DE:
 	pState_minusRotate_z_1 = LEGACY_S16_WRAP_SUB(
-		polarAngle(var_F2, var_F4), 0x100);
+		polarAngle(var_F2, var_F4), ANGLE_QUARTER_TURN);
 	if (pState_minusRotate_z_1 >= 0)
 		{ physics_flow = PLAYER_FLOW_loc_161FC; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_161FF; continue; }
@@ -1308,7 +1309,7 @@ case PLAYER_FLOW_loc_165F0:
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD6A, vec_18EoStateWorldCrds) == 0)
 		{ physics_flow = PLAYER_FLOW_loc_165EA; continue; }
 	arg_pState->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
-		arg_pState->car_36MwhlAngle, 0x200);
+		arg_pState->car_36MwhlAngle, ANGLE_HALF_TURN);
 
 case PLAYER_FLOW_loc_16648:
 	// crash with start/finish pole
@@ -1353,11 +1354,11 @@ case PLAYER_FLOW_loc_1671F:
 case PLAYER_FLOW_loc_1672C:
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, 0x100)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)), 0x7E));
 	vec_18EoStateWorldCrds[0].y = hillHeightConsts[hillFlag];
 	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
 		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, 0x100)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)), 0x7E));
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 	if (var_138 != 0)
@@ -1365,10 +1366,12 @@ case PLAYER_FLOW_loc_1672C:
 
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, 0x300)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle,
+				ANGLE_THREE_QUARTER_TURN)), 0x7E));
 	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
 		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, 0x300)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle,
+				ANGLE_THREE_QUARTER_TURN)), 0x7E));
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 
