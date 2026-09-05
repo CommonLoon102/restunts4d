@@ -45,9 +45,6 @@
 #define SLIDE_GRIP_TOLERANCE 1000U
 #define SLIDE_YAW_DAMPING_DIVISOR 2
 #define SLIDE_SPEED_PENALTY_SHIFT 1U
-#define CAR_SOUND_SKID_PAVED_FLAG 2U
-#define CAR_SOUND_SKID_OFFROAD_FLAG 4U
-
 static legacy_s16 penalty_route_next(legacy_s16 track_index)
 {
 	if (track_index == PENALTY_ROUTE_SENTINEL)

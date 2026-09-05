@@ -9,6 +9,7 @@
 extern legacy_s16 camera_track_height_offset;
 
 #define AUDIO_TRACK_CAMERA_VERTICAL_OFFSET 90
+#define AUDIO_CAR_COUNT_WITH_OPPONENT 2
 
 void audio_op_unk3(legacy_s16 channel);
 void audio_op_unk4(legacy_s16 channel);
@@ -44,35 +45,36 @@ static legacy_u8 audio_carstate_update_flags(struct CARSTATE* carstate,
 	legacy_u8 desired;
 
 	desired = (legacy_u8)carstate->field_CF;
-	if ((desired & 1U) != 0) {
-		if ((flags & 1U) == 0) {
-			flags = (legacy_u8)(flags | 1U);
+	if ((desired & CAR_SOUND_ENGINE_ACTIVE_FLAG) != 0) {
+		if ((flags & CAR_SOUND_ENGINE_ACTIVE_FLAG) == 0) {
+			flags = (legacy_u8)(flags | CAR_SOUND_ENGINE_ACTIVE_FLAG);
 			audio_op_unk(channel);
 		}
-	} else if ((flags & 1U) != 0) {
-		flags = (legacy_u8)(flags - 1U);
+	} else if ((flags & CAR_SOUND_ENGINE_ACTIVE_FLAG) != 0) {
+		flags = (legacy_u8)(flags - CAR_SOUND_ENGINE_ACTIVE_FLAG);
 		audio_function2(channel);
 	}
 
-	if ((desired & 6U) != 0) {
-		if ((flags & 6U) == (desired & 6U))
+	if ((desired & CAR_SOUND_SKID_MASK) != 0) {
+		if ((flags & CAR_SOUND_SKID_MASK) ==
+			(desired & CAR_SOUND_SKID_MASK))
 			return flags;
-		if ((flags & 6U) == 0) {
-			if ((desired & 2U) != 0) {
+		if ((flags & CAR_SOUND_SKID_MASK) == 0) {
+			if ((desired & CAR_SOUND_SKID_PAVED_FLAG) != 0) {
 				audio_op_unk5(channel);
-				return (legacy_u8)(flags + 2U);
+				return (legacy_u8)(flags + CAR_SOUND_SKID_PAVED_FLAG);
 			}
 			audio_op_unk6(channel);
-			return (legacy_u8)(flags + 4U);
+			return (legacy_u8)(flags + CAR_SOUND_SKID_OFFROAD_FLAG);
 		}
-	} else if ((flags & 6U) == 0) {
+	} else if ((flags & CAR_SOUND_SKID_MASK) == 0) {
 		return flags;
 	}
 
-	if ((flags & 2U) != 0)
-		flags = (legacy_u8)(flags - 2U);
-	if ((flags & 4U) != 0)
-		flags = (legacy_u8)(flags - 4U);
+	if ((flags & CAR_SOUND_SKID_PAVED_FLAG) != 0)
+		flags = (legacy_u8)(flags - CAR_SOUND_SKID_PAVED_FLAG);
+	if ((flags & CAR_SOUND_SKID_OFFROAD_FLAG) != 0)
+		flags = (legacy_u8)(flags - CAR_SOUND_SKID_OFFROAD_FLAG);
 	audio_op_unk7(channel);
 	return flags;
 }
@@ -96,14 +98,18 @@ void audio_carstate(void)
 	if (is_in_replay != 0) {
 		if (audio_car_state_ready != 0) {
 			audio_car_state_read_index = audio_car_state_write_index;
-			if (((legacy_u8)audio_player_car_flags & 6U) != 0)
+			if (((legacy_u8)audio_player_car_flags &
+				CAR_SOUND_SKID_MASK) != 0)
 				audio_op_unk7(audio_player_engine_channel);
-			if (((legacy_u8)audio_player_car_flags & 1U) != 0)
+			if (((legacy_u8)audio_player_car_flags &
+				CAR_SOUND_ENGINE_ACTIVE_FLAG) != 0)
 				audio_function2(audio_player_engine_channel);
 			if (gameconfig.game_opponenttype != 0) {
-				if (((legacy_u8)audio_opponent_car_flags & 6U) != 0)
+				if (((legacy_u8)audio_opponent_car_flags &
+					CAR_SOUND_SKID_MASK) != 0)
 					audio_op_unk7(audio_opponent_engine_channel);
-				if (((legacy_u8)audio_opponent_car_flags & 1U) != 0)
+				if (((legacy_u8)audio_opponent_car_flags &
+					CAR_SOUND_ENGINE_ACTIVE_FLAG) != 0)
 					audio_function2(audio_opponent_engine_channel);
 			}
 			audio_car_state_ready = 0;
@@ -178,7 +184,7 @@ void audio_carstate(void)
 			&record->opponent_current, &camera_previous,
 			&camera_current, &opponent_previous, &opponent_current);
 		record->opponent_rpm = state.opponentstate.car_currpm;
-		car_count = 2;
+		car_count = AUDIO_CAR_COUNT_WITH_OPPONENT;
 	}
 
 	for (car_index = 0; car_index < car_count; car_index++) {

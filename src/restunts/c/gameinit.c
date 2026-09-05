@@ -123,7 +123,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_transmission = transmission;
 	playerstate->field_CD = 0;
 	playerstate->field_CE = 0;
-	playerstate->field_CF = 1;
+	playerstate->field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 }
 
 void init_game_state(legacy_s16 arg)

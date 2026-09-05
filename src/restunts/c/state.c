@@ -54,7 +54,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 			show_penalty_counter, 1);
 	}
 
-	state.playerstate.field_CF = 1;
+	state.playerstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.playerstate.car_crashBmpFlag != 0) {
 		state.field_45D = 0;
 		arg_carInputByte = INPUT_BRAKE_FLAG;

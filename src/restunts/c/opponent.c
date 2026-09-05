@@ -263,7 +263,7 @@ void opponent_op(void)
 	rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 		state.opponentstate.car_rotate.y,
 		state.opponentstate.car_rotate.x, 1);
-	state.opponentstate.field_CF = 1;
+	state.opponentstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.opponentstate.car_crashBmpFlag != 0) {
 		if (state.opponentstate.car_speed2 == 0)
 			state.opponentstate.field_CF = 0;
