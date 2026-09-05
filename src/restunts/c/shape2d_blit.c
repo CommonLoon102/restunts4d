@@ -13,6 +13,9 @@
 #define PALETTE_MAP_TRANSPARENT 255U
 #define MCGA_WINDOW_WIDTH 320U
 #define MCGA_WINDOW_HEIGHT 200U
+#define DOS_PARAGRAPH_SHIFT 4U
+#define DOS_WINDOW_EXTRA_PARAGRAPH_COUNT 1U
+#define SPRITE_STATE_COUNT 2U
 
 struct SHAPE2D_CLIP {
 	legacy_u16 source;
@@ -54,7 +57,7 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 		SHAPE2D_HEADER_SIZE);
 	width = shape2d_get_width(shape);
 	line_entry = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(sprite1.sprite_lineofs),
-		(legacy_u16)(y << 1));
+		LEGACY_U16_WRAP_MUL(y, LEGACY_WORD_BYTES));
 	destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
 		(legacy_u8 far*)dos_memory_make_pointer(dos_memory_pointer_segment(&sprite1), line_entry)), x);
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
@@ -94,7 +97,7 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 			remaining = LEGACY_U16_WRAP_SUB(remaining, 1U);
 			if (old_remaining == LEGACY_U16_SIGN_BIT ||
 				LEGACY_S16_FROM_BITS(remaining) <= 0) {
-				line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
+				line_entry = LEGACY_U16_WRAP_ADD(line_entry, LEGACY_WORD_BYTES);
 				destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
 					(legacy_u8 far*)dos_memory_make_pointer(
 						dos_memory_pointer_segment(&sprite1), line_entry)), x);
@@ -179,7 +182,8 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 
 	wnddefseg = dos_memory_pointer_segment(&wnd_defs);
 
-	pages = ((width * height + SHAPE2D_HEADER_SIZE) >> 4) + 1;
+	pages = ((width * height + SHAPE2D_HEADER_SIZE) >>
+		DOS_PARAGRAPH_SHIFT) + DOS_WINDOW_EXTRA_PARAGRAPH_COUNT;
 	shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
 
 	header = (struct SHAPE2D far*)dos_memory_make_pointer(
@@ -226,7 +230,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	// this file.
 	for (i = 0; i < height; i++) {
 		shape2d_put_word(farlineofsptr, lineofs);
-		farlineofsptr += 2U;
+		farlineofsptr += LEGACY_WORD_BYTES;
 		lineofs += width;
 	}
 
@@ -277,16 +281,16 @@ void sprite_copy_wnd_to_1_clear(void) {
 }
 
 void sprite_copy_both_to_arg(struct SPRITE* argsprite) {
-	fmemcpy(argsprite, &sprite1, sizeof(struct SPRITE) * 2);
+	fmemcpy(argsprite, &sprite1, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
 }
 
 void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
-	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * 2);
+	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
 }
 
 legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom)
 {
-	struct SPRITE saved_sprites[2];
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	struct SPRITE far* window;
 	legacy_u16 index;
 	legacy_s16 width;
@@ -319,7 +323,7 @@ legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s
 
 void sub_275C6(void)
 {
-	struct SPRITE saved_sprites[2];
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	legacy_u16 index;
 
 	if (byte_3B8FC == 0)
@@ -338,7 +342,7 @@ void sub_275C6(void)
 }
 
 void mouse_draw_opaque(void) {
-	struct SPRITE saved_sprites[2];
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 
 	sprite_copy_both_to_arg(saved_sprites);
 	sprite_copy_2_to_1();
@@ -348,7 +352,7 @@ void mouse_draw_opaque(void) {
 }
 
 void mouse_draw_transparent(void) {
-	struct SPRITE saved_sprites[2];
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	legacy_s16 aligned_x;
 
 	aligned_x = mouse_xpos - mouse_xpos % video_flag2_is1;
