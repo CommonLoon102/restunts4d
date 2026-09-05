@@ -53,6 +53,18 @@
 #define ELEVATED_CORNER_INNER_OFFSET 108
 #define ELEVATED_CORNER_INNER_WALL_BASE 105
 #define ELEVATED_CORNER_OUTER_WALL_BASE 123
+#define BANKED_ENTRANCE_A_PLAN_BASE 35
+#define BANKED_ENTRANCE_A_ANGLE -672
+#define BANKED_ENTRANCE_B_PLAN_BASE 25
+#define BANKED_ENTRANCE_B_ANGLE 160
+#define BANKED_ENTRANCE_END_Z 334
+#define BANKED_ENTRANCE_INNER_Z 168
+#define BANKED_ROAD_PLANE_INDEX 6
+#define BANKED_CORNER_INNER_OFFSET 120
+#define BANKED_CORNER_OUTER_OFFSET 126
+#define BANKED_CORNER_WALL_THRESHOLD 102
+#define BANKED_CORNER_PLAN_BASE 7
+#define BANKED_CORNER_WALL_BASE 123
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -568,42 +580,42 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 24: /* Banked-road entrance A. */
-		value = 0x23;
+		value = BANKED_ENTRANCE_A_PLAN_BASE;
 		value2 = 0;
-		terrain_angle = -0x2A0;
+		terrain_angle = BANKED_ENTRANCE_A_ANGLE;
 		/* fall through */
 
 	case 23: /* Banked-road entrance B. */
 		if (physical_model == 23) {
-			value = 0x19;
+			value = BANKED_ENTRANCE_B_PLAN_BASE;
 			value2 = 1;
-			terrain_angle = 0xA0;
+			terrain_angle = BANKED_ENTRANCE_B_ANGLE;
 		}
-		if (absolute_x > 0x78)
+		if (absolute_x > ROAD_HALF_WIDTH)
 			break;
-		if (value2 == 0 && next_position.x <= -0x78) {
+		if (value2 == 0 && next_position.x <= -ROAD_HALF_WIDTH) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
-			wallindex = 0x64;
-		} else if (value2 != 0 && next_position.x >= 0x78) {
+			wallindex = ELEVATED_LEFT_WALL_INDEX;
+		} else if (value2 != 0 && next_position.x >= ROAD_HALF_WIDTH) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
-			wallindex = 0x65;
+			wallindex = ELEVATED_RIGHT_WALL_INDEX;
 		}
 		current_surf_type = (legacy_u8)surface_type;
-		if (position.z < -0x14E) {
+		if (position.z < -BANKED_ENTRANCE_END_Z) {
 			planindex = value;
 			break;
 		}
-		if (position.z >= 0x14E) {
+		if (position.z >= BANKED_ENTRANCE_END_Z) {
 			planindex = LEGACY_S16_WRAP_ADD(value, 9);
 			break;
 		}
-		if (position.z < -0xA8) {
+		if (position.z < -BANKED_ENTRANCE_INNER_Z) {
 			planindex = LEGACY_S16_WRAP_ADD(value, 1);
 			index = 0;
 		} else if (position.z < 0) {
 			planindex = LEGACY_S16_WRAP_ADD(value, 3);
 			index = 1;
-		} else if (position.z < 0xA8) {
+		} else if (position.z < BANKED_ENTRANCE_INNER_Z) {
 			planindex = LEGACY_S16_WRAP_ADD(value, 5);
 			index = 2;
 		} else {
@@ -622,26 +634,27 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 25: /* Banked road. */
-		if (absolute_x <= 0x78) {
+		if (absolute_x <= ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
-			planindex = 6;
-			if (next_position.x >= 0x78) {
+			planindex = BANKED_ROAD_PLANE_INDEX;
+			if (next_position.x >= ROAD_HALF_WIDTH) {
 				wall_orientation_modifier = ANGLE_HALF_TURN;
-				wallindex = 0x65;
+				wallindex = ELEVATED_RIGHT_WALL_INDEX;
 			}
 		}
 		break;
 
 	case 26: /* Banked corner. */
 		radius = track_arc_radius(&position);
-		if (radius <= -0x78 || radius >= 0x7E)
+		if (radius <= -BANKED_CORNER_INNER_OFFSET ||
+			radius >= BANKED_CORNER_OUTER_OFFSET)
 			break;
 		value = track_arc_segment(&position);
-		planindex = LEGACY_S16_WRAP_ADD(value, 7);
+		planindex = LEGACY_S16_WRAP_ADD(value, BANKED_CORNER_PLAN_BASE);
 		current_surf_type = (legacy_u8)surface_type;
-		if (radius > 0x66) {
+		if (radius > BANKED_CORNER_WALL_THRESHOLD) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
-			wallindex = LEGACY_S16_WRAP_ADD(value, 0x7B);
+			wallindex = LEGACY_S16_WRAP_ADD(value, BANKED_CORNER_WALL_BASE);
 			byte_4392C = 0;
 		}
 		break;
