@@ -2,6 +2,22 @@
 #include "legacy.h"
 #include "math.h"
 
+#define PARTICLE_SLOT_COUNT 24
+#define CAR_CRASH_PARTICLE_KIND_COUNT 2
+#define CAR_CRASH_PARTICLE_LIMIT 18
+#define CAR_CRASH_PARTICLE_LIFETIME_SCALE 6
+#define OBJECT_PARTICLE_ANGLE_OFFSET 96
+#define OBJECT_PARTICLE_ANGULAR_RANGE 192
+#define OBJECT_PARTICLE_LIMIT 8
+#define PARTICLE_TYPE_VARIANT_COUNT 4
+#define PARTICLE_TYPE_VARIANT_MASK 3U
+#define PARTICLE_RANDOM_ROTATION_SCALE 4
+#define PARTICLE_RANDOM_SPEED_SCALE 6
+#define PARTICLE_FORWARD_SPEED_BIAS 384
+#define PARTICLE_GRAVITY_STEP 19
+#define PARTICLE_ROTATION_STEP 16
+#define LOW_FRAME_RATE 10
+
 #ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
@@ -49,23 +65,25 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 	kind = (legacy_s16)kind_arg;
 	base_angle = (legacy_s16)base_angle_arg;
 	energy_offset = (legacy_s16)energy_offset_arg;
-	if (kind < 2) {
-		angular_range = 0x400;
-		particle_limit = 0x12;
+	if (kind < CAR_CRASH_PARTICLE_KIND_COUNT) {
+		angular_range = ANGLE_FULL_TURN;
+		particle_limit = CAR_CRASH_PARTICLE_LIMIT;
 		type_base = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_WRAP_MUL(kind, 4), 4);
-		lifetime_scale = 6;
+			LEGACY_S16_WRAP_MUL(kind, PARTICLE_TYPE_VARIANT_COUNT),
+			PARTICLE_TYPE_VARIANT_COUNT);
+		lifetime_scale = CAR_CRASH_PARTICLE_LIFETIME_SCALE;
 	} else {
-		base_angle = LEGACY_S16_WRAP_SUB(base_angle, 0x60);
-		angular_range = 0xC0;
-		particle_limit = 8;
+		base_angle = LEGACY_S16_WRAP_SUB(
+			base_angle, OBJECT_PARTICLE_ANGLE_OFFSET);
+		angular_range = OBJECT_PARTICLE_ANGULAR_RANGE;
+		particle_limit = OBJECT_PARTICLE_LIMIT;
 		type_base = 0;
 		lifetime_scale = 1;
 	}
 
 	state.field_42A = 1;
 	free_count = 0;
-	for (slot = 0; slot < 24; slot++) {
+	for (slot = 0; slot < PARTICLE_SLOT_COUNT; slot++) {
 		if (state.field_38E[slot] == 0)
 			free_count = LEGACY_S16_WRAP_ADD(free_count, 1);
 	}
@@ -73,21 +91,24 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 		free_count = particle_limit;
 
 	emitted = 0;
-	for (slot = 0; slot < 24 && emitted < free_count; slot++) {
+	for (slot = 0; slot < PARTICLE_SLOT_COUNT && emitted < free_count; slot++) {
 		if (state.field_38E[slot] != 0)
 			continue;
 
 		state.field_443[slot] = (legacy_u8)kind;
 		state.field_42B[slot] = (legacy_u8)(
-			((legacy_u8)emitted & 3U) + (legacy_u8)type_base);
+			((legacy_u8)emitted & PARTICLE_TYPE_VARIANT_MASK) +
+			(legacy_u8)type_base);
 		state.game_longs1[slot] = 0;
 		state.game_longs2[slot] = 0;
 		state.game_longs3[slot] = 0;
 
 		random_value = (legacy_s16)get_kevinrandom();
-		state.field_2FE[slot] = LEGACY_S16_WRAP_MUL(random_value, 4);
+		state.field_2FE[slot] = LEGACY_S16_WRAP_MUL(
+			random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 		random_value = (legacy_s16)get_kevinrandom();
-		state.field_32E[slot] = LEGACY_S16_WRAP_MUL(random_value, 4);
+		state.field_32E[slot] = LEGACY_S16_WRAP_MUL(
+			random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 
 		particle_angle = LEGACY_S16_FROM_BITS((legacy_u16)
 			LEGACY_S32_DIV_OR_ZERO(
@@ -96,13 +117,15 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 				(legacy_s32)free_count));
 		particle_angle = LEGACY_S16_WRAP_ADD(particle_angle, base_angle);
 		state.field_35E[slot] = LEGACY_S16_FROM_BITS(
-			(legacy_u16)particle_angle & 0x03FFU);
+			(legacy_u16)particle_angle & ANGLE_MASK);
 
 		random_value = (legacy_s16)get_kevinrandom();
 		particle_timer = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(random_value, 6)),
+			LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(
+				random_value, PARTICLE_RANDOM_SPEED_SCALE)),
 			energy_offset);
-		particle_timer = LEGACY_S16_WRAP_ADD(particle_timer, 0x180);
+		particle_timer = LEGACY_S16_WRAP_ADD(
+			particle_timer, PARTICLE_FORWARD_SPEED_BIAS);
 		state.field_38E[slot] = particle_timer;
 
 		particle_lifetime = LEGACY_S16_SAR2(
@@ -123,7 +146,7 @@ void sub_19BA0(void) {
 	legacy_s16 slot;
 
 	any_active = 0;
-	for (slot = 0; slot < 24; slot++) {
+	for (slot = 0; slot < PARTICLE_SLOT_COUNT; slot++) {
 		if (state.field_38E[slot] == 0)
 			continue;
 
@@ -139,15 +162,16 @@ void sub_19BA0(void) {
 
 		particle_velocity = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
 			&state.field_3BE[slot * 2]));
-		particle_velocity = LEGACY_S16_WRAP_SUB(particle_velocity, 0x13);
+		particle_velocity = LEGACY_S16_WRAP_SUB(
+			particle_velocity, PARTICLE_GRAVITY_STEP);
 		LEGACY_WRITE_U16_LE(
 			&state.field_3BE[slot * 2], particle_velocity);
 		state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
 			state.game_longs2[slot], particle_velocity);
 
-		if (framespersec == 10) {
+		if (framespersec == LOW_FRAME_RATE) {
 			particle_velocity = LEGACY_S16_WRAP_SUB(
-				particle_velocity, 0x13);
+				particle_velocity, PARTICLE_GRAVITY_STEP);
 			LEGACY_WRITE_U16_LE(
 				&state.field_3BE[slot * 2], particle_velocity);
 			state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
@@ -164,9 +188,9 @@ void sub_19BA0(void) {
 
 		any_active = 1;
 		state.field_2FE[slot] = LEGACY_S16_WRAP_ADD(
-			state.field_2FE[slot], 0x10);
+			state.field_2FE[slot], PARTICLE_ROTATION_STEP);
 		state.field_32E[slot] = LEGACY_S16_WRAP_ADD(
-			state.field_32E[slot], 0x10);
+			state.field_32E[slot], PARTICLE_ROTATION_STEP);
 	}
 
 	state.field_42A = any_active;
