@@ -4,6 +4,20 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#define CUSTOM_CAMERA_INITIAL_DISTANCE 210
+#define CUSTOM_CAMERA_INITIAL_ELEVATION_ANGLE 80
+#define CUSTOM_CAMERA_INITIAL_AZIMUTH_ANGLE 464
+#define FENCE_TRACK_OBJECT_CODE 214U
+#define FENCE_SCENE_OBJECT_CODE 215U
+#define TRACK_PREVIEW_CAMERA_X 15360
+#define TRACK_PREVIEW_CAMERA_Y 20200
+#define TRACK_PREVIEW_CAMERA_Z -2800
+#define TRACK_PREVIEW_TARGET_X 15360
+#define TRACK_PREVIEW_TARGET_Y 2800
+#define TRACK_PREVIEW_TARGET_Z 10960
+#define TRACK_PREVIEW_VECTOR_Y -10100
+#define TRACK_PREVIEW_VECTOR_Z 16760
+
 /* Renderer work areas formerly reserved as anonymous spans in dseg.asm. */
 struct SHAPE3D game3dshapes[130];
 struct TRANSFORMEDSHAPE3D currenttransshape[29];
@@ -25,7 +39,11 @@ struct RECTANGLE* rectptr_unk;
 struct RECTANGLE* rectptr_unk2;
 
 /* Camera, menu, and renderer constants. */
-struct CUSTOM_CAMERA custom_camera = { 0x00D2, 0x0050, 0x01D0 };
+struct CUSTOM_CAMERA custom_camera = {
+	CUSTOM_CAMERA_INITIAL_DISTANCE,
+	CUSTOM_CAMERA_INITIAL_ELEVATION_ANGLE,
+	CUSTOM_CAMERA_INITIAL_AZIMUTH_ANGLE
+};
 
 struct BUTTON_AREA menu_buttons[5] = {
 	{ 105, 208, 119, 197 },
@@ -84,7 +102,10 @@ legacy_s16 word_3C0D6[8] = {
 	ANGLE_THREE_QUARTER_TURN, ANGLE_THREE_QUARTER_TURN
 };
 legacy_u8 fence_TrkObjCodes[8] = {
-	0xD6, 0xD7, 0xD6, 0xD7, 0xD6, 0xD7, 0xD6, 0xD7
+	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE,
+	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE,
+	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE,
+	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE
 };
 legacy_s8 unk_3C0EE[2] = { 0, 0 };
 legacy_s8 unk_3C0F0[4] = { 0, 0, 0, 1 };
@@ -92,35 +113,37 @@ legacy_s8 unk_3C0F4[4] = { 0, 0, 1, 0 };
 legacy_s8 unk_3C0F8[16] = {
 	0, 0, 1, 0, 0, 1, 1, 1, -128, 0, -128, 1, -1, -1, 0, 0
 };
-legacy_s16 word_3C108 = 0x3C00;
-legacy_s16 word_3C10A = 0x4EE8;
-legacy_s16 word_3C10C = (legacy_s16)0xF510;
-legacy_s16 word_3C10E = 0x3C00;
-legacy_s16 word_3C110 = 0x0AF0;
-legacy_s16 word_3C112 = 0x2AD0;
-struct VECTOR unk_3C114 = { 0, (legacy_s16)0xD88C, 0x4178 };
+legacy_s16 word_3C108 = TRACK_PREVIEW_CAMERA_X;
+legacy_s16 word_3C10A = TRACK_PREVIEW_CAMERA_Y;
+legacy_s16 word_3C10C = TRACK_PREVIEW_CAMERA_Z;
+legacy_s16 word_3C10E = TRACK_PREVIEW_TARGET_X;
+legacy_s16 word_3C110 = TRACK_PREVIEW_TARGET_Y;
+legacy_s16 word_3C112 = TRACK_PREVIEW_TARGET_Z;
+struct VECTOR unk_3C114 = {
+	0, TRACK_PREVIEW_VECTOR_Y, TRACK_PREVIEW_VECTOR_Z
+};
 
 /* Static scene objects refer to portable C shape records, not dseg offsets. */
 struct TRACKOBJECT sceneshapes2[19] = {
-	{ 0, 0x0000, &game3dshapes[108], &game3dshapes[109], 0, 0, 0, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[45], &game3dshapes[45], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0300, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0200, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0100, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[43], &game3dshapes[43], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0300, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0200, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0100, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0300, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0200, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0100, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0000, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0300, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0200, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
-	{ 0, 0x0100, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 }
+	{ 0, 0, &game3dshapes[108], &game3dshapes[109], 0, 0, 0, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[45], &game3dshapes[45], 0, 0, 1, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_THREE_QUARTER_TURN, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_HALF_TURN, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_QUARTER_TURN, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[43], &game3dshapes[43], 0, 0, 1, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_THREE_QUARTER_TURN, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_HALF_TURN, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_QUARTER_TURN, &game3dshapes[42], &game3dshapes[42], 0, 0, 1, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_THREE_QUARTER_TURN, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_HALF_TURN, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_QUARTER_TURN, &game3dshapes[41], &game3dshapes[41], 0, 0, 1, 0, -1, 0 },
+	{ 0, 0, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_THREE_QUARTER_TURN, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_HALF_TURN, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 },
+	{ 0, ANGLE_QUARTER_TURN, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 }
 };
 
 struct TRACKOBJECT sceneshapes3[13] = {
