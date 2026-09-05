@@ -1,5 +1,44 @@
 #include "state_internal.h"
 
+#define LEGACY_NULL_TRACK_VECTOR_CAPACITY 256
+#define LEGACY_NULL_TRACK_TEXT_SPACE 32
+#define LEGACY_NULL_TRACK_TEXT_R 82
+#define LEGACY_NULL_TRACK_TEXT_U 117
+#define LEGACY_NULL_TRACK_TEXT_N 110
+
+#define OPPONENT_NORMAL_FRAME_RATE 20U
+#define OPPONENT_LOW_FRAME_RATE 10
+#define OPPONENT_NORMAL_STEERING_STEP 8
+#define OPPONENT_LOW_RATE_STEERING_STEP 16
+#define OPPONENT_NORMAL_SPEED_STEP 1
+#define OPPONENT_LOW_RATE_SPEED_STEP 2
+#define OPPONENT_FORCED_INPUT_MODE 2
+#define OPPONENT_ROUTE_REACHED_DISTANCE 200
+#define OPPONENT_PLAYER_HEIGHT_RANGE 90
+#define OPPONENT_PLAYER_LATERAL_RANGE 180
+#define OPPONENT_PLAYER_FORWARD_RANGE 600
+#define OPPONENT_PLAYER_REAR_RANGE (-180)
+#define OPPONENT_PASSING_FORWARD_LIMIT (-78)
+#define OPPONENT_ROUTE_ANGLE_LIMIT ANGLE_QUARTER_TURN
+#define OPPONENT_STEERING_TARGET_LIMIT 65
+
+#define OPPONENT_EMERGENCY_TARGET_SPEED 16384U
+#define OPPONENT_ACCELERATE_MARGIN 256U
+#define OPPONENT_BRAKE_MARGIN 768U
+#define OPPONENT_SPEED_TO_TARGET_SHIFT LEGACY_BYTE_BITS
+#define OPPONENT_COAST_SPEED_SHIFT 9U
+
+#define STEERING_RESPONSE_SPEED_SHIFT 10U
+#define STEERING_RESPONSE_INDEX_MASK 252U
+#define STEERING_LOW_RATE_RESPONSE_LIMIT 160
+#define STEERING_NORMAL_RESPONSE_LIMIT 80
+#define STEERING_ANGLE_LIMIT 240
+#define STEERING_CENTER_DEADZONE 8
+
+#define TRACK_ROUTE_SUBTYPE_MASK 15U
+#define TRACK_ROUTE_REVERSED_FLAG 16U
+#define TRACK_ROUTE_FLAG_OFFSET 18U
+
 /*
  * Track object zero has no info record.  In the original executable its null
  * near pointer aliases the fixed DGROUP prefix.  The camera pointer found
@@ -7,7 +46,8 @@
  * is zero-filled.  Preserve the exact legacy alias explicitly so changing the
  * C-only data layout cannot change route physics.
  */
-static struct VECTOR legacy_null_track_vectors[256] = {
+static struct VECTOR legacy_null_track_vectors[
+	LEGACY_NULL_TRACK_VECTOR_CAPACITY] = {
 	{ 0, 0, 0 },
 	{ -8960, -137, -1 },
 	{ -1, -1, -1 },
@@ -120,7 +160,8 @@ static struct VECTOR legacy_null_track_vectors[256] = {
 static struct TRKOBJINFO legacy_null_track_info = {
 	0, 0, 0, 0, 0, 0, 0,
 	legacy_null_track_vectors,
-	0x20, 0x52, 0x75, 0x6E
+	LEGACY_NULL_TRACK_TEXT_SPACE, LEGACY_NULL_TRACK_TEXT_R,
+	LEGACY_NULL_TRACK_TEXT_U, LEGACY_NULL_TRACK_TEXT_N
 };
 
 extern struct VECTOR* headless_track_vector_from_legacy_offset(
@@ -196,15 +237,15 @@ void opponent_op(void)
 	legacy_u8 forced_route;
 	legacy_u8 input;
 
-	if (framespersec == 0x14U) {
-		steering_step = 8;
-		speed_step = 1;
+	if (framespersec == OPPONENT_NORMAL_FRAME_RATE) {
+		steering_step = OPPONENT_NORMAL_STEERING_STEP;
+		speed_step = OPPONENT_NORMAL_SPEED_STEP;
 	} else {
-		steering_step = 0x10;
-		speed_step = 2;
+		steering_step = OPPONENT_LOW_RATE_STEERING_STEP;
+		speed_step = OPPONENT_LOW_RATE_SPEED_STEP;
 	}
 	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
-		state.game_inputmode == 2;
+		state.game_inputmode == OPPONENT_FORCED_INPUT_MODE;
 	opponent_x = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lx);
 	opponent_y = position_to_word(
@@ -238,13 +279,13 @@ void opponent_op(void)
 			LEGACY_S16_WRAP_SUB(route_target.x, opponent_x),
 			LEGACY_S16_WRAP_SUB(route_target.z, opponent_z));
 	}
-	if (route_distance < 0xC8) {
+	if (route_distance < OPPONENT_ROUTE_REACHED_DISTANCE) {
 		opponent_advance_route();
 	}
 
 	for (;;) {
 	route_target = state.opponentstate.car_vec_unk3;
-	if (state.game_inputmode != 2) {
+	if (state.game_inputmode != OPPONENT_FORCED_INPUT_MODE) {
 		relative.x = LEGACY_S16_WRAP_SUB(player_x, opponent_x);
 		relative.y = LEGACY_S16_WRAP_SUB(player_y, opponent_y);
 		relative.z = LEGACY_S16_WRAP_SUB(player_z, opponent_z);
@@ -253,8 +294,10 @@ void opponent_op(void)
 		absolute_value = transformed.x;
 		if (absolute_value < 0)
 			absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
-		if (transformed.y <= 0x5A && absolute_value <= 0xB4 &&
-			transformed.z <= 0x258 && transformed.z >= -0xB4) {
+		if (transformed.y <= OPPONENT_PLAYER_HEIGHT_RANGE &&
+			absolute_value <= OPPONENT_PLAYER_LATERAL_RANGE &&
+			transformed.z <= OPPONENT_PLAYER_FORWARD_RANGE &&
+			transformed.z >= OPPONENT_PLAYER_REAR_RANGE) {
 			relative.x = LEGACY_S16_WRAP_SUB(
 				player_x, state.opponentstate.car_vec_unk3.x);
 			relative.y = state.opponentstate.car_vec_unk3.y == -1 ? 0 :
@@ -274,7 +317,7 @@ void opponent_op(void)
 				route_target.z = opponent_average(
 					state.opponentstate.car_vec_unk3.z,
 					state.opponentstate.car_vec_unk5.z);
-				if (player_forward > -0x4E &&
+				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
 					state.playerstate.car_crashBmpFlag == 0) {
 					state.field_45E = 2;
 				}
@@ -289,7 +332,7 @@ void opponent_op(void)
 				route_target.z = opponent_average(
 					state.opponentstate.car_vec_unk3.z,
 					state.opponentstate.car_vec_unk4.z);
-				if (player_forward > -0x4E &&
+				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
 					state.playerstate.car_crashBmpFlag == 0) {
 					state.field_45E = 1;
 				}
@@ -307,24 +350,24 @@ void opponent_op(void)
 		absolute_value = steering_target;
 		if (absolute_value < 0)
 			absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
-		if (absolute_value > 0x100) {
+		if (absolute_value > OPPONENT_ROUTE_ANGLE_LIMIT) {
 			opponent_advance_route();
 		}
 	}
-	if (steering_target > 0x41) {
+	if (steering_target > OPPONENT_STEERING_TARGET_LIMIT) {
 		if (forced_route == 0) {
 			forced_route = 1;
 			opponent_advance_route();
 			continue;
 		}
-		steering_target = 0x41;
-	} else if (steering_target < -0x41) {
+		steering_target = OPPONENT_STEERING_TARGET_LIMIT;
+	} else if (steering_target < -OPPONENT_STEERING_TARGET_LIMIT) {
 		if (forced_route == 0) {
 			forced_route = 1;
 			opponent_advance_route();
 			continue;
 		}
-		steering_target = -0x41;
+		steering_target = -OPPONENT_STEERING_TARGET_LIMIT;
 	}
 	if (state.opponentstate.car_sumSurfFrontWheels == 0)
 		steering_target = 0;
@@ -353,7 +396,8 @@ void opponent_op(void)
 		if (state.opponentstate.car_crashBmpFlag != 0) {
 			input = 2;
 		} else if (state.opponentstate.car_36MwhlAngle != 0) {
-			speed_threshold = LEGACY_U16_SHL(speed_step, 9U);
+			speed_threshold = LEGACY_U16_SHL(speed_step,
+				OPPONENT_COAST_SPEED_SHIFT);
 			if (speed_threshold > state.opponentstate.car_speed2) {
 				state.opponentstate.car_speed2 = 0;
 				state.opponentstate.car_36MwhlAngle = 0;
@@ -363,12 +407,16 @@ void opponent_op(void)
 			}
 		} else if (state.opponentstate.car_demandedGrip <=
 			state.opponentstate.car_surfacegrip_sum) {
-			target_speed = state.game_inputmode == 2 ? 0x4000U :
-				LEGACY_U16_SHL((legacy_u8)state.field_3F9, 8U);
-			if (LEGACY_U16_WRAP_SUB(target_speed, 0x100U) >
+			target_speed = state.game_inputmode ==
+				OPPONENT_FORCED_INPUT_MODE ? OPPONENT_EMERGENCY_TARGET_SPEED :
+				LEGACY_U16_SHL((legacy_u8)state.field_3F9,
+					OPPONENT_SPEED_TO_TARGET_SHIFT);
+			if (LEGACY_U16_WRAP_SUB(target_speed,
+				OPPONENT_ACCELERATE_MARGIN) >
 				state.opponentstate.car_speed) {
 				input = 1;
-			} else if (LEGACY_U16_WRAP_ADD(target_speed, 0x300U) <
+			} else if (LEGACY_U16_WRAP_ADD(target_speed,
+				OPPONENT_BRAKE_MARGIN) <
 				state.opponentstate.car_speed) {
 				input = 2;
 			}
@@ -401,7 +449,7 @@ void opponent_op(void)
 		state.opponentstate.field_48 = LEGACY_S16_FROM_BITS(
 			(legacy_u16)polarAngle(
 				LEGACY_S16_WRAP_NEGATE(transformed.x),
-				transformed.z) & 0x03FFU);
+				transformed.z) & ANGLE_MASK);
 	}
 
 	if (state.opponentstate.field_CD != 0) {
@@ -429,7 +477,8 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 
 	response_table = steerWhlRespTable_ptr;
 	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index = (legacy_u8)((state.playerstate.car_speed2 >> 10) & 0xFC);
+	speed_index = (legacy_u8)((state.playerstate.car_speed2 >>
+		STEERING_RESPONSE_SPEED_SHIFT) & STEERING_RESPONSE_INDEX_MASK);
 	response_index = LEGACY_S16_WRAP_ADD(
 		(legacy_s16)speed_index, (legacy_s16)steering_input);
 	response = response_table[response_index];
@@ -458,26 +507,27 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 		}
 	}
 
-	if (framespersec == 10) {
-		if (response > 0xA0)
-			response = 0xA0;
-		if (response < -0xA0)
-			response = -0xA0;
+	if (framespersec == OPPONENT_LOW_FRAME_RATE) {
+		if (response > STEERING_LOW_RATE_RESPONSE_LIMIT)
+			response = STEERING_LOW_RATE_RESPONSE_LIMIT;
+		if (response < -STEERING_LOW_RATE_RESPONSE_LIMIT)
+			response = -STEERING_LOW_RATE_RESPONSE_LIMIT;
 	} else {
-		if (response > 0x50)
-			response = 0x50;
-		if (response < -0x50)
-			response = -0x50;
+		if (response > STEERING_NORMAL_RESPONSE_LIMIT)
+			response = STEERING_NORMAL_RESPONSE_LIMIT;
+		if (response < -STEERING_NORMAL_RESPONSE_LIMIT)
+			response = -STEERING_NORMAL_RESPONSE_LIMIT;
 	}
 
 	steering_angle = LEGACY_S16_WRAP_ADD(steering_angle, response);
-	if (steering_angle > 0xF0)
-		steering_angle = 0xF0;
-	if (steering_angle < -0xF0)
-		steering_angle = -0xF0;
+	if (steering_angle > STEERING_ANGLE_LIMIT)
+		steering_angle = STEERING_ANGLE_LIMIT;
+	if (steering_angle < -STEERING_ANGLE_LIMIT)
+		steering_angle = -STEERING_ANGLE_LIMIT;
 
 	if (response_table[response_index] == 0 &&
-		steering_angle > -8 && steering_angle < 8) {
+		steering_angle > -STEERING_CENTER_DEADZONE &&
+		steering_angle < STEERING_CENTER_DEADZONE) {
 		steering_angle = 0;
 	}
 
@@ -536,8 +586,10 @@ legacy_s16 sub_18D60(
 
 	track_index = (legacy_s16)track_index_arg;
 	tile_element = (legacy_u8)td17_trk_elem_ordered[track_index];
-	track_subtype = (legacy_u8)trackdata18[track_index] & 0x0FU;
-	connection_status = (legacy_u8)trackdata18[track_index] & 0x10U;
+	track_subtype = (legacy_u8)trackdata18[track_index] &
+		TRACK_ROUTE_SUBTYPE_MASK;
+	connection_status = (legacy_u8)trackdata18[track_index] &
+		TRACK_ROUTE_REVERSED_FLAG;
 	track_object = &trkObjectList[tile_element];
 	if (track_object->ss_trkObjInfoPtr == 0)
 		track_info = &legacy_null_track_info;
@@ -564,7 +616,8 @@ legacy_s16 sub_18D60(
 
 	packed_opponent_offset = (legacy_u16)(
 		(legacy_u8)track_info->si_opp1 |
-		LEGACY_U16_SHL((legacy_u8)track_info->si_opp2, 8U));
+		LEGACY_U16_SHL((legacy_u8)track_info->si_opp2,
+			LEGACY_BYTE_BITS));
 	has_opponent_path = packed_opponent_offset != 0;
 	if (connection_status != 0 && has_opponent_path != 0) {
 		route_vectors = track_vector_from_legacy_offset(
@@ -582,19 +635,19 @@ legacy_s16 sub_18D60(
 	}
 
 	orientation = (legacy_s16)track_info->si_arrowOrient;
-	if (orientation == 0x100) {
+	if (orientation == ANGLE_QUARTER_TURN) {
 		base_position = first_point.x;
 		first_point.x = first_point.z;
 		first_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
 		base_position = second_point.x;
 		second_point.x = second_point.z;
 		second_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
-	} else if (orientation == 0x200) {
+	} else if (orientation == ANGLE_HALF_TURN) {
 		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.x);
 		first_point.z = LEGACY_S16_WRAP_NEGATE(first_point.z);
 		second_point.x = LEGACY_S16_WRAP_NEGATE(second_point.x);
 		second_point.z = LEGACY_S16_WRAP_NEGATE(second_point.z);
-	} else if (orientation == 0x300) {
+	} else if (orientation == ANGLE_THREE_QUARTER_TURN) {
 		base_position = first_point.x;
 		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.z);
 		first_point.z = base_position;
@@ -629,10 +682,11 @@ legacy_s16 sub_18D60(
 	output[0].z = route_average(first_point.z, second_point.z);
 	output[1] = first_point;
 	output[2] = second_point;
-	LEGACY_WRITE_U16_LE((legacy_u8*)output + 18, has_opponent_path);
+	LEGACY_WRITE_U16_LE((legacy_u8*)output + TRACK_ROUTE_FLAG_OFFSET,
+		has_opponent_path);
 
 	route_index_word = route_index;
-	if ((route_index & 0x80U) != 0)
-		route_index_word |= 0xFF00U;
+	if ((route_index & LEGACY_U8_SIGN_BIT) != 0)
+		route_index_word |= LEGACY_U16_HIGH_BYTE_MASK;
 	return LEGACY_U16_WRAP_SUB(arrow_type, 1U) == route_index_word;
 }
