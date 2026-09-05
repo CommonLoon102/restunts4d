@@ -14,6 +14,7 @@
 #define TRACK_CONTINUATION_NORTH 254U
 #define TRACK_CONTINUATION_WEST 255U
 #define TRACK_TILE_INDEX_UNASSIGNED 255U
+#define TRACK_TERRAIN_HILL 6U
 #define TRACK_HILLROAD_TERRAIN_FIRST 7U
 #define TRACK_HILLROAD_TERRAIN_END 11U
 #define TRACK_CAMERA_COUNT_MAX 64U
@@ -31,6 +32,14 @@
 #define TRACK_TRAVERSAL_UNMATCHED (-1)
 #define TRACK_TRAVERSAL_FORWARD 0
 #define TRACK_TRAVERSAL_REVERSE 1
+#define TRACK_EXIT_POINT_FIRST 1U
+#define TRACK_EXIT_POINT_LAST 12U
+#define TRACK_EXIT_POINT_TABLE_SIZE 13U
+#define TRACK_JUMP_CONNECTION_CODE 1U
+#define TRACK_JUMP_MAX_EMPTY_TILES 2U
+#define TRACK_JUMP_BACKTRACK_LENGTH_LIMIT 1U
+#define TRACK_RUNWAY_MINIMUM_LENGTH 2U
+#define TRACK_CAMERA_RUNWAY_THRESHOLD 3U
 #define TRACK_START_FINISH_VARIANT_COUNT 3U
 #define PLAN_TRACK_ROUTE_LENGTH 18U
 #define PLAN_TRACK_ROUTE_ENTRY_SIZE 2U
@@ -145,7 +154,8 @@ struct TRACK_SETUP_STEP {
 	legacy_s16 orientation;
 };
 
-static const struct TRACK_SETUP_STEP track_setup_steps[13] = {
+static const struct TRACK_SETUP_STEP track_setup_steps[
+	TRACK_EXIT_POINT_TABLE_SIZE] = {
 	{  0,  0, TRACK_ORIENTATION_NORTH },
 	{  0, -1, TRACK_ORIENTATION_NORTH },
 	{  0,  1, TRACK_ORIENTATION_SOUTH },
@@ -354,7 +364,7 @@ legacy_s16 track_setup(void)
 				startrow2 = row;
 				tile_terrain = td15_terr_map_main[
 					terrainrows[row] + column];
-				hillFlag = tile_terrain == 6;
+				hillFlag = tile_terrain == TRACK_TERRAIN_HILL;
 				start_finish_count = LEGACY_U8_WRAP_ADD(
 					start_finish_count, 1U);
 			}
@@ -509,10 +519,11 @@ legacy_s16 track_setup(void)
 
 	if (match_count != 0) {
 		connection_status = selected_connection_status;
-	} else if (previous_connection_code != 1 || jump_length >= 2) {
+	} else if (previous_connection_code != TRACK_JUMP_CONNECTION_CODE ||
+		jump_length >= TRACK_JUMP_MAX_EMPTY_TILES) {
 		backtrack_required = 1;
 	} else {
-		if (runway_length < 2) {
+		if (runway_length < TRACK_RUNWAY_MINIMUM_LENGTH) {
 			return track_setup_error(branches,
 				TRACK_SETUP_NO_RUNWAY, column, row);
 		}
@@ -562,7 +573,7 @@ legacy_s16 track_setup(void)
 		previous_tile_element = branch->previous_tile_element;
 		previous_subtype = branch->previous_subtype;
 		previous_connection_status = branch->previous_connection_status;
-		if (jump_length > 1) {
+		if (jump_length > TRACK_JUMP_BACKTRACK_LENGTH_LIMIT) {
 			return track_setup_error(branches,
 				TRACK_SETUP_LONG_JUMP, column, row);
 		}
@@ -588,7 +599,8 @@ legacy_s16 track_setup(void)
 	if (arrow_code == 0) {
 		runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
 	} else {
-		if (arrow_code != LEGACY_U8_MAX && runway_length > 3 &&
+		if (arrow_code != LEGACY_U8_MAX &&
+			runway_length > TRACK_CAMERA_RUNWAY_THRESHOLD &&
 			byte_45635 != TRACK_CAMERA_RESERVED_INDEX) {
 			previous_track_object = &trkObjectList[previous_tile_element];
 			previous_info = &previous_track_object->
@@ -623,7 +635,7 @@ legacy_s16 track_setup(void)
 				(orientation ^ TRACK_ORIENTATION_SOUTH) : orientation;
 			trackdata23[byte_45635] = arrow_code;
 			if (td15_terr_map_main[terrainrows[previous_row] +
-				previous_column] == 6)
+				previous_column] == TRACK_TERRAIN_HILL)
 				camera_vector.y = LEGACY_S16_WRAP_ADD(
 					camera_vector.y, TRACK_CAMERA_HILL_HEIGHT);
 			camera_index = (legacy_s16)byte_45635;
@@ -663,7 +675,8 @@ legacy_s16 track_setup(void)
 	previous_subtype = subtype;
 	previous_tile_element = tile_element;
 
-	if (tile_entry_point >= 1U && tile_entry_point <= 12U) {
+	if (tile_entry_point >= TRACK_EXIT_POINT_FIRST &&
+		tile_entry_point <= TRACK_EXIT_POINT_LAST) {
 		const struct TRACK_SETUP_STEP* step =
 			&track_setup_steps[tile_entry_point];
 
