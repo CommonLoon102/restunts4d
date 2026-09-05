@@ -29,6 +29,12 @@
 #define WHEEL_SIDE_WORD_COUNT 36U
 #define WHEEL_QUAD_POINT_COUNT 4U
 #define WHEEL_QUAD_WORD_COUNT 8U
+#define PRERENDER_EDGE_ROW_CAPACITY 480
+#define PRERENDER_EDGE_TABLE_COUNT 2U
+#define PRERENDER_LINE_BUFFER_COUNT 2U
+#define PRERENDER_EDGE_CLIPPED_MODE 0
+#define PRERENDER_EDGE_UNCLIPPED_MODE 1
+#define PRERENDER_FIXED_CARRY_LIMIT ((legacy_u32)LEGACY_U16_MAX)
 
 static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines,
@@ -45,11 +51,11 @@ void preRender_line(
 	legacy_u16 end_y,
 	legacy_u16 color
 ) {
-	legacy_u16 line[14];
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
 
-	line[8] = color;
+	line[DRAW_LINE_COLOR_INDEX] = color;
 	if (draw_line_related(start_x, start_y, end_x, end_y, line) == 0 &&
-			LEGACY_S16_FROM_BITS(line[7]) > 0)
+			LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]) > 0)
 		putpixel_line1_maybe(line);
 }
 
@@ -629,8 +635,10 @@ void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color,
 static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines,
 	legacy_u16 var_A) {
-	legacy_s16 var_798[480 + 480];
-	legacy_u16 var_7D0[28];
+	legacy_s16 var_798[
+		PRERENDER_EDGE_ROW_CAPACITY * PRERENDER_EDGE_TABLE_COUNT];
+	legacy_u16 var_7D0[
+		DRAW_LINE_WORD_COUNT * PRERENDER_LINE_BUFFER_COUNT];
 
 	legacy_s16* var_18;
 	const struct POINT2D* var_16;
@@ -715,10 +723,12 @@ static void preRender_default_impl(legacy_u16 arg_color,
 
 			if (var_C != 0) {
 				draw_line_related(temp0x, temp0y, temp1x, temp1y, var_7D0);
-				generate_poly_edges(var_18, var_7D0, 0);
+				generate_poly_edges(var_18, var_7D0,
+					PRERENDER_EDGE_CLIPPED_MODE);
 			} else {
 				draw_line_related_alt(temp0x, temp0y, temp1x, temp1y, var_7D0);
-				generate_poly_edges(var_18, var_7D0, 1);
+				generate_poly_edges(var_18, var_7D0,
+					PRERENDER_EDGE_UNCLIPPED_MODE);
 			}
 		}
 
@@ -757,7 +767,9 @@ static void preRender_default_impl(legacy_u16 arg_color,
 	if (temp0x <= 0) return ;
 	temp0x++;
 
-	spritefunc(&var_798[temp1y], &var_798[480 + temp1y], temp1y, temp0x, arg_color);
+	spritefunc(&var_798[temp1y],
+		&var_798[PRERENDER_EDGE_ROW_CAPACITY + temp1y],
+		temp1y, temp0x, arg_color);
 
 }
 
@@ -768,7 +780,7 @@ static void generate_poly_edge_fill(legacy_s16* edges,
 
 	for (index = 0; index < count; index++) {
 		edges[offset + index] = boundary;
-		edges[480 + offset + index] = boundary - 1;
+		edges[PRERENDER_EDGE_ROW_CAPACITY + offset + index] = boundary - 1;
 	}
 }
 
@@ -784,12 +796,13 @@ static void generate_poly_edge_padding(legacy_s16* edges,
 		return;
 	if (leading != 0) {
 		offset = LEGACY_S16_WRAP_SUB(
-			LEGACY_S16_FROM_BITS(setup[3]), count);
-		if (LEGACY_S16_FROM_BITS(setup[2]) < 0)
+			LEGACY_S16_FROM_BITS(setup[DRAW_LINE_START_Y_INDEX]), count);
+		if (LEGACY_S16_FROM_BITS(
+			setup[DRAW_LINE_START_Y_FRACTION_INDEX]) < 0)
 			offset = LEGACY_S16_WRAP_ADD(offset, 1);
 	} else {
 		offset = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_FROM_BITS(setup[5]), 1);
+			LEGACY_S16_FROM_BITS(setup[DRAW_LINE_END_Y_INDEX]), 1);
 	}
 	generate_poly_edge_fill(edges, offset, count, boundary);
 }
@@ -802,75 +815,92 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 	legacy_u32 value;
 	legacy_u32 temp;
 
-	if (mode != 1) {
-		generate_poly_edge_padding(var_18, regsi, 10,
+	if (mode != PRERENDER_EDGE_UNCLIPPED_MODE) {
+		generate_poly_edge_padding(var_18, regsi,
+			DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX,
 			sprite1_sprite_left2, 1);
-		generate_poly_edge_padding(var_18, regsi, 12,
+		generate_poly_edge_padding(var_18, regsi,
+			DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX,
 			sprite1_sprite_widthsum, 1);
-		generate_poly_edge_padding(var_18, regsi, 11,
+		generate_poly_edge_padding(var_18, regsi,
+			DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX,
 			sprite1_sprite_left2, 0);
-		generate_poly_edge_padding(var_18, regsi, 13,
+		generate_poly_edge_padding(var_18, regsi,
+			DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX,
 			sprite1_sprite_widthsum, 0);
 	}
 
-	count = LEGACY_S16_FROM_BITS(regsi[7]);
+	count = LEGACY_S16_FROM_BITS(regsi[DRAW_LINE_PIXEL_COUNT_INDEX]);
 	if (count <= 0) return ;
 
-	ofs = LEGACY_S16_FROM_BITS(regsi[3]);
+	ofs = LEGACY_S16_FROM_BITS(regsi[DRAW_LINE_START_Y_INDEX]);
 
-	switch ((legacy_u8)regsi[9]) {
-		case 0:
-		case 1:
+	switch ((legacy_u8)regsi[DRAW_LINE_MODE_AND_CLIP_INDEX]) {
+		case DRAW_LINE_MODE_HORIZONTAL_REVERSED:
+		case DRAW_LINE_MODE_HORIZONTAL:
 			return;
-		case 2:
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = LEGACY_S16_FROM_BITS(regsi[1]);
-				var_18[480 + ofs + i] =
-					LEGACY_S16_FROM_BITS(regsi[1]);
-			}
-			return ;
-		case 3:
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = LEGACY_S16_WRAP_SUB(
-					LEGACY_S16_FROM_BITS(regsi[1]), i);
-				var_18[480 + ofs + i] = LEGACY_S16_WRAP_SUB(
-					LEGACY_S16_FROM_BITS(regsi[1]), i);
-			}
-			return ;
-		case 4:
-			for (i = 0; i < count; i++) {
-				var_18[ofs + i] = LEGACY_S16_WRAP_ADD(
-					LEGACY_S16_FROM_BITS(regsi[1]), i);
-				var_18[480 + ofs + i] = LEGACY_S16_WRAP_ADD(
-					LEGACY_S16_FROM_BITS(regsi[1]), i);
-			}
-			return ;
-		case 5:
-		case 6:
-			value = LEGACY_U32_WRAP_ADD(
-				LEGACY_U32_FROM_WORDS(regsi[0], regsi[1]), 0x8000UL);
+		case DRAW_LINE_MODE_VERTICAL:
 			for (i = 0; i < count; i++) {
 				var_18[ofs + i] = LEGACY_S16_FROM_BITS(
-					(legacy_u16)(value >> 16));
-				var_18[480 + ofs + i] = LEGACY_S16_FROM_BITS(
-					(legacy_u16)(value >> 16));
-				if ((legacy_u8)regsi[9] == 5U)
-					value = LEGACY_U32_WRAP_SUB(value,
-						(legacy_u16)regsi[6]);
-				else
-					value = LEGACY_U32_WRAP_ADD(value,
-						(legacy_u16)regsi[6]);
+					regsi[DRAW_LINE_START_X_INDEX]);
+				var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs + i] =
+					LEGACY_S16_FROM_BITS(
+						regsi[DRAW_LINE_START_X_INDEX]);
 			}
 			return ;
-		case 7:
-			value = (legacy_u16)regsi[1];
-			temp = (legacy_u16)regsi[2];
-			if (temp + 0x8000 > USHRT_MAX)
-				ofs++;
-			temp = (temp + 0x8000) & 0xFFFF;
-			var_18[480 + ofs] = value;
+		case DRAW_LINE_MODE_DIAGONAL_LEFT:
 			for (i = 0; i < count; i++) {
-				if (temp + (legacy_u16)regsi[6] <= USHRT_MAX) {
+				var_18[ofs + i] = LEGACY_S16_WRAP_SUB(
+					LEGACY_S16_FROM_BITS(
+						regsi[DRAW_LINE_START_X_INDEX]), i);
+				var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs + i] =
+					LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(
+						regsi[DRAW_LINE_START_X_INDEX]), i);
+			}
+			return ;
+		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = LEGACY_S16_WRAP_ADD(
+					LEGACY_S16_FROM_BITS(
+						regsi[DRAW_LINE_START_X_INDEX]), i);
+				var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs + i] =
+					LEGACY_S16_WRAP_ADD(LEGACY_S16_FROM_BITS(
+						regsi[DRAW_LINE_START_X_INDEX]), i);
+			}
+			return ;
+		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
+		case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
+			value = LEGACY_U32_WRAP_ADD(
+				LEGACY_U32_FROM_WORDS(
+					regsi[DRAW_LINE_START_X_FRACTION_INDEX],
+					regsi[DRAW_LINE_START_X_INDEX]),
+				DRAW_LINE_FIXED_ROUNDING);
+			for (i = 0; i < count; i++) {
+				var_18[ofs + i] = LEGACY_S16_FROM_BITS(
+					(legacy_u16)(value >> LEGACY_WORD_BITS));
+				var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs + i] =
+					LEGACY_S16_FROM_BITS(
+						(legacy_u16)(value >> LEGACY_WORD_BITS));
+				if ((legacy_u8)regsi[DRAW_LINE_MODE_AND_CLIP_INDEX] ==
+					DRAW_LINE_MODE_Y_MAJOR_LEFT)
+					value = LEGACY_U32_WRAP_SUB(value,
+						(legacy_u16)regsi[DRAW_LINE_STEP_INDEX]);
+				else
+					value = LEGACY_U32_WRAP_ADD(value,
+						(legacy_u16)regsi[DRAW_LINE_STEP_INDEX]);
+			}
+			return ;
+		case DRAW_LINE_MODE_X_MAJOR_LEFT:
+			value = (legacy_u16)regsi[DRAW_LINE_START_X_INDEX];
+			temp = (legacy_u16)regsi[DRAW_LINE_START_Y_FRACTION_INDEX];
+			if (temp + DRAW_LINE_FIXED_ROUNDING >
+				PRERENDER_FIXED_CARRY_LIMIT)
+				ofs++;
+			temp = (temp + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
+			var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs] = value;
+			for (i = 0; i < count; i++) {
+				if (temp + (legacy_u16)regsi[DRAW_LINE_STEP_INDEX] <=
+					PRERENDER_FIXED_CARRY_LIMIT) {
 					value--;
 					if (i == count - 1) {
 						var_18[ofs] = value + 1;
@@ -879,35 +909,42 @@ void generate_poly_edges(legacy_s16* var_18, const legacy_u16* regsi, legacy_s16
 					var_18[ofs] = value;
 					value--;
 					ofs++;
-					var_18[480 + ofs] = value;
+					var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs] = value;
 				}
-				temp = (temp + (legacy_u16)regsi[6])  & 0xFFFF;
+				temp = (temp +
+					(legacy_u16)regsi[DRAW_LINE_STEP_INDEX]) &
+					LEGACY_U16_MAX;
 			}
 			return ;
 
-		case 8:
-			value = (legacy_u16)regsi[1];
-			temp = (legacy_u16)regsi[2];
-			if (temp + 0x8000 > USHRT_MAX)
+		case DRAW_LINE_MODE_X_MAJOR_RIGHT:
+			value = (legacy_u16)regsi[DRAW_LINE_START_X_INDEX];
+			temp = (legacy_u16)regsi[DRAW_LINE_START_Y_FRACTION_INDEX];
+			if (temp + DRAW_LINE_FIXED_ROUNDING >
+				PRERENDER_FIXED_CARRY_LIMIT)
 				ofs++;
-			temp = (temp + 0x8000) & 0xFFFF;
+			temp = (temp + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
 			var_18[ofs] = value;
 			for (i = 0; i < count; i++) {
-				if (temp + (legacy_u16)regsi[6] <= USHRT_MAX) {
+				if (temp + (legacy_u16)regsi[DRAW_LINE_STEP_INDEX] <=
+					PRERENDER_FIXED_CARRY_LIMIT) {
 					value++;
 					if (i == count - 1) {
-						var_18[480+ofs] = value - 1;
+						var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs] =
+							value - 1;
 					}
 				} else {
-					var_18[480+ofs] = value;
+					var_18[PRERENDER_EDGE_ROW_CAPACITY + ofs] = value;
 					value++;
 					ofs++;
 					var_18[ofs] = value;
 				}
-				temp = (temp + (legacy_u16)regsi[6])  & 0xFFFF;
+				temp = (temp +
+					(legacy_u16)regsi[DRAW_LINE_STEP_INDEX]) &
+					LEGACY_U16_MAX;
 				}
 				return ;
-			case 9:
+			case DRAW_LINE_MODE_POINT:
 			default:
 				return ;
 	}
@@ -934,7 +971,7 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 {
 	const legacy_u16* line = regsi;
 	legacy_s16* left_edges = var_18;
-	legacy_s16* right_edges = left_edges + 480;
+	legacy_s16* right_edges = left_edges + PRERENDER_EDGE_ROW_CAPACITY;
 	legacy_s16 value;
 	legacy_u16 fraction;
 	legacy_u16 step;
@@ -948,70 +985,74 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	legacy_s16 to_left;
 	legacy_s16 value_step;
 
-	count = LEGACY_S16_FROM_BITS(line[7]);
-	index = LEGACY_S16_FROM_BITS(line[3]);
-	mode = (legacy_u8)line[9];
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
 
-	if (count > 0 && mode >= 2U && mode <= 8U) {
-		value = LEGACY_S16_FROM_BITS(line[1]);
+	if (count > 0 && mode >= DRAW_LINE_MODE_VERTICAL &&
+		mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT) {
+		value = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
 
 		if (var_A != 0U) {
 			switch (mode) {
-			case 2:
-			case 3:
-			case 4:
+			case DRAW_LINE_MODE_VERTICAL:
+			case DRAW_LINE_MODE_DIAGONAL_LEFT:
+			case DRAW_LINE_MODE_DIAGONAL_RIGHT:
 				while (count-- > 0) {
 					if (right_edges[index] < value)
 						right_edges[index] = value;
 					else if (left_edges[index] > value)
 						left_edges[index] = value;
 					index++;
-					if (mode == 3U)
+					if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT)
 						value = LEGACY_S16_WRAP_SUB(value, 1);
-					else if (mode == 4U)
+					else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT)
 						value = LEGACY_S16_WRAP_ADD(value, 1);
 				}
 				break;
 
-			case 5:
-			case 6:
-				fixed = ((legacy_u32)(legacy_u16)line[1] << 16) |
-					(legacy_u16)line[0];
-				fixed += 0x8000UL;
-				step = (legacy_u16)line[6];
+			case DRAW_LINE_MODE_Y_MAJOR_LEFT:
+			case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
+				fixed = ((legacy_u32)(legacy_u16)
+					line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+					(legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+				fixed += DRAW_LINE_FIXED_ROUNDING;
+				step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
 				while (count-- > 0) {
 					value = LEGACY_S16_FROM_BITS(
-						(legacy_u16)(fixed >> 16));
+						(legacy_u16)(fixed >> LEGACY_WORD_BITS));
 					if (right_edges[index] < value)
 						right_edges[index] = value;
 					else if (left_edges[index] > value)
 						left_edges[index] = value;
 					index++;
-					if (mode == 5U)
+					if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT)
 						fixed -= step;
 					else
 						fixed += step;
 				}
 				break;
 
-			case 7:
-			case 8:
+			case DRAW_LINE_MODE_X_MAJOR_LEFT:
+			case DRAW_LINE_MODE_X_MAJOR_RIGHT:
 				/* Mode 7 walks the span right-to-left and mode 8
 				   left-to-right, which only swaps which edge array
 				   opens a row and which one closes it. */
-				to_left = mode == 7U ? 1 : 0;
+				to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
 				value_step = to_left ? -1 : 1;
-				step = (legacy_u16)line[6];
-				sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+				step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+				sum = (legacy_u32)(legacy_u16)
+					line[DRAW_LINE_START_Y_FRACTION_INDEX] +
+					DRAW_LINE_FIXED_ROUNDING;
 				fraction = (legacy_u16)sum;
-				if (sum > 0xFFFFUL)
+				if (sum > PRERENDER_FIXED_CARRY_LIMIT)
 					index++;
 				prerender_extend_edge(left_edges, right_edges, index,
 					value, !to_left);
 				while (count > 0) {
 					sum = (legacy_u32)fraction + step;
 					fraction = (legacy_u16)sum;
-					carry = sum > 0xFFFFUL;
+					carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 					if (carry) {
 						prerender_extend_edge(left_edges,
 							right_edges, index, value, to_left);
@@ -1038,25 +1079,29 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 				}
 				break;
 			}
-		} else if (mode <= 6U) {
-			fixed = ((legacy_u32)(legacy_u16)line[1] << 16) |
-				(legacy_u16)line[0];
-			fixed += 0x8000UL;
-			step = (legacy_u16)line[6];
+		} else if (mode <= DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
+			fixed = ((legacy_u32)(legacy_u16)
+				line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+				(legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+			fixed += DRAW_LINE_FIXED_ROUNDING;
+			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
 			target = 0;
 
 			while (count > 0) {
-				value = mode >= 5U ?
-					LEGACY_S16_FROM_BITS((legacy_u16)(fixed >> 16)) :
-					LEGACY_S16_FROM_BITS(line[1]);
-				if (mode == 3U)
+				value = mode >= DRAW_LINE_MODE_Y_MAJOR_LEFT ?
+					LEGACY_S16_FROM_BITS(
+						(legacy_u16)(fixed >> LEGACY_WORD_BITS)) :
+					LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+				if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT)
 					value = LEGACY_S16_WRAP_SUB(value,
 						LEGACY_S16_WRAP_SUB(
-							LEGACY_S16_FROM_BITS(line[7]), count));
-				else if (mode == 4U)
+							LEGACY_S16_FROM_BITS(
+								line[DRAW_LINE_PIXEL_COUNT_INDEX]), count));
+				else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT)
 					value = LEGACY_S16_WRAP_ADD(value,
 						LEGACY_S16_WRAP_SUB(
-							LEGACY_S16_FROM_BITS(line[7]), count));
+							LEGACY_S16_FROM_BITS(
+								line[DRAW_LINE_PIXEL_COUNT_INDEX]), count));
 
 				if (target == 0) {
 					if (left_edges[index] > value)
@@ -1070,16 +1115,18 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 					right_edges[index] = value;
 				index++;
 				count--;
-				if (mode == 5U)
+				if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT)
 					fixed -= step;
-				else if (mode == 6U)
+				else if (mode == DRAW_LINE_MODE_Y_MAJOR_RIGHT)
 					fixed += step;
 			}
-		} else if (mode == 7U) {
-			step = (legacy_u16)line[6];
-			sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+		} else if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
+			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+			sum = (legacy_u32)(legacy_u16)
+				line[DRAW_LINE_START_Y_FRACTION_INDEX] +
+				DRAW_LINE_FIXED_ROUNDING;
 			fraction = (legacy_u16)sum;
-			if (sum > 0xFFFFUL)
+			if (sum > PRERENDER_FIXED_CARRY_LIMIT)
 				index++;
 
 			while (count > 0) {
@@ -1090,7 +1137,8 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 						sum = (legacy_u32)fraction + step;
 						fraction = (legacy_u16)sum;
 						count--;
-						if (count > 0 && sum > 0xFFFFUL)
+						if (count > 0 &&
+							sum > PRERENDER_FIXED_CARRY_LIMIT)
 							right_edges[index++] = value;
 					}
 					break;
@@ -1098,7 +1146,7 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 
 				sum = (legacy_u32)fraction + step;
 				fraction = (legacy_u16)sum;
-				carry = sum > 0xFFFFUL;
+				carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 				if (carry && left_edges[index] > value) {
 					left_edges[index++] = value;
 					value = LEGACY_S16_WRAP_SUB(value, 1);
@@ -1106,7 +1154,7 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 					while (count > 0) {
 						sum = (legacy_u32)fraction + step;
 						fraction = (legacy_u16)sum;
-						carry = sum > 0xFFFFUL;
+						carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 						if (carry)
 							left_edges[index++] = value;
 						value = LEGACY_S16_WRAP_SUB(value, 1);
@@ -1124,10 +1172,12 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 				count--;
 			}
 		} else {
-			step = (legacy_u16)line[6];
-			sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
+			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+			sum = (legacy_u32)(legacy_u16)
+				line[DRAW_LINE_START_Y_FRACTION_INDEX] +
+				DRAW_LINE_FIXED_ROUNDING;
 			fraction = (legacy_u16)sum;
-			if (sum > 0xFFFFUL)
+			if (sum > PRERENDER_FIXED_CARRY_LIMIT)
 				index++;
 
 			while (count > 0) {
@@ -1138,7 +1188,7 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 					while (count > 0) {
 						sum = (legacy_u32)fraction + step;
 						fraction = (legacy_u16)sum;
-						if (sum > 0xFFFFUL)
+						if (sum > PRERENDER_FIXED_CARRY_LIMIT)
 							left_edges[index++] = value;
 						value = LEGACY_S16_WRAP_ADD(value, 1);
 						count--;
@@ -1148,14 +1198,14 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 
 				sum = (legacy_u32)fraction + step;
 				fraction = (legacy_u16)sum;
-				carry = sum > 0xFFFFUL;
+				carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 				if (carry && right_edges[index] < value) {
 					right_edges[index] = value;
 					while (count > 0) {
 						value = LEGACY_S16_WRAP_ADD(value, 1);
 						sum = (legacy_u32)fraction + step;
 						fraction = (legacy_u16)sum;
-						carry = sum > 0xFFFFUL;
+						carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 						if (carry)
 							index++;
 						count--;
@@ -1181,40 +1231,48 @@ void preRender_default_impl_helper(const legacy_u16* regsi, legacy_u16 var_A,
 	if (var_C == 0U)
 		return;
 
-	sum = (legacy_u32)(legacy_u16)line[2] + 0x8000UL;
-	carry = sum > 0xFFFFUL;
+	sum = (legacy_u32)(legacy_u16)
+		line[DRAW_LINE_START_Y_FRACTION_INDEX] +
+		DRAW_LINE_FIXED_ROUNDING;
+	carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 
-	count = LEGACY_S16_FROM_BITS(line[10]);
+	count = LEGACY_S16_FROM_BITS(
+		line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX]);
 	if (count > 0) {
 		index = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_FROM_BITS(line[3]), carry), count);
+			LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]), carry),
+			count);
 		while (count-- > 0)
 			left_edges[index++] =
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
 	}
 
-	count = LEGACY_S16_FROM_BITS(line[12]);
+	count = LEGACY_S16_FROM_BITS(
+		line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX]);
 	if (count > 0) {
 		index = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_FROM_BITS(line[3]), carry), count);
+			LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]), carry),
+			count);
 		while (count-- > 0)
 			right_edges[index++] = LEGACY_S16_WRAP_SUB(
 				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
 	}
 
-	count = LEGACY_S16_FROM_BITS(line[11]);
+	count = LEGACY_S16_FROM_BITS(
+		line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX]);
 	if (count > 0) {
 		index = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_FROM_BITS(line[5]), 1);
+			LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]), 1);
 		while (count-- > 0)
 			left_edges[index++] =
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
 	}
 
-	count = LEGACY_S16_FROM_BITS(line[13]);
+	count = LEGACY_S16_FROM_BITS(
+		line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX]);
 	if (count > 0) {
 		index = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_FROM_BITS(line[5]), 1);
+			LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]), 1);
 		while (count-- > 0)
 			right_edges[index++] = LEGACY_S16_WRAP_SUB(
 				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
