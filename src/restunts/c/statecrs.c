@@ -9,6 +9,8 @@
 #define OBJECT_PARTICLE_ANGLE_OFFSET 96
 #define OBJECT_PARTICLE_ANGULAR_RANGE 192
 #define OBJECT_PARTICLE_LIMIT 8
+#define OBJECT_PARTICLE_TYPE_BASE 0
+#define OBJECT_PARTICLE_LIFETIME_SCALE 1
 #define PARTICLE_TYPE_VARIANT_COUNT 4
 #define PARTICLE_TYPE_VARIANT_MASK 3U
 #define PARTICLE_RANDOM_ROTATION_SCALE 4
@@ -16,6 +18,9 @@
 #define PARTICLE_FORWARD_SPEED_BIAS 384
 #define PARTICLE_GRAVITY_STEP 19
 #define PARTICLE_ROTATION_STEP 16
+#define PARTICLE_TIMER_INACTIVE 0
+#define PARTICLE_SYSTEM_INACTIVE 0
+#define PARTICLE_SYSTEM_ACTIVE 1
 #define CRASH_FRAME_RATE_SCALE_SHIFT 2U
 
 #ifndef RESTUNTS_HEADLESS
@@ -77,14 +82,14 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 			base_angle, OBJECT_PARTICLE_ANGLE_OFFSET);
 		angular_range = OBJECT_PARTICLE_ANGULAR_RANGE;
 		particle_limit = OBJECT_PARTICLE_LIMIT;
-		type_base = 0;
-		lifetime_scale = 1;
+		type_base = OBJECT_PARTICLE_TYPE_BASE;
+		lifetime_scale = OBJECT_PARTICLE_LIFETIME_SCALE;
 	}
 
-	state.field_42A = 1;
+	state.field_42A = PARTICLE_SYSTEM_ACTIVE;
 	free_count = 0;
 	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
-		if (state.field_38E[slot] == 0)
+		if (state.field_38E[slot] == PARTICLE_TIMER_INACTIVE)
 			free_count = LEGACY_S16_WRAP_ADD(free_count, 1);
 	}
 	if (free_count > particle_limit)
@@ -146,9 +151,9 @@ void sub_19BA0(void) {
 	legacy_u8 any_active;
 	legacy_s16 slot;
 
-	any_active = 0;
+	any_active = PARTICLE_SYSTEM_INACTIVE;
 	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
-		if (state.field_38E[slot] == 0)
+		if (state.field_38E[slot] == PARTICLE_TIMER_INACTIVE)
 			continue;
 
 		direction.x = 0;
@@ -184,11 +189,11 @@ void sub_19BA0(void) {
 			(legacy_s32)state.game_longs2[slot],
 			(legacy_s32)state.playerstate.car_posWorld1.ly);
 		if (ground_position < 0) {
-			state.field_38E[slot] = 0;
+			state.field_38E[slot] = PARTICLE_TIMER_INACTIVE;
 			continue;
 		}
 
-		any_active = 1;
+		any_active = PARTICLE_SYSTEM_ACTIVE;
 		state.field_2FE[slot] = LEGACY_S16_WRAP_ADD(
 			state.field_2FE[slot], PARTICLE_ROTATION_STEP);
 		state.field_32E[slot] = LEGACY_S16_WRAP_ADD(
