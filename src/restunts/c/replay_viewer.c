@@ -105,7 +105,6 @@
 #define REPLAY_SAVE_RETRY 0
 #define REPLAY_SAVE_READY 1
 #define REPLAY_FILE_CHECK_ARGUMENT 2
-#define REPLAY_INITIAL_GAME_FRAME (-1)
 
 #define REPLAY_PLAYBACK_NORMAL 0
 #define REPLAY_PLAYBACK_FAST 3
@@ -413,7 +412,7 @@ static void replay_pause_menu(void)
 		}
 		framespersec = (legacy_s16)LEGACY_S8_FROM_BITS(
 			LEGACY_U16_LOW_BYTE(gameconfig.game_framespersec));
-		init_game_state(REPLAY_INITIAL_GAME_FRAME);
+		init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
 		break;
 
 	case REPLAY_PAUSE_ACTION_SAVE:

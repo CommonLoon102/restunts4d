@@ -22,7 +22,6 @@
 #define TRACK_MENU_TRANSPARENT_COLOR 15U
 #define TRACK_SKYBOX_ELEMENT_INDEX 900U
 #define TRACK_PREVIEW_PROJECTION_SCALE 40
-#define TRACK_PREVIEW_GAME_STATE (-2)
 #define TRACK_MENU_NAME_Y 6
 #define TRACK_MENU_HIGHSCORE_LABEL_Y 18
 #define TRACK_MENU_HIGHSCORE_ENTRY_Y 30
@@ -79,7 +78,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		set_projection(TRACK_PREVIEW_PROJECTION_SCALE,
 			TRACK_PREVIEW_PROJECTION_SCALE, TRACK_MENU_SCREEN_WIDTH,
 			TRACK_MENU_SCREEN_HEIGHT);
-		init_game_state(TRACK_PREVIEW_GAME_STATE);
+		init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
 		sprite_copy_wnd_to_1();
 		sprite_clear_1_color((legacy_u8)skybox.ground_color);
 		sprite_set_1_size(0, TRACK_MENU_SCREEN_WIDTH, 0,

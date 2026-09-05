@@ -741,7 +741,7 @@ void init_plantrak(void) {
 	legacy_u16 route_table_offset;
 	legacy_u8 route_index;
 
-	init_game_state(-3);
+	init_game_state(GAMESTATE_INIT_TIMING_ONLY);
 	state.game_inputmode = 2;
 	planptr = &plan_memres;
 	startcol2 = 1;

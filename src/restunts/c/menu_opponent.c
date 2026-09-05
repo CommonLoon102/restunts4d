@@ -242,7 +242,7 @@ void run_opponent_menu(void)
 					(((legacy_u8)gameconfig.game_playermaterial &
 						CAR_MATERIAL_VARIANT_MASK) ^
 						CAR_MATERIAL_VARIANT_MASK));
-				gameconfig.game_opponenttransmission = 0;
+				gameconfig.game_opponenttransmission = TRANSMISSION_MANUAL;
 			}
 		} else {
 			gameconfig.game_opponentcarid[0] =

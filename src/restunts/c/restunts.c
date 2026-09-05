@@ -27,9 +27,6 @@
 #include "ui_input.h"
 #include "ui_text.h"
 
-// Entries in the CVX gamestate buffer.
-#define RST_CVX_NUM 20
-
 #define GAME_SCREEN_WIDTH 320
 #define GAME_SCREEN_HEIGHT 200
 #define GAME_TOP_PANEL_HEIGHT 100
@@ -125,7 +122,7 @@ void set_default_car(void) {
 	gameconfig.game_playercarid[2]     = 'U';
 	gameconfig.game_playercarid[3]     = 'N';
 	gameconfig.game_playermaterial     = 0;
-	gameconfig.game_playertransmission = 1;
+	gameconfig.game_playertransmission = TRANSMISSION_AUTOMATIC;
 	gameconfig.game_opponenttype       = 0;
 	gameconfig.game_opponentmaterial   = 0;
 	gameconfig.game_opponentcarid[0]   = NO_OPPONENT_CAR_ID;
@@ -656,8 +653,9 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 
 			audio_unload();
 
-			cvxptr = mmgr_alloc_resbytes("cvx", sizeof(struct GAMESTATE) * RST_CVX_NUM);
-			init_game_state(-1);
+			cvxptr = mmgr_alloc_resbytes("cvx",
+				sizeof(struct GAMESTATE) * GAMESTATE_CHECKPOINT_COUNT);
+			init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
 
 			if (var_A != 0) {
 				byte_43966 = 0;

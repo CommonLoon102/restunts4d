@@ -61,8 +61,6 @@
 #define CAR_MENU_GRAPH_FIRST_X 28U
 #define CAR_MENU_DESCRIPTION_X 88
 #define CAR_MENU_DESCRIPTION_FIRST_Y 116
-#define CAR_MENU_PREVIEW_GAME_STATE (-2)
-#define CAR_MENU_PREVIEW_TRANSMISSION 1
 #define CAR_MENU_FULL_CLIP_BOTTOM 200
 #define CAR_MENU_CAR_CLIP_BOTTOM 95
 #define CAR_RENDER_IDLE_PHASE 0U
@@ -269,8 +267,8 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 		old_frame_rate = (legacy_u16)framespersec;
 		framespersec = GAME_FRAME_RATE_NORMAL;
-		init_game_state(CAR_MENU_PREVIEW_GAME_STATE);
-		state.playerstate.car_transmission = CAR_MENU_PREVIEW_TRANSMISSION;
+		init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
+		state.playerstate.car_transmission = TRANSMISSION_AUTOMATIC;
 		graph_step = 0;
 		for (;;) {
 			update_car_speed(INPUT_ACCELERATE_FLAG, 0,

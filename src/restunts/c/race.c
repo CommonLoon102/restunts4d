@@ -83,7 +83,7 @@ void run_game(void) {
 		if (idle_expired != 0) {
 			framespersec = gameconfig.game_framespersec;
 
-			init_game_state(-1);
+			init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
 		} else {
 			if (is_in_replay == 0) {
 				cameramode = CAMERA_MODE_COCKPIT;
