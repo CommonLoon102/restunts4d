@@ -8,7 +8,6 @@
 #define PLAYER_PHYSICS_COLLISION_POINT_CAPACITY 32
 #define PLAYER_PHYSICS_POSITION_SCALE_SHIFT 6U
 #define PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT 10U
-#define PLAYER_PHYSICS_LOW_FRAME_RATE 10U
 #define PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR 7680U
 #define PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR 15360U
 #define PLAYER_PHYSICS_LOW_SPEED_LIMIT 7680U
@@ -291,7 +290,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 
 	/* Convert speed to per-tick travel, accounting for the simulation rate. */
-	if (framespersec == PLAYER_PHYSICS_LOW_FRAME_RATE) {
+	if (framespersec == GAME_FRAME_RATE_LOW) {
 		var_pSpeed2Scaled = scale_speed_to_travel(
 			arg_pState->car_speed2,
 			PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR);
@@ -746,7 +745,7 @@ case PLAYER_FLOW_loc_15642:
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
-	if (framespersec != PLAYER_PHYSICS_LOW_FRAME_RATE)
+	if (framespersec != GAME_FRAME_RATE_LOW)
 		{ physics_flow = PLAYER_FLOW_loc_156A3; continue; }
 	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc1[var_wheelIndex],

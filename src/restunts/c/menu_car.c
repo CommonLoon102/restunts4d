@@ -52,7 +52,6 @@
 #define CAR_MENU_GRAPH_LABEL_0_Y 175
 #define CAR_MENU_GRAPH_AXIS_X 26
 #define CAR_MENU_GRAPH_AXIS_Y 185
-#define CAR_MENU_GRAPH_FRAME_RATE 20
 #define CAR_MENU_GRAPH_BASELINE_Y 181U
 #define CAR_MENU_GRAPH_MINIMUM_Y 117U
 #define CAR_MENU_GRAPH_SPEED_SCALE 64UL
@@ -269,7 +268,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			locate_text_res(miscptr, aBco), CAR_MENU_COLOR_BUTTON);
 
 		old_frame_rate = (legacy_u16)framespersec;
-		framespersec = CAR_MENU_GRAPH_FRAME_RATE;
+		framespersec = GAME_FRAME_RATE_NORMAL;
 		init_game_state(CAR_MENU_PREVIEW_GAME_STATE);
 		state.playerstate.car_transmission = CAR_MENU_PREVIEW_TRANSMISSION;
 		graph_step = 0;

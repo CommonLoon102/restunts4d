@@ -139,7 +139,7 @@ void init_game_state(legacy_s16 arg)
 			cvxptr[i].field_3F4 = 0;
 	}
 
-	if (framespersec == 10)
+	if (framespersec == GAME_FRAME_RATE_LOW)
 		steerWhlRespTable_ptr = steerWhlRespTable_10fps;
 	else
 		steerWhlRespTable_ptr = steerWhlRespTable_20fps;

@@ -16,7 +16,6 @@
 #define PARTICLE_FORWARD_SPEED_BIAS 384
 #define PARTICLE_GRAVITY_STEP 19
 #define PARTICLE_ROTATION_STEP 16
-#define LOW_FRAME_RATE 10
 
 #ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
@@ -170,7 +169,7 @@ void sub_19BA0(void) {
 		state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
 			state.game_longs2[slot], particle_velocity);
 
-		if (framespersec == LOW_FRAME_RATE) {
+		if (framespersec == GAME_FRAME_RATE_LOW) {
 			particle_velocity = LEGACY_S16_WRAP_SUB(
 				particle_velocity, PARTICLE_GRAVITY_STEP);
 			LEGACY_WRITE_U16_LE(

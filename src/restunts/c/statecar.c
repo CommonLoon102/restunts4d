@@ -6,8 +6,6 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 
 #define ACCELERATION_MASS_NUMERATOR 25L
 #define ACCELERATION_DRAG_SCALE 200L
-#define NORMAL_FRAME_RATE 20U
-#define LOW_FRAME_RATE 10U
 #define NORMAL_GEAR_KNOB_STEP 6
 #define LOW_RATE_GEAR_KNOB_STEP 12
 #define GEAR_RATIO_BYTE_SHIFT 8U
@@ -104,7 +102,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	legacy_s16 var_deltaSpeed;
 	legacy_u8 var_currTorque;
 
-	var_2 = framespersec == NORMAL_FRAME_RATE ?
+	var_2 = framespersec == GAME_FRAME_RATE_NORMAL ?
 		NORMAL_GEAR_KNOB_STEP : LOW_RATE_GEAR_KNOB_STEP;
 	if (arg_carState->car_engineLimiterTimer != 0) {
 		arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
@@ -199,7 +197,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 		arg_carState->car_is_accelerating = 1;
 		if (arg_carState->car_changing_gear != 0) {
 			arg_carState->car_engineLimiterTimer = 0;
-			if (framespersec == LOW_FRAME_RATE) {
+			if (framespersec == GAME_FRAME_RATE_LOW) {
 				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
 					arg_carState->car_currpm,
 					LOW_RATE_GEAR_CHANGE_RPM_DROP);
@@ -264,7 +262,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 		arg_carState->car_is_accelerating = 0;
 		arg_carState->car_is_braking = 0;
 	}
-	if (framespersec == LOW_FRAME_RATE) {
+	if (framespersec == GAME_FRAME_RATE_LOW) {
 		var_deltaSpeed = LEGACY_S16_WRAP_ADD(
 			var_deltaSpeed, var_deltaSpeed);
 	}

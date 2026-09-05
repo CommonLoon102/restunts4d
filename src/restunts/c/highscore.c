@@ -13,8 +13,6 @@
 
 #define HIGHSCORE_NO_HIGHLIGHT LEGACY_U8_MAX
 #define HIGHSCORE_EMPTY_TIME LEGACY_U16_MAX
-#define HIGHSCORE_NORMAL_FRAME_RATE 20
-#define HIGHSCORE_LOW_FRAME_RATE 10
 #define HIGHSCORE_FORMAT_BUFFER_SIZE 18
 #define HIGHSCORE_TEXT_FIELD_COUNT 4
 #define HIGHSCORE_NAME_MAX_CHARACTERS 16
@@ -232,7 +230,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 		(legacy_u16)strlen(output) + 1U);
 
 	saved_frame_rate = framespersec;
-	framespersec = HIGHSCORE_NORMAL_FRAME_RATE;
+	framespersec = GAME_FRAME_RATE_NORMAL;
 	frame_count = LEGACY_S16_FROM_BITS(record.time);
 	format_frame_as_string(formatted_time,
 		frame_count == -1 ? 0 : frame_count, 1);
@@ -315,7 +313,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	legacy_s16 positions[2];
 
 	time_bits = (legacy_u16)frame_count;
-	if (framespersec == HIGHSCORE_LOW_FRAME_RATE)
+	if (framespersec == GAME_FRAME_RATE_LOW)
 		time_bits = LEGACY_U16_WRAP_MUL(time_bits, 2U);
 	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 	if (scores[HIGHSCORE_LAST_ENTRY_INDEX].time <= time_bits) {

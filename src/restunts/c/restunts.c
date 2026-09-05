@@ -371,7 +371,8 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	timerdelta3 = timer_get_delta_alt();
 
 	slow_video_mgmt = (timerdelta2 <= timerdelta1);
-	framespersec2 = (timerdelta3 >= 75) ? 10 : 20;
+	framespersec2 = (timerdelta3 >= 75) ?
+		GAME_FRAME_RATE_LOW : GAME_FRAME_RATE_NORMAL;
 
 	if (timerdelta3 < 35) {
 		detail_level = 0;

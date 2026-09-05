@@ -54,7 +54,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	video_flag5_is0 = 0;
 	video_flag6_is1 = 1;
 	textresprefix = 'e';
-	framespersec = 20;
+	framespersec = GAME_FRAME_RATE_NORMAL;
 	mmgr_alloc_a000();
 	himem_init();
 }

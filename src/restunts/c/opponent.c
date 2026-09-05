@@ -6,8 +6,6 @@
 #define LEGACY_NULL_TRACK_TEXT_U 117
 #define LEGACY_NULL_TRACK_TEXT_N 110
 
-#define OPPONENT_NORMAL_FRAME_RATE 20U
-#define OPPONENT_LOW_FRAME_RATE 10
 #define OPPONENT_NORMAL_STEERING_STEP 8
 #define OPPONENT_LOW_RATE_STEERING_STEP 16
 #define OPPONENT_NORMAL_SPEED_STEP 1
@@ -237,7 +235,7 @@ void opponent_op(void)
 	legacy_u8 forced_route;
 	legacy_u8 input;
 
-	if (framespersec == OPPONENT_NORMAL_FRAME_RATE) {
+	if (framespersec == GAME_FRAME_RATE_NORMAL) {
 		steering_step = OPPONENT_NORMAL_STEERING_STEP;
 		speed_step = OPPONENT_NORMAL_SPEED_STEP;
 	} else {
@@ -507,7 +505,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 		}
 	}
 
-	if (framespersec == OPPONENT_LOW_FRAME_RATE) {
+	if (framespersec == GAME_FRAME_RATE_LOW) {
 		if (response > STEERING_LOW_RATE_RESPONSE_LIMIT)
 			response = STEERING_LOW_RATE_RESPONSE_LIMIT;
 		if (response < -STEERING_LOW_RATE_RESPONSE_LIMIT)

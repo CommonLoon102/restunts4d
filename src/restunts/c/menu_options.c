@@ -9,6 +9,8 @@
 #define JOYSTICK_BUTTON_MASK 48U
 #define OPTION_MENU_VERSION_TEXT_Y 16
 #define REPLAY_LOAD_WAIT_TICKS 150
+#define OPTION_MENU_LOW_FRAME_RATE_INDEX 7U
+#define OPTION_MENU_NORMAL_FRAME_RATE_INDEX 8U
 
 void do_mer_restext(void)
 {
@@ -233,7 +235,9 @@ void show_graphic_levels_menu(void)
 			selected_options[option_index] = 0;
 		selected_options[detail_level] = 1;
 		selected_options[5U + slow_video_mgmt] = 1;
-		selected_options[framespersec2 == 10U ? 7 : 8] = 1;
+		selected_options[framespersec2 == GAME_FRAME_RATE_LOW ?
+			OPTION_MENU_LOW_FRAME_RATE_INDEX :
+			OPTION_MENU_NORMAL_FRAME_RATE_INDEX] = 1;
 
 		text_index = 0;
 		for (option_index = 0; option_index < 9U; option_index++) {
@@ -258,10 +262,10 @@ void show_graphic_levels_menu(void)
 			slow_video_mgmt = 1;
 			break;
 		case 7:
-			framespersec2 = 10;
+			framespersec2 = GAME_FRAME_RATE_LOW;
 			break;
 		case 8:
-			framespersec2 = 20;
+			framespersec2 = GAME_FRAME_RATE_NORMAL;
 			break;
 		default:
 			detail_level = (legacy_u8)selected;
