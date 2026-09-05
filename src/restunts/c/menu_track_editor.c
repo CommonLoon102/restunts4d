@@ -19,6 +19,48 @@
 #define TRACK_EDITOR_MOUSE_NO_HIT 255U
 #define TRACK_EDITOR_SAVE_CANCELLED 255U
 #define TRACK_EDITOR_DIALOG_CANCELLED 255U
+#define TRACK_EDITOR_SCREEN_WIDTH 320U
+#define TRACK_EDITOR_SCREEN_HEIGHT 200U
+#define TRACK_EDITOR_MAP_LEFT 8
+#define TRACK_EDITOR_MAP_TOP 4
+#define TRACK_EDITOR_MAP_CLIP_RIGHT 200
+#define TRACK_EDITOR_MAP_CLIP_BOTTOM 179
+#define TRACK_EDITOR_TILE_SIZE 16U
+#define TRACK_EDITOR_PALETTE_LEFT 220U
+#define TRACK_EDITOR_PALETTE_TOP 36U
+#define TRACK_EDITOR_PALETTE_WIDTH 96U
+#define TRACK_EDITOR_PALETTE_ACTION_TOP 28
+#define TRACK_EDITOR_PALETTE_ACTION_WIDTH 48U
+#define TRACK_EDITOR_MULTITILE_CURSOR_SIZE 32U
+#define TRACK_EDITOR_LABEL_Y 192
+#define TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X 9
+#define TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH 181
+#define TRACK_EDITOR_VERTICAL_SCROLLBAR_X 202
+#define TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH 176
+#define TRACK_EDITOR_PAGE_BAR_X 221
+#define TRACK_EDITOR_PAGE_BAR_WIDTH 95
+#define TRACK_EDITOR_PAGE_BAR_Y 133
+#define TRACK_EDITOR_TITLE_X 217
+#define TRACK_EDITOR_TITLE_Y 3
+#define TRACK_EDITOR_TITLE_WIDTH 102
+#define TRACK_EDITOR_TITLE_HEIGHT 22
+#define TRACK_EDITOR_LEFT_FRAME_X 5
+#define TRACK_EDITOR_LEFT_FRAME_Y 0
+#define TRACK_EDITOR_LEFT_FRAME_WIDTH 206
+#define TRACK_EDITOR_LEFT_FRAME_HEIGHT 190
+#define TRACK_EDITOR_RIGHT_FRAME_X 217
+#define TRACK_EDITOR_RIGHT_FRAME_Y 32
+#define TRACK_EDITOR_RIGHT_FRAME_WIDTH 102
+#define TRACK_EDITOR_RIGHT_FRAME_HEIGHT 158
+#define TRACK_EDITOR_WIDE_BUTTON_X 221
+#define TRACK_EDITOR_WIDE_BUTTON_Y 140
+#define TRACK_EDITOR_WIDE_BUTTON_WIDTH 94
+#define TRACK_EDITOR_BUTTON_LEFT_X 221
+#define TRACK_EDITOR_BUTTON_RIGHT_X 269
+#define TRACK_EDITOR_BUTTON_UPPER_Y 156
+#define TRACK_EDITOR_BUTTON_LOWER_Y 172
+#define TRACK_EDITOR_BUTTON_WIDTH 46
+#define TRACK_EDITOR_BUTTON_HEIGHT 14
 
 static legacy_u8 far* progress_box_shape;
 
@@ -42,10 +84,10 @@ void preRender_icons(legacy_u8 page)
 		for (column = 0; column < 6U; column++) {
 			tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U +
 				column];
-			x = LEGACY_U16_WRAP_ADD(0x00DCU,
-				LEGACY_U16_WRAP_MUL(column, 16U));
-			y = LEGACY_U16_WRAP_ADD(0x0024U,
-				LEGACY_U16_WRAP_MUL(row, 16U));
+			x = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_LEFT,
+				LEGACY_U16_WRAP_MUL(column, TRACK_EDITOR_TILE_SIZE));
+			y = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_TOP,
+				LEGACY_U16_WRAP_MUL(row, TRACK_EDITOR_TILE_SIZE));
 			if (page == 0) {
 				sprite_shape_to_1(tracksmenushapes1[tile], x, y);
 				continue;
@@ -632,19 +674,34 @@ void load_tracks_menu_shapes(void)
 
 	sprite_copy_wnd_to_1_clear();
 	draw_button(locate_text_res(text_resource, "bti"),
-		0xD9, 3, 0x66, 0x16, word_407F4, word_407F6, word_407F8, 0);
-	draw_lines_unk(5, 0, 0xCE, 0xBE, 0x0B, 9, 1);
-	draw_lines_unk(0xD9, 0x20, 0x66, 0x9E, 0x0B, 9, 1);
+		TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y, TRACK_EDITOR_TITLE_WIDTH,
+		TRACK_EDITOR_TITLE_HEIGHT, word_407F4, word_407F6, word_407F8, 0);
+	draw_lines_unk(TRACK_EDITOR_LEFT_FRAME_X, TRACK_EDITOR_LEFT_FRAME_Y,
+		TRACK_EDITOR_LEFT_FRAME_WIDTH, TRACK_EDITOR_LEFT_FRAME_HEIGHT,
+		11, 9, 1);
+	draw_lines_unk(TRACK_EDITOR_RIGHT_FRAME_X, TRACK_EDITOR_RIGHT_FRAME_Y,
+		TRACK_EDITOR_RIGHT_FRAME_WIDTH, TRACK_EDITOR_RIGHT_FRAME_HEIGHT,
+		11, 9, 1);
 	draw_button(locate_text_res(text_resource, "bsc"),
-		0xDD, 0x8C, 0x5E, 0x0E, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_WIDE_BUTTON_X, TRACK_EDITOR_WIDE_BUTTON_Y,
+		TRACK_EDITOR_WIDE_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(text_resource, "blo"),
-		0xDD, 0x9C, 0x2E, 0x0E, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
+		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(text_resource, "bsa"),
-		0xDD, 0xAC, 0x2E, 0x0E, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
+		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(text_resource, "bcl"),
-		0x10D, 0x9C, 0x2E, 0x0E, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
+		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(text_resource, "bex"),
-		0x10D, 0xAC, 0x2E, 0x0E, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
+		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+		word_407F4, word_407F6, word_407F8, 0);
 
 	while (menu_active != 0) {
 		if (palette_dirty != 0 || page != previous_page) {
@@ -707,10 +764,13 @@ void load_tracks_menu_shapes(void)
 				sprite_copy_wnd_to_1();
 				preRender_icons(page);
 				if (page == 0)
-					mouse_track_op(0, 0xDD, 0x5F, 0x85, 5, 0, 1, 1);
+					mouse_track_op(0, TRACK_EDITOR_PAGE_BAR_X,
+						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
+						5, 0, 1, 1);
 				else
-					mouse_track_op(0, 0xDD, 0x5F, 0x85, 5,
-						page - 1U, 1, 10);
+					mouse_track_op(0, TRACK_EDITOR_PAGE_BAR_X,
+						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
+						5, page - 1U, 1, 10);
 			}
 		}
 
@@ -725,15 +785,21 @@ void load_tracks_menu_shapes(void)
 				map_dirty = 0;
 				if (scrollbars_dirty != 0) {
 					scrollbars_dirty = 0;
-					mouse_track_op(0, 9, 0xC0, 0xB5, 5,
+					mouse_track_op(0, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
+						TRACK_EDITOR_LABEL_Y,
+						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
 						map_column_offset, 12, 30);
-					mouse_track_op(0, 0xCA, 5, 4, 0xB0,
+					mouse_track_op(0, TRACK_EDITOR_VERTICAL_SCROLLBAR_X,
+						5, 4, TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
 						map_row_offset, 11, 30);
 				}
-				sprite_set_1_size(8, 0xC8, 4, 0xB3);
+				sprite_set_1_size(TRACK_EDITOR_MAP_LEFT,
+					TRACK_EDITOR_MAP_CLIP_RIGHT, TRACK_EDITOR_MAP_TOP,
+					TRACK_EDITOR_MAP_CLIP_BOTTOM);
 				draw_2DtrackMap(map_column_offset, map_row_offset,
 					cached_track, cached_terrain);
-				sprite_set_1_size(0, 0x140, 0, 0xC8);
+				sprite_set_1_size(0, TRACK_EDITOR_SCREEN_WIDTH,
+					0, TRACK_EDITOR_SCREEN_HEIGHT);
 			}
 
 			if (palette_dirty != 0) {
@@ -770,33 +836,36 @@ void load_tracks_menu_shapes(void)
 			hovered_tile = track_editor_map_tile(
 				selection_column[0], selection_row[0]);
 		} else {
-			cursor_width = 0x10U;
-			cursor_height = 0x10U;
-			cursor_y = (legacy_s16)(selection_row[1] * 16U + 0x24U);
+			cursor_width = TRACK_EDITOR_TILE_SIZE;
+			cursor_height = TRACK_EDITOR_TILE_SIZE;
+			cursor_y = (legacy_s16)(selection_row[1] *
+				TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_TOP);
 			if (selection_row[1] == 6U) {
-				cursor_x = 0xDC;
-				cursor_width = 0x60U;
+				cursor_x = TRACK_EDITOR_PALETTE_LEFT;
+				cursor_width = TRACK_EDITOR_PALETTE_WIDTH;
 				cursor_height = 8U;
 			} else if (selection_row[1] == 7U) {
 				selection_column[1] = 0;
-				cursor_x = 0xDC;
-				cursor_width = 0x60U;
+				cursor_x = TRACK_EDITOR_PALETTE_LEFT;
+				cursor_width = TRACK_EDITOR_PALETTE_WIDTH;
 				cursor_y = LEGACY_S16_WRAP_SUB(cursor_y, 8);
 			} else if (selection_row[1] > 7U) {
 				cursor_y = LEGACY_S16_WRAP_SUB(cursor_y, 8);
 				selection_column[1] = selection_column[1] < 3U ? 0U : 3U;
-				cursor_x = (legacy_s16)(selection_column[1] * 16U + 0xDCU);
-				cursor_width = 0x30U;
+				cursor_x = (legacy_s16)(selection_column[1] *
+					TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_LEFT);
+				cursor_width = TRACK_EDITOR_PALETTE_ACTION_WIDTH;
 			} else {
-				cursor_x = (legacy_s16)(selection_column[1] * 16U + 0xDCU);
+				cursor_x = (legacy_s16)(selection_column[1] *
+					TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_LEFT);
 				if (track_editor_palette_tile(page, selection_row[1],
 					selection_column[1] + 6U) == TRACK_TILE_CONTINUATION_SOUTH)
-					cursor_height = 0x20U;
+					cursor_height = TRACK_EDITOR_MULTITILE_CURSOR_SIZE;
 				if (selection_column[1] < 5U &&
 					track_editor_palette_tile(page, selection_row[1],
 						selection_column[1] + 1U) ==
 						TRACK_TILE_CONTINUATION_EAST)
-					cursor_width = 0x20U;
+					cursor_width = TRACK_EDITOR_MULTITILE_CURSOR_SIZE;
 			}
 			hovered_tile = selection_row[1] < 6U ?
 				track_editor_palette_tile(page, selection_row[1],
@@ -815,10 +884,12 @@ void load_tracks_menu_shapes(void)
 			text = locate_text_res(text_resource, resource_id);
 			copy_string(resource_id, text);
 			label_width = (legacy_s16)font_op2(resource_id);
-			sub_345BC(resource_id, 8, 0xC0);
+			sub_345BC(resource_id, TRACK_EDITOR_MAP_LEFT,
+				TRACK_EDITOR_LABEL_Y);
 			if (previous_label_width > label_width) {
-				sprite_1_unk(LEGACY_S16_WRAP_ADD(label_width, 8),
-					0xC0, LEGACY_S16_WRAP_SUB(previous_label_width,
+				sprite_1_unk(LEGACY_S16_WRAP_ADD(label_width,
+					TRACK_EDITOR_MAP_LEFT), TRACK_EDITOR_LABEL_Y,
+					LEGACY_S16_WRAP_SUB(previous_label_width,
 						label_width), 8, 0);
 			}
 			mouse_draw_transparent_check();
@@ -872,7 +943,10 @@ void load_tracks_menu_shapes(void)
 				if (hit == 0U && (mouse_butstate & 3) != 0) {
 					focus = 0;
 					clicked_column = (legacy_u8)mouse_track_op(1,
-						9, 0xC0, 0xB5, 5, map_column_offset, 12, 30);
+						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
+						TRACK_EDITOR_LABEL_Y,
+						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
+						map_column_offset, 12, 30);
 					selection_column[0] = (legacy_u8)(selection_column[0] +
 						clicked_column - map_column_offset);
 					map_column_offset = clicked_column;
@@ -880,7 +954,9 @@ void load_tracks_menu_shapes(void)
 				} else if (hit == 1U && (mouse_butstate & 3) != 0) {
 					focus = 0;
 					clicked_row = (legacy_u8)mouse_track_op(1,
-						0xCA, 5, 4, 0xB0, map_row_offset, 11, 30);
+						TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
+						TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
+						map_row_offset, 11, 30);
 					selection_row[0] = (legacy_u8)(selection_row[0] +
 						clicked_row - map_row_offset);
 					map_row_offset = clicked_row;
@@ -889,7 +965,9 @@ void load_tracks_menu_shapes(void)
 					if ((mouse_butstate & 3) != 0) {
 						focus = 1;
 						page = (legacy_u8)mouse_track_op(1,
-							0xDD, 0x5F, 0x85, 5, page - 1U, 1, 10) + 1U;
+							TRACK_EDITOR_PAGE_BAR_X,
+							TRACK_EDITOR_PAGE_BAR_WIDTH,
+							TRACK_EDITOR_PAGE_BAR_Y, 5, page - 1U, 1, 10) + 1U;
 						key = 1;
 					}
 				} else if (hit == 3U) {
@@ -919,9 +997,11 @@ void load_tracks_menu_shapes(void)
 						key = KEY_ENTER;
 				} else if (hit == 4U) {
 					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_xpos, 0xDC), 16);
+						LEGACY_S16_WRAP_SUB(mouse_xpos,
+							TRACK_EDITOR_PALETTE_LEFT), TRACK_EDITOR_TILE_SIZE);
 					clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_ypos, 0x24), 16);
+						LEGACY_S16_WRAP_SUB(mouse_ypos,
+							TRACK_EDITOR_PALETTE_TOP), TRACK_EDITOR_TILE_SIZE);
 					if (clicked_row < 6U) {
 						if (track_editor_palette_tile(page, clicked_row,
 							clicked_column) == TRACK_TILE_CONTINUATION_SOUTH)
@@ -931,7 +1011,9 @@ void load_tracks_menu_shapes(void)
 							clicked_column--;
 					} else {
 						clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-							LEGACY_S16_WRAP_SUB(mouse_ypos, 0x1C), 16);
+							LEGACY_S16_WRAP_SUB(mouse_ypos,
+								TRACK_EDITOR_PALETTE_ACTION_TOP),
+							TRACK_EDITOR_TILE_SIZE);
 						if (clicked_row == 7U)
 							clicked_column = 0;
 						else if (clicked_column >= 3U)
