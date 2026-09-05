@@ -1,7 +1,26 @@
 #include "state_internal.h"
 
-#define TRACK_SETUP_TILE_COUNT 0x385U
-#define TRACK_SETUP_BRANCH_COUNT 0x40U
+#define TRACK_GRID_SIZE 30
+#define TRACK_GRID_LAST_INDEX 29
+#define TRACK_SETUP_TILE_COUNT 901U
+#define TRACK_SETUP_BRANCH_COUNT 64U
+#define TRACK_SETUP_VISITED_TILE_CAPACITY 904U
+#define TRACK_SETUP_PIECE_CAPACITY 902U
+#define TRACK_TERRAIN_NO_CONNECTION 99U
+#define TRACK_INVALID_ELEMENT_FIRST 253U
+#define TRACK_LARGE_ELEMENT_FIRST 182U
+#define TRACK_GENERIC_LARGE_ELEMENT 4U
+#define TRACK_CONTINUATION_NORTHWEST 253U
+#define TRACK_CONTINUATION_NORTH 254U
+#define TRACK_CONTINUATION_WEST 255U
+#define TRACK_TILE_INDEX_UNASSIGNED 255U
+#define TRACK_HILLROAD_TERRAIN_FIRST 7U
+#define TRACK_HILLROAD_TERRAIN_END 11U
+#define TRACK_CAMERA_COUNT_MAX 64U
+#define TRACK_CAMERA_RESERVED_INDEX 48U
+#define TRACK_CAMERA_HILL_HEIGHT 450
+#define TRACK_PIECE_SUBTYPE_MASK 15U
+#define TRACK_PIECE_REVERSE_FLAG 16U
 #define TRACK_ORIENTATION_COUNT 4U
 #define TRACK_ORIENTATION_QUARTER_TURN 256
 #define TRACK_ORIENTATION_NORTH 0
@@ -142,12 +161,12 @@ static legacy_s16 track_setup_error(
 ) {
 	if (column == -1)
 		column = 0;
-	else if (column == 0x1E)
-		column = 0x1D;
+	else if (column == TRACK_GRID_SIZE)
+		column = TRACK_GRID_LAST_INDEX;
 	if (row == -1)
 		row = 0;
-	else if (row == 0x1E)
-		row = 0x1D;
+	else if (row == TRACK_GRID_SIZE)
+		row = TRACK_GRID_LAST_INDEX;
 	byte_45D90 = (legacy_u8)column;
 	byte_45E16 = (legacy_u8)row;
 	mmgr_release((legacy_s8 far*)branches);
@@ -170,15 +189,15 @@ static legacy_s16 track_setup_terrain_seams(
 	legacy_s8 outer;
 	legacy_s8 inner;
 
-	for (outer = 0; outer < 0x1E; outer++) {
-		previous_connection_code = 0x63U;
-		for (inner = 0; inner < 0x1E; inner++) {
+	for (outer = 0; outer < TRACK_GRID_SIZE; outer++) {
+		previous_connection_code = TRACK_TERRAIN_NO_CONNECTION;
+		for (inner = 0; inner < TRACK_GRID_SIZE; inner++) {
 			row = along_row ? outer : inner;
 			column = along_row ? inner : outer;
 			tile_terrain = td15_terr_map_main[
 				terrainrows[row] + column];
 			if (incoming[tile_terrain] != previous_connection_code &&
-				previous_connection_code != 0x63U) {
+				previous_connection_code != TRACK_TERRAIN_NO_CONNECTION) {
 				return track_setup_error(branches,
 					TRACK_SETUP_TERRAIN_MISMATCH, column, row);
 			}
@@ -202,9 +221,9 @@ legacy_s16 track_setup(void)
 	struct VECTOR camera_vector;
 	legacy_s16 far* camera_height;
 	legacy_s16 far* camera_unknown;
-	legacy_u8 visited_tiles[904];
-	legacy_u8 subtype_by_piece[902];
-	legacy_s8 connection_by_piece[902];
+	legacy_u8 visited_tiles[TRACK_SETUP_VISITED_TILE_CAPACITY];
+	legacy_u8 subtype_by_piece[TRACK_SETUP_PIECE_CAPACITY];
+	legacy_s8 connection_by_piece[TRACK_SETUP_PIECE_CAPACITY];
 	legacy_u16 branch_count;
 	legacy_u16 block_index;
 	legacy_u16 index;
@@ -242,9 +261,10 @@ legacy_s16 track_setup(void)
 	legacy_s16 seam_status;
 
 	branches = (struct TRACK_SETUP_BRANCH far*)
-		mmgr_alloc_resbytes("tcomp", 0x380L);
+		mmgr_alloc_resbytes("tcomp",
+			TRACK_SETUP_BRANCH_COUNT * sizeof(struct TRACK_SETUP_BRANCH));
 	if (branches == 0)
-		return 2;
+		return TRACK_SETUP_INTERNAL_ERROR;
 
 	camera_height = trackdata7;
 	camera_unknown = trackdata6;
@@ -252,7 +272,7 @@ legacy_s16 track_setup(void)
 	jump_length = 0;
 	track_pieces_counter = 0;
 	for (index = 0; index < TRACK_SETUP_TILE_COUNT; index++)
-		trackdata19[index] = 0xFFU;
+		trackdata19[index] = TRACK_TILE_INDEX_UNASSIGNED;
 
 	seam_status = track_setup_terrain_seams(branches,
 		terrConnDataEtoW, terrConnDataWtoE, 1);
@@ -263,15 +283,16 @@ legacy_s16 track_setup(void)
 	if (seam_status != 0)
 		return seam_status;
 
-	for (row = 0; row < 0x1E; row++) {
-		for (column = 0; column < 0x1E; column++) {
+	for (row = 0; row < TRACK_GRID_SIZE; row++) {
+		for (column = 0; column < TRACK_GRID_SIZE; column++) {
 			tile_index = trackrows[row] + column;
 			tile_element = td14_elem_map_main[tile_index];
-			if (tile_element >= 0xFDU)
+			if (tile_element >= TRACK_INVALID_ELEMENT_FIRST)
 				tile_element = 0;
-			if (tile_element >= 0xB6U) {
-				tile_element = 4;
-				td14_elem_map_main[tile_index] = 4;
+			if (tile_element >= TRACK_LARGE_ELEMENT_FIRST) {
+				tile_element = TRACK_GENERIC_LARGE_ELEMENT;
+				td14_elem_map_main[tile_index] =
+					TRACK_GENERIC_LARGE_ELEMENT;
 			}
 
 			orientation = -1;
@@ -331,27 +352,30 @@ legacy_s16 track_setup(void)
 	for (;;) {
 	match_count = 0;
 	backtrack_required = 0;
-	if (column < 0 || row < 0 || column > 0x1D || row > 0x1D)
+	if (column < 0 || row < 0 || column > TRACK_GRID_LAST_INDEX ||
+		row > TRACK_GRID_LAST_INDEX)
 		backtrack_required = 1;
 
 	if (backtrack_required == 0) {
 	tile_element = td14_elem_map_main[trackrows[row] + column];
 	tile_terrain = td15_terr_map_main[terrainrows[row] + column];
-	if (tile_element != 0 && tile_terrain >= 7U && tile_terrain < 0x0BU)
+	if (tile_element != 0 &&
+		tile_terrain >= TRACK_HILLROAD_TERRAIN_FIRST &&
+		tile_terrain < TRACK_HILLROAD_TERRAIN_END)
 		tile_element = subst_hillroad_track(tile_terrain, tile_element);
 
-	if (tile_element == 0xFDU) {
+	if (tile_element == TRACK_CONTINUATION_NORTHWEST) {
 		column = track_setup_add_s8(column, -1);
 		row = track_setup_add_s8(row, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_northwest, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
-	} else if (tile_element == 0xFEU) {
+	} else if (tile_element == TRACK_CONTINUATION_NORTH) {
 		row = track_setup_add_s8(row, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_north, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
-	} else if (tile_element == 0xFFU) {
+	} else if (tile_element == TRACK_CONTINUATION_WEST) {
 		column = track_setup_add_s8(column, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_west, orientation);
@@ -529,8 +553,8 @@ legacy_s16 track_setup(void)
 	if (arrow_code == 0) {
 		runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
 	} else {
-		if (arrow_code != 0xFFU && runway_length > 3 &&
-			byte_45635 != 0x30U) {
+		if (arrow_code != LEGACY_U8_MAX && runway_length > 3 &&
+			byte_45635 != TRACK_CAMERA_RESERVED_INDEX) {
 			previous_track_object = &trkObjectList[previous_tile_element];
 			previous_info = &previous_track_object->
 				ss_trkObjInfoPtr[previous_subtype];
@@ -566,7 +590,7 @@ legacy_s16 track_setup(void)
 			if (td15_terr_map_main[terrainrows[previous_row] +
 				previous_column] == 6)
 				camera_vector.y = LEGACY_S16_WRAP_ADD(
-					camera_vector.y, 0x1C2);
+					camera_vector.y, TRACK_CAMERA_HILL_HEIGHT);
 			camera_index = (legacy_s16)byte_45635;
 			td10_track_check_rel[camera_index].y = camera_vector.y;
 			base_position = track_object_base_z(
@@ -618,8 +642,8 @@ legacy_s16 track_setup(void)
 	byte_45E16 = (legacy_u8)startrow2;
 	camera_count = (legacy_u16)LEGACY_S16_DIV_OR_ZERO(
 		track_pieces_counter, 3);
-	if (camera_count > 0x40U)
-		camera_count = 0x40U;
+	if (camera_count > TRACK_CAMERA_COUNT_MAX)
+		camera_count = TRACK_CAMERA_COUNT_MAX;
 	byte_4616E = (legacy_u8)camera_count;
 	for (index = 0; index < TRACK_SETUP_TILE_COUNT; index++)
 		subtype_by_piece[index] = 0;
@@ -640,9 +664,10 @@ legacy_s16 track_setup(void)
 			continue;
 		subtype_by_piece[tile_index] = 1;
 		tile_element = (legacy_u8)td17_trk_elem_ordered[sampled_piece];
-		subtype = (legacy_u8)trackdata18[sampled_piece] & 0x0FU;
+		subtype = (legacy_u8)trackdata18[sampled_piece] &
+			TRACK_PIECE_SUBTYPE_MASK;
 		connection_status = ((legacy_u8)trackdata18[sampled_piece] &
-			0x10U) != 0;
+			TRACK_PIECE_REVERSE_FLAG) != 0;
 		track_object = &trkObjectList[tile_element];
 		current_info = &track_object->ss_trkObjInfoPtr[subtype];
 		opponent_path_offset = (legacy_u16)(
@@ -659,7 +684,7 @@ legacy_s16 track_setup(void)
 		orientation = (legacy_s16)current_info->si_arrowOrient;
 		track_setup_rotate_vector(&camera_vector, orientation);
 		if (td15_terr_map_main[terrainrows[row] + column] == 6)
-			camera_height[camera_index] = 0x1C2;
+			camera_height[camera_index] = TRACK_CAMERA_HILL_HEIGHT;
 		else
 			camera_height[camera_index] = 0;
 		camera_unknown[camera_index] = 0;
