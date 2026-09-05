@@ -18,6 +18,25 @@
 #define FRAME_SURFACE_GRASS 4
 #define FRAME_TRANSFORM_FLAGS_DEFAULT 4
 #define FRAME_TRANSFORM_FLAGS_CLIPPED 12
+#define FRAME_CAMERA_MODE_COCKPIT 0
+#define FRAME_CAMERA_MODE_FOLLOW 1
+#define FRAME_CAMERA_MODE_CUSTOM 2
+#define FRAME_CAMERA_MODE_TRACK 3
+#define FRAME_COCKPIT_HEIGHT_CLEARANCE 6
+#define FRAME_CAMERA_DIRECTION_LENGTH 16384
+#define FRAME_TRACK_CAMERA_HEIGHT_OFFSET 90
+#define FRAME_PLANE_CLEARANCE 12
+#define FRAME_CAMERA_TARGET_HEIGHT_OFFSET 50
+#define FRAME_ANIMATION_PHASE_MASK 15U
+#define FRAME_LOOKAHEAD_HEADING_SHIFT 7U
+#define FRAME_SKYBOX_TEST_DISTANCE 1000
+#define FRAME_DISTANT_SHAPE_FLAGS 7
+#define FRAME_DISTANT_SHAPE_COUNT 8
+#define FRAME_DISTANT_SHAPE_MIN_ANGLE 135
+#define FRAME_DISTANT_SHAPE_MAX_ANGLE 889
+#define FRAME_DISTANT_SHAPE_HEIGHT 2790
+#define FRAME_DISTANT_SHAPE_DISTANCE 15000
+#define FRAME_DISTANT_SHAPE_MIN_DEPTH 200
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -514,15 +533,16 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	car_rot_z_2 = 0;
 
 	// Set camera position, based on the car position and the camera mode
-	if (cameramode == 0) {
-		car_rot_x_2 = car_rot_x & 0x3ff;
-		car_rot_y_2 = car_rot_y & 0x3ff;
-		car_rot_z_2   = car_rot_z & 0x3ff;
+	if (cameramode == FRAME_CAMERA_MODE_COCKPIT) {
+		car_rot_x_2 = car_rot_x & ANGLE_MASK;
+		car_rot_y_2 = car_rot_y & ANGLE_MASK;
+		car_rot_z_2 = car_rot_z & ANGLE_MASK;
 		car_rot_matrix = frame_car_rotation(car_rot_x, car_rot_y,
 			car_rot_z);
 		offset_vector.x = 0;
 		offset_vector.z = 0;
-		offset_vector.y = LEGACY_S16_WRAP_SUB(simd_player.car_height, 6);
+		offset_vector.y = LEGACY_S16_WRAP_SUB(simd_player.car_height,
+			FRAME_COCKPIT_HEIGHT_CLEARANCE);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
 		cam_pos.x = LEGACY_S16_WRAP_ADD(
@@ -531,14 +551,14 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(
 			car_pos.z, car_to_cam_rotated.z);
-	} else if (cameramode == 1) {
+	} else if (cameramode == FRAME_CAMERA_MODE_FOLLOW) {
 		cam_pos.x = state.game_vec1[followOpponentFlag].x;
 		cam_pos.z = state.game_vec1[followOpponentFlag].z;
 		cam_pos.y = state.game_vec1[followOpponentFlag].y;
-	} else if (cameramode == 2) {
+	} else if (cameramode == FRAME_CAMERA_MODE_CUSTOM) {
 		offset_vector.x = 0;
 		offset_vector.y = 0;
-		offset_vector.z = 0x4000;
+		offset_vector.z = FRAME_CAMERA_DIRECTION_LENGTH;
 		car_rot_matrix = frame_car_rotation(car_rot_x, car_rot_y,
 			car_rot_z);
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
@@ -555,11 +575,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
 		cam_pos.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
-	} else if (cameramode == 3) {
+	} else if (cameramode == FRAME_CAMERA_MODE_TRACK) {
 		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag]].x;
 		cam_pos.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 			trackdata9[state.field_3F7[followOpponentFlag]].y,
-			camera_track_height_offset), 0x5A);
+			camera_track_height_offset), FRAME_TRACK_CAMERA_HEIGHT_OFFSET);
 		cam_pos.z = trackdata9[state.field_3F7[followOpponentFlag]].z;
 	}
 
@@ -572,9 +592,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		if (byte_4392C != 0) {
 			si = plane_origin_op(planindex, cam_pos.x, cam_pos.y, cam_pos.z);
-			if (si < 0xC) {
+			if (si < FRAME_PLANE_CLEARANCE) {
 				vec_unk2.x = 0;
-				vec_unk2.y = LEGACY_S16_WRAP_SUB(0xC, si);
+				vec_unk2.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE,
+					si);
 				vec_unk2.z = 0;
 				planindex_copy = planindex;
 				pState_f36Mminf40sar2 = 0;
@@ -594,26 +615,29 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		car_rot_x_2 = LEGACY_S16_FROM_BITS((legacy_u16)
 			LEGACY_S16_WRAP_NEGATE(polarAngle(
 				LEGACY_S16_WRAP_SUB(car_pos.x, cam_pos.x),
-				LEGACY_S16_WRAP_SUB(car_pos.z, cam_pos.z))) & 0x3FFU);
+				LEGACY_S16_WRAP_SUB(car_pos.z, cam_pos.z))) & ANGLE_MASK);
 		var_38 = polarRadius2D(
 			LEGACY_S16_WRAP_SUB(car_pos.x, cam_pos.x),
 			LEGACY_S16_WRAP_SUB(car_pos.z, cam_pos.z));
 		car_rot_y_2 = LEGACY_S16_FROM_BITS((legacy_u16)polarAngle(
 			LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_SUB(car_pos.y, cam_pos.y), 0x32),
-			var_38) & 0x3FFU);
+				LEGACY_S16_WRAP_SUB(car_pos.y, cam_pos.y),
+				FRAME_CAMERA_TARGET_HEIGHT_OFFSET),
+			var_38) & ANGLE_MASK);
 	}
 
-	if (car_rot_z_2 > 1 && car_rot_z_2 < 0x3FF) {
+	if (car_rot_z_2 > 1 && car_rot_z_2 < ANGLE_MASK) {
 		car_rot_z_3 = car_rot_z_2;
 	} else {
 		car_rot_z_3 = 0;
 	}
 
 	if (state.game_frame == 0) {
-		var_E4 = byte_3C0C6[frame_callback_count&0xF];
+		var_E4 = byte_3C0C6[
+			frame_callback_count & FRAME_ANIMATION_PHASE_MASK];
 	} else {
-		var_E4 = byte_3C0C6[state.game_frame&0xF];
+		var_E4 = byte_3C0C6[
+			state.game_frame & FRAME_ANIMATION_PHASE_MASK];
 	}
 
 	// Select the vector specifying the 23 tiles to draw. The vector contains
@@ -637,12 +661,13 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	heading = select_cliprect_rotate(car_rot_z_3, car_rot_y_2, car_rot_x_2, arg_cliprectptr, 0);
 	lookahead_tiles = (const struct FRAME_LOOKAHEAD_TILE*)
-		lookahead_tiles_tables[(heading & 0x3FF) >> 7];
+		lookahead_tiles_tables[(heading & ANGLE_MASK) >>
+			FRAME_LOOKAHEAD_HEADING_SHIFT];
 
 	var_mat = *mat_rot_zxy(car_rot_z_3, car_rot_y_2, 0, 1);
 	offset_vector.x = 0;
 	offset_vector.y = 0;
-	offset_vector.z = 0x3E8;
+	offset_vector.z = FRAME_SKYBOX_TEST_DISTANCE;
 	mat_mul_vector(&offset_vector, &var_mat, &var_vec8);
 	if (var_vec8.z > 0) {
 		skybox_parameter = 1;
@@ -654,26 +679,30 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// level is the max one
 	if (detail_level == 0) {
 		currenttransshape->rectptr = &rect_unk9;
-		currenttransshape->ts_flags = var_122 | 7;
+		currenttransshape->ts_flags = var_122 | FRAME_DISTANT_SHAPE_FLAGS;
 		currenttransshape->rotvec.x = 0;
 		currenttransshape->rotvec.y = 0;
 		currenttransshape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 		currenttransshape->material = 0;
 
-		for (var_counter = 0; var_counter < 8; var_counter++) {
+		for (var_counter = 0; var_counter < FRAME_DISTANT_SHAPE_COUNT;
+			var_counter++) {
 			si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_WRAP_ADD(
 					word_3BE34[var_counter], car_rot_x_2),
-				run_game_random) & 0x3FFU);
-			if (si < 0x87 || si > 0x379) {
+				run_game_random) & ANGLE_MASK);
+			if (si < FRAME_DISTANT_SHAPE_MIN_ANGLE ||
+				si > FRAME_DISTANT_SHAPE_MAX_ANGLE) {
 				mat_rot_y(&var_mat2, si);
 				offset_vector.x = 0;
-				offset_vector.y = LEGACY_S16_WRAP_SUB(0xAE6, cam_pos.y);
-				offset_vector.z = 0x3A98; //15000
+				offset_vector.y = LEGACY_S16_WRAP_SUB(
+					FRAME_DISTANT_SHAPE_HEIGHT, cam_pos.y);
+				offset_vector.z = FRAME_DISTANT_SHAPE_DISTANCE;
 				mat_mul_vector(&offset_vector, &var_mat2, &car_to_cam_rotated);
-				car_to_cam_rotated.z = 0x3A98; //15000
+				car_to_cam_rotated.z = FRAME_DISTANT_SHAPE_DISTANCE;
 				mat_mul_vector(&car_to_cam_rotated, &var_mat, &currenttransshape->pos);
-				if (currenttransshape->pos.z > 0xC8) {
+				if (currenttransshape->pos.z >
+					FRAME_DISTANT_SHAPE_MIN_DEPTH) {
 					currenttransshape->shapeptr = off_3BE44[var_counter];
 					currenttransshape->rotvec.z =
 						LEGACY_S16_WRAP_NEGATE(car_rot_x_2);
@@ -818,7 +847,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Draw own wheels
 	var_3C = -1;
 	var_6C = 0;
-	if (cameramode != 0 || followOpponentFlag != 0) {
+	if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
+		followOpponentFlag != 0) {
 
 		if (state.playerstate.car_crashBmpFlag != 2) {
 
@@ -833,7 +863,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	var_A4 = 0;
 	if (gameconfig.game_opponenttype != 0) {
 
-		if (cameramode != 0 || followOpponentFlag == 0) {
+		if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
+			followOpponentFlag == 0) {
 			if (state.opponentstate.car_crashBmpFlag != 2) {
 				var_A4 = frame_find_car_wheel(&state.opponentstate,
 					&simd_opponent, should_skip_tile, lookahead_tiles,
@@ -1376,7 +1407,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Depict windscreen cracking after a crash
 	sprite_set_1_size(0, FRAME_SCREEN_WIDTH, arg_cliprectptr->top,
 		arg_cliprectptr->bottom);
-	if (cameramode == 0) {
+	if (cameramode == FRAME_CAMERA_MODE_COCKPIT) {
 
 		if (followOpponentFlag != 0) {
 			var_stateptr = &state.opponentstate;
