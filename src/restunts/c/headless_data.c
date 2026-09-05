@@ -89,9 +89,11 @@ legacy_s8 far* td21_col_from_path;
 legacy_s8 far* td22_row_from_path;
 legacy_u8 far* trackdata23;
 
+#define FILE_DIALOG_PATH_BUFFER_SIZE 81U
+
 legacy_s8 g_path_buf[94];
-legacy_s8 byte_3B80C[0x51];
-legacy_s8 byte_3B85E[0x51];
+legacy_s8 byte_3B80C[FILE_DIALOG_PATH_BUFFER_SIZE];
+legacy_s8 byte_3B85E[FILE_DIALOG_PATH_BUFFER_SIZE];
 
 legacy_s8 aCarcoun[] = "carcoun";
 legacy_s8 aOpp1[] = "opp1";

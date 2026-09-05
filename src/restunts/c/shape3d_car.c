@@ -3,28 +3,57 @@
 #include "shape3d.h"
 #include "shape3d_internal.h"
 
+#define CAR_RESOURCE_ID_OFFSET 2U
+#define CAR_ID_LENGTH 4
+#define CAR_WHEEL_CENTER_COUNT 2U
+#define CAR_WHEEL_COUNT 4
+#define CAR_WHEEL_VERTEX_GROUP_SIZE 6
+#define CAR_WHEEL_VERTEX_COUNT 24U
+#define CAR_WHEEL_CENTER_SAMPLE_OFFSET 3U
+#define CAR_FIRST_WHEEL_VERTEX 8U
+#define CAR_STEERED_WHEEL_VERTEX_COUNT 12
+#define CAR_WHEEL_STATE_CACHE_SIZE 5
+#define CAR_WHEEL_STEERING_CACHE_INDEX 4
+#define CAR_WHEEL_VERTICAL_SCALE_SHIFT 6U
+#define PLAYER_EXPLOSION_SHAPE_FIRST 116
+#define OPPONENT_EXPLOSION_SHAPE_FIRST 120
+#define PLAYER_CAR_LOW_SHAPE 124
+#define OPPONENT_CAR_LOW_SHAPE 125
+#define PLAYER_CAR_WHEEL_SHAPE 126
+#define OPPONENT_CAR_WHEEL_SHAPE 127
+#define PLAYER_CAR_HIGH_SHAPE 128
+#define OPPONENT_CAR_HIGH_SHAPE 129
+
 static void shape3d_init_car_wheel_vertices(const struct SHAPE3D* shape,
-	struct VECTOR centers[2], struct VECTOR vertices[24])
+	struct VECTOR centers[CAR_WHEEL_CENTER_COUNT],
+	struct VECTOR vertices[CAR_WHEEL_VERTEX_COUNT])
 {
 	legacy_s16 i;
 	struct VECTOR resource_vertex;
 
-	shape3d_vertex_read(shape, 8U, &resource_vertex);
+	shape3d_vertex_read(shape, CAR_FIRST_WHEEL_VERTEX, &resource_vertex);
 	centers[0].x = resource_vertex.x;
 	centers[0].z = resource_vertex.z;
-	shape3d_vertex_read(shape, 11U, &resource_vertex);
+	shape3d_vertex_read(shape,
+		CAR_FIRST_WHEEL_VERTEX + CAR_WHEEL_CENTER_SAMPLE_OFFSET,
+		&resource_vertex);
 	centers[0].x = LEGACY_S16_SAR(
 		LEGACY_S16_WRAP_ADD(centers[0].x, resource_vertex.x), 1U);
 
-	shape3d_vertex_read(shape, 14U, &resource_vertex);
+	shape3d_vertex_read(shape,
+		CAR_FIRST_WHEEL_VERTEX + CAR_WHEEL_VERTEX_GROUP_SIZE,
+		&resource_vertex);
 	centers[1].x = resource_vertex.x;
 	centers[1].z = resource_vertex.z;
-	shape3d_vertex_read(shape, 17U, &resource_vertex);
+	shape3d_vertex_read(shape,
+		CAR_FIRST_WHEEL_VERTEX + CAR_WHEEL_VERTEX_GROUP_SIZE +
+		CAR_WHEEL_CENTER_SAMPLE_OFFSET, &resource_vertex);
 	centers[1].x = LEGACY_S16_SAR(
 		LEGACY_S16_WRAP_ADD(centers[1].x, resource_vertex.x), 1U);
 
-	for (i = 0; i < 6; i++) {
-		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(8U, i),
+	for (i = 0; i < CAR_WHEEL_VERTEX_GROUP_SIZE; i++) {
+		shape3d_vertex_read(shape,
+			LEGACY_U16_WRAP_ADD(CAR_FIRST_WHEEL_VERTEX, i),
 			&resource_vertex);
 		vertices[i].x = LEGACY_S16_WRAP_SUB(
 			centers[0].x, resource_vertex.x);
@@ -32,18 +61,21 @@ static void shape3d_init_car_wheel_vertices(const struct SHAPE3D* shape,
 		vertices[i].z = LEGACY_S16_WRAP_SUB(
 			centers[0].z, resource_vertex.z);
 
-		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(14U, i),
+		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(
+			CAR_FIRST_WHEEL_VERTEX + CAR_WHEEL_VERTEX_GROUP_SIZE, i),
 			&resource_vertex);
-		vertices[i + 6].x = LEGACY_S16_WRAP_SUB(
+		vertices[i + CAR_WHEEL_VERTEX_GROUP_SIZE].x = LEGACY_S16_WRAP_SUB(
 			centers[1].x, resource_vertex.x);
-		vertices[i + 6].y = resource_vertex.y;
-		vertices[i + 6].z = LEGACY_S16_WRAP_SUB(
+		vertices[i + CAR_WHEEL_VERTEX_GROUP_SIZE].y = resource_vertex.y;
+		vertices[i + CAR_WHEEL_VERTEX_GROUP_SIZE].z = LEGACY_S16_WRAP_SUB(
 			centers[1].z, resource_vertex.z);
 
-		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(20U, i),
-			&vertices[i + 12]);
-		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(26U, i),
-			&vertices[i + 18]);
+		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(
+			CAR_FIRST_WHEEL_VERTEX + 2U * CAR_WHEEL_VERTEX_GROUP_SIZE, i),
+			&vertices[i + 2 * CAR_WHEEL_VERTEX_GROUP_SIZE]);
+		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(
+			CAR_FIRST_WHEEL_VERTEX + 3U * CAR_WHEEL_VERTEX_GROUP_SIZE, i),
+			&vertices[i + 3 * CAR_WHEEL_VERTEX_GROUP_SIZE]);
 	}
 }
 
@@ -53,26 +85,31 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 	legacy_u32 copy_index;
 	legacy_u8 far* source_bytes;
 	legacy_u8 far* destination_bytes;
-	aStxxx[2] = arg_playercarid[0];
-	aStxxx[3] = arg_playercarid[1];
-	aStxxx[4] = arg_playercarid[2];
-	aStxxx[5] = arg_playercarid[3];
+	for (i = 0; i < CAR_ID_LENGTH; i++)
+		aStxxx[CAR_RESOURCE_ID_OFFSET + i] = arg_playercarid[i];
 	carresptr = file_load_3dres(aStxxx);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "car0"), &game3dshapes[124]);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "car1"), &game3dshapes[126]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "car0"),
+		&game3dshapes[PLAYER_CAR_LOW_SHAPE]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "car1"),
+		&game3dshapes[PLAYER_CAR_WHEEL_SHAPE]);
 
-	shape3d_init_car_wheel_vertices(&game3dshapes[126],
+	shape3d_init_car_wheel_vertices(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
 		carshapevec, carshapevecs);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; i < CAR_WHEEL_STATE_CACHE_SIZE; i++) {
 		word_443E8[i] = 0;
 	}
 
-	shape3d_init_shape(locate_shape_fatal(carresptr, "car2"), &game3dshapes[128]);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "exp0"), &game3dshapes[116]);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "exp1"), &game3dshapes[117]);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "exp2"), &game3dshapes[118]);
-	shape3d_init_shape(locate_shape_fatal(carresptr, "exp3"), &game3dshapes[119]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "car2"),
+		&game3dshapes[PLAYER_CAR_HIGH_SHAPE]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "exp0"),
+		&game3dshapes[PLAYER_EXPLOSION_SHAPE_FIRST]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "exp1"),
+		&game3dshapes[PLAYER_EXPLOSION_SHAPE_FIRST + 1]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "exp2"),
+		&game3dshapes[PLAYER_EXPLOSION_SHAPE_FIRST + 2]);
+	shape3d_init_shape(locate_shape_fatal(carresptr, "exp3"),
+		&game3dshapes[PLAYER_EXPLOSION_SHAPE_FIRST + 3]);
 
 	if (arg_opponentcarid[0] != -1) {
 		if (arg_playercarid[0] == arg_opponentcarid[0] && arg_playercarid[1] == arg_opponentcarid[1] &&
@@ -87,26 +124,32 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 				destination_bytes[(legacy_u16)copy_index] = source_bytes[(legacy_u16)copy_index];
 			}
 		} else {
-			aStxxx[2] = arg_opponentcarid[0];
-			aStxxx[3] = arg_opponentcarid[1];
-			aStxxx[4] = arg_opponentcarid[2];
-			aStxxx[5] = arg_opponentcarid[3];
+			for (i = 0; i < CAR_ID_LENGTH; i++)
+				aStxxx[CAR_RESOURCE_ID_OFFSET + i] = arg_opponentcarid[i];
 			car2resptr = file_load_3dres(aStxxx);
 		}
 
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "car0"), &game3dshapes[125]);
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "car1"), &game3dshapes[127]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "car0"),
+			&game3dshapes[OPPONENT_CAR_LOW_SHAPE]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "car1"),
+			&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE]);
 
-		shape3d_init_car_wheel_vertices(&game3dshapes[127],
+		shape3d_init_car_wheel_vertices(
+			&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
 			oppcarshapevec, oppcarshapevecs);
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < CAR_WHEEL_STATE_CACHE_SIZE; i++) {
 			word_4448A[i] = 0;
 		}
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "car2"), &game3dshapes[129]);
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp0"), &game3dshapes[120]);
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp1"), &game3dshapes[121]);
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp2"), &game3dshapes[122]);
-		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp3"), &game3dshapes[123]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "car2"),
+			&game3dshapes[OPPONENT_CAR_HIGH_SHAPE]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp0"),
+			&game3dshapes[OPPONENT_EXPLOSION_SHAPE_FIRST]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp1"),
+			&game3dshapes[OPPONENT_EXPLOSION_SHAPE_FIRST + 1]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp2"),
+			&game3dshapes[OPPONENT_EXPLOSION_SHAPE_FIRST + 2]);
+		shape3d_init_shape(locate_shape_fatal(car2resptr, "exp3"),
+			&game3dshapes[OPPONENT_EXPLOSION_SHAPE_FIRST + 3]);
 	} else {
 		car2resptr = 0;
 	}
@@ -126,11 +169,11 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 	//return ported_sub_204AE_(arg_verts, arg_4, arg_6, arg_8, arg_vecarray, arg_vecptr);
 	// arg_8[4] caches the steering angle the wheel vertices were last built
 	// for, so the test is against arg_4, not against zero.
-	if (arg_8[4] != arg_4) {
+	if (arg_8[CAR_WHEEL_STEERING_CACHE_INDEX] != arg_4) {
 		var_C = sin_fast(LEGACY_S16_SAR(arg_4, 1U));
 		var_2 = cos_fast(LEGACY_S16_SAR(arg_4, 1U));
 
-		for (i = 0; i < 6; i++) {
+		for (i = 0; i < CAR_WHEEL_VERTEX_GROUP_SIZE; i++) {
 			shape3d_vertex_read(shape,
 				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
 			var_14 = multiply_and_scale(arg_vecarray[i].x, var_2);
@@ -146,7 +189,8 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 			shape3d_vertex_write(shape,
 				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
 		}
-		for (i = 6; i < 0xC; i++) {
+		for (i = CAR_WHEEL_VERTEX_GROUP_SIZE;
+			i < CAR_STEERED_WHEEL_VERTEX_COUNT; i++) {
 			shape3d_vertex_read(shape,
 				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
 			var_10 = multiply_and_scale(arg_vecarray[i].x, var_2);
@@ -162,24 +206,24 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 			shape3d_vertex_write(shape,
 				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
 		}
-		arg_8[4] = arg_4;
+		arg_8[CAR_WHEEL_STEERING_CACHE_INDEX] = arg_4;
 	}
 
-	for (j = 0; j < 4; j++) {
+	for (j = 0; j < CAR_WHEEL_COUNT; j++) {
 
 		// The original takes |x|, shifts that right six, then re-applies the
 		// sign of x (loc_2069F: cwd / xor / sub, sar ax,6, xor / sub).
 		var_8 = arg_6[j];
 		if (var_8 < 0)
 			var_8 = LEGACY_S16_WRAP_NEGATE(var_8);
-		var_8 = LEGACY_S16_SAR(var_8, 6U);
+		var_8 = LEGACY_S16_SAR(var_8, CAR_WHEEL_VERTICAL_SCALE_SHIFT);
 		if (arg_6[j] < 0)
 			var_8 = LEGACY_S16_WRAP_NEGATE(var_8);
 
 		if (arg_8[j] == var_8)
 			continue;
-		i = j * 6;
-		var_4 = (j * 6) + 6;
+		i = j * CAR_WHEEL_VERTEX_GROUP_SIZE;
+		var_4 = i + CAR_WHEEL_VERTEX_GROUP_SIZE;
 
 		for (; i < var_4; i++) {
 			shape3d_vertex_read(shape,
@@ -196,11 +240,13 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 
 void shape3d_free_car_shapes() {
 	if (car2resptr != 0) {
-		sub_204AE(&game3dshapes[127], 8U, 0, unk_3E710,
+		sub_204AE(&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
+			CAR_FIRST_WHEEL_VERTEX, 0, unk_3E710,
 			word_4448A, oppcarshapevecs, oppcarshapevec);
 		mmgr_release(car2resptr);
 	}
-	sub_204AE(&game3dshapes[126], 8U, 0, unk_3E710,
+	sub_204AE(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
+		CAR_FIRST_WHEEL_VERTEX, 0, unk_3E710,
 		word_443E8, carshapevecs, carshapevec);
 	mmgr_free(carresptr);
 }
