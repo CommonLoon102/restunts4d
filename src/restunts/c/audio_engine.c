@@ -15,8 +15,14 @@
 #define AUDIO_ENGINE_RATE_BASE_OFFSET 15U
 #define AUDIO_ENGINE_RATE_BASE_SHIFT 4U
 #define AUDIO_ENGINE_MAX_VOLUME 127U
+#define AUDIO_ENGINE_CHANNEL_PRIORITY 127U
 #define AUDIO_ENGINE_UNSET_VOLUME 255U
 #define AUDIO_ENGINE_UNSET_PITCH 65535U
+#define AUDIO_CHANNEL_DEFAULT_NOTE_VELOCITY 127U
+#define AUDIO_CHANNEL_DEFAULT_NOTE_LIMIT 15U
+#define AUDIO_CHANNEL_DEFAULT_RATE 127U
+#define AUDIO_CHANNEL_NONE 255U
+#define AUDIO_PRIORITY_LOWEST 255U
 #define AUDIO_MAX_AUDIBLE_DISTANCE 6000
 #define AUDIO_SPATIAL_INTERVAL_PERCENT 100U
 #define AUDIO_APPROACH_VOLUME_REDUCTION_SHIFT 4U
@@ -160,7 +166,7 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 		engine_definition->initialized = 1;
 	}
 
-	channel = sub_37470(-1, AUDIO_ENGINE_MAX_VOLUME);
+	channel = sub_37470(-1, AUDIO_ENGINE_CHANNEL_PRIORITY);
 	timer->channel = channel;
 	timer->engine_active = 0;
 	timer->current_volume = 0;
@@ -557,9 +563,9 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		chunk = &audio_channels[channel];
 		chunk->finish_callback.offset = 0;
 		chunk->finish_callback.segment = 0;
-		chunk->note_velocity = 0x7F;
+		chunk->note_velocity = AUDIO_CHANNEL_DEFAULT_NOTE_VELOCITY;
 		chunk->channel = (legacy_u8)channel;
-		chunk->note_limit = 0x0F;
+		chunk->note_limit = AUDIO_CHANNEL_DEFAULT_NOTE_LIMIT;
 		audio_channel_values[(legacy_u16)channel] = 0;
 		audio_channel_notes[(legacy_u16)channel] = 0;
 		chunk->stack_depth = 0;
@@ -577,7 +583,7 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 		chunk->unknown_29[1] = 0;
 		chunk->unknown_29[2] = 0;
 		chunk->unknown_29[3] = 0;
-		chunk->driver_channel = 0xFF;
+		chunk->driver_channel = AUDIO_CHANNEL_NONE;
 
 		if (resource != 0) {
 			resource_data = (const legacy_u8 far*)dos_memory_make_pointer(
@@ -612,7 +618,7 @@ void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
 
 static void audio_clear_driver_context(struct AUDIO_CONTEXT* context)
 {
-	context->channel = 0xFFU;
+	context->channel = AUDIO_CHANNEL_NONE;
 	context->state = 0;
 	context->priority = 0;
 	context->resource.offset = 0;
@@ -626,13 +632,13 @@ void audio_reset_channels(void)
 
 	audio_update_lock = 1;
 	audio_init_chunk(AUDIO_MUSIC_CHANNEL_FIRST, AUDIO_EFFECT_CHANNEL_LAST,
-		0, 0, 0x7FU, 0);
+		0, 0, AUDIO_CHANNEL_DEFAULT_RATE, 0);
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
 		dos_audio_driver_release_channel((legacy_s16)context_index);
 		audio_clear_driver_context(context);
-		context->driver_channel = 0xFFU;
+		context->driver_channel = AUDIO_CHANNEL_NONE;
 		context++;
 	}
 	dos_audio_driver_reset();
@@ -665,7 +671,7 @@ void audio_release_channel_range(legacy_s16 first_channel,
 		channel = first_channel;
 		while (channel <= last_channel) {
 			chunk = &audio_channels[channel];
-			if (chunk->driver_channel < 0x10U)
+			if (chunk->driver_channel < AUDIO_EFFECT_CHANNEL_FIRST)
 				dos_audio_driver_release_channel(chunk->driver_channel);
 
 			context = dos_audio_contexts;
@@ -920,7 +926,7 @@ void audio_update_driver_contexts(void)
 			context++;
 			continue;
 		}
-		if (context->channel > 0x0FU)
+		if (context->channel > AUDIO_MUSIC_CHANNEL_LAST)
 			audio_advance_driver_context(context);
 
 		resource = (legacy_u8 far*)
@@ -1143,7 +1149,7 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	if (channel == -1)
 		channel = audio_find_free_sfx_channel();
 	if (channel == -1) {
-		lowest_priority = 0xFFU;
+		lowest_priority = AUDIO_PRIORITY_LOWEST;
 		replacement = -1;
 		for (candidate = AUDIO_EFFECT_CHANNEL_FIRST;
 			candidate <= AUDIO_EFFECT_CHANNEL_LAST; candidate++) {
