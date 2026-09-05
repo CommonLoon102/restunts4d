@@ -5,7 +5,10 @@
 
 #define HEADLESS_MAX_ARGS 6
 #define HEADLESS_COMMAND_LINE_SIZE 128
-#define HEADLESS_STACK_PARAGRAPHS 0x200
+#define HEADLESS_STACK_PARAGRAPHS 512
+#define HEADLESS_DOS_INTERRUPT 33
+#define HEADLESS_DOS_RESIZE_MEMORY_FUNCTION 74
+#define HEADLESS_PSP_COMMAND_LINE_OFFSET 128U
 
 #if defined(RESTUNTS_FULL) || defined(RESTUNTS_PIXLDUMP)
 extern void full_data_initialize(void);
@@ -45,8 +48,8 @@ static void headless_release_extra_memory(void)
 	__asm {
 		mov bx, program_paragraphs
 		mov es, psp_segment
-		mov ah, 4Ah
-		int 21h
+		mov ah, HEADLESS_DOS_RESIZE_MEMORY_FUNCTION
+		int HEADLESS_DOS_INTERRUPT
 		push ds
 		pop es
 	}
@@ -62,7 +65,8 @@ static legacy_s16 headless_parse_command_line(void)
 	legacy_u8 character;
 	legacy_u8 quoted;
 
-	source = (legacy_u8 far*)MK_FP(headless_psp_segment, 0x80);
+	source = (legacy_u8 far*)MK_FP(headless_psp_segment,
+		HEADLESS_PSP_COMMAND_LINE_OFFSET);
 	source_length = source[0];
 	source_index = 1;
 	destination_index = 0;
