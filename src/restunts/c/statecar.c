@@ -4,6 +4,35 @@
 
 extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 
+#define ACCELERATION_MASS_NUMERATOR 25L
+#define ACCELERATION_DRAG_SCALE 200L
+#define NORMAL_FRAME_RATE 20U
+#define LOW_FRAME_RATE 10U
+#define NORMAL_GEAR_KNOB_STEP 6
+#define LOW_RATE_GEAR_KNOB_STEP 12
+#define GEAR_RATIO_BYTE_SHIFT 8U
+#define AERODYNAMIC_RESISTANCE_SPEED_SHIFT 10U
+#define LOW_RATE_GEAR_CHANGE_RPM_DROP 80
+#define NORMAL_GEAR_CHANGE_RPM_DROP 40
+#define AIRBORNE_MAX_SPEED 64000U
+#define AIRBORNE_ACCELERATION 768
+#define IDLE_TORQUE_RPM_THRESHOLD 2600
+#define TORQUE_CURVE_RPM_SHIFT 7U
+#define ENGINE_LIMITER_BLEND_RPM 5000
+#define TORQUE_ACCELERATION_SHIFT 4U
+#define OPPONENT_SPEED_SCALE 200U
+#define OPPONENT_DRAG_SHIFT 1U
+#define ENGINE_LIMITER_ACCELERATION_THRESHOLD 296
+#define ENGINE_LIMITER_SHORT_TICKS 5
+#define OPPONENT_BRAKING_MULTIPLIER 2
+#define WRAPPED_REVERSE_SPEED_LIMIT 62720U
+#define WHEEL_SPEED_SYNC_THRESHOLD 5120
+#define RAPID_RPM_CHANGE_THRESHOLD 2000
+#define ENGINE_TORQUE_LIMIT_THRESHOLD 12000
+#define ENGINE_LIMITER_LONG_TICKS 30
+#define ENGINE_LIMITER_RECOVERY_TICKS 10
+#define ENGINE_SPEED_CORRECTION 1280U
+
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)
 {
@@ -12,7 +41,7 @@ static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 low_word;
 
 	product = (legacy_u32)LEGACY_S32_WRAP_MUL(
-		(legacy_s32)acceleration, 0x19L);
+		(legacy_s32)acceleration, ACCELERATION_MASS_NUMERATOR);
 	quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
 	low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 	return LEGACY_S16_SAR(low_word, 1U);
@@ -26,7 +55,7 @@ static legacy_s16 apply_opponent_acceleration_drag(
 
 	product = LEGACY_S32_WRAP_MUL(
 		(legacy_s32)(legacy_u16)drag, (legacy_s32)acceleration);
-	reduction = LEGACY_S32_DIV_OR_ZERO(product, 0xC8L);
+	reduction = LEGACY_S32_DIV_OR_ZERO(product, ACCELERATION_DRAG_SCALE);
 	return LEGACY_S16_WRAP_SUB(acceleration,
 		LEGACY_S16_FROM_BITS((legacy_u16)reduction));
 }
@@ -58,7 +87,7 @@ static legacy_s16 move_gear_knob_toward(legacy_s16 current,
 legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16 gearratio, legacy_s16 changing_gear, legacy_u16 idle_rpm) {
 	if (changing_gear == 0) {
 		currpm = (legacy_u16)(
-			LEGACY_U32_WRAP_MUL(speed, gearratio) >> 16);
+			LEGACY_U32_WRAP_MUL(speed, gearratio) >> LEGACY_WORD_BITS);
 	}
 
 	if (currpm >= idle_rpm) {
@@ -75,7 +104,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	legacy_s16 var_deltaSpeed;
 	legacy_u8 var_currTorque;
 
-	var_2 = framespersec == 0x14 ? 6 : 0xC;
+	var_2 = framespersec == NORMAL_FRAME_RATE ?
+		NORMAL_GEAR_KNOB_STEP : LOW_RATE_GEAR_KNOB_STEP;
 	if (arg_carState->car_engineLimiterTimer != 0) {
 		arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
 			arg_carState->car_engineLimiterTimer, 1);
@@ -131,7 +161,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 				arg_carState->car_gearratio =
 					arg_simd->gear_ratios[arg_carState->car_current_gear];
 				arg_carState->car_gearratioshr8 =
-					arg_carState->car_gearratio >> 8;
+					arg_carState->car_gearratio >> GEAR_RATIO_BYTE_SHIFT;
 			} else {
 				arg_carState->car_knob_y = move_gear_knob_toward(
 					arg_carState->car_knob_y,
@@ -155,7 +185,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	var_updatedSpeed = arg_carState->car_speed;
 	var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 		arg_carState->car_pseudoGravity,
-		arg_simd->aerorestable[var_updatedSpeed >> 10]);
+		arg_simd->aerorestable[
+			var_updatedSpeed >> AERODYNAMIC_RESISTANCE_SPEED_SHIFT]);
 	if ((legacy_u16)arg_carState->car_currpm >
 		(legacy_u16)arg_simd->max_rpm) {
 		arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
@@ -168,47 +199,54 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 		arg_carState->car_is_accelerating = 1;
 		if (arg_carState->car_changing_gear != 0) {
 			arg_carState->car_engineLimiterTimer = 0;
-			if (framespersec == 0xA) {
+			if (framespersec == LOW_FRAME_RATE) {
 				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-					arg_carState->car_currpm, 0x50);
+					arg_carState->car_currpm,
+					LOW_RATE_GEAR_CHANGE_RPM_DROP);
 			} else {
 				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-					arg_carState->car_currpm, 0x28);
+					arg_carState->car_currpm,
+					NORMAL_GEAR_CHANGE_RPM_DROP);
 			}
 		} else if (arg_carState->car_sumSurfRearWheels == 0) {
 			if ((legacy_u16)arg_carState->car_currpm <
 				(legacy_u16)arg_simd->max_rpm &&
-				var_updatedSpeed < 0xFA00) {
+				var_updatedSpeed < AIRBORNE_MAX_SPEED) {
 				var_deltaSpeed = LEGACY_S16_WRAP_ADD(
-					var_deltaSpeed, 0x300);
+					var_deltaSpeed, AIRBORNE_ACCELERATION);
 			}
 		} else {
 			if (arg_carState->car_current_gear <= 1 &&
-				arg_carState->car_currpm < 0xA28) {
+				arg_carState->car_currpm < IDLE_TORQUE_RPM_THRESHOLD) {
 				var_currTorque = arg_simd->idle_torque;
 			} else {
 				var_currTorque = arg_simd->torque_curve[
-					(legacy_u16)arg_carState->car_currpm >> 7];
+					(legacy_u16)arg_carState->car_currpm >>
+					TORQUE_CURVE_RPM_SHIFT];
 			}
 			if (arg_carState->car_engineLimiterTimer != 0 &&
-				arg_carState->car_currpm < 0x1388) {
+				arg_carState->car_currpm < ENGINE_LIMITER_BLEND_RPM) {
 				var_currTorque = ((legacy_u8)arg_simd->idle_torque +
 					var_currTorque) >> 1;
 			}
 			var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed,
 				LEGACY_S16_FROM_BITS((legacy_u16)(LEGACY_U16_WRAP_MUL(
-					arg_carState->car_gearratioshr8, var_currTorque) >> 4)));
+					arg_carState->car_gearratioshr8, var_currTorque) >>
+					TORQUE_ACCELERATION_SHIFT)));
 			var_deltaSpeed = scale_acceleration_by_mass(
 				var_deltaSpeed, arg_simd->car_mass);
 			if (arg_MplayerFlag != 0) {
-				var_currTorque = (legacy_u16)(0xC8 - *oppnentSped) >> 1;
+				var_currTorque = (legacy_u16)(
+					OPPONENT_SPEED_SCALE - *oppnentSped) >>
+					OPPONENT_DRAG_SHIFT;
 				if (var_currTorque != 0) {
 					var_deltaSpeed = apply_opponent_acceleration_drag(
 						var_deltaSpeed, var_currTorque);
 				}
 			}
-			if (var_deltaSpeed > 0x128)
-				arg_carState->car_engineLimiterTimer = 5;
+			if (var_deltaSpeed > ENGINE_LIMITER_ACCELERATION_THRESHOLD)
+				arg_carState->car_engineLimiterTimer =
+					ENGINE_LIMITER_SHORT_TICKS;
 		}
 	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) == INPUT_BRAKE_FLAG) {
 		arg_carState->car_is_accelerating = 0;
@@ -219,26 +257,28 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 				var_deltaSpeed, arg_simd->braking_eff);
 		} else {
 			var_deltaSpeed = LEGACY_S16_WRAP_SUB(var_deltaSpeed,
-				LEGACY_S16_WRAP_MUL(arg_simd->braking_eff, 2));
+				LEGACY_S16_WRAP_MUL(
+					arg_simd->braking_eff, OPPONENT_BRAKING_MULTIPLIER));
 		}
 	} else {
 		arg_carState->car_is_accelerating = 0;
 		arg_carState->car_is_braking = 0;
 	}
-	if (framespersec == 0xA) {
+	if (framespersec == LOW_FRAME_RATE) {
 		var_deltaSpeed = LEGACY_S16_WRAP_ADD(
 			var_deltaSpeed, var_deltaSpeed);
 	}
 
 	if (var_deltaSpeed >= 0) {
-		if (var_updatedSpeed < 0x8000) {
+		if (var_updatedSpeed < LEGACY_U16_SIGN_BIT) {
 			var_updatedSpeed = LEGACY_U16_WRAP_ADD(
 				var_updatedSpeed, var_deltaSpeed);
 		} else {
 			var_updatedSpeed = LEGACY_U16_WRAP_ADD(
 				var_updatedSpeed, var_deltaSpeed);
-			if (var_updatedSpeed < 0x8000 || var_updatedSpeed > 0xF500)
-				var_updatedSpeed = 0xF500;
+			if (var_updatedSpeed < LEGACY_U16_SIGN_BIT ||
+				var_updatedSpeed > WRAPPED_REVERSE_SPEED_LIMIT)
+				var_updatedSpeed = WRAPPED_REVERSE_SPEED_LIMIT;
 		}
 	} else if ((legacy_u16)LEGACY_S16_WRAP_NEGATE(var_deltaSpeed) >
 		var_updatedSpeed) {
@@ -253,12 +293,13 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	} else {
 		var_4 = absolute_word(LEGACY_S16_WRAP_SUB(
 			arg_carState->car_speed2, var_updatedSpeed));
-		if (var_4 > 0x1400) {
+		if (var_4 > WHEEL_SPEED_SYNC_THRESHOLD) {
 			arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
 				arg_carState->car_speed,
 				arg_carState->car_speed2) >> 1);
 			arg_carState->car_speed2 = arg_carState->car_speed;
-			arg_carState->car_engineLimiterTimer = 5;
+			arg_carState->car_engineLimiterTimer =
+				ENGINE_LIMITER_SHORT_TICKS;
 		} else {
 			arg_carState->car_speed = var_updatedSpeed;
 			arg_carState->car_speed2 = var_updatedSpeed;
@@ -273,16 +314,19 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	if (arg_carState->car_sumSurfAllWheels != 0 &&
 		arg_carState->car_lastrpm > arg_carState->car_currpm) {
 		if (LEGACY_S16_WRAP_SUB(arg_carState->car_lastrpm,
-			arg_carState->car_currpm) > 0x7D0) {
+			arg_carState->car_currpm) > RAPID_RPM_CHANGE_THRESHOLD) {
 			if (arg_simd->idle_torque *
-				arg_carState->car_gearratioshr8 > 0x2EE0) {
-				arg_carState->car_engineLimiterTimer = 0x1E;
+				arg_carState->car_gearratioshr8 >
+				ENGINE_TORQUE_LIMIT_THRESHOLD) {
+				arg_carState->car_engineLimiterTimer =
+					ENGINE_LIMITER_LONG_TICKS;
 			}
 		} else if (LEGACY_S16_WRAP_SUB(arg_carState->car_currpm,
-			arg_carState->car_lastrpm) > 0x7D0) {
-			arg_carState->car_engineLimiterTimer = 0xA;
+			arg_carState->car_lastrpm) > RAPID_RPM_CHANGE_THRESHOLD) {
+			arg_carState->car_engineLimiterTimer =
+				ENGINE_LIMITER_RECOVERY_TICKS;
 			arg_carState->car_speed2 = LEGACY_U16_WRAP_SUB(
-				arg_carState->car_speed2, 0x500U);
+				arg_carState->car_speed2, ENGINE_SPEED_CORRECTION);
 		}
 	}
 
