@@ -3,6 +3,7 @@
 
 #include "legacy.h"
 
+#define INPUT_NONE 0U
 #define INPUT_ACCELERATE_FLAG 1U
 #define INPUT_BRAKE_FLAG 2U
 #define INPUT_STEER_RIGHT_FLAG 4U

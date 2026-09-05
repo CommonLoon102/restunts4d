@@ -155,7 +155,7 @@ void update_gamestate(void)
 	legacy_u16 checkpoint_index;
 
 	car_input = td16_rpl_buffer[(legacy_u16)state.game_frame];
-	if (car_input != 0)
+	if (car_input != INPUT_NONE)
 		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
 
 	if (word_45A00 == 0 ||
@@ -229,7 +229,7 @@ void update_gamestate(void)
 					START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
 					player_op(INPUT_ACCELERATE_FLAG);
 				} else {
-					player_op(0);
+					player_op(INPUT_NONE);
 				}
 			}
 		}

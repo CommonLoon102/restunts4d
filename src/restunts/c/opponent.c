@@ -407,7 +407,7 @@ void opponent_op(void)
 	}
 	}
 
-	input = 0;
+	input = INPUT_NONE;
 	if (state.opponentstate.car_sumSurfRearWheels != 0) {
 		if (state.opponentstate.car_crashBmpFlag != 0) {
 			input = INPUT_BRAKE_FLAG;
