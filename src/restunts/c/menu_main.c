@@ -6,10 +6,31 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#define MAIN_MENU_DRIVE 0U
+#define MAIN_MENU_CAR 1U
+#define MAIN_MENU_OPPONENT 2U
+#define MAIN_MENU_TRACK 3U
+#define MAIN_MENU_OPTIONS 4U
+#define MAIN_MENU_BUTTON_COUNT 5U
+#define MAIN_MENU_NO_SELECTION 255U
+#define MAIN_MENU_INITIAL_BLIT_MODE 255U
+#define MAIN_MENU_REFRESH_BLIT_MODE 254U
+#define MAIN_MENU_WAIT_TICKS 180
+#define MAIN_MENU_IDLE_LIMIT_TICKS 6000
+#define MAIN_MENU_SCREEN_WIDTH 320U
+#define MAIN_MENU_SCREEN_HEIGHT 200U
+#define MAIN_MENU_TRANSPARENT_COLOR 15U
+
 legacy_s8 run_menu(void)
 {
-	static const legacy_u8 previous_selection[5] = { 1, 2, 4, 0, 3 };
-	static const legacy_u8 next_selection[5] = { 3, 0, 1, 4, 2 };
+	static const legacy_u8 previous_selection[MAIN_MENU_BUTTON_COUNT] = {
+		MAIN_MENU_CAR, MAIN_MENU_OPPONENT, MAIN_MENU_OPTIONS,
+		MAIN_MENU_DRIVE, MAIN_MENU_TRACK
+	};
+	static const legacy_u8 next_selection[MAIN_MENU_BUTTON_COUNT] = {
+		MAIN_MENU_TRACK, MAIN_MENU_DRIVE, MAIN_MENU_CAR,
+		MAIN_MENU_OPTIONS, MAIN_MENU_OPPONENT
+	};
 	legacy_s8 far* resource;
 	struct SHAPE2D far* shape;
 	legacy_u8 selected;
@@ -19,12 +40,13 @@ legacy_s8 run_menu(void)
 	legacy_u16 key;
 	legacy_s16 hit;
 
-	selected = 0;
-	previous = 0xFFU;
-	blit_mode = 0xFFU;
+	selected = MAIN_MENU_DRIVE;
+	previous = MAIN_MENU_NO_SELECTION;
+	blit_mode = MAIN_MENU_INITIAL_BLIT_MODE;
 	show_waiting();
-	waitflag = 0xB4;
-	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	waitflag = MAIN_MENU_WAIT_TICKS;
+	render_window_sprite = sprite_make_wnd(MAIN_MENU_SCREEN_WIDTH,
+		MAIN_MENU_SCREEN_HEIGHT, MAIN_MENU_TRANSPARENT_COLOR);
 	resource = (legacy_s8 far*)file_load_resource(
 		FILE_RESOURCE_SHAPE2D, aSdmsel);
 	sprite_copy_wnd_to_1();
@@ -38,7 +60,7 @@ legacy_s8 run_menu(void)
 			sprite_copy_wnd_to_1();
 			sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
-			blit_mode = 0xFEU;
+			blit_mode = MAIN_MENU_REFRESH_BLIT_MODE;
 			sprite_copy_2_to_1_2();
 			sub_29772();
 		}
@@ -46,13 +68,14 @@ legacy_s8 run_menu(void)
 		elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
 			menu_buttons, word_407CE, word_407D0);
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-		hit = (legacy_s16)mouse_multi_hittest(5, menu_buttons);
+		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT,
+			menu_buttons);
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 
-		menu_update_idle_counter(elapsed, 0x1770);
+		menu_update_idle_counter(elapsed, MAIN_MENU_IDLE_LIMIT_TICKS);
 		if (idle_expired != 0) {
-			selected = 0;
+			selected = MAIN_MENU_DRIVE;
 			key = KEY_ENTER;
 		}
 
@@ -61,7 +84,7 @@ legacy_s8 run_menu(void)
 		if (key == KEY_ENTER || key == KEY_SPACE)
 			break;
 		if (key == KEY_ESCAPE) {
-			selected = 0xFFU;
+			selected = MAIN_MENU_NO_SELECTION;
 			break;
 		}
 		if (key == KEY_LEFT)
