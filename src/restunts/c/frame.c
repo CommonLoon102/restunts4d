@@ -1,5 +1,6 @@
 #include "frame_internal.h"
 #include "game_input.h"
+#include "trackdata_layout.h"
 
 #define TRACK_OBJECT_COUNT 215U
 #define TRACK_GRID_LAST_COORDINATE 29
@@ -47,7 +48,6 @@
 #define FRAME_MULTITILE_COLUMN 2
 #define FRAME_MULTITILE_BOTH 3
 #define FRAME_MULTITILE_NONE 0
-#define FRAME_ELEVATED_TERRAIN 6
 #define FRAME_ELEVATED_CORNER_FIRST 105U
 #define FRAME_ELEVATED_CORNER_LAST 108U
 #define FRAME_ELEVATED_CORNER_COUNT 4
@@ -1063,7 +1063,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		// Elevated terrain is a flat piece of land at an elevated level.
-		if (terr_map_value != FRAME_ELEVATED_TERRAIN) {
+		if (terr_map_value != TERRAIN_RAISED_TILE) {
 			var_hillheight = 0;
 
 			// Special treatment of elevated corners
@@ -1106,7 +1106,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				terr_map_value = 0;
 			}
 		} else {
-			var_hillheight = hillHeightConsts[1];
+			var_hillheight =
+				hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 			if (elem_map_value != 0) {
 				terr_map_value = 0;
 			}

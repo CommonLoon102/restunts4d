@@ -1,5 +1,6 @@
 #include "state_internal.h"
 #include "game_input.h"
+#include "trackdata_layout.h"
 
 #define LEGACY_NULL_TRACK_VECTOR_CAPACITY 256
 #define LEGACY_NULL_TRACK_TEXT_SPACE 32
@@ -37,6 +38,12 @@
 #define TRACK_ROUTE_SUBTYPE_MASK 15U
 #define TRACK_ROUTE_REVERSED_FLAG 16U
 #define TRACK_ROUTE_FLAG_OFFSET 18U
+#define TRACK_ROUTE_VECTORS_PER_SEGMENT 2U
+#define TRACK_ROUTE_SECOND_VECTOR_OFFSET 1U
+#define TRACK_ROUTE_RESULT_CENTER_INDEX 0U
+#define TRACK_ROUTE_RESULT_FIRST_POINT_INDEX 1U
+#define TRACK_ROUTE_RESULT_SECOND_POINT_INDEX 2U
+#define TRACK_ROUTE_LAST_INDEX_OFFSET 1U
 
 /*
  * Track object zero has no info record.  In the original executable its null
@@ -175,7 +182,7 @@ static legacy_s16 opponent_route_word(legacy_s16 index)
 {
 	legacy_u16 offset;
 
-	offset = LEGACY_U16_WRAP_MUL(index, 2U);
+	offset = LEGACY_U16_WRAP_MUL(index, LEGACY_WORD_BYTES);
 	return LEGACY_READ_S16_LE(
 		(const legacy_u8 far*)trackdata3 + offset);
 }
@@ -603,11 +610,14 @@ legacy_s16 sub_18D60(
 	route_index = (legacy_u8)route_index_arg;
 
 	if (connection_status == 0) {
-		vector_index = LEGACY_U8_WRAP_MUL(route_index, 2U);
+		vector_index = LEGACY_U8_WRAP_MUL(
+			route_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	} else {
 		vector_index = LEGACY_U8_WRAP_SUB(arrow_type, route_index);
-		vector_index = LEGACY_U8_WRAP_MUL(vector_index, 2U);
-		vector_index = LEGACY_U8_WRAP_SUB(vector_index, 2U);
+		vector_index = LEGACY_U8_WRAP_MUL(
+			vector_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
+		vector_index = LEGACY_U8_WRAP_SUB(
+			vector_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	}
 
 	if (optional_speed != 0) {
@@ -631,11 +641,13 @@ legacy_s16 sub_18D60(
 	}
 
 	if (connection_status != 0 && has_opponent_path == 0) {
-		first_point = route_vectors[vector_index + 1];
+		first_point = route_vectors[
+			vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 		second_point = route_vectors[vector_index];
 	} else {
 		first_point = route_vectors[vector_index];
-		second_point = route_vectors[vector_index + 1];
+		second_point = route_vectors[
+			vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 	}
 
 	orientation = (legacy_s16)track_info->si_arrowOrient;
@@ -663,11 +675,12 @@ legacy_s16 sub_18D60(
 	column = (legacy_u8)td21_col_from_path[track_index];
 	row = (legacy_u8)td22_row_from_path[track_index];
 	if (first_point.y != OPPONENT_ROUTE_HEIGHT_UNSPECIFIED &&
-		td15_terr_map_main[terrainrows[row] + column] == 6) {
+		td15_terr_map_main[terrainrows[row] + column] ==
+			TERRAIN_RAISED_TILE) {
 		first_point.y = LEGACY_S16_WRAP_ADD(
-			first_point.y, hillHeightConsts[1]);
+			first_point.y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
 		second_point.y = LEGACY_S16_WRAP_ADD(
-			second_point.y, hillHeightConsts[1]);
+			second_point.y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
 	}
 
 	base_position = track_object_base_z(track_object, row);
@@ -678,19 +691,24 @@ legacy_s16 sub_18D60(
 	first_point.x = LEGACY_S16_WRAP_ADD(first_point.x, base_position);
 	second_point.x = LEGACY_S16_WRAP_ADD(second_point.x, base_position);
 
-	output[0].x = route_average(first_point.x, second_point.x);
+	output[TRACK_ROUTE_RESULT_CENTER_INDEX].x =
+		route_average(first_point.x, second_point.x);
 	if (first_point.y == OPPONENT_ROUTE_HEIGHT_UNSPECIFIED)
-		output[0].y = OPPONENT_ROUTE_HEIGHT_UNSPECIFIED;
+		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y =
+			OPPONENT_ROUTE_HEIGHT_UNSPECIFIED;
 	else
-		output[0].y = route_average(first_point.y, second_point.y);
-	output[0].z = route_average(first_point.z, second_point.z);
-	output[1] = first_point;
-	output[2] = second_point;
+		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y =
+			route_average(first_point.y, second_point.y);
+	output[TRACK_ROUTE_RESULT_CENTER_INDEX].z =
+		route_average(first_point.z, second_point.z);
+	output[TRACK_ROUTE_RESULT_FIRST_POINT_INDEX] = first_point;
+	output[TRACK_ROUTE_RESULT_SECOND_POINT_INDEX] = second_point;
 	LEGACY_WRITE_U16_LE((legacy_u8*)output + TRACK_ROUTE_FLAG_OFFSET,
 		has_opponent_path);
 
 	route_index_word = route_index;
 	if ((route_index & LEGACY_U8_SIGN_BIT) != 0)
 		route_index_word |= LEGACY_U16_HIGH_BYTE_MASK;
-	return LEGACY_U16_WRAP_SUB(arrow_type, 1U) == route_index_word;
+	return LEGACY_U16_WRAP_SUB(
+		arrow_type, TRACK_ROUTE_LAST_INDEX_OFFSET) == route_index_word;
 }

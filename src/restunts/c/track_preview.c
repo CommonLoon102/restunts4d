@@ -1,4 +1,5 @@
 #include "frame_internal.h"
+#include "trackdata_layout.h"
 
 #define TRACK_PREVIEW_HALF_SHIFT 1U
 #define TRACK_PREVIEW_SCREEN_WIDTH 320
@@ -9,7 +10,6 @@
 #define TRACK_PREVIEW_TRANSFORM_DISTANCE 1024
 #define TRACK_PREVIEW_GRID_SIZE 30U
 #define TRACK_PREVIEW_PLACEHOLDER_MINIMUM 253U
-#define TRACK_PREVIEW_HILL_TERRAIN 6U
 #define TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST 7U
 #define TRACK_PREVIEW_HILL_ROAD_TERRAIN_END 11U
 #define TRACK_PREVIEW_BRIDGE_FIRST 105U
@@ -138,8 +138,9 @@ void draw_track_preview(void)
 			}
 
 			terrain_height = 0;
-			if (terrain == TRACK_PREVIEW_HILL_TERRAIN) {
-				terrain_height = hillHeightConsts[1];
+			if (terrain == TERRAIN_RAISED_TILE) {
+				terrain_height =
+					hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 				if (track != 0)
 					terrain = 0;
 			} else if (track >= TRACK_PREVIEW_BRIDGE_FIRST &&

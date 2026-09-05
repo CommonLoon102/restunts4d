@@ -2,6 +2,7 @@
 #include "math.h"
 #include "physics_internal.h"
 #include "residue.h"
+#include "trackdata_layout.h"
 
 #define SPEED_TO_TRAVEL_NUMERATOR 1408UL
 #define COLLISION_MODEL_COUNT 5U
@@ -22,8 +23,6 @@
 #define TRACK_CONTINUATION_WEST 255U
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U
-#define HILL_TERRAIN_ELEMENT 6U
-#define HILL_HEIGHT_INDEX 1U
 #define SUSPENSION_TARGET_DECAY 4
 #define SUSPENSION_RETURN_STEP 128
 #define CONTACT_DELTA_LIMIT 192
@@ -182,8 +181,8 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 		return 0;
 
 	terrain_height = td15_terr_map_main[terrainrows[row] + column] ==
-		HILL_TERRAIN_ELEMENT ?
-		(legacy_u16)hillHeightConsts[HILL_HEIGHT_INDEX] : 0;
+		TERRAIN_RAISED_TILE ?
+		(legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX] : 0;
 	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
 	for (index = 0; index < count; index++) {
 		legacy_u16 source_x;
