@@ -27,6 +27,15 @@
 #define TRACK_ORIENTATION_EAST 256
 #define TRACK_ORIENTATION_SOUTH 512
 #define TRACK_ORIENTATION_WEST 768
+#define TRACK_START_FINISH_VARIANT_COUNT 3U
+#define PLAN_TRACK_ROUTE_LENGTH 18U
+#define PLAN_TRACK_ROUTE_ENTRY_SIZE 2U
+#define PLAN_TRACK_START_ROW 28
+#define PLAN_TRACK_OPPONENT_SPEED 200U
+#define PLAN_TRACK_PATH_INDEX 28U
+#define PLAN_TRACK_PATH_Z_OFFSET 302
+#define PLAN_TRACK_OPPONENT_X 96000L
+#define PLAN_TRACK_POSITION_SHIFT 6U
 
 enum TRACK_SETUP_ERROR {
 	TRACK_SETUP_OK = 0,
@@ -78,6 +87,36 @@ static const legacy_u8 track_entry_points_west[
 static const legacy_u8 track_entry_points_owner[
 	TRACK_ORIENTATION_COUNT] = { 2, 4, 1, 3 };
 
+static const legacy_u8 track_start_finish_elements[
+	TRACK_ORIENTATION_COUNT][TRACK_START_FINISH_VARIANT_COUNT] = {
+	{ 1, 134, 147 },
+	{ 136, 149, 180 },
+	{ 135, 148, 179 },
+	{ 137, 150, 181 }
+};
+
+static legacy_s16 track_setup_start_finish_orientation(
+	legacy_u8 tile_element)
+{
+	legacy_u16 orientation_index;
+	legacy_u16 variant_index;
+
+	for (orientation_index = 0U;
+		orientation_index < TRACK_ORIENTATION_COUNT;
+		orientation_index++) {
+		for (variant_index = 0U;
+			variant_index < TRACK_START_FINISH_VARIANT_COUNT;
+			variant_index++) {
+			if (tile_element == track_start_finish_elements[
+				orientation_index][variant_index]) {
+				return (legacy_s16)(orientation_index *
+					TRACK_ORIENTATION_QUARTER_TURN);
+			}
+		}
+	}
+	return -1;
+}
+
 static legacy_u8 track_setup_entry_point(const legacy_u8* points,
 	legacy_s16 orientation)
 {
@@ -116,6 +155,10 @@ static const struct TRACK_SETUP_STEP track_setup_steps[13] = {
 	{  1,  1, TRACK_ORIENTATION_SOUTH },
 	{  0,  2, TRACK_ORIENTATION_SOUTH },
 	{  1,  2, TRACK_ORIENTATION_SOUTH }
+};
+
+static const legacy_u16 plan_track_route[PLAN_TRACK_ROUTE_LENGTH] = {
+	0, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 0, 1, 2, 3, 0
 };
 
 static legacy_s8 track_setup_add_s8(legacy_s8 value, legacy_s16 amount)
@@ -295,19 +338,7 @@ legacy_s16 track_setup(void)
 					TRACK_GENERIC_LARGE_ELEMENT;
 			}
 
-			orientation = -1;
-			if (tile_element == 1 || tile_element == 0x86U ||
-				tile_element == 0x93U)
-				orientation = 0;
-			else if (tile_element == 0x87U ||
-				tile_element == 0x94U || tile_element == 0xB3U)
-				orientation = TRACK_ORIENTATION_SOUTH;
-			else if (tile_element == 0x88U ||
-				tile_element == 0x95U || tile_element == 0xB4U)
-				orientation = TRACK_ORIENTATION_EAST;
-			else if (tile_element == 0x89U ||
-				tile_element == 0x96U || tile_element == 0xB5U)
-				orientation = TRACK_ORIENTATION_WEST;
+			orientation = track_setup_start_finish_orientation(tile_element);
 
 			if (orientation != -1) {
 				track_angle = orientation;
@@ -715,7 +746,7 @@ void init_plantrak(void) {
 	state.game_inputmode = 2;
 	planptr = &plan_memres;
 	startcol2 = 1;
-	startrow2 = 0x1C;
+	startrow2 = PLAN_TRACK_START_ROW;
 
 	td17_trk_elem_ordered[0] = 7;
 	td17_trk_elem_ordered[1] = 6;
@@ -741,34 +772,24 @@ void init_plantrak(void) {
 	trackdata18[3] = 0;
 	trackdata18[4] = 0;
 
-	trackdata3[0x00] = 0; trackdata3[0x01] = 0;
-	trackdata3[0x02] = 1; trackdata3[0x03] = 0;
-	trackdata3[0x04] = 2; trackdata3[0x05] = 0;
-	trackdata3[0x06] = 3; trackdata3[0x07] = 0;
-	trackdata3[0x08] = 4; trackdata3[0x09] = 0;
-	trackdata3[0x0A] = 1; trackdata3[0x0B] = 0;
-	trackdata3[0x0C] = 2; trackdata3[0x0D] = 0;
-	trackdata3[0x0E] = 3; trackdata3[0x0F] = 0;
-	trackdata3[0x10] = 4; trackdata3[0x11] = 0;
-	trackdata3[0x12] = 1; trackdata3[0x13] = 0;
-	trackdata3[0x14] = 2; trackdata3[0x15] = 0;
-	trackdata3[0x16] = 3; trackdata3[0x17] = 0;
-	trackdata3[0x18] = 4; trackdata3[0x19] = 0;
-	trackdata3[0x1A] = 0; trackdata3[0x1B] = 0;
-	trackdata3[0x1C] = 1; trackdata3[0x1D] = 0;
-	trackdata3[0x1E] = 2; trackdata3[0x1F] = 0;
-	trackdata3[0x20] = 3; trackdata3[0x21] = 0;
-	trackdata3[0x22] = 0; trackdata3[0x23] = 0;
+	for (route_index = 0U; route_index < PLAN_TRACK_ROUTE_LENGTH;
+		route_index++) {
+		route_table_offset = LEGACY_U16_WRAP_MUL(
+			route_index, PLAN_TRACK_ROUTE_ENTRY_SIZE);
+		LEGACY_WRITE_U16_LE((legacy_u8 far*)trackdata3 +
+			route_table_offset, plan_track_route[route_index]);
+	}
 
-	oppnentSped[0] = 0xC8;
-	path_z = LEGACY_S16_WRAP_ADD(trackpos[0x1C], 0x012E);
+	oppnentSped[0] = PLAN_TRACK_OPPONENT_SPEED;
+	path_z = LEGACY_S16_WRAP_ADD(trackpos[PLAN_TRACK_PATH_INDEX],
+		PLAN_TRACK_PATH_Z_OFFSET);
 	init_carstate_from_simd(
 		&state.opponentstate,
 		&simd_opponent,
 		1,
-		(legacy_s32)0x00017700L,
+		(legacy_s32)PLAN_TRACK_OPPONENT_X,
 		0L,
-		LEGACY_S32_SHL((legacy_s32)path_z, 6U),
+		LEGACY_S32_SHL((legacy_s32)path_z, PLAN_TRACK_POSITION_SHIFT),
 		0);
 
 	route_index = (legacy_u8)state.opponentstate.field_CE;
