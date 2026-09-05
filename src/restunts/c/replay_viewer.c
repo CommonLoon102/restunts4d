@@ -103,9 +103,6 @@
 #define REPLAY_MODE_ACTION_DETAIL 3
 #define REPLAY_MODE_ACTION_FOLLOW_OPPONENT 4
 
-#define REPLAY_DIALOG_MESSAGE 1
-#define REPLAY_DIALOG_MENU 2
-#define REPLAY_DIALOG_KEEP_BACKGROUND 0
 #define REPLAY_DIALOG_INITIAL_CHOICE 0
 #define REPLAY_DIALOG_ACCEPTED_MINIMUM 1
 
@@ -323,8 +320,8 @@ static void replay_pause_menu(void)
 	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0)
 		options[REPLAY_PAUSE_ACTION_FINISH] = 1;
 	byte_454A4 = (legacy_u8)video_flag6_is1;
-	menu_result = LEGACY_S8_FROM_BITS(show_dialog(REPLAY_DIALOG_MENU,
-		REPLAY_DIALOG_KEEP_BACKGROUND,
+	menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+		DIALOG_NO_BACKGROUND_SAVE,
 		locate_text_res(gameresptr, aMen_0),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, options, REPLAY_DIALOG_INITIAL_CHOICE));
@@ -353,7 +350,7 @@ static void replay_pause_menu(void)
 					REPLAY_RECORDING_MODIFIED_FLAG;
 			} else if (gameconfig.game_recordedframes != elapsed_time2) {
 				dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
-					REPLAY_DIALOG_MENU, REPLAY_DIALOG_KEEP_BACKGROUND,
+					DIALOG_TYPE_MENU, DIALOG_NO_BACKGROUND_SAVE,
 					locate_text_res(gameresptr, aCon_0),
 					DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 					performGraphColor, 0, REPLAY_DIALOG_INITIAL_CHOICE));
@@ -443,7 +440,7 @@ static void replay_pause_menu(void)
 				g_is_busy = 1;
 				if (file_find(g_path_buf) != 0) {
 					dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
-						REPLAY_DIALOG_MENU, REPLAY_DIALOG_KEEP_BACKGROUND,
+						DIALOG_TYPE_MENU, DIALOG_NO_BACKGROUND_SAVE,
 						locate_text_res(mainresptr, aFex_0),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						performGraphColor, 0,
@@ -459,7 +456,8 @@ static void replay_pause_menu(void)
 				break;
 			if ((legacy_u8)file_write_replay(g_path_buf) == 0)
 				break;
-			show_dialog(REPLAY_DIALOG_MESSAGE, REPLAY_DIALOG_KEEP_BACKGROUND,
+			show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
+				DIALOG_NO_BACKGROUND_SAVE,
 				locate_text_res(mainresptr, aSer_0),
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, REPLAY_DIALOG_INITIAL_CHOICE);
@@ -471,8 +469,8 @@ static void replay_pause_menu(void)
 			mode_options[index] = 0;
 		if (gameconfig.game_opponenttype == 0)
 			mode_options[REPLAY_MODE_ACTION_FOLLOW_OPPONENT] = 1;
-		menu_result = LEGACY_S8_FROM_BITS(show_dialog(REPLAY_DIALOG_MENU,
-			REPLAY_DIALOG_KEEP_BACKGROUND,
+		menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+			DIALOG_NO_BACKGROUND_SAVE,
 			locate_text_res(gameresptr, aMdo),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, mode_options, REPLAY_DIALOG_INITIAL_CHOICE));

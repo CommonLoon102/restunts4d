@@ -157,7 +157,10 @@ void run_game(void) {
 			if (byte_46467 != 0) {
 				input_push_status();
 				audio_suspend();
-				regsi = show_dialog(2, 1, locate_text_res(gameresptr, "rbf"), -1, -1, dialogarg2, 0, 0);
+				regsi = show_dialog(DIALOG_TYPE_MENU,
+					DIALOG_SAVE_BACKGROUND,
+					locate_text_res(gameresptr, "rbf"), -1, -1,
+					dialogarg2, 0, 0);
 				if (regsi == -1)
 					regsi = 0;
 
@@ -355,7 +358,9 @@ void run_game(void) {
 		audio_carstate();
 		audio_remove_driver_timer();
 		if (game_replay_mode == 0 && gameconfig.game_opponenttype != 0 && state.opponentstate.car_crashBmpFlag == 0) {
-			show_dialog(3, 0, locate_text_res(gameresptr, "cop"), -1,
+			show_dialog(DIALOG_TYPE_PLACEHOLDERS,
+				DIALOG_NO_BACKGROUND_SAVE,
+				locate_text_res(gameresptr, "cop"), -1,
 				RACE_OPPONENT_PROGRESS_DIALOG_Y, performGraphColor,
 				var_16, 0);
 			word_45D3E = LEGACY_S16_FROM_BITS(

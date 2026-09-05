@@ -358,7 +358,8 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	sprite_copy_wnd_to_1();
 	highscore_text_unk();
 	sprite_blit_to_video(render_window_sprite, -1);
-	show_dialog(3, 0, prompt, DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+	show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_NO_BACKGROUND_SAVE,
+		prompt, DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, positions, 0);
 	check_input();
 	call_read_line(byte_459E0, HIGHSCORE_NAME_MAX_CHARACTERS,
@@ -777,7 +778,8 @@ legacy_u16 end_hiscore(void)
 	track_resource = (legacy_u8 far*)file_load_resource(
 		FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 	if (track_resource == 0) {
-		result = show_dialog(1, 1,
+		result = show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
+			DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, aIhd),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, 0, 0);

@@ -12,7 +12,8 @@
 
 void do_mer_restext(void)
 {
-	show_dialog(1, 1, locate_text_res(mainresptr, aMer),
+	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, aMer),
 		-1, -1, dialogarg2, 0, 0);
 }
 
@@ -21,7 +22,8 @@ void do_key_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	show_dialog(4, 1, locate_text_res(mainresptr, aKey),
+	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, aKey),
 		-1, -1, dialogarg2, 0, 0);
 	dos_joystick_set_enabled(0);
 	byte_3B8F2 = 0;
@@ -57,7 +59,8 @@ void do_joy_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
+	if (LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_PLACEHOLDERS,
+		DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, "joy"),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, positions, 0)) <= 0) {
@@ -130,7 +133,8 @@ void do_joy_restext(void)
 			dos_joystick_is_enabled() & visited[i]);
 	sub_275C6();
 	if (dos_joystick_is_enabled() == 0)
-		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
+		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
+			DIALOG_SAVE_BACKGROUND, locate_text_res(mainresptr, "jox"),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, 0, 0);
 
@@ -143,7 +147,8 @@ void do_mou_restext(void)
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	byte_3B8F2 = 1;
-	show_dialog(4, 1, locate_text_res(mainresptr, aMou),
+	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, aMou),
 		-1, -1, dialogarg2, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -155,7 +160,8 @@ void do_pau_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	show_dialog(0, 1, locate_text_res(mainresptr, aPau),
+	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, aPau),
 		-1, -1, dialogarg2, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -169,7 +175,8 @@ void do_mof_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	message_id = audio_toggle_flag2() != 0 ? aMon : aMof;
-	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
+	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
@@ -182,7 +189,8 @@ void do_sonsof_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	message_id = audio_toggle_flag6() != 0 ? aSon : aSof;
-	show_dialog(4, 1, locate_text_res(mainresptr, message_id),
+	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
@@ -195,7 +203,8 @@ void do_dos_restext(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	result = show_dialog(2, 1, locate_text_res(mainresptr, aDos_0),
+	result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(mainresptr, aDos_0),
 		-1, -1, dialogarg2, 0, 0);
 	if (result == 1)
 		call_exitlist2();
@@ -235,7 +244,8 @@ void show_graphic_levels_menu(void)
 			text_index++;
 		}
 
-		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+		selected = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+			DIALOG_SAVE_BACKGROUND,
 			(void far*)menu_text, -1, -1, performGraphColor, 0,
 			(legacy_s16)selected));
 		if (selected == -1 || selected == 9)
@@ -260,7 +270,8 @@ void show_graphic_levels_menu(void)
 	}
 
 	if (original_frame_rate != framespersec2)
-		show_dialog(1, 1, locate_text_res(mainresptr, aMrs),
+		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
+			locate_text_res(mainresptr, aMrs),
 			-1, -1, dialogarg2, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -287,7 +298,8 @@ legacy_u16 run_option_menu(void)
 
 	menu_active = 1;
 	while (menu_active != 0) {
-		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+		selected = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+			DIALOG_SAVE_BACKGROUND,
 			locate_text_res(miscptr, "mop"),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, 0, 0));
@@ -304,7 +316,8 @@ legacy_u16 run_option_menu(void)
 				initial_input = 1;
 			else
 				initial_input = 0;
-			selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+			selected = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+				DIALOG_SAVE_BACKGROUND,
 				locate_text_res(miscptr, "mid"),
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, initial_input));

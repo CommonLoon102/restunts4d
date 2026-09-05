@@ -401,7 +401,8 @@ static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y,
 static void track_editor_show_message(legacy_s8 far* text_resource,
 	const legacy_s8* resource_id)
 {
-	show_dialog(1, 1, locate_text_res(text_resource, (legacy_s8*)resource_id),
+	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
+		locate_text_res(text_resource, (legacy_s8*)resource_id),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		performGraphColor, 0, 0);
 }
@@ -429,7 +430,8 @@ static void track_editor_save_track(legacy_u8* track_changed,
 			gameconfig.game_trackname, ".trk", g_path_buf);
 		save_status = 1;
 		if (file_find(g_path_buf) != 0) {
-			result = LEGACY_S16_FROM_BITS(show_dialog(2, 1,
+			result = LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
+				DIALOG_SAVE_BACKGROUND,
 				locate_text_res((legacy_s8 far*)mainresptr, "fex"),
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, 0));
@@ -1028,7 +1030,8 @@ void load_tracks_menu_shapes(void)
 					if (page > 10U)
 						page = 1;
 				} else if (selection_row[1] == 7U) {
-					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
+						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 						locate_text_res(text_resource, "mss"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						dialogarg2, 0,
@@ -1040,7 +1043,8 @@ void load_tracks_menu_shapes(void)
 					}
 				} else if (selection_row[1] == 8U &&
 					selection_column[1] != 0) {
-					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
+					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
+						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 						locate_text_res(text_resource, "men"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						dialogarg2, 0, 0));
@@ -1062,7 +1066,8 @@ void load_tracks_menu_shapes(void)
 				} else if (selection_row[1] == 8U) {
 					result = 1;
 					if (track_changed != 0) {
-						result = (legacy_s16)show_dialog(2, 1,
+						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU,
+							DIALOG_SAVE_BACKGROUND,
 							locate_text_res(text_resource, "chl"),
 							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 							performGraphColor, 0, 0);
@@ -1096,7 +1101,8 @@ void load_tracks_menu_shapes(void)
 				} else {
 					result = 1;
 					if (track_changed != 0) {
-						result = (legacy_s16)show_dialog(2, 1,
+						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU,
+							DIALOG_SAVE_BACKGROUND,
 							locate_text_res(text_resource, "chx"),
 							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 							performGraphColor, 0, 0);

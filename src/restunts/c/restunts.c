@@ -511,7 +511,8 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 		if (inch != 0) {
 			textresptr = locate_text_res(mainresptr, "dos");
 			// DIALOG_AUTO_POSITION centers both dialog coordinates.
-			result = show_dialog(2, 1, textresptr, 0, 170, dialogarg2, 0, 0);
+			result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+				textresptr, 0, 170, dialogarg2, 0, 0);
 			if (result >= 1)
 				break;
 		}
@@ -568,7 +569,8 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 		result = run_intro_looped();
 		if (result == 27) {
 			textresptr = locate_text_res(mainresptr, "dos");
-			result = show_dialog(2, 1, textresptr,
+			result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+				textresptr,
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				dialogarg2, 0, 0);
 			if (result >= 1) {
