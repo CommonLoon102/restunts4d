@@ -12,10 +12,50 @@
 void audio_sequence_timer(void);
 void timer_reg_callback(void (far* callback)(void));
 
+#define AUDIO_DRIVER_PREFIX_LENGTH 14U
+#define AUDIO_PADDED_ID_LENGTH (AUDIO_RESOURCE_ID_LENGTH + 1U)
+#define AUDIO_FILENAME_BUFFER_LENGTH 34U
+#define AUDIO_FILENAME_EXTENSION_LENGTH 4U
+#define AUDIO_SPECIAL_DRIVER_MODE 18234
+#define AUDIO_DRIVER_LOAD_FAILURE 2
+#define AUDIO_DEFAULT_RATE 127U
+#define AUDIO_DRIVER_CHANNEL_COUNT_ERROR 255U
+#define AUDIO_DIRECT_CHANNEL_FLAG_THRESHOLD 127U
+#define AUDIO_DEFAULT_MASTER_VOLUME 100U
+#define AUDIO_DRIVER_MASTER_STATE_COMMAND 4
+#define DOS_SEGMENT_WRAP_PARAGRAPHS 4096U
+#define AUDIO_RESOURCE_CHUNK_COUNT_OFFSET 4U
+#define AUDIO_RESOURCE_TABLE_OFFSET 6U
+#define AUDIO_RESOURCE_OFFSET_ENTRY_SIZE 4U
+#define AUDIO_RESOURCE_DIRECTORY_ENTRY_SIZE 8U
+#define AUDIO_RESOURCE_CHUNK_LENGTH_SIZE 4U
+#define AUDIO_SONG_INSTRUMENT_COUNT_OFFSET 6U
+#define AUDIO_SONG_INSTRUMENT_TABLE_OFFSET 7U
+#define AUDIO_FAR_POINTER_WORD_SHIFT 8U
+#define AUDIO_SEQUENCE_REFERENCE_RECORD_SIZE 5U
+#define AUDIO_SEQUENCE_COMMAND_ONLY_SIZE 1U
+#define AUDIO_SEQUENCE_BYTE_ARGUMENT_SIZE 2U
+#define AUDIO_SEQUENCE_WORD_ARGUMENT_SIZE 3U
+#define AUDIO_SEQUENCE_CALL_PREFIX_SIZE 2U
+#define AUDIO_SONG_HEADER_PREFIX_SIZE 2U
+#define AUDIO_SONG_HEADER_MAPPED_FLAG_OFFSET 5U
+#define AUDIO_SONG_HEADER_MAPPED 1U
+#define AUDIO_SONG_DATA_SCALE_OFFSET 4U
+#define AUDIO_SONG_DATA_SCALE_SHIFT 3U
+#define AUDIO_SONG_DATA_PREFIX_SIZE 1U
+#define AUDIO_RESOURCE_TYPE_OFFSET 4U
+#define AUDIO_RESOURCE_READY_FLAG_OFFSET 5U
+#define AUDIO_RESOURCE_TYPE_SONG 0U
+#define AUDIO_RESOURCE_READY 1U
+#define AUDIO_ENGINE_INITIAL_TICK_STEP 128U
+#define AUDIO_MUSIC_CHANNEL_COUNT_SCALE_SHIFT 2U
+#define AUDIO_MUSIC_CHANNEL_COUNT_OFFSET 7U
+#define AUDIO_MUSIC_PRIORITY 32U
+
 static legacy_s16 audio_missing_file_fatal;
-static legacy_s8 audio_driver_prefix[14];
-static legacy_u8 audio_padded_id[5];
-static legacy_s8 audio_filename_buffer[34];
+static legacy_s8 audio_driver_prefix[AUDIO_DRIVER_PREFIX_LENGTH];
+static legacy_u8 audio_padded_id[AUDIO_PADDED_ID_LENGTH];
+static legacy_s8 audio_filename_buffer[AUDIO_FILENAME_BUFFER_LENGTH];
 
 static legacy_s16 legacy_toupper(legacy_s16 ch)
 {
@@ -32,12 +72,12 @@ legacy_s8* pad_id(const legacy_s8 far* source)
 	legacy_u16 index;
 
 	destination = audio_padded_id;
-	for (index = 0; index < 4U; index++) {
+	for (index = 0; index < AUDIO_RESOURCE_ID_LENGTH; index++) {
 		destination[index] = (legacy_u8)source[index];
 		if (destination[index] == 0)
 			destination[index] = ' ';
 	}
-	audio_padded_id[4] = 0;
+	audio_padded_id[AUDIO_RESOURCE_ID_LENGTH] = 0;
 	return (legacy_s8*)destination;
 }
 
@@ -113,7 +153,8 @@ legacy_s8* audio_make_filename(const legacy_s8* filename, const legacy_s8* exten
 	length = 0;
 	while (audio_filename_buffer[length] != 0)
 		length++;
-	if (length <= 4U || audio_filename_buffer[length - 4U] != '.') {
+	if (length <= AUDIO_FILENAME_EXTENSION_LENGTH ||
+		audio_filename_buffer[length - AUDIO_FILENAME_EXTENSION_LENGTH] != '.') {
 		audio_append_filename_part(audio_filename_buffer, ".");
 		audio_append_filename_part(audio_filename_buffer, extension);
 	}
@@ -135,7 +176,7 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 	legacy_u8 channel_count;
 
 	(void)unused;
-	if (mode == 0x473A)
+	if (mode == AUDIO_SPECIAL_DRIVER_MODE)
 		dos_audio_special_mode = 1;
 	if (dos_audio_driver_binary != 0)
 		dos_audio_shutdown();
@@ -159,19 +200,19 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 
 	dos_audio_driver_binary = file_load_binary_nofatal(audio_make_filename(
 		driver, driver_extension, empty_path));
-	audio_music_rate = 0x7FU;
-	audio_effect_rate = 0x7FU;
+	audio_music_rate = AUDIO_DEFAULT_RATE;
+	audio_effect_rate = AUDIO_DEFAULT_RATE;
 	if (dos_audio_driver_binary == 0) {
 		fatal_error(missing_driver_message);
-		return 2;
+		return AUDIO_DRIVER_LOAD_FAILURE;
 	}
 
 	channel_count = dos_audio_driver_initialize();
 	dos_audio_context_count = channel_count;
-	if (channel_count == 0 || channel_count == 0xFFU)
-		return 2;
-	if (channel_count > 0x7FU) {
-		dos_audio_context_count = 0x10U;
+	if (channel_count == 0 || channel_count == AUDIO_DRIVER_CHANNEL_COUNT_ERROR)
+		return AUDIO_DRIVER_LOAD_FAILURE;
+	if (channel_count > AUDIO_DIRECT_CHANNEL_FLAG_THRESHOLD) {
+		dos_audio_context_count = AUDIO_CONTEXT_COUNT;
 		dos_audio_uses_direct_channels = 1;
 		dos_audio_special_mode = 0;
 	}
@@ -183,9 +224,10 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 		if (bank != 0) {
 			dos_audio_driver_load_bank(bank);
 			mmgr_release((legacy_s8 far*)bank);
-			dos_audio_master_volume = 0x64U;
+			dos_audio_master_volume = AUDIO_DEFAULT_MASTER_VOLUME;
 			dos_audio_driver_set_master_state(
-				4, (void far*)dos_audio_master_state);
+				AUDIO_DRIVER_MASTER_STATE_COMMAND,
+				(void far*)dos_audio_master_state);
 		}
 	}
 
@@ -199,7 +241,7 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 void far* load_sfx_ge(const legacy_s8* filename, const legacy_s8* extension,
 	const legacy_s8* inserted_path)
 {
-	legacy_s8 compressed_extension[4];
+	legacy_s8 compressed_extension[AUDIO_RESOURCE_ID_LENGTH];
 	void far* result;
 
 	result = file_load_binary_nofatal(audio_make_filename(
@@ -340,10 +382,12 @@ legacy_s16 audioresource_get_chunk_index(legacy_s16 extra_name_stride, legacy_s1
 		candidate = (const legacy_u8 far*)dos_memory_make_pointer(
 			names_segment, names_offset);
 		if (audioresource_compare_chunknames(0,
-			(const legacy_s8 far*)candidate, requested_name_far, 4))
+			(const legacy_s8 far*)candidate, requested_name_far,
+			AUDIO_RESOURCE_ID_LENGTH))
 			return index;
 		names_offset = LEGACY_U16_WRAP_ADD(names_offset,
-			LEGACY_U16_WRAP_ADD(4U, extra_name_stride));
+			LEGACY_U16_WRAP_ADD(
+				AUDIO_RESOURCE_ID_LENGTH, extra_name_stride));
 	}
 	return -1;
 }
@@ -359,7 +403,7 @@ static void far* audio_far_pointer_add_normalized(void far* pointer,
 	segment = (legacy_u16)dos_memory_pointer_segment(pointer);
 	new_offset = LEGACY_U16_WRAP_ADD(old_offset, increment);
 	if (new_offset < old_offset)
-		segment = LEGACY_U16_WRAP_ADD(segment, 0x1000U);
+		segment = LEGACY_U16_WRAP_ADD(segment, DOS_SEGMENT_WRAP_PARAGRAPHS);
 	return dos_memory_make_pointer(segment, new_offset);
 }
 
@@ -379,23 +423,29 @@ void far* audioresource_find(void far* resource, const legacy_s8* chunk_name)
 	resource_offset = (legacy_u16)dos_memory_pointer_offset(resource);
 	resource_segment = (legacy_u16)dos_memory_pointer_segment(resource);
 	chunk_count = audioresource_get_word(
-		(const legacy_u8 far*)audio_far_pointer_add_normalized(bytes, 4U));
+		(const legacy_u8 far*)audio_far_pointer_add_normalized(
+			bytes, AUDIO_RESOURCE_CHUNK_COUNT_OFFSET));
 	chunk_index = audioresource_get_chunk_index(0, chunk_count, chunk_name,
-		(const legacy_u8 far*)audio_far_pointer_add_normalized(bytes, 6U));
+		(const legacy_u8 far*)audio_far_pointer_add_normalized(
+			bytes, AUDIO_RESOURCE_TABLE_OFFSET));
 	if (chunk_index < 0)
 		return 0;
 
 	table_offset = LEGACY_U16_WRAP_ADD(resource_offset,
-		LEGACY_U16_WRAP_MUL(chunk_count, 4U));
+		LEGACY_U16_WRAP_MUL(chunk_count, AUDIO_RESOURCE_ID_LENGTH));
 	table_offset = LEGACY_U16_WRAP_ADD(table_offset,
-		LEGACY_U16_WRAP_MUL(chunk_index, 4U));
-	table_offset = LEGACY_U16_WRAP_ADD(table_offset, 6U);
+		LEGACY_U16_WRAP_MUL(
+			chunk_index, AUDIO_RESOURCE_OFFSET_ENTRY_SIZE));
+	table_offset = LEGACY_U16_WRAP_ADD(
+		table_offset, AUDIO_RESOURCE_TABLE_OFFSET);
 	offset_entry = (legacy_u8 far*)dos_memory_make_pointer(resource_segment, table_offset);
 	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
 	result_offset = LEGACY_U16_WRAP_ADD(resource_offset,
-		LEGACY_U16_WRAP_MUL(chunk_count, 8U));
+		LEGACY_U16_WRAP_MUL(
+			chunk_count, AUDIO_RESOURCE_DIRECTORY_ENTRY_SIZE));
 	result_offset = LEGACY_U16_WRAP_ADD(result_offset, relative_offset);
-	result_offset = LEGACY_U16_WRAP_ADD(result_offset, 6U);
+	result_offset = LEGACY_U16_WRAP_ADD(
+		result_offset, AUDIO_RESOURCE_TABLE_OFFSET);
 	return dos_memory_make_pointer(resource_segment, result_offset);
 }
 
@@ -403,7 +453,7 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 {
 	legacy_u8 far* header;
 	void far* instrument;
-	legacy_s8 name[4];
+	legacy_s8 name[AUDIO_RESOURCE_ID_LENGTH];
 	legacy_u16 pointer_offset;
 	legacy_u16 pointer_segment;
 	legacy_u16 count;
@@ -414,9 +464,10 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 	if (header == 0)
 		return;
 
-	count = header[6];
+	count = header[AUDIO_SONG_INSTRUMENT_COUNT_OFFSET];
 	for (index = 0; index < count; ++index) {
-		name_offset = 7U + index * 4U;
+		name_offset = AUDIO_SONG_INSTRUMENT_TABLE_OFFSET +
+			index * AUDIO_RESOURCE_ID_LENGTH;
 		name[0] = header[name_offset];
 		name[1] = header[name_offset + 1U];
 		name[2] = header[name_offset + 2U];
@@ -425,9 +476,11 @@ void audio_map_song_instruments(void far* song, void far* instruments)
 		pointer_offset = (legacy_u16)dos_memory_pointer_offset(instrument);
 		pointer_segment = (legacy_u16)dos_memory_pointer_segment(instrument);
 		header[name_offset] = (legacy_u8)pointer_offset;
-		header[name_offset + 1U] = (legacy_u8)(pointer_offset >> 8);
+		header[name_offset + 1U] =
+			(legacy_u8)(pointer_offset >> AUDIO_FAR_POINTER_WORD_SHIFT);
 		header[name_offset + 2U] = (legacy_u8)pointer_segment;
-		header[name_offset + 3U] = (legacy_u8)(pointer_segment >> 8);
+		header[name_offset + 3U] =
+			(legacy_u8)(pointer_segment >> AUDIO_FAR_POINTER_WORD_SHIFT);
 	}
 
 	audio_bass_drum_resource = audioresource_find(instruments, "BASD");
@@ -443,9 +496,9 @@ static void audio_write_far_pointer_to_resource(legacy_u8 far* destination,
 	legacy_u16 offset, legacy_u16 segment)
 {
 	destination[0] = (legacy_u8)offset;
-	destination[1] = (legacy_u8)(offset >> 8);
+	destination[1] = (legacy_u8)(offset >> AUDIO_FAR_POINTER_WORD_SHIFT);
 	destination[2] = (legacy_u8)segment;
-	destination[3] = (legacy_u8)(segment >> 8);
+	destination[3] = (legacy_u8)(segment >> AUDIO_FAR_POINTER_WORD_SHIFT);
 }
 
 static void audio_patch_song_reference(legacy_u8 far* destination,
@@ -455,7 +508,7 @@ static void audio_patch_song_reference(legacy_u8 far* destination,
 {
 	const legacy_u8 far* names;
 	const legacy_u8 far* offset_entry;
-	legacy_s8 name[4];
+	legacy_s8 name[AUDIO_RESOURCE_ID_LENGTH];
 	legacy_u16 relative_offset;
 	legacy_s16 chunk_index;
 
@@ -472,7 +525,8 @@ static void audio_patch_song_reference(legacy_u8 far* destination,
 
 	offset_entry = (const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 		LEGACY_U16_WRAP_ADD(offset_table_offset,
-			LEGACY_U16_WRAP_MUL((legacy_u16)chunk_index, 4U)));
+			LEGACY_U16_WRAP_MUL((legacy_u16)chunk_index,
+				AUDIO_RESOURCE_OFFSET_ENTRY_SIZE)));
 	relative_offset = (legacy_u16)audioresource_get_dword(offset_entry);
 	audio_write_far_pointer_to_resource(destination,
 		LEGACY_U16_WRAP_ADD(first_data_offset, relative_offset),
@@ -486,7 +540,7 @@ static legacy_u16 audio_skip_variable_length_field(
 
 	cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 		cursor_offset);
-	while ((cursor[0] & 0x80U) != 0) {
+	while ((cursor[0] & AUDIO_VARIABLE_LENGTH_CONTINUATION_BIT) != 0) {
 		cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
 		cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 			cursor_offset);
@@ -518,13 +572,16 @@ void audio_map_song_tracks(void far* song)
 	resource_segment = (legacy_u16)dos_memory_pointer_segment(song);
 	chunk_count = audioresource_get_word(
 		(const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
-			LEGACY_U16_WRAP_ADD(resource_offset, 4U)));
-	name_table_offset = LEGACY_U16_WRAP_ADD(resource_offset, 6U);
+			LEGACY_U16_WRAP_ADD(
+				resource_offset, AUDIO_RESOURCE_CHUNK_COUNT_OFFSET)));
+	name_table_offset = LEGACY_U16_WRAP_ADD(
+		resource_offset, AUDIO_RESOURCE_TABLE_OFFSET);
 	offset_table_offset = LEGACY_U16_WRAP_ADD(name_table_offset,
-		LEGACY_U16_WRAP_MUL(chunk_count, 4U));
+		LEGACY_U16_WRAP_MUL(chunk_count, AUDIO_RESOURCE_ID_LENGTH));
 	first_data_offset = LEGACY_U16_WRAP_ADD(resource_offset,
-		LEGACY_U16_WRAP_ADD(6U,
-			LEGACY_U16_WRAP_MUL(chunk_count, 8U)));
+		LEGACY_U16_WRAP_ADD(AUDIO_RESOURCE_TABLE_OFFSET,
+			LEGACY_U16_WRAP_MUL(
+				chunk_count, AUDIO_RESOURCE_DIRECTORY_ENTRY_SIZE)));
 	header_index = (legacy_u16)audioresource_get_chunk_index(0,
 		chunk_count, "hdr1", (const legacy_u8 far*)dos_memory_make_pointer(
 			resource_segment, name_table_offset));
@@ -533,21 +590,25 @@ void audio_map_song_tracks(void far* song)
 		relative_offset = (legacy_u16)audioresource_get_dword(
 			(const legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				LEGACY_U16_WRAP_ADD(offset_table_offset,
-					LEGACY_U16_WRAP_MUL(index, 4U))));
+					LEGACY_U16_WRAP_MUL(
+						index, AUDIO_RESOURCE_OFFSET_ENTRY_SIZE))));
 		chunk_offset = LEGACY_U16_WRAP_ADD(first_data_offset,
 			relative_offset);
 		bytes = (legacy_u8 far*)dos_memory_make_pointer(resource_segment, chunk_offset);
 		chunk_end_offset = LEGACY_U16_WRAP_ADD(chunk_offset,
 			(legacy_u16)audioresource_get_dword(bytes));
-		cursor_offset = LEGACY_U16_WRAP_ADD(chunk_offset, 4U);
+		cursor_offset = LEGACY_U16_WRAP_ADD(
+			chunk_offset, AUDIO_RESOURCE_CHUNK_LENGTH_SIZE);
 
 		if (index == header_index) {
-			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+			cursor_offset = LEGACY_U16_WRAP_ADD(
+				cursor_offset, AUDIO_SONG_HEADER_PREFIX_SIZE);
 			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
 				LEGACY_U16_WRAP_ADD(
-					LEGACY_U16_WRAP_MUL(cursor[0], 4U), 1U));
+					LEGACY_U16_WRAP_MUL(
+						cursor[0], AUDIO_RESOURCE_ID_LENGTH), 1U));
 			cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 				cursor_offset);
 			reference_count = cursor[0];
@@ -558,7 +619,8 @@ void audio_map_song_tracks(void far* song)
 				audio_patch_song_reference(cursor, name_table_offset,
 					offset_table_offset, first_data_offset,
 					resource_segment, chunk_count);
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 5U);
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_REFERENCE_RECORD_SIZE);
 				reference_count--;
 			}
 			continue;
@@ -571,47 +633,55 @@ void audio_map_song_tracks(void far* song)
 				cursor_offset);
 			event = cursor[0];
 
-			if (event < 0xD9U || event > 0xEAU) {
-				if (event >= 0x80U)
+			if (event < AUDIO_SEQUENCE_COMMAND_BASE ||
+				event > AUDIO_SEQUENCE_COMMAND_LAST) {
+				if (event >= AUDIO_SEQUENCE_STATUS_BIT)
 					cursor_offset = LEGACY_U16_WRAP_ADD(
-						cursor_offset, 1U);
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+						cursor_offset, AUDIO_SEQUENCE_COMMAND_ONLY_SIZE);
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_COMMAND_ONLY_SIZE);
 				cursor_offset = audio_skip_variable_length_field(
 					resource_segment, cursor_offset);
 				continue;
 			}
 			if (audio_sequence_command_has_byte_argument(
-				(legacy_u8)(event - 0xD9U))) {
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+				(legacy_u8)(event - AUDIO_SEQUENCE_COMMAND_BASE))) {
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_BYTE_ARGUMENT_SIZE);
 				continue;
 			}
 
-			switch (event - 0xD9U) {
-			case 0:
-			case 1:
-			case 2:
-			case 10:
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+			switch (event - AUDIO_SEQUENCE_COMMAND_BASE) {
+			case AUDIO_SEQUENCE_COMMAND_RETURN:
+			case AUDIO_SEQUENCE_COMMAND_STOP:
+			case AUDIO_SEQUENCE_COMMAND_RESTART:
+			case AUDIO_SEQUENCE_COMMAND_LOOP_END:
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_COMMAND_ONLY_SIZE);
 				break;
 
-			case 6:
-			case 12:
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 3U);
+			case AUDIO_SEQUENCE_COMMAND_SET_CONTROL:
+			case AUDIO_SEQUENCE_COMMAND_SET_PITCH:
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_WORD_ARGUMENT_SIZE);
 				break;
 
-			case 13:
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 2U);
+			case AUDIO_SEQUENCE_COMMAND_CALL:
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_CALL_PREFIX_SIZE);
 				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				audio_patch_song_reference(cursor, name_table_offset,
 					offset_table_offset, first_data_offset,
 					resource_segment, chunk_count);
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 4U);
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_FAR_POINTER_SIZE);
 				break;
 
-			case 14:
-			case 15:
-				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset, 1U);
+			case AUDIO_SEQUENCE_COMMAND_SKIP_PAYLOAD:
+			case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
+				cursor_offset = LEGACY_U16_WRAP_ADD(
+					cursor_offset, AUDIO_SEQUENCE_COMMAND_ONLY_SIZE);
 				cursor = (legacy_u8 far*)dos_memory_make_pointer(resource_segment,
 					cursor_offset);
 				cursor_offset = LEGACY_U16_WRAP_ADD(cursor_offset,
@@ -637,14 +707,19 @@ void far* init_audio_resources(void far* song, void far* instruments,
 	if (header == 0)
 		return 0;
 
-	if (header[5] != 1) {
+	if (header[AUDIO_SONG_HEADER_MAPPED_FLAG_OFFSET] !=
+		AUDIO_SONG_HEADER_MAPPED) {
 		audio_map_song_instruments(song_chunk, instruments);
 		audio_map_song_tracks(song_chunk);
-		header[5] = 1;
+		header[AUDIO_SONG_HEADER_MAPPED_FLAG_OFFSET] =
+			AUDIO_SONG_HEADER_MAPPED;
 		data_offset = LEGACY_U16_WRAP_ADD(
 			(legacy_u16)dos_memory_pointer_offset(song_chunk),
-			(legacy_u16)((legacy_u16)song_chunk[4] << 3));
-		data_offset = LEGACY_U16_WRAP_ADD(data_offset, 1U);
+			(legacy_u16)((legacy_u16)
+				song_chunk[AUDIO_SONG_DATA_SCALE_OFFSET] <<
+				AUDIO_SONG_DATA_SCALE_SHIFT));
+		data_offset = LEGACY_U16_WRAP_ADD(
+			data_offset, AUDIO_SONG_DATA_PREFIX_SIZE);
 		data = dos_memory_make_pointer(dos_memory_pointer_segment(song_chunk), data_offset);
 		audio_write_far_pointer(header, data);
 	}
@@ -660,18 +735,23 @@ void load_audio_finalize(void far* audio_resource)
 	audio_update_lock = 1;
 	sub_3736A();
 	resource = (legacy_u8 far*)audio_resource;
-	if (resource == 0 || resource[4] != 0 || resource[5] != 1)
+	if (resource == 0 ||
+		resource[AUDIO_RESOURCE_TYPE_OFFSET] != AUDIO_RESOURCE_TYPE_SONG ||
+		resource[AUDIO_RESOURCE_READY_FLAG_OFFSET] != AUDIO_RESOURCE_READY)
 		return;
 
 	dos_audio_driver_reset();
 	audio_engine_value_44d48 = 0;
-	audio_engine_value_454ba = 0x80U;
+	audio_engine_value_454ba = AUDIO_ENGINE_INITIAL_TICK_STEP;
 	data_offset = LEGACY_U16_WRAP_ADD(
-		(legacy_u16)((legacy_u16)resource[6] << 2), 7U);
+		(legacy_u16)((legacy_u16)
+			resource[AUDIO_SONG_INSTRUMENT_COUNT_OFFSET] <<
+			AUDIO_MUSIC_CHANNEL_COUNT_SCALE_SHIFT),
+		AUDIO_MUSIC_CHANNEL_COUNT_OFFSET);
 	audio_music_channel_count = resource[data_offset++];
 	audio_init_chunk(0,
 		LEGACY_S16_FROM_BITS((legacy_u16)(audio_music_channel_count - 1U)),
-		resource, data_offset, audio_music_rate, 0x20U);
+		resource, data_offset, audio_music_rate, AUDIO_MUSIC_PRIORITY);
 	audio_music_active = 1;
 	audio_update_lock = 0;
 }
