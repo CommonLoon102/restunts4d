@@ -30,6 +30,7 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_SPEAKER_CONTROL_PORT 97U
 #define DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK 252U
 #define DOS_TIMER_DEFAULT_DIVIDER_PERIOD 5U
+#define DOS_TIMER_DWORD_HIGH_WORD_OFFSET 2
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -269,10 +270,10 @@ legacy_u32 timer_get_counter(void)
 	__asm {
 		cli
 		mov     ax, word ptr dos_timer_counter
-		mov     dx, word ptr dos_timer_counter+2
+		mov     dx, word ptr dos_timer_counter+DOS_TIMER_DWORD_HIGH_WORD_OFFSET
 		sti
 		mov     word ptr result, ax
-		mov     word ptr result+2, dx
+		mov     word ptr result+DOS_TIMER_DWORD_HIGH_WORD_OFFSET, dx
 	}
 
 	return result;
@@ -286,17 +287,17 @@ legacy_u32 timer_get_delta(void)
 	 * Borland otherwise emits two independently interruptible word loads. */
 	__asm {
 		mov     bx, word ptr dos_timer_last_counter
-		mov     cx, word ptr dos_timer_last_counter+2
+		mov     cx, word ptr dos_timer_last_counter+DOS_TIMER_DWORD_HIGH_WORD_OFFSET
 		cli
 		mov     ax, word ptr dos_timer_counter
-		mov     dx, word ptr dos_timer_counter+2
+		mov     dx, word ptr dos_timer_counter+DOS_TIMER_DWORD_HIGH_WORD_OFFSET
 		sti
 		mov     word ptr dos_timer_last_counter, ax
-		mov     word ptr dos_timer_last_counter+2, dx
+		mov     word ptr dos_timer_last_counter+DOS_TIMER_DWORD_HIGH_WORD_OFFSET, dx
 		sub     ax, bx
 		sbb     dx, cx
 		mov     word ptr result, ax
-		mov     word ptr result+2, dx
+		mov     word ptr result+DOS_TIMER_DWORD_HIGH_WORD_OFFSET, dx
 	}
 
 	return result;
@@ -314,7 +315,7 @@ legacy_u32 timer_get_slow_counter(void)
 		mov     dx, dos_timer_slow_high
 		sti
 		mov     word ptr result, ax
-		mov     word ptr result+2, dx
+		mov     word ptr result+DOS_TIMER_DWORD_HIGH_WORD_OFFSET, dx
 	}
 
 	return result;

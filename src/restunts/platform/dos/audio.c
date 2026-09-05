@@ -56,15 +56,15 @@ extern void mmgr_release(void far* memory);
 #define DOS_AUDIO_DIRECT_CHANNEL_LIMIT 16U
 #define DOS_AUDIO_CHANNEL_INDEX_MASK 15U
 #define DOS_AUDIO_DRIVER_CHANNEL_BASE 1U
+#define DOS_AUDIO_MASTER_STATE_INITIALIZER { 16U, 0U, 22U }
 
 struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
 struct AUDIO_CHANNEL audio_channels[AUDIO_CHANNEL_COUNT];
 struct AUDIO_CHANNEL* audio_sfx_channels =
 	audio_channels + AUDIO_EFFECT_CHANNEL_FIRST;
 struct AUDIO_CONTEXT dos_audio_contexts[AUDIO_CONTEXT_COUNT];
-legacy_u8 dos_audio_master_state[DOS_AUDIO_MASTER_STATE_SIZE] = {
-	16U, 0, 22U
-};
+legacy_u8 dos_audio_master_state[DOS_AUDIO_MASTER_STATE_SIZE] =
+	DOS_AUDIO_MASTER_STATE_INITIALIZER;
 legacy_u8 dos_audio_driver_data[DOS_AUDIO_DRIVER_DATA_SIZE];
 void far* dos_audio_driver_binary;
 legacy_s16 audio_update_lock = 1;

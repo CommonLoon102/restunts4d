@@ -1,5 +1,11 @@
 #include "../../c/legacy.h"
 
+#define DOS_RUNTIME_INTERRUPT 33
+#define DOS_RUNTIME_WRITE_FUNCTION 64
+#define DOS_RUNTIME_EXIT_FUNCTION 76
+#define DOS_RUNTIME_STDOUT_HANDLE 1U
+#define DOS_RUNTIME_STDERR_HANDLE 2U
+
 /* Borland's DOS interrupt wrapper records failures here.  The original
  * executable obtained this word from its C startup module; the assembly-free
  * target supplies the same runtime storage explicitly. */
@@ -12,11 +18,11 @@ static legacy_s16 dos_write_handle(legacy_u16 handle,
 
 	__asm {
 		push    ds
-		mov     ah, 40h
+		mov     ah, DOS_RUNTIME_WRITE_FUNCTION
 		mov     bx, handle
 		mov     cx, length
 		mov     dx, text
-		int     21h
+		int     DOS_RUNTIME_INTERRUPT
 		pop     ds
 		jnc     write_finished
 		mov     ax, -1
@@ -29,20 +35,20 @@ static legacy_s16 dos_write_handle(legacy_u16 handle,
 
 legacy_s16 dos_write_stdout(const legacy_s8* text, legacy_u16 length)
 {
-	return dos_write_handle(1U, text, length);
+	return dos_write_handle(DOS_RUNTIME_STDOUT_HANDLE, text, length);
 }
 
 legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length)
 {
-	return dos_write_handle(2U, text, length);
+	return dos_write_handle(DOS_RUNTIME_STDERR_HANDLE, text, length);
 }
 
 void dos_process_exit(legacy_s16 status)
 {
 	__asm {
 		mov     ax, status
-		mov     ah, 4Ch
-		int     21h
+		mov     ah, DOS_RUNTIME_EXIT_FUNCTION
+		int     DOS_RUNTIME_INTERRUPT
 	}
 
 	for (;;) {

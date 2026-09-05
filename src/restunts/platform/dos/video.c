@@ -40,12 +40,12 @@ static legacy_u8 saved_video_mode;
 static legacy_u8 saved_equipment_byte;
 static legacy_u8 mode4_active;
 
-static const legacy_u8 mode4_crtc_registers[12] = {
+static const legacy_u8 mode4_crtc_registers[DOS_VIDEO_CRTC_REGISTER_COUNT] = {
 	53U, 40U, 44U, 7U, 121U, 2U,
 	100U, 110U, 2U, 2U, 0U, 0U
 };
 
-static const legacy_u8 mode7_crtc_registers[12] = {
+static const legacy_u8 mode7_crtc_registers[DOS_VIDEO_CRTC_REGISTER_COUNT] = {
 	97U, 80U, 82U, 15U, 25U, 6U,
 	25U, 25U, 2U, 13U, 11U, 12U
 };

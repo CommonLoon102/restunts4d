@@ -4,6 +4,8 @@
 
 typedef void interrupt (far* interrupt_handler_type)();
 
+#define DOS_DIVIDE_INSTRUCTION_SIZE 2U
+
 extern void _CType _setvect(legacy_s16 interrupt_number,
 	interrupt_handler_type handler);
 extern interrupt_handler_type _CType _getvect(legacy_s16 interrupt_number);
@@ -20,7 +22,7 @@ static void interrupt dos_divide_error_handler(legacy_u16 bp,
 {
 	word_3BE30 = cs;
 	word_3BE32 = ip;
-	ip = LEGACY_U16_WRAP_ADD(ip, 2U);
+	ip = LEGACY_U16_WRAP_ADD(ip, DOS_DIVIDE_INSTRUCTION_SIZE);
 	ax = 0;
 }
 
