@@ -22,6 +22,9 @@
 #define PARTICLE_SYSTEM_INACTIVE 0
 #define PARTICLE_SYSTEM_ACTIVE 1
 #define CRASH_FRAME_RATE_SCALE_SHIFT 2U
+#define CRASH_CAR_MOTION_PRESERVED 0
+#define CRASH_CAR_MOTION_STOPPED 1
+#define CRASH_EXIT_TIMING_VALUE 1
 
 #ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
@@ -205,20 +208,20 @@ void sub_19BA0(void) {
 
 // previously set_AV_event_triggers
 void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
-	legacy_s8 var_2;
+	legacy_s8 stop_car;
 	struct CARSTATE* var_cState;
 	if (arg_MplayerFlag == PLAYER_CAR_INDEX)
 		var_cState = &state.playerstate;
 	else if (arg_MplayerFlag == OPPONENT_CAR_INDEX)
 		var_cState = &state.opponentstate;
-	if (var_cState->car_crashBmpFlag != 0)
+	if (var_cState->car_crashBmpFlag != CRASH_EVENT_NONE)
 		return;
 
-	var_2 = 0;
+	stop_car = CRASH_CAR_MOTION_PRESERVED;
 	switch (arg_someFlag) {
 	case CRASH_EVENT_IMMEDIATE_STOP:
 		arg_someFlag = CRASH_EVENT_COLLISION;
-		var_2 = 1;
+		stop_car = CRASH_CAR_MOTION_STOPPED;
 		/* fall through */
 	case CRASH_EVENT_COLLISION:
 		var_cState->car_crashBmpFlag = CRASH_EVENT_COLLISION;
@@ -239,7 +242,7 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		stop_car_engine_audio(arg_MplayerFlag);
 #endif
 		var_cState->car_crashBmpFlag = CRASH_EVENT_WATER;
-		var_2 = 1;
+		stop_car = CRASH_CAR_MOTION_STOPPED;
 		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
 			state.game_impactSpeed = var_cState->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
@@ -263,12 +266,12 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		break;
 
 	case CRASH_EVENT_EXIT:
-		state.game_frame_in_sec = 1;
-		state.game_frames_per_sec = 1;
+		state.game_frame_in_sec = CRASH_EXIT_TIMING_VALUE;
+		state.game_frames_per_sec = CRASH_EXIT_TIMING_VALUE;
 		break;
 	}
 
-	if (var_2 != 0) {
+	if (stop_car == CRASH_CAR_MOTION_STOPPED) {
 		var_cState->car_speed2 = 0;
 		var_cState->car_speed = 0;
 	}
