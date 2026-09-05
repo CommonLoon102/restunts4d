@@ -8,15 +8,30 @@
 #include "shape2d.h"
 #include "shape2d_internal.h"
 
+#define DOS_PARAGRAPH_SHIFT 4U
+#define DOS_PARAGRAPH_OFFSET_MASK 15U
+#define DWORD_SECOND_BYTE_SHIFT 8U
+#define DWORD_THIRD_BYTE_SHIFT 16U
+#define DWORD_FOURTH_BYTE_SHIFT 24U
+#define RESOURCE_TABLE_ENTRY_SIZE 4U
+#define RESOURCE_FILE_HEADER_SIZE 6U
+#define PARSED_RESOURCE_TABLE_ENTRY_SIZE 8U
+#define SHAPE2D_HEIGHT_OFFSET 2U
+#define RLE_LITERAL_RUN_LIMIT 3
+#define RLE_BLOCK_LIMIT 127
+#define RLE_FULL_LITERAL_CONTROL 129U
+
 legacy_u32 parse_shape2d_helper(void far* data)
 {
-	return ((legacy_u32)dos_memory_pointer_segment(data) << 4) + dos_memory_pointer_offset(data);
+	return ((legacy_u32)dos_memory_pointer_segment(data) <<
+		DOS_PARAGRAPH_SHIFT) + dos_memory_pointer_offset(data);
 }
 
 void far* parse_shape2d_helper2(legacy_u32 linear_address)
 {
-	return dos_memory_make_pointer((legacy_u16)(linear_address >> 4),
-		(legacy_u16)linear_address & 0x0FU);
+	return dos_memory_make_pointer(
+		(legacy_u16)(linear_address >> DOS_PARAGRAPH_SHIFT),
+		(legacy_u16)linear_address & DOS_PARAGRAPH_OFFSET_MASK);
 }
 
 legacy_s16 parse_shape2d_helper3(void far* data)
@@ -58,11 +73,14 @@ static void shape2d_far_write_dword(legacy_u16 segment,
 {
 	shape2d_far_write_byte(segment, offset, (legacy_u8)value);
 	offset++;
-	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 8));
+	shape2d_far_write_byte(segment, offset,
+		(legacy_u8)(value >> DWORD_SECOND_BYTE_SHIFT));
 	offset++;
-	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 16));
+	shape2d_far_write_byte(segment, offset,
+		(legacy_u8)(value >> DWORD_THIRD_BYTE_SHIFT));
 	offset++;
-	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> 24));
+	shape2d_far_write_byte(segment, offset,
+		(legacy_u8)(value >> DWORD_FOURTH_BYTE_SHIFT));
 }
 
 static void shape2d_copy_wrapped(legacy_u16 source_segment,
@@ -127,9 +145,11 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	pages_offset = dos_memory_pointer_offset(mempages);
 	shape_count = file_get_res_shape_count(memchunk);
 	offsets_offset = LEGACY_U16_WRAP_ADD(pages_offset,
-		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, 4U), 6U));
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count,
+			RESOURCE_TABLE_ENTRY_SIZE), RESOURCE_FILE_HEADER_SIZE));
 	header_size = LEGACY_U16_WRAP_ADD(
-		LEGACY_U16_WRAP_MUL(shape_count, 4U), 6U);
+		LEGACY_U16_WRAP_MUL(shape_count, RESOURCE_TABLE_ENTRY_SIZE),
+		RESOURCE_FILE_HEADER_SIZE);
 	copied = 0;
 	while (LEGACY_S16_FROM_BITS(header_size) >
 		LEGACY_S16_FROM_BITS(copied)) {
@@ -141,7 +161,8 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	}
 	output_segment = dos_memory_pointer_segment(mempages);
 	output_offset = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(mempages),
-		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, 8U), 6U));
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count,
+			PARSED_RESOURCE_TABLE_ENTRY_SIZE), RESOURCE_FILE_HEADER_SIZE));
 	initial_output_linear = parse_shape2d_helper(
 		dos_memory_make_pointer(output_segment, output_offset));
 
@@ -156,7 +177,8 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 		output_offset = dos_memory_pointer_offset(output_pointer);
 		shape2d_far_write_dword(pages_segment, offsets_offset,
 			output_linear - initial_output_linear);
-		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset, 4U);
+		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset,
+			RESOURCE_TABLE_ENTRY_SIZE);
 
 		source_segment = dos_memory_pointer_segment(shape);
 		source_offset = dos_memory_pointer_offset(shape);
@@ -168,7 +190,7 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 		literal_count = 0;
 		remaining = LEGACY_U16_WRAP_MUL(
 			shape2d_get_word((legacy_u8 far*)shape),
-			shape2d_get_word((legacy_u8 far*)shape + 2U));
+			shape2d_get_word((legacy_u8 far*)shape + SHAPE2D_HEIGHT_OFFSET));
 		scan_offset++;
 		literal_count++;
 
@@ -176,24 +198,26 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 			for (;;) {
 				run_count = (legacy_u16)parse_shape2d_helper3(
 					dos_memory_make_pointer(source_segment, scan_offset));
-				if (LEGACY_S16_FROM_BITS(run_count) <= 3 &&
+				if (LEGACY_S16_FROM_BITS(run_count) <=
+					RLE_LITERAL_RUN_LIMIT &&
 					literal_count < remaining) {
 					scan_offset++;
 					literal_count++;
 					continue;
 				}
 
-				while (LEGACY_S16_FROM_BITS(literal_count) > 0x7F) {
+				while (LEGACY_S16_FROM_BITS(literal_count) >
+					RLE_BLOCK_LIMIT) {
 					literal_count = LEGACY_U16_WRAP_SUB(
-						literal_count, 0x7FU);
+						literal_count, RLE_BLOCK_LIMIT);
 					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, 0x7FU);
+						remaining, RLE_BLOCK_LIMIT);
 					shape2d_far_write_byte(output_segment,
-						output_offset, 0x81U);
+						output_offset, RLE_FULL_LITERAL_CONTROL);
 					output_offset++;
 					shape2d_copy_wrapped(source_segment,
 						&literal_offset, output_segment,
-						&output_offset, 0x7FU);
+						&output_offset, RLE_BLOCK_LIMIT);
 				}
 				if (literal_count != 0) {
 					shape2d_far_write_byte(output_segment,
@@ -209,15 +233,15 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 
 				if (run_count > remaining)
 					run_count = remaining;
-				while (LEGACY_S16_FROM_BITS(run_count) > 0x7F) {
+				while (LEGACY_S16_FROM_BITS(run_count) > RLE_BLOCK_LIMIT) {
 					run_count = LEGACY_U16_WRAP_SUB(
-						run_count, 0x7FU);
+						run_count, RLE_BLOCK_LIMIT);
 					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, 0x7FU);
+						remaining, RLE_BLOCK_LIMIT);
 					shape2d_write_run(source_segment, &scan_offset,
-						output_segment, &output_offset, 0x7FU);
+						output_segment, &output_offset, RLE_BLOCK_LIMIT);
 				}
-				if (LEGACY_S16_FROM_BITS(run_count) > 3) {
+				if (LEGACY_S16_FROM_BITS(run_count) > RLE_LITERAL_RUN_LIMIT) {
 					remaining = LEGACY_U16_WRAP_SUB(
 						remaining, run_count);
 					shape2d_write_run(source_segment, &scan_offset,
@@ -240,10 +264,10 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	output_size = parse_shape2d_helper(
 		dos_memory_make_pointer(output_segment, output_offset)) -
 		parse_shape2d_helper(mempages);
-	if ((legacy_u8)output_size & 0x0FU)
-		output_size = (output_size >> 4) + 1UL;
+	if ((legacy_u8)output_size & DOS_PARAGRAPH_OFFSET_MASK)
+		output_size = (output_size >> DOS_PARAGRAPH_SHIFT) + 1UL;
 	else
-		output_size >>= 4;
+		output_size >>= DOS_PARAGRAPH_SHIFT;
 	mmgr_resize_memory(dos_memory_pointer_offset(mempages), dos_memory_pointer_segment(mempages),
 		(legacy_u16)output_size);
 }
