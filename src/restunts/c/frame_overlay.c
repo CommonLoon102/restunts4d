@@ -22,7 +22,7 @@ struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height
 	rect_ingame_text.bottom = bottom;
 	sprite_set_1_size(0, 0x140, rect_ingame_text.top,
 		rect_ingame_text.bottom);
-	sprite_clear_1_color((legacy_u8)skybox_wat_color);
+	sprite_clear_1_color((legacy_u8)skybox.water_color);
 	return &rect_ingame_text;
 }
 

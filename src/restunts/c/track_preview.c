@@ -72,15 +72,15 @@ void draw_track_preview(void)
 		horizon = 0;
 
 	sprite_set_1_size(0, 0x140, 0,
-		LEGACY_S16_WRAP_SUB(horizon, skybox_current));
-	sprite_clear_1_color((legacy_u8)skybox_sky_color);
+		LEGACY_S16_WRAP_SUB(horizon, skybox.minimum_height));
+	sprite_clear_1_color((legacy_u8)skybox.sky_color);
 	sprite_set_1_size(0, 0x140, 0, 0x64);
 	sprite_putimage_and_alt(skyboxes[2], 0,
-		LEGACY_S16_WRAP_SUB(horizon, skybox_ptr3));
+		LEGACY_S16_WRAP_SUB(horizon, skybox.heights[2]));
 	sprite_putimage_and_alt(skyboxes[3], 0x140,
-		LEGACY_S16_WRAP_SUB(horizon, skybox_ptr4));
+		LEGACY_S16_WRAP_SUB(horizon, skybox.heights[3]));
 	sprite_set_1_size(0, 0x140, horizon, 0xC8);
-	sprite_clear_1_color((legacy_u8)skybox_grd_color);
+	sprite_clear_1_color((legacy_u8)skybox.ground_color);
 	sprite_set_1_size(0, 0x140, 0, 0xC8);
 	select_cliprect_rotate(0, camera_angle, 0, &trackpreview_cliprect, 1);
 

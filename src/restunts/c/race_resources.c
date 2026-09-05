@@ -71,37 +71,37 @@ void load_skybox(legacy_s8 skybox_index)
 			"scensce2sce3sce4",
 			skyboxes);
 
-		skybox_ptr1 = shape2d_get_height(
+		skybox.heights[0] = shape2d_get_height(
 			(struct SHAPE2D far*)skyboxes[0]);
-		skybox_ptr2 = shape2d_get_height(
+		skybox.heights[1] = shape2d_get_height(
 			(struct SHAPE2D far*)skyboxes[1]);
-		skybox_ptr3 = shape2d_get_height(
+		skybox.heights[2] = shape2d_get_height(
 			(struct SHAPE2D far*)skyboxes[2]);
-		skybox_ptr4 = shape2d_get_height(
+		skybox.heights[3] = shape2d_get_height(
 			(struct SHAPE2D far*)skyboxes[3]);
 
-		minimum = skybox_ptr1;
-		if (minimum > skybox_ptr2)
-			minimum = skybox_ptr2;
-		if (minimum > skybox_ptr3)
-			minimum = skybox_ptr3;
-		if (minimum > skybox_ptr4)
-			minimum = skybox_ptr4;
-		skybox_current = minimum;
+		minimum = skybox.heights[0];
+		if (minimum > skybox.heights[1])
+			minimum = skybox.heights[1];
+		if (minimum > skybox.heights[2])
+			minimum = skybox.heights[2];
+		if (minimum > skybox.heights[3])
+			minimum = skybox.heights[3];
+		skybox.minimum_height = minimum;
 
-		maximum = skybox_ptr1;
-		if (maximum < skybox_ptr2)
-			maximum = skybox_ptr2;
-		if (maximum < skybox_ptr3)
-			maximum = skybox_ptr3;
-		if (maximum < skybox_ptr4)
-			maximum = skybox_ptr4;
-		word_454CE = maximum;
+		maximum = skybox.heights[0];
+		if (maximum < skybox.heights[1])
+			maximum = skybox.heights[1];
+		if (maximum < skybox.heights[2])
+			maximum = skybox.heights[2];
+		if (maximum < skybox.heights[3])
+			maximum = skybox.heights[3];
+		skybox.maximum_height = maximum;
 	}
 
-	skybox_sky_color = material_clrlist_ptr[17];
-	skybox_grd_color = material_clrlist_ptr[16];
-	skybox_wat_color = material_clrlist_ptr[100];
+	skybox.sky_color = material_clrlist_ptr[17];
+	skybox.ground_color = material_clrlist_ptr[16];
+	skybox.water_color = material_clrlist_ptr[100];
 	meter_needle_color = dialog_fnt_colour;
 }
 

@@ -45,7 +45,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		set_projection(0x28, 0x28, 0x140, 0xC8);
 		init_game_state(-2);
 		sprite_copy_wnd_to_1();
-		sprite_clear_1_color((legacy_u8)skybox_grd_color);
+		sprite_clear_1_color((legacy_u8)skybox.ground_color);
 		sprite_set_1_size(0, 0x140, 0, 0xC8);
 		draw_track_preview();
 		shape3d_free_all();

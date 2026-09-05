@@ -228,15 +228,7 @@ legacy_u16 word_40320;
 legacy_s16 word_4646A[4];
 legacy_s16 word_46486[4];
 
-legacy_s16 skybox_sky_color;
-legacy_s16 skybox_grd_color;
-legacy_s16 skybox_wat_color;
-legacy_u16 skybox_ptr1;
-legacy_u16 skybox_ptr2;
-legacy_u16 skybox_ptr3;
-legacy_u16 skybox_ptr4;
-legacy_u16 skybox_current;
-legacy_u16 word_454CE;
+struct SKYBOX skybox;
 struct RECTANGLE rect_ingame_text;
 legacy_s16 intro_colorvalue = 1;
 legacy_s16 word_407CC = 16;

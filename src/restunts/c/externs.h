@@ -120,6 +120,19 @@ extern legacy_s16 video_flag3_isFFFF;
 extern legacy_s16 video_flag4_is1;
 extern legacy_s16 video_flag5_is0;
 extern legacy_s16 video_flag6_is1;
+/* The four horizon band images and the colours drawn around them. heights
+   is indexed the same way as the skyboxes[] resource array. */
+struct SKYBOX {
+	legacy_u16 heights[4];
+	legacy_u16 minimum_height;
+	legacy_u16 maximum_height;
+	legacy_s16 sky_color;
+	legacy_s16 ground_color;
+	legacy_s16 water_color;
+};
+
+extern struct SKYBOX skybox;
+
 /* The free camera the player steers with the keypad in replay mode. */
 struct CUSTOM_CAMERA {
 	legacy_s16 distance;

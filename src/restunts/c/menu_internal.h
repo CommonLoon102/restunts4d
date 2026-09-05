@@ -230,7 +230,6 @@ extern struct RECTANGLE cliprect_unk;
 extern struct SHAPE3D game3dshapes[];
 extern void far* miscptr;
 extern legacy_s16 dialog_fnt_colour;
-extern legacy_s16 skybox_grd_color;
 extern legacy_s16 word_407FA;
 extern legacy_s16 ranking_entry_order[7];
 extern legacy_s8 aCarcoun[];
