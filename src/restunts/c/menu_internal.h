@@ -112,6 +112,20 @@ extern legacy_s16 word_40D3A;
 extern legacy_s16 word_40D3C;
 extern legacy_s16 word_40D3E;
 #define HIGHSCORE_ENTRY_COUNT 7U
+#define HIGHSCORE_LAST_ENTRY_INDEX (HIGHSCORE_ENTRY_COUNT - 1U)
+#define HIGHSCORE_PLAYER_NAME_BYTES 17U
+#define HIGHSCORE_CAR_NAME_BYTES 24U
+#define HIGHSCORE_OPPONENT_BYTES 8U
+#define HIGHSCORE_COMBINED_NAME_TEXT_BYTES \
+	(HIGHSCORE_PLAYER_NAME_BYTES + HIGHSCORE_CAR_NAME_BYTES - 1U)
+#define HIGHSCORE_OPPONENT_TEXT_BYTES (HIGHSCORE_OPPONENT_BYTES - 1U)
+#define HIGHSCORE_ENTRY_SIZE_BYTES 52U
+#define HIGHSCORE_CAR_NAME_OFFSET 17U
+#define HIGHSCORE_CAR_FLAG_OFFSET 41U
+#define HIGHSCORE_OPPONENT_OFFSET 42U
+#define HIGHSCORE_TIME_OFFSET 50U
+#define HIGHSCORE_TABLE_SIZE_BYTES \
+	(HIGHSCORE_ENTRY_COUNT * HIGHSCORE_ENTRY_SIZE_BYTES)
 
 #pragma pack (push, 1)
 
@@ -119,25 +133,29 @@ extern legacy_s16 word_40D3E;
    layout is fixed by the on-disk format. The two name areas each hold a
    pair of strings laid end to end. */
 struct HIGHSCORE_ENTRY {
-	legacy_s8 player_name[17];
-	legacy_s8 car_name[24];
+	legacy_s8 player_name[HIGHSCORE_PLAYER_NAME_BYTES];
+	legacy_s8 car_name[HIGHSCORE_CAR_NAME_BYTES];
 	legacy_u8 car_flag;
-	legacy_s8 opponent[8];
+	legacy_s8 opponent[HIGHSCORE_OPPONENT_BYTES];
 	legacy_u16 time;
 };
 
 #pragma pack (pop)
 
-typedef char highscore_entry_must_be_52_bytes[
-	(sizeof(struct HIGHSCORE_ENTRY) == 0x34) ? 1 : -1];
-typedef char highscore_entry_car_name_must_be_at_11[
-	(offsetof(struct HIGHSCORE_ENTRY, car_name) == 0x11) ? 1 : -1];
-typedef char highscore_entry_car_flag_must_be_at_29[
-	(offsetof(struct HIGHSCORE_ENTRY, car_flag) == 0x29) ? 1 : -1];
-typedef char highscore_entry_opponent_must_be_at_2A[
-	(offsetof(struct HIGHSCORE_ENTRY, opponent) == 0x2A) ? 1 : -1];
-typedef char highscore_entry_time_must_be_at_32[
-	(offsetof(struct HIGHSCORE_ENTRY, time) == 0x32) ? 1 : -1];
+typedef char highscore_entry_must_have_expected_size[
+	(sizeof(struct HIGHSCORE_ENTRY) == HIGHSCORE_ENTRY_SIZE_BYTES) ? 1 : -1];
+typedef char highscore_entry_car_name_must_have_expected_offset[
+	(offsetof(struct HIGHSCORE_ENTRY, car_name) ==
+		HIGHSCORE_CAR_NAME_OFFSET) ? 1 : -1];
+typedef char highscore_entry_car_flag_must_have_expected_offset[
+	(offsetof(struct HIGHSCORE_ENTRY, car_flag) ==
+		HIGHSCORE_CAR_FLAG_OFFSET) ? 1 : -1];
+typedef char highscore_entry_opponent_must_have_expected_offset[
+	(offsetof(struct HIGHSCORE_ENTRY, opponent) ==
+		HIGHSCORE_OPPONENT_OFFSET) ? 1 : -1];
+typedef char highscore_entry_time_must_have_expected_offset[
+	(offsetof(struct HIGHSCORE_ENTRY, time) ==
+		HIGHSCORE_TIME_OFFSET) ? 1 : -1];
 
 extern legacy_s16 word_40D40;
 extern legacy_s16 end_hiscore_random;
@@ -219,7 +237,7 @@ extern struct SHAPE3D game3dshapes[];
 extern void far* miscptr;
 extern legacy_s16 dialog_fnt_colour;
 extern legacy_s16 word_407FA;
-extern legacy_s16 ranking_entry_order[7];
+extern legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
 extern legacy_s8 aCarcoun[];
 extern legacy_s8 aDefault_1[];
 extern legacy_s8 aDos_0[];
