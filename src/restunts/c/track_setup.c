@@ -2,6 +2,12 @@
 
 #define TRACK_SETUP_TILE_COUNT 0x385U
 #define TRACK_SETUP_BRANCH_COUNT 0x40U
+#define TRACK_ORIENTATION_COUNT 4U
+#define TRACK_ORIENTATION_QUARTER_TURN 256
+#define TRACK_ORIENTATION_NORTH 0
+#define TRACK_ORIENTATION_EAST 256
+#define TRACK_ORIENTATION_SOUTH 512
+#define TRACK_ORIENTATION_WEST 768
 
 enum TRACK_SETUP_ERROR {
 	TRACK_SETUP_OK = 0,
@@ -41,23 +47,28 @@ typedef legacy_s8 track_setup_branch_must_be_14_bytes[
 
 /* Arriving on a tile, the entry point the walk uses depends on the direction
    of travel and on which continuation marker (if any) sent it here. Each row
-   is indexed by orientation / 0x100; a zero means the combination does not
+   is indexed by orientation / TRACK_ORIENTATION_QUARTER_TURN; a zero means
+   the combination does not
    occur, exactly as the original chains fell through to zero. */
-static const legacy_u8 track_entry_points_northwest[4] = { 0x0C, 0, 0, 9 };
-static const legacy_u8 track_entry_points_north[4] = { 0x0B, 6, 0, 7 };
-static const legacy_u8 track_entry_points_west[4] = { 0x0A, 0, 5, 8 };
-static const legacy_u8 track_entry_points_owner[4] = { 2, 4, 1, 3 };
+static const legacy_u8 track_entry_points_northwest[
+	TRACK_ORIENTATION_COUNT] = { 12, 0, 0, 9 };
+static const legacy_u8 track_entry_points_north[
+	TRACK_ORIENTATION_COUNT] = { 11, 6, 0, 7 };
+static const legacy_u8 track_entry_points_west[
+	TRACK_ORIENTATION_COUNT] = { 10, 0, 5, 8 };
+static const legacy_u8 track_entry_points_owner[
+	TRACK_ORIENTATION_COUNT] = { 2, 4, 1, 3 };
 
 static legacy_u8 track_setup_entry_point(const legacy_u8* points,
 	legacy_s16 orientation)
 {
-	if (orientation == 0x000)
+	if (orientation == TRACK_ORIENTATION_NORTH)
 		return points[0];
-	if (orientation == 0x100)
+	if (orientation == TRACK_ORIENTATION_EAST)
 		return points[1];
-	if (orientation == 0x200)
+	if (orientation == TRACK_ORIENTATION_SOUTH)
 		return points[2];
-	if (orientation == 0x300)
+	if (orientation == TRACK_ORIENTATION_WEST)
 		return points[3];
 	return 0;
 }
@@ -73,19 +84,19 @@ struct TRACK_SETUP_STEP {
 };
 
 static const struct TRACK_SETUP_STEP track_setup_steps[13] = {
-	{  0,  0, 0x000 },
-	{  0, -1, 0x000 },
-	{  0,  1, 0x200 },
-	{  1,  0, 0x100 },
-	{ -1,  0, 0x300 },
-	{  1, -1, 0x000 },
-	{ -1,  1, 0x300 },
-	{  1,  1, 0x100 },
-	{  2,  0, 0x100 },
-	{  2,  1, 0x100 },
-	{  1,  1, 0x200 },
-	{  0,  2, 0x200 },
-	{  1,  2, 0x200 }
+	{  0,  0, TRACK_ORIENTATION_NORTH },
+	{  0, -1, TRACK_ORIENTATION_NORTH },
+	{  0,  1, TRACK_ORIENTATION_SOUTH },
+	{  1,  0, TRACK_ORIENTATION_EAST },
+	{ -1,  0, TRACK_ORIENTATION_WEST },
+	{  1, -1, TRACK_ORIENTATION_NORTH },
+	{ -1,  1, TRACK_ORIENTATION_WEST },
+	{  1,  1, TRACK_ORIENTATION_EAST },
+	{  2,  0, TRACK_ORIENTATION_EAST },
+	{  2,  1, TRACK_ORIENTATION_EAST },
+	{  1,  1, TRACK_ORIENTATION_SOUTH },
+	{  0,  2, TRACK_ORIENTATION_SOUTH },
+	{  1,  2, TRACK_ORIENTATION_SOUTH }
 };
 
 static legacy_s8 track_setup_add_s8(legacy_s8 value, legacy_s16 amount)
@@ -99,14 +110,14 @@ static void track_setup_rotate_vector(
 ) {
 	legacy_s16 temporary;
 
-	if (orientation == 0x100) {
+	if (orientation == TRACK_ORIENTATION_EAST) {
 		temporary = vector->x;
 		vector->x = vector->z;
 		vector->z = LEGACY_S16_WRAP_NEGATE(temporary);
-	} else if (orientation == 0x200) {
+	} else if (orientation == TRACK_ORIENTATION_SOUTH) {
 		vector->x = LEGACY_S16_WRAP_NEGATE(vector->x);
 		vector->z = LEGACY_S16_WRAP_NEGATE(vector->z);
-	} else if (orientation == 0x300) {
+	} else if (orientation == TRACK_ORIENTATION_WEST) {
 		temporary = vector->x;
 		vector->x = LEGACY_S16_WRAP_NEGATE(vector->z);
 		vector->z = temporary;
@@ -269,13 +280,13 @@ legacy_s16 track_setup(void)
 				orientation = 0;
 			else if (tile_element == 0x87U ||
 				tile_element == 0x94U || tile_element == 0xB3U)
-				orientation = 0x200;
+				orientation = TRACK_ORIENTATION_SOUTH;
 			else if (tile_element == 0x88U ||
 				tile_element == 0x95U || tile_element == 0xB4U)
-				orientation = 0x100;
+				orientation = TRACK_ORIENTATION_EAST;
 			else if (tile_element == 0x89U ||
 				tile_element == 0x96U || tile_element == 0xB5U)
-				orientation = 0x300;
+				orientation = TRACK_ORIENTATION_WEST;
 
 			if (orientation != -1) {
 				track_angle = orientation;
@@ -452,15 +463,15 @@ legacy_s16 track_setup(void)
 			column = previous_column;
 			row = track_setup_add_s8(previous_row,
 				-(legacy_s16)jump_length - 1);
-		} else if (orientation == 0x100) {
+		} else if (orientation == TRACK_ORIENTATION_EAST) {
 			row = previous_row;
 			column = track_setup_add_s8(previous_column,
 				(legacy_s16)jump_length + 1);
-		} else if (orientation == 0x200) {
+		} else if (orientation == TRACK_ORIENTATION_SOUTH) {
 			column = previous_column;
 			row = track_setup_add_s8(previous_row,
 				(legacy_s16)jump_length + 1);
-		} else if (orientation == 0x300) {
+		} else if (orientation == TRACK_ORIENTATION_WEST) {
 			row = previous_row;
 			column = track_setup_add_s8(previous_column,
 				-(legacy_s16)jump_length - 1);
@@ -550,7 +561,7 @@ legacy_s16 track_setup(void)
 			track_setup_rotate_vector(&camera_vector, orientation);
 			td08_direction_related[byte_45635] =
 				previous_connection_status != 0 ?
-				(orientation ^ 0x200) : orientation;
+				(orientation ^ TRACK_ORIENTATION_SOUTH) : orientation;
 			trackdata23[byte_45635] = arrow_code;
 			if (td15_terr_map_main[terrainrows[previous_row] +
 				previous_column] == 6)
