@@ -26,6 +26,8 @@
 #define TRACK_ORIENTATION_EAST ANGLE_QUARTER_TURN
 #define TRACK_ORIENTATION_SOUTH ANGLE_HALF_TURN
 #define TRACK_ORIENTATION_WEST ANGLE_THREE_QUARTER_TURN
+#define TRACK_ORIENTATION_NOT_FOUND (-1)
+#define TRACK_PREVIOUS_PIECE_NONE (-1)
 #define TRACK_START_FINISH_VARIANT_COUNT 3U
 #define PLAN_TRACK_ROUTE_LENGTH 18U
 #define PLAN_TRACK_ROUTE_ENTRY_SIZE 2U
@@ -113,7 +115,7 @@ static legacy_s16 track_setup_start_finish_orientation(
 			}
 		}
 	}
-	return -1;
+	return TRACK_ORIENTATION_NOT_FOUND;
 }
 
 static legacy_u8 track_setup_entry_point(const legacy_u8* points,
@@ -339,7 +341,7 @@ legacy_s16 track_setup(void)
 
 			orientation = track_setup_start_finish_orientation(tile_element);
 
-			if (orientation != -1) {
+			if (orientation != TRACK_ORIENTATION_NOT_FOUND) {
 				track_angle = orientation;
 				if (start_finish_count != 0) {
 					return track_setup_error(branches,
@@ -377,7 +379,7 @@ legacy_s16 track_setup(void)
 	row = LEGACY_S8_FROM_BITS((legacy_u8)startrow2);
 	orientation = (legacy_s16)track_angle;
 	previous_connection_code = 0;
-	previous_piece = -1;
+	previous_piece = TRACK_PREVIOUS_PIECE_NONE;
 
 	for (;;) {
 	match_count = 0;
@@ -567,7 +569,7 @@ legacy_s16 track_setup(void)
 	visited_tiles[trackrows[row] + column] = 1;
 	subtype_by_piece[track_pieces_counter] = subtype;
 	connection_by_piece[track_pieces_counter] = connection_status;
-	if (previous_piece != -1)
+	if (previous_piece != TRACK_PREVIOUS_PIECE_NONE)
 		track_setup_link_piece(previous_piece, track_pieces_counter);
 	previous_piece = (legacy_s16)track_pieces_counter;
 	td21_col_from_path[track_pieces_counter] = column;
