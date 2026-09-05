@@ -50,10 +50,10 @@ void shape3d_vertex_read(const struct SHAPE3D* shape, legacy_u16 index,
 	const legacy_u8 far* source;
 
 	source = shape->shape3d_vertex_bytes +
-		LEGACY_U16_WRAP_MUL(index, 6U);
-	destination->x = LEGACY_READ_S16_LE(source);
-	destination->y = LEGACY_READ_S16_LE(source + 2U);
-	destination->z = LEGACY_READ_S16_LE(source + 4U);
+		LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
+	destination->x = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_X_OFFSET);
+	destination->y = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_Y_OFFSET);
+	destination->z = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_Z_OFFSET);
 }
 
 void shape3d_vertex_write(struct SHAPE3D* shape, legacy_u16 index,
@@ -62,10 +62,13 @@ void shape3d_vertex_write(struct SHAPE3D* shape, legacy_u16 index,
 	legacy_u8 far* destination;
 
 	destination = shape->shape3d_vertex_bytes +
-		LEGACY_U16_WRAP_MUL(index, 6U);
-	LEGACY_WRITE_U16_LE(destination, (legacy_u16)source->x);
-	LEGACY_WRITE_U16_LE(destination + 2U, (legacy_u16)source->y);
-	LEGACY_WRITE_U16_LE(destination + 4U, (legacy_u16)source->z);
+		LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
+	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_X_OFFSET,
+		(legacy_u16)source->x);
+	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_Y_OFFSET,
+		(legacy_u16)source->y);
+	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_Z_OFFSET,
+		(legacy_u16)source->z);
 }
 
 extern legacy_s8 is_facing_camera(struct POINT2D far*);

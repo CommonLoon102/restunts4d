@@ -7,6 +7,10 @@
 #define SHAPE3D_VERTEX_COUNT_OFFSET      0U
 #define SHAPE3D_PRIMITIVE_COUNT_OFFSET   1U
 #define SHAPE3D_PAINT_COUNT_OFFSET       2U
+#define SHAPE3D_VERTEX_SIZE               6U
+#define SHAPE3D_VERTEX_X_OFFSET           0U
+#define SHAPE3D_VERTEX_Y_OFFSET           2U
+#define SHAPE3D_VERTEX_Z_OFFSET           4U
 
 #pragma pack (push, 1)
 

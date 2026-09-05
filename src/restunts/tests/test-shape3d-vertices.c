@@ -3,30 +3,42 @@
 #include "../c/externs.h"
 #include "../c/shape3d.h"
 
+#define TEST_VERTEX_INDEX 1U
+#define TEST_VERTEX_STORAGE_PREFIX_SIZE 1U
+#define TEST_VERTEX_STORAGE_SIZE (TEST_VERTEX_STORAGE_PREFIX_SIZE + \
+	(TEST_VERTEX_INDEX + 1U) * SHAPE3D_VERTEX_SIZE)
+#define TEST_VERTEX_BYTE_OFFSET (TEST_VERTEX_STORAGE_PREFIX_SIZE + \
+	TEST_VERTEX_INDEX * SHAPE3D_VERTEX_SIZE)
+
 int main(void)
 {
-	legacy_u8 bytes[13];
+	legacy_u8 bytes[TEST_VERTEX_STORAGE_SIZE];
 	struct SHAPE3D shape;
 	struct VECTOR source;
 	struct VECTOR destination;
 
-	shape.shape3d_vertex_bytes = bytes + 1;
-	source.x = LEGACY_S16_FROM_BITS(0x8000U);
-	source.y = 0x7FFF;
+	shape.shape3d_vertex_bytes = bytes + TEST_VERTEX_STORAGE_PREFIX_SIZE;
+	source.x = LEGACY_S16_FROM_BITS(LEGACY_U16_SIGN_BIT);
+	source.y = LEGACY_S16_MAX;
 	source.z = -1;
-	shape3d_vertex_write(&shape, 1U, &source);
+	shape3d_vertex_write(&shape, TEST_VERTEX_INDEX, &source);
 
-	assert(bytes[7] == 0x00U);
-	assert(bytes[8] == 0x80U);
-	assert(bytes[9] == 0xFFU);
-	assert(bytes[10] == 0x7FU);
-	assert(bytes[11] == 0xFFU);
-	assert(bytes[12] == 0xFFU);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_X_OFFSET] == 0U);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_X_OFFSET + 1U] ==
+		LEGACY_U8_SIGN_BIT);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Y_OFFSET] ==
+		LEGACY_U8_MAX);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Y_OFFSET + 1U] ==
+		LEGACY_S8_MAX);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Z_OFFSET] ==
+		LEGACY_U8_MAX);
+	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Z_OFFSET + 1U] ==
+		LEGACY_U8_MAX);
 
 	destination.x = 0;
 	destination.y = 0;
 	destination.z = 0;
-	shape3d_vertex_read(&shape, 1U, &destination);
+	shape3d_vertex_read(&shape, TEST_VERTEX_INDEX, &destination);
 	assert(destination.x == source.x);
 	assert(destination.y == source.y);
 	assert(destination.z == source.z);
