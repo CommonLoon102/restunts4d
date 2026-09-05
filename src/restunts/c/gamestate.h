@@ -4,6 +4,15 @@
 #include "math.h"
 
 #define GAMESTATE_SERIALIZED_SIZE 1120U
+#define CARSTATE_SERIALIZED_SIZE 208U
+#define CARSTATE_WHEEL_COUNT 4U
+#define GAMESTATE_PARTICLE_SLOT_COUNT 24U
+#define GAMESTATE_CAR_VECTOR_COUNT 2U
+#define GAMESTATE_PARTICLE_VELOCITY_BYTES \
+	(GAMESTATE_PARTICLE_SLOT_COUNT * LEGACY_WORD_BYTES)
+#define GAMESTATE_RANDOM_SEED_SIZE 6U
+#define GAMESTATE_FIELD_3F7_SIZE 2U
+#define GAMESTATE_FIELD_3FA_SIZE 48U
 
 #pragma pack (push, 1)
 
@@ -34,13 +43,13 @@ struct CARSTATE {
 	legacy_s16 car_surfacegrip_sum;
 	legacy_s16 field_48;
 	legacy_s16 car_trackdata3_index;
-	legacy_s16 car_rc1[4]; /* One word per wheel in each rc array. */
-	legacy_s16 car_rc2[4];
-	legacy_s16 car_rc3[4];
-	legacy_s16 car_rc4[4];
-	legacy_s16 car_rc5[4];
-	struct VECTOR car_whlWorldCrds1[4];
-	struct VECTOR car_whlWorldCrds2[4];
+	legacy_s16 car_rc1[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_rc2[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_rc3[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_rc4[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_rc5[CARSTATE_WHEEL_COUNT];
+	struct VECTOR car_whlWorldCrds1[CARSTATE_WHEEL_COUNT];
+	struct VECTOR car_whlWorldCrds2[CARSTATE_WHEEL_COUNT];
 	struct VECTOR car_vec_unk3;
 	struct VECTOR car_vec_unk4;
 	struct VECTOR car_vec_unk5;
@@ -53,7 +62,7 @@ struct CARSTATE {
 	legacy_s8 car_sumSurfFrontWheels;
 	legacy_s8 car_sumSurfRearWheels;
 	legacy_s8 car_sumSurfAllWheels; /* Also used as the jump flag. */
-	legacy_s8 car_surfaceWhl[4];
+	legacy_s8 car_surfaceWhl[CARSTATE_WHEEL_COUNT];
 	legacy_s8 car_engineLimiterTimer;
 	legacy_s8 car_slidingFlag;
 	legacy_s8 field_C8;
@@ -67,10 +76,10 @@ struct CARSTATE {
 };
 
 struct GAMESTATE {
-	legacy_s32 game_longs1[24]; /* x */
-	legacy_s32 game_longs2[24]; /* y */
-	legacy_s32 game_longs3[24]; /* z */
-	struct VECTOR game_vec1[2]; /* Player and opponent. */
+	legacy_s32 game_longs1[GAMESTATE_PARTICLE_SLOT_COUNT]; /* x */
+	legacy_s32 game_longs2[GAMESTATE_PARTICLE_SLOT_COUNT]; /* y */
+	legacy_s32 game_longs3[GAMESTATE_PARTICLE_SLOT_COUNT]; /* z */
+	struct VECTOR game_vec1[GAMESTATE_CAR_VECTOR_COUNT];
 	struct VECTOR game_vec3;
 	struct VECTOR game_vec4;
 	legacy_s16 game_frame_in_sec;
@@ -93,21 +102,21 @@ struct GAMESTATE {
 	legacy_s16 game_startcol2;
 	legacy_s16 game_startrow;
 	legacy_s16 game_startrow2;
-	legacy_s16 field_2FE[24];
-	legacy_s16 field_32E[24];
-	legacy_s16 field_35E[24];
-	legacy_s16 field_38E[24];
-	legacy_s8 field_3BE[48];
-	legacy_s8 kevinseed[6];
+	legacy_s16 field_2FE[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 field_32E[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 field_35E[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 field_38E[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s8 field_3BE[GAMESTATE_PARTICLE_VELOCITY_BYTES];
+	legacy_s8 kevinseed[GAMESTATE_RANDOM_SEED_SIZE];
 	legacy_s8 field_3F4;
 	legacy_s8 game_inputmode; /* 0 waiting, 1 active, 2 intro. */
 	legacy_s8 game_3F6autoLoadEvalFlag;
-	legacy_s8 field_3F7[2];
+	legacy_s8 field_3F7[GAMESTATE_FIELD_3F7_SIZE];
 	legacy_s8 field_3F9;
-	legacy_s8 field_3FA[48];
+	legacy_s8 field_3FA[GAMESTATE_FIELD_3FA_SIZE];
 	legacy_s8 field_42A;
-	legacy_s8 field_42B[24];
-	legacy_s8 field_443[24];
+	legacy_s8 field_42B[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s8 field_443[GAMESTATE_PARTICLE_SLOT_COUNT];
 	legacy_s8 field_45B;
 	legacy_s8 field_45C;
 	legacy_s8 field_45D;
@@ -118,7 +127,7 @@ struct GAMESTATE {
 #pragma pack (pop)
 
 typedef char legacy_carstate_must_be_208_bytes[
-	(sizeof(struct CARSTATE) == 208) ? 1 : -1];
+	(sizeof(struct CARSTATE) == CARSTATE_SERIALIZED_SIZE) ? 1 : -1];
 typedef char legacy_gamestate_must_be_1120_bytes[
 	(sizeof(struct GAMESTATE) == GAMESTATE_SERIALIZED_SIZE) ? 1 : -1];
 

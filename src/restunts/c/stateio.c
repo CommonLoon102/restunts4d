@@ -123,13 +123,20 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s16(writer, carstate->car_surfacegrip_sum);
 	gamestate_write_s16(writer, carstate->field_48);
 	gamestate_write_s16(writer, carstate->car_trackdata3_index);
-	gamestate_write_s16_array(writer, carstate->car_rc1, 4U);
-	gamestate_write_s16_array(writer, carstate->car_rc2, 4U);
-	gamestate_write_s16_array(writer, carstate->car_rc3, 4U);
-	gamestate_write_s16_array(writer, carstate->car_rc4, 4U);
-	gamestate_write_s16_array(writer, carstate->car_rc5, 4U);
-	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds1, 4U);
-	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds2, 4U);
+	gamestate_write_s16_array(writer, carstate->car_rc1,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_rc2,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_rc3,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_rc4,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_rc5,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds1,
+		CARSTATE_WHEEL_COUNT);
+	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds2,
+		CARSTATE_WHEEL_COUNT);
 	gamestate_write_vector(writer, &carstate->car_vec_unk3);
 	gamestate_write_vector(writer, &carstate->car_vec_unk4);
 	gamestate_write_vector(writer, &carstate->car_vec_unk5);
@@ -142,7 +149,8 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->car_sumSurfFrontWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfRearWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfAllWheels);
-	gamestate_write_s8_array(writer, carstate->car_surfaceWhl, 4U);
+	gamestate_write_s8_array(writer, carstate->car_surfaceWhl,
+		CARSTATE_WHEEL_COUNT);
 	gamestate_write_s8(writer, carstate->car_engineLimiterTimer);
 	gamestate_write_s8(writer, carstate->car_slidingFlag);
 	gamestate_write_s8(writer, carstate->field_C8);
@@ -163,10 +171,14 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	writer.destination = destination;
 	writer.offset = 0U;
 
-	gamestate_write_s32_array(&writer, source->game_longs1, 24U);
-	gamestate_write_s32_array(&writer, source->game_longs2, 24U);
-	gamestate_write_s32_array(&writer, source->game_longs3, 24U);
-	gamestate_write_vector_array(&writer, source->game_vec1, 2U);
+	gamestate_write_s32_array(&writer, source->game_longs1,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s32_array(&writer, source->game_longs2,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s32_array(&writer, source->game_longs3,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_vector_array(&writer, source->game_vec1,
+		GAMESTATE_CAR_VECTOR_COUNT);
 	gamestate_write_vector(&writer, &source->game_vec3);
 	gamestate_write_vector(&writer, &source->game_vec4);
 	gamestate_write_s16(&writer, source->game_frame_in_sec);
@@ -189,21 +201,31 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	gamestate_write_s16(&writer, source->game_startcol2);
 	gamestate_write_s16(&writer, source->game_startrow);
 	gamestate_write_s16(&writer, source->game_startrow2);
-	gamestate_write_s16_array(&writer, source->field_2FE, 24U);
-	gamestate_write_s16_array(&writer, source->field_32E, 24U);
-	gamestate_write_s16_array(&writer, source->field_35E, 24U);
-	gamestate_write_s16_array(&writer, source->field_38E, 24U);
-	gamestate_write_s8_array(&writer, source->field_3BE, 48U);
-	gamestate_write_s8_array(&writer, source->kevinseed, 6U);
+	gamestate_write_s16_array(&writer, source->field_2FE,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s16_array(&writer, source->field_32E,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s16_array(&writer, source->field_35E,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s16_array(&writer, source->field_38E,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s8_array(&writer, source->field_3BE,
+		GAMESTATE_PARTICLE_VELOCITY_BYTES);
+	gamestate_write_s8_array(&writer, source->kevinseed,
+		GAMESTATE_RANDOM_SEED_SIZE);
 	gamestate_write_s8(&writer, source->field_3F4);
 	gamestate_write_s8(&writer, source->game_inputmode);
 	gamestate_write_s8(&writer, source->game_3F6autoLoadEvalFlag);
-	gamestate_write_s8_array(&writer, source->field_3F7, 2U);
+	gamestate_write_s8_array(&writer, source->field_3F7,
+		GAMESTATE_FIELD_3F7_SIZE);
 	gamestate_write_s8(&writer, source->field_3F9);
-	gamestate_write_s8_array(&writer, source->field_3FA, 48U);
+	gamestate_write_s8_array(&writer, source->field_3FA,
+		GAMESTATE_FIELD_3FA_SIZE);
 	gamestate_write_s8(&writer, source->field_42A);
-	gamestate_write_s8_array(&writer, source->field_42B, 24U);
-	gamestate_write_s8_array(&writer, source->field_443, 24U);
+	gamestate_write_s8_array(&writer, source->field_42B,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s8_array(&writer, source->field_443,
+		GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s8(&writer, source->field_45B);
 	gamestate_write_s8(&writer, source->field_45C);
 	gamestate_write_s8(&writer, source->field_45D);

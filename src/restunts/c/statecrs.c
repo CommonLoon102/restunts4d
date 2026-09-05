@@ -2,7 +2,6 @@
 #include "legacy.h"
 #include "math.h"
 
-#define PARTICLE_SLOT_COUNT 24
 #define CAR_CRASH_PARTICLE_KIND_COUNT 2
 #define CAR_CRASH_PARTICLE_LIMIT 18
 #define CAR_CRASH_PARTICLE_LIFETIME_SCALE 6
@@ -83,7 +82,7 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 
 	state.field_42A = 1;
 	free_count = 0;
-	for (slot = 0; slot < PARTICLE_SLOT_COUNT; slot++) {
+	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
 		if (state.field_38E[slot] == 0)
 			free_count = LEGACY_S16_WRAP_ADD(free_count, 1);
 	}
@@ -91,7 +90,8 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 		free_count = particle_limit;
 
 	emitted = 0;
-	for (slot = 0; slot < PARTICLE_SLOT_COUNT && emitted < free_count; slot++) {
+	for (slot = 0;
+		slot < GAMESTATE_PARTICLE_SLOT_COUNT && emitted < free_count; slot++) {
 		if (state.field_38E[slot] != 0)
 			continue;
 
@@ -146,7 +146,7 @@ void sub_19BA0(void) {
 	legacy_s16 slot;
 
 	any_active = 0;
-	for (slot = 0; slot < PARTICLE_SLOT_COUNT; slot++) {
+	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
 		if (state.field_38E[slot] == 0)
 			continue;
 
