@@ -1,18 +1,34 @@
 #include "state_internal.h"
 
+#define TRACK_GRID_LAST_COORDINATE 29
+#define TRACK_WORLD_TILE_SHIFT 16U
+#define PENALTY_ROUTE_VISITED_CAPACITY 904U
+#define PENALTY_ROUTE_PENDING_CAPACITY 128U
+#define PENALTY_ROUTE_SENTINEL (-1)
+#define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
+#define PENALTY_ROUTE_START_TRACK_INDEX 900U
+#define PENALTY_ROUTE_START_TILE_INDEX 11999U
+#define PENALTY_ROUTE_START_COLUMN_INDEX 1963U
+#define MULTI_TILE_ROW_FLAG 1U
+#define MULTI_TILE_COLUMN_FLAG 2U
+#define TRACK_START_FINISH_PIECE_INDEX 0
+#define PENALTY_DISTANCE_FINISH_REACHED (-1)
+#define PENALTY_NOT_DETECTED 0
+#define PENALTY_DETECTED 1
+
 static legacy_s16 penalty_route_next(legacy_s16 track_index)
 {
-	if (track_index == -1)
+	if (track_index == PENALTY_ROUTE_SENTINEL)
 		return legacy_execution_residue.penalty_route_word;
 	if (track_index < 0 || track_index >= track_pieces_counter)
-		return -1;
+		return PENALTY_ROUTE_SENTINEL;
 	return td01_track_file_cpy[track_index];
 }
 
 static legacy_s16 penalty_route_alternate(legacy_s16 track_index)
 {
-	if (track_index == -1)
-		return td01_track_file_cpy[0x384];
+	if (track_index == PENALTY_ROUTE_SENTINEL)
+		return td01_track_file_cpy[PENALTY_ROUTE_START_TRACK_INDEX];
 	return td02_penalty_related[track_index];
 }
 
@@ -28,16 +44,16 @@ static legacy_s16 finish_penalty_route(legacy_s16* current_track,
 		state.game_startcol2 = column;
 		state.game_startrow = row;
 		state.game_startrow2 = row;
-		*penalty_count = -2;
+		*penalty_count = PENALTY_ROUTE_OUTSIDE_TRACK;
 	}
-	return 1;
+	return PENALTY_DETECTED;
 }
 
 legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 {
-	legacy_u8 visited[904];
-	legacy_s16 pending_track[128];
-	legacy_s16 pending_distance[128];
+	legacy_u8 visited[PENALTY_ROUTE_VISITED_CAPACITY];
+	legacy_s16 pending_track[PENALTY_ROUTE_PENDING_CAPACITY];
+	legacy_s16 pending_distance[PENALTY_ROUTE_PENDING_CAPACITY];
 	legacy_u16 pending_count;
 	legacy_s16 track_index;
 	legacy_s16 next_track;
@@ -57,17 +73,21 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 	legacy_u16 index;
 
 	column = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lx >> 16));
-	row = LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_SUB(0x1DU,
-		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lz >> 16)));
+		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lx >>
+			TRACK_WORLD_TILE_SHIFT));
+	row = LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_SUB(
+		TRACK_GRID_LAST_COORDINATE,
+		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lz >>
+			TRACK_WORLD_TILE_SHIFT)));
 	if ((column == state.game_startcol || column == state.game_startcol2) &&
 		(row == state.game_startrow || row == state.game_startrow2)) {
 		*penalty_count = 0;
-		return 0;
+		return PENALTY_NOT_DETECTED;
 	}
-	if (column < 0 || column > 0x1D || row < 0 || row > 0x1D) {
-		*penalty_count = -2;
-		return 1;
+	if (column < 0 || column > TRACK_GRID_LAST_COORDINATE || row < 0 ||
+		row > TRACK_GRID_LAST_COORDINATE) {
+		*penalty_count = PENALTY_ROUTE_OUTSIDE_TRACK;
+		return PENALTY_DETECTED;
 	}
 
 	best_distance = 0;
@@ -81,7 +101,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 
 	for (;;) {
 		next_track = penalty_route_next(track_index);
-		if (next_track == -1) {
+		if (next_track == PENALTY_ROUTE_SENTINEL) {
 			if (sentinel_visited == 0) {
 				sentinel_visited = 1;
 			} else if (pending_count != 0) {
@@ -108,30 +128,34 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			visited[next_track] = 1;
 		}
 
-		if (next_track == -1) {
-			minimum_row = (legacy_u8)td21_col_from_path[0x384];
-			tile_element = (legacy_u8)td16_rpl_buffer[0x2EDF];
+		if (next_track == PENALTY_ROUTE_SENTINEL) {
+			minimum_row = (legacy_u8)td21_col_from_path[
+				PENALTY_ROUTE_START_TRACK_INDEX];
+			tile_element = (legacy_u8)td16_rpl_buffer[
+				PENALTY_ROUTE_START_TILE_INDEX];
 		} else {
 			minimum_row = (legacy_u8)td22_row_from_path[next_track];
 			tile_element = (legacy_u8)td17_trk_elem_ordered[next_track];
 		}
 		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 		maximum_row = minimum_row;
-		if ((multi_tile_flags & 1U) != 0)
+		if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != 0)
 			maximum_row = LEGACY_U8_WRAP_ADD(maximum_row, 1U);
-		if (next_track == -1)
-			minimum_column = (legacy_u8)td20_trk_file_appnd[0x7AB];
+		if (next_track == PENALTY_ROUTE_SENTINEL)
+			minimum_column = (legacy_u8)td20_trk_file_appnd[
+				PENALTY_ROUTE_START_COLUMN_INDEX];
 		else
 			minimum_column = (legacy_u8)td21_col_from_path[next_track];
 		maximum_column = minimum_column;
-		if ((multi_tile_flags & 2U) != 0)
+		if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) != 0)
 			maximum_column = LEGACY_U8_WRAP_ADD(maximum_column, 1U);
 
 		if (((legacy_u8)column == minimum_column ||
 			(legacy_u8)column == maximum_column) &&
 			((legacy_u8)row == minimum_row ||
 			(legacy_u8)row == maximum_row)) {
-			if (penalty_route_alternate(track_index) != -1)
+			if (penalty_route_alternate(track_index) !=
+				PENALTY_ROUTE_SENTINEL)
 				next_track = track_index;
 			state.game_startcol = LEGACY_S8_FROM_BITS(minimum_column);
 			state.game_startcol2 = LEGACY_S8_FROM_BITS(maximum_column);
@@ -140,7 +164,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			if (distance <= 0) {
 				*current_track = next_track;
 				*penalty_count = distance;
-				return 1;
+				return PENALTY_DETECTED;
 			}
 			if (best_distance == 0 || best_distance > distance) {
 				best_track = next_track;
@@ -149,14 +173,14 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		}
 
 		alternate_track = penalty_route_alternate(track_index);
-		if (alternate_track != -1) {
+		if (alternate_track != PENALTY_ROUTE_SENTINEL) {
 			pending_distance[pending_count] = distance;
 			pending_track[pending_count] = alternate_track;
 			pending_count = LEGACY_U16_WRAP_ADD(pending_count, 1U);
 		}
-		if (next_track == 0) {
-			distance = -1;
-		} else if (distance != -1) {
+		if (next_track == TRACK_START_FINISH_PIECE_INDEX) {
+			distance = PENALTY_DISTANCE_FINISH_REACHED;
+		} else if (distance != PENALTY_DISTANCE_FINISH_REACHED) {
 			distance = LEGACY_S16_WRAP_ADD(distance, 1);
 		}
 		track_index = next_track;
