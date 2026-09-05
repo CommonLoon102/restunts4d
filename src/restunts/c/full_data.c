@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "fatal.h"
 #include "game_input.h"
 #include "platform.h"
 #include "shape2d.h"
@@ -322,7 +323,7 @@ legacy_s8 far* opp_res;
 legacy_s8 far* oppresources[7];
 legacy_s8 is_audioloaded;
 
-void (far* exitlistfuncs[11])(void);
+void (far* exitlistfuncs[EXIT_HANDLER_SLOT_COUNT])(void);
 legacy_s16 waitflag;
 
 /* Menu and overlay resources. */

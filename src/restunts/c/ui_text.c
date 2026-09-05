@@ -10,6 +10,13 @@ legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 #define FONT_GLYPH_WIDTHS_FLAG_OFFSET 20U
 #define FONT_GLYPH_OFFSET_TABLE_OFFSET 22U
 #define FONT_GLYPH_OFFSET_ENTRY_SIZE 2U
+#define UI_HORIZONTAL_CENTER_DIVISOR 2
+#define LEGACY_S16_DECIMAL_DIGIT_COUNT 5U
+#define UI_NUMBER_SCRATCH_SIZE 18U
+#define UI_DECIMAL_RADIX 10U
+#define SECONDS_PER_MINUTE 60U
+#define HUNDREDTHS_PER_SECOND 100U
+#define TIME_FIELD_WIDTH 2
 
 legacy_s16 font_op2_alt(const legacy_s8* text)
 {
@@ -17,7 +24,7 @@ legacy_s16 font_op2_alt(const legacy_s8* text)
 
 	centered = LEGACY_S16_WRAP_NEGATE(
 		LEGACY_S16_WRAP_SUB(font_op2(text), UI_SCREEN_WIDTH));
-	return LEGACY_S16_DIV_OR_ZERO(centered, 2);
+	return LEGACY_S16_DIV_OR_ZERO(centered, UI_HORIZONTAL_CENTER_DIVISOR);
 }
 
 legacy_u16 legacy_near_string_length(const legacy_s8* text)
@@ -33,7 +40,7 @@ legacy_u16 legacy_near_string_length(const legacy_s8* text)
 void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value, legacy_s16 zero_pad,
 	legacy_s16 width)
 {
-	legacy_s8 digits[5];
+	legacy_s8 digits[LEGACY_S16_DECIMAL_DIGIT_COUNT];
 	legacy_s16 signed_value;
 	legacy_u16 magnitude;
 	legacy_u16 digit_count;
@@ -46,8 +53,8 @@ void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value, legacy_
 		(legacy_u16)signed_value;
 	digit_count = 0;
 	do {
-		digits[digit_count++] = (legacy_s8)('0' + magnitude % 10U);
-		magnitude = LEGACY_U16_DIV_OR_ZERO(magnitude, 10U);
+		digits[digit_count++] = (legacy_s8)('0' + magnitude % UI_DECIMAL_RADIX);
+		magnitude = LEGACY_U16_DIV_OR_ZERO(magnitude, UI_DECIMAL_RADIX);
 	} while (magnitude != 0);
 
 	index = 0;
@@ -94,7 +101,7 @@ static legacy_s8* legacy_near_string_copy(legacy_s8* destination, const legacy_s
 void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	legacy_s16 include_hundredths)
 {
-	legacy_s8 number[18];
+	legacy_s8 number[UI_NUMBER_SCRATCH_SIZE];
 	legacy_s8* output;
 	legacy_u16 frames;
 	legacy_u16 frame_rate;
@@ -105,7 +112,7 @@ void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 
 	frames = (legacy_u16)frame_count;
 	frame_rate = (legacy_u16)framespersec;
-	frames_per_minute = LEGACY_U16_WRAP_MUL(60U, frame_rate);
+	frames_per_minute = LEGACY_U16_WRAP_MUL(SECONDS_PER_MINUTE, frame_rate);
 	minutes = LEGACY_U16_DIV_OR_ZERO(frames, frames_per_minute);
 	frames = LEGACY_U16_WRAP_SUB(frames,
 		LEGACY_U16_WRAP_MUL(frames_per_minute, minutes));
@@ -113,16 +120,16 @@ void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	frames = LEGACY_U16_WRAP_SUB(frames,
 		LEGACY_U16_WRAP_MUL(frame_rate, seconds));
 
-	print_int_as_string_maybe(number, minutes, 0, 2);
+	print_int_as_string_maybe(number, minutes, 0, TIME_FIELD_WIDTH);
 	output = legacy_near_string_copy(destination, number);
 	*output++ = ':';
-	print_int_as_string_maybe(number, seconds, 1, 2);
+	print_int_as_string_maybe(number, seconds, 1, TIME_FIELD_WIDTH);
 	output = legacy_near_string_copy(output, number);
 	if (include_hundredths != 0) {
 		*output++ = '.';
 		hundredths = LEGACY_U16_WRAP_MUL(
-			LEGACY_U16_DIV_OR_ZERO(100U, frame_rate), frames);
-		print_int_as_string_maybe(number, hundredths, 1, 2);
+			LEGACY_U16_DIV_OR_ZERO(HUNDREDTHS_PER_SECOND, frame_rate), frames);
+		print_int_as_string_maybe(number, hundredths, 1, TIME_FIELD_WIDTH);
 		legacy_near_string_copy(output, number);
 	}
 }

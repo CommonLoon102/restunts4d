@@ -5,6 +5,9 @@
 #include "shape2d.h"
 
 #define FATAL_OUTPUT_BUFFER_SIZE 96U
+#define FATAL_NUMBER_SCRATCH_SIZE 12U
+#define FATAL_FORMAT_DECIMAL_RADIX 10U
+#define FATAL_FORMAT_HEXADECIMAL_RADIX 16U
 
 struct FATAL_OUTPUT_STATE {
 	legacy_s8 buffer[FATAL_OUTPUT_BUFFER_SIZE];
@@ -17,7 +20,7 @@ void add_exit_handler(void (far* exit_handler)(void))
 {
 	legacy_s16 index;
 
-	for (index = 0; index < 10; index++) {
+	for (index = 0; index < EXIT_HANDLER_MAX_COUNT; index++) {
 		if (exitlistfuncs[index] == exit_handler)
 			return;
 		if (exitlistfuncs[index] == 0) {
@@ -33,7 +36,7 @@ void call_exitlist(void)
 {
 	legacy_s16 index;
 
-	for (index = 10; index >= 0; index--)
+	for (index = EXIT_HANDLER_MAX_COUNT; index >= 0; index--)
 		if (exitlistfuncs[index] != 0)
 			exitlistfuncs[index]();
 }
@@ -91,7 +94,7 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE* output, legacy_u32 valu
 	legacy_s16 width, legacy_s16 precision, legacy_s16 left_aligned,
 	legacy_s16 zero_padded)
 {
-	legacy_s8 digits[12];
+	legacy_s8 digits[FATAL_NUMBER_SCRATCH_SIZE];
 	legacy_s16 digit_count;
 	legacy_s16 zero_count;
 	legacy_s16 space_count;
@@ -158,13 +161,15 @@ static void fatal_vprintf(const legacy_s8* format, va_list arguments)
 		}
 		width = 0;
 		while (*format >= '0' && *format <= '9')
-			width = (legacy_s16)(width * 10 + *format++ - '0');
+			width = (legacy_s16)(width * FATAL_FORMAT_DECIMAL_RADIX +
+				*format++ - '0');
 		precision = -1;
 		if (*format == '.') {
 			format++;
 			precision = 0;
 			while (*format >= '0' && *format <= '9')
-				precision = (legacy_s16)(precision * 10 + *format++ - '0');
+				precision = (legacy_s16)(precision *
+					FATAL_FORMAT_DECIMAL_RADIX + *format++ - '0');
 		}
 		long_value = 0;
 		if (*format == 'l') {
@@ -198,13 +203,15 @@ static void fatal_vprintf(const legacy_s8* format, va_list arguments)
 					(legacy_u32)(0UL - (legacy_u32)long_signed_value) :
 					(legacy_u32)long_signed_value;
 				fatal_emit_number(&output, unsigned_value, long_signed_value < 0,
-					10, 0, width, precision, left_aligned, zero_padded);
+					FATAL_FORMAT_DECIMAL_RADIX, 0, width, precision,
+					left_aligned, zero_padded);
 			} else {
 				value = va_arg(arguments, legacy_s16);
 				unsigned_value = value < 0 ?
 					(legacy_u16)(0U - (legacy_u16)value) : (legacy_u16)value;
-				fatal_emit_number(&output, unsigned_value, value < 0, 10, 0,
-					width, precision, left_aligned, zero_padded);
+				fatal_emit_number(&output, unsigned_value, value < 0,
+					FATAL_FORMAT_DECIMAL_RADIX, 0, width, precision,
+					left_aligned, zero_padded);
 			}
 			break;
 		case 'u':
@@ -213,7 +220,9 @@ static void fatal_vprintf(const legacy_s8* format, va_list arguments)
 			unsigned_value = long_value ? va_arg(arguments, legacy_u32) :
 				(legacy_u16)va_arg(arguments, legacy_u16);
 			fatal_emit_number(&output, unsigned_value, 0,
-				conversion == 'u' ? 10 : 16, conversion == 'X', width,
+				conversion == 'u' ? FATAL_FORMAT_DECIMAL_RADIX :
+					FATAL_FORMAT_HEXADECIMAL_RADIX,
+				conversion == 'X', width,
 				precision, left_aligned, zero_padded);
 			break;
 		default:
