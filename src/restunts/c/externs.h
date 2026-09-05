@@ -202,7 +202,7 @@ extern legacy_u16 elapsed_time1;
 extern legacy_u16 elapsed_time2;
 extern legacy_u8 byte_449DA;
 extern legacy_u8 byte_4393C;
-extern legacy_u8 game_replay_mode; // 0 = playing, 1 = paused, 2 = replay
+extern legacy_u8 game_replay_mode;
 extern legacy_s16 word_44DCA;
 
 extern legacy_s16 word_45A24; // current frame?

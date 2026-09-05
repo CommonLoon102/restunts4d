@@ -1254,7 +1254,7 @@ case PLAYER_FLOW_loc_16288:
 	if (var_E != planindex)
 		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 	var_138 = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
-	if (game_replay_mode == 1)
+	if (game_replay_mode == REPLAY_MODE_PAUSED)
 		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 	if (si >= 0)
 		{ physics_flow = PLAYER_FLOW_loc_162EE; continue; }

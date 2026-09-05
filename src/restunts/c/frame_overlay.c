@@ -172,8 +172,8 @@ struct RECTANGLE* draw_ingame_text(void)
 		return &rect_ingame_text;
 	}
 
-	if (game_replay_mode != 0) {
-		if (game_replay_mode != 2)
+	if (game_replay_mode != REPLAY_MODE_LIVE) {
+		if (game_replay_mode != REPLAY_MODE_PLAYBACK)
 			return &rect_ingame_text;
 		replay_frame = (legacy_u16)state.game_frame % framespersec;
 		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U))

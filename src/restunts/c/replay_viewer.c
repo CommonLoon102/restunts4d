@@ -356,7 +356,7 @@ static void replay_pause_menu(void)
 		dashb_toggle = 1;
 		show_penalty_counter = 0;
 		followOpponentFlag = 0;
-		game_replay_mode = 0;
+		game_replay_mode = REPLAY_MODE_LIVE;
 		cameramode = CAMERA_MODE_COCKPIT;
 		state.game_3F6autoLoadEvalFlag = 0;
 		state.game_frame_in_sec = 0;

@@ -231,7 +231,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 {
 	switch (key) {
 	case KEY_ESCAPE:
-		if (game_replay_mode == 0)
+		if (game_replay_mode == REPLAY_MODE_LIVE)
 			update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_449DA = 1;
 		return 1;
@@ -259,7 +259,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 	case 'C':
 	case 'c':
-		if (game_replay_mode != 1) {
+		if (game_replay_mode != REPLAY_MODE_PAUSED) {
 			cameramode++;
 			if (cameramode == CAMERA_MODE_COUNT)
 				cameramode = CAMERA_MODE_COCKPIT;
@@ -285,10 +285,10 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 		return 1;
 	}
 
-	if (game_replay_mode != 1)
+	if (game_replay_mode != REPLAY_MODE_PAUSED)
 		return 0;
 
-	game_replay_mode = 0;
+	game_replay_mode = REPLAY_MODE_LIVE;
 	byte_4393C = 0;
 	init_game_state_with_frame_rate_byte(framespersec2);
 	return 1;
