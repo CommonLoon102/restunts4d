@@ -15,6 +15,10 @@
 #define INITIAL_CAMERA_DISTANCE 4096
 #define INITIAL_CAMERA_TILE_SHIFT 10U
 #define INITIAL_CAMERA_HEIGHT 960
+#define GAMESTATE_CHECKPOINT_INVALID 0
+#define GAMESTATE_CHECKPOINT_VALID 1
+#define GAMESTATE_CHECKPOINT_INDEX_STEP 1U
+#define GAMESTATE_INITIAL_TIMING_VALUE 1
 
 static legacy_s16 angle_with_offset(legacy_s16 angle, legacy_s16 offset)
 {
@@ -156,7 +160,7 @@ void init_game_state(legacy_s16 arg)
 	if (arg == GAMESTATE_INIT_RESET_CHECKPOINTS) {
 		elapsed_time1 = 0;
 		for (i = 0; i < GAMESTATE_CHECKPOINT_COUNT; ++i)
-			cvxptr[i].field_3F4 = 0;
+			cvxptr[i].field_3F4 = GAMESTATE_CHECKPOINT_INVALID;
 	}
 
 	if (framespersec == GAME_FRAME_RATE_LOW)
@@ -173,8 +177,8 @@ void init_game_state(legacy_s16 arg)
 	if (arg != GAMESTATE_INIT_TIMING_ONLY) {
 		init_unknown();
 
-		state.field_3F4 = 1;
-		state.game_frames_per_sec = 1;
+		state.field_3F4 = GAMESTATE_CHECKPOINT_VALID;
+		state.game_frames_per_sec = GAMESTATE_INITIAL_TIMING_VALUE;
 		state.game_inputmode = GAME_INPUT_MODE_WAITING;
 		state.game_3F6autoLoadEvalFlag = 0;
 		state.game_frame_in_sec = 0;
@@ -304,7 +308,8 @@ void restore_gamestate(legacy_u16 frame)
 
 	curframe = LEGACY_U16_DIV_OR_ZERO(frame, word_45A00);
 	if (curframe == GAMESTATE_CHECKPOINT_COUNT)
-		curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
+		curframe = LEGACY_U16_WRAP_SUB(
+			curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
 
 	/* Find the newest valid checkpoint preceding the requested frame. */
 	if (frame >= state.game_frame) {
@@ -312,13 +317,14 @@ void restore_gamestate(legacy_u16 frame)
 			if (LEGACY_U16_WRAP_MUL(curframe, word_45A00) <=
 				state.game_frame)
 				return;
-			if (cvxptr[curframe].field_3F4 != 0)
+			if (cvxptr[curframe].field_3F4 != GAMESTATE_CHECKPOINT_INVALID)
 				break;
 			/* A newly loaded replay has no checkpoints yet.  Stop at the
 			 * initial state instead of wrapping before the checkpoint array. */
 			if (curframe == 0)
 				return;
-			curframe = LEGACY_U16_WRAP_SUB(curframe, 1U);
+			curframe = LEGACY_U16_WRAP_SUB(
+				curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
 		}
 	}
 
