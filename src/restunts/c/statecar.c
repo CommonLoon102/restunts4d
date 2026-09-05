@@ -30,6 +30,8 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define ENGINE_LIMITER_LONG_TICKS 30
 #define ENGINE_LIMITER_RECOVERY_TICKS 10
 #define ENGINE_SPEED_CORRECTION 1280U
+#define ENGINE_LIMITER_INACTIVE 0
+#define ENGINE_LIMITER_TICK_STEP 1
 #define CAR_GEAR_NEUTRAL 0
 #define CAR_GEAR_FIRST 1
 #define CAR_GEAR_INDEX_STEP 1
@@ -114,9 +116,9 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 
 	var_2 = framespersec == GAME_FRAME_RATE_NORMAL ?
 		NORMAL_GEAR_KNOB_STEP : LOW_RATE_GEAR_KNOB_STEP;
-	if (arg_carState->car_engineLimiterTimer != 0) {
+	if (arg_carState->car_engineLimiterTimer != ENGINE_LIMITER_INACTIVE) {
 		arg_carState->car_engineLimiterTimer = LEGACY_S8_WRAP_SUB(
-			arg_carState->car_engineLimiterTimer, 1);
+			arg_carState->car_engineLimiterTimer, ENGINE_LIMITER_TICK_STEP);
 	}
 
 	arg_carState->car_speeddiff = LEGACY_S16_WRAP_SUB(
@@ -207,7 +209,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		arg_carState->car_is_braking = CAR_PEDAL_RELEASED;
 		arg_carState->car_is_accelerating = CAR_PEDAL_PRESSED;
 		if (arg_carState->car_changing_gear != CAR_GEAR_CHANGE_INACTIVE) {
-			arg_carState->car_engineLimiterTimer = 0;
+			arg_carState->car_engineLimiterTimer = ENGINE_LIMITER_INACTIVE;
 			if (framespersec == GAME_FRAME_RATE_LOW) {
 				arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
 					arg_carState->car_currpm,
@@ -233,7 +235,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 					(legacy_u16)arg_carState->car_currpm >>
 					TORQUE_CURVE_RPM_SHIFT];
 			}
-			if (arg_carState->car_engineLimiterTimer != 0 &&
+			if (arg_carState->car_engineLimiterTimer !=
+				ENGINE_LIMITER_INACTIVE &&
 				arg_carState->car_currpm < ENGINE_LIMITER_BLEND_RPM) {
 				var_currTorque = ((legacy_u8)arg_simd->idle_torque +
 					var_currTorque) >> 1;
@@ -259,7 +262,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		}
 	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) == INPUT_BRAKE_FLAG) {
 		arg_carState->car_is_accelerating = CAR_PEDAL_RELEASED;
-		arg_carState->car_engineLimiterTimer = 0;
+		arg_carState->car_engineLimiterTimer = ENGINE_LIMITER_INACTIVE;
 		arg_carState->car_is_braking = CAR_PEDAL_PRESSED;
 		if (car_index == PLAYER_CAR_INDEX) {
 			var_deltaSpeed = LEGACY_S16_WRAP_SUB(
