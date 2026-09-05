@@ -16,6 +16,7 @@
 #define PARTICLE_FORWARD_SPEED_BIAS 384
 #define PARTICLE_GRAVITY_STEP 19
 #define PARTICLE_ROTATION_STEP 16
+#define CRASH_FRAME_RATE_SCALE_SHIFT 2U
 
 #ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
@@ -220,7 +221,8 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
 			state.game_impactSpeed = var_cState->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
-				LEGACY_U16_SHL(framespersec, 2U));
+				LEGACY_U16_SHL(framespersec,
+					CRASH_FRAME_RATE_SCALE_SHIFT));
 		}
 #ifndef RESTUNTS_HEADLESS
 		stop_car_engine_audio(arg_MplayerFlag);
@@ -236,7 +238,8 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
 			state.game_impactSpeed = var_cState->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
-				LEGACY_U16_SHL(framespersec, 2U));
+				LEGACY_U16_SHL(framespersec,
+					CRASH_FRAME_RATE_SCALE_SHIFT));
 		}
 		break;
 
