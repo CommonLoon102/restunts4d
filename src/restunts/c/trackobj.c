@@ -10,6 +10,16 @@
 #define TRACK_ARC_CENTER_RADIUS 1536
 #define TRACK_ARC_SEGMENT_COUNT 18U
 #define TRACK_ARC_LAST_SEGMENT 17
+#define TRACK_ARC_ANGLE_SCALE_SHIFT 8U
+#define TERRAIN_TILE_NONE 0U
+#define TERRAIN_WATER_TILE 1U
+#define TERRAIN_WATER_SLOPE_FIRST 2U
+#define TERRAIN_WATER_SLOPE_2 2U
+#define TERRAIN_WATER_SLOPE_3 3U
+#define TERRAIN_WATER_SLOPE_4 4U
+#define TERRAIN_WATER_SLOPE_LAST 5U
+#define TERRAIN_RAISED_TILE 6U
+#define TERRAIN_RAISED_HEIGHT_INDEX 1U
 #define TERRAIN_SLOPE_2_ANGLE 128
 #define TERRAIN_SLOPE_3_ANGLE -640
 #define TERRAIN_SLOPE_4_ANGLE -384
@@ -228,6 +238,31 @@
 #define SHIP_FORWARD_WALL_INDEX 184
 #define SHIP_LEFT_WALL_INDEX 183
 #define SHIP_RIGHT_WALL_INDEX 182
+#define MULTI_TILE_ROW_EDGE_FLAG 1U
+#define MULTI_TILE_COLUMN_EDGE_FLAG 2U
+#define TRACK_TILE_EMPTY 0U
+#define TRACK_SURFACE_TYPE_OFFSET 1U
+#define TRACK_SURFACE_TYPE_MINIMUM 1
+#define PHYSICAL_MODEL_NONE -1
+#define PHYSICAL_MODEL_MINIMUM 0
+#define TRACK_COLLISION_ENABLED 1
+#define TERRAIN_ORIENTED_LAST_TILE 18U
+#define TERRAIN_ORIENTATION_MASK 3U
+#define TERRAIN_ORIENTATION_DEFAULT_INDEX 0U
+#define TERRAIN_ORIENTATION_THREE_QUARTER_INDEX 1U
+#define TERRAIN_ORIENTATION_HALF_INDEX 2U
+#define TERRAIN_SLOPE_DOWN_LAST_TILE 14U
+#define TERRAIN_FLAT_PLANE_INDEX 3
+#define TERRAIN_SLOPE_DOWN_PLANE_INDEX 4
+#define TERRAIN_SLOPE_UP_PLANE_INDEX 5
+#define TERRAIN_UPPER_HEIGHT 450
+#define PLANE_ORIENTATION_COUNT 4
+#define PLANE_QUARTER_TURN_OFFSET 3
+#define PLANE_HALF_TURN_OFFSET 2
+#define PLANE_THREE_QUARTER_TURN_OFFSET 1
+#define GRASS_HEIGHT_HASH_SHIFT 8U
+#define GRASS_HEIGHT_VARIATION_MASK 1U
+#define NON_GRASS_HEIGHT_OFFSET 2
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -316,9 +351,9 @@ static void track_object_tile_center(legacy_u8 track_tile,
 	legacy_u8 multi_tile;
 
 	multi_tile = (legacy_u8)trkObjectList[track_tile].ss_multiTileFlag;
-	if ((multi_tile & 1U) != 0)
+	if ((multi_tile & MULTI_TILE_ROW_EDGE_FLAG) != 0)
 		elem_zCenter = (legacy_s16)terrainpos[row_index];
-	if ((multi_tile & 2U) != 0)
+	if ((multi_tile & MULTI_TILE_COLUMN_EDGE_FLAG) != 0)
 		elem_xCenter = (legacy_s16)trackpos2[column_index];
 }
 
@@ -370,7 +405,8 @@ static legacy_s16 track_arc_segment(const struct VECTOR* position)
 	value = (legacy_s16)((((legacy_u16)polarAngle(
 		LEGACY_S16_WRAP_ADD(position->x, TRACK_ARC_CENTER_OFFSET),
 		LEGACY_S16_WRAP_ADD(position->z, TRACK_ARC_CENTER_OFFSET)) &
-		ANGLE_QUARTER_MASK) * TRACK_ARC_SEGMENT_COUNT) >> 8);
+		ANGLE_QUARTER_MASK) * TRACK_ARC_SEGMENT_COUNT) >>
+		TRACK_ARC_ANGLE_SCALE_SHIFT);
 	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value,
 		TRACK_ARC_LAST_SEGMENT));
 }
@@ -408,17 +444,17 @@ void build_track_object(struct VECTOR* world_position,
 	elRdWallRelated = -1000;
 	corkFlag = CORKSCREW_INACTIVE;
 	current_surf_type = SURFACE_GRASS;
-	byte_4392C = 1;
+	byte_4392C = TRACK_COLLISION_ENABLED;
 	wall_orientation_modifier = 0;
 	element_orientation = 0;
 	terrainHeight = 0;
-	terrain_tile = 0;
+	terrain_tile = TERRAIN_TILE_NONE;
 
 	track_column = LEGACY_S16_SAR(world_position->x,
 		TRACK_TILE_COORDINATE_SHIFT);
 	track_row = LEGACY_S16_SAR(world_position->z,
 		TRACK_TILE_COORDINATE_SHIFT);
-	physical_model = -1;
+	physical_model = PHYSICAL_MODEL_NONE;
 	if (track_column >= 0 && track_column <= TRACK_GRID_LAST_INDEX &&
 		track_row >= 0 && track_row <= TRACK_GRID_LAST_INDEX) {
 
@@ -426,17 +462,18 @@ void build_track_object(struct VECTOR* world_position,
 	elem_zCenter = (legacy_s16)terraincenterpos[track_row];
 	terrain_tile = td15_terr_map_main[
 		trackrows[track_row] + track_column];
-	if (terrain_tile == 1U) {
+	if (terrain_tile == TERRAIN_WATER_TILE) {
 		current_surf_type = SURFACE_WATER;
-	} else if (terrain_tile >= 2U && terrain_tile <= 5U) {
+	} else if (terrain_tile >= TERRAIN_WATER_SLOPE_FIRST &&
+		terrain_tile <= TERRAIN_WATER_SLOPE_LAST) {
 		switch (terrain_tile) {
-		case 2:
+		case TERRAIN_WATER_SLOPE_2:
 			terrain_angle = TERRAIN_SLOPE_2_ANGLE;
 			break;
-		case 3:
+		case TERRAIN_WATER_SLOPE_3:
 			terrain_angle = TERRAIN_SLOPE_3_ANGLE;
 			break;
-		case 4:
+		case TERRAIN_WATER_SLOPE_4:
 			terrain_angle = TERRAIN_SLOPE_4_ANGLE;
 			break;
 		default:
@@ -454,14 +491,14 @@ void build_track_object(struct VECTOR* world_position,
 				position.x));
 		if (value < 0)
 			current_surf_type = SURFACE_WATER;
-	} else if (terrain_tile == 6U) {
-		terrainHeight = (legacy_s16)hillHeightConsts[1];
+	} else if (terrain_tile == TERRAIN_RAISED_TILE) {
+		terrainHeight = (legacy_s16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 	}
 
 	track_tile = td14_elem_map_main[
 		terrainrows[track_row] + track_column];
 	do {
-	if (track_tile == 0)
+	if (track_tile == TRACK_TILE_EMPTY)
 		break;
 	if (track_tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		track_tile = td14_elem_map_main[
@@ -486,7 +523,7 @@ void build_track_object(struct VECTOR* world_position,
 		next_world_position->x, elem_xCenter);
 	next_position.z = LEGACY_S16_WRAP_SUB(
 		next_world_position->z, elem_zCenter);
-	if (track_tile != 0 && terrain_tile >= HILL_TERRAIN_FIRST &&
+	if (track_tile != TRACK_TILE_EMPTY && terrain_tile >= HILL_TERRAIN_FIRST &&
 		terrain_tile < HILL_TERRAIN_END)
 		track_tile = subst_hillroad_track(terrain_tile, track_tile);
 
@@ -495,12 +532,14 @@ void build_track_object(struct VECTOR* world_position,
 	element_orientation = (legacy_s16)track_object->ss_rotY;
 	track_rotate_local(&position, element_orientation);
 	track_rotate_local(&next_position, element_orientation);
-	surface_type = (legacy_s8)((legacy_u8)track_object->ss_surfaceType + 1U);
-	if (surface_type < 1)
-		surface_type = 1;
+	surface_type = (legacy_s8)((legacy_u8)track_object->ss_surfaceType +
+		TRACK_SURFACE_TYPE_OFFSET);
+	if (surface_type < TRACK_SURFACE_TYPE_MINIMUM)
+		surface_type = TRACK_SURFACE_TYPE_MINIMUM;
 	absolute_x = absolute_word(position.x);
 	absolute_z = absolute_word(position.z);
-	if (physical_model < 0 || physical_model > TRACK_PHYSICAL_MODEL_MAXIMUM)
+	if (physical_model < PHYSICAL_MODEL_MINIMUM ||
+		physical_model > TRACK_PHYSICAL_MODEL_MAXIMUM)
 		break;
 
 	switch (physical_model) {
@@ -1247,21 +1286,22 @@ void build_track_object(struct VECTOR* world_position,
 	}
 	} while (0);
 
-	if (terrain_tile >= 7U) {
+	if (terrain_tile >= HILL_TERRAIN_FIRST) {
 		position.x = LEGACY_S16_WRAP_SUB(world_position->x,
 			(legacy_s16)trackcenterpos2[track_column]);
 		position.z = LEGACY_S16_WRAP_SUB(world_position->z,
 			(legacy_s16)terraincenterpos[track_row]);
-		if (terrain_tile <= 0x12U) {
-			switch ((terrain_tile - 7U) & 3U) {
-			case 0:
+		if (terrain_tile <= TERRAIN_ORIENTED_LAST_TILE) {
+			switch ((terrain_tile - HILL_TERRAIN_FIRST) &
+				TERRAIN_ORIENTATION_MASK) {
+			case TERRAIN_ORIENTATION_DEFAULT_INDEX:
 				element_orientation = 0;
 				break;
-			case 1:
+			case TERRAIN_ORIENTATION_THREE_QUARTER_INDEX:
 				element_orientation = ANGLE_THREE_QUARTER_TURN;
 				track_rotate_local(&position, ANGLE_THREE_QUARTER_TURN);
 				break;
-			case 2:
+			case TERRAIN_ORIENTATION_HALF_INDEX:
 				element_orientation = ANGLE_HALF_TURN;
 				track_rotate_local(&position, ANGLE_HALF_TURN);
 				break;
@@ -1271,39 +1311,44 @@ void build_track_object(struct VECTOR* world_position,
 				break;
 			}
 		}
-		if (terrain_tile <= 0x0AU) {
-			if (planindex == 0)
-				planindex = 3;
+		if (terrain_tile < HILL_TERRAIN_END) {
+			if (planindex == NO_PLANE_INDEX)
+				planindex = TERRAIN_FLAT_PLANE_INDEX;
 		} else {
 			value = LEGACY_S16_WRAP_ADD(
-				multiply_and_scale(sin_fast((legacy_u16)-0x80),
+				multiply_and_scale(sin_fast(
+					(legacy_u16)TERRAIN_SLOPE_5_ANGLE),
 					position.z),
-				multiply_and_scale(cos_fast((legacy_u16)-0x80),
+				multiply_and_scale(cos_fast(
+					(legacy_u16)TERRAIN_SLOPE_5_ANGLE),
 					position.x));
-			if (terrain_tile <= 0x0EU) {
+			if (terrain_tile <= TERRAIN_SLOPE_DOWN_LAST_TILE) {
 				if (value < 0)
-					planindex = 4;
-			} else if (terrain_tile <= 0x12U) {
+					planindex = TERRAIN_SLOPE_DOWN_PLANE_INDEX;
+			} else if (terrain_tile <= TERRAIN_ORIENTED_LAST_TILE) {
 				if (value > 0)
-					planindex = 5;
+					planindex = TERRAIN_SLOPE_UP_PLANE_INDEX;
 				else
-					terrainHeight = 0x1C2;
+					terrainHeight = TERRAIN_UPPER_HEIGHT;
 			}
 		}
 	}
 	}
 
-	if (planindex > 0) {
-		planindex = LEGACY_S16_WRAP_MUL(planindex, 4);
+	if (planindex > NO_PLANE_INDEX) {
+		planindex = LEGACY_S16_WRAP_MUL(planindex, PLANE_ORIENTATION_COUNT);
 		switch ((legacy_u16)element_orientation) {
 		case ANGLE_QUARTER_TURN:
-			planindex = LEGACY_S16_WRAP_ADD(planindex, 3);
+			planindex = LEGACY_S16_WRAP_ADD(planindex,
+				PLANE_QUARTER_TURN_OFFSET);
 			break;
 		case ANGLE_HALF_TURN:
-			planindex = LEGACY_S16_WRAP_ADD(planindex, 2);
+			planindex = LEGACY_S16_WRAP_ADD(planindex,
+				PLANE_HALF_TURN_OFFSET);
 			break;
 		case ANGLE_THREE_QUARTER_TURN:
-			planindex = LEGACY_S16_WRAP_ADD(planindex, 1);
+			planindex = LEGACY_S16_WRAP_ADD(planindex,
+				PLANE_THREE_QUARTER_TURN_OFFSET);
 			break;
 		}
 	}
@@ -1312,9 +1357,11 @@ void build_track_object(struct VECTOR* world_position,
 		value = LEGACY_S16_FROM_BITS(
 			(legacy_u16)(world_position->z ^ world_position->x));
 		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight,
-			(legacy_s16)(LEGACY_U16_SAR(value, 8U) & 1U));
+			(legacy_s16)(LEGACY_U16_SAR(value, GRASS_HEIGHT_HASH_SHIFT) &
+				GRASS_HEIGHT_VARIATION_MASK));
 	} else {
-		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight, 2);
+		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight,
+			NON_GRASS_HEIGHT_OFFSET);
 	}
 
 	if (wallindex < 0)
