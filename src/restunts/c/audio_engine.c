@@ -17,6 +17,12 @@
 #define AUDIO_ENGINE_MAX_VOLUME 127U
 #define AUDIO_ENGINE_UNSET_VOLUME 255U
 #define AUDIO_ENGINE_UNSET_PITCH 65535U
+#define AUDIO_MAX_AUDIBLE_DISTANCE 6000
+#define AUDIO_SPATIAL_INTERVAL_PERCENT 100U
+#define AUDIO_APPROACH_VOLUME_REDUCTION_SHIFT 4U
+#define AUDIO_VECTOR_X_OFFSET 0U
+#define AUDIO_VECTOR_Y_OFFSET 2U
+#define AUDIO_VECTOR_Z_OFFSET 4U
 
 extern legacy_s16 camera_track_height_offset;
 
@@ -238,7 +244,7 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	timer = &audio_timers[index];
 	second_distance = (legacy_u16)polarRadius2D(
 		polarRadius2D(second_x, second_z), second_y);
-	if (LEGACY_S16_FROM_BITS(second_distance) > 0x1770) {
+	if (LEGACY_S16_FROM_BITS(second_distance) > AUDIO_MAX_AUDIBLE_DISTANCE) {
 		timer->target_volume = 0;
 		return;
 	}
@@ -247,13 +253,16 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 		polarRadius2D(first_x, first_z), first_y);
 	distance_delta = LEGACY_U16_WRAP_SUB(
 		first_distance, second_distance);
-	quotient = LEGACY_U16_DIV_OR_ZERO(100U, (legacy_u16)interval);
+	quotient = LEGACY_U16_DIV_OR_ZERO(AUDIO_SPATIAL_INTERVAL_PERCENT,
+		(legacy_u16)interval);
 	scaled_delta = LEGACY_U16_WRAP_MUL(quotient, distance_delta);
 	quotient = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
-		LEGACY_U32_WRAP_MUL(0x7FUL, second_distance), 0x1770UL);
-	volume = LEGACY_U16_WRAP_SUB(0x7FU, quotient);
+		LEGACY_U32_WRAP_MUL(AUDIO_ENGINE_MAX_VOLUME, second_distance),
+		AUDIO_MAX_AUDIBLE_DISTANCE);
+	volume = LEGACY_U16_WRAP_SUB(AUDIO_ENGINE_MAX_VOLUME, quotient);
 	if (LEGACY_S16_FROM_BITS(scaled_delta) > 0)
-		volume = LEGACY_U16_WRAP_SUB(volume, volume >> 4);
+		volume = LEGACY_U16_WRAP_SUB(volume,
+			volume >> AUDIO_APPROACH_VOLUME_REDUCTION_SHIFT);
 
 	engine_definition = &timer->definition;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(
@@ -264,10 +273,12 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	base_rate = LEGACY_U16_WRAP_ADD(base_rate,
 		(legacy_u16)((legacy_u16)definition[AUDIO_ENGINE_RATE_BASE_OFFSET] <<
 			AUDIO_ENGINE_RATE_BASE_SHIFT));
-	denominator = LEGACY_U16_WRAP_SUB(0x1770U, scaled_delta);
+	denominator = LEGACY_U16_WRAP_SUB(AUDIO_MAX_AUDIBLE_DISTANCE,
+		scaled_delta);
 	if (denominator != 0) {
 		base_rate = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
-			LEGACY_U32_WRAP_MUL(0x1770UL, base_rate), denominator);
+			LEGACY_U32_WRAP_MUL(AUDIO_MAX_AUDIBLE_DISTANCE, base_rate),
+			denominator);
 		timer->target_pitch = base_rate;
 	}
 	timer->target_volume = (legacy_u8)volume;
@@ -276,23 +287,43 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 void sub_18D06(const legacy_u8 far* sample, legacy_s16 interval)
 {
 	audio_op_unk2(audio_player_engine_channel,
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1EU)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 6U)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 8U)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0AU)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0CU)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x0EU)),
-		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x10U)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
+			sample + AUDIO_CAR_STATE_PLAYER_RPM_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_PREVIOUS_OFFSET + AUDIO_VECTOR_X_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_PREVIOUS_OFFSET + AUDIO_VECTOR_Y_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_PREVIOUS_OFFSET + AUDIO_VECTOR_Z_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_CURRENT_OFFSET + AUDIO_VECTOR_X_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_CURRENT_OFFSET + AUDIO_VECTOR_Y_OFFSET)),
+		LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+			AUDIO_CAR_STATE_PLAYER_CURRENT_OFFSET + AUDIO_VECTOR_Z_OFFSET)),
 		interval);
 	if (gameconfig.game_opponenttype != 0) {
 		audio_op_unk2(audio_opponent_engine_channel,
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x20U)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x12U)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x14U)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x16U)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x18U)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1AU)),
-			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample + 0x1CU)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
+				sample + AUDIO_CAR_STATE_OPPONENT_RPM_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_PREVIOUS_OFFSET +
+				AUDIO_VECTOR_X_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_PREVIOUS_OFFSET +
+				AUDIO_VECTOR_Y_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_PREVIOUS_OFFSET +
+				AUDIO_VECTOR_Z_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_CURRENT_OFFSET +
+				AUDIO_VECTOR_X_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_CURRENT_OFFSET +
+				AUDIO_VECTOR_Y_OFFSET)),
+			LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(sample +
+				AUDIO_CAR_STATE_OPPONENT_CURRENT_OFFSET +
+				AUDIO_VECTOR_Z_OFFSET)),
 			interval);
 	}
 }
