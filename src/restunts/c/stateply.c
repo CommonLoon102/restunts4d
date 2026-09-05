@@ -5,6 +5,11 @@
 
 #define PLAYER_PHYSICS_WHEEL_COUNT 4
 #define PLAYER_PHYSICS_FRONT_WHEEL_COUNT 2
+#define PLAYER_PHYSICS_FRONT_WHEEL_FIRST 0
+#define PLAYER_PHYSICS_FRONT_WHEEL_SECOND 1
+#define PLAYER_PHYSICS_REAR_WHEEL_FIRST 2
+#define PLAYER_PHYSICS_REAR_WHEEL_SECOND 3
+#define PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT 2U
 #define PLAYER_PHYSICS_COLLISION_POINT_CAPACITY 32
 #define PLAYER_PHYSICS_POSITION_SCALE_SHIFT 6U
 #define PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT 10U
@@ -388,15 +393,16 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		}
 
 		/*
-		 * Rebuild wheel 2 in car-local coordinates, including suspension travel
-		 * and the low-speed inverted-car adjustment.
+		 * Rebuild the first rear wheel in car-local coordinates, including
+		 * suspension travel and the low-speed inverted-car adjustment.
 		 */
 		prepare_opponent_rear_wheel(&vec_1C6, &vec_FC,
-			&var_MmatFromAngleZ, 2, var_F0);
+			&var_MmatFromAngleZ, PLAYER_PHYSICS_REAR_WHEEL_FIRST,
+			var_F0);
 
 		/*
-		 * Rotate wheel 2 into world axes and recover the high word of its world
-		 * Z coordinate, the first aliased stack word.
+		 * Rotate the first rear wheel into world axes and recover the high word
+		 * of its world Z coordinate, the first aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 		var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD] = (legacy_u16)(
@@ -408,13 +414,14 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 			LEGACY_RESIDUE_FIRST_WORD] =
 			var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD];
 
-		/* Rebuild wheel 3 using the same local-coordinate adjustments. */
+		/* Rebuild the second rear wheel with the same local adjustments. */
 		prepare_opponent_rear_wheel(&vec_1C6, &vec_FC,
-			&var_MmatFromAngleZ, 3, var_F0);
+			&var_MmatFromAngleZ, PLAYER_PHYSICS_REAR_WHEEL_SECOND,
+			var_F0);
 
 		/*
-		 * Rotate wheel 3 into world axes and recover the low word of its world
-		 * X coordinate, the second aliased stack word.
+		 * Rotate the second rear wheel into world axes and recover the low word
+		 * of its world X coordinate, the second aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 		var_140someWhlData[LEGACY_RESIDUE_SECOND_WORD] =
@@ -542,13 +549,17 @@ case PLAYER_FLOW_loc_15142:
 	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15163:
-	if (arg_pState->car_surfaceWhl[0] != PLAYER_PHYSICS_SURFACE_WATER)
+	if (arg_pState->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST] !=
+		PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[1] != PLAYER_PHYSICS_SURFACE_WATER)
+	if (arg_pState->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND] !=
+		PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[2] != PLAYER_PHYSICS_SURFACE_WATER)
+	if (arg_pState->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST] !=
+		PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[3] != PLAYER_PHYSICS_SURFACE_WATER)
+	if (arg_pState->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND] !=
+		PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	update_crash_state(CRASH_EVENT_WATER, car_index);
 
@@ -760,7 +771,7 @@ case PLAYER_FLOW_loc_1553F:
 	si++;
 
 case PLAYER_FLOW_loc_15599:
-	if (si < 4)
+	if (si < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_155A1; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_15142; continue; }
 
@@ -1069,14 +1080,29 @@ case PLAYER_FLOW_loc_15E85:
 
 case PLAYER_FLOW_code_update_globalPos:
 	pState_lvec1_x = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(vecl_1C0[0].lx, vecl_1C0[1].lx),
-		LEGACY_S32_WRAP_ADD(vecl_1C0[2].lx, vecl_1C0[3].lx)), 2U);
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lx,
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lx),
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lx,
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lx)),
+		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
 	pState_lvec1_y = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(vecl_1C0[0].ly, vecl_1C0[1].ly),
-		LEGACY_S32_WRAP_ADD(vecl_1C0[2].ly, vecl_1C0[3].ly)), 2U);
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].ly,
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].ly),
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_FIRST].ly,
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_SECOND].ly)),
+		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
 	pState_lvec1_z = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(vecl_1C0[0].lz, vecl_1C0[1].lz),
-		LEGACY_S32_WRAP_ADD(vecl_1C0[2].lz, vecl_1C0[3].lz)), 2U);
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lz,
+			vecl_1C0[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lz),
+		LEGACY_S32_WRAP_ADD(
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lz,
+			vecl_1C0[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lz)),
+		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
 
 	var_DEptrTo1C0 = vecl_1C0;
 	var_wheelIndex = 0;
@@ -1131,10 +1157,16 @@ case PLAYER_FLOW_loc_1604B:
 	pState_lvec1_z = PLAYER_PHYSICS_WORLD_MIN_POSITION;
 
 case PLAYER_FLOW_loc_16057:
-	var_EE = wheel_pair_delta(vec_1DE[3].x, vec_1DE[2].x,
-		vec_1DE[0].x, vec_1DE[1].x);
-	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
-		vec_1DE[0].z, vec_1DE[1].z);
+	var_EE = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x);
+	var_F2 = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
 	pState_minusRotate_y_1 = LEGACY_S16_FROM_BITS((legacy_u16)
 		polarAngle(var_EE, LEGACY_S16_WRAP_NEGATE(var_F2)) & ANGLE_MASK);
 	mat_rot_y(&var_MmatFromAngleZ, pState_minusRotate_y_1);
@@ -1147,10 +1179,16 @@ case PLAYER_FLOW_loc_160A7:
 	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_160A7; continue; }
 
-	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
-		vec_1DE[0].z, vec_1DE[1].z);
-	var_F4 = wheel_pair_delta(vec_1DE[3].y, vec_1DE[2].y,
-		vec_1DE[0].y, vec_1DE[1].y);
+	var_F2 = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
+	var_F4 = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y);
 	//var_F2 = vec_1CC.z + vec_1D2.z - vec_1DE.z - vec_1D8.z;
 	//var_F4 = vec_1CC.y + vec_1D2.y - vec_1DE.y - vec_1D8.y;
 	if (var_F4 != 0)
@@ -1190,10 +1228,16 @@ case PLAYER_FLOW_loc_16169:
 		{ physics_flow = PLAYER_FLOW_loc_16169; continue; }
 
 case PLAYER_FLOW_loc_161AB:
-	var_F2 = wheel_pair_delta(vec_1DE[1].x, vec_1DE[2].x,
-		vec_1DE[0].x, vec_1DE[3].x);
-	var_F4 = wheel_pair_delta(vec_1DE[1].y, vec_1DE[2].y,
-		vec_1DE[0].y, vec_1DE[3].y);
+	var_F2 = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x);
+	var_F4 = wheel_pair_delta(
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
+		vec_1DE[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
+		vec_1DE[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y);
 
 	//var_F2 = vec_1DE[3].x + vec_1DE[2].x - vec_1DE[0].x - vec_1DE[1].x;
 	//var_F4 = vec_1DE[3].y + vec_1DE[2].y - vec_1DE[0].y - vec_1DE[1].y;
@@ -1223,9 +1267,11 @@ case PLAYER_FLOW_loc_16204:
 	pState_minusRotate_z_1 = 0;
 case PLAYER_FLOW_loc_1620A:
 	arg_pState->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
-		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
+		arg_pState->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST],
+		arg_pState->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND]);
 	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
-		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
+		arg_pState->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST],
+		arg_pState->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND]);
 	if (state.game_inputmode != GAME_INPUT_MODE_INTRO)
 		{ physics_flow = PLAYER_FLOW_loc_16236; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
