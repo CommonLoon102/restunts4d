@@ -6,6 +6,83 @@
 #include "resource.h"
 #include "shape2d.h"
 
+#define HIGHSCORE_READ_RETRY_OPERATION 9
+#define HIGHSCORE_READ_ONCE_OPERATION 10
+#define HIGHSCORE_READ_RETRY_CANCEL_RESULT 2
+
+#define HIGHSCORE_NO_HIGHLIGHT LEGACY_U8_MAX
+#define HIGHSCORE_EMPTY_TIME LEGACY_U16_MAX
+#define HIGHSCORE_NORMAL_FRAME_RATE 20
+#define HIGHSCORE_LOW_FRAME_RATE 10
+#define HIGHSCORE_FORMAT_BUFFER_SIZE 18
+#define HIGHSCORE_TEXT_FIELD_COUNT 4
+#define HIGHSCORE_NAME_MAX_CHARACTERS 16
+#define HIGHSCORE_NAME_INPUT_TIMEOUT 30000UL
+
+#define HIGHSCORE_TITLE_Y 5
+#define HIGHSCORE_HEADING_Y 15
+#define HIGHSCORE_FIRST_ROW_Y 25
+#define HIGHSCORE_ROW_HEIGHT 10U
+#define HIGHSCORE_PLAYER_COLUMN_X 16
+#define HIGHSCORE_CAR_COLUMN_X 120
+#define HIGHSCORE_OPPONENT_COLUMN_X 224
+#define HIGHSCORE_TIME_COLUMN_X 272
+
+#define END_SCREEN_WIDTH 320U
+#define END_SCREEN_HEIGHT 200U
+#define END_SCREEN_COLOR 15U
+#define END_SCREEN_TOP_HEIGHT 100
+#define END_SCREEN_BOTTOM_Y 101
+#define END_SCREEN_BOTTOM_HEIGHT 99
+#define END_SCREEN_TEXT_START_Y 107
+#define END_SCREEN_ANIMATION_WIDTH 200U
+#define END_SCREEN_ANIMATION_HEIGHT 100U
+#define END_SCREEN_ANIMATION_RIGHT 312
+#define END_SCREEN_ANIMATION_BOTTOM 99
+#define END_SCREEN_ANIMATION_CENTER_SHIFT 1U
+#define END_SCREEN_ANIMATION_BORDER_INSET 3
+#define END_SCREEN_ANIMATION_BORDER_GROWTH 5
+#define END_SCREEN_ANIMATION_FRAME_TICKS 30
+
+#define END_SCREEN_CONDITION_NOTICE_FLAG 2U
+#define END_SCREEN_KEEP_RANDOM_TEXT_FLAG 4U
+#define END_SCREEN_HIGHSCORE_INELIGIBLE_FLAGS 6U
+#define END_SCREEN_SPEED_FRACTION_BITS 8U
+#define END_SCREEN_NUMBER_WIDTH 3
+
+#define END_SCREEN_OUTCOME_LOSS 0U
+#define END_SCREEN_OUTCOME_WIN 1U
+#define END_SCREEN_OUTCOME_NONE 2U
+#define END_SCREEN_TEXT_VARIANT_COUNT 3U
+#define END_SCREEN_WIN_VARIANT_COUNT 2
+#define END_SCREEN_OUTCOME_VARIANT_COUNT 4
+#define END_SCREEN_FINISHED_VARIANT_OFFSET 2
+#define END_SCREEN_BINARY_RANDOM_MASK 1U
+#define END_SCREEN_FOUR_WAY_RANDOM_MASK 3U
+
+#define END_SCREEN_TEXT_WORD_CAPACITY 32
+#define END_SCREEN_TEXT_ID_SIZE 4
+#define END_SCREEN_TEXT_LEFT 8
+#define END_SCREEN_TEXT_TOP 8
+#define END_SCREEN_TEXT_LINE_HEIGHT 8
+#define END_SCREEN_TEXT_RIGHT_MARGIN 16
+#define END_SCREEN_TEXT_OUTPUT_CAPACITY 80U
+
+#define END_SCREEN_TRACK_RESOURCE_INDEX 4
+#define END_SCREEN_TRACK_VALIDATION_BYTES 901U
+#define END_SCREEN_INITIAL_BLIT_MODE LEGACY_U8_MAX
+#define END_SCREEN_REFRESH_BLIT_MODE 254U
+#define END_SCREEN_MENU_AREA_COUNT 5U
+#define END_SCREEN_BUTTON_COUNT 4U
+#define END_SCREEN_REDUCED_BUTTON_COUNT 3
+#define END_SCREEN_MENU_OFFSET_WITHOUT_FIRST_BUTTON (-36)
+#define END_SCREEN_LAST_BUTTON_INDEX 3U
+#define END_SCREEN_EVALUATION_BUTTON_X 129
+#define END_SCREEN_BUTTON_Y 175
+#define END_SCREEN_BUTTON_WIDTH 70
+#define END_SCREEN_BUTTON_HEIGHT 21
+#define END_SCREEN_NO_SCORE_MESSAGE_Y 50
+
 static legacy_u8 ranking_highlight;
 legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
 
@@ -51,15 +128,15 @@ void far* sub_29A86(legacy_s16 operation, const legacy_s8* filename,
 {
 	void far* result;
 
-	if (operation == 10)
+	if (operation == HIGHSCORE_READ_ONCE_OPERATION)
 		return file_read_nofatal(filename, destination);
-	if (operation != 9)
+	if (operation != HIGHSCORE_READ_RETRY_OPERATION)
 		return 0;
 	do {
 		result = file_read_nofatal(filename, destination);
 		if (result != 0)
 			return result;
-	} while (do_dea_textres() != 2);
+	} while (do_dea_textres() != HIGHSCORE_READ_RETRY_CANCEL_RESULT);
 	return 0;
 }
 
@@ -72,14 +149,15 @@ legacy_s16 highscore_write_a(legacy_s16 create_default)
 	legacy_u16 entry;
 	legacy_u16 offset;
 
-	ranking_highlight = 0xFFU;
+	ranking_highlight = HIGHSCORE_NO_HIGHLIGHT;
 	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++)
 		ranking_entry_order[entry] = entry;
 	file_build_path(byte_3B80C, gameconfig.game_trackname,
 		".hig", g_path_buf);
 	if (create_default == 0) {
 		g_is_busy = 1;
-		read_result = sub_29A86(10, g_path_buf, td11_highscores);
+		read_result = sub_29A86(HIGHSCORE_READ_ONCE_OPERATION,
+			g_path_buf, td11_highscores);
 		g_is_busy = 0;
 		return read_result == 0 ? 1 : 0;
 	}
@@ -95,7 +173,7 @@ legacy_s16 highscore_write_a(legacy_s16 create_default)
 	for (offset = 3U; offset < HIGHSCORE_OPPONENT_TEXT_BYTES; offset++)
 		record.opponent[offset] = '.';
 	record.opponent[HIGHSCORE_OPPONENT_TEXT_BYTES] = 0;
-	record.time = 0xFFFFU;
+	record.time = HIGHSCORE_EMPTY_TIME;
 	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++)
 		scores[entry] = record;
@@ -130,7 +208,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 	legacy_u16 output_offset;
 	legacy_s16 saved_frame_rate;
 	legacy_s16 frame_count;
-	legacy_s8 formatted_time[18];
+	legacy_s8 formatted_time[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	legacy_s8* output;
 
 	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
@@ -156,7 +234,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 		(legacy_u16)strlen(output) + 1U);
 
 	saved_frame_rate = framespersec;
-	framespersec = 0x14;
+	framespersec = HIGHSCORE_NORMAL_FRAME_RATE;
 	frame_count = LEGACY_S16_FROM_BITS(record.time);
 	format_frame_as_string(formatted_time,
 		frame_count == -1 ? 0 : frame_count, 1);
@@ -167,7 +245,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 
 void highscore_text_unk(void)
 {
-	legacy_u8 text_offsets[4];
+	legacy_u8 text_offsets[HIGHSCORE_TEXT_FIELD_COUNT];
 	legacy_s16 row;
 	legacy_u16 entry;
 	legacy_s16 color;
@@ -179,36 +257,45 @@ void highscore_text_unk(void)
 	strcat(&resID_byte1, gameconfig.game_trackname);
 	strcat(&resID_byte1, "'");
 	hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
-		5, dialog_fnt_colour, 0);
+		HIGHSCORE_TITLE_Y, dialog_fnt_colour, 0);
 
 	text = locate_text_res(mainresptr, "hs2");
 	copy_string(&resID_byte1, text);
-	hiscore_draw_text(&resID_byte1, 0x10, 0x0F,
+	hiscore_draw_text(&resID_byte1, HIGHSCORE_PLAYER_COLUMN_X,
+		HIGHSCORE_HEADING_Y,
 		dialog_fnt_colour, 0);
 	text = locate_text_res(mainresptr, "hs3");
 	copy_string(&resID_byte1, text);
-	hiscore_draw_text(&resID_byte1, 0x78, 0x0F,
+	hiscore_draw_text(&resID_byte1, HIGHSCORE_CAR_COLUMN_X,
+		HIGHSCORE_HEADING_Y,
 		dialog_fnt_colour, 0);
 	text = locate_text_res(mainresptr, "hs5");
 	copy_string(&resID_byte1, text);
-	hiscore_draw_text(&resID_byte1, 0xE0, 0x0F,
+	hiscore_draw_text(&resID_byte1, HIGHSCORE_OPPONENT_COLUMN_X,
+		HIGHSCORE_HEADING_Y,
 		dialog_fnt_colour, 0);
 	text = locate_text_res(mainresptr, "hs4");
 	copy_string(&resID_byte1, text);
-	hiscore_draw_text(&resID_byte1, 0x110, 0x0F,
+	hiscore_draw_text(&resID_byte1, HIGHSCORE_TIME_COLUMN_X,
+		HIGHSCORE_HEADING_Y,
 		dialog_fnt_colour, 0);
 
 	font_set_fontdef2(fontnptr);
-	for (entry = 0; entry < 7U; entry++) {
+	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		print_highscore_entry(entry, text_offsets);
 		row = LEGACY_S16_WRAP_ADD(
-			LEGACY_U16_WRAP_MUL(entry, 10U), 0x19);
+			LEGACY_U16_WRAP_MUL(entry, HIGHSCORE_ROW_HEIGHT),
+			HIGHSCORE_FIRST_ROW_Y);
 		color = entry == (legacy_u8)ranking_highlight ? dialogarg2 : 0;
 		font_set_unk(color, 0);
-		font_draw_text(&resID_byte1 + text_offsets[0], 0x10, row);
-		font_draw_text(&resID_byte1 + text_offsets[1], 0x78, row);
-		font_draw_text(&resID_byte1 + text_offsets[2], 0xE0, row);
-		font_draw_text(&resID_byte1 + text_offsets[3], 0x110, row);
+		font_draw_text(&resID_byte1 + text_offsets[0],
+			HIGHSCORE_PLAYER_COLUMN_X, row);
+		font_draw_text(&resID_byte1 + text_offsets[1],
+			HIGHSCORE_CAR_COLUMN_X, row);
+		font_draw_text(&resID_byte1 + text_offsets[2],
+			HIGHSCORE_OPPONENT_COLUMN_X, row);
+		font_draw_text(&resID_byte1 + text_offsets[3],
+			HIGHSCORE_TIME_COLUMN_X, row);
 	}
 	font_set_fontdef();
 }
@@ -230,7 +317,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	legacy_s16 positions[2];
 
 	time_bits = (legacy_u16)frame_count;
-	if (framespersec == 0x0A)
+	if (framespersec == HIGHSCORE_LOW_FRAME_RATE)
 		time_bits = LEGACY_U16_WRAP_MUL(time_bits, 2U);
 	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 	if (scores[HIGHSCORE_LAST_ENTRY_INDEX].time <= time_bits) {
@@ -240,14 +327,14 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 
 	entry = 0;
 	while (scores[entry].time <= time_bits) {
-		if (entry >= 7U)
+		if (entry >= HIGHSCORE_ENTRY_COUNT)
 			break;
 		ranking_entry_order[entry] = (legacy_s16)entry;
 		entry++;
 	}
 	rank = entry;
 	ranking_highlight = (legacy_u8)rank;
-	while (entry < 6U) {
+	while (entry < HIGHSCORE_LAST_ENTRY_INDEX) {
 		ranking_entry_order[entry + 1U] = (legacy_s16)entry;
 		entry++;
 	}
@@ -274,8 +361,8 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	show_dialog(3, 0, prompt, DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, positions, 0);
 	check_input();
-	call_read_line(byte_459E0, 0x10, positions[0], positions[1],
-		0x7530UL);
+	call_read_line(byte_459E0, HIGHSCORE_NAME_MAX_CHARACTERS,
+		positions[0], positions[1], HIGHSCORE_NAME_INPUT_TIMEOUT);
 	strcpy(record.player_name, byte_459E0);
 	scores[HIGHSCORE_LAST_ENTRY_INDEX] = record;
 
@@ -301,7 +388,7 @@ static void end_hiscore_draw_current_text(legacy_s16* y)
 {
 	hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), *y,
 		dialog_fnt_colour, 0);
-	*y = LEGACY_S16_WRAP_ADD(*y, 10);
+	*y = LEGACY_S16_WRAP_ADD(*y, HIGHSCORE_ROW_HEIGHT);
 }
 
 static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
@@ -341,8 +428,9 @@ static void end_hiscore_advance_animation(legacy_s16 delta,
 	legacy_s16* timer, legacy_u8* frame, const legacy_u8 far* frame_sequence)
 {
 	*timer = LEGACY_S16_WRAP_ADD(*timer, delta);
-	if (*timer >= 0x1E) {
-		*timer = LEGACY_S16_WRAP_SUB(*timer, 0x1E);
+	if (*timer >= END_SCREEN_ANIMATION_FRAME_TICKS) {
+		*timer = LEGACY_S16_WRAP_SUB(*timer,
+			END_SCREEN_ANIMATION_FRAME_TICKS);
 		(*frame)++;
 		if (frame_sequence[*frame] == 0)
 			*frame = 0;
@@ -367,8 +455,8 @@ static void end_hiscore_update_animation(legacy_s16 delta,
 static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	legacy_u8 outcome, legacy_u8 text_prefix, legacy_s16 animation_x)
 {
-	legacy_s8 word[32];
-	legacy_s8 text_id[4];
+	legacy_s8 word[END_SCREEN_TEXT_WORD_CAPACITY];
+	legacy_s8 text_id[END_SCREEN_TEXT_ID_SIZE];
 	legacy_s8 far* text;
 	legacy_u8 character;
 	legacy_u16 resource_index;
@@ -382,14 +470,15 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	legacy_s16 line_y;
 	legacy_s16 selector;
 
-	line_y = 8;
+	line_y = END_SCREEN_TEXT_TOP;
 	output_length = 0;
 	line_width = 0;
 	word_length = 0;
-	resource_count = outcome == 2 ? 1U : 3U;
+	resource_count = outcome == END_SCREEN_OUTCOME_NONE ?
+		1U : END_SCREEN_TEXT_VARIANT_COUNT;
 	for (resource_index = 0; resource_index < resource_count;
 		resource_index++) {
-		if (outcome == 2) {
+		if (outcome == END_SCREEN_OUTCOME_NONE) {
 			text = locate_text_res(opponent_resource, aD4a);
 		} else {
 			text_id[0] = (legacy_s8)text_prefix;
@@ -416,9 +505,10 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 			word[word_length] = 0;
 			word_width = (legacy_s16)font_op2(word);
 			if (LEGACY_S16_WRAP_ADD(word_width, line_width) <
-				LEGACY_S16_WRAP_SUB(animation_x, 0x10) &&
+				LEGACY_S16_WRAP_SUB(animation_x,
+					END_SCREEN_TEXT_RIGHT_MARGIN) &&
 				LEGACY_U16_WRAP_ADD(output_length, word_length) <
-				0x50U) {
+				END_SCREEN_TEXT_OUTPUT_CAPACITY) {
 				for (copy_index = 0; copy_index < word_length;
 					copy_index++) {
 					(&resID_byte1)[output_length++] = word[copy_index];
@@ -427,8 +517,10 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 					word_width);
 			} else {
 				(&resID_byte1)[output_length] = 0;
-				font_draw_text(&resID_byte1, 8, line_y);
-				line_y = LEGACY_S16_WRAP_ADD(line_y, 8);
+				font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT,
+					line_y);
+				line_y = LEGACY_S16_WRAP_ADD(line_y,
+					END_SCREEN_TEXT_LINE_HEIGHT);
 				first_character = word[0] == ' ' ? 1U : 0U;
 				output_length = 0;
 				for (copy_index = first_character;
@@ -450,14 +542,14 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	if (output_length != 0) {
 		font_set_fontdef2(fontnptr);
 		(&resID_byte1)[output_length] = 0;
-		font_draw_text(&resID_byte1, 8, line_y);
+		font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line_y);
 		font_set_fontdef();
 	}
 }
 
 legacy_u16 end_hiscore(void)
 {
-	legacy_s8 number[18];
+	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	legacy_s8 far* misc_resource;
 	legacy_s8 far* opponent_resource;
 	legacy_s8 far* animation_resource;
@@ -466,8 +558,8 @@ legacy_u16 end_hiscore(void)
 	struct HIGHSCORE_ENTRY far* scores;
 	struct SPRITE far* animation_sprite;
 	struct SHAPE2D far* frame_shape;
-	struct BUTTON_AREA menu_areas[5];
-	struct BUTTON_AREA button_areas[4];
+	struct BUTTON_AREA menu_areas[END_SCREEN_MENU_AREA_COUNT];
+	struct BUTTON_AREA button_areas[END_SCREEN_BUTTON_COUNT];
 	legacy_s8 score_status;
 	legacy_u8 outcome;
 	legacy_u8 opponent_active;
@@ -495,7 +587,7 @@ legacy_u16 end_hiscore(void)
 	legacy_s16 random_value;
 	legacy_u16 result;
 
-	ensure_file_exists(4);
+	ensure_file_exists(END_SCREEN_TRACK_RESOURCE_INDEX);
 	misc_resource = (legacy_s8 far*)file_load_resfile(aMisc_2);
 	opponent_resource = 0;
 	if (gameconfig.game_opponenttype != 0) {
@@ -503,25 +595,29 @@ legacy_u16 end_hiscore(void)
 		opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
 	}
 
-	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+	render_window_sprite = sprite_make_wnd(END_SCREEN_WIDTH,
+		END_SCREEN_HEIGHT, END_SCREEN_COLOR);
 	animation_sprite = 0;
 	if (video_flag5_is0 != 0)
-		animation_sprite = sprite_make_wnd(0xC8U, 0x64U, 0x0FU);
-	blit_mode = 0xFFU;
+		animation_sprite = sprite_make_wnd(END_SCREEN_ANIMATION_WIDTH,
+			END_SCREEN_ANIMATION_HEIGHT, END_SCREEN_COLOR);
+	blit_mode = END_SCREEN_INITIAL_BLIT_MODE;
 	sprite_copy_wnd_to_1_clear();
-	draw_button(0, 0, 0, 0x140, 0x64,
+	draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
-	draw_button(0, 0, 0x65, 0x140, 0x63,
+	draw_button(0, 0, END_SCREEN_BOTTOM_Y, END_SCREEN_WIDTH,
+		END_SCREEN_BOTTOM_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
 
-	text_y = 0x6B;
+	text_y = END_SCREEN_TEXT_START_Y;
 	end_hiscore_set_text(misc_resource, aElt);
 	if (gState_total_finish_time != 0) {
 		format_frame_as_string(number,
 			LEGACY_S16_WRAP_SUB(gState_total_finish_time,
 				gState_penalty), 1);
 		strcat(&resID_byte1, number);
-		if (((legacy_u8)byte_43966 & 2U) != 0)
+		if (((legacy_u8)byte_43966 &
+			END_SCREEN_CONDITION_NOTICE_FLAG) != 0)
 			end_hiscore_append_text(misc_resource, aCon);
 		end_hiscore_draw_current_text(&text_y);
 		if (gState_penalty != 0) {
@@ -535,47 +631,50 @@ legacy_u16 end_hiscore(void)
 		end_hiscore_draw_current_text(&text_y);
 	}
 
-	outcome = 2;
+	outcome = END_SCREEN_OUTCOME_NONE;
 	if (gameconfig.game_opponenttype != 0) {
 		if (gState_144 == 0) {
 			end_hiscore_set_text(misc_resource, aOlt);
 			end_hiscore_append_text(misc_resource, aDnf_0);
 			if (gState_total_finish_time != 0)
-				outcome = 0;
+				outcome = END_SCREEN_OUTCOME_LOSS;
 		} else if (gState_total_finish_time == 0 ||
 			(legacy_u16)gState_144 <
 				(legacy_u16)gState_total_finish_time) {
 			end_hiscore_set_text(misc_resource, aOwt);
 			format_frame_as_string(number, gState_144, 1);
 			strcat(&resID_byte1, number);
-			outcome = 1;
+			outcome = END_SCREEN_OUTCOME_WIN;
 		} else {
 			end_hiscore_set_text(misc_resource, aOlt_0);
 			format_frame_as_string(number, gState_144, 1);
 			strcat(&resID_byte1, number);
-			outcome = 0;
+			outcome = END_SCREEN_OUTCOME_LOSS;
 		}
 		end_hiscore_draw_current_text(&text_y);
 	}
 
-	if (outcome == 0)
+	if (outcome == END_SCREEN_OUTCOME_LOSS)
 		file_load_audiores(aSkidvict, aSkidms_1, aVict);
 	else
 		file_load_audiores(aSkidover, aSkidms_2, aOver);
 
 	opponent_active = (legacy_u8)gameconfig.game_opponenttype;
-	if (outcome == 2 && gState_pEndFrame != gState_oEndFrame)
+	if (outcome == END_SCREEN_OUTCOME_NONE &&
+		gState_pEndFrame != gState_oEndFrame)
 		opponent_active = 0;
 
 	end_hiscore_set_text(misc_resource, aAvs);
 	duration = LEGACY_U16_WRAP_ADD(gState_pEndFrame, elapsed_time1);
 	if (duration != 0) {
 		average_speed = (legacy_u16)(LEGACY_U32_DIV_OR_ZERO(
-			(legacy_u32)gState_travDist, (legacy_u32)duration) >> 8);
+			(legacy_u32)gState_travDist, (legacy_u32)duration) >>
+			END_SCREEN_SPEED_FRACTION_BITS);
 	} else {
 		average_speed = 0;
 	}
-	print_int_as_string_maybe(number, average_speed, 0, 3);
+	print_int_as_string_maybe(number, average_speed, 0,
+		END_SCREEN_NUMBER_WIDTH);
 	strcat(&resID_byte1, number);
 	end_hiscore_append_text(misc_resource, aMph);
 	end_hiscore_draw_current_text(&text_y);
@@ -583,7 +682,9 @@ legacy_u16 end_hiscore(void)
 	if (gState_impactSpeed != 0) {
 		end_hiscore_set_text(misc_resource, aImp);
 		print_int_as_string_maybe(number,
-			(legacy_u16)gState_impactSpeed >> 8, 0, 3);
+			(legacy_u16)gState_impactSpeed >>
+				END_SCREEN_SPEED_FRACTION_BITS,
+			0, END_SCREEN_NUMBER_WIDTH);
 		strcat(&resID_byte1, number);
 		end_hiscore_append_text(misc_resource, aMph_0);
 		end_hiscore_draw_current_text(&text_y);
@@ -591,13 +692,15 @@ legacy_u16 end_hiscore(void)
 
 	end_hiscore_set_text(misc_resource, aTop);
 	print_int_as_string_maybe(number,
-		(legacy_u16)gState_topSpeed >> 8, 0, 3);
+		(legacy_u16)gState_topSpeed >> END_SCREEN_SPEED_FRACTION_BITS,
+		0, END_SCREEN_NUMBER_WIDTH);
 	strcat(&resID_byte1, number);
 	end_hiscore_append_text(misc_resource, aMph_1);
 	end_hiscore_draw_current_text(&text_y);
 	if (gState_jumpCount != 0) {
 		end_hiscore_set_text(misc_resource, aJum);
-		print_int_as_string_maybe(number, gState_jumpCount, 0, 3);
+		print_int_as_string_maybe(number, gState_jumpCount, 0,
+			END_SCREEN_NUMBER_WIDTH);
 		strcat(&resID_byte1, number);
 		hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
 			text_y, dialog_fnt_colour, 0);
@@ -607,27 +710,33 @@ legacy_u16 end_hiscore(void)
 	animation_sequence = 0;
 	text_prefix = 0;
 	if (opponent_active != 0) {
-		if (((legacy_u8)byte_43966 & 4U) == 0) {
+		if (((legacy_u8)byte_43966 &
+			END_SCREEN_KEEP_RANDOM_TEXT_FLAG) == 0) {
 			word_40D3A = word_40D40;
 			word_40D3C = end_hiscore_random;
 			word_40D3E = word_40D44;
 			random_value = (legacy_s16)get_super_random();
-			word_40D40 = (legacy_s16)(random_value % 3);
+			word_40D40 = (legacy_s16)(random_value %
+				END_SCREEN_TEXT_VARIANT_COUNT);
 			if (word_40D40 == word_40D3A)
 				word_40D40 = word_3BCDE[(legacy_u16)word_40D40];
 			random_value = (legacy_s16)get_super_random();
-			word_40D44 = (legacy_s16)(random_value % 3);
+			word_40D44 = (legacy_s16)(random_value %
+				END_SCREEN_TEXT_VARIANT_COUNT);
 			if (word_40D44 == word_40D3E)
 				word_40D44 = word_3BCDE[(legacy_u16)word_40D44];
 
 			random_value = (legacy_s16)get_super_random();
-			if (outcome == 1) {
-				end_hiscore_random = (legacy_s16)(random_value % 2);
+			if (outcome == END_SCREEN_OUTCOME_WIN) {
+				end_hiscore_random = (legacy_s16)(random_value %
+					END_SCREEN_WIN_VARIANT_COUNT);
 				if (gState_total_finish_time != 0)
 					end_hiscore_random = LEGACY_S16_WRAP_ADD(
-						end_hiscore_random, 2);
+						end_hiscore_random,
+						END_SCREEN_FINISHED_VARIANT_OFFSET);
 			} else {
-				end_hiscore_random = (legacy_s16)(random_value % 4);
+				end_hiscore_random = (legacy_s16)(random_value %
+					END_SCREEN_OUTCOME_VARIANT_COUNT);
 			}
 			if (end_hiscore_random == word_40D3C) {
 				end_hiscore_random = word_3BCE4[
@@ -635,26 +744,29 @@ legacy_u16 end_hiscore(void)
 			}
 		}
 
-		if (outcome == 1) {
+		if (outcome == END_SCREEN_OUTCOME_WIN) {
 			aOpp2win[3] = (legacy_s8)(opponent_active + '0');
 			animation_resource = (legacy_s8 far*)file_load_resource(
-				3, aOpp2win);
+				FILE_RESOURCE_SHAPE2D_COLLECTION, aOpp2win);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
 				opponent_resource, aWinn);
 			end_hiscore_random = (legacy_s16)(
-				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) & 1U);
+				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) &
+				END_SCREEN_BINARY_RANDOM_MASK);
 			if (gState_total_finish_time != 0)
 				end_hiscore_random = LEGACY_S16_WRAP_ADD(
-					end_hiscore_random, 2);
+					end_hiscore_random,
+					END_SCREEN_FINISHED_VARIANT_OFFSET);
 			text_prefix = 'v';
 		} else {
 			aOpp2lose[3] = (legacy_s8)(opponent_active + '0');
 			animation_resource = (legacy_s8 far*)file_load_resource(
-				3, aOpp2lose);
+				FILE_RESOURCE_SHAPE2D_COLLECTION, aOpp2lose);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
 				opponent_resource, aLose);
 			end_hiscore_random = (legacy_s16)(
-				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) & 3U);
+				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) &
+				END_SCREEN_FOUR_WAY_RANDOM_MASK);
 			text_prefix = 'd';
 		}
 	}
@@ -671,10 +783,10 @@ legacy_u16 end_hiscore(void)
 			dialogarg2, 0, 0);
 		if (result != 0)
 			track_resource = (legacy_u8 far*)file_load_resource(
-				1, g_path_buf);
+				FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 	}
 	if (track_resource != 0) {
-		for (i = 0; i < 0x385U; i++) {
+		for (i = 0; i < END_SCREEN_TRACK_VALIDATION_BYTES; i++) {
 			if (track_resource[i] != td14_elem_map_main[i]) {
 				score_status = -1;
 				break;
@@ -693,7 +805,8 @@ legacy_u16 end_hiscore(void)
 	if (score_status == 0 && gState_total_finish_time != 0) {
 		finish_time = gState_total_finish_time;
 		scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
-		if (((legacy_u8)byte_43966 & 6U) == 0 &&
+		if (((legacy_u8)byte_43966 &
+			END_SCREEN_HIGHSCORE_INELIGIBLE_FLAGS) == 0 &&
 			scores[HIGHSCORE_LAST_ENTRY_INDEX].time >
 				(legacy_u16)finish_time) {
 			score_status = 1;
@@ -701,7 +814,7 @@ legacy_u16 end_hiscore(void)
 	}
 
 	animation_frame = 0;
-	animation_timer = 0x1E;
+	animation_timer = END_SCREEN_ANIMATION_FRAME_TICKS;
 	evaluation_screen = 1;
 
 	for (;;) {
@@ -722,13 +835,14 @@ legacy_u16 end_hiscore(void)
 			enter_hiscore(finish_time,
 				locate_text_res(misc_resource, aInh_0), 0);
 			score_status = 0;
-			blit_mode = 0xFEU;
+			blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
 		} else {
 			mouse_draw_opaque_check();
 			if (score_status == -1) {
 				end_hiscore_set_text(misc_resource, aHna);
 				hiscore_draw_text(&resID_byte1,
-					font_op2_alt(&resID_byte1), 0x32,
+					font_op2_alt(&resID_byte1),
+					END_SCREEN_NO_SCORE_MESSAGE_Y,
 					dialog_fnt_colour, 0);
 			} else {
 				highscore_text_unk();
@@ -742,15 +856,21 @@ legacy_u16 end_hiscore(void)
 		animation_resource, aOp01);
 	animation_width = LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
 		video_flag1_is1);
-	animation_x = LEGACY_S16_WRAP_SUB(0x138, animation_width);
+	animation_x = LEGACY_S16_WRAP_SUB(END_SCREEN_ANIMATION_RIGHT,
+		animation_width);
 	animation_y = LEGACY_S16_WRAP_SUB(
-		0x63, shape2d_get_height(frame_shape));
+		END_SCREEN_ANIMATION_BOTTOM, shape2d_get_height(frame_shape));
 	animation_y = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_SAR((legacy_u16)animation_y, 1U));
-	draw_lines_unk(LEGACY_S16_WRAP_SUB(animation_x, 3),
-		LEGACY_S16_WRAP_SUB(animation_y, 3),
-		LEGACY_S16_WRAP_ADD(animation_width, 5),
-		LEGACY_S16_WRAP_ADD(shape2d_get_height(frame_shape), 5),
+		LEGACY_U16_SAR((legacy_u16)animation_y,
+			END_SCREEN_ANIMATION_CENTER_SHIFT));
+	draw_lines_unk(LEGACY_S16_WRAP_SUB(animation_x,
+			END_SCREEN_ANIMATION_BORDER_INSET),
+		LEGACY_S16_WRAP_SUB(animation_y,
+			END_SCREEN_ANIMATION_BORDER_INSET),
+		LEGACY_S16_WRAP_ADD(animation_width,
+			END_SCREEN_ANIMATION_BORDER_GROWTH),
+		LEGACY_S16_WRAP_ADD(shape2d_get_height(frame_shape),
+			END_SCREEN_ANIMATION_BORDER_GROWTH),
 		dialog_fnt_colour, 0, word_407D2);
 	aOp01[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
 	shape2d_op_unk5((struct SHAPE2D far*)locate_shape_fatal(
@@ -766,23 +886,26 @@ legacy_u16 end_hiscore(void)
 	score_status = 0;
 	evaluation_screen = 1;
 	draw_button(locate_text_res(misc_resource, aBct),
-		0x81, 0xAF, 0x46, 0x15,
+		END_SCREEN_EVALUATION_BUTTON_X, END_SCREEN_BUTTON_Y,
+		END_SCREEN_BUTTON_WIDTH, END_SCREEN_BUTTON_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
-	blit_mode = 0xFEU;
+	blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
 	sub_29772();
 	check_input();
 	sprite_copy_2_to_1_2();
-	for (i = 0; i < 5U; i++) {
+	for (i = 0; i < END_SCREEN_MENU_AREA_COUNT; i++) {
 		menu_areas[i].x1 = word_3BCEC[i];
 		menu_areas[i].x2 = word_3BCF6[i];
 		menu_areas[i].y1 = hiscore_buttons_y1[i];
 		menu_areas[i].y2 = hiscore_buttons_y2[i];
 	}
-	text_resource_count = outcome == 2 ? 1U : 3U;
+	text_resource_count = outcome == END_SCREEN_OUTCOME_NONE ?
+		1U : END_SCREEN_TEXT_VARIANT_COUNT;
 	for (;;) {
-		delta = (legacy_s16)mouse_timer_sprite_unk(4, menu_areas,
+		delta = (legacy_s16)mouse_timer_sprite_unk(
+			END_SCREEN_BUTTON_COUNT, menu_areas,
 			word_407CE, word_407D0);
 		end_hiscore_update_animation(delta, &animation_timer,
 			&animation_frame, &previous_animation_frame,
@@ -796,9 +919,10 @@ legacy_u16 end_hiscore(void)
 	}
 
 	sprite_copy_wnd_to_1();
-	draw_button(0, 0, 0, 0x140, 0x64,
+	draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
-	sprite_set_1_size(8, 0x138, hiscore_buttons_y1[0],
+	sprite_set_1_size(END_SCREEN_TEXT_LEFT, END_SCREEN_ANIMATION_RIGHT,
+		hiscore_buttons_y1[0],
 		LEGACY_S16_WRAP_ADD(hiscore_buttons_y2[0], 1));
 	sprite_clear_1_color(word_407F8);
 	mouse_draw_opaque_check();
@@ -811,32 +935,36 @@ legacy_u16 end_hiscore(void)
 	sub_29772();
 	sprite_copy_wnd_to_1();
 	if (opponent_active == 0 || score_status == -1) {
-		menu_offset = -0x24;
+		menu_offset = END_SCREEN_MENU_OFFSET_WITHOUT_FIRST_BUTTON;
 	} else {
 		menu_offset = 0;
 		draw_button(locate_text_res(misc_resource,
 			evaluation_screen != 0 ? aBev : aBhi),
 			LEGACY_S16_WRAP_ADD(word_3BCEC[0], 1),
-			0xAF, 0x46, 0x15,
+			END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
+			END_SCREEN_BUTTON_HEIGHT,
 			word_407F4, word_407F6, word_407F8, 0);
 	}
 	draw_button(locate_text_res(misc_resource, aBrp),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(word_3BCEC[1], menu_offset), 1),
-		0xAF, 0x46, 0x15,
+		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
+		END_SCREEN_BUTTON_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(misc_resource,
 		opponent_active != 0 ? aBra : aBdr),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(word_3BCEC[2], menu_offset), 1),
-		0xAF, 0x46, 0x15,
+		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
+		END_SCREEN_BUTTON_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
 	draw_button(locate_text_res(misc_resource, aBmm_0),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(word_3BCEC[3], menu_offset), 1),
-		0xAF, 0x46, 0x15,
+		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
+		END_SCREEN_BUTTON_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
-	for (i = 0; i < 4U; i++) {
+	for (i = 0; i < END_SCREEN_BUTTON_COUNT; i++) {
 		button_areas[i].x1 = LEGACY_S16_WRAP_ADD(word_3BCEC[i], menu_offset);
 		button_areas[i].x2 = LEGACY_S16_WRAP_ADD(word_3BCF6[i], menu_offset);
 		button_areas[i].y1 = hiscore_buttons_y1[i];
@@ -845,14 +973,14 @@ legacy_u16 end_hiscore(void)
 	check_input();
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
-	blit_mode = 0xFEU;
+	blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
 	sprite_copy_2_to_1_2();
 
 	for (;;) {
 	if (previous_selection != selected) {
 		previous_selection = selected;
 		sprite_copy_2_to_1_2();
-		sprite_set_1_size(0, 0x140,
+		sprite_set_1_size(0, END_SCREEN_WIDTH,
 			hiscore_buttons_y1[0],
 			LEGACY_S16_WRAP_ADD(hiscore_buttons_y2[0], 1));
 		mouse_draw_opaque_check();
@@ -864,7 +992,8 @@ legacy_u16 end_hiscore(void)
 
 		delta = (legacy_s16)mouse_timer_sprite_unk(selected, button_areas,
 			word_407CE, word_407D0);
-		if (evaluation_screen == 0 && outcome != 2) {
+		if (evaluation_screen == 0 &&
+			outcome != END_SCREEN_OUTCOME_NONE) {
 			end_hiscore_update_animation(delta, &animation_timer,
 				&animation_frame, &previous_animation_frame,
 				animation_resource, animation_sequence, animation_x,
@@ -872,11 +1001,13 @@ legacy_u16 end_hiscore(void)
 		}
 
 	if (opponent_active == 0 || score_status == -1) {
-		hit = (legacy_s16)mouse_multi_hittest(3, &button_areas[1]);
+		hit = (legacy_s16)mouse_multi_hittest(
+			END_SCREEN_REDUCED_BUTTON_COUNT, &button_areas[1]);
 		if (hit != -1)
 			selected = (legacy_u8)(hit + 1);
 	} else {
-		hit = (legacy_s16)mouse_multi_hittest(4, button_areas);
+		hit = (legacy_s16)mouse_multi_hittest(
+			END_SCREEN_BUTTON_COUNT, button_areas);
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 	}
@@ -886,16 +1017,16 @@ legacy_u16 end_hiscore(void)
 		continue;
 	if (input == KEY_LEFT) {
 		if (opponent_active == 0 || score_status == -1) {
-			selected = selected <= 1 ? 3U :
+			selected = selected <= 1 ? END_SCREEN_LAST_BUTTON_INDEX :
 				(legacy_u8)(selected - 1U);
 		} else {
-			selected = selected == 0 ? 3U :
+			selected = selected == 0 ? END_SCREEN_LAST_BUTTON_INDEX :
 				(legacy_u8)(selected - 1U);
 		}
 		continue;
 	}
 	if (input == KEY_RIGHT) {
-		if (selected < 3U)
+		if (selected < END_SCREEN_LAST_BUTTON_INDEX)
 			selected++;
 		else
 			selected = (opponent_active == 0 ||
@@ -907,7 +1038,7 @@ legacy_u16 end_hiscore(void)
 
 	if (selected == 0) {
 		sprite_copy_wnd_to_1();
-		draw_button(0, 0, 0, 0x140, 0x64,
+		draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 			word_407F4, word_407F6, word_407F8, 0);
 		score_status = evaluation_screen != 0 ? 0 : 2;
 		break;
