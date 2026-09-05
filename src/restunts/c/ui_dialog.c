@@ -11,6 +11,20 @@
 #define RST_ASC_CHAR_UPPER 1
 #define RST_ASC_CHAR_LOWER 2
 #define RST_ASC_CONTROL    32
+#define ASCII_CASE_OFFSET 32U
+#define DIALOG_DEFAULT_WIDTH 32
+#define DIALOG_WIDTH_PADDING 24U
+#define DIALOG_ALIGNMENT_MASK 65528U
+#define DIALOG_SCREEN_WIDTH 320
+#define DIALOG_SCREEN_HEIGHT 200
+#define DIALOG_CENTER_DIVISOR 2
+#define DIALOG_CONTENT_WIDTH_REDUCTION 16
+#define DIALOG_NO_SELECTION 255U
+#define FILE_DIALOG_SEPARATOR_WIDTH 171
+#define FILE_DIALOG_LIST_WIDTH 162
+#define FILE_DIALOG_DIRECTORY_MAX_LENGTH 18
+#define DIALOG_INPUT_TIMEOUT 30000UL
+#define SECURITY_DIALOG_Y 120U
 
 extern legacy_s8 aId1[];
 extern legacy_s8 aId2[];
@@ -84,7 +98,7 @@ static legacy_u16 dialog_ascii_lower(legacy_u16 character)
 {
 	if (character < 256U &&
 		(g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0)
-		character = LEGACY_U16_WRAP_ADD(character, 0x20U);
+		character = LEGACY_U16_WRAP_ADD(character, ASCII_CASE_OFFSET);
 	return character;
 }
 
@@ -150,7 +164,7 @@ legacy_u16 show_dialog(
 
 	line_height = LEGACY_S16_WRAP_ADD(fontdef_unk_0E, 2);
 	dialog_height = 0;
-	dialog_width = 0x20;
+	dialog_width = DIALOG_DEFAULT_WIDTH;
 	mouse_draw_opaque_check();
 
 	cursor = (legacy_s8 far*)text_resource;
@@ -171,17 +185,21 @@ legacy_u16 show_dialog(
 	}
 
 	dialog_width = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_WRAP_ADD((legacy_u16)dialog_width, 0x18U) & 0xFFF8U);
+		LEGACY_U16_WRAP_ADD((legacy_u16)dialog_width,
+			DIALOG_WIDTH_PADDING) & DIALOG_ALIGNMENT_MASK);
 	x = LEGACY_S16_FROM_BITS(x_argument);
 	y = LEGACY_S16_FROM_BITS(y_argument);
 	if (x == -1) {
 		x = LEGACY_S16_DIV_OR_ZERO(
-			LEGACY_S16_WRAP_SUB(0x140, dialog_width), 2);
-		x = LEGACY_S16_FROM_BITS((legacy_u16)x & 0xFFF8U);
+			LEGACY_S16_WRAP_SUB(DIALOG_SCREEN_WIDTH, dialog_width),
+			DIALOG_CENTER_DIVISOR);
+		x = LEGACY_S16_FROM_BITS(
+			(legacy_u16)x & DIALOG_ALIGNMENT_MASK);
 	}
 	if (y == -1)
 		y = LEGACY_S16_DIV_OR_ZERO(
-			LEGACY_S16_WRAP_SUB(0xC8, dialog_height), 2);
+			LEGACY_S16_WRAP_SUB(DIALOG_SCREEN_HEIGHT, dialog_height),
+			DIALOG_CENTER_DIVISOR);
 
 	left = x;
 	right = LEGACY_S16_WRAP_ADD(x, dialog_width);
@@ -189,7 +207,8 @@ legacy_u16 show_dialog(
 	bottom = LEGACY_S16_WRAP_ADD(
 		LEGACY_S16_WRAP_ADD(y, dialog_height), 8);
 	x = LEGACY_S16_WRAP_ADD(x, 8);
-	dialog_width = LEGACY_S16_WRAP_SUB(dialog_width, 0x10);
+	dialog_width = LEGACY_S16_WRAP_SUB(dialog_width,
+		DIALOG_CONTENT_WIDTH_REDUCTION);
 	if (save_background != 0 &&
 		sub_274B0(left, right, top, bottom) == 0)
 		return DIALOG_FAILURE_RESULT;
@@ -305,7 +324,7 @@ legacy_u16 show_dialog(
 		return dialog_finish(result, save_background);
 
 	selected = (legacy_u8)initial_choice;
-	previous = 0xFFU;
+	previous = DIALOG_NO_SELECTION;
 	(void)timer_get_delta_alt();
 	mouse_draw_opaque_check();
 	first_hotkey = 0;
@@ -341,7 +360,7 @@ legacy_u16 show_dialog(
 					choices[index].y1);
 			}
 			mouse_draw_transparent_check();
-			if (previous == 0xFFU)
+			if (previous == DIALOG_NO_SELECTION)
 				check_input();
 			previous = selected;
 		}
@@ -372,7 +391,7 @@ legacy_u16 show_dialog(
 			continue;
 		}
 		if (input == KEY_ESCAPE) {
-			selected = 0xFFU;
+			selected = DIALOG_NO_SELECTION;
 			active = 0;
 			check_input();
 			continue;
@@ -438,14 +457,15 @@ legacy_s8 do_fileselect_dialog(
 	saved_busy = g_is_busy;
 	g_is_busy = 1;
 	preRender_line(positions[4] - 4, positions[5] + 4,
-		positions[4] + 0xAB, positions[5] + 4, dialogarg2);
+		positions[4] + FILE_DIALOG_SEPARATOR_WIDTH,
+		positions[5] + 4, dialogarg2);
 	font_set_unk(dialog_fnt_colour, word_3EB90);
 	copy_string(&resID_byte1, prompt);
 	sub_345BC(&resID_byte1, positions[0], positions[1]);
 
 	for (index = 0; index < 10U; index++) {
 		hit_areas[index].x1 = positions[2];
-		hit_areas[index].x2 = positions[2] + 0xA2;
+		hit_areas[index].x2 = positions[2] + FILE_DIALOG_LIST_WIDTH;
 		if (index == 9U)
 			hit_areas[index].y1 = hit_areas[index - 1U].y1 + 10;
 		else
@@ -461,8 +481,9 @@ legacy_s8 do_fileselect_dialog(
 	found_path = file_combine_and_find(directory, "*", extension);
 	if (found_path == 0) {
 		font_set_unk(dialog_fnt_colour, word_3EB90);
-		key = (legacy_u16)call_read_line(directory, 0x12,
-			positions[2], positions[3], 0x7530UL);
+		key = (legacy_u16)call_read_line(directory,
+			FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
+			DIALOG_INPUT_TIMEOUT);
 		if (key == KEY_ESCAPE) {
 			result = 0;
 			break;
@@ -522,7 +543,8 @@ legacy_s8 do_fileselect_dialog(
 				text_width = (legacy_u16)font_op2(&resID_byte1);
 				sprite_1_unk(positions[2] + text_width,
 					hit_areas[visible_row + 2U].y1,
-					positions[2] + 0xA2 - text_width - positions[2],
+					positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
+						positions[2],
 					8, word_3EB90);
 			}
 			mouse_draw_transparent_check();
@@ -585,8 +607,9 @@ legacy_s8 do_fileselect_dialog(
 			scroll = selected;
 		if (scroll < 0) {
 			font_set_unk(dialog_fnt_colour, word_3EB90);
-			key = (legacy_u16)call_read_line(directory, 0x12,
-				positions[2], positions[3], 0x7530UL);
+			key = (legacy_u16)call_read_line(directory,
+				FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
+				DIALOG_INPUT_TIMEOUT);
 			if (key == KEY_ESCAPE) {
 				result = 0;
 			} else {
@@ -661,7 +684,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 	result = 0;
 	for (;;) {
 		key = LEGACY_S16_FROM_BITS(call_read_line(secondary, 8,
-			positions[4], positions[5], 0x7530UL));
+			positions[4], positions[5], DIALOG_INPUT_TIMEOUT));
 		for (character_index = 0; secondary[character_index] != 0;
 			character_index++) {
 			if (secondary[character_index] == ' ')
@@ -673,8 +696,9 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 			result = 1;
 			break;
 		}
-		key = LEGACY_S16_FROM_BITS(call_read_line(primary, 0x12,
-			positions[2], positions[3], 0x7530UL));
+		key = LEGACY_S16_FROM_BITS(call_read_line(primary,
+			FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
+			DIALOG_INPUT_TIMEOUT));
 		if (key == KEY_ESCAPE)
 			break;
 	}
@@ -724,7 +748,7 @@ void security_check(legacy_s16 question_index)
 		question_parts[i] = (legacy_u8)(&resID_byte1)[i];
 
 	show_dialog(3, 1, (void far*)question_text,
-		DIALOG_AUTO_POSITION, 0x78U,
+		DIALOG_AUTO_POSITION, SECURITY_DIALOG_Y,
 		performGraphColor, positions, 0);
 	(&resID_byte1)[2] = 0;
 	(&resID_byte1)[0] = question_parts[0];
@@ -743,12 +767,12 @@ void security_check(legacy_s16 question_index)
 	attempts = 0;
 	for (;;) {
 		call_read_line(answer, answer_length, positions[6], positions[7],
-			0x7530UL);
+			DIALOG_INPUT_TIMEOUT);
 		for (i = 0; answer[i] != 0; i++) {
 			legacy_u8 character = (legacy_u8)answer[i];
 
 			if ((g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0)
-				answer[i] = (legacy_s8)(character + 0x20U);
+				answer[i] = (legacy_s8)(character + ASCII_CASE_OFFSET);
 		}
 		if (strcmp(answer, &resID_byte1) == 0) {
 			passed_security = 1;
