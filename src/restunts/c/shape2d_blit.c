@@ -7,6 +7,13 @@
 #include "shape2d.h"
 #include "shape2d_internal.h"
 
+#define WINDOW_DEFINITION_TABLE_BYTES 3600U
+#define WINDOW_ALLOCATION_OVERHEAD 18L
+#define SPRITE_WINDOW_LEGACY_ARGUMENT 15U
+#define PALETTE_MAP_TRANSPARENT 255U
+#define MCGA_WINDOW_WIDTH 320U
+#define MCGA_WINDOW_HEIGHT 200U
+
 struct SHAPE2D_CLIP {
 	legacy_u16 source;
 	legacy_u16 source_advance;
@@ -85,7 +92,7 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 			destination++;
 			old_remaining = remaining;
 			remaining = LEGACY_U16_WRAP_SUB(remaining, 1U);
-			if (old_remaining == 0x8000U ||
+			if (old_remaining == LEGACY_U16_SIGN_BIT ||
 				LEGACY_S16_FROM_BITS(remaining) <= 0) {
 				line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
 				destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
@@ -187,7 +194,9 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	// it is safe to read/write the pointers to next_wnd_def/wnd_defs, but not the contents
 	wnd = next_wnd_def;
 	nextwnd = next_wnd_def + sizeof(struct SPRITE) + height * sizeof(legacy_u16);
-	if (dos_memory_pointer_offset(nextwnd) >= dos_memory_pointer_offset(&wnd_defs) + 0xE10) {
+	if (dos_memory_pointer_offset(nextwnd) >=
+		dos_memory_pointer_offset(&wnd_defs) +
+		WINDOW_DEFINITION_TABLE_BYTES) {
 		fatal_error(aWindowdefOutOfRowTableSpa);
 	}
 	next_wnd_def = nextwnd;
@@ -287,12 +296,14 @@ legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s
 	width = LEGACY_S16_WRAP_SUB(right, left);
 	height = LEGACY_S16_WRAP_SUB(bottom, top);
 	required = ((legacy_s32)width * height) /
-		((legacy_s32)video_flag1_is1 * video_flag4_is1) + 0x12L;
+		((legacy_s32)video_flag1_is1 * video_flag4_is1) +
+		WINDOW_ALLOCATION_OVERHEAD;
 	if (mmgr_get_res_ofs_diff_scaled() <= (legacy_u32)required)
 		return 0;
 
 	mouse_draw_opaque_check();
-	window = sprite_make_wnd((legacy_u16)width, (legacy_u16)height, 0x0FU);
+	window = sprite_make_wnd((legacy_u16)width, (legacy_u16)height,
+		SPRITE_WINDOW_LEGACY_ARGUMENT);
 	index = byte_3B8FC;
 	sprite_ptrs[index] = window;
 	word_4646A[index] = left;
@@ -623,7 +634,7 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 				shape_segment, clip.source);
 			if (operation == SHAPE2D_RASTER_MAP) {
 				mapped_color = incnums[*source_ptr];
-				if (mapped_color != 0xFFU)
+				if (mapped_color != PALETTE_MAP_TRANSPARENT)
 					bitmap[clip.destination] = mapped_color;
 			} else if (operation == SHAPE2D_RASTER_OR) {
 				bitmap[clip.destination] |= *source_ptr;
@@ -642,7 +653,7 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 			clip.destination, clip.destination_advance);
 		old_row_count = row_count;
 		row_count = LEGACY_U16_WRAP_SUB(row_count, 1U);
-	} while (old_row_count != 0x8000U &&
+	} while (old_row_count != LEGACY_U16_SIGN_BIT &&
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
@@ -703,7 +714,9 @@ void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy
 
 void setup_mcgawnd1(void) {
 	if (!mcgawndsprite) {
-		mcgawndsprite = sprite_make_wnd(320, 200, 0x0F);
+		mcgawndsprite = sprite_make_wnd(
+			MCGA_WINDOW_WIDTH, MCGA_WINDOW_HEIGHT,
+			SPRITE_WINDOW_LEGACY_ARGUMENT);
 	}
 
 	sprite_set_1_from_argptr(&sprite2);
@@ -712,7 +725,9 @@ void setup_mcgawnd1(void) {
 
 void setup_mcgawnd2(void) {
 	if (!mcgawndsprite) {
-		mcgawndsprite = sprite_make_wnd(320, 200, 0x0F);
+		mcgawndsprite = sprite_make_wnd(
+			MCGA_WINDOW_WIDTH, MCGA_WINDOW_HEIGHT,
+			SPRITE_WINDOW_LEGACY_ARGUMENT);
 	}
 
 	sprite_set_1_from_argptr(mcgawndsprite);
