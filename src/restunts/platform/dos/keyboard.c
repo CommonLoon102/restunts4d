@@ -39,6 +39,20 @@ extern legacy_s16 dos_data_stack_segments_match(void);
 #define DOS_KB_ASCII_BYTE_SHIFT LEGACY_BYTE_BITS
 #define DOS_PIC_COMMAND_PORT 32U
 #define DOS_PIC_END_OF_INTERRUPT 32U
+#define DOS_PIC_MASK_PORT 33U
+#define DOS_KB_IRQ_MASK 3U
+#define DOS_KB_HARDWARE_INTERRUPT_VECTOR 9
+#define DOS_KB_BIOS_INTERRUPT_VECTOR 22
+#define DOS_KB_BIOS_READ_FUNCTION 0
+#define DOS_KB_BIOS_STATUS_FUNCTION 1
+#define DOS_KB_BIOS_SHIFT_STATUS_FUNCTION 2
+#define DOS_KB_BIOS_DATA_SEGMENT 64U
+#define DOS_KB_BIOS_FLAGS_OFFSET 23U
+#define DOS_KB_BIOS_FLAGS_LINEAR_OFFSET 1047U
+#define DOS_KB_NUM_LOCK_FLAG 32U
+#define DOS_KB_NUM_LOCK_CLEAR_MASK 223U
+#define DOS_KB_BIOS_SHIFT_FLAGS_CLEAR_MASK 240U
+#define DOS_KB_X86_ZERO_FLAG 64U
 
 static legacy_u8 dos_kb_input[DOS_KB_SCANCODE_COUNT];
 
@@ -226,9 +240,9 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 
 	legacy_u16 result, kbdata;
 	legacy_u8 shiftleft, shiftright;
-	legacy_u8 bioscall = ax >> 8;
+	legacy_u8 bioscall = ax >> LEGACY_BYTE_BITS;
 	disable();
-	if (bioscall == 0) {
+	if (bioscall == DOS_KB_BIOS_READ_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
@@ -237,20 +251,20 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 			return ;
 		}
 		kbdata = dos_kb_buffer_read;
-		result = dos_kb_buffer[kbdata / 2];
-		kbdata+=2;
+		result = dos_kb_buffer[kbdata / DOS_KB_BUFFER_ENTRY_BYTES];
+		kbdata += DOS_KB_BUFFER_ENTRY_BYTES;
 		if (kbdata >= dos_kb_buffer_size)
 			kbdata = 0;
 		dos_kb_buffer_read = kbdata;
 		kbdata = dos_kb_buffer_count;
-		dos_kb_buffer_count = kbdata - 2;
+		dos_kb_buffer_count = kbdata - DOS_KB_BUFFER_ENTRY_BYTES;
 		enable();
 		ax = result;
 		flags = kb_flags_after_subtract_two(kbdata);
 		return ;
 	}
 
-	if (bioscall == 1) {
+	if (bioscall == DOS_KB_BIOS_STATUS_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
@@ -258,19 +272,20 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
 			flags = kb_flags_after_zero();
 			return ;
 		}
-		result = dos_kb_buffer[dos_kb_buffer_read / 2];
+		result = dos_kb_buffer[dos_kb_buffer_read /
+			DOS_KB_BUFFER_ENTRY_BYTES];
 		enable();
 		ax = result;
 		flags = kb_flags_after_compare_zero(kbdata);
 		return ;
 	}
 
-	if (bioscall == 2) {
-		shiftleft = dos_kb_input[0x2A];
-		shiftright = dos_kb_input[0x36];
+	if (bioscall == DOS_KB_BIOS_SHIFT_STATUS_FUNCTION) {
+		shiftleft = dos_kb_input[DOS_KB_LEFT_SHIFT_SCANCODE];
+		shiftright = dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE];
 		result = shiftleft | shiftright;
 		enable();
-		ax = result & 0xFF;
+		ax = result & LEGACY_U8_MAX;
 		flags = kb_flags_after_or(shiftleft, shiftright);
 		return ;
 	}
@@ -285,23 +300,23 @@ void kb_init_interrupt(void) {
 	legacy_s16 i;
 	voidinterruptfunctype current_kb_int9_handler;
 
-	irqmask = inp(0x21);
-	outp(0x21, irqmask | 0x3);
+	irqmask = inp(DOS_PIC_MASK_PORT);
+	outp(DOS_PIC_MASK_PORT, irqmask | DOS_KB_IRQ_MASK);
 
 	// The original compares only the offset word read from vector 9.
-	current_kb_int9_handler = getvect(9);
+	current_kb_int9_handler = getvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR);
 	if (FP_OFF(current_kb_int9_handler) != FP_OFF(kb_int9_handler)) {
 		old_kb_int9_handler = current_kb_int9_handler;
-		setvect(9, kb_int9_handler);
+		setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, kb_int9_handler);
 
-		old_kb_int16_handler = getvect(0x16);
-		setvect(0x16, kb_int16_handler);
+		old_kb_int16_handler = getvect(DOS_KB_BIOS_INTERRUPT_VECTOR);
+		setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, kb_int16_handler);
 	}
 
-	outp(0x21, irqmask);
+	outp(DOS_PIC_MASK_PORT, irqmask);
 
-	// `mov di, offset dos_kb_input / mov cx, 5Ah / xor ax, ax / cld / rep stosb`
-	for (i = 0; i < 0x5A; i++) {
+	/* Clear every tracked hardware scancode state. */
+	for (i = 0; i < DOS_KB_SCANCODE_COUNT; i++) {
 		dos_kb_input[i] = 0;
 	}
 
@@ -311,17 +326,19 @@ void kb_init_interrupt(void) {
 void kb_exit_handler(void) {
 	legacy_u8 irqmask;
 
-	irqmask = inp(0x21);
-	outp(0x21, irqmask | 0x3);
+	irqmask = inp(DOS_PIC_MASK_PORT);
+	outp(DOS_PIC_MASK_PORT, irqmask | DOS_KB_IRQ_MASK);
 
 	// The original guards this block with the saved offset word alone.
 	if (FP_OFF(old_kb_int9_handler) != 0) {
-		setvect(9, old_kb_int9_handler);
-		setvect(0x16, old_kb_int16_handler);
-		pokeb(0, 0x417, peekb(0, 0x417) & 0xf0);
+		setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, old_kb_int9_handler);
+		setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, old_kb_int16_handler);
+		pokeb(0, DOS_KB_BIOS_FLAGS_LINEAR_OFFSET,
+			peekb(0, DOS_KB_BIOS_FLAGS_LINEAR_OFFSET) &
+			DOS_KB_BIOS_SHIFT_FLAGS_CLEAR_MASK);
 	}
 
-	outp(0x21, irqmask);
+	outp(DOS_PIC_MASK_PORT, irqmask);
 }
 
 legacy_s16 kb_get_key_state(legacy_s16 key) {
@@ -333,9 +350,9 @@ legacy_s16 dos_kb_get_char(void)
 	union REGS inregs;
 	union REGS outregs;
 
-	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
-	if ((outregs.x.flags & 0x0040U) != 0)
+	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
+	if ((outregs.x.flags & DOS_KB_X86_ZERO_FLAG) != 0)
 		return 0;
 
 	/* A timer callback may ask while a foreign stack is active.  The original
@@ -343,20 +360,24 @@ legacy_s16 dos_kb_get_char(void)
 	if (dos_data_stack_segments_match() == 0)
 		return outregs.x.ax;
 
-	inregs.h.ah = 0;
-	int86(0x16, &inregs, &outregs);
+	inregs.h.ah = DOS_KB_BIOS_READ_FUNCTION;
+	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	return kb_parse_key(outregs.x.ax);
 }
 
 void dos_kb_set_numlock(void)
 {
-	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) | 0x20U);
+	pokeb(DOS_KB_BIOS_DATA_SEGMENT, DOS_KB_BIOS_FLAGS_OFFSET,
+		peekb(DOS_KB_BIOS_DATA_SEGMENT, DOS_KB_BIOS_FLAGS_OFFSET) |
+		DOS_KB_NUM_LOCK_FLAG);
 	(void)kb_checking();
 }
 
 void dos_kb_clear_numlock(void)
 {
-	pokeb(0x40U, 0x17U, peekb(0x40U, 0x17U) & 0xDFU);
+	pokeb(DOS_KB_BIOS_DATA_SEGMENT, DOS_KB_BIOS_FLAGS_OFFSET,
+		peekb(DOS_KB_BIOS_DATA_SEGMENT, DOS_KB_BIOS_FLAGS_OFFSET) &
+		DOS_KB_NUM_LOCK_CLEAR_MASK);
 	(void)kb_checking();
 }
 
@@ -371,12 +392,12 @@ legacy_s16 kb_read_char(void) {
 	union REGS inregs;
 	union REGS outregs;
 
-	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
+	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	if (!outregs.x.ax) return 0;
 
-	inregs.h.ah = 0;
-	int86(0x16, &inregs, &outregs);
+	inregs.h.ah = DOS_KB_BIOS_READ_FUNCTION;
+	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	// AL == 0 marks an extended key, whose scancode kb_int9_handler put in AH.
 	// The original keeps the whole word in that case (or al,al / jz, skipping
 	// the xor ah,ah) and returns AL alone otherwise.
@@ -389,8 +410,8 @@ legacy_s16 kb_checking(void) {
 	union REGS inregs;
 	union REGS outregs;
 
-	inregs.h.ah = 1;
-	int86(0x16, &inregs, &outregs);
+	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	if (outregs.h.al == 0)
 		return outregs.x.ax;
 	return outregs.h.al;
@@ -408,11 +429,11 @@ legacy_s16 kb_check(void) {
 	union REGS outregs;
 
 	while (1) {
-		inregs.h.ah = 1;
-		int86(0x16, &inregs, &outregs);
+		inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+		int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 		if (!outregs.x.ax) return 0;
 
-		inregs.h.ah = 0;
-		int86(0x16, &inregs, &outregs);
+		inregs.h.ah = DOS_KB_BIOS_READ_FUNCTION;
+		int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	}
 }
