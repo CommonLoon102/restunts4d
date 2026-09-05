@@ -163,7 +163,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 		var_matptr = mat_rot_zxy(
 			state.playerstate.car_rotate.z,
 			state.playerstate.car_rotate.y,
-			state.playerstate.car_rotate.x, 1);
+			state.playerstate.car_rotate.x,
+			MATRIX_ROTATION_ORDER_YXZ);
 		route_selection_required = 0;
 		route_advance_required = 0;
 		guidance_required = 1;
@@ -292,7 +293,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 			var_matptr = mat_rot_zxy(
 				state.playerstate.car_rotate.z,
 				state.playerstate.car_rotate.y,
-				state.playerstate.car_rotate.x, 1);
+				state.playerstate.car_rotate.x,
+				MATRIX_ROTATION_ORDER_YXZ);
 			mat_mul_vector(&var_28, var_matptr, &var_38);
 			state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
 				(legacy_u16)polarAngle(

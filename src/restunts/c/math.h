@@ -3,6 +3,10 @@
 
 #include "legacy.h"
 
+#define MATRIX_ROTATION_ORDER_ZXY 0
+#define MATRIX_ROTATION_ORDER_YXZ 1
+#define MATRIX_ROTATION_ORDER_MASK 1U
+
 #define ANGLE_EIGHTH_TURN 128
 #define ANGLE_QUARTER_TURN 256
 #define ANGLE_HALF_TURN 512
@@ -85,7 +89,8 @@ void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat);
 void mat_rot_x(struct MATRIX* outmat, legacy_s16 angle);
 void mat_rot_y(struct MATRIX* outmat, legacy_s16 angle);
 void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle);
-struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 unk);
+struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y,
+	legacy_s16 rotation_order);
 
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
 void rectlist_add_rects(legacy_s8 rectcount, legacy_s8* indices, struct RECTANGLE* first, struct RECTANGLE* second, struct RECTANGLE* clip, legacy_s8* output_length, struct RECTANGLE* output);

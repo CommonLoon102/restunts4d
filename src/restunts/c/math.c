@@ -393,7 +393,8 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 // mat_z_rot depending on which axes were live. The contents are the same and
 // no caller keeps the pointer across another call.
 
-struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 unk) {
+struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y,
+	legacy_s16 rotation_order) {
 	mat_rot_z(&math_mat_z_rot, z);
 	mat_rot_x(&math_mat_x_rot, x);
 
@@ -405,7 +406,8 @@ struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 
 	math_mat_y_rot_angle = y; // dont forget this!!
 	mat_rot_y(&math_mat_y_rot, y);
 
-	if ((unk & 1) != 0) {
+	if ((rotation_order & MATRIX_ROTATION_ORDER_MASK) ==
+		MATRIX_ROTATION_ORDER_YXZ) {
 		mat_multiply(&math_mat_y_rot, &math_mat_x_rot, &math_mat_rot_temp);
 		mat_multiply(&math_mat_rot_temp, &math_mat_z_rot, &math_mat_x_rot);
 		return &math_mat_x_rot;

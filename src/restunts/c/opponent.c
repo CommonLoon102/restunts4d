@@ -276,7 +276,7 @@ void opponent_op(void)
 	state.field_45E = ROUTE_INDICATOR_NONE;
 	rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 		state.opponentstate.car_rotate.y,
-		state.opponentstate.car_rotate.x, 1);
+		state.opponentstate.car_rotate.x, MATRIX_ROTATION_ORDER_YXZ);
 	state.opponentstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.opponentstate.car_crashBmpFlag != 0) {
 		if (state.opponentstate.car_speed2 == 0)
@@ -463,7 +463,8 @@ void opponent_op(void)
 				state.opponentstate.car_posWorld1.lz));
 		rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 			state.opponentstate.car_rotate.y,
-			state.opponentstate.car_rotate.x, 1);
+			state.opponentstate.car_rotate.x,
+			MATRIX_ROTATION_ORDER_YXZ);
 		mat_mul_vector(&relative, rotation, &transformed);
 		state.opponentstate.field_48 = LEGACY_S16_FROM_BITS(
 			(legacy_u16)polarAngle(

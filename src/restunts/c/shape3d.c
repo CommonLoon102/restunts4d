@@ -308,7 +308,9 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	}
 
 	if ((transshapeflags & SHAPE3D_PRETRANSFORMED_FLAG) == 0) {
-		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x, arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z, 0);
+		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x,
+			arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z,
+			MATRIX_ROTATION_ORDER_ZXY);
 		mat_mul_vector(&arg_transshapeptr->pos, &mat_temp, &var_vec);
 		mat_multiply(var_rotmatptr, &mat_temp, &var_mat2);
 		mat_invert(&var_mat2, &var_mat);
@@ -329,7 +331,9 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			var_A = 0;
 		}
 	} else {
-		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x, arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z, 0);
+		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x,
+			arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z,
+			MATRIX_ROTATION_ORDER_ZXY);
 		mat_multiply(var_rotmatptr, &mat_temp, &var_mat2);
 		var_vec = arg_transshapeptr->pos;
 		var_45C = -1;
@@ -895,11 +899,13 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 
 	//return ported_select_cliprect_rotate_(angX, angY, angZ, cliprect, unk);
 
-	mat_temp = *mat_rot_zxy(angZ, angX, angY, 1);
+	mat_temp = *mat_rot_zxy(angZ, angX, angY,
+		MATRIX_ROTATION_ORDER_YXZ);
 	polyinfo_reset();
 	select_rect_rc = *cliprect;
 	select_rect_param = unk;
-	matptr = mat_rot_zxy(-angZ, -angX, -angY, 0);
+	matptr = mat_rot_zxy(-angZ, -angX, -angY,
+		MATRIX_ROTATION_ORDER_ZXY);
 	vec.z = PROJECTION_VIEW_VECTOR_LENGTH;
 	vec.y = 0;
 	vec.x = 0;

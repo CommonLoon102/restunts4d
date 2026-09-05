@@ -357,7 +357,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
 			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
 			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
-			0
+			MATRIX_ROTATION_ORDER_ZXY
 		);
 		/*
 		if (opponent has wheel contact &&
@@ -383,7 +383,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
 			var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
 				LEGACY_S16_WRAP_NEGATE(
-					state.opponentstate.car_angle_z), 0);
+					state.opponentstate.car_angle_z),
+				MATRIX_ROTATION_ORDER_ZXY);
 		}
 
 		/*
@@ -445,7 +446,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	mat_unk = *mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
-		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1),
+		MATRIX_ROTATION_ORDER_ZXY);
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
 		vec_1C6.x = 0;
 		vec_1C6.y = 0;
@@ -459,7 +461,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	if ((arg_pState->car_angle_z & ANGLE_MASK) != 0) {
 		var_EC = 1;
 		var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
-			LEGACY_S16_WRAP_NEGATE(arg_pState->car_angle_z), 0);
+			LEGACY_S16_WRAP_NEGATE(arg_pState->car_angle_z),
+			MATRIX_ROTATION_ORDER_ZXY);
 	} else {
 		var_EC = 0;
 	}
@@ -696,7 +699,8 @@ case PLAYER_FLOW_loc_1545D:
 case PLAYER_FLOW_loc_1546E:
 	var_EA = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
-		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE, 0);
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1), var_EE,
+		MATRIX_ROTATION_ORDER_ZXY);
 	mat_mul_vector(&vec_FC, var_EA, &vec_1C);
 	si = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), var_EE) &
@@ -1245,7 +1249,8 @@ case PLAYER_FLOW_loc_1625F:
 	var_EA = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1),
 		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1),
-		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1), 0);
+		LEGACY_S16_WRAP_NEGATE(pState_minusRotate_y_1),
+		MATRIX_ROTATION_ORDER_ZXY);
 	var_wheelIndex = 0;
 	{ physics_flow = PLAYER_FLOW_loc_1632C; continue; }
 

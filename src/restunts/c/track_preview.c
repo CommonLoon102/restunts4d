@@ -90,7 +90,8 @@ void draw_track_preview(void)
 		LEGACY_S16_WRAP_SUB(word_3C112, camera_z));
 	camera_angle = (legacy_s16)polarAngle(
 		LEGACY_S16_WRAP_SUB(word_3C110, camera_y), camera_radius);
-	rotation = mat_rot_zxy(0, camera_angle, 0, 1);
+	rotation = mat_rot_zxy(0, camera_angle, 0,
+		MATRIX_ROTATION_ORDER_YXZ);
 	mat_mul_vector(&unk_3C114, rotation, &projected_vector);
 	vector_to_point(&projected_vector, &projected_point);
 	horizon = (legacy_s16)projected_point.py;

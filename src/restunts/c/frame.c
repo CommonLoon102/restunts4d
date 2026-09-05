@@ -245,7 +245,8 @@ static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
 	rotation = mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.z),
 		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.y),
-		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x), 0);
+		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x),
+		MATRIX_ROTATION_ORDER_ZXY);
 	best_tile_index = -1;
 	matched_wheel = -1;
 	for (wheel = 0; wheel < FRAME_CAR_WHEEL_COUNT; wheel++) {
@@ -518,7 +519,7 @@ static struct MATRIX* frame_car_rotation(legacy_s16 rot_x, legacy_s16 rot_y,
 {
 	return mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(rot_z),
 		LEGACY_S16_WRAP_NEGATE(rot_y),
-		LEGACY_S16_WRAP_NEGATE(rot_x), 0);
+		LEGACY_S16_WRAP_NEGATE(rot_x), MATRIX_ROTATION_ORDER_ZXY);
 }
 
 void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
@@ -660,7 +661,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		car_rot_matrix = mat_rot_zxy(0,
 			LEGACY_S16_WRAP_NEGATE(custom_camera.elevation_angle),
 			LEGACY_S16_WRAP_SUB(polarAngle(car_to_cam_rotated.x,
-				car_to_cam_rotated.z), custom_camera.azimuth_angle), 0);
+				car_to_cam_rotated.z), custom_camera.azimuth_angle),
+			MATRIX_ROTATION_ORDER_ZXY);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
 		cam_pos.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
@@ -755,7 +757,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		lookahead_tiles_tables[(heading & ANGLE_MASK) >>
 			FRAME_LOOKAHEAD_HEADING_SHIFT];
 
-	var_mat = *mat_rot_zxy(car_rot_z_3, car_rot_y_2, 0, 1);
+	var_mat = *mat_rot_zxy(car_rot_z_3, car_rot_y_2, 0,
+		MATRIX_ROTATION_ORDER_YXZ);
 	offset_vector.x = 0;
 	offset_vector.y = 0;
 	offset_vector.z = FRAME_SKYBOX_TEST_DISTANCE;

@@ -389,7 +389,7 @@ static void build_collision_corners(
 		LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].x),
 		LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].y),
 		LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].z),
-		0);
+		MATRIX_ROTATION_ORDER_ZXY);
 	for (corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
 		if (corner == COLLISION_LEFT_FIRST_CORNER ||
 			corner == COLLISION_LEFT_LAST_CORNER) {
@@ -433,7 +433,7 @@ static legacy_s16 collision_corners_inside(
 		world_coordinates[COLLISION_ROTATION_INDEX].x,
 		world_coordinates[COLLISION_ROTATION_INDEX].y,
 		world_coordinates[COLLISION_ROTATION_INDEX].z,
-		1);
+		MATRIX_ROTATION_ORDER_YXZ);
 	for (corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
 		relative_corner.x = LEGACY_S16_WRAP_SUB(
 			world_coordinates[COLLISION_POSITION_INDEX].x, corners[corner].x);

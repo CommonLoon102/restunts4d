@@ -153,7 +153,8 @@ void sub_19BA0(void) {
 		direction.x = 0;
 		direction.y = 0;
 		direction.z = state.field_38E[slot];
-		rotation = mat_rot_zxy(0, 0, state.field_35E[slot], 1);
+		rotation = mat_rot_zxy(0, 0, state.field_35E[slot],
+			MATRIX_ROTATION_ORDER_YXZ);
 		mat_mul_vector(&direction, rotation, &movement);
 		state.game_longs1[slot] = LEGACY_S32_WRAP_ADD_S16(
 			state.game_longs1[slot], movement.x);
