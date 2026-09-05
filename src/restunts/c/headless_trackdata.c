@@ -10,8 +10,8 @@ extern struct SHAPE3D game3dshapes[130];
 #define TRACK_SHAPE(index) 0
 #endif
 
-#define LEGACY_TRACK_VECTOR_BASE 0x0C94U
-#define LEGACY_TRACK_INFO_BASE 0x1A08U
+#define LEGACY_TRACK_VECTOR_BASE 3220U
+#define LEGACY_TRACK_INFO_BASE 6664U
 
 static struct VECTOR legacy_track_vectors[574] = {
 	{ -120, -1, -334 },
