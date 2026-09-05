@@ -21,7 +21,7 @@ static void route_point_delta(struct VECTOR* delta, legacy_s16 level)
 	*delta = state.playerstate.car_vec_unk3;
 	delta->x = LEGACY_S16_WRAP_SUB(delta->x,
 		position_to_word(state.playerstate.car_posWorld1.lx));
-	if (delta->y == -1) {
+	if (delta->y == ROUTE_POINT_HEIGHT_UNSPECIFIED) {
 		delta->y = level ? 0 : LEGACY_S16_WRAP_NEGATE(
 			position_to_word(state.playerstate.car_posWorld1.ly));
 	} else {
@@ -176,7 +176,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 			route_selection_required = 1;
 		} else {
 			si = 0;
-			if (state.playerstate.car_trackdata3_index != -1) {
+			if (state.playerstate.car_trackdata3_index != ROUTE_INDEX_NONE) {
 				if ((var_1C == ROUTE_TRACKING_NORMAL ||
 					state.field_45B != ROUTE_TRACKING_NORMAL) &&
 					(state.playerstate.car_trackdata3_index ==
@@ -189,7 +189,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 						state.playerstate.car_vec_unk3.x,
 						position_to_word(
 							state.playerstate.car_posWorld1.lx));
-					if (state.playerstate.car_vec_unk3.y == -1) {
+					if (state.playerstate.car_vec_unk3.y ==
+						ROUTE_POINT_HEIGHT_UNSPECIFIED) {
 						var_32.y = 0;
 					} else {
 						var_32.y = LEGACY_S16_WRAP_SUB(
@@ -204,11 +205,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 					mat_mul_vector(&var_32, var_matptr, &var_38);
 					si = var_38.z;
 				} else {
-					state.playerstate.car_trackdata3_index = -1;
+					state.playerstate.car_trackdata3_index = ROUTE_INDEX_NONE;
 				}
 			}
 			if (si < ROUTE_POINT_ADVANCE_DISTANCE) {
-				if (state.playerstate.car_trackdata3_index == -1) {
+				if (state.playerstate.car_trackdata3_index == ROUTE_INDEX_NONE) {
 					var_2 = state.field_2F2;
 					route_selection_required = 1;
 				} else {
@@ -218,7 +219,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		}
 
 		if (route_selection_required != 0) {
-			if (td02_penalty_related[var_2] != -1) {
+			if (td02_penalty_related[var_2] != TRACK_ROUTE_LINK_NONE) {
 				guidance_required = 0;
 			} else {
 				var_2A = 0;
@@ -276,8 +277,9 @@ void player_op(legacy_s8 arg_carInputByte) {
 			if (sub_18D60(state.playerstate.car_trackdata3_index,
 				&state.playerstate.car_vec_unk3,
 				(legacy_s16)route_point, 0) != 0) {
-				if (td02_penalty_related[state.field_2F2] != -1) {
-					state.playerstate.car_trackdata3_index = -1;
+				if (td02_penalty_related[state.field_2F2] !=
+					TRACK_ROUTE_LINK_NONE) {
+					state.playerstate.car_trackdata3_index = ROUTE_INDEX_NONE;
 				} else {
 					state.playerstate.car_trackdata3_index =
 						td01_track_file_cpy[state.field_2F2];
@@ -287,7 +289,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		}
 
 		if (guidance_required != 0 &&
-			state.playerstate.car_trackdata3_index != -1 &&
+			state.playerstate.car_trackdata3_index != ROUTE_INDEX_NONE &&
 			state.field_45B == ROUTE_TRACKING_NORMAL) {
 			route_point_delta(&var_28, 1);
 			var_matptr = mat_rot_zxy(

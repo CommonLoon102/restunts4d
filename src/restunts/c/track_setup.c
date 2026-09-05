@@ -189,7 +189,7 @@ static void track_setup_link_piece(
 	legacy_s16 source_piece,
 	legacy_s16 destination_piece
 ) {
-	if (td01_track_file_cpy[source_piece] == -1)
+	if (td01_track_file_cpy[source_piece] == TRACK_ROUTE_LINK_NONE)
 		td01_track_file_cpy[source_piece] = destination_piece;
 	else
 		td02_penalty_related[source_piece] = destination_piece;
@@ -369,8 +369,8 @@ legacy_s16 track_setup(void)
 	path_closed = 0;
 	for (index = 0; index < TRACK_SETUP_TILE_COUNT; index++) {
 		visited_tiles[index] = 0;
-		td01_track_file_cpy[index] = -1;
-		td02_penalty_related[index] = -1;
+		td01_track_file_cpy[index] = TRACK_ROUTE_LINK_NONE;
+		td02_penalty_related[index] = TRACK_ROUTE_LINK_NONE;
 	}
 
 	column = LEGACY_S8_FROM_BITS((legacy_u8)startcol2);

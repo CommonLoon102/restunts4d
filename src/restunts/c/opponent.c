@@ -13,7 +13,6 @@
 #define OPPONENT_NORMAL_SPEED_STEP 1
 #define OPPONENT_LOW_RATE_SPEED_STEP 2
 #define OPPONENT_ROUTE_REACHED_DISTANCE 200
-#define OPPONENT_ROUTE_HEIGHT_UNSPECIFIED (-1)
 #define OPPONENT_PLAYER_HEIGHT_RANGE 90
 #define OPPONENT_PLAYER_LATERAL_RANGE 180
 #define OPPONENT_PLAYER_FORWARD_RANGE 600
@@ -283,7 +282,7 @@ void opponent_op(void)
 			state.opponentstate.field_CF = 0;
 	} else {
 	route_target = state.opponentstate.car_vec_unk3;
-	if (route_target.y != OPPONENT_ROUTE_HEIGHT_UNSPECIFIED) {
+	if (route_target.y != ROUTE_POINT_HEIGHT_UNSPECIFIED) {
 		relative.x = LEGACY_S16_WRAP_SUB(route_target.x, opponent_x);
 		relative.y = LEGACY_S16_WRAP_SUB(route_target.y, opponent_y);
 		relative.z = LEGACY_S16_WRAP_SUB(route_target.z, opponent_z);
@@ -315,7 +314,7 @@ void opponent_op(void)
 			relative.x = LEGACY_S16_WRAP_SUB(
 				player_x, state.opponentstate.car_vec_unk3.x);
 			relative.y = state.opponentstate.car_vec_unk3.y ==
-				OPPONENT_ROUTE_HEIGHT_UNSPECIFIED ? 0 :
+				ROUTE_POINT_HEIGHT_UNSPECIFIED ? 0 :
 				LEGACY_S16_WRAP_SUB(player_y,
 					state.opponentstate.car_vec_unk3.y);
 			relative.z = LEGACY_S16_WRAP_SUB(
@@ -326,8 +325,8 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk3.x,
 					state.opponentstate.car_vec_unk5.x);
 				route_target.y = state.opponentstate.car_vec_unk3.y ==
-					OPPONENT_ROUTE_HEIGHT_UNSPECIFIED ?
-					OPPONENT_ROUTE_HEIGHT_UNSPECIFIED : opponent_average(
+					ROUTE_POINT_HEIGHT_UNSPECIFIED ?
+					ROUTE_POINT_HEIGHT_UNSPECIFIED : opponent_average(
 						state.opponentstate.car_vec_unk3.y,
 						state.opponentstate.car_vec_unk5.y);
 				route_target.z = opponent_average(
@@ -342,8 +341,8 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk3.x,
 					state.opponentstate.car_vec_unk4.x);
 				route_target.y = state.opponentstate.car_vec_unk3.y ==
-					OPPONENT_ROUTE_HEIGHT_UNSPECIFIED ?
-					OPPONENT_ROUTE_HEIGHT_UNSPECIFIED : opponent_average(
+					ROUTE_POINT_HEIGHT_UNSPECIFIED ?
+					ROUTE_POINT_HEIGHT_UNSPECIFIED : opponent_average(
 						state.opponentstate.car_vec_unk3.y,
 						state.opponentstate.car_vec_unk4.y);
 				route_target.z = opponent_average(
@@ -358,7 +357,7 @@ void opponent_op(void)
 	}
 
 	relative.x = LEGACY_S16_WRAP_SUB(route_target.x, opponent_x);
-	relative.y = route_target.y == OPPONENT_ROUTE_HEIGHT_UNSPECIFIED ? 0 :
+	relative.y = route_target.y == ROUTE_POINT_HEIGHT_UNSPECIFIED ? 0 :
 		LEGACY_S16_WRAP_SUB(route_target.y, opponent_y);
 	relative.z = LEGACY_S16_WRAP_SUB(route_target.z, opponent_z);
 	mat_mul_vector(&relative, rotation, &transformed);
@@ -688,7 +687,7 @@ legacy_s16 sub_18D60(
 
 	column = (legacy_u8)td21_col_from_path[track_index];
 	row = (legacy_u8)td22_row_from_path[track_index];
-	if (first_point.y != OPPONENT_ROUTE_HEIGHT_UNSPECIFIED &&
+	if (first_point.y != ROUTE_POINT_HEIGHT_UNSPECIFIED &&
 		td15_terr_map_main[terrainrows[row] + column] ==
 			TERRAIN_RAISED_TILE) {
 		first_point.y = LEGACY_S16_WRAP_ADD(
@@ -707,9 +706,9 @@ legacy_s16 sub_18D60(
 
 	output[TRACK_ROUTE_RESULT_CENTER_INDEX].x =
 		route_average(first_point.x, second_point.x);
-	if (first_point.y == OPPONENT_ROUTE_HEIGHT_UNSPECIFIED)
+	if (first_point.y == ROUTE_POINT_HEIGHT_UNSPECIFIED)
 		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y =
-			OPPONENT_ROUTE_HEIGHT_UNSPECIFIED;
+			ROUTE_POINT_HEIGHT_UNSPECIFIED;
 	else
 		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y =
 			route_average(first_point.y, second_point.y);

@@ -64,7 +64,7 @@ void sub_2298C(void)
 				state.field_45C != 0)) ||
 			carstate->field_B6 != 0 ||
 			carstate->car_crashBmpFlag != 0 ||
-			carstate->car_trackdata3_index == -1 ||
+			carstate->car_trackdata3_index == ROUTE_INDEX_NONE ||
 			(carstate->field_48 > CAMERA_TARGET_OVERRIDE_FIELD_MIN &&
 			carstate->field_48 < CAMERA_TARGET_OVERRIDE_FIELD_END)) {
 			target.x = car_x;
