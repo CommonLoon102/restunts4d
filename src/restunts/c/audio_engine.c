@@ -8,6 +8,16 @@
 #include "platform.h"
 #include "resource.h"
 
+#define AUDIO_DRIVER_TIMER_RATE 22U
+#define DOS_SEGMENT_WRAP_PARAGRAPHS 4096U
+#define AUDIO_ENGINE_FIRST_SAMPLE_RESOURCE 2U
+#define AUDIO_ENGINE_RATE_DIVISOR_OFFSET 14U
+#define AUDIO_ENGINE_RATE_BASE_OFFSET 15U
+#define AUDIO_ENGINE_RATE_BASE_SHIFT 4U
+#define AUDIO_ENGINE_MAX_VOLUME 127U
+#define AUDIO_ENGINE_UNSET_VOLUME 255U
+#define AUDIO_ENGINE_UNSET_PITCH 65535U
+
 extern legacy_s16 camera_track_height_offset;
 
 void audio_sequence_timer(void);
@@ -63,7 +73,7 @@ void audio_add_driver_timer(void)
 
 	for (index = 0; index < AUDIO_TIMER_COUNT; index++)
 		audio_timers[index].active = 0;
-	audio_driver_timer_rate = 0x16U;
+	audio_driver_timer_rate = AUDIO_DRIVER_TIMER_RATE;
 	timer_reg_callback(&audio_driver_timer);
 }
 
@@ -113,14 +123,14 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 	engine_definition = &timer->definition;
 	source_offset = (legacy_u16)dos_memory_pointer_offset(source_pointer);
 	source_segment = (legacy_u16)dos_memory_pointer_segment(source_pointer);
-	for (field = 0; field < 0x30U; field++) {
+	for (field = 0; field < AUDIO_ENGINE_DEFINITION_SIZE; field++) {
 		source = (const legacy_u8 far*)dos_memory_make_pointer(
 			source_segment, source_offset);
 		((legacy_u8*)engine_definition)[field] = *source;
 		source_offset++;
 		if (source_offset == 0)
-			source_segment = LEGACY_U16_WRAP_ADD(
-				source_segment, 0x1000U);
+			source_segment = LEGACY_U16_WRAP_ADD(source_segment,
+				DOS_SEGMENT_WRAP_PARAGRAPHS);
 	}
 
 	if (engine_definition->initialized == 0) {
@@ -129,7 +139,8 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 				(legacy_u8*)&engine_definition->resources[0])));
 		audio_write_far_pointer(
 			(legacy_u8*)&engine_definition->resources[0], resource);
-		for (resource_index = 2U; resource_index < 10U;
+		for (resource_index = AUDIO_ENGINE_FIRST_SAMPLE_RESOURCE;
+			resource_index < AUDIO_ENGINE_RESOURCE_COUNT;
 			resource_index++) {
 			resource = init_audio_resources(audio_resources,
 				shape_resources,
@@ -143,7 +154,7 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 		engine_definition->initialized = 1;
 	}
 
-	channel = sub_37470(-1, 0x7FU);
+	channel = sub_37470(-1, AUDIO_ENGINE_MAX_VOLUME);
 	timer->channel = channel;
 	timer->engine_active = 0;
 	timer->current_volume = 0;
@@ -151,14 +162,15 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far* source_pointer,
 	timer->target_volume = 0;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(
 		(legacy_u8*)&engine_definition->resources[0]);
-	divisor = definition[0x0EU];
+	divisor = definition[AUDIO_ENGINE_RATE_DIVISOR_OFFSET];
 	rate = LEGACY_U16_DIV_OR_ZERO(
 		engine_definition->sample_count, divisor);
 	rate = LEGACY_U16_WRAP_ADD(rate,
-		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
+		(legacy_u16)((legacy_u16)definition[AUDIO_ENGINE_RATE_BASE_OFFSET] <<
+			AUDIO_ENGINE_RATE_BASE_SHIFT));
 	timer->target_pitch = rate;
-	timer->last_volume = 0xFFU;
-	timer->last_pitch = 0xFFFFU;
+	timer->last_volume = AUDIO_ENGINE_UNSET_VOLUME;
+	timer->last_pitch = AUDIO_ENGINE_UNSET_PITCH;
 	timer->engine_context = -1;
 	timer->effect_channel = -1;
 	timer->secondary_effect_channel = -1;
@@ -192,10 +204,11 @@ void audio_op_unk(legacy_s16 index)
 	sample_count = engine_definition->sample_count;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(
 		(legacy_u8*)&engine_definition->resources[0]);
-	divisor = definition[0x0EU];
+	divisor = definition[AUDIO_ENGINE_RATE_DIVISOR_OFFSET];
 	value = LEGACY_U16_DIV_OR_ZERO(sample_count, divisor);
 	value = LEGACY_U16_WRAP_ADD(value,
-		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
+		(legacy_u16)((legacy_u16)definition[AUDIO_ENGINE_RATE_BASE_OFFSET] <<
+			AUDIO_ENGINE_RATE_BASE_SHIFT));
 	timer->target_pitch = value;
 	channel = audio_start_sample(value, handle);
 	timer->engine_context = channel;
@@ -245,11 +258,12 @@ void audio_op_unk2(legacy_s16 index, legacy_s16 base_value,
 	engine_definition = &timer->definition;
 	definition = (const legacy_u8 far*)audio_read_far_pointer(
 		(legacy_u8*)&engine_definition->resources[0]);
-	divisor = definition[0x0EU];
+	divisor = definition[AUDIO_ENGINE_RATE_DIVISOR_OFFSET];
 	base_rate = LEGACY_U16_DIV_OR_ZERO(
 		(legacy_u16)base_value, divisor);
 	base_rate = LEGACY_U16_WRAP_ADD(base_rate,
-		(legacy_u16)((legacy_u16)definition[0x0FU] << 4));
+		(legacy_u16)((legacy_u16)definition[AUDIO_ENGINE_RATE_BASE_OFFSET] <<
+			AUDIO_ENGINE_RATE_BASE_SHIFT));
 	denominator = LEGACY_U16_WRAP_SUB(0x1770U, scaled_delta);
 	if (denominator != 0) {
 		base_rate = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
