@@ -8,6 +8,8 @@
 #define ROUTE_DIRECTION_LEFT_SECTOR 1
 #define ROUTE_DIRECTION_RIGHT_SECTOR 3
 #define ROUTE_GEOMETRY_POINT_COUNT 4U
+#define ROUTE_HEIGHT_REFERENCE_TRACK_LEVEL 0
+#define ROUTE_HEIGHT_REFERENCE_CAR_LEVEL 1
 #define PENALTY_ROUTE_DECISION_DISTANCE 3
 #define PENALTY_ROUTE_CONFIRMATION_COUNT 3
 #define PENALTY_SECONDS_PER_SKIPPED_ROUTE 3
@@ -16,14 +18,16 @@
 /* Vector from the player's car to its current route point. A y of -1 marks
    a route point with no height of its own: the route search still measures
    the drop to the car, the steering hint treats the point as level. */
-static void route_point_delta(struct VECTOR* delta, legacy_s16 level)
+static void route_point_delta(struct VECTOR* delta,
+	legacy_s16 unspecified_height_reference)
 {
 	*delta = state.playerstate.car_vec_unk3;
 	delta->x = LEGACY_S16_WRAP_SUB(delta->x,
 		position_to_word(state.playerstate.car_posWorld1.lx));
 	if (delta->y == ROUTE_POINT_HEIGHT_UNSPECIFIED) {
-		delta->y = level ? 0 : LEGACY_S16_WRAP_NEGATE(
-			position_to_word(state.playerstate.car_posWorld1.ly));
+		delta->y = unspecified_height_reference ==
+			ROUTE_HEIGHT_REFERENCE_CAR_LEVEL ? 0 : LEGACY_S16_WRAP_NEGATE(
+				position_to_word(state.playerstate.car_posWorld1.ly));
 	} else {
 		delta->y = LEGACY_S16_WRAP_SUB(delta->y,
 			position_to_word(state.playerstate.car_posWorld1.ly));
@@ -228,7 +232,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 					var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
 						var_2, &state.playerstate.car_vec_unk3,
 						(legacy_s16)(legacy_u8)var_2C, 0));
-					route_point_delta(&var_28, 0);
+					route_point_delta(&var_28,
+						ROUTE_HEIGHT_REFERENCE_TRACK_LEVEL);
 					mat_mul_vector(&var_28, var_matptr, &var_38);
 					if (var_2C == 0 ||
 						(var_38.z < var_32.z && var_38.z > 0)) {
@@ -291,7 +296,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		if (guidance_required != 0 &&
 			state.playerstate.car_trackdata3_index != ROUTE_INDEX_NONE &&
 			state.field_45B == ROUTE_TRACKING_NORMAL) {
-			route_point_delta(&var_28, 1);
+			route_point_delta(&var_28, ROUTE_HEIGHT_REFERENCE_CAR_LEVEL);
 			var_matptr = mat_rot_zxy(
 				state.playerstate.car_rotate.z,
 				state.playerstate.car_rotate.y,
