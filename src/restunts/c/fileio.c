@@ -15,18 +15,35 @@ static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
 #define aSInvalidPackTy headless_pack_error
 #endif
 
-#define PAGE_SIZE 0x4000
-#define PAGE_GAP  0x400
-#define FILENAME_LEN 13
+#define FILE_IO_PAGE_SIZE 16384
+#define FILE_IO_PAGE_SEGMENT_GAP 1024
+#define DOS_FILENAME_LENGTH 13
+#define FILE_FIND_PATH_SIZE 128
+#define FILE_COMBINE_PATH_SIZE 80
+#define RESOURCE_NAME_BUFFER_SIZE 80
 
-#define RS_RLE_ESCLEN_MAX    0x10
-#define RS_RLE_ESCLOOKUP_LEN 0x100
-#define RS_RLE_ESCSEQ_POS    0x01
+#define RS_RLE_ESCLEN_MAX 16
+#define RS_RLE_ESCLOOKUP_LEN 256
+#define RS_RLE_ESCSEQ_POS 1
 
-#define RS_VLE_ESC_LEN   0x10
-#define RS_VLE_ALPH_LEN  0x100
-#define RS_VLE_ESC_WIDTH 0x40
-#define RS_VLE_NUM_SYMB  0x80
+#define RS_VLE_ESC_LEN 16
+#define RS_VLE_ALPH_LEN 256
+#define RS_VLE_ESC_WIDTH 64
+#define RS_VLE_NUM_SYMB 128
+
+#define DOS_PARAGRAPH_SHIFT 4U
+#define DOS_PARAGRAPH_MASK 15L
+#define LEGACY_DWORD_HIGH_WORD_SHIFT 16U
+#define BYTE_HIGH_BIT 128U
+#define BYTE_SHIFT 8U
+#define BYTE_BIT_COUNT 8U
+#define RLE_BYTE_COUNT_CODE 1
+#define RLE_WORD_COUNT_CODE 3
+#define RLE_SEQUENCE_TRAILER_SIZE 2
+#define VLE_EXTENDED_CODE_START_WIDTH 7U
+#define COMPRESSION_WORKSPACE_PARAGRAPHS 4U
+#define COMPRESSION_RLE_TYPE 1U
+#define COMPRESSION_VLE_TYPE 2U
 
 #define COMPR_HEADER_SIZE 4U
 #define COMPR_SIZE_LOW_OFFSET 1U
@@ -85,7 +102,7 @@ static legacy_s16 fileio_remove(const legacy_s8* path)
 }
 
 struct file_find_dos {
-	legacy_s8 path[128];
+	legacy_s8 path[FILE_FIND_PATH_SIZE];
 	legacy_s8* dirdelim;
 } g_find;
 
@@ -114,7 +131,7 @@ const legacy_s8* file_find(const legacy_s8* query)
 	}
 
 	// Copy found filename to result path.
-	memcpy(g_find.dirdelim, found_name, FILENAME_LEN);
+	memcpy(g_find.dirdelim, found_name, DOS_FILENAME_LENGTH);
 
 	return g_find.path;
 }
@@ -131,7 +148,7 @@ const legacy_s8* file_find_next(void)
 	}
 
 	// Copy found filename to result path.
-	memcpy(g_find.dirdelim, found_name, FILENAME_LEN);
+	memcpy(g_find.dirdelim, found_name, DOS_FILENAME_LENGTH);
 
 	return g_find.path;
 }
@@ -166,7 +183,7 @@ void file_build_path(const legacy_s8* dir, const legacy_s8* name, const legacy_s
 const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* name, const legacy_s8* ext)
 {
 	// The original reserves 80 bytes of stack for this (var_50 = byte ptr -80).
-	legacy_s8 path[80];
+	legacy_s8 path[FILE_COMBINE_PATH_SIZE];
 
 	file_build_path(dir, name, ext, path);
 
@@ -176,7 +193,8 @@ const legacy_s8* file_combine_and_find(const legacy_s8* dir, const legacy_s8* na
 // Round a byte count up to the number of whole 16-byte paragraphs holding it.
 static legacy_u16 file_bytes_to_paras(legacy_s32 length)
 {
-	return (legacy_u16)((length >> 4) + (length & 0xF ? 1 : 0));
+	return (legacy_u16)((length >> DOS_PARAGRAPH_SHIFT) +
+		(length & DOS_PARAGRAPH_MASK ? 1 : 0));
 }
 
 // Get number of 16-byte blocks needed to store entire file.
@@ -226,7 +244,8 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 			// May overflow, but all Stunts files are rather small.
 			length = (legacy_s32)LEGACY_READ_U16_LE(
 				header + COMPR_SIZE_LOW_OFFSET) |
-				((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] << 16);
+				((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] <<
+					LEGACY_DWORD_HIGH_WORD_SHIFT);
 			return file_bytes_to_paras(length);
 		}
 	}
@@ -258,11 +277,12 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
 		// Read one page at a time.
 		do {
-			readlen = fileio_read(curdst, PAGE_SIZE, 1, file);
+			readlen = fileio_read(curdst, FILE_IO_PAGE_SIZE, 1, file);
 			curdst = dos_memory_make_pointer(
-				dos_memory_pointer_segment(curdst) + PAGE_GAP,
+				dos_memory_pointer_segment(curdst) +
+					FILE_IO_PAGE_SEGMENT_GAP,
 				dos_memory_pointer_offset(dst));
-		} while (readlen == PAGE_SIZE);
+		} while (readlen == FILE_IO_PAGE_SIZE);
 
 		fileio_close(file);
 
@@ -310,7 +330,7 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 	if ((file = fileio_open(filename, 1)) != FILEIO_INVALID_HANDLE) {
 		// Write one page at a time.
 		while (length != 0) {
-			wrtlen = length > PAGE_SIZE ? PAGE_SIZE : length;
+			wrtlen = length > FILE_IO_PAGE_SIZE ? FILE_IO_PAGE_SIZE : length;
 
 			if (fileio_write(src, wrtlen, 1, file) != wrtlen) {
 				// Either int 21h AH=40h set carry, or it wrote fewer bytes
@@ -320,7 +340,8 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 			}
 			length -= wrtlen;
 			src = dos_memory_make_pointer(
-				dos_memory_pointer_segment(src) + PAGE_GAP,
+				dos_memory_pointer_segment(src) +
+					FILE_IO_PAGE_SEGMENT_GAP,
 				dos_memory_pointer_offset(src));
 		}
 
@@ -404,7 +425,7 @@ legacy_u32 file_decomp_rle_seq(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_
 			// emit.
 			while (rep--) {
 				src = seqstart;
-				while (src < seqend - 2) {
+				while (src < seqend - RLE_SEQUENCE_TRAILER_SIZE) {
 					*dst++ = *src++;
 				}
 			}
@@ -434,7 +455,7 @@ legacy_u32 file_decomp_rle_single(legacy_u8 huge* src, legacy_u8 huge* dst, lega
 
 		if (esclookup[cur]) {
 			switch (esclookup[cur]) {
-				case 1:
+				case RLE_BYTE_COUNT_CODE:
 					rep = *src++;
 					cur = *src++;
 
@@ -443,9 +464,9 @@ legacy_u32 file_decomp_rle_single(legacy_u8 huge* src, legacy_u8 huge* dst, lega
 					}
 					break;
 
-				case 3:
+				case RLE_WORD_COUNT_CODE:
 					repw = *src++;
-					repw |= *src++ << 8;
+					repw |= *src++ << BYTE_SHIFT;
 					cur = *src++;
 
 					while (repw--) {
@@ -500,12 +521,14 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 
 	// Get decompressed size from header.
 	len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
-		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << 16);
+		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] <<
+			LEGACY_DWORD_HIGH_WORD_SHIFT);
 	origsrc = src += COMPR_HEADER_SIZE;
 
 	// Get source size and escape codes.
 	srclen = LEGACY_READ_U16_LE(src) |
-		((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] << 16);
+		((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] <<
+			LEGACY_DWORD_HIGH_WORD_SHIFT);
 	esclen = src[COMPR_RLE_ESCLEN_OFFSET];
 	escapes = src + COMPR_RLE_HEADER_SIZE;
 
@@ -513,8 +536,8 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
 	// using the byte in the sequence-escape slot even though the declared
 	// escape-code count is zero.
-	skipseq = esclen > 0x80;
-	esclen &= (legacy_u8)~0x80U;
+	skipseq = esclen > BYTE_HIGH_BIT;
+	esclen &= (legacy_u8)~BYTE_HIGH_BIT;
 
 	// Set pos to after escape codes.
 	src = origsrc + COMPR_RLE_HEADER_SIZE + esclen;
@@ -564,13 +587,14 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 
 	// Get decompressed size from header.
 	len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
-		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << 16);
+		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] <<
+			LEGACY_DWORD_HIGH_WORD_SHIFT);
 	src += COMPR_HEADER_SIZE;
 
 	// One-byte escape codes length counter.
 	esclen = *src++;
-	additive = (esclen & 0x80) == 0x80; // MSB is additive flag
-	esclen &= ~0x80;
+	additive = (esclen & BYTE_HIGH_BIT) == BYTE_HIGH_BIT;
+	esclen &= (legacy_u8)~BYTE_HIGH_BIT;
 
 	// Store postion of width data for later.
 	wdtpos = src;
@@ -595,7 +619,7 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 
 	// Generate lookup tables.
 	width = 1;
-	widthdistr = (esclen >= 8 ? 8 : esclen);
+	widthdistr = (esclen >= BYTE_BIT_COUNT ? BYTE_BIT_COUNT : esclen);
 	numsymb = RS_VLE_NUM_SYMB;
 	for (i = 0, j = 0; width <= widthdistr; ++width, numsymb >>= 1) {
 		for (symbwdth = *src++; symbwdth > 0; --symbwdth, ++j) {
@@ -614,28 +638,29 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// Go to compression codes.
 	src = codpos;
 
-	curword = *src << 8 | *(src + 1);
+	curword = *src << BYTE_SHIFT | *(src + 1);
 	src += 2;
-	curwdt = 8;
+	curwdt = BYTE_BIT_COUNT;
 	cursymb = 0;
 
 	++lenleft;
 	while (lenleft) {
-		code = curword >> 8;
+		code = curword >> BYTE_SHIFT;
 		nextwdt = wdth[code];
 		// Expand.
-		if (nextwdt > 8) {
+		if (nextwdt > BYTE_BIT_COUNT) {
 			code = curword;
-			curword >>= 8;
+			curword >>= BYTE_SHIFT;
 
-			i = 7;
+			i = VLE_EXTENDED_CODE_START_WIDTH;
 			while (1) {
 				if (!curwdt) {
 					code = *src++;
-					curwdt = 8;
+					curwdt = BYTE_BIT_COUNT;
 				}
 
-				curword = (curword << 1) + ((code & 0x80) == 0x80);
+				curword = (curword << 1) +
+					((code & BYTE_HIGH_BIT) == BYTE_HIGH_BIT);
 				code <<= 1;
 				--curwdt;
 				++i;
@@ -657,8 +682,8 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 			}
 
 			curword = (code << curwdt) | *src++;
-			nextwdt = 8 - curwdt;
-			curwdt = 8;
+			nextwdt = BYTE_BIT_COUNT - curwdt;
+			curwdt = BYTE_BIT_COUNT;
 		}
 		// Direct lookup.
 		else {
@@ -675,7 +700,7 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 			if (curwdt < nextwdt) {
 				curword <<= curwdt;
 				nextwdt -= curwdt;
-				curwdt = 8;
+				curwdt = BYTE_BIT_COUNT;
 				curword |= *src++;
 			}
 		}
@@ -708,7 +733,7 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 	if (decompparas) {
 		// Allocate extra paragraphs for alphabet and escape tables
 		// overhead used during decompression.
-		decompparas += 4;
+		decompparas += COMPRESSION_WORKSPACE_PARAGRAPHS;
 		dst = mmgr_alloc_pages(filename, decompparas);
 
 		paras = file_paras(filename, fatal);
@@ -723,8 +748,8 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 				// If the multi-pass flag is set, the first byte contains the
 				// number of compression passes and the next three bytes holds
 				// the final decompressed size.
-				if (passes & 0x80) {
-					passes &= ~0x80;
+				if (passes & BYTE_HIGH_BIT) {
+					passes &= (legacy_u8)~BYTE_HIGH_BIT;
 					src += 4; // Skip past length data.
 				}
 				// Flag not set, first byte is compression type of the first
@@ -738,10 +763,10 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 					type = *src;
 
 					switch (type) {
-						case 1:
+						case COMPRESSION_RLE_TYPE:
 							passlen = file_decomp_rle(src, dst, decompparas);
 							break;
-						case 2:
+						case COMPRESSION_VLE_TYPE:
 							passlen = file_decomp_vle(src, dst, decompparas);
 							break;
 						default:
@@ -757,7 +782,7 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 
 				// Free unneeded overhead.
 				if (!err) {
-					decompparas -= 4;
+					decompparas -= COMPRESSION_WORKSPACE_PARAGRAPHS;
 					mmgr_resize_memory(dos_memory_pointer_offset(dst),
 						dos_memory_pointer_segment(dst), decompparas);
 
@@ -883,7 +908,7 @@ static void far* file_load_suffixed_resource(legacy_s16 resource_type,
 
 
 void far* file_load_resfile(const legacy_s8* filename) {
-	legacy_s8 name[0x50];
+	legacy_s8 name[RESOURCE_NAME_BUFFER_SIZE];
 	void far* result;
 
 #ifdef RESTUNTS_HEADLESS
@@ -917,7 +942,7 @@ void unload_resource(void far* resptr) {
 
 #ifndef RESTUNTS_HEADLESS
 void far* file_load_3dres(const legacy_s8* filename) {
-	legacy_s8 name[0x50];
+	legacy_s8 name[RESOURCE_NAME_BUFFER_SIZE];
 	void far* result;
 
 	while (1) {
