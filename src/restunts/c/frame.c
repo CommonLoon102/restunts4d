@@ -87,6 +87,42 @@
 #define FRAME_EXPLOSION_VARIANT_COUNT 3
 #define FRAME_EXPLOSION_FIXED_SCALE 256L
 #define FRAME_ELAPSED_TIME_X 140
+#define FRAME_ELAPSED_TIME_Y_OFFSET 2
+#define FRAME_DIRTY_RECT_CHANGED 3
+#define FRAME_SKYBOX_RECT_INDEX 5
+#define FRAME_DETAIL_FULL 0
+#define FRAME_DETAIL_FASTEST 4
+#define FRAME_CAR_LOW_DETAIL_FIRST 3
+#define FRAME_TILE_DETAIL_FULL 0
+#define FRAME_STEERED_WHEEL_FIRST_VERTEX 8U
+#define FRAME_CAR_CRASH_STATE_CRASHED 1
+#define FRAME_CAR_CRASH_STATE_SINKING 2
+#define FRAME_FENCE_EDGE_CLASS_COUNT 3
+#define FRAME_FENCE_EDGE_LOW 0
+#define FRAME_FENCE_EDGE_HIGH 1
+#define FRAME_FENCE_EDGE_INTERIOR 2
+#define FRAME_FENCE_NONE (-1)
+#define FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT 24
+#define FRAME_SLOW_VIDEO_TRANSFORM_FLAG 8
+#define FRAME_CAMERA_TILE_SHIFT 10U
+#define FRAME_FENCE_POSITION_STRIDE 2
+#define FRAME_FENCE_SECOND_COORDINATE 1
+#define FRAME_FENCE_POSITION_COUNT_SINGLE 1
+#define FRAME_FENCE_POSITION_COUNT_ROW 2
+#define FRAME_FENCE_POSITION_COUNT_COLUMN 3
+#define FRAME_FENCE_POSITION_COUNT_BOTH 4
+#define FRAME_CORNER_NORTHWEST 0
+#define FRAME_CORNER_NORTHEAST 1
+#define FRAME_CORNER_SOUTHWEST 2
+#define FRAME_CORNER_SOUTHEAST 3
+#define FRAME_SORT_MINIMUM_SHAPE_COUNT 2
+#define FRAME_INPUT_MODE_WAITING 0
+#define FRAME_REPLAY_MODE_LIVE 0
+#define FRAME_RECT_CENTER_SHIFT 1U
+#define FRAME_START_FLAG_VERTEX_LEFT_NEAR 0
+#define FRAME_START_FLAG_VERTEX_LEFT_FAR 1
+#define FRAME_START_FLAG_VERTEX_RIGHT_NEAR 2
+#define FRAME_START_FLAG_VERTEX_RIGHT_FAR 3
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -328,15 +364,19 @@ void sub_19F14(struct RECTANGLE* cliprect) {
 		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 	} else {
 		for (i = 0; i < FRAME_DIRTY_RECT_COUNT; i++)
-			rect_array_unk_indices[i] = 3;
-		if (detail_level == 4)
+			rect_array_unk_indices[i] = FRAME_DIRTY_RECT_CHANGED;
+		if (detail_level == FRAME_DETAIL_FASTEST)
 			word_449FC[1] = word_463D6;
 		if (word_449FC[1] == word_463D6 &&
-			rect_array_unk[5].left == rect_array_unk2[5].left &&
-			rect_array_unk[5].right == rect_array_unk2[5].right &&
-			rect_array_unk[5].top == rect_array_unk2[5].top &&
-			rect_array_unk[5].bottom == rect_array_unk2[5].bottom) {
-			rect_array_unk_indices[5] = 0;
+			rect_array_unk[FRAME_SKYBOX_RECT_INDEX].left ==
+				rect_array_unk2[FRAME_SKYBOX_RECT_INDEX].left &&
+			rect_array_unk[FRAME_SKYBOX_RECT_INDEX].right ==
+				rect_array_unk2[FRAME_SKYBOX_RECT_INDEX].right &&
+			rect_array_unk[FRAME_SKYBOX_RECT_INDEX].top ==
+				rect_array_unk2[FRAME_SKYBOX_RECT_INDEX].top &&
+			rect_array_unk[FRAME_SKYBOX_RECT_INDEX].bottom ==
+				rect_array_unk2[FRAME_SKYBOX_RECT_INDEX].bottom) {
+			rect_array_unk_indices[FRAME_SKYBOX_RECT_INDEX] = 0;
 		}
 
 		rect_array_unk3_length = 0;
@@ -408,7 +448,8 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 					state.game_longs3[index],
 					carstate->car_posWorld1.lz, camera_position->z);
 				frame_add_dynamic_shape(track_object, index,
-					flags | 5, material, z_adjust);
+					flags | FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT,
+					material, z_adjust);
 			}
 		}
 	}
@@ -421,11 +462,13 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 	curtransshape_ptr->pos.z = frame_relative_position(
 		carstate->car_posWorld1.lz, camera_position->z);
 
-	if (tile_detail != 0 || detail_level > 2) {
+	if (tile_detail != FRAME_TILE_DETAIL_FULL ||
+		detail_level >= FRAME_CAR_LOW_DETAIL_FIRST) {
 		curtransshape_ptr->shapeptr = track_object->ss_loShapePtr;
 	} else {
 		curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
-		sub_204AE(wheel_shape, 8U, carstate->car_steeringAngle,
+		sub_204AE(wheel_shape, FRAME_STEERED_WHEEL_FIRST_VERTEX,
+			carstate->car_steeringAngle,
 			carstate->car_rc2, wheel_angles, wheel_vectors,
 			wheel_vector);
 	}
@@ -433,7 +476,8 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 	if (slow_video_mgmt_copy != 0) {
 		curtransshape_ptr->rectptr = slow_rect;
 		curtransshape_ptr->ts_flags = FRAME_TRANSFORM_FLAGS_CLIPPED;
-	} else if (carstate->car_crashBmpFlag != 1) {
+	} else if (carstate->car_crashBmpFlag !=
+		FRAME_CAR_CRASH_STATE_CRASHED) {
 		curtransshape_ptr->ts_flags = FRAME_TRANSFORM_FLAGS_DEFAULT;
 	} else {
 		*crash_rect = cliprect_unk;
@@ -457,19 +501,20 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 /* Border fences: a tile sits on the low edge (0), the high edge (1) or in
    between (2) along each axis, and the pair picks the fence piece. -1 means
    the tile is not on the border at all. */
-static const legacy_s8 fence_by_edge[3][3] = {
+static const legacy_s8 fence_by_edge[FRAME_FENCE_EDGE_CLASS_COUNT]
+	[FRAME_FENCE_EDGE_CLASS_COUNT] = {
 	{ 7, 5, 6 },
 	{ 1, 3, 2 },
-	{ 0, 4, -1 }
+	{ 0, 4, FRAME_FENCE_NONE }
 };
 
 static legacy_s16 frame_border_index(legacy_s8 offset)
 {
 	if (offset == 0)
-		return 0;
+		return FRAME_FENCE_EDGE_LOW;
 	if (offset == TRACK_GRID_LAST_COORDINATE)
-		return 1;
-	return 2;
+		return FRAME_FENCE_EDGE_HIGH;
+	return FRAME_FENCE_EDGE_INTERIOR;
 }
 
 /* The camera looks out of the car, so it uses the car's rotation inverted. */
@@ -502,12 +547,12 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s8 tile_south, tile_east;
 	legacy_s8 tile_to_draw_south_offset, tile_to_draw_east_offset;
 	legacy_s8 car_tile_east, car_tile_south;
-	legacy_u8 tiles_to_draw_terr_type_vec[24];
-	legacy_s8 should_skip_tile[24];
-	legacy_s8 tile_detail_level[24];
-	legacy_s8 tiles_to_draw_south[24];
-	legacy_s8 tiles_to_draw_east[24];
-	legacy_u8 tiles_to_draw_elem_type_vec[24];
+	legacy_u8 tiles_to_draw_terr_type_vec[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
+	legacy_s8 should_skip_tile[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
+	legacy_s8 tile_detail_level[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
+	legacy_s8 tiles_to_draw_south[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
+	legacy_s8 tiles_to_draw_east[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
+	legacy_u8 tiles_to_draw_elem_type_vec[FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT];
 	legacy_s8 detail_threshold;
 	legacy_s8 var_3C;
 	legacy_s8 var_60;
@@ -531,7 +576,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_s16 var_12A;
 	legacy_u8 var_4C;
 	struct RECTANGLE var_rect, var_rect2;
-	struct VECTOR var_108[4];
+	struct VECTOR var_108[FRAME_START_FLAG_VERTEX_COUNT];
 	struct CARSTATE* var_stateptr;
 	legacy_u8 elem_map_value;
 	legacy_u8 terr_map_value;
@@ -547,7 +592,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	}
 
 	if (slow_video_mgmt_copy != 0) {
-		var_122 = 8;
+		var_122 = FRAME_SLOW_VIDEO_TRANSFORM_FLAG;
 		var_rectptr = rect_unk;
 		for (si = 0; si < FRAME_DIRTY_RECT_COUNT; si++) {
 			*var_rectptr = cliprect_unk;
@@ -728,7 +773,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	// Draw 8 shapes (still TBD what they are), but only if the detail
 	// level is the max one
-	if (detail_level == 0) {
+	if (detail_level == FRAME_DETAIL_FULL) {
 		currenttransshape->rectptr = &rect_unk9;
 		currenttransshape->ts_flags = var_122 | FRAME_DISTANT_SHAPE_FLAGS;
 		currenttransshape->rotvec.x = 0;
@@ -769,10 +814,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 */
 
 	cam_tile_east = LEGACY_S8_FROM_BITS(
-		(legacy_u8)LEGACY_S16_SAR(cam_pos.x, 10U));
+		(legacy_u8)LEGACY_S16_SAR(cam_pos.x, FRAME_CAMERA_TILE_SHIFT));
 	cam_tile_south = LEGACY_S8_WRAP_SUB(TRACK_GRID_LAST_COORDINATE,
-		LEGACY_S16_SAR(cam_pos.z, 10U));
-	if (detail_level != 0) {
+		LEGACY_S16_SAR(cam_pos.z, FRAME_CAMERA_TILE_SHIFT));
+	if (detail_level != FRAME_DETAIL_FULL) {
 		car_tile_east = frame_tile_from_world(
 			state.playerstate.car_posWorld1.lx);
 		car_tile_south = frame_south_tile_from_world(
@@ -842,7 +887,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				tiles_to_draw_terr_type_vec[si] = terr_map_value;
 				tile_detail_level[si] = lookahead_tiles[si].detail;
 
-				if (elem_map_value != 0 && detail_level != 0 &&
+				if (elem_map_value != 0 &&
+					detail_level != FRAME_DETAIL_FULL &&
 					trkObjectList[elem_map_value].ss_physicalModel >=
 						FRAME_SCENERY_PHYSICAL_MODEL_FIRST &&
 					(tile_east != car_tile_east || tile_south != car_tile_south))
@@ -909,7 +955,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
 		followOpponentFlag != 0) {
 
-		if (state.playerstate.car_crashBmpFlag != 2) {
+		if (state.playerstate.car_crashBmpFlag !=
+			FRAME_CAR_CRASH_STATE_SINKING) {
 
 			var_6C = frame_find_car_wheel(&state.playerstate,
 				&simd_player, should_skip_tile, lookahead_tiles,
@@ -924,7 +971,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
 			followOpponentFlag == 0) {
-			if (state.opponentstate.car_crashBmpFlag != 2) {
+			if (state.opponentstate.car_crashBmpFlag !=
+				FRAME_CAR_CRASH_STATE_SINKING) {
 				var_A4 = frame_find_car_wheel(&state.opponentstate,
 					&simd_opponent, should_skip_tile, lookahead_tiles,
 					cam_tile_east, cam_tile_south, &var_4A, &var_6E);
@@ -957,19 +1005,19 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			var_trkobject_ptr = &trkObjectList[elem_map_value];
 			if (var_trkobject_ptr->ss_multiTileFlag ==
 				FRAME_MULTITILE_NONE) {
-				var_counter = 1;
+				var_counter = FRAME_FENCE_POSITION_COUNT_SINGLE;
 				var_10E = unk_3C0EE;
 			} else if (var_trkobject_ptr->ss_multiTileFlag ==
 				FRAME_MULTITILE_ROW) {
-				var_counter = 2;
+				var_counter = FRAME_FENCE_POSITION_COUNT_ROW;
 				var_10E = unk_3C0F0;
 			} else if (var_trkobject_ptr->ss_multiTileFlag ==
 				FRAME_MULTITILE_COLUMN) {
-				var_counter = 3;
+				var_counter = FRAME_FENCE_POSITION_COUNT_COLUMN;
 				var_10E = unk_3C0F4;
 			} else if (var_trkobject_ptr->ss_multiTileFlag ==
 				FRAME_MULTITILE_BOTH) {
-				var_counter = 4;
+				var_counter = FRAME_FENCE_POSITION_COUNT_BOTH;
 				var_10E = unk_3C0F8;
 			}
 		}
@@ -977,19 +1025,22 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		// Draw the fence
 		for (idx = 0; idx < var_counter; idx++) {
 			tile_to_draw_east_offset = LEGACY_S8_WRAP_ADD(
-				var_10E[idx * 2], tile_east);
+				var_10E[idx * FRAME_FENCE_POSITION_STRIDE], tile_east);
 			tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
-				var_10E[idx * 2 + 1], tile_south);
+				var_10E[idx * FRAME_FENCE_POSITION_STRIDE +
+					FRAME_FENCE_SECOND_COORDINATE], tile_south);
 
-			if (detail_level == 0 || (tile_to_draw_east_offset == car_tile_east && tile_to_draw_south_offset == car_tile_south)) {
+			if (detail_level == FRAME_DETAIL_FULL ||
+				(tile_to_draw_east_offset == car_tile_east &&
+					tile_to_draw_south_offset == car_tile_south)) {
 				di = fence_by_edge[frame_border_index(
 					tile_to_draw_east_offset)][frame_border_index(
 					tile_to_draw_south_offset)];
 
-				if (di != -1) {
+				if (di != FRAME_FENCE_NONE) {
 					var_trkobjectptr = frame_track_object_from_legacy_index(
 						fence_TrkObjCodes[di]);
-					if (tile_det_level == 0) {
+					if (tile_det_level == FRAME_TILE_DETAIL_FULL) {
 						currenttransshape->shapeptr = var_trkobjectptr->ss_shapePtr;
 					} else {
 						currenttransshape->shapeptr = var_trkobjectptr->ss_loShapePtr;
@@ -1024,18 +1075,18 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			if (elem_map_value >= FRAME_ELEVATED_CORNER_FIRST &&
 				elem_map_value <= FRAME_ELEVATED_CORNER_LAST) {
 				for (idx = 0; idx < FRAME_ELEVATED_CORNER_COUNT; idx++) {
-					if (idx == 0) {
+					if (idx == FRAME_CORNER_NORTHWEST) {
 						tile_to_draw_east_offset = tile_east;
 						tile_to_draw_south_offset = tile_south;
-					} else if (idx == 1) {
+					} else if (idx == FRAME_CORNER_NORTHEAST) {
 						tile_to_draw_east_offset = LEGACY_S8_WRAP_ADD(
 							tile_east, 1);
 						tile_to_draw_south_offset = tile_south;
-					} else if (idx == 2) {
+					} else if (idx == FRAME_CORNER_SOUTHWEST) {
 						tile_to_draw_east_offset = tile_east;
 						tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
 							tile_south, 1);
-					} else if (idx == 3) {
+					} else if (idx == FRAME_CORNER_SOUTHEAST) {
 						tile_to_draw_east_offset = LEGACY_S8_WRAP_ADD(
 							tile_east, 1);
 						tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
@@ -1177,7 +1228,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			if (var_trkobject_ptr->ss_ssOvelay != 0) {
 				var_trkobjectptr = frame_track_object_from_legacy_index(
 					var_trkobject_ptr->ss_ssOvelay);
-				if (tile_det_level != 0) {
+				if (tile_det_level != FRAME_TILE_DETAIL_FULL) {
 					currenttransshape[1].shapeptr = var_trkobjectptr->ss_loShapePtr;
 				} else {
 					currenttransshape[1].shapeptr = var_trkobjectptr->ss_shapePtr;
@@ -1219,7 +1270,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 			}
 
-			if (tile_det_level != 0) {
+			if (tile_det_level != FRAME_TILE_DETAIL_FULL) {
 				currenttransshape->shapeptr = var_trkobject_ptr->ss_loShapePtr;
 			} else {
 				currenttransshape->shapeptr = var_trkobject_ptr->ss_shapePtr;
@@ -1348,7 +1399,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 		}
 
-		if (state.game_inputmode == 0) {
+		if (state.game_inputmode == FRAME_INPUT_MODE_WAITING) {
 			if ((tile_east == startcol2 || tile_to_draw_east_offset == startcol2) && (tile_south == startrow2 || tile_to_draw_south_offset == startrow2)) {
 
 				idx = multiply_and_scale(cos_fast(word_44DCA),
@@ -1367,19 +1418,23 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						LEGACY_U16_WRAP_ADD(FRAME_START_FLAG_FIRST_VERTEX,
 							vertex_index),
 						&var_108[vertex_index]);
-				var_108[0].x = LEGACY_S16_WRAP_SUB(idx,
+				var_108[FRAME_START_FLAG_VERTEX_LEFT_NEAR].x =
+					LEGACY_S16_WRAP_SUB(idx,
 					FRAME_START_FLAG_RADIUS);
-				var_108[1].x = LEGACY_S16_WRAP_SUB(idx,
+				var_108[FRAME_START_FLAG_VERTEX_LEFT_FAR].x =
+					LEGACY_S16_WRAP_SUB(idx,
 					FRAME_START_FLAG_RADIUS);
-				var_108[2].x = LEGACY_S16_WRAP_SUB(
+				var_108[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].x =
+					LEGACY_S16_WRAP_SUB(
 					FRAME_START_FLAG_RADIUS, idx);
-				var_108[3].x = LEGACY_S16_WRAP_SUB(
+				var_108[FRAME_START_FLAG_VERTEX_RIGHT_FAR].x =
+					LEGACY_S16_WRAP_SUB(
 					FRAME_START_FLAG_RADIUS, idx);
 
-				var_108[0].z = var_counter;
-				var_108[1].z = var_counter;
-				var_108[2].z = var_counter;
-				var_108[3].z = var_counter;
+				var_108[FRAME_START_FLAG_VERTEX_LEFT_NEAR].z = var_counter;
+				var_108[FRAME_START_FLAG_VERTEX_LEFT_FAR].z = var_counter;
+				var_108[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].z = var_counter;
+				var_108[FRAME_START_FLAG_VERTEX_RIGHT_FAR].z = var_counter;
 				for (vertex_index = 0;
 					vertex_index < FRAME_START_FLAG_VERTEX_COUNT;
 					vertex_index++)
@@ -1433,7 +1488,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		if (transformedshape_counter != 0) {
-			if (transformedshape_counter > 1) {
+			if (transformedshape_counter >=
+				FRAME_SORT_MINIMUM_SHAPE_COUNT) {
 				heapsort_by_order(transformedshape_counter, transformedshape_zarray, transformedshape_indices);
 			}
 
@@ -1467,12 +1523,14 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				if (var_transformresult == 0) {
 					if (transformedshape_arg2array[di] ==
 						FRAME_PLAYER_SORT_ID) {
-						if (state.playerstate.car_crashBmpFlag == 1) {
+						if (state.playerstate.car_crashBmpFlag ==
+							FRAME_CAR_CRASH_STATE_CRASHED) {
 							var_DC[FRAME_PLAYER_INDEX] = 1;
 						}
 					} else if (transformedshape_arg2array[di] ==
 						FRAME_OPPONENT_SORT_ID) {
-						if (state.opponentstate.car_crashBmpFlag == 1) {
+						if (state.opponentstate.car_crashBmpFlag ==
+							FRAME_CAR_CRASH_STATE_CRASHED) {
 							var_DC[FRAME_OPPONENT_INDEX] = 1;
 						}
 					}
@@ -1511,9 +1569,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		if (rect_intersect(var_rectptr, arg_cliprectptr) == 0) {
 			sprite_set_1_size(var_rectptr->left, var_rectptr->right, var_rectptr->top, var_rectptr->bottom);
 			offset_vector.x = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
-				var_rectptr->right, var_rectptr->left), 1U);
+				var_rectptr->right, var_rectptr->left),
+				FRAME_RECT_CENTER_SHIFT);
 			offset_vector.y = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
-				var_rectptr->top, var_rectptr->bottom), 1U);
+				var_rectptr->top, var_rectptr->bottom),
+				FRAME_RECT_CENTER_SHIFT);
 			idx = LEGACY_S16_WRAP_SUB(
 				var_rectptr->right, var_rectptr->left);
 			var_counter = LEGACY_S16_WRAP_SUB(
@@ -1550,13 +1610,15 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			si = state.game_pEndFrame;
 		}
 
-		if (var_stateptr->car_crashBmpFlag == 1) {
+		if (var_stateptr->car_crashBmpFlag ==
+			FRAME_CAR_CRASH_STATE_CRASHED) {
 			if (slow_video_mgmt_copy != 0) {
 				rect_union(init_crak(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top), rect_unk, rect_unk);
 			} else {
 				init_crak(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top);
 			}
-		} else if (var_stateptr->car_crashBmpFlag == 2) {
+		} else if (var_stateptr->car_crashBmpFlag ==
+			FRAME_CAR_CRASH_STATE_SINKING) {
 			if (slow_video_mgmt_copy != 0) {
 				rect_union(do_sinking(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top), rect_unk, rect_unk);
 			} else {
@@ -1566,17 +1628,19 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	}
 
 	// Show elapsed time
-	if (game_replay_mode == 0) {
-		if (state.game_inputmode != 0) {
+	if (game_replay_mode == FRAME_REPLAY_MODE_LIVE) {
+		if (state.game_inputmode != FRAME_INPUT_MODE_WAITING) {
 			format_frame_as_string(&resID_byte1, elapsed_time1 + elapsed_time2, 0);
 			font_set_fontdef2(fontledresptr);
 			if (slow_video_mgmt_copy != 0) {
 				rect_union(intro_draw_text(&resID_byte1,
-					FRAME_ELAPSED_TIME_X, roofbmpheight + 2,
+					FRAME_ELAPSED_TIME_X,
+					roofbmpheight + FRAME_ELAPSED_TIME_Y_OFFSET,
 					dialog_fnt_colour, 0), &rect_unk11, &rect_unk11);
 			} else {
 				intro_draw_text(&resID_byte1, FRAME_ELAPSED_TIME_X,
-					roofbmpheight + 2, dialog_fnt_colour, 0);
+					roofbmpheight + FRAME_ELAPSED_TIME_Y_OFFSET,
+					dialog_fnt_colour, 0);
 			}
 
 			font_set_fontdef();
