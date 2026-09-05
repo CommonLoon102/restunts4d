@@ -113,7 +113,6 @@
 #define FRAME_CORNER_SOUTHWEST 2
 #define FRAME_CORNER_SOUTHEAST 3
 #define FRAME_SORT_MINIMUM_SHAPE_COUNT 2
-#define FRAME_INPUT_MODE_WAITING 0
 #define FRAME_REPLAY_MODE_LIVE 0
 #define FRAME_RECT_CENTER_SHIFT 1U
 #define FRAME_START_FLAG_VERTEX_LEFT_NEAR 0
@@ -1396,7 +1395,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 		}
 
-		if (state.game_inputmode == FRAME_INPUT_MODE_WAITING) {
+		if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
 			if ((tile_east == startcol2 || tile_to_draw_east_offset == startcol2) && (tile_south == startrow2 || tile_to_draw_south_offset == startrow2)) {
 
 				idx = multiply_and_scale(cos_fast(word_44DCA),
@@ -1626,7 +1625,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 	// Show elapsed time
 	if (game_replay_mode == FRAME_REPLAY_MODE_LIVE) {
-		if (state.game_inputmode != FRAME_INPUT_MODE_WAITING) {
+		if (state.game_inputmode != GAME_INPUT_MODE_WAITING) {
 			format_frame_as_string(&resID_byte1, elapsed_time1 + elapsed_time2, 0);
 			font_set_fontdef2(fontledresptr);
 			if (slow_video_mgmt_copy != 0) {

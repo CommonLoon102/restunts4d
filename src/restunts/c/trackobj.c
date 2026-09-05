@@ -597,7 +597,8 @@ void build_track_object(struct VECTOR* world_position,
 
 	switch (physical_model) {
 	case PHYSICAL_MODEL_START_FINISH:
-		if (state.game_inputmode == 0 && position.x > 0) {
+		if (state.game_inputmode == GAME_INPUT_MODE_WAITING &&
+			position.x > 0) {
 			if (position.z < START_FINISH_FAR_Z)
 				planindex = START_FINISH_FAR_PLANE_INDEX;
 			else if (position.z < START_FINISH_NEAR_Z)

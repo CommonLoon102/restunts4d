@@ -158,7 +158,7 @@ void update_gamestate(void)
 
 	car_input = td16_rpl_buffer[(legacy_u16)state.game_frame];
 	if (car_input != 0)
-		state.game_inputmode = 1;
+		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
 
 	if (word_45A00 == 0 ||
 		((legacy_u16)state.game_frame % (legacy_u16)word_45A00) == 0) {
@@ -187,7 +187,7 @@ void update_gamestate(void)
 		}
 	}
 
-	if (state.game_inputmode != 0) {
+	if (state.game_inputmode != GAME_INPUT_MODE_WAITING) {
 		player_op(car_input);
 		if (gameconfig.game_opponenttype != 0)
 			opponent_op();

@@ -189,7 +189,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		return &rect_ingame_text;
 	}
 
-	if (state.game_inputmode == 0) {
+	if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
 		draw_centered_ingame_resource("pre", PREPARE_TEXT_Y);
 		return &rect_ingame_text;
 	}

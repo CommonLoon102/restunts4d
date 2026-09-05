@@ -10,7 +10,6 @@
 #define OPPONENT_LOW_RATE_STEERING_STEP 16
 #define OPPONENT_NORMAL_SPEED_STEP 1
 #define OPPONENT_LOW_RATE_SPEED_STEP 2
-#define OPPONENT_FORCED_INPUT_MODE 2
 #define OPPONENT_ROUTE_REACHED_DISTANCE 200
 #define OPPONENT_PLAYER_HEIGHT_RANGE 90
 #define OPPONENT_PLAYER_LATERAL_RANGE 180
@@ -243,7 +242,7 @@ void opponent_op(void)
 		speed_step = OPPONENT_LOW_RATE_SPEED_STEP;
 	}
 	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
-		state.game_inputmode == OPPONENT_FORCED_INPUT_MODE;
+		state.game_inputmode == GAME_INPUT_MODE_INTRO;
 	opponent_x = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lx);
 	opponent_y = position_to_word(
@@ -283,7 +282,7 @@ void opponent_op(void)
 
 	for (;;) {
 	route_target = state.opponentstate.car_vec_unk3;
-	if (state.game_inputmode != OPPONENT_FORCED_INPUT_MODE) {
+	if (state.game_inputmode != GAME_INPUT_MODE_INTRO) {
 		relative.x = LEGACY_S16_WRAP_SUB(player_x, opponent_x);
 		relative.y = LEGACY_S16_WRAP_SUB(player_y, opponent_y);
 		relative.z = LEGACY_S16_WRAP_SUB(player_z, opponent_z);
@@ -406,7 +405,7 @@ void opponent_op(void)
 		} else if (state.opponentstate.car_demandedGrip <=
 			state.opponentstate.car_surfacegrip_sum) {
 			target_speed = state.game_inputmode ==
-				OPPONENT_FORCED_INPUT_MODE ? OPPONENT_EMERGENCY_TARGET_SPEED :
+				GAME_INPUT_MODE_INTRO ? OPPONENT_EMERGENCY_TARGET_SPEED :
 				LEGACY_U16_SHL((legacy_u8)state.field_3F9,
 					OPPONENT_SPEED_TO_TARGET_SHIFT);
 			if (LEGACY_U16_WRAP_SUB(target_speed,

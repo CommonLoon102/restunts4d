@@ -21,6 +21,10 @@
 #define GAME_FRAME_RATE_LOW 10U
 #define GAME_FRAME_RATE_NORMAL 20U
 
+#define GAME_INPUT_MODE_WAITING 0
+#define GAME_INPUT_MODE_ACTIVE 1
+#define GAME_INPUT_MODE_INTRO 2
+
 #define GAMESTATE_INIT_NORMAL 0
 #define GAMESTATE_INIT_RESET_CHECKPOINTS (-1)
 #define GAMESTATE_INIT_SKIP_ROUTE_SETUP (-2)
@@ -145,7 +149,7 @@ struct GAMESTATE {
 	legacy_s8 field_3BE[GAMESTATE_PARTICLE_VELOCITY_BYTES];
 	legacy_s8 kevinseed[GAMESTATE_RANDOM_SEED_SIZE];
 	legacy_s8 field_3F4;
-	legacy_s8 game_inputmode; /* 0 waiting, 1 active, 2 intro. */
+	legacy_s8 game_inputmode;
 	legacy_s8 game_3F6autoLoadEvalFlag;
 	legacy_s8 field_3F7[GAMESTATE_FIELD_3F7_SIZE];
 	legacy_s8 field_3F9;

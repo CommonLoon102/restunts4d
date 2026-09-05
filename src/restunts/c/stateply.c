@@ -32,7 +32,6 @@
 #define PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE 29
 #define PLAYER_PHYSICS_TRACK_GRID_SIZE 30
 #define PLAYER_PHYSICS_START_FINISH_POLE_OFFSET 126
-#define PLAYER_PHYSICS_INTRO_INPUT_MODE 2
 #define PLAYER_PHYSICS_SURFACE_WATER 5
 #define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
 #define PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE 4U
@@ -566,7 +565,7 @@ case PLAYER_FLOW_loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
 	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
-	if (state.game_inputmode != PLAYER_PHYSICS_INTRO_INPUT_MODE)
+	if (state.game_inputmode != GAME_INPUT_MODE_INTRO)
 		{ physics_flow = PLAYER_FLOW_loc_15240; continue; }
 	nextPosAndNormalIP = vec_1C6.y;
 	{ physics_flow = PLAYER_FLOW_loc_15257; continue; }
@@ -786,7 +785,7 @@ case PLAYER_FLOW_loc_15642:
 
 case PLAYER_FLOW_loc_156A3:
 	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	if (state.game_inputmode == PLAYER_PHYSICS_INTRO_INPUT_MODE) {
+	if (state.game_inputmode == GAME_INPUT_MODE_INTRO) {
 		nextPosAndNormalIP = vec_1C6.y;
 	} else {
 		nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
@@ -1016,7 +1015,7 @@ case PLAYER_FLOW_loc_15D39:
 case PLAYER_FLOW_loc_15D43:
 	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
-	if (state.game_inputmode == PLAYER_PHYSICS_INTRO_INPUT_MODE)
+	if (state.game_inputmode == GAME_INPUT_MODE_INTRO)
 		{ physics_flow = PLAYER_FLOW_loc_15D94; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_151BA; continue; }
 
@@ -1221,7 +1220,7 @@ case PLAYER_FLOW_loc_1620A:
 		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
 	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
-	if (state.game_inputmode != PLAYER_PHYSICS_INTRO_INPUT_MODE)
+	if (state.game_inputmode != GAME_INPUT_MODE_INTRO)
 		{ physics_flow = PLAYER_FLOW_loc_16236; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 

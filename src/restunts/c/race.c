@@ -138,13 +138,15 @@ void run_game(void) {
 			}
 
 
-			if (game_replay_mode == 0 && byte_449DA == 0 && state.game_inputmode != 0) {
+			if (game_replay_mode == 0 && byte_449DA == 0 &&
+				state.game_inputmode != GAME_INPUT_MODE_WAITING) {
 				if (var_C == state.game_frame)
 					continue;
 				var_C = state.game_frame;
 			}
 
-			if (state.game_inputmode == 0 && game_replay_mode == 0) {
+			if (state.game_inputmode == GAME_INPUT_MODE_WAITING &&
+				game_replay_mode == 0) {
 				elapsed_time2 = 0;
 				gameconfig.game_recordedframes = 0;
 				state.game_frame = 0;

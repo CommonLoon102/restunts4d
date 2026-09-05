@@ -175,7 +175,7 @@ void init_game_state(legacy_s16 arg)
 
 		state.field_3F4 = 1;
 		state.game_frames_per_sec = 1;
-		state.game_inputmode = 0;
+		state.game_inputmode = GAME_INPUT_MODE_WAITING;
 		state.game_3F6autoLoadEvalFlag = 0;
 		state.game_frame_in_sec = 0;
 		state.field_2F4 = 0;
