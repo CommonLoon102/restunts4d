@@ -1,4 +1,5 @@
 #include "frame_internal.h"
+#include "game_input.h"
 
 #define OVERLAY_SCREEN_WIDTH 320
 #define OVERLAY_REFERENCE_HEIGHT 200L
@@ -197,7 +198,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		draw_centered_ingame_resource("se2", SECURITY_TEXT_SECOND_Y);
 		return &rect_ingame_text;
 	}
-	if (followOpponentFlag != 0 || cameramode != 0 ||
+	if (followOpponentFlag != 0 || cameramode != CAMERA_MODE_COCKPIT ||
 		state.playerstate.car_crashBmpFlag != 0)
 		return &rect_ingame_text;
 

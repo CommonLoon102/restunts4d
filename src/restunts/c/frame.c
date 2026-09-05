@@ -1,4 +1,5 @@
 #include "frame_internal.h"
+#include "game_input.h"
 
 #define TRACK_OBJECT_COUNT 215U
 #define TRACK_GRID_LAST_COORDINATE 29
@@ -21,10 +22,6 @@
 #define FRAME_TRANSFORM_FLAGS_DEFAULT 4
 #define FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT 5
 #define FRAME_TRANSFORM_FLAGS_CLIPPED 12
-#define FRAME_CAMERA_MODE_COCKPIT 0
-#define FRAME_CAMERA_MODE_FOLLOW 1
-#define FRAME_CAMERA_MODE_CUSTOM 2
-#define FRAME_CAMERA_MODE_TRACK 3
 #define FRAME_COCKPIT_HEIGHT_CLEARANCE 6
 #define FRAME_CAMERA_DIRECTION_LENGTH 16384
 #define FRAME_TRACK_CAMERA_HEIGHT_OFFSET 90
@@ -629,7 +626,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	car_rot_z_2 = 0;
 
 	// Set camera position, based on the car position and the camera mode
-	if (cameramode == FRAME_CAMERA_MODE_COCKPIT) {
+	if (cameramode == CAMERA_MODE_COCKPIT) {
 		car_rot_x_2 = car_rot_x & ANGLE_MASK;
 		car_rot_y_2 = car_rot_y & ANGLE_MASK;
 		car_rot_z_2 = car_rot_z & ANGLE_MASK;
@@ -647,11 +644,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(
 			car_pos.z, car_to_cam_rotated.z);
-	} else if (cameramode == FRAME_CAMERA_MODE_FOLLOW) {
+	} else if (cameramode == CAMERA_MODE_FOLLOW) {
 		cam_pos.x = state.game_vec1[followOpponentFlag].x;
 		cam_pos.z = state.game_vec1[followOpponentFlag].z;
 		cam_pos.y = state.game_vec1[followOpponentFlag].y;
-	} else if (cameramode == FRAME_CAMERA_MODE_CUSTOM) {
+	} else if (cameramode == CAMERA_MODE_CUSTOM) {
 		offset_vector.x = 0;
 		offset_vector.y = 0;
 		offset_vector.z = FRAME_CAMERA_DIRECTION_LENGTH;
@@ -671,7 +668,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
 		cam_pos.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
-	} else if (cameramode == FRAME_CAMERA_MODE_TRACK) {
+	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
 		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag]].x;
 		cam_pos.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 			trackdata9[state.field_3F7[followOpponentFlag]].y,
@@ -952,7 +949,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Draw own wheels
 	var_3C = -1;
 	var_6C = 0;
-	if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
+	if (cameramode != CAMERA_MODE_COCKPIT ||
 		followOpponentFlag != 0) {
 
 		if (state.playerstate.car_crashBmpFlag !=
@@ -969,7 +966,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	var_A4 = 0;
 	if (gameconfig.game_opponenttype != 0) {
 
-		if (cameramode != FRAME_CAMERA_MODE_COCKPIT ||
+		if (cameramode != CAMERA_MODE_COCKPIT ||
 			followOpponentFlag == 0) {
 			if (state.opponentstate.car_crashBmpFlag !=
 				FRAME_CAR_CRASH_STATE_SINKING) {
@@ -1600,7 +1597,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Depict windscreen cracking after a crash
 	sprite_set_1_size(0, FRAME_SCREEN_WIDTH, arg_cliprectptr->top,
 		arg_cliprectptr->bottom);
-	if (cameramode == FRAME_CAMERA_MODE_COCKPIT) {
+	if (cameramode == CAMERA_MODE_COCKPIT) {
 
 		if (followOpponentFlag != 0) {
 			var_stateptr = &state.opponentstate;

@@ -260,8 +260,8 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 	case 'c':
 		if (game_replay_mode != 1) {
 			cameramode++;
-			if (cameramode == 4)
-				cameramode = 0;
+			if (cameramode == CAMERA_MODE_COUNT)
+				cameramode = CAMERA_MODE_COCKPIT;
 		}
 		return 1;
 
@@ -271,16 +271,16 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 		return 1;
 
 	case KEY_F1:
-		cameramode = 0;
+		cameramode = CAMERA_MODE_COCKPIT;
 		return 1;
 	case KEY_F2:
-		cameramode = 1;
+		cameramode = CAMERA_MODE_FOLLOW;
 		return 1;
 	case KEY_F3:
-		cameramode = 2;
+		cameramode = CAMERA_MODE_CUSTOM;
 		return 1;
 	case KEY_F4:
-		cameramode = 3;
+		cameramode = CAMERA_MODE_TRACKSIDE;
 		return 1;
 	}
 

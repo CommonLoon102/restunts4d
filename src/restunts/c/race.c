@@ -44,17 +44,17 @@ void run_game(void) {
 	is_in_replay = 0;
 	if (idle_expired == 0) {
 		if (gameconfig.game_recordedframes != 0) {
-			cameramode = 0;
+			cameramode = CAMERA_MODE_COCKPIT;
 			game_replay_mode = 2;
 			is_in_replay = 1;
 		} else {
-			cameramode = 0;
+			cameramode = CAMERA_MODE_COCKPIT;
 			game_replay_mode = 1;
 		}
 	} else {
 		cameramode++;
-		if (cameramode == 4) {
-			cameramode = 0;
+		if (cameramode == CAMERA_MODE_COUNT) {
+			cameramode = CAMERA_MODE_COCKPIT;
 		}
 
 		game_replay_mode = 2;
@@ -85,7 +85,7 @@ void run_game(void) {
 			init_game_state(-1);
 		} else {
 			if (is_in_replay == 0) {
-				cameramode = 0;
+				cameramode = CAMERA_MODE_COCKPIT;
 				dashb_toggle = 1;
 				show_penalty_counter = 0;
 				init_game_state_with_frame_rate(framespersec2);
@@ -109,7 +109,7 @@ void run_game(void) {
 					RACE_START_CAMERA_HEIGHT_OFFSET);
 				byte_43966 = 1;
 			} else {
-				cameramode = 0;
+				cameramode = CAMERA_MODE_COCKPIT;
 				game_replay_mode = 2;
 				word_44DCA = RACE_REPLAY_RESTORE_WAIT_TICKS;
 				framespersec = gameconfig.game_framespersec;

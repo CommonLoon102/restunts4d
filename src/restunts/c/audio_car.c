@@ -1,6 +1,7 @@
 #include "audio.h"
 #include "audio_internal.h"
 #include "externs.h"
+#include "game_input.h"
 #include "legacy.h"
 #include "math.h"
 #include "platform.h"
@@ -143,11 +144,11 @@ void audio_carstate(void)
 			(legacy_s32)state.opponentstate.car_posWorld1.lz);
 	}
 
-	if (cameramode == 1) {
+	if (cameramode == CAMERA_MODE_FOLLOW) {
 		camera_current = state.game_vec1[(legacy_u8)followOpponentFlag];
 		camera_previous = followOpponentFlag != 0 ?
 			state.game_vec4 : state.game_vec3;
-	} else if (cameramode == 3) {
+	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
 		track_index = LEGACY_S16_FROM_BITS((legacy_u16)(legacy_s8)
 			state.field_3F7[(legacy_u8)followOpponentFlag]);
 		camera_current.x = trackdata9[track_index].x;

@@ -21,6 +21,13 @@
 #define INPUT_NON_STEERING_MASK \
 	(INPUT_PEDAL_MASK | INPUT_ACTION_BUTTON_MASK)
 
+#define CAMERA_MODE_COCKPIT 0
+#define CAMERA_MODE_FOLLOW 1
+#define CAMERA_MODE_CUSTOM 2
+#define CAMERA_MODE_TRACKSIDE 3
+#define CAMERA_MODE_COUNT 4U
+#define CAMERA_MODE_MASK (CAMERA_MODE_COUNT - 1U)
+
 typedef legacy_s16 (far* readchar_callback_type)(void);
 
 void kb_reg_callback(legacy_s16 code, void (far* callback)(void));
