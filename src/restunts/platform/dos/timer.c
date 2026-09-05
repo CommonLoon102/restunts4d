@@ -18,6 +18,18 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_PIC_COMMAND_PORT 32U
 #define DOS_TIMER_PIC_END_OF_INTERRUPT 32U
 #define DOS_TIMER_CALLBACK_SUSPENDED_MASK LEGACY_U8_MAX
+#define DOS_TIMER_PIC_MASK_PORT 33U
+#define DOS_TIMER_IRQ_DISABLE_MASK 3U
+#define DOS_TIMER_IRQ_ENABLE_MASK 252U
+#define DOS_TIMER_PIT_COUNTER_PORT 64U
+#define DOS_TIMER_PIT_CONTROL_PORT 67U
+#define DOS_TIMER_PIT_CONTROL_WORD 182U
+#define DOS_TIMER_PIT_DIVISOR_LOW_BYTE 156U
+#define DOS_TIMER_PIT_DIVISOR_HIGH_BYTE 46U
+#define DOS_TIMER_PIT_BIOS_DIVISOR_BYTE 0U
+#define DOS_TIMER_SPEAKER_CONTROL_PORT 97U
+#define DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK 252U
+#define DOS_TIMER_DEFAULT_DIVIDER_PERIOD 5U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -193,18 +205,22 @@ void dos_timer_shutdown(void)
 	interrupt_handler_type installed_handler;
 	legacy_u8 interrupt_mask;
 
-	installed_handler = getvect(8);
+	installed_handler = getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt)
 		return;
 
-	interrupt_mask = (legacy_u8)inp(0x21U);
-	outp(0x21U, interrupt_mask | 3U);
+	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	outp(DOS_TIMER_PIC_MASK_PORT,
+		interrupt_mask | DOS_TIMER_IRQ_DISABLE_MASK);
 	dos_timer_write_vector(previous_timer_interrupt);
-	interrupt_mask = (legacy_u8)inp(0x21U);
-	outp(0x21U, interrupt_mask & 0xFCU);
-	outp(0x40U, 0);
-	outp(0x40U, 0);
-	outp(0x61U, inp(0x61U) & 0xFCU);
+	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	outp(DOS_TIMER_PIC_MASK_PORT,
+		interrupt_mask & DOS_TIMER_IRQ_ENABLE_MASK);
+	outp(DOS_TIMER_PIT_COUNTER_PORT, DOS_TIMER_PIT_BIOS_DIVISOR_BYTE);
+	outp(DOS_TIMER_PIT_COUNTER_PORT, DOS_TIMER_PIT_BIOS_DIVISOR_BYTE);
+	outp(DOS_TIMER_SPEAKER_CONTROL_PORT,
+		inp(DOS_TIMER_SPEAKER_CONTROL_PORT) &
+		DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK);
 }
 
 void dos_timer_setup_interrupt(void)
@@ -212,8 +228,8 @@ void dos_timer_setup_interrupt(void)
 	interrupt_handler_type installed_handler;
 	legacy_u8 interrupt_mask;
 
-	dos_timer_divider_period = 5U;
-	dos_timer_divider = 5U;
+	dos_timer_divider_period = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
+	dos_timer_divider = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
 	dos_timer_chain_timeout_active = 0;
 	dos_timer_chain_enabled = 1U;
 
@@ -222,21 +238,25 @@ void dos_timer_setup_interrupt(void)
 	dos_timer_callbacks[0] = 0;
 	enable();
 
-	outp(0x61U, inp(0x61U) & 0xFCU);
-	outp(0x43U, 0xB6U);
-	interrupt_mask = (legacy_u8)inp(0x21U);
-	outp(0x21U, interrupt_mask | 3U);
+	outp(DOS_TIMER_SPEAKER_CONTROL_PORT,
+		inp(DOS_TIMER_SPEAKER_CONTROL_PORT) &
+		DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK);
+	outp(DOS_TIMER_PIT_CONTROL_PORT, DOS_TIMER_PIT_CONTROL_WORD);
+	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	outp(DOS_TIMER_PIC_MASK_PORT,
+		interrupt_mask | DOS_TIMER_IRQ_DISABLE_MASK);
 
-	installed_handler = getvect(8);
+	installed_handler = getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt) {
 		previous_timer_interrupt = installed_handler;
 		dos_timer_write_vector(dos_timer_interrupt);
 	}
 
-	interrupt_mask = (legacy_u8)inp(0x21U);
-	outp(0x21U, interrupt_mask & 0xFCU);
-	outp(0x40U, 0x9CU);
-	outp(0x40U, 0x2EU);
+	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	outp(DOS_TIMER_PIC_MASK_PORT,
+		interrupt_mask & DOS_TIMER_IRQ_ENABLE_MASK);
+	outp(DOS_TIMER_PIT_COUNTER_PORT, DOS_TIMER_PIT_DIVISOR_LOW_BYTE);
+	outp(DOS_TIMER_PIT_COUNTER_PORT, DOS_TIMER_PIT_DIVISOR_HIGH_BYTE);
 	add_exit_handler(dos_timer_shutdown);
 }
 
