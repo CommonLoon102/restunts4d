@@ -22,6 +22,11 @@
 #define TRACK_CAMERA_HILL_HEIGHT 450
 #define TRACK_PIECE_SUBTYPE_MASK 15U
 #define TRACK_PIECE_REVERSE_FLAG 16U
+#define TRACK_PIECE_TRAVERSAL_SHIFT 4U
+#define TRACK_ARROW_NONE 0U
+#define TRACK_CAMERA_VECTOR_STRIDE 2U
+#define TRACK_CAMERA_VECTOR_FORWARD_OFFSET 1U
+#define TRACK_CAMERA_VECTOR_REVERSE_OFFSET 2U
 #define TRACK_ORIENTATION_COUNT 4U
 #define TRACK_ORIENTATION_NORTH 0
 #define TRACK_ORIENTATION_EAST ANGLE_QUARTER_TURN
@@ -590,13 +595,14 @@ legacy_s16 track_setup(void)
 	td22_row_from_path[track_pieces_counter] = row;
 	trackdata18[track_pieces_counter] = (legacy_u8)(
 		LEGACY_U16_WRAP_ADD(
-			LEGACY_U16_SHL((legacy_u8)connection_status, 4U), subtype));
+			LEGACY_U16_SHL((legacy_u8)connection_status,
+				TRACK_PIECE_TRAVERSAL_SHIFT), subtype));
 	td17_trk_elem_ordered[track_pieces_counter] = tile_element;
 
 	track_info = trkObjectList[tile_element].ss_trkObjInfoPtr;
 	current_info = &track_info[subtype];
 	arrow_code = (legacy_u8)current_info->si_opp3;
-	if (arrow_code == 0) {
+	if (arrow_code == TRACK_ARROW_NONE) {
 		runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
 	} else {
 		if (arrow_code != LEGACY_U8_MAX &&
@@ -616,11 +622,14 @@ legacy_s16 track_setup(void)
 			else
 				camera_vectors = previous_info->si_cameraDataOffset;
 			index = LEGACY_U16_WRAP_MUL(
-				(legacy_u8)previous_info->si_arrowType, 2U);
+				(legacy_u8)previous_info->si_arrowType,
+				TRACK_CAMERA_VECTOR_STRIDE);
 			if (previous_connection_status == TRACK_TRAVERSAL_REVERSE)
-				index = LEGACY_U16_WRAP_ADD(index, 2U);
+				index = LEGACY_U16_WRAP_ADD(index,
+					TRACK_CAMERA_VECTOR_REVERSE_OFFSET);
 			else
-				index = LEGACY_U16_WRAP_ADD(index, 1U);
+				index = LEGACY_U16_WRAP_ADD(index,
+					TRACK_CAMERA_VECTOR_FORWARD_OFFSET);
 			camera_vector = camera_vectors[index];
 			if (connection_status == TRACK_TRAVERSAL_REVERSE)
 				arrow_code = byte_3E724[
