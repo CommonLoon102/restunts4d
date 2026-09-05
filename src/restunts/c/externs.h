@@ -8,6 +8,19 @@
 
 #pragma pack (push, 1)
 
+#define SIMD_GEAR_RATIO_COUNT 7U
+#define SIMD_KNOB_POINT_COUNT 7U
+#define SIMD_TORQUE_CURVE_SIZE 104U
+#define SIMD_FIELD_A6_COUNT 7U
+#define SIMD_SURFACE_GRIP_COUNT 4U
+#define SIMD_UNKNOWN3_SIZE 10U
+#define SIMD_COLLISION_POINT_COUNT 2U
+#define SIMD_WHEEL_COORDINATE_COUNT 4U
+#define SIMD_STEERING_DOT_COUNT 62U
+#define SIMD_SPEEDOMETER_POINT_COUNT 208U
+#define SIMD_REV_COUNTER_POINT_COUNT 256U
+#define SIMD_DOS_STRUCTURE_SIZE 776U
+
 struct SIMD {
 	legacy_s8 num_gears;
 	legacy_s8 simd_unk;
@@ -17,27 +30,27 @@ struct SIMD {
 	legacy_s16 downshift_rpm;
 	legacy_s16 upshift_rpm;
 	legacy_s16 max_rpm;
-	legacy_u16 gear_ratios[7];
-	struct POINT2D knob_points[7];
+	legacy_u16 gear_ratios[SIMD_GEAR_RATIO_COUNT];
+	struct POINT2D knob_points[SIMD_KNOB_POINT_COUNT];
 	legacy_s16 aero_resistance;
 	legacy_s8 idle_torque;
-	legacy_s8 torque_curve[104];
+	legacy_s8 torque_curve[SIMD_TORQUE_CURVE_SIZE];
 	legacy_s8 field_A3;
 	legacy_s16 grip;
-	legacy_s16 field_A6[7];
+	legacy_s16 field_A6[SIMD_FIELD_A6_COUNT];
 	legacy_s16 sliding;
-	legacy_s16 surface_grip[4];
-	legacy_s8 simd_unk3[10];
-	struct POINT2D collide_points[2];
+	legacy_s16 surface_grip[SIMD_SURFACE_GRIP_COUNT];
+	legacy_s8 simd_unk3[SIMD_UNKNOWN3_SIZE];
+	struct POINT2D collide_points[SIMD_COLLISION_POINT_COUNT];
 	legacy_s16 car_height;
-	struct VECTOR wheel_coords[4];
-	legacy_s8 steeringdots[62];
+	struct VECTOR wheel_coords[SIMD_WHEEL_COORDINATE_COUNT];
+	legacy_s8 steeringdots[SIMD_STEERING_DOT_COUNT];
 	struct POINT2D spdcenter;
 	legacy_s16 spdnumpoints;
-	legacy_s8 spdpoints[208];
+	legacy_s8 spdpoints[SIMD_SPEEDOMETER_POINT_COUNT];
 	struct POINT2D revcenter;
 	legacy_s16 revnumpoints;
-	legacy_s8 revpoints[256];
+	legacy_s8 revpoints[SIMD_REV_COUNTER_POINT_COUNT];
 	legacy_s16 far* aerorestable;
 };
 
@@ -84,7 +97,7 @@ typedef char legacy_track_wall_must_be_6_bytes[
  * meaningful only when the Borland memory model supplies those pointer sizes. */
 #if defined(__BORLANDC__)
 typedef char legacy_simd_must_be_776_bytes[
-	(sizeof(struct SIMD) == 776) ? 1 : -1];
+	(sizeof(struct SIMD) == SIMD_DOS_STRUCTURE_SIZE) ? 1 : -1];
 typedef char legacy_trkobjinfo_must_be_14_bytes[
 	(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1];
 typedef char legacy_trackobject_must_be_14_bytes[

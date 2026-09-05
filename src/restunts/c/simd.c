@@ -115,27 +115,38 @@ legacy_u16 simd_decode(struct SIMD* destination,
 	destination->downshift_rpm = simd_read_s16(&reader);
 	destination->upshift_rpm = simd_read_s16(&reader);
 	destination->max_rpm = simd_read_s16(&reader);
-	simd_read_u16_array(&reader, destination->gear_ratios, 7U);
-	simd_read_point_array(&reader, destination->knob_points, 7U);
+	simd_read_u16_array(&reader, destination->gear_ratios,
+		SIMD_GEAR_RATIO_COUNT);
+	simd_read_point_array(&reader, destination->knob_points,
+		SIMD_KNOB_POINT_COUNT);
 	destination->aero_resistance = simd_read_s16(&reader);
 	destination->idle_torque = simd_read_s8(&reader);
-	simd_read_s8_array(&reader, destination->torque_curve, 104U);
+	simd_read_s8_array(&reader, destination->torque_curve,
+		SIMD_TORQUE_CURVE_SIZE);
 	destination->field_A3 = simd_read_s8(&reader);
 	destination->grip = simd_read_s16(&reader);
-	simd_read_s16_array(&reader, destination->field_A6, 7U);
+	simd_read_s16_array(&reader, destination->field_A6,
+		SIMD_FIELD_A6_COUNT);
 	destination->sliding = simd_read_s16(&reader);
-	simd_read_s16_array(&reader, destination->surface_grip, 4U);
-	simd_read_s8_array(&reader, destination->simd_unk3, 10U);
-	simd_read_point_array(&reader, destination->collide_points, 2U);
+	simd_read_s16_array(&reader, destination->surface_grip,
+		SIMD_SURFACE_GRIP_COUNT);
+	simd_read_s8_array(&reader, destination->simd_unk3,
+		SIMD_UNKNOWN3_SIZE);
+	simd_read_point_array(&reader, destination->collide_points,
+		SIMD_COLLISION_POINT_COUNT);
 	destination->car_height = simd_read_s16(&reader);
-	simd_read_vector_array(&reader, destination->wheel_coords, 4U);
-	simd_read_s8_array(&reader, destination->steeringdots, 62U);
+	simd_read_vector_array(&reader, destination->wheel_coords,
+		SIMD_WHEEL_COORDINATE_COUNT);
+	simd_read_s8_array(&reader, destination->steeringdots,
+		SIMD_STEERING_DOT_COUNT);
 	simd_read_point(&reader, &destination->spdcenter);
 	destination->spdnumpoints = simd_read_s16(&reader);
-	simd_read_s8_array(&reader, destination->spdpoints, 208U);
+	simd_read_s8_array(&reader, destination->spdpoints,
+		SIMD_SPEEDOMETER_POINT_COUNT);
 	simd_read_point(&reader, &destination->revcenter);
 	destination->revnumpoints = simd_read_s16(&reader);
-	simd_read_s8_array(&reader, destination->revpoints, 256U);
+	simd_read_s8_array(&reader, destination->revpoints,
+		SIMD_REV_COUNTER_POINT_COUNT);
 
 	/* This is a runtime lookup table pointer, not part of the resource. */
 	destination->aerorestable = 0;
