@@ -27,6 +27,18 @@ legacy_s32 nopsub_26552(legacy_s32 value)
 
 extern legacy_s32 sin80, cos80;
 
+#define VECTOR_DIRECTION_NEGATIVE_Y 30
+#define VECTOR_DIRECTION_POSITIVE_Y 31
+#define VECTOR_DIRECTION_POSITIVE_Y_OFFSET 15
+#define VECTOR_DIRECTION_SCALE_SHIFT 4U
+#define VECTOR_DIRECTION_INDEX_SHIFT 10U
+#define PROJECTION_COORD_LIMIT 32000
+#define PROJECTION_INVALID_COORD_BITS LEGACY_U16_SIGN_BIT
+#define PROJECTION_DEPTH_COMPARE_SHIFT 15U
+#define MULTIPLY_ROUND_BIT 32768UL
+#define MULTIPLY_ROUND_SHIFT 15U
+#define NORMAL_INNER_PRODUCT_SCALE 8192L
+
 /*
  * Scratch matrices used only by mat_rot_zxy().  Keeping them here makes the
  * routine self-contained instead of obtaining private temporary storage from
@@ -367,7 +379,7 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 //    init_polyinfo (shape3d.c:2672-2675), so they hold exactly what this
 //    code recomputes.
 //  - multiplying by the identity is exact here: mat_multiply forms
-//    (a * b) >> 14 and the identity entry is 4000h, so (v * 16384) >> 14
+//    (a * b) >> 14 and the identity entry is 16384, so (v * 16384) >> 14
 //    is v with nothing lost. Building all three axes and both products when
 //    the original would have skipped an axis therefore cannot drift.
 //  - the scratch state is private. mat_y_rot, mat_y_rot_angle, mat_z_rot,
@@ -456,7 +468,7 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 
 	// Unreachable. video_flag2_is1 is written exactly once in the whole
 	// program - init_main sets it to 1 (asmorig/seg031.asm:237,
-	// restunts.c:1260) - and video_flag3_isFFFF alongside it to 0FFFFh.
+	// restunts.c:1260) - and video_flag3_isFFFF alongside it to 65535.
 	// The suppressed tail is `right = (right + video_flag2_is1 - 1) &
 	// video_flag3_isFFFF`, which at those values is the identity anyway, so
 	// the port loses nothing by not carrying it.
@@ -562,7 +574,7 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 
 	if (video_flag2_is1 != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
-		// video_flag2_is1 is only ever set to 1, in init_main.
+	// video_flag2_is1 is only ever set to 1, in init_main.
 		fatal_error((const legacy_s8*)
 			"rectlist_add_rect: unexpected code path");
 	}
@@ -761,14 +773,14 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	}
 
 	if (vec->y < 0) {
-		if (flag != 0) return 0x1E;
+		if (flag != 0) return VECTOR_DIRECTION_NEGATIVE_Y;
 	} else
 	if (vec->y > 0) {
-		if (flag != 0) return 0x1F;
+		if (flag != 0) return VECTOR_DIRECTION_POSITIVE_Y;
 	}
 
 	if (vec->y > 0) {
-		result = 0x0F;
+		result = VECTOR_DIRECTION_POSITIVE_Y_OFFSET;
 	} else {
 		result = 0;
 	}
@@ -779,9 +791,10 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 	}
 
 	scaled_angle = LEGACY_S32_WRAP_SUB(
-		LEGACY_S32_SHL(angle, 4U), angle);
+		LEGACY_S32_SHL(angle, VECTOR_DIRECTION_SCALE_SHIFT), angle);
 	result = LEGACY_S16_WRAP_ADD(result,
-		(legacy_s16)LEGACY_S32_SAR(scaled_angle, 10U));
+		(legacy_s16)LEGACY_S32_SAR(
+			scaled_angle, VECTOR_DIRECTION_INDEX_SHIFT));
 
 	return result;
 }
@@ -789,7 +802,7 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 // All ten of these are `dw` in dseg and are declared unsigned in shape3d.c,
 // which is also how set_projection produces them. math.c used to declare this
 // subset as int, so projectiondata9/10 - the only ones that can grow past
-// 7FFFh - reached the projection multiply as negative values.
+// 32767 - reached the projection multiply as negative values.
 //
 // The two roles are not the same, and the casts at the use sites say which is
 // which: 9 and 10 are the operands of `mul`, so they stay unsigned there,
@@ -799,19 +812,20 @@ extern legacy_u16 projectiondata5, projectiondata8, projectiondata9, projectiond
 
 
 // Each `add ax, projectiondataN` in the original is followed by `jo`, and on
-// overflow the sum is replaced by the rail it ran past: 7D00h when the true
+// overflow the sum is replaced by the rail it ran past: 32000 when the true
 // sum was too positive (the wrapped word comes back negative, `or ax,ax / jl`)
-// and 8300h = -7D00h when it was too negative.
+// and -32000 when it was too negative.
 static legacy_s16 saturate_projection(legacy_s32 sum) {
-	if (sum > 32767L)
-		return 0x7D00;
-	if (sum < -32768L)
-		return -0x7D00;
+	if (sum > (legacy_s32)LEGACY_S16_MAX)
+		return PROJECTION_COORD_LIMIT;
+	if (sum < -(legacy_s32)LEGACY_U16_SIGN_BIT)
+		return -PROJECTION_COORD_LIMIT;
 	return (legacy_s16)sum;
 }
 
 // NEG in the original wraps in AX and is followed by unsigned MUL. In
-// particular, -(-32768) remains 8000h and is used as the magnitude 32768.
+// particular, -(-32768) remains the sign-bit pattern and is used as the
+// magnitude 32768.
 static legacy_u16 projection_magnitude(legacy_s16 value) {
 	return (legacy_u16)(0U - (legacy_u16)value);
 }
@@ -825,14 +839,14 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 	legacy_s16 comp;
 
 	if (vec->z <= 0) {
-		outpt->px = 0x8000;
-		outpt->py = 0x8000;
+		outpt->px = LEGACY_S16_FROM_BITS(PROJECTION_INVALID_COORD_BITS);
+		outpt->py = LEGACY_S16_FROM_BITS(PROJECTION_INVALID_COORD_BITS);
 		return;
 	}
 
 	if (vec->x < 0) {
 		proj = (legacy_u32)projection_magnitude(vec->x) * (legacy_u16)projectiondata9;
-		comp = (legacy_s16)(proj >> 15);
+		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp) {
 			outpt->px = saturate_projection(
@@ -840,10 +854,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 					proj, (legacy_u16)vec->z) +
 				(legacy_s16)projectiondata5);
 		} else
-			outpt->px = -0x7D00;
+			outpt->px = -PROJECTION_COORD_LIMIT;
 	} else {
 		proj = (legacy_u32)(legacy_u16)vec->x * (legacy_u16)projectiondata9;
-		comp = (legacy_s16)(proj >> 15);
+		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->px = saturate_projection(
@@ -851,12 +865,12 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 					proj, (legacy_u16)vec->z) +
 				(legacy_s16)projectiondata5);
 		else
-			outpt->px = 0x7D00;
+			outpt->px = PROJECTION_COORD_LIMIT;
 	}
 
 	if (vec->y < 0) {
 		proj = (legacy_u32)projection_magnitude(vec->y) * (legacy_u16)projectiondata10;
-		comp = (legacy_s16)(proj >> 15);
+		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->py = saturate_projection(
@@ -864,10 +878,10 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 					proj, (legacy_u16)vec->z) +
 				(legacy_s16)projectiondata8);
 		else
-			outpt->py = 0x7D00;
+			outpt->py = PROJECTION_COORD_LIMIT;
 	} else {
 		proj = (legacy_u32)(legacy_u16)vec->y * (legacy_u16)projectiondata10;
-		comp = (legacy_s16)(proj >> 15);
+		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->py = saturate_projection(
@@ -875,7 +889,7 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 					proj, (legacy_u16)vec->z) +
 				(legacy_s16)projectiondata8);
 		else
-			outpt->py = -0x7D00;
+			outpt->py = -PROJECTION_COORD_LIMIT;
 	}
 }
 #endif
@@ -937,7 +951,8 @@ legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
 	product = LEGACY_S32_WRAP_MUL((legacy_s32)a1, (legacy_s32)a2);
 	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, 2U);
 	high_word = (legacy_u16)(scaled_bits >> 16);
-	round_up = (legacy_u16)((scaled_bits & 0x8000UL) >> 15);
+	round_up = (legacy_u16)((scaled_bits & MULTIPLY_ROUND_BIT) >>
+		MULTIPLY_ROUND_SHIFT);
 	return LEGACY_S16_FROM_BITS(
 		LEGACY_U16_WRAP_ADD(high_word, round_up));
 }
@@ -964,7 +979,7 @@ legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z, stru
 		(legacy_s32)normal->z, (legacy_s32)z);
 	sum = LEGACY_S32_WRAP_ADD(
 		LEGACY_S32_WRAP_ADD(x_product, z_product), y_product);
-	quotient = LEGACY_S32_DIV_OR_ZERO(sum, 0x2000L);
+	quotient = LEGACY_S32_DIV_OR_ZERO(sum, NORMAL_INNER_PRODUCT_SCALE);
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
