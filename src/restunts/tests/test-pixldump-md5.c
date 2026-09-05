@@ -3,23 +3,34 @@
 
 #include "../pixldump/md5.h"
 
+#define MD5_HEX_DIGITS_PER_BYTE   2U
+#define MD5_HEX_OUTPUT_SIZE       \
+	(PIXLDUMP_MD5_SIZE * MD5_HEX_DIGITS_PER_BYTE + 1U)
+#define MD5_HEX_TERMINATOR_OFFSET (MD5_HEX_OUTPUT_SIZE - 1U)
+#define MD5_HIGH_NIBBLE_SHIFT     4U
+#define MD5_NIBBLE_MASK           15U
+#define MD5_LOW_NIBBLE_OFFSET     1U
+#define TEST_FRAMEBUFFER_SIZE     64000U
+
 static void digest_to_hex(const legacy_u8 digest[PIXLDUMP_MD5_SIZE],
-	char output[33])
+	char output[MD5_HEX_OUTPUT_SIZE])
 {
 	static const char digits[] = "0123456789abcdef";
 	legacy_u16 index;
 
 	for (index = 0; index < PIXLDUMP_MD5_SIZE; index++) {
-		output[index * 2U] = digits[digest[index] >> 4];
-		output[index * 2U + 1U] = digits[digest[index] & 0x0FU];
+		output[index * MD5_HEX_DIGITS_PER_BYTE] =
+			digits[digest[index] >> MD5_HIGH_NIBBLE_SHIFT];
+		output[index * MD5_HEX_DIGITS_PER_BYTE + MD5_LOW_NIBBLE_OFFSET] =
+			digits[digest[index] & MD5_NIBBLE_MASK];
 	}
-	output[32] = 0;
+	output[MD5_HEX_TERMINATOR_OFFSET] = 0;
 }
 
 static void test_text_vector(const char* input, const char* expected)
 {
 	legacy_u8 digest[PIXLDUMP_MD5_SIZE];
-	char actual[33];
+	char actual[MD5_HEX_OUTPUT_SIZE];
 
 	pixldump_md5((const legacy_u8*)input,
 		(legacy_u16)strlen(input), digest);
@@ -29,9 +40,9 @@ static void test_text_vector(const char* input, const char* expected)
 
 static void test_framebuffer_sized_input(void)
 {
-	static legacy_u8 framebuffer[64000];
+	static legacy_u8 framebuffer[TEST_FRAMEBUFFER_SIZE];
 	legacy_u8 digest[PIXLDUMP_MD5_SIZE];
-	char actual[33];
+	char actual[MD5_HEX_OUTPUT_SIZE];
 
 	memset(framebuffer, 0, sizeof(framebuffer));
 	pixldump_md5(framebuffer, (legacy_u16)sizeof(framebuffer), digest);
