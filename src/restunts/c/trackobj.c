@@ -73,6 +73,16 @@
 #define LOOP_LANE_SEPARATION 400
 #define LOOP_LOW_CLEARANCE 100
 #define LOOP_LOW_CLEARANCE_LAST_SEGMENT 1U
+#define TUNNEL_HEIGHT 144
+#define TUNNEL_OUTER_HALF_WIDTH 270
+#define TUNNEL_ROOF_PLANE_INDEX 133
+#define TUNNEL_END_Z 512
+#define TUNNEL_REAR_WALL_INDEX 154
+#define TUNNEL_FORWARD_WALL_INDEX 153
+#define TUNNEL_RIGHT_INNER_WALL_INDEX 152
+#define TUNNEL_RIGHT_OUTER_WALL_INDEX 150
+#define TUNNEL_LEFT_INNER_WALL_INDEX 151
+#define TUNNEL_LEFT_OUTER_WALL_INDEX 149
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -759,37 +769,40 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 28: /* Tunnel. */
-		if (LEGACY_S16_WRAP_SUB(world_position->y, terrainHeight) >= 0x90 ||
+		if (LEGACY_S16_WRAP_SUB(world_position->y,
+			terrainHeight) >= TUNNEL_HEIGHT ||
 			LEGACY_S16_WRAP_SUB(next_world_position->y,
-				terrainHeight) >= 0x90) {
-			if (absolute_x < 0x10E) {
+				terrainHeight) >= TUNNEL_HEIGHT) {
+			if (absolute_x < TUNNEL_OUTER_HALF_WIDTH) {
 				current_surf_type = (legacy_u8)surface_type;
-				planindex = 0x85;
+				planindex = TUNNEL_ROOF_PLANE_INDEX;
 			}
 			break;
 		}
-		if (absolute_x < 0x78)
+		if (absolute_x < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
-		if (position.x >= 0x78 && position.x <= 0x10E) {
-			wallHeight = 0x90;
-			if (next_position.z <= -0x200)
-				wallindex = 0x9A;
-			else if (next_position.z >= 0x200)
-				wallindex = 0x99;
-			else if (next_position.x <= 0x78)
-				wallindex = 0x98;
-			else if (next_position.x >= 0x10E)
-				wallindex = 0x96;
-		} else if (position.x <= -0x78 && position.x >= -0x10E) {
-			wallHeight = 0x90;
-			if (next_position.z <= -0x200)
-				wallindex = 0x9A;
-			else if (next_position.z >= 0x200)
-				wallindex = 0x99;
-			else if (next_position.x >= -0x78)
-				wallindex = 0x97;
-			else if (next_position.x <= -0x10E)
-				wallindex = 0x95;
+		if (position.x >= ROAD_HALF_WIDTH &&
+			position.x <= TUNNEL_OUTER_HALF_WIDTH) {
+			wallHeight = TUNNEL_HEIGHT;
+			if (next_position.z <= -TUNNEL_END_Z)
+				wallindex = TUNNEL_REAR_WALL_INDEX;
+			else if (next_position.z >= TUNNEL_END_Z)
+				wallindex = TUNNEL_FORWARD_WALL_INDEX;
+			else if (next_position.x <= ROAD_HALF_WIDTH)
+				wallindex = TUNNEL_RIGHT_INNER_WALL_INDEX;
+			else if (next_position.x >= TUNNEL_OUTER_HALF_WIDTH)
+				wallindex = TUNNEL_RIGHT_OUTER_WALL_INDEX;
+		} else if (position.x <= -ROAD_HALF_WIDTH &&
+			position.x >= -TUNNEL_OUTER_HALF_WIDTH) {
+			wallHeight = TUNNEL_HEIGHT;
+			if (next_position.z <= -TUNNEL_END_Z)
+				wallindex = TUNNEL_REAR_WALL_INDEX;
+			else if (next_position.z >= TUNNEL_END_Z)
+				wallindex = TUNNEL_FORWARD_WALL_INDEX;
+			else if (next_position.x >= -ROAD_HALF_WIDTH)
+				wallindex = TUNNEL_LEFT_INNER_WALL_INDEX;
+			else if (next_position.x <= -TUNNEL_OUTER_HALF_WIDTH)
+				wallindex = TUNNEL_LEFT_OUTER_WALL_INDEX;
 		}
 		break;
 
