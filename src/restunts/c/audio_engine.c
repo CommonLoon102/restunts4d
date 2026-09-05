@@ -24,12 +24,12 @@ legacy_u8 audio_music_rate;
 legacy_s8 audio_car_state_ready;
 legacy_s8 audio_player_car_flags;
 legacy_s8 audio_opponent_car_flags;
-static legacy_u8 audio_saved_channel_volumes[24];
-static legacy_u8 audio_effect_channel_volumes[24];
+static legacy_u8 audio_saved_channel_volumes[AUDIO_CHANNEL_COUNT];
+static legacy_u8 audio_effect_channel_volumes[AUDIO_CHANNEL_COUNT];
 legacy_u8 audio_effect_rate;
-legacy_u8 audio_channel_reserved[24];
-static legacy_u8 audio_channel_values[24];
-static legacy_u8 audio_channel_notes[24];
+legacy_u8 audio_channel_reserved[AUDIO_CHANNEL_COUNT];
+static legacy_u8 audio_channel_values[AUDIO_CHANNEL_COUNT];
+static legacy_u8 audio_channel_notes[AUDIO_CHANNEL_COUNT];
 void far* audio_bass_drum_resource;
 void far* audio_snare_resource;
 void far* audio_tom_resource;
@@ -404,8 +404,9 @@ legacy_s16 nopsub_373FE(void)
 		return 1;
 
 	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++) {
-		if ((audio_channels[channel + 0x10U].cursor.offset |
-			audio_channels[channel + 0x10U].cursor.segment) != 0)
+		if ((audio_channels[channel + AUDIO_EFFECT_CHANNEL_FIRST].cursor.offset |
+			audio_channels[channel + AUDIO_EFFECT_CHANNEL_FIRST].cursor.segment) !=
+			0)
 			return 0;
 	}
 
@@ -416,8 +417,10 @@ void sub_3736A(void)
 {
 	audio_update_lock = 1;
 	audio_music_active = 0;
-	audio_release_channel_range(0, 0x0F);
-	audio_init_chunk(0, 0x0F, 0, 0, audio_music_rate, 0);
+	audio_release_channel_range(AUDIO_MUSIC_CHANNEL_FIRST,
+		AUDIO_MUSIC_CHANNEL_LAST);
+	audio_init_chunk(AUDIO_MUSIC_CHANNEL_FIRST, AUDIO_MUSIC_CHANNEL_LAST,
+		0, 0, audio_music_rate, 0);
 	audio_music_channel_count = 0;
 	audio_update_driver_contexts();
 	audio_update_lock = 0;
@@ -430,7 +433,8 @@ void audio_enable_flag6(void)
 	if (audio_effects_enabled == 1)
 		return;
 
-	for (channel = 0x10; channel < 0x18; channel++)
+	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
+		channel <= AUDIO_EFFECT_CHANNEL_LAST; channel++)
 		dos_audio_set_channel_volume(channel, audio_effect_channel_volumes[channel]);
 	audio_effects_enabled = 1;
 }
@@ -442,9 +446,10 @@ void audio_disable_flag6(void)
 	if (audio_effects_enabled == 0)
 		return;
 
-	for (channel = 0x10; channel < 0x18; channel++) {
+	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
+		channel <= AUDIO_EFFECT_CHANNEL_LAST; channel++) {
 		audio_effect_channel_volumes[channel] =
-			audio_sfx_channels[channel - 0x10].volume;
+			audio_sfx_channels[channel - AUDIO_EFFECT_CHANNEL_FIRST].volume;
 		dos_audio_set_channel_volume(channel, 0);
 	}
 	audio_effects_enabled = 0;
@@ -465,7 +470,9 @@ legacy_s16 sub_3771E(legacy_s16 channel)
 {
 	legacy_u16 offset;
 
-	if (audio_effects_enabled == 0 || channel < 0x10 || channel > 0x17)
+	if (audio_effects_enabled == 0 ||
+		channel < AUDIO_EFFECT_CHANNEL_FIRST ||
+		channel > AUDIO_EFFECT_CHANNEL_LAST)
 		return 1;
 
 	return (audio_channels[channel].cursor.offset |
@@ -573,7 +580,8 @@ void audio_reset_channels(void)
 	legacy_u16 context_index;
 
 	audio_update_lock = 1;
-	audio_init_chunk(0, 0x17, 0, 0, 0x7FU, 0);
+	audio_init_chunk(AUDIO_MUSIC_CHANNEL_FIRST, AUDIO_EFFECT_CHANNEL_LAST,
+		0, 0, 0x7FU, 0);
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count;
 		context_index++) {
@@ -1006,8 +1014,9 @@ void audio_suspend(void)
 	}
 
 	chunk = audio_channels;
-	for (channel = 0; channel < 0x18U; channel++) {
-		if (audio_effects_enabled == 1 || channel < 0x10U) {
+	for (channel = 0; channel < AUDIO_CHANNEL_COUNT; channel++) {
+		if (audio_effects_enabled == 1 ||
+			channel < AUDIO_EFFECT_CHANNEL_FIRST) {
 			audio_saved_channel_volumes[channel] = chunk->volume;
 			dos_audio_set_channel_volume((legacy_s16)channel, 0);
 		}
@@ -1036,8 +1045,9 @@ void audio_resume(void)
 		dos_audio_master_volume = 0x64U;
 		dos_audio_driver_set_master_state(4, (void far*)dos_audio_master_state);
 	} else {
-		for (channel = 0; channel < 0x18U; channel++) {
-			if (audio_effects_enabled == 1 || channel < 0x10U)
+		for (channel = 0; channel < AUDIO_CHANNEL_COUNT; channel++) {
+			if (audio_effects_enabled == 1 ||
+				channel < AUDIO_EFFECT_CHANNEL_FIRST)
 				dos_audio_set_channel_volume((legacy_s16)channel,
 					audio_saved_channel_volumes[channel]);
 		}
@@ -1051,9 +1061,11 @@ static legacy_s16 audio_find_free_sfx_channel(void)
 	legacy_u16 offset;
 	legacy_s16 candidate;
 
-	for (candidate = 0x10; candidate <= 0x17; candidate++) {
-		if ((audio_sfx_channels[candidate - 0x10].cursor.offset |
-			audio_sfx_channels[candidate - 0x10].cursor.segment) == 0 &&
+	for (candidate = AUDIO_EFFECT_CHANNEL_FIRST;
+		candidate <= AUDIO_EFFECT_CHANNEL_LAST; candidate++) {
+		if ((audio_sfx_channels[candidate - AUDIO_EFFECT_CHANNEL_FIRST].cursor.offset |
+			audio_sfx_channels[candidate - AUDIO_EFFECT_CHANNEL_FIRST].cursor.segment) ==
+			0 &&
 			audio_channel_reserved[candidate] == 0)
 			return candidate;
 	}
@@ -1088,7 +1100,8 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	if (channel == -1) {
 		lowest_priority = 0xFFU;
 		replacement = -1;
-		for (candidate = 0x10; candidate <= 0x17; candidate++) {
+		for (candidate = AUDIO_EFFECT_CHANNEL_FIRST;
+			candidate <= AUDIO_EFFECT_CHANNEL_LAST; candidate++) {
 			if (audio_channel_reserved[candidate] == 0 &&
 				audio_channels[candidate].priority <= lowest_priority) {
 				lowest_priority = audio_channels[candidate].priority;
@@ -1140,7 +1153,8 @@ void audio_init_chunk2(legacy_s16 channel)
 {
 	legacy_u16 offset;
 
-	if (channel < 0x10 || channel > 0x17)
+	if (channel < AUDIO_EFFECT_CHANNEL_FIRST ||
+		channel > AUDIO_EFFECT_CHANNEL_LAST)
 		return;
 
 	audio_channels[channel].cursor.offset = 0;

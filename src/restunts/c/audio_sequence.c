@@ -46,7 +46,6 @@ typedef void (far* audio_channel_callback_type)(legacy_s16 channel);
 #define AUDIO_TEMPO_NUMERATOR 32000U
 #define AUDIO_SEQUENCE_DRIVER_DATA_HEADER_SIZE 4U
 #define AUDIO_SEQUENCE_TIMER_TICK_STEP 128U
-#define AUDIO_FIRST_EFFECT_CHANNEL 16U
 #define AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE 23U
 
 legacy_s16 audio_sequence_command_has_byte_argument(
@@ -428,7 +427,7 @@ void audio_sequence_timer(void)
 	} else {
 		audio_advance_music_contexts();
 	}
-	for (channel = AUDIO_FIRST_EFFECT_CHANNEL;
+	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
 		channel < AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE; channel++)
 		audio_service_sequence_channel((legacy_s16)channel);
 	audio_sequence_timer_active--;

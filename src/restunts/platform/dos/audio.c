@@ -32,7 +32,8 @@ extern void mmgr_release(void far* memory);
 
 struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
 struct AUDIO_CHANNEL audio_channels[AUDIO_CHANNEL_COUNT];
-struct AUDIO_CHANNEL* audio_sfx_channels = audio_channels + 16U;
+struct AUDIO_CHANNEL* audio_sfx_channels =
+	audio_channels + AUDIO_EFFECT_CHANNEL_FIRST;
 struct AUDIO_CONTEXT dos_audio_contexts[AUDIO_CONTEXT_COUNT];
 legacy_u8 dos_audio_master_state[3] = { 16U, 0, 22U };
 legacy_u8 dos_audio_driver_data[256];
