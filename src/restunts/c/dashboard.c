@@ -28,6 +28,36 @@
 #define DASHBOARD_STEERING_DOT_BACKGROUND_SHAPE 3U
 #define DASHBOARD_STEERING_DOT_BUFFER_FIRST_SHAPE 4U
 
+#define DASHBOARD_CACHE_VALUE_INVALID (-1)
+#define DASHBOARD_STEERING_LEFT_LIMIT (-10)
+#define DASHBOARD_STEERING_RIGHT_LIMIT 10
+#define DASHBOARD_WHEEL_STATE_LEFT DASHBOARD_WHEEL_LEFT_SHAPE
+#define DASHBOARD_WHEEL_STATE_CENTER DASHBOARD_WHEEL_CENTER_SHAPE
+#define DASHBOARD_WHEEL_STATE_RIGHT DASHBOARD_WHEEL_RIGHT_SHAPE
+
+#define DASHBOARD_GAUGE_ANALOG 0U
+#define DASHBOARD_GAUGE_DIGITAL 1U
+#define DASHBOARD_GAUGE_HIDDEN 2U
+#define DASHBOARD_GAUGE_HIDDEN_CENTER_Y (-1)
+#define DASHBOARD_GAUGE_DIGITAL_CENTER_Y 0
+#define DASHBOARD_DIGITAL_SPEED_SHIFT 8U
+#define DASHBOARD_RPM_INDEX_SHIFT 7U
+#define DASHBOARD_POINT_COORDINATE_STRIDE 2U
+#define DASHBOARD_POINT_Y_OFFSET 1U
+#define DASHBOARD_STEERING_MIRROR_SHIFT 1U
+
+#define DASHBOARD_DECIMAL_BASE 10U
+#define DASHBOARD_ONE_HUNDRED 100U
+#define DASHBOARD_TWO_HUNDRED 200U
+#define DASHBOARD_ONE_HUNDRED_DIGIT 1U
+#define DASHBOARD_TWO_HUNDRED_DIGIT 2U
+#define DASHBOARD_SPEED_HUNDREDS_X 0U
+#define DASHBOARD_SPEED_HUNDREDS_Y 1U
+#define DASHBOARD_SPEED_TENS_X 2U
+#define DASHBOARD_SPEED_TENS_Y 3U
+#define DASHBOARD_SPEED_UNITS_X 4U
+#define DASHBOARD_SPEED_UNITS_Y 5U
+
 static legacy_s16 dashboard_steering_position(legacy_s16 angle)
 {
 	legacy_s16 magnitude;
@@ -170,9 +200,9 @@ void setup_car_shapes(legacy_s16 operation)
 		byte_40DFA[player_index] = 0;
 		word_40DF6[player_index] = 0;
 		byte_40DF0[player_index] = 0;
-		word_40E00[player_index] = -1;
-		word_40D78[player_index] = -1;
-		word_40D6C[player_index] = -1;
+		word_40E00[player_index] = DASHBOARD_CACHE_VALUE_INVALID;
+		word_40D78[player_index] = DASHBOARD_CACHE_VALUE_INVALID;
+		word_40D6C[player_index] = DASHBOARD_CACHE_VALUE_INVALID;
 		return;
 	}
 
@@ -229,11 +259,11 @@ void setup_car_shapes(legacy_s16 operation)
 
 	steering_position = dashboard_steering_position(
 		state.playerstate.car_steeringAngle);
-	wheel_state = 1;
-	if (steering_position < -10)
-		wheel_state = 0;
-	else if (steering_position > 10)
-		wheel_state = 2;
+	wheel_state = DASHBOARD_WHEEL_STATE_CENTER;
+	if (steering_position < DASHBOARD_STEERING_LEFT_LIMIT)
+		wheel_state = DASHBOARD_WHEEL_STATE_LEFT;
+	else if (steering_position > DASHBOARD_STEERING_RIGHT_LIMIT)
+		wheel_state = DASHBOARD_WHEEL_STATE_RIGHT;
 	if (byte_40DF0[player_index] != wheel_state || byte_454A4 != 0) {
 		if (video_flag5_is0 == 0)
 			mouse_draw_opaque_check();
@@ -245,20 +275,22 @@ void setup_car_shapes(legacy_s16 operation)
 		wheel_redrawn = 0;
 	}
 
-	if (simd_player.spdcenter.py == -1) {
+	if (simd_player.spdcenter.py == DASHBOARD_GAUGE_HIDDEN_CENTER_Y) {
 		speed_index = 0;
-		gauge_mode = 2;
-	} else if (simd_player.spdcenter.py == 0) {
-		speed_index = (legacy_u16)state.playerstate.car_speed >> 8;
-		gauge_mode = 1;
+		gauge_mode = DASHBOARD_GAUGE_HIDDEN;
+	} else if (simd_player.spdcenter.py == DASHBOARD_GAUGE_DIGITAL_CENTER_Y) {
+		speed_index = (legacy_u16)state.playerstate.car_speed >>
+			DASHBOARD_DIGITAL_SPEED_SHIFT;
+		gauge_mode = DASHBOARD_GAUGE_DIGITAL;
 	} else {
 		speed_index = LEGACY_U16_DIV_OR_ZERO(
 			state.playerstate.car_speed, DASHBOARD_ANALOG_SPEED_DIVISOR);
 		if ((legacy_s16)speed_index >= simd_player.spdnumpoints)
 			speed_index = (legacy_u16)(simd_player.spdnumpoints - 1);
-		gauge_mode = 0;
+		gauge_mode = DASHBOARD_GAUGE_ANALOG;
 	}
-	rpm_index = (legacy_u16)state.playerstate.car_currpm >> 7;
+	rpm_index = (legacy_u16)state.playerstate.car_currpm >>
+		DASHBOARD_RPM_INDEX_SHIFT;
 	if ((legacy_s16)rpm_index >= simd_player.revnumpoints)
 		rpm_index = (legacy_u16)(simd_player.revnumpoints - 1);
 
@@ -275,54 +307,59 @@ void setup_car_shapes(legacy_s16 operation)
 		word_40D78[player_index] = (legacy_s16)speed_index;
 		word_40D6C[player_index] = (legacy_s16)rpm_index;
 
-		if (gauge_mode == 1) {
+		if (gauge_mode == DASHBOARD_GAUGE_DIGITAL) {
 			digit_started = 0;
 			digit_group = 0;
-			if (speed_index >= 200U) {
-				digit_group = 2;
-				speed_index -= 200U;
-			} else if (speed_index >= 100U) {
-				digit_group = 1;
-				speed_index -= 100U;
+			if (speed_index >= DASHBOARD_TWO_HUNDRED) {
+				digit_group = DASHBOARD_TWO_HUNDRED_DIGIT;
+				speed_index -= DASHBOARD_TWO_HUNDRED;
+			} else if (speed_index >= DASHBOARD_ONE_HUNDRED) {
+				digit_group = DASHBOARD_ONE_HUNDRED_DIGIT;
+				speed_index -= DASHBOARD_ONE_HUNDRED;
 			}
 			if (digit_group != 0) {
 				sprite_putimage_or(digshapes[digit_group],
-					(legacy_u8)simd_player.spdpoints[0],
-					(legacy_u8)simd_player.spdpoints[1]);
+					(legacy_u8)simd_player.spdpoints[
+						DASHBOARD_SPEED_HUNDREDS_X],
+					(legacy_u8)simd_player.spdpoints[
+						DASHBOARD_SPEED_HUNDREDS_Y]);
 				digit_started = 1;
 			}
-			digit = LEGACY_U16_DIV_OR_ZERO(speed_index, 10U);
+			digit = LEGACY_U16_DIV_OR_ZERO(
+				speed_index, DASHBOARD_DECIMAL_BASE);
 			if (digit != 0 || digit_started != 0) {
 				sprite_putimage_or(digshapes[digit],
-					(legacy_u8)simd_player.spdpoints[2],
-					(legacy_u8)simd_player.spdpoints[3]);
-				speed_index -= digit * 10U;
+					(legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_TENS_X],
+					(legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_TENS_Y]);
+				speed_index -= digit * DASHBOARD_DECIMAL_BASE;
 			}
 			sprite_putimage_or(digshapes[speed_index],
-				(legacy_u8)simd_player.spdpoints[4],
-				(legacy_u8)simd_player.spdpoints[5]);
-		} else if (gauge_mode == 0) {
-			dot_index = speed_index * 2U;
+				(legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_UNITS_X],
+				(legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_UNITS_Y]);
+		} else if (gauge_mode == DASHBOARD_GAUGE_ANALOG) {
+			dot_index = speed_index * DASHBOARD_POINT_COORDINATE_STRIDE;
 			preRender_line(simd_player.spdcenter.px,
 				simd_player.spdcenter.py,
 				(legacy_u8)simd_player.spdpoints[dot_index],
-				(legacy_u8)simd_player.spdpoints[dot_index + 1U],
+				(legacy_u8)simd_player.spdpoints[
+					dot_index + DASHBOARD_POINT_Y_OFFSET],
 				meter_needle_color);
 		}
 
-		dot_index = rpm_index * 2U;
+		dot_index = rpm_index * DASHBOARD_POINT_COORDINATE_STRIDE;
 		preRender_line(simd_player.revcenter.px, simd_player.revcenter.py,
 			(legacy_u8)simd_player.revpoints[dot_index],
-			(legacy_u8)simd_player.revpoints[dot_index + 1U],
+			(legacy_u8)simd_player.revpoints[
+				dot_index + DASHBOARD_POINT_Y_OFFSET],
 			meter_needle_color);
-		if (wheel_state == 0) {
+		if (wheel_state == DASHBOARD_WHEEL_STATE_LEFT) {
 			shape2d_render_bmp_as_mask(
 				whlshapes[DASHBOARD_LEFT_INSTRUMENT_MASK_SHAPE]);
 			shape2d_op_unk4(dos_memory_pointer_offset(
 				whlshapes[DASHBOARD_LEFT_INSTRUMENT_SOURCE_SHAPE]),
 				dos_memory_pointer_segment(
 					whlshapes[DASHBOARD_LEFT_INSTRUMENT_SOURCE_SHAPE]));
-		} else if (wheel_state == 2) {
+		} else if (wheel_state == DASHBOARD_WHEEL_STATE_RIGHT) {
 			shape2d_render_bmp_as_mask(
 				whlshapes[DASHBOARD_RIGHT_INSTRUMENT_MASK_SHAPE]);
 			shape2d_op_unk4(dos_memory_pointer_offset(
@@ -351,12 +388,13 @@ void setup_car_shapes(legacy_s16 operation)
 		steering_dots = (legacy_u8*)simd_player.steeringdots;
 		dot_index = (legacy_u16)(steering_position < 0 ?
 			LEGACY_S16_WRAP_NEGATE(steering_position) :
-			steering_position) * 2U;
+			steering_position) * DASHBOARD_POINT_COORDINATE_STRIDE;
 		dot_x = steering_dots[dot_index];
-		dot_y = steering_dots[dot_index + 1U];
+		dot_y = steering_dots[dot_index + DASHBOARD_POINT_Y_OFFSET];
 		if (steering_position < 0) {
 			dot_x = (legacy_u8)(dot_x -
-				(legacy_u8)((legacy_u8)(dot_x - steering_dots[0]) << 1));
+				(legacy_u8)((legacy_u8)(dot_x - steering_dots[0]) <<
+					DASHBOARD_STEERING_MIRROR_SHIFT));
 		}
 		word_40DF2[player_index] = LEGACY_S16_FROM_BITS(
 			((legacy_u16)((legacy_u8)dot_x -
