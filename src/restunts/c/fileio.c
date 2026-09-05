@@ -33,17 +33,19 @@ static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
 
 #define DOS_PARAGRAPH_SHIFT 4U
 #define DOS_PARAGRAPH_MASK 15L
-#define LEGACY_DWORD_HIGH_WORD_SHIFT 16U
 #define BYTE_HIGH_BIT 128U
-#define BYTE_SHIFT 8U
-#define BYTE_BIT_COUNT 8U
+#define BYTE_SHIFT LEGACY_BYTE_BITS
+#define BYTE_BIT_COUNT LEGACY_BYTE_BITS
 #define RLE_BYTE_COUNT_CODE 1
 #define RLE_WORD_COUNT_CODE 3
 #define RLE_SEQUENCE_TRAILER_SIZE 2
 #define VLE_EXTENDED_CODE_START_WIDTH 7U
+#define VLE_ALPHABET_BRANCH_FACTOR 2U
+#define VLE_CODE_WORD_SECOND_BYTE_OFFSET 1U
 #define COMPRESSION_WORKSPACE_PARAGRAPHS 4U
 #define COMPRESSION_RLE_TYPE 1U
 #define COMPRESSION_VLE_TYPE 2U
+#define FILE_ERROR_DIALOG_ABORT 2
 
 #define COMPR_HEADER_SIZE 4U
 #define COMPR_SIZE_LOW_OFFSET 1U
@@ -245,7 +247,7 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 			length = (legacy_s32)LEGACY_READ_U16_LE(
 				header + COMPR_SIZE_LOW_OFFSET) |
 				((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] <<
-					LEGACY_DWORD_HIGH_WORD_SHIFT);
+					LEGACY_WORD_BITS);
 			return file_bytes_to_paras(length);
 		}
 	}
@@ -333,8 +335,8 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 			wrtlen = length > FILE_IO_PAGE_SIZE ? FILE_IO_PAGE_SIZE : length;
 
 			if (fileio_write(src, wrtlen, 1, file) != wrtlen) {
-				// Either int 21h AH=40h set carry, or it wrote fewer bytes
-				// than asked (`cmp ax, cx / jnz` -> `mov ax, 1`).
+				// Either DOS interrupt 33 function 64 set carry, or it wrote
+				// fewer bytes than asked (`cmp ax, cx / jnz` -> `mov ax, 1`).
 				retval = 1;
 				break;
 			}
@@ -522,18 +524,18 @@ legacy_u32 file_decomp_rle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// Get decompressed size from header.
 	len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
 		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] <<
-			LEGACY_DWORD_HIGH_WORD_SHIFT);
+			LEGACY_WORD_BITS);
 	origsrc = src += COMPR_HEADER_SIZE;
 
 	// Get source size and escape codes.
 	srclen = LEGACY_READ_U16_LE(src) |
 		((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] <<
-			LEGACY_DWORD_HIGH_WORD_SHIFT);
+			LEGACY_WORD_BITS);
 	esclen = src[COMPR_RLE_ESCLEN_OFFSET];
 	escapes = src + COMPR_RLE_HEADER_SIZE;
 
 	// MSB denotes skipping the initial pass for byte sequence runs. Match the
-	// original's strict `cmp ... 80h / ja`: exactly 80h still runs the pass,
+	// original's strict compare against 128: exactly 128 still runs the pass,
 	// using the byte in the sequence-escape slot even though the declared
 	// escape-code count is zero.
 	skipseq = esclen > BYTE_HIGH_BIT;
@@ -588,7 +590,7 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// Get decompressed size from header.
 	len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
 		((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] <<
-			LEGACY_DWORD_HIGH_WORD_SHIFT);
+			LEGACY_WORD_BITS);
 	src += COMPR_HEADER_SIZE;
 
 	// One-byte escape codes length counter.
@@ -600,7 +602,8 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	wdtpos = src;
 
 	// Generate escape codes.
-	for (i = 0, j = 0, alphlen = 0; i < esclen; ++i, j *= 2) {
+	for (i = 0, j = 0, alphlen = 0;
+		i < esclen; ++i, j *= VLE_ALPHABET_BRANCH_FACTOR) {
 		esc1[i] = alphlen - j;
 		tmp = *src++;
 		j += tmp;
@@ -638,8 +641,9 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// Go to compression codes.
 	src = codpos;
 
-	curword = *src << BYTE_SHIFT | *(src + 1);
-	src += 2;
+	curword = *src << BYTE_SHIFT |
+		*(src + VLE_CODE_WORD_SECOND_BYTE_OFFSET);
+	src += LEGACY_WORD_BYTES;
 	curwdt = BYTE_BIT_COUNT;
 	cursymb = 0;
 
@@ -750,7 +754,7 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 				// the final decompressed size.
 				if (passes & BYTE_HIGH_BIT) {
 					passes &= (legacy_u8)~BYTE_HIGH_BIT;
-					src += 4; // Skip past length data.
+					src += COMPR_HEADER_SIZE;
 				}
 				// Flag not set, first byte is compression type of the first
 				// and only pass.
@@ -893,7 +897,8 @@ void far* file_load_resource(legacy_s16 resource_type,
 			return result;
 
 		dearesult = do_dea_textres();
-		if (dearesult == 2) return 0;
+		if (dearesult == FILE_ERROR_DIALOG_ABORT)
+			return 0;
 	}
 #endif
 }

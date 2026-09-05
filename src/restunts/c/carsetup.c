@@ -105,7 +105,7 @@ static legacy_s16 legacy_alias_from_raw_resource(
 
 /*
  * detect_penalty in the original executable indexes td01 with route -1.
- * Its 16-bit offset wraps to FFFEh in the trakdata segment, aliasing a word
+ * Its 16-bit offset wraps to 65534 in the trakdata segment, aliasing a word
  * in resources allocated later. Reconstruct the original low-arena offsets
  * without loading the dashboard or the menu-only car shapes. Words in an
  * unmodeled compressed/render resource are treated as an invalid route; the
