@@ -17,6 +17,43 @@
 #define PIXLDUMP_BMP_PIXEL_OFFSET 1078UL
 #define PIXLDUMP_BMP_FILE_SIZE 65078UL
 #define PIXLDUMP_OUTPUT_NAME_SIZE 128U
+#define PIXLDUMP_FILE_WRITE_MODE 1
+#define PIXLDUMP_STDOUT_HANDLE 1U
+#define PIXLDUMP_DECIMAL_BASE 10UL
+#define PIXLDUMP_FRAME_NUMBER_DIGITS 5U
+#define PIXLDUMP_BMP_NAME_PREFIX_SIZE 5U
+#define PIXLDUMP_SAMPLE_LINE_SIZE 40U
+#define PIXLDUMP_HEX_NIBBLE_SHIFT 4U
+#define PIXLDUMP_HEX_NIBBLE_MASK 15U
+#define PIXLDUMP_PALETTE_COLOR_COUNT 256U
+#define PIXLDUMP_PALETTE_SOURCE_STRIDE 3U
+#define PIXLDUMP_PALETTE_DESTINATION_STRIDE 4U
+#define PIXLDUMP_PALETTE_RED_OFFSET 2U
+#define PIXLDUMP_PALETTE_GREEN_OFFSET 1U
+#define PIXLDUMP_PALETTE_ALPHA_OFFSET 3U
+#define PIXLDUMP_PALETTE_EXPAND_LEFT_SHIFT 2U
+#define PIXLDUMP_PALETTE_EXPAND_RIGHT_SHIFT 4U
+#define PIXLDUMP_BMP_FILE_SIZE_OFFSET 2U
+#define PIXLDUMP_BMP_PIXEL_OFFSET_FIELD 10U
+#define PIXLDUMP_BMP_DIB_HEADER_OFFSET 14U
+#define PIXLDUMP_BMP_DIB_HEADER_SIZE 40UL
+#define PIXLDUMP_BMP_WIDTH_OFFSET 18U
+#define PIXLDUMP_BMP_HEIGHT_OFFSET 22U
+#define PIXLDUMP_BMP_PLANES_OFFSET 26U
+#define PIXLDUMP_BMP_PLANES 1U
+#define PIXLDUMP_BMP_BITS_PER_PIXEL_OFFSET 28U
+#define PIXLDUMP_BMP_BITS_PER_PIXEL 8U
+#define PIXLDUMP_BMP_IMAGE_SIZE_OFFSET 34U
+#define PIXLDUMP_BMP_COLOR_COUNT_OFFSET 46U
+#define PIXLDUMP_BMP_COLOR_COUNT 256UL
+#define PIXLDUMP_VGA_SEGMENT 40960U
+#define PIXLDUMP_CVX_RESOURCE_SIZE 22400U
+#define PIXLDUMP_RANDOM_SHIFT 3U
+#define PIXLDUMP_REPLAY_MODE 2
+#define PIXLDUMP_FRAME_RATE 20
+#define PIXLDUMP_FRAME_TIMER_VALUE 500
+#define PIXLDUMP_PROJECTION_DISTANCE 35
+#define PIXLDUMP_PROJECTION_DIVISOR 6U
 
 #ifdef RESTUNTS_ORIGINAL
 #define PIXLDUMP_DUMP_EXTENSION ".PDO"
@@ -30,7 +67,7 @@ typedef legacy_u16 PIXLDUMP_OUTPUT;
 
 static PIXLDUMP_OUTPUT pixldump_output_open(const legacy_s8* path)
 {
-	return dos_file_open(path, 1);
+	return dos_file_open(path, PIXLDUMP_FILE_WRITE_MODE);
 }
 
 static legacy_u16 pixldump_output_write(PIXLDUMP_OUTPUT output,
@@ -46,7 +83,8 @@ static void pixldump_output_close(PIXLDUMP_OUTPUT output)
 
 static void pixldump_write_stdout(const legacy_s8* message)
 {
-	(void)pixldump_output_write(1U, message, strlen(message));
+	(void)pixldump_output_write(PIXLDUMP_STDOUT_HANDLE,
+		message, strlen(message));
 }
 
 static legacy_s16 pixldump_parse_camera(const legacy_s8* argument)
@@ -75,8 +113,9 @@ static legacy_s16 pixldump_parse_frame(const legacy_s8* argument,
 	for (index = 0; argument[index] != 0; index++) {
 		if (argument[index] < '0' || argument[index] > '9')
 			return 0;
-		value = value * 10UL + (legacy_u32)(argument[index] - '0');
-		if (value > 0xFFFFUL)
+		value = value * PIXLDUMP_DECIMAL_BASE +
+			(legacy_u32)(argument[index] - '0');
+		if (value > LEGACY_U16_MAX)
 			return 0;
 	}
 	*frame = (legacy_u16)value;
@@ -175,14 +214,15 @@ void init_trackdata(void)
 static legacy_u16 pixldump_append_frame_number(legacy_s8* line,
 	legacy_u16 frame)
 {
-	legacy_s8 reversed[5];
+	legacy_s8 reversed[PIXLDUMP_FRAME_NUMBER_DIGITS];
 	legacy_u16 count;
 	legacy_u16 index;
 
 	count = 0;
 	do {
-		reversed[count++] = (legacy_s8)('0' + frame % 10U);
-		frame = (legacy_u16)(frame / 10U);
+		reversed[count++] = (legacy_s8)('0' +
+			frame % PIXLDUMP_DECIMAL_BASE);
+		frame = (legacy_u16)(frame / PIXLDUMP_DECIMAL_BASE);
 	} while (frame != 0U);
 
 	for (index = 0; index < count; index++)
@@ -195,8 +235,8 @@ static legacy_u16 pixldump_frame_number_length(legacy_u16 frame)
 	legacy_u16 length;
 
 	length = 1;
-	while (frame >= 10U) {
-		frame = (legacy_u16)(frame / 10U);
+	while (frame >= PIXLDUMP_DECIMAL_BASE) {
+		frame = (legacy_u16)(frame / PIXLDUMP_DECIMAL_BASE);
 		length++;
 	}
 	return length;
@@ -211,7 +251,7 @@ static legacy_s16 pixldump_build_output_name(legacy_s8* output_name,
 
 	length = strlen(replay_name);
 	if (bmp_mode != 0) {
-		required = (legacy_u16)(5U +
+		required = (legacy_u16)(PIXLDUMP_BMP_NAME_PREFIX_SIZE +
 			pixldump_frame_number_length(frame) +
 			strlen(PIXLDUMP_DUMP_EXTENSION ".bmp"));
 	} else {
@@ -240,7 +280,7 @@ static legacy_s16 pixldump_write_sample(PIXLDUMP_OUTPUT output,
 {
 	static const legacy_s8 hex_digits[] = "0123456789abcdef";
 	legacy_u8 digest[PIXLDUMP_MD5_SIZE];
-	legacy_s8 line[40];
+	legacy_s8 line[PIXLDUMP_SAMPLE_LINE_SIZE];
 	legacy_u16 line_length;
 	legacy_u16 index;
 
@@ -248,8 +288,10 @@ static legacy_s16 pixldump_write_sample(PIXLDUMP_OUTPUT output,
 	line_length = pixldump_append_frame_number(line, frame);
 	line[line_length++] = ' ';
 	for (index = 0; index < PIXLDUMP_MD5_SIZE; index++) {
-		line[line_length++] = hex_digits[digest[index] >> 4];
-		line[line_length++] = hex_digits[digest[index] & 0x0FU];
+		line[line_length++] = hex_digits[
+			digest[index] >> PIXLDUMP_HEX_NIBBLE_SHIFT];
+		line[line_length++] = hex_digits[
+			digest[index] & PIXLDUMP_HEX_NIBBLE_MASK];
 	}
 	line[line_length++] = '\r';
 	line[line_length++] = '\n';
@@ -259,20 +301,21 @@ static legacy_s16 pixldump_write_sample(PIXLDUMP_OUTPUT output,
 static void pixldump_store_u16(legacy_u8* output, legacy_u16 value)
 {
 	output[0] = (legacy_u8)value;
-	output[1] = (legacy_u8)(value >> 8);
+	output[1] = (legacy_u8)(value >> LEGACY_BYTE_BITS);
 }
 
 static void pixldump_store_u32(legacy_u8* output, legacy_u32 value)
 {
 	output[0] = (legacy_u8)value;
-	output[1] = (legacy_u8)(value >> 8);
-	output[2] = (legacy_u8)(value >> 16);
-	output[3] = (legacy_u8)(value >> 24);
+	output[1] = (legacy_u8)(value >> LEGACY_BYTE_BITS);
+	output[2] = (legacy_u8)(value >> LEGACY_WORD_BITS);
+	output[3] = (legacy_u8)(value >> LEGACY_THREE_BYTE_BITS);
 }
 
 static legacy_u8 pixldump_expand_palette_channel(legacy_u8 value)
 {
-	return (legacy_u8)((value << 2) | (value >> 4));
+	return (legacy_u8)((value << PIXLDUMP_PALETTE_EXPAND_LEFT_SHIFT) |
+		(value >> PIXLDUMP_PALETTE_EXPAND_RIGHT_SHIFT));
 }
 
 static void pixldump_load_bmp_palette(legacy_u8* bmp_palette)
@@ -286,16 +329,19 @@ static void pixldump_load_bmp_palette(legacy_u8* bmp_palette)
 	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
 	source = (legacy_u8 far*)locate_shape_fatal(resource, "!pal") +
 		SHAPE2D_HEADER_SIZE;
-	for (index = 0; index < 256U; index++) {
-		source_offset = (legacy_u16)(index * 3U);
-		destination_offset = (legacy_u16)(index * 4U);
+	for (index = 0; index < PIXLDUMP_PALETTE_COLOR_COUNT; index++) {
+		source_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_SOURCE_STRIDE);
+		destination_offset = (legacy_u16)(index *
+			PIXLDUMP_PALETTE_DESTINATION_STRIDE);
 		bmp_palette[destination_offset] =
-			pixldump_expand_palette_channel(source[source_offset + 2U]);
-		bmp_palette[destination_offset + 1U] =
-			pixldump_expand_palette_channel(source[source_offset + 1U]);
-		bmp_palette[destination_offset + 2U] =
+			pixldump_expand_palette_channel(source[source_offset +
+				PIXLDUMP_PALETTE_RED_OFFSET]);
+		bmp_palette[destination_offset + PIXLDUMP_PALETTE_GREEN_OFFSET] =
+			pixldump_expand_palette_channel(source[source_offset +
+				PIXLDUMP_PALETTE_GREEN_OFFSET]);
+		bmp_palette[destination_offset + PIXLDUMP_PALETTE_RED_OFFSET] =
 			pixldump_expand_palette_channel(source[source_offset]);
-		bmp_palette[destination_offset + 3U] = 0;
+		bmp_palette[destination_offset + PIXLDUMP_PALETTE_ALPHA_OFFSET] = 0;
 	}
 	(void)mmgr_free(resource);
 }
@@ -315,15 +361,24 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8* output_name,
 		header[index] = 0;
 	header[0] = 'B';
 	header[1] = 'M';
-	pixldump_store_u32(header + 2U, PIXLDUMP_BMP_FILE_SIZE);
-	pixldump_store_u32(header + 10U, PIXLDUMP_BMP_PIXEL_OFFSET);
-	pixldump_store_u32(header + 14U, 40UL);
-	pixldump_store_u32(header + 18U, PIXLDUMP_SCREEN_WIDTH);
-	pixldump_store_u32(header + 22U, PIXLDUMP_SCREEN_HEIGHT);
-	pixldump_store_u16(header + 26U, 1U);
-	pixldump_store_u16(header + 28U, 8U);
-	pixldump_store_u32(header + 34U, PIXLDUMP_FRAMEBUFFER_SIZE);
-	pixldump_store_u32(header + 46U, 256UL);
+	pixldump_store_u32(header + PIXLDUMP_BMP_FILE_SIZE_OFFSET,
+		PIXLDUMP_BMP_FILE_SIZE);
+	pixldump_store_u32(header + PIXLDUMP_BMP_PIXEL_OFFSET_FIELD,
+		PIXLDUMP_BMP_PIXEL_OFFSET);
+	pixldump_store_u32(header + PIXLDUMP_BMP_DIB_HEADER_OFFSET,
+		PIXLDUMP_BMP_DIB_HEADER_SIZE);
+	pixldump_store_u32(header + PIXLDUMP_BMP_WIDTH_OFFSET,
+		PIXLDUMP_SCREEN_WIDTH);
+	pixldump_store_u32(header + PIXLDUMP_BMP_HEIGHT_OFFSET,
+		PIXLDUMP_SCREEN_HEIGHT);
+	pixldump_store_u16(header + PIXLDUMP_BMP_PLANES_OFFSET,
+		PIXLDUMP_BMP_PLANES);
+	pixldump_store_u16(header + PIXLDUMP_BMP_BITS_PER_PIXEL_OFFSET,
+		PIXLDUMP_BMP_BITS_PER_PIXEL);
+	pixldump_store_u32(header + PIXLDUMP_BMP_IMAGE_SIZE_OFFSET,
+		PIXLDUMP_FRAMEBUFFER_SIZE);
+	pixldump_store_u32(header + PIXLDUMP_BMP_COLOR_COUNT_OFFSET,
+		PIXLDUMP_BMP_COLOR_COUNT);
 
 	pixldump_load_bmp_palette(bmp_palette);
 	output = pixldump_output_open(output_name);
@@ -381,7 +436,8 @@ static legacy_s16 pixldump_write_frames(const legacy_s8* output_name)
 	if (output == 0)
 		return 1;
 
-	framebuffer = (legacy_u8 far*)dos_memory_make_pointer(0xA000, 0);
+	framebuffer = (legacy_u8 far*)dos_memory_make_pointer(
+		PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
 
@@ -407,7 +463,8 @@ static legacy_s16 pixldump_write_requested_frame(
 
 	while ((legacy_u16)state.game_frame < requested_frame)
 		pixldump_update_gamestate();
-	framebuffer = (legacy_u8 far*)dos_memory_make_pointer(0xA000, 0);
+	framebuffer = (legacy_u8 far*)dos_memory_make_pointer(
+		PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	return pixldump_write_bmp(output_name, framebuffer);
 }
@@ -442,15 +499,15 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	if (track_setup() != 0)
 		return 1;
 
-	cvxptr = mmgr_alloc_resbytes("cvx", 0x5780);
+	cvxptr = mmgr_alloc_resbytes("cvx", PIXLDUMP_CVX_RESOURCE_SIZE);
 	init_game_state(-1);
 	word_449EA = -1;
-	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), 3U);
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), PIXLDUMP_RANDOM_SHIFT);
 	replaybar_toggle = 0;
 	is_in_replay = 1;
 	idle_expired = 0;
 	cameramode = (legacy_s8)(camera_number - 1);
-	game_replay_mode = 2;
+	game_replay_mode = PIXLDUMP_REPLAY_MODE;
 	detail_level = 0;
 	slow_video_mgmt = 0;
 	slow_video_mgmt_copy = 0;
@@ -467,13 +524,15 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	byte_46467 = 0;
 	dashb_toggle = 0;
 	followOpponentFlag = (legacy_u8)target;
-	framespersec = 20;
-	word_44DCA = 0x1F4;
+	framespersec = PIXLDUMP_FRAME_RATE;
+	word_44DCA = PIXLDUMP_FRAME_TIMER_VALUE;
 	rect_windshield.left = 0;
 	rect_windshield.right = 320;
 	rect_windshield.top = 0;
 	rect_windshield.bottom = 200;
-	set_projection(0x23, 200 / 6, 320, 200);
+	set_projection(PIXLDUMP_PROJECTION_DISTANCE,
+		PIXLDUMP_SCREEN_HEIGHT / PIXLDUMP_PROJECTION_DIVISOR,
+		PIXLDUMP_SCREEN_WIDTH, PIXLDUMP_SCREEN_HEIGHT);
 
 	restore_gamestate(0);
 	restore_gamestate(gameconfig.game_recordedframes);
