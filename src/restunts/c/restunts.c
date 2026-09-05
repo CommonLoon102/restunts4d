@@ -29,6 +29,36 @@
 // Entries in the CVX gamestate buffer.
 #define RST_CVX_NUM 20
 
+#define GAME_SCREEN_WIDTH 320
+#define GAME_SCREEN_HEIGHT 200
+#define GAME_TOP_PANEL_HEIGHT 100
+#define GAME_INITIAL_CLIP_BOTTOM 95
+#define GAME_SCREEN_COLOR 15U
+
+#define RANDOM_WAIT_SPIN_LIMIT 12000
+#define RANDOM_WAIT_RESOURCE_INDEX 1024
+#define NO_OPPONENT_CAR_ID 255U
+
+#define CALLBACK_GRAPHICS_MENU_KEY 7
+#define CALLBACK_JOYSTICK_HELP_KEY 10
+#define CALLBACK_KEYBOARD_HELP_KEY 11
+#define CALLBACK_MOUSE_HELP_KEY 12800
+#define CALLBACK_PAUSE_HELP_KEY 16
+#define CALLBACK_DOS_HELP_KEY 17
+#define CALLBACK_SOUND_HELP_KEY 19
+#define CALLBACK_DOS_HELP_ALT_KEY 24
+
+#define STARTUP_PROJECTION_X 36
+#define STARTUP_PROJECTION_Y 17
+#define STARTUP_SHAPE_COUNT 116
+#define STARTUP_CAR_POSITION_Y_BITS 64696U
+#define STARTUP_CAR_POSITION_Z 2880
+
+#define TRACK_PATH_STORAGE_SIZE 81
+#define TRACK_PRIMARY_PATH_OFFSET REPLAY_TRACK_SIZE
+#define TRACK_SECONDARY_PATH_OFFSET \
+	(REPLAY_TRACK_SIZE + TRACK_PATH_STORAGE_SIZE)
+
 
 legacy_s16 get_0(void)
 {
@@ -66,9 +96,10 @@ legacy_s16 random_wait(void)
 
 	status1 = dos_video_get_status();
 
-	for (i = 0; status1 == dos_video_get_status() && i < 12000; ++i);
+	for (i = 0; status1 == dos_video_get_status() &&
+		i < RANDOM_WAIT_SPIN_LIMIT; ++i);
 
-	if (i == 1024) {
+	if (i == RANDOM_WAIT_RESOURCE_INDEX) {
 		i = aMisc_1[0];
 	}
 
@@ -77,7 +108,7 @@ legacy_s16 random_wait(void)
 		get_kevinrandom();
 	}
 
-	i &= 0xFF;
+	i &= LEGACY_U8_MAX;
 
 	while (i--) {
 		get_kevinrandom();
@@ -96,7 +127,7 @@ void set_default_car(void) {
 	gameconfig.game_playertransmission = 1;
 	gameconfig.game_opponenttype       = 0;
 	gameconfig.game_opponentmaterial   = 0;
-	gameconfig.game_opponentcarid[0]   = 0xFF;
+	gameconfig.game_opponentcarid[0]   = NO_OPPONENT_CAR_ID;
 }
 
 
@@ -104,18 +135,22 @@ extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legac
 //extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
 extern void set_projection(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 
-struct RECTANGLE shaperect = { 0, 320, 0, 200 };
+struct RECTANGLE shaperect = {
+	0, GAME_SCREEN_WIDTH, 0, GAME_SCREEN_HEIGHT
+};
 struct TRANSFORMEDSHAPE3D transshape;
-struct RECTANGLE cliprect = { 0, 0x140, 0, 0x5F };
-struct VECTOR carpos = { 0, 0x0FCB8, 0x0B40 }; // from the original
-//struct VECTOR carpos = { 0, 0, 320 };
+struct RECTANGLE cliprect = { 0, GAME_SCREEN_WIDTH,
+	0, GAME_INITIAL_CLIP_BOTTOM };
+struct VECTOR carpos = { 0, LEGACY_S16_FROM_BITS(
+	STARTUP_CAR_POSITION_Y_BITS), STARTUP_CAR_POSITION_Z }; // from the original
+//struct VECTOR carpos = { 0, 0, GAME_SCREEN_WIDTH };
 
 struct SPRITE far* render_window_sprite;
-//cliprect_unk    RECTANGLE <270Fh, 0FFFFh, 270Fh, 0FFFFh>
+// cliprect_unk uses the legacy sentinel rectangle <9999, 65535, 9999, 65535>.
 
 extern legacy_s16 polyinfonumpolys;
-extern legacy_u8 far* polyinfoptrs[]; // array size = 0x190
-extern legacy_u16 poly_linked_list_40ED6[]; // array size = 0x190
+extern legacy_u8 far* polyinfoptrs[]; // array size = 400
+extern legacy_u16 poly_linked_list_40ED6[]; // array size = 400
 
 
 extern legacy_s16 font_op(const legacy_s8* text, legacy_s16 count);
@@ -207,15 +242,15 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	dos_kb_clear_numlock();
 	kb_call_readchar_callback();
 
-	kb_reg_callback(0x0007, &show_graphic_levels_menu);
-	kb_reg_callback(0x000A, &do_joy_restext);
-	kb_reg_callback(0x000B, &do_key_restext);
-	kb_reg_callback(0x3200, &do_mof_restext);
-	kb_reg_callback(0x0010, &do_pau_restext);
+	kb_reg_callback(CALLBACK_GRAPHICS_MENU_KEY, &show_graphic_levels_menu);
+	kb_reg_callback(CALLBACK_JOYSTICK_HELP_KEY, &do_joy_restext);
+	kb_reg_callback(CALLBACK_KEYBOARD_HELP_KEY, &do_key_restext);
+	kb_reg_callback(CALLBACK_MOUSE_HELP_KEY, &do_mof_restext);
+	kb_reg_callback(CALLBACK_PAUSE_HELP_KEY, &do_pau_restext);
 	kb_reg_callback('p', &do_pau_restext);
-	kb_reg_callback(0x0011, &do_dos_restext);
-	kb_reg_callback(0x0013, &do_sonsof_restext);
-	kb_reg_callback(0x0018, &do_dos_restext);
+	kb_reg_callback(CALLBACK_DOS_HELP_KEY, &do_dos_restext);
+	kb_reg_callback(CALLBACK_SOUND_HELP_KEY, &do_sonsof_restext);
+	kb_reg_callback(CALLBACK_DOS_HELP_ALT_KEY, &do_dos_restext);
 
 	// Video
 	init_video_geometry_flags();
@@ -284,7 +319,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 
 	sprite_copy_2_to_1_clear();
 
-	dos_mouse_init(0x0140, 0x00C8);
+	dos_mouse_init(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
 
 	// Audio driver.
 	if (audio_load_dos_driver(audiodriverstring, 0, 0)) {
@@ -412,9 +447,12 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 
 	// try do something
 	sub_29772();
-	set_projection(0x24, 0x11, 0x140, 0x64);	// would at best draw just a pixel without this - camera projection??
+	set_projection(STARTUP_PROJECTION_X, STARTUP_PROJECTION_Y,
+		GAME_SCREEN_WIDTH, GAME_TOP_PANEL_HEIGHT);
+	// The camera projection would at best draw a pixel without this setup.
 
-	render_window_sprite = sprite_make_wnd(320, 100, 0x0F);
+	render_window_sprite = sprite_make_wnd(
+		GAME_SCREEN_WIDTH, GAME_TOP_PANEL_HEIGHT, GAME_SCREEN_COLOR);
 
 	//run_intro_looped();
 
@@ -430,7 +468,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	transshape.rotvec.y = 0;
 	transshape.pos = carpos;
 
-	transshape.unk = 0;//0x7530;
+	transshape.unk = 0; // The abandoned experiment used 30000.
 	transshape.ts_flags = 0;
 	transshape.rectptr = &shaperect;
 
@@ -438,10 +476,10 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	shapeindex = 24;
 	for (; ; counter++) {
 
-		transshape.rotvec.z = 0; //counter + 0x230;
+		transshape.rotvec.z = 0; // An abandoned experiment added 560.
 
-		// seg000:1C58                 mov     [bp+var_transshape.ts_shapeptr], (offset game3dshapes.shape3d_numverts+0AA8h)
-		// 0xAA8 / sizeof(SHAPE3D) = 0xAA8 / 0x16 = 124, points at where car0 is loaded during shape3d_load_car_shapes();
+		// The original adds 2728 bytes, or 124 22-byte SHAPE3D records,
+		// to reach the first car shape loaded by shape3d_load_car_shapes().
 
 		transshape.shapeptr = &game3dshapes[shapeindex];
 
@@ -462,15 +500,17 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 		inch = get_kb_or_joy_flags();//kb_get_char();
 		if (inch == 4) { // right
 			shapeindex++;
-			shapeindex = (shapeindex + 0x74) % 0x74;
+			shapeindex = (shapeindex + STARTUP_SHAPE_COUNT) %
+				STARTUP_SHAPE_COUNT;
 		} else
 		if (inch == 8) { // left
 			shapeindex--;
-			shapeindex = (shapeindex + 0x74) % 0x74;
+			shapeindex = (shapeindex + STARTUP_SHAPE_COUNT) %
+				STARTUP_SHAPE_COUNT;
 		} else
 		if (inch != 0) {
 			textresptr = locate_text_res(mainresptr, "dos");
-			//result = show_dialog(2, 1, textresptr, 0xFFFF, 0xFFFF, dialogarg2, 0, 0); // center
+			// DIALOG_AUTO_POSITION centers both dialog coordinates.
 			result = show_dialog(2, 1, textresptr, 0, 170, dialogarg2, 0, 0);
 			if (result >= 1)
 				break;
@@ -528,7 +568,9 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 		result = run_intro_looped();
 		if (result == 27) {
 			textresptr = locate_text_res(mainresptr, "dos");
-			result = show_dialog(2, 1, textresptr, 0xFFFF, 0xFFFF, dialogarg2, 0, 0);
+			result = show_dialog(2, 1, textresptr,
+				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+				dialogarg2, 0, 0);
 			if (result >= 1) {
 				shutdown_dos_game();
 				return result;
@@ -579,12 +621,14 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			}
 
 			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-			for (i = 0; i < 0x70A; i++) {
+			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
 				td20_trk_file_appnd[i] = td14_elem_map_main[i];
 			}
-			for (i = 0; i < 0x51; i++) {
-				td20_trk_file_appnd[i + 0x70A] = byte_3B80C[i];
-				td20_trk_file_appnd[i + 0x75B] = byte_3B85E[i];
+			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+				td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET] =
+					byte_3B80C[i];
+				td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET] =
+					byte_3B85E[i];
 			}
 
 			if (idle_expired == 0) {
@@ -638,12 +682,14 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			}
 
 			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-			for (i = 0; i < 0x70A; i++) {
+			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
 				td14_elem_map_main[i] = td20_trk_file_appnd[i];
 			}
-			for (i = 0; i < 0x51; i++) {
-				byte_3B80C[i] = td20_trk_file_appnd[i + 0x70A];
-				byte_3B85E[i] = td20_trk_file_appnd[i + 0x75B];
+			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+				byte_3B80C[i] =
+					td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET];
+				byte_3B85E[i] =
+					td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET];
 			}
 			mmgr_release(cvxptr);
 
