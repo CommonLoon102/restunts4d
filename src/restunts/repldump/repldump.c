@@ -3,6 +3,7 @@
 #include <fileio.h>
 #include <memmgr.h>
 #include <platform.h>
+#include <trackdata_layout.h>
 
 #ifdef RESTUNTS_ORIGINAL
 typedef legacy_u16 size_t;
@@ -101,94 +102,98 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 
 void init_row_tables(void) {
 	legacy_s16 i;
-	for (i = 0; i < 30; i++) {
-		trackrows[i] = 30 * (29 - i);
-		terrainrows[i] = 30 * i;
-		trackpos[i] = (29 - i) << 10;
-		trackcenterpos[i] = ((29 - i) << 10) + 0x200;
-		terrainpos[i] = i << 10;
-		terraincenterpos[i] = (i << 10) + 0x200;
+	for (i = 0; i < TRACK_GRID_SIZE; i++) {
+		trackrows[i] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - i);
+		terrainrows[i] = TRACK_GRID_SIZE * i;
+		trackpos[i] = (TRACK_GRID_LAST_INDEX - i) <<
+			TRACK_TILE_POSITION_SHIFT;
+		trackcenterpos[i] = ((TRACK_GRID_LAST_INDEX - i) <<
+			TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
+		terrainpos[i] = i << TRACK_TILE_POSITION_SHIFT;
+		terraincenterpos[i] = (i << TRACK_TILE_POSITION_SHIFT) +
+			TRACK_TILE_HALF_SIZE;
 	}
 
-	for (i = 0; i < 30; i++) {
-		trackpos2[i] = i << 10;
-		trackcenterpos2[i] = (i << 10) + 0x200;
+	for (i = 0; i < TRACK_GRID_SIZE; i++) {
+		trackpos2[i] = i << TRACK_TILE_POSITION_SHIFT;
+		trackcenterpos2[i] = (i << TRACK_TILE_POSITION_SHIFT) +
+			TRACK_TILE_HALF_SIZE;
 	}
 }
 
 void init_trackdata(void) {
 	legacy_s8 far* trkptr;
-	trkptr = mmgr_alloc_resbytes("trakdata", 0x6BF3);
+	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 
 	td01_track_file_cpy = trkptr;
 
-	trkptr += 0x70a;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	td02_penalty_related = trkptr;
 
-	trkptr += 0x70a;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	trackdata3 = trkptr;
 
-	trkptr += 0x70a;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	td04_aerotable_pl = trkptr;
 
-	trkptr += 0x80;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	td05_aerotable_op = trkptr;
 
-	trkptr += 0x80;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata6 = trkptr;
 
-	trkptr += 0x80;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata7 = trkptr;
 
-	trkptr += 0x80;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	td08_direction_related = trkptr;
 
-	trkptr += 0x60;
+	trkptr += TRACKDATA_DIRECTION_TABLE_SIZE;
 	trackdata9 = trkptr;
 
-	trkptr += 0x180;
+	trkptr += TRACKDATA_CAMERA_VECTOR_SIZE;
 	td10_track_check_rel = trkptr;
 
-	trkptr += 0x120;
+	trkptr += TRACKDATA_CHECK_VECTOR_SIZE;
 	td11_highscores = trkptr;
 
-	trkptr += 0x16c;
+	trkptr += TRACKDATA_HIGHSCORE_SIZE;
 	trackdata12 = trkptr;
 
-	trkptr += 0x0f0;
+	trkptr += TRACKDATA_UNKNOWN_12_SIZE;
 	td13_rpl_header = trkptr;
 
-	trkptr += 0x1a;
+	trkptr += TRACKDATA_REPLAY_HEADER_SIZE;
 	td14_elem_map_main = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td15_terr_map_main = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td16_rpl_buffer = trkptr;
 
-	trkptr += 0x2ee0;
+	trkptr += TRACKDATA_REPLAY_INPUT_BUFFER_SIZE;
 	td17_trk_elem_ordered = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata18 = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata19 = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td20_trk_file_appnd = trkptr;
 
-	trkptr += 0x7ac;
+	trkptr += TRACKDATA_TRACK_FILE_APPEND_SIZE;
 	td21_col_from_path = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td22_row_from_path = trkptr;
 
-	trkptr += 0x385;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata23 = trkptr;
 
-	trkptr += 0x30;
+	trkptr += TRACKDATA_OBJECT_INDEX_SIZE;
 }
 #else
 
