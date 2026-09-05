@@ -97,6 +97,6 @@ void init_unknown(void)
 	byte_4552F = REPLAY_SLOW_CALLBACK_DIVISOR;
 	elapsed_time2 = 0;
 	byte_449DA = 0;
-	byte_4393C = 0;
+	byte_4393C = RACE_START_SEQUENCE_INACTIVE;
 	word_44DCA = 0;
 }

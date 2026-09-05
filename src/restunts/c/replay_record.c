@@ -159,7 +159,8 @@ void replay_unk2(legacy_s16 mode)
 	} else if (byte_449DA == 0 &&
 		state.game_3F6autoLoadEvalFlag == 0 &&
 		game_replay_mode != REPLAY_MODE_PAUSED) {
-		if (passed_security == 0 && byte_4393C == 0 &&
+		if (passed_security == 0 &&
+			byte_4393C == RACE_START_SEQUENCE_INACTIVE &&
 			(legacy_u16)state.game_frame >
 				LEGACY_U16_WRAP_MUL(framespersec,
 					REPLAY_SECURITY_GRACE_SECONDS))

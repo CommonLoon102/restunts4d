@@ -289,7 +289,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 		return 0;
 
 	game_replay_mode = REPLAY_MODE_LIVE;
-	byte_4393C = 0;
+	byte_4393C = RACE_START_SEQUENCE_INACTIVE;
 	init_game_state_with_frame_rate_byte(framespersec2);
 	return 1;
 }

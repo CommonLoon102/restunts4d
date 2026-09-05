@@ -13,11 +13,11 @@
 #define CAMERA_REDUCED_RATE_STEP_LIMIT 240
 #define TRACK_POINT_UPDATE_DIVISOR_SHIFT 1U
 #define TRACK_POINT_INITIAL_DISTANCE 10000
-#define CRASH_ROLL_DISTANCE_LIMIT 450
-#define CRASH_ROLL_STAGE_THRESHOLD 384
-#define CRASH_ROLL_ADVANCE_STEP 8
-#define CRASH_ROLL_APPROACH_DISTANCE 228
-#define CRASH_ROLL_SPEED_LIMIT 1280
+#define START_FLAG_ANIMATION_LIMIT 450
+#define START_FLAG_AUTO_DRIVE_THRESHOLD 384
+#define START_FLAG_ANIMATION_STEP 8
+#define START_SEQUENCE_LINE_DISTANCE 228
+#define START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT 1280
 
 extern legacy_u8 byte_4616E;
 
@@ -199,14 +199,14 @@ void update_gamestate(void)
 #ifndef RESTUNTS_HEADLESS
 		audio_carstate();
 #endif
-		if (byte_4393C != 0) {
-			if (word_44DCA < CRASH_ROLL_DISTANCE_LIMIT)
+		if (byte_4393C != RACE_START_SEQUENCE_INACTIVE) {
+			if (word_44DCA < START_FLAG_ANIMATION_LIMIT)
 				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA,
-					CRASH_ROLL_ADVANCE_STEP);
-			if (byte_4393C == 1 &&
-				word_44DCA > CRASH_ROLL_STAGE_THRESHOLD)
-				byte_4393C = LEGACY_S8_WRAP_ADD(byte_4393C, 1);
-			if (byte_4393C == 2) {
+					START_FLAG_ANIMATION_STEP);
+			if (byte_4393C == RACE_START_SEQUENCE_FLAG_ANIMATION &&
+				word_44DCA > START_FLAG_AUTO_DRIVE_THRESHOLD)
+				byte_4393C = RACE_START_SEQUENCE_AUTO_DRIVE;
+			if (byte_4393C == RACE_START_SEQUENCE_AUTO_DRIVE) {
 				if (LEGACY_S16_WRAP_ADD(
 					multiply_and_scale(cos_fast(track_angle),
 						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
@@ -220,13 +220,13 @@ void update_gamestate(void)
 								LEGACY_S32_SAR(
 									state.playerstate.car_posWorld1.lx,
 									CAR_WORLD_POSITION_SHIFT))))) <=
-					CRASH_ROLL_APPROACH_DISTANCE) {
+					START_SEQUENCE_LINE_DISTANCE) {
 					if (state.playerstate.car_speed != 0)
 						player_op(INPUT_BRAKE_FLAG);
 					else
-						byte_4393C = 0;
+						byte_4393C = RACE_START_SEQUENCE_INACTIVE;
 				} else if (state.playerstate.car_speed <
-					CRASH_ROLL_SPEED_LIMIT) {
+					START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
 					player_op(INPUT_ACCELERATE_FLAG);
 				} else {
 					player_op(0);

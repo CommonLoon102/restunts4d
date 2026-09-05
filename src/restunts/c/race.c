@@ -94,7 +94,7 @@ void run_game(void) {
 				word_45D94 = 0;
 				word_45D3E = LEGACY_S16_FROM_BITS(
 					LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
-				byte_4393C = 1;
+				byte_4393C = RACE_START_SEQUENCE_FLAG_ANIMATION;
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = REPLAY_MODE_PAUSED;
 
@@ -302,7 +302,8 @@ void run_game(void) {
 				mouse_draw_transparent_check();
 			}
 
-			if (game_replay_mode == REPLAY_MODE_PAUSED && byte_4393C == 0) {
+			if (game_replay_mode == REPLAY_MODE_PAUSED &&
+				byte_4393C == RACE_START_SEQUENCE_INACTIVE) {
 				game_replay_mode = REPLAY_MODE_LIVE;
 				init_game_state_with_frame_rate(framespersec2);
 			}
@@ -350,7 +351,7 @@ void run_game(void) {
 						((get_kb_or_joy_flags() &
 							INPUT_ACTION_BUTTON_MASK) != 0)) {
 						game_replay_mode = REPLAY_MODE_LIVE;
-						byte_4393C = 0;
+						byte_4393C = RACE_START_SEQUENCE_INACTIVE;
 						init_game_state_with_frame_rate(framespersec2);
 					}
 				}
