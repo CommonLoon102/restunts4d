@@ -4,6 +4,38 @@
 
 extern void add_exit_handler(void (far* exit_handler)(void));
 
+#define DOS_VIDEO_BIOS_INTERRUPT 16
+#define DOS_VIDEO_BIOS_SET_MODE_FUNCTION 0
+#define DOS_VIDEO_BIOS_SET_BACKGROUND_FUNCTION 11
+#define DOS_VIDEO_BIOS_GET_MODE_FUNCTION 15
+#define DOS_VIDEO_BIOS_SET_DAC_BLOCK_FUNCTION 4114
+#define DOS_VIDEO_BIOS_DATA_SEGMENT 64U
+#define DOS_VIDEO_BIOS_EQUIPMENT_OFFSET 16U
+#define DOS_VIDEO_EQUIPMENT_DISPLAY_CLEAR_MASK 65487U
+#define DOS_VIDEO_EQUIPMENT_COLOR_BITS 16U
+#define DOS_VIDEO_EQUIPMENT_MODE4_BITS 32U
+#define DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS 48U
+#define DOS_VIDEO_CRTC_REGISTER_COUNT 12U
+#define DOS_VIDEO_CRTC_INDEX_PORT 948U
+#define DOS_VIDEO_CRTC_DATA_PORT 949U
+#define DOS_VIDEO_STATUS_PORT 986U
+#define DOS_VIDEO_RETRACE_STATUS_BIT 8U
+#define DOS_VIDEO_GRAPHICS_SEGMENT 40960U
+#define DOS_VIDEO_GRAPHICS_CLEAR_WORDS 64000U
+#define DOS_VIDEO_MONOCHROME_SEGMENT 47104U
+#define DOS_VIDEO_MONOCHROME_CLEAR_WORDS 16384U
+#define DOS_VIDEO_HERCULES_CONFIG_PORT 959U
+#define DOS_VIDEO_HERCULES_CONTROL_PORT 952U
+#define DOS_VIDEO_HERCULES_CONFIG_ENABLE 3U
+#define DOS_VIDEO_HERCULES_MODE4_CONTROL 2U
+#define DOS_VIDEO_HERCULES_MODE4_ACTIVE_CONTROL 138U
+#define DOS_VIDEO_HERCULES_MODE7_CONTROL 32U
+#define DOS_VIDEO_HERCULES_MODE7_ACTIVE_CONTROL 40U
+#define DOS_VIDEO_BIOS_MODE3 3U
+#define DOS_VIDEO_BIOS_MODE4 4U
+#define DOS_VIDEO_BIOS_MODE7 7U
+#define DOS_VIDEO_BIOS_MODE13 19U
+
 static legacy_u8 saved_video_mode;
 static legacy_u8 saved_equipment_byte;
 static legacy_u8 mode4_active;
@@ -22,27 +54,30 @@ static void dos_video_set_equipment_bits(legacy_u16 display_bits)
 {
 	legacy_u16 equipment;
 
-	equipment = (legacy_u16)peek(0x40U, 0x10U);
-	equipment = (legacy_u16)((equipment & 0xFFCFU) | display_bits);
-	poke(0x40U, 0x10U, equipment);
+	equipment = (legacy_u16)peek(DOS_VIDEO_BIOS_DATA_SEGMENT,
+		DOS_VIDEO_BIOS_EQUIPMENT_OFFSET);
+	equipment = (legacy_u16)((equipment &
+		DOS_VIDEO_EQUIPMENT_DISPLAY_CLEAR_MASK) | display_bits);
+	poke(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET,
+		equipment);
 }
 
 static void dos_video_set_bios_mode(legacy_u8 mode)
 {
 	union REGS registers;
 
-	registers.h.ah = 0;
+	registers.h.ah = DOS_VIDEO_BIOS_SET_MODE_FUNCTION;
 	registers.h.al = mode;
-	int86(0x10, &registers, &registers);
+	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
 }
 
 static void dos_video_reset_palette(void)
 {
 	union REGS registers;
 
-	registers.h.ah = 0x0BU;
+	registers.h.ah = DOS_VIDEO_BIOS_SET_BACKGROUND_FUNCTION;
 	registers.x.bx = 0;
-	int86(0x10, &registers, &registers);
+	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
 }
 
 static void dos_video_fill(legacy_u16 segment, legacy_u16 value,
@@ -60,9 +95,9 @@ static void dos_video_program_crtc(const legacy_u8* values)
 {
 	legacy_u16 index;
 
-	for (index = 0; index < 12U; ++index) {
-		outp(0x3B4U, index);
-		outp(0x3B5U, values[index]);
+	for (index = 0; index < DOS_VIDEO_CRTC_REGISTER_COUNT; ++index) {
+		outp(DOS_VIDEO_CRTC_INDEX_PORT, index);
+		outp(DOS_VIDEO_CRTC_DATA_PORT, values[index]);
 	}
 }
 
@@ -70,12 +105,16 @@ static void far dos_video_on_exit(void)
 {
 	legacy_u8 equipment;
 
-	pokeb(0x40U, 0x10U, saved_equipment_byte);
+	pokeb(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET,
+		saved_equipment_byte);
 	dos_video_set_bios_mode(saved_video_mode);
-	pokeb(0x40U, 0x10U, saved_equipment_byte);
+	pokeb(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET,
+		saved_equipment_byte);
 	equipment = saved_equipment_byte;
-	if ((equipment & 0x30U) == 0x30U)
-		dos_video_fill(0xA000U, 0, 0xFA00U);
+	if ((equipment & DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS) ==
+		DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS)
+		dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+			DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 	dos_video_reset_palette();
 }
 
@@ -85,24 +124,27 @@ static void dos_video_add_exit_handler(void)
 
 	if (saved_video_mode != 0)
 		return;
-	registers.h.ah = 0x0FU;
-	int86(0x10, &registers, &registers);
+	registers.h.ah = DOS_VIDEO_BIOS_GET_MODE_FUNCTION;
+	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
 	saved_video_mode = registers.h.al;
-	saved_equipment_byte = (legacy_u8)peekb(0x40U, 0x10U);
+	saved_equipment_byte = (legacy_u8)peekb(DOS_VIDEO_BIOS_DATA_SEGMENT,
+		DOS_VIDEO_BIOS_EQUIPMENT_OFFSET);
 	add_exit_handler(dos_video_on_exit);
 }
 
 static void dos_video_set_mode3(void)
 {
-	dos_video_fill(0xA000U, 0, 0xFA00U);
-	dos_video_set_equipment_bits(0x10U);
-	dos_video_set_bios_mode(3U);
+	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+		DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
+	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_COLOR_BITS);
+	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE3);
 	dos_video_reset_palette();
 }
 
 legacy_s16 dos_video_get_status(void)
 {
-	return (legacy_s16)(inport(0x3DAU) & 8U);
+	return (legacy_s16)(inport(DOS_VIDEO_STATUS_PORT) &
+		DOS_VIDEO_RETRACE_STATUS_BIT);
 }
 
 /* A dormant translated-assembly fallback still imports this legacy name. */
@@ -122,8 +164,8 @@ void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
 		mov     bx, start
 		mov     cx, count
 		mov     dx, palette
-		mov     ax, 1012h
-		int     10h
+		mov     ax, DOS_VIDEO_BIOS_SET_DAC_BLOCK_FUNCTION
+		int     DOS_VIDEO_BIOS_INTERRUPT
 		pop     es
 	}
 }
@@ -131,22 +173,27 @@ void dos_video_set_palette(legacy_u16 start, legacy_u16 count,
 void dos_video_set_mode_13h(void)
 {
 	dos_video_add_exit_handler();
-	dos_video_set_equipment_bits(0x10U);
+	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_COLOR_BITS);
 	dos_video_reset_palette();
-	dos_video_set_bios_mode(0x13U);
-	dos_video_fill(0xA000U, 0, 0xFA00U);
+	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE13);
+	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+		DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 }
 
 void dos_video_set_mode4(void)
 {
 	mode4_active = 1U;
-	dos_video_set_equipment_bits(0x20U);
-	dos_video_set_bios_mode(4U);
-	outp(0x3BFU, 3U);
-	outp(0x3B8U, 2U);
+	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_MODE4_BITS);
+	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE4);
+	outp(DOS_VIDEO_HERCULES_CONFIG_PORT,
+		DOS_VIDEO_HERCULES_CONFIG_ENABLE);
+	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
+		DOS_VIDEO_HERCULES_MODE4_CONTROL);
 	dos_video_program_crtc(mode4_crtc_registers);
-	dos_video_fill(0xB800U, 0, 0x4000U);
-	outp(0x3B8U, 0x8AU);
+	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, 0,
+		DOS_VIDEO_MONOCHROME_CLEAR_WORDS);
+	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
+		DOS_VIDEO_HERCULES_MODE4_ACTIVE_CONTROL);
 }
 
 void dos_video_set_mode7(void)
@@ -156,11 +203,15 @@ void dos_video_set_mode7(void)
 		return;
 	}
 
-	dos_video_set_equipment_bits(0x30U);
-	outp(0x3BFU, 3U);
-	outp(0x3B8U, 0x20U);
+	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS);
+	outp(DOS_VIDEO_HERCULES_CONFIG_PORT,
+		DOS_VIDEO_HERCULES_CONFIG_ENABLE);
+	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
+		DOS_VIDEO_HERCULES_MODE7_CONTROL);
 	dos_video_program_crtc(mode7_crtc_registers);
-	dos_video_fill(0xB800U, 0, 0x4000U);
-	outp(0x3B8U, 0x28U);
-	dos_video_set_bios_mode(7U);
+	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, 0,
+		DOS_VIDEO_MONOCHROME_CLEAR_WORDS);
+	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
+		DOS_VIDEO_HERCULES_MODE7_ACTIVE_CONTROL);
+	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE7);
 }
