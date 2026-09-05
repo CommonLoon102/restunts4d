@@ -5,6 +5,16 @@
 
 #define DIALOG_AUTO_POSITION 65535U
 #define DIALOG_FAILURE_RESULT 65535U
+#define DIALOG_NO_BACKGROUND_SAVE 0
+#define DIALOG_SAVE_BACKGROUND 1
+
+enum DIALOG_TYPE {
+	DIALOG_TYPE_MESSAGE = 0,
+	DIALOG_TYPE_ACKNOWLEDGEMENT = 1,
+	DIALOG_TYPE_MENU = 2,
+	DIALOG_TYPE_PLACEHOLDERS = 3,
+	DIALOG_TYPE_DELAY = 4
+};
 
 legacy_u16 show_dialog(legacy_s16 dialog_type, legacy_s16 save_background,
 	void far* text_resource, legacy_u16 x_argument, legacy_u16 y_argument,
