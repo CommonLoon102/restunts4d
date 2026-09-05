@@ -5,6 +5,8 @@
 #define ROUTE_ALIGNMENT_WRAP_LIMIT \
 	(ANGLE_FULL_TURN - ANGLE_EIGHTH_TURN)
 #define ROUTE_GUIDANCE_DIRECTION_SHIFT 8U
+#define ROUTE_DIRECTION_LEFT_SECTOR 1
+#define ROUTE_DIRECTION_RIGHT_SECTOR 3
 
 /* Vector from the player's car to its current route point. A y of -1 marks
    a route point with no height of its own: the route search still measures
@@ -56,7 +58,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 
 	state.playerstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.playerstate.car_crashBmpFlag != 0) {
-		state.field_45D = 0;
+		state.field_45D = ROUTE_INDICATOR_NONE;
 		arg_carInputByte = INPUT_BRAKE_FLAG;
 
 		if (state.playerstate.car_speed2 == 0) {
@@ -146,7 +148,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		}
 		state.field_2F4 = var_2;
 	}
-	state.field_45D = 0;
+	state.field_45D = ROUTE_INDICATOR_NONE;
 	if (state.field_45B != 1) {
 		var_matptr = mat_rot_zxy(
 			state.playerstate.car_rotate.z,
@@ -158,7 +160,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 
 		if (state.field_45B == 2) {
 			if (state.playerstate.car_crashBmpFlag == 0)
-				state.field_45D = 3;
+				state.field_45D = ROUTE_INDICATOR_WRONG_WAY;
 			var_2 = state.field_2F4;
 			route_selection_required = 1;
 		} else {
@@ -288,12 +290,13 @@ void player_op(legacy_s8 arg_carInputByte) {
 				si = LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
 					state.playerstate.field_48, ANGLE_EIGHTH_TURN) &
 					ANGLE_MASK, ROUTE_GUIDANCE_DIRECTION_SHIFT);
-				if (si == 1) {
-					state.field_45D = 1;
-				} else if (si == 3 && state.playerstate.field_B6 == 0) {
-					state.field_45D = 2;
+				if (si == ROUTE_DIRECTION_LEFT_SECTOR) {
+					state.field_45D = ROUTE_INDICATOR_LEFT;
+				} else if (si == ROUTE_DIRECTION_RIGHT_SECTOR &&
+					state.playerstate.field_B6 == 0) {
+					state.field_45D = ROUTE_INDICATOR_RIGHT;
 				} else {
-					state.field_45D = 0;
+					state.field_45D = ROUTE_INDICATOR_NONE;
 				}
 			}
 		}

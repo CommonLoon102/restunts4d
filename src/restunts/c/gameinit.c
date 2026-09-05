@@ -208,8 +208,8 @@ void init_game_state(legacy_s16 arg)
 			tmprow);
 
 		state.field_2F2 = 0;
-		state.field_45D = 0;
-		state.field_45E = 0;
+		state.field_45D = ROUTE_INDICATOR_NONE;
+		state.field_45E = ROUTE_INDICATOR_NONE;
 		state.field_45B = 0;
 		state.field_45C = 0;
 		state.game_startcol = startcol2;

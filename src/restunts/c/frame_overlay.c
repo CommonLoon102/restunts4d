@@ -203,26 +203,26 @@ struct RECTANGLE* draw_ingame_text(void)
 		return &rect_ingame_text;
 
 	switch (state.field_45D) {
-	case 1:
+	case ROUTE_INDICATOR_LEFT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
 			DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
 		rect_union(&rect_ingame_text, &rect_ingame_text2,
 			&rect_ingame_text);
 		break;
-	case 2:
+	case ROUTE_INDICATOR_RIGHT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
 			DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
 		rect_union(&rect_ingame_text, &rect_ingame_text2,
 			&rect_ingame_text);
 		break;
-	case 3:
+	case ROUTE_INDICATOR_WRONG_WAY:
 		draw_centered_ingame_resource("www", WRONG_WAY_TEXT_Y);
 		break;
 	}
 
 	resID_byte1 = 0;
 	switch (state.field_45E) {
-	case 1:
+	case ROUTE_INDICATOR_LEFT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
 			OPPONENT_LEFT_ICON_X, OPPONENT_ICON_Y);
 		rect_union(&rect_ingame_text, &rect_ingame_text3,
@@ -230,7 +230,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		copy_string(&resID_byte1,
 			locate_text_res(gameresptr, "opp"));
 		break;
-	case 2:
+	case ROUTE_INDICATOR_RIGHT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
 			OPPONENT_RIGHT_ICON_X, OPPONENT_ICON_Y);
 		rect_union(&rect_ingame_text, &rect_ingame_text4,

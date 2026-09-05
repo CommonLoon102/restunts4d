@@ -259,7 +259,7 @@ void opponent_op(void)
 	player_z = position_to_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lz);
 	state.opponentstate.field_CF = 0;
-	state.field_45E = 0;
+	state.field_45E = ROUTE_INDICATOR_NONE;
 	rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 		state.opponentstate.car_rotate.y,
 		state.opponentstate.car_rotate.x, 1);
@@ -319,7 +319,7 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk5.z);
 				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
 					state.playerstate.car_crashBmpFlag == 0) {
-					state.field_45E = 2;
+					state.field_45E = ROUTE_INDICATOR_RIGHT;
 				}
 			} else {
 				route_target.x = opponent_average(
@@ -334,7 +334,7 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk4.z);
 				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
 					state.playerstate.car_crashBmpFlag == 0) {
-					state.field_45E = 1;
+					state.field_45E = ROUTE_INDICATOR_LEFT;
 				}
 			}
 		}
