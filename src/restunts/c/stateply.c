@@ -31,6 +31,7 @@
 #define PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG 32U
 #define PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT 12
 #define PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT 24
+#define PLAYER_PHYSICS_PLANE_PENETRATION_BIAS 6
 #define PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE 64
 #define PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD 250
 #define PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD 23275
@@ -43,6 +44,7 @@
 #define PLAYER_PHYSICS_SURFACE_WATER 5
 #define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
 #define PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE 4U
+#define PLAYER_PHYSICS_ROTATION_DEADBAND 2
 
 enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_15142,
@@ -995,13 +997,15 @@ case PLAYER_FLOW_loc_15C04:
 	if (var_136 == 0)
 		{ physics_flow = PLAYER_FLOW_loc_15C75; continue; }
 	nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6);
+		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
+		PLAYER_PHYSICS_PLANE_PENETRATION_BIAS);
 
 case PLAYER_FLOW_loc_15C75:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
 	vec_1C6.y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP), 6U);
+		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
+		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	mat_mul_vector2(&vec_1C6, &planptr[planindex].plane_rotation, &vec_FC);
 
 	physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0, &vec_FC);
@@ -1209,11 +1213,12 @@ case PLAYER_FLOW_loc_1611C:
 	{ physics_flow = PLAYER_FLOW_loc_16141; continue; }
 
 case PLAYER_FLOW_loc_1613E:
-	if (pState_minusRotate_x_1 >= 2)
+	if (pState_minusRotate_x_1 >= PLAYER_PHYSICS_ROTATION_DEADBAND)
 		{ physics_flow = PLAYER_FLOW_loc_1614C; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16146; continue; }
 case PLAYER_FLOW_loc_16141:
-	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1) >= 2)
+	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_x_1) >=
+		PLAYER_PHYSICS_ROTATION_DEADBAND)
 		{ physics_flow = PLAYER_FLOW_loc_1614C; continue; }
 
 case PLAYER_FLOW_loc_16146:
@@ -1261,11 +1266,12 @@ case PLAYER_FLOW_loc_161DE:
 	{ physics_flow = PLAYER_FLOW_loc_161FF; continue; }
 
 case PLAYER_FLOW_loc_161FC:
-	if (pState_minusRotate_z_1 >= 2)
+	if (pState_minusRotate_z_1 >= PLAYER_PHYSICS_ROTATION_DEADBAND)
 		{ physics_flow = PLAYER_FLOW_loc_1620A; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16204; continue; }
 case PLAYER_FLOW_loc_161FF:
-	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >= 2)
+	if (LEGACY_S16_WRAP_NEGATE(pState_minusRotate_z_1) >=
+		PLAYER_PHYSICS_ROTATION_DEADBAND)
 		{ physics_flow = PLAYER_FLOW_loc_1620A; continue; }
 case PLAYER_FLOW_loc_16204:
 	pState_minusRotate_z_1 = 0;
