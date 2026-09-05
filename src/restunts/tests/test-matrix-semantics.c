@@ -14,8 +14,9 @@ static legacy_s16 reference_matrix_product(legacy_s16 left,
 	legacy_u32 bits;
 
 	product = (legacy_s32)left * (legacy_s32)right;
-	bits = (legacy_u32)product << 2;
-	return LEGACY_S16_FROM_BITS((legacy_u16)(bits >> 16));
+	bits = (legacy_u32)product << MATH_PRODUCT_SCALE_SHIFT;
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)(bits >> LEGACY_WORD_BITS));
 }
 
 static legacy_s16 reference_multiply_and_scale(legacy_s16 left,
@@ -26,9 +27,10 @@ static legacy_s16 reference_multiply_and_scale(legacy_s16 left,
 	legacy_u16 result;
 
 	product = (legacy_s32)left * (legacy_s32)right;
-	bits = (legacy_u32)product << 2;
-	result = (legacy_u16)(bits >> 16);
-	result = (legacy_u16)(result + ((bits & 0x8000UL) >> 15));
+	bits = (legacy_u32)product << MATH_PRODUCT_SCALE_SHIFT;
+	result = (legacy_u16)(bits >> LEGACY_WORD_BITS);
+	result = (legacy_u16)(result +
+		((bits & LEGACY_U16_SIGN_BIT) >> (LEGACY_WORD_BITS - 1U)));
 	return LEGACY_S16_FROM_BITS(result);
 }
 
@@ -36,7 +38,7 @@ static void clear_matrix(struct MATRIX* matrix)
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < 9U; index++)
+	for (index = 0U; index < MATRIX_ELEMENT_COUNT; index++)
 		matrix->vals[index] = 0;
 }
 

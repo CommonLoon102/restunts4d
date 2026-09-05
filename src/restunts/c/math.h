@@ -11,6 +11,8 @@
 #define ANGLE_QUARTER_MASK 255U
 #define ANGLE_MASK 1023U
 #define TRIG_FIXED_ONE 16384
+#define MATH_PRODUCT_SCALE_SHIFT 2U
+#define MATRIX_ELEMENT_COUNT 9U
 
 #pragma pack (push, 1)
 
@@ -35,7 +37,7 @@ struct POINT2D {
 
 struct MATRIX {
 	union {
-		legacy_s16 vals[9];
+		legacy_s16 vals[MATRIX_ELEMENT_COUNT];
 		struct {
 			legacy_s16 _11, _21, _31;
 			legacy_s16 _12, _22, _32;

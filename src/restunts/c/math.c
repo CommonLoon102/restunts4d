@@ -35,8 +35,8 @@ extern legacy_s32 sin80, cos80;
 #define PROJECTION_COORD_LIMIT 32000
 #define PROJECTION_INVALID_COORD_BITS LEGACY_U16_SIGN_BIT
 #define PROJECTION_DEPTH_COMPARE_SHIFT 15U
-#define MULTIPLY_ROUND_BIT 32768UL
-#define MULTIPLY_ROUND_SHIFT 15U
+#define MULTIPLY_ROUND_BIT ((legacy_u32)LEGACY_U16_SIGN_BIT)
+#define MULTIPLY_ROUND_SHIFT (LEGACY_WORD_BITS - 1U)
 #define NORMAL_INNER_PRODUCT_SCALE 8192L
 
 /*
@@ -218,8 +218,10 @@ static legacy_s16 matrix_scaled_product(legacy_s16 left, legacy_s16 right)
 	legacy_u32 scaled_bits;
 
 	product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
-	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, 2U);
-	return LEGACY_S16_FROM_BITS((legacy_u16)(scaled_bits >> 16));
+	scaled_bits = LEGACY_U32_SHL((legacy_u32)product,
+		MATH_PRODUCT_SCALE_SHIFT);
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)(scaled_bits >> LEGACY_WORD_BITS));
 }
 
 static legacy_s16 matrix_row_product(legacy_s16 row_x, legacy_s16 row_y,
@@ -263,7 +265,7 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 	legacy_s16* lmatvals = lmat->vals;
 	legacy_s16* outmatvals = outmat->vals;
 
-	counter = 9;
+	counter = MATRIX_ELEMENT_COUNT;
 	while (counter > 0) {
 		if (rmatvals[0] != 0 && lmatvals[0] != 0)
 			outmatvals[0] = matrix_scaled_product(
@@ -949,8 +951,9 @@ legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
 	legacy_u16 round_up;
 
 	product = LEGACY_S32_WRAP_MUL((legacy_s32)a1, (legacy_s32)a2);
-	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, 2U);
-	high_word = (legacy_u16)(scaled_bits >> 16);
+	scaled_bits = LEGACY_U32_SHL((legacy_u32)product,
+		MATH_PRODUCT_SCALE_SHIFT);
+	high_word = (legacy_u16)(scaled_bits >> LEGACY_WORD_BITS);
 	round_up = (legacy_u16)((scaled_bits & MULTIPLY_ROUND_BIT) >>
 		MULTIPLY_ROUND_SHIFT);
 	return LEGACY_S16_FROM_BITS(
