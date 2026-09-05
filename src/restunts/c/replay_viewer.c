@@ -109,9 +109,7 @@
 
 #define REPLAY_PLAYBACK_NORMAL 0
 #define REPLAY_PLAYBACK_FAST 3
-#define REPLAY_EXIT_CRASH_STATE 4
 #define REPLAY_EXIT_REQUESTED 2
-#define PLAYER_CAR_INDEX 0
 #define REPLAY_RECORDING_ACTIVE_FLAG 1U
 #define REPLAY_RECORDING_MODIFIED_FLAG 2U
 #define REPLAY_RECORDING_RESTARTABLE_FLAG 4U
@@ -323,7 +321,7 @@ static void replay_pause_menu(void)
 
 	switch (menu_result) {
 	case REPLAY_PAUSE_ACTION_FINISH:
-		update_crash_state(REPLAY_EXIT_CRASH_STATE, PLAYER_CAR_INDEX);
+		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_449DA = REPLAY_EXIT_REQUESTED;
 		break;
 
@@ -490,7 +488,7 @@ static void replay_pause_menu(void)
 		break;
 
 	case REPLAY_PAUSE_ACTION_EXIT:
-		update_crash_state(REPLAY_EXIT_CRASH_STATE, PLAYER_CAR_INDEX);
+		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_43966 = 0;
 		byte_449DA = REPLAY_EXIT_REQUESTED;
 		break;

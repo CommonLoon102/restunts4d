@@ -309,7 +309,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 						position_to_word(
 							state.playerstate.car_posWorld1.lx))));
 			if (si < 0)
-				update_crash_state(3, 0);
+				update_crash_state(CRASH_EVENT_FINISH, PLAYER_CAR_INDEX);
 		}
 	}
 }

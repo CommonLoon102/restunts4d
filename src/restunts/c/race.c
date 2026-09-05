@@ -168,7 +168,8 @@ void run_game(void) {
 				dos_timer_set_callbacks_suspended(0);
 				input_pop_status();
 				if (regsi != 0) {
-					update_crash_state(4, 0);
+					update_crash_state(
+						CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 					byte_449DA = 1;
 				}
 

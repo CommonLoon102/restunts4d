@@ -232,7 +232,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 	switch (key) {
 	case KEY_ESCAPE:
 		if (game_replay_mode == 0)
-			update_crash_state(4, 0);
+			update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_449DA = 1;
 		return 1;
 

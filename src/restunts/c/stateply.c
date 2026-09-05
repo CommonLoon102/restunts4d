@@ -36,9 +36,6 @@
 #define PLAYER_PHYSICS_INTRO_INPUT_MODE 2
 #define PLAYER_PHYSICS_SURFACE_WATER 5
 #define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
-#define PLAYER_PHYSICS_CRASH_COLLISION 1
-#define PLAYER_PHYSICS_CRASH_WATER 2
-#define PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP 5
 
 enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_15142,
@@ -520,7 +517,7 @@ case PLAYER_FLOW_loc_15142:
 	if (var_2 != PLAYER_PHYSICS_COLLISION_RETRY_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_151A2; continue; }
 	arg_pState->car_36MwhlAngle = ANGLE_HALF_TURN;
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15163:
 	if (arg_pState->car_surfaceWhl[0] != PLAYER_PHYSICS_SURFACE_WATER)
@@ -531,7 +528,7 @@ case PLAYER_FLOW_loc_15163:
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	if (arg_pState->car_surfaceWhl[3] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	update_crash_state(PLAYER_PHYSICS_CRASH_WATER, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_WATER, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15192:
 	var_DEptrTo1C0 = vecl_1C0;
@@ -699,7 +696,7 @@ case PLAYER_FLOW_loc_154F8:
 	var_138 = LEGACY_S16_SHL(si, 1U);
 case PLAYER_FLOW_loc_154FA:
 	arg_pState->car_36MwhlAngle = var_138;
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15513:
 	arg_pState->field_CF |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
@@ -824,7 +821,7 @@ case PLAYER_FLOW_loc_1570A:
 		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
 	if (vec_1C.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_158DA; continue; }
-	update_crash_state(PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, arg_MplayerFlag);
 	var_136 = 1;
 
 case PLAYER_FLOW_loc_15879:
@@ -959,7 +956,7 @@ case PLAYER_FLOW_loc_15CF7:
 	if (arg_pState->car_rc1[var_wheelIndex] <=
 		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15D1A; continue; }
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15D1A:
 	arg_pState->car_rc1[var_wheelIndex] = 0;
@@ -1230,7 +1227,7 @@ case PLAYER_FLOW_loc_162EE:
 		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
 case PLAYER_FLOW_loc_162F9:
-	update_crash_state(PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_16309:
 	arg_pState->car_whlWorldCrds2[var_wheelIndex] = vec_17C;
@@ -1313,9 +1310,10 @@ case PLAYER_FLOW_loc_1653E:
 	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
 case PLAYER_FLOW_loc_16550:
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION,
-		arg_MplayerFlag ^ 1);
+	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION,
+		arg_MplayerFlag == PLAYER_CAR_INDEX ?
+			OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
 	return;
 
 case PLAYER_FLOW_loc_16566:
@@ -1375,7 +1373,7 @@ case PLAYER_FLOW_loc_165F0:
 
 case PLAYER_FLOW_loc_16648:
 	// crash with start/finish pole
-	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
 	return ;
 
 case PLAYER_FLOW_loc_16650:

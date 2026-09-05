@@ -166,7 +166,7 @@ void replay_unk2(legacy_s16 mode)
 			(legacy_u16)state.game_frame >
 				LEGACY_U16_WRAP_MUL(framespersec,
 					REPLAY_SECURITY_GRACE_SECONDS))
-			update_crash_state(1, 0);
+			update_crash_state(CRASH_EVENT_COLLISION, PLAYER_CAR_INDEX);
 
 		if (byte_3B8F2 != 0 || dos_joystick_is_enabled() != 0) {
 			if (byte_3B8F2 != 0) {
@@ -231,7 +231,7 @@ void replay_unk2(legacy_s16 mode)
 		framespersec);
 	elapsed_total = LEGACY_U16_WRAP_ADD(elapsed_time2, elapsed_time1);
 	if (recording_limit <= elapsed_total) {
-		update_crash_state(4, 0);
+		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_449DA = 1;
 		return;
 	}

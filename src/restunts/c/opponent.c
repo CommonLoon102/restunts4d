@@ -463,7 +463,7 @@ void opponent_op(void)
 					position_to_word((legacy_s32)
 						state.opponentstate.car_posWorld1.lx))));
 		if (finish_distance < 0)
-			update_crash_state(3, 1);
+			update_crash_state(CRASH_EVENT_FINISH, OPPONENT_CAR_INDEX);
 	}
 }
 
