@@ -9,9 +9,19 @@ typedef void interrupt (far* interrupt_handler_type)(void);
 
 extern void add_exit_handler(void (far* exit_handler)(void));
 
+#define DOS_TIMER_CALLBACK_CAPACITY 6U
+#define DOS_TIMER_USABLE_CALLBACK_COUNT 5U
+#define DOS_TIMER_LAST_CALLBACK_INDEX 4U
+#define DOS_TIMER_INTERRUPT_VECTOR 8
+#define DOS_TIMER_VECTOR_OFFSET_ADDRESS 32
+#define DOS_TIMER_VECTOR_SEGMENT_ADDRESS 34
+#define DOS_TIMER_PIC_COMMAND_PORT 32U
+#define DOS_TIMER_PIC_END_OF_INTERRUPT 32U
+#define DOS_TIMER_CALLBACK_SUSPENDED_MASK LEGACY_U8_MAX
+
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
-void (far* dos_timer_callbacks[6])(void);
+void (far* dos_timer_callbacks[DOS_TIMER_CALLBACK_CAPACITY])(void);
 
 static legacy_u32 dos_timer_last_counter;
 static legacy_u16 dos_timer_slow_low;
@@ -45,11 +55,13 @@ legacy_s16 dos_timer_register_callback(void (far* callback)(void))
 {
 	legacy_u16 callback_index;
 
-	for (callback_index = 0; callback_index < 5U; callback_index++) {
+	for (callback_index = 0;
+		callback_index < DOS_TIMER_USABLE_CALLBACK_COUNT;
+		callback_index++) {
 		if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
 			break;
 	}
-	if (callback_index == 5U)
+	if (callback_index == DOS_TIMER_USABLE_CALLBACK_COUNT)
 		return 0;
 
 	disable();
@@ -64,20 +76,22 @@ void dos_timer_unregister_callback(void (far* callback)(void))
 {
 	legacy_u16 callback_index;
 
-	for (callback_index = 0; callback_index < 5U; callback_index++) {
+	for (callback_index = 0;
+		callback_index < DOS_TIMER_USABLE_CALLBACK_COUNT;
+		callback_index++) {
 		if (dos_timer_callbacks[callback_index] == callback)
 			break;
 	}
-	if (callback_index == 5U)
+	if (callback_index == DOS_TIMER_USABLE_CALLBACK_COUNT)
 		return;
 
 	disable();
-	while (callback_index < 4U) {
+	while (callback_index < DOS_TIMER_LAST_CALLBACK_INDEX) {
 		dos_timer_callbacks[callback_index] =
 			dos_timer_callbacks[callback_index + 1U];
 		callback_index++;
 	}
-	dos_timer_callbacks[4] = 0;
+	dos_timer_callbacks[DOS_TIMER_LAST_CALLBACK_INDEX] = 0;
 	enable();
 }
 
@@ -116,13 +130,15 @@ static void interrupt dos_timer_interrupt(void)
 			}
 			dos_timer_chain_previous_handler();
 		} else {
-			outp(0x20U, 0x20U);
+			outp(DOS_TIMER_PIC_COMMAND_PORT,
+				DOS_TIMER_PIC_END_OF_INTERRUPT);
 		}
 	} else {
-		outp(0x20U, 0x20U);
+		outp(DOS_TIMER_PIC_COMMAND_PORT, DOS_TIMER_PIC_END_OF_INTERRUPT);
 	}
 
-	if (((legacy_u16)dos_timer_callbacks_suspended & 0x00FFU) != 0)
+	if (((legacy_u16)dos_timer_callbacks_suspended &
+		DOS_TIMER_CALLBACK_SUSPENDED_MASK) != 0)
 		goto callbacks_finished;
 
 	dos_timer_increment_counter(&dos_timer_counter);
@@ -130,7 +146,8 @@ static void interrupt dos_timer_interrupt(void)
 	if (dos_timer_in_callbacks == 0) {
 		dos_timer_in_callbacks = 1U;
 		enable();
-		for (callback_index = 0; callback_index < 6U;
+		for (callback_index = 0;
+			callback_index < DOS_TIMER_CALLBACK_CAPACITY;
 			callback_index++) {
 			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
 				break;
@@ -163,9 +180,9 @@ static void dos_timer_write_vector(interrupt_handler_type handler)
 		xor     ax, ax
 		mov     es, ax
 		mov     ax, handler_offset
-		mov     es:[20h], ax
+		mov     es:[DOS_TIMER_VECTOR_OFFSET_ADDRESS], ax
 		mov     ax, handler_segment
-		mov     es:[22h], ax
+		mov     es:[DOS_TIMER_VECTOR_SEGMENT_ADDRESS], ax
 		pop     es
 		sti
 	}
