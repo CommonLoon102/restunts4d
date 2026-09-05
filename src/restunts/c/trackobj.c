@@ -32,6 +32,27 @@
 #define SHARP_CORNER_OUTER_RADIUS 632
 #define SPLIT_STRAIGHT_LANE_INNER_X 392
 #define SPLIT_STRAIGHT_LANE_OUTER_X 632
+#define HIGHWAY_PLANE_INDEX 1
+#define HIGHWAY_MERGE_END_Z 334
+#define HIGHWAY_OUTER_HALF_WIDTH 360
+#define HIGHWAY_FAR_LEFT_WALL_INDEX 188
+#define HIGHWAY_FAR_RIGHT_WALL_INDEX 186
+#define HIGHWAY_NEAR_LEFT_WALL_INDEX 189
+#define HIGHWAY_NEAR_RIGHT_WALL_INDEX 187
+#define RAMP_PLANE_INDEX 3
+#define RAMP_ENTRY_WALL_INDEX 102
+#define ELEVATED_DECK_CLEARANCE 390
+#define ELEVATED_PLANE_INDEX 2
+#define ELEVATED_ROAD_END_Z 476
+#define ELEVATED_FORWARD_WALL_INDEX 103
+#define ELEVATED_REAR_WALL_INDEX 104
+#define ELEVATED_SIDE_WALL_HEIGHT 42
+#define ELEVATED_LEFT_WALL_INDEX 100
+#define ELEVATED_RIGHT_WALL_INDEX 101
+#define ELEVATED_CORNER_OUTER_OFFSET 150
+#define ELEVATED_CORNER_INNER_OFFSET 108
+#define ELEVATED_CORNER_INNER_WALL_BASE 105
+#define ELEVATED_CORNER_OUTER_WALL_BASE 123
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -423,29 +444,31 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
-		if (position.z >= 0 && value <= 0x78) {
-			planindex = 1;
-			if (position.z >= 0x14E) {
-				if (next_position.x <= -0x78)
-					wallindex = 0xBC;
-				else if (next_position.x >= 0x78)
-					wallindex = 0xBA;
+		if (position.z >= 0 && value <= ROAD_HALF_WIDTH) {
+			planindex = HIGHWAY_PLANE_INDEX;
+			if (position.z >= HIGHWAY_MERGE_END_Z) {
+				if (next_position.x <= -ROAD_HALF_WIDTH)
+					wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
+				else if (next_position.x >= ROAD_HALF_WIDTH)
+					wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
 			} else {
-				wallindex = next_position.x < 0 ? 0xBD : 0xBB;
+				wallindex = next_position.x < 0 ?
+					HIGHWAY_NEAR_LEFT_WALL_INDEX :
+					HIGHWAY_NEAR_RIGHT_WALL_INDEX;
 			}
 		}
 		break;
 
 	case 11: /* Highway. */
-		if (absolute_x <= 0x168) {
-			if (absolute_x > 0x78) {
+		if (absolute_x <= HIGHWAY_OUTER_HALF_WIDTH) {
+			if (absolute_x > ROAD_HALF_WIDTH) {
 				current_surf_type = (legacy_u8)surface_type;
 			} else {
-				planindex = 1;
-				if (next_position.x <= -0x78)
-					wallindex = 0xBC;
-				else if (next_position.x >= 0x78)
-					wallindex = 0xBA;
+				planindex = HIGHWAY_PLANE_INDEX;
+				if (next_position.x <= -ROAD_HALF_WIDTH)
+					wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
+				else if (next_position.x >= ROAD_HALF_WIDTH)
+					wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
 			}
 		}
 		break;
@@ -454,26 +477,29 @@ void build_track_object(struct VECTOR* world_position,
 		if (position.z > 0)
 			byte_4392C = 0;
 		else if (next_position.z >= 0)
-			wallindex = 0x66;
+			wallindex = RAMP_ENTRY_WALL_INDEX;
 		/* fall through */
 
 	case 17: /* Solid ramp. */
-		if (physical_model == 17 && next_position.z >= 0x1DC)
-			wallindex = 0x67;
+		if (physical_model == 17 && next_position.z >= ELEVATED_ROAD_END_Z)
+			wallindex = ELEVATED_FORWARD_WALL_INDEX;
 
-		if (absolute_word(next_position.x) < 0x78) {
-			planindex = 3;
+		if (absolute_word(next_position.x) < ROAD_HALF_WIDTH) {
+			planindex = RAMP_PLANE_INDEX;
 			current_surf_type = (legacy_u8)surface_type;
-			if (wallindex < 0 && position.z >= 0 && absolute_x >= 0x78) {
-				wallHeight = 0x2A;
+			if (wallindex < 0 && position.z >= 0 &&
+				absolute_x >= ROAD_HALF_WIDTH) {
+				wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
 				elRdWallRelated = -12;
-				wallindex = position.x < 0 ? 0x64 : 0x65;
+				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
+					ELEVATED_RIGHT_WALL_INDEX;
 			}
-		} else if (byte_4392C != 0 && absolute_x <= 0x78) {
-			planindex = 3;
+		} else if (byte_4392C != 0 && absolute_x <= ROAD_HALF_WIDTH) {
+			planindex = RAMP_PLANE_INDEX;
 			if (wallindex < 0) {
 				wall_orientation_modifier = ANGLE_HALF_TURN;
-				wallindex = position.x < 0 ? 0x64 : 0x65;
+				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
+					ELEVATED_RIGHT_WALL_INDEX;
 			}
 		}
 		break;
@@ -484,56 +510,61 @@ void build_track_object(struct VECTOR* world_position,
 	case 22: /* Overpass. */
 		if (physical_model == 22) {
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) <= 0x186) {
-				if (absolute_z <= 0x78)
+				terrainHeight) <= ELEVATED_DECK_CLEARANCE) {
+				if (absolute_z <= ROAD_HALF_WIDTH)
 					current_surf_type = (legacy_u8)surface_type;
 				break;
 			}
 			byte_4392C = 0;
 		} else if (physical_model != 20) {
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) <= 0x186)
+				terrainHeight) <= ELEVATED_DECK_CLEARANCE)
 				break;
 			byte_4392C = 0;
 		}
-		if (absolute_word(next_position.x) <= 0x78) {
-			planindex = 2;
+		if (absolute_word(next_position.x) <= ROAD_HALF_WIDTH) {
+			planindex = ELEVATED_PLANE_INDEX;
 			current_surf_type = (legacy_u8)surface_type;
 			if (byte_4392C != 0) {
-				if (next_position.z >= 0x1DC)
-					wallindex = 0x67;
-				else if (next_position.z <= -0x1DC)
-					wallindex = 0x68;
+				if (next_position.z >= ELEVATED_ROAD_END_Z)
+					wallindex = ELEVATED_FORWARD_WALL_INDEX;
+				else if (next_position.z <= -ELEVATED_ROAD_END_Z)
+					wallindex = ELEVATED_REAR_WALL_INDEX;
 			}
-			if (absolute_x >= 0x78) {
-				wallHeight = 0x2A;
-				wallindex = position.x < 0 ? 0x64 : 0x65;
+			if (absolute_x >= ROAD_HALF_WIDTH) {
+				wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
+				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
+					ELEVATED_RIGHT_WALL_INDEX;
 			}
-		} else if (byte_4392C != 0 && absolute_x <= 0x78) {
-			planindex = 2;
-			wallHeight = 0x2A;
+		} else if (byte_4392C != 0 && absolute_x <= ROAD_HALF_WIDTH) {
+			planindex = ELEVATED_PLANE_INDEX;
+			wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
 			wall_orientation_modifier = ANGLE_HALF_TURN;
-			wallindex = next_position.x < 0 ? 0x64 : 0x65;
+			wallindex = next_position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
+				ELEVATED_RIGHT_WALL_INDEX;
 		}
 		break;
 
 	case 21: /* Elevated corner. */
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) <= 0x186)
+			terrainHeight) <= ELEVATED_DECK_CLEARANCE)
 			break;
 		radius = track_arc_radius(&position);
-		if (radius <= -0x96 || radius >= 0x96)
+		if (radius <= -ELEVATED_CORNER_OUTER_OFFSET ||
+			radius >= ELEVATED_CORNER_OUTER_OFFSET)
 			break;
 		current_surf_type = (legacy_u8)surface_type;
-		planindex = 2;
+		planindex = ELEVATED_PLANE_INDEX;
 		byte_4392C = 0;
-		if (radius >= -0x6C && radius <= 0x6C)
+		if (radius >= -ELEVATED_CORNER_INNER_OFFSET &&
+			radius <= ELEVATED_CORNER_INNER_OFFSET)
 			break;
 		value = track_arc_segment(&position);
-		wallHeight = 0x2A;
+		wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
 		elRdWallRelated = -12;
 		wallindex = LEGACY_S16_WRAP_ADD(value,
-			radius < 0 ? 0x69 : 0x7B);
+			radius < 0 ? ELEVATED_CORNER_INNER_WALL_BASE :
+				ELEVATED_CORNER_OUTER_WALL_BASE);
 		break;
 
 	case 24: /* Banked-road entrance A. */
