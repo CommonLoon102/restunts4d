@@ -28,6 +28,10 @@
 #define TRACK_CAMERA_VECTOR_FORWARD_OFFSET 1U
 #define TRACK_CAMERA_VECTOR_REVERSE_OFFSET 2U
 #define TRACK_ORIENTATION_COUNT 4U
+#define TRACK_ORIENTATION_INDEX_NORTH 0U
+#define TRACK_ORIENTATION_INDEX_EAST 1U
+#define TRACK_ORIENTATION_INDEX_SOUTH 2U
+#define TRACK_ORIENTATION_INDEX_WEST 3U
 #define TRACK_ORIENTATION_NORTH 0
 #define TRACK_ORIENTATION_EAST ANGLE_QUARTER_TURN
 #define TRACK_ORIENTATION_SOUTH ANGLE_HALF_TURN
@@ -40,6 +44,9 @@
 #define TRACK_EXIT_POINT_FIRST 1U
 #define TRACK_EXIT_POINT_LAST 12U
 #define TRACK_EXIT_POINT_TABLE_SIZE 13U
+#define TRACK_ENTRY_POINT_NONE 0U
+#define TRACK_SEAM_SCAN_COLUMNS 0
+#define TRACK_SEAM_SCAN_ROWS 1
 #define TRACK_JUMP_CONNECTION_CODE 1U
 #define TRACK_JUMP_MAX_EMPTY_TILES 2U
 #define TRACK_JUMP_BACKTRACK_LENGTH_LIMIT 1U
@@ -139,14 +146,14 @@ static legacy_u8 track_setup_entry_point(const legacy_u8* points,
 	legacy_s16 orientation)
 {
 	if (orientation == TRACK_ORIENTATION_NORTH)
-		return points[0];
+		return points[TRACK_ORIENTATION_INDEX_NORTH];
 	if (orientation == TRACK_ORIENTATION_EAST)
-		return points[1];
+		return points[TRACK_ORIENTATION_INDEX_EAST];
 	if (orientation == TRACK_ORIENTATION_SOUTH)
-		return points[2];
+		return points[TRACK_ORIENTATION_INDEX_SOUTH];
 	if (orientation == TRACK_ORIENTATION_WEST)
-		return points[3];
-	return 0;
+		return points[TRACK_ORIENTATION_INDEX_WEST];
+	return TRACK_ENTRY_POINT_NONE;
 }
 
 /* Leaving a piece through one of its exit points steps on to the neighbour
@@ -242,7 +249,7 @@ static legacy_s16 track_setup_error(
 static legacy_s16 track_setup_terrain_seams(
 	struct TRACK_SETUP_BRANCH far* branches,
 	const legacy_u8* incoming, const legacy_u8* outgoing,
-	legacy_s16 along_row)
+	legacy_s16 scan_direction)
 {
 	legacy_u8 previous_connection_code;
 	legacy_u8 tile_terrain;
@@ -254,8 +261,8 @@ static legacy_s16 track_setup_terrain_seams(
 	for (outer = 0; outer < TRACK_GRID_SIZE; outer++) {
 		previous_connection_code = TRACK_TERRAIN_NO_CONNECTION;
 		for (inner = 0; inner < TRACK_GRID_SIZE; inner++) {
-			row = along_row ? outer : inner;
-			column = along_row ? inner : outer;
+			row = scan_direction == TRACK_SEAM_SCAN_ROWS ? outer : inner;
+			column = scan_direction == TRACK_SEAM_SCAN_ROWS ? inner : outer;
 			tile_terrain = td15_terr_map_main[
 				terrainrows[row] + column];
 			if (incoming[tile_terrain] != previous_connection_code &&
@@ -267,7 +274,7 @@ static legacy_s16 track_setup_terrain_seams(
 		}
 	}
 
-	return 0;
+	return TRACK_SETUP_OK;
 }
 
 legacy_s16 track_setup(void)
@@ -337,12 +344,12 @@ legacy_s16 track_setup(void)
 		trackdata19[index] = TRACK_TILE_INDEX_UNASSIGNED;
 
 	seam_status = track_setup_terrain_seams(branches,
-		terrConnDataEtoW, terrConnDataWtoE, 1);
-	if (seam_status != 0)
+		terrConnDataEtoW, terrConnDataWtoE, TRACK_SEAM_SCAN_ROWS);
+	if (seam_status != TRACK_SETUP_OK)
 		return seam_status;
 	seam_status = track_setup_terrain_seams(branches,
-		terrConnDataNtoS, terrConnDataStoN, 0);
-	if (seam_status != 0)
+		terrConnDataNtoS, terrConnDataStoN, TRACK_SEAM_SCAN_COLUMNS);
+	if (seam_status != TRACK_SETUP_OK)
 		return seam_status;
 
 	for (row = 0; row < TRACK_GRID_SIZE; row++) {
@@ -435,7 +442,7 @@ legacy_s16 track_setup(void)
 			track_entry_points_owner, orientation);
 	}
 
-	if (jump_length == 0 && tile_entry_point == 0) {
+	if (jump_length == 0 && tile_entry_point == TRACK_ENTRY_POINT_NONE) {
 		return track_setup_error(branches,
 			TRACK_SETUP_INTERNAL_ERROR, column, row);
 	}
@@ -534,7 +541,7 @@ legacy_s16 track_setup(void)
 		}
 		runway_length = LEGACY_U8_WRAP_ADD(runway_length, 1U);
 		jump_length = LEGACY_U8_WRAP_ADD(jump_length, 1U);
-		if (orientation == 0) {
+		if (orientation == TRACK_ORIENTATION_NORTH) {
 			column = previous_column;
 			row = track_setup_add_s8(previous_row,
 				-(legacy_s16)jump_length - 1);
