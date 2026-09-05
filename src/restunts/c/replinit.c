@@ -1,23 +1,7 @@
 #include "restunts.h"
 #include "memmgr.h"
+#include "trackdata_layout.h"
 
-#define TRACK_GRID_SIZE 30
-#define TRACK_GRID_LAST_INDEX 29
-#define TRACK_TILE_POSITION_SHIFT 10U
-#define TRACK_TILE_HALF_SIZE 512
-#define TRACKDATA_ALLOCATION_SIZE 27635
-#define TRACK_LINK_TABLE_BYTES 1802
-#define TRACK_AERO_TABLE_BYTES 128
-#define TRACK_DIRECTION_TABLE_BYTES 96
-#define TRACK_CAMERA_VECTOR_BYTES 384
-#define TRACK_CHECK_VECTOR_BYTES 288
-#define TRACK_HIGHSCORE_BYTES 364
-#define TRACKDATA12_BYTES 240
-#define REPLAY_HEADER_BYTES 26
-#define TRACK_MAP_BYTES 901
-#define REPLAY_INPUT_BUFFER_BYTES 12000
-#define TRACK_FILE_APPEND_BYTES 1964
-#define TRACK_OBJECT_INDEX_BYTES 48
 #define REPLAY_SLOW_CALLBACK_DIVISOR 2U
 
 void init_video_geometry_flags(void)
@@ -60,51 +44,51 @@ void init_trackdata(void)
 
 	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 	td01_track_file_cpy = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_LINK_TABLE_BYTES;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	td02_penalty_related = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_LINK_TABLE_BYTES;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	trackdata3 = trkptr;
-	trkptr += TRACK_LINK_TABLE_BYTES;
+	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	td04_aerotable_pl = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_AERO_TABLE_BYTES;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	td05_aerotable_op = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_AERO_TABLE_BYTES;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata6 = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_AERO_TABLE_BYTES;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata7 = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_AERO_TABLE_BYTES;
+	trkptr += TRACKDATA_AERO_TABLE_SIZE;
 	td08_direction_related = (legacy_s16 far*)trkptr;
-	trkptr += TRACK_DIRECTION_TABLE_BYTES;
+	trkptr += TRACKDATA_DIRECTION_TABLE_SIZE;
 	trackdata9 = (struct VECTOR far*)trkptr;
-	trkptr += TRACK_CAMERA_VECTOR_BYTES;
+	trkptr += TRACKDATA_CAMERA_VECTOR_SIZE;
 	td10_track_check_rel = (struct VECTOR far*)trkptr;
-	trkptr += TRACK_CHECK_VECTOR_BYTES;
+	trkptr += TRACKDATA_CHECK_VECTOR_SIZE;
 	td11_highscores = trkptr;
-	trkptr += TRACK_HIGHSCORE_BYTES;
+	trkptr += TRACKDATA_HIGHSCORE_SIZE;
 	trackdata12 = trkptr;
-	trkptr += TRACKDATA12_BYTES;
+	trkptr += TRACKDATA_UNKNOWN_12_SIZE;
 	td13_rpl_header = trkptr;
-	trkptr += REPLAY_HEADER_BYTES;
+	trkptr += TRACKDATA_REPLAY_HEADER_SIZE;
 	td14_elem_map_main = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td15_terr_map_main = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td16_rpl_buffer = trkptr;
-	trkptr += REPLAY_INPUT_BUFFER_BYTES;
+	trkptr += TRACKDATA_REPLAY_INPUT_BUFFER_SIZE;
 	td17_trk_elem_ordered = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata18 = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata19 = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td20_trk_file_appnd = trkptr;
-	trkptr += TRACK_FILE_APPEND_BYTES;
+	trkptr += TRACKDATA_TRACK_FILE_APPEND_SIZE;
 	td21_col_from_path = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	td22_row_from_path = trkptr;
-	trkptr += TRACK_MAP_BYTES;
+	trkptr += TRACKDATA_MAP_SIZE;
 	trackdata23 = trkptr;
-	trkptr += TRACK_OBJECT_INDEX_BYTES;
+	trkptr += TRACKDATA_OBJECT_INDEX_SIZE;
 }
 
 void init_unknown(void)

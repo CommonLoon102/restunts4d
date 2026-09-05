@@ -4,6 +4,7 @@
 #include <platform.h>
 #include <shape2d.h>
 #include <shape3d.h>
+#include <trackdata_layout.h>
 
 #include "md5.h"
 
@@ -99,18 +100,22 @@ void init_row_tables(void)
 {
 	legacy_s16 index;
 
-	for (index = 0; index < 30; index++) {
-		trackrows[index] = 30 * (29 - index);
-		terrainrows[index] = 30 * index;
-		trackpos[index] = (29 - index) << 10;
-		trackcenterpos[index] = ((29 - index) << 10) + 0x200;
-		terrainpos[index] = index << 10;
-		terraincenterpos[index] = (index << 10) + 0x200;
+	for (index = 0; index < TRACK_GRID_SIZE; index++) {
+		trackrows[index] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - index);
+		terrainrows[index] = TRACK_GRID_SIZE * index;
+		trackpos[index] = (TRACK_GRID_LAST_INDEX - index) <<
+			TRACK_TILE_POSITION_SHIFT;
+		trackcenterpos[index] = ((TRACK_GRID_LAST_INDEX - index) <<
+			TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
+		terrainpos[index] = index << TRACK_TILE_POSITION_SHIFT;
+		terraincenterpos[index] = (index << TRACK_TILE_POSITION_SHIFT) +
+			TRACK_TILE_HALF_SIZE;
 	}
 
-	for (index = 0; index < 30; index++) {
-		trackpos2[index] = index << 10;
-		trackcenterpos2[index] = (index << 10) + 0x200;
+	for (index = 0; index < TRACK_GRID_SIZE; index++) {
+		trackpos2[index] = index << TRACK_TILE_POSITION_SHIFT;
+		trackcenterpos2[index] = (index << TRACK_TILE_POSITION_SHIFT) +
+			TRACK_TILE_HALF_SIZE;
 	}
 }
 
@@ -118,51 +123,51 @@ void init_trackdata(void)
 {
 	legacy_s8 far* track_pointer;
 
-	track_pointer = mmgr_alloc_resbytes("trakdata", 0x6BF3);
+	track_pointer = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 	td01_track_file_cpy = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x70A;
+	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
 	td02_penalty_related = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x70A;
+	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
 	trackdata3 = track_pointer;
-	track_pointer += 0x70A;
+	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
 	td04_aerotable_pl = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x80;
+	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	td05_aerotable_op = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x80;
+	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata6 = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x80;
+	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	trackdata7 = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x80;
+	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	td08_direction_related = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x60;
+	track_pointer += TRACKDATA_DIRECTION_TABLE_SIZE;
 	trackdata9 = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x180;
+	track_pointer += TRACKDATA_CAMERA_VECTOR_SIZE;
 	td10_track_check_rel = (legacy_s16 far*)track_pointer;
-	track_pointer += 0x120;
+	track_pointer += TRACKDATA_CHECK_VECTOR_SIZE;
 	td11_highscores = track_pointer;
-	track_pointer += 0x16C;
+	track_pointer += TRACKDATA_HIGHSCORE_SIZE;
 	trackdata12 = track_pointer;
-	track_pointer += 0x0F0;
+	track_pointer += TRACKDATA_UNKNOWN_12_SIZE;
 	td13_rpl_header = track_pointer;
-	track_pointer += 0x1A;
+	track_pointer += TRACKDATA_REPLAY_HEADER_SIZE;
 	td14_elem_map_main = (legacy_u8 far*)track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	td15_terr_map_main = (legacy_u8 far*)track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	td16_rpl_buffer = track_pointer;
-	track_pointer += 0x2EE0;
+	track_pointer += TRACKDATA_REPLAY_INPUT_BUFFER_SIZE;
 	td17_trk_elem_ordered = track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	trackdata18 = track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	trackdata19 = (legacy_u8 far*)track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	td20_trk_file_appnd = track_pointer;
-	track_pointer += 0x7AC;
+	track_pointer += TRACKDATA_TRACK_FILE_APPEND_SIZE;
 	td21_col_from_path = track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	td22_row_from_path = track_pointer;
-	track_pointer += 0x385;
+	track_pointer += TRACKDATA_MAP_SIZE;
 	trackdata23 = (legacy_u8 far*)track_pointer;
 }
 #endif
@@ -426,11 +431,13 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	}
 
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-	for (index = 0; index < 0x70A; index++)
+	for (index = 0; index < TRACKDATA_LINK_TABLE_SIZE; index++)
 		td20_trk_file_appnd[index] = td14_elem_map_main[index];
-	for (index = 0; index < 0x51; index++) {
-		td20_trk_file_appnd[index + 0x70A] = byte_3B80C[index];
-		td20_trk_file_appnd[index + 0x75B] = byte_3B85E[index];
+	for (index = 0; index < TRACKDATA_CHECKPOINT_DATA_SIZE; index++) {
+		td20_trk_file_appnd[index + TRACKDATA_LINK_TABLE_SIZE] =
+			byte_3B80C[index];
+		td20_trk_file_appnd[index + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
+			byte_3B85E[index];
 	}
 	if (track_setup() != 0)
 		return 1;

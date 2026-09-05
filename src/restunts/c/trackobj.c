@@ -1,11 +1,10 @@
 #include "restunts.h"
 #include "legacy.h"
 #include "math.h"
+#include "trackdata_layout.h"
 
 #define SURFACE_GRASS 4
 #define SURFACE_WATER 5
-#define TRACK_GRID_LAST_INDEX 29
-#define TRACK_TILE_COORDINATE_SHIFT 10U
 #define TRACK_ARC_CENTER_OFFSET 1024
 #define TRACK_ARC_CENTER_RADIUS 1536
 #define TRACK_ARC_SEGMENT_COUNT 18U
@@ -490,9 +489,9 @@ void build_track_object(struct VECTOR* world_position,
 	terrain_tile = TERRAIN_TILE_NONE;
 
 	track_column = LEGACY_S16_SAR(world_position->x,
-		TRACK_TILE_COORDINATE_SHIFT);
+		TRACK_TILE_POSITION_SHIFT);
 	track_row = LEGACY_S16_SAR(world_position->z,
-		TRACK_TILE_COORDINATE_SHIFT);
+		TRACK_TILE_POSITION_SHIFT);
 	physical_model = PHYSICAL_MODEL_NONE;
 	if (track_column >= 0 && track_column <= TRACK_GRID_LAST_INDEX &&
 		track_row >= 0 && track_row <= TRACK_GRID_LAST_INDEX) {
