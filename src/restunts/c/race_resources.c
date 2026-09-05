@@ -177,7 +177,8 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	if (idle_expired == 0) {
 		sdgameresptr = file_load_resource(FILE_RESOURCE_SHAPE2D_COLLECTION,
 			"sdgame");
-		loop_game(0, 0, 0);
+		loop_game(REPLAY_LOOP_LOAD_RESOURCES,
+			REPLAY_LOOP_UNUSED_ARGUMENT, REPLAY_LOOP_UNUSED_ARGUMENT);
 	}
 
 	load_track_collision_resources();

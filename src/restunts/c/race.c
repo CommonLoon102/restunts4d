@@ -256,7 +256,8 @@ void run_game(void) {
 				if (replaybar_enabled != 0) {
 					sprite_set_1_size(0, RACE_SCREEN_WIDTH, 0,
 						RACE_SCREEN_HEIGHT);
-					loop_game(1, state.game_frame, state.game_frame);
+					loop_game(REPLAY_LOOP_DRAW_CONTROLS,
+						state.game_frame, state.game_frame);
 				}
 			} else {
 				if (replaybar_enabled == 0) {
@@ -314,8 +315,12 @@ void run_game(void) {
 						byte_449DA = 0;
 						game_replay_mode = REPLAY_MODE_PLAYBACK;
 						mouse_minmax_position(0);
-						loop_game(0, 0, 0);
-						loop_game(2, 4, 0);
+						loop_game(REPLAY_LOOP_LOAD_RESOURCES,
+							REPLAY_LOOP_UNUSED_ARGUMENT,
+							REPLAY_LOOP_UNUSED_ARGUMENT);
+						loop_game(REPLAY_LOOP_SELECT_CONTROL,
+							REPLAY_CONTROL_PAUSE,
+							REPLAY_LOOP_UNUSED_ARGUMENT);
 						is_in_replay = 1;
 						audio_carstate();
 					} else {
@@ -324,7 +329,9 @@ void run_game(void) {
 				}
 
 				if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
-					loop_game(3, 0, 0);
+					loop_game(REPLAY_LOOP_HANDLE_INPUT,
+						REPLAY_LOOP_UNUSED_ARGUMENT,
+						REPLAY_LOOP_UNUSED_ARGUMENT);
 					continue;
 				}
 
