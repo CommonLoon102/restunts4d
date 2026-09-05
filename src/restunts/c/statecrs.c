@@ -1,6 +1,7 @@
 #include "externs.h"
 #include "legacy.h"
 #include "math.h"
+#include "replay.h"
 
 #define CAR_CRASH_PARTICLE_KIND_COUNT 2
 #define CAR_CRASH_PARTICLE_LIMIT 18
@@ -271,7 +272,7 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		arg_MplayerFlag == PLAYER_CAR_INDEX)
 		state.game_3F6autoLoadEvalFlag = arg_someFlag;
 #ifndef RESTUNTS_HEADLESS
-	if ((byte_43966 & 4) == 0) {
+	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 		// These copied values are used by the evaluation screen.
 		gState_travDist = state.game_travDist;
 		gState_frame = state.game_frame;

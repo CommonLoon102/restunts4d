@@ -7,6 +7,7 @@
 #include "platform.h"
 #include "race.h"
 #include "race_resources.h"
+#include "replay.h"
 #include "replay_record.h"
 #include "replay_viewer.h"
 #include "shape2d.h"
@@ -107,7 +108,7 @@ void run_game(void) {
 				state.playerstate.car_posWorld1.ly = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_posWorld1.ly,
 					RACE_START_CAMERA_HEIGHT_OFFSET);
-				byte_43966 = 1;
+				byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG;
 			} else {
 				cameramode = CAMERA_MODE_COCKPIT;
 				game_replay_mode = 2;

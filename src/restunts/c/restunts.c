@@ -16,6 +16,7 @@
 #include "race.h"
 #include "race_resources.h"
 #include "race_resources_internal.h"
+#include "replay.h"
 #include "replay_record.h"
 #include "replay_viewer.h"
 #include "replay_viewer_internal.h"
@@ -671,7 +672,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 					result = end_hiscore();
 					if (result == 0) {
 						// view replay
-						byte_43966 = 4;
+						byte_43966 = REPLAY_RECORDING_RESTARTABLE_FLAG;
 						continue;
 					} else if (result == 1) {
 						// drive

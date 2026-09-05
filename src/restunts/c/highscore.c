@@ -3,6 +3,7 @@
 #include "memmgr.h"
 #include "menu_internal.h"
 #include "platform.h"
+#include "replay.h"
 #include "resource.h"
 #include "shape2d.h"
 
@@ -44,9 +45,6 @@
 #define END_SCREEN_ANIMATION_BORDER_GROWTH 5
 #define END_SCREEN_ANIMATION_FRAME_TICKS 30
 
-#define END_SCREEN_CONDITION_NOTICE_FLAG 2U
-#define END_SCREEN_KEEP_RANDOM_TEXT_FLAG 4U
-#define END_SCREEN_HIGHSCORE_INELIGIBLE_FLAGS 6U
 #define END_SCREEN_SPEED_FRACTION_BITS 8U
 #define END_SCREEN_NUMBER_WIDTH 3
 
@@ -618,7 +616,7 @@ legacy_u16 end_hiscore(void)
 				gState_penalty), 1);
 		strcat(&resID_byte1, number);
 		if (((legacy_u8)byte_43966 &
-			END_SCREEN_CONDITION_NOTICE_FLAG) != 0)
+			REPLAY_RECORDING_MODIFIED_FLAG) != 0)
 			end_hiscore_append_text(misc_resource, aCon);
 		end_hiscore_draw_current_text(&text_y);
 		if (gState_penalty != 0) {
@@ -712,7 +710,7 @@ legacy_u16 end_hiscore(void)
 	text_prefix = 0;
 	if (opponent_active != 0) {
 		if (((legacy_u8)byte_43966 &
-			END_SCREEN_KEEP_RANDOM_TEXT_FLAG) == 0) {
+			REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 			word_40D3A = word_40D40;
 			word_40D3C = end_hiscore_random;
 			word_40D3E = word_40D44;
@@ -808,7 +806,7 @@ legacy_u16 end_hiscore(void)
 		finish_time = gState_total_finish_time;
 		scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 		if (((legacy_u8)byte_43966 &
-			END_SCREEN_HIGHSCORE_INELIGIBLE_FLAGS) == 0 &&
+			REPLAY_RECORDING_HIGHSCORE_INELIGIBLE_FLAGS) == 0 &&
 			scores[HIGHSCORE_LAST_ENTRY_INDEX].time >
 				(legacy_u16)finish_time) {
 			score_status = 1;
