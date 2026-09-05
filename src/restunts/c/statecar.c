@@ -204,8 +204,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 			var_deltaSpeed, arg_simd->braking_eff);
 	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) ==
 		INPUT_ACCELERATE_FLAG) {
-		arg_carState->car_is_braking = 0;
-		arg_carState->car_is_accelerating = 1;
+		arg_carState->car_is_braking = CAR_PEDAL_RELEASED;
+		arg_carState->car_is_accelerating = CAR_PEDAL_PRESSED;
 		if (arg_carState->car_changing_gear != CAR_GEAR_CHANGE_INACTIVE) {
 			arg_carState->car_engineLimiterTimer = 0;
 			if (framespersec == GAME_FRAME_RATE_LOW) {
@@ -258,9 +258,9 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 					ENGINE_LIMITER_SHORT_TICKS;
 		}
 	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) == INPUT_BRAKE_FLAG) {
-		arg_carState->car_is_accelerating = 0;
+		arg_carState->car_is_accelerating = CAR_PEDAL_RELEASED;
 		arg_carState->car_engineLimiterTimer = 0;
-		arg_carState->car_is_braking = 1;
+		arg_carState->car_is_braking = CAR_PEDAL_PRESSED;
 		if (car_index == PLAYER_CAR_INDEX) {
 			var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 				var_deltaSpeed, arg_simd->braking_eff);
@@ -270,8 +270,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 					arg_simd->braking_eff, OPPONENT_BRAKING_MULTIPLIER));
 		}
 	} else {
-		arg_carState->car_is_accelerating = 0;
-		arg_carState->car_is_braking = 0;
+		arg_carState->car_is_accelerating = CAR_PEDAL_RELEASED;
+		arg_carState->car_is_braking = CAR_PEDAL_RELEASED;
 	}
 	if (framespersec == GAME_FRAME_RATE_LOW) {
 		var_deltaSpeed = LEGACY_S16_WRAP_ADD(
