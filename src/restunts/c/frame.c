@@ -6,7 +6,9 @@
 #define FRAME_CAR_WHEEL_COUNT 4
 #define FRAME_LOOKAHEAD_TILE_COUNT 23
 #define FRAME_LOOKAHEAD_LAST_TILE_INDEX 22
-#define FRAME_TILE_SKIP_MARKER 2
+#define FRAME_TILE_DRAW_MARKER 0
+#define FRAME_TILE_MULTITILE_COVERED_MARKER 1
+#define FRAME_TILE_UNAVAILABLE_MARKER 2
 #define FRAME_CAR_UP_VECTOR_LENGTH 30000
 #define FRAME_CAR_NEAR_SORT_ADJUSTMENT 2048
 #define FRAME_DEFAULT_TRANSFORM_DISTANCE 1024
@@ -37,6 +39,19 @@
 #define FRAME_DISTANT_SHAPE_HEIGHT 2790
 #define FRAME_DISTANT_SHAPE_DISTANCE 15000
 #define FRAME_DISTANT_SHAPE_MIN_DEPTH 200
+#define FRAME_HILL_ROAD_TERRAIN_FIRST 7U
+#define FRAME_HILL_ROAD_TERRAIN_END 11U
+#define FRAME_TRACK_CONTINUATION_NORTHWEST 253U
+#define FRAME_TRACK_CONTINUATION_NORTH 254U
+#define FRAME_TRACK_CONTINUATION_WEST 255U
+#define FRAME_SCENERY_PHYSICAL_MODEL_FIRST 64
+#define FRAME_MULTITILE_ROW 1
+#define FRAME_MULTITILE_COLUMN 2
+#define FRAME_MULTITILE_BOTH 3
+#define FRAME_ELEVATED_TERRAIN 6
+#define FRAME_ELEVATED_CORNER_FIRST 105U
+#define FRAME_ELEVATED_CORNER_LAST 108U
+#define FRAME_ELEVATED_CORNER_COUNT 4
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -177,7 +192,8 @@ static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
 		for (tile_index = FRAME_LOOKAHEAD_LAST_TILE_INDEX;
 			tile_index > best_tile_index;
 			tile_index--) {
-			if (should_skip_tile[tile_index] != FRAME_TILE_SKIP_MARKER &&
+			if (should_skip_tile[tile_index] !=
+				FRAME_TILE_UNAVAILABLE_MARKER &&
 				lookahead_tiles[tile_index].east + camera_tile_east ==
 					tile_east &&
 				lookahead_tiles[tile_index].south + camera_tile_south ==
@@ -729,7 +745,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	}
 
 	for (si = 0; si < FRAME_LOOKAHEAD_TILE_COUNT; si++) {
-		should_skip_tile[si] = 0;
+		should_skip_tile[si] = FRAME_TILE_DRAW_MARKER;
 	}
 
 	// Select the detail level (FULL if 1st or 2nd option in the graphics menu
@@ -741,7 +757,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		// Skip if a previous iteration determined this tile is not needed
 		// (happens for multi-tile elements)
-		if (should_skip_tile[si] != 0)
+		if (should_skip_tile[si] != FRAME_TILE_DRAW_MARKER)
 			continue;
 
 		// Skip if detail threshold not met (e.g. far tiles in FASTEST detail)
@@ -761,23 +777,27 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 				if (elem_map_value != 0) {
 
-					if (terr_map_value >= 7 && terr_map_value < 0xB) {
+					if (terr_map_value >= FRAME_HILL_ROAD_TERRAIN_FIRST &&
+						terr_map_value < FRAME_HILL_ROAD_TERRAIN_END) {
 						elem_map_value = subst_hillroad_track(terr_map_value, elem_map_value);
 						terr_map_value = 0;
 					}
 
 					// Found a filler tile (non-main tile of a multitile component)
 					// Process the main tile of the component instead (the NW one)
-					if (elem_map_value == 0xFD) {
+					if (elem_map_value ==
+						FRAME_TRACK_CONTINUATION_NORTHWEST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
-					} else if (elem_map_value == 0xFE) {
+					} else if (elem_map_value ==
+						FRAME_TRACK_CONTINUATION_NORTH) {
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
-					} else if (elem_map_value == 0xFF) {
+					} else if (elem_map_value ==
+						FRAME_TRACK_CONTINUATION_WEST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
@@ -788,7 +808,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				tile_detail_level[si] = lookahead_tiles[si].detail;
 
 				if (elem_map_value != 0 && detail_level != 0 &&
-					trkObjectList[elem_map_value].ss_physicalModel >= 0x40 &&
+					trkObjectList[elem_map_value].ss_physicalModel >=
+						FRAME_SCENERY_PHYSICAL_MODEL_FIRST &&
 					(tile_east != car_tile_east || tile_south != car_tile_south))
 				{
 					elem_map_value = 0;
@@ -810,24 +831,27 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							tile_east, cam_tile_east);
 						tile_to_draw_south_offset = LEGACY_S8_WRAP_SUB(
 							tile_south, cam_tile_south);
-						if (idx == 1) {
+						if (idx == FRAME_MULTITILE_ROW) {
 							for (di = 0; di < si; di++) {
 								if (lookahead_tiles[di].east == tile_to_draw_east_offset && (lookahead_tiles[di].south == tile_to_draw_south_offset || lookahead_tiles[di].south == tile_to_draw_south_offset + 1)) {
-									should_skip_tile[di] = 1;
+									should_skip_tile[di] =
+										FRAME_TILE_MULTITILE_COVERED_MARKER;
 								}
 							}
-						} else if (idx == 2) {
+						} else if (idx == FRAME_MULTITILE_COLUMN) {
 							for (di = 0; di < si; di++) {
 								if (lookahead_tiles[di].south == tile_to_draw_south_offset && (lookahead_tiles[di].east == tile_to_draw_east_offset || lookahead_tiles[di].east == tile_to_draw_east_offset + 1)) {
-									should_skip_tile[di] = 1;
+									should_skip_tile[di] =
+										FRAME_TILE_MULTITILE_COVERED_MARKER;
 								}
 							}
-						} else if (idx == 3) {
+						} else if (idx == FRAME_MULTITILE_BOTH) {
 							for (di = 0; di < si; di++) {
 								if ((lookahead_tiles[di].east == tile_to_draw_east_offset || lookahead_tiles[di].east == tile_to_draw_east_offset + 1) &&
 									(lookahead_tiles[di].south == tile_to_draw_south_offset || lookahead_tiles[di].south == tile_to_draw_south_offset + 1))
 								{
-									should_skip_tile[di] = 1;
+									should_skip_tile[di] =
+										FRAME_TILE_MULTITILE_COVERED_MARKER;
 								}
 							}
 						}
@@ -835,10 +859,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 
 			} else {
-				should_skip_tile[si] = 2;
+				should_skip_tile[si] = FRAME_TILE_UNAVAILABLE_MARKER;
 			}
 		} else {
-			should_skip_tile[si] = 2;
+			should_skip_tile[si] = FRAME_TILE_UNAVAILABLE_MARKER;
 		}
 	}
 
@@ -882,7 +906,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// proceed to draw the shapes in each tile. Start from the farthest
 	// (painter's algorithm)
 	for (si = 0; si < FRAME_LOOKAHEAD_TILE_COUNT; si++) {
-		if (should_skip_tile[si] != 0) {
+		if (should_skip_tile[si] != FRAME_TILE_DRAW_MARKER) {
 			continue;
 		}
 		tile_east = tiles_to_draw_east[si];
@@ -899,13 +923,16 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			if (var_trkobject_ptr->ss_multiTileFlag == 0) {
 				var_counter = 1;
 				var_10E = unk_3C0EE;
-			} else if (var_trkobject_ptr->ss_multiTileFlag == 1) {
+			} else if (var_trkobject_ptr->ss_multiTileFlag ==
+				FRAME_MULTITILE_ROW) {
 				var_counter = 2;
 				var_10E = unk_3C0F0;
-			} else if (var_trkobject_ptr->ss_multiTileFlag == 2) {
+			} else if (var_trkobject_ptr->ss_multiTileFlag ==
+				FRAME_MULTITILE_COLUMN) {
 				var_counter = 3;
 				var_10E = unk_3C0F4;
-			} else if (var_trkobject_ptr->ss_multiTileFlag == 3) {
+			} else if (var_trkobject_ptr->ss_multiTileFlag ==
+				FRAME_MULTITILE_BOTH) {
 				var_counter = 4;
 				var_10E = unk_3C0F8;
 			}
@@ -952,13 +979,14 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			}
 		}
 
-		// terrain type 0x06: a flat piece of land at an elevated level
-		if (terr_map_value != 6) {
+		// Elevated terrain is a flat piece of land at an elevated level.
+		if (terr_map_value != FRAME_ELEVATED_TERRAIN) {
 			var_hillheight = 0;
 
 			// Special treatment of elevated corners
-			if (elem_map_value >= 0x69 && elem_map_value <= 0x6C) {
-				for (idx = 0; idx < 4; idx++) {
+			if (elem_map_value >= FRAME_ELEVATED_CORNER_FIRST &&
+				elem_map_value <= FRAME_ELEVATED_CORNER_LAST) {
+				for (idx = 0; idx < FRAME_ELEVATED_CORNER_COUNT; idx++) {
 					if (idx == 0) {
 						tile_to_draw_east_offset = tile_east;
 						tile_to_draw_south_offset = tile_south;
