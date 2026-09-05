@@ -3,6 +3,16 @@
 
 #include "legacy.h"
 
+#define FILE_RESOURCE_BINARY_FATAL 0
+#define FILE_RESOURCE_BINARY_OPTIONAL 1
+#define FILE_RESOURCE_SHAPE2D 2
+#define FILE_RESOURCE_SHAPE2D_COLLECTION 3
+#define FILE_RESOURCE_SONG 4
+#define FILE_RESOURCE_VOICE 5
+#define FILE_RESOURCE_SOUND_EFFECTS 6
+#define FILE_RESOURCE_COMPRESSED_OPTIONAL 7
+#define FILE_RESOURCE_SHAPE2D_ALTERNATE 8
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -39,7 +49,8 @@ void far* file_load_binary_nofatal(const legacy_s8* filename);
 void far* file_load_binary_fatal(const legacy_s8* filename);
 
 void far* file_load_resfile(const legacy_s8* filename);
-void far* file_load_resource(legacy_s16 type, const legacy_s8* filename);
+void far* file_load_resource(legacy_s16 resource_type,
+	const legacy_s8* filename);
 void unload_resource(void far* resptr);
 void file_load_audiores(const legacy_s8* songfile, const legacy_s8* voicefile, const legacy_s8* name);
 void far* file_load_3dres(const legacy_s8* filename);

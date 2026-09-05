@@ -48,7 +48,7 @@ legacy_s16 run_intro_looped(void)
 	legacy_s16 result;
 
 	file_load_audiores("skidtitl", "skidms", "TITL");
-	ui_temp_resource = file_load_resource(2, "sdtitl");
+	ui_temp_resource = file_load_resource(FILE_RESOURCE_SHAPE2D, "sdtitl");
 	render_window_sprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 	result = run_intro();
 	sprite_free_wnd(render_window_sprite);
@@ -57,7 +57,8 @@ legacy_s16 run_intro_looped(void)
 	if (result == 0) {
 		result = setup_intro();
 		if (result == 0) {
-			ui_temp_resource = file_load_resource(2, "sdcred");
+			ui_temp_resource = file_load_resource(
+				FILE_RESOURCE_SHAPE2D, "sdcred");
 			render_window_sprite = sprite_make_wnd(0x140, 0xC8, 0x0F);
 			sprite_copy_wnd_to_1_clear();
 			sprite_blit_to_video(render_window_sprite, 0);

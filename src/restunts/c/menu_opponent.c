@@ -29,7 +29,8 @@ void run_opponent_menu(void)
 
 	ensure_file_exists(4);
 	miscptr = file_load_resfile(aMisc);
-	opp_res = (legacy_s8 far*)file_load_resource(8, aSdosel);
+	opp_res = (legacy_s8 far*)file_load_resource(
+		FILE_RESOURCE_SHAPE2D_ALTERNATE, aSdosel);
 	locate_many_resources(opp_res, aOpp0opp1opp2op, oppresources);
 	selected = 0;
 	resource_loaded = 0;

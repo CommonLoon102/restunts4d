@@ -808,33 +808,33 @@ void far* file_load_binary_fatal(const legacy_s8* filename) {
 
 #ifndef RESTUNTS_HEADLESS
 // One attempt at loading a resource of the given type; 0 means it failed.
-static void far* file_try_load_resource(legacy_s16 type,
+static void far* file_try_load_resource(legacy_s16 resource_type,
 	const legacy_s8* filename)
 {
-	switch (type) {
-		case 0:
-		case 1:
+	switch (resource_type) {
+		case FILE_RESOURCE_BINARY_FATAL:
+		case FILE_RESOURCE_BINARY_OPTIONAL:
 			return file_load_binary_nofatal(filename);
 
-		case 2:
+		case FILE_RESOURCE_SHAPE2D:
 			return file_load_shape2d_nofatal(filename);
 
-		case 3:
+		case FILE_RESOURCE_SHAPE2D_COLLECTION:
 			return file_load_shape2d_res_nofatal(filename);
 
-		case 4:
+		case FILE_RESOURCE_SONG:
 			return load_song_file(filename);
 
-		case 5:
+		case FILE_RESOURCE_VOICE:
 			return load_voice_file(filename);
 
-		case 6:
+		case FILE_RESOURCE_SOUND_EFFECTS:
 			return load_sfx_file(filename);
 
-		case 7:
+		case FILE_RESOURCE_COMPRESSED_OPTIONAL:
 			return file_decomp_nofatal(filename);
 
-		case 8:
+		case FILE_RESOURCE_SHAPE2D_ALTERNATE:
 			return file_load_shape2d_nofatal2(filename);
 	}
 
@@ -842,25 +842,30 @@ static void far* file_try_load_resource(legacy_s16 type,
 }
 #endif
 
-void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
+void far* file_load_resource(legacy_s16 resource_type,
+	const legacy_s8* filename) {
 	void far* result;
 #ifdef RESTUNTS_HEADLESS
-	if (type == 0 || type == 1)
+	if (resource_type == FILE_RESOURCE_BINARY_FATAL ||
+		resource_type == FILE_RESOURCE_BINARY_OPTIONAL)
 		result = file_load_binary_nofatal(filename);
-	else if (type == 7)
+	else if (resource_type == FILE_RESOURCE_COMPRESSED_OPTIONAL)
 		result = file_decomp_nofatal(filename);
 	else
 		result = 0;
-	if (result == 0 && type == 0)
+	if (result == 0 && resource_type == FILE_RESOURCE_BINARY_FATAL)
 		fatal_error(headless_file_error, filename);
 	return result;
 #else
 	legacy_s16 dearesult;
 	while (1) {
-		result = file_try_load_resource(type, filename);
-		// Types 1 and 7 report the failure to the caller; every other type
-		// shows a dialog and retries until the dialog gives up.
-		if (result != 0 || type == 1 || type == 7) return result;
+		result = file_try_load_resource(resource_type, filename);
+		// Optional resource types report failure to the caller; every other
+		// type shows a dialog and retries until the dialog gives up.
+		if (result != 0 ||
+			resource_type == FILE_RESOURCE_BINARY_OPTIONAL ||
+			resource_type == FILE_RESOURCE_COMPRESSED_OPTIONAL)
+			return result;
 
 		dearesult = do_dea_textres();
 		if (dearesult == 2) return 0;
@@ -868,12 +873,12 @@ void far* file_load_resource(legacy_s16 type, const legacy_s8* filename) {
 #endif
 }
 
-static void far* file_load_suffixed_resource(legacy_s16 type,
+static void far* file_load_suffixed_resource(legacy_s16 resource_type,
 	const legacy_s8* filename, const legacy_s8* suffix, legacy_s8* name)
 {
 	strcpy(name, filename);
 	strcat(name, suffix);
-	return file_load_resource(type, name);
+	return file_load_resource(resource_type, name);
 }
 
 
@@ -882,19 +887,23 @@ void far* file_load_resfile(const legacy_s8* filename) {
 	void far* result;
 
 #ifdef RESTUNTS_HEADLESS
-	result = file_load_suffixed_resource(1, filename, ".res", name);
+	result = file_load_suffixed_resource(FILE_RESOURCE_BINARY_OPTIONAL,
+		filename, ".res", name);
 	if (result != 0)
 		return result;
-	result = file_load_suffixed_resource(7, filename, ".pre", name);
+	result = file_load_suffixed_resource(FILE_RESOURCE_COMPRESSED_OPTIONAL,
+		filename, ".pre", name);
 	if (result == 0)
 		fatal_error(headless_file_error, filename);
 	return result;
 #else
 	while (1) {
-		result = file_load_suffixed_resource(1, filename, ".res", name);
+		result = file_load_suffixed_resource(FILE_RESOURCE_BINARY_OPTIONAL,
+			filename, ".res", name);
 		if (result != 0) return result;
 
-		result = file_load_suffixed_resource(7, filename, ".pre", name);
+		result = file_load_suffixed_resource(FILE_RESOURCE_COMPRESSED_OPTIONAL,
+			filename, ".pre", name);
 		if (result != 0) return result;
 
 		do_dea_textres();
@@ -912,10 +921,12 @@ void far* file_load_3dres(const legacy_s8* filename) {
 	void far* result;
 
 	while (1) {
-		result = file_load_suffixed_resource(7, filename, ".p3s", name);
+		result = file_load_suffixed_resource(FILE_RESOURCE_COMPRESSED_OPTIONAL,
+			filename, ".p3s", name);
 		if (result != 0) return result;
 
-		result = file_load_suffixed_resource(1, filename, ".3sh", name);
+		result = file_load_suffixed_resource(FILE_RESOURCE_BINARY_OPTIONAL,
+			filename, ".3sh", name);
 		if (result != 0) return result;
 
 		do_dea_textres();
@@ -924,8 +935,8 @@ void far* file_load_3dres(const legacy_s8* filename) {
 
 void file_load_audiores(const legacy_s8* songfile, const legacy_s8* voicefile, const legacy_s8* name) {
 	void far* audiores;
-	voicefileptr = file_load_resource(5, voicefile);
-	songfileptr = file_load_resource(4, songfile);
+	voicefileptr = file_load_resource(FILE_RESOURCE_VOICE, voicefile);
+	songfileptr = file_load_resource(FILE_RESOURCE_SONG, songfile);
 	audiores = init_audio_resources(songfileptr, voicefileptr, name);
 	load_audio_finalize(audiores);
 	is_audioloaded = 1;

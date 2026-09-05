@@ -66,8 +66,10 @@ void setup_car_shapes(legacy_s16 operation)
 			aStdaxxxx[index + 4U] = gameconfig.game_playercarid[index];
 			aStdbxxxx[index + 4U] = gameconfig.game_playercarid[index];
 		}
-		stdaresptr = (legacy_s8 far*)file_load_resource(3, aStdaxxxx);
-		stdbresptr = (legacy_s8 far*)file_load_resource(2, aStdbxxxx);
+		stdaresptr = (legacy_s8 far*)file_load_resource(
+			FILE_RESOURCE_SHAPE2D_COLLECTION, aStdaxxxx);
+		stdbresptr = (legacy_s8 far*)file_load_resource(
+			FILE_RESOURCE_SHAPE2D, aStdbxxxx);
 		locate_many_resources(stdaresptr, aWhl1whl2whl3ins2gboxins1i,
 			(legacy_s8 far**)whlshapes);
 		locate_many_resources(stdbresptr, aGnobgnabdotDotadot1dot2,

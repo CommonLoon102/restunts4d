@@ -662,7 +662,8 @@ legacy_u16 end_hiscore(void)
 	score_status = 0;
 	file_build_path(byte_3B80C, gameconfig.game_trackname,
 		a_trk_5, g_path_buf);
-	track_resource = (legacy_u8 far*)file_load_resource(1, g_path_buf);
+	track_resource = (legacy_u8 far*)file_load_resource(
+		FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 	if (track_resource == 0) {
 		result = show_dialog(1, 1,
 			locate_text_res(mainresptr, aIhd),

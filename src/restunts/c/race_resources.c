@@ -41,7 +41,8 @@ void load_sdgame2_shapes(void)
 {
 	legacy_s16 i;
 
-	sdgame2ptr = file_load_resource(8, "sdgame2");
+	sdgame2ptr = file_load_resource(FILE_RESOURCE_SHAPE2D_ALTERNATE,
+		"sdgame2");
 	locate_many_resources(
 		sdgame2ptr,
 		"ex01ex02ex03leftrigh",
@@ -135,8 +136,8 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	}
 
 	ensure_file_exists(3);
-	eng1ptr = file_load_resource(5, "eng1");//aEng1); // "eng1"
-	engptr = file_load_resource(6, "eng");//aEng); // "eng"
+	eng1ptr = file_load_resource(FILE_RESOURCE_VOICE, "eng1");
+	engptr = file_load_resource(FILE_RESOURCE_SOUND_EFFECTS, "eng");
 	audio_add_driver_timer();
 	audio_player_engine_channel = audio_init_engine(0x21, &unk_3E7FC, eng1ptr, engptr);
 
@@ -150,7 +151,8 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	audio_car_state_read_index = 0;
 	audio_car_state_write_index = 0;
 	audio_car_state_interval = 0;
-	fontledresptr = file_load_resource(0, "fontled.fnt");//aFontled_fnt); // "fontled.fnt"
+	fontledresptr = file_load_resource(FILE_RESOURCE_BINARY_FATAL,
+		"fontled.fnt");
 	slow_video_mgmt_copy = slow_video_mgmt;
 	init_rect_arrays();
 	/* REPLDUMP advances simulation without rendering the dashboard.  Keep the
@@ -162,7 +164,8 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	}
 
 	if (idle_expired == 0) {
-		sdgameresptr = file_load_resource(3, "sdgame");//aSdgame); // "sdgame"
+		sdgameresptr = file_load_resource(FILE_RESOURCE_SHAPE2D_COLLECTION,
+			"sdgame");
 		loop_game(0, 0, 0);
 	}
 

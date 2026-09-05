@@ -25,7 +25,8 @@ legacy_s8 run_menu(void)
 	show_waiting();
 	waitflag = 0xB4;
 	render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
-	resource = (legacy_s8 far*)file_load_resource(2, aSdmsel);
+	resource = (legacy_s8 far*)file_load_resource(
+		FILE_RESOURCE_SHAPE2D, aSdmsel);
 	sprite_copy_wnd_to_1();
 	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, aScrn);
 	sprite_shape_to_1_alt(shape);

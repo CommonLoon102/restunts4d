@@ -371,8 +371,10 @@ static void init_full_game(legacy_s16 argc, legacy_s8* argv[])
 	init_row_tables();
 
 	mainresptr = file_load_resfile("main");
-	fontdefptr = file_load_resource(0, "fontdef.fnt");
-	fontnptr = file_load_resource(0, "fontn.fnt");
+	fontdefptr = file_load_resource(FILE_RESOURCE_BINARY_FATAL,
+		"fontdef.fnt");
+	fontnptr = file_load_resource(FILE_RESOURCE_BINARY_FATAL,
+		"fontn.fnt");
 
 	font_set_fontdef();
 	init_polyinfo();
