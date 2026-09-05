@@ -174,6 +174,19 @@
 #define CORK_UD_ANGLE_SCALE_SHIFT 10U
 #define CORK_UD_FIRST_ARC_PLAN_OFFSET 1
 #define ELEVATED_WALL_VERTICAL_OFFSET -12
+#define SLALOM_POLE_INNER_X 23
+#define SLALOM_POLE_OUTER_X 97
+#define SLALOM_POLE_NEAR_Z 241
+#define SLALOM_POLE_FAR_Z 271
+#define SLALOM_POLE_WALL_HEIGHT 42
+#define SLALOM_NEGATIVE_Z_FAR_WALL_INDEX 145
+#define SLALOM_NEGATIVE_Z_NEAR_WALL_INDEX 146
+#define SLALOM_NEGATIVE_Z_INNER_WALL_INDEX 148
+#define SLALOM_NEGATIVE_Z_OUTER_WALL_INDEX 147
+#define SLALOM_POSITIVE_Z_FAR_WALL_INDEX 141
+#define SLALOM_POSITIVE_Z_NEAR_WALL_INDEX 142
+#define SLALOM_POSITIVE_Z_INNER_WALL_INDEX 143
+#define SLALOM_POSITIVE_Z_OUTER_WALL_INDEX 144
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -1102,30 +1115,34 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 34: /* Slalom. */
-		if (absolute_x < 0x78)
+		if (absolute_x < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
-		if (position.x >= 0x17 && position.x <= 0x61 &&
-			position.z > -0x10F && position.z < -0xF1) {
-			wallHeight = 0x2A;
-			if (next_position.z < -0x10F)
-				wallindex = 0x91;
-			else if (next_position.z > -0xF1)
-				wallindex = 0x92;
-			else if (next_position.x < 0x17)
-				wallindex = 0x94;
-			else if (next_position.x > 0x61)
-				wallindex = 0x93;
-		} else if (position.x <= -0x17 && position.x >= -0x61 &&
-			position.z < 0x10F && position.z > 0xF1) {
-			wallHeight = 0x2A;
-			if (next_position.z > 0x10F)
-				wallindex = 0x8D;
-			else if (next_position.z < 0xF1)
-				wallindex = 0x8E;
-			else if (next_position.x > -0x17)
-				wallindex = 0x8F;
-			else if (next_position.x < -0x61)
-				wallindex = 0x90;
+		if (position.x >= SLALOM_POLE_INNER_X &&
+			position.x <= SLALOM_POLE_OUTER_X &&
+			position.z > -SLALOM_POLE_FAR_Z &&
+			position.z < -SLALOM_POLE_NEAR_Z) {
+			wallHeight = SLALOM_POLE_WALL_HEIGHT;
+			if (next_position.z < -SLALOM_POLE_FAR_Z)
+				wallindex = SLALOM_NEGATIVE_Z_FAR_WALL_INDEX;
+			else if (next_position.z > -SLALOM_POLE_NEAR_Z)
+				wallindex = SLALOM_NEGATIVE_Z_NEAR_WALL_INDEX;
+			else if (next_position.x < SLALOM_POLE_INNER_X)
+				wallindex = SLALOM_NEGATIVE_Z_INNER_WALL_INDEX;
+			else if (next_position.x > SLALOM_POLE_OUTER_X)
+				wallindex = SLALOM_NEGATIVE_Z_OUTER_WALL_INDEX;
+		} else if (position.x <= -SLALOM_POLE_INNER_X &&
+			position.x >= -SLALOM_POLE_OUTER_X &&
+			position.z < SLALOM_POLE_FAR_Z &&
+			position.z > SLALOM_POLE_NEAR_Z) {
+			wallHeight = SLALOM_POLE_WALL_HEIGHT;
+			if (next_position.z > SLALOM_POLE_FAR_Z)
+				wallindex = SLALOM_POSITIVE_Z_FAR_WALL_INDEX;
+			else if (next_position.z < SLALOM_POLE_NEAR_Z)
+				wallindex = SLALOM_POSITIVE_Z_NEAR_WALL_INDEX;
+			else if (next_position.x > -SLALOM_POLE_INNER_X)
+				wallindex = SLALOM_POSITIVE_Z_INNER_WALL_INDEX;
+			else if (next_position.x < -SLALOM_POLE_OUTER_X)
+				wallindex = SLALOM_POSITIVE_Z_OUTER_WALL_INDEX;
 		}
 		break;
 
