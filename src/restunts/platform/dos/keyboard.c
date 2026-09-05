@@ -19,16 +19,37 @@ extern void add_exit_handler(voidfunctype exitfunc);
 extern legacy_s16 kb_parse_key(legacy_s16 key);
 extern legacy_s16 dos_data_stack_segments_match(void);
 
-static legacy_u8 dos_kb_input[90];
+#define DOS_KB_SCANCODE_COUNT 90
+#define DOS_KB_PRIMARY_KEYMAP_SIZE 91
+#define DOS_KB_ALT_KEYMAP_SIZE 92
+#define DOS_KB_BUFFER_CAPACITY 64
+#define DOS_KB_BUFFER_ENTRY_BYTES 2
+#define DOS_KB_DATA_PORT 96U
+#define DOS_KB_CONTROL_PORT 97U
+#define DOS_KB_INTERRUPT_ACK_MASK 128U
+#define DOS_KB_BREAK_CODE_MASK 128U
+#define DOS_KB_SCANCODE_MASK 127U
+#define DOS_KB_ALT_SCANCODE 56U
+#define DOS_KB_CONTROL_SCANCODE 29U
+#define DOS_KB_LEFT_SHIFT_SCANCODE 42U
+#define DOS_KB_RIGHT_SHIFT_SCANCODE 54U
+#define DOS_KB_CAPS_LOCK_SCANCODE 58U
+#define DOS_KB_EXTENDED_KEY_FLAG 128U
+#define DOS_KB_EXTENDED_KEY_NORMALIZE_MIN 133U
+#define DOS_KB_ASCII_BYTE_SHIFT LEGACY_BYTE_BITS
+#define DOS_PIC_COMMAND_PORT 32U
+#define DOS_PIC_END_OF_INTERRUPT 32U
+
+static legacy_u8 dos_kb_input[DOS_KB_SCANCODE_COUNT];
 
 static legacy_u16 dos_kb_buffer_write;
 static legacy_u16 dos_kb_buffer_read;
-static legacy_u16 dos_kb_buffer_size = 2U;
+static legacy_u16 dos_kb_buffer_size = DOS_KB_BUFFER_ENTRY_BYTES;
 static legacy_u16 dos_kb_buffer_count;
-static legacy_u16 dos_kb_buffer[64];
+static legacy_u16 dos_kb_buffer[DOS_KB_BUFFER_CAPACITY];
 static legacy_u16 dos_kb_last_input;
 
-static const legacy_u8 dos_kb_keymap1[91] = {
+static const legacy_u8 dos_kb_keymap1[DOS_KB_PRIMARY_KEYMAP_SIZE] = {
 	0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 9,
 	113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 91, 93, 13, 0,
 	97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39, 96, 0, 92,
@@ -38,7 +59,7 @@ static const legacy_u8 dos_kb_keymap1[91] = {
 	0, 0, 0
 };
 
-static const legacy_u8 dos_kb_keymap2[91] = {
+static const legacy_u8 dos_kb_keymap2[DOS_KB_PRIMARY_KEYMAP_SIZE] = {
 	0, 27, 33, 64, 35, 36, 37, 94, 38, 42, 40, 41, 95, 43, 8, 143,
 	81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 123, 125, 13, 0, 65, 83,
 	68, 70, 71, 72, 74, 75, 76, 58, 34, 126, 0, 124, 90, 88, 67, 86,
@@ -47,7 +68,7 @@ static const legacy_u8 dos_kb_keymap2[91] = {
 	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
 };
 
-static const legacy_u8 dos_kb_keymap3[91] = {
+static const legacy_u8 dos_kb_keymap3[DOS_KB_PRIMARY_KEYMAP_SIZE] = {
 	0, 27, 49, 50, 51, 52, 53, 54, 55, 56, 57, 48, 45, 61, 8, 143,
 	81, 87, 69, 82, 84, 89, 85, 73, 79, 80, 91, 93, 13, 0, 65, 83,
 	68, 70, 71, 72, 74, 75, 76, 59, 39, 96, 0, 92, 90, 88, 67, 86,
@@ -56,7 +77,7 @@ static const legacy_u8 dos_kb_keymap3[91] = {
 	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
 };
 
-static const legacy_u8 dos_kb_keymap4[91] = {
+static const legacy_u8 dos_kb_keymap4[DOS_KB_PRIMARY_KEYMAP_SIZE] = {
 	0, 27, 33, 0, 35, 36, 37, 30, 38, 42, 40, 41, 31, 43, 127, 9,
 	17, 23, 5, 18, 20, 25, 21, 9, 15, 16, 27, 29, 13, 0, 1, 19,
 	4, 6, 7, 8, 10, 11, 12, 59, 44, 96, 0, 28, 26, 24, 3, 22,
@@ -65,7 +86,7 @@ static const legacy_u8 dos_kb_keymap4[91] = {
 	43, 207, 208, 209, 210, 211, 0, 0, 0, 0, 0, 0, 0
 };
 
-static const legacy_u8 dos_kb_keymap5[92] = {
+static const legacy_u8 dos_kb_keymap5[DOS_KB_ALT_KEYMAP_SIZE] = {
 	0, 27, 33, 64, 35, 36, 37, 94, 38, 42, 40, 41, 95, 43, 8, 143,
 	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 123, 125, 13, 0,
 	158, 159, 160, 161, 162, 163, 164, 165, 166, 58, 34, 126, 0, 124,
@@ -84,49 +105,50 @@ void interrupt kb_int9_handler(void) {
 	legacy_u8 kbc, kbp;
 	legacy_u16 kbval, kbdata;
 
-	kbc = inp(0x60);
-	kbp = inp(0x61);
-	outp(0x61, kbp | 0x80);
-	outp(0x61, kbp);
+	kbc = inp(DOS_KB_DATA_PORT);
+	kbp = inp(DOS_KB_CONTROL_PORT);
+	outp(DOS_KB_CONTROL_PORT, kbp | DOS_KB_INTERRUPT_ACK_MASK);
+	outp(DOS_KB_CONTROL_PORT, kbp);
 
-	if ((kbc & 0x80) == 0) {
-		if (kbc >= 0x5a)
+	if ((kbc & DOS_KB_BREAK_CODE_MASK) == 0) {
+		if (kbc >= DOS_KB_SCANCODE_COUNT)
 			kbc = 0;
 		dos_kb_last_input = kbc;
 		dos_kb_input[kbc] = 1;
 
-		if (dos_kb_input[0x38] == 1) {
+		if (dos_kb_input[DOS_KB_ALT_SCANCODE] == 1) {
 			kbval = dos_kb_keymap5[kbc];
 		} else
-		if (dos_kb_input[0x1D] == 1) {
+		if (dos_kb_input[DOS_KB_CONTROL_SCANCODE] == 1) {
 			kbval = dos_kb_keymap4[kbc];
 		} else
-		if (dos_kb_input[0x2A] == 1 || dos_kb_input[0x36] == 1) {
+		if (dos_kb_input[DOS_KB_LEFT_SHIFT_SCANCODE] == 1 ||
+			dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE] == 1) {
 			/* Either shift key. */
 			kbval = dos_kb_keymap2[kbc];
 		} else
-		if (dos_kb_input[0x3A] == 1) {
+		if (dos_kb_input[DOS_KB_CAPS_LOCK_SCANCODE] == 1) {
 			kbval = dos_kb_keymap3[kbc];
 		} else {
 			kbval = dos_kb_keymap1[kbc];
 		}
 
-		if ((kbval & 0x80) != 0) {
-			if (kbval >= 0x85)
-				kbval &= 0x7F;
-			kbval <<= 8;
+		if ((kbval & DOS_KB_EXTENDED_KEY_FLAG) != 0) {
+			if (kbval >= DOS_KB_EXTENDED_KEY_NORMALIZE_MIN)
+				kbval &= DOS_KB_SCANCODE_MASK;
+			kbval <<= DOS_KB_ASCII_BYTE_SHIFT;
 		}
 
 		kbdata = dos_kb_buffer_write;
 		disable();
-		dos_kb_buffer[kbdata / 2] = kbval;
-		kbdata+=2;
+		dos_kb_buffer[kbdata / DOS_KB_BUFFER_ENTRY_BYTES] = kbval;
+		kbdata += DOS_KB_BUFFER_ENTRY_BYTES;
 		if (kbdata >= dos_kb_buffer_size) // data3 = kb_buffer_pos
 			kbdata = 0;
 		dos_kb_buffer_write = kbdata;
 
 		kbdata = dos_kb_buffer_count;
-		kbdata+=2;
+		kbdata += DOS_KB_BUFFER_ENTRY_BYTES;
 		if (kbdata > dos_kb_buffer_size) {
 			kbdata = dos_kb_buffer_size;
 			dos_kb_buffer_read = dos_kb_buffer_write;
@@ -135,13 +157,13 @@ void interrupt kb_int9_handler(void) {
 		enable();
 
 	} else {
-		kbc &= 0x7F;
-		if (kbc >= 0x5a) // 0x5a = 90, keymaps are 90 bytes?
+		kbc &= DOS_KB_SCANCODE_MASK;
+		if (kbc >= DOS_KB_SCANCODE_COUNT)
 			kbc = 0;
 		dos_kb_input[kbc] = 0;
 	}
 
-	outp(0x20, 0x20);
+	outp(DOS_PIC_COMMAND_PORT, DOS_PIC_END_OF_INTERRUPT);
 
 }
 
@@ -164,7 +186,7 @@ static legacy_u16 kb_flags_after_subtract_two(legacy_u16 value) {
 	legacy_u16 result;
 	__asm {
 		mov ax, value
-		sub ax, 2
+		sub ax, DOS_KB_BUFFER_ENTRY_BYTES
 		pushf
 		pop ax
 		mov result, ax
