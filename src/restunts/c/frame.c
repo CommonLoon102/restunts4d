@@ -19,6 +19,7 @@
 #define FRAME_DEBRIS_SLOT_COUNT 24
 #define FRAME_SURFACE_GRASS 4
 #define FRAME_TRANSFORM_FLAGS_DEFAULT 4
+#define FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT 5
 #define FRAME_TRANSFORM_FLAGS_CLIPPED 12
 #define FRAME_CAMERA_MODE_COCKPIT 0
 #define FRAME_CAMERA_MODE_FOLLOW 1
@@ -48,10 +49,19 @@
 #define FRAME_MULTITILE_ROW 1
 #define FRAME_MULTITILE_COLUMN 2
 #define FRAME_MULTITILE_BOTH 3
+#define FRAME_MULTITILE_NONE 0
 #define FRAME_ELEVATED_TERRAIN 6
 #define FRAME_ELEVATED_CORNER_FIRST 105U
 #define FRAME_ELEVATED_CORNER_LAST 108U
 #define FRAME_ELEVATED_CORNER_COUNT 4
+#define FRAME_HILL_FILL_COUNT_SINGLE 1
+#define FRAME_HILL_FILL_COUNT_ROW 2
+#define FRAME_HILL_FILL_COUNT_COLUMN 2
+#define FRAME_HILL_FILL_COUNT_BOTH 4
+#define FRAME_HILL_FILL_SHAPE_RESOURCE_OFFSET 946U
+#define FRAME_SINGLE_TILE_TRANSFORM_DISTANCE 2048
+#define FRAME_NO_DEPTH_SORT_FLAG 1U
+#define FRAME_WHEEL_SORT_ADJUSTMENT 1024
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -821,7 +831,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 				if (elem_map_value != 0) {
 					idx = trkObjectList[elem_map_value].ss_multiTileFlag;
-					if (idx != 0) {
+					if (idx != FRAME_MULTITILE_NONE) {
 						// Look the future tiles to process (i.e. with lower index, since si
 						// counts backwards) and remove those which belong to the same
 						// multi-tile component as this tile
@@ -920,7 +930,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			var_10E = unk_3C0F4;
 		} else {
 			var_trkobject_ptr = &trkObjectList[elem_map_value];
-			if (var_trkobject_ptr->ss_multiTileFlag == 0) {
+			if (var_trkobject_ptr->ss_multiTileFlag ==
+				FRAME_MULTITILE_NONE) {
 				var_counter = 1;
 				var_10E = unk_3C0EE;
 			} else if (var_trkobject_ptr->ss_multiTileFlag ==
@@ -962,7 +973,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					frame_prepare_flat_track_shape(currenttransshape,
 						tile_to_draw_east_offset,
 						tile_to_draw_south_offset,
-						&cam_pos, (legacy_s16)(var_122 | 5),
+						&cam_pos, (legacy_s16)(var_122 |
+							FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
 						word_3C0D6[di]);
 					var_transformresult = transformed_shape_op(&currenttransshape[0]);
 					if (var_transformresult > 0) {
@@ -1011,7 +1023,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						frame_prepare_flat_track_shape(currenttransshape,
 							tile_to_draw_east_offset,
 							tile_to_draw_south_offset,
-							&cam_pos, (legacy_s16)(var_122 | 5),
+							&cam_pos, (legacy_s16)(var_122 |
+								FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
 							var_trkobject_ptr->ss_rotY);
 						var_transformresult = transformed_shape_op(&currenttransshape[0]);
 						if (var_transformresult > 0)
@@ -1049,7 +1062,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				currenttransshape->rectptr = &rect_unk6;
 			}
 
-			currenttransshape->ts_flags = var_122 | 5;
+			currenttransshape->ts_flags = var_122 |
+				FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT;
 			currenttransshape->rotvec.x = 0;
 			currenttransshape->rotvec.y = 0;
 			currenttransshape->rotvec.z = var_trkobject_ptr->ss_rotY;
@@ -1067,7 +1081,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			tile_to_draw_south_offset = tile_south;
 		} else {
 			var_trkobject_ptr = &trkObjectList[elem_map_value];
-			if ((var_trkobject_ptr->ss_multiTileFlag & 1) != 0) {
+			if ((var_trkobject_ptr->ss_multiTileFlag & FRAME_MULTITILE_ROW) !=
+				0) {
 				var_5E = trackpos[tile_south];
 				tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
 					tile_south, 1);
@@ -1076,7 +1091,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				tile_to_draw_south_offset = tile_south;
 			}
 
-			if ((var_trkobject_ptr->ss_multiTileFlag & 2) != 0) {
+			if ((var_trkobject_ptr->ss_multiTileFlag &
+				FRAME_MULTITILE_COLUMN) != 0) {
 				var_3A = trackpos2[LEGACY_S8_WRAP_ADD(tile_east, 1)];
 				tile_to_draw_east_offset = LEGACY_S8_WRAP_ADD(
 					tile_east, 1);
@@ -1089,17 +1105,21 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			var_vec8.y = LEGACY_S16_WRAP_SUB(var_hillheight, cam_pos.y);
 			var_vec8.z = LEGACY_S16_WRAP_SUB(var_5E, cam_pos.z);
 			if (var_hillheight != 0) {
-				if (var_trkobject_ptr->ss_multiTileFlag == 0) {
-					di = 1;
+				if (var_trkobject_ptr->ss_multiTileFlag ==
+					FRAME_MULTITILE_NONE) {
+					di = FRAME_HILL_FILL_COUNT_SINGLE;
 					var_DA = unk_3C0A2;
-				} else if (var_trkobject_ptr->ss_multiTileFlag == 1) {
-					di = 2;
+				} else if (var_trkobject_ptr->ss_multiTileFlag ==
+					FRAME_MULTITILE_ROW) {
+					di = FRAME_HILL_FILL_COUNT_ROW;
 					var_DA = unk_3C0A6;
-				} else if (var_trkobject_ptr->ss_multiTileFlag == 2) {
-					di = 2;
+				} else if (var_trkobject_ptr->ss_multiTileFlag ==
+					FRAME_MULTITILE_COLUMN) {
+					di = FRAME_HILL_FILL_COUNT_COLUMN;
 					var_DA = unk_3C0AE;
-				} else if (var_trkobject_ptr->ss_multiTileFlag == 3) {
-					di = 4;
+				} else if (var_trkobject_ptr->ss_multiTileFlag ==
+					FRAME_MULTITILE_BOTH) {
+					di = FRAME_HILL_FILL_COUNT_BOTH;
 					var_DA = unk_3C0B6;
 				}
 
@@ -1111,13 +1131,17 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					currenttransshape->pos.z = LEGACY_S16_WRAP_ADD(
 						*var_DA, var_vec8.z);
 					var_DA++;
-					currenttransshape->shapeptr = &game3dshapes[0x3B2 / sizeof(struct SHAPE3D)];
+					currenttransshape->shapeptr = &game3dshapes[
+						FRAME_HILL_FILL_SHAPE_RESOURCE_OFFSET /
+						sizeof(struct SHAPE3D)];
 					currenttransshape->rectptr = &rect_unk6;
-					currenttransshape->ts_flags = var_122 | 5;
+					currenttransshape->ts_flags = var_122 |
+						FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT;
 					currenttransshape->rotvec.x = 0;
 					currenttransshape->rotvec.y = 0;
 					currenttransshape->rotvec.z = 0;
-					currenttransshape->unk = 0x800;
+					currenttransshape->unk =
+						FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 					currenttransshape->material = 0;
 					var_transformresult = transformed_shape_op(&currenttransshape[0]);
 					if (var_transformresult > 0)
@@ -1139,11 +1163,13 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					currenttransshape[1].rotvec.x = 0;
 					currenttransshape[1].rotvec.y = 0;
 					currenttransshape[1].rotvec.z = var_trkobjectptr->ss_rotY;
-					if (var_trkobjectptr->ss_multiTileFlag != 0) {
+					if (var_trkobjectptr->ss_multiTileFlag !=
+						FRAME_MULTITILE_NONE) {
 						currenttransshape[1].unk =
 							FRAME_DEFAULT_TRANSFORM_DISTANCE;
 					} else {
-						currenttransshape[1].unk = 0x800;
+						currenttransshape[1].unk =
+							FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 					}
 
 					if (var_trkobjectptr->ss_surfaceType >= 0) {
@@ -1152,8 +1178,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						currenttransshape[1].material = var_E4;
 					}
 
-					currenttransshape[1].ts_flags = var_trkobjectptr->ss_ignoreZBias | var_122 | 4;
-					if ((currenttransshape[1].ts_flags & 1) != 0) {
+					currenttransshape[1].ts_flags =
+						var_trkobjectptr->ss_ignoreZBias | var_122 |
+						FRAME_TRANSFORM_FLAGS_DEFAULT;
+					if ((currenttransshape[1].ts_flags &
+						FRAME_NO_DEPTH_SORT_FLAG) != 0) {
 						currenttransshape[1].rectptr = &rect_unk2;
 						var_transformresult = transformed_shape_op(&currenttransshape[1]);
 						if (var_transformresult > 0)
@@ -1175,20 +1204,25 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			currenttransshape->rotvec.x = 0;
 			currenttransshape->rotvec.y = 0;
 			currenttransshape->rotvec.z = var_trkobject_ptr->ss_rotY;
-			if (var_trkobject_ptr->ss_multiTileFlag != 0) {
+			if (var_trkobject_ptr->ss_multiTileFlag !=
+				FRAME_MULTITILE_NONE) {
 				currenttransshape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 			} else {
-				currenttransshape->unk = 0x800;
+				currenttransshape->unk =
+					FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 			}
 
-			currenttransshape->ts_flags = var_trkobject_ptr->ss_ignoreZBias | var_122 | 4;
+			currenttransshape->ts_flags =
+				var_trkobject_ptr->ss_ignoreZBias | var_122 |
+				FRAME_TRANSFORM_FLAGS_DEFAULT;
 			if (var_trkobject_ptr->ss_surfaceType >= 0) {
 				currenttransshape->material = var_trkobject_ptr->ss_surfaceType;
 			} else {
 				currenttransshape->material = var_E4;
 			}
 
-			if ((var_trkobject_ptr->ss_ignoreZBias & 1) != 0) {
+			if ((var_trkobject_ptr->ss_ignoreZBias &
+				FRAME_NO_DEPTH_SORT_FLAG) != 0) {
 				currenttransshape->rectptr = &rect_unk2;
 				var_transformresult = transformed_shape_op(&currenttransshape[0]);
 				if (var_transformresult > 0)
@@ -1198,13 +1232,15 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				transformed_shape_add_for_sort(0, 0);
 				if (var_4E != 0) {
 					var_4E = 0;
-					transformed_shape_add_for_sort(-0x800 /*0xF800*/, 0);
+					transformed_shape_add_for_sort(
+						-FRAME_SINGLE_TILE_TRANSFORM_DISTANCE, 0);
 					if (var_6C != 0) {
-						var_6C = -0x400;//0xFC00;
+						var_6C = -FRAME_WHEEL_SORT_ADJUSTMENT;
 					}
 
 					if (var_A4 != 0) {
-					var_A4 = LEGACY_S16_WRAP_SUB(var_A4, 0x400);
+						var_A4 = LEGACY_S16_WRAP_SUB(var_A4,
+							FRAME_WHEEL_SORT_ADJUSTMENT);
 					}
 				}
 
@@ -1248,7 +1284,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 								state.game_longs3[di],
 								td10_track_check_rel[var_4C].z, cam_pos.z);
 							frame_add_dynamic_shape(var_trkobject_ptr, di,
-								var_122 | 5, 0, 0);
+								var_122 |
+									FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT,
+								0, 0);
 						}
 					}
 				}
@@ -1332,7 +1370,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				}
 
 				curtransshape_ptr->material = idx;
-				transformed_shape_add_for_sort(var_12A & -0x800 /*0xF800*/, 0);
+				transformed_shape_add_for_sort(var_12A &
+					-FRAME_SINGLE_TILE_TRANSFORM_DISTANCE, 0);
 			}
 		}
 
