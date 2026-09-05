@@ -1,5 +1,10 @@
 #include "state_internal.h"
 
+#define ROUTE_POINT_ADVANCE_DISTANCE 275
+#define ROUTE_ALIGNMENT_WRAP_LIMIT \
+	(ANGLE_FULL_TURN - ANGLE_EIGHTH_TURN)
+#define ROUTE_GUIDANCE_DIRECTION_SHIFT 8U
+
 /* Vector from the player's car to its current route point. A y of -1 marks
    a route point with no height of its own: the route search still measures
    the drop to the car, the steering hint treats the point as level. */
@@ -186,7 +191,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					state.playerstate.car_trackdata3_index = -1;
 				}
 			}
-			if (si < 0x113) {
+			if (si < ROUTE_POINT_ADVANCE_DISTANCE) {
 				if (state.playerstate.car_trackdata3_index == -1) {
 					var_2 = state.field_2F2;
 					route_selection_required = 1;
@@ -232,8 +237,9 @@ void player_op(legacy_s8 arg_carInputByte) {
 							LEGACY_S16_WRAP_SUB(
 								var_52[0].x, var_1A[0].x),
 							LEGACY_S16_WRAP_SUB(
-								var_1A[0].z, var_52[0].z))) & 0x3FFU);
-					if (si > 0x380 || si < 0x80) {
+								var_1A[0].z, var_52[0].z))) & ANGLE_MASK);
+					if (si > ROUTE_ALIGNMENT_WRAP_LIMIT ||
+						si < ANGLE_EIGHTH_TURN) {
 						state.field_45B = 0;
 						state.field_45C = 1;
 						state.playerstate.car_trackdata3_index = var_2;
@@ -275,10 +281,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 			mat_mul_vector(&var_28, var_matptr, &var_38);
 			state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
 				(legacy_u16)polarAngle(
-					LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & 0x3FFU);
+					LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & ANGLE_MASK);
 			if (state.playerstate.car_crashBmpFlag == 0) {
 				si = LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
-					state.playerstate.field_48, 0x80U) & 0x3FFU, 8U);
+					state.playerstate.field_48, ANGLE_EIGHTH_TURN) &
+					ANGLE_MASK, ROUTE_GUIDANCE_DIRECTION_SHIFT);
 				if (si == 1) {
 					state.field_45D = 1;
 				} else if (si == 3 && state.playerstate.field_B6 == 0) {
