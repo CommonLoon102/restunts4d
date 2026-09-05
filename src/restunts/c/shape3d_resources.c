@@ -8,6 +8,14 @@ extern legacy_s8 far* curshapeptr;
 extern struct SHAPE3D game3dshapes[130];
 extern legacy_s8 aBarn[];
 
+#define SHAPE3D_REQUIRED_ARENA_BYTES 65000UL
+#define SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS 4062U
+#define SHAPE3D_BASE_TRACK_SHAPE_COUNT 116
+#define SHAPE3D_TRACK_SHAPE_NAME_SIZE 5
+#define SHAPE3D_VERTEX_RECORD_SIZE 6U
+#define SHAPE3D_PRIMITIVE_CULL_RECORD_SIZE 4U
+#define SHAPE3D_PRIMITIVE_RECORD_SIZE 8U
+
 legacy_s16 shape3d_load_all() {
 	legacy_s16 i;
 	legacy_u32 mmgrofsdiff;
@@ -21,14 +29,15 @@ legacy_s16 shape3d_load_all() {
 	// The original only had the arena to draw on. The track shapes loaded
 	// below can come out of upper memory instead, so the arena check only
 	// has to hold when the pool cannot cover the same amount.
-	if (mmgrofsdiff < 0xFDE8 && !highpool_can_fit(0xFDE))	// ??
+	if (mmgrofsdiff < SHAPE3D_REQUIRED_ARENA_BYTES &&
+		!highpool_can_fit(SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS))
 		return 1;
 
 	game1ptr = file_load_3dres("game1");
 	game2ptr = file_load_3dres("game2");
 
-	for (i = 0; i < 0x74; i++) {
-		shapename = &aBarn[i * 5];
+	for (i = 0; i < SHAPE3D_BASE_TRACK_SHAPE_COUNT; i++) {
+		shapename = &aBarn[i * SHAPE3D_TRACK_SHAPE_NAME_SIZE];
 		curshapeptr = locate_shape_nofatal(game1ptr, shapename);
 		if (curshapeptr == 0)
 			curshapeptr = locate_shape_fatal(game2ptr, shapename);
@@ -59,15 +68,18 @@ void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape) {
 	// only ever read as a count and the shape structs start out zeroed.
 	gameshape->shape3d_numpaints =
 		(legacy_u8)shapeptr[SHAPE3D_PAINT_COUNT_OFFSET];
-	vertex_bytes = LEGACY_U16_WRAP_MUL(gameshape->shape3d_numverts, 6U);
+	vertex_bytes = LEGACY_U16_WRAP_MUL(gameshape->shape3d_numverts,
+		SHAPE3D_VERTEX_RECORD_SIZE);
 	gameshape->shape3d_vertex_bytes = (legacy_u8 far*)shapeptr +
 		SHAPE3D_HEADER_SIZE;
 	gameshape->shape3d_cull1 = (legacy_u8 far*)shapeptr +
 		vertex_bytes + SHAPE3D_HEADER_SIZE;
 	gameshape->shape3d_cull2 = (legacy_u8 far*)shapeptr +
-		LEGACY_U16_WRAP_MUL(primitive_count, 4U) + vertex_bytes +
+		LEGACY_U16_WRAP_MUL(primitive_count,
+			SHAPE3D_PRIMITIVE_CULL_RECORD_SIZE) + vertex_bytes +
 		SHAPE3D_HEADER_SIZE;
 	gameshape->shape3d_primitives = (legacy_u8 far*)shapeptr +
-		LEGACY_U16_WRAP_MUL(primitive_count, 8U) + vertex_bytes +
+		LEGACY_U16_WRAP_MUL(primitive_count,
+			SHAPE3D_PRIMITIVE_RECORD_SIZE) + vertex_bytes +
 		SHAPE3D_HEADER_SIZE;
 }

@@ -6,6 +6,9 @@
 #include "shape2d.h"
 
 #define DASHBOARD_STEERING_SCALE_SHIFT 3U
+#define DASHBOARD_VIEWPORT_WIDTH 320
+#define DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT 15U
+#define DASHBOARD_ANALOG_SPEED_DIVISOR 640U
 
 static legacy_s16 dashboard_steering_position(legacy_s16 angle)
 {
@@ -32,7 +35,8 @@ static legacy_u8 dashboard_clear_steering_dot(legacy_u16 player_index)
 
 static void dashboard_set_viewport(void)
 {
-	sprite_set_1_size(0, 0x140, 0, height_above_replaybar);
+	sprite_set_1_size(0, DASHBOARD_VIEWPORT_WIDTH, 0,
+		height_above_replaybar);
 }
 
 void setup_car_shapes(legacy_s16 operation)
@@ -76,15 +80,18 @@ void setup_car_shapes(legacy_s16 operation)
 		whlsprite1 = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[3]),
 				(legacy_u16)video_flag1_is1),
-			shape2d_get_height(whlshapes[3]), 0x0FU);
+			shape2d_get_height(whlshapes[3]),
+			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 		whlsprite2 = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[4]),
 				(legacy_u16)video_flag1_is1),
-			shape2d_get_height(whlshapes[4]), 0x0FU);
+			shape2d_get_height(whlshapes[4]),
+			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 		whlsprite3 = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[4]),
 				(legacy_u16)video_flag1_is1),
-			shape2d_get_height(whlshapes[4]), 0x0FU);
+			shape2d_get_height(whlshapes[4]),
+			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 
 		dashboard_shape = (struct SHAPE2D far*)
 			locate_shape_fatal(stdaresptr, aDash);
@@ -218,7 +225,7 @@ void setup_car_shapes(legacy_s16 operation)
 		gauge_mode = 1;
 	} else {
 		speed_index = LEGACY_U16_DIV_OR_ZERO(
-			state.playerstate.car_speed, 0x280U);
+			state.playerstate.car_speed, DASHBOARD_ANALOG_SPEED_DIVISOR);
 		if ((legacy_s16)speed_index >= simd_player.spdnumpoints)
 			speed_index = (legacy_u16)(simd_player.spdnumpoints - 1);
 		gauge_mode = 0;

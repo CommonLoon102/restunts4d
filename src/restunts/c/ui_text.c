@@ -5,12 +5,18 @@ legacy_u8 far* active_font_definition;
 
 legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 
+#define UI_SCREEN_WIDTH 320
+#define FONT_FIXED_GLYPH_WIDTH_OFFSET 16U
+#define FONT_GLYPH_WIDTHS_FLAG_OFFSET 20U
+#define FONT_GLYPH_OFFSET_TABLE_OFFSET 22U
+#define FONT_GLYPH_OFFSET_ENTRY_SIZE 2U
+
 legacy_s16 font_op2_alt(const legacy_s8* text)
 {
 	legacy_s16 centered;
 
 	centered = LEGACY_S16_WRAP_NEGATE(
-		LEGACY_S16_WRAP_SUB(font_op2(text), 0x140));
+		LEGACY_S16_WRAP_SUB(font_op2(text), UI_SCREEN_WIDTH));
 	return LEGACY_S16_DIV_OR_ZERO(centered, 2);
 }
 
@@ -183,12 +189,14 @@ static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, lega
 	if (bounded != 0 && remaining == 0)
 		return 0;
 	font_definition = active_font_definition;
-	has_glyph_widths = font_definition[0x14U];
-	glyph_width = audioresource_get_word(font_definition + 0x10U);
+	has_glyph_widths = font_definition[FONT_GLYPH_WIDTHS_FLAG_OFFSET];
+	glyph_width = audioresource_get_word(
+		font_definition + FONT_FIXED_GLYPH_WIDTH_OFFSET);
 	total_width = 0;
 	while ((character = (legacy_u8)*text++) != 0) {
-		glyph_offset = audioresource_get_word(font_definition + 0x16U +
-			(legacy_u16)character * 2U);
+		glyph_offset = audioresource_get_word(
+			font_definition + FONT_GLYPH_OFFSET_TABLE_OFFSET +
+			(legacy_u16)character * FONT_GLYPH_OFFSET_ENTRY_SIZE);
 		if (glyph_offset == 0)
 			continue;
 		if (has_glyph_widths != 0)

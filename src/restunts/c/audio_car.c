@@ -7,6 +7,8 @@
 
 extern legacy_s16 camera_track_height_offset;
 
+#define AUDIO_TRACK_CAMERA_VERTICAL_OFFSET 90
+
 void audio_op_unk3(legacy_s16 channel);
 void audio_op_unk4(legacy_s16 channel);
 void audio_op_unk(legacy_s16 channel);
@@ -151,7 +153,8 @@ void audio_carstate(void)
 		camera_current.x = trackdata9[track_index].x;
 		camera_current.y = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(trackdata9[track_index].y,
-				camera_track_height_offset), 0x5A);
+				camera_track_height_offset),
+			AUDIO_TRACK_CAMERA_VERTICAL_OFFSET);
 		camera_current.z = trackdata9[track_index].z;
 		camera_previous = camera_current;
 	} else if (followOpponentFlag != 0) {
