@@ -1,9 +1,24 @@
 #include "externs.h"
 
+#define MULTI_TILE_ROW_FLAG 1U
+#define MULTI_TILE_COLUMN_FLAG 2U
+#define ROUTE_TRACK_INDEX_SIZE 2U
+
+#define HILLROAD_TERRAIN_FIRST 7U
+#define HILLROAD_TERRAIN_LAST 10U
+#define HILLROAD_TERRAIN_COUNT 4
+#define HILLROAD_PIECE_VARIANT_COUNT 6
+#define HILLROAD_SHAPE_COUNT 4
+#define HILLROAD_DIRECT_SHAPE_COUNT 3U
+#define HILLROAD_ALTERNATE_SHAPE_INDEX 3U
+
+#define DEFAULT_PLANE_NORMAL_Y 8192
+
 legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
 	legacy_u8 column)
 {
-	if (((legacy_u8)track_object->ss_multiTileFlag & 2U) != 0)
+	if (((legacy_u8)track_object->ss_multiTileFlag &
+		MULTI_TILE_COLUMN_FLAG) != 0)
 		return trackpos2[column + 1U];
 	return trackcenterpos2[column];
 }
@@ -11,7 +26,7 @@ legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
 legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
 	legacy_u8 row)
 {
-	if (((legacy_u8)track_object->ss_multiTileFlag & 1U) != 0)
+	if (((legacy_u8)track_object->ss_multiTileFlag & MULTI_TILE_ROW_FLAG) != 0)
 		return trackpos[row];
 	return trackcenterpos[row];
 }
@@ -25,7 +40,7 @@ void opponent_route_advance(legacy_s16 route_point)
 	legacy_s16 route_track_index;
 
 	route_table_offset = LEGACY_U16_WRAP_MUL(
-		state.opponentstate.car_trackdata3_index, 2U);
+		state.opponentstate.car_trackdata3_index, ROUTE_TRACK_INDEX_SIZE);
 	route_track_index = LEGACY_READ_S16_LE(
 		(const legacy_u8 far*)trackdata3 + route_table_offset);
 	sub_18D60(route_track_index, &state.opponentstate.car_vec_unk3,
@@ -36,18 +51,20 @@ void opponent_route_advance(legacy_s16 route_point)
    matches the hill. Each terrain row lists the road pieces it accepts: the
    first three map one-to-one, the last three are the alternative spellings of
    one and the same piece. */
-static const legacy_u8 hillroad_pieces[4][6] = {
-	{ 0x04, 0x0E, 0x18, 0x27, 0x3B, 0x62 },
-	{ 0x05, 0x0F, 0x19, 0x24, 0x38, 0x5F },
-	{ 0x04, 0x0E, 0x18, 0x26, 0x3A, 0x61 },
-	{ 0x05, 0x0F, 0x19, 0x25, 0x39, 0x60 }
+static const legacy_u8 hillroad_pieces
+	[HILLROAD_TERRAIN_COUNT][HILLROAD_PIECE_VARIANT_COUNT] = {
+	{ 4, 14, 24, 39, 59, 98 },
+	{ 5, 15, 25, 36, 56, 95 },
+	{ 4, 14, 24, 38, 58, 97 },
+	{ 5, 15, 25, 37, 57, 96 }
 };
 
-static const legacy_u8 hillroad_shapes[4][4] = {
-	{ 0xB6, 0xBA, 0xBE, 0xC2 },
-	{ 0xB7, 0xBB, 0xBF, 0xC3 },
-	{ 0xB8, 0xBC, 0xC0, 0xC4 },
-	{ 0xB9, 0xBD, 0xC1, 0xC5 }
+static const legacy_u8 hillroad_shapes
+	[HILLROAD_TERRAIN_COUNT][HILLROAD_SHAPE_COUNT] = {
+	{ 182, 186, 190, 194 },
+	{ 183, 187, 191, 195 },
+	{ 184, 188, 192, 196 },
+	{ 185, 189, 193, 197 }
 };
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
@@ -55,13 +72,15 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 	legacy_u16 row;
 	legacy_u16 piece;
 
-	if (terrain < 7U || terrain > 10U)
+	if (terrain < HILLROAD_TERRAIN_FIRST || terrain > HILLROAD_TERRAIN_LAST)
 		return 0;
 
-	row = terrain - 7U;
-	for (piece = 0U; piece < 6U; piece++) {
+	row = terrain - HILLROAD_TERRAIN_FIRST;
+	for (piece = 0U; piece < HILLROAD_PIECE_VARIANT_COUNT; piece++) {
 		if (hillroad_pieces[row][piece] == track)
-			return hillroad_shapes[row][piece < 3U ? piece : 3U];
+			return hillroad_shapes[row][
+				piece < HILLROAD_DIRECT_SHAPE_COUNT ?
+				piece : HILLROAD_ALTERNATE_SHAPE_INDEX];
 	}
 
 	return 0;
@@ -70,6 +89,6 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 struct PLANE far plan_memres = {
 	0, 0,
 	{ 0, 0, 0 },
-	{ 0, 0x2000, 0 },
+	{ 0, DEFAULT_PLANE_NORMAL_Y, 0 },
 	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
 };
