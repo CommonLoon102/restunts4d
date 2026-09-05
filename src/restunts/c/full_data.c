@@ -18,6 +18,13 @@
 #define TRACK_PREVIEW_VECTOR_Y -10100
 #define TRACK_PREVIEW_VECTOR_Z 16760
 #define LEGACY_S32_MIN_VALUE ((legacy_s32)(-2147483647L - 1L))
+#define WINDOW_DEFINITION_BUFFER_SIZE 3600U
+#define VGA_MEMORY_SEGMENT 40960U
+#define FULL_AUDIO_ENGINE_SAMPLE_COUNT 500U
+#define FULL_AUDIO_ENGINE_UNKNOWN_02 16U
+#define FULL_AUDIO_ENGINE_UNKNOWN_03 39U
+#define FULL_AUDIO_ENGINE_UNKNOWN_04 40U
+#define FULL_AUDIO_ENGINE_UNKNOWN_05 35U
 
 /* Renderer work areas formerly reserved as anonymous spans in dseg.asm. */
 struct SHAPE3D game3dshapes[130];
@@ -257,7 +264,7 @@ struct SHAPE3D bravshape;
 struct SPRITE far sprite1;
 struct SPRITE far sprite2;
 legacy_u16 far full_screen_line_offsets[200];
-legacy_u8 far wnd_defs[0xE10];
+legacy_u8 far wnd_defs[WINDOW_DEFINITION_BUFFER_SIZE];
 legacy_s8* far next_wnd_def = (legacy_s8*)&wnd_defs[0];
 struct SPRITE far* sprite_ptrs[4];
 struct SPRITE far* mcgawndsprite;
@@ -537,7 +544,10 @@ void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16,
 
 #pragma pack (push, 1)
 struct FULL_AUDIO_ENGINE_DEFINITION {
-	legacy_u8 header[8];
+	legacy_u16 sample_count;
+	legacy_u8 unknown_02[4];
+	legacy_u8 initialized;
+	legacy_u8 unknown_07;
 	const legacy_s8 far* resource_ids[10];
 };
 #pragma pack (pop)
@@ -549,12 +559,20 @@ typedef char full_audio_engine_definition_must_be_48_bytes[
 #endif
 
 struct FULL_AUDIO_ENGINE_DEFINITION unk_3E7FC = {
-	{ 0xF4, 0x01, 0x10, 0x27, 0x28, 0x23, 0, 0 },
+	FULL_AUDIO_ENGINE_SAMPLE_COUNT,
+	{ FULL_AUDIO_ENGINE_UNKNOWN_02, FULL_AUDIO_ENGINE_UNKNOWN_03,
+		FULL_AUDIO_ENGINE_UNKNOWN_04, FULL_AUDIO_ENGINE_UNKNOWN_05 },
+	0,
+	0,
 	{ "ENGI", "ENGI", "STAR", "STOP", "BLOW", "CRAS", "SKID",
 		"SKI2", "BUMP", "SCRA" }
 };
 struct FULL_AUDIO_ENGINE_DEFINITION unk_3E82C = {
-	{ 0xF4, 0x01, 0x10, 0x27, 0x28, 0x23, 0, 0 },
+	FULL_AUDIO_ENGINE_SAMPLE_COUNT,
+	{ FULL_AUDIO_ENGINE_UNKNOWN_02, FULL_AUDIO_ENGINE_UNKNOWN_03,
+		FULL_AUDIO_ENGINE_UNKNOWN_04, FULL_AUDIO_ENGINE_UNKNOWN_05 },
+	0,
+	0,
 	{ "ENGI", "ENGI", "STAR", "STOP", "BLOW", "CRAS", "SKID",
 		"SKI2", "BUMP", "SCRA" }
 };
@@ -562,7 +580,7 @@ struct FULL_AUDIO_ENGINE_DEFINITION unk_3E82C = {
 static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 {
 	sprite->sprite_bitmapptr = (struct SHAPE2D far*)
-		dos_memory_make_pointer(0xA000, 0);
+		dos_memory_make_pointer(VGA_MEMORY_SEGMENT, 0);
 	sprite->sprite_unk1 = 0;
 	sprite->sprite_unk2 = 0;
 	sprite->sprite_unk3 = 0;
@@ -585,7 +603,7 @@ void full_data_initialize(void)
 
 	for (index = 0; index < 200U; index++)
 		full_screen_line_offsets[index] = (legacy_u16)(index * 320U);
-	for (index = 0; index < 0xE10U; index++)
+	for (index = 0; index < WINDOW_DEFINITION_BUFFER_SIZE; index++)
 		wnd_defs[index] = 0;
 	next_wnd_def = (legacy_s8*)dos_memory_make_near_pointer(
 		dos_memory_pointer_offset(wnd_defs));
