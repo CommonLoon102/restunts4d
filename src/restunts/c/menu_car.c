@@ -10,8 +10,8 @@ static void car_menu_draw_standard_button(legacy_s8 far* text,
 	legacy_u16 button_index)
 {
 	draw_button(text,
-		LEGACY_S16_WRAP_ADD(carmenu_buttons_y1[0], 1),
-		LEGACY_S16_WRAP_ADD(carmenu_buttons_x1[button_index], 1),
+		LEGACY_S16_WRAP_ADD(carmenu_buttons_x1[0], 1),
+		LEGACY_S16_WRAP_ADD(carmenu_buttons_y1[button_index], 1),
 		0x56, 0x10, word_407F4, word_407F6, word_407F8, 0);
 }
 
@@ -313,13 +313,13 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	if (previous_selected != selected) {
 		if (previous_selected != 0xFFU) {
 			sprite_copy_2_to_1_2();
-			sprite_set_1_size(carmenu_buttons_y1[0],
+			sprite_set_1_size(carmenu_buttons_x1[0],
 				LEGACY_S16_FROM_BITS((legacy_u16)(
-					(LEGACY_U16_WRAP_ADD(carmenu_buttons_y2[0],
+					(LEGACY_U16_WRAP_ADD(carmenu_buttons_x2[0],
 						video_flag2_is1)) &
 					(legacy_u16)video_flag3_isFFFF)),
-				carmenu_buttons_x1[0],
-				LEGACY_S16_WRAP_ADD(carmenu_buttons_x2[4], 1));
+				carmenu_buttons_y1[0],
+				LEGACY_S16_WRAP_ADD(carmenu_buttons_y2[4], 1));
 			mouse_draw_opaque_check();
 			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 			mouse_draw_transparent_check();
@@ -331,14 +331,14 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 	sprite_copy_2_to_1_2();
 	rotation_delta = (legacy_s16)mouse_timer_sprite_unk(selected,
-		carmenu_buttons_y1, carmenu_buttons_y2,
 		carmenu_buttons_x1, carmenu_buttons_x2,
+		carmenu_buttons_y1, carmenu_buttons_y2,
 		word_407CE, word_407D0);
 	menu_update_idle_counter((legacy_u16)rotation_delta, 0x2EE0);
 	input = (legacy_u16)input_checking(rotation_delta);
 	mouse_hit = (legacy_s16)mouse_multi_hittest(5,
-		carmenu_buttons_y1, carmenu_buttons_y2,
-		carmenu_buttons_x1, carmenu_buttons_x2);
+		carmenu_buttons_x1, carmenu_buttons_x2,
+		carmenu_buttons_y1, carmenu_buttons_y2);
 	if (mouse_hit != -1)
 		selected = (legacy_u8)mouse_hit;
 	if (idle_expired != 0) {
