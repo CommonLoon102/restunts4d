@@ -65,6 +65,14 @@
 #define BANKED_CORNER_WALL_THRESHOLD 102
 #define BANKED_CORNER_PLAN_BASE 7
 #define BANKED_CORNER_WALL_BASE 123
+#define LOOP_REAR_PLAN_BASE 51
+#define LOOP_FRONT_PLAN_BASE 45
+#define LOOP_SURFACE_END_PADDING 100
+#define LOOP_SURFACE_LAST_INDEX 5U
+#define LOOP_UPPER_HEIGHT_THRESHOLD 524
+#define LOOP_LANE_SEPARATION 400
+#define LOOP_LOW_CLEARANCE 100
+#define LOOP_LOW_CLEARANCE_LAST_SEGMENT 1U
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -661,16 +669,16 @@ void build_track_object(struct VECTOR* world_position,
 
 	case 27: /* Loop. */
 		if (position.z < 0) {
-			value = 0x33;
+			value = LOOP_REAR_PLAN_BASE;
 			effective_x = LEGACY_S16_WRAP_NEGATE(position.x);
 			effective_z = LEGACY_S16_WRAP_NEGATE(position.z);
 		} else {
-			value = 0x2D;
+			value = LOOP_FRONT_PLAN_BASE;
 			effective_x = position.x;
 			effective_z = position.z;
 		}
 		if (effective_z <=
-			LEGACY_S16_WRAP_ADD(loopSurface_maxZ, 0x64)) {
+			LEGACY_S16_WRAP_ADD(loopSurface_maxZ, LOOP_SURFACE_END_PADDING)) {
 			if (effective_z > LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1))
 				value2 = LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1);
 			else
@@ -679,22 +687,22 @@ void build_track_object(struct VECTOR* world_position,
 			while (loopSurface_ZBounds1[index] < value2)
 				index++;
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) > 0x20C) {
-				index = (legacy_u16)(5U - index);
+				terrainHeight) > LOOP_UPPER_HEIGHT_THRESHOLD) {
+				index = (legacy_u16)(LOOP_SURFACE_LAST_INDEX - index);
 				if (effective_x < loopSurface_XBounds0[index] ||
 					effective_x > LEGACY_S16_WRAP_ADD(
-						loopSurface_XBounds1[index], 0x190))
+						loopSurface_XBounds1[index], LOOP_LANE_SEPARATION))
 					break;
 				if (effective_x <= loopSurface_XBounds1[index] ||
 					effective_x >= LEGACY_S16_WRAP_ADD(
-						loopSurface_XBounds0[index], 0x190)) {
+						loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
 					value3 = track_interpolate(value2,
 						loopSurface_ZBounds0[index],
 						loopSurface_ZBounds1[index],
 						loopSurface_XBounds0[index],
 						loopSurface_XBounds1[index]);
 					if (effective_x <= value3 || effective_x >=
-						LEGACY_S16_WRAP_ADD(value3, 0x190))
+						LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION))
 						break;
 				}
 				planindex = LEGACY_S16_WRAP_ADD(
@@ -703,14 +711,15 @@ void build_track_object(struct VECTOR* world_position,
 				byte_4392C = 0;
 				break;
 			}
-			if (!((index > 1U && LEGACY_S16_WRAP_SUB(
-					world_position->y, terrainHeight) < 0x64) ||
+			if (!((index > LOOP_LOW_CLEARANCE_LAST_SEGMENT &&
+				LEGACY_S16_WRAP_SUB(world_position->y,
+					terrainHeight) < LOOP_LOW_CLEARANCE) ||
 				effective_x < loopSurface_XBounds0[index] ||
 				effective_x > LEGACY_S16_WRAP_ADD(
-					loopSurface_XBounds1[index], 0x190))) {
+					loopSurface_XBounds1[index], LOOP_LANE_SEPARATION))) {
 				if (effective_x > loopSurface_XBounds1[index] &&
 					effective_x < LEGACY_S16_WRAP_ADD(
-						loopSurface_XBounds0[index], 0x190)) {
+						loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
 					planindex = LEGACY_S16_WRAP_ADD(
 						value, (legacy_s16)index);
 					current_surf_type = (legacy_u8)surface_type;
@@ -725,7 +734,7 @@ void build_track_object(struct VECTOR* world_position,
 						loopSurface_XBounds0[index],
 						loopSurface_XBounds1[index]);
 					if (effective_x > value3 && effective_x <
-						LEGACY_S16_WRAP_ADD(value3, 0x190)) {
+						LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
 						planindex = LEGACY_S16_WRAP_ADD(
 							value, (legacy_s16)index);
 						current_surf_type = (legacy_u8)surface_type;
