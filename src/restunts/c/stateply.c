@@ -41,10 +41,16 @@
 #define PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE 29
 #define PLAYER_PHYSICS_TRACK_GRID_SIZE 30
 #define PLAYER_PHYSICS_START_FINISH_POLE_OFFSET 126
+#define PLAYER_PHYSICS_SURFACE_PAVED 1
 #define PLAYER_PHYSICS_SURFACE_WATER 5
 #define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
 #define PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE 4U
 #define PLAYER_PHYSICS_ROTATION_DEADBAND 2
+#define PLAYER_PHYSICS_PLANE_INDEX_NONE (-1)
+#define PLAYER_PHYSICS_GROUND_PLANE_INDEX 0
+#define PLAYER_PHYSICS_WALL_INDEX_NONE (-1)
+#define PLAYER_PHYSICS_TRACK_CAMERA_INDEX_NONE (-1)
+#define PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET 2
 
 enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_15142,
@@ -495,7 +501,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	}
 	vec_unk2.x = 0;
 	vec_unk2.y = 0;
-	planindex_copy = -1;
+	planindex_copy = PLAYER_PHYSICS_PLANE_INDEX_NONE;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
 	for (var_wheelIndex = 0;
@@ -596,7 +602,7 @@ case PLAYER_FLOW_loc_15240:
 	nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
 case PLAYER_FLOW_loc_15257:
-	if (wallindex != -1)
+	if (wallindex != PLAYER_PHYSICS_WALL_INDEX_NONE)
 		{ physics_flow = PLAYER_FLOW_loc_15264; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_15950; continue; }
 
@@ -909,7 +915,8 @@ case PLAYER_FLOW_loc_158DA:
 	byte_4392C = 1;
 	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
-	nextPosAndNormalIP = plane_origin_op(0, vec_1C6.x, vec_1C6.y, vec_1C6.z);
+	nextPosAndNormalIP = plane_origin_op(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
+		vec_1C6.x, vec_1C6.y, vec_1C6.z);
 
 case PLAYER_FLOW_loc_15950:
 	if (nextPosAndNormalIP > 0)
@@ -1045,9 +1052,9 @@ case PLAYER_FLOW_loc_15D43:
 	{ physics_flow = PLAYER_FLOW_loc_151BA; continue; }
 
 case PLAYER_FLOW_loc_15D94:
-	wallindex = -1;
-	current_surf_type = 1; //tarmac;
-	planindex = 0;
+	wallindex = PLAYER_PHYSICS_WALL_INDEX_NONE;
+	current_surf_type = PLAYER_PHYSICS_SURFACE_PAVED;
+	planindex = PLAYER_PHYSICS_GROUND_PLANE_INDEX;
 	current_planptr = planptr;
 	{ physics_flow = PLAYER_FLOW_loc_151DB; continue; }
 
@@ -1497,7 +1504,7 @@ case PLAYER_FLOW_loc_16648:
 
 case PLAYER_FLOW_loc_16650:
 	si = (legacy_s8)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
-	if (si != -1)
+	if (si != PLAYER_PHYSICS_TRACK_CAMERA_INDEX_NONE)
 		{ physics_flow = PLAYER_FLOW_loc_16670; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
@@ -1518,7 +1525,8 @@ case PLAYER_FLOW_loc_1667A:
 
 	state.field_3FA[si] = 1;
 
-	state_op_unk(LEGACY_S16_WRAP_ADD(si, 2),
+	state_op_unk(LEGACY_S16_WRAP_ADD(si,
+		PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
 		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
 		scale_speed_to_travel(arg_pState->car_speed2,
 			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
