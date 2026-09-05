@@ -132,7 +132,7 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 		particle_lifetime = LEGACY_S16_SAR2(
 			LEGACY_S16_WRAP_MUL(lifetime_scale, particle_timer));
 		LEGACY_WRITE_U16_LE(
-			&state.field_3BE[slot * 2], particle_lifetime);
+			&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_lifetime);
 		emitted = LEGACY_S16_WRAP_ADD(emitted, 1);
 	}
 }
@@ -162,11 +162,11 @@ void sub_19BA0(void) {
 			state.game_longs3[slot], movement.z);
 
 		particle_velocity = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
-			&state.field_3BE[slot * 2]));
+			&state.field_3BE[slot * LEGACY_WORD_BYTES]));
 		particle_velocity = LEGACY_S16_WRAP_SUB(
 			particle_velocity, PARTICLE_GRAVITY_STEP);
 		LEGACY_WRITE_U16_LE(
-			&state.field_3BE[slot * 2], particle_velocity);
+			&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_velocity);
 		state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
 			state.game_longs2[slot], particle_velocity);
 
@@ -174,7 +174,7 @@ void sub_19BA0(void) {
 			particle_velocity = LEGACY_S16_WRAP_SUB(
 				particle_velocity, PARTICLE_GRAVITY_STEP);
 			LEGACY_WRITE_U16_LE(
-				&state.field_3BE[slot * 2], particle_velocity);
+				&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_velocity);
 			state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
 				state.game_longs2[slot], particle_velocity);
 		}
