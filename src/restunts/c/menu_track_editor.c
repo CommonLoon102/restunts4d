@@ -7,6 +7,11 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#define TRACK_TILE_CONTINUATION_SOUTHEAST 253U
+#define TRACK_TILE_CONTINUATION_SOUTH 254U
+#define TRACK_TILE_CONTINUATION_EAST 255U
+#define TRACK_EDITOR_REFRESH_BLIT_MODE 254U
+
 static legacy_u8 far* progress_box_shape;
 
 extern struct TRACKOBJECT trkObjectList[];
@@ -37,7 +42,7 @@ void preRender_icons(legacy_u8 page)
 				sprite_shape_to_1(tracksmenushapes1[tile], x, y);
 				continue;
 			}
-			if (tile >= 0xFDU)
+			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST)
 				continue;
 
 			sprite_shape_to_1(tracksmenushapes1[0], x, y);
@@ -97,7 +102,7 @@ void draw_2DtrackMap(
 			y = LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_WRAP_MUL((legacy_s16)map_row, 16), 4);
 
-			if (tile < 0xFDU) {
+			if (tile < TRACK_TILE_CONTINUATION_SOUTHEAST) {
 				if (tile == 0) {
 					if (cached_track[cache_index] == 0 &&
 						cached_terrain[cache_index] == terrain)
@@ -173,7 +178,7 @@ void draw_2DtrackMap(
 			}
 			cached_track[cache_index] = 0xFFU;
 
-			if (tile == 0xFFU && map_column == 0) {
+			if (tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
 				sprite_putimage_and_alt(tracksmenushapes1[terrain], x, y);
 				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row + 1U],
@@ -186,7 +191,7 @@ void draw_2DtrackMap(
 					LEGACY_S16_WRAP_SUB(x, 16), y);
 				sprite_putimage_or(tracksmenushape2dunk[neighbor_tile],
 					LEGACY_S16_WRAP_SUB(x, 16), y);
-			} else if (tile == 0xFEU && map_row == 0) {
+			} else if (tile == TRACK_TILE_CONTINUATION_SOUTH && map_row == 0) {
 				sprite_putimage_and_alt(tracksmenushapes1[terrain], x, y);
 				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row],
@@ -199,7 +204,7 @@ void draw_2DtrackMap(
 					x, LEGACY_S16_WRAP_SUB(y, 16));
 				sprite_putimage_or(tracksmenushape2dunk[neighbor_tile],
 					x, LEGACY_S16_WRAP_SUB(y, 16));
-			} else if (tile == 0xFDU && map_row == 0 && map_column == 0) {
+			} else if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST && map_row == 0 && map_column == 0) {
 				sprite_putimage_and_alt(tracksmenushapes1[terrain], x, y);
 				neighbor_tile = td14_elem_map_main[LEGACY_U16_WRAP_SUB(
 					LEGACY_U16_WRAP_ADD(
@@ -251,7 +256,7 @@ void sub_2C9B4(void)
 			tile = td14_elem_map_main[current_index];
 			if (tile == 0)
 				continue;
-			if (tile >= 0xFDU) {
+			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST) {
 				if (used[current_index] == 0)
 					td14_elem_map_main[current_index] = 0;
 				continue;
@@ -263,7 +268,7 @@ void sub_2C9B4(void)
 				next_index = LEGACY_U16_WRAP_ADD(
 					track_menu_next_row(row), column);
 				if (used[next_index] != 0 ||
-					td14_elem_map_main[next_index] != 0xFEU)
+					td14_elem_map_main[next_index] != TRACK_TILE_CONTINUATION_SOUTH)
 					td14_elem_map_main[current_index] = 0;
 				else
 					used[next_index] = 1;
@@ -272,7 +277,8 @@ void sub_2C9B4(void)
 			case 2:
 				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
 				if (used[east_index] != 0 ||
-					td14_elem_map_main[east_index] != 0xFFU)
+					td14_elem_map_main[east_index] !=
+					TRACK_TILE_CONTINUATION_EAST)
 					td14_elem_map_main[current_index] = 0;
 				else
 					used[east_index] = 1;
@@ -284,10 +290,11 @@ void sub_2C9B4(void)
 					track_menu_next_row(row), column);
 				if (used[east_index] != 0 || used[next_index] != 0 ||
 					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0 ||
-					td14_elem_map_main[east_index] != 0xFFU ||
-					td14_elem_map_main[next_index] != 0xFEU ||
+					td14_elem_map_main[east_index] !=
+					TRACK_TILE_CONTINUATION_EAST ||
+					td14_elem_map_main[next_index] != TRACK_TILE_CONTINUATION_SOUTH ||
 					td14_elem_map_main[
-						LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0xFDU) {
+						LEGACY_U16_WRAP_ADD(next_index, 1U)] != TRACK_TILE_CONTINUATION_SOUTHEAST) {
 					td14_elem_map_main[current_index] = 0;
 				} else {
 					used[east_index] = 1;
@@ -359,9 +366,9 @@ static void track_editor_skip_previous_placeholders(legacy_u8 page,
 {
 	legacy_u8 tile;
 
-	while (track_editor_palette_tile(page, *row, *column) >= 0xFEU) {
+	while (track_editor_palette_tile(page, *row, *column) >= TRACK_TILE_CONTINUATION_SOUTH) {
 		tile = track_editor_palette_tile(page, *row, *column);
-		if (tile == 0xFFU)
+		if (tile == TRACK_TILE_CONTINUATION_EAST)
 			(*column)--;
 		else
 			(*row)--;
@@ -375,15 +382,15 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 
 	source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[row], column);
 	tile = td14_elem_map_main[source_index];
-	if (tile == 0xFDU) {
+	if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		source_index = LEGACY_U16_WRAP_SUB(
 			LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column), 1U);
 		tile = td14_elem_map_main[source_index];
-	} else if (tile == 0xFEU) {
+	} else if (tile == TRACK_TILE_CONTINUATION_SOUTH) {
 		source_index = LEGACY_U16_WRAP_ADD(
 			track_menu_previous_row(row), column);
 		tile = td14_elem_map_main[source_index];
-	} else if (tile == 0xFFU) {
+	} else if (tile == TRACK_TILE_CONTINUATION_EAST) {
 		tile = td14_elem_map_main[LEGACY_U16_WRAP_SUB(source_index, 1U)];
 	}
 	return tile;
@@ -681,10 +688,10 @@ void load_tracks_menu_shapes(void)
 				previous_page = page;
 				while (selection_row[1] < 6U &&
 					track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]) >= 0xFEU) {
+						selection_row[1], selection_column[1]) >= TRACK_TILE_CONTINUATION_SOUTH) {
 					value = track_editor_palette_tile(page,
 						selection_row[1], selection_column[1]);
-					if (value == 0xFFU)
+					if (value == TRACK_TILE_CONTINUATION_EAST)
 						selection_column[1]--;
 					else
 						selection_row[1]--;
@@ -740,7 +747,7 @@ void load_tracks_menu_shapes(void)
 			}
 
 			sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
-			blit_mode = 0xFEU;
+			blit_mode = TRACK_EDITOR_REFRESH_BLIT_MODE;
 			previous_hovered_tile = 0xFFU;
 		}
 
@@ -775,17 +782,18 @@ void load_tracks_menu_shapes(void)
 			} else {
 				cursor_x = (legacy_s16)(selection_column[1] * 16U + 0xDCU);
 				if (track_editor_palette_tile(page, selection_row[1],
-					selection_column[1] + 6U) == 0xFEU)
+					selection_column[1] + 6U) == TRACK_TILE_CONTINUATION_SOUTH)
 					cursor_height = 0x20U;
 				if (selection_column[1] < 5U &&
 					track_editor_palette_tile(page, selection_row[1],
-						selection_column[1] + 1U) == 0xFFU)
+						selection_column[1] + 1U) ==
+						TRACK_TILE_CONTINUATION_EAST)
 					cursor_width = 0x20U;
 			}
 			hovered_tile = selection_row[1] < 6U ?
 				track_editor_palette_tile(page, selection_row[1],
 					selection_column[1]) : 0;
-			if (hovered_tile >= 0xFDU || page == 0)
+			if (hovered_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST || page == 0)
 				hovered_tile = 0;
 		}
 
@@ -908,10 +916,10 @@ void load_tracks_menu_shapes(void)
 						LEGACY_S16_WRAP_SUB(mouse_ypos, 0x24), 16);
 					if (clicked_row < 6U) {
 						if (track_editor_palette_tile(page, clicked_row,
-							clicked_column) == 0xFEU)
+							clicked_column) == TRACK_TILE_CONTINUATION_SOUTH)
 							clicked_row--;
 						if (track_editor_palette_tile(page, clicked_row,
-							clicked_column) == 0xFFU)
+							clicked_column) == TRACK_TILE_CONTINUATION_EAST)
 							clicked_column--;
 					} else {
 						clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
@@ -1150,7 +1158,7 @@ void load_tracks_menu_shapes(void)
 						(legacy_u16)trackrows[selection_row[0]],
 						selection_column[0]);
 					saved_tile = td14_elem_map_main[source_index];
-					if (saved_tile >= 0xFDU)
+					if (saved_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST)
 						saved_tile = 0;
 					last_column = selection_column[0];
 					last_row = selection_row[0];
@@ -1164,18 +1172,18 @@ void load_tracks_menu_shapes(void)
 				if (multi_tile == 1U) {
 					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[last_row + 1U],
-						last_column)] = 0xFEU;
+						last_column)] = TRACK_TILE_CONTINUATION_SOUTH;
 				} else if (multi_tile == 2U) {
 					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = 0xFFU;
+						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
 				} else if (multi_tile == 3U) {
 					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = 0xFFU;
+						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[last_row + 1U], last_column);
-					td14_elem_map_main[source_index] = 0xFEU;
+					td14_elem_map_main[source_index] = TRACK_TILE_CONTINUATION_SOUTH;
 					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = 0xFDU;
+						source_index, 1U)] = TRACK_TILE_CONTINUATION_SOUTHEAST;
 				}
 			}
 		} else if (key == KEY_SPACE || key == KEY_INSERT) {
@@ -1217,9 +1225,9 @@ void load_tracks_menu_shapes(void)
 				if (focus != 0 && selection_row[1] < 6U) {
 					value = track_editor_palette_tile(page,
 						selection_row[1], selection_column[1]);
-					if (value == 0xFFU)
+					if (value == TRACK_TILE_CONTINUATION_EAST)
 						selection_column[1]--;
-					else if (value == 0xFEU)
+					else if (value == TRACK_TILE_CONTINUATION_SOUTH)
 						selection_row[1]++;
 				}
 			}
@@ -1252,9 +1260,9 @@ void load_tracks_menu_shapes(void)
 					value = track_editor_palette_tile(page,
 						selection_row[1],
 						(legacy_u8)(selection_column[1] + step));
-					if (value < 0xFEU)
+					if (value < TRACK_TILE_CONTINUATION_SOUTH)
 						break;
-					if (value == 0xFFU)
+					if (value == TRACK_TILE_CONTINUATION_EAST)
 						step++;
 					else
 						selection_row[1]--;
