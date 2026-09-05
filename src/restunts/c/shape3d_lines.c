@@ -39,9 +39,9 @@ static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor) 
 
 static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major) {
 	/* The legacy code-segment table contains this truncated quotient for
-	 * major values below 50.  Its first shared entry is an otherwise unused
-	 * sentinel; retain it for the degenerate calls as well. */
-	if (major < 2U)
+	 * major values below its shared-entry cutoff. Its first shared entry is
+	 * an otherwise unused sentinel; retain it for the degenerate calls as well. */
+	if (major < DRAW_LINE_MIN_MAJOR_LENGTH)
 		return DRAW_LINE_DEGENERATE_STEP;
 	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
 		(legacy_u32)minor << LEGACY_WORD_BITS, major);
@@ -383,14 +383,16 @@ static legacy_s16 draw_line_clip_left(legacy_u16* line)
 		ax = (legacy_u16)(ax - dx);
 		advance = (legacy_u16)(ax + 1);
 		line[DRAW_LINE_PIXEL_COUNT_INDEX] = advance;
-		draw_line_advance_end(line, ax, 11);
+		draw_line_advance_end(
+			line, ax, DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX);
 		break;
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
 		old_value = line[DRAW_LINE_START_X_INDEX];
 		line[DRAW_LINE_START_X_INDEX] = sprite1.sprite_left2;
 		advance = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] - old_value);
 		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - advance);
-		draw_line_advance_secondary(line, advance, 10U);
+		draw_line_advance_secondary(
+			line, advance, DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX);
 		break;
 	default:
 		return 0;
@@ -467,7 +469,8 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 		ax = (legacy_u16)(ax - cx);
 		line[DRAW_LINE_START_X_INDEX] = cx;
 		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - ax);
-		draw_line_advance_secondary(line, ax, 12U);
+		draw_line_advance_secondary(
+			line, ax, DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX);
 		return 0;
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
 		ax = sprite1.sprite_widthsum;
@@ -476,7 +479,8 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 		ax = (legacy_u16)(ax - line[DRAW_LINE_START_X_INDEX]);
 		line[DRAW_LINE_PIXEL_COUNT_INDEX] = ax;
 		advance = (legacy_u16)(ax - 1);
-		draw_line_advance_end(line, advance, 13);
+		draw_line_advance_end(
+			line, advance, DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX);
 		return 0;
 	default:
 		return 0;
@@ -687,13 +691,15 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 	subdivide_required = 0;
 	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]) -
 		(legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
-	if (difference < -32768L || difference > 32767L) {
+	if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT ||
+		difference > (legacy_s32)LEGACY_S16_MAX) {
 		subdivide_required = 1;
 	} else {
 		cx = (legacy_u16)difference;
 		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) -
 			(legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-		if (difference < -32768L || difference > 32767L) {
+		if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT ||
+			difference > (legacy_s32)LEGACY_S16_MAX) {
 			subdivide_required = 1;
 		} else {
 			dx = (legacy_u16)difference;
