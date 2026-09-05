@@ -21,7 +21,7 @@ static void gamestate_write_u16(struct GAMESTATE_WRITER* writer,
 	legacy_u16 value)
 {
 	LEGACY_WRITE_U16_LE(writer->destination + writer->offset, value);
-	writer->offset += 2U;
+	writer->offset += LEGACY_WORD_BYTES;
 }
 
 static void gamestate_write_s16(struct GAMESTATE_WRITER* writer,
@@ -35,7 +35,7 @@ static void gamestate_write_s32(struct GAMESTATE_WRITER* writer,
 {
 	LEGACY_WRITE_U32_LE(writer->destination + writer->offset,
 		(legacy_u32)value);
-	writer->offset += 4U;
+	writer->offset += LEGACY_DWORD_BYTES;
 }
 
 static void gamestate_write_vector(struct GAMESTATE_WRITER* writer,

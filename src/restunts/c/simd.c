@@ -27,7 +27,8 @@ static legacy_u16 simd_read_u16(struct SIMD_READER* reader)
 	legacy_u16 value;
 
 	value = LEGACY_READ_U16_LE(reader->source + reader->offset);
-	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, 2U);
+	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset,
+		LEGACY_WORD_BYTES);
 	return value;
 }
 

@@ -21,6 +21,8 @@ typedef unsigned short legacy_u16;
 #define LEGACY_WORD_BITS 16U
 #define LEGACY_DWORD_BITS 32U
 #define LEGACY_THREE_BYTE_BITS 24U
+#define LEGACY_WORD_BYTES 2U
+#define LEGACY_DWORD_BYTES 4U
 #define LEGACY_S8_MAX 127U
 #define LEGACY_U8_SIGN_BIT 128U
 #define LEGACY_U8_MAX 255U

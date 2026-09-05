@@ -97,14 +97,15 @@ legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
 
 static legacy_u32 secondary_timer_target(void)
 {
-	return ((legacy_u32)word_3F1C4 << 16) | word_3F1C2;
+	return ((legacy_u32)word_3F1C4 << LEGACY_WORD_BITS) | word_3F1C2;
 }
 
 static legacy_s16 secondary_timer_target_reached(
 	legacy_u32 current,
 	legacy_u32 target
 ) {
-	return (legacy_u16)(current >> 16) >= (legacy_u16)(target >> 16) &&
+	return (legacy_u16)(current >> LEGACY_WORD_BITS) >=
+		(legacy_u16)(target >> LEGACY_WORD_BITS) &&
 		(legacy_u16)current >= (legacy_u16)target;
 }
 
@@ -114,7 +115,7 @@ legacy_u32 set_add_value(legacy_u32 ticks)
 
 	target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	word_3F1C2 = (legacy_u16)target;
-	word_3F1C4 = (legacy_u16)(target >> 16);
+	word_3F1C4 = (legacy_u16)(target >> LEGACY_WORD_BITS);
 	return target;
 }
 

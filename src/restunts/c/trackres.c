@@ -36,7 +36,8 @@ static legacy_s16 track_resource_next_s16(struct TRACK_RESOURCE_READER* reader)
 	legacy_s16 value;
 
 	value = LEGACY_READ_S16_LE(reader->source + reader->offset);
-	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, 2U);
+	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset,
+		LEGACY_WORD_BYTES);
 	return value;
 }
 
@@ -73,7 +74,7 @@ void track_collision_resources_decode(const legacy_u8 far* plane_source,
 		plane->plane_xy = track_resource_next_s16(&reader);
 		track_resource_next_vector(&reader, &plane->plane_origin);
 		track_resource_next_vector(&reader, &plane->plane_normal);
-		for (component = 0U; component < 9U; component++) {
+		for (component = 0U; component < MATRIX_ELEMENT_COUNT; component++) {
 			plane->plane_rotation.vals[component] =
 				track_resource_next_s16(&reader);
 		}
