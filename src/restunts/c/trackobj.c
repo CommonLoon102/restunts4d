@@ -4,6 +4,22 @@
 
 #define SURFACE_GRASS 4
 #define SURFACE_WATER 5
+#define TRACK_GRID_LAST_INDEX 29
+#define TRACK_TILE_COORDINATE_SHIFT 10U
+#define TRACK_ARC_CENTER_OFFSET 1024
+#define TRACK_ARC_CENTER_RADIUS 1536
+#define TRACK_ARC_SEGMENT_COUNT 18U
+#define TRACK_ARC_LAST_SEGMENT 17
+#define TERRAIN_SLOPE_2_ANGLE 128
+#define TERRAIN_SLOPE_3_ANGLE -640
+#define TERRAIN_SLOPE_4_ANGLE -384
+#define TERRAIN_SLOPE_5_ANGLE -128
+#define TRACK_TILE_CONTINUATION_SOUTHEAST 253U
+#define TRACK_TILE_CONTINUATION_SOUTH 254U
+#define TRACK_TILE_CONTINUATION_EAST 255U
+#define HILL_TERRAIN_FIRST 7U
+#define HILL_TERRAIN_END 11U
+#define TRACK_PHYSICAL_MODEL_MAXIMUM 74
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -129,13 +145,14 @@ static legacy_s16 track_radius_in_band(legacy_s16 x, legacy_s16 z,
 }
 
 /* Elevated and banked corners share one arc, centred on the tile corner:
-   the radius is measured against the 0x600 centre line, and the shape index
+   the radius is measured against the 1536-unit centre line, and the shape index
    comes from the same angle quantised into the 18 segments of the arc. */
 static legacy_s16 track_arc_radius(const struct VECTOR* position)
 {
 	return LEGACY_S16_WRAP_SUB((legacy_s16)polarRadius2D(
-		LEGACY_S16_WRAP_ADD(position->x, 0x400),
-		LEGACY_S16_WRAP_ADD(position->z, 0x400)), 0x600);
+		LEGACY_S16_WRAP_ADD(position->x, TRACK_ARC_CENTER_OFFSET),
+		LEGACY_S16_WRAP_ADD(position->z, TRACK_ARC_CENTER_OFFSET)),
+		TRACK_ARC_CENTER_RADIUS);
 }
 
 static legacy_s16 track_arc_segment(const struct VECTOR* position)
@@ -143,10 +160,11 @@ static legacy_s16 track_arc_segment(const struct VECTOR* position)
 	legacy_s16 value;
 
 	value = (legacy_s16)((((legacy_u16)polarAngle(
-		LEGACY_S16_WRAP_ADD(position->x, 0x400),
-		LEGACY_S16_WRAP_ADD(position->z, 0x400)) & ANGLE_QUARTER_MASK) *
-		18U) >> 8);
-	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value, 0x11));
+		LEGACY_S16_WRAP_ADD(position->x, TRACK_ARC_CENTER_OFFSET),
+		LEGACY_S16_WRAP_ADD(position->z, TRACK_ARC_CENTER_OFFSET)) &
+		ANGLE_QUARTER_MASK) * TRACK_ARC_SEGMENT_COUNT) >> 8);
+	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value,
+		TRACK_ARC_LAST_SEGMENT));
 }
 
 void build_track_object(struct VECTOR* world_position,
@@ -188,11 +206,13 @@ void build_track_object(struct VECTOR* world_position,
 	terrainHeight = 0;
 	terrain_tile = 0;
 
-	track_column = LEGACY_S16_SAR(world_position->x, 10U);
-	track_row = LEGACY_S16_SAR(world_position->z, 10U);
+	track_column = LEGACY_S16_SAR(world_position->x,
+		TRACK_TILE_COORDINATE_SHIFT);
+	track_row = LEGACY_S16_SAR(world_position->z,
+		TRACK_TILE_COORDINATE_SHIFT);
 	physical_model = -1;
-	if (track_column >= 0 && track_column <= 0x1D &&
-		track_row >= 0 && track_row <= 0x1D) {
+	if (track_column >= 0 && track_column <= TRACK_GRID_LAST_INDEX &&
+		track_row >= 0 && track_row <= TRACK_GRID_LAST_INDEX) {
 
 	elem_xCenter = (legacy_s16)trackcenterpos2[track_column];
 	elem_zCenter = (legacy_s16)terraincenterpos[track_row];
@@ -203,16 +223,16 @@ void build_track_object(struct VECTOR* world_position,
 	} else if (terrain_tile >= 2U && terrain_tile <= 5U) {
 		switch (terrain_tile) {
 		case 2:
-			terrain_angle = 0x80;
+			terrain_angle = TERRAIN_SLOPE_2_ANGLE;
 			break;
 		case 3:
-			terrain_angle = -0x280;
+			terrain_angle = TERRAIN_SLOPE_3_ANGLE;
 			break;
 		case 4:
-			terrain_angle = -0x180;
+			terrain_angle = TERRAIN_SLOPE_4_ANGLE;
 			break;
 		default:
-			terrain_angle = -0x80;
+			terrain_angle = TERRAIN_SLOPE_5_ANGLE;
 			break;
 		}
 		position.x = LEGACY_S16_WRAP_SUB(world_position->x,
@@ -235,16 +255,16 @@ void build_track_object(struct VECTOR* world_position,
 	do {
 	if (track_tile == 0)
 		break;
-	if (track_tile == 0xFDU) {
+	if (track_tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row + 1] + track_column - 1];
 		track_object_tile_center(track_tile, track_row + 1, track_column);
-	} else if (track_tile == 0xFEU) {
+	} else if (track_tile == TRACK_TILE_CONTINUATION_SOUTH) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row + 1] + track_column];
 		track_object_tile_center(track_tile, track_row + 1,
 			track_column + 1);
-	} else if (track_tile == 0xFFU) {
+	} else if (track_tile == TRACK_TILE_CONTINUATION_EAST) {
 		track_tile = td14_elem_map_main[
 			terrainrows[track_row] + track_column - 1];
 		track_object_tile_center(track_tile, track_row, track_column);
@@ -258,7 +278,8 @@ void build_track_object(struct VECTOR* world_position,
 		next_world_position->x, elem_xCenter);
 	next_position.z = LEGACY_S16_WRAP_SUB(
 		next_world_position->z, elem_zCenter);
-	if (track_tile != 0 && terrain_tile >= 7U && terrain_tile < 0x0BU)
+	if (track_tile != 0 && terrain_tile >= HILL_TERRAIN_FIRST &&
+		terrain_tile < HILL_TERRAIN_END)
 		track_tile = subst_hillroad_track(terrain_tile, track_tile);
 
 	track_object = &trkObjectList[track_tile];
@@ -271,7 +292,7 @@ void build_track_object(struct VECTOR* world_position,
 		surface_type = 1;
 	absolute_x = absolute_word(position.x);
 	absolute_z = absolute_word(position.z);
-	if (physical_model < 0 || physical_model > 0x4A)
+	if (physical_model < 0 || physical_model > TRACK_PHYSICAL_MODEL_MAXIMUM)
 		break;
 
 	switch (physical_model) {
