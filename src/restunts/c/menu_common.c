@@ -26,8 +26,8 @@ void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit)
 	}
 }
 
-legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index, const legacy_s16* x_values,
-	const legacy_s16* width_values, const legacy_s16* y_values, const legacy_s16* height_values,
+legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
+	const struct BUTTON_AREA* buttons,
 	legacy_s16 second_state, legacy_s16 first_state)
 {
 	legacy_u16 delta;
@@ -45,8 +45,8 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index, const legacy_s16* x_val
 	if (menu_animation_state != selected_state) {
 		menu_animation_state = selected_state;
 		mouse_draw_opaque_check();
-		sprite_1_unk4(x_values[item_index], y_values[item_index],
-			width_values[item_index], height_values[item_index],
+		sprite_1_unk4(buttons[item_index].x1, buttons[item_index].y1,
+			buttons[item_index].x2, buttons[item_index].y2,
 			selected_state);
 		mouse_draw_transparent_check();
 	}

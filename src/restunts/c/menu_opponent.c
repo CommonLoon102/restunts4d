@@ -75,7 +75,7 @@ void run_opponent_menu(void)
 					button_resource_ids[index]),
 					LEGACY_S16_WRAP_ADD(0x15,
 						LEGACY_U16_WRAP_MUL(index, 0x38U)),
-					opponentmenu_buttons_y1[0] + 1,
+					opponentmenu_buttons[0].y1 + 1,
 					0x36, 0x12, word_407F4, word_407F6,
 					word_407F8, 0);
 			}
@@ -131,14 +131,10 @@ void run_opponent_menu(void)
 		}
 
 		elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
-			opponentmenu_buttons_x1, opponentmenu_buttons_x2,
-			opponentmenu_buttons_y1, opponentmenu_buttons_y2,
-			word_407CE, word_407D0);
+			opponentmenu_buttons, word_407CE, word_407D0);
 		key = (legacy_u16)input_checking(
 			LEGACY_S16_FROM_BITS(elapsed));
-		hit = (legacy_s16)mouse_multi_hittest(5,
-			opponentmenu_buttons_x1, opponentmenu_buttons_x2,
-			opponentmenu_buttons_y1, opponentmenu_buttons_y2);
+		hit = (legacy_s16)mouse_multi_hittest(5, opponentmenu_buttons);
 		if (hit != -1 &&
 			!((legacy_u8)gameconfig.game_opponenttype == 0 && hit == 3))
 			selected = (legacy_u8)hit;

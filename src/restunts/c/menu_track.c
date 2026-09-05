@@ -104,15 +104,11 @@ void run_tracks_menu(legacy_s16 reload_track)
 			}
 
 			elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
-				trackmenu_buttons_x1, trackmenu_buttons_x2,
-				trackmenu_buttons_y1, trackmenu_buttons_y2,
-				word_407CE, word_407D0);
+				trackmenu_buttons, word_407CE, word_407D0);
 			menu_update_idle_counter(elapsed, 0x1770);
 			key = (legacy_u16)input_checking(
 				LEGACY_S16_FROM_BITS(elapsed));
-			hit = (legacy_s16)mouse_multi_hittest(3,
-				trackmenu_buttons_x1, trackmenu_buttons_x2,
-				trackmenu_buttons_y1, trackmenu_buttons_y2);
+			hit = (legacy_s16)mouse_multi_hittest(3, trackmenu_buttons);
 			if (hit != -1)
 				selected = (legacy_u8)hit;
 			if (idle_expired != 0) {

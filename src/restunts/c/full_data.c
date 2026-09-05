@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "game_input.h"
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
@@ -26,22 +27,32 @@ struct RECTANGLE* rectptr_unk2;
 /* Camera, menu, and renderer constants. */
 struct CUSTOM_CAMERA custom_camera = { 0x00D2, 0x0050, 0x01D0 };
 
-legacy_s16 menu_buttons_x1[5] = { 105, 66, 5, 190, 255 };
-legacy_s16 menu_buttons_x2[5] = { 208, 107, 67, 253, 312 };
-legacy_s16 menu_buttons_y1[5] = { 119, 77, 114, 76, 116 };
-legacy_s16 menu_buttons_y2[5] = { 197, 120, 170, 122, 166 };
-legacy_s16 trackmenu_buttons_x1[3] = { 16, 112, 208 };
-legacy_s16 trackmenu_buttons_x2[3] = { 112, 208, 304 };
-legacy_s16 trackmenu_buttons_y1[3] = { 171, 171, 171 };
-legacy_s16 trackmenu_buttons_y2[3] = { 197, 197, 197 };
-legacy_s16 carmenu_buttons_x1[5] = { 229, 229, 229, 229, 229 };
-legacy_s16 carmenu_buttons_x2[5] = { 316, 316, 316, 316, 316 };
-legacy_s16 carmenu_buttons_y1[5] = { 107, 125, 143, 161, 179 };
-legacy_s16 carmenu_buttons_y2[5] = { 124, 142, 160, 178, 196 };
-legacy_s16 opponentmenu_buttons_x1[5] = { 20, 76, 132, 188, 244 };
-legacy_s16 opponentmenu_buttons_x2[5] = { 76, 132, 188, 244, 300 };
-legacy_s16 opponentmenu_buttons_y1[5] = { 177, 177, 177, 177, 177 };
-legacy_s16 opponentmenu_buttons_y2[5] = { 197, 197, 197, 197, 197 };
+struct BUTTON_AREA menu_buttons[5] = {
+	{ 105, 208, 119, 197 },
+	{ 66, 107, 77, 120 },
+	{ 5, 67, 114, 170 },
+	{ 190, 253, 76, 122 },
+	{ 255, 312, 116, 166 }
+};
+struct BUTTON_AREA trackmenu_buttons[3] = {
+	{ 16, 112, 171, 197 },
+	{ 112, 208, 171, 197 },
+	{ 208, 304, 171, 197 }
+};
+struct BUTTON_AREA carmenu_buttons[5] = {
+	{ 229, 316, 107, 124 },
+	{ 229, 316, 125, 142 },
+	{ 229, 316, 143, 160 },
+	{ 229, 316, 161, 178 },
+	{ 229, 316, 179, 196 }
+};
+struct BUTTON_AREA opponentmenu_buttons[5] = {
+	{ 20, 76, 177, 197 },
+	{ 76, 132, 177, 197 },
+	{ 132, 188, 177, 197 },
+	{ 188, 244, 177, 197 },
+	{ 244, 300, 177, 197 }
+};
 legacy_s16 hiscore_buttons_y1[5] = { 174, 174, 174, 174, 174 };
 legacy_s16 hiscore_buttons_y2[5] = { 197, 197, 197, 197, 197 };
 
@@ -333,17 +344,16 @@ legacy_u8 byte_3E9E6[10] = { 0, 0, 2, 2, 3, 4, 5, 1, 7, 0 };
 legacy_u8 byte_3E9F0[10] = { 2, 6, 2, 3, 4, 5, 6, 7, 8, 0 };
 legacy_u8 byte_3E9FA[10] = { 0, 1, 0, 0, 1, 1, 1, 7, 8, 0 };
 legacy_u8 game_camera_buttons_count[4] = { 6, 6, 8, 7 };
-legacy_s16 game_camera_buttons_x1[9] = {
-	272, 109, 274, 232, 190, 151, 108, 66, 10
-};
-legacy_s16 game_camera_buttons_x2[9] = {
-	314, 151, 314, 274, 232, 190, 151, 91, 47
-};
-legacy_s16 game_camera_buttons_y1[9] = {
-	176, 176, 156, 156, 156, 156, 156, 156, 156
-};
-legacy_s16 game_camera_buttons_y2[9] = {
-	193, 193, 173, 173, 173, 173, 173, 193, 193
+struct BUTTON_AREA game_camera_buttons[9] = {
+	{ 272, 314, 176, 193 },
+	{ 109, 151, 176, 193 },
+	{ 274, 314, 156, 173 },
+	{ 232, 274, 156, 173 },
+	{ 190, 232, 156, 173 },
+	{ 151, 190, 156, 173 },
+	{ 108, 151, 156, 173 },
+	{ 66, 91, 156, 193 },
+	{ 10, 47, 156, 193 }
 };
 legacy_s16 word_3EA18 = 10;
 legacy_s16 word_3EA2A = 47;
@@ -351,10 +361,7 @@ legacy_s16 word_3EA3A = 156;
 legacy_s16 word_3EA3C = 156;
 legacy_s16 word_3EA4C = 193;
 legacy_s16 word_3EA4E = 193;
-legacy_s16 gameunk_button_x1;
-legacy_s16 gameunk_button_x2 = 104;
-legacy_s16 gameunk_button_y1 = 151;
-legacy_s16 gameunk_button_y2 = 200;
+struct BUTTON_AREA gameunk_button = { 0, 104, 151, 200 };
 
 legacy_s16 word_3BCDE[3] = { 2, 0, 1 };
 legacy_s16 word_3BCE4[4] = { 1, 0, 3, 2 };

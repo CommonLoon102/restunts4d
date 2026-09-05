@@ -137,10 +137,10 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	}
 	byte_40E08[player_index] = byte_3E9DB;
 	if (byte_3E9DB != 0xFFU) {
-		sprite_1_unk4(game_camera_buttons_x1[byte_3E9DB],
-			game_camera_buttons_y1[byte_3E9DB],
-			game_camera_buttons_x2[byte_3E9DB],
-			game_camera_buttons_y2[byte_3E9DB], word_407FE);
+		sprite_1_unk4(game_camera_buttons[byte_3E9DB].x1,
+			game_camera_buttons[byte_3E9DB].y1,
+			game_camera_buttons[byte_3E9DB].x2,
+			game_camera_buttons[byte_3E9DB].y2, word_407FE);
 	}
 	mouse_draw_transparent_check();
 }
@@ -565,8 +565,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	input = (legacy_u16)input_checking(delta);
 	hit = (legacy_u8)mouse_multi_hittest(
 		(legacy_u8)(game_camera_buttons_count[(legacy_u8)cameramode] + 1U),
-		game_camera_buttons_x1, game_camera_buttons_x2,
-		game_camera_buttons_y1, game_camera_buttons_y2);
+		game_camera_buttons);
 	if (hit != 0xFFU) {
 		if (hit != byte_3E9DB && input == 0)
 			input = 1;
@@ -602,9 +601,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 			}
 		}
 	} else {
-		hit = (legacy_u8)mouse_multi_hittest(1,
-			&gameunk_button_x1, &gameunk_button_x2,
-			&gameunk_button_y1, &gameunk_button_y2);
+		hit = (legacy_u8)mouse_multi_hittest(1, &gameunk_button);
 		if (hit == 0 && (input == 0x0DU || input == 0x20U))
 			input = 'c';
 	}

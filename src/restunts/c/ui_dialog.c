@@ -119,10 +119,7 @@ legacy_u16 show_dialog(
 	legacy_s8 choice_buffer[80];
 	legacy_s8 far* choice_texts[20];
 	legacy_u8 choice_lengths[20];
-	legacy_s16 choice_left[20];
-	legacy_s16 choice_right[20];
-	legacy_s16 choice_top[20];
-	legacy_s16 choice_bottom[20];
+	struct BUTTON_AREA choices[20];
 	legacy_s8 far* cursor;
 	legacy_s16 line_height;
 	legacy_s16 dialog_width;
@@ -245,11 +242,11 @@ legacy_u16 show_dialog(
 		cursor++;
 		choice_texts[choice_count] = cursor;
 		line_buffer[line_length] = 0;
-		choice_left[choice_count] = LEGACY_S16_WRAP_ADD(
+		choices[choice_count].x1 = LEGACY_S16_WRAP_ADD(
 			x, (legacy_s16)font_op2(line_buffer));
-		choice_top[choice_count] = LEGACY_S16_WRAP_ADD(y, dialog_height);
-		choice_bottom[choice_count] = LEGACY_S16_WRAP_ADD(
-			choice_top[choice_count], line_height);
+		choices[choice_count].y1 = LEGACY_S16_WRAP_ADD(y, dialog_height);
+		choices[choice_count].y2 = LEGACY_S16_WRAP_ADD(
+			choices[choice_count].y1, line_height);
 		line_buffer[line_length++] = ' ';
 		choice_width = 0;
 		character_count = 0;
@@ -270,17 +267,17 @@ legacy_u16 show_dialog(
 		line_buffer[line_length] = 0;
 		if (choice_width == 0)
 			choice_width = (legacy_u16)font_op2(line_buffer);
-		choice_right[choice_count] = LEGACY_S16_WRAP_ADD(
-			choice_left[choice_count], (legacy_s16)choice_width);
+		choices[choice_count].x2 = LEGACY_S16_WRAP_ADD(
+			choices[choice_count].x1, (legacy_s16)choice_width);
 		choice_count++;
 	}
 
 	if (choice_count > 2U &&
-		choice_left[0] == choice_left[1] &&
-		choice_left[1] == choice_left[2]) {
+		choices[0].x1 == choices[1].x1 &&
+		choices[1].x1 == choices[2].x1) {
 		for (index = 0; index < choice_count; index++) {
-			choice_right[index] = LEGACY_S16_WRAP_ADD(
-				choice_left[index], dialog_width);
+			choices[index].x2 = LEGACY_S16_WRAP_ADD(
+				choices[index].x1, dialog_width);
 		}
 	}
 	mouse_draw_transparent_check();
@@ -340,8 +337,8 @@ legacy_u16 show_dialog(
 				for (copied = 0; copied < choice_lengths[index]; copied++)
 					choice_buffer[copied] = choice_texts[index][copied];
 				choice_buffer[copied] = 0;
-				sub_345BC(choice_buffer, choice_left[index],
-					choice_top[index]);
+				sub_345BC(choice_buffer, choices[index].x1,
+					choices[index].y1);
 			}
 			mouse_draw_transparent_check();
 			if (previous == 0xFFU)
@@ -351,7 +348,7 @@ legacy_u16 show_dialog(
 
 		input = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
 		hit = (legacy_s16)mouse_multi_hittest(choice_count,
-			choice_left, choice_right, choice_top, choice_bottom);
+			choices);
 		if (hit != -1 &&
 			(disabled_choices == 0 || disabled_choices[hit] == 0))
 			selected = (legacy_u8)hit;
@@ -410,10 +407,7 @@ legacy_s8 do_fileselect_dialog(
 	legacy_s8 far* prompt
 ) {
 	legacy_s16 positions[40];
-	legacy_s16 hit_left[10];
-	legacy_s16 hit_right[10];
-	legacy_s16 hit_top[10];
-	legacy_s16 hit_bottom[10];
+	struct BUTTON_AREA hit_areas[10];
 	legacy_s8 filenames[128][13];
 	const legacy_s8* found_path;
 	legacy_u16 index;
@@ -449,13 +443,13 @@ legacy_s8 do_fileselect_dialog(
 	sub_345BC(&resID_byte1, positions[0], positions[1]);
 
 	for (index = 0; index < 10U; index++) {
-		hit_left[index] = positions[2];
-		hit_right[index] = positions[2] + 0xA2;
+		hit_areas[index].x1 = positions[2];
+		hit_areas[index].x2 = positions[2] + 0xA2;
 		if (index == 9U)
-			hit_top[index] = hit_top[index - 1U] + 10;
+			hit_areas[index].y1 = hit_areas[index - 1U].y1 + 10;
 		else
-			hit_top[index] = positions[3U + index * 2U];
-		hit_bottom[index] = hit_top[index] + 10;
+			hit_areas[index].y1 = positions[3U + index * 2U];
+		hit_areas[index].y2 = hit_areas[index].y1 + 10;
 	}
 	font_set_unk(dialog_fnt_colour, word_3EB90);
 	sub_345BC(directory, positions[2], positions[3]);
@@ -492,10 +486,10 @@ legacy_s8 do_fileselect_dialog(
 
 	if (file_count > 7U) {
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsu));
-		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), hit_top[1]);
+		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), hit_areas[1].y1);
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsd));
 		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1),
-			hit_top[9] - 1);
+			hit_areas[9].y1 - 1);
 	}
 
 	selected = 0;
@@ -519,14 +513,14 @@ legacy_s8 do_fileselect_dialog(
 				if (candidate < (legacy_s16)file_count) {
 					strcpy(&resID_byte1, filenames[(legacy_u8)candidate]);
 					sub_345BC(&resID_byte1, positions[2],
-						hit_top[visible_row + 2U]);
+						hit_areas[visible_row + 2U].y1);
 				} else {
 					sub_345BC("        ", positions[2],
-						hit_top[visible_row + 2U]);
+						hit_areas[visible_row + 2U].y1);
 				}
 				text_width = (legacy_u16)font_op2(&resID_byte1);
 				sprite_1_unk(positions[2] + text_width,
-					hit_top[visible_row + 2U],
+					hit_areas[visible_row + 2U].y1,
 					positions[2] + 0xA2 - text_width - positions[2],
 					8, word_3EB90);
 			}
@@ -535,7 +529,7 @@ legacy_s8 do_fileselect_dialog(
 
 		key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
 		hit = (legacy_s16)mouse_multi_hittest(10,
-			hit_left, hit_right, hit_top, hit_bottom);
+			hit_areas);
 		if (hit != -1) {
 			if (hit == 0) {
 				if ((mouse_butstate & 3U) != 0) {

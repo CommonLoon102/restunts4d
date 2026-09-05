@@ -14,19 +14,13 @@
 
 extern legacy_s8 aSdmsel[];
 extern legacy_s8 aScrn[];
-extern legacy_s16 menu_buttons_x1[];
-extern legacy_s16 menu_buttons_x2[];
-extern legacy_s16 menu_buttons_y1[];
-extern legacy_s16 menu_buttons_y2[];
+extern struct BUTTON_AREA menu_buttons[5];
 extern legacy_s16 word_407CE;
 extern legacy_s16 word_407D0;
 extern legacy_s16 word_407F4;
 extern legacy_s16 word_407F6;
 extern legacy_s16 word_407F8;
-extern legacy_s16 trackmenu_buttons_x1[];
-extern legacy_s16 trackmenu_buttons_x2[];
-extern legacy_s16 trackmenu_buttons_y1[];
-extern legacy_s16 trackmenu_buttons_y2[];
+extern struct BUTTON_AREA trackmenu_buttons[3];
 extern legacy_s8 aMisc[];
 extern legacy_s8 aSdosel[];
 extern legacy_s8 aOpp0opp1opp2op[];
@@ -40,10 +34,7 @@ extern legacy_s8 aClip[];
 extern legacy_s8 aDes_0[];
 extern legacy_s8 aRac[];
 extern legacy_s8 aOpp1[];
-extern legacy_s16 opponentmenu_buttons_x1[];
-extern legacy_s16 opponentmenu_buttons_x2[];
-extern legacy_s16 opponentmenu_buttons_y1[];
-extern legacy_s16 opponentmenu_buttons_y2[];
+extern struct BUTTON_AREA opponentmenu_buttons[5];
 extern legacy_s8 far* opp_res;
 extern legacy_s8 far* oppresources[7];
 extern legacy_s8 a_res_0[];
@@ -66,10 +57,7 @@ extern legacy_s8 aDes_1[];
 extern legacy_s8 aStop_1[];
 extern legacy_s8 aBau_0[];
 extern legacy_s8 aBma_0[];
-extern legacy_s16 carmenu_buttons_y1[];
-extern legacy_s16 carmenu_buttons_y2[];
-extern legacy_s16 carmenu_buttons_x1[];
-extern legacy_s16 carmenu_buttons_x2[];
+extern struct BUTTON_AREA carmenu_buttons[5];
 extern struct RECTANGLE carmenu_cliprect;
 extern struct RECTANGLE rect_unk16;
 extern struct VECTOR carmenu_carpos;
@@ -249,8 +237,7 @@ extern legacy_s8 aSon[];
 void sub_29772(void);
 void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
 legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
-	const legacy_s16* x_values, const legacy_s16* width_values,
-	const legacy_s16* y_values, const legacy_s16* height_values,
+	const struct BUTTON_AREA* buttons,
 	legacy_s16 second_state, legacy_s16 first_state);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y,
 	legacy_s16 width, legacy_s16 height, legacy_s16 top_color,

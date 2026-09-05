@@ -277,8 +277,8 @@ void mouse_draw_opaque_check(void)
 		mouse_draw_opaque();
 }
 
-legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array, legacy_s16* x2_array,
-	legacy_s16* y1_array, legacy_s16* y2_array)
+legacy_s16 mouse_multi_hittest(legacy_s16 count,
+	const struct BUTTON_AREA* buttons)
 {
 	legacy_s16 i;
 
@@ -286,8 +286,8 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array, legacy_s1
 		return -1;
 
 	for (i = 0; i < count; i++) {
-		if (x1_array[i] <= mouse_xpos && mouse_xpos <= x2_array[i] &&
-			y1_array[i] <= mouse_ypos && mouse_ypos <= y2_array[i])
+		if (buttons[i].x1 <= mouse_xpos && mouse_xpos <= buttons[i].x2 &&
+			buttons[i].y1 <= mouse_ypos && mouse_ypos <= buttons[i].y2)
 			return (legacy_s8)i;
 	}
 

@@ -18,8 +18,16 @@ void load_palandcursor(void);
 legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key);
 void mouse_draw_transparent_check(void);
 void mouse_draw_opaque_check(void);
-legacy_s16 mouse_multi_hittest(legacy_s16 count, legacy_s16* x1_array,
-	legacy_s16* x2_array, legacy_s16* y1_array, legacy_s16* y2_array);
+/* A clickable rectangle. Menus keep one array of these per screen. */
+struct BUTTON_AREA {
+	legacy_s16 x1;
+	legacy_s16 x2;
+	legacy_s16 y1;
+	legacy_s16 y2;
+};
+
+legacy_s16 mouse_multi_hittest(legacy_s16 count,
+	const struct BUTTON_AREA* buttons);
 legacy_s16 get_kb_or_joy_flags(void);
 legacy_s16 input_checking(legacy_s16 frame_delta);
 legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x,

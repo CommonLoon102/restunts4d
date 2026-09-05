@@ -464,8 +464,8 @@ legacy_u16 end_hiscore(void)
 	struct HIGHSCORE_ENTRY far* scores;
 	struct SPRITE far* animation_sprite;
 	struct SHAPE2D far* frame_shape;
-	legacy_s16 button_x1[4];
-	legacy_s16 button_x2[4];
+	struct BUTTON_AREA menu_areas[5];
+	struct BUTTON_AREA button_areas[4];
 	legacy_s8 score_status;
 	legacy_u8 outcome;
 	legacy_u8 opponent_active;
@@ -771,11 +771,15 @@ legacy_u16 end_hiscore(void)
 	sub_29772();
 	check_input();
 	sprite_copy_2_to_1_2();
+	for (i = 0; i < 5U; i++) {
+		menu_areas[i].x1 = word_3BCEC[i];
+		menu_areas[i].x2 = word_3BCF6[i];
+		menu_areas[i].y1 = hiscore_buttons_y1[i];
+		menu_areas[i].y2 = hiscore_buttons_y2[i];
+	}
 	text_resource_count = outcome == 2 ? 1U : 3U;
 	for (;;) {
-		delta = (legacy_s16)mouse_timer_sprite_unk(4,
-			word_3BCEC, word_3BCF6,
-			hiscore_buttons_y1, hiscore_buttons_y2,
+		delta = (legacy_s16)mouse_timer_sprite_unk(4, menu_areas,
 			word_407CE, word_407D0);
 		end_hiscore_update_animation(delta, &animation_timer,
 			&animation_frame, &previous_animation_frame,
@@ -829,8 +833,10 @@ legacy_u16 end_hiscore(void)
 		0xAF, 0x46, 0x15,
 		word_407F4, word_407F6, word_407F8, 0);
 	for (i = 0; i < 4U; i++) {
-		button_x1[i] = LEGACY_S16_WRAP_ADD(word_3BCEC[i], menu_offset);
-		button_x2[i] = LEGACY_S16_WRAP_ADD(word_3BCF6[i], menu_offset);
+		button_areas[i].x1 = LEGACY_S16_WRAP_ADD(word_3BCEC[i], menu_offset);
+		button_areas[i].x2 = LEGACY_S16_WRAP_ADD(word_3BCF6[i], menu_offset);
+		button_areas[i].y1 = hiscore_buttons_y1[i];
+		button_areas[i].y2 = hiscore_buttons_y2[i];
 	}
 	check_input();
 	(void)sprite_blit_to_video(render_window_sprite,
@@ -852,8 +858,7 @@ legacy_u16 end_hiscore(void)
 		sub_29772();
 	}
 
-		delta = (legacy_s16)mouse_timer_sprite_unk(selected,
-			button_x1, button_x2, hiscore_buttons_y1, hiscore_buttons_y2,
+		delta = (legacy_s16)mouse_timer_sprite_unk(selected, button_areas,
 			word_407CE, word_407D0);
 		if (evaluation_screen == 0 && outcome != 2) {
 			end_hiscore_update_animation(delta, &animation_timer,
@@ -863,15 +868,11 @@ legacy_u16 end_hiscore(void)
 		}
 
 	if (opponent_active == 0 || score_status == -1) {
-		hit = (legacy_s16)mouse_multi_hittest(3,
-			&button_x1[1], &button_x2[1],
-			&hiscore_buttons_y1[1], &hiscore_buttons_y2[1]);
+		hit = (legacy_s16)mouse_multi_hittest(3, &button_areas[1]);
 		if (hit != -1)
 			selected = (legacy_u8)(hit + 1);
 	} else {
-		hit = (legacy_s16)mouse_multi_hittest(4,
-			button_x1, button_x2,
-			hiscore_buttons_y1, hiscore_buttons_y2);
+		hit = (legacy_s16)mouse_multi_hittest(4, button_areas);
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 	}

@@ -1,6 +1,7 @@
 #ifndef RESTUNTS_REPLAY_VIEWER_INTERNAL_H
 #define RESTUNTS_REPLAY_VIEWER_INTERNAL_H
 
+#include "game_input.h"
 #include "legacy.h"
 
 struct RECTANGLE;
@@ -12,20 +13,14 @@ extern legacy_u8 byte_3E9E6[10];
 extern legacy_u8 byte_3E9F0[10];
 extern legacy_u8 byte_3E9FA[10];
 extern legacy_u8 game_camera_buttons_count[4];
-extern legacy_s16 game_camera_buttons_x1[9];
-extern legacy_s16 game_camera_buttons_x2[9];
-extern legacy_s16 game_camera_buttons_y1[9];
-extern legacy_s16 game_camera_buttons_y2[9];
+extern struct BUTTON_AREA game_camera_buttons[9];
 extern legacy_s16 word_3EA18;
 extern legacy_s16 word_3EA2A;
 extern legacy_s16 word_3EA3A;
 extern legacy_s16 word_3EA3C;
 extern legacy_s16 word_3EA4C;
 extern legacy_s16 word_3EA4E;
-extern legacy_s16 gameunk_button_x1;
-extern legacy_s16 gameunk_button_x2;
-extern legacy_s16 gameunk_button_y1;
-extern legacy_s16 gameunk_button_y2;
+extern struct BUTTON_AREA gameunk_button;
 extern legacy_s16 word_40E04[2];
 extern legacy_u8 byte_40E08[2];
 extern legacy_s16 word_40E0A[2];

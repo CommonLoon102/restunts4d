@@ -43,11 +43,9 @@ legacy_s8 run_menu(void)
 		}
 
 		elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
-			menu_buttons_x1, menu_buttons_x2,
-			menu_buttons_y1, menu_buttons_y2, word_407CE, word_407D0);
+			menu_buttons, word_407CE, word_407D0);
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-		hit = (legacy_s16)mouse_multi_hittest(5, menu_buttons_x1,
-			menu_buttons_x2, menu_buttons_y1, menu_buttons_y2);
+		hit = (legacy_s16)mouse_multi_hittest(5, menu_buttons);
 		if (hit != -1)
 			selected = (legacy_u8)hit;
 

@@ -156,10 +156,6 @@ legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16
 	legacy_u32 timeout);
 legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
 	legacy_s8* extension, legacy_s8 far* prompt);
-legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
-	const legacy_s16* x_values, const legacy_s16* width_values,
-	const legacy_s16* y_values, const legacy_s16* height_values,
-	legacy_s16 second_state, legacy_s16 first_state);
 void do_mer_restext(void);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 	legacy_s16 shadow_color);

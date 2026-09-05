@@ -474,10 +474,13 @@ void load_tracks_menu_shapes(void)
 	static legacy_s8 under_cursor_shape_names[] = "ucr0ucr1ucr2ucr3";
 	static const legacy_s8 error_resource_ids[] =
 		"eokenseieemseedewwefuenpestejsejdeteewaefteat";
-	static legacy_s16 button_x1[5] = { 9, 202, 220, 8, 220 };
-	static legacy_s16 button_x2[5] = { 199, 206, 315, 199, 315 };
-	static legacy_s16 button_y1[5] = { 181, 4, 132, 4, 36 };
-	static legacy_s16 button_y2[5] = { 187, 179, 139, 179, 187 };
+	static const struct BUTTON_AREA buttons[5] = {
+		{ 9, 199, 181, 187 },
+		{ 202, 206, 4, 179 },
+		{ 220, 315, 132, 139 },
+		{ 8, 199, 4, 179 },
+		{ 220, 315, 36, 187 }
+	};
 	static const legacy_u16 page_keys[10] = {
 		0x3B00U, 0x3C00U, 0x3D00U, 0x3E00U, 0x3F00U,
 		0x4000U, 0x4100U, 0x4200U, 0x4300U, 0x4400U
@@ -844,8 +847,7 @@ void load_tracks_menu_shapes(void)
 			delta = (legacy_u16)timer_get_delta_alt();
 			blink_timer = LEGACY_U16_WRAP_ADD(blink_timer, delta);
 			key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(delta));
-			hit = (legacy_u8)mouse_multi_hittest(5,
-				button_x1, button_x2, button_y1, button_y2);
+			hit = (legacy_u8)mouse_multi_hittest(5, buttons);
 			if (hit != 0xFFU) {
 				if (hit == 0U && (mouse_butstate & 3) != 0) {
 					focus = 0;
