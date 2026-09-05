@@ -5,14 +5,12 @@
 #define PENALTY_ROUTE_VISITED_CAPACITY 904U
 #define PENALTY_ROUTE_PENDING_CAPACITY 128U
 #define PENALTY_ROUTE_SENTINEL (-1)
-#define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
 #define PENALTY_ROUTE_START_TRACK_INDEX 900U
 #define PENALTY_ROUTE_START_TILE_INDEX 11999U
 #define PENALTY_ROUTE_START_COLUMN_INDEX 1963U
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U
 #define TRACK_START_FINISH_PIECE_INDEX 0
-#define PENALTY_DISTANCE_FINISH_REACHED (-1)
 #define PENALTY_NOT_DETECTED 0
 #define PENALTY_DETECTED 1
 #define LEGACY_GRIP_STACK_SI_VALUE 80
@@ -208,8 +206,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			pending_count = LEGACY_U16_WRAP_ADD(pending_count, 1U);
 		}
 		if (next_track == TRACK_START_FINISH_PIECE_INDEX) {
-			distance = PENALTY_DISTANCE_FINISH_REACHED;
-		} else if (distance != PENALTY_DISTANCE_FINISH_REACHED) {
+			distance = PENALTY_ROUTE_FINISH_REACHED;
+		} else if (distance != PENALTY_ROUTE_FINISH_REACHED) {
 			distance = LEGACY_S16_WRAP_ADD(distance, 1);
 		}
 		track_index = next_track;

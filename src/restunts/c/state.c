@@ -7,6 +7,11 @@
 #define ROUTE_GUIDANCE_DIRECTION_SHIFT 8U
 #define ROUTE_DIRECTION_LEFT_SECTOR 1
 #define ROUTE_DIRECTION_RIGHT_SECTOR 3
+#define ROUTE_GEOMETRY_POINT_COUNT 4U
+#define PENALTY_ROUTE_DECISION_DISTANCE 3
+#define PENALTY_ROUTE_CONFIRMATION_COUNT 3
+#define PENALTY_SECONDS_PER_SKIPPED_ROUTE 3
+#define PENALTY_DISPLAY_DURATION_SHIFT 2U
 
 /* Vector from the player's car to its current route point. A y of -1 marks
    a route point with no height of its own: the route search still measures
@@ -31,8 +36,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 	struct VECTOR var_38;
 	struct VECTOR var_32;
 	struct VECTOR var_28;
-	struct VECTOR var_1A[4];
-	struct VECTOR var_52[4];
+	struct VECTOR var_1A[ROUTE_GEOMETRY_POINT_COUNT];
+	struct VECTOR var_52[ROUTE_GEOMETRY_POINT_COUNT];
 	struct MATRIX* var_matptr;
 	legacy_s8 var_3A;
 	legacy_s8 var_1C;
@@ -98,25 +103,26 @@ void player_op(legacy_s8 arg_carInputByte) {
 	si = detect_penalty(&var_2, &var_1EpenaltyCounter);
 	if (si != 0) {
 		commit_penalty = 0;
-		if (var_1EpenaltyCounter == -2) {
-			state.field_45B = 1;
+		if (var_1EpenaltyCounter == PENALTY_ROUTE_OUTSIDE_TRACK) {
+			state.field_45B = ROUTE_TRACKING_OUTSIDE_TRACK;
 			state.field_45C = 0;
 		} else {
-			if (state.field_45B == 1) {
-				state.field_45B = 0;
+			if (state.field_45B == ROUTE_TRACKING_OUTSIDE_TRACK) {
+				state.field_45B = ROUTE_TRACKING_NORMAL;
 				state.field_45C = 0;
 			}
-			if (state.field_45B == 0) {
+			if (state.field_45B == ROUTE_TRACKING_NORMAL) {
 				if (var_2 == 0 && state.field_2F4 != 0) {
 					state.playerstate.field_CD = LEGACY_S8_WRAP_ADD(
 						state.playerstate.field_CD, 1);
 					commit_penalty = 1;
 				} else if (var_1EpenaltyCounter >= 0 &&
-					var_1EpenaltyCounter < 3) {
+					var_1EpenaltyCounter < PENALTY_ROUTE_DECISION_DISTANCE) {
 					state.field_45C = 0;
 					state.field_2F2 = var_2;
-				} else if (var_1EpenaltyCounter == -1 ||
-					var_1EpenaltyCounter > 3) {
+				} else if (var_1EpenaltyCounter ==
+					PENALTY_ROUTE_FINISH_REACHED ||
+					var_1EpenaltyCounter > PENALTY_ROUTE_DECISION_DISTANCE) {
 					if (td01_track_file_cpy[state.field_2F4] == var_2 ||
 						td02_penalty_related[state.field_2F4] == var_2) {
 						state.field_45C = LEGACY_S8_WRAP_ADD(
@@ -124,11 +130,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 					} else {
 						if (td01_track_file_cpy[var_2] == state.field_2F4 ||
 							td02_penalty_related[var_2] == state.field_2F4) {
-							state.field_45B = 2;
+							state.field_45B = ROUTE_TRACKING_WRONG_WAY;
 						}
 						state.field_45C = 1;
 					}
-					if (state.field_45C >= 3)
+					if (state.field_45C >= PENALTY_ROUTE_CONFIRMATION_COUNT)
 						commit_penalty = 1;
 				}
 			}
@@ -139,9 +145,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 			if (var_1EpenaltyCounter > 0) {
 				penalty_time = LEGACY_S16_WRAP_MUL(
 					LEGACY_S16_WRAP_MUL(
-						var_1EpenaltyCounter, framespersec), 3);
+						var_1EpenaltyCounter, framespersec),
+					PENALTY_SECONDS_PER_SKIPPED_ROUTE);
 				show_penalty_counter = LEGACY_S8_FROM_BITS(
-					(legacy_u8)LEGACY_U16_SHL(framespersec, 2U));
+					(legacy_u8)LEGACY_U16_SHL(framespersec,
+						PENALTY_DISPLAY_DURATION_SHIFT));
 				state.game_penalty = LEGACY_S16_WRAP_ADD(
 					state.game_penalty, penalty_time);
 			}
@@ -149,7 +157,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		state.field_2F4 = var_2;
 	}
 	state.field_45D = ROUTE_INDICATOR_NONE;
-	if (state.field_45B != 1) {
+	if (state.field_45B != ROUTE_TRACKING_OUTSIDE_TRACK) {
 		var_matptr = mat_rot_zxy(
 			state.playerstate.car_rotate.z,
 			state.playerstate.car_rotate.y,
@@ -158,7 +166,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		route_advance_required = 0;
 		guidance_required = 1;
 
-		if (state.field_45B == 2) {
+		if (state.field_45B == ROUTE_TRACKING_WRONG_WAY) {
 			if (state.playerstate.car_crashBmpFlag == 0)
 				state.field_45D = ROUTE_INDICATOR_WRONG_WAY;
 			var_2 = state.field_2F4;
@@ -166,7 +174,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 		} else {
 			si = 0;
 			if (state.playerstate.car_trackdata3_index != -1) {
-				if ((var_1C == 0 || state.field_45B != 0) &&
+				if ((var_1C == ROUTE_TRACKING_NORMAL ||
+					state.field_45B != ROUTE_TRACKING_NORMAL) &&
 					(state.playerstate.car_trackdata3_index ==
 						state.field_2F2 ||
 					td01_track_file_cpy[state.field_2F2] ==
@@ -225,7 +234,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					var_2C = LEGACY_S8_WRAP_ADD(var_2C, 1);
 				} while (var_2A == 0);
 
-				if (state.field_45B == 2) {
+				if (state.field_45B == ROUTE_TRACKING_WRONG_WAY) {
 					if (var_3A == 0) {
 						sub_18D60(var_2, var_52, 0, 0);
 						sub_18D60(var_2, var_1A, 1, 0);
@@ -244,7 +253,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 								var_1A[0].z, var_52[0].z))) & ANGLE_MASK);
 					if (si > ROUTE_ALIGNMENT_WRAP_LIMIT ||
 						si < ANGLE_EIGHTH_TURN) {
-						state.field_45B = 0;
+						state.field_45B = ROUTE_TRACKING_NORMAL;
 						state.field_45C = 1;
 						state.playerstate.car_trackdata3_index = var_2;
 						state.playerstate.field_CE = var_3A;
@@ -276,7 +285,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 
 		if (guidance_required != 0 &&
 			state.playerstate.car_trackdata3_index != -1 &&
-			state.field_45B == 0) {
+			state.field_45B == ROUTE_TRACKING_NORMAL) {
 			route_point_delta(&var_28, 1);
 			var_matptr = mat_rot_zxy(
 				state.playerstate.car_rotate.z,

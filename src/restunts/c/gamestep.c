@@ -63,7 +63,8 @@ void sub_2298C(void)
 			carstate->car_posWorld1.lz, CAR_WORLD_POSITION_SHIFT));
 		target = carstate->car_vec_unk3;
 		if ((car_index == PLAYER_CAR_INDEX &&
-			(state.field_45B != 0 || state.field_45C != 0)) ||
+			(state.field_45B != ROUTE_TRACKING_NORMAL ||
+				state.field_45C != 0)) ||
 			carstate->field_B6 != 0 ||
 			carstate->car_crashBmpFlag != 0 ||
 			carstate->car_trackdata3_index == -1 ||

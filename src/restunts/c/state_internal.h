@@ -8,6 +8,9 @@
 #include "residue.h"
 #include "shape3d.h"
 
+#define PENALTY_ROUTE_FINISH_REACHED (-1)
+#define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
+
 extern legacy_s16 penalty_time;
 extern legacy_s16 grassDecelDivTab[];
 extern struct TRACKOBJECT trkObjectList[215];
