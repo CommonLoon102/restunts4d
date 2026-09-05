@@ -20,6 +20,25 @@
 #define RLE_LITERAL_RUN_LIMIT 3
 #define RLE_BLOCK_LIMIT 127
 #define RLE_FULL_LITERAL_CONTROL 129U
+#define SHAPE2D_FLIP_FLAG_MASK 240
+#define SHAPE2D_FLIP_FLAG_SHIFT 4U
+#define SHAPE2D_FLIP_TYPE_COUNT 3
+#define SHAPE2D_PATTERN_MASK 15
+#define SHAPE2D_PLANE_ENABLED_FLAG 1
+#define SHAPE2D_PLANAR_PLANE_COUNT 4
+#define SHAPE2D_BITS_PER_PLANE_BYTE 8
+#define SHAPE2D_SOURCE_HIGH_BIT 128
+#define SHAPE2D_COPIED_HEADER_WORDS 6U
+#define SHAPE2D_EXPANDED_PIXEL_LIMIT 8000
+#define SHAPE2D_UNFLIP_PARAGRAPH_PADDING 32
+#define VGA_PALETTE_COLOR_COUNT 16
+#define SHAPE2D_PATH_BUFFER_SIZE 100
+#define PES_UNFLIP_WORKSPACE_PARAGRAPHS 1000
+#define DOS_PARAGRAPH_BYTES 16U
+#define MMGR_CHUNK_OVERHEAD_PARAGRAPHS 2U
+#define OVERLAP_MARGIN_HALF_SHIFT 1U
+#define OVERLAP_MARGIN_QUARTER_SHIFT 2U
+#define OVERLAP_RESERVE_EIGHTH_SHIFT 3U
 
 legacy_u32 parse_shape2d_helper(void far* data)
 {
@@ -309,8 +328,8 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 		shape_header = (struct SHAPE2D far*)memshape;
 		membitmapptr = (legacy_s8 far*)memshape + SHAPE2D_HEADER_SIZE;
 		flag = shape_header->unknown[3];
-		if ((flag & 0xF0) == 0) {
-			flag = shape_header->unknown[2] >> 4;
+		if ((flag & SHAPE2D_FLIP_FLAG_MASK) == 0) {
+			flag = shape_header->unknown[2] >> SHAPE2D_FLIP_FLAG_SHIFT;
 			if (flag != 0) {
 				// The original does not merely skip an unknown flip type, it
 				// gives up on the whole resource, so the shapes after this
@@ -320,7 +339,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 				// (asmorig/seg034.asm:237) does `add sp, 8` and goes straight
 				// on to mmgr_release without ever reading ax, and the three
 				// arms below cover every flip type the resources use.
-				if (flag < 4) {
+				if (flag <= SHAPE2D_FLIP_TYPE_COUNT) {
 					width = shape_header->width;
 					height = shape_header->height;
 					switch (flag - 1) {
@@ -406,16 +425,17 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
 		shape_header = (struct SHAPE2D far*)memshape;
 
-		if (!(shape_header->unknown[3] & 0xF0)) {
-			val = (shape_header->unknown[2] >> 4) & 0x0F;
+		if (!(shape_header->unknown[3] & SHAPE2D_FLIP_FLAG_MASK)) {
+			val = (shape_header->unknown[2] >> SHAPE2D_FLIP_FLAG_SHIFT) &
+				SHAPE2D_PATTERN_MASK;
 
 			if (val) {
 				width = shape_header->width;
 				height = shape_header->height;
 				membitmapptr = memshape + SHAPE2D_HEADER_SIZE;
 
-				for (j = 0; j < 4; ++j) {
-					if (val & 0x01) {
+				for (j = 0; j < SHAPE2D_PLANAR_PLANE_COUNT; ++j) {
+					if (val & SHAPE2D_PLANE_ENABLED_FLAG) {
 						for (y = 0; y < height; ++y) {
 							for (x = 0; x < width; ++x) {
 								mempages[y * width + x] = membitmapptr[x * height + y];
@@ -474,44 +494,47 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 		// half 16 bits wide and wrapping on its own - the three shl's and
 		// the `add ax, size SHAPE2D` never carry into dx. Only the
 		// `add ax, bx / adc dx, cx` that folds in the running offset does.
-		lowterm = (legacy_u16)length * 8 + SHAPE2D_HEADER_SIZE;
+		lowterm = (legacy_u16)length * SHAPE2D_BITS_PER_PLANE_BYTE +
+			SHAPE2D_HEADER_SIZE;
 
 		resource_file_set_offset((legacy_u8 far*)mempages,
 			(legacy_u16)shapecount, (legacy_u16)i, nextoffset);
 		nextoffset += (legacy_u32)lowterm
-					+ ((legacy_u32)(legacy_u16)(product >> 16) << 16);
+					+ ((legacy_u32)(legacy_u16)(product >>
+						DWORD_THIRD_BYTE_SHIFT) << DWORD_THIRD_BYTE_SHIFT);
 
 		dstshape = file_get_shape2d_bytes((legacy_u8 far*)mempages, i);
 		destination_header = (struct SHAPE2D far*)dstshape;
 		// `mov cx, 6 / rep movsw` - the first six words only, up to and
 		// including s2d_pos_y. s2d_unk3..s2d_unk6 hold the pattern and flip
 		// nibbles and are deliberately left alone in the destination.
-		fmemcpy(dstshape, srcshape, 6 * sizeof(legacy_u16));
+		fmemcpy(dstshape, srcshape,
+			SHAPE2D_COPIED_HEADER_WORDS * sizeof(legacy_u16));
 
 		destination_header->width = LEGACY_U16_WRAP_MUL(
-			destination_header->width, 8U);
+			destination_header->width, SHAPE2D_BITS_PER_PLANE_BYTE);
 
-		if (length && length <= 8000) {
+		if (length && length <= SHAPE2D_EXPANDED_PIXEL_LIMIT) {
 			mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
 
-			val = source_header->unknown[1] >> 4;
-			val |= val << 8;
+			val = source_header->unknown[1] >> SHAPE2D_FLIP_FLAG_SHIFT;
+			val |= val << DWORD_SECOND_BYTE_SHIFT;
 
-			for (j = 0; j < length * 4; ++j) {
+			for (j = 0; j < length * SHAPE2D_PLANAR_PLANE_COUNT; ++j) {
 				shape2d_put_word(mempagesptr, val);
-				mempagesptr += 2U;
+				mempagesptr += sizeof(legacy_u16);
 			}
 			memchunkptr = srcshape + SHAPE2D_HEADER_SIZE;
 
-			for (j = 0; j < 4; ++j) {
-				pat = source_header->unknown[j] & 0x0F;
+			for (j = 0; j < SHAPE2D_PLANAR_PLANE_COUNT; ++j) {
+				pat = source_header->unknown[j] & SHAPE2D_PATTERN_MASK;
 
 				if (pat) {
 					mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
 					for (k = 0; k < length; ++k) {
 						px = *memchunkptr++;
-						for (l = 0; l < 8; ++l) {
-							if (px & 0x80) {
+						for (l = 0; l < SHAPE2D_BITS_PER_PLANE_BYTE; ++l) {
+							if (px & SHAPE2D_SOURCE_HIGH_BIT) {
 								*mempagesptr |= pat;
 							}
 							px <<= 1;
@@ -546,7 +569,7 @@ legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
 		shape_header = (struct SHAPE2D far*)memshape;
 		size = (shape_header->width *
 			shape_header->height +
-			0x20) >> 4;
+			SHAPE2D_UNFLIP_PARAGRAPH_PADDING) >> DOS_PARAGRAPH_SHIFT;
 		if (size > maxsize)
 			maxsize = size;
 	}
@@ -563,7 +586,8 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 
 	// The original forms this seed in AX, then uses CWD: both the shift and
 	// header addition wrap to 16 bits before the result is sign-extended.
-	size = (legacy_s16)(legacy_u16)((shapecount * 8) +
+	size = (legacy_s16)(legacy_u16)((shapecount *
+		PARSED_RESOURCE_TABLE_ENTRY_SIZE) +
 		SHAPE2D_HEADER_SIZE);
 
 	for (i = 0; i < shapecount; ++i) {
@@ -572,17 +596,18 @@ legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
 		// `shl ax, 3` then `sub dx, dx / adc`: the per-shape term is a
 		// 16-bit value ZERO-extended into the accumulator, and the header
 		// size is folded in afterwards with its own carry.
-		size += (legacy_u32)(legacy_u16)(shape_header->width * shape_header->height * 8)
+		size += (legacy_u32)(legacy_u16)(shape_header->width *
+			shape_header->height * SHAPE2D_BITS_PER_PLANE_BYTE)
 			  + SHAPE2D_HEADER_SIZE;
 	}
 
-	return (size + SHAPE2D_HEADER_SIZE) >> 4;
+	return (size + SHAPE2D_HEADER_SIZE) >> DOS_PARAGRAPH_SHIFT;
 }
 
 void file_load_shape2d_palmap_init(legacy_u8 far* pal) {
 	legacy_s16 i;
 
-	for (i = 0; i < 0x10; ++i) {
+	for (i = 0; i < VGA_PALETTE_COLOR_COUNT; ++i) {
 		palmap[i] = pal[i];
 	}
 }
@@ -629,7 +654,7 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 	mempages = mmgr_alloc_pages(str, expandedsize);
 
 	resource_file_set_size((legacy_u8 far*)mempages,
-		(legacy_u32)expandedsize * 16U);
+		(legacy_u32)expandedsize * DOS_PARAGRAPH_BYTES);
 
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);
@@ -640,7 +665,7 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 }
 
 void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
-	legacy_s8 str[100];
+	legacy_s8 str[SHAPE2D_PATH_BUFFER_SIZE];
 	legacy_s8* strptr;
 	legacy_s16 counter;
 	void far* memchunk;
@@ -690,7 +715,8 @@ void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 		memchunk = file_decomp(str, fatal);
 		if (!memchunk) return dos_memory_make_pointer(0, 0);
 
-		mempages = mmgr_alloc_pages("UNFLIP", 1000);
+		mempages = mmgr_alloc_pages("UNFLIP",
+			PES_UNFLIP_WORKSPACE_PARAGRAPHS);
 		file_unflip_shape2d_pes(memchunk, mempages);
 		mmgr_release(mempages);
 
@@ -749,14 +775,17 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	// in either case. What is left afterwards has the same size, position
 	// and name as the two-buffer path would have produced.
 	freeparas = mmgr_get_ofs_diff();
-	if (freeparas < (legacy_u16)chunksize + 2 &&
+	if (freeparas < (legacy_u16)chunksize + MMGR_CHUNK_OVERHEAD_PARAGRAPHS &&
 		!(highpool_route(resname, (legacy_u16)chunksize) &&
 		  highpool_can_fit((legacy_u16)chunksize))) {
-		margin = ((legacy_u16)chunksize >> 1) + ((legacy_u16)chunksize >> 2);
-		if (margin > freeparas - (freeparas >> 3))
-			margin = freeparas - (freeparas >> 3);
+		margin = ((legacy_u16)chunksize >> OVERLAP_MARGIN_HALF_SHIFT) +
+			((legacy_u16)chunksize >> OVERLAP_MARGIN_QUARTER_SHIFT);
+		if (margin > freeparas - (freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT))
+			margin = freeparas -
+				(freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT);
 
-		if (margin >= ((legacy_u16)chunksize >> 1)) {
+		if (margin >= ((legacy_u16)chunksize >>
+			OVERLAP_MARGIN_HALF_SHIFT)) {
 			rawseg = dos_memory_pointer_segment(memchunk);
 			mmgr_resize_memory(0, rawseg, chunksize + margin);
 			copy_paras_reverse(rawseg, rawseg + margin, chunksize);
