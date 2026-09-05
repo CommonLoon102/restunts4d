@@ -109,7 +109,32 @@ extern legacy_u8 far* transshapeprimindexptr;
 extern legacy_s8 backlights_paint_override;
 
 /* 14-bit fixed point: the inner radius is 37/64 of the outer radius. */
-#define WHEEL_INNER_RADIUS_SCALE 0x2500U
+#define WHEEL_INNER_RADIUS_SCALE 9472U
+
+#define SHAPE3D_VERTEX_CAPACITY 255U
+#define SHAPE3D_VERTEX_FLAG_CAPACITY 256U
+#define SHAPE3D_VERTEX_UNTRANSFORMED LEGACY_U8_MAX
+#define SHAPE3D_FORWARD_VECTOR_SCALE 4096
+#define SHAPE3D_NEAR_CLIP_Z 12
+#define SHAPE3D_ALL_RECT_CLIP_FLAGS 15U
+#define SHAPE3D_USE_BOUNDING_RECT_FLAG 8U
+#define SHAPE3D_PRETRANSFORMED_FLAG 2U
+#define SHAPE3D_NO_DEPTH_SORT_FLAG 1U
+#define SHAPE3D_PRIMITIVE_ALWAYS_VISIBLE_FLAG 1U
+#define SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG 2U
+#define SHAPE3D_BACKLIGHT_PAINT_JOB 45
+
+#define POLYINFO_LIST_CAPACITY 400U
+#define POLYINFO_LIST_SENTINEL LEGACY_U16_MAX
+#define POLYINFO_DATA_LAST_VALID_OFFSET 10354U
+#define POLYINFO_DATA_ALLOCATION_SIZE 10400U
+#define POLYINFO_MAX_RENDER_POINTS 13U
+
+#define PROJECTION_EXTENT_SCALE 2048L
+#define PROJECTION_EXTENT_DIVISOR 360L
+#define PROJECTION_VIEW_VECTOR_LENGTH 10000
+#define PROJECTION_YAW_MASK 1023U
+#define PROJECTION_SINCOS_ANGLE 128
 
 static legacy_u16 shape3d_average_depth(legacy_s32 sum,
 	legacy_u16 vertex_count)
@@ -225,7 +250,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_u8 far* var_cull1;
 	legacy_u8 far* var_cull2;
 
-	legacy_u8 var_vertflagtbl[256];
+	legacy_u8 var_vertflagtbl[SHAPE3D_VERTEX_FLAG_CAPACITY];
 	struct MATRIX* var_rotmatptr;
 	struct MATRIX var_mat;
 	struct MATRIX var_mat2;
@@ -237,7 +262,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_s32 var_A;
 	legacy_u16 var_45E, var_460, var_1A;
 	legacy_u8 var_ptrectflag, var_primtype;
-	struct VECTOR var_vecarr[255];
+	struct VECTOR var_vecarr[SHAPE3D_VERTEX_CAPACITY];
 	legacy_u16 var_primitiveflags, var_fileprimtype, var_4;
 	legacy_u16 var_polyvertcounter, var_C, var_448, var_462;
 	legacy_s16 var_polyvertX, var_polyvertY;
@@ -245,7 +270,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	legacy_s32 var_18;
 	struct POINT2D var_574, var_450;
 	struct POINT2D polyinfo_points[4];
-	struct POINT2D var_vecarr2[255];
+	struct POINT2D var_vecarr2[SHAPE3D_VERTEX_CAPACITY];
 	struct POINT2D** var_polyvertunktabptr;
 
 
@@ -260,7 +285,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	transshapenumverts = arg_transshapeptr->shapeptr->shape3d_numverts;
 	/* Shape files store this count in one byte.  Reject a damaged descriptor
 	 * before it can overrun the fixed-size transformation work arrays. */
-	if (transshapenumverts > 0xFFU)
+	if (transshapenumverts > SHAPE3D_VERTEX_CAPACITY)
 		return 1;
 	transshapeprimitives = arg_transshapeptr->shapeptr->shape3d_primitives;
 	transshapenumpaints = arg_transshapeptr->shapeptr->shape3d_numpaints;
@@ -271,22 +296,22 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		transshapematerial = 0;
 	transshapeflags = arg_transshapeptr->ts_flags;
 
-	if ((transshapeflags & 8) != 0) {
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 		transshaperectptr = arg_transshapeptr->rectptr;
 	}
 
 	for (i = 0; i < transshapenumverts; i++) {
-		var_vertflagtbl[i] = 0xff;
+		var_vertflagtbl[i] = SHAPE3D_VERTEX_UNTRANSFORMED;
 	}
 
-	if ((transshapeflags & 2) == 0) {
+	if ((transshapeflags & SHAPE3D_PRETRANSFORMED_FLAG) == 0) {
 		var_rotmatptr = mat_rot_zxy(arg_transshapeptr->rotvec.x, arg_transshapeptr->rotvec.y, arg_transshapeptr->rotvec.z, 0);
 		mat_mul_vector(&arg_transshapeptr->pos, &mat_temp, &var_vec);
 		mat_multiply(var_rotmatptr, &mat_temp, &var_mat2);
 		mat_invert(&var_mat2, &var_mat);
 		var_vec2.x = 0;
 		var_vec2.y = 0;
-		var_vec2.z = 0x1000;
+		var_vec2.z = SHAPE3D_FORWARD_VECTOR_SCALE;
 		mat_mul_vector(&var_vec2, &var_mat, &var_vec3);
 		if ((var_vec3.y <= 0 || arg_transshapeptr->pos.y >= 0) &&
 			(LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
@@ -326,7 +351,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			transshapenumvertscopy = 4;
 	}
 
-	var_ptrectflag = 0x0f;
+	var_ptrectflag = SHAPE3D_ALL_RECT_CLIP_FLAGS;
 	var_460 = 1;
 	var_1A = 0;
 	for (i = 0; i < transshapenumvertscopy;
@@ -335,7 +360,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		shape3d_transform_vertex(arg_transshapeptr->shapeptr, i,
 			select_rect_param, &var_mat2, &var_vec, &var_vec3);
 		var_vecarr[i] = var_vec3;
-		if (var_vec3.z < 0x0C) {
+		if (var_vec3.z < SHAPE3D_NEAR_CLIP_Z) {
 			var_vertflagtbl[i] = 1;
 			var_1A = 1;
 			continue;
@@ -375,7 +400,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	transprimitivepaintjob = transshapeprimitives[2 + transshapematerial];
 	transshapeprimitives += 2 + transshapenumpaints; // <- skip header and materials, -> point at indices
 
-	var_ptrectflag = 0x0f;
+	var_ptrectflag = SHAPE3D_ALL_RECT_CLIP_FLAGS;
 	var_460 = 1;
 	var_1A = 0;
 	transshapeprimindexptr = transshapeprimitives;
@@ -385,11 +410,11 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		transshapeprimindexptr++;
 		polyvertpointptrtab[var_polyvertcounter] = &var_vecarr2[temp];
 
-		if (var_vertflagtbl[temp] == 0xFFU) {
+		if (var_vertflagtbl[temp] == SHAPE3D_VERTEX_UNTRANSFORMED) {
 			shape3d_transform_vertex(arg_transshapeptr->shapeptr,
 				temp, select_rect_param, &var_mat2, &var_vec, &var_vec3);
 			var_vecarr[temp] = var_vec3;
-			if (var_vec3.z >= 0x0C) {
+			if (var_vec3.z >= SHAPE3D_NEAR_CLIP_Z) {
 				var_460 = 0;
 				var_vertflagtbl[temp] = 0;
 				vector_to_point(&var_vec3,
@@ -417,7 +442,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	var_transshapepolyinfoptindex = 0U;
 	transshapeprimindexptr = transshapeprimitives;
 	var_18 = 0;
-	var_ptrectflag = 0x0f;
+	var_ptrectflag = SHAPE3D_ALL_RECT_CLIP_FLAGS;
 	if (var_1A == 0) {
 		for (i = 0; i < transshapenumvertscopy; i++) {
 			var_C = transshapeprimindexptr[0];
@@ -441,7 +466,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			if (var_vertflagtbl[var_C] != 0) {
 				if (var_vertflagtbl[var_448] == 0) {
 					vector_op_unk(&var_vecarr[var_448],
-						&var_vecarr[var_C], &var_vec2, 0x0C);
+						&var_vecarr[var_C], &var_vec2,
+						SHAPE3D_NEAR_CLIP_Z);
 					vector_to_point(&var_vec2, &var_574);
 					if (var_574.px != var_vecarr2[var_448].px ||
 						var_574.py != var_vecarr2[var_448].py) {
@@ -454,7 +480,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			} else {
 				if (var_vertflagtbl[var_448] != 0) {
 					vector_op_unk(&var_vecarr[var_C],
-						&var_vecarr[var_448], &var_vec2, 0x0C);
+						&var_vecarr[var_448], &var_vec2,
+						SHAPE3D_NEAR_CLIP_Z);
 					vector_to_point(&var_vec2, &var_574);
 					if (var_574.px != var_vecarr2[var_C].px ||
 						var_574.py != var_vecarr2[var_C].py) {
@@ -475,12 +502,14 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	}
 
 	if (transshapenumvertscopy != 0 && var_ptrectflag == 0) {
-		if ((var_primitiveflags & 1) != 0 ||
+		if ((var_primitiveflags &
+			SHAPE3D_PRIMITIVE_ALWAYS_VISIBLE_FLAG) != 0 ||
 			((legacy_u32)var_A & LEGACY_READ_U32_LE(var_cull2)) != 0UL ||
 			polyinfo_is_facing_camera(transshapepolyinfo) != 0) {
 			var_4 = LEGACY_U16_WRAP_ADD(var_4, 1U);
 		}
-		if (var_4 != 0 && (transshapeflags & 8) != 0) {
+		if (var_4 != 0 &&
+			(transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 			for (var_polyvertcounter = 0;
 				var_polyvertcounter < transshapenumvertscopy;
 				var_polyvertcounter = LEGACY_U16_WRAP_ADD(
@@ -506,12 +535,12 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	if (var_vertflagtbl[temp0] + var_vertflagtbl[temp1] != 2) {
 		if (var_vertflagtbl[temp0] != 0) {
 			vector_op_unk(&var_vecarr[temp1], &var_vecarr[temp0],
-				&var_vec2, 0x0C);
+				&var_vec2, SHAPE3D_NEAR_CLIP_Z);
 			temp = temp0;
 			vector_to_point(&var_vec2, &var_vecarr2[temp]);
 		} else if (var_vertflagtbl[temp1] != 0) {
 			vector_op_unk(&var_vecarr[temp0], &var_vecarr[temp1],
-				&var_vec2, 0x0C);
+				&var_vec2, SHAPE3D_NEAR_CLIP_Z);
 			temp = temp1;
 			vector_to_point(&var_vec2, &var_vecarr2[temp]);
 		}
@@ -524,7 +553,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 			transshapepolyinfo, 0U, polyvertpointptrtab[0]);
 		polyinfo_write_point(
 			transshapepolyinfo, 1U, polyvertpointptrtab[1]);
-		if ((transshapeflags & 8) != 0) {
+		if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 			rect_adjust_from_point(
 				polyvertpointptrtab[0], transshaperectptr);
 			rect_adjust_from_point(
@@ -569,7 +598,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		if (temp1 > temp)
 			temp = temp1;
 
-		if ((transshapeflags & 8) != 0) {
+		if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 			var_450.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
 				polyinfo_points[0].px, temp), 1);
 			var_450.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(
@@ -611,7 +640,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		var_462 = projectiondata9_times_ratio(
 			polarRadius3D(&var_vec2), var_vec3.z);
 		polyinfo_write_word(transshapepolyinfo, 5U, var_462);
-		if ((transshapeflags & 8) != 0) {
+		if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 			var_450.py = LEGACY_S16_WRAP_SUB(
 				polyvertpointptrtab[0]->py, var_462);
 			var_450.px = LEGACY_S16_WRAP_SUB(
@@ -632,7 +661,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 		var_18 = var_vecarr[temp0].z;
 		polyinfo_write_point(
 			transshapepolyinfo, 0U, polyvertpointptrtab[0]);
-		if ((transshapeflags & 8U) != 0) {
+		if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 			rect_adjust_from_point(
 				polyvertpointptrtab[0], transshaperectptr);
 		}
@@ -650,7 +679,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	var_45E = LEGACY_U16_WRAP_ADD(var_45E, 1U);
 	transshapepolyinfo[3] = transshapenumvertscopy;
 	transshapepolyinfo[4] = var_primtype;
-	if (transprimitivepaintjob == 0x2D) {
+	if (transprimitivepaintjob == SHAPE3D_BACKLIGHT_PAINT_JOB) {
 		transshapepolyinfo[2] = backlights_paint_override;
 	} else {
 		transshapepolyinfo[2] = transprimitivepaintjob;
@@ -661,7 +690,8 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	polyinfo_write_word(transshapepolyinfo, 0U, temp0);
 
 
-	if ((transshapeflags & 1) != 0 || (var_primitiveflags & 2) != 0) {
+	if ((transshapeflags & SHAPE3D_NO_DEPTH_SORT_FLAG) != 0 ||
+		(var_primitiveflags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
 		temp = 0;
 	} else
 		temp = 1;
@@ -669,8 +699,10 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	word_40ECE = insert_newest_poly_in_poly_linked_list_40ED6(temp0, temp);
 	if (word_40ECE != 0)
 		return 1;
-	} else if ((var_primitiveflags & 2) == 0) {
-		while ((transshapeprimitives[1] & 2) != 0) {
+	} else if ((var_primitiveflags &
+		SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) == 0) {
+		while ((transshapeprimitives[1] &
+			SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
 			transshapeprimitives +=
 				primidxcounttab[transshapeprimitives[0]] +
 				transshapenumpaints + 2;
@@ -776,8 +808,8 @@ extern legacy_u16 insert_newest_poly_in_poly_linked_list_40ED6(legacy_u16 arg_0,
 	polyinfoptrnext = LEGACY_U16_WRAP_ADD(polyinfoptrnext,
 		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(
 			transshapenumvertscopy, sizeof(struct POINT2D)), 6U));
-	if (polyinfonumpolys == 0x190) return 1;
-	if (polyinfoptrnext <= 0x2872) return 0;
+	if (polyinfonumpolys == POLYINFO_LIST_CAPACITY) return 1;
+	if (polyinfoptrnext <= POLYINFO_DATA_LAST_VALID_OFFSET) return 0;
 	return 1;
 }
 
@@ -786,8 +818,10 @@ static legacy_u16 projection_angle_from_extent(legacy_s16 extent)
 	legacy_s32 scaled;
 	legacy_s32 quotient;
 
-	scaled = LEGACY_S32_WRAP_MUL((legacy_s32)extent, 0x800L);
-	quotient = LEGACY_S32_DIV_OR_ZERO(scaled, 0x168L);
+	scaled = LEGACY_S32_WRAP_MUL((legacy_s32)extent,
+		PROJECTION_EXTENT_SCALE);
+	quotient = LEGACY_S32_DIV_OR_ZERO(scaled,
+		PROJECTION_EXTENT_DIVISOR);
 	return (legacy_u16)LEGACY_S32_SAR(quotient, 1U);
 }
 
@@ -863,30 +897,32 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 	select_rect_rc = *cliprect;
 	select_rect_param = unk;
 	matptr = mat_rot_zxy(-angZ, -angX, -angY, 0);
-	vec.z = 0x2710;
+	vec.z = PROJECTION_VIEW_VECTOR_LENGTH;
 	vec.y = 0;
 	vec.x = 0;
 	mat_mul_vector(&vec, matptr, &vec2);
-	return polarAngle(vec2.x, vec2.z) & 0x3FF;
+	return polarAngle(vec2.x, vec2.z) & PROJECTION_YAW_MASK;
 }
 
 void polyinfo_reset(void) {
 	polyinfonumpolys = 0;
 	polyinfoptrnext = 0;
 	word_40ECE = 0;
-	poly_linked_list_40ED6[0x190] = 0xFFFF;
-	poly_linklist_40ED6_iter2 = 0x190;
+	poly_linked_list_40ED6[POLYINFO_LIST_CAPACITY] =
+		POLYINFO_LIST_SENTINEL;
+	poly_linklist_40ED6_iter2 = POLYINFO_LIST_CAPACITY;
 }
 
 void calc_sincos80(void) {
-	sin80 = sin_fast(0x80);
-	cos80 = cos_fast(0x80);
-	sin80_2 = sin_fast(0x80);
-	cos80_2 = cos_fast(0x80);
+	sin80 = sin_fast(PROJECTION_SINCOS_ANGLE);
+	cos80 = cos_fast(PROJECTION_SINCOS_ANGLE);
+	sin80_2 = sin_fast(PROJECTION_SINCOS_ANGLE);
+	cos80_2 = cos_fast(PROJECTION_SINCOS_ANGLE);
 }
 
 void init_polyinfo(void) {
-	polyinfoptr = mmgr_alloc_resbytes("polyinfo", 0x28A0);
+	polyinfoptr = mmgr_alloc_resbytes("polyinfo",
+		POLYINFO_DATA_ALLOCATION_SIZE);
 
 	mat_rot_y(&mat_y0, 0);
 	mat_rot_y(&mat_y100, ANGLE_QUARTER_TURN);
@@ -898,7 +934,7 @@ void init_polyinfo(void) {
 void get_a_poly_info(void)
 {
 	legacy_u8 far* record;
-	struct POINT2D points[13];
+	struct POINT2D points[POLYINFO_MAX_RENDER_POINTS];
 	legacy_u16 record_index;
 	legacy_u16 primitive_index;
 	legacy_u16 material_type;
@@ -907,7 +943,7 @@ void get_a_poly_info(void)
 	legacy_u16 vertex_count;
 	legacy_u16 pattern_type;
 
-	record_index = 0x190U;
+	record_index = POLYINFO_LIST_CAPACITY;
 	for (primitive_index = 0; primitive_index < polyinfonumpolys;
 		primitive_index++) {
 		record_index = (legacy_u16)poly_linked_list_40ED6[record_index];
