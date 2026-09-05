@@ -6,18 +6,20 @@
 #define REPLAY_GAMEINFO_SIZE 26U
 #define REPLAY_TRACK_SIZE 1802U
 #define REPLAY_INPUT_OFFSET (REPLAY_GAMEINFO_SIZE + REPLAY_TRACK_SIZE)
+#define REPLAY_CAR_ID_SIZE 4U
+#define REPLAY_TRACK_NAME_SIZE 9U
 
 #pragma pack (push, 1)
 
 struct GAMEINFO {
-	legacy_s8 game_playercarid[4];
+	legacy_s8 game_playercarid[REPLAY_CAR_ID_SIZE];
 	legacy_s8 game_playermaterial;
 	legacy_s8 game_playertransmission;
 	legacy_s8 game_opponenttype;
-	legacy_s8 game_opponentcarid[4];
+	legacy_s8 game_opponentcarid[REPLAY_CAR_ID_SIZE];
 	legacy_s8 game_opponentmaterial;
 	legacy_s8 game_opponenttransmission;
-	legacy_s8 game_trackname[9];
+	legacy_s8 game_trackname[REPLAY_TRACK_NAME_SIZE];
 	legacy_u16 game_framespersec;
 	legacy_u16 game_recordedframes;
 };
