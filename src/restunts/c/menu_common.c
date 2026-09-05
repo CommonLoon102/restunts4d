@@ -6,6 +6,13 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#define MENU_ANIMATION_PERIOD 60
+#define MENU_ANIMATION_SECOND_STATE_START 30
+#define BUTTON_TEXT_LINE_BUFFER_SIZE 86U
+#define BUTTON_FONT_LINE_HEIGHT 8U
+#define BUTTON_CENTER_DIVISOR 2
+#define BUTTON_TEXT_VERTICAL_ADJUSTMENT 1
+
 static legacy_s16 menu_animation_counter;
 static legacy_s16 menu_animation_state;
 legacy_s16 menu_idle_counter;
@@ -36,10 +43,12 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 
 	delta = (legacy_u16)timer_get_delta_alt();
 	animation_counter = LEGACY_U16_WRAP_ADD(menu_animation_counter, delta);
-	while (LEGACY_S16_FROM_BITS(animation_counter) > 60)
-		animation_counter = LEGACY_U16_WRAP_SUB(animation_counter, 60U);
+	while (LEGACY_S16_FROM_BITS(animation_counter) > MENU_ANIMATION_PERIOD)
+		animation_counter = LEGACY_U16_WRAP_SUB(
+			animation_counter, MENU_ANIMATION_PERIOD);
 	menu_animation_counter = animation_counter;
-	selected_state = LEGACY_S16_FROM_BITS(animation_counter) > 30 ?
+	selected_state = LEGACY_S16_FROM_BITS(animation_counter) >
+		MENU_ANIMATION_SECOND_STATE_START ?
 		LEGACY_S16_FROM_BITS((legacy_u16)second_state) :
 		LEGACY_S16_FROM_BITS((legacy_u16)first_state);
 	if (menu_animation_state != selected_state) {
@@ -56,7 +65,7 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color)
 {
-	legacy_s8 line[86];
+	legacy_s8 line[BUTTON_TEXT_LINE_BUFFER_SIZE];
 	legacy_s8* copied_text;
 	legacy_u16 length;
 	legacy_u16 source_index;
@@ -85,9 +94,10 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	}
 
 	remaining = LEGACY_S16_WRAP_SUB(height,
-		LEGACY_U16_WRAP_MUL(line_count, 8U));
+		LEGACY_U16_WRAP_MUL(line_count, BUTTON_FONT_LINE_HEIGHT));
 	vertical_offset = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_DIV_OR_ZERO(remaining, 2), 1);
+		LEGACY_S16_DIV_OR_ZERO(remaining, BUTTON_CENTER_DIVISOR),
+		BUTTON_TEXT_VERTICAL_ADJUSTMENT);
 	destination_index = 0;
 	line_index = 0;
 	for (source_index = 0; source_index <= length; source_index++) {
@@ -100,12 +110,13 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 
 		line[destination_index] = 0;
 		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
-		horizontal_offset = LEGACY_S16_DIV_OR_ZERO(remaining, 2);
+		horizontal_offset = LEGACY_S16_DIV_OR_ZERO(
+			remaining, BUTTON_CENTER_DIVISOR);
 		font_draw_text(line,
 			LEGACY_S16_WRAP_ADD(x, horizontal_offset),
 			LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_WRAP_ADD(y, vertical_offset),
-				LEGACY_U16_WRAP_MUL(line_index, 8U)));
+				LEGACY_U16_WRAP_MUL(line_index, BUTTON_FONT_LINE_HEIGHT)));
 		line_index++;
 		destination_index = 0;
 	}
