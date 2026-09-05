@@ -4,6 +4,11 @@ extern const legacy_s8 aLocateshape4_4sShapeNotF[];
 extern const legacy_s8 aLocatesound4_4sSoundNotF[];
 extern void fatal_error(const legacy_s8* format, ...);
 
+#define RESOURCE_NOT_FOUND_IGNORE 0U
+#define RESOURCE_NOT_FOUND_SHAPE_FATAL 1U
+#define RESOURCE_NOT_FOUND_SOUND_FATAL 2U
+#define RESOURCE_IDENTIFIER_PADDING ' '
+
 static const legacy_u8 far* resource_file_offset_bytes(
 	const legacy_u8 far* resource, legacy_u16 count, legacy_u16 index)
 {
@@ -79,7 +84,7 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 			padded_name[character] = name[character];
 		else {
 			padding = 1;
-			padded_name[character] = 0x20;
+			padded_name[character] = RESOURCE_IDENTIFIER_PADDING;
 		}
 	}
 
@@ -97,15 +102,15 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 		}
 		if (character == RESOURCE_FILE_IDENTIFIER_SIZE ||
 			(identifier[character] == 0 &&
-			padded_name[character] == 0x20)) {
+			padded_name[character] == RESOURCE_IDENTIFIER_PADDING)) {
 			return (legacy_s8 far*)resource_file_data(
 				(legacy_u8 far*)data, index);
 		}
 	}
 
-	if (fatal > 1U)
+	if (fatal >= RESOURCE_NOT_FOUND_SOUND_FATAL)
 		fatal_error(aLocatesound4_4sSoundNotF, name);
-	if (fatal == 1U)
+	if (fatal == RESOURCE_NOT_FOUND_SHAPE_FATAL)
 		fatal_error(aLocateshape4_4sShapeNotF, name);
 	return 0;
 }
@@ -113,13 +118,13 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
 	const legacy_s8* name)
 {
-	return locate_resource(data, name, 0);
+	return locate_resource(data, name, RESOURCE_NOT_FOUND_IGNORE);
 }
 
 legacy_s8 far* locate_shape_fatal(legacy_s8 far* data,
 	const legacy_s8* name)
 {
-	return locate_resource(data, name, 1);
+	return locate_resource(data, name, RESOURCE_NOT_FOUND_SHAPE_FATAL);
 }
 
 legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
@@ -131,5 +136,5 @@ legacy_s8 far* locate_shape_alt(legacy_s8 far* data,
 legacy_s8 far* locate_sound_fatal(legacy_s8 far* data,
 	const legacy_s8* name)
 {
-	return locate_resource(data, name, 2);
+	return locate_resource(data, name, RESOURCE_NOT_FOUND_SOUND_FATAL);
 }
