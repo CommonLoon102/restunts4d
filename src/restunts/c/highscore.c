@@ -742,8 +742,7 @@ legacy_u16 end_hiscore(void)
 	animation_y = LEGACY_S16_WRAP_SUB(
 		0x63, shape2d_get_height(frame_shape));
 	animation_y = LEGACY_S16_FROM_BITS(
-		((legacy_u16)animation_y >> 1) |
-		((legacy_u16)animation_y & 0x8000U));
+		LEGACY_U16_SAR((legacy_u16)animation_y, 1U));
 	draw_lines_unk(LEGACY_S16_WRAP_SUB(animation_x, 3),
 		LEGACY_S16_WRAP_SUB(animation_y, 3),
 		LEGACY_S16_WRAP_ADD(animation_width, 5),

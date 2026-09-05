@@ -5,6 +5,8 @@
 #include "platform.h"
 #include "shape2d.h"
 
+#define DASHBOARD_STEERING_SCALE_SHIFT 3U
+
 static legacy_s16 dashboard_steering_position(legacy_s16 angle)
 {
 	legacy_s16 magnitude;
@@ -12,8 +14,7 @@ static legacy_s16 dashboard_steering_position(legacy_s16 angle)
 
 	magnitude = angle < 0 ? LEGACY_S16_WRAP_NEGATE(angle) : angle;
 	bits = (legacy_u16)magnitude;
-	bits = (legacy_u16)((bits >> 3) |
-		((bits & 0x8000U) != 0 ? 0xE000U : 0U));
+	bits = LEGACY_U16_SAR(bits, DASHBOARD_STEERING_SCALE_SHIFT);
 	magnitude = LEGACY_S16_FROM_BITS(bits);
 	return angle < 0 ? LEGACY_S16_WRAP_NEGATE(magnitude) : magnitude;
 }

@@ -20,7 +20,7 @@ legacy_s32 nopsub_26552(legacy_s32 value)
 	legacy_u32 bits;
 
 	bits = (legacy_u32)value;
-	if ((bits & 0x80000000UL) != 0)
+	if ((bits & LEGACY_U32_SIGN_BIT) != 0)
 		bits = (legacy_u32)(0UL - bits);
 	return LEGACY_S32_FROM_BITS(bits);
 }
@@ -160,7 +160,7 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 /* Arithmetic shift right by one: the sign bit is kept as x86 SAR does. */
 legacy_u16 sar1_word(legacy_u16 value)
 {
-	return (legacy_u16)((value >> 1) | (value & 0x8000U));
+	return LEGACY_U16_SAR(value, 1U);
 }
 
 legacy_s16 absolute_word(legacy_s16 value)

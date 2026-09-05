@@ -18,12 +18,7 @@ void audio_unk3(legacy_u8 flags, legacy_s16 channel);
 
 static legacy_s16 audio_carstate_position(legacy_s32 position)
 {
-	legacy_u32 bits;
-
-	bits = (legacy_u32)position;
-	bits = (bits >> 6) |
-		((bits & 0x80000000UL) != 0 ? 0xFC000000UL : 0);
-	return LEGACY_S16_FROM_BITS((legacy_u16)bits);
+	return position_to_word(position);
 }
 
 /* Each car is logged as its offset from the camera, before and after. */

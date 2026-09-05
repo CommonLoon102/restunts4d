@@ -10,12 +10,7 @@
 static legacy_s16 intro_shift_position(legacy_s32 position,
 	legacy_s16 camera)
 {
-	legacy_u32 bits;
-
-	bits = (legacy_u32)position;
-	bits = (bits >> 6) |
-		((bits & 0x80000000UL) != 0 ? 0xFC000000UL : 0);
-	return LEGACY_S16_WRAP_SUB((legacy_u16)bits, camera);
+	return LEGACY_S16_WRAP_SUB(position_to_word(position), camera);
 }
 
 static void intro_draw_transformed_shape(

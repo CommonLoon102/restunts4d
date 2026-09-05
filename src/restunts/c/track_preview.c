@@ -5,7 +5,7 @@ static legacy_s16 track_preview_half(legacy_s16 value)
 	legacy_u16 bits;
 
 	bits = (legacy_u16)value;
-	return LEGACY_S16_FROM_BITS((bits >> 1) | (bits & 0x8000U));
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_SAR(bits, 1U));
 }
 
 static void track_preview_draw_terrain(legacy_u8 terrain,
