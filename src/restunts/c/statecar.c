@@ -46,6 +46,12 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define CAR_GEAR_CHANGE_ACTIVE 1
 #define GEAR_CHANGE_DELAY_HALF_SHIFT 1U
 #define GEAR_CHANGE_DELAY_TICK_STEP 1
+#define GEAR_KNOB_ALIGNED 0
+#define GEAR_CHANGE_DELAY_EXPIRED 0
+#define REAR_WHEEL_CONTACT_NONE 0
+#define ALL_WHEEL_CONTACT_NONE 0
+#define OPPONENT_DRAG_NONE 0
+#define CAR_SPEED_STOPPED 0
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)
@@ -139,7 +145,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 			var_4 = CAR_GEAR_SHIFT_DOWN;
 	} else if (arg_carState->car_current_gear != CAR_GEAR_NEUTRAL &&
 		arg_carState->car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
-		arg_carState->car_sumSurfRearWheels != 0) {
+		arg_carState->car_sumSurfRearWheels != REAR_WHEEL_CONTACT_NONE) {
 		if ((legacy_u16)arg_carState->car_currpm >
 			(legacy_u16)arg_simd->upshift_rpm) {
 			var_4 = CAR_GEAR_SHIFT_UP;
@@ -172,7 +178,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		if (arg_carState->car_knob_x == arg_carState->car_knob_x2) {
 			var_4 = LEGACY_S16_WRAP_SUB(
 				arg_carState->car_knob_y2, arg_carState->car_knob_y);
-			if (var_4 == 0) {
+			if (var_4 == GEAR_KNOB_ALIGNED) {
 				arg_carState->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
 				arg_carState->car_gearratio =
 					arg_simd->gear_ratios[arg_carState->car_current_gear];
@@ -193,7 +199,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 				arg_carState->car_knob_y,
 				arg_simd->knob_points[CAR_GEAR_NEUTRAL].py, var_2);
 		}
-	} else if (arg_carState->car_fpsmul2 != 0) {
+	} else if (arg_carState->car_fpsmul2 != GEAR_CHANGE_DELAY_EXPIRED) {
 		arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
 			arg_carState->car_fpsmul2, GEAR_CHANGE_DELAY_TICK_STEP);
 	}
@@ -224,7 +230,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 					arg_carState->car_currpm,
 					NORMAL_GEAR_CHANGE_RPM_DROP);
 			}
-		} else if (arg_carState->car_sumSurfRearWheels == 0) {
+		} else if (arg_carState->car_sumSurfRearWheels ==
+			REAR_WHEEL_CONTACT_NONE) {
 			if ((legacy_u16)arg_carState->car_currpm <
 				(legacy_u16)arg_simd->max_rpm &&
 				var_updatedSpeed < AIRBORNE_MAX_SPEED) {
@@ -256,7 +263,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 				var_currTorque = (legacy_u16)(
 					OPPONENT_SPEED_SCALE - *oppnentSped) >>
 					OPPONENT_DRAG_SHIFT;
-				if (var_currTorque != 0) {
+				if (var_currTorque != OPPONENT_DRAG_NONE) {
 					var_deltaSpeed = apply_opponent_acceleration_drag(
 						var_deltaSpeed, var_currTorque);
 				}
@@ -299,13 +306,13 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		}
 	} else if ((legacy_u16)LEGACY_S16_WRAP_NEGATE(var_deltaSpeed) >
 		var_updatedSpeed) {
-		var_updatedSpeed = 0;
+		var_updatedSpeed = CAR_SPEED_STOPPED;
 	} else {
 		var_updatedSpeed = LEGACY_U16_WRAP_ADD(
 			var_updatedSpeed, var_deltaSpeed);
 	}
 
-	if (arg_carState->car_sumSurfRearWheels == 0) {
+	if (arg_carState->car_sumSurfRearWheels == REAR_WHEEL_CONTACT_NONE) {
 		arg_carState->car_speed = var_updatedSpeed;
 	} else {
 		var_4 = absolute_word(LEGACY_S16_WRAP_SUB(
@@ -328,7 +335,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		arg_carState->car_gearratio, arg_carState->car_changing_gear,
 		arg_simd->idle_rpm);
 
-	if (arg_carState->car_sumSurfAllWheels != 0 &&
+	if (arg_carState->car_sumSurfAllWheels != ALL_WHEEL_CONTACT_NONE &&
 		arg_carState->car_lastrpm > arg_carState->car_currpm) {
 		if (LEGACY_S16_WRAP_SUB(arg_carState->car_lastrpm,
 			arg_carState->car_currpm) > RAPID_RPM_CHANGE_THRESHOLD) {
