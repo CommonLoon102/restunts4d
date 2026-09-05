@@ -68,6 +68,18 @@
 #define BANKED_ENTRANCE_B_ANGLE 160
 #define BANKED_ENTRANCE_END_Z 334
 #define BANKED_ENTRANCE_INNER_Z 168
+#define BANKED_ENTRANCE_A_VARIANT 0
+#define BANKED_ENTRANCE_B_VARIANT 1
+#define BANKED_ENTRANCE_NEGATIVE_OUTER_PLAN_OFFSET 1
+#define BANKED_ENTRANCE_NEGATIVE_INNER_PLAN_OFFSET 3
+#define BANKED_ENTRANCE_POSITIVE_INNER_PLAN_OFFSET 5
+#define BANKED_ENTRANCE_POSITIVE_OUTER_PLAN_OFFSET 7
+#define BANKED_ENTRANCE_POSITIVE_END_PLAN_OFFSET 9
+#define BANKED_ENTRANCE_NEGATIVE_OUTER_ADJUST_INDEX 0U
+#define BANKED_ENTRANCE_NEGATIVE_INNER_ADJUST_INDEX 1U
+#define BANKED_ENTRANCE_POSITIVE_INNER_ADJUST_INDEX 2U
+#define BANKED_ENTRANCE_POSITIVE_OUTER_ADJUST_INDEX 3U
+#define BANKED_ENTRANCE_SECOND_TRIANGLE_PLAN_OFFSET 1
 #define BANKED_ROAD_PLANE_INDEX 6
 #define BANKED_CORNER_INNER_OFFSET 120
 #define BANKED_CORNER_OUTER_OFFSET 126
@@ -183,6 +195,9 @@
 #define CORK_UD_ANGLE_SCALE_SHIFT 10U
 #define CORK_UD_FIRST_ARC_PLAN_OFFSET 1
 #define ELEVATED_WALL_VERTICAL_OFFSET -12
+#define TRACK_WALL_NONE -1
+#define TRACK_WALL_DEFAULT_HEIGHT ELEVATED_WALL_VERTICAL_OFFSET
+#define ELEVATED_WALL_LOWER_BOUND_DEFAULT -1000
 #define SLALOM_POLE_INNER_X 23
 #define SLALOM_POLE_OUTER_X 97
 #define SLALOM_POLE_NEAR_Z 241
@@ -477,9 +492,9 @@ void build_track_object(struct VECTOR* world_position,
 	legacy_u8 track_tile;
 
 	planindex = NO_PLANE_INDEX;
-	wallindex = -1;
-	wallHeight = -12;
-	elRdWallRelated = -1000;
+	wallindex = TRACK_WALL_NONE;
+	wallHeight = TRACK_WALL_DEFAULT_HEIGHT;
+	elRdWallRelated = ELEVATED_WALL_LOWER_BOUND_DEFAULT;
 	corkFlag = CORKSCREW_INACTIVE;
 	current_surf_type = SURFACE_GRASS;
 	byte_4392C = TRACK_COLLISION_ENABLED;
@@ -822,22 +837,24 @@ void build_track_object(struct VECTOR* world_position,
 
 	case PHYSICAL_MODEL_BANKED_ENTRANCE_A:
 		value = BANKED_ENTRANCE_A_PLAN_BASE;
-		value2 = 0;
+		value2 = BANKED_ENTRANCE_A_VARIANT;
 		terrain_angle = BANKED_ENTRANCE_A_ANGLE;
 		/* fall through */
 
 	case PHYSICAL_MODEL_BANKED_ENTRANCE_B:
 		if (physical_model == PHYSICAL_MODEL_BANKED_ENTRANCE_B) {
 			value = BANKED_ENTRANCE_B_PLAN_BASE;
-			value2 = 1;
+			value2 = BANKED_ENTRANCE_B_VARIANT;
 			terrain_angle = BANKED_ENTRANCE_B_ANGLE;
 		}
 		if (absolute_x > ROAD_HALF_WIDTH)
 			break;
-		if (value2 == 0 && next_position.x <= -ROAD_HALF_WIDTH) {
+		if (value2 == BANKED_ENTRANCE_A_VARIANT &&
+			next_position.x <= -ROAD_HALF_WIDTH) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = ELEVATED_LEFT_WALL_INDEX;
-		} else if (value2 != 0 && next_position.x >= ROAD_HALF_WIDTH) {
+		} else if (value2 == BANKED_ENTRANCE_B_VARIANT &&
+			next_position.x >= ROAD_HALF_WIDTH) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = ELEVATED_RIGHT_WALL_INDEX;
 		}
@@ -847,21 +864,26 @@ void build_track_object(struct VECTOR* world_position,
 			break;
 		}
 		if (position.z >= BANKED_ENTRANCE_END_Z) {
-			planindex = LEGACY_S16_WRAP_ADD(value, 9);
+			planindex = LEGACY_S16_WRAP_ADD(value,
+				BANKED_ENTRANCE_POSITIVE_END_PLAN_OFFSET);
 			break;
 		}
 		if (position.z < -BANKED_ENTRANCE_INNER_Z) {
-			planindex = LEGACY_S16_WRAP_ADD(value, 1);
-			index = 0;
+			planindex = LEGACY_S16_WRAP_ADD(value,
+				BANKED_ENTRANCE_NEGATIVE_OUTER_PLAN_OFFSET);
+			index = BANKED_ENTRANCE_NEGATIVE_OUTER_ADJUST_INDEX;
 		} else if (position.z < 0) {
-			planindex = LEGACY_S16_WRAP_ADD(value, 3);
-			index = 1;
+			planindex = LEGACY_S16_WRAP_ADD(value,
+				BANKED_ENTRANCE_NEGATIVE_INNER_PLAN_OFFSET);
+			index = BANKED_ENTRANCE_NEGATIVE_INNER_ADJUST_INDEX;
 		} else if (position.z < BANKED_ENTRANCE_INNER_Z) {
-			planindex = LEGACY_S16_WRAP_ADD(value, 5);
-			index = 2;
+			planindex = LEGACY_S16_WRAP_ADD(value,
+				BANKED_ENTRANCE_POSITIVE_INNER_PLAN_OFFSET);
+			index = BANKED_ENTRANCE_POSITIVE_INNER_ADJUST_INDEX;
 		} else {
-			planindex = LEGACY_S16_WRAP_ADD(value, 7);
-			index = 3;
+			planindex = LEGACY_S16_WRAP_ADD(value,
+				BANKED_ENTRANCE_POSITIVE_OUTER_PLAN_OFFSET);
+			index = BANKED_ENTRANCE_POSITIVE_OUTER_ADJUST_INDEX;
 		}
 		value3 = LEGACY_S16_WRAP_SUB(position.z,
 			bkRdEntr_triang_zAdjust[index]);
@@ -871,7 +893,8 @@ void build_track_object(struct VECTOR* world_position,
 			multiply_and_scale(cos_fast((legacy_u16)terrain_angle),
 				position.x));
 		if (value3 > 0)
-			planindex = LEGACY_S16_WRAP_ADD(planindex, 1);
+			planindex = LEGACY_S16_WRAP_ADD(planindex,
+				BANKED_ENTRANCE_SECOND_TRIANGLE_PLAN_OFFSET);
 		break;
 
 	case PHYSICAL_MODEL_BANKED_ROAD:
