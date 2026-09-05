@@ -210,7 +210,7 @@ extern legacy_s8 unk_3E7FC[];
 extern legacy_s8 unk_3E82C[];
 extern legacy_s16 audio_init_engine(legacy_s16, void far*, void far*, void far*);
 
-extern void update_car_speed(legacy_s8 input, legacy_s16 multiplayer,
+extern void update_car_speed(legacy_s8 input, legacy_s16 car_index,
 	struct CARSTATE* carstate, struct SIMD* simd);
 
 void init_div0(void)

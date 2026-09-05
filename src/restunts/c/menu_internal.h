@@ -266,7 +266,7 @@ void audio_suspend(void);
 void audio_resume(void);
 void call_exitlist2(void);
 void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets);
-void update_car_speed(legacy_s8 input, legacy_s16 multiplayer,
+void update_car_speed(legacy_s8 input, legacy_s16 car_index,
 	struct CARSTATE* carstate, struct SIMD* simd);
 
 #endif

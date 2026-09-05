@@ -302,7 +302,7 @@ void update_car_speed(legacy_s8, legacy_s16, struct CARSTATE* carstate, struct S
 void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, legacy_s16);
 
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
-	legacy_s16 player_behavior)
+	legacy_s16 grip_behavior)
 {
 	legacy_s16 initial_angle;
 	legacy_s16 adjusted_angle;
@@ -374,7 +374,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	carstate->car_demandedGrip = LEGACY_S16_FROM_BITS(demanded_grip);
 	carstate->car_surfacegrip_sum = combined_grip;
 
-	if (player_behavior == 0) {
+	if (grip_behavior == GRIP_BEHAVIOR_OPPONENT) {
 		carstate->car_40MfrontWhlAngle = LEGACY_S16_SHL(
 			carstate->car_steeringAngle, FRONT_WHEEL_ANGLE_SHIFT);
 		if (carstate->car_angle_z != 0) {
@@ -384,7 +384,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		}
 	}
 
-	if (player_behavior != 0) {
+	if (grip_behavior == GRIP_BEHAVIOR_PLAYER) {
 	if (carstate->car_steeringAngle == 0) {
 		rotation_low = LEGACY_S8_FROM_BITS(
 			(legacy_u8)carstate->car_rotate.x);

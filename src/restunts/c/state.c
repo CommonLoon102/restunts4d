@@ -75,7 +75,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 		}
 	}
 
-	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
+	update_car_speed(arg_carInputByte, PLAYER_CAR_INDEX,
+		&state.playerstate, &simd_player);
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
 		state.playerstate.car_lastrpm;
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD] =
@@ -87,14 +88,15 @@ void player_op(legacy_s8 arg_carInputByte) {
 			INPUT_STEERING_SHIFT) & INPUT_PEDAL_MASK);
 	var_speedBeforeGrip = state.playerstate.car_speed;
 	var_speed2BeforeGrip = state.playerstate.car_speed2;
-	update_grip(&state.playerstate, &simd_player, 1);
+	update_grip(&state.playerstate, &simd_player, GRIP_BEHAVIOR_PLAYER);
 	update_legacy_grip_stack_words(
 		&state.playerstate,
 		&simd_player,
 		var_speedBeforeGrip,
 		var_speed2BeforeGrip
 	);
-	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent, 0);
+	update_player_state(&state.playerstate, &simd_player,
+		&state.opponentstate, &simd_opponent, PLAYER_CAR_INDEX);
 	state.game_travDist = LEGACY_S32_WRAP_ADD(
 		state.game_travDist,
 		(legacy_s32)(legacy_u16)state.playerstate.car_speed2);

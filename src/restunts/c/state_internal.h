@@ -10,6 +10,8 @@
 
 #define PENALTY_ROUTE_FINISH_REACHED (-1)
 #define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
+#define GRIP_BEHAVIOR_OPPONENT 0
+#define GRIP_BEHAVIOR_PLAYER 1
 
 extern legacy_s16 penalty_time;
 extern legacy_s16 grassDecelDivTab[];
@@ -31,16 +33,16 @@ extern legacy_u8 byte_4616E;
 
 legacy_s16 detect_penalty(legacy_s16* current_track,
 	legacy_s16* penalty_count);
-void update_car_speed(legacy_s8 input, legacy_s16 is_opponent,
+void update_car_speed(legacy_s8 input, legacy_s16 car_index,
 	struct CARSTATE* carstate, struct SIMD* simd);
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
-	legacy_s16 is_player);
+	legacy_s16 grip_behavior);
 void update_legacy_grip_stack_words(struct CARSTATE* carstate,
 	struct SIMD* simd, legacy_u16 speed_before_grip,
 	legacy_u16 speed2_before_grip);
 void update_player_state(struct CARSTATE* playerstate,
 	struct SIMD* playersimd, struct CARSTATE* opponentstate,
-	struct SIMD* opponentsimd, legacy_s16 is_opponent);
+	struct SIMD* opponentsimd, legacy_s16 car_index);
 
 struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset);
 void upd_statef20_from_steer_input(legacy_s8 steering_input);

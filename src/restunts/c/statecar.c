@@ -95,7 +95,8 @@ legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16
 
 }
 
-void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
+void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
+	struct CARSTATE* arg_carState, struct SIMD* arg_simd) {
 	legacy_s16 var_2;
 	legacy_s16 var_4;
 	legacy_u16 var_updatedSpeed;
@@ -233,7 +234,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 					TORQUE_ACCELERATION_SHIFT)));
 			var_deltaSpeed = scale_acceleration_by_mass(
 				var_deltaSpeed, arg_simd->car_mass);
-			if (arg_MplayerFlag != 0) {
+			if (car_index == OPPONENT_CAR_INDEX) {
 				var_currTorque = (legacy_u16)(
 					OPPONENT_SPEED_SCALE - *oppnentSped) >>
 					OPPONENT_DRAG_SHIFT;
@@ -250,7 +251,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 		arg_carState->car_is_accelerating = 0;
 		arg_carState->car_engineLimiterTimer = 0;
 		arg_carState->car_is_braking = 1;
-		if (arg_MplayerFlag == 0) {
+		if (car_index == PLAYER_CAR_INDEX) {
 			var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 				var_deltaSpeed, arg_simd->braking_eff);
 		} else {

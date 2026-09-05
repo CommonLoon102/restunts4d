@@ -220,7 +220,9 @@ static legacy_s16 scaled_vector_separation(struct VECTOR* first,
 	return polarRadius3D(delta);
 }
 
-void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, struct CARSTATE* arg_oState, struct SIMD* arg_oSimd, legacy_s16 arg_MplayerFlag) {
+void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
+	struct CARSTATE* arg_oState, struct SIMD* arg_oSimd,
+	legacy_s16 car_index) {
 	struct MATRIX var_MmatFromAngleZ;
 	legacy_s16 var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
@@ -252,7 +254,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	struct VECTOR var_DC[PLAYER_PHYSICS_COLLISION_POINT_CAPACITY];
 	enum PLAYER_PHYSICS_FLOW physics_flow;
 
-	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
+	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, car_index);
 
 	/*
 	 * Seed the four collision-plane results from the explicit model of the
@@ -310,7 +312,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	 * appropriate to the opponent or player invocation.
 	 */
 	if (var_pSpeed2Scaled == 0) {
-		if (arg_MplayerFlag != 0) {
+		if (car_index == OPPONENT_CAR_INDEX) {
 			var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD] =
 				legacy_execution_residue.wheel_angle_stack_words[
 					LEGACY_RESIDUE_FIRST_WORD];
@@ -344,7 +346,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	 * retained words come from rear-opponent wheel coordinates rather than
 	 * ordinary wheel angles. Reconstruct those words from explicit game state.
 	 */
-	if (arg_MplayerFlag == 0 && gameconfig.game_opponenttype != 0 &&
+	if (car_index == PLAYER_CAR_INDEX && gameconfig.game_opponenttype != 0 &&
 		var_pSpeed2Scaled == 0 &&
 		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
 		/*
@@ -514,7 +516,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		var_140someWhlData[var_wheelIndex] = pState_f36Mminf40sar2;
 		legacy_execution_residue.wheel_plane_angles[var_wheelIndex] =
 			pState_f36Mminf40sar2;
-		if (arg_MplayerFlag != 0) {
+		if (car_index == OPPONENT_CAR_INDEX) {
 			legacy_execution_residue.wheel_angle_stack_words[
 				var_wheelIndex] = pState_f36Mminf40sar2;
 		}
@@ -534,7 +536,7 @@ case PLAYER_FLOW_loc_15142:
 	if (var_2 != PLAYER_PHYSICS_COLLISION_RETRY_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_151A2; continue; }
 	arg_pState->car_36MwhlAngle = ANGLE_HALF_TURN;
-	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15163:
 	if (arg_pState->car_surfaceWhl[0] != PLAYER_PHYSICS_SURFACE_WATER)
@@ -545,7 +547,7 @@ case PLAYER_FLOW_loc_15163:
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
 	if (arg_pState->car_surfaceWhl[3] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	update_crash_state(CRASH_EVENT_WATER, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_WATER, car_index);
 
 case PLAYER_FLOW_loc_15192:
 	var_DEptrTo1C0 = vecl_1C0;
@@ -602,7 +604,7 @@ case PLAYER_FLOW_loc_1527C:
 
 	mat_rot_y(&mat_134, LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
-	if (arg_MplayerFlag == 0) {
+	if (car_index == PLAYER_CAR_INDEX) {
 		legacy_execution_residue.wheel_angle_stack_words[
 			LEGACY_RESIDUE_FIRST_WORD] = mat_134.vals[
 			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
@@ -725,7 +727,7 @@ case PLAYER_FLOW_loc_154F8:
 	var_138 = LEGACY_S16_SHL(si, 1U);
 case PLAYER_FLOW_loc_154FA:
 	arg_pState->car_36MwhlAngle = var_138;
-	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15513:
 	arg_pState->field_CF |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
@@ -831,7 +833,7 @@ case PLAYER_FLOW_loc_1570A:
 		position_to_word(var_DEptrTo1C0->lz), var_122.z);
 
 	mat_134 = var_6->plane_rotation;
-	if (arg_MplayerFlag == 0) {
+	if (car_index == PLAYER_CAR_INDEX) {
 		legacy_execution_residue.wheel_angle_stack_words[
 			LEGACY_RESIDUE_FIRST_WORD] = mat_134.vals[
 			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
@@ -862,7 +864,7 @@ case PLAYER_FLOW_loc_1570A:
 		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
 	if (vec_1C.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_158DA; continue; }
-	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
 	var_136 = 1;
 
 case PLAYER_FLOW_loc_15879:
@@ -997,7 +999,7 @@ case PLAYER_FLOW_loc_15CF7:
 	if (arg_pState->car_rc1[var_wheelIndex] <=
 		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15D1A; continue; }
-	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15D1A:
 	arg_pState->car_rc1[var_wheelIndex] = 0;
@@ -1228,7 +1230,7 @@ case PLAYER_FLOW_loc_16236:
 #ifndef RESTUNTS_HEADLESS
 	if (is_in_replay != 0)
 		{ physics_flow = PLAYER_FLOW_loc_1625F; continue; }
-	if (arg_MplayerFlag == 0)
+	if (car_index == PLAYER_CAR_INDEX)
 		{ physics_flow = PLAYER_FLOW_loc_1624A; continue; }
 	audio_unk3(arg_pState->field_CF, audio_opponent_engine_channel);
 	{ physics_flow = PLAYER_FLOW_loc_1624E; continue; }
@@ -1268,7 +1270,7 @@ case PLAYER_FLOW_loc_162EE:
 		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
 case PLAYER_FLOW_loc_162F9:
-	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
 
 case PLAYER_FLOW_loc_16309:
 	arg_pState->car_whlWorldCrds2[var_wheelIndex] = vec_17C;
@@ -1311,7 +1313,7 @@ case PLAYER_FLOW_loc_16428:
 	var_11C = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_sumSurfFrontWheels,
 		arg_pState->car_sumSurfRearWheels);
-	if (arg_MplayerFlag != 0)
+	if (car_index == OPPONENT_CAR_INDEX)
 		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	if (var_11C != 0)
 		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
@@ -1351,9 +1353,9 @@ case PLAYER_FLOW_loc_1653E:
 	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
 case PLAYER_FLOW_loc_16550:
-	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 	update_crash_state(CRASH_EVENT_COLLISION,
-		arg_MplayerFlag == PLAYER_CAR_INDEX ?
+		car_index == PLAYER_CAR_INDEX ?
 			OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
 	return;
 
@@ -1414,7 +1416,7 @@ case PLAYER_FLOW_loc_165F0:
 
 case PLAYER_FLOW_loc_16648:
 	// crash with start/finish pole
-	update_crash_state(CRASH_EVENT_COLLISION, arg_MplayerFlag);
+	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 	return ;
 
 case PLAYER_FLOW_loc_16650:

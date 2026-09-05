@@ -271,7 +271,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		state.playerstate.car_transmission = TRANSMISSION_AUTOMATIC;
 		graph_step = 0;
 		for (;;) {
-			update_car_speed(INPUT_ACCELERATE_FLAG, 0,
+			update_car_speed(INPUT_ACCELERATE_FLAG, PLAYER_CAR_INDEX,
 				&state.playerstate, &simd_player);
 			speed = (legacy_u16)state.playerstate.car_speed >> 8;
 			graph_y = LEGACY_U16_WRAP_SUB(CAR_MENU_GRAPH_BASELINE_Y,

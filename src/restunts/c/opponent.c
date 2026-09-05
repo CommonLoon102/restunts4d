@@ -427,10 +427,12 @@ void opponent_op(void)
 		}
 	}
 
-	update_car_speed(input, 1, &state.opponentstate, &simd_opponent);
-	update_grip(&state.opponentstate, &simd_opponent, 0);
+	update_car_speed(input, OPPONENT_CAR_INDEX,
+		&state.opponentstate, &simd_opponent);
+	update_grip(&state.opponentstate, &simd_opponent,
+		GRIP_BEHAVIOR_OPPONENT);
 	update_player_state(&state.opponentstate, &simd_opponent,
-		&state.playerstate, &simd_player, 1);
+		&state.playerstate, &simd_player, OPPONENT_CAR_INDEX);
 	if (state.opponentstate.car_crashBmpFlag == 0) {
 		relative.x = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.x,
