@@ -410,7 +410,7 @@ static void replay_fast_forward(void)
 	legacy_u16 target;
 
 	accumulated = replay_scrub_begin(0);
-	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
+	while (((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0) {
 		accumulated = replay_scrub_advance(accumulated, &delta);
 		remaining = LEGACY_U16_WRAP_SUB(
 			gameconfig.game_recordedframes, elapsed_time2);
@@ -458,7 +458,7 @@ static void replay_rewind(void)
 	legacy_u16 displayed_frame;
 
 	accumulated = replay_scrub_begin(1);
-	while (((legacy_u8)input_combined_flags & 0x30U) != 0) {
+	while (((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0) {
 		accumulated = replay_scrub_advance(accumulated, &delta);
 		amount = replay_scrub_amount(accumulated);
 		if (amount > elapsed_time2)
@@ -629,7 +629,8 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 
 	custom_camera_active = 0;
 	if (kb_get_key_state(0x1D) != 0 ||
-		(byte_3E9DB == 8U && ((legacy_u8)input_combined_flags & 0x30U) != 0))
+		(byte_3E9DB == 8U &&
+			((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0))
 		custom_camera_active = 1;
 	if (custom_camera_active != 0) {
 		switch (input) {

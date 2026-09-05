@@ -152,9 +152,9 @@ void replay_unk2(legacy_s16 mode)
 				}
 				input_steering_value = LEGACY_S8_FROM_BITS(steering);
 				if (((legacy_u16)mouse_butstate & 1U) != 0)
-					input_flags = 2;
+					input_flags = INPUT_BRAKE_FLAG;
 				else if (((legacy_u16)mouse_butstate & 2U) != 0)
-					input_flags = 1;
+					input_flags = INPUT_ACCELERATE_FLAG;
 				else
 					input_flags = 0;
 			} else {
@@ -170,7 +170,8 @@ void replay_unk2(legacy_s16 mode)
 								(legacy_u8)mapped_steering)]));
 				}
 				input_flags = (legacy_s16)
-					((legacy_u16)get_kb_or_joy_flags() & 0x33U);
+					((legacy_u16)get_kb_or_joy_flags() &
+						INPUT_NON_STEERING_MASK);
 			}
 			history_index = (legacy_u16)elapsed_time2 & 0x3FU;
 			input_steering_history[history_index] = (legacy_u8)input_steering_value;
@@ -181,10 +182,10 @@ void replay_unk2(legacy_s16 mode)
 
 		if (kb_get_key_state(0x1E) != 0)
 			input_flags = (legacy_s16)
-				((legacy_u16)input_flags | 0x10U);
+				((legacy_u16)input_flags | INPUT_SHIFT_UP_FLAG);
 		if (kb_get_key_state(0x2C) != 0)
 			input_flags = (legacy_s16)
-				((legacy_u16)input_flags | 0x20U);
+				((legacy_u16)input_flags | INPUT_SHIFT_DOWN_FLAG);
 	} else {
 		input_flags = 0;
 	}

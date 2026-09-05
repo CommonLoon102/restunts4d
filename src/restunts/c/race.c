@@ -308,7 +308,9 @@ void run_game(void) {
 
 				if (game_replay_mode == 1) {
 					dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
-					if (((mouse_butstate & 3) != 0) || ((get_kb_or_joy_flags() & 0x30) != 0)) {
+					if (((mouse_butstate & 3) != 0) ||
+						((get_kb_or_joy_flags() &
+							INPUT_ACTION_BUTTON_MASK) != 0)) {
 						game_replay_mode = 0;
 						byte_4393C = 0;
 						init_game_state_with_frame_rate(framespersec2);

@@ -1,4 +1,5 @@
 #include "externs.h"
+#include "game_input.h"
 #include "math.h"
 
 extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
@@ -87,9 +88,9 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 	var_4 = 0;
 	if (arg_carState->car_transmission == 0 &&
 		arg_carState->car_changing_gear == 0) {
-		if ((arg_carInputByte & 0x10) != 0)
+		if ((arg_carInputByte & INPUT_SHIFT_UP_FLAG) != 0)
 			var_4 = 1;
-		else if ((arg_carInputByte & 0x20) != 0)
+		else if ((arg_carInputByte & INPUT_SHIFT_DOWN_FLAG) != 0)
 			var_4 = -1;
 	} else if (arg_carState->car_current_gear != 0 &&
 		arg_carState->car_changing_gear == 0 &&
@@ -161,7 +162,8 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 			arg_simd->max_rpm, 1);
 		var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 			var_deltaSpeed, arg_simd->braking_eff);
-	} else if ((arg_carInputByte & 3) == 1) {
+	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) ==
+		INPUT_ACCELERATE_FLAG) {
 		arg_carState->car_is_braking = 0;
 		arg_carState->car_is_accelerating = 1;
 		if (arg_carState->car_changing_gear != 0) {
@@ -208,7 +210,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 arg_MplayerFlag, st
 			if (var_deltaSpeed > 0x128)
 				arg_carState->car_engineLimiterTimer = 5;
 		}
-	} else if ((arg_carInputByte & 3) == 2) {
+	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) == INPUT_BRAKE_FLAG) {
 		arg_carState->car_is_accelerating = 0;
 		arg_carState->car_engineLimiterTimer = 0;
 		arg_carState->car_is_braking = 1;

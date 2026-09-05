@@ -1,4 +1,5 @@
 #include "state_internal.h"
+#include "game_input.h"
 
 #define ROUTE_POINT_ADVANCE_DISTANCE 275
 #define ROUTE_ALIGNMENT_WRAP_LIMIT \
@@ -56,7 +57,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 	state.playerstate.field_CF = 1;
 	if (state.playerstate.car_crashBmpFlag != 0) {
 		state.field_45D = 0;
-		arg_carInputByte = 2;
+		arg_carInputByte = INPUT_BRAKE_FLAG;
 
 		if (state.playerstate.car_speed2 == 0) {
 			state.playerstate.field_CF = 0;
@@ -75,7 +76,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 	legacy_execution_residue.grip_stack_words[2] =
 		(legacy_s16)state.playerstate.car_gearratio;
 	upd_statef20_from_steer_input(
-		LEGACY_S16_SAR((legacy_s16)arg_carInputByte, 2U) & 3);
+		LEGACY_S16_SAR((legacy_s16)arg_carInputByte,
+			INPUT_STEERING_SHIFT) & INPUT_PEDAL_MASK);
 	var_speedBeforeGrip = state.playerstate.car_speed;
 	var_speed2BeforeGrip = state.playerstate.car_speed2;
 	update_grip(&state.playerstate, &simd_player, 1);
