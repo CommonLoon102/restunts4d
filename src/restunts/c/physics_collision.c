@@ -150,13 +150,13 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 		if (orientation == 0) {
 			rotated_x = source_x;
 			rotated_z = source_z;
-		} else if (orientation == 0x100U) {
+		} else if (orientation == ANGLE_QUARTER_TURN) {
 			rotated_x = source_z;
 			rotated_z = LEGACY_U16_WRAP_SUB(0, source_x);
-		} else if (orientation == 0x200U) {
+		} else if (orientation == ANGLE_HALF_TURN) {
 			rotated_x = LEGACY_U16_WRAP_SUB(0, source_x);
 			rotated_z = LEGACY_U16_WRAP_SUB(0, source_z);
-		} else if (orientation == 0x300U) {
+		} else if (orientation == ANGLE_THREE_QUARTER_TURN) {
 			rotated_x = LEGACY_U16_WRAP_SUB(0, source_z);
 			rotated_z = source_x;
 		} else {
@@ -301,17 +301,17 @@ legacy_s16 car_car_speed_adjust_maybe(
 	}
 
 	angle_delta = LEGACY_S16_WRAP_SUB(second_angle, first_angle);
-	if (angle_delta >= 0x200)
-		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, 0x400);
-	if (angle_delta <= -0x200)
-		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, 0x400);
+	if (angle_delta >= ANGLE_HALF_TURN)
+		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, ANGLE_FULL_TURN);
+	if (angle_delta <= -ANGLE_HALF_TURN)
+		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, ANGLE_FULL_TURN);
 	first_state->car_36MwhlAngle = angle_delta;
 
 	angle_delta = LEGACY_S16_WRAP_SUB(first_angle, second_angle);
-	if (angle_delta >= 0x200)
-		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, 0x400);
-	if (angle_delta <= -0x200)
-		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, 0x400);
+	if (angle_delta >= ANGLE_HALF_TURN)
+		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, ANGLE_FULL_TURN);
+	if (angle_delta <= -ANGLE_HALF_TURN)
+		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, ANGLE_FULL_TURN);
 	second_state->car_36MwhlAngle = angle_delta;
 
 	first_state->car_speed = first_state->car_speed2;

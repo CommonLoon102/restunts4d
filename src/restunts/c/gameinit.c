@@ -22,12 +22,12 @@ static void calculate_car_start_offset(legacy_s16 track_direction,
 {
 	*column_offset = LEGACY_S16_WRAP_ADD(
 		multiply_and_scale(sin_fast(angle_with_offset(
-			track_direction, 0x200)), 210),
+			track_direction, ANGLE_HALF_TURN)), 210),
 		multiply_and_scale(sin_fast(angle_with_offset(
 			track_direction, side_direction)), 36));
 	*row_offset = LEGACY_S16_WRAP_ADD(
 		multiply_and_scale(cos_fast(angle_with_offset(
-			track_direction, 0x200)), 210),
+			track_direction, ANGLE_HALF_TURN)), 210),
 		multiply_and_scale(cos_fast(angle_with_offset(
 			track_direction, side_direction)), 36));
 }
@@ -169,19 +169,19 @@ void init_game_state(legacy_s16 arg)
 		state.game_vec1[0].x =
 			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 				multiply_and_scale(sin_fast(angle_with_offset(
-					track_angle, 0x300)), 512),
+					track_angle, ANGLE_THREE_QUARTER_TURN)), 512),
 				multiply_and_scale(sin_fast(angle_with_offset(
-					track_angle, 0x200)), 4096)),
+					track_angle, ANGLE_HALF_TURN)), 4096)),
 				LEGACY_S16_SHL((legacy_s16)startcol2, 10U));
 		state.game_vec1[0].y = LEGACY_S16_WRAP_ADD(
 			hillHeightConsts[hillFlag], 960);
 		state.game_vec1[0].z =
 			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 				multiply_and_scale(cos_fast(angle_with_offset(
-					track_angle, 0x200)), 4096),
+					track_angle, ANGLE_HALF_TURN)), 4096),
 				trackpos[startrow2]),
 				multiply_and_scale(cos_fast(angle_with_offset(
-					track_angle, 0x300)), 512));
+					track_angle, ANGLE_THREE_QUARTER_TURN)), 512));
 
 		state.game_vec1[1] = state.game_vec1[0];
 		state.game_vec3 = state.game_vec1[0];
@@ -197,7 +197,8 @@ void init_game_state(legacy_s16 arg)
 		state.game_topSpeed = 0;
 		state.game_jumpCount = 0;
 
-		calculate_car_start_offset(track_angle, 0x100, &tmpcol, &tmprow);
+		calculate_car_start_offset(track_angle, ANGLE_QUARTER_TURN,
+			&tmpcol, &tmprow);
 
 		init_car_at_start(
 			&state.playerstate,
@@ -227,7 +228,8 @@ void init_game_state(legacy_s16 arg)
 				route_point, 1);
 		}
 
-		calculate_car_start_offset(track_angle, 0x300, &tmpcol, &tmprow);
+		calculate_car_start_offset(track_angle, ANGLE_THREE_QUARTER_TURN,
+			&tmpcol, &tmprow);
 
 		init_car_at_start(
 			&state.opponentstate,

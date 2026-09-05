@@ -46,23 +46,23 @@ legacy_s16 sintab[] = {
 extern legacy_u8 atantable[];
 
 legacy_s16 sin_fast(legacy_u16 s) {
-	legacy_u8 c = s & 0xFF;
+	legacy_u8 c = s & ANGLE_QUARTER_MASK;
 	switch ((s >> 8) & 3) {
 		case 0:
 			return sintab[c];
 		case 1:
-			return sintab[0x100 - c];
+			return sintab[ANGLE_QUARTER_TURN - c];
 		case 2:
 			return -sintab[c];
 		case 3:
-			return -sintab[0x100 - c];
+			return -sintab[ANGLE_QUARTER_TURN - c];
 	}
 
 	return 0;
 }
 
 legacy_s16 cos_fast(legacy_u16 s) {
-	return sin_fast(LEGACY_U16_WRAP_ADD(s, 0x100U));
+	return sin_fast(LEGACY_U16_WRAP_ADD(s, ANGLE_QUARTER_TURN));
 }
 
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
@@ -87,7 +87,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 		/* The legacy callers treat a zero-length direction as angle zero. */
 		if (z == 0)
 			return 0;
-		result = 0x80;
+		result = ANGLE_EIGHTH_TURN;
 	} else {
 		if (z > y) {
 			temp = z;
@@ -98,8 +98,8 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 		index = LEGACY_U32_DIV_OR_ZERO(
 			LEGACY_U32_SHL((legacy_u16)z, 16U),
 			(legacy_u16)y);
-		if ((index & 0xFF) >= 0x80) // round upwards
-			index += 0x100;
+		if ((index & ANGLE_QUARTER_MASK) >= ANGLE_EIGHTH_TURN)
+			index += ANGLE_QUARTER_TURN;
 		result = atantable[index >> 8];
 	}
 
@@ -107,19 +107,19 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 		case 0:
 			return result;
 		case 1:
-			return -result + 0x100;
+			return -result + ANGLE_QUARTER_TURN;
 		case 2:
-			return -result + 0x200;
+			return -result + ANGLE_HALF_TURN;
 		case 3:
-			return result + 0x100;
+			return result + ANGLE_QUARTER_TURN;
 		case 4:
 			return -result;
 		case 5:
-			return result - 0x100;
+			return result - ANGLE_QUARTER_TURN;
 		case 6:
-			return result - 0x200;
+			return result - ANGLE_HALF_TURN;
 		case 7:
-			return -(result + 0x100);
+			return -(result + ANGLE_QUARTER_TURN);
 	}
 
 	return 0;
@@ -134,11 +134,11 @@ legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y) {
 		result = -result;
 	}
 
-	if (result >= 0x100) {
-		result = -(result - 0x200);
+	if (result >= ANGLE_QUARTER_TURN) {
+		result = -(result - ANGLE_HALF_TURN);
 	}
 
-	if (result <= 0x80) {
+	if (result <= ANGLE_EIGHTH_TURN) {
 		result = cos_fast(result);
 		if (y < 0)
 			y = LEGACY_S16_WRAP_NEGATE(y);
@@ -313,7 +313,7 @@ void mat_rot_x(struct MATRIX* outmat, legacy_s16 angle) {
 
 	c = cos_fast(angle);
 	s = sin_fast(angle);
-	outmat->m._11 = 0x4000;
+	outmat->m._11 = TRIG_FIXED_ONE;
 	outmat->m._21 = 0;
 	outmat->m._31 = 0;
 	outmat->m._12 = 0;
@@ -333,7 +333,7 @@ void mat_rot_y(struct MATRIX* outmat, legacy_s16 angle) {
 	outmat->m._21 = 0;
 	outmat->m._31 = -s;
 	outmat->m._12 = 0;
-	outmat->m._22 = 0x4000;
+	outmat->m._22 = TRIG_FIXED_ONE;
 	outmat->m._32 = 0;
 	outmat->m._13 = s;
 	outmat->m._23 = 0;
@@ -353,7 +353,7 @@ void mat_rot_z(struct MATRIX* outmat, legacy_s16 angle) {
 	outmat->m._32 = 0;
 	outmat->m._13 = 0;
 	outmat->m._23 = 0;
-	outmat->m._33 = 0x4000;
+	outmat->m._33 = TRIG_FIXED_ONE;
 }
 
 // mat_rot_zxy was originally optimized, using pre-calced y-matrices and only
@@ -775,7 +775,7 @@ legacy_s16 vector_op_unk2(struct VECTOR* vec) {
 
 	angle = -polarAngle(vec->z, -vec->x);
 	if (angle < 0) {
-		angle += 0x400;
+		angle += ANGLE_FULL_TURN;
 	}
 
 	scaled_angle = LEGACY_S32_WRAP_SUB(

@@ -22,11 +22,10 @@
 #define TRACK_PIECE_SUBTYPE_MASK 15U
 #define TRACK_PIECE_REVERSE_FLAG 16U
 #define TRACK_ORIENTATION_COUNT 4U
-#define TRACK_ORIENTATION_QUARTER_TURN 256
 #define TRACK_ORIENTATION_NORTH 0
-#define TRACK_ORIENTATION_EAST 256
-#define TRACK_ORIENTATION_SOUTH 512
-#define TRACK_ORIENTATION_WEST 768
+#define TRACK_ORIENTATION_EAST ANGLE_QUARTER_TURN
+#define TRACK_ORIENTATION_SOUTH ANGLE_HALF_TURN
+#define TRACK_ORIENTATION_WEST ANGLE_THREE_QUARTER_TURN
 #define TRACK_START_FINISH_VARIANT_COUNT 3U
 #define PLAN_TRACK_ROUTE_LENGTH 18U
 #define PLAN_TRACK_ROUTE_ENTRY_SIZE 2U
@@ -75,7 +74,7 @@ typedef legacy_s8 track_setup_branch_must_be_14_bytes[
 
 /* Arriving on a tile, the entry point the walk uses depends on the direction
    of travel and on which continuation marker (if any) sent it here. Each row
-   is indexed by orientation / TRACK_ORIENTATION_QUARTER_TURN; a zero means
+   is indexed by orientation / ANGLE_QUARTER_TURN; a zero means
    the combination does not
    occur, exactly as the original chains fell through to zero. */
 static const legacy_u8 track_entry_points_northwest[
@@ -110,7 +109,7 @@ static legacy_s16 track_setup_start_finish_orientation(
 			if (tile_element == track_start_finish_elements[
 				orientation_index][variant_index]) {
 				return (legacy_s16)(orientation_index *
-					TRACK_ORIENTATION_QUARTER_TURN);
+					ANGLE_QUARTER_TURN);
 			}
 		}
 	}

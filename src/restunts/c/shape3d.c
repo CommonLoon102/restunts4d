@@ -889,9 +889,9 @@ void init_polyinfo(void) {
 	polyinfoptr = mmgr_alloc_resbytes("polyinfo", 0x28A0);
 
 	mat_rot_y(&mat_y0, 0);
-	mat_rot_y(&mat_y100, 0x100);
-	mat_rot_y(&mat_y200, 0x200);
-	mat_rot_y(&mat_y300, 0x300);
+	mat_rot_y(&mat_y100, ANGLE_QUARTER_TURN);
+	mat_rot_y(&mat_y200, ANGLE_HALF_TURN);
+	mat_rot_y(&mat_y300, ANGLE_THREE_QUARTER_TURN);
 	calc_sincos80();
 }
 

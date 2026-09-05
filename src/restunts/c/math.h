@@ -3,6 +3,15 @@
 
 #include "legacy.h"
 
+#define ANGLE_EIGHTH_TURN 128
+#define ANGLE_QUARTER_TURN 256
+#define ANGLE_HALF_TURN 512
+#define ANGLE_THREE_QUARTER_TURN 768
+#define ANGLE_FULL_TURN 1024
+#define ANGLE_QUARTER_MASK 255U
+#define ANGLE_MASK 1023U
+#define TRIG_FIXED_ONE 16384
+
 #pragma pack (push, 1)
 
 struct RECTANGLE {
