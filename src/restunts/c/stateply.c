@@ -3,6 +3,43 @@
 #include "physics_internal.h"
 #include "residue.h"
 
+#define PLAYER_PHYSICS_WHEEL_COUNT 4
+#define PLAYER_PHYSICS_FRONT_WHEEL_COUNT 2
+#define PLAYER_PHYSICS_COLLISION_POINT_CAPACITY 32
+#define PLAYER_PHYSICS_POSITION_SCALE_SHIFT 6U
+#define PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT 10U
+#define PLAYER_PHYSICS_LOW_FRAME_RATE 10U
+#define PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR 7680U
+#define PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR 15360U
+#define PLAYER_PHYSICS_LOW_SPEED_LIMIT 7680U
+#define PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT 384
+#define PLAYER_PHYSICS_UP_VECTOR_LENGTH 30000
+#define PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT 192
+#define PLAYER_PHYSICS_PSEUDO_GRAVITY_LENGTH 130
+#define PLAYER_PHYSICS_WALL_PUSH_DISTANCE 768
+#define PLAYER_PHYSICS_WALL_SPEED_ANGLE_MULTIPLIER 70
+#define PLAYER_PHYSICS_WALL_SPEED_BIAS 100
+#define PLAYER_PHYSICS_WALL_SPEED_SHIFT 8U
+#define PLAYER_PHYSICS_WALL_SOUND_FLAG 16U
+#define PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG 32U
+#define PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT 12
+#define PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT 24
+#define PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE 64
+#define PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD 250
+#define PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD 23275
+#define PLAYER_PHYSICS_WORLD_MIN_POSITION 3840L
+#define PLAYER_PHYSICS_WORLD_MAX_POSITION 1962239L
+#define PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE 1962240L
+#define PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE 29
+#define PLAYER_PHYSICS_TRACK_GRID_SIZE 30
+#define PLAYER_PHYSICS_START_FINISH_POLE_OFFSET 126
+#define PLAYER_PHYSICS_INTRO_INPUT_MODE 2
+#define PLAYER_PHYSICS_SURFACE_WATER 5
+#define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
+#define PLAYER_PHYSICS_CRASH_COLLISION 1
+#define PLAYER_PHYSICS_CRASH_WATER 2
+#define PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP 5
+
 enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_15142,
 	PLAYER_FLOW_loc_15163,
@@ -161,7 +198,8 @@ static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 	*wheel = simd_opponent.wheel_coords[wheel_index];
 	wheel->y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
 		LEGACY_S16_WRAP_ADD(
-			state.opponentstate.car_rc2[wheel_index], 0x180)),
+			state.opponentstate.car_rc2[wheel_index],
+			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT)),
 		y_adjustment);
 	if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
 		mat_mul_vector(wheel, angle_rotation, rotated);
@@ -175,11 +213,14 @@ static legacy_s16 scaled_vector_separation(struct VECTOR* first,
 {
 	vector_op_unk(first, second, intersection, 0);
 	delta->x = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->x, intersection->x), 6U);
+		LEGACY_S16_WRAP_SUB(first->x, intersection->x),
+		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	delta->y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->y, intersection->y), 6U);
+		LEGACY_S16_WRAP_SUB(first->y, intersection->y),
+		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	delta->z = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->z, intersection->z), 6U);
+		LEGACY_S16_WRAP_SUB(first->z, intersection->z),
+		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	return polarRadius3D(delta);
 }
 
@@ -188,15 +229,15 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	legacy_s16 var_pSpeed2Scaled;
 	struct VECTOR vec_FC;
 	struct VECTOR vec_1C6;
-	legacy_s16 var_140someWhlData[4];
+	legacy_s16 var_140someWhlData[PLAYER_PHYSICS_WHEEL_COUNT];
 	struct VECTORLONG* var_DEptrTo1C0;
 	struct VECTORLONG* var_146ptrTo176;
 	legacy_s16 pState_f40_sar2;
 	legacy_s8 var_EC;
 	legacy_s16 var_F0;
 	struct VECTOR vec_E4;
-	struct VECTORLONG vecl_1C0[4];
-	struct VECTORLONG vecl_176[4];
+	struct VECTORLONG vecl_1C0[PLAYER_PHYSICS_WHEEL_COUNT];
+	struct VECTORLONG vecl_176[PLAYER_PHYSICS_WHEEL_COUNT];
 	legacy_s16 var_wheelIndex;
 	legacy_s8 var_2;
 	struct VECTOR vec_182, vec_1E4, vec_C, vec_1C, vec_17C, var_122;
@@ -207,12 +248,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	legacy_u16 var_190;
 	struct MATRIX* var_EA;
 	legacy_s16 si;
-	legacy_s16 var_16[4];
+	legacy_s16 var_16[PLAYER_PHYSICS_WHEEL_COUNT];
 	struct PLANE far* var_6;
-	struct VECTOR vec_1DE[4];
+	struct VECTOR vec_1DE[PLAYER_PHYSICS_WHEEL_COUNT];
 	legacy_s16 var_E;
 	legacy_s8 var_11C;
-	struct VECTOR var_DC[32];
+	struct VECTOR var_DC[PLAYER_PHYSICS_COLLISION_POINT_CAPACITY];
 	enum PLAYER_PHYSICS_FLOW physics_flow;
 
 	//return ported_update_player_state_(arg_pState, arg_pSimd, arg_oState, arg_oSimd, arg_MplayerFlag);
@@ -253,12 +294,14 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 
 	/* Convert speed to per-tick travel, accounting for the simulation rate. */
-	if (framespersec == 0xA) {
+	if (framespersec == PLAYER_PHYSICS_LOW_FRAME_RATE) {
 		var_pSpeed2Scaled = scale_speed_to_travel(
-			arg_pState->car_speed2, 0x1E00U);
+			arg_pState->car_speed2,
+			PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR);
 	} else {
 		var_pSpeed2Scaled = scale_speed_to_travel(
-			arg_pState->car_speed2, 0x3C00U);
+			arg_pState->car_speed2,
+			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
 	}
 
 	/*
@@ -316,13 +359,13 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		*/
 		var_F0 = 0;
 		if (state.opponentstate.car_sumSurfAllWheels != 0 &&
-			state.opponentstate.car_speed2 <= 0x1E00) {
+			state.opponentstate.car_speed2 <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
 			vec_1C6.x = 0;
-			vec_1C6.y = 0x7530;
+			vec_1C6.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
 			vec_1C6.z = 0;
 			mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 			if (vec_FC.y < 0) {
-				var_F0 = 0xC0;
+				var_F0 = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 			}
 		}
 
@@ -347,7 +390,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 		var_140someWhlData[0] = (legacy_u16)(
 			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-				state.opponentstate.car_posWorld1.lz, vec_FC.z) >> 16
+				state.opponentstate.car_posWorld1.lz, vec_FC.z) >>
+				LEGACY_WORD_BITS
 		);
 		legacy_execution_residue.wheel_plane_angles[0] =
 			var_140someWhlData[0];
@@ -369,7 +413,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 			var_140someWhlData[1];
 		var_140someWhlData[2] = (legacy_u16)(
 			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-				state.opponentstate.car_posWorld1.lx, vec_FC.x) >> 16
+				state.opponentstate.car_posWorld1.lx, vec_FC.x) >>
+				LEGACY_WORD_BITS
 		);
 
 		/* Commit the third word and recover world Y's low word as the fourth. */
@@ -388,7 +433,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	if (pState_minusRotate_x_1 != 0 || pState_minusRotate_z_1 != 0) {
 		vec_1C6.x = 0;
 		vec_1C6.y = 0;
-		vec_1C6.z = 0x82;
+		vec_1C6.z = PLAYER_PHYSICS_PSEUDO_GRAVITY_LENGTH;
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 		arg_pState->car_pseudoGravity = LEGACY_S16_WRAP_NEGATE(vec_FC.y);
 	} else {
@@ -404,16 +449,16 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	}
 
 	vec_1C6.x = 0;
-	vec_1C6.y = 0x7530;
+	vec_1C6.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
 	vec_1C6.z = 0;
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
 	if (arg_pState->car_sumSurfAllWheels == 0 || vec_FC.y >= 0) {
 		var_F0 = 0;
-	} else if (arg_pState->car_speed2 <= 0x1E00) {
-		var_F0 = -192;
+	} else if (arg_pState->car_speed2 <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
+		var_F0 = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 	} else {
-		var_F0 = 192;
-		vec_1C6.y = -192;
+		var_F0 = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
+		vec_1C6.y = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_E4);
 	}
 	vec_unk2.x = 0;
@@ -421,10 +466,12 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	planindex_copy = -1;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
-	for (var_wheelIndex = 0; var_wheelIndex < 4; var_wheelIndex++) {
+	for (var_wheelIndex = 0;
+		var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT; var_wheelIndex++) {
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
 	vec_1C6.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
-		arg_pState->car_rc2[var_wheelIndex], 0x180));
+		arg_pState->car_rc2[var_wheelIndex],
+		PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
 	if (var_F0 < 0)
 		vec_1C6.y = LEGACY_S16_WRAP_SUB(vec_1C6.y, var_F0);
 	if (var_EC != 0) {
@@ -445,7 +492,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	if (var_pSpeed2Scaled != 0) {
 		vec_unk2.z = var_pSpeed2Scaled;
 		pState_f36Mminf40sar2 = arg_pState->car_36MwhlAngle;
-		if (pState_f40_sar2 != 0 && var_wheelIndex < 2) {
+		if (pState_f40_sar2 != 0 &&
+			var_wheelIndex < PLAYER_PHYSICS_FRONT_WHEEL_COUNT) {
 			pState_f36Mminf40sar2 = LEGACY_S16_WRAP_SUB(
 				arg_pState->car_36MwhlAngle, pState_f40_sar2);
 		}
@@ -469,21 +517,21 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	switch (physics_flow) {
 case PLAYER_FLOW_loc_15142:
 	var_2 = LEGACY_S8_WRAP_ADD(var_2, 1);
-	if (var_2 != 5)
+	if (var_2 != PLAYER_PHYSICS_COLLISION_RETRY_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_151A2; continue; }
 	arg_pState->car_36MwhlAngle = ANGLE_HALF_TURN;
-	update_crash_state(1, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15163:
-	if (arg_pState->car_surfaceWhl[0] != 5)
+	if (arg_pState->car_surfaceWhl[0] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[1] != 5)
+	if (arg_pState->car_surfaceWhl[1] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[2] != 5)
+	if (arg_pState->car_surfaceWhl[2] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	if (arg_pState->car_surfaceWhl[3] != 5)
+	if (arg_pState->car_surfaceWhl[3] != PLAYER_PHYSICS_SURFACE_WATER)
 		{ physics_flow = PLAYER_FLOW_loc_15192; continue; }
-	update_crash_state(2, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_WATER, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15192:
 	var_DEptrTo1C0 = vecl_1C0;
@@ -503,7 +551,7 @@ case PLAYER_FLOW_loc_151DB:
 	arg_pState->car_surfaceWhl[var_wheelIndex] = current_surf_type;
 	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
-	if (state.game_inputmode != 2)
+	if (state.game_inputmode != PLAYER_PHYSICS_INTRO_INPUT_MODE)
 		{ physics_flow = PLAYER_FLOW_loc_15240; continue; }
 	nextPosAndNormalIP = vec_1C6.y;
 	{ physics_flow = PLAYER_FLOW_loc_15257; continue; }
@@ -604,13 +652,13 @@ case PLAYER_FLOW_loc_1540C:
 
 case PLAYER_FLOW_loc_1543A:
 	var_EE = wallOrientation;
-	vec_FC.x = 768;//0x300;
+	vec_FC.x = PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
 	{ physics_flow = PLAYER_FLOW_loc_1545D; continue; }
 
 case PLAYER_FLOW_loc_1544A:
 	var_EE = LEGACY_S16_FROM_BITS((legacy_u16)
 		LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
-	vec_FC.x = -768;//0xFD00; // TODO: a negative number
+	vec_FC.x = -PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
 
 case PLAYER_FLOW_loc_1545D:
 	if (var_136 == 0)
@@ -635,7 +683,11 @@ case PLAYER_FLOW_loc_154CA:
 	var_190 = LEGACY_U16_SHL(
 		(legacy_u8)LEGACY_S16_WRAP_NEGATE(
 			LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
-				LEGACY_S16_WRAP_MUL(si, 0x46), 8U), 0x64)), 8U);
+				LEGACY_S16_WRAP_MUL(si,
+					PLAYER_PHYSICS_WALL_SPEED_ANGLE_MULTIPLIER),
+				PLAYER_PHYSICS_WALL_SPEED_SHIFT),
+				PLAYER_PHYSICS_WALL_SPEED_BIAS)),
+		PLAYER_PHYSICS_WALL_SPEED_SHIFT);
 	if (arg_pState->car_speed2 <= var_190)
 		{ physics_flow = PLAYER_FLOW_loc_15513; continue; }
 	if (var_138 == 0)
@@ -647,10 +699,10 @@ case PLAYER_FLOW_loc_154F8:
 	var_138 = LEGACY_S16_SHL(si, 1U);
 case PLAYER_FLOW_loc_154FA:
 	arg_pState->car_36MwhlAngle = var_138;
-	update_crash_state(1, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15513:
-	arg_pState->field_CF |= 0x10;
+	arg_pState->field_CF |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
 	si = 0;
@@ -697,7 +749,7 @@ case PLAYER_FLOW_loc_15642:
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
 		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
-	if (framespersec != 0xA)
+	if (framespersec != PLAYER_PHYSICS_LOW_FRAME_RATE)
 		{ physics_flow = PLAYER_FLOW_loc_156A3; continue; }
 	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
 		arg_pState->car_rc1[var_wheelIndex],
@@ -707,14 +759,14 @@ case PLAYER_FLOW_loc_15642:
 
 case PLAYER_FLOW_loc_156A3:
 	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
-	if (state.game_inputmode == 2) {
+	if (state.game_inputmode == PLAYER_PHYSICS_INTRO_INPUT_MODE) {
 		nextPosAndNormalIP = vec_1C6.y;
 	} else {
 		nextPosAndNormalIP = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
 	}
 
 case PLAYER_FLOW_loc_156D6:
-	if (nextPosAndNormalIP <= 0xC)
+	if (nextPosAndNormalIP <= PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_156ED; continue; }
 	arg_pState->car_surfaceWhl[var_wheelIndex] = 0;
 
@@ -766,13 +818,13 @@ case PLAYER_FLOW_loc_1570A:
 	var_136 = 0;
 	if (byte_4392C != 0)
 		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
-	if (vec_C.y >= -12)//0xFFF4)
+	if (vec_C.y >= -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
-	if (vec_1C.y >= -12)//0xFFF4)
+	if (vec_1C.y >= -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_15879; continue; }
-	if (vec_1C.y <= -24)//0xFFE8)
+	if (vec_1C.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_158DA; continue; }
-	update_crash_state(5, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP, arg_MplayerFlag);
 	var_136 = 1;
 
 case PLAYER_FLOW_loc_15879:
@@ -783,7 +835,7 @@ case PLAYER_FLOW_loc_15879:
 case PLAYER_FLOW_loc_15882:
 	vec_unk2.x = 0;
 	vec_unk2.y = 0;
-	vec_unk2.z = 0x40;
+	vec_unk2.z = PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE;
 	planindex_copy = planindex;
 	pState_f36Mminf40sar2 = var_140someWhlData[var_wheelIndex];
 	plane_rotate_op();
@@ -809,7 +861,8 @@ case PLAYER_FLOW_loc_1595A:
 	{ physics_flow = PLAYER_FLOW_loc_15642; continue; }
 
 case PLAYER_FLOW_loc_15964:
-	if (nextPosAndNormalIP < 0x18)
+	if (nextPosAndNormalIP <
+		PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
 		{ physics_flow = PLAYER_FLOW_loc_1596E; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_15642; continue; }
 
@@ -896,15 +949,17 @@ case PLAYER_FLOW_loc_15C75:
 
 case PLAYER_FLOW_loc_15CDF:
 case PLAYER_FLOW_loc_15CE8:
-	if (arg_pState->car_rc1[var_wheelIndex] <= 0xFA)
+	if (arg_pState->car_rc1[var_wheelIndex] <=
+		PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15CF7; continue; }
-	arg_pState->field_CF |= 0x20;
+	arg_pState->field_CF |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
 
 
 case PLAYER_FLOW_loc_15CF7:
-	if (arg_pState->car_rc1[var_wheelIndex] <= 0x5AEB)
+	if (arg_pState->car_rc1[var_wheelIndex] <=
+		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15D1A; continue; }
-	update_crash_state(1, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_15D1A:
 	arg_pState->car_rc1[var_wheelIndex] = 0;
@@ -915,14 +970,14 @@ case PLAYER_FLOW_loc_15D2B:
 	var_wheelIndex++;
 
 case PLAYER_FLOW_loc_15D39:
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_15D43; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_15163; continue; }
 
 case PLAYER_FLOW_loc_15D43:
 	physics_position_to_vector(&vec_1C6, var_DEptrTo1C0);
 
-	if (state.game_inputmode == 2)
+	if (state.game_inputmode == PLAYER_PHYSICS_INTRO_INPUT_MODE)
 		{ physics_flow = PLAYER_FLOW_loc_15D94; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_151BA; continue; }
 
@@ -935,14 +990,15 @@ case PLAYER_FLOW_loc_15D94:
 
 case PLAYER_FLOW_loc_15DB6:
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_ADD_S16(
-		var_DEptrTo1C0->ly, LEGACY_S16_WRAP_ADD(var_EE, 0x180));
+		var_DEptrTo1C0->ly, LEGACY_S16_WRAP_ADD(var_EE,
+			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
 
 case PLAYER_FLOW_loc_15DC8:
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
 
 case PLAYER_FLOW_loc_15DD1:
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_15DDB; continue; }
 	{ physics_flow = PLAYER_FLOW_code_update_globalPos; continue; }
 
@@ -961,7 +1017,8 @@ case PLAYER_FLOW_loc_15DDB:
 case PLAYER_FLOW_loc_15E85:
 	vec_1C6.z = 0;
 	vec_1C6.x = 0;
-	vec_1C6.y = LEGACY_S16_WRAP_ADD(var_EE, 0x180);
+	vec_1C6.y = LEGACY_S16_WRAP_ADD(var_EE,
+		PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT);
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_182);
 	physics_position_offset(var_DEptrTo1C0, var_DEptrTo1C0, &vec_182);
 	{ physics_flow = PLAYER_FLOW_loc_15DC8; continue; }
@@ -989,45 +1046,45 @@ case PLAYER_FLOW_code_update_rotCoords:
 		var_DEptrTo1C0->lz, pState_lvec1_z);
 	var_DEptrTo1C0++;
 	var_wheelIndex++;
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_code_update_rotCoords; continue; }
 	if (pState_lvec1_y >= 0)
 		{ physics_flow = PLAYER_FLOW_loc_15FDE; continue; }
 	pState_lvec1_y = 0;
 
 case PLAYER_FLOW_loc_15FDE:
-	if (pState_lvec1_x <= 0x1DF100)
+	if (pState_lvec1_x <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
 		{ physics_flow = PLAYER_FLOW_loc_15FFE; continue; }
 
 
 case PLAYER_FLOW_loc_15FEF:
-	pState_lvec1_x = 0x1DF0FF;
+	pState_lvec1_x = PLAYER_PHYSICS_WORLD_MAX_POSITION;
 	{ physics_flow = PLAYER_FLOW_loc_1601B; continue; }
 
 case PLAYER_FLOW_loc_15FFE:
-	if (pState_lvec1_x >= 0xF00)
+	if (pState_lvec1_x >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
 		{ physics_flow = PLAYER_FLOW_loc_1601B; continue; }
 
 
 case PLAYER_FLOW_loc_1600F:
-	pState_lvec1_x = 0xF00;
+	pState_lvec1_x = PLAYER_PHYSICS_WORLD_MIN_POSITION;
 case PLAYER_FLOW_loc_1601B:
-	if (pState_lvec1_z <= 0x1DF100)
+	if (pState_lvec1_z <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
 		{ physics_flow = PLAYER_FLOW_loc_1603A; continue; }
 
 
 
 case PLAYER_FLOW_loc_1602C:
-	pState_lvec1_z = 0x1DF0FF;
+	pState_lvec1_z = PLAYER_PHYSICS_WORLD_MAX_POSITION;
 	{ physics_flow = PLAYER_FLOW_loc_16057; continue; }
 
 case PLAYER_FLOW_loc_1603A:
-	if (pState_lvec1_z >= 0xF00)
+	if (pState_lvec1_z >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
 		{ physics_flow = PLAYER_FLOW_loc_16057; continue; }
 
 
 case PLAYER_FLOW_loc_1604B:
-	pState_lvec1_z = 0xF00;
+	pState_lvec1_z = PLAYER_PHYSICS_WORLD_MIN_POSITION;
 
 case PLAYER_FLOW_loc_16057:
 	var_EE = wheel_pair_delta(vec_1DE[3].x, vec_1DE[2].x,
@@ -1043,7 +1100,7 @@ case PLAYER_FLOW_loc_160A7:
 	vec_FC = vec_1DE[var_wheelIndex];
 	mat_mul_vector(&vec_FC, &var_MmatFromAngleZ, &vec_1DE[var_wheelIndex]);
 	var_wheelIndex++;
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_160A7; continue; }
 
 	var_F2 = wheel_pair_delta(vec_1DE[3].z, vec_1DE[2].z,
@@ -1085,7 +1142,7 @@ case PLAYER_FLOW_loc_16169:
 	vec_FC = vec_1DE[var_wheelIndex];
 	mat_mul_vector(&vec_FC, &var_MmatFromAngleZ, &vec_1DE[var_wheelIndex]);
 	var_wheelIndex++;
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_16169; continue; }
 
 case PLAYER_FLOW_loc_161AB:
@@ -1125,7 +1182,7 @@ case PLAYER_FLOW_loc_1620A:
 		arg_pState->car_surfaceWhl[0], arg_pState->car_surfaceWhl[1]);
 	arg_pState->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
 		arg_pState->car_surfaceWhl[2], arg_pState->car_surfaceWhl[3]);
-	if (state.game_inputmode != 2)
+	if (state.game_inputmode != PLAYER_PHYSICS_INTRO_INPUT_MODE)
 		{ physics_flow = PLAYER_FLOW_loc_16236; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
@@ -1173,21 +1230,22 @@ case PLAYER_FLOW_loc_162EE:
 		{ physics_flow = PLAYER_FLOW_loc_16309; continue; }
 
 case PLAYER_FLOW_loc_162F9:
-	update_crash_state(5, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_IMMEDIATE_STOP, arg_MplayerFlag);
 
 case PLAYER_FLOW_loc_16309:
 	arg_pState->car_whlWorldCrds2[var_wheelIndex] = vec_17C;
 	var_wheelIndex++;
 
 case PLAYER_FLOW_loc_1632C:
-	if (var_wheelIndex < 4)
+	if (var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_16336; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16428; continue; }
 
 case PLAYER_FLOW_loc_16336:
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
 	vec_1C6.y = LEGACY_S16_SHL(
-		arg_pSimd->collide_points[0].py, 6U);
+		arg_pSimd->collide_points[0].py,
+		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	mat_mul_vector(&vec_1C6, var_EA, &vec_FC);
 
 	vec_1C6.x = position_to_word(
@@ -1200,7 +1258,7 @@ case PLAYER_FLOW_loc_16336:
 	vec_17C = vec_1C6;
 	build_track_object(&vec_1C6, &arg_pState->car_whlWorldCrds2[var_wheelIndex]);
 	si = plane_origin_op(planindex, vec_1C6.x, vec_1C6.y, vec_1C6.z);
-	if (planindex < 4)
+	if (planindex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_loc_1641E; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16288; continue; }
 
@@ -1255,17 +1313,21 @@ case PLAYER_FLOW_loc_1653E:
 	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
 case PLAYER_FLOW_loc_16550:
-	update_crash_state(1, arg_MplayerFlag);
-	update_crash_state(1, arg_MplayerFlag ^ 1);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION,
+		arg_MplayerFlag ^ 1);
 	return;
 
 case PLAYER_FLOW_loc_16566:
 	return;
 
 case PLAYER_FLOW_loc_16578:
-	vec_FC.x = LEGACY_S16_SAR(var_11ApStateWorldCrds[0].x, 10U);
+	vec_FC.x = LEGACY_S16_SAR(var_11ApStateWorldCrds[0].x,
+		PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT);
 	vec_FC.z = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_SAR(var_11ApStateWorldCrds[0].z, 10U), 0x1D));
+		LEGACY_S16_SAR(var_11ApStateWorldCrds[0].z,
+			PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT),
+		PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE));
 	vec_18EoStateWorldCrds[1].x = 0;
 	vec_18EoStateWorldCrds[1].y = 0;
 	vec_18EoStateWorldCrds[1].z = 0;
@@ -1274,7 +1336,7 @@ case PLAYER_FLOW_loc_16578:
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
 case PLAYER_FLOW_loc_165AF:
-	if (vec_FC.x < 0x1E)
+	if (vec_FC.x < PLAYER_PHYSICS_TRACK_GRID_SIZE)
 		{ physics_flow = PLAYER_FLOW_loc_165B9; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
@@ -1284,7 +1346,7 @@ case PLAYER_FLOW_loc_165B9:
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
 case PLAYER_FLOW_loc_165C0:
-	if (vec_FC.z < 0x1E)
+	if (vec_FC.z < PLAYER_PHYSICS_TRACK_GRID_SIZE)
 		{ physics_flow = PLAYER_FLOW_loc_165C8; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16840; continue; }
 
@@ -1313,12 +1375,12 @@ case PLAYER_FLOW_loc_165F0:
 
 case PLAYER_FLOW_loc_16648:
 	// crash with start/finish pole
-	update_crash_state(1, arg_MplayerFlag);
+	update_crash_state(PLAYER_PHYSICS_CRASH_COLLISION, arg_MplayerFlag);
 	return ;
 
 case PLAYER_FLOW_loc_16650:
 	si = (legacy_s8)trackdata19[trackrows[vec_FC.z] + vec_FC.x];
-	if (si != -1) //0xFF) // note: checking for 0xff elsewhere, should be signed and check for -1
+	if (si != -1)
 		{ physics_flow = PLAYER_FLOW_loc_16670; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
@@ -1338,7 +1400,8 @@ case PLAYER_FLOW_loc_1667A:
 
 	state_op_unk(LEGACY_S16_WRAP_ADD(si, 2),
 		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
-		scale_speed_to_travel(arg_pState->car_speed2, 0x3C00U));
+		scale_speed_to_travel(arg_pState->car_speed2,
+			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
 
 case PLAYER_FLOW_loc_16710:
 	// following looks like collision detection against right and left start/finish poles
@@ -1354,11 +1417,13 @@ case PLAYER_FLOW_loc_1671F:
 case PLAYER_FLOW_loc_1672C:
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
+			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 	vec_18EoStateWorldCrds[0].y = hillHeightConsts[hillFlag];
 	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
 		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)), 0x7E));
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
+			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 	if (var_138 != 0)
@@ -1367,11 +1432,13 @@ case PLAYER_FLOW_loc_1672C:
 	vec_18EoStateWorldCrds[0].x = LEGACY_S16_WRAP_ADD(
 		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
 			LEGACY_S16_WRAP_ADD(track_angle,
-				ANGLE_THREE_QUARTER_TURN)), 0x7E));
+				ANGLE_THREE_QUARTER_TURN)),
+			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 	vec_18EoStateWorldCrds[0].z = LEGACY_S16_WRAP_ADD(
 		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
 			LEGACY_S16_WRAP_ADD(track_angle,
-				ANGLE_THREE_QUARTER_TURN)), 0x7E));
+				ANGLE_THREE_QUARTER_TURN)),
+			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 
 	var_138 = car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD62, vec_18EoStateWorldCrds);
 
