@@ -11,6 +11,14 @@
 #define TRACK_TILE_CONTINUATION_SOUTH 254U
 #define TRACK_TILE_CONTINUATION_EAST 255U
 #define TRACK_EDITOR_REFRESH_BLIT_MODE 254U
+#define TRACK_EDITOR_CACHE_INVALID 255U
+#define TRACK_EDITOR_POSITION_UNSET 255U
+#define TRACK_EDITOR_PAGE_UNSET 255U
+#define TRACK_EDITOR_INITIAL_BLIT_MODE 255U
+#define TRACK_EDITOR_HOVER_UNSET 255U
+#define TRACK_EDITOR_MOUSE_NO_HIT 255U
+#define TRACK_EDITOR_SAVE_CANCELLED 255U
+#define TRACK_EDITOR_DIALOG_CANCELLED 255U
 
 static legacy_u8 far* progress_box_shape;
 
@@ -172,11 +180,11 @@ void draw_2DtrackMap(
 			}
 
 			if (map_row != 0 && map_column != 0) {
-				cached_track[cache_index] = 0xFFU;
-				cached_terrain[cache_index] = 0xFFU;
+				cached_track[cache_index] = TRACK_EDITOR_CACHE_INVALID;
+				cached_terrain[cache_index] = TRACK_EDITOR_CACHE_INVALID;
 				continue;
 			}
-			cached_track[cache_index] = 0xFFU;
+			cached_track[cache_index] = TRACK_EDITOR_CACHE_INVALID;
 
 			if (tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
 				sprite_putimage_and_alt(tracksmenushapes1[terrain], x, y);
@@ -430,7 +438,7 @@ static void track_editor_save_track(legacy_u8* track_changed,
 		text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
 		if (do_savefile_dialog(byte_3B80C,
 			gameconfig.game_trackname, text) == 0) {
-			save_status = 0xFFU;
+			save_status = TRACK_EDITOR_SAVE_CANCELLED;
 			break;
 		}
 		file_build_path(byte_3B80C,
@@ -443,7 +451,7 @@ static void track_editor_save_track(legacy_u8* track_changed,
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, 0));
 			if (result == -1) {
-				save_status = 0xFFU;
+				save_status = TRACK_EDITOR_SAVE_CANCELLED;
 				break;
 			}
 			if (result == 0) {
@@ -583,8 +591,8 @@ void load_tracks_menu_shapes(void)
 	text_name_resource = locate_shape_alt(text_resource, "tnam");
 
 	for (index = 0; index < 132U; index++) {
-		cached_track[index] = 0xFFU;
-		cached_terrain[index] = 0xFFU;
+		cached_track[index] = TRACK_EDITOR_CACHE_INVALID;
+		cached_terrain[index] = TRACK_EDITOR_CACHE_INVALID;
 	}
 	for (index = 0; index < 186U; index++) {
 		__fmemcpy(&resID_byte1, shape_name_resource + index * 4U, 4U);
@@ -595,11 +603,11 @@ void load_tracks_menu_shapes(void)
 			locate_shape_fatal(shape_resource, &resID_byte1);
 	}
 
-	last_column = 0xFFU;
-	last_row = 0xFFU;
+	last_column = TRACK_EDITOR_POSITION_UNSET;
+	last_row = TRACK_EDITOR_POSITION_UNSET;
 	saved_tile = 0;
 	selected_tile = 0;
-	previous_page = 0xFFU;
+	previous_page = TRACK_EDITOR_PAGE_UNSET;
 	map_dirty = 1;
 	palette_dirty = 1;
 	scrollbars_dirty = 1;
@@ -607,7 +615,7 @@ void load_tracks_menu_shapes(void)
 	validation_error = 0;
 	track_changed = 0;
 	menu_active = 1;
-	blit_mode = 0xFFU;
+	blit_mode = TRACK_EDITOR_INITIAL_BLIT_MODE;
 	page = 1;
 	selection_column[0] = byte_45D90;
 	selection_row[0] = byte_45E16;
@@ -615,9 +623,9 @@ void load_tracks_menu_shapes(void)
 	selection_row[1] = 7;
 	map_column_offset = 0;
 	map_row_offset = 0;
-	previous_column_offset = 0xFFU;
-	previous_row_offset = 0xFFU;
-	previous_hovered_tile = 0xFFU;
+	previous_column_offset = TRACK_EDITOR_POSITION_UNSET;
+	previous_row_offset = TRACK_EDITOR_POSITION_UNSET;
+	previous_hovered_tile = TRACK_EDITOR_HOVER_UNSET;
 	previous_label_width = 0;
 	focus = 0;
 	path_animation_index = 0;
@@ -748,7 +756,7 @@ void load_tracks_menu_shapes(void)
 
 			sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = TRACK_EDITOR_REFRESH_BLIT_MODE;
-			previous_hovered_tile = 0xFFU;
+			previous_hovered_tile = TRACK_EDITOR_HOVER_UNSET;
 		}
 
 		sprite_copy_2_to_1_2();
@@ -860,7 +868,7 @@ void load_tracks_menu_shapes(void)
 			blink_timer = LEGACY_U16_WRAP_ADD(blink_timer, delta);
 			key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(delta));
 			hit = (legacy_u8)mouse_multi_hittest(5, buttons);
-			if (hit != 0xFFU) {
+			if (hit != TRACK_EDITOR_MOUSE_NO_HIT) {
 				if (hit == 0U && (mouse_butstate & 3) != 0) {
 					focus = 0;
 					clicked_column = (legacy_u8)mouse_track_op(1,
@@ -944,7 +952,7 @@ void load_tracks_menu_shapes(void)
 				}
 			}
 			if (key == 1U)
-				last_column = 0xFFU;
+				last_column = TRACK_EDITOR_POSITION_UNSET;
 			if (key == 0 && path_animation_index != 0)
 				key = 1;
 		}
@@ -1044,7 +1052,8 @@ void load_tracks_menu_shapes(void)
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						dialogarg2, 0,
 						td14_elem_map_main[0x384]));
-					if (dialog_result != 0xFFU && dialog_result != 5U) {
+					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
+						dialog_result != 5U) {
 						td14_elem_map_main[0x384] = dialog_result;
 						map_dirty = 1;
 						track_changed = 1;
@@ -1056,7 +1065,8 @@ void load_tracks_menu_shapes(void)
 						locate_text_res(text_resource, "men"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						dialogarg2, 0, 0));
-					if (dialog_result != 0xFFU && dialog_result != 5U) {
+					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
+						dialog_result != 5U) {
 						for (index = 0; index < 900U; index++)
 							td14_elem_map_main[index] = 0;
 						terrain_id[0] = 't';
@@ -1211,7 +1221,7 @@ void load_tracks_menu_shapes(void)
 			}
 		} else if (key == KEY_UP) {
 			if (selection_row[focus] != 0) {
-				last_column = 0xFFU;
+				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_row[focus]--;
 				if (focus != 0 && selection_row[1] < 6U) {
 					track_editor_skip_previous_placeholders(page,
@@ -1220,7 +1230,7 @@ void load_tracks_menu_shapes(void)
 			}
 		} else if (key == KEY_DOWN) {
 			if (selection_row[focus] < maximum_rows[focus]) {
-				last_column = 0xFFU;
+				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_row[focus]++;
 				if (focus != 0 && selection_row[1] < 6U) {
 					value = track_editor_palette_tile(page,
@@ -1236,7 +1246,7 @@ void load_tracks_menu_shapes(void)
 				if (page > 1U)
 					page--;
 			} else if (selection_column[focus] != 0) {
-				last_column = 0xFFU;
+				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_column[focus]--;
 				if (focus != 0) {
 					if (selection_row[1] > 5U) {
@@ -1269,7 +1279,7 @@ void load_tracks_menu_shapes(void)
 				}
 				if ((legacy_u16)selection_column[focus] + step <
 					maximum_columns[focus]) {
-					last_column = 0xFFU;
+					last_column = TRACK_EDITOR_POSITION_UNSET;
 					selection_column[focus] = (legacy_u8)
 						(selection_column[focus] + step);
 				}
