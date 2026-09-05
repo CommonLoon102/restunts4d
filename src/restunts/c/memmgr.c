@@ -2,6 +2,28 @@
 #include "memmgr.h"
 #include "platform.h"
 
+#define MMGR_RESOURCE_SENTINEL_INDEX 49
+#define MMGR_RESOURCE_STATE_FREE 0
+#define MMGR_RESOURCE_STATE_CACHED 1
+#define MMGR_RESOURCE_STATE_LIVE 2
+#define HIGHPOOL_RESOURCE_STATE_RESERVED 3
+#define HIGHPOOL_REGULAR_BLOCK 0
+#define HIGHPOOL_VIDEO_ONLY_BLOCK 1
+#define HIGHPOOL_LARGE_REQUEST_MIN_PARAS 3840U
+#define HIGHPOOL_WINDOW_PARAS 4002U
+#define HIGHPOOL_WINDOW_NAME "MCGA WINDOW"
+#define HIGHPOOL_ZERO_WORDS_PER_PARAGRAPH 8
+#define MMGR_INITIAL_ARENA_PARAS 100U
+#define MMGR_ARENA_END_SEGMENT 40960U
+#define DOS_PARAGRAPH_BYTES 16L
+#define DOS_PARAGRAPHS_PER_COPY_CHUNK 4096
+#define DOS_WORDS_PER_COPY_CHUNK 32768U
+#define DOS_WORDS_PER_PARAGRAPH_SHIFT 3U
+#define DOS_BYTES_PER_PARAGRAPH_SHIFT 4U
+#define DOS_BYTES_PER_WORD_SHIFT 1U
+#define DOS_BYTES_PER_WORD 2U
+#define RESOURCE_IDENTIFIER_LENGTH 4
+
 legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
 legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
 legacy_u16 resmaxsize = 0; // size of largest chunk?
@@ -10,7 +32,7 @@ legacy_u16 pspseg = 0;
 
 struct MEMCHUNK resources[] = {
 	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		0, 0, 2 },
+		0, 0, MMGR_RESOURCE_STATE_LIVE },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
@@ -26,10 +48,10 @@ struct MEMCHUNK resources[] = {
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 }, { 0, 0, 0, 0 },
 	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
-		0, 0, 1 },
+		0, 0, MMGR_RESOURCE_STATE_CACHED },
 };
-struct MEMCHUNK* resendptr1 = &resources[49]; // eller 49?
-struct MEMCHUNK* resendptr2 = &resources[49]; // ditto
+struct MEMCHUNK* resendptr1 = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
+struct MEMCHUNK* resendptr2 = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
 struct MEMCHUNK* resptr1 = resources;
 struct MEMCHUNK* resptr2 = resources;
 
@@ -51,20 +73,17 @@ struct HIGHBLOCK {
 };
 
 struct HIGHCHUNK {
-	legacy_s8 resname[12];
+	legacy_s8 resname[MMGR_RESOURCE_NAME_LENGTH];
 	legacy_u16 resseg;
 	legacy_u16 resparas;
-	legacy_u16 resstate; // 0 = free, 1 = cached, 2 = live, 3 = reserved
+	legacy_u16 resstate;
 };
 
 // The full-screen window is the largest single allocation the game makes and
 // the last one it asks for, by which time the pool is full of smaller
 // resources and the arena has been whittled down - so it is the one that
-// fails. Set its space aside before anything else can take it. 0xFA2 paras
-// is 320x200 plus the bitmap header.
-#define HIGHPOOL_WINDOW_PARAS 0xFA2
-#define HIGHPOOL_WINDOW_NAME "MCGA WINDOW"
-
+// fails. Set its space aside before anything else can take it. 4002 paras
+// is a 320 by 200 frame plus the bitmap header.
 static struct HIGHCHUNK* highpool_reserved_window(void);
 
 static struct HIGHBLOCK highblocks[HIGHPOOL_MAXBLOCKS];
@@ -130,10 +149,10 @@ void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) 
 	// same values as they would in the regular arena. Video memory is left
 	// alone: it holds the visible screen, and its only tenant overwrites it
 	// completely anyway.
-	if (!largeonly) {
+	if (largeonly == HIGHPOOL_REGULAR_BLOCK) {
 		for (p = 0; p < paras; p++) {
 			wipe = dos_memory_make_pointer(seg + p, 0);
-			for (i = 0; i < 8; i++)
+			for (i = 0; i < HIGHPOOL_ZERO_WORDS_PER_PARAGRAPH; i++)
 				wipe[i] = 0;
 		}
 	}
@@ -156,7 +175,7 @@ legacy_s16 highpool_owns_seg(legacy_u16 seg) {
 static struct HIGHCHUNK* highpool_chunk_by_seg(legacy_u16 seg) {
 	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate != 0 && highchunks[i].resseg == seg)
+		if (highchunks[i].resstate != MMGR_RESOURCE_STATE_FREE && highchunks[i].resseg == seg)
 			return &highchunks[i];
 	}
 	return 0;
@@ -172,7 +191,7 @@ legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
 	// Menus and instruments create many small windows under the same name.
 	// Pool space is zero-sum, and giving it to them only displaces bigger
 	// chunks, so only the full-screen window is worth diverting.
-	if (paras < 0xF00 && name[0] == 'M' && name[1] == 'C')
+	if (paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS && name[0] == 'M' && name[1] == 'C')
 		return 0;
 
 	for (i = 0; highpool_names[i] != 0; i++) {
@@ -201,9 +220,9 @@ static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras, l
 			return 0;
 		conflict = 0;
 		for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-			if (highchunks[i].resstate == 0)
+			if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE)
 				continue;
-			if (dropcached && highchunks[i].resstate == 1)
+			if (dropcached && highchunks[i].resstate == MMGR_RESOURCE_STATE_CACHED)
 				continue; // discardable, so it does not block the search
 			if (highchunks[i].resseg < cand + paras && cand < highchunks[i].resseg + highchunks[i].resparas) {
 				cand = highchunks[i].resseg + highchunks[i].resparas;
@@ -221,10 +240,10 @@ static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras, l
 static void highpool_drop_cached(legacy_u16 seg, legacy_u16 paras) {
 	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate != 1)
+		if (highchunks[i].resstate != MMGR_RESOURCE_STATE_CACHED)
 			continue;
 		if (highchunks[i].resseg < seg + paras && seg < highchunks[i].resseg + highchunks[i].resparas)
-			highchunks[i].resstate = 0;
+			highchunks[i].resstate = MMGR_RESOURCE_STATE_FREE;
 	}
 }
 
@@ -243,7 +262,7 @@ static legacy_s16 highpool_fits_at(legacy_u16 seg, legacy_u16 paras) {
 		return 0;
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 0)
+		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE)
 			continue;
 		if (highchunks[i].resseg == seg)
 			continue;
@@ -260,7 +279,8 @@ legacy_s16 highpool_can_fit(legacy_u16 paras) {
 		return 1;
 
 	for (i = 0; i < highblockcount; i++) {
-		if (highblocks[i].blocklarge && paras < 0xF00)
+		if (highblocks[i].blocklarge == HIGHPOOL_VIDEO_ONLY_BLOCK &&
+			paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS)
 			continue;
 		if (highpool_find_gap(&highblocks[i], paras, 1) != 0)
 			return 1;
@@ -271,7 +291,7 @@ legacy_s16 highpool_can_fit(legacy_u16 paras) {
 static struct HIGHCHUNK* highpool_reserved_window(void) {
 	legacy_s16 i;
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 3)
+		if (highchunks[i].resstate == HIGHPOOL_RESOURCE_STATE_RESERVED)
 			return &highchunks[i];
 	}
 	return 0;
@@ -283,7 +303,7 @@ void highpool_reserve_window(void) {
 	legacy_s16 i, b;
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 0) {
+		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE) {
 			slot = &highchunks[i];
 			break;
 		}
@@ -295,16 +315,16 @@ void highpool_reserve_window(void) {
 		seg = highpool_find_gap(&highblocks[b], HIGHPOOL_WINDOW_PARAS, 0);
 		if (seg != 0) {
 			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
-			for (i = 0; i < 12; i++) {
+			for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 				slot->resname[i] = nm[i];
 				if (nm[i] == 0)
 					break;
 			}
-			for (; i < 12; i++)
+			for (; i < MMGR_RESOURCE_NAME_LENGTH; i++)
 				slot->resname[i] = 0;
 			slot->resseg = seg;
 			slot->resparas = HIGHPOOL_WINDOW_PARAS;
-			slot->resstate = 3;
+			slot->resstate = HIGHPOOL_RESOURCE_STATE_RESERVED;
 			return;
 		}
 	}
@@ -321,18 +341,19 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 		if (res != 0) {
 			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
 			for (i = 0; ; i++) {
-				if (nm[i] == 0 && (name[i] == 0 || i == 12)) {
-					res->resstate = 2;
+				if (nm[i] == 0 && (name[i] == 0 ||
+					i == MMGR_RESOURCE_NAME_LENGTH)) {
+					res->resstate = MMGR_RESOURCE_STATE_LIVE;
 					return dos_memory_make_pointer(res->resseg, 0);
 				}
-				if (i == 12 || nm[i] != name[i])
+				if (i == MMGR_RESOURCE_NAME_LENGTH || nm[i] != name[i])
 					break;
 			}
 		}
 	}
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == 0) {
+		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE) {
 			slot = &highchunks[i];
 			break;
 		}
@@ -350,7 +371,8 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 		legacy_s16 bestb = -1;
 		for (b = 0; b < highblockcount; b++) {
 			legacy_u16 cand, slack;
-			if (highblocks[b].blocklarge && paras < 0xF00)
+			if (highblocks[b].blocklarge == HIGHPOOL_VIDEO_ONLY_BLOCK &&
+				paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS)
 				continue;
 			cand = highpool_find_gap(&highblocks[b], paras, dropcached);
 			if (cand == 0)
@@ -375,16 +397,16 @@ void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
 
 	for (; b < highblockcount; b++) {
 		if (seg != 0) {
-			for (i = 0; i < 12; i++) {
+			for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 				slot->resname[i] = name[i];
 				if (name[i] == 0)
 					break;
 			}
-			for (; i < 12; i++)
+			for (; i < MMGR_RESOURCE_NAME_LENGTH; i++)
 				slot->resname[i] = 0;
 			slot->resseg = seg;
 			slot->resparas = paras;
-			slot->resstate = 2;
+			slot->resstate = MMGR_RESOURCE_STATE_LIVE;
 			return dos_memory_make_pointer(seg, 0);
 		}
 	}
@@ -399,10 +421,10 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 
 	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
 		chunk = &highchunks[i];
-		if (chunk->resstate != 1)
+		if (chunk->resstate != MMGR_RESOURCE_STATE_CACHED)
 			continue;
 		found = 0;
-		for (j = 0; j < 12; j++) {
+		for (j = 0; j < MMGR_RESOURCE_NAME_LENGTH; j++) {
 			if (name[j] == 0) {
 				if (chunk->resname[j] == '.' || chunk->resname[j] == 0)
 					found = 1;
@@ -411,10 +433,10 @@ void far* highpool_get_by_name(const legacy_s8* name) {
 			if (name[j] != chunk->resname[j])
 				break;
 		}
-		if (j == 12)
+		if (j == MMGR_RESOURCE_NAME_LENGTH)
 			found = 1;
 		if (found) {
-			chunk->resstate = 2;
+			chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
 			return dos_memory_make_pointer(chunk->resseg, 0);
 		}
 	}
@@ -462,13 +484,13 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 
 	resptr2 = resdi;
 	chunkname = mmgr_path_to_name(arg_0);
-	for (i = 0; i < 0xC; i++)
+	for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++)
 		resdi->resname[i] = chunkname[i];
 
 	rax = arg_2;
 	resdi->resofs = rdx;
 	resdi->ressize = rax;
-	resdi->resunk = 2;
+	resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
 
 	rax += rdx;
 	if (rax > resmaxsize)
@@ -484,7 +506,7 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 				fatal_error("reservememory - OUT OF MEMORY RESERVING %s P=%x HW=%x\r\n", arg_0, resdi->ressize, resmaxsize);
 			}
 
-			ressi->resunk = 0;
+			ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 			ressi++;
 			resendptr1 = ressi;
 		}
@@ -496,7 +518,7 @@ void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
 void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
 	/* The original allocator always reserves one paragraph after division. */
 	return mmgr_alloc_pages(name, (legacy_u16)LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_DIV_OR_ZERO(size, 16L), 1L));
+		LEGACY_S32_DIV_OR_ZERO(size, DOS_PARAGRAPH_BYTES), 1L));
 }
 
 void mmgr_alloc_resmem(legacy_u16 arg_0) {
@@ -510,7 +532,7 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	pspofs = dos_memory_pointer_offset(psp);
 
 	if (word_3FF82 == 0) {
-		resptr1->resofs = dos_memory_allocate(0x64);
+		resptr1->resofs = dos_memory_allocate(MMGR_INITIAL_ARENA_PARAS);
 		word_3FF84 = resptr1->resofs;
 		maxblocks = dos_memory_resize(resptr1->resofs,
 			arg_0 - resptr1->resofs);
@@ -526,12 +548,12 @@ void mmgr_alloc_resmem(legacy_u16 arg_0) {
 	for (;;) {
 		rp++;
 		if (rp == resendptr2) break;
-		rp->resunk = 0;
+		rp->resunk = MMGR_RESOURCE_STATE_FREE;
 	}
 }
 
 void mmgr_alloc_a000(void) {
-	mmgr_alloc_resmem(0xa000);
+	mmgr_alloc_resmem(MMGR_ARENA_END_SEGMENT);
 }
 
 legacy_u16 mmgr_get_ofs_diff(void) {
@@ -569,7 +591,8 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 		if (highchunk == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
 		highchunk->resstate =
-			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 1;
+			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ?
+			HIGHPOOL_RESOURCE_STATE_RESERVED : MMGR_RESOURCE_STATE_CACHED;
 		return dos_memory_make_pointer(
 			ptrseg, dos_memory_pointer_offset(ptr));
 	}
@@ -577,7 +600,7 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	MMGR_FIND_ARENA_CHUNK(ressi, ptrseg);
 
 	ptrseg = 0;
-	ressi->resunk = 0;
+	ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 	ax = resendptr1->resofs - resptr2->resofs - resptr2->ressize;
 	if (ressi == resptr2 ||
 		(ressi != resendptr1 && ax >= ressi->ressize)) {
@@ -585,9 +608,9 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 		resendptr1--;
 		resendptr1->resofs = ptrseg;
 		resendptr1->ressize = ressi->ressize;
-		resendptr1->resunk = 1;
+		resendptr1->resunk = MMGR_RESOURCE_STATE_CACHED;
 
-		for (i = 0; i < 0xC; i++) {
+		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 			resendptr1->resname[i] = ressi->resname[i];
 		}
 
@@ -597,7 +620,7 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	if (ressi == resptr2) {
 		do {
 			ressi--;
-		} while (ressi->resunk == 0);
+		} while (ressi->resunk == MMGR_RESOURCE_STATE_FREE);
 		resptr2 = ressi;
 	}
 
@@ -605,9 +628,9 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 }
 
 // `paras` is signed here but the original treats it as unsigned: it steps the
-// count down with `sub bx, 1000h` and tests the borrow with jnb. Counts from
-// 8000h through 8FFFh wrap into the non-negative range after that subtraction
-// and still chunk correctly here; the divergence starts at 9000h (576 KiB),
+// count down by 4096 paragraphs and tests the borrow with jnb. Counts from
+// 32768 through 36863 wrap into the non-negative range after that subtraction
+// and still chunk correctly here; the divergence starts at 36864 (576 KiB),
 // where the signed remainder test is taken despite no unsigned borrow. Nothing
 // asks either copier for that much at once.
 void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
@@ -616,10 +639,11 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 	legacy_u16 far * destptr;
 
 	while (paras != 0) {
-		count = 0x8000; // 64k in words
-		paras -= 0x1000; // 64k in paras
+		count = DOS_WORDS_PER_COPY_CHUNK;
+		paras -= DOS_PARAGRAPHS_PER_COPY_CHUNK;
 		if (paras < 0) {
-			count = (paras + 0x1000) << 3;  // count = remaining paras < 0x1000 in words
+			count = (paras + DOS_PARAGRAPHS_PER_COPY_CHUNK) <<
+				DOS_WORDS_PER_PARAGRAPH_SHIFT;
 			paras = 0;
 		}
 		srcptr = dos_memory_make_pointer(srcseg, 0);
@@ -632,14 +656,14 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 			count--;
 		}
 
-		srcseg += 0x1000;
-		destseg += 0x1000;
+		srcseg += DOS_PARAGRAPHS_PER_COPY_CHUNK;
+		destseg += DOS_PARAGRAPHS_PER_COPY_CHUNK;
 	}
 }
 
 
 // Same signedness caveat as mmgr_copy_paras above: the original's loop guard
-// is `sub bx, 1000h / jnb`, an unsigned count.
+// subtracts 4096 paragraphs and uses an unsigned no-borrow branch.
 void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 	legacy_u16 count, ofs;
 	legacy_u16 far* destptr;
@@ -649,16 +673,16 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 	destseg += paras;
 
 	while (paras != 0) {
-		count = 0x1000;
-		paras -= 0x1000;
+		count = DOS_PARAGRAPHS_PER_COPY_CHUNK;
+		paras -= DOS_PARAGRAPHS_PER_COPY_CHUNK;
 		if (paras < 0) {
-			count = paras + 0x1000;
+			count = paras + DOS_PARAGRAPHS_PER_COPY_CHUNK;
 			paras = 0;
 		}
 		srcseg -= count;
 		destseg -= count;
-		count <<= 3;
-		ofs = (count << 1) - 2;
+		count <<= DOS_WORDS_PER_PARAGRAPH_SHIFT;
+		ofs = (count << DOS_BYTES_PER_WORD_SHIFT) - DOS_BYTES_PER_WORD;
 
 		srcptr = dos_memory_make_pointer(srcseg, ofs);
 		destptr = dos_memory_make_pointer(destseg, ofs);
@@ -693,9 +717,9 @@ void mmgr_find_free(void) {
 				resdi->ressize = ressi->ressize;
 				resdi->resofs = regax;
 				resunk = ressi->resunk;
-				ressi->resunk = 0;
+				ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 				resdi->resunk = resunk;
-				for (i = 0; i < 0xC; i++) {
+				for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 					resdi->resname[i] = ressi->resname[i];
 				}
 				copy_paras_reverse(ressi->resofs, regax, ressi->ressize);
@@ -733,11 +757,11 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 
 	for (; ressi < resendptr2; ressi++) {
 		regbx = 0;
-		if (ressi->resunk == 0) {
+		if (ressi->resunk == MMGR_RESOURCE_STATE_FREE) {
 			return 0;
 		}
 
-		for (; regbx < 0xC; regbx++) {
+		for (; regbx < MMGR_RESOURCE_NAME_LENGTH; regbx++) {
 			if (pcdi[regbx] == 0) {
 				if (ressi->resname[regbx] == '.' || ressi->resname[regbx] == 0) {
 					found = 1;
@@ -747,25 +771,26 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 			if (pcdi[regbx] != ressi->resname[regbx])
 				break;
 		}
-		if (regbx == 0xC || found == 1) {
+		if (regbx == MMGR_RESOURCE_NAME_LENGTH || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
 			srcofs = ressi->resofs;
 			srcsize = ressi->ressize;
 			destofs = resptr2->resofs + resptr2->ressize;
-			ressi->resunk = 0;
+			ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 			resdi = resptr2 + 1;
 			resptr2 = resdi;
 			resdi->resofs = destofs;
 			resdi->ressize = srcsize;
-			resdi->resunk = 2;
-			memcpy(resdi->resname, ressi->resname, sizeof(legacy_s8[12]));
+			resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
+			memcpy(resdi->resname, ressi->resname,
+				sizeof(legacy_s8[MMGR_RESOURCE_NAME_LENGTH]));
 			if (resdi == resendptr1) {
 				resendptr1++;
 			}
 			mmgr_copy_paras(srcofs, destofs, srcsize);
 			regax = destofs + srcsize;
 			while (regax > resendptr1->resofs) {
-				resendptr1->resunk = 0;
+				resendptr1->resunk = MMGR_RESOURCE_STATE_FREE;
 				resendptr1++;
 			}
 			mmgr_find_free();
@@ -785,9 +810,9 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 	wanted = mmgr_path_to_name(name);
 	chunk = resendptr1;
 	while (chunk < resendptr2) {
-		if (chunk->resunk == 0)
+		if (chunk->resunk == MMGR_RESOURCE_STATE_FREE)
 			return 0;
-		for (i = 0; i < 12; i++) {
+		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 			if (wanted[i] == 0) {
 				if (chunk->resname[i] == '.' || chunk->resname[i] == 0)
 					return 1;
@@ -796,7 +821,7 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 			if (wanted[i] != chunk->resname[i])
 				break;
 		}
-		if (i == 12)
+		if (i == MMGR_RESOURCE_NAME_LENGTH)
 			return 1;
 		chunk++;
 	}
@@ -818,17 +843,18 @@ void mmgr_release(void far* ptr) {
 		if (highchunk == 0)
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
 		highchunk->resstate =
-			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ? 3 : 0;
+			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ?
+			HIGHPOOL_RESOURCE_STATE_RESERVED : MMGR_RESOURCE_STATE_FREE;
 		return;
 	}
 
 	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 
-	ressi->resunk = 0;
+	ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 	if (ressi == resptr2) {
 		do {
 			ressi--;
-		} while (ressi->resunk == 0);
+		} while (ressi->resunk == MMGR_RESOURCE_STATE_FREE);
 		resptr2 = ressi;
 	}
 
@@ -851,7 +877,7 @@ void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
 	MMGR_FIND_ARENA_CHUNK(ressi, regax);
 
 	chunkname = mmgr_path_to_name(name);
-	for (i = 0; i < 0xC; i++)
+	for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++)
 		ressi->resname[i] = chunkname[i];
 }
 
@@ -931,7 +957,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg
 		if (ressi == resendptr2)
 			fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
 
-		ressi->resunk = 0;
+		ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 		ressi++;
 		resendptr1 = ressi;
 	}
@@ -959,13 +985,13 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 
 	resdi = ressi;
 	resdi--;
-	if (resdi->resunk == 0) {
+	if (resdi->resunk == MMGR_RESOURCE_STATE_FREE) {
 
 		do {
 			resdi--;
-		} while (resdi->resunk == 0);
+		} while (resdi->resunk == MMGR_RESOURCE_STATE_FREE);
 
-		ressi->resunk = 0;
+		ressi->resunk = MMGR_RESOURCE_STATE_FREE;
 		regax = resdi->resofs + resdi->ressize;
 		resdi++;
 		if (ressi == resptr2) {
@@ -974,8 +1000,8 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 
 		resdi->resofs = regax;
 		resdi->ressize = ressi->ressize;
-		resdi->resunk = 2;
-		for (i = 0; i < 0xC; i++) {
+		resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
+		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 			resdi->resname[i] = ressi->resname[i];
 		}
 		mmgr_copy_paras(ressi->resofs, regax, ressi->ressize);
@@ -989,12 +1015,12 @@ void far* mmgr_op_unk(legacy_s8 far* ptr) {
 
 legacy_u32 mmgr_get_res_ofs_diff_scaled(void) {
 	legacy_u32 result = mmgr_get_ofs_diff();
-	return result << 4;
+	return result << DOS_BYTES_PER_PARAGRAPH_SHIFT;
 }
 
 legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 	legacy_u32 result = mmgr_get_chunk_size(ptr);
-	return result << 4;
+	return result << DOS_BYTES_PER_PARAGRAPH_SHIFT;
 }
 //#endif
 
@@ -1004,7 +1030,7 @@ void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_fatal(data, names);
-		names += 4;
+		names += RESOURCE_IDENTIFIER_LENGTH;
 		result ++;
 	}
 }
@@ -1013,7 +1039,7 @@ static void locate_many_resources_nofatal(legacy_s8 far* data,
 	const legacy_s8* names, legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_shape_nofatal(data, names);
-		names += 4;
+		names += RESOURCE_IDENTIFIER_LENGTH;
 		result++;
 	}
 }
@@ -1027,7 +1053,7 @@ void nopsub_36826(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_sound_fatal(data, names);
-		names += 4;
+		names += RESOURCE_IDENTIFIER_LENGTH;
 		result++;
 	}
 }

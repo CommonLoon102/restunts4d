@@ -4,9 +4,12 @@
 #include "legacy.h"
 #include "resource.h"
 
+#define MMGR_RESOURCE_NAME_LENGTH 12
+#define MMGR_LEGACY_MEMCHUNK_SIZE_BYTES 18
+
 #pragma pack (push, 1)
 struct MEMCHUNK {
-	legacy_s8 resname[12];
+	legacy_s8 resname[MMGR_RESOURCE_NAME_LENGTH];
 	legacy_u16 ressize;
 	legacy_u16 resofs;
 	legacy_u16 resunk;
@@ -14,7 +17,7 @@ struct MEMCHUNK {
 #pragma pack (pop)
 
 typedef char legacy_memchunk_must_be_18_bytes[
-	(sizeof(struct MEMCHUNK) == 18) ? 1 : -1];
+	(sizeof(struct MEMCHUNK) == MMGR_LEGACY_MEMCHUNK_SIZE_BYTES) ? 1 : -1];
 
 const legacy_s8* mmgr_path_to_name(const legacy_s8* filename);
 void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2);
