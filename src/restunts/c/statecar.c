@@ -30,6 +30,10 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define ENGINE_LIMITER_LONG_TICKS 30
 #define ENGINE_LIMITER_RECOVERY_TICKS 10
 #define ENGINE_SPEED_CORRECTION 1280U
+#define ACCELERATION_MASS_RESULT_SHIFT 1U
+#define ENGINE_LIMITER_TORQUE_BLEND_SHIFT 1U
+#define WHEEL_SPEED_AVERAGE_SHIFT 1U
+#define MAX_RPM_MARGIN 1
 #define ENGINE_LIMITER_INACTIVE 0
 #define ENGINE_LIMITER_TICK_STEP 1
 #define CAR_GEAR_NEUTRAL 0
@@ -41,6 +45,7 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define CAR_GEAR_CHANGE_INACTIVE 0
 #define CAR_GEAR_CHANGE_ACTIVE 1
 #define GEAR_CHANGE_DELAY_HALF_SHIFT 1U
+#define GEAR_CHANGE_DELAY_TICK_STEP 1
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)
@@ -53,7 +58,7 @@ static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 		(legacy_s32)acceleration, ACCELERATION_MASS_NUMERATOR);
 	quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
 	low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
-	return LEGACY_S16_SAR(low_word, 1U);
+	return LEGACY_S16_SAR(low_word, ACCELERATION_MASS_RESULT_SHIFT);
 }
 
 static legacy_s16 apply_opponent_acceleration_drag(
@@ -190,7 +195,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		}
 	} else if (arg_carState->car_fpsmul2 != 0) {
 		arg_carState->car_fpsmul2 = LEGACY_S8_WRAP_SUB(
-			arg_carState->car_fpsmul2, 1);
+			arg_carState->car_fpsmul2, GEAR_CHANGE_DELAY_TICK_STEP);
 	}
 
 	var_updatedSpeed = arg_carState->car_speed;
@@ -201,7 +206,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 	if ((legacy_u16)arg_carState->car_currpm >
 		(legacy_u16)arg_simd->max_rpm) {
 		arg_carState->car_currpm = LEGACY_S16_WRAP_SUB(
-			arg_simd->max_rpm, 1);
+			arg_simd->max_rpm, MAX_RPM_MARGIN);
 		var_deltaSpeed = LEGACY_S16_WRAP_SUB(
 			var_deltaSpeed, arg_simd->braking_eff);
 	} else if ((arg_carInputByte & INPUT_PEDAL_MASK) ==
@@ -239,7 +244,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 				ENGINE_LIMITER_INACTIVE &&
 				arg_carState->car_currpm < ENGINE_LIMITER_BLEND_RPM) {
 				var_currTorque = ((legacy_u8)arg_simd->idle_torque +
-					var_currTorque) >> 1;
+					var_currTorque) >> ENGINE_LIMITER_TORQUE_BLEND_SHIFT;
 			}
 			var_deltaSpeed = LEGACY_S16_WRAP_ADD(var_deltaSpeed,
 				LEGACY_S16_FROM_BITS((legacy_u16)(LEGACY_U16_WRAP_MUL(
@@ -308,7 +313,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 		if (var_4 > WHEEL_SPEED_SYNC_THRESHOLD) {
 			arg_carState->car_speed = (legacy_u16)(LEGACY_U32_WRAP_ADD(
 				arg_carState->car_speed,
-				arg_carState->car_speed2) >> 1);
+				arg_carState->car_speed2) >> WHEEL_SPEED_AVERAGE_SHIFT);
 			arg_carState->car_speed2 = arg_carState->car_speed;
 			arg_carState->car_engineLimiterTimer =
 				ENGINE_LIMITER_SHORT_TICKS;
