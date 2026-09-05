@@ -83,6 +83,49 @@
 #define TUNNEL_RIGHT_OUTER_WALL_INDEX 150
 #define TUNNEL_LEFT_INNER_WALL_INDEX 151
 #define TUNNEL_LEFT_OUTER_WALL_INDEX 149
+#define PIPE_HALF_WIDTH 164
+#define PIPE_WALL_HEIGHT 151
+#define PIPE_ENTRANCE_WALL_INNER_X 115
+#define PIPE_ENTRANCE_LEFT_WALL_INDEX 160
+#define PIPE_ENTRANCE_RIGHT_WALL_INDEX 159
+#define PIPE_ENTRANCE_MAX_HEIGHT 171
+#define PIPE_ENTRANCE_CENTER_HALF_WIDTH 31
+#define PIPE_ENTRANCE_CENTER_PLAN_INDEX 70
+#define PIPE_ENTRANCE_SIDE_SPLIT_X 84
+#define PIPE_ENTRANCE_LEFT_OUTER_PLAN_BASE 73
+#define PIPE_ENTRANCE_LEFT_INNER_PLAN_BASE 71
+#define PIPE_ENTRANCE_RIGHT_OUTER_PLAN_BASE 77
+#define PIPE_ENTRANCE_RIGHT_INNER_PLAN_BASE 75
+#define PIPE_ENTRANCE_OUTER_CENTER_X 100
+#define PIPE_ENTRANCE_INNER_CENTER_X 57
+#define PIPE_ENTRANCE_OUTER_ANGLE 5
+#define PIPE_ENTRANCE_INNER_ANGLE 8
+#define PIPE_LEFT_WALL_INDEX 156
+#define PIPE_RIGHT_WALL_INDEX 155
+#define PIPE_MAX_HEIGHT 265
+#define PIPE_SURFACE_HALF_WIDTH 130
+#define HALF_PIPE_FLOOR_HALF_WIDTH 84
+#define HALF_PIPE_FLOOR_HALF_LENGTH 75
+#define HALF_PIPE_FLOOR_PLAN_INDEX 69
+#define HALF_PIPE_REAR_WALL_INDEX 157
+#define HALF_PIPE_FORWARD_WALL_INDEX 158
+#define PIPE_SIDE_HEIGHT_SPLIT 88
+#define PIPE_UPPER_LEFT_SIDE_PLAN_INDEX 60
+#define PIPE_UPPER_RIGHT_SIDE_PLAN_INDEX 66
+#define PIPE_UPPER_CENTER_PLAN_INDEX 63
+#define PIPE_UPPER_LEFT_OUTER_PLAN_INDEX 61
+#define PIPE_UPPER_LEFT_INNER_PLAN_INDEX 62
+#define PIPE_UPPER_RIGHT_OUTER_PLAN_INDEX 65
+#define PIPE_UPPER_RIGHT_INNER_PLAN_INDEX 64
+#define PIPE_LOWER_CENTER_PLAN_INDEX 57
+#define PIPE_LOWER_LEFT_OUTER_PLAN_INDEX 59
+#define PIPE_LOWER_LEFT_INNER_PLAN_INDEX 58
+#define PIPE_LOWER_RIGHT_OUTER_PLAN_INDEX 67
+#define PIPE_LOWER_RIGHT_INNER_PLAN_INDEX 68
+#define PIPE_FULL 0
+#define PIPE_HALF 1
+#define PIPE_LOWER_HALF 0
+#define PIPE_UPPER_HALF 1
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -807,36 +850,38 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 29: /* Pipe entrance. */
-		if (absolute_word(next_position.x) >= 0x73 && absolute_x <= 0xA4) {
-			wallHeight = 0x97;
-			wallindex = next_position.x <= 0 ? 0xA0 : 0x9F;
+		if (absolute_word(next_position.x) >= PIPE_ENTRANCE_WALL_INNER_X &&
+			absolute_x <= PIPE_HALF_WIDTH) {
+			wallHeight = PIPE_WALL_HEIGHT;
+			wallindex = next_position.x <= 0 ? PIPE_ENTRANCE_LEFT_WALL_INDEX :
+				PIPE_ENTRANCE_RIGHT_WALL_INDEX;
 			break;
 		}
-		if (absolute_x >= 0x73 ||
+		if (absolute_x >= PIPE_ENTRANCE_WALL_INNER_X ||
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) >= 0xAB)
+				terrainHeight) >= PIPE_ENTRANCE_MAX_HEIGHT)
 			break;
 		current_surf_type = (legacy_u8)surface_type;
-		if (absolute_x < 0x1F) {
-			planindex = 0x46;
+		if (absolute_x < PIPE_ENTRANCE_CENTER_HALF_WIDTH) {
+			planindex = PIPE_ENTRANCE_CENTER_PLAN_INDEX;
 			break;
 		}
-		if (position.x < -0x54) {
-			planindex = 0x49;
-			value = -0x64;
-			terrain_angle = -5;
+		if (position.x < -PIPE_ENTRANCE_SIDE_SPLIT_X) {
+			planindex = PIPE_ENTRANCE_LEFT_OUTER_PLAN_BASE;
+			value = -PIPE_ENTRANCE_OUTER_CENTER_X;
+			terrain_angle = -PIPE_ENTRANCE_OUTER_ANGLE;
 		} else if (position.x < 0) {
-			planindex = 0x47;
-			value = -0x39;
-			terrain_angle = -8;
-		} else if (position.x > 0x54) {
-			planindex = 0x4D;
-			value = 0x64;
-			terrain_angle = 5;
+			planindex = PIPE_ENTRANCE_LEFT_INNER_PLAN_BASE;
+			value = -PIPE_ENTRANCE_INNER_CENTER_X;
+			terrain_angle = -PIPE_ENTRANCE_INNER_ANGLE;
+		} else if (position.x > PIPE_ENTRANCE_SIDE_SPLIT_X) {
+			planindex = PIPE_ENTRANCE_RIGHT_OUTER_PLAN_BASE;
+			value = PIPE_ENTRANCE_OUTER_CENTER_X;
+			terrain_angle = PIPE_ENTRANCE_OUTER_ANGLE;
 		} else {
-			planindex = 0x4B;
-			value = 0x39;
-			terrain_angle = 8;
+			planindex = PIPE_ENTRANCE_RIGHT_INNER_PLAN_BASE;
+			value = PIPE_ENTRANCE_INNER_CENTER_X;
+			terrain_angle = PIPE_ENTRANCE_INNER_ANGLE;
 		}
 		value2 = LEGACY_S16_WRAP_ADD(
 			multiply_and_scale(sin_fast((legacy_u16)terrain_angle),
@@ -848,47 +893,57 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 31: /* Half-pipe. */
-		value = 1;
+		value = PIPE_HALF;
 		/* fall through */
 
 	case 30: /* Pipe. */
 		if (physical_model == 30)
-			value = 0;
-		if (absolute_word(next_position.x) >= 0xA4 && absolute_x <= 0xA4) {
-			wallHeight = 0x97;
-			wallindex = next_position.x <= 0 ? 0x9C : 0x9B;
+			value = PIPE_FULL;
+		if (absolute_word(next_position.x) >= PIPE_HALF_WIDTH &&
+			absolute_x <= PIPE_HALF_WIDTH) {
+			wallHeight = PIPE_WALL_HEIGHT;
+			wallindex = next_position.x <= 0 ? PIPE_LEFT_WALL_INDEX :
+				PIPE_RIGHT_WALL_INDEX;
 			break;
 		}
-		if (absolute_x >= 0xA4 ||
+		if (absolute_x >= PIPE_HALF_WIDTH ||
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) >= 0x109)
+				terrainHeight) >= PIPE_MAX_HEIGHT)
 			break;
-		if (absolute_x < 0x82)
+		if (absolute_x < PIPE_SURFACE_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		value2 = LEGACY_S16_WRAP_SUB(world_position->y, terrainHeight) >
-			0x97 ? 1 : 0;
-		if (value != 0 && value2 == 0 && absolute_x <= 0x54 &&
-			absolute_z <= 0x4B) {
-			planindex = 0x45;
-			if (next_position.z <= -0x4B)
-				wallindex = 0x9D;
-			else if (next_position.z >= 0x4B)
-				wallindex = 0x9E;
+			PIPE_WALL_HEIGHT ? PIPE_UPPER_HALF : PIPE_LOWER_HALF;
+		if (value == PIPE_HALF && value2 == PIPE_LOWER_HALF &&
+			absolute_x <= HALF_PIPE_FLOOR_HALF_WIDTH &&
+			absolute_z <= HALF_PIPE_FLOOR_HALF_LENGTH) {
+			planindex = HALF_PIPE_FLOOR_PLAN_INDEX;
+			if (next_position.z <= -HALF_PIPE_FLOOR_HALF_LENGTH)
+				wallindex = HALF_PIPE_REAR_WALL_INDEX;
+			else if (next_position.z >= HALF_PIPE_FLOOR_HALF_LENGTH)
+				wallindex = HALF_PIPE_FORWARD_WALL_INDEX;
 			break;
 		}
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) > 0x58 && value2 == 0) {
-			planindex = position.x < 0 ? 0x3C : 0x42;
-		} else if (absolute_x < 0x1F) {
-			planindex = value2 != 0 ? 0x3F : 0x39;
-		} else if (position.x < -0x54) {
-			planindex = value2 != 0 ? 0x3D : 0x3B;
+			terrainHeight) > PIPE_SIDE_HEIGHT_SPLIT &&
+			value2 == PIPE_LOWER_HALF) {
+			planindex = position.x < 0 ? PIPE_UPPER_LEFT_SIDE_PLAN_INDEX :
+				PIPE_UPPER_RIGHT_SIDE_PLAN_INDEX;
+		} else if (absolute_x < PIPE_ENTRANCE_CENTER_HALF_WIDTH) {
+			planindex = value2 != PIPE_LOWER_HALF ? PIPE_UPPER_CENTER_PLAN_INDEX :
+				PIPE_LOWER_CENTER_PLAN_INDEX;
+		} else if (position.x < -PIPE_ENTRANCE_SIDE_SPLIT_X) {
+			planindex = value2 != PIPE_LOWER_HALF ?
+				PIPE_UPPER_LEFT_OUTER_PLAN_INDEX : PIPE_LOWER_LEFT_OUTER_PLAN_INDEX;
 		} else if (position.x < 0) {
-			planindex = value2 != 0 ? 0x3E : 0x3A;
-		} else if (position.x > 0x54) {
-			planindex = value2 != 0 ? 0x41 : 0x43;
+			planindex = value2 != PIPE_LOWER_HALF ?
+				PIPE_UPPER_LEFT_INNER_PLAN_INDEX : PIPE_LOWER_LEFT_INNER_PLAN_INDEX;
+		} else if (position.x > PIPE_ENTRANCE_SIDE_SPLIT_X) {
+			planindex = value2 != PIPE_LOWER_HALF ?
+				PIPE_UPPER_RIGHT_OUTER_PLAN_INDEX : PIPE_LOWER_RIGHT_OUTER_PLAN_INDEX;
 		} else {
-			planindex = value2 != 0 ? 0x40 : 0x44;
+			planindex = value2 != PIPE_LOWER_HALF ?
+				PIPE_UPPER_RIGHT_INNER_PLAN_INDEX : PIPE_LOWER_RIGHT_INNER_PLAN_INDEX;
 		}
 		break;
 
