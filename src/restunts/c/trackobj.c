@@ -153,6 +153,27 @@
 #define CORK_LR_END_Z 512
 #define CORK_LR_WALL_INDEX 185
 #define CORK_LR_WALL_HEIGHT 117
+#define CORK_UD_A_PLAN_BASE 79
+#define CORK_UD_A_OUTER_WALL_BASE 50
+#define CORK_UD_A_INNER_WALL_BASE 75
+#define CORK_UD_B_PLAN_BASE 105
+#define CORK_UD_B_OUTER_WALL_BASE 0
+#define CORK_UD_B_INNER_WALL_BASE 25
+#define CORK_UD_LOW_HEIGHT 100
+#define CORK_UD_UPPER_HEIGHT 350
+#define CORK_UD_LOWER_INNER_RADIUS 392
+#define CORK_UD_LOWER_OUTER_RADIUS 632
+#define CORK_UD_INNER_RADIUS 332
+#define CORK_UD_OUTER_RADIUS 692
+#define CORK_UD_CENTER_RADIUS 512
+#define CORK_UD_WALL_RADIUS_OFFSET 90
+#define CORK_UD_WALL_HEIGHT 42
+#define CORK_UD_WALL_INDEX_OFFSET 24
+#define CORK_UD_UPPER_PLAN_OFFSET 25
+#define CORK_UD_ARC_SEGMENT_COUNT 24U
+#define CORK_UD_ANGLE_SCALE_SHIFT 10U
+#define CORK_UD_FIRST_ARC_PLAN_OFFSET 1
+#define ELEVATED_WALL_VERTICAL_OFFSET -12
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -590,7 +611,7 @@ void build_track_object(struct VECTOR* world_position,
 			if (wallindex < 0 && position.z >= 0 &&
 				absolute_x >= ROAD_HALF_WIDTH) {
 				wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
-				elRdWallRelated = -12;
+				elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
 				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
 					ELEVATED_RIGHT_WALL_INDEX;
 			}
@@ -661,7 +682,7 @@ void build_track_object(struct VECTOR* world_position,
 			break;
 		value = track_arc_segment(&position);
 		wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
-		elRdWallRelated = -12;
+		elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
 		wallindex = LEGACY_S16_WRAP_ADD(value,
 			radius < 0 ? ELEVATED_CORNER_INNER_WALL_BASE :
 				ELEVATED_CORNER_OUTER_WALL_BASE);
@@ -1021,23 +1042,24 @@ void build_track_object(struct VECTOR* world_position,
 
 	case 32: /* Up/down corkscrew A. */
 		value = LEGACY_S16_WRAP_NEGATE(position.x);
-		value2 = 0x4F;
-		value3 = 0x32;
-		terrain_angle = 0x4B;
+		value2 = CORK_UD_A_PLAN_BASE;
+		value3 = CORK_UD_A_OUTER_WALL_BASE;
+		terrain_angle = CORK_UD_A_INNER_WALL_BASE;
 		/* fall through */
 
 	case 33: /* Up/down corkscrew B. */
 		if (physical_model == 33) {
 			value = position.x;
-			value2 = 0x69;
-			value3 = 0;
-			terrain_angle = 0x19;
+			value2 = CORK_UD_B_PLAN_BASE;
+			value3 = CORK_UD_B_OUTER_WALL_BASE;
+			terrain_angle = CORK_UD_B_INNER_WALL_BASE;
 		}
-		corkFlag = 1;
+		corkFlag = CORKSCREW_ACTIVE;
 		if (position.z < 0 &&
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) < 0x64 && value > 0) {
-			if (value >= 0x278 || value <= 0x188)
+				terrainHeight) < CORK_UD_LOW_HEIGHT && value > 0) {
+			if (value >= CORK_UD_LOWER_OUTER_RADIUS ||
+				value <= CORK_UD_LOWER_INNER_RADIUS)
 				break;
 			current_surf_type = (legacy_u8)surface_type;
 			planindex = value2;
@@ -1045,34 +1067,37 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		if (position.z > 0 &&
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) > 0x15E &&
-			value < 0x2B4 && value > 0x14C) {
-			wallHeight = 0x2A;
-			elRdWallRelated = -12;
+				terrainHeight) > CORK_UD_UPPER_HEIGHT &&
+			value < CORK_UD_OUTER_RADIUS && value > CORK_UD_INNER_RADIUS) {
+			wallHeight = CORK_UD_WALL_HEIGHT;
+			elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
 			wallindex = LEGACY_S16_WRAP_ADD(
-				value > 0x200 ? value3 : terrain_angle, 0x18);
+				value > CORK_UD_CENTER_RADIUS ? value3 : terrain_angle,
+				CORK_UD_WALL_INDEX_OFFSET);
 			current_surf_type = (legacy_u8)surface_type;
-			planindex = LEGACY_S16_WRAP_ADD(value2, 0x19);
+			planindex = LEGACY_S16_WRAP_ADD(value2, CORK_UD_UPPER_PLAN_OFFSET);
 			byte_4392C = 0;
 			break;
 		}
 		radius = (legacy_s16)polarRadius2D(value, position.z);
-		if (radius <= 0x14C || radius >= 0x2B4)
+		if (radius <= CORK_UD_INNER_RADIUS || radius >= CORK_UD_OUTER_RADIUS)
 			break;
 		angle_step = (legacy_s16)((((legacy_u16)
 			LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
 				(legacy_s16)polarAngle(value, position.z),
-				ANGLE_QUARTER_TURN)) & ANGLE_MASK) * 24U) >> 10);
+				ANGLE_QUARTER_TURN)) & ANGLE_MASK) *
+			CORK_UD_ARC_SEGMENT_COUNT) >> CORK_UD_ANGLE_SCALE_SHIFT);
 		planindex = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_WRAP_ADD(value2, angle_step), 1);
+			LEGACY_S16_WRAP_ADD(value2, angle_step),
+			CORK_UD_FIRST_ARC_PLAN_OFFSET);
 		current_surf_type = (legacy_u8)surface_type;
 		byte_4392C = 0;
-		wallHeight = 0x2A;
-		elRdWallRelated = -12;
-		value = LEGACY_S16_WRAP_SUB(radius, 0x200);
-		if (value > 0x5A)
+		wallHeight = CORK_UD_WALL_HEIGHT;
+		elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
+		value = LEGACY_S16_WRAP_SUB(radius, CORK_UD_CENTER_RADIUS);
+		if (value > CORK_UD_WALL_RADIUS_OFFSET)
 			wallindex = LEGACY_S16_WRAP_ADD(value3, angle_step);
-		else if (value < -0x5A)
+		else if (value < -CORK_UD_WALL_RADIUS_OFFSET)
 			wallindex = LEGACY_S16_WRAP_ADD(terrain_angle, angle_step);
 		break;
 
