@@ -28,6 +28,9 @@
 #define TRACK_ORIENTATION_WEST ANGLE_THREE_QUARTER_TURN
 #define TRACK_ORIENTATION_NOT_FOUND (-1)
 #define TRACK_PREVIOUS_PIECE_NONE (-1)
+#define TRACK_TRAVERSAL_UNMATCHED (-1)
+#define TRACK_TRAVERSAL_FORWARD 0
+#define TRACK_TRAVERSAL_REVERSE 1
 #define TRACK_START_FINISH_VARIANT_COUNT 3U
 #define PLAN_TRACK_ROUTE_LENGTH 18U
 #define PLAN_TRACK_ROUTE_ENTRY_SIZE 2U
@@ -429,7 +432,7 @@ legacy_s16 track_setup(void)
 			block_index < (legacy_u8)track_info->si_noOfBlocks;
 			block_index++) {
 			current_info = &track_info[block_index];
-			connection_status = -1;
+			connection_status = TRACK_TRAVERSAL_UNMATCHED;
 			if ((legacy_u8)current_info->si_entryPoint ==
 				tile_entry_point) {
 				if ((legacy_u8)current_info->si_entryType !=
@@ -437,7 +440,7 @@ legacy_s16 track_setup(void)
 					return track_setup_error(branches,
 						TRACK_SETUP_ELEMENT_MISMATCH, column, row);
 				}
-				connection_status = 0;
+				connection_status = TRACK_TRAVERSAL_FORWARD;
 			} else if ((legacy_u8)current_info->si_exitPoint ==
 				tile_entry_point) {
 				if ((legacy_u8)current_info->si_exitType !=
@@ -445,10 +448,10 @@ legacy_s16 track_setup(void)
 					return track_setup_error(branches,
 						TRACK_SETUP_ELEMENT_MISMATCH, column, row);
 				}
-				connection_status = 1;
+				connection_status = TRACK_TRAVERSAL_REVERSE;
 			}
 
-			if (connection_status >= 0 &&
+			if (connection_status != TRACK_TRAVERSAL_UNMATCHED &&
 				visited_tiles[trackrows[row] + column] != 0) {
 				for (existing_piece = 0;
 					existing_piece < track_pieces_counter;
@@ -461,7 +464,7 @@ legacy_s16 track_setup(void)
 						(legacy_u8)block_index &&
 						connection_by_piece[existing_piece] ==
 						connection_status) {
-						connection_status = -1;
+						connection_status = TRACK_TRAVERSAL_UNMATCHED;
 						track_setup_link_piece(
 							previous_piece, existing_piece);
 						if (existing_piece == 0)
@@ -471,7 +474,7 @@ legacy_s16 track_setup(void)
 				}
 			}
 
-			if (connection_status >= 0) {
+			if (connection_status != TRACK_TRAVERSAL_UNMATCHED) {
 				if (match_count == 0) {
 					subtype = (legacy_u8)block_index;
 					selected_connection_status = connection_status;
@@ -594,7 +597,7 @@ legacy_s16 track_setup(void)
 				(legacy_u8)previous_info->si_opp1 |
 				LEGACY_U16_SHL(
 					(legacy_u8)previous_info->si_opp2, 8U));
-			if (previous_connection_status != 0 &&
+			if (previous_connection_status == TRACK_TRAVERSAL_REVERSE &&
 				opponent_path_offset != 0)
 				camera_vectors = track_vector_from_legacy_offset(
 					opponent_path_offset);
@@ -602,12 +605,12 @@ legacy_s16 track_setup(void)
 				camera_vectors = previous_info->si_cameraDataOffset;
 			index = LEGACY_U16_WRAP_MUL(
 				(legacy_u8)previous_info->si_arrowType, 2U);
-			if (previous_connection_status != 0)
+			if (previous_connection_status == TRACK_TRAVERSAL_REVERSE)
 				index = LEGACY_U16_WRAP_ADD(index, 2U);
 			else
 				index = LEGACY_U16_WRAP_ADD(index, 1U);
 			camera_vector = camera_vectors[index];
-			if (connection_status != 0)
+			if (connection_status == TRACK_TRAVERSAL_REVERSE)
 				arrow_code = byte_3E724[
 					LEGACY_S8_FROM_BITS(arrow_code)];
 			else
@@ -616,7 +619,7 @@ legacy_s16 track_setup(void)
 			orientation = (legacy_s16)previous_info->si_arrowOrient;
 			track_setup_rotate_vector(&camera_vector, orientation);
 			td08_direction_related[byte_45635] =
-				previous_connection_status != 0 ?
+				previous_connection_status == TRACK_TRAVERSAL_REVERSE ?
 				(orientation ^ TRACK_ORIENTATION_SOUTH) : orientation;
 			trackdata23[byte_45635] = arrow_code;
 			if (td15_terr_map_main[terrainrows[previous_row] +
@@ -647,7 +650,7 @@ legacy_s16 track_setup(void)
 			TRACK_SETUP_MANY_ELEMENTS, column, row);
 	}
 	current_info = &track_info[subtype];
-	if (connection_status != 0) {
+	if (connection_status == TRACK_TRAVERSAL_REVERSE) {
 		tile_entry_point = (legacy_u8)current_info->si_entryPoint;
 		previous_connection_code = (legacy_u8)current_info->si_entryType;
 	} else {
@@ -699,13 +702,15 @@ legacy_s16 track_setup(void)
 		subtype = (legacy_u8)trackdata18[sampled_piece] &
 			TRACK_PIECE_SUBTYPE_MASK;
 		connection_status = ((legacy_u8)trackdata18[sampled_piece] &
-			TRACK_PIECE_REVERSE_FLAG) != 0;
+			TRACK_PIECE_REVERSE_FLAG) != 0 ? TRACK_TRAVERSAL_REVERSE :
+			TRACK_TRAVERSAL_FORWARD;
 		track_object = &trkObjectList[tile_element];
 		current_info = &track_object->ss_trkObjInfoPtr[subtype];
 		opponent_path_offset = (legacy_u16)(
 			(legacy_u8)current_info->si_opp1 |
 			LEGACY_U16_SHL((legacy_u8)current_info->si_opp2, 8U));
-		if (connection_status != 0 && opponent_path_offset != 0)
+		if (connection_status == TRACK_TRAVERSAL_REVERSE &&
+			opponent_path_offset != 0)
 			camera_vectors = track_vector_from_legacy_offset(
 				opponent_path_offset);
 		else
