@@ -1,11 +1,37 @@
 #include "frame_internal.h"
 
+#define TRACK_PREVIEW_HALF_SHIFT 1U
+#define TRACK_PREVIEW_SCREEN_WIDTH 320
+#define TRACK_PREVIEW_SCREEN_HEIGHT 200
+#define TRACK_PREVIEW_SKYBOX_HEIGHT 100
+#define TRACK_PREVIEW_SKYBOX_LEFT 2U
+#define TRACK_PREVIEW_SKYBOX_RIGHT 3U
+#define TRACK_PREVIEW_TRANSFORM_DISTANCE 1024
+#define TRACK_PREVIEW_GRID_SIZE 30U
+#define TRACK_PREVIEW_PLACEHOLDER_MINIMUM 253U
+#define TRACK_PREVIEW_HILL_TERRAIN 6U
+#define TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST 7U
+#define TRACK_PREVIEW_HILL_ROAD_TERRAIN_END 11U
+#define TRACK_PREVIEW_BRIDGE_FIRST 105U
+#define TRACK_PREVIEW_BRIDGE_LAST 108U
+#define TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT 4U
+#define TRACK_PREVIEW_QUADRANT_COLUMN_BIT 1U
+#define TRACK_PREVIEW_QUADRANT_ROW_BIT 2U
+#define TRACK_PREVIEW_HILL_BASE_SINGLE_SHAPE 43U
+#define TRACK_PREVIEW_HILL_BASE_VERTICAL_SHAPE 91U
+#define TRACK_PREVIEW_HILL_BASE_HORIZONTAL_SHAPE 92U
+#define TRACK_PREVIEW_HILL_BASE_QUAD_SHAPE 93U
+#define TRACK_PREVIEW_TRANSFORM_FLAGS 5U
+#define TRACK_PREVIEW_OBJECT_TRANSFORM_FLAG 4U
+#define TRACK_PREVIEW_ROTATE_CLIP 1
+
 static legacy_s16 track_preview_half(legacy_s16 value)
 {
 	legacy_u16 bits;
 
 	bits = (legacy_u16)value;
-	return LEGACY_S16_FROM_BITS(LEGACY_U16_SAR(bits, 1U));
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_SAR(bits,
+		TRACK_PREVIEW_HALF_SHIFT));
 }
 
 static void track_preview_draw_terrain(legacy_u8 terrain,
@@ -27,7 +53,7 @@ static void track_preview_draw_terrain(legacy_u8 terrain,
 	transformed->pos.z = track_preview_half(LEGACY_S16_WRAP_SUB(
 		trackcenterpos[row], camera_z));
 	transformed->rotvec.z = terrain_object->ss_rotY;
-	transformed->ts_flags = 5;
+	transformed->ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 	transformed->material = 0;
 	transformed_shape_op(transformed);
 }
@@ -71,48 +97,62 @@ void draw_track_preview(void)
 	if (horizon < 0)
 		horizon = 0;
 
-	sprite_set_1_size(0, 0x140, 0,
+	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
 		LEGACY_S16_WRAP_SUB(horizon, skybox.minimum_height));
 	sprite_clear_1_color((legacy_u8)skybox.sky_color);
-	sprite_set_1_size(0, 0x140, 0, 0x64);
-	sprite_putimage_and_alt(skyboxes[2], 0,
-		LEGACY_S16_WRAP_SUB(horizon, skybox.heights[2]));
-	sprite_putimage_and_alt(skyboxes[3], 0x140,
-		LEGACY_S16_WRAP_SUB(horizon, skybox.heights[3]));
-	sprite_set_1_size(0, 0x140, horizon, 0xC8);
+	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
+		TRACK_PREVIEW_SKYBOX_HEIGHT);
+	sprite_putimage_and_alt(skyboxes[TRACK_PREVIEW_SKYBOX_LEFT], 0,
+		LEGACY_S16_WRAP_SUB(horizon,
+			skybox.heights[TRACK_PREVIEW_SKYBOX_LEFT]));
+	sprite_putimage_and_alt(skyboxes[TRACK_PREVIEW_SKYBOX_RIGHT],
+		TRACK_PREVIEW_SCREEN_WIDTH,
+		LEGACY_S16_WRAP_SUB(horizon,
+			skybox.heights[TRACK_PREVIEW_SKYBOX_RIGHT]));
+	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, horizon,
+		TRACK_PREVIEW_SCREEN_HEIGHT);
 	sprite_clear_1_color((legacy_u8)skybox.ground_color);
-	sprite_set_1_size(0, 0x140, 0, 0xC8);
-	select_cliprect_rotate(0, camera_angle, 0, &trackpreview_cliprect, 1);
+	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
+		TRACK_PREVIEW_SCREEN_HEIGHT);
+	select_cliprect_rotate(0, camera_angle, 0, &trackpreview_cliprect,
+		TRACK_PREVIEW_ROTATE_CLIP);
 
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
-	transformed.unk = 0x400;
-	for (row = 0; row < 30U; row++) {
-		for (column = 0; column < 30U; column++) {
+	transformed.unk = TRACK_PREVIEW_TRANSFORM_DISTANCE;
+	for (row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
+		for (column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
 			track = td14_elem_map_main[
 				LEGACY_U16_WRAP_ADD(trackrows[row], column)];
 			terrain = td15_terr_map_main[
 				LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
-			if (track != 0 && terrain >= 7U && terrain < 11U) {
+			if (track != 0 && terrain >=
+				TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST && terrain <
+				TRACK_PREVIEW_HILL_ROAD_TERRAIN_END) {
 				track = subst_hillroad_track(terrain, track);
 				terrain = 0;
 			}
-			if (track >= 0xFDU) {
+			if (track >= TRACK_PREVIEW_PLACEHOLDER_MINIMUM) {
 				track = 0;
 				terrain = 0;
 			}
 
 			terrain_height = 0;
-			if (terrain == 6U) {
+			if (terrain == TRACK_PREVIEW_HILL_TERRAIN) {
 				terrain_height = hillHeightConsts[1];
 				if (track != 0)
 					terrain = 0;
-			} else if (track >= 0x69U && track <= 0x6CU) {
-				for (quadrant = 0; quadrant < 4U; quadrant++) {
+			} else if (track >= TRACK_PREVIEW_BRIDGE_FIRST &&
+				track <= TRACK_PREVIEW_BRIDGE_LAST) {
+				for (quadrant = 0;
+					quadrant < TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT;
+					quadrant++) {
 					adjacent_column = (legacy_u8)(column +
-						((quadrant & 1U) != 0 ? 1U : 0U));
+						((quadrant & TRACK_PREVIEW_QUADRANT_COLUMN_BIT) != 0 ?
+							1U : 0U));
 					adjacent_row = (legacy_u8)(row +
-						((quadrant & 2U) != 0 ? 1U : 0U));
+						((quadrant & TRACK_PREVIEW_QUADRANT_ROW_BIT) != 0 ?
+							1U : 0U));
 					terrain = td15_terr_map_main[
 						LEGACY_U16_WRAP_ADD(
 							terrainrows[adjacent_row],
@@ -146,22 +186,27 @@ void draw_track_preview(void)
 
 			if (terrain_height != 0) {
 				switch (track_object->ss_multiTileFlag) {
-				case 1:
-					transformed.shapeptr = &game3dshapes[91];
+				case TRACK_PREVIEW_QUADRANT_COLUMN_BIT:
+					transformed.shapeptr = &game3dshapes[
+						TRACK_PREVIEW_HILL_BASE_VERTICAL_SHAPE];
 					break;
-				case 2:
-					transformed.shapeptr = &game3dshapes[92];
+				case TRACK_PREVIEW_QUADRANT_ROW_BIT:
+					transformed.shapeptr = &game3dshapes[
+						TRACK_PREVIEW_HILL_BASE_HORIZONTAL_SHAPE];
 					break;
-				case 3:
-					transformed.shapeptr = &game3dshapes[93];
+				case TRACK_PREVIEW_QUADRANT_COLUMN_BIT |
+					TRACK_PREVIEW_QUADRANT_ROW_BIT:
+					transformed.shapeptr = &game3dshapes[
+						TRACK_PREVIEW_HILL_BASE_QUAD_SHAPE];
 					break;
 				default:
-					transformed.shapeptr = &game3dshapes[43];
+					transformed.shapeptr = &game3dshapes[
+						TRACK_PREVIEW_HILL_BASE_SINGLE_SHAPE];
 					break;
 				}
 				transformed.pos = track_position;
 				transformed.rotvec.z = 0;
-				transformed.ts_flags = 5;
+				transformed.ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 				transformed.material = 0;
 				transformed_shape_op(&transformed);
 			}
@@ -174,7 +219,7 @@ void draw_track_preview(void)
 						overlay_object->ss_loShapePtr;
 					transformed.pos = track_position;
 					transformed.rotvec.z = track_object->ss_rotY;
-					transformed.ts_flags = 5;
+					transformed.ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 					transformed.material =
 						(legacy_s8)overlay_object->ss_surfaceType < 0 ?
 						0 : overlay_object->ss_surfaceType;
@@ -186,7 +231,8 @@ void draw_track_preview(void)
 			transformed.pos = track_position;
 			transformed.rotvec.z = track_object->ss_rotY;
 			transformed.ts_flags =
-				(legacy_u8)(track_object->ss_ignoreZBias | 4U);
+				(legacy_u8)(track_object->ss_ignoreZBias |
+					TRACK_PREVIEW_OBJECT_TRANSFORM_FLAG);
 			transformed.material =
 				(legacy_s8)track_object->ss_surfaceType < 0 ?
 				0 : track_object->ss_surfaceType;
