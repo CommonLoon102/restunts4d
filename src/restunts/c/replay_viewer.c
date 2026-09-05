@@ -187,7 +187,8 @@ static void replay_pause_menu(void)
 		options[1] = 1;
 	byte_454A4 = (legacy_u8)video_flag6_is1;
 	menu_result = LEGACY_S8_FROM_BITS(show_dialog(2, 0,
-		locate_text_res(gameresptr, aMen_0), 0xFFFFU, 0xFFFFU,
+		locate_text_res(gameresptr, aMen_0),
+		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, options, 0));
 
 	switch (menu_result) {
@@ -212,8 +213,9 @@ static void replay_pause_menu(void)
 				byte_43966 = 3;
 			} else if (gameconfig.game_recordedframes != elapsed_time2) {
 				dialog_result = LEGACY_S16_FROM_BITS(show_dialog(2, 0,
-					locate_text_res(gameresptr, aCon_0), 0xFFFFU,
-					0xFFFFU, performGraphColor, 0, 0));
+					locate_text_res(gameresptr, aCon_0),
+					DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+					performGraphColor, 0, 0));
 				if (dialog_result < 1)
 					break;
 				byte_43966 = 3;
@@ -299,7 +301,8 @@ static void replay_pause_menu(void)
 				if (file_find(g_path_buf) != 0) {
 					dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
 						2, 0, locate_text_res(mainresptr, aFex_0),
-						0xFFFFU, 0xFFFFU, performGraphColor, 0, 0));
+						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+						performGraphColor, 0, 0));
 					if (dialog_result == -1)
 						save_status = -1;
 					else if (dialog_result == 0)
@@ -312,7 +315,8 @@ static void replay_pause_menu(void)
 			if ((legacy_u8)file_write_replay(g_path_buf) == 0)
 				break;
 			show_dialog(1, 0, locate_text_res(mainresptr, aSer_0),
-				0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
+				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+				performGraphColor, 0, 0);
 		}
 		break;
 
@@ -322,7 +326,8 @@ static void replay_pause_menu(void)
 		if (gameconfig.game_opponenttype == 0)
 			mode_options[4] = 1;
 		menu_result = LEGACY_S8_FROM_BITS(show_dialog(2, 0,
-			locate_text_res(gameresptr, aMdo), 0xFFFFU, 0xFFFFU,
+			locate_text_res(gameresptr, aMdo),
+			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, mode_options, 0));
 		switch (menu_result) {
 		case 0:

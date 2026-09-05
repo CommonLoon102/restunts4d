@@ -429,7 +429,8 @@ legacy_s8 do_fileselect_dialog(
 	legacy_u8 search_again;
 
 	dialog_result = LEGACY_S16_FROM_BITS(show_dialog(3, 1,
-		locate_text_res(mainresptr, aLoa), 0xFFFFU, 0xFFFFU,
+		locate_text_res(mainresptr, aLoa),
+		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, positions, 0));
 	if (dialog_result < 0)
 		return 0;
@@ -722,7 +723,8 @@ void security_check(legacy_s16 question_index)
 	for (i = 0; i < 6U; i++)
 		question_parts[i] = (legacy_u8)(&resID_byte1)[i];
 
-	show_dialog(3, 1, (void far*)question_text, 0xFFFFU, 0x78U,
+	show_dialog(3, 1, (void far*)question_text,
+		DIALOG_AUTO_POSITION, 0x78U,
 		performGraphColor, positions, 0);
 	(&resID_byte1)[2] = 0;
 	(&resID_byte1)[0] = question_parts[0];

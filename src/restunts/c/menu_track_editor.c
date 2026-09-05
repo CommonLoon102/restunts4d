@@ -402,7 +402,8 @@ static void track_editor_show_message(legacy_s8 far* text_resource,
 	const legacy_s8* resource_id)
 {
 	show_dialog(1, 1, locate_text_res(text_resource, (legacy_s8*)resource_id),
-		0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
+		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+		performGraphColor, 0, 0);
 }
 
 static void track_editor_save_track(legacy_u8* track_changed,
@@ -430,7 +431,8 @@ static void track_editor_save_track(legacy_u8* track_changed,
 		if (file_find(g_path_buf) != 0) {
 			result = LEGACY_S16_FROM_BITS(show_dialog(2, 1,
 				locate_text_res((legacy_s8 far*)mainresptr, "fex"),
-				0xFFFFU, 0xFFFFU, performGraphColor, 0, 0));
+				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+				performGraphColor, 0, 0));
 			if (result == -1) {
 				save_status = 0xFFU;
 				break;
@@ -1028,7 +1030,8 @@ void load_tracks_menu_shapes(void)
 				} else if (selection_row[1] == 7U) {
 					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
 						locate_text_res(text_resource, "mss"),
-						0xFFFFU, 0xFFFFU, dialogarg2, 0,
+						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+						dialogarg2, 0,
 						td14_elem_map_main[0x384]));
 					if (dialog_result != 0xFFU && dialog_result != 5U) {
 						td14_elem_map_main[0x384] = dialog_result;
@@ -1039,7 +1042,8 @@ void load_tracks_menu_shapes(void)
 					selection_column[1] != 0) {
 					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
 						locate_text_res(text_resource, "men"),
-						0xFFFFU, 0xFFFFU, dialogarg2, 0, 0));
+						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+						dialogarg2, 0, 0));
 					if (dialog_result != 0xFFU && dialog_result != 5U) {
 						for (index = 0; index < 900U; index++)
 							td14_elem_map_main[index] = 0;
@@ -1060,7 +1064,8 @@ void load_tracks_menu_shapes(void)
 					if (track_changed != 0) {
 						result = (legacy_s16)show_dialog(2, 1,
 							locate_text_res(text_resource, "chl"),
-							0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
+							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+							performGraphColor, 0, 0);
 					}
 					if (result == 0) {
 						track_editor_save_track(
@@ -1093,7 +1098,8 @@ void load_tracks_menu_shapes(void)
 					if (track_changed != 0) {
 						result = (legacy_s16)show_dialog(2, 1,
 							locate_text_res(text_resource, "chx"),
-							0xFFFFU, 0xFFFFU, performGraphColor, 0, 0);
+							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+							performGraphColor, 0, 0);
 					}
 					if (result == 0)
 						track_editor_save_track(

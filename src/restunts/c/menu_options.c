@@ -54,7 +54,8 @@ void do_joy_restext(void)
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	if (LEGACY_S16_FROM_BITS(show_dialog(3, 1,
-		locate_text_res(mainresptr, "joy"), 0xFFFFU, 0xFFFFU,
+		locate_text_res(mainresptr, "joy"),
+		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialogarg2, positions, 0)) <= 0) {
 		dos_joystick_set_enabled(0);
 		joy_dialog_finish();
@@ -126,7 +127,8 @@ void do_joy_restext(void)
 	sub_275C6();
 	if (dos_joystick_is_enabled() == 0)
 		show_dialog(1, 1, locate_text_res(mainresptr, "jox"),
-			0xFFFFU, 0xFFFFU, dialogarg2, 0, 0);
+			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+			dialogarg2, 0, 0);
 
 	joy_dialog_finish();
 }
@@ -281,7 +283,8 @@ legacy_u16 run_option_menu(void)
 	menu_active = 1;
 	while (menu_active != 0) {
 		selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
-			locate_text_res(miscptr, "mop"), 0xFFFFU, 0xFFFFU,
+			locate_text_res(miscptr, "mop"),
+			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialogarg2, 0, 0));
 		switch (selected) {
 		case -1:
@@ -297,8 +300,9 @@ legacy_u16 run_option_menu(void)
 			else
 				initial_input = 0;
 			selected = LEGACY_S8_FROM_BITS(show_dialog(2, 1,
-				locate_text_res(miscptr, "mid"), 0xFFFFU,
-				0xFFFFU, performGraphColor, 0, initial_input));
+				locate_text_res(miscptr, "mid"),
+				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+				performGraphColor, 0, initial_input));
 			if (selected == 0)
 				do_key_restext();
 			else if (selected == 1)
