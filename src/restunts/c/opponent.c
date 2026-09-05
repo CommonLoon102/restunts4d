@@ -34,6 +34,13 @@
 #define STEERING_NORMAL_RESPONSE_LIMIT 80
 #define STEERING_ANGLE_LIMIT 240
 #define STEERING_CENTER_DEADZONE 8
+#define STEERING_AWAY_FROM_CENTER_THRESHOLD 1
+#define STEERING_AWAY_RESPONSE_SHIFT 2U
+#define STEERING_CENTERING_SAMPLE_OFFSET \
+	(INPUT_STEER_RIGHT_FLAG >> INPUT_STEERING_SHIFT)
+#define STEERING_CENTERING_LIMIT_SHIFT 1U
+
+#define OPPONENT_AVERAGE_SHIFT 1U
 
 #define TRACK_ROUTE_SUBTYPE_MASK 15U
 #define TRACK_ROUTE_REVERSED_FLAG 16U
@@ -215,7 +222,8 @@ static legacy_s16 opponent_average(legacy_s16 first, legacy_s16 second)
 	legacy_s32 sum;
 
 	sum = (legacy_s32)first + (legacy_s32)second;
-	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, 1U));
+	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+		sum, OPPONENT_AVERAGE_SHIFT));
 }
 
 void opponent_op(void)
@@ -495,16 +503,20 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	response = response_table[response_index];
 
 	/* Turning farther from center gets the original fourfold response. */
-	if ((response > 0 && steering_angle < -1) ||
-		(response < 0 && steering_angle > 1)) {
-		response = LEGACY_S16_SHL(response, 2U);
+	if ((response > 0 && steering_angle <
+			-STEERING_AWAY_FROM_CENTER_THRESHOLD) ||
+		(response < 0 && steering_angle >
+			STEERING_AWAY_FROM_CENTER_THRESHOLD)) {
+		response = LEGACY_S16_SHL(response, STEERING_AWAY_RESPONSE_SHIFT);
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
 	if (response == 0 && state.playerstate.car_speed2 != 0 &&
 		steering_angle != 0) {
 		centering_limit = LEGACY_S16_SHL(
-			(legacy_s16)response_table[speed_index + 1U], 1U);
+			(legacy_s16)response_table[
+				speed_index + STEERING_CENTERING_SAMPLE_OFFSET],
+			STEERING_CENTERING_LIMIT_SHIFT);
 		if (steering_angle < 0) {
 			if (LEGACY_S16_WRAP_NEGATE(steering_angle) > centering_limit)
 				response = centering_limit;
@@ -549,7 +561,8 @@ static legacy_s16 route_average(legacy_s16 first, legacy_s16 second) {
 	legacy_s32 sum;
 
 	sum = LEGACY_S32_WRAP_ADD(first, second);
-	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, 1U));
+	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+		sum, OPPONENT_AVERAGE_SHIFT));
 }
 
 static legacy_u8 opponent_speed_at(legacy_u16 index)
