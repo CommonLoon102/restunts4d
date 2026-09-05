@@ -192,7 +192,7 @@ legacy_u16 show_dialog(
 	dialog_width = LEGACY_S16_WRAP_SUB(dialog_width, 0x10);
 	if (save_background != 0 &&
 		sub_274B0(left, right, top, bottom) == 0)
-		return 0xFFFFU;
+		return DIALOG_FAILURE_RESULT;
 
 	sprite_copy_2_to_1();
 	sprite_set_1_size(left, right, top, bottom);

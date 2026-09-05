@@ -4,6 +4,7 @@
 #include "legacy.h"
 
 #define DIALOG_AUTO_POSITION 65535U
+#define DIALOG_FAILURE_RESULT 65535U
 
 legacy_u16 show_dialog(legacy_s16 dialog_type, legacy_s16 save_background,
 	void far* text_resource, legacy_u16 x_argument, legacy_u16 y_argument,

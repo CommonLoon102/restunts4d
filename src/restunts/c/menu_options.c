@@ -6,6 +6,10 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
+#define JOYSTICK_BUTTON_MASK 48U
+#define OPTION_MENU_VERSION_TEXT_Y 16
+#define REPLAY_LOAD_WAIT_TICKS 150
+
 void do_mer_restext(void)
 {
 	show_dialog(1, 1, locate_text_res(mainresptr, aMer),
@@ -107,7 +111,7 @@ void do_joy_restext(void)
 		if (kb_read_char() != 0)
 			break;
 		joy_flags = (legacy_u16)dos_get_joy_flags();
-		if ((joy_flags & 0x30U) != 0)
+		if ((joy_flags & JOYSTICK_BUTTON_MASK) != 0)
 			break;
 		next_selected = (legacy_s16)sub_307D2(joy_flags);
 		if (next_selected == selected)
@@ -277,7 +281,8 @@ legacy_u16 run_option_menu(void)
 	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 6,
 		dialog_fnt_colour, 0);
 	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gver"));
-	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 0x10,
+	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+		OPTION_MENU_VERSION_TEXT_Y,
 		dialog_fnt_colour, 0);
 
 	menu_active = 1;
@@ -323,7 +328,7 @@ legacy_u16 run_option_menu(void)
 			prompt = locate_text_res(mainresptr, "rep");
 			if (do_fileselect_dialog(byte_3B85E, aDefault_1,
 				".rpl", prompt) != 0) {
-				waitflag = 0x96;
+				waitflag = REPLAY_LOAD_WAIT_TICKS;
 				show_waiting();
 				file_load_replay(byte_3B85E, aDefault_1);
 				menu_active = 1;
