@@ -126,6 +126,33 @@
 #define PIPE_HALF 1
 #define PIPE_LOWER_HALF 0
 #define PIPE_UPPER_HALF 1
+#define NO_PLANE_INDEX 0
+#define CORKSCREW_INACTIVE 0
+#define CORKSCREW_ACTIVE 1
+#define CORK_LR_HALF_WIDTH 150
+#define CORK_LR_MAX_HEIGHT 265
+#define CORK_LR_UPPER_HEIGHT 151
+#define CORK_LR_SIDE_HEIGHT_SPLIT 88
+#define CORK_LR_LOWER_HALF 0
+#define CORK_LR_UPPER_HALF 1
+#define CORK_LR_NO_SEGMENT 0
+#define CORK_LR_CENTER_HALF_WIDTH 31
+#define CORK_LR_SIDE_SPLIT_X 84
+#define CORK_LR_LOWER_LEFT_SIDE_SEGMENT 3
+#define CORK_LR_LOWER_RIGHT_SIDE_SEGMENT 9
+#define CORK_LR_UPPER_CENTER_SEGMENT 6
+#define CORK_LR_UPPER_LEFT_OUTER_SEGMENT 4
+#define CORK_LR_LOWER_LEFT_OUTER_SEGMENT 2
+#define CORK_LR_UPPER_LEFT_INNER_SEGMENT 5
+#define CORK_LR_LOWER_LEFT_INNER_SEGMENT 1
+#define CORK_LR_UPPER_RIGHT_OUTER_SEGMENT 8
+#define CORK_LR_LOWER_RIGHT_OUTER_SEGMENT 10
+#define CORK_LR_UPPER_RIGHT_INNER_SEGMENT 7
+#define CORK_LR_LOWER_RIGHT_INNER_SEGMENT 11
+#define CORK_LR_PLAN_BASE 57
+#define CORK_LR_END_Z 512
+#define CORK_LR_WALL_INDEX 185
+#define CORK_LR_WALL_HEIGHT 117
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -300,11 +327,11 @@ void build_track_object(struct VECTOR* world_position,
 	legacy_u8 terrain_tile;
 	legacy_u8 track_tile;
 
-	planindex = 0;
+	planindex = NO_PLANE_INDEX;
 	wallindex = -1;
 	wallHeight = -12;
 	elRdWallRelated = -1000;
-	corkFlag = 0;
+	corkFlag = CORKSCREW_INACTIVE;
 	current_surf_type = SURFACE_GRASS;
 	byte_4392C = 1;
 	wall_orientation_modifier = 0;
@@ -948,37 +975,47 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 35: /* Left/right corkscrew. */
-		if (absolute_x >= 0x96 ||
+		if (absolute_x >= CORK_LR_HALF_WIDTH ||
 			LEGACY_S16_WRAP_SUB(world_position->y,
-				terrainHeight) >= 0x109)
+				terrainHeight) >= CORK_LR_MAX_HEIGHT)
 			break;
 		current_surf_type = (legacy_u8)surface_type;
 		value2 = LEGACY_S16_WRAP_SUB(world_position->y, terrainHeight) >
-			0x97 ? 1 : 0;
-		value3 = 0;
+			CORK_LR_UPPER_HEIGHT ? CORK_LR_UPPER_HALF : CORK_LR_LOWER_HALF;
+		value3 = CORK_LR_NO_SEGMENT;
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
-			terrainHeight) > 0x58 && value2 == 0) {
-			value3 = position.x < 0 ? 3 : 9;
-		} else if (absolute_x < 0x1F) {
-			if (value2 != 0)
-				value3 = 6;
-		} else if (position.x < -0x54) {
-			value3 = value2 != 0 ? 4 : 2;
+			terrainHeight) > CORK_LR_SIDE_HEIGHT_SPLIT &&
+			value2 == CORK_LR_LOWER_HALF) {
+			value3 = position.x < 0 ? CORK_LR_LOWER_LEFT_SIDE_SEGMENT :
+				CORK_LR_LOWER_RIGHT_SIDE_SEGMENT;
+		} else if (absolute_x < CORK_LR_CENTER_HALF_WIDTH) {
+			if (value2 != CORK_LR_LOWER_HALF)
+				value3 = CORK_LR_UPPER_CENTER_SEGMENT;
+		} else if (position.x < -CORK_LR_SIDE_SPLIT_X) {
+			value3 = value2 != CORK_LR_LOWER_HALF ?
+				CORK_LR_UPPER_LEFT_OUTER_SEGMENT :
+				CORK_LR_LOWER_LEFT_OUTER_SEGMENT;
 		} else if (position.x < 0) {
-			value3 = value2 != 0 ? 5 : 1;
-		} else if (position.x > 0x54) {
-			value3 = value2 != 0 ? 8 : 10;
+			value3 = value2 != CORK_LR_LOWER_HALF ?
+				CORK_LR_UPPER_LEFT_INNER_SEGMENT :
+				CORK_LR_LOWER_LEFT_INNER_SEGMENT;
+		} else if (position.x > CORK_LR_SIDE_SPLIT_X) {
+			value3 = value2 != CORK_LR_LOWER_HALF ?
+				CORK_LR_UPPER_RIGHT_OUTER_SEGMENT :
+				CORK_LR_LOWER_RIGHT_OUTER_SEGMENT;
 		} else {
-			value3 = value2 != 0 ? 7 : 11;
+			value3 = value2 != CORK_LR_LOWER_HALF ?
+				CORK_LR_UPPER_RIGHT_INNER_SEGMENT :
+				CORK_LR_LOWER_RIGHT_INNER_SEGMENT;
 		}
-		if (value3 != 0 &&
+		if (value3 != CORK_LR_NO_SEGMENT &&
 			position.z > corkLR_negZBound[value3] &&
 			position.z < corkLR_posZBound[value3])
-			planindex = LEGACY_S16_WRAP_ADD(value3, 0x39);
-		if (planindex == 0 && absolute_z < 0x200) {
-			wallindex = 0xB9;
-			corkFlag = 1;
-			wallHeight = 0x75;
+			planindex = LEGACY_S16_WRAP_ADD(value3, CORK_LR_PLAN_BASE);
+		if (planindex == NO_PLANE_INDEX && absolute_z < CORK_LR_END_Z) {
+			wallindex = CORK_LR_WALL_INDEX;
+			corkFlag = CORKSCREW_ACTIVE;
+			wallHeight = CORK_LR_WALL_HEIGHT;
 		}
 		break;
 
