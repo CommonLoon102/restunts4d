@@ -76,11 +76,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 	}
 
 	update_car_speed(arg_carInputByte, 0, &state.playerstate, &simd_player);
-	legacy_execution_residue.grip_stack_words[0] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
 		state.playerstate.car_lastrpm;
-	legacy_execution_residue.grip_stack_words[1] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD] =
 		(legacy_s16)state.playerstate.car_speed;
-	legacy_execution_residue.grip_stack_words[2] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD] =
 		(legacy_s16)state.playerstate.car_gearratio;
 	upd_statef20_from_steer_input(
 		LEGACY_S16_SAR((legacy_s16)arg_carInputByte,

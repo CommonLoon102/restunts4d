@@ -237,7 +237,7 @@ void update_legacy_grip_stack_words(
 	legacy_s16 i;
 
 	/* The original player_op reaches update_grip with SI == 80. */
-	legacy_execution_residue.grip_stack_words[3] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] =
 		LEGACY_GRIP_STACK_SI_VALUE;
 	if (carstate->car_sumSurfAllWheels == 0)
 		return;
@@ -256,9 +256,11 @@ void update_legacy_grip_stack_words(
 	}
 
 	/* Operand words left by update_grip's first signed long multiply. */
-	legacy_execution_residue.grip_stack_words[0] = sliding_sum < 0 ? -1 : 0;
-	legacy_execution_residue.grip_stack_words[1] = combined_grip_operand;
-	legacy_execution_residue.grip_stack_words[2] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
+		sliding_sum < 0 ? -1 : 0;
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD] =
+		combined_grip_operand;
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD] =
 		combined_grip_operand < 0 ? -1 : 0;
 
 	if (carstate->car_demandedGrip <= carstate->car_surfacegrip_sum)
@@ -287,11 +289,12 @@ void update_legacy_grip_stack_words(
 		(legacy_u32)speed_shr8, (legacy_u32)speed_shr8);
 	scaled_combined_grip = LEGACY_S32_WRAP_MUL(
 		(legacy_s32)carstate->car_surfacegrip_sum, GRIP_FIXED_SCALE);
-	legacy_execution_residue.grip_stack_words[0] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
 		(legacy_s16)((legacy_u32)scaled_combined_grip >>
 			LEGACY_LONG_HIGH_WORD_SHIFT);
-	legacy_execution_residue.grip_stack_words[1] = (legacy_s16)speed_squared;
-	legacy_execution_residue.grip_stack_words[2] =
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD] =
+		(legacy_s16)speed_squared;
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD] =
 		(legacy_s16)(speed_squared >> LEGACY_LONG_HIGH_WORD_SHIFT);
 }
 

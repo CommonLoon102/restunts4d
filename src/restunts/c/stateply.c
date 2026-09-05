@@ -35,6 +35,7 @@
 #define PLAYER_PHYSICS_INTRO_INPUT_MODE 2
 #define PLAYER_PHYSICS_SURFACE_WATER 5
 #define PLAYER_PHYSICS_COLLISION_RETRY_LIMIT 5
+#define PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE 4U
 
 enum PLAYER_PHYSICS_FLOW {
 	PLAYER_FLOW_loc_15142,
@@ -259,10 +260,14 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	 * original overlapping stack window. Each successful wheel lookup below
 	 * replaces its corresponding entry.
 	 */
-	var_16[0] = legacy_execution_residue.grip_stack_words[0];
-	var_16[1] = legacy_execution_residue.grip_stack_words[1];
-	var_16[2] = legacy_execution_residue.grip_stack_words[2];
-	var_16[3] = legacy_execution_residue.grip_stack_words[3];
+	var_16[LEGACY_RESIDUE_FIRST_WORD] =
+		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD];
+	var_16[LEGACY_RESIDUE_SECOND_WORD] =
+		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD];
+	var_16[LEGACY_RESIDUE_THIRD_WORD] =
+		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD];
+	var_16[LEGACY_RESIDUE_FOURTH_WORD] =
+		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD];
 
 	/* Initialize the working position and rotation from the current car pose. */
 	pState_lvec1_x = arg_pState->car_posWorld1.lx;
@@ -307,23 +312,31 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 	 */
 	if (var_pSpeed2Scaled == 0) {
 		if (arg_MplayerFlag != 0) {
-			var_140someWhlData[0] =
-				legacy_execution_residue.wheel_angle_stack_words[0];
-			var_140someWhlData[1] =
-				legacy_execution_residue.wheel_angle_stack_words[1];
-			var_140someWhlData[2] =
-				legacy_execution_residue.wheel_angle_stack_words[2];
-			var_140someWhlData[3] =
-				legacy_execution_residue.wheel_angle_stack_words[3];
+			var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD] =
+				legacy_execution_residue.wheel_angle_stack_words[
+					LEGACY_RESIDUE_FIRST_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_SECOND_WORD] =
+				legacy_execution_residue.wheel_angle_stack_words[
+					LEGACY_RESIDUE_SECOND_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_THIRD_WORD] =
+				legacy_execution_residue.wheel_angle_stack_words[
+					LEGACY_RESIDUE_THIRD_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_FOURTH_WORD] =
+				legacy_execution_residue.wheel_angle_stack_words[
+					LEGACY_RESIDUE_FOURTH_WORD];
 		} else {
-			var_140someWhlData[0] =
-				legacy_execution_residue.wheel_plane_angles[0];
-			var_140someWhlData[1] =
-				legacy_execution_residue.wheel_plane_angles[1];
-			var_140someWhlData[2] =
-				legacy_execution_residue.wheel_plane_angles[2];
-			var_140someWhlData[3] =
-				legacy_execution_residue.wheel_plane_angles[3];
+			var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD] =
+				legacy_execution_residue.wheel_plane_angles[
+					LEGACY_RESIDUE_FIRST_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_SECOND_WORD] =
+				legacy_execution_residue.wheel_plane_angles[
+					LEGACY_RESIDUE_SECOND_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_THIRD_WORD] =
+				legacy_execution_residue.wheel_plane_angles[
+					LEGACY_RESIDUE_THIRD_WORD];
+			var_140someWhlData[LEGACY_RESIDUE_FOURTH_WORD] =
+				legacy_execution_residue.wheel_plane_angles[
+					LEGACY_RESIDUE_FOURTH_WORD];
 		}
 	}
 
@@ -384,13 +397,14 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * Z coordinate, the first aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		var_140someWhlData[0] = (legacy_u16)(
+		var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD] = (legacy_u16)(
 			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
 				state.opponentstate.car_posWorld1.lz, vec_FC.z) >>
 				LEGACY_WORD_BITS
 		);
-		legacy_execution_residue.wheel_plane_angles[0] =
-			var_140someWhlData[0];
+		legacy_execution_residue.wheel_plane_angles[
+			LEGACY_RESIDUE_FIRST_WORD] =
+			var_140someWhlData[LEGACY_RESIDUE_FIRST_WORD];
 
 		/* Rebuild wheel 3 using the same local-coordinate adjustments. */
 		prepare_opponent_rear_wheel(&vec_1C6, &vec_FC,
@@ -401,25 +415,30 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd, st
 		 * X coordinate, the second aliased stack word.
 		 */
 		mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-		var_140someWhlData[1] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+		var_140someWhlData[LEGACY_RESIDUE_SECOND_WORD] =
+			(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
 			state.opponentstate.car_posWorld1.lx, vec_FC.x);
 
 		/* Commit the second word and recover world X's high word as the third. */
-		legacy_execution_residue.wheel_plane_angles[1] =
-			var_140someWhlData[1];
-		var_140someWhlData[2] = (legacy_u16)(
+		legacy_execution_residue.wheel_plane_angles[
+			LEGACY_RESIDUE_SECOND_WORD] =
+			var_140someWhlData[LEGACY_RESIDUE_SECOND_WORD];
+		var_140someWhlData[LEGACY_RESIDUE_THIRD_WORD] = (legacy_u16)(
 			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
 				state.opponentstate.car_posWorld1.lx, vec_FC.x) >>
 				LEGACY_WORD_BITS
 		);
 
 		/* Commit the third word and recover world Y's low word as the fourth. */
-		legacy_execution_residue.wheel_plane_angles[2] =
-			var_140someWhlData[2];
-		var_140someWhlData[3] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+		legacy_execution_residue.wheel_plane_angles[
+			LEGACY_RESIDUE_THIRD_WORD] =
+			var_140someWhlData[LEGACY_RESIDUE_THIRD_WORD];
+		var_140someWhlData[LEGACY_RESIDUE_FOURTH_WORD] =
+			(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
 			state.opponentstate.car_posWorld1.ly, vec_FC.y);
-		legacy_execution_residue.wheel_plane_angles[3] =
-			var_140someWhlData[3];
+		legacy_execution_residue.wheel_plane_angles[
+			LEGACY_RESIDUE_FOURTH_WORD] =
+			var_140someWhlData[LEGACY_RESIDUE_FOURTH_WORD];
 	}
 
 	mat_unk = *mat_rot_zxy(
@@ -585,10 +604,22 @@ case PLAYER_FLOW_loc_1527C:
 	mat_rot_y(&mat_134, LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
 	if (arg_MplayerFlag == 0) {
-		legacy_execution_residue.wheel_angle_stack_words[0] = mat_134.vals[4];
-		legacy_execution_residue.wheel_angle_stack_words[1] = mat_134.vals[5];
-		legacy_execution_residue.wheel_angle_stack_words[2] = mat_134.vals[6];
-		legacy_execution_residue.wheel_angle_stack_words[3] = mat_134.vals[7];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_FIRST_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_FIRST_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_SECOND_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_SECOND_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_THIRD_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_THIRD_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_FOURTH_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_FOURTH_WORD];
 	}
 	mat_mul_vector(&vec_182, &mat_134, &vec_C);
 	mat_mul_vector(&vec_1E4, &mat_134, &vec_1C);
@@ -802,10 +833,22 @@ case PLAYER_FLOW_loc_1570A:
 
 	mat_134 = var_6->plane_rotation;
 	if (arg_MplayerFlag == 0) {
-		legacy_execution_residue.wheel_angle_stack_words[0] = mat_134.vals[4];
-		legacy_execution_residue.wheel_angle_stack_words[1] = mat_134.vals[5];
-		legacy_execution_residue.wheel_angle_stack_words[2] = mat_134.vals[6];
-		legacy_execution_residue.wheel_angle_stack_words[3] = mat_134.vals[7];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_FIRST_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_FIRST_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_SECOND_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_SECOND_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_THIRD_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_THIRD_WORD];
+		legacy_execution_residue.wheel_angle_stack_words[
+			LEGACY_RESIDUE_FOURTH_WORD] = mat_134.vals[
+			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
+				LEGACY_RESIDUE_FOURTH_WORD];
 	}
 	mat_invert(&mat_134, &var_MmatFromAngleZ);
 	mat_mul_vector(&vec_182, &var_MmatFromAngleZ, &vec_C);
