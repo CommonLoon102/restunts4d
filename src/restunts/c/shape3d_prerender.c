@@ -5,7 +5,30 @@
 #include "shape3d.h"
 #include "shape3d_internal.h"
 
+#define PRERENDER_POINT_WORD_COUNT 2U
+#define PRERENDER_POINT_Y_OFFSET 1U
 #define SPHERE_RASTER_TABLE_LIMIT 40U
+#define SPHERE_PERIMETER_POINT_COUNT 16U
+#define SPHERE_VERTEX_COUNT 32U
+#define SPHERE_VERTEX_WORD_COUNT 64U
+#define SPHERE_MIRROR_WORD_OFFSET 32U
+#define SPHERE_DIAGONAL_NORMALIZATION 11585U
+#define SPHERE_HALF_STEP_NORMALIZATION 14654U
+#define SPHERE_QUARTER_STEP_NORMALIZATION 15895U
+#define SPHERE_THREE_QUARTER_STEP_NORMALIZATION 13107U
+#define WHEEL_SOURCE_POINT_COUNT 4U
+#define WHEEL_SOURCE_WORD_COUNT 8U
+#define WHEEL_PERIMETER_POINT_COUNT 16U
+#define WHEEL_PERIMETER_INDEX_MASK 15U
+#define WHEEL_INNER_WORD_OFFSET 32U
+#define WHEEL_DEPTH_WORD_OFFSET 64U
+#define WHEEL_POINT_WORD_COUNT 96U
+#define WHEEL_SIDE_HALF_POINT_COUNT 9U
+#define WHEEL_SIDE_LAST_POINT_INDEX 17U
+#define WHEEL_SIDE_VERTEX_COUNT 18U
+#define WHEEL_SIDE_WORD_COUNT 36U
+#define WHEEL_QUAD_POINT_COUNT 4U
+#define WHEEL_QUAD_WORD_COUNT 8U
 
 static void preRender_default_impl(legacy_u16 arg_color,
 	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines,
@@ -87,12 +110,15 @@ void preRender_default(legacy_u16 arg_color,
 static void preRender_default_alt_words(legacy_u16 color,
 	legacy_u16 vertex_count, const legacy_u16* words)
 {
-	struct POINT2D vertices[32];
+	struct POINT2D vertices[SPHERE_VERTEX_COUNT];
 	legacy_u16 index;
 
 	for (index = 0; index < vertex_count; index++) {
-		vertices[index].px = LEGACY_S16_FROM_BITS(words[index * 2U]);
-		vertices[index].py = LEGACY_S16_FROM_BITS(words[index * 2U + 1U]);
+		vertices[index].px = LEGACY_S16_FROM_BITS(
+			words[index * PRERENDER_POINT_WORD_COUNT]);
+		vertices[index].py = LEGACY_S16_FROM_BITS(
+			words[index * PRERENDER_POINT_WORD_COUNT +
+				PRERENDER_POINT_Y_OFFSET]);
 	}
 	preRender_default_alt(color, vertex_count, vertices);
 }
@@ -151,73 +177,92 @@ void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination)
 	three_quarters_y2 = LEGACY_U16_WRAP_ADD(half_y2, quarter_y2);
 
 	destination[8] = sphere_scale_sum(destination[16], destination[0],
-		0x2D41U);
+		SPHERE_DIAGONAL_NORMALIZATION);
 	destination[9] = sphere_scale_sum(destination[1], destination[17],
-		0x2D41U);
-	destination[4] = sphere_scale_sum(destination[0], half_x2, 0x393EU);
-	destination[5] = sphere_scale_sum(destination[1], half_y2, 0x393EU);
-	destination[12] = sphere_scale_sum(destination[16], half_x1, 0x393EU);
-	destination[13] = sphere_scale_sum(destination[17], half_y1, 0x393EU);
-	destination[2] = sphere_scale_sum(destination[0], quarter_x2, 0x3E17U);
-	destination[3] = sphere_scale_sum(destination[1], quarter_y2, 0x3E17U);
-	destination[14] = sphere_scale_sum(destination[16], quarter_x1, 0x3E17U);
-	destination[15] = sphere_scale_sum(destination[17], quarter_y1, 0x3E17U);
+		SPHERE_DIAGONAL_NORMALIZATION);
+	destination[4] = sphere_scale_sum(destination[0], half_x2,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[5] = sphere_scale_sum(destination[1], half_y2,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[12] = sphere_scale_sum(destination[16], half_x1,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[13] = sphere_scale_sum(destination[17], half_y1,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[2] = sphere_scale_sum(destination[0], quarter_x2,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[3] = sphere_scale_sum(destination[1], quarter_y2,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[14] = sphere_scale_sum(destination[16], quarter_x1,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[15] = sphere_scale_sum(destination[17], quarter_y1,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
 	destination[6] = sphere_scale_sum(destination[0], three_quarters_x2,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[7] = sphere_scale_sum(destination[1], three_quarters_y2,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[10] = sphere_scale_sum(destination[16], three_quarters_x1,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[11] = sphere_scale_sum(destination[17], three_quarters_y1,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 
 	negative_x1 = LEGACY_U16_WRAP_SUB(0, destination[0]);
 	negative_y1 = LEGACY_U16_WRAP_SUB(0, destination[1]);
 	destination[24] = sphere_scale_sum(destination[16], negative_x1,
-		0x2D41U);
+		SPHERE_DIAGONAL_NORMALIZATION);
 	destination[25] = sphere_scale_sum(destination[17], negative_y1,
-		0x2D41U);
-	destination[28] = sphere_scale_sum(half_x2, negative_x1, 0x393EU);
-	destination[29] = sphere_scale_sum(half_y2, negative_y1, 0x393EU);
+		SPHERE_DIAGONAL_NORMALIZATION);
+	destination[28] = sphere_scale_sum(half_x2, negative_x1,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[29] = sphere_scale_sum(half_y2, negative_y1,
+		SPHERE_HALF_STEP_NORMALIZATION);
 	destination[20] = sphere_scale_difference(destination[16], half_x1,
-		0x393EU);
+		SPHERE_HALF_STEP_NORMALIZATION);
 	destination[21] = sphere_scale_difference(destination[17], half_y1,
-		0x393EU);
-	destination[30] = sphere_scale_sum(quarter_x2, negative_x1, 0x3E17U);
-	destination[31] = sphere_scale_sum(quarter_y2, negative_y1, 0x3E17U);
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[30] = sphere_scale_sum(quarter_x2, negative_x1,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[31] = sphere_scale_sum(quarter_y2, negative_y1,
+		SPHERE_QUARTER_STEP_NORMALIZATION);
 	destination[18] = sphere_scale_difference(destination[16], quarter_x1,
-		0x3E17U);
+		SPHERE_QUARTER_STEP_NORMALIZATION);
 	destination[19] = sphere_scale_difference(destination[17], quarter_y1,
-		0x3E17U);
+		SPHERE_QUARTER_STEP_NORMALIZATION);
 	destination[26] = sphere_scale_sum(three_quarters_x2, negative_x1,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[27] = sphere_scale_sum(three_quarters_y2, negative_y1,
-		0x3333U);
+		SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[22] = sphere_scale_difference(destination[16],
-		three_quarters_x1, 0x3333U);
+		three_quarters_x1, SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[23] = sphere_scale_difference(destination[17],
-		three_quarters_y1, 0x3333U);
+		three_quarters_y1, SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 
 	center_x = (legacy_u16)source[0];
 	center_y = (legacy_u16)source[1];
-	for (index = 0; index < 16U; index++) {
-		destination[32U + index * 2U] = LEGACY_U16_WRAP_SUB(
-			center_x, destination[index * 2U]);
-		destination[33U + index * 2U] = LEGACY_U16_WRAP_SUB(
-			center_y, destination[index * 2U + 1U]);
-		destination[index * 2U] = LEGACY_U16_WRAP_ADD(
-			destination[index * 2U], center_x);
-		destination[index * 2U + 1U] = LEGACY_U16_WRAP_ADD(
-			destination[index * 2U + 1U], center_y);
+	for (index = 0; index < SPHERE_PERIMETER_POINT_COUNT; index++) {
+		destination[SPHERE_MIRROR_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT] = LEGACY_U16_WRAP_SUB(
+			center_x, destination[index * PRERENDER_POINT_WORD_COUNT]);
+		destination[SPHERE_MIRROR_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET] =
+			LEGACY_U16_WRAP_SUB(center_y,
+				destination[index * PRERENDER_POINT_WORD_COUNT +
+					PRERENDER_POINT_Y_OFFSET]);
+		destination[index * PRERENDER_POINT_WORD_COUNT] =
+			LEGACY_U16_WRAP_ADD(
+				destination[index * PRERENDER_POINT_WORD_COUNT], center_x);
+		destination[index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET] = LEGACY_U16_WRAP_ADD(
+				destination[index * PRERENDER_POINT_WORD_COUNT +
+					PRERENDER_POINT_Y_OFFSET], center_y);
 	}
 }
 
 void preRender_sphere_helper(legacy_u16* source, legacy_u16 color)
 {
-	legacy_u16 vertices[64];
+	legacy_u16 vertices[SPHERE_VERTEX_WORD_COUNT];
 
 	preRender_sphere_helper2(source, vertices);
-	preRender_default_alt_words(color, 0x20U, vertices);
+	preRender_default_alt_words(color, SPHERE_VERTEX_COUNT, vertices);
 }
 
 void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination)
@@ -235,29 +280,33 @@ void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination)
 	destination[8] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
 	destination[9] = LEGACY_U16_WRAP_SUB(source[5], source[1]);
 	destination[4] = sphere_scale_sum(destination[8], destination[0],
-		0x2D41U);
+		SPHERE_DIAGONAL_NORMALIZATION);
 	destination[5] = sphere_scale_sum(destination[1], destination[9],
-		0x2D41U);
+		SPHERE_DIAGONAL_NORMALIZATION);
 	half_x2 = sar1_word((legacy_u16)destination[8]);
 	half_y2 = sar1_word((legacy_u16)destination[9]);
-	destination[2] = sphere_scale_sum(destination[0], half_x2, 0x393EU);
-	destination[3] = sphere_scale_sum(destination[1], half_y2, 0x393EU);
+	destination[2] = sphere_scale_sum(destination[0], half_x2,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[3] = sphere_scale_sum(destination[1], half_y2,
+		SPHERE_HALF_STEP_NORMALIZATION);
 	half_x1 = sar1_word((legacy_u16)destination[0]);
 	half_y1 = sar1_word((legacy_u16)destination[1]);
-	destination[6] = sphere_scale_sum(destination[8], half_x1, 0x393EU);
-	destination[7] = sphere_scale_sum(destination[9], half_y1, 0x393EU);
+	destination[6] = sphere_scale_sum(destination[8], half_x1,
+		SPHERE_HALF_STEP_NORMALIZATION);
+	destination[7] = sphere_scale_sum(destination[9], half_y1,
+		SPHERE_HALF_STEP_NORMALIZATION);
 	destination[12] = sphere_scale_difference(destination[8],
-		destination[0], 0x2D41U);
+		destination[0], SPHERE_DIAGONAL_NORMALIZATION);
 	destination[13] = sphere_scale_difference(destination[9],
-		destination[1], 0x2D41U);
+		destination[1], SPHERE_DIAGONAL_NORMALIZATION);
 	destination[14] = sphere_scale_difference(half_x2,
-		destination[0], 0x393EU);
+		destination[0], SPHERE_HALF_STEP_NORMALIZATION);
 	destination[15] = sphere_scale_difference(half_y2,
-		destination[1], 0x393EU);
+		destination[1], SPHERE_HALF_STEP_NORMALIZATION);
 	destination[10] = sphere_scale_difference(destination[8], half_x1,
-		0x393EU);
+		SPHERE_HALF_STEP_NORMALIZATION);
 	destination[11] = sphere_scale_difference(destination[9], half_y1,
-		0x393EU);
+		SPHERE_HALF_STEP_NORMALIZATION);
 
 	center_x = (legacy_u16)source[0];
 	center_y = (legacy_u16)source[1];
@@ -303,7 +352,8 @@ void preRender_wheel_helper2(legacy_u16* source, legacy_u16* destination,
 	inner_source[5] = wheel_interpolate(center_y,
 		(legacy_u16)source[5], scale_bits);
 	preRender_wheel_helper3(source, destination);
-	preRender_wheel_helper3(inner_source, destination + 32U);
+	preRender_wheel_helper3(inner_source,
+		destination + WHEEL_INNER_WORD_OFFSET);
 }
 
 void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
@@ -316,81 +366,112 @@ void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
 	preRender_wheel_helper2(source, destination, scale);
 	offset_x = LEGACY_U16_WRAP_SUB(source[6], source[0]);
 	offset_y = LEGACY_U16_WRAP_SUB(source[7], source[1]);
-	for (index = 0; index < 16U; index++) {
-		destination[64U + index * 2U] = LEGACY_U16_WRAP_ADD(
-			destination[index * 2U], offset_x);
-		destination[65U + index * 2U] = LEGACY_U16_WRAP_ADD(
-			destination[index * 2U + 1U], offset_y);
+	for (index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+		destination[WHEEL_DEPTH_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT] = LEGACY_U16_WRAP_ADD(
+			destination[index * PRERENDER_POINT_WORD_COUNT], offset_x);
+		destination[WHEEL_DEPTH_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET] =
+			LEGACY_U16_WRAP_ADD(
+				destination[index * PRERENDER_POINT_WORD_COUNT +
+					PRERENDER_POINT_Y_OFFSET], offset_y);
 	}
 }
 
 static void preRender_wheel_side(const legacy_u16* wheel_points,
 	legacy_u16 minimum_index, legacy_u16 reverse, legacy_u16 color)
 {
-	legacy_u16 side[36];
+	legacy_u16 side[WHEEL_SIDE_WORD_COUNT];
 	legacy_u16 step;
 	legacy_u16 point_index;
 	legacy_u16 destination_index;
 
-	for (step = 0; step < 9U; step++) {
+	for (step = 0; step < WHEEL_SIDE_HALF_POINT_COUNT; step++) {
 		if (reverse == 0U)
-			point_index = (legacy_u16)((minimum_index + step) & 0x0FU);
+			point_index = (legacy_u16)((minimum_index + step) &
+				WHEEL_PERIMETER_INDEX_MASK);
 		else
-			point_index = (legacy_u16)((minimum_index + 16U - step) & 0x0FU);
-		destination_index = (legacy_u16)(step * 2U);
-		side[destination_index] = wheel_points[point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[point_index * 2U + 1U];
-		destination_index = (legacy_u16)((17U - step) * 2U);
-		side[destination_index] = wheel_points[32U + point_index * 2U];
-		side[destination_index + 1U] =
-			wheel_points[33U + point_index * 2U];
+			point_index = (legacy_u16)((minimum_index +
+				WHEEL_PERIMETER_POINT_COUNT - step) &
+				WHEEL_PERIMETER_INDEX_MASK);
+		destination_index = (legacy_u16)(
+			step * PRERENDER_POINT_WORD_COUNT);
+		side[destination_index] = wheel_points[
+			point_index * PRERENDER_POINT_WORD_COUNT];
+		side[destination_index + PRERENDER_POINT_Y_OFFSET] =
+			wheel_points[point_index * PRERENDER_POINT_WORD_COUNT +
+				PRERENDER_POINT_Y_OFFSET];
+		destination_index = (legacy_u16)((WHEEL_SIDE_LAST_POINT_INDEX -
+			step) * PRERENDER_POINT_WORD_COUNT);
+		side[destination_index] = wheel_points[WHEEL_INNER_WORD_OFFSET +
+			point_index * PRERENDER_POINT_WORD_COUNT];
+		side[destination_index + PRERENDER_POINT_Y_OFFSET] =
+			wheel_points[WHEEL_INNER_WORD_OFFSET +
+				point_index * PRERENDER_POINT_WORD_COUNT +
+				PRERENDER_POINT_Y_OFFSET];
 	}
-	preRender_default_alt_words(color, 18U, side);
+	preRender_default_alt_words(color, WHEEL_SIDE_VERTEX_COUNT, side);
 }
 
 void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color)
 {
-	legacy_u16 source_words[8];
-	legacy_u16 wheel_points[96];
-	legacy_u16 quad[8];
+	legacy_u16 source_words[WHEEL_SOURCE_WORD_COUNT];
+	legacy_u16 wheel_points[WHEEL_POINT_WORD_COUNT];
+	legacy_u16 quad[WHEEL_QUAD_WORD_COUNT];
 	legacy_u16 index;
 	legacy_u16 next_index;
 	legacy_u16 minimum_index;
 	legacy_u16 minimum_y;
 
-	for (index = 0; index < 4U; index++) {
-		source_words[index * 2U] = (legacy_u16)source[index].px;
-		source_words[index * 2U + 1U] = (legacy_u16)source[index].py;
+	for (index = 0; index < WHEEL_SOURCE_POINT_COUNT; index++) {
+		source_words[index * PRERENDER_POINT_WORD_COUNT] =
+			(legacy_u16)source[index].px;
+		source_words[index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET] = (legacy_u16)source[index].py;
 	}
 	preRender_wheel_helper(source_words, wheel_points, scale);
-	for (index = 0; index < 16U; index++) {
-		next_index = (legacy_u16)((index + 1U) & 0x0FU);
-		quad[0] = wheel_points[index * 2U];
-		quad[1] = wheel_points[index * 2U + 1U];
-		quad[2] = wheel_points[next_index * 2U];
-		quad[3] = wheel_points[next_index * 2U + 1U];
-		quad[4] = wheel_points[64U + next_index * 2U];
-		quad[5] = wheel_points[65U + next_index * 2U];
-		quad[6] = wheel_points[64U + index * 2U];
-		quad[7] = wheel_points[65U + index * 2U];
-		preRender_default_alt_words(outer_color, 4U, quad);
+	for (index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+		next_index = (legacy_u16)((index + 1U) &
+			WHEEL_PERIMETER_INDEX_MASK);
+		quad[0] = wheel_points[index * PRERENDER_POINT_WORD_COUNT];
+		quad[1] = wheel_points[index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET];
+		quad[2] = wheel_points[next_index * PRERENDER_POINT_WORD_COUNT];
+		quad[3] = wheel_points[next_index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET];
+		quad[4] = wheel_points[WHEEL_DEPTH_WORD_OFFSET +
+			next_index * PRERENDER_POINT_WORD_COUNT];
+		quad[5] = wheel_points[WHEEL_DEPTH_WORD_OFFSET +
+			next_index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET];
+		quad[6] = wheel_points[WHEEL_DEPTH_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT];
+		quad[7] = wheel_points[WHEEL_DEPTH_WORD_OFFSET +
+			index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET];
+		preRender_default_alt_words(outer_color,
+			WHEEL_QUAD_POINT_COUNT, quad);
 	}
 
 	minimum_index = 0;
 	minimum_y = (legacy_u16)wheel_points[1];
-	for (index = 1; index < 16U; index++) {
-		if (LEGACY_S16_FROM_BITS(wheel_points[index * 2U + 1U]) <
+	for (index = 1; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+		if (LEGACY_S16_FROM_BITS(wheel_points[
+			index * PRERENDER_POINT_WORD_COUNT +
+			PRERENDER_POINT_Y_OFFSET]) <
 			LEGACY_S16_FROM_BITS(minimum_y)) {
-			minimum_y = (legacy_u16)wheel_points[index * 2U + 1U];
+			minimum_y = (legacy_u16)wheel_points[
+				index * PRERENDER_POINT_WORD_COUNT +
+				PRERENDER_POINT_Y_OFFSET];
 			minimum_index = index;
 		}
 	}
 
 	preRender_wheel_side(wheel_points, minimum_index, 0U, side_color);
 	preRender_wheel_side(wheel_points, minimum_index, 1U, side_color);
-	preRender_default_alt_words(inner_color, 16U, &wheel_points[32]);
+	preRender_default_alt_words(inner_color, WHEEL_PERIMETER_POINT_COUNT,
+		&wheel_points[WHEEL_INNER_WORD_OFFSET]);
 }
 
 void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color)
