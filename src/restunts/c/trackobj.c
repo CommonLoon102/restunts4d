@@ -20,6 +20,18 @@
 #define HILL_TERRAIN_FIRST 7U
 #define HILL_TERRAIN_END 11U
 #define TRACK_PHYSICAL_MODEL_MAXIMUM 74
+#define ROAD_HALF_WIDTH 120
+#define START_FINISH_FAR_Z -380
+#define START_FINISH_NEAR_Z -300
+#define START_FINISH_FAR_PLANE_INDEX 131
+#define START_FINISH_NEAR_PLANE_INDEX 132
+#define LARGE_CORNER_INNER_RADIUS 1416
+#define LARGE_CORNER_OUTER_RADIUS 1656
+#define SHARP_CORNER_CENTER_OFFSET 512
+#define SHARP_CORNER_INNER_RADIUS 392
+#define SHARP_CORNER_OUTER_RADIUS 632
+#define SPLIT_STRAIGHT_LANE_INNER_X 392
+#define SPLIT_STRAIGHT_LANE_OUTER_X 632
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -298,19 +310,19 @@ void build_track_object(struct VECTOR* world_position,
 	switch (physical_model) {
 	case 0: /* Start/finish line. */
 		if (state.game_inputmode == 0 && position.x > 0) {
-			if (position.z < -0x17C)
-				planindex = 0x83;
-			else if (position.z < -0x12C)
-				planindex = 0x84;
+			if (position.z < START_FINISH_FAR_Z)
+				planindex = START_FINISH_FAR_PLANE_INDEX;
+			else if (position.z < START_FINISH_NEAR_Z)
+				planindex = START_FINISH_NEAR_PLANE_INDEX;
 		}
 		/* fall through */
 	case 1: /* Road. */
-		if (absolute_x < 0x78)
+		if (absolute_x < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
 	case 12: /* Crossroad. */
-		if (absolute_x < 0x78 || absolute_z < 0x78)
+		if (absolute_x < ROAD_HALF_WIDTH || absolute_z < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
@@ -326,54 +338,65 @@ void build_track_object(struct VECTOR* world_position,
 		/* fall through */
 	case 3: /* Large corner. */
 		if (track_radius_in_band(
-				LEGACY_S16_WRAP_ADD(position.x, 0x400),
-				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
+				LEGACY_S16_WRAP_ADD(position.x, TRACK_ARC_CENTER_OFFSET),
+				LEGACY_S16_WRAP_ADD(position.z, TRACK_ARC_CENTER_OFFSET),
+				LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
 	case 6: /* Sharp split A. */
-		if (absolute_x < 0x78) {
+		if (absolute_x < ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
 		/* fall through */
 	case 2: /* Sharp corner. */
 		if (track_radius_in_band(
-				LEGACY_S16_WRAP_ADD(position.x, 0x200),
-				LEGACY_S16_WRAP_ADD(position.z, 0x200), 0x188, 0x278))
+				LEGACY_S16_WRAP_ADD(position.x,
+					SHARP_CORNER_CENTER_OFFSET),
+				LEGACY_S16_WRAP_ADD(position.z,
+					SHARP_CORNER_CENTER_OFFSET),
+				SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
 	case 7: /* Sharp split B. */
-		if (absolute_x < 0x78) {
+		if (absolute_x < ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
 		if (track_radius_in_band(
-				LEGACY_S16_WRAP_SUB(0x200, position.x),
-				LEGACY_S16_WRAP_ADD(position.z, 0x200), 0x188, 0x278))
+				LEGACY_S16_WRAP_SUB(SHARP_CORNER_CENTER_OFFSET,
+					position.x),
+				LEGACY_S16_WRAP_ADD(position.z,
+					SHARP_CORNER_CENTER_OFFSET),
+				SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
 	case 8: /* Large split A. */
-		if (position.x >= 0x188 && position.x <= 0x278) {
+		if (position.x >= SPLIT_STRAIGHT_LANE_INNER_X &&
+			position.x <= SPLIT_STRAIGHT_LANE_OUTER_X) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
 		if (track_radius_in_band(
-				LEGACY_S16_WRAP_ADD(position.x, 0x400),
-				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
+				LEGACY_S16_WRAP_ADD(position.x, TRACK_ARC_CENTER_OFFSET),
+				LEGACY_S16_WRAP_ADD(position.z, TRACK_ARC_CENTER_OFFSET),
+				LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
 	case 9: /* Large split B. */
-		if (position.x >= -0x278 && position.x <= -0x188) {
+		if (position.x >= -SPLIT_STRAIGHT_LANE_OUTER_X &&
+			position.x <= -SPLIT_STRAIGHT_LANE_INNER_X) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
 		if (track_radius_in_band(
-				LEGACY_S16_WRAP_SUB(0x400, position.x),
-				LEGACY_S16_WRAP_ADD(position.z, 0x400), 0x588, 0x678))
+				LEGACY_S16_WRAP_SUB(TRACK_ARC_CENTER_OFFSET, position.x),
+				LEGACY_S16_WRAP_ADD(position.z, TRACK_ARC_CENTER_OFFSET),
+				LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS))
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
