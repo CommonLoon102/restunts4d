@@ -303,7 +303,8 @@ void run_game(void) {
 						handle_ingame_kb_shortcuts(var_12);
 					}
 
-				} while (var_12 == 0x4800 || var_12 == 0x4B00 || var_12 == 0x4D00 || var_12 == 0x5000);
+				} while (var_12 == KEY_UP || var_12 == KEY_LEFT ||
+					var_12 == KEY_RIGHT || var_12 == KEY_DOWN);
 
 				if (game_replay_mode == 1) {
 					dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);

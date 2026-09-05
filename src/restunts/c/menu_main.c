@@ -53,20 +53,20 @@ legacy_s8 run_menu(void)
 		menu_update_idle_counter(elapsed, 0x1770);
 		if (idle_expired != 0) {
 			selected = 0;
-			key = 0x0DU;
+			key = KEY_ENTER;
 		}
 
 		if (key == 0)
 			continue;
-		if (key == 0x0DU || key == 0x20U)
+		if (key == KEY_ENTER || key == KEY_SPACE)
 			break;
-		if (key == 0x1BU) {
+		if (key == KEY_ESCAPE) {
 			selected = 0xFFU;
 			break;
 		}
-		if (key == 0x4B00U)
+		if (key == KEY_LEFT)
 			selected = previous_selection[selected];
-		else if (key == 0x4D00U)
+		else if (key == KEY_RIGHT)
 			selected = next_selection[selected];
 	}
 

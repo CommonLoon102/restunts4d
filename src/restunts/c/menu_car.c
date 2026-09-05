@@ -339,20 +339,20 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		selected = (legacy_u8)mouse_hit;
 	if (idle_expired != 0) {
 		selected = 0;
-		input = 0x0DU;
+		input = KEY_ENTER;
 	}
 
 	if (input == 0)
 		continue;
-	if (input == 0x4800U) {
+	if (input == KEY_UP) {
 		selected = selected == 0 ? 4U : (legacy_u8)(selected - 1U);
 		continue;
 	}
-	if (input == 0x5000U) {
+	if (input == KEY_DOWN) {
 		selected = selected >= 4U ? 0U : (legacy_u8)(selected + 1U);
 		continue;
 	}
-	if (input != 0x0DU && input != 0x1BU && input != 0x20U)
+	if (input != KEY_ENTER && input != KEY_ESCAPE && input != KEY_SPACE)
 		continue;
 
 	if (selected == 0) {

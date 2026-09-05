@@ -790,7 +790,8 @@ legacy_u16 end_hiscore(void)
 			animation_y, animation_sprite, 0);
 		input = (legacy_u16)input_checking(
 			(legacy_s16)text_resource_count);
-		if (input == 0x0DU || input == 0x20U || input == 0x1BU)
+		if (input == KEY_ENTER || input == KEY_SPACE ||
+			input == KEY_ESCAPE)
 			break;
 	}
 
@@ -883,7 +884,7 @@ legacy_u16 end_hiscore(void)
 	input = (legacy_u16)input_checking(delta);
 	if (input == 0)
 		continue;
-	if (input == 0x4B00U) {
+	if (input == KEY_LEFT) {
 		if (opponent_active == 0 || score_status == -1) {
 			selected = selected <= 1 ? 3U :
 				(legacy_u8)(selected - 1U);
@@ -893,7 +894,7 @@ legacy_u16 end_hiscore(void)
 		}
 		continue;
 	}
-	if (input == 0x4D00U) {
+	if (input == KEY_RIGHT) {
 		if (selected < 3U)
 			selected++;
 		else
@@ -901,7 +902,7 @@ legacy_u16 end_hiscore(void)
 				score_status == -1) ? 1U : 0U;
 		continue;
 	}
-	if (input != 0x0DU && input != 0x20U)
+	if (input != KEY_ENTER && input != KEY_SPACE)
 		continue;
 
 	if (selected == 0) {

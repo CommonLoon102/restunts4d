@@ -199,7 +199,7 @@ void load_palandcursor(void)
 legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 {
 	switch (key) {
-	case 0x1B:
+	case KEY_ESCAPE:
 		if (game_replay_mode == 0)
 			update_crash_state(4, 0);
 		byte_449DA = 1;
@@ -240,16 +240,16 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 			followOpponentFlag ^= 1;
 		return 1;
 
-	case 0x3B00:
+	case KEY_F1:
 		cameramode = 0;
 		return 1;
-	case 0x3C00:
+	case KEY_F2:
 		cameramode = 1;
 		return 1;
-	case 0x3D00:
+	case KEY_F3:
 		cameramode = 2;
 		return 1;
-	case 0x3E00:
+	case KEY_F4:
 		cameramode = 3;
 		return 1;
 	}
@@ -344,17 +344,17 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 
 	if (changed_or_repeating) {
 		if (((legacy_u16)input_new_joystick_flags & 0x20U) != 0)
-			input_joystick_keycode = 0x0D;
+			input_joystick_keycode = KEY_ENTER;
 		else if (((legacy_u16)input_new_joystick_flags & 0x10U) != 0)
-			input_joystick_keycode = 0x20;
+			input_joystick_keycode = KEY_SPACE;
 		else if (((legacy_u16)input_new_joystick_flags & 1U) != 0)
-			input_joystick_keycode = 0x4800;
+			input_joystick_keycode = KEY_UP;
 		else if (((legacy_u16)input_new_joystick_flags & 2U) != 0)
-			input_joystick_keycode = 0x5000;
+			input_joystick_keycode = KEY_DOWN;
 		else if (((legacy_u16)input_new_joystick_flags & 8U) != 0)
-			input_joystick_keycode = 0x4B00;
+			input_joystick_keycode = KEY_LEFT;
 		else if (((legacy_u16)input_new_joystick_flags & 4U) != 0)
-			input_joystick_keycode = 0x4D00;
+			input_joystick_keycode = KEY_RIGHT;
 
 		if (input_joystick_keycode != 0) {
 			input_joystick_repeat_at = input_elapsed_frames;
@@ -397,9 +397,9 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 
 		if (changed_or_repeating) {
 			if (((legacy_u16)mouse_butstate & 1U) != 0)
-				input_mouse_keycode = 0x20;
+				input_mouse_keycode = KEY_SPACE;
 			else if (((legacy_u16)mouse_butstate & 2U) != 0)
-				input_mouse_keycode = 0x0D;
+				input_mouse_keycode = KEY_ENTER;
 			if (input_mouse_keycode != 0)
 				input_mouse_repeat_at = input_elapsed_frames;
 			input_mouse_idle_frames = 0;

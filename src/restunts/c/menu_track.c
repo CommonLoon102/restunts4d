@@ -113,24 +113,24 @@ void run_tracks_menu(legacy_s16 reload_track)
 				selected = (legacy_u8)hit;
 			if (idle_expired != 0) {
 				selected = 2;
-				key = 0x0DU;
+				key = KEY_ENTER;
 			}
 
 			if (key == 0)
 				continue;
-			if (key == 0x4B00U) {
+			if (key == KEY_LEFT) {
 				selected = selected == 0 ? 2U :
 					(legacy_u8)(selected - 1U);
 				continue;
 			}
-			if (key == 0x4D00U) {
+			if (key == KEY_RIGHT) {
 				selected = selected >= 2U ? 0U :
 					(legacy_u8)(selected + 1U);
 				continue;
 			}
-			if (key == 0x1BU)
+			if (key == KEY_ESCAPE)
 				selected = 0xFFU;
-			else if (key != 0x0DU && key != 0x20U)
+			else if (key != KEY_ENTER && key != KEY_SPACE)
 				continue;
 
 			if (selected == 0) {

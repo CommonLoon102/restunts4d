@@ -290,7 +290,7 @@ legacy_u16 show_dialog(
 			input = (legacy_u16)input_checking(
 				(legacy_s16)timer_get_delta_alt());
 		} while (input == 0);
-		if (input == 0x1BU)
+		if (input == KEY_ESCAPE)
 			result = 0;
 		check_input();
 		return dialog_finish(result, save_background);
@@ -357,27 +357,27 @@ legacy_u16 show_dialog(
 			input = dialog_ascii_lower(input);
 			if (input == first_hotkey) {
 				selected = 0;
-				input = 0x0DU;
+				input = KEY_ENTER;
 			} else if (input == second_hotkey) {
 				selected = 1;
-				input = 0x0DU;
+				input = KEY_ENTER;
 			}
 		}
 
 		if (input == 0)
 			continue;
-		if (input == 0x20U || input == 0x0DU) {
+		if (input == KEY_SPACE || input == KEY_ENTER) {
 			active = 0;
 			check_input();
 			continue;
 		}
-		if (input == 0x1BU) {
+		if (input == KEY_ESCAPE) {
 			selected = 0xFFU;
 			active = 0;
 			check_input();
 			continue;
 		}
-		if (input == 0x4800U || input == 0x4B00U) {
+		if (input == KEY_UP || input == KEY_LEFT) {
 			do {
 				selected = selected == 0 ?
 					(legacy_u8)(choice_count - 1U) :
@@ -386,7 +386,7 @@ legacy_u16 show_dialog(
 				disabled_choices[selected] != 0);
 			continue;
 		}
-		if (input == 0x4D00U || input == 0x5000U) {
+		if (input == KEY_RIGHT || input == KEY_DOWN) {
 			do {
 				selected = (legacy_u8)(selected + 1U);
 				if (selected >= choice_count)
@@ -463,7 +463,7 @@ legacy_s8 do_fileselect_dialog(
 		font_set_unk(dialog_fnt_colour, word_3EB90);
 		key = (legacy_u16)call_read_line(directory, 0x12,
 			positions[2], positions[3], 0x7530UL);
-		if (key == 0x1BU) {
+		if (key == KEY_ESCAPE) {
 			result = 0;
 			break;
 		}
@@ -559,13 +559,13 @@ legacy_s8 do_fileselect_dialog(
 			}
 		}
 
-		if (key == 0x0DU || key == 0x20U) {
+		if (key == KEY_ENTER || key == KEY_SPACE) {
 			result = 1;
-		} else if (key == 0x1BU) {
+		} else if (key == KEY_ESCAPE) {
 			result = -1;
-		} else if (key == 0x4800U) {
+		} else if (key == KEY_UP) {
 			selected--;
-		} else if (key == 0x5000U) {
+		} else if (key == KEY_DOWN) {
 			if (selected != (legacy_s8)(file_count - 1U))
 				selected++;
 		} else if (key < 256U &&
@@ -587,7 +587,7 @@ legacy_s8 do_fileselect_dialog(
 			font_set_unk(dialog_fnt_colour, word_3EB90);
 			key = (legacy_u16)call_read_line(directory, 0x12,
 				positions[2], positions[3], 0x7530UL);
-			if (key == 0x1BU) {
+			if (key == KEY_ESCAPE) {
 				result = 0;
 			} else {
 				search_again = 1;
@@ -667,15 +667,15 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 			if (secondary[character_index] == ' ')
 				secondary[character_index] = '_';
 		}
-		if (key == 0x1B)
+		if (key == KEY_ESCAPE)
 			break;
-		if (key == 0x0D) {
+		if (key == KEY_ENTER) {
 			result = 1;
 			break;
 		}
 		key = LEGACY_S16_FROM_BITS(call_read_line(primary, 0x12,
 			positions[2], positions[3], 0x7530UL));
-		if (key == 0x1B)
+		if (key == KEY_ESCAPE)
 			break;
 	}
 

@@ -484,8 +484,8 @@ void load_tracks_menu_shapes(void)
 		{ 220, 315, 36, 187 }
 	};
 	static const legacy_u16 page_keys[10] = {
-		0x3B00U, 0x3C00U, 0x3D00U, 0x3E00U, 0x3F00U,
-		0x4000U, 0x4100U, 0x4200U, 0x4300U, 0x4400U
+		KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+		KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10
 	};
 	static const legacy_u8 maximum_columns[2] = { 30, 6 };
 	static const legacy_u8 maximum_rows[2] = { 29, 9 };
@@ -897,8 +897,8 @@ void load_tracks_menu_shapes(void)
 						selection_row[0] = clicked_row;
 						key = 1;
 					}
-					if (key == 0x20U)
-						key = 0x0DU;
+					if (key == KEY_SPACE)
+						key = KEY_ENTER;
 				} else if (hit == 4U) {
 					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
 						LEGACY_S16_WRAP_SUB(mouse_xpos, 0xDC), 16);
@@ -929,8 +929,8 @@ void load_tracks_menu_shapes(void)
 						focus = 1;
 						key = 1;
 					}
-					if (key == 0x20U)
-						key = 0x0DU;
+					if (key == KEY_SPACE)
+						key = KEY_ENTER;
 				}
 			}
 			if (key == 1U)
@@ -1006,7 +1006,7 @@ void load_tracks_menu_shapes(void)
 				}
 			}
 			check_input();
-		} else if (key == 0x0DU) {
+		} else if (key == KEY_ENTER) {
 			if (focus != 0) {
 				if (selection_row[1] < 6U) {
 					selected_tile = track_editor_palette_tile(page,
@@ -1172,7 +1172,7 @@ void load_tracks_menu_shapes(void)
 						source_index, 1U)] = 0xFDU;
 				}
 			}
-		} else if (key == 0x20U || key == 0x5200U) {
+		} else if (key == KEY_SPACE || key == KEY_INSERT) {
 			focus ^= 1U;
 		} else if (key == (legacy_u16)'+') {
 			if (page < 10U)
@@ -1180,10 +1180,10 @@ void load_tracks_menu_shapes(void)
 		} else if (key == (legacy_u16)'-') {
 			if (page > 1U)
 				page--;
-		} else if (key == 0x5400U) {
+		} else if (key == KEY_SHIFT_F1) {
 			page = 0;
 			selected_tile = 0;
-		} else if (key == 0x4700U) {
+		} else if (key == KEY_HOME) {
 			if (focus != 0) {
 				selection_row[1] = 0;
 			} else {
@@ -1195,7 +1195,7 @@ void load_tracks_menu_shapes(void)
 				selection_column[0] = map_column_offset;
 				selection_row[0] = map_row_offset;
 			}
-		} else if (key == 0x4800U) {
+		} else if (key == KEY_UP) {
 			if (selection_row[focus] != 0) {
 				last_column = 0xFFU;
 				selection_row[focus]--;
@@ -1204,7 +1204,7 @@ void load_tracks_menu_shapes(void)
 						&selection_row[1], &selection_column[1]);
 				}
 			}
-		} else if (key == 0x5000U) {
+		} else if (key == KEY_DOWN) {
 			if (selection_row[focus] < maximum_rows[focus]) {
 				last_column = 0xFFU;
 				selection_row[focus]++;
@@ -1217,7 +1217,7 @@ void load_tracks_menu_shapes(void)
 						selection_row[1]++;
 				}
 			}
-		} else if (key == 0x4B00U) {
+		} else if (key == KEY_LEFT) {
 			if (focus != 0 && selection_row[1] == 6U) {
 				if (page > 1U)
 					page--;
@@ -1233,7 +1233,7 @@ void load_tracks_menu_shapes(void)
 					}
 				}
 			}
-		} else if (key == 0x4D00U) {
+		} else if (key == KEY_RIGHT) {
 			if (focus != 0 && selection_row[1] == 6U) {
 				if (page < 10U)
 					page++;

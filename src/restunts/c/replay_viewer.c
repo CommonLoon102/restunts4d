@@ -575,11 +575,11 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		if (hit != byte_3E9DB && input == 0)
 			input = 1;
 		byte_3E9DB = hit;
-		if ((input == 0x0DU || input == 0x20U) && byte_3E9DB >= 7U) {
+		if ((input == KEY_ENTER || input == KEY_SPACE) && byte_3E9DB >= 7U) {
 			if (byte_3E9DB == 7U) {
 				midpoint = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
 					word_3EA3A, word_3EA4C), 1U);
-				input = midpoint < mouse_ypos ? 0x5000U : 0x4800U;
+				input = midpoint < mouse_ypos ? KEY_DOWN : KEY_UP;
 			} else {
 				y_delta = LEGACY_S16_WRAP_SUB(
 					LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
@@ -591,27 +591,27 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 				angle = (legacy_u16)polarAngle(x_delta, y_delta);
 				switch (((angle + 0x80U) >> 8) & 3U) {
 				case 0:
-					input = 0x4800U;
+					input = KEY_UP;
 					break;
 				case 1:
-					input = 0x4D00U;
+					input = KEY_RIGHT;
 					break;
 				case 2:
-					input = 0x5000U;
+					input = KEY_DOWN;
 					break;
 				default:
-					input = 0x4B00U;
+					input = KEY_LEFT;
 					break;
 				}
 			}
 		}
 	} else {
 		hit = (legacy_u8)mouse_multi_hittest(1, &gameunk_button);
-		if (hit == 0 && (input == 0x0DU || input == 0x20U))
+		if (hit == 0 && (input == KEY_ENTER || input == KEY_SPACE))
 			input = 'c';
 	}
 
-	if (input != 0 && input != 0x1BU &&
+	if (input != 0 && input != KEY_ESCAPE &&
 		(legacy_u8)handle_ingame_kb_shortcuts(input) != 0)
 		return;
 	if (is_in_replay == 0 && input == 0) {
@@ -633,15 +633,15 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		custom_camera_active = 1;
 	if (custom_camera_active != 0) {
 		switch (input) {
-		case 0x4D00U:
+		case KEY_RIGHT:
 			custom_camera.azimuth_angle = LEGACY_S16_WRAP_ADD(
 				custom_camera.azimuth_angle, 0x10);
 			return;
-		case 0x4B00U:
+		case KEY_LEFT:
 			custom_camera.azimuth_angle = LEGACY_S16_WRAP_SUB(
 				custom_camera.azimuth_angle, 0x10);
 			return;
-		case 0x4800U:
+		case KEY_UP:
 			if (LEGACY_S16_WRAP_ADD(custom_camera.elevation_angle,
 				0x10) < 0x100) {
 				custom_camera.elevation_angle = LEGACY_S16_WRAP_ADD(
@@ -650,7 +650,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 			}
 			input = 0;
 			break;
-		case 0x5000U:
+		case KEY_DOWN:
 			if (LEGACY_S16_WRAP_SUB(custom_camera.elevation_angle,
 				0x10) > -0x100) {
 				custom_camera.elevation_angle = LEGACY_S16_WRAP_SUB(
@@ -672,8 +672,8 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		return;
 
 	switch (input) {
-	case 0x0DU:
-	case 0x20U:
+	case KEY_ENTER:
+	case KEY_SPACE:
 		if (byte_3E9DB > 6U)
 			break;
 		switch (byte_3E9DB) {
@@ -715,22 +715,22 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		}
 		break;
 
-	case 0x1BU:
+	case KEY_ESCAPE:
 		replay_pause_menu();
 		return;
 
-	case 0x4B00U:
+	case KEY_LEFT:
 		next_selection = byte_3E9DC[byte_3E9DB];
 		if (next_selection <=
 			game_camera_buttons_count[(legacy_u8)cameramode])
 			byte_3E9DB = next_selection;
 		break;
 
-	case 0x4D00U:
+	case KEY_RIGHT:
 		byte_3E9DB = byte_3E9E6[byte_3E9DB];
 		break;
 
-	case 0x4800U:
+	case KEY_UP:
 		if (byte_3E9DB == 7U) {
 			if (replay_try_zoom('+') != 0)
 				return;
@@ -739,7 +739,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		byte_3E9DB = byte_3E9F0[byte_3E9DB];
 		break;
 
-	case 0x5000U:
+	case KEY_DOWN:
 		if (byte_3E9DB == 7U) {
 			if (replay_try_zoom('-') != 0)
 				return;

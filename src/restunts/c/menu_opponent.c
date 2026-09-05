@@ -142,7 +142,7 @@ void run_opponent_menu(void)
 
 		if (key == 0)
 			continue;
-		if (key == 0x4B00U) {
+		if (key == KEY_LEFT) {
 			selected = selected == 0 ? 4U :
 				(legacy_u8)(selected - 1U);
 			if ((legacy_u8)gameconfig.game_opponenttype == 0 &&
@@ -150,7 +150,7 @@ void run_opponent_menu(void)
 				selected--;
 			continue;
 		}
-		if (key == 0x4D00U) {
+		if (key == KEY_RIGHT) {
 			selected = selected < 4U ?
 				(legacy_u8)(selected + 1U) : 0U;
 			if ((legacy_u8)gameconfig.game_opponenttype == 0 &&
@@ -158,7 +158,7 @@ void run_opponent_menu(void)
 				selected++;
 			continue;
 		}
-		if (key != 0x0DU && key != 0x1BU && key != 0x20U)
+		if (key != KEY_ENTER && key != KEY_ESCAPE && key != KEY_SPACE)
 			continue;
 
 		if (selected == 0) {
