@@ -187,6 +187,47 @@
 #define SLALOM_POSITIVE_Z_NEAR_WALL_INDEX 142
 #define SLALOM_POSITIVE_Z_INNER_WALL_INDEX 143
 #define SLALOM_POSITIVE_Z_OUTER_WALL_INDEX 144
+#define BARN_HALF_WIDTH 150
+#define BARN_HEIGHT 425
+#define BARN_REAR_WALL_INDEX 161
+#define BARN_FORWARD_WALL_INDEX 162
+#define BARN_LEFT_WALL_INDEX 164
+#define BARN_RIGHT_WALL_INDEX 163
+#define GAS_STATION_LEFT_X -200
+#define GAS_STATION_RIGHT_X 260
+#define GAS_STATION_HALF_LENGTH 80
+#define GAS_STATION_HEIGHT 230
+#define GAS_STATION_REAR_WALL_INDEX 165
+#define GAS_STATION_FORWARD_WALL_INDEX 168
+#define GAS_STATION_LEFT_WALL_INDEX 166
+#define GAS_STATION_RIGHT_WALL_INDEX 167
+#define JOES_HALF_WIDTH 180
+#define JOES_HALF_LENGTH 100
+#define JOES_HEIGHT 248
+#define JOES_REAR_WALL_INDEX 169
+#define JOES_FORWARD_WALL_INDEX 172
+#define JOES_LEFT_WALL_INDEX 171
+#define JOES_RIGHT_WALL_INDEX 170
+#define OFFICE_HALF_WIDTH 200
+#define OFFICE_HEIGHT 550
+#define OFFICE_REAR_WALL_INDEX 173
+#define OFFICE_FORWARD_WALL_INDEX 174
+#define OFFICE_LEFT_WALL_INDEX 175
+#define OFFICE_RIGHT_WALL_INDEX 176
+#define WINDMILL_HALF_WIDTH 114
+#define WINDMILL_HEIGHT 495
+#define WINDMILL_REAR_WALL_INDEX 180
+#define WINDMILL_FORWARD_WALL_INDEX 178
+#define WINDMILL_LEFT_WALL_INDEX 177
+#define WINDMILL_RIGHT_WALL_INDEX 179
+#define SHIP_LEFT_X -170
+#define SHIP_RIGHT_X 260
+#define SHIP_HALF_LENGTH 110
+#define SHIP_HEIGHT 230
+#define SHIP_REAR_WALL_INDEX 181
+#define SHIP_FORWARD_WALL_INDEX 184
+#define SHIP_LEFT_WALL_INDEX 183
+#define SHIP_RIGHT_WALL_INDEX 182
 
 extern legacy_s16 planindex;
 extern legacy_s16 wallindex;
@@ -1147,47 +1188,61 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	case 65: /* Barn. */
-		if (absolute_x <= 0x96 && absolute_z <= 0x96)
-			track_object_building_wall(&next_position, 0x1A9,
-				-0x96, 0x96, -0x96, 0x96,
-				0xA1, 0xA2, 0xA4, 0xA3);
+		if (absolute_x <= BARN_HALF_WIDTH && absolute_z <= BARN_HALF_WIDTH)
+			track_object_building_wall(&next_position, BARN_HEIGHT,
+				-BARN_HALF_WIDTH, BARN_HALF_WIDTH,
+				-BARN_HALF_WIDTH, BARN_HALF_WIDTH,
+				BARN_REAR_WALL_INDEX, BARN_FORWARD_WALL_INDEX,
+				BARN_LEFT_WALL_INDEX, BARN_RIGHT_WALL_INDEX);
 		break;
 
 	case 66: /* Gas station. */
-		if (position.x >= -0xC8 && position.x <= 0x104 &&
-			absolute_z <= 0x50)
-			track_object_building_wall(&next_position, 0xE6,
-				-0xC8, 0x104, -0x50, 0x50,
-				0xA5, 0xA8, 0xA6, 0xA7);
+		if (position.x >= GAS_STATION_LEFT_X &&
+			position.x <= GAS_STATION_RIGHT_X &&
+			absolute_z <= GAS_STATION_HALF_LENGTH)
+			track_object_building_wall(&next_position, GAS_STATION_HEIGHT,
+				GAS_STATION_LEFT_X, GAS_STATION_RIGHT_X,
+				-GAS_STATION_HALF_LENGTH, GAS_STATION_HALF_LENGTH,
+				GAS_STATION_REAR_WALL_INDEX, GAS_STATION_FORWARD_WALL_INDEX,
+				GAS_STATION_LEFT_WALL_INDEX, GAS_STATION_RIGHT_WALL_INDEX);
 		break;
 
 	case 67: /* Joe's. */
-		if (absolute_x <= 0xB4 && absolute_z <= 0x64)
-			track_object_building_wall(&next_position, 0xF8,
-				-0xB4, 0xB4, -0x64, 0x64,
-				0xA9, 0xAC, 0xAB, 0xAA);
+		if (absolute_x <= JOES_HALF_WIDTH && absolute_z <= JOES_HALF_LENGTH)
+			track_object_building_wall(&next_position, JOES_HEIGHT,
+				-JOES_HALF_WIDTH, JOES_HALF_WIDTH,
+				-JOES_HALF_LENGTH, JOES_HALF_LENGTH,
+				JOES_REAR_WALL_INDEX, JOES_FORWARD_WALL_INDEX,
+				JOES_LEFT_WALL_INDEX, JOES_RIGHT_WALL_INDEX);
 		break;
 
 	case 68: /* Office. */
-		if (absolute_x <= 0xC8 && absolute_z <= 0xC8)
-			track_object_building_wall(&next_position, 0x226,
-				-0xC8, 0xC8, -0xC8, 0xC8,
-				0xAD, 0xAE, 0xAF, 0xB0);
+		if (absolute_x <= OFFICE_HALF_WIDTH && absolute_z <= OFFICE_HALF_WIDTH)
+			track_object_building_wall(&next_position, OFFICE_HEIGHT,
+				-OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH,
+				-OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH,
+				OFFICE_REAR_WALL_INDEX, OFFICE_FORWARD_WALL_INDEX,
+				OFFICE_LEFT_WALL_INDEX, OFFICE_RIGHT_WALL_INDEX);
 		break;
 
 	case 69: /* Windmill. */
-		if (absolute_x <= 0x72 && absolute_z <= 0x72)
-			track_object_building_wall(&next_position, 0x1EF,
-				-0x72, 0x72, -0x72, 0x72,
-				0xB4, 0xB2, 0xB1, 0xB3);
+		if (absolute_x <= WINDMILL_HALF_WIDTH &&
+			absolute_z <= WINDMILL_HALF_WIDTH)
+			track_object_building_wall(&next_position, WINDMILL_HEIGHT,
+				-WINDMILL_HALF_WIDTH, WINDMILL_HALF_WIDTH,
+				-WINDMILL_HALF_WIDTH, WINDMILL_HALF_WIDTH,
+				WINDMILL_REAR_WALL_INDEX, WINDMILL_FORWARD_WALL_INDEX,
+				WINDMILL_LEFT_WALL_INDEX, WINDMILL_RIGHT_WALL_INDEX);
 		break;
 
 	case 70: /* Ship. */
-		if (position.x >= -0xAA && position.x <= 0x104 &&
-			absolute_z <= 0x6E)
-			track_object_building_wall(&next_position, 0xE6,
-				-0xAA, 0x104, -0x6E, 0x6E,
-				0xB5, 0xB8, 0xB7, 0xB6);
+		if (position.x >= SHIP_LEFT_X && position.x <= SHIP_RIGHT_X &&
+			absolute_z <= SHIP_HALF_LENGTH)
+			track_object_building_wall(&next_position, SHIP_HEIGHT,
+				SHIP_LEFT_X, SHIP_RIGHT_X,
+				-SHIP_HALF_LENGTH, SHIP_HALF_LENGTH,
+				SHIP_REAR_WALL_INDEX, SHIP_FORWARD_WALL_INDEX,
+				SHIP_LEFT_WALL_INDEX, SHIP_RIGHT_WALL_INDEX);
 		break;
 	}
 	} while (0);
