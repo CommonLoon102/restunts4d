@@ -61,7 +61,7 @@ void setup_car_shapes(legacy_s16 operation)
 	legacy_u8 digit_started;
 	legacy_u16 index;
 
-	if (operation == 0) {
+	if (operation == DASHBOARD_OPERATION_LOAD) {
 		for (index = 0; index < 4U; index++) {
 			aStdaxxxx[index + 4U] = gameconfig.game_playercarid[index];
 			aStdbxxxx[index + 4U] = gameconfig.game_playercarid[index];
@@ -129,7 +129,7 @@ void setup_car_shapes(legacy_s16 operation)
 		return;
 	}
 
-	if (operation == 1) {
+	if (operation == DASHBOARD_OPERATION_REDRAW_STATIC) {
 		mouse_draw_opaque_check();
 		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aRoof);
 		if (shape != 0)
@@ -151,7 +151,7 @@ void setup_car_shapes(legacy_s16 operation)
 		return;
 	}
 
-	if (operation == 3) {
+	if (operation == DASHBOARD_OPERATION_UNLOAD) {
 		sprite_free_wnd(whlsprite3);
 		sprite_free_wnd(whlsprite2);
 		sprite_free_wnd(whlsprite1);
@@ -159,7 +159,7 @@ void setup_car_shapes(legacy_s16 operation)
 		mmgr_free(stdaresptr);
 		return;
 	}
-	if (operation != 2)
+	if (operation != DASHBOARD_OPERATION_UPDATE)
 		return;
 
 	player_index = (legacy_u8)byte_4432A;

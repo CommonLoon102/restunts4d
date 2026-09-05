@@ -250,7 +250,7 @@ void run_game(void) {
 				if (byte_449E2 != 0) {
 					sprite_set_1_size(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
 						height_above_replaybar);
-					setup_car_shapes(1);
+					setup_car_shapes(DASHBOARD_OPERATION_REDRAW_STATIC);
 				}
 
 				if (replaybar_enabled != 0) {
@@ -285,7 +285,7 @@ void run_game(void) {
 			if (byte_449E2 != 0) {
 				sprite_set_1_size(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
 					height_above_replaybar);
-				setup_car_shapes(2);
+				setup_car_shapes(DASHBOARD_OPERATION_UPDATE);
 				sprite_set_1_size(0, RACE_SCREEN_WIDTH, 0,
 					RACE_SCREEN_HEIGHT);
 			}

@@ -171,7 +171,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	 * state still observes that memory layout, but avoid the much larger 2D
 	 * dashboard allocation that memory-heavy custom cars cannot afford. */
 	if (idle_expired == 0 && load_dashboard_shapes) {
-		setup_car_shapes(0);
+		setup_car_shapes(DASHBOARD_OPERATION_LOAD);
 	}
 
 	if (idle_expired == 0) {
@@ -229,7 +229,7 @@ void free_player_cars(void) {
 	unload_resource(gameresptr);
 	if (idle_expired == 0) {
 		mmgr_free(sdgameresptr);
-		setup_car_shapes(3);
+		setup_car_shapes(DASHBOARD_OPERATION_UNLOAD);
 	}
 
 	mmgr_free(fontledresptr);

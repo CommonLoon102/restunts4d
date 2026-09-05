@@ -3,6 +3,11 @@
 
 #include "legacy.h"
 
+#define DASHBOARD_OPERATION_LOAD 0
+#define DASHBOARD_OPERATION_REDRAW_STATIC 1
+#define DASHBOARD_OPERATION_UPDATE 2
+#define DASHBOARD_OPERATION_UNLOAD 3
+
 extern legacy_s16 meter_needle_color;
 extern legacy_s8 far* stdaresptr;
 extern legacy_s8 far* stdbresptr;
