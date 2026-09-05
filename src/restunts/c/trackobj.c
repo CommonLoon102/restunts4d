@@ -245,6 +245,45 @@
 #define TRACK_SURFACE_TYPE_MINIMUM 1
 #define PHYSICAL_MODEL_NONE -1
 #define PHYSICAL_MODEL_MINIMUM 0
+#define PHYSICAL_MODEL_START_FINISH 0
+#define PHYSICAL_MODEL_ROAD 1
+#define PHYSICAL_MODEL_SHARP_CORNER 2
+#define PHYSICAL_MODEL_LARGE_CORNER 3
+#define PHYSICAL_MODEL_CHICANE_RIGHT_LEFT 4
+#define PHYSICAL_MODEL_CHICANE_LEFT_RIGHT 5
+#define PHYSICAL_MODEL_SHARP_SPLIT_A 6
+#define PHYSICAL_MODEL_SHARP_SPLIT_B 7
+#define PHYSICAL_MODEL_LARGE_SPLIT_A 8
+#define PHYSICAL_MODEL_LARGE_SPLIT_B 9
+#define PHYSICAL_MODEL_HIGHWAY_ENTRANCE 10
+#define PHYSICAL_MODEL_HIGHWAY 11
+#define PHYSICAL_MODEL_CROSSROAD 12
+#define PHYSICAL_MODEL_RAMP 16
+#define PHYSICAL_MODEL_SOLID_RAMP 17
+#define PHYSICAL_MODEL_ELEVATED_ROAD 18
+#define PHYSICAL_MODEL_ELEVATED_SPAN 19
+#define PHYSICAL_MODEL_SOLID_ROAD 20
+#define PHYSICAL_MODEL_ELEVATED_CORNER 21
+#define PHYSICAL_MODEL_OVERPASS 22
+#define PHYSICAL_MODEL_BANKED_ENTRANCE_B 23
+#define PHYSICAL_MODEL_BANKED_ENTRANCE_A 24
+#define PHYSICAL_MODEL_BANKED_ROAD 25
+#define PHYSICAL_MODEL_BANKED_CORNER 26
+#define PHYSICAL_MODEL_LOOP 27
+#define PHYSICAL_MODEL_TUNNEL 28
+#define PHYSICAL_MODEL_PIPE_ENTRANCE 29
+#define PHYSICAL_MODEL_PIPE 30
+#define PHYSICAL_MODEL_HALF_PIPE 31
+#define PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A 32
+#define PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B 33
+#define PHYSICAL_MODEL_SLALOM 34
+#define PHYSICAL_MODEL_CORKSCREW_LEFT_RIGHT 35
+#define PHYSICAL_MODEL_BARN 65
+#define PHYSICAL_MODEL_GAS_STATION 66
+#define PHYSICAL_MODEL_JOES 67
+#define PHYSICAL_MODEL_OFFICE 68
+#define PHYSICAL_MODEL_WINDMILL 69
+#define PHYSICAL_MODEL_SHIP 70
 #define TRACK_COLLISION_ENABLED 1
 #define TERRAIN_ORIENTED_LAST_TILE 18U
 #define TERRAIN_ORIENTATION_MASK 3U
@@ -543,7 +582,7 @@ void build_track_object(struct VECTOR* world_position,
 		break;
 
 	switch (physical_model) {
-	case 0: /* Start/finish line. */
+	case PHYSICAL_MODEL_START_FINISH:
 		if (state.game_inputmode == 0 && position.x > 0) {
 			if (position.z < START_FINISH_FAR_Z)
 				planindex = START_FINISH_FAR_PLANE_INDEX;
@@ -551,27 +590,27 @@ void build_track_object(struct VECTOR* world_position,
 				planindex = START_FINISH_NEAR_PLANE_INDEX;
 		}
 		/* fall through */
-	case 1: /* Road. */
+	case PHYSICAL_MODEL_ROAD:
 		if (absolute_x < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 12: /* Crossroad. */
+	case PHYSICAL_MODEL_CROSSROAD:
 		if (absolute_x < ROAD_HALF_WIDTH || absolute_z < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 5: /* Left/right chicane. */
+	case PHYSICAL_MODEL_CHICANE_LEFT_RIGHT:
 		position.x = LEGACY_S16_WRAP_NEGATE(position.x);
 		/* fall through */
-	case 4: /* Right/left chicane. */
+	case PHYSICAL_MODEL_CHICANE_RIGHT_LEFT:
 		current_surf_type = (legacy_u8)surface_type;
 		if (position.x > 0) {
 			position.z = LEGACY_S16_WRAP_NEGATE(position.z);
 			position.x = LEGACY_S16_WRAP_NEGATE(position.x);
 		}
 		/* fall through */
-	case 3: /* Large corner. */
+	case PHYSICAL_MODEL_LARGE_CORNER:
 		if (track_radius_in_band(
 				LEGACY_S16_WRAP_ADD(position.x, TRACK_ARC_CENTER_OFFSET),
 				LEGACY_S16_WRAP_ADD(position.z, TRACK_ARC_CENTER_OFFSET),
@@ -579,13 +618,13 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 6: /* Sharp split A. */
+	case PHYSICAL_MODEL_SHARP_SPLIT_A:
 		if (absolute_x < ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
 		}
 		/* fall through */
-	case 2: /* Sharp corner. */
+	case PHYSICAL_MODEL_SHARP_CORNER:
 		if (track_radius_in_band(
 				LEGACY_S16_WRAP_ADD(position.x,
 					SHARP_CORNER_CENTER_OFFSET),
@@ -595,7 +634,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 7: /* Sharp split B. */
+	case PHYSICAL_MODEL_SHARP_SPLIT_B:
 		if (absolute_x < ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
 			break;
@@ -609,7 +648,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 8: /* Large split A. */
+	case PHYSICAL_MODEL_LARGE_SPLIT_A:
 		if (position.x >= SPLIT_STRAIGHT_LANE_INNER_X &&
 			position.x <= SPLIT_STRAIGHT_LANE_OUTER_X) {
 			current_surf_type = (legacy_u8)surface_type;
@@ -622,7 +661,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 9: /* Large split B. */
+	case PHYSICAL_MODEL_LARGE_SPLIT_B:
 		if (position.x >= -SPLIT_STRAIGHT_LANE_OUTER_X &&
 			position.x <= -SPLIT_STRAIGHT_LANE_INNER_X) {
 			current_surf_type = (legacy_u8)surface_type;
@@ -635,7 +674,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 10: /* Highway entrance. */
+	case PHYSICAL_MODEL_HIGHWAY_ENTRANCE:
 		value = absolute_word(position.x);
 		index = 0;
 		while (highEntrZBounds1[index] < position.z)
@@ -673,7 +712,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 11: /* Highway. */
+	case PHYSICAL_MODEL_HIGHWAY:
 		if (absolute_x <= HIGHWAY_OUTER_HALF_WIDTH) {
 			if (absolute_x > ROAD_HALF_WIDTH) {
 				current_surf_type = (legacy_u8)surface_type;
@@ -687,15 +726,16 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 16: /* Ramp. */
+	case PHYSICAL_MODEL_RAMP:
 		if (position.z > 0)
 			byte_4392C = 0;
 		else if (next_position.z >= 0)
 			wallindex = RAMP_ENTRY_WALL_INDEX;
 		/* fall through */
 
-	case 17: /* Solid ramp. */
-		if (physical_model == 17 && next_position.z >= ELEVATED_ROAD_END_Z)
+	case PHYSICAL_MODEL_SOLID_RAMP:
+		if (physical_model == PHYSICAL_MODEL_SOLID_RAMP &&
+			next_position.z >= ELEVATED_ROAD_END_Z)
 			wallindex = ELEVATED_FORWARD_WALL_INDEX;
 
 		if (absolute_word(next_position.x) < ROAD_HALF_WIDTH) {
@@ -718,11 +758,11 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 18: /* Elevated road. */
-	case 19: /* Elevated span. */
-	case 20: /* Solid road. */
-	case 22: /* Overpass. */
-		if (physical_model == 22) {
+	case PHYSICAL_MODEL_ELEVATED_ROAD:
+	case PHYSICAL_MODEL_ELEVATED_SPAN:
+	case PHYSICAL_MODEL_SOLID_ROAD:
+	case PHYSICAL_MODEL_OVERPASS:
+		if (physical_model == PHYSICAL_MODEL_OVERPASS) {
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
 				terrainHeight) <= ELEVATED_DECK_CLEARANCE) {
 				if (absolute_z <= ROAD_HALF_WIDTH)
@@ -730,7 +770,7 @@ void build_track_object(struct VECTOR* world_position,
 				break;
 			}
 			byte_4392C = 0;
-		} else if (physical_model != 20) {
+		} else if (physical_model != PHYSICAL_MODEL_SOLID_ROAD) {
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
 				terrainHeight) <= ELEVATED_DECK_CLEARANCE)
 				break;
@@ -759,7 +799,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 21: /* Elevated corner. */
+	case PHYSICAL_MODEL_ELEVATED_CORNER:
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
 			terrainHeight) <= ELEVATED_DECK_CLEARANCE)
 			break;
@@ -781,14 +821,14 @@ void build_track_object(struct VECTOR* world_position,
 				ELEVATED_CORNER_OUTER_WALL_BASE);
 		break;
 
-	case 24: /* Banked-road entrance A. */
+	case PHYSICAL_MODEL_BANKED_ENTRANCE_A:
 		value = BANKED_ENTRANCE_A_PLAN_BASE;
 		value2 = 0;
 		terrain_angle = BANKED_ENTRANCE_A_ANGLE;
 		/* fall through */
 
-	case 23: /* Banked-road entrance B. */
-		if (physical_model == 23) {
+	case PHYSICAL_MODEL_BANKED_ENTRANCE_B:
+		if (physical_model == PHYSICAL_MODEL_BANKED_ENTRANCE_B) {
 			value = BANKED_ENTRANCE_B_PLAN_BASE;
 			value2 = 1;
 			terrain_angle = BANKED_ENTRANCE_B_ANGLE;
@@ -835,7 +875,7 @@ void build_track_object(struct VECTOR* world_position,
 			planindex = LEGACY_S16_WRAP_ADD(planindex, 1);
 		break;
 
-	case 25: /* Banked road. */
+	case PHYSICAL_MODEL_BANKED_ROAD:
 		if (absolute_x <= ROAD_HALF_WIDTH) {
 			current_surf_type = (legacy_u8)surface_type;
 			planindex = BANKED_ROAD_PLANE_INDEX;
@@ -846,7 +886,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 26: /* Banked corner. */
+	case PHYSICAL_MODEL_BANKED_CORNER:
 		radius = track_arc_radius(&position);
 		if (radius <= -BANKED_CORNER_INNER_OFFSET ||
 			radius >= BANKED_CORNER_OUTER_OFFSET)
@@ -861,7 +901,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 27: /* Loop. */
+	case PHYSICAL_MODEL_LOOP:
 		if (position.z < 0) {
 			value = LOOP_REAR_PLAN_BASE;
 			effective_x = LEGACY_S16_WRAP_NEGATE(position.x);
@@ -952,7 +992,7 @@ void build_track_object(struct VECTOR* world_position,
 			current_surf_type = (legacy_u8)surface_type;
 		break;
 
-	case 28: /* Tunnel. */
+	case PHYSICAL_MODEL_TUNNEL:
 		if (LEGACY_S16_WRAP_SUB(world_position->y,
 			terrainHeight) >= TUNNEL_HEIGHT ||
 			LEGACY_S16_WRAP_SUB(next_world_position->y,
@@ -990,7 +1030,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 29: /* Pipe entrance. */
+	case PHYSICAL_MODEL_PIPE_ENTRANCE:
 		if (absolute_word(next_position.x) >= PIPE_ENTRANCE_WALL_INNER_X &&
 			absolute_x <= PIPE_HALF_WIDTH) {
 			wallHeight = PIPE_WALL_HEIGHT;
@@ -1033,12 +1073,12 @@ void build_track_object(struct VECTOR* world_position,
 			planindex = LEGACY_S16_WRAP_ADD(planindex, 1);
 		break;
 
-	case 31: /* Half-pipe. */
+	case PHYSICAL_MODEL_HALF_PIPE:
 		value = PIPE_HALF;
 		/* fall through */
 
-	case 30: /* Pipe. */
-		if (physical_model == 30)
+	case PHYSICAL_MODEL_PIPE:
+		if (physical_model == PHYSICAL_MODEL_PIPE)
 			value = PIPE_FULL;
 		if (absolute_word(next_position.x) >= PIPE_HALF_WIDTH &&
 			absolute_x <= PIPE_HALF_WIDTH) {
@@ -1088,7 +1128,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 35: /* Left/right corkscrew. */
+	case PHYSICAL_MODEL_CORKSCREW_LEFT_RIGHT:
 		if (absolute_x >= CORK_LR_HALF_WIDTH ||
 			LEGACY_S16_WRAP_SUB(world_position->y,
 				terrainHeight) >= CORK_LR_MAX_HEIGHT)
@@ -1133,15 +1173,15 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 32: /* Up/down corkscrew A. */
+	case PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A:
 		value = LEGACY_S16_WRAP_NEGATE(position.x);
 		value2 = CORK_UD_A_PLAN_BASE;
 		value3 = CORK_UD_A_OUTER_WALL_BASE;
 		terrain_angle = CORK_UD_A_INNER_WALL_BASE;
 		/* fall through */
 
-	case 33: /* Up/down corkscrew B. */
-		if (physical_model == 33) {
+	case PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B:
+		if (physical_model == PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B) {
 			value = position.x;
 			value2 = CORK_UD_B_PLAN_BASE;
 			value3 = CORK_UD_B_OUTER_WALL_BASE;
@@ -1194,7 +1234,7 @@ void build_track_object(struct VECTOR* world_position,
 			wallindex = LEGACY_S16_WRAP_ADD(terrain_angle, angle_step);
 		break;
 
-	case 34: /* Slalom. */
+	case PHYSICAL_MODEL_SLALOM:
 		if (absolute_x < ROAD_HALF_WIDTH)
 			current_surf_type = (legacy_u8)surface_type;
 		if (position.x >= SLALOM_POLE_INNER_X &&
@@ -1226,7 +1266,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 		break;
 
-	case 65: /* Barn. */
+	case PHYSICAL_MODEL_BARN:
 		if (absolute_x <= BARN_HALF_WIDTH && absolute_z <= BARN_HALF_WIDTH)
 			track_object_building_wall(&next_position, BARN_HEIGHT,
 				-BARN_HALF_WIDTH, BARN_HALF_WIDTH,
@@ -1235,7 +1275,7 @@ void build_track_object(struct VECTOR* world_position,
 				BARN_LEFT_WALL_INDEX, BARN_RIGHT_WALL_INDEX);
 		break;
 
-	case 66: /* Gas station. */
+	case PHYSICAL_MODEL_GAS_STATION:
 		if (position.x >= GAS_STATION_LEFT_X &&
 			position.x <= GAS_STATION_RIGHT_X &&
 			absolute_z <= GAS_STATION_HALF_LENGTH)
@@ -1246,7 +1286,7 @@ void build_track_object(struct VECTOR* world_position,
 				GAS_STATION_LEFT_WALL_INDEX, GAS_STATION_RIGHT_WALL_INDEX);
 		break;
 
-	case 67: /* Joe's. */
+	case PHYSICAL_MODEL_JOES:
 		if (absolute_x <= JOES_HALF_WIDTH && absolute_z <= JOES_HALF_LENGTH)
 			track_object_building_wall(&next_position, JOES_HEIGHT,
 				-JOES_HALF_WIDTH, JOES_HALF_WIDTH,
@@ -1255,7 +1295,7 @@ void build_track_object(struct VECTOR* world_position,
 				JOES_LEFT_WALL_INDEX, JOES_RIGHT_WALL_INDEX);
 		break;
 
-	case 68: /* Office. */
+	case PHYSICAL_MODEL_OFFICE:
 		if (absolute_x <= OFFICE_HALF_WIDTH && absolute_z <= OFFICE_HALF_WIDTH)
 			track_object_building_wall(&next_position, OFFICE_HEIGHT,
 				-OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH,
@@ -1264,7 +1304,7 @@ void build_track_object(struct VECTOR* world_position,
 				OFFICE_LEFT_WALL_INDEX, OFFICE_RIGHT_WALL_INDEX);
 		break;
 
-	case 69: /* Windmill. */
+	case PHYSICAL_MODEL_WINDMILL:
 		if (absolute_x <= WINDMILL_HALF_WIDTH &&
 			absolute_z <= WINDMILL_HALF_WIDTH)
 			track_object_building_wall(&next_position, WINDMILL_HEIGHT,
@@ -1274,7 +1314,7 @@ void build_track_object(struct VECTOR* world_position,
 				WINDMILL_LEFT_WALL_INDEX, WINDMILL_RIGHT_WALL_INDEX);
 		break;
 
-	case 70: /* Ship. */
+	case PHYSICAL_MODEL_SHIP:
 		if (position.x >= SHIP_LEFT_X && position.x <= SHIP_RIGHT_X &&
 			absolute_z <= SHIP_HALF_LENGTH)
 			track_object_building_wall(&next_position, SHIP_HEIGHT,
