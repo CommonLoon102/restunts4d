@@ -1,6 +1,39 @@
 #include "frame_internal.h"
 
 #define TRACK_OBJECT_COUNT 215U
+#define INTRO_SCREEN_WIDTH 320U
+#define INTRO_SCREEN_HEIGHT 200U
+#define INTRO_SCREEN_MAX_X 320
+#define INTRO_SCREEN_MAX_Y 200
+#define INTRO_SCREEN_COLOR 15U
+#define INTRO_STAR_COUNT 100U
+#define INTRO_POINT_BUFFER_COUNT 2
+#define INTRO_POINT_BUFFER_MASK 1U
+#define INTRO_TITLE_SHAPE_COUNT 3
+
+#define TRANSFORMED_SHAPE_BASE_FLAG 4U
+#define TRANSFORMED_SHAPE_RECT_FLAG 8U
+#define INTRO_TRANSFORMED_SHAPE_SCALE 1024
+#define INTRO_LOGO_WORLD_CENTER 1024
+#define INTRO_STAR_MIN_DEPTH 200
+
+#define INTRO_STAR_RANDOM_SCALE 128U
+#define INTRO_STAR_XZ_OFFSET 16384
+#define INTRO_STAR_Y_OFFSET 5000
+#define INTRO_PROJECTION_SCALE_X 40
+#define INTRO_PROJECTION_SCALE_Y 40
+
+#define INTRO_INITIAL_CAMERA_Y 300
+#define INTRO_LOGO_CAMERA_Y 90
+#define INTRO_CAMERA_CAR_HEIGHT 20
+#define INTRO_CAMERA_RISE_STEP 20
+#define INTRO_CAMERA_RETREAT_STEP 5
+#define INTRO_CAMERA_CENTER_STEP 10
+#define INTRO_CAMERA_CENTER_SNAP_DISTANCE 10
+
+#define INTRO_CAR_PHASE_SECONDS 6
+#define INTRO_LOGO_PHASE_SECONDS 11
+#define INTRO_TOTAL_SECONDS 23
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -19,14 +52,15 @@ static void intro_draw_transformed_shape(
 {
 	if (slow_video_mgmt_copy != 0) {
 		transformed->rectptr = shape_rect;
-		transformed->ts_flags = 0x0C;
+		transformed->ts_flags =
+			TRANSFORMED_SHAPE_BASE_FLAG | TRANSFORMED_SHAPE_RECT_FLAG;
 	} else {
-		transformed->ts_flags = 4;
+		transformed->ts_flags = TRANSFORMED_SHAPE_BASE_FLAG;
 	}
 	transformed->rotvec.x = 0;
 	transformed->rotvec.y = 0;
 	transformed->rotvec.z = rotation_z;
-	transformed->unk = 0x400;
+	transformed->unk = INTRO_TRANSFORMED_SHAPE_SCALE;
 	transformed->material = 0;
 	transformed_shape_op(transformed);
 }
@@ -52,9 +86,11 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	current_shape_rect = cliprect_unk;
 	select_cliprect_rotate(0, rotate_x, rotate_y, &intro_cliprect, 0);
 	transformed.shapeptr = primary_logo != 0 ? &logoshape : &logo2shape;
-	transformed.pos.x = LEGACY_S16_WRAP_SUB(0x400, camera_x);
+	transformed.pos.x = LEGACY_S16_WRAP_SUB(
+		INTRO_LOGO_WORLD_CENTER, camera_x);
 	transformed.pos.y = LEGACY_S16_WRAP_NEGATE(camera_y);
-	transformed.pos.z = LEGACY_S16_WRAP_SUB(0x400, camera_z);
+	transformed.pos.z = LEGACY_S16_WRAP_SUB(
+		INTRO_LOGO_WORLD_CENTER, camera_z);
 	intro_draw_transformed_shape(&transformed, &current_shape_rect, 0);
 
 	if (draw_car != 0) {
@@ -93,12 +129,12 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	sprite_set_1_size(intro_cliprect.left, intro_cliprect.right,
 		intro_cliprect.top, intro_cliprect.bottom);
 	new_point_count = 0;
-	for (i = 0; i < 100U; i++) {
+	for (i = 0; i < INTRO_STAR_COUNT; i++) {
 		translated.x = LEGACY_S16_WRAP_SUB(stars[i].x, camera_x);
 		translated.y = LEGACY_S16_WRAP_SUB(stars[i].y, camera_y);
 		translated.z = LEGACY_S16_WRAP_SUB(stars[i].z, camera_z);
 		mat_mul_vector(&translated, &mat_temp, &projected);
-		if (projected.z <= 0xC8)
+		if (projected.z <= INTRO_STAR_MIN_DEPTH)
 			continue;
 		vector_to_point(&projected, &point);
 		putpixel_single_maybe(point.px, point.py, intro_colorvalue);
@@ -145,11 +181,12 @@ static legacy_s16 intro_step_towards(legacy_s16 value, legacy_s16 target)
 legacy_s8 setup_intro(void)
 {
 	legacy_s8 far* title_resource;
-	legacy_s8 far* title_shapes[3];
+	legacy_s8 far* title_shapes[INTRO_TITLE_SHAPE_COUNT];
 	void far* opponent_resource;
-	struct VECTOR stars[100];
-	struct POINT2D point_buffers[2][100];
-	legacy_s16 point_counts[2];
+	struct VECTOR stars[INTRO_STAR_COUNT];
+	struct POINT2D point_buffers
+		[INTRO_POINT_BUFFER_COUNT][INTRO_STAR_COUNT];
+	legacy_s16 point_counts[INTRO_POINT_BUFFER_COUNT];
 	struct RECTANGLE shape_rect;
 	struct RECTANGLE combined_rect;
 	struct RECTANGLE redraw_rect;
@@ -186,21 +223,26 @@ legacy_s8 setup_intro(void)
 	shape3d_init_shape(title_shapes[1], &logo2shape);
 	shape3d_init_shape(title_shapes[2], &bravshape);
 	if (video_flag5_is0 == 0)
-		render_window_sprite = sprite_make_wnd(0x140U, 0xC8U, 0x0FU);
+		render_window_sprite = sprite_make_wnd(
+			INTRO_SCREEN_WIDTH, INTRO_SCREEN_HEIGHT, INTRO_SCREEN_COLOR);
 
-	for (i = 0; i < 100U; i++) {
+	for (i = 0; i < INTRO_STAR_COUNT; i++) {
 		stars[i].x = LEGACY_S16_WRAP_SUB(
-			LEGACY_U16_WRAP_MUL(get_kevinrandom(), 0x80U), 0x4000);
+			LEGACY_U16_WRAP_MUL(get_kevinrandom(),
+				INTRO_STAR_RANDOM_SCALE), INTRO_STAR_XZ_OFFSET);
 		stars[i].y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-			LEGACY_U16_WRAP_MUL(get_kevinrandom(), 0x80U), 0x1388));
+			LEGACY_U16_WRAP_MUL(get_kevinrandom(),
+				INTRO_STAR_RANDOM_SCALE), INTRO_STAR_Y_OFFSET));
 		stars[i].z = LEGACY_S16_WRAP_SUB(
-			LEGACY_U16_WRAP_MUL(get_kevinrandom(), 0x80U), 0x4000);
+			LEGACY_U16_WRAP_MUL(get_kevinrandom(),
+				INTRO_STAR_RANDOM_SCALE), INTRO_STAR_XZ_OFFSET);
 	}
 
-	set_projection(0x28, 0x28, 0x140, 0xC8);
-	camera_x = 0x400;
-	camera_y = 0x12C;
-	camera_z = 0x400;
+	set_projection(INTRO_PROJECTION_SCALE_X, INTRO_PROJECTION_SCALE_Y,
+		INTRO_SCREEN_MAX_X, INTRO_SCREEN_MAX_Y);
+	camera_x = INTRO_LOGO_WORLD_CENTER;
+	camera_y = INTRO_INITIAL_CAMERA_Y;
+	camera_z = INTRO_LOGO_WORLD_CENTER;
 	logo_changed = 0;
 	frame_count = 0;
 	opponent_resource = file_load_resfile("carcoun");
@@ -212,9 +254,9 @@ legacy_s8 setup_intro(void)
 	point_counts[1] = 0;
 	slow_video_mgmt_copy = slow_video_mgmt;
 	rect_unk[0].left = 0;
-	rect_unk[0].right = 0x140;
+	rect_unk[0].right = INTRO_SCREEN_MAX_X;
 	rect_unk[0].top = 0;
-	rect_unk[0].bottom = 0xC8;
+	rect_unk[0].bottom = INTRO_SCREEN_MAX_Y;
 	rect_unk2 = rect_unk[0];
 	rect_unk3 = rect_unk[0];
 	rect_index = 0;
@@ -229,22 +271,30 @@ legacy_s8 setup_intro(void)
 			do_opponent_op();
 			needs_render = 1;
 			frame_count = LEGACY_S16_WRAP_ADD(frame_count, 1);
-			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 11);
+			elapsed_limit = LEGACY_S16_WRAP_MUL(
+				framespersec, INTRO_LOGO_PHASE_SECONDS);
 			if (frame_count > elapsed_limit) {
 				logo_changed = 1;
-				camera_y = LEGACY_S16_WRAP_ADD(camera_y, 0x14);
-				camera_z = LEGACY_S16_WRAP_SUB(camera_z, 5);
-				difference = LEGACY_S16_WRAP_SUB(camera_x, 0x400);
+				camera_y = LEGACY_S16_WRAP_ADD(
+					camera_y, INTRO_CAMERA_RISE_STEP);
+				camera_z = LEGACY_S16_WRAP_SUB(
+					camera_z, INTRO_CAMERA_RETREAT_STEP);
+				difference = LEGACY_S16_WRAP_SUB(
+					camera_x, INTRO_LOGO_WORLD_CENTER);
 				absolute_difference = absolute_word(difference);
-				if (absolute_difference < 10)
-					camera_x = 0x400;
+				if (absolute_difference < INTRO_CAMERA_CENTER_SNAP_DISTANCE)
+					camera_x = INTRO_LOGO_WORLD_CENTER;
 				else if (difference > 0)
-					camera_x = LEGACY_S16_WRAP_SUB(camera_x, 10);
+					camera_x = LEGACY_S16_WRAP_SUB(
+						camera_x, INTRO_CAMERA_CENTER_STEP);
 				else if (difference < 0)
-					camera_x = LEGACY_S16_WRAP_ADD(camera_x, 10);
+					camera_x = LEGACY_S16_WRAP_ADD(
+						camera_x, INTRO_CAMERA_CENTER_STEP);
 
-				target_x = intro_step_towards(target_x, 0x400);
-				target_z = intro_step_towards(target_z, 0x400);
+				target_x = intro_step_towards(
+					target_x, INTRO_LOGO_WORLD_CENTER);
+				target_z = intro_step_towards(
+					target_z, INTRO_LOGO_WORLD_CENTER);
 			}
 		}
 
@@ -263,21 +313,24 @@ legacy_s8 setup_intro(void)
 			opponent_z = intro_shift_position(
 				(legacy_s32)state.opponentstate.car_posWorld1.lz, 0);
 
-			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 6);
+			elapsed_limit = LEGACY_S16_WRAP_MUL(
+				framespersec, INTRO_CAR_PHASE_SECONDS);
 			if (frame_count < elapsed_limit) {
 				draw_car = 0;
 				horizontal_angle = LEGACY_S16_FROM_BITS(
-					(legacy_u16)state.opponentstate.car_rotate.x & 0x03FFU);
+					(legacy_u16)state.opponentstate.car_rotate.x & ANGLE_MASK);
 				vertical_angle = 0;
 				camera_x = opponent_x;
-				camera_y = LEGACY_S16_WRAP_ADD(opponent_y, 0x14);
+				camera_y = LEGACY_S16_WRAP_ADD(
+					opponent_y, INTRO_CAMERA_CAR_HEIGHT);
 				camera_z = opponent_z;
 			} else {
-				elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, 11);
+				elapsed_limit = LEGACY_S16_WRAP_MUL(
+					framespersec, INTRO_LOGO_PHASE_SECONDS);
 				if (frame_count < elapsed_limit) {
-					camera_x = 0x400;
-					camera_y = 0x5A;
-					camera_z = 0x400;
+					camera_x = INTRO_LOGO_WORLD_CENTER;
+					camera_y = INTRO_LOGO_CAMERA_Y;
+					camera_z = INTRO_LOGO_WORLD_CENTER;
 					target_x = opponent_x;
 					target_y = opponent_y;
 					target_z = opponent_z;
@@ -288,13 +341,13 @@ legacy_s8 setup_intro(void)
 				horizontal_angle = LEGACY_S16_FROM_BITS(
 					(legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
 						LEGACY_S16_WRAP_SUB(target_x, camera_x),
-						LEGACY_S16_WRAP_SUB(target_z, camera_z))) & 0x03FFU);
+						LEGACY_S16_WRAP_SUB(target_z, camera_z))) & ANGLE_MASK);
 				target_distance = (legacy_s16)polarRadius2D(
 					LEGACY_S16_WRAP_SUB(target_x, camera_x),
 					LEGACY_S16_WRAP_SUB(target_z, camera_z));
 				vertical_angle = LEGACY_S16_FROM_BITS((legacy_u16)polarAngle(
 					LEGACY_S16_WRAP_SUB(target_y, camera_y),
-					target_distance) & 0x03FFU);
+					target_distance) & ANGLE_MASK);
 			}
 
 			active_points = point_buffers[rect_index];
@@ -310,7 +363,7 @@ legacy_s8 setup_intro(void)
 				mouse_draw_transparent_check();
 				if (slow_video_mgmt_copy != 0)
 					rect_unk[rect_index] = shape_rect;
-				rect_index ^= 1U;
+				rect_index ^= INTRO_POINT_BUFFER_MASK;
 			} else {
 				sprite_copy_2_to_1_2();
 				if (slow_video_mgmt_copy != 0) {
@@ -336,7 +389,8 @@ legacy_s8 setup_intro(void)
 			interrupted = 1;
 			break;
 		}
-		elapsed_limit = LEGACY_S16_WRAP_MUL(0x17, framespersec);
+		elapsed_limit = LEGACY_S16_WRAP_MUL(
+			INTRO_TOTAL_SECONDS, framespersec);
 		if (frame_count >= elapsed_limit)
 			break;
 	}
@@ -344,7 +398,7 @@ legacy_s8 setup_intro(void)
 	if (video_flag5_is0 != 0) {
 		if (get_0() != 0) {
 			setup_mcgawnd2();
-			sub_35C4E(0, 0, 0x140, 0xC8, 0);
+			sub_35C4E(0, 0, INTRO_SCREEN_MAX_X, INTRO_SCREEN_MAX_Y, 0);
 			mouse_draw_opaque_check();
 			setup_mcgawnd1();
 			mouse_draw_transparent_check();
