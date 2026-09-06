@@ -1360,7 +1360,8 @@ static legacy_s16 audio_start_timer_resource(struct AUDIO_TIMER* timer,
 	legacy_u16 rate;
 	void far* resource;
 
-	rate = timer->current_volume >> 4;
+	rate = timer->current_volume >>
+		AUDIO_TIMER_INTERPOLATION_FRACTION_BITS;
 	resource = audio_read_far_pointer(
 		(legacy_u8*)&timer->definition.resources[resource_index]);
 	return audio_check_flag(resource, -1, priority, rate);
