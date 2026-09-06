@@ -86,8 +86,8 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_posWorld2.lz = posZ;
 
 	playerstate->car_rotate.x = track_angle;
-	playerstate->car_rotate.y = 0;
-	playerstate->car_rotate.z = 0;
+	playerstate->car_rotate.y = CAR_ROTATION_ANGLE_ZERO;
+	playerstate->car_rotate.z = CAR_ROTATION_ANGLE_ZERO;
 	playerstate->car_36MwhlAngle = CAR_WHEEL_HEADING_STRAIGHT;
 	playerstate->car_pseudoGravity = 0;
 	playerstate->car_steeringAngle = CAR_STEERING_CENTERED;
