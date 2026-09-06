@@ -36,8 +36,8 @@ int main(void)
 	assert(simd_decode(&decoded, source) == SIMD_RESOURCE_SIZE);
 	assert(decoded.num_gears == expected_s8(source,
 		SIMD_RESOURCE_NUM_GEARS_OFFSET));
-	assert(decoded.simd_unk == expected_s8(source,
-		SIMD_RESOURCE_UNKNOWN_OFFSET));
+	assert(decoded.reserved_gear_byte == expected_s8(source,
+		SIMD_RESOURCE_RESERVED_GEAR_OFFSET));
 	assert(decoded.car_mass == expected_s16(source,
 		SIMD_RESOURCE_CAR_MASS_OFFSET));
 	assert(decoded.braking_eff == expected_s16(source,
@@ -73,14 +73,14 @@ int main(void)
 		assert(decoded.torque_curve[index] ==
 			expected_s8(source, (legacy_u16)(
 				SIMD_RESOURCE_TORQUE_CURVE_OFFSET + index)));
-	assert(decoded.field_A3 == expected_s8(source,
-		SIMD_RESOURCE_FIELD_A3_OFFSET));
+	assert(decoded.reserved_torque_byte == expected_s8(source,
+		SIMD_RESOURCE_RESERVED_TORQUE_OFFSET));
 	assert(decoded.grip == expected_s16(source,
 		SIMD_RESOURCE_GRIP_OFFSET));
-	for (index = 0U; index < SIMD_FIELD_A6_COUNT; index++)
-		assert(decoded.field_A6[index] ==
+	for (index = 0U; index < SIMD_RESERVED_HANDLING_COUNT; index++)
+		assert(decoded.reserved_handling_words[index] ==
 			expected_s16(source, (legacy_u16)(
-				SIMD_RESOURCE_FIELD_A6_OFFSET +
+				SIMD_RESOURCE_RESERVED_HANDLING_OFFSET +
 				index * SIMD_RESOURCE_WORD_SIZE)));
 	assert(decoded.sliding == expected_s16(source,
 		SIMD_RESOURCE_SLIDING_OFFSET));
@@ -89,10 +89,10 @@ int main(void)
 			expected_s16(source, (legacy_u16)(
 				SIMD_RESOURCE_SURFACE_GRIP_OFFSET +
 				index * SIMD_RESOURCE_WORD_SIZE)));
-	for (index = 0U; index < SIMD_UNKNOWN3_SIZE; index++)
-		assert(decoded.simd_unk3[index] ==
+	for (index = 0U; index < SIMD_RESERVED_GRIP_SIZE; index++)
+		assert(decoded.reserved_grip_bytes[index] ==
 			expected_s8(source, (legacy_u16)(
-				SIMD_RESOURCE_UNKNOWN3_OFFSET + index)));
+				SIMD_RESOURCE_RESERVED_GRIP_OFFSET + index)));
 	for (index = 0U; index < SIMD_COLLISION_POINT_COUNT; index++) {
 		assert(decoded.collide_points[index].px ==
 			expected_s16(source, (legacy_u16)(

@@ -216,7 +216,7 @@ static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 	*wheel = simd_opponent.wheel_coords[wheel_index];
 	wheel->y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
 		LEGACY_S16_WRAP_ADD(
-			state.opponentstate.car_rc2[wheel_index],
+			state.opponentstate.car_suspension_deflection[wheel_index],
 			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT)),
 		y_adjustment);
 	if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
@@ -516,7 +516,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		var_wheelIndex < PLAYER_PHYSICS_WHEEL_COUNT; var_wheelIndex++) {
 	vec_1C6 = arg_pSimd->wheel_coords[var_wheelIndex];
 	vec_1C6.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
-		arg_pState->car_rc2[var_wheelIndex],
+		arg_pState->car_suspension_deflection[var_wheelIndex],
 		PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
 	if (var_F0 < 0)
 		vec_1C6.y = LEGACY_S16_WRAP_SUB(vec_1C6.y, var_F0);
@@ -765,7 +765,7 @@ case PLAYER_FLOW_loc_154FA:
 	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15513:
-	arg_pState->field_CF |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
+	arg_pState->car_sound_flags |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
 	var_DEptrTo1C0 = vecl_1C0;
 	var_146ptrTo176 = vecl_176;
 	si = 0;
@@ -807,18 +807,18 @@ case PLAYER_FLOW_loc_155A1:
 	{ physics_flow = PLAYER_FLOW_loc_1553F; continue; }
 
 case PLAYER_FLOW_loc_15642:
-	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
-		arg_pState->car_rc1[var_wheelIndex],
+	arg_pState->car_wheel_vertical_speed[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_wheel_vertical_speed[var_wheelIndex],
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
-		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
+		var_DEptrTo1C0->ly, arg_pState->car_wheel_vertical_speed[var_wheelIndex]);
 	if (framespersec != GAME_FRAME_RATE_LOW)
 		{ physics_flow = PLAYER_FLOW_loc_156A3; continue; }
-	arg_pState->car_rc1[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
-		arg_pState->car_rc1[var_wheelIndex],
+	arg_pState->car_wheel_vertical_speed[var_wheelIndex] = LEGACY_S16_WRAP_ADD(
+		arg_pState->car_wheel_vertical_speed[var_wheelIndex],
 		word_3BD72[var_wheelIndex]);
 	var_DEptrTo1C0->ly = LEGACY_S32_WRAP_SUB_S16(
-		var_DEptrTo1C0->ly, arg_pState->car_rc1[var_wheelIndex]);
+		var_DEptrTo1C0->ly, arg_pState->car_wheel_vertical_speed[var_wheelIndex]);
 
 case PLAYER_FLOW_loc_156A3:
 	vec_1C6.y = position_to_word(var_DEptrTo1C0->ly);
@@ -975,7 +975,7 @@ case PLAYER_FLOW_loc_15A30:
 	var_EE = scaled_vector_separation(
 		&vec_1C, &vec_C, &vec_FC, &vec_17C);
 	var_F4 = LEGACY_S16_WRAP_ADD(
-		arg_pState->car_rc1[var_wheelIndex], var_pSpeed2Scaled);
+		arg_pState->car_wheel_vertical_speed[var_wheelIndex], var_pSpeed2Scaled);
 	var_F2 = LEGACY_S16_WRAP_SUB(var_F4, var_EE);
 	vec_C.x = scale_position_delta(var_DEptrTo1C0->lx,
 		var_146ptrTo176->lx, var_F2, var_F4);
@@ -1027,20 +1027,20 @@ case PLAYER_FLOW_loc_15C75:
 
 case PLAYER_FLOW_loc_15CDF:
 case PLAYER_FLOW_loc_15CE8:
-	if (arg_pState->car_rc1[var_wheelIndex] <=
+	if (arg_pState->car_wheel_vertical_speed[var_wheelIndex] <=
 		PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15CF7; continue; }
-	arg_pState->field_CF |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
+	arg_pState->car_sound_flags |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
 
 
 case PLAYER_FLOW_loc_15CF7:
-	if (arg_pState->car_rc1[var_wheelIndex] <=
+	if (arg_pState->car_wheel_vertical_speed[var_wheelIndex] <=
 		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
 		{ physics_flow = PLAYER_FLOW_loc_15D1A; continue; }
 	update_crash_state(CRASH_EVENT_COLLISION, car_index);
 
 case PLAYER_FLOW_loc_15D1A:
-	arg_pState->car_rc1[var_wheelIndex] = 0;
+	arg_pState->car_wheel_vertical_speed[var_wheelIndex] = 0;
 
 case PLAYER_FLOW_loc_15D2B:
 	var_DEptrTo1C0++;
@@ -1307,13 +1307,13 @@ case PLAYER_FLOW_loc_16236:
 		{ physics_flow = PLAYER_FLOW_loc_1625F; continue; }
 	if (car_index == PLAYER_CAR_INDEX)
 		{ physics_flow = PLAYER_FLOW_loc_1624A; continue; }
-	audio_unk3(arg_pState->field_CF, audio_opponent_engine_channel);
+	audio_unk3(arg_pState->car_sound_flags, audio_opponent_engine_channel);
 	{ physics_flow = PLAYER_FLOW_loc_1624E; continue; }
 
 case PLAYER_FLOW_loc_1624A:
-	audio_unk3(arg_pState->field_CF, audio_player_engine_channel);
+	audio_unk3(arg_pState->car_sound_flags, audio_player_engine_channel);
 case PLAYER_FLOW_loc_1624E:
-	//audio_unk3(arg_pState->field_CF, );
+	//audio_unk3(arg_pState->car_sound_flags, );
 #endif
 
 case PLAYER_FLOW_loc_1625F:
@@ -1429,7 +1429,7 @@ case PLAYER_FLOW_loc_164B2:
 		arg_oState->car_rotate.x;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, arg_oSimd->collide_points, vec_18EoStateWorldCrds) == 0)
 		{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
-	if (arg_pState->field_C8 == CAR_COLLISION_LATCH_CLEAR)
+	if (arg_pState->car_collision_latch == CAR_COLLISION_LATCH_CLEAR)
 		{ physics_flow = PLAYER_FLOW_loc_1653E; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
@@ -1517,7 +1517,7 @@ case PLAYER_FLOW_loc_16650:
 	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
 case PLAYER_FLOW_loc_16670:
-	if (state.field_3FA[si] == 0)
+	if (state.game_object_destroyed[si] == 0)
 		{ physics_flow = PLAYER_FLOW_loc_1667A; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
@@ -1531,9 +1531,9 @@ case PLAYER_FLOW_loc_1667A:
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, unk_3BD5A, vec_18EoStateWorldCrds) == 0)
 		{ physics_flow = PLAYER_FLOW_loc_16710; continue; }
 
-	state.field_3FA[si] = 1;
+	state.game_object_destroyed[si] = 1;
 
-	state_op_unk(LEGACY_S16_WRAP_ADD(si,
+	emit_crash_particles(LEGACY_S16_WRAP_ADD(si,
 		PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
 		LEGACY_S16_WRAP_NEGATE(arg_pState->car_rotate.x),
 		scale_speed_to_travel(arg_pState->car_speed2,
@@ -1595,7 +1595,7 @@ case PLAYER_FLOW_loc_16840:
 	arg_pState->car_rotate.z = pState_minusRotate_z_1;
 	arg_pState->car_rotate.y = pState_minusRotate_x_1;
 	arg_pState->car_rotate.x = pState_minusRotate_y_1;
-	arg_pState->field_C8 = CAR_COLLISION_LATCH_CLEAR;
+	arg_pState->car_collision_latch = CAR_COLLISION_LATCH_CLEAR;
 
 case PLAYER_FLOW_loc_16892:
 	return ;

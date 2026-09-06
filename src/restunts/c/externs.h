@@ -11,9 +11,9 @@
 #define SIMD_GEAR_RATIO_COUNT 7U
 #define SIMD_KNOB_POINT_COUNT 7U
 #define SIMD_TORQUE_CURVE_SIZE 104U
-#define SIMD_FIELD_A6_COUNT 7U
+#define SIMD_RESERVED_HANDLING_COUNT 7U
 #define SIMD_SURFACE_GRIP_COUNT 4U
-#define SIMD_UNKNOWN3_SIZE 10U
+#define SIMD_RESERVED_GRIP_SIZE 10U
 #define SIMD_COLLISION_POINT_COUNT 2U
 #define SIMD_WHEEL_COORDINATE_COUNT 4U
 #define SIMD_STEERING_DOT_COUNT 62U
@@ -28,7 +28,7 @@
 #define SIMD_RESOURCE_VECTOR_Y_OFFSET SIMD_RESOURCE_WORD_SIZE
 #define SIMD_RESOURCE_VECTOR_Z_OFFSET (2U * SIMD_RESOURCE_WORD_SIZE)
 #define SIMD_RESOURCE_NUM_GEARS_OFFSET 0U
-#define SIMD_RESOURCE_UNKNOWN_OFFSET 1U
+#define SIMD_RESOURCE_RESERVED_GEAR_OFFSET 1U
 #define SIMD_RESOURCE_CAR_MASS_OFFSET 2U
 #define SIMD_RESOURCE_BRAKING_EFFICIENCY_OFFSET 4U
 #define SIMD_RESOURCE_IDLE_RPM_OFFSET 6U
@@ -40,12 +40,12 @@
 #define SIMD_RESOURCE_AERO_RESISTANCE_OFFSET 56U
 #define SIMD_RESOURCE_IDLE_TORQUE_OFFSET 58U
 #define SIMD_RESOURCE_TORQUE_CURVE_OFFSET 59U
-#define SIMD_RESOURCE_FIELD_A3_OFFSET 163U
+#define SIMD_RESOURCE_RESERVED_TORQUE_OFFSET 163U
 #define SIMD_RESOURCE_GRIP_OFFSET 164U
-#define SIMD_RESOURCE_FIELD_A6_OFFSET 166U
+#define SIMD_RESOURCE_RESERVED_HANDLING_OFFSET 166U
 #define SIMD_RESOURCE_SLIDING_OFFSET 180U
 #define SIMD_RESOURCE_SURFACE_GRIP_OFFSET 182U
-#define SIMD_RESOURCE_UNKNOWN3_OFFSET 190U
+#define SIMD_RESOURCE_RESERVED_GRIP_OFFSET 190U
 #define SIMD_RESOURCE_COLLISION_POINTS_OFFSET 200U
 #define SIMD_RESOURCE_CAR_HEIGHT_OFFSET 208U
 #define SIMD_RESOURCE_WHEEL_COORDINATES_OFFSET 210U
@@ -59,7 +59,7 @@
 
 struct SIMD {
 	legacy_s8 num_gears;
-	legacy_s8 simd_unk;
+	legacy_s8 reserved_gear_byte;
 	legacy_s16 car_mass;
 	legacy_s16 braking_eff;
 	legacy_s16 idle_rpm;
@@ -71,12 +71,12 @@ struct SIMD {
 	legacy_s16 aero_resistance;
 	legacy_s8 idle_torque;
 	legacy_s8 torque_curve[SIMD_TORQUE_CURVE_SIZE];
-	legacy_s8 field_A3;
+	legacy_s8 reserved_torque_byte;
 	legacy_s16 grip;
-	legacy_s16 field_A6[SIMD_FIELD_A6_COUNT];
+	legacy_s16 reserved_handling_words[SIMD_RESERVED_HANDLING_COUNT];
 	legacy_s16 sliding;
 	legacy_s16 surface_grip[SIMD_SURFACE_GRIP_COUNT];
-	legacy_s8 simd_unk3[SIMD_UNKNOWN3_SIZE];
+	legacy_s8 reserved_grip_bytes[SIMD_RESERVED_GRIP_SIZE];
 	struct POINT2D collide_points[SIMD_COLLISION_POINT_COUNT];
 	legacy_s16 car_height;
 	struct VECTOR wheel_coords[SIMD_WHEEL_COORDINATE_COUNT];
@@ -255,8 +255,8 @@ extern struct RECTANGLE* rectptr_unk;
 
 extern void player_op(legacy_s8);
 extern void opponent_op(void);
-extern void state_op_unk(legacy_s16, legacy_s16, legacy_s16);
-extern void sub_19BA0(void);
+extern void emit_crash_particles(legacy_s16, legacy_s16, legacy_s16);
+extern void update_crash_particles(void);
 extern void init_kevinrandom(const legacy_s8* seed);
 extern void get_kevinrandom_seed(legacy_s8* seed);
 extern legacy_s16 get_kevinrandom(void);
@@ -398,7 +398,7 @@ extern legacy_s16* material_patlist2_ptr;
 extern legacy_s16* material_patlist2_ptr_cpy;
 extern legacy_u16 someZeroVideoConst;
 
-extern legacy_s16 sub_18D60(legacy_s16 car_trackdata3_index, struct VECTOR* car_vec_unk3, legacy_s16 field_CE, legacy_s8* optional_speed);
+extern legacy_s16 get_track_route_point(legacy_s16 car_trackdata3_index, struct VECTOR* car_route_target, legacy_s16 car_route_point_index, legacy_s8* optional_speed);
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle);
 extern void init_game_state(legacy_s16 arg);
 extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);

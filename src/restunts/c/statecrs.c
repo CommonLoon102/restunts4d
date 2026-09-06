@@ -37,7 +37,7 @@ enum CRASH_CAR_MOTION_POLICY {
 #ifndef RESTUNTS_HEADLESS
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
-extern legacy_s16 gState_144;
+extern legacy_s16 gState_opponent_finish_time;
 extern legacy_s16 gState_pEndFrame;
 extern legacy_s16 gState_oEndFrame;
 extern legacy_s16 gState_penalty;
@@ -62,7 +62,7 @@ static void stop_car_engine_audio(legacy_s16 player_flag) {
 }
 #endif
 
-void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 energy_offset_arg) {
+void emit_crash_particles(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 energy_offset_arg) {
 	legacy_s16 kind;
 	legacy_s16 base_angle;
 	legacy_s16 energy_offset;
@@ -97,10 +97,10 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 		lifetime_scale = OBJECT_PARTICLE_LIFETIME_SCALE;
 	}
 
-	state.field_42A = PARTICLE_SYSTEM_ACTIVE;
+	state.game_particles_active = PARTICLE_SYSTEM_ACTIVE;
 	free_count = 0;
 	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
-		if (state.field_38E[slot] == PARTICLE_TIMER_INACTIVE)
+		if (state.game_particle_forward_speed[slot] == PARTICLE_TIMER_INACTIVE)
 			free_count = LEGACY_S16_WRAP_ADD(free_count, 1);
 	}
 	if (free_count > particle_limit)
@@ -109,22 +109,22 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 	emitted = 0;
 	for (slot = 0;
 		slot < GAMESTATE_PARTICLE_SLOT_COUNT && emitted < free_count; slot++) {
-		if (state.field_38E[slot] != 0)
+		if (state.game_particle_forward_speed[slot] != 0)
 			continue;
 
-		state.field_443[slot] = (legacy_u8)kind;
-		state.field_42B[slot] = (legacy_u8)(
+		state.game_particle_owner[slot] = (legacy_u8)kind;
+		state.game_particle_shape_index[slot] = (legacy_u8)(
 			((legacy_u8)emitted & PARTICLE_TYPE_VARIANT_MASK) +
 			(legacy_u8)type_base);
-		state.game_longs1[slot] = 0;
-		state.game_longs2[slot] = 0;
-		state.game_longs3[slot] = 0;
+		state.game_particle_x[slot] = 0;
+		state.game_particle_y[slot] = 0;
+		state.game_particle_z[slot] = 0;
 
 		random_value = (legacy_s16)get_kevinrandom();
-		state.field_2FE[slot] = LEGACY_S16_WRAP_MUL(
+		state.game_particle_rotation_x[slot] = LEGACY_S16_WRAP_MUL(
 			random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 		random_value = (legacy_s16)get_kevinrandom();
-		state.field_32E[slot] = LEGACY_S16_WRAP_MUL(
+		state.game_particle_rotation_y[slot] = LEGACY_S16_WRAP_MUL(
 			random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 
 		particle_angle = LEGACY_S16_FROM_BITS((legacy_u16)
@@ -133,7 +133,7 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 					(legacy_s32)angular_range, (legacy_s32)emitted),
 				(legacy_s32)free_count));
 		particle_angle = LEGACY_S16_WRAP_ADD(particle_angle, base_angle);
-		state.field_35E[slot] = LEGACY_S16_FROM_BITS(
+		state.game_particle_heading[slot] = LEGACY_S16_FROM_BITS(
 			(legacy_u16)particle_angle & ANGLE_MASK);
 
 		random_value = (legacy_s16)get_kevinrandom();
@@ -143,17 +143,17 @@ void state_op_unk(legacy_s16 kind_arg, legacy_s16 base_angle_arg, legacy_s16 ene
 			energy_offset);
 		particle_timer = LEGACY_S16_WRAP_ADD(
 			particle_timer, PARTICLE_FORWARD_SPEED_BIAS);
-		state.field_38E[slot] = particle_timer;
+		state.game_particle_forward_speed[slot] = particle_timer;
 
 		particle_lifetime = LEGACY_S16_SAR2(
 			LEGACY_S16_WRAP_MUL(lifetime_scale, particle_timer));
 		LEGACY_WRITE_U16_LE(
-			&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_lifetime);
+			&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES], particle_lifetime);
 		emitted = LEGACY_S16_WRAP_ADD(emitted, 1);
 	}
 }
 
-void sub_19BA0(void) {
+void update_crash_particles(void) {
 	struct VECTOR direction;
 	struct VECTOR movement;
 	struct MATRIX* rotation;
@@ -164,54 +164,54 @@ void sub_19BA0(void) {
 
 	any_active = PARTICLE_SYSTEM_INACTIVE;
 	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
-		if (state.field_38E[slot] == PARTICLE_TIMER_INACTIVE)
+		if (state.game_particle_forward_speed[slot] == PARTICLE_TIMER_INACTIVE)
 			continue;
 
 		direction.x = 0;
 		direction.y = 0;
-		direction.z = state.field_38E[slot];
-		rotation = mat_rot_zxy(0, 0, state.field_35E[slot],
+		direction.z = state.game_particle_forward_speed[slot];
+		rotation = mat_rot_zxy(0, 0, state.game_particle_heading[slot],
 			MATRIX_ROTATION_ORDER_YXZ);
 		mat_mul_vector(&direction, rotation, &movement);
-		state.game_longs1[slot] = LEGACY_S32_WRAP_ADD_S16(
-			state.game_longs1[slot], movement.x);
-		state.game_longs3[slot] = LEGACY_S32_WRAP_ADD_S16(
-			state.game_longs3[slot], movement.z);
+		state.game_particle_x[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_particle_x[slot], movement.x);
+		state.game_particle_z[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_particle_z[slot], movement.z);
 
 		particle_velocity = LEGACY_S16_FROM_BITS(LEGACY_READ_U16_LE(
-			&state.field_3BE[slot * LEGACY_WORD_BYTES]));
+			&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES]));
 		particle_velocity = LEGACY_S16_WRAP_SUB(
 			particle_velocity, PARTICLE_GRAVITY_STEP);
 		LEGACY_WRITE_U16_LE(
-			&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_velocity);
-		state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
-			state.game_longs2[slot], particle_velocity);
+			&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES], particle_velocity);
+		state.game_particle_y[slot] = LEGACY_S32_WRAP_ADD_S16(
+			state.game_particle_y[slot], particle_velocity);
 
 		if (framespersec == GAME_FRAME_RATE_LOW) {
 			particle_velocity = LEGACY_S16_WRAP_SUB(
 				particle_velocity, PARTICLE_GRAVITY_STEP);
 			LEGACY_WRITE_U16_LE(
-				&state.field_3BE[slot * LEGACY_WORD_BYTES], particle_velocity);
-			state.game_longs2[slot] = LEGACY_S32_WRAP_ADD_S16(
-				state.game_longs2[slot], particle_velocity);
+				&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES], particle_velocity);
+			state.game_particle_y[slot] = LEGACY_S32_WRAP_ADD_S16(
+				state.game_particle_y[slot], particle_velocity);
 		}
 
 		ground_position = LEGACY_S32_WRAP_ADD(
-			(legacy_s32)state.game_longs2[slot],
+			(legacy_s32)state.game_particle_y[slot],
 			(legacy_s32)state.playerstate.car_posWorld1.ly);
 		if (ground_position < 0) {
-			state.field_38E[slot] = PARTICLE_TIMER_INACTIVE;
+			state.game_particle_forward_speed[slot] = PARTICLE_TIMER_INACTIVE;
 			continue;
 		}
 
 		any_active = PARTICLE_SYSTEM_ACTIVE;
-		state.field_2FE[slot] = LEGACY_S16_WRAP_ADD(
-			state.field_2FE[slot], PARTICLE_ROTATION_STEP);
-		state.field_32E[slot] = LEGACY_S16_WRAP_ADD(
-			state.field_32E[slot], PARTICLE_ROTATION_STEP);
+		state.game_particle_rotation_x[slot] = LEGACY_S16_WRAP_ADD(
+			state.game_particle_rotation_x[slot], PARTICLE_ROTATION_STEP);
+		state.game_particle_rotation_y[slot] = LEGACY_S16_WRAP_ADD(
+			state.game_particle_rotation_y[slot], PARTICLE_ROTATION_STEP);
 	}
 
-	state.field_42A = any_active;
+	state.game_particles_active = any_active;
 }
 
 // previously set_AV_event_triggers
@@ -233,7 +233,7 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		/* fall through */
 	case CRASH_EVENT_COLLISION:
 		var_cState->car_crashBmpFlag = CRASH_EVENT_COLLISION;
-		state_op_unk(arg_MplayerFlag, var_cState->car_rotate.x, 0);
+		emit_crash_particles(arg_MplayerFlag, var_cState->car_rotate.x, 0);
 		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
 			state.game_impactSpeed = var_cState->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
@@ -268,7 +268,7 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 				elapsed_time1);
 			state.game_frames_per_sec = framespersec;
 		} else {
-			state.field_144 = LEGACY_S16_WRAP_ADD(
+			state.game_opponent_finish_time = LEGACY_S16_WRAP_ADD(
 				state.game_frame, elapsed_time1);
 		}
 		break;
@@ -296,7 +296,7 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		gState_travDist = state.game_travDist;
 		gState_frame = state.game_frame;
 		gState_total_finish_time = state.game_total_finish;
-		gState_144 = state.field_144;
+		gState_opponent_finish_time = state.game_opponent_finish_time;
 		gState_pEndFrame = state.game_pEndFrame;
 		gState_oEndFrame = state.game_oEndFrame;
 		gState_penalty = state.game_penalty;

@@ -837,8 +837,8 @@ void init_plantrak(void) {
 		LEGACY_S32_SHL((legacy_s32)path_z, PLAN_TRACK_POSITION_SHIFT),
 		0);
 
-	route_index = (legacy_u8)state.opponentstate.field_CE;
-	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
+	route_index = (legacy_u8)state.opponentstate.car_route_point_index;
+	state.opponentstate.car_route_point_index = LEGACY_S8_WRAP_ADD(
 		route_index, ROUTE_POINT_STEP);
 	opponent_route_advance((legacy_s16)route_index);
 }

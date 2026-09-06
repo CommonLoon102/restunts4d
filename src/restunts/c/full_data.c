@@ -291,7 +291,7 @@ void far* fontledresptr;
 legacy_s32 gState_travDist;
 legacy_u16 gState_frame;
 legacy_s16 gState_total_finish_time;
-legacy_s16 gState_144;
+legacy_s16 gState_opponent_finish_time;
 legacy_s16 gState_pEndFrame;
 legacy_s16 gState_oEndFrame;
 legacy_s16 gState_penalty;

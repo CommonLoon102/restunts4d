@@ -205,7 +205,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE)
 		return &rect_ingame_text;
 
-	switch (state.field_45D) {
+	switch (state.game_player_route_indicator) {
 	case ROUTE_INDICATOR_LEFT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
 			DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
@@ -224,7 +224,7 @@ struct RECTANGLE* draw_ingame_text(void)
 	}
 
 	resID_byte1 = 0;
-	switch (state.field_45E) {
+	switch (state.game_opponent_route_indicator) {
 	case ROUTE_INDICATOR_LEFT:
 		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
 			OPPONENT_LEFT_ICON_X, OPPONENT_ICON_Y);

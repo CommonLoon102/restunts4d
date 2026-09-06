@@ -230,12 +230,12 @@ legacy_s16 carState_rc_op(
 	legacy_s16 scaled_delta;
 	legacy_s16 target;
 
-	previous_rc2 = (legacy_s16)carstate->car_rc2[wheel_index];
+	previous_rc2 = (legacy_s16)carstate->car_suspension_deflection[wheel_index];
 	contact_delta = (legacy_s16)contact_delta_arg;
 	adjustment = 0;
 
 	/* Decay the per-wheel target by four toward zero each frame. */
-	target = (legacy_s16)carstate->car_rc5[wheel_index];
+	target = (legacy_s16)carstate->car_suspension_target[wheel_index];
 	if (target < 0) {
 		target = LEGACY_S16_WRAP_ADD(target, SUSPENSION_TARGET_DECAY);
 		if (target > 0)
@@ -245,56 +245,56 @@ legacy_s16 carState_rc_op(
 		if (target < 0)
 			target = 0;
 	}
-	carstate->car_rc5[wheel_index] = target;
+	carstate->car_suspension_target[wheel_index] = target;
 
 	if (contact_delta < 0 &&
-		(legacy_s16)carstate->car_rc2[wheel_index] >
+		(legacy_s16)carstate->car_suspension_deflection[wheel_index] >
 		LEGACY_S16_WRAP_NEGATE(contact_delta)) {
 		contact_delta = 0;
 	}
 
 	if (contact_delta == 0) {
-		if ((legacy_s16)carstate->car_rc2[wheel_index] > target) {
-			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_SUB(
-				carstate->car_rc2[wheel_index], SUSPENSION_RETURN_STEP);
-			if ((legacy_s16)carstate->car_rc2[wheel_index] < target)
-				carstate->car_rc2[wheel_index] = target;
+		if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
+			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_SUB(
+				carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
+			if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target)
+				carstate->car_suspension_deflection[wheel_index] = target;
 			adjustment = LEGACY_S16_WRAP_SUB(
-				previous_rc2, carstate->car_rc2[wheel_index]);
-		} else if ((legacy_s16)carstate->car_rc2[wheel_index] < target) {
-			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
-				carstate->car_rc2[wheel_index], SUSPENSION_RETURN_STEP);
-			if ((legacy_s16)carstate->car_rc2[wheel_index] > target)
-				carstate->car_rc2[wheel_index] = target;
+				previous_rc2, carstate->car_suspension_deflection[wheel_index]);
+		} else if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target) {
+			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
+			if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target)
+				carstate->car_suspension_deflection[wheel_index] = target;
 		}
 	} else if (contact_delta > 0) {
 		if (contact_delta > CONTACT_DELTA_LIMIT)
 			contact_delta = CONTACT_DELTA_LIMIT;
-		carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
-			carstate->car_rc2[wheel_index], contact_delta);
-		if ((legacy_s16)carstate->car_rc2[wheel_index] >
+		carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
+			carstate->car_suspension_deflection[wheel_index], contact_delta);
+		if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] >
 			SUSPENSION_TRAVEL_LIMIT)
-			carstate->car_rc2[wheel_index] = SUSPENSION_TRAVEL_LIMIT;
-		carstate->car_rc4[wheel_index] = 0;
+			carstate->car_suspension_deflection[wheel_index] = SUSPENSION_TRAVEL_LIMIT;
+		carstate->car_reserved_contact_state[wheel_index] = 0;
 	} else {
 		if (LEGACY_S16_WRAP_ADD(
-			contact_delta, carstate->car_rc2[wheel_index]) >
+			contact_delta, carstate->car_suspension_deflection[wheel_index]) >
 			SUSPENSION_SOFT_CONTACT_THRESHOLD) {
-			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
-				carstate->car_rc2[wheel_index], contact_delta);
+			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_suspension_deflection[wheel_index], contact_delta);
 		} else {
 			scaled_delta = LEGACY_S16_SAR2(
 				LEGACY_S16_WRAP_MUL(
 					contact_delta, HARD_CONTACT_SCALE_NUMERATOR));
-			carstate->car_rc2[wheel_index] = LEGACY_S16_WRAP_ADD(
-				carstate->car_rc2[wheel_index], scaled_delta);
-			if ((legacy_s16)carstate->car_rc2[wheel_index] <
+			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
+				carstate->car_suspension_deflection[wheel_index], scaled_delta);
+			if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] <
 				-SUSPENSION_TRAVEL_LIMIT)
-				carstate->car_rc2[wheel_index] = -SUSPENSION_TRAVEL_LIMIT;
+				carstate->car_suspension_deflection[wheel_index] = -SUSPENSION_TRAVEL_LIMIT;
 		}
 		adjustment = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_SUB(
-				previous_rc2, carstate->car_rc2[wheel_index]),
+				previous_rc2, carstate->car_suspension_deflection[wheel_index]),
 			contact_delta);
 	}
 
@@ -315,8 +315,8 @@ legacy_s16 car_car_speed_adjust_maybe(
 	legacy_s16 slowdown;
 	legacy_s16 angle_delta;
 
-	first_state->field_C8 = CAR_COLLISION_LATCH_SET;
-	second_state->field_C8 = CAR_COLLISION_LATCH_SET;
+	first_state->car_collision_latch = CAR_COLLISION_LATCH_SET;
+	second_state->car_collision_latch = CAR_COLLISION_LATCH_SET;
 	first_angle = (legacy_s16)first_state->car_rotate.x;
 	second_angle = (legacy_s16)second_state->car_rotate.x;
 

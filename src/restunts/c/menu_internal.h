@@ -168,7 +168,7 @@ extern legacy_s16 word_40D44;
 extern legacy_s16 word_407D2;
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
-extern legacy_s16 gState_144;
+extern legacy_s16 gState_opponent_finish_time;
 extern legacy_s16 gState_pEndFrame;
 extern legacy_s16 gState_oEndFrame;
 extern legacy_s16 gState_penalty;

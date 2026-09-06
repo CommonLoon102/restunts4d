@@ -290,11 +290,11 @@ static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
 	curtransshape_ptr->rectptr = &rect_unk6;
 	curtransshape_ptr->ts_flags = flags;
 	curtransshape_ptr->rotvec.x = LEGACY_S16_WRAP_NEGATE(
-		state.field_2FE[state_index]);
+		state.game_particle_rotation_x[state_index]);
 	curtransshape_ptr->rotvec.y = LEGACY_S16_WRAP_NEGATE(
-		state.field_32E[state_index]);
+		state.game_particle_rotation_y[state_index]);
 	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
-		state.field_35E[state_index]);
+		state.game_particle_heading[state_index]);
 	curtransshape_ptr->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 	curtransshape_ptr->material = material;
 	transformed_shape_add_for_sort(z_adjust, 0);
@@ -434,19 +434,19 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 	struct TRACKOBJECT* track_object;
 	legacy_s16 index;
 
-	if (state.field_42A != 0) {
+	if (state.game_particles_active != 0) {
 		for (index = 0; index < FRAME_DEBRIS_SLOT_COUNT; index++) {
-			if (state.field_38E[index] != 0 &&
-				state.field_443[index] == debris_owner) {
-				track_object = &sceneshapes3[state.field_42B[index]];
+			if (state.game_particle_forward_speed[index] != 0 &&
+				state.game_particle_owner[index] == debris_owner) {
+				track_object = &sceneshapes3[state.game_particle_shape_index[index]];
 				curtransshape_ptr->pos.x = frame_relative_position_sum(
-					state.game_longs1[index],
+					state.game_particle_x[index],
 					carstate->car_posWorld1.lx, camera_position->x);
 				curtransshape_ptr->pos.y = frame_relative_position_sum(
-					state.game_longs2[index],
+					state.game_particle_y[index],
 					carstate->car_posWorld1.ly, camera_position->y);
 				curtransshape_ptr->pos.z = frame_relative_position_sum(
-					state.game_longs3[index],
+					state.game_particle_z[index],
 					carstate->car_posWorld1.lz, camera_position->z);
 				frame_add_dynamic_shape(track_object, index,
 					flags | FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT,
@@ -470,7 +470,7 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 		curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
 		sub_204AE(wheel_shape, FRAME_STEERED_WHEEL_FIRST_VERTEX,
 			carstate->car_steeringAngle,
-			carstate->car_rc2, wheel_angles, wheel_vectors,
+			carstate->car_suspension_deflection, wheel_angles, wheel_vectors,
 			wheel_vector);
 	}
 
@@ -648,9 +648,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.z = LEGACY_S16_WRAP_ADD(
 			car_pos.z, car_to_cam_rotated.z);
 	} else if (cameramode == CAMERA_MODE_FOLLOW) {
-		cam_pos.x = state.game_vec1[followOpponentFlag].x;
-		cam_pos.z = state.game_vec1[followOpponentFlag].z;
-		cam_pos.y = state.game_vec1[followOpponentFlag].y;
+		cam_pos.x = state.game_follow_camera_position[followOpponentFlag].x;
+		cam_pos.z = state.game_follow_camera_position[followOpponentFlag].z;
+		cam_pos.y = state.game_follow_camera_position[followOpponentFlag].y;
 	} else if (cameramode == CAMERA_MODE_CUSTOM) {
 		offset_vector.x = 0;
 		offset_vector.y = 0;
@@ -673,11 +673,11 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		cam_pos.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
 	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
-		cam_pos.x = trackdata9[state.field_3F7[followOpponentFlag]].x;
+		cam_pos.x = trackdata9[state.game_trackside_camera_index[followOpponentFlag]].x;
 		cam_pos.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-			trackdata9[state.field_3F7[followOpponentFlag]].y,
+			trackdata9[state.game_trackside_camera_index[followOpponentFlag]].y,
 			camera_track_height_offset), FRAME_TRACK_CAMERA_HEIGHT_OFFSET);
-		cam_pos.z = trackdata9[state.field_3F7[followOpponentFlag]].z;
+		cam_pos.z = trackdata9[state.game_trackside_camera_index[followOpponentFlag]].z;
 	}
 
 	// Unknown part; seems to be performing some initialization
@@ -1332,7 +1332,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 			var_4C = trackdata19[tile_east + trackrows[tile_south]];
 			if (var_4C != FRAME_CHECKPOINT_NONE) {
-				if (state.field_3FA[var_4C] == 0) {
+				if (state.game_object_destroyed[var_4C] == 0) {
 					var_trkobject_ptr = &trkObjectList[
 						FRAME_CHECKPOINT_TRACK_OBJECT_BASE +
 						trackdata23[var_4C]];
@@ -1353,20 +1353,20 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						FRAME_CHECKPOINT_TRANSFORM_DISTANCE;
 					curtransshape_ptr->material = 0;
 					transformed_shape_add_for_sort(0, 0);
-				} else if (state.field_42A != 0) {
+				} else if (state.game_particles_active != 0) {
 					for (di = 0; di < FRAME_DEBRIS_SLOT_COUNT; di++) {
-						if (state.field_38E[di] != 0 &&
+						if (state.game_particle_forward_speed[di] != 0 &&
 							var_4C + FRAME_CHECKPOINT_OWNER_OFFSET ==
-								state.field_443[di]) {
-							var_trkobject_ptr = &sceneshapes3[state.field_42B[di]];
+								state.game_particle_owner[di]) {
+							var_trkobject_ptr = &sceneshapes3[state.game_particle_shape_index[di]];
 							curtransshape_ptr->pos.x = frame_relative_track_position(
-								state.game_longs1[di],
+								state.game_particle_x[di],
 								td10_track_check_rel[var_4C].x, cam_pos.x);
 							curtransshape_ptr->pos.y = frame_relative_track_position(
-								state.game_longs2[di],
+								state.game_particle_y[di],
 								td10_track_check_rel[var_4C].y, cam_pos.y);
 							curtransshape_ptr->pos.z = frame_relative_track_position(
-								state.game_longs3[di],
+								state.game_particle_z[di],
 								td10_track_check_rel[var_4C].z, cam_pos.z);
 							frame_add_dynamic_shape(var_trkobject_ptr, di,
 								var_122 |

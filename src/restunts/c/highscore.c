@@ -636,21 +636,21 @@ legacy_u16 end_hiscore(void)
 
 	outcome = END_SCREEN_OUTCOME_NONE;
 	if (gameconfig.game_opponenttype != 0) {
-		if (gState_144 == 0) {
+		if (gState_opponent_finish_time == 0) {
 			end_hiscore_set_text(misc_resource, aOlt);
 			end_hiscore_append_text(misc_resource, aDnf_0);
 			if (gState_total_finish_time != 0)
 				outcome = END_SCREEN_OUTCOME_LOSS;
 		} else if (gState_total_finish_time == 0 ||
-			(legacy_u16)gState_144 <
+			(legacy_u16)gState_opponent_finish_time <
 				(legacy_u16)gState_total_finish_time) {
 			end_hiscore_set_text(misc_resource, aOwt);
-			format_frame_as_string(number, gState_144, 1);
+			format_frame_as_string(number, gState_opponent_finish_time, 1);
 			strcat(&resID_byte1, number);
 			outcome = END_SCREEN_OUTCOME_WIN;
 		} else {
 			end_hiscore_set_text(misc_resource, aOlt_0);
-			format_frame_as_string(number, gState_144, 1);
+			format_frame_as_string(number, gState_opponent_finish_time, 1);
 			strcat(&resID_byte1, number);
 			outcome = END_SCREEN_OUTCOME_LOSS;
 		}

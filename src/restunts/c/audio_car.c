@@ -44,7 +44,7 @@ static legacy_u8 audio_carstate_update_flags(struct CARSTATE* carstate,
 {
 	legacy_u8 desired;
 
-	desired = (legacy_u8)carstate->field_CF;
+	desired = (legacy_u8)carstate->car_sound_flags;
 	if ((desired & CAR_SOUND_ENGINE_ACTIVE_FLAG) != 0) {
 		if ((flags & CAR_SOUND_ENGINE_ACTIVE_FLAG) == 0) {
 			flags = (legacy_u8)(flags | CAR_SOUND_ENGINE_ACTIVE_FLAG);
@@ -151,12 +151,12 @@ void audio_carstate(void)
 	}
 
 	if (cameramode == CAMERA_MODE_FOLLOW) {
-		camera_current = state.game_vec1[(legacy_u8)followOpponentFlag];
+		camera_current = state.game_follow_camera_position[(legacy_u8)followOpponentFlag];
 		camera_previous = followOpponentFlag != 0 ?
-			state.game_vec4 : state.game_vec3;
+			state.game_opponent_camera_previous : state.game_player_camera_previous;
 	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
 		track_index = LEGACY_S16_FROM_BITS((legacy_u16)(legacy_s8)
-			state.field_3F7[(legacy_u8)followOpponentFlag]);
+			state.game_trackside_camera_index[(legacy_u8)followOpponentFlag]);
 		camera_current.x = trackdata9[track_index].x;
 		camera_current.y = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(trackdata9[track_index].y,

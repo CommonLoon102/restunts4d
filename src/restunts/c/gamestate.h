@@ -18,8 +18,8 @@ enum GAME_CAR_INDEX {
 #define GAMESTATE_PARTICLE_VELOCITY_BYTES \
 	(GAMESTATE_PARTICLE_SLOT_COUNT * LEGACY_WORD_BYTES)
 #define GAMESTATE_RANDOM_SEED_SIZE 6U
-#define GAMESTATE_FIELD_3F7_SIZE 2U
-#define GAMESTATE_FIELD_3FA_SIZE 48U
+#define GAMESTATE_CAMERA_INDEX_COUNT 2U
+#define GAMESTATE_BREAKABLE_OBJECT_COUNT 48U
 #define GAMESTATE_CHECKPOINT_COUNT 20U
 
 enum GAME_FRAME_RATE {
@@ -155,24 +155,24 @@ struct CARSTATE {
 	legacy_s16 car_knob_y2;
 	legacy_s16 car_angle_z;
 	legacy_s16 car_40MfrontWhlAngle;
-	legacy_s16 field_42;
+	legacy_s16 car_slip_angle;
 	legacy_s16 car_demandedGrip;
 	legacy_s16 car_surfacegrip_sum;
-	legacy_s16 field_48;
+	legacy_s16 car_route_heading_error;
 	legacy_s16 car_trackdata3_index;
-	legacy_s16 car_rc1[CARSTATE_WHEEL_COUNT];
-	legacy_s16 car_rc2[CARSTATE_WHEEL_COUNT];
-	legacy_s16 car_rc3[CARSTATE_WHEEL_COUNT];
-	legacy_s16 car_rc4[CARSTATE_WHEEL_COUNT];
-	legacy_s16 car_rc5[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_wheel_vertical_speed[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_suspension_deflection[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_reserved_wheel_state[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_reserved_contact_state[CARSTATE_WHEEL_COUNT];
+	legacy_s16 car_suspension_target[CARSTATE_WHEEL_COUNT];
 	struct VECTOR car_whlWorldCrds1[CARSTATE_WHEEL_COUNT];
 	struct VECTOR car_whlWorldCrds2[CARSTATE_WHEEL_COUNT];
-	struct VECTOR car_vec_unk3;
-	struct VECTOR car_vec_unk4;
-	struct VECTOR car_vec_unk5;
-	legacy_s16 field_B6;
-	legacy_s16 field_B8;
-	legacy_s16 field_BA;
+	struct VECTOR car_route_target;
+	struct VECTOR car_route_first_edge;
+	struct VECTOR car_route_second_edge;
+	legacy_s16 car_route_has_reverse_path;
+	legacy_s16 car_reserved_route_word1;
+	legacy_s16 car_reserved_route_word2;
 	legacy_s8 car_is_braking;
 	legacy_s8 car_is_accelerating;
 	legacy_s8 car_current_gear;
@@ -182,29 +182,29 @@ struct CARSTATE {
 	legacy_s8 car_surfaceWhl[CARSTATE_WHEEL_COUNT];
 	legacy_s8 car_engineLimiterTimer;
 	legacy_s8 car_slidingFlag;
-	legacy_s8 field_C8;
+	legacy_s8 car_collision_latch;
 	legacy_s8 car_crashBmpFlag;
 	legacy_s8 car_changing_gear;
 	legacy_s8 car_fpsmul2;
 	legacy_s8 car_transmission;
-	legacy_s8 field_CD;
-	legacy_s8 field_CE;
-	legacy_s8 field_CF;
+	legacy_s8 car_lap_count;
+	legacy_s8 car_route_point_index;
+	legacy_s8 car_sound_flags;
 };
 
 struct GAMESTATE {
-	legacy_s32 game_longs1[GAMESTATE_PARTICLE_SLOT_COUNT]; /* x */
-	legacy_s32 game_longs2[GAMESTATE_PARTICLE_SLOT_COUNT]; /* y */
-	legacy_s32 game_longs3[GAMESTATE_PARTICLE_SLOT_COUNT]; /* z */
-	struct VECTOR game_vec1[GAMESTATE_CAR_VECTOR_COUNT];
-	struct VECTOR game_vec3;
-	struct VECTOR game_vec4;
+	legacy_s32 game_particle_x[GAMESTATE_PARTICLE_SLOT_COUNT]; /* x */
+	legacy_s32 game_particle_y[GAMESTATE_PARTICLE_SLOT_COUNT]; /* y */
+	legacy_s32 game_particle_z[GAMESTATE_PARTICLE_SLOT_COUNT]; /* z */
+	struct VECTOR game_follow_camera_position[GAMESTATE_CAR_VECTOR_COUNT];
+	struct VECTOR game_player_camera_previous;
+	struct VECTOR game_opponent_camera_previous;
 	legacy_s16 game_frame_in_sec;
 	legacy_s16 game_frames_per_sec;
 	legacy_s32 game_travDist;
 	legacy_s16 game_frame;
 	legacy_s16 game_total_finish; /* Finish time plus penalty. */
-	legacy_s16 field_144;
+	legacy_s16 game_opponent_finish_time;
 	legacy_s16 game_pEndFrame;
 	legacy_s16 game_oEndFrame;
 	legacy_s16 game_penalty;
@@ -213,32 +213,32 @@ struct GAMESTATE {
 	legacy_s16 game_jumpCount;
 	struct CARSTATE playerstate;
 	struct CARSTATE opponentstate;
-	legacy_s16 field_2F2;
-	legacy_s16 field_2F4;
+	legacy_s16 game_player_confirmed_route;
+	legacy_s16 game_player_previous_route;
 	legacy_s16 game_startcol;
 	legacy_s16 game_startcol2;
 	legacy_s16 game_startrow;
 	legacy_s16 game_startrow2;
-	legacy_s16 field_2FE[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s16 field_32E[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s16 field_35E[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s16 field_38E[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s8 field_3BE[GAMESTATE_PARTICLE_VELOCITY_BYTES];
+	legacy_s16 game_particle_rotation_x[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 game_particle_rotation_y[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 game_particle_heading[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s16 game_particle_forward_speed[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s8 game_particle_vertical_speed[GAMESTATE_PARTICLE_VELOCITY_BYTES];
 	legacy_s8 kevinseed[GAMESTATE_RANDOM_SEED_SIZE];
-	legacy_s8 field_3F4;
+	legacy_s8 game_checkpoint_valid;
 	legacy_s8 game_inputmode;
 	legacy_s8 game_3F6autoLoadEvalFlag;
-	legacy_s8 field_3F7[GAMESTATE_FIELD_3F7_SIZE];
-	legacy_s8 field_3F9;
-	legacy_s8 field_3FA[GAMESTATE_FIELD_3FA_SIZE];
-	legacy_s8 field_42A;
-	legacy_s8 field_42B[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s8 field_443[GAMESTATE_PARTICLE_SLOT_COUNT];
-	legacy_s8 field_45B;
-	legacy_s8 field_45C;
-	legacy_s8 field_45D;
-	legacy_s8 field_45E;
-	legacy_s8 field_45F;
+	legacy_s8 game_trackside_camera_index[GAMESTATE_CAMERA_INDEX_COUNT];
+	legacy_s8 game_opponent_target_speed;
+	legacy_s8 game_object_destroyed[GAMESTATE_BREAKABLE_OBJECT_COUNT];
+	legacy_s8 game_particles_active;
+	legacy_s8 game_particle_shape_index[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s8 game_particle_owner[GAMESTATE_PARTICLE_SLOT_COUNT];
+	legacy_s8 game_player_route_status;
+	legacy_s8 game_route_confirmation_count;
+	legacy_s8 game_player_route_indicator;
+	legacy_s8 game_opponent_route_indicator;
+	legacy_s8 game_reserved_trailing_byte;
 };
 
 #pragma pack (pop)

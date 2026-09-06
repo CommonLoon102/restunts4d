@@ -452,20 +452,20 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		adjusted_angle = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_MUL(adjusted_angle, SLIDE_ANGLE_WEIGHT),
 			initial_angle), SLIDE_ANGLE_BLEND_SHIFT);
-		carstate->field_42 = LEGACY_S16_WRAP_SUB(
+		carstate->car_slip_angle = LEGACY_S16_WRAP_SUB(
 			initial_angle, adjusted_angle);
 	} else {
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
-		if (carstate->field_42 != 0) {
-			carstate->field_42 = LEGACY_S16_WRAP_SUB(
-				carstate->field_42, LEGACY_S16_SAR(
-					carstate->field_42, SLIDE_ANGLE_DECAY_SHIFT));
-			absolute_angle = carstate->field_42;
+		if (carstate->car_slip_angle != 0) {
+			carstate->car_slip_angle = LEGACY_S16_WRAP_SUB(
+				carstate->car_slip_angle, LEGACY_S16_SAR(
+					carstate->car_slip_angle, SLIDE_ANGLE_DECAY_SHIFT));
+			absolute_angle = carstate->car_slip_angle;
 			if (absolute_angle < 0)
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			if (absolute_angle < SLIDE_ANGLE_DECAY_THRESHOLD)
-				carstate->field_42 = LEGACY_S16_SAR(
-					carstate->field_42,
+				carstate->car_slip_angle = LEGACY_S16_SAR(
+					carstate->car_slip_angle,
 					SLIDE_ANGLE_FINAL_DECAY_SHIFT);
 		}
 	}
@@ -545,7 +545,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 
 	if (carstate->car_slidingFlag != CAR_SLIDING_INACTIVE) {
-		absolute_angle = carstate->field_42;
+		absolute_angle = carstate->car_slip_angle;
 		if (absolute_angle < 0)
 			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 		penalty = LEGACY_S16_SHL(absolute_angle,
@@ -568,10 +568,10 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 				if (carstate->car_surfaceWhl[i] == CAR_SURFACE_PAVED)
 					break;
 			}
-			carstate->field_CF = (legacy_u8)carstate->field_CF |
+			carstate->car_sound_flags = (legacy_u8)carstate->car_sound_flags |
 				(i < CAR_WHEEL_COUNT ? CAR_SOUND_SKID_PAVED_FLAG :
 					CAR_SOUND_SKID_OFFROAD_FLAG);
 		}
 	}
-	carstate->field_42 = 0;
+	carstate->car_slip_angle = 0;
 }

@@ -109,7 +109,7 @@ legacy_u16 simd_decode(struct SIMD* destination,
 	reader.offset = 0U;
 
 	destination->num_gears = simd_read_s8(&reader);
-	destination->simd_unk = simd_read_s8(&reader);
+	destination->reserved_gear_byte = simd_read_s8(&reader);
 	destination->car_mass = simd_read_s16(&reader);
 	destination->braking_eff = simd_read_s16(&reader);
 	destination->idle_rpm = simd_read_s16(&reader);
@@ -124,15 +124,15 @@ legacy_u16 simd_decode(struct SIMD* destination,
 	destination->idle_torque = simd_read_s8(&reader);
 	simd_read_s8_array(&reader, destination->torque_curve,
 		SIMD_TORQUE_CURVE_SIZE);
-	destination->field_A3 = simd_read_s8(&reader);
+	destination->reserved_torque_byte = simd_read_s8(&reader);
 	destination->grip = simd_read_s16(&reader);
-	simd_read_s16_array(&reader, destination->field_A6,
-		SIMD_FIELD_A6_COUNT);
+	simd_read_s16_array(&reader, destination->reserved_handling_words,
+		SIMD_RESERVED_HANDLING_COUNT);
 	destination->sliding = simd_read_s16(&reader);
 	simd_read_s16_array(&reader, destination->surface_grip,
 		SIMD_SURFACE_GRIP_COUNT);
-	simd_read_s8_array(&reader, destination->simd_unk3,
-		SIMD_UNKNOWN3_SIZE);
+	simd_read_s8_array(&reader, destination->reserved_grip_bytes,
+		SIMD_RESERVED_GRIP_SIZE);
 	simd_read_point_array(&reader, destination->collide_points,
 		SIMD_COLLISION_POINT_COUNT);
 	destination->car_height = simd_read_s16(&reader);
