@@ -24,6 +24,9 @@
 #define PENALTY_DETECTED 1
 #define LEGACY_GRIP_STACK_SI_VALUE 80
 #define CAR_WHEEL_COUNT 4U
+#define CAR_WHEEL_INDEX_FIRST 0
+#define GRASS_WHEEL_COUNT_NONE 0
+#define GRASS_WHEEL_COUNT_STEP 1
 #define SURFACE_PAVED 1
 #define SURFACE_GRASS 4
 #define CAR_SPEED_INTEGER_SHIFT 8U
@@ -264,7 +267,7 @@ void update_legacy_grip_stack_words(
 	combined_grip_operand = LEGACY_S16_SHL(simd->grip, 1U);
 	sliding_sum = 0;
 	sliding_values = &simd->sliding;
-	for (i = 0; i < CAR_WHEEL_COUNT; i++) {
+	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(
 			sliding_sum,
 			sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
@@ -285,13 +288,14 @@ void update_legacy_grip_stack_words(
 	 * Sliding grip uses the post-deceleration speed when any wheel is on
 	 * grass, with the divisor selected by the number of grass wheels.
 	 */
-	grass_wheels = 0;
-	for (i = 0; i < CAR_WHEEL_COUNT; i++) {
+	grass_wheels = GRASS_WHEEL_COUNT_NONE;
+	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		if (carstate->car_surfaceWhl[i] == SURFACE_GRASS)
-			grass_wheels = LEGACY_S16_WRAP_ADD(grass_wheels, 1);
+			grass_wheels = LEGACY_S16_WRAP_ADD(
+				grass_wheels, GRASS_WHEEL_COUNT_STEP);
 	}
 	grip_speed = speed_before_grip;
-	if (grass_wheels != 0) {
+	if (grass_wheels != GRASS_WHEEL_COUNT_NONE) {
 		speed2_before_grip = LEGACY_U16_WRAP_SUB(speed2_before_grip,
 			LEGACY_U16_DIV_OR_ZERO(speed2_before_grip,
 				grassDecelDivTab[grass_wheels]));
@@ -348,12 +352,13 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		return;
 	}
 
-	grass_wheels = 0;
-	for (i = 0; i < CAR_WHEEL_COUNT; i++) {
+	grass_wheels = GRASS_WHEEL_COUNT_NONE;
+	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		if (carstate->car_surfaceWhl[i] == SURFACE_GRASS)
-			grass_wheels = LEGACY_U16_WRAP_ADD(grass_wheels, 1U);
+			grass_wheels = LEGACY_U16_WRAP_ADD(
+				grass_wheels, GRASS_WHEEL_COUNT_STEP);
 	}
-	if (grass_wheels != 0) {
+	if (grass_wheels != GRASS_WHEEL_COUNT_NONE) {
 		carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
 			carstate->car_speed2,
 			LEGACY_U16_DIV_OR_ZERO(carstate->car_speed2,
@@ -377,7 +382,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	combined_grip = LEGACY_S16_SHL(simd->grip, 1U);
 	sliding_sum = 0;
 	sliding_values = &simd->sliding;
-	for (i = 0; i < CAR_WHEEL_COUNT; i++) {
+	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
 			sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
 	}
@@ -539,7 +544,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		}
 
 		if (carstate->car_crashBmpFlag == CRASH_EVENT_NONE) {
-			for (i = 0; i < CAR_WHEEL_COUNT; i++) {
+			for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 				if (carstate->car_surfaceWhl[i] == SURFACE_PAVED)
 					break;
 			}
