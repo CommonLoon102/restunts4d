@@ -504,7 +504,8 @@ legacy_s16 nopsub_373FE(void)
 	legacy_u16 offset;
 	legacy_u16 channel;
 
-	if (audio_suspended == 1 || audio_music_enabled == AUDIO_STATE_DISABLED)
+	if (audio_suspended == AUDIO_STATE_ENABLED ||
+		audio_music_enabled == AUDIO_STATE_DISABLED)
 		return 1;
 
 	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++) {
@@ -520,7 +521,7 @@ legacy_s16 nopsub_373FE(void)
 void sub_3736A(void)
 {
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
-	audio_music_active = 0;
+	audio_music_active = AUDIO_STATE_DISABLED;
 	audio_release_channel_range(AUDIO_MUSIC_CHANNEL_FIRST,
 		AUDIO_MUSIC_CHANNEL_LAST);
 	audio_init_chunk(AUDIO_MUSIC_CHANNEL_FIRST, AUDIO_MUSIC_CHANNEL_LAST,
@@ -1139,7 +1140,7 @@ void audio_suspend(void)
 	legacy_u16 channel;
 	legacy_u16 context_index;
 
-	audio_suspended = 1;
+	audio_suspended = AUDIO_STATE_ENABLED;
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
 	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_master_volume = 0;
@@ -1175,7 +1176,7 @@ void audio_resume(void)
 {
 	legacy_u16 channel;
 
-	audio_suspended = 1;
+	audio_suspended = AUDIO_STATE_ENABLED;
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
 	if (dos_audio_uses_direct_channels != 0) {
 		dos_audio_master_volume = AUDIO_DEFAULT_MASTER_VOLUME;
@@ -1190,7 +1191,7 @@ void audio_resume(void)
 		}
 	}
 	audio_update_lock = AUDIO_UPDATE_UNLOCKED;
-	audio_suspended = 0;
+	audio_suspended = AUDIO_STATE_DISABLED;
 }
 
 static legacy_s16 audio_find_free_sfx_channel(void)

@@ -231,9 +231,9 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 		}
 	}
 
-	audio_suspended = 0;
+	audio_suspended = AUDIO_STATE_DISABLED;
 	audio_music_enabled = AUDIO_STATE_ENABLED;
-	audio_music_active = 0;
+	audio_music_active = AUDIO_STATE_DISABLED;
 	audio_effects_enabled = AUDIO_STATE_ENABLED;
 	return 0;
 }
@@ -752,7 +752,7 @@ void load_audio_finalize(void far* audio_resource)
 	audio_init_chunk(0,
 		LEGACY_S16_FROM_BITS((legacy_u16)(audio_music_channel_count - 1U)),
 		resource, data_offset, audio_music_rate, AUDIO_MUSIC_PRIORITY);
-	audio_music_active = 1;
+	audio_music_active = AUDIO_STATE_ENABLED;
 	audio_update_lock = AUDIO_UPDATE_UNLOCKED;
 }
 
