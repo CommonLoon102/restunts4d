@@ -626,7 +626,7 @@ legacy_s16 get_track_route_point(
 	legacy_s16 orientation;
 
 	track_index = (legacy_s16)track_index_arg;
-	tile_element = (legacy_u8)td17_trk_elem_ordered[track_index];
+	tile_element = (legacy_u8)track_route_element_ids[track_index];
 	track_subtype = (legacy_u8)track_route_traversal_flags[track_index] &
 		TRACK_ROUTE_SUBTYPE_MASK;
 	connection_status = (legacy_u8)track_route_traversal_flags[track_index] &
@@ -702,10 +702,10 @@ legacy_s16 get_track_route_point(
 		second_point.z = base_position;
 	}
 
-	column = (legacy_u8)td21_col_from_path[track_index];
-	row = (legacy_u8)td22_row_from_path[track_index];
+	column = (legacy_u8)track_route_columns[track_index];
+	row = (legacy_u8)track_route_rows[track_index];
 	if (first_point.y != ROUTE_POINT_HEIGHT_UNSPECIFIED &&
-		td15_terr_map_main[terrainrows[row] + column] ==
+		track_terrain_map[terrainrows[row] + column] ==
 			TERRAIN_RAISED_TILE) {
 		first_point.y = LEGACY_S16_WRAP_ADD(
 			first_point.y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);

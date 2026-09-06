@@ -9,6 +9,17 @@
 
 /* Track arena symbols exported by the unchanged original executable. */
 #ifdef RESTUNTS_ORIGINAL
+#define player_aero_resistance_table td04_aerotable_pl
+#define opponent_aero_resistance_table td05_aerotable_op
+#define track_highscore_table td11_highscores
+#define replay_header_buffer td13_rpl_header
+#define track_element_map td14_elem_map_main
+#define track_terrain_map td15_terr_map_main
+#define replay_input_buffer td16_rpl_buffer
+#define track_route_element_ids td17_trk_elem_ordered
+#define track_and_directory_backup td20_trk_file_appnd
+#define track_route_columns td21_col_from_path
+#define track_route_rows td22_row_from_path
 #define track_primary_route_links td01_track_file_cpy
 #define track_alternate_route_links td02_penalty_related
 #define opponent_route_track_indices trackdata3
@@ -347,8 +358,8 @@ extern legacy_s16 track_column_centers[];
 extern legacy_s16 far* track_primary_route_links; //trackdata1;
 extern legacy_s16 far* track_alternate_route_links; //trackdata2;
 extern legacy_s8 far* opponent_route_track_indices;
-extern legacy_s16 far* td04_aerotable_pl; //trackdata4;
-extern legacy_s16 far* td05_aerotable_op; //trackdata5;
+extern legacy_s16 far* player_aero_resistance_table;
+extern legacy_s16 far* opponent_aero_resistance_table;
 extern legacy_s16 far* reserved_trackside_camera_words;
 extern legacy_s16 far* trackside_camera_ground_heights;
 extern legacy_s16 far* roadside_sign_headings; //trackdata8;
@@ -356,18 +367,19 @@ extern legacy_s16 far* roadside_sign_headings; //trackdata8;
 extern struct VECTOR far* trackside_camera_positions;
 /* Point each TV camera looks at, one vector per camera. */
 extern struct VECTOR far* roadside_sign_positions;// trackdata10;
-extern legacy_s8 far* td11_highscores; //trackdata11;
+extern legacy_s8 far* track_highscore_table;
 extern legacy_s8 far* sprite_background_state_stack;
-extern legacy_s8 far* td13_rpl_header; //trackdata13;
-extern legacy_u8 far* td14_elem_map_main; //trackdata14;
-extern legacy_u8 far* td15_terr_map_main; //trackdata15;
-extern legacy_s8 far* td16_rpl_buffer; //trackdata16;
-extern legacy_s8 far* td17_trk_elem_ordered; //trackdata17;
+extern legacy_s8 far* replay_header_buffer;
+extern legacy_u8 far* track_element_map;
+extern legacy_u8 far* track_terrain_map;
+extern legacy_s8 far* replay_input_buffer;
+extern legacy_s8 far* track_route_element_ids;
 extern legacy_s8 far* track_route_traversal_flags;
 extern legacy_u8 far* roadside_sign_indices_by_tile;
-extern legacy_s8 far* td20_trk_file_appnd; //trackdata20;
-extern legacy_s8 far* td21_col_from_path; //trackdata21;
-extern legacy_s8 far* td22_row_from_path; //trackdata22;
+/* Saved element/terrain maps followed by the track and replay directories. */
+extern legacy_s8 far* track_and_directory_backup;
+extern legacy_s8 far* track_route_columns;
+extern legacy_s8 far* track_route_rows;
 extern legacy_u8 far* roadside_sign_shape_indices; // indexes into trkObjectList
 extern legacy_s8 kbormouse;
 extern legacy_s8 passed_security;

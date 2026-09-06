@@ -158,7 +158,7 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 	if (create_default == 0) {
 		g_is_busy = 1;
 		read_result = highscore_read_with_retry(HIGHSCORE_READ_ONCE_OPERATION,
-			g_path_buf, td11_highscores);
+			g_path_buf, track_highscore_table);
 		g_is_busy = 0;
 		return read_result == 0 ? 1 : 0;
 	}
@@ -175,10 +175,10 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 		record.opponent[offset] = '.';
 	record.opponent[HIGHSCORE_OPPONENT_TEXT_BYTES] = 0;
 	record.time = HIGHSCORE_EMPTY_TIME;
-	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++)
 		scores[entry] = record;
-	return file_write_fatal(g_path_buf, td11_highscores,
+	return file_write_fatal(g_path_buf, track_highscore_table,
 		HIGHSCORE_TABLE_SIZE_BYTES) != 0;
 }
 
@@ -189,7 +189,7 @@ void highscore_save_sorted(void)
 	legacy_u16 entry;
 	legacy_u16 source_entry;
 
-	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		source_entry = (legacy_u16)ranking_entry_order[entry];
 		ordered_scores[entry] = scores[source_entry];
@@ -212,7 +212,7 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets)
 	legacy_s8 formatted_time[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	legacy_s8* output;
 
-	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 	record = scores[ranking_entry_order[entry]];
 
 	text_offsets[0] = 0;
@@ -321,7 +321,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	if (framespersec == GAME_FRAME_RATE_LOW)
 		time_bits = LEGACY_U16_WRAP_MUL(time_bits,
 			HIGHSCORE_LOW_FRAME_RATE_TIME_SCALE);
-	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+	scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 	if (scores[HIGHSCORE_LAST_ENTRY_INDEX].time <= time_bits) {
 		highscore_draw_table();
 		return;
@@ -791,7 +791,7 @@ legacy_u16 end_hiscore(void)
 	}
 	if (track_resource != 0) {
 		for (i = 0; i < END_SCREEN_TRACK_VALIDATION_BYTES; i++) {
-			if (track_resource[i] != td14_elem_map_main[i]) {
+			if (track_resource[i] != track_element_map[i]) {
 				score_status = -1;
 				break;
 			}
@@ -808,7 +808,7 @@ legacy_u16 end_hiscore(void)
 	finish_time = 0;
 	if (score_status == 0 && gState_total_finish_time != 0) {
 		finish_time = gState_total_finish_time;
-		scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+		scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 		if (((legacy_u8)replay_recording_flags &
 			REPLAY_RECORDING_HIGHSCORE_INELIGIBLE_FLAGS) == 0 &&
 			scores[HIGHSCORE_LAST_ENTRY_INDEX].time >

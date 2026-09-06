@@ -170,9 +170,9 @@ void init_trackdata(void)
 	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
 	opponent_route_track_indices = track_pointer;
 	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
-	td04_aerotable_pl = (legacy_s16 far*)track_pointer;
+	player_aero_resistance_table = (legacy_s16 far*)track_pointer;
 	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
-	td05_aerotable_op = (legacy_s16 far*)track_pointer;
+	opponent_aero_resistance_table = (legacy_s16 far*)track_pointer;
 	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	reserved_trackside_camera_words = (legacy_s16 far*)track_pointer;
 	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
@@ -184,29 +184,29 @@ void init_trackdata(void)
 	track_pointer += TRACKDATA_CAMERA_VECTOR_SIZE;
 	roadside_sign_positions = (legacy_s16 far*)track_pointer;
 	track_pointer += TRACKDATA_CHECK_VECTOR_SIZE;
-	td11_highscores = track_pointer;
+	track_highscore_table = track_pointer;
 	track_pointer += TRACKDATA_HIGHSCORE_SIZE;
 	sprite_background_state_stack = track_pointer;
 	track_pointer += TRACKDATA_SPRITE_STATE_STACK_SIZE;
-	td13_rpl_header = track_pointer;
+	replay_header_buffer = track_pointer;
 	track_pointer += TRACKDATA_REPLAY_HEADER_SIZE;
-	td14_elem_map_main = (legacy_u8 far*)track_pointer;
+	track_element_map = (legacy_u8 far*)track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
-	td15_terr_map_main = (legacy_u8 far*)track_pointer;
+	track_terrain_map = (legacy_u8 far*)track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
-	td16_rpl_buffer = track_pointer;
+	replay_input_buffer = track_pointer;
 	track_pointer += TRACKDATA_REPLAY_INPUT_BUFFER_SIZE;
-	td17_trk_elem_ordered = track_pointer;
+	track_route_element_ids = track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
 	track_route_traversal_flags = track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
 	roadside_sign_indices_by_tile = (legacy_u8 far*)track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
-	td20_trk_file_appnd = track_pointer;
+	track_and_directory_backup = track_pointer;
 	track_pointer += TRACKDATA_TRACK_FILE_APPEND_SIZE;
-	td21_col_from_path = track_pointer;
+	track_route_columns = track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
-	td22_row_from_path = track_pointer;
+	track_route_rows = track_pointer;
 	track_pointer += TRACKDATA_MAP_SIZE;
 	roadside_sign_shape_indices = (legacy_u8 far*)track_pointer;
 }
@@ -491,11 +491,11 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
 	for (index = 0; index < TRACKDATA_LINK_TABLE_SIZE; index++)
-		td20_trk_file_appnd[index] = td14_elem_map_main[index];
+		track_and_directory_backup[index] = track_element_map[index];
 	for (index = 0; index < TRACKDATA_CHECKPOINT_DATA_SIZE; index++) {
-		td20_trk_file_appnd[index + TRACKDATA_LINK_TABLE_SIZE] =
+		track_and_directory_backup[index + TRACKDATA_LINK_TABLE_SIZE] =
 			track_directory[index];
-		td20_trk_file_appnd[index + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
+		track_and_directory_backup[index + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
 			replay_directory[index];
 	}
 	if (track_setup() != 0)

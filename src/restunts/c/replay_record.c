@@ -261,8 +261,8 @@ void replay_update_input_tick(legacy_s16 force_neutral_input)
 			input_index < (legacy_u16)(REPLAY_INPUT_BUFFER_FRAME_COUNT -
 				recording_chunk);
 			input_index++)
-			td16_rpl_buffer[input_index] =
-				td16_rpl_buffer[input_index + recording_chunk];
+			replay_input_buffer[input_index] =
+				replay_input_buffer[input_index + recording_chunk];
 		elapsed_time2 = LEGACY_U16_WRAP_SUB(
 			elapsed_time2, recording_chunk);
 		gameconfig.game_recordedframes = LEGACY_U16_WRAP_SUB(
@@ -273,7 +273,7 @@ void replay_update_input_tick(legacy_s16 force_neutral_input)
 			state.game_frame, recording_chunk);
 	}
 
-	td16_rpl_buffer[elapsed_time2] = (legacy_u8)input_flags;
+	replay_input_buffer[elapsed_time2] = (legacy_u8)input_flags;
 	elapsed_time2++;
 	gameconfig.game_recordedframes++;
 }
@@ -319,6 +319,6 @@ void replay_apply_analog_steering_history(void)
 			action = INPUT_STEER_RIGHT_FLAG;
 	}
 	if (action != 0)
-		td16_rpl_buffer[frame] |= action;
+		replay_input_buffer[frame] |= action;
 	input_steering_history_valid[history_index] = 0;
 }

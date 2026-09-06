@@ -510,7 +510,7 @@ void build_track_object(struct VECTOR* world_position,
 
 	elem_xCenter = (legacy_s16)track_column_centers[track_column];
 	elem_zCenter = (legacy_s16)terraincenterpos[track_row];
-	terrain_tile = td15_terr_map_main[
+	terrain_tile = track_terrain_map[
 		trackrows[track_row] + track_column];
 	if (terrain_tile == TERRAIN_WATER_TILE) {
 		current_surf_type = CAR_SURFACE_WATER;
@@ -545,22 +545,22 @@ void build_track_object(struct VECTOR* world_position,
 		terrainHeight = (legacy_s16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 	}
 
-	track_tile = td14_elem_map_main[
+	track_tile = track_element_map[
 		terrainrows[track_row] + track_column];
 	do {
 	if (track_tile == TRACK_TILE_EMPTY)
 		break;
 	if (track_tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
-		track_tile = td14_elem_map_main[
+		track_tile = track_element_map[
 			terrainrows[track_row + 1] + track_column - 1];
 		track_object_tile_center(track_tile, track_row + 1, track_column);
 	} else if (track_tile == TRACK_TILE_CONTINUATION_SOUTH) {
-		track_tile = td14_elem_map_main[
+		track_tile = track_element_map[
 			terrainrows[track_row + 1] + track_column];
 		track_object_tile_center(track_tile, track_row + 1,
 			track_column + 1);
 	} else if (track_tile == TRACK_TILE_CONTINUATION_EAST) {
-		track_tile = td14_elem_map_main[
+		track_tile = track_element_map[
 			terrainrows[track_row] + track_column - 1];
 		track_object_tile_center(track_tile, track_row, track_column);
 	} else {

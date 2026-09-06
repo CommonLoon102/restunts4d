@@ -154,7 +154,7 @@ void update_gamestate(void)
 	legacy_s8 car_input;
 	legacy_u16 checkpoint_index;
 
-	car_input = td16_rpl_buffer[(legacy_u16)state.game_frame];
+	car_input = replay_input_buffer[(legacy_u16)state.game_frame];
 	if (car_input != INPUT_NONE)
 		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
 

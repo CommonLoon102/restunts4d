@@ -853,8 +853,8 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 				tile_east <= TRACK_GRID_LAST_COORDINATE &&
 				tile_south >= 0 &&
 				tile_south <= TRACK_GRID_LAST_COORDINATE) {
-				elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
-				terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+				elem_map_value = track_element_map[tile_east + trackrows[tile_south]];
+				terr_map_value = track_terrain_map[tile_east + terrainrows[tile_south]];
 
 				if (elem_map_value != 0) {
 
@@ -870,18 +870,18 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 						TRACK_TILE_CONTINUATION_SOUTHEAST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
-						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
-						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+						elem_map_value = track_element_map[tile_east + trackrows[tile_south]];
+						terr_map_value = track_terrain_map[tile_east + terrainrows[tile_south]];
 					} else if (elem_map_value ==
 						TRACK_TILE_CONTINUATION_SOUTH) {
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
-						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
-						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+						elem_map_value = track_element_map[tile_east + trackrows[tile_south]];
+						terr_map_value = track_terrain_map[tile_east + terrainrows[tile_south]];
 					} else if (elem_map_value ==
 						TRACK_TILE_CONTINUATION_EAST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
-						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
-						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
+						elem_map_value = track_element_map[tile_east + trackrows[tile_south]];
+						terr_map_value = track_terrain_map[tile_east + terrainrows[tile_south]];
 					}
 				}
 
@@ -1093,7 +1093,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 						tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
 							tile_south, 1);
 					}
-					terr_map_value = td15_terr_map_main[tile_to_draw_east_offset + terrainrows[tile_to_draw_south_offset]];
+					terr_map_value = track_terrain_map[tile_to_draw_east_offset + terrainrows[tile_to_draw_south_offset]];
 					if (terr_map_value != 0) {
 						track_object = &terrain_scene_objects[terr_map_value];
 						currenttransshape->shapeptr = track_object->ss_shapePtr;

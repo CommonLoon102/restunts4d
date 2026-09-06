@@ -181,16 +181,16 @@ void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
 
 	if (is_opponent == 0) {
 		(void)simd_decode(&simd_player, simd_resource);
-		simd_player.aerorestable = td04_aerotable_pl;
+		simd_player.aerorestable = player_aero_resistance_table;
 		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++)
-			td04_aerotable_pl[i] = aero_resistance_at(
+			player_aero_resistance_table[i] = aero_resistance_at(
 				simd_player.aero_resistance, i);
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
 	} else {
 		(void)simd_decode(&simd_opponent, simd_resource);
-		simd_opponent.aerorestable = td05_aerotable_op;
+		simd_opponent.aerorestable = opponent_aero_resistance_table;
 		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++)
-			td05_aerotable_op[i] = aero_resistance_at(
+			opponent_aero_resistance_table[i] = aero_resistance_at(
 				simd_opponent.aero_resistance, i);
 		copy_string(gsna_string, locate_shape_alt(carresptr, "gsna"));
 	}
@@ -251,7 +251,7 @@ void load_opponent_data(void)
 
 		path[path_count] = track_index;
 		path_count++;
-		speed_index = (legacy_u8)td17_trk_elem_ordered[track_index];
+		speed_index = (legacy_u8)track_route_element_ids[track_index];
 		distance += (legacy_u32)speed_data[speed_index] + 1UL;
 		if (!terminal) {
 			alternate_track = (legacy_u16)

@@ -74,7 +74,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		render_window_sprite = sprite_make_wnd(TRACK_MENU_SCREEN_WIDTH,
 			TRACK_MENU_SCREEN_HEIGHT, TRACK_MENU_TRANSPARENT_COLOR);
 		load_skybox((legacy_s8)
-			td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX]);
+			track_element_map[TRACK_SKYBOX_ELEMENT_INDEX]);
 		shape3d_load_all();
 		set_projection(TRACK_PREVIEW_PROJECTION_SCALE,
 			TRACK_PREVIEW_PROJECTION_SCALE, TRACK_MENU_SCREEN_WIDTH,
@@ -96,7 +96,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 			TRACK_MENU_NAME_Y,
 			dialog_fnt_colour, 0);
 		if (highscore_load_or_create(0) == 0) {
-			scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
+			scores = (struct HIGHSCORE_ENTRY far*)track_highscore_table;
 			score = scores[ranking_entry_order[0]].time;
 			if (score != HIGHSCORE_UNSET_TIME) {
 				copy_string(&resID_byte1,
@@ -192,7 +192,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 				file_build_path(track_directory,
 					gameconfig.game_trackname, ".trk", g_path_buf);
 				if (chosen != 0) {
-					file_read_fatal(g_path_buf, td14_elem_map_main);
+					file_read_fatal(g_path_buf, track_element_map);
 					sprite_free_wnd(render_window_sprite);
 					break;
 				}

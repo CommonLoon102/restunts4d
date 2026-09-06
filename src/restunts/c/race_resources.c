@@ -184,7 +184,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 
 	load_track_collision_resources();
 	load_sdgame2_shapes();
-	load_skybox(td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX]);
+	load_skybox(track_element_map[TRACK_SKYBOX_ELEMENT_INDEX]);
 	if (shape3d_load_all() != 0) {
 		return 1;
 	}

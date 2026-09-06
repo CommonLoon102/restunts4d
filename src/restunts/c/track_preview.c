@@ -129,9 +129,9 @@ void draw_track_preview(void)
 	transformed.culling_distance = TRACK_PREVIEW_TRANSFORM_DISTANCE;
 	for (row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
 		for (column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
-			track = td14_elem_map_main[
+			track = track_element_map[
 				LEGACY_U16_WRAP_ADD(trackrows[row], column)];
-			terrain = td15_terr_map_main[
+			terrain = track_terrain_map[
 				LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
 			if (track != 0 && terrain >=
 				TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST && terrain <
@@ -161,7 +161,7 @@ void draw_track_preview(void)
 					adjacent_row = (legacy_u8)(row +
 						((quadrant & TRACK_PREVIEW_QUADRANT_ROW_BIT) != 0 ?
 							1U : 0U));
-					terrain = td15_terr_map_main[
+					terrain = track_terrain_map[
 						LEGACY_U16_WRAP_ADD(
 							terrainrows[adjacent_row],
 							adjacent_column)];

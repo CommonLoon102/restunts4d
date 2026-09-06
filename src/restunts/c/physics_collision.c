@@ -130,7 +130,7 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 
 	column = (legacy_u16)column_arg;
 	row = (legacy_u16)row_arg;
-	tile_element = td14_elem_map_main[trackrows[row] + column];
+	tile_element = track_element_map[trackrows[row] + column];
 	if (tile_element == 0)
 		return 0;
 
@@ -139,16 +139,16 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 	previous_row_base = row == 0 ? (legacy_u16)replay_overflow_acknowledged_word :
 		(legacy_u16)trackrows[row - 1U];
 	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
-		tile_element = td14_elem_map_main[
+		tile_element = track_element_map[
 			LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
 		collision_tile_center(tile_element, row + 1U, column,
 			&center_z, &center_x);
 	} else if (tile_element == TRACK_TILE_CONTINUATION_SOUTH) {
-		tile_element = td14_elem_map_main[previous_row_base + column];
+		tile_element = track_element_map[previous_row_base + column];
 		collision_tile_center(tile_element, row + 1U, column + 1U,
 			&center_z, &center_x);
 	} else if (tile_element == TRACK_TILE_CONTINUATION_EAST) {
-		tile_element = td14_elem_map_main[
+		tile_element = track_element_map[
 			LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
 		collision_tile_center(tile_element, row, column,
 			&center_z, &center_x);
@@ -178,7 +178,7 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 	if (count == 0)
 		return 0;
 
-	terrain_height = td15_terr_map_main[terrainrows[row] + column] ==
+	terrain_height = track_terrain_map[terrainrows[row] + column] ==
 		TERRAIN_RAISED_TILE ?
 		(legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX] : 0;
 	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;

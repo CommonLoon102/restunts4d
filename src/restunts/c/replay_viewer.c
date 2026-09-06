@@ -369,13 +369,13 @@ static void replay_pause_menu(void)
 		waitflag = REPLAY_LOAD_WAIT_VALUE;
 		show_waiting();
 		saved_config = gameconfig;
-		saved_track = td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX];
+		saved_track = track_element_map[TRACK_SKYBOX_ELEMENT_INDEX];
 		if ((legacy_u8)file_load_replay(replay_directory, replay_filename_input) != 0)
 			gameconfig.game_recordedframes = 0;
 		dashb_toggle = 0;
 		track_setup();
 		resources_changed =
-			td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX] != saved_track;
+			track_element_map[TRACK_SKYBOX_ELEMENT_INDEX] != saved_track;
 		for (index = 0; index < CAR_ID_LENGTH; index++) {
 			if (saved_config.game_playercarid[index] !=
 				gameconfig.game_playercarid[index])

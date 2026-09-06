@@ -561,7 +561,7 @@ legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8* argv[]) {
 
 		if (reload_track != 0) {
 			file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
-			file_read_fatal(g_path_buf, td14_elem_map_main);
+			file_read_fatal(g_path_buf, track_element_map);
 		}
 
 		idle_expired = 0;
@@ -623,12 +623,12 @@ legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8* argv[]) {
 
 			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
 			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
-				td20_trk_file_appnd[i] = td14_elem_map_main[i];
+				track_and_directory_backup[i] = track_element_map[i];
 			}
 			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
-				td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET] =
+				track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET] =
 					track_directory[i];
-				td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET] =
+				track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET] =
 					replay_directory[i];
 			}
 
@@ -685,13 +685,13 @@ legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8* argv[]) {
 
 			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
 			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
-				td14_elem_map_main[i] = td20_trk_file_appnd[i];
+				track_element_map[i] = track_and_directory_backup[i];
 			}
 			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
 				track_directory[i] =
-					td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET];
+					track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET];
 				replay_directory[i] =
-					td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET];
+					track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET];
 			}
 			mmgr_release(cvxptr);
 

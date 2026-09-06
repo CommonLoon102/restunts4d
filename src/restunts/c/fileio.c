@@ -988,9 +988,9 @@ legacy_s16 file_load_replay(const legacy_s8* dir, const legacy_s8* name)
 	file_build_path(dir, name, ".rpl", g_path_buf);
 
 	g_is_busy = 1;
-	file_read_fatal(g_path_buf, td13_rpl_header);
+	file_read_fatal(g_path_buf, replay_header_buffer);
 	replay_gameinfo_decode(&gameconfig,
-		(const legacy_u8 far*)td13_rpl_header);
+		(const legacy_u8 far*)replay_header_buffer);
 	g_is_busy = 0;
 	return 0;
 }
@@ -999,10 +999,10 @@ legacy_s16 file_write_replay(const legacy_s8* filename)
 {
 	legacy_s16 ret;
 
-	replay_gameinfo_encode((legacy_u8 far*)td13_rpl_header, &gameconfig);
+	replay_gameinfo_encode((legacy_u8 far*)replay_header_buffer, &gameconfig);
 
 	g_is_busy = 1;
-	ret = file_write_fatal(filename, td13_rpl_header,
+	ret = file_write_fatal(filename, replay_header_buffer,
 		replay_file_size(gameconfig.game_recordedframes));
 	g_is_busy = 0;
 

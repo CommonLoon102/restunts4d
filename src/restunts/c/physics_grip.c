@@ -182,13 +182,13 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		}
 
 		if (next_track == PENALTY_ROUTE_SENTINEL) {
-			minimum_row = (legacy_u8)td21_col_from_path[
+			minimum_row = (legacy_u8)track_route_columns[
 				PENALTY_ROUTE_START_TRACK_INDEX];
-			tile_element = (legacy_u8)td16_rpl_buffer[
+			tile_element = (legacy_u8)replay_input_buffer[
 				PENALTY_ROUTE_START_TILE_INDEX];
 		} else {
-			minimum_row = (legacy_u8)td22_row_from_path[next_track];
-			tile_element = (legacy_u8)td17_trk_elem_ordered[next_track];
+			minimum_row = (legacy_u8)track_route_rows[next_track];
+			tile_element = (legacy_u8)track_route_element_ids[next_track];
 		}
 		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 		maximum_row = minimum_row;
@@ -197,10 +197,10 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			maximum_row = LEGACY_U8_WRAP_ADD(
 				maximum_row, TRACK_TILE_COORDINATE_STEP);
 		if (next_track == PENALTY_ROUTE_SENTINEL)
-			minimum_column = (legacy_u8)td20_trk_file_appnd[
+			minimum_column = (legacy_u8)track_and_directory_backup[
 				PENALTY_ROUTE_START_COLUMN_INDEX];
 		else
-			minimum_column = (legacy_u8)td21_col_from_path[next_track];
+			minimum_column = (legacy_u8)track_route_columns[next_track];
 		maximum_column = minimum_column;
 		if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) !=
 			MULTI_TILE_FLAGS_NONE)
@@ -484,7 +484,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_position.lx >> TRACK_WORLD_TILE_SHIFT);
 		tile_z = (legacy_u8)((legacy_u32)
 			carstate->car_position.lz >> TRACK_WORLD_TILE_SHIFT);
-		track = td14_elem_map_main[
+		track = track_element_map[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 			tile_x = LEGACY_U8_WRAP_SUB(
@@ -498,7 +498,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			tile_x = LEGACY_U8_WRAP_SUB(
 				tile_x, TRACK_TILE_COORDINATE_STEP);
 		}
-		track = td14_elem_map_main[
+		track = track_element_map[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track >= BANKED_TRACK_FIRST && track <= BANKED_TRACK_LAST) {
 			carstate->car_front_wheel_response_angle = LEGACY_S16_WRAP_ADD(

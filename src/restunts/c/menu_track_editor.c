@@ -159,8 +159,8 @@ void draw_2DtrackMap(
 				column_offset, map_column);
 			source_index = LEGACY_U16_WRAP_ADD(
 				(legacy_u16)trackrows[source_row], source_column);
-			tile = td14_elem_map_main[source_index];
-			terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+			tile = track_element_map[source_index];
+			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 				(legacy_u16)terrainrows[source_row], source_column)];
 			cache_index = LEGACY_U16_WRAP_ADD(
 				LEGACY_U16_WRAP_MUL(map_row, 12U), map_column);
@@ -195,7 +195,7 @@ void draw_2DtrackMap(
 					break;
 
 				case 1:
-					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column)];
 					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
@@ -205,7 +205,7 @@ void draw_2DtrackMap(
 					break;
 
 				case 2:
-					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row],
 						source_column + 1U)];
 					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
@@ -215,17 +215,17 @@ void draw_2DtrackMap(
 					break;
 
 				case 3:
-					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row],
 						source_column + 1U)];
 					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						LEGACY_S16_WRAP_ADD(x, 16), y);
-					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column)];
 					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						x, LEGACY_S16_WRAP_ADD(y, 16));
-					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column + 1U)];
 					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
@@ -247,12 +247,12 @@ void draw_2DtrackMap(
 
 			if (tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
-				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+				terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row + 1U],
 					source_column)];
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 					x, LEGACY_S16_WRAP_ADD(y, 16));
-				neighbor_tile = td14_elem_map_main[
+				neighbor_tile = track_element_map[
 					LEGACY_U16_WRAP_SUB(source_index, 1U)];
 				sprite_putimage_and(track_editor_tile_masks[neighbor_tile],
 					LEGACY_S16_WRAP_SUB(x, 16), y);
@@ -260,12 +260,12 @@ void draw_2DtrackMap(
 					LEGACY_S16_WRAP_SUB(x, 16), y);
 			} else if (tile == TRACK_TILE_CONTINUATION_SOUTH && map_row == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
-				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
+				terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row],
 					source_column + 1U)];
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 					LEGACY_S16_WRAP_ADD(x, 16), y);
-				neighbor_tile = td14_elem_map_main[LEGACY_U16_WRAP_ADD(
+				neighbor_tile = track_element_map[LEGACY_U16_WRAP_ADD(
 					track_menu_previous_row(source_row), source_column)];
 				sprite_putimage_and(track_editor_tile_masks[neighbor_tile],
 					x, LEGACY_S16_WRAP_SUB(y, 16));
@@ -273,7 +273,7 @@ void draw_2DtrackMap(
 					x, LEGACY_S16_WRAP_SUB(y, 16));
 			} else if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST && map_row == 0 && map_column == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
-				neighbor_tile = td14_elem_map_main[LEGACY_U16_WRAP_SUB(
+				neighbor_tile = track_element_map[LEGACY_U16_WRAP_SUB(
 					LEGACY_U16_WRAP_ADD(
 						track_menu_previous_row(source_row), source_column),
 					1U)];
@@ -320,12 +320,12 @@ void track_editor_remove_invalid_multitile_links(void)
 		for (column = 0; column < 30U; column++) {
 			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
 				column);
-			tile = td14_elem_map_main[current_index];
+			tile = track_element_map[current_index];
 			if (tile == 0)
 				continue;
 			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST) {
 				if (used[current_index] == 0)
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[current_index] = 0;
 				continue;
 			}
 
@@ -335,8 +335,8 @@ void track_editor_remove_invalid_multitile_links(void)
 				next_index = LEGACY_U16_WRAP_ADD(
 					track_menu_next_row(row), column);
 				if (used[next_index] != 0 ||
-					td14_elem_map_main[next_index] != TRACK_TILE_CONTINUATION_SOUTH)
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH)
+					track_element_map[current_index] = 0;
 				else
 					used[next_index] = 1;
 				break;
@@ -344,9 +344,9 @@ void track_editor_remove_invalid_multitile_links(void)
 			case 2:
 				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
 				if (used[east_index] != 0 ||
-					td14_elem_map_main[east_index] !=
+					track_element_map[east_index] !=
 					TRACK_TILE_CONTINUATION_EAST)
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[current_index] = 0;
 				else
 					used[east_index] = 1;
 				break;
@@ -357,12 +357,12 @@ void track_editor_remove_invalid_multitile_links(void)
 					track_menu_next_row(row), column);
 				if (used[east_index] != 0 || used[next_index] != 0 ||
 					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0 ||
-					td14_elem_map_main[east_index] !=
+					track_element_map[east_index] !=
 					TRACK_TILE_CONTINUATION_EAST ||
-					td14_elem_map_main[next_index] != TRACK_TILE_CONTINUATION_SOUTH ||
-					td14_elem_map_main[
+					track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH ||
+					track_element_map[
 						LEGACY_U16_WRAP_ADD(next_index, 1U)] != TRACK_TILE_CONTINUATION_SOUTHEAST) {
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[current_index] = 0;
 				} else {
 					used[east_index] = 1;
 					used[next_index] = 1;
@@ -387,11 +387,11 @@ legacy_s16 track_editor_remove_invalid_terrain_tiles(void)
 	error = TRACK_EDITOR_VALIDATION_OK;
 	for (row = 0; row < 30U; row++) {
 		for (column = 0; column < 30U; column++) {
-			terrain = td15_terr_map_main[
+			terrain = track_terrain_map[
 				LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
 			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
 				column);
-			tile = td14_elem_map_main[current_index];
+			tile = track_element_map[current_index];
 			if (tile == 0 || terrain == 0 || terrain == 6U)
 				continue;
 
@@ -405,16 +405,16 @@ legacy_s16 track_editor_remove_invalid_terrain_tiles(void)
 					tile <= TRACK_EDITOR_WATER_BRIDGE_LAST) ||
 					(tile >= TRACK_EDITOR_WATER_SHIP_FIRST &&
 					tile <= TRACK_EDITOR_WATER_SHIP_LAST))) {
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[current_index] = 0;
 					error = TRACK_EDITOR_ERROR_INVALID_WATER_TILE;
 				}
 			} else if (terrain >= 7U && terrain <= 10U) {
 				if (subst_hillroad_track(terrain, tile) == 0) {
-					td14_elem_map_main[current_index] = 0;
+					track_element_map[current_index] = 0;
 					error = TRACK_EDITOR_ERROR_INVALID_HILL_TILE;
 				}
 			} else {
-				td14_elem_map_main[current_index] = 0;
+				track_element_map[current_index] = 0;
 				error = TRACK_EDITOR_ERROR_INVALID_TERRAIN_TILE;
 			}
 		}
@@ -451,17 +451,17 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 	legacy_u8 tile;
 
 	source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[row], column);
-	tile = td14_elem_map_main[source_index];
+	tile = track_element_map[source_index];
 	if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		source_index = LEGACY_U16_WRAP_SUB(
 			LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column), 1U);
-		tile = td14_elem_map_main[source_index];
+		tile = track_element_map[source_index];
 	} else if (tile == TRACK_TILE_CONTINUATION_SOUTH) {
 		source_index = LEGACY_U16_WRAP_ADD(
 			track_menu_previous_row(row), column);
-		tile = td14_elem_map_main[source_index];
+		tile = track_element_map[source_index];
 	} else if (tile == TRACK_TILE_CONTINUATION_EAST) {
-		tile = td14_elem_map_main[LEGACY_U16_WRAP_SUB(source_index, 1U)];
+		tile = track_element_map[LEGACY_U16_WRAP_SUB(source_index, 1U)];
 	}
 	return tile;
 }
@@ -522,7 +522,7 @@ static void track_editor_save_track(legacy_u8* track_changed,
 			}
 		}
 		write_result = file_write_fatal(g_path_buf,
-			td14_elem_map_main, TRACK_EDITOR_TRACK_FILE_SIZE);
+			track_element_map, TRACK_EDITOR_TRACK_FILE_SIZE);
 		if (write_result == 0)
 			highscore_load_or_create(1);
 		if (write_result != 0) {
@@ -1086,9 +1086,9 @@ void load_tracks_menu_shapes(void)
 				path_animation_index = (legacy_u16)
 					(track_pieces_counter - 1);
 			selection_column[0] = (legacy_u8)
-				td21_col_from_path[path_animation_index];
+				track_route_columns[path_animation_index];
 			selection_row[0] = (legacy_u8)
-				td22_row_from_path[path_animation_index];
+				track_route_rows[path_animation_index];
 			selected_tile = track_editor_map_tile(
 				selection_column[0], selection_row[0]);
 			map_dirty = 1;
@@ -1125,8 +1125,8 @@ void load_tracks_menu_shapes(void)
 					selection_row[0] = track_validation_row;
 				} else {
 					animation_saved_tile = selected_tile;
-					selection_column[0] = (legacy_u8)td21_col_from_path[0];
-					selection_row[0] = (legacy_u8)td22_row_from_path[0];
+					selection_column[0] = (legacy_u8)track_route_columns[0];
+					selection_row[0] = (legacy_u8)track_route_rows[0];
 					selected_tile = track_editor_map_tile(
 						selection_column[0], selection_row[0]);
 					path_animation_index = 1;
@@ -1161,10 +1161,10 @@ void load_tracks_menu_shapes(void)
 						locate_text_res(text_resource, "mss"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						dialog_border_color, 0,
-						td14_elem_map_main[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
+						track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
-						td14_elem_map_main[TRACK_EDITOR_SKYBOX_MAP_INDEX] =
+						track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX] =
 							dialog_result;
 						map_dirty = 1;
 						track_changed = 1;
@@ -1179,7 +1179,7 @@ void load_tracks_menu_shapes(void)
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
 						for (index = 0; index < 900U; index++)
-							td14_elem_map_main[index] = 0;
+							track_element_map[index] = 0;
 						terrain_id[0] = 't';
 						terrain_id[1] = 'e';
 						terrain_id[2] = 'r';
@@ -1187,7 +1187,7 @@ void load_tracks_menu_shapes(void)
 						terrain_id[4] = 0;
 						terrain_shape = (struct SHAPE2D far*)
 							locate_shape_alt(text_resource, terrain_id);
-						__fmemcpy(td15_terr_map_main, terrain_shape, 901U);
+						__fmemcpy(track_terrain_map, terrain_shape, 901U);
 						gameconfig.game_trackname[0] = 0;
 						map_dirty = 1;
 						track_changed = 1;
@@ -1214,7 +1214,7 @@ void load_tracks_menu_shapes(void)
 						file_build_path(track_directory,
 							gameconfig.game_trackname, ".trk", g_path_buf);
 						if (result > 0) {
-							file_read_fatal(g_path_buf, td14_elem_map_main);
+							file_read_fatal(g_path_buf, track_element_map);
 							track_setup();
 							focus = 0;
 							selection_column[0] = track_validation_column;
@@ -1251,13 +1251,13 @@ void load_tracks_menu_shapes(void)
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[selection_row[0]],
 						selection_column[0]);
-					saved_tile = td15_terr_map_main[source_index];
+					saved_tile = track_terrain_map[source_index];
 					last_column = selection_column[0];
 					last_row = selection_row[0];
 				}
 				source_index = LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[last_row], last_column);
-				td15_terr_map_main[source_index] = selected_tile;
+				track_terrain_map[source_index] = selected_tile;
 				track_changed = 1;
 				validate_track = 1;
 				map_dirty = 1;
@@ -1278,7 +1278,7 @@ void load_tracks_menu_shapes(void)
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[selection_row[0]],
 						selection_column[0]);
-					saved_tile = td14_elem_map_main[source_index];
+					saved_tile = track_element_map[source_index];
 					if (saved_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST)
 						saved_tile = 0;
 					last_column = selection_column[0];
@@ -1286,24 +1286,24 @@ void load_tracks_menu_shapes(void)
 				}
 				source_index = LEGACY_U16_WRAP_ADD(
 					(legacy_u16)trackrows[last_row], last_column);
-				td14_elem_map_main[source_index] = selected_tile;
+				track_element_map[source_index] = selected_tile;
 				track_changed = 1;
 				validate_track = 1;
 				map_dirty = 1;
 				if (multi_tile == 1U) {
-					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
+					track_element_map[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[last_row + 1U],
 						last_column)] = TRACK_TILE_CONTINUATION_SOUTH;
 				} else if (multi_tile == 2U) {
-					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
+					track_element_map[LEGACY_U16_WRAP_ADD(
 						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
 				} else if (multi_tile == 3U) {
-					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
+					track_element_map[LEGACY_U16_WRAP_ADD(
 						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
 					source_index = LEGACY_U16_WRAP_ADD(
 						(legacy_u16)trackrows[last_row + 1U], last_column);
-					td14_elem_map_main[source_index] = TRACK_TILE_CONTINUATION_SOUTH;
-					td14_elem_map_main[LEGACY_U16_WRAP_ADD(
+					track_element_map[source_index] = TRACK_TILE_CONTINUATION_SOUTH;
+					track_element_map[LEGACY_U16_WRAP_ADD(
 						source_index, 1U)] = TRACK_TILE_CONTINUATION_SOUTHEAST;
 				}
 			}
