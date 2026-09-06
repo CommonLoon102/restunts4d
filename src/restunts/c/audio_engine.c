@@ -9,6 +9,7 @@
 #include "resource.h"
 
 #define AUDIO_DRIVER_TIMER_RATE 22U
+#define AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD 2
 #define DOS_SEGMENT_WRAP_PARAGRAPHS 4096U
 #define AUDIO_ENGINE_FIRST_SAMPLE_RESOURCE 2U
 #define AUDIO_ENGINE_RATE_DIVISOR_OFFSET 14U
@@ -401,7 +402,8 @@ void audio_driver_timer(void)
 		return;
 
 	audio_driver_timer_divider = LEGACY_S16_WRAP_ADD(audio_driver_timer_divider, 1);
-	if (audio_driver_timer_divider < 2 && dos_audio_uses_direct_channels != 0)
+	if (audio_driver_timer_divider < AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD &&
+		dos_audio_uses_direct_channels != 0)
 		return;
 
 	for (index = 0; index < AUDIO_TIMER_COUNT; index++) {
@@ -460,7 +462,7 @@ void audio_driver_timer(void)
 		}
 	}
 
-	if (audio_driver_timer_divider >= 2)
+	if (audio_driver_timer_divider >= AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD)
 		audio_driver_timer_divider = 0;
 }
 
