@@ -33,6 +33,8 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_DWORD_HIGH_WORD_OFFSET 2
 #define DOS_TIMER_CALLBACKS_IDLE 0U
 #define DOS_TIMER_CALLBACKS_RUNNING 1U
+#define DOS_TIMER_CALLBACK_REGISTRATION_FAILED 0
+#define DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED 1
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -77,14 +79,14 @@ legacy_s16 dos_timer_register_callback(void (far* callback)(void))
 			break;
 	}
 	if (callback_index == DOS_TIMER_USABLE_CALLBACK_COUNT)
-		return 0;
+		return DOS_TIMER_CALLBACK_REGISTRATION_FAILED;
 
 	disable();
 	dos_timer_callbacks[callback_index] = 0;
 	dos_timer_callbacks[callback_index] = callback;
 	dos_timer_callbacks[callback_index + 1U] = 0;
 	enable();
-	return 1;
+	return DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED;
 }
 
 void dos_timer_unregister_callback(void (far* callback)(void))
