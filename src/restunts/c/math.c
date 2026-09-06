@@ -5,7 +5,7 @@
 void heapsort_by_order(legacy_s16 count, legacy_s16* values,
 	legacy_s16* order);
 
-legacy_s16 nopsub_19DE8(legacy_s16 value)
+legacy_s16 sign_word(legacy_s16 value)
 {
 	legacy_s16 signed_value;
 
@@ -15,7 +15,7 @@ legacy_s16 nopsub_19DE8(legacy_s16 value)
 	return signed_value != 0;
 }
 
-legacy_s32 nopsub_26552(legacy_s32 value)
+legacy_s32 absolute_long(legacy_s32 value)
 {
 	legacy_u32 bits;
 
@@ -568,13 +568,13 @@ static void rectlist_remove_at(legacy_s8* length,
 	(*length)--;
 }
 
-void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr, struct RECTANGLE* rect) {
-	legacy_s16 var_counter;
-	struct RECTANGLE var_rect;
-	struct RECTANGLE var_rect2;
-	struct RECTANGLE var_rect3;
-	struct RECTANGLE* var_rectptr;
-	legacy_s16 var_22, var_18;
+void rectlist_add_rect(legacy_s8* rectangle_count, struct RECTANGLE* rectangles, struct RECTANGLE* rect) {
+	legacy_s16 rectangle_index;
+	struct RECTANGLE merged_rectangle;
+	struct RECTANGLE upper_remainder;
+	struct RECTANGLE lower_remainder;
+	struct RECTANGLE* existing_rectangle;
+	legacy_s16 has_lower_remainder, has_upper_remainder;
 
 	if (video_flag2_is1 != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
@@ -583,161 +583,161 @@ void rectlist_add_rect(legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* a
 			"rectlist_add_rect: unexpected code path");
 	}
 
-	for (var_counter = 0; var_counter < *arg_rect_array_length_ptr; var_counter++) {
-		var_rectptr = &arg_rect_array_ptr[var_counter];
-		if (rect_is_overlapping(rect, var_rectptr) == 0)
+	for (rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
+		existing_rectangle = &rectangles[rectangle_index];
+		if (rect_is_overlapping(rect, existing_rectangle) == 0)
 			continue;
-		if (rect_is_inside(rect, var_rectptr) != 0)
+		if (rect_is_inside(rect, existing_rectangle) != 0)
 			return ;
 
-		if (rect_is_inside(var_rectptr, rect) != 0) {
-			rectlist_remove_at(arg_rect_array_length_ptr,
-				arg_rect_array_ptr, var_counter);
+		if (rect_is_inside(existing_rectangle, rect) != 0) {
+			rectlist_remove_at(rectangle_count,
+				rectangles, rectangle_index);
 			continue;
 		}
 
-		var_rect = *var_rectptr;
-		if (var_rectptr->top >= rect->top) {
-			if (rect->top < var_rectptr->top) {
-				var_rect2 = *rect;
-				var_rect2.bottom = var_rectptr->top;
-				var_18 = 1;
+		merged_rectangle = *existing_rectangle;
+		if (existing_rectangle->top >= rect->top) {
+			if (rect->top < existing_rectangle->top) {
+				upper_remainder = *rect;
+				upper_remainder.bottom = existing_rectangle->top;
+				has_upper_remainder = 1;
 			} else {
-				var_18 = 0;
+				has_upper_remainder = 0;
 			}
 		} else {
-			var_rect2 = *var_rectptr;
-			var_rect2.bottom = rect->top;
-			var_rect.top = rect->top;
-			var_18 = 1;
+			upper_remainder = *existing_rectangle;
+			upper_remainder.bottom = rect->top;
+			merged_rectangle.top = rect->top;
+			has_upper_remainder = 1;
 		}
 
-		if (var_rectptr->bottom <= rect->bottom) {
-			if (rect->bottom > var_rectptr->bottom) {
-				var_rect3 = *rect;
-				var_rect3.top = var_rectptr->bottom;
-				var_22 = 1;
+		if (existing_rectangle->bottom <= rect->bottom) {
+			if (rect->bottom > existing_rectangle->bottom) {
+				lower_remainder = *rect;
+				lower_remainder.top = existing_rectangle->bottom;
+				has_lower_remainder = 1;
 			} else {
-				var_22 = 0;
+				has_lower_remainder = 0;
 			}
 		} else {
-			var_rect3 = *var_rectptr;
-			var_rect3.top = rect->bottom;
-			var_rect.bottom = rect->bottom;
-			var_22 = 1;
+			lower_remainder = *existing_rectangle;
+			lower_remainder.top = rect->bottom;
+			merged_rectangle.bottom = rect->bottom;
+			has_lower_remainder = 1;
 		}
 
-		if (rect->left <= var_rectptr->left)
-			var_rect.left = rect->left;
+		if (rect->left <= existing_rectangle->left)
+			merged_rectangle.left = rect->left;
 		else
-			var_rect.left = var_rectptr->left;
+			merged_rectangle.left = existing_rectangle->left;
 
-		if (rect->right >= var_rectptr->right)
-			var_rect.right = rect->right;
+		if (rect->right >= existing_rectangle->right)
+			merged_rectangle.right = rect->right;
 		else
-			var_rect.right = var_rectptr->right;
+			merged_rectangle.right = existing_rectangle->right;
 
-		rectlist_remove_at(arg_rect_array_length_ptr,
-			arg_rect_array_ptr, var_counter);
-		if (var_18 != 0) {
-			rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect2);
+		rectlist_remove_at(rectangle_count,
+			rectangles, rectangle_index);
+		if (has_upper_remainder != 0) {
+			rectlist_add_rect(rectangle_count, rectangles, &upper_remainder);
 		}
 
-		rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect);
-		if (var_22 != 0) {
-			rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect3);
+		rectlist_add_rect(rectangle_count, rectangles, &merged_rectangle);
+		if (has_lower_remainder != 0) {
+			rectlist_add_rect(rectangle_count, rectangles, &lower_remainder);
 			return ;
 		}
 		return ;
 	}
 
-	for (var_counter = 0; var_counter < *arg_rect_array_length_ptr; var_counter++) {
-		var_rectptr = &arg_rect_array_ptr[var_counter];
+	for (rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
+		existing_rectangle = &rectangles[rectangle_index];
 
-		if (rect_is_adjacent(var_rectptr, rect) == 0) {
+		if (rect_is_adjacent(existing_rectangle, rect) == 0) {
 			continue;
 		}
-		rect_union(var_rectptr, rect, &var_rect);
+		rect_union(existing_rectangle, rect, &merged_rectangle);
 
-		rectlist_remove_at(arg_rect_array_length_ptr,
-			arg_rect_array_ptr, var_counter);
-		rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect);
+		rectlist_remove_at(rectangle_count,
+			rectangles, rectangle_index);
+		rectlist_add_rect(rectangle_count, rectangles, &merged_rectangle);
 		return ;
 	}
 
-	arg_rect_array_ptr[*arg_rect_array_length_ptr] = *rect;
-	(*arg_rect_array_length_ptr)++;
+	rectangles[*rectangle_count] = *rect;
+	(*rectangle_count)++;
 }
 
 
-void rectlist_add_rects(legacy_s8 arg_rectcount, legacy_s8* arg_rectarray_indices,
-	struct RECTANGLE* arg_rectarray1, struct RECTANGLE* arg_rectarray2,
-	struct RECTANGLE* arg_rectptr, legacy_s8* arg_rect_array_length_ptr, struct RECTANGLE* arg_rect_array_ptr)
+void rectlist_add_rects(legacy_s8 source_count, legacy_s8* source_flags,
+	struct RECTANGLE* first_rectangles, struct RECTANGLE* second_rectangles,
+	struct RECTANGLE* clip_rectangle, legacy_s8* output_count, struct RECTANGLE* output_rectangles)
 {
-	struct RECTANGLE* var_rectptr3;
-	struct RECTANGLE* var_rectptr;
-	struct RECTANGLE* var_rectptr2;
-	struct RECTANGLE var_rect;
-	struct RECTANGLE var_rect2;
-	legacy_s16 var_2, var_rectcounter;
-	legacy_s16 var_rectarray_index;
+	struct RECTANGLE* second_rectangle;
+	struct RECTANGLE* first_rectangle;
+	struct RECTANGLE* selected_rectangle;
+	struct RECTANGLE clipped_rectangle;
+	struct RECTANGLE merged_rectangle;
+	legacy_s16 has_rectangle, source_index;
+	legacy_s16 flags;
 /*
 	return ported_rect_clip_combined_(
-		arg_rectcount, arg_rectarray_indices, arg_rectarray1, arg_rectarray2, arg_rectptr,
-		arg_rect_array_length_ptr, arg_rect_array_ptr);
+		source_count, source_flags, first_rectangles, second_rectangles, clip_rectangle,
+		output_count, output_rectangles);
 	*/
-	for (var_rectcounter = 0; var_rectcounter < arg_rectcount; var_rectcounter++) {
+	for (source_index = 0; source_index < source_count; source_index++) {
 
-		var_rectarray_index = arg_rectarray_indices[var_rectcounter];
-		if ((var_rectarray_index & 1) != 0) {
-			var_rectptr = &arg_rectarray1[var_rectcounter];
+		flags = source_flags[source_index];
+		if ((flags & 1) != 0) {
+			first_rectangle = &first_rectangles[source_index];
 		}
 
-		if ((var_rectarray_index & 2) != 0) {
-			var_rectptr3 = &arg_rectarray2[var_rectcounter];
+		if ((flags & 2) != 0) {
+			second_rectangle = &second_rectangles[source_index];
 		}
 
-		if (((var_rectarray_index & 1) == 0) || var_rectptr->right <= var_rectptr->left) {
-			if (((var_rectarray_index & 2) == 0) || var_rectptr3->right <= var_rectptr3->left) {
-				var_2 = 0;
+		if (((flags & 1) == 0) || first_rectangle->right <= first_rectangle->left) {
+			if (((flags & 2) == 0) || second_rectangle->right <= second_rectangle->left) {
+				has_rectangle = 0;
 			} else {
-				var_rectptr2 = var_rectptr3;
-				var_2 = 1;
+				selected_rectangle = second_rectangle;
+				has_rectangle = 1;
 			}
-		} else if ((var_rectarray_index & 2) == 0) {
-			var_rectptr2 = var_rectptr;
-			var_2 = 1;
-		} else if (var_rectptr3->right <= var_rectptr3->left) {
-			var_rectptr2 = var_rectptr;
-			var_2 = 1;
+		} else if ((flags & 2) == 0) {
+			selected_rectangle = first_rectangle;
+			has_rectangle = 1;
+		} else if (second_rectangle->right <= second_rectangle->left) {
+			selected_rectangle = first_rectangle;
+			has_rectangle = 1;
 		} else {
-			rect_union(var_rectptr, var_rectptr3, &var_rect2);
-			var_rectptr2 = &var_rect2;
-			var_2 = 1;
+			rect_union(first_rectangle, second_rectangle, &merged_rectangle);
+			selected_rectangle = &merged_rectangle;
+			has_rectangle = 1;
 		}
 
-		if (var_2 != 0) {
-			var_rect = *var_rectptr2;
-			if (rect_intersect(&var_rect, arg_rectptr) == 0) {
-				rectlist_add_rect(arg_rect_array_length_ptr, arg_rect_array_ptr, &var_rect);
+		if (has_rectangle != 0) {
+			clipped_rectangle = *selected_rectangle;
+			if (rect_intersect(&clipped_rectangle, clip_rectangle) == 0) {
+				rectlist_add_rect(output_count, output_rectangles, &clipped_rectangle);
 			}
 		}
 	}
 
 }
 
-void rect_array_sort_by_top(legacy_s8 arg_array_length, struct RECTANGLE* arg_rect_array, legacy_s16* arg_array_indices) {
-	legacy_s16 i;
-	legacy_s16 intbuffer[256];
-	//return ported_rect_array_indexed_op_(arg_array_length, arg_rect_array, arg_array_indices);
-	if (arg_array_length > 1) {
-		for (i = 0; i < arg_array_length; i++) {
-			intbuffer[i] = -arg_rect_array[i].top;
-			arg_array_indices[i] = i;
+void rect_array_sort_by_top(legacy_s8 rectangle_count, struct RECTANGLE* rectangles, legacy_s16* sorted_indices) {
+	legacy_s16 rectangle_index;
+	legacy_s16 sort_keys[256];
+	//return ported_rect_array_indexed_op_(rectangle_count, rectangles, sorted_indices);
+	if (rectangle_count > 1) {
+		for (rectangle_index = 0; rectangle_index < rectangle_count; rectangle_index++) {
+			sort_keys[rectangle_index] = -rectangles[rectangle_index].top;
+			sorted_indices[rectangle_index] = rectangle_index;
 		}
-		heapsort_by_order(arg_array_length, intbuffer, arg_array_indices);
+		heapsort_by_order(rectangle_count, sort_keys, sorted_indices);
 	} else {
-		arg_array_indices[0] = 0;
+		sorted_indices[0] = 0;
 	}
 }
 
@@ -748,7 +748,7 @@ static legacy_u16 math_word_magnitude(legacy_s16 value)
 	return (legacy_u16)value;
 }
 
-legacy_s16 vector_op_unk2(struct VECTOR* vec) {
+legacy_s16 vector_direction_sector(struct VECTOR* vec) {
 	legacy_s32 y;
 	legacy_s32 temp;
 	legacy_s32 scaled_angle;
@@ -912,36 +912,36 @@ static legacy_s16 vector_interpolate_axis(legacy_s16 first,
 		LEGACY_S16_FROM_BITS((legacy_u16)quotient), second);
 }
 
-void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i) {
-	legacy_s16 var_4, var_2;
+void vector_interpolate_at_z(struct VECTOR* first, struct VECTOR* second, struct VECTOR* result, legacy_s16 depth) {
+	legacy_s16 depth_offset, depth_span;
 
-	outvec->z = i;
+	result->z = depth;
 
-	var_4 = LEGACY_S16_WRAP_SUB(outvec->z, vec2->z);
-	var_2 = LEGACY_S16_WRAP_SUB(vec1->z, vec2->z);
-	if (var_2 < 0) {
+	depth_offset = LEGACY_S16_WRAP_SUB(result->z, second->z);
+	depth_span = LEGACY_S16_WRAP_SUB(first->z, second->z);
+	if (depth_span < 0) {
 		/* The original uses a 16-bit logical SHR for both values. */
-		var_4 = LEGACY_S16_FROM_BITS((legacy_u16)var_4 >> 1);
-		var_2 = LEGACY_S16_FROM_BITS((legacy_u16)var_2 >> 1);
+		depth_offset = LEGACY_S16_FROM_BITS((legacy_u16)depth_offset >> 1);
+		depth_span = LEGACY_S16_FROM_BITS((legacy_u16)depth_span >> 1);
 	}
 
-	outvec->x = vector_interpolate_axis(
-		vec1->x, vec2->x, var_4, var_2);
-	outvec->y = vector_interpolate_axis(
-		vec1->y, vec2->y, var_4, var_2);
+	result->x = vector_interpolate_axis(
+		first->x, second->x, depth_offset, depth_span);
+	result->y = vector_interpolate_axis(
+		first->y, second->y, depth_offset, depth_span);
 }
 
-extern legacy_u8 byte_4032A;
-extern legacy_u8 byte_4032B;
+extern legacy_u8 vector_saved_z_low;
+extern legacy_u8 vector_saved_z_high;
 
-void nopsub_33006(struct VECTOR* vec1, struct VECTOR* vec2,
+void vector_interpolate_at_saved_z(struct VECTOR* vec1, struct VECTOR* vec2,
 	struct VECTOR* outvec)
 {
 	legacy_u16 interpolation_z;
 
-	interpolation_z = (legacy_u16)(byte_4032A |
-		LEGACY_U16_SHL(byte_4032B, 8U));
-	vector_op_unk(vec1, vec2, outvec,
+	interpolation_z = (legacy_u16)(vector_saved_z_low |
+		LEGACY_U16_SHL(vector_saved_z_high, 8U));
+	vector_interpolate_at_z(vec1, vec2, outvec,
 		LEGACY_S16_FROM_BITS(interpolation_z));
 }
 
@@ -988,89 +988,89 @@ legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z, stru
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
-legacy_s16 plane_origin_op(legacy_s16 arg_planindex, legacy_s16 x, legacy_s16 y, legacy_s16 z) {
-	struct PLANE far* curplane;
-	struct VECTOR a;
-	struct VECTOR b;
+legacy_s16 plane_origin_op(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z) {
+	struct PLANE far* plane;
+	struct VECTOR relative_position;
+	struct VECTOR world_origin;
 
-	if (arg_planindex == planindex) {
-		curplane = current_planptr;
+	if (plane_index == planindex) {
+		plane = current_planptr;
 	} else {
-		curplane = &planptr[arg_planindex];
+		plane = &planptr[plane_index];
 	}
 
-	b.y = curplane->plane_origin.y + terrainHeight;
-	a.y = y - b.y;
-	if (arg_planindex < 4) {
+	world_origin.y = plane->plane_origin.y + terrainHeight;
+	relative_position.y = y - world_origin.y;
+	if (plane_index < 4) {
 		// NOTE: what is this
-		return a.y;
+		return relative_position.y;
 	}
-	b.x = curplane->plane_origin.x + elem_xCenter;
-	b.z = curplane->plane_origin.z + elem_zCenter;
-	a.x = x - b.x;
-	a.z = z - b.z;
-	return vec_normalInnerProduct(a.x, a.y, a.z, &curplane->plane_normal);
+	world_origin.x = plane->plane_origin.x + elem_xCenter;
+	world_origin.z = plane->plane_origin.z + elem_zCenter;
+	relative_position.x = x - world_origin.x;
+	relative_position.z = z - world_origin.z;
+	return vec_normalInnerProduct(relative_position.x, relative_position.y, relative_position.z, &plane->plane_normal);
 }
 
 extern legacy_s16 planindex_copy;
-extern legacy_s16 pState_minusRotate_z_2;
-extern legacy_s16 pState_minusRotate_y_2;
-extern legacy_s16 pState_minusRotate_x_2;
-extern struct MATRIX mat_unk;
-extern struct MATRIX mat_unk2;
-extern struct VECTOR vec_unk2;
-extern legacy_s16 pState_f36Mminf40sar2;
-extern struct VECTOR vec_planerotopresult;
-extern legacy_s16 word_3BE16;
-extern struct MATRIX mat_planetmp;
-extern legacy_s16 pState_f36Mminf40sar2;
-extern legacy_s16 f36f40_whlData;
+extern legacy_s16 car_initial_roll;
+extern legacy_s16 car_initial_yaw;
+extern legacy_s16 car_initial_pitch;
+extern struct MATRIX car_to_world_rotation;
+extern struct MATRIX wheel_heading_rotation;
+extern struct VECTOR wheel_forward_travel;
+extern legacy_s16 wheel_heading_offset;
+extern struct VECTOR wheel_world_travel;
+extern legacy_s16 cached_plane_heading;
+extern struct MATRIX plane_heading_rotation;
+extern legacy_s16 wheel_heading_offset;
+extern legacy_s16 cached_wheel_heading;
 
 void plane_rotate_op(void) {
-	struct PLANE far* var_planptr;
-	struct VECTOR var_32;
-	struct MATRIX var_2C;
-	struct MATRIX var_1A;
-	struct VECTOR var_8;
-	legacy_s16 si;
+	struct PLANE far* plane;
+	struct VECTOR plane_direction;
+	struct MATRIX inverse_plane_rotation;
+	struct MATRIX plane_rotation;
+	struct VECTOR world_direction;
+	legacy_s16 heading;
 
 	if (planindex_copy != -1) {
-		var_planptr = &planptr[planindex_copy];
-		if (var_planptr->plane_xy == pState_minusRotate_x_2 &&
-			var_planptr->plane_yz == pState_minusRotate_z_2) {
-			si = pState_minusRotate_y_2;
+		plane = &planptr[planindex_copy];
+		if (plane->plane_xy == car_initial_pitch &&
+			plane->plane_yz == car_initial_roll) {
+			heading = car_initial_yaw;
 		} else {
-			mat_mul_vector(&vec_unk2, &mat_unk, &var_8);
-			var_1A = var_planptr->plane_rotation;
-			mat_invert(&var_1A, &var_2C);
-			mat_mul_vector(&var_8, &var_2C, &var_32);
-			si = polarAngle(-var_32.x, var_32.z);
+			mat_mul_vector(&wheel_forward_travel, &car_to_world_rotation, &world_direction);
+			plane_rotation = plane->plane_rotation;
+			mat_invert(&plane_rotation, &inverse_plane_rotation);
+			mat_mul_vector(&world_direction, &inverse_plane_rotation, &plane_direction);
+			heading = polarAngle(-plane_direction.x, plane_direction.z);
 		}
 
-		si += pState_f36Mminf40sar2;
-		if (si == 0) {
-			mat_mul_vector2(&vec_unk2, &var_planptr->plane_rotation,
-				&vec_planerotopresult);
+		heading += wheel_heading_offset;
+		if (heading == 0) {
+			mat_mul_vector2(&wheel_forward_travel, &plane->plane_rotation,
+				&wheel_world_travel);
 			return;
 		}
-		if (word_3BE16 != si) {
-			mat_rot_y(&mat_planetmp, -si);
-			word_3BE16 = si;
+		if (cached_plane_heading != heading) {
+			mat_rot_y(&plane_heading_rotation, -heading);
+			cached_plane_heading = heading;
 		}
-		mat_mul_vector(&vec_unk2, &mat_planetmp, &var_32);
-		mat_mul_vector2(&var_32, &var_planptr->plane_rotation,
-			&vec_planerotopresult);
+		mat_mul_vector(&wheel_forward_travel, &plane_heading_rotation, &plane_direction);
+		mat_mul_vector2(&plane_direction, &plane->plane_rotation,
+			&wheel_world_travel);
 		return;
 	}
 
-	if (pState_f36Mminf40sar2 == 0) {
-		mat_mul_vector(&vec_unk2, &mat_unk, &vec_planerotopresult);
+	if (wheel_heading_offset == 0) {
+		mat_mul_vector(&wheel_forward_travel, &car_to_world_rotation, &wheel_world_travel);
 		return;
 	}
-	if (pState_f36Mminf40sar2 != f36f40_whlData) {
-		mat_rot_y(&mat_unk2, -pState_f36Mminf40sar2);
-		f36f40_whlData = pState_f36Mminf40sar2;
+	if (wheel_heading_offset != cached_wheel_heading) {
+		mat_rot_y(&wheel_heading_rotation, -wheel_heading_offset);
+		cached_wheel_heading = wheel_heading_offset;
 	}
-	mat_mul_vector(&vec_unk2, &mat_unk2, &var_32);
-	mat_mul_vector(&var_32, &mat_unk, &vec_planerotopresult);
+	mat_mul_vector(&wheel_forward_travel, &wheel_heading_rotation, &plane_direction);
+	mat_mul_vector(&plane_direction, &car_to_world_rotation, &wheel_world_travel);
 }

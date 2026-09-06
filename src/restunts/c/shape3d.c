@@ -19,10 +19,10 @@ X   159 mat_rot_zxy (16)
 X    60 mat_multiply (0)
 X   122 mat_mul_vector (0)
 X    48 mat_invert (0)
-X   126 vector_op_unk2 (14)
+X   126 vector_direction_sector (14)
 X    97 vector_to_point (0)
 X    32 rect_compare_point (0)
-X    40 vector_op_unk (0)
+X    40 vector_interpolate_at_z (0)
 X    86 is_facing_camera (4)
 X    33 rect_adjust_from_point(0)
 X    47 polarRadius2D (6)
@@ -322,7 +322,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 				absolute_word(var_vec.x) ||
 			LEGACY_S16_SHL(arg_transshapeptr->unk, 1U) <=
 				absolute_word(var_vec.z))) {
-			byte_4393D = vector_op_unk2(&var_vec3);
+			byte_4393D = vector_direction_sector(&var_vec3);
 			var_45C = invpow2tbl[byte_4393D];
 			var_A = invpow2tbl[byte_4393D];
 		} else {
@@ -471,7 +471,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 
 			if (var_vertflagtbl[var_C] != 0) {
 				if (var_vertflagtbl[var_448] == 0) {
-					vector_op_unk(&var_vecarr[var_448],
+					vector_interpolate_at_z(&var_vecarr[var_448],
 						&var_vecarr[var_C], &var_vec2,
 						SHAPE3D_NEAR_CLIP_Z);
 					vector_to_point(&var_vec2, &var_574);
@@ -485,7 +485,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 				}
 			} else {
 				if (var_vertflagtbl[var_448] != 0) {
-					vector_op_unk(&var_vecarr[var_C],
+					vector_interpolate_at_z(&var_vecarr[var_C],
 						&var_vecarr[var_448], &var_vec2,
 						SHAPE3D_NEAR_CLIP_Z);
 					vector_to_point(&var_vec2, &var_574);
@@ -540,12 +540,12 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	temp1 = transshapeprimitives[1];
 	if (var_vertflagtbl[temp0] + var_vertflagtbl[temp1] != 2) {
 		if (var_vertflagtbl[temp0] != 0) {
-			vector_op_unk(&var_vecarr[temp1], &var_vecarr[temp0],
+			vector_interpolate_at_z(&var_vecarr[temp1], &var_vecarr[temp0],
 				&var_vec2, SHAPE3D_NEAR_CLIP_Z);
 			temp = temp0;
 			vector_to_point(&var_vec2, &var_vecarr2[temp]);
 		} else if (var_vertflagtbl[temp1] != 0) {
-			vector_op_unk(&var_vecarr[temp0], &var_vecarr[temp1],
+			vector_interpolate_at_z(&var_vecarr[temp0], &var_vecarr[temp1],
 				&var_vec2, SHAPE3D_NEAR_CLIP_Z);
 			temp = temp1;
 			vector_to_point(&var_vec2, &var_vecarr2[temp]);

@@ -164,46 +164,46 @@ legacy_u8 terrConnDataStoN[19] = {
 	0, 0, 0, 0, 0, 0, 1, 0, 5, 1, 4, 0, 5, 4, 0, 5, 1, 1, 4
 };
 
-struct POINT2D unk_3BD5A[2] = { { 5, 40 }, { 5, 10 } };
-struct POINT2D unk_3BD62[2] = { { 6, 121 }, { 6, 9 } };
-struct POINT2D unk_3BD6A[2] = { { 1, 10 }, { 1, 10 } };
-legacy_s16 word_3BD72[4] = { 21, 21, 15, 15 };
+struct POINT2D breakable_object_bounds[2] = { { 5, 40 }, { 5, 10 } };
+struct POINT2D start_finish_pole_bounds[2] = { { 6, 121 }, { 6, 9 } };
+struct POINT2D track_auxiliary_obstacle_bounds[2] = { { 1, 10 }, { 1, 10 } };
+legacy_s16 wheel_gravity_steps[4] = { 21, 21, 15, 15 };
 
-struct VECTOR unk_3E640[1] = { { 0, 0, 0 } };
-struct VECTOR unk_3E646[8] = {
+struct VECTOR scenery_collision_points[1] = { { 0, 0, 0 } };
+struct VECTOR elevated_road_collision_points[8] = {
 	{ -120, 0, -281 }, { -120, 0, -231 },
 	{ -120, 0, 281 }, { -120, 0, 231 },
 	{ 120, 0, -281 }, { 120, 0, -231 },
 	{ 120, 0, 281 }, { 120, 0, 231 }
 };
-struct VECTOR unk_3E676[2] = { { -60, 0, -512 }, { 60, 0, 512 } };
-struct VECTOR unk_3E682[2] = { { -392, 0, 0 }, { -632, 0, 0 } };
-struct VECTOR unk_3E68E[2] = { { 392, 0, 0 }, { 632, 0, 0 } };
-struct VECTOR unk_3E69A[4] = {
+struct VECTOR corkscrew_lr_collision_points[2] = { { -60, 0, -512 }, { 60, 0, 512 } };
+struct VECTOR corkscrew_up_collision_points[2] = { { -392, 0, 0 }, { -632, 0, 0 } };
+struct VECTOR corkscrew_down_collision_points[2] = { { 392, 0, 0 }, { 632, 0, 0 } };
+struct VECTOR slalom_collision_points[4] = {
 	{ 23, 0, -255 }, { 97, 0, -255 },
 	{ -97, 0, 255 }, { -23, 0, 255 }
 };
 
 /* Shared simulation scratch data. */
-struct MATRIX mat_unk;
-struct MATRIX mat_unk2;
-struct MATRIX mat_planetmp;
-struct VECTOR vec_unk2;
-struct VECTOR vec_planerotopresult;
-legacy_s32 pState_lvec1_x;
-legacy_s32 pState_lvec1_y;
-legacy_s32 pState_lvec1_z;
-legacy_s16 pState_minusRotate_z_1;
-legacy_s16 pState_minusRotate_z_2;
-legacy_s16 pState_minusRotate_y_1;
-legacy_s16 pState_minusRotate_y_2;
-legacy_s16 pState_minusRotate_x_1;
-legacy_s16 pState_minusRotate_x_2;
+struct MATRIX car_to_world_rotation;
+struct MATRIX wheel_heading_rotation;
+struct MATRIX plane_heading_rotation;
+struct VECTOR wheel_forward_travel;
+struct VECTOR wheel_world_travel;
+legacy_s32 car_working_x;
+legacy_s32 car_working_y;
+legacy_s32 car_working_z;
+legacy_s16 car_working_roll;
+legacy_s16 car_initial_roll;
+legacy_s16 car_working_yaw;
+legacy_s16 car_initial_yaw;
+legacy_s16 car_working_pitch;
+legacy_s16 car_initial_pitch;
 legacy_s16 planindex;
 legacy_s16 planindex_copy;
-legacy_s16 pState_f36Mminf40sar2;
-legacy_s16 word_3BE16 = 9999;
-legacy_s16 f36f40_whlData = 9999;
+legacy_s16 wheel_heading_offset;
+legacy_s16 cached_plane_heading = 9999;
+legacy_s16 cached_wheel_heading = 9999;
 legacy_s16 elem_xCenter;
 legacy_s16 elem_zCenter;
 legacy_s16 terrainHeight;
@@ -215,7 +215,7 @@ legacy_s16 wallHeight;
 legacy_s16 wallStartX;
 legacy_s16 wallStartZ;
 legacy_s16 wallOrientation;
-legacy_s8 byte_4392C;
+legacy_s8 track_wall_collision_enabled;
 legacy_s8 corkFlag;
 legacy_s16 penalty_time;
 legacy_s16 track_pieces_counter;
@@ -225,8 +225,8 @@ legacy_u8 byte_45E16;
 legacy_u8 byte_4616E;
 /* The original DGROUP reserves sixteen consecutive opponent-speed bytes. */
 legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
-legacy_u8 byte_4032A;
-legacy_u8 byte_4032B;
+legacy_u8 vector_saved_z_low;
+legacy_u8 vector_saved_z_high;
 legacy_u16 word_3BE30;
 legacy_u16 word_3BE32;
 

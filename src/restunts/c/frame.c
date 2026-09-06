@@ -687,25 +687,25 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			cam_pos.y = terrainHeight;
 		}
 
-		if (byte_4392C != 0) {
+		if (track_wall_collision_enabled != 0) {
 			si = plane_origin_op(planindex, cam_pos.x, cam_pos.y, cam_pos.z);
 			if (si < FRAME_PLANE_CLEARANCE) {
-				vec_unk2.x = 0;
-				vec_unk2.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE,
+				wheel_forward_travel.x = 0;
+				wheel_forward_travel.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE,
 					si);
-				vec_unk2.z = 0;
+				wheel_forward_travel.z = 0;
 				planindex_copy = planindex;
-				pState_f36Mminf40sar2 = 0;
-				pState_minusRotate_x_2 = 0;
-				pState_minusRotate_z_2 = 0;
-				pState_minusRotate_y_2 = 0;
+				wheel_heading_offset = 0;
+				car_initial_pitch = 0;
+				car_initial_roll = 0;
+				car_initial_yaw = 0;
 				plane_rotate_op();
 				cam_pos.x = LEGACY_S16_WRAP_ADD(
-					cam_pos.x, vec_planerotopresult.x);
+					cam_pos.x, wheel_world_travel.x);
 				cam_pos.y = LEGACY_S16_WRAP_ADD(
-					cam_pos.y, vec_planerotopresult.y);
+					cam_pos.y, wheel_world_travel.y);
 				cam_pos.z = LEGACY_S16_WRAP_ADD(
-					cam_pos.z, vec_planerotopresult.z);
+					cam_pos.z, wheel_world_travel.z);
 			}
 		}
 

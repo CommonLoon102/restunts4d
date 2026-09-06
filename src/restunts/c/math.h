@@ -99,9 +99,9 @@ void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc);
 void rectlist_add_rects(legacy_s8 rectcount, legacy_s8* indices, struct RECTANGLE* first, struct RECTANGLE* second, struct RECTANGLE* clip, legacy_s8* output_length, struct RECTANGLE* output);
 void rect_array_sort_by_top(legacy_s8 length, struct RECTANGLE* rects, legacy_s16* indices);
 
-legacy_s16 vector_op_unk2(struct VECTOR* vec);
+legacy_s16 vector_direction_sector(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
-void vector_op_unk(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i);
+void vector_interpolate_at_z(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i);
 
 legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
 legacy_s16 absolute_word(legacy_s16 value);

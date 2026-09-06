@@ -31,8 +31,8 @@ extern struct RECTANGLE cliprect_unk;
 extern struct RECTANGLE rect_ingame_text2;
 extern struct RECTANGLE rect_ingame_text3;
 extern struct RECTANGLE rect_ingame_text4;
-extern struct VECTOR vec_unk2;
-extern struct VECTOR vec_planerotopresult;
+extern struct VECTOR wheel_forward_travel;
+extern struct VECTOR wheel_world_travel;
 extern struct MATRIX mat_temp;
 extern legacy_s16 camera_track_height_offset;
 extern legacy_s8 detail_threshold_by_level[];
@@ -44,13 +44,13 @@ extern struct SHAPE3D* off_3BE44[];
 extern legacy_s16 terrainHeight;
 extern legacy_s16 planindex;
 extern legacy_s16 planindex_copy;
-extern legacy_s8 byte_4392C;
+extern legacy_s8 track_wall_collision_enabled;
 extern struct TRANSFORMEDSHAPE3D currenttransshape[29];
 //extern struct TRANSFORMEDSHAPE3D transshapeunk;
 extern struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
 extern struct TRACKOBJECT trkObjectList[215]; // 215 entries
 extern legacy_u8 fence_TrkObjCodes[];
-extern legacy_s16 pState_minusRotate_z_2, pState_minusRotate_x_2, pState_minusRotate_y_2, pState_f36Mminf40sar2;
+extern legacy_s16 car_initial_roll, car_initial_pitch, car_initial_yaw, wheel_heading_offset;
 
 extern legacy_s8 unk_3C0EE[];
 extern legacy_s8 unk_3C0F0[];

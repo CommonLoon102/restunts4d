@@ -320,7 +320,7 @@ extern legacy_s16 wallHeight;
 extern legacy_s16 elRdWallRelated;
 extern legacy_u8 corkFlag;
 extern legacy_u8 current_surf_type;
-extern legacy_u8 byte_4392C;
+extern legacy_u8 track_wall_collision_enabled;
 extern legacy_s16 terrainHeight;
 extern legacy_s16 elem_xCenter;
 extern legacy_s16 elem_zCenter;
@@ -494,7 +494,7 @@ void build_track_object(struct VECTOR* world_position,
 	elRdWallRelated = ELEVATED_WALL_LOWER_BOUND_DEFAULT;
 	corkFlag = CORKSCREW_INACTIVE;
 	current_surf_type = CAR_SURFACE_GRASS;
-	byte_4392C = TRACK_COLLISION_ENABLED;
+	track_wall_collision_enabled = TRACK_COLLISION_ENABLED;
 	wall_orientation_modifier = 0;
 	element_orientation = 0;
 	terrainHeight = 0;
@@ -740,7 +740,7 @@ void build_track_object(struct VECTOR* world_position,
 
 	case PHYSICAL_MODEL_RAMP:
 		if (position.z > 0)
-			byte_4392C = 0;
+			track_wall_collision_enabled = 0;
 		else if (next_position.z >= 0)
 			wallindex = RAMP_ENTRY_WALL_INDEX;
 		/* fall through */
@@ -760,7 +760,7 @@ void build_track_object(struct VECTOR* world_position,
 				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
 					ELEVATED_RIGHT_WALL_INDEX;
 			}
-		} else if (byte_4392C != 0 && absolute_x <= ROAD_HALF_WIDTH) {
+		} else if (track_wall_collision_enabled != 0 && absolute_x <= ROAD_HALF_WIDTH) {
 			planindex = RAMP_PLANE_INDEX;
 			if (wallindex < 0) {
 				wall_orientation_modifier = ANGLE_HALF_TURN;
@@ -781,17 +781,17 @@ void build_track_object(struct VECTOR* world_position,
 					current_surf_type = (legacy_u8)surface_type;
 				break;
 			}
-			byte_4392C = 0;
+			track_wall_collision_enabled = 0;
 		} else if (physical_model != PHYSICAL_MODEL_SOLID_ROAD) {
 			if (LEGACY_S16_WRAP_SUB(world_position->y,
 				terrainHeight) <= ELEVATED_DECK_CLEARANCE)
 				break;
-			byte_4392C = 0;
+			track_wall_collision_enabled = 0;
 		}
 		if (absolute_word(next_position.x) <= ROAD_HALF_WIDTH) {
 			planindex = ELEVATED_PLANE_INDEX;
 			current_surf_type = (legacy_u8)surface_type;
-			if (byte_4392C != 0) {
+			if (track_wall_collision_enabled != 0) {
 				if (next_position.z >= ELEVATED_ROAD_END_Z)
 					wallindex = ELEVATED_FORWARD_WALL_INDEX;
 				else if (next_position.z <= -ELEVATED_ROAD_END_Z)
@@ -802,7 +802,7 @@ void build_track_object(struct VECTOR* world_position,
 				wallindex = position.x < 0 ? ELEVATED_LEFT_WALL_INDEX :
 					ELEVATED_RIGHT_WALL_INDEX;
 			}
-		} else if (byte_4392C != 0 && absolute_x <= ROAD_HALF_WIDTH) {
+		} else if (track_wall_collision_enabled != 0 && absolute_x <= ROAD_HALF_WIDTH) {
 			planindex = ELEVATED_PLANE_INDEX;
 			wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
 			wall_orientation_modifier = ANGLE_HALF_TURN;
@@ -821,7 +821,7 @@ void build_track_object(struct VECTOR* world_position,
 			break;
 		current_surf_type = (legacy_u8)surface_type;
 		planindex = ELEVATED_PLANE_INDEX;
-		byte_4392C = 0;
+		track_wall_collision_enabled = 0;
 		if (radius >= -ELEVATED_CORNER_INNER_OFFSET &&
 			radius <= ELEVATED_CORNER_INNER_OFFSET)
 			break;
@@ -917,7 +917,7 @@ void build_track_object(struct VECTOR* world_position,
 		if (radius > BANKED_CORNER_WALL_THRESHOLD) {
 			wall_orientation_modifier = ANGLE_HALF_TURN;
 			wallindex = LEGACY_S16_WRAP_ADD(value, BANKED_CORNER_WALL_BASE);
-			byte_4392C = 0;
+			track_wall_collision_enabled = 0;
 		}
 		break;
 
@@ -962,7 +962,7 @@ void build_track_object(struct VECTOR* world_position,
 				planindex = LEGACY_S16_WRAP_ADD(
 					value, (legacy_s16)index);
 				current_surf_type = (legacy_u8)surface_type;
-				byte_4392C = 0;
+				track_wall_collision_enabled = 0;
 				break;
 			}
 			if (!((index > LOOP_LOW_CLEARANCE_LAST_SEGMENT &&
@@ -977,7 +977,7 @@ void build_track_object(struct VECTOR* world_position,
 					planindex = LEGACY_S16_WRAP_ADD(
 						value, (legacy_s16)index);
 					current_surf_type = (legacy_u8)surface_type;
-					byte_4392C = 0;
+					track_wall_collision_enabled = 0;
 					break;
 				}
 				if (loopSurface_XBounds0[index] !=
@@ -992,7 +992,7 @@ void build_track_object(struct VECTOR* world_position,
 						planindex = LEGACY_S16_WRAP_ADD(
 							value, (legacy_s16)index);
 						current_surf_type = (legacy_u8)surface_type;
-						byte_4392C = 0;
+						track_wall_collision_enabled = 0;
 						break;
 					}
 				}
@@ -1229,7 +1229,7 @@ void build_track_object(struct VECTOR* world_position,
 				CORK_UD_WALL_INDEX_OFFSET);
 			current_surf_type = (legacy_u8)surface_type;
 			planindex = LEGACY_S16_WRAP_ADD(value2, CORK_UD_UPPER_PLAN_OFFSET);
-			byte_4392C = 0;
+			track_wall_collision_enabled = 0;
 			break;
 		}
 		radius = (legacy_s16)polarRadius2D(value, position.z);
@@ -1244,7 +1244,7 @@ void build_track_object(struct VECTOR* world_position,
 			LEGACY_S16_WRAP_ADD(value2, angle_step),
 			CORK_UD_FIRST_ARC_PLAN_OFFSET);
 		current_surf_type = (legacy_u8)surface_type;
-		byte_4392C = 0;
+		track_wall_collision_enabled = 0;
 		wallHeight = CORK_UD_WALL_HEIGHT;
 		elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
 		value = LEGACY_S16_WRAP_SUB(radius, CORK_UD_CENTER_RADIUS);

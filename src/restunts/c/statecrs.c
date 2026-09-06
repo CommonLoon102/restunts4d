@@ -215,44 +215,44 @@ void update_crash_particles(void) {
 }
 
 // previously set_AV_event_triggers
-void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
+void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index) {
 	legacy_s8 stop_car;
-	struct CARSTATE* var_cState;
-	if (arg_MplayerFlag == PLAYER_CAR_INDEX)
-		var_cState = &state.playerstate;
-	else if (arg_MplayerFlag == OPPONENT_CAR_INDEX)
-		var_cState = &state.opponentstate;
-	if (var_cState->car_crashBmpFlag != CRASH_EVENT_NONE)
+	struct CARSTATE* carstate;
+	if (car_index == PLAYER_CAR_INDEX)
+		carstate = &state.playerstate;
+	else if (car_index == OPPONENT_CAR_INDEX)
+		carstate = &state.opponentstate;
+	if (carstate->car_crashBmpFlag != CRASH_EVENT_NONE)
 		return;
 
 	stop_car = CRASH_CAR_MOTION_PRESERVED;
-	switch (arg_someFlag) {
+	switch (crash_event) {
 	case CRASH_EVENT_IMMEDIATE_STOP:
-		arg_someFlag = CRASH_EVENT_COLLISION;
+		crash_event = CRASH_EVENT_COLLISION;
 		stop_car = CRASH_CAR_MOTION_STOPPED;
 		/* fall through */
 	case CRASH_EVENT_COLLISION:
-		var_cState->car_crashBmpFlag = CRASH_EVENT_COLLISION;
-		emit_crash_particles(arg_MplayerFlag, var_cState->car_rotate.x, 0);
-		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
-			state.game_impactSpeed = var_cState->car_speed2;
+		carstate->car_crashBmpFlag = CRASH_EVENT_COLLISION;
+		emit_crash_particles(car_index, carstate->car_rotate.x, 0);
+		if (car_index == PLAYER_CAR_INDEX) {
+			state.game_impactSpeed = carstate->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_SHL(framespersec,
 					CRASH_FRAME_RATE_SCALE_SHIFT));
 		}
 #ifndef RESTUNTS_HEADLESS
-		stop_car_engine_audio(arg_MplayerFlag);
+		stop_car_engine_audio(car_index);
 #endif
 		break;
 
 	case CRASH_EVENT_WATER:
 #ifndef RESTUNTS_HEADLESS
-		stop_car_engine_audio(arg_MplayerFlag);
+		stop_car_engine_audio(car_index);
 #endif
-		var_cState->car_crashBmpFlag = CRASH_EVENT_WATER;
+		carstate->car_crashBmpFlag = CRASH_EVENT_WATER;
 		stop_car = CRASH_CAR_MOTION_STOPPED;
-		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
-			state.game_impactSpeed = var_cState->car_speed2;
+		if (car_index == PLAYER_CAR_INDEX) {
+			state.game_impactSpeed = carstate->car_speed2;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_SHL(framespersec,
 					CRASH_FRAME_RATE_SCALE_SHIFT));
@@ -260,8 +260,8 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 		break;
 
 	case CRASH_EVENT_FINISH:
-		var_cState->car_crashBmpFlag = CRASH_EVENT_FINISH;
-		if (arg_MplayerFlag == PLAYER_CAR_INDEX) {
+		carstate->car_crashBmpFlag = CRASH_EVENT_FINISH;
+		if (car_index == PLAYER_CAR_INDEX) {
 			state.game_total_finish = LEGACY_S16_WRAP_ADD(
 				LEGACY_S16_WRAP_ADD(
 					state.game_frame, state.game_penalty),
@@ -280,16 +280,16 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 	}
 
 	if (stop_car == CRASH_CAR_MOTION_STOPPED) {
-		var_cState->car_speed2 = CAR_SPEED_STOPPED;
-		var_cState->car_speed = CAR_SPEED_STOPPED;
+		carstate->car_speed2 = CAR_SPEED_STOPPED;
+		carstate->car_speed = CAR_SPEED_STOPPED;
 	}
-	if (arg_MplayerFlag == PLAYER_CAR_INDEX)
+	if (car_index == PLAYER_CAR_INDEX)
 		state.game_pEndFrame = state.game_frame;
 	else
 		state.game_oEndFrame = state.game_frame;
 	if (state.game_3F6autoLoadEvalFlag == 0 &&
-		arg_MplayerFlag == PLAYER_CAR_INDEX)
-		state.game_3F6autoLoadEvalFlag = arg_someFlag;
+		car_index == PLAYER_CAR_INDEX)
+		state.game_3F6autoLoadEvalFlag = crash_event;
 #ifndef RESTUNTS_HEADLESS
 	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 		// These copied values are used by the evaluation screen.
