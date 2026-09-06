@@ -13,8 +13,6 @@
 #define JOYSTICK_STEERING_TABLE_SIZE 34U
 #define AUDIO_STATE_CHUNK_NAME_SIZE 12U
 #define FRAME_CALLBACK_TIMER_TICKS 10UL
-#define REPLAY_PLAYBACK_SLOW_MODE 2
-#define REPLAY_PLAYBACK_FAST_MODE 3
 #define REPLAY_SLOW_CALLBACK_DIVISOR 2U
 #define REPLAY_SECURITY_GRACE_SECONDS 4U
 #define MOUSE_HORIZONTAL_CENTER 160
@@ -110,7 +108,7 @@ void frame_callback(void)
 				frame_callback_count = LEGACY_U16_WRAP_ADD(frame_callback_count, 1U);
 				if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
 					LEGACY_S8_FROM_BITS(byte_449E6) ==
-						REPLAY_PLAYBACK_SLOW_MODE) {
+						REPLAY_PLAYBACK_SLOW) {
 					byte_4552F = (legacy_u8)(byte_4552F - 1U);
 					if (byte_4552F == 0) {
 						replay_unk2(0);
@@ -119,7 +117,7 @@ void frame_callback(void)
 				} else {
 					if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
 						LEGACY_S8_FROM_BITS(byte_449E6) ==
-							REPLAY_PLAYBACK_FAST_MODE)
+							REPLAY_PLAYBACK_FAST)
 						replay_unk2(0);
 					replay_unk2(0);
 				}

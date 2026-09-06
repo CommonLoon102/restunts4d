@@ -28,9 +28,6 @@
 #define PIXLDUMP_PALETTE_COLOR_COUNT 256U
 #define PIXLDUMP_PALETTE_SOURCE_STRIDE 3U
 #define PIXLDUMP_PALETTE_DESTINATION_STRIDE 4U
-#define PIXLDUMP_PALETTE_RED_OFFSET 2U
-#define PIXLDUMP_PALETTE_GREEN_OFFSET 1U
-#define PIXLDUMP_PALETTE_ALPHA_OFFSET 3U
 #define PIXLDUMP_PALETTE_EXPAND_LEFT_SHIFT 2U
 #define PIXLDUMP_PALETTE_EXPAND_RIGHT_SHIFT 4U
 #define PIXLDUMP_BMP_FILE_SIZE_OFFSET 2U
@@ -49,11 +46,16 @@
 #define PIXLDUMP_VGA_SEGMENT 40960U
 #define PIXLDUMP_CVX_RESOURCE_SIZE 22400U
 #define PIXLDUMP_RANDOM_SHIFT 3U
-#define PIXLDUMP_REPLAY_MODE 2
-#define PIXLDUMP_FRAME_RATE 20
 #define PIXLDUMP_FRAME_TIMER_VALUE 500
 #define PIXLDUMP_PROJECTION_DISTANCE 35
 #define PIXLDUMP_PROJECTION_DIVISOR 6U
+
+enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
+	PIXLDUMP_PALETTE_BLUE_OFFSET = 0,
+	PIXLDUMP_PALETTE_GREEN_OFFSET = 1,
+	PIXLDUMP_PALETTE_RED_OFFSET = 2,
+	PIXLDUMP_PALETTE_ALPHA_OFFSET = 3
+};
 
 #ifdef RESTUNTS_ORIGINAL
 #define PIXLDUMP_DUMP_EXTENSION ".PDO"
@@ -333,14 +335,15 @@ static void pixldump_load_bmp_palette(legacy_u8* bmp_palette)
 		source_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_SOURCE_STRIDE);
 		destination_offset = (legacy_u16)(index *
 			PIXLDUMP_PALETTE_DESTINATION_STRIDE);
-		bmp_palette[destination_offset] =
+		bmp_palette[destination_offset + PIXLDUMP_PALETTE_BLUE_OFFSET] =
 			pixldump_expand_palette_channel(source[source_offset +
 				PIXLDUMP_PALETTE_RED_OFFSET]);
 		bmp_palette[destination_offset + PIXLDUMP_PALETTE_GREEN_OFFSET] =
 			pixldump_expand_palette_channel(source[source_offset +
 				PIXLDUMP_PALETTE_GREEN_OFFSET]);
 		bmp_palette[destination_offset + PIXLDUMP_PALETTE_RED_OFFSET] =
-			pixldump_expand_palette_channel(source[source_offset]);
+			pixldump_expand_palette_channel(source[source_offset +
+				PIXLDUMP_PALETTE_BLUE_OFFSET]);
 		bmp_palette[destination_offset + PIXLDUMP_PALETTE_ALPHA_OFFSET] = 0;
 	}
 	(void)mmgr_free(resource);
@@ -507,7 +510,7 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	is_in_replay = 1;
 	idle_expired = 0;
 	cameramode = (legacy_s8)(camera_number - 1);
-	game_replay_mode = PIXLDUMP_REPLAY_MODE;
+	game_replay_mode = REPLAY_MODE_PLAYBACK;
 	detail_level = 0;
 	slow_video_mgmt = 0;
 	slow_video_mgmt_copy = 0;
@@ -516,7 +519,7 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 		return 1;
 
 	kbormouse = 0;
-	byte_449E6 = 0;
+	byte_449E6 = REPLAY_PLAYBACK_NORMAL;
 	byte_449DA = 1;
 	game_replay_mode_copy = -1;
 	byte_44346 = 0;
@@ -524,7 +527,7 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	byte_46467 = 0;
 	dashb_toggle = 0;
 	followOpponentFlag = (legacy_u8)target;
-	framespersec = PIXLDUMP_FRAME_RATE;
+	framespersec = GAME_FRAME_RATE_NORMAL;
 	word_44DCA = PIXLDUMP_FRAME_TIMER_VALUE;
 	rect_windshield.left = 0;
 	rect_windshield.right = 320;

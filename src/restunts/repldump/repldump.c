@@ -17,9 +17,7 @@
 #define REPLDUMP_POLYINFO_RESOURCE_SIZE 10400U
 #define REPLDUMP_CVX_RESOURCE_SIZE 22400U
 #define REPLDUMP_RANDOM_SHIFT 3U
-#define REPLDUMP_REPLAY_MODE 2
 #define REPLDUMP_FRAME_TIMER_VALUE 500
-#define REPLDUMP_FRAME_RATE 20
 
 #ifdef RESTUNTS_ORIGINAL
 #define REPLDUMP_DOS_INTERRUPT 33
@@ -374,7 +372,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	is_in_replay = 0;
 	idle_expired = 0;
 	cameramode = 0;
-	game_replay_mode = REPLDUMP_REPLAY_MODE;
+	game_replay_mode = REPLAY_MODE_PLAYBACK;
 	is_in_replay = 1;
 
 	printf("Setup player cars... ");
@@ -387,7 +385,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		return 1;
 	}
 	kbormouse = 0;
-	byte_449E6 = 0;
+	byte_449E6 = REPLAY_PLAYBACK_NORMAL;
 	byte_449DA = 1;
 	printf("OK\n");
 
@@ -404,9 +402,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	printf("Restore game state... ");
 	cameramode = 0;
-	game_replay_mode = REPLDUMP_REPLAY_MODE;
+	game_replay_mode = REPLAY_MODE_PLAYBACK;
 	word_44DCA = REPLDUMP_FRAME_TIMER_VALUE;
-	framespersec = REPLDUMP_FRAME_RATE;
+	framespersec = GAME_FRAME_RATE_NORMAL;
 
 	restore_gamestate(0);
 	restore_gamestate(gameconfig.game_recordedframes);

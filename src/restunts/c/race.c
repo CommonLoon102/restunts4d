@@ -76,7 +76,7 @@ void run_game(void) {
 	} else {
 
 		kbormouse = 0;
-		byte_449E6 = 0;
+		byte_449E6 = REPLAY_PLAYBACK_NORMAL;
 		byte_449DA = 1;
 		set_frame_callback();
 		game_replay_mode_copy = RACE_REPLAY_MODE_UNINITIALIZED;
