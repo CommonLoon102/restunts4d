@@ -80,6 +80,7 @@
 #define AUDIO_EFFECT_HIGH_PRIORITY 100U
 #define AUDIO_FADE_VOLUME_STEP 2
 #define AUDIO_FADE_RESTORE_DELAY_TICKS 50UL
+#define AUDIO_UNLOAD_FADE_DELAY_TICKS 2
 #define AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION 10U
 #define AUDIO_CAR_EVENT_RESOURCE_9_FLAG 16U
 #define AUDIO_CAR_EVENT_RESOURCE_8_FLAG 32U
@@ -471,7 +472,7 @@ void audio_driver_timer(void)
 
 void audio_unload(void)
 {
-	audio_fade_out(2);
+	audio_fade_out(AUDIO_UNLOAD_FADE_DELAY_TICKS);
 	mmgr_free(songfileptr);
 	mmgr_free(voicefileptr);
 	is_audioloaded = 0;
