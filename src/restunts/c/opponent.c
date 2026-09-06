@@ -50,6 +50,12 @@
 #define TRACK_ROUTE_RESULT_FIRST_POINT_INDEX 1U
 #define TRACK_ROUTE_RESULT_SECOND_POINT_INDEX 2U
 #define TRACK_ROUTE_LAST_INDEX_OFFSET 1U
+#define OPPONENT_ROUTE_POINT_NOT_LAST 0
+#define OPPONENT_ROUTE_LIST_END 0
+#define OPPONENT_ROUTE_INDEX_FIRST 0
+#define OPPONENT_ROUTE_INDEX_STEP 1
+#define OPPONENT_LAP_NONE 0
+#define OPPONENT_LAP_STEP 1
 
 /*
  * Track object zero has no info record.  In the original executable its null
@@ -203,16 +209,16 @@ static void opponent_advance_route(void)
 	if (sub_18D60(opponent_route_word(
 		state.opponentstate.car_trackdata3_index),
 		&state.opponentstate.car_vec_unk3, route_point,
-		&state.field_3F9) == 0) {
+		&state.field_3F9) == OPPONENT_ROUTE_POINT_NOT_LAST) {
 		return;
 	}
 	state.opponentstate.car_trackdata3_index = LEGACY_S16_WRAP_ADD(
-		state.opponentstate.car_trackdata3_index, 1);
+		state.opponentstate.car_trackdata3_index, OPPONENT_ROUTE_INDEX_STEP);
 	if (opponent_route_word(
-		state.opponentstate.car_trackdata3_index) == 0) {
+		state.opponentstate.car_trackdata3_index) == OPPONENT_ROUTE_LIST_END) {
 		state.opponentstate.field_CD = LEGACY_S8_WRAP_ADD(
-			state.opponentstate.field_CD, 1);
-		state.opponentstate.car_trackdata3_index = 0;
+			state.opponentstate.field_CD, OPPONENT_LAP_STEP);
+		state.opponentstate.car_trackdata3_index = OPPONENT_ROUTE_INDEX_FIRST;
 	}
 	state.opponentstate.field_CE = ROUTE_POINT_FIRST;
 }
@@ -472,7 +478,7 @@ void opponent_op(void)
 				transformed.z) & ANGLE_MASK);
 	}
 
-	if (state.opponentstate.field_CD != 0) {
+	if (state.opponentstate.field_CD != OPPONENT_LAP_NONE) {
 		finish_distance = multiply_and_scale(cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
 				position_to_word((legacy_s32)
