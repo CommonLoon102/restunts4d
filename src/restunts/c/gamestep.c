@@ -61,7 +61,7 @@ void sub_2298C(void)
 		target = carstate->car_vec_unk3;
 		if ((car_index == PLAYER_CAR_INDEX &&
 			(state.field_45B != ROUTE_TRACKING_NORMAL ||
-				state.field_45C != 0)) ||
+				state.field_45C != ROUTE_CONFIRMATION_NONE)) ||
 			carstate->field_B6 != 0 ||
 			carstate->car_crashBmpFlag != CRASH_EVENT_NONE ||
 			carstate->car_trackdata3_index == ROUTE_INDEX_NONE ||

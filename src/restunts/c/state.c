@@ -111,11 +111,11 @@ void player_op(legacy_s8 arg_carInputByte) {
 		commit_penalty = 0;
 		if (var_1EpenaltyCounter == PENALTY_ROUTE_OUTSIDE_TRACK) {
 			state.field_45B = ROUTE_TRACKING_OUTSIDE_TRACK;
-			state.field_45C = 0;
+			state.field_45C = ROUTE_CONFIRMATION_NONE;
 		} else {
 			if (state.field_45B == ROUTE_TRACKING_OUTSIDE_TRACK) {
 				state.field_45B = ROUTE_TRACKING_NORMAL;
-				state.field_45C = 0;
+				state.field_45C = ROUTE_CONFIRMATION_NONE;
 			}
 			if (state.field_45B == ROUTE_TRACKING_NORMAL) {
 				if (var_2 == 0 && state.field_2F4 != 0) {
@@ -124,7 +124,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					commit_penalty = 1;
 				} else if (var_1EpenaltyCounter >= 0 &&
 					var_1EpenaltyCounter < PENALTY_ROUTE_DECISION_DISTANCE) {
-					state.field_45C = 0;
+					state.field_45C = ROUTE_CONFIRMATION_NONE;
 					state.field_2F2 = var_2;
 				} else if (var_1EpenaltyCounter ==
 					PENALTY_ROUTE_FINISH_REACHED ||
@@ -132,13 +132,13 @@ void player_op(legacy_s8 arg_carInputByte) {
 					if (td01_track_file_cpy[state.field_2F4] == var_2 ||
 						td02_penalty_related[state.field_2F4] == var_2) {
 						state.field_45C = LEGACY_S8_WRAP_ADD(
-							state.field_45C, 1);
+							state.field_45C, ROUTE_CONFIRMATION_STEP);
 					} else {
 						if (td01_track_file_cpy[var_2] == state.field_2F4 ||
 							td02_penalty_related[var_2] == state.field_2F4) {
 							state.field_45B = ROUTE_TRACKING_WRONG_WAY;
 						}
-						state.field_45C = 1;
+						state.field_45C = ROUTE_CONFIRMATION_INITIAL;
 					}
 					if (state.field_45C >= PENALTY_ROUTE_CONFIRMATION_COUNT)
 						commit_penalty = 1;
@@ -147,7 +147,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		}
 		if (commit_penalty != 0) {
 			state.field_2F2 = var_2;
-			state.field_45C = 0;
+			state.field_45C = ROUTE_CONFIRMATION_NONE;
 			if (var_1EpenaltyCounter > 0) {
 				penalty_time = LEGACY_S16_WRAP_MUL(
 					LEGACY_S16_WRAP_MUL(
@@ -264,7 +264,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					if (si > ROUTE_ALIGNMENT_WRAP_LIMIT ||
 						si < ANGLE_EIGHTH_TURN) {
 						state.field_45B = ROUTE_TRACKING_NORMAL;
-						state.field_45C = 1;
+						state.field_45C = ROUTE_CONFIRMATION_INITIAL;
 						state.playerstate.car_trackdata3_index = var_2;
 						state.playerstate.field_CE = var_3A;
 					}
