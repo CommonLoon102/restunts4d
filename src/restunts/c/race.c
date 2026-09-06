@@ -27,6 +27,7 @@
 #define RACE_REPLAY_MODE_UNINITIALIZED (-1)
 #define RACE_START_POSITION_DISTANCE (-240)
 #define RACE_START_POSITION_SCALE_SHIFT 6U
+#define RACE_RANDOM_VALUE_SHIFT 3U
 
 legacy_s16 get_0(void);
 void do_mer_restext(void);
@@ -43,7 +44,8 @@ void run_game(void) {
 	rect_windshield.right = RACE_SCREEN_WIDTH;
 	var_2 = -1;
 	word_449EA = -1;
-	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), 3U);
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(),
+		RACE_RANDOM_VALUE_SHIFT);
 	replaybar_toggle = 1;
 	is_in_replay = 0;
 	if (idle_expired == 0) {
