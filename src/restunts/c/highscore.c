@@ -17,6 +17,7 @@
 #define HIGHSCORE_TEXT_FIELD_COUNT 4
 #define HIGHSCORE_NAME_MAX_CHARACTERS 16
 #define HIGHSCORE_NAME_INPUT_TIMEOUT 30000UL
+#define HIGHSCORE_LOW_FRAME_RATE_TIME_SCALE 2U
 
 #define HIGHSCORE_TITLE_Y 5
 #define HIGHSCORE_HEADING_Y 15
@@ -314,7 +315,8 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 
 	time_bits = (legacy_u16)frame_count;
 	if (framespersec == GAME_FRAME_RATE_LOW)
-		time_bits = LEGACY_U16_WRAP_MUL(time_bits, 2U);
+		time_bits = LEGACY_U16_WRAP_MUL(time_bits,
+			HIGHSCORE_LOW_FRAME_RATE_TIME_SCALE);
 	scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 	if (scores[HIGHSCORE_LAST_ENTRY_INDEX].time <= time_bits) {
 		highscore_text_unk();
