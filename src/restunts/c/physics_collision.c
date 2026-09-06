@@ -12,9 +12,6 @@
 #define CORKSCREW_COLLISION_POINT_COUNT 2U
 #define SLALOM_COLLISION_POINT_COUNT 4U
 #define SCENERY_COLLISION_POINT_COUNT 1U
-#define TRACK_CONTINUATION_NORTHWEST 253U
-#define TRACK_CONTINUATION_NORTH 254U
-#define TRACK_CONTINUATION_WEST 255U
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U
 #define SUSPENSION_TARGET_DECAY 4
@@ -141,16 +138,16 @@ legacy_s16 bto_auxiliary1(legacy_s16 column_arg, legacy_s16 row_arg, struct VECT
 	center_z = (legacy_u16)trackcenterpos[row];
 	previous_row_base = row == 0 ? (legacy_u16)word_45D3E :
 		(legacy_u16)trackrows[row - 1U];
-	if (tile_element == TRACK_CONTINUATION_NORTHWEST) {
+	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		tile_element = td14_elem_map_main[
 			LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
 		collision_tile_center(tile_element, row + 1U, column,
 			&center_z, &center_x);
-	} else if (tile_element == TRACK_CONTINUATION_NORTH) {
+	} else if (tile_element == TRACK_TILE_CONTINUATION_SOUTH) {
 		tile_element = td14_elem_map_main[previous_row_base + column];
 		collision_tile_center(tile_element, row + 1U, column + 1U,
 			&center_z, &center_x);
-	} else if (tile_element == TRACK_CONTINUATION_WEST) {
+	} else if (tile_element == TRACK_TILE_CONTINUATION_EAST) {
 		tile_element = td14_elem_map_main[
 			LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
 		collision_tile_center(tile_element, row, column,

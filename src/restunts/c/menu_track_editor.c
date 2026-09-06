@@ -6,10 +6,8 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "trackdata_layout.h"
 
-#define TRACK_TILE_CONTINUATION_SOUTHEAST 253U
-#define TRACK_TILE_CONTINUATION_SOUTH 254U
-#define TRACK_TILE_CONTINUATION_EAST 255U
 #define TRACK_EDITOR_REFRESH_BLIT_MODE 254U
 #define TRACK_EDITOR_CACHE_INVALID 255U
 #define TRACK_EDITOR_POSITION_UNSET 255U

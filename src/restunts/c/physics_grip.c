@@ -1,4 +1,5 @@
 #include "state_internal.h"
+#include "trackdata_layout.h"
 
 #define TRACK_GRID_LAST_COORDINATE 29
 #define TRACK_WORLD_TILE_SHIFT 16U
@@ -58,9 +59,6 @@ enum PENALTY_DETECTION_RESULT {
 #define SLIDE_ANGLE_FINAL_DECAY_SHIFT 1U
 #define SLIDE_ANGLE_DECAY_THRESHOLD 16
 #define BANK_EFFECT_ROTATION_THRESHOLD 4
-#define TRACK_CONTINUATION_NORTHWEST 253U
-#define TRACK_CONTINUATION_NORTH 254U
-#define TRACK_CONTINUATION_WEST 255U
 #define BANKED_TRACK_FIRST 52U
 #define BANKED_TRACK_LAST 55U
 #define BANKED_TRACK_TILT_DIVISOR 5
@@ -488,15 +486,15 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_posWorld1.lz >> TRACK_WORLD_TILE_SHIFT);
 		track = td14_elem_map_main[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
-		if (track == TRACK_CONTINUATION_NORTHWEST) {
+		if (track == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 			tile_x = LEGACY_U8_WRAP_SUB(
 				tile_x, TRACK_TILE_COORDINATE_STEP);
 			tile_z = LEGACY_U8_WRAP_ADD(
 				tile_z, TRACK_TILE_COORDINATE_STEP);
-		} else if (track == TRACK_CONTINUATION_NORTH) {
+		} else if (track == TRACK_TILE_CONTINUATION_SOUTH) {
 			tile_z = LEGACY_U8_WRAP_ADD(
 				tile_z, TRACK_TILE_COORDINATE_STEP);
-		} else if (track == TRACK_CONTINUATION_WEST) {
+		} else if (track == TRACK_TILE_CONTINUATION_EAST) {
 			tile_x = LEGACY_U8_WRAP_SUB(
 				tile_x, TRACK_TILE_COORDINATE_STEP);
 		}

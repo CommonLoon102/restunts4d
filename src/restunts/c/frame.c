@@ -39,9 +39,6 @@
 #define FRAME_DISTANT_SHAPE_MIN_DEPTH 200
 #define FRAME_HILL_ROAD_TERRAIN_FIRST 7U
 #define FRAME_HILL_ROAD_TERRAIN_END 11U
-#define FRAME_TRACK_CONTINUATION_NORTHWEST 253U
-#define FRAME_TRACK_CONTINUATION_NORTH 254U
-#define FRAME_TRACK_CONTINUATION_WEST 255U
 #define FRAME_SCENERY_PHYSICAL_MODEL_FIRST 64
 #define FRAME_MULTITILE_ROW 1
 #define FRAME_MULTITILE_COLUMN 2
@@ -863,18 +860,18 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					// Found a filler tile (non-main tile of a multitile component)
 					// Process the main tile of the component instead (the NW one)
 					if (elem_map_value ==
-						FRAME_TRACK_CONTINUATION_NORTHWEST) {
+						TRACK_TILE_CONTINUATION_SOUTHEAST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
 					} else if (elem_map_value ==
-						FRAME_TRACK_CONTINUATION_NORTH) {
+						TRACK_TILE_CONTINUATION_SOUTH) {
 						tile_south = LEGACY_S8_WRAP_SUB(tile_south, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];
 					} else if (elem_map_value ==
-						FRAME_TRACK_CONTINUATION_WEST) {
+						TRACK_TILE_CONTINUATION_EAST) {
 						tile_east = LEGACY_S8_WRAP_SUB(tile_east, 1);
 						elem_map_value = td14_elem_map_main[tile_east + trackrows[tile_south]];
 						terr_map_value = td15_terr_map_main[tile_east + terrainrows[tile_south]];

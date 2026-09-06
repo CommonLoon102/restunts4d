@@ -1,4 +1,5 @@
 #include "state_internal.h"
+#include "trackdata_layout.h"
 
 #define TRACK_GRID_SIZE 30
 #define TRACK_GRID_LAST_INDEX 29
@@ -10,9 +11,6 @@
 #define TRACK_INVALID_ELEMENT_FIRST 253U
 #define TRACK_LARGE_ELEMENT_FIRST 182U
 #define TRACK_GENERIC_LARGE_ELEMENT 4U
-#define TRACK_CONTINUATION_NORTHWEST 253U
-#define TRACK_CONTINUATION_NORTH 254U
-#define TRACK_CONTINUATION_WEST 255U
 #define TRACK_TILE_INDEX_UNASSIGNED 255U
 #define TRACK_TERRAIN_HILL 6U
 #define TRACK_HILLROAD_TERRAIN_FIRST 7U
@@ -433,18 +431,18 @@ legacy_s16 track_setup(void)
 		tile_terrain < TRACK_HILLROAD_TERRAIN_END)
 		tile_element = subst_hillroad_track(tile_terrain, tile_element);
 
-	if (tile_element == TRACK_CONTINUATION_NORTHWEST) {
+	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		column = track_setup_add_s8(column, -1);
 		row = track_setup_add_s8(row, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_northwest, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
-	} else if (tile_element == TRACK_CONTINUATION_NORTH) {
+	} else if (tile_element == TRACK_TILE_CONTINUATION_SOUTH) {
 		row = track_setup_add_s8(row, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_north, orientation);
 		tile_element = td14_elem_map_main[trackrows[row] + column];
-	} else if (tile_element == TRACK_CONTINUATION_WEST) {
+	} else if (tile_element == TRACK_TILE_CONTINUATION_EAST) {
 		column = track_setup_add_s8(column, -1);
 		tile_entry_point = track_setup_entry_point(
 			track_entry_points_west, orientation);
