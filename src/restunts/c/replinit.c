@@ -3,13 +3,15 @@
 #include "trackdata_layout.h"
 
 #define REPLAY_SLOW_CALLBACK_DIVISOR 2U
+#define VIDEO_GEOMETRY_UNIT_SCALE 1
+#define VIDEO_GEOMETRY_FULL_MASK (-1)
 
 void init_video_geometry_flags(void)
 {
-	video_flag1_is1 = 1;
-	video_flag2_is1 = 1;
-	video_flag3_isFFFF = -1;
-	video_flag4_is1 = 1;
+	video_flag1_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
+	video_flag2_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
+	video_flag3_isFFFF = VIDEO_GEOMETRY_FULL_MASK;
+	video_flag4_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
 }
 
 void init_row_tables(void)
