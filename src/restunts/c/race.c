@@ -318,7 +318,7 @@ void run_game(void) {
 				if (byte_449DA != 0) {
 
 					if ((game_replay_mode != REPLAY_MODE_LIVE ||
-						state.game_3F6autoLoadEvalFlag == 4) &&
+						state.game_3F6autoLoadEvalFlag == CRASH_EVENT_EXIT) &&
 						byte_449DA != REPLAY_EXIT_REQUESTED) {
 						byte_449DA = 0;
 						game_replay_mode = REPLAY_MODE_PLAYBACK;
