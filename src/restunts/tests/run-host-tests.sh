@@ -39,11 +39,17 @@ run_host_test() {
 run_host_test test-gamestate-serialization stateio.c
 run_host_test test-legacy-semantics legacy.c
 run_host_test test-matrix-semantics math.c
+run_host_test test-memmgr-cache memmgr.c \
+    -Wno-pointer-sign -Wno-unused-variable -Wno-missing-braces -Wno-missing-field-initializers
 run_host_test test-pixldump-md5 ../pixldump/md5.c
 run_host_test test-replay-serialization replay.c
 run_host_test test-resource-lookup resource.c
 run_host_test test-shape3d-vertices shape3d.c \
     -Wno-pointer-sign -Wno-unused-variable
+run_host_test test-car-shape-lifetime shape3d_car.c \
+    "$test_source_dir/shape3d_resources.c" "$test_source_dir/shape3d.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
 run_host_test test-track-resource-decoding trackres.c
 

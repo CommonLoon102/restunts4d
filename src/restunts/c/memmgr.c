@@ -183,7 +183,7 @@ legacy_u16 mmgr_allocated_paragraphs(void) {
 void far* mmgr_free(legacy_s8 far* ptr) {
 	legacy_s16 name_index;
 	legacy_u16 free_paragraphs, unused_bx, unused_cx, unused_dx, unused_di;
-	legacy_u16 ptrseg;
+	legacy_u16 ptrseg, source_segment, source_paragraphs;
 	struct MEMCHUNK* chunk;
 	struct MEMCHUNK* unused_chunk;
 
@@ -195,19 +195,24 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 	ptrseg = 0;
 	chunk->resstate = MMGR_RESOURCE_STATE_FREE;
 	free_paragraphs = mmgr_first_cached_chunk->resofs - mmgr_last_live_chunk->resofs - mmgr_last_live_chunk->ressize;
+	/* Only the last live block can reuse its own descriptor for caching. */
 	if (chunk == mmgr_last_live_chunk ||
-		(chunk != mmgr_first_cached_chunk && free_paragraphs >= chunk->ressize)) {
-		ptrseg = mmgr_first_cached_chunk->resofs - chunk->ressize;
+		(mmgr_first_cached_chunk > mmgr_last_live_chunk + 1 &&
+			free_paragraphs >= chunk->ressize)) {
+		/* A full table reuses the source descriptor for the cached block. */
+		source_segment = chunk->resofs;
+		source_paragraphs = chunk->ressize;
+		ptrseg = mmgr_first_cached_chunk->resofs - source_paragraphs;
 		mmgr_first_cached_chunk--;
 		mmgr_first_cached_chunk->resofs = ptrseg;
-		mmgr_first_cached_chunk->ressize = chunk->ressize;
+		mmgr_first_cached_chunk->ressize = source_paragraphs;
 		mmgr_first_cached_chunk->resstate = MMGR_RESOURCE_STATE_CACHED;
 
 		for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 			mmgr_first_cached_chunk->resname[name_index] = chunk->resname[name_index];
 		}
 
-		copy_paras_reverse(chunk->resofs, ptrseg, chunk->ressize);
+		copy_paras_reverse(source_segment, ptrseg, source_paragraphs);
 	}
 
 	if (chunk == mmgr_last_live_chunk) {

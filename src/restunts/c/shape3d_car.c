@@ -233,15 +233,27 @@ void shape3d_update_car_wheel_vertices(struct SHAPE3D* shape, legacy_u16 first_v
 	return ;
 }
 
-void shape3d_free_car_shapes() {
+void shape3d_free_car_shapes(void) {
+	struct SHAPE3D empty_shape = { 0 };
+	legacy_s16 shape_index;
+
 	if (car2resptr != 0) {
 		shape3d_update_car_wheel_vertices(&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
 			CAR_FIRST_WHEEL_VERTEX, 0, neutral_wheel_suspension,
 			opponent_wheel_vertex_state, opponent_base_wheel_vertices, opponent_front_wheel_centers);
 		mmgr_release(car2resptr);
+		car2resptr = 0;
 	}
-	shape3d_update_car_wheel_vertices(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
-		CAR_FIRST_WHEEL_VERTEX, 0, neutral_wheel_suspension,
-		player_wheel_vertex_state, player_base_wheel_vertices, player_front_wheel_centers);
-	mmgr_free(carresptr);
+	if (carresptr != 0) {
+		shape3d_update_car_wheel_vertices(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
+			CAR_FIRST_WHEEL_VERTEX, 0, neutral_wheel_suspension,
+			player_wheel_vertex_state, player_base_wheel_vertices, player_front_wheel_centers);
+		mmgr_free(carresptr);
+		carresptr = 0;
+	}
+
+	/* Scene objects can retain these records after their resource is freed. */
+	for (shape_index = PLAYER_EXPLOSION_SHAPE_FIRST;
+		shape_index <= OPPONENT_CAR_HIGH_SHAPE; shape_index++)
+		game3dshapes[shape_index] = empty_shape;
 }
