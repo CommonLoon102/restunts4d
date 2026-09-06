@@ -31,6 +31,10 @@
 #define SURFACE_GRASS 4
 #define CAR_SPEED_INTEGER_SHIFT 8U
 #define GRIP_FIXED_SCALE 256L
+#define BASE_GRIP_SCALE_SHIFT 1U
+#define SLIDING_COEFFICIENT_SUM_NONE 0
+#define LEGACY_SIGN_WORD_NEGATIVE (-1)
+#define LEGACY_SIGN_WORD_NONNEGATIVE 0
 #define LEGACY_LONG_HIGH_WORD_SHIFT 16U
 #define DEMANDED_GRIP_ANGLE_SHIFT 3U
 #define DEMANDED_GRIP_SPEED_SQUARE_SHIFT 6U
@@ -263,8 +267,9 @@ void update_legacy_grip_stack_words(
 	 * Reproduce update_grip's first operands: twice the car's base grip and
 	 * the sum of the four surface-specific sliding coefficients.
 	 */
-	combined_grip_operand = LEGACY_S16_SHL(simd->grip, 1U);
-	sliding_sum = 0;
+	combined_grip_operand = LEGACY_S16_SHL(
+		simd->grip, BASE_GRIP_SCALE_SHIFT);
+	sliding_sum = SLIDING_COEFFICIENT_SUM_NONE;
 	sliding_values = &simd->sliding;
 	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(
@@ -274,11 +279,13 @@ void update_legacy_grip_stack_words(
 
 	/* Operand words left by update_grip's first signed long multiply. */
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
-		sliding_sum < 0 ? -1 : 0;
+		sliding_sum < 0 ? LEGACY_SIGN_WORD_NEGATIVE :
+			LEGACY_SIGN_WORD_NONNEGATIVE;
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD] =
 		combined_grip_operand;
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD] =
-		combined_grip_operand < 0 ? -1 : 0;
+		combined_grip_operand < 0 ? LEGACY_SIGN_WORD_NEGATIVE :
+			LEGACY_SIGN_WORD_NONNEGATIVE;
 
 	if (carstate->car_demandedGrip <= carstate->car_surfacegrip_sum)
 		return;
@@ -378,8 +385,8 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		DEMANDED_GRIP_SPEED_SQUARE_SHIFT);
 	demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
 
-	combined_grip = LEGACY_S16_SHL(simd->grip, 1U);
-	sliding_sum = 0;
+	combined_grip = LEGACY_S16_SHL(simd->grip, BASE_GRIP_SCALE_SHIFT);
+	sliding_sum = SLIDING_COEFFICIENT_SUM_NONE;
 	sliding_values = &simd->sliding;
 	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
