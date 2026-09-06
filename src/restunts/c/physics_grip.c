@@ -50,6 +50,7 @@
 #define SLIDE_ANGLE_WEIGHT 3
 #define SLIDE_ANGLE_BLEND_SHIFT 2U
 #define SLIDE_ANGLE_DECAY_SHIFT 4U
+#define SLIDE_ANGLE_FINAL_DECAY_SHIFT 1U
 #define SLIDE_ANGLE_DECAY_THRESHOLD 16
 #define BANK_EFFECT_ROTATION_THRESHOLD 4
 #define TRACK_CONTINUATION_NORTHWEST 253U
@@ -464,7 +465,8 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			if (absolute_angle < SLIDE_ANGLE_DECAY_THRESHOLD)
 				carstate->field_42 = LEGACY_S16_SAR(
-					carstate->field_42, 1U);
+					carstate->field_42,
+					SLIDE_ANGLE_FINAL_DECAY_SHIFT);
 		}
 	}
 
