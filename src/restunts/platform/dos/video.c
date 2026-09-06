@@ -35,6 +35,14 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_VIDEO_BIOS_MODE4 4U
 #define DOS_VIDEO_BIOS_MODE7 7U
 #define DOS_VIDEO_BIOS_MODE13 19U
+#define DOS_VIDEO_BACKGROUND_BLACK 0
+#define DOS_VIDEO_MEMORY_START_OFFSET 0
+#define DOS_VIDEO_FIRST_WORD_INDEX 0
+#define DOS_VIDEO_FIRST_CRTC_REGISTER_INDEX 0
+#define DOS_VIDEO_CLEAR_WORD 0
+#define DOS_VIDEO_MODE_UNSAVED 0
+#define DOS_VIDEO_MODE4_INACTIVE 0
+#define DOS_VIDEO_MODE4_ACTIVE 1U
 
 static legacy_u8 saved_video_mode;
 static legacy_u8 saved_equipment_byte;
@@ -76,7 +84,7 @@ static void dos_video_reset_palette(void)
 	union REGS registers;
 
 	registers.h.ah = DOS_VIDEO_BIOS_SET_BACKGROUND_FUNCTION;
-	registers.x.bx = 0;
+	registers.x.bx = DOS_VIDEO_BACKGROUND_BLACK;
 	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
 }
 
@@ -86,8 +94,9 @@ static void dos_video_fill(legacy_u16 segment, legacy_u16 value,
 	legacy_u16 far* destination;
 	legacy_u16 index;
 
-	destination = (legacy_u16 far*)MK_FP(segment, 0);
-	for (index = 0; index < word_count; ++index)
+	destination = (legacy_u16 far*)MK_FP(segment,
+		DOS_VIDEO_MEMORY_START_OFFSET);
+	for (index = DOS_VIDEO_FIRST_WORD_INDEX; index < word_count; ++index)
 		destination[index] = value;
 }
 
@@ -95,7 +104,8 @@ static void dos_video_program_crtc(const legacy_u8* values)
 {
 	legacy_u16 index;
 
-	for (index = 0; index < DOS_VIDEO_CRTC_REGISTER_COUNT; ++index) {
+	for (index = DOS_VIDEO_FIRST_CRTC_REGISTER_INDEX;
+		index < DOS_VIDEO_CRTC_REGISTER_COUNT; ++index) {
 		outp(DOS_VIDEO_CRTC_INDEX_PORT, index);
 		outp(DOS_VIDEO_CRTC_DATA_PORT, values[index]);
 	}
@@ -113,7 +123,7 @@ static void far dos_video_on_exit(void)
 	equipment = saved_equipment_byte;
 	if ((equipment & DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS) ==
 		DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS)
-		dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+		dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, DOS_VIDEO_CLEAR_WORD,
 			DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 	dos_video_reset_palette();
 }
@@ -122,7 +132,7 @@ static void dos_video_add_exit_handler(void)
 {
 	union REGS registers;
 
-	if (saved_video_mode != 0)
+	if (saved_video_mode != DOS_VIDEO_MODE_UNSAVED)
 		return;
 	registers.h.ah = DOS_VIDEO_BIOS_GET_MODE_FUNCTION;
 	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
@@ -134,7 +144,7 @@ static void dos_video_add_exit_handler(void)
 
 static void dos_video_set_mode3(void)
 {
-	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, DOS_VIDEO_CLEAR_WORD,
 		DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_COLOR_BITS);
 	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE3);
@@ -176,13 +186,13 @@ void dos_video_set_mode_13h(void)
 	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_COLOR_BITS);
 	dos_video_reset_palette();
 	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE13);
-	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0,
+	dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, DOS_VIDEO_CLEAR_WORD,
 		DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 }
 
 void dos_video_set_mode4(void)
 {
-	mode4_active = 1U;
+	mode4_active = DOS_VIDEO_MODE4_ACTIVE;
 	dos_video_set_equipment_bits(DOS_VIDEO_EQUIPMENT_MODE4_BITS);
 	dos_video_set_bios_mode(DOS_VIDEO_BIOS_MODE4);
 	outp(DOS_VIDEO_HERCULES_CONFIG_PORT,
@@ -190,7 +200,7 @@ void dos_video_set_mode4(void)
 	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
 		DOS_VIDEO_HERCULES_MODE4_CONTROL);
 	dos_video_program_crtc(mode4_crtc_registers);
-	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, 0,
+	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, DOS_VIDEO_CLEAR_WORD,
 		DOS_VIDEO_MONOCHROME_CLEAR_WORDS);
 	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
 		DOS_VIDEO_HERCULES_MODE4_ACTIVE_CONTROL);
@@ -198,7 +208,7 @@ void dos_video_set_mode4(void)
 
 void dos_video_set_mode7(void)
 {
-	if (mode4_active == 0) {
+	if (mode4_active == DOS_VIDEO_MODE4_INACTIVE) {
 		dos_video_set_mode3();
 		return;
 	}
@@ -209,7 +219,7 @@ void dos_video_set_mode7(void)
 	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
 		DOS_VIDEO_HERCULES_MODE7_CONTROL);
 	dos_video_program_crtc(mode7_crtc_registers);
-	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, 0,
+	dos_video_fill(DOS_VIDEO_MONOCHROME_SEGMENT, DOS_VIDEO_CLEAR_WORD,
 		DOS_VIDEO_MONOCHROME_CLEAR_WORDS);
 	outp(DOS_VIDEO_HERCULES_CONTROL_PORT,
 		DOS_VIDEO_HERCULES_MODE7_ACTIVE_CONTROL);
