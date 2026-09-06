@@ -38,6 +38,8 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_CALLBACKS_RUNNING 1U
 #define DOS_TIMER_CALLBACK_REGISTRATION_FAILED 0
 #define DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED 1
+#define DOS_TIMER_NO_CALLBACK 0
+#define DOS_TIMER_NO_CALLBACK_SEGMENT 0U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -78,16 +80,17 @@ legacy_s16 dos_timer_register_callback(void (far* callback)(void))
 	for (callback_index = 0;
 		callback_index < DOS_TIMER_USABLE_CALLBACK_COUNT;
 		callback_index++) {
-		if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
+		if (FP_SEG(dos_timer_callbacks[callback_index]) ==
+			DOS_TIMER_NO_CALLBACK_SEGMENT)
 			break;
 	}
 	if (callback_index == DOS_TIMER_USABLE_CALLBACK_COUNT)
 		return DOS_TIMER_CALLBACK_REGISTRATION_FAILED;
 
 	disable();
-	dos_timer_callbacks[callback_index] = 0;
+	dos_timer_callbacks[callback_index] = DOS_TIMER_NO_CALLBACK;
 	dos_timer_callbacks[callback_index] = callback;
-	dos_timer_callbacks[callback_index + 1U] = 0;
+	dos_timer_callbacks[callback_index + 1U] = DOS_TIMER_NO_CALLBACK;
 	enable();
 	return DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED;
 }
@@ -111,7 +114,7 @@ void dos_timer_unregister_callback(void (far* callback)(void))
 			dos_timer_callbacks[callback_index + 1U];
 		callback_index++;
 	}
-	dos_timer_callbacks[DOS_TIMER_LAST_CALLBACK_INDEX] = 0;
+	dos_timer_callbacks[DOS_TIMER_LAST_CALLBACK_INDEX] = DOS_TIMER_NO_CALLBACK;
 	enable();
 }
 
@@ -171,7 +174,8 @@ static void interrupt dos_timer_interrupt(void)
 		for (callback_index = 0;
 			callback_index < DOS_TIMER_CALLBACK_CAPACITY;
 			callback_index++) {
-			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U)
+			if (FP_SEG(dos_timer_callbacks[callback_index]) ==
+				DOS_TIMER_NO_CALLBACK_SEGMENT)
 				break;
 			dos_timer_callbacks[callback_index]();
 		}
@@ -245,7 +249,7 @@ void dos_timer_setup_interrupt(void)
 
 	disable();
 	dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_IDLE;
-	dos_timer_callbacks[0] = 0;
+	dos_timer_callbacks[0] = DOS_TIMER_NO_CALLBACK;
 	enable();
 
 	outp(DOS_TIMER_SPEAKER_CONTROL_PORT,
