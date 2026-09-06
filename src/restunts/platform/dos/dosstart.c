@@ -9,6 +9,15 @@
 #define HEADLESS_DOS_INTERRUPT 33
 #define HEADLESS_DOS_RESIZE_MEMORY_FUNCTION 74
 #define HEADLESS_PSP_COMMAND_LINE_OFFSET 128U
+#define HEADLESS_PSP_COMMAND_LENGTH_INDEX 0U
+#define HEADLESS_PSP_COMMAND_FIRST_CHARACTER_INDEX 1U
+#define HEADLESS_COMMAND_FIRST_INDEX 0U
+#define HEADLESS_PROGRAM_ONLY_ARG_COUNT 1
+#define HEADLESS_PROGRAM_ARG_INDEX 0
+#define HEADLESS_COMMAND_TERMINATOR_RESERVE 1U
+#define HEADLESS_QUOTE_STATE_OFF 0U
+#define HEADLESS_QUOTE_STATE_TOGGLE 1U
+#define HEADLESS_COMMAND_TERMINATOR '\0'
 
 #if defined(RESTUNTS_FULL) || defined(RESTUNTS_PIXLDUMP)
 extern void full_data_initialize(void);
@@ -67,14 +76,15 @@ static legacy_s16 headless_parse_command_line(void)
 
 	source = (legacy_u8 far*)MK_FP(headless_psp_segment,
 		HEADLESS_PSP_COMMAND_LINE_OFFSET);
-	source_length = source[0];
-	source_index = 1;
-	destination_index = 0;
-	argc = 1;
-	headless_argv[0] = headless_program_name;
+	source_length = source[HEADLESS_PSP_COMMAND_LENGTH_INDEX];
+	source_index = HEADLESS_PSP_COMMAND_FIRST_CHARACTER_INDEX;
+	destination_index = HEADLESS_COMMAND_FIRST_INDEX;
+	argc = HEADLESS_PROGRAM_ONLY_ARG_COUNT;
+	headless_argv[HEADLESS_PROGRAM_ARG_INDEX] = headless_program_name;
 
 	while (source_index <= source_length && argc < HEADLESS_MAX_ARGS &&
-		destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
+		destination_index + HEADLESS_COMMAND_TERMINATOR_RESERVE <
+			HEADLESS_COMMAND_LINE_SIZE) {
 		while (source_index <= source_length &&
 			(source[source_index] == ' ' || source[source_index] == '\t'))
 			source_index++;
@@ -82,19 +92,21 @@ static legacy_s16 headless_parse_command_line(void)
 			break;
 
 		headless_argv[argc++] = &headless_command_line[destination_index];
-		quoted = 0;
+		quoted = HEADLESS_QUOTE_STATE_OFF;
 		while (source_index <= source_length) {
 			character = source[source_index++];
 			if (character == '"') {
-				quoted ^= 1U;
+				quoted ^= HEADLESS_QUOTE_STATE_TOGGLE;
 				continue;
 			}
 			if (!quoted && (character == ' ' || character == '\t'))
 				break;
-			if (destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE)
+			if (destination_index + HEADLESS_COMMAND_TERMINATOR_RESERVE <
+				HEADLESS_COMMAND_LINE_SIZE)
 				headless_command_line[destination_index++] = character;
 		}
-		headless_command_line[destination_index++] = 0;
+		headless_command_line[destination_index++] =
+			HEADLESS_COMMAND_TERMINATOR;
 	}
 
 	return argc;
