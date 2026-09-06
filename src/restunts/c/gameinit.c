@@ -146,7 +146,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_fpsmul2 = 0;
 	playerstate->car_transmission = transmission;
 	playerstate->field_CD = 0;
-	playerstate->field_CE = 0;
+	playerstate->field_CE = ROUTE_POINT_FIRST;
 	playerstate->field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 }
 
@@ -254,7 +254,7 @@ void init_game_state(legacy_s16 arg)
 				(legacy_s16)route_point,
 				0);
 			state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(
-				route_point, 1);
+				route_point, ROUTE_POINT_STEP);
 		}
 
 		calculate_car_start_offset(track_angle, ANGLE_THREE_QUARTER_TURN,
@@ -272,7 +272,7 @@ void init_game_state(legacy_s16 arg)
 			route_point = (legacy_u8)state.opponentstate.field_CE;
 			opponent_route_advance((legacy_s16)route_point);
 			state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
-				route_point, 1);
+				route_point, ROUTE_POINT_STEP);
 		}
 
 		state.field_42A = 0;

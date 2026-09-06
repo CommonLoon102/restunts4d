@@ -198,7 +198,8 @@ static void opponent_advance_route(void)
 	legacy_u8 route_point;
 
 	route_point = (legacy_u8)state.opponentstate.field_CE;
-	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(route_point, 1);
+	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
+		route_point, ROUTE_POINT_STEP);
 	if (sub_18D60(opponent_route_word(
 		state.opponentstate.car_trackdata3_index),
 		&state.opponentstate.car_vec_unk3, route_point,
@@ -213,7 +214,7 @@ static void opponent_advance_route(void)
 			state.opponentstate.field_CD, 1);
 		state.opponentstate.car_trackdata3_index = 0;
 	}
-	state.opponentstate.field_CE = 0;
+	state.opponentstate.field_CE = ROUTE_POINT_FIRST;
 }
 
 static legacy_s16 opponent_average(legacy_s16 first, legacy_s16 second)

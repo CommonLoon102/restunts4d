@@ -828,6 +828,7 @@ void init_plantrak(void) {
 		0);
 
 	route_index = (legacy_u8)state.opponentstate.field_CE;
-	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(route_index, 1);
+	state.opponentstate.field_CE = LEGACY_S8_WRAP_ADD(
+		route_index, ROUTE_POINT_STEP);
 	opponent_route_advance((legacy_s16)route_index);
 }

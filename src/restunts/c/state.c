@@ -227,7 +227,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 				guidance_required = 0;
 			} else {
 				var_2A = 0;
-				var_2C = 0;
+				var_2C = ROUTE_POINT_FIRST;
 				do {
 					var_2A = LEGACY_S8_FROM_BITS((legacy_u8)sub_18D60(
 						var_2, &state.playerstate.car_vec_unk3,
@@ -235,21 +235,22 @@ void player_op(legacy_s8 arg_carInputByte) {
 					route_point_delta(&var_28,
 						ROUTE_HEIGHT_REFERENCE_TRACK_LEVEL);
 					mat_mul_vector(&var_28, var_matptr, &var_38);
-					if (var_2C == 0 ||
+					if (var_2C == ROUTE_POINT_FIRST ||
 						(var_38.z < var_32.z && var_38.z > 0)) {
 						var_3A = var_2C;
 						var_32.z = var_38.z;
 					}
-					var_2C = LEGACY_S8_WRAP_ADD(var_2C, 1);
+					var_2C = LEGACY_S8_WRAP_ADD(var_2C, ROUTE_POINT_STEP);
 				} while (var_2A == 0);
 
 				if (state.field_45B == ROUTE_TRACKING_WRONG_WAY) {
-					if (var_3A == 0) {
-						sub_18D60(var_2, var_52, 0, 0);
-						sub_18D60(var_2, var_1A, 1, 0);
+					if (var_3A == ROUTE_POINT_FIRST) {
+						sub_18D60(var_2, var_52, ROUTE_POINT_FIRST, 0);
+						sub_18D60(var_2, var_1A, ROUTE_POINT_SECOND, 0);
 					} else {
 						sub_18D60(var_2, var_52,
-							(legacy_s16)LEGACY_S8_WRAP_SUB(var_3A, 1), 0);
+							(legacy_s16)LEGACY_S8_WRAP_SUB(
+								var_3A, ROUTE_POINT_STEP), 0);
 						sub_18D60(var_2, var_1A,
 							(legacy_s16)(legacy_u8)var_3A, 0);
 					}
@@ -278,7 +279,8 @@ void player_op(legacy_s8 arg_carInputByte) {
 
 		if (route_advance_required != 0) {
 			route_point = (legacy_u8)state.playerstate.field_CE;
-			state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(route_point, 1);
+			state.playerstate.field_CE = LEGACY_S8_WRAP_ADD(
+				route_point, ROUTE_POINT_STEP);
 			if (sub_18D60(state.playerstate.car_trackdata3_index,
 				&state.playerstate.car_vec_unk3,
 				(legacy_s16)route_point, 0) != 0) {
@@ -289,7 +291,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 					state.playerstate.car_trackdata3_index =
 						td01_track_file_cpy[state.field_2F2];
 				}
-				state.playerstate.field_CE = 0;
+				state.playerstate.field_CE = ROUTE_POINT_FIRST;
 			}
 		}
 
