@@ -10,6 +10,11 @@
 #define REPLAY_TRACK_NAME_OFFSET 13U
 #define REPLAY_FRAMES_PER_SECOND_OFFSET 22U
 #define REPLAY_RECORDED_FRAMES_OFFSET 24U
+#define REPLAY_BYTE_INDEX_FIRST 0U
+#define REPLAY_RECORDED_FRAMES_NONE 0U
+#define REPLAY_TIMELINE_POSITION_START 0U
+#define REPLAY_CHECKPOINT_DISTANCE_NONE 0U
+#define REPLAY_REWIND_AMOUNT_NONE 0U
 
 /* The header stores the ids and the track name as plain byte runs. */
 static void replay_read_bytes(legacy_s8* destination,
@@ -17,7 +22,7 @@ static void replay_read_bytes(legacy_s8* destination,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = REPLAY_BYTE_INDEX_FIRST; index < count; index++)
 		destination[index] = LEGACY_S8_FROM_BITS(source[index]);
 }
 
@@ -26,7 +31,7 @@ static void replay_write_bytes(legacy_u8 far* destination,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = REPLAY_BYTE_INDEX_FIRST; index < count; index++)
 		destination[index] = (legacy_u8)source[index];
 }
 
@@ -88,8 +93,8 @@ legacy_u32 replay_file_size(legacy_u16 recorded_frames)
 legacy_u16 replay_timeline_position(legacy_u16 frame,
 	legacy_u16 recorded_frames, legacy_u16 width)
 {
-	if (recorded_frames == 0U)
-		return 0U;
+	if (recorded_frames == REPLAY_RECORDED_FRAMES_NONE)
+		return REPLAY_TIMELINE_POSITION_START;
 	if (frame > recorded_frames)
 		frame = recorded_frames;
 	return (legacy_u16)(((legacy_u32)frame * (legacy_u32)width) /
@@ -99,8 +104,8 @@ legacy_u16 replay_timeline_position(legacy_u16 frame,
 legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount,
 	legacy_u16 frames_remaining, legacy_u16 checkpoint_distance)
 {
-	if (checkpoint_distance == 0U)
-		return 0U;
+	if (checkpoint_distance == REPLAY_CHECKPOINT_DISTANCE_NONE)
+		return REPLAY_REWIND_AMOUNT_NONE;
 	return (legacy_u16)(((legacy_u32)rewind_amount *
 		(legacy_u32)frames_remaining) /
 		(legacy_u32)checkpoint_distance);
