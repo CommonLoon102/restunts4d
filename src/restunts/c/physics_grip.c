@@ -43,7 +43,6 @@
 #define SLIDE_ANGLE_BLEND_SHIFT 2U
 #define SLIDE_ANGLE_DECAY_SHIFT 4U
 #define SLIDE_ANGLE_DECAY_THRESHOLD 16
-#define CAR_CRASHED_FLAG 1
 #define BANK_EFFECT_ROTATION_THRESHOLD 4
 #define TRACK_CONTINUATION_NORTHWEST 253U
 #define TRACK_CONTINUATION_NORTH 254U
@@ -455,7 +454,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 
 	if (carstate->car_angle_z == 0 &&
-		carstate->car_crashBmpFlag != CAR_CRASHED_FLAG)
+		carstate->car_crashBmpFlag != CRASH_EVENT_COLLISION)
 		carstate->car_40MfrontWhlAngle = adjusted_angle;
 	else
 		carstate->car_40MfrontWhlAngle = 0;
