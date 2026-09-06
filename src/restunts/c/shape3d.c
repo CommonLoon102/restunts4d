@@ -125,7 +125,6 @@ extern legacy_s8 backlights_paint_override;
 #define SHAPE3D_NO_DEPTH_SORT_FLAG 1U
 #define SHAPE3D_PRIMITIVE_ALWAYS_VISIBLE_FLAG 1U
 #define SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG 2U
-#define SHAPE3D_BACKLIGHT_PAINT_JOB 45
 
 #define POLYINFO_LIST_CAPACITY 400U
 #define POLYINFO_LIST_SENTINEL LEGACY_U16_MAX
@@ -686,7 +685,7 @@ legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr) {
 	var_45E = LEGACY_U16_WRAP_ADD(var_45E, 1U);
 	transshapepolyinfo[3] = transshapenumvertscopy;
 	transshapepolyinfo[4] = var_primtype;
-	if (transprimitivepaintjob == SHAPE3D_BACKLIGHT_PAINT_JOB) {
+	if (transprimitivepaintjob == BACKLIGHT_PAINT_DEFAULT) {
 		transshapepolyinfo[2] = backlights_paint_override;
 	} else {
 		transshapepolyinfo[2] = transprimitivepaintjob;

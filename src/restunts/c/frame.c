@@ -8,9 +8,6 @@
 #define FRAME_CAR_WHEEL_COUNT 4
 #define FRAME_LOOKAHEAD_TILE_COUNT 23
 #define FRAME_LOOKAHEAD_LAST_TILE_INDEX 22
-#define FRAME_TILE_DRAW_MARKER 0
-#define FRAME_TILE_MULTITILE_COVERED_MARKER 1
-#define FRAME_TILE_UNAVAILABLE_MARKER 2
 #define FRAME_CAR_UP_VECTOR_LENGTH 30000
 #define FRAME_CAR_NEAR_SORT_ADJUSTMENT 2048
 #define FRAME_DEFAULT_TRANSFORM_DISTANCE 1024
@@ -59,10 +56,6 @@
 #define FRAME_CHECKPOINT_TRACK_OBJECT_BASE 212U
 #define FRAME_CHECKPOINT_OWNER_OFFSET 2
 #define FRAME_CHECKPOINT_TRANSFORM_DISTANCE 100
-#define FRAME_PLAYER_INDEX 0
-#define FRAME_OPPONENT_INDEX 1
-#define FRAME_PLAYER_SORT_ID 2
-#define FRAME_OPPONENT_SORT_ID 3
 #define FRAME_PLAYER_SHAPE_RESOURCE_OFFSET 2772U
 #define FRAME_OPPONENT_SHAPE_RESOURCE_OFFSET 2794U
 #define FRAME_START_FLAG_RESOURCE_OFFSET 2442U
@@ -73,8 +66,6 @@
 #define FRAME_START_FLAG_FIRST_VERTEX 8U
 #define FRAME_START_FLAG_ANIMATION_SHIFT 6U
 #define FRAME_START_FLAG_MAX_MATERIAL 3
-#define FRAME_BACKLIGHT_PAINT_NORMAL 46
-#define FRAME_BACKLIGHT_PAINT_BRAKING 47
 #define FRAME_EXPLOSION_CAR_COUNT 2
 #define FRAME_EXPLOSION_FRAME_SHIFT 2U
 #define FRAME_EXPLOSION_VARIANT_COUNT 3
@@ -88,12 +79,7 @@
 #define FRAME_CAR_LOW_DETAIL_FIRST 3
 #define FRAME_TILE_DETAIL_FULL 0
 #define FRAME_STEERED_WHEEL_FIRST_VERTEX 8U
-#define FRAME_CAR_CRASH_STATE_CRASHED 1
-#define FRAME_CAR_CRASH_STATE_SINKING 2
 #define FRAME_FENCE_EDGE_CLASS_COUNT 3
-#define FRAME_FENCE_EDGE_LOW 0
-#define FRAME_FENCE_EDGE_HIGH 1
-#define FRAME_FENCE_EDGE_INTERIOR 2
 #define FRAME_FENCE_NONE (-1)
 #define FRAME_LOOKAHEAD_TABLE_ENTRY_COUNT 24
 #define FRAME_SLOW_VIDEO_TRANSFORM_FLAG 8
@@ -104,16 +90,39 @@
 #define FRAME_FENCE_POSITION_COUNT_ROW 2
 #define FRAME_FENCE_POSITION_COUNT_COLUMN 3
 #define FRAME_FENCE_POSITION_COUNT_BOTH 4
-#define FRAME_CORNER_NORTHWEST 0
-#define FRAME_CORNER_NORTHEAST 1
-#define FRAME_CORNER_SOUTHWEST 2
-#define FRAME_CORNER_SOUTHEAST 3
 #define FRAME_SORT_MINIMUM_SHAPE_COUNT 2
 #define FRAME_RECT_CENTER_SHIFT 1U
-#define FRAME_START_FLAG_VERTEX_LEFT_NEAR 0
-#define FRAME_START_FLAG_VERTEX_LEFT_FAR 1
-#define FRAME_START_FLAG_VERTEX_RIGHT_NEAR 2
-#define FRAME_START_FLAG_VERTEX_RIGHT_FAR 3
+
+enum FRAME_TILE_MARKER {
+	FRAME_TILE_DRAW_MARKER = 0,
+	FRAME_TILE_MULTITILE_COVERED_MARKER = 1,
+	FRAME_TILE_UNAVAILABLE_MARKER = 2
+};
+
+enum FRAME_SORT_ID {
+	FRAME_PLAYER_SORT_ID = 2,
+	FRAME_OPPONENT_SORT_ID = 3
+};
+
+enum FRAME_FENCE_EDGE_CLASS {
+	FRAME_FENCE_EDGE_LOW = 0,
+	FRAME_FENCE_EDGE_HIGH = 1,
+	FRAME_FENCE_EDGE_INTERIOR = 2
+};
+
+enum FRAME_CORNER {
+	FRAME_CORNER_NORTHWEST = 0,
+	FRAME_CORNER_NORTHEAST = 1,
+	FRAME_CORNER_SOUTHWEST = 2,
+	FRAME_CORNER_SOUTHEAST = 3
+};
+
+enum FRAME_START_FLAG_VERTEX_INDEX {
+	FRAME_START_FLAG_VERTEX_LEFT_NEAR = 0,
+	FRAME_START_FLAG_VERTEX_LEFT_FAR = 1,
+	FRAME_START_FLAG_VERTEX_RIGHT_NEAR = 2,
+	FRAME_START_FLAG_VERTEX_RIGHT_FAR = 3
+};
 
 /*
  * In the original dseg, sceneshapes2 immediately follows trkObjectList.
@@ -468,8 +477,7 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 	if (slow_video_mgmt_copy != 0) {
 		curtransshape_ptr->rectptr = slow_rect;
 		curtransshape_ptr->ts_flags = FRAME_TRANSFORM_FLAGS_CLIPPED;
-	} else if (carstate->car_crashBmpFlag !=
-		FRAME_CAR_CRASH_STATE_CRASHED) {
+	} else if (carstate->car_crashBmpFlag != CRASH_EVENT_COLLISION) {
 		curtransshape_ptr->ts_flags = FRAME_TRANSFORM_FLAGS_DEFAULT;
 	} else {
 		*crash_rect = cliprect_unk;
@@ -573,8 +581,8 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	legacy_u8 elem_map_value;
 	legacy_u8 terr_map_value;
 
-	var_DC[FRAME_PLAYER_INDEX] = 0;
-	var_DC[FRAME_OPPONENT_INDEX] = 0;
+	var_DC[PLAYER_CAR_INDEX] = 0;
+	var_DC[OPPONENT_CAR_INDEX] = 0;
 	if (video_flag5_is0 == 0 || arg_0 == 0) {
 		rectptr_unk = rect_array_unk;
 		rectptr_unk2 = rect_array_unk2;
@@ -950,7 +958,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		followOpponentFlag != 0) {
 
 		if (state.playerstate.car_crashBmpFlag !=
-			FRAME_CAR_CRASH_STATE_SINKING) {
+			CRASH_EVENT_WATER) {
 
 			var_6C = frame_find_car_wheel(&state.playerstate,
 				&simd_player, should_skip_tile, lookahead_tiles,
@@ -966,7 +974,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		if (cameramode != CAMERA_MODE_COCKPIT ||
 			followOpponentFlag == 0) {
 			if (state.opponentstate.car_crashBmpFlag !=
-				FRAME_CAR_CRASH_STATE_SINKING) {
+				CRASH_EVENT_WATER) {
 				var_A4 = frame_find_car_wheel(&state.opponentstate,
 					&simd_opponent, should_skip_tile, lookahead_tiles,
 					cam_tile_east, cam_tile_south, &var_4A, &var_6E);
@@ -1371,7 +1379,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		if ((var_3C == tile_east || var_3C == tile_to_draw_east_offset) && (var_60 == tile_south || var_60 == tile_to_draw_south_offset)) {
-			frame_add_car(&state.playerstate, FRAME_PLAYER_INDEX,
+			frame_add_car(&state.playerstate, PLAYER_CAR_INDEX,
 				FRAME_PLAYER_SORT_ID,
 				&game3dshapes[FRAME_PLAYER_SHAPE_RESOURCE_OFFSET /
 					sizeof(struct SHAPE3D)],
@@ -1383,7 +1391,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		if ((var_4A == tile_east) || (var_4A == tile_to_draw_east_offset)) {
 			if ((var_6E == tile_south) || (var_6E == tile_to_draw_south_offset)) {
-				frame_add_car(&state.opponentstate, FRAME_OPPONENT_INDEX,
+				frame_add_car(&state.opponentstate, OPPONENT_CAR_INDEX,
 					FRAME_OPPONENT_SORT_ID,
 					&game3dshapes[FRAME_OPPONENT_SHAPE_RESOURCE_OFFSET /
 						sizeof(struct SHAPE3D)],
@@ -1495,19 +1503,19 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				if (transformedshape_arg2array[di] == FRAME_PLAYER_SORT_ID) {
 					if (state.playerstate.car_is_braking != 0) {
 						backlights_paint_override =
-							FRAME_BACKLIGHT_PAINT_BRAKING;
+							BACKLIGHT_PAINT_BRAKING;
 					} else {
 						backlights_paint_override =
-							FRAME_BACKLIGHT_PAINT_NORMAL;
+							BACKLIGHT_PAINT_NORMAL;
 					}
 				} else if (transformedshape_arg2array[di] ==
 					FRAME_OPPONENT_SORT_ID) {
 					if (state.opponentstate.car_is_braking == 0) {
 						backlights_paint_override =
-							FRAME_BACKLIGHT_PAINT_NORMAL;
+							BACKLIGHT_PAINT_NORMAL;
 					} else {
 						backlights_paint_override =
-							FRAME_BACKLIGHT_PAINT_BRAKING;
+							BACKLIGHT_PAINT_BRAKING;
 					}
 				}
 
@@ -1519,14 +1527,14 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					if (transformedshape_arg2array[di] ==
 						FRAME_PLAYER_SORT_ID) {
 						if (state.playerstate.car_crashBmpFlag ==
-							FRAME_CAR_CRASH_STATE_CRASHED) {
-							var_DC[FRAME_PLAYER_INDEX] = 1;
+							CRASH_EVENT_COLLISION) {
+							var_DC[PLAYER_CAR_INDEX] = 1;
 						}
 					} else if (transformedshape_arg2array[di] ==
 						FRAME_OPPONENT_SORT_ID) {
 						if (state.opponentstate.car_crashBmpFlag ==
-							FRAME_CAR_CRASH_STATE_CRASHED) {
-							var_DC[FRAME_OPPONENT_INDEX] = 1;
+							CRASH_EVENT_COLLISION) {
+							var_DC[OPPONENT_CAR_INDEX] = 1;
 						}
 					}
 				}
@@ -1548,13 +1556,13 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			continue;
 		}
 		if (slow_video_mgmt_copy == 0) {
-			if (si == FRAME_PLAYER_INDEX) {
+			if (si == PLAYER_CAR_INDEX) {
 				var_rectptr = &var_rect;
 			} else {
 				var_rectptr = &var_rect2;
 			}
 		} else {
-			if (si == FRAME_PLAYER_INDEX) {
+			if (si == PLAYER_CAR_INDEX) {
 				var_rectptr = &rect_unk12;
 			} else {
 				var_rectptr = &rect_unk15;
@@ -1606,14 +1614,14 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		}
 
 		if (var_stateptr->car_crashBmpFlag ==
-			FRAME_CAR_CRASH_STATE_CRASHED) {
+			CRASH_EVENT_COLLISION) {
 			if (slow_video_mgmt_copy != 0) {
 				rect_union(init_crak(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top), rect_unk, rect_unk);
 			} else {
 				init_crak(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top);
 			}
 		} else if (var_stateptr->car_crashBmpFlag ==
-			FRAME_CAR_CRASH_STATE_SINKING) {
+			CRASH_EVENT_WATER) {
 			if (slow_video_mgmt_copy != 0) {
 				rect_union(do_sinking(state.game_frame - si, arg_cliprectptr->top, arg_cliprectptr->bottom - arg_cliprectptr->top), rect_unk, rect_unk);
 			} else {

@@ -34,8 +34,6 @@
 #define CAR_MENU_PROJECTION_Y_SCALE 17
 #define CAR_MENU_PROJECTION_HEIGHT 100
 #define CAR_MENU_TRANSFORM_DISTANCE 30000U
-#define CAR_MENU_BACKLIGHT_PAINT 45
-#define CAR_MENU_CAR_SHAPE_INDEX 124U
 #define CAR_MENU_CLIPPED_TRANSFORM_FLAG 8U
 #define CAR_MENU_BACKGROUND_Y 103
 #define CAR_MENU_BACKGROUND_HEIGHT 97
@@ -121,7 +119,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	legacy_s16 mouse_hit;
 
 	transformed.pos = carmenu_carpos;
-	transformed.shapeptr = &game3dshapes[CAR_MENU_CAR_SHAPE_INDEX];
+	transformed.shapeptr = &game3dshapes[PLAYER_CAR_LOW_SHAPE];
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
 	transformed.unk = CAR_MENU_TRANSFORM_DISTANCE;
@@ -171,7 +169,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 	waitflag = CAR_MENU_WAIT_TICKS;
 	blit_mode = CAR_MENU_INITIAL_BLIT_MODE;
-	backlights_paint_override = CAR_MENU_BACKLIGHT_PAINT;
+	backlights_paint_override = BACKLIGHT_PAINT_DEFAULT;
 	selector_resource = file_load_shape2d_fatal(aSdcsel);
 	opponent_sprite = 0;
 	if (opponent_type == CAR_MENU_PLAYER_MODE)
@@ -336,7 +334,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			&carmenu_cliprect, 0);
 		if ((legacy_s8)(legacy_u8)*material >=
 			(legacy_s8)(legacy_u8)
-				game3dshapes[CAR_MENU_CAR_SHAPE_INDEX].shape3d_numpaints)
+				game3dshapes[PLAYER_CAR_LOW_SHAPE].shape3d_numpaints)
 			*material = 0;
 		transformed.rotvec.z = rotation;
 		transformed.material = (legacy_u8)*material;
