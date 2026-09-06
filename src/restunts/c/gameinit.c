@@ -12,6 +12,7 @@
 #define CAR_PSEUDO_GRAVITY_NONE 0
 #define CAR_INITIAL_SPEED_DIFFERENCE 0
 #define CAR_INITIAL_DEMANDED_GRIP 0
+#define CAR_INITIAL_WHEEL_PHYSICS_VALUE 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -131,11 +132,11 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 
 	for (i = 0; i < CARSTATE_WHEEL_COUNT; ++i) {
 		playerstate->car_surfaceWhl[i] = CAR_INITIAL_SURFACE_PAVED;
-		playerstate->car_rc1[i] = 0;
-		playerstate->car_rc2[i] = 0;
-		playerstate->car_rc3[i] = 0;
-		playerstate->car_rc4[i] = 0;
-		playerstate->car_rc5[i] = 0;
+		playerstate->car_rc1[i] = CAR_INITIAL_WHEEL_PHYSICS_VALUE;
+		playerstate->car_rc2[i] = CAR_INITIAL_WHEEL_PHYSICS_VALUE;
+		playerstate->car_rc3[i] = CAR_INITIAL_WHEEL_PHYSICS_VALUE;
+		playerstate->car_rc4[i] = CAR_INITIAL_WHEEL_PHYSICS_VALUE;
+		playerstate->car_rc5[i] = CAR_INITIAL_WHEEL_PHYSICS_VALUE;
 
 		playerstate->car_whlWorldCrds1[i] = whlPos;
 		playerstate->car_whlWorldCrds2[i] = whlPos;
