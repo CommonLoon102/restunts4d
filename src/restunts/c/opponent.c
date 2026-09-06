@@ -278,7 +278,7 @@ void opponent_op(void)
 		(legacy_s32)state.playerstate.car_posWorld1.ly);
 	player_z = position_to_word(
 		(legacy_s32)state.playerstate.car_posWorld1.lz);
-	state.opponentstate.field_CF = 0;
+	state.opponentstate.field_CF = CAR_SOUND_NONE;
 	state.field_45E = ROUTE_INDICATOR_NONE;
 	rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 		state.opponentstate.car_rotate.y,
@@ -286,7 +286,7 @@ void opponent_op(void)
 	state.opponentstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 		if (state.opponentstate.car_speed2 == 0)
-			state.opponentstate.field_CF = 0;
+			state.opponentstate.field_CF = CAR_SOUND_NONE;
 	} else {
 	route_target = state.opponentstate.car_vec_unk3;
 	if (route_target.y != ROUTE_POINT_HEIGHT_UNSPECIFIED) {
