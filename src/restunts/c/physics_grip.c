@@ -329,7 +329,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 
 	if (carstate->car_sumSurfAllWheels == 0) {
 		carstate->car_40MfrontWhlAngle = 0;
-		carstate->car_slidingFlag = 0;
+		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		return;
 	}
 
@@ -405,7 +405,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 
 	if (LEGACY_S16_FROM_BITS(demanded_grip) > combined_grip) {
-		carstate->car_slidingFlag = 1;
+		carstate->car_slidingFlag = CAR_SLIDING_ACTIVE;
 		numerator = LEGACY_S32_WRAP_MUL(
 			(legacy_s32)combined_grip, GRIP_FIXED_SCALE);
 		denominator = LEGACY_S32_WRAP_MUL(
@@ -420,7 +420,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		carstate->field_42 = LEGACY_S16_WRAP_SUB(
 			initial_angle, adjusted_angle);
 	} else {
-		carstate->car_slidingFlag = 0;
+		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		if (carstate->field_42 != 0) {
 			carstate->field_42 = LEGACY_S16_WRAP_SUB(
 				carstate->field_42, LEGACY_S16_SAR(
@@ -504,7 +504,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_36MwhlAngle, carstate->car_angle_z);
 	}
 
-	if (carstate->car_slidingFlag != 0) {
+	if (carstate->car_slidingFlag != CAR_SLIDING_INACTIVE) {
 		absolute_angle = carstate->field_42;
 		if (absolute_angle < 0)
 			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);

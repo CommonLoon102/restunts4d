@@ -371,7 +371,7 @@ void opponent_op(void)
 	relative.z = LEGACY_S16_WRAP_SUB(route_target.z, opponent_z);
 	mat_mul_vector(&relative, rotation, &transformed);
 	steering_target = (legacy_s16)polarAngle(transformed.x, transformed.z);
-	if (state.opponentstate.car_slidingFlag == 0) {
+	if (state.opponentstate.car_slidingFlag == CAR_SLIDING_INACTIVE) {
 		absolute_value = steering_target;
 		if (absolute_value < 0)
 			absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
