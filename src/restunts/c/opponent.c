@@ -266,7 +266,8 @@ void opponent_op(void)
 		steering_step = OPPONENT_LOW_RATE_STEERING_STEP;
 		speed_step = OPPONENT_LOW_RATE_SPEED_STEP;
 	}
-	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
+	forced_route = state.opponentstate.car_36MwhlAngle !=
+		CAR_WHEEL_HEADING_STRAIGHT ||
 		state.game_inputmode == GAME_INPUT_MODE_INTRO;
 	opponent_x = position_to_word(
 		(legacy_s32)state.opponentstate.car_posWorld1.lx);
@@ -420,12 +421,14 @@ void opponent_op(void)
 	if (state.opponentstate.car_sumSurfRearWheels != CAR_WHEEL_CONTACT_NONE) {
 		if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 			input = INPUT_BRAKE_FLAG;
-		} else if (state.opponentstate.car_36MwhlAngle != 0) {
+		} else if (state.opponentstate.car_36MwhlAngle !=
+			CAR_WHEEL_HEADING_STRAIGHT) {
 			speed_threshold = LEGACY_U16_SHL(speed_step,
 				OPPONENT_COAST_SPEED_SHIFT);
 			if (speed_threshold > state.opponentstate.car_speed2) {
 				state.opponentstate.car_speed2 = CAR_SPEED_STOPPED;
-				state.opponentstate.car_36MwhlAngle = 0;
+				state.opponentstate.car_36MwhlAngle =
+					CAR_WHEEL_HEADING_STRAIGHT;
 			} else {
 				state.opponentstate.car_speed2 = LEGACY_U16_WRAP_SUB(
 					state.opponentstate.car_speed2, speed_threshold);

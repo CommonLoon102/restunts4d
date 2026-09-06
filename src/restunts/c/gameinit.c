@@ -88,7 +88,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_rotate.x = track_angle;
 	playerstate->car_rotate.y = 0;
 	playerstate->car_rotate.z = 0;
-	playerstate->car_36MwhlAngle = 0;
+	playerstate->car_36MwhlAngle = CAR_WHEEL_HEADING_STRAIGHT;
 	playerstate->car_pseudoGravity = 0;
 	playerstate->car_steeringAngle = CAR_STEERING_CENTERED;
 	playerstate->car_is_braking = CAR_PEDAL_RELEASED;
@@ -108,9 +108,9 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_knob_x2 = playerstate->car_knob_x;
 	playerstate->car_knob_y = simd->knob_points[CAR_INITIAL_GEAR_INDEX].py;
 	playerstate->car_knob_y2 = playerstate->car_knob_y;
-	playerstate->car_angle_z = 0;
-	playerstate->car_40MfrontWhlAngle = 0;
-	playerstate->field_42 = 0;
+	playerstate->car_angle_z = CAR_ROTATION_DELTA_NONE;
+	playerstate->car_40MfrontWhlAngle = CAR_FRONT_WHEEL_ANGLE_STRAIGHT;
+	playerstate->field_42 = CAR_SLIDE_ANGLE_NONE;
 	playerstate->field_48 = 0;
 	playerstate->car_trackdata3_index = 0;
 	playerstate->car_sumSurfFrontWheels = CAR_WHEELS_PER_AXLE;

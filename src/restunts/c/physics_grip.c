@@ -347,7 +347,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s32 denominator;
 
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
-		carstate->car_40MfrontWhlAngle = 0;
+		carstate->car_40MfrontWhlAngle = CAR_FRONT_WHEEL_ANGLE_STRAIGHT;
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		return;
 	}
@@ -397,7 +397,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	if (grip_behavior == GRIP_BEHAVIOR_OPPONENT) {
 		carstate->car_40MfrontWhlAngle = LEGACY_S16_SHL(
 			carstate->car_steeringAngle, FRONT_WHEEL_ANGLE_SHIFT);
-		if (carstate->car_angle_z != 0) {
+		if (carstate->car_angle_z != CAR_ROTATION_DELTA_NONE) {
 			carstate->car_angle_z = LEGACY_S16_SAR(
 				LEGACY_S16_WRAP_MUL(carstate->car_angle_z,
 					ROTATION_DAMPING_NUMERATOR), ROTATION_DAMPING_SHIFT);
@@ -441,7 +441,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			initial_angle, adjusted_angle);
 	} else {
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
-		if (carstate->field_42 != 0) {
+		if (carstate->field_42 != CAR_SLIDE_ANGLE_NONE) {
 			carstate->field_42 = LEGACY_S16_WRAP_SUB(
 				carstate->field_42, LEGACY_S16_SAR(
 					carstate->field_42, SLIDE_ANGLE_DECAY_SHIFT));
@@ -454,11 +454,11 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		}
 	}
 
-	if (carstate->car_angle_z == 0 &&
+	if (carstate->car_angle_z == CAR_ROTATION_DELTA_NONE &&
 		carstate->car_crashBmpFlag != CAR_CRASHED_FLAG)
 		carstate->car_40MfrontWhlAngle = adjusted_angle;
 	else
-		carstate->car_40MfrontWhlAngle = 0;
+		carstate->car_40MfrontWhlAngle = CAR_FRONT_WHEEL_ANGLE_STRAIGHT;
 
 	absolute_angle = carstate->car_rotate.z;
 	if (absolute_angle < 0)
@@ -498,28 +498,29 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_angle_z, correction);
 		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
 			carstate->car_angle_z, SLIDE_YAW_DAMPING_DIVISOR);
-	} else if (carstate->car_angle_z != 0) {
+	} else if (carstate->car_angle_z != CAR_ROTATION_DELTA_NONE) {
 		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
 			carstate->car_angle_z, correction);
 		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
 			carstate->car_angle_z, SLIDE_YAW_DAMPING_DIVISOR);
-		if (carstate->car_angle_z == 0) {
+		if (carstate->car_angle_z == CAR_ROTATION_DELTA_NONE) {
 			carstate->car_speed2 = (legacy_u16)multiply_and_scale(
 				cos_fast(carstate->car_36MwhlAngle),
 				carstate->car_speed2);
 			if (cos_fast(carstate->car_36MwhlAngle) < 0)
 				carstate->car_speed2 = CAR_SPEED_STOPPED;
-			carstate->car_36MwhlAngle = 0;
+			carstate->car_36MwhlAngle = CAR_WHEEL_HEADING_STRAIGHT;
 		}
 	}
 	}
 
-	if (carstate->car_36MwhlAngle != 0 && carstate->car_angle_z == 0) {
+	if (carstate->car_36MwhlAngle != CAR_WHEEL_HEADING_STRAIGHT &&
+		carstate->car_angle_z == CAR_ROTATION_DELTA_NONE) {
 		carstate->car_36MwhlAngle = LEGACY_S16_SAR(
 			LEGACY_S16_WRAP_MUL(carstate->car_36MwhlAngle,
 				ROTATION_DAMPING_NUMERATOR), ROTATION_DAMPING_SHIFT);
 	}
-	if (carstate->car_angle_z != 0) {
+	if (carstate->car_angle_z != CAR_ROTATION_DELTA_NONE) {
 		carstate->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
 			carstate->car_36MwhlAngle, carstate->car_angle_z);
 	}
@@ -553,5 +554,5 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 					CAR_SOUND_SKID_OFFROAD_FLAG);
 		}
 	}
-	carstate->field_42 = 0;
+	carstate->field_42 = CAR_SLIDE_ANGLE_NONE;
 }

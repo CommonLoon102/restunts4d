@@ -213,7 +213,8 @@ static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
 			state.opponentstate.car_rc2[wheel_index],
 			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT)),
 		y_adjustment);
-	if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
+	if ((state.opponentstate.car_angle_z & ANGLE_MASK) !=
+		CAR_ROTATION_DELTA_NONE) {
 		mat_mul_vector(wheel, angle_rotation, rotated);
 		*wheel = *rotated;
 	}
@@ -398,7 +399,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		}
 
 		/* Prepare the optional auxiliary wheel rotation once for both wheels. */
-		if ((state.opponentstate.car_angle_z & ANGLE_MASK) != 0) {
+		if ((state.opponentstate.car_angle_z & ANGLE_MASK) !=
+			CAR_ROTATION_DELTA_NONE) {
 			var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
 				LEGACY_S16_WRAP_NEGATE(
 					state.opponentstate.car_angle_z),
@@ -478,7 +480,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		arg_pState->car_pseudoGravity = 0;
 	}
 
-	if ((arg_pState->car_angle_z & ANGLE_MASK) != 0) {
+	if ((arg_pState->car_angle_z & ANGLE_MASK) != CAR_ROTATION_DELTA_NONE) {
 		var_EC = 1;
 		var_MmatFromAngleZ = *mat_rot_zxy(0, 0,
 			LEGACY_S16_WRAP_NEGATE(arg_pState->car_angle_z),
