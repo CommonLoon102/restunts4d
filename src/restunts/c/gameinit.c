@@ -148,7 +148,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 
 	playerstate->car_engineLimiterTimer = CAR_INITIAL_ENGINE_LIMITER_TIMER;
 	playerstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
-	playerstate->field_C8 = 0;
+	playerstate->field_C8 = CAR_COLLISION_LATCH_CLEAR;
 	playerstate->car_crashBmpFlag = CRASH_EVENT_NONE;
 	playerstate->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
 	playerstate->car_fpsmul2 = GEAR_CHANGE_DELAY_EXPIRED;
