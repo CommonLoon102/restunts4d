@@ -24,6 +24,8 @@
 #define DOS_JOYSTICK_STATE_DISABLED 0U
 #define DOS_JOYSTICK_STATE_ENABLED 1U
 #define DOS_JOYSTICK_NO_INPUT 0
+#define DOS_JOYSTICK_FIRST_AXIS_INDEX 0U
+#define DOS_JOYSTICK_MINIMUM_AXIS_DIFFERENCE 0U
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
@@ -177,7 +179,7 @@ legacy_s16 dos_joystick_get_scaled_axis(legacy_u16 axis_index)
 	legacy_u16 difference;
 	legacy_u32 scaled;
 
-	if (axis_index == 0U) {
+	if (axis_index == DOS_JOYSTICK_FIRST_AXIS_INDEX) {
 		axis = dos_joystick_axis1;
 		minimum = dos_joystick_axis1_min;
 		scale = dos_joystick_axis1_scale;
@@ -187,7 +189,7 @@ legacy_s16 dos_joystick_get_scaled_axis(legacy_u16 axis_index)
 		scale = dos_joystick_axis2_scale;
 	}
 	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(minimum))
-		difference = 0;
+		difference = DOS_JOYSTICK_MINIMUM_AXIS_DIFFERENCE;
 	else
 		difference = LEGACY_U16_WRAP_SUB(axis, minimum);
 	scaled = (legacy_u32)difference * scale;
