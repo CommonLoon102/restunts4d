@@ -70,7 +70,7 @@ legacy_s8 run_menu(void)
 		}
 
 		elapsed = (legacy_u16)menu_animate_button_highlight(selected,
-			menu_buttons, word_407CE, word_407D0);
+			menu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
 		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT,
 			menu_buttons);

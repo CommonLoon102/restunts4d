@@ -37,7 +37,7 @@ legacy_u16 legacy_near_string_length(const legacy_s8* text)
 	return length;
 }
 
-void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value, legacy_s16 zero_pad,
+void format_integer(legacy_s8* destination, legacy_s16 value, legacy_s16 zero_pad,
 	legacy_s16 width)
 {
 	legacy_s8 digits[LEGACY_S16_DECIMAL_DIGIT_COUNT];
@@ -120,16 +120,16 @@ void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	frames = LEGACY_U16_WRAP_SUB(frames,
 		LEGACY_U16_WRAP_MUL(frame_rate, seconds));
 
-	print_int_as_string_maybe(number, minutes, 0, TIME_FIELD_WIDTH);
+	format_integer(number, minutes, 0, TIME_FIELD_WIDTH);
 	output = legacy_near_string_copy(destination, number);
 	*output++ = ':';
-	print_int_as_string_maybe(number, seconds, 1, TIME_FIELD_WIDTH);
+	format_integer(number, seconds, 1, TIME_FIELD_WIDTH);
 	output = legacy_near_string_copy(output, number);
 	if (include_hundredths != 0) {
 		*output++ = '.';
 		hundredths = LEGACY_U16_WRAP_MUL(
 			LEGACY_U16_DIV_OR_ZERO(HUNDREDTHS_PER_SECOND, frame_rate), frames);
-		print_int_as_string_maybe(number, hundredths, 1, TIME_FIELD_WIDTH);
+		format_integer(number, hundredths, 1, TIME_FIELD_WIDTH);
 		legacy_near_string_copy(output, number);
 	}
 }

@@ -13,7 +13,7 @@ void font_set_colors(legacy_s16 color, legacy_s16 background_color);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x,
 	legacy_s16 y, legacy_s16 color, legacy_s16 shadow_color);
 
-void print_int_as_string_maybe(legacy_s8* destination, legacy_s16 value,
+void format_integer(legacy_s8* destination, legacy_s16 value,
 	legacy_s16 zero_pad, legacy_s16 width);
 void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
 	legacy_s16 include_hundredths);

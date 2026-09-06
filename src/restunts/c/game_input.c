@@ -248,7 +248,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 	case 'M':
 	case 'm':
-		do_mou_restext();
+		select_mouse_driving();
 		mouse_minmax_position(LEGACY_S8_FROM_BITS(byte_3B8F2));
 		return 1;
 
@@ -524,7 +524,7 @@ static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 wid
 	}
 }
 
-legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y, legacy_s16 height,
+legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y, legacy_s16 height,
 	legacy_s16 selected, legacy_s16 selection_width, legacy_s16 item_count)
 {
 	legacy_s16 length;

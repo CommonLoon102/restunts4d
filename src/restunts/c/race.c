@@ -30,7 +30,7 @@
 #define RACE_RANDOM_VALUE_SHIFT 3U
 
 legacy_s16 get_0(void);
-void do_mer_restext(void);
+void show_insufficient_memory_dialog(void);
 
 void run_game(void) {
 	legacy_s16 var_16[2];
@@ -72,7 +72,7 @@ void run_game(void) {
 
 	if (setup_player_cars() != 0) {
 		free_player_cars();
-		do_mer_restext();
+		show_insufficient_memory_dialog();
 	} else {
 
 		kbormouse = 0;
@@ -171,7 +171,7 @@ void run_game(void) {
 				regsi = show_dialog(DIALOG_TYPE_MENU,
 					DIALOG_SAVE_BACKGROUND,
 					locate_text_res(gameresptr, "rbf"), -1, -1,
-					dialogarg2, 0, 0);
+					dialog_border_color, 0, 0);
 				if (regsi == -1)
 					regsi = 0;
 
@@ -252,7 +252,7 @@ void run_game(void) {
 			}
 
 			if (full_redraw_frames_remaining != 0) {
-				byte_449D8[dashboard_buffer_index] = 0;
+				replay_controls_drawn[dashboard_buffer_index] = 0;
 				if (byte_449E2 != 0) {
 					sprite_set_1_size(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
 						height_above_replaybar);
@@ -267,7 +267,7 @@ void run_game(void) {
 				}
 			} else {
 				if (replaybar_enabled == 0) {
-					byte_449D8[dashboard_buffer_index] = 0;
+					replay_controls_drawn[dashboard_buffer_index] = 0;
 				}
 			}
 

@@ -144,7 +144,7 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 			rect_adjust_from_point(&point, &point_rect);
 		}
 		intro_colorvalue = LEGACY_S16_WRAP_ADD(intro_colorvalue, 1);
-		if (intro_colorvalue == word_407CC)
+		if (intro_colorvalue == intro_palette_color_count)
 			intro_colorvalue = 1;
 	}
 	if (slow_video_mgmt_copy != 0)

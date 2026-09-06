@@ -130,8 +130,8 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	legacy_u8 state_changed;
 
 	player_index = (legacy_u8)dashboard_buffer_index;
-	if (byte_449D8[player_index] == 0) {
-		byte_449D8[player_index] = 1;
+	if (replay_controls_drawn[player_index] == 0) {
+		replay_controls_drawn[player_index] = 1;
 		byte_40E74[player_index] = REPLAY_NO_SELECTION;
 		byte_40E08[player_index] = REPLAY_NO_SELECTION;
 		for (index = 0; index < REPLAY_CONTROL_COUNT; index++)
@@ -187,7 +187,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		word_40E76[player_index] = recorded_position;
 		word_40E04[player_index] = current_position;
 		sprite_fill_rect(REPLAY_TIMELINE_X, REPLAY_TIMELINE_Y,
-			REPLAY_TIMELINE_WIDTH, REPLAY_TIMELINE_HEIGHT, word_407FC);
+			REPLAY_TIMELINE_WIDTH, REPLAY_TIMELINE_HEIGHT, replay_timeline_background_color);
 		sprite_fill_rect(LEGACY_S16_WRAP_ADD(
 			REPLAY_TIMELINE_X, recorded_position),
 			REPLAY_TIMELINE_Y, REPLAY_TIMELINE_HEIGHT,
@@ -198,7 +198,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 			LEGACY_S16_WRAP_ADD(
 				REPLAY_TIMELINE_CURSOR_RIGHT_X, current_position),
 			REPLAY_TIMELINE_CURSOR_BOTTOM_Y,
-			word_407FE);
+			replay_marker_color);
 	}
 
 	state_changed = byte_40E08[player_index] != byte_3E9DB;
@@ -254,7 +254,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		sprite_draw_rect_outline(game_camera_buttons[byte_3E9DB].x1,
 			game_camera_buttons[byte_3E9DB].y1,
 			game_camera_buttons[byte_3E9DB].x2,
-			game_camera_buttons[byte_3E9DB].y2, word_407FE);
+			game_camera_buttons[byte_3E9DB].y2, replay_marker_color);
 	}
 	mouse_draw_transparent_check();
 }
@@ -305,7 +305,7 @@ static void replay_pause_menu(void)
 		DIALOG_NO_BACKGROUND_SAVE,
 		locate_text_res(gameresptr, aMen_0),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-		dialogarg2, options, REPLAY_DIALOG_INITIAL_CHOICE));
+		dialog_border_color, options, REPLAY_DIALOG_INITIAL_CHOICE));
 
 	switch (menu_result) {
 	case REPLAY_PAUSE_ACTION_FINISH:
@@ -454,7 +454,7 @@ static void replay_pause_menu(void)
 			DIALOG_NO_BACKGROUND_SAVE,
 			locate_text_res(gameresptr, aMdo),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-			dialogarg2, mode_options, REPLAY_DIALOG_INITIAL_CHOICE));
+			dialog_border_color, mode_options, REPLAY_DIALOG_INITIAL_CHOICE));
 		switch (menu_result) {
 		case REPLAY_MODE_ACTION_DASHBOARD:
 			dashb_toggle ^= 1;

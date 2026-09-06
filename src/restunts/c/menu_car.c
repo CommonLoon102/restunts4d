@@ -77,7 +77,7 @@ static void car_menu_draw_standard_button(legacy_s8 far* text,
 		LEGACY_S16_WRAP_ADD(carmenu_buttons[0].x1, 1),
 		LEGACY_S16_WRAP_ADD(carmenu_buttons[button_index].y1, 1),
 		CAR_MENU_BUTTON_WIDTH, CAR_MENU_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 }
 
 void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmission,
@@ -229,13 +229,13 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		sprite_copy_wnd_to_1_clear();
 		draw_button(0, 0, CAR_MENU_BACKGROUND_Y, CAR_MENU_SCREEN_WIDTH,
 			CAR_MENU_BACKGROUND_HEIGHT,
-			word_407F4, word_407F6, word_407F8, 0);
+			button_top_color, button_bottom_color, button_fill_color, 0);
 		draw_button(0, CAR_MENU_LEFT_PANEL_X, CAR_MENU_PANEL_Y,
 			CAR_MENU_LEFT_PANEL_WIDTH, CAR_MENU_PANEL_HEIGHT,
-			word_407F4, word_407F6, word_407F8, 0);
+			button_top_color, button_bottom_color, button_fill_color, 0);
 		draw_button(0, CAR_MENU_RIGHT_PANEL_X, CAR_MENU_PANEL_Y,
 			CAR_MENU_RIGHT_PANEL_WIDTH, CAR_MENU_PANEL_HEIGHT,
-			word_407F4, word_407F6, word_407F8, 0);
+			button_top_color, button_bottom_color, button_fill_color, 0);
 		shape = (struct SHAPE2D far*)locate_shape_fatal(
 			selector_resource, aGrap);
 		sprite_shape_to_1_alt(shape);
@@ -421,7 +421,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 	sprite_copy_2_to_1_2();
 	rotation_delta = (legacy_s16)menu_animate_button_highlight(selected,
-		carmenu_buttons, word_407CE, word_407D0);
+		carmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 	menu_update_idle_counter((legacy_u16)rotation_delta,
 		CAR_MENU_IDLE_LIMIT_TICKS);
 	input = (legacy_u16)input_checking(rotation_delta);

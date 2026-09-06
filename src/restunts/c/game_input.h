@@ -59,7 +59,7 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count,
 	const struct BUTTON_AREA* buttons);
 legacy_s16 get_kb_or_joy_flags(void);
 legacy_s16 input_checking(legacy_s16 frame_delta);
-legacy_s16 mouse_track_op(legacy_s16 operation, legacy_s16 x,
+legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x,
 	legacy_s16 width, legacy_s16 y, legacy_s16 height,
 	legacy_s16 selected, legacy_s16 selection_width,
 	legacy_s16 item_count);

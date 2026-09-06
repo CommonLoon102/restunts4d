@@ -906,7 +906,7 @@ void far* file_load_resource(legacy_s16 resource_type,
 			resource_type == FILE_RESOURCE_COMPRESSED_OPTIONAL)
 			return result;
 
-		dearesult = do_dea_textres();
+		dearesult = show_disk_error_dialog();
 		if (dearesult == FILE_ERROR_DIALOG_ABORT)
 			return 0;
 	}
@@ -946,7 +946,7 @@ void far* file_load_resfile(const legacy_s8* filename) {
 			filename, ".pre", name);
 		if (result != 0) return result;
 
-		do_dea_textres();
+		show_disk_error_dialog();
 	}
 #endif
 }
@@ -969,7 +969,7 @@ void far* file_load_3dres(const legacy_s8* filename) {
 			filename, ".3sh", name);
 		if (result != 0) return result;
 
-		do_dea_textres();
+		show_disk_error_dialog();
 	}
 }
 

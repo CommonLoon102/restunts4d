@@ -14,13 +14,13 @@
 #define BUTTON_TEXT_VERTICAL_ADJUSTMENT 1
 
 static legacy_s16 menu_animation_counter;
-static legacy_s16 menu_animation_state;
+static legacy_s16 menu_highlight_color;
 legacy_s16 menu_idle_counter;
 
 void menu_reset_animation_timers(void)
 {
 	menu_animation_counter = 0;
-	menu_animation_state = 0;
+	menu_highlight_color = 0;
 	menu_idle_counter = 0;
 }
 
@@ -35,11 +35,11 @@ void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit)
 
 legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 	const struct BUTTON_AREA* buttons,
-	legacy_s16 second_state, legacy_s16 first_state)
+	legacy_s16 second_color, legacy_s16 first_color)
 {
 	legacy_u16 delta;
 	legacy_u16 animation_counter;
-	legacy_s16 selected_state;
+	legacy_s16 selected_color;
 
 	delta = (legacy_u16)timer_get_delta_alt();
 	animation_counter = LEGACY_U16_WRAP_ADD(menu_animation_counter, delta);
@@ -47,16 +47,16 @@ legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 		animation_counter = LEGACY_U16_WRAP_SUB(
 			animation_counter, MENU_ANIMATION_PERIOD);
 	menu_animation_counter = animation_counter;
-	selected_state = LEGACY_S16_FROM_BITS(animation_counter) >
+	selected_color = LEGACY_S16_FROM_BITS(animation_counter) >
 		MENU_ANIMATION_SECOND_STATE_START ?
-		LEGACY_S16_FROM_BITS((legacy_u16)second_state) :
-		LEGACY_S16_FROM_BITS((legacy_u16)first_state);
-	if (menu_animation_state != selected_state) {
-		menu_animation_state = selected_state;
+		LEGACY_S16_FROM_BITS((legacy_u16)second_color) :
+		LEGACY_S16_FROM_BITS((legacy_u16)first_color);
+	if (menu_highlight_color != selected_color) {
+		menu_highlight_color = selected_color;
 		mouse_draw_opaque_check();
 		sprite_draw_rect_outline(buttons[item_index].x1, buttons[item_index].y1,
 			buttons[item_index].x2, buttons[item_index].y2,
-			selected_state);
+			selected_color);
 		mouse_draw_transparent_check();
 	}
 	return LEGACY_S16_FROM_BITS(delta);

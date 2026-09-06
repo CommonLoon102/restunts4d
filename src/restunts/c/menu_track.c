@@ -95,7 +95,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 			TRACK_MENU_NAME_Y,
 			dialog_fnt_colour, 0);
-		if (highscore_write_a(0) == 0) {
+		if (highscore_load_or_create(0) == 0) {
 			scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
 			score = scores[ranking_entry_order[0]].time;
 			if (score != HIGHSCORE_UNSET_TIME) {
@@ -128,18 +128,18 @@ void run_tracks_menu(legacy_s16 reload_track)
 		draw_button(locate_text_res(text_resource, "bmt"),
 			TRACK_MENU_FIRST_BUTTON_X, TRACK_MENU_BUTTON_Y,
 			TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT,
-			word_407F4, word_407F6,
-			word_407F8, 0);
+			button_top_color, button_bottom_color,
+			button_fill_color, 0);
 		draw_button(locate_text_res(text_resource, "bet"),
 			TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING,
 			TRACK_MENU_BUTTON_Y, TRACK_MENU_BUTTON_WIDTH,
-			TRACK_MENU_BUTTON_HEIGHT, word_407F4, word_407F6,
-			word_407F8, 0);
+			TRACK_MENU_BUTTON_HEIGHT, button_top_color, button_bottom_color,
+			button_fill_color, 0);
 		draw_button(locate_text_res(text_resource, "bmm"),
 			TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING * 2,
 			TRACK_MENU_BUTTON_Y, TRACK_MENU_BUTTON_WIDTH,
-			TRACK_MENU_BUTTON_HEIGHT, word_407F4, word_407F6,
-			word_407F8, 0);
+			TRACK_MENU_BUTTON_HEIGHT, button_top_color, button_bottom_color,
+			button_fill_color, 0);
 		unload_resource(text_resource);
 
 		for (;;) {
@@ -153,7 +153,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 			}
 
 			elapsed = (legacy_u16)menu_animate_button_highlight(selected,
-				trackmenu_buttons, word_407CE, word_407D0);
+				trackmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 			menu_update_idle_counter(elapsed, TRACK_MENU_IDLE_LIMIT_TICKS);
 			key = (legacy_u16)input_checking(
 				LEGACY_S16_FROM_BITS(elapsed));

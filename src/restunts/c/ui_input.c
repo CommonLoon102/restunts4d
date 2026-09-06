@@ -97,17 +97,17 @@ static void read_line_delete_character(legacy_s8* text,
 		index = LEGACY_U16_WRAP_ADD(index, 1U);
 	}
 	text[LEGACY_U16_WRAP_SUB(max_characters, 1U)] = ' ';
-	read_line_helper2();
+	text_edit_redraw();
 }
 
 static void read_line_erase_character(legacy_s8* text,
 	legacy_s16 max_characters, legacy_s16 move_left)
 {
-	read_line_helper();
+	text_edit_toggle_cursor();
 	if (move_left != 0)
 		text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
 	read_line_delete_character(text, max_characters);
-	read_line_helper();
+	text_edit_toggle_cursor();
 }
 
 legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, legacy_s16 max_characters,
@@ -142,11 +142,11 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		text[length] = ' ';
 		length = LEGACY_U16_WRAP_ADD(length, 1U);
 	}
-	read_line_helper2();
+	text_edit_redraw();
 	text_edit_cursor_width = TEXT_EDIT_NARROW_CURSOR_WIDTH;
 	text_edit_cursor_visible = 1;
 	insert_mode = 0;
-	read_line_helper();
+	text_edit_toggle_cursor();
 	timer_set_deadline(timeout);
 	slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
 	first_key = 1;
@@ -168,10 +168,10 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
 			old_cursor_state = (legacy_u16)text_edit_cursor_visible;
 			text_edit_cursor_visible = 1;
-			read_line_helper();
+			text_edit_toggle_cursor();
 			text_edit_cursor_visible = old_cursor_state != 0 ? 0 : 1;
 			if (timeout != 0 && timer_deadline_reached()) {
-				read_line_helper();
+				text_edit_toggle_cursor();
 				return 0;
 			}
 			continue;
@@ -183,51 +183,51 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 				(input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||
 			(key == KEY_TAB &&
 				(input_flags & READ_LINE_IGNORE_TAB_KEY) == 0)) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			return key;
 		}
 
 		if (key == KEY_RIGHT) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			if (LEGACY_S16_FROM_BITS(max_characters) >
 				LEGACY_S16_FROM_BITS(text_edit_cursor))
 				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
-			read_line_helper();
+			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_LEFT) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			if (text_edit_cursor != 0)
 				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
-			read_line_helper();
+			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_HOME) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			text_edit_cursor = 0;
-			read_line_helper();
+			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_END) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			text_edit_cursor = (legacy_u16)strlen(text);
-			read_line_helper();
+			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_INSERT) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			insert_mode = !insert_mode;
 			text_edit_cursor_width = insert_mode ?
 				TEXT_EDIT_WIDE_CURSOR_WIDTH : TEXT_EDIT_NARROW_CURSOR_WIDTH;
-			read_line_helper();
+			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
@@ -252,7 +252,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			LEGACY_S16_FROM_BITS(key) <= TEXT_EDIT_MAXIMUM_CHARACTER &&
 			LEGACY_S16_FROM_BITS(max_characters) >
 				LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-			read_line_helper();
+			text_edit_toggle_cursor();
 			if (first_key &&
 				(input_flags & READ_LINE_RETAIN_INITIAL_TEXT) == 0) {
 				text_edit_cursor = 0;
@@ -281,14 +281,14 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			if (LEGACY_S16_FROM_BITS(max_characters) >
 				LEGACY_S16_FROM_BITS(text_edit_cursor))
 				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
-			read_line_helper2();
-			read_line_helper();
+			text_edit_redraw();
+			text_edit_toggle_cursor();
 		}
 		first_key = 0;
 	}
 }
 
-void read_line_helper(void)
+void text_edit_toggle_cursor(void)
 {
 	static const legacy_s8 space[] = " ";
 	legacy_u8 far* font_definition;
@@ -323,7 +323,7 @@ void read_line_helper(void)
 		LEGACY_S16_FROM_BITS(color));
 }
 
-void read_line_helper2(void)
+void text_edit_redraw(void)
 {
 	legacy_u8 far* font_definition;
 	legacy_u16 length;

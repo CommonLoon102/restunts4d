@@ -11,7 +11,7 @@ extern legacy_s8 gsna_string[];
 extern legacy_s8 aNam[];
 extern legacy_s8 aPath[];
 extern legacy_s8 aSped[];
-extern legacy_s8 unk_46464[];
+extern legacy_s8 opponent_highscore_name[];
 extern legacy_u8 oppnentSped[];
 
 #define CAR_FILENAME_PREFIX_LENGTH 2U
@@ -218,7 +218,7 @@ void load_opponent_data(void)
 
 	aOpp1[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
 	resource = file_load_resfile(aOpp1);
-	copy_string(unk_46464,
+	copy_string(opponent_highscore_name,
 		locate_text_res((legacy_s8 far*)resource, aNam));
 	(void)locate_shape_alt((legacy_s8 far*)resource, aPath);
 	speed_data = (legacy_u8 far*)locate_shape_alt(

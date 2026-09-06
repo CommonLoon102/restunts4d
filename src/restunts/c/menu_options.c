@@ -15,21 +15,21 @@ enum OPTION_MENU_FRAME_RATE_INDEX {
 	OPTION_MENU_NORMAL_FRAME_RATE_INDEX = 8
 };
 
-void do_mer_restext(void)
+void show_insufficient_memory_dialog(void)
 {
 	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aMer),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 }
 
-void do_key_restext(void)
+void select_keyboard_driving(void)
 {
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aKey),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	dos_joystick_set_enabled(0);
 	byte_3B8F2 = 0;
 	dos_timer_set_callbacks_suspended(0);
@@ -46,7 +46,7 @@ static void joy_dialog_finish(void)
 	input_pop_status();
 }
 
-void do_joy_restext(void)
+void calibrate_joystick_driving(void)
 {
 	legacy_s16 positions[15];
 	legacy_s16 button_x[9];
@@ -68,7 +68,7 @@ void do_joy_restext(void)
 		DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, "joy"),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-		dialogarg2, positions, 0)) <= 0) {
+		dialog_border_color, positions, 0)) <= 0) {
 		dos_joystick_set_enabled(0);
 		joy_dialog_finish();
 		return;
@@ -81,14 +81,14 @@ void do_joy_restext(void)
 	line_height = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
 	sprite_fill_rect(LEGACY_S16_WRAP_SUB(positions[2], 4), positions[3],
-		1, line_height, dialogarg2);
+		1, line_height, dialog_border_color);
 	sprite_fill_rect(LEGACY_S16_WRAP_SUB(positions[4], 4), positions[5],
-		1, line_height, dialogarg2);
+		1, line_height, dialog_border_color);
 	line_width = LEGACY_S16_WRAP_SUB(positions[6], positions[0]);
 	sprite_fill_rect(positions[0], LEGACY_S16_WRAP_SUB(positions[9], 4),
-		line_width, 1, dialogarg2);
+		line_width, 1, dialog_border_color);
 	sprite_fill_rect(positions[0], LEGACY_S16_WRAP_SUB(positions[11], 4),
-		line_width, 1, dialogarg2);
+		line_width, 1, dialog_border_color);
 
 	button_x[0] = positions[2];
 	button_x[1] = positions[2];
@@ -141,12 +141,12 @@ void do_joy_restext(void)
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
 			DIALOG_SAVE_BACKGROUND, locate_text_res(mainresptr, "jox"),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-			dialogarg2, 0, 0);
+			dialog_border_color, 0, 0);
 
 	joy_dialog_finish();
 }
 
-void do_mou_restext(void)
+void select_mouse_driving(void)
 {
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
@@ -154,26 +154,26 @@ void do_mou_restext(void)
 	byte_3B8F2 = 1;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aMou),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
 
-void do_pau_restext(void)
+void show_pause_dialog(void)
 {
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aPau),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
 }
 
-void do_mof_restext(void)
+void toggle_music_with_dialog(void)
 {
 	legacy_s8* message_id;
 
@@ -182,12 +182,12 @@ void do_mof_restext(void)
 	message_id = audio_toggle_music() != 0 ? aMon : aMof;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
 }
 
-void do_sonsof_restext(void)
+void toggle_effects_with_dialog(void)
 {
 	legacy_s8* message_id;
 
@@ -196,12 +196,12 @@ void do_sonsof_restext(void)
 	message_id = audio_toggle_effects() != 0 ? aSon : aSof;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
 }
 
-void do_dos_restext(void)
+void show_exit_to_dos_dialog(void)
 {
 	legacy_s16 result;
 
@@ -210,7 +210,7 @@ void do_dos_restext(void)
 	audio_suspend();
 	result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aDos_0),
-		-1, -1, dialogarg2, 0, 0);
+		-1, -1, dialog_border_color, 0, 0);
 	if (result == 1)
 		call_exitlist2();
 	dos_timer_set_callbacks_suspended(0);
@@ -279,7 +279,7 @@ void show_graphic_levels_menu(void)
 	if (original_frame_rate != framespersec2)
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, aMrs),
-			-1, -1, dialogarg2, 0, 0);
+			-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
@@ -294,7 +294,7 @@ legacy_u16 run_option_menu(void)
 
 	miscptr = file_load_resfile("misc");
 	sprite_copy_2_to_1_2();
-	sprite_clear_1_color((legacy_u8)word_407FA);
+	sprite_clear_1_color((legacy_u8)graphics_menu_background_color);
 	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gstu"));
 	intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), 6,
 		dialog_fnt_colour, 0);
@@ -309,7 +309,7 @@ legacy_u16 run_option_menu(void)
 			DIALOG_SAVE_BACKGROUND,
 			locate_text_res(miscptr, "mop"),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-			dialogarg2, 0, 0));
+			dialog_border_color, 0, 0));
 		switch (selected) {
 		case -1:
 		case 6:
@@ -329,19 +329,19 @@ legacy_u16 run_option_menu(void)
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, initial_input));
 			if (selected == 0)
-				do_key_restext();
+				select_keyboard_driving();
 			else if (selected == 1)
-				do_joy_restext();
+				calibrate_joystick_driving();
 			else if (selected == 2)
-				do_mou_restext();
+				select_mouse_driving();
 			break;
 
 		case 1:
-			do_mof_restext();
+			toggle_music_with_dialog();
 			break;
 
 		case 2:
-			do_sonsof_restext();
+			toggle_effects_with_dialog();
 			break;
 
 		case 3:
@@ -362,7 +362,7 @@ legacy_u16 run_option_menu(void)
 			break;
 
 		case 5:
-			do_dos_restext();
+			show_exit_to_dos_dialog();
 			break;
 		}
 	}

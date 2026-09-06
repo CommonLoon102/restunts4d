@@ -102,7 +102,7 @@ legacy_s8 aPath[] = "path";
 legacy_s8 aSped[] = "sped";
 legacy_s8 gnam_string[32];
 legacy_s8 gsna_string[32];
-legacy_s8 unk_46464[3];
+legacy_s8 opponent_highscore_name[3];
 
 legacy_s8 textresprefix = 'e';
 const legacy_s8 aLocateshape4_4sShapeNotF[] =

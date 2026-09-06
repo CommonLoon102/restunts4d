@@ -29,7 +29,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary,
 	legacy_s8 far* prompt);
 void ensure_file_exists(legacy_s16 unused);
 void show_waiting(void);
-legacy_s16 do_dea_textres(void);
+legacy_s16 show_disk_error_dialog(void);
 void security_check(legacy_s16 question_index);
 void sprite_xor_rect_outline(legacy_s16 left, legacy_s16 top, legacy_s16 right,
 	legacy_s16 bottom, legacy_s16 color);

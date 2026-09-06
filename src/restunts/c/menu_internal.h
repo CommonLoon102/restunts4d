@@ -20,11 +20,11 @@ enum MENU_BLIT_MODE {
 extern legacy_s8 aSdmsel[];
 extern legacy_s8 aScrn[];
 extern struct BUTTON_AREA menu_buttons[5];
-extern legacy_s16 word_407CE;
-extern legacy_s16 word_407D0;
-extern legacy_s16 word_407F4;
-extern legacy_s16 word_407F6;
-extern legacy_s16 word_407F8;
+extern legacy_s16 menu_highlight_second_color;
+extern legacy_s16 menu_highlight_first_color;
+extern legacy_s16 button_top_color;
+extern legacy_s16 button_bottom_color;
+extern legacy_s16 button_fill_color;
 extern struct BUTTON_AREA trackmenu_buttons[3];
 extern legacy_s8 aMisc[];
 extern legacy_s8 aSdosel[];
@@ -107,15 +107,15 @@ extern legacy_s8 aBmm_0[];
 extern legacy_s8 aOpp2win[];
 extern legacy_s8 aOpp2lose[];
 extern legacy_s8 aOp01[];
-extern legacy_s16 word_3BCDE[];
-extern legacy_s16 word_3BCE4[];
-extern legacy_s16 word_3BCEC[5];
-extern legacy_s16 word_3BCF6[5];
+extern legacy_s16 end_text_alternate_variant[];
+extern legacy_s16 end_outcome_alternate_variant[];
+extern legacy_s16 result_button_left[5];
+extern legacy_s16 result_button_right[5];
 extern legacy_s16 hiscore_buttons_y1[5];
 extern legacy_s16 hiscore_buttons_y2[5];
-extern legacy_s16 word_40D3A;
-extern legacy_s16 word_40D3C;
-extern legacy_s16 word_40D3E;
+extern legacy_s16 previous_end_opening_variant;
+extern legacy_s16 previous_end_outcome_variant;
+extern legacy_s16 previous_end_closing_variant;
 #define HIGHSCORE_ENTRY_COUNT 7U
 #define HIGHSCORE_LAST_ENTRY_INDEX (HIGHSCORE_ENTRY_COUNT - 1U)
 #define HIGHSCORE_PLAYER_NAME_BYTES 17U
@@ -162,10 +162,10 @@ typedef char highscore_entry_time_must_have_expected_offset[
 	(offsetof(struct HIGHSCORE_ENTRY, time) ==
 		HIGHSCORE_TIME_OFFSET) ? 1 : -1];
 
-extern legacy_s16 word_40D40;
-extern legacy_s16 end_hiscore_random;
-extern legacy_s16 word_40D44;
-extern legacy_s16 word_407D2;
+extern legacy_s16 end_opening_variant;
+extern legacy_s16 end_outcome_variant;
+extern legacy_s16 end_closing_variant;
+extern legacy_s16 end_animation_border_shadow_color;
 extern legacy_s32 gState_travDist;
 extern legacy_s16 gState_total_finish_time;
 extern legacy_s16 gState_opponent_finish_time;
@@ -200,18 +200,18 @@ extern legacy_s8 aGmsm[];
 extern legacy_s8 aGdav[];
 extern legacy_s8 aGnic[];
 extern legacy_s8 aGkev_1[];
-extern legacy_s16 word_407D4;
-extern legacy_s16 word_407D6;
-extern legacy_s16 word_407D8;
-extern legacy_s16 word_407DA;
-extern legacy_s16 word_407DC;
-extern legacy_s16 word_407DE;
-extern legacy_s16 word_407E0;
-extern legacy_s16 word_407E2;
-extern legacy_s16 word_407E4;
-extern legacy_s16 word_407E6;
-extern legacy_s16 word_407E8;
-extern legacy_s16 word_407EA;
+extern legacy_s16 credits_text_color;
+extern legacy_s16 credits_text_shadow_color;
+extern legacy_s16 credits_title_color;
+extern legacy_s16 credits_title_shadow_color;
+extern legacy_s16 credits_design_heading_color;
+extern legacy_s16 credits_design_heading_shadow_color;
+extern legacy_s16 credits_production_heading_color;
+extern legacy_s16 credits_production_heading_shadow_color;
+extern legacy_s16 credits_art_heading_color;
+extern legacy_s16 credits_art_heading_shadow_color;
+extern legacy_s16 credits_music_heading_color;
+extern legacy_s16 credits_music_heading_shadow_color;
 
 void load_skybox(legacy_s8 skybox_index);
 void unload_skybox(void);
@@ -219,10 +219,10 @@ void draw_track_preview(void);
 void load_tracks_menu_shapes(void);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
-legacy_s16 highscore_write_a(legacy_s16 create_default);
+legacy_s16 highscore_load_or_create(legacy_s16 create_default);
 extern struct SHAPE2D far* tracksmenushapes2[];
 extern struct SHAPE2D far* tracksmenushapes3[];
-extern legacy_s16 word_407F2;
+extern legacy_s16 track_editor_highlight_color;
 extern legacy_s16 track_pieces_counter;
 extern legacy_u8 byte_45D90;
 extern legacy_u8 byte_45E16;
@@ -236,12 +236,12 @@ extern legacy_s16 menu_idle_counter;
 extern legacy_s16 word_3EB90;
 extern legacy_s16 font_glyph_height;
 extern struct RECTANGLE intro_text_bounds;
-extern struct RECTANGLE word_42250;
+extern struct RECTANGLE highscore_text_bounds;
 extern struct RECTANGLE empty_rect;
 extern struct SHAPE3D game3dshapes[];
 extern void far* miscptr;
 extern legacy_s16 dialog_fnt_colour;
-extern legacy_s16 word_407FA;
+extern legacy_s16 graphics_menu_background_color;
 extern legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
 extern legacy_s8 aCarcoun[];
 extern legacy_s8 aDefault_1[];
@@ -261,7 +261,7 @@ void menu_reset_animation_timers(void);
 void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
 legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 	const struct BUTTON_AREA* buttons,
-	legacy_s16 second_state, legacy_s16 first_state);
+	legacy_s16 second_color, legacy_s16 first_color);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y,
 	legacy_s16 width, legacy_s16 height, legacy_s16 top_color,
 	legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);

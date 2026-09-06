@@ -189,7 +189,7 @@ legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16
 	legacy_u32 timeout);
 legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
 	legacy_s8* extension, legacy_s8 far* prompt);
-void do_mer_restext(void);
+void show_insufficient_memory_dialog(void);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 	legacy_s16 shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
@@ -199,8 +199,8 @@ extern void sprite_draw_rect_outline(legacy_s16 x, legacy_s16 y, legacy_s16 widt
 
 extern legacy_s8 gnam_string[];
 extern legacy_s8 gsna_string[];
-extern legacy_s8 unk_46464[];
-extern legacy_s8 byte_459E0[];
+extern legacy_s8 opponent_highscore_name[];
+extern legacy_s8 highscore_player_name_input[];
 
 extern void far* engptr;
 extern void far* eng1ptr;
@@ -241,14 +241,14 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	kb_call_readchar_callback();
 
 	kb_reg_callback(CALLBACK_GRAPHICS_MENU_KEY, &show_graphic_levels_menu);
-	kb_reg_callback(CALLBACK_JOYSTICK_HELP_KEY, &do_joy_restext);
-	kb_reg_callback(CALLBACK_KEYBOARD_HELP_KEY, &do_key_restext);
-	kb_reg_callback(CALLBACK_MOUSE_HELP_KEY, &do_mof_restext);
-	kb_reg_callback(CALLBACK_PAUSE_HELP_KEY, &do_pau_restext);
-	kb_reg_callback('p', &do_pau_restext);
-	kb_reg_callback(CALLBACK_DOS_HELP_KEY, &do_dos_restext);
-	kb_reg_callback(CALLBACK_SOUND_HELP_KEY, &do_sonsof_restext);
-	kb_reg_callback(CALLBACK_DOS_HELP_ALT_KEY, &do_dos_restext);
+	kb_reg_callback(CALLBACK_JOYSTICK_HELP_KEY, &calibrate_joystick_driving);
+	kb_reg_callback(CALLBACK_KEYBOARD_HELP_KEY, &select_keyboard_driving);
+	kb_reg_callback(CALLBACK_MOUSE_HELP_KEY, &toggle_music_with_dialog);
+	kb_reg_callback(CALLBACK_PAUSE_HELP_KEY, &show_pause_dialog);
+	kb_reg_callback('p', &show_pause_dialog);
+	kb_reg_callback(CALLBACK_DOS_HELP_KEY, &show_exit_to_dos_dialog);
+	kb_reg_callback(CALLBACK_SOUND_HELP_KEY, &toggle_effects_with_dialog);
+	kb_reg_callback(CALLBACK_DOS_HELP_ALT_KEY, &show_exit_to_dos_dialog);
 
 	// Video
 	init_video_geometry_flags();
@@ -330,7 +330,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 		audio_toggle_effects();
 	}
 
-	dos_set_critical_error_handler(&do_dea_textres);
+	dos_set_critical_error_handler(&show_disk_error_dialog);
 
 	load_palandcursor();
 
@@ -511,7 +511,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 			textresptr = locate_text_res(mainresptr, "dos");
 			// DIALOG_AUTO_POSITION centers both dialog coordinates.
 			result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-				textresptr, 0, 170, dialogarg2, 0, 0);
+				textresptr, 0, 170, dialog_border_color, 0, 0);
 			if (result >= 1)
 				break;
 		}
@@ -571,7 +571,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 				textresptr,
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-				dialogarg2, 0, 0);
+				dialog_border_color, 0, 0);
 			if (result >= 1) {
 				shutdown_dos_game();
 				return result;

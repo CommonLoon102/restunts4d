@@ -110,8 +110,8 @@ void run_opponent_menu(void)
 							OPPONENT_MENU_BUTTON_SPACING)),
 					opponentmenu_buttons[0].y1 + 1,
 					OPPONENT_MENU_BUTTON_WIDTH,
-					OPPONENT_MENU_BUTTON_HEIGHT, word_407F4, word_407F6,
-					word_407F8, 0);
+					OPPONENT_MENU_BUTTON_HEIGHT, button_top_color, button_bottom_color,
+					button_fill_color, 0);
 			}
 
 			sprite_draw_palette_mapped((struct SHAPE2D far*)
@@ -166,7 +166,7 @@ void run_opponent_menu(void)
 		}
 
 		elapsed = (legacy_u16)menu_animate_button_highlight(selected,
-			opponentmenu_buttons, word_407CE, word_407D0);
+			opponentmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 		key = (legacy_u16)input_checking(
 			LEGACY_S16_FROM_BITS(elapsed));
 		hit = (legacy_s16)mouse_multi_hittest(OPPONENT_MENU_BUTTON_COUNT,

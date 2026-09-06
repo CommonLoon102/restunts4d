@@ -472,7 +472,7 @@ static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y,
 	sprite_xor_rect_outline(x, LEGACY_S16_WRAP_SUB(y, 1),
 		LEGACY_S16_WRAP_ADD(x, width),
 		LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(y, height), 1),
-		word_407F2);
+		track_editor_highlight_color);
 }
 
 static void track_editor_show_message(legacy_s8 far* text_resource,
@@ -524,7 +524,7 @@ static void track_editor_save_track(legacy_u8* track_changed,
 		write_result = file_write_fatal(g_path_buf,
 			td14_elem_map_main, TRACK_EDITOR_TRACK_FILE_SIZE);
 		if (write_result == 0)
-			highscore_write_a(1);
+			highscore_load_or_create(1);
 		if (write_result != 0) {
 			track_editor_show_message(
 				(legacy_s8 far*)mainresptr, "ser");
@@ -697,7 +697,7 @@ void load_tracks_menu_shapes(void)
 	sprite_copy_wnd_to_1_clear();
 	draw_button(locate_text_res(text_resource, "bti"),
 		TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y, TRACK_EDITOR_TITLE_WIDTH,
-		TRACK_EDITOR_TITLE_HEIGHT, word_407F4, word_407F6, word_407F8, 0);
+		TRACK_EDITOR_TITLE_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_three_color_beveled_border(TRACK_EDITOR_LEFT_FRAME_X, TRACK_EDITOR_LEFT_FRAME_Y,
 		TRACK_EDITOR_LEFT_FRAME_WIDTH, TRACK_EDITOR_LEFT_FRAME_HEIGHT,
 		11, 9, 1);
@@ -707,23 +707,23 @@ void load_tracks_menu_shapes(void)
 	draw_button(locate_text_res(text_resource, "bsc"),
 		TRACK_EDITOR_WIDE_BUTTON_X, TRACK_EDITOR_WIDE_BUTTON_Y,
 		TRACK_EDITOR_WIDE_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(locate_text_res(text_resource, "blo"),
 		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
 		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(locate_text_res(text_resource, "bsa"),
 		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
 		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(locate_text_res(text_resource, "bcl"),
 		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
 		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(locate_text_res(text_resource, "bex"),
 		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
 		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		word_407F4, word_407F6, word_407F8, 0);
+		button_top_color, button_bottom_color, button_fill_color, 0);
 
 	while (menu_active != 0) {
 		if (palette_dirty != 0 || page != previous_page) {
@@ -786,11 +786,11 @@ void load_tracks_menu_shapes(void)
 				sprite_copy_wnd_to_1();
 				preRender_icons(page);
 				if (page == 0)
-					mouse_track_op(0, TRACK_EDITOR_PAGE_BAR_X,
+					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X,
 						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
 						5, 0, 1, 1);
 				else
-					mouse_track_op(0, TRACK_EDITOR_PAGE_BAR_X,
+					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X,
 						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
 						5, page - 1U, 1, 10);
 			}
@@ -807,11 +807,11 @@ void load_tracks_menu_shapes(void)
 				map_dirty = 0;
 				if (scrollbars_dirty != 0) {
 					scrollbars_dirty = 0;
-					mouse_track_op(0, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
+					scrollbar_update(0, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
 						TRACK_EDITOR_LABEL_Y,
 						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
 						map_column_offset, 12, 30);
-					mouse_track_op(0, TRACK_EDITOR_VERTICAL_SCROLLBAR_X,
+					scrollbar_update(0, TRACK_EDITOR_VERTICAL_SCROLLBAR_X,
 						5, 4, TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
 						map_row_offset, 11, 30);
 				}
@@ -970,7 +970,7 @@ void load_tracks_menu_shapes(void)
 			if (hit != TRACK_EDITOR_MOUSE_NO_HIT) {
 				if (hit == 0U && (mouse_butstate & 3) != 0) {
 					focus = 0;
-					clicked_column = (legacy_u8)mouse_track_op(1,
+					clicked_column = (legacy_u8)scrollbar_update(1,
 						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
 						TRACK_EDITOR_LABEL_Y,
 						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
@@ -981,7 +981,7 @@ void load_tracks_menu_shapes(void)
 					key = 1;
 				} else if (hit == 1U && (mouse_butstate & 3) != 0) {
 					focus = 0;
-					clicked_row = (legacy_u8)mouse_track_op(1,
+					clicked_row = (legacy_u8)scrollbar_update(1,
 						TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
 						TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
 						map_row_offset, 11, 30);
@@ -992,7 +992,7 @@ void load_tracks_menu_shapes(void)
 				} else if (hit == 2U) {
 					if ((mouse_butstate & 3) != 0) {
 						focus = 1;
-						page = (legacy_u8)mouse_track_op(1,
+						page = (legacy_u8)scrollbar_update(1,
 							TRACK_EDITOR_PAGE_BAR_X,
 							TRACK_EDITOR_PAGE_BAR_WIDTH,
 							TRACK_EDITOR_PAGE_BAR_Y, 5, page - 1U, 1, 10) + 1U;
@@ -1160,7 +1160,7 @@ void load_tracks_menu_shapes(void)
 						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 						locate_text_res(text_resource, "mss"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-						dialogarg2, 0,
+						dialog_border_color, 0,
 						td14_elem_map_main[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
@@ -1175,7 +1175,7 @@ void load_tracks_menu_shapes(void)
 						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 						locate_text_res(text_resource, "men"),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-						dialogarg2, 0, 0));
+						dialog_border_color, 0, 0));
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
 						for (index = 0; index < 900U; index++)

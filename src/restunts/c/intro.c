@@ -176,51 +176,51 @@ legacy_s8 load_intro_resources(void)
 	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
 
 	intro_draw_resource_line(credit_resource, aCre, CREDITS_LINE_TEXT,
-		CREDITS_TITLE_X, CREDITS_TITLE_Y, word_407D8, word_407DA);
+		CREDITS_TITLE_X, CREDITS_TITLE_Y, credits_title_color, credits_title_shadow_color);
 	intro_draw_resource_line(credit_resource, aGds0, CREDITS_LINE_SHAPE,
-		CREDITS_FIRST_LOGO_X, CREDITS_FIRST_LOGO_Y, word_407D4, word_407D6);
+		CREDITS_FIRST_LOGO_X, CREDITS_FIRST_LOGO_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGds1, CREDITS_LINE_SHAPE,
-		CREDITS_SECOND_LOGO_X, CREDITS_SECOND_LOGO_Y, word_407D4, word_407D6);
+		CREDITS_SECOND_LOGO_X, CREDITS_SECOND_LOGO_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aDes, CREDITS_LINE_TEXT,
-		CREDITS_LEFT_COLUMN_X, CREDITS_DESIGN_HEADING_Y, word_407DC, word_407DE);
+		CREDITS_LEFT_COLUMN_X, CREDITS_DESIGN_HEADING_Y, credits_design_heading_color, credits_design_heading_shadow_color);
 	intro_draw_resource_line(credit_resource, aGdon, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_DESIGNER_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGkev, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_DESIGNER_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGbra, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_DESIGNER_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGrob, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_FOURTH_DESIGNER_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_FOURTH_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGsta, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_FIFTH_DESIGNER_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_FIFTH_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aMus, CREDITS_LINE_TEXT,
-		CREDITS_LEFT_COLUMN_X, CREDITS_MUSIC_HEADING_Y, word_407E8, word_407EA);
+		CREDITS_LEFT_COLUMN_X, CREDITS_MUSIC_HEADING_Y, credits_music_heading_color, credits_music_heading_shadow_color);
 	intro_draw_resource_line(credit_resource, aGmsy, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_MUSICIAN_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGkri, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_MUSICIAN_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGbri, CREDITS_LINE_SHAPE,
-		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_MUSICIAN_Y, word_407D4, word_407D6);
+		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aPro, CREDITS_LINE_TEXT,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCTION_HEADING_Y, word_407E0, word_407E2);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCTION_HEADING_Y, credits_production_heading_color, credits_production_heading_shadow_color);
 	intro_draw_resource_line(credit_resource, aGkev_0, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCER_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCER_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aOpr, CREDITS_LINE_TEXT,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_OPPONENT_HEADING_Y, word_407E0, word_407E2);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_OPPONENT_HEADING_Y, credits_production_heading_color, credits_production_heading_shadow_color);
 	intro_draw_resource_line(credit_resource, aGbra_0, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_OPPONENT_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_OPPONENT_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGric, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_OPPONENT_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_OPPONENT_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aArt, CREDITS_LINE_TEXT,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_ART_HEADING_Y, word_407E4, word_407E6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_ART_HEADING_Y, credits_art_heading_color, credits_art_heading_shadow_color);
 	intro_draw_resource_line(credit_resource, aGmsm, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_ARTIST_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_ARTIST_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGdav, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_ARTIST_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_ARTIST_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGnic, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_THIRD_ARTIST_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_THIRD_ARTIST_Y, credits_text_color, credits_text_shadow_color);
 	intro_draw_resource_line(credit_resource, aGkev_1, CREDITS_LINE_SHAPE,
-		CREDITS_RIGHT_COLUMN_X, CREDITS_FOURTH_ARTIST_Y, word_407D4, word_407D6);
+		CREDITS_RIGHT_COLUMN_X, CREDITS_FOURTH_ARTIST_Y, credits_text_color, credits_text_shadow_color);
 	unload_resource(credit_resource);
 
 	(void)sprite_blit_to_video(render_window_sprite, -1);

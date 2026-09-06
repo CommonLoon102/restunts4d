@@ -88,7 +88,7 @@ extern struct RECTANGLE intro_cliprect;
 extern struct SHAPE2D far* skyboxes[];
 extern legacy_s16 penalty_time;
 extern legacy_s16 intro_colorvalue;
-extern legacy_s16 word_407CC;
+extern legacy_s16 intro_palette_color_count;
 extern struct SHAPE3D logoshape;
 extern struct SHAPE3D logo2shape;
 extern struct SHAPE3D bravshape;

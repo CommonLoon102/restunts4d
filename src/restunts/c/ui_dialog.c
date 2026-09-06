@@ -48,8 +48,8 @@ extern legacy_s8 aLsd[];
 extern legacy_s8* findfilenames[];
 extern legacy_s8 gnam_string[];
 extern legacy_s8 gsna_string[];
-extern legacy_s8 unk_46464[];
-extern legacy_s8 byte_459E0[];
+extern legacy_s8 opponent_highscore_name[];
+extern legacy_s8 highscore_player_name_input[];
 
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters,
 	legacy_s16 x, legacy_s16 y, legacy_u32 timeout);
@@ -463,7 +463,7 @@ legacy_s8 do_fileselect_dialog(
 		DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aLoa),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-		dialogarg2, positions, 0));
+		dialog_border_color, positions, 0));
 	if (dialog_result < 0)
 		return 0;
 
@@ -471,7 +471,7 @@ legacy_s8 do_fileselect_dialog(
 	g_is_busy = 1;
 	preRender_line(positions[4] - 4, positions[5] + 4,
 		positions[4] + FILE_DIALOG_SEPARATOR_WIDTH,
-		positions[5] + 4, dialogarg2);
+		positions[5] + 4, dialog_border_color);
 	font_set_colors(dialog_fnt_colour, word_3EB90);
 	copy_string(&resID_byte1, prompt);
 	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
@@ -661,7 +661,7 @@ void ensure_file_exists(legacy_s16 file_index)
 	while (file_find(findfilenames[file_index]) == 0) {
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, message_id),
-			-1, -1, dialogarg2, 0, 0);
+			-1, -1, dialog_border_color, 0, 0);
 		mouse_draw_opaque_check();
 		kbormouse = 0;
 	}
@@ -671,7 +671,7 @@ void show_waiting(void)
 {
 	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_NO_BACKGROUND_SAVE,
 		locate_text_res(mainresptr, aWai),
-		-1, waitflag, dialogarg2, 0, 0);
+		-1, waitflag, dialog_border_color, 0, 0);
 	mouse_draw_opaque_check();
 }
 
@@ -684,7 +684,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 
 	result = LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_PLACEHOLDERS,
 		DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aSav), -1, -1, dialogarg2,
+		locate_text_res(mainresptr, aSav), -1, -1, dialog_border_color,
 		positions, 0));
 	if (result < 0)
 		return 0;
@@ -723,7 +723,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 	return result;
 }
 
-legacy_s16 do_dea_textres(void)
+legacy_s16 show_disk_error_dialog(void)
 {
 	legacy_s16 result;
 
@@ -731,11 +731,11 @@ legacy_s16 do_dea_textres(void)
 	if (g_is_busy != 0) {
 		result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, aDea),
-			-1, -1, dialogarg2, 0, 0) == 0;
+			-1, -1, dialog_border_color, 0, 0) == 0;
 	} else {
 		show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, aDer),
-			-1, -1, dialogarg2, 0, 0);
+			-1, -1, dialog_border_color, 0, 0);
 		result = 1;
 	}
 	input_pop_status();
