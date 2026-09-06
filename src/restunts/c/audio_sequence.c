@@ -47,6 +47,8 @@ typedef void (far* audio_channel_callback_type)(legacy_s16 channel);
 #define AUDIO_SEQUENCE_DRIVER_DATA_HEADER_SIZE 4U
 #define AUDIO_SEQUENCE_TIMER_TICK_STEP 128U
 #define AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE 23U
+#define AUDIO_SEQUENCE_TIMER_INACTIVE 0
+#define AUDIO_SEQUENCE_TIMER_ACTIVE 1
 
 legacy_s16 audio_sequence_command_has_byte_argument(
 	legacy_u8 command_index)
@@ -407,14 +409,16 @@ void audio_sequence_timer(void)
 	legacy_u16 channel;
 
 	if (dos_data_stack_segments_match() == 0 ||
-		dos_audio_driver_binary == 0 || audio_update_lock != 0 ||
-		audio_sequence_timer_active != 0)
+		dos_audio_driver_binary == 0 ||
+		audio_update_lock != AUDIO_UPDATE_UNLOCKED ||
+		audio_sequence_timer_active != AUDIO_SEQUENCE_TIMER_INACTIVE)
 		return;
 
-	audio_sequence_timer_active = 1;
+	audio_sequence_timer_active = AUDIO_SEQUENCE_TIMER_ACTIVE;
 	audio_update_driver_contexts();
-	if (audio_music_active == 1 && audio_music_enabled == 1 &&
-		audio_suspended == 0) {
+	if (audio_music_active == AUDIO_STATE_ENABLED &&
+		audio_music_enabled == AUDIO_STATE_ENABLED &&
+		audio_suspended == AUDIO_STATE_DISABLED) {
 		audio_engine_value_44d48 = LEGACY_U16_WRAP_ADD(
 			audio_engine_value_44d48, AUDIO_SEQUENCE_TIMER_TICK_STEP);
 		while (audio_engine_value_44d48 >= audio_engine_value_454ba) {
@@ -430,5 +434,5 @@ void audio_sequence_timer(void)
 	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
 		channel < AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE; channel++)
 		audio_service_sequence_channel((legacy_s16)channel);
-	audio_sequence_timer_active--;
+	audio_sequence_timer_active = AUDIO_SEQUENCE_TIMER_INACTIVE;
 }
