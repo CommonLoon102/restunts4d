@@ -25,6 +25,8 @@
 #define RACE_FINAL_WAIT_TICKS 100
 #define MOUSE_BUTTON_MASK 3
 #define RACE_REPLAY_MODE_UNINITIALIZED (-1)
+#define RACE_START_POSITION_DISTANCE (-240)
+#define RACE_START_POSITION_SCALE_SHIFT 6U
 
 legacy_s16 get_0(void);
 void do_mer_restext(void);
@@ -101,11 +103,13 @@ void run_game(void) {
 				state.playerstate.car_posWorld1.lx = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_posWorld1.lx,
 					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
-						sin_fast(track_angle), -240), 6U));
+						sin_fast(track_angle), RACE_START_POSITION_DISTANCE),
+						RACE_START_POSITION_SCALE_SHIFT));
 				state.playerstate.car_posWorld1.lz = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_posWorld1.lz,
 					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
-						cos_fast(track_angle), -240), 6U));
+						cos_fast(track_angle), RACE_START_POSITION_DISTANCE),
+						RACE_START_POSITION_SCALE_SHIFT));
 				state.playerstate.car_posWorld1.ly = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_posWorld1.ly,
 					RACE_START_CAMERA_HEIGHT_OFFSET);
