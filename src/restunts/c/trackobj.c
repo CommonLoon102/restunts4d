@@ -3,8 +3,6 @@
 #include "math.h"
 #include "trackdata_layout.h"
 
-#define SURFACE_GRASS 4
-#define SURFACE_WATER 5
 #define TRACK_ARC_CENTER_OFFSET 1024
 #define TRACK_ARC_CENTER_RADIUS 1536
 #define TRACK_ARC_SEGMENT_COUNT 18U
@@ -255,47 +253,7 @@
 #define TRACK_TILE_EMPTY 0U
 #define TRACK_SURFACE_TYPE_OFFSET 1U
 #define TRACK_SURFACE_TYPE_MINIMUM 1
-#define PHYSICAL_MODEL_NONE -1
 #define PHYSICAL_MODEL_MINIMUM 0
-#define PHYSICAL_MODEL_START_FINISH 0
-#define PHYSICAL_MODEL_ROAD 1
-#define PHYSICAL_MODEL_SHARP_CORNER 2
-#define PHYSICAL_MODEL_LARGE_CORNER 3
-#define PHYSICAL_MODEL_CHICANE_RIGHT_LEFT 4
-#define PHYSICAL_MODEL_CHICANE_LEFT_RIGHT 5
-#define PHYSICAL_MODEL_SHARP_SPLIT_A 6
-#define PHYSICAL_MODEL_SHARP_SPLIT_B 7
-#define PHYSICAL_MODEL_LARGE_SPLIT_A 8
-#define PHYSICAL_MODEL_LARGE_SPLIT_B 9
-#define PHYSICAL_MODEL_HIGHWAY_ENTRANCE 10
-#define PHYSICAL_MODEL_HIGHWAY 11
-#define PHYSICAL_MODEL_CROSSROAD 12
-#define PHYSICAL_MODEL_RAMP 16
-#define PHYSICAL_MODEL_SOLID_RAMP 17
-#define PHYSICAL_MODEL_ELEVATED_ROAD 18
-#define PHYSICAL_MODEL_ELEVATED_SPAN 19
-#define PHYSICAL_MODEL_SOLID_ROAD 20
-#define PHYSICAL_MODEL_ELEVATED_CORNER 21
-#define PHYSICAL_MODEL_OVERPASS 22
-#define PHYSICAL_MODEL_BANKED_ENTRANCE_B 23
-#define PHYSICAL_MODEL_BANKED_ENTRANCE_A 24
-#define PHYSICAL_MODEL_BANKED_ROAD 25
-#define PHYSICAL_MODEL_BANKED_CORNER 26
-#define PHYSICAL_MODEL_LOOP 27
-#define PHYSICAL_MODEL_TUNNEL 28
-#define PHYSICAL_MODEL_PIPE_ENTRANCE 29
-#define PHYSICAL_MODEL_PIPE 30
-#define PHYSICAL_MODEL_HALF_PIPE 31
-#define PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A 32
-#define PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B 33
-#define PHYSICAL_MODEL_SLALOM 34
-#define PHYSICAL_MODEL_CORKSCREW_LEFT_RIGHT 35
-#define PHYSICAL_MODEL_BARN 65
-#define PHYSICAL_MODEL_GAS_STATION 66
-#define PHYSICAL_MODEL_JOES 67
-#define PHYSICAL_MODEL_OFFICE 68
-#define PHYSICAL_MODEL_WINDMILL 69
-#define PHYSICAL_MODEL_SHIP 70
 #define TRACK_COLLISION_ENABLED 1
 #define TERRAIN_ORIENTED_LAST_TILE 18U
 #define TERRAIN_ORIENTATION_MASK 3U
@@ -494,7 +452,7 @@ void build_track_object(struct VECTOR* world_position,
 	wallHeight = TRACK_WALL_DEFAULT_HEIGHT;
 	elRdWallRelated = ELEVATED_WALL_LOWER_BOUND_DEFAULT;
 	corkFlag = CORKSCREW_INACTIVE;
-	current_surf_type = SURFACE_GRASS;
+	current_surf_type = CAR_SURFACE_GRASS;
 	byte_4392C = TRACK_COLLISION_ENABLED;
 	wall_orientation_modifier = 0;
 	element_orientation = 0;
@@ -514,7 +472,7 @@ void build_track_object(struct VECTOR* world_position,
 	terrain_tile = td15_terr_map_main[
 		trackrows[track_row] + track_column];
 	if (terrain_tile == TERRAIN_WATER_TILE) {
-		current_surf_type = SURFACE_WATER;
+		current_surf_type = CAR_SURFACE_WATER;
 	} else if (terrain_tile >= TERRAIN_WATER_SLOPE_FIRST &&
 		terrain_tile <= TERRAIN_WATER_SLOPE_LAST) {
 		switch (terrain_tile) {
@@ -541,7 +499,7 @@ void build_track_object(struct VECTOR* world_position,
 			multiply_and_scale(cos_fast((legacy_u16)terrain_angle),
 				position.x));
 		if (value < 0)
-			current_surf_type = SURFACE_WATER;
+			current_surf_type = CAR_SURFACE_WATER;
 	} else if (terrain_tile == TERRAIN_RAISED_TILE) {
 		terrainHeight = (legacy_s16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 	}
@@ -1414,7 +1372,7 @@ void build_track_object(struct VECTOR* world_position,
 		}
 	}
 	current_planptr = &planptr[planindex];
-	if (current_surf_type == SURFACE_GRASS) {
+	if (current_surf_type == CAR_SURFACE_GRASS) {
 		value = LEGACY_S16_FROM_BITS(
 			(legacy_u16)(world_position->z ^ world_position->x));
 		terrainHeight = LEGACY_S16_WRAP_ADD(terrainHeight,

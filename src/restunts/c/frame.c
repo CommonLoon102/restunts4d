@@ -19,7 +19,6 @@
 #define FRAME_DIRTY_RECT_COUNT 15
 #define FRAME_FONT_HEIGHT_OFFSET 14U
 #define FRAME_DEBRIS_SLOT_COUNT 24
-#define FRAME_SURFACE_GRASS 4
 #define FRAME_TRANSFORM_FLAGS_DEFAULT 4
 #define FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT 5
 #define FRAME_TRANSFORM_FLAGS_CLIPPED 12
@@ -210,10 +209,10 @@ static legacy_s16 frame_car_z_adjust(const legacy_s8* wheel_surfaces,
 	struct VECTOR offset_vector;
 	struct VECTOR rotated_vector;
 
-	if (wheel_surfaces[0] == FRAME_SURFACE_GRASS &&
-		wheel_surfaces[1] == FRAME_SURFACE_GRASS &&
-		wheel_surfaces[2] == FRAME_SURFACE_GRASS &&
-		wheel_surfaces[3] == FRAME_SURFACE_GRASS)
+	if (wheel_surfaces[0] == CAR_SURFACE_GRASS &&
+		wheel_surfaces[1] == CAR_SURFACE_GRASS &&
+		wheel_surfaces[2] == CAR_SURFACE_GRASS &&
+		wheel_surfaces[3] == CAR_SURFACE_GRASS)
 		return 0;
 	offset_vector.x = 0;
 	offset_vector.z = 0;

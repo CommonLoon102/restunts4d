@@ -7,7 +7,6 @@
 #define CAR_INITIAL_BODY_HEIGHT 512L
 #define CAR_INITIAL_GEAR_INDEX 1U
 #define CAR_WHEELS_PER_AXLE (CARSTATE_WHEEL_COUNT / 2U)
-#define CAR_INITIAL_SURFACE_PAVED 1
 #define CAR_INITIAL_SURFACE_GRIP 1000
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
@@ -131,7 +130,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 		LEGACY_S32_DIV_OR_ZERO(posZ, CAR_WORLD_POSITION_SCALE));
 
 	for (i = 0; i < CARSTATE_WHEEL_COUNT; ++i) {
-		playerstate->car_surfaceWhl[i] = CAR_INITIAL_SURFACE_PAVED;
+		playerstate->car_surfaceWhl[i] = CAR_SURFACE_PAVED;
 		playerstate->car_rc1[i] = 0;
 		playerstate->car_rc2[i] = 0;
 		playerstate->car_rc3[i] = 0;

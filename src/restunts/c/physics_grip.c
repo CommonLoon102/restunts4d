@@ -40,8 +40,6 @@ enum PENALTY_DETECTION_RESULT {
 #define CAR_WHEEL_INDEX_FIRST 0
 #define GRASS_WHEEL_COUNT_NONE 0
 #define GRASS_WHEEL_COUNT_STEP 1
-#define SURFACE_PAVED 1
-#define SURFACE_GRASS 4
 #define CAR_SPEED_INTEGER_SHIFT 8U
 #define GRIP_FIXED_SCALE 256L
 #define LEGACY_LONG_HIGH_WORD_SHIFT 16U
@@ -309,7 +307,7 @@ void update_legacy_grip_stack_words(
 	 */
 	grass_wheels = GRASS_WHEEL_COUNT_NONE;
 	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
-		if (carstate->car_surfaceWhl[i] == SURFACE_GRASS)
+		if (carstate->car_surfaceWhl[i] == CAR_SURFACE_GRASS)
 			grass_wheels = LEGACY_S16_WRAP_ADD(
 				grass_wheels, GRASS_WHEEL_COUNT_STEP);
 	}
@@ -373,7 +371,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 
 	grass_wheels = GRASS_WHEEL_COUNT_NONE;
 	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
-		if (carstate->car_surfaceWhl[i] == SURFACE_GRASS)
+		if (carstate->car_surfaceWhl[i] == CAR_SURFACE_GRASS)
 			grass_wheels = LEGACY_U16_WRAP_ADD(
 				grass_wheels, GRASS_WHEEL_COUNT_STEP);
 	}
@@ -569,7 +567,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 
 		if (carstate->car_crashBmpFlag == CRASH_EVENT_NONE) {
 			for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
-				if (carstate->car_surfaceWhl[i] == SURFACE_PAVED)
+				if (carstate->car_surfaceWhl[i] == CAR_SURFACE_PAVED)
 					break;
 			}
 			carstate->field_CF = (legacy_u8)carstate->field_CF |
