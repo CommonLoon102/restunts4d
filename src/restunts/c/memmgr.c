@@ -31,9 +31,9 @@ enum HIGHPOOL_BLOCK_TYPE {
 #define DOS_BYTES_PER_WORD 2U
 #define RESOURCE_IDENTIFIER_LENGTH 4
 
-legacy_u16 word_3FF82 = 0; // last para reserved by memmgr
-legacy_u16 word_3FF84 = 0; // first para reserved by memmgr
-legacy_u16 resmaxsize = 0; // size of largest chunk?
+legacy_u16 mmgr_arena_end_segment = 0; // last para reserved by memmgr
+legacy_u16 mmgr_arena_start_segment = 0; // first para reserved by memmgr
+legacy_u16 mmgr_high_water_segment = 0; // highest segment reached by live allocations
 legacy_u16 pspofs = 0;
 legacy_u16 pspseg = 0;
 
@@ -57,10 +57,10 @@ struct MEMCHUNK resources[] = {
 	{ { ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ' },
 		0, 0, MMGR_RESOURCE_STATE_CACHED },
 };
-struct MEMCHUNK* resendptr1 = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
-struct MEMCHUNK* resendptr2 = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
-struct MEMCHUNK* resptr1 = resources;
-struct MEMCHUNK* resptr2 = resources;
+struct MEMCHUNK* mmgr_first_cached_chunk = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
+struct MEMCHUNK* mmgr_cache_sentinel = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
+struct MEMCHUNK* mmgr_live_sentinel = resources;
+struct MEMCHUNK* mmgr_last_live_chunk = resources;
 
 // High-memory pool core. The pool is a set of fixed upper-memory blocks with
 // a small chunk table, kept fully separate from the resources[] arena table
@@ -462,64 +462,64 @@ const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	return result;
 }
 
-void far* mmgr_alloc_pages(const legacy_s8* arg_0, legacy_u16 arg_2) {
-	legacy_s16 i;
-	struct MEMCHUNK* resdi;
-	struct MEMCHUNK* ressi;
+void far* mmgr_alloc_pages(const legacy_s8* name, legacy_u16 paragraphs) {
+	legacy_s16 name_index;
+	struct MEMCHUNK* live_chunk;
+	struct MEMCHUNK* cached_chunk;
 	const legacy_s8* chunkname;
-	legacy_u16 rax, rdx;
+	legacy_u16 size_or_end_segment, start_segment;
 
-	if (highpool_route(mmgr_path_to_name(arg_0), arg_2)) {
-		void far* highptr = highpool_alloc(mmgr_path_to_name(arg_0), arg_2);
+	if (highpool_route(mmgr_path_to_name(name), paragraphs)) {
+		void far* highptr = highpool_alloc(mmgr_path_to_name(name), paragraphs);
 		if (dos_memory_pointer_segment(highptr) != 0)
 			return highptr;
 		// The pool is full; fall through to the regular arena.
 	}
 
-	resdi = resptr2;
-	ressi = resendptr1;
-	rdx = resdi->resofs + resdi->ressize;
+	live_chunk = mmgr_last_live_chunk;
+	cached_chunk = mmgr_first_cached_chunk;
+	start_segment = live_chunk->resofs + live_chunk->ressize;
 
-	resdi++;
-	if (ressi <= resdi) {
-		if (ressi == resendptr2)
-			fatal_error("reservememory - OUT OF MEMORY SLOTS RESERVING %s", arg_0);
+	live_chunk++;
+	if (cached_chunk <= live_chunk) {
+		if (cached_chunk == mmgr_cache_sentinel)
+			fatal_error("reservememory - OUT OF MEMORY SLOTS RESERVING %s", name);
 
-		ressi++;
-		resendptr1 = ressi;
+		cached_chunk++;
+		mmgr_first_cached_chunk = cached_chunk;
 	}
 
-	resptr2 = resdi;
-	chunkname = mmgr_path_to_name(arg_0);
-	for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++)
-		resdi->resname[i] = chunkname[i];
+	mmgr_last_live_chunk = live_chunk;
+	chunkname = mmgr_path_to_name(name);
+	for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++)
+		live_chunk->resname[name_index] = chunkname[name_index];
 
-	rax = arg_2;
-	resdi->resofs = rdx;
-	resdi->ressize = rax;
-	resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
+	size_or_end_segment = paragraphs;
+	live_chunk->resofs = start_segment;
+	live_chunk->ressize = size_or_end_segment;
+	live_chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
 
-	rax += rdx;
-	if (rax > resmaxsize)
-		resmaxsize = rax;
+	size_or_end_segment += start_segment;
+	if (size_or_end_segment > mmgr_high_water_segment)
+		mmgr_high_water_segment = size_or_end_segment;
 
-	if (rax > ressi->resofs) {
-		ressi = resendptr1;
-		resdi = resptr2;
-		rax = resdi->resofs + resdi->ressize;
+	if (size_or_end_segment > cached_chunk->resofs) {
+		cached_chunk = mmgr_first_cached_chunk;
+		live_chunk = mmgr_last_live_chunk;
+		size_or_end_segment = live_chunk->resofs + live_chunk->ressize;
 
-		while (rax > ressi->resofs) {
-			if (ressi == resendptr2) {
-				fatal_error("reservememory - OUT OF MEMORY RESERVING %s P=%x HW=%x\r\n", arg_0, resdi->ressize, resmaxsize);
+		while (size_or_end_segment > cached_chunk->resofs) {
+			if (cached_chunk == mmgr_cache_sentinel) {
+				fatal_error("reservememory - OUT OF MEMORY RESERVING %s P=%x HW=%x\r\n", name, live_chunk->ressize, mmgr_high_water_segment);
 			}
 
-			ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-			ressi++;
-			resendptr1 = ressi;
+			cached_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+			cached_chunk++;
+			mmgr_first_cached_chunk = cached_chunk;
 		}
 	}
 
-	return dos_memory_make_pointer(rdx, 0);
+	return dos_memory_make_pointer(start_segment, 0);
 }
 
 void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
@@ -528,34 +528,34 @@ void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size) {
 		LEGACY_S32_DIV_OR_ZERO(size, DOS_PARAGRAPH_BYTES), 1L));
 }
 
-void mmgr_alloc_resmem(legacy_u16 arg_0) {
+void mmgr_alloc_resmem(legacy_u16 end_segment) {
 
 	void far* psp;
 	legacy_u16 maxblocks;
-	struct MEMCHUNK* rp;
+	struct MEMCHUNK* chunk;
 
 	psp = dos_memory_get_psp();
 	pspseg = dos_memory_pointer_segment(psp);
 	pspofs = dos_memory_pointer_offset(psp);
 
-	if (word_3FF82 == 0) {
-		resptr1->resofs = dos_memory_allocate(MMGR_INITIAL_ARENA_PARAS);
-		word_3FF84 = resptr1->resofs;
-		maxblocks = dos_memory_resize(resptr1->resofs,
-			arg_0 - resptr1->resofs);
-		maxblocks = dos_memory_resize(resptr1->resofs, maxblocks);
-		resendptr2->resofs = word_3FF84 + maxblocks;
-		word_3FF82 = resendptr2->resofs;
-		//fatal_error("%u\n", word_3FF82 - word_3FF84);
+	if (mmgr_arena_end_segment == 0) {
+		mmgr_live_sentinel->resofs = dos_memory_allocate(MMGR_INITIAL_ARENA_PARAS);
+		mmgr_arena_start_segment = mmgr_live_sentinel->resofs;
+		maxblocks = dos_memory_resize(mmgr_live_sentinel->resofs,
+			end_segment - mmgr_live_sentinel->resofs);
+		maxblocks = dos_memory_resize(mmgr_live_sentinel->resofs, maxblocks);
+		mmgr_cache_sentinel->resofs = mmgr_arena_start_segment + maxblocks;
+		mmgr_arena_end_segment = mmgr_cache_sentinel->resofs;
+		//fatal_error("%u\n", mmgr_arena_end_segment - mmgr_arena_start_segment);
 	}
-	resendptr1 = resendptr2;
-	resptr2 = resptr1;
+	mmgr_first_cached_chunk = mmgr_cache_sentinel;
+	mmgr_last_live_chunk = mmgr_live_sentinel;
 
-	rp = resptr1;
+	chunk = mmgr_live_sentinel;
 	for (;;) {
-		rp++;
-		if (rp == resendptr2) break;
-		rp->resunk = MMGR_RESOURCE_STATE_FREE;
+		chunk++;
+		if (chunk == mmgr_cache_sentinel) break;
+		chunk->resstate = MMGR_RESOURCE_STATE_FREE;
 	}
 }
 
@@ -564,33 +564,33 @@ void mmgr_alloc_a000(void) {
 }
 
 legacy_u16 mmgr_get_ofs_diff(void) {
-	return resendptr2->resofs - resptr2->resofs - resptr2->ressize;
+	return mmgr_cache_sentinel->resofs - mmgr_last_live_chunk->resofs - mmgr_last_live_chunk->ressize;
 }
 
-legacy_u16 nopsub_31157(void) {
+legacy_u16 mmgr_available_paragraphs(void) {
 	return mmgr_get_ofs_diff();
 }
 
-legacy_u16 nopsub_31169(void) {
-	return (legacy_u16)(resptr2->resofs + resptr2->ressize - resptr1->resofs);
+legacy_u16 mmgr_allocated_paragraphs(void) {
+	return (legacy_u16)(mmgr_last_live_chunk->resofs + mmgr_last_live_chunk->ressize - mmgr_live_sentinel->resofs);
 }
 
 #define MMGR_FIND_ARENA_CHUNK(chunk, segment) \
 	while (1) { \
-		if (chunk == resptr1) \
+		if (chunk == mmgr_live_sentinel) \
 			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment); \
 		if (chunk->resofs == segment) break; \
 		chunk--; \
 	}
 
 void far* mmgr_free(legacy_s8 far* ptr) {
-	legacy_s16 i;
-	legacy_u16 ax, bx, cx, dx, di;
+	legacy_s16 name_index;
+	legacy_u16 free_paragraphs, unused_bx, unused_cx, unused_dx, unused_di;
 	legacy_u16 ptrseg;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resbx;
+	struct MEMCHUNK* chunk;
+	struct MEMCHUNK* unused_chunk;
 
-	ressi = resptr2;
+	chunk = mmgr_last_live_chunk;
 	ptrseg = dos_memory_pointer_segment(ptr);
 
 	if (highpool_owns_seg(ptrseg)) {
@@ -604,31 +604,31 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 			ptrseg, dos_memory_pointer_offset(ptr));
 	}
 
-	MMGR_FIND_ARENA_CHUNK(ressi, ptrseg);
+	MMGR_FIND_ARENA_CHUNK(chunk, ptrseg);
 
 	ptrseg = 0;
-	ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-	ax = resendptr1->resofs - resptr2->resofs - resptr2->ressize;
-	if (ressi == resptr2 ||
-		(ressi != resendptr1 && ax >= ressi->ressize)) {
-		ptrseg = resendptr1->resofs - ressi->ressize;
-		resendptr1--;
-		resendptr1->resofs = ptrseg;
-		resendptr1->ressize = ressi->ressize;
-		resendptr1->resunk = MMGR_RESOURCE_STATE_CACHED;
+	chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+	free_paragraphs = mmgr_first_cached_chunk->resofs - mmgr_last_live_chunk->resofs - mmgr_last_live_chunk->ressize;
+	if (chunk == mmgr_last_live_chunk ||
+		(chunk != mmgr_first_cached_chunk && free_paragraphs >= chunk->ressize)) {
+		ptrseg = mmgr_first_cached_chunk->resofs - chunk->ressize;
+		mmgr_first_cached_chunk--;
+		mmgr_first_cached_chunk->resofs = ptrseg;
+		mmgr_first_cached_chunk->ressize = chunk->ressize;
+		mmgr_first_cached_chunk->resstate = MMGR_RESOURCE_STATE_CACHED;
 
-		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
-			resendptr1->resname[i] = ressi->resname[i];
+		for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+			mmgr_first_cached_chunk->resname[name_index] = chunk->resname[name_index];
 		}
 
-		copy_paras_reverse(ressi->resofs, ptrseg, ressi->ressize);
+		copy_paras_reverse(chunk->resofs, ptrseg, chunk->ressize);
 	}
 
-	if (ressi == resptr2) {
+	if (chunk == mmgr_last_live_chunk) {
 		do {
-			ressi--;
-		} while (ressi->resunk == MMGR_RESOURCE_STATE_FREE);
-		resptr2 = ressi;
+			chunk--;
+		} while (chunk->resstate == MMGR_RESOURCE_STATE_FREE);
+		mmgr_last_live_chunk = chunk;
 	}
 
 	return dos_memory_make_pointer(ptrseg, dos_memory_pointer_offset(ptr));
@@ -703,105 +703,105 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 }
 
 void mmgr_find_free(void) {
-	legacy_s16 i;
-	legacy_u16 regax, regdx, resunk;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+	legacy_s16 name_index;
+	legacy_u16 destination_segment, free_paragraphs, resstate;
+	struct MEMCHUNK* source_chunk;
+	struct MEMCHUNK* destination_chunk;
 
-	ressi = resendptr2;
-	resdi = ressi;
-	regdx = 0;
+	source_chunk = mmgr_cache_sentinel;
+	destination_chunk = source_chunk;
+	free_paragraphs = 0;
 
 	do {
-		if ((ressi->resunk & 1) == 0) {
-			regdx += ressi->ressize;
+		if ((source_chunk->resstate & 1) == 0) {
+			free_paragraphs += source_chunk->ressize;
 		} else {
 
-			if (regdx != 0) {
-				resdi++;
-				regax = resdi->resofs - ressi->ressize;
-				resdi--;
-				resdi->ressize = ressi->ressize;
-				resdi->resofs = regax;
-				resunk = ressi->resunk;
-				ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-				resdi->resunk = resunk;
-				for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
-					resdi->resname[i] = ressi->resname[i];
+			if (free_paragraphs != 0) {
+				destination_chunk++;
+				destination_segment = destination_chunk->resofs - source_chunk->ressize;
+				destination_chunk--;
+				destination_chunk->ressize = source_chunk->ressize;
+				destination_chunk->resofs = destination_segment;
+				resstate = source_chunk->resstate;
+				source_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+				destination_chunk->resstate = resstate;
+				for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+					destination_chunk->resname[name_index] = source_chunk->resname[name_index];
 				}
-				copy_paras_reverse(ressi->resofs, regax, ressi->ressize);
+				copy_paras_reverse(source_chunk->resofs, destination_segment, source_chunk->ressize);
 			}
 
-			resdi--;
+			destination_chunk--;
 		}
-		ressi--;
-	// `cmp si, resendptr1 / jnb` - the entry at resendptr1 is the last one
+		source_chunk--;
+	// `cmp si, mmgr_first_cached_chunk / jnb` - the entry at mmgr_first_cached_chunk is the last one
 	// the original visits, not one past the end.
-	} while (ressi >= resendptr1);
+	} while (source_chunk >= mmgr_first_cached_chunk);
 
-	resdi++;
-	resendptr1 = resdi;
+	destination_chunk++;
+	mmgr_first_cached_chunk = destination_chunk;
 
 }
 
 void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
-	const legacy_s8* pcdi;
-	legacy_s16 regbx, regax;
+	const legacy_s8* wanted_name;
+	legacy_s16 name_index, allocation_end_segment;
 	legacy_u16 srcofs, srcsize, destofs;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+	struct MEMCHUNK* cached_chunk;
+	struct MEMCHUNK* live_chunk;
 	legacy_s16 found = 0;
 
-	pcdi = mmgr_path_to_name(name);
+	wanted_name = mmgr_path_to_name(name);
 
 	{
-		void far* highptr = highpool_get_by_name(pcdi);
+		void far* highptr = highpool_get_by_name(wanted_name);
 		if (dos_memory_pointer_segment(highptr) != 0)
 			return highptr;
 	}
 
-	ressi = resendptr1;
+	cached_chunk = mmgr_first_cached_chunk;
 
-	for (; ressi < resendptr2; ressi++) {
-		regbx = 0;
-		if (ressi->resunk == MMGR_RESOURCE_STATE_FREE) {
+	for (; cached_chunk < mmgr_cache_sentinel; cached_chunk++) {
+		name_index = 0;
+		if (cached_chunk->resstate == MMGR_RESOURCE_STATE_FREE) {
 			return 0;
 		}
 
-		for (; regbx < MMGR_RESOURCE_NAME_LENGTH; regbx++) {
-			if (pcdi[regbx] == 0) {
-				if (ressi->resname[regbx] == '.' || ressi->resname[regbx] == 0) {
+		for (; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+			if (wanted_name[name_index] == 0) {
+				if (cached_chunk->resname[name_index] == '.' || cached_chunk->resname[name_index] == 0) {
 					found = 1;
 				}
 				break;
 			}
-			if (pcdi[regbx] != ressi->resname[regbx])
+			if (wanted_name[name_index] != cached_chunk->resname[name_index])
 				break;
 		}
-		if (regbx == MMGR_RESOURCE_NAME_LENGTH || found == 1) {
+		if (name_index == MMGR_RESOURCE_NAME_LENGTH || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
-			srcofs = ressi->resofs;
-			srcsize = ressi->ressize;
-			destofs = resptr2->resofs + resptr2->ressize;
-			ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-			resdi = resptr2 + 1;
-			resptr2 = resdi;
-			resdi->resofs = destofs;
-			resdi->ressize = srcsize;
-			resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
-			memcpy(resdi->resname, ressi->resname,
+			srcofs = cached_chunk->resofs;
+			srcsize = cached_chunk->ressize;
+			destofs = mmgr_last_live_chunk->resofs + mmgr_last_live_chunk->ressize;
+			cached_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+			live_chunk = mmgr_last_live_chunk + 1;
+			mmgr_last_live_chunk = live_chunk;
+			live_chunk->resofs = destofs;
+			live_chunk->ressize = srcsize;
+			live_chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
+			memcpy(live_chunk->resname, cached_chunk->resname,
 				sizeof(legacy_s8[MMGR_RESOURCE_NAME_LENGTH]));
-			if (resdi == resendptr1) {
-				resendptr1++;
+			if (live_chunk == mmgr_first_cached_chunk) {
+				mmgr_first_cached_chunk++;
 			}
 			mmgr_copy_paras(srcofs, destofs, srcsize);
-			regax = destofs + srcsize;
-			while (regax > resendptr1->resofs) {
-				resendptr1->resunk = MMGR_RESOURCE_STATE_FREE;
-				resendptr1++;
+			allocation_end_segment = destofs + srcsize;
+			while (allocation_end_segment > mmgr_first_cached_chunk->resofs) {
+				mmgr_first_cached_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+				mmgr_first_cached_chunk++;
 			}
 			mmgr_find_free();
-			return dos_memory_make_pointer(resdi->resofs, 0);
+			return dos_memory_make_pointer(live_chunk->resofs, 0);
 		}
 
 	}
@@ -809,15 +809,15 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 	return 0;
 }
 
-legacy_u16 nopsub_31429(const legacy_s8* name) {
+legacy_u16 mmgr_has_cached_resource(const legacy_s8* name) {
 	const legacy_s8* wanted;
 	legacy_s16 i;
 	struct MEMCHUNK* chunk;
 
 	wanted = mmgr_path_to_name(name);
-	chunk = resendptr1;
-	while (chunk < resendptr2) {
-		if (chunk->resunk == MMGR_RESOURCE_STATE_FREE)
+	chunk = mmgr_first_cached_chunk;
+	while (chunk < mmgr_cache_sentinel) {
+		if (chunk->resstate == MMGR_RESOURCE_STATE_FREE)
 			return 0;
 		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
 			if (wanted[i] == 0) {
@@ -836,33 +836,33 @@ legacy_u16 nopsub_31429(const legacy_s8* name) {
 }
 
 void mmgr_release(void far* ptr) {
-	legacy_s16 i;
-	legacy_u16 regax, regbx, regcx, regdx;
-	legacy_s8* strdi;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+	legacy_s16 unused_index;
+	legacy_u16 segment, unused_bx, unused_cx, unused_dx;
+	legacy_s8* unused_name;
+	struct MEMCHUNK* chunk;
+	struct MEMCHUNK* unused_chunk;
 
-	regax = dos_memory_pointer_segment(ptr);
-	ressi = resptr2;
+	segment = dos_memory_pointer_segment(ptr);
+	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(regax)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+	if (highpool_owns_seg(segment)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(segment);
 		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
 		highchunk->resstate =
 			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ?
 			HIGHPOOL_RESOURCE_STATE_RESERVED : MMGR_RESOURCE_STATE_FREE;
 		return;
 	}
 
-	MMGR_FIND_ARENA_CHUNK(ressi, regax);
+	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
-	ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-	if (ressi == resptr2) {
+	chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+	if (chunk == mmgr_last_live_chunk) {
 		do {
-			ressi--;
-		} while (ressi->resunk == MMGR_RESOURCE_STATE_FREE);
-		resptr2 = ressi;
+			chunk--;
+		} while (chunk->resstate == MMGR_RESOURCE_STATE_FREE);
+		mmgr_last_live_chunk = chunk;
 	}
 
 }
@@ -870,154 +870,154 @@ void mmgr_release(void far* ptr) {
 // Rename a live arena chunk, so a buffer filled under one name can be handed
 // on under the name the caller expects.
 void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
-	legacy_s16 i;
-	legacy_u16 regax;
+	legacy_s16 name_index;
+	legacy_u16 segment;
 	const legacy_s8* chunkname;
-	struct MEMCHUNK* ressi;
+	struct MEMCHUNK* chunk;
 
-	regax = dos_memory_pointer_segment(ptr);
-	ressi = resptr2;
+	segment = dos_memory_pointer_segment(ptr);
+	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(regax))
+	if (highpool_owns_seg(segment))
 		return;
 
-	MMGR_FIND_ARENA_CHUNK(ressi, regax);
+	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
 	chunkname = mmgr_path_to_name(name);
-	for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++)
-		ressi->resname[i] = chunkname[i];
+	for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++)
+		chunk->resname[name_index] = chunkname[name_index];
 }
 
 legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
-	legacy_s16 i;
-	legacy_u16 regax, regbx, regcx, regdx;
-	legacy_s8* strdi;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+	legacy_s16 unused_index;
+	legacy_u16 segment, unused_bx, unused_cx, unused_dx;
+	legacy_s8* unused_name;
+	struct MEMCHUNK* chunk;
+	struct MEMCHUNK* unused_chunk;
 
-	regax = dos_memory_pointer_segment(ptr);
-	ressi = resptr2;
+	segment = dos_memory_pointer_segment(ptr);
+	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(regax)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+	if (highpool_owns_seg(segment)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(segment);
 		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
 		return highchunk->resparas;
 	}
 
-	MMGR_FIND_ARENA_CHUNK(ressi, regax);
-	return ressi->ressize;
+	MMGR_FIND_ARENA_CHUNK(chunk, segment);
+	return chunk->ressize;
 }
 
-legacy_u16 mmgr_resize_memory(legacy_u16 arg_0, legacy_u16 arg_2, legacy_u16 arg_4) {
-	legacy_s16 i;
-	legacy_u16 regax, regbx, regcx, regdx;
-	legacy_s8* strdi;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+legacy_u16 mmgr_resize_memory(legacy_u16 unused_offset, legacy_u16 segment, legacy_u16 paragraphs) {
+	legacy_s16 unused_index;
+	legacy_u16 size_or_end_segment, unused_bx, unused_cx, unused_dx;
+	legacy_s8* unused_name;
+	struct MEMCHUNK* chunk;
+	struct MEMCHUNK* limit_chunk;
 
-	(void)arg_0;
-	regax = arg_2;
-	ressi = resptr2;
+	(void)unused_offset;
+	size_or_end_segment = segment;
+	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(regax)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(regax);
+	if (highpool_owns_seg(size_or_end_segment)) {
+		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(size_or_end_segment);
 		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", arg_2);
-		if (arg_4 <= highchunk->resparas) {
-			highchunk->resparas = arg_4;
-			return arg_4;
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
+		if (paragraphs <= highchunk->resparas) {
+			highchunk->resparas = paragraphs;
+			return paragraphs;
 		}
-		if (highpool_fits_at(regax, arg_4)) {
-			highchunk->resparas = arg_4;
+		if (highpool_fits_at(size_or_end_segment, paragraphs)) {
+			highchunk->resparas = paragraphs;
 			return 0;
 		}
-		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
+		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", mmgr_high_water_segment);
 	}
 
-	MMGR_FIND_ARENA_CHUNK(ressi, arg_2);
+	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
-	regax = arg_4;
-	if (regax <= ressi->ressize) {
-		ressi->ressize = regax;
-		return regax;
+	size_or_end_segment = paragraphs;
+	if (size_or_end_segment <= chunk->ressize) {
+		chunk->ressize = size_or_end_segment;
+		return size_or_end_segment;
 	}
 
-	if (ressi != resptr2)
+	if (chunk != mmgr_last_live_chunk)
 		fatal_error("resizememory - CANNOT EXPAND BLOCK NOT AT TOP");
-	ressi->ressize = regax;
-	resdi = resendptr1;
-	regax += ressi->resofs;
-	if (regax >= resmaxsize)
-		resmaxsize = regax;
+	chunk->ressize = size_or_end_segment;
+	limit_chunk = mmgr_first_cached_chunk;
+	size_or_end_segment += chunk->resofs;
+	if (size_or_end_segment >= mmgr_high_water_segment)
+		mmgr_high_water_segment = size_or_end_segment;
 
-	if (regax <= resdi->resofs) {
+	if (size_or_end_segment <= limit_chunk->resofs) {
 		return 0;
 	}
 
-	ressi = resendptr1;
-	resdi = resptr2;
-	regax = resdi->resofs + resdi->ressize;
+	chunk = mmgr_first_cached_chunk;
+	limit_chunk = mmgr_last_live_chunk;
+	size_or_end_segment = limit_chunk->resofs + limit_chunk->ressize;
 
 	for (;;) {
-		if (regax <= ressi->resofs) break;
-		if (ressi == resendptr2)
-			fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", resmaxsize);
+		if (size_or_end_segment <= chunk->resofs) break;
+		if (chunk == mmgr_cache_sentinel)
+			fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", mmgr_high_water_segment);
 
-		ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-		ressi++;
-		resendptr1 = ressi;
+		chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+		chunk++;
+		mmgr_first_cached_chunk = chunk;
 	}
 	return 0;
 }
 
-void far* mmgr_op_unk(legacy_s8 far* ptr) {
-	legacy_s16 i;
-	legacy_u16 regax, regbx, regcx, regdx;
-	legacy_s8* strdi;
-	struct MEMCHUNK* ressi;
-	struct MEMCHUNK* resdi;
+void far* mmgr_compact_live_chunk(legacy_s8 far* ptr) {
+	legacy_s16 name_index;
+	legacy_u16 destination_segment, unused_bx, unused_cx, unused_dx;
+	legacy_s8* unused_name;
+	struct MEMCHUNK* source_chunk;
+	struct MEMCHUNK* destination_chunk;
 
-	regax = dos_memory_pointer_segment(ptr);
-	ressi = resptr2;
+	destination_segment = dos_memory_pointer_segment(ptr);
+	source_chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(regax)) {
-		if (highpool_chunk_by_seg(regax) == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", regax);
+	if (highpool_owns_seg(destination_segment)) {
+		if (highpool_chunk_by_seg(destination_segment) == 0)
+			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", destination_segment);
 		// Pool chunks are never compacted; they stay where they are.
-		return dos_memory_make_pointer(regax, 0);
+		return dos_memory_make_pointer(destination_segment, 0);
 	}
 
-	MMGR_FIND_ARENA_CHUNK(ressi, regax);
+	MMGR_FIND_ARENA_CHUNK(source_chunk, destination_segment);
 
-	resdi = ressi;
-	resdi--;
-	if (resdi->resunk == MMGR_RESOURCE_STATE_FREE) {
+	destination_chunk = source_chunk;
+	destination_chunk--;
+	if (destination_chunk->resstate == MMGR_RESOURCE_STATE_FREE) {
 
 		do {
-			resdi--;
-		} while (resdi->resunk == MMGR_RESOURCE_STATE_FREE);
+			destination_chunk--;
+		} while (destination_chunk->resstate == MMGR_RESOURCE_STATE_FREE);
 
-		ressi->resunk = MMGR_RESOURCE_STATE_FREE;
-		regax = resdi->resofs + resdi->ressize;
-		resdi++;
-		if (ressi == resptr2) {
-			resptr2 = resdi;
+		source_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
+		destination_segment = destination_chunk->resofs + destination_chunk->ressize;
+		destination_chunk++;
+		if (source_chunk == mmgr_last_live_chunk) {
+			mmgr_last_live_chunk = destination_chunk;
 		}
 
-		resdi->resofs = regax;
-		resdi->ressize = ressi->ressize;
-		resdi->resunk = MMGR_RESOURCE_STATE_LIVE;
-		for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
-			resdi->resname[i] = ressi->resname[i];
+		destination_chunk->resofs = destination_segment;
+		destination_chunk->ressize = source_chunk->ressize;
+		destination_chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
+		for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+			destination_chunk->resname[name_index] = source_chunk->resname[name_index];
 		}
-		mmgr_copy_paras(ressi->resofs, regax, ressi->ressize);
+		mmgr_copy_paras(source_chunk->resofs, destination_segment, source_chunk->ressize);
 
 	} else {
-		resdi = ressi;
+		destination_chunk = source_chunk;
 	}
 
-	return dos_memory_make_pointer(resdi->resofs, 0);
+	return dos_memory_make_pointer(destination_chunk->resofs, 0);
 }
 
 legacy_u32 mmgr_get_res_ofs_diff_scaled(void) {
@@ -1051,12 +1051,12 @@ static void locate_many_resources_nofatal(legacy_s8 far* data,
 	}
 }
 
-void nopsub_367E4(legacy_s8 far* data, const legacy_s8* names,
+void locate_many_shapes_nofatal(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }
 
-void nopsub_36826(legacy_s8 far* data, const legacy_s8* names,
+void locate_many_sounds_fatal(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {
 	while (*names != 0) {
 		*result = locate_sound_fatal(data, names);
@@ -1065,7 +1065,7 @@ void nopsub_36826(legacy_s8 far* data, const legacy_s8* names,
 	}
 }
 
-void nopsub_36868(legacy_s8 far* data, const legacy_s8* names,
+void locate_many_resources_optional(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {
 	locate_many_resources_nofatal(data, names, result);
 }

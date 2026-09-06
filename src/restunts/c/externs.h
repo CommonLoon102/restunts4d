@@ -353,14 +353,14 @@ extern legacy_u8 detail_level;
 
 extern legacy_u16 pspofs;
 extern legacy_u16 pspseg;
-extern legacy_u16 word_3FF82;
-extern legacy_u16 word_3FF84;
+extern legacy_u16 mmgr_arena_end_segment;
+extern legacy_u16 mmgr_arena_start_segment;
 
-extern struct MEMCHUNK* resptr1;
-extern struct MEMCHUNK* resptr2;
-extern struct MEMCHUNK* resendptr1;
-extern struct MEMCHUNK* resendptr2;
-extern legacy_u16 resmaxsize;
+extern struct MEMCHUNK* mmgr_live_sentinel;
+extern struct MEMCHUNK* mmgr_last_live_chunk;
+extern struct MEMCHUNK* mmgr_first_cached_chunk;
+extern struct MEMCHUNK* mmgr_cache_sentinel;
+extern legacy_u16 mmgr_high_water_segment;
 
 extern legacy_u16 slow_timer_deadline_low;
 extern legacy_u16 slow_timer_deadline_high;

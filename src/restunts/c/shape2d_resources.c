@@ -658,7 +658,7 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);
-	memchunk = mmgr_op_unk(mempages);
+	memchunk = mmgr_compact_live_chunk(mempages);
 	file_load_shape2d_palmap_apply(memchunk, palmap);
 
 	return memchunk;
@@ -801,7 +801,7 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	parse_shape2d(memchunk, mempages);
 
 	mmgr_release(memchunk);
-	return mmgr_op_unk(mempages);
+	return mmgr_compact_live_chunk(mempages);
 }
 
 void far* file_load_shape2d_res_fatal(const legacy_s8* resname) {
