@@ -2,7 +2,14 @@
 #include "physics_internal.h"
 #include "state_internal.h"
 #include "resource.h"
-#include "menu_internal.h"
+#include "race_stats.h"
+#include "car_speed.h"
+#include "track_types.h"
+#include "track_objects.h"
+#include "track_collision.h"
+#include "wheel_transform.h"
+#include "camera.h"
+#include "car_resources.h"
 
 /* Mutable engine state formerly allocated by dseg.asm. */
 struct GAMEINFO gameconfig;

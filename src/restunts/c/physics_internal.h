@@ -1,37 +1,17 @@
 #ifndef RESTUNTS_PHYSICS_INTERNAL_H
 #define RESTUNTS_PHYSICS_INTERNAL_H
 
-#include "externs.h"
+#include "math.h"
+
+struct CARSTATE;
 
 extern legacy_s32 car_working_x;
 extern legacy_s32 car_working_y;
 extern legacy_s32 car_working_z;
 extern legacy_s16 car_working_roll;
-extern legacy_s16 car_initial_roll;
 extern legacy_s16 car_working_yaw;
-extern legacy_s16 car_initial_yaw;
 extern legacy_s16 car_working_pitch;
-extern legacy_s16 car_initial_pitch;
-extern struct MATRIX car_to_world_rotation;
-extern struct VECTOR wheel_forward_travel;
-extern legacy_s16 planindex;
-extern legacy_s16 planindex_copy;
-extern legacy_s16 wheel_heading_offset;
-extern struct VECTOR wheel_world_travel;
-extern legacy_s8 current_surf_type;
 extern legacy_s16 nextPosAndNormalIP;
-extern legacy_s16 wallindex;
-extern legacy_s16 elRdWallRelated;
-extern legacy_s16 wallHeight;
-extern legacy_s16 wallStartX;
-extern legacy_s16 wallStartZ;
-extern legacy_s16 wallOrientation;
-extern struct PLANE far* planptr;
-extern struct PLANE far* current_planptr;
-extern legacy_s16 elem_xCenter;
-extern legacy_s16 elem_zCenter;
-extern legacy_s16 terrainHeight;
-extern legacy_s8 track_wall_collision_enabled;
 
 extern struct POINT2D start_finish_pole_bounds[2];
 extern struct POINT2D breakable_object_bounds[2];
@@ -43,9 +23,6 @@ extern struct VECTOR corkscrew_lr_collision_points[];
 extern struct VECTOR corkscrew_up_collision_points[];
 extern struct VECTOR corkscrew_down_collision_points[];
 extern struct VECTOR slalom_collision_points[];
-
-void update_crash_state(legacy_s16, legacy_s16);
-void build_track_object(struct VECTOR*, struct VECTOR*);
 
 legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor);
@@ -66,7 +43,5 @@ legacy_s16 car_collision_boxes_overlap(
 	struct VECTOR* first_world_coordinates,
 	struct POINT2D* second_collision_points,
 	struct VECTOR* second_world_coordinates);
-
-extern struct TRACK_WALL far* wallptr;
 
 #endif

@@ -6,6 +6,7 @@
 #include "shape2d.h"
 #include "fatal.h"
 #include "ui_dialog.h"
+#include "audio_control.h"
 
 #ifdef RESTUNTS_HEADLESS
 static const legacy_s8 headless_file_error[] = "File error: %s";

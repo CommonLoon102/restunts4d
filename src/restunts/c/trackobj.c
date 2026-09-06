@@ -2,8 +2,10 @@
 #include "legacy.h"
 #include "math.h"
 #include "trackdata_layout.h"
-#include "physics_internal.h"
-#include "state_internal.h"
+#include "track_types.h"
+#include "track_objects.h"
+#include "track_collision.h"
+#include "externs.h"
 
 #define TRACK_ARC_CENTER_OFFSET 1024
 #define TRACK_ARC_CENTER_RADIUS 1536

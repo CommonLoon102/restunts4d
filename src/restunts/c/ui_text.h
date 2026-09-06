@@ -26,4 +26,10 @@ extern legacy_s16 font_glyph_height;
 
 void font_set_fontdef2(void far* data);
 
+void set_fontdefseg(void far* data);
+
+void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
+
+extern struct RECTANGLE intro_text_bounds;
+
 #endif

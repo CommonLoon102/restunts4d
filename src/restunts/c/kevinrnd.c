@@ -1,4 +1,5 @@
 #include "restunts.h"
+#include "externs.h"
 
 #define KEVINRANDOM_SEED_LEN 6
 

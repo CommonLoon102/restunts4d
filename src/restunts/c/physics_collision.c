@@ -3,7 +3,8 @@
 #include "physics_internal.h"
 #include "residue.h"
 #include "trackdata_layout.h"
-#include "state_internal.h"
+#include "track_objects.h"
+#include "externs.h"
 
 #define SPEED_TO_TRAVEL_NUMERATOR 1408UL
 #define COLLISION_MODEL_COUNT 5U

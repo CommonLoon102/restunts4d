@@ -3,9 +3,12 @@
 #include "memmgr.h"
 #include "platform.h"
 #include "residue.h"
-#include "state_internal.h"
-#include "menu_internal.h"
 #include "race_resources.h"
+#include "car_speed.h"
+#include "track_collision.h"
+#include "camera.h"
+#include "car_model.h"
+#include "car_resources.h"
 
 extern legacy_s8 opponent_name_text_id[];
 extern legacy_s8 opponent_path_resource_id[];

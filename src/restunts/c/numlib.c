@@ -1,4 +1,5 @@
 #include "restunts.h"
+#include "externs.h"
 
 #define LEGACY_RAND_DEFAULT_SEED 1UL
 #define LEGACY_RAND_MULTIPLIER 214013UL

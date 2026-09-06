@@ -1,6 +1,6 @@
-#include "menu_internal.h"
 #include "ui_text.h"
-#include "audio_internal.h"
+#include "resource_bytes.h"
+#include "externs.h"
 
 legacy_u8 far* active_font_definition;
 
@@ -196,11 +196,11 @@ static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, lega
 		return 0;
 	font_definition = active_font_definition;
 	has_glyph_widths = font_definition[FONT_GLYPH_WIDTHS_FLAG_OFFSET];
-	glyph_width = audioresource_get_word(
+	glyph_width = resource_read_u16le(
 		font_definition + FONT_FIXED_GLYPH_WIDTH_OFFSET);
 	total_width = 0;
 	while ((character = (legacy_u8)*text++) != 0) {
-		glyph_offset = audioresource_get_word(
+		glyph_offset = resource_read_u16le(
 			font_definition + FONT_GLYPH_OFFSET_TABLE_OFFSET +
 			(legacy_u16)character * FONT_GLYPH_OFFSET_ENTRY_SIZE);
 		if (glyph_offset == 0)

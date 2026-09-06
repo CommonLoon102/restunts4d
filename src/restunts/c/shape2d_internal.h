@@ -15,7 +15,6 @@ struct SPRITE;
 extern legacy_s8 window_row_table_overflow_message[];
 extern legacy_s8 video_window_resource_name[];
 extern legacy_s8 window_release_order_message[];
-extern struct SPRITE far* render_window_sprite;
 /* Reserved seg012 storage: SPRITE structs followed by line offsets. */
 extern legacy_u8* far wnd_defs;
 /* Near pointer relative to seg012 for the current SPRITE in wnd_defs. */

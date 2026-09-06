@@ -9,6 +9,9 @@
 #include "resource.h"
 #include "timing.h"
 #include "fatal.h"
+#include "car_audio.h"
+#include "audio_control.h"
+#include "resource_bytes.h"
 
 #define AUDIO_DRIVER_TIMER_RATE 22U
 #define AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD 2
@@ -650,13 +653,13 @@ void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel,
 				resource_segment,
 				LEGACY_U16_WRAP_ADD(resource_offset,
 					resource_data_offset));
-			pointer_value = audioresource_get_dword(resource_data);
+			pointer_value = resource_read_u32le(resource_data);
 			pointer_offset = LEGACY_U16_WRAP_ADD(
 				(legacy_u16)pointer_value, 4U);
 			pointer_segment = (legacy_u16)(pointer_value >> 16);
 			chunk->call_stack[0].offset = pointer_offset;
 			chunk->call_stack[0].segment = pointer_segment;
-			pointer_value = audioresource_get_dword(resource_data);
+			pointer_value = resource_read_u32le(resource_data);
 			pointer_offset = LEGACY_U16_WRAP_ADD(
 				(legacy_u16)pointer_value, 4U);
 			pointer_segment = (legacy_u16)(pointer_value >> 16);
@@ -798,7 +801,7 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far* resource,
 	legacy_s16 selected;
 	legacy_s16 restrict_to_timer;
 
-	resource_mask = audioresource_get_word(
+	resource_mask = resource_read_u16le(
 		resource + AUDIO_RESOURCE_CONTEXT_MASK_OFFSET);
 	if (resource_mask == 0)
 		return -1;
@@ -907,19 +910,19 @@ legacy_s16 audio_start_note(struct AUDIO_CHANNEL* timer, legacy_u16 value,
 	context->age = 0;
 	context->fade_out_flag = LEGACY_U32_WRAP_SUB(duration, 1UL);
 	context->level = LEGACY_S16_FROM_BITS(
-		audioresource_get_word(resource + AUDIO_RESOURCE_LEVEL_OFFSET));
+		resource_read_u16le(resource + AUDIO_RESOURCE_LEVEL_OFFSET));
 	context->envelope_state = AUDIO_ENVELOPE_STATE_ATTACK;
-	context->modulation_delay = audioresource_get_word(
+	context->modulation_delay = resource_read_u16le(
 		resource + AUDIO_RESOURCE_MODULATION_DELAY_OFFSET);
-	context->modulation_count = audioresource_get_word(
+	context->modulation_count = resource_read_u16le(
 		resource + AUDIO_RESOURCE_MODULATION_COUNT_OFFSET);
 	context->modulation = 0;
-	context->sequence_delay = audioresource_get_word(
+	context->sequence_delay = resource_read_u16le(
 		resource + AUDIO_RESOURCE_SEQUENCE_DELAY_OFFSET);
-	context->sequence_count = audioresource_get_word(
+	context->sequence_count = resource_read_u16le(
 		resource + AUDIO_RESOURCE_SEQUENCE_COUNT_OFFSET);
 	context->sequence_value = 0;
-	context->modulation_step = audioresource_get_word(
+	context->modulation_step = resource_read_u16le(
 		resource + AUDIO_RESOURCE_MODULATION_STEP_OFFSET);
 	context->modulation_direction =
 		resource[AUDIO_RESOURCE_MODULATION_DIRECTION_OFFSET];
@@ -1008,15 +1011,15 @@ void audio_update_driver_contexts(void)
 		if (context->envelope_state == AUDIO_ENVELOPE_STATE_ATTACK) {
 			level = LEGACY_S16_WRAP_ADD(
 				context->level,
-				LEGACY_S16_FROM_BITS(audioresource_get_word(
+				LEGACY_S16_FROM_BITS(resource_read_u16le(
 					resource + AUDIO_RESOURCE_ATTACK_STEP_OFFSET)));
 			context->level = level;
-			value = audioresource_get_word(
+			value = resource_read_u16le(
 				resource + AUDIO_RESOURCE_ATTACK_LEVEL_OFFSET);
 			if (level >= LEGACY_S16_FROM_BITS(value)) {
 				context->level = LEGACY_S16_FROM_BITS(value);
 				context->envelope_state =
-					LEGACY_S16_FROM_BITS(audioresource_get_word(
+					LEGACY_S16_FROM_BITS(resource_read_u16le(
 						resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET)) >=
 					LEGACY_S16_FROM_BITS(value) ?
 					AUDIO_ENVELOPE_STATE_SUSTAIN : AUDIO_ENVELOPE_STATE_DECAY;
@@ -1025,10 +1028,10 @@ void audio_update_driver_contexts(void)
 		if (context->envelope_state == AUDIO_ENVELOPE_STATE_DECAY) {
 			level = LEGACY_S16_WRAP_SUB(
 				context->level,
-				LEGACY_S16_FROM_BITS(audioresource_get_word(
+				LEGACY_S16_FROM_BITS(resource_read_u16le(
 					resource + AUDIO_RESOURCE_DECAY_STEP_OFFSET)));
 			context->level = level;
-			value = audioresource_get_word(
+			value = resource_read_u16le(
 				resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET);
 			if (level <= LEGACY_S16_FROM_BITS(value)) {
 				context->envelope_state = AUDIO_ENVELOPE_STATE_SUSTAIN;
@@ -1036,13 +1039,13 @@ void audio_update_driver_contexts(void)
 			}
 		}
 		if (context->envelope_state == AUDIO_ENVELOPE_STATE_SUSTAIN &&
-			audioresource_get_word(
+			resource_read_u16le(
 				resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET) == 0)
 			context->envelope_state = AUDIO_ENVELOPE_STATE_RELEASE;
 		if (context->envelope_state == AUDIO_ENVELOPE_STATE_RELEASE) {
 			level = LEGACY_S16_WRAP_SUB(
 				context->level,
-				LEGACY_S16_FROM_BITS(audioresource_get_word(
+				LEGACY_S16_FROM_BITS(resource_read_u16le(
 					resource + AUDIO_RESOURCE_RELEASE_STEP_OFFSET)));
 			context->level = level;
 			if (level <= 0) {
@@ -1083,7 +1086,7 @@ void audio_update_driver_contexts(void)
 								context->modulation_step);
 						context->modulation = modulation;
 						magnitude = audio_absolute_word(modulation);
-						threshold = audioresource_get_word(
+						threshold = resource_read_u16le(
 							resource + AUDIO_RESOURCE_MODULATION_LIMIT_OFFSET);
 						if (magnitude >= threshold) {
 							if (context->modulation_direction ==

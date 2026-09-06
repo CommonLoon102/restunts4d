@@ -1,5 +1,5 @@
 #include "legacy.h"
-#include "math_internal.h"
+#include "math.h"
 
 #define HEAPSORT_GAP_DIVISOR 2
 

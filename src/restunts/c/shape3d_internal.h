@@ -51,37 +51,15 @@ enum DRAW_LINE_BUFFER_INDEX {
 
 #define DRAW_LINE_WORD_COUNT 14
 
-extern struct SHAPE3D game3dshapes[130];
-extern legacy_s8 car_shape_resource_name[];
-extern legacy_s8 far* carresptr;
-extern legacy_s8 far* car2resptr;
-extern struct VECTOR player_front_wheel_centers[2];
-extern struct VECTOR player_base_wheel_vertices[24];
-extern struct VECTOR opponent_front_wheel_centers[2];
-extern struct VECTOR opponent_base_wheel_vertices[24];
-extern legacy_s16 player_wheel_vertex_state[];
-extern legacy_s16 opponent_wheel_vertex_state[];
-extern legacy_s16 neutral_wheel_suspension[];
 extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16,
 	legacy_u16, legacy_u16);
 extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16,
 	legacy_u16, legacy_u16);
 extern legacy_u8* sphere_radius_rows[];
 
-extern legacy_s8 backlights_paint_override;
-extern legacy_s8 far* curshapeptr;
-extern legacy_s8 far* game1ptr;
-extern legacy_s8 far* game2ptr;
-extern legacy_s8 game_shape_names[];
-extern struct MATRIX mat_temp;
 extern legacy_s16 polygon_next_index[];
 extern legacy_u16 polyinfonumpolys;
 extern legacy_u8 far* polyinfoptr;
 extern legacy_u8 far* polyinfoptrs[];
-extern legacy_u16 projection_center_x;
-extern legacy_u16 projection_center_y;
-extern legacy_u16 projection_focal_length_x;
-extern legacy_u16 projection_focal_length_y;
-extern struct RECTANGLE select_rect_rc;
 
 #endif

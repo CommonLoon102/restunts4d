@@ -2,7 +2,6 @@
 #include "game_input.h"
 #include "math.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "race_resources.h"
 #include "replay.h"
 #include "replay_viewer.h"
@@ -13,10 +12,14 @@
 #include "ui_dialog.h"
 #include "ui_input.h"
 #include "ui_text.h"
-#include "frame_internal.h"
-#include "race_resources_internal.h"
-#include "audio_internal.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "track_objects.h"
+#include "camera.h"
+#include "video_frame.h"
+#include "race_graphics.h"
+#include "car_audio.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define REPLAY_PLAYER_COUNT 2U
 #define REPLAY_CONTROL_COUNT 9U

@@ -159,4 +159,6 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal);
 void far* file_load_shape2d_res_fatal(const legacy_s8* resname);
 void far* file_load_shape2d_res_nofatal(const legacy_s8* resname);
 
+extern struct SPRITE far* render_window_sprite;
+
 #endif

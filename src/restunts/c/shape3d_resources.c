@@ -1,7 +1,7 @@
 #include "fileio.h"
 #include "memmgr.h"
 #include "shape3d.h"
-#include "shape3d_internal.h"
+#include "scene_resources.h"
 
 #define SHAPE3D_REQUIRED_ARENA_BYTES 65000UL
 #define SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS 4062U

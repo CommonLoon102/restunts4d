@@ -5,7 +5,8 @@
 #include "legacy.h"
 #include "math.h"
 #include "platform.h"
-#include "frame_internal.h"
+#include "camera.h"
+#include "car_audio.h"
 
 #define AUDIO_TRACK_CAMERA_VERTICAL_OFFSET 90
 #define AUDIO_CAR_COUNT_WITH_OPPONENT 2

@@ -1,7 +1,11 @@
-#include "state_internal.h"
 #include "trackdata_layout.h"
-#include "physics_internal.h"
 #include "memmgr.h"
+#include "car_speed.h"
+#include "track_types.h"
+#include "track_objects.h"
+#include "track_collision.h"
+#include "opponent.h"
+#include "externs.h"
 
 #define TRACK_GRID_SIZE 30
 #define TRACK_GRID_LAST_INDEX 29

@@ -1,30 +1,14 @@
 #ifndef RESTUNTS_MENU_INTERNAL_H
 #define RESTUNTS_MENU_INTERNAL_H
 
-#include <stddef.h>
-#include "externs.h"
 #include "game_input.h"
-#include "keyboard.h"
+#include "math.h"
 #include "shape2d.h"
 #include "shape3d.h"
-#include "timing.h"
-#include "ui_dialog.h"
-#include "ui_input.h"
-#include "ui_text.h"
-
-enum MENU_BLIT_MODE {
-	MENU_BLIT_MODE_REFRESH = 254,
-	MENU_BLIT_MODE_INITIAL = 255
-};
 
 extern legacy_s8 main_menu_shapes_name[];
 extern legacy_s8 main_menu_background_data[];
 extern struct BUTTON_AREA menu_buttons[5];
-extern legacy_s16 menu_highlight_second_color;
-extern legacy_s16 menu_highlight_first_color;
-extern legacy_s16 button_top_color;
-extern legacy_s16 button_bottom_color;
-extern legacy_s16 button_fill_color;
 extern struct BUTTON_AREA trackmenu_buttons[3];
 extern legacy_s8 opponent_misc_resource_name[];
 extern legacy_s8 opponent_menu_shapes_name[];
@@ -38,7 +22,6 @@ extern legacy_s8 opponent_done_button_id[];
 extern legacy_s8 opponent_portrait_clip_id[];
 extern legacy_s8 opponent_description_id[];
 extern legacy_s8 opponent_racing_car_label_id[];
-extern legacy_s8 opponent_resource_name[];
 extern struct BUTTON_AREA opponentmenu_buttons[5];
 extern legacy_s8 far* opp_res;
 extern legacy_s8 far* oppresources[7];
@@ -115,51 +98,6 @@ extern legacy_s16 hiscore_buttons_y2[5];
 extern legacy_s16 previous_end_opening_variant;
 extern legacy_s16 previous_end_outcome_variant;
 extern legacy_s16 previous_end_closing_variant;
-#define HIGHSCORE_ENTRY_COUNT 7U
-#define HIGHSCORE_LAST_ENTRY_INDEX (HIGHSCORE_ENTRY_COUNT - 1U)
-#define HIGHSCORE_PLAYER_NAME_BYTES 17U
-#define HIGHSCORE_CAR_NAME_BYTES 24U
-#define HIGHSCORE_OPPONENT_BYTES 8U
-#define HIGHSCORE_COMBINED_NAME_TEXT_BYTES \
-	(HIGHSCORE_PLAYER_NAME_BYTES + HIGHSCORE_CAR_NAME_BYTES - 1U)
-#define HIGHSCORE_OPPONENT_TEXT_BYTES (HIGHSCORE_OPPONENT_BYTES - 1U)
-#define HIGHSCORE_ENTRY_SIZE_BYTES 52U
-#define HIGHSCORE_CAR_NAME_OFFSET 17U
-#define HIGHSCORE_CAR_FLAG_OFFSET 41U
-#define HIGHSCORE_OPPONENT_OFFSET 42U
-#define HIGHSCORE_TIME_OFFSET 50U
-#define HIGHSCORE_TABLE_SIZE_BYTES \
-	(HIGHSCORE_ENTRY_COUNT * HIGHSCORE_ENTRY_SIZE_BYTES)
-
-#pragma pack (push, 1)
-
-/* One line of a track's .HIG table. The file is the raw array, so the
-   layout is fixed by the on-disk format. The two name areas each hold a
-   pair of strings laid end to end. */
-struct HIGHSCORE_ENTRY {
-	legacy_s8 player_name[HIGHSCORE_PLAYER_NAME_BYTES];
-	legacy_s8 car_name[HIGHSCORE_CAR_NAME_BYTES];
-	legacy_u8 car_flag;
-	legacy_s8 opponent[HIGHSCORE_OPPONENT_BYTES];
-	legacy_u16 time;
-};
-
-#pragma pack (pop)
-
-typedef char highscore_entry_must_have_expected_size[
-	(sizeof(struct HIGHSCORE_ENTRY) == HIGHSCORE_ENTRY_SIZE_BYTES) ? 1 : -1];
-typedef char highscore_entry_car_name_must_have_expected_offset[
-	(offsetof(struct HIGHSCORE_ENTRY, car_name) ==
-		HIGHSCORE_CAR_NAME_OFFSET) ? 1 : -1];
-typedef char highscore_entry_car_flag_must_have_expected_offset[
-	(offsetof(struct HIGHSCORE_ENTRY, car_flag) ==
-		HIGHSCORE_CAR_FLAG_OFFSET) ? 1 : -1];
-typedef char highscore_entry_opponent_must_have_expected_offset[
-	(offsetof(struct HIGHSCORE_ENTRY, opponent) ==
-		HIGHSCORE_OPPONENT_OFFSET) ? 1 : -1];
-typedef char highscore_entry_time_must_have_expected_offset[
-	(offsetof(struct HIGHSCORE_ENTRY, time) ==
-		HIGHSCORE_TIME_OFFSET) ? 1 : -1];
 
 extern legacy_s16 end_opening_variant;
 extern legacy_s16 end_outcome_variant;
@@ -205,9 +143,6 @@ extern legacy_s16 credits_music_heading_shadow_color;
 
 void draw_track_preview(void);
 void load_tracks_menu_shapes(void);
-void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
-	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
-legacy_s16 highscore_load_or_create(legacy_s16 create_default);
 extern struct SHAPE2D far* track_editor_cursor_shapes[];
 extern struct SHAPE2D far* track_editor_under_cursor_shapes[];
 extern legacy_s16 track_editor_highlight_color;
@@ -216,15 +151,9 @@ extern struct RECTANGLE shaperect;
 extern struct TRANSFORMEDSHAPE3D transshape;
 extern struct RECTANGLE cliprect;
 extern struct VECTOR carpos;
-extern legacy_s16 menu_idle_counter;
-extern legacy_s16 dialog_background_color;
-extern struct RECTANGLE intro_text_bounds;
 extern struct RECTANGLE highscore_text_bounds;
 extern void far* miscptr;
 extern legacy_s16 graphics_menu_background_color;
-extern legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
-extern legacy_s8 car_resource_name[];
-extern legacy_s8 replay_filename_input[];
 extern legacy_s8 exit_to_dos_dialog_id[];
 extern legacy_s8 keyboard_driving_dialog_id[];
 extern legacy_s8 insufficient_memory_dialog_id[];
@@ -237,34 +166,8 @@ extern legacy_s8 pause_dialog_id[];
 extern legacy_s8 effects_disabled_message_id[];
 extern legacy_s8 effects_enabled_message_id[];
 
-void menu_reset_animation_timers(void);
-void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
-legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
-	const struct BUTTON_AREA* buttons,
-	legacy_s16 second_color, legacy_s16 first_color);
-
-void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
-
-void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets);
-
-extern legacy_s8 gnam_string[];
-extern legacy_s8 gsna_string[];
-extern legacy_s8 opponent_highscore_name[];
-extern legacy_s8 highscore_player_name_input[];
 extern struct SHAPE2D far* track_editor_terrain_shapes[];
 extern struct SHAPE2D far* track_editor_tile_shapes[];
 extern struct SHAPE2D far* track_editor_tile_masks[];
-extern legacy_s8 missing_disk1_message_id[];
-extern legacy_s8 missing_disk2_message_id[];
-extern legacy_s8 missing_disk3_message_id[];
-extern legacy_s8 missing_disk4_message_id[];
-extern legacy_s8 disk_retry_dialog_id[];
-extern legacy_s8 disk_error_dialog_id[];
-extern legacy_s8 file_save_dialog_id[];
-extern legacy_s8 waiting_message_id[];
-extern legacy_s8 file_load_dialog_id[];
-extern legacy_s8 file_scroll_up_label_id[];
-extern legacy_s8 file_scroll_down_label_id[];
-extern legacy_s8* findfilenames[];
 
 #endif

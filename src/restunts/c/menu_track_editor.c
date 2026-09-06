@@ -8,12 +8,14 @@
 #include "shape3d.h"
 #include "trackdata_layout.h"
 #include "ui_text.h"
-#include "shape2d_internal.h"
-#include "state_internal.h"
 #include "timing.h"
 #include "ui_dialog.h"
 #include "game_input.h"
 #include "ui_input.h"
+#include "track_objects.h"
+#include "highscore.h"
+#include "menu_common.h"
+#include "keyboard.h"
 
 #define TRACK_EDITOR_CACHE_INVALID 255U
 #define TRACK_EDITOR_POSITION_UNSET 255U

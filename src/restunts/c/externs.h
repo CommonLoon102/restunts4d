@@ -59,6 +59,7 @@
 #endif
 
 #include "math.h"
+#include "track_types.h"
 
 #include "replay.h"
 #include "gamestate.h"
@@ -147,65 +148,20 @@ struct SIMD {
 	legacy_s16 far* aerorestable;
 };
 
-struct TRKOBJINFO {
-	legacy_s8  si_noOfBlocks;      // How many shapeInfo pieces compose the element. Arbitrary for the first piece, 0 for the following ones.
-	legacy_s8  si_entryPoint;      // Connectivity of the track element regarding tiles.
-	legacy_s8  si_exitPoint;
-	legacy_s8  si_entryType;        // Connectivity of the track element regarding element types.
-	legacy_s8  si_exitType;
-	legacy_s8  route_point_count;        // Number of route points in this element path.
-	legacy_s16 route_orientation;      // Rotation shared by route, camera and roadside-sign placement.
-	struct VECTOR* route_vectors; // Forward route edge vectors.
-	legacy_s8  reverse_path_offset_low;             // Low byte of the legacy reverse-route vector offset.
-	legacy_s8  reverse_path_offset_high;
-	legacy_s8  roadside_sign_type;
-	legacy_s8  opponent_speed_code;
-};
-
-struct TRACK_WALL {
-	legacy_s16 orientation;
-	legacy_s16 x;
-	legacy_s16 z;
-};
-
-struct TRACKOBJECT {
-	struct TRKOBJINFO* ss_trkObjInfoPtr; // offset (0003B770)
-	legacy_s16 ss_rotY;           // Horizontal orientation of the element.
-	struct SHAPE3D* ss_shapePtr;       // offset (0003B770)
-	struct SHAPE3D* ss_loShapePtr;     // offset (0003B770)
-	legacy_u8  ss_ssOvelay;       // Renders additional sceneShapes over the current one.
-	legacy_s8  ss_surfaceType;    // Paintjob. FF will induce alternating paintjobs.
-	legacy_s8  ss_ignoreZBias;    // Appears to be Z-bias override flag, mostly used for roads and corners.
-	legacy_s8  ss_multiTileFlag;  // 0 = one-tile, 1 = two-tile vertical, 2 = two-tile horizontal, 3 = four-tile.
-	legacy_s8  ss_physicalModel;  // sets the physical model in build_track_object
-	legacy_s8  reserved_scene_byte;        // always zero.
-};
-
 #pragma pack (pop)
-
-typedef char legacy_track_wall_must_be_6_bytes[
-	(sizeof(struct TRACK_WALL) == 6) ? 1 : -1];
 
 /* These records contain 16-bit near/far pointers.  Their DOS ABI layout is
  * meaningful only when the Borland memory model supplies those pointer sizes. */
 #if defined(__BORLANDC__)
 typedef char legacy_simd_must_be_776_bytes[
 	(sizeof(struct SIMD) == SIMD_DOS_STRUCTURE_SIZE) ? 1 : -1];
-typedef char legacy_trkobjinfo_must_be_14_bytes[
-	(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1];
-typedef char legacy_trackobject_must_be_14_bytes[
-	(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1];
+
 #endif
 
 legacy_u16 simd_decode(struct SIMD* destination,
 	const legacy_u8 far* source);
 
 #define OPPONENT_SPEED_COUNT 16U
-#define TRACK_PLAN_RESOURCE_COUNT 536U
-#define TRACK_WALL_RESOURCE_COUNT 191U
-void load_track_collision_resources(void);
-void track_collision_resources_decode(const legacy_u8 far* plane_source,
-	const legacy_u8 far* wall_source);
 
 extern struct GAMEINFO gameconfig;
 extern struct GAMEINFO gameconfigcopy;
@@ -225,33 +181,6 @@ extern legacy_s16 video_x_alignment_mask;
 extern legacy_s16 video_buffer_height_divisor;
 extern legacy_s16 video_uses_page_flipping;
 extern legacy_s16 video_page_count;
-/* The four horizon band images and the colours drawn around them. heights
-   is indexed the same way as the skyboxes[] resource array. */
-struct SKYBOX {
-	legacy_u16 heights[4];
-	legacy_u16 minimum_height;
-	legacy_u16 maximum_height;
-	legacy_s16 sky_color;
-	legacy_s16 ground_color;
-	legacy_s16 water_color;
-};
-
-extern struct SKYBOX skybox;
-
-/* The free camera the player steers with the keypad in replay mode. */
-struct CUSTOM_CAMERA {
-	legacy_s16 distance;
-	legacy_s16 elevation_angle;
-	legacy_s16 azimuth_angle;
-};
-
-extern struct CUSTOM_CAMERA custom_camera;
-
-legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
-	legacy_u8 column);
-legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
-	legacy_u8 row);
-void opponent_route_advance(legacy_s16 route_point);
 
 extern legacy_u8 frame_callback_countdown;
 extern legacy_u8 slow_replay_countdown;
@@ -278,7 +207,6 @@ extern legacy_s16 viewport_bottom_cache;
 extern legacy_s16 run_game_random;
 extern legacy_s8 replaybar_toggle;
 extern legacy_s8 is_in_replay;
-extern legacy_s8 cameramode;
 extern legacy_s8 replay_playback_speed;
 extern legacy_s8 game_replay_mode_copy;
 extern legacy_s8 frame_buffer_index;
@@ -294,8 +222,6 @@ extern void far* dasmshapeptr;
 extern legacy_s8 dashb_toggle_copy;
 extern legacy_s8 replaybar_toggle_copy;
 extern legacy_s8 is_in_replay_copy;
-extern legacy_s8 followOpponentFlag;
-extern legacy_s8 followOpponentFlag_copy;
 extern legacy_s16 roofbmpheight_copy;
 extern legacy_s8 dashboard_visible;
 extern legacy_s8 replaybar_enabled;
@@ -311,7 +237,6 @@ extern legacy_s16 roofbmpheight;
 extern struct RECTANGLE* active_frame_rects;
 
 extern void update_player_tick(legacy_s8);
-extern void update_opponent_tick(void);
 extern void emit_crash_particles(legacy_s16, legacy_s16, legacy_s16);
 extern void update_crash_particles(void);
 extern void init_kevinrandom(const legacy_s8* seed);
@@ -465,7 +390,6 @@ extern legacy_s8 load_intro_resources(void);
 extern legacy_s8 run_menu(void);
 extern legacy_s8 setup_track(void);
 extern void run_tracks_menu(legacy_s16 reload_track);
-extern legacy_s16 track_setup(void);
 extern void run_opponent_menu(void);
 
 extern void run_car_menu(legacy_s8* carid, legacy_s8* material, legacy_s8* transmission,
@@ -474,21 +398,7 @@ extern void run_car_menu(legacy_s8* carid, legacy_s8* material, legacy_s8* trans
 extern legacy_u16 end_hiscore(void);
 extern legacy_u16 run_option_menu(void);
 
-extern void far* load_song_file(const legacy_s8* filename);
-extern void far* load_voice_file(const legacy_s8* filename);
-extern void far* load_sfx_file(const legacy_s8* filename);
-
-extern void far* init_audio_resources(void far* songptr, void far* voiceptr, const legacy_s8* name);
-extern void load_audio_finalize(void far* audiores);
-extern legacy_s16 audio_load_driver(legacy_s8* driver, legacy_s16 unused_driver_segment, legacy_s16 mode);
-extern void audio_unload(void);
-extern legacy_s16 audio_toggle_music(void);
-extern legacy_s16 audio_toggle_effects(void);
 extern void legacy_timer_shutdown(void);
-extern void audiodrv_atexit(void);
-extern void audio_play_crash_and_stop_engine(legacy_s16 index);
-extern void audio_add_driver_timer(void);
-extern void audio_remove_driver_timer(void);
 
 extern void show_graphic_levels_menu(void);
 extern void calibrate_joystick_driving(void);

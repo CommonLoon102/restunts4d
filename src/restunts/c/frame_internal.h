@@ -1,15 +1,10 @@
 #ifndef RESTUNTS_FRAME_INTERNAL_H
 #define RESTUNTS_FRAME_INTERNAL_H
 
-#include "externs.h"
-#include "fileio.h"
-#include "legacy.h"
 #include "math.h"
-#include "memmgr.h"
-#include "shape2d.h"
 #include "shape3d.h"
+#include "track_types.h"
 
-extern struct RECTANGLE* alternate_frame_rects;
 extern struct RECTANGLE frame_rects_page0[];
 extern struct RECTANGLE frame_rects_page1[];
 extern struct RECTANGLE merged_redraw_rects[];
@@ -26,12 +21,9 @@ extern struct RECTANGLE frame_layer_rects[];
 #define frame_elapsed_time_rect frame_layer_rects[6]
 #define frame_cloud_rect  frame_layer_rects[7]
 extern struct RECTANGLE intro_redraw_cliprect;
-extern struct RECTANGLE full_screen_rect;
-extern struct RECTANGLE empty_rect;
 extern struct RECTANGLE rect_ingame_text2;
 extern struct RECTANGLE rect_ingame_text3;
 extern struct RECTANGLE rect_ingame_text4;
-extern legacy_s16 camera_track_height_offset;
 extern legacy_s8 detail_threshold_by_level[];
 extern legacy_s8 track_material_animation[];
 extern legacy_u16 frame_callback_count;
@@ -79,9 +71,6 @@ extern struct RECTANGLE trackpreview_cliprect;
 
 struct TRACKOBJECT* frame_track_object_from_legacy_index(legacy_u8 index);
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
-void skybox_render_level_rect(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
-
-legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction, struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y);
 
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
@@ -92,11 +81,5 @@ void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 cam
 	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect);
-void init_plantrak(void);
-void update_opponent(void);
-
-legacy_s16 video_backbuffer_copy_required(void);
-
-void set_fontdefseg(void far* data);
 
 #endif

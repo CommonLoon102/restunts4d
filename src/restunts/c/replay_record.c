@@ -1,4 +1,3 @@
-#include "audio_internal.h"
 #include "externs.h"
 #include "game_input.h"
 #include "keyboard.h"
@@ -6,7 +5,8 @@
 #include "platform.h"
 #include "replay_record.h"
 #include "timing.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "car_audio.h"
 
 #define INPUT_STEERING_HISTORY_SIZE 64U
 #define INPUT_STEERING_HISTORY_MASK 63U

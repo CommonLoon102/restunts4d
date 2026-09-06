@@ -6,7 +6,4 @@
 extern legacy_s32 direction_sector_cosine;
 extern legacy_s32 direction_sector_sine;
 
-void heapsort_by_order(legacy_s16 count, legacy_s16* values,
-	legacy_s16* order);
-
 #endif

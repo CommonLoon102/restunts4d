@@ -1,8 +1,6 @@
-#include "audio_internal.h"
 #include "dashboard.h"
 #include "fileio.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "race_resources.h"
 #include "race_resources_internal.h"
 #include "replay_viewer.h"
@@ -10,7 +8,15 @@
 #include "shape3d.h"
 #include "ui_dialog.h"
 #include "ui_text.h"
-#include "shape2d_internal.h"
+#include "track_collision.h"
+#include "camera.h"
+#include "car_model.h"
+#include "skybox.h"
+#include "race_graphics.h"
+#include "car_audio.h"
+#include "audio_control.h"
+#include "car_resources.h"
+#include "externs.h"
 
 #define SKYBOX_RESOURCE_COUNT 5
 #define SKYBOX_RESOURCE_NAME_BYTES 9

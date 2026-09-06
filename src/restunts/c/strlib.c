@@ -1,4 +1,5 @@
 #include "restunts.h"
+#include "externs.h"
 
 void copy_string(legacy_s8* destination, legacy_s8 far* source)
 {

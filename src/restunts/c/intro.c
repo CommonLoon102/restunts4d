@@ -4,11 +4,12 @@
 #include "menu_internal.h"
 #include "resource.h"
 #include "shape2d.h"
-#include "shape2d_internal.h"
 #include "timing.h"
 #include "ui_text.h"
 #include "game_input.h"
 #include "ui_input.h"
+#include "audio_control.h"
+#include "externs.h"
 
 #define INTRO_SCREEN_WIDTH 320
 #define INTRO_SCREEN_HEIGHT 200

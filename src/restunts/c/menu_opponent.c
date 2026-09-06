@@ -6,11 +6,14 @@
 #include "shape2d.h"
 #include "shape3d.h"
 #include "ui_text.h"
-#include "shape2d_internal.h"
 #include "timing.h"
 #include "game_input.h"
 #include "ui_input.h"
 #include "ui_dialog.h"
+#include "car_resources.h"
+#include "menu_common.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define OPPONENT_RESOURCE_FILE_INDEX 4
 #define OPPONENT_NONE 0U

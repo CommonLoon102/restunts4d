@@ -1,6 +1,7 @@
 #include "restunts.h"
 #include "memmgr.h"
 #include "trackdata_layout.h"
+#include "externs.h"
 
 #define REPLAY_SLOW_CALLBACK_DIVISOR 2U
 #define VIDEO_GEOMETRY_UNIT_SCALE 1

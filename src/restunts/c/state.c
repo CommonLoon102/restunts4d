@@ -1,6 +1,11 @@
 #include "state_internal.h"
 #include "game_input.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "race_stats.h"
+#include "car_speed.h"
+#include "track_objects.h"
+#include "externs.h"
+#include "residue.h"
 
 #define ROUTE_POINT_ADVANCE_DISTANCE 275
 #define ROUTE_ALIGNMENT_WRAP_LIMIT \

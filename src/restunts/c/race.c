@@ -1,9 +1,7 @@
-#include "audio_internal.h"
 #include "dashboard.h"
 #include "fileio.h"
 #include "game_input.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "platform.h"
 #include "race.h"
 #include "race_resources.h"
@@ -13,9 +11,15 @@
 #include "shape2d.h"
 #include "ui_dialog.h"
 #include "ui_text.h"
-#include "frame_internal.h"
 #include "shape3d.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "track_objects.h"
+#include "camera.h"
+#include "video_frame.h"
+#include "car_audio.h"
+#include "audio_control.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define RACE_SCREEN_WIDTH 320
 #define RACE_SCREEN_HEIGHT 200

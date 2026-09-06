@@ -9,7 +9,11 @@
 #include "ui_dialog.h"
 #include "fatal.h"
 #include "game_input.h"
-#include "audio_internal.h"
+#include "audio_control.h"
+#include "ui_dialog_internal.h"
+#include "replay_viewer_internal.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define JOYSTICK_BUTTON_MASK 48U
 #define OPTION_MENU_VERSION_TEXT_Y 16

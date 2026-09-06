@@ -1,42 +1,20 @@
 #ifndef RESTUNTS_STATE_INTERNAL_H
 #define RESTUNTS_STATE_INTERNAL_H
 
-#include "externs.h"
 #include "legacy.h"
-#include "math.h"
-#include "memmgr.h"
-#include "residue.h"
-#include "shape3d.h"
 
-#define PENALTY_ROUTE_FINISH_REACHED (-1)
-#define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
-#define TRACK_ROUTE_LINK_NONE (-1)
+struct CARSTATE;
+struct SIMD;
+
 enum GRIP_BEHAVIOR {
 	GRIP_BEHAVIOR_OPPONENT = 0,
 	GRIP_BEHAVIOR_PLAYER = 1
 };
 
-extern legacy_s16 penalty_time;
 extern legacy_s16 grassDecelDivTab[];
-extern struct TRACKOBJECT trkObjectList[215];
-extern legacy_u8 oppnentSped[];
-extern struct PLANE far plan_memres;
-extern legacy_s16 track_pieces_counter;
-extern legacy_u8 roadside_sign_forward_types[];
-extern legacy_u8 roadside_sign_reverse_types[];
-extern legacy_u8 terrConnDataEtoW[];
-extern legacy_u8 terrConnDataWtoE[];
-extern legacy_u8 terrConnDataNtoS[];
-extern legacy_u8 terrConnDataStoN[];
-extern legacy_u8 roadside_sign_count;
-extern legacy_u8 track_validation_column;
-extern legacy_u8 track_validation_row;
-extern legacy_u8 trackside_camera_count;
 
 legacy_s16 detect_penalty(legacy_s16* current_track,
 	legacy_s16* penalty_count);
-void update_car_speed(legacy_s8 input, legacy_s16 car_index,
-	struct CARSTATE* carstate, struct SIMD* simd);
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s16 grip_behavior);
 void update_legacy_grip_stack_words(struct CARSTATE* carstate,
@@ -46,19 +24,6 @@ void update_player_state(struct CARSTATE* playerstate,
 	struct SIMD* playersimd, struct CARSTATE* opponentstate,
 	struct SIMD* opponentsimd, legacy_s16 car_index);
 
-struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset);
 void update_player_steering_input(legacy_s8 steering_input);
-
-legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
-
-extern legacy_s16 gState_impactSpeed;
-extern legacy_s16 gState_jumpCount;
-extern legacy_s16 gState_oEndFrame;
-extern legacy_s16 gState_opponent_finish_time;
-extern legacy_s16 gState_pEndFrame;
-extern legacy_s16 gState_penalty;
-extern legacy_s16 gState_topSpeed;
-extern legacy_s16 gState_total_finish_time;
-extern legacy_s32 gState_travDist;
 
 #endif

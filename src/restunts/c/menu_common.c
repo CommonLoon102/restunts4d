@@ -1,12 +1,14 @@
 #include "fileio.h"
 #include "legacy.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
 #include "timing.h"
 #include "game_input.h"
+#include "ui_text.h"
+#include "menu_common.h"
+#include "externs.h"
 
 #define MENU_ANIMATION_PERIOD 60
 #define MENU_ANIMATION_SECOND_STATE_START 30

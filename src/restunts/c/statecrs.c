@@ -2,9 +2,10 @@
 #include "legacy.h"
 #include "math.h"
 #include "replay.h"
-#include "audio_internal.h"
-#include "state_internal.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "race_stats.h"
+#include "car_audio.h"
+#include "audio_control.h"
 
 #define CAR_CRASH_PARTICLE_KIND_COUNT 2
 #define CAR_CRASH_PARTICLE_LIMIT 18

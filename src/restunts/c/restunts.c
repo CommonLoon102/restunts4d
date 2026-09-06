@@ -1,7 +1,6 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include "audio.h"
-#include "audio_internal.h"
 #include "dashboard.h"
 #include "restunts.h"
 #include "fileio.h"
@@ -15,7 +14,6 @@
 #include "platform.h"
 #include "race.h"
 #include "race_resources.h"
-#include "race_resources_internal.h"
 #include "replay.h"
 #include "replay_record.h"
 #include "replay_viewer.h"
@@ -26,9 +24,14 @@
 #include "ui_dialog.h"
 #include "ui_input.h"
 #include "ui_text.h"
-#include "shape3d_internal.h"
-#include "frame_internal.h"
-#include "shape2d_internal.h"
+#include "track_objects.h"
+#include "camera.h"
+#include "video_frame.h"
+#include "opponent.h"
+#include "scene_resources.h"
+#include "audio_control.h"
+#include "menu_common.h"
+#include "externs.h"
 
 #define GAME_SCREEN_WIDTH 320
 #define GAME_SCREEN_HEIGHT 200

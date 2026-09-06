@@ -1,5 +1,16 @@
 #include "resource.h"
 #include "fatal.h"
+#include "resource_bytes.h"
+
+legacy_u16 resource_read_u16le(const legacy_u8 far* source)
+{
+	return LEGACY_READ_U16_LE(source);
+}
+
+legacy_u32 resource_read_u32le(const legacy_u8 far* source)
+{
+	return LEGACY_READ_U32_LE(source);
+}
 
 enum RESOURCE_NOT_FOUND_BEHAVIOR {
 	RESOURCE_NOT_FOUND_IGNORE = 0,

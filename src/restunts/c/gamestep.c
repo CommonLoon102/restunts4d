@@ -1,7 +1,10 @@
 #include "restunts.h"
 #include "game_input.h"
-#include "state_internal.h"
-#include "audio_internal.h"
+#include "track_objects.h"
+#include "opponent.h"
+#include "car_audio.h"
+#include "externs.h"
+#include "crash_state.h"
 
 #define ACTIVE_CAR_COUNT_WITHOUT_OPPONENT 1U
 #define ACTIVE_CAR_COUNT_WITH_OPPONENT 2U

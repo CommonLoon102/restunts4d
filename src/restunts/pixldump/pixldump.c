@@ -1,3 +1,4 @@
+#include <externs.h>
 #include <restunts.h>
 #include <fileio.h>
 #include <memmgr.h>
@@ -12,6 +13,9 @@
 #include "../c/shape3d.h"
 #include "../c/keyboard.h"
 #include "../c/game_input.h"
+#include "../c/track_objects.h"
+#include "../c/camera.h"
+#include "../c/audio_control.h"
 
 #define PIXLDUMP_FRAMEBUFFER_SIZE 64000U
 #define PIXLDUMP_SAMPLE_INTERVAL 5U

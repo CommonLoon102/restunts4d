@@ -1,4 +1,7 @@
 #include "restunts.h"
+#include "opponent.h"
+#include "externs.h"
+#include "crash_state.h"
 
 #define CAR_START_LONGITUDINAL_OFFSET 210
 #define CAR_START_LATERAL_OFFSET 36

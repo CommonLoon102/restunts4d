@@ -1,5 +1,9 @@
 #include "state_internal.h"
 #include "trackdata_layout.h"
+#include "track_objects.h"
+#include "externs.h"
+#include "residue.h"
+#include "crash_state.h"
 
 #define TRACK_GRID_LAST_COORDINATE 29
 #define TRACK_WORLD_TILE_SHIFT 16U

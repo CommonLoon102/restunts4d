@@ -1,10 +1,12 @@
 #include "frame_internal.h"
 #include "trackdata_layout.h"
-#include "shape3d_internal.h"
-#include "race_resources_internal.h"
-#include "state_internal.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "track_types.h"
+#include "track_objects.h"
+#include "scene_resources.h"
+#include "skybox.h"
+#include "externs.h"
 
 #define TRACK_PREVIEW_HALF_SHIFT 1U
 #define TRACK_PREVIEW_SCREEN_WIDTH 320

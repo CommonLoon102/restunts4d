@@ -2,8 +2,12 @@
 #include "math.h"
 #include "physics_internal.h"
 #include "residue.h"
-#include "audio_internal.h"
 #include "state_internal.h"
+#include "crash_state.h"
+#include "track_collision.h"
+#include "wheel_transform.h"
+#include "car_audio.h"
+#include "externs.h"
 
 #define PLAYER_PHYSICS_WHEEL_COUNT 4
 #define PLAYER_PHYSICS_FRONT_WHEEL_COUNT 2

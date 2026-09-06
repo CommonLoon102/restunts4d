@@ -1,7 +1,8 @@
 #include "fileio.h"
 #include "memmgr.h"
 #include "shape3d.h"
-#include "shape3d_internal.h"
+#include "car_model.h"
+#include "scene_resources.h"
 
 #define CAR_RESOURCE_ID_OFFSET 2U
 #define CAR_ID_LENGTH 4

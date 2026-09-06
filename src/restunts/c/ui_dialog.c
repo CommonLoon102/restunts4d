@@ -1,7 +1,6 @@
 #include "fileio.h"
 #include "legacy.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "platform.h"
 #include "resource.h"
 #include "shape2d.h"
@@ -10,6 +9,10 @@
 #include "timing.h"
 #include "ui_input.h"
 #include "game_input.h"
+#include "ui_dialog_internal.h"
+#include "externs.h"
+#include "keyboard.h"
+#include "shape3d.h"
 
 #define RST_ASC_CHAR_UPPER 1
 #define RST_ASC_CHAR_LOWER 2

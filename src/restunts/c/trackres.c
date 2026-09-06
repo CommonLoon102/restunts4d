@@ -1,7 +1,8 @@
 #include "externs.h"
 #include "fileio.h"
 #include "resource.h"
-#include "physics_internal.h"
+#include "track_types.h"
+#include "track_collision.h"
 
 #if !defined(__BORLANDC__)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];

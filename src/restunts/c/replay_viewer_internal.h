@@ -42,4 +42,6 @@ extern legacy_s8 replay_save_error_message_id[];
 extern legacy_s8 replay_mode_options_dialog_id[];
 extern legacy_s8 replay_control_shape_ids[];
 
+extern legacy_s8 replay_filename_input[];
+
 #endif

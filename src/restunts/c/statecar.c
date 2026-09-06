@@ -1,7 +1,7 @@
 #include "externs.h"
 #include "game_input.h"
 #include "math.h"
-#include "state_internal.h"
+#include "car_speed.h"
 
 #define ACCELERATION_MASS_NUMERATOR 25L
 #define ACCELERATION_DRAG_SCALE 200L

@@ -1,4 +1,5 @@
 #include <dos.h>
+#include <externs.h>
 #include <restunts.h>
 #include <fileio.h>
 #include <memmgr.h>
@@ -11,6 +12,9 @@
 #include "../c/game_input.h"
 #include "../c/shape3d.h"
 #include "../c/replay_record.h"
+#include "../c/track_objects.h"
+#include "../c/camera.h"
+#include "../c/audio_control.h"
 
 #define REPLDUMP_OUTPUT_NAME_SIZE 13U
 #define REPLDUMP_OUTPUT_NAME_LAST_INDEX 12U

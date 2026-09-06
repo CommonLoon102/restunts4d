@@ -2,13 +2,14 @@
 #include "game_input.h"
 #include "keyboard.h"
 #include "memmgr.h"
-#include "menu_internal.h"
 #include "platform.h"
 #include "resource.h"
 #include "shape2d.h"
 #include "timing.h"
 #include "ui_text.h"
-#include "physics_internal.h"
+#include "crash_state.h"
+#include "camera.h"
+#include "externs.h"
 
 #define INPUT_DIRECTION_COUNT 16U
 #define INPUT_KEY_COUNT 10U

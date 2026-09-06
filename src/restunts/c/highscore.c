@@ -7,12 +7,17 @@
 #include "resource.h"
 #include "shape2d.h"
 #include "ui_text.h"
-#include "shape2d_internal.h"
-#include "state_internal.h"
 #include "timing.h"
 #include "ui_input.h"
 #include "game_input.h"
 #include "ui_dialog.h"
+#include "race_stats.h"
+#include "audio_control.h"
+#include "car_resources.h"
+#include "highscore.h"
+#include "menu_common.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define HIGHSCORE_READ_RETRY_CANCEL_RESULT 2
 

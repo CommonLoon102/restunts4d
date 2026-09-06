@@ -1,10 +1,11 @@
 #include "externs.h"
 #include "legacy.h"
 #include "math.h"
-#include "physics_internal.h"
-#include "shape3d_internal.h"
 #include "math_internal.h"
 #include "fatal.h"
+#include "track_collision.h"
+#include "wheel_transform.h"
+#include "projection.h"
 
 legacy_s16 sign_word(legacy_s16 value)
 {

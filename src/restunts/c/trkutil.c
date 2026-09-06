@@ -1,5 +1,7 @@
 #include "externs.h"
-#include "state_internal.h"
+#include "track_types.h"
+#include "track_objects.h"
+#include "opponent.h"
 
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U

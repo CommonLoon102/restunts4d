@@ -1,11 +1,12 @@
-#include "menu_internal.h"
 #include "timing.h"
 #include "platform.h"
 #include "shape2d.h"
 #include "ui_input.h"
 #include "ui_text.h"
-#include "audio_internal.h"
 #include "game_input.h"
+#include "resource_bytes.h"
+#include "externs.h"
+#include "keyboard.h"
 
 #define SPRITE_BLIT_IMMEDIATE_MODE 65534U
 #define READ_LINE_CLEAR_TEXT 1U
@@ -313,10 +314,10 @@ void text_edit_toggle_cursor(void)
 	x = LEGACY_U16_WRAP_ADD(font_prefix_width(text_edit_buffer, cursor), text_edit_x);
 	font_definition = active_font_definition;
 	y = LEGACY_U16_WRAP_ADD(
-		audioresource_get_word(font_definition +
+		resource_read_u16le(font_definition +
 			FONT_DEFINITION_HEIGHT_OFFSET), text_edit_y);
 	y = LEGACY_U16_WRAP_SUB(y, text_edit_cursor_width);
-	color = audioresource_get_word(font_definition);
+	color = resource_read_u16le(font_definition);
 	sprite_xor_rect_clipped(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
 		LEGACY_S16_FROM_BITS(cursor_width),
 		LEGACY_S16_FROM_BITS(text_edit_cursor_width),
@@ -358,9 +359,9 @@ void text_edit_redraw(void)
 		LEGACY_S16_FROM_BITS(text_edit_y),
 		LEGACY_S16_FROM_BITS(remaining_width),
 		LEGACY_S16_FROM_BITS(
-			audioresource_get_word(font_definition +
+			resource_read_u16le(font_definition +
 				FONT_DEFINITION_HEIGHT_OFFSET)),
 		LEGACY_S16_FROM_BITS(
-			audioresource_get_word(font_definition +
+			resource_read_u16le(font_definition +
 				FONT_DEFINITION_BACKGROUND_COLOR_OFFSET)));
 }

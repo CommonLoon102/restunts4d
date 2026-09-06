@@ -111,7 +111,7 @@ legacy_s16 position_to_word(legacy_s32 position);
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
 legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
 
-void transform_wheel_travel_to_world(void);
-legacy_s16 plane_signed_distance(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z);
+void heapsort_by_order(legacy_s16 count, legacy_s16* values,
+	legacy_s16* order);
 
 #endif

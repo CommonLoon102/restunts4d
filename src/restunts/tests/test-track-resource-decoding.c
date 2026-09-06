@@ -2,6 +2,8 @@
 
 #include "../c/externs.h"
 #include "../c/physics_internal.h"
+#include "../c/track_types.h"
+#include "../c/track_collision.h"
 
 #define PLANE_RECORD_SIZE 34U
 #define WALL_RECORD_SIZE 6U
