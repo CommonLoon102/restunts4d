@@ -95,13 +95,13 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 
 	if (draw_car != 0) {
 		transformed.pos.x = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lx,
+			(legacy_s32)state.opponentstate.car_position.lx,
 			(legacy_s16)camera_x);
 		transformed.pos.y = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.ly,
+			(legacy_s32)state.opponentstate.car_position.ly,
 			(legacy_s16)camera_y);
 		transformed.pos.z = intro_shift_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lz,
+			(legacy_s32)state.opponentstate.car_position.lz,
 			(legacy_s16)camera_z);
 		transformed.shapeptr = &bravshape;
 		intro_draw_transformed_shape(&transformed, &current_shape_rect,
@@ -268,7 +268,7 @@ legacy_s8 setup_intro(void)
 
 		while ((legacy_s16)word_44DCC > (legacy_s16)word_4499C) {
 			word_44DCC = LEGACY_S16_WRAP_SUB(word_44DCC, word_4499C);
-			do_opponent_op();
+			update_opponent();
 			needs_render = 1;
 			frame_count = LEGACY_S16_WRAP_ADD(frame_count, 1);
 			elapsed_limit = LEGACY_S16_WRAP_MUL(
@@ -307,11 +307,11 @@ legacy_s8 setup_intro(void)
 			draw_car = 1;
 			horizontal_angle = -1;
 			opponent_x = intro_shift_position(
-				(legacy_s32)state.opponentstate.car_posWorld1.lx, 0);
+				(legacy_s32)state.opponentstate.car_position.lx, 0);
 			opponent_y = intro_shift_position(
-				(legacy_s32)state.opponentstate.car_posWorld1.ly, 0);
+				(legacy_s32)state.opponentstate.car_position.ly, 0);
 			opponent_z = intro_shift_position(
-				(legacy_s32)state.opponentstate.car_posWorld1.lz, 0);
+				(legacy_s32)state.opponentstate.car_position.lz, 0);
 
 			elapsed_limit = LEGACY_S16_WRAP_MUL(
 				framespersec, INTRO_CAR_PHASE_SECONDS);

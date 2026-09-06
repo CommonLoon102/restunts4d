@@ -40,7 +40,7 @@ void opponent_route_advance(legacy_s16 route_point)
 	legacy_s16 route_track_index;
 
 	route_table_offset = LEGACY_U16_WRAP_MUL(
-		state.opponentstate.car_trackdata3_index, ROUTE_TRACK_INDEX_SIZE);
+		state.opponentstate.car_route_index, ROUTE_TRACK_INDEX_SIZE);
 	route_track_index = LEGACY_READ_S16_LE(
 		(const legacy_u8 far*)trackdata3 + route_table_offset);
 	get_track_route_point(route_track_index, &state.opponentstate.car_route_target,

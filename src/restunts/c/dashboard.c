@@ -232,7 +232,7 @@ void setup_car_shapes(legacy_s16 operation)
 
 	player_index = (legacy_u8)byte_4432A;
 	steering_dot_cleared = 0;
-	if (state.playerstate.car_fpsmul2 == GEAR_CHANGE_DELAY_EXPIRED &&
+	if (state.playerstate.car_gear_change_delay == GEAR_CHANGE_DELAY_EXPIRED &&
 		state.playerstate.car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
 		byte_40DFA[player_index] != 0) {
 		if (video_flag5_is0 == 0)
@@ -246,7 +246,7 @@ void setup_car_shapes(legacy_s16 operation)
 			(legacy_u8)state.playerstate.car_changing_gear ||
 		word_40D70[player_index] != state.playerstate.car_knob_x ||
 		word_40D74[player_index] != state.playerstate.car_knob_y ||
-		(state.playerstate.car_fpsmul2 != GEAR_CHANGE_DELAY_EXPIRED &&
+		(state.playerstate.car_gear_change_delay != GEAR_CHANGE_DELAY_EXPIRED &&
 			byte_40DFA[player_index] == 0)) {
 		sprite_set_1_from_argptr(whlsprite2);
 		byte_40DFA[player_index] = 1;
@@ -292,12 +292,12 @@ void setup_car_shapes(legacy_s16 operation)
 		speed_index = 0;
 		gauge_mode = DASHBOARD_GAUGE_HIDDEN;
 	} else if (simd_player.spdcenter.py == DASHBOARD_GAUGE_DIGITAL_CENTER_Y) {
-		speed_index = (legacy_u16)state.playerstate.car_speed >>
+		speed_index = (legacy_u16)state.playerstate.car_rev_speed >>
 			DASHBOARD_DIGITAL_SPEED_SHIFT;
 		gauge_mode = DASHBOARD_GAUGE_DIGITAL;
 	} else {
 		speed_index = LEGACY_U16_DIV_OR_ZERO(
-			state.playerstate.car_speed, DASHBOARD_ANALOG_SPEED_DIVISOR);
+			state.playerstate.car_rev_speed, DASHBOARD_ANALOG_SPEED_DIVISOR);
 		if ((legacy_s16)speed_index >= simd_player.spdnumpoints)
 			speed_index = (legacy_u16)(simd_player.spdnumpoints - 1);
 		gauge_mode = DASHBOARD_GAUGE_ANALOG;

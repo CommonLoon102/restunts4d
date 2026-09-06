@@ -134,39 +134,39 @@ enum ROUTE_POINT_INDEX {
 #pragma pack (push, 1)
 
 struct CARSTATE {
-	struct VECTORLONG car_posWorld1;
-	struct VECTORLONG car_posWorld2;
+	struct VECTORLONG car_position;
+	struct VECTORLONG car_previous_position;
 	struct VECTOR car_rotate; /* Rotation angles, despite the vector notation. */
 	legacy_s16 car_pseudoGravity;
 	legacy_s16 car_steeringAngle;
 	legacy_s16 car_currpm;
 	legacy_s16 car_lastrpm;
-	legacy_s16 car_idlerpm2;
+	legacy_s16 car_initial_rpm;
 	legacy_s16 car_speeddiff; /* Formerly called gripdiff. */
-	legacy_u16 car_speed; /* Rev-coupled speed, scaled by 2^8. */
-	legacy_u16 car_speed2; /* Actual car speed, scaled by 2^8. */
+	legacy_u16 car_rev_speed; /* Rev-coupled speed, scaled by 2^8. */
+	legacy_u16 car_actual_speed; /* Actual car speed, scaled by 2^8. */
 	legacy_u16 car_lastspeed;
 	legacy_u16 car_gearratio;
 	legacy_u16 car_gearratioshr8;
 	legacy_s16 car_knob_x;
-	legacy_s16 car_36MwhlAngle;
+	legacy_s16 car_velocity_heading_offset;
 	legacy_s16 car_knob_y;
 	legacy_s16 car_knob_x2;
 	legacy_s16 car_knob_y2;
-	legacy_s16 car_angle_z;
-	legacy_s16 car_40MfrontWhlAngle;
+	legacy_s16 car_slide_yaw_delta;
+	legacy_s16 car_front_wheel_response_angle;
 	legacy_s16 car_slip_angle;
 	legacy_s16 car_demandedGrip;
 	legacy_s16 car_surfacegrip_sum;
 	legacy_s16 car_route_heading_error;
-	legacy_s16 car_trackdata3_index;
+	legacy_s16 car_route_index;
 	legacy_s16 car_wheel_vertical_speed[CARSTATE_WHEEL_COUNT];
 	legacy_s16 car_suspension_deflection[CARSTATE_WHEEL_COUNT];
 	legacy_s16 car_reserved_wheel_state[CARSTATE_WHEEL_COUNT];
 	legacy_s16 car_reserved_contact_state[CARSTATE_WHEEL_COUNT];
 	legacy_s16 car_suspension_target[CARSTATE_WHEEL_COUNT];
-	struct VECTOR car_whlWorldCrds1[CARSTATE_WHEEL_COUNT];
-	struct VECTOR car_whlWorldCrds2[CARSTATE_WHEEL_COUNT];
+	struct VECTOR car_wheel_contact_positions[CARSTATE_WHEEL_COUNT];
+	struct VECTOR car_body_corner_positions[CARSTATE_WHEEL_COUNT];
 	struct VECTOR car_route_target;
 	struct VECTOR car_route_first_edge;
 	struct VECTOR car_route_second_edge;
@@ -185,7 +185,7 @@ struct CARSTATE {
 	legacy_s8 car_collision_latch;
 	legacy_s8 car_crashBmpFlag;
 	legacy_s8 car_changing_gear;
-	legacy_s8 car_fpsmul2;
+	legacy_s8 car_gear_change_delay;
 	legacy_s8 car_transmission;
 	legacy_s8 car_lap_count;
 	legacy_s8 car_route_point_index;
@@ -227,7 +227,7 @@ struct GAMESTATE {
 	legacy_s8 kevinseed[GAMESTATE_RANDOM_SEED_SIZE];
 	legacy_s8 game_checkpoint_valid;
 	legacy_s8 game_inputmode;
-	legacy_s8 game_3F6autoLoadEvalFlag;
+	legacy_s8 game_end_event;
 	legacy_s8 game_trackside_camera_index[GAMESTATE_CAMERA_INDEX_COUNT];
 	legacy_s8 game_opponent_target_speed;
 	legacy_s8 game_object_destroyed[GAMESTATE_BREAKABLE_OBJECT_COUNT];

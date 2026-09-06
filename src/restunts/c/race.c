@@ -102,18 +102,18 @@ void run_game(void) {
 				mouse_minmax_position(byte_3B8F2);
 				game_replay_mode = REPLAY_MODE_PAUSED;
 
-				state.playerstate.car_posWorld1.lx = LEGACY_S32_WRAP_ADD(
-					state.playerstate.car_posWorld1.lx,
+				state.playerstate.car_position.lx = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_position.lx,
 					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
 						sin_fast(track_angle), RACE_START_POSITION_DISTANCE),
 						RACE_START_POSITION_SCALE_SHIFT));
-				state.playerstate.car_posWorld1.lz = LEGACY_S32_WRAP_ADD(
-					state.playerstate.car_posWorld1.lz,
+				state.playerstate.car_position.lz = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_position.lz,
 					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
 						cos_fast(track_angle), RACE_START_POSITION_DISTANCE),
 						RACE_START_POSITION_SCALE_SHIFT));
-				state.playerstate.car_posWorld1.ly = LEGACY_S32_WRAP_ADD(
-					state.playerstate.car_posWorld1.ly,
+				state.playerstate.car_position.ly = LEGACY_S32_WRAP_ADD(
+					state.playerstate.car_position.ly,
 					RACE_START_CAMERA_HEIGHT_OFFSET);
 				byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG;
 			} else {
@@ -318,7 +318,7 @@ void run_game(void) {
 				if (byte_449DA != 0) {
 
 					if ((game_replay_mode != REPLAY_MODE_LIVE ||
-						state.game_3F6autoLoadEvalFlag == CRASH_EVENT_EXIT) &&
+						state.game_end_event == CRASH_EVENT_EXIT) &&
 						byte_449DA != REPLAY_EXIT_REQUESTED) {
 						byte_449DA = 0;
 						game_replay_mode = REPLAY_MODE_PLAYBACK;

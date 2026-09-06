@@ -53,18 +53,18 @@ void update_follow_cameras(void)
 		carstate = car_index == PLAYER_CAR_INDEX ?
 			&state.playerstate : &state.opponentstate;
 		car_x = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lx, CAR_WORLD_POSITION_SHIFT));
+			carstate->car_position.lx, CAR_WORLD_POSITION_SHIFT));
 		car_y = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.ly, CAR_WORLD_POSITION_SHIFT));
+			carstate->car_position.ly, CAR_WORLD_POSITION_SHIFT));
 		car_z = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_posWorld1.lz, CAR_WORLD_POSITION_SHIFT));
+			carstate->car_position.lz, CAR_WORLD_POSITION_SHIFT));
 		target = carstate->car_route_target;
 		if ((car_index == PLAYER_CAR_INDEX &&
 			(state.game_player_route_status != ROUTE_TRACKING_NORMAL ||
 				state.game_route_confirmation_count != ROUTE_CONFIRMATION_NONE)) ||
 			carstate->car_route_has_reverse_path != 0 ||
 			carstate->car_crashBmpFlag != CRASH_EVENT_NONE ||
-			carstate->car_trackdata3_index == ROUTE_INDEX_NONE ||
+			carstate->car_route_index == ROUTE_INDEX_NONE ||
 			(carstate->car_route_heading_error > CAMERA_TARGET_OVERRIDE_FIELD_MIN &&
 			carstate->car_route_heading_error < CAMERA_TARGET_OVERRIDE_FIELD_END)) {
 			target.x = car_x;
@@ -169,14 +169,14 @@ void update_gamestate(void)
 	}
 
 	state.game_frame = LEGACY_S16_WRAP_ADD(state.game_frame, 1);
-	if (state.game_3F6autoLoadEvalFlag != 0 &&
+	if (state.game_end_event != 0 &&
 		state.game_frame_in_sec < state.game_frames_per_sec) {
 		state.game_frame_in_sec = LEGACY_S16_WRAP_ADD(
 			state.game_frame_in_sec, 1);
 		if (state.game_frame_in_sec == state.game_frames_per_sec &&
 			byte_449DA == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 &&
-				state.playerstate.car_speed2 != CAR_SPEED_STOPPED) {
+				state.playerstate.car_actual_speed != CAR_SPEED_STOPPED) {
 				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
 					state.game_frames_per_sec, 1);
 			} else if (game_replay_mode == REPLAY_MODE_LIVE) {
@@ -186,9 +186,9 @@ void update_gamestate(void)
 	}
 
 	if (state.game_inputmode != GAME_INPUT_MODE_WAITING) {
-		player_op(car_input);
+		update_player_tick(car_input);
 		if (gameconfig.game_opponenttype != 0)
-			opponent_op();
+			update_opponent_tick();
 		update_follow_cameras();
 		if (state.game_particles_active != 0)
 			update_crash_particles();
@@ -212,24 +212,24 @@ void update_gamestate(void)
 						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
-									state.playerstate.car_posWorld1.lz,
+									state.playerstate.car_position.lz,
 									CAR_WORLD_POSITION_SHIFT)))),
 					multiply_and_scale(sin_fast(track_angle),
 						LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
-									state.playerstate.car_posWorld1.lx,
+									state.playerstate.car_position.lx,
 									CAR_WORLD_POSITION_SHIFT))))) <=
 					START_SEQUENCE_LINE_DISTANCE) {
-					if (state.playerstate.car_speed != CAR_SPEED_STOPPED)
-						player_op(INPUT_BRAKE_FLAG);
+					if (state.playerstate.car_rev_speed != CAR_SPEED_STOPPED)
+						update_player_tick(INPUT_BRAKE_FLAG);
 					else
 						byte_4393C = RACE_START_SEQUENCE_INACTIVE;
-				} else if (state.playerstate.car_speed <
+				} else if (state.playerstate.car_rev_speed <
 					START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
-					player_op(INPUT_ACCELERATE_FLAG);
+					update_player_tick(INPUT_ACCELERATE_FLAG);
 				} else {
-					player_op(INPUT_NONE);
+					update_player_tick(INPUT_NONE);
 				}
 			}
 		}

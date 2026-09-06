@@ -198,7 +198,7 @@ void update_crash_particles(void) {
 
 		ground_position = LEGACY_S32_WRAP_ADD(
 			(legacy_s32)state.game_particle_y[slot],
-			(legacy_s32)state.playerstate.car_posWorld1.ly);
+			(legacy_s32)state.playerstate.car_position.ly);
 		if (ground_position < 0) {
 			state.game_particle_forward_speed[slot] = PARTICLE_TIMER_INACTIVE;
 			continue;
@@ -235,7 +235,7 @@ void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index) {
 		carstate->car_crashBmpFlag = CRASH_EVENT_COLLISION;
 		emit_crash_particles(car_index, carstate->car_rotate.x, 0);
 		if (car_index == PLAYER_CAR_INDEX) {
-			state.game_impactSpeed = carstate->car_speed2;
+			state.game_impactSpeed = carstate->car_actual_speed;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_SHL(framespersec,
 					CRASH_FRAME_RATE_SCALE_SHIFT));
@@ -252,7 +252,7 @@ void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index) {
 		carstate->car_crashBmpFlag = CRASH_EVENT_WATER;
 		stop_car = CRASH_CAR_MOTION_STOPPED;
 		if (car_index == PLAYER_CAR_INDEX) {
-			state.game_impactSpeed = carstate->car_speed2;
+			state.game_impactSpeed = carstate->car_actual_speed;
 			state.game_frames_per_sec = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_SHL(framespersec,
 					CRASH_FRAME_RATE_SCALE_SHIFT));
@@ -280,16 +280,16 @@ void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index) {
 	}
 
 	if (stop_car == CRASH_CAR_MOTION_STOPPED) {
-		carstate->car_speed2 = CAR_SPEED_STOPPED;
-		carstate->car_speed = CAR_SPEED_STOPPED;
+		carstate->car_actual_speed = CAR_SPEED_STOPPED;
+		carstate->car_rev_speed = CAR_SPEED_STOPPED;
 	}
 	if (car_index == PLAYER_CAR_INDEX)
 		state.game_pEndFrame = state.game_frame;
 	else
 		state.game_oEndFrame = state.game_frame;
-	if (state.game_3F6autoLoadEvalFlag == 0 &&
+	if (state.game_end_event == 0 &&
 		car_index == PLAYER_CAR_INDEX)
-		state.game_3F6autoLoadEvalFlag = crash_event;
+		state.game_end_event = crash_event;
 #ifndef RESTUNTS_HEADLESS
 	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 		// These copied values are used by the evaluation screen.

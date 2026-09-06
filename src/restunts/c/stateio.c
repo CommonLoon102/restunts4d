@@ -97,32 +97,32 @@ static void gamestate_write_vector_array(struct GAMESTATE_WRITER* writer,
 static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	const struct CARSTATE* carstate)
 {
-	gamestate_write_vectorlong(writer, &carstate->car_posWorld1);
-	gamestate_write_vectorlong(writer, &carstate->car_posWorld2);
+	gamestate_write_vectorlong(writer, &carstate->car_position);
+	gamestate_write_vectorlong(writer, &carstate->car_previous_position);
 	gamestate_write_vector(writer, &carstate->car_rotate);
 	gamestate_write_s16(writer, carstate->car_pseudoGravity);
 	gamestate_write_s16(writer, carstate->car_steeringAngle);
 	gamestate_write_s16(writer, carstate->car_currpm);
 	gamestate_write_s16(writer, carstate->car_lastrpm);
-	gamestate_write_s16(writer, carstate->car_idlerpm2);
+	gamestate_write_s16(writer, carstate->car_initial_rpm);
 	gamestate_write_s16(writer, carstate->car_speeddiff);
-	gamestate_write_u16(writer, carstate->car_speed);
-	gamestate_write_u16(writer, carstate->car_speed2);
+	gamestate_write_u16(writer, carstate->car_rev_speed);
+	gamestate_write_u16(writer, carstate->car_actual_speed);
 	gamestate_write_u16(writer, carstate->car_lastspeed);
 	gamestate_write_u16(writer, carstate->car_gearratio);
 	gamestate_write_u16(writer, carstate->car_gearratioshr8);
 	gamestate_write_s16(writer, carstate->car_knob_x);
-	gamestate_write_s16(writer, carstate->car_36MwhlAngle);
+	gamestate_write_s16(writer, carstate->car_velocity_heading_offset);
 	gamestate_write_s16(writer, carstate->car_knob_y);
 	gamestate_write_s16(writer, carstate->car_knob_x2);
 	gamestate_write_s16(writer, carstate->car_knob_y2);
-	gamestate_write_s16(writer, carstate->car_angle_z);
-	gamestate_write_s16(writer, carstate->car_40MfrontWhlAngle);
+	gamestate_write_s16(writer, carstate->car_slide_yaw_delta);
+	gamestate_write_s16(writer, carstate->car_front_wheel_response_angle);
 	gamestate_write_s16(writer, carstate->car_slip_angle);
 	gamestate_write_s16(writer, carstate->car_demandedGrip);
 	gamestate_write_s16(writer, carstate->car_surfacegrip_sum);
 	gamestate_write_s16(writer, carstate->car_route_heading_error);
-	gamestate_write_s16(writer, carstate->car_trackdata3_index);
+	gamestate_write_s16(writer, carstate->car_route_index);
 	gamestate_write_s16_array(writer, carstate->car_wheel_vertical_speed,
 		CARSTATE_WHEEL_COUNT);
 	gamestate_write_s16_array(writer, carstate->car_suspension_deflection,
@@ -133,9 +133,9 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 		CARSTATE_WHEEL_COUNT);
 	gamestate_write_s16_array(writer, carstate->car_suspension_target,
 		CARSTATE_WHEEL_COUNT);
-	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds1,
+	gamestate_write_vector_array(writer, carstate->car_wheel_contact_positions,
 		CARSTATE_WHEEL_COUNT);
-	gamestate_write_vector_array(writer, carstate->car_whlWorldCrds2,
+	gamestate_write_vector_array(writer, carstate->car_body_corner_positions,
 		CARSTATE_WHEEL_COUNT);
 	gamestate_write_vector(writer, &carstate->car_route_target);
 	gamestate_write_vector(writer, &carstate->car_route_first_edge);
@@ -156,7 +156,7 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->car_collision_latch);
 	gamestate_write_s8(writer, carstate->car_crashBmpFlag);
 	gamestate_write_s8(writer, carstate->car_changing_gear);
-	gamestate_write_s8(writer, carstate->car_fpsmul2);
+	gamestate_write_s8(writer, carstate->car_gear_change_delay);
 	gamestate_write_s8(writer, carstate->car_transmission);
 	gamestate_write_s8(writer, carstate->car_lap_count);
 	gamestate_write_s8(writer, carstate->car_route_point_index);
@@ -215,7 +215,7 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 		GAMESTATE_RANDOM_SEED_SIZE);
 	gamestate_write_s8(&writer, source->game_checkpoint_valid);
 	gamestate_write_s8(&writer, source->game_inputmode);
-	gamestate_write_s8(&writer, source->game_3F6autoLoadEvalFlag);
+	gamestate_write_s8(&writer, source->game_end_event);
 	gamestate_write_s8_array(&writer, source->game_trackside_camera_index,
 		GAMESTATE_CAMERA_INDEX_COUNT);
 	gamestate_write_s8(&writer, source->game_opponent_target_speed);

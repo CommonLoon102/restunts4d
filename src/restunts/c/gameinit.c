@@ -80,29 +80,29 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	legacy_s16 i;
 	struct VECTOR whlPos;
 
-	playerstate->car_posWorld1.lx = posX;
-	playerstate->car_posWorld2.lx = posX;
-	playerstate->car_posWorld1.ly = LEGACY_S32_WRAP_ADD(
+	playerstate->car_position.lx = posX;
+	playerstate->car_previous_position.lx = posX;
+	playerstate->car_position.ly = LEGACY_S32_WRAP_ADD(
 		posY, CAR_INITIAL_BODY_HEIGHT);
-	playerstate->car_posWorld2.ly = posY;
-	playerstate->car_posWorld1.lz = posZ;
-	playerstate->car_posWorld2.lz = posZ;
+	playerstate->car_previous_position.ly = posY;
+	playerstate->car_position.lz = posZ;
+	playerstate->car_previous_position.lz = posZ;
 
 	playerstate->car_rotate.x = track_angle;
 	playerstate->car_rotate.y = 0;
 	playerstate->car_rotate.z = 0;
-	playerstate->car_36MwhlAngle = 0;
+	playerstate->car_velocity_heading_offset = 0;
 	playerstate->car_pseudoGravity = 0;
 	playerstate->car_steeringAngle = CAR_STEERING_CENTERED;
 	playerstate->car_is_braking = CAR_PEDAL_RELEASED;
 	playerstate->car_is_accelerating = CAR_PEDAL_RELEASED;
 	playerstate->car_currpm = simd->idle_rpm;
 	playerstate->car_lastrpm = playerstate->car_currpm;
-	playerstate->car_idlerpm2 = playerstate->car_currpm;
+	playerstate->car_initial_rpm = playerstate->car_currpm;
 	playerstate->car_current_gear = CAR_INITIAL_GEAR_INDEX;
 	playerstate->car_speeddiff = 0;
-	playerstate->car_speed = CAR_SPEED_STOPPED;
-	playerstate->car_speed2 = CAR_SPEED_STOPPED;
+	playerstate->car_rev_speed = CAR_SPEED_STOPPED;
+	playerstate->car_actual_speed = CAR_SPEED_STOPPED;
 	playerstate->car_lastspeed = CAR_SPEED_STOPPED;
 	playerstate->car_gearratio = simd->gear_ratios[CAR_INITIAL_GEAR_INDEX];
 	playerstate->car_gearratioshr8 =
@@ -111,11 +111,11 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_knob_x2 = playerstate->car_knob_x;
 	playerstate->car_knob_y = simd->knob_points[CAR_INITIAL_GEAR_INDEX].py;
 	playerstate->car_knob_y2 = playerstate->car_knob_y;
-	playerstate->car_angle_z = 0;
-	playerstate->car_40MfrontWhlAngle = 0;
+	playerstate->car_slide_yaw_delta = 0;
+	playerstate->car_front_wheel_response_angle = 0;
 	playerstate->car_slip_angle = 0;
 	playerstate->car_route_heading_error = 0;
-	playerstate->car_trackdata3_index = 0;
+	playerstate->car_route_index = 0;
 	playerstate->car_sumSurfFrontWheels = CAR_WHEELS_PER_AXLE;
 	playerstate->car_sumSurfRearWheels = CAR_WHEELS_PER_AXLE;
 	playerstate->car_sumSurfAllWheels = CARSTATE_WHEEL_COUNT;
@@ -137,8 +137,8 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 		playerstate->car_reserved_contact_state[i] = 0;
 		playerstate->car_suspension_target[i] = 0;
 
-		playerstate->car_whlWorldCrds1[i] = whlPos;
-		playerstate->car_whlWorldCrds2[i] = whlPos;
+		playerstate->car_wheel_contact_positions[i] = whlPos;
+		playerstate->car_body_corner_positions[i] = whlPos;
 	}
 
 	playerstate->car_engineLimiterTimer = 0;
@@ -146,7 +146,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_collision_latch = CAR_COLLISION_LATCH_CLEAR;
 	playerstate->car_crashBmpFlag = CRASH_EVENT_NONE;
 	playerstate->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
-	playerstate->car_fpsmul2 = GEAR_CHANGE_DELAY_EXPIRED;
+	playerstate->car_gear_change_delay = GEAR_CHANGE_DELAY_EXPIRED;
 	playerstate->car_transmission = transmission;
 	playerstate->car_lap_count = 0;
 	playerstate->car_route_point_index = ROUTE_POINT_FIRST;
@@ -183,7 +183,7 @@ void init_game_state(legacy_s16 arg)
 		state.game_checkpoint_valid = GAMESTATE_CHECKPOINT_VALID;
 		state.game_frames_per_sec = GAMESTATE_INITIAL_TIMING_VALUE;
 		state.game_inputmode = GAME_INPUT_MODE_WAITING;
-		state.game_3F6autoLoadEvalFlag = 0;
+		state.game_end_event = 0;
 		state.game_frame_in_sec = 0;
 		state.game_player_previous_route = 0;
 		state.game_trackside_camera_index[0] = 0;
@@ -252,7 +252,7 @@ void init_game_state(legacy_s16 arg)
 		if (arg != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.playerstate.car_route_point_index;
 			get_track_route_point(
-				state.playerstate.car_trackdata3_index,
+				state.playerstate.car_route_index,
 				&state.playerstate.car_route_target,
 				(legacy_s16)route_point,
 				0);

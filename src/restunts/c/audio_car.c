@@ -123,31 +123,31 @@ void audio_carstate(void)
 	}
 
 	player_previous.x = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld2.lx);
+		(legacy_s32)state.playerstate.car_previous_position.lx);
 	player_previous.y = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld2.ly);
+		(legacy_s32)state.playerstate.car_previous_position.ly);
 	player_previous.z = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld2.lz);
+		(legacy_s32)state.playerstate.car_previous_position.lz);
 	player_current.x = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld1.lx);
+		(legacy_s32)state.playerstate.car_position.lx);
 	player_current.y = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld1.ly);
+		(legacy_s32)state.playerstate.car_position.ly);
 	player_current.z = audio_carstate_position(
-		(legacy_s32)state.playerstate.car_posWorld1.lz);
+		(legacy_s32)state.playerstate.car_position.lz);
 
 	if (gameconfig.game_opponenttype != 0) {
 		opponent_previous.x = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld2.lx);
+			(legacy_s32)state.opponentstate.car_previous_position.lx);
 		opponent_previous.y = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld2.ly);
+			(legacy_s32)state.opponentstate.car_previous_position.ly);
 		opponent_previous.z = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld2.lz);
+			(legacy_s32)state.opponentstate.car_previous_position.lz);
 		opponent_current.x = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lx);
+			(legacy_s32)state.opponentstate.car_position.lx);
 		opponent_current.y = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.ly);
+			(legacy_s32)state.opponentstate.car_position.ly);
 		opponent_current.z = audio_carstate_position(
-			(legacy_s32)state.opponentstate.car_posWorld1.lz);
+			(legacy_s32)state.opponentstate.car_position.lz);
 	}
 
 	if (cameramode == CAMERA_MODE_FOLLOW) {

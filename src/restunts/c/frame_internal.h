@@ -119,7 +119,7 @@ void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, leg
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect);
 void init_plantrak(void);
-void do_opponent_op(void);
+void update_opponent(void);
 legacy_u32 timer_get_delta(void);
 legacy_s16 get_0(void);
 void font_set_fontdef2(void far* data);

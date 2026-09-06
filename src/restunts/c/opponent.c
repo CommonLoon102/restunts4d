@@ -217,18 +217,18 @@ static void opponent_advance_route(void)
 	state.opponentstate.car_route_point_index = LEGACY_S8_WRAP_ADD(
 		route_point, ROUTE_POINT_STEP);
 	if (get_track_route_point(opponent_route_word(
-		state.opponentstate.car_trackdata3_index),
+		state.opponentstate.car_route_index),
 		&state.opponentstate.car_route_target, route_point,
 		&state.game_opponent_target_speed) == OPPONENT_ROUTE_POINT_NOT_LAST) {
 		return;
 	}
-	state.opponentstate.car_trackdata3_index = LEGACY_S16_WRAP_ADD(
-		state.opponentstate.car_trackdata3_index, OPPONENT_ROUTE_INDEX_STEP);
+	state.opponentstate.car_route_index = LEGACY_S16_WRAP_ADD(
+		state.opponentstate.car_route_index, OPPONENT_ROUTE_INDEX_STEP);
 	if (opponent_route_word(
-		state.opponentstate.car_trackdata3_index) == OPPONENT_ROUTE_LIST_END) {
+		state.opponentstate.car_route_index) == OPPONENT_ROUTE_LIST_END) {
 		state.opponentstate.car_lap_count = LEGACY_S8_WRAP_ADD(
 			state.opponentstate.car_lap_count, OPPONENT_LAP_STEP);
-		state.opponentstate.car_trackdata3_index = OPPONENT_ROUTE_INDEX_FIRST;
+		state.opponentstate.car_route_index = OPPONENT_ROUTE_INDEX_FIRST;
 	}
 	state.opponentstate.car_route_point_index = ROUTE_POINT_FIRST;
 }
@@ -242,7 +242,7 @@ static legacy_s16 opponent_average(legacy_s16 first, legacy_s16 second)
 		sum, OPPONENT_AVERAGE_SHIFT));
 }
 
-void opponent_op(void)
+void update_opponent_tick(void)
 {
 	struct VECTOR route_target;
 	struct VECTOR relative;
@@ -274,20 +274,20 @@ void opponent_op(void)
 		steering_step = OPPONENT_LOW_RATE_STEERING_STEP;
 		speed_step = OPPONENT_LOW_RATE_SPEED_STEP;
 	}
-	forced_route = state.opponentstate.car_36MwhlAngle != 0 ||
+	forced_route = state.opponentstate.car_velocity_heading_offset != 0 ||
 		state.game_inputmode == GAME_INPUT_MODE_INTRO;
 	opponent_x = position_to_word(
-		(legacy_s32)state.opponentstate.car_posWorld1.lx);
+		(legacy_s32)state.opponentstate.car_position.lx);
 	opponent_y = position_to_word(
-		(legacy_s32)state.opponentstate.car_posWorld1.ly);
+		(legacy_s32)state.opponentstate.car_position.ly);
 	opponent_z = position_to_word(
-		(legacy_s32)state.opponentstate.car_posWorld1.lz);
+		(legacy_s32)state.opponentstate.car_position.lz);
 	player_x = position_to_word(
-		(legacy_s32)state.playerstate.car_posWorld1.lx);
+		(legacy_s32)state.playerstate.car_position.lx);
 	player_y = position_to_word(
-		(legacy_s32)state.playerstate.car_posWorld1.ly);
+		(legacy_s32)state.playerstate.car_position.ly);
 	player_z = position_to_word(
-		(legacy_s32)state.playerstate.car_posWorld1.lz);
+		(legacy_s32)state.playerstate.car_position.lz);
 	state.opponentstate.car_sound_flags = CAR_SOUND_NONE;
 	state.game_opponent_route_indicator = ROUTE_INDICATOR_NONE;
 	rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
@@ -295,7 +295,7 @@ void opponent_op(void)
 		state.opponentstate.car_rotate.x, MATRIX_ROTATION_ORDER_YXZ);
 	state.opponentstate.car_sound_flags = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
-		if (state.opponentstate.car_speed2 == CAR_SPEED_STOPPED)
+		if (state.opponentstate.car_actual_speed == CAR_SPEED_STOPPED)
 			state.opponentstate.car_sound_flags = CAR_SOUND_NONE;
 	} else {
 	route_target = state.opponentstate.car_route_target;
@@ -428,15 +428,15 @@ void opponent_op(void)
 	if (state.opponentstate.car_sumSurfRearWheels != CAR_WHEEL_CONTACT_NONE) {
 		if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 			input = INPUT_BRAKE_FLAG;
-		} else if (state.opponentstate.car_36MwhlAngle != 0) {
+		} else if (state.opponentstate.car_velocity_heading_offset != 0) {
 			speed_threshold = LEGACY_U16_SHL(speed_step,
 				OPPONENT_COAST_SPEED_SHIFT);
-			if (speed_threshold > state.opponentstate.car_speed2) {
-				state.opponentstate.car_speed2 = CAR_SPEED_STOPPED;
-				state.opponentstate.car_36MwhlAngle = 0;
+			if (speed_threshold > state.opponentstate.car_actual_speed) {
+				state.opponentstate.car_actual_speed = CAR_SPEED_STOPPED;
+				state.opponentstate.car_velocity_heading_offset = 0;
 			} else {
-				state.opponentstate.car_speed2 = LEGACY_U16_WRAP_SUB(
-					state.opponentstate.car_speed2, speed_threshold);
+				state.opponentstate.car_actual_speed = LEGACY_U16_WRAP_SUB(
+					state.opponentstate.car_actual_speed, speed_threshold);
 			}
 		} else if (state.opponentstate.car_demandedGrip <=
 			state.opponentstate.car_surfacegrip_sum) {
@@ -446,11 +446,11 @@ void opponent_op(void)
 					OPPONENT_SPEED_TO_TARGET_SHIFT);
 			if (LEGACY_U16_WRAP_SUB(target_speed,
 				OPPONENT_ACCELERATE_MARGIN) >
-				state.opponentstate.car_speed) {
+				state.opponentstate.car_rev_speed) {
 				input = INPUT_ACCELERATE_FLAG;
 			} else if (LEGACY_U16_WRAP_ADD(target_speed,
 				OPPONENT_BRAKE_MARGIN) <
-				state.opponentstate.car_speed) {
+				state.opponentstate.car_rev_speed) {
 				input = INPUT_BRAKE_FLAG;
 			}
 		} else {
@@ -468,15 +468,15 @@ void opponent_op(void)
 		relative.x = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_route_target.x,
 			position_to_word((legacy_s32)
-				state.opponentstate.car_posWorld1.lx));
+				state.opponentstate.car_position.lx));
 		relative.y = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_route_target.y,
 			position_to_word((legacy_s32)
-				state.opponentstate.car_posWorld1.ly));
+				state.opponentstate.car_position.ly));
 		relative.z = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_route_target.z,
 			position_to_word((legacy_s32)
-				state.opponentstate.car_posWorld1.lz));
+				state.opponentstate.car_position.lz));
 		rotation = mat_rot_zxy(state.opponentstate.car_rotate.z,
 			state.opponentstate.car_rotate.y,
 			state.opponentstate.car_rotate.x,
@@ -492,18 +492,18 @@ void opponent_op(void)
 		finish_distance = multiply_and_scale(cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
 				position_to_word((legacy_s32)
-					state.opponentstate.car_posWorld1.lz)));
+					state.opponentstate.car_position.lz)));
 		finish_distance = LEGACY_S16_WRAP_ADD(finish_distance,
 			multiply_and_scale(sin_fast(track_angle),
 				LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
 					position_to_word((legacy_s32)
-						state.opponentstate.car_posWorld1.lx))));
+						state.opponentstate.car_position.lx))));
 		if (finish_distance < 0)
 			update_crash_state(CRASH_EVENT_FINISH, OPPONENT_CAR_INDEX);
 	}
 }
 
-void upd_statef20_from_steer_input(legacy_s8 steering_input) {
+void update_player_steering_input(legacy_s8 steering_input) {
 	legacy_s8* response_table;
 	legacy_s16 steering_angle;
 	legacy_s16 response;
@@ -513,7 +513,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 
 	response_table = steerWhlRespTable_ptr;
 	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index = (legacy_u8)((state.playerstate.car_speed2 >>
+	speed_index = (legacy_u8)((state.playerstate.car_actual_speed >>
 		STEERING_RESPONSE_SPEED_SHIFT) & STEERING_RESPONSE_INDEX_MASK);
 	response_index = LEGACY_S16_WRAP_ADD(
 		(legacy_s16)speed_index, (legacy_s16)steering_input);
@@ -528,7 +528,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
-	if (response == 0 && state.playerstate.car_speed2 != CAR_SPEED_STOPPED &&
+	if (response == 0 && state.playerstate.car_actual_speed != CAR_SPEED_STOPPED &&
 		steering_angle != CAR_STEERING_CENTERED) {
 		centering_limit = LEGACY_S16_SHL(
 			(legacy_s16)response_table[

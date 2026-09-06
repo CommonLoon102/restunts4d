@@ -321,16 +321,16 @@ legacy_s16 resolve_car_collision_speeds(
 	second_angle = (legacy_s16)second_state->car_rotate.x;
 
 	first_sin_speed = multiply_and_scale(
-		(legacy_s16)(first_state->car_speed2 >> COLLISION_SPEED_FIXED_SHIFT),
+		(legacy_s16)(first_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		sin_fast((legacy_u16)first_angle));
 	second_sin_speed = multiply_and_scale(
-		(legacy_s16)(second_state->car_speed2 >> COLLISION_SPEED_FIXED_SHIFT),
+		(legacy_s16)(second_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		sin_fast((legacy_u16)second_angle));
 	first_cos_speed = multiply_and_scale(
-		(legacy_s16)(first_state->car_speed2 >> COLLISION_SPEED_FIXED_SHIFT),
+		(legacy_s16)(first_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		cos_fast((legacy_u16)first_angle));
 	second_cos_speed = multiply_and_scale(
-		(legacy_s16)(second_state->car_speed2 >> COLLISION_SPEED_FIXED_SHIFT),
+		(legacy_s16)(second_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		cos_fast((legacy_u16)second_angle));
 
 	relative_speed = (legacy_s16)polarRadius2D(
@@ -342,11 +342,11 @@ legacy_s16 resolve_car_collision_speeds(
 	/* The original keeps only the low product word before shifting it. */
 	slowdown = LEGACY_S16_SAR2(
 		LEGACY_S16_WRAP_MUL(COLLISION_SLOWDOWN_SCALE, relative_speed));
-	if ((legacy_u16)first_state->car_speed2 < (legacy_u16)slowdown) {
-		first_state->car_speed2 = CAR_SPEED_STOPPED;
+	if ((legacy_u16)first_state->car_actual_speed < (legacy_u16)slowdown) {
+		first_state->car_actual_speed = CAR_SPEED_STOPPED;
 	} else {
-		first_state->car_speed2 = LEGACY_U16_WRAP_SUB(
-			first_state->car_speed2, slowdown);
+		first_state->car_actual_speed = LEGACY_U16_WRAP_SUB(
+			first_state->car_actual_speed, slowdown);
 	}
 
 	angle_delta = LEGACY_S16_WRAP_SUB(second_angle, first_angle);
@@ -354,17 +354,17 @@ legacy_s16 resolve_car_collision_speeds(
 		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, ANGLE_FULL_TURN);
 	if (angle_delta <= -ANGLE_HALF_TURN)
 		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, ANGLE_FULL_TURN);
-	first_state->car_36MwhlAngle = angle_delta;
+	first_state->car_velocity_heading_offset = angle_delta;
 
 	angle_delta = LEGACY_S16_WRAP_SUB(first_angle, second_angle);
 	if (angle_delta >= ANGLE_HALF_TURN)
 		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, ANGLE_FULL_TURN);
 	if (angle_delta <= -ANGLE_HALF_TURN)
 		angle_delta = LEGACY_S16_WRAP_ADD(angle_delta, ANGLE_FULL_TURN);
-	second_state->car_36MwhlAngle = angle_delta;
+	second_state->car_velocity_heading_offset = angle_delta;
 
-	first_state->car_speed = first_state->car_speed2;
-	second_state->car_speed = second_state->car_speed2;
+	first_state->car_rev_speed = first_state->car_actual_speed;
+	second_state->car_rev_speed = second_state->car_actual_speed;
 	return relative_speed > COLLISION_ACTIVE_SPEED_THRESHOLD;
 }
 

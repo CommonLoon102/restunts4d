@@ -155,7 +155,7 @@ void replay_unk2(legacy_s16 mode)
 		byte_449DA = 1;
 		return;
 	} else if (byte_449DA == 0 &&
-		state.game_3F6autoLoadEvalFlag == 0 &&
+		state.game_end_event == 0 &&
 		game_replay_mode != REPLAY_MODE_PAUSED) {
 		if (passed_security == 0 &&
 			byte_4393C == RACE_START_SEQUENCE_INACTIVE &&
@@ -297,7 +297,7 @@ void replay_unk(void)
 
 	target_angle = LEGACY_S8_FROM_BITS(input_steering_history[history_index]);
 	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index = (state.playerstate.car_speed2 >>
+	speed_index = (state.playerstate.car_actual_speed >>
 		STEERING_RESPONSE_SPEED_SHIFT) & STEERING_RESPONSE_SPEED_MASK;
 	response_table = steerWhlRespTable_ptr;
 	response = response_table[speed_index + STEERING_RESPONSE_TABLE_OFFSET];

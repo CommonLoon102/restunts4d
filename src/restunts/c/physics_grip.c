@@ -123,11 +123,11 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 	legacy_u16 index;
 
 	column = LEGACY_S8_FROM_BITS(
-		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lx >>
+		(legacy_u8)((legacy_u32)state.playerstate.car_position.lx >>
 			TRACK_WORLD_TILE_SHIFT));
 	row = LEGACY_S8_FROM_BITS(LEGACY_U8_WRAP_SUB(
 		TRACK_GRID_LAST_COORDINATE,
-		(legacy_u8)((legacy_u32)state.playerstate.car_posWorld1.lz >>
+		(legacy_u8)((legacy_u32)state.playerstate.car_position.lz >>
 			TRACK_WORLD_TILE_SHIFT)));
 	if ((column == state.game_startcol || column == state.game_startcol2) &&
 		(row == state.game_startrow || row == state.game_startrow2)) {
@@ -248,7 +248,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 }
 
 /*
- * The original player update reuses four words below player_op's stack frame.
+ * The original player update reuses four words below update_player_tick's stack frame.
  * update_car_speed and update_grip write that same physical window before the
  * player physics reads it. Keep the window as explicit 16-bit execution state
  * so its behavior does not depend on a compiler's frame layout or ABI.
@@ -269,7 +269,7 @@ void update_legacy_grip_stack_words(
 	legacy_s16 grass_wheels;
 	legacy_s16 i;
 
-	/* The original player_op reaches update_grip with SI == 80. */
+	/* The original update_player_tick reaches update_grip with SI == 80. */
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] =
 		LEGACY_GRIP_STACK_SI_VALUE;
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE)
@@ -362,7 +362,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s32 denominator;
 
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
-		carstate->car_40MfrontWhlAngle = 0;
+		carstate->car_front_wheel_response_angle = 0;
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		return;
 	}
@@ -374,17 +374,17 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 				grass_wheels, GRASS_WHEEL_COUNT_STEP);
 	}
 	if (grass_wheels != GRASS_WHEEL_COUNT_NONE) {
-		carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
-			carstate->car_speed2,
-			LEGACY_U16_DIV_OR_ZERO(carstate->car_speed2,
+		carstate->car_actual_speed = LEGACY_U16_WRAP_SUB(
+			carstate->car_actual_speed,
+			LEGACY_U16_DIV_OR_ZERO(carstate->car_actual_speed,
 				grassDecelDivTab[grass_wheels]));
-		carstate->car_speed = carstate->car_speed2;
+		carstate->car_rev_speed = carstate->car_actual_speed;
 	}
 
 	initial_angle = LEGACY_S16_WRAP_ADD(carstate->car_steeringAngle,
-		carstate->car_36MwhlAngle);
+		carstate->car_velocity_heading_offset);
 	adjusted_angle = initial_angle;
-	speed_shr8 = (legacy_u16)(carstate->car_speed >>
+	speed_shr8 = (legacy_u16)(carstate->car_rev_speed >>
 		CAR_SPEED_INTEGER_SHIFT);
 	absolute_angle = absolute_word(adjusted_angle);
 	angle_factor = LEGACY_S16_SAR(absolute_angle,
@@ -410,11 +410,11 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	carstate->car_surfacegrip_sum = combined_grip;
 
 	if (grip_behavior == GRIP_BEHAVIOR_OPPONENT) {
-		carstate->car_40MfrontWhlAngle = LEGACY_S16_SHL(
+		carstate->car_front_wheel_response_angle = LEGACY_S16_SHL(
 			carstate->car_steeringAngle, FRONT_WHEEL_ANGLE_SHIFT);
-		if (carstate->car_angle_z != 0) {
-			carstate->car_angle_z = LEGACY_S16_SAR(
-				LEGACY_S16_WRAP_MUL(carstate->car_angle_z,
+		if (carstate->car_slide_yaw_delta != 0) {
+			carstate->car_slide_yaw_delta = LEGACY_S16_SAR(
+				LEGACY_S16_WRAP_MUL(carstate->car_slide_yaw_delta,
 					ROTATION_DAMPING_NUMERATOR), ROTATION_DAMPING_SHIFT);
 		}
 	}
@@ -470,20 +470,20 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		}
 	}
 
-	if (carstate->car_angle_z == 0 &&
+	if (carstate->car_slide_yaw_delta == 0 &&
 		carstate->car_crashBmpFlag != CRASH_EVENT_COLLISION)
-		carstate->car_40MfrontWhlAngle = adjusted_angle;
+		carstate->car_front_wheel_response_angle = adjusted_angle;
 	else
-		carstate->car_40MfrontWhlAngle = 0;
+		carstate->car_front_wheel_response_angle = 0;
 
 	absolute_angle = carstate->car_rotate.z;
 	if (absolute_angle < 0)
 		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 	if (absolute_angle > BANK_EFFECT_ROTATION_THRESHOLD) {
 		tile_x = (legacy_u8)((legacy_u32)
-			carstate->car_posWorld1.lx >> TRACK_WORLD_TILE_SHIFT);
+			carstate->car_position.lx >> TRACK_WORLD_TILE_SHIFT);
 		tile_z = (legacy_u8)((legacy_u32)
-			carstate->car_posWorld1.lz >> TRACK_WORLD_TILE_SHIFT);
+			carstate->car_position.lz >> TRACK_WORLD_TILE_SHIFT);
 		track = td14_elem_map_main[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track == TRACK_TILE_CONTINUATION_SOUTHEAST) {
@@ -501,8 +501,8 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		track = td14_elem_map_main[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track >= BANKED_TRACK_FIRST && track <= BANKED_TRACK_LAST) {
-			carstate->car_40MfrontWhlAngle = LEGACY_S16_WRAP_ADD(
-				carstate->car_40MfrontWhlAngle,
+			carstate->car_front_wheel_response_angle = LEGACY_S16_WRAP_ADD(
+				carstate->car_front_wheel_response_angle,
 				LEGACY_S16_DIV_OR_ZERO(carstate->car_rotate.z,
 					BANKED_TRACK_TILT_DIVISOR));
 		}
@@ -514,34 +514,34 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
 		combined_grip, SLIDE_GRIP_TOLERANCE)) <
 		LEGACY_S16_FROM_BITS(demanded_grip)) {
-		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
-			carstate->car_angle_z, correction);
-		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
-			carstate->car_angle_z, SLIDE_YAW_DAMPING_DIVISOR);
-	} else if (carstate->car_angle_z != 0) {
-		carstate->car_angle_z = LEGACY_S16_WRAP_ADD(
-			carstate->car_angle_z, correction);
-		carstate->car_angle_z = LEGACY_S16_DIV_OR_ZERO(
-			carstate->car_angle_z, SLIDE_YAW_DAMPING_DIVISOR);
-		if (carstate->car_angle_z == 0) {
-			carstate->car_speed2 = (legacy_u16)multiply_and_scale(
-				cos_fast(carstate->car_36MwhlAngle),
-				carstate->car_speed2);
-			if (cos_fast(carstate->car_36MwhlAngle) < 0)
-				carstate->car_speed2 = CAR_SPEED_STOPPED;
-			carstate->car_36MwhlAngle = 0;
+		carstate->car_slide_yaw_delta = LEGACY_S16_WRAP_ADD(
+			carstate->car_slide_yaw_delta, correction);
+		carstate->car_slide_yaw_delta = LEGACY_S16_DIV_OR_ZERO(
+			carstate->car_slide_yaw_delta, SLIDE_YAW_DAMPING_DIVISOR);
+	} else if (carstate->car_slide_yaw_delta != 0) {
+		carstate->car_slide_yaw_delta = LEGACY_S16_WRAP_ADD(
+			carstate->car_slide_yaw_delta, correction);
+		carstate->car_slide_yaw_delta = LEGACY_S16_DIV_OR_ZERO(
+			carstate->car_slide_yaw_delta, SLIDE_YAW_DAMPING_DIVISOR);
+		if (carstate->car_slide_yaw_delta == 0) {
+			carstate->car_actual_speed = (legacy_u16)multiply_and_scale(
+				cos_fast(carstate->car_velocity_heading_offset),
+				carstate->car_actual_speed);
+			if (cos_fast(carstate->car_velocity_heading_offset) < 0)
+				carstate->car_actual_speed = CAR_SPEED_STOPPED;
+			carstate->car_velocity_heading_offset = 0;
 		}
 	}
 	}
 
-	if (carstate->car_36MwhlAngle != 0 && carstate->car_angle_z == 0) {
-		carstate->car_36MwhlAngle = LEGACY_S16_SAR(
-			LEGACY_S16_WRAP_MUL(carstate->car_36MwhlAngle,
+	if (carstate->car_velocity_heading_offset != 0 && carstate->car_slide_yaw_delta == 0) {
+		carstate->car_velocity_heading_offset = LEGACY_S16_SAR(
+			LEGACY_S16_WRAP_MUL(carstate->car_velocity_heading_offset,
 				ROTATION_DAMPING_NUMERATOR), ROTATION_DAMPING_SHIFT);
 	}
-	if (carstate->car_angle_z != 0) {
-		carstate->car_36MwhlAngle = LEGACY_S16_WRAP_SUB(
-			carstate->car_36MwhlAngle, carstate->car_angle_z);
+	if (carstate->car_slide_yaw_delta != 0) {
+		carstate->car_velocity_heading_offset = LEGACY_S16_WRAP_SUB(
+			carstate->car_velocity_heading_offset, carstate->car_slide_yaw_delta);
 	}
 
 	if (carstate->car_slidingFlag != CAR_SLIDING_INACTIVE) {
@@ -550,17 +550,17 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 		penalty = LEGACY_S16_SHL(absolute_angle,
 			SLIDE_SPEED_PENALTY_SHIFT);
-		if (carstate->car_speed <= (legacy_u16)penalty) {
-			carstate->car_speed = CAR_SPEED_STOPPED;
-			carstate->car_speed2 = CAR_SPEED_STOPPED;
-		} else if (carstate->car_speed2 > (legacy_u16)penalty) {
-			carstate->car_speed = LEGACY_U16_WRAP_SUB(
-				carstate->car_speed, penalty);
-			carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
-				carstate->car_speed2, penalty);
+		if (carstate->car_rev_speed <= (legacy_u16)penalty) {
+			carstate->car_rev_speed = CAR_SPEED_STOPPED;
+			carstate->car_actual_speed = CAR_SPEED_STOPPED;
+		} else if (carstate->car_actual_speed > (legacy_u16)penalty) {
+			carstate->car_rev_speed = LEGACY_U16_WRAP_SUB(
+				carstate->car_rev_speed, penalty);
+			carstate->car_actual_speed = LEGACY_U16_WRAP_SUB(
+				carstate->car_actual_speed, penalty);
 		} else {
-			carstate->car_speed = CAR_SPEED_STOPPED;
-			carstate->car_speed2 = CAR_SPEED_STOPPED;
+			carstate->car_rev_speed = CAR_SPEED_STOPPED;
+			carstate->car_actual_speed = CAR_SPEED_STOPPED;
 		}
 
 		if (carstate->car_crashBmpFlag == CRASH_EVENT_NONE) {

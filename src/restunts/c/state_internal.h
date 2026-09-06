@@ -48,7 +48,7 @@ void update_player_state(struct CARSTATE* playerstate,
 	struct SIMD* opponentsimd, legacy_s16 car_index);
 
 struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset);
-void upd_statef20_from_steer_input(legacy_s8 steering_input);
+void update_player_steering_input(legacy_s8 steering_input);
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 

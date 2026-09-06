@@ -253,8 +253,8 @@ extern legacy_s16 dashbmp_y;
 extern legacy_s16 roofbmpheight;
 extern struct RECTANGLE* rectptr_unk;
 
-extern void player_op(legacy_s8);
-extern void opponent_op(void);
+extern void update_player_tick(legacy_s8);
+extern void update_opponent_tick(void);
 extern void emit_crash_particles(legacy_s16, legacy_s16, legacy_s16);
 extern void update_crash_particles(void);
 extern void init_kevinrandom(const legacy_s8* seed);
@@ -398,7 +398,7 @@ extern legacy_s16* material_patlist2_ptr;
 extern legacy_s16* material_patlist2_ptr_cpy;
 extern legacy_u16 someZeroVideoConst;
 
-extern legacy_s16 get_track_route_point(legacy_s16 car_trackdata3_index, struct VECTOR* car_route_target, legacy_s16 car_route_point_index, legacy_s8* optional_speed);
+extern legacy_s16 get_track_route_point(legacy_s16 car_route_index, struct VECTOR* car_route_target, legacy_s16 car_route_point_index, legacy_s8* optional_speed);
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle);
 extern void init_game_state(legacy_s16 arg);
 extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);

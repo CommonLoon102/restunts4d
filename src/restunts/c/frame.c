@@ -258,9 +258,9 @@ static legacy_s16 frame_find_car_wheel(const struct CARSTATE* carstate,
 		offset_vector = simd->wheel_coords[wheel];
 		mat_mul_vector(&offset_vector, rotation, &rotated_vector);
 		tile_east = frame_tile_from_world_offset(
-			carstate->car_posWorld1.lx, rotated_vector.x);
+			carstate->car_position.lx, rotated_vector.x);
 		tile_south = frame_south_tile_from_world_offset(
-			carstate->car_posWorld1.lz, rotated_vector.z);
+			carstate->car_position.lz, rotated_vector.z);
 		for (tile_index = FRAME_LOOKAHEAD_LAST_TILE_INDEX;
 			tile_index > best_tile_index;
 			tile_index--) {
@@ -441,13 +441,13 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 				track_object = &sceneshapes3[state.game_particle_shape_index[index]];
 				curtransshape_ptr->pos.x = frame_relative_position_sum(
 					state.game_particle_x[index],
-					carstate->car_posWorld1.lx, camera_position->x);
+					carstate->car_position.lx, camera_position->x);
 				curtransshape_ptr->pos.y = frame_relative_position_sum(
 					state.game_particle_y[index],
-					carstate->car_posWorld1.ly, camera_position->y);
+					carstate->car_position.ly, camera_position->y);
 				curtransshape_ptr->pos.z = frame_relative_position_sum(
 					state.game_particle_z[index],
-					carstate->car_posWorld1.lz, camera_position->z);
+					carstate->car_position.lz, camera_position->z);
 				frame_add_dynamic_shape(track_object, index,
 					flags | FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT,
 					material, z_adjust);
@@ -457,11 +457,11 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 
 	track_object = &trkObjectList[car_object];
 	curtransshape_ptr->pos.x = frame_relative_position(
-		carstate->car_posWorld1.lx, camera_position->x);
+		carstate->car_position.lx, camera_position->x);
 	curtransshape_ptr->pos.y = frame_relative_position(
-		carstate->car_posWorld1.ly, camera_position->y);
+		carstate->car_position.ly, camera_position->y);
 	curtransshape_ptr->pos.z = frame_relative_position(
-		carstate->car_posWorld1.lz, camera_position->z);
+		carstate->car_position.lz, camera_position->z);
 
 	if (tile_detail != FRAME_TILE_DETAIL_FULL ||
 		detail_level >= FRAME_CAR_LOW_DETAIL_FIRST) {
@@ -605,21 +605,21 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	// Set car position (own or opponent's)
 	if (followOpponentFlag == 0) {
 		car_pos.x = position_to_word(
-			state.playerstate.car_posWorld1.lx);
+			state.playerstate.car_position.lx);
 		car_pos.y = position_to_word(
-			state.playerstate.car_posWorld1.ly);
+			state.playerstate.car_position.ly);
 		car_pos.z = position_to_word(
-			state.playerstate.car_posWorld1.lz);
+			state.playerstate.car_position.lz);
 		car_rot_y = state.playerstate.car_rotate.y;
 		car_rot_z = state.playerstate.car_rotate.z;
 		car_rot_x = state.playerstate.car_rotate.x;
 	} else {
 		car_pos.x = position_to_word(
-			state.opponentstate.car_posWorld1.lx);
+			state.opponentstate.car_position.lx);
 		car_pos.y = position_to_word(
-			state.opponentstate.car_posWorld1.ly);
+			state.opponentstate.car_position.ly);
 		car_pos.z = position_to_word(
-			state.opponentstate.car_posWorld1.lz);
+			state.opponentstate.car_position.lz);
 		car_rot_y = state.opponentstate.car_rotate.y;
 		car_rot_z = state.opponentstate.car_rotate.z;
 		car_rot_x = state.opponentstate.car_rotate.x;
@@ -821,9 +821,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		LEGACY_S16_SAR(cam_pos.z, FRAME_CAMERA_TILE_SHIFT));
 	if (detail_level != FRAME_DETAIL_FULL) {
 		car_tile_east = frame_tile_from_world(
-			state.playerstate.car_posWorld1.lx);
+			state.playerstate.car_position.lx);
 		car_tile_south = frame_south_tile_from_world(
-			state.playerstate.car_posWorld1.lz);
+			state.playerstate.car_position.lz);
 	}
 
 	for (si = 0; si < FRAME_LOOKAHEAD_TILE_COUNT; si++) {

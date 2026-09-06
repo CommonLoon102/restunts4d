@@ -55,7 +55,7 @@ static void test_little_endian_fields(void)
 	state.game_travDist = TEST_TRAVEL_DISTANCE;
 	state.game_frame = TEST_FRAME_NUMBER;
 	state.game_impactSpeed = TEST_IMPACT_SPEED;
-	state.playerstate.car_posWorld1.lx = TEST_PLAYER_X_POSITION;
+	state.playerstate.car_position.lx = TEST_PLAYER_X_POSITION;
 	gamestate_serialize(output, &state);
 
 	assert(output[TEST_TRAVEL_DISTANCE_OFFSET] ==

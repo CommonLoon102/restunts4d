@@ -77,9 +77,9 @@ extern void far frame_callback(void);
 
 legacy_s16 camera_track_height_offset;
 
-void do_opponent_op(void)
+void update_opponent(void)
 {
-	opponent_op();
+	update_opponent_tick();
 }
 
 legacy_s16 get_super_random(void)
