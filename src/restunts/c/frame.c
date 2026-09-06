@@ -306,10 +306,10 @@ static void frame_prepare_flat_track_shape(struct TRANSFORMEDSHAPE3D* shape,
 	legacy_s16 rotation)
 {
 	shape->pos.x = LEGACY_S16_WRAP_SUB(
-		trackcenterpos2[tile_east], camera_position->x);
+		track_column_centers[tile_east], camera_position->x);
 	shape->pos.y = LEGACY_S16_WRAP_NEGATE(camera_position->y);
 	shape->pos.z = LEGACY_S16_WRAP_SUB(
-		trackcenterpos[tile_south], camera_position->z);
+		track_row_centers[tile_south], camera_position->z);
 	shape->rectptr = &frame_unsorted_shapes_rect;
 	shape->ts_flags = flags;
 	shape->rotvec.x = 0;
@@ -673,11 +673,11 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 		cam_pos.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
 		cam_pos.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
 	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
-		cam_pos.x = trackdata9[state.game_trackside_camera_index[followOpponentFlag]].x;
+		cam_pos.x = trackside_camera_positions[state.game_trackside_camera_index[followOpponentFlag]].x;
 		cam_pos.y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-			trackdata9[state.game_trackside_camera_index[followOpponentFlag]].y,
+			trackside_camera_positions[state.game_trackside_camera_index[followOpponentFlag]].y,
 			camera_track_height_offset), FRAME_TRACK_CAMERA_HEIGHT_OFFSET);
-		cam_pos.z = trackdata9[state.game_trackside_camera_index[followOpponentFlag]].z;
+		cam_pos.z = trackside_camera_positions[state.game_trackside_camera_index[followOpponentFlag]].z;
 	}
 
 	// Keep external cameras above the track and aim them at the followed car.
@@ -1129,11 +1129,11 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 			track_object = &terrain_scene_objects[terr_map_value];
 			currenttransshape->shapeptr = track_object->ss_shapePtr;
 			currenttransshape->pos.x = LEGACY_S16_WRAP_SUB(
-				trackcenterpos2[tile_east], cam_pos.x);
+				track_column_centers[tile_east], cam_pos.x);
 			currenttransshape->pos.y = LEGACY_S16_WRAP_SUB(
 				hill_height, cam_pos.y);
 			currenttransshape->pos.z = LEGACY_S16_WRAP_SUB(
-				trackcenterpos[tile_south], cam_pos.z);
+				track_row_centers[tile_south], cam_pos.z);
 			if (hill_height == 0) {
 				currenttransshape->rectptr = &frame_unsorted_shapes_rect;
 			} else {
@@ -1161,21 +1161,21 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 			track_object = &trkObjectList[elem_map_value];
 			if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_ROW) !=
 				0) {
-				track_object_world_z = trackpos[tile_south];
+				track_object_world_z = track_row_positions[tile_south];
 				tile_to_draw_south_offset = LEGACY_S8_WRAP_ADD(
 					tile_south, 1);
 			} else {
-				track_object_world_z = trackcenterpos[tile_south];
+				track_object_world_z = track_row_centers[tile_south];
 				tile_to_draw_south_offset = tile_south;
 			}
 
 			if ((track_object->ss_multiTileFlag &
 				FRAME_MULTITILE_COLUMN) != 0) {
-				track_object_world_x = trackpos2[LEGACY_S8_WRAP_ADD(tile_east, 1)];
+				track_object_world_x = track_column_positions[LEGACY_S8_WRAP_ADD(tile_east, 1)];
 				tile_to_draw_east_offset = LEGACY_S8_WRAP_ADD(
 					tile_east, 1);
 			} else {
-				track_object_world_x = trackcenterpos2[tile_east];
+				track_object_world_x = track_column_centers[tile_east];
 				tile_to_draw_east_offset = tile_east;
 			}
 
@@ -1322,32 +1322,32 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 					}
 				}
 
-				if (tile_east == startcol2 && tile_south == startrow2) {
+				if (tile_east == start_finish_column && tile_south == start_finish_row) {
 					depth_adjustment_mask = 0;
 				} else {
 					depth_adjustment_mask = -1;
 				}
 			}
 
-			breakable_object_index = trackdata19[tile_east + trackrows[tile_south]];
+			breakable_object_index = roadside_sign_indices_by_tile[tile_east + trackrows[tile_south]];
 			if (breakable_object_index != FRAME_CHECKPOINT_NONE) {
 				if (state.game_object_destroyed[breakable_object_index] == 0) {
 					track_object = &trkObjectList[
 						FRAME_CHECKPOINT_TRACK_OBJECT_BASE +
-						trackdata23[breakable_object_index]];
+						roadside_sign_shape_indices[breakable_object_index]];
 					curtransshape_ptr->pos.x = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[breakable_object_index].x, cam_pos.x);
+						roadside_sign_positions[breakable_object_index].x, cam_pos.x);
 					curtransshape_ptr->pos.y = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[breakable_object_index].y, cam_pos.y);
+						roadside_sign_positions[breakable_object_index].y, cam_pos.y);
 					curtransshape_ptr->pos.z = LEGACY_S16_WRAP_SUB(
-						td10_track_check_rel[breakable_object_index].z, cam_pos.z);
+						roadside_sign_positions[breakable_object_index].z, cam_pos.z);
 					curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
 					curtransshape_ptr->rectptr = &frame_sorted_shapes_rect;
 					curtransshape_ptr->ts_flags = redraw_transform_flags |
 						FRAME_TRANSFORM_FLAGS_DEFAULT;
 					curtransshape_ptr->rotvec.x = 0;
 					curtransshape_ptr->rotvec.y = 0;
-					curtransshape_ptr->rotvec.z = td08_direction_related[breakable_object_index];
+					curtransshape_ptr->rotvec.z = roadside_sign_headings[breakable_object_index];
 					curtransshape_ptr->culling_distance =
 						FRAME_CHECKPOINT_TRANSFORM_DISTANCE;
 					curtransshape_ptr->material = 0;
@@ -1360,13 +1360,13 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 							track_object = &particle_scene_objects[state.game_particle_shape_index[shape_or_tile_index]];
 							curtransshape_ptr->pos.x = frame_relative_track_position(
 								state.game_particle_x[shape_or_tile_index],
-								td10_track_check_rel[breakable_object_index].x, cam_pos.x);
+								roadside_sign_positions[breakable_object_index].x, cam_pos.x);
 							curtransshape_ptr->pos.y = frame_relative_track_position(
 								state.game_particle_y[shape_or_tile_index],
-								td10_track_check_rel[breakable_object_index].y, cam_pos.y);
+								roadside_sign_positions[breakable_object_index].y, cam_pos.y);
 							curtransshape_ptr->pos.z = frame_relative_track_position(
 								state.game_particle_z[shape_or_tile_index],
-								td10_track_check_rel[breakable_object_index].z, cam_pos.z);
+								roadside_sign_positions[breakable_object_index].z, cam_pos.z);
 							frame_add_dynamic_shape(track_object, shape_or_tile_index,
 								redraw_transform_flags |
 									FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT,
@@ -1402,7 +1402,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 		}
 
 		if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
-			if ((tile_east == startcol2 || tile_to_draw_east_offset == startcol2) && (tile_south == startrow2 || tile_to_draw_south_offset == startrow2)) {
+			if ((tile_east == start_finish_column || tile_to_draw_east_offset == start_finish_column) && (tile_south == start_finish_row || tile_to_draw_south_offset == start_finish_row)) {
 
 				idx = multiply_and_scale(cos_fast(start_flag_animation),
 					FRAME_START_FLAG_RADIUS);
@@ -1455,7 +1455,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 						multiply_and_scale(sin_fast(LEGACY_S16_WRAP_ADD(
 							track_angle, ANGLE_HALF_TURN)),
 							FRAME_START_FLAG_FAR_OFFSET)),
-						trackcenterpos2[startcol2]), cam_pos.x);
+						track_column_centers[start_finish_column]), cam_pos.x);
 				curtransshape_ptr->pos.y = LEGACY_S16_WRAP_SUB(
 					hillHeightConsts[hillFlag], cam_pos.y);
 				curtransshape_ptr->pos.z = LEGACY_S16_WRAP_SUB(
@@ -1466,7 +1466,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 						multiply_and_scale(cos_fast(LEGACY_S16_WRAP_ADD(
 							track_angle, ANGLE_HALF_TURN)),
 							FRAME_START_FLAG_FAR_OFFSET)),
-						trackcenterpos[startrow2]), cam_pos.z);
+						track_row_centers[start_finish_row]), cam_pos.z);
 
 				curtransshape_ptr->shapeptr = &game3dshapes[
 					FRAME_START_FLAG_RESOURCE_OFFSET / sizeof(struct SHAPE3D)];

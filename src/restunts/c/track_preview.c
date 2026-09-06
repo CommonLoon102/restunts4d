@@ -53,11 +53,11 @@ static void track_preview_draw_terrain(legacy_u8 terrain,
 	transformed->shapeptr = use_high_detail != 0 ?
 		terrain_object->ss_shapePtr : terrain_object->ss_loShapePtr;
 	transformed->pos.x = track_preview_half(LEGACY_S16_WRAP_SUB(
-		trackcenterpos2[column], camera_x));
+		track_column_centers[column], camera_x));
 	transformed->pos.y = track_preview_half(LEGACY_S16_WRAP_SUB(
 		height, camera_y));
 	transformed->pos.z = track_preview_half(LEGACY_S16_WRAP_SUB(
-		trackcenterpos[row], camera_z));
+		track_row_centers[row], camera_z));
 	transformed->rotvec.z = terrain_object->ss_rotY;
 	transformed->ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 	transformed->material = 0;

@@ -404,7 +404,7 @@ static void track_object_tile_center(legacy_u8 track_tile,
 	if ((multi_tile & MULTI_TILE_ROW_EDGE_FLAG) != 0)
 		elem_zCenter = (legacy_s16)terrainpos[row_index];
 	if ((multi_tile & MULTI_TILE_COLUMN_EDGE_FLAG) != 0)
-		elem_xCenter = (legacy_s16)trackpos2[column_index];
+		elem_xCenter = (legacy_s16)track_column_positions[column_index];
 }
 
 /* Rectangular buildings share one wall test: the wall the car meets is the
@@ -508,7 +508,7 @@ void build_track_object(struct VECTOR* world_position,
 	if (track_column >= 0 && track_column <= TRACK_GRID_LAST_INDEX &&
 		track_row >= 0 && track_row <= TRACK_GRID_LAST_INDEX) {
 
-	elem_xCenter = (legacy_s16)trackcenterpos2[track_column];
+	elem_xCenter = (legacy_s16)track_column_centers[track_column];
 	elem_zCenter = (legacy_s16)terraincenterpos[track_row];
 	terrain_tile = td15_terr_map_main[
 		trackrows[track_row] + track_column];
@@ -1348,7 +1348,7 @@ void build_track_object(struct VECTOR* world_position,
 
 	if (terrain_tile >= HILL_TERRAIN_FIRST) {
 		position.x = LEGACY_S16_WRAP_SUB(world_position->x,
-			(legacy_s16)trackcenterpos2[track_column]);
+			(legacy_s16)track_column_centers[track_column]);
 		position.z = LEGACY_S16_WRAP_SUB(world_position->z,
 			(legacy_s16)terraincenterpos[track_row]);
 		if (terrain_tile <= TERRAIN_ORIENTED_LAST_TILE) {

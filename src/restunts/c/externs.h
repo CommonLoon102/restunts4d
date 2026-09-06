@@ -1,6 +1,27 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
+/* Track arena symbols exported by the unchanged original executable. */
+#ifdef RESTUNTS_ORIGINAL
+#define track_primary_route_links td01_track_file_cpy
+#define track_alternate_route_links td02_penalty_related
+#define opponent_route_track_indices trackdata3
+#define reserved_trackside_camera_words trackdata6
+#define trackside_camera_ground_heights trackdata7
+#define roadside_sign_headings td08_direction_related
+#define trackside_camera_positions trackdata9
+#define roadside_sign_positions td10_track_check_rel
+#define sprite_background_state_stack trackdata12
+#define track_route_traversal_flags trackdata18
+#define roadside_sign_indices_by_tile trackdata19
+#define roadside_sign_shape_indices trackdata23
+#define TRACKDATA_SPRITE_STATE_STACK_SIZE TRACKDATA_UNKNOWN_12_SIZE
+#define track_column_positions trackpos2
+#define track_column_centers trackcenterpos2
+#define track_row_positions trackpos
+#define track_row_centers trackcenterpos
+#endif
+
 /* Shared dump tools retain original assembly linkage in oracle builds. */
 #ifdef RESTUNTS_ORIGINAL
 #define viewport_bottom_cache word_449EA
@@ -115,13 +136,13 @@ struct TRKOBJINFO {
 	legacy_s8  si_exitPoint;
 	legacy_s8  si_entryType;        // Connectivity of the track element regarding element types.
 	legacy_s8  si_exitType;
-	legacy_s8  si_arrowType;        // Type of the element for determining penalty-arrow behaviour.
-	legacy_s16 si_arrowOrient;      // Orientation angle for penalty-arrow purposes
-	struct VECTOR* si_cameraDataOffset; // offset (0003B770)
-	legacy_s8  si_opp1;             //Appears to affect how the opponent AI approaches an element.
-	legacy_s8  si_opp2;
-	legacy_s8  si_opp3;
-	legacy_s8  si_oppSpedCode;
+	legacy_s8  route_point_count;        // Number of route points in this element path.
+	legacy_s16 route_orientation;      // Rotation shared by route, camera and roadside-sign placement.
+	struct VECTOR* route_vectors; // Forward route edge vectors.
+	legacy_s8  reverse_path_offset_low;             // Low byte of the legacy reverse-route vector offset.
+	legacy_s8  reverse_path_offset_high;
+	legacy_s8  roadside_sign_type;
+	legacy_s8  opponent_speed_code;
 };
 
 struct TRACK_WALL {
@@ -140,7 +161,7 @@ struct TRACKOBJECT {
 	legacy_s8  ss_ignoreZBias;    // Appears to be Z-bias override flag, mostly used for roads and corners.
 	legacy_s8  ss_multiTileFlag;  // 0 = one-tile, 1 = two-tile vertical, 2 = two-tile horizontal, 3 = four-tile.
 	legacy_s8  ss_physicalModel;  // sets the physical model in build_track_object
-	legacy_s8  scene_unk5;        // always zero.
+	legacy_s8  reserved_scene_byte;        // always zero.
 };
 
 #pragma pack (pop)
@@ -231,7 +252,7 @@ extern legacy_s16 track_angle;
 extern legacy_s8* steerWhlRespTable_ptr;
 extern legacy_s8 steerWhlRespTable_10fps[62];
 extern legacy_s8 steerWhlRespTable_20fps[64];
-extern legacy_s8 startcol2, startrow2;
+extern legacy_s8 start_finish_column, start_finish_row;
 extern legacy_s8 hillFlag;
 extern legacy_s16 hillHeightConsts[];
 
@@ -311,37 +332,37 @@ extern void far* mainresptr;
 extern struct GAMESTATE far* cvxptr;
 extern legacy_s16 trackrows[];
 extern legacy_s16 terrainrows[];
-extern legacy_s16 trackpos[];
-extern legacy_s16 trackcenterpos[];
+extern legacy_s16 track_row_positions[];
+extern legacy_s16 track_row_centers[];
 extern legacy_s16 terrainpos[];
 extern legacy_s16 terraincenterpos[];
-extern legacy_s16 trackpos2[];
-extern legacy_s16 trackcenterpos2[];
-extern legacy_s16 far* td01_track_file_cpy; //trackdata1;
-extern legacy_s16 far* td02_penalty_related; //trackdata2;
-extern legacy_s8 far* trackdata3;
+extern legacy_s16 track_column_positions[];
+extern legacy_s16 track_column_centers[];
+extern legacy_s16 far* track_primary_route_links; //trackdata1;
+extern legacy_s16 far* track_alternate_route_links; //trackdata2;
+extern legacy_s8 far* opponent_route_track_indices;
 extern legacy_s16 far* td04_aerotable_pl; //trackdata4;
 extern legacy_s16 far* td05_aerotable_op; //trackdata5;
-extern legacy_s16 far* trackdata6;
-extern legacy_s16 far* trackdata7;
-extern legacy_s16 far* td08_direction_related; //trackdata8;
+extern legacy_s16 far* reserved_trackside_camera_words;
+extern legacy_s16 far* trackside_camera_ground_heights;
+extern legacy_s16 far* roadside_sign_headings; //trackdata8;
 /* TV camera positions, one vector per camera. */
-extern struct VECTOR far* trackdata9;
+extern struct VECTOR far* trackside_camera_positions;
 /* Point each TV camera looks at, one vector per camera. */
-extern struct VECTOR far* td10_track_check_rel;// trackdata10;
+extern struct VECTOR far* roadside_sign_positions;// trackdata10;
 extern legacy_s8 far* td11_highscores; //trackdata11;
-extern legacy_s8 far* trackdata12;
+extern legacy_s8 far* sprite_background_state_stack;
 extern legacy_s8 far* td13_rpl_header; //trackdata13;
 extern legacy_u8 far* td14_elem_map_main; //trackdata14;
 extern legacy_u8 far* td15_terr_map_main; //trackdata15;
 extern legacy_s8 far* td16_rpl_buffer; //trackdata16;
 extern legacy_s8 far* td17_trk_elem_ordered; //trackdata17;
-extern legacy_s8 far* trackdata18;
-extern legacy_u8 far* trackdata19;
+extern legacy_s8 far* track_route_traversal_flags;
+extern legacy_u8 far* roadside_sign_indices_by_tile;
 extern legacy_s8 far* td20_trk_file_appnd; //trackdata20;
 extern legacy_s8 far* td21_col_from_path; //trackdata21;
 extern legacy_s8 far* td22_row_from_path; //trackdata22;
-extern legacy_u8 far* trackdata23; // indexes into trkObjectList
+extern legacy_u8 far* roadside_sign_shape_indices; // indexes into trkObjectList
 extern legacy_s8 kbormouse;
 extern legacy_s8 passed_security;
 extern legacy_s8 g_is_busy;

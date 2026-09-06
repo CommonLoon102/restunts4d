@@ -65,11 +65,11 @@ static void init_car_at_start(struct CARSTATE* carstate, struct SIMD* simd,
 		simd,
 		transmission,
 		track_coordinate_to_world(
-			trackcenterpos2[startcol2], column_offset),
+			track_column_centers[start_finish_column], column_offset),
 		LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag],
 			CAR_WORLD_POSITION_SHIFT),
 		track_coordinate_to_world(
-			trackcenterpos[startrow2], row_offset),
+			track_row_centers[start_finish_row], row_offset),
 		LEGACY_S16_WRAP_NEGATE(track_angle));
 }
 
@@ -201,7 +201,7 @@ void init_game_state(legacy_s16 arg)
 					INITIAL_CAMERA_LATERAL_OFFSET),
 				multiply_and_scale(sin_fast(angle_with_offset(
 					track_angle, ANGLE_HALF_TURN)), INITIAL_CAMERA_DISTANCE)),
-				LEGACY_S16_SHL((legacy_s16)startcol2,
+				LEGACY_S16_SHL((legacy_s16)start_finish_column,
 					INITIAL_CAMERA_TILE_SHIFT));
 		state.game_follow_camera_position[PLAYER_CAR_INDEX].y = LEGACY_S16_WRAP_ADD(
 			hillHeightConsts[hillFlag], INITIAL_CAMERA_HEIGHT);
@@ -209,7 +209,7 @@ void init_game_state(legacy_s16 arg)
 			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
 				multiply_and_scale(cos_fast(angle_with_offset(
 					track_angle, ANGLE_HALF_TURN)), INITIAL_CAMERA_DISTANCE),
-				trackpos[startrow2]),
+				track_row_positions[start_finish_row]),
 				multiply_and_scale(cos_fast(angle_with_offset(
 					track_angle, ANGLE_THREE_QUARTER_TURN)),
 					INITIAL_CAMERA_LATERAL_OFFSET));
@@ -244,10 +244,10 @@ void init_game_state(legacy_s16 arg)
 		state.game_opponent_route_indicator = ROUTE_INDICATOR_NONE;
 		state.game_player_route_status = ROUTE_TRACKING_NORMAL;
 		state.game_route_confirmation_count = ROUTE_CONFIRMATION_NONE;
-		state.game_startcol = startcol2;
-		state.game_startcol2 = startcol2;
-		state.game_startrow = startrow2;
-		state.game_startrow2 = startrow2;
+		state.game_startcol = start_finish_column;
+		state.game_startcol2 = start_finish_column;
+		state.game_startrow = start_finish_row;
+		state.game_startrow2 = start_finish_row;
 
 		if (arg != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.playerstate.car_route_point_index;

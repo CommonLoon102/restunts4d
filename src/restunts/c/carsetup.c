@@ -157,7 +157,7 @@ static void opponent_route_write(legacy_u16 index, legacy_u16 value)
 	legacy_u16 offset;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 2U);
-	LEGACY_WRITE_U16_LE((legacy_u8 far*)trackdata3 + offset, value);
+	LEGACY_WRITE_U16_LE((legacy_u8 far*)opponent_route_track_indices + offset, value);
 }
 
 static legacy_s16 aero_resistance_at(legacy_s16 resistance,
@@ -234,7 +234,7 @@ void load_opponent_data(void)
 	for (;;) {
 		terminal = 0;
 		reaches_finish = 0;
-		next_track = (legacy_u16)td01_track_file_cpy[track_index];
+		next_track = (legacy_u16)track_primary_route_links[track_index];
 		if (next_track == 0) {
 			terminal = 1;
 			reaches_finish = 1;
@@ -255,7 +255,7 @@ void load_opponent_data(void)
 		distance += (legacy_u32)speed_data[speed_index] + 1UL;
 		if (!terminal) {
 			alternate_track = (legacy_u16)
-				td02_penalty_related[track_index];
+				track_alternate_route_links[track_index];
 			if (alternate_track != LEGACY_U16_MAX) {
 				pending_track[pending_count] = alternate_track;
 				pending_path_count[pending_count] = path_count;

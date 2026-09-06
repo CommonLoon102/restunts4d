@@ -19,20 +19,20 @@ legacy_s16 track_object_base_x(const struct TRACKOBJECT* track_object,
 {
 	if (((legacy_u8)track_object->ss_multiTileFlag &
 		MULTI_TILE_COLUMN_FLAG) != 0)
-		return trackpos2[column + 1U];
-	return trackcenterpos2[column];
+		return track_column_positions[column + 1U];
+	return track_column_centers[column];
 }
 
 legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
 	legacy_u8 row)
 {
 	if (((legacy_u8)track_object->ss_multiTileFlag & MULTI_TILE_ROW_FLAG) != 0)
-		return trackpos[row];
-	return trackcenterpos[row];
+		return track_row_positions[row];
+	return track_row_centers[row];
 }
 
 /* Hand the opponent its next route point: the route index table in
-   trackdata3 is looked up through the car's current entry, and the route
+   opponent_route_track_indices is looked up through the car's current entry, and the route
    walker is given that track piece. */
 void opponent_route_advance(legacy_s16 route_point)
 {
@@ -42,7 +42,7 @@ void opponent_route_advance(legacy_s16 route_point)
 	route_table_offset = LEGACY_U16_WRAP_MUL(
 		state.opponentstate.car_route_index, ROUTE_TRACK_INDEX_SIZE);
 	route_track_index = LEGACY_READ_S16_LE(
-		(const legacy_u8 far*)trackdata3 + route_table_offset);
+		(const legacy_u8 far*)opponent_route_track_indices + route_table_offset);
 	get_track_route_point(route_track_index, &state.opponentstate.car_route_target,
 		route_point, &state.game_opponent_target_speed);
 }

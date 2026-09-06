@@ -1511,7 +1511,7 @@ case PLAYER_FLOW_CRASH_INTO_FIXED_OBSTACLE:
 	return ;
 
 case PLAYER_FLOW_FIND_BREAKABLE_OBJECT:
-	collision_angle_distance_or_index = (legacy_s8)trackdata19[trackrows[transformed_vector.z] + transformed_vector.x];
+	collision_angle_distance_or_index = (legacy_s8)roadside_sign_indices_by_tile[trackrows[transformed_vector.z] + transformed_vector.x];
 	if (collision_angle_distance_or_index != PLAYER_PHYSICS_TRACK_CAMERA_INDEX_NONE)
 		{ physics_flow = PLAYER_FLOW_CHECK_BREAKABLE_OBJECT_INTACT; continue; }
 	{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_COLUMN; continue; }
@@ -1523,11 +1523,11 @@ case PLAYER_FLOW_CHECK_BREAKABLE_OBJECT_INTACT:
 
 case PLAYER_FLOW_COLLIDE_WITH_BREAKABLE_OBJECT:
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		td10_track_check_rel[collision_angle_distance_or_index].x;
+		roadside_sign_positions[collision_angle_distance_or_index].x;
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
-		td10_track_check_rel[collision_angle_distance_or_index].y;
+		roadside_sign_positions[collision_angle_distance_or_index].y;
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		td10_track_check_rel[collision_angle_distance_or_index].z;
+		roadside_sign_positions[collision_angle_distance_or_index].z;
 	if (car_collision_boxes_overlap(simd->collide_points, car_collision_pose, breakable_object_bounds, obstacle_collision_pose) == 0)
 		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_COLUMN; continue; }
 
@@ -1541,26 +1541,26 @@ case PLAYER_FLOW_COLLIDE_WITH_BREAKABLE_OBJECT:
 
 case PLAYER_FLOW_CHECK_START_FINISH_COLUMN:
 	// following looks like collision detection against right and left start/finish poles
-	if (transformed_vector.x == startcol2)
+	if (transformed_vector.x == start_finish_column)
 		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_ROW; continue; }
 	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
 
 case PLAYER_FLOW_CHECK_START_FINISH_ROW:
-	if (transformed_vector.z == startrow2)
+	if (transformed_vector.z == start_finish_row)
 		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_POLES; continue; }
 	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
 
 case PLAYER_FLOW_CHECK_START_FINISH_POLES:
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
 		LEGACY_S16_WRAP_ADD(
-		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
+		track_column_centers[start_finish_column], multiply_and_scale(sin_fast(
 			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
 			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
 		hillHeightConsts[hillFlag];
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
 		LEGACY_S16_WRAP_ADD(
-		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
+		track_row_centers[start_finish_row], multiply_and_scale(cos_fast(
 			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
 			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 
@@ -1570,13 +1570,13 @@ case PLAYER_FLOW_CHECK_START_FINISH_POLES:
 
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
 		LEGACY_S16_WRAP_ADD(
-		trackcenterpos2[startcol2], multiply_and_scale(sin_fast(
+		track_column_centers[start_finish_column], multiply_and_scale(sin_fast(
 			LEGACY_S16_WRAP_ADD(track_angle,
 				ANGLE_THREE_QUARTER_TURN)),
 			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
 	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
 		LEGACY_S16_WRAP_ADD(
-		trackcenterpos[startrow2], multiply_and_scale(cos_fast(
+		track_row_centers[start_finish_row], multiply_and_scale(cos_fast(
 			LEGACY_S16_WRAP_ADD(track_angle,
 				ANGLE_THREE_QUARTER_TURN)),
 			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));

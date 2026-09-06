@@ -23,16 +23,16 @@ extern legacy_u8 oppnentSped[];
 extern struct PLANE far* planptr;
 extern struct PLANE far plan_memres;
 extern legacy_s16 track_pieces_counter;
-extern legacy_u8 byte_3E71E[];
-extern legacy_u8 byte_3E724[];
+extern legacy_u8 roadside_sign_forward_types[];
+extern legacy_u8 roadside_sign_reverse_types[];
 extern legacy_u8 terrConnDataEtoW[];
 extern legacy_u8 terrConnDataWtoE[];
 extern legacy_u8 terrConnDataNtoS[];
 extern legacy_u8 terrConnDataStoN[];
-extern legacy_u8 byte_45635;
-extern legacy_u8 byte_45D90;
-extern legacy_u8 byte_45E16;
-extern legacy_u8 byte_4616E;
+extern legacy_u8 roadside_sign_count;
+extern legacy_u8 track_validation_column;
+extern legacy_u8 track_validation_row;
+extern legacy_u8 trackside_camera_count;
 
 legacy_s16 detect_penalty(legacy_s16* current_track,
 	legacy_s16* penalty_count);

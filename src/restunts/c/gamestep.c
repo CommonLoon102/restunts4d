@@ -19,7 +19,7 @@
 #define START_SEQUENCE_LINE_DISTANCE 228
 #define START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT 1280
 
-extern legacy_u8 byte_4616E;
+extern legacy_u8 trackside_camera_count;
 
 void update_follow_cameras(void)
 {
@@ -121,13 +121,13 @@ void update_follow_cameras(void)
 		nearest_distance = TRACK_POINT_INITIAL_DISTANCE;
 		for (candidate = 0;
 			LEGACY_S8_FROM_BITS(candidate) <
-				LEGACY_S8_FROM_BITS(byte_4616E);
+				LEGACY_S8_FROM_BITS(trackside_camera_count);
 			candidate++) {
 			delta_x = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackdata9[candidate].x,
+				(legacy_s32)trackside_camera_positions[candidate].x,
 				(legacy_s32)car_x);
 			delta_z = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackdata9[candidate].z,
+				(legacy_s32)trackside_camera_positions[candidate].z,
 				(legacy_s32)car_z);
 			absolute_x = delta_x < 0 ?
 				LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
@@ -209,13 +209,13 @@ void update_gamestate(void)
 			if (race_start_sequence_state == RACE_START_SEQUENCE_AUTO_DRIVE) {
 				if (LEGACY_S16_WRAP_ADD(
 					multiply_and_scale(cos_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+						LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
 									state.playerstate.car_position.lz,
 									CAR_WORLD_POSITION_SHIFT)))),
 					multiply_and_scale(sin_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+						LEGACY_S16_WRAP_SUB(track_column_centers[start_finish_column],
 							LEGACY_S16_FROM_BITS((legacy_u16)
 								LEGACY_S32_SAR(
 									state.playerstate.car_position.lx,

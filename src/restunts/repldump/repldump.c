@@ -129,9 +129,9 @@ void init_row_tables(void) {
 	for (i = 0; i < TRACK_GRID_SIZE; i++) {
 		trackrows[i] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - i);
 		terrainrows[i] = TRACK_GRID_SIZE * i;
-		trackpos[i] = (TRACK_GRID_LAST_INDEX - i) <<
+		track_row_positions[i] = (TRACK_GRID_LAST_INDEX - i) <<
 			TRACK_TILE_POSITION_SHIFT;
-		trackcenterpos[i] = ((TRACK_GRID_LAST_INDEX - i) <<
+		track_row_centers[i] = ((TRACK_GRID_LAST_INDEX - i) <<
 			TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 		terrainpos[i] = i << TRACK_TILE_POSITION_SHIFT;
 		terraincenterpos[i] = (i << TRACK_TILE_POSITION_SHIFT) +
@@ -139,8 +139,8 @@ void init_row_tables(void) {
 	}
 
 	for (i = 0; i < TRACK_GRID_SIZE; i++) {
-		trackpos2[i] = i << TRACK_TILE_POSITION_SHIFT;
-		trackcenterpos2[i] = (i << TRACK_TILE_POSITION_SHIFT) +
+		track_column_positions[i] = i << TRACK_TILE_POSITION_SHIFT;
+		track_column_centers[i] = (i << TRACK_TILE_POSITION_SHIFT) +
 			TRACK_TILE_HALF_SIZE;
 	}
 }
@@ -149,13 +149,13 @@ void init_trackdata(void) {
 	legacy_s8 far* trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 
-	td01_track_file_cpy = trkptr;
+	track_primary_route_links = trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	td02_penalty_related = trkptr;
+	track_alternate_route_links = trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	trackdata3 = trkptr;
+	opponent_route_track_indices = trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	td04_aerotable_pl = trkptr;
@@ -164,27 +164,27 @@ void init_trackdata(void) {
 	td05_aerotable_op = trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	trackdata6 = trkptr;
+	reserved_trackside_camera_words = trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	trackdata7 = trkptr;
+	trackside_camera_ground_heights = trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	td08_direction_related = trkptr;
+	roadside_sign_headings = trkptr;
 
 	trkptr += TRACKDATA_DIRECTION_TABLE_SIZE;
-	trackdata9 = trkptr;
+	trackside_camera_positions = trkptr;
 
 	trkptr += TRACKDATA_CAMERA_VECTOR_SIZE;
-	td10_track_check_rel = trkptr;
+	roadside_sign_positions = trkptr;
 
 	trkptr += TRACKDATA_CHECK_VECTOR_SIZE;
 	td11_highscores = trkptr;
 
 	trkptr += TRACKDATA_HIGHSCORE_SIZE;
-	trackdata12 = trkptr;
+	sprite_background_state_stack = trkptr;
 
-	trkptr += TRACKDATA_UNKNOWN_12_SIZE;
+	trkptr += TRACKDATA_SPRITE_STATE_STACK_SIZE;
 	td13_rpl_header = trkptr;
 
 	trkptr += TRACKDATA_REPLAY_HEADER_SIZE;
@@ -200,10 +200,10 @@ void init_trackdata(void) {
 	td17_trk_elem_ordered = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	trackdata18 = trkptr;
+	track_route_traversal_flags = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	trackdata19 = trkptr;
+	roadside_sign_indices_by_tile = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
 	td20_trk_file_appnd = trkptr;
@@ -215,7 +215,7 @@ void init_trackdata(void) {
 	td22_row_from_path = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	trackdata23 = trkptr;
+	roadside_sign_shape_indices = trkptr;
 
 	trkptr += TRACKDATA_OBJECT_INDEX_SIZE;
 }

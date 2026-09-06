@@ -72,14 +72,14 @@ static legacy_s16 penalty_route_next(legacy_s16 track_index)
 		return legacy_execution_residue.penalty_route_word;
 	if (track_index < 0 || track_index >= track_pieces_counter)
 		return PENALTY_ROUTE_SENTINEL;
-	return td01_track_file_cpy[track_index];
+	return track_primary_route_links[track_index];
 }
 
 static legacy_s16 penalty_route_alternate(legacy_s16 track_index)
 {
 	if (track_index == PENALTY_ROUTE_SENTINEL)
-		return td01_track_file_cpy[PENALTY_ROUTE_START_TRACK_INDEX];
-	return td02_penalty_related[track_index];
+		return track_primary_route_links[PENALTY_ROUTE_START_TRACK_INDEX];
+	return track_alternate_route_links[track_index];
 }
 
 static legacy_s16 finish_penalty_route(legacy_s16* current_track,

@@ -182,9 +182,9 @@ extern legacy_s8 aLsu[];
 extern legacy_s8 aLsd[];
 extern legacy_s8* findfilenames[];
 extern struct TRACKOBJECT trkObjectList[];
-extern struct SHAPE2D far* tracksmenushapes1[];
-extern struct SHAPE2D far* tracksmenushape2dunk[];
-extern struct SHAPE2D far* tracksmenushape2dunk2[];
+extern struct SHAPE2D far* track_editor_terrain_shapes[];
+extern struct SHAPE2D far* track_editor_tile_shapes[];
+extern struct SHAPE2D far* track_editor_tile_masks[];
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout);
 legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,

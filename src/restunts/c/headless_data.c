@@ -25,8 +25,8 @@ legacy_s16 start_flag_animation;
 legacy_s16 checkpoint_frame_interval;
 legacy_s16 timer_ticks_per_frame;
 legacy_s16 track_angle;
-legacy_s8 startcol2;
-legacy_s8 startrow2;
+legacy_s8 start_finish_column;
+legacy_s8 start_finish_row;
 legacy_s8 hillFlag;
 legacy_s16 hillHeightConsts[2] = { 0, 450 };
 
@@ -58,36 +58,36 @@ struct GAMESTATE far* cvxptr;
 
 legacy_s16 trackrows[30];
 legacy_s16 terrainrows[30];
-legacy_s16 trackpos[30];
-legacy_s16 trackcenterpos[30];
+legacy_s16 track_row_positions[30];
+legacy_s16 track_row_centers[30];
 legacy_s16 terrainpos[30];
 legacy_s16 terraincenterpos[30];
-legacy_s16 trackpos2[30];
-legacy_s16 trackcenterpos2[30];
+legacy_s16 track_column_positions[30];
+legacy_s16 track_column_centers[30];
 
-legacy_s16 far* td01_track_file_cpy;
-legacy_s16 far* td02_penalty_related;
-legacy_s8 far* trackdata3;
+legacy_s16 far* track_primary_route_links;
+legacy_s16 far* track_alternate_route_links;
+legacy_s8 far* opponent_route_track_indices;
 legacy_s16 far* td04_aerotable_pl;
 legacy_s16 far* td05_aerotable_op;
-legacy_s16 far* trackdata6;
-legacy_s16 far* trackdata7;
-legacy_s16 far* td08_direction_related;
-struct VECTOR far* trackdata9;
-struct VECTOR far* td10_track_check_rel;
+legacy_s16 far* reserved_trackside_camera_words;
+legacy_s16 far* trackside_camera_ground_heights;
+legacy_s16 far* roadside_sign_headings;
+struct VECTOR far* trackside_camera_positions;
+struct VECTOR far* roadside_sign_positions;
 legacy_s8 far* td11_highscores;
-legacy_s8 far* trackdata12;
+legacy_s8 far* sprite_background_state_stack;
 legacy_s8 far* td13_rpl_header;
 legacy_u8 far* td14_elem_map_main;
 legacy_u8 far* td15_terr_map_main;
 legacy_s8 far* td16_rpl_buffer;
 legacy_s8 far* td17_trk_elem_ordered;
-legacy_s8 far* trackdata18;
-legacy_u8 far* trackdata19;
+legacy_s8 far* track_route_traversal_flags;
+legacy_u8 far* roadside_sign_indices_by_tile;
 legacy_s8 far* td20_trk_file_appnd;
 legacy_s8 far* td21_col_from_path;
 legacy_s8 far* td22_row_from_path;
-legacy_u8 far* trackdata23;
+legacy_u8 far* roadside_sign_shape_indices;
 
 #define FILE_DIALOG_PATH_BUFFER_SIZE 81U
 
@@ -149,8 +149,8 @@ legacy_s8 steerWhlRespTable_10fps[62] = {
 legacy_s8* steerWhlRespTable_ptr;
 legacy_s16 grassDecelDivTab[5] = { 255, 256, 192, 128, 64 };
 
-legacy_u8 byte_3E71E[6] = { 0, 0, 1, 0, 1, 0 };
-legacy_u8 byte_3E724[6] = { 0, 1, 0, 0, 1, 0 };
+legacy_u8 roadside_sign_forward_types[6] = { 0, 0, 1, 0, 1, 0 };
+legacy_u8 roadside_sign_reverse_types[6] = { 0, 1, 0, 0, 1, 0 };
 legacy_u8 terrConnDataEtoW[20] = {
 	0, 0, 0, 0, 0, 0, 1, 2, 1, 3, 0, 2, 3, 0, 0, 1, 1, 3, 2, 0
 };
@@ -219,10 +219,10 @@ legacy_s8 track_wall_collision_enabled;
 legacy_s8 corkFlag;
 legacy_s16 penalty_time;
 legacy_s16 track_pieces_counter;
-legacy_u8 byte_45635;
-legacy_u8 byte_45D90;
-legacy_u8 byte_45E16;
-legacy_u8 byte_4616E;
+legacy_u8 roadside_sign_count;
+legacy_u8 track_validation_column;
+legacy_u8 track_validation_row;
+legacy_u8 trackside_camera_count;
 /* The original DGROUP reserves sixteen consecutive opponent-speed bytes. */
 legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 legacy_u8 vector_saved_z_low;

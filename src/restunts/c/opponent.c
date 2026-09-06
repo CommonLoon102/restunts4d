@@ -206,7 +206,7 @@ static legacy_s16 opponent_route_word(legacy_s16 index)
 
 	offset = LEGACY_U16_WRAP_MUL(index, LEGACY_WORD_BYTES);
 	return LEGACY_READ_S16_LE(
-		(const legacy_u8 far*)trackdata3 + offset);
+		(const legacy_u8 far*)opponent_route_track_indices + offset);
 }
 
 static void opponent_advance_route(void)
@@ -490,12 +490,12 @@ void update_opponent_tick(void)
 
 	if (state.opponentstate.car_lap_count != OPPONENT_LAP_NONE) {
 		finish_distance = multiply_and_scale(cos_fast(track_angle),
-			LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+			LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
 				position_to_word((legacy_s32)
 					state.opponentstate.car_position.lz)));
 		finish_distance = LEGACY_S16_WRAP_ADD(finish_distance,
 			multiply_and_scale(sin_fast(track_angle),
-				LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+				LEGACY_S16_WRAP_SUB(track_column_centers[start_finish_column],
 					position_to_word((legacy_s32)
 						state.opponentstate.car_position.lx))));
 		if (finish_distance < 0)
@@ -616,7 +616,7 @@ legacy_s16 get_track_route_point(
 	legacy_u8 tile_element;
 	legacy_u8 track_subtype;
 	legacy_u8 connection_status;
-	legacy_u8 arrow_type;
+	legacy_u8 route_point_count;
 	legacy_u8 route_index;
 	legacy_u8 vector_index;
 	legacy_u8 column;
@@ -627,23 +627,23 @@ legacy_s16 get_track_route_point(
 
 	track_index = (legacy_s16)track_index_arg;
 	tile_element = (legacy_u8)td17_trk_elem_ordered[track_index];
-	track_subtype = (legacy_u8)trackdata18[track_index] &
+	track_subtype = (legacy_u8)track_route_traversal_flags[track_index] &
 		TRACK_ROUTE_SUBTYPE_MASK;
-	connection_status = (legacy_u8)trackdata18[track_index] &
+	connection_status = (legacy_u8)track_route_traversal_flags[track_index] &
 		TRACK_ROUTE_REVERSED_FLAG;
 	track_object = &trkObjectList[tile_element];
 	if (track_object->ss_trkObjInfoPtr == 0)
 		track_info = &legacy_null_track_info;
 	else
 		track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
-	arrow_type = (legacy_u8)track_info->si_arrowType;
+	route_point_count = (legacy_u8)track_info->route_point_count;
 	route_index = (legacy_u8)route_index_arg;
 
 	if (connection_status == 0) {
 		vector_index = LEGACY_U8_WRAP_MUL(
 			route_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	} else {
-		vector_index = LEGACY_U8_WRAP_SUB(arrow_type, route_index);
+		vector_index = LEGACY_U8_WRAP_SUB(route_point_count, route_index);
 		vector_index = LEGACY_U8_WRAP_MUL(
 			vector_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 		vector_index = LEGACY_U8_WRAP_SUB(
@@ -651,7 +651,7 @@ legacy_s16 get_track_route_point(
 	}
 
 	if (optional_speed != 0) {
-		speed_index = (legacy_u8)track_info->si_oppSpedCode;
+		speed_index = (legacy_u8)track_info->opponent_speed_code;
 		speed_index = LEGACY_U16_WRAP_ADD(
 			speed_index, (legacy_u8)track_object->ss_surfaceType);
 		*optional_speed = LEGACY_S8_FROM_BITS(
@@ -659,15 +659,15 @@ legacy_s16 get_track_route_point(
 	}
 
 	packed_opponent_offset = (legacy_u16)(
-		(legacy_u8)track_info->si_opp1 |
-		LEGACY_U16_SHL((legacy_u8)track_info->si_opp2,
+		(legacy_u8)track_info->reverse_path_offset_low |
+		LEGACY_U16_SHL((legacy_u8)track_info->reverse_path_offset_high,
 			LEGACY_BYTE_BITS));
 	has_opponent_path = packed_opponent_offset != 0;
 	if (connection_status != 0 && has_opponent_path != 0) {
 		route_vectors = track_vector_from_legacy_offset(
 			packed_opponent_offset);
 	} else {
-		route_vectors = track_info->si_cameraDataOffset;
+		route_vectors = track_info->route_vectors;
 	}
 
 	if (connection_status != 0 && has_opponent_path == 0) {
@@ -680,7 +680,7 @@ legacy_s16 get_track_route_point(
 			vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 	}
 
-	orientation = (legacy_s16)track_info->si_arrowOrient;
+	orientation = (legacy_s16)track_info->route_orientation;
 	if (orientation == ANGLE_QUARTER_TURN) {
 		base_position = first_point.x;
 		first_point.x = first_point.z;
@@ -740,5 +740,5 @@ legacy_s16 get_track_route_point(
 	if ((route_index & LEGACY_U8_SIGN_BIT) != 0)
 		route_index_word |= LEGACY_U16_HIGH_BYTE_MASK;
 	return LEGACY_U16_WRAP_SUB(
-		arrow_type, TRACK_ROUTE_LAST_INDEX_OFFSET) == route_index_word;
+		route_point_count, TRACK_ROUTE_LAST_INDEX_OFFSET) == route_index_word;
 }

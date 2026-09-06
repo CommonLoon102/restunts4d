@@ -313,7 +313,7 @@ legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 
 	sprite_background_saved_x[index] = left;
 	sprite_background_saved_y[index] = top;
 	sprite_copy_both_to_arg(saved_sprites);
-	fmemcpy(trackdata12 + index * sizeof(saved_sprites),
+	fmemcpy(sprite_background_state_stack + index * sizeof(saved_sprites),
 		saved_sprites, sizeof(saved_sprites));
 	sprite_copy_2_to_1();
 	sprite_clear_shape_alt(window->sprite_bitmapptr, left, top);
@@ -334,7 +334,7 @@ void sprite_pop_background(void)
 	sprite_shape_to_1(sprite_ptrs[index]->sprite_bitmapptr,
 		sprite_background_saved_x[index], sprite_background_saved_y[index]);
 	fmemcpy(saved_sprites,
-		trackdata12 + index * sizeof(saved_sprites),
+		sprite_background_state_stack + index * sizeof(saved_sprites),
 		sizeof(saved_sprites));
 	sprite_copy_arg_to_both(saved_sprites);
 	sprite_free_wnd(sprite_ptrs[index]);

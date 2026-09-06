@@ -108,9 +108,9 @@ static void collision_tile_center(legacy_u8 tile_element,
 
 	multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 	if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != 0)
-		*center_z = (legacy_u16)trackpos[row_index];
+		*center_z = (legacy_u16)track_row_positions[row_index];
 	if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) != 0)
-		*center_x = (legacy_u16)trackpos2[column_index];
+		*center_x = (legacy_u16)track_column_positions[column_index];
 }
 
 legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg, struct VECTOR* output)
@@ -134,8 +134,8 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 	if (tile_element == 0)
 		return 0;
 
-	center_x = (legacy_u16)trackcenterpos2[column];
-	center_z = (legacy_u16)trackcenterpos[row];
+	center_x = (legacy_u16)track_column_centers[column];
+	center_z = (legacy_u16)track_row_centers[row];
 	previous_row_base = row == 0 ? (legacy_u16)replay_overflow_acknowledged_word :
 		(legacy_u16)trackrows[row - 1U];
 	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {

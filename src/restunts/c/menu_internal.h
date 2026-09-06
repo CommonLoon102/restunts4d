@@ -220,12 +220,12 @@ void load_tracks_menu_shapes(void);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 top_color, legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
 legacy_s16 highscore_load_or_create(legacy_s16 create_default);
-extern struct SHAPE2D far* tracksmenushapes2[];
-extern struct SHAPE2D far* tracksmenushapes3[];
+extern struct SHAPE2D far* track_editor_cursor_shapes[];
+extern struct SHAPE2D far* track_editor_under_cursor_shapes[];
 extern legacy_s16 track_editor_highlight_color;
 extern legacy_s16 track_pieces_counter;
-extern legacy_u8 byte_45D90;
-extern legacy_u8 byte_45E16;
+extern legacy_u8 track_validation_column;
+extern legacy_u8 track_validation_row;
 
 extern struct RECTANGLE shaperect;
 extern struct TRANSFORMEDSHAPE3D transshape;

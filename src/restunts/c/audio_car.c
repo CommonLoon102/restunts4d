@@ -157,12 +157,12 @@ void audio_carstate(void)
 	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
 		track_index = LEGACY_S16_FROM_BITS((legacy_u16)(legacy_s8)
 			state.game_trackside_camera_index[(legacy_u8)followOpponentFlag]);
-		camera_current.x = trackdata9[track_index].x;
+		camera_current.x = trackside_camera_positions[track_index].x;
 		camera_current.y = LEGACY_S16_WRAP_ADD(
-			LEGACY_S16_WRAP_ADD(trackdata9[track_index].y,
+			LEGACY_S16_WRAP_ADD(trackside_camera_positions[track_index].y,
 				camera_track_height_offset),
 			AUDIO_TRACK_CAMERA_VERTICAL_OFFSET);
-		camera_current.z = trackdata9[track_index].z;
+		camera_current.z = trackside_camera_positions[track_index].z;
 		camera_previous = camera_current;
 	} else if (followOpponentFlag != 0) {
 		camera_current = opponent_current;

@@ -131,13 +131,13 @@ void update_player_tick(legacy_s8 input_flags) {
 				} else if (skipped_route_count ==
 					PENALTY_ROUTE_FINISH_REACHED ||
 					skipped_route_count > PENALTY_ROUTE_DECISION_DISTANCE) {
-					if (td01_track_file_cpy[state.game_player_previous_route] == route_index ||
-						td02_penalty_related[state.game_player_previous_route] == route_index) {
+					if (track_primary_route_links[state.game_player_previous_route] == route_index ||
+						track_alternate_route_links[state.game_player_previous_route] == route_index) {
 						state.game_route_confirmation_count = LEGACY_S8_WRAP_ADD(
 							state.game_route_confirmation_count, ROUTE_CONFIRMATION_STEP);
 					} else {
-						if (td01_track_file_cpy[route_index] == state.game_player_previous_route ||
-							td02_penalty_related[route_index] == state.game_player_previous_route) {
+						if (track_primary_route_links[route_index] == state.game_player_previous_route ||
+							track_alternate_route_links[route_index] == state.game_player_previous_route) {
 							state.game_player_route_status = ROUTE_TRACKING_WRONG_WAY;
 						}
 						state.game_route_confirmation_count = ROUTE_CONFIRMATION_INITIAL;
@@ -187,9 +187,9 @@ void update_player_tick(legacy_s8 input_flags) {
 					state.game_player_route_status != ROUTE_TRACKING_NORMAL) &&
 					(state.playerstate.car_route_index ==
 						state.game_player_confirmed_route ||
-					td01_track_file_cpy[state.game_player_confirmed_route] ==
+					track_primary_route_links[state.game_player_confirmed_route] ==
 						state.playerstate.car_route_index ||
-					td02_penalty_related[state.game_player_confirmed_route] ==
+					track_alternate_route_links[state.game_player_confirmed_route] ==
 						state.playerstate.car_route_index)) {
 					route_delta_or_best_depth.x = LEGACY_S16_WRAP_SUB(
 						state.playerstate.car_route_target.x,
@@ -225,7 +225,7 @@ void update_player_tick(legacy_s8 input_flags) {
 		}
 
 		if (route_selection_required != 0) {
-			if (td02_penalty_related[route_index] != TRACK_ROUTE_LINK_NONE) {
+			if (track_alternate_route_links[route_index] != TRACK_ROUTE_LINK_NONE) {
 				guidance_required = 0;
 			} else {
 				route_end_reached = 0;
@@ -286,12 +286,12 @@ void update_player_tick(legacy_s8 input_flags) {
 			if (get_track_route_point(state.playerstate.car_route_index,
 				&state.playerstate.car_route_target,
 				(legacy_s16)route_point, 0) != 0) {
-				if (td02_penalty_related[state.game_player_confirmed_route] !=
+				if (track_alternate_route_links[state.game_player_confirmed_route] !=
 					TRACK_ROUTE_LINK_NONE) {
 					state.playerstate.car_route_index = ROUTE_INDEX_NONE;
 				} else {
 					state.playerstate.car_route_index =
-						td01_track_file_cpy[state.game_player_confirmed_route];
+						track_primary_route_links[state.game_player_confirmed_route];
 				}
 				state.playerstate.car_route_point_index = ROUTE_POINT_FIRST;
 			}
@@ -327,12 +327,12 @@ void update_player_tick(legacy_s8 input_flags) {
 
 		if (state.playerstate.car_lap_count != 0) {
 			route_distance_or_direction = multiply_and_scale(cos_fast(track_angle),
-				LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
+				LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
 					position_to_word(
 						state.playerstate.car_position.lz)));
 			route_distance_or_direction = LEGACY_S16_WRAP_ADD(route_distance_or_direction,
 				multiply_and_scale(sin_fast(track_angle),
-					LEGACY_S16_WRAP_SUB(trackcenterpos2[startcol2],
+					LEGACY_S16_WRAP_SUB(track_column_centers[start_finish_column],
 						position_to_word(
 							state.playerstate.car_position.lx))));
 			if (route_distance_or_direction < 0)
