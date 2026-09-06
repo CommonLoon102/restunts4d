@@ -2,6 +2,7 @@
 
 #define TRACK_GRID_LAST_COORDINATE 29
 #define TRACK_WORLD_TILE_SHIFT 16U
+#define TRACK_TILE_COORDINATE_STEP 1U
 #define PENALTY_ROUTE_VISITED_CAPACITY 904U
 #define PENALTY_ROUTE_PENDING_CAPACITY 128U
 #define PENALTY_ROUTE_SENTINEL (-1)
@@ -187,7 +188,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 		maximum_row = minimum_row;
 		if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != 0)
-			maximum_row = LEGACY_U8_WRAP_ADD(maximum_row, 1U);
+			maximum_row = LEGACY_U8_WRAP_ADD(
+				maximum_row, TRACK_TILE_COORDINATE_STEP);
 		if (next_track == PENALTY_ROUTE_SENTINEL)
 			minimum_column = (legacy_u8)td20_trk_file_appnd[
 				PENALTY_ROUTE_START_COLUMN_INDEX];
@@ -195,7 +197,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			minimum_column = (legacy_u8)td21_col_from_path[next_track];
 		maximum_column = minimum_column;
 		if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) != 0)
-			maximum_column = LEGACY_U8_WRAP_ADD(maximum_column, 1U);
+			maximum_column = LEGACY_U8_WRAP_ADD(
+				maximum_column, TRACK_TILE_COORDINATE_STEP);
 
 		if (((legacy_u8)column == minimum_column ||
 			(legacy_u8)column == maximum_column) &&
@@ -479,12 +482,16 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		track = td14_elem_map_main[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track == TRACK_CONTINUATION_NORTHWEST) {
-			tile_x = LEGACY_U8_WRAP_SUB(tile_x, 1U);
-			tile_z = LEGACY_U8_WRAP_ADD(tile_z, 1U);
+			tile_x = LEGACY_U8_WRAP_SUB(
+				tile_x, TRACK_TILE_COORDINATE_STEP);
+			tile_z = LEGACY_U8_WRAP_ADD(
+				tile_z, TRACK_TILE_COORDINATE_STEP);
 		} else if (track == TRACK_CONTINUATION_NORTH) {
-			tile_z = LEGACY_U8_WRAP_ADD(tile_z, 1U);
+			tile_z = LEGACY_U8_WRAP_ADD(
+				tile_z, TRACK_TILE_COORDINATE_STEP);
 		} else if (track == TRACK_CONTINUATION_WEST) {
-			tile_x = LEGACY_U8_WRAP_SUB(tile_x, 1U);
+			tile_x = LEGACY_U8_WRAP_SUB(
+				tile_x, TRACK_TILE_COORDINATE_STEP);
 		}
 		track = td14_elem_map_main[
 			LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
