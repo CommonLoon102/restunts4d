@@ -158,11 +158,11 @@ void update_gamestate(void)
 	if (car_input != INPUT_NONE)
 		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
 
-	if (word_45A00 == 0 ||
-		((legacy_u16)state.game_frame % (legacy_u16)word_45A00) == 0) {
+	if (checkpoint_frame_interval == 0 ||
+		((legacy_u16)state.game_frame % (legacy_u16)checkpoint_frame_interval) == 0) {
 		get_kevinrandom_seed(state.kevinseed);
 		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(
-			state.game_frame, word_45A00);
+			state.game_frame, checkpoint_frame_interval);
 		fmemcpy(&cvxptr[checkpoint_index],
 			&state,
 			sizeof(struct GAMESTATE));
@@ -199,14 +199,14 @@ void update_gamestate(void)
 #ifndef RESTUNTS_HEADLESS
 		audio_carstate();
 #endif
-		if (byte_4393C != RACE_START_SEQUENCE_INACTIVE) {
+		if (race_start_sequence_state != RACE_START_SEQUENCE_INACTIVE) {
 			if (start_flag_animation < START_FLAG_ANIMATION_LIMIT)
 				start_flag_animation = LEGACY_S16_WRAP_ADD(start_flag_animation,
 					START_FLAG_ANIMATION_STEP);
-			if (byte_4393C == RACE_START_SEQUENCE_FLAG_ANIMATION &&
+			if (race_start_sequence_state == RACE_START_SEQUENCE_FLAG_ANIMATION &&
 				start_flag_animation > START_FLAG_AUTO_DRIVE_THRESHOLD)
-				byte_4393C = RACE_START_SEQUENCE_AUTO_DRIVE;
-			if (byte_4393C == RACE_START_SEQUENCE_AUTO_DRIVE) {
+				race_start_sequence_state = RACE_START_SEQUENCE_AUTO_DRIVE;
+			if (race_start_sequence_state == RACE_START_SEQUENCE_AUTO_DRIVE) {
 				if (LEGACY_S16_WRAP_ADD(
 					multiply_and_scale(cos_fast(track_angle),
 						LEGACY_S16_WRAP_SUB(trackcenterpos[startrow2],
@@ -224,7 +224,7 @@ void update_gamestate(void)
 					if (state.playerstate.car_rev_speed != CAR_SPEED_STOPPED)
 						update_player_tick(INPUT_BRAKE_FLAG);
 					else
-						byte_4393C = RACE_START_SEQUENCE_INACTIVE;
+						race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
 				} else if (state.playerstate.car_rev_speed <
 					START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
 					update_player_tick(INPUT_ACCELERATE_FLAG);

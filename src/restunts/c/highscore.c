@@ -153,7 +153,7 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 	ranking_highlight = HIGHSCORE_NO_HIGHLIGHT;
 	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++)
 		ranking_entry_order[entry] = entry;
-	file_build_path(byte_3B80C, gameconfig.game_trackname,
+	file_build_path(track_directory, gameconfig.game_trackname,
 		".hig", g_path_buf);
 	if (create_default == 0) {
 		g_is_busy = 1;
@@ -194,7 +194,7 @@ void highscore_save_sorted(void)
 		source_entry = (legacy_u16)ranking_entry_order[entry];
 		ordered_scores[entry] = scores[source_entry];
 	}
-	file_build_path(byte_3B80C, gameconfig.game_trackname,
+	file_build_path(track_directory, gameconfig.game_trackname,
 		".hig", g_path_buf);
 	g_is_busy = 1;
 	(void)file_write_fatal(g_path_buf, ordered_scores,
@@ -619,7 +619,7 @@ legacy_u16 end_hiscore(void)
 			LEGACY_S16_WRAP_SUB(gState_total_finish_time,
 				gState_penalty), 1);
 		strcat(&resID_byte1, number);
-		if (((legacy_u8)byte_43966 &
+		if (((legacy_u8)replay_recording_flags &
 			REPLAY_RECORDING_MODIFIED_FLAG) != 0)
 			end_hiscore_append_text(misc_resource, aCon);
 		end_hiscore_draw_current_text(&text_y);
@@ -713,7 +713,7 @@ legacy_u16 end_hiscore(void)
 	animation_sequence = 0;
 	text_prefix = 0;
 	if (opponent_active != 0) {
-		if (((legacy_u8)byte_43966 &
+		if (((legacy_u8)replay_recording_flags &
 			REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 			previous_end_opening_variant = end_opening_variant;
 			previous_end_outcome_variant = end_outcome_variant;
@@ -775,7 +775,7 @@ legacy_u16 end_hiscore(void)
 	}
 
 	score_status = 0;
-	file_build_path(byte_3B80C, gameconfig.game_trackname,
+	file_build_path(track_directory, gameconfig.game_trackname,
 		a_trk_5, g_path_buf);
 	track_resource = (legacy_u8 far*)file_load_resource(
 		FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
@@ -809,7 +809,7 @@ legacy_u16 end_hiscore(void)
 	if (score_status == 0 && gState_total_finish_time != 0) {
 		finish_time = gState_total_finish_time;
 		scores = (struct HIGHSCORE_ENTRY far*)td11_highscores;
-		if (((legacy_u8)byte_43966 &
+		if (((legacy_u8)replay_recording_flags &
 			REPLAY_RECORDING_HIGHSCORE_INELIGIBLE_FLAGS) == 0 &&
 			scores[HIGHSCORE_LAST_ENTRY_INDEX].time >
 				(legacy_u16)finish_time) {

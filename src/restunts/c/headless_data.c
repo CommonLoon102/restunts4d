@@ -14,23 +14,23 @@ legacy_s16 video_flag4_is1;
 legacy_s16 video_flag5_is0;
 legacy_s16 video_flag6_is1;
 
-legacy_u8 byte_44A8A;
-legacy_u8 byte_4552F;
+legacy_u8 frame_callback_countdown;
+legacy_u8 slow_replay_countdown;
 legacy_u16 elapsed_time1;
 legacy_u16 elapsed_time2;
 legacy_u8 race_exit_request;
-legacy_u8 byte_4393C;
+legacy_u8 race_start_sequence_state;
 legacy_u8 game_replay_mode;
 legacy_s16 start_flag_animation;
-legacy_s16 word_45A00;
-legacy_s16 word_4499C;
+legacy_s16 checkpoint_frame_interval;
+legacy_s16 timer_ticks_per_frame;
 legacy_s16 track_angle;
 legacy_s8 startcol2;
 legacy_s8 startrow2;
 legacy_s8 hillFlag;
 legacy_s16 hillHeightConsts[2] = { 0, 450 };
 
-legacy_s16 word_449EA;
+legacy_s16 viewport_bottom_cache;
 legacy_s16 run_game_random;
 legacy_s8 replaybar_toggle;
 legacy_s8 is_in_replay;
@@ -38,11 +38,11 @@ legacy_s8 cameramode;
 legacy_s8 replay_playback_speed;
 legacy_s8 game_replay_mode_copy;
 legacy_s8 frame_buffer_index;
-legacy_s8 byte_46467;
+legacy_s8 recording_limit_warning_requested;
 legacy_s8 dashb_toggle;
 legacy_s8 dashboard_buffer_index;
 legacy_s8 show_penalty_counter;
-legacy_s16 word_45D3E;
+legacy_s16 replay_overflow_acknowledged_word;
 legacy_s8 is_in_replay_copy;
 legacy_s8 followOpponentFlag;
 legacy_s8 idle_expired;
@@ -92,8 +92,8 @@ legacy_u8 far* trackdata23;
 #define FILE_DIALOG_PATH_BUFFER_SIZE 81U
 
 legacy_s8 g_path_buf[94];
-legacy_s8 byte_3B80C[FILE_DIALOG_PATH_BUFFER_SIZE];
-legacy_s8 byte_3B85E[FILE_DIALOG_PATH_BUFFER_SIZE];
+legacy_s8 track_directory[FILE_DIALOG_PATH_BUFFER_SIZE];
+legacy_s8 replay_directory[FILE_DIALOG_PATH_BUFFER_SIZE];
 
 legacy_s8 aCarcoun[] = "carcoun";
 legacy_s8 aOpp1[] = "opp1";

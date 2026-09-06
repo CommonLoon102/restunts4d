@@ -115,13 +115,13 @@ static void replay_controls_select(legacy_u8 selection)
 	legacy_u16 index;
 
 	for (index = 0; index < REPLAY_CONTROL_COUNT; index++)
-		byte_40E6A[index] = 0;
-	byte_40E6A[selection] = 1;
+		replay_control_active[index] = 0;
+	replay_control_active[selection] = 1;
 }
 
 static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_frame)
 {
-	legacy_u16 player_index;
+	legacy_u16 buffer_index;
 	legacy_u16 index;
 	legacy_s16 recorded_position;
 	legacy_s16 current_position;
@@ -129,18 +129,18 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	legacy_u8 previous_selection;
 	legacy_u8 state_changed;
 
-	player_index = (legacy_u8)dashboard_buffer_index;
-	if (replay_controls_drawn[player_index] == 0) {
-		replay_controls_drawn[player_index] = 1;
-		byte_40E74[player_index] = REPLAY_NO_SELECTION;
-		byte_40E08[player_index] = REPLAY_NO_SELECTION;
+	buffer_index = (legacy_u8)dashboard_buffer_index;
+	if (replay_controls_drawn[buffer_index] == 0) {
+		replay_controls_drawn[buffer_index] = 1;
+		replay_camera_mode_cache[buffer_index] = REPLAY_NO_SELECTION;
+		replay_selection_cache[buffer_index] = REPLAY_NO_SELECTION;
 		for (index = 0; index < REPLAY_CONTROL_COUNT; index++)
-			byte_40E7A[player_index +
+			replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 0;
 		mouse_draw_opaque_check();
 		shape2d_rle_copy_at_position(rplyshapes[REPLAY_SHAPE_BACKGROUND]);
-		word_40E0A[player_index] = -1;
-		word_40E76[player_index] = -1;
+		replay_displayed_time_cache[buffer_index] = -1;
+		replay_recorded_position_cache[buffer_index] = -1;
 		format_frame_as_string(&resID_byte1,
 			(legacy_u16)(gameconfig.game_recordedframes + elapsed_time1),
 			REPLAY_TIME_INCLUDE_FRACTION);
@@ -151,8 +151,8 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	}
 
 	displayed_time = (legacy_u16)(current_frame + elapsed_time1);
-	if ((legacy_u16)word_40E0A[player_index] != displayed_time) {
-		word_40E0A[player_index] = (legacy_s16)displayed_time;
+	if ((legacy_u16)replay_displayed_time_cache[buffer_index] != displayed_time) {
+		replay_displayed_time_cache[buffer_index] = (legacy_s16)displayed_time;
 		format_frame_as_string(&resID_byte1, displayed_time,
 			REPLAY_TIME_INCLUDE_FRACTION);
 		font_set_colors(dialog_fnt_colour, 0);
@@ -162,17 +162,17 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		font_set_fontdef();
 	}
 
-	if (byte_40E74[player_index] != (legacy_u8)cameramode) {
-		byte_40E74[player_index] = (legacy_u8)cameramode;
-		word_40E76[player_index] = -1;
+	if (replay_camera_mode_cache[buffer_index] != (legacy_u8)cameramode) {
+		replay_camera_mode_cache[buffer_index] = (legacy_u8)cameramode;
+		replay_recorded_position_cache[buffer_index] = -1;
 		mouse_draw_opaque_check();
 		shape2d_rle_copy_at_position(rplyshapes[
 			REPLAY_SHAPE_CAMERA_FIRST + (legacy_u8)cameramode]);
-		if (LEGACY_S8_FROM_BITS(byte_3E9DB) > LEGACY_S8_FROM_BITS(
+		if (LEGACY_S8_FROM_BITS(replay_selected_control) > LEGACY_S8_FROM_BITS(
 			game_camera_buttons_count[(legacy_u8)cameramode]))
-			byte_3E9DB = game_camera_buttons_count[(legacy_u8)cameramode];
-		if (byte_40E08[player_index] > REPLAY_LAST_ACTION_CONTROL)
-			byte_40E08[player_index] = REPLAY_NO_SELECTION;
+			replay_selected_control = game_camera_buttons_count[(legacy_u8)cameramode];
+		if (replay_selection_cache[buffer_index] > REPLAY_LAST_ACTION_CONTROL)
+			replay_selection_cache[buffer_index] = REPLAY_NO_SELECTION;
 	}
 
 	recorded_position = (legacy_s16)replay_timeline_position(
@@ -181,11 +181,11 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	current_position = (legacy_s16)replay_timeline_position(
 		current_frame, gameconfig.game_recordedframes,
 		REPLAY_TIMELINE_POSITION_RANGE);
-	if (word_40E76[player_index] != recorded_position ||
-		word_40E04[player_index] != current_position) {
+	if (replay_recorded_position_cache[buffer_index] != recorded_position ||
+		replay_current_position_cache[buffer_index] != current_position) {
 		mouse_draw_opaque_check();
-		word_40E76[player_index] = recorded_position;
-		word_40E04[player_index] = current_position;
+		replay_recorded_position_cache[buffer_index] = recorded_position;
+		replay_current_position_cache[buffer_index] = current_position;
 		sprite_fill_rect(REPLAY_TIMELINE_X, REPLAY_TIMELINE_Y,
 			REPLAY_TIMELINE_WIDTH, REPLAY_TIMELINE_HEIGHT, replay_timeline_background_color);
 		sprite_fill_rect(LEGACY_S16_WRAP_ADD(
@@ -201,12 +201,12 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 			replay_marker_color);
 	}
 
-	state_changed = byte_40E08[player_index] != byte_3E9DB;
+	state_changed = replay_selection_cache[buffer_index] != replay_selected_control;
 	if (state_changed == 0) {
 		for (index = 0; index < REPLAY_ACTION_CONTROL_COUNT; index++) {
-			if (byte_40E7A[player_index +
+			if (replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] !=
-				byte_40E6A[index]) {
+				replay_control_active[index]) {
 				state_changed = 1;
 				break;
 			}
@@ -218,43 +218,43 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	}
 
 	mouse_draw_opaque_check();
-	previous_selection = byte_40E08[player_index];
+	previous_selection = replay_selection_cache[buffer_index];
 	if (previous_selection != REPLAY_NO_SELECTION) {
-		if (byte_40E7A[player_index +
+		if (replay_control_active_cache[buffer_index +
 			previous_selection * REPLAY_CONTROL_PLAYER_STRIDE] != 0)
 			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_ACTIVE_FIRST + previous_selection]);
 		else
 			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_INACTIVE_FIRST + previous_selection]);
-		byte_40E08[player_index] = REPLAY_NO_SELECTION;
+		replay_selection_cache[buffer_index] = REPLAY_NO_SELECTION;
 	}
 	for (index = 0; index < REPLAY_ACTION_CONTROL_COUNT; index++) {
-		if (byte_40E6A[index] == 0 &&
-			byte_40E7A[player_index +
+		if (replay_control_active[index] == 0 &&
+			replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] != 0) {
 			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_INACTIVE_FIRST + index]);
-			byte_40E7A[player_index +
+			replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 0;
 		}
 	}
 	for (index = 0; index < REPLAY_ACTION_CONTROL_COUNT; index++) {
-		if (byte_40E6A[index] != 0) {
-			byte_40E7A[player_index +
+		if (replay_control_active[index] != 0) {
+			replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 1;
 			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_ACTIVE_FIRST + index]);
-			byte_40E7A[player_index +
+			replay_control_active_cache[buffer_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 1;
 		}
 	}
-	byte_40E08[player_index] = byte_3E9DB;
-	if (byte_3E9DB != REPLAY_NO_SELECTION) {
-		sprite_draw_rect_outline(game_camera_buttons[byte_3E9DB].x1,
-			game_camera_buttons[byte_3E9DB].y1,
-			game_camera_buttons[byte_3E9DB].x2,
-			game_camera_buttons[byte_3E9DB].y2, replay_marker_color);
+	replay_selection_cache[buffer_index] = replay_selected_control;
+	if (replay_selected_control != REPLAY_NO_SELECTION) {
+		sprite_draw_rect_outline(game_camera_buttons[replay_selected_control].x1,
+			game_camera_buttons[replay_selected_control].y1,
+			game_camera_buttons[replay_selected_control].x2,
+			game_camera_buttons[replay_selected_control].y2, replay_marker_color);
 	}
 	mouse_draw_transparent_check();
 }
@@ -298,7 +298,7 @@ static void replay_pause_menu(void)
 		options[REPLAY_PAUSE_ACTION_RESTART] = 1;
 		options[REPLAY_PAUSE_ACTION_CONTINUE] = 1;
 	}
-	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0)
+	if (((legacy_u8)replay_recording_flags & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0)
 		options[REPLAY_PAUSE_ACTION_FINISH] = 1;
 	full_redraw_frames_remaining = (legacy_u8)video_flag6_is1;
 	menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
@@ -318,16 +318,16 @@ static void replay_pause_menu(void)
 		init_game_state_with_frame_rate_byte(framespersec2);
 		elapsed_time2 = 0;
 		gameconfig.game_recordedframes = 0;
-		word_45D3E = LEGACY_S16_FROM_BITS(
-			LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 0U));
-		byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG;
+		replay_overflow_acknowledged_word = LEGACY_S16_FROM_BITS(
+			LEGACY_U16_REPLACE_LOW_BYTE(replay_overflow_acknowledged_word, 0U));
+		replay_recording_flags = REPLAY_RECORDING_ACTIVE_FLAG;
 		/* fall through */
 
 	case REPLAY_PAUSE_ACTION_CONTINUE:
 		if (menu_result == REPLAY_PAUSE_ACTION_CONTINUE) {
-			if (((legacy_u8)byte_43966 &
+			if (((legacy_u8)replay_recording_flags &
 				REPLAY_RECORDING_MODIFIED_FLAG) != 0) {
-				byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG |
+				replay_recording_flags = REPLAY_RECORDING_ACTIVE_FLAG |
 					REPLAY_RECORDING_MODIFIED_FLAG;
 			} else if (gameconfig.game_recordedframes != elapsed_time2) {
 				dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
@@ -337,10 +337,10 @@ static void replay_pause_menu(void)
 					performGraphColor, 0, REPLAY_DIALOG_INITIAL_CHOICE));
 				if (dialog_result < REPLAY_DIALOG_ACCEPTED_MINIMUM)
 					break;
-				byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG |
+				replay_recording_flags = REPLAY_RECORDING_ACTIVE_FLAG |
 					REPLAY_RECORDING_MODIFIED_FLAG;
 			} else {
-				byte_43966 = REPLAY_RECORDING_ACTIVE_FLAG;
+				replay_recording_flags = REPLAY_RECORDING_ACTIVE_FLAG;
 			}
 			elapsed_time2 = (legacy_u16)state.game_frame;
 			gameconfig.game_recordedframes = (legacy_u16)state.game_frame;
@@ -355,22 +355,22 @@ static void replay_pause_menu(void)
 		replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
 		replay_controls_select(REPLAY_CONTROL_PLAY);
 		is_in_replay = 0;
-		mouse_minmax_position(LEGACY_S8_FROM_BITS(byte_3B8F2));
+		mouse_minmax_position(LEGACY_S8_FROM_BITS(mouse_driving_enabled));
 		check_input();
 		kbormouse = 0;
 		break;
 
 	case REPLAY_PAUSE_ACTION_LOAD:
-		byte_43966 = 0;
+		replay_recording_flags = 0;
 		audio_carstate();
-		if (do_fileselect_dialog(byte_3B85E, aDefault_1, ".rpl",
+		if (do_fileselect_dialog(replay_directory, aDefault_1, ".rpl",
 			locate_text_res(mainresptr, "rep")) == 0)
 			break;
 		waitflag = REPLAY_LOAD_WAIT_VALUE;
 		show_waiting();
 		saved_config = gameconfig;
 		saved_track = td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX];
-		if ((legacy_u8)file_load_replay(byte_3B85E, aDefault_1) != 0)
+		if ((legacy_u8)file_load_replay(replay_directory, aDefault_1) != 0)
 			gameconfig.game_recordedframes = 0;
 		dashb_toggle = 0;
 		track_setup();
@@ -411,11 +411,11 @@ static void replay_pause_menu(void)
 		audio_carstate();
 		for (;;) {
 			save_status = REPLAY_SAVE_RETRY;
-			if (do_savefile_dialog(byte_3B85E, aDefault_1,
+			if (do_savefile_dialog(replay_directory, aDefault_1,
 				locate_text_res(mainresptr, aRep_1)) == 0) {
 				save_status = REPLAY_SAVE_CANCELLED;
 			} else {
-				file_build_path(byte_3B85E, aDefault_1, a_rpl_2,
+				file_build_path(replay_directory, aDefault_1, a_rpl_2,
 					g_path_buf);
 				save_status = REPLAY_SAVE_READY;
 				g_is_busy = 1;
@@ -477,7 +477,7 @@ static void replay_pause_menu(void)
 
 	case REPLAY_PAUSE_ACTION_EXIT:
 		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-		byte_43966 = 0;
+		replay_recording_flags = 0;
 		race_exit_request = REPLAY_EXIT_REQUESTED;
 		break;
 	}
@@ -688,10 +688,10 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	if (operation != REPLAY_LOOP_HANDLE_INPUT)
 		return;
 
-	if (LEGACY_S8_FROM_BITS(byte_3E9DB) > LEGACY_S8_FROM_BITS(
+	if (LEGACY_S8_FROM_BITS(replay_selected_control) > LEGACY_S8_FROM_BITS(
 		game_camera_buttons_count[(legacy_u8)cameramode]) &&
 		cameramode != CAMERA_MODE_CUSTOM)
-		byte_3E9DB = game_camera_buttons_count[(legacy_u8)cameramode];
+		replay_selected_control = game_camera_buttons_count[(legacy_u8)cameramode];
 	sprite_copy_2_to_1();
 	if (video_flag5_is0 != 0)
 		dashboard_buffer_index = frame_buffer_index ^ 1;
@@ -703,23 +703,23 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		(legacy_u8)(game_camera_buttons_count[(legacy_u8)cameramode] + 1U),
 		game_camera_buttons);
 	if (hit != REPLAY_NO_SELECTION) {
-		if (hit != byte_3E9DB && input == 0)
+		if (hit != replay_selected_control && input == 0)
 			input = 1;
-		byte_3E9DB = hit;
+		replay_selected_control = hit;
 		if ((input == KEY_ENTER || input == KEY_SPACE) &&
-			byte_3E9DB >= REPLAY_CONTROL_ZOOM) {
-			if (byte_3E9DB == REPLAY_CONTROL_ZOOM) {
+			replay_selected_control >= REPLAY_CONTROL_ZOOM) {
+			if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
 				midpoint = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
-					word_3EA3A, word_3EA4C), 1U);
+					replay_zoom_button_top, replay_zoom_button_bottom), 1U);
 				input = midpoint < mouse_ypos ? KEY_DOWN : KEY_UP;
 			} else {
 				y_delta = LEGACY_S16_WRAP_SUB(
 					LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
-						word_3EA3C, word_3EA4E), 1U),
+						replay_pan_button_top, replay_pan_button_bottom), 1U),
 					(legacy_s16)mouse_ypos);
 				x_delta = LEGACY_S16_WRAP_SUB((legacy_s16)mouse_xpos,
 					LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
-						word_3EA18, word_3EA2A), 1U));
+						replay_pan_button_left, replay_pan_button_right), 1U));
 				angle = (legacy_u16)polarAngle(x_delta, y_delta);
 				switch (((angle + ANGLE_EIGHTH_TURN) >>
 					REPLAY_DIRECTION_ANGLE_SHIFT) & REPLAY_DIRECTION_MASK) {
@@ -739,7 +739,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 			}
 		}
 	} else {
-		hit = (legacy_u8)mouse_multi_hittest(1, &gameunk_button);
+		hit = (legacy_u8)mouse_multi_hittest(1, &replay_hidden_bar_camera_button);
 		if (hit == 0 && (input == KEY_ENTER || input == KEY_SPACE))
 			input = 'c';
 	}
@@ -754,15 +754,15 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	}
 	if (replaybar_enabled == 0) {
 		is_in_replay_copy = (legacy_s8)REPLAY_BAR_HIDDEN_STATE;
-		word_449EA = -1;
+		viewport_bottom_cache = -1;
 	}
-	if (is_in_replay != 0 && (byte_40E6D != 0 || byte_40E6C != 0))
+	if (is_in_replay != 0 && (replay_legacy_play_active != 0 || replay_legacy_fast_play_active != 0))
 		replay_controls_select(REPLAY_CONTROL_PAUSE);
 	replay_controls_draw(state.game_frame, state.game_frame);
 
 	custom_camera_active = 0;
 	if (kb_get_key_state(REPLAY_CUSTOM_CAMERA_MODIFIER_SCAN_CODE) != 0 ||
-		(byte_3E9DB == REPLAY_CONTROL_PAN &&
+		(replay_selected_control == REPLAY_CONTROL_PAN &&
 			((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0))
 		custom_camera_active = 1;
 	if (custom_camera_active != 0) {
@@ -812,9 +812,9 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 	switch (input) {
 	case KEY_ENTER:
 	case KEY_SPACE:
-		if (byte_3E9DB > REPLAY_LAST_ACTION_CONTROL)
+		if (replay_selected_control > REPLAY_LAST_ACTION_CONTROL)
 			break;
-		switch (byte_3E9DB) {
+		switch (replay_selected_control) {
 		case REPLAY_CONTROL_FAST_FORWARD:
 			replay_fast_forward();
 			return;
@@ -858,32 +858,32 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		return;
 
 	case KEY_LEFT:
-		next_selection = byte_3E9DC[byte_3E9DB];
+		next_selection = replay_control_left_neighbor[replay_selected_control];
 		if (next_selection <=
 			game_camera_buttons_count[(legacy_u8)cameramode])
-			byte_3E9DB = next_selection;
+			replay_selected_control = next_selection;
 		break;
 
 	case KEY_RIGHT:
-		byte_3E9DB = byte_3E9E6[byte_3E9DB];
+		replay_selected_control = replay_control_right_neighbor[replay_selected_control];
 		break;
 
 	case KEY_UP:
-		if (byte_3E9DB == REPLAY_CONTROL_ZOOM) {
+		if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
 			if (replay_try_zoom('+') != 0)
 				return;
 			break;
 		}
-		byte_3E9DB = byte_3E9F0[byte_3E9DB];
+		replay_selected_control = replay_control_up_neighbor[replay_selected_control];
 		break;
 
 	case KEY_DOWN:
-		if (byte_3E9DB == REPLAY_CONTROL_ZOOM) {
+		if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
 			if (replay_try_zoom('-') != 0)
 				return;
 			break;
 		}
-		byte_3E9DB = byte_3E9FA[byte_3E9DB];
+		replay_selected_control = replay_control_down_neighbor[replay_selected_control];
 		break;
 	}
 

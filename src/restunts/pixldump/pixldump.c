@@ -494,16 +494,16 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 		td20_trk_file_appnd[index] = td14_elem_map_main[index];
 	for (index = 0; index < TRACKDATA_CHECKPOINT_DATA_SIZE; index++) {
 		td20_trk_file_appnd[index + TRACKDATA_LINK_TABLE_SIZE] =
-			byte_3B80C[index];
+			track_directory[index];
 		td20_trk_file_appnd[index + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
-			byte_3B85E[index];
+			replay_directory[index];
 	}
 	if (track_setup() != 0)
 		return 1;
 
 	cvxptr = mmgr_alloc_resbytes("cvx", PIXLDUMP_CVX_RESOURCE_SIZE);
 	init_game_state(-1);
-	word_449EA = -1;
+	viewport_bottom_cache = -1;
 	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), PIXLDUMP_RANDOM_SHIFT);
 	replaybar_toggle = 0;
 	is_in_replay = 1;
@@ -523,7 +523,7 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 	game_replay_mode_copy = -1;
 	frame_buffer_index = 0;
 	dashboard_buffer_index = 0;
-	byte_46467 = 0;
+	recording_limit_warning_requested = 0;
 	dashb_toggle = 0;
 	followOpponentFlag = (legacy_u8)target;
 	framespersec = GAME_FRAME_RATE_NORMAL;

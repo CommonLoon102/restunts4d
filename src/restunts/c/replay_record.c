@@ -84,7 +84,7 @@ void frame_callback(void)
 
 	frame_callback_active = 1;
 	audio_car_state_interval = LEGACY_S16_WRAP_ADD(audio_car_state_interval, 1);
-	if (audio_car_state_interval >= word_4499C && audio_car_state_read_index != audio_car_state_write_index) {
+	if (audio_car_state_interval >= timer_ticks_per_frame && audio_car_state_read_index != audio_car_state_write_index) {
 		audio_apply_car_state_sample((legacy_u8 far*)
 			&audio_car_state_records[audio_car_state_read_index],
 			audio_car_state_interval);
@@ -94,7 +94,7 @@ void frame_callback(void)
 			audio_car_state_read_index = 0;
 	}
 
-	if (race_exit_request == 0 && byte_46467 == 0 &&
+	if (race_exit_request == 0 && recording_limit_warning_requested == 0 &&
 		(is_in_replay == 0 || game_replay_mode != REPLAY_MODE_PLAYBACK)) {
 		if (game_replay_mode == REPLAY_MODE_LIVE &&
 			LEGACY_S16_FROM_BITS(state.game_frame_in_sec) >=
@@ -102,24 +102,24 @@ void frame_callback(void)
 			is_in_replay = 1;
 			audio_carstate();
 		} else {
-			byte_44A8A = (legacy_u8)(byte_44A8A - 1U);
-			if (byte_44A8A == 0) {
-				byte_44A8A = (legacy_u8)word_4499C;
+			frame_callback_countdown = (legacy_u8)(frame_callback_countdown - 1U);
+			if (frame_callback_countdown == 0) {
+				frame_callback_countdown = (legacy_u8)timer_ticks_per_frame;
 				frame_callback_count = LEGACY_U16_WRAP_ADD(frame_callback_count, 1U);
 				if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
 					LEGACY_S8_FROM_BITS(replay_playback_speed) ==
 						REPLAY_PLAYBACK_SLOW) {
-					byte_4552F = (legacy_u8)(byte_4552F - 1U);
-					if (byte_4552F == 0) {
-						replay_unk2(0);
-						byte_4552F = REPLAY_SLOW_CALLBACK_DIVISOR;
+					slow_replay_countdown = (legacy_u8)(slow_replay_countdown - 1U);
+					if (slow_replay_countdown == 0) {
+						replay_update_input_tick(0);
+						slow_replay_countdown = REPLAY_SLOW_CALLBACK_DIVISOR;
 					}
 				} else {
 					if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
 						LEGACY_S8_FROM_BITS(replay_playback_speed) ==
 							REPLAY_PLAYBACK_FAST)
-						replay_unk2(0);
-					replay_unk2(0);
+						replay_update_input_tick(0);
+					replay_update_input_tick(0);
 				}
 			}
 		}
@@ -128,7 +128,7 @@ void frame_callback(void)
 	frame_callback_active--;
 }
 
-void replay_unk2(legacy_s16 mode)
+void replay_update_input_tick(legacy_s16 force_neutral_input)
 {
 	legacy_s16 input_flags;
 	legacy_s16 steering;
@@ -141,7 +141,7 @@ void replay_unk2(legacy_s16 mode)
 	legacy_u16 input_index;
 	legacy_s8 mapped_steering;
 
-	if (mode != 0) {
+	if (force_neutral_input != 0) {
 		input_flags = 0;
 	} else if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
 		if (gameconfig.game_recordedframes > elapsed_time2) {
@@ -158,14 +158,14 @@ void replay_unk2(legacy_s16 mode)
 		state.game_end_event == 0 &&
 		game_replay_mode != REPLAY_MODE_PAUSED) {
 		if (passed_security == 0 &&
-			byte_4393C == RACE_START_SEQUENCE_INACTIVE &&
+			race_start_sequence_state == RACE_START_SEQUENCE_INACTIVE &&
 			(legacy_u16)state.game_frame >
 				LEGACY_U16_WRAP_MUL(framespersec,
 					REPLAY_SECURITY_GRACE_SECONDS))
 			update_crash_state(CRASH_EVENT_COLLISION, PLAYER_CAR_INDEX);
 
-		if (byte_3B8F2 != 0 || dos_joystick_is_enabled() != 0) {
-			if (byte_3B8F2 != 0) {
+		if (mouse_driving_enabled != 0 || dos_joystick_is_enabled() != 0) {
+			if (mouse_driving_enabled != 0) {
 				dos_mouse_get_state(
 					&mouse_butstate, &mouse_xpos, &mouse_ypos);
 				steering = LEGACY_S16_WRAP_SUB(mouse_xpos,
@@ -234,10 +234,10 @@ void replay_unk2(legacy_s16 mode)
 
 	if (elapsed_time2 == REPLAY_INPUT_BUFFER_FRAME_COUNT) {
 		if (elapsed_time1 == 0 &&
-			LEGACY_U16_LOW_BYTE(word_45D3E) == 0) {
-			word_45D3E = LEGACY_S16_FROM_BITS(
-				LEGACY_U16_REPLACE_LOW_BYTE(word_45D3E, 1U));
-			byte_46467 = 1;
+			LEGACY_U16_LOW_BYTE(replay_overflow_acknowledged_word) == 0) {
+			replay_overflow_acknowledged_word = LEGACY_S16_FROM_BITS(
+				LEGACY_U16_REPLACE_LOW_BYTE(replay_overflow_acknowledged_word, 1U));
+			recording_limit_warning_requested = 1;
 			return;
 		}
 
@@ -278,7 +278,7 @@ void replay_unk2(legacy_s16 mode)
 	gameconfig.game_recordedframes++;
 }
 
-void replay_unk(void)
+void replay_apply_analog_steering_history(void)
 {
 	legacy_s16 steering_angle;
 	legacy_s16 target_angle;

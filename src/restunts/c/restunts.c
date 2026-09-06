@@ -560,7 +560,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 		ensure_file_exists(2);
 
 		if (regsi != 0) {
-			file_build_path(byte_3B80C, gameconfig.game_trackname, ".trk", g_path_buf);
+			file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
 			file_read_fatal(g_path_buf, td14_elem_map_main);
 		}
 
@@ -627,9 +627,9 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			}
 			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
 				td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET] =
-					byte_3B80C[i];
+					track_directory[i];
 				td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET] =
-					byte_3B85E[i];
+					replay_directory[i];
 			}
 
 			if (idle_expired == 0) {
@@ -658,7 +658,7 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
 
 			if (var_A != 0) {
-				byte_43966 = 0;
+				replay_recording_flags = 0;
  			} else {
 
 				gameconfig.game_recordedframes = 0;
@@ -667,11 +667,11 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 			while (1) {
 				show_waiting();
 				run_game();
-				if (idle_expired == 0 && byte_43966 != 0) {
+				if (idle_expired == 0 && replay_recording_flags != 0) {
 					result = end_hiscore();
 					if (result == 0) {
 						// view replay
-						byte_43966 = REPLAY_RECORDING_RESTARTABLE_FLAG;
+						replay_recording_flags = REPLAY_RECORDING_RESTARTABLE_FLAG;
 						continue;
 					} else if (result == 1) {
 						// drive
@@ -688,9 +688,9 @@ legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]) {
 				td14_elem_map_main[i] = td20_trk_file_appnd[i];
 			}
 			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
-				byte_3B80C[i] =
+				track_directory[i] =
 					td20_trk_file_appnd[i + TRACK_PRIMARY_PATH_OFFSET];
-				byte_3B85E[i] =
+				replay_directory[i] =
 					td20_trk_file_appnd[i + TRACK_SECONDARY_PATH_OFFSET];
 			}
 			mmgr_release(cvxptr);

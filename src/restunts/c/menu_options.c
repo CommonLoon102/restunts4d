@@ -31,7 +31,7 @@ void select_keyboard_driving(void)
 		locate_text_res(mainresptr, aKey),
 		-1, -1, dialog_border_color, 0, 0);
 	dos_joystick_set_enabled(0);
-	byte_3B8F2 = 0;
+	mouse_driving_enabled = 0;
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
 	input_pop_status();
@@ -40,7 +40,7 @@ void select_keyboard_driving(void)
 static void joy_dialog_finish(void)
 {
 	kb_check();
-	byte_3B8F2 = 0;
+	mouse_driving_enabled = 0;
 	audio_resume();
 	dos_timer_set_callbacks_suspended(0);
 	input_pop_status();
@@ -151,7 +151,7 @@ void select_mouse_driving(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	byte_3B8F2 = 1;
+	mouse_driving_enabled = 1;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, aMou),
 		-1, -1, dialog_border_color, 0, 0);
@@ -317,7 +317,7 @@ legacy_u16 run_option_menu(void)
 			break;
 
 		case 0:
-			if (byte_3B8F2 != 0)
+			if (mouse_driving_enabled != 0)
 				initial_input = 2;
 			else if (dos_joystick_is_enabled() != 0)
 				initial_input = 1;
@@ -346,11 +346,11 @@ legacy_u16 run_option_menu(void)
 
 		case 3:
 			prompt = locate_text_res(mainresptr, "rep");
-			if (do_fileselect_dialog(byte_3B85E, aDefault_1,
+			if (do_fileselect_dialog(replay_directory, aDefault_1,
 				".rpl", prompt) != 0) {
 				waitflag = REPLAY_LOAD_WAIT_TICKS;
 				show_waiting();
-				file_load_replay(byte_3B85E, aDefault_1);
+				file_load_replay(replay_directory, aDefault_1);
 				menu_active = 1;
 				unload_resource(miscptr);
 				return menu_active;

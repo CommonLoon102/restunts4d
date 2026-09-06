@@ -266,8 +266,8 @@ legacy_s8 setup_intro(void)
 		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
 		intro_elapsed_ticks = LEGACY_S16_WRAP_ADD(intro_elapsed_ticks, delta);
 
-		while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)word_4499C) {
-			intro_elapsed_ticks = LEGACY_S16_WRAP_SUB(intro_elapsed_ticks, word_4499C);
+		while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)timer_ticks_per_frame) {
+			intro_elapsed_ticks = LEGACY_S16_WRAP_SUB(intro_elapsed_ticks, timer_ticks_per_frame);
 			update_opponent();
 			needs_render = 1;
 			frame_count = LEGACY_S16_WRAP_ADD(frame_count, 1);

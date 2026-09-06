@@ -187,9 +187,9 @@ void run_tracks_menu(legacy_s16 reload_track)
 
 			if (selected == TRACK_MENU_LOAD_BUTTON) {
 				prompt = locate_text_res(mainresptr, "trk");
-				chosen = do_fileselect_dialog(byte_3B80C,
+				chosen = do_fileselect_dialog(track_directory,
 					gameconfig.game_trackname, ".trk", prompt);
-				file_build_path(byte_3B80C,
+				file_build_path(track_directory,
 					gameconfig.game_trackname, ".trk", g_path_buf);
 				if (chosen != 0) {
 					file_read_fatal(g_path_buf, td14_elem_map_main);

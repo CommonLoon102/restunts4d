@@ -171,10 +171,10 @@ void init_game_state(legacy_s16 arg)
 	else
 		steerWhlRespTable_ptr = steerWhlRespTable_20fps;
 
-	word_45A00 = LEGACY_S16_FROM_BITS(
+	checkpoint_frame_interval = LEGACY_S16_FROM_BITS(
 		LEGACY_U16_WRAP_MUL(framespersec,
 			GAMESTATE_CHECKPOINT_INTERVAL_SECONDS));
-	word_4499C = LEGACY_S16_FROM_BITS(
+	timer_ticks_per_frame = LEGACY_S16_FROM_BITS(
 		LEGACY_U16_DIV_OR_ZERO(TIMER_TICKS_PER_SECOND, framespersec));
 
 	if (arg != GAMESTATE_INIT_TIMING_ONLY) {
@@ -309,7 +309,7 @@ void restore_gamestate(legacy_u16 frame)
 	if (frame == 0 && elapsed_time1 == 0)
 		init_game_state(GAMESTATE_INIT_NORMAL);
 
-	curframe = LEGACY_U16_DIV_OR_ZERO(frame, word_45A00);
+	curframe = LEGACY_U16_DIV_OR_ZERO(frame, checkpoint_frame_interval);
 	if (curframe == GAMESTATE_CHECKPOINT_COUNT)
 		curframe = LEGACY_U16_WRAP_SUB(
 			curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
@@ -317,7 +317,7 @@ void restore_gamestate(legacy_u16 frame)
 	/* Find the newest valid checkpoint preceding the requested frame. */
 	if (frame >= state.game_frame) {
 		while (1) {
-			if (LEGACY_U16_WRAP_MUL(curframe, word_45A00) <=
+			if (LEGACY_U16_WRAP_MUL(curframe, checkpoint_frame_interval) <=
 				state.game_frame)
 				return;
 			if (cvxptr[curframe].game_checkpoint_valid != GAMESTATE_CHECKPOINT_INVALID)

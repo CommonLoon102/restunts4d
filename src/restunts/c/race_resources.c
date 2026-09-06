@@ -46,9 +46,9 @@ static legacy_s8 skybox_resource_names[SKYBOX_RESOURCE_COUNT]
 
 void unload_skybox(void)
 {
-	if (byte_3B8F6 != 0)
+	if (skybox_resources_loaded != 0)
 		mmgr_free(skybox_res_ofs);
-	byte_3B8F6 = 0;
+	skybox_resources_loaded = 0;
 }
 
 void free_sdgame2(void)
@@ -78,13 +78,13 @@ void load_skybox(legacy_s8 skybox_index)
 	legacy_u16 image_index;
 
 	if (((legacy_u8)skybox_index & SKYBOX_NO_IMAGES_FLAG) == 0) {
-		if (byte_3B8F6 != 0 &&
-			(legacy_u8)skybox_index == (legacy_u8)byte_46167)
+		if (skybox_resources_loaded != 0 &&
+			(legacy_u8)skybox_index == (legacy_u8)loaded_skybox_index)
 			return;
 
 		unload_skybox();
-		byte_46167 = skybox_index;
-		byte_3B8F6 = 1;
+		loaded_skybox_index = skybox_index;
+		skybox_resources_loaded = 1;
 		skybox_res_ofs = file_load_shape2d_fatal(
 			skybox_resource_names[(legacy_s8)skybox_index]);
 		locate_many_resources(
@@ -118,7 +118,7 @@ void load_skybox(legacy_s8 skybox_index)
 
 static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	void far* carresptr;
-	legacy_u32 var_8;
+	legacy_u32 window_pixel_bytes;
 
 	setup_legacy_penalty_route_word();
 	render_window_sprite = 0;
@@ -193,10 +193,10 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 		// The free-arena check only applies when the window has to come from
 		// the arena; the paragraph count covers all pixels and its header.
 		if (!highpool_can_fit(RENDER_WINDOW_ARENA_PARAGRAPHS)) {
-			var_8 = LEGACY_U16_DIV_OR_ZERO(RENDER_WINDOW_PIXEL_BYTES,
+			window_pixel_bytes = LEGACY_U16_DIV_OR_ZERO(RENDER_WINDOW_PIXEL_BYTES,
 				LEGACY_U16_WRAP_MUL(
 					video_flag1_is1, video_flag4_is1));
-			if (mmgr_get_res_ofs_diff_scaled() <= var_8) {
+			if (mmgr_get_res_ofs_diff_scaled() <= window_pixel_bytes) {
 				return 1;
 			}
 		}

@@ -1,6 +1,14 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
+/* Shared dump tools retain original assembly linkage in oracle builds. */
+#ifdef RESTUNTS_ORIGINAL
+#define viewport_bottom_cache word_449EA
+#define recording_limit_warning_requested byte_46467
+#define track_directory byte_3B80C
+#define replay_directory byte_3B85E
+#endif
+
 #ifdef RESTUNTS_ORIGINAL
 /* Keep the original-linked dump harness bound to the original exports. */
 #define frame_present sub_19F14
@@ -207,18 +215,18 @@ legacy_s16 track_object_base_z(const struct TRACKOBJECT* track_object,
 	legacy_u8 row);
 void opponent_route_advance(legacy_s16 route_point);
 
-extern legacy_u8 byte_44A8A;
-extern legacy_u8 byte_4552F;
+extern legacy_u8 frame_callback_countdown;
+extern legacy_u8 slow_replay_countdown;
 extern legacy_u16 elapsed_time1;
 extern legacy_u16 elapsed_time2;
 extern legacy_u8 race_exit_request;
-extern legacy_u8 byte_4393C;
+extern legacy_u8 race_start_sequence_state;
 extern legacy_u8 game_replay_mode;
 extern legacy_s16 start_flag_animation;
 
 extern legacy_s16 word_45A24; // current frame?
-extern legacy_s16 word_45A00; // fps * 30
-extern legacy_s16 word_4499C; // 100 / fps
+extern legacy_s16 checkpoint_frame_interval; // fps * 30
+extern legacy_s16 timer_ticks_per_frame; // 100 / fps
 extern legacy_s16 track_angle;
 extern legacy_s8* steerWhlRespTable_ptr;
 extern legacy_s8 steerWhlRespTable_10fps[62];
@@ -228,7 +236,7 @@ extern legacy_s8 hillFlag;
 extern legacy_s16 hillHeightConsts[];
 
 extern struct RECTANGLE rect_windshield;
-extern legacy_s16 word_449EA;
+extern legacy_s16 viewport_bottom_cache;
 extern legacy_s16 run_game_random;
 extern legacy_s8 replaybar_toggle;
 extern legacy_s8 is_in_replay;
@@ -236,13 +244,13 @@ extern legacy_s8 cameramode;
 extern legacy_s8 replay_playback_speed;
 extern legacy_s8 game_replay_mode_copy;
 extern legacy_s8 frame_buffer_index;
-extern legacy_s8 byte_46467;
+extern legacy_s8 recording_limit_warning_requested;
 extern legacy_s8 dashb_toggle;
 extern legacy_s8 dashboard_buffer_index;
 extern legacy_s8 show_penalty_counter;
-extern legacy_s16 word_45D94;
-extern legacy_s16 word_45D3E;
-extern legacy_s8 byte_3B8F2;
+extern legacy_s16 reserved_race_word;
+extern legacy_s16 replay_overflow_acknowledged_word;
+extern legacy_s8 mouse_driving_enabled;
 extern void far* gameresptr;
 extern void far* dasmshapeptr;
 extern legacy_s8 dashb_toggle_copy;
@@ -251,7 +259,7 @@ extern legacy_s8 is_in_replay_copy;
 extern legacy_s8 followOpponentFlag;
 extern legacy_s8 followOpponentFlag_copy;
 extern legacy_s16 roofbmpheight_copy;
-extern legacy_s8 byte_449E2;
+extern legacy_s8 dashboard_visible;
 extern legacy_s8 replaybar_enabled;
 extern legacy_s16 dashbmp_y_copy;
 extern legacy_s16 height_above_replaybar;
@@ -338,11 +346,11 @@ extern legacy_s8 kbormouse;
 extern legacy_s8 passed_security;
 extern legacy_s8 g_is_busy;
 extern legacy_s8 g_path_buf[];
-extern legacy_s8 byte_3B80C[];
+extern legacy_s8 track_directory[];
 extern legacy_s8 idle_expired;
 extern legacy_u16 dialog_border_color;
-extern legacy_s8 byte_3B85E[];
-extern legacy_s8 byte_43966;
+extern legacy_s8 replay_directory[];
+extern legacy_s8 replay_recording_flags;
 extern legacy_s8 aMain[];
 extern legacy_s8 aMisc_1[];
 extern legacy_s8 aFontdef_fnt[];

@@ -249,7 +249,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 	case 'M':
 	case 'm':
 		select_mouse_driving();
-		mouse_minmax_position(LEGACY_S8_FROM_BITS(byte_3B8F2));
+		mouse_minmax_position(LEGACY_S8_FROM_BITS(mouse_driving_enabled));
 		return 1;
 
 	case 'R':
@@ -289,7 +289,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 		return 0;
 
 	game_replay_mode = REPLAY_MODE_LIVE;
-	byte_4393C = RACE_START_SEQUENCE_INACTIVE;
+	race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
 	init_game_state_with_frame_rate_byte(framespersec2);
 	return 1;
 }

@@ -136,7 +136,7 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 
 	center_x = (legacy_u16)trackcenterpos2[column];
 	center_z = (legacy_u16)trackcenterpos[row];
-	previous_row_base = row == 0 ? (legacy_u16)word_45D3E :
+	previous_row_base = row == 0 ? (legacy_u16)replay_overflow_acknowledged_word :
 		(legacy_u16)trackrows[row - 1U];
 	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		tile_element = td14_elem_map_main[

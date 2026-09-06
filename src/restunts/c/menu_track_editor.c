@@ -298,7 +298,7 @@ static legacy_u16 track_menu_next_row(legacy_u16 row)
 static legacy_u16 track_menu_previous_row(legacy_u16 row)
 {
 	if (row == 0)
-		return (legacy_u16)word_45D3E;
+		return (legacy_u16)replay_overflow_acknowledged_word;
 	return (legacy_u16)trackrows[row - 1U];
 }
 
@@ -498,12 +498,12 @@ static void track_editor_save_track(legacy_u8* track_changed,
 		sprite_copy_2_to_1_2();
 		*map_dirty = 1;
 		text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
-		if (do_savefile_dialog(byte_3B80C,
+		if (do_savefile_dialog(track_directory,
 			gameconfig.game_trackname, text) == 0) {
 			save_status = TRACK_EDITOR_SAVE_CANCELLED;
 			break;
 		}
-		file_build_path(byte_3B80C,
+		file_build_path(track_directory,
 			gameconfig.game_trackname, ".trk", g_path_buf);
 		save_status = 1;
 		if (file_find(g_path_buf) != 0) {
@@ -1209,9 +1209,9 @@ void load_tracks_menu_shapes(void)
 						map_dirty = 1;
 						text = locate_text_res(
 							(legacy_s8 far*)mainresptr, "trk");
-						result = do_fileselect_dialog(byte_3B80C,
+						result = do_fileselect_dialog(track_directory,
 							gameconfig.game_trackname, ".trk", text);
-						file_build_path(byte_3B80C,
+						file_build_path(track_directory,
 							gameconfig.game_trackname, ".trk", g_path_buf);
 						if (result > 0) {
 							file_read_fatal(g_path_buf, td14_elem_map_main);

@@ -345,9 +345,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	}
 	for (i = 0; i < TRACKDATA_CHECKPOINT_DATA_SIZE; i++) {
 		td20_trk_file_appnd[i + TRACKDATA_LINK_TABLE_SIZE] =
-			byte_3B80C[i];
+			track_directory[i];
 		td20_trk_file_appnd[i + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
-			byte_3B85E[i];
+			replay_directory[i];
 	}
 	printf("OK\n");
 
@@ -364,7 +364,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	printf("OK\n");
 
 	// Inits from run_game()...
-	word_449EA = -1;
+	viewport_bottom_cache = -1;
 	run_game_random = LEGACY_S16_SHL(get_kevinrandom(),
 		REPLDUMP_RANDOM_SHIFT);
 	replaybar_toggle = 1;
@@ -395,7 +395,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	game_replay_mode_copy = LEGACY_U8_MAX;
 	frame_buffer_index = 0;
 	dashboard_buffer_index = 0;
-	byte_46467 = 0;
+	recording_limit_warning_requested = 0;
 	dashb_toggle = 0;
 	printf("OK\n");
 

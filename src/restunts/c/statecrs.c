@@ -291,7 +291,7 @@ void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index) {
 		car_index == PLAYER_CAR_INDEX)
 		state.game_end_event = crash_event;
 #ifndef RESTUNTS_HEADLESS
-	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
+	if (((legacy_u8)replay_recording_flags & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0) {
 		// These copied values are used by the evaluation screen.
 		gState_travDist = state.game_travDist;
 		gState_frame = state.game_frame;

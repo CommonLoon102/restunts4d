@@ -95,10 +95,10 @@ void init_trackdata(void)
 
 void reset_race_loop_state(void)
 {
-	byte_44A8A = 1;
-	byte_4552F = REPLAY_SLOW_CALLBACK_DIVISOR;
+	frame_callback_countdown = 1;
+	slow_replay_countdown = REPLAY_SLOW_CALLBACK_DIVISOR;
 	elapsed_time2 = 0;
 	race_exit_request = 0;
-	byte_4393C = RACE_START_SEQUENCE_INACTIVE;
+	race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
 	start_flag_animation = 0;
 }
