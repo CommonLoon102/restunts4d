@@ -40,6 +40,8 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED 1
 #define DOS_TIMER_NO_CALLBACK 0
 #define DOS_TIMER_NO_CALLBACK_SEGMENT 0U
+#define DOS_TIMER_COUNTER_RESET_VALUE 0UL
+#define DOS_TIMER_REENTRY_RESET_VALUE 0U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -120,7 +122,7 @@ void dos_timer_unregister_callback(void (far* callback)(void))
 
 void dos_timer_reset_counter(void)
 {
-	dos_timer_counter = 0;
+	dos_timer_counter = DOS_TIMER_COUNTER_RESET_VALUE;
 }
 
 void dos_timer_set_callbacks_suspended(legacy_s16 suspended)
@@ -190,7 +192,7 @@ static void interrupt dos_timer_interrupt(void)
 
 callbacks_finished:
 	dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_IDLE;
-	dos_timer_reentry = 0;
+	dos_timer_reentry = DOS_TIMER_REENTRY_RESET_VALUE;
 }
 
 static void dos_timer_write_vector(interrupt_handler_type handler)
