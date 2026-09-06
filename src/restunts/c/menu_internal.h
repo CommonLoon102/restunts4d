@@ -234,8 +234,8 @@ extern struct VECTOR carpos;
 extern struct SPRITE far* render_window_sprite;
 extern legacy_s16 menu_idle_counter;
 extern legacy_s16 word_3EB90;
-extern legacy_s16 fontdef_unk_0E;
-extern struct RECTANGLE word_42248;
+extern legacy_s16 font_glyph_height;
+extern struct RECTANGLE intro_text_bounds;
 extern struct RECTANGLE word_42250;
 extern struct RECTANGLE cliprect_unk;
 extern struct SHAPE3D game3dshapes[];
@@ -257,9 +257,9 @@ extern legacy_s8 aPau[];
 extern legacy_s8 aSof[];
 extern legacy_s8 aSon[];
 
-void sub_29772(void);
+void menu_reset_animation_timers(void);
 void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
-legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
+legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 	const struct BUTTON_AREA* buttons,
 	legacy_s16 second_state, legacy_s16 first_state);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y,

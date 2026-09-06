@@ -269,19 +269,19 @@ legacy_u8 far wnd_defs[WINDOW_DEFINITION_BUFFER_SIZE];
 legacy_s8* far next_wnd_def = (legacy_s8*)&wnd_defs[0];
 struct SPRITE far* sprite_ptrs[4];
 struct SPRITE far* mcgawndsprite;
-legacy_u8 byte_3B8FC;
+legacy_u8 sprite_background_stack_depth;
 legacy_u16 fontdefseg;
-legacy_u16 word_4031E;
-legacy_u16 word_40320;
-legacy_s16 word_4646A[4];
-legacy_s16 word_46486[4];
+legacy_u16 raster_fill_pattern;
+legacy_u16 raster_alternate_color;
+legacy_s16 sprite_background_saved_x[4];
+legacy_s16 sprite_background_saved_y[4];
 
 struct SKYBOX skybox;
 struct RECTANGLE rect_ingame_text;
 legacy_s16 intro_colorvalue = 1;
 legacy_s16 word_407CC = 16;
 legacy_s16 dialog_fnt_colour = 15;
-legacy_s16 fontdef_unk_0E;
+legacy_s16 font_glyph_height;
 legacy_s16 sdgame2_widths[5];
 void far* sdgame2shapes[5];
 struct SHAPE2D far* skyboxes[4];
@@ -458,7 +458,7 @@ legacy_u8 byte_40E7A[18];
 legacy_s16 word_3EB90;
 legacy_u16 slow_timer_deadline_low;
 legacy_u16 slow_timer_deadline_high;
-struct RECTANGLE word_42248;
+struct RECTANGLE intro_text_bounds;
 struct RECTANGLE word_42250;
 
 legacy_u8 palmap[16] = {
@@ -582,9 +582,9 @@ static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 {
 	sprite->sprite_bitmapptr = (struct SHAPE2D far*)
 		dos_memory_make_pointer(VGA_MEMORY_SEGMENT, 0);
-	sprite->sprite_unk1 = 0;
-	sprite->sprite_unk2 = 0;
-	sprite->sprite_unk3 = 0;
+	sprite->sprite_reserved_word1 = 0;
+	sprite->sprite_reserved_word2 = 0;
+	sprite->sprite_reserved_word3 = 0;
 	sprite->sprite_lineofs = (legacy_u8*)dos_memory_make_near_pointer(
 		dos_memory_pointer_offset(full_screen_line_offsets));
 	sprite->sprite_left = 0;
@@ -592,7 +592,7 @@ static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 	sprite->sprite_top = 0;
 	sprite->sprite_height = 200;
 	sprite->sprite_pitch = 320;
-	sprite->sprite_unk4 = 0;
+	sprite->sprite_reserved_word4 = 0;
 	sprite->sprite_width2 = 320;
 	sprite->sprite_left2 = 0;
 	sprite->sprite_widthsum = 320;

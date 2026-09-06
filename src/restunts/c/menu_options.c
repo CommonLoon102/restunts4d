@@ -80,14 +80,14 @@ void do_joy_restext(void)
 	mouse_draw_opaque_check();
 	line_height = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
-	sprite_1_unk(LEGACY_S16_WRAP_SUB(positions[2], 4), positions[3],
+	sprite_fill_rect(LEGACY_S16_WRAP_SUB(positions[2], 4), positions[3],
 		1, line_height, dialogarg2);
-	sprite_1_unk(LEGACY_S16_WRAP_SUB(positions[4], 4), positions[5],
+	sprite_fill_rect(LEGACY_S16_WRAP_SUB(positions[4], 4), positions[5],
 		1, line_height, dialogarg2);
 	line_width = LEGACY_S16_WRAP_SUB(positions[6], positions[0]);
-	sprite_1_unk(positions[0], LEGACY_S16_WRAP_SUB(positions[9], 4),
+	sprite_fill_rect(positions[0], LEGACY_S16_WRAP_SUB(positions[9], 4),
 		line_width, 1, dialogarg2);
-	sprite_1_unk(positions[0], LEGACY_S16_WRAP_SUB(positions[11], 4),
+	sprite_fill_rect(positions[0], LEGACY_S16_WRAP_SUB(positions[11], 4),
 		line_width, 1, dialogarg2);
 
 	button_x[0] = positions[2];
@@ -125,9 +125,9 @@ void do_joy_restext(void)
 		if (next_selected == selected)
 			continue;
 		for (i = 0; i < 9U; i++)
-			sprite_1_unk(button_x[i], button_y[i], button_width,
+			sprite_fill_rect(button_x[i], button_y[i], button_width,
 				button_height, word_3EB90);
-		sprite_1_unk(button_x[next_selected], button_y[next_selected],
+		sprite_fill_rect(button_x[next_selected], button_y[next_selected],
 			button_width, button_height, dialog_fnt_colour);
 		selected = next_selected;
 		visited[next_selected] = 1;
@@ -136,7 +136,7 @@ void do_joy_restext(void)
 	for (i = 0; i < 9U; i++)
 		dos_joystick_set_enabled(
 			dos_joystick_is_enabled() & visited[i]);
-	sub_275C6();
+	sprite_pop_background();
 	if (dos_joystick_is_enabled() == 0)
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
 			DIALOG_SAVE_BACKGROUND, locate_text_res(mainresptr, "jox"),
@@ -296,10 +296,10 @@ legacy_u16 run_option_menu(void)
 	sprite_copy_2_to_1_2();
 	sprite_clear_1_color((legacy_u8)word_407FA);
 	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gstu"));
-	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), 6,
+	intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), 6,
 		dialog_fnt_colour, 0);
 	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gver"));
-	intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+	intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 		OPTION_MENU_VERSION_TEXT_Y,
 		dialog_fnt_colour, 0);
 

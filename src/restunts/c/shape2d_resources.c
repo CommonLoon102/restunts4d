@@ -303,7 +303,7 @@ struct SHAPE2D far* file_get_shape2d(legacy_u8 far* memchunk,
 	return (struct SHAPE2D far*)file_get_shape2d_bytes(memchunk, index);
 }
 
-void nopsub_326BA(legacy_u8 far* memchunk, legacy_u16 index, legacy_u32* result) {
+void file_get_shape2d_identifier(legacy_u8 far* memchunk, legacy_u16 index, legacy_u32* result) {
 	*result = LEGACY_READ_U32_LE(resource_file_identifier(memchunk, index));
 }
 
@@ -327,9 +327,9 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 		memshape = file_get_shape2d_bytes(memchunk, counter);
 		shape_header = (struct SHAPE2D far*)memshape;
 		membitmapptr = (legacy_s8 far*)memshape + SHAPE2D_HEADER_SIZE;
-		flag = shape_header->unknown[3];
+		flag = shape_header->plane_flags[3];
 		if ((flag & SHAPE2D_FLIP_FLAG_MASK) == 0) {
-			flag = shape_header->unknown[2] >> SHAPE2D_FLIP_FLAG_SHIFT;
+			flag = shape_header->plane_flags[2] >> SHAPE2D_FLIP_FLAG_SHIFT;
 			if (flag != 0) {
 				// The original does not merely skip an unknown flip type, it
 				// gives up on the whole resource, so the shapes after this
@@ -425,8 +425,8 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
 		shape_header = (struct SHAPE2D far*)memshape;
 
-		if (!(shape_header->unknown[3] & SHAPE2D_FLIP_FLAG_MASK)) {
-			val = (shape_header->unknown[2] >> SHAPE2D_FLIP_FLAG_SHIFT) &
+		if (!(shape_header->plane_flags[3] & SHAPE2D_FLIP_FLAG_MASK)) {
+			val = (shape_header->plane_flags[2] >> SHAPE2D_FLIP_FLAG_SHIFT) &
 				SHAPE2D_PATTERN_MASK;
 
 			if (val) {
@@ -517,7 +517,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 		if (length && length <= SHAPE2D_EXPANDED_PIXEL_LIMIT) {
 			mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
 
-			val = source_header->unknown[1] >> SHAPE2D_FLIP_FLAG_SHIFT;
+			val = source_header->plane_flags[1] >> SHAPE2D_FLIP_FLAG_SHIFT;
 			val |= val << DWORD_SECOND_BYTE_SHIFT;
 
 			for (j = 0; j < length * SHAPE2D_PLANAR_PLANE_COUNT; ++j) {
@@ -527,7 +527,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 			memchunkptr = srcshape + SHAPE2D_HEADER_SIZE;
 
 			for (j = 0; j < SHAPE2D_PLANAR_PLANE_COUNT; ++j) {
-				pat = source_header->unknown[j] & SHAPE2D_PATTERN_MASK;
+				pat = source_header->plane_flags[j] & SHAPE2D_PATTERN_MASK;
 
 				if (pat) {
 					mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;

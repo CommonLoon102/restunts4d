@@ -65,7 +65,7 @@ void run_opponent_menu(void)
 	resource_loaded = 0;
 	displayed_opponent = OPPONENT_MENU_NO_SELECTION;
 	blit_mode = MENU_BLIT_MODE_INITIAL;
-	sub_29772();
+	menu_reset_animation_timers();
 	mouse_draw_transparent_check();
 
 	for (;;) {
@@ -101,7 +101,7 @@ void run_opponent_menu(void)
 
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
 				opp_res, aScrn_0);
-			sub_34526(shape);
+			sprite_draw_palette_mapped(shape);
 			for (index = 0; index < OPPONENT_MENU_BUTTON_COUNT; index++) {
 				draw_button(locate_text_res((legacy_s8 far*)miscptr,
 					button_resource_ids[index]),
@@ -114,11 +114,11 @@ void run_opponent_menu(void)
 					word_407F8, 0);
 			}
 
-			sub_34526((struct SHAPE2D far*)
+			sprite_draw_palette_mapped((struct SHAPE2D far*)
 				oppresources[(legacy_u8)gameconfig.game_opponenttype]);
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
 				opp_res, aClip);
-			sub_34526(shape);
+			sprite_draw_palette_mapped(shape);
 			if (video_flag5_is0 != 0) {
 				sprite_clear_shape_alt(
 					render_window_sprite->sprite_bitmapptr, 0, 0);
@@ -132,7 +132,7 @@ void run_opponent_menu(void)
 				description = locate_text_res(
 					(legacy_s8 far*)miscptr, aRac);
 			font_set_fontdef2(fontnptr);
-			font_set_unk(0, dialog_fnt_colour);
+			font_set_colors(0, dialog_fnt_colour);
 			line_length = 0;
 			line_y = 0;
 			for (;;) {
@@ -146,7 +146,7 @@ void run_opponent_menu(void)
 					}
 					line_length = 0;
 					line_y = LEGACY_S16_WRAP_ADD(
-						line_y, fontdef_unk_0E);
+						line_y, font_glyph_height);
 				} else {
 					*(&resID_byte1 + line_length++) = (legacy_s8)character;
 				}
@@ -162,10 +162,10 @@ void run_opponent_menu(void)
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = MENU_BLIT_MODE_REFRESH;
 			(void)timer_get_delta_alt();
-			sub_29772();
+			menu_reset_animation_timers();
 		}
 
-		elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
+		elapsed = (legacy_u16)menu_animate_button_highlight(selected,
 			opponentmenu_buttons, word_407CE, word_407D0);
 		key = (legacy_u16)input_checking(
 			LEGACY_S16_FROM_BITS(elapsed));

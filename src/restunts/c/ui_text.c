@@ -18,12 +18,12 @@ legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 #define HUNDREDTHS_PER_SECOND 100U
 #define TIME_FIELD_WIDTH 2
 
-legacy_s16 font_op2_alt(const legacy_s8* text)
+legacy_s16 font_centered_text_x(const legacy_s8* text)
 {
 	legacy_s16 centered;
 
 	centered = LEGACY_S16_WRAP_NEGATE(
-		LEGACY_S16_WRAP_SUB(font_op2(text), UI_SCREEN_WIDTH));
+		LEGACY_S16_WRAP_SUB(font_text_width(text), UI_SCREEN_WIDTH));
 	return LEGACY_S16_DIV_OR_ZERO(centered, UI_HORIZONTAL_CENTER_DIVISOR);
 }
 
@@ -155,33 +155,33 @@ void parse_filepath_separators(legacy_s8* destination, const legacy_s8* path)
 	destination[output_index - 1U] = 0;
 }
 
-void font_set_unk(legacy_s16 color, legacy_s16 unknown)
+void font_set_colors(legacy_s16 color, legacy_s16 background_color)
 {
 	legacy_u8 far* font_definition;
 
 	font_definition = active_font_definition;
 	font_definition[0] = (legacy_u8)color;
 	font_definition[1] = 0;
-	font_definition[2] = (legacy_u8)unknown;
+	font_definition[2] = (legacy_u8)background_color;
 	font_definition[3] = 0;
 }
 
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 	legacy_s16 shadow_color)
 {
-	word_42248.left = LEGACY_S16_FROM_BITS((legacy_u16)x);
-	word_42248.right = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_ADD(x, font_op2(text)), 1);
-	word_42248.top = LEGACY_S16_FROM_BITS((legacy_u16)y);
-	word_42248.bottom = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_ADD(y, fontdef_unk_0E), 1);
-	font_set_unk(shadow_color, 0);
+	intro_text_bounds.left = LEGACY_S16_FROM_BITS((legacy_u16)x);
+	intro_text_bounds.right = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(x, font_text_width(text)), 1);
+	intro_text_bounds.top = LEGACY_S16_FROM_BITS((legacy_u16)y);
+	intro_text_bounds.bottom = LEGACY_S16_WRAP_ADD(
+		LEGACY_S16_WRAP_ADD(y, font_glyph_height), 1);
+	font_set_colors(shadow_color, 0);
 	font_draw_text(text, LEGACY_S16_WRAP_ADD(x, 1),
 		LEGACY_S16_WRAP_ADD(y, 1));
-	font_set_unk(color, 0);
+	font_set_colors(color, 0);
 	font_draw_text(text, LEGACY_S16_FROM_BITS((legacy_u16)x),
 		LEGACY_S16_FROM_BITS((legacy_u16)y));
-	return &word_42248;
+	return &intro_text_bounds;
 }
 
 static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, legacy_s16 bounded)
@@ -216,12 +216,12 @@ static legacy_s16 font_measure(const legacy_s8* text, legacy_u16 remaining, lega
 	return LEGACY_S16_FROM_BITS(total_width);
 }
 
-legacy_s16 font_op(const legacy_s8* text, legacy_s16 glyph_count)
+legacy_s16 font_prefix_width(const legacy_s8* text, legacy_s16 glyph_count)
 {
 	return font_measure(text, (legacy_u16)glyph_count, 1);
 }
 
-legacy_s16 font_op2(const legacy_s8* text)
+legacy_s16 font_text_width(const legacy_s8* text)
 {
 	return font_measure(text, 0, 0);
 }

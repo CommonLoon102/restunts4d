@@ -52,12 +52,12 @@ legacy_u16 shape2d_get_height(const struct SHAPE2D far* shape)
 	return shape->height;
 }
 
-legacy_u16 shape2d_get_unk1(const struct SHAPE2D far* shape)
+legacy_u16 shape2d_get_anchor_x(const struct SHAPE2D far* shape)
 {
 	return shape->centre_x;
 }
 
-legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape)
+legacy_u16 shape2d_get_anchor_y(const struct SHAPE2D far* shape)
 {
 	return shape->centre_y;
 }
@@ -66,12 +66,12 @@ legacy_u16 shape2d_get_unk2(const struct SHAPE2D far* shape)
    blit origin is the requested point minus that anchor. */
 legacy_u16 shape2d_anchored_x(const struct SHAPE2D far* shape, legacy_s16 x)
 {
-	return LEGACY_U16_WRAP_SUB(x, shape2d_get_unk1(shape));
+	return LEGACY_U16_WRAP_SUB(x, shape2d_get_anchor_x(shape));
 }
 
 legacy_u16 shape2d_anchored_y(const struct SHAPE2D far* shape, legacy_s16 y)
 {
-	return LEGACY_U16_WRAP_SUB(y, shape2d_get_unk2(shape));
+	return LEGACY_U16_WRAP_SUB(y, shape2d_get_anchor_y(shape));
 }
 
 legacy_u16 shape2d_get_pos_x(const struct SHAPE2D far* shape)
@@ -107,7 +107,7 @@ void sprite_set_1_size(legacy_u16 left, legacy_u16 right,
 	sprite1.sprite_height = height;
 }
 
-void nopsub_3320E(struct SPRITE far* sprite, legacy_u16 left,
+void sprite_set_clip_bounds(struct SPRITE far* sprite, legacy_u16 left,
 	legacy_u16 right, legacy_u16 top, legacy_u16 height)
 {
 	sprite->sprite_left2 = left;
@@ -121,7 +121,7 @@ void nopsub_3320E(struct SPRITE far* sprite, legacy_u16 left,
 		sprite_set_1_size(left, right, top, height);
 }
 
-void sprite_1_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
+void sprite_fill_rect(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
 {
 	legacy_u8 far* bitmap;
 	legacy_u16 offset;
@@ -191,7 +191,7 @@ static legacy_s16 sprite_clip_rectangle(legacy_s16 x, legacy_s16 y,
 	return 1;
 }
 
-void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
+void sprite_fill_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
 {
 	legacy_s16 clipped_x;
 	legacy_s16 clipped_y;
@@ -201,10 +201,10 @@ void sprite_1_unk2(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 heig
 	if (!sprite_clip_rectangle(x, y, width, height, &clipped_x,
 		&clipped_y, &clipped_width, &clipped_height))
 		return;
-	sprite_1_unk(clipped_x, clipped_y, clipped_width, clipped_height, color);
+	sprite_fill_rect(clipped_x, clipped_y, clipped_width, clipped_height, color);
 }
 
-void sprite_1_unk4(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legacy_s16 y2, legacy_s16 color)
+void sprite_draw_rect_outline(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legacy_s16 y2, legacy_s16 color)
 {
 	legacy_s16 width;
 	legacy_s16 height;
@@ -213,12 +213,12 @@ void sprite_1_unk4(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legacy_s16 y2, l
 		LEGACY_S16_WRAP_SUB(x2, x1), 1);
 	height = LEGACY_S16_WRAP_SUB(y2, y1);
 	if (width > 0) {
-		sprite_1_unk2(x1, y1, width, 1, color);
-		sprite_1_unk2(x1, y2, width, 1, color);
+		sprite_fill_rect_clipped(x1, y1, width, 1, color);
+		sprite_fill_rect_clipped(x1, y2, width, 1, color);
 	}
 	if (height > 0) {
-		sprite_1_unk2(x1, y1, 1, height, color);
-		sprite_1_unk2(x2, y1, 1, height, color);
+		sprite_fill_rect_clipped(x1, y1, 1, height, color);
+		sprite_fill_rect_clipped(x2, y1, 1, height, color);
 	}
 }
 
@@ -326,7 +326,7 @@ void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y)
 	font_draw_text_impl(text, x, y, 0);
 }
 
-void sub_345BC(const legacy_s8* text, legacy_s16 x, legacy_s16 y)
+void font_draw_text_opaque(const legacy_s8* text, legacy_s16 x, legacy_s16 y)
 {
 	font_draw_text_impl(text, x, y, 1);
 }
@@ -397,8 +397,8 @@ static void draw_pattern_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 
 	legacy_u16 swapped_pattern;
 
 	if (((legacy_u16)y & 1U) == 0) {
-		word_4031E = (legacy_u16)((word_4031E << LEGACY_BYTE_BITS) |
-			(word_4031E >> LEGACY_BYTE_BITS));
+		raster_fill_pattern = (legacy_u16)((raster_fill_pattern << LEGACY_BYTE_BITS) |
+			(raster_fill_pattern >> LEGACY_BYTE_BITS));
 	}
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
 		dos_memory_pointer_segment(sprite1.sprite_bitmapptr), 0);
@@ -410,9 +410,9 @@ static void draw_pattern_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 
 	do {
 		left = (legacy_u16)*x1arr++;
 		right = (legacy_u16)*x2arr++;
-		pattern = (legacy_u8)word_4031E;
+		pattern = (legacy_u8)raster_fill_pattern;
 		pattern = shape2d_rotate_left_8(pattern, (legacy_u8)left);
-		alternate_color = (legacy_u8)word_40320;
+		alternate_color = (legacy_u8)raster_alternate_color;
 		width = LEGACY_U16_WRAP_ADD(
 			LEGACY_U16_WRAP_SUB(right, left), 1U);
 		if (width != 0 && width <= LEGACY_U16_SIGN_BIT) {
@@ -436,29 +436,29 @@ static void draw_pattern_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 
 		}
 		line_entry = LEGACY_U16_WRAP_ADD(line_entry, 2U);
 		swapped_pattern = (legacy_u16)(
-			(word_4031E << LEGACY_BYTE_BITS) |
-			(word_4031E >> LEGACY_BYTE_BITS));
-		word_4031E = swapped_pattern;
+			(raster_fill_pattern << LEGACY_BYTE_BITS) |
+			(raster_fill_pattern >> LEGACY_BYTE_BITS));
+		raster_fill_pattern = swapped_pattern;
 		old_line_count = line_count;
 		line_count = LEGACY_U16_WRAP_SUB(line_count, 1U);
 	} while (old_line_count != LEGACY_U16_SIGN_BIT &&
 		LEGACY_S16_FROM_BITS(line_count) > 0);
 }
 
-void draw_unknown_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
+void draw_two_color_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	legacy_u16 numlines, legacy_u16 color)
 {
 	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 1);
 }
 
-void nopsub_33330(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
+void draw_two_color_pattern_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	legacy_u16 numlines, legacy_u16 color, legacy_u16 alternate_color,
 	legacy_u16 pattern)
 {
-	word_4031E = (legacy_u16)pattern;
-	word_40320 = LEGACY_U16_REPLACE_LOW_BYTE(word_40320,
+	raster_fill_pattern = (legacy_u16)pattern;
+	raster_alternate_color = LEGACY_U16_REPLACE_LOW_BYTE(raster_alternate_color,
 		alternate_color);
-	draw_unknown_lines(x1arr, x2arr, y, numlines, color);
+	draw_two_color_lines(x1arr, x2arr, y, numlines, color);
 }
 
 void draw_patterned_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
@@ -576,7 +576,7 @@ void putpixel_line1_maybe(const legacy_u16* line)
 	}
 }
 
-void sprite_1_unk3(struct SHAPE2D far* shape, legacy_u16 phase)
+void sprite_draw_dissolve_phase(struct SHAPE2D far* shape, legacy_u16 phase)
 {
 	static const legacy_u8 row_order[12] = {
 		11, 5, 8, 2, 10, 4, 7, 1, 9, 3, 6, 0
@@ -667,7 +667,7 @@ void sprite_1_unk3(struct SHAPE2D far* shape, legacy_u16 phase)
 	}
 }
 
-void sub_34526(struct SHAPE2D far* shape)
+void sprite_draw_palette_mapped(struct SHAPE2D far* shape)
 {
 	legacy_u8 far* bitmap;
 	legacy_u8 far* source_ptr;
@@ -783,7 +783,7 @@ void sprite_clear_shape(struct SHAPE2D far* shape)
 		shape2d_get_pos_y(shape));
 }
 
-void nopsub_34736(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void sprite_capture_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_clear_shape_impl(shape,
 		shape2d_anchored_x(shape, x),
@@ -832,9 +832,9 @@ static void shape2d_scale_transparent_impl(struct SHAPE2D far* shape,
 		return;
 	shape_segment = dos_memory_pointer_segment(shape);
 	x = LEGACY_U16_WRAP_SUB(x, shape2d_scaled_anchor(
-		shape2d_get_unk1(shape), scale));
+		shape2d_get_anchor_x(shape), scale));
 	y = LEGACY_U16_WRAP_SUB(y, shape2d_scaled_anchor(
-		shape2d_get_unk2(shape), scale));
+		shape2d_get_anchor_y(shape), scale));
 	source_width = shape2d_get_width(shape);
 	product = (legacy_u32)shape2d_get_height(shape) * scale;
 	scaled_height = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
@@ -959,7 +959,7 @@ void shape_op_explosion(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 
 		(legacy_u16)x, (legacy_u16)y, 1);
 }
 
-void sub_35E08(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_draw_scaled_transparent(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_scale_transparent_impl(shape, (legacy_u16)scale,
 		(legacy_u16)x, (legacy_u16)y, 0);
@@ -1037,7 +1037,7 @@ static void sprite_shape_to_1_at_anchor(struct SHAPE2D far* shape,
 		operation);
 }
 
-void nopsub_33D0C(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_copy_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_shape_to_1_at_anchor(shape, x, y, SHAPE2D_RASTER_COPY);
 }
@@ -1048,7 +1048,7 @@ void putpixel_iconMask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 		SHAPE2D_RASTER_AND);
 }
 
-void nopsub_339FA(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_mask_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_shape_to_1_at_anchor(shape, x, y, SHAPE2D_RASTER_AND);
 }
@@ -1059,7 +1059,7 @@ void putpixel_iconFillings(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y
 		SHAPE2D_RASTER_OR);
 }
 
-void putpixel_single_maybe(legacy_s16 x, legacy_s16 y, legacy_s16 color)
+void sprite_putpixel_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 color)
 {
 	legacy_u8 far* bitmap;
 	legacy_u16 x_bits;
@@ -1090,7 +1090,7 @@ void set_fontdefseg(void far* data)
 	active_font_definition = (legacy_u8 far*)data;
 }
 
-void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
+void sprite_xor_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color)
 {
 	legacy_u8 far* bitmap;
 	legacy_s16 clipped_x;
@@ -1131,7 +1131,7 @@ void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, 
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
-void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legacy_s16 height,
+void sprite_copy_rect_shifted(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 destination_shift)
 {
 	legacy_u8 far* source_bitmap;
@@ -1190,7 +1190,7 @@ void sub_35C4E(legacy_s16 source_x, legacy_s16 source_y, legacy_s16 width, legac
 		LEGACY_S16_FROM_BITS(row_count) > 0);
 }
 
-void sub_35DE6(legacy_s16 destination_index, legacy_s16 count, void far* source_data)
+void sprite_set_palette_map(legacy_s16 destination_index, legacy_s16 count, void far* source_data)
 {
 	legacy_u8 far* source_ptr;
 	legacy_u8 far* destination_ptr;

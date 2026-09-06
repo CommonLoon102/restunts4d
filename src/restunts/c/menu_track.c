@@ -92,7 +92,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 		strcpy(&resID_byte1, "'");
 		strcat(&resID_byte1, gameconfig.game_trackname);
 		strcat(&resID_byte1, "'");
-		intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 			TRACK_MENU_NAME_Y,
 			dialog_fnt_colour, 0);
 		if (highscore_write_a(0) == 0) {
@@ -102,12 +102,12 @@ void run_tracks_menu(legacy_s16 reload_track)
 				copy_string(&resID_byte1,
 					locate_text_res(mainresptr, "hs0"));
 				intro_draw_text(&resID_byte1,
-					font_op2_alt(&resID_byte1),
+					font_centered_text_x(&resID_byte1),
 					TRACK_MENU_HIGHSCORE_LABEL_Y,
 					dialog_fnt_colour, 0);
 				font_set_fontdef2(fontnptr);
 				print_highscore_entry(0, text_offsets);
-				font_set_unk(0, 0);
+				font_set_colors(0, 0);
 				font_draw_text(&resID_byte1 + text_offsets[0],
 					TRACK_MENU_HIGHSCORE_NAME_X,
 					TRACK_MENU_HIGHSCORE_ENTRY_Y);
@@ -149,10 +149,10 @@ void run_tracks_menu(legacy_s16 reload_track)
 					LEGACY_S8_FROM_BITS(blit_mode));
 				blit_mode = MENU_BLIT_MODE_REFRESH;
 				sprite_copy_2_to_1_2();
-				sub_29772();
+				menu_reset_animation_timers();
 			}
 
-			elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
+			elapsed = (legacy_u16)menu_animate_button_highlight(selected,
 				trackmenu_buttons, word_407CE, word_407D0);
 			menu_update_idle_counter(elapsed, TRACK_MENU_IDLE_LIMIT_TICKS);
 			key = (legacy_u16)input_checking(

@@ -520,7 +520,7 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 
 	half_height = (legacy_u16)(effective_height >> 1);
 	if (half_height == 0) {
-		putpixel_single_maybe(LEGACY_S16_FROM_BITS(x_bits),
+		sprite_putpixel_clipped(LEGACY_S16_FROM_BITS(x_bits),
 			LEGACY_S16_FROM_BITS(y_bits), color);
 		return;
 	}
@@ -617,11 +617,11 @@ void preRender_wheel_helper4(legacy_u16 arg_color, legacy_u16 arg_vertlinecount,
 
 void preRender_unk(legacy_u16 unk, legacy_u16 arg_color, legacy_u16 unk2,
 	legacy_u16 arg_vertlinecount, const struct POINT2D* arg_vertlines) {
-	spritefunc = &draw_unknown_lines;
+	spritefunc = &draw_two_color_lines;
 	imagefunc = &preRender_line;
 
-	word_4031E = unk;
-	word_40320 = unk2;
+	raster_fill_pattern = unk;
+	raster_alternate_color = unk2;
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }
 
@@ -631,7 +631,7 @@ void preRender_patterned(legacy_u16 unk, legacy_u16 arg_color,
 
 	spritefunc = &draw_patterned_lines;
 	imagefunc = &preRender_line;
-	word_4031E = unk;
+	raster_fill_pattern = unk;
 
 	preRender_default_impl(arg_color, arg_vertlinecount, arg_vertlines, 1);
 }

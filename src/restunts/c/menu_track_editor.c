@@ -469,7 +469,7 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y,
 	legacy_u8 width, legacy_u8 height)
 {
-	sub_3702E(x, LEGACY_S16_WRAP_SUB(y, 1),
+	sprite_xor_rect_outline(x, LEGACY_S16_WRAP_SUB(y, 1),
 		LEGACY_S16_WRAP_ADD(x, width),
 		LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(y, height), 1),
 		word_407F2);
@@ -904,18 +904,18 @@ void load_tracks_menu_shapes(void)
 
 		if (hovered_tile != previous_hovered_tile) {
 			mouse_draw_opaque_check();
-			font_set_unk(dialog_fnt_colour, 0);
+			font_set_colors(dialog_fnt_colour, 0);
 			resource_id = &resID_byte1;
 			__fmemcpy(resource_id, text_name_resource +
 				(legacy_u16)hovered_tile * 3U, 3U);
 			resource_id[3] = 0;
 			text = locate_text_res(text_resource, resource_id);
 			copy_string(resource_id, text);
-			label_width = (legacy_s16)font_op2(resource_id);
-			sub_345BC(resource_id, TRACK_EDITOR_MAP_LEFT,
+			label_width = (legacy_s16)font_text_width(resource_id);
+			font_draw_text_opaque(resource_id, TRACK_EDITOR_MAP_LEFT,
 				TRACK_EDITOR_LABEL_Y);
 			if (previous_label_width > label_width) {
-				sprite_1_unk(LEGACY_S16_WRAP_ADD(label_width,
+				sprite_fill_rect(LEGACY_S16_WRAP_ADD(label_width,
 					TRACK_EDITOR_MAP_LEFT), TRACK_EDITOR_LABEL_Y,
 					LEGACY_S16_WRAP_SUB(previous_label_width,
 						label_width), 8, 0);

@@ -131,18 +131,18 @@ void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape)
 	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_AND);
 }
 
-void nopsub_33AC0(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_mask_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle_at_anchor(shape, x, y, SHAPE2D_RASTER_AND);
 }
 
-void nopsub_33AE4(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_mask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
 		SHAPE2D_RASTER_AND);
 }
 
-void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
+void shape2d_rle_or_far_pointer(legacy_u16 offset, legacy_u16 segment)
 {
 	struct SHAPE2D far* shape;
 
@@ -150,23 +150,23 @@ void shape2d_op_unk4(legacy_u16 offset, legacy_u16 segment)
 	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_OR);
 }
 
-void shape2d_op_unk5(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_copy(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle(shape, (legacy_u16)x, (legacy_u16)y,
 		SHAPE2D_RASTER_COPY);
 }
 
-void shape2d_op_unk(struct SHAPE2D far* shape)
+void shape2d_rle_copy_at_position(struct SHAPE2D far* shape)
 {
 	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_COPY);
 }
 
-void nopsub_33DBE(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_copy_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle_at_anchor(shape, x, y, SHAPE2D_RASTER_COPY);
 }
 
-struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16 unk) {
+struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16 unused_flags) {
 	legacy_s16 pages, i;
 	legacy_s8* wnd;
 	legacy_s8* nextwnd;
@@ -178,7 +178,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	legacy_u8 far* farlineofsptr;
 	legacy_u16 wnddefseg;
 
-	(void)unk;
+	(void)unused_flags;
 
 	wnddefseg = dos_memory_pointer_segment(&wnd_defs);
 
@@ -288,7 +288,7 @@ void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
 	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
 }
 
-legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom)
+legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom)
 {
 	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	struct SPRITE far* window;
@@ -308,31 +308,31 @@ legacy_s16 sub_274B0(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s
 	mouse_draw_opaque_check();
 	window = sprite_make_wnd((legacy_u16)width, (legacy_u16)height,
 		SPRITE_WINDOW_LEGACY_ARGUMENT);
-	index = byte_3B8FC;
+	index = sprite_background_stack_depth;
 	sprite_ptrs[index] = window;
-	word_4646A[index] = left;
-	word_46486[index] = top;
+	sprite_background_saved_x[index] = left;
+	sprite_background_saved_y[index] = top;
 	sprite_copy_both_to_arg(saved_sprites);
 	fmemcpy(trackdata12 + index * sizeof(saved_sprites),
 		saved_sprites, sizeof(saved_sprites));
 	sprite_copy_2_to_1();
 	sprite_clear_shape_alt(window->sprite_bitmapptr, left, top);
-	byte_3B8FC++;
+	sprite_background_stack_depth++;
 	return 1;
 }
 
-void sub_275C6(void)
+void sprite_pop_background(void)
 {
 	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	legacy_u16 index;
 
-	if (byte_3B8FC == 0)
+	if (sprite_background_stack_depth == 0)
 		return;
-	byte_3B8FC--;
-	index = byte_3B8FC;
+	sprite_background_stack_depth--;
+	index = sprite_background_stack_depth;
 	mouse_draw_opaque_check();
 	sprite_shape_to_1(sprite_ptrs[index]->sprite_bitmapptr,
-		word_4646A[index], word_46486[index]);
+		sprite_background_saved_x[index], sprite_background_saved_y[index]);
 	fmemcpy(saved_sprites,
 		trackdata12 + index * sizeof(saved_sprites),
 		sizeof(saved_sprites));
@@ -594,19 +594,19 @@ static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
 	} while (1);
 }
 
-void shape2d_op_unk2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_copy_clipped(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle_clipped(shape, (legacy_u16)x, (legacy_u16)y);
 }
 
-void shape2d_op_unk3(struct SHAPE2D far* shape)
+void shape2d_rle_copy_position_clipped(struct SHAPE2D far* shape)
 {
 	shape2d_render_rle_clipped(shape,
 		shape2d_get_pos_x(shape),
 		shape2d_get_pos_y(shape));
 }
 
-void nopsub_33E90(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void shape2d_rle_copy_anchor_clipped(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	shape2d_render_rle_clipped(shape,
 		shape2d_anchored_x(shape, x),
@@ -677,7 +677,7 @@ void sprite_putimage(struct SHAPE2D far* shape)
 		shape2d_get_pos_y(shape), SHAPE2D_RASTER_COPY);
 }
 
-void nopsub_33B98(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void sprite_putimage_at_shape_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_COPY);
 }

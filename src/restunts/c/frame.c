@@ -335,7 +335,7 @@ void init_rect_arrays(void) {
 
 void font_set_fontdef2(void far* data) {
 	set_fontdefseg(data);
-	fontdef_unk_0E = LEGACY_S16_FROM_BITS(
+	font_glyph_height = LEGACY_S16_FROM_BITS(
 		LEGACY_READ_U16_LE((legacy_u8 far*)data +
 			FRAME_FONT_HEIGHT_OFFSET));
 }

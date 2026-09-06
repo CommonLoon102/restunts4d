@@ -17,7 +17,7 @@ static legacy_s16 menu_animation_counter;
 static legacy_s16 menu_animation_state;
 legacy_s16 menu_idle_counter;
 
-void sub_29772(void)
+void menu_reset_animation_timers(void)
 {
 	menu_animation_counter = 0;
 	menu_animation_state = 0;
@@ -33,7 +33,7 @@ void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit)
 	}
 }
 
-legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
+legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 	const struct BUTTON_AREA* buttons,
 	legacy_s16 second_state, legacy_s16 first_state)
 {
@@ -54,7 +54,7 @@ legacy_s16 mouse_timer_sprite_unk(legacy_s16 item_index,
 	if (menu_animation_state != selected_state) {
 		menu_animation_state = selected_state;
 		mouse_draw_opaque_check();
-		sprite_1_unk4(buttons[item_index].x1, buttons[item_index].y1,
+		sprite_draw_rect_outline(buttons[item_index].x1, buttons[item_index].y1,
 			buttons[item_index].x2, buttons[item_index].y2,
 			selected_state);
 		mouse_draw_transparent_check();
@@ -76,14 +76,14 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	legacy_s16 horizontal_offset;
 	legacy_s16 remaining;
 
-	sprite_1_unk(x, y, width, height, fill_color);
+	sprite_fill_rect(x, y, width, height, fill_color);
 	draw_beveled_border(x, y, width, height,
 		top_color, top_color, bottom_color, bottom_color);
 
 	if (text == 0)
 		return;
 
-	font_set_unk(font_color, 0);
+	font_set_colors(font_color, 0);
 	copied_text = &resID_byte1;
 	copy_string(copied_text, text);
 	length = (legacy_u16)strlen(copied_text);
@@ -109,7 +109,7 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 		}
 
 		line[destination_index] = 0;
-		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
+		remaining = LEGACY_S16_WRAP_SUB(width, font_text_width(line));
 		horizontal_offset = LEGACY_S16_DIV_OR_ZERO(
 			remaining, BUTTON_CENTER_DIVISOR);
 		font_draw_text(line,

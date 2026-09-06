@@ -105,11 +105,11 @@ struct RECTANGLE* hiscore_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y,
 {
 	word_42250.left = LEGACY_S16_WRAP_SUB(x, 1);
 	word_42250.right = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_ADD(x, font_op2(text)), 1);
+		LEGACY_S16_WRAP_ADD(x, font_text_width(text)), 1);
 	word_42250.top = LEGACY_S16_WRAP_SUB(y, 1);
 	word_42250.bottom = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_ADD(y, fontdef_unk_0E), 1);
-	font_set_unk(shadow_color, 0);
+		LEGACY_S16_WRAP_ADD(y, font_glyph_height), 1);
+	font_set_colors(shadow_color, 0);
 	font_draw_text(text, LEGACY_S16_WRAP_ADD(x, 1),
 		LEGACY_S16_WRAP_ADD(y, 1));
 	font_draw_text(text, LEGACY_S16_WRAP_SUB(x, 1),
@@ -118,7 +118,7 @@ struct RECTANGLE* hiscore_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y,
 		LEGACY_S16_WRAP_SUB(y, 1));
 	font_draw_text(text, LEGACY_S16_WRAP_SUB(x, 1),
 		LEGACY_S16_WRAP_SUB(y, 1));
-	font_set_unk(color, 0);
+	font_set_colors(color, 0);
 	font_draw_text(text, LEGACY_S16_FROM_BITS((legacy_u16)x),
 		LEGACY_S16_FROM_BITS((legacy_u16)y));
 	return &word_42250;
@@ -257,7 +257,7 @@ void highscore_text_unk(void)
 	strcat(&resID_byte1, " '");
 	strcat(&resID_byte1, gameconfig.game_trackname);
 	strcat(&resID_byte1, "'");
-	hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+	hiscore_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 		HIGHSCORE_TITLE_Y, dialog_fnt_colour, 0);
 
 	text = locate_text_res(mainresptr, "hs2");
@@ -288,7 +288,7 @@ void highscore_text_unk(void)
 			LEGACY_U16_WRAP_MUL(entry, HIGHSCORE_ROW_HEIGHT),
 			HIGHSCORE_FIRST_ROW_Y);
 		color = entry == (legacy_u8)ranking_highlight ? dialogarg2 : 0;
-		font_set_unk(color, 0);
+		font_set_colors(color, 0);
 		font_draw_text(&resID_byte1 + text_offsets[0],
 			HIGHSCORE_PLAYER_COLUMN_X, row);
 		font_draw_text(&resID_byte1 + text_offsets[1],
@@ -389,7 +389,7 @@ static void end_hiscore_append_text(legacy_s8 far* resource, legacy_s8* text_id)
 
 static void end_hiscore_draw_current_text(legacy_s16* y)
 {
-	hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), *y,
+	hiscore_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), *y,
 		dialog_fnt_colour, 0);
 	*y = LEGACY_S16_WRAP_ADD(*y, HIGHSCORE_ROW_HEIGHT);
 }
@@ -407,7 +407,7 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 	mouse_draw_opaque_check();
 	if (video_flag5_is0 != 0) {
 		sprite_set_1_from_argptr(animation_sprite);
-		shape2d_op_unk5(frame_shape, 0, 0);
+		shape2d_rle_copy(frame_shape, 0, 0);
 		sprite_copy_2_to_1_2();
 		sprite_set_1_size(animation_x,
 			LEGACY_S16_WRAP_ADD(animation_x,
@@ -420,10 +420,10 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 			animation_x, animation_y);
 		sprite_copy_2_to_1_2();
 	} else {
-		shape2d_op_unk5(frame_shape, animation_x, animation_y);
+		shape2d_rle_copy(frame_shape, animation_x, animation_y);
 	}
 	if (draw_direct_copy != 0)
-		shape2d_op_unk5(frame_shape, animation_x, animation_y);
+		shape2d_rle_copy(frame_shape, animation_x, animation_y);
 	mouse_draw_transparent_check();
 }
 
@@ -506,7 +506,7 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 			}
 
 			word[word_length] = 0;
-			word_width = (legacy_s16)font_op2(word);
+			word_width = (legacy_s16)font_text_width(word);
 			if (LEGACY_S16_WRAP_ADD(word_width, line_width) <
 				LEGACY_S16_WRAP_SUB(animation_x,
 					END_SCREEN_TEXT_RIGHT_MARGIN) &&
@@ -531,7 +531,7 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 					(&resID_byte1)[output_length++] = word[copy_index];
 				}
 				(&resID_byte1)[output_length] = 0;
-				line_width = (legacy_s16)font_op2(&resID_byte1);
+				line_width = (legacy_s16)font_text_width(&resID_byte1);
 			}
 
 			word_length = 1;
@@ -705,7 +705,7 @@ legacy_u16 end_hiscore(void)
 		print_int_as_string_maybe(number, gState_jumpCount, 0,
 			END_SCREEN_NUMBER_WIDTH);
 		strcat(&resID_byte1, number);
-		hiscore_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+		hiscore_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 			text_y, dialog_fnt_colour, 0);
 	}
 
@@ -845,7 +845,7 @@ legacy_u16 end_hiscore(void)
 			if (score_status == -1) {
 				end_hiscore_set_text(misc_resource, aHna);
 				hiscore_draw_text(&resID_byte1,
-					font_op2_alt(&resID_byte1),
+					font_centered_text_x(&resID_byte1),
 					END_SCREEN_NO_SCORE_MESSAGE_Y,
 					dialog_fnt_colour, 0);
 			} else {
@@ -877,10 +877,10 @@ legacy_u16 end_hiscore(void)
 			END_SCREEN_ANIMATION_BORDER_GROWTH),
 		dialog_fnt_colour, 0, word_407D2);
 	aOp01[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
-	shape2d_op_unk5((struct SHAPE2D far*)locate_shape_fatal(
+	shape2d_rle_copy((struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01), animation_x, animation_y);
 	previous_animation_frame = animation_frame;
-	font_set_unk(0, 0);
+	font_set_colors(0, 0);
 	end_hiscore_draw_opponent_text(opponent_resource, outcome,
 		text_prefix, animation_x);
 	evaluation_screen = 0;
@@ -896,7 +896,7 @@ legacy_u16 end_hiscore(void)
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
 	blit_mode = MENU_BLIT_MODE_REFRESH;
-	sub_29772();
+	menu_reset_animation_timers();
 	check_input();
 	sprite_copy_2_to_1_2();
 	for (i = 0; i < END_SCREEN_MENU_AREA_COUNT; i++) {
@@ -908,7 +908,7 @@ legacy_u16 end_hiscore(void)
 	text_resource_count = outcome == END_SCREEN_OUTCOME_NONE ?
 		1U : END_SCREEN_TEXT_VARIANT_COUNT;
 	for (;;) {
-		delta = (legacy_s16)mouse_timer_sprite_unk(
+		delta = (legacy_s16)menu_animate_button_highlight(
 			END_SCREEN_BUTTON_COUNT, menu_areas,
 			word_407CE, word_407D0);
 		end_hiscore_update_animation(delta, &animation_timer,
@@ -936,7 +936,7 @@ legacy_u16 end_hiscore(void)
 	} while (0);
 	selected = 1;
 	previous_selection = 1;
-	sub_29772();
+	menu_reset_animation_timers();
 	sprite_copy_wnd_to_1();
 	if (opponent_active == 0 || score_status == -1) {
 		menu_offset = END_SCREEN_MENU_OFFSET_WITHOUT_FIRST_BUTTON;
@@ -991,10 +991,10 @@ legacy_u16 end_hiscore(void)
 		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		mouse_draw_transparent_check();
 		(void)timer_get_delta_alt();
-		sub_29772();
+		menu_reset_animation_timers();
 	}
 
-		delta = (legacy_s16)mouse_timer_sprite_unk(selected, button_areas,
+		delta = (legacy_s16)menu_animate_button_highlight(selected, button_areas,
 			word_407CE, word_407D0);
 		if (evaluation_screen == 0 &&
 			outcome != END_SCREEN_OUTCOME_NONE) {

@@ -236,7 +236,7 @@ legacy_s8 load_intro_resources(void)
 			break;
 		mouse_draw_opaque_check();
 		sprite_putimage_and_alt(arrow_shape, arrow_x, arrow_y);
-		sprite_1_unk2(LEGACY_S16_WRAP_ADD(arrow_width, arrow_x),
+		sprite_fill_rect_clipped(LEGACY_S16_WRAP_ADD(arrow_width, arrow_x),
 			arrow_y, CREDITS_ARROW_ERASE_WIDTH, arrow_height, 0);
 		mouse_draw_transparent_check();
 		input = (legacy_s16)input_do_checking(frame_elapsed);

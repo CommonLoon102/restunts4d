@@ -997,7 +997,7 @@ void get_a_poly_info(void)
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == 5U) {
-			putpixel_single_maybe(
+			sprite_putpixel_clipped(
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 				material_color);

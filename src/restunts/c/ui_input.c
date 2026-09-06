@@ -75,7 +75,7 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 		result = input_do_checking((legacy_s16)timer_get_delta_alt());
 		if (result != 0)
 			break;
-		sprite_1_unk3(sprite->sprite_bitmapptr, phase);
+		sprite_draw_dissolve_phase(sprite->sprite_bitmapptr, phase);
 	}
 	if (result != 0) {
 		sprite_copy_2_to_1_2();
@@ -307,17 +307,17 @@ void read_line_helper(void)
 		cursor = length;
 		text_edit_cursor = cursor;
 	}
-	cursor_width = (legacy_u16)font_op(text_edit_buffer + cursor, 1);
+	cursor_width = (legacy_u16)font_prefix_width(text_edit_buffer + cursor, 1);
 	if (cursor_width == 0)
-		cursor_width = (legacy_u16)font_op2(space);
-	x = LEGACY_U16_WRAP_ADD(font_op(text_edit_buffer, cursor), text_edit_x);
+		cursor_width = (legacy_u16)font_text_width(space);
+	x = LEGACY_U16_WRAP_ADD(font_prefix_width(text_edit_buffer, cursor), text_edit_x);
 	font_definition = active_font_definition;
 	y = LEGACY_U16_WRAP_ADD(
 		audioresource_get_word(font_definition +
 			FONT_DEFINITION_HEIGHT_OFFSET), text_edit_y);
 	y = LEGACY_U16_WRAP_SUB(y, text_edit_cursor_width);
 	color = audioresource_get_word(font_definition);
-	sub_35B76(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
+	sprite_xor_rect_clipped(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
 		LEGACY_S16_FROM_BITS(cursor_width),
 		LEGACY_S16_FROM_BITS(text_edit_cursor_width),
 		LEGACY_S16_FROM_BITS(color));
@@ -331,7 +331,7 @@ void read_line_helper2(void)
 	legacy_u16 remaining_width;
 
 	if (text_edit_max_pixels != 0) {
-		while (LEGACY_S16_FROM_BITS(font_op2(text_edit_buffer)) >
+		while (LEGACY_S16_FROM_BITS(font_text_width(text_edit_buffer)) >
 			LEGACY_S16_FROM_BITS(text_edit_max_pixels)) {
 			length = legacy_near_string_length(text_edit_buffer);
 			if (length == 0)
@@ -343,17 +343,17 @@ void read_line_helper2(void)
 	if (LEGACY_S16_FROM_BITS(length) <
 		LEGACY_S16_FROM_BITS(text_edit_cursor))
 		text_edit_cursor = length;
-	sub_345BC(text_edit_buffer, LEGACY_S16_FROM_BITS(text_edit_x),
+	font_draw_text_opaque(text_edit_buffer, LEGACY_S16_FROM_BITS(text_edit_x),
 		LEGACY_S16_FROM_BITS(text_edit_y));
 	if (text_edit_max_pixels == 0)
 		return;
 
-	text_width = (legacy_u16)font_op2(text_edit_buffer);
+	text_width = (legacy_u16)font_text_width(text_edit_buffer);
 	remaining_width = LEGACY_U16_WRAP_SUB(text_edit_max_pixels, text_width);
 	if (LEGACY_S16_FROM_BITS(remaining_width) <= 0)
 		return;
 	font_definition = active_font_definition;
-	sprite_1_unk2(LEGACY_S16_FROM_BITS(
+	sprite_fill_rect_clipped(LEGACY_S16_FROM_BITS(
 			LEGACY_U16_WRAP_ADD(text_width, text_edit_x)),
 		LEGACY_S16_FROM_BITS(text_edit_y),
 		LEGACY_S16_FROM_BITS(remaining_width),

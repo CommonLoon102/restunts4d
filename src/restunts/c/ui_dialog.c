@@ -77,7 +77,7 @@ static const legacy_u8 far g_ascii_props[256] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
 
-void sub_3702E(legacy_s16 left, legacy_s16 top, legacy_s16 right, legacy_s16 bottom, legacy_s16 color)
+void sprite_xor_rect_outline(legacy_s16 left, legacy_s16 top, legacy_s16 right, legacy_s16 bottom, legacy_s16 color)
 {
 	legacy_s16 x;
 	legacy_s16 y;
@@ -91,13 +91,13 @@ void sub_3702E(legacy_s16 left, legacy_s16 top, legacy_s16 right, legacy_s16 bot
 	height = LEGACY_S16_WRAP_SUB(
 		LEGACY_S16_WRAP_SUB(bottom, top), 1);
 	if (width > 0) {
-		sub_35B76(x, y, width, 1, color);
-		sub_35B76(x, LEGACY_S16_FROM_BITS(bottom), width, 1, color);
+		sprite_xor_rect_clipped(x, y, width, 1, color);
+		sprite_xor_rect_clipped(x, LEGACY_S16_FROM_BITS(bottom), width, 1, color);
 	}
 	if (height > 0) {
 		y = LEGACY_S16_WRAP_ADD(y, 1);
-		sub_35B76(x, y, 1, height, color);
-		sub_35B76(LEGACY_S16_FROM_BITS(right), y,
+		sprite_xor_rect_clipped(x, y, 1, height, color);
+		sprite_xor_rect_clipped(LEGACY_S16_FROM_BITS(right), y,
 			1, height, color);
 	}
 }
@@ -114,7 +114,7 @@ static legacy_u16 dialog_finish(legacy_s16 result,
 	legacy_s16 save_background)
 {
 	if (save_background != 0)
-		sub_275C6();
+		sprite_pop_background();
 	return (legacy_u16)result;
 }
 
@@ -170,7 +170,7 @@ legacy_u16 show_dialog(
 	legacy_u8 previous;
 	legacy_u8 active;
 
-	line_height = LEGACY_S16_WRAP_ADD(fontdef_unk_0E,
+	line_height = LEGACY_S16_WRAP_ADD(font_glyph_height,
 		DIALOG_LINE_HEIGHT_PADDING);
 	dialog_height = 0;
 	dialog_width = DIALOG_DEFAULT_WIDTH;
@@ -181,7 +181,7 @@ legacy_u16 show_dialog(
 	while ((character = (legacy_u8)*cursor) != 0) {
 		if (character == ']' || character == '}') {
 			line_buffer[line_length] = 0;
-			measured_width = (legacy_s16)font_op2(line_buffer);
+			measured_width = (legacy_s16)font_text_width(line_buffer);
 			if (measured_width > dialog_width)
 				dialog_width = measured_width;
 			line_length = 0;
@@ -219,22 +219,22 @@ legacy_u16 show_dialog(
 	dialog_width = LEGACY_S16_WRAP_SUB(dialog_width,
 		DIALOG_CONTENT_WIDTH_REDUCTION);
 	if (save_background != 0 &&
-		sub_274B0(left, right, top, bottom) == 0)
+		sprite_push_background(left, right, top, bottom) == 0)
 		return DIALOG_FAILURE_RESULT;
 
 	sprite_copy_2_to_1();
 	sprite_set_1_size(left, right, top, bottom);
 	sprite_clear_1_color(0);
-	sprite_1_unk4(LEGACY_S16_WRAP_SUB(x, 4),
+	sprite_draw_rect_outline(LEGACY_S16_WRAP_SUB(x, 4),
 		LEGACY_S16_WRAP_SUB(y, 4),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(x, dialog_width), 4),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(y, dialog_height), 4),
 		border_color);
-	font_set_unk(dialog_fnt_colour, 0);
+	font_set_colors(dialog_fnt_colour, 0);
 	word_3EB90 = 0;
-	font_set_unk(dialog_fnt_colour, 0);
+	font_set_colors(dialog_fnt_colour, 0);
 
 	cursor = (legacy_s8 far*)text_resource;
 	line_length = 0;
@@ -243,7 +243,7 @@ legacy_u16 show_dialog(
 	while ((character = (legacy_u8)*cursor) != 0 && character != '[') {
 		if (character == ']' || character == '}') {
 			line_buffer[line_length] = 0;
-			sub_345BC(line_buffer, x,
+			font_draw_text_opaque(line_buffer, x,
 				LEGACY_S16_WRAP_ADD(y, dialog_height));
 			line_length = 0;
 			dialog_height = dialog_advance_height(dialog_height,
@@ -253,7 +253,7 @@ legacy_u16 show_dialog(
 				line_buffer[line_length] = 0;
 				disabled_choices[placeholder_index] =
 					LEGACY_S16_WRAP_ADD(x,
-						(legacy_s16)font_op2(line_buffer));
+						(legacy_s16)font_text_width(line_buffer));
 				disabled_choices[placeholder_index + 1U] =
 					LEGACY_S16_WRAP_ADD(y, dialog_height);
 				placeholder_index = (legacy_u8)(placeholder_index +
@@ -272,7 +272,7 @@ legacy_u16 show_dialog(
 		choice_texts[choice_count] = cursor;
 		line_buffer[line_length] = 0;
 		choices[choice_count].x1 = LEGACY_S16_WRAP_ADD(
-			x, (legacy_s16)font_op2(line_buffer));
+			x, (legacy_s16)font_text_width(line_buffer));
 		choices[choice_count].y1 = LEGACY_S16_WRAP_ADD(y, dialog_height);
 		choices[choice_count].y2 = LEGACY_S16_WRAP_ADD(
 			choices[choice_count].y1, line_height);
@@ -282,7 +282,7 @@ legacy_u16 show_dialog(
 		while ((character = (legacy_u8)*cursor) != 0 && character != '[') {
 			if (character == ']' || character == '}') {
 				line_buffer[line_length] = 0;
-				choice_width = (legacy_u16)font_op2(line_buffer);
+				choice_width = (legacy_u16)font_text_width(line_buffer);
 				line_length = 0;
 				dialog_height = dialog_advance_height(dialog_height,
 					line_height, character,
@@ -296,7 +296,7 @@ legacy_u16 show_dialog(
 		choice_lengths[choice_count] = (legacy_u8)character_count;
 		line_buffer[line_length] = 0;
 		if (choice_width == 0)
-			choice_width = (legacy_u16)font_op2(line_buffer);
+			choice_width = (legacy_u16)font_text_width(line_buffer);
 		choices[choice_count].x2 = LEGACY_S16_WRAP_ADD(
 			choices[choice_count].x1, (legacy_s16)choice_width);
 		choice_count++;
@@ -360,15 +360,15 @@ legacy_u16 show_dialog(
 			mouse_draw_opaque_check();
 			for (index = 0; index < choice_count; index++) {
 				if (selected == (legacy_u8)index)
-					font_set_unk(word_3EB90, dialog_fnt_colour);
+					font_set_colors(word_3EB90, dialog_fnt_colour);
 				else
-					font_set_unk(dialog_fnt_colour, word_3EB90);
+					font_set_colors(dialog_fnt_colour, word_3EB90);
 				if (disabled_choices != 0 && disabled_choices[index] != 0)
-					font_set_unk(performGraphColor, word_3EB90);
+					font_set_colors(performGraphColor, word_3EB90);
 				for (copied = 0; copied < choice_lengths[index]; copied++)
 					choice_buffer[copied] = choice_texts[index][copied];
 				choice_buffer[copied] = 0;
-				sub_345BC(choice_buffer, choices[index].x1,
+				font_draw_text_opaque(choice_buffer, choices[index].x1,
 					choices[index].y1);
 			}
 			mouse_draw_transparent_check();
@@ -472,9 +472,9 @@ legacy_s8 do_fileselect_dialog(
 	preRender_line(positions[4] - 4, positions[5] + 4,
 		positions[4] + FILE_DIALOG_SEPARATOR_WIDTH,
 		positions[5] + 4, dialogarg2);
-	font_set_unk(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, word_3EB90);
 	copy_string(&resID_byte1, prompt);
-	sub_345BC(&resID_byte1, positions[0], positions[1]);
+	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
 
 	for (index = 0; index < 10U; index++) {
 		hit_areas[index].x1 = positions[2];
@@ -485,15 +485,15 @@ legacy_s8 do_fileselect_dialog(
 			hit_areas[index].y1 = positions[3U + index * 2U];
 		hit_areas[index].y2 = hit_areas[index].y1 + 10;
 	}
-	font_set_unk(dialog_fnt_colour, word_3EB90);
-	sub_345BC(directory, positions[2], positions[3]);
+	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_draw_text_opaque(directory, positions[2], positions[3]);
 
 	for (;;) {
 	mouse_draw_transparent_check();
 	file_count = 0;
 	found_path = file_combine_and_find(directory, "*", extension);
 	if (found_path == 0) {
-		font_set_unk(dialog_fnt_colour, word_3EB90);
+		font_set_colors(dialog_fnt_colour, word_3EB90);
 		key = (legacy_u16)call_read_line(directory,
 			FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
 			DIALOG_INPUT_TIMEOUT);
@@ -521,9 +521,9 @@ legacy_s8 do_fileselect_dialog(
 
 	if (file_count > 7U) {
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsu));
-		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), hit_areas[1].y1);
+		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1), hit_areas[1].y1);
 		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsd));
-		sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1),
+		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
 			hit_areas[9].y1 - 1);
 	}
 
@@ -542,19 +542,19 @@ legacy_s8 do_fileselect_dialog(
 			for (visible_row = 0; visible_row < 7U; visible_row++) {
 				candidate = (legacy_s16)(scroll + (legacy_s16)visible_row);
 				if (candidate == selected)
-					font_set_unk(word_3EB90, dialog_fnt_colour);
+					font_set_colors(word_3EB90, dialog_fnt_colour);
 				else
-					font_set_unk(dialog_fnt_colour, word_3EB90);
+					font_set_colors(dialog_fnt_colour, word_3EB90);
 				if (candidate < (legacy_s16)file_count) {
 					strcpy(&resID_byte1, filenames[(legacy_u8)candidate]);
-					sub_345BC(&resID_byte1, positions[2],
+					font_draw_text_opaque(&resID_byte1, positions[2],
 						hit_areas[visible_row + 2U].y1);
 				} else {
-					sub_345BC("        ", positions[2],
+					font_draw_text_opaque("        ", positions[2],
 						hit_areas[visible_row + 2U].y1);
 				}
-				text_width = (legacy_u16)font_op2(&resID_byte1);
-				sprite_1_unk(positions[2] + text_width,
+				text_width = (legacy_u16)font_text_width(&resID_byte1);
+				sprite_fill_rect(positions[2] + text_width,
 					hit_areas[visible_row + 2U].y1,
 					positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
 						positions[2],
@@ -619,7 +619,7 @@ legacy_s8 do_fileselect_dialog(
 		if (selected < scroll)
 			scroll = selected;
 		if (scroll < 0) {
-			font_set_unk(dialog_fnt_colour, word_3EB90);
+			font_set_colors(dialog_fnt_colour, word_3EB90);
 			key = (legacy_u16)call_read_line(directory,
 				FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
 				DIALOG_INPUT_TIMEOUT);
@@ -647,7 +647,7 @@ legacy_s8 do_fileselect_dialog(
 		break;
 	}
 
-	sub_275C6();
+	sprite_pop_background();
 	g_is_busy = saved_busy;
 	return result;
 }
@@ -689,12 +689,12 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 	if (result < 0)
 		return 0;
 
-	font_set_unk(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, word_3EB90);
 	copy_string(&resID_byte1, prompt);
-	sub_345BC(&resID_byte1, positions[0], positions[1]);
-	font_set_unk(dialog_fnt_colour, word_3EB90);
-	sub_345BC(primary, positions[2], positions[3]);
-	sub_345BC(secondary, positions[4], positions[5]);
+	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
+	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_draw_text_opaque(primary, positions[2], positions[3]);
+	font_draw_text_opaque(secondary, positions[4], positions[5]);
 	mouse_draw_transparent_check();
 
 	result = 0;
@@ -719,7 +719,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 			break;
 	}
 
-	sub_275C6();
+	sprite_pop_background();
 	return result;
 }
 
@@ -801,7 +801,7 @@ void security_check(legacy_s16 question_index)
 			break;
 	}
 
-	sub_275C6();
+	sprite_pop_background();
 	mouse_draw_transparent_check();
 	unload_resource(resource);
 }

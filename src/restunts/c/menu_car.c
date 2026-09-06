@@ -201,7 +201,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	previous_car_index = CAR_MENU_NO_SELECTION;
 	rotation = 0;
 	selected = CAR_MENU_DONE_BUTTON;
-	sub_29772();
+	menu_reset_animation_timers();
 	rotation_delta = 0;
 	previous_selected = CAR_MENU_NO_SELECTION;
 	set_projection(CAR_MENU_PROJECTION_X_SCALE,
@@ -241,7 +241,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		sprite_shape_to_1_alt(shape);
 
 		font_set_fontdef2(fontnptr);
-		font_set_unk(0, dialog_fnt_colour);
+		font_set_colors(0, dialog_fnt_colour);
 		font_draw_text(a150, CAR_MENU_GRAPH_LABEL_X,
 			CAR_MENU_GRAPH_LABEL_150_Y);
 		font_draw_text(a100, CAR_MENU_GRAPH_LABEL_X,
@@ -289,7 +289,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 						graph_step),
 					CAR_MENU_GRAPH_STEPS),
 				CAR_MENU_GRAPH_FIRST_X);
-			putpixel_single_maybe(graph_x, graph_y,
+			sprite_putpixel_clipped(graph_x, graph_y,
 				performGraphColor);
 			graph_step++;
 			if (graph_step >= CAR_MENU_GRAPH_STEPS)
@@ -311,7 +311,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 				}
 				line_length = 0;
 				text_y = LEGACY_S16_WRAP_ADD(text_y,
-					fontdef_unk_0E);
+					font_glyph_height);
 			} else {
 				(&resID_byte1)[line_length++] = (legacy_s8)character;
 			}
@@ -415,12 +415,12 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			mouse_draw_transparent_check();
 			sprite_copy_2_to_1_2();
 		}
-		sub_29772();
+		menu_reset_animation_timers();
 		previous_selected = selected;
 	}
 
 	sprite_copy_2_to_1_2();
-	rotation_delta = (legacy_s16)mouse_timer_sprite_unk(selected,
+	rotation_delta = (legacy_s16)menu_animate_button_highlight(selected,
 		carmenu_buttons, word_407CE, word_407D0);
 	menu_update_idle_counter((legacy_u16)rotation_delta,
 		CAR_MENU_IDLE_LIMIT_TICKS);

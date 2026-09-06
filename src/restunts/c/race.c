@@ -284,7 +284,7 @@ void run_game(void) {
 				}
 
 				shape2d_render_bmp_as_mask(dasmshapeptr);
-				shape2d_op_unk4(dastbmp_y2, dastseg);
+				shape2d_rle_or_far_pointer(dastbmp_y2, dastseg);
 			}
 
 			sub_19F14(&rect_windshield);
@@ -373,7 +373,7 @@ void run_game(void) {
 		if (video_flag5_is0 != 0 && get_0() != 0) {
 			mouse_draw_opaque_check();
 			setup_mcgawnd2();
-			sub_35C4E(0, 0, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT, 0);
+			sprite_copy_rect_shifted(0, 0, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT, 0);
 			setup_mcgawnd1();
 			mouse_draw_transparent_check();
 		}
@@ -403,7 +403,7 @@ void run_game(void) {
 					regsi = 0;
 					format_frame_as_string(&resID_byte1, state.game_frame + elapsed_time1, 1);
 					mouse_draw_opaque_check();
-					sub_345BC(&resID_byte1, font_op2_alt(&resID_byte1), var_16[1]);
+					font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1), var_16[1]);
 					mouse_draw_transparent_check();
 				}
 

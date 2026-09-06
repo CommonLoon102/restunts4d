@@ -6,10 +6,10 @@
 
 extern legacy_u8 far* active_font_definition;
 
-legacy_s16 font_op(const legacy_s8* text, legacy_s16 glyph_count);
-legacy_s16 font_op2(const legacy_s8* text);
-legacy_s16 font_op2_alt(const legacy_s8* text);
-void font_set_unk(legacy_s16 color, legacy_s16 unknown);
+legacy_s16 font_prefix_width(const legacy_s8* text, legacy_s16 glyph_count);
+legacy_s16 font_text_width(const legacy_s8* text);
+legacy_s16 font_centered_text_x(const legacy_s8* text);
+void font_set_colors(legacy_s16 color, legacy_s16 background_color);
 struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x,
 	legacy_s16 y, legacy_s16 color, legacy_s16 shadow_color);
 

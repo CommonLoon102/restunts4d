@@ -151,14 +151,14 @@ extern legacy_u8 far* polyinfoptrs[]; // array size = 400
 extern legacy_u16 poly_linked_list_40ED6[]; // array size = 400
 
 
-extern legacy_s16 font_op(const legacy_s8* text, legacy_s16 count);
+extern legacy_s16 font_prefix_width(const legacy_s8* text, legacy_s16 count);
 
 
 void audio_sequence_timer(void);
 extern void audio_map_song_instruments(void far* song,
 	void far* instruments);
 extern void audio_map_song_tracks(void far* song);
-extern void sub_35B76(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
+extern void sprite_xor_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
 extern void audio_op_unk3(legacy_s16 channel);
@@ -194,7 +194,7 @@ struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, l
 	legacy_s16 shadow_color);
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
-extern void sprite_1_unk4(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
+extern void sprite_draw_rect_outline(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 
 
 extern legacy_s8 gnam_string[];
@@ -445,7 +445,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	//set_default_car();
 
 	// try do something
-	sub_29772();
+	menu_reset_animation_timers();
 	set_projection(STARTUP_PROJECTION_X, STARTUP_PROJECTION_Y,
 		GAME_SCREEN_WIDTH, GAME_TOP_PANEL_HEIGHT);
 	// The camera projection would at best draw a pixel without this setup.

@@ -514,12 +514,12 @@ static legacy_s16 mouse_track_thumb_size(legacy_s16 length,
 static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 width, legacy_s16 y,
 	legacy_s16 height, legacy_s16 thumb_start, legacy_s16 thumb_size)
 {
-	sprite_1_unk(x, y, width, height, 0);
+	sprite_fill_rect(x, y, width, height, 0);
 	if (horizontal) {
-		sprite_1_unk(LEGACY_S16_WRAP_ADD(x, thumb_start), y,
+		sprite_fill_rect(LEGACY_S16_WRAP_ADD(x, thumb_start), y,
 			thumb_size, height, dialog_fnt_colour);
 	} else {
-		sprite_1_unk(x, LEGACY_S16_WRAP_ADD(y, thumb_start),
+		sprite_fill_rect(x, LEGACY_S16_WRAP_ADD(y, thumb_start),
 			width, thumb_size, dialog_fnt_colour);
 	}
 }

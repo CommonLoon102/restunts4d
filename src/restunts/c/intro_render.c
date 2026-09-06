@@ -111,7 +111,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	if (slow_video_mgmt_copy != 0) {
 		old_point_count = (legacy_u16)*previous_point_count;
 		for (i = 0; i < old_point_count; i++)
-			putpixel_single_maybe(previous_points[i].px,
+			sprite_putpixel_clipped(previous_points[i].px,
 				previous_points[i].py, 0);
 		rect_union(shape_rect, previous_rect, &redraw_rect);
 		if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
@@ -137,7 +137,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 		if (projected.z <= INTRO_STAR_MIN_DEPTH)
 			continue;
 		vector_to_point(&projected, &point);
-		putpixel_single_maybe(point.px, point.py, intro_colorvalue);
+		sprite_putpixel_clipped(point.px, point.py, intro_colorvalue);
 		if (slow_video_mgmt_copy != 0) {
 			previous_points[new_point_count] = point;
 			new_point_count++;
@@ -398,7 +398,7 @@ legacy_s8 setup_intro(void)
 	if (video_flag5_is0 != 0) {
 		if (get_0() != 0) {
 			setup_mcgawnd2();
-			sub_35C4E(0, 0, INTRO_SCREEN_MAX_X, INTRO_SCREEN_MAX_Y, 0);
+			sprite_copy_rect_shifted(0, 0, INTRO_SCREEN_MAX_X, INTRO_SCREEN_MAX_Y, 0);
 			mouse_draw_opaque_check();
 			setup_mcgawnd1();
 			mouse_draw_transparent_check();

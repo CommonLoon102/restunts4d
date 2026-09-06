@@ -66,10 +66,10 @@ legacy_s8 run_menu(void)
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = MENU_BLIT_MODE_REFRESH;
 			sprite_copy_2_to_1_2();
-			sub_29772();
+			menu_reset_animation_timers();
 		}
 
-		elapsed = (legacy_u16)mouse_timer_sprite_unk(selected,
+		elapsed = (legacy_u16)menu_animate_button_highlight(selected,
 			menu_buttons, word_407CE, word_407D0);
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
 		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT,

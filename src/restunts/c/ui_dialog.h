@@ -31,7 +31,7 @@ void ensure_file_exists(legacy_s16 unused);
 void show_waiting(void);
 legacy_s16 do_dea_textres(void);
 void security_check(legacy_s16 question_index);
-void sub_3702E(legacy_s16 left, legacy_s16 top, legacy_s16 right,
+void sprite_xor_rect_outline(legacy_s16 left, legacy_s16 top, legacy_s16 right,
 	legacy_s16 bottom, legacy_s16 color);
 
 #endif

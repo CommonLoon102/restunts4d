@@ -158,7 +158,7 @@ static void draw_centered_ingame_resource(legacy_s8* resource_id, legacy_s16 y)
 {
 	copy_string(&resID_byte1, locate_text_res(gameresptr, resource_id));
 	rect_union(&rect_ingame_text,
-		intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1), y,
+		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), y,
 			dialog_fnt_colour, 0),
 		&rect_ingame_text);
 }
@@ -244,7 +244,7 @@ struct RECTANGLE* draw_ingame_text(void)
 	}
 	if (resID_byte1 != 0)
 		rect_union(&rect_ingame_text,
-			intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 				OPPONENT_TEXT_Y, dialog_fnt_colour, 0),
 			&rect_ingame_text);
 
@@ -253,7 +253,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		format_frame_as_string(&resID_byte1 + strlen(&resID_byte1),
 			penalty_time, 0);
 		rect_union(&rect_ingame_text,
-			intro_draw_text(&resID_byte1, font_op2_alt(&resID_byte1),
+			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
 				PENALTY_TEXT_Y, dialog_fnt_colour, 0),
 			&rect_ingame_text);
 	}

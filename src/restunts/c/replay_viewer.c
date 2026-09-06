@@ -138,15 +138,15 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 			byte_40E7A[player_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 0;
 		mouse_draw_opaque_check();
-		shape2d_op_unk(rplyshapes[REPLAY_SHAPE_BACKGROUND]);
+		shape2d_rle_copy_at_position(rplyshapes[REPLAY_SHAPE_BACKGROUND]);
 		word_40E0A[player_index] = -1;
 		word_40E76[player_index] = -1;
 		format_frame_as_string(&resID_byte1,
 			(legacy_u16)(gameconfig.game_recordedframes + elapsed_time1),
 			REPLAY_TIME_INCLUDE_FRACTION);
-		font_set_unk(dialog_fnt_colour, 0);
+		font_set_colors(dialog_fnt_colour, 0);
 		font_set_fontdef2(fontledresptr);
-		sub_345BC(&resID_byte1, REPLAY_TOTAL_TIME_X, REPLAY_TIME_Y);
+		font_draw_text_opaque(&resID_byte1, REPLAY_TOTAL_TIME_X, REPLAY_TIME_Y);
 		font_set_fontdef();
 	}
 
@@ -155,10 +155,10 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		word_40E0A[player_index] = (legacy_s16)displayed_time;
 		format_frame_as_string(&resID_byte1, displayed_time,
 			REPLAY_TIME_INCLUDE_FRACTION);
-		font_set_unk(dialog_fnt_colour, 0);
+		font_set_colors(dialog_fnt_colour, 0);
 		mouse_draw_opaque_check();
 		font_set_fontdef2(fontledresptr);
-		sub_345BC(&resID_byte1, REPLAY_CURRENT_TIME_X, REPLAY_TIME_Y);
+		font_draw_text_opaque(&resID_byte1, REPLAY_CURRENT_TIME_X, REPLAY_TIME_Y);
 		font_set_fontdef();
 	}
 
@@ -166,7 +166,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		byte_40E74[player_index] = (legacy_u8)cameramode;
 		word_40E76[player_index] = -1;
 		mouse_draw_opaque_check();
-		shape2d_op_unk(rplyshapes[
+		shape2d_rle_copy_at_position(rplyshapes[
 			REPLAY_SHAPE_CAMERA_FIRST + (legacy_u8)cameramode]);
 		if (LEGACY_S8_FROM_BITS(byte_3E9DB) > LEGACY_S8_FROM_BITS(
 			game_camera_buttons_count[(legacy_u8)cameramode]))
@@ -186,13 +186,13 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		mouse_draw_opaque_check();
 		word_40E76[player_index] = recorded_position;
 		word_40E04[player_index] = current_position;
-		sprite_1_unk(REPLAY_TIMELINE_X, REPLAY_TIMELINE_Y,
+		sprite_fill_rect(REPLAY_TIMELINE_X, REPLAY_TIMELINE_Y,
 			REPLAY_TIMELINE_WIDTH, REPLAY_TIMELINE_HEIGHT, word_407FC);
-		sprite_1_unk(LEGACY_S16_WRAP_ADD(
+		sprite_fill_rect(LEGACY_S16_WRAP_ADD(
 			REPLAY_TIMELINE_X, recorded_position),
 			REPLAY_TIMELINE_Y, REPLAY_TIMELINE_HEIGHT,
 			REPLAY_TIMELINE_HEIGHT, dialog_fnt_colour);
-		sprite_1_unk4(LEGACY_S16_WRAP_ADD(
+		sprite_draw_rect_outline(LEGACY_S16_WRAP_ADD(
 			REPLAY_TIMELINE_X, current_position),
 			REPLAY_TIMELINE_Y,
 			LEGACY_S16_WRAP_ADD(
@@ -222,10 +222,10 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	if (previous_selection != REPLAY_NO_SELECTION) {
 		if (byte_40E7A[player_index +
 			previous_selection * REPLAY_CONTROL_PLAYER_STRIDE] != 0)
-			shape2d_op_unk(rplyshapes[
+			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_ACTIVE_FIRST + previous_selection]);
 		else
-			shape2d_op_unk(rplyshapes[
+			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_INACTIVE_FIRST + previous_selection]);
 		byte_40E08[player_index] = REPLAY_NO_SELECTION;
 	}
@@ -233,7 +233,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		if (byte_40E6A[index] == 0 &&
 			byte_40E7A[player_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] != 0) {
-			shape2d_op_unk(rplyshapes[
+			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_INACTIVE_FIRST + index]);
 			byte_40E7A[player_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 0;
@@ -243,7 +243,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 		if (byte_40E6A[index] != 0) {
 			byte_40E7A[player_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 1;
-			shape2d_op_unk(rplyshapes[
+			shape2d_rle_copy_at_position(rplyshapes[
 				REPLAY_SHAPE_CONTROL_ACTIVE_FIRST + index]);
 			byte_40E7A[player_index +
 				index * REPLAY_CONTROL_PLAYER_STRIDE] = 1;
@@ -251,7 +251,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	}
 	byte_40E08[player_index] = byte_3E9DB;
 	if (byte_3E9DB != REPLAY_NO_SELECTION) {
-		sprite_1_unk4(game_camera_buttons[byte_3E9DB].x1,
+		sprite_draw_rect_outline(game_camera_buttons[byte_3E9DB].x1,
 			game_camera_buttons[byte_3E9DB].y1,
 			game_camera_buttons[byte_3E9DB].x2,
 			game_camera_buttons[byte_3E9DB].y2, word_407FE);
@@ -265,7 +265,7 @@ static void replay_draw_waiting(void)
 
 	copy_string(&resID_byte1, locate_text_res(gameresptr, "wai"));
 	text_rectangle = intro_draw_text(&resID_byte1,
-		font_op2_alt(&resID_byte1), REPLAY_WAITING_TEXT_Y,
+		font_centered_text_x(&resID_byte1), REPLAY_WAITING_TEXT_Y,
 		dialog_fnt_colour, 0);
 	if (slow_video_mgmt_copy != 0)
 		rect_union(rectptr_unk2, text_rectangle, rectptr_unk2);
