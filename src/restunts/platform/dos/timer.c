@@ -31,6 +31,9 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK 252U
 #define DOS_TIMER_DEFAULT_DIVIDER_PERIOD 5U
 #define DOS_TIMER_DWORD_HIGH_WORD_OFFSET 2
+#define DOS_TIMER_CHAIN_TIMEOUT_INACTIVE 0U
+#define DOS_TIMER_CHAIN_DISABLED 0U
+#define DOS_TIMER_CHAIN_ENABLED 1U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -133,12 +136,14 @@ static void interrupt dos_timer_interrupt(void)
 			dos_timer_slow_high = (legacy_u16)(dos_timer_slow_high + 1U);
 		dos_timer_divider = dos_timer_divider_period;
 
-		if (dos_timer_chain_enabled != 0) {
-			if (dos_timer_chain_timeout_active != 0) {
+		if (dos_timer_chain_enabled != DOS_TIMER_CHAIN_DISABLED) {
+			if (dos_timer_chain_timeout_active !=
+				DOS_TIMER_CHAIN_TIMEOUT_INACTIVE) {
 				dos_timer_chain_timeout = (legacy_u16)(dos_timer_chain_timeout - 1U);
 				if (LEGACY_S16_FROM_BITS(dos_timer_chain_timeout) <= 0) {
-					dos_timer_chain_timeout_active = 0;
-					dos_timer_chain_enabled = 0;
+					dos_timer_chain_timeout_active =
+						DOS_TIMER_CHAIN_TIMEOUT_INACTIVE;
+					dos_timer_chain_enabled = DOS_TIMER_CHAIN_DISABLED;
 				}
 			}
 			dos_timer_chain_previous_handler();
@@ -231,8 +236,8 @@ void dos_timer_setup_interrupt(void)
 
 	dos_timer_divider_period = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
 	dos_timer_divider = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
-	dos_timer_chain_timeout_active = 0;
-	dos_timer_chain_enabled = 1U;
+	dos_timer_chain_timeout_active = DOS_TIMER_CHAIN_TIMEOUT_INACTIVE;
+	dos_timer_chain_enabled = DOS_TIMER_CHAIN_ENABLED;
 
 	disable();
 	dos_timer_in_callbacks = 0;
