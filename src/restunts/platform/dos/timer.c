@@ -44,6 +44,7 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_REENTRY_RESET_VALUE 0U
 #define DOS_TIMER_EXPIRATION_THRESHOLD 0
 #define DOS_TIMER_LOW_WORD_WRAP_VALUE 0U
+#define DOS_TIMER_CALLBACK_SUSPEND_MASK_CLEAR 0U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -169,7 +170,8 @@ static void interrupt dos_timer_interrupt(void)
 	}
 
 	if (((legacy_u16)dos_timer_callbacks_suspended &
-		DOS_TIMER_CALLBACK_SUSPENDED_MASK) != 0)
+		DOS_TIMER_CALLBACK_SUSPENDED_MASK) !=
+		DOS_TIMER_CALLBACK_SUSPEND_MASK_CLEAR)
 		goto callbacks_finished;
 
 	dos_timer_increment_counter(&dos_timer_counter);
