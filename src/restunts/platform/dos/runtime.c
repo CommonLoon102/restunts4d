@@ -5,6 +5,7 @@
 #define DOS_RUNTIME_EXIT_FUNCTION 76
 #define DOS_RUNTIME_STDOUT_HANDLE 1U
 #define DOS_RUNTIME_STDERR_HANDLE 2U
+#define DOS_RUNTIME_WRITE_ERROR (-1)
 
 /* Borland's DOS interrupt wrapper records failures here.  The original
  * executable obtained this word from its C startup module; the assembly-free
@@ -25,7 +26,7 @@ static legacy_s16 dos_write_handle(legacy_u16 handle,
 		int     DOS_RUNTIME_INTERRUPT
 		pop     ds
 		jnc     write_finished
-		mov     ax, -1
+		mov     ax, DOS_RUNTIME_WRITE_ERROR
 	write_finished:
 		mov     result, ax
 	}
