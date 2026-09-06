@@ -4,9 +4,12 @@ extern const legacy_s8 aLocateshape4_4sShapeNotF[];
 extern const legacy_s8 aLocatesound4_4sSoundNotF[];
 extern void fatal_error(const legacy_s8* format, ...);
 
-#define RESOURCE_NOT_FOUND_IGNORE 0U
-#define RESOURCE_NOT_FOUND_SHAPE_FATAL 1U
-#define RESOURCE_NOT_FOUND_SOUND_FATAL 2U
+enum RESOURCE_NOT_FOUND_BEHAVIOR {
+	RESOURCE_NOT_FOUND_IGNORE = 0,
+	RESOURCE_NOT_FOUND_SHAPE_FATAL = 1,
+	RESOURCE_NOT_FOUND_SOUND_FATAL = 2
+};
+
 #define RESOURCE_IDENTIFIER_PADDING ' '
 
 static const legacy_u8 far* resource_file_offset_bytes(
