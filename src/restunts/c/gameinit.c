@@ -10,6 +10,7 @@
 #define CAR_INITIAL_SURFACE_PAVED 1
 #define CAR_INITIAL_SURFACE_GRIP 1000
 #define CAR_PSEUDO_GRAVITY_NONE 0
+#define CAR_INITIAL_SPEED_DIFFERENCE 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -98,7 +99,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_lastrpm = playerstate->car_currpm;
 	playerstate->car_idlerpm2 = playerstate->car_currpm;
 	playerstate->car_current_gear = CAR_INITIAL_GEAR_INDEX;
-	playerstate->car_speeddiff = 0;
+	playerstate->car_speeddiff = CAR_INITIAL_SPEED_DIFFERENCE;
 	playerstate->car_speed = CAR_SPEED_STOPPED;
 	playerstate->car_speed2 = CAR_SPEED_STOPPED;
 	playerstate->car_lastspeed = CAR_SPEED_STOPPED;
