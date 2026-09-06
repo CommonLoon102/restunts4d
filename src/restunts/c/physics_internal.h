@@ -49,7 +49,7 @@ extern struct VECTOR slalom_collision_points[];
 
 extern void update_crash_state(legacy_s16, legacy_s16);
 extern void build_track_object(struct VECTOR*, struct VECTOR*);
-extern void audio_unk3(legacy_u8, legacy_s16);
+extern void audio_play_car_events(legacy_u8, legacy_s16);
 
 legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor);

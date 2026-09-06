@@ -85,7 +85,7 @@ void frame_callback(void)
 	frame_callback_active = 1;
 	audio_car_state_interval = LEGACY_S16_WRAP_ADD(audio_car_state_interval, 1);
 	if (audio_car_state_interval >= word_4499C && audio_car_state_read_index != audio_car_state_write_index) {
-		sub_18D06((legacy_u8 far*)
+		audio_apply_car_state_sample((legacy_u8 far*)
 			&audio_car_state_records[audio_car_state_read_index],
 			audio_car_state_interval);
 		audio_car_state_interval = 0;

@@ -32,8 +32,8 @@ extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
 extern void far* sdgameresptr;
-extern legacy_s8 unk_3E7FC[];
-extern legacy_s8 unk_3E82C[];
+extern legacy_s8 player_engine_definition[];
+extern legacy_s8 opponent_engine_definition[];
 
 static legacy_s8 skybox_resource_names[SKYBOX_RESOURCE_COUNT]
 	[SKYBOX_RESOURCE_NAME_BYTES] = {
@@ -150,14 +150,14 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	engptr = file_load_resource(FILE_RESOURCE_SOUND_EFFECTS, "eng");
 	audio_add_driver_timer();
 	audio_player_engine_channel = audio_init_engine(
-		PLAYER_ENGINE_LEGACY_TYPE, &unk_3E7FC, eng1ptr, engptr);
+		PLAYER_ENGINE_LEGACY_TYPE, &player_engine_definition, eng1ptr, engptr);
 
 	audio_car_state_ready = 0;
 	audio_player_car_flags = 0;
 	audio_opponent_car_flags = 0;
 	if (gameconfig.game_opponenttype != 0) {
 		audio_opponent_engine_channel = audio_init_engine(
-			OPPONENT_ENGINE_LEGACY_TYPE, &unk_3E82C, eng1ptr, engptr);
+			OPPONENT_ENGINE_LEGACY_TYPE, &opponent_engine_definition, eng1ptr, engptr);
 	}
 
 	audio_car_state_read_index = 0;

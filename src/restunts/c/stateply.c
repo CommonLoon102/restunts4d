@@ -1307,13 +1307,13 @@ case PLAYER_FLOW_loc_16236:
 		{ physics_flow = PLAYER_FLOW_loc_1625F; continue; }
 	if (car_index == PLAYER_CAR_INDEX)
 		{ physics_flow = PLAYER_FLOW_loc_1624A; continue; }
-	audio_unk3(arg_pState->car_sound_flags, audio_opponent_engine_channel);
+	audio_play_car_events(arg_pState->car_sound_flags, audio_opponent_engine_channel);
 	{ physics_flow = PLAYER_FLOW_loc_1624E; continue; }
 
 case PLAYER_FLOW_loc_1624A:
-	audio_unk3(arg_pState->car_sound_flags, audio_player_engine_channel);
+	audio_play_car_events(arg_pState->car_sound_flags, audio_player_engine_channel);
 case PLAYER_FLOW_loc_1624E:
-	//audio_unk3(arg_pState->car_sound_flags, );
+	//audio_play_car_events(arg_pState->car_sound_flags, );
 #endif
 
 case PLAYER_FLOW_loc_1625F:

@@ -179,7 +179,7 @@ void do_mof_restext(void)
 
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
-	message_id = audio_toggle_flag2() != 0 ? aMon : aMof;
+	message_id = audio_toggle_music() != 0 ? aMon : aMof;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);
@@ -193,7 +193,7 @@ void do_sonsof_restext(void)
 
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
-	message_id = audio_toggle_flag6() != 0 ? aSon : aSof;
+	message_id = audio_toggle_effects() != 0 ? aSon : aSof;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
 		-1, -1, dialogarg2, 0, 0);

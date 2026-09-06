@@ -438,11 +438,11 @@ extern void far* init_audio_resources(void far* songptr, void far* voiceptr, con
 extern void load_audio_finalize(void far* audiores);
 extern legacy_s16 audio_load_driver(legacy_s8* driver, legacy_s16 a2, legacy_s16 a3);
 extern void audio_unload(void);
-extern legacy_s16 audio_toggle_flag2(void);
-extern legacy_s16 audio_toggle_flag6(void);
+extern legacy_s16 audio_toggle_music(void);
+extern legacy_s16 audio_toggle_effects(void);
 extern void audio_stop_unk(void);
 extern void audiodrv_atexit(void);
-extern void audio_function2_wrap(legacy_s16 index);
+extern void audio_play_crash_and_stop_engine(legacy_s16 index);
 extern void audio_add_driver_timer(void);
 extern void audio_remove_driver_timer(void);
 

@@ -13,7 +13,7 @@ extern legacy_s16 audio_start_note(struct AUDIO_CHANNEL* timer,
 extern void audio_advance_driver_context(struct AUDIO_CONTEXT* context);
 extern void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
-extern void audio_init_chunk(legacy_s16 first_channel,
+extern void audio_init_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel, void far* resource,
 	legacy_u16 resource_data_offset, legacy_u16 rate,
 	legacy_u8 priority);
@@ -242,7 +242,7 @@ static void audio_sequence_finish_channel(legacy_s16 channel,
 	chunk->cursor.segment = 0;
 	audio_release_channel_range(channel, channel);
 	if (reset_channel != 0)
-		audio_init_chunk(channel, channel, 0, 0, audio_effect_rate, 0);
+		audio_init_channel_range(channel, channel, 0, 0, audio_effect_rate, 0);
 	if (callback != 0)
 		callback(channel);
 }
@@ -310,7 +310,7 @@ static void audio_service_sequence_channel(legacy_s16 channel)
 				break;
 			case AUDIO_SEQUENCE_COMMAND_SET_TEMPO:
 				if (channel < AUDIO_DIRECT_CHANNEL_COUNT)
-					audio_engine_value_454ba = LEGACY_U16_DIV_OR_ZERO(
+					audio_sequence_tick_period = LEGACY_U16_DIV_OR_ZERO(
 						AUDIO_TEMPO_NUMERATOR, event.argument);
 				break;
 			case AUDIO_SEQUENCE_COMMAND_SET_VOLUME:
@@ -422,12 +422,12 @@ void audio_sequence_timer(void)
 	if (audio_music_active == AUDIO_STATE_ENABLED &&
 		audio_music_enabled == AUDIO_STATE_ENABLED &&
 		audio_suspended == AUDIO_STATE_DISABLED) {
-		audio_engine_value_44d48 = LEGACY_U16_WRAP_ADD(
-			audio_engine_value_44d48, AUDIO_SEQUENCE_TIMER_TICK_STEP);
-		while (audio_engine_value_44d48 >= audio_engine_value_454ba) {
+		audio_sequence_elapsed_ticks = LEGACY_U16_WRAP_ADD(
+			audio_sequence_elapsed_ticks, AUDIO_SEQUENCE_TIMER_TICK_STEP);
+		while (audio_sequence_elapsed_ticks >= audio_sequence_tick_period) {
 			audio_advance_music_contexts();
-			audio_engine_value_44d48 = LEGACY_U16_WRAP_SUB(
-				audio_engine_value_44d48, audio_engine_value_454ba);
+			audio_sequence_elapsed_ticks = LEGACY_U16_WRAP_SUB(
+				audio_sequence_elapsed_ticks, audio_sequence_tick_period);
 			for (channel = 0; channel < audio_music_channel_count; channel++)
 				audio_service_sequence_channel((legacy_s16)channel);
 		}

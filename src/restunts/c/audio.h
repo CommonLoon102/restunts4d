@@ -12,16 +12,16 @@
 #define AUDIO_EFFECT_CHANNEL_FIRST 16U
 #define AUDIO_EFFECT_CHANNEL_LAST 23U
 #define AUDIO_FAR_POINTER_SIZE 4U
-#define AUDIO_ENGINE_UNKNOWN_PREFIX_SIZE 4U
+#define AUDIO_ENGINE_RESERVED_PARAMETER_SIZE 4U
 #define AUDIO_ENGINE_RESOURCE_COUNT 10U
 #define AUDIO_ENGINE_DEFINITION_SIZE 48U
 #define AUDIO_TIMER_SIZE 76U
 #define AUDIO_CHANNEL_SIZE 76U
 #define AUDIO_CHANNEL_CALL_STACK_COUNT 4U
-#define AUDIO_CHANNEL_UNKNOWN_29_SIZE 4U
+#define AUDIO_CHANNEL_DRIVER_STATE_SIZE 4U
 #define AUDIO_CHANNEL_RETURN_STACK_COUNT 4U
 #define AUDIO_CHANNEL_LOOP_COUNT 4U
-#define AUDIO_CONTEXT_UNKNOWN_PREFIX_SIZE 5U
+#define AUDIO_CONTEXT_DRIVER_STATE_SIZE 5U
 #define AUDIO_CONTEXT_SIZE 46U
 #define AUDIO_CHANNEL_CALL_STACK_OFFSET 5U
 #define AUDIO_CHANNEL_ACTIVE_NOTES_OFFSET 21U
@@ -61,9 +61,9 @@ struct AUDIO_FAR_POINTER {
 
 struct AUDIO_ENGINE_DEFINITION {
 	legacy_u16 sample_count;
-	legacy_u8 unknown_02[AUDIO_ENGINE_UNKNOWN_PREFIX_SIZE];
+	legacy_u8 reserved_parameters[AUDIO_ENGINE_RESERVED_PARAMETER_SIZE];
 	legacy_u8 initialized;
-	legacy_u8 unknown_07;
+	legacy_u8 reserved_initialization_byte;
 	struct AUDIO_FAR_POINTER resources[AUDIO_ENGINE_RESOURCE_COUNT];
 };
 
@@ -74,10 +74,10 @@ struct AUDIO_TIMER {
 	legacy_u16 current_volume;
 	legacy_u32 current_pitch;
 	legacy_u8 target_volume;
-	legacy_u8 unknown_0B;
+	legacy_u8 reserved_target_volume_byte;
 	legacy_u16 target_pitch;
 	legacy_u8 last_volume;
-	legacy_u8 unknown_0F;
+	legacy_u8 reserved_last_volume_byte;
 	legacy_u16 last_pitch;
 	legacy_s16 engine_context;
 	legacy_s16 effect_channel;
@@ -100,10 +100,10 @@ struct AUDIO_CHANNEL {
 	struct AUDIO_FAR_POINTER call_stack[AUDIO_CHANNEL_CALL_STACK_COUNT];
 	legacy_u8 active_notes;
 	legacy_u8 note_limit;
-	legacy_u8 unknown_17;
+	legacy_u8 reserved_note_limit_byte;
 	legacy_u32 delay;
-	legacy_u8 unknown_1C;
-	legacy_u8 unknown_1D;
+	legacy_u8 reserved_delay_byte;
+	legacy_u8 reserved_resource_byte;
 	struct AUDIO_FAR_POINTER resource;
 	legacy_u8 note_velocity;
 	legacy_u8 channel;
@@ -111,8 +111,8 @@ struct AUDIO_CHANNEL {
 	legacy_u8 sustain;
 	legacy_u16 pitch;
 	legacy_u8 volume;
-	legacy_u8 unknown_29[AUDIO_CHANNEL_UNKNOWN_29_SIZE];
-	legacy_u8 unknown_2D;
+	legacy_u8 driver_private_state[AUDIO_CHANNEL_DRIVER_STATE_SIZE];
+	legacy_u8 reserved_instrument_byte;
 	struct AUDIO_FAR_POINTER instruments;
 	legacy_u8 stack_depth;
 	struct AUDIO_FAR_POINTER return_stack[AUDIO_CHANNEL_RETURN_STACK_COUNT];
@@ -125,20 +125,20 @@ struct AUDIO_CONTEXT {
 	legacy_u8 channel;
 	legacy_u8 state;
 	legacy_u8 priority;
-	legacy_u8 unknown_03[AUDIO_CONTEXT_UNKNOWN_PREFIX_SIZE];
+	legacy_u8 driver_private_state[AUDIO_CONTEXT_DRIVER_STATE_SIZE];
 	legacy_u32 age;
 	legacy_u32 fade_out_flag;
 	struct AUDIO_FAR_POINTER resource;
 	legacy_s16 level;
 	legacy_u8 envelope_state;
-	legacy_u8 unknown_17;
+	legacy_u8 reserved_envelope_byte;
 	legacy_u16 modulation_delay;
 	legacy_u16 modulation_count;
 	legacy_s16 modulation;
 	legacy_u16 sequence_delay;
 	legacy_u16 sequence_count;
 	legacy_u8 sequence_value;
-	legacy_u8 unknown_23;
+	legacy_u8 reserved_sequence_byte;
 	legacy_u16 modulation_step;
 	legacy_u8 modulation_direction;
 	legacy_u8 modulation_tick;
@@ -146,7 +146,7 @@ struct AUDIO_CONTEXT {
 	legacy_u8 sequence_index;
 	legacy_u16 timer_offset;
 	legacy_u8 driver_channel;
-	legacy_u8 unknown_2D;
+	legacy_u8 reserved_driver_channel_byte;
 };
 
 #pragma pack (pop)

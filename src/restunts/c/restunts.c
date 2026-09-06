@@ -161,11 +161,11 @@ extern void audio_map_song_tracks(void far* song);
 extern void sprite_xor_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
-extern void audio_op_unk3(legacy_s16 channel);
-extern void audio_op_unk4(legacy_s16 channel);
-extern legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
+extern void audio_play_bump(legacy_s16 channel);
+extern void audio_play_scrape(legacy_s16 channel);
+extern legacy_s16 audio_play_effect_at_rate(void far* resource, legacy_s16 channel,
 	legacy_u8 priority, legacy_u16 rate);
-extern void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
+extern void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel,
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
 
@@ -206,8 +206,8 @@ extern void far* engptr;
 extern void far* eng1ptr;
 extern void far* fontledresptr;
 extern void far* sdgameresptr;
-extern legacy_s8 unk_3E7FC[];
-extern legacy_s8 unk_3E82C[];
+extern legacy_s8 player_engine_definition[];
+extern legacy_s8 opponent_engine_definition[];
 extern legacy_s16 audio_init_engine(legacy_s16, void far*, void far*, void far*);
 
 extern void update_car_speed(legacy_s8 input, legacy_s16 car_index,
@@ -326,8 +326,8 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	}
 
 	if (argnosound) {
-		audio_toggle_flag2();
-		audio_toggle_flag6();
+		audio_toggle_music();
+		audio_toggle_effects();
 	}
 
 	dos_set_critical_error_handler(&do_dea_textres);

@@ -56,9 +56,9 @@ static void stop_car_engine_audio(legacy_s16 player_flag) {
 		return;
 
 	if (player_flag == PLAYER_CAR_INDEX)
-		audio_function2_wrap(audio_player_engine_channel);
+		audio_play_crash_and_stop_engine(audio_player_engine_channel);
 	else
-		audio_function2_wrap(audio_opponent_engine_channel);
+		audio_play_crash_and_stop_engine(audio_opponent_engine_channel);
 }
 #endif
 

@@ -732,7 +732,7 @@ void load_audio_finalize(void far* audio_resource)
 	legacy_u16 data_offset;
 
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
-	sub_3736A();
+	audio_stop_music();
 	resource = (legacy_u8 far*)audio_resource;
 	if (resource == 0 ||
 		resource[AUDIO_RESOURCE_TYPE_OFFSET] != AUDIO_RESOURCE_TYPE_SONG ||
@@ -740,15 +740,15 @@ void load_audio_finalize(void far* audio_resource)
 		return;
 
 	dos_audio_driver_reset();
-	audio_engine_value_44d48 = 0;
-	audio_engine_value_454ba = AUDIO_ENGINE_INITIAL_TICK_STEP;
+	audio_sequence_elapsed_ticks = 0;
+	audio_sequence_tick_period = AUDIO_ENGINE_INITIAL_TICK_STEP;
 	data_offset = LEGACY_U16_WRAP_ADD(
 		(legacy_u16)((legacy_u16)
 			resource[AUDIO_SONG_INSTRUMENT_COUNT_OFFSET] <<
 			AUDIO_MUSIC_CHANNEL_COUNT_SCALE_SHIFT),
 		AUDIO_MUSIC_CHANNEL_COUNT_OFFSET);
 	audio_music_channel_count = resource[data_offset++];
-	audio_init_chunk(0,
+	audio_init_channel_range(0,
 		LEGACY_S16_FROM_BITS((legacy_u16)(audio_music_channel_count - 1U)),
 		resource, data_offset, audio_music_rate, AUDIO_MUSIC_PRIORITY);
 	audio_music_active = AUDIO_STATE_ENABLED;
@@ -782,7 +782,7 @@ void audioresource_copy_n_bytes(const legacy_u8 far* source,
 	} while (remaining != 0);
 }
 
-void sub_37C38(legacy_s16 value)
+void audio_set_missing_file_fatal(legacy_s16 value)
 {
 	audio_missing_file_fatal = value;
 }

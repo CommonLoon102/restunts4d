@@ -7,7 +7,7 @@
 
 #define AUDIO_CAR_STATE_RECORD_COUNT 40U
 #define AUDIO_CAR_STATE_RECORD_SIZE 34U
-#define AUDIO_CAR_STATE_UNKNOWN_PREFIX_SIZE 6U
+#define AUDIO_CAR_STATE_RESERVED_PREFIX_SIZE 6U
 #define AUDIO_CAR_STATE_PLAYER_PREVIOUS_OFFSET 6U
 #define AUDIO_CAR_STATE_PLAYER_CURRENT_OFFSET 12U
 #define AUDIO_CAR_STATE_OPPONENT_PREVIOUS_OFFSET 18U
@@ -71,7 +71,7 @@ enum AUDIO_ENGINE_LEGACY_TYPE {
    position relative to the camera before and after the frame, plus its rev
    counter. The asm mixer reads these records, so the layout is fixed. */
 struct AUDIO_CAR_STATE {
-	legacy_u8 unknown_00[AUDIO_CAR_STATE_UNKNOWN_PREFIX_SIZE];
+	legacy_u8 reserved_prefix[AUDIO_CAR_STATE_RESERVED_PREFIX_SIZE];
 	struct VECTOR player_previous;
 	struct VECTOR player_current;
 	struct VECTOR opponent_previous;
@@ -122,8 +122,8 @@ extern legacy_u8 audio_music_channel_count;
 extern legacy_u8 audio_suspended;
 extern legacy_u8 audio_music_active;
 extern legacy_u8 audio_effect_rate;
-extern legacy_u16 audio_engine_value_44d48;
-extern legacy_u16 audio_engine_value_454ba;
+extern legacy_u16 audio_sequence_elapsed_ticks;
+extern legacy_u16 audio_sequence_tick_period;
 extern void far* audio_bass_drum_resource;
 extern void far* audio_snare_resource;
 extern void far* audio_tom_resource;
@@ -143,7 +143,7 @@ void audio_write_far_pointer(legacy_u8 far* destination,
 legacy_u32 audioresource_get_dword(const legacy_u8 far* source);
 legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 legacy_s8* pad_id(const legacy_s8 far* source);
-void sub_18D06(const legacy_u8 far* sample, legacy_s16 interval);
+void audio_apply_car_state_sample(const legacy_u8 far* sample, legacy_s16 interval);
 legacy_s16 audio_init_engine(legacy_s16 timer_index, void far* first,
 	void far* second, void far* third);
 void audio_carstate(void);
@@ -152,22 +152,22 @@ void audio_resume(void);
 legacy_s16 audio_load_dos_driver(const legacy_s8* driver_name,
 	legacy_s16 unused1, legacy_s16 unused2);
 void audio_reset_channels(void);
-void sub_3736A(void);
+void audio_stop_music(void);
 void audio_driver_timer(void);
 void audio_release_channel_range(legacy_s16 first_channel,
 	legacy_s16 last_channel);
 void audio_update_driver_contexts(void);
-void audio_init_chunk(legacy_s16 first_channel, legacy_s16 last_channel,
+void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel,
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
-void audio_init_chunk2(legacy_s16 channel);
+void audio_stop_effect_channel(legacy_s16 channel);
 legacy_s16 audio_sequence_command_has_byte_argument(
 	legacy_u8 command_index);
 legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle);
-legacy_s16 sub_37470(legacy_s16 channel, legacy_u8 priority);
-void sub_374DE(legacy_s16 channel);
-legacy_s16 sub_3771E(legacy_s16 channel);
-void sub_38156(legacy_s16 index);
+legacy_s16 audio_reserve_effect_channel(legacy_s16 channel, legacy_u8 priority);
+void audio_release_effect_channel(legacy_s16 channel);
+legacy_s16 audio_effect_channel_idle(legacy_s16 channel);
+void audio_request_context_fade(legacy_s16 index);
 void audio_fade_out(legacy_s16 delay_ticks);
 
 #endif
