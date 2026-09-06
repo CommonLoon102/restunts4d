@@ -43,6 +43,7 @@
 
 #define TRACK_ROUTE_SUBTYPE_MASK 15U
 #define TRACK_ROUTE_REVERSED_FLAG 16U
+#define TRACK_ROUTE_CONNECTION_FORWARD 0U
 #define TRACK_ROUTE_FLAG_OFFSET 18U
 #define TRACK_ROUTE_VECTORS_PER_SEGMENT 2U
 #define TRACK_ROUTE_SECOND_VECTOR_OFFSET 1U
@@ -50,6 +51,10 @@
 #define TRACK_ROUTE_RESULT_FIRST_POINT_INDEX 1U
 #define TRACK_ROUTE_RESULT_SECOND_POINT_INDEX 2U
 #define TRACK_ROUTE_LAST_INDEX_OFFSET 1U
+#define TRACK_ROUTE_INFO_NONE 0
+#define TRACK_ROUTE_OPTIONAL_SPEED_NONE 0
+#define TRACK_ROUTE_OPPONENT_PATH_OFFSET_NONE 0U
+#define TRACK_ROUTE_OPPONENT_PATH_ABSENT 0U
 #define OPPONENT_ROUTE_POINT_NOT_LAST 0
 #define OPPONENT_ROUTE_LIST_END 0
 #define OPPONENT_ROUTE_INDEX_FIRST 0
@@ -58,6 +63,7 @@
 #define OPPONENT_ROUTE_FORCED 1U
 #define OPPONENT_LAP_NONE 0
 #define OPPONENT_LAP_STEP 1
+#define OPPONENT_SPEED_NONE 0U
 
 /*
  * Track object zero has no info record.  In the original executable its null
@@ -590,7 +596,7 @@ static legacy_u8 opponent_speed_at(legacy_u16 index)
 	 * byte in the path workspace.  Keep those reads deterministic instead of
 	 * indexing beyond the C array.
 	 */
-	return 0;
+	return OPPONENT_SPEED_NONE;
 }
 
 legacy_s16 sub_18D60(
@@ -627,14 +633,14 @@ legacy_s16 sub_18D60(
 	connection_status = (legacy_u8)trackdata18[track_index] &
 		TRACK_ROUTE_REVERSED_FLAG;
 	track_object = &trkObjectList[tile_element];
-	if (track_object->ss_trkObjInfoPtr == 0)
+	if (track_object->ss_trkObjInfoPtr == TRACK_ROUTE_INFO_NONE)
 		track_info = &legacy_null_track_info;
 	else
 		track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
 	arrow_type = (legacy_u8)track_info->si_arrowType;
 	route_index = (legacy_u8)route_index_arg;
 
-	if (connection_status == 0) {
+	if (connection_status == TRACK_ROUTE_CONNECTION_FORWARD) {
 		vector_index = LEGACY_U8_WRAP_MUL(
 			route_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	} else {
@@ -645,7 +651,7 @@ legacy_s16 sub_18D60(
 			vector_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	}
 
-	if (optional_speed != 0) {
+	if (optional_speed != TRACK_ROUTE_OPTIONAL_SPEED_NONE) {
 		speed_index = (legacy_u8)track_info->si_oppSpedCode;
 		speed_index = LEGACY_U16_WRAP_ADD(
 			speed_index, (legacy_u8)track_object->ss_surfaceType);
@@ -657,15 +663,18 @@ legacy_s16 sub_18D60(
 		(legacy_u8)track_info->si_opp1 |
 		LEGACY_U16_SHL((legacy_u8)track_info->si_opp2,
 			LEGACY_BYTE_BITS));
-	has_opponent_path = packed_opponent_offset != 0;
-	if (connection_status != 0 && has_opponent_path != 0) {
+	has_opponent_path = packed_opponent_offset !=
+		TRACK_ROUTE_OPPONENT_PATH_OFFSET_NONE;
+	if (connection_status != TRACK_ROUTE_CONNECTION_FORWARD &&
+		has_opponent_path != TRACK_ROUTE_OPPONENT_PATH_ABSENT) {
 		route_vectors = track_vector_from_legacy_offset(
 			packed_opponent_offset);
 	} else {
 		route_vectors = track_info->si_cameraDataOffset;
 	}
 
-	if (connection_status != 0 && has_opponent_path == 0) {
+	if (connection_status != TRACK_ROUTE_CONNECTION_FORWARD &&
+		has_opponent_path == TRACK_ROUTE_OPPONENT_PATH_ABSENT) {
 		first_point = route_vectors[
 			vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 		second_point = route_vectors[vector_index];
