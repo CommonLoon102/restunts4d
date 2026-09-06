@@ -7,8 +7,6 @@
 #include "resource.h"
 #include "shape2d.h"
 
-#define HIGHSCORE_READ_RETRY_OPERATION 9
-#define HIGHSCORE_READ_ONCE_OPERATION 10
 #define HIGHSCORE_READ_RETRY_CANCEL_RESULT 2
 
 #define HIGHSCORE_NO_HIGHLIGHT LEGACY_U8_MAX
@@ -47,9 +45,6 @@
 #define END_SCREEN_SPEED_FRACTION_BITS 8U
 #define END_SCREEN_NUMBER_WIDTH 3
 
-#define END_SCREEN_OUTCOME_LOSS 0U
-#define END_SCREEN_OUTCOME_WIN 1U
-#define END_SCREEN_OUTCOME_NONE 2U
 #define END_SCREEN_TEXT_VARIANT_COUNT 3U
 #define END_SCREEN_WIN_VARIANT_COUNT 2
 #define END_SCREEN_OUTCOME_VARIANT_COUNT 4
@@ -67,8 +62,6 @@
 
 #define END_SCREEN_TRACK_RESOURCE_INDEX 4
 #define END_SCREEN_TRACK_VALIDATION_BYTES 901U
-#define END_SCREEN_INITIAL_BLIT_MODE LEGACY_U8_MAX
-#define END_SCREEN_REFRESH_BLIT_MODE 254U
 #define END_SCREEN_MENU_AREA_COUNT 5U
 #define END_SCREEN_BUTTON_COUNT 4U
 #define END_SCREEN_REDUCED_BUTTON_COUNT 3
@@ -79,6 +72,17 @@
 #define END_SCREEN_BUTTON_WIDTH 70
 #define END_SCREEN_BUTTON_HEIGHT 21
 #define END_SCREEN_NO_SCORE_MESSAGE_Y 50
+
+enum HIGHSCORE_READ_OPERATION {
+	HIGHSCORE_READ_RETRY_OPERATION = 9,
+	HIGHSCORE_READ_ONCE_OPERATION = 10
+};
+
+enum END_SCREEN_OUTCOME {
+	END_SCREEN_OUTCOME_LOSS = 0,
+	END_SCREEN_OUTCOME_WIN = 1,
+	END_SCREEN_OUTCOME_NONE = 2
+};
 
 static legacy_u8 ranking_highlight;
 legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
@@ -600,7 +604,7 @@ legacy_u16 end_hiscore(void)
 	if (video_flag5_is0 != 0)
 		animation_sprite = sprite_make_wnd(END_SCREEN_ANIMATION_WIDTH,
 			END_SCREEN_ANIMATION_HEIGHT, END_SCREEN_COLOR);
-	blit_mode = END_SCREEN_INITIAL_BLIT_MODE;
+	blit_mode = MENU_BLIT_MODE_INITIAL;
 	sprite_copy_wnd_to_1_clear();
 	draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 		word_407F4, word_407F6, word_407F8, 0);
@@ -835,7 +839,7 @@ legacy_u16 end_hiscore(void)
 			enter_hiscore(finish_time,
 				locate_text_res(misc_resource, aInh_0), 0);
 			score_status = 0;
-			blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
+			blit_mode = MENU_BLIT_MODE_REFRESH;
 		} else {
 			mouse_draw_opaque_check();
 			if (score_status == -1) {
@@ -891,7 +895,7 @@ legacy_u16 end_hiscore(void)
 		word_407F4, word_407F6, word_407F8, 0);
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
-	blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
+	blit_mode = MENU_BLIT_MODE_REFRESH;
 	sub_29772();
 	check_input();
 	sprite_copy_2_to_1_2();
@@ -973,7 +977,7 @@ legacy_u16 end_hiscore(void)
 	check_input();
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
-	blit_mode = END_SCREEN_REFRESH_BLIT_MODE;
+	blit_mode = MENU_BLIT_MODE_REFRESH;
 	sprite_copy_2_to_1_2();
 
 	for (;;) {

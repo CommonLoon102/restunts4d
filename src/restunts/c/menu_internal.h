@@ -12,6 +12,11 @@
 #include "ui_input.h"
 #include "ui_text.h"
 
+enum MENU_BLIT_MODE {
+	MENU_BLIT_MODE_REFRESH = 254,
+	MENU_BLIT_MODE_INITIAL = 255
+};
+
 extern legacy_s8 aSdmsel[];
 extern legacy_s8 aScrn[];
 extern struct BUTTON_AREA menu_buttons[5];

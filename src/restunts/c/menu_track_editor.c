@@ -8,11 +8,9 @@
 #include "shape3d.h"
 #include "trackdata_layout.h"
 
-#define TRACK_EDITOR_REFRESH_BLIT_MODE 254U
 #define TRACK_EDITOR_CACHE_INVALID 255U
 #define TRACK_EDITOR_POSITION_UNSET 255U
 #define TRACK_EDITOR_PAGE_UNSET 255U
-#define TRACK_EDITOR_INITIAL_BLIT_MODE 255U
 #define TRACK_EDITOR_HOVER_UNSET 255U
 #define TRACK_EDITOR_MOUSE_NO_HIT 255U
 #define TRACK_EDITOR_SAVE_CANCELLED 255U
@@ -65,9 +63,6 @@
 #define TRACK_EDITOR_WATER_BRIDGE_LAST 108U
 #define TRACK_EDITOR_WATER_SHIP_FIRST 171U
 #define TRACK_EDITOR_WATER_SHIP_LAST 174U
-#define TRACK_EDITOR_ERROR_INVALID_WATER_TILE 12U
-#define TRACK_EDITOR_ERROR_INVALID_HILL_TILE 13U
-#define TRACK_EDITOR_ERROR_INVALID_TERRAIN_TILE 14U
 #define TRACK_EDITOR_TRACK_FILE_SIZE 1802UL
 #define TRACK_EDITOR_TRANSPARENT_COLOR 15U
 #define TRACK_EDITOR_TILE_PREVIEW_RIGHT 15
@@ -76,6 +71,13 @@
 #define TRACK_EDITOR_BLINK_INTERVAL 15U
 #define TRACK_EDITOR_SKYBOX_MAP_INDEX 900U
 #define TRACK_EDITOR_DIALOG_NO_CHANGE 5U
+
+enum TRACK_EDITOR_VALIDATION_RESULT {
+	TRACK_EDITOR_VALIDATION_OK = 0,
+	TRACK_EDITOR_ERROR_INVALID_WATER_TILE = 12,
+	TRACK_EDITOR_ERROR_INVALID_HILL_TILE = 13,
+	TRACK_EDITOR_ERROR_INVALID_TERRAIN_TILE = 14
+};
 
 static legacy_u8 far* progress_box_shape;
 
@@ -382,7 +384,7 @@ legacy_s16 sub_2C81C(void)
 	legacy_u8 error;
 
 	sub_2C9B4();
-	error = 0;
+	error = TRACK_EDITOR_VALIDATION_OK;
 	for (row = 0; row < 30U; row++) {
 		for (column = 0; column < 30U; column++) {
 			terrain = td15_terr_map_main[
@@ -417,7 +419,7 @@ legacy_s16 sub_2C81C(void)
 			}
 		}
 	}
-	if (error != 0)
+	if (error != TRACK_EDITOR_VALIDATION_OK)
 		sub_2C9B4();
 	return error;
 }
@@ -674,10 +676,10 @@ void load_tracks_menu_shapes(void)
 	palette_dirty = 1;
 	scrollbars_dirty = 1;
 	validate_track = 1;
-	validation_error = 0;
+	validation_error = TRACK_EDITOR_VALIDATION_OK;
 	track_changed = 0;
 	menu_active = 1;
-	blit_mode = TRACK_EDITOR_INITIAL_BLIT_MODE;
+	blit_mode = MENU_BLIT_MODE_INITIAL;
 	page = 1;
 	selection_column[0] = byte_45D90;
 	selection_row[0] = byte_45E16;
@@ -847,7 +849,7 @@ void load_tracks_menu_shapes(void)
 			}
 
 			sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
-			blit_mode = TRACK_EDITOR_REFRESH_BLIT_MODE;
+			blit_mode = MENU_BLIT_MODE_REFRESH;
 			previous_hovered_tile = TRACK_EDITOR_HOVER_UNSET;
 		}
 
@@ -923,13 +925,13 @@ void load_tracks_menu_shapes(void)
 			previous_hovered_tile = hovered_tile;
 		}
 
-		if (validation_error != 0) {
+		if (validation_error != TRACK_EDITOR_VALIDATION_OK) {
 			resource_id = (legacy_s8*)error_resource_ids +
 				(legacy_u16)validation_error * 3U;
 			__fmemcpy(&resID_byte1, resource_id, 3U);
 			*(&resID_byte1 + 3) = 0;
 			track_editor_show_message(text_resource, &resID_byte1);
-			validation_error = 0;
+			validation_error = TRACK_EDITOR_VALIDATION_OK;
 		}
 
 		blink_timer = TRACK_EDITOR_BLINK_INITIAL_COUNT;

@@ -8,12 +8,7 @@
 
 #define TRACK_EDITOR_RESOURCE_FILE_INDEX 3
 #define TRACK_MENU_BUTTON_COUNT 3
-#define TRACK_MENU_LOAD_BUTTON 0U
-#define TRACK_MENU_EDIT_BUTTON 1U
-#define TRACK_MENU_EXIT_BUTTON 2U
 #define TRACK_MENU_NO_SELECTION 255U
-#define TRACK_MENU_INITIAL_BLIT_MODE 255U
-#define TRACK_MENU_REFRESH_BLIT_MODE 254U
 #define TRACK_MENU_SETUP_WAIT_TICKS 130
 #define TRACK_MENU_PREVIEW_WAIT_TICKS 155
 #define TRACK_MENU_IDLE_LIMIT_TICKS 6000
@@ -36,6 +31,12 @@
 #define TRACK_MENU_BUTTON_Y 172
 #define TRACK_MENU_BUTTON_WIDTH 94
 #define TRACK_MENU_BUTTON_HEIGHT 24
+
+enum TRACK_MENU_BUTTON {
+	TRACK_MENU_LOAD_BUTTON = 0,
+	TRACK_MENU_EDIT_BUTTON = 1,
+	TRACK_MENU_EXIT_BUTTON = 2
+};
 
 void run_tracks_menu(legacy_s16 reload_track)
 {
@@ -67,7 +68,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 
 		selected = 0;
 		previous = TRACK_MENU_NO_SELECTION;
-		blit_mode = TRACK_MENU_INITIAL_BLIT_MODE;
+		blit_mode = MENU_BLIT_MODE_INITIAL;
 		show_waiting();
 		waitflag = TRACK_MENU_PREVIEW_WAIT_TICKS;
 		render_window_sprite = sprite_make_wnd(TRACK_MENU_SCREEN_WIDTH,
@@ -146,7 +147,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 				previous = selected;
 				sprite_blit_to_video(render_window_sprite,
 					LEGACY_S8_FROM_BITS(blit_mode));
-				blit_mode = TRACK_MENU_REFRESH_BLIT_MODE;
+				blit_mode = MENU_BLIT_MODE_REFRESH;
 				sprite_copy_2_to_1_2();
 				sub_29772();
 			}

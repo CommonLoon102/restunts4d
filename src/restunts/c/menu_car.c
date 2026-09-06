@@ -13,14 +13,7 @@
 #define CAR_ID_BUFFER_SIZE (CAR_ID_LENGTH + 1U)
 #define CAR_RESOURCE_ID_OFFSET 3U
 #define CAR_MENU_BUTTON_COUNT 5U
-#define CAR_MENU_DONE_BUTTON 0U
-#define CAR_MENU_NEXT_BUTTON 1U
-#define CAR_MENU_PREVIOUS_BUTTON 2U
-#define CAR_MENU_TRANSMISSION_BUTTON 3U
-#define CAR_MENU_COLOR_BUTTON 4U
 #define CAR_MENU_NO_SELECTION 255U
-#define CAR_MENU_INITIAL_BLIT_MODE 255U
-#define CAR_MENU_REFRESH_BLIT_MODE 254U
 #define CAR_MENU_WAIT_TICKS 90
 #define CAR_MENU_IDLE_LIMIT_TICKS 12000
 #define CAR_MENU_BUTTON_WIDTH 86
@@ -61,10 +54,21 @@
 #define CAR_MENU_DESCRIPTION_FIRST_Y 116
 #define CAR_MENU_FULL_CLIP_BOTTOM 200
 #define CAR_MENU_CAR_CLIP_BOTTOM 95
-#define CAR_RENDER_IDLE_PHASE 0U
-#define CAR_RENDER_DRAW_PHASE 1U
-#define CAR_RENDER_START_PHASE 3U
 #define TRANSMISSION_MODE_MASK 1U
+
+enum CAR_MENU_BUTTON {
+	CAR_MENU_DONE_BUTTON = 0,
+	CAR_MENU_NEXT_BUTTON = 1,
+	CAR_MENU_PREVIOUS_BUTTON = 2,
+	CAR_MENU_TRANSMISSION_BUTTON = 3,
+	CAR_MENU_COLOR_BUTTON = 4
+};
+
+enum CAR_RENDER_PHASE {
+	CAR_RENDER_IDLE_PHASE = 0,
+	CAR_RENDER_DRAW_PHASE = 1,
+	CAR_RENDER_START_PHASE = 3
+};
 
 static void car_menu_draw_standard_button(legacy_s8 far* text,
 	legacy_u16 button_index)
@@ -168,7 +172,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	}
 
 	waitflag = CAR_MENU_WAIT_TICKS;
-	blit_mode = CAR_MENU_INITIAL_BLIT_MODE;
+	blit_mode = MENU_BLIT_MODE_INITIAL;
 	backlights_paint_override = BACKLIGHT_PAINT_DEFAULT;
 	selector_resource = file_load_shape2d_fatal(aSdcsel);
 	opponent_sprite = 0;
@@ -384,10 +388,10 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		sprite_set_1_size(union_rect.left, union_rect.right,
 			union_rect.top, union_rect.bottom);
 		mouse_draw_opaque_check();
-		if (blit_mode != CAR_MENU_REFRESH_BLIT_MODE) {
+		if (blit_mode != MENU_BLIT_MODE_REFRESH) {
 			(void)sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
-			blit_mode = CAR_MENU_REFRESH_BLIT_MODE;
+			blit_mode = MENU_BLIT_MODE_REFRESH;
 		} else {
 			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		}
