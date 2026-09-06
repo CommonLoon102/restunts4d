@@ -26,6 +26,7 @@
 #define DOS_JOYSTICK_NO_INPUT 0
 #define DOS_JOYSTICK_FIRST_AXIS_INDEX 0U
 #define DOS_JOYSTICK_MINIMUM_AXIS_DIFFERENCE 0U
+#define DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD 0
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
@@ -212,7 +213,8 @@ legacy_s16 dos_get_joy_flags(void)
 	axis = dos_joystick_axis1;
 	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(dos_joystick_axis1_min)) {
 		dos_joystick_axis1_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
-		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <= 0) {
+		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <=
+			DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD) {
 			dos_joystick_axis1_min = dos_joystick_axis1_low_candidate;
 			joystick_recalculate_axis1();
 			joystick_reset_axis1_candidates();
@@ -223,7 +225,8 @@ legacy_s16 dos_get_joy_flags(void)
 	} else if (LEGACY_S16_FROM_BITS(axis) >
 		LEGACY_S16_FROM_BITS(dos_joystick_axis1_max)) {
 		dos_joystick_axis1_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
-		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <= 0) {
+		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <=
+			DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD) {
 			dos_joystick_axis1_max = dos_joystick_axis1_high_candidate;
 			joystick_recalculate_axis1();
 			joystick_reset_axis1_candidates();
@@ -244,7 +247,8 @@ legacy_s16 dos_get_joy_flags(void)
 	axis = dos_joystick_axis2;
 	if (axis < dos_joystick_axis2_min) {
 		dos_joystick_axis2_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
-		if (LEGACY_S16_FROM_BITS(dos_joystick_axis2_candidate_ticks) <= 0) {
+		if (LEGACY_S16_FROM_BITS(dos_joystick_axis2_candidate_ticks) <=
+			DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD) {
 			dos_joystick_axis2_min = dos_joystick_axis2_low_candidate;
 			joystick_recalculate_axis2();
 			joystick_reset_axis2_candidates();
@@ -255,7 +259,8 @@ legacy_s16 dos_get_joy_flags(void)
 	} else if (LEGACY_S16_FROM_BITS(axis) >
 		LEGACY_S16_FROM_BITS(dos_joystick_axis2_max)) {
 		dos_joystick_axis2_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
-		if (dos_joystick_axis2_candidate_ticks == 0) {
+		if (dos_joystick_axis2_candidate_ticks ==
+			DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD) {
 			dos_joystick_axis2_max = dos_joystick_axis2_high_candidate;
 			joystick_recalculate_axis2();
 			joystick_reset_axis2_candidates();
