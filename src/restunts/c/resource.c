@@ -8,6 +8,12 @@ extern void fatal_error(const legacy_s8* format, ...);
 #define RESOURCE_NOT_FOUND_SHAPE_FATAL 1U
 #define RESOURCE_NOT_FOUND_SOUND_FATAL 2U
 #define RESOURCE_IDENTIFIER_PADDING ' '
+#define RESOURCE_NAME_PADDING_INACTIVE 0U
+#define RESOURCE_NAME_PADDING_ACTIVE 1U
+#define RESOURCE_NAME_CHARACTER_FIRST 0U
+#define RESOURCE_DIRECTORY_INDEX_FIRST 0U
+#define RESOURCE_STRING_TERMINATOR 0
+#define RESOURCE_POINTER_NOT_FOUND 0
 
 static const legacy_u8 far* resource_file_offset_bytes(
 	const legacy_u8 far* resource, legacy_u16 count, legacy_u16 index)
@@ -77,13 +83,14 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 	chunk_count = resource_file_count((const legacy_u8 far*)data);
 	/* Compare through a local padded key.  Several callers pass string
 	 * literals, so the original in-place padding is not portable. */
-	padding = 0;
-	for (character = 0;
+	padding = RESOURCE_NAME_PADDING_INACTIVE;
+	for (character = RESOURCE_NAME_CHARACTER_FIRST;
 		character < RESOURCE_FILE_IDENTIFIER_SIZE; character++) {
-		if (padding == 0 && name[character] != 0)
+		if (padding == RESOURCE_NAME_PADDING_INACTIVE &&
+			name[character] != RESOURCE_STRING_TERMINATOR)
 			padded_name[character] = name[character];
 		else {
-			padding = 1;
+			padding = RESOURCE_NAME_PADDING_ACTIVE;
 			padded_name[character] = RESOURCE_IDENTIFIER_PADDING;
 		}
 	}
@@ -91,17 +98,18 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 	/* The original runs this compare chunks+1 times.  The extra slot is the
 	 * first offset dword, which is zero for normal resources and cannot match
 	 * any space-padded name used by callers. */
-	for (index = 0; index < chunk_count; index++) {
+	for (index = RESOURCE_DIRECTORY_INDEX_FIRST;
+		index < chunk_count; index++) {
 		identifier = resource_file_identifier(
 			(const legacy_u8 far*)data, index);
-		for (character = 0;
+		for (character = RESOURCE_NAME_CHARACTER_FIRST;
 			character < RESOURCE_FILE_IDENTIFIER_SIZE; character++) {
 			if (identifier[character] !=
 				(legacy_u8)padded_name[character])
 				break;
 		}
 		if (character == RESOURCE_FILE_IDENTIFIER_SIZE ||
-			(identifier[character] == 0 &&
+			(identifier[character] == RESOURCE_STRING_TERMINATOR &&
 			padded_name[character] == RESOURCE_IDENTIFIER_PADDING)) {
 			return (legacy_s8 far*)resource_file_data(
 				(legacy_u8 far*)data, index);
@@ -112,7 +120,7 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 		fatal_error(aLocatesound4_4sSoundNotF, name);
 	if (fatal == RESOURCE_NOT_FOUND_SHAPE_FATAL)
 		fatal_error(aLocateshape4_4sShapeNotF, name);
-	return 0;
+	return RESOURCE_POINTER_NOT_FOUND;
 }
 
 legacy_s8 far* locate_shape_nofatal(legacy_s8 far* data,
