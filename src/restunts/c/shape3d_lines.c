@@ -5,9 +5,9 @@
 #include "shape3d.h"
 #include "shape3d_internal.h"
 
-legacy_u16 draw_line_related_impl(legacy_u16 start_x, legacy_u16 start_y,
+legacy_u16 line_prepare(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line,
-	legacy_u16 alternate);
+	legacy_u16 skip_clipping);
 
 /* Walk the line's far end forward by `steps` and carry the same correction
    into the span counter the caller names. */
@@ -165,31 +165,31 @@ static legacy_u16 draw_line_horizontal(
 
 static legacy_u8 draw_line_clip_top(legacy_u16* line)
 {
-	legacy_u16 ax;
-	legacy_u16 cx;
+	legacy_u16 original_start_y;
+	legacy_u16 top_bound_or_clip_count;
 	legacy_u16 mode;
 	legacy_u16 advance;
 	legacy_u32 value32;
 	legacy_u32 product;
 
-	ax = line[DRAW_LINE_START_Y_INDEX];
-	cx = sprite1.sprite_top;
-	line[DRAW_LINE_START_Y_INDEX] = cx;
-	cx = (legacy_u16)(cx - ax);
+	original_start_y = line[DRAW_LINE_START_Y_INDEX];
+	top_bound_or_clip_count = sprite1.sprite_top;
+	line[DRAW_LINE_START_Y_INDEX] = top_bound_or_clip_count;
+	top_bound_or_clip_count = (legacy_u16)(top_bound_or_clip_count - original_start_y);
 	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
 	switch (mode) {
 	case DRAW_LINE_MODE_VERTICAL:
 	case DRAW_LINE_MODE_DIAGONAL_LEFT:
 	case DRAW_LINE_MODE_DIAGONAL_RIGHT:
 		if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT)
-			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] - cx);
+			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] - top_bound_or_clip_count);
 		else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT)
-			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] + cx);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
+			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] + top_bound_or_clip_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - top_bound_or_clip_count);
 		break;
 	case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 	case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
-		product = (legacy_u32)line[DRAW_LINE_STEP_INDEX] * cx;
+		product = (legacy_u32)line[DRAW_LINE_STEP_INDEX] * top_bound_or_clip_count;
 		value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) | line[DRAW_LINE_START_X_FRACTION_INDEX];
 		if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT)
 			value32 -= product;
@@ -197,13 +197,13 @@ static legacy_u8 draw_line_clip_top(legacy_u16* line)
 			value32 += product;
 		line[DRAW_LINE_START_X_FRACTION_INDEX] = (legacy_u16)value32;
 		line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(value32 >> LEGACY_WORD_BITS);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - top_bound_or_clip_count);
 		break;
 	case DRAW_LINE_MODE_X_MAJOR_LEFT:
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-		line[DRAW_LINE_START_Y_INDEX] = ax;
+		line[DRAW_LINE_START_Y_INDEX] = original_start_y;
 		advance = draw_line_round_div(
-			(legacy_u32)cx << LEGACY_WORD_BITS, line[DRAW_LINE_STEP_INDEX]);
+			(legacy_u32)top_bound_or_clip_count << LEGACY_WORD_BITS, line[DRAW_LINE_STEP_INDEX]);
 		if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT)
 			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] - advance);
 		else
@@ -230,31 +230,31 @@ static legacy_u8 draw_line_clip_top(legacy_u16* line)
 
 static legacy_u8 draw_line_clip_bottom(legacy_u16* line)
 {
-	legacy_u16 cx;
-	legacy_u16 dx;
+	legacy_u16 end_y_or_clip_count;
+	legacy_u16 clip_bottom;
 	legacy_u16 mode;
 	legacy_u16 advance;
 	legacy_u32 value32;
 	legacy_u32 product;
 
-	cx = line[DRAW_LINE_END_Y_INDEX];
-	dx = (legacy_u16)(sprite1.sprite_height - 1);
-	line[DRAW_LINE_END_Y_INDEX] = dx;
-	cx = (legacy_u16)(cx - dx);
+	end_y_or_clip_count = line[DRAW_LINE_END_Y_INDEX];
+	clip_bottom = (legacy_u16)(sprite1.sprite_height - 1);
+	line[DRAW_LINE_END_Y_INDEX] = clip_bottom;
+	end_y_or_clip_count = (legacy_u16)(end_y_or_clip_count - clip_bottom);
 	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
 	switch (mode) {
 	case DRAW_LINE_MODE_VERTICAL:
 	case DRAW_LINE_MODE_DIAGONAL_LEFT:
 	case DRAW_LINE_MODE_DIAGONAL_RIGHT:
 		if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT)
-			line[DRAW_LINE_END_X_INDEX] = (legacy_u16)(line[DRAW_LINE_END_X_INDEX] + cx);
+			line[DRAW_LINE_END_X_INDEX] = (legacy_u16)(line[DRAW_LINE_END_X_INDEX] + end_y_or_clip_count);
 		else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT)
-			line[DRAW_LINE_END_X_INDEX] = (legacy_u16)(line[DRAW_LINE_END_X_INDEX] - cx);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
+			line[DRAW_LINE_END_X_INDEX] = (legacy_u16)(line[DRAW_LINE_END_X_INDEX] - end_y_or_clip_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - end_y_or_clip_count);
 		break;
 	case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 	case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - end_y_or_clip_count);
 		advance = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - 1);
 		product = (legacy_u32)line[DRAW_LINE_STEP_INDEX] * advance;
 		value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) | line[DRAW_LINE_START_X_FRACTION_INDEX];
@@ -267,7 +267,7 @@ static legacy_u8 draw_line_clip_bottom(legacy_u16* line)
 		break;
 	case DRAW_LINE_MODE_X_MAJOR_LEFT:
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-		value32 = ((legacy_u32)dx << LEGACY_WORD_BITS) -
+		value32 = ((legacy_u32)clip_bottom << LEGACY_WORD_BITS) -
 			(((legacy_u32)line[DRAW_LINE_START_Y_INDEX] << LEGACY_WORD_BITS) | line[DRAW_LINE_START_Y_FRACTION_INDEX]);
 		if ((value32 & LEGACY_U32_SIGN_BIT) != 0)
 			advance = 0;
@@ -306,9 +306,9 @@ static void draw_line_advance_secondary(legacy_u16* line,
 
 static legacy_s16 draw_line_clip_left(legacy_u16* line)
 {
-	legacy_u16 ax;
-	legacy_u16 cx;
-	legacy_u16 dx;
+	legacy_u16 x_or_remaining_span;
+	legacy_u16 left_bound_or_clip_count;
+	legacy_u16 clip_left;
 	legacy_u16 mode;
 	legacy_u16 old_value;
 	legacy_u16 advance;
@@ -322,22 +322,22 @@ static legacy_s16 draw_line_clip_left(legacy_u16* line)
 	case DRAW_LINE_MODE_VERTICAL:
 		return DRAW_LINE_CLIP_LEFT;
 	case DRAW_LINE_MODE_DIAGONAL_LEFT:
-		cx = sprite1.sprite_left2;
-		ax = line[DRAW_LINE_END_X_INDEX];
-		line[DRAW_LINE_END_X_INDEX] = cx;
-		cx = (legacy_u16)(cx - ax);
-		line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + cx);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
-		line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - cx);
+		left_bound_or_clip_count = sprite1.sprite_left2;
+		x_or_remaining_span = line[DRAW_LINE_END_X_INDEX];
+		line[DRAW_LINE_END_X_INDEX] = left_bound_or_clip_count;
+		left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
+		line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + left_bound_or_clip_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
+		line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - left_bound_or_clip_count);
 		break;
 	case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-		ax = line[DRAW_LINE_START_X_INDEX];
-		cx = sprite1.sprite_left2;
-		line[DRAW_LINE_START_X_INDEX] = cx;
-		cx = (legacy_u16)(cx - ax);
-		line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] + cx);
-		line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + cx);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
+		x_or_remaining_span = line[DRAW_LINE_START_X_INDEX];
+		left_bound_or_clip_count = sprite1.sprite_left2;
+		line[DRAW_LINE_START_X_INDEX] = left_bound_or_clip_count;
+		left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
+		line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] + left_bound_or_clip_count);
+		line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + left_bound_or_clip_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
 		break;
 	case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 		value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) | line[DRAW_LINE_START_X_FRACTION_INDEX];
@@ -377,14 +377,14 @@ static legacy_s16 draw_line_clip_left(legacy_u16* line)
 		line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(value32 >> LEGACY_WORD_BITS);
 		break;
 	case DRAW_LINE_MODE_X_MAJOR_LEFT:
-		ax = line[DRAW_LINE_START_X_INDEX];
-		dx = sprite1.sprite_left2;
-		line[DRAW_LINE_END_X_INDEX] = dx;
-		ax = (legacy_u16)(ax - dx);
-		advance = (legacy_u16)(ax + 1);
+		x_or_remaining_span = line[DRAW_LINE_START_X_INDEX];
+		clip_left = sprite1.sprite_left2;
+		line[DRAW_LINE_END_X_INDEX] = clip_left;
+		x_or_remaining_span = (legacy_u16)(x_or_remaining_span - clip_left);
+		advance = (legacy_u16)(x_or_remaining_span + 1);
 		line[DRAW_LINE_PIXEL_COUNT_INDEX] = advance;
 		draw_line_advance_end(
-			line, ax, DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX);
+			line, x_or_remaining_span, DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX);
 		break;
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
 		old_value = line[DRAW_LINE_START_X_INDEX];
@@ -402,8 +402,8 @@ static legacy_s16 draw_line_clip_left(legacy_u16* line)
 
 static legacy_u16 draw_line_clip_right(legacy_u16* line)
 {
-	legacy_u16 ax;
-	legacy_u16 cx;
+	legacy_u16 x_or_span_count;
+	legacy_u16 right_bound_or_clip_count;
 	legacy_u16 mode;
 	legacy_u16 old_value;
 	legacy_u16 advance;
@@ -416,22 +416,22 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 	case DRAW_LINE_MODE_VERTICAL:
 		return draw_line_reject(line, DRAW_LINE_CLIP_RIGHT);
 	case DRAW_LINE_MODE_DIAGONAL_LEFT:
-		cx = line[DRAW_LINE_START_X_INDEX];
-		ax = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		line[DRAW_LINE_START_X_INDEX] = ax;
-		cx = (legacy_u16)(cx - ax);
-		line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + cx);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - cx);
-		line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] + cx);
+		right_bound_or_clip_count = line[DRAW_LINE_START_X_INDEX];
+		x_or_span_count = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		line[DRAW_LINE_START_X_INDEX] = x_or_span_count;
+		right_bound_or_clip_count = (legacy_u16)(right_bound_or_clip_count - x_or_span_count);
+		line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + right_bound_or_clip_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - right_bound_or_clip_count);
+		line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] + right_bound_or_clip_count);
 		return 0;
 	case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		ax = line[DRAW_LINE_END_X_INDEX];
-		line[DRAW_LINE_END_X_INDEX] = cx;
-		ax = (legacy_u16)(ax - cx);
-		line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + ax);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - ax);
-		line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - ax);
+		right_bound_or_clip_count = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		x_or_span_count = line[DRAW_LINE_END_X_INDEX];
+		line[DRAW_LINE_END_X_INDEX] = right_bound_or_clip_count;
+		x_or_span_count = (legacy_u16)(x_or_span_count - right_bound_or_clip_count);
+		line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + x_or_span_count);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - x_or_span_count);
+		line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - x_or_span_count);
 		return 0;
 	case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 		value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) | line[DRAW_LINE_START_X_FRACTION_INDEX];
@@ -464,21 +464,21 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 		line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + advance - 1);
 		return 0;
 	case DRAW_LINE_MODE_X_MAJOR_LEFT:
-		ax = line[DRAW_LINE_START_X_INDEX];
-		cx = (legacy_u16)(sprite1.sprite_widthsum - 1);
-		ax = (legacy_u16)(ax - cx);
-		line[DRAW_LINE_START_X_INDEX] = cx;
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - ax);
+		x_or_span_count = line[DRAW_LINE_START_X_INDEX];
+		right_bound_or_clip_count = (legacy_u16)(sprite1.sprite_widthsum - 1);
+		x_or_span_count = (legacy_u16)(x_or_span_count - right_bound_or_clip_count);
+		line[DRAW_LINE_START_X_INDEX] = right_bound_or_clip_count;
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - x_or_span_count);
 		draw_line_advance_secondary(
-			line, ax, DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX);
+			line, x_or_span_count, DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX);
 		return 0;
 	case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-		ax = sprite1.sprite_widthsum;
-		cx = (legacy_u16)(ax - 1);
-		line[DRAW_LINE_END_X_INDEX] = cx;
-		ax = (legacy_u16)(ax - line[DRAW_LINE_START_X_INDEX]);
-		line[DRAW_LINE_PIXEL_COUNT_INDEX] = ax;
-		advance = (legacy_u16)(ax - 1);
+		x_or_span_count = sprite1.sprite_widthsum;
+		right_bound_or_clip_count = (legacy_u16)(x_or_span_count - 1);
+		line[DRAW_LINE_END_X_INDEX] = right_bound_or_clip_count;
+		x_or_span_count = (legacy_u16)(x_or_span_count - line[DRAW_LINE_START_X_INDEX]);
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = x_or_span_count;
+		advance = (legacy_u16)(x_or_span_count - 1);
 		draw_line_advance_end(
 			line, advance, DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX);
 		return 0;
@@ -490,31 +490,31 @@ static legacy_u16 draw_line_clip_right(legacy_u16* line)
 static void draw_line_subdivide_advance_start(legacy_u16* line,
 	legacy_u16 vertical_step, legacy_u16 horizontal_step)
 {
-	legacy_u16 ax;
-	legacy_u16 bx;
+	legacy_u16 start_y_or_visible_step;
+	legacy_u16 start_y_or_bottom_overflow;
 	legacy_u8 update_counter;
 
-	ax = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + vertical_step);
-	line[DRAW_LINE_START_Y_INDEX] = ax;
-	bx = ax;
-	ax = (legacy_u16)(ax - sprite1.sprite_top);
-	if (LEGACY_S16_FROM_BITS(ax) > 0) {
-		if (LEGACY_S16_FROM_BITS(ax) >
+	start_y_or_visible_step = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + vertical_step);
+	line[DRAW_LINE_START_Y_INDEX] = start_y_or_visible_step;
+	start_y_or_bottom_overflow = start_y_or_visible_step;
+	start_y_or_visible_step = (legacy_u16)(start_y_or_visible_step - sprite1.sprite_top);
+	if (LEGACY_S16_FROM_BITS(start_y_or_visible_step) > 0) {
+		if (LEGACY_S16_FROM_BITS(start_y_or_visible_step) >
 			LEGACY_S16_FROM_BITS(vertical_step))
-			ax = vertical_step;
+			start_y_or_visible_step = vertical_step;
 		update_counter = 1;
-		bx = (legacy_u16)(bx - sprite1.sprite_height);
-		if (LEGACY_S16_FROM_BITS(bx) > 0) {
-			ax = (legacy_u16)(ax - bx);
-			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+		start_y_or_bottom_overflow = (legacy_u16)(start_y_or_bottom_overflow - sprite1.sprite_height);
+		if (LEGACY_S16_FROM_BITS(start_y_or_bottom_overflow) > 0) {
+			start_y_or_visible_step = (legacy_u16)(start_y_or_visible_step - start_y_or_bottom_overflow);
+			if (LEGACY_S16_FROM_BITS(start_y_or_visible_step) <= 0)
 				update_counter = 0;
 		}
 		if (update_counter != 0) {
 			if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]) <
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-				line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] + ax);
+				line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] + start_y_or_visible_step);
 			} else {
-				line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] + ax);
+				line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] + start_y_or_visible_step);
 			}
 		}
 	}
@@ -524,32 +524,32 @@ static void draw_line_subdivide_advance_start(legacy_u16* line,
 static void draw_line_subdivide_advance_end(legacy_u16* line,
 	legacy_u16 vertical_step, legacy_u16 horizontal_step)
 {
-	legacy_u16 ax;
-	legacy_u16 bx;
+	legacy_u16 end_y_or_visible_step;
+	legacy_u16 end_y_or_top_overflow;
 	legacy_u8 update_counter;
 
-	ax = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - vertical_step);
-	line[DRAW_LINE_END_Y_INDEX] = ax;
-	bx = ax;
-	ax = (legacy_u16)(ax - sprite1.sprite_height + 1);
-	if (LEGACY_S16_FROM_BITS(ax) < 0) {
-		ax = (legacy_u16)(0U - ax);
-		if (LEGACY_S16_FROM_BITS(ax) >
+	end_y_or_visible_step = (legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - vertical_step);
+	line[DRAW_LINE_END_Y_INDEX] = end_y_or_visible_step;
+	end_y_or_top_overflow = end_y_or_visible_step;
+	end_y_or_visible_step = (legacy_u16)(end_y_or_visible_step - sprite1.sprite_height + 1);
+	if (LEGACY_S16_FROM_BITS(end_y_or_visible_step) < 0) {
+		end_y_or_visible_step = (legacy_u16)(0U - end_y_or_visible_step);
+		if (LEGACY_S16_FROM_BITS(end_y_or_visible_step) >
 			LEGACY_S16_FROM_BITS(vertical_step))
-			ax = vertical_step;
+			end_y_or_visible_step = vertical_step;
 		update_counter = 1;
-		bx = (legacy_u16)(bx - sprite1.sprite_top + 1);
-		if (LEGACY_S16_FROM_BITS(bx) < 0) {
-			ax = (legacy_u16)(ax + bx);
-			if (LEGACY_S16_FROM_BITS(ax) <= 0)
+		end_y_or_top_overflow = (legacy_u16)(end_y_or_top_overflow - sprite1.sprite_top + 1);
+		if (LEGACY_S16_FROM_BITS(end_y_or_top_overflow) < 0) {
+			end_y_or_visible_step = (legacy_u16)(end_y_or_visible_step + end_y_or_top_overflow);
+			if (LEGACY_S16_FROM_BITS(end_y_or_visible_step) <= 0)
 				update_counter = 0;
 		}
 		if (update_counter != 0) {
 			if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) <
 				LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-				line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + ax);
+				line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + end_y_or_visible_step);
 			} else {
-				line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + ax);
+				line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + end_y_or_visible_step);
 			}
 		}
 	}
@@ -558,55 +558,55 @@ static void draw_line_subdivide_advance_end(legacy_u16* line,
 
 static void draw_line_subdivide(legacy_u16* line)
 {
-	legacy_u16 ax;
-	legacy_u16 cx;
-	legacy_u16 dx;
+	legacy_u16 half_start_coordinate;
+	legacy_u16 vertical_step;
+	legacy_u16 horizontal_step;
 
-	cx = sar1_word(line[DRAW_LINE_END_Y_INDEX]);
-	ax = sar1_word(line[DRAW_LINE_START_Y_INDEX]);
-	cx = sar1_word((legacy_u16)(cx - ax));
-	dx = sar1_word(line[DRAW_LINE_END_X_INDEX]);
-	ax = sar1_word(line[DRAW_LINE_START_X_INDEX]);
-	dx = sar1_word((legacy_u16)(dx - ax));
+	vertical_step = sar1_word(line[DRAW_LINE_END_Y_INDEX]);
+	half_start_coordinate = sar1_word(line[DRAW_LINE_START_Y_INDEX]);
+	vertical_step = sar1_word((legacy_u16)(vertical_step - half_start_coordinate));
+	horizontal_step = sar1_word(line[DRAW_LINE_END_X_INDEX]);
+	half_start_coordinate = sar1_word(line[DRAW_LINE_START_X_INDEX]);
+	horizontal_step = sar1_word((legacy_u16)(horizontal_step - half_start_coordinate));
 
 	for (;;) {
 		while (LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]) <=
 			DRAW_LINE_SUBDIVIDE_MIN) {
-			draw_line_subdivide_advance_start(line, cx, dx);
+			draw_line_subdivide_advance_start(line, vertical_step, horizontal_step);
 		}
 
 		if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]) >=
 			DRAW_LINE_SUBDIVIDE_MAX) {
-			draw_line_subdivide_advance_end(line, cx, dx);
+			draw_line_subdivide_advance_end(line, vertical_step, horizontal_step);
 			continue;
 		}
 		if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]) <= DRAW_LINE_SUBDIVIDE_MIN ||
 			LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]) >= DRAW_LINE_SUBDIVIDE_MAX) {
-			draw_line_subdivide_advance_start(line, cx, dx);
+			draw_line_subdivide_advance_start(line, vertical_step, horizontal_step);
 			continue;
 		}
 		if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) <= DRAW_LINE_SUBDIVIDE_MIN ||
 			LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) >= DRAW_LINE_SUBDIVIDE_MAX) {
-			draw_line_subdivide_advance_end(line, cx, dx);
+			draw_line_subdivide_advance_end(line, vertical_step, horizontal_step);
 			continue;
 		}
 		return;
 	}
 }
 
-legacy_u16 draw_line_related(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
-	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 0);
+legacy_u16 line_prepare_clipped(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line) {
+	return line_prepare(start_x, start_y, end_x, end_y, line, 0);
 }
 
-legacy_u16 draw_line_related_alt(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line) {
-	return draw_line_related_impl(arg_startX, arg_startY, arg_endX, arg_endY, line, 1);
+legacy_u16 line_prepare_unclipped(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line) {
+	return line_prepare(start_x, start_y, end_x, end_y, line, 1);
 }
 
-legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, legacy_u16 arg_endX, legacy_u16 arg_endY, legacy_u16* line, legacy_u16 var_4) {
-	legacy_u16 ax;
-	legacy_u16 bx;
-	legacy_u16 cx;
-	legacy_u16 dx;
+legacy_u16 line_prepare(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line, legacy_u16 skip_clipping) {
+	legacy_u16 coordinate;
+	legacy_u16 boundary_or_swap;
+	legacy_u16 extent_or_major_delta;
+	legacy_u16 clip_or_minor_delta;
 	legacy_u16 mode;
 	legacy_u16 clip;
 	legacy_u16 old_value;
@@ -627,67 +627,67 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 	line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] = 0;
 	line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] = 0;
 
-	ax = (legacy_u16)arg_startY;
-	bx = (legacy_u16)arg_endY;
-	cx = (legacy_u16)arg_startX;
-	dx = (legacy_u16)arg_endX;
-	if (LEGACY_S16_FROM_BITS(ax) <= LEGACY_S16_FROM_BITS(bx)) {
-		line[DRAW_LINE_START_X_INDEX] = cx;
-		line[DRAW_LINE_START_Y_INDEX] = ax;
-		line[DRAW_LINE_END_X_INDEX] = dx;
-		line[DRAW_LINE_END_Y_INDEX] = bx;
+	coordinate = (legacy_u16)start_y;
+	boundary_or_swap = (legacy_u16)end_y;
+	extent_or_major_delta = (legacy_u16)start_x;
+	clip_or_minor_delta = (legacy_u16)end_x;
+	if (LEGACY_S16_FROM_BITS(coordinate) <= LEGACY_S16_FROM_BITS(boundary_or_swap)) {
+		line[DRAW_LINE_START_X_INDEX] = extent_or_major_delta;
+		line[DRAW_LINE_START_Y_INDEX] = coordinate;
+		line[DRAW_LINE_END_X_INDEX] = clip_or_minor_delta;
+		line[DRAW_LINE_END_Y_INDEX] = boundary_or_swap;
 	} else {
-		line[DRAW_LINE_START_X_INDEX] = dx;
-		line[DRAW_LINE_START_Y_INDEX] = bx;
-		line[DRAW_LINE_END_X_INDEX] = cx;
-		line[DRAW_LINE_END_Y_INDEX] = ax;
+		line[DRAW_LINE_START_X_INDEX] = clip_or_minor_delta;
+		line[DRAW_LINE_START_Y_INDEX] = boundary_or_swap;
+		line[DRAW_LINE_END_X_INDEX] = extent_or_major_delta;
+		line[DRAW_LINE_END_Y_INDEX] = coordinate;
 	}
-	if (ax == bx)
-		return draw_line_horizontal(ax, cx, dx, line, var_4);
+	if (coordinate == boundary_or_swap)
+		return draw_line_horizontal(coordinate, extent_or_major_delta, clip_or_minor_delta, line, skip_clipping);
 
 	for (;;) {
-	dx = 0;
-	if ((legacy_u16)var_4 == 0) {
-		ax = line[DRAW_LINE_START_Y_INDEX];
-		bx = sprite1.sprite_top;
-		cx = sprite1.sprite_height;
-		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx)) {
-			dx = DRAW_LINE_CLIP_BOTTOM;
-			return draw_line_reject(line, dx);
+	clip_or_minor_delta = 0;
+	if ((legacy_u16)skip_clipping == 0) {
+		coordinate = line[DRAW_LINE_START_Y_INDEX];
+		boundary_or_swap = sprite1.sprite_top;
+		extent_or_major_delta = sprite1.sprite_height;
+		if (LEGACY_S16_FROM_BITS(coordinate) >= LEGACY_S16_FROM_BITS(extent_or_major_delta)) {
+			clip_or_minor_delta = DRAW_LINE_CLIP_BOTTOM;
+			return draw_line_reject(line, clip_or_minor_delta);
 		}
-		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
-			dx |= DRAW_LINE_CLIP_TOP << DRAW_LINE_CLIP_SHIFT;
+		if (LEGACY_S16_FROM_BITS(coordinate) < LEGACY_S16_FROM_BITS(boundary_or_swap))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_TOP << DRAW_LINE_CLIP_SHIFT;
 
-		ax = line[DRAW_LINE_END_Y_INDEX];
-		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx)) {
-			dx = DRAW_LINE_CLIP_TOP;
-			return draw_line_reject(line, dx);
+		coordinate = line[DRAW_LINE_END_Y_INDEX];
+		if (LEGACY_S16_FROM_BITS(coordinate) < LEGACY_S16_FROM_BITS(boundary_or_swap)) {
+			clip_or_minor_delta = DRAW_LINE_CLIP_TOP;
+			return draw_line_reject(line, clip_or_minor_delta);
 		}
-		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
-			dx |= DRAW_LINE_CLIP_BOTTOM;
+		if (LEGACY_S16_FROM_BITS(coordinate) >= LEGACY_S16_FROM_BITS(extent_or_major_delta))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_BOTTOM;
 
-		bx = sprite1.sprite_left2;
-		cx = sprite1.sprite_widthsum;
-		ax = line[DRAW_LINE_START_X_INDEX];
-		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
-			dx |= DRAW_LINE_CLIP_LEFT << DRAW_LINE_CLIP_SHIFT;
-		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
-			dx |= DRAW_LINE_CLIP_RIGHT << DRAW_LINE_CLIP_SHIFT;
-		ax = line[DRAW_LINE_END_X_INDEX];
-		if (LEGACY_S16_FROM_BITS(ax) < LEGACY_S16_FROM_BITS(bx))
-			dx |= DRAW_LINE_CLIP_LEFT;
-		if (LEGACY_S16_FROM_BITS(ax) >= LEGACY_S16_FROM_BITS(cx))
-			dx |= DRAW_LINE_CLIP_RIGHT;
-		if ((legacy_u8)dx & (legacy_u8)(dx >> LEGACY_BYTE_BITS)) {
-			dx = (legacy_u8)dx &
-				(legacy_u8)(dx >> LEGACY_BYTE_BITS);
-			return draw_line_reject(line, dx);
+		boundary_or_swap = sprite1.sprite_left2;
+		extent_or_major_delta = sprite1.sprite_widthsum;
+		coordinate = line[DRAW_LINE_START_X_INDEX];
+		if (LEGACY_S16_FROM_BITS(coordinate) < LEGACY_S16_FROM_BITS(boundary_or_swap))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_LEFT << DRAW_LINE_CLIP_SHIFT;
+		if (LEGACY_S16_FROM_BITS(coordinate) >= LEGACY_S16_FROM_BITS(extent_or_major_delta))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_RIGHT << DRAW_LINE_CLIP_SHIFT;
+		coordinate = line[DRAW_LINE_END_X_INDEX];
+		if (LEGACY_S16_FROM_BITS(coordinate) < LEGACY_S16_FROM_BITS(boundary_or_swap))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_LEFT;
+		if (LEGACY_S16_FROM_BITS(coordinate) >= LEGACY_S16_FROM_BITS(extent_or_major_delta))
+			clip_or_minor_delta |= DRAW_LINE_CLIP_RIGHT;
+		if ((legacy_u8)clip_or_minor_delta & (legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS)) {
+			clip_or_minor_delta = (legacy_u8)clip_or_minor_delta &
+				(legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS);
+			return draw_line_reject(line, clip_or_minor_delta);
 		}
 	}
 
-	dx = (legacy_u16)((legacy_u8)dx |
-		(legacy_u8)(dx >> LEGACY_BYTE_BITS));
-	clip = dx;
+	clip_or_minor_delta = (legacy_u16)((legacy_u8)clip_or_minor_delta |
+		(legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS));
+	clip = clip_or_minor_delta;
 	subdivide_required = 0;
 	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]) -
 		(legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
@@ -695,70 +695,70 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 		difference > (legacy_s32)LEGACY_S16_MAX) {
 		subdivide_required = 1;
 	} else {
-		cx = (legacy_u16)difference;
+		extent_or_major_delta = (legacy_u16)difference;
 		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) -
 			(legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
 		if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT ||
 			difference > (legacy_s32)LEGACY_S16_MAX) {
 			subdivide_required = 1;
 		} else {
-			dx = (legacy_u16)difference;
+			clip_or_minor_delta = (legacy_u16)difference;
 			compute_step = 0;
-			if (dx == 0) {
-				cx = (legacy_u16)(cx + 1);
-				line[DRAW_LINE_PIXEL_COUNT_INDEX] = cx;
+			if (clip_or_minor_delta == 0) {
+				extent_or_major_delta = (legacy_u16)(extent_or_major_delta + 1);
+				line[DRAW_LINE_PIXEL_COUNT_INDEX] = extent_or_major_delta;
 				line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 					LEGACY_U16_HIGH_BYTE_MASK) | DRAW_LINE_MODE_VERTICAL);
-			} else if (LEGACY_S16_FROM_BITS(dx) >= 0) {
-				if (dx < cx) {
+			} else if (LEGACY_S16_FROM_BITS(clip_or_minor_delta) >= 0) {
+				if (clip_or_minor_delta < extent_or_major_delta) {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_Y_MAJOR_RIGHT);
 					compute_step = 1;
-				} else if (dx == cx) {
+				} else if (clip_or_minor_delta == extent_or_major_delta) {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_DIAGONAL_RIGHT);
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(cx + 1);
+					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
 				} else {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_X_MAJOR_RIGHT);
-					bx = cx;
-					cx = dx;
-					dx = bx;
+					boundary_or_swap = extent_or_major_delta;
+					extent_or_major_delta = clip_or_minor_delta;
+					clip_or_minor_delta = boundary_or_swap;
 					compute_step = 1;
 				}
-			} else if (dx == LEGACY_U16_SIGN_BIT) {
+			} else if (clip_or_minor_delta == LEGACY_U16_SIGN_BIT) {
 				subdivide_required = 1;
 			} else {
-				dx = (legacy_u16)(0U - dx);
-				if (dx < cx) {
+				clip_or_minor_delta = (legacy_u16)(0U - clip_or_minor_delta);
+				if (clip_or_minor_delta < extent_or_major_delta) {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_Y_MAJOR_LEFT);
 					compute_step = 1;
-				} else if (dx == cx) {
+				} else if (clip_or_minor_delta == extent_or_major_delta) {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_DIAGONAL_LEFT);
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(cx + 1);
+					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
 				} else {
 					line[DRAW_LINE_MODE_AND_CLIP_INDEX] = (legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
 						LEGACY_U16_HIGH_BYTE_MASK) |
 						DRAW_LINE_MODE_X_MAJOR_LEFT);
-					bx = cx;
-					cx = dx;
-					dx = bx;
+					boundary_or_swap = extent_or_major_delta;
+					extent_or_major_delta = clip_or_minor_delta;
+					clip_or_minor_delta = boundary_or_swap;
 					compute_step = 1;
 				}
 			}
 			if (compute_step != 0) {
-				line[DRAW_LINE_STEP_INDEX] = draw_line_step(dx, cx);
-				if (cx == LEGACY_S16_MAX)
+				line[DRAW_LINE_STEP_INDEX] = draw_line_step(clip_or_minor_delta, extent_or_major_delta);
+				if (extent_or_major_delta == LEGACY_S16_MAX)
 					subdivide_required = 1;
 				else
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(cx + 1);
+					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
 			}
 		}
 	}
@@ -802,38 +802,38 @@ legacy_u16 draw_line_related_impl(legacy_u16 arg_startX, legacy_u16 arg_startY, 
 			break;
 		}
 
-		dx = 0;
-		ax = line[DRAW_LINE_START_X_INDEX];
-		if (LEGACY_S16_FROM_BITS(ax) <
+		clip_or_minor_delta = 0;
+		coordinate = line[DRAW_LINE_START_X_INDEX];
+		if (LEGACY_S16_FROM_BITS(coordinate) <
 			LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-			dx |= DRAW_LINE_CLIP_LEFT << DRAW_LINE_CLIP_SHIFT;
+			clip_or_minor_delta |= DRAW_LINE_CLIP_LEFT << DRAW_LINE_CLIP_SHIFT;
 		}
 		value32 = (legacy_u32)line[DRAW_LINE_START_X_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
-		ax = (legacy_u16)(ax +
+		coordinate = (legacy_u16)(coordinate +
 			(legacy_u16)(value32 >> LEGACY_WORD_BITS));
-		if (LEGACY_S16_FROM_BITS(ax) >=
+		if (LEGACY_S16_FROM_BITS(coordinate) >=
 			LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
-			dx |= DRAW_LINE_CLIP_RIGHT << DRAW_LINE_CLIP_SHIFT;
+			clip_or_minor_delta |= DRAW_LINE_CLIP_RIGHT << DRAW_LINE_CLIP_SHIFT;
 		}
-		ax = line[DRAW_LINE_END_X_INDEX];
-		if (LEGACY_S16_FROM_BITS(ax) <
+		coordinate = line[DRAW_LINE_END_X_INDEX];
+		if (LEGACY_S16_FROM_BITS(coordinate) <
 			LEGACY_S16_FROM_BITS(sprite1.sprite_left2)) {
-			dx |= DRAW_LINE_CLIP_LEFT;
+			clip_or_minor_delta |= DRAW_LINE_CLIP_LEFT;
 		}
-		if (LEGACY_S16_FROM_BITS(ax) >=
+		if (LEGACY_S16_FROM_BITS(coordinate) >=
 			LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum)) {
-			dx |= DRAW_LINE_CLIP_RIGHT;
+			clip_or_minor_delta |= DRAW_LINE_CLIP_RIGHT;
 		}
-		if ((legacy_u8)dx & (legacy_u8)(dx >> LEGACY_BYTE_BITS)) {
-			dx = (legacy_u8)dx &
-				(legacy_u8)(dx >> LEGACY_BYTE_BITS);
-			return draw_line_reject(line, dx);
+		if ((legacy_u8)clip_or_minor_delta & (legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS)) {
+			clip_or_minor_delta = (legacy_u8)clip_or_minor_delta &
+				(legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS);
+			return draw_line_reject(line, clip_or_minor_delta);
 		}
-		dx = (legacy_u16)((legacy_u8)dx |
-			(legacy_u8)(dx >> LEGACY_BYTE_BITS));
-		if (dx == 0)
+		clip_or_minor_delta = (legacy_u16)((legacy_u8)clip_or_minor_delta |
+			(legacy_u8)(clip_or_minor_delta >> LEGACY_BYTE_BITS));
+		if (clip_or_minor_delta == 0)
 			return 0;
-		clip = dx;
+		clip = clip_or_minor_delta;
 	}
 	}
 }

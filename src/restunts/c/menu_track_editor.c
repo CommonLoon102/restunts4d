@@ -698,10 +698,10 @@ void load_tracks_menu_shapes(void)
 	draw_button(locate_text_res(text_resource, "bti"),
 		TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y, TRACK_EDITOR_TITLE_WIDTH,
 		TRACK_EDITOR_TITLE_HEIGHT, word_407F4, word_407F6, word_407F8, 0);
-	draw_lines_unk(TRACK_EDITOR_LEFT_FRAME_X, TRACK_EDITOR_LEFT_FRAME_Y,
+	draw_three_color_beveled_border(TRACK_EDITOR_LEFT_FRAME_X, TRACK_EDITOR_LEFT_FRAME_Y,
 		TRACK_EDITOR_LEFT_FRAME_WIDTH, TRACK_EDITOR_LEFT_FRAME_HEIGHT,
 		11, 9, 1);
-	draw_lines_unk(TRACK_EDITOR_RIGHT_FRAME_X, TRACK_EDITOR_RIGHT_FRAME_Y,
+	draw_three_color_beveled_border(TRACK_EDITOR_RIGHT_FRAME_X, TRACK_EDITOR_RIGHT_FRAME_Y,
 		TRACK_EDITOR_RIGHT_FRAME_WIDTH, TRACK_EDITOR_RIGHT_FRAME_HEIGHT,
 		11, 9, 1);
 	draw_button(locate_text_res(text_resource, "bsc"),

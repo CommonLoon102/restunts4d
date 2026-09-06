@@ -25,7 +25,7 @@ legacy_s32 absolute_long(legacy_s32 value)
 	return LEGACY_S32_FROM_BITS(bits);
 }
 
-extern legacy_s32 sin80, cos80;
+extern legacy_s32 direction_sector_sine, direction_sector_cosine;
 
 #define VECTOR_DIRECTION_NEGATIVE_Y 30
 #define VECTOR_DIRECTION_POSITIVE_Y 31
@@ -749,38 +749,38 @@ static legacy_u16 math_word_magnitude(legacy_s16 value)
 }
 
 legacy_s16 vector_direction_sector(struct VECTOR* vec) {
-	legacy_s32 y;
-	legacy_s32 temp;
+	legacy_s32 vertical_magnitude;
+	legacy_s32 horizontal_radius;
 	legacy_s32 scaled_angle;
-	legacy_s16 flag;
+	legacy_s16 vertical_sector;
 	legacy_s16 result;
 	legacy_s32 angle;
 
-	y = (legacy_s32)math_word_magnitude(vec->y);
+	vertical_magnitude = (legacy_s32)math_word_magnitude(vec->y);
 
 	// The original widens the 16-bit radius with an explicit zero high word
 	// (mov [bp+var_4], ax / mov [bp+var_2], 0), not with a sign extension.
-	temp = (legacy_u16)polarRadius2D(
+	horizontal_radius = (legacy_u16)polarRadius2D(
 		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->x)),
 		LEGACY_S16_FROM_BITS(math_word_magnitude(vec->z)));
 
-	if (sin80 != cos80) {
-		//fatal_error("sin80 != cos80 - not observed");
-		y = y * sin80;
-		temp = temp * cos80;
+	if (direction_sector_sine != direction_sector_cosine) {
+		//fatal_error("direction_sector_sine != direction_sector_cosine - not observed");
+		vertical_magnitude = vertical_magnitude * direction_sector_sine;
+		horizontal_radius = horizontal_radius * direction_sector_cosine;
 	}
 
-	if (temp >= y) {
-		flag = 0;
+	if (horizontal_radius >= vertical_magnitude) {
+		vertical_sector = 0;
 	} else {
-		flag = 1;
+		vertical_sector = 1;
 	}
 
 	if (vec->y < 0) {
-		if (flag != 0) return VECTOR_DIRECTION_NEGATIVE_Y;
+		if (vertical_sector != 0) return VECTOR_DIRECTION_NEGATIVE_Y;
 	} else
 	if (vec->y > 0) {
-		if (flag != 0) return VECTOR_DIRECTION_POSITIVE_Y;
+		if (vertical_sector != 0) return VECTOR_DIRECTION_POSITIVE_Y;
 	}
 
 	if (vec->y > 0) {
@@ -805,14 +805,14 @@ legacy_s16 vector_direction_sector(struct VECTOR* vec) {
 
 // All ten of these are `dw` in dseg and are declared unsigned in shape3d.c,
 // which is also how set_projection produces them. math.c used to declare this
-// subset as int, so projectiondata9/10 - the only ones that can grow past
+// subset as int, so projection_focal_length_x/10 - the only ones that can grow past
 // 32767 - reached the projection multiply as negative values.
 //
 // The two roles are not the same, and the casts at the use sites say which is
 // which: 9 and 10 are the operands of `mul`, so they stay unsigned there,
 // while 5 and 8 are added with `add ax, .. / jo`, whose overflow test reads
 // both operands as signed words.
-extern legacy_u16 projectiondata5, projectiondata8, projectiondata9, projectiondata10;
+extern legacy_u16 projection_center_x, projection_center_y, projection_focal_length_x, projection_focal_length_y;
 
 
 // Each `add ax, projectiondataN` in the original is followed by `jo`, and on
@@ -849,49 +849,49 @@ void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt) {
 	}
 
 	if (vec->x < 0) {
-		proj = (legacy_u32)projection_magnitude(vec->x) * (legacy_u16)projectiondata9;
+		proj = (legacy_u32)projection_magnitude(vec->x) * (legacy_u16)projection_focal_length_x;
 		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp) {
 			outpt->px = saturate_projection(
 				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
-				(legacy_s16)projectiondata5);
+				(legacy_s16)projection_center_x);
 		} else
 			outpt->px = -PROJECTION_COORD_LIMIT;
 	} else {
-		proj = (legacy_u32)(legacy_u16)vec->x * (legacy_u16)projectiondata9;
+		proj = (legacy_u32)(legacy_u16)vec->x * (legacy_u16)projection_focal_length_x;
 		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->px = saturate_projection(
 				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
-				(legacy_s16)projectiondata5);
+				(legacy_s16)projection_center_x);
 		else
 			outpt->px = PROJECTION_COORD_LIMIT;
 	}
 
 	if (vec->y < 0) {
-		proj = (legacy_u32)projection_magnitude(vec->y) * (legacy_u16)projectiondata10;
+		proj = (legacy_u32)projection_magnitude(vec->y) * (legacy_u16)projection_focal_length_y;
 		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->py = saturate_projection(
 				(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
-				(legacy_s16)projectiondata8);
+				(legacy_s16)projection_center_y);
 		else
 			outpt->py = PROJECTION_COORD_LIMIT;
 	} else {
-		proj = (legacy_u32)(legacy_u16)vec->y * (legacy_u16)projectiondata10;
+		proj = (legacy_u32)(legacy_u16)vec->y * (legacy_u16)projection_focal_length_y;
 		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
 
 		if (vec->z > comp)
 			outpt->py = saturate_projection(
 				-(legacy_s32)LEGACY_U32_DIV_OR_ZERO(
 					proj, (legacy_u16)vec->z) +
-				(legacy_s16)projectiondata8);
+				(legacy_s16)projection_center_y);
 		else
 			outpt->py = -PROJECTION_COORD_LIMIT;
 	}

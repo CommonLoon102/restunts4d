@@ -867,7 +867,7 @@ legacy_u16 end_hiscore(void)
 	animation_y = LEGACY_S16_FROM_BITS(
 		LEGACY_U16_SAR((legacy_u16)animation_y,
 			END_SCREEN_ANIMATION_CENTER_SHIFT));
-	draw_lines_unk(LEGACY_S16_WRAP_SUB(animation_x,
+	draw_three_color_beveled_border(LEGACY_S16_WRAP_SUB(animation_x,
 			END_SCREEN_ANIMATION_BORDER_INSET),
 		LEGACY_S16_WRAP_SUB(animation_y,
 			END_SCREEN_ANIMATION_BORDER_INSET),

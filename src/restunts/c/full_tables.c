@@ -52,7 +52,7 @@ static legacy_u8 sphere_radii_data[780] = {
 	47, 47, 47, 48, 48, 48, 48, 48, 49, 49, 49, 49
 };
 
-legacy_u8* off_3F3C8[40] = {
+legacy_u8* sphere_radius_rows[40] = {
 	sphere_radii_data + 0, sphere_radii_data + 0, sphere_radii_data + 1, sphere_radii_data + 3, sphere_radii_data + 6,
 	sphere_radii_data + 10, sphere_radii_data + 15, sphere_radii_data + 21, sphere_radii_data + 28, sphere_radii_data + 36,
 	sphere_radii_data + 45, sphere_radii_data + 55, sphere_radii_data + 66, sphere_radii_data + 78, sphere_radii_data + 91,

@@ -72,9 +72,9 @@ void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape) {
 		SHAPE3D_VERTEX_RECORD_SIZE);
 	gameshape->shape3d_vertex_bytes = (legacy_u8 far*)shapeptr +
 		SHAPE3D_HEADER_SIZE;
-	gameshape->shape3d_cull1 = (legacy_u8 far*)shapeptr +
+	gameshape->shape3d_visibility_masks = (legacy_u8 far*)shapeptr +
 		vertex_bytes + SHAPE3D_HEADER_SIZE;
-	gameshape->shape3d_cull2 = (legacy_u8 far*)shapeptr +
+	gameshape->shape3d_front_facing_masks = (legacy_u8 far*)shapeptr +
 		LEGACY_U16_WRAP_MUL(primitive_count,
 			SHAPE3D_PRIMITIVE_CULL_RECORD_SIZE) + vertex_bytes +
 		SHAPE3D_HEADER_SIZE;

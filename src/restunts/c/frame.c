@@ -295,7 +295,7 @@ static void frame_add_dynamic_shape(struct TRACKOBJECT* track_object,
 		state.game_particle_rotation_y[state_index]);
 	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
 		state.game_particle_heading[state_index]);
-	curtransshape_ptr->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+	curtransshape_ptr->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 	curtransshape_ptr->material = material;
 	transformed_shape_add_for_sort(z_adjust, 0);
 }
@@ -315,7 +315,7 @@ static void frame_prepare_flat_track_shape(struct TRANSFORMEDSHAPE3D* shape,
 	shape->rotvec.x = 0;
 	shape->rotvec.y = 0;
 	shape->rotvec.z = rotation;
-	shape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+	shape->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 	shape->material = 0;
 }
 
@@ -468,7 +468,7 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 		curtransshape_ptr->shapeptr = track_object->ss_loShapePtr;
 	} else {
 		curtransshape_ptr->shapeptr = track_object->ss_shapePtr;
-		sub_204AE(wheel_shape, FRAME_STEERED_WHEEL_FIRST_VERTEX,
+		shape3d_update_car_wheel_vertices(wheel_shape, FRAME_STEERED_WHEEL_FIRST_VERTEX,
 			carstate->car_steeringAngle,
 			carstate->car_suspension_deflection, wheel_angles, wheel_vectors,
 			wheel_vector);
@@ -491,7 +491,7 @@ static void frame_add_car(struct CARSTATE* carstate, legacy_s8 debris_owner,
 		carstate->car_rotate.y);
 	curtransshape_ptr->rotvec.z = LEGACY_S16_WRAP_NEGATE(
 		carstate->car_rotate.x);
-	curtransshape_ptr->unk = FRAME_CAR_TRANSFORM_DISTANCE;
+	curtransshape_ptr->culling_distance = FRAME_CAR_TRANSFORM_DISTANCE;
 	curtransshape_ptr->material = material;
 	/* The sort slot carries the same id as the track object: 2 for the
 	   player, 3 for the opponent. */
@@ -780,7 +780,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 		currenttransshape->ts_flags = var_122 | FRAME_DISTANT_SHAPE_FLAGS;
 		currenttransshape->rotvec.x = 0;
 		currenttransshape->rotvec.y = 0;
-		currenttransshape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+		currenttransshape->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 		currenttransshape->material = 0;
 
 		for (var_counter = 0; var_counter < FRAME_DISTANT_SHAPE_COUNT;
@@ -804,7 +804,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					currenttransshape->shapeptr = off_3BE44[var_counter];
 					currenttransshape->rotvec.z =
 						LEGACY_S16_WRAP_NEGATE(car_rot_x_2);
-					var_transformresult = transformed_shape_op(&currenttransshape[0]);
+					var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 					(void) var_transformresult; // we cannot be out of memory as we are just starting to process
 				}
 			}
@@ -1054,7 +1054,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 						&cam_pos, (legacy_s16)(var_122 |
 							FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
 						word_3C0D6[di]);
-					var_transformresult = transformed_shape_op(&currenttransshape[0]);
+					var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 					if (var_transformresult > 0) {
 						// if the return value is > 0, we are out of memory
 						// for the polygons, so the rendering is interrupted.
@@ -1104,7 +1104,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 							&cam_pos, (legacy_s16)(var_122 |
 								FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
 							var_trkobject_ptr->ss_rotY);
-						var_transformresult = transformed_shape_op(&currenttransshape[0]);
+						var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 						if (var_transformresult > 0)
 							break;
 					}
@@ -1122,7 +1122,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 
 		// The rest of the rendering loop still needs to be analyzed in detail.
 		// Anyway, the gist is that every tile is associated with various shape,
-		// each of which is rendered via a call to `transformed_shape_op`. The
+		// each of which is rendered via a call to `shape3d_transform_and_queue`. The
 		// result of such fn is checked each time, since a return value of 1
 		// means we ran out of memory
 
@@ -1146,9 +1146,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			currenttransshape->rotvec.x = 0;
 			currenttransshape->rotvec.y = 0;
 			currenttransshape->rotvec.z = var_trkobject_ptr->ss_rotY;
-			currenttransshape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+			currenttransshape->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 			currenttransshape->material = 0;
-			var_transformresult = transformed_shape_op(&currenttransshape[0]);
+			var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 			if (var_transformresult > 0)
 				break;
 		}
@@ -1219,10 +1219,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					currenttransshape->rotvec.x = 0;
 					currenttransshape->rotvec.y = 0;
 					currenttransshape->rotvec.z = 0;
-					currenttransshape->unk =
+					currenttransshape->culling_distance =
 						FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 					currenttransshape->material = 0;
-					var_transformresult = transformed_shape_op(&currenttransshape[0]);
+					var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 					if (var_transformresult > 0)
 						break;
 				}
@@ -1244,10 +1244,10 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					currenttransshape[1].rotvec.z = var_trkobjectptr->ss_rotY;
 					if (var_trkobjectptr->ss_multiTileFlag !=
 						FRAME_MULTITILE_NONE) {
-						currenttransshape[1].unk =
+						currenttransshape[1].culling_distance =
 							FRAME_DEFAULT_TRANSFORM_DISTANCE;
 					} else {
-						currenttransshape[1].unk =
+						currenttransshape[1].culling_distance =
 							FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 					}
 
@@ -1263,7 +1263,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					if ((currenttransshape[1].ts_flags &
 						FRAME_NO_DEPTH_SORT_FLAG) != 0) {
 						currenttransshape[1].rectptr = &rect_unk2;
-						var_transformresult = transformed_shape_op(&currenttransshape[1]);
+						var_transformresult = shape3d_transform_and_queue(&currenttransshape[1]);
 						if (var_transformresult > 0)
 							break;
 					} else {
@@ -1285,9 +1285,9 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			currenttransshape->rotvec.z = var_trkobject_ptr->ss_rotY;
 			if (var_trkobject_ptr->ss_multiTileFlag !=
 				FRAME_MULTITILE_NONE) {
-				currenttransshape->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+				currenttransshape->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 			} else {
-				currenttransshape->unk =
+				currenttransshape->culling_distance =
 					FRAME_SINGLE_TILE_TRANSFORM_DISTANCE;
 			}
 
@@ -1303,7 +1303,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 			if ((var_trkobject_ptr->ss_ignoreZBias &
 				FRAME_NO_DEPTH_SORT_FLAG) != 0) {
 				currenttransshape->rectptr = &rect_unk2;
-				var_transformresult = transformed_shape_op(&currenttransshape[0]);
+				var_transformresult = shape3d_transform_and_queue(&currenttransshape[0]);
 				if (var_transformresult > 0)
 					break;
 			} else {
@@ -1349,7 +1349,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					curtransshape_ptr->rotvec.x = 0;
 					curtransshape_ptr->rotvec.y = 0;
 					curtransshape_ptr->rotvec.z = td08_direction_related[var_4C];
-					curtransshape_ptr->unk =
+					curtransshape_ptr->culling_distance =
 						FRAME_CHECKPOINT_TRANSFORM_DISTANCE;
 					curtransshape_ptr->material = 0;
 					transformed_shape_add_for_sort(0, 0);
@@ -1383,7 +1383,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				FRAME_PLAYER_SORT_ID,
 				&game3dshapes[FRAME_PLAYER_SHAPE_RESOURCE_OFFSET /
 					sizeof(struct SHAPE3D)],
-				word_443E8, carshapevecs, carshapevec,
+				player_wheel_vertex_state, player_base_wheel_vertices, player_front_wheel_centers,
 				&rect_unk12, &var_rect, &cam_pos, tile_det_level,
 				var_122, gameconfig.game_playermaterial,
 				var_6C & var_12A);
@@ -1395,7 +1395,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					FRAME_OPPONENT_SORT_ID,
 					&game3dshapes[FRAME_OPPONENT_SHAPE_RESOURCE_OFFSET /
 						sizeof(struct SHAPE3D)],
-					word_4448A, oppcarshapevecs, oppcarshapevec,
+					opponent_wheel_vertex_state, opponent_base_wheel_vertices, opponent_front_wheel_centers,
 					&rect_unk15, &var_rect2, &cam_pos, tile_det_level,
 					var_122, gameconfig.game_opponentmaterial,
 					var_A4 & var_12A);
@@ -1477,7 +1477,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 				curtransshape_ptr->rotvec.x = 0;
 				curtransshape_ptr->rotvec.y = 0;
 				curtransshape_ptr->rotvec.z = track_angle;
-				curtransshape_ptr->unk = FRAME_DEFAULT_TRANSFORM_DISTANCE;
+				curtransshape_ptr->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
 				idx = LEGACY_S16_SAR(word_44DCA,
 					FRAME_START_FLAG_ANIMATION_SHIFT);
 				if (idx > FRAME_START_FLAG_MAX_MATERIAL) {
@@ -1519,7 +1519,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 					}
 				}
 
-				var_transformresult = transformed_shape_op(&currenttransshape[di]); // DI??
+				var_transformresult = shape3d_transform_and_queue(&currenttransshape[di]); // DI??
 				if (var_transformresult > 0)
 					break;
 
@@ -1546,7 +1546,7 @@ void update_frame(legacy_s8 arg_0, struct RECTANGLE* arg_cliprectptr) {
 	var_132 = skybox_op(arg_0, arg_cliprectptr, skybox_parameter, &var_mat, car_rot_z_3, car_rot_x_2, cam_pos.y);
 	sprite_set_1_size(0, FRAME_SCREEN_WIDTH, arg_cliprectptr->top,
 		arg_cliprectptr->bottom);
-	get_a_poly_info();
+	shape3d_render_queued_primitives();
 
 	// This supposedly draws the explosion. The fact that it cycles three
 	// different patterns, each 4 frames long, seems to corroborate the

@@ -73,14 +73,14 @@ static void shape3d_init_car_wheel_vertices(const struct SHAPE3D* shape,
 	}
 }
 
-void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponentcarid[]) {
+void shape3d_load_car_shapes(legacy_s8 player_car_id[], legacy_s8 opponent_car_id[]) {
 	legacy_s16 i;
-	legacy_u32 var_6;
+	legacy_u32 resource_size;
 	legacy_u32 copy_index;
 	legacy_u8 far* source_bytes;
 	legacy_u8 far* destination_bytes;
 	for (i = 0; i < CAR_ID_LENGTH; i++)
-		aStxxx[CAR_RESOURCE_ID_OFFSET + i] = arg_playercarid[i];
+		aStxxx[CAR_RESOURCE_ID_OFFSET + i] = player_car_id[i];
 	carresptr = file_load_3dres(aStxxx);
 	shape3d_init_shape(locate_shape_fatal(carresptr, "car0"),
 		&game3dshapes[PLAYER_CAR_LOW_SHAPE]);
@@ -88,10 +88,10 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 		&game3dshapes[PLAYER_CAR_WHEEL_SHAPE]);
 
 	shape3d_init_car_wheel_vertices(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
-		carshapevec, carshapevecs);
+		player_front_wheel_centers, player_base_wheel_vertices);
 
 	for (i = 0; i < CAR_WHEEL_STATE_CACHE_SIZE; i++) {
-		word_443E8[i] = 0;
+		player_wheel_vertex_state[i] = 0;
 	}
 
 	shape3d_init_shape(locate_shape_fatal(carresptr, "car2"),
@@ -105,21 +105,21 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 	shape3d_init_shape(locate_shape_fatal(carresptr, "exp3"),
 		&game3dshapes[PLAYER_EXPLOSION_SHAPE_FIRST + 3]);
 
-	if (arg_opponentcarid[0] != -1) {
-		if (arg_playercarid[0] == arg_opponentcarid[0] && arg_playercarid[1] == arg_opponentcarid[1] &&
-			arg_playercarid[2] == arg_opponentcarid[2] && arg_playercarid[3] == arg_opponentcarid[3])
+	if (opponent_car_id[0] != -1) {
+		if (player_car_id[0] == opponent_car_id[0] && player_car_id[1] == opponent_car_id[1] &&
+			player_car_id[2] == opponent_car_id[2] && player_car_id[3] == opponent_car_id[3])
 		{
-			var_6 = mmgr_get_chunk_size_bytes(carresptr);
-			car2resptr = mmgr_alloc_resbytes("car2", var_6);
+			resource_size = mmgr_get_chunk_size_bytes(carresptr);
+			car2resptr = mmgr_alloc_resbytes("car2", resource_size);
 			source_bytes = (legacy_u8 far*)carresptr;
 			destination_bytes = (legacy_u8 far*)car2resptr;
 
-			for (copy_index = 0; copy_index < var_6; copy_index++) {
+			for (copy_index = 0; copy_index < resource_size; copy_index++) {
 				destination_bytes[(legacy_u16)copy_index] = source_bytes[(legacy_u16)copy_index];
 			}
 		} else {
 			for (i = 0; i < CAR_ID_LENGTH; i++)
-				aStxxx[CAR_RESOURCE_ID_OFFSET + i] = arg_opponentcarid[i];
+				aStxxx[CAR_RESOURCE_ID_OFFSET + i] = opponent_car_id[i];
 			car2resptr = file_load_3dres(aStxxx);
 		}
 
@@ -130,9 +130,9 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 
 		shape3d_init_car_wheel_vertices(
 			&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
-			oppcarshapevec, oppcarshapevecs);
+			opponent_front_wheel_centers, opponent_base_wheel_vertices);
 		for (i = 0; i < CAR_WHEEL_STATE_CACHE_SIZE; i++) {
-			word_4448A[i] = 0;
+			opponent_wheel_vertex_state[i] = 0;
 		}
 		shape3d_init_shape(locate_shape_fatal(car2resptr, "car2"),
 			&game3dshapes[OPPONENT_CAR_HIGH_SHAPE]);
@@ -149,84 +149,84 @@ void shape3d_load_car_shapes(legacy_s8 arg_playercarid[], legacy_s8 arg_opponent
 	}
 }
 
-void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
-	legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8,
-	struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr) {
-	legacy_s16 i, j;
-	legacy_s16 var_C;
-	legacy_s16 var_2;
-	legacy_s16 var_14;
-	legacy_s16 var_10;
-	legacy_s16 var_8;
-	legacy_s16 var_4;
+void shape3d_update_car_wheel_vertices(struct SHAPE3D* shape, legacy_u16 first_vertex,
+	legacy_s16 steering_angle, legacy_s16* suspension_offsets, legacy_s16* cached_wheel_state,
+	struct VECTOR* base_vertices, struct VECTOR* front_wheel_centers) {
+	legacy_s16 vertex_index, wheel_index;
+	legacy_s16 steering_sine;
+	legacy_s16 steering_cosine;
+	legacy_s16 first_wheel_cosine_component;
+	legacy_s16 second_wheel_cosine_component;
+	legacy_s16 vertical_offset;
+	legacy_s16 wheel_vertex_end;
 	struct VECTOR vertex;
-	//return ported_sub_204AE_(arg_verts, arg_4, arg_6, arg_8, arg_vecarray, arg_vecptr);
-	// arg_8[4] caches the steering angle the wheel vertices were last built
-	// for, so the test is against arg_4, not against zero.
-	if (arg_8[CAR_WHEEL_STEERING_CACHE_INDEX] != arg_4) {
-		var_C = sin_fast(LEGACY_S16_SAR(arg_4, 1U));
-		var_2 = cos_fast(LEGACY_S16_SAR(arg_4, 1U));
+	//return ported_sub_204AE_(arg_verts, steering_angle, suspension_offsets, cached_wheel_state, base_vertices, front_wheel_centers);
+	// cached_wheel_state[4] caches the steering angle the wheel vertices were last built
+	// for, so the test is against steering_angle, not against zero.
+	if (cached_wheel_state[CAR_WHEEL_STEERING_CACHE_INDEX] != steering_angle) {
+		steering_sine = sin_fast(LEGACY_S16_SAR(steering_angle, 1U));
+		steering_cosine = cos_fast(LEGACY_S16_SAR(steering_angle, 1U));
 
-		for (i = 0; i < CAR_WHEEL_VERTEX_GROUP_SIZE; i++) {
+		for (vertex_index = 0; vertex_index < CAR_WHEEL_VERTEX_GROUP_SIZE; vertex_index++) {
 			shape3d_vertex_read(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
-			var_14 = multiply_and_scale(arg_vecarray[i].x, var_2);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+			first_wheel_cosine_component = multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
 			vertex.x = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(arg_vecptr[0].x,
-					multiply_and_scale(arg_vecarray[i].z, var_C)),
-				var_14);
-			var_14 = multiply_and_scale(arg_vecarray[i].z, var_2);
+				LEGACY_S16_WRAP_ADD(front_wheel_centers[0].x,
+					multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
+				first_wheel_cosine_component);
+			first_wheel_cosine_component = multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
 			vertex.z = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(arg_vecptr[0].z,
-					multiply_and_scale(arg_vecarray[i].x, var_C)),
-				var_14);
+				LEGACY_S16_WRAP_ADD(front_wheel_centers[0].z,
+					multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
+				first_wheel_cosine_component);
 			shape3d_vertex_write(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
 		}
-		for (i = CAR_WHEEL_VERTEX_GROUP_SIZE;
-			i < CAR_STEERED_WHEEL_VERTEX_COUNT; i++) {
+		for (vertex_index = CAR_WHEEL_VERTEX_GROUP_SIZE;
+			vertex_index < CAR_STEERED_WHEEL_VERTEX_COUNT; vertex_index++) {
 			shape3d_vertex_read(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
-			var_10 = multiply_and_scale(arg_vecarray[i].x, var_2);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+			second_wheel_cosine_component = multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
 			vertex.x = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(arg_vecptr[1].x,
-					multiply_and_scale(arg_vecarray[i].z, var_C)),
-				var_10);
-			var_10 = multiply_and_scale(arg_vecarray[i].z, var_2);
+				LEGACY_S16_WRAP_ADD(front_wheel_centers[1].x,
+					multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
+				second_wheel_cosine_component);
+			second_wheel_cosine_component = multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
 			vertex.z = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(arg_vecptr[1].z,
-					multiply_and_scale(arg_vecarray[i].x, var_C)),
-				var_10);
+				LEGACY_S16_WRAP_ADD(front_wheel_centers[1].z,
+					multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
+				second_wheel_cosine_component);
 			shape3d_vertex_write(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
 		}
-		arg_8[CAR_WHEEL_STEERING_CACHE_INDEX] = arg_4;
+		cached_wheel_state[CAR_WHEEL_STEERING_CACHE_INDEX] = steering_angle;
 	}
 
-	for (j = 0; j < CAR_WHEEL_COUNT; j++) {
+	for (wheel_index = 0; wheel_index < CAR_WHEEL_COUNT; wheel_index++) {
 
 		// The original takes |x|, shifts that right six, then re-applies the
 		// sign of x (loc_2069F: cwd / xor / sub, sar ax,6, xor / sub).
-		var_8 = arg_6[j];
-		if (var_8 < 0)
-			var_8 = LEGACY_S16_WRAP_NEGATE(var_8);
-		var_8 = LEGACY_S16_SAR(var_8, CAR_WHEEL_VERTICAL_SCALE_SHIFT);
-		if (arg_6[j] < 0)
-			var_8 = LEGACY_S16_WRAP_NEGATE(var_8);
+		vertical_offset = suspension_offsets[wheel_index];
+		if (vertical_offset < 0)
+			vertical_offset = LEGACY_S16_WRAP_NEGATE(vertical_offset);
+		vertical_offset = LEGACY_S16_SAR(vertical_offset, CAR_WHEEL_VERTICAL_SCALE_SHIFT);
+		if (suspension_offsets[wheel_index] < 0)
+			vertical_offset = LEGACY_S16_WRAP_NEGATE(vertical_offset);
 
-		if (arg_8[j] == var_8)
+		if (cached_wheel_state[wheel_index] == vertical_offset)
 			continue;
-		i = j * CAR_WHEEL_VERTEX_GROUP_SIZE;
-		var_4 = i + CAR_WHEEL_VERTEX_GROUP_SIZE;
+		vertex_index = wheel_index * CAR_WHEEL_VERTEX_GROUP_SIZE;
+		wheel_vertex_end = vertex_index + CAR_WHEEL_VERTEX_GROUP_SIZE;
 
-		for (; i < var_4; i++) {
+		for (; vertex_index < wheel_vertex_end; vertex_index++) {
 			shape3d_vertex_read(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
-			vertex.y = LEGACY_S16_WRAP_SUB(arg_vecarray[i].y, var_8);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+			vertex.y = LEGACY_S16_WRAP_SUB(base_vertices[vertex_index].y, vertical_offset);
 			shape3d_vertex_write(shape,
-				LEGACY_U16_WRAP_ADD(first_vertex, i), &vertex);
+				LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
 		}
-		arg_8[j] = var_8;
+		cached_wheel_state[wheel_index] = vertical_offset;
 	}
 
 	return ;
@@ -234,13 +234,13 @@ void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
 
 void shape3d_free_car_shapes() {
 	if (car2resptr != 0) {
-		sub_204AE(&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
-			CAR_FIRST_WHEEL_VERTEX, 0, unk_3E710,
-			word_4448A, oppcarshapevecs, oppcarshapevec);
+		shape3d_update_car_wheel_vertices(&game3dshapes[OPPONENT_CAR_WHEEL_SHAPE],
+			CAR_FIRST_WHEEL_VERTEX, 0, neutral_wheel_suspension,
+			opponent_wheel_vertex_state, opponent_base_wheel_vertices, opponent_front_wheel_centers);
 		mmgr_release(car2resptr);
 	}
-	sub_204AE(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
-		CAR_FIRST_WHEEL_VERTEX, 0, unk_3E710,
-		word_443E8, carshapevecs, carshapevec);
+	shape3d_update_car_wheel_vertices(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE],
+		CAR_FIRST_WHEEL_VERTEX, 0, neutral_wheel_suspension,
+		player_wheel_vertex_state, player_base_wheel_vertices, player_front_wheel_centers);
 	mmgr_free(carresptr);
 }

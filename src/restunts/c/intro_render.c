@@ -60,9 +60,9 @@ static void intro_draw_transformed_shape(
 	transformed->rotvec.x = 0;
 	transformed->rotvec.y = 0;
 	transformed->rotvec.z = rotation_z;
-	transformed->unk = INTRO_TRANSFORMED_SHAPE_SCALE;
+	transformed->culling_distance = INTRO_TRANSFORMED_SHAPE_SCALE;
 	transformed->material = 0;
-	transformed_shape_op(transformed);
+	shape3d_transform_and_queue(transformed);
 }
 
 static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
@@ -150,7 +150,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	if (slow_video_mgmt_copy != 0)
 		*previous_point_count = new_point_count;
 
-	get_a_poly_info();
+	shape3d_render_queued_primitives();
 	if (slow_video_mgmt_copy != 0) {
 		*shape_rect = current_shape_rect;
 		*combined_rect = point_rect;

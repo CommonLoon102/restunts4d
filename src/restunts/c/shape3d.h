@@ -35,8 +35,8 @@ struct SHAPE3D {
 	legacy_u16 shape3d_numprimitives;
 	legacy_u16 shape3d_numpaints;
 	legacy_u8 far* shape3d_primitives;
-	legacy_u8 far* shape3d_cull1;
-	legacy_u8 far* shape3d_cull2;
+	legacy_u8 far* shape3d_visibility_masks;
+	legacy_u8 far* shape3d_front_facing_masks;
 };
 
 struct TRANSFORMEDSHAPE3D {
@@ -44,7 +44,7 @@ struct TRANSFORMEDSHAPE3D {
 	struct SHAPE3D* shapeptr;
 	struct RECTANGLE* rectptr;
 	struct VECTOR rotvec;
-	legacy_u16 unk;
+	legacy_u16 culling_distance;
 	legacy_u8 ts_flags;
 	legacy_u8 material;
 };
@@ -69,35 +69,35 @@ void shape3d_vertex_write(struct SHAPE3D* shape, legacy_u16 index,
 void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* opponent_carid);
 void shape3d_free_car_shapes(void);
 void shape3d_init_shape(legacy_s8 far* shapeptr, struct SHAPE3D* gameshape);
-legacy_u16 transformed_shape_op(struct TRANSFORMEDSHAPE3D* arg_transshapeptr);
-void set_projection(legacy_s16 i1, legacy_s16 i2, legacy_s16 i3, legacy_s16 i4);
-legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 unk);
+legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance);
+void set_projection(legacy_s16 horizontal_fov_degrees, legacy_s16 vertical_fov_degrees, legacy_s16 width, legacy_s16 height);
+legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 half_scale);
 void init_polyinfo(void);
 void polyinfo_reset(void);
-void get_a_poly_info(void);
+void shape3d_render_queued_primitives(void);
 void preRender_default(legacy_u16 color, legacy_u16 vertex_count,
 	const struct POINT2D* vertices);
 void preRender_default_alt(legacy_u16 color, legacy_u16 vertex_count,
 	const struct POINT2D* vertices);
 void preRender_patterned(legacy_u16 pattern, legacy_u16 color,
 	legacy_u16 vertex_count, const struct POINT2D* vertices);
-void preRender_unk(legacy_u16 pattern, legacy_u16 alternate_color,
-	legacy_u16 color, legacy_u16 vertex_count,
+void preRender_two_color(legacy_u16 pattern, legacy_u16 color,
+	legacy_u16 alternate_color, legacy_u16 vertex_count,
 	const struct POINT2D* vertices);
 void preRender_line(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16 color);
-legacy_u16 draw_line_related(legacy_u16 start_x, legacy_u16 start_y,
+legacy_u16 line_prepare_clipped(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line_data);
-legacy_u16 draw_line_related_alt(legacy_u16 start_x, legacy_u16 start_y,
+legacy_u16 line_prepare_unclipped(legacy_u16 start_x, legacy_u16 start_y,
 	legacy_u16 end_x, legacy_u16 end_y, legacy_u16* line_data);
-void skybox_op_helper(legacy_u16 color, legacy_u16 vertex_count,
+void skybox_fill_polygon(legacy_u16 color, legacy_u16 vertex_count,
 	struct POINT2D vertices[]);
-void preRender_sphere_helper2(legacy_u16* source, legacy_u16* destination);
-void preRender_sphere_helper(legacy_u16* source, legacy_u16 color);
-void preRender_wheel_helper3(legacy_u16* source, legacy_u16* destination);
-void preRender_wheel_helper2(legacy_u16* source, legacy_u16* destination,
+void sphere_build_perimeter(legacy_u16* source, legacy_u16* destination);
+void sphere_draw_polygon(legacy_u16* source, legacy_u16 color);
+void wheel_build_perimeter(legacy_u16* source, legacy_u16* destination);
+void wheel_build_rim_perimeters(legacy_u16* source, legacy_u16* destination,
 	legacy_u16 scale);
-void preRender_wheel_helper(legacy_u16* source, legacy_u16* destination,
+void wheel_build_vertices(legacy_u16* source, legacy_u16* destination,
 	legacy_u16 scale);
 void preRender_wheel(const struct POINT2D* source, legacy_u16 scale,
 	legacy_u16 outer_color, legacy_u16 side_color, legacy_u16 inner_color);
@@ -106,10 +106,10 @@ void draw_beveled_border(legacy_s16 x, legacy_s16 y,
 	legacy_s16 width, legacy_s16 height,
 	legacy_s16 top_outer_color, legacy_s16 top_inner_color,
 	legacy_s16 bottom_outer_color, legacy_s16 bottom_inner_color);
-void draw_lines_unk(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
+void draw_three_color_beveled_border(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
 	legacy_s16 outer_color, legacy_s16 inner_color, legacy_s16 opposite_color);
-void sub_204AE(struct SHAPE3D* shape, legacy_u16 first_vertex,
-	legacy_s16 arg_4, legacy_s16* arg_6, legacy_s16* arg_8,
-	struct VECTOR* arg_vecarray, struct VECTOR* arg_vecptr);
+void shape3d_update_car_wheel_vertices(struct SHAPE3D* shape, legacy_u16 first_vertex,
+	legacy_s16 steering_angle, legacy_s16* suspension_offsets, legacy_s16* cached_wheel_state,
+	struct VECTOR* base_vertices, struct VECTOR* front_wheel_centers);
 
 #endif

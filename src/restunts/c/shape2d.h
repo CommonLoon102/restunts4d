@@ -97,7 +97,7 @@ void draw_two_color_lines(legacy_s16* x1arr, legacy_s16* x2arr, legacy_u16 y,
 	legacy_u16 numlines, legacy_u16 color);
 void draw_patterned_lines(legacy_s16* x1arr, legacy_s16* x2arr,
 	legacy_u16 y, legacy_u16 numlines, legacy_u16 color);
-void putpixel_line1_maybe(const legacy_u16* line);
+void sprite_draw_line_from_setup(const legacy_u16* line);
 void sprite_putpixel_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 color);
 void putpixel_iconMask(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void putpixel_iconFillings(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);

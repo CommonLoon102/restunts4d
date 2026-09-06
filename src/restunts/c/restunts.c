@@ -129,8 +129,8 @@ void set_default_car(void) {
 }
 
 
-extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 unk);
-//extern void transformed_shape_op(struct TRANSFORMSHAPE3D* shape);
+extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 half_scale);
+//extern void shape3d_transform_and_queue(struct TRANSFORMSHAPE3D* shape);
 extern void set_projection(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 
 struct RECTANGLE shaperect = {
@@ -148,7 +148,7 @@ struct SPRITE far* render_window_sprite;
 
 extern legacy_s16 polyinfonumpolys;
 extern legacy_u8 far* polyinfoptrs[]; // array size = 400
-extern legacy_u16 poly_linked_list_40ED6[]; // array size = 400
+extern legacy_u16 polygon_next_index[]; // array size = 400
 
 
 extern legacy_s16 font_prefix_width(const legacy_s8* text, legacy_s16 count);
@@ -467,7 +467,7 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 	transshape.rotvec.y = 0;
 	transshape.pos = carpos;
 
-	transshape.unk = 0; // The abandoned experiment used 30000.
+	transshape.culling_distance = 0; // The abandoned experiment used 30000.
 	transshape.ts_flags = 0;
 	transshape.rectptr = &shaperect;
 
@@ -485,13 +485,13 @@ legacy_s16 stuntsmain2(legacy_s16 argc, legacy_s8* argv[]) {
 		//transshape.shapeptr = &game3dshapes[124];
 		//transshape.shapeptr = &game3dshapes[124];
 
-		transformed_shape_op(&transshape);
+		shape3d_transform_and_queue(&transshape);
 
 		sprite_copy_wnd_to_1();
 		sprite_clear_1_color(3);
 
 		//sprite_set_1_size(50, 200, 50, 100);
-		get_a_poly_info(); // renders to sprite1
+		shape3d_render_queued_primitives(); // renders to sprite1
 
 		//sprite_copy_2_to_1_2();
 		sprite_blit_to_video(render_window_sprite, 0);

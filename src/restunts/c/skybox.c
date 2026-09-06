@@ -216,7 +216,7 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 		has_linear_horizon = 0;
 		if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL &&
 			points[1].px < 0 && points[0].px > SKYBOX_SCREEN_WIDTH &&
-			draw_line_related(points[1].px, points[1].py,
+			line_prepare_clipped(points[1].px, points[1].py,
 				points[0].px, points[0].py, line_data) == 0) {
 			absolute_delta = LEGACY_S16_WRAP_SUB(
 				line_data[3], line_data[5]);
@@ -328,11 +328,11 @@ legacy_s16 skybox_op(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 d
 		point_swap = points[2];
 		points[2] = points[3];
 		points[3] = point_swap;
-		skybox_op_helper(
+		skybox_fill_polygon(
 			skybox.sky_color, SKYBOX_POLYGON_POINT_COUNT, points);
 		points[2] = points[4];
 		points[3] = points[5];
-		skybox_op_helper(
+		skybox_fill_polygon(
 			skybox.ground_color, SKYBOX_POLYGON_POINT_COUNT, points);
 		return 1;
 	}

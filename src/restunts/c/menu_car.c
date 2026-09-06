@@ -126,7 +126,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	transformed.shapeptr = &game3dshapes[PLAYER_CAR_LOW_SHAPE];
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
-	transformed.unk = CAR_MENU_TRANSFORM_DISTANCE;
+	transformed.culling_distance = CAR_MENU_TRANSFORM_DISTANCE;
 	slow_video_mgmt_copy = slow_video_mgmt;
 	if (slow_video_mgmt_copy != 0) {
 		transformed.rectptr = &current_rect;
@@ -342,7 +342,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			*material = 0;
 		transformed.rotvec.z = rotation;
 		transformed.material = (legacy_u8)*material;
-		transformed_shape_op(&transformed);
+		shape3d_transform_and_queue(&transformed);
 		rect_unk16.bottom = previous_car_index == car_index ?
 			CAR_MENU_CAR_CLIP_BOTTOM : CAR_MENU_FULL_CLIP_BOTTOM;
 		(void)rect_intersect(&current_rect, &rect_unk16);
@@ -363,7 +363,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			union_rect.top, union_rect.bottom);
 		sprite_putimage((struct SHAPE2D far*)locate_shape_fatal(
 			selector_resource, aStop_1));
-		get_a_poly_info();
+		shape3d_render_queued_primitives();
 		sprite_copy_wnd_to_1();
 		sprite_set_1_size(union_rect.left, union_rect.right,
 			union_rect.top, union_rect.bottom);

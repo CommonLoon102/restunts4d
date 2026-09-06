@@ -61,7 +61,7 @@ static void track_preview_draw_terrain(legacy_u8 terrain,
 	transformed->rotvec.z = terrain_object->ss_rotY;
 	transformed->ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 	transformed->material = 0;
-	transformed_shape_op(transformed);
+	shape3d_transform_and_queue(transformed);
 }
 
 void draw_track_preview(void)
@@ -126,7 +126,7 @@ void draw_track_preview(void)
 
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
-	transformed.unk = TRACK_PREVIEW_TRANSFORM_DISTANCE;
+	transformed.culling_distance = TRACK_PREVIEW_TRANSFORM_DISTANCE;
 	for (row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
 		for (column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
 			track = td14_elem_map_main[
@@ -177,7 +177,7 @@ void draw_track_preview(void)
 				terrain_height, camera_x, camera_y, camera_z, 0,
 				&transformed);
 			if (track == 0) {
-				get_a_poly_info();
+				shape3d_render_queued_primitives();
 				continue;
 			}
 
@@ -216,7 +216,7 @@ void draw_track_preview(void)
 				transformed.rotvec.z = 0;
 				transformed.ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
 				transformed.material = 0;
-				transformed_shape_op(&transformed);
+				shape3d_transform_and_queue(&transformed);
 			}
 
 			if (track_object->ss_ssOvelay != 0) {
@@ -231,7 +231,7 @@ void draw_track_preview(void)
 					transformed.material =
 						(legacy_s8)overlay_object->ss_surfaceType < 0 ?
 						0 : overlay_object->ss_surfaceType;
-					transformed_shape_op(&transformed);
+					shape3d_transform_and_queue(&transformed);
 				}
 			}
 
@@ -244,8 +244,8 @@ void draw_track_preview(void)
 			transformed.material =
 				(legacy_s8)track_object->ss_surfaceType < 0 ?
 				0 : track_object->ss_surfaceType;
-			transformed_shape_op(&transformed);
-			get_a_poly_info();
+			shape3d_transform_and_queue(&transformed);
+			shape3d_render_queued_primitives();
 		}
 	}
 }
