@@ -473,12 +473,12 @@ void audio_unload(void)
 
 void audio_enable_flag2(void)
 {
-	audio_music_enabled = 1;
+	audio_music_enabled = AUDIO_STATE_ENABLED;
 }
 
 void audio_disable_flag2(void)
 {
-	audio_music_enabled = 0;
+	audio_music_enabled = AUDIO_STATE_DISABLED;
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
 	if (audio_music_channel_count != 0)
 		audio_release_channel_range(
@@ -489,7 +489,7 @@ void audio_disable_flag2(void)
 
 legacy_s16 audio_toggle_flag2(void)
 {
-	if (audio_music_enabled == 1) {
+	if (audio_music_enabled == AUDIO_STATE_ENABLED) {
 		audio_disable_flag2();
 		return 0;
 	}
@@ -503,7 +503,7 @@ legacy_s16 nopsub_373FE(void)
 	legacy_u16 offset;
 	legacy_u16 channel;
 
-	if (audio_suspended == 1 || audio_music_enabled == 0)
+	if (audio_suspended == 1 || audio_music_enabled == AUDIO_STATE_DISABLED)
 		return 1;
 
 	for (channel = 0; channel < (legacy_u16)audio_music_channel_count; channel++) {
