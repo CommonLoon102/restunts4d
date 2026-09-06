@@ -3,6 +3,7 @@
 #include "../../c/legacy.h"
 
 #define DOS_CRITICAL_ERROR_INTERRUPT_VECTOR 36
+#define DOS_CRITICAL_ERROR_HANDLER_NONE 0
 
 typedef void interrupt (far* interrupt_handler_type)();
 typedef legacy_s16 (far* critical_error_callback_type)(void);
@@ -28,7 +29,8 @@ void dos_interrupts_enable(void)
 
 static void far dos_critical_error_restore(void)
 {
-	if (previous_critical_error_handler != 0)
+	if (previous_critical_error_handler !=
+		DOS_CRITICAL_ERROR_HANDLER_NONE)
 		_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR,
 			previous_critical_error_handler);
 }
