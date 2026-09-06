@@ -18,6 +18,7 @@
 #define PENALTY_ROUTE_TRACK_UNVISITED 0U
 #define PENALTY_ROUTE_TRACK_VISITED 1U
 #define PENALTY_ROUTE_INDEX_FIRST 0U
+#define MULTI_TILE_FLAGS_NONE 0U
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U
 #define TRACK_START_FINISH_PIECE_INDEX 0
@@ -187,7 +188,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		}
 		multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 		maximum_row = minimum_row;
-		if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != 0)
+		if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) !=
+			MULTI_TILE_FLAGS_NONE)
 			maximum_row = LEGACY_U8_WRAP_ADD(
 				maximum_row, TRACK_TILE_COORDINATE_STEP);
 		if (next_track == PENALTY_ROUTE_SENTINEL)
@@ -196,7 +198,8 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		else
 			minimum_column = (legacy_u8)td21_col_from_path[next_track];
 		maximum_column = minimum_column;
-		if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) != 0)
+		if ((multi_tile_flags & MULTI_TILE_COLUMN_FLAG) !=
+			MULTI_TILE_FLAGS_NONE)
 			maximum_column = LEGACY_U8_WRAP_ADD(
 				maximum_column, TRACK_TILE_COORDINATE_STEP);
 
