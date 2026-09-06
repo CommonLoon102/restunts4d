@@ -23,6 +23,7 @@
 #define DOS_FILE_IO_ERROR 1
 #define DOS_FILE_SEEK_COMMAND_BASE 16896U
 #define DOS_FILE_SEEK_CURRENT_ORIGIN 1
+#define DOS_FILE_OPEN_EXISTING_REQUEST 0
 
 static legacy_s16 dos_file_errno;
 static struct find_t dos_find_data;
@@ -36,9 +37,11 @@ static legacy_u16 dos_file_open_lfn(const legacy_s8* path,
 	legacy_u16 handle;
 
 	path_offset = FP_OFF(path);
-	access_mode = create != 0 ? DOS_FILE_READ_WRITE_ACCESS :
+	access_mode = create != DOS_FILE_OPEN_EXISTING_REQUEST ?
+		DOS_FILE_READ_WRITE_ACCESS :
 		DOS_FILE_READ_ONLY_ACCESS;
-	action = create != 0 ? DOS_FILE_CREATE_OR_TRUNCATE_ACTION :
+	action = create != DOS_FILE_OPEN_EXISTING_REQUEST ?
+		DOS_FILE_CREATE_OR_TRUNCATE_ACTION :
 		DOS_FILE_OPEN_EXISTING_ACTION;
 	handle = 0;
 	__asm {
@@ -70,7 +73,7 @@ legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create)
 	handle = dos_file_open_lfn(path, create);
 	if (handle != 0)
 		return handle;
-	if (create != 0) {
+	if (create != DOS_FILE_OPEN_EXISTING_REQUEST) {
 		__asm {
 			mov ah, DOS_FILE_CREATE_FUNCTION
 			mov cx, DOS_FILE_DEFAULT_ATTRIBUTES
