@@ -54,6 +54,8 @@
 #define OPPONENT_ROUTE_LIST_END 0
 #define OPPONENT_ROUTE_INDEX_FIRST 0
 #define OPPONENT_ROUTE_INDEX_STEP 1
+#define OPPONENT_ROUTE_NOT_FORCED 0U
+#define OPPONENT_ROUTE_FORCED 1U
 #define OPPONENT_LAP_NONE 0
 #define OPPONENT_LAP_STEP 1
 
@@ -378,15 +380,15 @@ void opponent_op(void)
 		}
 	}
 	if (steering_target > OPPONENT_STEERING_TARGET_LIMIT) {
-		if (forced_route == 0) {
-			forced_route = 1;
+		if (forced_route == OPPONENT_ROUTE_NOT_FORCED) {
+			forced_route = OPPONENT_ROUTE_FORCED;
 			opponent_advance_route();
 			continue;
 		}
 		steering_target = OPPONENT_STEERING_TARGET_LIMIT;
 	} else if (steering_target < -OPPONENT_STEERING_TARGET_LIMIT) {
-		if (forced_route == 0) {
-			forced_route = 1;
+		if (forced_route == OPPONENT_ROUTE_NOT_FORCED) {
+			forced_route = OPPONENT_ROUTE_FORCED;
 			opponent_advance_route();
 			continue;
 		}
