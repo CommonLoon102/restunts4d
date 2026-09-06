@@ -19,6 +19,9 @@
 #define DOS_JOYSTICK_AXIS2_LOW_FLAG 1U
 #define DOS_JOYSTICK_AXIS2_HIGH_FLAG 2U
 #define DOS_JOYSTICK_BUTTON_BITS 48U
+#define DOS_JOYSTICK_LOW_CANDIDATE_INITIAL_VALUE 0U
+#define DOS_JOYSTICK_MAXIMUM_INITIAL_VALUE 0U
+#define DOS_JOYSTICK_STATE_ENABLED 1U
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
@@ -133,23 +136,25 @@ static void joystick_reset_axis1_candidates(void)
 {
 	dos_joystick_axis1_candidate_ticks = DOS_JOYSTICK_CALIBRATION_TICKS;
 	dos_joystick_axis1_high_candidate = DOS_JOYSTICK_HIGH_CANDIDATE;
-	dos_joystick_axis1_low_candidate = 0;
+	dos_joystick_axis1_low_candidate =
+		DOS_JOYSTICK_LOW_CANDIDATE_INITIAL_VALUE;
 }
 
 static void joystick_reset_axis2_candidates(void)
 {
 	dos_joystick_axis2_candidate_ticks = DOS_JOYSTICK_CALIBRATION_TICKS;
 	dos_joystick_axis2_high_candidate = DOS_JOYSTICK_HIGH_CANDIDATE;
-	dos_joystick_axis2_low_candidate = 0;
+	dos_joystick_axis2_low_candidate =
+		DOS_JOYSTICK_LOW_CANDIDATE_INITIAL_VALUE;
 }
 
 void dos_joystick_reset_calibration(void)
 {
-	dos_joystick_enabled = 1;
+	dos_joystick_enabled = DOS_JOYSTICK_STATE_ENABLED;
 	dos_joystick_axis1_min = DOS_JOYSTICK_AXIS_INITIAL_VALUE;
-	dos_joystick_axis1_max = 0;
+	dos_joystick_axis1_max = DOS_JOYSTICK_MAXIMUM_INITIAL_VALUE;
 	dos_joystick_axis2_min = DOS_JOYSTICK_AXIS_INITIAL_VALUE;
-	dos_joystick_axis2_max = 0;
+	dos_joystick_axis2_max = DOS_JOYSTICK_MAXIMUM_INITIAL_VALUE;
 }
 
 void dos_joystick_set_enabled(legacy_u8 enabled)
