@@ -317,8 +317,8 @@ legacy_s16 car_car_speed_adjust_maybe(
 	legacy_s16 slowdown;
 	legacy_s16 angle_delta;
 
-	first_state->field_C8 = 1;
-	second_state->field_C8 = 1;
+	first_state->field_C8 = CAR_COLLISION_LATCH_SET;
+	second_state->field_C8 = CAR_COLLISION_LATCH_SET;
 	first_angle = (legacy_s16)first_state->car_rotate.x;
 	second_angle = (legacy_s16)second_state->car_rotate.x;
 

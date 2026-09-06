@@ -1423,7 +1423,7 @@ case PLAYER_FLOW_loc_164B2:
 		arg_oState->car_rotate.x;
 	if (car_car_coll_detect_maybe(arg_pSimd->collide_points, var_11ApStateWorldCrds, arg_oSimd->collide_points, vec_18EoStateWorldCrds) == 0)
 		{ physics_flow = PLAYER_FLOW_loc_16578; continue; }
-	if (arg_pState->field_C8 == 0)
+	if (arg_pState->field_C8 == CAR_COLLISION_LATCH_CLEAR)
 		{ physics_flow = PLAYER_FLOW_loc_1653E; continue; }
 	{ physics_flow = PLAYER_FLOW_loc_16892; continue; }
 
@@ -1589,7 +1589,7 @@ case PLAYER_FLOW_loc_16840:
 	arg_pState->car_rotate.z = pState_minusRotate_z_1;
 	arg_pState->car_rotate.y = pState_minusRotate_x_1;
 	arg_pState->car_rotate.x = pState_minusRotate_y_1;
-	arg_pState->field_C8 = 0;
+	arg_pState->field_C8 = CAR_COLLISION_LATCH_CLEAR;
 
 case PLAYER_FLOW_loc_16892:
 	return ;
