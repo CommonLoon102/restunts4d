@@ -42,7 +42,9 @@
 #define FRONT_WHEEL_ANGLE_SHIFT 2U
 #define ROTATION_DAMPING_NUMERATOR 15
 #define ROTATION_DAMPING_SHIFT 4U
+#define ROTATION_OFFSET_NONE 0
 #define ROTATION_RECENTER_THRESHOLD 8
+#define ROTATION_RECENTER_STEP 1
 #define SLIDE_ANGLE_WEIGHT 3
 #define SLIDE_ANGLE_BLEND_SHIFT 2U
 #define SLIDE_ANGLE_DECAY_SHIFT 4U
@@ -414,17 +416,17 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	if (carstate->car_steeringAngle == CAR_STEERING_CENTERED) {
 		rotation_low = LEGACY_S8_FROM_BITS(
 			(legacy_u8)carstate->car_rotate.x);
-		if (rotation_low != 0) {
+		if (rotation_low != ROTATION_OFFSET_NONE) {
 			absolute_angle = rotation_low;
 			if (absolute_angle < 0)
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			if (absolute_angle < ROTATION_RECENTER_THRESHOLD) {
 				if (rotation_low > 0) {
 					carstate->car_rotate.x = LEGACY_S16_WRAP_SUB(
-						carstate->car_rotate.x, 1);
+						carstate->car_rotate.x, ROTATION_RECENTER_STEP);
 				} else {
 					carstate->car_rotate.x = LEGACY_S16_WRAP_ADD(
-						carstate->car_rotate.x, 1);
+						carstate->car_rotate.x, ROTATION_RECENTER_STEP);
 				}
 			}
 		}
