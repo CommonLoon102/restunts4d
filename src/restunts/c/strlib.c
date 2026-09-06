@@ -1,5 +1,10 @@
 #include "restunts.h"
 
+#define STRING_TERMINATOR '\0'
+#define STRING_COMPARE_EQUAL 0
+#define STRING_COMPARE_LESS (-1)
+#define STRING_COMPARE_GREATER 1
+
 void copy_string(legacy_s8* destination, legacy_s8 far* source)
 {
 	/* Preserve the original post-copy lookahead, including its empty input bug. */
@@ -7,8 +12,8 @@ void copy_string(legacy_s8* destination, legacy_s8 far* source)
 		*destination = *source;
 		destination++;
 		source++;
-	} while (*source != 0);
-	*destination = 0;
+	} while (*source != STRING_TERMINATOR);
+	*destination = STRING_TERMINATOR;
 }
 
 legacy_s8* _strcpy(legacy_s8* destination, const legacy_s8* source)
@@ -19,7 +24,7 @@ legacy_s8* _strcpy(legacy_s8* destination, const legacy_s8* source)
 	do {
 		*destination = *source;
 		destination++;
-	} while (*source++ != '\0');
+	} while (*source++ != STRING_TERMINATOR);
 	return result;
 }
 
@@ -28,7 +33,7 @@ legacy_u16 _strlen(const legacy_s8* string)
 	const legacy_s8* end;
 
 	end = string;
-	while (*end != '\0')
+	while (*end != STRING_TERMINATOR)
 		end++;
 	return (legacy_u16)(end - string);
 }
@@ -47,12 +52,13 @@ legacy_s16 _strcmp(const legacy_s8* left, const legacy_s8* right)
 	left_bytes = (const legacy_u8*)left;
 	right_bytes = (const legacy_u8*)right;
 	while (*left_bytes == *right_bytes) {
-		if (*left_bytes == '\0')
-			return 0;
+		if (*left_bytes == STRING_TERMINATOR)
+			return STRING_COMPARE_EQUAL;
 		left_bytes++;
 		right_bytes++;
 	}
-	return *left_bytes < *right_bytes ? -1 : 1;
+	return *left_bytes < *right_bytes ?
+		STRING_COMPARE_LESS : STRING_COMPARE_GREATER;
 }
 
 static legacy_u8 legacy_ascii_lower(legacy_u8 character)
@@ -71,7 +77,8 @@ legacy_s16 _stricmp(const legacy_s8* left, const legacy_s8* right)
 		left_character = legacy_ascii_lower((legacy_u8)*left++);
 		right_character = legacy_ascii_lower((legacy_u8)*right++);
 		if (left_character != right_character)
-			return left_character < right_character ? -1 : 1;
-	} while (left_character != '\0');
-	return 0;
+			return left_character < right_character ?
+				STRING_COMPARE_LESS : STRING_COMPARE_GREATER;
+	} while (left_character != STRING_TERMINATOR);
+	return STRING_COMPARE_EQUAL;
 }
