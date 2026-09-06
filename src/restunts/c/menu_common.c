@@ -12,6 +12,16 @@
 #define BUTTON_FONT_LINE_HEIGHT 8U
 #define BUTTON_CENTER_DIVISOR 2
 #define BUTTON_TEXT_VERTICAL_ADJUSTMENT 1
+#define MENU_ANIMATION_INITIAL_COUNTER 0
+#define MENU_ANIMATION_INITIAL_STATE 0
+#define MENU_IDLE_INITIAL_COUNTER 0
+#define MENU_IDLE_EXPIRED_INCREMENT 1U
+#define BUTTON_TEXT_NONE 0
+#define BUTTON_FONT_SECONDARY_COLOR 0
+#define BUTTON_INITIAL_LINE_COUNT 1U
+#define BUTTON_TEXT_FIRST_INDEX 0U
+#define BUTTON_TEXT_LINE_SEPARATOR ']'
+#define BUTTON_TEXT_TERMINATOR '\0'
 
 static legacy_s16 menu_animation_counter;
 static legacy_s16 menu_animation_state;
@@ -19,17 +29,18 @@ legacy_s16 menu_idle_counter;
 
 void sub_29772(void)
 {
-	menu_animation_counter = 0;
-	menu_animation_state = 0;
-	menu_idle_counter = 0;
+	menu_animation_counter = MENU_ANIMATION_INITIAL_COUNTER;
+	menu_animation_state = MENU_ANIMATION_INITIAL_STATE;
+	menu_idle_counter = MENU_IDLE_INITIAL_COUNTER;
 }
 
 void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit)
 {
 	menu_idle_counter = LEGACY_U16_WRAP_ADD(menu_idle_counter, elapsed);
 	if (LEGACY_S16_FROM_BITS((legacy_u16)menu_idle_counter) > limit) {
-		menu_idle_counter = 0;
-		idle_expired = (legacy_u8)(idle_expired + 1U);
+		menu_idle_counter = MENU_IDLE_INITIAL_COUNTER;
+		idle_expired = (legacy_u8)(idle_expired +
+			MENU_IDLE_EXPIRED_INCREMENT);
 	}
 }
 
@@ -80,16 +91,17 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	draw_beveled_border(x, y, width, height,
 		top_color, top_color, bottom_color, bottom_color);
 
-	if (text == 0)
+	if (text == BUTTON_TEXT_NONE)
 		return;
 
-	font_set_unk(font_color, 0);
+	font_set_unk(font_color, BUTTON_FONT_SECONDARY_COLOR);
 	copied_text = &resID_byte1;
 	copy_string(copied_text, text);
 	length = (legacy_u16)strlen(copied_text);
-	line_count = 1;
-	for (source_index = 0; source_index < length; source_index++) {
-		if (copied_text[source_index] == ']')
+	line_count = BUTTON_INITIAL_LINE_COUNT;
+	for (source_index = BUTTON_TEXT_FIRST_INDEX;
+		source_index < length; source_index++) {
+		if (copied_text[source_index] == BUTTON_TEXT_LINE_SEPARATOR)
 			line_count++;
 	}
 
@@ -98,17 +110,19 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 	vertical_offset = LEGACY_S16_WRAP_ADD(
 		LEGACY_S16_DIV_OR_ZERO(remaining, BUTTON_CENTER_DIVISOR),
 		BUTTON_TEXT_VERTICAL_ADJUSTMENT);
-	destination_index = 0;
-	line_index = 0;
-	for (source_index = 0; source_index <= length; source_index++) {
+	destination_index = BUTTON_TEXT_FIRST_INDEX;
+	line_index = BUTTON_TEXT_FIRST_INDEX;
+	for (source_index = BUTTON_TEXT_FIRST_INDEX;
+		source_index <= length; source_index++) {
 		legacy_s8 character = copied_text[source_index];
 
-		if (character != ']' && character != 0) {
+		if (character != BUTTON_TEXT_LINE_SEPARATOR &&
+			character != BUTTON_TEXT_TERMINATOR) {
 			line[destination_index++] = character;
 			continue;
 		}
 
-		line[destination_index] = 0;
+		line[destination_index] = BUTTON_TEXT_TERMINATOR;
 		remaining = LEGACY_S16_WRAP_SUB(width, font_op2(line));
 		horizontal_offset = LEGACY_S16_DIV_OR_ZERO(
 			remaining, BUTTON_CENTER_DIVISOR);
@@ -118,6 +132,6 @@ void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 wid
 				LEGACY_S16_WRAP_ADD(y, vertical_offset),
 				LEGACY_U16_WRAP_MUL(line_index, BUTTON_FONT_LINE_HEIGHT)));
 		line_index++;
-		destination_index = 0;
+		destination_index = BUTTON_TEXT_FIRST_INDEX;
 	}
 }
