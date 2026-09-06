@@ -221,8 +221,7 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 						   (argv[i][2] == 'S' || argv[i][2] == 's')
 						&& (argv[i][3] == 'B' || argv[i][3] == 'b'))
 					{
-						// We do not have Sound Blaster drivers.
-						// Replace them with Adlib
+						// Use the Sound Blaster's AdLib-compatible FM synthesizer.
 						audiodriverstring[0] = 'a';
 						audiodriverstring[1] = 'd';
 					}

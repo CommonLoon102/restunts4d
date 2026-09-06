@@ -689,6 +689,7 @@ legacy_s8 track_file_extension[5] = {
 	'.', 't', 'r', 'k', 0
 };
 
+/* AdLib FM also works on the OPL synthesizer of Sound Blaster cards. */
 legacy_s8 audiodriverstring[5] = {
-	'p', 'c', '1', '5', 0
+	'a', 'd', '1', '5', 0
 };
