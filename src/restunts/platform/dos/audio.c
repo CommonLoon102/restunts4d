@@ -67,9 +67,9 @@ legacy_u8 dos_audio_master_state[DOS_AUDIO_MASTER_STATE_SIZE] =
 	DOS_AUDIO_MASTER_STATE_INITIALIZER;
 legacy_u8 dos_audio_driver_data[DOS_AUDIO_DRIVER_DATA_SIZE];
 void far* dos_audio_driver_binary;
-legacy_s16 audio_update_lock = 1;
-legacy_s8 audio_music_enabled = 1;
-legacy_s8 audio_effects_enabled = 1;
+legacy_s16 audio_update_lock = AUDIO_UPDATE_LOCKED;
+legacy_s8 audio_music_enabled = AUDIO_STATE_ENABLED;
+legacy_s8 audio_effects_enabled = AUDIO_STATE_ENABLED;
 legacy_u8 dos_audio_uses_direct_channels;
 legacy_u8 dos_audio_special_mode;
 legacy_u8 dos_audio_master_volume;
@@ -262,11 +262,11 @@ void dos_audio_driver_set_master_state(legacy_s16 operation,
 
 void dos_audio_shutdown(void)
 {
-	audio_update_lock = 1;
+	audio_update_lock = AUDIO_UPDATE_LOCKED;
 	if (dos_audio_driver_binary != 0) {
 		timer_remove_callback(audio_sequence_timer);
-		audio_music_enabled = 0;
-		audio_effects_enabled = 0;
+		audio_music_enabled = AUDIO_STATE_DISABLED;
+		audio_effects_enabled = AUDIO_STATE_DISABLED;
 		if (dos_audio_uses_direct_channels != 0) {
 			dos_audio_master_volume = DOS_AUDIO_SHUTDOWN_MASTER_VOLUME;
 			dos_audio_driver_set_master_state(
@@ -280,7 +280,7 @@ void dos_audio_shutdown(void)
 		dos_audio_uses_direct_channels = 0;
 		dos_audio_special_mode = 0;
 	}
-	audio_update_lock = 0;
+	audio_update_lock = AUDIO_UPDATE_UNLOCKED;
 }
 
 void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
