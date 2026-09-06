@@ -90,7 +90,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_rotate.z = 0;
 	playerstate->car_36MwhlAngle = 0;
 	playerstate->car_pseudoGravity = 0;
-	playerstate->car_steeringAngle = 0;
+	playerstate->car_steeringAngle = CAR_STEERING_CENTERED;
 	playerstate->car_is_braking = CAR_PEDAL_RELEASED;
 	playerstate->car_is_accelerating = CAR_PEDAL_RELEASED;
 	playerstate->car_currpm = simd->idle_rpm;

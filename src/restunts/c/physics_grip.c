@@ -385,7 +385,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 
 	if (grip_behavior == GRIP_BEHAVIOR_PLAYER) {
-	if (carstate->car_steeringAngle == 0) {
+	if (carstate->car_steeringAngle == CAR_STEERING_CENTERED) {
 		rotation_low = LEGACY_S8_FROM_BITS(
 			(legacy_u8)carstate->car_rotate.x);
 		if (rotation_low != 0) {

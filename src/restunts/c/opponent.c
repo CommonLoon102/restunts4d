@@ -395,7 +395,7 @@ void opponent_op(void)
 		steering_target = -OPPONENT_STEERING_TARGET_LIMIT;
 	}
 	if (state.opponentstate.car_sumSurfFrontWheels == CAR_WHEEL_CONTACT_NONE)
-		steering_target = 0;
+		steering_target = CAR_STEERING_CENTERED;
 	steering_delta = LEGACY_S16_WRAP_SUB(steering_target,
 		state.opponentstate.car_steeringAngle);
 	absolute_value = steering_delta;
@@ -521,7 +521,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 
 	/* With no steering input, bring a moving car back toward center. */
 	if (response == 0 && state.playerstate.car_speed2 != CAR_SPEED_STOPPED &&
-		steering_angle != 0) {
+		steering_angle != CAR_STEERING_CENTERED) {
 		centering_limit = LEGACY_S16_SHL(
 			(legacy_s16)response_table[
 				speed_index + STEERING_CENTERING_SAMPLE_OFFSET],
@@ -560,7 +560,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	if (response_table[response_index] == 0 &&
 		steering_angle > -STEERING_CENTER_DEADZONE &&
 		steering_angle < STEERING_CENTER_DEADZONE) {
-		steering_angle = 0;
+		steering_angle = CAR_STEERING_CENTERED;
 	}
 
 	state.playerstate.car_steeringAngle = steering_angle;
