@@ -46,6 +46,8 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define GEAR_CHANGE_DELAY_TICK_STEP 1
 #define GEAR_KNOB_ALIGNED 0
 #define OPPONENT_DRAG_NONE 0
+#define GEAR_KNOB_DIRECTION_NEUTRAL 0
+#define CAR_SPEED_DELTA_STATIONARY 0
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,
 	legacy_s16 mass)
@@ -93,7 +95,7 @@ static legacy_s16 move_gear_knob_toward(legacy_s16 current,
 	difference = LEGACY_S16_WRAP_SUB(target, current);
 	if (absolute_word(difference) <= step)
 		return target;
-	if (difference > 0)
+	if (difference > GEAR_KNOB_DIRECTION_NEUTRAL)
 		return LEGACY_S16_WRAP_ADD(current, step);
 	return LEGACY_S16_WRAP_SUB(current, step);
 }
@@ -133,9 +135,9 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 	var_4 = CAR_GEAR_SHIFT_NONE;
 	if (arg_carState->car_transmission == TRANSMISSION_MANUAL &&
 		arg_carState->car_changing_gear == CAR_GEAR_CHANGE_INACTIVE) {
-		if ((arg_carInputByte & INPUT_SHIFT_UP_FLAG) != 0)
+		if ((arg_carInputByte & INPUT_SHIFT_UP_FLAG) != INPUT_NONE)
 			var_4 = CAR_GEAR_SHIFT_UP;
-		else if ((arg_carInputByte & INPUT_SHIFT_DOWN_FLAG) != 0)
+		else if ((arg_carInputByte & INPUT_SHIFT_DOWN_FLAG) != INPUT_NONE)
 			var_4 = CAR_GEAR_SHIFT_DOWN;
 	} else if (arg_carState->car_current_gear != CAR_GEAR_NEUTRAL &&
 		arg_carState->car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
@@ -287,7 +289,7 @@ void update_car_speed(legacy_s8 arg_carInputByte, legacy_s16 car_index,
 			var_deltaSpeed, var_deltaSpeed);
 	}
 
-	if (var_deltaSpeed >= 0) {
+	if (var_deltaSpeed >= CAR_SPEED_DELTA_STATIONARY) {
 		if (var_updatedSpeed < LEGACY_U16_SIGN_BIT) {
 			var_updatedSpeed = LEGACY_U16_WRAP_ADD(
 				var_updatedSpeed, var_deltaSpeed);
