@@ -15,14 +15,18 @@ extern legacy_s8 aBarn[];
 #define SHAPE3D_VERTEX_RECORD_SIZE 6U
 #define SHAPE3D_PRIMITIVE_CULL_RECORD_SIZE 4U
 #define SHAPE3D_PRIMITIVE_RECORD_SIZE 8U
+#define SHAPE3D_RESOURCE_NONE 0
+#define SHAPE3D_LOAD_FAILURE 1
+#define SHAPE3D_LOAD_SUCCESS 0
+#define SHAPE3D_FIRST_TRACK_SHAPE_INDEX 0
 
 legacy_s16 shape3d_load_all() {
 	legacy_s16 i;
 	legacy_u32 mmgrofsdiff;
 	legacy_s8* shapename;
 
-	game1ptr = 0;
-	game2ptr = 0;
+	game1ptr = SHAPE3D_RESOURCE_NONE;
+	game2ptr = SHAPE3D_RESOURCE_NONE;
 
 	mmgrofsdiff = mmgr_get_res_ofs_diff_scaled();
 
@@ -31,25 +35,26 @@ legacy_s16 shape3d_load_all() {
 	// has to hold when the pool cannot cover the same amount.
 	if (mmgrofsdiff < SHAPE3D_REQUIRED_ARENA_BYTES &&
 		!highpool_can_fit(SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS))
-		return 1;
+		return SHAPE3D_LOAD_FAILURE;
 
 	game1ptr = file_load_3dres("game1");
 	game2ptr = file_load_3dres("game2");
 
-	for (i = 0; i < SHAPE3D_BASE_TRACK_SHAPE_COUNT; i++) {
+	for (i = SHAPE3D_FIRST_TRACK_SHAPE_INDEX;
+		i < SHAPE3D_BASE_TRACK_SHAPE_COUNT; i++) {
 		shapename = &aBarn[i * SHAPE3D_TRACK_SHAPE_NAME_SIZE];
 		curshapeptr = locate_shape_nofatal(game1ptr, shapename);
-		if (curshapeptr == 0)
+		if (curshapeptr == SHAPE3D_RESOURCE_NONE)
 			curshapeptr = locate_shape_fatal(game2ptr, shapename);
 		shape3d_init_shape(curshapeptr, &game3dshapes[i]);
 	}
-	return 0;
+	return SHAPE3D_LOAD_SUCCESS;
 }
 
 void shape3d_free_all() {
-	if (game1ptr != 0)
+	if (game1ptr != SHAPE3D_RESOURCE_NONE)
 		mmgr_free(game1ptr);
-	if (game2ptr != 0)
+	if (game2ptr != SHAPE3D_RESOURCE_NONE)
 		mmgr_free(game2ptr);
 }
 
