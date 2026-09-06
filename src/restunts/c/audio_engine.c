@@ -80,6 +80,7 @@
 #define AUDIO_EFFECT_HIGH_PRIORITY 100U
 #define AUDIO_FADE_VOLUME_STEP 2
 #define AUDIO_FADE_RESTORE_DELAY_TICKS 50UL
+#define AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION 10U
 #define AUDIO_CAR_EVENT_RESOURCE_9_FLAG 16U
 #define AUDIO_CAR_EVENT_RESOURCE_8_FLAG 32U
 
@@ -423,8 +424,10 @@ void audio_driver_timer(void)
 			timer->parameters_changed != 0) {
 			channel = timer->channel;
 			dos_audio_set_channel_volume(channel, volume);
-			secondary_volume = volume >= 10U ?
-				(legacy_u8)(volume - 10U) : 0;
+		secondary_volume =
+			volume >= AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION ?
+			(legacy_u8)(volume -
+				AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION) : 0;
 			channel = timer->effect_channel;
 			if (channel != -1)
 				dos_audio_set_channel_volume(channel, secondary_volume);
