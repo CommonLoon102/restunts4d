@@ -11,6 +11,7 @@
 #define CAR_INITIAL_SURFACE_GRIP 1000
 #define CAR_PSEUDO_GRAVITY_NONE 0
 #define CAR_INITIAL_SPEED_DIFFERENCE 0
+#define CAR_INITIAL_DEMANDED_GRIP 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -118,7 +119,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_sumSurfFrontWheels = CAR_WHEELS_PER_AXLE;
 	playerstate->car_sumSurfRearWheels = CAR_WHEELS_PER_AXLE;
 	playerstate->car_sumSurfAllWheels = CARSTATE_WHEEL_COUNT;
-	playerstate->car_demandedGrip = 0;
+	playerstate->car_demandedGrip = CAR_INITIAL_DEMANDED_GRIP;
 	playerstate->car_surfacegrip_sum = CAR_INITIAL_SURFACE_GRIP;
 
 	whlPos.x = LEGACY_S16_FROM_BITS((legacy_u16)
