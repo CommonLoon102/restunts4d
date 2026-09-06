@@ -52,9 +52,9 @@ legacy_s8 run_menu(void)
 	render_window_sprite = sprite_make_wnd(MAIN_MENU_SCREEN_WIDTH,
 		MAIN_MENU_SCREEN_HEIGHT, MAIN_MENU_TRANSPARENT_COLOR);
 	resource = (legacy_s8 far*)file_load_resource(
-		FILE_RESOURCE_SHAPE2D, aSdmsel);
+		FILE_RESOURCE_SHAPE2D, main_menu_shapes_name);
 	sprite_select_render_window();
-	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, aScrn);
+	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, main_menu_background_data);
 	sprite_shape_to_1_alt(shape);
 	mmgr_free(resource);
 

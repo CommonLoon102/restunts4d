@@ -80,8 +80,8 @@ void shape3d_load_car_shapes(legacy_s8 player_car_id[], legacy_s8 opponent_car_i
 	legacy_u8 far* source_bytes;
 	legacy_u8 far* destination_bytes;
 	for (i = 0; i < CAR_ID_LENGTH; i++)
-		aStxxx[CAR_RESOURCE_ID_OFFSET + i] = player_car_id[i];
-	carresptr = file_load_3dres(aStxxx);
+		car_shape_resource_name[CAR_RESOURCE_ID_OFFSET + i] = player_car_id[i];
+	carresptr = file_load_3dres(car_shape_resource_name);
 	shape3d_init_shape(locate_shape_fatal(carresptr, "car0"),
 		&game3dshapes[PLAYER_CAR_LOW_SHAPE]);
 	shape3d_init_shape(locate_shape_fatal(carresptr, "car1"),
@@ -119,8 +119,8 @@ void shape3d_load_car_shapes(legacy_s8 player_car_id[], legacy_s8 opponent_car_i
 			}
 		} else {
 			for (i = 0; i < CAR_ID_LENGTH; i++)
-				aStxxx[CAR_RESOURCE_ID_OFFSET + i] = opponent_car_id[i];
-			car2resptr = file_load_3dres(aStxxx);
+				car_shape_resource_name[CAR_RESOURCE_ID_OFFSET + i] = opponent_car_id[i];
+			car2resptr = file_load_3dres(car_shape_resource_name);
 		}
 
 		shape3d_init_shape(locate_shape_fatal(car2resptr, "car0"),

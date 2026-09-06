@@ -38,7 +38,7 @@ enum OPPONENT_MENU_BUTTON {
 void run_opponent_menu(void)
 {
 	static legacy_s8* button_resource_ids[OPPONENT_MENU_BUTTON_COUNT] = {
-		aBla, aBnx, aBcl, aBca, aBdo
+		opponent_previous_button_id, opponent_next_button_id, opponent_none_button_id, opponent_car_button_id, opponent_done_button_id
 	};
 	legacy_s8 far* opponent_resource;
 	legacy_s8 far* description;
@@ -57,10 +57,10 @@ void run_opponent_menu(void)
 	legacy_u16 index;
 
 	ensure_file_exists(OPPONENT_RESOURCE_FILE_INDEX);
-	miscptr = file_load_resfile(aMisc);
+	miscptr = file_load_resfile(opponent_misc_resource_name);
 	opp_res = (legacy_s8 far*)file_load_resource(
-		FILE_RESOURCE_SHAPE2D_ALTERNATE, aSdosel);
-	locate_many_resources(opp_res, aOpp0opp1opp2op, oppresources);
+		FILE_RESOURCE_SHAPE2D_ALTERNATE, opponent_menu_shapes_name);
+	locate_many_resources(opp_res, opponent_portrait_shape_ids, oppresources);
 	selected = OPPONENT_MENU_PREVIOUS_BUTTON;
 	resource_loaded = 0;
 	displayed_opponent = OPPONENT_MENU_NO_SELECTION;
@@ -79,9 +79,9 @@ void run_opponent_menu(void)
 
 			ensure_file_exists(OPPONENT_RESOURCE_FILE_INDEX);
 			if ((legacy_u8)gameconfig.game_opponenttype != OPPONENT_NONE) {
-				aOpp1[OPPONENT_ID_DIGIT_INDEX] = (legacy_s8)(
+				opponent_resource_name[OPPONENT_ID_DIGIT_INDEX] = (legacy_s8)(
 					(legacy_u8)gameconfig.game_opponenttype + '0');
-				opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
+				opponent_resource = (legacy_s8 far*)file_load_resfile(opponent_resource_name);
 				resource_loaded = 1;
 			} else {
 				resource_loaded = 0;
@@ -100,7 +100,7 @@ void run_opponent_menu(void)
 			sprite_clear_target(0);
 
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
-				opp_res, aScrn_0);
+				opp_res, opponent_menu_background_id);
 			sprite_draw_palette_mapped(shape);
 			for (index = 0; index < OPPONENT_MENU_BUTTON_COUNT; index++) {
 				draw_button(locate_text_res((legacy_s8 far*)miscptr,
@@ -117,7 +117,7 @@ void run_opponent_menu(void)
 			sprite_draw_palette_mapped((struct SHAPE2D far*)
 				oppresources[(legacy_u8)gameconfig.game_opponenttype]);
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
-				opp_res, aClip);
+				opp_res, opponent_portrait_clip_id);
 			sprite_draw_palette_mapped(shape);
 			if (video_uses_page_flipping != 0) {
 				sprite_clear_shape_alt(
@@ -127,10 +127,10 @@ void run_opponent_menu(void)
 
 			if ((legacy_u8)gameconfig.game_opponenttype != OPPONENT_NONE)
 				description = locate_text_res(
-					opponent_resource, aDes_0);
+					opponent_resource, opponent_description_id);
 			else
 				description = locate_text_res(
-					(legacy_s8 far*)miscptr, aRac);
+					(legacy_s8 far*)miscptr, opponent_racing_car_label_id);
 			font_set_fontdef2(fontnptr);
 			font_set_colors(0, dialog_fnt_colour);
 			line_length = 0;

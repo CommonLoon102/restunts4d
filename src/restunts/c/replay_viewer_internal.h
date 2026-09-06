@@ -34,13 +34,13 @@ extern legacy_u8 replay_control_active_cache[18];
 extern struct RECTANGLE* alternate_frame_rects;
 extern legacy_s16 replay_timeline_background_color;
 extern legacy_s16 replay_marker_color;
-extern legacy_s8 aMen_0[];
-extern legacy_s8 aCon_0[];
-extern legacy_s8 aRep_1[];
-extern legacy_s8 a_rpl_2[];
-extern legacy_s8 aFex_0[];
-extern legacy_s8 aSer_0[];
-extern legacy_s8 aMdo[];
-extern legacy_s8 aRplyrpicrpacrpmcrptcbof6bof5b[];
+extern legacy_s8 replay_pause_menu_id[];
+extern legacy_s8 replay_continue_dialog_id[];
+extern legacy_s8 replay_save_prompt_id[];
+extern legacy_s8 replay_file_extension[];
+extern legacy_s8 replay_overwrite_dialog_id[];
+extern legacy_s8 replay_save_error_message_id[];
+extern legacy_s8 replay_mode_options_dialog_id[];
+extern legacy_s8 replay_control_shape_ids[];
 
 #endif

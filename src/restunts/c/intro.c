@@ -163,9 +163,9 @@ legacy_s8 load_intro_resources(void)
 	legacy_s16 input;
 	legacy_u16 animation_index;
 
-	credit_resource = (legacy_s8 far*)file_load_resfile(aCred);
+	credit_resource = (legacy_s8 far*)file_load_resfile(credits_resource_name);
 	locate_many_resources((legacy_s8 far*)ui_temp_resource,
-		aArowarrwarw1ar, (legacy_s8 far**)credit_shapes);
+		credits_shape_ids, (legacy_s8 far**)credit_shapes);
 	waitflag = CREDITS_INITIAL_WAIT;
 	sprite_select_render_window_and_clear();
 	arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
@@ -175,51 +175,51 @@ legacy_s8 load_intro_resources(void)
 		(legacy_s16)shape2d_get_width(arrow_shape), video_shape_width_scale);
 	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
 
-	intro_draw_resource_line(credit_resource, aCre, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_title_id, CREDITS_LINE_TEXT,
 		CREDITS_TITLE_X, CREDITS_TITLE_Y, credits_title_color, credits_title_shadow_color);
-	intro_draw_resource_line(credit_resource, aGds0, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_first_logo_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_FIRST_LOGO_X, CREDITS_FIRST_LOGO_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGds1, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_second_logo_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_SECOND_LOGO_X, CREDITS_SECOND_LOGO_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aDes, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_design_heading_id, CREDITS_LINE_TEXT,
 		CREDITS_LEFT_COLUMN_X, CREDITS_DESIGN_HEADING_Y, credits_design_heading_color, credits_design_heading_shadow_color);
-	intro_draw_resource_line(credit_resource, aGdon, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_first_designer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGkev, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_second_designer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGbra, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_third_designer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGrob, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_fourth_designer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_FOURTH_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGsta, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_fifth_designer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_FIFTH_DESIGNER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aMus, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_music_heading_id, CREDITS_LINE_TEXT,
 		CREDITS_LEFT_COLUMN_X, CREDITS_MUSIC_HEADING_Y, credits_music_heading_color, credits_music_heading_shadow_color);
-	intro_draw_resource_line(credit_resource, aGmsy, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_first_musician_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_FIRST_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGkri, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_second_musician_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_SECOND_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGbri, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_third_musician_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_MUSICIAN_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aPro, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_production_heading_id, CREDITS_LINE_TEXT,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCTION_HEADING_Y, credits_production_heading_color, credits_production_heading_shadow_color);
-	intro_draw_resource_line(credit_resource, aGkev_0, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_producer_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCER_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aOpr, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_opponent_heading_id, CREDITS_LINE_TEXT,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_OPPONENT_HEADING_Y, credits_production_heading_color, credits_production_heading_shadow_color);
-	intro_draw_resource_line(credit_resource, aGbra_0, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_first_opponent_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_OPPONENT_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGric, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_second_opponent_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_OPPONENT_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aArt, CREDITS_LINE_TEXT,
+	intro_draw_resource_line(credit_resource, credits_art_heading_id, CREDITS_LINE_TEXT,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_ART_HEADING_Y, credits_art_heading_color, credits_art_heading_shadow_color);
-	intro_draw_resource_line(credit_resource, aGmsm, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_first_artist_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_FIRST_ARTIST_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGdav, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_second_artist_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_ARTIST_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGnic, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_third_artist_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_THIRD_ARTIST_Y, credits_text_color, credits_text_shadow_color);
-	intro_draw_resource_line(credit_resource, aGkev_1, CREDITS_LINE_SHAPE,
+	intro_draw_resource_line(credit_resource, credits_fourth_artist_shape_id, CREDITS_LINE_SHAPE,
 		CREDITS_RIGHT_COLUMN_X, CREDITS_FOURTH_ARTIST_Y, credits_text_color, credits_text_shadow_color);
 	unload_resource(credit_resource);
 

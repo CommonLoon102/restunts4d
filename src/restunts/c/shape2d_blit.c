@@ -201,7 +201,7 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	if (dos_memory_pointer_offset(nextwnd) >=
 		dos_memory_pointer_offset(&wnd_defs) +
 		WINDOW_DEFINITION_TABLE_BYTES) {
-		fatal_error(aWindowdefOutOfRowTableSpa);
+		fatal_error(window_row_table_overflow_message);
 	}
 	next_wnd_def = nextwnd;
 
@@ -248,7 +248,7 @@ void sprite_free_wnd(struct SPRITE far* render_window_sprite) {
 	spritesize = sizeof(struct SPRITE) + shape2d_get_height(
 		render_window_sprite->sprite_bitmapptr) * sizeof(legacy_u16);
 	if (dos_memory_pointer_offset(render_window_sprite) + spritesize != dos_memory_pointer_offset(next_wnd_def)) {
-		fatal_error(aWindowReleased);
+		fatal_error(window_release_order_message);
 	}
 	next_wnd_def = next_wnd_def - spritesize;
 	mmgr_release((void far*)render_window_sprite->sprite_bitmapptr);

@@ -1,7 +1,7 @@
 #include "resource.h"
 
-extern const legacy_s8 aLocateshape4_4sShapeNotF[];
-extern const legacy_s8 aLocatesound4_4sSoundNotF[];
+extern const legacy_s8 missing_shape_error_format[];
+extern const legacy_s8 missing_sound_error_format[];
 extern void fatal_error(const legacy_s8* format, ...);
 
 enum RESOURCE_NOT_FOUND_BEHAVIOR {
@@ -112,9 +112,9 @@ legacy_s8 far* locate_resource(legacy_s8 far* data,
 	}
 
 	if (fatal >= RESOURCE_NOT_FOUND_SOUND_FATAL)
-		fatal_error(aLocatesound4_4sSoundNotF, name);
+		fatal_error(missing_sound_error_format, name);
 	if (fatal == RESOURCE_NOT_FOUND_SHAPE_FATAL)
-		fatal_error(aLocateshape4_4sShapeNotF, name);
+		fatal_error(missing_shape_error_format, name);
 	return 0;
 }
 

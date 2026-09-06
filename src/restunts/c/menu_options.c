@@ -18,7 +18,7 @@ enum OPTION_MENU_FRAME_RATE_INDEX {
 void show_insufficient_memory_dialog(void)
 {
 	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aMer),
+		locate_text_res(mainresptr, insufficient_memory_dialog_id),
 		-1, -1, dialog_border_color, 0, 0);
 }
 
@@ -28,7 +28,7 @@ void select_keyboard_driving(void)
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aKey),
+		locate_text_res(mainresptr, keyboard_driving_dialog_id),
 		-1, -1, dialog_border_color, 0, 0);
 	dos_joystick_set_enabled(0);
 	mouse_driving_enabled = 0;
@@ -153,7 +153,7 @@ void select_mouse_driving(void)
 	audio_suspend();
 	mouse_driving_enabled = 1;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aMou),
+		locate_text_res(mainresptr, mouse_driving_dialog_id),
 		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -166,7 +166,7 @@ void show_pause_dialog(void)
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aPau),
+		locate_text_res(mainresptr, pause_dialog_id),
 		-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -179,7 +179,7 @@ void toggle_music_with_dialog(void)
 
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
-	message_id = audio_toggle_music() != 0 ? aMon : aMof;
+	message_id = audio_toggle_music() != 0 ? music_enabled_message_id : music_disabled_message_id;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
 		-1, -1, dialog_border_color, 0, 0);
@@ -193,7 +193,7 @@ void toggle_effects_with_dialog(void)
 
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
-	message_id = audio_toggle_effects() != 0 ? aSon : aSof;
+	message_id = audio_toggle_effects() != 0 ? effects_enabled_message_id : effects_disabled_message_id;
 	show_dialog(DIALOG_TYPE_DELAY, DIALOG_SAVE_BACKGROUND,
 		locate_text_res(mainresptr, message_id),
 		-1, -1, dialog_border_color, 0, 0);
@@ -209,7 +209,7 @@ void show_exit_to_dos_dialog(void)
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
 	result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aDos_0),
+		locate_text_res(mainresptr, exit_to_dos_dialog_id),
 		-1, -1, dialog_border_color, 0, 0);
 	if (result == 1)
 		call_exitlist2();
@@ -233,7 +233,7 @@ void show_graphic_levels_menu(void)
 	original_frame_rate = configured_frame_rate;
 	selected = 0;
 	for (;;) {
-		copy_string(menu_text, locate_text_res(mainresptr, aMrl));
+		copy_string(menu_text, locate_text_res(mainresptr, graphics_options_dialog_id));
 		for (option_index = 0; option_index < 9U; option_index++)
 			selected_options[option_index] = 0;
 		selected_options[detail_level] = 1;
@@ -278,7 +278,7 @@ void show_graphic_levels_menu(void)
 
 	if (original_frame_rate != configured_frame_rate)
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
-			locate_text_res(mainresptr, aMrs),
+			locate_text_res(mainresptr, frame_rate_changed_message_id),
 			-1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();
@@ -346,11 +346,11 @@ legacy_u16 run_option_menu(void)
 
 		case 3:
 			prompt = locate_text_res(mainresptr, "rep");
-			if (do_fileselect_dialog(replay_directory, aDefault_1,
+			if (do_fileselect_dialog(replay_directory, replay_filename_input,
 				".rpl", prompt) != 0) {
 				waitflag = REPLAY_LOAD_WAIT_TICKS;
 				show_waiting();
-				file_load_replay(replay_directory, aDefault_1);
+				file_load_replay(replay_directory, replay_filename_input);
 				menu_active = 1;
 				unload_resource(miscptr);
 				return menu_active;

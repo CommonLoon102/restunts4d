@@ -32,7 +32,7 @@ void add_exit_handler(void (far* exit_handler)(void))
 			return;
 		}
 	}
-	fatal_error(aExitListOverflow);
+	fatal_error(exit_handler_overflow_message);
 }
 
 void call_exitlist(void)

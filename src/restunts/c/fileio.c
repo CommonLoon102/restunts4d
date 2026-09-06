@@ -9,10 +9,10 @@ static const legacy_s8 headless_file_error[] = "File error: %s";
 static const legacy_s8 headless_write_error[] = "File write error: %s";
 static const legacy_s8 headless_size_error[] = "File size error: %s";
 static const legacy_s8 headless_pack_error[] = "Invalid packed resource: %s";
-#define aSFileError headless_file_error
-#define aSFileError_0 headless_write_error
-#define aSFileError_1 headless_size_error
-#define aSInvalidPackTy headless_pack_error
+#define file_read_error_format headless_file_error
+#define file_write_error_format headless_write_error
+#define file_size_error_format headless_size_error
+#define invalid_pack_type_error_format headless_pack_error
 #endif
 
 #define FILE_IO_PAGE_SIZE 16384
@@ -223,7 +223,7 @@ legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 	}
 
 	if (fatal) {
-		fatal_error(aSFileError, filename);
+		fatal_error(file_read_error_format, filename);
 	}
 
 	return 0;
@@ -261,7 +261,7 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 	}
 
 	if (fatal) {
-		fatal_error(aSFileError_1, filename);
+		fatal_error(file_size_error_format, filename);
 	}
 
 	return 0;
@@ -303,7 +303,7 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 	}
 
 	if (fatal) {
-		fatal_error(aSFileError, filename);
+		fatal_error(file_read_error_format, filename);
 	}
 
 	return 0;
@@ -379,7 +379,7 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 	fileio_remove(filename);
 
 	if (!fatal) {
-		fatal_error(aSFileError_0, filename);
+		fatal_error(file_write_error_format, filename);
 	}
 
 	return retval;
@@ -807,7 +807,7 @@ void far* file_decomp(const legacy_s8* filename, legacy_s16 fatal)
 	}
 
 	if (fatal) {
-		fatal_error(aSInvalidPackTy, filename);
+		fatal_error(invalid_pack_type_error_format, filename);
 	}
 
 	return 0;

@@ -28,15 +28,15 @@ extern legacy_s16 dashboard_steering_dot_y_cache[];
 extern legacy_s16 dashboard_steering_position_cache[];
 extern legacy_u8 dashboard_wheel_shape_cache[];
 extern legacy_u8 dashboard_gear_knob_visible_cache[];
-extern legacy_s8 aWhl1whl2whl3ins2gboxins1i[];
-extern legacy_s8 aGnobgnabdotDotadot1dot2[];
-extern legacy_s8 aDig0dig1dig2dig3dig4dig5d[];
-extern legacy_s8 aDash[];
-extern legacy_s8 aRoof[];
-extern legacy_s8 aDast[];
-extern legacy_s8 aDasm[];
-extern legacy_s8 aStdaxxxx[];
-extern legacy_s8 aStdbxxxx[];
+extern legacy_s8 dashboard_wheel_and_instrument_ids[];
+extern legacy_s8 dashboard_gear_and_dot_shape_ids[];
+extern legacy_s8 dashboard_digit_shape_ids[];
+extern legacy_s8 dashboard_background_shape_id[];
+extern legacy_s8 dashboard_roof_shape_id[];
+extern legacy_s8 dashboard_top_shape_id[];
+extern legacy_s8 dashboard_mask_shape_id[];
+extern legacy_s8 dashboard_primary_resource_name[];
+extern legacy_s8 dashboard_secondary_resource_name[];
 
 void setup_car_shapes(legacy_s16 operation);
 

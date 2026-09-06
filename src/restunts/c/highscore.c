@@ -401,9 +401,9 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 {
 	struct SHAPE2D far* frame_shape;
 
-	aOp01[3] = (legacy_s8)(frame_sequence[frame_index] + '0');
+	opponent_animation_frame_id[3] = (legacy_s8)(frame_sequence[frame_index] + '0');
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
-		animation_resource, aOp01);
+		animation_resource, opponent_animation_frame_id);
 	mouse_draw_opaque_check();
 	if (video_uses_page_flipping != 0) {
 		sprite_select_target(animation_sprite);
@@ -482,7 +482,7 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far* opponent_resource,
 	for (resource_index = 0; resource_index < resource_count;
 		resource_index++) {
 		if (outcome == END_SCREEN_OUTCOME_NONE) {
-			text = locate_text_res(opponent_resource, aD4a);
+			text = locate_text_res(opponent_resource, opponent_neutral_result_text_id);
 		} else {
 			text_id[0] = (legacy_s8)text_prefix;
 			text_id[1] = (legacy_s8)('1' + resource_index);
@@ -591,11 +591,11 @@ legacy_u16 end_hiscore(void)
 	legacy_u16 result;
 
 	ensure_file_exists(END_SCREEN_TRACK_RESOURCE_INDEX);
-	misc_resource = (legacy_s8 far*)file_load_resfile(aMisc_2);
+	misc_resource = (legacy_s8 far*)file_load_resfile(results_misc_resource_name);
 	opponent_resource = 0;
 	if (gameconfig.game_opponenttype != 0) {
-		aOpp1[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
-		opponent_resource = (legacy_s8 far*)file_load_resfile(aOpp1);
+		opponent_resource_name[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
+		opponent_resource = (legacy_s8 far*)file_load_resfile(opponent_resource_name);
 	}
 
 	render_window_sprite = sprite_make_wnd(END_SCREEN_WIDTH,
@@ -613,7 +613,7 @@ legacy_u16 end_hiscore(void)
 		button_top_color, button_bottom_color, button_fill_color, 0);
 
 	text_y = END_SCREEN_TEXT_START_Y;
-	end_hiscore_set_text(misc_resource, aElt);
+	end_hiscore_set_text(misc_resource, elapsed_time_label_id);
 	if (gState_total_finish_time != 0) {
 		format_frame_as_string(number,
 			LEGACY_S16_WRAP_SUB(gState_total_finish_time,
@@ -621,35 +621,35 @@ legacy_u16 end_hiscore(void)
 		strcat(&resID_byte1, number);
 		if (((legacy_u8)replay_recording_flags &
 			REPLAY_RECORDING_MODIFIED_FLAG) != 0)
-			end_hiscore_append_text(misc_resource, aCon);
+			end_hiscore_append_text(misc_resource, continued_race_label_id);
 		end_hiscore_draw_current_text(&text_y);
 		if (gState_penalty != 0) {
-			end_hiscore_set_text(misc_resource, aPpt);
+			end_hiscore_set_text(misc_resource, penalty_time_label_id);
 			format_frame_as_string(number, gState_penalty, 1);
 			strcat(&resID_byte1, number);
 			end_hiscore_draw_current_text(&text_y);
 		}
 	} else {
-		end_hiscore_append_text(misc_resource, aDnf);
+		end_hiscore_append_text(misc_resource, player_did_not_finish_label_id);
 		end_hiscore_draw_current_text(&text_y);
 	}
 
 	outcome = END_SCREEN_OUTCOME_NONE;
 	if (gameconfig.game_opponenttype != 0) {
 		if (gState_opponent_finish_time == 0) {
-			end_hiscore_set_text(misc_resource, aOlt);
-			end_hiscore_append_text(misc_resource, aDnf_0);
+			end_hiscore_set_text(misc_resource, opponent_unfinished_time_label_id);
+			end_hiscore_append_text(misc_resource, opponent_did_not_finish_label_id);
 			if (gState_total_finish_time != 0)
 				outcome = END_SCREEN_OUTCOME_LOSS;
 		} else if (gState_total_finish_time == 0 ||
 			(legacy_u16)gState_opponent_finish_time <
 				(legacy_u16)gState_total_finish_time) {
-			end_hiscore_set_text(misc_resource, aOwt);
+			end_hiscore_set_text(misc_resource, opponent_win_time_label_id);
 			format_frame_as_string(number, gState_opponent_finish_time, 1);
 			strcat(&resID_byte1, number);
 			outcome = END_SCREEN_OUTCOME_WIN;
 		} else {
-			end_hiscore_set_text(misc_resource, aOlt_0);
+			end_hiscore_set_text(misc_resource, opponent_loss_time_label_id);
 			format_frame_as_string(number, gState_opponent_finish_time, 1);
 			strcat(&resID_byte1, number);
 			outcome = END_SCREEN_OUTCOME_LOSS;
@@ -658,16 +658,16 @@ legacy_u16 end_hiscore(void)
 	}
 
 	if (outcome == END_SCREEN_OUTCOME_LOSS)
-		file_load_audiores(aSkidvict, aSkidms_1, aVict);
+		file_load_audiores(victory_music_resource_name, victory_instrument_resource_name, victory_song_id);
 	else
-		file_load_audiores(aSkidover, aSkidms_2, aOver);
+		file_load_audiores(race_end_music_resource_name, race_end_instrument_resource_name, race_end_song_id);
 
 	opponent_active = (legacy_u8)gameconfig.game_opponenttype;
 	if (outcome == END_SCREEN_OUTCOME_NONE &&
 		gState_pEndFrame != gState_oEndFrame)
 		opponent_active = 0;
 
-	end_hiscore_set_text(misc_resource, aAvs);
+	end_hiscore_set_text(misc_resource, average_speed_label_id);
 	duration = LEGACY_U16_WRAP_ADD(gState_pEndFrame, elapsed_time1);
 	if (duration != 0) {
 		average_speed = (legacy_u16)(LEGACY_U32_DIV_OR_ZERO(
@@ -679,29 +679,29 @@ legacy_u16 end_hiscore(void)
 	format_integer(number, average_speed, 0,
 		END_SCREEN_NUMBER_WIDTH);
 	strcat(&resID_byte1, number);
-	end_hiscore_append_text(misc_resource, aMph);
+	end_hiscore_append_text(misc_resource, average_speed_units_id);
 	end_hiscore_draw_current_text(&text_y);
 
 	if (gState_impactSpeed != 0) {
-		end_hiscore_set_text(misc_resource, aImp);
+		end_hiscore_set_text(misc_resource, impact_speed_label_id);
 		format_integer(number,
 			(legacy_u16)gState_impactSpeed >>
 				END_SCREEN_SPEED_FRACTION_BITS,
 			0, END_SCREEN_NUMBER_WIDTH);
 		strcat(&resID_byte1, number);
-		end_hiscore_append_text(misc_resource, aMph_0);
+		end_hiscore_append_text(misc_resource, impact_speed_units_id);
 		end_hiscore_draw_current_text(&text_y);
 	}
 
-	end_hiscore_set_text(misc_resource, aTop);
+	end_hiscore_set_text(misc_resource, top_speed_label_id);
 	format_integer(number,
 		(legacy_u16)gState_topSpeed >> END_SCREEN_SPEED_FRACTION_BITS,
 		0, END_SCREEN_NUMBER_WIDTH);
 	strcat(&resID_byte1, number);
-	end_hiscore_append_text(misc_resource, aMph_1);
+	end_hiscore_append_text(misc_resource, top_speed_units_id);
 	end_hiscore_draw_current_text(&text_y);
 	if (gState_jumpCount != 0) {
-		end_hiscore_set_text(misc_resource, aJum);
+		end_hiscore_set_text(misc_resource, jump_count_label_id);
 		format_integer(number, gState_jumpCount, 0,
 			END_SCREEN_NUMBER_WIDTH);
 		strcat(&resID_byte1, number);
@@ -748,11 +748,11 @@ legacy_u16 end_hiscore(void)
 		}
 
 		if (outcome == END_SCREEN_OUTCOME_WIN) {
-			aOpp2win[3] = (legacy_s8)(opponent_active + '0');
+			opponent_win_animation_name[3] = (legacy_s8)(opponent_active + '0');
 			animation_resource = (legacy_s8 far*)file_load_resource(
-				FILE_RESOURCE_SHAPE2D_COLLECTION, aOpp2win);
+				FILE_RESOURCE_SHAPE2D_COLLECTION, opponent_win_animation_name);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
-				opponent_resource, aWinn);
+				opponent_resource, opponent_win_text_id);
 			end_outcome_variant = (legacy_s16)(
 				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) &
 				END_SCREEN_BINARY_RANDOM_MASK);
@@ -762,11 +762,11 @@ legacy_u16 end_hiscore(void)
 					END_SCREEN_FINISHED_VARIANT_OFFSET);
 			text_prefix = 'v';
 		} else {
-			aOpp2lose[3] = (legacy_s8)(opponent_active + '0');
+			opponent_loss_animation_name[3] = (legacy_s8)(opponent_active + '0');
 			animation_resource = (legacy_s8 far*)file_load_resource(
-				FILE_RESOURCE_SHAPE2D_COLLECTION, aOpp2lose);
+				FILE_RESOURCE_SHAPE2D_COLLECTION, opponent_loss_animation_name);
 			animation_sequence = (legacy_u8 far*)locate_shape_alt(
-				opponent_resource, aLose);
+				opponent_resource, opponent_loss_text_id);
 			end_outcome_variant = (legacy_s16)(
 				LEGACY_U16_WRAP_ADD(get_kevinrandom(), gState_frame) &
 				END_SCREEN_FOUR_WAY_RANDOM_MASK);
@@ -776,13 +776,13 @@ legacy_u16 end_hiscore(void)
 
 	score_status = 0;
 	file_build_path(track_directory, gameconfig.game_trackname,
-		a_trk_5, g_path_buf);
+		track_file_extension, g_path_buf);
 	track_resource = (legacy_u8 far*)file_load_resource(
 		FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 	if (track_resource == 0) {
 		result = show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
 			DIALOG_SAVE_BACKGROUND,
-			locate_text_res(mainresptr, aIhd),
+			locate_text_res(mainresptr, highscore_track_disk_prompt_id),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialog_border_color, 0, 0);
 		if (result != 0)
@@ -837,13 +837,13 @@ legacy_u16 end_hiscore(void)
 			check_input();
 			mouse_draw_opaque_check();
 			enter_hiscore(finish_time,
-				locate_text_res(misc_resource, aInh_0), 0);
+				locate_text_res(misc_resource, solo_highscore_prompt_id), 0);
 			score_status = 0;
 			blit_mode = MENU_BLIT_MODE_REFRESH;
 		} else {
 			mouse_draw_opaque_check();
 			if (score_status == -1) {
-				end_hiscore_set_text(misc_resource, aHna);
+				end_hiscore_set_text(misc_resource, highscore_unavailable_message_id);
 				hiscore_draw_text(&resID_byte1,
 					font_centered_text_x(&resID_byte1),
 					END_SCREEN_NO_SCORE_MESSAGE_Y,
@@ -855,9 +855,9 @@ legacy_u16 end_hiscore(void)
 		break;
 	}
 
-	aOp01[3] = '1';
+	opponent_animation_frame_id[3] = '1';
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
-		animation_resource, aOp01);
+		animation_resource, opponent_animation_frame_id);
 	animation_width = LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
 		video_shape_width_scale);
 	animation_x = LEGACY_S16_WRAP_SUB(END_SCREEN_ANIMATION_RIGHT,
@@ -876,9 +876,9 @@ legacy_u16 end_hiscore(void)
 		LEGACY_S16_WRAP_ADD(shape2d_get_height(frame_shape),
 			END_SCREEN_ANIMATION_BORDER_GROWTH),
 		dialog_fnt_colour, 0, end_animation_border_shadow_color);
-	aOp01[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
+	opponent_animation_frame_id[3] = (legacy_s8)(animation_sequence[animation_frame] + '0');
 	shape2d_rle_copy((struct SHAPE2D far*)locate_shape_fatal(
-		animation_resource, aOp01), animation_x, animation_y);
+		animation_resource, opponent_animation_frame_id), animation_x, animation_y);
 	previous_animation_frame = animation_frame;
 	font_set_colors(0, 0);
 	end_hiscore_draw_opponent_text(opponent_resource, outcome,
@@ -889,7 +889,7 @@ legacy_u16 end_hiscore(void)
 
 	score_status = 0;
 	evaluation_screen = 1;
-	draw_button(locate_text_res(misc_resource, aBct),
+	draw_button(locate_text_res(misc_resource, result_continue_button_id),
 		END_SCREEN_EVALUATION_BUTTON_X, END_SCREEN_BUTTON_Y,
 		END_SCREEN_BUTTON_WIDTH, END_SCREEN_BUTTON_HEIGHT,
 		button_top_color, button_bottom_color, button_fill_color, 0);
@@ -931,7 +931,7 @@ legacy_u16 end_hiscore(void)
 	sprite_clear_target(button_fill_color);
 	mouse_draw_opaque_check();
 	enter_hiscore(finish_time,
-		locate_text_res(misc_resource, aInh), outcome);
+		locate_text_res(misc_resource, opponent_highscore_prompt_id), outcome);
 
 	} while (0);
 	selected = 1;
@@ -943,26 +943,26 @@ legacy_u16 end_hiscore(void)
 	} else {
 		menu_offset = 0;
 		draw_button(locate_text_res(misc_resource,
-			evaluation_screen != 0 ? aBev : aBhi),
+			evaluation_screen != 0 ? result_evaluation_button_id : result_highscore_button_id),
 			LEGACY_S16_WRAP_ADD(result_button_left[0], 1),
 			END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
 			END_SCREEN_BUTTON_HEIGHT,
 			button_top_color, button_bottom_color, button_fill_color, 0);
 	}
-	draw_button(locate_text_res(misc_resource, aBrp),
+	draw_button(locate_text_res(misc_resource, result_replay_button_id),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(result_button_left[1], menu_offset), 1),
 		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
 		END_SCREEN_BUTTON_HEIGHT,
 		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(locate_text_res(misc_resource,
-		opponent_active != 0 ? aBra : aBdr),
+		opponent_active != 0 ? result_race_button_id : result_drive_button_id),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(result_button_left[2], menu_offset), 1),
 		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,
 		END_SCREEN_BUTTON_HEIGHT,
 		button_top_color, button_bottom_color, button_fill_color, 0);
-	draw_button(locate_text_res(misc_resource, aBmm_0),
+	draw_button(locate_text_res(misc_resource, result_main_menu_button_data),
 		LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_WRAP_ADD(result_button_left[3], menu_offset), 1),
 		END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH,

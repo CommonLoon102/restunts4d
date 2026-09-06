@@ -95,19 +95,19 @@ legacy_s8 g_path_buf[94];
 legacy_s8 track_directory[FILE_DIALOG_PATH_BUFFER_SIZE];
 legacy_s8 replay_directory[FILE_DIALOG_PATH_BUFFER_SIZE];
 
-legacy_s8 aCarcoun[] = "carcoun";
-legacy_s8 aOpp1[] = "opp1";
-legacy_s8 aNam[] = "nam";
-legacy_s8 aPath[] = "path";
-legacy_s8 aSped[] = "sped";
+legacy_s8 car_resource_name[] = "carcoun";
+legacy_s8 opponent_resource_name[] = "opp1";
+legacy_s8 opponent_name_text_id[] = "nam";
+legacy_s8 opponent_path_resource_id[] = "path";
+legacy_s8 opponent_speed_resource_id[] = "sped";
 legacy_s8 gnam_string[32];
 legacy_s8 gsna_string[32];
 legacy_s8 opponent_highscore_name[3];
 
 legacy_s8 textresprefix = 'e';
-const legacy_s8 aLocateshape4_4sShapeNotF[] =
+const legacy_s8 missing_shape_error_format[] =
 	"locateshape - %-4.4s SHAPE NOT FOUND\r\n";
-const legacy_s8 aLocatesound4_4sSoundNotF[] =
+const legacy_s8 missing_sound_error_format[] =
 	"locatesound - %-4.4s SOUND NOT FOUND\r\n";
 
 /* Lookup tables whose byte-for-byte values affect replay simulation. */

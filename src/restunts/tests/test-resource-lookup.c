@@ -16,8 +16,8 @@
 #define TEST_RESOURCE_MARKER_BYTE_2      86U
 #define TEST_RESOURCE_MARKER_BYTE_3      120U
 
-const legacy_s8 aLocateshape4_4sShapeNotF[] = "shape";
-const legacy_s8 aLocatesound4_4sSoundNotF[] = "sound";
+const legacy_s8 missing_shape_error_format[] = "shape";
+const legacy_s8 missing_sound_error_format[] = "sound";
 
 void fatal_error(const legacy_s8* format, ...)
 {

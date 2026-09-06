@@ -52,7 +52,7 @@ enum DRAW_LINE_BUFFER_INDEX {
 #define DRAW_LINE_WORD_COUNT 14
 
 extern struct SHAPE3D game3dshapes[130];
-extern legacy_s8 aStxxx[];
+extern legacy_s8 car_shape_resource_name[];
 extern legacy_s8 far* carresptr;
 extern legacy_s8 far* car2resptr;
 extern struct VECTOR player_front_wheel_centers[2];

@@ -34,17 +34,17 @@
 #define DIALOG_PLACEHOLDER_POSITION_STRIDE 2U
 #define DIALOG_DELAY_TICKS 8UL
 
-extern legacy_s8 aId1[];
-extern legacy_s8 aId2[];
-extern legacy_s8 aId3[];
-extern legacy_s8 aId4[];
-extern legacy_s8 aDea[];
-extern legacy_s8 aDer[];
-extern legacy_s8 aSav[];
-extern legacy_s8 aWai[];
-extern legacy_s8 aLoa[];
-extern legacy_s8 aLsu[];
-extern legacy_s8 aLsd[];
+extern legacy_s8 missing_disk1_message_id[];
+extern legacy_s8 missing_disk2_message_id[];
+extern legacy_s8 missing_disk3_message_id[];
+extern legacy_s8 missing_disk4_message_id[];
+extern legacy_s8 disk_retry_dialog_id[];
+extern legacy_s8 disk_error_dialog_id[];
+extern legacy_s8 file_save_dialog_id[];
+extern legacy_s8 waiting_message_id[];
+extern legacy_s8 file_load_dialog_id[];
+extern legacy_s8 file_scroll_up_label_id[];
+extern legacy_s8 file_scroll_down_label_id[];
 extern legacy_s8* findfilenames[];
 extern legacy_s8 gnam_string[];
 extern legacy_s8 gsna_string[];
@@ -461,7 +461,7 @@ legacy_s8 do_fileselect_dialog(
 
 	dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
 		DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aLoa),
+		locate_text_res(mainresptr, file_load_dialog_id),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialog_border_color, positions, 0));
 	if (dialog_result < 0)
@@ -520,9 +520,9 @@ legacy_s8 do_fileselect_dialog(
 	}
 
 	if (file_count > 7U) {
-		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsu));
+		copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_up_label_id));
 		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1), hit_areas[1].y1);
-		copy_string(&resID_byte1, locate_text_res(mainresptr, aLsd));
+		copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_down_label_id));
 		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
 			hit_areas[9].y1 - 1);
 	}
@@ -654,7 +654,7 @@ legacy_s8 do_fileselect_dialog(
 
 void ensure_file_exists(legacy_s16 file_index)
 {
-	static legacy_s8* const message_ids[] = { aId1, aId2, aId3, aId4 };
+	static legacy_s8* const message_ids[] = { missing_disk1_message_id, missing_disk2_message_id, missing_disk3_message_id, missing_disk4_message_id };
 	legacy_s8* message_id;
 
 	message_id = message_ids[file_index - 1];
@@ -670,7 +670,7 @@ void ensure_file_exists(legacy_s16 file_index)
 void show_waiting(void)
 {
 	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_NO_BACKGROUND_SAVE,
-		locate_text_res(mainresptr, aWai),
+		locate_text_res(mainresptr, waiting_message_id),
 		-1, waitflag, dialog_border_color, 0, 0);
 	mouse_draw_opaque_check();
 }
@@ -684,7 +684,7 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 
 	result = LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_PLACEHOLDERS,
 		DIALOG_SAVE_BACKGROUND,
-		locate_text_res(mainresptr, aSav), -1, -1, dialog_border_color,
+		locate_text_res(mainresptr, file_save_dialog_id), -1, -1, dialog_border_color,
 		positions, 0));
 	if (result < 0)
 		return 0;
@@ -730,11 +730,11 @@ legacy_s16 show_disk_error_dialog(void)
 	input_push_status();
 	if (g_is_busy != 0) {
 		result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-			locate_text_res(mainresptr, aDea),
+			locate_text_res(mainresptr, disk_retry_dialog_id),
 			-1, -1, dialog_border_color, 0, 0) == 0;
 	} else {
 		show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
-			locate_text_res(mainresptr, aDer),
+			locate_text_res(mainresptr, disk_error_dialog_id),
 			-1, -1, dialog_border_color, 0, 0);
 		result = 1;
 	}

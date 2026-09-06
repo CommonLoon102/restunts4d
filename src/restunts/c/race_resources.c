@@ -124,20 +124,20 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 	render_window_sprite = 0;
 	ensure_file_exists(2);
 	shape3d_load_car_shapes(gameconfig.game_playercarid, gameconfig.game_opponentcarid);
-	aCarcoun[3] = gameconfig.game_playercarid[0];
-	aCarcoun[4] = gameconfig.game_playercarid[1];
-	aCarcoun[5] = gameconfig.game_playercarid[2];
-	aCarcoun[6] = gameconfig.game_playercarid[3];
-	carresptr = file_load_resfile(aCarcoun);
+	car_resource_name[3] = gameconfig.game_playercarid[0];
+	car_resource_name[4] = gameconfig.game_playercarid[1];
+	car_resource_name[5] = gameconfig.game_playercarid[2];
+	car_resource_name[6] = gameconfig.game_playercarid[3];
+	carresptr = file_load_resfile(car_resource_name);
 	setup_aero_trackdata(carresptr, 0);
 	unload_resource(carresptr);
 
 	if (gameconfig.game_opponenttype != 0) {
-		aCarcoun[3] = gameconfig.game_opponentcarid[0];
-		aCarcoun[4] = gameconfig.game_opponentcarid[1];
-		aCarcoun[5] = gameconfig.game_opponentcarid[2];
-		aCarcoun[6] = gameconfig.game_opponentcarid[3];
-		carresptr = file_load_resfile(aCarcoun);
+		car_resource_name[3] = gameconfig.game_opponentcarid[0];
+		car_resource_name[4] = gameconfig.game_opponentcarid[1];
+		car_resource_name[5] = gameconfig.game_opponentcarid[2];
+		car_resource_name[6] = gameconfig.game_opponentcarid[3];
+		carresptr = file_load_resfile(car_resource_name);
 		setup_aero_trackdata(carresptr, 1);
 		unload_resource(carresptr);
 

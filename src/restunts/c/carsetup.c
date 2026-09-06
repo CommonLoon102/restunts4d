@@ -4,13 +4,13 @@
 #include "platform.h"
 #include "residue.h"
 
-extern legacy_s8 aCarcoun[];
-extern legacy_s8 aOpp1[];
+extern legacy_s8 car_resource_name[];
+extern legacy_s8 opponent_resource_name[];
 extern legacy_s8 gnam_string[];
 extern legacy_s8 gsna_string[];
-extern legacy_s8 aNam[];
-extern legacy_s8 aPath[];
-extern legacy_s8 aSped[];
+extern legacy_s8 opponent_name_text_id[];
+extern legacy_s8 opponent_path_resource_id[];
+extern legacy_s8 opponent_speed_resource_id[];
 extern legacy_s8 opponent_highscore_name[];
 extern legacy_u8 oppnentSped[];
 
@@ -216,13 +216,13 @@ void load_opponent_data(void)
 	legacy_s16 terminal;
 	legacy_s16 reaches_finish;
 
-	aOpp1[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
-	resource = file_load_resfile(aOpp1);
+	opponent_resource_name[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
+	resource = file_load_resfile(opponent_resource_name);
 	copy_string(opponent_highscore_name,
-		locate_text_res((legacy_s8 far*)resource, aNam));
-	(void)locate_shape_alt((legacy_s8 far*)resource, aPath);
+		locate_text_res((legacy_s8 far*)resource, opponent_name_text_id));
+	(void)locate_shape_alt((legacy_s8 far*)resource, opponent_path_resource_id);
 	speed_data = (legacy_u8 far*)locate_shape_alt(
-		(legacy_s8 far*)resource, aSped);
+		(legacy_s8 far*)resource, opponent_speed_resource_id);
 	for (index = 0; index < OPPONENT_SPEED_COUNT; index++)
 		oppnentSped[index] = speed_data[index];
 
@@ -295,15 +295,15 @@ legacy_s16 setup_player_cars_repldump(void)
 	setup_legacy_penalty_route_word();
 
 	for (index = 0; index < CAR_ID_LENGTH; index++)
-		aCarcoun[index + 3U] = gameconfig.game_playercarid[index];
-	car_resource = file_load_resfile(aCarcoun);
+		car_resource_name[index + 3U] = gameconfig.game_playercarid[index];
+	car_resource = file_load_resfile(car_resource_name);
 	setup_aero_trackdata(car_resource, 0);
 	unload_resource(car_resource);
 
 	if (gameconfig.game_opponenttype != 0) {
 		for (index = 0; index < CAR_ID_LENGTH; index++)
-			aCarcoun[index + 3U] = gameconfig.game_opponentcarid[index];
-		car_resource = file_load_resfile(aCarcoun);
+			car_resource_name[index + 3U] = gameconfig.game_opponentcarid[index];
+		car_resource = file_load_resfile(car_resource_name);
 		setup_aero_trackdata(car_resource, 1);
 		unload_resource(car_resource);
 		load_opponent_data();

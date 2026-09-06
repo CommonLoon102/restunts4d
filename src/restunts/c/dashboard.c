@@ -125,22 +125,22 @@ void setup_car_shapes(legacy_s16 operation)
 
 	if (operation == DASHBOARD_OPERATION_LOAD) {
 		for (index = 0; index < DASHBOARD_CAR_ID_LENGTH; index++) {
-			aStdaxxxx[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
+			dashboard_primary_resource_name[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
 				gameconfig.game_playercarid[index];
-			aStdbxxxx[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
+			dashboard_secondary_resource_name[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
 				gameconfig.game_playercarid[index];
 		}
 		stdaresptr = (legacy_s8 far*)file_load_resource(
-			FILE_RESOURCE_SHAPE2D_COLLECTION, aStdaxxxx);
+			FILE_RESOURCE_SHAPE2D_COLLECTION, dashboard_primary_resource_name);
 		stdbresptr = (legacy_s8 far*)file_load_resource(
-			FILE_RESOURCE_SHAPE2D, aStdbxxxx);
-		locate_many_resources(stdaresptr, aWhl1whl2whl3ins2gboxins1i,
+			FILE_RESOURCE_SHAPE2D, dashboard_secondary_resource_name);
+		locate_many_resources(stdaresptr, dashboard_wheel_and_instrument_ids,
 			(legacy_s8 far**)whlshapes);
-		locate_many_resources(stdbresptr, aGnobgnabdotDotadot1dot2,
+		locate_many_resources(stdbresptr, dashboard_gear_and_dot_shape_ids,
 			(legacy_s8 far**)gnobshapes);
 		if (simd_player.spdcenter.py == 0) {
 			locate_many_resources(stdbresptr,
-				aDig0dig1dig2dig3dig4dig5d, (legacy_s8 far**)digshapes);
+				dashboard_digit_shape_ids, (legacy_s8 far**)digshapes);
 		}
 
 		dashboard_instrument_sprite = sprite_make_wnd(
@@ -164,7 +164,7 @@ void setup_car_shapes(legacy_s16 operation)
 			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 
 		dashboard_shape = (struct SHAPE2D far*)
-			locate_shape_fatal(stdaresptr, aDash);
+			locate_shape_fatal(stdaresptr, dashboard_background_shape_id);
 		gearbox_shape = whlshapes[DASHBOARD_GEARBOX_SHAPE];
 		sprite_select_target(dashboard_gearbox_background_sprite);
 		shape2d_rle_copy_clipped(dashboard_shape,
@@ -177,20 +177,20 @@ void setup_car_shapes(legacy_s16 operation)
 		sprite_select_screen();
 		dashbmp_y = shape2d_get_pos_y(dashboard_shape);
 
-		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aRoof);
+		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
 		if (shape != 0) {
-			shape = (struct SHAPE2D far*)locate_shape_fatal(stdaresptr, aRoof);
+			shape = (struct SHAPE2D far*)locate_shape_fatal(stdaresptr, dashboard_roof_shape_id);
 			roofbmpheight = shape2d_get_height(shape);
 		} else {
 			roofbmpheight = 0;
 		}
 
-		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aDast);
+		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, dashboard_top_shape_id);
 		if (shape != 0) {
 			dastbmp_y = shape2d_get_pos_y(shape);
 			dastbmp_y2 = dos_memory_pointer_offset(shape);
 			dastseg = dos_memory_pointer_segment(shape);
-			dasmshapeptr = locate_shape_fatal(stdaresptr, aDasm);
+			dasmshapeptr = locate_shape_fatal(stdaresptr, dashboard_mask_shape_id);
 		} else {
 			dastbmp_y = 0;
 		}
@@ -199,12 +199,12 @@ void setup_car_shapes(legacy_s16 operation)
 
 	if (operation == DASHBOARD_OPERATION_REDRAW_STATIC) {
 		mouse_draw_opaque_check();
-		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aRoof);
+		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
 		if (shape != 0)
 			shape2d_rle_copy_at_position((struct SHAPE2D far*)
-				locate_shape_fatal(stdaresptr, aRoof));
+				locate_shape_fatal(stdaresptr, dashboard_roof_shape_id));
 		shape2d_rle_copy_position_clipped((struct SHAPE2D far*)
-			locate_shape_fatal(stdaresptr, aDash));
+			locate_shape_fatal(stdaresptr, dashboard_background_shape_id));
 		shape2d_rle_copy_position_clipped(whlshapes[DASHBOARD_WHEEL_CENTER_SHAPE]);
 		mouse_draw_transparent_check();
 

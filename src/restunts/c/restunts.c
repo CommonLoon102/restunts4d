@@ -98,7 +98,7 @@ legacy_s16 random_wait(void)
 		i < RANDOM_WAIT_SPIN_LIMIT; ++i);
 
 	if (i == RANDOM_WAIT_RESOURCE_INDEX) {
-		i = aMisc_1[0];
+		i = random_wait_legacy_bytes[0];
 	}
 
 	while (i--) {
@@ -169,17 +169,17 @@ extern void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_c
 	void far* resource, legacy_u16 resource_data_offset,
 	legacy_u16 rate, legacy_u8 priority);
 
-extern legacy_s8 aId1[];
-extern legacy_s8 aId2[];
-extern legacy_s8 aId3[];
-extern legacy_s8 aId4[];
-extern legacy_s8 aDea[];
-extern legacy_s8 aDer[];
-extern legacy_s8 aSav[];
-extern legacy_s8 aWai[];
-extern legacy_s8 aLoa[];
-extern legacy_s8 aLsu[];
-extern legacy_s8 aLsd[];
+extern legacy_s8 missing_disk1_message_id[];
+extern legacy_s8 missing_disk2_message_id[];
+extern legacy_s8 missing_disk3_message_id[];
+extern legacy_s8 missing_disk4_message_id[];
+extern legacy_s8 disk_retry_dialog_id[];
+extern legacy_s8 disk_error_dialog_id[];
+extern legacy_s8 file_save_dialog_id[];
+extern legacy_s8 waiting_message_id[];
+extern legacy_s8 file_load_dialog_id[];
+extern legacy_s8 file_scroll_up_label_id[];
+extern legacy_s8 file_scroll_down_label_id[];
 extern legacy_s8* findfilenames[];
 extern struct TRACKOBJECT trkObjectList[];
 extern struct SHAPE2D far* track_editor_terrain_shapes[];

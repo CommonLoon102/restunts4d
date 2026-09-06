@@ -303,7 +303,7 @@ static void replay_pause_menu(void)
 	full_redraw_frames_remaining = (legacy_u8)video_page_count;
 	menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
 		DIALOG_NO_BACKGROUND_SAVE,
-		locate_text_res(gameresptr, aMen_0),
+		locate_text_res(gameresptr, replay_pause_menu_id),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 		dialog_border_color, options, REPLAY_DIALOG_INITIAL_CHOICE));
 
@@ -332,7 +332,7 @@ static void replay_pause_menu(void)
 			} else if (gameconfig.game_recordedframes != elapsed_time2) {
 				dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
 					DIALOG_TYPE_MENU, DIALOG_NO_BACKGROUND_SAVE,
-					locate_text_res(gameresptr, aCon_0),
+					locate_text_res(gameresptr, replay_continue_dialog_id),
 					DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 					performGraphColor, 0, REPLAY_DIALOG_INITIAL_CHOICE));
 				if (dialog_result < REPLAY_DIALOG_ACCEPTED_MINIMUM)
@@ -363,14 +363,14 @@ static void replay_pause_menu(void)
 	case REPLAY_PAUSE_ACTION_LOAD:
 		replay_recording_flags = 0;
 		audio_carstate();
-		if (do_fileselect_dialog(replay_directory, aDefault_1, ".rpl",
+		if (do_fileselect_dialog(replay_directory, replay_filename_input, ".rpl",
 			locate_text_res(mainresptr, "rep")) == 0)
 			break;
 		waitflag = REPLAY_LOAD_WAIT_VALUE;
 		show_waiting();
 		saved_config = gameconfig;
 		saved_track = td14_elem_map_main[TRACK_SKYBOX_ELEMENT_INDEX];
-		if ((legacy_u8)file_load_replay(replay_directory, aDefault_1) != 0)
+		if ((legacy_u8)file_load_replay(replay_directory, replay_filename_input) != 0)
 			gameconfig.game_recordedframes = 0;
 		dashb_toggle = 0;
 		track_setup();
@@ -411,18 +411,18 @@ static void replay_pause_menu(void)
 		audio_carstate();
 		for (;;) {
 			save_status = REPLAY_SAVE_RETRY;
-			if (do_savefile_dialog(replay_directory, aDefault_1,
-				locate_text_res(mainresptr, aRep_1)) == 0) {
+			if (do_savefile_dialog(replay_directory, replay_filename_input,
+				locate_text_res(mainresptr, replay_save_prompt_id)) == 0) {
 				save_status = REPLAY_SAVE_CANCELLED;
 			} else {
-				file_build_path(replay_directory, aDefault_1, a_rpl_2,
+				file_build_path(replay_directory, replay_filename_input, replay_file_extension,
 					g_path_buf);
 				save_status = REPLAY_SAVE_READY;
 				g_is_busy = 1;
 				if (file_find(g_path_buf) != 0) {
 					dialog_result = LEGACY_S16_FROM_BITS(show_dialog(
 						DIALOG_TYPE_MENU, DIALOG_NO_BACKGROUND_SAVE,
-						locate_text_res(mainresptr, aFex_0),
+						locate_text_res(mainresptr, replay_overwrite_dialog_id),
 						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 						performGraphColor, 0,
 						REPLAY_DIALOG_INITIAL_CHOICE));
@@ -439,7 +439,7 @@ static void replay_pause_menu(void)
 				break;
 			show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT,
 				DIALOG_NO_BACKGROUND_SAVE,
-				locate_text_res(mainresptr, aSer_0),
+				locate_text_res(mainresptr, replay_save_error_message_id),
 				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 				performGraphColor, 0, REPLAY_DIALOG_INITIAL_CHOICE);
 		}
@@ -452,7 +452,7 @@ static void replay_pause_menu(void)
 			mode_options[REPLAY_MODE_ACTION_FOLLOW_OPPONENT] = 1;
 		menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
 			DIALOG_NO_BACKGROUND_SAVE,
-			locate_text_res(gameresptr, aMdo),
+			locate_text_res(gameresptr, replay_mode_options_dialog_id),
 			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
 			dialog_border_color, mode_options, REPLAY_DIALOG_INITIAL_CHOICE));
 		switch (menu_result) {
@@ -672,7 +672,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 
 	if (operation == REPLAY_LOOP_LOAD_RESOURCES) {
 		locate_many_resources((legacy_s8 far*)sdgameresptr,
-			aRplyrpicrpacrpmcrptcbof6bof5b,
+			replay_control_shape_ids,
 			(legacy_s8 far**)rplyshapes);
 		replay_controls_select(REPLAY_CONTROL_PAUSE);
 		return;
