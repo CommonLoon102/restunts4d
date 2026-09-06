@@ -98,9 +98,9 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_idlerpm2 = playerstate->car_currpm;
 	playerstate->car_current_gear = CAR_INITIAL_GEAR_INDEX;
 	playerstate->car_speeddiff = 0;
-	playerstate->car_speed = 0;
-	playerstate->car_speed2 = 0;
-	playerstate->car_lastspeed = 0;
+	playerstate->car_speed = CAR_SPEED_STOPPED;
+	playerstate->car_speed2 = CAR_SPEED_STOPPED;
+	playerstate->car_lastspeed = CAR_SPEED_STOPPED;
 	playerstate->car_gearratio = simd->gear_ratios[CAR_INITIAL_GEAR_INDEX];
 	playerstate->car_gearratioshr8 =
 		playerstate->car_gearratio >> LEGACY_BYTE_BITS;

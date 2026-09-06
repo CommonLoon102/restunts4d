@@ -272,8 +272,8 @@ void update_crash_state(legacy_s16 arg_someFlag, legacy_s16 arg_MplayerFlag) {
 	}
 
 	if (stop_car == CRASH_CAR_MOTION_STOPPED) {
-		var_cState->car_speed2 = 0;
-		var_cState->car_speed = 0;
+		var_cState->car_speed2 = CAR_SPEED_STOPPED;
+		var_cState->car_speed = CAR_SPEED_STOPPED;
 	}
 	if (arg_MplayerFlag == PLAYER_CAR_INDEX)
 		state.game_pEndFrame = state.game_frame;

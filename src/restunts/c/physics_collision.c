@@ -345,7 +345,7 @@ legacy_s16 car_car_speed_adjust_maybe(
 	slowdown = LEGACY_S16_SAR2(
 		LEGACY_S16_WRAP_MUL(COLLISION_SLOWDOWN_SCALE, relative_speed));
 	if ((legacy_u16)first_state->car_speed2 < (legacy_u16)slowdown) {
-		first_state->car_speed2 = 0;
+		first_state->car_speed2 = CAR_SPEED_STOPPED;
 	} else {
 		first_state->car_speed2 = LEGACY_U16_WRAP_SUB(
 			first_state->car_speed2, slowdown);

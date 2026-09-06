@@ -176,7 +176,7 @@ void update_gamestate(void)
 		if (state.game_frame_in_sec == state.game_frames_per_sec &&
 			byte_449DA == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 &&
-				state.playerstate.car_speed2 != 0) {
+				state.playerstate.car_speed2 != CAR_SPEED_STOPPED) {
 				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
 					state.game_frames_per_sec, 1);
 			} else if (game_replay_mode == REPLAY_MODE_LIVE) {
@@ -221,7 +221,7 @@ void update_gamestate(void)
 									state.playerstate.car_posWorld1.lx,
 									CAR_WORLD_POSITION_SHIFT))))) <=
 					START_SEQUENCE_LINE_DISTANCE) {
-					if (state.playerstate.car_speed != 0)
+					if (state.playerstate.car_speed != CAR_SPEED_STOPPED)
 						player_op(INPUT_BRAKE_FLAG);
 					else
 						byte_4393C = RACE_START_SEQUENCE_INACTIVE;

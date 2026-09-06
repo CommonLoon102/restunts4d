@@ -287,7 +287,7 @@ void opponent_op(void)
 		state.opponentstate.car_rotate.x, MATRIX_ROTATION_ORDER_YXZ);
 	state.opponentstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 	if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
-		if (state.opponentstate.car_speed2 == 0)
+		if (state.opponentstate.car_speed2 == CAR_SPEED_STOPPED)
 			state.opponentstate.field_CF = CAR_SOUND_NONE;
 	} else {
 	route_target = state.opponentstate.car_vec_unk3;
@@ -424,7 +424,7 @@ void opponent_op(void)
 			speed_threshold = LEGACY_U16_SHL(speed_step,
 				OPPONENT_COAST_SPEED_SHIFT);
 			if (speed_threshold > state.opponentstate.car_speed2) {
-				state.opponentstate.car_speed2 = 0;
+				state.opponentstate.car_speed2 = CAR_SPEED_STOPPED;
 				state.opponentstate.car_36MwhlAngle = 0;
 			} else {
 				state.opponentstate.car_speed2 = LEGACY_U16_WRAP_SUB(
@@ -520,7 +520,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
-	if (response == 0 && state.playerstate.car_speed2 != 0 &&
+	if (response == 0 && state.playerstate.car_speed2 != CAR_SPEED_STOPPED &&
 		steering_angle != 0) {
 		centering_limit = LEGACY_S16_SHL(
 			(legacy_s16)response_table[

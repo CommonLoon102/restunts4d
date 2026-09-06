@@ -70,10 +70,10 @@ void player_op(legacy_s8 arg_carInputByte) {
 		state.field_45D = ROUTE_INDICATOR_NONE;
 		arg_carInputByte = INPUT_BRAKE_FLAG;
 
-		if (state.playerstate.car_speed2 == 0) {
+		if (state.playerstate.car_speed2 == CAR_SPEED_STOPPED) {
 			state.playerstate.field_CF = CAR_SOUND_NONE;
 
-			if (state.playerstate.car_speed == 0 && state.playerstate.car_rc1[0] == 0 && state.playerstate.car_rc1[1] == 0 && state.playerstate.car_rc1[2] == 0 && state.playerstate.car_rc1[3] == 0) {
+			if (state.playerstate.car_speed == CAR_SPEED_STOPPED && state.playerstate.car_rc1[0] == 0 && state.playerstate.car_rc1[1] == 0 && state.playerstate.car_rc1[2] == 0 && state.playerstate.car_rc1[3] == 0) {
 				return ;
 			}
 		}

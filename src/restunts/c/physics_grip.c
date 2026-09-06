@@ -488,7 +488,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 				cos_fast(carstate->car_36MwhlAngle),
 				carstate->car_speed2);
 			if (cos_fast(carstate->car_36MwhlAngle) < 0)
-				carstate->car_speed2 = 0;
+				carstate->car_speed2 = CAR_SPEED_STOPPED;
 			carstate->car_36MwhlAngle = 0;
 		}
 	}
@@ -511,16 +511,16 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 		penalty = LEGACY_S16_SHL(absolute_angle,
 			SLIDE_SPEED_PENALTY_SHIFT);
 		if (carstate->car_speed <= (legacy_u16)penalty) {
-			carstate->car_speed = 0;
-			carstate->car_speed2 = 0;
+			carstate->car_speed = CAR_SPEED_STOPPED;
+			carstate->car_speed2 = CAR_SPEED_STOPPED;
 		} else if (carstate->car_speed2 > (legacy_u16)penalty) {
 			carstate->car_speed = LEGACY_U16_WRAP_SUB(
 				carstate->car_speed, penalty);
 			carstate->car_speed2 = LEGACY_U16_WRAP_SUB(
 				carstate->car_speed2, penalty);
 		} else {
-			carstate->car_speed = 0;
-			carstate->car_speed2 = 0;
+			carstate->car_speed = CAR_SPEED_STOPPED;
+			carstate->car_speed2 = CAR_SPEED_STOPPED;
 		}
 
 		if (carstate->car_crashBmpFlag == CRASH_EVENT_NONE) {
