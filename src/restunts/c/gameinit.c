@@ -9,6 +9,7 @@
 #define CAR_WHEELS_PER_AXLE (CARSTATE_WHEEL_COUNT / 2U)
 #define CAR_INITIAL_SURFACE_PAVED 1
 #define CAR_INITIAL_SURFACE_GRIP 1000
+#define CAR_PSEUDO_GRAVITY_NONE 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -89,7 +90,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_rotate.y = CAR_ROTATION_ANGLE_ZERO;
 	playerstate->car_rotate.z = CAR_ROTATION_ANGLE_ZERO;
 	playerstate->car_36MwhlAngle = CAR_WHEEL_HEADING_STRAIGHT;
-	playerstate->car_pseudoGravity = 0;
+	playerstate->car_pseudoGravity = CAR_PSEUDO_GRAVITY_NONE;
 	playerstate->car_steeringAngle = CAR_STEERING_CENTERED;
 	playerstate->car_is_braking = CAR_PEDAL_RELEASED;
 	playerstate->car_is_accelerating = CAR_PEDAL_RELEASED;
