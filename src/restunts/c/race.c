@@ -377,7 +377,7 @@ void run_game(void) {
 		audio_remove_driver_timer();
 		if (game_replay_mode == REPLAY_MODE_LIVE &&
 			gameconfig.game_opponenttype != 0 &&
-			state.opponentstate.car_crashBmpFlag == 0) {
+			state.opponentstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 			show_dialog(DIALOG_TYPE_PLACEHOLDERS,
 				DIALOG_NO_BACKGROUND_SAVE,
 				locate_text_res(gameresptr, "cop"), -1,
@@ -402,7 +402,7 @@ void run_game(void) {
 
 				if (input_do_checking(1) == KEY_ESCAPE)
 					break;
-				if (state.opponentstate.car_crashBmpFlag != 0)
+				if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE)
 					break;
 				if (RACE_FRAME_LIMIT_MULTIPLIER * framespersec ==
 					state.game_frame + elapsed_time1)

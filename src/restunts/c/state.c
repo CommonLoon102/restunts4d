@@ -66,7 +66,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 	}
 
 	state.playerstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
-	if (state.playerstate.car_crashBmpFlag != 0) {
+	if (state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 		state.field_45D = ROUTE_INDICATOR_NONE;
 		arg_carInputByte = INPUT_BRAKE_FLAG;
 
@@ -174,7 +174,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 		guidance_required = 1;
 
 		if (state.field_45B == ROUTE_TRACKING_WRONG_WAY) {
-			if (state.playerstate.car_crashBmpFlag == 0)
+			if (state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE)
 				state.field_45D = ROUTE_INDICATOR_WRONG_WAY;
 			var_2 = state.field_2F4;
 			route_selection_required = 1;
@@ -308,7 +308,7 @@ void player_op(legacy_s8 arg_carInputByte) {
 			state.playerstate.field_48 = LEGACY_S16_FROM_BITS(
 				(legacy_u16)polarAngle(
 					LEGACY_S16_WRAP_NEGATE(var_38.x), var_38.z) & ANGLE_MASK);
-			if (state.playerstate.car_crashBmpFlag == 0) {
+			if (state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 				si = LEGACY_U16_SAR(LEGACY_U16_WRAP_ADD(
 					state.playerstate.field_48, ANGLE_EIGHTH_TURN) &
 					ANGLE_MASK, ROUTE_GUIDANCE_DIRECTION_SHIFT);

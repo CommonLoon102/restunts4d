@@ -199,7 +199,7 @@ struct RECTANGLE* draw_ingame_text(void)
 		return &rect_ingame_text;
 	}
 	if (followOpponentFlag != 0 || cameramode != CAMERA_MODE_COCKPIT ||
-		state.playerstate.car_crashBmpFlag != 0)
+		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE)
 		return &rect_ingame_text;
 
 	switch (state.field_45D) {

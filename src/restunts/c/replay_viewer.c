@@ -283,7 +283,7 @@ static void replay_pause_menu(void)
 	replay_controls_draw(state.game_frame, state.game_frame);
 	for (index = 0; index < REPLAY_PAUSE_OPTION_COUNT; index++)
 		options[index] = 0;
-	if (state.playerstate.car_crashBmpFlag != 0)
+	if (state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE)
 		options[REPLAY_PAUSE_ACTION_CONTINUE] = 1;
 	if (gameconfig.game_recordedframes == 0 || elapsed_time1 != 0)
 		options[REPLAY_PAUSE_ACTION_SAVE] = 1;

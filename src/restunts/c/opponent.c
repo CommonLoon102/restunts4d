@@ -284,7 +284,7 @@ void opponent_op(void)
 		state.opponentstate.car_rotate.y,
 		state.opponentstate.car_rotate.x, MATRIX_ROTATION_ORDER_YXZ);
 	state.opponentstate.field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
-	if (state.opponentstate.car_crashBmpFlag != 0) {
+	if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 		if (state.opponentstate.car_speed2 == 0)
 			state.opponentstate.field_CF = 0;
 	} else {
@@ -340,7 +340,7 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk3.z,
 					state.opponentstate.car_vec_unk5.z);
 				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
-					state.playerstate.car_crashBmpFlag == 0) {
+					state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 					state.field_45E = ROUTE_INDICATOR_RIGHT;
 				}
 			} else {
@@ -356,7 +356,7 @@ void opponent_op(void)
 					state.opponentstate.car_vec_unk3.z,
 					state.opponentstate.car_vec_unk4.z);
 				if (player_forward > OPPONENT_PASSING_FORWARD_LIMIT &&
-					state.playerstate.car_crashBmpFlag == 0) {
+					state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 					state.field_45E = ROUTE_INDICATOR_LEFT;
 				}
 			}
@@ -416,7 +416,7 @@ void opponent_op(void)
 
 	input = INPUT_NONE;
 	if (state.opponentstate.car_sumSurfRearWheels != 0) {
-		if (state.opponentstate.car_crashBmpFlag != 0) {
+		if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 			input = INPUT_BRAKE_FLAG;
 		} else if (state.opponentstate.car_36MwhlAngle != 0) {
 			speed_threshold = LEGACY_U16_SHL(speed_step,
@@ -454,7 +454,7 @@ void opponent_op(void)
 		GRIP_BEHAVIOR_OPPONENT);
 	update_player_state(&state.opponentstate, &simd_opponent,
 		&state.playerstate, &simd_player, OPPONENT_CAR_INDEX);
-	if (state.opponentstate.car_crashBmpFlag == 0) {
+	if (state.opponentstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 		relative.x = LEGACY_S16_WRAP_SUB(
 			state.opponentstate.car_vec_unk3.x,
 			position_to_word((legacy_s32)

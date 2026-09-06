@@ -523,7 +523,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 			carstate->car_speed2 = 0;
 		}
 
-		if (carstate->car_crashBmpFlag == 0) {
+		if (carstate->car_crashBmpFlag == CRASH_EVENT_NONE) {
 			for (i = 0; i < CAR_WHEEL_COUNT; i++) {
 				if (carstate->car_surfaceWhl[i] == SURFACE_PAVED)
 					break;

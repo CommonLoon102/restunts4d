@@ -365,7 +365,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	 */
 	if (car_index == PLAYER_CAR_INDEX && gameconfig.game_opponenttype != 0 &&
 		var_pSpeed2Scaled == 0 &&
-		arg_pState->car_lastspeed != 0 && arg_pState->car_crashBmpFlag != 0) {
+		arg_pState->car_lastspeed != 0 &&
+		arg_pState->car_crashBmpFlag != CRASH_EVENT_NONE) {
 		/*
 		 * On the zero-speed crash transition, the original wheel-angle locals
 		 * reuse opponent wheel-coordinate words left at the same stack addresses.
