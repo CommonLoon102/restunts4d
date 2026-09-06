@@ -1,6 +1,7 @@
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
+#include "fatal.h"
 
 #define MMGR_RESOURCE_SENTINEL_INDEX 49
 
@@ -668,7 +669,6 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
 	}
 }
 
-
 // Same signedness caveat as mmgr_copy_paras above: the original's loop guard
 // subtracts 4096 paragraphs and uses an unsigned no-borrow branch.
 void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras) {
@@ -1030,8 +1030,6 @@ legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr) {
 	return result << DOS_BYTES_PER_PARAGRAPH_SHIFT;
 }
 //#endif
-
-
 
 void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
 	legacy_s8 far** result) {

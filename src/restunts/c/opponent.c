@@ -1,6 +1,7 @@
 #include "state_internal.h"
 #include "game_input.h"
 #include "trackdata_layout.h"
+#include "physics_internal.h"
 
 #define LEGACY_NULL_TRACK_VECTOR_CAPACITY 256
 #define LEGACY_NULL_TRACK_TEXT_SPACE 32

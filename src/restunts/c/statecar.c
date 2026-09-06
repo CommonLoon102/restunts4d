@@ -1,8 +1,7 @@
 #include "externs.h"
 #include "game_input.h"
 #include "math.h"
-
-extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
+#include "state_internal.h"
 
 #define ACCELERATION_MASS_NUMERATOR 25L
 #define ACCELERATION_DRAG_SCALE 200L

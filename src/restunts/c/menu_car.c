@@ -5,6 +5,15 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "shape3d_internal.h"
+#include "frame_internal.h"
+#include "ui_text.h"
+#include "shape2d_internal.h"
+#include "timing.h"
+#include "state_internal.h"
+#include "game_input.h"
+#include "ui_input.h"
+#include "ui_dialog.h"
 
 #define GAME_RESOURCE_FILE_INDEX 2
 #define CAR_MENU_PLAYER_MODE 0U

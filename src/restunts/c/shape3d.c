@@ -8,6 +8,7 @@
 #include "shape3d_internal.h"
 #include "shape2d.h"
 #include "shape2d_internal.h"
+#include "math_internal.h"
 
 /*
 
@@ -37,12 +38,6 @@ X     - set_projection (10)
 X     - select_cliprect_rotate (10)
 
 */
-
-extern legacy_s8 far* game1ptr;
-extern legacy_s8 far* game2ptr;
-extern legacy_s8 far* curshapeptr;
-
-extern legacy_s8 game_shape_names[];
 
 void shape3d_vertex_read(const struct SHAPE3D* shape, legacy_u16 index,
 	struct VECTOR* destination)
@@ -82,7 +77,6 @@ extern legacy_u16 transshapenumpaints;
 extern legacy_u8 transshapematerial;
 extern legacy_u8 transshapeflags;
 extern struct RECTANGLE* transshaperectptr;
-extern struct MATRIX mat_temp;
 extern legacy_s32 invpow2tbl[32];
 extern legacy_u8 shape_view_direction_sector;
 
@@ -103,13 +97,9 @@ extern legacy_u8 primidxcounttab[];
 extern legacy_u8 primtypetab[];
 extern legacy_u8 far* transshapeprimptr;
 extern legacy_u16 polyinfoptrnext;
-extern legacy_u8 far* polyinfoptr;
 extern legacy_u8 far* transshapepolyinfo;
-extern legacy_u8 far* polyinfoptrs[];
-extern legacy_u16 polyinfonumpolys;
 extern legacy_s8 transprimitivepaintjob;
 extern legacy_u8 far* transshapeprimindexptr;
-extern legacy_s8 backlights_paint_override;
 
 /* 14-bit fixed point: the inner radius is 37/64 of the outer radius. */
 #define WHEEL_INNER_RADIUS_SCALE 9472U
@@ -275,8 +265,6 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 	struct POINT2D projected_vertices[SHAPE3D_VERTEX_CAPACITY];
 	struct POINT2D** projected_point_pointer;
 
-
-
 	legacy_u16 i;
 	legacy_u16 vertex_radius_or_sort_flag, vertex_index_or_depth, vertex_index_or_radius;
 
@@ -387,8 +375,6 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 	}
 
 	transshapeprimitives = instance->shapeptr->shape3d_primitives;
-
-
 
 	for (;;) {
 	transshapeprimptr = transshapeprimitives + primidxcounttab[transshapeprimitives[0]] + transshapenumpaints + 2;
@@ -695,7 +681,6 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 
 	polyinfo_write_word(transshapepolyinfo, 0U, vertex_index_or_depth);
 
-
 	if ((transshapeflags & SHAPE3D_NO_DEPTH_SORT_FLAG) != 0 ||
 		(primitive_flags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
 		vertex_radius_or_sort_flag = 0;
@@ -722,9 +707,6 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 	}
 }
 
-
-
-
 // parameter points to a far array of 2d points
 legacy_s8 is_facing_camera(struct POINT2D far* pts) {
 	legacy_s32 dx0, dy0, dx1, dy1;
@@ -747,12 +729,8 @@ extern legacy_u16 projection_horizontal_half_fov;
 extern legacy_u16 projection_vertical_half_fov;
 extern legacy_u16 projection_half_width;
 extern legacy_u16 projection_origin_x;
-extern legacy_u16 projection_center_x;
 extern legacy_u16 projection_half_height;
 extern legacy_u16 projection_origin_y;
-extern legacy_u16 projection_center_y;
-extern legacy_u16 projection_focal_length_x;
-extern legacy_u16 projection_focal_length_y;
 
 legacy_u16 projection_scale_x_wrapped(legacy_u16 numerator, legacy_s16 divisor) {
 	return LEGACY_U16_DIV_OR_ZERO(
@@ -776,8 +754,6 @@ legacy_u16 projection_scale_y(legacy_u16 value, legacy_u16 divisor) {
 	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
 		LEGACY_U32_WRAP_MUL(projection_focal_length_y, value), divisor);
 }
-
-extern legacy_s16 polygon_next_index[];
 
 extern legacy_u16 polygon_insert_newest(legacy_u16 depth, legacy_u16 sort_by_depth) {
 	legacy_s16 next_polygon, remaining_polygons, previous_remaining_count;
@@ -887,10 +863,10 @@ void projection_set_half_fov(legacy_u16 horizontal_half_fov, legacy_u16 vertical
 	projection_update_derived();
 }
 
-extern struct RECTANGLE select_rect_rc;
 //extern unsigned word_411F6;
 extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
-extern legacy_s32 direction_sector_sine, direction_sector_cosine, direction_sector_sine_copy, direction_sector_cosine_copy;
+extern legacy_s32 direction_sector_sine_copy;
+extern legacy_s32 direction_sector_cosine_copy;
 
 legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY, struct RECTANGLE* cliprect, legacy_s16 half_scale) {
 	struct MATRIX* inverse_view_rotation;

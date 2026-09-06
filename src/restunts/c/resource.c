@@ -1,8 +1,5 @@
 #include "resource.h"
-
-extern const legacy_s8 missing_shape_error_format[];
-extern const legacy_s8 missing_sound_error_format[];
-extern void fatal_error(const legacy_s8* format, ...);
+#include "fatal.h"
 
 enum RESOURCE_NOT_FOUND_BEHAVIOR {
 	RESOURCE_NOT_FOUND_IGNORE = 0,

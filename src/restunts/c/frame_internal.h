@@ -31,9 +31,6 @@ extern struct RECTANGLE empty_rect;
 extern struct RECTANGLE rect_ingame_text2;
 extern struct RECTANGLE rect_ingame_text3;
 extern struct RECTANGLE rect_ingame_text4;
-extern struct VECTOR wheel_forward_travel;
-extern struct VECTOR wheel_world_travel;
-extern struct MATRIX mat_temp;
 extern legacy_s16 camera_track_height_offset;
 extern legacy_s8 detail_threshold_by_level[];
 extern legacy_s8 track_material_animation[];
@@ -41,16 +38,10 @@ extern legacy_u16 frame_callback_count;
 extern legacy_s16 cloud_heading_offsets[];
 extern legacy_s8* lookahead_tiles_tables[];
 extern struct SHAPE3D* cloud_shapes[];
-extern legacy_s16 terrainHeight;
-extern legacy_s16 planindex;
-extern legacy_s16 planindex_copy;
-extern legacy_s8 track_wall_collision_enabled;
 extern struct TRANSFORMEDSHAPE3D currenttransshape[29];
 //extern struct TRANSFORMEDSHAPE3D transshapeunk;
 extern struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
-extern struct TRACKOBJECT trkObjectList[215]; // 215 entries
 extern legacy_u8 fence_TrkObjCodes[];
-extern legacy_s16 car_initial_roll, car_initial_pitch, car_initial_yaw, wheel_heading_offset;
 
 extern legacy_s8 fence_tile_offsets_single[];
 extern legacy_s8 fence_tile_offsets_row[];
@@ -63,30 +54,14 @@ extern legacy_s16 hill_fill_offsets_column[];
 extern legacy_s16 hill_fill_offsets_both[];
 extern struct TRACKOBJECT terrain_scene_objects[];
 extern struct TRACKOBJECT particle_scene_objects[];
-extern struct SHAPE3D game3dshapes[130];
-extern struct VECTOR player_front_wheel_centers[2];
-extern struct VECTOR player_base_wheel_vertices[24];
-extern legacy_s16 player_wheel_vertex_state[];
-extern struct VECTOR opponent_front_wheel_centers[2];
-extern struct VECTOR opponent_base_wheel_vertices[24];
-extern legacy_s16 opponent_wheel_vertex_state[];
-extern legacy_s8 backlights_paint_override;
 extern legacy_s16 frame_buffer_camera_headings[];
 extern legacy_s16 last_rendered_camera_heading;
 extern legacy_s16 transformedshape_zarray[];
 extern legacy_s16 transformedshape_indices[];
 extern legacy_s8 transformed_shape_sort_types[];
-extern legacy_s16 sdgame2_widths[];
-extern void far* sdgame2shapes[];
-extern void far* fontledresptr;
-extern legacy_s16 dialog_fnt_colour;
 extern legacy_s8 transformedshape_counter;
-extern struct SPRITE far* render_window_sprite;
-extern legacy_s16 font_glyph_height;
 extern struct RECTANGLE rect_ingame_text;
 extern struct RECTANGLE intro_cliprect;
-extern struct SHAPE2D far* skyboxes[];
-extern legacy_s16 penalty_time;
 extern legacy_s16 intro_colorvalue;
 extern legacy_s16 intro_palette_color_count;
 extern struct SHAPE3D logoshape;
@@ -102,17 +77,16 @@ extern legacy_s16 track_preview_target_z;
 extern struct VECTOR track_preview_horizon_vector;
 extern struct RECTANGLE trackpreview_cliprect;
 
-void build_track_object(struct VECTOR* a, struct VECTOR* b);
 struct TRACKOBJECT* frame_track_object_from_legacy_index(legacy_u8 index);
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
 void skybox_render_level_rect(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
-legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);
+
 legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction, struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y);
-legacy_s16 font_centered_text_x(const legacy_s8* text);
+
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
 struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
-struct RECTANGLE* intro_draw_text(legacy_s8* str, legacy_s16 a, legacy_s16 b, legacy_s16 c, legacy_s16 d);
+
 void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
 	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
 	struct POINT2D* previous_points, legacy_s16* previous_point_count,
@@ -120,11 +94,9 @@ void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 cam
 	struct RECTANGLE* combined_rect);
 void init_plantrak(void);
 void update_opponent(void);
-legacy_u32 timer_get_delta(void);
+
 legacy_s16 video_backbuffer_copy_required(void);
-void font_set_fontdef2(void far* data);
+
 void set_fontdefseg(void far* data);
-void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);
-void heapsort_by_order(legacy_s16 n, legacy_s16* heap, legacy_s16* data);
 
 #endif

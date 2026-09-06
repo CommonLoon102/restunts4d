@@ -1,5 +1,6 @@
 #include "state_internal.h"
 #include "game_input.h"
+#include "physics_internal.h"
 
 #define ROUTE_POINT_ADVANCE_DISTANCE 275
 #define ROUTE_ALIGNMENT_WRAP_LIMIT \

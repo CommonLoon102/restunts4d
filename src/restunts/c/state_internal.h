@@ -20,7 +20,6 @@ extern legacy_s16 penalty_time;
 extern legacy_s16 grassDecelDivTab[];
 extern struct TRACKOBJECT trkObjectList[215];
 extern legacy_u8 oppnentSped[];
-extern struct PLANE far* planptr;
 extern struct PLANE far plan_memres;
 extern legacy_s16 track_pieces_counter;
 extern legacy_u8 roadside_sign_forward_types[];
@@ -51,5 +50,15 @@ struct VECTOR* track_vector_from_legacy_offset(legacy_u16 offset);
 void update_player_steering_input(legacy_s8 steering_input);
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
+
+extern legacy_s16 gState_impactSpeed;
+extern legacy_s16 gState_jumpCount;
+extern legacy_s16 gState_oEndFrame;
+extern legacy_s16 gState_opponent_finish_time;
+extern legacy_s16 gState_pEndFrame;
+extern legacy_s16 gState_penalty;
+extern legacy_s16 gState_topSpeed;
+extern legacy_s16 gState_total_finish_time;
+extern legacy_s32 gState_travDist;
 
 #endif

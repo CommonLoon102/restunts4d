@@ -9,6 +9,8 @@
 #include "shape2d.h"
 #include "shape3d.h"
 #include "ui_dialog.h"
+#include "ui_text.h"
+#include "shape2d_internal.h"
 
 #define SKYBOX_RESOURCE_COUNT 5
 #define SKYBOX_RESOURCE_NAME_BYTES 9
@@ -27,13 +29,6 @@ enum SKYBOX_MATERIAL_INDEX {
 	SKYBOX_SKY_MATERIAL_INDEX = 17,
 	SKYBOX_WATER_MATERIAL_INDEX = 100
 };
-
-extern void far* engptr;
-extern void far* eng1ptr;
-extern void far* fontledresptr;
-extern void far* sdgameresptr;
-extern legacy_s8 player_engine_definition[];
-extern legacy_s8 opponent_engine_definition[];
 
 static legacy_s8 skybox_resource_names[SKYBOX_RESOURCE_COUNT]
 	[SKYBOX_RESOURCE_NAME_BYTES] = {

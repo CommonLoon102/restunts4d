@@ -3,6 +3,7 @@
 #include "fatal.h"
 #include "platform.h"
 #include "shape2d.h"
+#include "keyboard.h"
 
 #define FATAL_OUTPUT_BUFFER_SIZE 96U
 #define FATAL_NUMBER_SCRATCH_SIZE 12U
@@ -16,8 +17,6 @@ struct FATAL_OUTPUT_STATE {
 	legacy_s8 buffer[FATAL_OUTPUT_BUFFER_SIZE];
 	legacy_u16 length;
 };
-
-void flush_stdin(void);
 
 void add_exit_handler(void (far* exit_handler)(void))
 {

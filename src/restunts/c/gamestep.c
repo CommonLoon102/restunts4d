@@ -1,5 +1,7 @@
 #include "restunts.h"
 #include "game_input.h"
+#include "state_internal.h"
+#include "audio_internal.h"
 
 #define ACTIVE_CAR_COUNT_WITHOUT_OPPONENT 1U
 #define ACTIVE_CAR_COUNT_WITH_OPPONENT 2U
@@ -18,8 +20,6 @@
 #define START_FLAG_ANIMATION_STEP 8
 #define START_SEQUENCE_LINE_DISTANCE 228
 #define START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT 1280
-
-extern legacy_u8 trackside_camera_count;
 
 void update_follow_cameras(void)
 {

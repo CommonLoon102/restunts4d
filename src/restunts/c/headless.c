@@ -2,6 +2,7 @@
 #include "externs.h"
 #include "memmgr.h"
 #include "platform.h"
+#include "fatal.h"
 
 extern void headless_exit(legacy_s16 result);
 

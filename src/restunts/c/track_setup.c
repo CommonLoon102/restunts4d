@@ -1,5 +1,7 @@
 #include "state_internal.h"
 #include "trackdata_layout.h"
+#include "physics_internal.h"
+#include "memmgr.h"
 
 #define TRACK_GRID_SIZE 30
 #define TRACK_GRID_LAST_INDEX 29

@@ -1,14 +1,12 @@
 #include "externs.h"
 #include "fileio.h"
 #include "resource.h"
+#include "physics_internal.h"
 
 #if !defined(__BORLANDC__)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
 static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
 #endif
-
-extern struct PLANE far* planptr;
-extern struct TRACK_WALL far* wallptr;
 
 void load_track_collision_resources(void)
 {

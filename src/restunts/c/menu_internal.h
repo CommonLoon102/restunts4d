@@ -66,7 +66,6 @@ extern struct BUTTON_AREA carmenu_buttons[5];
 extern struct RECTANGLE carmenu_cliprect;
 extern struct RECTANGLE car_menu_redraw_cliprect;
 extern struct VECTOR carmenu_carpos;
-extern legacy_s8 backlights_paint_override;
 extern legacy_s8 results_misc_resource_name[];
 extern legacy_s8 elapsed_time_label_id[];
 extern legacy_s8 continued_race_label_id[];
@@ -166,15 +165,6 @@ extern legacy_s16 end_opening_variant;
 extern legacy_s16 end_outcome_variant;
 extern legacy_s16 end_closing_variant;
 extern legacy_s16 end_animation_border_shadow_color;
-extern legacy_s32 gState_travDist;
-extern legacy_s16 gState_total_finish_time;
-extern legacy_s16 gState_opponent_finish_time;
-extern legacy_s16 gState_pEndFrame;
-extern legacy_s16 gState_oEndFrame;
-extern legacy_s16 gState_penalty;
-extern legacy_s16 gState_impactSpeed;
-extern legacy_s16 gState_topSpeed;
-extern legacy_s16 gState_jumpCount;
 extern legacy_s8 credits_resource_name[];
 extern legacy_s8 credits_shape_ids[];
 extern legacy_s8 credits_title_id[];
@@ -213,8 +203,6 @@ extern legacy_s16 credits_art_heading_shadow_color;
 extern legacy_s16 credits_music_heading_color;
 extern legacy_s16 credits_music_heading_shadow_color;
 
-void load_skybox(legacy_s8 skybox_index);
-void unload_skybox(void);
 void draw_track_preview(void);
 void load_tracks_menu_shapes(void);
 void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,
@@ -223,24 +211,16 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default);
 extern struct SHAPE2D far* track_editor_cursor_shapes[];
 extern struct SHAPE2D far* track_editor_under_cursor_shapes[];
 extern legacy_s16 track_editor_highlight_color;
-extern legacy_s16 track_pieces_counter;
-extern legacy_u8 track_validation_column;
-extern legacy_u8 track_validation_row;
 
 extern struct RECTANGLE shaperect;
 extern struct TRANSFORMEDSHAPE3D transshape;
 extern struct RECTANGLE cliprect;
 extern struct VECTOR carpos;
-extern struct SPRITE far* render_window_sprite;
 extern legacy_s16 menu_idle_counter;
 extern legacy_s16 dialog_background_color;
-extern legacy_s16 font_glyph_height;
 extern struct RECTANGLE intro_text_bounds;
 extern struct RECTANGLE highscore_text_bounds;
-extern struct RECTANGLE empty_rect;
-extern struct SHAPE3D game3dshapes[];
 extern void far* miscptr;
-extern legacy_s16 dialog_fnt_colour;
 extern legacy_s16 graphics_menu_background_color;
 extern legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
 extern legacy_s8 car_resource_name[];
@@ -262,16 +242,29 @@ void menu_update_idle_counter(legacy_u16 elapsed, legacy_s16 limit);
 legacy_s16 menu_animate_button_highlight(legacy_s16 item_index,
 	const struct BUTTON_AREA* buttons,
 	legacy_s16 second_color, legacy_s16 first_color);
-void draw_button(legacy_s8 far* text, legacy_s16 x, legacy_s16 y,
-	legacy_s16 width, legacy_s16 height, legacy_s16 top_color,
-	legacy_s16 bottom_color, legacy_s16 fill_color, legacy_s16 font_color);
+
 void font_draw_text(const legacy_s8* text, legacy_s16 x, legacy_s16 y);
-void font_set_fontdef2(void far* data);
-void audio_suspend(void);
-void audio_resume(void);
-void call_exitlist2(void);
+
 void print_highscore_entry(legacy_s16 entry, legacy_u8* text_offsets);
-void update_car_speed(legacy_s8 input, legacy_s16 car_index,
-	struct CARSTATE* carstate, struct SIMD* simd);
+
+extern legacy_s8 gnam_string[];
+extern legacy_s8 gsna_string[];
+extern legacy_s8 opponent_highscore_name[];
+extern legacy_s8 highscore_player_name_input[];
+extern struct SHAPE2D far* track_editor_terrain_shapes[];
+extern struct SHAPE2D far* track_editor_tile_shapes[];
+extern struct SHAPE2D far* track_editor_tile_masks[];
+extern legacy_s8 missing_disk1_message_id[];
+extern legacy_s8 missing_disk2_message_id[];
+extern legacy_s8 missing_disk3_message_id[];
+extern legacy_s8 missing_disk4_message_id[];
+extern legacy_s8 disk_retry_dialog_id[];
+extern legacy_s8 disk_error_dialog_id[];
+extern legacy_s8 file_save_dialog_id[];
+extern legacy_s8 waiting_message_id[];
+extern legacy_s8 file_load_dialog_id[];
+extern legacy_s8 file_scroll_up_label_id[];
+extern legacy_s8 file_scroll_down_label_id[];
+extern legacy_s8* findfilenames[];
 
 #endif

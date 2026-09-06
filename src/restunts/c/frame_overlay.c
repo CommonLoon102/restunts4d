@@ -1,5 +1,9 @@
 #include "frame_internal.h"
 #include "game_input.h"
+#include "ui_text.h"
+#include "race_resources_internal.h"
+#include "state_internal.h"
+#include "shape2d.h"
 
 #define OVERLAY_SCREEN_WIDTH 320
 #define OVERLAY_REFERENCE_HEIGHT 200L

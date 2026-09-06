@@ -1,7 +1,9 @@
 #ifndef RESTUNTS_FATAL_H
 #define RESTUNTS_FATAL_H
 
+#ifndef RESTUNTS_LEGACY_H
 #include "legacy.h"
+#endif
 
 #define EXIT_HANDLER_MAX_COUNT 10
 #define EXIT_HANDLER_SLOT_COUNT (EXIT_HANDLER_MAX_COUNT + 1U)

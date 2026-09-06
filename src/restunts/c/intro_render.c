@@ -1,4 +1,10 @@
 #include "frame_internal.h"
+#include "shape3d_internal.h"
+#include "shape2d_internal.h"
+#include "platform.h"
+#include "shape2d.h"
+#include "shape3d.h"
+#include "game_input.h"
 
 #define TRACK_OBJECT_COUNT 215U
 #define INTRO_SCREEN_WIDTH 320U

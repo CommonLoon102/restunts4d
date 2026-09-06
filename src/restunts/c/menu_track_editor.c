@@ -7,6 +7,13 @@
 #include "shape2d.h"
 #include "shape3d.h"
 #include "trackdata_layout.h"
+#include "ui_text.h"
+#include "shape2d_internal.h"
+#include "state_internal.h"
+#include "timing.h"
+#include "ui_dialog.h"
+#include "game_input.h"
+#include "ui_input.h"
 
 #define TRACK_EDITOR_CACHE_INVALID 255U
 #define TRACK_EDITOR_POSITION_UNSET 255U
@@ -80,13 +87,6 @@ enum TRACK_EDITOR_VALIDATION_RESULT {
 };
 
 static legacy_u8 far* progress_box_shape;
-
-extern struct TRACKOBJECT trkObjectList[];
-extern struct SHAPE2D far* track_editor_terrain_shapes[];
-extern struct SHAPE2D far* track_editor_tile_shapes[];
-extern struct SHAPE2D far* track_editor_tile_masks[];
-
-legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 void preRender_icons(legacy_u8 page)
 {

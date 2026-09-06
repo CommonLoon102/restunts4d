@@ -2,6 +2,8 @@
 #include <stdarg.h>
 
 #include "../c/memmgr.h"
+#include "../c/resource.h"
+#include "../c/fatal.h"
 
 #define TEST_RESOURCE_COUNT              1U
 #define TEST_RESOURCE_PAYLOAD_SIZE       4U

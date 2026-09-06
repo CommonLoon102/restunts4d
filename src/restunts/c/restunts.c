@@ -26,6 +26,9 @@
 #include "ui_dialog.h"
 #include "ui_input.h"
 #include "ui_text.h"
+#include "shape3d_internal.h"
+#include "frame_internal.h"
+#include "shape2d_internal.h"
 
 #define GAME_SCREEN_WIDTH 320
 #define GAME_SCREEN_HEIGHT 200
@@ -57,7 +60,6 @@
 #define TRACK_SECONDARY_PATH_OFFSET \
 	(REPLAY_TRACK_SIZE + TRACK_PATH_STORAGE_SIZE)
 
-
 legacy_s16 video_backbuffer_copy_required(void)
 {
 	return 0;
@@ -72,8 +74,6 @@ static void shutdown_dos_game(void)
 	dos_kb_set_numlock();
 	dos_video_set_mode7();
 }
-
-extern void far frame_callback(void);
 
 legacy_s16 camera_track_height_offset;
 
@@ -128,10 +128,7 @@ void set_default_car(void) {
 	gameconfig.game_opponentcarid[0]   = NO_OPPONENT_CAR_ID;
 }
 
-
-extern legacy_u16 select_cliprect_rotate(legacy_s16 angX, legacy_s16 angY, legacy_s16 angZ, struct RECTANGLE* cliprect, legacy_s16 half_scale);
 //extern void shape3d_transform_and_queue(struct TRANSFORMSHAPE3D* shape);
-extern void set_projection(legacy_s16, legacy_s16, legacy_s16, legacy_s16);
 
 struct RECTANGLE shaperect = {
 	0, GAME_SCREEN_WIDTH, 0, GAME_SCREEN_HEIGHT
@@ -145,73 +142,6 @@ struct VECTOR carpos = { 0, LEGACY_S16_FROM_BITS(
 
 struct SPRITE far* render_window_sprite;
 // empty_rect uses the legacy sentinel rectangle <9999, 65535, 9999, 65535>.
-
-extern legacy_s16 polyinfonumpolys;
-extern legacy_u8 far* polyinfoptrs[]; // array size = 400
-extern legacy_u16 polygon_next_index[]; // array size = 400
-
-
-extern legacy_s16 font_prefix_width(const legacy_s8* text, legacy_s16 count);
-
-
-void audio_sequence_timer(void);
-extern void audio_map_song_instruments(void far* song,
-	void far* instruments);
-extern void audio_map_song_tracks(void far* song);
-extern void sprite_xor_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
-void audio_release_channel_range(legacy_s16 first_channel,
-	legacy_s16 last_channel);
-extern void audio_play_bump(legacy_s16 channel);
-extern void audio_play_scrape(legacy_s16 channel);
-extern legacy_s16 audio_play_effect_at_rate(void far* resource, legacy_s16 channel,
-	legacy_u8 priority, legacy_u16 rate);
-extern void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel,
-	void far* resource, legacy_u16 resource_data_offset,
-	legacy_u16 rate, legacy_u8 priority);
-
-extern legacy_s8 missing_disk1_message_id[];
-extern legacy_s8 missing_disk2_message_id[];
-extern legacy_s8 missing_disk3_message_id[];
-extern legacy_s8 missing_disk4_message_id[];
-extern legacy_s8 disk_retry_dialog_id[];
-extern legacy_s8 disk_error_dialog_id[];
-extern legacy_s8 file_save_dialog_id[];
-extern legacy_s8 waiting_message_id[];
-extern legacy_s8 file_load_dialog_id[];
-extern legacy_s8 file_scroll_up_label_id[];
-extern legacy_s8 file_scroll_down_label_id[];
-extern legacy_s8* findfilenames[];
-extern struct TRACKOBJECT trkObjectList[];
-extern struct SHAPE2D far* track_editor_terrain_shapes[];
-extern struct SHAPE2D far* track_editor_tile_shapes[];
-extern struct SHAPE2D far* track_editor_tile_masks[];
-legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
-	legacy_u32 timeout);
-legacy_s8 do_fileselect_dialog(legacy_s8* directory, legacy_s8* filename,
-	legacy_s8* extension, legacy_s8 far* prompt);
-void show_insufficient_memory_dialog(void);
-struct RECTANGLE* intro_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
-	legacy_s16 shadow_color);
-legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
-
-extern void sprite_draw_rect_outline(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
-
-
-extern legacy_s8 gnam_string[];
-extern legacy_s8 gsna_string[];
-extern legacy_s8 opponent_highscore_name[];
-extern legacy_s8 highscore_player_name_input[];
-
-extern void far* engptr;
-extern void far* eng1ptr;
-extern void far* fontledresptr;
-extern void far* sdgameresptr;
-extern legacy_s8 player_engine_definition[];
-extern legacy_s8 opponent_engine_definition[];
-extern legacy_s16 audio_init_engine(legacy_s16, void far*, void far*, void far*);
-
-extern void update_car_speed(legacy_s8 input, legacy_s16 car_index,
-	struct CARSTATE* carstate, struct SIMD* simd);
 
 void init_div0(void)
 {
@@ -529,7 +459,6 @@ legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8* argv[]) {
 		//sprite_putimage(unused_preview_window->sprite_bitmapptr);
 
 	//fatal_error("happy yet?");
-
 
 	// shutdown
 	shutdown_dos_game();

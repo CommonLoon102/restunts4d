@@ -1,13 +1,12 @@
 #include "../../c/platform.h"
 
 #include <dos.h>
+#include "../../c/fatal.h"
+#include "dos_interrupts.h"
 
 #define getvect _getvect
-extern void interrupt (far* _CType _getvect(legacy_s16 interrupt_number))(void);
 
 typedef void interrupt (far* interrupt_handler_type)(void);
-
-extern void add_exit_handler(void (far* exit_handler)(void));
 
 #define DOS_TIMER_CALLBACK_CAPACITY 6U
 #define DOS_TIMER_USABLE_CALLBACK_COUNT 5U

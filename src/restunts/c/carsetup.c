@@ -3,16 +3,13 @@
 #include "memmgr.h"
 #include "platform.h"
 #include "residue.h"
+#include "state_internal.h"
+#include "menu_internal.h"
+#include "race_resources.h"
 
-extern legacy_s8 car_resource_name[];
-extern legacy_s8 opponent_resource_name[];
-extern legacy_s8 gnam_string[];
-extern legacy_s8 gsna_string[];
 extern legacy_s8 opponent_name_text_id[];
 extern legacy_s8 opponent_path_resource_id[];
 extern legacy_s8 opponent_speed_resource_id[];
-extern legacy_s8 opponent_highscore_name[];
-extern legacy_u8 oppnentSped[];
 
 #define CAR_FILENAME_PREFIX_LENGTH 2U
 #define CAR_ID_LENGTH 4U

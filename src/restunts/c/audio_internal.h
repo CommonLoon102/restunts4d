@@ -170,4 +170,27 @@ legacy_s16 audio_effect_channel_idle(legacy_s16 channel);
 void audio_request_context_fade(legacy_s16 index);
 void audio_fade_out(legacy_s16 delay_ticks);
 
+#pragma pack (push, 1)
+struct FULL_AUDIO_ENGINE_DEFINITION {
+	legacy_u16 sample_count;
+	legacy_u8 reserved_parameters[4];
+	legacy_u8 initialized;
+	legacy_u8 reserved_initialization_byte;
+	const legacy_s8 far* resource_ids[10];
+};
+#pragma pack (pop)
+
+/* The resource-id fields are 16-bit far pointers in the DOS ABI. */
+#if defined(__BORLANDC__)
+typedef char full_audio_engine_definition_must_be_48_bytes[
+	(sizeof(struct FULL_AUDIO_ENGINE_DEFINITION) == 48) ? 1 : -1];
+#endif
+
+extern struct FULL_AUDIO_ENGINE_DEFINITION player_engine_definition;
+extern struct FULL_AUDIO_ENGINE_DEFINITION opponent_engine_definition;
+
+void audio_sequence_timer(void);
+
+void audio_play_car_events(legacy_u8 flags, legacy_s16 channel);
+
 #endif

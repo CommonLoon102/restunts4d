@@ -6,6 +6,7 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape2d_internal.h"
+#include "game_input.h"
 
 #define WINDOW_DEFINITION_TABLE_BYTES 3600U
 #define WINDOW_ALLOCATION_OVERHEAD 18L

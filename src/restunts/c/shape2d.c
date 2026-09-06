@@ -8,8 +8,8 @@
 #include "resource.h"
 #include "shape2d.h"
 #include "shape2d_internal.h"
+#include "ui_text.h"
 
-extern legacy_u8 far* active_font_definition;
 extern legacy_u16 fontdefseg;
 
 #define FONTDEF_LINE_START_X_OFFSET 4U

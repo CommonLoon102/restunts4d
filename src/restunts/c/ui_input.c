@@ -4,6 +4,8 @@
 #include "shape2d.h"
 #include "ui_input.h"
 #include "ui_text.h"
+#include "audio_internal.h"
+#include "game_input.h"
 
 #define SPRITE_BLIT_IMMEDIATE_MODE 65534U
 #define READ_LINE_CLEAR_TEXT 1U
@@ -29,8 +31,6 @@ static legacy_u16 text_edit_cursor_visible;
 static legacy_s8* text_edit_buffer;
 static legacy_u16 text_edit_max_pixels;
 static legacy_u16 text_edit_cursor;
-
-legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 
 legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
 	legacy_u32 timeout)

@@ -1,4 +1,6 @@
 #include "externs.h"
+#include "shape3d_internal.h"
+#include "menu_internal.h"
 
 /* Exact resource identifiers and messages formerly stored in dseg.asm. */
 

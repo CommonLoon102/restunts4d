@@ -7,6 +7,9 @@
 #include "shape2d.h"
 #include "ui_dialog.h"
 #include "ui_text.h"
+#include "timing.h"
+#include "ui_input.h"
+#include "game_input.h"
 
 #define RST_ASC_CHAR_UPPER 1
 #define RST_ASC_CHAR_LOWER 2
@@ -33,26 +36,6 @@
 #define DIALOG_CHOICE_PARAGRAPH_HEIGHT 3
 #define DIALOG_PLACEHOLDER_POSITION_STRIDE 2U
 #define DIALOG_DELAY_TICKS 8UL
-
-extern legacy_s8 missing_disk1_message_id[];
-extern legacy_s8 missing_disk2_message_id[];
-extern legacy_s8 missing_disk3_message_id[];
-extern legacy_s8 missing_disk4_message_id[];
-extern legacy_s8 disk_retry_dialog_id[];
-extern legacy_s8 disk_error_dialog_id[];
-extern legacy_s8 file_save_dialog_id[];
-extern legacy_s8 waiting_message_id[];
-extern legacy_s8 file_load_dialog_id[];
-extern legacy_s8 file_scroll_up_label_id[];
-extern legacy_s8 file_scroll_down_label_id[];
-extern legacy_s8* findfilenames[];
-extern legacy_s8 gnam_string[];
-extern legacy_s8 gsna_string[];
-extern legacy_s8 opponent_highscore_name[];
-extern legacy_s8 highscore_player_name_input[];
-
-legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters,
-	legacy_s16 x, legacy_s16 y, legacy_u32 timeout);
 
 static const legacy_u8 far quiz_question_suffixes[20] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',

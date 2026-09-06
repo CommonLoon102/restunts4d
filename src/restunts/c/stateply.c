@@ -2,6 +2,8 @@
 #include "math.h"
 #include "physics_internal.h"
 #include "residue.h"
+#include "audio_internal.h"
+#include "state_internal.h"
 
 #define PLAYER_PHYSICS_WHEEL_COUNT 4
 #define PLAYER_PHYSICS_FRONT_WHEEL_COUNT 2
@@ -1032,7 +1034,6 @@ case PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_SOUND:
 		{ physics_flow = PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_CRASH; continue; }
 	carstate->car_sound_flags |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
 
-
 case PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_CRASH:
 	if (carstate->car_wheel_vertical_speed[wheel_index] <=
 		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
@@ -1083,7 +1084,6 @@ case PLAYER_FLOW_CHECK_SUSPENSION_UPDATE_REMAINING:
 case PLAYER_FLOW_UPDATE_WHEEL_SUSPENSION:
 	physics_position_to_vector(
 		&carstate->car_wheel_contact_positions[wheel_index], current_wheel_position);
-
 
 	contact_angle_distance_or_deflection = update_wheel_suspension(carstate, wheel_contact_distances[wheel_index], wheel_index);
 	if (car_working_roll != 0)
@@ -1149,7 +1149,6 @@ case PLAYER_FLOW_CHECK_WORLD_X_MAXIMUM:
 	if (car_working_x <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
 		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_X_MINIMUM; continue; }
 
-
 case PLAYER_FLOW_CLAMP_WORLD_X_MAXIMUM:
 	car_working_x = PLAYER_PHYSICS_WORLD_MAX_POSITION;
 	{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM; continue; }
@@ -1158,14 +1157,11 @@ case PLAYER_FLOW_CHECK_WORLD_X_MINIMUM:
 	if (car_working_x >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
 		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM; continue; }
 
-
 case PLAYER_FLOW_CLAMP_WORLD_X_MINIMUM:
 	car_working_x = PLAYER_PHYSICS_WORLD_MIN_POSITION;
 case PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM:
 	if (car_working_z <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
 		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MINIMUM; continue; }
-
-
 
 case PLAYER_FLOW_CLAMP_WORLD_Z_MAXIMUM:
 	car_working_z = PLAYER_PHYSICS_WORLD_MAX_POSITION;
@@ -1174,7 +1170,6 @@ case PLAYER_FLOW_CLAMP_WORLD_Z_MAXIMUM:
 case PLAYER_FLOW_CHECK_WORLD_Z_MINIMUM:
 	if (car_working_z >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
 		{ physics_flow = PLAYER_FLOW_DERIVE_YAW_FROM_WHEELS; continue; }
-
 
 case PLAYER_FLOW_CLAMP_WORLD_Z_MINIMUM:
 	car_working_z = PLAYER_PHYSICS_WORLD_MIN_POSITION;

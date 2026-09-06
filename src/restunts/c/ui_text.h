@@ -21,4 +21,9 @@ void parse_filepath_separators(legacy_s8* destination,
 	const legacy_s8* path);
 legacy_u16 legacy_near_string_length(const legacy_s8* text);
 
+extern legacy_s16 dialog_fnt_colour;
+extern legacy_s16 font_glyph_height;
+
+void font_set_fontdef2(void far* data);
+
 #endif

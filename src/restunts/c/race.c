@@ -12,6 +12,10 @@
 #include "replay_viewer.h"
 #include "shape2d.h"
 #include "ui_dialog.h"
+#include "ui_text.h"
+#include "frame_internal.h"
+#include "shape3d.h"
+#include "physics_internal.h"
 
 #define RACE_SCREEN_WIDTH 320
 #define RACE_SCREEN_HEIGHT 200
@@ -28,9 +32,6 @@
 #define RACE_START_POSITION_DISTANCE (-240)
 #define RACE_START_POSITION_SCALE_SHIFT 6U
 #define RACE_RANDOM_VALUE_SHIFT 3U
-
-legacy_s16 video_backbuffer_copy_required(void);
-void show_insufficient_memory_dialog(void);
 
 void run_game(void) {
 	legacy_s16 opponent_progress_text_position[2];
@@ -144,7 +145,6 @@ void run_game(void) {
 				update_gamestate();
 				continue;
 			}
-
 
 			if (game_replay_mode == REPLAY_MODE_LIVE && race_exit_request == 0 &&
 				state.game_inputmode != GAME_INPUT_MODE_WAITING) {

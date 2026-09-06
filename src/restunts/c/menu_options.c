@@ -5,6 +5,11 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "ui_text.h"
+#include "ui_dialog.h"
+#include "fatal.h"
+#include "game_input.h"
+#include "audio_internal.h"
 
 #define JOYSTICK_BUTTON_MASK 48U
 #define OPTION_MENU_VERSION_TEXT_Y 16

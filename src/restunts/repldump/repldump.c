@@ -4,6 +4,13 @@
 #include <memmgr.h>
 #include <platform.h>
 #include <trackdata_layout.h>
+#include "../c/shape3d_internal.h"
+#include "../c/race_resources.h"
+#include "../c/fatal.h"
+#include "../c/keyboard.h"
+#include "../c/game_input.h"
+#include "../c/shape3d.h"
+#include "../c/replay_record.h"
 
 #define REPLDUMP_OUTPUT_NAME_SIZE 13U
 #define REPLDUMP_OUTPUT_NAME_LAST_INDEX 12U
@@ -250,8 +257,7 @@ typedef FILE* REPLDUMP_OUTPUT;
 #endif
 
 #ifndef RESTUNTS_ORIGINAL
-extern legacy_s16 setup_player_cars_repldump(void);
-extern legacy_s8 far* polyinfoptr;
+
 static legacy_u8 far* serialized_gamestate;
 static const legacy_s8 serialized_state_chunk_name[
 	REPLDUMP_SERIALIZED_CHUNK_NAME_SIZE] = {

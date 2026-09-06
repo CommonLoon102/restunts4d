@@ -7,6 +7,8 @@
 #include "memmgr.h"
 #include "platform.h"
 #include "resource.h"
+#include "timing.h"
+#include "fatal.h"
 
 #define AUDIO_DRIVER_TIMER_RATE 22U
 #define AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD 2
@@ -85,15 +87,6 @@ enum AUDIO_MODULATION_DIRECTION {
 	AUDIO_MODULATION_DIRECTION_INCREASE = 1,
 	AUDIO_MODULATION_DIRECTION_DECREASE = 2
 };
-
-extern legacy_s16 camera_track_height_offset;
-
-void audio_sequence_timer(void);
-void add_exit_handler(void (far* exit_handler)(void));
-void timer_reg_callback(void (far* callback)(void));
-void timer_remove_callback(void (far* callback)(void));
-legacy_u32 timer_set_deadline(legacy_u32 ticks);
-legacy_u32 timer_wait_for_deadline(void);
 
 legacy_u8 audio_music_channel_count;
 legacy_u8 audio_suspended;
@@ -1144,7 +1137,6 @@ void audio_update_driver_contexts(void)
 	}
 	dos_audio_driver_suspend_all(dos_audio_contexts);
 }
-
 
 void audio_suspend(void)
 {

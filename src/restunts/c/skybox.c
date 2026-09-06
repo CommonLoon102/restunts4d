@@ -1,4 +1,6 @@
 #include "frame_internal.h"
+#include "race_resources_internal.h"
+#include "shape2d.h"
 
 #define SKYBOX_IMAGE_COUNT 4
 #define SKYBOX_IMAGE_WIDTH 320U

@@ -2,10 +2,9 @@
 
 #include "memmgr.h"
 #include "platform.h"
+#include "../../c/fatal.h"
 
 typedef void (far* exit_handler_type)(void);
-
-extern void add_exit_handler(exit_handler_type exit_handler);
 
 #define DOS_MEMORY_INTERRUPT 33
 #define DOS_MEMORY_GET_PSP_FUNCTION 98

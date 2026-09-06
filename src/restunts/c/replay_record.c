@@ -6,6 +6,7 @@
 #include "platform.h"
 #include "replay_record.h"
 #include "timing.h"
+#include "physics_internal.h"
 
 #define INPUT_STEERING_HISTORY_SIZE 64U
 #define INPUT_STEERING_HISTORY_MASK 63U

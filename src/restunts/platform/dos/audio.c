@@ -1,6 +1,9 @@
 #include <dos.h>
 #include "../../c/audio.h"
 #include "../../c/platform.h"
+#include "../../c/timing.h"
+#include "../../c/audio_internal.h"
+#include "../../c/memmgr.h"
 
 typedef void (far* driver_set_volume_type)(legacy_s16 driver_channel,
 	legacy_u8* context, legacy_u16 volume);
@@ -25,10 +28,6 @@ typedef void (far* driver_load_bank_type)(void far* bank);
 typedef void (far* driver_activate_context_type)(legacy_s16 driver_channel,
 	legacy_u8* driver_context, legacy_u8* timer, legacy_s16 pitch,
 	legacy_u16 parameter, void far* resource);
-
-extern void audio_sequence_timer(void);
-extern void timer_remove_callback(void (far* callback)(void));
-extern void mmgr_release(void far* memory);
 
 #define DOS_AUDIO_DRIVER_INITIALIZE_OFFSET 0U
 #define DOS_AUDIO_DRIVER_SHUTDOWN_OFFSET 3U

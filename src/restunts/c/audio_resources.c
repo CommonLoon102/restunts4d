@@ -8,9 +8,7 @@
 #include "memmgr.h"
 #include "platform.h"
 #include "resource.h"
-
-void audio_sequence_timer(void);
-void timer_reg_callback(void (far* callback)(void));
+#include "timing.h"
 
 #define AUDIO_DRIVER_PREFIX_LENGTH 14U
 #define AUDIO_PADDED_ID_LENGTH (AUDIO_RESOURCE_ID_LENGTH + 1U)

@@ -6,6 +6,13 @@
 #include "replay.h"
 #include "resource.h"
 #include "shape2d.h"
+#include "ui_text.h"
+#include "shape2d_internal.h"
+#include "state_internal.h"
+#include "timing.h"
+#include "ui_input.h"
+#include "game_input.h"
+#include "ui_dialog.h"
 
 #define HIGHSCORE_READ_RETRY_CANCEL_RESULT 2
 
@@ -87,17 +94,6 @@ enum END_SCREEN_OUTCOME {
 static legacy_u8 ranking_highlight;
 legacy_s16 ranking_entry_order[HIGHSCORE_ENTRY_COUNT];
 
-extern legacy_s8 gnam_string[];
-extern legacy_s8 gsna_string[];
-extern legacy_s8 opponent_highscore_name[];
-extern legacy_s8 highscore_player_name_input[];
-
-void format_integer(legacy_s8* destination, legacy_s16 value,
-	legacy_s16 zero_pad, legacy_s16 width);
-void format_frame_as_string(legacy_s8* destination, legacy_s16 frame_count,
-	legacy_s16 include_hundredths);
-legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
-	legacy_u32 timeout);
 legacy_s16 get_super_random(void);
 
 struct RECTANGLE* hiscore_draw_text(legacy_s8* text, legacy_s16 x, legacy_s16 y, legacy_s16 color,

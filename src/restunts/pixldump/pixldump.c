@@ -7,6 +7,11 @@
 #include <trackdata_layout.h>
 
 #include "md5.h"
+#include "../c/fatal.h"
+#include "../c/race_resources.h"
+#include "../c/shape3d.h"
+#include "../c/keyboard.h"
+#include "../c/game_input.h"
 
 #define PIXLDUMP_FRAMEBUFFER_SIZE 64000U
 #define PIXLDUMP_SAMPLE_INTERVAL 5U
@@ -414,11 +419,10 @@ static void pixldump_render_frame(void)
 }
 
 #ifndef RESTUNTS_ORIGINAL
-extern void call_exitlist(void);
+
 #else
 extern void kb_shift_checking1(void);
 #endif
-extern legacy_s16 setup_player_cars(void);
 
 static void pixldump_update_gamestate(void)
 {

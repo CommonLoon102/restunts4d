@@ -332,9 +332,6 @@ void update_legacy_grip_stack_words(
 		(legacy_s16)(speed_squared >> LEGACY_LONG_HIGH_WORD_SHIFT);
 }
 
-void update_car_speed(legacy_s8, legacy_s16, struct CARSTATE* carstate, struct SIMD* simd);
-void update_player_state(struct CARSTATE* playerstate, struct SIMD* playersimd, struct CARSTATE* oppstate, struct SIMD* oppsimd, legacy_s16);
-
 void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s16 grip_behavior)
 {

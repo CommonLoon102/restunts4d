@@ -37,9 +37,6 @@ extern struct POINT2D start_finish_pole_bounds[2];
 extern struct POINT2D breakable_object_bounds[2];
 extern struct POINT2D track_auxiliary_obstacle_bounds[2];
 extern legacy_s16 wheel_gravity_steps[4];
-extern legacy_s16 audio_opponent_engine_channel;
-extern legacy_s16 audio_player_engine_channel;
-extern struct TRACKOBJECT trkObjectList[215];
 extern struct VECTOR scenery_collision_points[];
 extern struct VECTOR elevated_road_collision_points[];
 extern struct VECTOR corkscrew_lr_collision_points[];
@@ -47,9 +44,8 @@ extern struct VECTOR corkscrew_up_collision_points[];
 extern struct VECTOR corkscrew_down_collision_points[];
 extern struct VECTOR slalom_collision_points[];
 
-extern void update_crash_state(legacy_s16, legacy_s16);
-extern void build_track_object(struct VECTOR*, struct VECTOR*);
-extern void audio_play_car_events(legacy_u8, legacy_s16);
+void update_crash_state(legacy_s16, legacy_s16);
+void build_track_object(struct VECTOR*, struct VECTOR*);
 
 legacy_s16 scale_position_delta(legacy_s32 current,
 	legacy_s32 previous, legacy_s16 factor, legacy_s16 divisor);
@@ -70,5 +66,7 @@ legacy_s16 car_collision_boxes_overlap(
 	struct VECTOR* first_world_coordinates,
 	struct POINT2D* second_collision_points,
 	struct VECTOR* second_world_coordinates);
+
+extern struct TRACK_WALL far* wallptr;
 
 #endif

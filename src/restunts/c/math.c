@@ -1,9 +1,10 @@
 #include "externs.h"
 #include "legacy.h"
 #include "math.h"
-
-void heapsort_by_order(legacy_s16 count, legacy_s16* values,
-	legacy_s16* order);
+#include "physics_internal.h"
+#include "shape3d_internal.h"
+#include "math_internal.h"
+#include "fatal.h"
 
 legacy_s16 sign_word(legacy_s16 value)
 {
@@ -24,8 +25,6 @@ legacy_s32 absolute_long(legacy_s32 value)
 		bits = (legacy_u32)(0UL - bits);
 	return LEGACY_S32_FROM_BITS(bits);
 }
-
-extern legacy_s32 direction_sector_sine, direction_sector_cosine;
 
 #define VECTOR_DIRECTION_NEGATIVE_Y 30
 #define VECTOR_DIRECTION_POSITIVE_Y 31
@@ -193,7 +192,6 @@ legacy_s16 polarRadius3D(struct VECTOR* vec) {
 }
 
 #ifndef RESTUNTS_HEADLESS
-extern struct RECTANGLE select_rect_rc;
 
 legacy_u16 rect_compare_point(struct POINT2D* pt) {
 	legacy_s8 flag;
@@ -320,7 +318,6 @@ void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat) {
 		outmat->m._33 = inmat->m._33;
 	}
 }
-
 
 void mat_rot_x(struct MATRIX* outmat, legacy_s16 angle) {
 	legacy_s16 c, s;
@@ -669,7 +666,6 @@ void rectlist_add_rect(legacy_s8* rectangle_count, struct RECTANGLE* rectangles,
 	(*rectangle_count)++;
 }
 
-
 void rectlist_add_rects(legacy_s8 source_count, legacy_s8* source_flags,
 	struct RECTANGLE* first_rectangles, struct RECTANGLE* second_rectangles,
 	struct RECTANGLE* clip_rectangle, legacy_s8* output_count, struct RECTANGLE* output_rectangles)
@@ -812,8 +808,6 @@ legacy_s16 vector_direction_sector(struct VECTOR* vec) {
 // which: 9 and 10 are the operands of `mul`, so they stay unsigned there,
 // while 5 and 8 are added with `add ax, .. / jo`, whose overflow test reads
 // both operands as signed words.
-extern legacy_u16 projection_center_x, projection_center_y, projection_focal_length_x, projection_focal_length_y;
-
 
 // Each `add ax, projectiondataN` in the original is followed by `jo`, and on
 // overflow the sum is replaced by the rail it ran past: 32000 when the true
@@ -962,13 +956,6 @@ legacy_s16 multiply_and_scale(legacy_s16 left, legacy_s16 right)
 		LEGACY_U16_WRAP_ADD(high_word, round_up));
 }
 
-extern legacy_s16 planindex;
-extern struct PLANE far* planptr;
-extern struct PLANE far* current_planptr;
-extern legacy_s16 elem_xCenter;
-extern legacy_s16 elem_zCenter;
-extern legacy_s16 terrainHeight;
-
 legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z, struct VECTOR far* normal) {
 	legacy_s32 x_product;
 	legacy_s32 y_product;
@@ -1012,18 +999,9 @@ legacy_s16 plane_signed_distance(legacy_s16 plane_index, legacy_s16 x, legacy_s1
 	return vec_normalInnerProduct(relative_position.x, relative_position.y, relative_position.z, &plane->plane_normal);
 }
 
-extern legacy_s16 planindex_copy;
-extern legacy_s16 car_initial_roll;
-extern legacy_s16 car_initial_yaw;
-extern legacy_s16 car_initial_pitch;
-extern struct MATRIX car_to_world_rotation;
 extern struct MATRIX wheel_heading_rotation;
-extern struct VECTOR wheel_forward_travel;
-extern legacy_s16 wheel_heading_offset;
-extern struct VECTOR wheel_world_travel;
 extern legacy_s16 cached_plane_heading;
 extern struct MATRIX plane_heading_rotation;
-extern legacy_s16 wheel_heading_offset;
 extern legacy_s16 cached_wheel_heading;
 
 void transform_wheel_travel_to_world(void) {

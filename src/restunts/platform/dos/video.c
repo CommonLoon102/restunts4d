@@ -1,8 +1,7 @@
 #define int86 _int86
 #include <dos.h>
 #include "../../c/legacy.h"
-
-extern void add_exit_handler(void (far* exit_handler)(void));
+#include "../../c/fatal.h"
 
 #define DOS_VIDEO_BIOS_INTERRUPT 16
 #define DOS_VIDEO_BIOS_SET_DAC_BLOCK_FUNCTION 4114

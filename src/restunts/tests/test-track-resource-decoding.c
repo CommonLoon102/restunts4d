@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "../c/externs.h"
+#include "../c/physics_internal.h"
 
 #define PLANE_RECORD_SIZE 34U
 #define WALL_RECORD_SIZE 6U

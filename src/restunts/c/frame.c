@@ -1,6 +1,14 @@
 #include "frame_internal.h"
 #include "game_input.h"
 #include "trackdata_layout.h"
+#include "physics_internal.h"
+#include "shape3d_internal.h"
+#include "ui_text.h"
+#include "race_resources_internal.h"
+#include "shape2d_internal.h"
+#include "state_internal.h"
+#include "math_internal.h"
+#include "shape3d.h"
 
 #define TRACK_OBJECT_COUNT 215U
 #define TRACK_GRID_LAST_COORDINATE 29
@@ -981,7 +989,6 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 		}
 	}
 //; -----------------------------------------------------------------------------
-
 
 	overlay_needs_depth_sort = 0;
 	tile_angle_or_frame_index = 0;

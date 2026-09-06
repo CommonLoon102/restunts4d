@@ -1,9 +1,8 @@
 #include "menu_internal.h"
 #include "ui_text.h"
+#include "audio_internal.h"
 
 legacy_u8 far* active_font_definition;
-
-legacy_u16 audioresource_get_word(const legacy_u8 far* source);
 
 #define UI_SCREEN_WIDTH 320
 #define FONT_FIXED_GLYPH_WIDTH_OFFSET 16U

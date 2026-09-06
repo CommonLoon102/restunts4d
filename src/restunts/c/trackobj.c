@@ -2,6 +2,8 @@
 #include "legacy.h"
 #include "math.h"
 #include "trackdata_layout.h"
+#include "physics_internal.h"
+#include "state_internal.h"
 
 #define TRACK_ARC_CENTER_OFFSET 1024
 #define TRACK_ARC_CENTER_RADIUS 1536
@@ -314,25 +316,7 @@ enum PLANE_ORIENTATION_OFFSET {
 #define GRASS_HEIGHT_VARIATION_MASK 1U
 #define NON_GRASS_HEIGHT_OFFSET 2
 
-extern legacy_s16 planindex;
-extern legacy_s16 wallindex;
-extern legacy_s16 wallHeight;
-extern legacy_s16 elRdWallRelated;
 extern legacy_u8 corkFlag;
-extern legacy_u8 current_surf_type;
-extern legacy_u8 track_wall_collision_enabled;
-extern legacy_s16 terrainHeight;
-extern legacy_s16 elem_xCenter;
-extern legacy_s16 elem_zCenter;
-extern legacy_s16 wallOrientation;
-extern legacy_s16 wallStartX;
-extern legacy_s16 wallStartZ;
-extern struct PLANE far* planptr;
-extern struct PLANE far* current_planptr;
-extern struct TRACK_WALL far* wallptr;
-extern struct TRACKOBJECT trkObjectList[];
-extern legacy_u8 subst_hillroad_track(legacy_u8 terrain,
-	legacy_u8 track);
 
 extern legacy_s16 loopSurface_ZBounds0[];
 extern legacy_s16 loopSurface_ZBounds1[];

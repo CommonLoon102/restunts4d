@@ -1,12 +1,7 @@
 #include "fileio.h"
 #include "memmgr.h"
 #include "shape3d.h"
-
-extern legacy_s8 far* game1ptr;
-extern legacy_s8 far* game2ptr;
-extern legacy_s8 far* curshapeptr;
-extern struct SHAPE3D game3dshapes[130];
-extern legacy_s8 game_shape_names[];
+#include "shape3d_internal.h"
 
 #define SHAPE3D_REQUIRED_ARENA_BYTES 65000UL
 #define SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS 4062U

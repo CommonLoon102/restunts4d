@@ -31,7 +31,6 @@ extern legacy_u8 replay_legacy_play_active;
 extern legacy_u8 replay_camera_mode_cache[2];
 extern legacy_s16 replay_recorded_position_cache[2];
 extern legacy_u8 replay_control_active_cache[18];
-extern struct RECTANGLE* alternate_frame_rects;
 extern legacy_s16 replay_timeline_background_color;
 extern legacy_s16 replay_marker_color;
 extern legacy_s8 replay_pause_menu_id[];

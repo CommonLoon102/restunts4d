@@ -1,10 +1,11 @@
 #include "externs.h"
 #include "shape3d.h"
+#include "shape3d_internal.h"
+#include "state_internal.h"
 
 /* The original table points into four adjacent shape banks.  The full C port
  * stores those banks contiguously in game3dshapes; headless does not render. */
 #if defined(RESTUNTS_FULL)
-extern struct SHAPE3D game3dshapes[130];
 #define TRACK_SHAPE(index) (&game3dshapes[(index)])
 #else
 #define TRACK_SHAPE(index) 0

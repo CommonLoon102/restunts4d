@@ -321,15 +321,8 @@ extern void init_row_tables(void);
 extern void init_trackdata(void);
 extern void reset_race_loop_state(void);
 extern void init_video_geometry_flags(void);
-extern void audio_carstate(void);
-extern void setup_car_shapes(legacy_s16);
+
 extern void update_frame(legacy_s8, struct RECTANGLE* rc);
-extern void loop_game(legacy_s16, legacy_s16, legacy_s16);
-extern void set_frame_callback(void);
-extern void remove_frame_callback(void);
-extern void mouse_minmax_position(legacy_s16);
-extern legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key);
-extern void update_crash_state(legacy_s16 state, legacy_s16 multiplayer);
 
 extern legacy_s16 mouse_butstate;
 extern legacy_s16 mouse_xpos;
@@ -434,8 +427,6 @@ extern const legacy_s8 file_read_error_format[];
 extern const legacy_s8 file_write_error_format[];
 extern const legacy_s8 file_size_error_format[];
 extern const legacy_s8 invalid_pack_type_error_format[];
-extern const legacy_s8 missing_shape_error_format[];
-extern const legacy_s8 missing_sound_error_format[];
 extern legacy_s8 audiodriverstring[];
 
 extern legacy_u16 gState_frame;
@@ -466,32 +457,27 @@ extern void update_gamestate(void);
 extern void init_rect_arrays(void);
 extern void frame_present(struct RECTANGLE* rect);
 extern void font_set_fontdef(void);
-extern void init_polyinfo(void);
+
 extern legacy_s16 run_intro_looped(void);
 extern legacy_s8 setup_intro(void);
 extern legacy_s8 load_intro_resources(void);
-extern legacy_u16 show_dialog(legacy_s16 dialog_type, legacy_s16 save_background, void far* text_resource, legacy_u16 x_argument, legacy_u16 y_argument, legacy_s16 border_color, legacy_s16* disabled_choices, legacy_s16 initial_choice);
+
 extern legacy_s8 run_menu(void);
 extern legacy_s8 setup_track(void);
 extern void run_tracks_menu(legacy_s16 reload_track);
 extern legacy_s16 track_setup(void);
 extern void run_opponent_menu(void);
-extern void show_waiting(void);
+
 extern void run_car_menu(legacy_s8* carid, legacy_s8* material, legacy_s8* transmission,
 	legacy_u16 opponent_type);
-extern void run_game(void);
+
 extern legacy_u16 end_hiscore(void);
 extern legacy_u16 run_option_menu(void);
-extern void security_check(legacy_s16 question_index);
-
-extern void ensure_file_exists(legacy_s16 file_index);
 
 extern void far* load_song_file(const legacy_s8* filename);
 extern void far* load_voice_file(const legacy_s8* filename);
 extern void far* load_sfx_file(const legacy_s8* filename);
-extern void far* file_load_shape2d_nofatal(const legacy_s8* shapename);
-extern void far* file_load_shape2d_res_nofatal(const legacy_s8* resname);
-extern void far* file_load_shape2d_nofatal2(const legacy_s8* shapename);
+
 extern void far* init_audio_resources(void far* songptr, void far* voiceptr, const legacy_s8* name);
 extern void load_audio_finalize(void far* audiores);
 extern legacy_s16 audio_load_driver(legacy_s8* driver, legacy_s16 unused_driver_segment, legacy_s16 mode);
@@ -504,10 +490,6 @@ extern void audio_play_crash_and_stop_engine(legacy_s16 index);
 extern void audio_add_driver_timer(void);
 extern void audio_remove_driver_timer(void);
 
-extern void check_input(void);
-extern legacy_s16 input_do_checking(legacy_s16 frame_delta);
-extern void kb_exit_handler(void);
-extern void kb_reg_callback(legacy_s16 code, void (far* callback)(void));
 extern void show_graphic_levels_menu(void);
 extern void calibrate_joystick_driving(void);
 extern void select_keyboard_driving(void);
@@ -516,30 +498,19 @@ extern void toggle_music_with_dialog(void);
 extern void show_pause_dialog(void);
 extern void show_exit_to_dos_dialog(void);
 extern void toggle_effects_with_dialog(void);
-extern legacy_s16 get_kb_or_joy_flags(void);
 
 extern void mouse_draw_opaque(void);
 extern void mouse_draw_transparent(void);
-extern void mouse_draw_opaque_check(void);
-extern void mouse_draw_transparent_check(void);
 
 extern void video_set_mode4(void);
 extern void video_set_mode7(void);
 extern void video_set_mode_13h(void);
 
-extern void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* oppcarid);
-
-extern void load_palandcursor(void);
 extern void sprite_set_target_clip_bounds(legacy_u16 left, legacy_u16 right, legacy_u16 top, legacy_u16 bottom);
-extern void sprite_clear_target(legacy_u8);
+
 struct SPRITE;
-extern legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode);
 
 extern void timer_setup_interrupt(void);
-extern legacy_u32 timer_get_delta_alt(void);
-
-extern void fatal_error(const legacy_s8*, ...);
-extern legacy_s16 show_disk_error_dialog(void);
 
 extern void* _memcpy(void*, const void*, legacy_u16);
 extern legacy_s8* _strcpy(legacy_s8* dest, const legacy_s8* src);

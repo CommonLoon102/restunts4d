@@ -13,6 +13,10 @@
 #include "ui_dialog.h"
 #include "ui_input.h"
 #include "ui_text.h"
+#include "frame_internal.h"
+#include "race_resources_internal.h"
+#include "audio_internal.h"
+#include "physics_internal.h"
 
 #define REPLAY_PLAYER_COUNT 2U
 #define REPLAY_CONTROL_COUNT 9U
@@ -104,11 +108,6 @@ enum REPLAY_SAVE_STATUS {
 	REPLAY_SAVE_RETRY = 0,
 	REPLAY_SAVE_READY = 1
 };
-
-extern void far* fontledresptr;
-extern void far* sdgameresptr;
-extern legacy_s16 camera_track_height_offset;
-
 
 static void replay_controls_select(legacy_u8 selection)
 {

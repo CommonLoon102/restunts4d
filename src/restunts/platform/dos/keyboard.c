@@ -1,23 +1,20 @@
 #include <dos.h>
 #include "keyboard.h"
+#include "../../c/platform.h"
+#include "../../c/fatal.h"
+#include "../../c/game_input.h"
+#include "dos_interrupts.h"
 
 // need these since we are referncing external symbols without an underscore
 #define getvect _getvect
 #define setvect _setvect
 #define int86 _int86
-extern void _CType _setvect( legacy_s16 __interruptno, void interrupt( far *__isr )( ) );
-extern void interrupt( far * _CType _getvect( legacy_s16 __interruptno ))( );
 legacy_s16 _Cdecl _int86( legacy_s16 __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs );
 
 typedef void interrupt (far* voidinterruptfunctype)();
-typedef void (far* voidfunctype)();
 
 static voidinterruptfunctype old_kb_int9_handler;
 static voidinterruptfunctype old_kb_int16_handler;
-
-extern void add_exit_handler(voidfunctype exitfunc);
-extern legacy_s16 kb_parse_key(legacy_s16 key);
-extern legacy_s16 dos_data_stack_segments_match(void);
 
 #define DOS_KB_SCANCODE_COUNT 90
 #define DOS_KB_PRIMARY_KEYMAP_SIZE 91

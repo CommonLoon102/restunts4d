@@ -1,4 +1,5 @@
 #include "../../c/legacy.h"
+#include "../../c/platform.h"
 
 #define DOS_RUNTIME_INTERRUPT 33
 #define DOS_RUNTIME_WRITE_FUNCTION 64

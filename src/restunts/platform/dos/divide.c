@@ -1,14 +1,12 @@
 #include <dos.h>
 
 #include "platform.h"
+#include "dos_interrupts.h"
 
 typedef void interrupt (far* interrupt_handler_type)();
 
 #define DOS_DIVIDE_INSTRUCTION_SIZE 2U
 
-extern void _CType _setvect(legacy_s16 interrupt_number,
-	interrupt_handler_type handler);
-extern interrupt_handler_type _CType _getvect(legacy_s16 interrupt_number);
 extern legacy_u16 legacy_divide_fault_segment;
 extern legacy_u16 legacy_divide_fault_offset;
 

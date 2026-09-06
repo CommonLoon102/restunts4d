@@ -5,8 +5,7 @@
 #include "legacy.h"
 #include "math.h"
 #include "platform.h"
-
-extern legacy_s16 camera_track_height_offset;
+#include "frame_internal.h"
 
 #define AUDIO_TRACK_CAMERA_VERTICAL_OFFSET 90
 #define AUDIO_CAR_COUNT_WITH_OPPONENT 2
@@ -18,7 +17,6 @@ void audio_stop_engine(legacy_s16 channel);
 void audio_play_paved_skid(legacy_s16 channel);
 void audio_play_offroad_skid(legacy_s16 channel);
 void audio_stop_skid_sound(legacy_s16 channel);
-void audio_play_car_events(legacy_u8 flags, legacy_s16 channel);
 
 static legacy_s16 audio_carstate_position(legacy_s32 position)
 {

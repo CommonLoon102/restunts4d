@@ -4,6 +4,14 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "audio_internal.h"
+#include "shape3d_internal.h"
+#include "math_internal.h"
+#include "frame_internal.h"
+#include "ui_text.h"
+#include "race_resources_internal.h"
+#include "state_internal.h"
+#include "menu_internal.h"
 
 #define CUSTOM_CAMERA_INITIAL_DISTANCE 210
 #define CUSTOM_CAMERA_INITIAL_ELEVATION_ANGLE 80
@@ -542,22 +550,6 @@ void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16, legacy_u16,
 	legacy_u16);
 void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16,
 	legacy_u16);
-
-#pragma pack (push, 1)
-struct FULL_AUDIO_ENGINE_DEFINITION {
-	legacy_u16 sample_count;
-	legacy_u8 reserved_parameters[4];
-	legacy_u8 initialized;
-	legacy_u8 reserved_initialization_byte;
-	const legacy_s8 far* resource_ids[10];
-};
-#pragma pack (pop)
-
-/* The resource-id fields are 16-bit far pointers in the DOS ABI. */
-#if defined(__BORLANDC__)
-typedef char full_audio_engine_definition_must_be_48_bytes[
-	(sizeof(struct FULL_AUDIO_ENGINE_DEFINITION) == 48) ? 1 : -1];
-#endif
 
 struct FULL_AUDIO_ENGINE_DEFINITION player_engine_definition = {
 	FULL_AUDIO_ENGINE_SAMPLE_COUNT,

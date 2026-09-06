@@ -3,6 +3,9 @@
 #include "fileio.h"
 #include "memmgr.h"
 #include "platform.h"
+#include "shape2d.h"
+#include "fatal.h"
+#include "ui_dialog.h"
 
 #ifdef RESTUNTS_HEADLESS
 static const legacy_s8 headless_file_error[] = "File error: %s";
@@ -920,7 +923,6 @@ static void far* file_load_suffixed_resource(legacy_s16 resource_type,
 	strcat(name, suffix);
 	return file_load_resource(resource_type, name);
 }
-
 
 void far* file_load_resfile(const legacy_s8* filename) {
 	legacy_s8 name[RESOURCE_NAME_BUFFER_SIZE];

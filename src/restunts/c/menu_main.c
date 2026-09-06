@@ -5,6 +5,9 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "shape2d_internal.h"
+#include "ui_input.h"
+#include "ui_dialog.h"
 
 #define MAIN_MENU_BUTTON_COUNT 5U
 #define MAIN_MENU_NO_SELECTION 255U

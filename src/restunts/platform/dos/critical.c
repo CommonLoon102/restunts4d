@@ -1,17 +1,13 @@
 #include <dos.h>
 
 #include "../../c/legacy.h"
+#include "../../c/fatal.h"
+#include "dos_interrupts.h"
 
 #define DOS_CRITICAL_ERROR_INTERRUPT_VECTOR 36
 
 typedef void interrupt (far* interrupt_handler_type)();
 typedef legacy_s16 (far* critical_error_callback_type)(void);
-typedef void (far* exit_handler_type)(void);
-
-extern void add_exit_handler(exit_handler_type exit_handler);
-extern void _CType _setvect(legacy_s16 interrupt_number,
-	interrupt_handler_type handler);
-extern interrupt_handler_type _CType _getvect(legacy_s16 interrupt_number);
 
 static interrupt_handler_type previous_critical_error_handler;
 static critical_error_callback_type critical_error_callback;

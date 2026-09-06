@@ -34,4 +34,6 @@ void security_check(legacy_s16 question_index);
 void sprite_xor_rect_outline(legacy_s16 left, legacy_s16 top, legacy_s16 right,
 	legacy_s16 bottom, legacy_s16 color);
 
+void show_insufficient_memory_dialog(void);
+
 #endif

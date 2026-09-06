@@ -5,6 +5,12 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "ui_text.h"
+#include "shape2d_internal.h"
+#include "race_resources.h"
+#include "ui_dialog.h"
+#include "game_input.h"
+#include "ui_input.h"
 
 #define TRACK_EDITOR_RESOURCE_FILE_INDEX 3
 #define TRACK_MENU_BUTTON_COUNT 3

@@ -1,4 +1,8 @@
 #include "externs.h"
+#include "physics_internal.h"
+#include "state_internal.h"
+#include "resource.h"
+#include "menu_internal.h"
 
 /* Mutable engine state formerly allocated by dseg.asm. */
 struct GAMEINFO gameconfig;

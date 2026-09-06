@@ -1,7 +1,9 @@
 #ifndef RESTUNTS_PLATFORM_H
 #define RESTUNTS_PLATFORM_H
 
+#ifndef RESTUNTS_LEGACY_H
 #include "legacy.h"
+#endif
 
 struct AUDIO_CONTEXT;
 

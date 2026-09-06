@@ -2,6 +2,9 @@
 #include "legacy.h"
 #include "math.h"
 #include "replay.h"
+#include "audio_internal.h"
+#include "state_internal.h"
+#include "physics_internal.h"
 
 #define CAR_CRASH_PARTICLE_KIND_COUNT 2
 #define CAR_CRASH_PARTICLE_LIMIT 18
@@ -35,20 +38,7 @@ enum CRASH_CAR_MOTION_POLICY {
 #define CRASH_EXIT_TIMING_VALUE 1
 
 #ifndef RESTUNTS_HEADLESS
-extern legacy_s32 gState_travDist;
-extern legacy_s16 gState_total_finish_time;
-extern legacy_s16 gState_opponent_finish_time;
-extern legacy_s16 gState_pEndFrame;
-extern legacy_s16 gState_oEndFrame;
-extern legacy_s16 gState_penalty;
-extern legacy_s16 gState_impactSpeed;
-extern legacy_s16 gState_topSpeed;
-extern legacy_s16 gState_jumpCount;
 #endif
-
-extern legacy_s16 audio_player_engine_channel;
-extern legacy_s8 audio_car_state_ready;
-extern legacy_s16 audio_opponent_engine_channel;
 
 #ifndef RESTUNTS_HEADLESS
 static void stop_car_engine_audio(legacy_s16 player_flag) {

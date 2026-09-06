@@ -4,6 +4,7 @@
 #include "menu_internal.h"
 #include "platform.h"
 #include "shape2d.h"
+#include "game_input.h"
 
 #define DASHBOARD_STEERING_SCALE_SHIFT 3U
 #define DASHBOARD_VIEWPORT_WIDTH 320

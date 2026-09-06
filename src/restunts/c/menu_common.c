@@ -5,6 +5,8 @@
 #include "platform.h"
 #include "shape2d.h"
 #include "shape3d.h"
+#include "timing.h"
+#include "game_input.h"
 
 #define MENU_ANIMATION_PERIOD 60
 #define MENU_ANIMATION_SECOND_STATE_START 30
