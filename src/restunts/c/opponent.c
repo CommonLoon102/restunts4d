@@ -394,7 +394,7 @@ void opponent_op(void)
 		}
 		steering_target = -OPPONENT_STEERING_TARGET_LIMIT;
 	}
-	if (state.opponentstate.car_sumSurfFrontWheels == 0)
+	if (state.opponentstate.car_sumSurfFrontWheels == CAR_WHEEL_CONTACT_NONE)
 		steering_target = 0;
 	steering_delta = LEGACY_S16_WRAP_SUB(steering_target,
 		state.opponentstate.car_steeringAngle);
@@ -417,7 +417,7 @@ void opponent_op(void)
 	}
 
 	input = INPUT_NONE;
-	if (state.opponentstate.car_sumSurfRearWheels != 0) {
+	if (state.opponentstate.car_sumSurfRearWheels != CAR_WHEEL_CONTACT_NONE) {
 		if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 			input = INPUT_BRAKE_FLAG;
 		} else if (state.opponentstate.car_36MwhlAngle != 0) {

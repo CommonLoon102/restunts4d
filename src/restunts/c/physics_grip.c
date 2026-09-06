@@ -239,7 +239,7 @@ void update_legacy_grip_stack_words(
 	/* The original player_op reaches update_grip with SI == 80. */
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] =
 		LEGACY_GRIP_STACK_SI_VALUE;
-	if (carstate->car_sumSurfAllWheels == 0)
+	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE)
 		return;
 
 	/*
@@ -327,7 +327,7 @@ void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
 	legacy_s32 numerator;
 	legacy_s32 denominator;
 
-	if (carstate->car_sumSurfAllWheels == 0) {
+	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
 		carstate->car_40MfrontWhlAngle = 0;
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		return;

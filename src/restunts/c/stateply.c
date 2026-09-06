@@ -305,7 +305,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	 * While the car has surface contact, offset the first two wheel-plane
 	 * angles by one quarter of the front-wheel angle.
 	 */
-	if (arg_pState->car_sumSurfAllWheels != 0) {
+	if (arg_pState->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE) {
 		pState_f40_sar2 = LEGACY_S16_SAR2(
 			arg_pState->car_40MfrontWhlAngle);
 	} else {
@@ -386,7 +386,7 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 		}
 		*/
 		var_F0 = 0;
-		if (state.opponentstate.car_sumSurfAllWheels != 0 &&
+		if (state.opponentstate.car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE &&
 			state.opponentstate.car_speed2 <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
 			vec_1C6.x = 0;
 			vec_1C6.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
@@ -491,7 +491,8 @@ void update_player_state(struct CARSTATE* arg_pState, struct SIMD* arg_pSimd,
 	vec_1C6.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
 	vec_1C6.z = 0;
 	mat_mul_vector(&vec_1C6, &mat_unk, &vec_FC);
-	if (arg_pState->car_sumSurfAllWheels == 0 || vec_FC.y >= 0) {
+	if (arg_pState->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE ||
+		vec_FC.y >= 0) {
 		var_F0 = 0;
 	} else if (arg_pState->car_speed2 <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
 		var_F0 = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
@@ -1386,7 +1387,7 @@ case PLAYER_FLOW_loc_16428:
 		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	if (var_11C != 0)
 		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
-	if (arg_pState->car_sumSurfAllWheels == 0)
+	if (arg_pState->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE)
 		{ physics_flow = PLAYER_FLOW_loc_1644C; continue; }
 	state.game_jumpCount = LEGACY_S16_WRAP_ADD(state.game_jumpCount, 1);
 
