@@ -13,6 +13,9 @@
 #define MAIN_MENU_OPTIONS 4U
 #define MAIN_MENU_BUTTON_COUNT 5U
 #define MAIN_MENU_NO_SELECTION 255U
+#define MAIN_MENU_MOUSE_HIT_NONE (-1)
+#define MAIN_MENU_IDLE_NOT_EXPIRED 0
+#define MAIN_MENU_KEY_NONE 0U
 #define MAIN_MENU_INITIAL_BLIT_MODE 255U
 #define MAIN_MENU_REFRESH_BLIT_MODE 254U
 #define MAIN_MENU_WAIT_TICKS 180
@@ -70,16 +73,16 @@ legacy_s8 run_menu(void)
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
 		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT,
 			menu_buttons);
-		if (hit != -1)
+		if (hit != MAIN_MENU_MOUSE_HIT_NONE)
 			selected = (legacy_u8)hit;
 
 		menu_update_idle_counter(elapsed, MAIN_MENU_IDLE_LIMIT_TICKS);
-		if (idle_expired != 0) {
+		if (idle_expired != MAIN_MENU_IDLE_NOT_EXPIRED) {
 			selected = MAIN_MENU_DRIVE;
 			key = KEY_ENTER;
 		}
 
-		if (key == 0)
+		if (key == MAIN_MENU_KEY_NONE)
 			continue;
 		if (key == KEY_ENTER || key == KEY_SPACE)
 			break;
