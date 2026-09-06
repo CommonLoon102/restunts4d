@@ -1,5 +1,10 @@
 #include "externs.h"
 
+#define SIMD_BYTE_SIZE 1U
+#define SIMD_ARRAY_INDEX_FIRST 0U
+#define SIMD_READER_INITIAL_OFFSET 0U
+#define SIMD_RUNTIME_TABLE_NONE 0
+
 struct SIMD_READER {
 	const legacy_u8 far* source;
 	legacy_u16 offset;
@@ -10,7 +15,7 @@ static legacy_u8 simd_read_u8(struct SIMD_READER* reader)
 	legacy_u8 value;
 
 	value = reader->source[reader->offset];
-	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, 1U);
+	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, SIMD_BYTE_SIZE);
 	return value;
 }
 
@@ -60,7 +65,7 @@ static void simd_read_s8_array(struct SIMD_READER* reader,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = SIMD_ARRAY_INDEX_FIRST; index < count; index++)
 		values[index] = simd_read_s8(reader);
 }
 
@@ -69,7 +74,7 @@ static void simd_read_u16_array(struct SIMD_READER* reader,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = SIMD_ARRAY_INDEX_FIRST; index < count; index++)
 		values[index] = simd_read_u16(reader);
 }
 
@@ -78,7 +83,7 @@ static void simd_read_s16_array(struct SIMD_READER* reader,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = SIMD_ARRAY_INDEX_FIRST; index < count; index++)
 		values[index] = simd_read_s16(reader);
 }
 
@@ -87,7 +92,7 @@ static void simd_read_point_array(struct SIMD_READER* reader,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = SIMD_ARRAY_INDEX_FIRST; index < count; index++)
 		simd_read_point(reader, &points[index]);
 }
 
@@ -96,7 +101,7 @@ static void simd_read_vector_array(struct SIMD_READER* reader,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++)
+	for (index = SIMD_ARRAY_INDEX_FIRST; index < count; index++)
 		simd_read_vector(reader, &vectors[index]);
 }
 
@@ -106,7 +111,7 @@ legacy_u16 simd_decode(struct SIMD* destination,
 	struct SIMD_READER reader;
 
 	reader.source = source;
-	reader.offset = 0U;
+	reader.offset = SIMD_READER_INITIAL_OFFSET;
 
 	destination->num_gears = simd_read_s8(&reader);
 	destination->simd_unk = simd_read_s8(&reader);
@@ -150,6 +155,6 @@ legacy_u16 simd_decode(struct SIMD* destination,
 		SIMD_REV_COUNTER_POINT_COUNT);
 
 	/* This is a runtime lookup table pointer, not part of the resource. */
-	destination->aerorestable = 0;
+	destination->aerorestable = SIMD_RUNTIME_TABLE_NONE;
 	return reader.offset;
 }
