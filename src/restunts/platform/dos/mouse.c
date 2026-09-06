@@ -15,6 +15,11 @@
 #define DOS_MOUSE_DOUBLE_WIDTH_SCALE 1U
 #define DOS_MOUSE_DEFAULT_PIXEL_RATIO 16U
 #define DOS_MOUSE_AVAILABLE LEGACY_U16_MAX
+#define DOS_MOUSE_REGISTER_INITIAL_VALUE 0
+#define DOS_MOUSE_NOT_INSTALLED 0
+#define DOS_MOUSE_NORMAL_WIDTH_SCALE 0U
+#define DOS_MOUSE_RANGE_MINIMUM 0
+#define DOS_MOUSE_RANGE_MAXIMUM_OFFSET 1
 
 static legacy_u16 dos_mouse_button_count;
 
@@ -57,14 +62,14 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	union REGS registers;
 	legacy_s16 installed;
 
-	registers.x.ax = 0;
-	registers.x.bx = 0;
-	registers.x.cx = 0;
-	registers.x.dx = 0;
-	registers.x.si = 0;
-	registers.x.di = 0;
-	registers.x.cflag = 0;
-	registers.x.flags = 0;
+	registers.x.ax = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.bx = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.cx = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.dx = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.si = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.di = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.cflag = DOS_MOUSE_REGISTER_INITIAL_VALUE;
+	registers.x.flags = DOS_MOUSE_REGISTER_INITIAL_VALUE;
 	registers.x.ax = DOS_MOUSE_BIOS_DISABLE_POINTING_DEVICE;
 	int86(DOS_MOUSE_BIOS_INTERRUPT, &registers, &registers);
 
@@ -72,12 +77,13 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	int86(DOS_MOUSE_INTERRUPT, &registers, &registers);
 	installed = (legacy_s16)registers.x.ax;
 	dos_mouse_button_count = registers.x.bx;
-	if (installed != 0) {
+	if (installed != DOS_MOUSE_NOT_INSTALLED) {
 		dos_mouse_horizontal_scale = width == DOS_MOUSE_DOUBLE_WIDTH ?
-			DOS_MOUSE_DOUBLE_WIDTH_SCALE : 0U;
-		dos_mouse_set_minmax(0, 0,
-			LEGACY_S16_WRAP_SUB(width, 1),
-			LEGACY_S16_WRAP_SUB(height, 1));
+			DOS_MOUSE_DOUBLE_WIDTH_SCALE : DOS_MOUSE_NORMAL_WIDTH_SCALE;
+		dos_mouse_set_minmax(DOS_MOUSE_RANGE_MINIMUM,
+			DOS_MOUSE_RANGE_MINIMUM,
+			LEGACY_S16_WRAP_SUB(width, DOS_MOUSE_RANGE_MAXIMUM_OFFSET),
+			LEGACY_S16_WRAP_SUB(height, DOS_MOUSE_RANGE_MAXIMUM_OFFSET));
 		dos_mouse_set_pixel_ratio(DOS_MOUSE_DEFAULT_PIXEL_RATIO,
 			DOS_MOUSE_DEFAULT_PIXEL_RATIO);
 		dos_mouse_available = DOS_MOUSE_AVAILABLE;
