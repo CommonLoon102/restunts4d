@@ -21,7 +21,9 @@
 #define DOS_JOYSTICK_BUTTON_BITS 48U
 #define DOS_JOYSTICK_LOW_CANDIDATE_INITIAL_VALUE 0U
 #define DOS_JOYSTICK_MAXIMUM_INITIAL_VALUE 0U
+#define DOS_JOYSTICK_STATE_DISABLED 0U
 #define DOS_JOYSTICK_STATE_ENABLED 1U
+#define DOS_JOYSTICK_NO_INPUT 0
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
@@ -55,7 +57,7 @@ static void dos_sample_joystick_axes(void)
 	/* The discharge loop is deliberately kept as one instruction-timed DOS
 	 * block.  Moving port reads into an ordinary C loop changes calibration. */
 	__asm {
-		mov     dos_joystick_input, 0
+		mov     dos_joystick_input, DOS_JOYSTICK_NO_INPUT
 		mov     dx, DOS_JOYSTICK_GAME_PORT
 		in      al, dx
 		mov     dos_joystick_button_mask, al
@@ -199,8 +201,9 @@ legacy_s16 dos_get_joy_flags(void)
 	legacy_u16 axis;
 	legacy_u8 buttons;
 
-	if ((dos_joystick_enabled & DOS_JOYSTICK_ENABLED_BIT) == 0)
-		return 0;
+	if ((dos_joystick_enabled & DOS_JOYSTICK_ENABLED_BIT) ==
+		DOS_JOYSTICK_STATE_DISABLED)
+		return DOS_JOYSTICK_NO_INPUT;
 
 	dos_sample_joystick_axes();
 
