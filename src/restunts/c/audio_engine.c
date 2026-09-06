@@ -406,7 +406,8 @@ void audio_driver_timer(void)
 
 	for (index = 0; index < AUDIO_TIMER_COUNT; index++) {
 		timer = &audio_timers[index];
-		if (timer->active == 0 || audio_effects_enabled == 0)
+		if (timer->active == 0 ||
+			audio_effects_enabled == AUDIO_STATE_DISABLED)
 			continue;
 
 		volume_accumulator = LEGACY_U16_WRAP_ADD(
@@ -533,20 +534,20 @@ void audio_enable_flag6(void)
 {
 	legacy_s16 channel;
 
-	if (audio_effects_enabled == 1)
+	if (audio_effects_enabled == AUDIO_STATE_ENABLED)
 		return;
 
 	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
 		channel <= AUDIO_EFFECT_CHANNEL_LAST; channel++)
 		dos_audio_set_channel_volume(channel, audio_effect_channel_volumes[channel]);
-	audio_effects_enabled = 1;
+	audio_effects_enabled = AUDIO_STATE_ENABLED;
 }
 
 void audio_disable_flag6(void)
 {
 	legacy_s16 channel;
 
-	if (audio_effects_enabled == 0)
+	if (audio_effects_enabled == AUDIO_STATE_DISABLED)
 		return;
 
 	for (channel = AUDIO_EFFECT_CHANNEL_FIRST;
@@ -555,12 +556,12 @@ void audio_disable_flag6(void)
 			audio_sfx_channels[channel - AUDIO_EFFECT_CHANNEL_FIRST].volume;
 		dos_audio_set_channel_volume(channel, 0);
 	}
-	audio_effects_enabled = 0;
+	audio_effects_enabled = AUDIO_STATE_DISABLED;
 }
 
 legacy_s16 audio_toggle_flag6(void)
 {
-	if (audio_effects_enabled == 1) {
+	if (audio_effects_enabled == AUDIO_STATE_ENABLED) {
 		audio_disable_flag6();
 		return 0;
 	}
@@ -573,7 +574,7 @@ legacy_s16 sub_3771E(legacy_s16 channel)
 {
 	legacy_u16 offset;
 
-	if (audio_effects_enabled == 0 ||
+	if (audio_effects_enabled == AUDIO_STATE_DISABLED ||
 		channel < AUDIO_EFFECT_CHANNEL_FIRST ||
 		channel > AUDIO_EFFECT_CHANNEL_LAST)
 		return 1;
@@ -1150,7 +1151,7 @@ void audio_suspend(void)
 
 	chunk = audio_channels;
 	for (channel = 0; channel < AUDIO_CHANNEL_COUNT; channel++) {
-		if (audio_effects_enabled == 1 ||
+		if (audio_effects_enabled == AUDIO_STATE_ENABLED ||
 			channel < AUDIO_EFFECT_CHANNEL_FIRST) {
 			audio_saved_channel_volumes[channel] = chunk->volume;
 			dos_audio_set_channel_volume((legacy_s16)channel, 0);
@@ -1182,7 +1183,7 @@ void audio_resume(void)
 			(void far*)dos_audio_master_state);
 	} else {
 		for (channel = 0; channel < AUDIO_CHANNEL_COUNT; channel++) {
-			if (audio_effects_enabled == 1 ||
+			if (audio_effects_enabled == AUDIO_STATE_ENABLED ||
 				channel < AUDIO_EFFECT_CHANNEL_FIRST)
 				dos_audio_set_channel_volume((legacy_s16)channel,
 					audio_saved_channel_volumes[channel]);
@@ -1219,7 +1220,7 @@ legacy_s16 audio_check_flag(void far* resource, legacy_s16 channel,
 	legacy_s16 replacement;
 
 	bytes = (const legacy_u8 far*)resource;
-	if (audio_effects_enabled == 0 || resource == 0 ||
+	if (audio_effects_enabled == AUDIO_STATE_DISABLED || resource == 0 ||
 		bytes[AUDIO_EFFECT_RESOURCE_TYPE_OFFSET] != AUDIO_EFFECT_RESOURCE_TYPE)
 		return -1;
 
