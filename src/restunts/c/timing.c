@@ -5,13 +5,17 @@
 #include "platform.h"
 #include "timing.h"
 
+#define TIMER_CALLBACK_REGISTRATION_FAILED 0
+#define TIMER_INPUT_KEY_NONE 0
+
 static legacy_u32 timer_wait_target;
 static legacy_s8 input_callback_overflow_message[] =
 	"NO ROOM LEFT ON TIMER INTERRUPT ROUTINE LIST\r";
 
 void timer_reg_callback(void (far* callback)(void))
 {
-	if (dos_timer_register_callback(callback) == 0) {
+	if (dos_timer_register_callback(callback) ==
+		TIMER_CALLBACK_REGISTRATION_FAILED) {
 		fatal_error(input_callback_overflow_message);
 	}
 }
@@ -27,10 +31,10 @@ legacy_s16 nopsub_30A77(void)
 
 	do {
 		key = kb_call_readchar_callback();
-		if (key != 0)
+		if (key != TIMER_INPUT_KEY_NONE)
 			return key;
 	} while (timer_get_counter() < timer_wait_target);
-	return 0;
+	return TIMER_INPUT_KEY_NONE;
 }
 
 legacy_s16 nopsub_30A97(legacy_u32 ticks)
@@ -41,10 +45,10 @@ legacy_s16 nopsub_30A97(legacy_u32 ticks)
 	target = (legacy_u32)(timer_get_counter() + ticks);
 	do {
 		key = kb_call_readchar_callback();
-		if (key != 0)
+		if (key != TIMER_INPUT_KEY_NONE)
 			return key;
 	} while ((legacy_u32)timer_get_counter() < target);
-	return 0;
+	return TIMER_INPUT_KEY_NONE;
 }
 
 legacy_u32 timer_get_delta_alt(void)
