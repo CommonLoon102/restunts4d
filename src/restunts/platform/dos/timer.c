@@ -42,6 +42,7 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_NO_CALLBACK_SEGMENT 0U
 #define DOS_TIMER_COUNTER_RESET_VALUE 0UL
 #define DOS_TIMER_REENTRY_RESET_VALUE 0U
+#define DOS_TIMER_EXPIRATION_THRESHOLD 0
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -139,7 +140,8 @@ static void interrupt dos_timer_interrupt(void)
 	 * compiler's interrupt prologue has saved the interrupted registers. */
 	enable();
 	dos_timer_divider = (legacy_u16)(dos_timer_divider - 1U);
-	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <= 0) {
+	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <=
+		DOS_TIMER_EXPIRATION_THRESHOLD) {
 		dos_timer_slow_low = (legacy_u16)(dos_timer_slow_low + 1U);
 		if (dos_timer_slow_low == 0)
 			dos_timer_slow_high = (legacy_u16)(dos_timer_slow_high + 1U);
@@ -149,7 +151,8 @@ static void interrupt dos_timer_interrupt(void)
 			if (dos_timer_chain_timeout_active !=
 				DOS_TIMER_CHAIN_TIMEOUT_INACTIVE) {
 				dos_timer_chain_timeout = (legacy_u16)(dos_timer_chain_timeout - 1U);
-				if (LEGACY_S16_FROM_BITS(dos_timer_chain_timeout) <= 0) {
+				if (LEGACY_S16_FROM_BITS(dos_timer_chain_timeout) <=
+					DOS_TIMER_EXPIRATION_THRESHOLD) {
 					dos_timer_chain_timeout_active =
 						DOS_TIMER_CHAIN_TIMEOUT_INACTIVE;
 					dos_timer_chain_enabled = DOS_TIMER_CHAIN_DISABLED;
