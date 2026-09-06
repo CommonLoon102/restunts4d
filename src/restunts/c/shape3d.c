@@ -431,7 +431,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 	}
 
 	if (all_vertices_behind == 0 && (common_clip_flags == 0 || any_vertex_behind != 0)) {
-	if (primitive_type == 0) {
+	if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
 	output_point_index = 0U;
 	transshapeprimindexptr = transshapeprimitives;
 	depth_sum = 0;
@@ -522,7 +522,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 			}
 		}
 	}
-	} else if (primitive_type == 1) {
+	} else if (primitive_type == RENDER_PRIMITIVE_LINE) {
 	vertex_index_or_depth = transshapeprimitives[0];
 	vertex_index_or_radius = transshapeprimitives[1];
 	if (vertex_clip_flags[vertex_index_or_depth] + vertex_clip_flags[vertex_index_or_radius] != 2) {
@@ -555,7 +555,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 		transshapenumvertscopy = 2;
 		primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
 	}
-	} else if (primitive_type == 3) {
+	} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
 	if (any_vertex_behind == 0) {
 		for (i = 0; i < 4; i++) {
 			polyinfo_points[i] = *polyvertpointptrtab[i];
@@ -616,7 +616,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 		transshapenumvertscopy = 4;
 		primitive_visible = 1;
 	}
-	} else if (primitive_type == 2) {
+	} else if (primitive_type == RENDER_PRIMITIVE_SPHERE) {
 	vertex_index_or_depth = transshapeprimitives[0];
 	vertex_index_or_radius = transshapeprimitives[1];
 //fatal_error("anders: %i %i", vertex_index_or_depth, vertex_index_or_radius);
@@ -648,7 +648,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D* instance) {
 		transshapenumvertscopy = 2;
 		primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
 	}
-	} else if (primitive_type == 5) {
+	} else if (primitive_type == RENDER_PRIMITIVE_POINT) {
 	vertex_index_or_depth = transshapeprimitives[0];
 	if (vertex_clip_flags[vertex_index_or_depth] == 0) {
 		depth_sum = view_vertices[vertex_index_or_depth].z;
@@ -938,7 +938,7 @@ void shape3d_render_queued_primitives(void)
 			material_clrlist_ptr_cpy[material_type];
 		primitive_type = record[4];
 
-		if (primitive_type == 0U) {
+		if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
 			vertex_count = record[3];
 			polyinfo_read_points(record, points, vertex_count);
 			pattern_type = (legacy_u16)
@@ -958,22 +958,22 @@ void shape3d_render_queued_primitives(void)
 					material_color, vertex_count,
 						points);
 			}
-		} else if (primitive_type == 1U) {
+		} else if (primitive_type == RENDER_PRIMITIVE_LINE) {
 			preRender_line(polyinfo_read_word(record, 3U),
 				polyinfo_read_word(record, 4U),
 				polyinfo_read_word(record, 5U),
 				polyinfo_read_word(record, 6U), material_color);
-		} else if (primitive_type == 2U) {
+		} else if (primitive_type == RENDER_PRIMITIVE_SPHERE) {
 			preRender_sphere(LEGACY_S16_FROM_BITS(
 				polyinfo_read_word(record, 3U)),
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 				polyinfo_read_word(record, 5U), material_color);
-		} else if (primitive_type == 3U) {
+		} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
 			polyinfo_read_points(record, points, 4U);
 			preRender_wheel(points, WHEEL_INNER_RADIUS_SCALE, material_color,
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 				(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
-		} else if (primitive_type == 5U) {
+		} else if (primitive_type == RENDER_PRIMITIVE_POINT) {
 			sprite_putpixel_clipped(
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 				LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),

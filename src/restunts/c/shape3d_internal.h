@@ -3,6 +3,17 @@
 
 #include "shape3d.h"
 
+/* Queued renderer categories, distinct from shape resource primitive types.
+   Their numeric values are stored in the byte-sized polyinfo type field. */
+enum RENDER_PRIMITIVE_TYPE {
+	RENDER_PRIMITIVE_POLYGON = 0,
+	RENDER_PRIMITIVE_LINE = 1,
+	RENDER_PRIMITIVE_SPHERE = 2,
+	RENDER_PRIMITIVE_WHEEL = 3,
+	RENDER_PRIMITIVE_UNSUPPORTED = 4, /* Resource type 13 has no draw handler. */
+	RENDER_PRIMITIVE_POINT = 5
+};
+
 #define DRAW_LINE_FIXED_ROUNDING 32768UL
 #define DRAW_LINE_DEGENERATE_STEP 4956U
 #define DRAW_LINE_MIN_MAJOR_LENGTH 2U
