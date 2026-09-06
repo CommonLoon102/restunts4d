@@ -22,8 +22,6 @@
 #define REPLDUMP_CAR_ID_BUFFER_SIZE 5U
 #define REPLDUMP_REPLAY_EXTENSION_SIZE 4U
 #define REPLDUMP_SERIALIZED_CHUNK_NAME_SIZE 12U
-#define REPLDUMP_HIGH_MEMORY_SEGMENT 40960U
-#define REPLDUMP_HIGH_MEMORY_PARAGRAPHS 4096U
 #define REPLDUMP_POLYINFO_RESOURCE_SIZE 10400U
 #define REPLDUMP_CVX_RESOURCE_SIZE 22400U
 #define REPLDUMP_RANDOM_SHIFT 3U
@@ -307,13 +305,6 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 #ifndef RESTUNTS_ORIGINAL
 	serialized_gamestate = (legacy_u8 far*)mmgr_alloc_resbytes(
 		serialized_state_chunk_name, GAMESTATE_SERIALIZED_SIZE);
-	// REPLDUMP remains in text mode, so the VGA graphics aperture is unused.
-	// Make it available to the high-memory pool as the transitional C port
-	// grows beyond the original executable's conventional-memory footprint.
-#ifndef RESTUNTS_HEADLESS
-	highpool_add_block(REPLDUMP_HIGH_MEMORY_SEGMENT,
-		REPLDUMP_HIGH_MEMORY_PARAGRAPHS, 0);
-#endif
 #endif
 	init_div0();
 	init_row_tables();
@@ -477,8 +468,6 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		kb_shift_checking1();
 		video_set_mode7();
 	}
-#else
-	ems_shutdown();
 #endif
 
 	return 0;

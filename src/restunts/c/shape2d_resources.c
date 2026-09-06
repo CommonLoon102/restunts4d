@@ -761,10 +761,8 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 
 	// Parsing normally needs a second buffer as large as the loaded one, and
 	// the largest custom dashboards leave no room for that in the arena.
-	// Upper memory is the first choice for the second buffer; only when the
-	// destination really has to come out of the arena, and does not fit, is
-	// the chunk grown instead so the raw data can slide up inside it and
-	// parse_shape2d write downwards into the same chunk.
+	// If the second buffer does not fit, grow the chunk so the raw data can
+	// slide up inside it and parse_shape2d can write downwards into it.
 	//
 	// That overlap is safe: both cursors run forwards with the writer
 	// starting a margin below the reader, and across the stock and custom
@@ -775,9 +773,7 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	// in either case. What is left afterwards has the same size, position
 	// and name as the two-buffer path would have produced.
 	freeparas = mmgr_get_ofs_diff();
-	if (freeparas < (legacy_u16)chunksize + MMGR_CHUNK_OVERHEAD_PARAGRAPHS &&
-		!(highpool_route(resname, (legacy_u16)chunksize) &&
-		  highpool_can_fit((legacy_u16)chunksize))) {
+	if (freeparas < (legacy_u16)chunksize + MMGR_CHUNK_OVERHEAD_PARAGRAPHS) {
 		margin = ((legacy_u16)chunksize >> OVERLAP_MARGIN_HALF_SHIFT) +
 			((legacy_u16)chunksize >> OVERLAP_MARGIN_QUARTER_SHIFT);
 		if (margin > freeparas - (freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT))

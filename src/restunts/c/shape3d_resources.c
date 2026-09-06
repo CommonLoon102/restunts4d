@@ -4,7 +4,6 @@
 #include "scene_resources.h"
 
 #define SHAPE3D_REQUIRED_ARENA_BYTES 65000UL
-#define SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS 4062U
 #define SHAPE3D_BASE_TRACK_SHAPE_COUNT 116
 #define SHAPE3D_TRACK_SHAPE_NAME_SIZE 5
 #define SHAPE3D_VERTEX_RECORD_SIZE 6U
@@ -21,11 +20,7 @@ legacy_s16 shape3d_load_all() {
 
 	mmgrofsdiff = mmgr_get_res_ofs_diff_scaled();
 
-	// The original only had the arena to draw on. The track shapes loaded
-	// below can come out of upper memory instead, so the arena check only
-	// has to hold when the pool cannot cover the same amount.
-	if (mmgrofsdiff < SHAPE3D_REQUIRED_ARENA_BYTES &&
-		!highpool_can_fit(SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS))
+	if (mmgrofsdiff < SHAPE3D_REQUIRED_ARENA_BYTES)
 		return 1;
 
 	game1ptr = file_load_3dres("game1");

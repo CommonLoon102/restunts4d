@@ -8,19 +8,9 @@
 enum MMGR_RESOURCE_STATE {
 	MMGR_RESOURCE_STATE_FREE = 0,
 	MMGR_RESOURCE_STATE_CACHED = 1,
-	MMGR_RESOURCE_STATE_LIVE = 2,
-	HIGHPOOL_RESOURCE_STATE_RESERVED = 3
+	MMGR_RESOURCE_STATE_LIVE = 2
 };
 
-enum HIGHPOOL_BLOCK_TYPE {
-	HIGHPOOL_REGULAR_BLOCK = 0,
-	HIGHPOOL_VIDEO_ONLY_BLOCK = 1
-};
-
-#define HIGHPOOL_LARGE_REQUEST_MIN_PARAS 3840U
-#define HIGHPOOL_WINDOW_PARAS 4002U
-#define HIGHPOOL_WINDOW_NAME "MCGA WINDOW"
-#define HIGHPOOL_ZERO_WORDS_PER_PARAGRAPH 8
 #define MMGR_INITIAL_ARENA_PARAS 100U
 #define MMGR_ARENA_END_SEGMENT 40960U
 #define DOS_PARAGRAPH_BYTES 16L
@@ -63,393 +53,6 @@ struct MEMCHUNK* mmgr_cache_sentinel = &resources[MMGR_RESOURCE_SENTINEL_INDEX];
 struct MEMCHUNK* mmgr_live_sentinel = resources;
 struct MEMCHUNK* mmgr_last_live_chunk = resources;
 
-// High-memory pool core. The pool is a set of fixed upper-memory blocks with
-// a small chunk table, kept fully separate from the resources[] arena table
-// whose invariants assume one contiguous range. Chunks are diverted into the
-// pool by name in mmgr_alloc_pages; every other memory manager entry point
-// recognizes pool chunks by segment and handles them in place (no cache
-// moves and no compaction - all pool consumers hold position-independent far
-// pointers). With no blocks added the pool is inert and every call falls
-// through to the original arena behavior.
-#define HIGHPOOL_MAXBLOCKS 6
-#define HIGHPOOL_MAXCHUNKS 32
-
-struct HIGHBLOCK {
-	legacy_u16 blockseg;
-	legacy_u16 blockparas;
-	legacy_u16 blocklarge; // 1 = video memory, full-screen window only
-};
-
-struct HIGHCHUNK {
-	legacy_s8 resname[MMGR_RESOURCE_NAME_LENGTH];
-	legacy_u16 resseg;
-	legacy_u16 resparas;
-	legacy_u16 resstate;
-};
-
-// The full-screen window is the largest single allocation the game makes and
-// the last one it asks for, by which time the pool is full of smaller
-// resources and the arena has been whittled down - so it is the one that
-// fails. Set its space aside before anything else can take it. 4002 paras
-// is a 320 by 200 frame plus the bitmap header.
-static struct HIGHCHUNK* highpool_reserved_window(void);
-
-static struct HIGHBLOCK highblocks[HIGHPOOL_MAXBLOCKS];
-static struct HIGHCHUNK highchunks[HIGHPOOL_MAXCHUNKS];
-static legacy_s16 highblockcount = 0;
-
-// Chunks allowed in upper memory. The list is deliberately short: it was
-// established by replay regression, not by reasoning about what "looks"
-// render-only. Anything whose bytes can be observed before being written
-// must stay in the conventional arena, because the arena position it would
-// have taken holds remnants of earlier chunks and the original executable
-// observes exactly those remnants.
-//
-// Known to break replays if moved here, do not add them back:
-//  - "trakdata": its address participates in legacy stack residue, and its
-//    23 sub-blocks must also stay one contiguous allocation.
-//  - "cvx": init_game_state only clears one field per entry, so
-//    restore_gamestate copies bytes that were never written.
-//  - "*.vce"/"*.sfx"/"*.drv" and the car "st????.3sh"/".p3s" containers.
-static const legacy_s8* highpool_names[] = {
-	"MCGA WINDOW",
-	"polyinfo",
-	"sdgame",
-	"main.res",
-	"fontdef.fnt",
-	"fontn.fnt",
-	"fontled.fnt",
-	"game.pre",
-	"game.res",
-	"game1.p3s",
-	"game2.p3s",
-	"game1.3sh",
-	"game2.3sh",
-	"sdgame2.PVS",
-	"city.PVS",
-	"desert.PVS",
-	"alpine.PVS",
-	"country.PVS",
-	"tropical.PVS",
-	0
-};
-
-void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly) {
-	legacy_u16 p;
-	legacy_u16 far* wipe;
-	legacy_s16 i, k;
-
-	if (paras == 0)
-		return;
-
-	// Never hand the same paragraphs out twice: DOS may offer a block that
-	// already belongs to the pool.
-	for (k = 0; k < highblockcount; k++) {
-		if (seg < highblocks[k].blockseg + highblocks[k].blockparas && highblocks[k].blockseg < seg + paras)
-			return;
-	}
-
-	if (highblockcount >= HIGHPOOL_MAXBLOCKS)
-		return;
-
-	// Fresh conventional memory is zero-filled at boot; give the pool the
-	// same starting content so reads of never-written chunk bytes see the
-	// same values as they would in the regular arena. Video memory is left
-	// alone: it holds the visible screen, and its only tenant overwrites it
-	// completely anyway.
-	if (largeonly == HIGHPOOL_REGULAR_BLOCK) {
-		for (p = 0; p < paras; p++) {
-			wipe = dos_memory_make_pointer(seg + p, 0);
-			for (i = 0; i < HIGHPOOL_ZERO_WORDS_PER_PARAGRAPH; i++)
-				wipe[i] = 0;
-		}
-	}
-
-	highblocks[highblockcount].blockseg = seg;
-	highblocks[highblockcount].blockparas = paras;
-	highblocks[highblockcount].blocklarge = largeonly;
-	highblockcount++;
-}
-
-legacy_s16 highpool_owns_seg(legacy_u16 seg) {
-	legacy_s16 i;
-	for (i = 0; i < highblockcount; i++) {
-		if (seg >= highblocks[i].blockseg && seg < highblocks[i].blockseg + highblocks[i].blockparas)
-			return 1;
-	}
-	return 0;
-}
-
-static struct HIGHCHUNK* highpool_chunk_by_seg(legacy_u16 seg) {
-	legacy_s16 i;
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate != MMGR_RESOURCE_STATE_FREE && highchunks[i].resseg == seg)
-			return &highchunks[i];
-	}
-	return 0;
-}
-
-legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras) {
-	legacy_s16 i, j;
-	const legacy_s8* entry;
-
-	if (highblockcount == 0)
-		return 0;
-
-	// Menus and instruments create many small windows under the same name.
-	// Pool space is zero-sum, and giving it to them only displaces bigger
-	// chunks, so only the full-screen window is worth diverting.
-	if (paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS && name[0] == 'M' && name[1] == 'C')
-		return 0;
-
-	for (i = 0; highpool_names[i] != 0; i++) {
-		entry = highpool_names[i];
-		for (j = 0; ; j++) {
-			if (entry[j] != name[j])
-				break;
-			if (entry[j] == 0)
-				return 1;
-		}
-	}
-	return 0;
-}
-
-// First fit inside one block: bump the candidate past any conflicting chunk
-// until the request fits or the block ends.
-static legacy_u16 highpool_find_gap(struct HIGHBLOCK* block, legacy_u16 paras, legacy_s16 dropcached) {
-	legacy_u16 cand, blockend;
-	legacy_s16 i, conflict;
-
-	cand = block->blockseg;
-	blockend = block->blockseg + block->blockparas;
-
-	for (;;) {
-		if (paras > blockend - cand || cand >= blockend)
-			return 0;
-		conflict = 0;
-		for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-			if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE)
-				continue;
-			if (dropcached && highchunks[i].resstate == MMGR_RESOURCE_STATE_CACHED)
-				continue; // discardable, so it does not block the search
-			if (highchunks[i].resseg < cand + paras && cand < highchunks[i].resseg + highchunks[i].resparas) {
-				cand = highchunks[i].resseg + highchunks[i].resparas;
-				conflict = 1;
-				break;
-			}
-		}
-		if (!conflict)
-			return cand;
-	}
-}
-
-// Discard cached chunks overlapping a placement, exactly as the arena
-// allocator drops its own cached blocks when it needs the room back.
-static void highpool_drop_cached(legacy_u16 seg, legacy_u16 paras) {
-	legacy_s16 i;
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate != MMGR_RESOURCE_STATE_CACHED)
-			continue;
-		if (highchunks[i].resseg < seg + paras && seg < highchunks[i].resseg + highchunks[i].resparas)
-			highchunks[i].resstate = MMGR_RESOURCE_STATE_FREE;
-	}
-}
-
-// Does a chunk of this size fit at exactly this segment?
-static legacy_s16 highpool_fits_at(legacy_u16 seg, legacy_u16 paras) {
-	legacy_s16 i, b, inblock;
-
-	inblock = 0;
-	for (b = 0; b < highblockcount; b++) {
-		if (seg >= highblocks[b].blockseg && seg + paras <= highblocks[b].blockseg + highblocks[b].blockparas) {
-			inblock = 1;
-			break;
-		}
-	}
-	if (!inblock)
-		return 0;
-
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE)
-			continue;
-		if (highchunks[i].resseg == seg)
-			continue;
-		if (highchunks[i].resseg < seg + paras && seg < highchunks[i].resseg + highchunks[i].resparas)
-			return 0;
-	}
-	return 1;
-}
-
-legacy_s16 highpool_can_fit(legacy_u16 paras) {
-	legacy_s16 i;
-
-	if (paras <= HIGHPOOL_WINDOW_PARAS && highpool_reserved_window() != 0)
-		return 1;
-
-	for (i = 0; i < highblockcount; i++) {
-		if (highblocks[i].blocklarge == HIGHPOOL_VIDEO_ONLY_BLOCK &&
-			paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS)
-			continue;
-		if (highpool_find_gap(&highblocks[i], paras, 1) != 0)
-			return 1;
-	}
-	return 0;
-}
-
-static struct HIGHCHUNK* highpool_reserved_window(void) {
-	legacy_s16 i;
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == HIGHPOOL_RESOURCE_STATE_RESERVED)
-			return &highchunks[i];
-	}
-	return 0;
-}
-
-void highpool_reserve_window(void) {
-	struct HIGHCHUNK* slot = 0;
-	legacy_u16 seg;
-	legacy_s16 i, b;
-
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE) {
-			slot = &highchunks[i];
-			break;
-		}
-	}
-	if (slot == 0)
-		return;
-
-	for (b = 0; b < highblockcount; b++) {
-		seg = highpool_find_gap(&highblocks[b], HIGHPOOL_WINDOW_PARAS, 0);
-		if (seg != 0) {
-			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
-			for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
-				slot->resname[i] = nm[i];
-				if (nm[i] == 0)
-					break;
-			}
-			for (; i < MMGR_RESOURCE_NAME_LENGTH; i++)
-				slot->resname[i] = 0;
-			slot->resseg = seg;
-			slot->resparas = HIGHPOOL_WINDOW_PARAS;
-			slot->resstate = HIGHPOOL_RESOURCE_STATE_RESERVED;
-			return;
-		}
-	}
-}
-
-void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras) {
-	legacy_s16 i, b, dropcached;
-	legacy_u16 seg;
-	struct HIGHCHUNK* slot = 0;
-
-	// Claim the standing reservation rather than hunting for a gap.
-	if (paras <= HIGHPOOL_WINDOW_PARAS) {
-		struct HIGHCHUNK* res = highpool_reserved_window();
-		if (res != 0) {
-			const legacy_s8* nm = HIGHPOOL_WINDOW_NAME;
-			for (i = 0; ; i++) {
-				if (nm[i] == 0 && (name[i] == 0 ||
-					i == MMGR_RESOURCE_NAME_LENGTH)) {
-					res->resstate = MMGR_RESOURCE_STATE_LIVE;
-					return dos_memory_make_pointer(res->resseg, 0);
-				}
-				if (i == MMGR_RESOURCE_NAME_LENGTH || nm[i] != name[i])
-					break;
-			}
-		}
-	}
-
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		if (highchunks[i].resstate == MMGR_RESOURCE_STATE_FREE) {
-			slot = &highchunks[i];
-			break;
-		}
-	}
-	if (slot == 0)
-		return 0;
-
-	// Best fit rather than first fit: put each chunk in the tightest block
-	// that still holds it, so one large run of free space stays intact for
-	// the chunks that actually need it (above all the 62k window). A first
-	// pass leaves cached chunks alone so they can still be revived; only if
-	// nothing fits are they discarded to make room.
-	for (dropcached = 0; dropcached < 2; dropcached++) {
-		legacy_u16 bestseg = 0, bestslack = 0;
-		legacy_s16 bestb = -1;
-		for (b = 0; b < highblockcount; b++) {
-			legacy_u16 cand, slack;
-			if (highblocks[b].blocklarge == HIGHPOOL_VIDEO_ONLY_BLOCK &&
-				paras < HIGHPOOL_LARGE_REQUEST_MIN_PARAS)
-				continue;
-			cand = highpool_find_gap(&highblocks[b], paras, dropcached);
-			if (cand == 0)
-				continue;
-			slack = highblocks[b].blockseg + highblocks[b].blockparas - cand - paras;
-			if (bestb < 0 || slack < bestslack) {
-				bestb = b;
-				bestseg = cand;
-				bestslack = slack;
-			}
-		}
-		if (bestb >= 0) {
-			b = bestb;
-			seg = bestseg;
-			if (dropcached)
-				highpool_drop_cached(seg, paras);
-			break;
-		}
-		b = highblockcount;
-		seg = 0;
-	}
-
-	for (; b < highblockcount; b++) {
-		if (seg != 0) {
-			for (i = 0; i < MMGR_RESOURCE_NAME_LENGTH; i++) {
-				slot->resname[i] = name[i];
-				if (name[i] == 0)
-					break;
-			}
-			for (; i < MMGR_RESOURCE_NAME_LENGTH; i++)
-				slot->resname[i] = 0;
-			slot->resseg = seg;
-			slot->resparas = paras;
-			slot->resstate = MMGR_RESOURCE_STATE_LIVE;
-			return dos_memory_make_pointer(seg, 0);
-		}
-	}
-	return 0;
-}
-
-// Cache lookup mirroring mmgr_get_chunk_by_name: a cached pool chunk is
-// revived in place instead of being copied back into the arena.
-void far* highpool_get_by_name(const legacy_s8* name) {
-	legacy_s16 i, j, found;
-	struct HIGHCHUNK* chunk;
-
-	for (i = 0; i < HIGHPOOL_MAXCHUNKS; i++) {
-		chunk = &highchunks[i];
-		if (chunk->resstate != MMGR_RESOURCE_STATE_CACHED)
-			continue;
-		found = 0;
-		for (j = 0; j < MMGR_RESOURCE_NAME_LENGTH; j++) {
-			if (name[j] == 0) {
-				if (chunk->resname[j] == '.' || chunk->resname[j] == 0)
-					found = 1;
-				break;
-			}
-			if (name[j] != chunk->resname[j])
-				break;
-		}
-		if (j == MMGR_RESOURCE_NAME_LENGTH)
-			found = 1;
-		if (found) {
-			chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
-			return dos_memory_make_pointer(chunk->resseg, 0);
-		}
-	}
-	return 0;
-}
 const legacy_s8* mmgr_path_to_name(const legacy_s8* filename) {
 	const legacy_s8* c;
 	const legacy_s8* result;
@@ -469,13 +72,6 @@ void far* mmgr_alloc_pages(const legacy_s8* name, legacy_u16 paragraphs) {
 	struct MEMCHUNK* cached_chunk;
 	const legacy_s8* chunkname;
 	legacy_u16 size_or_end_segment, start_segment;
-
-	if (highpool_route(mmgr_path_to_name(name), paragraphs)) {
-		void far* highptr = highpool_alloc(mmgr_path_to_name(name), paragraphs);
-		if (dos_memory_pointer_segment(highptr) != 0)
-			return highptr;
-		// The pool is full; fall through to the regular arena.
-	}
 
 	live_chunk = mmgr_last_live_chunk;
 	cached_chunk = mmgr_first_cached_chunk;
@@ -593,17 +189,6 @@ void far* mmgr_free(legacy_s8 far* ptr) {
 
 	chunk = mmgr_last_live_chunk;
 	ptrseg = dos_memory_pointer_segment(ptr);
-
-	if (highpool_owns_seg(ptrseg)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(ptrseg);
-		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", ptrseg);
-		highchunk->resstate =
-			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ?
-			HIGHPOOL_RESOURCE_STATE_RESERVED : MMGR_RESOURCE_STATE_CACHED;
-		return dos_memory_make_pointer(
-			ptrseg, dos_memory_pointer_offset(ptr));
-	}
 
 	MMGR_FIND_ARENA_CHUNK(chunk, ptrseg);
 
@@ -754,12 +339,6 @@ void far* mmgr_get_chunk_by_name(const legacy_s8* name) {
 
 	wanted_name = mmgr_path_to_name(name);
 
-	{
-		void far* highptr = highpool_get_by_name(wanted_name);
-		if (dos_memory_pointer_segment(highptr) != 0)
-			return highptr;
-	}
-
 	cached_chunk = mmgr_first_cached_chunk;
 
 	for (; cached_chunk < mmgr_cache_sentinel; cached_chunk++) {
@@ -845,16 +424,6 @@ void mmgr_release(void far* ptr) {
 	segment = dos_memory_pointer_segment(ptr);
 	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(segment)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(segment);
-		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
-		highchunk->resstate =
-			(highchunk->resparas == HIGHPOOL_WINDOW_PARAS) ?
-			HIGHPOOL_RESOURCE_STATE_RESERVED : MMGR_RESOURCE_STATE_FREE;
-		return;
-	}
-
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
 	chunk->resstate = MMGR_RESOURCE_STATE_FREE;
@@ -878,9 +447,6 @@ void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name) {
 	segment = dos_memory_pointer_segment(ptr);
 	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(segment))
-		return;
-
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
 	chunkname = mmgr_path_to_name(name);
@@ -898,13 +464,6 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far* ptr) {
 	segment = dos_memory_pointer_segment(ptr);
 	chunk = mmgr_last_live_chunk;
 
-	if (highpool_owns_seg(segment)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(segment);
-		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
-		return highchunk->resparas;
-	}
-
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 	return chunk->ressize;
 }
@@ -919,21 +478,6 @@ legacy_u16 mmgr_resize_memory(legacy_u16 unused_offset, legacy_u16 segment, lega
 	(void)unused_offset;
 	size_or_end_segment = segment;
 	chunk = mmgr_last_live_chunk;
-
-	if (highpool_owns_seg(size_or_end_segment)) {
-		struct HIGHCHUNK* highchunk = highpool_chunk_by_seg(size_or_end_segment);
-		if (highchunk == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", segment);
-		if (paragraphs <= highchunk->resparas) {
-			highchunk->resparas = paragraphs;
-			return paragraphs;
-		}
-		if (highpool_fits_at(size_or_end_segment, paragraphs)) {
-			highchunk->resparas = paragraphs;
-			return 0;
-		}
-		fatal_error("resizememory - NO MEMORY LEFT TO EXPAND HW=%x", mmgr_high_water_segment);
-	}
 
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
@@ -980,13 +524,6 @@ void far* mmgr_compact_live_chunk(legacy_s8 far* ptr) {
 
 	destination_segment = dos_memory_pointer_segment(ptr);
 	source_chunk = mmgr_last_live_chunk;
-
-	if (highpool_owns_seg(destination_segment)) {
-		if (highpool_chunk_by_seg(destination_segment) == 0)
-			fatal_error("memory manager - BLOCK NOT FOUND at SEG= %x", destination_segment);
-		// Pool chunks are never compacted; they stay where they are.
-		return dos_memory_make_pointer(destination_segment, 0);
-	}
 
 	MMGR_FIND_ARENA_CHUNK(source_chunk, destination_segment);
 

@@ -187,7 +187,6 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	init_video_geometry_flags();
 
 	mmgr_init_conventional_arena();
-	himem_init();
 	audio_allocate_car_state_records();
 
 	video_uses_page_flipping = 0;

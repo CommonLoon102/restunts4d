@@ -57,7 +57,6 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	textresprefix = 'e';
 	framespersec = GAME_FRAME_RATE_NORMAL;
 	mmgr_init_conventional_arena();
-	himem_init();
 }
 
 legacy_s16 kb_read_char(void)

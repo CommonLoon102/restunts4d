@@ -37,15 +37,6 @@ void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size);
 legacy_u32 mmgr_get_res_ofs_diff_scaled(void);
 legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* ptr);
 
-void himem_init(void);
-void ems_shutdown(void);
-void highpool_add_block(legacy_u16 seg, legacy_u16 paras, legacy_u16 largeonly);
-void highpool_reserve_window(void);
-legacy_s16 highpool_owns_seg(legacy_u16 seg);
-legacy_s16 highpool_route(const legacy_s8* name, legacy_u16 paras);
-legacy_s16 highpool_can_fit(legacy_u16 paras);
-void far* highpool_alloc(const legacy_s8* name, legacy_u16 paras);
-void far* highpool_get_by_name(const legacy_s8* name);
 void mmgr_rename_chunk(legacy_s8 far* ptr, const legacy_s8* name);
 
 void locate_many_resources(legacy_s8 far* data, const legacy_s8* names,
