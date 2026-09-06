@@ -29,6 +29,7 @@
 
 #define STEERING_RESPONSE_SPEED_SHIFT 10U
 #define STEERING_RESPONSE_INDEX_MASK 252U
+#define STEERING_RESPONSE_NONE 0
 #define STEERING_LOW_RATE_RESPONSE_LIMIT 160
 #define STEERING_NORMAL_RESPONSE_LIMIT 80
 #define STEERING_ANGLE_LIMIT 240
@@ -529,7 +530,8 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	}
 
 	/* With no steering input, bring a moving car back toward center. */
-	if (response == 0 && state.playerstate.car_speed2 != CAR_SPEED_STOPPED &&
+	if (response == STEERING_RESPONSE_NONE &&
+		state.playerstate.car_speed2 != CAR_SPEED_STOPPED &&
 		steering_angle != CAR_STEERING_CENTERED) {
 		centering_limit = LEGACY_S16_SHL(
 			(legacy_s16)response_table[
@@ -566,7 +568,7 @@ void upd_statef20_from_steer_input(legacy_s8 steering_input) {
 	if (steering_angle < -STEERING_ANGLE_LIMIT)
 		steering_angle = -STEERING_ANGLE_LIMIT;
 
-	if (response_table[response_index] == 0 &&
+	if (response_table[response_index] == STEERING_RESPONSE_NONE &&
 		steering_angle > -STEERING_CENTER_DEADZONE &&
 		steering_angle < STEERING_CENTER_DEADZONE) {
 		steering_angle = CAR_STEERING_CENTERED;
