@@ -49,7 +49,7 @@ static void track_preview_draw_terrain(legacy_u8 terrain,
 
 	if (terrain == 0)
 		return;
-	terrain_object = &sceneshapes2[terrain];
+	terrain_object = &terrain_scene_objects[terrain];
 	transformed->shapeptr = use_high_detail != 0 ?
 		terrain_object->ss_shapePtr : terrain_object->ss_loShapePtr;
 	transformed->pos.x = track_preview_half(LEGACY_S16_WRAP_SUB(
@@ -88,17 +88,17 @@ void draw_track_preview(void)
 	legacy_u8 track;
 	legacy_u8 quadrant;
 
-	camera_x = (legacy_s16)word_3C108;
-	camera_y = (legacy_s16)word_3C10A;
-	camera_z = (legacy_s16)word_3C10C;
+	camera_x = (legacy_s16)track_preview_camera_x;
+	camera_y = (legacy_s16)track_preview_camera_y;
+	camera_z = (legacy_s16)track_preview_camera_z;
 	camera_radius = (legacy_s16)polarRadius2D(
-		LEGACY_S16_WRAP_SUB(word_3C10E, camera_x),
-		LEGACY_S16_WRAP_SUB(word_3C112, camera_z));
+		LEGACY_S16_WRAP_SUB(track_preview_target_x, camera_x),
+		LEGACY_S16_WRAP_SUB(track_preview_target_z, camera_z));
 	camera_angle = (legacy_s16)polarAngle(
-		LEGACY_S16_WRAP_SUB(word_3C110, camera_y), camera_radius);
+		LEGACY_S16_WRAP_SUB(track_preview_target_y, camera_y), camera_radius);
 	rotation = mat_rot_zxy(0, camera_angle, 0,
 		MATRIX_ROTATION_ORDER_YXZ);
-	mat_mul_vector(&unk_3C114, rotation, &projected_vector);
+	mat_mul_vector(&track_preview_horizon_vector, rotation, &projected_vector);
 	vector_to_point(&projected_vector, &projected_point);
 	horizon = (legacy_s16)projected_point.py;
 	if (horizon < 0)

@@ -89,7 +89,7 @@ static legacy_u8 dashboard_clear_steering_dot(legacy_u16 player_index)
 		return 0;
 	sprite_putimage_and_alt(
 		gnobshapes[DASHBOARD_STEERING_DOT_BUFFER_FIRST_SHAPE +
-			(legacy_u8)byte_44346],
+			(legacy_u8)frame_buffer_index],
 		word_40DF2[player_index], word_40DF6[player_index]);
 	word_40DF6[player_index] = 0;
 	return 1;
@@ -208,7 +208,7 @@ void setup_car_shapes(legacy_s16 operation)
 		shape2d_rle_copy_position_clipped(whlshapes[DASHBOARD_WHEEL_CENTER_SHAPE]);
 		mouse_draw_transparent_check();
 
-		player_index = (legacy_u8)byte_4432A;
+		player_index = (legacy_u8)dashboard_buffer_index;
 		byte_449D8[player_index] = 0;
 		byte_40DFA[player_index] = 0;
 		word_40DF6[player_index] = 0;
@@ -230,7 +230,7 @@ void setup_car_shapes(legacy_s16 operation)
 	if (operation != DASHBOARD_OPERATION_UPDATE)
 		return;
 
-	player_index = (legacy_u8)byte_4432A;
+	player_index = (legacy_u8)dashboard_buffer_index;
 	steering_dot_cleared = 0;
 	if (state.playerstate.car_gear_change_delay == GEAR_CHANGE_DELAY_EXPIRED &&
 		state.playerstate.car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
@@ -277,7 +277,7 @@ void setup_car_shapes(legacy_s16 operation)
 		wheel_state = DASHBOARD_WHEEL_STATE_LEFT;
 	else if (steering_position > DASHBOARD_STEERING_RIGHT_LIMIT)
 		wheel_state = DASHBOARD_WHEEL_STATE_RIGHT;
-	if (byte_40DF0[player_index] != wheel_state || byte_454A4 != 0) {
+	if (byte_40DF0[player_index] != wheel_state || full_redraw_frames_remaining != 0) {
 		if (video_flag5_is0 == 0)
 			mouse_draw_opaque_check();
 		steering_dot_cleared = dashboard_clear_steering_dot(player_index);
@@ -307,7 +307,7 @@ void setup_car_shapes(legacy_s16 operation)
 	if ((legacy_s16)rpm_index >= simd_player.revnumpoints)
 		rpm_index = (legacy_u16)(simd_player.revnumpoints - 1);
 
-	if (wheel_redrawn != 0 || byte_454A4 != 0 ||
+	if (wheel_redrawn != 0 || full_redraw_frames_remaining != 0 ||
 		word_40D78[player_index] != (legacy_s16)speed_index ||
 		word_40D6C[player_index] != (legacy_s16)rpm_index) {
 		if (video_flag5_is0 == 0)
@@ -393,7 +393,7 @@ void setup_car_shapes(legacy_s16 operation)
 	}
 
 	if (word_40E00[player_index] != steering_position ||
-		byte_454A4 != 0 || steering_dot_cleared != 0) {
+		full_redraw_frames_remaining != 0 || steering_dot_cleared != 0) {
 		if (video_flag5_is0 == 0)
 			mouse_draw_opaque_check();
 		dashboard_set_viewport();
@@ -420,7 +420,7 @@ void setup_car_shapes(legacy_s16 operation)
 					gnobshapes[DASHBOARD_STEERING_DOT_SHAPE])));
 		sprite_clear_shape_alt(
 			gnobshapes[DASHBOARD_STEERING_DOT_BUFFER_FIRST_SHAPE +
-				(legacy_u8)byte_44346],
+				(legacy_u8)frame_buffer_index],
 			word_40DF2[player_index], word_40DF6[player_index]);
 		sprite_putimage_and_alt2(
 			gnobshapes[DASHBOARD_STEERING_DOT_BACKGROUND_SHAPE], dot_x, dot_y);

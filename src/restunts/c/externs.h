@@ -1,6 +1,17 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
+#ifdef RESTUNTS_ORIGINAL
+/* Keep the original-linked dump harness bound to the original exports. */
+#define frame_present sub_19F14
+#define reset_race_loop_state init_unknown
+#define race_exit_request byte_449DA
+#define replay_playback_speed byte_449E6
+#define frame_buffer_index byte_44346
+#define dashboard_buffer_index byte_4432A
+#define start_flag_animation word_44DCA
+#endif
+
 #include "math.h"
 
 #include "replay.h"
@@ -200,10 +211,10 @@ extern legacy_u8 byte_44A8A;
 extern legacy_u8 byte_4552F;
 extern legacy_u16 elapsed_time1;
 extern legacy_u16 elapsed_time2;
-extern legacy_u8 byte_449DA;
+extern legacy_u8 race_exit_request;
 extern legacy_u8 byte_4393C;
 extern legacy_u8 game_replay_mode;
-extern legacy_s16 word_44DCA;
+extern legacy_s16 start_flag_animation;
 
 extern legacy_s16 word_45A24; // current frame?
 extern legacy_s16 word_45A00; // fps * 30
@@ -222,12 +233,12 @@ extern legacy_s16 run_game_random;
 extern legacy_s8 replaybar_toggle;
 extern legacy_s8 is_in_replay;
 extern legacy_s8 cameramode;
-extern legacy_s8 byte_449E6;
+extern legacy_s8 replay_playback_speed;
 extern legacy_s8 game_replay_mode_copy;
-extern legacy_s8 byte_44346;
+extern legacy_s8 frame_buffer_index;
 extern legacy_s8 byte_46467;
 extern legacy_s8 dashb_toggle;
-extern legacy_s8 byte_4432A;
+extern legacy_s8 dashboard_buffer_index;
 extern legacy_s8 show_penalty_counter;
 extern legacy_s16 word_45D94;
 extern legacy_s16 word_45D3E;
@@ -244,14 +255,14 @@ extern legacy_s8 byte_449E2;
 extern legacy_s8 replaybar_enabled;
 extern legacy_s16 dashbmp_y_copy;
 extern legacy_s16 height_above_replaybar;
-extern legacy_s8 byte_454A4;
+extern legacy_s8 full_redraw_frames_remaining;
 extern legacy_s8 byte_449D8[];
 extern legacy_s16 dastseg;
 extern legacy_s16 dastbmp_y;
 extern legacy_s16 dastbmp_y2;
 extern legacy_s16 dashbmp_y;
 extern legacy_s16 roofbmpheight;
-extern struct RECTANGLE* rectptr_unk;
+extern struct RECTANGLE* active_frame_rects;
 
 extern void update_player_tick(legacy_s8);
 extern void update_opponent_tick(void);
@@ -262,7 +273,7 @@ extern void get_kevinrandom_seed(legacy_s8* seed);
 extern legacy_s16 get_kevinrandom(void);
 extern void init_row_tables(void);
 extern void init_trackdata(void);
-extern void init_unknown(void);
+extern void reset_race_loop_state(void);
 extern void init_video_geometry_flags(void);
 extern void audio_carstate(void);
 extern void setup_car_shapes(legacy_s16);
@@ -406,7 +417,7 @@ extern void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate);
 extern void restore_gamestate(legacy_u16 frame);
 extern void update_gamestate(void);
 extern void init_rect_arrays(void);
-extern void sub_19F14(struct RECTANGLE* rect);
+extern void frame_present(struct RECTANGLE* rect);
 extern void font_set_fontdef(void);
 extern void init_polyinfo(void);
 extern legacy_s16 run_intro_looped(void);

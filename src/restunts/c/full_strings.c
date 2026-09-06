@@ -38,12 +38,10 @@ legacy_s8 aAvs[4] = {
 };
 
 /*
-The name aBarn came from the disassembler naming the address after its first
-string, "barn". It obscures its real purpose; something like game_shape_names
-would be much clearer. The table contains track and scenery shape identifiers
+The table contains track and scenery shape identifiers
 such as bridges, tunnels, roads, trees, barriers, and explosion shapes.
 */
-legacy_s8 aBarn[580] = {
+legacy_s8 game_shape_names[580] = {
 	'b', 'a', 'r', 'n', 0, 'z', 'b', 'r', 'n', 0, 'b', 'r',
 	'i', 'd', 0, 'z', 'b', 'r', 'i', 0, 'b', 't', 'u', 'r',
 	0, 'z', 'b', 't', 'u', 0, 'c', 'h', 'i', '1', 0, 'z',

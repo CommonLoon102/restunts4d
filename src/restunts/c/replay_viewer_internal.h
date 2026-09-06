@@ -31,7 +31,7 @@ extern legacy_u8 byte_40E6D;
 extern legacy_u8 byte_40E74[2];
 extern legacy_s16 word_40E76[2];
 extern legacy_u8 byte_40E7A[18];
-extern struct RECTANGLE* rectptr_unk2;
+extern struct RECTANGLE* alternate_frame_rects;
 extern legacy_s16 word_407FC;
 extern legacy_s16 word_407FE;
 extern legacy_s8 aMen_0[];

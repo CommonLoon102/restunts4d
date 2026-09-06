@@ -36,9 +36,9 @@
 #define INTRO_TOTAL_SECONDS 23
 
 /*
- * In the original dseg, sceneshapes2 immediately follows trkObjectList.
+ * In the original dseg, terrain_scene_objects immediately follows trkObjectList.
  * Some track objects store overlay indices into that combined legacy table,
- * so indices beyond trkObjectList intentionally address sceneshapes2.
+ * so indices beyond trkObjectList intentionally address terrain_scene_objects.
  */
 static legacy_s16 intro_shift_position(legacy_s32 position,
 	legacy_s16 camera)
@@ -65,7 +65,7 @@ static void intro_draw_transformed_shape(
 	shape3d_transform_and_queue(transformed);
 }
 
-static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
+static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
 	legacy_s16 rotate_y,
 	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
 	struct POINT2D* previous_points, legacy_s16* previous_point_count,
@@ -83,7 +83,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	legacy_u16 new_point_count;
 	legacy_u16 i;
 
-	current_shape_rect = cliprect_unk;
+	current_shape_rect = empty_rect;
 	select_cliprect_rotate(0, rotate_x, rotate_y, &intro_cliprect, 0);
 	transformed.shapeptr = primary_logo != 0 ? &logoshape : &logo2shape;
 	transformed.pos.x = LEGACY_S16_WRAP_SUB(
@@ -114,7 +114,7 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 			sprite_putpixel_clipped(previous_points[i].px,
 				previous_points[i].py, 0);
 		rect_union(shape_rect, previous_rect, &redraw_rect);
-		if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
+		if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
 			sprite_set_1_size(redraw_rect.left, redraw_rect.right,
 				redraw_rect.top, redraw_rect.bottom);
 			sprite_clear_1_color(0);
@@ -157,13 +157,13 @@ static void intro_op_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 c
 	}
 }
 
-void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
+void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
 	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
 	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,
 	struct RECTANGLE* combined_rect)
 {
-	intro_op_impl(camera_x, camera_y, camera_z, rotate_y, rotate_x,
+	intro_render_scene_impl(camera_x, camera_y, camera_z, rotate_y, rotate_x,
 		draw_car, primary_logo, stars, previous_points,
 		previous_point_count, &previous_rect, shape_rect, combined_rect);
 }
@@ -253,21 +253,21 @@ legacy_s8 setup_intro(void)
 	point_counts[0] = 0;
 	point_counts[1] = 0;
 	slow_video_mgmt_copy = slow_video_mgmt;
-	rect_unk[0].left = 0;
-	rect_unk[0].right = INTRO_SCREEN_MAX_X;
-	rect_unk[0].top = 0;
-	rect_unk[0].bottom = INTRO_SCREEN_MAX_Y;
-	rect_unk2 = rect_unk[0];
-	rect_unk3 = rect_unk[0];
+	frame_layer_rects[0].left = 0;
+	frame_layer_rects[0].right = INTRO_SCREEN_MAX_X;
+	frame_layer_rects[0].top = 0;
+	frame_layer_rects[0].bottom = INTRO_SCREEN_MAX_Y;
+	frame_unsorted_shapes_rect = frame_layer_rects[0];
+	intro_redraw_cliprect = frame_layer_rects[0];
 	rect_index = 0;
 	needs_render = 1;
 
 	for (;;) {
 		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
-		word_44DCC = LEGACY_S16_WRAP_ADD(word_44DCC, delta);
+		intro_elapsed_ticks = LEGACY_S16_WRAP_ADD(intro_elapsed_ticks, delta);
 
-		while ((legacy_s16)word_44DCC > (legacy_s16)word_4499C) {
-			word_44DCC = LEGACY_S16_WRAP_SUB(word_44DCC, word_4499C);
+		while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)word_4499C) {
+			intro_elapsed_ticks = LEGACY_S16_WRAP_SUB(intro_elapsed_ticks, word_4499C);
 			update_opponent();
 			needs_render = 1;
 			frame_count = LEGACY_S16_WRAP_ADD(frame_count, 1);
@@ -352,9 +352,9 @@ legacy_s8 setup_intro(void)
 
 			active_points = point_buffers[rect_index];
 			active_point_count = &point_counts[rect_index];
-			intro_op_impl(camera_x, camera_y, camera_z, horizontal_angle,
+			intro_render_scene_impl(camera_x, camera_y, camera_z, horizontal_angle,
 				vertical_angle, draw_car, logo_changed, stars,
-				active_points, active_point_count, &rect_unk[rect_index],
+				active_points, active_point_count, &frame_layer_rects[rect_index],
 				&shape_rect, &combined_rect);
 
 			if (video_flag5_is0 != 0) {
@@ -362,20 +362,20 @@ legacy_s8 setup_intro(void)
 				setup_mcgawnd1();
 				mouse_draw_transparent_check();
 				if (slow_video_mgmt_copy != 0)
-					rect_unk[rect_index] = shape_rect;
+					frame_layer_rects[rect_index] = shape_rect;
 				rect_index ^= INTRO_POINT_BUFFER_MASK;
 			} else {
 				sprite_copy_2_to_1_2();
 				if (slow_video_mgmt_copy != 0) {
-					rect_union(&combined_rect, &rect_unk6, &redraw_rect);
-					if (rect_intersect(&redraw_rect, &rect_unk3) == 0) {
+					rect_union(&combined_rect, &frame_sorted_shapes_rect, &redraw_rect);
+					if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
 						sprite_set_1_size(redraw_rect.left, redraw_rect.right,
 							redraw_rect.top, redraw_rect.bottom);
 						mouse_draw_opaque_check();
 						sprite_putimage(render_window_sprite->sprite_bitmapptr);
 						mouse_draw_transparent_check();
-						rect_unk[0] = shape_rect;
-						rect_unk6 = combined_rect;
+						frame_layer_rects[0] = shape_rect;
+						frame_sorted_shapes_rect = combined_rect;
 					}
 				} else {
 					mouse_draw_opaque_check();

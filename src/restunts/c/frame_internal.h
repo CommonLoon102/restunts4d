@@ -9,25 +9,25 @@
 #include "shape2d.h"
 #include "shape3d.h"
 
-extern struct RECTANGLE* rectptr_unk2;
-extern struct RECTANGLE rect_array_unk[];
-extern struct RECTANGLE rect_array_unk2[];
-extern struct RECTANGLE rect_array_unk3[];
-extern legacy_s8 rect_array_unk_indices[];
-extern legacy_s16 rect_array_unk3_indices[];
-extern legacy_s8 rect_array_unk3_length;
-extern struct RECTANGLE rect_unk[];
-/* These legacy labels were views into consecutive elements of rect_unk. */
-#define rect_unk2  rect_unk[1]
-#define rect_unk6  rect_unk[2]
-#define rect_unk12 rect_unk[3]
-#define rect_unk15 rect_unk[4]
-#define rect_skybox rect_unk[5]
-#define rect_unk11 rect_unk[6]
-#define rect_unk9  rect_unk[7]
-extern struct RECTANGLE rect_unk3;
-extern struct RECTANGLE rect_unk5;
-extern struct RECTANGLE cliprect_unk;
+extern struct RECTANGLE* alternate_frame_rects;
+extern struct RECTANGLE frame_rects_page0[];
+extern struct RECTANGLE frame_rects_page1[];
+extern struct RECTANGLE merged_redraw_rects[];
+extern legacy_s8 frame_rect_change_flags[];
+extern legacy_s16 redraw_rect_sort_indices[];
+extern legacy_s8 redraw_rect_count;
+extern struct RECTANGLE frame_layer_rects[];
+/* These legacy labels were views into consecutive elements of frame_layer_rects. */
+#define frame_unsorted_shapes_rect  frame_layer_rects[1]
+#define frame_sorted_shapes_rect  frame_layer_rects[2]
+#define frame_player_car_rect frame_layer_rects[3]
+#define frame_opponent_car_rect frame_layer_rects[4]
+#define rect_skybox frame_layer_rects[5]
+#define frame_elapsed_time_rect frame_layer_rects[6]
+#define frame_cloud_rect  frame_layer_rects[7]
+extern struct RECTANGLE intro_redraw_cliprect;
+extern struct RECTANGLE full_screen_rect;
+extern struct RECTANGLE empty_rect;
 extern struct RECTANGLE rect_ingame_text2;
 extern struct RECTANGLE rect_ingame_text3;
 extern struct RECTANGLE rect_ingame_text4;
@@ -36,11 +36,11 @@ extern struct VECTOR wheel_world_travel;
 extern struct MATRIX mat_temp;
 extern legacy_s16 camera_track_height_offset;
 extern legacy_s8 detail_threshold_by_level[];
-extern legacy_s8 byte_3C0C6[];
+extern legacy_s8 track_material_animation[];
 extern legacy_u16 frame_callback_count;
-extern legacy_s16 word_3BE34[];
+extern legacy_s16 cloud_heading_offsets[];
 extern legacy_s8* lookahead_tiles_tables[];
-extern struct SHAPE3D* off_3BE44[];
+extern struct SHAPE3D* cloud_shapes[];
 extern legacy_s16 terrainHeight;
 extern legacy_s16 planindex;
 extern legacy_s16 planindex_copy;
@@ -52,17 +52,17 @@ extern struct TRACKOBJECT trkObjectList[215]; // 215 entries
 extern legacy_u8 fence_TrkObjCodes[];
 extern legacy_s16 car_initial_roll, car_initial_pitch, car_initial_yaw, wheel_heading_offset;
 
-extern legacy_s8 unk_3C0EE[];
-extern legacy_s8 unk_3C0F0[];
-extern legacy_s8 unk_3C0F8[];
-extern legacy_s8 unk_3C0F4[];
-extern legacy_s16 word_3C0D6[];
-extern legacy_s16 unk_3C0A2[];
-extern legacy_s16 unk_3C0A6[];
-extern legacy_s16 unk_3C0AE[];
-extern legacy_s16 unk_3C0B6[];
-extern struct TRACKOBJECT sceneshapes2[];
-extern struct TRACKOBJECT sceneshapes3[];
+extern legacy_s8 fence_tile_offsets_single[];
+extern legacy_s8 fence_tile_offsets_row[];
+extern legacy_s8 fence_tile_offsets_both[];
+extern legacy_s8 fence_tile_offsets_column[];
+extern legacy_s16 fence_rotations[];
+extern legacy_s16 hill_fill_offsets_single[];
+extern legacy_s16 hill_fill_offsets_row[];
+extern legacy_s16 hill_fill_offsets_column[];
+extern legacy_s16 hill_fill_offsets_both[];
+extern struct TRACKOBJECT terrain_scene_objects[];
+extern struct TRACKOBJECT particle_scene_objects[];
 extern struct SHAPE3D game3dshapes[130];
 extern struct VECTOR player_front_wheel_centers[2];
 extern struct VECTOR player_base_wheel_vertices[24];
@@ -71,11 +71,11 @@ extern struct VECTOR opponent_front_wheel_centers[2];
 extern struct VECTOR opponent_base_wheel_vertices[24];
 extern legacy_s16 opponent_wheel_vertex_state[];
 extern legacy_s8 backlights_paint_override;
-extern legacy_s16 word_449FC[];
-extern legacy_s16 word_463D6;
+extern legacy_s16 frame_buffer_camera_headings[];
+extern legacy_s16 last_rendered_camera_heading;
 extern legacy_s16 transformedshape_zarray[];
 extern legacy_s16 transformedshape_indices[];
-extern legacy_s8 transformedshape_arg2array[];
+extern legacy_s8 transformed_shape_sort_types[];
 extern legacy_s16 sdgame2_widths[];
 extern void far* sdgame2shapes[];
 extern void far* fontledresptr;
@@ -92,28 +92,28 @@ extern legacy_s16 word_407CC;
 extern struct SHAPE3D logoshape;
 extern struct SHAPE3D logo2shape;
 extern struct SHAPE3D bravshape;
-extern legacy_s16 word_44DCC;
-extern legacy_s16 word_3C108;
-extern legacy_s16 word_3C10A;
-extern legacy_s16 word_3C10C;
-extern legacy_s16 word_3C10E;
-extern legacy_s16 word_3C110;
-extern legacy_s16 word_3C112;
-extern struct VECTOR unk_3C114;
+extern legacy_s16 intro_elapsed_ticks;
+extern legacy_s16 track_preview_camera_x;
+extern legacy_s16 track_preview_camera_y;
+extern legacy_s16 track_preview_camera_z;
+extern legacy_s16 track_preview_target_x;
+extern legacy_s16 track_preview_target_y;
+extern legacy_s16 track_preview_target_z;
+extern struct VECTOR track_preview_horizon_vector;
 extern struct RECTANGLE trackpreview_cliprect;
 
 void build_track_object(struct VECTOR* a, struct VECTOR* b);
 struct TRACKOBJECT* frame_track_object_from_legacy_index(legacy_u8 index);
 void transformed_shape_add_for_sort(legacy_s16 z_adjust, legacy_s16 type);
-void skybox_op_helper2(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
+void skybox_render_level_rect(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon);
 legacy_u8 subst_hillroad_track(legacy_u8 a, legacy_u8 b);
-legacy_s16 skybox_op(legacy_s16 a, struct RECTANGLE* rectptr, legacy_s16 c, struct MATRIX* matptr, legacy_s16 e, legacy_s16 f, legacy_s16 g);
+legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction, struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y);
 legacy_s16 font_centered_text_x(const legacy_s8* text);
 struct RECTANGLE* draw_ingame_text(void);
 struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
 struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height);
 struct RECTANGLE* intro_draw_text(legacy_s8* str, legacy_s16 a, legacy_s16 b, legacy_s16 c, legacy_s16 d);
-void intro_op(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
+void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z, legacy_s16 rotate_y,
 	legacy_s16 rotate_x, legacy_s16 draw_car, legacy_s16 primary_logo, struct VECTOR* stars,
 	struct POINT2D* previous_points, legacy_s16* previous_point_count,
 	struct RECTANGLE previous_rect, struct RECTANGLE* shape_rect,

@@ -35,17 +35,17 @@ struct TRANSFORMEDSHAPE3D* curtransshape_ptr;
 legacy_s16 polygon_next_index[401];
 legacy_u8 far* polyinfoptrs[400];
 
-struct RECTANGLE rect_unk[15];
-struct RECTANGLE rect_unk3;
-struct RECTANGLE rect_unk5 = { 0, 320, 0, 200 };
-struct RECTANGLE rect_array_unk[15];
-struct RECTANGLE rect_array_unk2[15];
-struct RECTANGLE rect_array_unk3[45];
-legacy_s8 rect_array_unk_indices[15];
-legacy_s16 rect_array_unk3_indices[45];
-legacy_s8 rect_array_unk3_length;
-struct RECTANGLE* rectptr_unk;
-struct RECTANGLE* rectptr_unk2;
+struct RECTANGLE frame_layer_rects[15];
+struct RECTANGLE intro_redraw_cliprect;
+struct RECTANGLE full_screen_rect = { 0, 320, 0, 200 };
+struct RECTANGLE frame_rects_page0[15];
+struct RECTANGLE frame_rects_page1[15];
+struct RECTANGLE merged_redraw_rects[45];
+legacy_s8 frame_rect_change_flags[15];
+legacy_s16 redraw_rect_sort_indices[45];
+legacy_s8 redraw_rect_count;
+struct RECTANGLE* active_frame_rects;
+struct RECTANGLE* alternate_frame_rects;
 
 /* Camera, menu, and renderer constants. */
 struct CUSTOM_CAMERA custom_camera = {
@@ -84,9 +84,9 @@ legacy_s16 hiscore_buttons_y1[5] = { 174, 174, 174, 174, 174 };
 legacy_s16 hiscore_buttons_y2[5] = { 197, 197, 197, 197, 197 };
 
 struct RECTANGLE carmenu_cliprect = { 0, 320, 0, 95 };
-struct RECTANGLE rect_unk16 = { 0, 320, 0, 0 };
+struct RECTANGLE car_menu_redraw_cliprect = { 0, 320, 0, 0 };
 struct VECTOR carmenu_carpos = { 0, -840, 2880 };
-struct RECTANGLE cliprect_unk = { 9999, -1, 9999, -1 };
+struct RECTANGLE empty_rect = { 9999, -1, 9999, -1 };
 struct RECTANGLE trackpreview_cliprect = { 0, 320, 0, 200 };
 struct RECTANGLE intro_cliprect = { 0, 320, 0, 200 };
 struct RECTANGLE rect_ingame_text2 = { 148, 172, 93, 108 };
@@ -94,17 +94,17 @@ struct RECTANGLE rect_ingame_text3 = { 68, 92, 113, 128 };
 struct RECTANGLE rect_ingame_text4 = { 228, 252, 113, 128 };
 
 legacy_s8 detail_threshold_by_level[6] = { 2, 2, 1, 0, 0, 0 };
-legacy_s16 word_3BE34[8] = { 30, 200, 320, 400, 530, 700, 880, 960 };
-legacy_s16 unk_3C0A2[2] = { 0, 0 };
-legacy_s16 unk_3C0A6[4] = { 0, 512, 0, -512 };
-legacy_s16 unk_3C0AE[4] = { 512, 0, -512, 0 };
-legacy_s16 unk_3C0B6[8] = {
+legacy_s16 cloud_heading_offsets[8] = { 30, 200, 320, 400, 530, 700, 880, 960 };
+legacy_s16 hill_fill_offsets_single[2] = { 0, 0 };
+legacy_s16 hill_fill_offsets_row[4] = { 0, 512, 0, -512 };
+legacy_s16 hill_fill_offsets_column[4] = { 512, 0, -512, 0 };
+legacy_s16 hill_fill_offsets_both[8] = {
 	-512, 512, -512, -512, 512, 512, 512, -512
 };
-legacy_s8 byte_3C0C6[16] = {
+legacy_s8 track_material_animation[16] = {
 	0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3
 };
-legacy_s16 word_3C0D6[8] = {
+legacy_s16 fence_rotations[8] = {
 	0, 0,
 	ANGLE_QUARTER_TURN, ANGLE_QUARTER_TURN,
 	ANGLE_HALF_TURN, ANGLE_HALF_TURN,
@@ -116,24 +116,24 @@ legacy_u8 fence_TrkObjCodes[8] = {
 	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE,
 	FENCE_TRACK_OBJECT_CODE, FENCE_SCENE_OBJECT_CODE
 };
-legacy_s8 unk_3C0EE[2] = { 0, 0 };
-legacy_s8 unk_3C0F0[4] = { 0, 0, 0, 1 };
-legacy_s8 unk_3C0F4[4] = { 0, 0, 1, 0 };
-legacy_s8 unk_3C0F8[16] = {
+legacy_s8 fence_tile_offsets_single[2] = { 0, 0 };
+legacy_s8 fence_tile_offsets_row[4] = { 0, 0, 0, 1 };
+legacy_s8 fence_tile_offsets_column[4] = { 0, 0, 1, 0 };
+legacy_s8 fence_tile_offsets_both[16] = {
 	0, 0, 1, 0, 0, 1, 1, 1, -128, 0, -128, 1, -1, -1, 0, 0
 };
-legacy_s16 word_3C108 = TRACK_PREVIEW_CAMERA_X;
-legacy_s16 word_3C10A = TRACK_PREVIEW_CAMERA_Y;
-legacy_s16 word_3C10C = TRACK_PREVIEW_CAMERA_Z;
-legacy_s16 word_3C10E = TRACK_PREVIEW_TARGET_X;
-legacy_s16 word_3C110 = TRACK_PREVIEW_TARGET_Y;
-legacy_s16 word_3C112 = TRACK_PREVIEW_TARGET_Z;
-struct VECTOR unk_3C114 = {
+legacy_s16 track_preview_camera_x = TRACK_PREVIEW_CAMERA_X;
+legacy_s16 track_preview_camera_y = TRACK_PREVIEW_CAMERA_Y;
+legacy_s16 track_preview_camera_z = TRACK_PREVIEW_CAMERA_Z;
+legacy_s16 track_preview_target_x = TRACK_PREVIEW_TARGET_X;
+legacy_s16 track_preview_target_y = TRACK_PREVIEW_TARGET_Y;
+legacy_s16 track_preview_target_z = TRACK_PREVIEW_TARGET_Z;
+struct VECTOR track_preview_horizon_vector = {
 	0, TRACK_PREVIEW_VECTOR_Y, TRACK_PREVIEW_VECTOR_Z
 };
 
 /* Static scene objects refer to portable C shape records, not dseg offsets. */
-struct TRACKOBJECT sceneshapes2[19] = {
+struct TRACKOBJECT terrain_scene_objects[19] = {
 	{ 0, 0, &game3dshapes[108], &game3dshapes[109], 0, 0, 0, 0, -1, 0 },
 	{ 0, 0, &game3dshapes[45], &game3dshapes[45], 0, 0, 1, 0, -1, 0 },
 	{ 0, 0, &game3dshapes[44], &game3dshapes[44], 0, 0, 1, 0, -1, 0 },
@@ -155,7 +155,7 @@ struct TRACKOBJECT sceneshapes2[19] = {
 	{ 0, ANGLE_QUARTER_TURN, &game3dshapes[40], &game3dshapes[40], 0, 0, 1, 0, -1, 0 }
 };
 
-struct TRACKOBJECT sceneshapes3[13] = {
+struct TRACKOBJECT particle_scene_objects[13] = {
 	{ 0, 0, &game3dshapes[112], &game3dshapes[112], 0, 0, 1, 0, -1, 0 },
 	{ 0, 0, &game3dshapes[113], &game3dshapes[113], 0, 0, 1, 0, -1, 0 },
 	{ 0, 0, &game3dshapes[114], &game3dshapes[114], 0, 0, 1, 0, -1, 0 },
@@ -171,7 +171,7 @@ struct TRACKOBJECT sceneshapes3[13] = {
 	{ 0, 0, &game3dshapes[110], &game3dshapes[110], 0, 0, 1, 0, -1, 0 }
 };
 
-struct SHAPE3D* off_3BE44[8] = {
+struct SHAPE3D* cloud_shapes[8] = {
 	&game3dshapes[48], &game3dshapes[47], &game3dshapes[46],
 	&game3dshapes[48], &game3dshapes[47], &game3dshapes[46],
 	&game3dshapes[48], &game3dshapes[47]
@@ -239,7 +239,7 @@ legacy_s32 invpow2tbl[32] = {
 
 legacy_s16 transformedshape_zarray[29];
 legacy_s16 transformedshape_indices[29];
-legacy_s8 transformedshape_arg2array[29];
+legacy_s8 transformed_shape_sort_types[29];
 legacy_s8 transformedshape_counter;
 legacy_s8 transshapenumvertscopy;
 legacy_s8 backlights_paint_override;
@@ -247,9 +247,9 @@ legacy_s16 player_wheel_vertex_state[5];
 legacy_s16 opponent_wheel_vertex_state[5];
 /* One entry per view. The disassembler named the two words separately, but
    the renderer indexes them as a pair, so they have to stay one array. */
-legacy_s16 word_449FC[2];
-legacy_s16 word_44DCC;
-legacy_s16 word_463D6;
+legacy_s16 frame_buffer_camera_headings[2];
+legacy_s16 intro_elapsed_ticks;
+legacy_s16 last_rendered_camera_heading;
 
 struct VECTOR player_front_wheel_centers[2];
 struct VECTOR player_base_wheel_vertices[24];
@@ -349,7 +349,7 @@ legacy_u8 detail_level;
 legacy_s8 shape_view_direction_sector;
 legacy_s8 byte_449D8[2];
 legacy_s8 byte_449E2;
-legacy_s8 byte_454A4;
+legacy_s8 full_redraw_frames_remaining;
 legacy_s8 byte_459E0[17];
 legacy_s8 byte_46167;
 legacy_s8 dashb_toggle_copy;

@@ -180,7 +180,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		miscptr = file_load_resfile(aMisc_0);
 
 	if (opponent_type != CAR_MENU_PLAYER_MODE) {
-		rect_unk16.right = CAR_MENU_OPPONENT_PANEL_RIGHT;
+		car_menu_redraw_cliprect.right = CAR_MENU_OPPONENT_PANEL_RIGHT;
 		if (video_flag5_is0 != 0) {
 			opponent_shape = (struct SHAPE2D far*)
 				oppresources[(legacy_u16)opponent_type];
@@ -195,7 +195,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 				0, 0);
 		}
 	} else {
-		rect_unk16.right = CAR_MENU_SCREEN_WIDTH;
+		car_menu_redraw_cliprect.right = CAR_MENU_SCREEN_WIDTH;
 	}
 
 	previous_car_index = CAR_MENU_NO_SELECTION;
@@ -333,7 +333,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		car_position_angle = (legacy_s16)polarAngle(
 			carmenu_carpos.y, carmenu_carpos.z);
 		current_rect = slow_video_mgmt_copy != 0 ?
-			cliprect_unk : carmenu_cliprect;
+			empty_rect : carmenu_cliprect;
 		select_cliprect_rotate(0, car_position_angle, 0,
 			&carmenu_cliprect, 0);
 		if ((legacy_s8)(legacy_u8)*material >=
@@ -343,9 +343,9 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		transformed.rotvec.z = rotation;
 		transformed.material = (legacy_u8)*material;
 		shape3d_transform_and_queue(&transformed);
-		rect_unk16.bottom = previous_car_index == car_index ?
+		car_menu_redraw_cliprect.bottom = previous_car_index == car_index ?
 			CAR_MENU_CAR_CLIP_BOTTOM : CAR_MENU_FULL_CLIP_BOTTOM;
-		(void)rect_intersect(&current_rect, &rect_unk16);
+		(void)rect_intersect(&current_rect, &car_menu_redraw_cliprect);
 		rect_union(&current_rect, &previous_rect, &union_rect);
 		if (render_phase != CAR_RENDER_START_PHASE) {
 			render_phase = CAR_RENDER_DRAW_PHASE;

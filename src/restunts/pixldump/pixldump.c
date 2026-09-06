@@ -408,7 +408,7 @@ static void pixldump_render_frame(void)
 {
 	sprite_copy_wnd_to_1();
 	update_frame(0, &rect_windshield);
-	sub_19F14(&rect_windshield);
+	frame_present(&rect_windshield);
 	/* The normal presentation path draws the software mouse cursor last. */
 	mouse_draw_opaque_check();
 }
@@ -518,16 +518,16 @@ static legacy_s16 pixldump_process_replay(const legacy_s8* replay_name,
 		return 1;
 
 	kbormouse = 0;
-	byte_449E6 = REPLAY_PLAYBACK_NORMAL;
-	byte_449DA = 1;
+	replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
+	race_exit_request = 1;
 	game_replay_mode_copy = -1;
-	byte_44346 = 0;
-	byte_4432A = 0;
+	frame_buffer_index = 0;
+	dashboard_buffer_index = 0;
 	byte_46467 = 0;
 	dashb_toggle = 0;
 	followOpponentFlag = (legacy_u8)target;
 	framespersec = GAME_FRAME_RATE_NORMAL;
-	word_44DCA = PIXLDUMP_FRAME_TIMER_VALUE;
+	start_flag_animation = PIXLDUMP_FRAME_TIMER_VALUE;
 	rect_windshield.left = 0;
 	rect_windshield.right = 320;
 	rect_windshield.top = 0;
@@ -597,7 +597,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[])
 	font_set_fontdef();
 	init_polyinfo();
 	init_trackdata();
-	init_unknown();
+	reset_race_loop_state();
 	init_kevinrandom("kevin");
 	result = pixldump_process_replay(argv[1], output_name, camera_number,
 		target, bmp_mode, requested_frame);

@@ -94,7 +94,7 @@ void frame_callback(void)
 			audio_car_state_read_index = 0;
 	}
 
-	if (byte_449DA == 0 && byte_46467 == 0 &&
+	if (race_exit_request == 0 && byte_46467 == 0 &&
 		(is_in_replay == 0 || game_replay_mode != REPLAY_MODE_PLAYBACK)) {
 		if (game_replay_mode == REPLAY_MODE_LIVE &&
 			LEGACY_S16_FROM_BITS(state.game_frame_in_sec) >=
@@ -107,7 +107,7 @@ void frame_callback(void)
 				byte_44A8A = (legacy_u8)word_4499C;
 				frame_callback_count = LEGACY_U16_WRAP_ADD(frame_callback_count, 1U);
 				if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
-					LEGACY_S8_FROM_BITS(byte_449E6) ==
+					LEGACY_S8_FROM_BITS(replay_playback_speed) ==
 						REPLAY_PLAYBACK_SLOW) {
 					byte_4552F = (legacy_u8)(byte_4552F - 1U);
 					if (byte_4552F == 0) {
@@ -116,7 +116,7 @@ void frame_callback(void)
 					}
 				} else {
 					if (game_replay_mode == REPLAY_MODE_PLAYBACK &&
-						LEGACY_S8_FROM_BITS(byte_449E6) ==
+						LEGACY_S8_FROM_BITS(replay_playback_speed) ==
 							REPLAY_PLAYBACK_FAST)
 						replay_unk2(0);
 					replay_unk2(0);
@@ -148,13 +148,13 @@ void replay_unk2(legacy_s16 mode)
 			elapsed_time2++;
 			return;
 		}
-		if (byte_449DA != 0)
+		if (race_exit_request != 0)
 			return;
 		is_in_replay = 1;
 		audio_carstate();
-		byte_449DA = 1;
+		race_exit_request = 1;
 		return;
-	} else if (byte_449DA == 0 &&
+	} else if (race_exit_request == 0 &&
 		state.game_end_event == 0 &&
 		game_replay_mode != REPLAY_MODE_PAUSED) {
 		if (passed_security == 0 &&
@@ -228,7 +228,7 @@ void replay_unk2(legacy_s16 mode)
 	elapsed_total = LEGACY_U16_WRAP_ADD(elapsed_time2, elapsed_time1);
 	if (recording_limit <= elapsed_total) {
 		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-		byte_449DA = 1;
+		race_exit_request = 1;
 		return;
 	}
 

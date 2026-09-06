@@ -178,7 +178,7 @@ void init_game_state(legacy_s16 arg)
 		LEGACY_U16_DIV_OR_ZERO(TIMER_TICKS_PER_SECOND, framespersec));
 
 	if (arg != GAMESTATE_INIT_TIMING_ONLY) {
-		init_unknown();
+		reset_race_loop_state();
 
 		state.game_checkpoint_valid = GAMESTATE_CHECKPOINT_VALID;
 		state.game_frames_per_sec = GAMESTATE_INITIAL_TIMING_VALUE;

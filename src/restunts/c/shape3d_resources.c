@@ -6,7 +6,7 @@ extern legacy_s8 far* game1ptr;
 extern legacy_s8 far* game2ptr;
 extern legacy_s8 far* curshapeptr;
 extern struct SHAPE3D game3dshapes[130];
-extern legacy_s8 aBarn[];
+extern legacy_s8 game_shape_names[];
 
 #define SHAPE3D_REQUIRED_ARENA_BYTES 65000UL
 #define SHAPE3D_REQUIRED_HIGHPOOL_PARAGRAPHS 4062U
@@ -37,7 +37,7 @@ legacy_s16 shape3d_load_all() {
 	game2ptr = file_load_3dres("game2");
 
 	for (i = 0; i < SHAPE3D_BASE_TRACK_SHAPE_COUNT; i++) {
-		shapename = &aBarn[i * SHAPE3D_TRACK_SHAPE_NAME_SIZE];
+		shapename = &game_shape_names[i * SHAPE3D_TRACK_SHAPE_NAME_SIZE];
 		curshapeptr = locate_shape_nofatal(game1ptr, shapename);
 		if (curshapeptr == 0)
 			curshapeptr = locate_shape_fatal(game2ptr, shapename);

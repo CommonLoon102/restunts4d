@@ -129,7 +129,7 @@ static void replay_controls_draw(legacy_u16 recorded_frame, legacy_u16 current_f
 	legacy_u8 previous_selection;
 	legacy_u8 state_changed;
 
-	player_index = (legacy_u8)byte_4432A;
+	player_index = (legacy_u8)dashboard_buffer_index;
 	if (byte_449D8[player_index] == 0) {
 		byte_449D8[player_index] = 1;
 		byte_40E74[player_index] = REPLAY_NO_SELECTION;
@@ -268,7 +268,7 @@ static void replay_draw_waiting(void)
 		font_centered_text_x(&resID_byte1), REPLAY_WAITING_TEXT_Y,
 		dialog_fnt_colour, 0);
 	if (slow_video_mgmt_copy != 0)
-		rect_union(rectptr_unk2, text_rectangle, rectptr_unk2);
+		rect_union(alternate_frame_rects, text_rectangle, alternate_frame_rects);
 }
 
 static void replay_pause_menu(void)
@@ -300,7 +300,7 @@ static void replay_pause_menu(void)
 	}
 	if (((legacy_u8)byte_43966 & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0)
 		options[REPLAY_PAUSE_ACTION_FINISH] = 1;
-	byte_454A4 = (legacy_u8)video_flag6_is1;
+	full_redraw_frames_remaining = (legacy_u8)video_flag6_is1;
 	menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
 		DIALOG_NO_BACKGROUND_SAVE,
 		locate_text_res(gameresptr, aMen_0),
@@ -310,7 +310,7 @@ static void replay_pause_menu(void)
 	switch (menu_result) {
 	case REPLAY_PAUSE_ACTION_FINISH:
 		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-		byte_449DA = REPLAY_EXIT_REQUESTED;
+		race_exit_request = REPLAY_EXIT_REQUESTED;
 		break;
 
 	case REPLAY_PAUSE_ACTION_RESTART:
@@ -352,7 +352,7 @@ static void replay_pause_menu(void)
 		cameramode = CAMERA_MODE_COCKPIT;
 		state.game_end_event = 0;
 		state.game_frame_in_sec = 0;
-		byte_449E6 = REPLAY_PLAYBACK_NORMAL;
+		replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
 		replay_controls_select(REPLAY_CONTROL_PLAY);
 		is_in_replay = 0;
 		mouse_minmax_position(LEGACY_S8_FROM_BITS(byte_3B8F2));
@@ -478,7 +478,7 @@ static void replay_pause_menu(void)
 	case REPLAY_PAUSE_ACTION_EXIT:
 		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		byte_43966 = 0;
-		byte_449DA = REPLAY_EXIT_REQUESTED;
+		race_exit_request = REPLAY_EXIT_REQUESTED;
 		break;
 	}
 	check_input();
@@ -694,7 +694,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		byte_3E9DB = game_camera_buttons_count[(legacy_u8)cameramode];
 	sprite_copy_2_to_1();
 	if (video_flag5_is0 != 0)
-		byte_4432A = byte_44346 ^ 1;
+		dashboard_buffer_index = frame_buffer_index ^ 1;
 
 	for (;;) {
 	delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta_alt());
@@ -823,11 +823,11 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 			return;
 		case REPLAY_CONTROL_FAST_PLAY:
 			replay_controls_select(REPLAY_CONTROL_FAST_PLAY);
-			byte_449E6 = REPLAY_PLAYBACK_FAST;
+			replay_playback_speed = REPLAY_PLAYBACK_FAST;
 			is_in_replay = 0;
 			break;
 		case REPLAY_CONTROL_PLAY:
-			byte_449E6 = REPLAY_PLAYBACK_NORMAL;
+			replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
 			replay_controls_select(REPLAY_CONTROL_PLAY);
 			is_in_replay = 0;
 			break;

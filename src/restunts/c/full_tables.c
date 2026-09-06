@@ -63,7 +63,7 @@ legacy_u8* sphere_radius_rows[40] = {
 	sphere_radii_data + 595, sphere_radii_data + 630, sphere_radii_data + 666, sphere_radii_data + 703, sphere_radii_data + 741
 };
 
-static legacy_s8 lookahead_table_3BE54[70] = {
+static legacy_s8 lookahead_north_west_to_east[70] = {
 	-2, -4, 2, -1, -4, 2, 0, -4, 2, 1, -4, 2, 2, -4,
 	2, -2, -3, 1, -1, -3, 1, 0, -3, 1, 1, -3, 1, 2,
 	-3, 1, -2, -2, 1, -1, -2, 0, 0, -2, 0, 1, -2, 0,
@@ -71,7 +71,7 @@ static legacy_s8 lookahead_table_3BE54[70] = {
 	0, 2, -1, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BE9A[70] = {
+static legacy_s8 lookahead_north_east_to_west[70] = {
 	2, -4, 2, 1, -4, 2, 0, -4, 2, -1, -4, 2, -2, -4,
 	2, 2, -3, 1, 1, -3, 1, 0, -3, 1, -1, -3, 1, -2,
 	-3, 1, 2, -2, 1, 1, -2, 0, 0, -2, 0, -1, -2, 0,
@@ -79,7 +79,7 @@ static legacy_s8 lookahead_table_3BE9A[70] = {
 	0, -2, -1, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BEE0[70] = {
+static legacy_s8 lookahead_east_north_to_south[70] = {
 	4, -2, 2, 4, -1, 2, 4, 0, 2, 4, 1, 2, 4, 2,
 	2, 3, -2, 1, 3, -1, 1, 3, 0, 1, 3, 1, 1, 3,
 	2, 1, 2, -2, 1, 2, -1, 0, 2, 0, 0, 2, 1, 0,
@@ -87,7 +87,7 @@ static legacy_s8 lookahead_table_3BEE0[70] = {
 	0, 2, 2, 0, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BF26[70] = {
+static legacy_s8 lookahead_east_south_to_north[70] = {
 	4, 2, 2, 4, 1, 2, 4, 0, 2, 4, -1, 2, 4, -2,
 	2, 3, 2, 1, 3, 1, 1, 3, 0, 1, 3, -1, 1, 3,
 	-2, 1, 2, 2, 1, 2, 1, 0, 2, 0, 0, 2, -1, 0,
@@ -95,7 +95,7 @@ static legacy_s8 lookahead_table_3BF26[70] = {
 	0, 1, -2, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BF6C[70] = {
+static legacy_s8 lookahead_south_east_to_west[70] = {
 	2, 4, 2, 1, 4, 2, 0, 4, 2, -1, 4, 2, -2, 4,
 	2, 2, 3, 1, 1, 3, 1, 0, 3, 1, -1, 3, 1, -2,
 	3, 1, 2, 2, 0, 1, 2, 0, 0, 2, 0, -1, 2, 0,
@@ -103,7 +103,7 @@ static legacy_s8 lookahead_table_3BF6C[70] = {
 	0, -2, 1, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BFB2[70] = {
+static legacy_s8 lookahead_south_west_to_east[70] = {
 	-2, 4, 2, -1, 4, 2, 0, 4, 2, 1, 4, 2, 2, 4,
 	2, -2, 3, 1, -1, 3, 1, 0, 3, 1, 1, 3, 1, 2,
 	3, 1, -2, 2, 1, -1, 2, 0, 0, 2, 0, 1, 2, 0,
@@ -111,7 +111,7 @@ static legacy_s8 lookahead_table_3BFB2[70] = {
 	0, 2, 1, 0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3BFF8[70] = {
+static legacy_s8 lookahead_west_south_to_north[70] = {
 	-4, 2, 2, -4, 1, 2, -4, 0, 2, -4, -1, 2, -4, -2,
 	2, -3, 2, 1, -3, 1, 1, -3, 0, 1, -3, -1, 1, -3,
 	-2, 1, -2, 2, 1, -2, 1, 0, -2, 0, 0, -2, -1, 0,
@@ -119,7 +119,7 @@ static legacy_s8 lookahead_table_3BFF8[70] = {
 	0, -1, -2, 0, 0, 1, 0, 0, -1, 0, 0, 0, 0, 0
 };
 
-static legacy_s8 lookahead_table_3C03E[70] = {
+static legacy_s8 lookahead_west_north_to_south[70] = {
 	-4, -2, 2, -4, -1, 2, -4, 0, 2, -4, 1, 2, -4, 2,
 	2, -3, -2, 1, -3, -1, 1, -3, 0, 1, -3, 1, 1, -3,
 	2, 1, -2, -2, 1, -2, -1, 0, -2, 0, 0, -2, 1, 0,
@@ -128,5 +128,5 @@ static legacy_s8 lookahead_table_3C03E[70] = {
 };
 
 legacy_s8* lookahead_tiles_tables[8] = {
-	lookahead_table_3BE9A, lookahead_table_3BEE0, lookahead_table_3BF26, lookahead_table_3BF6C, lookahead_table_3BFB2, lookahead_table_3BFF8, lookahead_table_3C03E, lookahead_table_3BE54
+	lookahead_north_east_to_west, lookahead_east_north_to_south, lookahead_east_south_to_north, lookahead_south_east_to_west, lookahead_south_west_to_east, lookahead_west_south_to_north, lookahead_west_north_to_south, lookahead_north_west_to_east
 };

@@ -326,7 +326,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	init_trackdata();
 
-	init_unknown();
+	reset_race_loop_state();
 
 	init_kevinrandom("kevin");
 
@@ -384,8 +384,8 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		return 1;
 	}
 	kbormouse = 0;
-	byte_449E6 = REPLAY_PLAYBACK_NORMAL;
-	byte_449DA = 1;
+	replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
+	race_exit_request = 1;
 	printf("OK\n");
 
 	printf("Set frame callback... ");
@@ -393,8 +393,8 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	set_frame_callback();
 #endif
 	game_replay_mode_copy = LEGACY_U8_MAX;
-	byte_44346 = 0;
-	byte_4432A = 0;
+	frame_buffer_index = 0;
+	dashboard_buffer_index = 0;
 	byte_46467 = 0;
 	dashb_toggle = 0;
 	printf("OK\n");
@@ -402,7 +402,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	printf("Restore game state... ");
 	cameramode = 0;
 	game_replay_mode = REPLAY_MODE_PLAYBACK;
-	word_44DCA = REPLDUMP_FRAME_TIMER_VALUE;
+	start_flag_animation = REPLDUMP_FRAME_TIMER_VALUE;
 	framespersec = GAME_FRAME_RATE_NORMAL;
 
 	restore_gamestate(0);

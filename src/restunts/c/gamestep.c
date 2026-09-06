@@ -174,13 +174,13 @@ void update_gamestate(void)
 		state.game_frame_in_sec = LEGACY_S16_WRAP_ADD(
 			state.game_frame_in_sec, 1);
 		if (state.game_frame_in_sec == state.game_frames_per_sec &&
-			byte_449DA == 0) {
+			race_exit_request == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 &&
 				state.playerstate.car_actual_speed != CAR_SPEED_STOPPED) {
 				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
 					state.game_frames_per_sec, 1);
 			} else if (game_replay_mode == REPLAY_MODE_LIVE) {
-				byte_449DA = 1;
+				race_exit_request = 1;
 			}
 		}
 	}
@@ -200,11 +200,11 @@ void update_gamestate(void)
 		audio_carstate();
 #endif
 		if (byte_4393C != RACE_START_SEQUENCE_INACTIVE) {
-			if (word_44DCA < START_FLAG_ANIMATION_LIMIT)
-				word_44DCA = LEGACY_S16_WRAP_ADD(word_44DCA,
+			if (start_flag_animation < START_FLAG_ANIMATION_LIMIT)
+				start_flag_animation = LEGACY_S16_WRAP_ADD(start_flag_animation,
 					START_FLAG_ANIMATION_STEP);
 			if (byte_4393C == RACE_START_SEQUENCE_FLAG_ANIMATION &&
-				word_44DCA > START_FLAG_AUTO_DRIVE_THRESHOLD)
+				start_flag_animation > START_FLAG_AUTO_DRIVE_THRESHOLD)
 				byte_4393C = RACE_START_SEQUENCE_AUTO_DRIVE;
 			if (byte_4393C == RACE_START_SEQUENCE_AUTO_DRIVE) {
 				if (LEGACY_S16_WRAP_ADD(

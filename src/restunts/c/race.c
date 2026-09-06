@@ -76,12 +76,12 @@ void run_game(void) {
 	} else {
 
 		kbormouse = 0;
-		byte_449E6 = REPLAY_PLAYBACK_NORMAL;
-		byte_449DA = 1;
+		replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
+		race_exit_request = 1;
 		set_frame_callback();
 		game_replay_mode_copy = RACE_REPLAY_MODE_UNINITIALIZED;
-		byte_44346 = 0;
-		byte_4432A = 0;
+		frame_buffer_index = 0;
+		dashboard_buffer_index = 0;
 		byte_46467 = 0;
 		dashb_toggle = 0;
 
@@ -119,7 +119,7 @@ void run_game(void) {
 			} else {
 				cameramode = CAMERA_MODE_COCKPIT;
 				game_replay_mode = REPLAY_MODE_PLAYBACK;
-				word_44DCA = RACE_REPLAY_RESTORE_WAIT_TICKS;
+				start_flag_animation = RACE_REPLAY_RESTORE_WAIT_TICKS;
 				framespersec = gameconfig.game_framespersec;
 				restore_gamestate(0);
 				restore_gamestate(gameconfig.game_recordedframes);
@@ -146,7 +146,7 @@ void run_game(void) {
 			}
 
 
-			if (game_replay_mode == REPLAY_MODE_LIVE && byte_449DA == 0 &&
+			if (game_replay_mode == REPLAY_MODE_LIVE && race_exit_request == 0 &&
 				state.game_inputmode != GAME_INPUT_MODE_WAITING) {
 				if (var_C == state.game_frame)
 					continue;
@@ -181,7 +181,7 @@ void run_game(void) {
 				if (regsi != 0) {
 					update_crash_state(
 						CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-					byte_449DA = 1;
+					race_exit_request = 1;
 				}
 
 				byte_46467 = 0;
@@ -189,7 +189,7 @@ void run_game(void) {
 
 			if (video_flag5_is0 != 0) {
 				setup_mcgawnd2();
-				byte_4432A = byte_44346;
+				dashboard_buffer_index = frame_buffer_index;
 			} else {
 				sprite_copy_wnd_to_1();
 			}
@@ -238,7 +238,7 @@ void run_game(void) {
 				}
 
 				if (var_2 != roofbmpheight_copy || dashbmp_y_copy != word_449EA || var_E != height_above_replaybar) {
-					byte_454A4 = video_flag6_is1;
+					full_redraw_frames_remaining = video_flag6_is1;
 					set_projection(RACE_PROJECTION_HORIZONTAL_SCALE,
 						LEGACY_S16_DIV_OR_ZERO(dashbmp_y_copy,
 							RACE_PROJECTION_VERTICAL_DIVISOR),
@@ -251,8 +251,8 @@ void run_game(void) {
 				}
 			}
 
-			if (byte_454A4 != 0) {
-				byte_449D8[byte_4432A] = 0;
+			if (full_redraw_frames_remaining != 0) {
+				byte_449D8[dashboard_buffer_index] = 0;
 				if (byte_449E2 != 0) {
 					sprite_set_1_size(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
 						height_above_replaybar);
@@ -267,19 +267,19 @@ void run_game(void) {
 				}
 			} else {
 				if (replaybar_enabled == 0) {
-					byte_449D8[byte_4432A] = 0;
+					byte_449D8[dashboard_buffer_index] = 0;
 				}
 			}
 
-			update_frame(byte_44346, &rect_windshield);
+			update_frame(frame_buffer_index, &rect_windshield);
 			if (dastbmp_y != 0 && byte_449E2 != 0) {
 				if (slow_video_mgmt_copy != 0) {
 					var_rect.left = 0;
 					var_rect.right = RACE_SCREEN_WIDTH;
 					var_rect.top = dastbmp_y;
 					var_rect.bottom = dashbmp_y_copy;
-					if (rectptr_unk != 0) {
-						rect_union(rectptr_unk, &var_rect, rectptr_unk);
+					if (active_frame_rects != 0) {
+						rect_union(active_frame_rects, &var_rect, active_frame_rects);
 					}
 				}
 
@@ -287,7 +287,7 @@ void run_game(void) {
 				shape2d_rle_or_far_pointer(dastbmp_y2, dastseg);
 			}
 
-			sub_19F14(&rect_windshield);
+			frame_present(&rect_windshield);
 			if (byte_449E2 != 0) {
 				sprite_set_1_size(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
 					height_above_replaybar);
@@ -296,15 +296,15 @@ void run_game(void) {
 					RACE_SCREEN_HEIGHT);
 			}
 
-			if (byte_454A4 != 0) {
-				byte_454A4--;
+			if (full_redraw_frames_remaining != 0) {
+				full_redraw_frames_remaining--;
 			}
 
 			if (video_flag5_is0 != 0) {
 				mouse_draw_opaque_check();
 				setup_mcgawnd1();
-				byte_44346 ^= 1;
-				byte_4432A = byte_44346;
+				frame_buffer_index ^= 1;
+				dashboard_buffer_index = frame_buffer_index;
 				mouse_draw_transparent_check();
 			}
 
@@ -315,12 +315,12 @@ void run_game(void) {
 			}
 
 			if (idle_expired == 0) {
-				if (byte_449DA != 0) {
+				if (race_exit_request != 0) {
 
 					if ((game_replay_mode != REPLAY_MODE_LIVE ||
 						state.game_end_event == CRASH_EVENT_EXIT) &&
-						byte_449DA != REPLAY_EXIT_REQUESTED) {
-						byte_449DA = 0;
+						race_exit_request != REPLAY_EXIT_REQUESTED) {
+						race_exit_request = 0;
 						game_replay_mode = REPLAY_MODE_PLAYBACK;
 						mouse_minmax_position(0);
 						loop_game(REPLAY_LOOP_LOAD_RESOURCES,
@@ -364,7 +364,7 @@ void run_game(void) {
 				}
 
 			} else {
-				if (dos_kb_get_char() != 0 || byte_449DA != 0 || get_kb_or_joy_flags() != 0) {
+				if (dos_kb_get_char() != 0 || race_exit_request != 0 || get_kb_or_joy_flags() != 0) {
 					break;
 				}
 			}

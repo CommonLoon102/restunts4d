@@ -88,7 +88,7 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 	line_count = LEGACY_READ_S16_LE(crack_info +
 		((legacy_u16)LEGACY_S16_WRAP_ADD(frame_index,
 			CRACK_INFO_HEADER_WORDS) << CRACK_INFO_INDEX_SHIFT));
-	rect_ingame_text = cliprect_unk;
+	rect_ingame_text = empty_rect;
 
 	for (i = 0; i < line_count; i++) {
 		legacy_u16 line_offset = (legacy_u16)i << CRACK_LINE_RECORD_SHIFT;
@@ -168,7 +168,7 @@ struct RECTANGLE* draw_ingame_text(void)
 	legacy_u16 replay_frame;
 	legacy_s16 replay_x;
 
-	rect_ingame_text = cliprect_unk;
+	rect_ingame_text = empty_rect;
 	if (idle_expired != 0) {
 		draw_centered_ingame_resource("dm1", DEMO_TEXT_FIRST_Y);
 		draw_centered_ingame_resource("dm2", DEMO_TEXT_SECOND_Y);

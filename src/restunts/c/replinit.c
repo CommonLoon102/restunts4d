@@ -93,12 +93,12 @@ void init_trackdata(void)
 	trkptr += TRACKDATA_OBJECT_INDEX_SIZE;
 }
 
-void init_unknown(void)
+void reset_race_loop_state(void)
 {
 	byte_44A8A = 1;
 	byte_4552F = REPLAY_SLOW_CALLBACK_DIVISOR;
 	elapsed_time2 = 0;
-	byte_449DA = 0;
+	race_exit_request = 0;
 	byte_4393C = RACE_START_SEQUENCE_INACTIVE;
-	word_44DCA = 0;
+	start_flag_animation = 0;
 }

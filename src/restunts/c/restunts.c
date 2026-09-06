@@ -144,7 +144,7 @@ struct VECTOR carpos = { 0, LEGACY_S16_FROM_BITS(
 //struct VECTOR carpos = { 0, 0, GAME_SCREEN_WIDTH };
 
 struct SPRITE far* render_window_sprite;
-// cliprect_unk uses the legacy sentinel rectangle <9999, 65535, 9999, 65535>.
+// empty_rect uses the legacy sentinel rectangle <9999, 65535, 9999, 65535>.
 
 extern legacy_s16 polyinfonumpolys;
 extern legacy_u8 far* polyinfoptrs[]; // array size = 400
@@ -414,7 +414,7 @@ static void init_full_game(legacy_s16 argc, legacy_s8* argv[])
 	init_polyinfo();
 	init_trackdata();
 
-	init_unknown();
+	reset_race_loop_state();
 
 	init_kevinrandom("kevin");
 
