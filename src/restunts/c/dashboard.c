@@ -219,8 +219,8 @@ void setup_car_shapes(legacy_s16 operation)
 
 	player_index = (legacy_u8)byte_4432A;
 	steering_dot_cleared = 0;
-	if (state.playerstate.car_fpsmul2 == 0 &&
-		state.playerstate.car_changing_gear == 0 &&
+	if (state.playerstate.car_fpsmul2 == GEAR_CHANGE_DELAY_EXPIRED &&
+		state.playerstate.car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
 		byte_40DFA[player_index] != 0) {
 		if (video_flag5_is0 == 0)
 			mouse_draw_opaque_check();
@@ -233,7 +233,7 @@ void setup_car_shapes(legacy_s16 operation)
 			(legacy_u8)state.playerstate.car_changing_gear ||
 		word_40D70[player_index] != state.playerstate.car_knob_x ||
 		word_40D74[player_index] != state.playerstate.car_knob_y ||
-		(state.playerstate.car_fpsmul2 != 0 &&
+		(state.playerstate.car_fpsmul2 != GEAR_CHANGE_DELAY_EXPIRED &&
 			byte_40DFA[player_index] == 0)) {
 		sprite_set_1_from_argptr(whlsprite2);
 		byte_40DFA[player_index] = 1;
