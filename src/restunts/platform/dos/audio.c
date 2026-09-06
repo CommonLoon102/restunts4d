@@ -57,6 +57,11 @@ extern void mmgr_release(void far* memory);
 #define DOS_AUDIO_CHANNEL_INDEX_MASK 15U
 #define DOS_AUDIO_DRIVER_CHANNEL_BASE 1U
 #define DOS_AUDIO_MASTER_STATE_INITIALIZER { 16U, 0U, 22U }
+#define DOS_AUDIO_DRIVER_NONE 0
+#define DOS_AUDIO_DIRECT_CHANNELS_DISABLED 0
+#define DOS_AUDIO_SPECIAL_MODE_DISABLED 0
+#define DOS_AUDIO_DRIVER_CONTEXT_NONE 0
+#define DOS_AUDIO_FIRST_CONTEXT_INDEX 0U
 
 struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
 struct AUDIO_CHANNEL audio_channels[AUDIO_CHANNEL_COUNT];
@@ -263,11 +268,12 @@ void dos_audio_driver_set_master_state(legacy_s16 operation,
 void dos_audio_shutdown(void)
 {
 	audio_update_lock = AUDIO_UPDATE_LOCKED;
-	if (dos_audio_driver_binary != 0) {
+	if (dos_audio_driver_binary != DOS_AUDIO_DRIVER_NONE) {
 		timer_remove_callback(audio_sequence_timer);
 		audio_music_enabled = AUDIO_STATE_DISABLED;
 		audio_effects_enabled = AUDIO_STATE_DISABLED;
-		if (dos_audio_uses_direct_channels != 0) {
+		if (dos_audio_uses_direct_channels !=
+			DOS_AUDIO_DIRECT_CHANNELS_DISABLED) {
 			dos_audio_master_volume = DOS_AUDIO_SHUTDOWN_MASTER_VOLUME;
 			dos_audio_driver_set_master_state(
 				DOS_AUDIO_SHUTDOWN_MASTER_OPERATION,
@@ -276,9 +282,10 @@ void dos_audio_shutdown(void)
 		dos_audio_driver_start();
 		dos_audio_driver_shutdown();
 		mmgr_release(dos_audio_driver_binary);
-		dos_audio_driver_binary = 0;
-		dos_audio_uses_direct_channels = 0;
-		dos_audio_special_mode = 0;
+		dos_audio_driver_binary = DOS_AUDIO_DRIVER_NONE;
+		dos_audio_uses_direct_channels =
+			DOS_AUDIO_DIRECT_CHANNELS_DISABLED;
+		dos_audio_special_mode = DOS_AUDIO_SPECIAL_MODE_DISABLED;
 	}
 	audio_update_lock = AUDIO_UPDATE_UNLOCKED;
 }
@@ -302,14 +309,16 @@ void dos_audio_bind_channel_context(legacy_s16 channel, void far* resource)
 			DOS_AUDIO_CHANNEL_INDEX_MASK) + DOS_AUDIO_DRIVER_CHANNEL_BASE);
 	channel_state->driver_channel = driver_channel;
 
-	if (dos_audio_uses_direct_channels != 0) {
+	if (dos_audio_uses_direct_channels != DOS_AUDIO_DIRECT_CHANNELS_DISABLED) {
 		dos_audio_driver_prepare_context(
-			driver_channel, 0, (legacy_u8*)channel_state, resource);
+			driver_channel, DOS_AUDIO_DRIVER_CONTEXT_NONE,
+			(legacy_u8*)channel_state, resource);
 		return;
 	}
 
 	driver_context = dos_audio_contexts;
-	for (context_index = 0; context_index < dos_audio_context_count;
+	for (context_index = DOS_AUDIO_FIRST_CONTEXT_INDEX;
+		context_index < dos_audio_context_count;
 		context_index++) {
 		if ((legacy_u16)driver_context->channel == (legacy_u16)channel)
 			dos_audio_driver_prepare_context((legacy_s16)context_index,
@@ -329,13 +338,15 @@ void dos_audio_set_channel_volume(legacy_s16 channel, legacy_s16 volume)
 	volume_bits = (legacy_u8)volume;
 	chunk->volume = (legacy_u8)volume_bits;
 
-	if (dos_audio_uses_direct_channels != 0) {
-		dos_audio_driver_set_volume(chunk->driver_channel, 0, volume_bits);
+	if (dos_audio_uses_direct_channels != DOS_AUDIO_DIRECT_CHANNELS_DISABLED) {
+		dos_audio_driver_set_volume(chunk->driver_channel,
+			DOS_AUDIO_DRIVER_CONTEXT_NONE, volume_bits);
 		return;
 	}
 
 	context = dos_audio_contexts;
-	for (context_index = 0; context_index < dos_audio_context_count;
+	for (context_index = DOS_AUDIO_FIRST_CONTEXT_INDEX;
+		context_index < dos_audio_context_count;
 		context_index++) {
 		if ((legacy_u16)context->channel == (legacy_u16)channel)
 			dos_audio_driver_set_volume(
