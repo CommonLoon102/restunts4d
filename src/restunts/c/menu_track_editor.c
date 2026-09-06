@@ -1067,7 +1067,7 @@ void load_tracks_menu_shapes(void)
 				key = 1;
 		}
 		if (path_animation_index != 0)
-			(void)timer_get_counter_unk(10UL);
+			(void)timer_wait_ticks(10UL);
 
 		if (cursor_drawn != 0) {
 			mouse_draw_opaque_check();

@@ -456,8 +456,8 @@ legacy_u8 byte_40E74[2];
 legacy_s16 word_40E76[2];
 legacy_u8 byte_40E7A[18];
 legacy_s16 word_3EB90;
-legacy_u16 word_3F1C2;
-legacy_u16 word_3F1C4;
+legacy_u16 slow_timer_deadline_low;
+legacy_u16 slow_timer_deadline_high;
 struct RECTANGLE word_42248;
 struct RECTANGLE word_42250;
 

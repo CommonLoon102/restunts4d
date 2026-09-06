@@ -362,8 +362,8 @@ extern struct MEMCHUNK* resendptr1;
 extern struct MEMCHUNK* resendptr2;
 extern legacy_u16 resmaxsize;
 
-extern legacy_u16 word_3F1C2;
-extern legacy_u16 word_3F1C4;
+extern legacy_u16 slow_timer_deadline_low;
+extern legacy_u16 slow_timer_deadline_high;
 extern void (far* exitlistfuncs[])(void);
 extern const legacy_s8 aExitListOverflow[];
 

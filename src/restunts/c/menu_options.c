@@ -114,14 +114,14 @@ void do_joy_restext(void)
 		LEGACY_S16_WRAP_SUB(positions[9], positions[1]), 8);
 
 	selected = -1;
-	sub_307B4();
+	joystick_reset_calibration();
 	for (;;) {
 		if (kb_read_char() != 0)
 			break;
 		joy_flags = (legacy_u16)dos_get_joy_flags();
 		if ((joy_flags & JOYSTICK_BUTTON_MASK) != 0)
 			break;
-		next_selected = (legacy_s16)sub_307D2(joy_flags);
+		next_selected = (legacy_s16)input_direction_from_flags(joy_flags);
 		if (next_selected == selected)
 			continue;
 		for (i = 0; i < 9U; i++)

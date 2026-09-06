@@ -139,7 +139,7 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 	return LEGACY_S16_FROM_BITS(code_bits);
 }
 
-void nopsub_304AF(legacy_s16 code)
+void kb_remove_callback(legacy_s16 code)
 {
 	legacy_u16 code_bits;
 	legacy_u16 key_index;
@@ -155,32 +155,32 @@ void nopsub_304AF(legacy_s16 code)
 		input_extended_callback_flags[key_index] = 0;
 }
 
-void nopsub_kb_set_readchar_callback(readchar_callback_type callback)
+void kb_set_readchar_callback(readchar_callback_type callback)
 {
 	input_readchar_callback = callback;
 }
 
-readchar_callback_type nopsub_kb_get_readchar_callback(void)
+readchar_callback_type kb_get_readchar_callback(void)
 {
 	return input_readchar_callback;
 }
 
-void sub_307B4(void)
+void joystick_reset_calibration(void)
 {
 	dos_joystick_reset_calibration();
 }
 
-legacy_s16 sub_307D2(legacy_s16 index)
+legacy_s16 input_direction_from_flags(legacy_s16 index)
 {
 	return input_direction_table[(legacy_u16)index & INPUT_DRIVING_MASK];
 }
 
-legacy_s16 sub_307E3(void)
+legacy_s16 joystick_get_scaled_x(void)
 {
 	return dos_joystick_get_scaled_axis(0U);
 }
 
-legacy_s16 nopsub_307FA(void)
+legacy_s16 joystick_get_scaled_y(void)
 {
 	return dos_joystick_get_scaled_axis(1U);
 }
@@ -633,7 +633,7 @@ void check_input(void)
 	} while (pressed);
 }
 
-void nopsub_28F26(void)
+void input_wait_for_press_and_release(void)
 {
 	do {
 		/* Keep advancing input state until an event is reported. */

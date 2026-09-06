@@ -92,8 +92,8 @@ void audio_sequence_timer(void);
 void add_exit_handler(void (far* exit_handler)(void));
 void timer_reg_callback(void (far* callback)(void));
 void timer_remove_callback(void (far* callback)(void));
-legacy_u32 timer_copy_counter(legacy_u32 ticks);
-legacy_u32 timer_wait_for_dx(void);
+legacy_u32 timer_set_deadline(legacy_u32 ticks);
+legacy_u32 timer_wait_for_deadline(void);
 
 legacy_u8 audio_music_channel_count;
 legacy_u8 audio_suspended;
@@ -1483,15 +1483,15 @@ void audio_fade_out(legacy_s16 delay_ticks)
 			sub_37868(volume);
 		}
 		audio_update_lock = AUDIO_UPDATE_UNLOCKED;
-		timer_copy_counter(delay);
-		timer_wait_for_dx();
+		timer_set_deadline(delay);
+		timer_wait_for_deadline();
 		volume = LEGACY_S16_WRAP_SUB(volume, AUDIO_FADE_VOLUME_STEP);
 	}
 
 	sub_3736A();
 	if (dos_audio_uses_direct_channels != 0) {
-		timer_copy_counter(AUDIO_FADE_RESTORE_DELAY_TICKS);
-		timer_wait_for_dx();
+		timer_set_deadline(AUDIO_FADE_RESTORE_DELAY_TICKS);
+		timer_wait_for_deadline();
 		dos_audio_master_volume = AUDIO_DEFAULT_MASTER_VOLUME;
 		dos_audio_driver_set_master_state(AUDIO_DRIVER_MASTER_STATE_COMMAND,
 			(void far*)dos_audio_master_state);

@@ -147,8 +147,8 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 	text_edit_cursor_visible = 1;
 	insert_mode = 0;
 	read_line_helper();
-	timer_copy_counter(timeout);
-	set_add_value(TEXT_EDIT_CURSOR_BLINK_TICKS);
+	timer_set_deadline(timeout);
+	slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
 	first_key = 1;
 
 	for (;;) {
@@ -161,23 +161,23 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 				key = (legacy_u16)kb_call_readchar_callback();
 				if (key != 0)
 					break;
-			} while (sub_2EB07() == 0);
+			} while (slow_timer_deadline_reached() == 0);
 		}
 
 		if (key == 0) {
-			set_add_value(TEXT_EDIT_CURSOR_BLINK_TICKS);
+			slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
 			old_cursor_state = (legacy_u16)text_edit_cursor_visible;
 			text_edit_cursor_visible = 1;
 			read_line_helper();
 			text_edit_cursor_visible = old_cursor_state != 0 ? 0 : 1;
-			if (timeout != 0 && timer_compare_dx()) {
+			if (timeout != 0 && timer_deadline_reached()) {
 				read_line_helper();
 				return 0;
 			}
 			continue;
 		}
 
-		timer_copy_counter(timeout);
+		timer_set_deadline(timeout);
 		if (key == KEY_ENTER || key == KEY_ESCAPE || key == KEY_UP ||
 			(key == KEY_DOWN &&
 				(input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||

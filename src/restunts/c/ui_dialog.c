@@ -329,7 +329,7 @@ legacy_u16 show_dialog(
 		return LEGACY_U16_DIV_OR_ZERO(placeholder_index,
 			DIALOG_PLACEHOLDER_POSITION_STRIDE);
 	if (dialog_type == DIALOG_TYPE_DELAY) {
-		(void)sub_2EB1E(DIALOG_DELAY_TICKS);
+		(void)slow_timer_wait_ticks(DIALOG_DELAY_TICKS);
 		return dialog_finish(result, save_background);
 	}
 	if (dialog_type != DIALOG_TYPE_MENU)

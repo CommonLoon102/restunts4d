@@ -843,7 +843,7 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 			replay_controls_select(REPLAY_CONTROL_RESTART);
 			replay_controls_draw(state.game_frame, state.game_frame);
 			restore_gamestate(REPLAY_FIRST_FRAME);
-			(void)timer_get_counter_unk(REPLAY_RESTART_WAIT_TICKS);
+			(void)timer_wait_ticks(REPLAY_RESTART_WAIT_TICKS);
 			replay_controls_select(REPLAY_CONTROL_PAUSE);
 			replay_controls_draw(state.game_frame, state.game_frame);
 			return;

@@ -73,7 +73,7 @@ void set_frame_callback(void)
 
 void remove_frame_callback(void)
 {
-	timer_get_counter_unk(FRAME_CALLBACK_TIMER_TICKS);
+	timer_wait_ticks(FRAME_CALLBACK_TIMER_TICKS);
 	timer_remove_callback(&frame_callback);
 }
 
@@ -190,7 +190,7 @@ void replay_unk2(legacy_s16 mode)
 				else
 					input_flags = 0;
 			} else {
-				mapped_steering = LEGACY_S8_FROM_BITS(sub_307E3());
+				mapped_steering = LEGACY_S8_FROM_BITS(joystick_get_scaled_x());
 				input_steering_value = mapped_steering;
 				if (mapped_steering > 0) {
 					input_steering_value = joystick_steering_table[

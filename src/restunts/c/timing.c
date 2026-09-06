@@ -24,7 +24,7 @@ void timer_remove_callback(void (far* callback)(void))
 	dos_timer_unregister_callback(callback);
 }
 
-legacy_s16 nopsub_30A77(void)
+legacy_s16 timer_read_key_until_deadline(void)
 {
 	legacy_s16 key;
 
@@ -36,7 +36,7 @@ legacy_s16 nopsub_30A77(void)
 	return TIMER_INPUT_KEY_NONE;
 }
 
-legacy_s16 nopsub_30A97(legacy_u32 ticks)
+legacy_s16 timer_read_key_with_timeout(legacy_u32 ticks)
 {
 	legacy_u32 target;
 	legacy_s16 key;
@@ -65,13 +65,13 @@ void timer_reset()
 	dos_timer_reset_counter();
 }
 
-legacy_u32 timer_copy_counter(legacy_u32 ticks)
+legacy_u32 timer_set_deadline(legacy_u32 ticks)
 {
 	timer_wait_target = timer_get_counter() + ticks;
 	return timer_wait_target;
 }
 
-legacy_u32 timer_wait_for_dx(void)
+legacy_u32 timer_wait_for_deadline(void)
 {
 	legacy_u32 res;
 	do {
@@ -81,12 +81,12 @@ legacy_u32 timer_wait_for_dx(void)
 	return res;
 }
 
-legacy_s16 timer_compare_dx(void)
+legacy_s16 timer_deadline_reached(void)
 {
 	return timer_get_counter() >= timer_wait_target;
 }
 
-legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
+legacy_u32 timer_wait_ticks(legacy_u32 ticks)
 {
 	legacy_u32 target, res;
 	target = timer_get_counter() + ticks;
@@ -100,7 +100,7 @@ legacy_u32 timer_get_counter_unk(legacy_u32 ticks)
 
 static legacy_u32 secondary_timer_target(void)
 {
-	return ((legacy_u32)word_3F1C4 << LEGACY_WORD_BITS) | word_3F1C2;
+	return ((legacy_u32)slow_timer_deadline_high << LEGACY_WORD_BITS) | slow_timer_deadline_low;
 }
 
 static legacy_s16 secondary_timer_target_reached(
@@ -112,23 +112,23 @@ static legacy_s16 secondary_timer_target_reached(
 		(legacy_u16)current >= (legacy_u16)target;
 }
 
-legacy_u32 set_add_value(legacy_u32 ticks)
+legacy_u32 slow_timer_set_deadline(legacy_u32 ticks)
 {
 	legacy_u32 target;
 
 	target = (legacy_u32)(timer_get_slow_counter() + ticks);
-	word_3F1C2 = (legacy_u16)target;
-	word_3F1C4 = (legacy_u16)(target >> LEGACY_WORD_BITS);
+	slow_timer_deadline_low = (legacy_u16)target;
+	slow_timer_deadline_high = (legacy_u16)(target >> LEGACY_WORD_BITS);
 	return target;
 }
 
-legacy_s16 sub_2EB07(void)
+legacy_s16 slow_timer_deadline_reached(void)
 {
 	return secondary_timer_target_reached(
 		timer_get_slow_counter(), secondary_timer_target());
 }
 
-legacy_u32 sub_2EB1E(legacy_u32 ticks)
+legacy_u32 slow_timer_wait_ticks(legacy_u32 ticks)
 {
 	legacy_u32 current;
 	legacy_u32 target;
