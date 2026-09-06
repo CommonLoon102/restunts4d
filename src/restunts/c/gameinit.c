@@ -16,6 +16,7 @@
 #define CAR_INITIAL_ROUTE_GUIDANCE_ANGLE 0
 #define CAR_INITIAL_ROUTE_INDEX 0
 #define CAR_INITIAL_ENGINE_LIMITER_TIMER 0
+#define CAR_INITIAL_LAP_COUNT 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -152,7 +153,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
 	playerstate->car_fpsmul2 = GEAR_CHANGE_DELAY_EXPIRED;
 	playerstate->car_transmission = transmission;
-	playerstate->field_CD = 0;
+	playerstate->field_CD = CAR_INITIAL_LAP_COUNT;
 	playerstate->field_CE = ROUTE_POINT_FIRST;
 	playerstate->field_CF = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 }
