@@ -103,7 +103,7 @@ legacy_s16 vector_direction_sector(struct VECTOR* vec);
 void vector_to_point(struct VECTOR* vec, struct POINT2D* outpt);
 void vector_interpolate_at_z(struct VECTOR* vec1, struct VECTOR* vec2, struct VECTOR* outvec, legacy_s16 i);
 
-legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2);
+legacy_s16 multiply_and_scale(legacy_s16 left, legacy_s16 right);
 legacy_s16 absolute_word(legacy_s16 value);
 legacy_u16 sar1_word(legacy_u16 value);
 legacy_s16 position_to_word(legacy_s32 position);
@@ -111,7 +111,7 @@ legacy_s16 position_to_word(legacy_s32 position);
 void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* outrc);
 legacy_s16 rect_intersect(struct RECTANGLE* r1, struct RECTANGLE* r2);
 
-void plane_rotate_op(void);
-legacy_s16 plane_origin_op(legacy_s16 index, legacy_s16 b, legacy_s16 c, legacy_s16 d);
+void transform_wheel_travel_to_world(void);
+legacy_s16 plane_signed_distance(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z);
 
 #endif

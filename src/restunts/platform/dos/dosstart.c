@@ -15,8 +15,8 @@ extern void full_data_initialize(void);
 #endif
 
 #ifdef RESTUNTS_FULL
-extern legacy_s16 stuntsmainimpl(legacy_s16 argc, legacy_s8* argv[]);
-#define dos_program_main stuntsmainimpl
+extern legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8* argv[]);
+#define dos_program_main run_main_menu_loop
 #else
 extern legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]);
 #define dos_program_main stuntsmain

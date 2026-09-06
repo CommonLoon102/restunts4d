@@ -406,7 +406,7 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8* output_name,
 
 static void pixldump_render_frame(void)
 {
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	update_frame(0, &rect_windshield);
 	frame_present(&rect_windshield);
 	/* The normal presentation path draws the software mouse cursor last. */
@@ -603,7 +603,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[])
 		target, bmp_mode, requested_frame);
 
 #ifdef RESTUNTS_ORIGINAL
-	audio_stop_unk();
+	legacy_timer_shutdown();
 	audiodrv_atexit();
 	kb_exit_handler();
 	kb_shift_checking1();

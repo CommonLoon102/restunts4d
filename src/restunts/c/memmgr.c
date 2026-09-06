@@ -559,7 +559,7 @@ void mmgr_alloc_resmem(legacy_u16 end_segment) {
 	}
 }
 
-void mmgr_alloc_a000(void) {
+void mmgr_init_conventional_arena(void) {
 	mmgr_alloc_resmem(MMGR_ARENA_END_SEGMENT);
 }
 

@@ -233,7 +233,7 @@ extern struct RECTANGLE cliprect;
 extern struct VECTOR carpos;
 extern struct SPRITE far* render_window_sprite;
 extern legacy_s16 menu_idle_counter;
-extern legacy_s16 word_3EB90;
+extern legacy_s16 dialog_background_color;
 extern legacy_s16 font_glyph_height;
 extern struct RECTANGLE intro_text_bounds;
 extern struct RECTANGLE highscore_text_bounds;

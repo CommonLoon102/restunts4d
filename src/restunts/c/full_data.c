@@ -262,13 +262,13 @@ struct SHAPE3D logo2shape;
 struct SHAPE3D bravshape;
 
 /* Video and sprite state formerly split between dseg and seg012. */
-struct SPRITE far sprite1;
-struct SPRITE far sprite2;
+struct SPRITE far drawing_sprite;
+struct SPRITE far screen_sprite;
 legacy_u16 far full_screen_line_offsets[200];
 legacy_u8 far wnd_defs[WINDOW_DEFINITION_BUFFER_SIZE];
 legacy_s8* far next_wnd_def = (legacy_s8*)&wnd_defs[0];
 struct SPRITE far* sprite_ptrs[4];
-struct SPRITE far* mcgawndsprite;
+struct SPRITE far* mcga_backbuffer_sprite;
 legacy_u8 sprite_background_stack_depth;
 legacy_u16 fontdefseg;
 legacy_u16 raster_fill_pattern;
@@ -368,10 +368,10 @@ legacy_s16 roofbmpheight;
 legacy_s16 roofbmpheight_copy;
 legacy_s16 height_above_replaybar;
 legacy_s16 meter_needle_color;
-legacy_u16 framespersec2;
+legacy_u16 configured_frame_rate;
 legacy_u16 slow_video_mgmt;
 legacy_u16 slow_video_mgmt_copy;
-legacy_u16 someZeroVideoConst;
+legacy_u16 reserved_material_video_word;
 legacy_s16 reserved_race_word;
 struct RECTANGLE rect_windshield;
 
@@ -455,7 +455,7 @@ legacy_u8 replay_legacy_play_active;
 legacy_u8 replay_camera_mode_cache[2];
 legacy_s16 replay_recorded_position_cache[2];
 legacy_u8 replay_control_active_cache[18];
-legacy_s16 word_3EB90;
+legacy_s16 dialog_background_color;
 legacy_u16 slow_timer_deadline_low;
 legacy_u16 slow_timer_deadline_high;
 struct RECTANGLE intro_text_bounds;
@@ -516,7 +516,7 @@ legacy_s8* shapeexts[6] = {
 	".PVS", ".XVS", ".VSH", ".PES", ".ESH", full_empty_extension
 };
 
-legacy_u8 far incnums[256] = {
+legacy_u8 far sprite_palette_map[256] = {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 	32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,
@@ -590,12 +590,12 @@ static void full_initialize_screen_sprite(struct SPRITE far* sprite)
 	sprite->sprite_left = 0;
 	sprite->sprite_right = 320;
 	sprite->sprite_top = 0;
-	sprite->sprite_height = 200;
+	sprite->sprite_bottom = 200;
 	sprite->sprite_pitch = 320;
 	sprite->sprite_reserved_word4 = 0;
-	sprite->sprite_width2 = 320;
-	sprite->sprite_left2 = 0;
-	sprite->sprite_widthsum = 320;
+	sprite->sprite_buffer_width = 320;
+	sprite->sprite_raster_left = 0;
+	sprite->sprite_raster_right = 320;
 }
 
 void full_data_initialize(void)
@@ -608,6 +608,6 @@ void full_data_initialize(void)
 		wnd_defs[index] = 0;
 	next_wnd_def = (legacy_s8*)dos_memory_make_near_pointer(
 		dos_memory_pointer_offset(wnd_defs));
-	full_initialize_screen_sprite(&sprite1);
-	full_initialize_screen_sprite(&sprite2);
+	full_initialize_screen_sprite(&drawing_sprite);
+	full_initialize_screen_sprite(&screen_sprite);
 }

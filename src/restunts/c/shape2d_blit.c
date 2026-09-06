@@ -56,12 +56,12 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape),
 		SHAPE2D_HEADER_SIZE);
 	width = shape2d_get_width(shape);
-	line_entry = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(sprite1.sprite_lineofs),
+	line_entry = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(drawing_sprite.sprite_lineofs),
 		LEGACY_U16_WRAP_MUL(y, LEGACY_WORD_BYTES));
 	destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
-		(legacy_u8 far*)dos_memory_make_pointer(dos_memory_pointer_segment(&sprite1), line_entry)), x);
+		(legacy_u8 far*)dos_memory_make_pointer(dos_memory_pointer_segment(&drawing_sprite), line_entry)), x);
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
-		dos_memory_pointer_segment(sprite1.sprite_bitmapptr), 0);
+		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
 	remaining = width;
 	for (;;) {
 		source_ptr = (legacy_u8 far*)dos_memory_make_pointer(shape_segment, source);
@@ -100,7 +100,7 @@ static void shape2d_render_rle(struct SHAPE2D far* shape,
 				line_entry = LEGACY_U16_WRAP_ADD(line_entry, LEGACY_WORD_BYTES);
 				destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(
 					(legacy_u8 far*)dos_memory_make_pointer(
-						dos_memory_pointer_segment(&sprite1), line_entry)), x);
+						dos_memory_pointer_segment(&drawing_sprite), line_entry)), x);
 				remaining = width;
 			}
 			count--;
@@ -212,13 +212,13 @@ struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	farwnd->sprite_bitmapptr = header;
 	farwnd->sprite_lineofs = lineofsptr;
 	farwnd->sprite_left = 0;
-	farwnd->sprite_left2 = 0;
+	farwnd->sprite_raster_left = 0;
 	farwnd->sprite_right = width;
 	farwnd->sprite_pitch = width;	// ??
 	farwnd->sprite_top = 0;
-	farwnd->sprite_height = height;
-	farwnd->sprite_width2 = width;
-	farwnd->sprite_widthsum = width;
+	farwnd->sprite_bottom = height;
+	farwnd->sprite_buffer_width = width;
+	farwnd->sprite_raster_right = width;
 
 	// create a writable far pointer to the line offsets
 	farlineofsptr = (legacy_u8 far*)dos_memory_make_pointer(
@@ -243,7 +243,7 @@ void sprite_free_wnd(struct SPRITE far* render_window_sprite) {
 	// The height comes from the bitmap header, not from the SPRITE: the
 	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height.
 	// sprite_make_wnd initializes both heights alike, and normal clipping edits
-	// the sprite1 working copy rather than the stored window SPRITE, so using
+	// the drawing_sprite working copy rather than the stored window SPRITE, so using
 	// the bitmap field here is structural parity rather than a clipping repair.
 	spritesize = sizeof(struct SPRITE) + shape2d_get_height(
 		render_window_sprite->sprite_bitmapptr) * sizeof(legacy_u16);
@@ -254,38 +254,38 @@ void sprite_free_wnd(struct SPRITE far* render_window_sprite) {
 	mmgr_release((void far*)render_window_sprite->sprite_bitmapptr);
 }
 
-void sprite_set_1_from_argptr(struct SPRITE far* argsprite) {
-	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE));
+void sprite_select_target(struct SPRITE far* target_sprite) {
+	fmemcpy(&drawing_sprite, target_sprite, sizeof(struct SPRITE));
 }
 
-void sprite_copy_2_to_1(void) {
-	sprite_set_1_from_argptr(&sprite2);
+void sprite_select_screen(void) {
+	sprite_select_target(&screen_sprite);
 }
 
-void sprite_copy_2_to_1_2(void) {
-	sprite_copy_2_to_1();
+void sprite_select_screen_compat(void) {
+	sprite_select_screen();
 }
 
-void sprite_copy_2_to_1_clear(void) {
-	sprite_copy_2_to_1();
-	sprite_clear_1_color(0);
+void sprite_select_screen_and_clear(void) {
+	sprite_select_screen();
+	sprite_clear_target(0);
 }
 
-void sprite_copy_wnd_to_1(void) {
-	sprite_set_1_from_argptr(render_window_sprite);
+void sprite_select_render_window(void) {
+	sprite_select_target(render_window_sprite);
 }
 
-void sprite_copy_wnd_to_1_clear(void) {
-	sprite_copy_wnd_to_1();
-	sprite_clear_1_color(0);
+void sprite_select_render_window_and_clear(void) {
+	sprite_select_render_window();
+	sprite_clear_target(0);
 }
 
-void sprite_copy_both_to_arg(struct SPRITE* argsprite) {
-	fmemcpy(argsprite, &sprite1, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
+void sprite_save_context(struct SPRITE* saved_context) {
+	fmemcpy(saved_context, &drawing_sprite, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
 }
 
-void sprite_copy_arg_to_both(struct SPRITE* argsprite) {
-	fmemcpy(&sprite1, argsprite, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
+void sprite_restore_context(struct SPRITE* saved_context) {
+	fmemcpy(&drawing_sprite, saved_context, sizeof(struct SPRITE) * SPRITE_STATE_COUNT);
 }
 
 legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom)
@@ -300,7 +300,7 @@ legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 
 	width = LEGACY_S16_WRAP_SUB(right, left);
 	height = LEGACY_S16_WRAP_SUB(bottom, top);
 	required = ((legacy_s32)width * height) /
-		((legacy_s32)video_flag1_is1 * video_flag4_is1) +
+		((legacy_s32)video_shape_width_scale * video_buffer_height_divisor) +
 		WINDOW_ALLOCATION_OVERHEAD;
 	if (mmgr_get_res_ofs_diff_scaled() <= (legacy_u32)required)
 		return 0;
@@ -312,10 +312,10 @@ legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 
 	sprite_ptrs[index] = window;
 	sprite_background_saved_x[index] = left;
 	sprite_background_saved_y[index] = top;
-	sprite_copy_both_to_arg(saved_sprites);
+	sprite_save_context(saved_sprites);
 	fmemcpy(sprite_background_state_stack + index * sizeof(saved_sprites),
 		saved_sprites, sizeof(saved_sprites));
-	sprite_copy_2_to_1();
+	sprite_select_screen();
 	sprite_clear_shape_alt(window->sprite_bitmapptr, left, top);
 	sprite_background_stack_depth++;
 	return 1;
@@ -336,7 +336,7 @@ void sprite_pop_background(void)
 	fmemcpy(saved_sprites,
 		sprite_background_state_stack + index * sizeof(saved_sprites),
 		sizeof(saved_sprites));
-	sprite_copy_arg_to_both(saved_sprites);
+	sprite_restore_context(saved_sprites);
 	sprite_free_wnd(sprite_ptrs[index]);
 	mouse_draw_transparent_check();
 }
@@ -344,10 +344,10 @@ void sprite_pop_background(void)
 void mouse_draw_opaque(void) {
 	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 
-	sprite_copy_both_to_arg(saved_sprites);
-	sprite_copy_2_to_1();
+	sprite_save_context(saved_sprites);
+	sprite_select_screen();
 	sprite_putimage(mouse_background_sprite->sprite_bitmapptr);
-	sprite_copy_arg_to_both(saved_sprites);
+	sprite_restore_context(saved_sprites);
 	mouse_background_dirty = 0;
 }
 
@@ -355,9 +355,9 @@ void mouse_draw_transparent(void) {
 	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	legacy_s16 aligned_x;
 
-	aligned_x = mouse_xpos - mouse_xpos % video_flag2_is1;
-	sprite_copy_both_to_arg(saved_sprites);
-	sprite_copy_2_to_1();
+	aligned_x = mouse_xpos - mouse_xpos % video_x_alignment;
+	sprite_save_context(saved_sprites);
+	sprite_select_screen();
 	sprite_clear_shape_alt(
 		mouse_background_sprite->sprite_bitmapptr,
 		aligned_x,
@@ -370,27 +370,27 @@ void mouse_draw_transparent(void) {
 		mouse_small_sprite->sprite_bitmapptr,
 		mouse_xpos,
 		mouse_ypos);
-	sprite_copy_arg_to_both(saved_sprites);
+	sprite_restore_context(saved_sprites);
 	mouse_background_dirty = 1;
 }
 
-void sprite_clear_1_color(legacy_u8 color) {
+void sprite_clear_target(legacy_u8 color) {
 
 	legacy_s16 height, top, left, right, pitch, lines, width, widthdiff, i, j;
 	legacy_u16 ofs;
 	legacy_u8 far* bitmapptr;
 
-	top = sprite1.sprite_top;
-	left = sprite1.sprite_left;
-	right = sprite1.sprite_right;
-	pitch = sprite1.sprite_pitch;
-	bitmapptr = (legacy_u8 far*)sprite1.sprite_bitmapptr;
+	top = drawing_sprite.sprite_top;
+	left = drawing_sprite.sprite_left;
+	right = drawing_sprite.sprite_right;
+	pitch = drawing_sprite.sprite_pitch;
+	bitmapptr = (legacy_u8 far*)drawing_sprite.sprite_bitmapptr;
 
-	lines = sprite1.sprite_height - top;
+	lines = drawing_sprite.sprite_bottom - top;
 	if (lines <= 0) return;
 
 	ofs = LEGACY_U16_WRAP_ADD(
-		shape2d_get_line_offset(dos_memory_pointer_segment(&sprite1), (legacy_u16)top),
+		shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), (legacy_u16)top),
 		(legacy_u16)left);
 
 	width = right - left;
@@ -424,22 +424,22 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 		SHAPE2D_HEADER_SIZE);
 	clipped_rows = height;
 	if (LEGACY_S16_FROM_BITS(y) <
-		LEGACY_S16_FROM_BITS(sprite1.sprite_top)) {
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
 		sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
 		if (LEGACY_S16_FROM_BITS(sum) <=
-			LEGACY_S16_FROM_BITS(sprite1.sprite_top))
+			LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top))
 			return 0;
-		visible = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_top);
+		visible = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_top);
 		overflow = LEGACY_U16_WRAP_SUB(clipped_rows, visible);
 		source = LEGACY_U16_WRAP_ADD(source,
 			(legacy_u16)((legacy_u32)overflow * width));
 		clipped_rows = visible;
-		y = sprite1.sprite_top;
+		y = drawing_sprite.sprite_top;
 	}
 	sum = LEGACY_U16_WRAP_ADD(y, clipped_rows);
 	if (LEGACY_S16_FROM_BITS(sum) >
-		LEGACY_S16_FROM_BITS(sprite1.sprite_height)) {
-		overflow = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_height);
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_bottom)) {
+		overflow = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_bottom);
 		if (LEGACY_S16_FROM_BITS(clipped_rows) <=
 			LEGACY_S16_FROM_BITS(overflow))
 			return 0;
@@ -449,30 +449,30 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 	visible = width;
 	clip->source_advance = 0;
 	if (LEGACY_S16_FROM_BITS(x) <
-		LEGACY_S16_FROM_BITS(sprite1.sprite_left)) {
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left)) {
 		sum = LEGACY_U16_WRAP_ADD(x, visible);
 		if (LEGACY_S16_FROM_BITS(sum) <=
-			LEGACY_S16_FROM_BITS(sprite1.sprite_left))
+			LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left))
 			return 0;
-		visible = LEGACY_U16_WRAP_SUB(sum, sprite1.sprite_left);
+		visible = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_left);
 		overflow = LEGACY_U16_WRAP_SUB(width, visible);
 		source = LEGACY_U16_WRAP_ADD(source, overflow);
 		sprite_width = LEGACY_U16_WRAP_SUB(
-			sprite1.sprite_right, sprite1.sprite_left);
-		if (LEGACY_S16_FROM_BITS(sprite1.sprite_right) <=
-			LEGACY_S16_FROM_BITS(sprite1.sprite_left))
+			drawing_sprite.sprite_right, drawing_sprite.sprite_left);
+		if (LEGACY_S16_FROM_BITS(drawing_sprite.sprite_right) <=
+			LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left))
 			return 0;
 		if (LEGACY_S16_FROM_BITS(visible) >=
 			LEGACY_S16_FROM_BITS(sprite_width))
 			visible = sprite_width;
 		clip->source_advance = LEGACY_U16_WRAP_SUB(width, visible);
-		x = sprite1.sprite_left;
+		x = drawing_sprite.sprite_left;
 	} else {
 		sum = LEGACY_U16_WRAP_ADD(x, visible);
 		if (LEGACY_S16_FROM_BITS(sum) >=
-			LEGACY_S16_FROM_BITS(sprite1.sprite_right)) {
+			LEGACY_S16_FROM_BITS(drawing_sprite.sprite_right)) {
 			overflow = LEGACY_U16_WRAP_SUB(
-				sum, sprite1.sprite_right);
+				sum, drawing_sprite.sprite_right);
 			if (LEGACY_S16_FROM_BITS(visible) <=
 				LEGACY_S16_FROM_BITS(overflow))
 				return 0;
@@ -485,9 +485,9 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far* shape,
 
 	clip->source = source;
 	clip->destination = LEGACY_U16_WRAP_ADD(
-		shape2d_get_line_offset(dos_memory_pointer_segment(&sprite1), y), x);
+		shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), y), x);
 	clip->destination_advance = LEGACY_U16_WRAP_SUB(
-		sprite1.sprite_pitch, visible);
+		drawing_sprite.sprite_pitch, visible);
 	clip->width = visible;
 	clip->rows = clipped_rows;
 	return 1;
@@ -568,7 +568,7 @@ static void shape2d_render_rle_clipped(struct SHAPE2D far* shape,
 		skip--;
 	}
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
-		dos_memory_pointer_segment(sprite1.sprite_bitmapptr), 0);
+		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
 	destination = clip.destination;
 	rows = clip.rows;
 	do {
@@ -629,7 +629,7 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 		return;
 	shape_segment = dos_memory_pointer_segment(shape);
 	bitmap = (legacy_u8 far*)dos_memory_make_pointer(
-		dos_memory_pointer_segment(sprite1.sprite_bitmapptr), 0);
+		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
 	row_count = clip.rows;
 	do {
 		column_count = clip.width;
@@ -637,7 +637,7 @@ static void sprite_putimage_at(struct SHAPE2D far* shape,
 			source_ptr = (legacy_u8 far*)dos_memory_make_pointer(
 				shape_segment, clip.source);
 			if (operation == SHAPE2D_RASTER_MAP) {
-				mapped_color = incnums[*source_ptr];
+				mapped_color = sprite_palette_map[*source_ptr];
 				if (mapped_color != PALETTE_MAP_TRANSPARENT)
 					bitmap[clip.destination] = mapped_color;
 			} else if (operation == SHAPE2D_RASTER_OR) {
@@ -694,18 +694,18 @@ void sprite_putimage_or(struct SHAPE2D far* shape,
 	sprite_putimage_at(shape, x, y, SHAPE2D_RASTER_OR);
 }
 
-void sprite_putimage_and_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void sprite_copy_image_at(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at(shape, (legacy_u16)x, (legacy_u16)y,
 		SHAPE2D_RASTER_COPY);
 }
 
-void sprite_putimage_and_alt2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void sprite_and_image_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_AND);
 }
 
-void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
+void sprite_or_image_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y)
 {
 	sprite_putimage_at_anchor(shape, x, y, SHAPE2D_RASTER_OR);
 }
@@ -716,23 +716,23 @@ void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy
 		SHAPE2D_RASTER_MAP);
 }
 
-void setup_mcgawnd1(void) {
-	if (!mcgawndsprite) {
-		mcgawndsprite = sprite_make_wnd(
+void sprite_present_mcga_backbuffer(void) {
+	if (!mcga_backbuffer_sprite) {
+		mcga_backbuffer_sprite = sprite_make_wnd(
 			MCGA_WINDOW_WIDTH, MCGA_WINDOW_HEIGHT,
 			SPRITE_WINDOW_LEGACY_ARGUMENT);
 	}
 
-	sprite_set_1_from_argptr(&sprite2);
-	sprite_putimage(mcgawndsprite->sprite_bitmapptr);
+	sprite_select_target(&screen_sprite);
+	sprite_putimage(mcga_backbuffer_sprite->sprite_bitmapptr);
 }
 
-void setup_mcgawnd2(void) {
-	if (!mcgawndsprite) {
-		mcgawndsprite = sprite_make_wnd(
+void sprite_select_mcga_backbuffer(void) {
+	if (!mcga_backbuffer_sprite) {
+		mcga_backbuffer_sprite = sprite_make_wnd(
 			MCGA_WINDOW_WIDTH, MCGA_WINDOW_HEIGHT,
 			SPRITE_WINDOW_LEGACY_ARGUMENT);
 	}
 
-	sprite_set_1_from_argptr(mcgawndsprite);
+	sprite_select_target(mcga_backbuffer_sprite);
 }

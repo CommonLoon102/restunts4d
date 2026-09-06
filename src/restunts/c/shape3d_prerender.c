@@ -525,14 +525,14 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 		return;
 	}
 	half_width = LEGACY_U16_WRAP_SUB(effective_height, half_height);
-	left_bound = sprite1.sprite_left2;
-	right_bound = LEGACY_U16_WRAP_SUB(sprite1.sprite_widthsum, 1U);
+	left_bound = drawing_sprite.sprite_raster_left;
+	right_bound = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U);
 	top = LEGACY_U16_WRAP_SUB(y_bits, half_height);
 	if (LEGACY_S16_FROM_BITS(top) >=
-		LEGACY_S16_FROM_BITS(sprite1.sprite_height))
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_bottom))
 		return;
 	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(y_bits, half_width)) <=
-		LEGACY_S16_FROM_BITS(sprite1.sprite_top))
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top))
 		return;
 	half_width = LEGACY_U16_WRAP_ADD(half_width,
 		(legacy_u16)(half_width >> 2));
@@ -592,14 +592,14 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 	}
 
 	skip_lines = 0;
-	clip_delta = LEGACY_S16_WRAP_SUB(sprite1.sprite_top, top);
+	clip_delta = LEGACY_S16_WRAP_SUB(drawing_sprite.sprite_top, top);
 	if (clip_delta > 0) {
 		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
 		skip_lines = (legacy_u16)clip_delta;
-		top = sprite1.sprite_top;
+		top = drawing_sprite.sprite_top;
 	}
 	clip_delta = LEGACY_S16_WRAP_SUB(
-		LEGACY_U16_WRAP_ADD(top, line_count), sprite1.sprite_height);
+		LEGACY_U16_WRAP_ADD(top, line_count), drawing_sprite.sprite_bottom);
 	if (clip_delta > 0)
 		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
 	draw_filled_lines(&left_edges[skip_lines], &right_edges[skip_lines],
@@ -657,10 +657,10 @@ static void polygon_rasterize(legacy_u16 color,
 	legacy_s16 min_x, max_x, vertex_index;
 	legacy_s16 start_x_or_line_count, start_y_or_bottom, end_x, end_y_or_top;
 
-	legacy_s16 clip_left_bound = sprite1.sprite_left2;
-	legacy_s16 clip_right_bound = sprite1.sprite_widthsum;
-	legacy_s16 clip_top = sprite1.sprite_top;
-	legacy_s16 clip_bottom = sprite1.sprite_height;
+	legacy_s16 clip_left_bound = drawing_sprite.sprite_raster_left;
+	legacy_s16 clip_right_bound = drawing_sprite.sprite_raster_right;
+	legacy_s16 clip_top = drawing_sprite.sprite_top;
+	legacy_s16 clip_bottom = drawing_sprite.sprite_bottom;
 
 	if (vertex_count == 0U)
 		return;
@@ -813,8 +813,8 @@ static void generate_poly_edge_padding(legacy_s16* edges,
 
 void generate_poly_edges(legacy_s16* edges, const legacy_u16* line_setup, legacy_s16 clipping_mode) {
 
-	legacy_s16 clip_left = sprite1.sprite_left2;
-	legacy_s16 clip_right = sprite1.sprite_widthsum;
+	legacy_s16 clip_left = drawing_sprite.sprite_raster_left;
+	legacy_s16 clip_right = drawing_sprite.sprite_raster_right;
 	legacy_s16 step_index, step_count, row_index;
 	legacy_u32 x_position;
 	legacy_u32 y_fraction;
@@ -1248,7 +1248,7 @@ void polygon_merge_second_edge(const legacy_u16* line_setup, legacy_u16 choose_e
 			count);
 		while (count-- > 0)
 			left_edges[row_index++] =
-				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+				LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_left);
 	}
 
 	count = LEGACY_S16_FROM_BITS(
@@ -1259,7 +1259,7 @@ void polygon_merge_second_edge(const legacy_u16* line_setup, legacy_u16 choose_e
 			count);
 		while (count-- > 0)
 			right_edges[row_index++] = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
+				LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_right), 1);
 	}
 
 	count = LEGACY_S16_FROM_BITS(
@@ -1269,7 +1269,7 @@ void polygon_merge_second_edge(const legacy_u16* line_setup, legacy_u16 choose_e
 			LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]), 1);
 		while (count-- > 0)
 			left_edges[row_index++] =
-				LEGACY_S16_FROM_BITS(sprite1.sprite_left2);
+				LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_left);
 	}
 
 	count = LEGACY_S16_FROM_BITS(
@@ -1279,6 +1279,6 @@ void polygon_merge_second_edge(const legacy_u16* line_setup, legacy_u16 choose_e
 			LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]), 1);
 		while (count-- > 0)
 			right_edges[row_index++] = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_FROM_BITS(sprite1.sprite_widthsum), 1);
+				LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_right), 1);
 	}
 }

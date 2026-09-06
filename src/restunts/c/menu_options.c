@@ -126,7 +126,7 @@ void calibrate_joystick_driving(void)
 			continue;
 		for (i = 0; i < 9U; i++)
 			sprite_fill_rect(button_x[i], button_y[i], button_width,
-				button_height, word_3EB90);
+				button_height, dialog_background_color);
 		sprite_fill_rect(button_x[next_selected], button_y[next_selected],
 			button_width, button_height, dialog_fnt_colour);
 		selected = next_selected;
@@ -230,7 +230,7 @@ void show_graphic_levels_menu(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	original_frame_rate = framespersec2;
+	original_frame_rate = configured_frame_rate;
 	selected = 0;
 	for (;;) {
 		copy_string(menu_text, locate_text_res(mainresptr, aMrl));
@@ -238,7 +238,7 @@ void show_graphic_levels_menu(void)
 			selected_options[option_index] = 0;
 		selected_options[detail_level] = 1;
 		selected_options[5U + slow_video_mgmt] = 1;
-		selected_options[framespersec2 == GAME_FRAME_RATE_LOW ?
+		selected_options[configured_frame_rate == GAME_FRAME_RATE_LOW ?
 			OPTION_MENU_LOW_FRAME_RATE_INDEX :
 			OPTION_MENU_NORMAL_FRAME_RATE_INDEX] = 1;
 
@@ -265,10 +265,10 @@ void show_graphic_levels_menu(void)
 			slow_video_mgmt = 1;
 			break;
 		case 7:
-			framespersec2 = GAME_FRAME_RATE_LOW;
+			configured_frame_rate = GAME_FRAME_RATE_LOW;
 			break;
 		case 8:
-			framespersec2 = GAME_FRAME_RATE_NORMAL;
+			configured_frame_rate = GAME_FRAME_RATE_NORMAL;
 			break;
 		default:
 			detail_level = (legacy_u8)selected;
@@ -276,7 +276,7 @@ void show_graphic_levels_menu(void)
 		}
 	}
 
-	if (original_frame_rate != framespersec2)
+	if (original_frame_rate != configured_frame_rate)
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 			locate_text_res(mainresptr, aMrs),
 			-1, -1, dialog_border_color, 0, 0);
@@ -293,8 +293,8 @@ legacy_u16 run_option_menu(void)
 	legacy_s8 far* prompt;
 
 	miscptr = file_load_resfile("misc");
-	sprite_copy_2_to_1_2();
-	sprite_clear_1_color((legacy_u8)graphics_menu_background_color);
+	sprite_select_screen_compat();
+	sprite_clear_target((legacy_u8)graphics_menu_background_color);
 	copy_string(&resID_byte1, locate_shape_alt(miscptr, "gstu"));
 	intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), 6,
 		dialog_fnt_colour, 0);

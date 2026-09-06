@@ -51,11 +51,11 @@ void init_main(legacy_s16 argc, legacy_s8* argv[])
 	(void)argc;
 	(void)argv;
 	init_video_geometry_flags();
-	video_flag5_is0 = 0;
-	video_flag6_is1 = 1;
+	video_uses_page_flipping = 0;
+	video_page_count = 1;
 	textresprefix = 'e';
 	framespersec = GAME_FRAME_RATE_NORMAL;
-	mmgr_alloc_a000();
+	mmgr_init_conventional_arena();
 	himem_init();
 }
 

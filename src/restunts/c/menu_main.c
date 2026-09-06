@@ -53,7 +53,7 @@ legacy_s8 run_menu(void)
 		MAIN_MENU_SCREEN_HEIGHT, MAIN_MENU_TRANSPARENT_COLOR);
 	resource = (legacy_s8 far*)file_load_resource(
 		FILE_RESOURCE_SHAPE2D, aSdmsel);
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, aScrn);
 	sprite_shape_to_1_alt(shape);
 	mmgr_free(resource);
@@ -61,11 +61,11 @@ legacy_s8 run_menu(void)
 	for (;;) {
 		if (selected != previous) {
 			previous = selected;
-			sprite_copy_wnd_to_1();
+			sprite_select_render_window();
 			sprite_blit_to_video(render_window_sprite,
 				LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = MENU_BLIT_MODE_REFRESH;
-			sprite_copy_2_to_1_2();
+			sprite_select_screen_compat();
 			menu_reset_animation_timers();
 		}
 

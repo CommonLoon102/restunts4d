@@ -80,15 +80,15 @@ void run_tracks_menu(legacy_s16 reload_track)
 			TRACK_PREVIEW_PROJECTION_SCALE, TRACK_MENU_SCREEN_WIDTH,
 			TRACK_MENU_SCREEN_HEIGHT);
 		init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
-		sprite_copy_wnd_to_1();
-		sprite_clear_1_color((legacy_u8)skybox.ground_color);
-		sprite_set_1_size(0, TRACK_MENU_SCREEN_WIDTH, 0,
+		sprite_select_render_window();
+		sprite_clear_target((legacy_u8)skybox.ground_color);
+		sprite_set_target_clip_bounds(0, TRACK_MENU_SCREEN_WIDTH, 0,
 			TRACK_MENU_SCREEN_HEIGHT);
 		draw_track_preview();
 		shape3d_free_all();
 		unload_skybox();
 
-		sprite_copy_wnd_to_1();
+		sprite_select_render_window();
 		strcpy(&resID_byte1, "'");
 		strcat(&resID_byte1, gameconfig.game_trackname);
 		strcat(&resID_byte1, "'");
@@ -148,7 +148,7 @@ void run_tracks_menu(legacy_s16 reload_track)
 				sprite_blit_to_video(render_window_sprite,
 					LEGACY_S8_FROM_BITS(blit_mode));
 				blit_mode = MENU_BLIT_MODE_REFRESH;
-				sprite_copy_2_to_1_2();
+				sprite_select_screen_compat();
 				menu_reset_animation_timers();
 			}
 

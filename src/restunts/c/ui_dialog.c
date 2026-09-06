@@ -222,9 +222,9 @@ legacy_u16 show_dialog(
 		sprite_push_background(left, right, top, bottom) == 0)
 		return DIALOG_FAILURE_RESULT;
 
-	sprite_copy_2_to_1();
-	sprite_set_1_size(left, right, top, bottom);
-	sprite_clear_1_color(0);
+	sprite_select_screen();
+	sprite_set_target_clip_bounds(left, right, top, bottom);
+	sprite_clear_target(0);
 	sprite_draw_rect_outline(LEGACY_S16_WRAP_SUB(x, 4),
 		LEGACY_S16_WRAP_SUB(y, 4),
 		LEGACY_S16_WRAP_ADD(
@@ -233,7 +233,7 @@ legacy_u16 show_dialog(
 			LEGACY_S16_WRAP_ADD(y, dialog_height), 4),
 		border_color);
 	font_set_colors(dialog_fnt_colour, 0);
-	word_3EB90 = 0;
+	dialog_background_color = 0;
 	font_set_colors(dialog_fnt_colour, 0);
 
 	cursor = (legacy_s8 far*)text_resource;
@@ -360,11 +360,11 @@ legacy_u16 show_dialog(
 			mouse_draw_opaque_check();
 			for (index = 0; index < choice_count; index++) {
 				if (selected == (legacy_u8)index)
-					font_set_colors(word_3EB90, dialog_fnt_colour);
+					font_set_colors(dialog_background_color, dialog_fnt_colour);
 				else
-					font_set_colors(dialog_fnt_colour, word_3EB90);
+					font_set_colors(dialog_fnt_colour, dialog_background_color);
 				if (disabled_choices != 0 && disabled_choices[index] != 0)
-					font_set_colors(performGraphColor, word_3EB90);
+					font_set_colors(performGraphColor, dialog_background_color);
 				for (copied = 0; copied < choice_lengths[index]; copied++)
 					choice_buffer[copied] = choice_texts[index][copied];
 				choice_buffer[copied] = 0;
@@ -472,7 +472,7 @@ legacy_s8 do_fileselect_dialog(
 	preRender_line(positions[4] - 4, positions[5] + 4,
 		positions[4] + FILE_DIALOG_SEPARATOR_WIDTH,
 		positions[5] + 4, dialog_border_color);
-	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
 	copy_string(&resID_byte1, prompt);
 	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
 
@@ -485,7 +485,7 @@ legacy_s8 do_fileselect_dialog(
 			hit_areas[index].y1 = positions[3U + index * 2U];
 		hit_areas[index].y2 = hit_areas[index].y1 + 10;
 	}
-	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
 	font_draw_text_opaque(directory, positions[2], positions[3]);
 
 	for (;;) {
@@ -493,7 +493,7 @@ legacy_s8 do_fileselect_dialog(
 	file_count = 0;
 	found_path = file_combine_and_find(directory, "*", extension);
 	if (found_path == 0) {
-		font_set_colors(dialog_fnt_colour, word_3EB90);
+		font_set_colors(dialog_fnt_colour, dialog_background_color);
 		key = (legacy_u16)call_read_line(directory,
 			FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
 			DIALOG_INPUT_TIMEOUT);
@@ -542,9 +542,9 @@ legacy_s8 do_fileselect_dialog(
 			for (visible_row = 0; visible_row < 7U; visible_row++) {
 				candidate = (legacy_s16)(scroll + (legacy_s16)visible_row);
 				if (candidate == selected)
-					font_set_colors(word_3EB90, dialog_fnt_colour);
+					font_set_colors(dialog_background_color, dialog_fnt_colour);
 				else
-					font_set_colors(dialog_fnt_colour, word_3EB90);
+					font_set_colors(dialog_fnt_colour, dialog_background_color);
 				if (candidate < (legacy_s16)file_count) {
 					strcpy(&resID_byte1, filenames[(legacy_u8)candidate]);
 					font_draw_text_opaque(&resID_byte1, positions[2],
@@ -558,7 +558,7 @@ legacy_s8 do_fileselect_dialog(
 					hit_areas[visible_row + 2U].y1,
 					positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
 						positions[2],
-					8, word_3EB90);
+					8, dialog_background_color);
 			}
 			mouse_draw_transparent_check();
 		}
@@ -619,7 +619,7 @@ legacy_s8 do_fileselect_dialog(
 		if (selected < scroll)
 			scroll = selected;
 		if (scroll < 0) {
-			font_set_colors(dialog_fnt_colour, word_3EB90);
+			font_set_colors(dialog_fnt_colour, dialog_background_color);
 			key = (legacy_u16)call_read_line(directory,
 				FILE_DIALOG_DIRECTORY_MAX_LENGTH, positions[2], positions[3],
 				DIALOG_INPUT_TIMEOUT);
@@ -689,10 +689,10 @@ legacy_s16 do_savefile_dialog(legacy_s8* primary, legacy_s8* secondary, legacy_s
 	if (result < 0)
 		return 0;
 
-	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
 	copy_string(&resID_byte1, prompt);
 	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
-	font_set_colors(dialog_fnt_colour, word_3EB90);
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
 	font_draw_text_opaque(primary, positions[2], positions[3]);
 	font_draw_text_opaque(secondary, positions[4], positions[5]);
 	mouse_draw_transparent_check();
@@ -760,7 +760,7 @@ void security_check(legacy_s16 question_index)
 	resource = file_load_resfile("misc");
 	copy_string(question_text, locate_text_res(resource, "cop"));
 	copy_string(&resID_byte1, locate_text_res(resource, question_id));
-	strcat(question_text, unk_463EA);
+	strcat(question_text, resource_text_payload);
 	for (i = 0; i < 6U; i++)
 		question_parts[i] = (legacy_u8)(&resID_byte1)[i];
 

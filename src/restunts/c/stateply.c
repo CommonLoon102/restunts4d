@@ -550,7 +550,7 @@ void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
 			legacy_execution_residue.wheel_angle_stack_words[
 				wheel_index] = wheel_heading_offset;
 		}
-		plane_rotate_op();
+		transform_wheel_travel_to_world();
 		physics_position_offset(current_wheel_position, current_wheel_position,
 			&wheel_world_travel);
 	}
@@ -607,7 +607,7 @@ case PLAYER_FLOW_STORE_WHEEL_SURFACE:
 	{ physics_flow = PLAYER_FLOW_CHECK_WALL_PRESENT; continue; }
 
 case PLAYER_FLOW_MEASURE_WHEEL_PLANE_DISTANCE:
-	nextPosAndNormalIP = plane_origin_op(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
 
 case PLAYER_FLOW_CHECK_WALL_PRESENT:
 	if (wallindex != PLAYER_PHYSICS_WALL_INDEX_NONE)
@@ -825,7 +825,7 @@ case PLAYER_FLOW_RECHECK_DISTANCE_AFTER_GRAVITY:
 	if (state.game_inputmode == GAME_INPUT_MODE_INTRO) {
 		nextPosAndNormalIP = wheel_vector.y;
 	} else {
-		nextPosAndNormalIP = plane_origin_op(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+		nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
 	}
 
 case PLAYER_FLOW_CHECK_WHEEL_CONTACT_RANGE:
@@ -913,7 +913,7 @@ case PLAYER_FLOW_RETRACE_WHEEL_FROM_PLANE:
 	wheel_forward_travel.z = PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE;
 	planindex_copy = planindex;
 	wheel_heading_offset = wheel_plane_headings[wheel_index];
-	plane_rotate_op();
+	transform_wheel_travel_to_world();
 	physics_position_pull_back(current_wheel_position, &wheel_world_travel);
 	{ physics_flow = PLAYER_FLOW_FINISH_PLANE_CORRECTION; continue; }
 
@@ -923,7 +923,7 @@ case PLAYER_FLOW_FALL_BACK_TO_GROUND_PLANE:
 	track_wall_collision_enabled = 1;
 	physics_position_to_vector(&wheel_vector, current_wheel_position);
 
-	nextPosAndNormalIP = plane_origin_op(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
+	nextPosAndNormalIP = plane_signed_distance(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
 		wheel_vector.x, wheel_vector.y, wheel_vector.z);
 
 case PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE:
@@ -959,7 +959,7 @@ case PLAYER_FLOW_ADVANCE_WHEEL_ALONG_PLANE:
 	wheel_forward_travel.z = travel_per_tick;
 	planindex_copy = planindex;
 	wheel_heading_offset = wheel_plane_headings[wheel_index];
-	plane_rotate_op();
+	transform_wheel_travel_to_world();
 	physics_position_offset(current_wheel_position, previous_wheel_position,
 		&wheel_world_travel);
 	{ physics_flow = PLAYER_FLOW_RECHECK_PLANE_PENETRATION; continue; }
@@ -989,7 +989,7 @@ case PLAYER_FLOW_SPLIT_PLANE_CROSSING_TRAVEL:
 	wheel_forward_travel.z = contact_angle_distance_or_deflection;
 	planindex_copy = planindex;
 	wheel_heading_offset = wheel_plane_headings[wheel_index];
-	plane_rotate_op();
+	transform_wheel_travel_to_world();
 	current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
 		LEGACY_S32_WRAP_ADD_S16(
 			previous_wheel_position->lx, contact_start_or_delta.x),
@@ -1006,7 +1006,7 @@ case PLAYER_FLOW_SPLIT_PLANE_CROSSING_TRAVEL:
 case PLAYER_FLOW_RECHECK_PLANE_PENETRATION:
 	physics_position_to_vector(&wheel_vector, current_wheel_position);
 
-	nextPosAndNormalIP = plane_origin_op(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
 	if (nextPosAndNormalIP >= 0)
 		{ physics_flow = PLAYER_FLOW_FINISH_PLANE_CORRECTION; continue; }
 	if (contact_response_reversed == 0)
@@ -1331,7 +1331,7 @@ case PLAYER_FLOW_COMPARE_PREVIOUS_BODY_PLANE:
 	build_track_object(&wheel_vector, &intersection_delta_or_body_position);
 	if (previous_plane_index != planindex)
 		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
-	impact_turn_distance_or_overlap = plane_origin_op(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	impact_turn_distance_or_overlap = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
 	if (game_replay_mode == REPLAY_MODE_PAUSED)
 		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
 	if (collision_angle_distance_or_index >= 0)
@@ -1373,7 +1373,7 @@ case PLAYER_FLOW_LOOK_UP_BODY_CORNER_PLANE:
 
 	intersection_delta_or_body_position = wheel_vector;
 	build_track_object(&wheel_vector, &carstate->car_body_corner_positions[wheel_index]);
-	collision_angle_distance_or_index = plane_origin_op(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	collision_angle_distance_or_index = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
 	if (planindex < PLAYER_PHYSICS_WHEEL_COUNT)
 		{ physics_flow = PLAYER_FLOW_CHECK_BODY_GROUND_PENETRATION; continue; }
 	{ physics_flow = PLAYER_FLOW_COMPARE_PREVIOUS_BODY_PLANE; continue; }

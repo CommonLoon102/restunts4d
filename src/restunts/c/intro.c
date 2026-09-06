@@ -67,9 +67,9 @@ legacy_s16 run_intro(void)
 	legacy_s16 result;
 
 	mouse_draw_opaque_check();
-	sprite_copy_2_to_1_clear();
+	sprite_select_screen_and_clear();
 	mouse_draw_transparent_check();
-	sprite_copy_wnd_to_1_clear();
+	sprite_select_render_window_and_clear();
 
 	shape = (struct SHAPE2D far*)locate_shape_fatal(
 		(legacy_s8 far*)ui_temp_resource, "prod");
@@ -84,7 +84,7 @@ legacy_s16 run_intro(void)
 		result = input_repeat_check(INTRO_PAGE_INPUT_DELAY);
 
 	if (result == 0) {
-		sprite_copy_wnd_to_1_clear();
+		sprite_select_render_window_and_clear();
 		waitflag = INTRO_DEFAULT_PAGE_WAIT;
 		shape = (struct SHAPE2D far*)locate_shape_fatal(
 			(legacy_s8 far*)ui_temp_resource, "titl");
@@ -116,7 +116,7 @@ legacy_s16 run_intro_looped(void)
 				FILE_RESOURCE_SHAPE2D, "sdcred");
 			render_window_sprite = sprite_make_wnd(INTRO_SCREEN_WIDTH,
 				INTRO_SCREEN_HEIGHT, INTRO_SCREEN_COLOR);
-			sprite_copy_wnd_to_1_clear();
+			sprite_select_render_window_and_clear();
 			sprite_blit_to_video(render_window_sprite, 0);
 			result = load_intro_resources();
 			sprite_free_wnd(render_window_sprite);
@@ -167,12 +167,12 @@ legacy_s8 load_intro_resources(void)
 	locate_many_resources((legacy_s8 far*)ui_temp_resource,
 		aArowarrwarw1ar, (legacy_s8 far**)credit_shapes);
 	waitflag = CREDITS_INITIAL_WAIT;
-	sprite_copy_wnd_to_1_clear();
+	sprite_select_render_window_and_clear();
 	arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
 	target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
 	arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
 	arrow_width = LEGACY_S16_WRAP_MUL(
-		(legacy_s16)shape2d_get_width(arrow_shape), video_flag1_is1);
+		(legacy_s16)shape2d_get_width(arrow_shape), video_shape_width_scale);
 	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
 
 	intro_draw_resource_line(credit_resource, aCre, CREDITS_LINE_TEXT,
@@ -224,7 +224,7 @@ legacy_s8 load_intro_resources(void)
 	unload_resource(credit_resource);
 
 	(void)sprite_blit_to_video(render_window_sprite, -1);
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 	(void)timer_get_delta_alt();
 	arrow_x = CREDITS_ARROW_START_X;
 	input = 0;
@@ -235,7 +235,7 @@ legacy_s8 load_intro_resources(void)
 		if (target_x > arrow_x)
 			break;
 		mouse_draw_opaque_check();
-		sprite_putimage_and_alt(arrow_shape, arrow_x, arrow_y);
+		sprite_copy_image_at(arrow_shape, arrow_x, arrow_y);
 		sprite_fill_rect_clipped(LEGACY_S16_WRAP_ADD(arrow_width, arrow_x),
 			arrow_y, CREDITS_ARROW_ERASE_WIDTH, arrow_height, 0);
 		mouse_draw_transparent_check();
@@ -251,13 +251,13 @@ legacy_s8 load_intro_resources(void)
 	for (animation_index = CREDITS_FIRST_ANIMATION_INDEX;
 		animation_index < CREDITS_ANIMATION_END_INDEX && input == 0;
 		animation_index++) {
-		sprite_copy_wnd_to_1();
-		sprite_set_1_size(0, INTRO_SCREEN_WIDTH, arrow_y,
+		sprite_select_render_window();
+		sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, arrow_y,
 		INTRO_SCREEN_HEIGHT);
-		sprite_clear_1_color(0);
+		sprite_clear_target(0);
 		sprite_shape_to_1_alt(credit_shapes[animation_index]);
-		sprite_copy_2_to_1_2();
-		sprite_set_1_size(0, INTRO_SCREEN_WIDTH, arrow_y,
+		sprite_select_screen_compat();
+		sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, arrow_y,
 		INTRO_SCREEN_HEIGHT);
 		mouse_draw_opaque_check();
 		sprite_putimage(render_window_sprite->sprite_bitmapptr);
@@ -272,13 +272,13 @@ legacy_s8 load_intro_resources(void)
 		}
 	}
 
-	sprite_set_1_size(0, INTRO_SCREEN_WIDTH, 0, INTRO_SCREEN_HEIGHT);
+	sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, 0, INTRO_SCREEN_HEIGHT);
 	mouse_draw_opaque_check();
 	sprite_clear_shape(render_window_sprite->sprite_bitmapptr);
-	sprite_copy_wnd_to_1();
-	sprite_set_1_size(0, INTRO_SCREEN_WIDTH, arrow_y,
+	sprite_select_render_window();
+	sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, arrow_y,
 		INTRO_SCREEN_HEIGHT);
-	sprite_clear_1_color(0);
+	sprite_clear_target(0);
 	sprite_shape_to_1_alt(credit_shapes[CREDITS_BACKGROUND_INDEX]);
 	sprite_shape_to_1_alt(credit_shapes[CREDITS_CLOSING_INDEX]);
 	if (sprite_blit_to_video(render_window_sprite, 0) != 0)

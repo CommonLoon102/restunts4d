@@ -121,7 +121,7 @@ void intro_render_scene(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 cam
 void init_plantrak(void);
 void update_opponent(void);
 legacy_u32 timer_get_delta(void);
-legacy_s16 get_0(void);
+legacy_s16 video_backbuffer_copy_required(void);
 void font_set_fontdef2(void far* data);
 void set_fontdefseg(void far* data);
 void format_frame_as_string(legacy_s8* s, legacy_s16 time, legacy_s16 c);

@@ -242,7 +242,7 @@ void fatal_error(const legacy_s8* format, ...)
 {
 	va_list arguments;
 
-	sprite_copy_2_to_1();
+	sprite_select_screen();
 	va_start(arguments, format);
 	fatal_vprintf(format, arguments);
 	va_end(arguments);

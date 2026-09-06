@@ -586,9 +586,9 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 {
 	legacy_u32 len, lenleft;
 	legacy_u16 additive, alphlen, width, widthdistr, i, j;
-	legacy_u16 esc1[RS_VLE_ESC_LEN], esc2[RS_VLE_ESC_LEN];
+	legacy_u16 escape_alphabet_offsets[RS_VLE_ESC_LEN], escape_code_limits[RS_VLE_ESC_LEN];
 	legacy_u8 alph[RS_VLE_ALPH_LEN], symb[RS_VLE_ALPH_LEN], wdth[RS_VLE_ALPH_LEN];
-	legacy_u8 esclen, symbwdth, numsymb, numsymbleft, cursymb, tmp;
+	legacy_u8 esclen, symbwdth, numsymb, numsymbleft, cursymb, width_symbol_count;
 	legacy_u8 curwdt, nextwdt, code;
 	legacy_u16 curword;
 
@@ -614,11 +614,11 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 	// Generate escape codes.
 	for (i = 0, j = 0, alphlen = 0;
 		i < esclen; ++i, j *= VLE_ALPHABET_BRANCH_FACTOR) {
-		esc1[i] = alphlen - j;
-		tmp = *src++;
-		j += tmp;
-		alphlen += tmp;
-		esc2[i] = j;
+		escape_alphabet_offsets[i] = alphlen - j;
+		width_symbol_count = *src++;
+		j += width_symbol_count;
+		alphlen += width_symbol_count;
+		escape_code_limits[i] = j;
 	}
 
 	// Read alphabet.
@@ -679,8 +679,8 @@ legacy_u32 file_decomp_vle(legacy_u8 huge* src, legacy_u8 huge* dst, legacy_u16 
 				--curwdt;
 				++i;
 
-				if (curword < esc2[i]) {
-					curword += esc1[i];
+				if (curword < escape_code_limits[i]) {
+					curword += escape_alphabet_offsets[i];
 
 					if (additive) {
 						cursymb += alph[curword];

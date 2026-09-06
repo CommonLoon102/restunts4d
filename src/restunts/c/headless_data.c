@@ -7,12 +7,12 @@ struct GAMESTATE state;
 struct SIMD simd_player;
 struct SIMD simd_opponent;
 
-legacy_s16 video_flag1_is1;
-legacy_s16 video_flag2_is1;
-legacy_s16 video_flag3_isFFFF;
-legacy_s16 video_flag4_is1;
-legacy_s16 video_flag5_is0;
-legacy_s16 video_flag6_is1;
+legacy_s16 video_shape_width_scale;
+legacy_s16 video_x_alignment;
+legacy_s16 video_x_alignment_mask;
+legacy_s16 video_buffer_height_divisor;
+legacy_s16 video_uses_page_flipping;
+legacy_s16 video_page_count;
 
 legacy_u8 frame_callback_countdown;
 legacy_u8 slow_replay_countdown;
@@ -227,8 +227,8 @@ legacy_u8 trackside_camera_count;
 legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 legacy_u8 vector_saved_z_low;
 legacy_u8 vector_saved_z_high;
-legacy_u16 word_3BE30;
-legacy_u16 word_3BE32;
+legacy_u16 legacy_divide_fault_segment;
+legacy_u16 legacy_divide_fault_offset;
 
 /* Track collision bounds.  Adjacent legacy labels intentionally exposed
  * overlapping windows; the C arrays make each window explicit. */

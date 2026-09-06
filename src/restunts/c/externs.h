@@ -1,6 +1,12 @@
 #ifndef RESTUNTS_EXTERNS_H
 #define RESTUNTS_EXTERNS_H
 
+/* The original timer shutdown restores INT 8 and the BIOS PIT divisor. */
+#ifdef RESTUNTS_ORIGINAL
+#define legacy_timer_shutdown audio_stop_unk
+#define sprite_select_render_window sprite_copy_wnd_to_1
+#endif
+
 /* Track arena symbols exported by the unchanged original executable. */
 #ifdef RESTUNTS_ORIGINAL
 #define track_primary_route_links td01_track_file_cpy
@@ -202,12 +208,12 @@ void setup_legacy_penalty_route_word(void);
 void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
 void load_opponent_data(void);
 
-extern legacy_s16 video_flag1_is1;
-extern legacy_s16 video_flag2_is1;
-extern legacy_s16 video_flag3_isFFFF;
-extern legacy_s16 video_flag4_is1;
-extern legacy_s16 video_flag5_is0;
-extern legacy_s16 video_flag6_is1;
+extern legacy_s16 video_shape_width_scale;
+extern legacy_s16 video_x_alignment;
+extern legacy_s16 video_x_alignment_mask;
+extern legacy_s16 video_buffer_height_divisor;
+extern legacy_s16 video_uses_page_flipping;
+extern legacy_s16 video_page_count;
 /* The four horizon band images and the colours drawn around them. heights
    is indexed the same way as the skyboxes[] resource array. */
 struct SKYBOX {
@@ -245,7 +251,7 @@ extern legacy_u8 race_start_sequence_state;
 extern legacy_u8 game_replay_mode;
 extern legacy_s16 start_flag_animation;
 
-extern legacy_s16 word_45A24; // current frame?
+extern legacy_s16 unused_legacy_word; // Unused legacy declaration.
 extern legacy_s16 checkpoint_frame_interval; // fps * 30
 extern legacy_s16 timer_ticks_per_frame; // 100 / fps
 extern legacy_s16 track_angle;
@@ -323,7 +329,7 @@ extern legacy_s16 performGraphColor;
 extern legacy_s8 resID_buffer[RESID_BUFFER_SIZE];
 /* Legacy labels for byte 0 and byte 6 of the same scratch buffer. */
 #define resID_byte1 resID_buffer[0]
-#define unk_463EA (resID_buffer + RESID_TEXT_OFFSET)
+#define resource_text_payload (resID_buffer + RESID_TEXT_OFFSET)
 extern legacy_s16 waitflag;
 
 extern void far* fontnptr;
@@ -386,7 +392,7 @@ extern legacy_s8 aSkidslct[];
 extern legacy_s8 aDos[];
 
 extern legacy_u16 framespersec;
-extern legacy_u16 framespersec2;
+extern legacy_u16 configured_frame_rate;
 extern legacy_u16 slow_video_mgmt;
 extern legacy_u16 slow_video_mgmt_copy;
 extern legacy_u8 detail_level;
@@ -436,11 +442,11 @@ extern legacy_s16* material_patlist_ptr;
 extern legacy_s16* material_patlist_ptr_cpy;
 extern legacy_s16* material_patlist2_ptr;
 extern legacy_s16* material_patlist2_ptr_cpy;
-extern legacy_u16 someZeroVideoConst;
+extern legacy_u16 reserved_material_video_word;
 
 extern legacy_s16 get_track_route_point(legacy_s16 car_route_index, struct VECTOR* car_route_target, legacy_s16 car_route_point_index, legacy_s8* optional_speed);
 extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle);
-extern void init_game_state(legacy_s16 arg);
+extern void init_game_state(legacy_s16 initialization_mode);
 extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);
 extern void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate);
 extern void restore_gamestate(legacy_u16 frame);
@@ -476,11 +482,11 @@ extern void far* file_load_shape2d_res_nofatal(const legacy_s8* resname);
 extern void far* file_load_shape2d_nofatal2(const legacy_s8* shapename);
 extern void far* init_audio_resources(void far* songptr, void far* voiceptr, const legacy_s8* name);
 extern void load_audio_finalize(void far* audiores);
-extern legacy_s16 audio_load_driver(legacy_s8* driver, legacy_s16 a2, legacy_s16 a3);
+extern legacy_s16 audio_load_driver(legacy_s8* driver, legacy_s16 unused_driver_segment, legacy_s16 mode);
 extern void audio_unload(void);
 extern legacy_s16 audio_toggle_music(void);
 extern legacy_s16 audio_toggle_effects(void);
-extern void audio_stop_unk(void);
+extern void legacy_timer_shutdown(void);
 extern void audiodrv_atexit(void);
 extern void audio_play_crash_and_stop_engine(legacy_s16 index);
 extern void audio_add_driver_timer(void);
@@ -512,8 +518,8 @@ extern void video_set_mode_13h(void);
 extern void shape3d_load_car_shapes(legacy_s8* carid, legacy_s8* oppcarid);
 
 extern void load_palandcursor(void);
-extern void sprite_set_1_size(legacy_u16 left, legacy_u16 right, legacy_u16 top, legacy_u16 height);
-extern void sprite_clear_1_color(legacy_u8);
+extern void sprite_set_target_clip_bounds(legacy_u16 left, legacy_u16 right, legacy_u16 top, legacy_u16 bottom);
+extern void sprite_clear_target(legacy_u8);
 struct SPRITE;
 extern legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode);
 

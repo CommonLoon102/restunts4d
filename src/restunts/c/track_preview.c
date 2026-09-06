@@ -104,22 +104,22 @@ void draw_track_preview(void)
 	if (horizon < 0)
 		horizon = 0;
 
-	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
+	sprite_set_target_clip_bounds(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
 		LEGACY_S16_WRAP_SUB(horizon, skybox.minimum_height));
-	sprite_clear_1_color((legacy_u8)skybox.sky_color);
-	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
+	sprite_clear_target((legacy_u8)skybox.sky_color);
+	sprite_set_target_clip_bounds(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
 		TRACK_PREVIEW_SKYBOX_HEIGHT);
-	sprite_putimage_and_alt(skyboxes[TRACK_PREVIEW_SKYBOX_LEFT], 0,
+	sprite_copy_image_at(skyboxes[TRACK_PREVIEW_SKYBOX_LEFT], 0,
 		LEGACY_S16_WRAP_SUB(horizon,
 			skybox.heights[TRACK_PREVIEW_SKYBOX_LEFT]));
-	sprite_putimage_and_alt(skyboxes[TRACK_PREVIEW_SKYBOX_RIGHT],
+	sprite_copy_image_at(skyboxes[TRACK_PREVIEW_SKYBOX_RIGHT],
 		TRACK_PREVIEW_SCREEN_WIDTH,
 		LEGACY_S16_WRAP_SUB(horizon,
 			skybox.heights[TRACK_PREVIEW_SKYBOX_RIGHT]));
-	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, horizon,
+	sprite_set_target_clip_bounds(0, TRACK_PREVIEW_SCREEN_WIDTH, horizon,
 		TRACK_PREVIEW_SCREEN_HEIGHT);
-	sprite_clear_1_color((legacy_u8)skybox.ground_color);
-	sprite_set_1_size(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
+	sprite_clear_target((legacy_u8)skybox.ground_color);
+	sprite_set_target_clip_bounds(0, TRACK_PREVIEW_SCREEN_WIDTH, 0,
 		TRACK_PREVIEW_SCREEN_HEIGHT);
 	select_cliprect_rotate(0, camera_angle, 0, &trackpreview_cliprect,
 		TRACK_PREVIEW_ROTATE_CLIP);

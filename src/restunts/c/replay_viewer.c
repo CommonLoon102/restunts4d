@@ -300,7 +300,7 @@ static void replay_pause_menu(void)
 	}
 	if (((legacy_u8)replay_recording_flags & REPLAY_RECORDING_RESTARTABLE_FLAG) == 0)
 		options[REPLAY_PAUSE_ACTION_FINISH] = 1;
-	full_redraw_frames_remaining = (legacy_u8)video_flag6_is1;
+	full_redraw_frames_remaining = (legacy_u8)video_page_count;
 	menu_result = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
 		DIALOG_NO_BACKGROUND_SAVE,
 		locate_text_res(gameresptr, aMen_0),
@@ -315,7 +315,7 @@ static void replay_pause_menu(void)
 
 	case REPLAY_PAUSE_ACTION_RESTART:
 		check_input();
-		init_game_state_with_frame_rate_byte(framespersec2);
+		init_game_state_with_frame_rate_byte(configured_frame_rate);
 		elapsed_time2 = 0;
 		gameconfig.game_recordedframes = 0;
 		replay_overflow_acknowledged_word = LEGACY_S16_FROM_BITS(
@@ -692,8 +692,8 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		game_camera_buttons_count[(legacy_u8)cameramode]) &&
 		cameramode != CAMERA_MODE_CUSTOM)
 		replay_selected_control = game_camera_buttons_count[(legacy_u8)cameramode];
-	sprite_copy_2_to_1();
-	if (video_flag5_is0 != 0)
+	sprite_select_screen();
+	if (video_uses_page_flipping != 0)
 		dashboard_buffer_index = frame_buffer_index ^ 1;
 
 	for (;;) {

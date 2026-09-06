@@ -189,13 +189,13 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes) {
 		return 1;
 	}
 
-	if (video_flag5_is0 == 0) {
+	if (video_uses_page_flipping == 0) {
 		// The free-arena check only applies when the window has to come from
 		// the arena; the paragraph count covers all pixels and its header.
 		if (!highpool_can_fit(RENDER_WINDOW_ARENA_PARAGRAPHS)) {
 			window_pixel_bytes = LEGACY_U16_DIV_OR_ZERO(RENDER_WINDOW_PIXEL_BYTES,
 				LEGACY_U16_WRAP_MUL(
-					video_flag1_is1, video_flag4_is1));
+					video_shape_width_scale, video_buffer_height_divisor));
 			if (mmgr_get_res_ofs_diff_scaled() <= window_pixel_bytes) {
 				return 1;
 			}
@@ -219,7 +219,7 @@ legacy_s16 setup_player_cars_repldump(void) {
 }
 
 void free_player_cars(void) {
-	if (video_flag5_is0 == 0) {
+	if (video_uses_page_flipping == 0) {
 		if (render_window_sprite != 0) {
 			sprite_free_wnd(render_window_sprite);
 		}

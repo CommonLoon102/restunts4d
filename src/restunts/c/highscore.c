@@ -252,7 +252,7 @@ void highscore_draw_table(void)
 	legacy_s16 color;
 	legacy_s8 far* text;
 
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	copy_string(&resID_byte1, locate_text_res(mainresptr, "hs1"));
 	strcat(&resID_byte1, " '");
 	strcat(&resID_byte1, gameconfig.game_trackname);
@@ -357,7 +357,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	record.time = time_bits;
 	scores[HIGHSCORE_LAST_ENTRY_INDEX] = record;
 
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	highscore_draw_table();
 	sprite_blit_to_video(render_window_sprite, -1);
 	show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_NO_BACKGROUND_SAVE,
@@ -369,7 +369,7 @@ void enter_hiscore(legacy_s16 frame_count, void far* prompt, legacy_u8 car_flag)
 	strcpy(record.player_name, highscore_player_name_input);
 	scores[HIGHSCORE_LAST_ENTRY_INDEX] = record;
 
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	highscore_draw_table();
 	sprite_blit_to_video(render_window_sprite, -1);
 	highscore_save_sorted();
@@ -405,20 +405,20 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far* animation_resource,
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01);
 	mouse_draw_opaque_check();
-	if (video_flag5_is0 != 0) {
-		sprite_set_1_from_argptr(animation_sprite);
+	if (video_uses_page_flipping != 0) {
+		sprite_select_target(animation_sprite);
 		shape2d_rle_copy(frame_shape, 0, 0);
-		sprite_copy_2_to_1_2();
-		sprite_set_1_size(animation_x,
+		sprite_select_screen_compat();
+		sprite_set_target_clip_bounds(animation_x,
 			LEGACY_S16_WRAP_ADD(animation_x,
 				LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
-					video_flag1_is1)),
+					video_shape_width_scale)),
 			animation_y,
 			LEGACY_S16_WRAP_ADD(animation_y,
 				shape2d_get_height(frame_shape)));
-		sprite_putimage_and_alt(animation_sprite->sprite_bitmapptr,
+		sprite_copy_image_at(animation_sprite->sprite_bitmapptr,
 			animation_x, animation_y);
-		sprite_copy_2_to_1_2();
+		sprite_select_screen_compat();
 	} else {
 		shape2d_rle_copy(frame_shape, animation_x, animation_y);
 	}
@@ -601,11 +601,11 @@ legacy_u16 end_hiscore(void)
 	render_window_sprite = sprite_make_wnd(END_SCREEN_WIDTH,
 		END_SCREEN_HEIGHT, END_SCREEN_COLOR);
 	animation_sprite = 0;
-	if (video_flag5_is0 != 0)
+	if (video_uses_page_flipping != 0)
 		animation_sprite = sprite_make_wnd(END_SCREEN_ANIMATION_WIDTH,
 			END_SCREEN_ANIMATION_HEIGHT, END_SCREEN_COLOR);
 	blit_mode = MENU_BLIT_MODE_INITIAL;
-	sprite_copy_wnd_to_1_clear();
+	sprite_select_render_window_and_clear();
 	draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 		button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(0, 0, END_SCREEN_BOTTOM_Y, END_SCREEN_WIDTH,
@@ -825,7 +825,7 @@ legacy_u16 end_hiscore(void)
 	do {
 	if (opponent_active != 0 && score_status == 2) {
 		score_status = 0;
-		sprite_copy_wnd_to_1();
+		sprite_select_render_window();
 		highscore_draw_table();
 		selected = 1;
 		evaluation_screen = 1;
@@ -859,7 +859,7 @@ legacy_u16 end_hiscore(void)
 	frame_shape = (struct SHAPE2D far*)locate_shape_fatal(
 		animation_resource, aOp01);
 	animation_width = LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape),
-		video_flag1_is1);
+		video_shape_width_scale);
 	animation_x = LEGACY_S16_WRAP_SUB(END_SCREEN_ANIMATION_RIGHT,
 		animation_width);
 	animation_y = LEGACY_S16_WRAP_SUB(
@@ -898,7 +898,7 @@ legacy_u16 end_hiscore(void)
 	blit_mode = MENU_BLIT_MODE_REFRESH;
 	menu_reset_animation_timers();
 	check_input();
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 	for (i = 0; i < END_SCREEN_MENU_AREA_COUNT; i++) {
 		menu_areas[i].x1 = result_button_left[i];
 		menu_areas[i].x2 = result_button_right[i];
@@ -922,13 +922,13 @@ legacy_u16 end_hiscore(void)
 			break;
 	}
 
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 		button_top_color, button_bottom_color, button_fill_color, 0);
-	sprite_set_1_size(END_SCREEN_TEXT_LEFT, END_SCREEN_ANIMATION_RIGHT,
+	sprite_set_target_clip_bounds(END_SCREEN_TEXT_LEFT, END_SCREEN_ANIMATION_RIGHT,
 		hiscore_buttons_y1[0],
 		LEGACY_S16_WRAP_ADD(hiscore_buttons_y2[0], 1));
-	sprite_clear_1_color(button_fill_color);
+	sprite_clear_target(button_fill_color);
 	mouse_draw_opaque_check();
 	enter_hiscore(finish_time,
 		locate_text_res(misc_resource, aInh), outcome);
@@ -937,7 +937,7 @@ legacy_u16 end_hiscore(void)
 	selected = 1;
 	previous_selection = 1;
 	menu_reset_animation_timers();
-	sprite_copy_wnd_to_1();
+	sprite_select_render_window();
 	if (opponent_active == 0 || score_status == -1) {
 		menu_offset = END_SCREEN_MENU_OFFSET_WITHOUT_FIRST_BUTTON;
 	} else {
@@ -978,13 +978,13 @@ legacy_u16 end_hiscore(void)
 	(void)sprite_blit_to_video(render_window_sprite,
 		LEGACY_S8_FROM_BITS(blit_mode));
 	blit_mode = MENU_BLIT_MODE_REFRESH;
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 
 	for (;;) {
 	if (previous_selection != selected) {
 		previous_selection = selected;
-		sprite_copy_2_to_1_2();
-		sprite_set_1_size(0, END_SCREEN_WIDTH,
+		sprite_select_screen_compat();
+		sprite_set_target_clip_bounds(0, END_SCREEN_WIDTH,
 			hiscore_buttons_y1[0],
 			LEGACY_S16_WRAP_ADD(hiscore_buttons_y2[0], 1));
 		mouse_draw_opaque_check();
@@ -1041,7 +1041,7 @@ legacy_u16 end_hiscore(void)
 		continue;
 
 	if (selected == 0) {
-		sprite_copy_wnd_to_1();
+		sprite_select_render_window();
 		draw_button(0, 0, 0, END_SCREEN_WIDTH, END_SCREEN_TOP_HEIGHT,
 			button_top_color, button_bottom_color, button_fill_color, 0);
 		score_status = evaluation_screen != 0 ? 0 : 2;
@@ -1051,7 +1051,7 @@ legacy_u16 end_hiscore(void)
 	audio_unload();
 	if (opponent_active != 0)
 		mmgr_release(animation_resource);
-	if (video_flag5_is0 != 0)
+	if (video_uses_page_flipping != 0)
 		sprite_free_wnd(animation_sprite);
 	sprite_free_wnd(render_window_sprite);
 	if (gameconfig.game_opponenttype != 0)

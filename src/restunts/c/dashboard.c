@@ -87,7 +87,7 @@ static legacy_u8 dashboard_clear_steering_dot(legacy_u16 buffer_index)
 {
 	if (dashboard_steering_dot_y_cache[buffer_index] == 0)
 		return 0;
-	sprite_putimage_and_alt(
+	sprite_copy_image_at(
 		gnobshapes[DASHBOARD_STEERING_DOT_BUFFER_FIRST_SHAPE +
 			(legacy_u8)frame_buffer_index],
 		dashboard_steering_dot_x_cache[buffer_index], dashboard_steering_dot_y_cache[buffer_index]);
@@ -97,7 +97,7 @@ static legacy_u8 dashboard_clear_steering_dot(legacy_u16 buffer_index)
 
 static void dashboard_set_viewport(void)
 {
-	sprite_set_1_size(0, DASHBOARD_VIEWPORT_WIDTH, 0,
+	sprite_set_target_clip_bounds(0, DASHBOARD_VIEWPORT_WIDTH, 0,
 		height_above_replaybar);
 }
 
@@ -146,27 +146,27 @@ void setup_car_shapes(legacy_s16 operation)
 		dashboard_instrument_sprite = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(
 				whlshapes[DASHBOARD_INSTRUMENT_PANEL_SHAPE]),
-				(legacy_u16)video_flag1_is1),
+				(legacy_u16)video_shape_width_scale),
 			shape2d_get_height(
 				whlshapes[DASHBOARD_INSTRUMENT_PANEL_SHAPE]),
 			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 		dashboard_gearbox_sprite = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(
 				whlshapes[DASHBOARD_GEARBOX_SHAPE]),
-				(legacy_u16)video_flag1_is1),
+				(legacy_u16)video_shape_width_scale),
 			shape2d_get_height(whlshapes[DASHBOARD_GEARBOX_SHAPE]),
 			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 		dashboard_gearbox_background_sprite = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(
 				whlshapes[DASHBOARD_GEARBOX_SHAPE]),
-				(legacy_u16)video_flag1_is1),
+				(legacy_u16)video_shape_width_scale),
 			shape2d_get_height(whlshapes[DASHBOARD_GEARBOX_SHAPE]),
 			DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 
 		dashboard_shape = (struct SHAPE2D far*)
 			locate_shape_fatal(stdaresptr, aDash);
 		gearbox_shape = whlshapes[DASHBOARD_GEARBOX_SHAPE];
-		sprite_set_1_from_argptr(dashboard_gearbox_background_sprite);
+		sprite_select_target(dashboard_gearbox_background_sprite);
 		shape2d_rle_copy_clipped(dashboard_shape,
 			LEGACY_S16_WRAP_SUB(
 				(legacy_s16)shape2d_get_pos_x(dashboard_shape),
@@ -174,7 +174,7 @@ void setup_car_shapes(legacy_s16 operation)
 			LEGACY_S16_WRAP_SUB(
 				(legacy_s16)shape2d_get_pos_y(dashboard_shape),
 				(legacy_s16)shape2d_get_pos_y(gearbox_shape)));
-		sprite_copy_2_to_1();
+		sprite_select_screen();
 		dashbmp_y = shape2d_get_pos_y(dashboard_shape);
 
 		shape = (struct SHAPE2D far*)locate_shape_nofatal(stdaresptr, aRoof);
@@ -235,10 +235,10 @@ void setup_car_shapes(legacy_s16 operation)
 	if (state.playerstate.car_gear_change_delay == GEAR_CHANGE_DELAY_EXPIRED &&
 		state.playerstate.car_changing_gear == CAR_GEAR_CHANGE_INACTIVE &&
 		dashboard_gear_knob_visible_cache[buffer_index] != 0) {
-		if (video_flag5_is0 == 0)
+		if (video_uses_page_flipping == 0)
 			mouse_draw_opaque_check();
 		dashboard_set_viewport();
-		sprite_putimage_and_alt(dashboard_gearbox_background_sprite->sprite_bitmapptr,
+		sprite_copy_image_at(dashboard_gearbox_background_sprite->sprite_bitmapptr,
 			shape2d_get_pos_x(whlshapes[DASHBOARD_GEARBOX_SHAPE]),
 			shape2d_get_pos_y(whlshapes[DASHBOARD_GEARBOX_SHAPE]));
 		dashboard_gear_knob_visible_cache[buffer_index] = 0;
@@ -248,24 +248,24 @@ void setup_car_shapes(legacy_s16 operation)
 		dashboard_gear_knob_y_cache[buffer_index] != state.playerstate.car_knob_y ||
 		(state.playerstate.car_gear_change_delay != GEAR_CHANGE_DELAY_EXPIRED &&
 			dashboard_gear_knob_visible_cache[buffer_index] == 0)) {
-		sprite_set_1_from_argptr(dashboard_gearbox_sprite);
+		sprite_select_target(dashboard_gearbox_sprite);
 		dashboard_gear_knob_visible_cache[buffer_index] = 1;
 		shape2d_rle_copy_clipped(whlshapes[DASHBOARD_GEARBOX_SHAPE], 0, 0);
 		dashboard_gear_knob_x_cache[buffer_index] = state.playerstate.car_knob_x;
 		dashboard_gear_knob_y_cache[buffer_index] = state.playerstate.car_knob_y;
-		sprite_putimage_and_alt2(
+		sprite_and_image_at_anchor(
 			gnobshapes[DASHBOARD_GEAR_KNOB_BACKGROUND_SHAPE],
 			state.playerstate.car_knob_x, state.playerstate.car_knob_y);
-		sprite_putimage_or_alt(gnobshapes[DASHBOARD_GEAR_KNOB_SHAPE],
+		sprite_or_image_at_anchor(gnobshapes[DASHBOARD_GEAR_KNOB_SHAPE],
 			state.playerstate.car_knob_x, state.playerstate.car_knob_y);
-		if (video_flag5_is0 != 0) {
-			setup_mcgawnd2();
+		if (video_uses_page_flipping != 0) {
+			sprite_select_mcga_backbuffer();
 		} else {
-			sprite_copy_2_to_1_2();
+			sprite_select_screen_compat();
 			mouse_draw_opaque_check();
 		}
 		dashboard_set_viewport();
-		sprite_putimage_and_alt(dashboard_gearbox_sprite->sprite_bitmapptr,
+		sprite_copy_image_at(dashboard_gearbox_sprite->sprite_bitmapptr,
 			shape2d_get_pos_x(whlshapes[DASHBOARD_GEARBOX_SHAPE]),
 			shape2d_get_pos_y(whlshapes[DASHBOARD_GEARBOX_SHAPE]));
 	}
@@ -278,7 +278,7 @@ void setup_car_shapes(legacy_s16 operation)
 	else if (steering_position > DASHBOARD_STEERING_RIGHT_LIMIT)
 		wheel_state = DASHBOARD_WHEEL_STATE_RIGHT;
 	if (dashboard_wheel_shape_cache[buffer_index] != wheel_state || full_redraw_frames_remaining != 0) {
-		if (video_flag5_is0 == 0)
+		if (video_uses_page_flipping == 0)
 			mouse_draw_opaque_check();
 		steering_dot_cleared = dashboard_clear_steering_dot(buffer_index);
 		shape2d_rle_copy_position_clipped(whlshapes[wheel_state]);
@@ -310,11 +310,11 @@ void setup_car_shapes(legacy_s16 operation)
 	if (wheel_redrawn != 0 || full_redraw_frames_remaining != 0 ||
 		dashboard_speed_index_cache[buffer_index] != (legacy_s16)speed_index ||
 		dashboard_rpm_index_cache[buffer_index] != (legacy_s16)rpm_index) {
-		if (video_flag5_is0 == 0)
+		if (video_uses_page_flipping == 0)
 			mouse_draw_opaque_check();
 		if (dashboard_clear_steering_dot(buffer_index) != 0)
 			steering_dot_cleared = 1;
-		sprite_set_1_from_argptr(dashboard_instrument_sprite);
+		sprite_select_target(dashboard_instrument_sprite);
 		shape2d_rle_copy(
 			whlshapes[DASHBOARD_INSTRUMENT_PANEL_SHAPE], 0, 0);
 		dashboard_speed_index_cache[buffer_index] = (legacy_s16)speed_index;
@@ -380,12 +380,12 @@ void setup_car_shapes(legacy_s16 operation)
 				dos_memory_pointer_segment(
 					whlshapes[DASHBOARD_RIGHT_INSTRUMENT_SOURCE_SHAPE]));
 		}
-		if (video_flag5_is0 != 0)
-			setup_mcgawnd2();
+		if (video_uses_page_flipping != 0)
+			sprite_select_mcga_backbuffer();
 		else
-			sprite_copy_2_to_1_2();
+			sprite_select_screen_compat();
 		dashboard_set_viewport();
-		sprite_putimage_and_alt(dashboard_instrument_sprite->sprite_bitmapptr,
+		sprite_copy_image_at(dashboard_instrument_sprite->sprite_bitmapptr,
 			shape2d_get_pos_x(
 				whlshapes[DASHBOARD_INSTRUMENT_PANEL_SHAPE]),
 			shape2d_get_pos_y(
@@ -394,7 +394,7 @@ void setup_car_shapes(legacy_s16 operation)
 
 	if (dashboard_steering_position_cache[buffer_index] != steering_position ||
 		full_redraw_frames_remaining != 0 || steering_dot_cleared != 0) {
-		if (video_flag5_is0 == 0)
+		if (video_uses_page_flipping == 0)
 			mouse_draw_opaque_check();
 		dashboard_set_viewport();
 		(void)dashboard_clear_steering_dot(buffer_index);
@@ -413,7 +413,7 @@ void setup_car_shapes(legacy_s16 operation)
 			((legacy_u16)((legacy_u8)dot_x -
 				shape2d_get_anchor_x(
 					gnobshapes[DASHBOARD_STEERING_DOT_SHAPE]))) &
-			(legacy_u16)video_flag3_isFFFF);
+			(legacy_u16)video_x_alignment_mask);
 		dashboard_steering_dot_y_cache[buffer_index] = LEGACY_S16_FROM_BITS(
 			LEGACY_U16_WRAP_SUB((legacy_u8)dot_y,
 				shape2d_get_anchor_y(
@@ -422,9 +422,9 @@ void setup_car_shapes(legacy_s16 operation)
 			gnobshapes[DASHBOARD_STEERING_DOT_BUFFER_FIRST_SHAPE +
 				(legacy_u8)frame_buffer_index],
 			dashboard_steering_dot_x_cache[buffer_index], dashboard_steering_dot_y_cache[buffer_index]);
-		sprite_putimage_and_alt2(
+		sprite_and_image_at_anchor(
 			gnobshapes[DASHBOARD_STEERING_DOT_BACKGROUND_SHAPE], dot_x, dot_y);
-		sprite_putimage_or_alt(
+		sprite_or_image_at_anchor(
 			gnobshapes[DASHBOARD_STEERING_DOT_SHAPE], dot_x, dot_y);
 		dashboard_steering_position_cache[buffer_index] = steering_position;
 	}

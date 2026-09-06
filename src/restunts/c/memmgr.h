@@ -22,7 +22,7 @@ typedef char legacy_memchunk_must_be_18_bytes[
 const legacy_s8* mmgr_path_to_name(const legacy_s8* filename);
 void far* mmgr_alloc_pages(const legacy_s8* name, legacy_u16 paragraphs);
 void mmgr_alloc_resmem(legacy_u16 end_segment);
-void mmgr_alloc_a000(void);
+void mmgr_init_conventional_arena(void);
 legacy_u16 mmgr_get_ofs_diff(void);
 void far* mmgr_free(legacy_s8 far* ptr);
 void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras);

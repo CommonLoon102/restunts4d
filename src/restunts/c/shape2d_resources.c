@@ -40,20 +40,20 @@
 #define OVERLAP_MARGIN_QUARTER_SHIFT 2U
 #define OVERLAP_RESERVE_EIGHTH_SHIFT 3U
 
-legacy_u32 parse_shape2d_helper(void far* data)
+legacy_u32 shape2d_pointer_to_linear(void far* data)
 {
 	return ((legacy_u32)dos_memory_pointer_segment(data) <<
 		DOS_PARAGRAPH_SHIFT) + dos_memory_pointer_offset(data);
 }
 
-void far* parse_shape2d_helper2(legacy_u32 linear_address)
+void far* shape2d_pointer_from_linear(legacy_u32 linear_address)
 {
 	return dos_memory_make_pointer(
 		(legacy_u16)(linear_address >> DOS_PARAGRAPH_SHIFT),
 		(legacy_u16)linear_address & DOS_PARAGRAPH_OFFSET_MASK);
 }
 
-legacy_s16 parse_shape2d_helper3(void far* data)
+legacy_s16 shape2d_count_repeated_bytes(void far* data)
 {
 	legacy_u8 far* source_ptr;
 	legacy_u16 source_segment;
@@ -182,16 +182,16 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	output_offset = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(mempages),
 		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count,
 			PARSED_RESOURCE_TABLE_ENTRY_SIZE), RESOURCE_FILE_HEADER_SIZE));
-	initial_output_linear = parse_shape2d_helper(
+	initial_output_linear = shape2d_pointer_to_linear(
 		dos_memory_make_pointer(output_segment, output_offset));
 
 	shape_index = 0;
 	while (LEGACY_S16_FROM_BITS(shape_index) <
 		LEGACY_S16_FROM_BITS(shape_count)) {
 		shape = file_get_shape2d((legacy_u8 far*)memchunk, shape_index);
-		output_linear = parse_shape2d_helper(
+		output_linear = shape2d_pointer_to_linear(
 			dos_memory_make_pointer(output_segment, output_offset));
-		output_pointer = parse_shape2d_helper2(output_linear);
+		output_pointer = shape2d_pointer_from_linear(output_linear);
 		output_segment = dos_memory_pointer_segment(output_pointer);
 		output_offset = dos_memory_pointer_offset(output_pointer);
 		shape2d_far_write_dword(pages_segment, offsets_offset,
@@ -215,7 +215,7 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 
 		if (remaining != 0) {
 			for (;;) {
-				run_count = (legacy_u16)parse_shape2d_helper3(
+				run_count = (legacy_u16)shape2d_count_repeated_bytes(
 					dos_memory_make_pointer(source_segment, scan_offset));
 				if (LEGACY_S16_FROM_BITS(run_count) <=
 					RLE_LITERAL_RUN_LIMIT &&
@@ -280,9 +280,9 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 		shape_index++;
 	}
 
-	output_size = parse_shape2d_helper(
+	output_size = shape2d_pointer_to_linear(
 		dos_memory_make_pointer(output_segment, output_offset)) -
-		parse_shape2d_helper(mempages);
+		shape2d_pointer_to_linear(mempages);
 	if ((legacy_u8)output_size & DOS_PARAGRAPH_OFFSET_MASK)
 		output_size = (output_size >> DOS_PARAGRAPH_SHIFT) + 1UL;
 	else

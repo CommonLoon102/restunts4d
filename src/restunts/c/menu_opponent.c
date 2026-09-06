@@ -93,11 +93,11 @@ void run_opponent_menu(void)
 			displayed_opponent =
 				(legacy_u8)gameconfig.game_opponenttype;
 			previous_selection = OPPONENT_MENU_NO_SELECTION;
-			if (video_flag5_is0 == 0)
-				sprite_copy_wnd_to_1();
+			if (video_uses_page_flipping == 0)
+				sprite_select_render_window();
 			else
-				setup_mcgawnd2();
-			sprite_clear_1_color(0);
+				sprite_select_mcga_backbuffer();
+			sprite_clear_target(0);
 
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
 				opp_res, aScrn_0);
@@ -119,10 +119,10 @@ void run_opponent_menu(void)
 			shape = (struct SHAPE2D far*)locate_shape_fatal(
 				opp_res, aClip);
 			sprite_draw_palette_mapped(shape);
-			if (video_flag5_is0 != 0) {
+			if (video_uses_page_flipping != 0) {
 				sprite_clear_shape_alt(
 					render_window_sprite->sprite_bitmapptr, 0, 0);
-				sprite_copy_wnd_to_1();
+				sprite_select_render_window();
 			}
 
 			if ((legacy_u8)gameconfig.game_opponenttype != OPPONENT_NONE)

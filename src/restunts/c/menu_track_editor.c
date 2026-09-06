@@ -198,7 +198,7 @@ void draw_2DtrackMap(
 					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column)];
-					sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						x, LEGACY_S16_WRAP_ADD(y, 16));
 					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
 					sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
@@ -208,7 +208,7 @@ void draw_2DtrackMap(
 					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row],
 						source_column + 1U)];
-					sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						LEGACY_S16_WRAP_ADD(x, 16), y);
 					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
 					sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
@@ -218,17 +218,17 @@ void draw_2DtrackMap(
 					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row],
 						source_column + 1U)];
-					sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						LEGACY_S16_WRAP_ADD(x, 16), y);
 					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column)];
-					sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						x, LEGACY_S16_WRAP_ADD(y, 16));
 					terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 						(legacy_u16)terrainrows[source_row + 1U],
 						source_column + 1U)];
-					sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 						LEGACY_S16_WRAP_ADD(x, 16),
 						LEGACY_S16_WRAP_ADD(y, 16));
 					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
@@ -246,11 +246,11 @@ void draw_2DtrackMap(
 			cached_track[cache_index] = TRACK_EDITOR_CACHE_INVALID;
 
 			if (tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
-				sprite_putimage_and_alt(track_editor_terrain_shapes[terrain], x, y);
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
 				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row + 1U],
 					source_column)];
-				sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 					x, LEGACY_S16_WRAP_ADD(y, 16));
 				neighbor_tile = td14_elem_map_main[
 					LEGACY_U16_WRAP_SUB(source_index, 1U)];
@@ -259,11 +259,11 @@ void draw_2DtrackMap(
 				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile],
 					LEGACY_S16_WRAP_SUB(x, 16), y);
 			} else if (tile == TRACK_TILE_CONTINUATION_SOUTH && map_row == 0) {
-				sprite_putimage_and_alt(track_editor_terrain_shapes[terrain], x, y);
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
 				terrain = td15_terr_map_main[LEGACY_U16_WRAP_ADD(
 					(legacy_u16)terrainrows[source_row],
 					source_column + 1U)];
-				sprite_putimage_and_alt(track_editor_terrain_shapes[terrain],
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
 					LEGACY_S16_WRAP_ADD(x, 16), y);
 				neighbor_tile = td14_elem_map_main[LEGACY_U16_WRAP_ADD(
 					track_menu_previous_row(source_row), source_column)];
@@ -272,7 +272,7 @@ void draw_2DtrackMap(
 				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile],
 					x, LEGACY_S16_WRAP_SUB(y, 16));
 			} else if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST && map_row == 0 && map_column == 0) {
-				sprite_putimage_and_alt(track_editor_terrain_shapes[terrain], x, y);
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
 				neighbor_tile = td14_elem_map_main[LEGACY_U16_WRAP_SUB(
 					LEGACY_U16_WRAP_ADD(
 						track_menu_previous_row(source_row), source_column),
@@ -495,7 +495,7 @@ static void track_editor_save_track(legacy_u8* track_changed,
 	save_status = 0;
 	g_is_busy = 1;
 	while (save_status == 0) {
-		sprite_copy_2_to_1_2();
+		sprite_select_screen_compat();
 		*map_dirty = 1;
 		text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
 		if (do_savefile_dialog(track_directory,
@@ -641,7 +641,7 @@ void load_tracks_menu_shapes(void)
 		cursor_sprites[index] = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(
 				track_editor_cursor_shapes[index]),
-				(legacy_u16)video_flag1_is1),
+				(legacy_u16)video_shape_width_scale),
 			shape2d_get_height(track_editor_cursor_shapes[index]),
 			TRACK_EDITOR_TRANSPARENT_COLOR);
 	}
@@ -694,7 +694,7 @@ void load_tracks_menu_shapes(void)
 	focus = 0;
 	path_animation_index = 0;
 
-	sprite_copy_wnd_to_1_clear();
+	sprite_select_render_window_and_clear();
 	draw_button(locate_text_res(text_resource, "bti"),
 		TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y, TRACK_EDITOR_TITLE_WIDTH,
 		TRACK_EDITOR_TITLE_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
@@ -783,7 +783,7 @@ void load_tracks_menu_shapes(void)
 					else
 						selection_row[1]--;
 				}
-				sprite_copy_wnd_to_1();
+				sprite_select_render_window();
 				preRender_icons(page);
 				if (page == 0)
 					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X,
@@ -802,7 +802,7 @@ void load_tracks_menu_shapes(void)
 		}
 
 		if (map_dirty != 0 || palette_dirty != 0) {
-			sprite_copy_wnd_to_1();
+			sprite_select_render_window();
 			if (map_dirty != 0) {
 				map_dirty = 0;
 				if (scrollbars_dirty != 0) {
@@ -815,18 +815,18 @@ void load_tracks_menu_shapes(void)
 						5, 4, TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
 						map_row_offset, 11, 30);
 				}
-				sprite_set_1_size(TRACK_EDITOR_MAP_LEFT,
+				sprite_set_target_clip_bounds(TRACK_EDITOR_MAP_LEFT,
 					TRACK_EDITOR_MAP_CLIP_RIGHT, TRACK_EDITOR_MAP_TOP,
 					TRACK_EDITOR_MAP_CLIP_BOTTOM);
 				draw_2DtrackMap(map_column_offset, map_row_offset,
 					cached_track, cached_terrain);
-				sprite_set_1_size(0, TRACK_EDITOR_SCREEN_WIDTH,
+				sprite_set_target_clip_bounds(0, TRACK_EDITOR_SCREEN_WIDTH,
 					0, TRACK_EDITOR_SCREEN_HEIGHT);
 			}
 
 			if (palette_dirty != 0) {
 				palette_dirty = 0;
-				sprite_set_1_from_argptr(cursor_sprites[multi_tile]);
+				sprite_select_target(cursor_sprites[multi_tile]);
 				if (page == 0) {
 					sprite_shape_to_1(track_editor_terrain_shapes[selected_tile], 0, 0);
 					preRender_line(1, 0, TRACK_EDITOR_TILE_PREVIEW_RIGHT,
@@ -853,7 +853,7 @@ void load_tracks_menu_shapes(void)
 			previous_hovered_tile = TRACK_EDITOR_HOVER_UNSET;
 		}
 
-		sprite_copy_2_to_1_2();
+		sprite_select_screen_compat();
 		if (focus == 0) {
 			cursor_width = (legacy_u8)(tile_width << 4);
 			cursor_height = (legacy_u8)(tile_height << 4);

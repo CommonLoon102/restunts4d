@@ -53,9 +53,9 @@ struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height
 	rect_ingame_text.right = OVERLAY_SCREEN_WIDTH;
 	rect_ingame_text.top = LEGACY_S16_WRAP_SUB(bottom, sink_height);
 	rect_ingame_text.bottom = bottom;
-	sprite_set_1_size(0, OVERLAY_SCREEN_WIDTH, rect_ingame_text.top,
+	sprite_set_target_clip_bounds(0, OVERLAY_SCREEN_WIDTH, rect_ingame_text.top,
 		rect_ingame_text.bottom);
-	sprite_clear_1_color((legacy_u8)skybox.water_color);
+	sprite_clear_target((legacy_u8)skybox.water_color);
 	return &rect_ingame_text;
 }
 

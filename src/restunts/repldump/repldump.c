@@ -461,7 +461,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		fatal_error("\nDone.\n");
 	}
 	else {
-		audio_stop_unk();
+		legacy_timer_shutdown();
 		audiodrv_atexit();
 		kb_exit_handler();
 		kb_shift_checking1();

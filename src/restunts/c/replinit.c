@@ -8,10 +8,10 @@
 
 void init_video_geometry_flags(void)
 {
-	video_flag1_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
-	video_flag2_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
-	video_flag3_isFFFF = VIDEO_GEOMETRY_FULL_MASK;
-	video_flag4_is1 = VIDEO_GEOMETRY_UNIT_SCALE;
+	video_shape_width_scale = VIDEO_GEOMETRY_UNIT_SCALE;
+	video_x_alignment = VIDEO_GEOMETRY_UNIT_SCALE;
+	video_x_alignment_mask = VIDEO_GEOMETRY_FULL_MASK;
+	video_buffer_height_divisor = VIDEO_GEOMETRY_UNIT_SCALE;
 }
 
 void init_row_tables(void)

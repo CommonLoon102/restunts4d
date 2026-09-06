@@ -62,7 +62,7 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 	legacy_s16 result;
 	legacy_u16 phase;
 
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 	mouse_draw_opaque_check();
 	if ((legacy_u16)mode == SPRITE_BLIT_IMMEDIATE_MODE) {
 		sprite_putimage(sprite->sprite_bitmapptr);
@@ -78,7 +78,7 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 		sprite_draw_dissolve_phase(sprite->sprite_bitmapptr, phase);
 	}
 	if (result != 0) {
-		sprite_copy_2_to_1_2();
+		sprite_select_screen_compat();
 		sprite_putimage(sprite->sprite_bitmapptr);
 	}
 	mouse_draw_transparent_check();
@@ -123,7 +123,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 	legacy_s16 first_key;
 
 	input_flags = (legacy_u8)flags;
-	sprite_copy_2_to_1();
+	sprite_select_screen();
 	text_edit_x = (legacy_u16)x;
 	text_edit_y = (legacy_u16)y;
 	text_edit_buffer = text;

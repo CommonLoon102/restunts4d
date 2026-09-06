@@ -43,12 +43,12 @@ struct SPRITE {
 	legacy_u16 sprite_left;
 	legacy_u16 sprite_right;
 	legacy_u16 sprite_top;
-	legacy_u16 sprite_height;
+	legacy_u16 sprite_bottom;
 	legacy_u16 sprite_pitch;
 	legacy_u16 sprite_reserved_word4;
-	legacy_u16 sprite_width2;
-	legacy_u16 sprite_left2;
-	legacy_u16 sprite_widthsum;
+	legacy_u16 sprite_buffer_width;
+	legacy_u16 sprite_raster_left;
+	legacy_u16 sprite_raster_right;
 };
 #pragma pack (pop)
 
@@ -70,20 +70,20 @@ typedef char legacy_sprite_must_be_30_bytes[
 struct SPRITE far* sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16);
 void sprite_free_wnd(struct SPRITE far* wndsprite);
 
-void sprite_set_1_from_argptr(struct SPRITE far* argsprite);
+void sprite_select_target(struct SPRITE far* target_sprite);
 
-void sprite_copy_2_to_1(void);
-void sprite_copy_2_to_1_2(void);
-void sprite_copy_2_to_1_clear(void);
-void sprite_copy_wnd_to_1(void);
-void sprite_copy_wnd_to_1_clear(void);
+void sprite_select_screen(void);
+void sprite_select_screen_compat(void);
+void sprite_select_screen_and_clear(void);
+void sprite_select_render_window(void);
+void sprite_select_render_window_and_clear(void);
 
-void sprite_copy_both_to_arg(struct SPRITE* argsprite);
-void sprite_copy_arg_to_both(struct SPRITE* argsprite);
+void sprite_save_context(struct SPRITE* saved_context);
+void sprite_restore_context(struct SPRITE* saved_context);
 
 legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 top, legacy_s16 bottom);
 
-void sprite_clear_1_color(legacy_u8 color);
+void sprite_clear_target(legacy_u8 color);
 void sprite_xor_rect_clipped(legacy_s16 x, legacy_s16 y, legacy_s16 width,
 	legacy_s16 height, legacy_s16 color);
 void sprite_fill_rect(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height, legacy_s16 color);
@@ -107,10 +107,10 @@ void sprite_shape_to_1(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_shape_to_1_alt(struct SHAPE2D far* shape);
 void sprite_pop_background(void);
 void sprite_putimage_and(struct SHAPE2D far* shape, legacy_u16 a, legacy_u16 b);
-void sprite_putimage_and_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
-void sprite_putimage_and_alt2(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
+void sprite_copy_image_at(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
+void sprite_and_image_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_putimage_or(struct SHAPE2D far* shape, legacy_u16 a, legacy_u16 b);
-void sprite_putimage_or_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
+void sprite_or_image_at_anchor(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_putimage_transparent(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_clear_shape_alt(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void sprite_clear_shape(struct SHAPE2D far* shape);
@@ -122,11 +122,11 @@ void shape2d_rle_or_far_pointer(legacy_u16 offset, legacy_u16 segment);
 void shape2d_rle_copy(struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void shape2d_render_bmp_as_mask(struct SHAPE2D far* shape);
 
-void shape_op_explosion(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
+void shape2d_draw_scaled_transparent_clipped(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 void shape2d_draw_scaled_transparent(legacy_s16 scale, struct SHAPE2D far* shape, legacy_s16 x, legacy_s16 y);
 
-void setup_mcgawnd1(void);
-void setup_mcgawnd2(void);
+void sprite_present_mcga_backbuffer(void);
+void sprite_select_mcga_backbuffer(void);
 void sprite_copy_rect_shifted(legacy_s16 source_x, legacy_s16 source_y,
 	legacy_s16 width, legacy_s16 height, legacy_s16 destination_shift);
 

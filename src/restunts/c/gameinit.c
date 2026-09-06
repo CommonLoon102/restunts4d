@@ -153,14 +153,14 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_sound_flags = CAR_SOUND_ENGINE_ACTIVE_FLAG;
 }
 
-void init_game_state(legacy_s16 arg)
+void init_game_state(legacy_s16 initialization_mode)
 {
-	legacy_s16 i, tmpcol, tmprow;
+	legacy_s16 i, start_column_offset, start_row_offset;
 	legacy_s16 route_track_index;
 	legacy_u16 route_table_offset;
 	legacy_u8 route_point;
 
-	if (arg == GAMESTATE_INIT_RESET_CHECKPOINTS) {
+	if (initialization_mode == GAMESTATE_INIT_RESET_CHECKPOINTS) {
 		elapsed_time1 = 0;
 		for (i = 0; i < GAMESTATE_CHECKPOINT_COUNT; ++i)
 			cvxptr[i].game_checkpoint_valid = GAMESTATE_CHECKPOINT_INVALID;
@@ -177,7 +177,7 @@ void init_game_state(legacy_s16 arg)
 	timer_ticks_per_frame = LEGACY_S16_FROM_BITS(
 		LEGACY_U16_DIV_OR_ZERO(TIMER_TICKS_PER_SECOND, framespersec));
 
-	if (arg != GAMESTATE_INIT_TIMING_ONLY) {
+	if (initialization_mode != GAMESTATE_INIT_TIMING_ONLY) {
 		reset_race_loop_state();
 
 		state.game_checkpoint_valid = GAMESTATE_CHECKPOINT_VALID;
@@ -230,14 +230,14 @@ void init_game_state(legacy_s16 arg)
 		state.game_jumpCount = 0;
 
 		calculate_car_start_offset(track_angle, ANGLE_QUARTER_TURN,
-			&tmpcol, &tmprow);
+			&start_column_offset, &start_row_offset);
 
 		init_car_at_start(
 			&state.playerstate,
 			&simd_player,
 			gameconfig.game_playertransmission,
-			tmpcol,
-			tmprow);
+			start_column_offset,
+			start_row_offset);
 
 		state.game_player_confirmed_route = 0;
 		state.game_player_route_indicator = ROUTE_INDICATOR_NONE;
@@ -249,7 +249,7 @@ void init_game_state(legacy_s16 arg)
 		state.game_startrow = start_finish_row;
 		state.game_startrow2 = start_finish_row;
 
-		if (arg != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
+		if (initialization_mode != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.playerstate.car_route_point_index;
 			get_track_route_point(
 				state.playerstate.car_route_index,
@@ -261,17 +261,17 @@ void init_game_state(legacy_s16 arg)
 		}
 
 		calculate_car_start_offset(track_angle, ANGLE_THREE_QUARTER_TURN,
-			&tmpcol, &tmprow);
+			&start_column_offset, &start_row_offset);
 
 		init_car_at_start(
 			&state.opponentstate,
 			&simd_opponent,
 			TRANSMISSION_AUTOMATIC,
-			tmpcol,
-			tmprow);
+			start_column_offset,
+			start_row_offset);
 
 		if (gameconfig.game_opponenttype &&
-			arg != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
+			initialization_mode != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.opponentstate.car_route_point_index;
 			opponent_route_advance((legacy_s16)route_point);
 			state.opponentstate.car_route_point_index = LEGACY_S8_WRAP_ADD(

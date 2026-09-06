@@ -150,7 +150,7 @@ void audio_carstate(void);
 void audio_suspend(void);
 void audio_resume(void);
 legacy_s16 audio_load_dos_driver(const legacy_s8* driver_name,
-	legacy_s16 unused1, legacy_s16 unused2);
+	legacy_s16 unused_driver_segment, legacy_s16 mode);
 void audio_reset_channels(void);
 void audio_stop_music(void);
 void audio_driver_timer(void);

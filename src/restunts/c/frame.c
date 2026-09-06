@@ -348,15 +348,15 @@ void frame_present(struct RECTANGLE* cliprect) {
 	struct RECTANGLE* dirty_rect;
 	legacy_s16 i;
 
-	if (video_flag5_is0 != 0)
+	if (video_uses_page_flipping != 0)
 		return;
 
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 	if (full_redraw_frames_remaining != 0) {
 		mouse_draw_opaque_check();
 		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 	} else if (slow_video_mgmt_copy == 0) {
-		sprite_set_1_size(
+		sprite_set_target_clip_bounds(
 			cliprect->left,
 			cliprect->right,
 			cliprect->top,
@@ -397,7 +397,7 @@ void frame_present(struct RECTANGLE* cliprect) {
 			mouse_draw_opaque_check();
 			for (i = 0; i < redraw_rect_count; i++) {
 				dirty_rect = &merged_redraw_rects[redraw_rect_sort_indices[i]];
-				sprite_set_1_size(
+				sprite_set_target_clip_bounds(
 					dirty_rect->left,
 					dirty_rect->right,
 					dirty_rect->top,
@@ -405,7 +405,7 @@ void frame_present(struct RECTANGLE* cliprect) {
 				sprite_putimage(render_window_sprite->sprite_bitmapptr);
 			}
 		} else {
-			sprite_set_1_size(0, FRAME_SCREEN_WIDTH,
+			sprite_set_target_clip_bounds(0, FRAME_SCREEN_WIDTH,
 				cliprect->top, cliprect->bottom);
 			mouse_draw_opaque_check();
 			sprite_putimage(render_window_sprite->sprite_bitmapptr);
@@ -583,7 +583,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 
 	visible_car_explosions[PLAYER_CAR_INDEX] = 0;
 	visible_car_explosions[OPPONENT_CAR_INDEX] = 0;
-	if (video_flag5_is0 == 0 || buffer_index == 0) {
+	if (video_uses_page_flipping == 0 || buffer_index == 0) {
 		active_frame_rects = frame_rects_page0;
 		alternate_frame_rects = frame_rects_page1;
 	} else {
@@ -688,7 +688,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 		}
 
 		if (track_wall_collision_enabled != 0) {
-			tile_angle_or_frame_index = plane_origin_op(planindex, cam_pos.x, cam_pos.y, cam_pos.z);
+			tile_angle_or_frame_index = plane_signed_distance(planindex, cam_pos.x, cam_pos.y, cam_pos.z);
 			if (tile_angle_or_frame_index < FRAME_PLANE_CLEARANCE) {
 				wheel_forward_travel.x = 0;
 				wheel_forward_travel.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE,
@@ -699,7 +699,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 				car_initial_pitch = 0;
 				car_initial_roll = 0;
 				car_initial_yaw = 0;
-				plane_rotate_op();
+				transform_wheel_travel_to_world();
 				cam_pos.x = LEGACY_S16_WRAP_ADD(
 					cam_pos.x, wheel_world_travel.x);
 				cam_pos.y = LEGACY_S16_WRAP_ADD(
@@ -1543,7 +1543,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 
 	// Draw the skybox
 	skybox_requires_full_redraw = skybox_render(buffer_index, cliprect, skybox_parameter, &camera_pitch_roll_rotation, effective_camera_roll, camera_yaw, cam_pos.y);
-	sprite_set_1_size(0, FRAME_SCREEN_WIDTH, cliprect->top,
+	sprite_set_target_clip_bounds(0, FRAME_SCREEN_WIDTH, cliprect->top,
 		cliprect->bottom);
 	shape3d_render_queued_primitives();
 
@@ -1567,7 +1567,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 		}
 
 		if (rect_intersect(redraw_rect, cliprect) == 0) {
-			sprite_set_1_size(redraw_rect->left, redraw_rect->right, redraw_rect->top, redraw_rect->bottom);
+			sprite_set_target_clip_bounds(redraw_rect->left, redraw_rect->right, redraw_rect->top, redraw_rect->bottom);
 			offset_vector.x = LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(
 				redraw_rect->right, redraw_rect->left),
 				FRAME_RECT_CENTER_SHIFT);
@@ -1589,7 +1589,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 					LEGACY_S32_WRAP_MUL((legacy_s32)idx,
 						FRAME_EXPLOSION_FIXED_SCALE),
 					(legacy_s32)sdgame2_widths[shape_or_tile_index]));
-			shape_op_explosion(shape_count_or_extent, sdgame2shapes[shape_or_tile_index], offset_vector.x, offset_vector.y);
+			shape2d_draw_scaled_transparent_clipped(shape_count_or_extent, sdgame2shapes[shape_or_tile_index], offset_vector.x, offset_vector.y);
 		}
 	}
 
@@ -1598,7 +1598,7 @@ void update_frame(legacy_s8 buffer_index, struct RECTANGLE* cliprect) {
 */
 
 	// Depict windscreen cracking after a crash
-	sprite_set_1_size(0, FRAME_SCREEN_WIDTH, cliprect->top,
+	sprite_set_target_clip_bounds(0, FRAME_SCREEN_WIDTH, cliprect->top,
 		cliprect->bottom);
 	if (cameramode == CAMERA_MODE_COCKPIT) {
 

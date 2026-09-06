@@ -181,15 +181,15 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 	if (opponent_type != CAR_MENU_PLAYER_MODE) {
 		car_menu_redraw_cliprect.right = CAR_MENU_OPPONENT_PANEL_RIGHT;
-		if (video_flag5_is0 != 0) {
+		if (video_uses_page_flipping != 0) {
 			opponent_shape = (struct SHAPE2D far*)
 				oppresources[(legacy_u16)opponent_type];
 			opponent_sprite = sprite_make_wnd(
 				shape2d_get_width(opponent_shape),
 				shape2d_get_height(opponent_shape),
 				CAR_MENU_TRANSPARENT_COLOR);
-			setup_mcgawnd2();
-			sprite_clear_1_color(0);
+			sprite_select_mcga_backbuffer();
+			sprite_clear_target(0);
 			sprite_putimage_transparent(opponent_shape, 0, 0);
 			sprite_clear_shape_alt(opponent_sprite->sprite_bitmapptr,
 				0, 0);
@@ -226,7 +226,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		car_resource = (legacy_s8 far*)file_load_resfile(aCarcoun);
 		setup_aero_trackdata(car_resource, 0);
 
-		sprite_copy_wnd_to_1_clear();
+		sprite_select_render_window_and_clear();
 		draw_button(0, 0, CAR_MENU_BACKGROUND_Y, CAR_MENU_SCREEN_WIDTH,
 			CAR_MENU_BACKGROUND_HEIGHT,
 			button_top_color, button_bottom_color, button_fill_color, 0);
@@ -358,34 +358,34 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			render_phase == CAR_RENDER_START_PHASE)) {
 		render_phase = CAR_RENDER_IDLE_PHASE;
 		car_ready = 1;
-		sprite_copy_wnd_to_1();
-		sprite_set_1_size(union_rect.left, union_rect.right,
+		sprite_select_render_window();
+		sprite_set_target_clip_bounds(union_rect.left, union_rect.right,
 			union_rect.top, union_rect.bottom);
 		sprite_putimage((struct SHAPE2D far*)locate_shape_fatal(
 			selector_resource, aStop_1));
 		shape3d_render_queued_primitives();
-		sprite_copy_wnd_to_1();
-		sprite_set_1_size(union_rect.left, union_rect.right,
+		sprite_select_render_window();
+		sprite_set_target_clip_bounds(union_rect.left, union_rect.right,
 			union_rect.top, union_rect.bottom);
 		previous_rect = current_rect;
 
 		if (opponent_type != CAR_MENU_PLAYER_MODE &&
 			previous_car_index != car_index) {
-			sprite_copy_wnd_to_1();
-			if (video_flag5_is0 == 0) {
+			sprite_select_render_window();
+			if (video_uses_page_flipping == 0) {
 				sprite_putimage_transparent(
 					(struct SHAPE2D far*)oppresources[
 						(legacy_u16)opponent_type],
 					CAR_MENU_OPPONENT_PANEL_X, 0);
 			} else {
-				sprite_putimage_and_alt(
+				sprite_copy_image_at(
 					opponent_sprite->sprite_bitmapptr,
 					CAR_MENU_OPPONENT_PANEL_X, 0);
 			}
 		}
 
-		sprite_copy_2_to_1_2();
-		sprite_set_1_size(union_rect.left, union_rect.right,
+		sprite_select_screen_compat();
+		sprite_set_target_clip_bounds(union_rect.left, union_rect.right,
 			union_rect.top, union_rect.bottom);
 		mouse_draw_opaque_check();
 		if (blit_mode != MENU_BLIT_MODE_REFRESH) {
@@ -401,25 +401,25 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 
 	if (previous_selected != selected) {
 		if (previous_selected != CAR_MENU_NO_SELECTION) {
-			sprite_copy_2_to_1_2();
-			sprite_set_1_size(carmenu_buttons[0].x1,
+			sprite_select_screen_compat();
+			sprite_set_target_clip_bounds(carmenu_buttons[0].x1,
 				LEGACY_S16_FROM_BITS((legacy_u16)(
 					(LEGACY_U16_WRAP_ADD(carmenu_buttons[0].x2,
-						video_flag2_is1)) &
-					(legacy_u16)video_flag3_isFFFF)),
+						video_x_alignment)) &
+					(legacy_u16)video_x_alignment_mask)),
 				carmenu_buttons[0].y1,
 				LEGACY_S16_WRAP_ADD(
 					carmenu_buttons[CAR_MENU_COLOR_BUTTON].y2, 1));
 			mouse_draw_opaque_check();
 			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 			mouse_draw_transparent_check();
-			sprite_copy_2_to_1_2();
+			sprite_select_screen_compat();
 		}
 		menu_reset_animation_timers();
 		previous_selected = selected;
 	}
 
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 	rotation_delta = (legacy_s16)menu_animate_button_highlight(selected,
 		carmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 	menu_update_idle_counter((legacy_u16)rotation_delta,
@@ -465,12 +465,12 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	} else if (selected == CAR_MENU_TRANSMISSION_BUTTON) {
 		*transmission = (legacy_s8)((legacy_u8)*transmission ^
 			TRANSMISSION_MODE_MASK);
-		sprite_copy_wnd_to_1();
+		sprite_select_render_window();
 		transmission_text = locate_text_res(miscptr,
 			*transmission != TRANSMISSION_MANUAL ? aBau_0 : aBma_0);
 		car_menu_draw_standard_button(transmission_text,
 			CAR_MENU_TRANSMISSION_BUTTON);
-		sprite_copy_2_to_1_2();
+		sprite_select_screen_compat();
 		mouse_draw_opaque_check();
 		car_menu_draw_standard_button(transmission_text,
 			CAR_MENU_TRANSMISSION_BUTTON);
@@ -488,7 +488,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 	sprite_free_wnd(render_window_sprite);
 	unload_resource(car_resource);
 	shape3d_free_car_shapes();
-	if (opponent_type != CAR_MENU_PLAYER_MODE && video_flag5_is0 != 0)
+	if (opponent_type != CAR_MENU_PLAYER_MODE && video_uses_page_flipping != 0)
 		sprite_free_wnd(opponent_sprite);
 	if (opponent_type == CAR_MENU_PLAYER_MODE)
 		unload_resource(miscptr);

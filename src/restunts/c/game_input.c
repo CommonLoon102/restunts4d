@@ -202,7 +202,7 @@ void load_palandcursor(void)
 
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
 	mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) *
-		video_flag2_is1);
+		video_x_alignment);
 	mouse_height = shape2d_get_height(mouse_shape);
 	mmgr_free(resource);
 
@@ -211,20 +211,20 @@ void load_palandcursor(void)
 	mouse_medium_sprite = sprite_make_wnd(mouse_width, mouse_height,
 		MOUSE_SPRITE_TRANSPARENT_COLOR);
 	mouse_background_sprite = sprite_make_wnd(
-		mouse_width + video_flag2_is1, mouse_height,
+		mouse_width + video_x_alignment, mouse_height,
 		MOUSE_SPRITE_TRANSPARENT_COLOR);
 
 	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
-	sprite_set_1_from_argptr(mouse_small_sprite);
+	sprite_select_target(mouse_small_sprite);
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
-	sprite_set_1_from_argptr(mouse_medium_sprite);
+	sprite_select_target(mouse_medium_sprite);
 	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "mmou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
 	mmgr_free(resource);
-	sprite_copy_2_to_1_2();
+	sprite_select_screen_compat();
 }
 
 legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
@@ -290,7 +290,7 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 
 	game_replay_mode = REPLAY_MODE_LIVE;
 	race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
-	init_game_state_with_frame_rate_byte(framespersec2);
+	init_game_state_with_frame_rate_byte(configured_frame_rate);
 	return 1;
 }
 

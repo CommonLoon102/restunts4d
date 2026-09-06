@@ -115,18 +115,18 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 				previous_points[i].py, 0);
 		rect_union(shape_rect, previous_rect, &redraw_rect);
 		if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
-			sprite_set_1_size(redraw_rect.left, redraw_rect.right,
+			sprite_set_target_clip_bounds(redraw_rect.left, redraw_rect.right,
 				redraw_rect.top, redraw_rect.bottom);
-			sprite_clear_1_color(0);
+			sprite_clear_target(0);
 		}
 		point_rect = current_shape_rect;
 	} else {
-		sprite_set_1_size(intro_cliprect.left, intro_cliprect.right,
+		sprite_set_target_clip_bounds(intro_cliprect.left, intro_cliprect.right,
 			intro_cliprect.top, intro_cliprect.bottom);
-		sprite_clear_1_color(0);
+		sprite_clear_target(0);
 	}
 
-	sprite_set_1_size(intro_cliprect.left, intro_cliprect.right,
+	sprite_set_target_clip_bounds(intro_cliprect.left, intro_cliprect.right,
 		intro_cliprect.top, intro_cliprect.bottom);
 	new_point_count = 0;
 	for (i = 0; i < INTRO_STAR_COUNT; i++) {
@@ -222,7 +222,7 @@ legacy_s8 setup_intro(void)
 	shape3d_init_shape(title_shapes[0], &logoshape);
 	shape3d_init_shape(title_shapes[1], &logo2shape);
 	shape3d_init_shape(title_shapes[2], &bravshape);
-	if (video_flag5_is0 == 0)
+	if (video_uses_page_flipping == 0)
 		render_window_sprite = sprite_make_wnd(
 			INTRO_SCREEN_WIDTH, INTRO_SCREEN_HEIGHT, INTRO_SCREEN_COLOR);
 
@@ -300,10 +300,10 @@ legacy_s8 setup_intro(void)
 
 		if (needs_render != 0) {
 			needs_render = 0;
-			if (video_flag5_is0 != 0)
-				setup_mcgawnd2();
+			if (video_uses_page_flipping != 0)
+				sprite_select_mcga_backbuffer();
 			else
-				sprite_copy_wnd_to_1();
+				sprite_select_render_window();
 			draw_car = 1;
 			horizontal_angle = -1;
 			opponent_x = intro_shift_position(
@@ -357,19 +357,19 @@ legacy_s8 setup_intro(void)
 				active_points, active_point_count, &frame_layer_rects[rect_index],
 				&shape_rect, &combined_rect);
 
-			if (video_flag5_is0 != 0) {
+			if (video_uses_page_flipping != 0) {
 				mouse_draw_opaque_check();
-				setup_mcgawnd1();
+				sprite_present_mcga_backbuffer();
 				mouse_draw_transparent_check();
 				if (slow_video_mgmt_copy != 0)
 					frame_layer_rects[rect_index] = shape_rect;
 				rect_index ^= INTRO_POINT_BUFFER_MASK;
 			} else {
-				sprite_copy_2_to_1_2();
+				sprite_select_screen_compat();
 				if (slow_video_mgmt_copy != 0) {
 					rect_union(&combined_rect, &frame_sorted_shapes_rect, &redraw_rect);
 					if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
-						sprite_set_1_size(redraw_rect.left, redraw_rect.right,
+						sprite_set_target_clip_bounds(redraw_rect.left, redraw_rect.right,
 							redraw_rect.top, redraw_rect.bottom);
 						mouse_draw_opaque_check();
 						sprite_putimage(render_window_sprite->sprite_bitmapptr);
@@ -395,12 +395,12 @@ legacy_s8 setup_intro(void)
 			break;
 	}
 
-	if (video_flag5_is0 != 0) {
-		if (get_0() != 0) {
-			setup_mcgawnd2();
+	if (video_uses_page_flipping != 0) {
+		if (video_backbuffer_copy_required() != 0) {
+			sprite_select_mcga_backbuffer();
 			sprite_copy_rect_shifted(0, 0, INTRO_SCREEN_MAX_X, INTRO_SCREEN_MAX_Y, 0);
 			mouse_draw_opaque_check();
-			setup_mcgawnd1();
+			sprite_present_mcga_backbuffer();
 			mouse_draw_transparent_check();
 		}
 	} else {

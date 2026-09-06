@@ -80,7 +80,7 @@ legacy_s16 cos_fast(legacy_u16 s) {
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 
 	legacy_u16 flag;
-	legacy_s16 temp, result;
+	legacy_s16 coordinate_swap, result;
 	legacy_u32 index;
 
 	flag = 0;
@@ -102,9 +102,9 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y) {
 		result = ANGLE_EIGHTH_TURN;
 	} else {
 		if (z > y) {
-			temp = z;
+			coordinate_swap = z;
 			z = y;
-			y = temp;
+			y = coordinate_swap;
 			flag |= 1;
 		}
 		index = LEGACY_U32_DIV_OR_ZERO(
@@ -254,9 +254,9 @@ void mat_mul_vector(struct VECTOR* invec, struct MATRIX* mat, struct VECTOR* out
 
 void mat_mul_vector2(struct VECTOR* invec, struct MATRIX far* mat, struct VECTOR* outvec)
 {
-	struct MATRIX tmpmat = *mat;
+	struct MATRIX local_matrix = *mat;
 
-	mat_mul_vector(invec, &tmpmat, outvec);
+	mat_mul_vector(invec, &local_matrix, outvec);
 }
 
 void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outmat) {
@@ -293,19 +293,19 @@ void mat_multiply(struct MATRIX* rmat, struct MATRIX* lmat, struct MATRIX* outma
 }
 
 void mat_invert(struct MATRIX* inmat, struct MATRIX* outmat) {
-	legacy_s16 temp;
+	legacy_s16 element_swap;
 	if (inmat == outmat) {
-		temp = outmat->m._21;
+		element_swap = outmat->m._21;
 		outmat->m._21 = outmat->m._12;
-		outmat->m._12 = temp;
+		outmat->m._12 = element_swap;
 
-		temp = outmat->m._31;
+		element_swap = outmat->m._31;
 		outmat->m._31 = outmat->m._13;
-		outmat->m._13 = temp;
+		outmat->m._13 = element_swap;
 
-		temp = outmat->m._32;
+		element_swap = outmat->m._32;
 		outmat->m._32 = outmat->m._23;
-		outmat->m._23 = temp;
+		outmat->m._23 = element_swap;
 	} else {
 		outmat->m._11 = inmat->m._11;
 		outmat->m._12 = inmat->m._21;
@@ -420,24 +420,24 @@ struct MATRIX* mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y,
 
 #ifndef RESTUNTS_HEADLESS
 void rect_adjust_from_point(struct POINT2D* pt, struct RECTANGLE* rc) {
-	legacy_s16 temp;
+	legacy_s16 exclusive_bound;
 
 	if (rc->left > pt->px) {
 		rc->left = pt->px;
 	}
 
-	temp = pt->px + 1;
-	if (rc->right < temp) {
-		rc->right = temp;
+	exclusive_bound = pt->px + 1;
+	if (rc->right < exclusive_bound) {
+		rc->right = exclusive_bound;
 	}
 
 	if (rc->top > pt->py) {
 		rc->top = pt->py;
 	}
 
-	temp = pt->py + 1;
-	if (rc->bottom < temp) {
-		rc->bottom = temp;
+	exclusive_bound = pt->py + 1;
+	if (rc->bottom < exclusive_bound) {
+		rc->bottom = exclusive_bound;
 	}
 }
 
@@ -466,15 +466,15 @@ void rect_union(struct RECTANGLE* r1, struct RECTANGLE* r2, struct RECTANGLE* ou
 		outrc->bottom = r2->bottom;
 	}
 
-	if (video_flag2_is1 == 1) {
+	if (video_x_alignment == 1) {
 		return ;
 	}
 
-	// Unreachable. video_flag2_is1 is written exactly once in the whole
+	// Unreachable. video_x_alignment is written exactly once in the whole
 	// program - init_main sets it to 1 (asmorig/seg031.asm:237,
-	// restunts.c:1260) - and video_flag3_isFFFF alongside it to 65535.
-	// The suppressed tail is `right = (right + video_flag2_is1 - 1) &
-	// video_flag3_isFFFF`, which at those values is the identity anyway, so
+	// restunts.c:1260) - and video_x_alignment_mask alongside it to 65535.
+	// The suppressed tail is `right = (right + video_x_alignment - 1) &
+	// video_x_alignment_mask`, which at those values is the identity anyway, so
 	// the port loses nothing by not carrying it.
 	fatal_error((const legacy_s8*)"rect_union: unexpected code path");
 }
@@ -576,9 +576,9 @@ void rectlist_add_rect(legacy_s8* rectangle_count, struct RECTANGLE* rectangles,
 	struct RECTANGLE* existing_rectangle;
 	legacy_s16 has_lower_remainder, has_upper_remainder;
 
-	if (video_flag2_is1 != 1) {
+	if (video_x_alignment != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
-	// video_flag2_is1 is only ever set to 1, in init_main.
+	// video_x_alignment is only ever set to 1, in init_main.
 		fatal_error((const legacy_s8*)
 			"rectlist_add_rect: unexpected code path");
 	}
@@ -945,14 +945,14 @@ void vector_interpolate_at_saved_z(struct VECTOR* vec1, struct VECTOR* vec2,
 		LEGACY_S16_FROM_BITS(interpolation_z));
 }
 
-legacy_s16 multiply_and_scale(legacy_s16 a1, legacy_s16 a2)
+legacy_s16 multiply_and_scale(legacy_s16 left, legacy_s16 right)
 {
 	legacy_s32 product;
 	legacy_u32 scaled_bits;
 	legacy_u16 high_word;
 	legacy_u16 round_up;
 
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)a1, (legacy_s32)a2);
+	product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
 	scaled_bits = LEGACY_U32_SHL((legacy_u32)product,
 		MATH_PRODUCT_SCALE_SHIFT);
 	high_word = (legacy_u16)(scaled_bits >> LEGACY_WORD_BITS);
@@ -988,7 +988,7 @@ legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z, stru
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
-legacy_s16 plane_origin_op(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z) {
+legacy_s16 plane_signed_distance(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z) {
 	struct PLANE far* plane;
 	struct VECTOR relative_position;
 	struct VECTOR world_origin;
@@ -1026,7 +1026,7 @@ extern struct MATRIX plane_heading_rotation;
 extern legacy_s16 wheel_heading_offset;
 extern legacy_s16 cached_wheel_heading;
 
-void plane_rotate_op(void) {
+void transform_wheel_travel_to_world(void) {
 	struct PLANE far* plane;
 	struct VECTOR plane_direction;
 	struct MATRIX inverse_plane_rotation;

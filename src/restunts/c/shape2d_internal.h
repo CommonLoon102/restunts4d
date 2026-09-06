@@ -20,9 +20,9 @@ extern struct SPRITE far* render_window_sprite;
 extern legacy_u8* far wnd_defs;
 /* Near pointer relative to seg012 for the current SPRITE in wnd_defs. */
 extern legacy_s8* far next_wnd_def;
-extern struct SPRITE far sprite1;
-extern struct SPRITE far sprite2;
-extern struct SPRITE far* mcgawndsprite;
+extern struct SPRITE far drawing_sprite;
+extern struct SPRITE far screen_sprite;
+extern struct SPRITE far* mcga_backbuffer_sprite;
 extern struct SPRITE far* mouse_background_sprite;
 extern struct SPRITE far* mouse_medium_sprite;
 extern struct SPRITE far* mouse_small_sprite;
@@ -31,7 +31,7 @@ extern legacy_u8 sprite_background_stack_depth;
 extern struct SPRITE far* sprite_ptrs[4];
 extern legacy_s16 sprite_background_saved_x[4];
 extern legacy_s16 sprite_background_saved_y[4];
-extern legacy_u8 far incnums[];
+extern legacy_u8 far sprite_palette_map[];
 extern legacy_u16 raster_fill_pattern;
 extern legacy_u16 raster_alternate_color;
 
