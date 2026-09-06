@@ -35,6 +35,15 @@ extern void add_exit_handler(exit_handler_type exit_handler);
 #define DOS_MEMORY_VIDEO_SEGMENT_MIN 40960U
 #define DOS_MEMORY_ROM_SEGMENT_MIN 61440U
 #define DOS_MEMORY_LOWEST_ALLOCATED_SEGMENT 16U
+#define DOS_MEMORY_EMS_NOT_PRESENT 0
+#define DOS_MEMORY_EMS_PRESENT 1
+#define DOS_MEMORY_EMS_NO_HANDLE 0
+#define DOS_MEMORY_VECTOR_ABSENT 0
+#define DOS_MEMORY_FIRST_EMS_DEVICE_INDEX 0
+#define DOS_MEMORY_FIRST_EMS_PAGE_INDEX 0
+#define DOS_MEMORY_HIGHPOOL_NOT_LARGE_ONLY 0
+#define DOS_MEMORY_UMB_SIZE_UNKNOWN 0
+#define DOS_MEMORY_UMB_SEGMENT_NONE 0
 
 void far* dos_memory_get_psp(void)
 {
@@ -95,11 +104,11 @@ void ems_shutdown(void)
 {
 	legacy_u16 handle;
 
-	if (ems_present == 0)
+	if (ems_present == DOS_MEMORY_EMS_NOT_PRESENT)
 		return;
-	ems_present = 0;
+	ems_present = DOS_MEMORY_EMS_NOT_PRESENT;
 	handle = ems_handle;
-	ems_handle = 0;
+	ems_handle = DOS_MEMORY_EMS_NO_HANDLE;
 	__asm {
 		mov ah, DOS_MEMORY_EMS_RELEASE_FUNCTION
 		mov dx, handle
@@ -121,7 +130,7 @@ static void ems_init(void)
 		'E', 'M', 'M', 'X', 'X', 'X', 'X', '0'
 	};
 
-	ems_present = 0;
+	ems_present = DOS_MEMORY_EMS_NOT_PRESENT;
 
 	__asm {
 		push es
@@ -131,13 +140,15 @@ static void ems_init(void)
 		mov vector_offset, bx
 		pop es
 	}
-	if (vector_segment == 0 && vector_offset == 0)
+	if (vector_segment == DOS_MEMORY_VECTOR_ABSENT &&
+		vector_offset == DOS_MEMORY_VECTOR_ABSENT)
 		return;
 
 	/* The EMS vector points into the EMM device driver; its header carries
 	 * the device name at byte offset 10. */
 	device_name = MK_FP(vector_segment, DOS_MEMORY_EMS_DEVICE_NAME_OFFSET);
-	for (index = 0; index < DOS_MEMORY_EMS_DEVICE_NAME_SIZE; ++index) {
+	for (index = DOS_MEMORY_FIRST_EMS_DEVICE_INDEX;
+		index < DOS_MEMORY_EMS_DEVICE_NAME_SIZE; ++index) {
 		if (device_name[index] != emm_name[index])
 			return;
 	}
@@ -169,7 +180,8 @@ static void ems_init(void)
 	if (status & DOS_MEMORY_EMS_STATUS_MASK)
 		return;
 
-	for (index = 0; index < DOS_MEMORY_EMS_PAGE_COUNT; ++index) {
+	for (index = DOS_MEMORY_FIRST_EMS_PAGE_INDEX;
+		index < DOS_MEMORY_EMS_PAGE_COUNT; ++index) {
 		page_number = (legacy_u8)index;
 		__asm {
 			mov ah, DOS_MEMORY_EMS_MAP_PAGE_FUNCTION
@@ -191,9 +203,10 @@ static void ems_init(void)
 	}
 
 	ems_handle = handle;
-	ems_present = 1;
+	ems_present = DOS_MEMORY_EMS_PRESENT;
 	add_exit_handler(ems_shutdown);
-	highpool_add_block(frame_segment, DOS_MEMORY_EMS_FRAME_PARAGRAPHS, 0);
+	highpool_add_block(frame_segment, DOS_MEMORY_EMS_FRAME_PARAGRAPHS,
+		DOS_MEMORY_HIGHPOOL_NOT_LARGE_ONLY);
 }
 
 static void umb_init(void)
@@ -226,7 +239,7 @@ static void umb_init(void)
 	}
 
 	/* Probe with an impossible size so DOS reports the largest UMB. */
-	umb_size = 0;
+	umb_size = DOS_MEMORY_UMB_SIZE_UNKNOWN;
 	__asm {
 		mov ah, DOS_MEMORY_ALLOCATE_FUNCTION
 		mov bx, DOS_MEMORY_MAX_PARAGRAPH_REQUEST
@@ -234,7 +247,7 @@ static void umb_init(void)
 		mov umb_size, bx
 	}
 
-	umb_segment = 0;
+	umb_segment = DOS_MEMORY_UMB_SEGMENT_NONE;
 	if (umb_size >= DOS_MEMORY_UMB_MIN_PARAGRAPHS)
 		umb_segment = dos_memory_allocate(umb_size);
 
@@ -253,7 +266,8 @@ static void umb_init(void)
 		umb_segment < DOS_MEMORY_ROM_SEGMENT_MIN &&
 		(legacy_u32)umb_segment + umb_size <=
 		DOS_MEMORY_ROM_SEGMENT_MIN) {
-		highpool_add_block(umb_segment, umb_size, 0);
+		highpool_add_block(umb_segment, umb_size,
+			DOS_MEMORY_HIGHPOOL_NOT_LARGE_ONLY);
 	} else if (umb_segment > DOS_MEMORY_LOWEST_ALLOCATED_SEGMENT) {
 		dos_memory_free(umb_segment);
 	}
