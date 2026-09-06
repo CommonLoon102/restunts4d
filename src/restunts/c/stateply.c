@@ -60,131 +60,20 @@ enum PLAYER_PHYSICS_POSE_VECTOR_INDEX {
 #define PLAYER_PHYSICS_ROTATION_DEADBAND 2
 #define PLAYER_PHYSICS_PLANE_INDEX_NONE (-1)
 #define PLAYER_PHYSICS_GROUND_PLANE_INDEX 0
+#define PLAYER_PHYSICS_HEIGHT_ONLY_PLANE_COUNT 4
 #define PLAYER_PHYSICS_WALL_INDEX_NONE (-1)
-#define PLAYER_PHYSICS_TRACK_CAMERA_INDEX_NONE (-1)
+#define PLAYER_PHYSICS_ROADSIDE_SIGN_INDEX_NONE (-1)
 #define PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET 2
 
-enum PLAYER_PHYSICS_FLOW {
-	PLAYER_FLOW_BEGIN_COLLISION_PASS,
-	PLAYER_FLOW_CHECK_ALL_WHEELS_IN_WATER,
-	PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE,
-	PLAYER_FLOW_BEGIN_WHEEL_CONTACT_SCAN,
-	PLAYER_FLOW_LOOK_UP_WHEEL_TRACK_OBJECT,
-	PLAYER_FLOW_STORE_WHEEL_SURFACE,
-	PLAYER_FLOW_MEASURE_WHEEL_PLANE_DISTANCE,
-	PLAYER_FLOW_CHECK_WALL_PRESENT,
-	PLAYER_FLOW_CHECK_WALL_LOWER_BOUND,
-	PLAYER_FLOW_CHECK_WALL_UPPER_BOUND,
-	PLAYER_FLOW_TRANSFORM_WALL_CROSSING,
-	PLAYER_FLOW_CHECK_WALL_NEGATIVE_SIDE,
-	PLAYER_FLOW_ORDER_WALL_CROSSING_ENDPOINTS,
-	PLAYER_FLOW_KEEP_WALL_ENDPOINT_ORDER,
-	PLAYER_FLOW_CHECK_WALL_END_ON_PLANE,
-	PLAYER_FLOW_CHECK_WALL_START_ON_PLANE,
-	PLAYER_FLOW_SPLIT_WALL_CROSSING_TRAVEL,
-	PLAYER_FLOW_SELECT_WALL_RESPONSE_SIDE,
-	PLAYER_FLOW_PUSH_ALONG_FORWARD_WALL,
-	PLAYER_FLOW_PUSH_ALONG_REVERSE_WALL,
-	PLAYER_FLOW_ADJUST_WALL_PUSH_DIRECTION,
-	PLAYER_FLOW_ROTATE_WALL_RESPONSE,
-	PLAYER_FLOW_CALCULATE_WALL_SAFE_SPEED,
-	PLAYER_FLOW_SET_FORWARD_IMPACT_TURN,
-	PLAYER_FLOW_APPLY_WALL_CRASH,
-	PLAYER_FLOW_BEGIN_WALL_WHEEL_REPOSITION,
-	PLAYER_FLOW_CLEAR_RETAINED_WHEEL_TRAVEL,
-	PLAYER_FLOW_APPLY_WALL_WHEEL_POSITION,
-	PLAYER_FLOW_CHECK_WALL_REPOSITION_REMAINING,
-	PLAYER_FLOW_SCALE_RETAINED_WHEEL_TRAVEL,
-	PLAYER_FLOW_APPLY_WHEEL_GRAVITY,
-	PLAYER_FLOW_RECHECK_DISTANCE_AFTER_GRAVITY,
-	PLAYER_FLOW_CHECK_WHEEL_CONTACT_RANGE,
-	PLAYER_FLOW_SAVE_WHEEL_CONTACT_DISTANCE,
-	PLAYER_FLOW_CHECK_WHEEL_PENETRATION,
-	PLAYER_FLOW_TRANSFORM_WHEEL_PLANE_CROSSING,
-	PLAYER_FLOW_CHECK_CROSSING_END_ON_PLANE,
-	PLAYER_FLOW_RETRACE_WHEEL_FROM_PLANE,
-	PLAYER_FLOW_FALL_BACK_TO_GROUND_PLANE,
-	PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE,
-	PLAYER_FLOW_CHECK_INVERTED_WHEEL_ADJUSTMENT,
-	PLAYER_FLOW_CHECK_INVERTED_CONTACT_RANGE,
-	PLAYER_FLOW_APPLY_INVERTED_WHEEL_ADJUSTMENT,
-	PLAYER_FLOW_CLASSIFY_PLANE_CROSSING_DIRECTION,
-	PLAYER_FLOW_ADVANCE_WHEEL_ALONG_PLANE,
-	PLAYER_FLOW_SPLIT_PLANE_CROSSING_TRAVEL,
-	PLAYER_FLOW_RECHECK_PLANE_PENETRATION,
-	PLAYER_FLOW_PUSH_WHEEL_OUT_OF_PLANE,
-	PLAYER_FLOW_FINISH_PLANE_CORRECTION,
-	PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_SOUND,
-	PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_CRASH,
-	PLAYER_FLOW_STOP_WHEEL_VERTICAL_SPEED,
-	PLAYER_FLOW_ADVANCE_WHEEL_CONTACT_SCAN,
-	PLAYER_FLOW_CHECK_WHEEL_CONTACT_SCAN_REMAINING,
-	PLAYER_FLOW_PREPARE_WHEEL_CONTACT_LOOKUP,
-	PLAYER_FLOW_USE_INTRO_GROUND_PLANE,
-	PLAYER_FLOW_APPLY_UPRIGHT_SUSPENSION_OFFSET,
-	PLAYER_FLOW_ADVANCE_SUSPENSION_UPDATE,
-	PLAYER_FLOW_CHECK_SUSPENSION_UPDATE_REMAINING,
-	PLAYER_FLOW_UPDATE_WHEEL_SUSPENSION,
-	PLAYER_FLOW_APPLY_ROTATED_SUSPENSION_OFFSET,
-	PLAYER_FLOW_AVERAGE_WHEEL_POSITIONS,
-	PLAYER_FLOW_CALCULATE_WHEEL_OFFSETS,
-	PLAYER_FLOW_CHECK_WORLD_X_MAXIMUM,
-	PLAYER_FLOW_CLAMP_WORLD_X_MAXIMUM,
-	PLAYER_FLOW_CHECK_WORLD_X_MINIMUM,
-	PLAYER_FLOW_CLAMP_WORLD_X_MINIMUM,
-	PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM,
-	PLAYER_FLOW_CLAMP_WORLD_Z_MAXIMUM,
-	PLAYER_FLOW_CHECK_WORLD_Z_MINIMUM,
-	PLAYER_FLOW_CLAMP_WORLD_Z_MINIMUM,
-	PLAYER_FLOW_DERIVE_YAW_FROM_WHEELS,
-	PLAYER_FLOW_REMOVE_WHEEL_YAW,
-	PLAYER_FLOW_DERIVE_PITCH_FROM_WHEELS,
-	PLAYER_FLOW_CHECK_POSITIVE_PITCH_DEADBAND,
-	PLAYER_FLOW_CHECK_NEGATIVE_PITCH_DEADBAND,
-	PLAYER_FLOW_CLEAR_SMALL_PITCH,
-	PLAYER_FLOW_PREPARE_WHEEL_PITCH_REMOVAL,
-	PLAYER_FLOW_REMOVE_WHEEL_PITCH,
-	PLAYER_FLOW_MEASURE_WHEEL_ROLL,
-	PLAYER_FLOW_DERIVE_ROLL_FROM_WHEELS,
-	PLAYER_FLOW_CHECK_POSITIVE_ROLL_DEADBAND,
-	PLAYER_FLOW_CHECK_NEGATIVE_ROLL_DEADBAND,
-	PLAYER_FLOW_CLEAR_SMALL_ROLL,
-	PLAYER_FLOW_SUM_FRONT_AND_REAR_SURFACES,
-	PLAYER_FLOW_PLAY_CAR_IMPACT_SOUNDS,
-	PLAYER_FLOW_PLAY_PLAYER_IMPACT_SOUNDS,
-	PLAYER_FLOW_FINISH_CAR_IMPACT_SOUNDS,
-	PLAYER_FLOW_BEGIN_BODY_PLANE_SCAN,
-	PLAYER_FLOW_COMPARE_PREVIOUS_BODY_PLANE,
-	PLAYER_FLOW_CHECK_BODY_CROSSING_FROM_ABOVE,
-	PLAYER_FLOW_STOP_CAR_AT_BODY_PLANE_COLLISION,
-	PLAYER_FLOW_SAVE_BODY_CORNER_POSITION,
-	PLAYER_FLOW_CHECK_BODY_PLANE_SCAN_REMAINING,
-	PLAYER_FLOW_LOOK_UP_BODY_CORNER_PLANE,
-	PLAYER_FLOW_CHECK_BODY_GROUND_PENETRATION,
-	PLAYER_FLOW_HANDLE_BODY_GROUND_PENETRATION,
-	PLAYER_FLOW_DETECT_PLAYER_JUMP,
-	PLAYER_FLOW_PREPARE_CAR_COLLISION_POSE,
-	PLAYER_FLOW_CHECK_OTHER_CAR_COLLISION,
-	PLAYER_FLOW_RESOLVE_CAR_COLLISION_SPEEDS,
-	PLAYER_FLOW_CRASH_BOTH_CARS,
-	PLAYER_FLOW_RETURN_AFTER_COLLISION,
-	PLAYER_FLOW_PREPARE_SCENERY_COLLISION_SCAN,
-	PLAYER_FLOW_CHECK_SCENERY_COLUMN_MAXIMUM,
-	PLAYER_FLOW_CHECK_SCENERY_ROW_MINIMUM,
-	PLAYER_FLOW_CHECK_SCENERY_ROW_MAXIMUM,
-	PLAYER_FLOW_LOAD_AUXILIARY_OBSTACLES,
-	PLAYER_FLOW_ADVANCE_AUXILIARY_OBSTACLE,
-	PLAYER_FLOW_CHECK_AUXILIARY_OBSTACLE_COLLISION,
-	PLAYER_FLOW_CRASH_INTO_FIXED_OBSTACLE,
-	PLAYER_FLOW_FIND_BREAKABLE_OBJECT,
-	PLAYER_FLOW_CHECK_BREAKABLE_OBJECT_INTACT,
-	PLAYER_FLOW_COLLIDE_WITH_BREAKABLE_OBJECT,
-	PLAYER_FLOW_CHECK_START_FINISH_COLUMN,
-	PLAYER_FLOW_CHECK_START_FINISH_ROW,
-	PLAYER_FLOW_CHECK_START_FINISH_POLES,
-	PLAYER_FLOW_HANDLE_START_FINISH_POLE_COLLISION,
-	PLAYER_FLOW_COMMIT_CAR_POSE,
-	PLAYER_FLOW_RETURN_FROM_PHYSICS,
+/* Per-tick wheel geometry shared by contact correction and suspension. */
+struct PLAYER_WHEEL_MOTION {
+	struct VECTORLONG current[PLAYER_PHYSICS_WHEEL_COUNT];
+	struct VECTORLONG previous[PLAYER_PHYSICS_WHEEL_COUNT];
+	legacy_s16 headings[PLAYER_PHYSICS_WHEEL_COUNT];
+	legacy_s16 contact_distances[PLAYER_PHYSICS_WHEEL_COUNT];
+	legacy_s16 travel;
+	legacy_s16 inverted_adjustment;
+	struct VECTOR inverted_offset;
 };
 
 /* Hand a long-precision position back as the word-precision vector the rest
@@ -248,58 +137,8 @@ static legacy_s16 scaled_vector_separation(struct VECTOR* first,
 	return polarRadius3D(delta);
 }
 
-void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
-	struct CARSTATE* other_carstate, struct SIMD* other_simd,
-	legacy_s16 car_index) {
-	struct MATRIX wheel_adjustment_rotation;
-	legacy_s16 travel_per_tick;
-	struct VECTOR transformed_vector;
-	struct VECTOR wheel_vector;
-	legacy_s16 wheel_plane_headings[PLAYER_PHYSICS_WHEEL_COUNT];
-	struct VECTORLONG* current_wheel_position;
-	struct VECTORLONG* previous_wheel_position;
-	legacy_s16 front_wheel_heading_offset;
-	legacy_s8 aux_rotation_or_obstacle_count;
-	legacy_s16 inverted_wheel_adjustment;
-	struct VECTOR inverted_wheel_offset;
-	struct VECTORLONG current_wheel_positions[PLAYER_PHYSICS_WHEEL_COUNT];
-	struct VECTORLONG previous_wheel_positions[PLAYER_PHYSICS_WHEEL_COUNT];
-	legacy_s16 wheel_index;
-	legacy_s8 collision_pass_count;
-	struct VECTOR relative_or_suspension_vector, current_relative_position, contact_start_or_delta, contact_end_or_response, intersection_delta_or_body_position, plane_world_origin;
-	struct VECTOR car_collision_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
-	struct VECTOR obstacle_collision_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
-	struct MATRIX collision_plane_rotation;
-	legacy_s8 contact_response_reversed;
-	legacy_s16 vertical_delta_or_travel, horizontal_delta_or_travel, contact_angle_distance_or_deflection, impact_turn_distance_or_overlap;
-	legacy_u16 wall_safe_speed;
-	struct MATRIX* response_rotation;
-	legacy_s16 collision_angle_distance_or_index;
-	legacy_s16 wheel_contact_distances[PLAYER_PHYSICS_WHEEL_COUNT];
-	struct PLANE far* contact_plane;
-	struct VECTOR wheel_offsets[PLAYER_PHYSICS_WHEEL_COUNT];
-	legacy_s16 previous_plane_index;
-	legacy_s8 wheel_surface_sum;
-	struct VECTOR obstacle_positions[PLAYER_PHYSICS_COLLISION_POINT_CAPACITY];
-	enum PLAYER_PHYSICS_FLOW physics_flow;
-
-	//return ported_update_player_state_(carstate, simd, other_carstate, other_simd, car_index);
-
-	/*
-	 * Seed the four collision-plane results from the explicit model of the
-	 * original overlapping stack window. Each successful wheel lookup below
-	 * replaces its corresponding entry.
-	 */
-	wheel_contact_distances[LEGACY_RESIDUE_FIRST_WORD] =
-		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD];
-	wheel_contact_distances[LEGACY_RESIDUE_SECOND_WORD] =
-		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_SECOND_WORD];
-	wheel_contact_distances[LEGACY_RESIDUE_THIRD_WORD] =
-		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_THIRD_WORD];
-	wheel_contact_distances[LEGACY_RESIDUE_FOURTH_WORD] =
-		legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD];
-
-	/* Initialize the working position and rotation from the current car pose. */
+static void initialize_working_car_pose(struct CARSTATE* carstate)
+{
 	car_working_x = carstate->car_position.lx;
 	car_working_y = carstate->car_position.ly;
 	car_working_z = carstate->car_position.lz;
@@ -312,168 +151,124 @@ void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
 	car_initial_pitch = carstate->car_rotate.y;
 	car_working_yaw = carstate->car_rotate.x;
 	car_initial_yaw = carstate->car_rotate.x;
+}
 
-	/*
-	 * While the car has surface contact, offset the first two wheel-plane
-	 * angles by one quarter of the front-wheel angle.
-	 */
-	if (carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE) {
-		front_wheel_heading_offset = LEGACY_S16_SAR2(
-			carstate->car_front_wheel_response_angle);
-	} else {
-		front_wheel_heading_offset = 0;
-	}
+/* The original zero-speed crash transition reused opponent wheel coordinates
+   as headings. Keep that compatibility detail separate from normal motion. */
+static void restore_crash_wheel_headings(legacy_s16* wheel_plane_headings)
+{
+	struct MATRIX wheel_adjustment_rotation;
+	struct VECTOR wheel_vector, transformed_vector;
+	legacy_s16 inverted_wheel_adjustment;
 
-	/* Convert speed to per-tick travel, accounting for the simulation rate. */
-	if (framespersec == GAME_FRAME_RATE_LOW) {
-		travel_per_tick = scale_speed_to_travel(
-			carstate->car_actual_speed,
-			PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR);
-	} else {
-		travel_per_tick = scale_speed_to_travel(
-			carstate->car_actual_speed,
-			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
-	}
-
-	/*
-	 * At zero per-tick travel the original skips initialization of its four
-	 * wheel-angle locals. Restore the retained words from the stack window
-	 * appropriate to the opponent or player invocation.
-	 */
-	if (travel_per_tick == 0) {
-		if (car_index == OPPONENT_CAR_INDEX) {
-			wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] =
-				legacy_execution_residue.wheel_angle_stack_words[
-					LEGACY_RESIDUE_FIRST_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] =
-				legacy_execution_residue.wheel_angle_stack_words[
-					LEGACY_RESIDUE_SECOND_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] =
-				legacy_execution_residue.wheel_angle_stack_words[
-					LEGACY_RESIDUE_THIRD_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] =
-				legacy_execution_residue.wheel_angle_stack_words[
-					LEGACY_RESIDUE_FOURTH_WORD];
-		} else {
-			wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] =
-				legacy_execution_residue.wheel_plane_angles[
-					LEGACY_RESIDUE_FIRST_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] =
-				legacy_execution_residue.wheel_plane_angles[
-					LEGACY_RESIDUE_SECOND_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] =
-				legacy_execution_residue.wheel_plane_angles[
-					LEGACY_RESIDUE_THIRD_WORD];
-			wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] =
-				legacy_execution_residue.wheel_plane_angles[
-					LEGACY_RESIDUE_FOURTH_WORD];
+	car_to_world_rotation = *mat_rot_zxy(
+		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
+		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
+		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
+		MATRIX_ROTATION_ORDER_ZXY
+	);
+	inverted_wheel_adjustment = 0;
+	if (state.opponentstate.car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE &&
+		state.opponentstate.car_actual_speed <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
+		wheel_vector.x = 0;
+		wheel_vector.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
+		wheel_vector.z = 0;
+		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
+		if (transformed_vector.y < 0) {
+			inverted_wheel_adjustment = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 		}
 	}
 
+	/* Prepare the optional auxiliary wheel rotation once for both wheels. */
+	if ((state.opponentstate.car_slide_yaw_delta & ANGLE_MASK) != 0) {
+		wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
+			LEGACY_S16_WRAP_NEGATE(
+				state.opponentstate.car_slide_yaw_delta),
+			MATRIX_ROTATION_ORDER_ZXY);
+	}
+
 	/*
-	 * On the first stopped frame of a player crash in an opponent race, the
-	 * retained words come from rear-opponent wheel coordinates rather than
-	 * ordinary wheel angles. Reconstruct those words from explicit game state.
+	 * Rebuild the first rear wheel in car-local coordinates, including
+	 * suspension travel and the low-speed inverted-car adjustment.
 	 */
+	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
+		&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_FIRST,
+		inverted_wheel_adjustment);
+
+	/*
+	 * Rotate the first rear wheel into world axes and recover the high word
+	 * of its world Z coordinate, the first aliased stack word.
+	 */
+	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
+	wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] = (legacy_u16)(
+		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
+			state.opponentstate.car_position.lz, transformed_vector.z) >>
+			LEGACY_WORD_BITS
+	);
+	legacy_execution_residue.wheel_plane_angles[
+		LEGACY_RESIDUE_FIRST_WORD] =
+		wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD];
+
+	/* Rebuild the second rear wheel with the same local adjustments. */
+	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
+		&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_SECOND,
+		inverted_wheel_adjustment);
+
+	/*
+	 * Rotate the second rear wheel into world axes and recover the low word
+	 * of its world X coordinate, the second aliased stack word.
+	 */
+	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
+	wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] =
+		(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+		state.opponentstate.car_position.lx, transformed_vector.x);
+
+	/* Commit the second word and recover world X's high word as the third. */
+	legacy_execution_residue.wheel_plane_angles[
+		LEGACY_RESIDUE_SECOND_WORD] =
+		wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD];
+	wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] = (legacy_u16)(
+		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
+			state.opponentstate.car_position.lx, transformed_vector.x) >>
+			LEGACY_WORD_BITS
+	);
+
+	/* Commit the third word and recover world Y's low word as the fourth. */
+	legacy_execution_residue.wheel_plane_angles[
+		LEGACY_RESIDUE_THIRD_WORD] =
+		wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD];
+	wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] =
+		(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+		state.opponentstate.car_position.ly, transformed_vector.y);
+	legacy_execution_residue.wheel_plane_angles[
+		LEGACY_RESIDUE_FOURTH_WORD] =
+		wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD];
+}
+
+static void restore_stopped_wheel_headings(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+{
+	legacy_s16 i;
+
+	if (motion->travel != 0) {
+		return;
+	}
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		motion->headings[i] = car_index == OPPONENT_CAR_INDEX ?
+			legacy_execution_residue.wheel_angle_stack_words[i] :
+			legacy_execution_residue.wheel_plane_angles[i];
+	}
 	if (car_index == PLAYER_CAR_INDEX && gameconfig.game_opponenttype != 0 &&
-		travel_per_tick == 0 &&
 		carstate->car_lastspeed != CAR_SPEED_STOPPED &&
 		carstate->car_crashBmpFlag != CRASH_EVENT_NONE) {
-		/*
-		 * On the zero-speed crash transition, the original wheel-angle locals
-		 * reuse opponent wheel-coordinate words left at the same stack addresses.
-		 */
-		car_to_world_rotation = *mat_rot_zxy(
-			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
-			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
-			LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
-			MATRIX_ROTATION_ORDER_ZXY
-		);
-		/*
-		if (opponent has wheel contact &&
-			opponent speed <= 30 mph &&
-			opponent is upside down)
-		{
-			wheel_y_adjustment = 192;
-		}
-		*/
-		inverted_wheel_adjustment = 0;
-		if (state.opponentstate.car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE &&
-			state.opponentstate.car_actual_speed <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
-			wheel_vector.x = 0;
-			wheel_vector.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
-			wheel_vector.z = 0;
-			mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-			if (transformed_vector.y < 0) {
-				inverted_wheel_adjustment = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
-			}
-		}
-
-		/* Prepare the optional auxiliary wheel rotation once for both wheels. */
-		if ((state.opponentstate.car_slide_yaw_delta & ANGLE_MASK) != 0) {
-			wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
-				LEGACY_S16_WRAP_NEGATE(
-					state.opponentstate.car_slide_yaw_delta),
-				MATRIX_ROTATION_ORDER_ZXY);
-		}
-
-		/*
-		 * Rebuild the first rear wheel in car-local coordinates, including
-		 * suspension travel and the low-speed inverted-car adjustment.
-		 */
-		prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
-			&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_FIRST,
-			inverted_wheel_adjustment);
-
-		/*
-		 * Rotate the first rear wheel into world axes and recover the high word
-		 * of its world Z coordinate, the first aliased stack word.
-		 */
-		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-		wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] = (legacy_u16)(
-			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-				state.opponentstate.car_position.lz, transformed_vector.z) >>
-				LEGACY_WORD_BITS
-		);
-		legacy_execution_residue.wheel_plane_angles[
-			LEGACY_RESIDUE_FIRST_WORD] =
-			wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD];
-
-		/* Rebuild the second rear wheel with the same local adjustments. */
-		prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
-			&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_SECOND,
-			inverted_wheel_adjustment);
-
-		/*
-		 * Rotate the second rear wheel into world axes and recover the low word
-		 * of its world X coordinate, the second aliased stack word.
-		 */
-		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-		wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] =
-			(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
-			state.opponentstate.car_position.lx, transformed_vector.x);
-
-		/* Commit the second word and recover world X's high word as the third. */
-		legacy_execution_residue.wheel_plane_angles[
-			LEGACY_RESIDUE_SECOND_WORD] =
-			wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD];
-		wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] = (legacy_u16)(
-			(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-				state.opponentstate.car_position.lx, transformed_vector.x) >>
-				LEGACY_WORD_BITS
-		);
-
-		/* Commit the third word and recover world Y's low word as the fourth. */
-		legacy_execution_residue.wheel_plane_angles[
-			LEGACY_RESIDUE_THIRD_WORD] =
-			wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD];
-		wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] =
-			(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
-			state.opponentstate.car_position.ly, transformed_vector.y);
-		legacy_execution_residue.wheel_plane_angles[
-			LEGACY_RESIDUE_FOURTH_WORD] =
-			wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD];
+		restore_crash_wheel_headings(motion->headings);
 	}
+}
+
+static void prepare_wheel_rotation(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion)
+{
+	struct VECTOR wheel_vector, transformed_vector;
 
 	car_to_world_rotation = *mat_rot_zxy(
 		LEGACY_S16_WRAP_NEGATE(car_working_roll),
@@ -490,367 +285,311 @@ void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
 		carstate->car_pseudoGravity = 0;
 	}
 
-	if ((carstate->car_slide_yaw_delta & ANGLE_MASK) != 0) {
-		aux_rotation_or_obstacle_count = 1;
-		wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
-			LEGACY_S16_WRAP_NEGATE(carstate->car_slide_yaw_delta),
-			MATRIX_ROTATION_ORDER_ZXY);
-	} else {
-		aux_rotation_or_obstacle_count = 0;
-	}
-
 	wheel_vector.x = 0;
 	wheel_vector.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
 	wheel_vector.z = 0;
 	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE ||
 		transformed_vector.y >= 0) {
-		inverted_wheel_adjustment = 0;
+		motion->inverted_adjustment = 0;
 	} else if (carstate->car_actual_speed <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
-		inverted_wheel_adjustment = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
+		motion->inverted_adjustment = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 	} else {
-		inverted_wheel_adjustment = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
+		motion->inverted_adjustment = PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
 		wheel_vector.y = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
-		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &inverted_wheel_offset);
+		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &motion->inverted_offset);
+	}
+}
+
+static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+{
+	struct MATRIX wheel_adjustment_rotation;
+	struct VECTOR wheel_vector, transformed_vector;
+	struct VECTORLONG* current_wheel_position;
+	struct VECTORLONG* previous_wheel_position;
+	legacy_s16 wheel_index, front_wheel_heading_offset;
+	int has_slide_rotation;
+
+	for (wheel_index = 0; wheel_index < PLAYER_PHYSICS_WHEEL_COUNT; wheel_index++) {
+		motion->contact_distances[wheel_index] =
+			legacy_execution_residue.grip_stack_words[wheel_index];
+	}
+	front_wheel_heading_offset = carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE ?
+		LEGACY_S16_SAR2(carstate->car_front_wheel_response_angle) : 0;
+	motion->travel = scale_speed_to_travel(carstate->car_actual_speed,
+		framespersec == GAME_FRAME_RATE_LOW ?
+			PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR :
+			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
+	restore_stopped_wheel_headings(carstate, motion, car_index);
+	prepare_wheel_rotation(carstate, motion);
+
+	has_slide_rotation = (carstate->car_slide_yaw_delta & ANGLE_MASK) != 0;
+	if (has_slide_rotation) {
+		wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
+			LEGACY_S16_WRAP_NEGATE(carstate->car_slide_yaw_delta),
+			MATRIX_ROTATION_ORDER_ZXY);
 	}
 	wheel_forward_travel.x = 0;
 	wheel_forward_travel.y = 0;
 	planindex_copy = PLAYER_PHYSICS_PLANE_INDEX_NONE;
-	current_wheel_position = current_wheel_positions;
-	previous_wheel_position = previous_wheel_positions;
-	for (wheel_index = 0;
-		wheel_index < PLAYER_PHYSICS_WHEEL_COUNT; wheel_index++) {
-	wheel_vector = simd->wheel_coords[wheel_index];
-	wheel_vector.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
-		carstate->car_suspension_deflection[wheel_index],
-		PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
-	if (inverted_wheel_adjustment < 0)
-		wheel_vector.y = LEGACY_S16_WRAP_SUB(wheel_vector.y, inverted_wheel_adjustment);
-	if (aux_rotation_or_obstacle_count != 0) {
-		mat_mul_vector(&wheel_vector, &wheel_adjustment_rotation, &transformed_vector);
-		wheel_vector = transformed_vector;
-	}
-	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-	current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
-		car_working_x, transformed_vector.x);
-	current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
-		car_working_y, transformed_vector.y);
-	current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(
-		car_working_z, transformed_vector.z);
-
-	previous_wheel_position->lx = current_wheel_position->lx;
-	previous_wheel_position->ly = current_wheel_position->ly;
-	previous_wheel_position->lz = current_wheel_position->lz;
-	if (travel_per_tick != 0) {
-		wheel_forward_travel.z = travel_per_tick;
-		wheel_heading_offset = carstate->car_velocity_heading_offset;
-		if (front_wheel_heading_offset != 0 &&
-			wheel_index < PLAYER_PHYSICS_FRONT_WHEEL_COUNT) {
-			wheel_heading_offset = LEGACY_S16_WRAP_SUB(
-				carstate->car_velocity_heading_offset, front_wheel_heading_offset);
+	for (wheel_index = 0; wheel_index < PLAYER_PHYSICS_WHEEL_COUNT; wheel_index++) {
+		current_wheel_position = &motion->current[wheel_index];
+		previous_wheel_position = &motion->previous[wheel_index];
+		wheel_vector = simd->wheel_coords[wheel_index];
+		wheel_vector.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
+			carstate->car_suspension_deflection[wheel_index],
+			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
+		if (motion->inverted_adjustment < 0) {
+			wheel_vector.y = LEGACY_S16_WRAP_SUB(wheel_vector.y, motion->inverted_adjustment);
 		}
-		wheel_plane_headings[wheel_index] = wheel_heading_offset;
-		legacy_execution_residue.wheel_plane_angles[wheel_index] =
-			wheel_heading_offset;
-		if (car_index == OPPONENT_CAR_INDEX) {
-			legacy_execution_residue.wheel_angle_stack_words[
-				wheel_index] = wheel_heading_offset;
+		if (has_slide_rotation != 0) {
+			mat_mul_vector(&wheel_vector, &wheel_adjustment_rotation, &transformed_vector);
+			wheel_vector = transformed_vector;
 		}
-		transform_wheel_travel_to_world();
-		physics_position_offset(current_wheel_position, current_wheel_position,
-			&wheel_world_travel);
+		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
+		current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
+			car_working_x, transformed_vector.x);
+		current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
+			car_working_y, transformed_vector.y);
+		current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(
+			car_working_z, transformed_vector.z);
+
+		previous_wheel_position->lx = current_wheel_position->lx;
+		previous_wheel_position->ly = current_wheel_position->ly;
+		previous_wheel_position->lz = current_wheel_position->lz;
+		if (motion->travel != 0) {
+			wheel_forward_travel.z = motion->travel;
+			wheel_heading_offset = carstate->car_velocity_heading_offset;
+			if (front_wheel_heading_offset != 0 &&
+				wheel_index < PLAYER_PHYSICS_FRONT_WHEEL_COUNT) {
+				wheel_heading_offset = LEGACY_S16_WRAP_SUB(
+					carstate->car_velocity_heading_offset, front_wheel_heading_offset);
+			}
+			motion->headings[wheel_index] = wheel_heading_offset;
+			legacy_execution_residue.wheel_plane_angles[wheel_index] =
+				wheel_heading_offset;
+			if (car_index == OPPONENT_CAR_INDEX) {
+				legacy_execution_residue.wheel_angle_stack_words[
+					wheel_index] = wheel_heading_offset;
+			}
+			transform_wheel_travel_to_world();
+			physics_position_offset(current_wheel_position, current_wheel_position,
+				&wheel_world_travel);
+		}
 	}
-	current_wheel_position++;
-	previous_wheel_position++;
-	}
-	collision_pass_count = 0;
-	physics_flow = PLAYER_FLOW_BEGIN_COLLISION_PASS;
-	for (;;) {
-	switch (physics_flow) {
-case PLAYER_FLOW_BEGIN_COLLISION_PASS:
-	collision_pass_count = LEGACY_S8_WRAP_ADD(collision_pass_count, 1);
-	if (collision_pass_count != PLAYER_PHYSICS_COLLISION_RETRY_LIMIT)
-		{ physics_flow = PLAYER_FLOW_BEGIN_WHEEL_CONTACT_SCAN; continue; }
-	carstate->car_velocity_heading_offset = ANGLE_HALF_TURN;
-	update_crash_state(CRASH_EVENT_COLLISION, car_index);
+}
 
-case PLAYER_FLOW_CHECK_ALL_WHEELS_IN_WATER:
-	if (carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST] !=
-		CAR_SURFACE_WATER)
-		{ physics_flow = PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE; continue; }
-	if (carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND] !=
-		CAR_SURFACE_WATER)
-		{ physics_flow = PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE; continue; }
-	if (carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST] !=
-		CAR_SURFACE_WATER)
-		{ physics_flow = PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE; continue; }
-	if (carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND] !=
-		CAR_SURFACE_WATER)
-		{ physics_flow = PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE; continue; }
-	update_crash_state(CRASH_EVENT_WATER, car_index);
+static void retain_collision_plane_rotation(struct MATRIX* rotation,
+	legacy_s16 car_index)
+{
+	legacy_s16 i;
 
-case PLAYER_FLOW_BEGIN_SUSPENSION_UPDATE:
-	current_wheel_position = current_wheel_positions;
-	wheel_index = 0;
-	{ physics_flow = PLAYER_FLOW_CHECK_SUSPENSION_UPDATE_REMAINING; continue; }
-
-case PLAYER_FLOW_BEGIN_WHEEL_CONTACT_SCAN:
-	current_wheel_position = current_wheel_positions;
-	previous_wheel_position = previous_wheel_positions;
-	wheel_index = 0;
-	{ physics_flow = PLAYER_FLOW_CHECK_WHEEL_CONTACT_SCAN_REMAINING; continue; }
-
-case PLAYER_FLOW_LOOK_UP_WHEEL_TRACK_OBJECT:
-	build_track_object(&wheel_vector, &carstate->car_wheel_contact_positions[wheel_index]);
-
-case PLAYER_FLOW_STORE_WHEEL_SURFACE:
-	carstate->car_surfaceWhl[wheel_index] = current_surf_type;
-	physics_position_to_vector(&wheel_vector, current_wheel_position);
-
-	if (state.game_inputmode != GAME_INPUT_MODE_INTRO)
-		{ physics_flow = PLAYER_FLOW_MEASURE_WHEEL_PLANE_DISTANCE; continue; }
-	nextPosAndNormalIP = wheel_vector.y;
-	{ physics_flow = PLAYER_FLOW_CHECK_WALL_PRESENT; continue; }
-
-case PLAYER_FLOW_MEASURE_WHEEL_PLANE_DISTANCE:
-	nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
-
-case PLAYER_FLOW_CHECK_WALL_PRESENT:
-	if (wallindex != PLAYER_PHYSICS_WALL_INDEX_NONE)
-		{ physics_flow = PLAYER_FLOW_CHECK_WALL_LOWER_BOUND; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE; continue; }
-
-case PLAYER_FLOW_CHECK_WALL_LOWER_BOUND:
-	if (nextPosAndNormalIP > elRdWallRelated)
-		{ physics_flow = PLAYER_FLOW_CHECK_WALL_UPPER_BOUND; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE; continue; }
-
-case PLAYER_FLOW_CHECK_WALL_UPPER_BOUND:
-	if (nextPosAndNormalIP < wallHeight)
-		{ physics_flow = PLAYER_FLOW_TRANSFORM_WALL_CROSSING; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE; continue; }
-
-case PLAYER_FLOW_TRANSFORM_WALL_CROSSING:
-	relative_or_suspension_vector.x = LEGACY_S16_WRAP_SUB(
-		carstate->car_wheel_contact_positions[wheel_index].x, wallStartX);
-	relative_or_suspension_vector.y = 0;
-	relative_or_suspension_vector.z = LEGACY_S16_WRAP_SUB(
-		carstate->car_wheel_contact_positions[wheel_index].z, wallStartZ);
-	current_relative_position.x = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lx), wallStartX);
-	current_relative_position.y = 0;
-	current_relative_position.z = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lz), wallStartZ);
-
-	mat_rot_y(&collision_plane_rotation, LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
 	if (car_index == PLAYER_CAR_INDEX) {
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_FIRST_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_FIRST_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_SECOND_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_SECOND_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_THIRD_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_THIRD_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_FOURTH_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_FOURTH_WORD];
+		for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+			legacy_execution_residue.wheel_angle_stack_words[i] =
+				rotation->vals[PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE + i];
+		}
 	}
-	mat_mul_vector(&relative_or_suspension_vector, &collision_plane_rotation, &contact_start_or_delta);
-	mat_mul_vector(&current_relative_position, &collision_plane_rotation, &contact_end_or_response);
-	if (contact_end_or_response.z <= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_WALL_NEGATIVE_SIDE; continue; }
-	if (contact_start_or_delta.z <= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_WALL_NEGATIVE_SIDE; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE; continue; }
+}
 
-case PLAYER_FLOW_CHECK_WALL_NEGATIVE_SIDE:
-	if (contact_end_or_response.z >= 0)
-		{ physics_flow = PLAYER_FLOW_ORDER_WALL_CROSSING_ENDPOINTS; continue; }
-	if (contact_start_or_delta.z >= 0)
-		{ physics_flow = PLAYER_FLOW_ORDER_WALL_CROSSING_ENDPOINTS; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE; continue; }
+static void scale_wheel_displacement(struct VECTOR* displacement,
+	struct VECTORLONG* current, struct VECTORLONG* previous,
+	legacy_s16 retained_travel, legacy_s16 total_travel)
+{
+	displacement->x = scale_position_delta(current->lx, previous->lx,
+		retained_travel, total_travel);
+	displacement->y = scale_position_delta(current->ly, previous->ly,
+		retained_travel, total_travel);
+	displacement->z = scale_position_delta(current->lz, previous->lz,
+		retained_travel, total_travel);
+}
 
-case PLAYER_FLOW_ORDER_WALL_CROSSING_ENDPOINTS:
-	if (contact_end_or_response.z <= contact_start_or_delta.z)
-		{ physics_flow = PLAYER_FLOW_KEEP_WALL_ENDPOINT_ORDER; continue; }
-	contact_response_reversed = 1;
-	transformed_vector = contact_end_or_response;
-	contact_end_or_response = contact_start_or_delta;
-	contact_start_or_delta = transformed_vector;
-	{ physics_flow = PLAYER_FLOW_CHECK_WALL_END_ON_PLANE; continue; }
+static void reposition_wheels_at_wall(struct PLAYER_WHEEL_MOTION* motion,
+	legacy_s16 retained_travel, struct VECTOR* wall_response)
+{
+	struct VECTOR retained;
+	legacy_s16 i;
 
-case PLAYER_FLOW_KEEP_WALL_ENDPOINT_ORDER:
-	contact_response_reversed = 0;
-case PLAYER_FLOW_CHECK_WALL_END_ON_PLANE:
-	if (contact_end_or_response.z != 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_WALL_START_ON_PLANE; continue; }
-	vertical_delta_or_travel = travel_per_tick;
-	horizontal_delta_or_travel = 0;
-	{ physics_flow = PLAYER_FLOW_SELECT_WALL_RESPONSE_SIDE; continue; }
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		retained.x = 0;
+		retained.y = 0;
+		retained.z = 0;
+		if (retained_travel != 0) {
+			scale_wheel_displacement(&retained, &motion->current[i],
+				&motion->previous[i], retained_travel, motion->travel);
+		}
+		physics_position_offset(&motion->current[i], &motion->previous[i], &retained);
+		physics_position_offset(&motion->current[i], &motion->current[i], wall_response);
+	}
+}
 
-case PLAYER_FLOW_CHECK_WALL_START_ON_PLANE:
-	if (contact_start_or_delta.z != 0)
-		{ physics_flow = PLAYER_FLOW_SPLIT_WALL_CROSSING_TRAVEL; continue; }
-	vertical_delta_or_travel = 0;
-	horizontal_delta_or_travel = travel_per_tick;
-	{ physics_flow = PLAYER_FLOW_SELECT_WALL_RESPONSE_SIDE; continue; }
+static void apply_wall_impact(struct CARSTATE* carstate, legacy_s16 wall_heading,
+	legacy_s16 car_index)
+{
+	legacy_s16 angle_distance, impact_turn;
+	legacy_u16 wall_safe_speed;
+	int reverse_turn;
 
-case PLAYER_FLOW_SPLIT_WALL_CROSSING_TRAVEL:
-	horizontal_delta_or_travel = scaled_vector_separation(
-		&contact_end_or_response, &contact_start_or_delta, &transformed_vector, &intersection_delta_or_body_position);
-	vertical_delta_or_travel = LEGACY_S16_WRAP_SUB(travel_per_tick, horizontal_delta_or_travel);
-
-case PLAYER_FLOW_SELECT_WALL_RESPONSE_SIDE:
-	contact_angle_distance_or_deflection = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw),
-		wallOrientation) & ANGLE_MASK);
-	transformed_vector.z = horizontal_delta_or_travel;
-	transformed_vector.y = 0;
-	if (contact_angle_distance_or_deflection < ANGLE_QUARTER_TURN)
-		{ physics_flow = PLAYER_FLOW_PUSH_ALONG_FORWARD_WALL; continue; }
-	if (contact_angle_distance_or_deflection <= ANGLE_THREE_QUARTER_TURN)
-		{ physics_flow = PLAYER_FLOW_PUSH_ALONG_REVERSE_WALL; continue; }
-
-case PLAYER_FLOW_PUSH_ALONG_FORWARD_WALL:
-	contact_angle_distance_or_deflection = wallOrientation;
-	transformed_vector.x = PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
-	{ physics_flow = PLAYER_FLOW_ADJUST_WALL_PUSH_DIRECTION; continue; }
-
-case PLAYER_FLOW_PUSH_ALONG_REVERSE_WALL:
-	contact_angle_distance_or_deflection = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
-	transformed_vector.x = -PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
-
-case PLAYER_FLOW_ADJUST_WALL_PUSH_DIRECTION:
-	if (contact_response_reversed == 0)
-		{ physics_flow = PLAYER_FLOW_ROTATE_WALL_RESPONSE; continue; }
-	transformed_vector.x = LEGACY_S16_WRAP_NEGATE(transformed_vector.x);
-
-case PLAYER_FLOW_ROTATE_WALL_RESPONSE:
-	response_rotation = mat_rot_zxy(
-		LEGACY_S16_WRAP_NEGATE(car_working_roll),
-		LEGACY_S16_WRAP_NEGATE(car_working_pitch), contact_angle_distance_or_deflection,
-		MATRIX_ROTATION_ORDER_ZXY);
-	mat_mul_vector(&transformed_vector, response_rotation, &contact_end_or_response);
-	collision_angle_distance_or_index = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw), contact_angle_distance_or_deflection) &
-		ANGLE_MASK);
-	impact_turn_distance_or_overlap = 0;
-	if (collision_angle_distance_or_index <= ANGLE_QUARTER_TURN)
-		{ physics_flow = PLAYER_FLOW_CALCULATE_WALL_SAFE_SPEED; continue; }
-		collision_angle_distance_or_index = LEGACY_S16_WRAP_SUB(ANGLE_FULL_TURN, collision_angle_distance_or_index);
-	impact_turn_distance_or_overlap = 1;
-
-case PLAYER_FLOW_CALCULATE_WALL_SAFE_SPEED:
+	angle_distance = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(car_working_yaw), wall_heading) & ANGLE_MASK);
+	reverse_turn = angle_distance > ANGLE_QUARTER_TURN;
+	if (reverse_turn) {
+		angle_distance = LEGACY_S16_WRAP_SUB(ANGLE_FULL_TURN, angle_distance);
+	}
 	wall_safe_speed = LEGACY_U16_SHL(
 		(legacy_u8)LEGACY_S16_WRAP_NEGATE(
 			LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
-				LEGACY_S16_WRAP_MUL(collision_angle_distance_or_index,
+				LEGACY_S16_WRAP_MUL(angle_distance,
 					PLAYER_PHYSICS_WALL_SPEED_ANGLE_MULTIPLIER),
 				PLAYER_PHYSICS_WALL_SPEED_SHIFT),
 				PLAYER_PHYSICS_WALL_SPEED_BIAS)),
 		PLAYER_PHYSICS_WALL_SPEED_SHIFT);
-	if (carstate->car_actual_speed <= wall_safe_speed)
-		{ physics_flow = PLAYER_FLOW_BEGIN_WALL_WHEEL_REPOSITION; continue; }
-	if (impact_turn_distance_or_overlap == 0)
-		{ physics_flow = PLAYER_FLOW_SET_FORWARD_IMPACT_TURN; continue; }
-	impact_turn_distance_or_overlap = LEGACY_S16_SHL(LEGACY_S16_WRAP_NEGATE(collision_angle_distance_or_index), 1U);
-	{ physics_flow = PLAYER_FLOW_APPLY_WALL_CRASH; continue; }
-
-case PLAYER_FLOW_SET_FORWARD_IMPACT_TURN:
-	impact_turn_distance_or_overlap = LEGACY_S16_SHL(collision_angle_distance_or_index, 1U);
-case PLAYER_FLOW_APPLY_WALL_CRASH:
-	carstate->car_velocity_heading_offset = impact_turn_distance_or_overlap;
-	update_crash_state(CRASH_EVENT_COLLISION, car_index);
-
-case PLAYER_FLOW_BEGIN_WALL_WHEEL_REPOSITION:
-	carstate->car_sound_flags |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
-	current_wheel_position = current_wheel_positions;
-	previous_wheel_position = previous_wheel_positions;
-	collision_angle_distance_or_index = 0;
-	{ physics_flow = PLAYER_FLOW_CHECK_WALL_REPOSITION_REMAINING; continue; }
-
-case PLAYER_FLOW_CLEAR_RETAINED_WHEEL_TRAVEL:
-	contact_start_or_delta.x = 0;
-	contact_start_or_delta.y = 0;
-	contact_start_or_delta.z = 0;
-
-case PLAYER_FLOW_APPLY_WALL_WHEEL_POSITION:
-	current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(previous_wheel_position->lx, contact_start_or_delta.x),
-		contact_end_or_response.x);
-	current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(previous_wheel_position->ly, contact_start_or_delta.y),
-		contact_end_or_response.y);
-	current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(previous_wheel_position->lz, contact_start_or_delta.z),
-		contact_end_or_response.z);
-	current_wheel_position++;
-	previous_wheel_position++;
-	collision_angle_distance_or_index++;
-
-case PLAYER_FLOW_CHECK_WALL_REPOSITION_REMAINING:
-	if (collision_angle_distance_or_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_SCALE_RETAINED_WHEEL_TRAVEL; continue; }
-	{ physics_flow = PLAYER_FLOW_BEGIN_COLLISION_PASS; continue; }
-
-case PLAYER_FLOW_SCALE_RETAINED_WHEEL_TRAVEL:
-	if (vertical_delta_or_travel == 0)
-		{ physics_flow = PLAYER_FLOW_CLEAR_RETAINED_WHEEL_TRAVEL; continue; }
-	contact_start_or_delta.x = scale_position_delta(current_wheel_position->lx,
-		previous_wheel_position->lx, vertical_delta_or_travel, travel_per_tick);
-	contact_start_or_delta.y = scale_position_delta(current_wheel_position->ly,
-		previous_wheel_position->ly, vertical_delta_or_travel, travel_per_tick);
-	contact_start_or_delta.z = scale_position_delta(current_wheel_position->lz,
-		previous_wheel_position->lz, vertical_delta_or_travel, travel_per_tick);
-	{ physics_flow = PLAYER_FLOW_APPLY_WALL_WHEEL_POSITION; continue; }
-
-case PLAYER_FLOW_APPLY_WHEEL_GRAVITY:
-	carstate->car_wheel_vertical_speed[wheel_index] = LEGACY_S16_WRAP_ADD(
-		carstate->car_wheel_vertical_speed[wheel_index],
-		wheel_gravity_steps[wheel_index]);
-	current_wheel_position->ly = LEGACY_S32_WRAP_SUB_S16(
-		current_wheel_position->ly, carstate->car_wheel_vertical_speed[wheel_index]);
-	if (framespersec != GAME_FRAME_RATE_LOW)
-		{ physics_flow = PLAYER_FLOW_RECHECK_DISTANCE_AFTER_GRAVITY; continue; }
-	carstate->car_wheel_vertical_speed[wheel_index] = LEGACY_S16_WRAP_ADD(
-		carstate->car_wheel_vertical_speed[wheel_index],
-		wheel_gravity_steps[wheel_index]);
-	current_wheel_position->ly = LEGACY_S32_WRAP_SUB_S16(
-		current_wheel_position->ly, carstate->car_wheel_vertical_speed[wheel_index]);
-
-case PLAYER_FLOW_RECHECK_DISTANCE_AFTER_GRAVITY:
-	wheel_vector.y = position_to_word(current_wheel_position->ly);
-	if (state.game_inputmode == GAME_INPUT_MODE_INTRO) {
-		nextPosAndNormalIP = wheel_vector.y;
-	} else {
-		nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	if (carstate->car_actual_speed > wall_safe_speed) {
+		impact_turn = reverse_turn ? LEGACY_S16_WRAP_NEGATE(angle_distance) : angle_distance;
+		carstate->car_velocity_heading_offset = LEGACY_S16_SHL(impact_turn, 1U);
+		update_crash_state(CRASH_EVENT_COLLISION, car_index);
 	}
+	carstate->car_sound_flags |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
+}
 
-case PLAYER_FLOW_CHECK_WHEEL_CONTACT_RANGE:
-	if (nextPosAndNormalIP <= PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
-		{ physics_flow = PLAYER_FLOW_SAVE_WHEEL_CONTACT_DISTANCE; continue; }
-	carstate->car_surfaceWhl[wheel_index] = 0;
+static legacy_s16 wall_response_heading(struct VECTOR* push,
+	legacy_s16 remaining_travel, int reversed)
+{
+	legacy_s16 relative_heading, wall_heading;
 
-case PLAYER_FLOW_SAVE_WHEEL_CONTACT_DISTANCE:
-	wheel_contact_distances[wheel_index] = nextPosAndNormalIP;
-	if (nextPosAndNormalIP != 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_WHEEL_PENETRATION; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_SOUND; continue; }
+	relative_heading = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(car_working_yaw), wallOrientation) & ANGLE_MASK);
+	push->y = 0;
+	push->z = remaining_travel;
+	if (relative_heading < ANGLE_QUARTER_TURN ||
+		relative_heading > ANGLE_THREE_QUARTER_TURN) {
+		wall_heading = wallOrientation;
+		push->x = PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
+	} else {
+		wall_heading = LEGACY_S16_FROM_BITS((legacy_u16)
+			LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
+		push->x = -PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
+	}
+	if (reversed) {
+		push->x = LEGACY_S16_WRAP_NEGATE(push->x);
+	}
+	return wall_heading;
+}
 
-case PLAYER_FLOW_CHECK_WHEEL_PENETRATION:
-	if (nextPosAndNormalIP < 0)
-		{ physics_flow = PLAYER_FLOW_TRANSFORM_WHEEL_PLANE_CROSSING; continue; }
-	{ physics_flow = PLAYER_FLOW_ADVANCE_WHEEL_CONTACT_SCAN; continue; }
+/* A wall response moves all four wheels, so the caller must restart the scan. */
+static int resolve_wheel_wall_collision(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+{
+	struct VECTORLONG* current_wheel_position = &motion->current[wheel_index];
+	struct VECTOR previous_relative, current_relative, start, end;
+	struct VECTOR temporary, intersection_delta, push, response;
+	struct MATRIX collision_plane_rotation;
+	struct MATRIX* response_rotation;
+	legacy_s16 retained_travel, remaining_travel, wall_heading;
+	int reversed;
 
-case PLAYER_FLOW_TRANSFORM_WHEEL_PLANE_CROSSING:
+	if (wallindex == PLAYER_PHYSICS_WALL_INDEX_NONE ||
+		nextPosAndNormalIP <= elRdWallRelated || nextPosAndNormalIP >= wallHeight) {
+		return 0;
+	}
+	previous_relative.x = LEGACY_S16_WRAP_SUB(
+		carstate->car_wheel_contact_positions[wheel_index].x, wallStartX);
+	previous_relative.y = 0;
+	previous_relative.z = LEGACY_S16_WRAP_SUB(
+		carstate->car_wheel_contact_positions[wheel_index].z, wallStartZ);
+	current_relative.x = LEGACY_S16_WRAP_SUB(
+		position_to_word(current_wheel_position->lx), wallStartX);
+	current_relative.y = 0;
+	current_relative.z = LEGACY_S16_WRAP_SUB(
+		position_to_word(current_wheel_position->lz), wallStartZ);
+
+	mat_rot_y(&collision_plane_rotation, LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
+	retain_collision_plane_rotation(&collision_plane_rotation, car_index);
+	mat_mul_vector(&previous_relative, &collision_plane_rotation, &start);
+	mat_mul_vector(&current_relative, &collision_plane_rotation, &end);
+	if ((end.z > 0 && start.z > 0) || (end.z < 0 && start.z < 0)) {
+		return 0;
+	}
+	reversed = end.z > start.z;
+	if (reversed) {
+		temporary = end;
+		end = start;
+		start = temporary;
+	}
+	if (end.z == 0) {
+		retained_travel = motion->travel;
+		remaining_travel = 0;
+	} else if (start.z == 0) {
+		retained_travel = 0;
+		remaining_travel = motion->travel;
+	} else {
+		remaining_travel = scaled_vector_separation(&end, &start,
+			&temporary, &intersection_delta);
+		retained_travel = LEGACY_S16_WRAP_SUB(motion->travel, remaining_travel);
+	}
+	wall_heading = wall_response_heading(&push, remaining_travel, reversed);
+	response_rotation = mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(car_working_roll),
+		LEGACY_S16_WRAP_NEGATE(car_working_pitch), wall_heading,
+		MATRIX_ROTATION_ORDER_ZXY);
+	mat_mul_vector(&push, response_rotation, &response);
+	apply_wall_impact(carstate, wall_heading, car_index);
+	reposition_wheels_at_wall(motion, retained_travel, &response);
+	return 1;
+}
+
+static void measure_wheel_plane_distance(struct VECTORLONG* position)
+{
+	struct VECTOR wheel;
+
+	physics_position_to_vector(&wheel, position);
+	nextPosAndNormalIP = state.game_inputmode == GAME_INPUT_MODE_INTRO ? wheel.y :
+		plane_signed_distance(planindex, wheel.x, wheel.y, wheel.z);
+}
+
+static void apply_wheel_gravity(struct CARSTATE* carstate,
+	struct VECTORLONG* position, legacy_s16 wheel_index)
+{
+	legacy_s16 step, step_count;
+
+	step_count = framespersec == GAME_FRAME_RATE_LOW ? 2 : 1;
+	for (step = 0; step < step_count; step++) {
+		carstate->car_wheel_vertical_speed[wheel_index] = LEGACY_S16_WRAP_ADD(
+			carstate->car_wheel_vertical_speed[wheel_index], wheel_gravity_steps[wheel_index]);
+		position->ly = LEGACY_S32_WRAP_SUB_S16(position->ly,
+			carstate->car_wheel_vertical_speed[wheel_index]);
+	}
+	measure_wheel_plane_distance(position);
+	if (nextPosAndNormalIP > PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT) {
+		carstate->car_surfaceWhl[wheel_index] = CAR_WHEEL_CONTACT_NONE;
+	}
+}
+
+static void move_airborne_wheel(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index)
+{
+	if (nextPosAndNormalIP > 0) {
+		if (motion->inverted_adjustment > 0 &&
+			nextPosAndNormalIP < PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT) {
+			physics_position_offset(&motion->current[wheel_index],
+				&motion->current[wheel_index], &motion->inverted_offset);
+		} else {
+			apply_wheel_gravity(carstate, &motion->current[wheel_index], wheel_index);
+		}
+	}
+}
+
+static void transform_wheel_plane_crossing(struct PLAYER_WHEEL_MOTION* motion,
+	legacy_s16 wheel_index, legacy_s16 car_index,
+	struct VECTOR* start, struct VECTOR* end)
+{
+	struct VECTORLONG* current_wheel_position = &motion->current[wheel_index];
+	struct VECTORLONG* previous_wheel_position = &motion->previous[wheel_index];
+	struct VECTOR previous_relative, current_relative, plane_world_origin;
+	struct MATRIX collision_plane_rotation, inverse_rotation;
+	struct PLANE far* contact_plane;
+
 	contact_plane = &planptr[planindex];
 	plane_world_origin.x = LEGACY_S16_WRAP_ADD(
 		contact_plane->plane_origin.x, elem_xCenter);
@@ -859,735 +598,619 @@ case PLAYER_FLOW_TRANSFORM_WHEEL_PLANE_CROSSING:
 	plane_world_origin.z = LEGACY_S16_WRAP_ADD(
 		contact_plane->plane_origin.z, elem_zCenter);
 
-	relative_or_suspension_vector.x = LEGACY_S16_WRAP_SUB(
+	previous_relative.x = LEGACY_S16_WRAP_SUB(
 		position_to_word(previous_wheel_position->lx), plane_world_origin.x);
-	relative_or_suspension_vector.y = LEGACY_S16_WRAP_SUB(
+	previous_relative.y = LEGACY_S16_WRAP_SUB(
 		position_to_word(previous_wheel_position->ly), plane_world_origin.y);
-	relative_or_suspension_vector.z = LEGACY_S16_WRAP_SUB(
+	previous_relative.z = LEGACY_S16_WRAP_SUB(
 		position_to_word(previous_wheel_position->lz), plane_world_origin.z);
 
-	current_relative_position.x = LEGACY_S16_WRAP_SUB(
+	current_relative.x = LEGACY_S16_WRAP_SUB(
 		position_to_word(current_wheel_position->lx), plane_world_origin.x);
-	current_relative_position.y = LEGACY_S16_WRAP_SUB(
+	current_relative.y = LEGACY_S16_WRAP_SUB(
 		position_to_word(current_wheel_position->ly), plane_world_origin.y);
-	current_relative_position.z = LEGACY_S16_WRAP_SUB(
+	current_relative.z = LEGACY_S16_WRAP_SUB(
 		position_to_word(current_wheel_position->lz), plane_world_origin.z);
 
 	collision_plane_rotation = contact_plane->plane_rotation;
-	if (car_index == PLAYER_CAR_INDEX) {
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_FIRST_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_FIRST_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_SECOND_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_SECOND_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_THIRD_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_THIRD_WORD];
-		legacy_execution_residue.wheel_angle_stack_words[
-			LEGACY_RESIDUE_FOURTH_WORD] = collision_plane_rotation.vals[
-			PLAYER_PHYSICS_RESIDUE_MATRIX_FIRST_VALUE +
-				LEGACY_RESIDUE_FOURTH_WORD];
-	}
-	mat_invert(&collision_plane_rotation, &wheel_adjustment_rotation);
-	mat_mul_vector(&relative_or_suspension_vector, &wheel_adjustment_rotation, &contact_start_or_delta);
+	retain_collision_plane_rotation(&collision_plane_rotation, car_index);
+	mat_invert(&collision_plane_rotation, &inverse_rotation);
+	mat_mul_vector(&previous_relative, &inverse_rotation, start);
 
-	mat_mul_vector(&current_relative_position, &wheel_adjustment_rotation, &contact_end_or_response);
-	contact_response_reversed = 0;
-	if (track_wall_collision_enabled != 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_CROSSING_END_ON_PLANE; continue; }
-	if (contact_start_or_delta.y >= -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
-		{ physics_flow = PLAYER_FLOW_CHECK_CROSSING_END_ON_PLANE; continue; }
-	if (contact_end_or_response.y >= -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT)
-		{ physics_flow = PLAYER_FLOW_CHECK_CROSSING_END_ON_PLANE; continue; }
-	if (contact_end_or_response.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
-		{ physics_flow = PLAYER_FLOW_FALL_BACK_TO_GROUND_PLANE; continue; }
-	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
-	contact_response_reversed = 1;
+	mat_mul_vector(&current_relative, &inverse_rotation, end);
+}
 
-case PLAYER_FLOW_CHECK_CROSSING_END_ON_PLANE:
-	if (contact_end_or_response.y == 0)
-		{ physics_flow = PLAYER_FLOW_RETRACE_WHEEL_FROM_PLANE; continue; }
-	{ physics_flow = PLAYER_FLOW_CLASSIFY_PLANE_CROSSING_DIRECTION; continue; }
-
-case PLAYER_FLOW_RETRACE_WHEEL_FROM_PLANE:
+static void prepare_wheel_plane_travel(struct PLAYER_WHEEL_MOTION* motion,
+	legacy_s16 wheel_index, legacy_s16 distance)
+{
 	wheel_forward_travel.x = 0;
 	wheel_forward_travel.y = 0;
-	wheel_forward_travel.z = PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE;
+	wheel_forward_travel.z = distance;
 	planindex_copy = planindex;
-	wheel_heading_offset = wheel_plane_headings[wheel_index];
+	wheel_heading_offset = motion->headings[wheel_index];
 	transform_wheel_travel_to_world();
-	physics_position_pull_back(current_wheel_position, &wheel_world_travel);
-	{ physics_flow = PLAYER_FLOW_FINISH_PLANE_CORRECTION; continue; }
+}
 
-case PLAYER_FLOW_FALL_BACK_TO_GROUND_PLANE:
-	planindex = 0;
-	current_planptr = planptr;
-	track_wall_collision_enabled = 1;
-	physics_position_to_vector(&wheel_vector, current_wheel_position);
+/* Express height as negative Z for the existing Z-plane intersection helper. */
+static void turn_plane_height_into_depth(struct VECTOR* position)
+{
+	legacy_s16 depth = position->z;
 
-	nextPosAndNormalIP = plane_signed_distance(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
-		wheel_vector.x, wheel_vector.y, wheel_vector.z);
+	position->z = LEGACY_S16_WRAP_NEGATE(position->y);
+	position->y = depth;
+}
 
-case PLAYER_FLOW_CLASSIFY_WHEEL_PLANE_DISTANCE:
-	if (nextPosAndNormalIP > 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_INVERTED_WHEEL_ADJUSTMENT; continue; }
-	{ physics_flow = PLAYER_FLOW_SAVE_WHEEL_CONTACT_DISTANCE; continue; }
+static void split_wheel_plane_travel(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index,
+	struct VECTOR* start, struct VECTOR* end)
+{
+	struct VECTOR intersection, delta, retained;
+	legacy_s16 remaining_travel, total_travel, retained_travel;
 
-case PLAYER_FLOW_CHECK_INVERTED_WHEEL_ADJUSTMENT:
-	if (inverted_wheel_adjustment > 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_INVERTED_CONTACT_RANGE; continue; }
-	{ physics_flow = PLAYER_FLOW_APPLY_WHEEL_GRAVITY; continue; }
-
-case PLAYER_FLOW_CHECK_INVERTED_CONTACT_RANGE:
-	if (nextPosAndNormalIP <
-		PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT)
-		{ physics_flow = PLAYER_FLOW_APPLY_INVERTED_WHEEL_ADJUSTMENT; continue; }
-	{ physics_flow = PLAYER_FLOW_APPLY_WHEEL_GRAVITY; continue; }
-
-case PLAYER_FLOW_APPLY_INVERTED_WHEEL_ADJUSTMENT:
-	physics_position_offset(current_wheel_position, current_wheel_position, &inverted_wheel_offset);
-	{ physics_flow = PLAYER_FLOW_SAVE_WHEEL_CONTACT_DISTANCE; continue; }
-
-case PLAYER_FLOW_CLASSIFY_PLANE_CROSSING_DIRECTION:
-	if (contact_start_or_delta.y <= 0)
-		{ physics_flow = PLAYER_FLOW_ADVANCE_WHEEL_ALONG_PLANE; continue; }
-	if (contact_end_or_response.y >= 0)
-		{ physics_flow = PLAYER_FLOW_ADVANCE_WHEEL_ALONG_PLANE; continue; }
-	{ physics_flow = PLAYER_FLOW_SPLIT_PLANE_CROSSING_TRAVEL; continue; }
-
-case PLAYER_FLOW_ADVANCE_WHEEL_ALONG_PLANE:
-	wheel_forward_travel.x = 0;
-	wheel_forward_travel.y = 0;
-	wheel_forward_travel.z = travel_per_tick;
-	planindex_copy = planindex;
-	wheel_heading_offset = wheel_plane_headings[wheel_index];
-	transform_wheel_travel_to_world();
-	physics_position_offset(current_wheel_position, previous_wheel_position,
+	turn_plane_height_into_depth(start);
+	turn_plane_height_into_depth(end);
+	remaining_travel = scaled_vector_separation(end, start, &intersection, &delta);
+	total_travel = LEGACY_S16_WRAP_ADD(
+		carstate->car_wheel_vertical_speed[wheel_index], motion->travel);
+	retained_travel = LEGACY_S16_WRAP_SUB(total_travel, remaining_travel);
+	scale_wheel_displacement(&retained, &motion->current[wheel_index],
+		&motion->previous[wheel_index], retained_travel, total_travel);
+	prepare_wheel_plane_travel(motion, wheel_index, remaining_travel);
+	physics_position_offset(&motion->current[wheel_index], &motion->previous[wheel_index],
+		&retained);
+	physics_position_offset(&motion->current[wheel_index], &motion->current[wheel_index],
 		&wheel_world_travel);
-	{ physics_flow = PLAYER_FLOW_RECHECK_PLANE_PENETRATION; continue; }
+}
 
-case PLAYER_FLOW_SPLIT_PLANE_CROSSING_TRAVEL:
-	contact_angle_distance_or_deflection = contact_start_or_delta.z;
-	contact_start_or_delta.z = LEGACY_S16_WRAP_NEGATE(contact_start_or_delta.y);
-	contact_start_or_delta.y = contact_angle_distance_or_deflection;
+static void push_wheel_out_of_plane(struct VECTORLONG* position, int reverse_response)
+{
+	struct VECTOR wheel, correction;
 
-	contact_angle_distance_or_deflection = contact_end_or_response.z;
-	contact_end_or_response.z = LEGACY_S16_WRAP_NEGATE(contact_end_or_response.y);
-	contact_end_or_response.y = contact_angle_distance_or_deflection;
-	contact_angle_distance_or_deflection = scaled_vector_separation(
-		&contact_end_or_response, &contact_start_or_delta, &transformed_vector, &intersection_delta_or_body_position);
-	vertical_delta_or_travel = LEGACY_S16_WRAP_ADD(
-		carstate->car_wheel_vertical_speed[wheel_index], travel_per_tick);
-	horizontal_delta_or_travel = LEGACY_S16_WRAP_SUB(vertical_delta_or_travel, contact_angle_distance_or_deflection);
-	contact_start_or_delta.x = scale_position_delta(current_wheel_position->lx,
-		previous_wheel_position->lx, horizontal_delta_or_travel, vertical_delta_or_travel);
-	contact_start_or_delta.y = scale_position_delta(current_wheel_position->ly,
-		previous_wheel_position->ly, horizontal_delta_or_travel, vertical_delta_or_travel);
-	contact_start_or_delta.z = scale_position_delta(current_wheel_position->lz,
-		previous_wheel_position->lz, horizontal_delta_or_travel, vertical_delta_or_travel);
+	/* Unlike the intro's initial lookup, correction always measures the plane. */
+	physics_position_to_vector(&wheel, position);
+	nextPosAndNormalIP = plane_signed_distance(planindex, wheel.x, wheel.y, wheel.z);
+	if (nextPosAndNormalIP < 0) {
+		if (reverse_response) {
+			nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
+				LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
+				PLAYER_PHYSICS_PLANE_PENETRATION_BIAS);
+		}
+		wheel.x = 0;
+		wheel.y = LEGACY_S16_SHL(LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
+			PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+		wheel.z = 0;
+		mat_mul_vector2(&wheel, &planptr[planindex].plane_rotation, &correction);
+		physics_position_offset(position, position, &correction);
+	}
+}
 
-	wheel_forward_travel.x = 0;
-	wheel_forward_travel.y = 0;
-	wheel_forward_travel.z = contact_angle_distance_or_deflection;
-	planindex_copy = planindex;
-	wheel_heading_offset = wheel_plane_headings[wheel_index];
-	transform_wheel_travel_to_world();
-	current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(
-			previous_wheel_position->lx, contact_start_or_delta.x),
-		wheel_world_travel.x);
-	current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(
-			previous_wheel_position->ly, contact_start_or_delta.y),
-		wheel_world_travel.y);
-	current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(
-		LEGACY_S32_WRAP_ADD_S16(
-			previous_wheel_position->lz, contact_start_or_delta.z),
-		wheel_world_travel.z);
+static void use_ground_plane_for_wheel(struct VECTORLONG* position)
+{
+	struct VECTOR wheel;
 
-case PLAYER_FLOW_RECHECK_PLANE_PENETRATION:
-	physics_position_to_vector(&wheel_vector, current_wheel_position);
-
-	nextPosAndNormalIP = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
-	if (nextPosAndNormalIP >= 0)
-		{ physics_flow = PLAYER_FLOW_FINISH_PLANE_CORRECTION; continue; }
-	if (contact_response_reversed == 0)
-		{ physics_flow = PLAYER_FLOW_PUSH_WHEEL_OUT_OF_PLANE; continue; }
-	nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
-		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
-		PLAYER_PHYSICS_PLANE_PENETRATION_BIAS);
-
-case PLAYER_FLOW_PUSH_WHEEL_OUT_OF_PLANE:
-	wheel_vector.z = 0;
-	wheel_vector.x = 0;
-	wheel_vector.y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
-		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
-	mat_mul_vector2(&wheel_vector, &planptr[planindex].plane_rotation, &transformed_vector);
-
-	physics_position_offset(current_wheel_position, current_wheel_position, &transformed_vector);
-
-case PLAYER_FLOW_FINISH_PLANE_CORRECTION:
-case PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_SOUND:
-	if (carstate->car_wheel_vertical_speed[wheel_index] <=
-		PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD)
-		{ physics_flow = PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_CRASH; continue; }
-	carstate->car_sound_flags |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
-
-case PLAYER_FLOW_CHECK_SUSPENSION_IMPACT_CRASH:
-	if (carstate->car_wheel_vertical_speed[wheel_index] <=
-		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD)
-		{ physics_flow = PLAYER_FLOW_STOP_WHEEL_VERTICAL_SPEED; continue; }
-	update_crash_state(CRASH_EVENT_COLLISION, car_index);
-
-case PLAYER_FLOW_STOP_WHEEL_VERTICAL_SPEED:
-	carstate->car_wheel_vertical_speed[wheel_index] = 0;
-
-case PLAYER_FLOW_ADVANCE_WHEEL_CONTACT_SCAN:
-	current_wheel_position++;
-	previous_wheel_position++;
-	wheel_index++;
-
-case PLAYER_FLOW_CHECK_WHEEL_CONTACT_SCAN_REMAINING:
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_PREPARE_WHEEL_CONTACT_LOOKUP; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_ALL_WHEELS_IN_WATER; continue; }
-
-case PLAYER_FLOW_PREPARE_WHEEL_CONTACT_LOOKUP:
-	physics_position_to_vector(&wheel_vector, current_wheel_position);
-
-	if (state.game_inputmode == GAME_INPUT_MODE_INTRO)
-		{ physics_flow = PLAYER_FLOW_USE_INTRO_GROUND_PLANE; continue; }
-	{ physics_flow = PLAYER_FLOW_LOOK_UP_WHEEL_TRACK_OBJECT; continue; }
-
-case PLAYER_FLOW_USE_INTRO_GROUND_PLANE:
-	wallindex = PLAYER_PHYSICS_WALL_INDEX_NONE;
-	current_surf_type = CAR_SURFACE_PAVED;
 	planindex = PLAYER_PHYSICS_GROUND_PLANE_INDEX;
 	current_planptr = planptr;
-	{ physics_flow = PLAYER_FLOW_STORE_WHEEL_SURFACE; continue; }
+	track_wall_collision_enabled = 1;
+	physics_position_to_vector(&wheel, position);
+	nextPosAndNormalIP = plane_signed_distance(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
+		wheel.x, wheel.y, wheel.z);
+}
 
-case PLAYER_FLOW_APPLY_UPRIGHT_SUSPENSION_OFFSET:
-	current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
-		current_wheel_position->ly, LEGACY_S16_WRAP_ADD(contact_angle_distance_or_deflection,
-			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
+/* Return false when the wheel is below an elevated plane and needs to be
+   tested against the ground instead. Ground correction cannot take this path. */
+static int correct_wheel_plane_penetration(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+{
+	struct VECTOR start, end;
+	int reverse_response = 0;
 
-case PLAYER_FLOW_ADVANCE_SUSPENSION_UPDATE:
-	current_wheel_position++;
-	wheel_index++;
+	transform_wheel_plane_crossing(motion, wheel_index, car_index, &start, &end);
+	if (track_wall_collision_enabled == 0 &&
+		start.y < -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT &&
+		end.y < -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT) {
+		if (end.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT) {
+			use_ground_plane_for_wheel(&motion->current[wheel_index]);
+			return 0;
+		}
+		update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
+		reverse_response = 1;
+	}
+	if (end.y == 0) {
+		prepare_wheel_plane_travel(motion, wheel_index, PLAYER_PHYSICS_PLANE_RETRACE_DISTANCE);
+		physics_position_pull_back(&motion->current[wheel_index], &wheel_world_travel);
+	} else {
+		if (start.y > 0 && end.y < 0) {
+			split_wheel_plane_travel(carstate, motion, wheel_index, &start, &end);
+		} else {
+			prepare_wheel_plane_travel(motion, wheel_index, motion->travel);
+			physics_position_offset(&motion->current[wheel_index],
+				&motion->previous[wheel_index], &wheel_world_travel);
+		}
+		push_wheel_out_of_plane(&motion->current[wheel_index], reverse_response);
+	}
+	return 1;
+}
 
-case PLAYER_FLOW_CHECK_SUSPENSION_UPDATE_REMAINING:
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_UPDATE_WHEEL_SUSPENSION; continue; }
-	{ physics_flow = PLAYER_FLOW_AVERAGE_WHEEL_POSITIONS; continue; }
+static void apply_wheel_landing(struct CARSTATE* carstate,
+	legacy_s16 wheel_index, legacy_s16 car_index)
+{
+	if (carstate->car_wheel_vertical_speed[wheel_index] >
+		PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD) {
+		carstate->car_sound_flags |= PLAYER_PHYSICS_SUSPENSION_SOUND_FLAG;
+	}
+	if (carstate->car_wheel_vertical_speed[wheel_index] >
+		PLAYER_PHYSICS_SUSPENSION_CRASH_THRESHOLD) {
+		update_crash_state(CRASH_EVENT_COLLISION, car_index);
+	}
+	carstate->car_wheel_vertical_speed[wheel_index] = 0;
+}
 
-case PLAYER_FLOW_UPDATE_WHEEL_SUSPENSION:
-	physics_position_to_vector(
-		&carstate->car_wheel_contact_positions[wheel_index], current_wheel_position);
+static void resolve_wheel_plane_contact(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+{
+	int resolved;
 
-	contact_angle_distance_or_deflection = update_wheel_suspension(carstate, wheel_contact_distances[wheel_index], wheel_index);
-	if (car_working_roll != 0)
-		{ physics_flow = PLAYER_FLOW_APPLY_ROTATED_SUSPENSION_OFFSET; continue; }
-	if (car_working_pitch != 0)
-		{ physics_flow = PLAYER_FLOW_APPLY_ROTATED_SUSPENSION_OFFSET; continue; }
-	{ physics_flow = PLAYER_FLOW_APPLY_UPRIGHT_SUSPENSION_OFFSET; continue; }
+	do {
+		move_airborne_wheel(carstate, motion, wheel_index);
+		/* Suspension uses the distance before penetration correction. */
+		motion->contact_distances[wheel_index] = nextPosAndNormalIP;
+		resolved = nextPosAndNormalIP >= 0 ||
+			correct_wheel_plane_penetration(carstate, motion, wheel_index, car_index);
+	} while (!resolved);
 
-case PLAYER_FLOW_APPLY_ROTATED_SUSPENSION_OFFSET:
-	wheel_vector.z = 0;
-	wheel_vector.x = 0;
-	wheel_vector.y = LEGACY_S16_WRAP_ADD(contact_angle_distance_or_deflection,
-		PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT);
-	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &relative_or_suspension_vector);
-	physics_position_offset(current_wheel_position, current_wheel_position, &relative_or_suspension_vector);
-	{ physics_flow = PLAYER_FLOW_ADVANCE_SUSPENSION_UPDATE; continue; }
+	if (motion->contact_distances[wheel_index] <= 0) {
+		apply_wheel_landing(carstate, wheel_index, car_index);
+	}
+}
 
-case PLAYER_FLOW_AVERAGE_WHEEL_POSITIONS:
-	car_working_x = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lx,
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lx),
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lx,
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lx)),
+static void look_up_wheel_surface(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index)
+{
+	struct VECTOR wheel;
+
+	physics_position_to_vector(&wheel, &motion->current[wheel_index]);
+	if (state.game_inputmode == GAME_INPUT_MODE_INTRO) {
+		wallindex = PLAYER_PHYSICS_WALL_INDEX_NONE;
+		current_surf_type = CAR_SURFACE_PAVED;
+		planindex = PLAYER_PHYSICS_GROUND_PLANE_INDEX;
+		current_planptr = planptr;
+	} else {
+		build_track_object(&wheel, &carstate->car_wheel_contact_positions[wheel_index]);
+	}
+	carstate->car_surfaceWhl[wheel_index] = current_surf_type;
+	measure_wheel_plane_distance(&motion->current[wheel_index]);
+}
+
+/* Stop at the first wall response: its displacement invalidates the whole scan. */
+static int resolve_wheel_contact_pass(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+{
+	legacy_s16 i;
+
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		look_up_wheel_surface(carstate, motion, i);
+		if (resolve_wheel_wall_collision(carstate, motion, i, car_index)) {
+			return 0;
+		}
+		resolve_wheel_plane_contact(carstate, motion, i, car_index);
+	}
+	return 1;
+}
+
+static void resolve_wheel_contacts(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+{
+	legacy_s16 pass = 1;
+	int resolved = 0;
+
+	/* Four scans are allowed; the fifth attempt crashes without scanning. */
+	while (pass < PLAYER_PHYSICS_COLLISION_RETRY_LIMIT && !resolved) {
+		resolved = resolve_wheel_contact_pass(carstate, motion, car_index);
+		pass++;
+	}
+	if (!resolved) {
+		carstate->car_velocity_heading_offset = ANGLE_HALF_TURN;
+		update_crash_state(CRASH_EVENT_COLLISION, car_index);
+	}
+	if (carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST] == CAR_SURFACE_WATER &&
+		carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND] == CAR_SURFACE_WATER &&
+		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST] == CAR_SURFACE_WATER &&
+		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND] == CAR_SURFACE_WATER) {
+		update_crash_state(CRASH_EVENT_WATER, car_index);
+	}
+}
+
+static void apply_wheel_suspension(struct CARSTATE* carstate,
+	struct PLAYER_WHEEL_MOTION* motion)
+{
+	struct VECTOR offset, rotated_offset;
+	legacy_s16 i, deflection;
+
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		physics_position_to_vector(&carstate->car_wheel_contact_positions[i], &motion->current[i]);
+		deflection = update_wheel_suspension(carstate, motion->contact_distances[i], i);
+		offset.x = 0;
+		offset.y = LEGACY_S16_WRAP_ADD(deflection, PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT);
+		offset.z = 0;
+		if (car_working_roll != 0 || car_working_pitch != 0) {
+			mat_mul_vector(&offset, &car_to_world_rotation, &rotated_offset);
+			physics_position_offset(&motion->current[i], &motion->current[i], &rotated_offset);
+		} else {
+			motion->current[i].ly = LEGACY_S32_WRAP_ADD_S16(motion->current[i].ly, offset.y);
+		}
+	}
+}
+
+static legacy_s32 wheel_axis_average(legacy_s32 front_first, legacy_s32 front_second,
+	legacy_s32 rear_first, legacy_s32 rear_second)
+{
+	return LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
+		LEGACY_S32_WRAP_ADD(front_first, front_second),
+		LEGACY_S32_WRAP_ADD(rear_first, rear_second)),
 		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
-	car_working_y = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].ly,
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].ly),
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_FIRST].ly,
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_SECOND].ly)),
-		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
-	car_working_z = LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lz,
-			current_wheel_positions[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lz),
-		LEGACY_S32_WRAP_ADD(
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lz,
-			current_wheel_positions[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lz)),
-		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
+}
 
-	current_wheel_position = current_wheel_positions;
-	wheel_index = 0;
+static legacy_s32 clamp_car_world_coordinate(legacy_s32 position)
+{
+	/* Preserve the original strict upper-bound comparison. */
+	if (position > PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE) {
+		return PLAYER_PHYSICS_WORLD_MAX_POSITION;
+	}
+	if (position < PLAYER_PHYSICS_WORLD_MIN_POSITION) {
+		return PLAYER_PHYSICS_WORLD_MIN_POSITION;
+	}
+	return position;
+}
 
-case PLAYER_FLOW_CALCULATE_WHEEL_OFFSETS:
-	wheel_offsets[wheel_index].x = physics_difference_word(
-		current_wheel_position->lx, car_working_x);
-	wheel_offsets[wheel_index].y = physics_difference_word(
-		current_wheel_position->ly, car_working_y);
-	wheel_offsets[wheel_index].z = physics_difference_word(
-		current_wheel_position->lz, car_working_z);
-	current_wheel_position++;
-	wheel_index++;
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_CALCULATE_WHEEL_OFFSETS; continue; }
-	if (car_working_y >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_X_MAXIMUM; continue; }
-	car_working_y = 0;
+static void derive_car_position_from_wheels(struct PLAYER_WHEEL_MOTION* motion,
+	struct VECTOR* wheel_offsets)
+{
+	legacy_s16 i;
+	struct VECTORLONG* wheels = motion->current;
 
-case PLAYER_FLOW_CHECK_WORLD_X_MAXIMUM:
-	if (car_working_x <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
-		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_X_MINIMUM; continue; }
+	car_working_x = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lx,
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lx,
+		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lx, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lx);
+	car_working_y = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].ly,
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].ly,
+		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].ly, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].ly);
+	car_working_z = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lz,
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lz,
+		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lz, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lz);
+	/* Orientation uses offsets from the unclamped wheel centroid. */
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		wheel_offsets[i].x = physics_difference_word(wheels[i].lx, car_working_x);
+		wheel_offsets[i].y = physics_difference_word(wheels[i].ly, car_working_y);
+		wheel_offsets[i].z = physics_difference_word(wheels[i].lz, car_working_z);
+	}
+	if (car_working_y < 0) {
+		car_working_y = 0;
+	}
+	car_working_x = clamp_car_world_coordinate(car_working_x);
+	car_working_z = clamp_car_world_coordinate(car_working_z);
+}
 
-case PLAYER_FLOW_CLAMP_WORLD_X_MAXIMUM:
-	car_working_x = PLAYER_PHYSICS_WORLD_MAX_POSITION;
-	{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM; continue; }
+static legacy_s16 apply_rotation_deadband(legacy_s16 angle)
+{
+	legacy_s16 magnitude = angle < 0 ? LEGACY_S16_WRAP_NEGATE(angle) : angle;
 
-case PLAYER_FLOW_CHECK_WORLD_X_MINIMUM:
-	if (car_working_x >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
-		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM; continue; }
+	return magnitude < PLAYER_PHYSICS_ROTATION_DEADBAND ? 0 : angle;
+}
 
-case PLAYER_FLOW_CLAMP_WORLD_X_MINIMUM:
-	car_working_x = PLAYER_PHYSICS_WORLD_MIN_POSITION;
-case PLAYER_FLOW_CHECK_WORLD_Z_MAXIMUM:
-	if (car_working_z <= PLAYER_PHYSICS_WORLD_MAX_EXCLUSIVE)
-		{ physics_flow = PLAYER_FLOW_CHECK_WORLD_Z_MINIMUM; continue; }
+static void rotate_wheel_offsets(struct VECTOR* offsets, struct MATRIX* rotation)
+{
+	legacy_s16 i;
+	struct VECTOR input;
 
-case PLAYER_FLOW_CLAMP_WORLD_Z_MAXIMUM:
-	car_working_z = PLAYER_PHYSICS_WORLD_MAX_POSITION;
-	{ physics_flow = PLAYER_FLOW_DERIVE_YAW_FROM_WHEELS; continue; }
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		input = offsets[i];
+		mat_mul_vector(&input, rotation, &offsets[i]);
+	}
+}
 
-case PLAYER_FLOW_CHECK_WORLD_Z_MINIMUM:
-	if (car_working_z >= PLAYER_PHYSICS_WORLD_MIN_POSITION)
-		{ physics_flow = PLAYER_FLOW_DERIVE_YAW_FROM_WHEELS; continue; }
-
-case PLAYER_FLOW_CLAMP_WORLD_Z_MINIMUM:
-	car_working_z = PLAYER_PHYSICS_WORLD_MIN_POSITION;
-
-case PLAYER_FLOW_DERIVE_YAW_FROM_WHEELS:
-	contact_angle_distance_or_deflection = wheel_pair_delta(
+static void derive_car_yaw(struct VECTOR* wheel_offsets)
+{
+	legacy_s16 lateral_delta, longitudinal_delta;
+	lateral_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x);
-	horizontal_delta_or_travel = wheel_pair_delta(
+	longitudinal_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
 	car_working_yaw = LEGACY_S16_FROM_BITS((legacy_u16)
-		polarAngle(contact_angle_distance_or_deflection, LEGACY_S16_WRAP_NEGATE(horizontal_delta_or_travel)) & ANGLE_MASK);
-	mat_rot_y(&wheel_adjustment_rotation, car_working_yaw);
-	wheel_index = 0;
+		polarAngle(lateral_delta, LEGACY_S16_WRAP_NEGATE(longitudinal_delta)) & ANGLE_MASK);
+}
 
-case PLAYER_FLOW_REMOVE_WHEEL_YAW:
-	transformed_vector = wheel_offsets[wheel_index];
-	mat_mul_vector(&transformed_vector, &wheel_adjustment_rotation, &wheel_offsets[wheel_index]);
-	wheel_index++;
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_REMOVE_WHEEL_YAW; continue; }
+static void derive_car_pitch(struct VECTOR* wheel_offsets)
+{
+	legacy_s16 longitudinal_delta, vertical_delta;
 
-	horizontal_delta_or_travel = wheel_pair_delta(
+	longitudinal_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
-	vertical_delta_or_travel = wheel_pair_delta(
+	vertical_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y);
-	//horizontal_delta_or_travel = vec_1CC.z + vec_1D2.z - wheel_offsets.z - vec_1D8.z;
-	//vertical_delta_or_travel = vec_1CC.y + vec_1D2.y - wheel_offsets.y - vec_1D8.y;
-	if (vertical_delta_or_travel != 0)
-		{ physics_flow = PLAYER_FLOW_DERIVE_PITCH_FROM_WHEELS; continue; }
-	if (horizontal_delta_or_travel < 0)
-		{ physics_flow = PLAYER_FLOW_CLEAR_SMALL_PITCH; continue; }
-
-case PLAYER_FLOW_DERIVE_PITCH_FROM_WHEELS:
-	car_working_pitch = LEGACY_S16_WRAP_SUB(
-		polarAngle(LEGACY_S16_WRAP_NEGATE(horizontal_delta_or_travel), vertical_delta_or_travel),
-		ANGLE_QUARTER_TURN);
-	if (car_working_pitch >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_POSITIVE_PITCH_DEADBAND; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_NEGATIVE_PITCH_DEADBAND; continue; }
-
-case PLAYER_FLOW_CHECK_POSITIVE_PITCH_DEADBAND:
-	if (car_working_pitch >= PLAYER_PHYSICS_ROTATION_DEADBAND)
-		{ physics_flow = PLAYER_FLOW_PREPARE_WHEEL_PITCH_REMOVAL; continue; }
-	{ physics_flow = PLAYER_FLOW_CLEAR_SMALL_PITCH; continue; }
-case PLAYER_FLOW_CHECK_NEGATIVE_PITCH_DEADBAND:
-	if (LEGACY_S16_WRAP_NEGATE(car_working_pitch) >=
-		PLAYER_PHYSICS_ROTATION_DEADBAND)
-		{ physics_flow = PLAYER_FLOW_PREPARE_WHEEL_PITCH_REMOVAL; continue; }
-
-case PLAYER_FLOW_CLEAR_SMALL_PITCH:
 	car_working_pitch = 0;
-case PLAYER_FLOW_PREPARE_WHEEL_PITCH_REMOVAL:
-	if (car_working_pitch == 0)
-		{ physics_flow = PLAYER_FLOW_MEASURE_WHEEL_ROLL; continue; }
-	mat_rot_x(&wheel_adjustment_rotation, car_working_pitch);
-	wheel_index = 0;
+	if (vertical_delta != 0 || longitudinal_delta >= 0) {
+		car_working_pitch = apply_rotation_deadband(LEGACY_S16_WRAP_SUB(
+			polarAngle(LEGACY_S16_WRAP_NEGATE(longitudinal_delta), vertical_delta),
+			ANGLE_QUARTER_TURN));
+	}
+}
 
-case PLAYER_FLOW_REMOVE_WHEEL_PITCH:
-	transformed_vector = wheel_offsets[wheel_index];
-	mat_mul_vector(&transformed_vector, &wheel_adjustment_rotation, &wheel_offsets[wheel_index]);
-	wheel_index++;
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_REMOVE_WHEEL_PITCH; continue; }
-
-case PLAYER_FLOW_MEASURE_WHEEL_ROLL:
-	horizontal_delta_or_travel = wheel_pair_delta(
+static void derive_car_roll(struct VECTOR* wheel_offsets)
+{
+	legacy_s16 lateral_delta, vertical_delta;
+	lateral_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x);
-	vertical_delta_or_travel = wheel_pair_delta(
+	vertical_delta = wheel_pair_delta(
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
 		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
 		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y);
 
-	//horizontal_delta_or_travel = wheel_offsets[3].x + wheel_offsets[2].x - wheel_offsets[0].x - wheel_offsets[1].x;
-	//vertical_delta_or_travel = wheel_offsets[3].y + wheel_offsets[2].y - wheel_offsets[0].y - wheel_offsets[1].y;
-
-	//horizontal_delta_or_travel = vec_1D8.x + vec_1D2.x - wheel_offsets.x - vec_1CC.x;
-	//vertical_delta_or_travel = vec_1D8.y + vec_1D2.y - wheel_offsets.y - vec_1CC.y;
-	if (vertical_delta_or_travel != 0)
-		{ physics_flow = PLAYER_FLOW_DERIVE_ROLL_FROM_WHEELS; continue; }
-	if (horizontal_delta_or_travel > 0)
-		{ physics_flow = PLAYER_FLOW_CLEAR_SMALL_ROLL; continue; }
-
-case PLAYER_FLOW_DERIVE_ROLL_FROM_WHEELS:
-	car_working_roll = LEGACY_S16_WRAP_SUB(
-		polarAngle(horizontal_delta_or_travel, vertical_delta_or_travel), ANGLE_QUARTER_TURN);
-	if (car_working_roll >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_POSITIVE_ROLL_DEADBAND; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_NEGATIVE_ROLL_DEADBAND; continue; }
-
-case PLAYER_FLOW_CHECK_POSITIVE_ROLL_DEADBAND:
-	if (car_working_roll >= PLAYER_PHYSICS_ROTATION_DEADBAND)
-		{ physics_flow = PLAYER_FLOW_SUM_FRONT_AND_REAR_SURFACES; continue; }
-	{ physics_flow = PLAYER_FLOW_CLEAR_SMALL_ROLL; continue; }
-case PLAYER_FLOW_CHECK_NEGATIVE_ROLL_DEADBAND:
-	if (LEGACY_S16_WRAP_NEGATE(car_working_roll) >=
-		PLAYER_PHYSICS_ROTATION_DEADBAND)
-		{ physics_flow = PLAYER_FLOW_SUM_FRONT_AND_REAR_SURFACES; continue; }
-case PLAYER_FLOW_CLEAR_SMALL_ROLL:
 	car_working_roll = 0;
-case PLAYER_FLOW_SUM_FRONT_AND_REAR_SURFACES:
+	if (vertical_delta != 0 || lateral_delta <= 0) {
+		car_working_roll = apply_rotation_deadband(LEGACY_S16_WRAP_SUB(
+			polarAngle(lateral_delta, vertical_delta), ANGLE_QUARTER_TURN));
+	}
+}
+
+static void derive_car_pose_from_wheels(struct PLAYER_WHEEL_MOTION* motion)
+{
+	struct VECTOR wheel_offsets[PLAYER_PHYSICS_WHEEL_COUNT];
+	struct MATRIX rotation;
+
+	derive_car_position_from_wheels(motion, wheel_offsets);
+	derive_car_yaw(wheel_offsets);
+	mat_rot_y(&rotation, car_working_yaw);
+	rotate_wheel_offsets(wheel_offsets, &rotation);
+	derive_car_pitch(wheel_offsets);
+	if (car_working_pitch != 0) {
+		mat_rot_x(&rotation, car_working_pitch);
+		rotate_wheel_offsets(wheel_offsets, &rotation);
+	}
+	derive_car_roll(wheel_offsets);
+}
+
+static void sum_front_and_rear_wheel_surfaces(struct CARSTATE* carstate)
+{
 	carstate->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
 		carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST],
 		carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND]);
 	carstate->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
 		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST],
 		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND]);
-	if (state.game_inputmode != GAME_INPUT_MODE_INTRO)
-		{ physics_flow = PLAYER_FLOW_PLAY_CAR_IMPACT_SOUNDS; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
+}
 
-case PLAYER_FLOW_PLAY_CAR_IMPACT_SOUNDS:
+static void play_car_impact_sounds(struct CARSTATE* carstate, legacy_s16 car_index)
+{
 #ifndef RESTUNTS_HEADLESS
-	if (is_in_replay != 0)
-		{ physics_flow = PLAYER_FLOW_BEGIN_BODY_PLANE_SCAN; continue; }
-	if (car_index == PLAYER_CAR_INDEX)
-		{ physics_flow = PLAYER_FLOW_PLAY_PLAYER_IMPACT_SOUNDS; continue; }
-	audio_play_car_events(carstate->car_sound_flags, audio_opponent_engine_channel);
-	{ physics_flow = PLAYER_FLOW_FINISH_CAR_IMPACT_SOUNDS; continue; }
-
-case PLAYER_FLOW_PLAY_PLAYER_IMPACT_SOUNDS:
-	audio_play_car_events(carstate->car_sound_flags, audio_player_engine_channel);
-case PLAYER_FLOW_FINISH_CAR_IMPACT_SOUNDS:
-	//audio_play_car_events(carstate->car_sound_flags, );
+	if (is_in_replay == 0) {
+		audio_play_car_events(carstate->car_sound_flags, car_index == PLAYER_CAR_INDEX ?
+			audio_player_engine_channel : audio_opponent_engine_channel);
+	}
+#else
+	(void)carstate;
+	(void)car_index;
 #endif
+}
 
-case PLAYER_FLOW_BEGIN_BODY_PLANE_SCAN:
-	response_rotation = mat_rot_zxy(
-		LEGACY_S16_WRAP_NEGATE(car_working_roll),
-		LEGACY_S16_WRAP_NEGATE(car_working_pitch),
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw),
+static void check_body_corner_plane(struct CARSTATE* carstate,
+	struct VECTOR* current_position, legacy_s16 corner_index, legacy_s16 car_index)
+{
+	struct VECTOR sample;
+	legacy_s16 current_distance, previous_distance, current_plane_index;
+
+	sample = *current_position;
+	build_track_object(&sample, &carstate->car_body_corner_positions[corner_index]);
+	current_distance = plane_signed_distance(planindex, sample.x, sample.y, sample.z);
+	if (planindex < PLAYER_PHYSICS_HEIGHT_ONLY_PLANE_COUNT) {
+		if (current_distance <= 0) {
+			update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
+		}
+	} else {
+		current_plane_index = planindex;
+		sample = carstate->car_body_corner_positions[corner_index];
+		build_track_object(&sample, current_position);
+		if (current_plane_index == planindex) {
+			previous_distance = plane_signed_distance(planindex, sample.x, sample.y, sample.z);
+			if (game_replay_mode != REPLAY_MODE_PAUSED &&
+				((current_distance < 0 && previous_distance > 0) ||
+				 (current_distance > 0 && previous_distance < 0))) {
+				update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
+			}
+		}
+	}
+	carstate->car_body_corner_positions[corner_index] = *current_position;
+}
+
+static void check_car_body_planes(struct CARSTATE* carstate, struct SIMD* simd,
+	legacy_s16 car_index)
+{
+	struct MATRIX* rotation;
+	struct VECTOR local, rotated, position;
+	legacy_s16 i;
+
+	rotation = mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(car_working_roll),
+		LEGACY_S16_WRAP_NEGATE(car_working_pitch), LEGACY_S16_WRAP_NEGATE(car_working_yaw),
 		MATRIX_ROTATION_ORDER_ZXY);
-	wheel_index = 0;
-	{ physics_flow = PLAYER_FLOW_CHECK_BODY_PLANE_SCAN_REMAINING; continue; }
+	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
+		local = simd->wheel_coords[i];
+		local.y = LEGACY_S16_SHL(simd->collide_points[0].py, PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+		mat_mul_vector(&local, rotation, &rotated);
+		position.x = position_to_word(LEGACY_S32_WRAP_ADD_S16(car_working_x, rotated.x));
+		position.y = position_to_word(LEGACY_S32_WRAP_ADD_S16(car_working_y, rotated.y));
+		position.z = position_to_word(LEGACY_S32_WRAP_ADD_S16(car_working_z, rotated.z));
+		check_body_corner_plane(carstate, &position, i, car_index);
+	}
+}
 
-case PLAYER_FLOW_COMPARE_PREVIOUS_BODY_PLANE:
-	previous_plane_index = planindex;
-	wheel_vector = carstate->car_body_corner_positions[wheel_index];
-	build_track_object(&wheel_vector, &intersection_delta_or_body_position);
-	if (previous_plane_index != planindex)
-		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
-	impact_turn_distance_or_overlap = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
-	if (game_replay_mode == REPLAY_MODE_PAUSED)
-		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
-	if (collision_angle_distance_or_index >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_BODY_CROSSING_FROM_ABOVE; continue; }
-	if (impact_turn_distance_or_overlap > 0)
-		{ physics_flow = PLAYER_FLOW_STOP_CAR_AT_BODY_PLANE_COLLISION; continue; }
+static void update_car_surface_contact(struct CARSTATE* carstate, legacy_s16 car_index)
+{
+	legacy_s8 surface_sum = LEGACY_S8_WRAP_ADD(
+		carstate->car_sumSurfFrontWheels, carstate->car_sumSurfRearWheels);
 
-case PLAYER_FLOW_CHECK_BODY_CROSSING_FROM_ABOVE:
-	if (collision_angle_distance_or_index <= 0)
-		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
-	if (impact_turn_distance_or_overlap >= 0)
-		{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
+	if (car_index != OPPONENT_CAR_INDEX && surface_sum == 0 &&
+		carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE) {
+		state.game_jumpCount = LEGACY_S16_WRAP_ADD(state.game_jumpCount, 1);
+	}
+	carstate->car_sumSurfAllWheels = surface_sum;
+}
 
-case PLAYER_FLOW_STOP_CAR_AT_BODY_PLANE_COLLISION:
-	update_crash_state(CRASH_EVENT_IMMEDIATE_STOP, car_index);
+static void prepare_car_collision_pose(struct VECTOR* pose)
+{
+	pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x = position_to_word(car_working_x);
+	pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y = position_to_word(car_working_y);
+	pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z = position_to_word(car_working_z);
+	/* Collision routines take roll, pitch, yaw, unlike CARSTATE's rotation. */
+	pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = car_working_roll;
+	pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = car_working_pitch;
+	pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = car_working_yaw;
+}
 
-case PLAYER_FLOW_SAVE_BODY_CORNER_POSITION:
-	carstate->car_body_corner_positions[wheel_index] = intersection_delta_or_body_position;
-	wheel_index++;
+/* Any overlap prevents the working pose from being committed, even when a
+   collision is already latched or the speed response does not cause a crash. */
+static int handle_other_car_collision(struct CARSTATE* carstate, struct SIMD* simd,
+	struct CARSTATE* other_carstate, struct SIMD* other_simd,
+	struct VECTOR* car_pose, legacy_s16 car_index)
+{
+	struct VECTOR other_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
 
-case PLAYER_FLOW_CHECK_BODY_PLANE_SCAN_REMAINING:
-	if (wheel_index < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_LOOK_UP_BODY_CORNER_PLANE; continue; }
-	{ physics_flow = PLAYER_FLOW_DETECT_PLAYER_JUMP; continue; }
-
-case PLAYER_FLOW_LOOK_UP_BODY_CORNER_PLANE:
-	wheel_vector = simd->wheel_coords[wheel_index];
-	wheel_vector.y = LEGACY_S16_SHL(
-		simd->collide_points[0].py,
-		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
-	mat_mul_vector(&wheel_vector, response_rotation, &transformed_vector);
-
-	wheel_vector.x = position_to_word(
-		LEGACY_S32_WRAP_ADD_S16(car_working_x, transformed_vector.x));
-	wheel_vector.y = position_to_word(
-		LEGACY_S32_WRAP_ADD_S16(car_working_y, transformed_vector.y));
-	wheel_vector.z = position_to_word(
-		LEGACY_S32_WRAP_ADD_S16(car_working_z, transformed_vector.z));
-
-	intersection_delta_or_body_position = wheel_vector;
-	build_track_object(&wheel_vector, &carstate->car_body_corner_positions[wheel_index]);
-	collision_angle_distance_or_index = plane_signed_distance(planindex, wheel_vector.x, wheel_vector.y, wheel_vector.z);
-	if (planindex < PLAYER_PHYSICS_WHEEL_COUNT)
-		{ physics_flow = PLAYER_FLOW_CHECK_BODY_GROUND_PENETRATION; continue; }
-	{ physics_flow = PLAYER_FLOW_COMPARE_PREVIOUS_BODY_PLANE; continue; }
-
-case PLAYER_FLOW_CHECK_BODY_GROUND_PENETRATION:
-	if (collision_angle_distance_or_index <= 0)
-		{ physics_flow = PLAYER_FLOW_HANDLE_BODY_GROUND_PENETRATION; continue; }
-	{ physics_flow = PLAYER_FLOW_SAVE_BODY_CORNER_POSITION; continue; }
-
-case PLAYER_FLOW_HANDLE_BODY_GROUND_PENETRATION:
-	{ physics_flow = PLAYER_FLOW_STOP_CAR_AT_BODY_PLANE_COLLISION; continue; }
-case PLAYER_FLOW_DETECT_PLAYER_JUMP:
-	wheel_surface_sum = LEGACY_S8_WRAP_ADD(
-		carstate->car_sumSurfFrontWheels,
-		carstate->car_sumSurfRearWheels);
-	if (car_index == OPPONENT_CAR_INDEX)
-		{ physics_flow = PLAYER_FLOW_PREPARE_CAR_COLLISION_POSE; continue; }
-	if (wheel_surface_sum != 0)
-		{ physics_flow = PLAYER_FLOW_PREPARE_CAR_COLLISION_POSE; continue; }
-	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE)
-		{ physics_flow = PLAYER_FLOW_PREPARE_CAR_COLLISION_POSE; continue; }
-	state.game_jumpCount = LEGACY_S16_WRAP_ADD(state.game_jumpCount, 1);
-
-case PLAYER_FLOW_PREPARE_CAR_COLLISION_POSE:
-	carstate->car_sumSurfAllWheels = wheel_surface_sum;
-	car_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		position_to_word(car_working_x);
-	car_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
-		position_to_word(car_working_y);
-	car_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		position_to_word(car_working_z);
-
-	car_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x =
-		car_working_roll;
-	car_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y =
-		car_working_pitch;
-	car_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z =
-		car_working_yaw;
-	if (gameconfig.game_opponenttype != 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_OTHER_CAR_COLLISION; continue; }
-	{ physics_flow = PLAYER_FLOW_PREPARE_SCENERY_COLLISION_SCAN; continue; }
-
-case PLAYER_FLOW_CHECK_OTHER_CAR_COLLISION:
-	physics_position_to_vector(
-		&obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX],
+	if (gameconfig.game_opponenttype == 0) {
+		return 0;
+	}
+	physics_position_to_vector(&other_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX],
 		&other_carstate->car_position);
+	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = other_carstate->car_rotate.z;
+	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = other_carstate->car_rotate.y;
+	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = other_carstate->car_rotate.x;
+	if (car_collision_boxes_overlap(simd->collide_points, car_pose,
+		other_simd->collide_points, other_pose) == 0) {
+		return 0;
+	}
+	if (carstate->car_collision_latch == CAR_COLLISION_LATCH_CLEAR &&
+		resolve_car_collision_speeds(carstate, other_carstate) != 0) {
+		update_crash_state(CRASH_EVENT_COLLISION, car_index);
+		update_crash_state(CRASH_EVENT_COLLISION,
+			car_index == PLAYER_CAR_INDEX ? OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
+	}
+	return 1;
+}
 
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x =
-		other_carstate->car_rotate.z;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y =
-		other_carstate->car_rotate.y;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z =
-		other_carstate->car_rotate.x;
-	if (car_collision_boxes_overlap(simd->collide_points, car_collision_pose, other_simd->collide_points, obstacle_collision_pose) == 0)
-		{ physics_flow = PLAYER_FLOW_PREPARE_SCENERY_COLLISION_SCAN; continue; }
-	if (carstate->car_collision_latch == CAR_COLLISION_LATCH_CLEAR)
-		{ physics_flow = PLAYER_FLOW_RESOLVE_CAR_COLLISION_SPEEDS; continue; }
-	{ physics_flow = PLAYER_FLOW_RETURN_FROM_PHYSICS; continue; }
+static int handle_auxiliary_obstacles(struct CARSTATE* carstate, struct SIMD* simd,
+	struct VECTOR* car_pose, struct VECTOR* obstacle_pose,
+	legacy_s16 column, legacy_s16 row, legacy_s16 car_index)
+{
+	struct VECTOR positions[PLAYER_PHYSICS_COLLISION_POINT_CAPACITY];
+	legacy_s8 obstacle_count;
+	legacy_s16 i;
 
-case PLAYER_FLOW_RESOLVE_CAR_COLLISION_SPEEDS:
-	if (resolve_car_collision_speeds(carstate, other_carstate) != 0)
-		{ physics_flow = PLAYER_FLOW_CRASH_BOTH_CARS; continue; }
-	{ physics_flow = PLAYER_FLOW_RETURN_FROM_PHYSICS; continue; }
+	obstacle_count = get_track_collision_points(column, row, positions);
+	for (i = 0; i < obstacle_count; i++) {
+		obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX] = positions[i];
+		if (car_collision_boxes_overlap(simd->collide_points, car_pose,
+			track_auxiliary_obstacle_bounds, obstacle_pose) != 0) {
+			carstate->car_velocity_heading_offset = LEGACY_S16_WRAP_SUB(
+				carstate->car_velocity_heading_offset, ANGLE_HALF_TURN);
+			update_crash_state(CRASH_EVENT_COLLISION, car_index);
+			return 1;
+		}
+	}
+	return 0;
+}
 
-case PLAYER_FLOW_CRASH_BOTH_CARS:
-	update_crash_state(CRASH_EVENT_COLLISION, car_index);
-	update_crash_state(CRASH_EVENT_COLLISION,
-		car_index == PLAYER_CAR_INDEX ?
-			OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
-	return;
+static void handle_breakable_object(struct CARSTATE* carstate, struct SIMD* simd,
+	struct VECTOR* car_pose, struct VECTOR* obstacle_pose, legacy_s16 column, legacy_s16 row)
+{
+	legacy_s16 object_index = (legacy_s8)roadside_sign_indices_by_tile[trackrows[row] + column];
 
-case PLAYER_FLOW_RETURN_AFTER_COLLISION:
-	return;
+	if (object_index == PLAYER_PHYSICS_ROADSIDE_SIGN_INDEX_NONE ||
+		state.game_object_destroyed[object_index] != 0) {
+		return;
+	}
+	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX] = roadside_sign_positions[object_index];
+	if (car_collision_boxes_overlap(simd->collide_points, car_pose,
+		breakable_object_bounds, obstacle_pose) != 0) {
+		state.game_object_destroyed[object_index] = 1;
+		emit_crash_particles(LEGACY_S16_WRAP_ADD(object_index,
+			PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
+			LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x),
+			scale_speed_to_travel(carstate->car_actual_speed,
+				PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
+	}
+}
 
-case PLAYER_FLOW_PREPARE_SCENERY_COLLISION_SCAN:
-	transformed_vector.x = LEGACY_S16_SAR(
-		car_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x,
+static int overlaps_start_finish_pole(struct SIMD* simd, struct VECTOR* car_pose,
+	struct VECTOR* obstacle_pose, legacy_s16 angle)
+{
+	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x = LEGACY_S16_WRAP_ADD(
+		track_column_centers[start_finish_column],
+		multiply_and_scale(sin_fast(angle), PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
+	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z = LEGACY_S16_WRAP_ADD(
+		track_row_centers[start_finish_row],
+		multiply_and_scale(cos_fast(angle), PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
+	return car_collision_boxes_overlap(simd->collide_points, car_pose,
+		start_finish_pole_bounds, obstacle_pose) != 0;
+}
+
+static int handle_start_finish_poles(struct SIMD* simd,
+	struct VECTOR* car_pose, struct VECTOR* obstacle_pose,
+	legacy_s16 column, legacy_s16 row, legacy_s16 car_index)
+{
+	if (column != start_finish_column || row != start_finish_row) {
+		return 0;
+	}
+	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y = hillHeightConsts[hillFlag];
+	if (overlaps_start_finish_pole(simd, car_pose, obstacle_pose,
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)) ||
+		overlaps_start_finish_pole(simd, car_pose, obstacle_pose,
+			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_THREE_QUARTER_TURN))) {
+		update_crash_state(CRASH_EVENT_COLLISION, car_index);
+		return 1;
+	}
+	return 0;
+}
+
+static int handle_scenery_collisions(struct CARSTATE* carstate, struct SIMD* simd,
+	struct VECTOR* car_pose, legacy_s16 car_index)
+{
+	struct VECTOR obstacle_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
+	legacy_s16 column, row;
+
+	column = LEGACY_S16_SAR(car_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x,
 		PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT);
-	transformed_vector.z = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_SAR(
-			car_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z,
-			PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT),
-		PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE));
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = 0;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = 0;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = 0;
-	if (transformed_vector.x >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_SCENERY_COLUMN_MAXIMUM; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
+	row = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_SAR(car_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z,
+			PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT), PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE));
+	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = 0;
+	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = 0;
+	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = 0;
+	if (column < 0 || column >= PLAYER_PHYSICS_TRACK_GRID_SIZE ||
+		row < 0 || row >= PLAYER_PHYSICS_TRACK_GRID_SIZE) {
+		return 0;
+	}
+	if (handle_auxiliary_obstacles(carstate, simd, car_pose, obstacle_pose, column, row, car_index)) {
+		return 1;
+	}
+	handle_breakable_object(carstate, simd, car_pose, obstacle_pose, column, row);
+	return handle_start_finish_poles(simd, car_pose, obstacle_pose, column, row, car_index);
+}
 
-case PLAYER_FLOW_CHECK_SCENERY_COLUMN_MAXIMUM:
-	if (transformed_vector.x < PLAYER_PHYSICS_TRACK_GRID_SIZE)
-		{ physics_flow = PLAYER_FLOW_CHECK_SCENERY_ROW_MINIMUM; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-
-case PLAYER_FLOW_CHECK_SCENERY_ROW_MINIMUM:
-	if (transformed_vector.z >= 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_SCENERY_ROW_MAXIMUM; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-
-case PLAYER_FLOW_CHECK_SCENERY_ROW_MAXIMUM:
-	if (transformed_vector.z < PLAYER_PHYSICS_TRACK_GRID_SIZE)
-		{ physics_flow = PLAYER_FLOW_LOAD_AUXILIARY_OBSTACLES; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-
-case PLAYER_FLOW_LOAD_AUXILIARY_OBSTACLES:
-	aux_rotation_or_obstacle_count = get_track_collision_points(transformed_vector.x, transformed_vector.z, obstacle_positions);
-	if (aux_rotation_or_obstacle_count == 0)
-		{ physics_flow = PLAYER_FLOW_FIND_BREAKABLE_OBJECT; continue; }
-	collision_angle_distance_or_index = 0;
-	{ physics_flow = PLAYER_FLOW_CHECK_AUXILIARY_OBSTACLE_COLLISION; continue; }
-
-case PLAYER_FLOW_ADVANCE_AUXILIARY_OBSTACLE:
-	// NOTE: var_144 is unused
-	// var_144 += 6;
-	collision_angle_distance_or_index++;
-
-case PLAYER_FLOW_CHECK_AUXILIARY_OBSTACLE_COLLISION:
-	if (aux_rotation_or_obstacle_count <= collision_angle_distance_or_index)
-		{ physics_flow = PLAYER_FLOW_FIND_BREAKABLE_OBJECT; continue; }
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		obstacle_positions[collision_angle_distance_or_index].x;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
-		obstacle_positions[collision_angle_distance_or_index].y;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		obstacle_positions[collision_angle_distance_or_index].z;
-	if (car_collision_boxes_overlap(simd->collide_points, car_collision_pose, track_auxiliary_obstacle_bounds, obstacle_collision_pose) == 0)
-		{ physics_flow = PLAYER_FLOW_ADVANCE_AUXILIARY_OBSTACLE; continue; }
-	carstate->car_velocity_heading_offset = LEGACY_S16_WRAP_SUB(
-		carstate->car_velocity_heading_offset, ANGLE_HALF_TURN);
-
-case PLAYER_FLOW_CRASH_INTO_FIXED_OBSTACLE:
-	// crash with start/finish pole
-	update_crash_state(CRASH_EVENT_COLLISION, car_index);
-	return ;
-
-case PLAYER_FLOW_FIND_BREAKABLE_OBJECT:
-	collision_angle_distance_or_index = (legacy_s8)roadside_sign_indices_by_tile[trackrows[transformed_vector.z] + transformed_vector.x];
-	if (collision_angle_distance_or_index != PLAYER_PHYSICS_TRACK_CAMERA_INDEX_NONE)
-		{ physics_flow = PLAYER_FLOW_CHECK_BREAKABLE_OBJECT_INTACT; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_COLUMN; continue; }
-
-case PLAYER_FLOW_CHECK_BREAKABLE_OBJECT_INTACT:
-	if (state.game_object_destroyed[collision_angle_distance_or_index] == 0)
-		{ physics_flow = PLAYER_FLOW_COLLIDE_WITH_BREAKABLE_OBJECT; continue; }
-	{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_COLUMN; continue; }
-
-case PLAYER_FLOW_COLLIDE_WITH_BREAKABLE_OBJECT:
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		roadside_sign_positions[collision_angle_distance_or_index].x;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
-		roadside_sign_positions[collision_angle_distance_or_index].y;
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		roadside_sign_positions[collision_angle_distance_or_index].z;
-	if (car_collision_boxes_overlap(simd->collide_points, car_collision_pose, breakable_object_bounds, obstacle_collision_pose) == 0)
-		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_COLUMN; continue; }
-
-	state.game_object_destroyed[collision_angle_distance_or_index] = 1;
-
-	emit_crash_particles(LEGACY_S16_WRAP_ADD(collision_angle_distance_or_index,
-		PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
-		LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x),
-		scale_speed_to_travel(carstate->car_actual_speed,
-			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
-
-case PLAYER_FLOW_CHECK_START_FINISH_COLUMN:
-	// following looks like collision detection against right and left start/finish poles
-	if (transformed_vector.x == start_finish_column)
-		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_ROW; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-
-case PLAYER_FLOW_CHECK_START_FINISH_ROW:
-	if (transformed_vector.z == start_finish_row)
-		{ physics_flow = PLAYER_FLOW_CHECK_START_FINISH_POLES; continue; }
-	{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-
-case PLAYER_FLOW_CHECK_START_FINISH_POLES:
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		LEGACY_S16_WRAP_ADD(
-		track_column_centers[start_finish_column], multiply_and_scale(sin_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
-			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y =
-		hillHeightConsts[hillFlag];
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		LEGACY_S16_WRAP_ADD(
-		track_row_centers[start_finish_row], multiply_and_scale(cos_fast(
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)),
-			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
-
-	impact_turn_distance_or_overlap = car_collision_boxes_overlap(simd->collide_points, car_collision_pose, start_finish_pole_bounds, obstacle_collision_pose);
-	if (impact_turn_distance_or_overlap != 0)
-		{ physics_flow = PLAYER_FLOW_HANDLE_START_FINISH_POLE_COLLISION; continue; }
-
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x =
-		LEGACY_S16_WRAP_ADD(
-		track_column_centers[start_finish_column], multiply_and_scale(sin_fast(
-			LEGACY_S16_WRAP_ADD(track_angle,
-				ANGLE_THREE_QUARTER_TURN)),
-			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
-	obstacle_collision_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z =
-		LEGACY_S16_WRAP_ADD(
-		track_row_centers[start_finish_row], multiply_and_scale(cos_fast(
-			LEGACY_S16_WRAP_ADD(track_angle,
-				ANGLE_THREE_QUARTER_TURN)),
-			PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
-
-	impact_turn_distance_or_overlap = car_collision_boxes_overlap(simd->collide_points, car_collision_pose, start_finish_pole_bounds, obstacle_collision_pose);
-
-case PLAYER_FLOW_HANDLE_START_FINISH_POLE_COLLISION:
-	if (impact_turn_distance_or_overlap == 0)
-		{ physics_flow = PLAYER_FLOW_COMMIT_CAR_POSE; continue; }
-	{ physics_flow = PLAYER_FLOW_CRASH_INTO_FIXED_OBSTACLE; continue; }
-
-case PLAYER_FLOW_COMMIT_CAR_POSE:
+static void commit_working_car_pose(struct CARSTATE* carstate)
+{
 	carstate->car_position.lx = car_working_x;
 	carstate->car_position.ly = car_working_y;
 	carstate->car_position.lz = car_working_z;
@@ -1595,10 +1218,31 @@ case PLAYER_FLOW_COMMIT_CAR_POSE:
 	carstate->car_rotate.y = car_working_pitch;
 	carstate->car_rotate.x = car_working_yaw;
 	carstate->car_collision_latch = CAR_COLLISION_LATCH_CLEAR;
+}
 
-case PLAYER_FLOW_RETURN_FROM_PHYSICS:
-	return ;
+void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
+	struct CARSTATE* other_carstate, struct SIMD* other_simd, legacy_s16 car_index)
+{
+	struct PLAYER_WHEEL_MOTION motion;
+	struct VECTOR car_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
 
+	initialize_working_car_pose(carstate);
+	prepare_wheel_motion(carstate, simd, &motion, car_index);
+	resolve_wheel_contacts(carstate, &motion, car_index);
+	apply_wheel_suspension(carstate, &motion);
+	derive_car_pose_from_wheels(&motion);
+	sum_front_and_rear_wheel_surfaces(carstate);
+
+	if (state.game_inputmode != GAME_INPUT_MODE_INTRO) {
+		play_car_impact_sounds(carstate, car_index);
+		check_car_body_planes(carstate, simd, car_index);
+		update_car_surface_contact(carstate, car_index);
+		prepare_car_collision_pose(car_pose);
+		if (handle_other_car_collision(carstate, simd, other_carstate, other_simd,
+				car_pose, car_index) ||
+			handle_scenery_collisions(carstate, simd, car_pose, car_index)) {
+			return;
+		}
 	}
-	}
+	commit_working_car_pose(carstate);
 }
