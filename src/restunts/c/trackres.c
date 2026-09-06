@@ -2,6 +2,10 @@
 #include "fileio.h"
 #include "resource.h"
 
+#define TRACK_RESOURCE_INITIAL_OFFSET 0U
+#define TRACK_RESOURCE_INDEX_FIRST 0U
+#define TRACK_MATRIX_COMPONENT_FIRST 0U
+
 #if !defined(__BORLANDC__)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
 static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
@@ -67,22 +71,25 @@ void track_collision_resources_decode(const legacy_u8 far* plane_source,
 	struct TRACK_WALL* wall;
 
 	reader.source = plane_source;
-	reader.offset = 0U;
-	for (index = 0U; index < TRACK_PLAN_RESOURCE_COUNT; index++) {
+	reader.offset = TRACK_RESOURCE_INITIAL_OFFSET;
+	for (index = TRACK_RESOURCE_INDEX_FIRST;
+		index < TRACK_PLAN_RESOURCE_COUNT; index++) {
 		plane = &decoded_planes[index];
 		plane->plane_yz = track_resource_next_s16(&reader);
 		plane->plane_xy = track_resource_next_s16(&reader);
 		track_resource_next_vector(&reader, &plane->plane_origin);
 		track_resource_next_vector(&reader, &plane->plane_normal);
-		for (component = 0U; component < MATRIX_ELEMENT_COUNT; component++) {
+		for (component = TRACK_MATRIX_COMPONENT_FIRST;
+			component < MATRIX_ELEMENT_COUNT; component++) {
 			plane->plane_rotation.vals[component] =
 				track_resource_next_s16(&reader);
 		}
 	}
 
 	reader.source = wall_source;
-	reader.offset = 0U;
-	for (index = 0U; index < TRACK_WALL_RESOURCE_COUNT; index++) {
+	reader.offset = TRACK_RESOURCE_INITIAL_OFFSET;
+	for (index = TRACK_RESOURCE_INDEX_FIRST;
+		index < TRACK_WALL_RESOURCE_COUNT; index++) {
 		wall = &decoded_walls[index];
 		wall->orientation = track_resource_next_s16(&reader);
 		wall->x = track_resource_next_s16(&reader);
