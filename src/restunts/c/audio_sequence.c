@@ -47,8 +47,11 @@ typedef void (far* audio_channel_callback_type)(legacy_s16 channel);
 #define AUDIO_SEQUENCE_DRIVER_DATA_HEADER_SIZE 4U
 #define AUDIO_SEQUENCE_TIMER_TICK_STEP 128U
 #define AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE 23U
-#define AUDIO_SEQUENCE_TIMER_INACTIVE 0
-#define AUDIO_SEQUENCE_TIMER_ACTIVE 1
+
+enum AUDIO_SEQUENCE_TIMER_STATE {
+	AUDIO_SEQUENCE_TIMER_INACTIVE = 0,
+	AUDIO_SEQUENCE_TIMER_ACTIVE = 1
+};
 
 legacy_s16 audio_sequence_command_has_byte_argument(
 	legacy_u8 command_index)
