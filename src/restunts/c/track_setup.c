@@ -821,7 +821,7 @@ void init_plantrak(void) {
 	init_carstate_from_simd(
 		&state.opponentstate,
 		&simd_opponent,
-		1,
+		TRANSMISSION_AUTOMATIC,
 		(legacy_s32)PLAN_TRACK_OPPONENT_X,
 		0L,
 		LEGACY_S32_SHL((legacy_s32)path_z, PLAN_TRACK_POSITION_SHIFT),

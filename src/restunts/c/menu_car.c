@@ -259,7 +259,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 		car_menu_draw_standard_button(
 			locate_text_res(miscptr, aBla_0), CAR_MENU_PREVIOUS_BUTTON);
 		transmission_text = locate_text_res(miscptr,
-			*transmission != 0 ? aBau : aBma);
+			*transmission != TRANSMISSION_MANUAL ? aBau : aBma);
 		car_menu_draw_standard_button(transmission_text,
 			CAR_MENU_TRANSMISSION_BUTTON);
 		car_menu_draw_standard_button(
@@ -465,7 +465,7 @@ void run_car_menu(legacy_s8* car_id, legacy_s8* material, legacy_s8* transmissio
 			TRANSMISSION_MODE_MASK);
 		sprite_copy_wnd_to_1();
 		transmission_text = locate_text_res(miscptr,
-			*transmission != 0 ? aBau_0 : aBma_0);
+			*transmission != TRANSMISSION_MANUAL ? aBau_0 : aBma_0);
 		car_menu_draw_standard_button(transmission_text,
 			CAR_MENU_TRANSMISSION_BUTTON);
 		sprite_copy_2_to_1_2();
