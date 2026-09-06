@@ -34,6 +34,8 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_CHAIN_TIMEOUT_INACTIVE 0U
 #define DOS_TIMER_CHAIN_DISABLED 0U
 #define DOS_TIMER_CHAIN_ENABLED 1U
+#define DOS_TIMER_CALLBACKS_IDLE 0U
+#define DOS_TIMER_CALLBACKS_RUNNING 1U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -161,8 +163,8 @@ static void interrupt dos_timer_interrupt(void)
 
 	dos_timer_increment_counter(&dos_timer_counter);
 	disable();
-	if (dos_timer_in_callbacks == 0) {
-		dos_timer_in_callbacks = 1U;
+	if (dos_timer_in_callbacks == DOS_TIMER_CALLBACKS_IDLE) {
+		dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_RUNNING;
 		enable();
 		for (callback_index = 0;
 			callback_index < DOS_TIMER_CALLBACK_CAPACITY;
@@ -181,7 +183,7 @@ static void interrupt dos_timer_interrupt(void)
 	return;
 
 callbacks_finished:
-	dos_timer_in_callbacks = 0;
+	dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_IDLE;
 	dos_timer_reentry = 0;
 }
 
@@ -240,7 +242,7 @@ void dos_timer_setup_interrupt(void)
 	dos_timer_chain_enabled = DOS_TIMER_CHAIN_ENABLED;
 
 	disable();
-	dos_timer_in_callbacks = 0;
+	dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_IDLE;
 	dos_timer_callbacks[0] = 0;
 	enable();
 
