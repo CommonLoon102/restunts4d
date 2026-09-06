@@ -5,13 +5,15 @@
 #define LEGACY_RAND_INCREMENT 2531011UL
 #define LEGACY_RAND_OUTPUT_SHIFT 16U
 #define LEGACY_RAND_MAX 32767U
+#define LEGACY_ABS_NEGATIVE_THRESHOLD 0
+#define LEGACY_ABS_UNSIGNED_ZERO 0U
 
 static legacy_u32 legacy_rand_seed = LEGACY_RAND_DEFAULT_SEED;
 
 legacy_u16 _abs(legacy_u16 value)
 {
-	if ((legacy_s16)value < 0)
-		return (legacy_u16)(0U - value);
+	if ((legacy_s16)value < LEGACY_ABS_NEGATIVE_THRESHOLD)
+		return (legacy_u16)(LEGACY_ABS_UNSIGNED_ZERO - value);
 	return value;
 }
 
