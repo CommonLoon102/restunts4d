@@ -3,6 +3,7 @@
 
 #include "replay.h"
 
+#define TRACK_GRID_FIRST_INDEX 0
 #define TRACK_GRID_SIZE 30
 #define TRACK_GRID_LAST_INDEX 29
 #define TRACK_TILE_POSITION_SHIFT 10U

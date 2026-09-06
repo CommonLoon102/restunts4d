@@ -21,7 +21,7 @@ void init_row_tables(void)
 	legacy_s16 track_position;
 	legacy_s16 terrain_position;
 
-	for (i = 0; i < TRACK_GRID_SIZE; i++) {
+	for (i = TRACK_GRID_FIRST_INDEX; i < TRACK_GRID_SIZE; i++) {
 		inverse_row = LEGACY_S16_WRAP_SUB(TRACK_GRID_LAST_INDEX, i);
 		track_position = LEGACY_S16_SHL(inverse_row,
 			TRACK_TILE_POSITION_SHIFT);
