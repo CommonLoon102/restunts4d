@@ -15,6 +15,7 @@
 #define CAR_INITIAL_WHEEL_PHYSICS_VALUE 0
 #define CAR_INITIAL_ROUTE_GUIDANCE_ANGLE 0
 #define CAR_INITIAL_ROUTE_INDEX 0
+#define CAR_INITIAL_ENGINE_LIMITER_TIMER 0
 #define GAMESTATE_CHECKPOINT_INTERVAL_SECONDS 30U
 #define TIMER_TICKS_PER_SECOND 100U
 #define INITIAL_CAMERA_LATERAL_OFFSET 512
@@ -144,7 +145,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 		playerstate->car_whlWorldCrds2[i] = whlPos;
 	}
 
-	playerstate->car_engineLimiterTimer = 0;
+	playerstate->car_engineLimiterTimer = CAR_INITIAL_ENGINE_LIMITER_TIMER;
 	playerstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 	playerstate->field_C8 = 0;
 	playerstate->car_crashBmpFlag = CRASH_EVENT_NONE;
