@@ -10,6 +10,9 @@
 
 #define AUDIO_DRIVER_TIMER_RATE 22U
 #define AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD 2
+#define AUDIO_TIMER_INTERPOLATION_FRACTION_BITS 4U
+#define AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT 7U
+#define AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT 3U
 #define DOS_SEGMENT_WRAP_PARAGRAPHS 4096U
 #define AUDIO_ENGINE_FIRST_SAMPLE_RESOURCE 2U
 #define AUDIO_ENGINE_RATE_DIVISOR_OFFSET 14U
@@ -415,12 +418,15 @@ void audio_driver_timer(void)
 			continue;
 
 		volume_accumulator = LEGACY_U16_WRAP_ADD(
-			(legacy_u16)((legacy_u16)timer->target_volume << 4),
+			(legacy_u16)((legacy_u16)timer->target_volume <<
+				AUDIO_TIMER_INTERPOLATION_FRACTION_BITS),
 			LEGACY_U16_WRAP_MUL(
-				timer->current_volume, 7U));
-		volume_accumulator >>= 3;
+				timer->current_volume,
+				AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT));
+		volume_accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
 		timer->current_volume = volume_accumulator;
-		volume = (legacy_u8)(volume_accumulator >> 4);
+		volume = (legacy_u8)(volume_accumulator >>
+			AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
 		if (volume != timer->last_volume ||
 			timer->parameters_changed != 0) {
 			channel = timer->channel;
@@ -439,11 +445,14 @@ void audio_driver_timer(void)
 		}
 
 		accumulator = timer->current_pitch;
-		accumulator = accumulator * 7UL +
-			((legacy_u32)timer->target_pitch << 4);
-		accumulator >>= 3;
+		accumulator = accumulator *
+			AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT +
+			((legacy_u32)timer->target_pitch <<
+				AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
+		accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
 		timer->current_pitch = accumulator;
-		pitch = (legacy_u16)(accumulator >> 4);
+		pitch = (legacy_u16)(accumulator >>
+			AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
 		if (pitch != timer->last_pitch ||
 			timer->parameters_changed != 0) {
 			channel = timer->engine_context;
