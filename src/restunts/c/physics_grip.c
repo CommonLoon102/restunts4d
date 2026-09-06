@@ -8,6 +8,15 @@
 #define PENALTY_ROUTE_START_TRACK_INDEX 900U
 #define PENALTY_ROUTE_START_TILE_INDEX 11999U
 #define PENALTY_ROUTE_START_COLUMN_INDEX 1963U
+#define PENALTY_ROUTE_DISTANCE_NONE 0
+#define PENALTY_ROUTE_DISTANCE_STEP 1
+#define PENALTY_ROUTE_PENDING_NONE 0U
+#define PENALTY_ROUTE_PENDING_STEP 1U
+#define PENALTY_ROUTE_SENTINEL_UNVISITED 0U
+#define PENALTY_ROUTE_SENTINEL_VISITED 1U
+#define PENALTY_ROUTE_TRACK_UNVISITED 0U
+#define PENALTY_ROUTE_TRACK_VISITED 1U
+#define PENALTY_ROUTE_INDEX_FIRST 0U
 #define MULTI_TILE_ROW_FLAG 1U
 #define MULTI_TILE_COLUMN_FLAG 2U
 #define TRACK_START_FINISH_PIECE_INDEX 0
@@ -63,7 +72,7 @@ static legacy_s16 finish_penalty_route(legacy_s16* current_track,
 	legacy_s16* penalty_count, legacy_s16 best_track,
 	legacy_s16 best_distance, legacy_s16 column, legacy_s16 row)
 {
-	if (best_distance != 0) {
+	if (best_distance != PENALTY_ROUTE_DISTANCE_NONE) {
 		*current_track = best_track;
 		*penalty_count = best_distance;
 	} else {
@@ -108,7 +117,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			TRACK_WORLD_TILE_SHIFT)));
 	if ((column == state.game_startcol || column == state.game_startcol2) &&
 		(row == state.game_startrow || row == state.game_startrow2)) {
-		*penalty_count = 0;
+		*penalty_count = PENALTY_ROUTE_DISTANCE_NONE;
 		return PENALTY_NOT_DETECTED;
 	}
 	if (column < 0 || column > TRACK_GRID_LAST_COORDINATE || row < 0 ||
@@ -117,22 +126,24 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		return PENALTY_DETECTED;
 	}
 
-	best_distance = 0;
-	best_track = 0;
-	pending_count = 0;
-	distance = 0;
-	sentinel_visited = 0;
-	for (index = 0; index < (legacy_u16)track_pieces_counter; index++)
-		visited[index] = 0;
+	best_distance = PENALTY_ROUTE_DISTANCE_NONE;
+	best_track = TRACK_START_FINISH_PIECE_INDEX;
+	pending_count = PENALTY_ROUTE_PENDING_NONE;
+	distance = PENALTY_ROUTE_DISTANCE_NONE;
+	sentinel_visited = PENALTY_ROUTE_SENTINEL_UNVISITED;
+	for (index = PENALTY_ROUTE_INDEX_FIRST;
+		index < (legacy_u16)track_pieces_counter; index++)
+		visited[index] = PENALTY_ROUTE_TRACK_UNVISITED;
 	track_index = (legacy_s16)*current_track;
 
 	for (;;) {
 		next_track = penalty_route_next(track_index);
 		if (next_track == PENALTY_ROUTE_SENTINEL) {
-			if (sentinel_visited == 0) {
-				sentinel_visited = 1;
-			} else if (pending_count != 0) {
-				pending_count = LEGACY_U16_WRAP_SUB(pending_count, 1U);
+			if (sentinel_visited == PENALTY_ROUTE_SENTINEL_UNVISITED) {
+				sentinel_visited = PENALTY_ROUTE_SENTINEL_VISITED;
+			} else if (pending_count != PENALTY_ROUTE_PENDING_NONE) {
+				pending_count = LEGACY_U16_WRAP_SUB(
+					pending_count, PENALTY_ROUTE_PENDING_STEP);
 				track_index = pending_track[pending_count];
 				distance = pending_distance[pending_count];
 				continue;
@@ -142,9 +153,10 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			}
 		} else if (next_track < 0 ||
 			next_track >= track_pieces_counter ||
-			visited[next_track] != 0) {
-			if (pending_count != 0) {
-				pending_count = LEGACY_U16_WRAP_SUB(pending_count, 1U);
+			visited[next_track] != PENALTY_ROUTE_TRACK_UNVISITED) {
+			if (pending_count != PENALTY_ROUTE_PENDING_NONE) {
+				pending_count = LEGACY_U16_WRAP_SUB(
+					pending_count, PENALTY_ROUTE_PENDING_STEP);
 				track_index = pending_track[pending_count];
 				distance = pending_distance[pending_count];
 				continue;
@@ -152,7 +164,7 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			return finish_penalty_route(current_track, penalty_count,
 				best_track, best_distance, column, row);
 		} else {
-			visited[next_track] = 1;
+			visited[next_track] = PENALTY_ROUTE_TRACK_VISITED;
 		}
 
 		if (next_track == PENALTY_ROUTE_SENTINEL) {
@@ -188,12 +200,13 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 			state.game_startcol2 = LEGACY_S8_FROM_BITS(maximum_column);
 			state.game_startrow = LEGACY_S8_FROM_BITS(minimum_row);
 			state.game_startrow2 = LEGACY_S8_FROM_BITS(maximum_row);
-			if (distance <= 0) {
+			if (distance <= PENALTY_ROUTE_DISTANCE_NONE) {
 				*current_track = next_track;
 				*penalty_count = distance;
 				return PENALTY_DETECTED;
 			}
-			if (best_distance == 0 || best_distance > distance) {
+			if (best_distance == PENALTY_ROUTE_DISTANCE_NONE ||
+				best_distance > distance) {
 				best_track = next_track;
 				best_distance = distance;
 			}
@@ -203,12 +216,14 @@ legacy_s16 detect_penalty(legacy_s16* current_track, legacy_s16* penalty_count)
 		if (alternate_track != PENALTY_ROUTE_SENTINEL) {
 			pending_distance[pending_count] = distance;
 			pending_track[pending_count] = alternate_track;
-			pending_count = LEGACY_U16_WRAP_ADD(pending_count, 1U);
+			pending_count = LEGACY_U16_WRAP_ADD(
+				pending_count, PENALTY_ROUTE_PENDING_STEP);
 		}
 		if (next_track == TRACK_START_FINISH_PIECE_INDEX) {
 			distance = PENALTY_ROUTE_FINISH_REACHED;
 		} else if (distance != PENALTY_ROUTE_FINISH_REACHED) {
-			distance = LEGACY_S16_WRAP_ADD(distance, 1);
+			distance = LEGACY_S16_WRAP_ADD(
+				distance, PENALTY_ROUTE_DISTANCE_STEP);
 		}
 		track_index = next_track;
 	}
