@@ -232,9 +232,9 @@ legacy_s16 audio_load_dos_driver(const legacy_s8* driver,
 	}
 
 	audio_suspended = 0;
-	audio_music_enabled = 1;
+	audio_music_enabled = AUDIO_STATE_ENABLED;
 	audio_music_active = 0;
-	audio_effects_enabled = 1;
+	audio_effects_enabled = AUDIO_STATE_ENABLED;
 	return 0;
 }
 
@@ -732,7 +732,7 @@ void load_audio_finalize(void far* audio_resource)
 	legacy_u8 far* resource;
 	legacy_u16 data_offset;
 
-	audio_update_lock = 1;
+	audio_update_lock = AUDIO_UPDATE_LOCKED;
 	sub_3736A();
 	resource = (legacy_u8 far*)audio_resource;
 	if (resource == 0 ||
@@ -753,7 +753,7 @@ void load_audio_finalize(void far* audio_resource)
 		LEGACY_S16_FROM_BITS((legacy_u16)(audio_music_channel_count - 1U)),
 		resource, data_offset, audio_music_rate, AUDIO_MUSIC_PRIORITY);
 	audio_music_active = 1;
-	audio_update_lock = 0;
+	audio_update_lock = AUDIO_UPDATE_UNLOCKED;
 }
 
 void audioresource_copy_n_bytes(const legacy_u8 far* source,
