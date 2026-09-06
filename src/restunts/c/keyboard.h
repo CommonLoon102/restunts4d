@@ -3,30 +3,32 @@
 
 #include "legacy.h"
 
-#define KEY_BACKSPACE 8U
-#define KEY_TAB 9U
-#define KEY_ENTER 13U
-#define KEY_ESCAPE 27U
-#define KEY_SPACE 32U
-#define KEY_F1 15104U
-#define KEY_F2 15360U
-#define KEY_F3 15616U
-#define KEY_F4 15872U
-#define KEY_F5 16128U
-#define KEY_F6 16384U
-#define KEY_F7 16640U
-#define KEY_F8 16896U
-#define KEY_F9 17152U
-#define KEY_F10 17408U
-#define KEY_HOME 18176U
-#define KEY_UP 18432U
-#define KEY_LEFT 19200U
-#define KEY_RIGHT 19712U
-#define KEY_END 20224U
-#define KEY_DOWN 20480U
-#define KEY_INSERT 20992U
-#define KEY_DELETE 21248U
-#define KEY_SHIFT_F1 21504U
+enum KEY_CODE {
+	KEY_BACKSPACE = 8,
+	KEY_TAB = 9,
+	KEY_ENTER = 13,
+	KEY_ESCAPE = 27,
+	KEY_SPACE = 32,
+	KEY_F1 = 15104,
+	KEY_F2 = 15360,
+	KEY_F3 = 15616,
+	KEY_F4 = 15872,
+	KEY_F5 = 16128,
+	KEY_F6 = 16384,
+	KEY_F7 = 16640,
+	KEY_F8 = 16896,
+	KEY_F9 = 17152,
+	KEY_F10 = 17408,
+	KEY_HOME = 18176,
+	KEY_UP = 18432,
+	KEY_LEFT = 19200,
+	KEY_RIGHT = 19712,
+	KEY_END = 20224,
+	KEY_DOWN = 20480,
+	KEY_INSERT = 20992,
+	KEY_DELETE = 21248,
+	KEY_SHIFT_F1 = 21504
+};
 
 void kb_init_interrupt(void);
 void kb_exit_handler(void);
