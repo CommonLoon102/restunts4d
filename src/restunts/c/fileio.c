@@ -66,8 +66,6 @@ enum COMPRESSION_TYPE {
 typedef legacy_u16 fileio_handle;
 
 #define FILEIO_INVALID_HANDLE 0U
-#define FILEIO_SEEK_END 2
-
 static fileio_handle fileio_open(const legacy_s8* path, legacy_s16 create)
 {
 	return dos_file_open(path, create);
@@ -212,8 +210,9 @@ legacy_u16 file_paras(const legacy_s8* filename, legacy_s16 fatal)
 {
 	legacy_s32 length;
 	fileio_handle file;
-	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
-		fileio_seek(file, 0, FILEIO_SEEK_END);
+	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) !=
+		FILEIO_INVALID_HANDLE) {
+		fileio_seek(file, 0, DOS_FILE_SEEK_END);
 		length = fileio_tell(file);
 		fileio_close(file);
 
@@ -246,7 +245,8 @@ legacy_u16 file_decomp_paras(const legacy_s8* filename, legacy_s16 fatal)
 	legacy_s32 length;
 	fileio_handle file;
 	legacy_u8 header[COMPR_HEADER_SIZE];
-	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
+	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) !=
+		FILEIO_INVALID_HANDLE) {
 		fileio_read(header, sizeof(header), 1, file);
 		fileio_close(file);
 
@@ -284,7 +284,8 @@ void far* file_read(const legacy_s8* filename, void far* dst, legacy_s16 fatal)
 	void far* curdst = dst;
 	fileio_handle file;
 
-	if ((file = fileio_open(filename, 0)) != FILEIO_INVALID_HANDLE) {
+	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) !=
+		FILEIO_INVALID_HANDLE) {
 		// Read one page at a time.
 		do {
 			readlen = fileio_read(curdst, FILE_IO_PAGE_SIZE, 1, file);
@@ -337,7 +338,8 @@ legacy_s16 file_write(const legacy_s8* filename, void far* src, legacy_u32 lengt
 
 	retval = 0;
 
-	if ((file = fileio_open(filename, 1)) != FILEIO_INVALID_HANDLE) {
+	if ((file = fileio_open(filename, DOS_FILE_CREATE)) !=
+		FILEIO_INVALID_HANDLE) {
 		// Write one page at a time.
 		while (length != 0) {
 			wrtlen = length > FILE_IO_PAGE_SIZE ? FILE_IO_PAGE_SIZE : length;

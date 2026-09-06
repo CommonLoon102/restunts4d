@@ -5,6 +5,22 @@
 
 struct AUDIO_CONTEXT;
 
+enum DOS_FILE_OPEN_MODE {
+	DOS_FILE_OPEN_EXISTING = 0,
+	DOS_FILE_CREATE = 1
+};
+
+enum DOS_FILE_SEEK_ORIGIN {
+	DOS_FILE_SEEK_BEGIN = 0,
+	DOS_FILE_SEEK_CURRENT = 1,
+	DOS_FILE_SEEK_END = 2
+};
+
+enum DOS_TIMER_CALLBACK_REGISTRATION_RESULT {
+	DOS_TIMER_CALLBACK_REGISTRATION_FAILED = 0,
+	DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED = 1
+};
+
 void far* dos_memory_get_psp(void);
 #if defined(__BORLANDC__)
 #define dos_memory_make_pointer(segment, offset) \

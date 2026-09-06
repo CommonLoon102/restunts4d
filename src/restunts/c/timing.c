@@ -5,7 +5,6 @@
 #include "platform.h"
 #include "timing.h"
 
-#define TIMER_CALLBACK_REGISTRATION_FAILED 0
 #define TIMER_INPUT_KEY_NONE 0
 
 static legacy_u32 timer_wait_target;
@@ -15,7 +14,7 @@ static legacy_s8 input_callback_overflow_message[] =
 void timer_reg_callback(void (far* callback)(void))
 {
 	if (dos_timer_register_callback(callback) ==
-		TIMER_CALLBACK_REGISTRATION_FAILED) {
+		DOS_TIMER_CALLBACK_REGISTRATION_FAILED) {
 		fatal_error(input_callback_overflow_message);
 	}
 }

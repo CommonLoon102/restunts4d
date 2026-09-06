@@ -17,7 +17,6 @@
 #define PIXLDUMP_BMP_PIXEL_OFFSET 1078UL
 #define PIXLDUMP_BMP_FILE_SIZE 65078UL
 #define PIXLDUMP_OUTPUT_NAME_SIZE 128U
-#define PIXLDUMP_FILE_WRITE_MODE 1
 #define PIXLDUMP_STDOUT_HANDLE 1U
 #define PIXLDUMP_DECIMAL_BASE 10UL
 #define PIXLDUMP_FRAME_NUMBER_DIGITS 5U
@@ -69,7 +68,7 @@ typedef legacy_u16 PIXLDUMP_OUTPUT;
 
 static PIXLDUMP_OUTPUT pixldump_output_open(const legacy_s8* path)
 {
-	return dos_file_open(path, PIXLDUMP_FILE_WRITE_MODE);
+	return dos_file_open(path, DOS_FILE_CREATE);
 }
 
 static legacy_u16 pixldump_output_write(PIXLDUMP_OUTPUT output,

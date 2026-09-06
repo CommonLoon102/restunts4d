@@ -5,7 +5,6 @@
 #include <platform.h>
 #include <trackdata_layout.h>
 
-#define REPLDUMP_FILE_WRITE_MODE 1
 #define REPLDUMP_OUTPUT_NAME_SIZE 13U
 #define REPLDUMP_OUTPUT_NAME_LAST_INDEX 12U
 #define REPLDUMP_CAR_ID_SIZE 4U
@@ -226,7 +225,7 @@ typedef legacy_u16 REPLDUMP_OUTPUT;
 
 static REPLDUMP_OUTPUT repldump_output_open(const legacy_s8* path)
 {
-	return dos_file_open(path, REPLDUMP_FILE_WRITE_MODE);
+	return dos_file_open(path, DOS_FILE_CREATE);
 }
 
 static legacy_u16 repldump_output_write(REPLDUMP_OUTPUT output,

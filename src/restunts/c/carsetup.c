@@ -71,10 +71,10 @@ static legacy_s16 legacy_raw_resource_word(const legacy_s8* filename,
 	legacy_u8 bytes[LEGACY_RESOURCE_WORD_SIZE];
 	legacy_u16 handle;
 
-	handle = dos_file_open(filename, 0);
+	handle = dos_file_open(filename, DOS_FILE_OPEN_EXISTING);
 	if (handle == 0U)
 		return 0;
-	if (dos_file_seek(handle, (legacy_s32)offset, 0) != 0 ||
+	if (dos_file_seek(handle, (legacy_s32)offset, DOS_FILE_SEEK_BEGIN) != 0 ||
 		dos_file_read(handle, bytes, LEGACY_RESOURCE_WORD_SIZE) !=
 		LEGACY_RESOURCE_WORD_SIZE) {
 		(void)dos_file_close(handle);
