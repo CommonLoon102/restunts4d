@@ -1,5 +1,8 @@
 #include "gamestate.h"
 
+#define GAMESTATE_ARRAY_INDEX_FIRST 0U
+#define GAMESTATE_WRITER_INITIAL_OFFSET 0U
+
 struct GAMESTATE_WRITER {
 	legacy_u8 far* destination;
 	legacy_u16 offset;
@@ -59,7 +62,7 @@ static void gamestate_write_s8_array(struct GAMESTATE_WRITER* writer,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++) {
+	for (index = GAMESTATE_ARRAY_INDEX_FIRST; index < count; index++) {
 		gamestate_write_s8(writer, values[index]);
 	}
 }
@@ -69,7 +72,7 @@ static void gamestate_write_s16_array(struct GAMESTATE_WRITER* writer,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++) {
+	for (index = GAMESTATE_ARRAY_INDEX_FIRST; index < count; index++) {
 		gamestate_write_s16(writer, values[index]);
 	}
 }
@@ -79,7 +82,7 @@ static void gamestate_write_s32_array(struct GAMESTATE_WRITER* writer,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++) {
+	for (index = GAMESTATE_ARRAY_INDEX_FIRST; index < count; index++) {
 		gamestate_write_s32(writer, values[index]);
 	}
 }
@@ -89,7 +92,7 @@ static void gamestate_write_vector_array(struct GAMESTATE_WRITER* writer,
 {
 	legacy_u16 index;
 
-	for (index = 0U; index < count; index++) {
+	for (index = GAMESTATE_ARRAY_INDEX_FIRST; index < count; index++) {
 		gamestate_write_vector(writer, &vectors[index]);
 	}
 }
@@ -169,7 +172,7 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	struct GAMESTATE_WRITER writer;
 
 	writer.destination = destination;
-	writer.offset = 0U;
+	writer.offset = GAMESTATE_WRITER_INITIAL_OFFSET;
 
 	gamestate_write_s32_array(&writer, source->game_longs1,
 		GAMESTATE_PARTICLE_SLOT_COUNT);
