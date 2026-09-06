@@ -27,6 +27,7 @@
 #define DOS_JOYSTICK_FIRST_AXIS_INDEX 0U
 #define DOS_JOYSTICK_MINIMUM_AXIS_DIFFERENCE 0U
 #define DOS_JOYSTICK_CALIBRATION_EXPIRATION_THRESHOLD 0
+#define DOS_JOYSTICK_VALID_RANGE_MINIMUM 0
 
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
@@ -108,7 +109,7 @@ static void joystick_recalculate_axis1(void)
 	legacy_u16 quarter;
 
 	range = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_max, dos_joystick_axis1_min);
-	if (LEGACY_S16_FROM_BITS(range) > 0)
+	if (LEGACY_S16_FROM_BITS(range) > DOS_JOYSTICK_VALID_RANGE_MINIMUM)
 		dos_joystick_axis1_scale = (legacy_u16)(
 			DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
 	half = range >> 1;
@@ -126,7 +127,7 @@ static void joystick_recalculate_axis2(void)
 	legacy_u16 quarter;
 
 	range = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_max, dos_joystick_axis2_min);
-	if (LEGACY_S16_FROM_BITS(range) > 0)
+	if (LEGACY_S16_FROM_BITS(range) > DOS_JOYSTICK_VALID_RANGE_MINIMUM)
 		dos_joystick_axis2_scale = (legacy_u16)(
 			DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
 	half = range >> 1;
