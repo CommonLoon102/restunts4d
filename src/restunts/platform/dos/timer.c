@@ -43,6 +43,7 @@ extern void add_exit_handler(void (far* exit_handler)(void));
 #define DOS_TIMER_COUNTER_RESET_VALUE 0UL
 #define DOS_TIMER_REENTRY_RESET_VALUE 0U
 #define DOS_TIMER_EXPIRATION_THRESHOLD 0
+#define DOS_TIMER_LOW_WORD_WRAP_VALUE 0U
 
 static legacy_u32 dos_timer_counter;
 static legacy_s16 dos_timer_callbacks_suspended;
@@ -143,7 +144,7 @@ static void interrupt dos_timer_interrupt(void)
 	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <=
 		DOS_TIMER_EXPIRATION_THRESHOLD) {
 		dos_timer_slow_low = (legacy_u16)(dos_timer_slow_low + 1U);
-		if (dos_timer_slow_low == 0)
+		if (dos_timer_slow_low == DOS_TIMER_LOW_WORD_WRAP_VALUE)
 			dos_timer_slow_high = (legacy_u16)(dos_timer_slow_high + 1U);
 		dos_timer_divider = dos_timer_divider_period;
 
