@@ -42,12 +42,9 @@ extern legacy_u8 oppnentSped[OPPONENT_SPEED_COUNT];
 #define CAR_GEAR_SHIFT_NONE 0
 #define CAR_GEAR_SHIFT_UP 1
 #define CAR_GEAR_SHIFT_DOWN (-1)
-#define CAR_GEAR_CHANGE_INACTIVE 0
-#define CAR_GEAR_CHANGE_ACTIVE 1
 #define GEAR_CHANGE_DELAY_HALF_SHIFT 1U
 #define GEAR_CHANGE_DELAY_TICK_STEP 1
 #define GEAR_KNOB_ALIGNED 0
-#define GEAR_CHANGE_DELAY_EXPIRED 0
 #define OPPONENT_DRAG_NONE 0
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration,

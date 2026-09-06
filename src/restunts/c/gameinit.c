@@ -145,8 +145,8 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 	playerstate->field_C8 = 0;
 	playerstate->car_crashBmpFlag = CRASH_EVENT_NONE;
-	playerstate->car_changing_gear = 0;
-	playerstate->car_fpsmul2 = 0;
+	playerstate->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
+	playerstate->car_fpsmul2 = GEAR_CHANGE_DELAY_EXPIRED;
 	playerstate->car_transmission = transmission;
 	playerstate->field_CD = 0;
 	playerstate->field_CE = ROUTE_POINT_FIRST;
