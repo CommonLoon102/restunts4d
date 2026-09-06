@@ -11,8 +11,10 @@
 #define PENALTY_ROUTE_FINISH_REACHED (-1)
 #define PENALTY_ROUTE_OUTSIDE_TRACK (-2)
 #define TRACK_ROUTE_LINK_NONE (-1)
-#define GRIP_BEHAVIOR_OPPONENT 0
-#define GRIP_BEHAVIOR_PLAYER 1
+enum GRIP_BEHAVIOR {
+	GRIP_BEHAVIOR_OPPONENT = 0,
+	GRIP_BEHAVIOR_PLAYER = 1
+};
 
 extern legacy_s16 penalty_time;
 extern legacy_s16 grassDecelDivTab[];
