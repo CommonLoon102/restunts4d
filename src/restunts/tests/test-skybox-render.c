@@ -204,8 +204,9 @@ static legacy_u32 skybox_fingerprint(legacy_s16 rolled, legacy_s16 slow_copy)
 int main(void)
 {
 	/* Geometry and rectangle merging use the real implementations. Raster
-	 * callbacks fingerprint their arguments and order without a video device. */
-	static const legacy_u32 expected[] = {1958318220UL, 243328842UL, 1150680283UL, 1450408363UL};
+	 * callbacks fingerprint their arguments and order without a video device.
+	 * Rolled-view baselines include the original long-line slope rounding. */
+	static const legacy_u32 expected[] = {1958318220UL, 1443166741UL, 1150680283UL, 2189361964UL};
 	unsigned i;
 
 	test_level_horizon();

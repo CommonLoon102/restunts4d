@@ -47,6 +47,47 @@ static void test_line_modes(void)
 	}
 }
 
+static void test_step_rounding(void)
+{
+	/* Values from the original table and its DIV/SHR/SUB/ADC fallback.
+	 * Cover the cutoff, round-up/down, an exact half-pixel slope, and both
+	 * axes/directions. In particular, 1/50 needs 1311, not truncated 1310:
+	 * its middle sample crosses into the next row/column only with 1311. */
+	static const struct {
+		legacy_u16 major, minor, step;
+	} cases[] = {{48, 1, 1365}, {49, 2, 2674},	 {50, 1, 1311}, {50, 2, 2621}, {50, 25, 32768},
+				 {51, 1, 1285}, {51, 25, 32125}, {52, 2, 2521}, {64, 1, 1024}, {150, 1, 437}};
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
+	legacy_u16 mode;
+	legacy_s16 dx, dy;
+	unsigned i, reverse;
+
+	reset_clip();
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		for (mode = DRAW_LINE_MODE_Y_MAJOR_LEFT; mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT; mode++) {
+			dx = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].minor : cases[i].major;
+			dy = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].major : cases[i].minor;
+			if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT || mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
+				dx = -dx;
+			}
+			for (reverse = 0; reverse < 2; reverse++) {
+				memset(line, 0, sizeof(line));
+				assert(line_prepare_unclipped(reverse ? 160 + dx : 160, reverse ? 25 + dy : 25,
+											  reverse ? 160 : 160 + dx, reverse ? 25 : 25 + dy,
+											  line) == 0);
+				assert(line[DRAW_LINE_STEP_INDEX] == cases[i].step);
+				assert(line[DRAW_LINE_MODE_AND_CLIP_INDEX] == mode);
+				assert(line[DRAW_LINE_PIXEL_COUNT_INDEX] == cases[i].major + 1);
+				assert(line_prepare_clipped(reverse ? 160 + dx : 160, reverse ? 25 + dy : 25,
+											reverse ? 160 : 160 + dx, reverse ? 25 : 25 + dy,
+											line) == 0);
+				assert(line[DRAW_LINE_STEP_INDEX] == cases[i].step);
+				assert(line[DRAW_LINE_MODE_AND_CLIP_INDEX] == mode);
+			}
+		}
+	}
+}
+
 static void test_clipped_endpoints(void)
 {
 	legacy_u16 line[DRAW_LINE_WORD_COUNT] = {0};
@@ -122,12 +163,13 @@ static legacy_u32 line_fingerprint(legacy_u16 unclipped, legacy_u16 wide_coordin
 
 int main(void)
 {
-	/* Captured before refactoring: all setup words, including words retained
-	 * on rejection, contribute to each deterministic baseline fingerprint. */
-	static const legacy_u32 expected[] = {2459404900UL, 19184828UL, 2708284857UL, 1954427655UL};
+	/* All setup words, including words retained on rejection, contribute to
+	 * these baselines, updated for the original long-line slope rounding. */
+	static const legacy_u32 expected[] = {2774831423UL, 1964948289UL, 3864549147UL, 4141859671UL};
 	unsigned i;
 
 	test_line_modes();
+	test_step_rounding();
 	test_clipped_endpoints();
 	for (i = 0; i < 4; i++) {
 		assert(line_fingerprint(i & 1U, i >> 1U) == expected[i]);

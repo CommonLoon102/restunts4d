@@ -5,6 +5,8 @@
 #include "shape3d.h"
 #include "shape3d_internal.h"
 
+#define DRAW_LINE_STEP_TABLE_LIMIT 50U
+
 legacy_u16 line_prepare(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y,
 						legacy_u16 *line, legacy_u16 skip_clipping);
 
@@ -39,13 +41,16 @@ static legacy_u16 draw_line_round_div(legacy_u32 numerator, legacy_u16 divisor)
 
 static legacy_u16 draw_line_step(legacy_u16 minor, legacy_u16 major)
 {
-	/* The legacy code-segment table contains this truncated quotient for
-	 * major values below its shared-entry cutoff. Its first shared entry is
-	 * an otherwise unused sentinel; retain it for the degenerate calls as well. */
+	/* The original uses truncated table entries below 50, then rounds its
+	 * division result to the nearest integer (ties down). Preserve both paths:
+	 * a one-unit step difference can move a raster sample across a pixel edge. */
 	if (major < DRAW_LINE_MIN_MAJOR_LENGTH) {
 		return DRAW_LINE_DEGENERATE_STEP;
 	}
-	return (legacy_u16)LEGACY_U32_DIV_OR_ZERO((legacy_u32)minor << LEGACY_WORD_BITS, major);
+	if (major < DRAW_LINE_STEP_TABLE_LIMIT) {
+		return (legacy_u16)LEGACY_U32_DIV_OR_ZERO((legacy_u32)minor << LEGACY_WORD_BITS, major);
+	}
+	return draw_line_round_div((legacy_u32)minor << LEGACY_WORD_BITS, major);
 }
 
 static legacy_u16 draw_line_reject(legacy_u16 *line, legacy_u16 reject)
