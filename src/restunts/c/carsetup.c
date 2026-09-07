@@ -280,7 +280,7 @@ void load_opponent_data(void)
 }
 
 #ifdef RESTUNTS_HEADLESS
-legacy_s16 setup_player_cars_repldump(void)
+legacy_s16 setup_player_cars_without_dashboard(void)
 {
 	void far *car_resource;
 	legacy_u16 index;

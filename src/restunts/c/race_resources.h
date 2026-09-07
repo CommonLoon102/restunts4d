@@ -6,7 +6,7 @@
 void load_sdgame2_shapes(void);
 void free_sdgame2(void);
 legacy_s16 setup_player_cars(void);
-legacy_s16 setup_player_cars_repldump(void);
+legacy_s16 setup_player_cars_without_dashboard(void);
 void free_player_cars(void);
 
 #endif

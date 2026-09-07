@@ -370,7 +370,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 #ifdef RESTUNTS_ORIGINAL
 	if (setup_player_cars() != 0) {
 #else
-	if (setup_player_cars_repldump() != 0) {
+	if (setup_player_cars_without_dashboard() != 0) {
 #endif
 		printf("FAIL (out of memory)\n");
 		return 1;

@@ -155,7 +155,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 	fontledresptr = file_load_resource(FILE_RESOURCE_BINARY_FATAL, "fontled.fnt");
 	slow_video_mgmt_copy = slow_video_mgmt;
 	init_rect_arrays();
-	/* REPLDUMP advances simulation without rendering the dashboard.  Keep the
+	/* Replay dump tools do not render the dashboard. Keep the
 	 * car 3D container in its original arena position because later legacy
 	 * state still observes that memory layout, but avoid the much larger 2D
 	 * dashboard allocation that memory-heavy custom cars cannot afford. */
@@ -197,7 +197,7 @@ legacy_s16 setup_player_cars(void)
 	return setup_player_cars_impl(1);
 }
 
-legacy_s16 setup_player_cars_repldump(void)
+legacy_s16 setup_player_cars_without_dashboard(void)
 {
 	return setup_player_cars_impl(0);
 }

@@ -504,7 +504,11 @@ static legacy_s16 pixldump_process_replay(const legacy_s8 *replay_name,
 	slow_video_mgmt = 0;
 	slow_video_mgmt_copy = 0;
 
+#ifdef RESTUNTS_ORIGINAL
 	if (setup_player_cars() != 0) {
+#else
+	if (setup_player_cars_without_dashboard() != 0) {
+#endif
 		return 1;
 	}
 
