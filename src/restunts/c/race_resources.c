@@ -104,6 +104,28 @@ void load_skybox(legacy_s8 skybox_index)
 	meter_needle_color = dialog_fnt_colour;
 }
 
+static void setup_car_engine_resources(void)
+{
+	ensure_file_exists(3);
+	eng1ptr = file_load_resource(FILE_RESOURCE_VOICE, "eng1");
+	engptr = file_load_resource(FILE_RESOURCE_SOUND_EFFECTS, "eng");
+	audio_add_driver_timer();
+	audio_player_engine_channel =
+		audio_init_engine(PLAYER_ENGINE_LEGACY_TYPE, &player_engine_definition, eng1ptr, engptr);
+
+	audio_car_state_ready = 0;
+	audio_player_car_flags = 0;
+	audio_opponent_car_flags = 0;
+	if (gameconfig.game_opponenttype != 0) {
+		audio_opponent_engine_channel = audio_init_engine(
+			OPPONENT_ENGINE_LEGACY_TYPE, &opponent_engine_definition, eng1ptr, engptr);
+	}
+
+	audio_car_state_read_index = 0;
+	audio_car_state_write_index = 0;
+	audio_car_state_interval = 0;
+}
+
 static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 {
 	void far *carresptr;
@@ -134,24 +156,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 		load_opponent_data();
 	}
 
-	ensure_file_exists(3);
-	eng1ptr = file_load_resource(FILE_RESOURCE_VOICE, "eng1");
-	engptr = file_load_resource(FILE_RESOURCE_SOUND_EFFECTS, "eng");
-	audio_add_driver_timer();
-	audio_player_engine_channel =
-		audio_init_engine(PLAYER_ENGINE_LEGACY_TYPE, &player_engine_definition, eng1ptr, engptr);
-
-	audio_car_state_ready = 0;
-	audio_player_car_flags = 0;
-	audio_opponent_car_flags = 0;
-	if (gameconfig.game_opponenttype != 0) {
-		audio_opponent_engine_channel = audio_init_engine(
-			OPPONENT_ENGINE_LEGACY_TYPE, &opponent_engine_definition, eng1ptr, engptr);
-	}
-
-	audio_car_state_read_index = 0;
-	audio_car_state_write_index = 0;
-	audio_car_state_interval = 0;
+	setup_car_engine_resources();
 	fontledresptr = file_load_resource(FILE_RESOURCE_BINARY_FATAL, "fontled.fnt");
 	slow_video_mgmt_copy = slow_video_mgmt;
 	init_rect_arrays();

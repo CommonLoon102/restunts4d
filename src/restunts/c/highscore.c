@@ -441,90 +441,104 @@ static void end_hiscore_update_animation(
 	}
 }
 
+struct END_SCREEN_TEXT_LINE {
+	legacy_s8 word[END_SCREEN_TEXT_WORD_CAPACITY];
+	legacy_u16 word_length, output_length;
+	legacy_s16 line_width, line_y;
+};
+
+static legacy_s8 far *end_hiscore_result_text(legacy_s8 far *opponent_resource, legacy_u8 outcome,
+											  legacy_u8 text_prefix, legacy_u16 resource_index)
+{
+	legacy_s8 text_id[END_SCREEN_TEXT_ID_SIZE];
+	legacy_s16 selector;
+	if (outcome == END_SCREEN_OUTCOME_NONE) {
+		return locate_text_res(opponent_resource, opponent_neutral_result_text_id);
+	} else {
+		text_id[0] = (legacy_s8)text_prefix;
+		text_id[1] = (legacy_s8)('1' + resource_index);
+		if (resource_index == 0) {
+			selector = end_opening_variant;
+		} else if (resource_index == 1) {
+			selector = end_outcome_variant;
+		} else {
+			selector = end_closing_variant;
+		}
+		text_id[2] = (legacy_s8)('a' + selector);
+		text_id[3] = 0;
+		return locate_text_res(opponent_resource, text_id);
+	}
+}
+
+static void end_hiscore_append_text_word(struct END_SCREEN_TEXT_LINE *line, legacy_s16 animation_x)
+{
+	legacy_s16 word_width;
+	legacy_u16 copy_index, first_character;
+	line->word[line->word_length] = 0;
+	word_width = (legacy_s16)font_text_width(line->word);
+	if (LEGACY_S16_WRAP_ADD(word_width, line->line_width) <
+			LEGACY_S16_WRAP_SUB(animation_x, END_SCREEN_TEXT_RIGHT_MARGIN) &&
+		LEGACY_U16_WRAP_ADD(line->output_length, line->word_length) <
+			END_SCREEN_TEXT_OUTPUT_CAPACITY) {
+		for (copy_index = 0; copy_index < line->word_length; copy_index++) {
+			(&resID_byte1)[line->output_length++] = line->word[copy_index];
+		}
+		line->line_width = LEGACY_S16_WRAP_ADD(line->line_width, word_width);
+	} else {
+		(&resID_byte1)[line->output_length] = 0;
+		font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line->line_y);
+		line->line_y = LEGACY_S16_WRAP_ADD(line->line_y, END_SCREEN_TEXT_LINE_HEIGHT);
+		first_character = line->word[0] == ' ' ? 1U : 0U;
+		line->output_length = 0;
+		for (copy_index = first_character; copy_index < line->word_length; copy_index++) {
+			(&resID_byte1)[line->output_length++] = line->word[copy_index];
+		}
+		(&resID_byte1)[line->output_length] = 0;
+		line->line_width = (legacy_s16)font_text_width(&resID_byte1);
+	}
+}
+
+static void end_hiscore_consume_text(struct END_SCREEN_TEXT_LINE *line, legacy_s8 far *text,
+									 legacy_s16 animation_x)
+{
+	legacy_u8 character;
+	for (;;) {
+		character = (legacy_u8)*text++;
+		if (character != ' ' && character != 0) {
+			line->word[line->word_length++] = (legacy_s8)character;
+			continue;
+		}
+
+		end_hiscore_append_text_word(line, animation_x);
+		line->word_length = 1;
+		line->word[0] = ' ';
+		if (character == 0) {
+			break;
+		}
+	}
+}
+
 static void end_hiscore_draw_opponent_text(legacy_s8 far *opponent_resource, legacy_u8 outcome,
 										   legacy_u8 text_prefix, legacy_s16 animation_x)
 {
-	legacy_s8 word[END_SCREEN_TEXT_WORD_CAPACITY];
-	legacy_s8 text_id[END_SCREEN_TEXT_ID_SIZE];
+	struct END_SCREEN_TEXT_LINE line;
 	legacy_s8 far *text;
-	legacy_u8 character;
-	legacy_u16 resource_index;
-	legacy_u16 resource_count;
-	legacy_u16 word_length;
-	legacy_u16 output_length;
-	legacy_u16 copy_index;
-	legacy_u16 first_character;
-	legacy_s16 line_width;
-	legacy_s16 word_width;
-	legacy_s16 line_y;
-	legacy_s16 selector;
-
-	line_y = END_SCREEN_TEXT_TOP;
-	output_length = 0;
-	line_width = 0;
-	word_length = 0;
+	legacy_u16 resource_index, resource_count;
+	line.line_y = END_SCREEN_TEXT_TOP;
+	line.output_length = 0;
+	line.line_width = 0;
+	line.word_length = 0;
 	resource_count = outcome == END_SCREEN_OUTCOME_NONE ? 1U : END_SCREEN_TEXT_VARIANT_COUNT;
 	for (resource_index = 0; resource_index < resource_count; resource_index++) {
-		if (outcome == END_SCREEN_OUTCOME_NONE) {
-			text = locate_text_res(opponent_resource, opponent_neutral_result_text_id);
-		} else {
-			text_id[0] = (legacy_s8)text_prefix;
-			text_id[1] = (legacy_s8)('1' + resource_index);
-			if (resource_index == 0) {
-				selector = end_opening_variant;
-			} else if (resource_index == 1) {
-				selector = end_outcome_variant;
-			} else {
-				selector = end_closing_variant;
-			}
-			text_id[2] = (legacy_s8)('a' + selector);
-			text_id[3] = 0;
-			text = locate_text_res(opponent_resource, text_id);
-		}
-
+		text = end_hiscore_result_text(opponent_resource, outcome, text_prefix, resource_index);
 		font_set_fontdef2(fontnptr);
-		for (;;) {
-			character = (legacy_u8)*text++;
-			if (character != ' ' && character != 0) {
-				word[word_length++] = (legacy_s8)character;
-				continue;
-			}
-
-			word[word_length] = 0;
-			word_width = (legacy_s16)font_text_width(word);
-			if (LEGACY_S16_WRAP_ADD(word_width, line_width) <
-					LEGACY_S16_WRAP_SUB(animation_x, END_SCREEN_TEXT_RIGHT_MARGIN) &&
-				LEGACY_U16_WRAP_ADD(output_length, word_length) < END_SCREEN_TEXT_OUTPUT_CAPACITY) {
-				for (copy_index = 0; copy_index < word_length; copy_index++) {
-					(&resID_byte1)[output_length++] = word[copy_index];
-				}
-				line_width = LEGACY_S16_WRAP_ADD(line_width, word_width);
-			} else {
-				(&resID_byte1)[output_length] = 0;
-				font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line_y);
-				line_y = LEGACY_S16_WRAP_ADD(line_y, END_SCREEN_TEXT_LINE_HEIGHT);
-				first_character = word[0] == ' ' ? 1U : 0U;
-				output_length = 0;
-				for (copy_index = first_character; copy_index < word_length; copy_index++) {
-					(&resID_byte1)[output_length++] = word[copy_index];
-				}
-				(&resID_byte1)[output_length] = 0;
-				line_width = (legacy_s16)font_text_width(&resID_byte1);
-			}
-
-			word_length = 1;
-			word[0] = ' ';
-			if (character == 0) {
-				break;
-			}
-		}
+		end_hiscore_consume_text(&line, text, animation_x);
 		font_set_fontdef();
 	}
-
-	if (output_length != 0) {
+	if (line.output_length != 0) {
 		font_set_fontdef2(fontnptr);
-		(&resID_byte1)[output_length] = 0;
-		font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line_y);
+		(&resID_byte1)[line.output_length] = 0;
+		font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line.line_y);
 		font_set_fontdef();
 	}
 }
@@ -995,11 +1009,8 @@ static void end_hiscore_select_mouse(struct END_SCREEN_STATE *screen)
 	}
 }
 
-static legacy_s16 end_hiscore_handle_menu_input(struct END_SCREEN_STATE *screen, legacy_u16 input)
+static legacy_s16 end_hiscore_navigate_menu(struct END_SCREEN_STATE *screen, legacy_u16 input)
 {
-	if (input == 0) {
-		return 0;
-	}
 	if (input == KEY_LEFT) {
 		if (screen->opponent_active == 0 || screen->score_status == -1) {
 			screen->selected = screen->selected <= 1 ? END_SCREEN_LAST_BUTTON_INDEX
@@ -1008,7 +1019,7 @@ static legacy_s16 end_hiscore_handle_menu_input(struct END_SCREEN_STATE *screen,
 			screen->selected = screen->selected == 0 ? END_SCREEN_LAST_BUTTON_INDEX
 													 : (legacy_u8)(screen->selected - 1U);
 		}
-		return 0;
+		return 1;
 	}
 	if (input == KEY_RIGHT) {
 		if (screen->selected < END_SCREEN_LAST_BUTTON_INDEX) {
@@ -1017,6 +1028,17 @@ static legacy_s16 end_hiscore_handle_menu_input(struct END_SCREEN_STATE *screen,
 			screen->selected =
 				(screen->opponent_active == 0 || screen->score_status == -1) ? 1U : 0U;
 		}
+		return 1;
+	}
+	return 0;
+}
+
+static legacy_s16 end_hiscore_handle_menu_input(struct END_SCREEN_STATE *screen, legacy_u16 input)
+{
+	if (input == 0) {
+		return 0;
+	}
+	if (end_hiscore_navigate_menu(screen, input)) {
 		return 0;
 	}
 	if (input != KEY_ENTER && input != KEY_SPACE) {

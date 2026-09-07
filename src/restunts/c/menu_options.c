@@ -55,37 +55,11 @@ static void joy_dialog_finish(void)
 	input_pop_status();
 }
 
-void calibrate_joystick_driving(void)
+static void joy_dialog_draw_grid(legacy_s16 *positions, legacy_s16 *button_x, legacy_s16 *button_y,
+								 legacy_s16 *button_width, legacy_s16 *button_height)
 {
-	legacy_s16 positions[15];
-	legacy_s16 button_x[9];
-	legacy_s16 button_y[9];
-	legacy_u8 visited[9];
-	legacy_s16 button_width;
-	legacy_s16 button_height;
 	legacy_s16 line_width;
 	legacy_s16 line_height;
-	legacy_s16 selected;
-	legacy_s16 next_selected;
-	legacy_u16 joy_flags;
-	legacy_u16 i;
-
-	input_push_status();
-	dos_timer_set_callbacks_suspended(1);
-	audio_suspend();
-	if (LEGACY_S16_FROM_BITS(show_dialog(
-			DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND, locate_text_res(mainresptr, "joy"),
-			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, positions, 0)) <= 0) {
-		dos_joystick_set_enabled(0);
-		joy_dialog_finish();
-		return;
-	}
-
-	for (i = 0; i < 9U; i++) {
-		visited[i] = 0;
-	}
-	dos_joystick_set_enabled(1);
-	mouse_draw_opaque_check();
 	line_height = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(positions[13], positions[3]), 8);
 	sprite_fill_rect(LEGACY_S16_WRAP_SUB(positions[2], 4), positions[3], 1, line_height,
 					 dialog_border_color);
@@ -115,8 +89,40 @@ void calibrate_joystick_driving(void)
 	button_y[4] = positions[11];
 	button_y[5] = positions[11];
 	button_y[6] = positions[11];
-	button_width = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(positions[2], positions[0]), 8);
-	button_height = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(positions[9], positions[1]), 8);
+	*button_width = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(positions[2], positions[0]), 8);
+	*button_height = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(positions[9], positions[1]), 8);
+}
+
+void calibrate_joystick_driving(void)
+{
+	legacy_s16 positions[15];
+	legacy_s16 button_x[9];
+	legacy_s16 button_y[9];
+	legacy_u8 visited[9];
+	legacy_s16 button_width;
+	legacy_s16 button_height;
+	legacy_s16 selected;
+	legacy_s16 next_selected;
+	legacy_u16 joy_flags;
+	legacy_u16 i;
+
+	input_push_status();
+	dos_timer_set_callbacks_suspended(1);
+	audio_suspend();
+	if (LEGACY_S16_FROM_BITS(show_dialog(
+			DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND, locate_text_res(mainresptr, "joy"),
+			DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, positions, 0)) <= 0) {
+		dos_joystick_set_enabled(0);
+		joy_dialog_finish();
+		return;
+	}
+
+	for (i = 0; i < 9U; i++) {
+		visited[i] = 0;
+	}
+	dos_joystick_set_enabled(1);
+	mouse_draw_opaque_check();
+	joy_dialog_draw_grid(positions, button_x, button_y, &button_width, &button_height);
 
 	selected = -1;
 	joystick_reset_calibration();
@@ -226,13 +232,37 @@ void show_exit_to_dos_dialog(void)
 	input_pop_status();
 }
 
-void show_graphic_levels_menu(void)
+static void option_menu_mark_graphics(legacy_s8 *menu_text)
 {
 	legacy_s8 selected_options[9];
-	legacy_s8 menu_text[512];
-	legacy_u16 original_frame_rate;
 	legacy_u16 option_index;
 	legacy_u16 text_index;
+	copy_string(menu_text, locate_text_res(mainresptr, graphics_options_dialog_id));
+	for (option_index = 0; option_index < 9U; option_index++) {
+		selected_options[option_index] = 0;
+	}
+	selected_options[detail_level] = 1;
+	selected_options[5U + slow_video_mgmt] = 1;
+	selected_options[configured_frame_rate == GAME_FRAME_RATE_LOW
+						 ? OPTION_MENU_LOW_FRAME_RATE_INDEX
+						 : OPTION_MENU_NORMAL_FRAME_RATE_INDEX] = 1;
+
+	text_index = 0;
+	for (option_index = 0; option_index < 9U; option_index++) {
+		while (menu_text[text_index] != '[') {
+			text_index++;
+		}
+		if (selected_options[option_index] != 0) {
+			menu_text[text_index + 1U] = '*';
+		}
+		text_index++;
+	}
+}
+
+void show_graphic_levels_menu(void)
+{
+	legacy_s8 menu_text[512];
+	legacy_u16 original_frame_rate;
 	legacy_s8 selected;
 
 	input_push_status();
@@ -241,26 +271,7 @@ void show_graphic_levels_menu(void)
 	original_frame_rate = configured_frame_rate;
 	selected = 0;
 	for (;;) {
-		copy_string(menu_text, locate_text_res(mainresptr, graphics_options_dialog_id));
-		for (option_index = 0; option_index < 9U; option_index++) {
-			selected_options[option_index] = 0;
-		}
-		selected_options[detail_level] = 1;
-		selected_options[5U + slow_video_mgmt] = 1;
-		selected_options[configured_frame_rate == GAME_FRAME_RATE_LOW
-							 ? OPTION_MENU_LOW_FRAME_RATE_INDEX
-							 : OPTION_MENU_NORMAL_FRAME_RATE_INDEX] = 1;
-
-		text_index = 0;
-		for (option_index = 0; option_index < 9U; option_index++) {
-			while (menu_text[text_index] != '[') {
-				text_index++;
-			}
-			if (selected_options[option_index] != 0) {
-				menu_text[text_index + 1U] = '*';
-			}
-			text_index++;
-		}
+		option_menu_mark_graphics(menu_text);
 
 		selected = LEGACY_S8_FROM_BITS(show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 												   (void far *)menu_text, -1, -1, performGraphColor,
@@ -297,10 +308,32 @@ void show_graphic_levels_menu(void)
 	input_pop_status();
 }
 
+static void option_menu_select_input(void)
+{
+	legacy_s8 initial_input;
+	legacy_s8 selected;
+	if (mouse_driving_enabled != 0) {
+		initial_input = 2;
+	} else if (dos_joystick_is_enabled() != 0) {
+		initial_input = 1;
+	} else {
+		initial_input = 0;
+	}
+	selected = LEGACY_S8_FROM_BITS(show_dialog(
+		DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(miscptr, "mid"),
+		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, performGraphColor, 0, initial_input));
+	if (selected == 0) {
+		select_keyboard_driving();
+	} else if (selected == 1) {
+		calibrate_joystick_driving();
+	} else if (selected == 2) {
+		select_mouse_driving();
+	}
+}
+
 legacy_u16 run_option_menu(void)
 {
 	legacy_s8 selected;
-	legacy_s8 initial_input;
 	legacy_u8 menu_active;
 	legacy_s8 far *prompt;
 
@@ -325,24 +358,7 @@ legacy_u16 run_option_menu(void)
 				break;
 
 			case 0:
-				if (mouse_driving_enabled != 0) {
-					initial_input = 2;
-				} else if (dos_joystick_is_enabled() != 0) {
-					initial_input = 1;
-				} else {
-					initial_input = 0;
-				}
-				selected = LEGACY_S8_FROM_BITS(
-					show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-								locate_text_res(miscptr, "mid"), DIALOG_AUTO_POSITION,
-								DIALOG_AUTO_POSITION, performGraphColor, 0, initial_input));
-				if (selected == 0) {
-					select_keyboard_driving();
-				} else if (selected == 1) {
-					calibrate_joystick_driving();
-				} else if (selected == 2) {
-					select_mouse_driving();
-				}
+				option_menu_select_input();
 				break;
 
 			case 1:

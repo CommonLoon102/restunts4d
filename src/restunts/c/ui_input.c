@@ -110,178 +110,213 @@ static void read_line_erase_character(legacy_s8 *text, legacy_s16 max_characters
 	text_edit_toggle_cursor();
 }
 
-legacy_s16 read_line(legacy_s16 flags, legacy_s8 *text, legacy_s16 initial_key,
-					 legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
-					 void(far *callback)(void), legacy_u32 timeout)
-{
+struct READ_LINE_STATE {
 	legacy_u8 input_flags;
-	legacy_u16 key;
-	legacy_u16 length;
-	legacy_u16 index;
-	legacy_u16 old_cursor_state;
+	legacy_s8 *text;
+	legacy_s16 max_characters;
 	legacy_s16 insert_mode;
 	legacy_s16 first_key;
+};
 
-	input_flags = (legacy_u8)flags;
+static void read_line_initialize(struct READ_LINE_STATE *state, legacy_s16 max_pixels, legacy_s16 x,
+								 legacy_s16 y)
+{
+	legacy_u16 length;
 	sprite_select_screen();
 	text_edit_x = (legacy_u16)x;
 	text_edit_y = (legacy_u16)y;
-	text_edit_buffer = text;
+	text_edit_buffer = state->text;
 	text_edit_max_pixels = (legacy_u16)max_pixels;
-	text[(legacy_u16)max_characters] = 0;
-	if ((input_flags & READ_LINE_CLEAR_TEXT) != 0) {
-		text[0] = 0;
+	state->text[(legacy_u16)state->max_characters] = 0;
+	if ((state->input_flags & READ_LINE_CLEAR_TEXT) != 0) {
+		state->text[0] = 0;
 	}
-	if ((input_flags & READ_LINE_CURSOR_AT_START) != 0) {
+	if ((state->input_flags & READ_LINE_CURSOR_AT_START) != 0) {
 		text_edit_cursor = 0;
 	} else {
-		text_edit_cursor = (legacy_u16)strlen(text);
+		text_edit_cursor = (legacy_u16)strlen(state->text);
 	}
-
-	length = (legacy_u16)strlen(text);
-	while (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(max_characters)) {
-		text[length] = ' ';
+	length = (legacy_u16)strlen(state->text);
+	while (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(state->max_characters)) {
+		state->text[length] = ' ';
 		length = LEGACY_U16_WRAP_ADD(length, 1U);
 	}
 	text_edit_redraw();
 	text_edit_cursor_width = TEXT_EDIT_NARROW_CURSOR_WIDTH;
 	text_edit_cursor_visible = 1;
-	insert_mode = 0;
+	state->insert_mode = 0;
 	text_edit_toggle_cursor();
+}
+
+static legacy_u16 read_line_wait_key(legacy_s16 *initial_key, void(far *callback)(void))
+{
+	legacy_u16 key;
+	if ((legacy_u16)*initial_key != 0) {
+		key = (legacy_u16)*initial_key;
+		*initial_key = 0;
+		return key;
+	}
+	do {
+		callback();
+		key = (legacy_u16)kb_call_readchar_callback();
+		if (key != 0) {
+			break;
+		}
+	} while (slow_timer_deadline_reached() == 0);
+	return key;
+}
+
+static legacy_s16 read_line_blink_cursor(legacy_u32 timeout)
+{
+	legacy_u16 old_cursor_state;
+	slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
+	old_cursor_state = (legacy_u16)text_edit_cursor_visible;
+	text_edit_cursor_visible = 1;
+	text_edit_toggle_cursor();
+	text_edit_cursor_visible = old_cursor_state != 0 ? 0 : 1;
+	if (timeout != 0 && timer_deadline_reached()) {
+		text_edit_toggle_cursor();
+		return 1;
+	}
+	return 0;
+}
+
+static legacy_s16 read_line_is_finished(legacy_u16 key, legacy_u8 input_flags)
+{
+	return key == KEY_ENTER || key == KEY_ESCAPE || key == KEY_UP ||
+		   (key == KEY_DOWN && (input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||
+		   (key == KEY_TAB && (input_flags & READ_LINE_IGNORE_TAB_KEY) == 0);
+}
+
+static void read_line_move_cursor(struct READ_LINE_STATE *state, legacy_u16 key)
+{
+	text_edit_toggle_cursor();
+	switch (key) {
+		case KEY_RIGHT:
+			if (LEGACY_S16_FROM_BITS(state->max_characters) >
+				LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
+			}
+			break;
+		case KEY_LEFT:
+			if (text_edit_cursor != 0) {
+				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
+			}
+			break;
+		case KEY_HOME:
+			text_edit_cursor = 0;
+			break;
+		case KEY_END:
+			text_edit_cursor = (legacy_u16)strlen(state->text);
+			break;
+		case KEY_INSERT:
+			state->insert_mode = !state->insert_mode;
+			text_edit_cursor_width =
+				state->insert_mode ? TEXT_EDIT_WIDE_CURSOR_WIDTH : TEXT_EDIT_NARROW_CURSOR_WIDTH;
+			break;
+	}
+	text_edit_toggle_cursor();
+}
+
+static legacy_s16 read_line_apply_edit_key(struct READ_LINE_STATE *state, legacy_u16 key)
+{
+	switch (key) {
+		case KEY_RIGHT:
+		case KEY_LEFT:
+		case KEY_HOME:
+		case KEY_END:
+		case KEY_INSERT:
+			read_line_move_cursor(state, key);
+			return 1;
+		case KEY_DELETE:
+			if (LEGACY_S16_FROM_BITS(state->max_characters) >
+					LEGACY_S16_FROM_BITS(text_edit_cursor) &&
+				state->text[(legacy_u16)text_edit_cursor] != 0) {
+				read_line_erase_character(state->text, state->max_characters, 0);
+			}
+			return 1;
+		case KEY_BACKSPACE:
+			if (text_edit_cursor != 0) {
+				read_line_erase_character(state->text, state->max_characters, 1);
+			}
+			return 1;
+	}
+	return 0;
+}
+
+static void read_line_insert_space(struct READ_LINE_STATE *state)
+{
+	legacy_u16 move_index;
+	move_index = LEGACY_U16_WRAP_SUB(state->max_characters, TEXT_EDIT_INSERT_MARGIN);
+	while (LEGACY_S16_FROM_BITS(move_index) >= LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+		state->text[LEGACY_U16_WRAP_ADD(move_index, 1U)] = state->text[move_index];
+		move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
+	}
+}
+
+static void read_line_type_character(struct READ_LINE_STATE *state, legacy_u16 key)
+{
+	legacy_u16 index;
+	if (LEGACY_S16_FROM_BITS(key) < TEXT_EDIT_MINIMUM_CHARACTER ||
+		LEGACY_S16_FROM_BITS(key) > TEXT_EDIT_MAXIMUM_CHARACTER ||
+		LEGACY_S16_FROM_BITS(state->max_characters) <= LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+		return;
+	}
+	text_edit_toggle_cursor();
+	if (state->first_key && (state->input_flags & READ_LINE_RETAIN_INITIAL_TEXT) == 0) {
+		text_edit_cursor = 0;
+		for (index = 0; LEGACY_S16_FROM_BITS(index) < LEGACY_S16_FROM_BITS(state->max_characters);
+			 index = LEGACY_U16_WRAP_ADD(index, 1U)) {
+			state->text[index] = ' ';
+		}
+	}
+	index = (legacy_u16)text_edit_cursor;
+	if (state->text[index] == 0) {
+		state->text[LEGACY_U16_WRAP_ADD(index, 1U)] = 0;
+	}
+	if (state->insert_mode) {
+		read_line_insert_space(state);
+	}
+	state->text[index] = (legacy_s8)(legacy_u8)key;
+	if (LEGACY_S16_FROM_BITS(state->max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+		text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
+	}
+	text_edit_redraw();
+	text_edit_toggle_cursor();
+}
+
+legacy_s16 read_line(legacy_s16 flags, legacy_s8 *text, legacy_s16 initial_key,
+					 legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
+					 void(far *callback)(void), legacy_u32 timeout)
+{
+	struct READ_LINE_STATE state;
+	legacy_u16 key;
+	state.input_flags = (legacy_u8)flags;
+	state.text = text;
+	state.max_characters = max_characters;
+	read_line_initialize(&state, max_pixels, x, y);
 	timer_set_deadline(timeout);
 	slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
-	first_key = 1;
-
+	state.first_key = 1;
 	for (;;) {
-		if ((legacy_u16)initial_key != 0) {
-			key = (legacy_u16)initial_key;
-			initial_key = 0;
-		} else {
-			do {
-				callback();
-				key = (legacy_u16)kb_call_readchar_callback();
-				if (key != 0) {
-					break;
-				}
-			} while (slow_timer_deadline_reached() == 0);
-		}
-
+		key = read_line_wait_key(&initial_key, callback);
 		if (key == 0) {
-			slow_timer_set_deadline(TEXT_EDIT_CURSOR_BLINK_TICKS);
-			old_cursor_state = (legacy_u16)text_edit_cursor_visible;
-			text_edit_cursor_visible = 1;
-			text_edit_toggle_cursor();
-			text_edit_cursor_visible = old_cursor_state != 0 ? 0 : 1;
-			if (timeout != 0 && timer_deadline_reached()) {
-				text_edit_toggle_cursor();
+			if (read_line_blink_cursor(timeout)) {
 				return 0;
 			}
 			continue;
 		}
-
 		timer_set_deadline(timeout);
-		if (key == KEY_ENTER || key == KEY_ESCAPE || key == KEY_UP ||
-			(key == KEY_DOWN && (input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||
-			(key == KEY_TAB && (input_flags & READ_LINE_IGNORE_TAB_KEY) == 0)) {
+		if (read_line_is_finished(key, state.input_flags)) {
 			text_edit_toggle_cursor();
 			return key;
 		}
-
-		if (key == KEY_RIGHT) {
-			text_edit_toggle_cursor();
-			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
-			}
-			text_edit_toggle_cursor();
-			first_key = 0;
+		if (read_line_apply_edit_key(&state, key)) {
+			state.first_key = 0;
 			continue;
 		}
-
-		if (key == KEY_LEFT) {
-			text_edit_toggle_cursor();
-			if (text_edit_cursor != 0) {
-				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
-			}
-			text_edit_toggle_cursor();
-			first_key = 0;
-			continue;
-		}
-
-		if (key == KEY_HOME) {
-			text_edit_toggle_cursor();
-			text_edit_cursor = 0;
-			text_edit_toggle_cursor();
-			first_key = 0;
-			continue;
-		}
-
-		if (key == KEY_END) {
-			text_edit_toggle_cursor();
-			text_edit_cursor = (legacy_u16)strlen(text);
-			text_edit_toggle_cursor();
-			first_key = 0;
-			continue;
-		}
-
-		if (key == KEY_INSERT) {
-			text_edit_toggle_cursor();
-			insert_mode = !insert_mode;
-			text_edit_cursor_width =
-				insert_mode ? TEXT_EDIT_WIDE_CURSOR_WIDTH : TEXT_EDIT_NARROW_CURSOR_WIDTH;
-			text_edit_toggle_cursor();
-			first_key = 0;
-			continue;
-		}
-
-		if (key == KEY_DELETE) {
-			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor) &&
-				text[(legacy_u16)text_edit_cursor] != 0) {
-				read_line_erase_character(text, max_characters, 0);
-			}
-			first_key = 0;
-			continue;
-		}
-
-		if (key == KEY_BACKSPACE) {
-			if (text_edit_cursor != 0) {
-				read_line_erase_character(text, max_characters, 1);
-			}
-			first_key = 0;
-			continue;
-		}
-
-		if (LEGACY_S16_FROM_BITS(key) >= TEXT_EDIT_MINIMUM_CHARACTER &&
-			LEGACY_S16_FROM_BITS(key) <= TEXT_EDIT_MAXIMUM_CHARACTER &&
-			LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-			text_edit_toggle_cursor();
-			if (first_key && (input_flags & READ_LINE_RETAIN_INITIAL_TEXT) == 0) {
-				text_edit_cursor = 0;
-				for (index = 0; LEGACY_S16_FROM_BITS(index) < LEGACY_S16_FROM_BITS(max_characters);
-					 index = LEGACY_U16_WRAP_ADD(index, 1U)) {
-					text[index] = ' ';
-				}
-			}
-
-			index = (legacy_u16)text_edit_cursor;
-			if (text[index] == 0) {
-				text[LEGACY_U16_WRAP_ADD(index, 1U)] = 0;
-			}
-			if (insert_mode) {
-				legacy_u16 move_index;
-				move_index = LEGACY_U16_WRAP_SUB(max_characters, TEXT_EDIT_INSERT_MARGIN);
-				while (LEGACY_S16_FROM_BITS(move_index) >= LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-					text[LEGACY_U16_WRAP_ADD(move_index, 1U)] = text[move_index];
-					move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
-				}
-			}
-			text[index] = (legacy_s8)(legacy_u8)key;
-			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
-			}
-			text_edit_redraw();
-			text_edit_toggle_cursor();
-		}
-		first_key = 0;
+		read_line_type_character(&state, key);
+		state.first_key = 0;
 	}
 }
 

@@ -49,19 +49,135 @@ enum TRACK_MENU_BUTTON {
 	TRACK_MENU_EXIT_BUTTON = 2
 };
 
-void run_tracks_menu(legacy_s16 reload_track)
-{
-	legacy_s8 far *text_resource;
-	legacy_s8 far *prompt;
-	struct HIGHSCORE_ENTRY far *scores;
-	legacy_u8 text_offsets[TRACK_MENU_HIGHSCORE_FIELD_COUNT];
+struct TRACK_MENU_STATE {
 	legacy_u8 selected;
 	legacy_u8 previous;
 	legacy_u8 blit_mode;
+};
+
+static void track_menu_draw_preview(void)
+{
+	show_waiting();
+	waitflag = TRACK_MENU_PREVIEW_WAIT_TICKS;
+	render_window_sprite = sprite_make_wnd(TRACK_MENU_SCREEN_WIDTH, TRACK_MENU_SCREEN_HEIGHT,
+										   TRACK_MENU_TRANSPARENT_COLOR);
+	load_skybox((legacy_s8)track_element_map[TRACK_SKYBOX_ELEMENT_INDEX]);
+	shape3d_load_all();
+	set_projection(TRACK_PREVIEW_PROJECTION_SCALE, TRACK_PREVIEW_PROJECTION_SCALE,
+				   TRACK_MENU_SCREEN_WIDTH, TRACK_MENU_SCREEN_HEIGHT);
+	init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
+	sprite_select_render_window();
+	sprite_clear_target((legacy_u8)skybox.ground_color);
+	sprite_set_target_clip_bounds(0, TRACK_MENU_SCREEN_WIDTH, 0, TRACK_MENU_SCREEN_HEIGHT);
+	draw_track_preview();
+	shape3d_free_all();
+	unload_skybox();
+}
+
+static void track_menu_draw_highscore(void)
+{
+	struct HIGHSCORE_ENTRY far *scores;
+	legacy_u8 text_offsets[TRACK_MENU_HIGHSCORE_FIELD_COUNT];
+	legacy_u16 score;
+	if (highscore_load_or_create(0) == 0) {
+		scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
+		score = scores[ranking_entry_order[0]].time;
+		if (score != HIGHSCORE_UNSET_TIME) {
+			copy_string(&resID_byte1, locate_text_res(mainresptr, "hs0"));
+			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
+							TRACK_MENU_HIGHSCORE_LABEL_Y, dialog_fnt_colour, 0);
+			font_set_fontdef2(fontnptr);
+			print_highscore_entry(0, text_offsets);
+			font_set_colors(0, 0);
+			font_draw_text(&resID_byte1 + text_offsets[0], TRACK_MENU_HIGHSCORE_NAME_X,
+						   TRACK_MENU_HIGHSCORE_ENTRY_Y);
+			font_draw_text(&resID_byte1 + text_offsets[1], TRACK_MENU_HIGHSCORE_CAR_X,
+						   TRACK_MENU_HIGHSCORE_ENTRY_Y);
+			font_draw_text(&resID_byte1 + text_offsets[2], TRACK_MENU_HIGHSCORE_OPPONENT_X,
+						   TRACK_MENU_HIGHSCORE_ENTRY_Y);
+			font_draw_text(&resID_byte1 + text_offsets[3], TRACK_MENU_HIGHSCORE_TIME_X,
+						   TRACK_MENU_HIGHSCORE_ENTRY_Y);
+			font_set_fontdef();
+		}
+	}
+}
+
+static void track_menu_draw_buttons(void)
+{
+	legacy_s8 far *text_resource;
+	text_resource = (legacy_s8 far *)file_load_resfile("tedit");
+	draw_button(locate_text_res(text_resource, "bmt"), TRACK_MENU_FIRST_BUTTON_X,
+				TRACK_MENU_BUTTON_Y, TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bet"),
+				TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING, TRACK_MENU_BUTTON_Y,
+				TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT, button_top_color,
+				button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bmm"),
+				TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING * 2, TRACK_MENU_BUTTON_Y,
+				TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT, button_top_color,
+				button_bottom_color, button_fill_color, 0);
+	unload_resource(text_resource);
+}
+
+static legacy_u16 track_menu_poll_input(struct TRACK_MENU_STATE *menu)
+{
 	legacy_u16 elapsed;
 	legacy_u16 key;
-	legacy_u16 score;
 	legacy_s16 hit;
+	if (menu->selected != menu->previous) {
+		menu->previous = menu->selected;
+		sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(menu->blit_mode));
+		menu->blit_mode = MENU_BLIT_MODE_REFRESH;
+		sprite_select_screen_compat();
+		menu_reset_animation_timers();
+	}
+
+	elapsed = (legacy_u16)menu_animate_button_highlight(
+		menu->selected, trackmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
+	menu_update_idle_counter(elapsed, TRACK_MENU_IDLE_LIMIT_TICKS);
+	key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
+	hit = (legacy_s16)mouse_multi_hittest(TRACK_MENU_BUTTON_COUNT, trackmenu_buttons);
+	if (hit != -1) {
+		menu->selected = (legacy_u8)hit;
+	}
+	if (idle_expired != 0) {
+		menu->selected = TRACK_MENU_EXIT_BUTTON;
+		key = KEY_ENTER;
+	}
+	return key;
+}
+
+static legacy_u8 track_menu_activate_key(struct TRACK_MENU_STATE *menu, legacy_u16 key)
+{
+	if (key == 0) {
+		return 0;
+	}
+	if (key == KEY_LEFT) {
+		menu->selected = menu->selected == TRACK_MENU_LOAD_BUTTON
+							 ? TRACK_MENU_EXIT_BUTTON
+							 : (legacy_u8)(menu->selected - 1U);
+		return 0;
+	}
+	if (key == KEY_RIGHT) {
+		menu->selected = menu->selected >= TRACK_MENU_EXIT_BUTTON
+							 ? TRACK_MENU_LOAD_BUTTON
+							 : (legacy_u8)(menu->selected + 1U);
+		return 0;
+	}
+	if (key == KEY_ESCAPE) {
+		menu->selected = TRACK_MENU_NO_SELECTION;
+	} else if (key != KEY_ENTER && key != KEY_SPACE) {
+		return 0;
+	}
+	return 1;
+}
+
+void run_tracks_menu(legacy_s16 reload_track)
+{
+	struct TRACK_MENU_STATE menu;
+	legacy_s8 far *prompt;
+	legacy_u16 key;
 	legacy_s8 chosen;
 	legacy_s16 needs_track_setup;
 
@@ -77,110 +193,28 @@ void run_tracks_menu(legacy_s16 reload_track)
 			needs_track_setup = 0;
 		}
 
-		selected = 0;
-		previous = TRACK_MENU_NO_SELECTION;
-		blit_mode = MENU_BLIT_MODE_INITIAL;
-		show_waiting();
-		waitflag = TRACK_MENU_PREVIEW_WAIT_TICKS;
-		render_window_sprite = sprite_make_wnd(TRACK_MENU_SCREEN_WIDTH, TRACK_MENU_SCREEN_HEIGHT,
-											   TRACK_MENU_TRANSPARENT_COLOR);
-		load_skybox((legacy_s8)track_element_map[TRACK_SKYBOX_ELEMENT_INDEX]);
-		shape3d_load_all();
-		set_projection(TRACK_PREVIEW_PROJECTION_SCALE, TRACK_PREVIEW_PROJECTION_SCALE,
-					   TRACK_MENU_SCREEN_WIDTH, TRACK_MENU_SCREEN_HEIGHT);
-		init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
-		sprite_select_render_window();
-		sprite_clear_target((legacy_u8)skybox.ground_color);
-		sprite_set_target_clip_bounds(0, TRACK_MENU_SCREEN_WIDTH, 0, TRACK_MENU_SCREEN_HEIGHT);
-		draw_track_preview();
-		shape3d_free_all();
-		unload_skybox();
-
+		menu.selected = 0;
+		menu.previous = TRACK_MENU_NO_SELECTION;
+		menu.blit_mode = MENU_BLIT_MODE_INITIAL;
+		track_menu_draw_preview();
 		sprite_select_render_window();
 		strcpy(&resID_byte1, "'");
 		strcat(&resID_byte1, gameconfig.game_trackname);
 		strcat(&resID_byte1, "'");
 		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), TRACK_MENU_NAME_Y,
 						dialog_fnt_colour, 0);
-		if (highscore_load_or_create(0) == 0) {
-			scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
-			score = scores[ranking_entry_order[0]].time;
-			if (score != HIGHSCORE_UNSET_TIME) {
-				copy_string(&resID_byte1, locate_text_res(mainresptr, "hs0"));
-				intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
-								TRACK_MENU_HIGHSCORE_LABEL_Y, dialog_fnt_colour, 0);
-				font_set_fontdef2(fontnptr);
-				print_highscore_entry(0, text_offsets);
-				font_set_colors(0, 0);
-				font_draw_text(&resID_byte1 + text_offsets[0], TRACK_MENU_HIGHSCORE_NAME_X,
-							   TRACK_MENU_HIGHSCORE_ENTRY_Y);
-				font_draw_text(&resID_byte1 + text_offsets[1], TRACK_MENU_HIGHSCORE_CAR_X,
-							   TRACK_MENU_HIGHSCORE_ENTRY_Y);
-				font_draw_text(&resID_byte1 + text_offsets[2], TRACK_MENU_HIGHSCORE_OPPONENT_X,
-							   TRACK_MENU_HIGHSCORE_ENTRY_Y);
-				font_draw_text(&resID_byte1 + text_offsets[3], TRACK_MENU_HIGHSCORE_TIME_X,
-							   TRACK_MENU_HIGHSCORE_ENTRY_Y);
-				font_set_fontdef();
-			}
-		}
+		track_menu_draw_highscore();
 
-		text_resource = (legacy_s8 far *)file_load_resfile("tedit");
-		draw_button(locate_text_res(text_resource, "bmt"), TRACK_MENU_FIRST_BUTTON_X,
-					TRACK_MENU_BUTTON_Y, TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT,
-					button_top_color, button_bottom_color, button_fill_color, 0);
-		draw_button(locate_text_res(text_resource, "bet"),
-					TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING, TRACK_MENU_BUTTON_Y,
-					TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT, button_top_color,
-					button_bottom_color, button_fill_color, 0);
-		draw_button(locate_text_res(text_resource, "bmm"),
-					TRACK_MENU_FIRST_BUTTON_X + TRACK_MENU_BUTTON_SPACING * 2, TRACK_MENU_BUTTON_Y,
-					TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT, button_top_color,
-					button_bottom_color, button_fill_color, 0);
-		unload_resource(text_resource);
+		track_menu_draw_buttons();
 
 		for (;;) {
-			if (selected != previous) {
-				previous = selected;
-				sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
-				blit_mode = MENU_BLIT_MODE_REFRESH;
-				sprite_select_screen_compat();
-				menu_reset_animation_timers();
-			}
+			key = track_menu_poll_input(&menu);
 
-			elapsed = (legacy_u16)menu_animate_button_highlight(selected, trackmenu_buttons,
-																menu_highlight_second_color,
-																menu_highlight_first_color);
-			menu_update_idle_counter(elapsed, TRACK_MENU_IDLE_LIMIT_TICKS);
-			key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-			hit = (legacy_s16)mouse_multi_hittest(TRACK_MENU_BUTTON_COUNT, trackmenu_buttons);
-			if (hit != -1) {
-				selected = (legacy_u8)hit;
-			}
-			if (idle_expired != 0) {
-				selected = TRACK_MENU_EXIT_BUTTON;
-				key = KEY_ENTER;
-			}
-
-			if (key == 0) {
-				continue;
-			}
-			if (key == KEY_LEFT) {
-				selected = selected == TRACK_MENU_LOAD_BUTTON ? TRACK_MENU_EXIT_BUTTON
-															  : (legacy_u8)(selected - 1U);
-				continue;
-			}
-			if (key == KEY_RIGHT) {
-				selected = selected >= TRACK_MENU_EXIT_BUTTON ? TRACK_MENU_LOAD_BUTTON
-															  : (legacy_u8)(selected + 1U);
-				continue;
-			}
-			if (key == KEY_ESCAPE) {
-				selected = TRACK_MENU_NO_SELECTION;
-			} else if (key != KEY_ENTER && key != KEY_SPACE) {
+			if (track_menu_activate_key(&menu, key) == 0) {
 				continue;
 			}
 
-			if (selected == TRACK_MENU_LOAD_BUTTON) {
+			if (menu.selected == TRACK_MENU_LOAD_BUTTON) {
 				prompt = locate_text_res(mainresptr, "trk");
 				chosen = do_fileselect_dialog(track_directory, gameconfig.game_trackname, ".trk",
 											  prompt);
@@ -190,12 +224,12 @@ void run_tracks_menu(legacy_s16 reload_track)
 					sprite_free_wnd(render_window_sprite);
 					break;
 				}
-				previous = TRACK_MENU_NO_SELECTION;
+				menu.previous = TRACK_MENU_NO_SELECTION;
 				continue;
 			}
 
 			sprite_free_wnd(render_window_sprite);
-			if (selected == TRACK_MENU_EDIT_BUTTON) {
+			if (menu.selected == TRACK_MENU_EDIT_BUTTON) {
 				needs_track_setup = 1;
 			} else {
 				return;

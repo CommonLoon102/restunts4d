@@ -434,26 +434,9 @@ static legacy_u16 car_menu_read_input(struct CAR_MENU_STATE *menu)
 	return input;
 }
 
-static legacy_s16 car_menu_handle_input(struct CAR_MENU_STATE *menu, legacy_u16 input)
+static legacy_s16 car_menu_activate_selection(struct CAR_MENU_STATE *menu)
 {
 	legacy_s8 far *transmission_text;
-	if (input == 0) {
-		return 0;
-	}
-	if (input == KEY_UP) {
-		menu->selected = menu->selected == CAR_MENU_DONE_BUTTON ? CAR_MENU_COLOR_BUTTON
-																: (legacy_u8)(menu->selected - 1U);
-		return 0;
-	}
-	if (input == KEY_DOWN) {
-		menu->selected = menu->selected >= CAR_MENU_COLOR_BUTTON ? CAR_MENU_DONE_BUTTON
-																 : (legacy_u8)(menu->selected + 1U);
-		return 0;
-	}
-	if (input != KEY_ENTER && input != KEY_ESCAPE && input != KEY_SPACE) {
-		return 0;
-	}
-
 	if (menu->selected == CAR_MENU_DONE_BUTTON) {
 		if (menu->car_ready == 0) {
 			return 0;
@@ -488,6 +471,28 @@ static legacy_s16 car_menu_handle_input(struct CAR_MENU_STATE *menu, legacy_u16 
 	} else {
 		return 0;
 	}
+}
+
+static legacy_s16 car_menu_handle_input(struct CAR_MENU_STATE *menu, legacy_u16 input)
+{
+	if (input == 0) {
+		return 0;
+	}
+	if (input == KEY_UP) {
+		menu->selected = menu->selected == CAR_MENU_DONE_BUTTON ? CAR_MENU_COLOR_BUTTON
+																: (legacy_u8)(menu->selected - 1U);
+		return 0;
+	}
+	if (input == KEY_DOWN) {
+		menu->selected = menu->selected >= CAR_MENU_COLOR_BUTTON ? CAR_MENU_DONE_BUTTON
+																 : (legacy_u8)(menu->selected + 1U);
+		return 0;
+	}
+	if (input != KEY_ENTER && input != KEY_ESCAPE && input != KEY_SPACE) {
+		return 0;
+	}
+
+	return car_menu_activate_selection(menu);
 }
 
 static void car_menu_release(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)

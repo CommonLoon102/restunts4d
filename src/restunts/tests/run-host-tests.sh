@@ -39,12 +39,22 @@ run_host_test() {
 run_host_test test-race-flow legacy.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-race-frames legacy.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-car-menu menu_car.c \
     "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-car-speed statecar.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c"
+run_host_test test-startup math.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    "$test_source_dir/headless_data.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers -Wno-unused-variable
+run_host_test test-credits legacy.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    "$test_source_dir/headless_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-dashboard dashboard.c \
     "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
@@ -89,6 +99,13 @@ run_host_test test-pixldump-md5 ../pixldump/md5.c
 run_host_test test-polygon-edges shape3d_prerender.c \
     "$test_source_dir/full_data.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
+run_host_test test-input-record legacy.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers -Wno-maybe-uninitialized
+run_host_test test-replay-menu replay.c \
+    "$test_source_dir/legacy.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-replay-controls legacy.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" "$test_source_dir/math.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
@@ -116,6 +133,18 @@ run_host_test test-skybox-render skybox.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
+run_host_test test-editor-boundaries legacy.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers -Wno-missing-braces
+run_host_test test-menu-options menu_options.c \
+    "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-menu-navigation menu_opponent.c \
+    "$test_source_dir/menu_track.c" "$test_source_dir/legacy.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    "$test_source_dir/headless_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-track-editor legacy.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
     "$test_source_dir/full_data.c" \
@@ -130,6 +159,9 @@ run_host_test test-track-setup track_setup.c \
     -Wno-missing-braces -Wno-type-limits -Wno-pointer-sign -Wno-unused-variable \
     -Wno-maybe-uninitialized
 run_host_test test-track-resource-decoding trackres.c
+run_host_test test-ui-file-input ui_dialog.c \
+    "$test_source_dir/ui_input.c" "$test_source_dir/legacy.c" \
+    "$test_source_dir/strlib.c" "$test_source_dir/resource.c" -Wno-pointer-sign
 run_host_test test-ui-dialog ui_dialog.c "$test_source_dir/legacy.c" -Wno-pointer-sign
 
 echo "All host regression tests passed."

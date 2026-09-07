@@ -231,16 +231,9 @@ void load_palandcursor(void)
 	sprite_select_screen_compat();
 }
 
-legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
+static legacy_s16 input_handle_display_shortcut(legacy_s16 key)
 {
 	switch (key) {
-		case KEY_ESCAPE:
-			if (game_replay_mode == REPLAY_MODE_LIVE) {
-				update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-			}
-			race_exit_request = 1;
-			return 1;
-
 		case 'D':
 		case 'd':
 			dashb_toggle ^= 1;
@@ -261,7 +254,13 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 		case 'r':
 			replaybar_toggle ^= 1;
 			return 1;
+	}
+	return 0;
+}
 
+static legacy_s16 input_handle_camera_shortcut(legacy_s16 key)
+{
+	switch (key) {
 		case 'C':
 		case 'c':
 			if (game_replay_mode != REPLAY_MODE_PAUSED) {
@@ -269,12 +268,6 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 				if (cameramode == CAMERA_MODE_COUNT) {
 					cameramode = CAMERA_MODE_COCKPIT;
 				}
-			}
-			return 1;
-
-		case 't':
-			if (gameconfig.game_opponenttype != 0) {
-				followOpponentFlag ^= 1;
 			}
 			return 1;
 
@@ -289,6 +282,28 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 			return 1;
 		case KEY_F4:
 			cameramode = CAMERA_MODE_TRACKSIDE;
+			return 1;
+	}
+	return 0;
+}
+
+legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
+{
+	if (input_handle_display_shortcut(key) || input_handle_camera_shortcut(key)) {
+		return 1;
+	}
+	switch (key) {
+		case KEY_ESCAPE:
+			if (game_replay_mode == REPLAY_MODE_LIVE) {
+				update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
+			}
+			race_exit_request = 1;
+			return 1;
+
+		case 't':
+			if (gameconfig.game_opponenttype != 0) {
+				followOpponentFlag ^= 1;
+			}
 			return 1;
 	}
 
@@ -364,12 +379,8 @@ legacy_s16 get_kb_or_joy_flags(void)
 	return LEGACY_S16_FROM_BITS(flags);
 }
 
-legacy_s16 input_checking(legacy_s16 frame_delta)
+static void input_advance_clock(legacy_s16 frame_delta)
 {
-	legacy_u16 current_joy_flags;
-	legacy_u16 key;
-	legacy_s16 changed_or_repeating;
-
 	input_elapsed_frames = LEGACY_U16_WRAP_ADD(input_elapsed_frames, frame_delta);
 	if (LEGACY_S16_FROM_BITS(input_elapsed_frames) > INPUT_COUNTER_WRAP_LIMIT) {
 		input_elapsed_frames = LEGACY_U16_WRAP_SUB(input_elapsed_frames, INPUT_COUNTER_WRAP_AMOUNT);
@@ -378,13 +389,29 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		input_joystick_repeat_at =
 			LEGACY_U16_WRAP_SUB(input_joystick_repeat_at, INPUT_COUNTER_WRAP_AMOUNT);
 	}
+}
 
-	key = (legacy_u16)dos_kb_get_char();
-	if (key != 0) {
-		kbormouse = 0;
+static void input_translate_joystick_key(void)
+{
+	if (((legacy_u16)input_new_joystick_flags & INPUT_SECONDARY_ACTION_FLAG) != 0) {
+		input_joystick_keycode = KEY_ENTER;
+	} else if (((legacy_u16)input_new_joystick_flags & INPUT_PRIMARY_ACTION_FLAG) != 0) {
+		input_joystick_keycode = KEY_SPACE;
+	} else if (((legacy_u16)input_new_joystick_flags & INPUT_ACCELERATE_FLAG) != 0) {
+		input_joystick_keycode = KEY_UP;
+	} else if (((legacy_u16)input_new_joystick_flags & INPUT_BRAKE_FLAG) != 0) {
+		input_joystick_keycode = KEY_DOWN;
+	} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_LEFT_FLAG) != 0) {
+		input_joystick_keycode = KEY_LEFT;
+	} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_RIGHT_FLAG) != 0) {
+		input_joystick_keycode = KEY_RIGHT;
 	}
-	current_joy_flags = (legacy_u16)dos_get_joy_flags();
-	input_combined_flags = get_kb_or_joy_flags();
+}
+
+static void input_update_joystick(legacy_u16 current_joy_flags)
+{
+	legacy_s16 changed_or_repeating;
+
 	changed_or_repeating = 0;
 	if ((legacy_u16)input_joystick_flags != current_joy_flags) {
 		input_new_joystick_flags =
@@ -396,26 +423,17 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 	}
 
 	if (changed_or_repeating) {
-		if (((legacy_u16)input_new_joystick_flags & INPUT_SECONDARY_ACTION_FLAG) != 0) {
-			input_joystick_keycode = KEY_ENTER;
-		} else if (((legacy_u16)input_new_joystick_flags & INPUT_PRIMARY_ACTION_FLAG) != 0) {
-			input_joystick_keycode = KEY_SPACE;
-		} else if (((legacy_u16)input_new_joystick_flags & INPUT_ACCELERATE_FLAG) != 0) {
-			input_joystick_keycode = KEY_UP;
-		} else if (((legacy_u16)input_new_joystick_flags & INPUT_BRAKE_FLAG) != 0) {
-			input_joystick_keycode = KEY_DOWN;
-		} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_LEFT_FLAG) != 0) {
-			input_joystick_keycode = KEY_LEFT;
-		} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_RIGHT_FLAG) != 0) {
-			input_joystick_keycode = KEY_RIGHT;
-		}
+		input_translate_joystick_key();
 
 		if (input_joystick_keycode != 0) {
 			input_joystick_repeat_at = input_elapsed_frames;
 			kbormouse = 0;
 		}
 	}
+}
 
+static void input_update_mouse_activity(legacy_s16 frame_delta)
+{
 	dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
 	if (input_mouse_previous_x != mouse_xpos || input_mouse_previous_y != mouse_ypos ||
 		input_mouse_previous_buttons != mouse_butstate) {
@@ -439,6 +457,11 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 			}
 		}
 	}
+}
+
+static void input_update_mouse_buttons(void)
+{
+	legacy_s16 changed_or_repeating;
 
 	if (kbormouse != 0) {
 		changed_or_repeating = 0;
@@ -470,7 +493,23 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 			}
 		}
 	}
+}
 
+legacy_s16 input_checking(legacy_s16 frame_delta)
+{
+	legacy_u16 current_joy_flags;
+	legacy_u16 key;
+
+	input_advance_clock(frame_delta);
+	key = (legacy_u16)dos_kb_get_char();
+	if (key != 0) {
+		kbormouse = 0;
+	}
+	current_joy_flags = (legacy_u16)dos_get_joy_flags();
+	input_combined_flags = get_kb_or_joy_flags();
+	input_update_joystick(current_joy_flags);
+	input_update_mouse_activity(frame_delta);
+	input_update_mouse_buttons();
 	if (key != 0) {
 		return key;
 	}
@@ -528,18 +567,76 @@ static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 wid
 	}
 }
 
+struct MOUSE_TRACK_DRAG {
+	legacy_s16 x;
+	legacy_s16 width;
+	legacy_s16 y;
+	legacy_s16 height;
+	legacy_s16 horizontal;
+	legacy_s16 length;
+	legacy_s16 thumb_start;
+	legacy_s16 thumb_size;
+};
+
+static legacy_s16 mouse_track_page(legacy_s16 coordinate, legacy_s16 thumb_start,
+								   legacy_s16 selected, legacy_s16 item_count)
+{
+	do {
+		input_checking((legacy_s16)timer_get_delta_alt());
+	} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
+	if (coordinate < thumb_start) {
+		if (selected != 0) {
+			selected = LEGACY_S16_WRAP_SUB(selected, 1);
+		}
+	} else if (LEGACY_S16_FROM_BITS(selected) < LEGACY_S16_WRAP_SUB(item_count, 1)) {
+		selected = LEGACY_S16_WRAP_ADD(selected, 1);
+	}
+	return selected;
+}
+
+static legacy_s16 mouse_track_drag(const struct MOUSE_TRACK_DRAG *track, legacy_s16 coordinate)
+{
+	legacy_s16 previous_start;
+	legacy_s16 current_coordinate;
+	legacy_s16 dragged_start;
+
+	previous_start = track->thumb_start;
+	do {
+		input_checking((legacy_s16)timer_get_delta_alt());
+		current_coordinate = track->horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, track->x)
+											   : LEGACY_S16_WRAP_SUB(mouse_ypos, track->y);
+		dragged_start = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
+											track->thumb_start);
+		if (dragged_start < 0) {
+			dragged_start = 0;
+		} else if (LEGACY_S16_WRAP_ADD(dragged_start, track->thumb_size) >
+				   LEGACY_S16_WRAP_SUB(track->length, 1)) {
+			dragged_start =
+				LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(track->length, track->thumb_size), 1);
+		}
+
+		if (dragged_start != previous_start) {
+			previous_start = dragged_start;
+			mouse_draw_opaque_check();
+			mouse_track_draw(track->horizontal, track->x, track->width, track->y, track->height,
+							 dragged_start, track->thumb_size);
+			mouse_draw_transparent_check();
+		}
+	} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
+	return dragged_start;
+}
+
 legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y,
 							legacy_s16 height, legacy_s16 selected, legacy_s16 selection_width,
 							legacy_s16 item_count)
 {
+	struct MOUSE_TRACK_DRAG track;
 	legacy_s16 length;
 	legacy_s16 thumb_start;
 	legacy_s16 thumb_end;
 	legacy_s16 thumb_size;
 	legacy_s16 coordinate;
-	legacy_s16 current_coordinate;
 	legacy_s16 dragged_start;
-	legacy_s16 previous_start;
 	legacy_s16 quotient;
 	legacy_s16 scaled;
 	legacy_s16 horizontal;
@@ -560,39 +657,18 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 	coordinate =
 		horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, x) : LEGACY_S16_WRAP_SUB(mouse_ypos, y);
 	if (coordinate < thumb_start || coordinate > thumb_end) {
-		do {
-			input_checking((legacy_s16)timer_get_delta_alt());
-		} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
-		if (coordinate < thumb_start) {
-			if (selected != 0) {
-				selected = LEGACY_S16_WRAP_SUB(selected, 1);
-			}
-		} else if (LEGACY_S16_FROM_BITS(selected) < LEGACY_S16_WRAP_SUB(item_count, 1)) {
-			selected = LEGACY_S16_WRAP_ADD(selected, 1);
-		}
+		selected = mouse_track_page(coordinate, thumb_start, selected, item_count);
 	} else {
 		selected = -1;
-		previous_start = thumb_start;
-		do {
-			input_checking((legacy_s16)timer_get_delta_alt());
-			current_coordinate = horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, x)
-											: LEGACY_S16_WRAP_SUB(mouse_ypos, y);
-			dragged_start = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
-												thumb_start);
-			if (dragged_start < 0) {
-				dragged_start = 0;
-			} else if (LEGACY_S16_WRAP_ADD(dragged_start, thumb_size) >
-					   LEGACY_S16_WRAP_SUB(length, 1)) {
-				dragged_start = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(length, thumb_size), 1);
-			}
-
-			if (dragged_start != previous_start) {
-				previous_start = dragged_start;
-				mouse_draw_opaque_check();
-				mouse_track_draw(horizontal, x, width, y, height, dragged_start, thumb_size);
-				mouse_draw_transparent_check();
-			}
-		} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
+		track.x = x;
+		track.width = width;
+		track.y = y;
+		track.height = height;
+		track.horizontal = horizontal;
+		track.length = length;
+		track.thumb_start = thumb_start;
+		track.thumb_size = thumb_size;
+		dragged_start = mouse_track_drag(&track, coordinate);
 	}
 
 	if (selected == -1) {

@@ -346,6 +346,29 @@ static legacy_u16 race_frame_is_ready(legacy_s16 *last_processed_frame)
 	return 1;
 }
 
+static legacy_s16 race_process_frame_input(void)
+{
+	if (idle_expired == 0) {
+		if (race_handle_exit_request() != 0) {
+			return 1;
+		}
+
+		if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
+			loop_game(REPLAY_LOOP_HANDLE_INPUT, REPLAY_LOOP_UNUSED_ARGUMENT,
+					  REPLAY_LOOP_UNUSED_ARGUMENT);
+			return 0;
+		}
+
+		race_handle_driving_input();
+
+	} else {
+		if (dos_kb_get_char() != 0 || race_exit_request != 0 || get_kb_or_joy_flags() != 0) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 static void race_run_frames(struct RACE_VIEWPORT_CACHE *cache)
 {
 	legacy_s16 last_processed_frame = -1;
@@ -383,23 +406,8 @@ static void race_run_frames(struct RACE_VIEWPORT_CACHE *cache)
 			init_game_state_with_frame_rate(configured_frame_rate);
 		}
 
-		if (idle_expired == 0) {
-			if (race_handle_exit_request() != 0) {
-				break;
-			}
-
-			if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
-				loop_game(REPLAY_LOOP_HANDLE_INPUT, REPLAY_LOOP_UNUSED_ARGUMENT,
-						  REPLAY_LOOP_UNUSED_ARGUMENT);
-				continue;
-			}
-
-			race_handle_driving_input();
-
-		} else {
-			if (dos_kb_get_char() != 0 || race_exit_request != 0 || get_kb_or_joy_flags() != 0) {
-				break;
-			}
+		if (race_process_frame_input() != 0) {
+			break;
 		}
 	}
 }

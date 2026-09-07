@@ -159,14 +159,14 @@ void copy_material_list_pointers(void *clrlist, void *clrlist2, void *patlist, v
 	reserved_material_video_word = reserved_video_word;
 }
 
-void init_main(legacy_s16 argc, legacy_s8 *argv[])
-{
-	legacy_u16 i, j;
-	legacy_u8 mode4_requested, sound_disabled, unused_nd_option;
-	legacy_u32 full_clear_ticks, partial_redraw_ticks, geometry_benchmark_ticks;
-	struct POINT2D benchmark_point;
-	struct RECTANGLE benchmark_bounds;
+struct STARTUP_OPTIONS {
+	legacy_u8 mode4_requested;
+	legacy_u8 sound_disabled;
+	legacy_u8 unused_nd_option;
+};
 
+static void startup_install_keyboard_callbacks(void)
+{
 	// Keyboard
 	kb_init_interrupt();
 	dos_kb_clear_numlock();
@@ -181,85 +181,59 @@ void init_main(legacy_s16 argc, legacy_s8 *argv[])
 	kb_reg_callback(CALLBACK_DOS_HELP_KEY, &show_exit_to_dos_dialog);
 	kb_reg_callback(CALLBACK_SOUND_HELP_KEY, &toggle_effects_with_dialog);
 	kb_reg_callback(CALLBACK_DOS_HELP_ALT_KEY, &show_exit_to_dos_dialog);
+}
 
-	// Video
-	init_video_geometry_flags();
+static void startup_select_audio_driver(const legacy_s8 *argument)
+{
+	if (strlen(argument) >= 4) {
+		if ((argument[2] == 'S' || argument[2] == 's') &&
+			(argument[3] == 'B' || argument[3] == 'b')) {
+			// Use the Sound Blaster's AdLib-compatible FM synthesizer.
+			audiodriverstring[0] = 'a';
+			audiodriverstring[1] = 'd';
+		} else {
+			audiodriverstring[0] = argument[2];
+			audiodriverstring[1] = argument[3];
+		}
+	}
+}
 
-	mmgr_init_conventional_arena();
-	audio_allocate_car_state_records();
-
-	video_uses_page_flipping = 0;
-	video_page_count = 1;
-
-	textresprefix = 'e';
-
-	// Parse arguments.
-	mode4_requested = 0;
-	sound_disabled = 0;
-	unused_nd_option = 0;
-
+static void startup_parse_options(legacy_s16 argc, legacy_s8 *argv[],
+								  struct STARTUP_OPTIONS *options)
+{
+	legacy_u16 i;
+	options->mode4_requested = 0;
+	options->sound_disabled = 0;
+	options->unused_nd_option = 0;
 	for (i = 1; argc > i; ++i) {
 		if (argv[i][0] == '/') {
 			switch (argv[i][1]) {
 				case 'h':
-					mode4_requested = 4;
+					options->mode4_requested = 4;
 					break;
 
 				case 'n':
 					if (argv[i][2] == 's') {
-						sound_disabled = 1;
+						options->sound_disabled = 1;
 					} else if (argv[i][2] == 'd') {
-						unused_nd_option = 1;
+						options->unused_nd_option = 1;
 					}
 					break;
 
 				case 's':
-					if (strlen(argv[i]) >= 4) {
-						if ((argv[i][2] == 'S' || argv[i][2] == 's') &&
-							(argv[i][3] == 'B' || argv[i][3] == 'b')) {
-							// Use the Sound Blaster's AdLib-compatible FM synthesizer.
-							audiodriverstring[0] = 'a';
-							audiodriverstring[1] = 'd';
-						} else {
-							audiodriverstring[0] = argv[i][2];
-							audiodriverstring[1] = argv[i][3];
-						}
-						break;
-					}
+					startup_select_audio_driver(argv[i]);
+					break;
 			}
 		}
 	}
+}
 
-	// Unused "/nd" switch. Maybe used when loading other video drivers?
-	(void)unused_nd_option;
-
-	// Video mode.
-	dos_video_set_mode_13h();
-	if (mode4_requested) {
-		dos_video_set_mode4();
-	}
-
-	dos_timer_setup_interrupt();
-
-	sprite_select_screen_and_clear();
-
-	dos_mouse_init(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
-
-	// Audio driver.
-	if (audio_load_dos_driver(audiodriverstring, 0, 0)) {
-		dos_timer_shutdown();
-		dos_process_exit(1);
-	}
-
-	if (sound_disabled) {
-		audio_toggle_music();
-		audio_toggle_effects();
-	}
-
-	dos_set_critical_error_handler(&show_disk_error_dialog);
-
-	load_palandcursor();
-
+static void startup_measure_video(void)
+{
+	legacy_u16 i, j;
+	legacy_u32 full_clear_ticks, partial_redraw_ticks, geometry_benchmark_ticks;
+	struct POINT2D benchmark_point;
+	struct RECTANGLE benchmark_bounds;
 	// Timing measures.
 	sprite_select_screen();
 	sprite_set_target_clip_bounds(0, 320, 0, 120);
@@ -314,6 +288,56 @@ void init_main(legacy_s16 argc, legacy_s8 *argv[])
 
 	framespersec = configured_frame_rate;
 	slow_video_mgmt_copy = slow_video_mgmt;
+}
+
+void init_main(legacy_s16 argc, legacy_s8 *argv[])
+{
+	struct STARTUP_OPTIONS options;
+	startup_install_keyboard_callbacks();
+	// Video
+	init_video_geometry_flags();
+
+	mmgr_init_conventional_arena();
+	audio_allocate_car_state_records();
+
+	video_uses_page_flipping = 0;
+	video_page_count = 1;
+
+	textresprefix = 'e';
+
+	startup_parse_options(argc, argv, &options);
+
+	// Unused "/nd" switch. Maybe used when loading other video drivers?
+	(void)options.unused_nd_option;
+
+	// Video mode.
+	dos_video_set_mode_13h();
+	if (options.mode4_requested) {
+		dos_video_set_mode4();
+	}
+
+	dos_timer_setup_interrupt();
+
+	sprite_select_screen_and_clear();
+
+	dos_mouse_init(GAME_SCREEN_WIDTH, GAME_SCREEN_HEIGHT);
+
+	// Audio driver.
+	if (audio_load_dos_driver(audiodriverstring, 0, 0)) {
+		dos_timer_shutdown();
+		dos_process_exit(1);
+	}
+
+	if (options.sound_disabled) {
+		audio_toggle_music();
+		audio_toggle_effects();
+	}
+
+	dos_set_critical_error_handler(&show_disk_error_dialog);
+
+	load_palandcursor();
+
+	startup_measure_video();
 
 	random_wait();
 
@@ -457,15 +481,133 @@ legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8 *argv[])
 	return 0;
 }
 
+static legacy_s16 main_menu_select_race(legacy_s16 result, legacy_s8 *start_in_replay)
+{
+	if (result == -1) {
+		return -1;
+	} else if (result == 0) {
+		*start_in_replay = 0;
+	} else if (result == 1) {
+		check_input();
+		show_waiting();
+		run_car_menu(&gameconfig.game_playercarid[0], &gameconfig.game_playermaterial,
+					 &gameconfig.game_playertransmission, 0);
+		return 0;
+	} else if (result == 2) {
+		check_input();
+		show_waiting();
+		run_opponent_menu();
+		return 0;
+	} else if (result == 3) {
+		run_tracks_menu(0);
+		return 0;
+	} else if (result == 4) {
+		check_input();
+		show_waiting();
+		result = run_option_menu();
+		if (result == 0) {
+			return 0;
+		} else {
+			// Enter replay mode if the option-menu result is nonzero.
+			*start_in_replay = 1;
+		}
+	} else {
+		return 0;
+	}
+
+	return 1;
+}
+
+static void main_menu_backup_track(void)
+{
+	legacy_s16 i;
+	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
+	for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+		track_and_directory_backup[i] = track_element_map[i];
+	}
+	for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+		track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET] = track_directory[i];
+		track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET] = replay_directory[i];
+	}
+}
+
+static void main_menu_restore_track(void)
+{
+	legacy_s16 i;
+	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
+	for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+		track_element_map[i] = track_and_directory_backup[i];
+	}
+	for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+		track_directory[i] = track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET];
+		replay_directory[i] = track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET];
+	}
+}
+
+static legacy_s16 main_menu_prepare_track(void)
+{
+	legacy_s16 result;
+	if (idle_expired == 0) {
+		result = track_setup();
+		//result = setup_track();
+		if (result != 0) {
+			run_tracks_menu(1);
+			return 0;
+		}
+		random_wait();
+		if (passed_security == 0) {
+			fatal_error("security check");
+			//get_super_random();
+			//security_check();
+		}
+	} else if (file_find("tedit.*") == 0) {
+		return -1;
+	}
+
+	return 1;
+}
+
+static void main_menu_run_race(legacy_s8 start_in_replay)
+{
+	legacy_s16 result;
+	cvxptr = mmgr_alloc_resbytes("cvx", sizeof(struct GAMESTATE) * GAMESTATE_CHECKPOINT_COUNT);
+	init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
+
+	if (start_in_replay != 0) {
+		replay_recording_flags = 0;
+	} else {
+
+		gameconfig.game_recordedframes = 0;
+	}
+
+	while (1) {
+		show_waiting();
+		run_game();
+		if (idle_expired == 0 && replay_recording_flags != 0) {
+			result = end_hiscore();
+			if (result == 0) {
+				// view replay
+				replay_recording_flags = REPLAY_RECORDING_RESTARTABLE_FLAG;
+				continue;
+			} else if (result == 1) {
+				// drive
+				gameconfig.game_recordedframes = 0;
+				continue;
+			}
+		}
+		// main menu
+		break;
+	}
+
+	main_menu_restore_track();
+	mmgr_release(cvxptr);
+}
+
 legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8 *argv[])
 {
-
-	legacy_s16 i, result;
-	legacy_s16 unused_result, reload_track;
+	legacy_s16 result, reload_track;
 	legacy_s8 start_in_replay;
-	legacy_s8 far *trkptr;
 	legacy_s8 far *textresptr;
-
 	init_full_game(argc, argv);
 
 	//fatal_error("ai");
@@ -503,111 +645,26 @@ legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8 *argv[])
 			if (is_audioloaded == 0) {
 				file_load_audiores("skidslct", "skidms", "SLCT");
 			}
-			result = run_menu();
+			result = main_menu_select_race(run_menu(), &start_in_replay);
+			if (result == 0) {
+				continue;
+			}
 			if (result == -1) {
 				audio_unload();
 				reload_track = 0;
 				break;
-			} else if (result == 0) {
-				start_in_replay = 0;
-			} else if (result == 1) {
-				check_input();
-				show_waiting();
-				run_car_menu(&gameconfig.game_playercarid[0], &gameconfig.game_playermaterial,
-							 &gameconfig.game_playertransmission, 0);
-				continue;
-			} else if (result == 2) {
-				check_input();
-				show_waiting();
-				run_opponent_menu();
-				continue;
-			} else if (result == 3) {
-				run_tracks_menu(0);
-				continue;
-			} else if (result == 4) {
-				check_input();
-				show_waiting();
-				result = run_option_menu();
-				if (result == 0) {
-					continue;
-				} else {
-					// Enter replay mode if the option-menu result is nonzero.
-					start_in_replay = 1;
-				}
-			} else {
+			}
+			main_menu_backup_track();
+			result = main_menu_prepare_track();
+			if (result == 0) {
 				continue;
 			}
-
-			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
-				track_and_directory_backup[i] = track_element_map[i];
-			}
-			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
-				track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET] = track_directory[i];
-				track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET] = replay_directory[i];
-			}
-
-			if (idle_expired == 0) {
-				result = track_setup();
-				//result = setup_track();
-				if (result != 0) {
-					run_tracks_menu(1);
-					continue;
-				}
-				random_wait();
-				if (passed_security == 0) {
-					fatal_error("security check");
-					//get_super_random();
-					//security_check();
-				}
-			} else if (file_find("tedit.*") == 0) {
-				audio_unload();
+			audio_unload();
+			if (result == -1) {
 				reload_track = 0;
 				break;
 			}
-
-			audio_unload();
-
-			cvxptr =
-				mmgr_alloc_resbytes("cvx", sizeof(struct GAMESTATE) * GAMESTATE_CHECKPOINT_COUNT);
-			init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
-
-			if (start_in_replay != 0) {
-				replay_recording_flags = 0;
-			} else {
-
-				gameconfig.game_recordedframes = 0;
-			}
-
-			while (1) {
-				show_waiting();
-				run_game();
-				if (idle_expired == 0 && replay_recording_flags != 0) {
-					result = end_hiscore();
-					if (result == 0) {
-						// view replay
-						replay_recording_flags = REPLAY_RECORDING_RESTARTABLE_FLAG;
-						continue;
-					} else if (result == 1) {
-						// drive
-						gameconfig.game_recordedframes = 0;
-						continue;
-					}
-				}
-				// main menu
-				break;
-			}
-
-			_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-			for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
-				track_element_map[i] = track_and_directory_backup[i];
-			}
-			for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
-				track_directory[i] = track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET];
-				replay_directory[i] = track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET];
-			}
-			mmgr_release(cvxptr);
-
+			main_menu_run_race(start_in_replay);
 			if (idle_expired != 0) {
 				reload_track = 0;
 				break;

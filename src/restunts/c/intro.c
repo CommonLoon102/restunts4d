@@ -143,34 +143,8 @@ static void intro_draw_resource_line(legacy_s8 far *resource, legacy_s8 *resourc
 	intro_draw_text(&resID_byte1, x, y, color, shadow_color);
 }
 
-legacy_s8 load_intro_resources(void)
+static void credits_draw_title(legacy_s8 far *credit_resource)
 {
-	legacy_s8 far *credit_resource;
-	struct SHAPE2D far *credit_shapes[CREDITS_RESOURCE_COUNT];
-	struct SHAPE2D far *arrow_shape;
-	legacy_s16 target_x;
-	legacy_s16 arrow_x;
-	legacy_s16 arrow_y;
-	legacy_s16 arrow_width;
-	legacy_s16 arrow_height;
-	legacy_s16 frame_elapsed;
-	legacy_s16 animation_elapsed;
-	legacy_s16 animation_target;
-	legacy_s16 input;
-	legacy_u16 animation_index;
-
-	credit_resource = (legacy_s8 far *)file_load_resfile(credits_resource_name);
-	locate_many_resources((legacy_s8 far *)ui_temp_resource, credits_shape_ids,
-						  (legacy_s8 far **)credit_shapes);
-	waitflag = CREDITS_INITIAL_WAIT;
-	sprite_select_render_window_and_clear();
-	arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
-	target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
-	arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
-	arrow_width =
-		LEGACY_S16_WRAP_MUL((legacy_s16)shape2d_get_width(arrow_shape), video_shape_width_scale);
-	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
-
 	intro_draw_resource_line(credit_resource, credits_title_id, CREDITS_LINE_TEXT, CREDITS_TITLE_X,
 							 CREDITS_TITLE_Y, credits_title_color, credits_title_shadow_color);
 	intro_draw_resource_line(credit_resource, credits_first_logo_shape_id, CREDITS_LINE_SHAPE,
@@ -179,6 +153,10 @@ legacy_s8 load_intro_resources(void)
 	intro_draw_resource_line(credit_resource, credits_second_logo_shape_id, CREDITS_LINE_SHAPE,
 							 CREDITS_SECOND_LOGO_X, CREDITS_SECOND_LOGO_Y, credits_text_color,
 							 credits_text_shadow_color);
+}
+
+static void credits_draw_designers(legacy_s8 far *credit_resource)
+{
 	intro_draw_resource_line(credit_resource, credits_design_heading_id, CREDITS_LINE_TEXT,
 							 CREDITS_LEFT_COLUMN_X, CREDITS_DESIGN_HEADING_Y,
 							 credits_design_heading_color, credits_design_heading_shadow_color);
@@ -197,6 +175,10 @@ legacy_s8 load_intro_resources(void)
 	intro_draw_resource_line(credit_resource, credits_fifth_designer_shape_id, CREDITS_LINE_SHAPE,
 							 CREDITS_LEFT_COLUMN_X, CREDITS_FIFTH_DESIGNER_Y, credits_text_color,
 							 credits_text_shadow_color);
+}
+
+static void credits_draw_musicians(legacy_s8 far *credit_resource)
+{
 	intro_draw_resource_line(credit_resource, credits_music_heading_id, CREDITS_LINE_TEXT,
 							 CREDITS_LEFT_COLUMN_X, CREDITS_MUSIC_HEADING_Y,
 							 credits_music_heading_color, credits_music_heading_shadow_color);
@@ -209,6 +191,10 @@ legacy_s8 load_intro_resources(void)
 	intro_draw_resource_line(credit_resource, credits_third_musician_shape_id, CREDITS_LINE_SHAPE,
 							 CREDITS_LEFT_COLUMN_X, CREDITS_THIRD_MUSICIAN_Y, credits_text_color,
 							 credits_text_shadow_color);
+}
+
+static void credits_draw_production(legacy_s8 far *credit_resource)
+{
 	intro_draw_resource_line(credit_resource, credits_production_heading_id, CREDITS_LINE_TEXT,
 							 CREDITS_RIGHT_COLUMN_X, CREDITS_PRODUCTION_HEADING_Y,
 							 credits_production_heading_color,
@@ -226,6 +212,10 @@ legacy_s8 load_intro_resources(void)
 	intro_draw_resource_line(credit_resource, credits_second_opponent_shape_id, CREDITS_LINE_SHAPE,
 							 CREDITS_RIGHT_COLUMN_X, CREDITS_SECOND_OPPONENT_Y, credits_text_color,
 							 credits_text_shadow_color);
+}
+
+static void credits_draw_artists(legacy_s8 far *credit_resource)
+{
 	intro_draw_resource_line(credit_resource, credits_art_heading_id, CREDITS_LINE_TEXT,
 							 CREDITS_RIGHT_COLUMN_X, CREDITS_ART_HEADING_Y,
 							 credits_art_heading_color, credits_art_heading_shadow_color);
@@ -241,11 +231,13 @@ legacy_s8 load_intro_resources(void)
 	intro_draw_resource_line(credit_resource, credits_fourth_artist_shape_id, CREDITS_LINE_SHAPE,
 							 CREDITS_RIGHT_COLUMN_X, CREDITS_FOURTH_ARTIST_Y, credits_text_color,
 							 credits_text_shadow_color);
-	unload_resource(credit_resource);
+}
 
-	(void)sprite_blit_to_video(render_window_sprite, -1);
-	sprite_select_screen_compat();
-	(void)timer_get_delta_alt();
+static legacy_s16 credits_slide_arrow(struct SHAPE2D far *arrow_shape, legacy_s16 target_x,
+									  legacy_s16 arrow_y, legacy_s16 arrow_width,
+									  legacy_s16 arrow_height)
+{
+	legacy_s16 arrow_x, input, frame_elapsed;
 	arrow_x = CREDITS_ARROW_START_X;
 	input = 0;
 	for (;;) {
@@ -266,7 +258,14 @@ legacy_s8 load_intro_resources(void)
 		}
 	}
 
-	arrow_y = (legacy_s16)shape2d_get_pos_y(credit_shapes[CREDITS_BACKGROUND_INDEX]);
+	return input;
+}
+
+static void credits_animate_shapes(struct SHAPE2D far **credit_shapes, legacy_s16 arrow_y,
+								   legacy_s16 input)
+{
+	legacy_s16 animation_target, animation_elapsed, frame_elapsed;
+	legacy_u16 animation_index;
 	animation_target = 0;
 	animation_elapsed = 0;
 	for (animation_index = CREDITS_FIRST_ANIMATION_INDEX;
@@ -287,7 +286,10 @@ legacy_s8 load_intro_resources(void)
 			animation_elapsed = LEGACY_S16_WRAP_ADD(animation_elapsed, frame_elapsed);
 		}
 	}
+}
 
+static legacy_s8 credits_present_closing(struct SHAPE2D far **credit_shapes, legacy_s16 arrow_y)
+{
 	sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, 0, INTRO_SCREEN_HEIGHT);
 	mouse_draw_opaque_check();
 	sprite_clear_shape(render_window_sprite->sprite_bitmapptr);
@@ -300,4 +302,43 @@ legacy_s8 load_intro_resources(void)
 		return 1;
 	}
 	return input_repeat_check(CREDITS_END_INPUT_DELAY) != 0;
+}
+
+legacy_s8 load_intro_resources(void)
+{
+	legacy_s8 far *credit_resource;
+	struct SHAPE2D far *credit_shapes[CREDITS_RESOURCE_COUNT];
+	struct SHAPE2D far *arrow_shape;
+	legacy_s16 target_x;
+	legacy_s16 arrow_y;
+	legacy_s16 arrow_width;
+	legacy_s16 arrow_height;
+	legacy_s16 input;
+
+	credit_resource = (legacy_s8 far *)file_load_resfile(credits_resource_name);
+	locate_many_resources((legacy_s8 far *)ui_temp_resource, credits_shape_ids,
+						  (legacy_s8 far **)credit_shapes);
+	waitflag = CREDITS_INITIAL_WAIT;
+	sprite_select_render_window_and_clear();
+	arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
+	target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
+	arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
+	arrow_width =
+		LEGACY_S16_WRAP_MUL((legacy_s16)shape2d_get_width(arrow_shape), video_shape_width_scale);
+	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
+
+	credits_draw_title(credit_resource);
+	credits_draw_designers(credit_resource);
+	credits_draw_musicians(credit_resource);
+	credits_draw_production(credit_resource);
+	credits_draw_artists(credit_resource);
+	unload_resource(credit_resource);
+
+	(void)sprite_blit_to_video(render_window_sprite, -1);
+	sprite_select_screen_compat();
+	(void)timer_get_delta_alt();
+	input = credits_slide_arrow(arrow_shape, target_x, arrow_y, arrow_width, arrow_height);
+	arrow_y = (legacy_s16)shape2d_get_pos_y(credit_shapes[CREDITS_BACKGROUND_INDEX]);
+	credits_animate_shapes(credit_shapes, arrow_y, input);
+	return credits_present_closing(credit_shapes, arrow_y);
 }

@@ -333,6 +333,25 @@ static legacy_u16 dialog_apply_hotkey(legacy_u16 input, legacy_u16 first_hotkey,
 	return input;
 }
 
+static void dialog_select_previous(legacy_u8 *selected, legacy_u8 choice_count,
+								   legacy_s16 *disabled_choices)
+{
+	do {
+		*selected = *selected == 0 ? (legacy_u8)(choice_count - 1U) : (legacy_u8)(*selected - 1U);
+	} while (disabled_choices != 0 && disabled_choices[*selected] != 0);
+}
+
+static void dialog_select_next(legacy_u8 *selected, legacy_u8 choice_count,
+							   legacy_s16 *disabled_choices)
+{
+	do {
+		*selected = (legacy_u8)(*selected + 1U);
+		if (*selected >= choice_count) {
+			*selected = 0;
+		}
+	} while (disabled_choices != 0 && disabled_choices[*selected] != 0);
+}
+
 static legacy_s16 dialog_apply_menu_input(legacy_u16 input, legacy_u8 *selected,
 										  legacy_u8 choice_count, legacy_s16 *disabled_choices)
 {
@@ -346,19 +365,11 @@ static legacy_s16 dialog_apply_menu_input(legacy_u16 input, legacy_u8 *selected,
 		return 1;
 	}
 	if (input == KEY_UP || input == KEY_LEFT) {
-		do {
-			*selected =
-				*selected == 0 ? (legacy_u8)(choice_count - 1U) : (legacy_u8)(*selected - 1U);
-		} while (disabled_choices != 0 && disabled_choices[*selected] != 0);
+		dialog_select_previous(selected, choice_count, disabled_choices);
 		return 0;
 	}
 	if (input == KEY_RIGHT || input == KEY_DOWN) {
-		do {
-			*selected = (legacy_u8)(*selected + 1U);
-			if (*selected >= choice_count) {
-				*selected = 0;
-			}
-		} while (disabled_choices != 0 && disabled_choices[*selected] != 0);
+		dialog_select_next(selected, choice_count, disabled_choices);
 	}
 	return 0;
 }
@@ -445,225 +456,265 @@ legacy_u16 show_dialog(legacy_s16 dialog_type, legacy_s16 save_background, void 
 	return dialog_finish(result, save_background);
 }
 
-legacy_s8 do_fileselect_dialog(legacy_s8 *directory, legacy_s8 *filename, legacy_s8 *extension,
-							   legacy_s8 far *prompt)
-{
+struct FILE_DIALOG {
 	legacy_s16 positions[40];
 	struct BUTTON_AREA hit_areas[10];
 	legacy_s8 filenames[128][13];
-	const legacy_s8 *found_path;
-	legacy_u16 index;
-	legacy_u16 compare_index;
-	legacy_u16 visible_row;
-	legacy_u16 text_width;
-	legacy_u16 key;
-	legacy_s16 dialog_result;
-	legacy_s16 hit;
-	legacy_s16 candidate;
 	legacy_s8 selected;
 	legacy_s8 scroll;
 	legacy_s8 previous_selected;
 	legacy_s8 previous_scroll;
-	legacy_s8 result;
 	legacy_u8 file_count;
-	legacy_u8 saved_busy;
-	legacy_u8 character;
 	legacy_u8 search_again;
+};
 
+static void file_dialog_draw_frame(struct FILE_DIALOG *dialog, const legacy_s8 *directory,
+								   legacy_s8 far *prompt)
+{
+	legacy_u16 index;
+	preRender_line(dialog->positions[4] - 4, dialog->positions[5] + 4,
+				   dialog->positions[4] + FILE_DIALOG_SEPARATOR_WIDTH, dialog->positions[5] + 4,
+				   dialog_border_color);
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
+	copy_string(&resID_byte1, prompt);
+	font_draw_text_opaque(&resID_byte1, dialog->positions[0], dialog->positions[1]);
+	for (index = 0; index < 10U; index++) {
+		dialog->hit_areas[index].x1 = dialog->positions[2];
+		dialog->hit_areas[index].x2 = dialog->positions[2] + FILE_DIALOG_LIST_WIDTH;
+		if (index == 9U) {
+			dialog->hit_areas[index].y1 = dialog->hit_areas[index - 1U].y1 + 10;
+		} else {
+			dialog->hit_areas[index].y1 = dialog->positions[3U + index * 2U];
+		}
+		dialog->hit_areas[index].y2 = dialog->hit_areas[index].y1 + 10;
+	}
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
+	font_draw_text_opaque(directory, dialog->positions[2], dialog->positions[3]);
+}
+
+static legacy_u16 file_dialog_edit_directory(struct FILE_DIALOG *dialog, legacy_s8 *directory)
+{
+	font_set_colors(dialog_fnt_colour, dialog_background_color);
+	return (legacy_u16)call_read_line(directory, FILE_DIALOG_DIRECTORY_MAX_LENGTH,
+									  dialog->positions[2], dialog->positions[3],
+									  DIALOG_INPUT_TIMEOUT);
+}
+
+static void file_dialog_collect_names(struct FILE_DIALOG *dialog, const legacy_s8 *found_path)
+{
+	legacy_u16 index;
+	legacy_u16 compare_index;
+	parse_filepath_separators(dialog->filenames[dialog->file_count++], found_path);
+	while (dialog->file_count < 128U && (found_path = file_find_next_alt()) != 0) {
+		parse_filepath_separators(dialog->filenames[dialog->file_count++], found_path);
+	}
+	for (index = 0; index + 1U < dialog->file_count; index++) {
+		for (compare_index = index + 1U; compare_index < dialog->file_count; compare_index++) {
+			if (strcmp(dialog->filenames[index], dialog->filenames[compare_index]) > 0) {
+				strcpy(&resID_byte1, dialog->filenames[index]);
+				strcpy(dialog->filenames[index], dialog->filenames[compare_index]);
+				strcpy(dialog->filenames[compare_index], &resID_byte1);
+			}
+		}
+	}
+}
+
+static void file_dialog_draw_scroll_labels(struct FILE_DIALOG *dialog)
+{
+	if (dialog->file_count > 7U) {
+		copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_up_label_id));
+		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
+							  dialog->hit_areas[1].y1);
+		copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_down_label_id));
+		font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
+							  dialog->hit_areas[9].y1 - 1);
+	}
+}
+
+static void file_dialog_draw_rows(struct FILE_DIALOG *dialog)
+{
+	legacy_u16 visible_row;
+	legacy_u16 text_width;
+	legacy_s16 candidate;
+	dialog->previous_selected = dialog->selected;
+	dialog->previous_scroll = dialog->scroll;
+	mouse_draw_opaque_check();
+	for (visible_row = 0; visible_row < 7U; visible_row++) {
+		candidate = (legacy_s16)(dialog->scroll + (legacy_s16)visible_row);
+		if (candidate == dialog->selected) {
+			font_set_colors(dialog_background_color, dialog_fnt_colour);
+		} else {
+			font_set_colors(dialog_fnt_colour, dialog_background_color);
+		}
+		if (candidate < (legacy_s16)dialog->file_count) {
+			strcpy(&resID_byte1, dialog->filenames[(legacy_u8)candidate]);
+			font_draw_text_opaque(&resID_byte1, dialog->positions[2],
+								  dialog->hit_areas[visible_row + 2U].y1);
+		} else {
+			font_draw_text_opaque("        ", dialog->positions[2],
+								  dialog->hit_areas[visible_row + 2U].y1);
+		}
+		text_width = (legacy_u16)font_text_width(&resID_byte1);
+		sprite_fill_rect(dialog->positions[2] + text_width, dialog->hit_areas[visible_row + 2U].y1,
+						 dialog->positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
+							 dialog->positions[2],
+						 8, dialog_background_color);
+	}
+	mouse_draw_transparent_check();
+}
+
+static legacy_u16 file_dialog_apply_mouse(struct FILE_DIALOG *dialog, legacy_s16 hit,
+										  legacy_u16 key)
+{
+	legacy_s16 candidate;
+	if (hit == -1) {
+		return key;
+	}
+	if (hit != 0 && hit != 1 && hit != 9) {
+		candidate = (legacy_s16)(dialog->scroll + hit - 2);
+		if (candidate < (legacy_s16)dialog->file_count) {
+			dialog->selected = (legacy_s8)candidate;
+		}
+		return key;
+	}
+	if ((mouse_butstate & 3U) == 0) {
+		return key;
+	}
+	if (hit == 0) {
+		dialog->selected = 0;
+		dialog->scroll = -1;
+	} else if (hit == 1) {
+		if ((legacy_s16)dialog->selected + dialog->scroll != 0) {
+			dialog->selected--;
+		}
+		if (dialog->selected < dialog->scroll) {
+			dialog->scroll = dialog->selected;
+		}
+	} else {
+		if (dialog->selected != (legacy_s8)(dialog->file_count - 1U)) {
+			dialog->selected++;
+		}
+	}
+	return 0;
+}
+
+static legacy_s8 file_dialog_apply_key(struct FILE_DIALOG *dialog, legacy_u16 key)
+{
+	legacy_u8 character;
+	legacy_u16 index;
+	if (key == KEY_ENTER || key == KEY_SPACE) {
+		return 1;
+	}
+	if (key == KEY_ESCAPE) {
+		return -1;
+	}
+	if (key == KEY_UP) {
+		dialog->selected--;
+	} else if (key == KEY_DOWN) {
+		if (dialog->selected != (legacy_s8)(dialog->file_count - 1U)) {
+			dialog->selected++;
+		}
+	} else if (key < 256U &&
+			   (g_ascii_props[key] & (RST_ASC_CHAR_UPPER | RST_ASC_CHAR_LOWER)) != 0) {
+		character = (legacy_u8)dialog_ascii_lower(key);
+		for (index = 0; index < dialog->file_count; index++) {
+			if ((legacy_u8)dialog_ascii_lower((legacy_u8)dialog->filenames[index][0]) ==
+				character) {
+				dialog->selected = (legacy_s8)index;
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+static legacy_s8 file_dialog_choose(struct FILE_DIALOG *dialog, legacy_s8 *directory,
+									legacy_s8 *filename)
+{
+	legacy_u16 key;
+	legacy_s16 hit;
+	legacy_s8 result;
+	dialog->selected = 0;
+	dialog->scroll = 0;
+	dialog->previous_selected = -1;
+	dialog->previous_scroll = -1;
+	(void)timer_get_delta_alt();
+	result = 0;
+	dialog->search_again = 0;
+	for (;;) {
+		if (dialog->selected != dialog->previous_selected ||
+			dialog->scroll != dialog->previous_scroll) {
+			file_dialog_draw_rows(dialog);
+		}
+		key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
+		hit = (legacy_s16)mouse_multi_hittest(10, dialog->hit_areas);
+		key = file_dialog_apply_mouse(dialog, hit, key);
+		result = file_dialog_apply_key(dialog, key);
+		if (dialog->selected < dialog->scroll) {
+			dialog->scroll = dialog->selected;
+		}
+		if (dialog->scroll < 0) {
+			key = file_dialog_edit_directory(dialog, directory);
+			if (key == KEY_ESCAPE) {
+				result = 0;
+			} else {
+				dialog->search_again = 1;
+			}
+			break;
+		}
+		while ((legacy_s16)(dialog->scroll + 6) < dialog->selected) {
+			dialog->scroll++;
+		}
+		if (result == 0) {
+			continue;
+		}
+		if (result < 0) {
+			result = 0;
+			break;
+		}
+		strcpy(filename, dialog->filenames[(legacy_u8)dialog->selected]);
+		result = 1;
+		break;
+	}
+	return result;
+}
+
+legacy_s8 do_fileselect_dialog(legacy_s8 *directory, legacy_s8 *filename, legacy_s8 *extension,
+							   legacy_s8 far *prompt)
+{
+	struct FILE_DIALOG dialog;
+	const legacy_s8 *found_path;
+	legacy_s16 dialog_result;
+	legacy_s8 result;
+	legacy_u8 saved_busy;
 	dialog_result = LEGACY_S16_FROM_BITS(
 		show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
 					locate_text_res(mainresptr, file_load_dialog_id), DIALOG_AUTO_POSITION,
-					DIALOG_AUTO_POSITION, dialog_border_color, positions, 0));
+					DIALOG_AUTO_POSITION, dialog_border_color, dialog.positions, 0));
 	if (dialog_result < 0) {
 		return 0;
 	}
-
 	saved_busy = g_is_busy;
 	g_is_busy = 1;
-	preRender_line(positions[4] - 4, positions[5] + 4, positions[4] + FILE_DIALOG_SEPARATOR_WIDTH,
-				   positions[5] + 4, dialog_border_color);
-	font_set_colors(dialog_fnt_colour, dialog_background_color);
-	copy_string(&resID_byte1, prompt);
-	font_draw_text_opaque(&resID_byte1, positions[0], positions[1]);
-
-	for (index = 0; index < 10U; index++) {
-		hit_areas[index].x1 = positions[2];
-		hit_areas[index].x2 = positions[2] + FILE_DIALOG_LIST_WIDTH;
-		if (index == 9U) {
-			hit_areas[index].y1 = hit_areas[index - 1U].y1 + 10;
-		} else {
-			hit_areas[index].y1 = positions[3U + index * 2U];
-		}
-		hit_areas[index].y2 = hit_areas[index].y1 + 10;
-	}
-	font_set_colors(dialog_fnt_colour, dialog_background_color);
-	font_draw_text_opaque(directory, positions[2], positions[3]);
-
+	file_dialog_draw_frame(&dialog, directory, prompt);
 	for (;;) {
 		mouse_draw_transparent_check();
-		file_count = 0;
+		dialog.file_count = 0;
 		found_path = file_combine_and_find(directory, "*", extension);
 		if (found_path == 0) {
-			font_set_colors(dialog_fnt_colour, dialog_background_color);
-			key = (legacy_u16)call_read_line(directory, FILE_DIALOG_DIRECTORY_MAX_LENGTH,
-											 positions[2], positions[3], DIALOG_INPUT_TIMEOUT);
-			if (key == KEY_ESCAPE) {
+			if (file_dialog_edit_directory(&dialog, directory) == KEY_ESCAPE) {
 				result = 0;
 				break;
 			}
 			continue;
 		}
-
-		parse_filepath_separators(filenames[file_count++], found_path);
-		while (file_count < 128U && (found_path = file_find_next_alt()) != 0) {
-			parse_filepath_separators(filenames[file_count++], found_path);
-		}
-
-		for (index = 0; index + 1U < file_count; index++) {
-			for (compare_index = index + 1U; compare_index < file_count; compare_index++) {
-				if (strcmp(filenames[index], filenames[compare_index]) > 0) {
-					strcpy(&resID_byte1, filenames[index]);
-					strcpy(filenames[index], filenames[compare_index]);
-					strcpy(filenames[compare_index], &resID_byte1);
-				}
-			}
-		}
-
-		if (file_count > 7U) {
-			copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_up_label_id));
-			font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
-								  hit_areas[1].y1);
-			copy_string(&resID_byte1, locate_text_res(mainresptr, file_scroll_down_label_id));
-			font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
-								  hit_areas[9].y1 - 1);
-		}
-
-		selected = 0;
-		scroll = 0;
-		previous_selected = -1;
-		previous_scroll = -1;
-		(void)timer_get_delta_alt();
-		result = 0;
-		search_again = 0;
-		for (;;) {
-			if (selected != previous_selected || scroll != previous_scroll) {
-				previous_selected = selected;
-				previous_scroll = scroll;
-				mouse_draw_opaque_check();
-				for (visible_row = 0; visible_row < 7U; visible_row++) {
-					candidate = (legacy_s16)(scroll + (legacy_s16)visible_row);
-					if (candidate == selected) {
-						font_set_colors(dialog_background_color, dialog_fnt_colour);
-					} else {
-						font_set_colors(dialog_fnt_colour, dialog_background_color);
-					}
-					if (candidate < (legacy_s16)file_count) {
-						strcpy(&resID_byte1, filenames[(legacy_u8)candidate]);
-						font_draw_text_opaque(&resID_byte1, positions[2],
-											  hit_areas[visible_row + 2U].y1);
-					} else {
-						font_draw_text_opaque("        ", positions[2],
-											  hit_areas[visible_row + 2U].y1);
-					}
-					text_width = (legacy_u16)font_text_width(&resID_byte1);
-					sprite_fill_rect(positions[2] + text_width, hit_areas[visible_row + 2U].y1,
-									 positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
-										 positions[2],
-									 8, dialog_background_color);
-				}
-				mouse_draw_transparent_check();
-			}
-
-			key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
-			hit = (legacy_s16)mouse_multi_hittest(10, hit_areas);
-			if (hit != -1) {
-				if (hit == 0) {
-					if ((mouse_butstate & 3U) != 0) {
-						selected = 0;
-						scroll = -1;
-						key = 0;
-					}
-				} else if (hit == 1) {
-					if ((mouse_butstate & 3U) != 0) {
-						if ((legacy_s16)selected + scroll != 0) {
-							selected--;
-						}
-						if (selected < scroll) {
-							scroll = selected;
-						}
-						key = 0;
-					}
-				} else if (hit == 9) {
-					if ((mouse_butstate & 3U) != 0) {
-						if (selected != (legacy_s8)(file_count - 1U)) {
-							selected++;
-						}
-						key = 0;
-					}
-				} else {
-					candidate = (legacy_s16)(scroll + hit - 2);
-					if (candidate < (legacy_s16)file_count) {
-						selected = (legacy_s8)candidate;
-					}
-				}
-			}
-
-			if (key == KEY_ENTER || key == KEY_SPACE) {
-				result = 1;
-			} else if (key == KEY_ESCAPE) {
-				result = -1;
-			} else if (key == KEY_UP) {
-				selected--;
-			} else if (key == KEY_DOWN) {
-				if (selected != (legacy_s8)(file_count - 1U)) {
-					selected++;
-				}
-			} else if (key < 256U &&
-					   (g_ascii_props[key] & (RST_ASC_CHAR_UPPER | RST_ASC_CHAR_LOWER)) != 0) {
-				character = (legacy_u8)dialog_ascii_lower(key);
-				for (index = 0; index < file_count; index++) {
-					if ((legacy_u8)dialog_ascii_lower((legacy_u8)filenames[index][0]) ==
-						character) {
-						selected = (legacy_s8)index;
-						break;
-					}
-				}
-			}
-
-			if (selected < scroll) {
-				scroll = selected;
-			}
-			if (scroll < 0) {
-				font_set_colors(dialog_fnt_colour, dialog_background_color);
-				key = (legacy_u16)call_read_line(directory, FILE_DIALOG_DIRECTORY_MAX_LENGTH,
-												 positions[2], positions[3], DIALOG_INPUT_TIMEOUT);
-				if (key == KEY_ESCAPE) {
-					result = 0;
-				} else {
-					search_again = 1;
-				}
-				break;
-			}
-			while ((legacy_s16)(scroll + 6) < selected) {
-				scroll++;
-			}
-
-			if (result == 0) {
-				continue;
-			}
-			if (result < 0) {
-				result = 0;
-				break;
-			}
-			strcpy(filename, filenames[(legacy_u8)selected]);
-			result = 1;
-			break;
-		}
-		if (search_again == 0) {
+		file_dialog_collect_names(&dialog, found_path);
+		file_dialog_draw_scroll_labels(&dialog);
+		result = file_dialog_choose(&dialog, directory, filename);
+		if (dialog.search_again == 0) {
 			break;
 		}
 	}
-
 	sprite_pop_background();
 	g_is_busy = saved_busy;
 	return result;
