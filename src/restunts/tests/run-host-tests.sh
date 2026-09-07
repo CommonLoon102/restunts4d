@@ -73,6 +73,10 @@ run_host_test test-car-shape-lifetime shape3d_car.c \
     "$test_source_dir/shape3d_resources.c" "$test_source_dir/shape3d.c" \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
+run_host_test test-skybox-render skybox.c \
+    "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
 run_host_test test-track-object trackobj.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
