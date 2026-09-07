@@ -78,6 +78,10 @@ run_host_test test-skybox-render skybox.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
+run_host_test test-track-editor legacy.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
+    "$test_source_dir/full_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers -Wno-missing-braces
 run_host_test test-track-object trackobj.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" "$test_source_dir/trkutil.c" \
