@@ -155,36 +155,11 @@ void audio_remove_driver_timer(void)
 	timer_remove_callback(&audio_driver_timer);
 }
 
-legacy_s16 audio_init_engine(legacy_s16 unused_type, void far *source_pointer,
-							 void far *shape_resources, void far *audio_resources)
+static void audio_copy_engine_definition(struct AUDIO_ENGINE_DEFINITION *engine_definition,
+										 void far *source_pointer)
 {
 	const legacy_u8 far *source;
-	struct AUDIO_TIMER *timer;
-	struct AUDIO_ENGINE_DEFINITION *engine_definition;
-	const legacy_u8 far *definition;
-	void far *resource;
-	legacy_u16 source_offset;
-	legacy_u16 source_segment;
-	legacy_u16 rate;
-	legacy_u16 divisor;
-	legacy_u16 index;
-	legacy_u16 field;
-	legacy_u16 resource_index;
-	legacy_s16 channel;
-
-	(void)unused_type;
-	for (index = 0; index < AUDIO_TIMER_COUNT; index++) {
-		if (audio_timers[index].active == 0) {
-			break;
-		}
-	}
-	if (index == AUDIO_TIMER_COUNT) {
-		fatal_error("InitEngine: All handles used.");
-		return -1;
-	}
-
-	timer = &audio_timers[index];
-	engine_definition = &timer->definition;
+	legacy_u16 source_offset, source_segment, field;
 	source_offset = (legacy_u16)dos_memory_pointer_offset(source_pointer);
 	source_segment = (legacy_u16)dos_memory_pointer_segment(source_pointer);
 	for (field = 0; field < AUDIO_ENGINE_DEFINITION_SIZE; field++) {
@@ -195,7 +170,13 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far *source_pointer,
 			source_segment = LEGACY_U16_WRAP_ADD(source_segment, DOS_SEGMENT_WRAP_PARAGRAPHS);
 		}
 	}
+}
 
+static void audio_resolve_engine_definition(struct AUDIO_ENGINE_DEFINITION *engine_definition,
+											void far *shape_resources, void far *audio_resources)
+{
+	void far *resource;
+	legacy_u16 resource_index;
 	if (engine_definition->initialized == 0) {
 		resource = locate_shape_fatal((legacy_s8 far *)shape_resources,
 									  pad_id((const legacy_s8 far *)audio_read_far_pointer(
@@ -212,6 +193,35 @@ legacy_s16 audio_init_engine(legacy_s16 unused_type, void far *source_pointer,
 		}
 		engine_definition->initialized = 1;
 	}
+}
+
+legacy_s16 audio_init_engine(legacy_s16 unused_type, void far *source_pointer,
+							 void far *shape_resources, void far *audio_resources)
+{
+	struct AUDIO_TIMER *timer;
+	struct AUDIO_ENGINE_DEFINITION *engine_definition;
+	const legacy_u8 far *definition;
+	legacy_u16 rate;
+	legacy_u16 divisor;
+	legacy_u16 index;
+	legacy_s16 channel;
+
+	(void)unused_type;
+	for (index = 0; index < AUDIO_TIMER_COUNT; index++) {
+		if (audio_timers[index].active == 0) {
+			break;
+		}
+	}
+	if (index == AUDIO_TIMER_COUNT) {
+		fatal_error("InitEngine: All handles used.");
+		return -1;
+	}
+
+	timer = &audio_timers[index];
+	engine_definition = &timer->definition;
+	audio_copy_engine_definition(engine_definition, source_pointer);
+
+	audio_resolve_engine_definition(engine_definition, shape_resources, audio_resources);
 
 	channel = audio_reserve_effect_channel(-1, AUDIO_ENGINE_CHANNEL_PRIORITY);
 	timer->channel = channel;
@@ -365,16 +375,74 @@ void audio_apply_car_state_sample(const legacy_u8 far *sample, legacy_s16 interv
 	}
 }
 
+static void audio_update_timer_volume(struct AUDIO_TIMER *timer)
+{
+	legacy_u16 volume_accumulator;
+	legacy_u8 volume, secondary_volume;
+	legacy_s16 channel;
+	volume_accumulator = LEGACY_U16_WRAP_ADD(
+		(legacy_u16)((legacy_u16)timer->target_volume << AUDIO_TIMER_INTERPOLATION_FRACTION_BITS),
+		LEGACY_U16_WRAP_MUL(timer->current_volume, AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT));
+	volume_accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
+	timer->current_volume = volume_accumulator;
+	volume = (legacy_u8)(volume_accumulator >> AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
+	if (volume != timer->last_volume || timer->parameters_changed != 0) {
+		channel = timer->channel;
+		dos_audio_set_channel_volume(channel, volume);
+		secondary_volume = volume >= AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION
+							   ? (legacy_u8)(volume - AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION)
+							   : 0;
+		channel = timer->effect_channel;
+		if (channel != -1) {
+			dos_audio_set_channel_volume(channel, secondary_volume);
+		}
+		channel = timer->secondary_effect_channel;
+		if (channel != -1) {
+			dos_audio_set_channel_volume(channel, secondary_volume);
+		}
+		timer->last_volume = volume;
+	}
+}
+
+static void audio_update_timer_pitch(struct AUDIO_TIMER *timer)
+{
+	legacy_u32 accumulator;
+	legacy_u16 pitch;
+	legacy_s16 channel;
+	accumulator = timer->current_pitch;
+	accumulator = accumulator * AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT +
+				  ((legacy_u32)timer->target_pitch << AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
+	accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
+	timer->current_pitch = accumulator;
+	pitch = (legacy_u16)(accumulator >> AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
+	if (pitch != timer->last_pitch || timer->parameters_changed != 0) {
+		channel = timer->engine_context;
+		if (channel != -1) {
+			dos_audio_set_context_pitch(channel, pitch);
+			timer->last_pitch = pitch;
+		}
+	}
+}
+
+static void audio_restart_timer_engine(struct AUDIO_TIMER *timer, legacy_u16 index)
+{
+	legacy_s16 channel;
+	if (timer->restart_engine != 0) {
+		channel = timer->effect_channel;
+		if (timer->engine_active != 0) {
+			audio_stop_effect_channel(channel);
+			timer->restart_engine = 0;
+		} else if (audio_effect_channel_idle(channel) != 0) {
+			audio_start_engine(index);
+			timer->restart_engine = 0;
+		}
+	}
+}
+
 void audio_driver_timer(void)
 {
 	struct AUDIO_TIMER *timer;
-	legacy_u32 accumulator;
-	legacy_u16 volume_accumulator;
-	legacy_u16 pitch;
 	legacy_u16 index;
-	legacy_u8 volume;
-	legacy_u8 secondary_volume;
-	legacy_s16 channel;
 
 	if (dos_data_stack_segments_match() == 0) {
 		return;
@@ -392,55 +460,12 @@ void audio_driver_timer(void)
 			continue;
 		}
 
-		volume_accumulator = LEGACY_U16_WRAP_ADD(
-			(legacy_u16)((legacy_u16)timer->target_volume
-						 << AUDIO_TIMER_INTERPOLATION_FRACTION_BITS),
-			LEGACY_U16_WRAP_MUL(timer->current_volume, AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT));
-		volume_accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
-		timer->current_volume = volume_accumulator;
-		volume = (legacy_u8)(volume_accumulator >> AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
-		if (volume != timer->last_volume || timer->parameters_changed != 0) {
-			channel = timer->channel;
-			dos_audio_set_channel_volume(channel, volume);
-			secondary_volume = volume >= AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION
-								   ? (legacy_u8)(volume - AUDIO_SECONDARY_CHANNEL_VOLUME_REDUCTION)
-								   : 0;
-			channel = timer->effect_channel;
-			if (channel != -1) {
-				dos_audio_set_channel_volume(channel, secondary_volume);
-			}
-			channel = timer->secondary_effect_channel;
-			if (channel != -1) {
-				dos_audio_set_channel_volume(channel, secondary_volume);
-			}
-			timer->last_volume = volume;
-		}
+		audio_update_timer_volume(timer);
 
-		accumulator = timer->current_pitch;
-		accumulator = accumulator * AUDIO_TIMER_INTERPOLATION_CURRENT_WEIGHT +
-					  ((legacy_u32)timer->target_pitch << AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
-		accumulator >>= AUDIO_TIMER_INTERPOLATION_AVERAGE_SHIFT;
-		timer->current_pitch = accumulator;
-		pitch = (legacy_u16)(accumulator >> AUDIO_TIMER_INTERPOLATION_FRACTION_BITS);
-		if (pitch != timer->last_pitch || timer->parameters_changed != 0) {
-			channel = timer->engine_context;
-			if (channel != -1) {
-				dos_audio_set_context_pitch(channel, pitch);
-				timer->last_pitch = pitch;
-			}
-		}
+		audio_update_timer_pitch(timer);
 
 		timer->parameters_changed = 0;
-		if (timer->restart_engine != 0) {
-			channel = timer->effect_channel;
-			if (timer->engine_active != 0) {
-				audio_stop_effect_channel(channel);
-				timer->restart_engine = 0;
-			} else if (audio_effect_channel_idle(channel) != 0) {
-				audio_start_engine(index);
-				timer->restart_engine = 0;
-			}
-		}
+		audio_restart_timer_engine(timer, index);
 	}
 
 	if (audio_driver_timer_divider >= AUDIO_DRIVER_DIRECT_CHANNEL_PERIOD) {
@@ -746,19 +771,72 @@ static void far *audio_select_sample_resource(void far *original_resource, legac
 	return resources[percussion_resource_indices[note_index]];
 }
 
-static legacy_s16 audio_find_driver_context(legacy_u8 far *resource, struct AUDIO_CHANNEL *timer)
+struct AUDIO_CONTEXT_SELECTION {
+	legacy_u32 oldest_state1_age;
+	legacy_u32 oldest_state2_age;
+	legacy_s16 oldest_state1;
+	legacy_s16 oldest_state2;
+};
+
+static legacy_u8 audio_context_matches_resource(struct AUDIO_CONTEXT *context,
+												struct AUDIO_CHANNEL *timer,
+												legacy_u16 resource_mask, legacy_u16 context_index,
+												legacy_s16 restrict_to_timer)
+{
+	legacy_u16 context_mask;
+	if (dos_audio_uses_direct_channels == 0) {
+		context_mask = context_index < AUDIO_CONTEXT_COUNT ? (legacy_u16)(1U << context_index) : 0;
+		if ((resource_mask & context_mask) == 0 ||
+			(restrict_to_timer != 0 && timer->channel != context->channel)) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static void audio_consider_older_context(struct AUDIO_CONTEXT *context, legacy_u16 context_index,
+										 struct AUDIO_CONTEXT_SELECTION *selection)
+{
+	legacy_u32 age;
+	age = context->age;
+	if (context->state == AUDIO_CONTEXT_STATE_PLAYING && age > selection->oldest_state1_age) {
+		selection->oldest_state1_age = age;
+		selection->oldest_state1 = (legacy_s16)context_index;
+	}
+	if (context->state == AUDIO_CONTEXT_STATE_RELEASING && age > selection->oldest_state2_age) {
+		selection->oldest_state2_age = age;
+		selection->oldest_state2 = (legacy_s16)context_index;
+	}
+}
+
+static void audio_reclaim_driver_context(legacy_s16 selected, struct AUDIO_CHANNEL *timer,
+										 legacy_s16 restrict_to_timer)
 {
 	struct AUDIO_CONTEXT *context;
 	struct AUDIO_CHANNEL *old_timer;
-	legacy_u32 oldest_state1_age;
-	legacy_u32 oldest_state2_age;
-	legacy_u32 age;
+	context = &dos_audio_contexts[selected];
+	if (dos_audio_uses_direct_channels == 0 && restrict_to_timer == 0) {
+		/* Recover the old record using its stored data-segment offset. */
+		old_timer =
+			(struct AUDIO_CHANNEL *)((legacy_u8 *)audio_timers +
+									 LEGACY_U16_WRAP_SUB(context->timer_offset,
+														 dos_memory_pointer_offset(audio_timers)));
+		if (old_timer != timer) {
+			old_timer->active_notes--;
+			timer->active_notes++;
+		}
+	}
+	dos_audio_driver_start_context(context->driver_channel, context);
+	dos_audio_driver_end_context(context->driver_channel, context);
+}
+
+static legacy_s16 audio_find_driver_context(legacy_u8 far *resource, struct AUDIO_CHANNEL *timer)
+{
+	struct AUDIO_CONTEXT *context;
+	struct AUDIO_CONTEXT_SELECTION selection;
 	legacy_u16 resource_mask;
-	legacy_u16 context_mask;
 	legacy_u16 context_index;
 	legacy_u16 context_count;
-	legacy_s16 oldest_state1;
-	legacy_s16 oldest_state2;
 	legacy_s16 selected;
 	legacy_s16 restrict_to_timer;
 
@@ -766,10 +844,10 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far *resource, struct AUDI
 	if (resource_mask == 0) {
 		return -1;
 	}
-	oldest_state1 = -1;
-	oldest_state2 = -1;
-	oldest_state1_age = 0;
-	oldest_state2_age = 0;
+	selection.oldest_state1 = -1;
+	selection.oldest_state2 = -1;
+	selection.oldest_state1_age = 0;
+	selection.oldest_state2_age = 0;
 
 	if (dos_audio_uses_direct_channels != 0) {
 		context_count = AUDIO_CONTEXT_COUNT;
@@ -781,14 +859,10 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far *resource, struct AUDI
 
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < context_count; context_index++) {
-		if (dos_audio_uses_direct_channels == 0) {
-			context_mask =
-				context_index < AUDIO_CONTEXT_COUNT ? (legacy_u16)(1U << context_index) : 0;
-			if ((resource_mask & context_mask) == 0 ||
-				(restrict_to_timer != 0 && timer->channel != context->channel)) {
-				context++;
-				continue;
-			}
+		if (audio_context_matches_resource(context, timer, resource_mask, context_index,
+										   restrict_to_timer) == 0) {
+			context++;
+			continue;
 		}
 
 		if (context->state == AUDIO_CONTEXT_STATE_FREE) {
@@ -802,37 +876,15 @@ static legacy_s16 audio_find_driver_context(legacy_u8 far *resource, struct AUDI
 			continue;
 		}
 
-		age = context->age;
-		if (context->state == AUDIO_CONTEXT_STATE_PLAYING && age > oldest_state1_age) {
-			oldest_state1_age = age;
-			oldest_state1 = (legacy_s16)context_index;
-		}
-		if (context->state == AUDIO_CONTEXT_STATE_RELEASING && age > oldest_state2_age) {
-			oldest_state2_age = age;
-			oldest_state2 = (legacy_s16)context_index;
-		}
+		audio_consider_older_context(context, context_index, &selection);
 		context++;
 	}
 
-	selected = oldest_state2 != -1 ? oldest_state2 : oldest_state1;
+	selected = selection.oldest_state2 != -1 ? selection.oldest_state2 : selection.oldest_state1;
 	if (selected == -1) {
 		return -1;
 	}
-	context = &dos_audio_contexts[selected];
-	if (dos_audio_uses_direct_channels == 0 && restrict_to_timer == 0) {
-		/* The stored offset is a plain data-segment offset, so the old
-		   record is recovered relative to any object in that segment. */
-		old_timer =
-			(struct AUDIO_CHANNEL *)((legacy_u8 *)audio_timers +
-									 LEGACY_U16_WRAP_SUB(context->timer_offset,
-														 dos_memory_pointer_offset(audio_timers)));
-		if (old_timer != timer) {
-			old_timer->active_notes--;
-			timer->active_notes++;
-		}
-	}
-	dos_audio_driver_start_context(context->driver_channel, context);
-	dos_audio_driver_end_context(context->driver_channel, context);
+	audio_reclaim_driver_context(selected, timer, restrict_to_timer);
 	return selected;
 }
 
@@ -939,18 +991,138 @@ static legacy_u16 audio_absolute_word(legacy_s16 value)
 	return (legacy_u16)value;
 }
 
+static void audio_update_context_envelope(struct AUDIO_CONTEXT *context, legacy_u8 far *resource)
+{
+	struct AUDIO_CHANNEL *chunk;
+	legacy_s16 level;
+	legacy_u16 value;
+	/* Successive envelope stages may run during this same tick. */
+	if (context->envelope_state == AUDIO_ENVELOPE_STATE_ATTACK) {
+		level =
+			LEGACY_S16_WRAP_ADD(context->level, LEGACY_S16_FROM_BITS(resource_read_u16le(
+													resource + AUDIO_RESOURCE_ATTACK_STEP_OFFSET)));
+		context->level = level;
+		value = resource_read_u16le(resource + AUDIO_RESOURCE_ATTACK_LEVEL_OFFSET);
+		if (level >= LEGACY_S16_FROM_BITS(value)) {
+			context->level = LEGACY_S16_FROM_BITS(value);
+			context->envelope_state =
+				LEGACY_S16_FROM_BITS(resource_read_u16le(
+					resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET)) >= LEGACY_S16_FROM_BITS(value)
+					? AUDIO_ENVELOPE_STATE_SUSTAIN
+					: AUDIO_ENVELOPE_STATE_DECAY;
+		}
+	}
+	if (context->envelope_state == AUDIO_ENVELOPE_STATE_DECAY) {
+		level = LEGACY_S16_WRAP_SUB(
+			context->level,
+			LEGACY_S16_FROM_BITS(resource_read_u16le(resource + AUDIO_RESOURCE_DECAY_STEP_OFFSET)));
+		context->level = level;
+		value = resource_read_u16le(resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET);
+		if (level <= LEGACY_S16_FROM_BITS(value)) {
+			context->envelope_state = AUDIO_ENVELOPE_STATE_SUSTAIN;
+			context->level = LEGACY_S16_FROM_BITS(value);
+		}
+	}
+	if (context->envelope_state == AUDIO_ENVELOPE_STATE_SUSTAIN &&
+		resource_read_u16le(resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET) == 0) {
+		context->envelope_state = AUDIO_ENVELOPE_STATE_RELEASE;
+	}
+	if (context->envelope_state == AUDIO_ENVELOPE_STATE_RELEASE) {
+		level = LEGACY_S16_WRAP_SUB(context->level,
+									LEGACY_S16_FROM_BITS(resource_read_u16le(
+										resource + AUDIO_RESOURCE_RELEASE_STEP_OFFSET)));
+		context->level = level;
+		if (level <= 0) {
+			context->level = 0;
+			context->envelope_state = AUDIO_ENVELOPE_STATE_IDLE;
+			context->state = AUDIO_CONTEXT_STATE_FREE;
+			chunk = &audio_channels[context->channel];
+			chunk->active_notes--;
+			dos_audio_driver_end_context(context->driver_channel, context);
+			audio_channel_notes[context->channel] = 0;
+		}
+	}
+}
+
+static void audio_update_context_modulation(struct AUDIO_CONTEXT *context, legacy_u8 far *resource)
+{
+	legacy_s16 modulation;
+	legacy_u16 magnitude, threshold, value;
+	if (resource[AUDIO_RESOURCE_MODULATION_ENABLED_OFFSET] != 0) {
+		value = context->modulation_delay;
+		if (value != 0) {
+			context->modulation_delay = LEGACY_U16_WRAP_SUB(value, 1U);
+		} else {
+			value = context->modulation_count;
+			if (value != 0) {
+				if (value != AUDIO_MODULATION_COUNT_INFINITE) {
+					context->modulation_count = LEGACY_U16_WRAP_SUB(value, 1U);
+				}
+				if (context->modulation_tick != 0) {
+					context->modulation_tick--;
+				} else {
+					context->modulation_tick = resource[AUDIO_RESOURCE_MODULATION_TICK_OFFSET];
+					modulation = context->modulation;
+					if (context->modulation_direction == AUDIO_MODULATION_DIRECTION_DECREASE) {
+						modulation = LEGACY_S16_WRAP_SUB(modulation, context->modulation_step);
+					} else {
+						modulation = LEGACY_S16_WRAP_ADD(modulation, context->modulation_step);
+					}
+					context->modulation = modulation;
+					magnitude = audio_absolute_word(modulation);
+					threshold =
+						resource_read_u16le(resource + AUDIO_RESOURCE_MODULATION_LIMIT_OFFSET);
+					if (magnitude >= threshold) {
+						if (context->modulation_direction == AUDIO_MODULATION_DIRECTION_DECREASE &&
+							(resource[AUDIO_RESOURCE_MODULATION_DIRECTION_OFFSET] &
+							 AUDIO_MODULATION_REVERSE_AT_MINIMUM) != 0) {
+							context->modulation_direction = AUDIO_MODULATION_DIRECTION_INCREASE;
+						} else if (context->modulation_direction !=
+									   AUDIO_MODULATION_DIRECTION_DECREASE &&
+								   (resource[AUDIO_RESOURCE_MODULATION_DIRECTION_OFFSET] &
+									AUDIO_MODULATION_REVERSE_AT_MAXIMUM) != 0) {
+							context->modulation_direction = AUDIO_MODULATION_DIRECTION_DECREASE;
+						} else {
+							context->modulation = 0;
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+static void audio_update_context_sequence(struct AUDIO_CONTEXT *context, legacy_u8 far *resource)
+{
+	legacy_u16 value;
+	legacy_u8 sequence_index;
+	if (resource[AUDIO_RESOURCE_SEQUENCE_ENABLED_OFFSET] != 0) {
+		value = context->sequence_delay;
+		if (value != 0) {
+			context->sequence_delay = LEGACY_U16_WRAP_SUB(value, 1U);
+		} else {
+			value = context->sequence_count;
+			if (value != 0) {
+				context->sequence_count = LEGACY_U16_WRAP_SUB(value, 1U);
+				if (context->sequence_tick != 0) {
+					context->sequence_tick--;
+				} else {
+					context->sequence_tick = resource[AUDIO_RESOURCE_SEQUENCE_TICK_OFFSET];
+					sequence_index = context->sequence_index++;
+					context->sequence_value =
+						resource[AUDIO_RESOURCE_SEQUENCE_VALUES_OFFSET +
+								 (sequence_index & AUDIO_SEQUENCE_VALUE_INDEX_MASK)];
+				}
+			}
+		}
+	}
+}
+
 void audio_update_driver_contexts(void)
 {
 	struct AUDIO_CONTEXT *context;
-	struct AUDIO_CHANNEL *chunk;
 	legacy_u8 far *resource;
-	legacy_s16 level;
-	legacy_s16 modulation;
-	legacy_u16 magnitude;
-	legacy_u16 threshold;
-	legacy_u16 value;
 	legacy_u16 context_index;
-	legacy_u8 sequence_index;
 
 	context = dos_audio_contexts;
 	for (context_index = 0; context_index < dos_audio_context_count; context_index++) {
@@ -963,116 +1135,11 @@ void audio_update_driver_contexts(void)
 		}
 
 		resource = (legacy_u8 far *)audio_read_far_pointer((legacy_u8 *)&context->resource);
-		if (context->envelope_state == AUDIO_ENVELOPE_STATE_ATTACK) {
-			level = LEGACY_S16_WRAP_ADD(context->level,
-										LEGACY_S16_FROM_BITS(resource_read_u16le(
-											resource + AUDIO_RESOURCE_ATTACK_STEP_OFFSET)));
-			context->level = level;
-			value = resource_read_u16le(resource + AUDIO_RESOURCE_ATTACK_LEVEL_OFFSET);
-			if (level >= LEGACY_S16_FROM_BITS(value)) {
-				context->level = LEGACY_S16_FROM_BITS(value);
-				context->envelope_state = LEGACY_S16_FROM_BITS(resource_read_u16le(
-											  resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET)) >=
-												  LEGACY_S16_FROM_BITS(value)
-											  ? AUDIO_ENVELOPE_STATE_SUSTAIN
-											  : AUDIO_ENVELOPE_STATE_DECAY;
-			}
-		}
-		if (context->envelope_state == AUDIO_ENVELOPE_STATE_DECAY) {
-			level = LEGACY_S16_WRAP_SUB(context->level,
-										LEGACY_S16_FROM_BITS(resource_read_u16le(
-											resource + AUDIO_RESOURCE_DECAY_STEP_OFFSET)));
-			context->level = level;
-			value = resource_read_u16le(resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET);
-			if (level <= LEGACY_S16_FROM_BITS(value)) {
-				context->envelope_state = AUDIO_ENVELOPE_STATE_SUSTAIN;
-				context->level = LEGACY_S16_FROM_BITS(value);
-			}
-		}
-		if (context->envelope_state == AUDIO_ENVELOPE_STATE_SUSTAIN &&
-			resource_read_u16le(resource + AUDIO_RESOURCE_SUSTAIN_LEVEL_OFFSET) == 0) {
-			context->envelope_state = AUDIO_ENVELOPE_STATE_RELEASE;
-		}
-		if (context->envelope_state == AUDIO_ENVELOPE_STATE_RELEASE) {
-			level = LEGACY_S16_WRAP_SUB(context->level,
-										LEGACY_S16_FROM_BITS(resource_read_u16le(
-											resource + AUDIO_RESOURCE_RELEASE_STEP_OFFSET)));
-			context->level = level;
-			if (level <= 0) {
-				context->level = 0;
-				context->envelope_state = AUDIO_ENVELOPE_STATE_IDLE;
-				context->state = AUDIO_CONTEXT_STATE_FREE;
-				chunk = &audio_channels[context->channel];
-				chunk->active_notes--;
-				dos_audio_driver_end_context(context->driver_channel, context);
-				audio_channel_notes[context->channel] = 0;
-			}
-		}
+		audio_update_context_envelope(context, resource);
 
-		if (resource[AUDIO_RESOURCE_MODULATION_ENABLED_OFFSET] != 0) {
-			value = context->modulation_delay;
-			if (value != 0) {
-				context->modulation_delay = LEGACY_U16_WRAP_SUB(value, 1U);
-			} else {
-				value = context->modulation_count;
-				if (value != 0) {
-					if (value != AUDIO_MODULATION_COUNT_INFINITE) {
-						context->modulation_count = LEGACY_U16_WRAP_SUB(value, 1U);
-					}
-					if (context->modulation_tick != 0) {
-						context->modulation_tick--;
-					} else {
-						context->modulation_tick = resource[AUDIO_RESOURCE_MODULATION_TICK_OFFSET];
-						modulation = context->modulation;
-						if (context->modulation_direction == AUDIO_MODULATION_DIRECTION_DECREASE) {
-							modulation = LEGACY_S16_WRAP_SUB(modulation, context->modulation_step);
-						} else {
-							modulation = LEGACY_S16_WRAP_ADD(modulation, context->modulation_step);
-						}
-						context->modulation = modulation;
-						magnitude = audio_absolute_word(modulation);
-						threshold =
-							resource_read_u16le(resource + AUDIO_RESOURCE_MODULATION_LIMIT_OFFSET);
-						if (magnitude >= threshold) {
-							if (context->modulation_direction ==
-									AUDIO_MODULATION_DIRECTION_DECREASE &&
-								(resource[AUDIO_RESOURCE_MODULATION_DIRECTION_OFFSET] &
-								 AUDIO_MODULATION_REVERSE_AT_MINIMUM) != 0) {
-								context->modulation_direction = AUDIO_MODULATION_DIRECTION_INCREASE;
-							} else if (context->modulation_direction !=
-										   AUDIO_MODULATION_DIRECTION_DECREASE &&
-									   (resource[AUDIO_RESOURCE_MODULATION_DIRECTION_OFFSET] &
-										AUDIO_MODULATION_REVERSE_AT_MAXIMUM) != 0) {
-								context->modulation_direction = AUDIO_MODULATION_DIRECTION_DECREASE;
-							} else {
-								context->modulation = 0;
-							}
-						}
-					}
-				}
-			}
-		}
+		audio_update_context_modulation(context, resource);
 
-		if (resource[AUDIO_RESOURCE_SEQUENCE_ENABLED_OFFSET] != 0) {
-			value = context->sequence_delay;
-			if (value != 0) {
-				context->sequence_delay = LEGACY_U16_WRAP_SUB(value, 1U);
-			} else {
-				value = context->sequence_count;
-				if (value != 0) {
-					context->sequence_count = LEGACY_U16_WRAP_SUB(value, 1U);
-					if (context->sequence_tick != 0) {
-						context->sequence_tick--;
-					} else {
-						context->sequence_tick = resource[AUDIO_RESOURCE_SEQUENCE_TICK_OFFSET];
-						sequence_index = context->sequence_index++;
-						context->sequence_value =
-							resource[AUDIO_RESOURCE_SEQUENCE_VALUES_OFFSET +
-									 (sequence_index & AUDIO_SEQUENCE_VALUE_INDEX_MASK)];
-					}
-				}
-			}
-		}
+		audio_update_context_sequence(context, resource);
 
 		dos_audio_driver_suspend_context(context->driver_channel, context, context->timer_offset,
 										 resource);

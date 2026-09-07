@@ -232,15 +232,122 @@ static void audio_sequence_finish_channel(legacy_s16 channel, struct AUDIO_CHANN
 	}
 }
 
+static legacy_s16 audio_sequence_flow_command(legacy_s16 channel, struct AUDIO_CHANNEL *chunk,
+											  const struct audio_sequence_event *event)
+{
+	legacy_u8 depth;
+	legacy_u8 count;
+	void far *pointer;
+
+	switch ((legacy_u8)(event->command - AUDIO_SEQUENCE_COMMAND_BASE)) {
+		case AUDIO_SEQUENCE_COMMAND_RETURN:
+			depth = chunk->call_depth;
+			if (depth != 0) {
+				pointer = audio_read_far_pointer((legacy_u8 *)&chunk->call_stack[depth]);
+				audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
+				chunk->call_depth--;
+			} else {
+				audio_sequence_finish_channel(channel, chunk, 0);
+			}
+			break;
+		case AUDIO_SEQUENCE_COMMAND_STOP:
+			audio_sequence_finish_channel(channel, chunk, 1);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_RESTART:
+			chunk->call_depth = 0;
+			chunk->stack_depth = 0;
+			pointer = audio_read_far_pointer((legacy_u8 *)&chunk->call_stack[0]);
+			audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_LOOP_BEGIN:
+			depth = chunk->stack_depth;
+			audio_write_far_pointer((legacy_u8 *)&chunk->return_stack[depth],
+									audio_read_far_pointer((legacy_u8 *)&chunk->cursor));
+			chunk->loop_counts[depth] = (legacy_u8)(event->argument - 1U);
+			chunk->stack_depth++;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_LOOP_END:
+			depth = chunk->stack_depth;
+			if (depth != 0) {
+				pointer = audio_read_far_pointer((legacy_u8 *)&chunk->return_stack[depth - 1U]);
+				audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
+				count = chunk->loop_counts[depth - 1U];
+				chunk->loop_counts[depth - 1U]--;
+				if (count == 0) {
+					chunk->stack_depth--;
+				}
+			}
+			break;
+		case AUDIO_SEQUENCE_COMMAND_CALL:
+			chunk->call_depth++;
+			depth = chunk->call_depth;
+			audio_write_far_pointer((legacy_u8 *)&chunk->call_stack[depth],
+									audio_read_far_pointer((legacy_u8 *)&chunk->cursor));
+			pointer = dos_memory_make_pointer(
+				(legacy_u16)(event->value >> LEGACY_WORD_BITS),
+				LEGACY_U16_WRAP_ADD((legacy_u16)event->value, AUDIO_FAR_POINTER_SIZE));
+			audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
+			break;
+		default:
+			return 0;
+	}
+	return 1;
+}
+
+static void audio_sequence_apply_command(legacy_s16 channel, struct AUDIO_CHANNEL *chunk,
+										 const struct audio_sequence_event *event)
+{
+	legacy_u16 offset;
+
+	switch ((legacy_u8)(event->command - AUDIO_SEQUENCE_COMMAND_BASE)) {
+		case AUDIO_SEQUENCE_COMMAND_SET_INSTRUMENT:
+			audio_sequence_bind_instrument(channel, chunk, event->argument);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_TEMPO:
+			if (channel < AUDIO_DIRECT_CHANNEL_COUNT) {
+				audio_sequence_tick_period =
+					LEGACY_U16_DIV_OR_ZERO(AUDIO_TEMPO_NUMERATOR, event->argument);
+			}
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_VOLUME:
+			dos_audio_set_channel_volume(channel, event->argument);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_CONTROL:
+			audio_sequence_set_control(chunk, event->argument, (legacy_u16)event->value);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_NOTE_LIMIT:
+			chunk->note_limit = event->argument;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_PRIORITY:
+			chunk->priority = event->argument;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_NOTE_VELOCITY:
+			chunk->note_velocity = event->argument;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_PITCH:
+			audio_sequence_set_pitch(chunk, (legacy_u16)event->value);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
+			offset = LEGACY_U16_WRAP_SUB(event->size, AUDIO_SEQUENCE_DRIVER_DATA_HEADER_SIZE);
+			dos_audio_driver_send_data(offset, dos_audio_driver_data);
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_DRIVER_CHANNEL:
+			chunk->driver_channel = event->argument;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SET_CHANNEL_RESERVED:
+			audio_channel_reserved[(legacy_u16)channel] = event->argument;
+			break;
+		default:
+			break;
+	}
+}
+
 static void audio_service_sequence_channel(legacy_s16 channel)
 {
 	struct audio_sequence_event event;
 	struct audio_sequence_event next_event;
 	struct AUDIO_CHANNEL *chunk;
 	legacy_u32 delay;
-	legacy_u16 offset;
-	legacy_u8 depth;
-	legacy_u8 count;
 	void far *pointer;
 
 	chunk = &audio_channels[channel];
@@ -264,96 +371,8 @@ static void audio_service_sequence_channel(legacy_s16 channel)
 			event.command &= AUDIO_NOTE_NUMBER_MASK;
 			audio_start_note(chunk, 0, event.value, event.command, event.argument, channel);
 		} else {
-			switch ((legacy_u8)(event.command - AUDIO_SEQUENCE_COMMAND_BASE)) {
-				case AUDIO_SEQUENCE_COMMAND_RETURN:
-					depth = chunk->call_depth;
-					if (depth != 0) {
-						pointer = audio_read_far_pointer((legacy_u8 *)&chunk->call_stack[depth]);
-						audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
-						chunk->call_depth--;
-					} else {
-						audio_sequence_finish_channel(channel, chunk, 0);
-					}
-					break;
-				case AUDIO_SEQUENCE_COMMAND_STOP:
-					audio_sequence_finish_channel(channel, chunk, 1);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_RESTART:
-					chunk->call_depth = 0;
-					chunk->stack_depth = 0;
-					pointer = audio_read_far_pointer((legacy_u8 *)&chunk->call_stack[0]);
-					audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_INSTRUMENT:
-					audio_sequence_bind_instrument(channel, chunk, event.argument);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_TEMPO:
-					if (channel < AUDIO_DIRECT_CHANNEL_COUNT) {
-						audio_sequence_tick_period =
-							LEGACY_U16_DIV_OR_ZERO(AUDIO_TEMPO_NUMERATOR, event.argument);
-					}
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_VOLUME:
-					dos_audio_set_channel_volume(channel, event.argument);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_CONTROL:
-					audio_sequence_set_control(chunk, event.argument, (legacy_u16)event.value);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_NOTE_LIMIT:
-					chunk->note_limit = event.argument;
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_PRIORITY:
-					chunk->priority = event.argument;
-					break;
-				case AUDIO_SEQUENCE_COMMAND_LOOP_BEGIN:
-					depth = chunk->stack_depth;
-					audio_write_far_pointer((legacy_u8 *)&chunk->return_stack[depth],
-											audio_read_far_pointer((legacy_u8 *)&chunk->cursor));
-					chunk->loop_counts[depth] = (legacy_u8)(event.argument - 1U);
-					chunk->stack_depth++;
-					break;
-				case AUDIO_SEQUENCE_COMMAND_LOOP_END:
-					depth = chunk->stack_depth;
-					if (depth != 0) {
-						pointer =
-							audio_read_far_pointer((legacy_u8 *)&chunk->return_stack[depth - 1U]);
-						audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
-						count = chunk->loop_counts[depth - 1U];
-						chunk->loop_counts[depth - 1U]--;
-						if (count == 0) {
-							chunk->stack_depth--;
-						}
-					}
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_NOTE_VELOCITY:
-					chunk->note_velocity = event.argument;
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_PITCH:
-					audio_sequence_set_pitch(chunk, (legacy_u16)event.value);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_CALL:
-					chunk->call_depth++;
-					depth = chunk->call_depth;
-					audio_write_far_pointer((legacy_u8 *)&chunk->call_stack[depth],
-											audio_read_far_pointer((legacy_u8 *)&chunk->cursor));
-					pointer = dos_memory_make_pointer(
-						(legacy_u16)(event.value >> LEGACY_WORD_BITS),
-						LEGACY_U16_WRAP_ADD((legacy_u16)event.value, AUDIO_FAR_POINTER_SIZE));
-					audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
-					offset =
-						LEGACY_U16_WRAP_SUB(event.size, AUDIO_SEQUENCE_DRIVER_DATA_HEADER_SIZE);
-					dos_audio_driver_send_data(offset, dos_audio_driver_data);
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_DRIVER_CHANNEL:
-					chunk->driver_channel = event.argument;
-					break;
-				case AUDIO_SEQUENCE_COMMAND_SET_CHANNEL_RESERVED:
-					audio_channel_reserved[(legacy_u16)channel] = event.argument;
-					break;
-				default:
-					break;
+			if (audio_sequence_flow_command(channel, chunk, &event) == 0) {
+				audio_sequence_apply_command(channel, chunk, &event);
 			}
 		}
 

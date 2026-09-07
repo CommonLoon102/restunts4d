@@ -564,143 +564,177 @@ legacy_u32 file_decomp_rle(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u16 
 	return len;
 }
 
+struct VLE_DECODER {
+	legacy_u16 escape_alphabet_offsets[RS_VLE_ESC_LEN];
+	legacy_u16 escape_code_limits[RS_VLE_ESC_LEN];
+	legacy_u8 alphabet[RS_VLE_ALPH_LEN];
+	legacy_u8 symbols[RS_VLE_ALPH_LEN];
+	legacy_u8 widths[RS_VLE_ALPH_LEN];
+	legacy_u8 huge *source;
+	legacy_u16 additive;
+	legacy_u16 current_word;
+	legacy_u8 current_width;
+	legacy_u8 current_symbol;
+};
+
+static legacy_u8 huge *file_vle_read_alphabet(struct VLE_DECODER *decoder, legacy_u8 huge *source,
+											  legacy_u8 escape_length)
+{
+	legacy_u16 index, code_limit, alphabet_length;
+	legacy_u8 width_symbol_count;
+	// Generate the canonical code limits and alphabet offsets for each width.
+	for (index = 0, code_limit = 0, alphabet_length = 0; index < escape_length;
+		 ++index, code_limit *= VLE_ALPHABET_BRANCH_FACTOR) {
+		decoder->escape_alphabet_offsets[index] = alphabet_length - code_limit;
+		width_symbol_count = *source++;
+		code_limit += width_symbol_count;
+		alphabet_length += width_symbol_count;
+		decoder->escape_code_limits[index] = code_limit;
+	}
+	for (index = 0; index < alphabet_length; ++index) {
+		decoder->alphabet[index] = *source++;
+	}
+	return source;
+}
+
+static void file_vle_prepare_lookup(struct VLE_DECODER *decoder, legacy_u8 huge *source,
+									legacy_u8 escape_length)
+{
+	legacy_u16 width, width_distribution, index, alphabet_index;
+	legacy_u8 symbol_width, symbol_count, symbols_left;
+	// Expand short codes into byte lookup tables; pad longer prefixes as escapes.
+	width = 1;
+	width_distribution = (escape_length >= BYTE_BIT_COUNT ? BYTE_BIT_COUNT : escape_length);
+	symbol_count = RS_VLE_NUM_SYMB;
+	for (index = 0, alphabet_index = 0; width <= width_distribution; ++width, symbol_count >>= 1) {
+		for (symbol_width = *source++; symbol_width > 0; --symbol_width, ++alphabet_index) {
+			for (symbols_left = symbol_count; symbols_left; --symbols_left, ++index) {
+				decoder->symbols[index] = decoder->alphabet[alphabet_index];
+				decoder->widths[index] = width;
+			}
+		}
+	}
+	for (; index < RS_VLE_ALPH_LEN; ++index) {
+		decoder->widths[index] = RS_VLE_ESC_WIDTH;
+	}
+}
+
+static void file_vle_write_symbol(struct VLE_DECODER *decoder, legacy_u8 huge *destination,
+								  legacy_u8 symbol)
+{
+	if (decoder->additive) {
+		decoder->current_symbol += symbol;
+	} else {
+		decoder->current_symbol = symbol;
+	}
+	*destination = decoder->current_symbol;
+}
+
+static legacy_u8 file_vle_read_byte(struct VLE_DECODER *decoder)
+{
+	legacy_u8 huge *source = decoder->source;
+	legacy_u8 value;
+
+	/* Borland updates huge pointer members through ES; a local keeps the
+	 * pointer update in the correct segment after destination writes. */
+	value = *source++;
+	decoder->source = source;
+	return value;
+}
+
+static legacy_u8 file_vle_expand_escape(struct VLE_DECODER *decoder, legacy_u8 huge *destination)
+{
+	legacy_u16 index;
+	legacy_u8 code, next_width;
+	code = decoder->current_word;
+	decoder->current_word >>= BYTE_SHIFT;
+	index = VLE_EXTENDED_CODE_START_WIDTH;
+	while (1) {
+		if (!decoder->current_width) {
+			code = file_vle_read_byte(decoder);
+			decoder->current_width = BYTE_BIT_COUNT;
+		}
+		decoder->current_word =
+			(decoder->current_word << 1) + ((code & BYTE_HIGH_BIT) == BYTE_HIGH_BIT);
+		code <<= 1;
+		--decoder->current_width;
+		++index;
+		if (decoder->current_word < decoder->escape_code_limits[index]) {
+			decoder->current_word += decoder->escape_alphabet_offsets[index];
+			file_vle_write_symbol(decoder, destination, decoder->alphabet[decoder->current_word]);
+			break;
+		}
+	}
+	decoder->current_word = (code << decoder->current_width) | file_vle_read_byte(decoder);
+	next_width = BYTE_BIT_COUNT - decoder->current_width;
+	decoder->current_width = BYTE_BIT_COUNT;
+	return next_width;
+}
+
+static legacy_u8 file_vle_decode_direct(struct VLE_DECODER *decoder, legacy_u8 huge *destination,
+										legacy_u8 code, legacy_u8 next_width)
+{
+	file_vle_write_symbol(decoder, destination, decoder->symbols[code]);
+	if (decoder->current_width < next_width) {
+		decoder->current_word <<= decoder->current_width;
+		next_width -= decoder->current_width;
+		decoder->current_width = BYTE_BIT_COUNT;
+		decoder->current_word |= file_vle_read_byte(decoder);
+	}
+	return next_width;
+}
+
 // Decompress variable-length encoded sub-file.
 legacy_u32 file_decomp_vle(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u16 decompparas)
 {
+	struct VLE_DECODER decoder;
 	legacy_u32 len, lenleft;
-	legacy_u16 additive, alphlen, width, widthdistr, i, j;
-	legacy_u16 escape_alphabet_offsets[RS_VLE_ESC_LEN], escape_code_limits[RS_VLE_ESC_LEN];
-	legacy_u8 alph[RS_VLE_ALPH_LEN], symb[RS_VLE_ALPH_LEN], wdth[RS_VLE_ALPH_LEN];
-	legacy_u8 esclen, symbwdth, numsymb, numsymbleft, cursymb, width_symbol_count;
-	legacy_u8 curwdt, nextwdt, code;
-	legacy_u16 curword;
-
-	legacy_u8 huge *wdtpos;
-	legacy_u8 huge *codpos;
-
+	legacy_u8 escape_length, code, next_width;
 	(void)decompparas;
-
-	// Get decompressed size from header.
 	len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
 					((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
 	src += COMPR_HEADER_SIZE;
-
-	// One-byte escape codes length counter.
-	esclen = *src++;
-	additive = (esclen & BYTE_HIGH_BIT) == BYTE_HIGH_BIT;
-	esclen &= (legacy_u8)~BYTE_HIGH_BIT;
-
-	// Store postion of width data for later.
-	wdtpos = src;
-
-	// Generate escape codes.
-	for (i = 0, j = 0, alphlen = 0; i < esclen; ++i, j *= VLE_ALPHABET_BRANCH_FACTOR) {
-		escape_alphabet_offsets[i] = alphlen - j;
-		width_symbol_count = *src++;
-		j += width_symbol_count;
-		alphlen += width_symbol_count;
-		escape_code_limits[i] = j;
-	}
-
-	// Read alphabet.
-	for (i = 0; i < alphlen; ++i) {
-		alph[i] = *src++;
-	}
-
-	// Store start position of compression codes, roll back to code width data.
-	codpos = src;
-	src = wdtpos;
-
-	// Generate lookup tables.
-	width = 1;
-	widthdistr = (esclen >= BYTE_BIT_COUNT ? BYTE_BIT_COUNT : esclen);
-	numsymb = RS_VLE_NUM_SYMB;
-	for (i = 0, j = 0; width <= widthdistr; ++width, numsymb >>= 1) {
-		for (symbwdth = *src++; symbwdth > 0; --symbwdth, ++j) {
-			for (numsymbleft = numsymb; numsymbleft; --numsymbleft, ++i) {
-				symb[i] = alph[j];
-				wdth[i] = width;
-			}
-		}
-	}
-
-	// Pad widths.
-	for (; i < RS_VLE_ALPH_LEN; ++i) {
-		wdth[i] = RS_VLE_ESC_WIDTH;
-	}
-
-	// Go to compression codes.
-	src = codpos;
-
-	curword = *src << BYTE_SHIFT | *(src + VLE_CODE_WORD_SECOND_BYTE_OFFSET);
-	src += LEGACY_WORD_BYTES;
-	curwdt = BYTE_BIT_COUNT;
-	cursymb = 0;
-
+	escape_length = *src++;
+	decoder.additive = (escape_length & BYTE_HIGH_BIT) == BYTE_HIGH_BIT;
+	escape_length &= (legacy_u8)~BYTE_HIGH_BIT;
+	// Save the code stream while revisiting the width data for direct lookups.
+	decoder.source = file_vle_read_alphabet(&decoder, src, escape_length);
+	file_vle_prepare_lookup(&decoder, src, escape_length);
+	decoder.current_word =
+		*decoder.source << BYTE_SHIFT | *(decoder.source + VLE_CODE_WORD_SECOND_BYTE_OFFSET);
+	decoder.source += LEGACY_WORD_BYTES;
+	decoder.current_width = BYTE_BIT_COUNT;
+	decoder.current_symbol = 0;
+	// The original writes len + 1 bytes but returns the declared header length.
 	++lenleft;
 	while (lenleft) {
-		code = curword >> BYTE_SHIFT;
-		nextwdt = wdth[code];
-		// Expand.
-		if (nextwdt > BYTE_BIT_COUNT) {
-			code = curword;
-			curword >>= BYTE_SHIFT;
-
-			i = VLE_EXTENDED_CODE_START_WIDTH;
-			while (1) {
-				if (!curwdt) {
-					code = *src++;
-					curwdt = BYTE_BIT_COUNT;
-				}
-
-				curword = (curword << 1) + ((code & BYTE_HIGH_BIT) == BYTE_HIGH_BIT);
-				code <<= 1;
-				--curwdt;
-				++i;
-
-				if (curword < escape_code_limits[i]) {
-					curword += escape_alphabet_offsets[i];
-
-					if (additive) {
-						cursymb += alph[curword];
-					} else {
-						cursymb = alph[curword];
-					}
-					*dst++ = cursymb;
-					--lenleft;
-
-					break;
-				}
-			}
-
-			curword = (code << curwdt) | *src++;
-			nextwdt = BYTE_BIT_COUNT - curwdt;
-			curwdt = BYTE_BIT_COUNT;
+		code = decoder.current_word >> BYTE_SHIFT;
+		next_width = decoder.widths[code];
+		if (next_width > BYTE_BIT_COUNT) {
+			next_width = file_vle_expand_escape(&decoder, dst);
+		} else {
+			next_width = file_vle_decode_direct(&decoder, dst, code, next_width);
 		}
-		// Direct lookup.
-		else {
-			if (additive) {
-				cursymb += symb[code];
-			} else {
-				cursymb = symb[code];
-			}
-
-			*dst++ = cursymb;
-			--lenleft;
-
-			if (curwdt < nextwdt) {
-				curword <<= curwdt;
-				nextwdt -= curwdt;
-				curwdt = BYTE_BIT_COUNT;
-				curword |= *src++;
-			}
-		}
-
-		curword <<= nextwdt;
-		curwdt -= nextwdt;
+		dst++;
+		--lenleft;
+		decoder.current_word <<= next_width;
+		decoder.current_width -= next_width;
 	}
-
 	return len;
+}
+
+static legacy_s16 file_decomp_pass(legacy_u8 far *source, legacy_u8 far *destination,
+								   legacy_u16 paragraphs, legacy_u32 *length)
+{
+	switch (*source) {
+		case COMPRESSION_RLE_TYPE:
+			*length = file_decomp_rle(source, destination, paragraphs);
+			return 1;
+		case COMPRESSION_VLE_TYPE:
+			*length = file_decomp_vle(source, destination, paragraphs);
+			return 1;
+	}
+	return 0;
 }
 
 // Decompress file. Returns pointer to result, NULL or raises fatal error.
@@ -708,7 +742,7 @@ void far *file_decomp(const legacy_s8 *filename, legacy_s16 fatal)
 {
 	legacy_u32 passlen;
 	legacy_u16 paras, decompparas;
-	legacy_u8 passes, type;
+	legacy_u8 passes;
 	legacy_u8 far *src;
 	legacy_u8 far *dst;
 	legacy_s16 err = 0;
@@ -750,17 +784,8 @@ void far *file_decomp(const legacy_s8 *filename, legacy_s16 fatal)
 
 				// Decode all compression passes.
 				while (!err && passes) {
-					type = *src;
-
-					switch (type) {
-						case COMPRESSION_RLE_TYPE:
-							passlen = file_decomp_rle(src, dst, decompparas);
-							break;
-						case COMPRESSION_VLE_TYPE:
-							passlen = file_decomp_vle(src, dst, decompparas);
-							break;
-						default:
-							err = 1;
+					if (file_decomp_pass(src, dst, decompparas, &passlen) == 0) {
+						err = 1;
 					}
 
 					// Set source for next pass.

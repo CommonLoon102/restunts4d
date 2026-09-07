@@ -142,109 +142,129 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE *output, legacy_u32 valu
 	}
 }
 
+struct FATAL_CONVERSION {
+	legacy_s16 left_aligned, zero_padded, width, precision, long_value;
+	legacy_s8 conversion;
+};
+
+static const legacy_s8 *fatal_parse_conversion(const legacy_s8 *format,
+											   struct FATAL_CONVERSION *field)
+{
+	field->left_aligned = 0;
+	field->zero_padded = 0;
+	while (*format == '-' || *format == '0') {
+		if (*format == '-') {
+			field->left_aligned = 1;
+		} else {
+			field->zero_padded = 1;
+		}
+		format++;
+	}
+	field->width = 0;
+	while (*format >= '0' && *format <= '9') {
+		field->width = (legacy_s16)(field->width * FATAL_FORMAT_DECIMAL_RADIX + *format++ - '0');
+	}
+	field->precision = -1;
+	if (*format == '.') {
+		format++;
+		field->precision = 0;
+		while (*format >= '0' && *format <= '9') {
+			field->precision =
+				(legacy_s16)(field->precision * FATAL_FORMAT_DECIMAL_RADIX + *format++ - '0');
+		}
+	}
+	field->long_value = 0;
+	if (*format == 'l') {
+		field->long_value = 1;
+		format++;
+	}
+	field->conversion = *format;
+	if (field->conversion != 0) {
+		format++;
+	}
+	return format;
+}
+
+static void fatal_emit_field_character(struct FATAL_OUTPUT_STATE *output,
+									   const struct FATAL_CONVERSION *field, legacy_s8 value)
+{
+	if (!field->left_aligned) {
+		fatal_emit_padding(output, ' ', (legacy_s16)(field->width - 1));
+	}
+	fatal_emit_character(output, value);
+	if (field->left_aligned) {
+		fatal_emit_padding(output, ' ', (legacy_s16)(field->width - 1));
+	}
+}
+
+static void fatal_emit_signed_field(struct FATAL_OUTPUT_STATE *output,
+									const struct FATAL_CONVERSION *field, legacy_s32 value)
+{
+	legacy_u32 magnitude;
+	magnitude = value < 0 ? (legacy_u32)(0UL - (legacy_u32)value) : (legacy_u32)value;
+	fatal_emit_number(output, magnitude, value < 0, FATAL_FORMAT_DECIMAL_RADIX, 0, field->width,
+					  field->precision, field->left_aligned, field->zero_padded);
+}
+
+static void fatal_emit_unsigned_field(struct FATAL_OUTPUT_STATE *output,
+									  const struct FATAL_CONVERSION *field, legacy_u32 value)
+{
+	fatal_emit_number(output, value, 0,
+					  field->conversion == 'u' ? FATAL_FORMAT_DECIMAL_RADIX
+											   : FATAL_FORMAT_HEXADECIMAL_RADIX,
+					  field->conversion == 'X', field->width, field->precision, field->left_aligned,
+					  field->zero_padded);
+}
+
+static void fatal_emit_unknown_field(struct FATAL_OUTPUT_STATE *output, legacy_s8 conversion)
+{
+	fatal_emit_character(output, '%');
+	if (conversion != 0) {
+		fatal_emit_character(output, conversion);
+	}
+}
+
 static void fatal_vprintf(const legacy_s8 *format, va_list arguments)
 {
 	struct FATAL_OUTPUT_STATE output;
-	legacy_s16 left_aligned;
-	legacy_s16 zero_padded;
-	legacy_s16 width;
-	legacy_s16 precision;
-	legacy_s16 long_value;
+	struct FATAL_CONVERSION field;
 	legacy_s16 value;
 	legacy_s32 long_signed_value;
 	legacy_u32 unsigned_value;
-	legacy_s8 conversion;
-
 	output.length = 0;
 	while (*format != 0) {
 		if (*format != '%') {
 			fatal_emit_character(&output, *format++);
 			continue;
 		}
-		format++;
-		left_aligned = 0;
-		zero_padded = 0;
-		while (*format == '-' || *format == '0') {
-			if (*format == '-') {
-				left_aligned = 1;
-			} else {
-				zero_padded = 1;
-			}
-			format++;
-		}
-		width = 0;
-		while (*format >= '0' && *format <= '9') {
-			width = (legacy_s16)(width * FATAL_FORMAT_DECIMAL_RADIX + *format++ - '0');
-		}
-		precision = -1;
-		if (*format == '.') {
-			format++;
-			precision = 0;
-			while (*format >= '0' && *format <= '9') {
-				precision = (legacy_s16)(precision * FATAL_FORMAT_DECIMAL_RADIX + *format++ - '0');
-			}
-		}
-		long_value = 0;
-		if (*format == 'l') {
-			long_value = 1;
-			format++;
-		}
-		conversion = *format;
-		if (conversion != 0) {
-			format++;
-		}
-		switch (conversion) {
+		format = fatal_parse_conversion(format + 1, &field);
+		switch (field.conversion) {
 			case '%':
 				fatal_emit_character(&output, '%');
 				break;
 			case 'c':
 				value = va_arg(arguments, legacy_s16);
-				if (!left_aligned) {
-					fatal_emit_padding(&output, ' ', (legacy_s16)(width - 1));
-				}
-				fatal_emit_character(&output, (legacy_s8)value);
-				if (left_aligned) {
-					fatal_emit_padding(&output, ' ', (legacy_s16)(width - 1));
-				}
+				fatal_emit_field_character(&output, &field, (legacy_s8)value);
 				break;
 			case 's':
-				fatal_emit_text(&output, va_arg(arguments, legacy_s8 *), width, precision,
-								left_aligned);
+				fatal_emit_text(&output, va_arg(arguments, legacy_s8 *), field.width,
+								field.precision, field.left_aligned);
 				break;
 			case 'd':
 			case 'i':
-				if (long_value) {
-					long_signed_value = va_arg(arguments, legacy_s32);
-					unsigned_value = long_signed_value < 0
-										 ? (legacy_u32)(0UL - (legacy_u32)long_signed_value)
-										 : (legacy_u32)long_signed_value;
-					fatal_emit_number(&output, unsigned_value, long_signed_value < 0,
-									  FATAL_FORMAT_DECIMAL_RADIX, 0, width, precision, left_aligned,
-									  zero_padded);
-				} else {
-					value = va_arg(arguments, legacy_s16);
-					unsigned_value =
-						value < 0 ? (legacy_u16)(0U - (legacy_u16)value) : (legacy_u16)value;
-					fatal_emit_number(&output, unsigned_value, value < 0,
-									  FATAL_FORMAT_DECIMAL_RADIX, 0, width, precision, left_aligned,
-									  zero_padded);
-				}
+				long_signed_value = field.long_value ? va_arg(arguments, legacy_s32)
+													 : va_arg(arguments, legacy_s16);
+				fatal_emit_signed_field(&output, &field, long_signed_value);
 				break;
 			case 'u':
 			case 'x':
 			case 'X':
-				unsigned_value = long_value ? va_arg(arguments, legacy_u32)
-											: (legacy_u16)va_arg(arguments, legacy_u16);
-				fatal_emit_number(&output, unsigned_value, 0,
-								  conversion == 'u' ? FATAL_FORMAT_DECIMAL_RADIX
-													: FATAL_FORMAT_HEXADECIMAL_RADIX,
-								  conversion == 'X', width, precision, left_aligned, zero_padded);
+				unsigned_value = field.long_value ? va_arg(arguments, legacy_u32)
+												  : (legacy_u16)va_arg(arguments, legacy_u16);
+				fatal_emit_unsigned_field(&output, &field, unsigned_value);
 				break;
 			default:
-				fatal_emit_character(&output, '%');
-				if (conversion != 0) {
-					fatal_emit_character(&output, conversion);
-				}
+				fatal_emit_unknown_field(&output, field.conversion);
 				break;
 		}
 	}

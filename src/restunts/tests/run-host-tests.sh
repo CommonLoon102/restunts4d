@@ -36,6 +36,12 @@ run_host_test() {
     "$test_build_dir/$test_name"
 }
 
+run_host_test test-audio-engine legacy.c -Wno-unused-variable -Wno-sign-compare
+run_host_test test-audio-car legacy.c \
+    "$test_source_dir/math.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/headless_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-audio-sequence legacy.c -Wno-sign-compare
+run_host_test test-audio-resources legacy.c "$test_source_dir/resource.c" -Wno-pointer-sign
 run_host_test test-race-flow legacy.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
@@ -72,6 +78,11 @@ run_host_test test-end-hiscore highscore.c \
     "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-file-decompression fileio.c "$test_source_dir/legacy.c" \
+    -DRESTUNTS_HEADLESS -Wno-pointer-sign
+run_host_test test-fatal-format legacy.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
+    "$test_source_dir/headless_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-gamestate-serialization stateio.c
 run_host_test test-grip physics_grip.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" -Wno-sign-compare

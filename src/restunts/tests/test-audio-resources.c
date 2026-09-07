@@ -1,0 +1,283 @@
+/* Regression fingerprints captured from the original audio routines before extraction. */
+#include "audio-test-support.h"
+#ifndef AUDIO_RESOURCES_SOURCE
+#define AUDIO_RESOURCES_SOURCE "../c/audio_resources.c"
+#endif
+#include AUDIO_RESOURCES_SOURCE
+#undef memcpy
+#undef strlen
+#undef printf
+static unsigned load_count, driver_variant;
+static legacy_u8 driver_channels;
+void dos_audio_shutdown(void)
+{
+	hash_word(20);
+}
+void add_exit_handler(void(far *handler)(void))
+{
+	hash_word(21);
+	assert(handler == dos_audio_shutdown);
+}
+void *file_load_binary_nofatal(const legacy_s8 *filename)
+{
+	hash_word(22);
+	hash_bytes(filename, strlen((const char *)filename));
+	load_count++;
+	if (load_count == 1) {
+		return driver_variant & 1 ? 0 : memory_bytes + 100;
+	}
+	return driver_variant & 2 ? 0 : memory_bytes + 200;
+}
+void fatal_error(const legacy_s8 *message, ...)
+{
+	hash_word(23);
+	hash_bytes(message, strlen((const char *)message));
+}
+legacy_u8 dos_audio_driver_initialize(void)
+{
+	hash_word(24);
+	return driver_channels;
+}
+void audio_reset_channels(void)
+{
+	hash_word(25);
+}
+void audio_sequence_timer(void)
+{
+}
+void timer_reg_callback(void(far *callback)(void))
+{
+	hash_word(26);
+	assert(callback == audio_sequence_timer);
+}
+void dos_audio_driver_load_bank(void *bank)
+{
+	hash_word(27);
+	hash_word(dos_memory_pointer_offset(bank));
+}
+void mmgr_release(void *resource)
+{
+	hash_word(28);
+	hash_word(dos_memory_pointer_offset(resource));
+}
+void dos_audio_driver_set_master_state(legacy_s16 operation, void *state)
+{
+	hash_word(29);
+	hash_word(operation);
+	assert(state == dos_audio_master_state);
+}
+void audio_stop_music(void)
+{
+	hash_word(30);
+}
+void dos_audio_driver_reset(void)
+{
+	hash_word(31);
+}
+legacy_s16 audio_sequence_command_has_byte_argument(legacy_u8 command)
+{
+	return command == 3 || command == 4 || command == 5 || command == 7 || command == 8 ||
+		   command == 9 || command == 11 || command == 16 || command == 17;
+}
+static legacy_u32 driver_fingerprint(void)
+{
+	static const char *names[] = {"adlib", "c:adlib", "c:\\snd\\mt32.drv", "pc", "xx\\snd"};
+	static const legacy_u8 counts[] = {0, 1, 16, 127, 128, 254, 255};
+	unsigned variant, name, count;
+	trace_hash = 2166136261UL;
+	for (variant = 0; variant < 32; variant++) {
+		for (name = 0; name < 5; name++) {
+			for (count = 0; count < 7; count++) {
+				reset_audio_fixture();
+				load_count = 0;
+				driver_variant = variant;
+				driver_channels = counts[count];
+				dos_audio_special_mode = variant & 4 ? 1 : 0;
+				dos_audio_uses_direct_channels = variant & 8 ? 1 : 0;
+				dos_audio_master_volume = 42;
+				if (variant & 16) {
+					dos_audio_driver_binary = 0;
+				}
+				hash_word(audio_load_dos_driver((const legacy_s8 *)names[name], 0,
+												count & 1 ? AUDIO_SPECIAL_DRIVER_MODE : 0));
+				hash_word(dos_audio_context_count);
+				hash_word(dos_audio_uses_direct_channels);
+				hash_word(dos_audio_special_mode);
+				hash_word(dos_audio_driver_binary != 0);
+				hash_word(audio_music_rate);
+				hash_word(audio_effect_rate);
+				hash_word(dos_audio_master_volume);
+				hash_word(audio_music_enabled);
+				hash_word(audio_effects_enabled);
+				hash_word(audio_music_active);
+				hash_word(audio_suspended);
+				hash_bytes(audio_driver_prefix, 3);
+			}
+		}
+	}
+	return trace_hash;
+}
+static void put_byte(legacy_u16 *offset, legacy_u8 value)
+{
+	memory_bytes[*offset] = value;
+	*offset = (legacy_u16)(*offset + 1);
+}
+static void put_bytes(legacy_u16 offset, const void *source, unsigned length)
+{
+	const legacy_u8 *bytes = source;
+	unsigned index;
+	for (index = 0; index < length; index++) {
+		put_byte(&offset, bytes[index]);
+	}
+}
+static void put_word(legacy_u16 offset, legacy_u16 value)
+{
+	put_byte(&offset, value);
+	put_byte(&offset, value >> 8);
+}
+static void put_length(legacy_u16 offset, legacy_u16 value)
+{
+	put_word(offset, value);
+	put_word((legacy_u16)(offset + 2), 0);
+}
+static unsigned sequence_bytes(legacy_u8 *buffer, unsigned command, unsigned variant)
+{
+	unsigned size = 0, index;
+	if (variant & 1) {
+		buffer[size++] = 0x81;
+	}
+	buffer[size++] = 0;
+	buffer[size++] = command;
+	if (command < AUDIO_SEQUENCE_COMMAND_BASE || command > AUDIO_SEQUENCE_COMMAND_LAST) {
+		if (command >= AUDIO_SEQUENCE_STATUS_BIT) {
+			buffer[size++] = 64;
+		}
+		buffer[size++] = 0x81;
+		buffer[size++] = 1;
+		return size;
+	}
+	if (audio_sequence_command_has_byte_argument(command - AUDIO_SEQUENCE_COMMAND_BASE)) {
+		buffer[size++] = 23;
+		return size;
+	}
+	switch (command - AUDIO_SEQUENCE_COMMAND_BASE) {
+		case AUDIO_SEQUENCE_COMMAND_SET_CONTROL:
+		case AUDIO_SEQUENCE_COMMAND_SET_PITCH:
+			buffer[size++] = 64;
+			buffer[size++] = 127;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_CALL:
+			buffer[size++] = 1;
+			memcpy(buffer + size, variant & 2 ? "MISS" : "trk2", 4);
+			size += 4;
+			break;
+		case AUDIO_SEQUENCE_COMMAND_SKIP_PAYLOAD:
+		case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
+			buffer[size++] = variant & 3;
+			for (index = 0; index < (variant & 3); index++) {
+				buffer[size++] = index + 17;
+			}
+			break;
+	}
+	return size;
+}
+static void build_song(legacy_u16 base, unsigned command, unsigned variant)
+{
+	legacy_u16 offset, header, track, end;
+	legacy_u8 bytes[32];
+	unsigned length, index;
+	put_word((legacy_u16)(base + 4), 3);
+	put_bytes((legacy_u16)(base + 6), variant & 4 ? "NONEtrk1trk2" : "hdr1trk1trk2", 12);
+	put_length((legacy_u16)(base + 18), 256);
+	put_length((legacy_u16)(base + 22), 768);
+	put_length((legacy_u16)(base + 26), 1536);
+	header = (legacy_u16)(base + 30 + 256);
+	put_length(header, 32);
+	offset = (legacy_u16)(header + 6);
+	put_byte(&offset, variant % 3);
+	for (index = 0; index < variant % 3; index++) {
+		put_bytes(offset, "SNAR", 4);
+		offset = (legacy_u16)(offset + 4);
+	}
+	put_byte(&offset, 2);
+	put_bytes(offset, "trk1", 4);
+	offset = (legacy_u16)(offset + 5);
+	put_bytes(offset, "MISS", 4);
+	if (variant & 4) {
+		put_length(header, 4);
+	}
+	track = (legacy_u16)(base + 30 + 768);
+	length = sequence_bytes(bytes, command, variant);
+	put_length(track, 4 + length);
+	put_bytes((legacy_u16)(track + 4), bytes, length);
+	end = (legacy_u16)(base + 30 + 1536);
+	put_length(end, 6);
+	put_word((legacy_u16)(end + 4), (AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP)
+										<< 8);
+}
+static legacy_u32 mapping_fingerprint(void)
+{
+	static const legacy_u16 offsets[] = {0, 1, 32768, 65500};
+	unsigned command, variant;
+	trace_hash = 2166136261UL;
+	for (command = 0; command < 256; command++) {
+		for (variant = 0; variant < 8; variant++) {
+			reset_audio_fixture();
+			build_song(offsets[variant & 3], command, variant);
+			audio_map_song_tracks(memory_bytes + offsets[variant & 3]);
+			hash_bytes(memory_bytes, 65536);
+		}
+	}
+	return trace_hash;
+}
+static legacy_u32 finalize_fingerprint(void)
+{
+	unsigned sample;
+	trace_hash = 2166136261UL;
+	for (sample = 0; sample < 256; sample++) {
+		reset_audio_fixture();
+		memory_bytes[4] = sample & 1;
+		memory_bytes[5] = (sample >> 1) & 1;
+		memory_bytes[6] = (sample >> 2) & 3;
+		memory_bytes[7 + memory_bytes[6] * 4] = sample >> 4;
+		load_audio_finalize(sample == 0 ? 0 : memory_bytes);
+		hash_word(audio_update_lock);
+		hash_word(audio_sequence_elapsed_ticks);
+		hash_word(audio_sequence_tick_period);
+		hash_word(audio_music_channel_count);
+		hash_word(audio_music_active);
+	}
+	return trace_hash;
+}
+static void test_song_reference_mapping(void)
+{
+	legacy_u16 base, header, track, target;
+	base = 65500;
+	reset_audio_fixture();
+	build_song(base, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_CALL, 0);
+	header = (legacy_u16)(base + 30 + 256);
+	track = (legacy_u16)(base + 30 + 768);
+	target = (legacy_u16)(base + 30 + 1536);
+	audio_map_song_tracks(memory_bytes + base);
+	assert(LEGACY_READ_U16_LE(memory_bytes + header + 8) == track);
+	assert(LEGACY_READ_U16_LE(memory_bytes + header + 10) == 0x1000);
+	assert(memcmp(memory_bytes + header + 13, "MISS", 4) == 0);
+	assert(LEGACY_READ_U16_LE(memory_bytes + track + 7) == target);
+	assert(LEGACY_READ_U16_LE(memory_bytes + track + 9) == 0x1000);
+}
+
+int main(void)
+{
+	legacy_u32 driver = driver_fingerprint(), mapping = mapping_fingerprint(),
+			   finalize = finalize_fingerprint();
+	test_song_reference_mapping();
+#ifdef AUDIO_RESOURCES_BASELINE
+	printf("%08lx %08lx %08lx\n", (unsigned long)driver, (unsigned long)mapping,
+		   (unsigned long)finalize);
+#else
+	assert(driver == 0x1bed120dUL);
+	assert(mapping == 0xe9f082d5UL);
+	assert(finalize == 0x8530e745UL);
+#endif
+	return 0;
+}
