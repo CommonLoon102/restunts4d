@@ -69,6 +69,11 @@ run_host_test test-track-object trackobj.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" "$test_source_dir/trkutil.c" \
     -Wno-missing-braces
+run_host_test test-track-setup track_setup.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
+    "$test_source_dir/trkutil.c" "$test_source_dir/opponent.c" "$test_source_dir/legacy.c" \
+    -Wno-missing-braces -Wno-type-limits -Wno-pointer-sign -Wno-unused-variable \
+    -Wno-maybe-uninitialized
 run_host_test test-track-resource-decoding trackres.c
 run_host_test test-ui-dialog ui_dialog.c "$test_source_dir/legacy.c" -Wno-pointer-sign
 
