@@ -1,5 +1,5 @@
-# C sources and headers only. Bundled compiler headers in tools/include are
-# intentionally outside this section. CRLF matches .gitattributes.
+# Project C sources/headers and C# tools. Bundled headers in tools/include
+# are intentionally excluded. CRLF matches .gitattributes.
 root = true
 
 [src/**.{c,h}]
@@ -13,3 +13,21 @@ trim_trailing_whitespace = true
 max_line_length = 100
 
 # C layout and mandatory braces are configured in .clang-format.
+
+[*.cs]
+charset = utf-8
+indent_style = space
+indent_size = 4
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+csharp_new_line_before_open_brace = all
+csharp_prefer_braces = true:error
+
+[*.{csproj,slnx}]
+charset = utf-8
+indent_style = space
+indent_size = 2
+end_of_line = crlf
+insert_final_newline = true

@@ -61,13 +61,37 @@ jobs:
       - name: Validate C layout and braces with clang-format
         run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
 
+  dumpsrv-tests:
+    name: C# regression service (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test the shared regression engine and HTTP service
+        run: dotnet test tools/dumpsrv.slnx --configuration Release
+
+      - name: Test the POSIX client
+        if: runner.os == 'Linux'
+        run: python3 tools/dumpsrv.tests/client-tests.py
+
+      - name: Check C# formatting
+        run: dotnet format tools/dumpsrv.slnx --verify-no-changes --no-restore
+
   plan:
     name: Plan the shards
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
-      total: ${{ steps.plan.outputs.total }}
     steps:
       - name: Split the golden set into shards
         id: plan
@@ -77,8 +101,12 @@ jobs:
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
           set -u
-          if (( SHARDS < 1 || PARTITIONS_PER_SHARD < 1 )); then
-              echo "::error::shards and partitions-per-shard must both be positive"
+          if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
+              echo "::error::shards must be an integer from 1 to 2147483647"
+              exit 1
+          fi
+          if [[ ! "$PARTITIONS_PER_SHARD" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]]; then
+              echo "::error::partitions-per-shard must be an integer from 1 to 64"
               exit 1
           fi
           if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
@@ -86,7 +114,6 @@ jobs:
               exit 1
           fi
           echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
-          echo "total=$(( SHARDS * PARTITIONS_PER_SHARD ))" >> "$GITHUB_OUTPUT"
 
   host-tests:
     name: Host regression tests
@@ -100,6 +127,7 @@ jobs:
 
   build:
     name: Build executables
+    needs: dumpsrv-tests
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
@@ -175,135 +203,68 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish the shared regression runner
+        run: dotnet publish tools/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+
       - name: Install DOSBox-X
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends dosbox-x
+
+      - name: Initialize DOSBox-X before concurrent runs
+        run: |
+          timeout --signal=KILL 30s dosbox-x -silent \
+              -conf tools/scripts/dosbox.proc.conf \
+              -c "mount c $RUNNER_TEMP" -c "c:" -c "exit"
 
       - uses: actions/download-artifact@v8
         with:
           name: ${{ needs.build.outputs.exe-artifact }}
           path: exes
 
-      - name: Smoke test DOSBox-X
-        run: |
-          # Also lets DOSBox-X create its user configuration before several
-          # copies of it start up at once.
-          dosbox-x -silent -conf tools/scripts/dosbox.proc.conf \
-              -c "mount c $RUNNER_TEMP" -c "c:" -c "exit"
-
       - name: Assemble the game directory
         run: |
           set -u
           game_dir="$RUNNER_TEMP/gamedir"
           mkdir -p "$game_dir"
-          # rpl2state.sh treats its own directory as the game directory, which
-          # is why the harness is copied next to the game data when it runs.
           cp -R stunts/. "$game_dir/"
-          # Only the archived golden set belongs in the desync run. In
-          # particular, remove replay files copied from stunts before the
-          # archive is extracted in the next step.
+          # The archived golden corpus is the complete replay set for CI.
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp tools/scripts/cars/*.RES tools/scripts/cars/*.3SH \
              tools/scripts/cars/*.VSH tools/scripts/cars/*.PVS "$game_dir/"
-          cp tools/scripts/rpl2state.sh tools/scripts/dosbox.proc.conf "$game_dir/"
           cp exes/*.EXE "$game_dir/"
-          chmod +x "$game_dir/rpl2state.sh"
+          unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
-          # Keep renderer reports separate while sharing the same game inputs.
-          renderer_dir="$RUNNER_TEMP/renderer"
-          mkdir -p "$renderer_dir"
-          ln -s "$game_dir" "$renderer_dir/stunts"
-          cp tools/scripts/rpl2pixdump.ps1 tools/scripts/dosbox.proc.conf "$renderer_dir/"
-          echo "RENDERER_DIR=$renderer_dir" >> "$GITHUB_ENV"
 
-      - name: Extract the golden replays
-        run: |
-          unzip -q tools/scripts/rpls_golden/replays.zip -d "${GAME_DIR:?}"
-          echo "Replays in the game directory: $(find "$GAME_DIR" -maxdepth 1 -type f -iname '*.rpl' | wc -l)"
-
-      - name: Run this shard's physics partitions
-        env:
-          SHARD: ${{ matrix.shard }}
-          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
-          TOTAL: ${{ needs.plan.outputs.total }}
-          REPLAY_TIMEOUT_SECONDS: ${{ inputs.replay-timeout-seconds }}
-        run: |
-          set -u
-          first=$(( SHARD * PARTITIONS_PER_SHARD ))
-          pids=()
-          partitions=()
-          for (( k = 0; k < PARTITIONS_PER_SHARD; k++ )); do
-              partition=$(( first + k ))
-              # rpl2state.sh only creates its output file when it logs an error,
-              # so create it up front to keep the artifact shape predictable.
-              : > "$GAME_DIR/partition_$partition.txt"
-              "$GAME_DIR/rpl2state.sh" "$partition" "$TOTAL" \
-                  > "$GAME_DIR/log_$partition.txt" 2>&1 &
-              pids+=("$!")
-              partitions+=("$partition")
-          done
-          status=0
-          for i in "${!pids[@]}"; do
-              if ! wait "${pids[$i]}"; then
-                  echo "::error::partition ${partitions[$i]} exited non-zero"
-                  status=1
-              fi
-          done
-          exit "$status"
-
-      - name: Run this shard's renderer partitions
+      - name: Run this shard's physics and renderer tests
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
           PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
-          TOTAL: ${{ needs.plan.outputs.total }}
+          REPLAY_TIMEOUT_SECONDS: ${{ inputs.replay-timeout-seconds }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
           RENDERER_TIMEOUT_SECONDS: ${{ inputs.renderer-timeout-seconds }}
         run: |
-          set -u
-          pids=()
-          partitions=()
-          for (( k = 0; k < PARTITIONS_PER_SHARD; k++ )); do
-              # Interleave partition IDs across shards so any extra samples
-              # are spread across machines as well as workers.
-              partition=$(( k * SHARDS + SHARD ))
-              : > "$RENDERER_DIR/partition_$partition.txt"
-              # Sample globally before assigning to the global partition index.
-              # Sampling within each physics partition would skew coverage.
-              pwsh -NoLogo -NoProfile -NonInteractive \
-                  -File "$RENDERER_DIR/rpl2pixdump.ps1" \
-                  -Partition "$partition" -PartitionCount "$TOTAL" \
-                  -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-                  -DosBoxTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
-                  > "$RENDERER_DIR/renderer_log_$partition.txt" 2>&1 &
-              pids+=("$!")
-              partitions+=("$partition")
-          done
-          status=0
-          for i in "${!pids[@]}"; do
-              if ! wait "${pids[$i]}"; then
-                  echo "::error::renderer partition ${partitions[$i]} exited non-zero"
-                  status=1
-              fi
-          done
-          exit "$status"
-
-      - name: Collect this shard's results
-        if: always()
-        run: |
-          mkdir -p partitions/physics partitions/renderer
-          cp "${GAME_DIR:?}"/partition_*.txt "${GAME_DIR:?}"/log_*.txt partitions/physics/
-          cp "${RENDERER_DIR:?}"/partition_*.txt \
-              "$RENDERER_DIR"/renderer_log_*.txt partitions/renderer/
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" run \
+              -GameDirectory "$GAME_DIR" \
+              -OutputDirectory partitions \
+              -DosBoxConfigPath tools/scripts/dosbox.proc.conf \
+              -PartitionCount "$PARTITIONS_PER_SHARD" \
+              -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
+              -DosBoxTimeoutSeconds "$REPLAY_TIMEOUT_SECONDS" \
+              -RendererTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
+              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE"
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: partitions-${{ matrix.shard }}
-          path: partitions/
-          # A shard that produced nothing is reported by the coverage check in
-          # the report job, which says far more than a failed upload would.
+          path: partitions/*.json
+          # Missing shards are diagnosed by the shared merge command.
           if-no-files-found: warn
           retention-days: 14
 
@@ -316,109 +277,50 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish the shared regression runner
+        run: dotnet publish tools/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+
       - uses: actions/download-artifact@v8
+        continue-on-error: true
         with:
           pattern: partitions-*
           merge-multiple: true
           path: partitions
 
-      - name: Merge the partitions
+      - name: Merge the shard results and check coverage
         env:
-          TOTAL: ${{ needs.plan.outputs.total }}
+          SHARDS: ${{ inputs.shards }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
-          tools/scripts/rpl2statemerge.sh partitions/physics "$TOTAL" physics_all.txt
-          tools/scripts/rpl2statemerge.sh partitions/renderer "$TOTAL" renderer_all.txt
-          cat physics_all.txt renderer_all.txt > partitions_all.txt
+          mkdir -p partitions "$RUNNER_TEMP/replays"
+          unzip -q tools/scripts/rpls_golden/replays.zip -d "$RUNNER_TEMP/replays"
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" merge \
+              -ReplayDirectory "$RUNNER_TEMP/replays" \
+              -ResultsDirectory partitions -ShardCount "$SHARDS" \
+              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+              -OutputFile partitions_all.txt \
+              -SummaryFile "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
           name: partitions_all
           path: partitions_all.txt
+          if-no-files-found: warn
           retention-days: 14
 
-      - name: Check for mismatches
+      - name: Check replay jobs completed successfully
+        if: always()
         env:
           REPLAY_RESULT: ${{ needs.replay.result }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
-          set -u
-          expected=$(unzip -Z1 tools/scripts/rpls_golden/replays.zip | \
-              grep -Eic '[0-9]{4}\.rpl$')
-          processed=$(cat partitions/physics/log_*.txt 2>/dev/null | grep -c '^Processing ' || true)
-          renderer_expected=$(( (expected * RENDERER_TEST_PERCENTAGE + 99) / 100 ))
-          renderer_processed=$(cat partitions/renderer/renderer_log_*.txt 2>/dev/null | \
-              grep -c '^Processing renderer replay ' || true)
-          errors=$(grep -c '' partitions_all.txt || true)
-
-          types() {
-              awk -F '|' '{
-                  for (i = 1; i <= NF; i++) {
-                      if ($i ~ /^type=/) { print substr($i, 6); next }
-                  }
-              }' partitions_all.txt | sort | uniq -c | sort -rn
-          }
-
-          {
-              echo "## Replay validation"
-              echo
-              echo "| | |"
-              echo "|---|---|"
-              echo "| Replays in the golden set | $expected |"
-              echo "| Physics replays processed | $processed |"
-              echo "| Renderer sample percentage | $RENDERER_TEST_PERCENTAGE% |"
-              echo "| Renderer replays expected | $renderer_expected |"
-              echo "| Renderer replays processed | $renderer_processed |"
-              echo "| Errors | $errors |"
-          } >> "$GITHUB_STEP_SUMMARY"
-
-          status=0
-
           if [[ "$REPLAY_RESULT" != "success" ]]; then
-              echo "::error::a replay shard did not finish (result: $REPLAY_RESULT)"
-              status=1
+              echo "::error::a replay shard did not finish successfully (result: $REPLAY_RESULT)"
+              printf '\n:x: A replay shard did not finish successfully (result: **%s**).\n' \
+                  "$REPLAY_RESULT" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
           fi
-
-          if (( processed != expected )); then
-              echo "::error::$processed of $expected replays were processed, so the run is incomplete"
-              printf '\n:x: Only **%s** of **%s** replays were processed.\n' \
-                  "$processed" "$expected" >> "$GITHUB_STEP_SUMMARY"
-              status=1
-          fi
-
-          if (( renderer_processed != renderer_expected )); then
-              echo "::error::$renderer_processed of $renderer_expected renderer replays were processed"
-              printf '\n:x: Only **%s** of **%s** sampled renderer replays were processed.\n' \
-                  "$renderer_processed" "$renderer_expected" >> "$GITHUB_STEP_SUMMARY"
-              status=1
-          fi
-
-          if (( errors > 0 )); then
-              echo "::error::$errors error(s) in partitions_all.txt"
-              echo
-              echo "Errors by type:"
-              types
-              echo
-              echo "partitions_all.txt:"
-              cat partitions_all.txt
-              {
-                  printf '\n:x: **%s error(s)** — the full report is in the `partitions_all` artifact.\n\n' "$errors"
-                  echo '### Errors by type'
-                  echo '```'
-                  types
-                  echo '```'
-                  echo
-                  echo '### partitions_all.txt (first 200 lines)'
-                  echo '```'
-                  head -n 200 partitions_all.txt
-                  echo '```'
-              } >> "$GITHUB_STEP_SUMMARY"
-              status=1
-          fi
-
-          if (( status == 0 )); then
-              echo "No mismatches: $processed physics and $renderer_processed renderer replays agree byte for byte."
-              printf '\n:white_check_mark: **%s** physics and **%s** renderer replays agree byte for byte.\n' \
-                  "$processed" "$renderer_processed" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
-          exit "$status"

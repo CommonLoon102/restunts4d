@@ -1,4 +1,10 @@
 .venv/
+out/*
+tools/dumpsrv/bin/
+tools/dumpsrv/obj/
+tools/dumpsrv.tests/bin/
+tools/dumpsrv.tests/obj/
+tools/dumpsrv.tests/TestResults/
 src/restunts/asmorig/build/*obj
 src/restunts/asmorig/build/*OBJ
 src/restunts/asmorig/TASMBOX.OUT

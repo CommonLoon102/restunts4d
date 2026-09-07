@@ -115,6 +115,18 @@ including macro bodies, empty loops, and bodies spanning preprocessor
 branches. Review those cases manually; a successful clang-format check does
 not prove that those cases have braces.
 
+## C# coding style
+
+The regression application and its tests under `tools/dumpsrv*` use four-space
+indentation, opening braces on their own line, braced control-flow bodies, a
+100-column target, and CRLF line endings. `.editorconfig` defines these rules.
+Use the .NET 10 SDK to check or apply formatting:
+
+```sh
+dotnet format tools/dumpsrv.slnx --verify-no-changes
+dotnet format tools/dumpsrv.slnx
+```
+
 ## Complexity audit
 
 See [the complexity report](docs/complexity.md) for measurements, completed
@@ -279,20 +291,34 @@ renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
 against PIXLDUMO `.PDO` files with camera 2 and player target 0.
 
+The C# application in `tools/dumpsrv` runs these comparisons on Linux, Windows,
+and GitHub Actions. Its HTTP service, direct runner, and report merger share the
+same engine. See the [service and runner guide](tools/scripts/dumpsrv/README.md)
+for publishing, service parameters, client options, and local execution.
+
 Set `renderer-test-percentage` (an integer from 1 to 100) when manually
 starting **PR validation** or **Release** to change renderer coverage. Calls
 to the reusable `build-and-validate.yml` workflow can set the same input;
-pull request events use 5%. The PowerShell service retains its separate
-100% default for `RendererTestPercentage`.
+pull request events use 5%. The HTTP service retains its separate 100% default
+for `RendererTestPercentage`.
 
-Renderer sampling happens across the entire filename-sorted golden set
-before the selected replay positions are distributed across all shards and
-partitions. Renderer partition IDs are interleaved across shards so both
-worker and shard sample counts differ by at most one replay. For 7,000
-replays at 5%, the default 20 shards get 17 or 18 renderer tests each. The CI
-report checks physics and renderer coverage separately and fails for missing
-coverage, processing errors, or any byte mismatch. The reusable workflow's
-`renderer-timeout-seconds` input defaults to 120 seconds per renderer run.
+Every top-level `.rpl` file is eligible, regardless of filename structure.
+Renderer sampling happens across the complete, ordinal-sorted corpus before
+work is distributed round robin into shard lists and then worker lists.
+The sample is independent of shard and worker counts, and both shard and
+worker lists differ in size by at most one replay. CI validates completed replay
+identities from the JSON shard results, so missing or duplicate coverage,
+processing errors, and byte mismatches fail validation.
+
+The reusable workflow defaults to 20 shards with 12 workers each, 30 seconds
+per physics execution, and 120 seconds per renderer execution. It tests the
+C# application and checks its formatting on Linux and Windows before building
+the DOS executables. Run these checks locally with the .NET 10 SDK:
+
+```sh
+dotnet test tools/dumpsrv.slnx --configuration Release
+dotnet format tools/dumpsrv.slnx --verify-no-changes
+```
 
 ## Build options
 

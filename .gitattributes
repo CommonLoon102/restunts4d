@@ -10,6 +10,9 @@
 *.c text eol=crlf
 *.C text eol=crlf
 *.h text eol=crlf
+*.cs text eol=crlf
+*.csproj text eol=crlf
+*.slnx text eol=crlf
 *.H text eol=crlf
 *.asm text eol=crlf
 *.inc text eol=crlf

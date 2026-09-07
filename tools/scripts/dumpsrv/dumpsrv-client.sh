@@ -3,13 +3,14 @@
 set -eu
 
 usage() {
-    echo "Usage: DUMPSRV_API_KEY=<secret> $0 [--physics-tests true|false] [--renderer-tests true|false] [service-url]" >&2
+    echo "Usage: DUMPSRV_API_KEY=<secret> $0 [--physics-tests true|false] [--renderer-tests true|false] [--timeout-seconds seconds] [service-url]" >&2
     echo "Example: DUMPSRV_API_KEY=<secret> $0 --physics-tests false http://server:8080/process" >&2
 }
 
 service_url=
 physics_tests=true
 renderer_tests=true
+timeout_seconds=1860
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -37,6 +38,19 @@ while [ "$#" -gt 0 ]; do
             ;;
         --renderer-tests=*)
             renderer_tests=${1#*=}
+            shift
+            ;;
+        --timeout-seconds)
+            if [ "$#" -lt 2 ]; then
+                echo "--timeout-seconds requires a positive integer." >&2
+                usage
+                exit 2
+            fi
+            timeout_seconds=$2
+            shift 2
+            ;;
+        --timeout-seconds=*)
+            timeout_seconds=${1#*=}
             shift
             ;;
         -h|--help)
@@ -75,6 +89,24 @@ case "$renderer_tests" in
         ;;
     *)
         echo "--renderer-tests must be true or false." >&2
+        usage
+        exit 2
+        ;;
+esac
+
+case "$timeout_seconds" in
+    ''|*[!0-9]*)
+        echo "--timeout-seconds must be a positive integer." >&2
+        usage
+        exit 2
+        ;;
+esac
+
+case "$timeout_seconds" in
+    *[1-9]*)
+        ;;
+    *)
+        echo "--timeout-seconds must be a positive integer." >&2
         usage
         exit 2
         ;;
@@ -127,7 +159,7 @@ if ! curl \
     --show-error \
     --fail \
     --connect-timeout 10 \
-    --max-time 2100 \
+    --max-time "$timeout_seconds" \
     --request POST \
     --header "X-API-Key: $api_key" \
     --form "repldump=@$repldump_file;type=application/octet-stream;filename=REPLDUMP.EXE" \

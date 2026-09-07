@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="dumpsrv/dumpsrv.csproj" />
+  <Project Path="dumpsrv.tests/dumpsrv.tests.csproj" />
+</Solution>
