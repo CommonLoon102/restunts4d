@@ -77,14 +77,14 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Test the shared regression engine and HTTP service
-        run: dotnet test tools/dumpsrv.slnx --configuration Release
+        run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
 
       - name: Test the POSIX client
         if: runner.os == 'Linux'
-        run: python3 tools/dumpsrv.tests/client-tests.py
+        run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
 
       - name: Check C# formatting
-        run: dotnet format tools/dumpsrv.slnx --verify-no-changes --no-restore
+        run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
 
   plan:
     name: Plan the shards
@@ -208,7 +208,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Publish the shared regression runner
-        run: dotnet publish tools/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
 
       - name: Install DOSBox-X
         run: |
@@ -282,7 +282,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Publish the shared regression runner
-        run: dotnet publish tools/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
 
       - uses: actions/download-artifact@v8
         continue-on-error: true

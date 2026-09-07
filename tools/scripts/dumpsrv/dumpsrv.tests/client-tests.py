@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 
-CLIENT = Path(__file__).resolve().parents[2] / "tools/scripts/dumpsrv/dumpsrv-client.sh"
+CLIENT = Path(__file__).resolve().parents[1] / "dumpsrv-client.sh"
 
 
 class ClientTests(unittest.TestCase):

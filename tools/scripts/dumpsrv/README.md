@@ -1,6 +1,6 @@
 # Replay regression service and runner
 
-`tools/dumpsrv` is one C# application for Linux, Windows, and GitHub Actions.
+`tools/scripts/dumpsrv` is one C# application for Linux, Windows, and GitHub Actions.
 Its HTTP service and direct runner share replay discovery, sampling, task
 scheduling, DOSBox execution, oracle caching, comparisons, and reporting.
 The shell client continues to use the same HTTP endpoint and report format.
@@ -11,7 +11,7 @@ Install the .NET 10 SDK to build and test the application. From the repository
 root, publish the portable application:
 
 ```sh
-dotnet publish tools/dumpsrv/dumpsrv.csproj --configuration Release --output out/dumpsrv
+dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output out/dumpsrv
 ```
 
 Copy the complete publish directory to the service machine. The same published
@@ -245,8 +245,8 @@ diagnostics and generated outputs are retained for investigation.
 ## Development checks
 
 ```sh
-dotnet test tools/dumpsrv.slnx --configuration Release
-dotnet format tools/dumpsrv.slnx --verify-no-changes
+dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
 ```
 
 CI runs both commands on Linux and Windows. The HTTP and engine tests use
@@ -255,5 +255,5 @@ coverage without requiring DOSBox for every test. On Linux, also run the POSIX
 client tests; CI runs them on its Linux job:
 
 ```sh
-python3 tools/dumpsrv.tests/client-tests.py
+python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
 ```

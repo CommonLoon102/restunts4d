@@ -117,14 +117,14 @@ not prove that those cases have braces.
 
 ## C# coding style
 
-The regression application and its tests under `tools/dumpsrv*` use four-space
+The regression application and its tests under `tools/scripts/dumpsrv` use four-space
 indentation, opening braces on their own line, braced control-flow bodies, a
 100-column target, and CRLF line endings. `.editorconfig` defines these rules.
 Use the .NET 10 SDK to check or apply formatting:
 
 ```sh
-dotnet format tools/dumpsrv.slnx --verify-no-changes
-dotnet format tools/dumpsrv.slnx
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx
 ```
 
 ## Complexity audit
@@ -291,7 +291,7 @@ renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
 against PIXLDUMO `.PDO` files with camera 2 and player target 0.
 
-The C# application in `tools/dumpsrv` runs these comparisons on Linux, Windows,
+The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
 same engine. See the [service and runner guide](tools/scripts/dumpsrv/README.md)
 for publishing, service parameters, client options, and local execution.
@@ -316,8 +316,8 @@ C# application and checks its formatting on Linux and Windows before building
 the DOS executables. Run these checks locally with the .NET 10 SDK:
 
 ```sh
-dotnet test tools/dumpsrv.slnx --configuration Release
-dotnet format tools/dumpsrv.slnx --verify-no-changes
+dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
 ```
 
 ## Build options
