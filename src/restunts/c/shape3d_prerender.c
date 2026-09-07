@@ -988,8 +988,8 @@ static void prerender_merge_x_major_rows(const legacy_u16 *line, legacy_s16 *lef
 	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
 	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
 	/* Mode 7 walks the span right-to-left and mode 8
-   left-to-right, which only swaps which edge array
-   opens a row and which one closes it. */
+	 * left-to-right, which only swaps which edge array
+	 * opens a row and which one closes it. */
 	to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
 	x_step = to_left ? -1 : 1;
 	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];

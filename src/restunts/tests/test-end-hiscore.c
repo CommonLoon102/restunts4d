@@ -646,7 +646,7 @@ int main(void)
 		run_end_screen_case(index);
 	}
 	/* Original full-entry trace includes race outcomes, score eligibility, disk
-  * retry/cancel, text variants, animations, table entry, menu toggles and cleanup. */
+	 * retry/cancel, text variants, animations, table entry, menu toggles and cleanup. */
 	assert(trace_hash == UINT64_C(0x1ea8860683c06e8b));
 	puts("End-of-race interaction snapshots passed (360 scenarios).");
 	return 0;

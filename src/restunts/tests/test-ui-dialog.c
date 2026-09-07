@@ -220,7 +220,7 @@ int main(void)
 		run_dialog_case(scenario);
 	}
 	/* Captured from the original dialog implementation. The trace includes drawing,
-  * geometry, disabled choices, placeholders, input polling and background lifetime. */
+	 * geometry, disabled choices, placeholders, input polling and background lifetime. */
 	assert(trace_hash == UINT64_C(0x268e59aba981d897));
 	puts("Dialog interaction snapshots passed (420 scenarios).");
 	return 0;

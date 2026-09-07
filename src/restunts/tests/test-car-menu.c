@@ -583,7 +583,7 @@ int main(void)
 		run_car_case(index);
 	}
 	/* Original implementation trace: car discovery and sorting, car changes,
-  * graph rendering, animation phases, navigation, idle exit and resource cleanup. */
+	 * graph rendering, animation phases, navigation, idle exit and resource cleanup. */
 	assert(trace_hash == UINT64_C(0x25191d328ccaebd8));
 	puts("Car menu interaction snapshots passed (102 scenarios).");
 	return 0;
