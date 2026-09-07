@@ -124,9 +124,6 @@ extern legacy_u8 far *transshapeprimindexptr;
 
 static legacy_u16 shape3d_average_depth(legacy_s32 sum, legacy_u16 vertex_count)
 {
-	legacy_u32 divisor_bits;
-	legacy_s32 divisor;
-
 	switch (vertex_count) {
 		case 1U:
 			return (legacy_u16)sum;
@@ -137,9 +134,9 @@ static legacy_u16 shape3d_average_depth(legacy_s32 sum, legacy_u16 vertex_count)
 		case 8U:
 			return (legacy_u16)LEGACY_S32_SAR(sum, 3U);
 		default:
-			divisor_bits = (legacy_u32)vertex_count;
-			divisor = LEGACY_S32_FROM_BITS(divisor_bits);
-			return (legacy_u16)LEGACY_S32_DIV_OR_ZERO(sum, divisor);
+			/* The original calls __aFuldiv even for negative depth sums.
+			 * Preserve that unsigned division; powers of two use signed shifts. */
+			return (legacy_u16)LEGACY_U32_DIV_OR_ZERO((legacy_u32)sum, vertex_count);
 	}
 }
 

@@ -206,6 +206,53 @@ static void test_depth_order_and_attached_primitive(void)
 	assert(polygon_next_index[0] == -1);
 }
 
+static void test_clipped_depth_signedness(void)
+{
+	static const struct {
+		legacy_u8 source_count;
+		legacy_u8 output_count;
+		legacy_s16 depths[4];
+		legacy_s16 average;
+		legacy_u16 first_index;
+	} cases[] = {{3, 3, {-100, -100, 100, 0}, 21812, 0},
+				 {3, 4, {100, 100, -401, 0}, -51, 1},
+				 {4, 5, {40, 50, 60, -600}, 13017, 0}};
+	static const struct VECTOR points[] = {{-20, -20, 0}, {20, -20, 0}, {20, 20, 0}, {-20, 20, 0}};
+	struct VECTOR vertex;
+	unsigned i, j, next;
+
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		reset_scene();
+		primitives[0] = cases[i].source_count;
+		primitives[1] = 1;
+		primitives[2] = 7;
+		for (j = 0; j < cases[i].source_count; j++) {
+			vertex = points[j];
+			vertex.z = cases[i].depths[j];
+			shape3d_vertex_write(&shape, j, &vertex);
+			primitives[3U + j] = (legacy_u8)j;
+		}
+		next = 3U + cases[i].source_count;
+		primitives[next] = 1;
+		primitives[next + 1U] = 1;
+		primitives[next + 2U] = 8;
+		primitives[next + 3U] = 4;
+
+		assert(shape3d_transform_and_queue(&instance) == 0);
+		assert(polyinfonumpolys == 2);
+		assert(polyinfoptrs[0][3] == cases[i].output_count);
+		/* Preserve the original's mixed signedness: negative depth sums use
+		 * unsigned division for counts 3 and 5, but signed shifts for count 4.
+		 * The resulting low word determines the signed painter-order key,
+		 * even when this puts a near-clipped polygon behind a farther one. */
+		assert(LEGACY_READ_S16_LE(polyinfoptrs[0]) == cases[i].average);
+		assert(LEGACY_READ_S16_LE(polyinfoptrs[1]) == 150);
+		assert(polygon_next_index[400] == cases[i].first_index);
+		assert(polygon_next_index[cases[i].first_index] == (legacy_s16)(1U - cases[i].first_index));
+		assert(polygon_next_index[1U - cases[i].first_index] == -1);
+	}
+}
+
 static void test_backface_and_material_override(void)
 {
 	static const legacy_u8 triangle[] = {3, 0, 7, 0, 1, 2, 0, 0};
@@ -258,6 +305,7 @@ int main(void)
 	test_shared_clipped_vertices();
 	test_hidden_primitive_children();
 	test_depth_order_and_attached_primitive();
+	test_clipped_depth_signedness();
 	test_backface_and_material_override();
 	test_queue_limits();
 	return 0;

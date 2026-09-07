@@ -222,6 +222,12 @@ REM Generate a player/F1 BMP at frame 5.
 PIXLDUMP.EXE default.rpl 1 0 5
 ```
 
+PIXLDUMP must reproduce the original renderer, including its bugs. In particular,
+polygon depth averages use unsigned division for non-power-of-two vertex counts
+even when near-plane clipping retains a negative depth sum. This can put a grille
+behind opaque surfaces, as in `0027.rpl`, camera 2, player, frame 665. Preserve
+this behavior in the C port; `asmorig` and PIXLDUMO remain the unchanged oracle.
+
 Both modes force maximum graphical detail and hide the dashboard and replay
 controls. Invalid arguments are rejected before an output file is created. The
 complete output path, including its generated suffix, must fit in 127
