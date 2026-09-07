@@ -533,22 +533,10 @@ void update_opponent_tick(void)
 	opponent_check_finish();
 }
 
-void update_player_steering_input(legacy_s8 steering_input)
+static legacy_s16 player_steering_response(legacy_s16 steering_angle, legacy_s16 response,
+										   legacy_u8 speed_index, const legacy_s8 *response_table)
 {
-	legacy_s8 *response_table;
-	legacy_s16 steering_angle;
-	legacy_s16 response;
 	legacy_s16 centering_limit;
-	legacy_s16 response_index;
-	legacy_u8 speed_index;
-
-	response_table = steerWhlRespTable_ptr;
-	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index =
-		(legacy_u8)((state.playerstate.car_actual_speed >> STEERING_RESPONSE_SPEED_SHIFT) &
-					STEERING_RESPONSE_INDEX_MASK);
-	response_index = LEGACY_S16_WRAP_ADD((legacy_s16)speed_index, (legacy_s16)steering_input);
-	response = response_table[response_index];
 
 	/* Turning farther from center gets the original fourfold response. */
 	if ((response > 0 && steering_angle < -STEERING_AWAY_FROM_CENTER_THRESHOLD) ||
@@ -576,6 +564,27 @@ void update_player_steering_input(legacy_s8 steering_input)
 			}
 		}
 	}
+
+	return response;
+}
+
+void update_player_steering_input(legacy_s8 steering_input)
+{
+	legacy_s8 *response_table;
+	legacy_s16 steering_angle;
+	legacy_s16 response;
+	legacy_s16 response_index;
+	legacy_u8 speed_index;
+
+	response_table = steerWhlRespTable_ptr;
+	steering_angle = state.playerstate.car_steeringAngle;
+	speed_index =
+		(legacy_u8)((state.playerstate.car_actual_speed >> STEERING_RESPONSE_SPEED_SHIFT) &
+					STEERING_RESPONSE_INDEX_MASK);
+	response_index = LEGACY_S16_WRAP_ADD((legacy_s16)speed_index, (legacy_s16)steering_input);
+	response = response_table[response_index];
+
+	response = player_steering_response(steering_angle, response, speed_index, response_table);
 
 	if (framespersec == GAME_FRAME_RATE_LOW) {
 		if (response > STEERING_LOW_RATE_RESPONSE_LIMIT) {
@@ -634,6 +643,83 @@ static legacy_u8 opponent_speed_at(legacy_u16 index)
 	return 0;
 }
 
+static void rotate_route_points(struct VECTOR *first_point, struct VECTOR *second_point,
+								legacy_s16 orientation)
+{
+	legacy_s16 base_position;
+
+	if (orientation == ANGLE_QUARTER_TURN) {
+		base_position = first_point->x;
+		first_point->x = first_point->z;
+		first_point->z = LEGACY_S16_WRAP_NEGATE(base_position);
+		base_position = second_point->x;
+		second_point->x = second_point->z;
+		second_point->z = LEGACY_S16_WRAP_NEGATE(base_position);
+	} else if (orientation == ANGLE_HALF_TURN) {
+		first_point->x = LEGACY_S16_WRAP_NEGATE(first_point->x);
+		first_point->z = LEGACY_S16_WRAP_NEGATE(first_point->z);
+		second_point->x = LEGACY_S16_WRAP_NEGATE(second_point->x);
+		second_point->z = LEGACY_S16_WRAP_NEGATE(second_point->z);
+	} else if (orientation == ANGLE_THREE_QUARTER_TURN) {
+		base_position = first_point->x;
+		first_point->x = LEGACY_S16_WRAP_NEGATE(first_point->z);
+		first_point->z = base_position;
+		base_position = second_point->x;
+		second_point->x = LEGACY_S16_WRAP_NEGATE(second_point->z);
+		second_point->z = base_position;
+	}
+}
+
+static void store_route_points(legacy_s16 track_index, struct TRACKOBJECT *track_object,
+							   struct VECTOR *first_point, struct VECTOR *second_point,
+							   struct VECTOR *output, legacy_u8 has_opponent_path)
+{
+	legacy_u8 column;
+	legacy_u8 row;
+	legacy_s16 base_position;
+
+	column = (legacy_u8)track_route_columns[track_index];
+	row = (legacy_u8)track_route_rows[track_index];
+	if (first_point->y != ROUTE_POINT_HEIGHT_UNSPECIFIED &&
+		track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE) {
+		first_point->y =
+			LEGACY_S16_WRAP_ADD(first_point->y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
+		second_point->y =
+			LEGACY_S16_WRAP_ADD(second_point->y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
+	}
+
+	base_position = track_object_base_z(track_object, row);
+	first_point->z = LEGACY_S16_WRAP_ADD(first_point->z, base_position);
+	second_point->z = LEGACY_S16_WRAP_ADD(second_point->z, base_position);
+
+	base_position = track_object_base_x(track_object, column);
+	first_point->x = LEGACY_S16_WRAP_ADD(first_point->x, base_position);
+	second_point->x = LEGACY_S16_WRAP_ADD(second_point->x, base_position);
+
+	output[TRACK_ROUTE_RESULT_CENTER_INDEX].x = route_average(first_point->x, second_point->x);
+	if (first_point->y == ROUTE_POINT_HEIGHT_UNSPECIFIED) {
+		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y = ROUTE_POINT_HEIGHT_UNSPECIFIED;
+	} else {
+		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y = route_average(first_point->y, second_point->y);
+	}
+	output[TRACK_ROUTE_RESULT_CENTER_INDEX].z = route_average(first_point->z, second_point->z);
+	output[TRACK_ROUTE_RESULT_FIRST_POINT_INDEX] = *first_point;
+	output[TRACK_ROUTE_RESULT_SECOND_POINT_INDEX] = *second_point;
+	LEGACY_WRITE_U16_LE((legacy_u8 *)output + TRACK_ROUTE_FLAG_OFFSET, has_opponent_path);
+}
+
+static void store_route_speed(const struct TRKOBJINFO *track_info,
+							  const struct TRACKOBJECT *track_object, legacy_s8 *optional_speed)
+{
+	legacy_u16 speed_index;
+
+	if (optional_speed != 0) {
+		speed_index = (legacy_u8)track_info->opponent_speed_code;
+		speed_index = LEGACY_U16_WRAP_ADD(speed_index, (legacy_u8)track_object->ss_surfaceType);
+		*optional_speed = LEGACY_S8_FROM_BITS(opponent_speed_at(speed_index));
+	}
+}
+
 legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *output,
 								 legacy_s16 route_index_arg, legacy_s8 *optional_speed)
 {
@@ -644,7 +730,6 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 	struct VECTOR second_point;
 	legacy_s16 track_index;
 	legacy_u16 packed_opponent_offset;
-	legacy_u16 speed_index;
 	legacy_u16 route_index_word;
 	legacy_u8 tile_element;
 	legacy_u8 track_subtype;
@@ -652,11 +737,7 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 	legacy_u8 route_point_count;
 	legacy_u8 route_index;
 	legacy_u8 vector_index;
-	legacy_u8 column;
-	legacy_u8 row;
 	legacy_u8 has_opponent_path;
-	legacy_s16 base_position;
-	legacy_s16 orientation;
 
 	track_index = (legacy_s16)track_index_arg;
 	tile_element = (legacy_u8)track_route_element_ids[track_index];
@@ -680,11 +761,7 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 		vector_index = LEGACY_U8_WRAP_SUB(vector_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	}
 
-	if (optional_speed != 0) {
-		speed_index = (legacy_u8)track_info->opponent_speed_code;
-		speed_index = LEGACY_U16_WRAP_ADD(speed_index, (legacy_u8)track_object->ss_surfaceType);
-		*optional_speed = LEGACY_S8_FROM_BITS(opponent_speed_at(speed_index));
-	}
+	store_route_speed(track_info, track_object, optional_speed);
 
 	packed_opponent_offset =
 		(legacy_u16)((legacy_u8)track_info->reverse_path_offset_low |
@@ -705,56 +782,10 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 		second_point = route_vectors[vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 	}
 
-	orientation = (legacy_s16)track_info->route_orientation;
-	if (orientation == ANGLE_QUARTER_TURN) {
-		base_position = first_point.x;
-		first_point.x = first_point.z;
-		first_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
-		base_position = second_point.x;
-		second_point.x = second_point.z;
-		second_point.z = LEGACY_S16_WRAP_NEGATE(base_position);
-	} else if (orientation == ANGLE_HALF_TURN) {
-		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.x);
-		first_point.z = LEGACY_S16_WRAP_NEGATE(first_point.z);
-		second_point.x = LEGACY_S16_WRAP_NEGATE(second_point.x);
-		second_point.z = LEGACY_S16_WRAP_NEGATE(second_point.z);
-	} else if (orientation == ANGLE_THREE_QUARTER_TURN) {
-		base_position = first_point.x;
-		first_point.x = LEGACY_S16_WRAP_NEGATE(first_point.z);
-		first_point.z = base_position;
-		base_position = second_point.x;
-		second_point.x = LEGACY_S16_WRAP_NEGATE(second_point.z);
-		second_point.z = base_position;
-	}
+	rotate_route_points(&first_point, &second_point, track_info->route_orientation);
 
-	column = (legacy_u8)track_route_columns[track_index];
-	row = (legacy_u8)track_route_rows[track_index];
-	if (first_point.y != ROUTE_POINT_HEIGHT_UNSPECIFIED &&
-		track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE) {
-		first_point.y =
-			LEGACY_S16_WRAP_ADD(first_point.y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
-		second_point.y =
-			LEGACY_S16_WRAP_ADD(second_point.y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
-	}
-
-	base_position = track_object_base_z(track_object, row);
-	first_point.z = LEGACY_S16_WRAP_ADD(first_point.z, base_position);
-	second_point.z = LEGACY_S16_WRAP_ADD(second_point.z, base_position);
-
-	base_position = track_object_base_x(track_object, column);
-	first_point.x = LEGACY_S16_WRAP_ADD(first_point.x, base_position);
-	second_point.x = LEGACY_S16_WRAP_ADD(second_point.x, base_position);
-
-	output[TRACK_ROUTE_RESULT_CENTER_INDEX].x = route_average(first_point.x, second_point.x);
-	if (first_point.y == ROUTE_POINT_HEIGHT_UNSPECIFIED) {
-		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y = ROUTE_POINT_HEIGHT_UNSPECIFIED;
-	} else {
-		output[TRACK_ROUTE_RESULT_CENTER_INDEX].y = route_average(first_point.y, second_point.y);
-	}
-	output[TRACK_ROUTE_RESULT_CENTER_INDEX].z = route_average(first_point.z, second_point.z);
-	output[TRACK_ROUTE_RESULT_FIRST_POINT_INDEX] = first_point;
-	output[TRACK_ROUTE_RESULT_SECOND_POINT_INDEX] = second_point;
-	LEGACY_WRITE_U16_LE((legacy_u8 *)output + TRACK_ROUTE_FLAG_OFFSET, has_opponent_path);
+	store_route_points(track_index, track_object, &first_point, &second_point, output,
+					   has_opponent_path);
 
 	route_index_word = route_index;
 	if ((route_index & LEGACY_U8_SIGN_BIT) != 0) {

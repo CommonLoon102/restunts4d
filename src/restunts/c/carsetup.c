@@ -188,6 +188,41 @@ void setup_aero_trackdata(void far *carresptr, legacy_s16 is_opponent)
 	}
 }
 
+static void far *load_opponent_speed_data(legacy_u8 far **speed_data)
+{
+	void far *resource;
+	legacy_u16 index;
+
+	opponent_resource_name[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
+	resource = file_load_resfile(opponent_resource_name);
+	copy_string(opponent_highscore_name,
+				locate_text_res((legacy_s8 far *)resource, opponent_name_text_id));
+	(void)locate_shape_alt((legacy_s8 far *)resource, opponent_path_resource_id);
+	*speed_data =
+		(legacy_u8 far *)locate_shape_alt((legacy_s8 far *)resource, opponent_speed_resource_id);
+	for (index = 0; index < OPPONENT_SPEED_COUNT; index++) {
+		oppnentSped[index] = (*speed_data)[index];
+	}
+
+	return resource;
+}
+
+static legacy_s16 opponent_route_is_terminal(const legacy_u16 *path, legacy_u16 path_count,
+											 legacy_u16 track_index, legacy_u16 next_track)
+{
+	legacy_u16 index;
+
+	if (next_track == 0 || next_track == LEGACY_U16_MAX) {
+		return 1;
+	}
+	for (index = 0; index < path_count; index++) {
+		if (path[index] == track_index) {
+			return 1;
+		}
+	}
+	return 0;
+}
+
 void load_opponent_data(void)
 {
 	legacy_u16 path[OPPONENT_ROUTE_PATH_CAPACITY];
@@ -208,16 +243,7 @@ void load_opponent_data(void)
 	legacy_s16 terminal;
 	legacy_s16 reaches_finish;
 
-	opponent_resource_name[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
-	resource = file_load_resfile(opponent_resource_name);
-	copy_string(opponent_highscore_name,
-				locate_text_res((legacy_s8 far *)resource, opponent_name_text_id));
-	(void)locate_shape_alt((legacy_s8 far *)resource, opponent_path_resource_id);
-	speed_data =
-		(legacy_u8 far *)locate_shape_alt((legacy_s8 far *)resource, opponent_speed_resource_id);
-	for (index = 0; index < OPPONENT_SPEED_COUNT; index++) {
-		oppnentSped[index] = speed_data[index];
-	}
+	resource = load_opponent_speed_data(&speed_data);
 
 	best_distance = OPPONENT_ROUTE_DISTANCE_LIMIT;
 	distance = 0;
@@ -225,22 +251,9 @@ void load_opponent_data(void)
 	path_count = 0;
 	pending_count = 0;
 	for (;;) {
-		terminal = 0;
-		reaches_finish = 0;
 		next_track = (legacy_u16)track_primary_route_links[track_index];
-		if (next_track == 0) {
-			terminal = 1;
-			reaches_finish = 1;
-		} else if (next_track == LEGACY_U16_MAX) {
-			terminal = 1;
-		} else if (path_count != 0) {
-			for (index = 0; index < path_count; index++) {
-				if (path[index] == track_index) {
-					terminal = 1;
-					break;
-				}
-			}
-		}
+		reaches_finish = next_track == 0;
+		terminal = opponent_route_is_terminal(path, path_count, track_index, next_track);
 
 		path[path_count] = track_index;
 		path_count++;

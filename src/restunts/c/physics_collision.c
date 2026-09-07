@@ -112,71 +112,40 @@ static void collision_tile_center(legacy_u8 tile_element, legacy_u16 row_index,
 	}
 }
 
-legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
-									  struct VECTOR *output)
+static legacy_u16 collision_model_points(legacy_u8 tile_element,
+										 const struct VECTOR **dependency_points)
 {
-	const struct VECTOR *dependency_points;
-	legacy_u16 column;
-	legacy_u16 row;
-	legacy_u16 previous_row_base;
-	legacy_u16 center_x;
-	legacy_u16 center_z;
-	legacy_u16 terrain_height;
-	legacy_u16 orientation;
 	legacy_u16 count;
 	legacy_u16 index;
-	legacy_u8 tile_element;
 	legacy_s8 physical_model;
 
-	column = (legacy_u16)column_arg;
-	row = (legacy_u16)row_arg;
-	tile_element = track_element_map[trackrows[row] + column];
-	if (tile_element == 0) {
-		return 0;
-	}
-
-	center_x = (legacy_u16)track_column_centers[column];
-	center_z = (legacy_u16)track_row_centers[row];
-	previous_row_base =
-		row == 0 ? (legacy_u16)replay_overflow_acknowledged_word : (legacy_u16)trackrows[row - 1U];
-	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
-		tile_element = track_element_map[LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
-		collision_tile_center(tile_element, row + 1U, column, &center_z, &center_x);
-	} else if (tile_element == TRACK_TILE_CONTINUATION_SOUTH) {
-		tile_element = track_element_map[previous_row_base + column];
-		collision_tile_center(tile_element, row + 1U, column + 1U, &center_z, &center_x);
-	} else if (tile_element == TRACK_TILE_CONTINUATION_EAST) {
-		tile_element = track_element_map[LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
-		collision_tile_center(tile_element, row, column, &center_z, &center_x);
-	} else {
-		collision_tile_center(tile_element, row, column + 1U, &center_z, &center_x);
-	}
-
-	dependency_points = 0;
+	*dependency_points = 0;
 	count = 0;
 	physical_model = (legacy_s8)trkObjectList[tile_element].ss_physicalModel;
 	if (physical_model == PHYSICAL_MODEL_HIGHWAY ||
 		(physical_model >= PHYSICAL_MODEL_SCENERY_FIRST &&
 		 physical_model <= PHYSICAL_MODEL_SCENERY_LAST)) {
-		dependency_points = scenery_collision_points;
+		*dependency_points = scenery_collision_points;
 		count = SCENERY_COLLISION_POINT_COUNT;
 	} else {
 		for (index = 0U; index < COLLISION_MODEL_COUNT; index++) {
 			if (collision_models[index].physical_model == physical_model) {
-				dependency_points = collision_models[index].points;
+				*dependency_points = collision_models[index].points;
 				count = collision_models[index].count;
 				break;
 			}
 		}
 	}
-	if (count == 0) {
-		return 0;
-	}
+	return count;
+}
 
-	terrain_height = track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE
-						 ? (legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]
-						 : 0;
-	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
+static void transform_collision_points(const struct VECTOR *dependency_points,
+									   struct VECTOR *output, legacy_u16 count,
+									   legacy_u16 orientation, legacy_u16 center_x,
+									   legacy_u16 center_z, legacy_u16 terrain_height)
+{
+	legacy_u16 index;
+
 	for (index = 0; index < count; index++) {
 		legacy_u16 source_x;
 		legacy_u16 source_y;
@@ -206,23 +175,65 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 		output[index].y = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(source_y, terrain_height));
 		output[index].z = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(rotated_z, center_z));
 	}
+}
+
+legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
+									  struct VECTOR *output)
+{
+	const struct VECTOR *dependency_points;
+	legacy_u16 column;
+	legacy_u16 row;
+	legacy_u16 previous_row_base;
+	legacy_u16 center_x;
+	legacy_u16 center_z;
+	legacy_u16 terrain_height;
+	legacy_u16 orientation;
+	legacy_u16 count;
+	legacy_u8 tile_element;
+
+	column = (legacy_u16)column_arg;
+	row = (legacy_u16)row_arg;
+	tile_element = track_element_map[trackrows[row] + column];
+	if (tile_element == 0) {
+		return 0;
+	}
+
+	center_x = (legacy_u16)track_column_centers[column];
+	center_z = (legacy_u16)track_row_centers[row];
+	previous_row_base =
+		row == 0 ? (legacy_u16)replay_overflow_acknowledged_word : (legacy_u16)trackrows[row - 1U];
+	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
+		tile_element = track_element_map[LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
+		collision_tile_center(tile_element, row + 1U, column, &center_z, &center_x);
+	} else if (tile_element == TRACK_TILE_CONTINUATION_SOUTH) {
+		tile_element = track_element_map[previous_row_base + column];
+		collision_tile_center(tile_element, row + 1U, column + 1U, &center_z, &center_x);
+	} else if (tile_element == TRACK_TILE_CONTINUATION_EAST) {
+		tile_element = track_element_map[LEGACY_U16_WRAP_SUB(trackrows[row] + column, 1U)];
+		collision_tile_center(tile_element, row, column, &center_z, &center_x);
+	} else {
+		collision_tile_center(tile_element, row, column + 1U, &center_z, &center_x);
+	}
+
+	count = collision_model_points(tile_element, &dependency_points);
+	if (count == 0) {
+		return 0;
+	}
+
+	terrain_height = track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE
+						 ? (legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]
+						 : 0;
+	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
+	transform_collision_points(dependency_points, output, count, orientation, center_x, center_z,
+							   terrain_height);
 	return count;
 }
 
 struct LEGACY_EXECUTION_RESIDUE legacy_execution_residue;
 
-legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact_delta_arg,
-								   legacy_s16 wheel_index)
+static legacy_s16 decay_suspension_target(struct CARSTATE *carstate, legacy_s16 wheel_index)
 {
-	legacy_s16 previous_deflection;
-	legacy_s16 contact_delta;
-	legacy_s16 adjustment;
-	legacy_s16 scaled_delta;
 	legacy_s16 target;
-
-	previous_deflection = (legacy_s16)carstate->car_suspension_deflection[wheel_index];
-	contact_delta = (legacy_s16)contact_delta_arg;
-	adjustment = 0;
 
 	/* Decay the per-wheel target by four toward zero each frame. */
 	target = (legacy_s16)carstate->car_suspension_target[wheel_index];
@@ -238,6 +249,48 @@ legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact
 		}
 	}
 	carstate->car_suspension_target[wheel_index] = target;
+	return target;
+}
+
+static legacy_s16 return_wheel_suspension(struct CARSTATE *carstate, legacy_s16 wheel_index,
+										  legacy_s16 target, legacy_s16 previous_deflection)
+{
+	legacy_s16 adjustment;
+
+	adjustment = 0;
+
+	if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
+		carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_SUB(
+			carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
+		if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target) {
+			carstate->car_suspension_deflection[wheel_index] = target;
+		}
+		adjustment = LEGACY_S16_WRAP_SUB(previous_deflection,
+										 carstate->car_suspension_deflection[wheel_index]);
+	} else if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target) {
+		carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
+			carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
+		if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
+			carstate->car_suspension_deflection[wheel_index] = target;
+		}
+	}
+	return adjustment;
+}
+
+legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact_delta_arg,
+								   legacy_s16 wheel_index)
+{
+	legacy_s16 previous_deflection;
+	legacy_s16 contact_delta;
+	legacy_s16 adjustment;
+	legacy_s16 scaled_delta;
+	legacy_s16 target;
+
+	previous_deflection = (legacy_s16)carstate->car_suspension_deflection[wheel_index];
+	contact_delta = (legacy_s16)contact_delta_arg;
+	adjustment = 0;
+
+	target = decay_suspension_target(carstate, wheel_index);
 
 	if (contact_delta < 0 && (legacy_s16)carstate->car_suspension_deflection[wheel_index] >
 								 LEGACY_S16_WRAP_NEGATE(contact_delta)) {
@@ -245,21 +298,7 @@ legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact
 	}
 
 	if (contact_delta == 0) {
-		if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
-			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_SUB(
-				carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
-			if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target) {
-				carstate->car_suspension_deflection[wheel_index] = target;
-			}
-			adjustment = LEGACY_S16_WRAP_SUB(previous_deflection,
-											 carstate->car_suspension_deflection[wheel_index]);
-		} else if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] < target) {
-			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
-				carstate->car_suspension_deflection[wheel_index], SUSPENSION_RETURN_STEP);
-			if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
-				carstate->car_suspension_deflection[wheel_index] = target;
-			}
-		}
+		adjustment = return_wheel_suspension(carstate, wheel_index, target, previous_deflection);
 	} else if (contact_delta > 0) {
 		if (contact_delta > CONTACT_DELTA_LIMIT) {
 			contact_delta = CONTACT_DELTA_LIMIT;

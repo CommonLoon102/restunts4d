@@ -113,8 +113,8 @@ legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16
 	return idle_rpm;
 }
 
-static void request_gear_change(legacy_s8 input_flags, struct CARSTATE *carstate,
-								const struct SIMD *simd)
+static legacy_s16 gear_shift_direction(legacy_s8 input_flags, struct CARSTATE *carstate,
+									   const struct SIMD *simd)
 {
 	legacy_s16 shift_direction;
 
@@ -135,6 +135,15 @@ static void request_gear_change(legacy_s8 input_flags, struct CARSTATE *carstate
 			shift_direction = CAR_GEAR_SHIFT_DOWN;
 		}
 	}
+	return shift_direction;
+}
+
+static void request_gear_change(legacy_s8 input_flags, struct CARSTATE *carstate,
+								const struct SIMD *simd)
+{
+	legacy_s16 shift_direction;
+
+	shift_direction = gear_shift_direction(input_flags, carstate, simd);
 	if (shift_direction == CAR_GEAR_SHIFT_UP && carstate->car_current_gear != simd->num_gears) {
 		carstate->car_current_gear =
 			LEGACY_S8_WRAP_ADD(carstate->car_current_gear, CAR_GEAR_INDEX_STEP);

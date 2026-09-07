@@ -435,170 +435,153 @@ struct TRACK_OBJECT_SAMPLE {
 	legacy_s16 wall_orientation_modifier;
 };
 
-static void track_object_ground(struct TRACK_OBJECT_SAMPLE *sample)
+static void track_object_straight(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	switch (sample->physical_model) {
-		case PHYSICAL_MODEL_START_FINISH:
-			if (state.game_inputmode == GAME_INPUT_MODE_WAITING && sample->position.x > 0) {
-				if (sample->position.z < START_FINISH_FAR_Z) {
-					planindex = START_FINISH_FAR_PLANE_INDEX;
-				} else if (sample->position.z < START_FINISH_NEAR_Z) {
-					planindex = START_FINISH_NEAR_PLANE_INDEX;
-				}
-			}
-			/* fall through */
-		case PHYSICAL_MODEL_ROAD:
-			if (sample->absolute_x < ROAD_HALF_WIDTH) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_CROSSROAD:
-			if (sample->absolute_x < ROAD_HALF_WIDTH || sample->absolute_z < ROAD_HALF_WIDTH) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_CHICANE_LEFT_RIGHT:
-			sample->position.x = LEGACY_S16_WRAP_NEGATE(sample->position.x);
-			/* fall through */
-		case PHYSICAL_MODEL_CHICANE_RIGHT_LEFT:
-			current_surf_type = (legacy_u8)sample->surface_type;
-			if (sample->position.x > 0) {
-				sample->position.z = LEGACY_S16_WRAP_NEGATE(sample->position.z);
-				sample->position.x = LEGACY_S16_WRAP_NEGATE(sample->position.x);
-			}
-			/* fall through */
-		case PHYSICAL_MODEL_LARGE_CORNER:
-			if (track_radius_in_band(
-					LEGACY_S16_WRAP_ADD(sample->position.x, TRACK_ARC_CENTER_OFFSET),
-					LEGACY_S16_WRAP_ADD(sample->position.z, TRACK_ARC_CENTER_OFFSET),
-					LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS)) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_SHARP_SPLIT_A:
-			if (sample->absolute_x < ROAD_HALF_WIDTH) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-				break;
-			}
-			/* fall through */
-		case PHYSICAL_MODEL_SHARP_CORNER:
-			if (track_radius_in_band(
-					LEGACY_S16_WRAP_ADD(sample->position.x, SHARP_CORNER_CENTER_OFFSET),
-					LEGACY_S16_WRAP_ADD(sample->position.z, SHARP_CORNER_CENTER_OFFSET),
-					SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS)) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_SHARP_SPLIT_B:
-			if (sample->absolute_x < ROAD_HALF_WIDTH) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-				break;
-			}
-			if (track_radius_in_band(
-					LEGACY_S16_WRAP_SUB(SHARP_CORNER_CENTER_OFFSET, sample->position.x),
-					LEGACY_S16_WRAP_ADD(sample->position.z, SHARP_CORNER_CENTER_OFFSET),
-					SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS)) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_LARGE_SPLIT_A:
-			if (sample->position.x >= SPLIT_STRAIGHT_LANE_INNER_X &&
-				sample->position.x <= SPLIT_STRAIGHT_LANE_OUTER_X) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-				break;
-			}
-			if (track_radius_in_band(
-					LEGACY_S16_WRAP_ADD(sample->position.x, TRACK_ARC_CENTER_OFFSET),
-					LEGACY_S16_WRAP_ADD(sample->position.z, TRACK_ARC_CENTER_OFFSET),
-					LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS)) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
-
-		case PHYSICAL_MODEL_LARGE_SPLIT_B:
-			if (sample->position.x >= -SPLIT_STRAIGHT_LANE_OUTER_X &&
-				sample->position.x <= -SPLIT_STRAIGHT_LANE_INNER_X) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-				break;
-			}
-			if (track_radius_in_band(
-					LEGACY_S16_WRAP_SUB(TRACK_ARC_CENTER_OFFSET, sample->position.x),
-					LEGACY_S16_WRAP_ADD(sample->position.z, TRACK_ARC_CENTER_OFFSET),
-					LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS)) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-			}
-			break;
+	if (sample->physical_model == PHYSICAL_MODEL_START_FINISH &&
+		state.game_inputmode == GAME_INPUT_MODE_WAITING && sample->position.x > 0) {
+		if (sample->position.z < START_FINISH_FAR_Z) {
+			planindex = START_FINISH_FAR_PLANE_INDEX;
+		} else if (sample->position.z < START_FINISH_NEAR_Z) {
+			planindex = START_FINISH_NEAR_PLANE_INDEX;
+		}
+	}
+	if (sample->absolute_x < ROAD_HALF_WIDTH) {
+		current_surf_type = (legacy_u8)sample->surface_type;
 	}
 }
 
-static void track_object_highway(struct TRACK_OBJECT_SAMPLE *sample)
+static void track_object_crossroad(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->absolute_x < ROAD_HALF_WIDTH || sample->absolute_z < ROAD_HALF_WIDTH) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+	}
+}
+
+static void track_object_large_corner(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (track_radius_in_band(LEGACY_S16_WRAP_ADD(sample->position.x, TRACK_ARC_CENTER_OFFSET),
+							 LEGACY_S16_WRAP_ADD(sample->position.z, TRACK_ARC_CENTER_OFFSET),
+							 LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS)) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+	}
+}
+
+static void track_object_chicane(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->physical_model == PHYSICAL_MODEL_CHICANE_LEFT_RIGHT) {
+		sample->position.x = LEGACY_S16_WRAP_NEGATE(sample->position.x);
+	}
+	current_surf_type = (legacy_u8)sample->surface_type;
+	if (sample->position.x > 0) {
+		sample->position.z = LEGACY_S16_WRAP_NEGATE(sample->position.z);
+		sample->position.x = LEGACY_S16_WRAP_NEGATE(sample->position.x);
+	}
+	track_object_large_corner(sample);
+}
+
+static void track_object_sharp_corner(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	legacy_s16 x;
+
+	if (sample->physical_model != PHYSICAL_MODEL_SHARP_CORNER &&
+		sample->absolute_x < ROAD_HALF_WIDTH) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+		return;
+	}
+	x = sample->physical_model == PHYSICAL_MODEL_SHARP_SPLIT_B
+			? LEGACY_S16_WRAP_SUB(SHARP_CORNER_CENTER_OFFSET, sample->position.x)
+			: LEGACY_S16_WRAP_ADD(sample->position.x, SHARP_CORNER_CENTER_OFFSET);
+	if (track_radius_in_band(x, LEGACY_S16_WRAP_ADD(sample->position.z, SHARP_CORNER_CENTER_OFFSET),
+							 SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS)) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+	}
+}
+
+static void track_object_large_split(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	legacy_s16 x;
+
+	if (sample->physical_model == PHYSICAL_MODEL_LARGE_SPLIT_A) {
+		if (sample->position.x >= SPLIT_STRAIGHT_LANE_INNER_X &&
+			sample->position.x <= SPLIT_STRAIGHT_LANE_OUTER_X) {
+			current_surf_type = (legacy_u8)sample->surface_type;
+			return;
+		}
+		x = LEGACY_S16_WRAP_ADD(sample->position.x, TRACK_ARC_CENTER_OFFSET);
+	} else {
+		if (sample->position.x >= -SPLIT_STRAIGHT_LANE_OUTER_X &&
+			sample->position.x <= -SPLIT_STRAIGHT_LANE_INNER_X) {
+			current_surf_type = (legacy_u8)sample->surface_type;
+			return;
+		}
+		x = LEGACY_S16_WRAP_SUB(TRACK_ARC_CENTER_OFFSET, sample->position.x);
+	}
+	if (track_radius_in_band(x, LEGACY_S16_WRAP_ADD(sample->position.z, TRACK_ARC_CENTER_OFFSET),
+							 LARGE_CORNER_INNER_RADIUS, LARGE_CORNER_OUTER_RADIUS)) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+	}
+}
+
+static void track_object_highway_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 {
 	legacy_s16 value;
 	legacy_s16 value2;
 	legacy_s16 value3;
 	legacy_u16 index;
 
-	switch (sample->physical_model) {
-		case PHYSICAL_MODEL_HIGHWAY_ENTRANCE:
-			value = absolute_word(sample->position.x);
-			index = 0;
-			while (highEntrZBounds1[index] < sample->position.z) {
-				index++;
+	value = absolute_word(sample->position.x);
+	index = 0;
+	while (highEntrZBounds1[index] < sample->position.z) {
+		index++;
+	}
+	value2 = highEntrXInnBounds0[index];
+	if (highEntrXInnBounds1[index] != value2) {
+		value2 =
+			track_interpolate(sample->position.z, highEntrZBounds0[index], highEntrZBounds1[index],
+							  highEntrXInnBounds0[index], highEntrXInnBounds1[index]);
+	}
+	value3 = highEntrXOutBounds0[index];
+	if (highEntrXOutBounds1[index] != value3) {
+		value3 =
+			track_interpolate(sample->position.z, highEntrZBounds0[index], highEntrZBounds1[index],
+							  highEntrXOutBounds0[index], highEntrXOutBounds1[index]);
+	}
+	if (value > value2 && value < value3) {
+		current_surf_type = (legacy_u8)sample->surface_type;
+		return;
+	}
+	if (sample->position.z >= 0 && value <= ROAD_HALF_WIDTH) {
+		planindex = HIGHWAY_PLANE_INDEX;
+		if (sample->position.z >= HIGHWAY_MERGE_END_Z) {
+			if (sample->next_position.x <= -ROAD_HALF_WIDTH) {
+				wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
+			} else if (sample->next_position.x >= ROAD_HALF_WIDTH) {
+				wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
 			}
-			value2 = highEntrXInnBounds0[index];
-			if (highEntrXInnBounds1[index] != value2) {
-				value2 = track_interpolate(sample->position.z, highEntrZBounds0[index],
-										   highEntrZBounds1[index], highEntrXInnBounds0[index],
-										   highEntrXInnBounds1[index]);
-			}
-			value3 = highEntrXOutBounds0[index];
-			if (highEntrXOutBounds1[index] != value3) {
-				value3 = track_interpolate(sample->position.z, highEntrZBounds0[index],
-										   highEntrZBounds1[index], highEntrXOutBounds0[index],
-										   highEntrXOutBounds1[index]);
-			}
-			if (value > value2 && value < value3) {
-				current_surf_type = (legacy_u8)sample->surface_type;
-				break;
-			}
-			if (sample->position.z >= 0 && value <= ROAD_HALF_WIDTH) {
-				planindex = HIGHWAY_PLANE_INDEX;
-				if (sample->position.z >= HIGHWAY_MERGE_END_Z) {
-					if (sample->next_position.x <= -ROAD_HALF_WIDTH) {
-						wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
-					} else if (sample->next_position.x >= ROAD_HALF_WIDTH) {
-						wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
-					}
-				} else {
-					wallindex = sample->next_position.x < 0 ? HIGHWAY_NEAR_LEFT_WALL_INDEX
-															: HIGHWAY_NEAR_RIGHT_WALL_INDEX;
-				}
-			}
-			break;
-
-		case PHYSICAL_MODEL_HIGHWAY:
-			if (sample->absolute_x <= HIGHWAY_OUTER_HALF_WIDTH) {
-				if (sample->absolute_x > ROAD_HALF_WIDTH) {
-					current_surf_type = (legacy_u8)sample->surface_type;
-				} else {
-					planindex = HIGHWAY_PLANE_INDEX;
-					if (sample->next_position.x <= -ROAD_HALF_WIDTH) {
-						wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
-					} else if (sample->next_position.x >= ROAD_HALF_WIDTH) {
-						wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
-					}
-				}
-			}
-			break;
+		} else {
+			wallindex = sample->next_position.x < 0 ? HIGHWAY_NEAR_LEFT_WALL_INDEX
+													: HIGHWAY_NEAR_RIGHT_WALL_INDEX;
+		}
 	}
 }
 
-static void track_object_ramp(struct TRACK_OBJECT_SAMPLE *sample)
+static void track_object_highway(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->absolute_x <= HIGHWAY_OUTER_HALF_WIDTH) {
+		if (sample->absolute_x > ROAD_HALF_WIDTH) {
+			current_surf_type = (legacy_u8)sample->surface_type;
+		} else {
+			planindex = HIGHWAY_PLANE_INDEX;
+			if (sample->next_position.x <= -ROAD_HALF_WIDTH) {
+				wallindex = HIGHWAY_FAR_LEFT_WALL_INDEX;
+			} else if (sample->next_position.x >= ROAD_HALF_WIDTH) {
+				wallindex = HIGHWAY_FAR_RIGHT_WALL_INDEX;
+			}
+		}
+	}
+}
+
+static void track_object_ramp_end_wall(struct TRACK_OBJECT_SAMPLE *sample)
 {
 	if (sample->physical_model == PHYSICAL_MODEL_RAMP) {
 		if (sample->position.z > 0) {
@@ -611,6 +594,11 @@ static void track_object_ramp(struct TRACK_OBJECT_SAMPLE *sample)
 		sample->next_position.z >= ELEVATED_ROAD_END_Z) {
 		wallindex = ELEVATED_FORWARD_WALL_INDEX;
 	}
+}
+
+static void track_object_ramp(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	track_object_ramp_end_wall(sample);
 
 	if (absolute_word(sample->next_position.x) < ROAD_HALF_WIDTH) {
 		planindex = RAMP_PLANE_INDEX;
@@ -631,22 +619,31 @@ static void track_object_ramp(struct TRACK_OBJECT_SAMPLE *sample)
 	}
 }
 
-static void track_object_elevated_road(struct TRACK_OBJECT_SAMPLE *sample)
+static legacy_s16 track_object_below_elevated_road(struct TRACK_OBJECT_SAMPLE *sample)
 {
 	if (sample->physical_model == PHYSICAL_MODEL_OVERPASS) {
 		if (sample->height <= ELEVATED_DECK_CLEARANCE) {
 			if (sample->absolute_z <= ROAD_HALF_WIDTH) {
 				current_surf_type = (legacy_u8)sample->surface_type;
 			}
-			return;
+			return 1;
 		}
 		track_wall_collision_enabled = 0;
 	} else if (sample->physical_model != PHYSICAL_MODEL_SOLID_ROAD) {
 		if (sample->height <= ELEVATED_DECK_CLEARANCE) {
-			return;
+			return 1;
 		}
 		track_wall_collision_enabled = 0;
 	}
+	return 0;
+}
+
+static void track_object_elevated_road(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (track_object_below_elevated_road(sample)) {
+		return;
+	}
+
 	if (absolute_word(sample->next_position.x) <= ROAD_HALF_WIDTH) {
 		planindex = ELEVATED_PLANE_INDEX;
 		current_surf_type = (legacy_u8)sample->surface_type;
@@ -785,6 +782,63 @@ static void track_object_banked_corner(struct TRACK_OBJECT_SAMPLE *sample)
 	}
 }
 
+static void track_object_loop_upper(struct TRACK_OBJECT_SAMPLE *sample, legacy_s16 value,
+									legacy_s16 effective_x, legacy_s16 value2, legacy_u16 index)
+{
+	legacy_s16 value3;
+
+	index = (legacy_u16)(LOOP_SURFACE_LAST_INDEX - index);
+	if (effective_x < loopSurface_XBounds0[index] ||
+		effective_x > LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION)) {
+		return;
+	}
+	if (effective_x <= loopSurface_XBounds1[index] ||
+		effective_x >= LEGACY_S16_WRAP_ADD(loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
+		value3 = track_interpolate(value2, loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
+								   loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
+		if (effective_x <= value3 ||
+			effective_x >= LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
+			return;
+		}
+	}
+	planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
+	current_surf_type = (legacy_u8)sample->surface_type;
+	track_wall_collision_enabled = 0;
+	return;
+}
+
+static legacy_s16 track_object_loop_lower(struct TRACK_OBJECT_SAMPLE *sample, legacy_s16 value,
+										  legacy_s16 effective_x, legacy_s16 value2,
+										  legacy_u16 index)
+{
+	legacy_s16 value3;
+
+	if (!((index > LOOP_LOW_CLEARANCE_LAST_SEGMENT && sample->height < LOOP_LOW_CLEARANCE) ||
+		  effective_x < loopSurface_XBounds0[index] ||
+		  effective_x > LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION))) {
+		if (effective_x > loopSurface_XBounds1[index] &&
+			effective_x < LEGACY_S16_WRAP_ADD(loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
+			planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
+			current_surf_type = (legacy_u8)sample->surface_type;
+			track_wall_collision_enabled = 0;
+			return 1;
+		}
+		if (loopSurface_XBounds0[index] != loopSurface_XBounds1[index]) {
+			value3 =
+				track_interpolate(value2, loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
+								  loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
+			if (effective_x > value3 &&
+				effective_x < LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
+				planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
+				current_surf_type = (legacy_u8)sample->surface_type;
+				track_wall_collision_enabled = 0;
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
 static void track_object_loop(struct TRACK_OBJECT_SAMPLE *sample)
 {
 	legacy_s16 value;
@@ -814,52 +868,11 @@ static void track_object_loop(struct TRACK_OBJECT_SAMPLE *sample)
 			index++;
 		}
 		if (sample->height > LOOP_UPPER_HEIGHT_THRESHOLD) {
-			index = (legacy_u16)(LOOP_SURFACE_LAST_INDEX - index);
-			if (effective_x < loopSurface_XBounds0[index] ||
-				effective_x >
-					LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION)) {
-				return;
-			}
-			if (effective_x <= loopSurface_XBounds1[index] ||
-				effective_x >=
-					LEGACY_S16_WRAP_ADD(loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
-				value3 = track_interpolate(value2, loopSurface_ZBounds0[index],
-										   loopSurface_ZBounds1[index], loopSurface_XBounds0[index],
-										   loopSurface_XBounds1[index]);
-				if (effective_x <= value3 ||
-					effective_x >= LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
-					return;
-				}
-			}
-			planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-			current_surf_type = (legacy_u8)sample->surface_type;
-			track_wall_collision_enabled = 0;
+			track_object_loop_upper(sample, value, effective_x, value2, index);
 			return;
 		}
-		if (!((index > LOOP_LOW_CLEARANCE_LAST_SEGMENT && sample->height < LOOP_LOW_CLEARANCE) ||
-			  effective_x < loopSurface_XBounds0[index] ||
-			  effective_x >
-				  LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION))) {
-			if (effective_x > loopSurface_XBounds1[index] &&
-				effective_x <
-					LEGACY_S16_WRAP_ADD(loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
-				planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-				current_surf_type = (legacy_u8)sample->surface_type;
-				track_wall_collision_enabled = 0;
-				return;
-			}
-			if (loopSurface_XBounds0[index] != loopSurface_XBounds1[index]) {
-				value3 = track_interpolate(value2, loopSurface_ZBounds0[index],
-										   loopSurface_ZBounds1[index], loopSurface_XBounds0[index],
-										   loopSurface_XBounds1[index]);
-				if (effective_x > value3 &&
-					effective_x < LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
-					planindex = LEGACY_S16_WRAP_ADD(value, (legacy_s16)index);
-					current_surf_type = (legacy_u8)sample->surface_type;
-					track_wall_collision_enabled = 0;
-					return;
-				}
-			}
+		if (track_object_loop_lower(sample, value, effective_x, value2, index)) {
+			return;
 		}
 	}
 
@@ -889,28 +902,16 @@ static void track_object_tunnel(struct TRACK_OBJECT_SAMPLE *sample)
 		current_surf_type = (legacy_u8)sample->surface_type;
 	}
 	if (sample->position.x >= ROAD_HALF_WIDTH && sample->position.x <= TUNNEL_OUTER_HALF_WIDTH) {
-		wallHeight = TUNNEL_HEIGHT;
-		if (sample->next_position.z <= -TUNNEL_END_Z) {
-			wallindex = TUNNEL_REAR_WALL_INDEX;
-		} else if (sample->next_position.z >= TUNNEL_END_Z) {
-			wallindex = TUNNEL_FORWARD_WALL_INDEX;
-		} else if (sample->next_position.x <= ROAD_HALF_WIDTH) {
-			wallindex = TUNNEL_RIGHT_INNER_WALL_INDEX;
-		} else if (sample->next_position.x >= TUNNEL_OUTER_HALF_WIDTH) {
-			wallindex = TUNNEL_RIGHT_OUTER_WALL_INDEX;
-		}
+		track_object_building_wall(&sample->next_position, TUNNEL_HEIGHT, ROAD_HALF_WIDTH,
+								   TUNNEL_OUTER_HALF_WIDTH, -TUNNEL_END_Z, TUNNEL_END_Z,
+								   TUNNEL_REAR_WALL_INDEX, TUNNEL_FORWARD_WALL_INDEX,
+								   TUNNEL_RIGHT_INNER_WALL_INDEX, TUNNEL_RIGHT_OUTER_WALL_INDEX);
 	} else if (sample->position.x <= -ROAD_HALF_WIDTH &&
 			   sample->position.x >= -TUNNEL_OUTER_HALF_WIDTH) {
-		wallHeight = TUNNEL_HEIGHT;
-		if (sample->next_position.z <= -TUNNEL_END_Z) {
-			wallindex = TUNNEL_REAR_WALL_INDEX;
-		} else if (sample->next_position.z >= TUNNEL_END_Z) {
-			wallindex = TUNNEL_FORWARD_WALL_INDEX;
-		} else if (sample->next_position.x >= -ROAD_HALF_WIDTH) {
-			wallindex = TUNNEL_LEFT_INNER_WALL_INDEX;
-		} else if (sample->next_position.x <= -TUNNEL_OUTER_HALF_WIDTH) {
-			wallindex = TUNNEL_LEFT_OUTER_WALL_INDEX;
-		}
+		track_object_building_wall(&sample->next_position, TUNNEL_HEIGHT, -TUNNEL_OUTER_HALF_WIDTH,
+								   -ROAD_HALF_WIDTH, -TUNNEL_END_Z, TUNNEL_END_Z,
+								   TUNNEL_REAR_WALL_INDEX, TUNNEL_FORWARD_WALL_INDEX,
+								   TUNNEL_LEFT_OUTER_WALL_INDEX, TUNNEL_LEFT_INNER_WALL_INDEX);
 	}
 }
 
@@ -994,6 +995,23 @@ static legacy_u16 track_object_pipe_section(const struct TRACK_OBJECT_SAMPLE *sa
 	return TRACK_PIPE_RIGHT_INNER;
 }
 
+static legacy_s16 track_object_half_pipe_floor(struct TRACK_OBJECT_SAMPLE *sample, legacy_s16 value,
+											   legacy_s16 value2)
+{
+	if (value == PIPE_HALF && value2 == PIPE_LOWER_HALF &&
+		sample->absolute_x <= HALF_PIPE_FLOOR_HALF_WIDTH &&
+		sample->absolute_z <= HALF_PIPE_FLOOR_HALF_LENGTH) {
+		planindex = HALF_PIPE_FLOOR_PLAN_INDEX;
+		if (sample->next_position.z <= -HALF_PIPE_FLOOR_HALF_LENGTH) {
+			wallindex = HALF_PIPE_REAR_WALL_INDEX;
+		} else if (sample->next_position.z >= HALF_PIPE_FLOOR_HALF_LENGTH) {
+			wallindex = HALF_PIPE_FORWARD_WALL_INDEX;
+		}
+		return 1;
+	}
+	return 0;
+}
+
 static void track_object_pipe(struct TRACK_OBJECT_SAMPLE *sample)
 {
 	static const legacy_s16 planes[2][7] = {
@@ -1022,15 +1040,7 @@ static void track_object_pipe(struct TRACK_OBJECT_SAMPLE *sample)
 		current_surf_type = (legacy_u8)sample->surface_type;
 	}
 	value2 = sample->height > PIPE_WALL_HEIGHT ? PIPE_UPPER_HALF : PIPE_LOWER_HALF;
-	if (value == PIPE_HALF && value2 == PIPE_LOWER_HALF &&
-		sample->absolute_x <= HALF_PIPE_FLOOR_HALF_WIDTH &&
-		sample->absolute_z <= HALF_PIPE_FLOOR_HALF_LENGTH) {
-		planindex = HALF_PIPE_FLOOR_PLAN_INDEX;
-		if (sample->next_position.z <= -HALF_PIPE_FLOOR_HALF_LENGTH) {
-			wallindex = HALF_PIPE_REAR_WALL_INDEX;
-		} else if (sample->next_position.z >= HALF_PIPE_FLOOR_HALF_LENGTH) {
-			wallindex = HALF_PIPE_FORWARD_WALL_INDEX;
-		}
+	if (track_object_half_pipe_floor(sample, value, value2)) {
 		return;
 	}
 	planindex = planes[value2][track_object_pipe_section(sample)];
@@ -1066,13 +1076,42 @@ static void track_object_corkscrew_left_right(struct TRACK_OBJECT_SAMPLE *sample
 	}
 }
 
-static void track_object_corkscrew_up_down(struct TRACK_OBJECT_SAMPLE *sample)
+static void track_object_corkscrew_arc(struct TRACK_OBJECT_SAMPLE *sample, legacy_s16 value,
+									   legacy_s16 value2, legacy_s16 value3,
+									   legacy_s16 terrain_angle)
 {
 	legacy_s16 radius;
+	legacy_s16 angle_step;
+
+	radius = (legacy_s16)polarRadius2D(value, sample->position.z);
+	if (radius <= CORK_UD_INNER_RADIUS || radius >= CORK_UD_OUTER_RADIUS) {
+		return;
+	}
+	angle_step =
+		(legacy_s16)((((legacy_u16)LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
+						   (legacy_s16)polarAngle(value, sample->position.z), ANGLE_QUARTER_TURN)) &
+					   ANGLE_MASK) *
+					  CORK_UD_ARC_SEGMENT_COUNT) >>
+					 CORK_UD_ANGLE_SCALE_SHIFT);
+	planindex =
+		LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(value2, angle_step), CORK_UD_FIRST_ARC_PLAN_OFFSET);
+	current_surf_type = (legacy_u8)sample->surface_type;
+	track_wall_collision_enabled = 0;
+	wallHeight = CORK_UD_WALL_HEIGHT;
+	elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
+	value = LEGACY_S16_WRAP_SUB(radius, CORK_UD_CENTER_RADIUS);
+	if (value > CORK_UD_WALL_RADIUS_OFFSET) {
+		wallindex = LEGACY_S16_WRAP_ADD(value3, angle_step);
+	} else if (value < -CORK_UD_WALL_RADIUS_OFFSET) {
+		wallindex = LEGACY_S16_WRAP_ADD(terrain_angle, angle_step);
+	}
+}
+
+static void track_object_corkscrew_up_down(struct TRACK_OBJECT_SAMPLE *sample)
+{
 	legacy_s16 value;
 	legacy_s16 value2;
 	legacy_s16 value3;
-	legacy_s16 angle_step;
 	legacy_s16 terrain_angle;
 
 	if (sample->physical_model == PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A) {
@@ -1106,27 +1145,34 @@ static void track_object_corkscrew_up_down(struct TRACK_OBJECT_SAMPLE *sample)
 		track_wall_collision_enabled = 0;
 		return;
 	}
-	radius = (legacy_s16)polarRadius2D(value, sample->position.z);
-	if (radius <= CORK_UD_INNER_RADIUS || radius >= CORK_UD_OUTER_RADIUS) {
-		return;
+	track_object_corkscrew_arc(sample, value, value2, value3, terrain_angle);
+}
+
+static void track_object_slalom_negative_wall(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	wallHeight = SLALOM_POLE_WALL_HEIGHT;
+	if (sample->next_position.z < -SLALOM_POLE_FAR_Z) {
+		wallindex = SLALOM_NEGATIVE_Z_FAR_WALL_INDEX;
+	} else if (sample->next_position.z > -SLALOM_POLE_NEAR_Z) {
+		wallindex = SLALOM_NEGATIVE_Z_NEAR_WALL_INDEX;
+	} else if (sample->next_position.x < SLALOM_POLE_INNER_X) {
+		wallindex = SLALOM_NEGATIVE_Z_INNER_WALL_INDEX;
+	} else if (sample->next_position.x > SLALOM_POLE_OUTER_X) {
+		wallindex = SLALOM_NEGATIVE_Z_OUTER_WALL_INDEX;
 	}
-	angle_step =
-		(legacy_s16)((((legacy_u16)LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-						   (legacy_s16)polarAngle(value, sample->position.z), ANGLE_QUARTER_TURN)) &
-					   ANGLE_MASK) *
-					  CORK_UD_ARC_SEGMENT_COUNT) >>
-					 CORK_UD_ANGLE_SCALE_SHIFT);
-	planindex =
-		LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(value2, angle_step), CORK_UD_FIRST_ARC_PLAN_OFFSET);
-	current_surf_type = (legacy_u8)sample->surface_type;
-	track_wall_collision_enabled = 0;
-	wallHeight = CORK_UD_WALL_HEIGHT;
-	elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
-	value = LEGACY_S16_WRAP_SUB(radius, CORK_UD_CENTER_RADIUS);
-	if (value > CORK_UD_WALL_RADIUS_OFFSET) {
-		wallindex = LEGACY_S16_WRAP_ADD(value3, angle_step);
-	} else if (value < -CORK_UD_WALL_RADIUS_OFFSET) {
-		wallindex = LEGACY_S16_WRAP_ADD(terrain_angle, angle_step);
+}
+
+static void track_object_slalom_positive_wall(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	wallHeight = SLALOM_POLE_WALL_HEIGHT;
+	if (sample->next_position.z > SLALOM_POLE_FAR_Z) {
+		wallindex = SLALOM_POSITIVE_Z_FAR_WALL_INDEX;
+	} else if (sample->next_position.z < SLALOM_POLE_NEAR_Z) {
+		wallindex = SLALOM_POSITIVE_Z_NEAR_WALL_INDEX;
+	} else if (sample->next_position.x > -SLALOM_POLE_INNER_X) {
+		wallindex = SLALOM_POSITIVE_Z_INNER_WALL_INDEX;
+	} else if (sample->next_position.x < -SLALOM_POLE_OUTER_X) {
+		wallindex = SLALOM_POSITIVE_Z_OUTER_WALL_INDEX;
 	}
 }
 
@@ -1137,172 +1183,133 @@ static void track_object_slalom(struct TRACK_OBJECT_SAMPLE *sample)
 	}
 	if (sample->position.x >= SLALOM_POLE_INNER_X && sample->position.x <= SLALOM_POLE_OUTER_X &&
 		sample->position.z > -SLALOM_POLE_FAR_Z && sample->position.z < -SLALOM_POLE_NEAR_Z) {
-		wallHeight = SLALOM_POLE_WALL_HEIGHT;
-		if (sample->next_position.z < -SLALOM_POLE_FAR_Z) {
-			wallindex = SLALOM_NEGATIVE_Z_FAR_WALL_INDEX;
-		} else if (sample->next_position.z > -SLALOM_POLE_NEAR_Z) {
-			wallindex = SLALOM_NEGATIVE_Z_NEAR_WALL_INDEX;
-		} else if (sample->next_position.x < SLALOM_POLE_INNER_X) {
-			wallindex = SLALOM_NEGATIVE_Z_INNER_WALL_INDEX;
-		} else if (sample->next_position.x > SLALOM_POLE_OUTER_X) {
-			wallindex = SLALOM_NEGATIVE_Z_OUTER_WALL_INDEX;
-		}
+		track_object_slalom_negative_wall(sample);
 	} else if (sample->position.x <= -SLALOM_POLE_INNER_X &&
 			   sample->position.x >= -SLALOM_POLE_OUTER_X &&
 			   sample->position.z < SLALOM_POLE_FAR_Z && sample->position.z > SLALOM_POLE_NEAR_Z) {
-		wallHeight = SLALOM_POLE_WALL_HEIGHT;
-		if (sample->next_position.z > SLALOM_POLE_FAR_Z) {
-			wallindex = SLALOM_POSITIVE_Z_FAR_WALL_INDEX;
-		} else if (sample->next_position.z < SLALOM_POLE_NEAR_Z) {
-			wallindex = SLALOM_POSITIVE_Z_NEAR_WALL_INDEX;
-		} else if (sample->next_position.x > -SLALOM_POLE_INNER_X) {
-			wallindex = SLALOM_POSITIVE_Z_INNER_WALL_INDEX;
-		} else if (sample->next_position.x < -SLALOM_POLE_OUTER_X) {
-			wallindex = SLALOM_POSITIVE_Z_OUTER_WALL_INDEX;
-		}
+		track_object_slalom_positive_wall(sample);
 	}
 }
 
-static void track_object_building(struct TRACK_OBJECT_SAMPLE *sample)
+static void track_object_barn(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	switch (sample->physical_model) {
-		case PHYSICAL_MODEL_BARN:
-			if (sample->absolute_x <= BARN_HALF_WIDTH && sample->absolute_z <= BARN_HALF_WIDTH) {
-				track_object_building_wall(&sample->next_position, BARN_HEIGHT, -BARN_HALF_WIDTH,
-										   BARN_HALF_WIDTH, -BARN_HALF_WIDTH, BARN_HALF_WIDTH,
-										   BARN_REAR_WALL_INDEX, BARN_FORWARD_WALL_INDEX,
-										   BARN_LEFT_WALL_INDEX, BARN_RIGHT_WALL_INDEX);
-			}
-			break;
-
-		case PHYSICAL_MODEL_GAS_STATION:
-			if (sample->position.x >= GAS_STATION_LEFT_X &&
-				sample->position.x <= GAS_STATION_RIGHT_X &&
-				sample->absolute_z <= GAS_STATION_HALF_LENGTH) {
-				track_object_building_wall(
-					&sample->next_position, GAS_STATION_HEIGHT, GAS_STATION_LEFT_X,
-					GAS_STATION_RIGHT_X, -GAS_STATION_HALF_LENGTH, GAS_STATION_HALF_LENGTH,
-					GAS_STATION_REAR_WALL_INDEX, GAS_STATION_FORWARD_WALL_INDEX,
-					GAS_STATION_LEFT_WALL_INDEX, GAS_STATION_RIGHT_WALL_INDEX);
-			}
-			break;
-
-		case PHYSICAL_MODEL_JOES:
-			if (sample->absolute_x <= JOES_HALF_WIDTH && sample->absolute_z <= JOES_HALF_LENGTH) {
-				track_object_building_wall(&sample->next_position, JOES_HEIGHT, -JOES_HALF_WIDTH,
-										   JOES_HALF_WIDTH, -JOES_HALF_LENGTH, JOES_HALF_LENGTH,
-										   JOES_REAR_WALL_INDEX, JOES_FORWARD_WALL_INDEX,
-										   JOES_LEFT_WALL_INDEX, JOES_RIGHT_WALL_INDEX);
-			}
-			break;
-
-		case PHYSICAL_MODEL_OFFICE:
-			if (sample->absolute_x <= OFFICE_HALF_WIDTH &&
-				sample->absolute_z <= OFFICE_HALF_WIDTH) {
-				track_object_building_wall(
-					&sample->next_position, OFFICE_HEIGHT, -OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH,
-					-OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH, OFFICE_REAR_WALL_INDEX,
-					OFFICE_FORWARD_WALL_INDEX, OFFICE_LEFT_WALL_INDEX, OFFICE_RIGHT_WALL_INDEX);
-			}
-			break;
-
-		case PHYSICAL_MODEL_WINDMILL:
-			if (sample->absolute_x <= WINDMILL_HALF_WIDTH &&
-				sample->absolute_z <= WINDMILL_HALF_WIDTH) {
-				track_object_building_wall(&sample->next_position, WINDMILL_HEIGHT,
-										   -WINDMILL_HALF_WIDTH, WINDMILL_HALF_WIDTH,
-										   -WINDMILL_HALF_WIDTH, WINDMILL_HALF_WIDTH,
-										   WINDMILL_REAR_WALL_INDEX, WINDMILL_FORWARD_WALL_INDEX,
-										   WINDMILL_LEFT_WALL_INDEX, WINDMILL_RIGHT_WALL_INDEX);
-			}
-			break;
-
-		case PHYSICAL_MODEL_SHIP:
-			if (sample->position.x >= SHIP_LEFT_X && sample->position.x <= SHIP_RIGHT_X &&
-				sample->absolute_z <= SHIP_HALF_LENGTH) {
-				track_object_building_wall(&sample->next_position, SHIP_HEIGHT, SHIP_LEFT_X,
-										   SHIP_RIGHT_X, -SHIP_HALF_LENGTH, SHIP_HALF_LENGTH,
-										   SHIP_REAR_WALL_INDEX, SHIP_FORWARD_WALL_INDEX,
-										   SHIP_LEFT_WALL_INDEX, SHIP_RIGHT_WALL_INDEX);
-			}
-			break;
+	if (sample->absolute_x <= BARN_HALF_WIDTH && sample->absolute_z <= BARN_HALF_WIDTH) {
+		track_object_building_wall(&sample->next_position, BARN_HEIGHT, -BARN_HALF_WIDTH,
+								   BARN_HALF_WIDTH, -BARN_HALF_WIDTH, BARN_HALF_WIDTH,
+								   BARN_REAR_WALL_INDEX, BARN_FORWARD_WALL_INDEX,
+								   BARN_LEFT_WALL_INDEX, BARN_RIGHT_WALL_INDEX);
 	}
 }
+
+static void track_object_gas_station(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->position.x >= GAS_STATION_LEFT_X && sample->position.x <= GAS_STATION_RIGHT_X &&
+		sample->absolute_z <= GAS_STATION_HALF_LENGTH) {
+		track_object_building_wall(&sample->next_position, GAS_STATION_HEIGHT, GAS_STATION_LEFT_X,
+								   GAS_STATION_RIGHT_X, -GAS_STATION_HALF_LENGTH,
+								   GAS_STATION_HALF_LENGTH, GAS_STATION_REAR_WALL_INDEX,
+								   GAS_STATION_FORWARD_WALL_INDEX, GAS_STATION_LEFT_WALL_INDEX,
+								   GAS_STATION_RIGHT_WALL_INDEX);
+	}
+}
+
+static void track_object_joes(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->absolute_x <= JOES_HALF_WIDTH && sample->absolute_z <= JOES_HALF_LENGTH) {
+		track_object_building_wall(&sample->next_position, JOES_HEIGHT, -JOES_HALF_WIDTH,
+								   JOES_HALF_WIDTH, -JOES_HALF_LENGTH, JOES_HALF_LENGTH,
+								   JOES_REAR_WALL_INDEX, JOES_FORWARD_WALL_INDEX,
+								   JOES_LEFT_WALL_INDEX, JOES_RIGHT_WALL_INDEX);
+	}
+}
+
+static void track_object_office(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->absolute_x <= OFFICE_HALF_WIDTH && sample->absolute_z <= OFFICE_HALF_WIDTH) {
+		track_object_building_wall(&sample->next_position, OFFICE_HEIGHT, -OFFICE_HALF_WIDTH,
+								   OFFICE_HALF_WIDTH, -OFFICE_HALF_WIDTH, OFFICE_HALF_WIDTH,
+								   OFFICE_REAR_WALL_INDEX, OFFICE_FORWARD_WALL_INDEX,
+								   OFFICE_LEFT_WALL_INDEX, OFFICE_RIGHT_WALL_INDEX);
+	}
+}
+
+static void track_object_windmill(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->absolute_x <= WINDMILL_HALF_WIDTH && sample->absolute_z <= WINDMILL_HALF_WIDTH) {
+		track_object_building_wall(&sample->next_position, WINDMILL_HEIGHT, -WINDMILL_HALF_WIDTH,
+								   WINDMILL_HALF_WIDTH, -WINDMILL_HALF_WIDTH, WINDMILL_HALF_WIDTH,
+								   WINDMILL_REAR_WALL_INDEX, WINDMILL_FORWARD_WALL_INDEX,
+								   WINDMILL_LEFT_WALL_INDEX, WINDMILL_RIGHT_WALL_INDEX);
+	}
+}
+
+static void track_object_ship(struct TRACK_OBJECT_SAMPLE *sample)
+{
+	if (sample->position.x >= SHIP_LEFT_X && sample->position.x <= SHIP_RIGHT_X &&
+		sample->absolute_z <= SHIP_HALF_LENGTH) {
+		track_object_building_wall(&sample->next_position, SHIP_HEIGHT, SHIP_LEFT_X, SHIP_RIGHT_X,
+								   -SHIP_HALF_LENGTH, SHIP_HALF_LENGTH, SHIP_REAR_WALL_INDEX,
+								   SHIP_FORWARD_WALL_INDEX, SHIP_LEFT_WALL_INDEX,
+								   SHIP_RIGHT_WALL_INDEX);
+	}
+}
+
+struct TRACK_OBJECT_HANDLER {
+	legacy_s16 physical_model;
+	void (*handle)(struct TRACK_OBJECT_SAMPLE *sample);
+};
+
+static const struct TRACK_OBJECT_HANDLER track_object_handlers[] = {
+	{PHYSICAL_MODEL_START_FINISH, track_object_straight},
+	{PHYSICAL_MODEL_ROAD, track_object_straight},
+	{PHYSICAL_MODEL_CROSSROAD, track_object_crossroad},
+	{PHYSICAL_MODEL_CHICANE_LEFT_RIGHT, track_object_chicane},
+	{PHYSICAL_MODEL_CHICANE_RIGHT_LEFT, track_object_chicane},
+	{PHYSICAL_MODEL_LARGE_CORNER, track_object_large_corner},
+	{PHYSICAL_MODEL_SHARP_SPLIT_A, track_object_sharp_corner},
+	{PHYSICAL_MODEL_SHARP_CORNER, track_object_sharp_corner},
+	{PHYSICAL_MODEL_SHARP_SPLIT_B, track_object_sharp_corner},
+	{PHYSICAL_MODEL_LARGE_SPLIT_A, track_object_large_split},
+	{PHYSICAL_MODEL_LARGE_SPLIT_B, track_object_large_split},
+	{PHYSICAL_MODEL_HIGHWAY_ENTRANCE, track_object_highway_entrance},
+	{PHYSICAL_MODEL_HIGHWAY, track_object_highway},
+	{PHYSICAL_MODEL_RAMP, track_object_ramp},
+	{PHYSICAL_MODEL_SOLID_RAMP, track_object_ramp},
+	{PHYSICAL_MODEL_ELEVATED_ROAD, track_object_elevated_road},
+	{PHYSICAL_MODEL_ELEVATED_SPAN, track_object_elevated_road},
+	{PHYSICAL_MODEL_SOLID_ROAD, track_object_elevated_road},
+	{PHYSICAL_MODEL_OVERPASS, track_object_elevated_road},
+	{PHYSICAL_MODEL_ELEVATED_CORNER, track_object_elevated_corner},
+	{PHYSICAL_MODEL_BANKED_ENTRANCE_A, track_object_banked_entrance},
+	{PHYSICAL_MODEL_BANKED_ENTRANCE_B, track_object_banked_entrance},
+	{PHYSICAL_MODEL_BANKED_ROAD, track_object_banked_road},
+	{PHYSICAL_MODEL_BANKED_CORNER, track_object_banked_corner},
+	{PHYSICAL_MODEL_LOOP, track_object_loop},
+	{PHYSICAL_MODEL_TUNNEL, track_object_tunnel},
+	{PHYSICAL_MODEL_PIPE_ENTRANCE, track_object_pipe_entrance},
+	{PHYSICAL_MODEL_HALF_PIPE, track_object_pipe},
+	{PHYSICAL_MODEL_PIPE, track_object_pipe},
+	{PHYSICAL_MODEL_CORKSCREW_LEFT_RIGHT, track_object_corkscrew_left_right},
+	{PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A, track_object_corkscrew_up_down},
+	{PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B, track_object_corkscrew_up_down},
+	{PHYSICAL_MODEL_SLALOM, track_object_slalom},
+	{PHYSICAL_MODEL_BARN, track_object_barn},
+	{PHYSICAL_MODEL_GAS_STATION, track_object_gas_station},
+	{PHYSICAL_MODEL_JOES, track_object_joes},
+	{PHYSICAL_MODEL_OFFICE, track_object_office},
+	{PHYSICAL_MODEL_WINDMILL, track_object_windmill},
+	{PHYSICAL_MODEL_SHIP, track_object_ship}};
 
 static void track_object_model(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	switch (sample->physical_model) {
-		case PHYSICAL_MODEL_START_FINISH:
-		case PHYSICAL_MODEL_ROAD:
-		case PHYSICAL_MODEL_CROSSROAD:
-		case PHYSICAL_MODEL_CHICANE_LEFT_RIGHT:
-		case PHYSICAL_MODEL_CHICANE_RIGHT_LEFT:
-		case PHYSICAL_MODEL_LARGE_CORNER:
-		case PHYSICAL_MODEL_SHARP_SPLIT_A:
-		case PHYSICAL_MODEL_SHARP_CORNER:
-		case PHYSICAL_MODEL_SHARP_SPLIT_B:
-		case PHYSICAL_MODEL_LARGE_SPLIT_A:
-		case PHYSICAL_MODEL_LARGE_SPLIT_B:
-			track_object_ground(sample);
-			break;
-		case PHYSICAL_MODEL_HIGHWAY_ENTRANCE:
-		case PHYSICAL_MODEL_HIGHWAY:
-			track_object_highway(sample);
-			break;
-		case PHYSICAL_MODEL_RAMP:
-		case PHYSICAL_MODEL_SOLID_RAMP:
-			track_object_ramp(sample);
-			break;
-		case PHYSICAL_MODEL_ELEVATED_ROAD:
-		case PHYSICAL_MODEL_ELEVATED_SPAN:
-		case PHYSICAL_MODEL_SOLID_ROAD:
-		case PHYSICAL_MODEL_OVERPASS:
-			track_object_elevated_road(sample);
-			break;
-		case PHYSICAL_MODEL_ELEVATED_CORNER:
-			track_object_elevated_corner(sample);
-			break;
-		case PHYSICAL_MODEL_BANKED_ENTRANCE_A:
-		case PHYSICAL_MODEL_BANKED_ENTRANCE_B:
-			track_object_banked_entrance(sample);
-			break;
-		case PHYSICAL_MODEL_BANKED_ROAD:
-			track_object_banked_road(sample);
-			break;
-		case PHYSICAL_MODEL_BANKED_CORNER:
-			track_object_banked_corner(sample);
-			break;
-		case PHYSICAL_MODEL_LOOP:
-			track_object_loop(sample);
-			break;
-		case PHYSICAL_MODEL_TUNNEL:
-			track_object_tunnel(sample);
-			break;
-		case PHYSICAL_MODEL_PIPE_ENTRANCE:
-			track_object_pipe_entrance(sample);
-			break;
-		case PHYSICAL_MODEL_HALF_PIPE:
-		case PHYSICAL_MODEL_PIPE:
-			track_object_pipe(sample);
-			break;
-		case PHYSICAL_MODEL_CORKSCREW_LEFT_RIGHT:
-			track_object_corkscrew_left_right(sample);
-			break;
-		case PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A:
-		case PHYSICAL_MODEL_CORKSCREW_UP_DOWN_B:
-			track_object_corkscrew_up_down(sample);
-			break;
-		case PHYSICAL_MODEL_SLALOM:
-			track_object_slalom(sample);
-			break;
-		case PHYSICAL_MODEL_BARN:
-		case PHYSICAL_MODEL_GAS_STATION:
-		case PHYSICAL_MODEL_JOES:
-		case PHYSICAL_MODEL_OFFICE:
-		case PHYSICAL_MODEL_WINDMILL:
-		case PHYSICAL_MODEL_SHIP:
-			track_object_building(sample);
-			break;
+	legacy_u16 index;
+
+	for (index = 0; index < sizeof(track_object_handlers) / sizeof(track_object_handlers[0]);
+		 index++) {
+		if (track_object_handlers[index].physical_model == sample->physical_model) {
+			track_object_handlers[index].handle(sample);
+			return;
+		}
 	}
 }
 
@@ -1434,15 +1441,73 @@ static void track_object_world_collision(const struct VECTOR *world_position,
 	wallStartZ = LEGACY_S16_WRAP_ADD(wallStartZ, elem_zCenter);
 }
 
+static legacy_s16 track_object_sample(struct TRACK_OBJECT_SAMPLE *sample,
+									  const struct VECTOR *world_position,
+									  const struct VECTOR *next_world_position,
+									  legacy_s16 track_row, legacy_s16 track_column,
+									  legacy_u8 terrain_tile)
+{
+	struct TRACKOBJECT *track_object;
+	legacy_s16 element_orientation;
+	legacy_u8 track_tile;
+
+	element_orientation = 0;
+	track_tile = track_element_map[terrainrows[track_row] + track_column];
+	if (track_tile == TRACK_TILE_EMPTY) {
+		return element_orientation;
+	}
+	if (track_tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
+		track_tile = track_element_map[terrainrows[track_row + 1] + track_column - 1];
+		track_object_tile_center(track_tile, track_row + 1, track_column);
+	} else if (track_tile == TRACK_TILE_CONTINUATION_SOUTH) {
+		track_tile = track_element_map[terrainrows[track_row + 1] + track_column];
+		track_object_tile_center(track_tile, track_row + 1, track_column + 1);
+	} else if (track_tile == TRACK_TILE_CONTINUATION_EAST) {
+		track_tile = track_element_map[terrainrows[track_row] + track_column - 1];
+		track_object_tile_center(track_tile, track_row, track_column);
+	} else {
+		track_object_tile_center(track_tile, track_row, track_column + 1);
+	}
+
+	sample->position.x = LEGACY_S16_WRAP_SUB(world_position->x, elem_xCenter);
+	sample->position.z = LEGACY_S16_WRAP_SUB(world_position->z, elem_zCenter);
+	sample->next_position.x = LEGACY_S16_WRAP_SUB(next_world_position->x, elem_xCenter);
+	sample->next_position.z = LEGACY_S16_WRAP_SUB(next_world_position->z, elem_zCenter);
+	if (track_tile != TRACK_TILE_EMPTY && terrain_tile >= HILL_TERRAIN_FIRST &&
+		terrain_tile < HILL_TERRAIN_END) {
+		track_tile = subst_hillroad_track(terrain_tile, track_tile);
+	}
+
+	track_object = &trkObjectList[track_tile];
+	sample->physical_model = (legacy_s8)track_object->ss_physicalModel;
+	element_orientation = (legacy_s16)track_object->ss_rotY;
+	track_rotate_local(&sample->position, element_orientation);
+	track_rotate_local(&sample->next_position, element_orientation);
+	sample->surface_type =
+		(legacy_s8)((legacy_u8)track_object->ss_surfaceType + TRACK_SURFACE_TYPE_OFFSET);
+	if (sample->surface_type < TRACK_SURFACE_TYPE_MINIMUM) {
+		sample->surface_type = TRACK_SURFACE_TYPE_MINIMUM;
+	}
+	sample->absolute_x = absolute_word(sample->position.x);
+	sample->absolute_z = absolute_word(sample->position.z);
+	if (sample->physical_model < PHYSICAL_MODEL_MINIMUM ||
+		sample->physical_model > TRACK_PHYSICAL_MODEL_MAXIMUM) {
+		return element_orientation;
+	}
+
+	sample->height = LEGACY_S16_WRAP_SUB(world_position->y, terrainHeight);
+	sample->next_height = LEGACY_S16_WRAP_SUB(next_world_position->y, terrainHeight);
+	track_object_model(sample);
+	return element_orientation;
+}
+
 void build_track_object(struct VECTOR *world_position, struct VECTOR *next_world_position)
 {
 	struct TRACK_OBJECT_SAMPLE sample;
-	struct TRACKOBJECT *track_object;
 	legacy_s16 element_orientation;
 	legacy_s16 track_column;
 	legacy_s16 track_row;
 	legacy_u8 terrain_tile;
-	legacy_u8 track_tile;
 
 	planindex = NO_PLANE_INDEX;
 	wallindex = TRACK_WALL_NONE;
@@ -1467,54 +1532,8 @@ void build_track_object(struct VECTOR *world_position, struct VECTOR *next_world
 		terrain_tile = track_terrain_map[trackrows[track_row] + track_column];
 		track_object_terrain(world_position, terrain_tile);
 
-		track_tile = track_element_map[terrainrows[track_row] + track_column];
-		do {
-			if (track_tile == TRACK_TILE_EMPTY) {
-				break;
-			}
-			if (track_tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
-				track_tile = track_element_map[terrainrows[track_row + 1] + track_column - 1];
-				track_object_tile_center(track_tile, track_row + 1, track_column);
-			} else if (track_tile == TRACK_TILE_CONTINUATION_SOUTH) {
-				track_tile = track_element_map[terrainrows[track_row + 1] + track_column];
-				track_object_tile_center(track_tile, track_row + 1, track_column + 1);
-			} else if (track_tile == TRACK_TILE_CONTINUATION_EAST) {
-				track_tile = track_element_map[terrainrows[track_row] + track_column - 1];
-				track_object_tile_center(track_tile, track_row, track_column);
-			} else {
-				track_object_tile_center(track_tile, track_row, track_column + 1);
-			}
-
-			sample.position.x = LEGACY_S16_WRAP_SUB(world_position->x, elem_xCenter);
-			sample.position.z = LEGACY_S16_WRAP_SUB(world_position->z, elem_zCenter);
-			sample.next_position.x = LEGACY_S16_WRAP_SUB(next_world_position->x, elem_xCenter);
-			sample.next_position.z = LEGACY_S16_WRAP_SUB(next_world_position->z, elem_zCenter);
-			if (track_tile != TRACK_TILE_EMPTY && terrain_tile >= HILL_TERRAIN_FIRST &&
-				terrain_tile < HILL_TERRAIN_END) {
-				track_tile = subst_hillroad_track(terrain_tile, track_tile);
-			}
-
-			track_object = &trkObjectList[track_tile];
-			sample.physical_model = (legacy_s8)track_object->ss_physicalModel;
-			element_orientation = (legacy_s16)track_object->ss_rotY;
-			track_rotate_local(&sample.position, element_orientation);
-			track_rotate_local(&sample.next_position, element_orientation);
-			sample.surface_type =
-				(legacy_s8)((legacy_u8)track_object->ss_surfaceType + TRACK_SURFACE_TYPE_OFFSET);
-			if (sample.surface_type < TRACK_SURFACE_TYPE_MINIMUM) {
-				sample.surface_type = TRACK_SURFACE_TYPE_MINIMUM;
-			}
-			sample.absolute_x = absolute_word(sample.position.x);
-			sample.absolute_z = absolute_word(sample.position.z);
-			if (sample.physical_model < PHYSICAL_MODEL_MINIMUM ||
-				sample.physical_model > TRACK_PHYSICAL_MODEL_MAXIMUM) {
-				break;
-			}
-
-			sample.height = LEGACY_S16_WRAP_SUB(world_position->y, terrainHeight);
-			sample.next_height = LEGACY_S16_WRAP_SUB(next_world_position->y, terrainHeight);
-			track_object_model(&sample);
-		} while (0);
+		element_orientation = track_object_sample(&sample, world_position, next_world_position,
+												  track_row, track_column, terrain_tile);
 
 		if (terrain_tile >= HILL_TERRAIN_FIRST) {
 			element_orientation = track_object_hill(world_position, terrain_tile, track_row,

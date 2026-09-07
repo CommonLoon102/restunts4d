@@ -522,8 +522,7 @@ static legacy_s16 track_setup_backtrack(struct TRACK_SETUP_WALK *walk)
 	return TRACK_SETUP_OK;
 }
 
-static void track_setup_roadside_sign(struct TRACK_SETUP_WALK *walk,
-									  struct TRKOBJINFO *current_info)
+static void track_setup_place_roadside_sign(struct TRACK_SETUP_WALK *walk, legacy_u8 arrow_code)
 {
 	struct TRACKOBJECT *previous_track_object;
 	struct TRKOBJINFO *previous_info;
@@ -533,6 +532,55 @@ static void track_setup_roadside_sign(struct TRACK_SETUP_WALK *walk,
 	legacy_s16 camera_index;
 	legacy_s16 base_position;
 	legacy_u16 opponent_path_offset;
+
+	previous_track_object = &trkObjectList[walk->previous_tile_element];
+	previous_info = &previous_track_object->ss_trkObjInfoPtr[walk->previous_subtype];
+	opponent_path_offset =
+		(legacy_u16)((legacy_u8)previous_info->reverse_path_offset_low |
+					 LEGACY_U16_SHL((legacy_u8)previous_info->reverse_path_offset_high, 8U));
+	if (walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE && opponent_path_offset != 0) {
+		camera_vectors = track_vector_from_legacy_offset(opponent_path_offset);
+	} else {
+		camera_vectors = previous_info->route_vectors;
+	}
+	index = LEGACY_U16_WRAP_MUL((legacy_u8)previous_info->route_point_count,
+								TRACK_CAMERA_VECTOR_STRIDE);
+	if (walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE) {
+		index = LEGACY_U16_WRAP_ADD(index, TRACK_CAMERA_VECTOR_REVERSE_OFFSET);
+	} else {
+		index = LEGACY_U16_WRAP_ADD(index, TRACK_CAMERA_VECTOR_FORWARD_OFFSET);
+	}
+	camera_vector = camera_vectors[index];
+	if (walk->connection_status == TRACK_TRAVERSAL_REVERSE) {
+		arrow_code = roadside_sign_reverse_types[LEGACY_S8_FROM_BITS(arrow_code)];
+	} else {
+		arrow_code = roadside_sign_forward_types[LEGACY_S8_FROM_BITS(arrow_code)];
+	}
+	walk->orientation = (legacy_s16)previous_info->route_orientation;
+	track_setup_rotate_vector(&camera_vector, walk->orientation);
+	roadside_sign_headings[roadside_sign_count] =
+		walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE
+			? (walk->orientation ^ TRACK_ORIENTATION_SOUTH)
+			: walk->orientation;
+	roadside_sign_shape_indices[roadside_sign_count] = arrow_code;
+	if (track_terrain_map[terrainrows[walk->previous_row] + walk->previous_column] ==
+		TRACK_TERRAIN_HILL) {
+		camera_vector.y = LEGACY_S16_WRAP_ADD(camera_vector.y, TRACK_CAMERA_HILL_HEIGHT);
+	}
+	camera_index = (legacy_s16)roadside_sign_count;
+	roadside_sign_positions[camera_index].y = camera_vector.y;
+	base_position = track_object_base_z(previous_track_object, (legacy_u8)walk->previous_row);
+	roadside_sign_positions[camera_index].z = LEGACY_S16_WRAP_ADD(camera_vector.z, base_position);
+	base_position = track_object_base_x(previous_track_object, (legacy_u8)walk->previous_column);
+	roadside_sign_positions[camera_index].x = LEGACY_S16_WRAP_ADD(camera_vector.x, base_position);
+	roadside_sign_indices_by_tile[trackrows[walk->previous_row] + walk->previous_column] =
+		roadside_sign_count;
+	roadside_sign_count = LEGACY_U8_WRAP_ADD(roadside_sign_count, 1U);
+}
+
+static void track_setup_roadside_sign(struct TRACK_SETUP_WALK *walk,
+									  struct TRKOBJINFO *current_info)
+{
 	legacy_u8 arrow_code;
 
 	arrow_code = (legacy_u8)current_info->roadside_sign_type;
@@ -541,55 +589,7 @@ static void track_setup_roadside_sign(struct TRACK_SETUP_WALK *walk,
 	} else {
 		if (arrow_code != LEGACY_U8_MAX && walk->runway_length > TRACK_CAMERA_RUNWAY_THRESHOLD &&
 			roadside_sign_count != TRACK_CAMERA_RESERVED_INDEX) {
-			previous_track_object = &trkObjectList[walk->previous_tile_element];
-			previous_info = &previous_track_object->ss_trkObjInfoPtr[walk->previous_subtype];
-			opponent_path_offset =
-				(legacy_u16)((legacy_u8)previous_info->reverse_path_offset_low |
-							 LEGACY_U16_SHL((legacy_u8)previous_info->reverse_path_offset_high,
-											8U));
-			if (walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE &&
-				opponent_path_offset != 0) {
-				camera_vectors = track_vector_from_legacy_offset(opponent_path_offset);
-			} else {
-				camera_vectors = previous_info->route_vectors;
-			}
-			index = LEGACY_U16_WRAP_MUL((legacy_u8)previous_info->route_point_count,
-										TRACK_CAMERA_VECTOR_STRIDE);
-			if (walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE) {
-				index = LEGACY_U16_WRAP_ADD(index, TRACK_CAMERA_VECTOR_REVERSE_OFFSET);
-			} else {
-				index = LEGACY_U16_WRAP_ADD(index, TRACK_CAMERA_VECTOR_FORWARD_OFFSET);
-			}
-			camera_vector = camera_vectors[index];
-			if (walk->connection_status == TRACK_TRAVERSAL_REVERSE) {
-				arrow_code = roadside_sign_reverse_types[LEGACY_S8_FROM_BITS(arrow_code)];
-			} else {
-				arrow_code = roadside_sign_forward_types[LEGACY_S8_FROM_BITS(arrow_code)];
-			}
-			walk->orientation = (legacy_s16)previous_info->route_orientation;
-			track_setup_rotate_vector(&camera_vector, walk->orientation);
-			roadside_sign_headings[roadside_sign_count] =
-				walk->previous_connection_status == TRACK_TRAVERSAL_REVERSE
-					? (walk->orientation ^ TRACK_ORIENTATION_SOUTH)
-					: walk->orientation;
-			roadside_sign_shape_indices[roadside_sign_count] = arrow_code;
-			if (track_terrain_map[terrainrows[walk->previous_row] + walk->previous_column] ==
-				TRACK_TERRAIN_HILL) {
-				camera_vector.y = LEGACY_S16_WRAP_ADD(camera_vector.y, TRACK_CAMERA_HILL_HEIGHT);
-			}
-			camera_index = (legacy_s16)roadside_sign_count;
-			roadside_sign_positions[camera_index].y = camera_vector.y;
-			base_position =
-				track_object_base_z(previous_track_object, (legacy_u8)walk->previous_row);
-			roadside_sign_positions[camera_index].z =
-				LEGACY_S16_WRAP_ADD(camera_vector.z, base_position);
-			base_position =
-				track_object_base_x(previous_track_object, (legacy_u8)walk->previous_column);
-			roadside_sign_positions[camera_index].x =
-				LEGACY_S16_WRAP_ADD(camera_vector.x, base_position);
-			roadside_sign_indices_by_tile[trackrows[walk->previous_row] + walk->previous_column] =
-				roadside_sign_count;
-			roadside_sign_count = LEGACY_U8_WRAP_ADD(roadside_sign_count, 1U);
+			track_setup_place_roadside_sign(walk, arrow_code);
 		}
 		walk->runway_length = 0;
 	}
@@ -649,15 +649,19 @@ static legacy_s16 track_setup_append_piece(struct TRACK_SETUP_WALK *walk)
 	return TRACK_SETUP_OK;
 }
 
+static legacy_s16 track_setup_outside_grid(const struct TRACK_SETUP_WALK *walk)
+{
+	return walk->column < 0 || walk->row < 0 || walk->column > TRACK_GRID_LAST_INDEX ||
+		   walk->row > TRACK_GRID_LAST_INDEX;
+}
+
 static legacy_s16 track_setup_walk(struct TRACK_SETUP_WALK *walk)
 {
 	legacy_s16 status;
 
 	for (;;) {
 		walk->match_count = 0;
-		walk->backtrack_required = walk->column < 0 || walk->row < 0 ||
-								   walk->column > TRACK_GRID_LAST_INDEX ||
-								   walk->row > TRACK_GRID_LAST_INDEX;
+		walk->backtrack_required = track_setup_outside_grid(walk);
 		if (walk->backtrack_required == 0) {
 			status = track_setup_resolve_piece(walk);
 			if (status != TRACK_SETUP_OK) {
@@ -696,12 +700,57 @@ static legacy_s16 track_setup_walk(struct TRACK_SETUP_WALK *walk)
 	}
 }
 
-static void track_setup_cameras(struct TRACK_SETUP_WALK *walk)
+static void track_setup_place_camera(struct TRACK_SETUP_WALK *walk, legacy_s16 sampled_piece,
+									 legacy_s16 camera_index, legacy_s16 far *camera_height,
+									 legacy_s16 far *reserved_camera_words)
 {
 	struct TRACKOBJECT *track_object;
 	struct TRKOBJINFO *current_info;
 	struct VECTOR *camera_vectors;
 	struct VECTOR camera_vector;
+	legacy_u16 index;
+	legacy_s16 base_position;
+	legacy_u16 opponent_path_offset;
+
+	walk->tile_element = (legacy_u8)track_route_element_ids[sampled_piece];
+	walk->subtype =
+		(legacy_u8)track_route_traversal_flags[sampled_piece] & TRACK_PIECE_SUBTYPE_MASK;
+	walk->connection_status =
+		((legacy_u8)track_route_traversal_flags[sampled_piece] & TRACK_PIECE_REVERSE_FLAG) != 0
+			? TRACK_TRAVERSAL_REVERSE
+			: TRACK_TRAVERSAL_FORWARD;
+	track_object = &trkObjectList[walk->tile_element];
+	current_info = &track_object->ss_trkObjInfoPtr[walk->subtype];
+	opponent_path_offset =
+		(legacy_u16)((legacy_u8)current_info->reverse_path_offset_low |
+					 LEGACY_U16_SHL((legacy_u8)current_info->reverse_path_offset_high, 8U));
+	if (walk->connection_status == TRACK_TRAVERSAL_REVERSE && opponent_path_offset != 0) {
+		camera_vectors = track_vector_from_legacy_offset(opponent_path_offset);
+	} else {
+		camera_vectors = current_info->route_vectors;
+	}
+	index = LEGACY_U16_WRAP_MUL((legacy_u8)current_info->route_point_count, 2U);
+	camera_vector = camera_vectors[index];
+	walk->orientation = (legacy_s16)current_info->route_orientation;
+	track_setup_rotate_vector(&camera_vector, walk->orientation);
+	if (track_terrain_map[terrainrows[walk->row] + walk->column] == 6) {
+		camera_height[camera_index] = TRACK_CAMERA_HILL_HEIGHT;
+	} else {
+		camera_height[camera_index] = 0;
+	}
+	reserved_camera_words[camera_index] = 0;
+	trackside_camera_positions[camera_index].y =
+		LEGACY_S16_WRAP_ADD(camera_height[camera_index], camera_vector.y);
+	base_position = track_object_base_z(track_object, (legacy_u8)walk->row);
+	trackside_camera_positions[camera_index].z =
+		LEGACY_S16_WRAP_ADD(base_position, camera_vector.z);
+	base_position = track_object_base_x(track_object, (legacy_u8)walk->column);
+	trackside_camera_positions[camera_index].x =
+		LEGACY_S16_WRAP_ADD(base_position, camera_vector.x);
+}
+
+static void track_setup_cameras(struct TRACK_SETUP_WALK *walk)
+{
 	legacy_s16 far *camera_height;
 	legacy_s16 far *reserved_camera_words;
 	legacy_u16 index;
@@ -710,8 +759,6 @@ static void track_setup_cameras(struct TRACK_SETUP_WALK *walk)
 	legacy_s16 sampled_piece;
 	legacy_s16 tile_index;
 	legacy_s16 camera_index;
-	legacy_s16 base_position;
-	legacy_u16 opponent_path_offset;
 
 	camera_height = trackside_camera_ground_heights;
 	reserved_camera_words = reserved_trackside_camera_words;
@@ -737,41 +784,8 @@ static void track_setup_cameras(struct TRACK_SETUP_WALK *walk)
 			continue;
 		}
 		walk->subtype_by_piece[tile_index] = 1;
-		walk->tile_element = (legacy_u8)track_route_element_ids[sampled_piece];
-		walk->subtype =
-			(legacy_u8)track_route_traversal_flags[sampled_piece] & TRACK_PIECE_SUBTYPE_MASK;
-		walk->connection_status =
-			((legacy_u8)track_route_traversal_flags[sampled_piece] & TRACK_PIECE_REVERSE_FLAG) != 0
-				? TRACK_TRAVERSAL_REVERSE
-				: TRACK_TRAVERSAL_FORWARD;
-		track_object = &trkObjectList[walk->tile_element];
-		current_info = &track_object->ss_trkObjInfoPtr[walk->subtype];
-		opponent_path_offset =
-			(legacy_u16)((legacy_u8)current_info->reverse_path_offset_low |
-						 LEGACY_U16_SHL((legacy_u8)current_info->reverse_path_offset_high, 8U));
-		if (walk->connection_status == TRACK_TRAVERSAL_REVERSE && opponent_path_offset != 0) {
-			camera_vectors = track_vector_from_legacy_offset(opponent_path_offset);
-		} else {
-			camera_vectors = current_info->route_vectors;
-		}
-		index = LEGACY_U16_WRAP_MUL((legacy_u8)current_info->route_point_count, 2U);
-		camera_vector = camera_vectors[index];
-		walk->orientation = (legacy_s16)current_info->route_orientation;
-		track_setup_rotate_vector(&camera_vector, walk->orientation);
-		if (track_terrain_map[terrainrows[walk->row] + walk->column] == 6) {
-			camera_height[camera_index] = TRACK_CAMERA_HILL_HEIGHT;
-		} else {
-			camera_height[camera_index] = 0;
-		}
-		reserved_camera_words[camera_index] = 0;
-		trackside_camera_positions[camera_index].y =
-			LEGACY_S16_WRAP_ADD(camera_height[camera_index], camera_vector.y);
-		base_position = track_object_base_z(track_object, (legacy_u8)walk->row);
-		trackside_camera_positions[camera_index].z =
-			LEGACY_S16_WRAP_ADD(base_position, camera_vector.z);
-		base_position = track_object_base_x(track_object, (legacy_u8)walk->column);
-		trackside_camera_positions[camera_index].x =
-			LEGACY_S16_WRAP_ADD(base_position, camera_vector.x);
+		track_setup_place_camera(walk, sampled_piece, camera_index, camera_height,
+								 reserved_camera_words);
 		camera_index = LEGACY_S16_WRAP_ADD(camera_index, 1);
 	}
 	trackside_camera_count = (legacy_u8)camera_index;

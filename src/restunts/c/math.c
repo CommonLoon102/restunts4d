@@ -99,6 +99,30 @@ legacy_s16 cos_fast(legacy_u16 s)
 	return sin_fast(LEGACY_U16_WRAP_ADD(s, ANGLE_QUARTER_TURN));
 }
 
+static legacy_s16 polar_angle_quadrant(legacy_u16 flag, legacy_s16 result)
+{
+	switch (flag) {
+		case 0:
+			return result;
+		case 1:
+			return -result + ANGLE_QUARTER_TURN;
+		case 2:
+			return -result + ANGLE_HALF_TURN;
+		case 3:
+			return result + ANGLE_QUARTER_TURN;
+		case 4:
+			return -result;
+		case 5:
+			return result - ANGLE_QUARTER_TURN;
+		case 6:
+			return result - ANGLE_HALF_TURN;
+		case 7:
+			return -(result + ANGLE_QUARTER_TURN);
+	}
+
+	return 0;
+}
+
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 {
 
@@ -138,26 +162,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 		result = atantable[index >> 8];
 	}
 
-	switch (flag) {
-		case 0:
-			return result;
-		case 1:
-			return -result + ANGLE_QUARTER_TURN;
-		case 2:
-			return -result + ANGLE_HALF_TURN;
-		case 3:
-			return result + ANGLE_QUARTER_TURN;
-		case 4:
-			return -result;
-		case 5:
-			return result - ANGLE_QUARTER_TURN;
-		case 6:
-			return result - ANGLE_HALF_TURN;
-		case 7:
-			return -(result + ANGLE_QUARTER_TURN);
-	}
-
-	return 0;
+	return polar_angle_quadrant(flag, result);
 }
 
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y)
@@ -614,6 +619,56 @@ static void rectlist_remove_at(legacy_s8 *length, struct RECTANGLE *rectangles, 
 	(*length)--;
 }
 
+static void rectlist_split_overlap(struct RECTANGLE *rect, struct RECTANGLE *existing_rectangle,
+								   struct RECTANGLE *merged_rectangle,
+								   struct RECTANGLE *upper_remainder,
+								   struct RECTANGLE *lower_remainder,
+								   legacy_s16 *has_upper_remainder, legacy_s16 *has_lower_remainder)
+{
+	*merged_rectangle = *existing_rectangle;
+	if (existing_rectangle->top >= rect->top) {
+		if (rect->top < existing_rectangle->top) {
+			*upper_remainder = *rect;
+			upper_remainder->bottom = existing_rectangle->top;
+			*has_upper_remainder = 1;
+		} else {
+			*has_upper_remainder = 0;
+		}
+	} else {
+		*upper_remainder = *existing_rectangle;
+		upper_remainder->bottom = rect->top;
+		merged_rectangle->top = rect->top;
+		*has_upper_remainder = 1;
+	}
+
+	if (existing_rectangle->bottom <= rect->bottom) {
+		if (rect->bottom > existing_rectangle->bottom) {
+			*lower_remainder = *rect;
+			lower_remainder->top = existing_rectangle->bottom;
+			*has_lower_remainder = 1;
+		} else {
+			*has_lower_remainder = 0;
+		}
+	} else {
+		*lower_remainder = *existing_rectangle;
+		lower_remainder->top = rect->bottom;
+		merged_rectangle->bottom = rect->bottom;
+		*has_lower_remainder = 1;
+	}
+
+	if (rect->left <= existing_rectangle->left) {
+		merged_rectangle->left = rect->left;
+	} else {
+		merged_rectangle->left = existing_rectangle->left;
+	}
+
+	if (rect->right >= existing_rectangle->right) {
+		merged_rectangle->right = rect->right;
+	} else {
+		merged_rectangle->right = existing_rectangle->right;
+	}
+}
+
 void rectlist_add_rect(legacy_s8 *rectangle_count, struct RECTANGLE *rectangles,
 					   struct RECTANGLE *rect)
 {
@@ -644,49 +699,8 @@ void rectlist_add_rect(legacy_s8 *rectangle_count, struct RECTANGLE *rectangles,
 			continue;
 		}
 
-		merged_rectangle = *existing_rectangle;
-		if (existing_rectangle->top >= rect->top) {
-			if (rect->top < existing_rectangle->top) {
-				upper_remainder = *rect;
-				upper_remainder.bottom = existing_rectangle->top;
-				has_upper_remainder = 1;
-			} else {
-				has_upper_remainder = 0;
-			}
-		} else {
-			upper_remainder = *existing_rectangle;
-			upper_remainder.bottom = rect->top;
-			merged_rectangle.top = rect->top;
-			has_upper_remainder = 1;
-		}
-
-		if (existing_rectangle->bottom <= rect->bottom) {
-			if (rect->bottom > existing_rectangle->bottom) {
-				lower_remainder = *rect;
-				lower_remainder.top = existing_rectangle->bottom;
-				has_lower_remainder = 1;
-			} else {
-				has_lower_remainder = 0;
-			}
-		} else {
-			lower_remainder = *existing_rectangle;
-			lower_remainder.top = rect->bottom;
-			merged_rectangle.bottom = rect->bottom;
-			has_lower_remainder = 1;
-		}
-
-		if (rect->left <= existing_rectangle->left) {
-			merged_rectangle.left = rect->left;
-		} else {
-			merged_rectangle.left = existing_rectangle->left;
-		}
-
-		if (rect->right >= existing_rectangle->right) {
-			merged_rectangle.right = rect->right;
-		} else {
-			merged_rectangle.right = existing_rectangle->right;
-		}
-
+		rectlist_split_overlap(rect, existing_rectangle, &merged_rectangle, &upper_remainder,
+							   &lower_remainder, &has_upper_remainder, &has_lower_remainder);
 		rectlist_remove_at(rectangle_count, rectangles, rectangle_index);
 		if (has_upper_remainder != 0) {
 			rectlist_add_rect(rectangle_count, rectangles, &upper_remainder);

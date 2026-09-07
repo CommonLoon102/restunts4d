@@ -57,6 +57,15 @@ run_host_test test-line-prepare shape3d_lines.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-matrix-semantics math.c
+run_host_test test-math-boundaries math.c \
+    "$test_source_dir/headless_data.c" "$test_source_dir/legacy.c"
+run_host_test test-simulation-setup gameinit.c \
+    "$test_source_dir/gamestep.c" "$test_source_dir/carsetup.c" \
+    "$test_source_dir/math.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/legacy.c" -Wno-pointer-sign -Wno-sign-compare
+run_host_test test-penalty-routing physics_grip.c -Wno-sign-compare
+run_host_test test-wheel-suspension physics_collision.c
+run_host_test test-route-points opponent.c "$test_source_dir/trkutil.c" -Wno-missing-braces
 run_host_test test-memmgr-cache memmgr.c \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-braces -Wno-missing-field-initializers
 run_host_test test-opponent-tick opponent.c \

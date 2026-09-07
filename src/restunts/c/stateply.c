@@ -277,15 +277,11 @@ static void prepare_wheel_rotation(struct CARSTATE *carstate, struct PLAYER_WHEE
 	}
 }
 
-static void prepare_wheel_motion(struct CARSTATE *carstate, struct SIMD *simd,
-								 struct PLAYER_WHEEL_MOTION *motion, legacy_s16 car_index)
+static legacy_s16 prepare_wheel_travel(struct CARSTATE *carstate,
+									   struct PLAYER_WHEEL_MOTION *motion)
 {
-	struct MATRIX wheel_adjustment_rotation;
-	struct VECTOR wheel_vector, transformed_vector;
-	struct VECTORLONG *current_wheel_position;
-	struct VECTORLONG *previous_wheel_position;
-	legacy_s16 wheel_index, front_wheel_heading_offset;
-	int has_slide_rotation;
+	legacy_s16 wheel_index;
+	legacy_s16 front_wheel_heading_offset;
 
 	for (wheel_index = 0; wheel_index < PLAYER_PHYSICS_WHEEL_COUNT; wheel_index++) {
 		motion->contact_distances[wheel_index] =
@@ -298,6 +294,20 @@ static void prepare_wheel_motion(struct CARSTATE *carstate, struct SIMD *simd,
 										   framespersec == GAME_FRAME_RATE_LOW
 											   ? PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR
 											   : PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
+	return front_wheel_heading_offset;
+}
+
+static void prepare_wheel_motion(struct CARSTATE *carstate, struct SIMD *simd,
+								 struct PLAYER_WHEEL_MOTION *motion, legacy_s16 car_index)
+{
+	struct MATRIX wheel_adjustment_rotation;
+	struct VECTOR wheel_vector, transformed_vector;
+	struct VECTORLONG *current_wheel_position;
+	struct VECTORLONG *previous_wheel_position;
+	legacy_s16 wheel_index, front_wheel_heading_offset;
+	int has_slide_rotation;
+
+	front_wheel_heading_offset = prepare_wheel_travel(carstate, motion);
 	restore_stopped_wheel_headings(carstate, motion, car_index);
 	prepare_wheel_rotation(carstate, motion);
 
