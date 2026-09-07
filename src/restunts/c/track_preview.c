@@ -69,37 +69,19 @@ static void track_preview_draw_terrain(legacy_u8 terrain, legacy_u8 column, lega
 	shape3d_transform_and_queue(transformed);
 }
 
-void draw_track_preview(void)
+static void track_preview_prepare(const struct VECTOR *camera)
 {
-	struct TRANSFORMEDSHAPE3D transformed;
-	struct TRACKOBJECT *track_object;
-	struct TRACKOBJECT *overlay_object;
 	struct VECTOR projected_vector;
-	struct VECTOR track_position;
 	struct POINT2D projected_point;
 	struct MATRIX *rotation;
-	legacy_s16 camera_x;
-	legacy_s16 camera_y;
-	legacy_s16 camera_z;
 	legacy_s16 camera_angle;
 	legacy_s16 camera_radius;
 	legacy_s16 horizon;
-	legacy_s16 terrain_height;
-	legacy_u8 column;
-	legacy_u8 row;
-	legacy_u8 adjacent_column;
-	legacy_u8 adjacent_row;
-	legacy_u8 terrain;
-	legacy_u8 track;
-	legacy_u8 quadrant;
 
-	camera_x = (legacy_s16)track_preview_camera_x;
-	camera_y = (legacy_s16)track_preview_camera_y;
-	camera_z = (legacy_s16)track_preview_camera_z;
 	camera_radius =
-		(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(track_preview_target_x, camera_x),
-								  LEGACY_S16_WRAP_SUB(track_preview_target_z, camera_z));
-	camera_angle = (legacy_s16)polarAngle(LEGACY_S16_WRAP_SUB(track_preview_target_y, camera_y),
+		(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(track_preview_target_x, camera->x),
+								  LEGACY_S16_WRAP_SUB(track_preview_target_z, camera->z));
+	camera_angle = (legacy_s16)polarAngle(LEGACY_S16_WRAP_SUB(track_preview_target_y, camera->y),
 										  camera_radius);
 	rotation = mat_rot_zxy(0, camera_angle, 0, MATRIX_ROTATION_ORDER_YXZ);
 	mat_mul_vector(&track_preview_horizon_vector, rotation, &projected_vector);
@@ -122,108 +104,154 @@ void draw_track_preview(void)
 	sprite_clear_target((legacy_u8)skybox.ground_color);
 	sprite_set_target_clip_bounds(0, TRACK_PREVIEW_SCREEN_WIDTH, 0, TRACK_PREVIEW_SCREEN_HEIGHT);
 	select_cliprect_rotate(0, camera_angle, 0, &trackpreview_cliprect, TRACK_PREVIEW_ROTATE_CLIP);
+}
 
+static void track_preview_draw_bridge_terrain(legacy_u8 column, legacy_u8 row,
+											  const struct VECTOR *camera,
+											  struct TRANSFORMEDSHAPE3D *transformed)
+{
+	legacy_u8 quadrant;
+	legacy_u8 adjacent_column;
+	legacy_u8 adjacent_row;
+	legacy_u8 terrain;
+
+	for (quadrant = 0; quadrant < TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT; quadrant++) {
+		adjacent_column =
+			(legacy_u8)(column + ((quadrant & TRACK_PREVIEW_QUADRANT_COLUMN_BIT) != 0 ? 1U : 0U));
+		adjacent_row =
+			(legacy_u8)(row + ((quadrant & TRACK_PREVIEW_QUADRANT_ROW_BIT) != 0 ? 1U : 0U));
+		terrain =
+			track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[adjacent_row], adjacent_column)];
+		track_preview_draw_terrain(terrain, adjacent_column, adjacent_row, 0, camera->x, camera->y,
+								   camera->z, 1, transformed);
+	}
+}
+
+static void track_preview_draw_hill_base(const struct TRACKOBJECT *track_object,
+										 const struct VECTOR *position,
+										 struct TRANSFORMEDSHAPE3D *transformed)
+{
+	switch (track_object->ss_multiTileFlag) {
+		case TRACK_PREVIEW_QUADRANT_COLUMN_BIT:
+			transformed->shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_VERTICAL_SHAPE];
+			break;
+		case TRACK_PREVIEW_QUADRANT_ROW_BIT:
+			transformed->shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_HORIZONTAL_SHAPE];
+			break;
+		case TRACK_PREVIEW_QUADRANT_COLUMN_BIT | TRACK_PREVIEW_QUADRANT_ROW_BIT:
+			transformed->shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_QUAD_SHAPE];
+			break;
+		default:
+			transformed->shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_SINGLE_SHAPE];
+			break;
+	}
+	transformed->pos = *position;
+	transformed->rotvec.z = 0;
+	transformed->ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
+	transformed->material = 0;
+	shape3d_transform_and_queue(transformed);
+}
+
+static void track_preview_draw_object(legacy_u8 track, legacy_u8 column, legacy_u8 row,
+									  legacy_s16 terrain_height, const struct VECTOR *camera,
+									  struct TRANSFORMEDSHAPE3D *transformed)
+{
+	struct TRACKOBJECT *track_object;
+	struct TRACKOBJECT *overlay_object;
+	struct VECTOR track_position;
+
+	track_object = &trkObjectList[track];
+	track_position.x = track_preview_half(
+		LEGACY_S16_WRAP_SUB(track_object_base_x(track_object, column), camera->x));
+	track_position.y = track_preview_half(LEGACY_S16_WRAP_SUB(terrain_height, camera->y));
+	track_position.z =
+		track_preview_half(LEGACY_S16_WRAP_SUB(track_object_base_z(track_object, row), camera->z));
+
+	if (terrain_height != 0) {
+		track_preview_draw_hill_base(track_object, &track_position, transformed);
+	}
+
+	if (track_object->ss_ssOvelay != 0) {
+		overlay_object = frame_track_object_from_legacy_index(track_object->ss_ssOvelay);
+		if (overlay_object->ss_loShapePtr != 0) {
+			transformed->shapeptr = overlay_object->ss_loShapePtr;
+			transformed->pos = track_position;
+			transformed->rotvec.z = track_object->ss_rotY;
+			transformed->ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
+			transformed->material =
+				(legacy_s8)overlay_object->ss_surfaceType < 0 ? 0 : overlay_object->ss_surfaceType;
+			shape3d_transform_and_queue(transformed);
+		}
+	}
+
+	transformed->shapeptr = track_object->ss_loShapePtr;
+	transformed->pos = track_position;
+	transformed->rotvec.z = track_object->ss_rotY;
+	transformed->ts_flags =
+		(legacy_u8)(track_object->ss_ignoreZBias | TRACK_PREVIEW_OBJECT_TRANSFORM_FLAG);
+	transformed->material =
+		(legacy_s8)track_object->ss_surfaceType < 0 ? 0 : track_object->ss_surfaceType;
+	shape3d_transform_and_queue(transformed);
+}
+
+static void track_preview_draw_cell(legacy_u8 column, legacy_u8 row, const struct VECTOR *camera,
+									struct TRANSFORMEDSHAPE3D *transformed)
+{
+	legacy_u8 track;
+	legacy_u8 terrain;
+	legacy_s16 terrain_height;
+
+	track = track_element_map[LEGACY_U16_WRAP_ADD(trackrows[row], column)];
+	terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
+	if (track != 0 && terrain >= TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST &&
+		terrain < TRACK_PREVIEW_HILL_ROAD_TERRAIN_END) {
+		track = subst_hillroad_track(terrain, track);
+		terrain = 0;
+	}
+	if (track >= TRACK_PREVIEW_PLACEHOLDER_MINIMUM) {
+		track = 0;
+		terrain = 0;
+	}
+
+	terrain_height = 0;
+	if (terrain == TERRAIN_RAISED_TILE) {
+		terrain_height = hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
+		if (track != 0) {
+			terrain = 0;
+		}
+	} else if (track >= TRACK_PREVIEW_BRIDGE_FIRST && track <= TRACK_PREVIEW_BRIDGE_LAST) {
+		track_preview_draw_bridge_terrain(column, row, camera, transformed);
+		terrain = 0;
+	}
+
+	track_preview_draw_terrain(terrain, column, row, terrain_height, camera->x, camera->y,
+							   camera->z, 0, transformed);
+	if (track == 0) {
+		shape3d_render_queued_primitives();
+		return;
+	}
+
+	track_preview_draw_object(track, column, row, terrain_height, camera, transformed);
+	shape3d_render_queued_primitives();
+}
+
+void draw_track_preview(void)
+{
+	struct VECTOR camera;
+	struct TRANSFORMEDSHAPE3D transformed;
+	legacy_u8 row;
+	legacy_u8 column;
+
+	camera.x = (legacy_s16)track_preview_camera_x;
+	camera.y = (legacy_s16)track_preview_camera_y;
+	camera.z = (legacy_s16)track_preview_camera_z;
+	track_preview_prepare(&camera);
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
 	transformed.culling_distance = TRACK_PREVIEW_TRANSFORM_DISTANCE;
 	for (row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
 		for (column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
-			track = track_element_map[LEGACY_U16_WRAP_ADD(trackrows[row], column)];
-			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
-			if (track != 0 && terrain >= TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST &&
-				terrain < TRACK_PREVIEW_HILL_ROAD_TERRAIN_END) {
-				track = subst_hillroad_track(terrain, track);
-				terrain = 0;
-			}
-			if (track >= TRACK_PREVIEW_PLACEHOLDER_MINIMUM) {
-				track = 0;
-				terrain = 0;
-			}
-
-			terrain_height = 0;
-			if (terrain == TERRAIN_RAISED_TILE) {
-				terrain_height = hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
-				if (track != 0) {
-					terrain = 0;
-				}
-			} else if (track >= TRACK_PREVIEW_BRIDGE_FIRST && track <= TRACK_PREVIEW_BRIDGE_LAST) {
-				for (quadrant = 0; quadrant < TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT; quadrant++) {
-					adjacent_column =
-						(legacy_u8)(column + ((quadrant & TRACK_PREVIEW_QUADRANT_COLUMN_BIT) != 0
-												  ? 1U
-												  : 0U));
-					adjacent_row =
-						(legacy_u8)(row +
-									((quadrant & TRACK_PREVIEW_QUADRANT_ROW_BIT) != 0 ? 1U : 0U));
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[adjacent_row],
-																	adjacent_column)];
-					track_preview_draw_terrain(terrain, adjacent_column, adjacent_row, 0, camera_x,
-											   camera_y, camera_z, 1, &transformed);
-				}
-				terrain = 0;
-			}
-
-			track_preview_draw_terrain(terrain, column, row, terrain_height, camera_x, camera_y,
-									   camera_z, 0, &transformed);
-			if (track == 0) {
-				shape3d_render_queued_primitives();
-				continue;
-			}
-
-			track_object = &trkObjectList[track];
-			track_position.x = track_preview_half(
-				LEGACY_S16_WRAP_SUB(track_object_base_x(track_object, column), camera_x));
-			track_position.y = track_preview_half(LEGACY_S16_WRAP_SUB(terrain_height, camera_y));
-			track_position.z = track_preview_half(
-				LEGACY_S16_WRAP_SUB(track_object_base_z(track_object, row), camera_z));
-
-			if (terrain_height != 0) {
-				switch (track_object->ss_multiTileFlag) {
-					case TRACK_PREVIEW_QUADRANT_COLUMN_BIT:
-						transformed.shapeptr =
-							&game3dshapes[TRACK_PREVIEW_HILL_BASE_VERTICAL_SHAPE];
-						break;
-					case TRACK_PREVIEW_QUADRANT_ROW_BIT:
-						transformed.shapeptr =
-							&game3dshapes[TRACK_PREVIEW_HILL_BASE_HORIZONTAL_SHAPE];
-						break;
-					case TRACK_PREVIEW_QUADRANT_COLUMN_BIT | TRACK_PREVIEW_QUADRANT_ROW_BIT:
-						transformed.shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_QUAD_SHAPE];
-						break;
-					default:
-						transformed.shapeptr = &game3dshapes[TRACK_PREVIEW_HILL_BASE_SINGLE_SHAPE];
-						break;
-				}
-				transformed.pos = track_position;
-				transformed.rotvec.z = 0;
-				transformed.ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
-				transformed.material = 0;
-				shape3d_transform_and_queue(&transformed);
-			}
-
-			if (track_object->ss_ssOvelay != 0) {
-				overlay_object = frame_track_object_from_legacy_index(track_object->ss_ssOvelay);
-				if (overlay_object->ss_loShapePtr != 0) {
-					transformed.shapeptr = overlay_object->ss_loShapePtr;
-					transformed.pos = track_position;
-					transformed.rotvec.z = track_object->ss_rotY;
-					transformed.ts_flags = TRACK_PREVIEW_TRANSFORM_FLAGS;
-					transformed.material = (legacy_s8)overlay_object->ss_surfaceType < 0
-											   ? 0
-											   : overlay_object->ss_surfaceType;
-					shape3d_transform_and_queue(&transformed);
-				}
-			}
-
-			transformed.shapeptr = track_object->ss_loShapePtr;
-			transformed.pos = track_position;
-			transformed.rotvec.z = track_object->ss_rotY;
-			transformed.ts_flags =
-				(legacy_u8)(track_object->ss_ignoreZBias | TRACK_PREVIEW_OBJECT_TRANSFORM_FLAG);
-			transformed.material =
-				(legacy_s8)track_object->ss_surfaceType < 0 ? 0 : track_object->ss_surfaceType;
-			shape3d_transform_and_queue(&transformed);
-			shape3d_render_queued_primitives();
+			track_preview_draw_cell(column, row, &camera, &transformed);
 		}
 	}
 }

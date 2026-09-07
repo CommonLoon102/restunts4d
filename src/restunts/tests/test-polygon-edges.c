@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "../c/externs.h"
 #include "../c/shape2d.h"
@@ -137,6 +138,41 @@ static legacy_u32 edge_fingerprint(legacy_u16 choose_edge_per_row, legacy_u16 ne
 	return hash;
 }
 
+static legacy_u32 first_edge_fingerprint(legacy_s16 clipping_mode)
+{
+	static const legacy_u16 fractions[] = {0, 1, 32767, 32768, 65534, 65535};
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
+	legacy_s16 edges[EDGE_ROWS * 2U];
+	legacy_u32 seed = 161803UL;
+	legacy_u32 hash = 2166136261UL;
+	unsigned iteration, i;
+
+	drawing_sprite.sprite_raster_left = 7;
+	drawing_sprite.sprite_raster_right = 313;
+	for (iteration = 0; iteration < 8192; iteration++) {
+		memset(line, 0, sizeof(line));
+		line[DRAW_LINE_MODE_AND_CLIP_INDEX] = iteration % 11;
+		line[DRAW_LINE_START_X_INDEX] = random_word(&seed);
+		line[DRAW_LINE_START_X_FRACTION_INDEX] = fractions[iteration % 6];
+		line[DRAW_LINE_START_Y_FRACTION_INDEX] = fractions[(iteration / 6) % 6];
+		line[DRAW_LINE_START_Y_INDEX] = 100 + random_word(&seed) % 100;
+		line[DRAW_LINE_END_Y_INDEX] = 350;
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = random_word(&seed) % 100;
+		line[DRAW_LINE_STEP_INDEX] = random_word(&seed);
+		for (i = DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX; i < DRAW_LINE_WORD_COUNT; i++) {
+			line[i] = random_word(&seed) % 8;
+		}
+		for (i = 0; i < EDGE_ROWS * 2U; i++) {
+			edges[i] = LEGACY_S16_FROM_BITS((legacy_u16)random_word(&seed));
+		}
+		generate_poly_edges(edges, line, clipping_mode);
+		for (i = 0; i < EDGE_ROWS * 2U; i++) {
+			hash = (hash ^ (legacy_u16)edges[i]) * 16777619UL;
+		}
+	}
+	return hash;
+}
+
 int main(void)
 {
 	/* Baseline fingerprints cover all modes, fractional carry boundaries,
@@ -150,5 +186,13 @@ int main(void)
 	for (i = 0; i < 4; i++) {
 		assert(edge_fingerprint(i & 1U, i >> 1U) == expected[i]);
 	}
+#ifdef PRERENDER_RECORD_BASELINE
+	fprintf(stdout, "%08lx %08lx\n", (unsigned long)first_edge_fingerprint(0),
+			(unsigned long)first_edge_fingerprint(1));
+#else
+	/* Pre-refactor first-edge baselines include untouched rows and clipping padding. */
+	assert(first_edge_fingerprint(0) == 0x8ca17529UL);
+	assert(first_edge_fingerprint(1) == 0xee8ca9ecUL);
+#endif
 	return 0;
 }

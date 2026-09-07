@@ -131,22 +131,48 @@ static legacy_u16 sphere_scale_difference(legacy_u16 left, legacy_u16 right, leg
 										  LEGACY_S16_FROM_BITS(scale));
 }
 
+static void sphere_build_coordinate(legacy_u16 *destination)
+{
+	legacy_u16 half_first, quarter_first, three_quarters_first;
+	legacy_u16 half_second, quarter_second, three_quarters_second;
+	legacy_u16 negative_first;
+
+	half_first = sar1_word(destination[0]);
+	quarter_first = sar1_word(half_first);
+	three_quarters_first = LEGACY_U16_WRAP_ADD(half_first, quarter_first);
+	half_second = sar1_word(destination[16]);
+	quarter_second = sar1_word(half_second);
+	three_quarters_second = LEGACY_U16_WRAP_ADD(half_second, quarter_second);
+	destination[8] =
+		sphere_scale_sum(destination[16], destination[0], SPHERE_DIAGONAL_NORMALIZATION);
+	destination[4] = sphere_scale_sum(destination[0], half_second, SPHERE_HALF_STEP_NORMALIZATION);
+	destination[12] = sphere_scale_sum(destination[16], half_first, SPHERE_HALF_STEP_NORMALIZATION);
+	destination[2] =
+		sphere_scale_sum(destination[0], quarter_second, SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[14] =
+		sphere_scale_sum(destination[16], quarter_first, SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[6] = sphere_scale_sum(destination[0], three_quarters_second,
+									  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
+	destination[10] = sphere_scale_sum(destination[16], three_quarters_first,
+									   SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
+	negative_first = LEGACY_U16_WRAP_SUB(0, destination[0]);
+	destination[24] =
+		sphere_scale_sum(destination[16], negative_first, SPHERE_DIAGONAL_NORMALIZATION);
+	destination[28] = sphere_scale_sum(half_second, negative_first, SPHERE_HALF_STEP_NORMALIZATION);
+	destination[20] =
+		sphere_scale_difference(destination[16], half_first, SPHERE_HALF_STEP_NORMALIZATION);
+	destination[30] =
+		sphere_scale_sum(quarter_second, negative_first, SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[18] =
+		sphere_scale_difference(destination[16], quarter_first, SPHERE_QUARTER_STEP_NORMALIZATION);
+	destination[26] = sphere_scale_sum(three_quarters_second, negative_first,
+									   SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
+	destination[22] = sphere_scale_difference(destination[16], three_quarters_first,
+											  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
+}
+
 void sphere_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 {
-	legacy_u16 half_x1;
-	legacy_u16 quarter_x1;
-	legacy_u16 three_quarters_x1;
-	legacy_u16 half_y1;
-	legacy_u16 quarter_y1;
-	legacy_u16 three_quarters_y1;
-	legacy_u16 half_x2;
-	legacy_u16 quarter_x2;
-	legacy_u16 three_quarters_x2;
-	legacy_u16 half_y2;
-	legacy_u16 quarter_y2;
-	legacy_u16 three_quarters_y2;
-	legacy_u16 negative_x1;
-	legacy_u16 negative_y1;
 	legacy_u16 index;
 	legacy_u16 center_x;
 	legacy_u16 center_y;
@@ -155,68 +181,8 @@ void sphere_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
 	destination[16] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
 	destination[17] = LEGACY_U16_WRAP_SUB(source[5], source[1]);
-	half_x1 = sar1_word((legacy_u16)destination[0]);
-	quarter_x1 = sar1_word(half_x1);
-	three_quarters_x1 = LEGACY_U16_WRAP_ADD(half_x1, quarter_x1);
-	half_y1 = sar1_word((legacy_u16)destination[1]);
-	quarter_y1 = sar1_word(half_y1);
-	three_quarters_y1 = LEGACY_U16_WRAP_ADD(half_y1, quarter_y1);
-	half_x2 = sar1_word((legacy_u16)destination[16]);
-	quarter_x2 = sar1_word(half_x2);
-	three_quarters_x2 = LEGACY_U16_WRAP_ADD(half_x2, quarter_x2);
-	half_y2 = sar1_word((legacy_u16)destination[17]);
-	quarter_y2 = sar1_word(half_y2);
-	three_quarters_y2 = LEGACY_U16_WRAP_ADD(half_y2, quarter_y2);
-
-	destination[8] =
-		sphere_scale_sum(destination[16], destination[0], SPHERE_DIAGONAL_NORMALIZATION);
-	destination[9] =
-		sphere_scale_sum(destination[1], destination[17], SPHERE_DIAGONAL_NORMALIZATION);
-	destination[4] = sphere_scale_sum(destination[0], half_x2, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[5] = sphere_scale_sum(destination[1], half_y2, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[12] = sphere_scale_sum(destination[16], half_x1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[13] = sphere_scale_sum(destination[17], half_y1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[2] =
-		sphere_scale_sum(destination[0], quarter_x2, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[3] =
-		sphere_scale_sum(destination[1], quarter_y2, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[14] =
-		sphere_scale_sum(destination[16], quarter_x1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[15] =
-		sphere_scale_sum(destination[17], quarter_y1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[6] = sphere_scale_sum(destination[0], three_quarters_x2,
-									  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[7] = sphere_scale_sum(destination[1], three_quarters_y2,
-									  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[10] = sphere_scale_sum(destination[16], three_quarters_x1,
-									   SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[11] = sphere_scale_sum(destination[17], three_quarters_y1,
-									   SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-
-	negative_x1 = LEGACY_U16_WRAP_SUB(0, destination[0]);
-	negative_y1 = LEGACY_U16_WRAP_SUB(0, destination[1]);
-	destination[24] = sphere_scale_sum(destination[16], negative_x1, SPHERE_DIAGONAL_NORMALIZATION);
-	destination[25] = sphere_scale_sum(destination[17], negative_y1, SPHERE_DIAGONAL_NORMALIZATION);
-	destination[28] = sphere_scale_sum(half_x2, negative_x1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[29] = sphere_scale_sum(half_y2, negative_y1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[20] =
-		sphere_scale_difference(destination[16], half_x1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[21] =
-		sphere_scale_difference(destination[17], half_y1, SPHERE_HALF_STEP_NORMALIZATION);
-	destination[30] = sphere_scale_sum(quarter_x2, negative_x1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[31] = sphere_scale_sum(quarter_y2, negative_y1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[18] =
-		sphere_scale_difference(destination[16], quarter_x1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[19] =
-		sphere_scale_difference(destination[17], quarter_y1, SPHERE_QUARTER_STEP_NORMALIZATION);
-	destination[26] =
-		sphere_scale_sum(three_quarters_x2, negative_x1, SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[27] =
-		sphere_scale_sum(three_quarters_y2, negative_y1, SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[22] = sphere_scale_difference(destination[16], three_quarters_x1,
-											  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	destination[23] = sphere_scale_difference(destination[17], three_quarters_y1,
-											  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
+	sphere_build_coordinate(destination);
+	sphere_build_coordinate(destination + PRERENDER_POINT_Y_OFFSET);
 
 	center_x = (legacy_u16)source[0];
 	center_y = (legacy_u16)source[1];
@@ -422,11 +388,7 @@ void preRender_wheel(const struct POINT2D *source, legacy_u16 scale, legacy_u16 
 								&wheel_points[WHEEL_INNER_WORD_OFFSET]);
 }
 
-void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color)
-{
-	legacy_s16 left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	legacy_s16 right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	legacy_u16 helper_points[6];
+struct SPHERE_RASTER {
 	legacy_u16 x_bits;
 	legacy_u16 y_bits;
 	legacy_u16 size_bits;
@@ -437,85 +399,40 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 	legacy_u16 line_count;
 	legacy_u16 left_bound;
 	legacy_u16 right_bound;
-	legacy_u16 left;
-	legacy_u16 right;
-	legacy_u16 skip_lines;
+};
+
+static legacy_s16 sphere_build_spans(struct SPHERE_RASTER *sphere, legacy_s16 *left_edges,
+									 legacy_s16 *right_edges)
+{
+	legacy_u16 left, right;
 	legacy_u16 output_index;
 	legacy_u8 *radii;
 	legacy_u8 radius;
 	legacy_s16 mirror_offset;
-	legacy_s16 clip_delta;
 
-	x_bits = (legacy_u16)x;
-	y_bits = (legacy_u16)y;
-	size_bits = (legacy_u16)size;
-	effective_height = LEGACY_U16_WRAP_SUB(size_bits, (legacy_u16)(size_bits >> 2));
-	effective_height = LEGACY_U16_WRAP_ADD(effective_height, (legacy_u16)(size_bits >> 4));
-	if (LEGACY_S16_FROM_BITS(effective_height) <= 0) {
-		return;
-	}
-
-	half_height = (legacy_u16)(effective_height >> 1);
-	if (half_height == 0) {
-		sprite_putpixel_clipped(LEGACY_S16_FROM_BITS(x_bits), LEGACY_S16_FROM_BITS(y_bits), color);
-		return;
-	}
-	half_width = LEGACY_U16_WRAP_SUB(effective_height, half_height);
-	left_bound = drawing_sprite.sprite_raster_left;
-	right_bound = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U);
-	top = LEGACY_U16_WRAP_SUB(y_bits, half_height);
-	if (LEGACY_S16_FROM_BITS(top) >= LEGACY_S16_FROM_BITS(drawing_sprite.sprite_bottom)) {
-		return;
-	}
-	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(y_bits, half_width)) <=
-		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
-		return;
-	}
-	half_width = LEGACY_U16_WRAP_ADD(half_width, (legacy_u16)(half_width >> 2));
-	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(x_bits, half_width)) >
-		LEGACY_S16_FROM_BITS(right_bound)) {
-		return;
-	}
-	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(x_bits, half_width)) <
-		LEGACY_S16_FROM_BITS(left_bound)) {
-		return;
-	}
-
-	half_width = LEGACY_U16_WRAP_SUB(effective_height, half_height);
-	if (half_width >= SPHERE_RASTER_TABLE_LIMIT) {
-		helper_points[0] = x_bits;
-		helper_points[1] = y_bits;
-		helper_points[2] = x_bits;
-		helper_points[3] = LEGACY_U16_WRAP_ADD(y_bits, half_height);
-		helper_points[4] = LEGACY_U16_WRAP_ADD(x_bits, (legacy_u16)(size_bits >> 1));
-		helper_points[5] = y_bits;
-		sphere_draw_polygon(helper_points, color);
-		return;
-	}
-
-	radii = sphere_radius_rows[half_width];
-	line_count = effective_height;
-	mirror_offset = (legacy_s16)((effective_height - 1U) << 1);
+	radii = sphere_radius_rows[sphere->half_width];
+	sphere->line_count = sphere->effective_height;
+	mirror_offset = (legacy_s16)((sphere->effective_height - 1U) << 1);
 	output_index = 0;
 	for (;;) {
 		radius = *radii++;
-		left = LEGACY_U16_WRAP_SUB(x_bits, radius);
-		right = LEGACY_U16_WRAP_ADD(x_bits, radius);
-		if (LEGACY_S16_FROM_BITS(left) > LEGACY_S16_FROM_BITS(right_bound) ||
-			LEGACY_S16_FROM_BITS(right) < LEGACY_S16_FROM_BITS(left_bound)) {
-			top = LEGACY_U16_WRAP_ADD(top, 1U);
-			line_count = LEGACY_U16_WRAP_SUB(line_count, 2U);
+		left = LEGACY_U16_WRAP_SUB(sphere->x_bits, radius);
+		right = LEGACY_U16_WRAP_ADD(sphere->x_bits, radius);
+		if (LEGACY_S16_FROM_BITS(left) > LEGACY_S16_FROM_BITS(sphere->right_bound) ||
+			LEGACY_S16_FROM_BITS(right) < LEGACY_S16_FROM_BITS(sphere->left_bound)) {
+			sphere->top = LEGACY_U16_WRAP_ADD(sphere->top, 1U);
+			sphere->line_count = LEGACY_U16_WRAP_SUB(sphere->line_count, 2U);
 			mirror_offset -= 4;
 			if (mirror_offset < 0) {
-				return;
+				return 0;
 			}
 			continue;
 		}
-		if (LEGACY_S16_FROM_BITS(left) < LEGACY_S16_FROM_BITS(left_bound)) {
-			left = left_bound;
+		if (LEGACY_S16_FROM_BITS(left) < LEGACY_S16_FROM_BITS(sphere->left_bound)) {
+			left = sphere->left_bound;
 		}
-		if (LEGACY_S16_FROM_BITS(right) > LEGACY_S16_FROM_BITS(right_bound)) {
-			right = right_bound;
+		if (LEGACY_S16_FROM_BITS(right) > LEGACY_S16_FROM_BITS(sphere->right_bound)) {
+			right = sphere->right_bound;
 		}
 		left_edges[output_index] = left;
 		right_edges[output_index] = right;
@@ -528,19 +445,92 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 		}
 	}
 
+	return 1;
+}
+
+static void sphere_draw_spans(struct SPHERE_RASTER *sphere, legacy_s16 *left_edges,
+							  legacy_s16 *right_edges, legacy_u16 color)
+{
+	legacy_u16 skip_lines;
+	legacy_s16 clip_delta;
+
 	skip_lines = 0;
-	clip_delta = LEGACY_S16_WRAP_SUB(drawing_sprite.sprite_top, top);
+	clip_delta = LEGACY_S16_WRAP_SUB(drawing_sprite.sprite_top, sphere->top);
 	if (clip_delta > 0) {
-		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
+		sphere->line_count = LEGACY_U16_WRAP_SUB(sphere->line_count, clip_delta);
 		skip_lines = (legacy_u16)clip_delta;
-		top = drawing_sprite.sprite_top;
+		sphere->top = drawing_sprite.sprite_top;
 	}
-	clip_delta =
-		LEGACY_S16_WRAP_SUB(LEGACY_U16_WRAP_ADD(top, line_count), drawing_sprite.sprite_bottom);
+	clip_delta = LEGACY_S16_WRAP_SUB(LEGACY_U16_WRAP_ADD(sphere->top, sphere->line_count),
+									 drawing_sprite.sprite_bottom);
 	if (clip_delta > 0) {
-		line_count = LEGACY_U16_WRAP_SUB(line_count, clip_delta);
+		sphere->line_count = LEGACY_U16_WRAP_SUB(sphere->line_count, clip_delta);
 	}
-	draw_filled_lines(&left_edges[skip_lines], &right_edges[skip_lines], top, line_count, color);
+	draw_filled_lines(&left_edges[skip_lines], &right_edges[skip_lines], sphere->top,
+					  sphere->line_count, color);
+}
+
+void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color)
+{
+	struct SPHERE_RASTER sphere;
+	legacy_s16 left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	legacy_s16 right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	legacy_u16 helper_points[6];
+
+	sphere.x_bits = (legacy_u16)x;
+	sphere.y_bits = (legacy_u16)y;
+	sphere.size_bits = (legacy_u16)size;
+	sphere.effective_height =
+		LEGACY_U16_WRAP_SUB(sphere.size_bits, (legacy_u16)(sphere.size_bits >> 2));
+	sphere.effective_height =
+		LEGACY_U16_WRAP_ADD(sphere.effective_height, (legacy_u16)(sphere.size_bits >> 4));
+	if (LEGACY_S16_FROM_BITS(sphere.effective_height) <= 0) {
+		return;
+	}
+
+	sphere.half_height = (legacy_u16)(sphere.effective_height >> 1);
+	if (sphere.half_height == 0) {
+		sprite_putpixel_clipped(LEGACY_S16_FROM_BITS(sphere.x_bits),
+								LEGACY_S16_FROM_BITS(sphere.y_bits), color);
+		return;
+	}
+	sphere.half_width = LEGACY_U16_WRAP_SUB(sphere.effective_height, sphere.half_height);
+	sphere.left_bound = drawing_sprite.sprite_raster_left;
+	sphere.right_bound = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U);
+	sphere.top = LEGACY_U16_WRAP_SUB(sphere.y_bits, sphere.half_height);
+	if (LEGACY_S16_FROM_BITS(sphere.top) >= LEGACY_S16_FROM_BITS(drawing_sprite.sprite_bottom)) {
+		return;
+	}
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(sphere.y_bits, sphere.half_width)) <=
+		LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
+		return;
+	}
+	sphere.half_width =
+		LEGACY_U16_WRAP_ADD(sphere.half_width, (legacy_u16)(sphere.half_width >> 2));
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(sphere.x_bits, sphere.half_width)) >
+		LEGACY_S16_FROM_BITS(sphere.right_bound)) {
+		return;
+	}
+	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(sphere.x_bits, sphere.half_width)) <
+		LEGACY_S16_FROM_BITS(sphere.left_bound)) {
+		return;
+	}
+
+	sphere.half_width = LEGACY_U16_WRAP_SUB(sphere.effective_height, sphere.half_height);
+	if (sphere.half_width >= SPHERE_RASTER_TABLE_LIMIT) {
+		helper_points[0] = sphere.x_bits;
+		helper_points[1] = sphere.y_bits;
+		helper_points[2] = sphere.x_bits;
+		helper_points[3] = LEGACY_U16_WRAP_ADD(sphere.y_bits, sphere.half_height);
+		helper_points[4] = LEGACY_U16_WRAP_ADD(sphere.x_bits, (legacy_u16)(sphere.size_bits >> 1));
+		helper_points[5] = sphere.y_bits;
+		sphere_draw_polygon(helper_points, color);
+		return;
+	}
+
+	if (sphere_build_spans(&sphere, left_edges, right_edges)) {
+		sphere_draw_spans(&sphere, left_edges, right_edges, color);
+	}
 }
 
 void skybox_fill_polygon(legacy_u16 color, legacy_u16 vertex_count, struct POINT2D vertices[])
@@ -576,157 +566,163 @@ void preRender_patterned(legacy_u16 pattern, legacy_u16 color, legacy_u16 vertex
 	polygon_rasterize(color, vertex_count, vertices, 1);
 }
 
+struct POLYGON_RASTER {
+	const struct POINT2D *first_vertex;
+	const struct POINT2D *last_vertex;
+	const struct POINT2D *top_vertex;
+	const struct POINT2D *bottom_vertex;
+	legacy_s16 min_x, max_x;
+	legacy_s16 top_y, bottom_y;
+	legacy_s16 clip_left, clip_right, clip_top, clip_bottom;
+	legacy_u16 needs_clipping;
+};
+
+static void polygon_find_bounds(const struct POINT2D *vertices, legacy_u16 vertex_count,
+								struct POLYGON_RASTER *raster)
+{
+	legacy_s16 vertex_index;
+
+	raster->clip_left = drawing_sprite.sprite_raster_left;
+	raster->clip_right = drawing_sprite.sprite_raster_right - 1;
+	raster->clip_top = drawing_sprite.sprite_top;
+	raster->clip_bottom = drawing_sprite.sprite_bottom;
+	raster->first_vertex = vertices;
+	raster->last_vertex = vertices + vertex_count - 1U;
+	raster->top_vertex = vertices;
+	raster->bottom_vertex = vertices;
+	raster->bottom_y = raster->top_y = vertices->py;
+	raster->max_x = raster->min_x = vertices->px;
+	for (vertex_index = 1; vertex_index < vertex_count; vertex_index++) {
+		if (vertices[vertex_index].py <= raster->top_y) {
+			raster->top_y = vertices[vertex_index].py;
+			raster->top_vertex = &vertices[vertex_index];
+		}
+		if (vertices[vertex_index].py > raster->bottom_y) {
+			raster->bottom_y = vertices[vertex_index].py;
+			raster->bottom_vertex = &vertices[vertex_index];
+		}
+		if (vertices[vertex_index].px < raster->min_x) {
+			raster->min_x = vertices[vertex_index].px;
+		}
+		if (vertices[vertex_index].px > raster->max_x) {
+			raster->max_x = vertices[vertex_index].px;
+		}
+	}
+}
+
+static legacy_s16 polygon_is_outside(const struct POLYGON_RASTER *raster)
+{
+	return raster->max_x < raster->clip_left || raster->min_x >= raster->clip_right ||
+		   raster->bottom_y < raster->clip_top || raster->top_y >= raster->clip_bottom;
+}
+
+static void polygon_prepare_segment(const struct POINT2D *start, const struct POINT2D *end,
+									legacy_u16 *line_setup, legacy_u16 needs_clipping)
+{
+	if (needs_clipping != 0) {
+		line_prepare_clipped(start->px, start->py, end->px, end->py, line_setup);
+	} else {
+		line_prepare_unclipped(start->px, start->py, end->px, end->py, line_setup);
+	}
+}
+
+static void polygon_generate_first_side(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
+										legacy_u16 *line_setup)
+{
+	const struct POINT2D *current_vertex;
+	const struct POINT2D *start_vertex;
+
+	current_vertex = raster->top_vertex;
+	do {
+		start_vertex = current_vertex;
+		current_vertex++;
+		if (current_vertex > raster->last_vertex) {
+			current_vertex = raster->first_vertex;
+		}
+		if (current_vertex->py > start_vertex->py) {
+			polygon_prepare_segment(start_vertex, current_vertex, line_setup,
+									raster->needs_clipping);
+			generate_poly_edges(edges, line_setup,
+								raster->needs_clipping != 0 ? PRERENDER_EDGE_CLIPPED_MODE
+															: PRERENDER_EDGE_UNCLIPPED_MODE);
+		}
+	} while (current_vertex != raster->bottom_vertex);
+}
+
+static void polygon_merge_second_side(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
+									  legacy_u16 *line_setup, legacy_u16 choose_edge_per_row)
+{
+	const struct POINT2D *current_vertex;
+	const struct POINT2D *start_vertex;
+
+	current_vertex = raster->top_vertex;
+	do {
+		start_vertex = current_vertex;
+		if (current_vertex == raster->first_vertex) {
+			current_vertex = raster->last_vertex;
+		} else {
+			current_vertex--;
+		}
+		if (current_vertex->py > start_vertex->py) {
+			polygon_prepare_segment(start_vertex, current_vertex, line_setup,
+									raster->needs_clipping);
+			polygon_merge_second_edge(line_setup, choose_edge_per_row, raster->needs_clipping,
+									  edges);
+		}
+	} while (current_vertex != raster->bottom_vertex);
+}
+
+static void polygon_draw_spans(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
+							   legacy_u16 color)
+{
+	legacy_s16 bottom, top, line_count;
+
+	bottom = raster->bottom_y;
+	if (bottom >= raster->clip_bottom) {
+		bottom = raster->clip_bottom - 1;
+	}
+	top = raster->top_y;
+	if (top < raster->clip_top) {
+		top = raster->clip_top;
+	}
+	line_count = bottom - top;
+	if (line_count <= 0) {
+		return;
+	}
+	line_count++;
+	spritefunc(&edges[top], &edges[PRERENDER_EDGE_ROW_CAPACITY + top], top, line_count, color);
+}
+
 static void polygon_rasterize(legacy_u16 color, legacy_u16 vertex_count,
 							  const struct POINT2D *vertices, legacy_u16 choose_edge_per_row)
 {
 	legacy_s16 edge_tables[PRERENDER_EDGE_ROW_CAPACITY * PRERENDER_EDGE_TABLE_COUNT];
 	legacy_u16 line_setup[DRAW_LINE_WORD_COUNT * PRERENDER_LINE_BUFFER_COUNT];
-
-	legacy_s16 *edge_tables_pointer;
-	const struct POINT2D *current_vertex;
-	const struct POINT2D *bottom_vertex;
-	const struct POINT2D *top_vertex;
-	legacy_s16 top_y, bottom_y;
-	legacy_u16 needs_clipping;
-	const struct POINT2D *last_vertex;
-	legacy_s16 clip_right, clip_left;
-
-	const struct POINT2D *first_vertex;
-	legacy_s16 min_x, max_x, vertex_index;
-	legacy_s16 start_x_or_line_count, start_y_or_bottom, end_x, end_y_or_top;
-
-	legacy_s16 clip_left_bound = drawing_sprite.sprite_raster_left;
-	legacy_s16 clip_right_bound = drawing_sprite.sprite_raster_right;
-	legacy_s16 clip_top = drawing_sprite.sprite_top;
-	legacy_s16 clip_bottom = drawing_sprite.sprite_bottom;
+	struct POLYGON_RASTER raster;
 
 	if (vertex_count == 0U) {
 		return;
 	}
-	first_vertex = vertices;
-	last_vertex = first_vertex + vertex_count - 1U;
-	edge_tables_pointer = edge_tables;
-	clip_left = clip_left_bound;
-	clip_right = clip_right_bound - 1;
-	bottom_y = top_y = first_vertex->py;
-	max_x = min_x = first_vertex->px;
-	top_vertex = vertices;
-	bottom_vertex = vertices;
+	polygon_find_bounds(vertices, vertex_count, &raster);
 	if (vertex_count == 1U) {
-		imagefunc(first_vertex->px, first_vertex->py, first_vertex->px, first_vertex->py, color);
+		imagefunc(vertices->px, vertices->py, vertices->px, vertices->py, color);
 		return;
 	}
-
-	for (vertex_index = 1; vertex_index < vertex_count; vertex_index++) {
-		if (vertices[vertex_index].py <= top_y) {
-			top_y = vertices[vertex_index].py;
-			top_vertex = &vertices[vertex_index];
-		}
-		if (vertices[vertex_index].py > bottom_y) {
-			bottom_y = vertices[vertex_index].py;
-			bottom_vertex = &vertices[vertex_index];
-		}
-
-		if (vertices[vertex_index].px < min_x) {
-			min_x = vertices[vertex_index].px;
-		}
-		if (vertices[vertex_index].px > max_x) {
-			max_x = vertices[vertex_index].px;
-		}
-	}
-
-	if (max_x < clip_left) {
+	if (polygon_is_outside(&raster)) {
 		return;
 	}
-	if (min_x >= clip_right) {
+	raster.needs_clipping = 0;
+	if (raster.max_x > raster.clip_right || raster.min_x < raster.clip_left ||
+		raster.bottom_y >= raster.clip_bottom || raster.top_y < raster.clip_top) {
+		raster.needs_clipping = 1;
+	}
+	if (raster.bottom_y == raster.top_y || raster.max_x == raster.min_x) {
+		imagefunc(raster.min_x, raster.top_y, raster.max_x, raster.bottom_y, color);
 		return;
 	}
-	if (bottom_y < clip_top) {
-		return;
-	}
-	if (top_y >= clip_bottom) {
-		return;
-	}
-	needs_clipping = 0;
-
-	if (max_x > clip_right || min_x < clip_left || bottom_y >= clip_bottom || top_y < clip_top) {
-		needs_clipping = 1;
-	}
-	if (bottom_y == top_y || max_x == min_x) {
-		imagefunc(min_x, top_y, max_x, bottom_y, color);
-		return;
-	}
-
-	current_vertex = top_vertex;
-
-	do {
-		start_x_or_line_count = current_vertex->px;
-		start_y_or_bottom = current_vertex->py;
-		current_vertex++;
-		if (current_vertex > last_vertex) {
-			current_vertex = first_vertex;
-		}
-
-		end_x = current_vertex->px;
-		end_y_or_top = current_vertex->py;
-		if (end_y_or_top > start_y_or_bottom) {
-
-			if (needs_clipping != 0) {
-				line_prepare_clipped(start_x_or_line_count, start_y_or_bottom, end_x, end_y_or_top,
-									 line_setup);
-				generate_poly_edges(edge_tables_pointer, line_setup, PRERENDER_EDGE_CLIPPED_MODE);
-			} else {
-				line_prepare_unclipped(start_x_or_line_count, start_y_or_bottom, end_x,
-									   end_y_or_top, line_setup);
-				generate_poly_edges(edge_tables_pointer, line_setup, PRERENDER_EDGE_UNCLIPPED_MODE);
-			}
-		}
-
-	} while (current_vertex != bottom_vertex);
-
-	current_vertex = top_vertex;
-	do {
-		start_x_or_line_count = current_vertex->px;
-		start_y_or_bottom = current_vertex->py;
-		if (current_vertex == first_vertex) {
-			current_vertex = last_vertex;
-		} else {
-			current_vertex--;
-		}
-		end_x = current_vertex->px;
-		end_y_or_top = current_vertex->py;
-		if (end_y_or_top > start_y_or_bottom) {
-
-			if (needs_clipping != 0) {
-				line_prepare_clipped(start_x_or_line_count, start_y_or_bottom, end_x, end_y_or_top,
-									 line_setup);
-			} else {
-				line_prepare_unclipped(start_x_or_line_count, start_y_or_bottom, end_x,
-									   end_y_or_top, line_setup);
-			}
-			polygon_merge_second_edge(line_setup, choose_edge_per_row, needs_clipping,
-									  edge_tables_pointer);
-		}
-	} while (current_vertex != bottom_vertex);
-
-	start_y_or_bottom = bottom_y;
-
-	if (start_y_or_bottom >= clip_bottom) {
-		start_y_or_bottom = clip_bottom - 1;
-	}
-	end_y_or_top = top_y;
-	if (end_y_or_top < clip_top) {
-		end_y_or_top = clip_top;
-	}
-
-	start_x_or_line_count = start_y_or_bottom - end_y_or_top;
-	if (start_x_or_line_count <= 0) {
-		return;
-	}
-	start_x_or_line_count++;
-
-	spritefunc(&edge_tables[end_y_or_top], &edge_tables[PRERENDER_EDGE_ROW_CAPACITY + end_y_or_top],
-			   end_y_or_top, start_x_or_line_count, color);
+	polygon_generate_first_side(&raster, edge_tables, line_setup);
+	polygon_merge_second_side(&raster, edge_tables, line_setup, choose_edge_per_row);
+	polygon_draw_spans(&raster, edge_tables, color);
 }
 
 static void generate_poly_edge_fill(legacy_s16 *edges, legacy_s16 offset, legacy_s16 count,
@@ -762,14 +758,135 @@ static void generate_poly_edge_padding(legacy_s16 *edges, const legacy_u16 *setu
 	generate_poly_edge_fill(edges, offset, count, boundary);
 }
 
+static void generate_poly_vertical(legacy_s16 *edges, const legacy_u16 *line_setup,
+								   legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	for (step_index = 0; step_index < step_count; step_index++) {
+		edges[row_index + step_index] = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
+		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
+			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
+	}
+}
+
+static void generate_poly_diagonal_left(legacy_s16 *edges, const legacy_u16 *line_setup,
+										legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	for (step_index = 0; step_index < step_count; step_index++) {
+		edges[row_index + step_index] = LEGACY_S16_WRAP_SUB(
+			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
+		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_SUB(
+			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
+	}
+}
+
+static void generate_poly_diagonal_right(legacy_s16 *edges, const legacy_u16 *line_setup,
+										 legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	for (step_index = 0; step_index < step_count; step_index++) {
+		edges[row_index + step_index] = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
+		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
+	}
+}
+
+static void generate_poly_y_major(legacy_s16 *edges, const legacy_u16 *line_setup,
+								  legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	legacy_u32 x_position;
+	x_position =
+		LEGACY_U32_WRAP_ADD(LEGACY_U32_FROM_WORDS(line_setup[DRAW_LINE_START_X_FRACTION_INDEX],
+												  line_setup[DRAW_LINE_START_X_INDEX]),
+							DRAW_LINE_FIXED_ROUNDING);
+	for (step_index = 0; step_index < step_count; step_index++) {
+		edges[row_index + step_index] =
+			LEGACY_S16_FROM_BITS((legacy_u16)(x_position >> LEGACY_WORD_BITS));
+		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
+			LEGACY_S16_FROM_BITS((legacy_u16)(x_position >> LEGACY_WORD_BITS));
+		if ((legacy_u8)line_setup[DRAW_LINE_MODE_AND_CLIP_INDEX] == DRAW_LINE_MODE_Y_MAJOR_LEFT) {
+			x_position =
+				LEGACY_U32_WRAP_SUB(x_position, (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]);
+		} else {
+			x_position =
+				LEGACY_U32_WRAP_ADD(x_position, (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]);
+		}
+	}
+}
+
+static void generate_poly_x_major_left(legacy_s16 *edges, const legacy_u16 *line_setup,
+									   legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	legacy_u32 x_position;
+	legacy_u32 y_fraction;
+	x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
+	y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
+	if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
+		row_index++;
+	}
+	y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
+	edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
+	for (step_index = 0; step_index < step_count; step_index++) {
+		if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
+			PRERENDER_FIXED_CARRY_LIMIT) {
+			x_position--;
+			if (step_index == step_count - 1) {
+				edges[row_index] = x_position + 1;
+			}
+		} else {
+			edges[row_index] = x_position;
+			x_position--;
+			row_index++;
+			if (step_index + 1 < step_count) {
+				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
+			}
+		}
+		y_fraction = (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
+	}
+}
+
+static void generate_poly_x_major_right(legacy_s16 *edges, const legacy_u16 *line_setup,
+										legacy_s16 step_count, legacy_s16 row_index)
+{
+	legacy_s16 step_index;
+	legacy_u32 x_position;
+	legacy_u32 y_fraction;
+	x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
+	y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
+	if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
+		row_index++;
+	}
+	y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
+	edges[row_index] = x_position;
+	for (step_index = 0; step_index < step_count; step_index++) {
+		if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
+			PRERENDER_FIXED_CARRY_LIMIT) {
+			x_position++;
+			if (step_index == step_count - 1) {
+				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position - 1;
+			}
+		} else {
+			edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
+			x_position++;
+			row_index++;
+			if (step_index + 1 < step_count) {
+				edges[row_index] = x_position;
+			}
+		}
+		y_fraction = (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
+	}
+}
+
 void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy_s16 clipping_mode)
 {
 
 	legacy_s16 clip_left = drawing_sprite.sprite_raster_left;
 	legacy_s16 clip_right = drawing_sprite.sprite_raster_right;
-	legacy_s16 step_index, step_count, row_index;
-	legacy_u32 x_position;
-	legacy_u32 y_fraction;
+	legacy_s16 step_count, row_index;
 
 	if (clipping_mode != PRERENDER_EDGE_UNCLIPPED_MODE) {
 		generate_poly_edge_padding(edges, line_setup, DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX,
@@ -794,105 +911,30 @@ void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy
 		case DRAW_LINE_MODE_HORIZONTAL:
 			return;
 		case DRAW_LINE_MODE_VERTICAL:
-			for (step_index = 0; step_index < step_count; step_index++) {
-				edges[row_index + step_index] =
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
-				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
-			}
+			generate_poly_vertical(edges, line_setup, step_count, row_index);
 			return;
+
 		case DRAW_LINE_MODE_DIAGONAL_LEFT:
-			for (step_index = 0; step_index < step_count; step_index++) {
-				edges[row_index + step_index] = LEGACY_S16_WRAP_SUB(
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
-				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_SUB(
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
-			}
+			generate_poly_diagonal_left(edges, line_setup, step_count, row_index);
 			return;
+
 		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-			for (step_index = 0; step_index < step_count; step_index++) {
-				edges[row_index + step_index] = LEGACY_S16_WRAP_ADD(
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
-				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_ADD(
-					LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
-			}
+			generate_poly_diagonal_right(edges, line_setup, step_count, row_index);
 			return;
+
 		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 		case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
-			x_position = LEGACY_U32_WRAP_ADD(
-				LEGACY_U32_FROM_WORDS(line_setup[DRAW_LINE_START_X_FRACTION_INDEX],
-									  line_setup[DRAW_LINE_START_X_INDEX]),
-				DRAW_LINE_FIXED_ROUNDING);
-			for (step_index = 0; step_index < step_count; step_index++) {
-				edges[row_index + step_index] =
-					LEGACY_S16_FROM_BITS((legacy_u16)(x_position >> LEGACY_WORD_BITS));
-				edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
-					LEGACY_S16_FROM_BITS((legacy_u16)(x_position >> LEGACY_WORD_BITS));
-				if ((legacy_u8)line_setup[DRAW_LINE_MODE_AND_CLIP_INDEX] ==
-					DRAW_LINE_MODE_Y_MAJOR_LEFT) {
-					x_position = LEGACY_U32_WRAP_SUB(x_position,
-													 (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]);
-				} else {
-					x_position = LEGACY_U32_WRAP_ADD(x_position,
-													 (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]);
-				}
-			}
+			generate_poly_y_major(edges, line_setup, step_count, row_index);
 			return;
+
 		case DRAW_LINE_MODE_X_MAJOR_LEFT:
-			x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
-			y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
-			if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
-				row_index++;
-			}
-			y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
-			edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
-			for (step_index = 0; step_index < step_count; step_index++) {
-				if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
-					PRERENDER_FIXED_CARRY_LIMIT) {
-					x_position--;
-					if (step_index == step_count - 1) {
-						edges[row_index] = x_position + 1;
-					}
-				} else {
-					edges[row_index] = x_position;
-					x_position--;
-					row_index++;
-					if (step_index + 1 < step_count) {
-						edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
-					}
-				}
-				y_fraction =
-					(y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
-			}
+			generate_poly_x_major_left(edges, line_setup, step_count, row_index);
 			return;
 
 		case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-			x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
-			y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
-			if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
-				row_index++;
-			}
-			y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
-			edges[row_index] = x_position;
-			for (step_index = 0; step_index < step_count; step_index++) {
-				if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
-					PRERENDER_FIXED_CARRY_LIMIT) {
-					x_position++;
-					if (step_index == step_count - 1) {
-						edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position - 1;
-					}
-				} else {
-					edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
-					x_position++;
-					row_index++;
-					if (step_index + 1 < step_count) {
-						edges[row_index] = x_position;
-					}
-				}
-				y_fraction =
-					(y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
-			}
+			generate_poly_x_major_right(edges, line_setup, step_count, row_index);
 			return;
+
 		case DRAW_LINE_MODE_POINT:
 		default:
 			return;
@@ -1083,6 +1125,23 @@ static void prerender_merge_fixed_y_edge(const legacy_u16 *line, legacy_s16 *lef
 	}
 }
 
+static void prerender_finish_fixed_left(legacy_s16 *right_edges, legacy_s16 x_position,
+										legacy_s16 count, legacy_s16 row_index, legacy_u16 fraction,
+										legacy_u16 step)
+{
+	legacy_u32 sum;
+
+	while (count > 0) {
+		x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+		sum = (legacy_u32)fraction + step;
+		fraction = (legacy_u16)sum;
+		count--;
+		if (count > 0 && sum > PRERENDER_FIXED_CARRY_LIMIT) {
+			right_edges[row_index++] = x_position;
+		}
+	}
+}
+
 static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *left_edges,
 											legacy_s16 *right_edges)
 {
@@ -1107,15 +1166,7 @@ static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *
 	while (count > 0) {
 		if (right_edges[row_index] < x_position) {
 			right_edges[row_index++] = x_position;
-			while (count > 0) {
-				x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-				sum = (legacy_u32)fraction + step;
-				fraction = (legacy_u16)sum;
-				count--;
-				if (count > 0 && sum > PRERENDER_FIXED_CARRY_LIMIT) {
-					right_edges[row_index++] = x_position;
-				}
-			}
+			prerender_finish_fixed_left(right_edges, x_position, count, row_index, fraction, step);
 			break;
 		}
 
@@ -1150,6 +1201,23 @@ static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *
 	}
 }
 
+static void prerender_finish_fixed_right(legacy_s16 *left_edges, legacy_s16 x_position,
+										 legacy_s16 count, legacy_s16 row_index,
+										 legacy_u16 fraction, legacy_u16 step)
+{
+	legacy_u32 sum;
+
+	while (count > 0) {
+		sum = (legacy_u32)fraction + step;
+		fraction = (legacy_u16)sum;
+		if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
+			left_edges[row_index++] = x_position;
+		}
+		x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
+		count--;
+	}
+}
+
 static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 *left_edges,
 											 legacy_s16 *right_edges)
 {
@@ -1176,15 +1244,7 @@ static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 
 			left_edges[row_index++] = x_position;
 			x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
 			count--;
-			while (count > 0) {
-				sum = (legacy_u32)fraction + step;
-				fraction = (legacy_u16)sum;
-				if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
-					left_edges[row_index++] = x_position;
-				}
-				x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-				count--;
-			}
+			prerender_finish_fixed_right(left_edges, x_position, count, row_index, fraction, step);
 			break;
 		}
 

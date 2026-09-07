@@ -339,6 +339,29 @@ void font_set_fontdef(void)
 	font_set_fontdef2(fontdefptr);
 }
 
+static void frame_mark_changed_rects(void)
+{
+	legacy_s16 i;
+
+	for (i = 0; i < FRAME_DIRTY_RECT_COUNT; i++) {
+		frame_rect_change_flags[i] = FRAME_DIRTY_RECT_CHANGED;
+	}
+	if (detail_level == FRAME_DETAIL_FASTEST) {
+		frame_buffer_camera_headings[1] = last_rendered_camera_heading;
+	}
+	if (frame_buffer_camera_headings[1] == last_rendered_camera_heading &&
+		frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].left ==
+			frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].left &&
+		frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].right ==
+			frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].right &&
+		frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].top ==
+			frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].top &&
+		frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].bottom ==
+			frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].bottom) {
+		frame_rect_change_flags[FRAME_SKYBOX_RECT_INDEX] = 0;
+	}
+}
+
 void frame_present(struct RECTANGLE *cliprect)
 {
 	struct RECTANGLE *dirty_rect;
@@ -358,23 +381,7 @@ void frame_present(struct RECTANGLE *cliprect)
 		mouse_draw_opaque_check();
 		sprite_putimage(render_window_sprite->sprite_bitmapptr);
 	} else {
-		for (i = 0; i < FRAME_DIRTY_RECT_COUNT; i++) {
-			frame_rect_change_flags[i] = FRAME_DIRTY_RECT_CHANGED;
-		}
-		if (detail_level == FRAME_DETAIL_FASTEST) {
-			frame_buffer_camera_headings[1] = last_rendered_camera_heading;
-		}
-		if (frame_buffer_camera_headings[1] == last_rendered_camera_heading &&
-			frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].left ==
-				frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].left &&
-			frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].right ==
-				frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].right &&
-			frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].top ==
-				frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].top &&
-			frame_rects_page0[FRAME_SKYBOX_RECT_INDEX].bottom ==
-				frame_rects_page1[FRAME_SKYBOX_RECT_INDEX].bottom) {
-			frame_rect_change_flags[FRAME_SKYBOX_RECT_INDEX] = 0;
-		}
+		frame_mark_changed_rects();
 
 		redraw_rect_count = 0;
 		rectlist_add_rects(FRAME_DIRTY_RECT_COUNT, frame_rect_change_flags, frame_rects_page0,
@@ -565,39 +572,16 @@ static legacy_s8 frame_begin(legacy_s8 buffer_index)
 	return redraw_transform_flags;
 }
 
-static void frame_setup_camera(struct FRAME_CAMERA *camera)
+static legacy_s16 frame_position_camera(struct FRAME_CAMERA *camera, const struct VECTOR *car_pos,
+										legacy_s16 car_rot_x, legacy_s16 car_rot_y,
+										legacy_s16 car_rot_z)
 {
-	legacy_s16 plane_distance;
 	struct MATRIX *car_rot_matrix;
-	struct VECTOR car_pos;
 	struct VECTOR offset_vector;
 	struct VECTOR car_to_cam_rotated;
-	legacy_s16 car_rot_y;
-	legacy_s16 car_rot_x;
-	legacy_s16 car_rot_z;
 	legacy_s16 camera_roll;
-	legacy_s16 camera_horizontal_distance;
 
-	// Set car position (own or opponent's)
-	if (followOpponentFlag == 0) {
-		car_pos.x = position_to_word(state.playerstate.car_position.lx);
-		car_pos.y = position_to_word(state.playerstate.car_position.ly);
-		car_pos.z = position_to_word(state.playerstate.car_position.lz);
-		car_rot_y = state.playerstate.car_rotate.y;
-		car_rot_z = state.playerstate.car_rotate.z;
-		car_rot_x = state.playerstate.car_rotate.x;
-	} else {
-		car_pos.x = position_to_word(state.opponentstate.car_position.lx);
-		car_pos.y = position_to_word(state.opponentstate.car_position.ly);
-		car_pos.z = position_to_word(state.opponentstate.car_position.lz);
-		car_rot_y = state.opponentstate.car_rotate.y;
-		car_rot_z = state.opponentstate.car_rotate.z;
-		car_rot_x = state.opponentstate.car_rotate.x;
-	}
-
-	camera->yaw = -1;
 	camera_roll = 0;
-
 	// Set camera position, based on the car position and the camera mode
 	if (cameramode == CAMERA_MODE_COCKPIT) {
 		camera->yaw = car_rot_x & ANGLE_MASK;
@@ -610,9 +594,9 @@ static void frame_setup_camera(struct FRAME_CAMERA *camera)
 			LEGACY_S16_WRAP_SUB(simd_player.car_height, FRAME_COCKPIT_HEIGHT_CLEARANCE);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
-		camera->position.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
-		camera->position.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
-		camera->position.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
+		camera->position.x = LEGACY_S16_WRAP_ADD(car_pos->x, car_to_cam_rotated.x);
+		camera->position.y = LEGACY_S16_WRAP_ADD(car_pos->y, car_to_cam_rotated.y);
+		camera->position.z = LEGACY_S16_WRAP_ADD(car_pos->z, car_to_cam_rotated.z);
 	} else if (cameramode == CAMERA_MODE_FOLLOW) {
 		camera->position.x = state.game_follow_camera_position[followOpponentFlag].x;
 		camera->position.z = state.game_follow_camera_position[followOpponentFlag].z;
@@ -634,9 +618,9 @@ static void frame_setup_camera(struct FRAME_CAMERA *camera)
 						MATRIX_ROTATION_ORDER_ZXY);
 
 		mat_mul_vector(&offset_vector, car_rot_matrix, &car_to_cam_rotated);
-		camera->position.x = LEGACY_S16_WRAP_ADD(car_pos.x, car_to_cam_rotated.x);
-		camera->position.y = LEGACY_S16_WRAP_ADD(car_pos.y, car_to_cam_rotated.y);
-		camera->position.z = LEGACY_S16_WRAP_ADD(car_pos.z, car_to_cam_rotated.z);
+		camera->position.x = LEGACY_S16_WRAP_ADD(car_pos->x, car_to_cam_rotated.x);
+		camera->position.y = LEGACY_S16_WRAP_ADD(car_pos->y, car_to_cam_rotated.y);
+		camera->position.z = LEGACY_S16_WRAP_ADD(car_pos->z, car_to_cam_rotated.z);
 	} else if (cameramode == CAMERA_MODE_TRACKSIDE) {
 		camera->position.x =
 			trackside_camera_positions[state.game_trackside_camera_index[followOpponentFlag]].x;
@@ -649,46 +633,84 @@ static void frame_setup_camera(struct FRAME_CAMERA *camera)
 			trackside_camera_positions[state.game_trackside_camera_index[followOpponentFlag]].z;
 	}
 
+	return camera_roll;
+}
+
+static void frame_aim_external_camera(struct FRAME_CAMERA *camera, const struct VECTOR *car_pos)
+{
+	legacy_s16 plane_distance;
+	legacy_s16 camera_horizontal_distance;
+
+	build_track_object(&camera->position, &camera->position);
+	if (camera->position.y < terrainHeight) {
+		camera->position.y = terrainHeight;
+	}
+
+	if (track_wall_collision_enabled != 0) {
+		plane_distance = plane_signed_distance(planindex, camera->position.x, camera->position.y,
+											   camera->position.z);
+		if (plane_distance < FRAME_PLANE_CLEARANCE) {
+			wheel_forward_travel.x = 0;
+			wheel_forward_travel.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE, plane_distance);
+			wheel_forward_travel.z = 0;
+			planindex_copy = planindex;
+			wheel_heading_offset = 0;
+			car_initial_pitch = 0;
+			car_initial_roll = 0;
+			car_initial_yaw = 0;
+			transform_wheel_travel_to_world();
+			camera->position.x = LEGACY_S16_WRAP_ADD(camera->position.x, wheel_world_travel.x);
+			camera->position.y = LEGACY_S16_WRAP_ADD(camera->position.y, wheel_world_travel.y);
+			camera->position.z = LEGACY_S16_WRAP_ADD(camera->position.z, wheel_world_travel.z);
+		}
+	}
+
+	camera->yaw = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
+										   LEGACY_S16_WRAP_SUB(car_pos->x, camera->position.x),
+										   LEGACY_S16_WRAP_SUB(car_pos->z, camera->position.z))) &
+									   ANGLE_MASK);
+	camera_horizontal_distance = polarRadius2D(LEGACY_S16_WRAP_SUB(car_pos->x, camera->position.x),
+											   LEGACY_S16_WRAP_SUB(car_pos->z, camera->position.z));
+	camera->pitch = LEGACY_S16_FROM_BITS(
+		(legacy_u16)polarAngle(
+			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(car_pos->y, camera->position.y),
+								FRAME_CAMERA_TARGET_HEIGHT_OFFSET),
+			camera_horizontal_distance) &
+		ANGLE_MASK);
+}
+
+static void frame_setup_camera(struct FRAME_CAMERA *camera)
+{
+	struct VECTOR car_pos;
+	legacy_s16 car_rot_y;
+	legacy_s16 car_rot_x;
+	legacy_s16 car_rot_z;
+	legacy_s16 camera_roll;
+
+	// Set car position (own or opponent's)
+	if (followOpponentFlag == 0) {
+		car_pos.x = position_to_word(state.playerstate.car_position.lx);
+		car_pos.y = position_to_word(state.playerstate.car_position.ly);
+		car_pos.z = position_to_word(state.playerstate.car_position.lz);
+		car_rot_y = state.playerstate.car_rotate.y;
+		car_rot_z = state.playerstate.car_rotate.z;
+		car_rot_x = state.playerstate.car_rotate.x;
+	} else {
+		car_pos.x = position_to_word(state.opponentstate.car_position.lx);
+		car_pos.y = position_to_word(state.opponentstate.car_position.ly);
+		car_pos.z = position_to_word(state.opponentstate.car_position.lz);
+		car_rot_y = state.opponentstate.car_rotate.y;
+		car_rot_z = state.opponentstate.car_rotate.z;
+		car_rot_x = state.opponentstate.car_rotate.x;
+	}
+
+	camera->yaw = -1;
+
+	camera_roll = frame_position_camera(camera, &car_pos, car_rot_x, car_rot_y, car_rot_z);
+
 	// Keep external cameras above the track and aim them at the followed car.
 	if (camera->yaw == -1) {
-		build_track_object(&camera->position, &camera->position);
-		if (camera->position.y < terrainHeight) {
-			camera->position.y = terrainHeight;
-		}
-
-		if (track_wall_collision_enabled != 0) {
-			plane_distance = plane_signed_distance(planindex, camera->position.x,
-												   camera->position.y, camera->position.z);
-			if (plane_distance < FRAME_PLANE_CLEARANCE) {
-				wheel_forward_travel.x = 0;
-				wheel_forward_travel.y = LEGACY_S16_WRAP_SUB(FRAME_PLANE_CLEARANCE, plane_distance);
-				wheel_forward_travel.z = 0;
-				planindex_copy = planindex;
-				wheel_heading_offset = 0;
-				car_initial_pitch = 0;
-				car_initial_roll = 0;
-				car_initial_yaw = 0;
-				transform_wheel_travel_to_world();
-				camera->position.x = LEGACY_S16_WRAP_ADD(camera->position.x, wheel_world_travel.x);
-				camera->position.y = LEGACY_S16_WRAP_ADD(camera->position.y, wheel_world_travel.y);
-				camera->position.z = LEGACY_S16_WRAP_ADD(camera->position.z, wheel_world_travel.z);
-			}
-		}
-
-		camera->yaw =
-			LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
-									 LEGACY_S16_WRAP_SUB(car_pos.x, camera->position.x),
-									 LEGACY_S16_WRAP_SUB(car_pos.z, camera->position.z))) &
-								 ANGLE_MASK);
-		camera_horizontal_distance =
-			polarRadius2D(LEGACY_S16_WRAP_SUB(car_pos.x, camera->position.x),
-						  LEGACY_S16_WRAP_SUB(car_pos.z, camera->position.z));
-		camera->pitch = LEGACY_S16_FROM_BITS(
-			(legacy_u16)polarAngle(
-				LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(car_pos.y, camera->position.y),
-									FRAME_CAMERA_TARGET_HEIGHT_OFFSET),
-				camera_horizontal_distance) &
-			ANGLE_MASK);
+		frame_aim_external_camera(camera, &car_pos);
 	}
 
 	if (camera_roll > 1 && camera_roll < ANGLE_MASK) {
@@ -834,52 +856,68 @@ static void frame_resolve_track_tile(struct FRAME_TILE *tile)
 	}
 }
 
+static legacy_s16 frame_lookahead_is_covered(const struct FRAME_LOOKAHEAD_TILE *lookahead,
+											 legacy_s16 multitile_flag, legacy_s8 east_offset,
+											 legacy_s8 south_offset)
+{
+	if (multitile_flag == FRAME_MULTITILE_ROW) {
+		return lookahead->east == east_offset &&
+			   (lookahead->south == south_offset || lookahead->south == south_offset + 1);
+	}
+	if (multitile_flag == FRAME_MULTITILE_COLUMN) {
+		return lookahead->south == south_offset &&
+			   (lookahead->east == east_offset || lookahead->east == east_offset + 1);
+	}
+	if (multitile_flag == FRAME_MULTITILE_BOTH) {
+		return (lookahead->east == east_offset || lookahead->east == east_offset + 1) &&
+			   (lookahead->south == south_offset || lookahead->south == south_offset + 1);
+	}
+	return 0;
+}
+
 static void frame_mark_covered_tiles(struct FRAME_TILE_SELECTION *tiles,
 									 const struct FRAME_TILE *tile, legacy_s16 tile_index)
 {
-	legacy_s8 tile_to_draw_south_offset;
-	legacy_s8 tile_to_draw_east_offset;
-	legacy_s16 multitile_flag;
-	legacy_s16 covered_index;
+	legacy_s8 east_offset, south_offset;
+	legacy_s16 multitile_flag, covered_index;
 
 	if (tile->element != 0) {
 		multitile_flag = trkObjectList[tile->element].ss_multiTileFlag;
 		if (multitile_flag != FRAME_MULTITILE_NONE) {
-			// Look at future tiles to process (with lower index, since tile_index
-			// counts backwards) and remove those which belong to the same
-			// multi-tile component as this tile
-
-			// Recalculate the offset (needed in case we hit a filler tile)
-			tile_to_draw_east_offset = LEGACY_S8_WRAP_SUB(tile->east, tiles->camera_east);
-			tile_to_draw_south_offset = LEGACY_S8_WRAP_SUB(tile->south, tiles->camera_south);
-			if (multitile_flag == FRAME_MULTITILE_ROW) {
-				for (covered_index = 0; covered_index < tile_index; covered_index++) {
-					if (tiles->lookahead[covered_index].east == tile_to_draw_east_offset &&
-						(tiles->lookahead[covered_index].south == tile_to_draw_south_offset ||
-						 tiles->lookahead[covered_index].south == tile_to_draw_south_offset + 1)) {
-						tiles->markers[covered_index] = FRAME_TILE_MULTITILE_COVERED_MARKER;
-					}
-				}
-			} else if (multitile_flag == FRAME_MULTITILE_COLUMN) {
-				for (covered_index = 0; covered_index < tile_index; covered_index++) {
-					if (tiles->lookahead[covered_index].south == tile_to_draw_south_offset &&
-						(tiles->lookahead[covered_index].east == tile_to_draw_east_offset ||
-						 tiles->lookahead[covered_index].east == tile_to_draw_east_offset + 1)) {
-						tiles->markers[covered_index] = FRAME_TILE_MULTITILE_COVERED_MARKER;
-					}
-				}
-			} else if (multitile_flag == FRAME_MULTITILE_BOTH) {
-				for (covered_index = 0; covered_index < tile_index; covered_index++) {
-					if ((tiles->lookahead[covered_index].east == tile_to_draw_east_offset ||
-						 tiles->lookahead[covered_index].east == tile_to_draw_east_offset + 1) &&
-						(tiles->lookahead[covered_index].south == tile_to_draw_south_offset ||
-						 tiles->lookahead[covered_index].south == tile_to_draw_south_offset + 1)) {
-						tiles->markers[covered_index] = FRAME_TILE_MULTITILE_COVERED_MARKER;
-					}
+			/* Recalculate after resolving filler tiles. Lower indices are visited later. */
+			east_offset = LEGACY_S8_WRAP_SUB(tile->east, tiles->camera_east);
+			south_offset = LEGACY_S8_WRAP_SUB(tile->south, tiles->camera_south);
+			for (covered_index = 0; covered_index < tile_index; covered_index++) {
+				if (frame_lookahead_is_covered(&tiles->lookahead[covered_index], multitile_flag,
+											   east_offset, south_offset)) {
+					tiles->markers[covered_index] = FRAME_TILE_MULTITILE_COVERED_MARKER;
 				}
 			}
 		}
 	}
+}
+
+static void frame_select_track_tile(struct FRAME_TILE_SELECTION *tiles, struct FRAME_TILE *tile,
+									legacy_s16 tile_index)
+{
+	tile->element = track_element_map[tile->east + trackrows[tile->south]];
+	tile->terrain = track_terrain_map[tile->east + terrainrows[tile->south]];
+
+	frame_resolve_track_tile(tile);
+	tiles->terrain[tile_index] = tile->terrain;
+	tiles->detail[tile_index] = tiles->lookahead[tile_index].detail;
+
+	if (tile->element != 0 && detail_level != FRAME_DETAIL_FULL &&
+		trkObjectList[tile->element].ss_physicalModel >= FRAME_SCENERY_PHYSICAL_MODEL_FIRST &&
+		(tile->east != tiles->player_east || tile->south != tiles->player_south)) {
+		tile->element = 0;
+	}
+
+	tiles->east[tile_index] = tile->east;
+	tiles->south[tile_index] = tile->south;
+	tiles->elements[tile_index] = tile->element;
+
+	frame_mark_covered_tiles(tiles, tile, tile_index);
 }
 
 static void frame_select_tiles(struct FRAME_TILE_SELECTION *tiles,
@@ -924,25 +962,7 @@ static void frame_select_tiles(struct FRAME_TILE_SELECTION *tiles,
 			// Skip if tile is out of bounds
 			if (tile.east >= 0 && tile.east <= TRACK_GRID_LAST_COORDINATE && tile.south >= 0 &&
 				tile.south <= TRACK_GRID_LAST_COORDINATE) {
-				tile.element = track_element_map[tile.east + trackrows[tile.south]];
-				tile.terrain = track_terrain_map[tile.east + terrainrows[tile.south]];
-
-				frame_resolve_track_tile(&tile);
-				tiles->terrain[tile_index] = tile.terrain;
-				tiles->detail[tile_index] = tiles->lookahead[tile_index].detail;
-
-				if (tile.element != 0 && detail_level != FRAME_DETAIL_FULL &&
-					trkObjectList[tile.element].ss_physicalModel >=
-						FRAME_SCENERY_PHYSICAL_MODEL_FIRST &&
-					(tile.east != tiles->player_east || tile.south != tiles->player_south)) {
-					tile.element = 0;
-				}
-
-				tiles->east[tile_index] = tile.east;
-				tiles->south[tile_index] = tile.south;
-				tiles->elements[tile_index] = tile.element;
-
-				frame_mark_covered_tiles(tiles, &tile, tile_index);
+				frame_select_track_tile(tiles, &tile, tile_index);
 
 			} else {
 				tiles->markers[tile_index] = FRAME_TILE_UNAVAILABLE_MARKER;
@@ -1067,11 +1087,46 @@ static void frame_draw_fences(const struct FRAME_TILE *tile,
 
 /* Return nonzero only when the ordinary terrain pass stops tile rendering.
  * Elevated corners stop their own pass on exhaustion. */
+static void frame_draw_elevated_corners(struct FRAME_TILE *tile, const struct FRAME_CAMERA *camera,
+										legacy_s8 redraw_transform_flags)
+{
+	legacy_s16 corner_index, transform_result;
+	struct TRACKOBJECT *track_object;
+
+	for (corner_index = 0; corner_index < FRAME_ELEVATED_CORNER_COUNT; corner_index++) {
+		if (corner_index == FRAME_CORNER_NORTHWEST) {
+			tile->last_east = tile->east;
+			tile->last_south = tile->south;
+		} else if (corner_index == FRAME_CORNER_NORTHEAST) {
+			tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
+			tile->last_south = tile->south;
+		} else if (corner_index == FRAME_CORNER_SOUTHWEST) {
+			tile->last_east = tile->east;
+			tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
+		} else if (corner_index == FRAME_CORNER_SOUTHEAST) {
+			tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
+			tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
+		}
+		tile->terrain = track_terrain_map[tile->last_east + terrainrows[tile->last_south]];
+		if (tile->terrain != 0) {
+			track_object = &terrain_scene_objects[tile->terrain];
+			currenttransshape->shapeptr = track_object->ss_shapePtr;
+			frame_prepare_flat_track_shape(
+				currenttransshape, tile->last_east, tile->last_south, &camera->position,
+				(legacy_s16)(redraw_transform_flags | FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
+				track_object->ss_rotY);
+			transform_result = shape3d_transform_and_queue(&currenttransshape[0]);
+			if (transform_result > 0) {
+				break;
+			}
+		}
+	}
+}
+
 static legacy_s16 frame_draw_terrain(struct FRAME_TILE *tile, const struct FRAME_CAMERA *camera,
 									 legacy_s8 redraw_transform_flags)
 {
 	legacy_s16 transform_result;
-	legacy_s16 corner_index;
 	struct TRACKOBJECT *track_object;
 
 	// Elevated terrain is a flat piece of land at an elevated level.
@@ -1081,34 +1136,7 @@ static legacy_s16 frame_draw_terrain(struct FRAME_TILE *tile, const struct FRAME
 		// Special treatment of elevated corners
 		if (tile->element >= FRAME_ELEVATED_CORNER_FIRST &&
 			tile->element <= FRAME_ELEVATED_CORNER_LAST) {
-			for (corner_index = 0; corner_index < FRAME_ELEVATED_CORNER_COUNT; corner_index++) {
-				if (corner_index == FRAME_CORNER_NORTHWEST) {
-					tile->last_east = tile->east;
-					tile->last_south = tile->south;
-				} else if (corner_index == FRAME_CORNER_NORTHEAST) {
-					tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
-					tile->last_south = tile->south;
-				} else if (corner_index == FRAME_CORNER_SOUTHWEST) {
-					tile->last_east = tile->east;
-					tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
-				} else if (corner_index == FRAME_CORNER_SOUTHEAST) {
-					tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
-					tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
-				}
-				tile->terrain = track_terrain_map[tile->last_east + terrainrows[tile->last_south]];
-				if (tile->terrain != 0) {
-					track_object = &terrain_scene_objects[tile->terrain];
-					currenttransshape->shapeptr = track_object->ss_shapePtr;
-					frame_prepare_flat_track_shape(
-						currenttransshape, tile->last_east, tile->last_south, &camera->position,
-						(legacy_s16)(redraw_transform_flags | FRAME_TRANSFORM_FLAGS_NO_DEPTH_SORT),
-						track_object->ss_rotY);
-					transform_result = shape3d_transform_and_queue(&currenttransshape[0]);
-					if (transform_result > 0) {
-						break;
-					}
-				}
-			}
+			frame_draw_elevated_corners(tile, camera, redraw_transform_flags);
 
 			tile->terrain = 0;
 		}
@@ -1308,49 +1336,54 @@ static void frame_add_roadside_sign(const struct FRAME_TILE *tile,
 	}
 }
 
+static void frame_animate_start_flag(void)
+{
+	legacy_s16 flag_z, flag_x;
+	legacy_u16 vertex_index;
+	struct VECTOR start_flag_vertices[FRAME_START_FLAG_VERTEX_COUNT];
+
+	flag_x = multiply_and_scale(cos_fast(start_flag_animation), FRAME_START_FLAG_RADIUS);
+	flag_z = LEGACY_S16_WRAP_ADD(
+		multiply_and_scale(sin_fast(start_flag_animation), FRAME_START_FLAG_RADIUS),
+		FRAME_START_FLAG_CENTER_Z);
+
+	for (vertex_index = 0; vertex_index < FRAME_START_FLAG_VERTEX_COUNT; vertex_index++) {
+		shape3d_vertex_read(
+			&game3dshapes[FRAME_START_FLAG_RESOURCE_OFFSET / sizeof(struct SHAPE3D)],
+			LEGACY_U16_WRAP_ADD(FRAME_START_FLAG_FIRST_VERTEX, vertex_index),
+			&start_flag_vertices[vertex_index]);
+	}
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_NEAR].x =
+		LEGACY_S16_WRAP_SUB(flag_x, FRAME_START_FLAG_RADIUS);
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_FAR].x =
+		LEGACY_S16_WRAP_SUB(flag_x, FRAME_START_FLAG_RADIUS);
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].x =
+		LEGACY_S16_WRAP_SUB(FRAME_START_FLAG_RADIUS, flag_x);
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_FAR].x =
+		LEGACY_S16_WRAP_SUB(FRAME_START_FLAG_RADIUS, flag_x);
+
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_NEAR].z = flag_z;
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_FAR].z = flag_z;
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].z = flag_z;
+	start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_FAR].z = flag_z;
+	for (vertex_index = 0; vertex_index < FRAME_START_FLAG_VERTEX_COUNT; vertex_index++) {
+		shape3d_vertex_write(
+			&game3dshapes[FRAME_START_FLAG_RESOURCE_OFFSET / sizeof(struct SHAPE3D)],
+			LEGACY_U16_WRAP_ADD(FRAME_START_FLAG_FIRST_VERTEX, vertex_index),
+			&start_flag_vertices[vertex_index]);
+	}
+}
+
 static void frame_add_start_flag(const struct FRAME_TILE *tile, const struct FRAME_CAMERA *camera,
 								 legacy_s8 redraw_transform_flags)
 {
-	legacy_s16 flag_z;
-	legacy_s16 flag_x_or_material;
-	legacy_u16 vertex_index;
-	struct VECTOR start_flag_vertices[FRAME_START_FLAG_VERTEX_COUNT];
+	legacy_s16 flag_material;
 
 	if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
 		if ((tile->east == start_finish_column || tile->last_east == start_finish_column) &&
 			(tile->south == start_finish_row || tile->last_south == start_finish_row)) {
 
-			flag_x_or_material =
-				multiply_and_scale(cos_fast(start_flag_animation), FRAME_START_FLAG_RADIUS);
-			flag_z = LEGACY_S16_WRAP_ADD(
-				multiply_and_scale(sin_fast(start_flag_animation), FRAME_START_FLAG_RADIUS),
-				FRAME_START_FLAG_CENTER_Z);
-
-			for (vertex_index = 0; vertex_index < FRAME_START_FLAG_VERTEX_COUNT; vertex_index++) {
-				shape3d_vertex_read(
-					&game3dshapes[FRAME_START_FLAG_RESOURCE_OFFSET / sizeof(struct SHAPE3D)],
-					LEGACY_U16_WRAP_ADD(FRAME_START_FLAG_FIRST_VERTEX, vertex_index),
-					&start_flag_vertices[vertex_index]);
-			}
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_NEAR].x =
-				LEGACY_S16_WRAP_SUB(flag_x_or_material, FRAME_START_FLAG_RADIUS);
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_FAR].x =
-				LEGACY_S16_WRAP_SUB(flag_x_or_material, FRAME_START_FLAG_RADIUS);
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].x =
-				LEGACY_S16_WRAP_SUB(FRAME_START_FLAG_RADIUS, flag_x_or_material);
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_FAR].x =
-				LEGACY_S16_WRAP_SUB(FRAME_START_FLAG_RADIUS, flag_x_or_material);
-
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_NEAR].z = flag_z;
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_LEFT_FAR].z = flag_z;
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_NEAR].z = flag_z;
-			start_flag_vertices[FRAME_START_FLAG_VERTEX_RIGHT_FAR].z = flag_z;
-			for (vertex_index = 0; vertex_index < FRAME_START_FLAG_VERTEX_COUNT; vertex_index++) {
-				shape3d_vertex_write(
-					&game3dshapes[FRAME_START_FLAG_RESOURCE_OFFSET / sizeof(struct SHAPE3D)],
-					LEGACY_U16_WRAP_ADD(FRAME_START_FLAG_FIRST_VERTEX, vertex_index),
-					&start_flag_vertices[vertex_index]);
-			}
+			frame_animate_start_flag();
 
 			curtransshape_ptr->pos.x = LEGACY_S16_WRAP_SUB(
 				LEGACY_S16_WRAP_ADD(
@@ -1383,13 +1416,12 @@ static void frame_add_start_flag(const struct FRAME_TILE *tile, const struct FRA
 			curtransshape_ptr->rotvec.y = 0;
 			curtransshape_ptr->rotvec.z = track_angle;
 			curtransshape_ptr->culling_distance = FRAME_DEFAULT_TRANSFORM_DISTANCE;
-			flag_x_or_material =
-				LEGACY_S16_SAR(start_flag_animation, FRAME_START_FLAG_ANIMATION_SHIFT);
-			if (flag_x_or_material > FRAME_START_FLAG_MAX_MATERIAL) {
-				flag_x_or_material = FRAME_START_FLAG_MAX_MATERIAL;
+			flag_material = LEGACY_S16_SAR(start_flag_animation, FRAME_START_FLAG_ANIMATION_SHIFT);
+			if (flag_material > FRAME_START_FLAG_MAX_MATERIAL) {
+				flag_material = FRAME_START_FLAG_MAX_MATERIAL;
 			}
 
-			curtransshape_ptr->material = flag_x_or_material;
+			curtransshape_ptr->material = flag_material;
 			transformed_shape_add_for_sort(tile->depth_mask & -FRAME_SINGLE_TILE_TRANSFORM_DISTANCE,
 										   0);
 		}
@@ -1397,6 +1429,23 @@ static void frame_add_start_flag(const struct FRAME_TILE *tile, const struct FRA
 }
 
 /* Exhaustion stops the current tile's sorted shapes, then advances the tile. */
+static void frame_select_brake_paint(legacy_s16 shape_index)
+{
+	if (transformed_shape_sort_types[shape_index] == FRAME_PLAYER_SORT_ID) {
+		if (state.playerstate.car_is_braking != 0) {
+			backlights_paint_override = BACKLIGHT_PAINT_BRAKING;
+		} else {
+			backlights_paint_override = BACKLIGHT_PAINT_NORMAL;
+		}
+	} else if (transformed_shape_sort_types[shape_index] == FRAME_OPPONENT_SORT_ID) {
+		if (state.opponentstate.car_is_braking == 0) {
+			backlights_paint_override = BACKLIGHT_PAINT_NORMAL;
+		} else {
+			backlights_paint_override = BACKLIGHT_PAINT_BRAKING;
+		}
+	}
+}
+
 static void frame_draw_sorted_shapes(struct FRAME_CAR_RENDER *cars)
 {
 	legacy_s16 transform_result;
@@ -1412,19 +1461,7 @@ static void frame_draw_sorted_shapes(struct FRAME_CAR_RENDER *cars)
 		// Draw red overlights on the brake lights on own and opponent's car
 		for (sort_index = 0; sort_index < transformedshape_counter; sort_index++) {
 			shape_index = transformedshape_indices[sort_index];
-			if (transformed_shape_sort_types[shape_index] == FRAME_PLAYER_SORT_ID) {
-				if (state.playerstate.car_is_braking != 0) {
-					backlights_paint_override = BACKLIGHT_PAINT_BRAKING;
-				} else {
-					backlights_paint_override = BACKLIGHT_PAINT_NORMAL;
-				}
-			} else if (transformed_shape_sort_types[shape_index] == FRAME_OPPONENT_SORT_ID) {
-				if (state.opponentstate.car_is_braking == 0) {
-					backlights_paint_override = BACKLIGHT_PAINT_NORMAL;
-				} else {
-					backlights_paint_override = BACKLIGHT_PAINT_BRAKING;
-				}
-			}
+			frame_select_brake_paint(shape_index);
 
 			transform_result = shape3d_transform_and_queue(&currenttransshape[shape_index]);
 			if (transform_result > 0) {
@@ -1446,6 +1483,33 @@ static void frame_draw_sorted_shapes(struct FRAME_CAR_RENDER *cars)
 	}
 }
 
+static void frame_position_track_element(struct FRAME_TILE *tile, const struct FRAME_CAMERA *camera,
+										 const struct TRACKOBJECT *track_object)
+{
+	legacy_s16 track_object_world_z;
+	legacy_s16 track_object_world_x;
+
+	if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_ROW) != 0) {
+		track_object_world_z = track_row_positions[tile->south];
+		tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
+	} else {
+		track_object_world_z = track_row_centers[tile->south];
+		tile->last_south = tile->south;
+	}
+
+	if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_COLUMN) != 0) {
+		track_object_world_x = track_column_positions[LEGACY_S8_WRAP_ADD(tile->east, 1)];
+		tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
+	} else {
+		track_object_world_x = track_column_centers[tile->east];
+		tile->last_east = tile->east;
+	}
+
+	tile->position.x = LEGACY_S16_WRAP_SUB(track_object_world_x, camera->position.x);
+	tile->position.y = LEGACY_S16_WRAP_SUB(tile->height, camera->position.y);
+	tile->position.z = LEGACY_S16_WRAP_SUB(track_object_world_z, camera->position.z);
+}
+
 static legacy_s16
 frame_add_track_element(struct FRAME_TILE *tile, const struct FRAME_CAMERA *camera,
 						struct FRAME_CAR_RENDER *cars, legacy_s8 redraw_transform_flags,
@@ -1453,33 +1517,13 @@ frame_add_track_element(struct FRAME_TILE *tile, const struct FRAME_CAMERA *came
 {
 	legacy_s16 transform_result;
 	struct TRACKOBJECT *track_object;
-	legacy_s16 track_object_world_z;
-	legacy_s16 track_object_world_x;
 
 	if (tile->element == 0) {
 		tile->last_east = tile->east;
 		tile->last_south = tile->south;
 	} else {
 		track_object = &trkObjectList[tile->element];
-		if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_ROW) != 0) {
-			track_object_world_z = track_row_positions[tile->south];
-			tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
-		} else {
-			track_object_world_z = track_row_centers[tile->south];
-			tile->last_south = tile->south;
-		}
-
-		if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_COLUMN) != 0) {
-			track_object_world_x = track_column_positions[LEGACY_S8_WRAP_ADD(tile->east, 1)];
-			tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
-		} else {
-			track_object_world_x = track_column_centers[tile->east];
-			tile->last_east = tile->east;
-		}
-
-		tile->position.x = LEGACY_S16_WRAP_SUB(track_object_world_x, camera->position.x);
-		tile->position.y = LEGACY_S16_WRAP_SUB(tile->height, camera->position.y);
-		tile->position.z = LEGACY_S16_WRAP_SUB(track_object_world_z, camera->position.z);
+		frame_position_track_element(tile, camera, track_object);
 		frame_draw_hill_fill(tile, track_object, redraw_transform_flags);
 
 		if (frame_prepare_overlay(tile, track_object, redraw_transform_flags, animated_material,

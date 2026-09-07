@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "../c/externs.h"
 #include "../c/car_model.h"
@@ -161,6 +162,50 @@ static void check_cycle(legacy_s8 *opponent, unsigned expected_loads, unsigned e
 	assert(discarded_release_count - previous_discards == expected_discards);
 }
 
+static legacy_u32 wheel_vertex_fingerprint(void)
+{
+	static const legacy_s16 angles[] = {-32768, -2048, -1024, -481, -240, -1,	0,
+										1,		240,   481,	  1024, 2048, 32767};
+	static const legacy_s16 offsets[] = {-32768, -65, -64, -63, -1, 0, 1, 63, 64, 65, 32767};
+	legacy_s8 player[] = "TEST";
+	legacy_s8 no_opponent[] = {-1, 0, 0, 0};
+	legacy_s16 suspension[4];
+	struct VECTOR vertex, previous[TEST_VERTEX_COUNT];
+	legacy_u32 hash = 2166136261UL;
+	unsigned sample, wheel, index, repeated;
+
+	shape3d_load_car_shapes(player, no_opponent);
+	for (sample = 0; sample < 4096; sample++) {
+		for (wheel = 0; wheel < 4; wheel++) {
+			suspension[wheel] = offsets[(sample + wheel * 3) % 11];
+		}
+		for (repeated = 0; repeated < 2; repeated++) {
+			shape3d_update_car_wheel_vertices(
+				&game3dshapes[PLAYER_CAR_WHEEL_SHAPE], 8, angles[sample % 13], suspension,
+				player_wheel_vertex_state, player_base_wheel_vertices, player_front_wheel_centers);
+			for (index = 0; index < TEST_VERTEX_COUNT; index++) {
+				shape3d_vertex_read(&game3dshapes[PLAYER_CAR_WHEEL_SHAPE], index, &vertex);
+				if (repeated != 0) {
+					assert(vertex.x == previous[index].x);
+					assert(vertex.y == previous[index].y);
+					assert(vertex.z == previous[index].z);
+				} else {
+					previous[index] = vertex;
+					hash = (hash ^ (legacy_u16)vertex.x) * 16777619UL;
+					hash = (hash ^ (legacy_u16)vertex.y) * 16777619UL;
+					hash = (hash ^ (legacy_u16)vertex.z) * 16777619UL;
+				}
+			}
+		}
+		for (index = 0; index < 5; index++) {
+			hash = (hash ^ (legacy_u16)player_wheel_vertex_state[index]) * 16777619UL;
+		}
+	}
+	shape3d_free_car_shapes();
+	check_released_shapes();
+	return hash;
+}
+
 int main(void)
 {
 	legacy_s8 no_opponent[] = {-1, 0, 0, 0};
@@ -174,5 +219,12 @@ int main(void)
 		check_cycle(no_opponent, 1U, 0U);
 		check_cycle(different_opponent, 2U, 1U);
 	}
+#ifdef PRERENDER_RECORD_BASELINE
+	fprintf(stdout, "%08lx\n", (unsigned long)wheel_vertex_fingerprint());
+#else
+	/* Pre-refactor geometry and cache state across steering and suspension boundaries. */
+	assert(wheel_vertex_fingerprint() == 0x12e2833dUL);
+#endif
+
 	return 0;
 }

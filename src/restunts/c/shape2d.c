@@ -228,19 +228,12 @@ void sprite_draw_rect_outline(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legac
 	}
 }
 
-static void font_draw_text_impl(const legacy_s8 *text, legacy_s16 x, legacy_s16 y,
-								legacy_s16 opaque)
+static void font_draw_glyph(legacy_u8 far *font_definition, legacy_u8 far *glyph_data,
+							legacy_u8 far *bitmap, legacy_u16 current_x, legacy_s16 opaque)
 {
-	legacy_u8 far *font_definition;
-	legacy_u8 far *glyph_data;
-	legacy_u8 far *bitmap;
-	legacy_u16 glyph_offset;
-	legacy_u16 current_x;
 	legacy_u16 current_y;
 	legacy_u16 destination;
-	legacy_u16 glyph_width;
 	legacy_u16 row_index;
-	legacy_u8 character;
 	legacy_u8 color;
 	legacy_u8 background;
 	legacy_u8 bits;
@@ -249,6 +242,47 @@ static void font_draw_text_impl(const legacy_s8 *text, legacy_s16 x, legacy_s16 
 	legacy_s8 old_byte_count;
 	legacy_s16 row_count;
 	legacy_s16 old_row_count;
+
+	color = font_definition[0];
+	background = font_definition[2];
+	current_y = shape2d_get_word(font_definition + FONTDEF_START_Y_OFFSET);
+	row_index = current_y;
+	row_count = LEGACY_S16_FROM_BITS(shape2d_get_word(font_definition + FONTDEF_HEIGHT_OFFSET));
+	do {
+		destination = LEGACY_U16_WRAP_ADD(
+			shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), row_index),
+			current_x);
+		byte_count = LEGACY_S8_FROM_BITS(font_definition[FONTDEF_BYTES_PER_ROW_OFFSET]);
+		do {
+			bits = *glyph_data++;
+			for (bit = 0; bit < FONT_GLYPH_BITS_PER_BYTE; bit++) {
+				if ((bits & FONT_GLYPH_FIRST_BIT) != 0) {
+					bitmap[destination] = color;
+				} else if (opaque != 0) {
+					bitmap[destination] = background;
+				}
+				bits <<= 1;
+				destination++;
+			}
+			old_byte_count = byte_count;
+			byte_count = LEGACY_S8_FROM_BITS((legacy_u8)((legacy_u8)byte_count - 1U));
+		} while (old_byte_count != LEGACY_S8_FROM_BITS(LEGACY_U8_SIGN_BIT) && byte_count > 0);
+		row_index++;
+		old_row_count = row_count;
+		row_count = LEGACY_S16_WRAP_SUB(row_count, 1);
+	} while (old_row_count != LEGACY_S16_FROM_BITS(LEGACY_U16_SIGN_BIT) && row_count > 0);
+}
+
+static void font_draw_text_impl(const legacy_s8 *text, legacy_s16 x, legacy_s16 y,
+								legacy_s16 opaque)
+{
+	legacy_u8 far *font_definition;
+	legacy_u8 far *glyph_data;
+	legacy_u8 far *bitmap;
+	legacy_u16 glyph_offset;
+	legacy_u16 current_x;
+	legacy_u16 glyph_width;
+	legacy_u8 character;
 
 	font_definition = active_font_definition;
 	shape2d_put_word(font_definition + FONTDEF_START_X_OFFSET, (legacy_u16)x);
@@ -279,34 +313,7 @@ static void font_draw_text_impl(const legacy_s8 *text, legacy_s16 x, legacy_s16 
 				(legacy_u8)((glyph_width + FONTDEF_GLYPH_WIDTH_ROUNDING) >>
 							FONTDEF_GLYPH_WIDTH_SHIFT);
 		}
-		color = font_definition[0];
-		background = font_definition[2];
-		current_y = shape2d_get_word(font_definition + FONTDEF_START_Y_OFFSET);
-		row_index = current_y;
-		row_count = LEGACY_S16_FROM_BITS(shape2d_get_word(font_definition + FONTDEF_HEIGHT_OFFSET));
-		do {
-			destination = LEGACY_U16_WRAP_ADD(
-				shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), row_index),
-				current_x);
-			byte_count = LEGACY_S8_FROM_BITS(font_definition[FONTDEF_BYTES_PER_ROW_OFFSET]);
-			do {
-				bits = *glyph_data++;
-				for (bit = 0; bit < FONT_GLYPH_BITS_PER_BYTE; bit++) {
-					if ((bits & FONT_GLYPH_FIRST_BIT) != 0) {
-						bitmap[destination] = color;
-					} else if (opaque != 0) {
-						bitmap[destination] = background;
-					}
-					bits <<= 1;
-					destination++;
-				}
-				old_byte_count = byte_count;
-				byte_count = LEGACY_S8_FROM_BITS((legacy_u8)((legacy_u8)byte_count - 1U));
-			} while (old_byte_count != LEGACY_S8_FROM_BITS(LEGACY_U8_SIGN_BIT) && byte_count > 0);
-			row_index++;
-			old_row_count = row_count;
-			row_count = LEGACY_S16_WRAP_SUB(row_count, 1);
-		} while (old_row_count != LEGACY_S16_FROM_BITS(LEGACY_U16_SIGN_BIT) && row_count > 0);
+		font_draw_glyph(font_definition, glyph_data, bitmap, current_x, opaque);
 		shape2d_put_word(
 			font_definition + FONTDEF_START_X_OFFSET,
 			LEGACY_U16_WRAP_ADD(current_x,
@@ -454,8 +461,7 @@ void draw_patterned_lines(legacy_s16 *x1arr, legacy_s16 *x2arr, legacy_u16 y, le
 	draw_pattern_lines(x1arr, x2arr, y, numlines, color, 0);
 }
 
-void sprite_draw_line_from_setup(const legacy_u16 *line)
-{
+struct SPRITE_LINE_DRAW {
 	legacy_u8 far *bitmap;
 	legacy_u16 sprite_segment;
 	legacy_u16 x_low;
@@ -465,43 +471,111 @@ void sprite_draw_line_from_setup(const legacy_u16 *line)
 	legacy_u16 original_y_high;
 	legacy_u16 delta;
 	legacy_u16 count;
+	legacy_u8 color;
+};
+
+static void sprite_draw_line_rows(struct SPRITE_LINE_DRAW *draw, legacy_u16 mode)
+{
 	legacy_u16 remaining;
 	legacy_u16 destination;
 	legacy_u16 old_low;
-	legacy_u16 mode;
-	legacy_u8 color;
 
-	x_low = (legacy_u16)line[0];
-	x_high = (legacy_u16)line[1];
-	old_low = x_low;
-	x_low = LEGACY_U16_WRAP_ADD(x_low, SHAPE2D_FIXED_HALF);
-	if (x_low < old_low) {
-		x_high++;
+	/* All five walk one row per step; only the horizontal advance
+	 * differs - none, a whole pixel either way, or a fractional
+	 * slope carried in draw->x_low. */
+	remaining = draw->count;
+	do {
+		destination = LEGACY_U16_WRAP_ADD(
+			shape2d_get_line_offset(draw->sprite_segment, draw->original_y_high), draw->x_high);
+		draw->bitmap[destination] = draw->color;
+		draw->original_y_high++;
+		if (mode == 3U) {
+			draw->x_high--;
+		} else if (mode == 4U) {
+			draw->x_high++;
+		} else if (mode == 5U) {
+			old_low = draw->x_low;
+			draw->x_low = LEGACY_U16_WRAP_SUB(draw->x_low, draw->delta);
+			if (old_low < draw->delta) {
+				draw->x_high--;
+			}
+		} else if (mode == 6U) {
+			old_low = draw->x_low;
+			draw->x_low = LEGACY_U16_WRAP_ADD(draw->x_low, draw->delta);
+			if (draw->x_low < old_low) {
+				draw->x_high++;
+			}
+		}
+		remaining--;
+	} while (remaining != 0);
+}
+
+static void sprite_draw_line_columns(struct SPRITE_LINE_DRAW *draw, legacy_u16 mode)
+{
+	legacy_u16 remaining;
+	legacy_u16 destination;
+	legacy_u16 old_low;
+
+	remaining = draw->count;
+	do {
+		destination = LEGACY_U16_WRAP_ADD(
+			shape2d_get_line_offset(draw->sprite_segment, draw->y_high), draw->x_high);
+		draw->bitmap[destination] = draw->color;
+		if (mode == 7U) {
+			draw->x_high--;
+		} else {
+			draw->x_high++;
+		}
+		old_low = draw->y_low;
+		draw->y_low = LEGACY_U16_WRAP_ADD(draw->y_low, draw->delta);
+		if (draw->y_low < old_low) {
+			draw->y_high++;
+		}
+		remaining--;
+	} while (remaining != 0);
+}
+
+static void sprite_round_line_coordinate(legacy_u16 *low, legacy_u16 *high)
+{
+	legacy_u16 old_low;
+
+	old_low = *low;
+	*low = LEGACY_U16_WRAP_ADD(*low, SHAPE2D_FIXED_HALF);
+	if (*low < old_low) {
+		(*high)++;
 	}
-	y_low = (legacy_u16)line[2];
-	y_high = (legacy_u16)line[3];
-	old_low = y_low;
-	y_low = LEGACY_U16_WRAP_ADD(y_low, SHAPE2D_FIXED_HALF);
-	if (y_low < old_low) {
-		y_high++;
-	}
-	original_y_high = (legacy_u16)line[3];
-	delta = (legacy_u16)line[6];
-	count = (legacy_u16)line[7];
-	color = (legacy_u8)line[8];
+}
+
+void sprite_draw_line_from_setup(const legacy_u16 *line)
+{
+	struct SPRITE_LINE_DRAW draw;
+	legacy_u16 remaining;
+	legacy_u16 destination;
+	legacy_u16 mode;
+
+	draw.x_low = (legacy_u16)line[0];
+	draw.x_high = (legacy_u16)line[1];
+	sprite_round_line_coordinate(&draw.x_low, &draw.x_high);
+	draw.y_low = (legacy_u16)line[2];
+	draw.y_high = (legacy_u16)line[3];
+	sprite_round_line_coordinate(&draw.y_low, &draw.y_high);
+	draw.original_y_high = (legacy_u16)line[3];
+	draw.delta = (legacy_u16)line[6];
+	draw.count = (legacy_u16)line[7];
+	draw.color = (legacy_u8)line[8];
 	mode = (legacy_u16)line[9];
-	bitmap = (legacy_u8 far *)dos_memory_make_pointer(
+	draw.bitmap = (legacy_u8 far *)dos_memory_make_pointer(
 		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
-	sprite_segment = dos_memory_pointer_segment(&drawing_sprite);
+	draw.sprite_segment = dos_memory_pointer_segment(&drawing_sprite);
 
 	switch (mode) {
 		case 0:
 		case 1:
-			destination =
-				LEGACY_U16_WRAP_ADD(shape2d_get_line_offset(sprite_segment, y_high), x_high);
-			remaining = count;
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(draw.sprite_segment, draw.y_high), draw.x_high);
+			remaining = draw.count;
 			while (remaining != 0) {
-				bitmap[destination] = color;
+				draw.bitmap[destination] = draw.color;
 				destination++;
 				remaining--;
 			}
@@ -511,71 +585,58 @@ void sprite_draw_line_from_setup(const legacy_u16 *line)
 		case 4:
 		case 5:
 		case 6:
-			/* All five walk one row per step; only the horizontal advance
-		   differs - none, a whole pixel either way, or a fractional
-		   slope carried in x_low. */
-			remaining = count;
-			do {
-				destination = LEGACY_U16_WRAP_ADD(
-					shape2d_get_line_offset(sprite_segment, original_y_high), x_high);
-				bitmap[destination] = color;
-				original_y_high++;
-				if (mode == 3U) {
-					x_high--;
-				} else if (mode == 4U) {
-					x_high++;
-				} else if (mode == 5U) {
-					old_low = x_low;
-					x_low = LEGACY_U16_WRAP_SUB(x_low, delta);
-					if (old_low < delta) {
-						x_high--;
-					}
-				} else if (mode == 6U) {
-					old_low = x_low;
-					x_low = LEGACY_U16_WRAP_ADD(x_low, delta);
-					if (x_low < old_low) {
-						x_high++;
-					}
-				}
-				remaining--;
-			} while (remaining != 0);
+			sprite_draw_line_rows(&draw, mode);
 			break;
 		case 7:
 		case 8:
-			remaining = count;
-			do {
-				destination =
-					LEGACY_U16_WRAP_ADD(shape2d_get_line_offset(sprite_segment, y_high), x_high);
-				bitmap[destination] = color;
-				if (mode == 7U) {
-					x_high--;
-				} else {
-					x_high++;
-				}
-				old_low = y_low;
-				y_low = LEGACY_U16_WRAP_ADD(y_low, delta);
-				if (y_low < old_low) {
-					y_high++;
-				}
-				remaining--;
-			} while (remaining != 0);
+			sprite_draw_line_columns(&draw, mode);
 			break;
 		case 9:
-			destination =
-				LEGACY_U16_WRAP_ADD(shape2d_get_line_offset(sprite_segment, y_high), x_high);
-			bitmap[destination] = color;
+			destination = LEGACY_U16_WRAP_ADD(
+				shape2d_get_line_offset(draw.sprite_segment, draw.y_high), draw.x_high);
+			draw.bitmap[destination] = draw.color;
 			break;
+	}
+}
+
+static void sprite_draw_dissolve_row(legacy_u16 shape_segment, legacy_u8 far *bitmap,
+									 legacy_u16 source, legacy_u16 destination, legacy_u16 width,
+									 legacy_u16 row_phase)
+{
+	static const legacy_u8 skip_count[4] = {1, 3, 0, 2};
+	static const legacy_u8 advance_count[4] = {3, 1, 4, 2};
+	legacy_u8 far *source_ptr;
+	legacy_u16 remaining;
+	legacy_u16 pattern;
+	legacy_u16 skip;
+	legacy_u16 advance;
+
+	remaining = width;
+	pattern = row_phase;
+	for (;;) {
+		pattern &= 3U;
+		skip = skip_count[pattern];
+		if (LEGACY_S16_FROM_BITS(remaining) <= (legacy_s16)skip) {
+			break;
+		}
+		remaining = LEGACY_U16_WRAP_SUB(remaining, skip);
+		source = LEGACY_U16_WRAP_ADD(source, skip);
+		destination = LEGACY_U16_WRAP_ADD(destination, skip);
+		source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, source);
+		bitmap[destination] = *source_ptr;
+		advance = advance_count[pattern];
+		source = LEGACY_U16_WRAP_ADD(source, advance);
+		destination = LEGACY_U16_WRAP_ADD(destination, advance);
+		remaining = LEGACY_U16_WRAP_SUB(remaining, advance);
+		pattern++;
 	}
 }
 
 void sprite_draw_dissolve_phase(struct SHAPE2D far *shape, legacy_u16 phase)
 {
 	static const legacy_u8 row_order[12] = {11, 5, 8, 2, 10, 4, 7, 1, 9, 3, 6, 0};
-	static const legacy_u8 skip_count[4] = {1, 3, 0, 2};
-	static const legacy_u8 advance_count[4] = {3, 1, 4, 2};
 	legacy_u8 far *bitmap;
 	legacy_u8 far *line_entry_ptr;
-	legacy_u8 far *source_ptr;
 	legacy_u16 shape_segment;
 	legacy_u16 sprite_segment;
 	legacy_u16 line_table_start;
@@ -590,12 +651,8 @@ void sprite_draw_dissolve_phase(struct SHAPE2D far *shape, legacy_u16 phase)
 	legacy_u16 height;
 	legacy_u16 pos_x;
 	legacy_u16 pos_y;
-	legacy_u16 remaining;
 	legacy_u16 row_phase;
-	legacy_u16 pattern;
 	legacy_u16 selector;
-	legacy_u16 skip;
-	legacy_u16 advance;
 	legacy_s16 order_index;
 
 	shape_segment = dos_memory_pointer_segment(shape);
@@ -619,26 +676,8 @@ void sprite_draw_dissolve_phase(struct SHAPE2D far *shape, legacy_u16 phase)
 		while (line_entry < line_table_end) {
 			line_entry_ptr = (legacy_u8 far *)dos_memory_make_pointer(sprite_segment, line_entry);
 			destination = LEGACY_U16_WRAP_ADD(shape2d_get_word(line_entry_ptr), pos_x);
-			remaining = width;
 			row_source = source;
-			pattern = row_phase;
-			for (;;) {
-				pattern &= 3U;
-				skip = skip_count[pattern];
-				if (LEGACY_S16_FROM_BITS(remaining) <= (legacy_s16)skip) {
-					break;
-				}
-				remaining = LEGACY_U16_WRAP_SUB(remaining, skip);
-				source = LEGACY_U16_WRAP_ADD(source, skip);
-				destination = LEGACY_U16_WRAP_ADD(destination, skip);
-				source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, source);
-				bitmap[destination] = *source_ptr;
-				advance = advance_count[pattern];
-				source = LEGACY_U16_WRAP_ADD(source, advance);
-				destination = LEGACY_U16_WRAP_ADD(destination, advance);
-				remaining = LEGACY_U16_WRAP_SUB(remaining, advance);
-				pattern++;
-			}
+			sprite_draw_dissolve_row(shape_segment, bitmap, source, destination, width, row_phase);
 			row_phase++;
 			line_entry = LEGACY_U16_WRAP_ADD(line_entry, 24U);
 			source = LEGACY_U16_WRAP_ADD(row_source, source_row_step);
@@ -761,125 +800,118 @@ static legacy_u16 shape2d_scaled_anchor(legacy_u16 anchor, legacy_u16 scale)
 	return (legacy_u16)((legacy_u32)product >> SHAPE2D_FIXED_FRACTION_BITS);
 }
 
-static void shape2d_scale_transparent_impl(struct SHAPE2D far *shape, legacy_u16 scale,
-										   legacy_u16 x, legacy_u16 y, legacy_s16 clipped)
-{
-	legacy_u8 far *source_ptr;
-	legacy_u8 far *bitmap;
-	legacy_u32 product;
+struct SHAPE2D_SCALED_DRAW {
 	legacy_u16 shape_segment;
 	legacy_u16 source;
-	legacy_u16 row_source;
-	legacy_u16 destination;
 	legacy_u16 source_width;
 	legacy_u16 scaled_width;
 	legacy_u16 scaled_height;
-	legacy_u16 destination_advance;
 	legacy_u16 step;
 	legacy_u16 horizontal_start;
-	legacy_u16 horizontal_fraction;
 	legacy_u16 vertical_fraction;
-	legacy_u16 center_skip;
-	legacy_u16 skipped;
+	legacy_u16 x;
+	legacy_u16 y;
+};
+
+static legacy_s16 shape2d_clip_scaled_columns(struct SHAPE2D_SCALED_DRAW *draw)
+{
+	legacy_u32 product;
 	legacy_u16 overflow;
+	legacy_u16 skipped;
+
+	if (LEGACY_S16_FROM_BITS(draw->x) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_left)) {
+		overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(draw->x, draw->scaled_width),
+									   drawing_sprite.sprite_raster_left);
+		if (LEGACY_S16_FROM_BITS(overflow) <= 0) {
+			return 0;
+		}
+		skipped = LEGACY_U16_WRAP_SUB(draw->scaled_width, overflow);
+		draw->scaled_width = overflow;
+		draw->x = drawing_sprite.sprite_raster_left;
+		product = (legacy_u32)skipped * draw->step;
+		draw->horizontal_start = (legacy_u8)product;
+		draw->source =
+			LEGACY_U16_WRAP_ADD(draw->source, (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS));
+	}
+	overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(draw->x, draw->scaled_width),
+								   drawing_sprite.sprite_raster_right);
+	if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
+		draw->scaled_width = LEGACY_U16_WRAP_SUB(draw->scaled_width, overflow);
+		if (LEGACY_S16_FROM_BITS(draw->scaled_width) <= 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static legacy_s16 shape2d_clip_scaled_rows(struct SHAPE2D_SCALED_DRAW *draw)
+{
+	legacy_u32 product;
+	legacy_u16 overflow;
+	legacy_u16 skipped;
+	legacy_u16 source_rows;
+
+	if (LEGACY_S16_FROM_BITS(draw->y) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
+		overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(draw->y, draw->scaled_height),
+									   drawing_sprite.sprite_top);
+		if (LEGACY_S16_FROM_BITS(overflow) <= 0) {
+			return 0;
+		}
+		skipped = LEGACY_U16_WRAP_SUB(draw->scaled_height, overflow);
+		draw->scaled_height = overflow;
+		draw->y = drawing_sprite.sprite_top;
+		product = (legacy_u32)skipped * draw->step;
+		draw->vertical_fraction = (legacy_u8)product;
+		source_rows = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
+		draw->source =
+			LEGACY_U16_WRAP_ADD(draw->source, LEGACY_U16_WRAP_MUL(source_rows, draw->source_width));
+	}
+	overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(draw->y, draw->scaled_height),
+								   drawing_sprite.sprite_bottom);
+	if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
+		draw->scaled_height = LEGACY_U16_WRAP_SUB(draw->scaled_height, overflow);
+		if (LEGACY_S16_FROM_BITS(draw->scaled_height) <= 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+static void shape2d_render_scaled(struct SHAPE2D_SCALED_DRAW *draw)
+{
+	legacy_u8 far *source_ptr;
+	legacy_u8 far *bitmap;
+	legacy_u16 row_source;
+	legacy_u16 destination;
+	legacy_u16 destination_advance;
+	legacy_u16 horizontal_fraction;
 	legacy_u16 column_count;
 	legacy_u16 row_count;
 	legacy_u16 old_row_count;
 	legacy_u16 source_rows;
 	legacy_u8 color;
 
-	if (scale < 2U) {
-		return;
-	}
-	shape_segment = dos_memory_pointer_segment(shape);
-	x = LEGACY_U16_WRAP_SUB(x, shape2d_scaled_anchor(shape2d_get_anchor_x(shape), scale));
-	y = LEGACY_U16_WRAP_SUB(y, shape2d_scaled_anchor(shape2d_get_anchor_y(shape), scale));
-	source_width = shape2d_get_width(shape);
-	product = (legacy_u32)shape2d_get_height(shape) * scale;
-	scaled_height = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
-	if (scaled_height == 0) {
-		return;
-	}
-	product = (legacy_u32)source_width * scale;
-	scaled_width = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
-	if (scaled_width == 0) {
-		return;
-	}
-	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
-	step = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(SHAPE2D_FIXED_ONE, scale);
-	horizontal_start = 0;
-	vertical_fraction = 0;
-	center_skip = (legacy_u16)((step >> SHAPE2D_FIXED_FRACTION_BITS) >> 1);
-	source = LEGACY_U16_WRAP_ADD(
-		source, (legacy_u16)((legacy_u32)center_skip * ((legacy_u32)source_width + 1UL)));
-
-	if (clipped != 0) {
-		if (LEGACY_S16_FROM_BITS(x) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_left)) {
-			overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(x, scaled_width),
-										   drawing_sprite.sprite_raster_left);
-			if (LEGACY_S16_FROM_BITS(overflow) <= 0) {
-				return;
-			}
-			skipped = LEGACY_U16_WRAP_SUB(scaled_width, overflow);
-			scaled_width = overflow;
-			x = drawing_sprite.sprite_raster_left;
-			product = (legacy_u32)skipped * step;
-			horizontal_start = (legacy_u8)product;
-			source =
-				LEGACY_U16_WRAP_ADD(source, (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS));
-		}
-		overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(x, scaled_width),
-									   drawing_sprite.sprite_raster_right);
-		if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
-			scaled_width = LEGACY_U16_WRAP_SUB(scaled_width, overflow);
-			if (LEGACY_S16_FROM_BITS(scaled_width) <= 0) {
-				return;
-			}
-		}
-		if (LEGACY_S16_FROM_BITS(y) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
-			overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(y, scaled_height),
-										   drawing_sprite.sprite_top);
-			if (LEGACY_S16_FROM_BITS(overflow) <= 0) {
-				return;
-			}
-			skipped = LEGACY_U16_WRAP_SUB(scaled_height, overflow);
-			scaled_height = overflow;
-			y = drawing_sprite.sprite_top;
-			product = (legacy_u32)skipped * step;
-			vertical_fraction = (legacy_u8)product;
-			source_rows = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
-			source = LEGACY_U16_WRAP_ADD(source, LEGACY_U16_WRAP_MUL(source_rows, source_width));
-		}
-		overflow = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(y, scaled_height),
-									   drawing_sprite.sprite_bottom);
-		if (LEGACY_S16_FROM_BITS(overflow) >= 0) {
-			scaled_height = LEGACY_U16_WRAP_SUB(scaled_height, overflow);
-			if (LEGACY_S16_FROM_BITS(scaled_height) <= 0) {
-				return;
-			}
-		}
-	}
-
 	bitmap = (legacy_u8 far *)dos_memory_make_pointer(
 		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
 	destination = LEGACY_U16_WRAP_ADD(
-		shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), y), x);
-	destination_advance = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_pitch, scaled_width);
-	row_source = source;
-	row_count = scaled_height;
+		shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), draw->y), draw->x);
+	destination_advance = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_pitch, draw->scaled_width);
+	row_source = draw->source;
+	row_count = draw->scaled_height;
 	do {
-		column_count = scaled_width;
-		horizontal_fraction = horizontal_start;
+		column_count = draw->scaled_width;
+		horizontal_fraction = draw->horizontal_start;
 		do {
-			source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, source);
+			source_ptr =
+				(legacy_u8 far *)dos_memory_make_pointer(draw->shape_segment, draw->source);
 			color = *source_ptr;
 			if (color != SHAPE2D_TRANSPARENT_COLOR) {
 				bitmap[destination] = color;
 			}
 			destination++;
-			horizontal_fraction = LEGACY_U16_WRAP_ADD(horizontal_fraction, step);
-			source =
-				LEGACY_U16_WRAP_ADD(source, horizontal_fraction >> SHAPE2D_FIXED_FRACTION_BITS);
+			horizontal_fraction = LEGACY_U16_WRAP_ADD(horizontal_fraction, draw->step);
+			draw->source = LEGACY_U16_WRAP_ADD(draw->source,
+											   horizontal_fraction >> SHAPE2D_FIXED_FRACTION_BITS);
 			horizontal_fraction &= LEGACY_U8_MAX;
 			column_count--;
 		} while (column_count != 0);
@@ -889,15 +921,57 @@ static void shape2d_scale_transparent_impl(struct SHAPE2D far *shape, legacy_u16
 			break;
 		}
 		destination = LEGACY_U16_WRAP_ADD(destination, destination_advance);
-		source = row_source;
-		vertical_fraction = LEGACY_U16_WRAP_ADD(vertical_fraction, step);
-		source_rows = vertical_fraction >> SHAPE2D_FIXED_FRACTION_BITS;
+		draw->source = row_source;
+		draw->vertical_fraction = LEGACY_U16_WRAP_ADD(draw->vertical_fraction, draw->step);
+		source_rows = draw->vertical_fraction >> SHAPE2D_FIXED_FRACTION_BITS;
 		if (source_rows != 0) {
-			source = LEGACY_U16_WRAP_ADD(source, LEGACY_U16_WRAP_MUL(source_rows, source_width));
-			vertical_fraction &= LEGACY_U8_MAX;
-			row_source = source;
+			draw->source = LEGACY_U16_WRAP_ADD(
+				draw->source, LEGACY_U16_WRAP_MUL(source_rows, draw->source_width));
+			draw->vertical_fraction &= LEGACY_U8_MAX;
+			row_source = draw->source;
 		}
 	} while (1);
+}
+
+static void shape2d_scale_transparent_impl(struct SHAPE2D far *shape, legacy_u16 scale,
+										   legacy_u16 x, legacy_u16 y, legacy_s16 clipped)
+{
+	struct SHAPE2D_SCALED_DRAW draw;
+	legacy_u32 product;
+	legacy_u16 center_skip;
+
+	if (scale < 2U) {
+		return;
+	}
+	draw.shape_segment = dos_memory_pointer_segment(shape);
+	draw.x = LEGACY_U16_WRAP_SUB(x, shape2d_scaled_anchor(shape2d_get_anchor_x(shape), scale));
+	draw.y = LEGACY_U16_WRAP_SUB(y, shape2d_scaled_anchor(shape2d_get_anchor_y(shape), scale));
+	draw.source_width = shape2d_get_width(shape);
+	product = (legacy_u32)shape2d_get_height(shape) * scale;
+	draw.scaled_height = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
+	if (draw.scaled_height == 0) {
+		return;
+	}
+	product = (legacy_u32)draw.source_width * scale;
+	draw.scaled_width = (legacy_u16)(product >> SHAPE2D_FIXED_FRACTION_BITS);
+	if (draw.scaled_width == 0) {
+		return;
+	}
+	draw.source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
+	draw.step = (legacy_u16)LEGACY_U32_DIV_OR_ZERO(SHAPE2D_FIXED_ONE, scale);
+	draw.horizontal_start = 0;
+	draw.vertical_fraction = 0;
+	center_skip = (legacy_u16)((draw.step >> SHAPE2D_FIXED_FRACTION_BITS) >> 1);
+	draw.source = LEGACY_U16_WRAP_ADD(
+		draw.source, (legacy_u16)((legacy_u32)center_skip * ((legacy_u32)draw.source_width + 1UL)));
+
+	if (clipped != 0) {
+		if (!shape2d_clip_scaled_columns(&draw) || !shape2d_clip_scaled_rows(&draw)) {
+			return;
+		}
+	}
+
+	shape2d_render_scaled(&draw);
 }
 
 void shape2d_draw_scaled_transparent_clipped(legacy_s16 scale, struct SHAPE2D far *shape,

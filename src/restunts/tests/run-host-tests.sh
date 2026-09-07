@@ -45,6 +45,19 @@ run_host_test test-car-menu menu_car.c \
     -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-car-speed statecar.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c"
+run_host_test test-dashboard dashboard.c \
+    "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-frame-render math.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/legacy.c" "$test_source_dir/heapsort.c" \
+    -Wno-pointer-sign -Wno-sign-compare -Wno-missing-field-initializers -Wno-maybe-uninitialized
+run_host_test test-intro-preview intro_render.c \
+    "$test_source_dir/track_preview.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
+    "$test_source_dir/math.c" "$test_source_dir/legacy.c" "$test_source_dir/trkutil.c" \
+    -DRESTUNTS_FULL -Wno-pointer-sign -Wno-missing-braces -Wno-missing-field-initializers
 run_host_test test-end-hiscore highscore.c \
     "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
@@ -81,6 +94,14 @@ run_host_test test-replay-controls legacy.c \
     -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-replay-serialization replay.c
 run_host_test test-resource-lookup resource.c
+run_host_test test-shape2d-render shape2d.c \
+    "$test_source_dir/shape2d_blit.c" "$test_source_dir/shape2d_resources.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/resource.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-missing-braces -Wno-missing-field-initializers -Wno-unused-variable
+run_host_test test-shape3d-raster shape3d_prerender.c \
+    "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/full_tables.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-shape3d-queue shape3d.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers

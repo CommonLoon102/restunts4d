@@ -124,8 +124,108 @@ static void shape2d_write_run(legacy_u16 source_segment, legacy_u16 *source,
 	*source = LEGACY_U16_WRAP_ADD(*source, count);
 }
 
+struct SHAPE2D_PARSE_OUTPUT {
+	legacy_u16 output_segment;
+	legacy_u16 output_offset;
+};
+
+struct SHAPE2D_PARSE_RUN {
+	legacy_u16 source_segment;
+	legacy_u16 scan_offset;
+	legacy_u16 literal_offset;
+	legacy_u16 remaining;
+	legacy_u16 literal_count;
+};
+
+static void shape2d_parse_literals(struct SHAPE2D_PARSE_RUN *run,
+								   struct SHAPE2D_PARSE_OUTPUT *output)
+{
+	while (LEGACY_S16_FROM_BITS(run->literal_count) > RLE_BLOCK_LIMIT) {
+		run->literal_count = LEGACY_U16_WRAP_SUB(run->literal_count, RLE_BLOCK_LIMIT);
+		run->remaining = LEGACY_U16_WRAP_SUB(run->remaining, RLE_BLOCK_LIMIT);
+		shape2d_far_write_byte(output->output_segment, output->output_offset,
+							   RLE_FULL_LITERAL_CONTROL);
+		output->output_offset++;
+		shape2d_copy_wrapped(run->source_segment, &run->literal_offset, output->output_segment,
+							 &output->output_offset, RLE_BLOCK_LIMIT);
+	}
+	if (run->literal_count != 0) {
+		shape2d_far_write_byte(output->output_segment, output->output_offset,
+							   (legacy_u8)(0U - run->literal_count));
+		output->output_offset++;
+		run->remaining = LEGACY_U16_WRAP_SUB(run->remaining, run->literal_count);
+		shape2d_copy_wrapped(run->source_segment, &run->literal_offset, output->output_segment,
+							 &output->output_offset, run->literal_count);
+	}
+}
+
+static void shape2d_parse_repeats(struct SHAPE2D_PARSE_RUN *run,
+								  struct SHAPE2D_PARSE_OUTPUT *output, legacy_u16 run_count)
+{
+	if (run_count > run->remaining) {
+		run_count = run->remaining;
+	}
+	while (LEGACY_S16_FROM_BITS(run_count) > RLE_BLOCK_LIMIT) {
+		run_count = LEGACY_U16_WRAP_SUB(run_count, RLE_BLOCK_LIMIT);
+		run->remaining = LEGACY_U16_WRAP_SUB(run->remaining, RLE_BLOCK_LIMIT);
+		shape2d_write_run(run->source_segment, &run->scan_offset, output->output_segment,
+						  &output->output_offset, RLE_BLOCK_LIMIT);
+	}
+	if (LEGACY_S16_FROM_BITS(run_count) > RLE_LITERAL_RUN_LIMIT) {
+		run->remaining = LEGACY_U16_WRAP_SUB(run->remaining, run_count);
+		shape2d_write_run(run->source_segment, &run->scan_offset, output->output_segment,
+						  &output->output_offset, run_count);
+	}
+}
+
+static void shape2d_parse_bitmap(struct SHAPE2D far *shape, struct SHAPE2D_PARSE_OUTPUT *output)
+{
+	struct SHAPE2D_PARSE_RUN run;
+	legacy_u16 source_offset;
+	legacy_u16 run_count;
+
+	run.source_segment = dos_memory_pointer_segment(shape);
+	source_offset = dos_memory_pointer_offset(shape);
+	shape2d_copy_wrapped(run.source_segment, &source_offset, output->output_segment,
+						 &output->output_offset, SHAPE2D_HEADER_SIZE);
+	run.scan_offset = source_offset;
+	run.literal_offset = run.scan_offset;
+	run.literal_count = 0;
+	run.remaining =
+		LEGACY_U16_WRAP_MUL(shape2d_get_word((legacy_u8 far *)shape),
+							shape2d_get_word((legacy_u8 far *)shape + SHAPE2D_HEIGHT_OFFSET));
+	run.scan_offset++;
+	run.literal_count++;
+
+	if (run.remaining != 0) {
+		for (;;) {
+			run_count = (legacy_u16)shape2d_count_repeated_bytes(
+				dos_memory_make_pointer(run.source_segment, run.scan_offset));
+			if (LEGACY_S16_FROM_BITS(run_count) <= RLE_LITERAL_RUN_LIMIT &&
+				run.literal_count < run.remaining) {
+				run.scan_offset++;
+				run.literal_count++;
+				continue;
+			}
+
+			shape2d_parse_literals(&run, output);
+			shape2d_parse_repeats(&run, output, run_count);
+			run.literal_offset = run.scan_offset;
+			run.literal_count = 0;
+			run.scan_offset++;
+			run.literal_count++;
+			if (run.remaining == 0) {
+				break;
+			}
+		}
+	}
+	shape2d_far_write_byte(output->output_segment, output->output_offset, 0);
+	output->output_offset++;
+}
+
 void parse_shape2d(void far *memchunk, void far *mempages)
 {
+	struct SHAPE2D_PARSE_OUTPUT output;
 	struct SHAPE2D far *shape;
 	void far *output_pointer;
 	legacy_u32 initial_output_linear;
@@ -136,19 +236,10 @@ void parse_shape2d(void far *memchunk, void far *mempages)
 	legacy_u16 pages_segment;
 	legacy_u16 pages_offset;
 	legacy_u16 offsets_offset;
-	legacy_u16 output_segment;
-	legacy_u16 output_offset;
-	legacy_u16 source_segment;
-	legacy_u16 source_offset;
-	legacy_u16 scan_offset;
-	legacy_u16 literal_offset;
 	legacy_u16 shape_count;
 	legacy_u16 shape_index;
 	legacy_u16 header_size;
 	legacy_u16 copied;
-	legacy_u16 remaining;
-	legacy_u16 literal_count;
-	legacy_u16 run_count;
 
 	chunk_segment = dos_memory_pointer_segment(memchunk);
 	chunk_offset = dos_memory_pointer_offset(memchunk);
@@ -169,99 +260,33 @@ void parse_shape2d(void far *memchunk, void far *mempages)
 		pages_offset++;
 		copied++;
 	}
-	output_segment = dos_memory_pointer_segment(mempages);
-	output_offset = LEGACY_U16_WRAP_ADD(
+	output.output_segment = dos_memory_pointer_segment(mempages);
+	output.output_offset = LEGACY_U16_WRAP_ADD(
 		dos_memory_pointer_offset(mempages),
 		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, PARSED_RESOURCE_TABLE_ENTRY_SIZE),
 							RESOURCE_FILE_HEADER_SIZE));
-	initial_output_linear =
-		shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset));
+	initial_output_linear = shape2d_pointer_to_linear(
+		dos_memory_make_pointer(output.output_segment, output.output_offset));
 
 	shape_index = 0;
 	while (LEGACY_S16_FROM_BITS(shape_index) < LEGACY_S16_FROM_BITS(shape_count)) {
 		shape = file_get_shape2d((legacy_u8 far *)memchunk, shape_index);
-		output_linear =
-			shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset));
+		output_linear = shape2d_pointer_to_linear(
+			dos_memory_make_pointer(output.output_segment, output.output_offset));
 		output_pointer = shape2d_pointer_from_linear(output_linear);
-		output_segment = dos_memory_pointer_segment(output_pointer);
-		output_offset = dos_memory_pointer_offset(output_pointer);
+		output.output_segment = dos_memory_pointer_segment(output_pointer);
+		output.output_offset = dos_memory_pointer_offset(output_pointer);
 		shape2d_far_write_dword(pages_segment, offsets_offset,
 								output_linear - initial_output_linear);
 		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset, RESOURCE_TABLE_ENTRY_SIZE);
 
-		source_segment = dos_memory_pointer_segment(shape);
-		source_offset = dos_memory_pointer_offset(shape);
-		shape2d_copy_wrapped(source_segment, &source_offset, output_segment, &output_offset,
-							 SHAPE2D_HEADER_SIZE);
-		scan_offset = source_offset;
-		literal_offset = scan_offset;
-		literal_count = 0;
-		remaining =
-			LEGACY_U16_WRAP_MUL(shape2d_get_word((legacy_u8 far *)shape),
-								shape2d_get_word((legacy_u8 far *)shape + SHAPE2D_HEIGHT_OFFSET));
-		scan_offset++;
-		literal_count++;
-
-		if (remaining != 0) {
-			for (;;) {
-				run_count = (legacy_u16)shape2d_count_repeated_bytes(
-					dos_memory_make_pointer(source_segment, scan_offset));
-				if (LEGACY_S16_FROM_BITS(run_count) <= RLE_LITERAL_RUN_LIMIT &&
-					literal_count < remaining) {
-					scan_offset++;
-					literal_count++;
-					continue;
-				}
-
-				while (LEGACY_S16_FROM_BITS(literal_count) > RLE_BLOCK_LIMIT) {
-					literal_count = LEGACY_U16_WRAP_SUB(literal_count, RLE_BLOCK_LIMIT);
-					remaining = LEGACY_U16_WRAP_SUB(remaining, RLE_BLOCK_LIMIT);
-					shape2d_far_write_byte(output_segment, output_offset, RLE_FULL_LITERAL_CONTROL);
-					output_offset++;
-					shape2d_copy_wrapped(source_segment, &literal_offset, output_segment,
-										 &output_offset, RLE_BLOCK_LIMIT);
-				}
-				if (literal_count != 0) {
-					shape2d_far_write_byte(output_segment, output_offset,
-										   (legacy_u8)(0U - literal_count));
-					output_offset++;
-					remaining = LEGACY_U16_WRAP_SUB(remaining, literal_count);
-					shape2d_copy_wrapped(source_segment, &literal_offset, output_segment,
-										 &output_offset, literal_count);
-				}
-
-				if (run_count > remaining) {
-					run_count = remaining;
-				}
-				while (LEGACY_S16_FROM_BITS(run_count) > RLE_BLOCK_LIMIT) {
-					run_count = LEGACY_U16_WRAP_SUB(run_count, RLE_BLOCK_LIMIT);
-					remaining = LEGACY_U16_WRAP_SUB(remaining, RLE_BLOCK_LIMIT);
-					shape2d_write_run(source_segment, &scan_offset, output_segment, &output_offset,
-									  RLE_BLOCK_LIMIT);
-				}
-				if (LEGACY_S16_FROM_BITS(run_count) > RLE_LITERAL_RUN_LIMIT) {
-					remaining = LEGACY_U16_WRAP_SUB(remaining, run_count);
-					shape2d_write_run(source_segment, &scan_offset, output_segment, &output_offset,
-									  run_count);
-				}
-
-				literal_offset = scan_offset;
-				literal_count = 0;
-				scan_offset++;
-				literal_count++;
-				if (remaining == 0) {
-					break;
-				}
-			}
-		}
-		shape2d_far_write_byte(output_segment, output_offset, 0);
-		output_offset++;
+		shape2d_parse_bitmap(shape, &output);
 		shape_index++;
 	}
 
-	output_size =
-		shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset)) -
-		shape2d_pointer_to_linear(mempages);
+	output_size = shape2d_pointer_to_linear(
+					  dos_memory_make_pointer(output.output_segment, output.output_offset)) -
+				  shape2d_pointer_to_linear(mempages);
 	if ((legacy_u8)output_size & DOS_PARAGRAPH_OFFSET_MASK) {
 		output_size = (output_size >> DOS_PARAGRAPH_SHIFT) + 1UL;
 	} else {
@@ -291,11 +316,74 @@ legacy_u16 file_get_res_shape_count(void far *memchunk)
 	return resource_file_count((const legacy_u8 far *)memchunk);
 }
 
+static void shape2d_unflip_transpose(legacy_s8 far *membitmapptr, legacy_s8 far *mempages,
+									 legacy_s16 width, legacy_s16 height)
+{
+	legacy_s16 i, j;
+
+	// regular flip
+	for (j = 0; j < height; j++) {	  // height
+		for (i = 0; i < width; i++) { // width
+			mempages[i + j * width] = membitmapptr[j + i * height];
+		}
+	}
+}
+
+static void shape2d_unflip_interlace(legacy_s8 far *membitmapptr, legacy_s8 far *mempages,
+									 legacy_s16 width, legacy_s16 height)
+{
+	legacy_s16 i, j;
+
+	// interlaced: the even rows first, then the odd
+	// ones. loc_32BBA walks the second pass with
+	// dx = 1, 3, .. while dx < height, so an odd
+	// height gets one fewer odd row than even rows.
+	for (j = 0; j < height; j += 2) { // even rows
+		for (i = 0; i < width; i++) { // width
+			mempages[i + j * width] = membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * height];
+		}
+	}
+	for (j = 1; j < height; j += 2) { // odd rows
+		for (i = 0; i < width; i++) { // width
+			mempages[i + j * width] =
+				membitmapptr[LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_ADD(height, j), 2) +
+							 i * height];
+		}
+	}
+}
+
+static void shape2d_unflip_column_blocks(legacy_s8 far *membitmapptr, legacy_s8 far *mempages,
+										 legacy_s16 width, legacy_s16 height)
+{
+	legacy_s16 i, j;
+	legacy_s16 evenrows, oddrows;
+
+	// loc_32BDE. Even and odd rows are stored as two
+	// separate column-major blocks: the even one holds
+	// ceil(height/2) samples per column from offset 0,
+	// the odd one holds height/2 per column starting at
+	// width * ceil(height/2). The original never reloads
+	// bx between the two halves of a pass, which is what
+	// puts the odd rows at that offset.
+	evenrows = LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_ADD(height, 1), 2);
+	oddrows = LEGACY_S16_DIV_OR_ZERO(height, 2);
+	for (j = 0; j < height; j += 2) { // even rows
+		for (i = 0; i < width; i++) { // width
+			mempages[i + j * width] = membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * evenrows];
+		}
+	}
+	for (j = 1; j < height; j += 2) { // odd rows
+		for (i = 0; i < width; i++) { // width
+			mempages[i + j * width] =
+				membitmapptr[width * evenrows + LEGACY_S16_DIV_OR_ZERO(j, 2) + i * oddrows];
+		}
+	}
+}
+
 void file_unflip_shape2d(legacy_u8 far *memchunk, legacy_s8 far *mempages)
 {
 
 	legacy_s16 shapecount, counter, width, height;
-	legacy_s16 evenrows, oddrows;
 	legacy_u8 far *memshape;
 	struct SHAPE2D far *shape_header;
 	legacy_s8 far *membitmapptr;
@@ -325,56 +413,13 @@ void file_unflip_shape2d(legacy_u8 far *memchunk, legacy_s8 far *mempages)
 					height = shape_header->height;
 					switch (flag - 1) {
 						case 0:
-							// regular flip
-							for (j = 0; j < height; j++) {	  // height
-								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[j + i * height];
-								}
-							}
+							shape2d_unflip_transpose(membitmapptr, mempages, width, height);
 							break;
 						case 1:
-							// interlaced: the even rows first, then the odd
-							// ones. loc_32BBA walks the second pass with
-							// dx = 1, 3, .. while dx < height, so an odd
-							// height gets one fewer odd row than even rows.
-							for (j = 0; j < height; j += 2) { // even rows
-								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] =
-										membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * height];
-								}
-							}
-							for (j = 1; j < height; j += 2) { // odd rows
-								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] =
-										membitmapptr[LEGACY_S16_DIV_OR_ZERO(
-														 LEGACY_S16_WRAP_ADD(height, j), 2) +
-													 i * height];
-								}
-							}
+							shape2d_unflip_interlace(membitmapptr, mempages, width, height);
 							break;
 						case 2:
-							// loc_32BDE. Even and odd rows are stored as two
-							// separate column-major blocks: the even one holds
-							// ceil(height/2) samples per column from offset 0,
-							// the odd one holds height/2 per column starting at
-							// width * ceil(height/2). The original never reloads
-							// bx between the two halves of a pass, which is what
-							// puts the odd rows at that offset.
-							evenrows = LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_ADD(height, 1), 2);
-							oddrows = LEGACY_S16_DIV_OR_ZERO(height, 2);
-							for (j = 0; j < height; j += 2) { // even rows
-								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] =
-										membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * evenrows];
-								}
-							}
-							for (j = 1; j < height; j += 2) { // odd rows
-								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] =
-										membitmapptr[width * evenrows +
-													 LEGACY_S16_DIV_OR_ZERO(j, 2) + i * oddrows];
-								}
-							}
+							shape2d_unflip_column_blocks(membitmapptr, mempages, width, height);
 							break;
 					}
 
@@ -642,14 +687,12 @@ void far *file_load_shape2d_esh(void far *memchunk, const legacy_s8 *str)
 	return memchunk;
 }
 
-void far *file_load_shape2d(const legacy_s8 *shapename, legacy_s16 fatal)
+static void far *shape2d_find_cached(const legacy_s8 *shapename, legacy_s8 *str,
+									 legacy_s8 **extension)
 {
-	legacy_s8 str[SHAPE2D_PATH_BUFFER_SIZE];
 	legacy_s8 *strptr;
 	legacy_s16 counter;
 	void far *memchunk;
-	void far *mempages;
-	legacy_s16 unflipsize;
 
 	strcpy(str, shapename);
 	strptr = str;
@@ -677,6 +720,23 @@ void far *file_load_shape2d(const legacy_s8 *shapename, legacy_s16 fatal)
 		}
 		// list exhausted: fall through to the dispatch with the last extension
 		// (".ESH") still in str, like the original loc_3AA53 `jz _try_load_pvs`
+	}
+
+	*extension = strptr;
+	return 0;
+}
+
+void far *file_load_shape2d(const legacy_s8 *shapename, legacy_s16 fatal)
+{
+	legacy_s8 str[SHAPE2D_PATH_BUFFER_SIZE];
+	legacy_s8 *strptr;
+	void far *memchunk;
+	void far *mempages;
+	legacy_s16 unflipsize;
+
+	memchunk = shape2d_find_cached(shapename, str, &strptr);
+	if (memchunk) {
+		return memchunk;
 	}
 
 	if (stricmp(strptr, ".PVS") == 0) {

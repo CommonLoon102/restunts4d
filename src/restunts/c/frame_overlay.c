@@ -147,50 +147,8 @@ static void draw_centered_ingame_resource(legacy_s8 *resource_id, legacy_s16 y)
 		&rect_ingame_text);
 }
 
-struct RECTANGLE *draw_ingame_text(void)
+static void draw_ingame_route_information(void)
 {
-	legacy_u16 replay_frame;
-	legacy_s16 replay_x;
-
-	rect_ingame_text = empty_rect;
-	if (idle_expired != 0) {
-		draw_centered_ingame_resource("dm1", DEMO_TEXT_FIRST_Y);
-		draw_centered_ingame_resource("dm2", DEMO_TEXT_SECOND_Y);
-		return &rect_ingame_text;
-	}
-
-	if (game_replay_mode != REPLAY_MODE_LIVE) {
-		if (game_replay_mode != REPLAY_MODE_PLAYBACK) {
-			return &rect_ingame_text;
-		}
-		replay_frame = (legacy_u16)state.game_frame % framespersec;
-		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U)) {
-			return &rect_ingame_text;
-		}
-		copy_string(&resID_byte1, locate_text_res(gameresptr, "rpl"));
-		replay_x = LEGACY_S16_WRAP_SUB(
-			REPLAY_TEXT_RIGHT_X,
-			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1), REPLAY_TEXT_CHARACTER_WIDTH));
-		rect_union(&rect_ingame_text,
-				   intro_draw_text(&resID_byte1, replay_x, REPLAY_TEXT_Y, dialog_fnt_colour, 0),
-				   &rect_ingame_text);
-		return &rect_ingame_text;
-	}
-
-	if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
-		draw_centered_ingame_resource("pre", PREPARE_TEXT_Y);
-		return &rect_ingame_text;
-	}
-	if (passed_security == 0) {
-		draw_centered_ingame_resource("se1", SECURITY_TEXT_FIRST_Y);
-		draw_centered_ingame_resource("se2", SECURITY_TEXT_SECOND_Y);
-		return &rect_ingame_text;
-	}
-	if (followOpponentFlag != 0 || cameramode != CAMERA_MODE_COCKPIT ||
-		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
-		return &rect_ingame_text;
-	}
-
 	switch (state.game_player_route_indicator) {
 		case ROUTE_INDICATOR_LEFT:
 			sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
@@ -237,6 +195,52 @@ struct RECTANGLE *draw_ingame_text(void)
 								   dialog_fnt_colour, 0),
 				   &rect_ingame_text);
 	}
+}
 
+struct RECTANGLE *draw_ingame_text(void)
+{
+	legacy_u16 replay_frame;
+	legacy_s16 replay_x;
+
+	rect_ingame_text = empty_rect;
+	if (idle_expired != 0) {
+		draw_centered_ingame_resource("dm1", DEMO_TEXT_FIRST_Y);
+		draw_centered_ingame_resource("dm2", DEMO_TEXT_SECOND_Y);
+		return &rect_ingame_text;
+	}
+
+	if (game_replay_mode != REPLAY_MODE_LIVE) {
+		if (game_replay_mode != REPLAY_MODE_PLAYBACK) {
+			return &rect_ingame_text;
+		}
+		replay_frame = (legacy_u16)state.game_frame % framespersec;
+		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U)) {
+			return &rect_ingame_text;
+		}
+		copy_string(&resID_byte1, locate_text_res(gameresptr, "rpl"));
+		replay_x = LEGACY_S16_WRAP_SUB(
+			REPLAY_TEXT_RIGHT_X,
+			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1), REPLAY_TEXT_CHARACTER_WIDTH));
+		rect_union(&rect_ingame_text,
+				   intro_draw_text(&resID_byte1, replay_x, REPLAY_TEXT_Y, dialog_fnt_colour, 0),
+				   &rect_ingame_text);
+		return &rect_ingame_text;
+	}
+
+	if (state.game_inputmode == GAME_INPUT_MODE_WAITING) {
+		draw_centered_ingame_resource("pre", PREPARE_TEXT_Y);
+		return &rect_ingame_text;
+	}
+	if (passed_security == 0) {
+		draw_centered_ingame_resource("se1", SECURITY_TEXT_FIRST_Y);
+		draw_centered_ingame_resource("se2", SECURITY_TEXT_SECOND_Y);
+		return &rect_ingame_text;
+	}
+	if (followOpponentFlag != 0 || cameramode != CAMERA_MODE_COCKPIT ||
+		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
+		return &rect_ingame_text;
+	}
+
+	draw_ingame_route_information();
 	return &rect_ingame_text;
 }

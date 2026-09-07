@@ -73,6 +73,42 @@ static void intro_draw_transformed_shape(struct TRANSFORMEDSHAPE3D *transformed,
 	shape3d_transform_and_queue(transformed);
 }
 
+static void intro_draw_stars(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
+							 struct VECTOR *stars, struct POINT2D *previous_points,
+							 legacy_s16 *previous_point_count, struct RECTANGLE *point_rect)
+{
+	struct VECTOR translated;
+	struct VECTOR projected;
+	struct POINT2D point;
+	legacy_u16 new_point_count;
+	legacy_u16 i;
+
+	new_point_count = 0;
+	for (i = 0; i < INTRO_STAR_COUNT; i++) {
+		translated.x = LEGACY_S16_WRAP_SUB(stars[i].x, camera_x);
+		translated.y = LEGACY_S16_WRAP_SUB(stars[i].y, camera_y);
+		translated.z = LEGACY_S16_WRAP_SUB(stars[i].z, camera_z);
+		mat_mul_vector(&translated, &mat_temp, &projected);
+		if (projected.z <= INTRO_STAR_MIN_DEPTH) {
+			continue;
+		}
+		vector_to_point(&projected, &point);
+		sprite_putpixel_clipped(point.px, point.py, intro_colorvalue);
+		if (slow_video_mgmt_copy != 0) {
+			previous_points[new_point_count] = point;
+			new_point_count++;
+			rect_adjust_from_point(&point, point_rect);
+		}
+		intro_colorvalue = LEGACY_S16_WRAP_ADD(intro_colorvalue, 1);
+		if (intro_colorvalue == intro_palette_color_count) {
+			intro_colorvalue = 1;
+		}
+	}
+	if (slow_video_mgmt_copy != 0) {
+		*previous_point_count = new_point_count;
+	}
+}
+
 static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s16 camera_z,
 									legacy_s16 rotate_y, legacy_s16 rotate_x, legacy_s16 draw_car,
 									legacy_s16 primary_logo, struct VECTOR *stars,
@@ -82,14 +118,10 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 									struct RECTANGLE *combined_rect)
 {
 	struct TRANSFORMEDSHAPE3D transformed;
-	struct VECTOR translated;
-	struct VECTOR projected;
-	struct POINT2D point;
 	struct RECTANGLE current_shape_rect;
 	struct RECTANGLE point_rect;
 	struct RECTANGLE redraw_rect;
 	legacy_u16 old_point_count;
-	legacy_u16 new_point_count;
 	legacy_u16 i;
 
 	current_shape_rect = empty_rect;
@@ -132,30 +164,8 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 
 	sprite_set_target_clip_bounds(intro_cliprect.left, intro_cliprect.right, intro_cliprect.top,
 								  intro_cliprect.bottom);
-	new_point_count = 0;
-	for (i = 0; i < INTRO_STAR_COUNT; i++) {
-		translated.x = LEGACY_S16_WRAP_SUB(stars[i].x, camera_x);
-		translated.y = LEGACY_S16_WRAP_SUB(stars[i].y, camera_y);
-		translated.z = LEGACY_S16_WRAP_SUB(stars[i].z, camera_z);
-		mat_mul_vector(&translated, &mat_temp, &projected);
-		if (projected.z <= INTRO_STAR_MIN_DEPTH) {
-			continue;
-		}
-		vector_to_point(&projected, &point);
-		sprite_putpixel_clipped(point.px, point.py, intro_colorvalue);
-		if (slow_video_mgmt_copy != 0) {
-			previous_points[new_point_count] = point;
-			new_point_count++;
-			rect_adjust_from_point(&point, &point_rect);
-		}
-		intro_colorvalue = LEGACY_S16_WRAP_ADD(intro_colorvalue, 1);
-		if (intro_colorvalue == intro_palette_color_count) {
-			intro_colorvalue = 1;
-		}
-	}
-	if (slow_video_mgmt_copy != 0) {
-		*previous_point_count = new_point_count;
-	}
+	intro_draw_stars(camera_x, camera_y, camera_z, stars, previous_points, previous_point_count,
+					 &point_rect);
 
 	shape3d_render_queued_primitives();
 	if (slow_video_mgmt_copy != 0) {
@@ -188,46 +198,31 @@ static legacy_s16 intro_step_towards(legacy_s16 value, legacy_s16 target)
 	return value;
 }
 
-legacy_s8 setup_intro(void)
-{
+struct INTRO_SESSION {
 	legacy_s8 far *title_resource;
-	legacy_s8 far *title_shapes[INTRO_TITLE_SHAPE_COUNT];
-	void far *opponent_resource;
 	struct VECTOR stars[INTRO_STAR_COUNT];
 	struct POINT2D point_buffers[INTRO_POINT_BUFFER_COUNT][INTRO_STAR_COUNT];
 	legacy_s16 point_counts[INTRO_POINT_BUFFER_COUNT];
 	struct RECTANGLE shape_rect;
 	struct RECTANGLE combined_rect;
-	struct RECTANGLE redraw_rect;
 	legacy_s16 camera_x;
 	legacy_s16 camera_y;
 	legacy_s16 camera_z;
 	legacy_s16 target_x;
 	legacy_s16 target_y;
 	legacy_s16 target_z;
-	legacy_s16 opponent_x;
-	legacy_s16 opponent_y;
-	legacy_s16 opponent_z;
-	legacy_s16 horizontal_angle;
-	legacy_s16 vertical_angle;
-	legacy_s16 target_distance;
 	legacy_s16 frame_count;
-	legacy_s16 delta;
-	legacy_s16 elapsed_limit;
 	legacy_s16 logo_changed;
-	legacy_s16 draw_car;
 	legacy_s16 needs_render;
 	legacy_u16 rect_index;
-	legacy_u16 i;
-	legacy_s16 difference;
-	legacy_s16 absolute_difference;
-	legacy_s16 *active_point_count;
-	struct POINT2D *active_points;
-	legacy_s8 interrupted;
+};
 
-	interrupted = 0;
-	title_resource = (legacy_s8 far *)file_load_3dres("title");
-	locate_many_resources(title_resource, "logolog2brav", title_shapes);
+static void intro_load_title(struct INTRO_SESSION *intro)
+{
+	legacy_s8 far *title_shapes[INTRO_TITLE_SHAPE_COUNT];
+
+	intro->title_resource = (legacy_s8 far *)file_load_3dres("title");
+	locate_many_resources(intro->title_resource, "logolog2brav", title_shapes);
 	shape3d_init_shape(title_shapes[0], &logoshape);
 	shape3d_init_shape(title_shapes[1], &logo2shape);
 	shape3d_init_shape(title_shapes[2], &bravshape);
@@ -235,6 +230,11 @@ legacy_s8 setup_intro(void)
 		render_window_sprite =
 			sprite_make_wnd(INTRO_SCREEN_WIDTH, INTRO_SCREEN_HEIGHT, INTRO_SCREEN_COLOR);
 	}
+}
+
+static void intro_create_stars(struct VECTOR *stars)
+{
+	legacy_u16 i;
 
 	for (i = 0; i < INTRO_STAR_COUNT; i++) {
 		stars[i].x = LEGACY_S16_WRAP_SUB(
@@ -244,21 +244,26 @@ legacy_s8 setup_intro(void)
 		stars[i].z = LEGACY_S16_WRAP_SUB(
 			LEGACY_U16_WRAP_MUL(get_kevinrandom(), INTRO_STAR_RANDOM_SCALE), INTRO_STAR_XZ_OFFSET);
 	}
+}
+
+static void intro_prepare_session(struct INTRO_SESSION *intro)
+{
+	void far *opponent_resource;
 
 	set_projection(INTRO_PROJECTION_SCALE_X, INTRO_PROJECTION_SCALE_Y, INTRO_SCREEN_MAX_X,
 				   INTRO_SCREEN_MAX_Y);
-	camera_x = INTRO_LOGO_WORLD_CENTER;
-	camera_y = INTRO_INITIAL_CAMERA_Y;
-	camera_z = INTRO_LOGO_WORLD_CENTER;
-	logo_changed = 0;
-	frame_count = 0;
+	intro->camera_x = INTRO_LOGO_WORLD_CENTER;
+	intro->camera_y = INTRO_INITIAL_CAMERA_Y;
+	intro->camera_z = INTRO_LOGO_WORLD_CENTER;
+	intro->logo_changed = 0;
+	intro->frame_count = 0;
 	opponent_resource = file_load_resfile("carcoun");
 	setup_aero_trackdata(opponent_resource, 1);
 	unload_resource(opponent_resource);
 	init_plantrak();
 	(void)timer_get_delta();
-	point_counts[0] = 0;
-	point_counts[1] = 0;
+	intro->point_counts[0] = 0;
+	intro->point_counts[1] = 0;
 	slow_video_mgmt_copy = slow_video_mgmt;
 	frame_layer_rects[0].left = 0;
 	frame_layer_rects[0].right = INTRO_SCREEN_MAX_X;
@@ -266,133 +271,156 @@ legacy_s8 setup_intro(void)
 	frame_layer_rects[0].bottom = INTRO_SCREEN_MAX_Y;
 	frame_unsorted_shapes_rect = frame_layer_rects[0];
 	intro_redraw_cliprect = frame_layer_rects[0];
-	rect_index = 0;
-	needs_render = 1;
+	intro->rect_index = 0;
+	intro->needs_render = 1;
+}
 
-	for (;;) {
-		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
-		intro_elapsed_ticks = LEGACY_S16_WRAP_ADD(intro_elapsed_ticks, delta);
+static void intro_advance_session(struct INTRO_SESSION *intro, legacy_s16 delta)
+{
+	legacy_s16 elapsed_limit;
+	legacy_s16 difference;
+	legacy_s16 absolute_difference;
 
-		while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)timer_ticks_per_frame) {
-			intro_elapsed_ticks = LEGACY_S16_WRAP_SUB(intro_elapsed_ticks, timer_ticks_per_frame);
-			update_opponent();
-			needs_render = 1;
-			frame_count = LEGACY_S16_WRAP_ADD(frame_count, 1);
-			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
-			if (frame_count > elapsed_limit) {
-				logo_changed = 1;
-				camera_y = LEGACY_S16_WRAP_ADD(camera_y, INTRO_CAMERA_RISE_STEP);
-				camera_z = LEGACY_S16_WRAP_SUB(camera_z, INTRO_CAMERA_RETREAT_STEP);
-				difference = LEGACY_S16_WRAP_SUB(camera_x, INTRO_LOGO_WORLD_CENTER);
-				absolute_difference = absolute_word(difference);
-				if (absolute_difference < INTRO_CAMERA_CENTER_SNAP_DISTANCE) {
-					camera_x = INTRO_LOGO_WORLD_CENTER;
-				} else if (difference > 0) {
-					camera_x = LEGACY_S16_WRAP_SUB(camera_x, INTRO_CAMERA_CENTER_STEP);
-				} else if (difference < 0) {
-					camera_x = LEGACY_S16_WRAP_ADD(camera_x, INTRO_CAMERA_CENTER_STEP);
-				}
+	intro_elapsed_ticks = LEGACY_S16_WRAP_ADD(intro_elapsed_ticks, delta);
 
-				target_x = intro_step_towards(target_x, INTRO_LOGO_WORLD_CENTER);
-				target_z = intro_step_towards(target_z, INTRO_LOGO_WORLD_CENTER);
+	while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)timer_ticks_per_frame) {
+		intro_elapsed_ticks = LEGACY_S16_WRAP_SUB(intro_elapsed_ticks, timer_ticks_per_frame);
+		update_opponent();
+		intro->needs_render = 1;
+		intro->frame_count = LEGACY_S16_WRAP_ADD(intro->frame_count, 1);
+		elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
+		if (intro->frame_count > elapsed_limit) {
+			intro->logo_changed = 1;
+			intro->camera_y = LEGACY_S16_WRAP_ADD(intro->camera_y, INTRO_CAMERA_RISE_STEP);
+			intro->camera_z = LEGACY_S16_WRAP_SUB(intro->camera_z, INTRO_CAMERA_RETREAT_STEP);
+			difference = LEGACY_S16_WRAP_SUB(intro->camera_x, INTRO_LOGO_WORLD_CENTER);
+			absolute_difference = absolute_word(difference);
+			if (absolute_difference < INTRO_CAMERA_CENTER_SNAP_DISTANCE) {
+				intro->camera_x = INTRO_LOGO_WORLD_CENTER;
+			} else if (difference > 0) {
+				intro->camera_x = LEGACY_S16_WRAP_SUB(intro->camera_x, INTRO_CAMERA_CENTER_STEP);
+			} else if (difference < 0) {
+				intro->camera_x = LEGACY_S16_WRAP_ADD(intro->camera_x, INTRO_CAMERA_CENTER_STEP);
 			}
+
+			intro->target_x = intro_step_towards(intro->target_x, INTRO_LOGO_WORLD_CENTER);
+			intro->target_z = intro_step_towards(intro->target_z, INTRO_LOGO_WORLD_CENTER);
 		}
+	}
+}
 
-		if (needs_render != 0) {
-			needs_render = 0;
-			if (video_uses_page_flipping != 0) {
-				sprite_select_mcga_backbuffer();
-			} else {
-				sprite_select_render_window();
-			}
-			draw_car = 1;
-			horizontal_angle = -1;
-			opponent_x = intro_shift_position((legacy_s32)state.opponentstate.car_position.lx, 0);
-			opponent_y = intro_shift_position((legacy_s32)state.opponentstate.car_position.ly, 0);
-			opponent_z = intro_shift_position((legacy_s32)state.opponentstate.car_position.lz, 0);
+static void intro_aim_camera(struct INTRO_SESSION *intro, legacy_s16 *horizontal_angle,
+							 legacy_s16 *vertical_angle, legacy_s16 *draw_car)
+{
+	legacy_s16 opponent_x;
+	legacy_s16 opponent_y;
+	legacy_s16 opponent_z;
+	legacy_s16 elapsed_limit;
+	legacy_s16 target_distance;
 
-			elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_CAR_PHASE_SECONDS);
-			if (frame_count < elapsed_limit) {
-				draw_car = 0;
-				horizontal_angle =
-					LEGACY_S16_FROM_BITS((legacy_u16)state.opponentstate.car_rotate.x & ANGLE_MASK);
-				vertical_angle = 0;
-				camera_x = opponent_x;
-				camera_y = LEGACY_S16_WRAP_ADD(opponent_y, INTRO_CAMERA_CAR_HEIGHT);
-				camera_z = opponent_z;
-			} else {
-				elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
-				if (frame_count < elapsed_limit) {
-					camera_x = INTRO_LOGO_WORLD_CENTER;
-					camera_y = INTRO_LOGO_CAMERA_Y;
-					camera_z = INTRO_LOGO_WORLD_CENTER;
-					target_x = opponent_x;
-					target_y = opponent_y;
-					target_z = opponent_z;
-				}
-			}
+	(*draw_car) = 1;
+	(*horizontal_angle) = -1;
+	opponent_x = intro_shift_position((legacy_s32)state.opponentstate.car_position.lx, 0);
+	opponent_y = intro_shift_position((legacy_s32)state.opponentstate.car_position.ly, 0);
+	opponent_z = intro_shift_position((legacy_s32)state.opponentstate.car_position.lz, 0);
 
-			if (horizontal_angle == -1) {
-				horizontal_angle =
-					LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_NEGATE(
-											 polarAngle(LEGACY_S16_WRAP_SUB(target_x, camera_x),
-														LEGACY_S16_WRAP_SUB(target_z, camera_z))) &
-										 ANGLE_MASK);
-				target_distance =
-					(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(target_x, camera_x),
-											  LEGACY_S16_WRAP_SUB(target_z, camera_z));
-				vertical_angle = LEGACY_S16_FROM_BITS(
-					(legacy_u16)polarAngle(LEGACY_S16_WRAP_SUB(target_y, camera_y),
-										   target_distance) &
-					ANGLE_MASK);
-			}
-
-			active_points = point_buffers[rect_index];
-			active_point_count = &point_counts[rect_index];
-			intro_render_scene_impl(camera_x, camera_y, camera_z, horizontal_angle, vertical_angle,
-									draw_car, logo_changed, stars, active_points,
-									active_point_count, &frame_layer_rects[rect_index], &shape_rect,
-									&combined_rect);
-
-			if (video_uses_page_flipping != 0) {
-				mouse_draw_opaque_check();
-				sprite_present_mcga_backbuffer();
-				mouse_draw_transparent_check();
-				if (slow_video_mgmt_copy != 0) {
-					frame_layer_rects[rect_index] = shape_rect;
-				}
-				rect_index ^= INTRO_POINT_BUFFER_MASK;
-			} else {
-				sprite_select_screen_compat();
-				if (slow_video_mgmt_copy != 0) {
-					rect_union(&combined_rect, &frame_sorted_shapes_rect, &redraw_rect);
-					if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
-						sprite_set_target_clip_bounds(redraw_rect.left, redraw_rect.right,
-													  redraw_rect.top, redraw_rect.bottom);
-						mouse_draw_opaque_check();
-						sprite_putimage(render_window_sprite->sprite_bitmapptr);
-						mouse_draw_transparent_check();
-						frame_layer_rects[0] = shape_rect;
-						frame_sorted_shapes_rect = combined_rect;
-					}
-				} else {
-					mouse_draw_opaque_check();
-					sprite_putimage(render_window_sprite->sprite_bitmapptr);
-					mouse_draw_transparent_check();
-				}
-			}
-		}
-
-		if (input_do_checking(delta) != 0) {
-			interrupted = 1;
-			break;
-		}
-		elapsed_limit = LEGACY_S16_WRAP_MUL(INTRO_TOTAL_SECONDS, framespersec);
-		if (frame_count >= elapsed_limit) {
-			break;
+	elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_CAR_PHASE_SECONDS);
+	if (intro->frame_count < elapsed_limit) {
+		(*draw_car) = 0;
+		(*horizontal_angle) =
+			LEGACY_S16_FROM_BITS((legacy_u16)state.opponentstate.car_rotate.x & ANGLE_MASK);
+		(*vertical_angle) = 0;
+		intro->camera_x = opponent_x;
+		intro->camera_y = LEGACY_S16_WRAP_ADD(opponent_y, INTRO_CAMERA_CAR_HEIGHT);
+		intro->camera_z = opponent_z;
+	} else {
+		elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
+		if (intro->frame_count < elapsed_limit) {
+			intro->camera_x = INTRO_LOGO_WORLD_CENTER;
+			intro->camera_y = INTRO_LOGO_CAMERA_Y;
+			intro->camera_z = INTRO_LOGO_WORLD_CENTER;
+			intro->target_x = opponent_x;
+			intro->target_y = opponent_y;
+			intro->target_z = opponent_z;
 		}
 	}
 
+	if ((*horizontal_angle) == -1) {
+		(*horizontal_angle) =
+			LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_NEGATE(polarAngle(
+									 LEGACY_S16_WRAP_SUB(intro->target_x, intro->camera_x),
+									 LEGACY_S16_WRAP_SUB(intro->target_z, intro->camera_z))) &
+								 ANGLE_MASK);
+		target_distance =
+			(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(intro->target_x, intro->camera_x),
+									  LEGACY_S16_WRAP_SUB(intro->target_z, intro->camera_z));
+		(*vertical_angle) = LEGACY_S16_FROM_BITS(
+			(legacy_u16)polarAngle(LEGACY_S16_WRAP_SUB(intro->target_y, intro->camera_y),
+								   target_distance) &
+			ANGLE_MASK);
+	}
+}
+
+static void intro_present_session(struct INTRO_SESSION *intro)
+{
+	struct RECTANGLE redraw_rect;
+
+	if (video_uses_page_flipping != 0) {
+		mouse_draw_opaque_check();
+		sprite_present_mcga_backbuffer();
+		mouse_draw_transparent_check();
+		if (slow_video_mgmt_copy != 0) {
+			frame_layer_rects[intro->rect_index] = intro->shape_rect;
+		}
+		intro->rect_index ^= INTRO_POINT_BUFFER_MASK;
+	} else {
+		sprite_select_screen_compat();
+		if (slow_video_mgmt_copy != 0) {
+			rect_union(&intro->combined_rect, &frame_sorted_shapes_rect, &redraw_rect);
+			if (rect_intersect(&redraw_rect, &intro_redraw_cliprect) == 0) {
+				sprite_set_target_clip_bounds(redraw_rect.left, redraw_rect.right, redraw_rect.top,
+											  redraw_rect.bottom);
+				mouse_draw_opaque_check();
+				sprite_putimage(render_window_sprite->sprite_bitmapptr);
+				mouse_draw_transparent_check();
+				frame_layer_rects[0] = intro->shape_rect;
+				frame_sorted_shapes_rect = intro->combined_rect;
+			}
+		} else {
+			mouse_draw_opaque_check();
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
+			mouse_draw_transparent_check();
+		}
+	}
+}
+
+static void intro_render_session(struct INTRO_SESSION *intro)
+{
+	legacy_s16 horizontal_angle;
+	legacy_s16 vertical_angle;
+	legacy_s16 draw_car;
+	legacy_s16 *active_point_count;
+	struct POINT2D *active_points;
+
+	intro->needs_render = 0;
+	if (video_uses_page_flipping != 0) {
+		sprite_select_mcga_backbuffer();
+	} else {
+		sprite_select_render_window();
+	}
+	intro_aim_camera(intro, &horizontal_angle, &vertical_angle, &draw_car);
+	active_points = intro->point_buffers[intro->rect_index];
+	active_point_count = &intro->point_counts[intro->rect_index];
+	intro_render_scene_impl(
+		intro->camera_x, intro->camera_y, intro->camera_z, horizontal_angle, vertical_angle,
+		draw_car, intro->logo_changed, intro->stars, active_points, active_point_count,
+		&frame_layer_rects[intro->rect_index], &intro->shape_rect, &intro->combined_rect);
+
+	intro_present_session(intro);
+}
+
+static void intro_finish_session(struct INTRO_SESSION *intro)
+{
 	if (video_uses_page_flipping != 0) {
 		if (video_backbuffer_copy_required() != 0) {
 			sprite_select_mcga_backbuffer();
@@ -404,6 +432,35 @@ legacy_s8 setup_intro(void)
 	} else {
 		sprite_free_wnd(render_window_sprite);
 	}
-	mmgr_free(title_resource);
+	mmgr_free(intro->title_resource);
+}
+
+legacy_s8 setup_intro(void)
+{
+	struct INTRO_SESSION intro;
+	legacy_s16 delta;
+	legacy_s16 elapsed_limit;
+	legacy_s8 interrupted;
+
+	interrupted = 0;
+	intro_load_title(&intro);
+	intro_create_stars(intro.stars);
+	intro_prepare_session(&intro);
+	for (;;) {
+		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
+		intro_advance_session(&intro, delta);
+		if (intro.needs_render != 0) {
+			intro_render_session(&intro);
+		}
+		if (input_do_checking(delta) != 0) {
+			interrupted = 1;
+			break;
+		}
+		elapsed_limit = LEGACY_S16_WRAP_MUL(INTRO_TOTAL_SECONDS, framespersec);
+		if (intro.frame_count >= elapsed_limit) {
+			break;
+		}
+	}
+	intro_finish_session(&intro);
 	return interrupted;
 }

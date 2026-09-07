@@ -145,16 +145,62 @@ void shape3d_load_car_shapes(legacy_s8 player_car_id[], legacy_s8 opponent_car_i
 	}
 }
 
+static void shape3d_steer_car_wheel_vertices(struct SHAPE3D *shape, legacy_u16 first_vertex,
+											 legacy_s16 steering_angle,
+											 const struct VECTOR *base_vertices,
+											 const struct VECTOR *front_wheel_centers)
+{
+	legacy_s16 vertex_index;
+	legacy_s16 steering_sine;
+	legacy_s16 steering_cosine;
+	legacy_s16 first_wheel_cosine_component;
+	legacy_s16 second_wheel_cosine_component;
+	struct VECTOR vertex;
+
+	steering_sine = sin_fast(LEGACY_S16_SAR(steering_angle, 1U));
+	steering_cosine = cos_fast(LEGACY_S16_SAR(steering_angle, 1U));
+
+	for (vertex_index = 0; vertex_index < CAR_WHEEL_VERTEX_GROUP_SIZE; vertex_index++) {
+		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+		first_wheel_cosine_component =
+			multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
+		vertex.x = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(front_wheel_centers[0].x,
+								multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
+			first_wheel_cosine_component);
+		first_wheel_cosine_component =
+			multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
+		vertex.z = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(front_wheel_centers[0].z,
+								multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
+			first_wheel_cosine_component);
+		shape3d_vertex_write(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+	}
+	for (vertex_index = CAR_WHEEL_VERTEX_GROUP_SIZE; vertex_index < CAR_STEERED_WHEEL_VERTEX_COUNT;
+		 vertex_index++) {
+		shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+		second_wheel_cosine_component =
+			multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
+		vertex.x = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(front_wheel_centers[1].x,
+								multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
+			second_wheel_cosine_component);
+		second_wheel_cosine_component =
+			multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
+		vertex.z = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(front_wheel_centers[1].z,
+								multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
+			second_wheel_cosine_component);
+		shape3d_vertex_write(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
+	}
+}
+
 void shape3d_update_car_wheel_vertices(struct SHAPE3D *shape, legacy_u16 first_vertex,
 									   legacy_s16 steering_angle, legacy_s16 *suspension_offsets,
 									   legacy_s16 *cached_wheel_state, struct VECTOR *base_vertices,
 									   struct VECTOR *front_wheel_centers)
 {
 	legacy_s16 vertex_index, wheel_index;
-	legacy_s16 steering_sine;
-	legacy_s16 steering_cosine;
-	legacy_s16 first_wheel_cosine_component;
-	legacy_s16 second_wheel_cosine_component;
 	legacy_s16 vertical_offset;
 	legacy_s16 wheel_vertex_end;
 	struct VECTOR vertex;
@@ -163,46 +209,8 @@ void shape3d_update_car_wheel_vertices(struct SHAPE3D *shape, legacy_u16 first_v
 	// cached_wheel_state[4] caches the steering angle the wheel vertices were last built
 	// for, so the test is against steering_angle, not against zero.
 	if (cached_wheel_state[CAR_WHEEL_STEERING_CACHE_INDEX] != steering_angle) {
-		steering_sine = sin_fast(LEGACY_S16_SAR(steering_angle, 1U));
-		steering_cosine = cos_fast(LEGACY_S16_SAR(steering_angle, 1U));
-
-		for (vertex_index = 0; vertex_index < CAR_WHEEL_VERTEX_GROUP_SIZE; vertex_index++) {
-			shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
-			first_wheel_cosine_component =
-				multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
-			vertex.x = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(
-					front_wheel_centers[0].x,
-					multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
-				first_wheel_cosine_component);
-			first_wheel_cosine_component =
-				multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
-			vertex.z = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(
-					front_wheel_centers[0].z,
-					multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
-				first_wheel_cosine_component);
-			shape3d_vertex_write(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
-		}
-		for (vertex_index = CAR_WHEEL_VERTEX_GROUP_SIZE;
-			 vertex_index < CAR_STEERED_WHEEL_VERTEX_COUNT; vertex_index++) {
-			shape3d_vertex_read(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
-			second_wheel_cosine_component =
-				multiply_and_scale(base_vertices[vertex_index].x, steering_cosine);
-			vertex.x = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(
-					front_wheel_centers[1].x,
-					multiply_and_scale(base_vertices[vertex_index].z, steering_sine)),
-				second_wheel_cosine_component);
-			second_wheel_cosine_component =
-				multiply_and_scale(base_vertices[vertex_index].z, steering_cosine);
-			vertex.z = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(
-					front_wheel_centers[1].z,
-					multiply_and_scale(base_vertices[vertex_index].x, steering_sine)),
-				second_wheel_cosine_component);
-			shape3d_vertex_write(shape, LEGACY_U16_WRAP_ADD(first_vertex, vertex_index), &vertex);
-		}
+		shape3d_steer_car_wheel_vertices(shape, first_vertex, steering_angle, base_vertices,
+										 front_wheel_centers);
 		cached_wheel_state[CAR_WHEEL_STEERING_CACHE_INDEX] = steering_angle;
 	}
 

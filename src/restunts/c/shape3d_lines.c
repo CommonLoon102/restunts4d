@@ -168,12 +168,42 @@ static legacy_u16 draw_line_horizontal(legacy_u16 y, legacy_u16 start_x, legacy_
 	return reject & DRAW_LINE_MODE_MASK;
 }
 
+static void draw_line_clip_top_x_major(legacy_u16 *line, legacy_u16 mode,
+									   legacy_u16 top_bound_or_clip_count,
+									   legacy_u16 original_start_y)
+{
+	legacy_u16 advance;
+	legacy_u32 product;
+	legacy_u32 value32;
+
+	line[DRAW_LINE_START_Y_INDEX] = original_start_y;
+	advance = draw_line_round_div((legacy_u32)top_bound_or_clip_count << LEGACY_WORD_BITS,
+								  line[DRAW_LINE_STEP_INDEX]);
+	if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
+		line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] - advance);
+	} else {
+		line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(line[DRAW_LINE_START_X_INDEX] + advance);
+	}
+	line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - advance);
+	if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]) <= 0) {
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = 1;
+		line[DRAW_LINE_START_Y_INDEX] = drawing_sprite.sprite_top;
+		line[DRAW_LINE_START_X_INDEX] = line[DRAW_LINE_END_X_INDEX];
+	} else {
+		product = (legacy_u32)advance * line[DRAW_LINE_STEP_INDEX];
+		value32 = ((legacy_u32)line[DRAW_LINE_START_Y_INDEX] << LEGACY_WORD_BITS) |
+				  line[DRAW_LINE_START_Y_FRACTION_INDEX];
+		value32 += product;
+		line[DRAW_LINE_START_Y_FRACTION_INDEX] = (legacy_u16)value32;
+		line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(value32 >> LEGACY_WORD_BITS);
+	}
+}
+
 static legacy_u8 draw_line_clip_top(legacy_u16 *line)
 {
 	legacy_u16 original_start_y;
 	legacy_u16 top_bound_or_clip_count;
 	legacy_u16 mode;
-	legacy_u16 advance;
 	legacy_u32 value32;
 	legacy_u32 product;
 
@@ -213,30 +243,7 @@ static legacy_u8 draw_line_clip_top(legacy_u16 *line)
 			break;
 		case DRAW_LINE_MODE_X_MAJOR_LEFT:
 		case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-			line[DRAW_LINE_START_Y_INDEX] = original_start_y;
-			advance = draw_line_round_div((legacy_u32)top_bound_or_clip_count << LEGACY_WORD_BITS,
-										  line[DRAW_LINE_STEP_INDEX]);
-			if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
-				line[DRAW_LINE_START_X_INDEX] =
-					(legacy_u16)(line[DRAW_LINE_START_X_INDEX] - advance);
-			} else {
-				line[DRAW_LINE_START_X_INDEX] =
-					(legacy_u16)(line[DRAW_LINE_START_X_INDEX] + advance);
-			}
-			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - advance);
-			if (LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]) <= 0) {
-				line[DRAW_LINE_PIXEL_COUNT_INDEX] = 1;
-				line[DRAW_LINE_START_Y_INDEX] = drawing_sprite.sprite_top;
-				line[DRAW_LINE_START_X_INDEX] = line[DRAW_LINE_END_X_INDEX];
-			} else {
-				product = (legacy_u32)advance * line[DRAW_LINE_STEP_INDEX];
-				value32 = ((legacy_u32)line[DRAW_LINE_START_Y_INDEX] << LEGACY_WORD_BITS) |
-						  line[DRAW_LINE_START_Y_FRACTION_INDEX];
-				value32 += product;
-				line[DRAW_LINE_START_Y_FRACTION_INDEX] = (legacy_u16)value32;
-				line[DRAW_LINE_START_Y_INDEX] = (legacy_u16)(value32 >> LEGACY_WORD_BITS);
-			}
+			draw_line_clip_top_x_major(line, mode, top_bound_or_clip_count, original_start_y);
 			break;
 		default:
 			return 0;
@@ -328,48 +335,15 @@ static void draw_line_advance_secondary(legacy_u16 *line, legacy_u16 advance,
 	line[counter_index] = (legacy_u16)(line[counter_index] + new_value - old_value);
 }
 
-static legacy_s16 draw_line_clip_left(legacy_u16 *line)
+static legacy_s16 draw_line_clip_left_y_major(legacy_u16 *line, legacy_u16 mode)
 {
-	legacy_u16 x_or_remaining_span;
-	legacy_u16 left_bound_or_clip_count;
-	legacy_u16 clip_left;
-	legacy_u16 mode;
-	legacy_u16 old_value;
 	legacy_u16 advance;
 	legacy_u16 original_count;
 	legacy_u32 value32;
 	legacy_u32 product;
 	legacy_s32 difference;
 
-	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
 	switch (mode) {
-		case DRAW_LINE_MODE_VERTICAL:
-			return DRAW_LINE_CLIP_LEFT;
-		case DRAW_LINE_MODE_DIAGONAL_LEFT:
-			left_bound_or_clip_count = drawing_sprite.sprite_raster_left;
-			x_or_remaining_span = line[DRAW_LINE_END_X_INDEX];
-			line[DRAW_LINE_END_X_INDEX] = left_bound_or_clip_count;
-			left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
-			line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + left_bound_or_clip_count);
-			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
-			line[DRAW_LINE_END_Y_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - left_bound_or_clip_count);
-			break;
-		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-			x_or_remaining_span = line[DRAW_LINE_START_X_INDEX];
-			left_bound_or_clip_count = drawing_sprite.sprite_raster_left;
-			line[DRAW_LINE_START_X_INDEX] = left_bound_or_clip_count;
-			left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
-			line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] +
-							 left_bound_or_clip_count);
-			line[DRAW_LINE_START_Y_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + left_bound_or_clip_count);
-			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
-			break;
 		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 			value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
 					  line[DRAW_LINE_START_X_FRACTION_INDEX];
@@ -413,6 +387,52 @@ static legacy_s16 draw_line_clip_left(legacy_u16 *line)
 			line[DRAW_LINE_START_X_FRACTION_INDEX] = (legacy_u16)value32;
 			line[DRAW_LINE_START_X_INDEX] = (legacy_u16)(value32 >> LEGACY_WORD_BITS);
 			break;
+	}
+	return 1;
+}
+
+static legacy_s16 draw_line_clip_left(legacy_u16 *line)
+{
+	legacy_u16 x_or_remaining_span;
+	legacy_u16 left_bound_or_clip_count;
+	legacy_u16 clip_left;
+	legacy_u16 mode;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+
+	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
+	switch (mode) {
+		case DRAW_LINE_MODE_VERTICAL:
+			return DRAW_LINE_CLIP_LEFT;
+		case DRAW_LINE_MODE_DIAGONAL_LEFT:
+			left_bound_or_clip_count = drawing_sprite.sprite_raster_left;
+			x_or_remaining_span = line[DRAW_LINE_END_X_INDEX];
+			line[DRAW_LINE_END_X_INDEX] = left_bound_or_clip_count;
+			left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
+			line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_END_LEFT_CLIP_COUNT_INDEX] + left_bound_or_clip_count);
+			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
+			line[DRAW_LINE_END_Y_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - left_bound_or_clip_count);
+			break;
+		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
+			x_or_remaining_span = line[DRAW_LINE_START_X_INDEX];
+			left_bound_or_clip_count = drawing_sprite.sprite_raster_left;
+			line[DRAW_LINE_START_X_INDEX] = left_bound_or_clip_count;
+			left_bound_or_clip_count = (legacy_u16)(left_bound_or_clip_count - x_or_remaining_span);
+			line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX] +
+							 left_bound_or_clip_count);
+			line[DRAW_LINE_START_Y_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + left_bound_or_clip_count);
+			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - left_bound_or_clip_count);
+			break;
+		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
+		case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
+			return draw_line_clip_left_y_major(line, mode);
+
 		case DRAW_LINE_MODE_X_MAJOR_LEFT:
 			x_or_remaining_span = line[DRAW_LINE_START_X_INDEX];
 			clip_left = drawing_sprite.sprite_raster_left;
@@ -436,46 +456,14 @@ static legacy_s16 draw_line_clip_left(legacy_u16 *line)
 	return 1;
 }
 
-static legacy_u16 draw_line_clip_right(legacy_u16 *line)
+static legacy_u16 draw_line_clip_right_y_major(legacy_u16 *line, legacy_u16 mode)
 {
-	legacy_u16 x_or_span_count;
-	legacy_u16 right_bound_or_clip_count;
-	legacy_u16 mode;
-	legacy_u16 old_value;
 	legacy_u16 advance;
 	legacy_u16 original_count;
 	legacy_u32 value32;
 	legacy_u32 product;
 
-	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
 	switch (mode) {
-		case DRAW_LINE_MODE_VERTICAL:
-			return draw_line_reject(line, DRAW_LINE_CLIP_RIGHT);
-		case DRAW_LINE_MODE_DIAGONAL_LEFT:
-			right_bound_or_clip_count = line[DRAW_LINE_START_X_INDEX];
-			x_or_span_count = (legacy_u16)(drawing_sprite.sprite_raster_right - 1);
-			line[DRAW_LINE_START_X_INDEX] = x_or_span_count;
-			right_bound_or_clip_count = (legacy_u16)(right_bound_or_clip_count - x_or_span_count);
-			line[DRAW_LINE_START_Y_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + right_bound_or_clip_count);
-			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - right_bound_or_clip_count);
-			line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] +
-							 right_bound_or_clip_count);
-			return 0;
-		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-			right_bound_or_clip_count = (legacy_u16)(drawing_sprite.sprite_raster_right - 1);
-			x_or_span_count = line[DRAW_LINE_END_X_INDEX];
-			line[DRAW_LINE_END_X_INDEX] = right_bound_or_clip_count;
-			x_or_span_count = (legacy_u16)(x_or_span_count - right_bound_or_clip_count);
-			line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + x_or_span_count);
-			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - x_or_span_count);
-			line[DRAW_LINE_END_Y_INDEX] =
-				(legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - x_or_span_count);
-			return 0;
 		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
 			value32 = ((legacy_u32)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
 					  line[DRAW_LINE_START_X_FRACTION_INDEX];
@@ -511,6 +499,51 @@ static legacy_u16 draw_line_clip_right(legacy_u16 *line)
 				(legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + original_count - advance);
 			line[DRAW_LINE_END_Y_INDEX] = (legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + advance - 1);
 			return 0;
+	}
+	return 0;
+}
+
+static legacy_u16 draw_line_clip_right(legacy_u16 *line)
+{
+	legacy_u16 x_or_span_count;
+	legacy_u16 right_bound_or_clip_count;
+	legacy_u16 mode;
+	legacy_u16 old_value;
+	legacy_u16 advance;
+
+	mode = line[DRAW_LINE_MODE_AND_CLIP_INDEX] & DRAW_LINE_MODE_MASK;
+	switch (mode) {
+		case DRAW_LINE_MODE_VERTICAL:
+			return draw_line_reject(line, DRAW_LINE_CLIP_RIGHT);
+		case DRAW_LINE_MODE_DIAGONAL_LEFT:
+			right_bound_or_clip_count = line[DRAW_LINE_START_X_INDEX];
+			x_or_span_count = (legacy_u16)(drawing_sprite.sprite_raster_right - 1);
+			line[DRAW_LINE_START_X_INDEX] = x_or_span_count;
+			right_bound_or_clip_count = (legacy_u16)(right_bound_or_clip_count - x_or_span_count);
+			line[DRAW_LINE_START_Y_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_START_Y_INDEX] + right_bound_or_clip_count);
+			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - right_bound_or_clip_count);
+			line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_START_RIGHT_CLIP_COUNT_INDEX] +
+							 right_bound_or_clip_count);
+			return 0;
+		case DRAW_LINE_MODE_DIAGONAL_RIGHT:
+			right_bound_or_clip_count = (legacy_u16)(drawing_sprite.sprite_raster_right - 1);
+			x_or_span_count = line[DRAW_LINE_END_X_INDEX];
+			line[DRAW_LINE_END_X_INDEX] = right_bound_or_clip_count;
+			x_or_span_count = (legacy_u16)(x_or_span_count - right_bound_or_clip_count);
+			line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_END_RIGHT_CLIP_COUNT_INDEX] + x_or_span_count);
+			line[DRAW_LINE_PIXEL_COUNT_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_PIXEL_COUNT_INDEX] - x_or_span_count);
+			line[DRAW_LINE_END_Y_INDEX] =
+				(legacy_u16)(line[DRAW_LINE_END_Y_INDEX] - x_or_span_count);
+			return 0;
+		case DRAW_LINE_MODE_Y_MAJOR_LEFT:
+		case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
+			return draw_line_clip_right_y_major(line, mode);
+
 		case DRAW_LINE_MODE_X_MAJOR_LEFT:
 			x_or_span_count = line[DRAW_LINE_START_X_INDEX];
 			right_bound_or_clip_count = (legacy_u16)(drawing_sprite.sprite_raster_right - 1);
@@ -717,98 +750,69 @@ static legacy_u16 draw_line_find_initial_clip(legacy_u16 *line, legacy_u16 *clip
 	return 0;
 }
 
-static legacy_u16 draw_line_setup_slope(legacy_u16 *line)
+static legacy_u16 draw_line_set_slope_mode(legacy_u16 *line, legacy_u16 extent_or_major_delta,
+										   legacy_u16 clip_or_minor_delta)
 {
 	legacy_u16 boundary_or_swap;
-	legacy_u16 extent_or_major_delta;
-	legacy_u16 clip_or_minor_delta;
-	legacy_s32 difference;
+	legacy_u16 mode;
 	legacy_u8 compute_step;
-	legacy_u8 subdivide_required;
+	legacy_u8 left;
 
-	subdivide_required = 0;
+	compute_step = 0;
+	if (clip_or_minor_delta == 0) {
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
+		mode = DRAW_LINE_MODE_VERTICAL;
+	} else {
+		if (clip_or_minor_delta == LEGACY_U16_SIGN_BIT) {
+			return 1;
+		}
+		left = LEGACY_S16_FROM_BITS(clip_or_minor_delta) < 0;
+		if (left != 0) {
+			clip_or_minor_delta = (legacy_u16)(0U - clip_or_minor_delta);
+		}
+		if (clip_or_minor_delta < extent_or_major_delta) {
+			mode = left ? DRAW_LINE_MODE_Y_MAJOR_LEFT : DRAW_LINE_MODE_Y_MAJOR_RIGHT;
+			compute_step = 1;
+		} else if (clip_or_minor_delta == extent_or_major_delta) {
+			mode = left ? DRAW_LINE_MODE_DIAGONAL_LEFT : DRAW_LINE_MODE_DIAGONAL_RIGHT;
+			line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
+		} else {
+			mode = left ? DRAW_LINE_MODE_X_MAJOR_LEFT : DRAW_LINE_MODE_X_MAJOR_RIGHT;
+			boundary_or_swap = extent_or_major_delta;
+			extent_or_major_delta = clip_or_minor_delta;
+			clip_or_minor_delta = boundary_or_swap;
+			compute_step = 1;
+		}
+	}
+	line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
+		(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] & LEGACY_U16_HIGH_BYTE_MASK) | mode);
+	if (compute_step != 0) {
+		line[DRAW_LINE_STEP_INDEX] = draw_line_step(clip_or_minor_delta, extent_or_major_delta);
+		if (extent_or_major_delta == LEGACY_S16_MAX) {
+			return 1;
+		}
+		line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
+	}
+	return 0;
+}
+
+static legacy_u16 draw_line_setup_slope(legacy_u16 *line)
+{
+	legacy_s32 difference;
+	legacy_u16 vertical_delta;
+
 	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_Y_INDEX]) -
 				 (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
 	if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT || difference > (legacy_s32)LEGACY_S16_MAX) {
-		subdivide_required = 1;
-	} else {
-		extent_or_major_delta = (legacy_u16)difference;
-		difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) -
-					 (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-		if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT ||
-			difference > (legacy_s32)LEGACY_S16_MAX) {
-			subdivide_required = 1;
-		} else {
-			clip_or_minor_delta = (legacy_u16)difference;
-			compute_step = 0;
-			if (clip_or_minor_delta == 0) {
-				extent_or_major_delta = (legacy_u16)(extent_or_major_delta + 1);
-				line[DRAW_LINE_PIXEL_COUNT_INDEX] = extent_or_major_delta;
-				line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-					(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] & LEGACY_U16_HIGH_BYTE_MASK) |
-								 DRAW_LINE_MODE_VERTICAL);
-			} else if (LEGACY_S16_FROM_BITS(clip_or_minor_delta) >= 0) {
-				if (clip_or_minor_delta < extent_or_major_delta) {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_Y_MAJOR_RIGHT);
-					compute_step = 1;
-				} else if (clip_or_minor_delta == extent_or_major_delta) {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_DIAGONAL_RIGHT);
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
-				} else {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_X_MAJOR_RIGHT);
-					boundary_or_swap = extent_or_major_delta;
-					extent_or_major_delta = clip_or_minor_delta;
-					clip_or_minor_delta = boundary_or_swap;
-					compute_step = 1;
-				}
-			} else if (clip_or_minor_delta == LEGACY_U16_SIGN_BIT) {
-				subdivide_required = 1;
-			} else {
-				clip_or_minor_delta = (legacy_u16)(0U - clip_or_minor_delta);
-				if (clip_or_minor_delta < extent_or_major_delta) {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_Y_MAJOR_LEFT);
-					compute_step = 1;
-				} else if (clip_or_minor_delta == extent_or_major_delta) {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_DIAGONAL_LEFT);
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
-				} else {
-					line[DRAW_LINE_MODE_AND_CLIP_INDEX] =
-						(legacy_u16)((line[DRAW_LINE_MODE_AND_CLIP_INDEX] &
-									  LEGACY_U16_HIGH_BYTE_MASK) |
-									 DRAW_LINE_MODE_X_MAJOR_LEFT);
-					boundary_or_swap = extent_or_major_delta;
-					extent_or_major_delta = clip_or_minor_delta;
-					clip_or_minor_delta = boundary_or_swap;
-					compute_step = 1;
-				}
-			}
-			if (compute_step != 0) {
-				line[DRAW_LINE_STEP_INDEX] =
-					draw_line_step(clip_or_minor_delta, extent_or_major_delta);
-				if (extent_or_major_delta == LEGACY_S16_MAX) {
-					subdivide_required = 1;
-				} else {
-					line[DRAW_LINE_PIXEL_COUNT_INDEX] = (legacy_u16)(extent_or_major_delta + 1);
-				}
-			}
-		}
+		return 1;
 	}
-	return subdivide_required;
+	vertical_delta = (legacy_u16)difference;
+	difference = (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_END_X_INDEX]) -
+				 (legacy_s32)LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	if (difference < -(legacy_s32)LEGACY_U16_SIGN_BIT || difference > (legacy_s32)LEGACY_S16_MAX) {
+		return 1;
+	}
+	return draw_line_set_slope_mode(line, vertical_delta, (legacy_u16)difference);
 }
 
 static legacy_u16 draw_line_find_horizontal_clip(legacy_u16 *line, legacy_u16 *clip)
@@ -849,45 +853,50 @@ static legacy_u16 draw_line_find_horizontal_clip(legacy_u16 *line, legacy_u16 *c
 	return 0;
 }
 
+static legacy_u16 draw_line_apply_horizontal_clipping(legacy_u16 *line, legacy_u16 clip)
+{
+	legacy_s16 clip_result;
+
+	switch (clip & DRAW_LINE_CLIP_MASK) {
+		case 0:
+			return 0;
+		case DRAW_LINE_CLIP_RIGHT:
+			return draw_line_clip_right(line);
+		case DRAW_LINE_CLIP_LEFT:
+		case DRAW_LINE_CLIP_LEFT | DRAW_LINE_CLIP_RIGHT:
+			clip_result = draw_line_clip_left(line);
+			if (clip_result == DRAW_LINE_CLIP_LEFT) {
+				return draw_line_reject(line, DRAW_LINE_CLIP_LEFT);
+			}
+			if (clip_result == 0) {
+				return 0;
+			}
+			if (clip & DRAW_LINE_CLIP_RIGHT) {
+				return draw_line_clip_right(line);
+			}
+			return 0;
+	}
+	return 0;
+}
+
 static legacy_u16 draw_line_apply_clipping(legacy_u16 *line, legacy_u16 clip)
 {
 	legacy_s16 clip_result;
 
 	for (;;) {
-		switch (clip & DRAW_LINE_CLIP_MASK) {
-			case 0:
+		if ((clip & DRAW_LINE_CLIP_TOP) != 0) {
+			if (draw_line_clip_top(line) == 0) {
 				return 0;
-			case DRAW_LINE_CLIP_RIGHT:
-				return draw_line_clip_right(line);
-			case DRAW_LINE_CLIP_LEFT:
-			case DRAW_LINE_CLIP_LEFT | DRAW_LINE_CLIP_RIGHT:
-				clip_result = draw_line_clip_left(line);
-				if (clip_result == DRAW_LINE_CLIP_LEFT) {
-					return draw_line_reject(line, DRAW_LINE_CLIP_LEFT);
-				}
-				if (clip_result == 0) {
-					return 0;
-				}
-				if (clip & DRAW_LINE_CLIP_RIGHT) {
-					return draw_line_clip_right(line);
-				}
+			}
+			if ((clip & DRAW_LINE_CLIP_BOTTOM) != 0 && draw_line_clip_bottom(line) == 0) {
 				return 0;
-			case DRAW_LINE_CLIP_BOTTOM:
-			case DRAW_LINE_CLIP_BOTTOM | DRAW_LINE_CLIP_RIGHT:
-			case DRAW_LINE_CLIP_BOTTOM | DRAW_LINE_CLIP_LEFT:
-			case DRAW_LINE_CLIP_BOTTOM | DRAW_LINE_CLIP_LEFT | DRAW_LINE_CLIP_RIGHT:
-				if (draw_line_clip_bottom(line) == 0) {
-					return 0;
-				}
-				break;
-			default:
-				if (draw_line_clip_top(line) == 0) {
-					return 0;
-				}
-				if ((clip & DRAW_LINE_CLIP_BOTTOM) != 0 && draw_line_clip_bottom(line) == 0) {
-					return 0;
-				}
-				break;
+			}
+		} else if ((clip & DRAW_LINE_CLIP_BOTTOM) != 0) {
+			if (draw_line_clip_bottom(line) == 0) {
+				return 0;
+			}
+		} else {
+			return draw_line_apply_horizontal_clipping(line, clip);
 		}
 		clip_result = draw_line_find_horizontal_clip(line, &clip);
 		if (clip_result != 0) {
