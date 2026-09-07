@@ -1,0 +1,15 @@
+# C sources and headers only. Bundled compiler headers in tools/include are
+# intentionally outside this section. CRLF matches .gitattributes.
+root = true
+
+[src/**.{c,h}]
+charset = utf-8
+indent_style = tab
+indent_size = 4
+tab_width = 4
+end_of_line = crlf
+insert_final_newline = true
+trim_trailing_whitespace = true
+max_line_length = 100
+
+# C layout and mandatory braces are configured in .clang-format.

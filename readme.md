@@ -57,6 +57,64 @@ Main repository: https://github.com/4d-stunts/restunts
 		framebuffer at frame 0 and every fifth frame thereafter.
 
 
+## C coding style
+
+Project `.c` and `.h` files under `src/` use tabs with a width of four columns,
+a 100-column target, K&R braces (function opening braces on their own line),
+and a required braced body for every `if`, `else`, `for`, `while`, and `do`.
+Conventional `else if` chains are allowed. Empty loops also need braces. Keep
+CRLF line endings, as required by `.gitattributes`. Bundled compiler headers
+under `tools/include/` are excluded.
+
+Two standard tools check the style directly:
+
+- [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker)
+  reads the whitespace rules in `.editorconfig`. Its Python package installs
+  the `ec` command. `.editorconfig-checker.json` limits discovery to `src/`
+  and permits alignment spaces after indentation tabs. Only C/H files have
+  EditorConfig rules.
+- [clang-format](https://clang.llvm.org/docs/ClangFormat.html) reads C layout
+  and brace rules from `.clang-format`. Keep its whitespace settings consistent
+  with `.editorconfig`. Include order is preserved for the legacy compiler.
+
+Install the pinned tools once in a Python virtual environment:
+
+```sh
+python3 -m venv .venv
+# Linux/macOS:
+. .venv/bin/activate
+# Windows cmd.exe: .venv\Scripts\activate.bat
+python -m pip install -r tools/scripts/requirements-format.txt
+```
+
+From the repository root, check against `.editorconfig` with one command:
+
+```sh
+ec
+```
+
+Check C formatting too (Bash or Git Bash):
+
+```sh
+git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
+```
+
+Format all tracked project C/H files:
+
+```sh
+git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format -i
+```
+
+For an individual file, use `clang-format -i path/to/file.c`. Add new files to
+Git before running the commands based on `git ls-files`. CI runs both checks
+for pull requests and before releases. No project-specific formatter or checker
+script is needed.
+
+Braces are required even where clang-format cannot insert them automatically,
+including macro bodies, empty loops, and bodies spanning preprocessor
+branches. Review those cases manually; a successful clang-format check does
+not prove that those cases have braces.
+
 ## How to build
 
 ### On Windows

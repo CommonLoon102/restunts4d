@@ -19,7 +19,7 @@ extern void full_data_initialize(void);
 
 #define dos_program_main run_main_menu_loop
 #else
-extern legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]);
+extern legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[]);
 #define dos_program_main stuntsmain
 #endif
 extern legacy_u8 headless_bss_start;
@@ -34,7 +34,7 @@ static legacy_s8 headless_program_name[] = "PIXLDUMP";
 static legacy_s8 headless_program_name[] = "REPLDUMP";
 #endif
 static legacy_s8 headless_command_line[HEADLESS_COMMAND_LINE_SIZE];
-static legacy_s8* headless_argv[HEADLESS_MAX_ARGS];
+static legacy_s8 *headless_argv[HEADLESS_MAX_ARGS];
 
 void headless_exit(legacy_s16 result)
 {
@@ -58,7 +58,7 @@ static void headless_release_extra_memory(void)
 
 static legacy_s16 headless_parse_command_line(void)
 {
-	legacy_u8 far* source;
+	legacy_u8 far *source;
 	legacy_u16 source_length;
 	legacy_u16 source_index;
 	legacy_u16 destination_index;
@@ -66,8 +66,7 @@ static legacy_s16 headless_parse_command_line(void)
 	legacy_u8 character;
 	legacy_u8 quoted;
 
-	source = (legacy_u8 far*)MK_FP(headless_psp_segment,
-		HEADLESS_PSP_COMMAND_LINE_OFFSET);
+	source = (legacy_u8 far *)MK_FP(headless_psp_segment, HEADLESS_PSP_COMMAND_LINE_OFFSET);
 	source_length = source[0];
 	source_index = 1;
 	destination_index = 0;
@@ -75,12 +74,14 @@ static legacy_s16 headless_parse_command_line(void)
 	headless_argv[0] = headless_program_name;
 
 	while (source_index <= source_length && argc < HEADLESS_MAX_ARGS &&
-		destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
+		   destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
 		while (source_index <= source_length &&
-			(source[source_index] == ' ' || source[source_index] == '\t'))
+			   (source[source_index] == ' ' || source[source_index] == '\t')) {
 			source_index++;
-		if (source_index > source_length)
+		}
+		if (source_index > source_length) {
 			break;
+		}
 
 		headless_argv[argc++] = &headless_command_line[destination_index];
 		quoted = 0;
@@ -90,10 +91,12 @@ static legacy_s16 headless_parse_command_line(void)
 				quoted ^= 1U;
 				continue;
 			}
-			if (!quoted && (character == ' ' || character == '\t'))
+			if (!quoted && (character == ' ' || character == '\t')) {
 				break;
-			if (destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE)
+			}
+			if (destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
 				headless_command_line[destination_index++] = character;
+			}
 		}
 		headless_command_line[destination_index++] = 0;
 	}

@@ -27,8 +27,7 @@
 static legacy_s16 dos_file_errno;
 static struct find_t dos_find_data;
 
-static legacy_u16 dos_file_open_lfn(const legacy_s8* path,
-	legacy_s16 create)
+static legacy_u16 dos_file_open_lfn(const legacy_s8 *path, legacy_s16 create)
 {
 	legacy_u16 path_offset;
 	legacy_u16 access_mode;
@@ -36,12 +35,10 @@ static legacy_u16 dos_file_open_lfn(const legacy_s8* path,
 	legacy_u16 handle;
 
 	path_offset = FP_OFF(path);
-	access_mode = create != DOS_FILE_OPEN_EXISTING ?
-		DOS_FILE_READ_WRITE_ACCESS :
-		DOS_FILE_READ_ONLY_ACCESS;
-	action = create != DOS_FILE_OPEN_EXISTING ?
-		DOS_FILE_CREATE_OR_TRUNCATE_ACTION :
-		DOS_FILE_OPEN_EXISTING_ACTION;
+	access_mode =
+		create != DOS_FILE_OPEN_EXISTING ? DOS_FILE_READ_WRITE_ACCESS : DOS_FILE_READ_ONLY_ACCESS;
+	action = create != DOS_FILE_OPEN_EXISTING ? DOS_FILE_CREATE_OR_TRUNCATE_ACTION
+											  : DOS_FILE_OPEN_EXISTING_ACTION;
 	handle = 0;
 	__asm {
 		push si
@@ -62,7 +59,7 @@ static legacy_u16 dos_file_open_lfn(const legacy_s8* path,
 	return handle;
 }
 
-legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create)
+legacy_u16 dos_file_open(const legacy_s8 *path, legacy_s16 create)
 {
 	legacy_u16 path_offset;
 	legacy_u16 handle;
@@ -70,8 +67,9 @@ legacy_u16 dos_file_open(const legacy_s8* path, legacy_s16 create)
 	path_offset = FP_OFF(path);
 	dos_file_errno = 0;
 	handle = dos_file_open_lfn(path, create);
-	if (handle != 0)
+	if (handle != 0) {
 		return handle;
+	}
 	if (create != DOS_FILE_OPEN_EXISTING) {
 		__asm {
 			mov ah, DOS_FILE_CREATE_FUNCTION
@@ -117,8 +115,7 @@ legacy_s16 dos_file_close(legacy_u16 handle)
 	return result;
 }
 
-legacy_u16 dos_file_read(legacy_u16 handle, void far* destination,
-	legacy_u16 length)
+legacy_u16 dos_file_read(legacy_u16 handle, void far *destination, legacy_u16 length)
 {
 	legacy_u16 segment;
 	legacy_u16 buffer_offset;
@@ -147,8 +144,7 @@ legacy_u16 dos_file_read(legacy_u16 handle, void far* destination,
 	return result;
 }
 
-legacy_u16 dos_file_write(legacy_u16 handle, const void far* source,
-	legacy_u16 length)
+legacy_u16 dos_file_write(legacy_u16 handle, const void far *source, legacy_u16 length)
 {
 	legacy_u16 segment;
 	legacy_u16 buffer_offset;
@@ -177,8 +173,7 @@ legacy_u16 dos_file_write(legacy_u16 handle, const void far* source,
 	return result;
 }
 
-legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset,
-	legacy_s16 origin)
+legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset, legacy_s16 origin)
 {
 	legacy_u16 low;
 	legacy_u16 high;
@@ -186,8 +181,7 @@ legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset,
 
 	low = (legacy_u16)offset;
 	high = (legacy_u16)((legacy_u32)offset >> LEGACY_WORD_BITS);
-	command = (legacy_u16)(DOS_FILE_SEEK_COMMAND_BASE |
-		(legacy_u16)origin);
+	command = (legacy_u16)(DOS_FILE_SEEK_COMMAND_BASE | (legacy_u16)origin);
 	__asm {
 		mov ax, command
 		mov bx, handle
@@ -231,7 +225,7 @@ legacy_s16 dos_file_error(void)
 	return result;
 }
 
-legacy_s16 dos_file_remove(const legacy_s8* path)
+legacy_s16 dos_file_remove(const legacy_s8 *path)
 {
 	legacy_u16 segment;
 	legacy_u16 path_offset;
@@ -257,7 +251,7 @@ legacy_s16 dos_file_remove(const legacy_s8* path)
 	return result;
 }
 
-const legacy_s8* dos_file_find_first(const legacy_s8* query)
+const legacy_s8 *dos_file_find_first(const legacy_s8 *query)
 {
 	legacy_u8 attributes;
 	legacy_s16 result;
@@ -281,11 +275,13 @@ const legacy_s8* dos_file_find_first(const legacy_s8* query)
 	find_done:
 	}
 	if (result != 0)
+	{
 		return 0;
+	}
 	return dos_find_data.name;
 }
 
-const legacy_s8* dos_file_find_next(void)
+const legacy_s8 *dos_file_find_next(void)
 {
 	legacy_s16 result;
 
@@ -305,6 +301,8 @@ const legacy_s8* dos_file_find_next(void)
 	find_next_done:
 	}
 	if (result != 0)
+	{
 		return 0;
+	}
 	return dos_find_data.name;
 }

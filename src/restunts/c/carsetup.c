@@ -29,54 +29,50 @@ extern legacy_s8 opponent_speed_resource_id[];
 #define OPPONENT_ROUTE_DISTANCE_CAPACITY 259U
 #define OPPONENT_ROUTE_DISTANCE_LIMIT 999999UL
 
-static void legacy_car_filename(legacy_s8* destination,
-	const legacy_s8 car_id[CAR_ID_LENGTH],
-	const legacy_s8 extension[CAR_RESOURCE_EXTENSION_LENGTH])
+static void legacy_car_filename(legacy_s8 *destination, const legacy_s8 car_id[CAR_ID_LENGTH],
+								const legacy_s8 extension[CAR_RESOURCE_EXTENSION_LENGTH])
 {
 	legacy_u16 index;
 
 	destination[0] = 's';
 	destination[1] = 't';
-	for (index = 0U; index < CAR_ID_LENGTH; index++)
+	for (index = 0U; index < CAR_ID_LENGTH; index++) {
 		destination[index + CAR_FILENAME_PREFIX_LENGTH] = car_id[index];
-	for (index = 0U; index < CAR_RESOURCE_EXTENSION_LENGTH; index++)
-		destination[index + CAR_FILENAME_PREFIX_LENGTH + CAR_ID_LENGTH] =
-			extension[index];
+	}
+	for (index = 0U; index < CAR_RESOURCE_EXTENSION_LENGTH; index++) {
+		destination[index + CAR_FILENAME_PREFIX_LENGTH + CAR_ID_LENGTH] = extension[index];
+	}
 }
 
-static legacy_u16 legacy_car_model_paragraphs(
-	const legacy_s8 car_id[CAR_ID_LENGTH])
+static legacy_u16 legacy_car_model_paragraphs(const legacy_s8 car_id[CAR_ID_LENGTH])
 {
 	legacy_s8 filename[CAR_RESOURCE_FILENAME_LENGTH];
-	static const legacy_s8 compressed_extension[
-		CAR_RESOURCE_EXTENSION_LENGTH] = {
-		'.', 'p', '3', 's', 0
-	};
-	static const legacy_s8 raw_extension[CAR_RESOURCE_EXTENSION_LENGTH] = {
-		'.', '3', 's', 'h', 0
-	};
+	static const legacy_s8 compressed_extension[CAR_RESOURCE_EXTENSION_LENGTH] = {'.', 'p', '3',
+																				  's', 0};
+	static const legacy_s8 raw_extension[CAR_RESOURCE_EXTENSION_LENGTH] = {'.', '3', 's', 'h', 0};
 	legacy_u16 paragraphs;
 
 	legacy_car_filename(filename, car_id, compressed_extension);
 	paragraphs = file_decomp_paras_nofatal(filename);
-	if (paragraphs != 0U)
+	if (paragraphs != 0U) {
 		return paragraphs;
+	}
 	legacy_car_filename(filename, car_id, raw_extension);
 	return file_paras_nofatal(filename);
 }
 
-static legacy_s16 legacy_raw_resource_word(const legacy_s8* filename,
-	legacy_u32 offset, legacy_s16* value)
+static legacy_s16 legacy_raw_resource_word(const legacy_s8 *filename, legacy_u32 offset,
+										   legacy_s16 *value)
 {
 	legacy_u8 bytes[LEGACY_RESOURCE_WORD_SIZE];
 	legacy_u16 handle;
 
 	handle = dos_file_open(filename, DOS_FILE_OPEN_EXISTING);
-	if (handle == 0U)
+	if (handle == 0U) {
 		return 0;
+	}
 	if (dos_file_seek(handle, (legacy_s32)offset, DOS_FILE_SEEK_BEGIN) != 0 ||
-		dos_file_read(handle, bytes, LEGACY_RESOURCE_WORD_SIZE) !=
-		LEGACY_RESOURCE_WORD_SIZE) {
+		dos_file_read(handle, bytes, LEGACY_RESOURCE_WORD_SIZE) != LEGACY_RESOURCE_WORD_SIZE) {
 		(void)dos_file_close(handle);
 		return 0;
 	}
@@ -85,8 +81,8 @@ static legacy_s16 legacy_raw_resource_word(const legacy_s8* filename,
 	return 1;
 }
 
-static legacy_s16 legacy_alias_from_raw_resource(
-	const legacy_s8* filename, legacy_u32* cursor, legacy_s16* value)
+static legacy_s16 legacy_alias_from_raw_resource(const legacy_s8 *filename, legacy_u32 *cursor,
+												 legacy_s16 *value)
 {
 	legacy_u16 paragraphs;
 	legacy_u32 length;
@@ -122,33 +118,31 @@ void setup_legacy_penalty_route_word(void)
 	legacy_s16 value;
 
 	value = (legacy_s16)LEGACY_S16_MAX;
-	cursor = (legacy_u32)(LEGACY_TRACKDATA_PARAGRAPHS +
-		LEGACY_CVX_PARAGRAPHS) * LEGACY_PARAGRAPH_SIZE;
-	player_model_paragraphs = legacy_car_model_paragraphs(
-		gameconfig.game_playercarid);
+	cursor =
+		(legacy_u32)(LEGACY_TRACKDATA_PARAGRAPHS + LEGACY_CVX_PARAGRAPHS) * LEGACY_PARAGRAPH_SIZE;
+	player_model_paragraphs = legacy_car_model_paragraphs(gameconfig.game_playercarid);
 	cursor += (legacy_u32)player_model_paragraphs * LEGACY_PARAGRAPH_SIZE;
 
 	if ((legacy_u8)gameconfig.game_opponentcarid[0] != LEGACY_U8_MAX) {
 		same_car = 1;
 		for (index = 0U; index < CAR_ID_LENGTH; index++) {
-			if (gameconfig.game_playercarid[index] !=
-				gameconfig.game_opponentcarid[index])
+			if (gameconfig.game_playercarid[index] != gameconfig.game_opponentcarid[index]) {
 				same_car = 0;
+			}
 		}
 		if (same_car != 0) {
-			cursor += (legacy_u32)LEGACY_U16_WRAP_ADD(
-				player_model_paragraphs, 1U) * LEGACY_PARAGRAPH_SIZE;
+			cursor += (legacy_u32)LEGACY_U16_WRAP_ADD(player_model_paragraphs, 1U) *
+					  LEGACY_PARAGRAPH_SIZE;
 		} else {
-			opponent_model_paragraphs = legacy_car_model_paragraphs(
-				gameconfig.game_opponentcarid);
-			cursor += (legacy_u32)opponent_model_paragraphs *
-				LEGACY_PARAGRAPH_SIZE;
+			opponent_model_paragraphs = legacy_car_model_paragraphs(gameconfig.game_opponentcarid);
+			cursor += (legacy_u32)opponent_model_paragraphs * LEGACY_PARAGRAPH_SIZE;
 		}
 	}
 
 	if (legacy_alias_from_raw_resource("pceng1.vce", &cursor, &value) == 0 &&
-		legacy_alias_from_raw_resource("geeng.sfx", &cursor, &value) == 0)
+		legacy_alias_from_raw_resource("geeng.sfx", &cursor, &value) == 0) {
 		(void)legacy_alias_from_raw_resource("fontled.fnt", &cursor, &value);
+	}
 	legacy_execution_residue.penalty_route_word = value;
 }
 
@@ -157,41 +151,39 @@ static void opponent_route_write(legacy_u16 index, legacy_u16 value)
 	legacy_u16 offset;
 
 	offset = LEGACY_U16_WRAP_MUL(index, 2U);
-	LEGACY_WRITE_U16_LE((legacy_u8 far*)opponent_route_track_indices + offset, value);
+	LEGACY_WRITE_U16_LE((legacy_u8 far *)opponent_route_track_indices + offset, value);
 }
 
-static legacy_s16 aero_resistance_at(legacy_s16 resistance,
-	legacy_s16 speed_index)
+static legacy_s16 aero_resistance_at(legacy_s16 resistance, legacy_s16 speed_index)
 {
 	legacy_s32 product;
 
 	product = LEGACY_S32_WRAP_MUL(resistance, speed_index);
 	product = LEGACY_S32_WRAP_MUL(product, speed_index);
-	return LEGACY_S16_FROM_BITS(
-		(legacy_u16)LEGACY_S32_SAR(product, 9U));
+	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(product, 9U));
 }
 
-void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent)
+void setup_aero_trackdata(void far *carresptr, legacy_s16 is_opponent)
 {
 	legacy_s16 i;
-	const legacy_u8 far* simd_resource;
+	const legacy_u8 far *simd_resource;
 
-	simd_resource = (const legacy_u8 far*)locate_shape_alt(
-		carresptr, "simd");
+	simd_resource = (const legacy_u8 far *)locate_shape_alt(carresptr, "simd");
 
 	if (is_opponent == 0) {
 		(void)simd_decode(&simd_player, simd_resource);
 		simd_player.aerorestable = player_aero_resistance_table;
-		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++)
-			player_aero_resistance_table[i] = aero_resistance_at(
-				simd_player.aero_resistance, i);
+		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++) {
+			player_aero_resistance_table[i] = aero_resistance_at(simd_player.aero_resistance, i);
+		}
 		copy_string(gnam_string, locate_shape_alt(carresptr, "gnam"));
 	} else {
 		(void)simd_decode(&simd_opponent, simd_resource);
 		simd_opponent.aerorestable = opponent_aero_resistance_table;
-		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++)
-			opponent_aero_resistance_table[i] = aero_resistance_at(
-				simd_opponent.aero_resistance, i);
+		for (i = 0; i < AERO_RESISTANCE_TABLE_COUNT; i++) {
+			opponent_aero_resistance_table[i] =
+				aero_resistance_at(simd_opponent.aero_resistance, i);
+		}
 		copy_string(gsna_string, locate_shape_alt(carresptr, "gsna"));
 	}
 }
@@ -202,8 +194,8 @@ void load_opponent_data(void)
 	legacy_u16 pending_track[OPPONENT_ROUTE_BRANCH_CAPACITY];
 	legacy_u16 pending_path_count[OPPONENT_ROUTE_BRANCH_CAPACITY];
 	legacy_u32 pending_distance[OPPONENT_ROUTE_DISTANCE_CAPACITY];
-	void far* resource;
-	legacy_u8 far* speed_data;
+	void far *resource;
+	legacy_u8 far *speed_data;
 	legacy_u32 distance;
 	legacy_u32 best_distance;
 	legacy_u16 track_index;
@@ -219,12 +211,13 @@ void load_opponent_data(void)
 	opponent_resource_name[3] = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype + '0');
 	resource = file_load_resfile(opponent_resource_name);
 	copy_string(opponent_highscore_name,
-		locate_text_res((legacy_s8 far*)resource, opponent_name_text_id));
-	(void)locate_shape_alt((legacy_s8 far*)resource, opponent_path_resource_id);
-	speed_data = (legacy_u8 far*)locate_shape_alt(
-		(legacy_s8 far*)resource, opponent_speed_resource_id);
-	for (index = 0; index < OPPONENT_SPEED_COUNT; index++)
+				locate_text_res((legacy_s8 far *)resource, opponent_name_text_id));
+	(void)locate_shape_alt((legacy_s8 far *)resource, opponent_path_resource_id);
+	speed_data =
+		(legacy_u8 far *)locate_shape_alt((legacy_s8 far *)resource, opponent_speed_resource_id);
+	for (index = 0; index < OPPONENT_SPEED_COUNT; index++) {
 		oppnentSped[index] = speed_data[index];
+	}
 
 	best_distance = OPPONENT_ROUTE_DISTANCE_LIMIT;
 	distance = 0;
@@ -254,8 +247,7 @@ void load_opponent_data(void)
 		speed_index = (legacy_u8)track_route_element_ids[track_index];
 		distance += (legacy_u32)speed_data[speed_index] + 1UL;
 		if (!terminal) {
-			alternate_track = (legacy_u16)
-				track_alternate_route_links[track_index];
+			alternate_track = (legacy_u16)track_alternate_route_links[track_index];
 			if (alternate_track != LEGACY_U16_MAX) {
 				pending_track[pending_count] = alternate_track;
 				pending_path_count[pending_count] = path_count;
@@ -270,14 +262,15 @@ void load_opponent_data(void)
 			path[path_count] = 0;
 			path_count++;
 			best_distance = distance;
-			for (index = 0; index < path_count; index++)
+			for (index = 0; index < path_count; index++) {
 				opponent_route_write(index, path[index]);
+			}
 			opponent_route_write(path_count, 0U);
-			opponent_route_write(
-				LEGACY_U16_WRAP_ADD(path_count, 1U), 1U);
+			opponent_route_write(LEGACY_U16_WRAP_ADD(path_count, 1U), 1U);
 		}
-		if (pending_count == 0)
+		if (pending_count == 0) {
 			break;
+		}
 		pending_count--;
 		track_index = pending_track[pending_count];
 		path_count = pending_path_count[pending_count];
@@ -289,20 +282,22 @@ void load_opponent_data(void)
 #ifdef RESTUNTS_HEADLESS
 legacy_s16 setup_player_cars_repldump(void)
 {
-	void far* car_resource;
+	void far *car_resource;
 	legacy_u16 index;
 
 	setup_legacy_penalty_route_word();
 
-	for (index = 0; index < CAR_ID_LENGTH; index++)
+	for (index = 0; index < CAR_ID_LENGTH; index++) {
 		car_resource_name[index + 3U] = gameconfig.game_playercarid[index];
+	}
 	car_resource = file_load_resfile(car_resource_name);
 	setup_aero_trackdata(car_resource, 0);
 	unload_resource(car_resource);
 
 	if (gameconfig.game_opponenttype != 0) {
-		for (index = 0; index < CAR_ID_LENGTH; index++)
+		for (index = 0; index < CAR_ID_LENGTH; index++) {
 			car_resource_name[index + 3U] = gameconfig.game_opponentcarid[index];
+		}
 		car_resource = file_load_resfile(car_resource_name);
 		setup_aero_trackdata(car_resource, 1);
 		unload_resource(car_resource);

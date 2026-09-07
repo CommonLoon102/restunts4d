@@ -23,8 +23,8 @@ extern legacy_s8 opponent_portrait_clip_id[];
 extern legacy_s8 opponent_description_id[];
 extern legacy_s8 opponent_racing_car_label_id[];
 extern struct BUTTON_AREA opponentmenu_buttons[5];
-extern legacy_s8 far* opp_res;
-extern legacy_s8 far* oppresources[7];
+extern legacy_s8 far *opp_res;
+extern legacy_s8 far *oppresources[7];
 extern legacy_s8 car_resource_extension[];
 extern legacy_s8 car_resource_wildcard[];
 extern legacy_s8 car_menu_shapes_name[];
@@ -143,8 +143,8 @@ extern legacy_s16 credits_music_heading_shadow_color;
 
 void draw_track_preview(void);
 void load_tracks_menu_shapes(void);
-extern struct SHAPE2D far* track_editor_cursor_shapes[];
-extern struct SHAPE2D far* track_editor_under_cursor_shapes[];
+extern struct SHAPE2D far *track_editor_cursor_shapes[];
+extern struct SHAPE2D far *track_editor_under_cursor_shapes[];
 extern legacy_s16 track_editor_highlight_color;
 
 extern struct RECTANGLE shaperect;
@@ -152,7 +152,7 @@ extern struct TRANSFORMEDSHAPE3D transshape;
 extern struct RECTANGLE cliprect;
 extern struct VECTOR carpos;
 extern struct RECTANGLE highscore_text_bounds;
-extern void far* miscptr;
+extern void far *miscptr;
 extern legacy_s16 graphics_menu_background_color;
 extern legacy_s8 exit_to_dos_dialog_id[];
 extern legacy_s8 keyboard_driving_dialog_id[];
@@ -166,8 +166,8 @@ extern legacy_s8 pause_dialog_id[];
 extern legacy_s8 effects_disabled_message_id[];
 extern legacy_s8 effects_enabled_message_id[];
 
-extern struct SHAPE2D far* track_editor_terrain_shapes[];
-extern struct SHAPE2D far* track_editor_tile_shapes[];
-extern struct SHAPE2D far* track_editor_tile_masks[];
+extern struct SHAPE2D far *track_editor_terrain_shapes[];
+extern struct SHAPE2D far *track_editor_tile_shapes[];
+extern struct SHAPE2D far *track_editor_tile_masks[];
 
 #endif

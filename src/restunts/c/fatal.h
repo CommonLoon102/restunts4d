@@ -8,9 +8,9 @@
 #define EXIT_HANDLER_MAX_COUNT 10
 #define EXIT_HANDLER_SLOT_COUNT (EXIT_HANDLER_MAX_COUNT + 1U)
 
-void add_exit_handler(void (far* exit_handler)(void));
+void add_exit_handler(void(far *exit_handler)(void));
 void call_exitlist(void);
 void call_exitlist2(void);
-void fatal_error(const legacy_s8* format, ...);
+void fatal_error(const legacy_s8 *format, ...);
 
 #endif

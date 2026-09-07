@@ -26,8 +26,8 @@
 
 void update_follow_cameras(void)
 {
-	struct VECTOR* previous_position;
-	struct CARSTATE* carstate;
+	struct VECTOR *previous_position;
+	struct CARSTATE *carstate;
 	struct VECTOR target;
 	legacy_s16 car_x;
 	legacy_s16 car_y;
@@ -47,105 +47,92 @@ void update_follow_cameras(void)
 	legacy_u16 divisor;
 	legacy_u8 candidate;
 
-	car_count = gameconfig.game_opponenttype == 0 ?
-		ACTIVE_CAR_COUNT_WITHOUT_OPPONENT : ACTIVE_CAR_COUNT_WITH_OPPONENT;
+	car_count = gameconfig.game_opponenttype == 0 ? ACTIVE_CAR_COUNT_WITHOUT_OPPONENT
+												  : ACTIVE_CAR_COUNT_WITH_OPPONENT;
 	for (car_index = 0; car_index < car_count; car_index++) {
-		previous_position = car_index == PLAYER_CAR_INDEX ?
-			&state.game_player_camera_previous : &state.game_opponent_camera_previous;
+		previous_position = car_index == PLAYER_CAR_INDEX ? &state.game_player_camera_previous
+														  : &state.game_opponent_camera_previous;
 		*previous_position = state.game_follow_camera_position[car_index];
-		carstate = car_index == PLAYER_CAR_INDEX ?
-			&state.playerstate : &state.opponentstate;
-		car_x = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_position.lx, CAR_WORLD_POSITION_SHIFT));
-		car_y = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_position.ly, CAR_WORLD_POSITION_SHIFT));
-		car_z = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-			carstate->car_position.lz, CAR_WORLD_POSITION_SHIFT));
+		carstate = car_index == PLAYER_CAR_INDEX ? &state.playerstate : &state.opponentstate;
+		car_x = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S32_SAR(carstate->car_position.lx, CAR_WORLD_POSITION_SHIFT));
+		car_y = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S32_SAR(carstate->car_position.ly, CAR_WORLD_POSITION_SHIFT));
+		car_z = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S32_SAR(carstate->car_position.lz, CAR_WORLD_POSITION_SHIFT));
 		target = carstate->car_route_target;
 		if ((car_index == PLAYER_CAR_INDEX &&
-			(state.game_player_route_status != ROUTE_TRACKING_NORMAL ||
-				state.game_route_confirmation_count != ROUTE_CONFIRMATION_NONE)) ||
+			 (state.game_player_route_status != ROUTE_TRACKING_NORMAL ||
+			  state.game_route_confirmation_count != ROUTE_CONFIRMATION_NONE)) ||
 			carstate->car_route_has_reverse_path != 0 ||
 			carstate->car_crashBmpFlag != CRASH_EVENT_NONE ||
 			carstate->car_route_index == ROUTE_INDEX_NONE ||
 			(carstate->car_route_heading_error > CAMERA_TARGET_OVERRIDE_FIELD_MIN &&
-			carstate->car_route_heading_error < CAMERA_TARGET_OVERRIDE_FIELD_END)) {
+			 carstate->car_route_heading_error < CAMERA_TARGET_OVERRIDE_FIELD_END)) {
 			target.x = car_x;
 			target.y = car_y;
 			target.z = car_z;
 		}
 
 		target_y = LEGACY_S16_WRAP_ADD(car_y, CAMERA_TARGET_HEIGHT);
-		delta_y = LEGACY_S16_WRAP_SUB(
-			state.game_follow_camera_position[car_index].y, target_y);
+		delta_y = LEGACY_S16_WRAP_SUB(state.game_follow_camera_position[car_index].y, target_y);
 		if (delta_y != 0) {
-			if (delta_y > CAMERA_VERTICAL_STEP_LIMIT)
+			if (delta_y > CAMERA_VERTICAL_STEP_LIMIT) {
 				delta_y = CAMERA_VERTICAL_STEP_LIMIT;
-			else if (delta_y < -CAMERA_VERTICAL_STEP_LIMIT)
+			} else if (delta_y < -CAMERA_VERTICAL_STEP_LIMIT) {
 				delta_y = -CAMERA_VERTICAL_STEP_LIMIT;
-			state.game_follow_camera_position[car_index].y = LEGACY_S16_WRAP_SUB(
-				state.game_follow_camera_position[car_index].y, delta_y);
+			}
+			state.game_follow_camera_position[car_index].y =
+				LEGACY_S16_WRAP_SUB(state.game_follow_camera_position[car_index].y, delta_y);
 		}
 
 		angle = (legacy_s16)polarAngle(
-			LEGACY_S16_WRAP_SUB(
-				target.x, state.game_follow_camera_position[car_index].x),
-			LEGACY_S16_WRAP_SUB(
-				target.z, state.game_follow_camera_position[car_index].z));
+			LEGACY_S16_WRAP_SUB(target.x, state.game_follow_camera_position[car_index].x),
+			LEGACY_S16_WRAP_SUB(target.z, state.game_follow_camera_position[car_index].z));
 		distance = (legacy_s16)polarRadius2D(
-			LEGACY_S16_WRAP_SUB(
-				car_x, state.game_follow_camera_position[car_index].x),
-			LEGACY_S16_WRAP_SUB(
-				car_z, state.game_follow_camera_position[car_index].z));
+			LEGACY_S16_WRAP_SUB(car_x, state.game_follow_camera_position[car_index].x),
+			LEGACY_S16_WRAP_SUB(car_z, state.game_follow_camera_position[car_index].z));
 		if (distance > CAMERA_FOLLOW_DISTANCE) {
-			adjustment = LEGACY_S16_WRAP_SUB(distance,
-				CAMERA_FOLLOW_DISTANCE);
+			adjustment = LEGACY_S16_WRAP_SUB(distance, CAMERA_FOLLOW_DISTANCE);
 			if (framespersec == GAME_FRAME_RATE_NORMAL) {
-				if (adjustment > CAMERA_FULL_RATE_STEP_LIMIT)
+				if (adjustment > CAMERA_FULL_RATE_STEP_LIMIT) {
 					adjustment = CAMERA_FULL_RATE_STEP_LIMIT;
+				}
 			} else if (adjustment > CAMERA_REDUCED_RATE_STEP_LIMIT) {
 				adjustment = CAMERA_REDUCED_RATE_STEP_LIMIT;
 			}
-			state.game_follow_camera_position[car_index].x = LEGACY_S16_WRAP_ADD(
-				state.game_follow_camera_position[car_index].x,
-				multiply_and_scale(adjustment,
-					sin_fast((legacy_u16)angle)));
-			state.game_follow_camera_position[car_index].z = LEGACY_S16_WRAP_ADD(
-				state.game_follow_camera_position[car_index].z,
-				multiply_and_scale(adjustment,
-					cos_fast((legacy_u16)angle)));
+			state.game_follow_camera_position[car_index].x =
+				LEGACY_S16_WRAP_ADD(state.game_follow_camera_position[car_index].x,
+									multiply_and_scale(adjustment, sin_fast((legacy_u16)angle)));
+			state.game_follow_camera_position[car_index].z =
+				LEGACY_S16_WRAP_ADD(state.game_follow_camera_position[car_index].z,
+									multiply_and_scale(adjustment, cos_fast((legacy_u16)angle)));
 		}
 
-		divisor = LEGACY_U16_SAR(framespersec,
-			TRACK_POINT_UPDATE_DIVISOR_SHIFT);
-		if (divisor != 0 &&
-			(legacy_u16)state.game_frame % divisor != 0)
+		divisor = LEGACY_U16_SAR(framespersec, TRACK_POINT_UPDATE_DIVISOR_SHIFT);
+		if (divisor != 0 && (legacy_u16)state.game_frame % divisor != 0) {
 			continue;
+		}
 		nearest_distance = TRACK_POINT_INITIAL_DISTANCE;
 		for (candidate = 0;
-			LEGACY_S8_FROM_BITS(candidate) <
-				LEGACY_S8_FROM_BITS(trackside_camera_count);
-			candidate++) {
-			delta_x = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackside_camera_positions[candidate].x,
-				(legacy_s32)car_x);
-			delta_z = LEGACY_S32_WRAP_SUB(
-				(legacy_s32)trackside_camera_positions[candidate].z,
-				(legacy_s32)car_z);
-			absolute_x = delta_x < 0 ?
-				LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
-			if (absolute_x >= nearest_distance)
+			 LEGACY_S8_FROM_BITS(candidate) < LEGACY_S8_FROM_BITS(trackside_camera_count);
+			 candidate++) {
+			delta_x = LEGACY_S32_WRAP_SUB((legacy_s32)trackside_camera_positions[candidate].x,
+										  (legacy_s32)car_x);
+			delta_z = LEGACY_S32_WRAP_SUB((legacy_s32)trackside_camera_positions[candidate].z,
+										  (legacy_s32)car_z);
+			absolute_x = delta_x < 0 ? LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
+			if (absolute_x >= nearest_distance) {
 				continue;
-			absolute_z = delta_z < 0 ?
-				LEGACY_S32_WRAP_NEGATE(delta_z) : delta_z;
-			if (absolute_z >= nearest_distance)
+			}
+			absolute_z = delta_z < 0 ? LEGACY_S32_WRAP_NEGATE(delta_z) : delta_z;
+			if (absolute_z >= nearest_distance) {
 				continue;
-			distance = polarRadius2D(
-				LEGACY_S16_FROM_BITS((legacy_u16)delta_x),
-				LEGACY_S16_FROM_BITS((legacy_u16)delta_z));
+			}
+			distance = polarRadius2D(LEGACY_S16_FROM_BITS((legacy_u16)delta_x),
+									 LEGACY_S16_FROM_BITS((legacy_u16)delta_z));
 			if (distance < nearest_distance) {
-				state.game_trackside_camera_index[car_index] =
-					LEGACY_S8_FROM_BITS(candidate);
+				state.game_trackside_camera_index[car_index] = LEGACY_S8_FROM_BITS(candidate);
 				nearest_distance = distance;
 			}
 		}
@@ -158,30 +145,24 @@ void update_gamestate(void)
 	legacy_u16 checkpoint_index;
 
 	car_input = replay_input_buffer[(legacy_u16)state.game_frame];
-	if (car_input != INPUT_NONE)
+	if (car_input != INPUT_NONE) {
 		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
+	}
 
 	if (checkpoint_frame_interval == 0 ||
 		((legacy_u16)state.game_frame % (legacy_u16)checkpoint_frame_interval) == 0) {
 		get_kevinrandom_seed(state.kevinseed);
-		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(
-			state.game_frame, checkpoint_frame_interval);
-		fmemcpy(&cvxptr[checkpoint_index],
-			&state,
-			sizeof(struct GAMESTATE));
+		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(state.game_frame, checkpoint_frame_interval);
+		fmemcpy(&cvxptr[checkpoint_index], &state, sizeof(struct GAMESTATE));
 	}
 
 	state.game_frame = LEGACY_S16_WRAP_ADD(state.game_frame, 1);
-	if (state.game_end_event != 0 &&
-		state.game_frame_in_sec < state.game_frames_per_sec) {
-		state.game_frame_in_sec = LEGACY_S16_WRAP_ADD(
-			state.game_frame_in_sec, 1);
-		if (state.game_frame_in_sec == state.game_frames_per_sec &&
-			race_exit_request == 0) {
+	if (state.game_end_event != 0 && state.game_frame_in_sec < state.game_frames_per_sec) {
+		state.game_frame_in_sec = LEGACY_S16_WRAP_ADD(state.game_frame_in_sec, 1);
+		if (state.game_frame_in_sec == state.game_frames_per_sec && race_exit_request == 0) {
 			if (state.playerstate.car_crashBmpFlag == 1 &&
 				state.playerstate.car_actual_speed != CAR_SPEED_STOPPED) {
-				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(
-					state.game_frames_per_sec, 1);
+				state.game_frames_per_sec = LEGACY_S16_WRAP_ADD(state.game_frames_per_sec, 1);
 			} else if (game_replay_mode == REPLAY_MODE_LIVE) {
 				race_exit_request = 1;
 			}
@@ -190,11 +171,13 @@ void update_gamestate(void)
 
 	if (state.game_inputmode != GAME_INPUT_MODE_WAITING) {
 		update_player_tick(car_input);
-		if (gameconfig.game_opponenttype != 0)
+		if (gameconfig.game_opponenttype != 0) {
 			update_opponent_tick();
+		}
 		update_follow_cameras();
-		if (state.game_particles_active != 0)
+		if (state.game_particles_active != 0) {
 			update_crash_particles();
+		}
 #ifndef RESTUNTS_HEADLESS
 		audio_carstate();
 #endif
@@ -203,33 +186,36 @@ void update_gamestate(void)
 		audio_carstate();
 #endif
 		if (race_start_sequence_state != RACE_START_SEQUENCE_INACTIVE) {
-			if (start_flag_animation < START_FLAG_ANIMATION_LIMIT)
-				start_flag_animation = LEGACY_S16_WRAP_ADD(start_flag_animation,
-					START_FLAG_ANIMATION_STEP);
+			if (start_flag_animation < START_FLAG_ANIMATION_LIMIT) {
+				start_flag_animation =
+					LEGACY_S16_WRAP_ADD(start_flag_animation, START_FLAG_ANIMATION_STEP);
+			}
 			if (race_start_sequence_state == RACE_START_SEQUENCE_FLAG_ANIMATION &&
-				start_flag_animation > START_FLAG_AUTO_DRIVE_THRESHOLD)
+				start_flag_animation > START_FLAG_AUTO_DRIVE_THRESHOLD) {
 				race_start_sequence_state = RACE_START_SEQUENCE_AUTO_DRIVE;
+			}
 			if (race_start_sequence_state == RACE_START_SEQUENCE_AUTO_DRIVE) {
 				if (LEGACY_S16_WRAP_ADD(
-					multiply_and_scale(cos_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
-							LEGACY_S16_FROM_BITS((legacy_u16)
-								LEGACY_S32_SAR(
-									state.playerstate.car_position.lz,
-									CAR_WORLD_POSITION_SHIFT)))),
-					multiply_and_scale(sin_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(track_column_centers[start_finish_column],
-							LEGACY_S16_FROM_BITS((legacy_u16)
-								LEGACY_S32_SAR(
-									state.playerstate.car_position.lx,
-									CAR_WORLD_POSITION_SHIFT))))) <=
+						multiply_and_scale(
+							cos_fast(track_angle),
+							LEGACY_S16_WRAP_SUB(
+								track_row_centers[start_finish_row],
+								LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+									state.playerstate.car_position.lz, CAR_WORLD_POSITION_SHIFT)))),
+						multiply_and_scale(
+							sin_fast(track_angle),
+							LEGACY_S16_WRAP_SUB(track_column_centers[start_finish_column],
+												LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+													state.playerstate.car_position.lx,
+													CAR_WORLD_POSITION_SHIFT))))) <=
 					START_SEQUENCE_LINE_DISTANCE) {
-					if (state.playerstate.car_rev_speed != CAR_SPEED_STOPPED)
+					if (state.playerstate.car_rev_speed != CAR_SPEED_STOPPED) {
 						update_player_tick(INPUT_BRAKE_FLAG);
-					else
+					} else {
 						race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
+					}
 				} else if (state.playerstate.car_rev_speed <
-					START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
+						   START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
 					update_player_tick(INPUT_ACCELERATE_FLAG);
 				} else {
 					update_player_tick(INPUT_NONE);

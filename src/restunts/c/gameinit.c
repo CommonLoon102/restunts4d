@@ -31,62 +31,50 @@ static legacy_s16 angle_with_offset(legacy_s16 angle, legacy_s16 offset)
 	return LEGACY_S16_WRAP_ADD(angle, offset);
 }
 
-static legacy_s32 track_coordinate_to_world(legacy_s16 base,
-	legacy_s16 offset)
+static legacy_s32 track_coordinate_to_world(legacy_s16 base, legacy_s16 offset)
 {
 	legacy_s16 coordinate;
 
 	coordinate = LEGACY_S16_WRAP_ADD(base, offset);
-	return LEGACY_S32_SHL((legacy_s32)coordinate,
-		CAR_WORLD_POSITION_SHIFT);
+	return LEGACY_S32_SHL((legacy_s32)coordinate, CAR_WORLD_POSITION_SHIFT);
 }
 
-static void calculate_car_start_offset(legacy_s16 track_direction,
-	legacy_s16 side_direction, legacy_s16* column_offset,
-	legacy_s16* row_offset)
+static void calculate_car_start_offset(legacy_s16 track_direction, legacy_s16 side_direction,
+									   legacy_s16 *column_offset, legacy_s16 *row_offset)
 {
 	*column_offset = LEGACY_S16_WRAP_ADD(
-		multiply_and_scale(sin_fast(angle_with_offset(
-			track_direction, ANGLE_HALF_TURN)),
-			CAR_START_LONGITUDINAL_OFFSET),
-		multiply_and_scale(sin_fast(angle_with_offset(
-			track_direction, side_direction)), CAR_START_LATERAL_OFFSET));
+		multiply_and_scale(sin_fast(angle_with_offset(track_direction, ANGLE_HALF_TURN)),
+						   CAR_START_LONGITUDINAL_OFFSET),
+		multiply_and_scale(sin_fast(angle_with_offset(track_direction, side_direction)),
+						   CAR_START_LATERAL_OFFSET));
 	*row_offset = LEGACY_S16_WRAP_ADD(
-		multiply_and_scale(cos_fast(angle_with_offset(
-			track_direction, ANGLE_HALF_TURN)),
-			CAR_START_LONGITUDINAL_OFFSET),
-		multiply_and_scale(cos_fast(angle_with_offset(
-			track_direction, side_direction)), CAR_START_LATERAL_OFFSET));
+		multiply_and_scale(cos_fast(angle_with_offset(track_direction, ANGLE_HALF_TURN)),
+						   CAR_START_LONGITUDINAL_OFFSET),
+		multiply_and_scale(cos_fast(angle_with_offset(track_direction, side_direction)),
+						   CAR_START_LATERAL_OFFSET));
 }
 
-static void init_car_at_start(struct CARSTATE* carstate, struct SIMD* simd,
-	legacy_s8 transmission, legacy_s16 column_offset,
-	legacy_s16 row_offset)
+static void init_car_at_start(struct CARSTATE *carstate, struct SIMD *simd, legacy_s8 transmission,
+							  legacy_s16 column_offset, legacy_s16 row_offset)
 {
 	init_carstate_from_simd(
-		carstate,
-		simd,
-		transmission,
-		track_coordinate_to_world(
-			track_column_centers[start_finish_column], column_offset),
-		LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag],
-			CAR_WORLD_POSITION_SHIFT),
-		track_coordinate_to_world(
-			track_row_centers[start_finish_row], row_offset),
+		carstate, simd, transmission,
+		track_coordinate_to_world(track_column_centers[start_finish_column], column_offset),
+		LEGACY_S32_SHL((legacy_s32)hillHeightConsts[hillFlag], CAR_WORLD_POSITION_SHIFT),
+		track_coordinate_to_world(track_row_centers[start_finish_row], row_offset),
 		LEGACY_S16_WRAP_NEGATE(track_angle));
 }
 
-void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
-	legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
-	legacy_s32 posZ, legacy_s16 track_angle)
+void init_carstate_from_simd(struct CARSTATE *playerstate, struct SIMD *simd,
+							 legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
+							 legacy_s32 posZ, legacy_s16 track_angle)
 {
 	legacy_s16 i;
 	struct VECTOR whlPos;
 
 	playerstate->car_position.lx = posX;
 	playerstate->car_previous_position.lx = posX;
-	playerstate->car_position.ly = LEGACY_S32_WRAP_ADD(
-		posY, CAR_INITIAL_BODY_HEIGHT);
+	playerstate->car_position.ly = LEGACY_S32_WRAP_ADD(posY, CAR_INITIAL_BODY_HEIGHT);
 	playerstate->car_previous_position.ly = posY;
 	playerstate->car_position.lz = posZ;
 	playerstate->car_previous_position.lz = posZ;
@@ -108,8 +96,7 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_actual_speed = CAR_SPEED_STOPPED;
 	playerstate->car_lastspeed = CAR_SPEED_STOPPED;
 	playerstate->car_gearratio = simd->gear_ratios[CAR_INITIAL_GEAR_INDEX];
-	playerstate->car_gearratioshr8 =
-		playerstate->car_gearratio >> LEGACY_BYTE_BITS;
+	playerstate->car_gearratioshr8 = playerstate->car_gearratio >> LEGACY_BYTE_BITS;
 	playerstate->car_knob_x = simd->knob_points[CAR_INITIAL_GEAR_INDEX].px;
 	playerstate->car_knob_x2 = playerstate->car_knob_x;
 	playerstate->car_knob_y = simd->knob_points[CAR_INITIAL_GEAR_INDEX].py;
@@ -125,12 +112,12 @@ void init_carstate_from_simd(struct CARSTATE* playerstate, struct SIMD* simd,
 	playerstate->car_demandedGrip = 0;
 	playerstate->car_surfacegrip_sum = CAR_INITIAL_SURFACE_GRIP;
 
-	whlPos.x = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S32_DIV_OR_ZERO(posX, CAR_WORLD_POSITION_SCALE));
-	whlPos.y = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S32_DIV_OR_ZERO(posY, CAR_WORLD_POSITION_SCALE));
-	whlPos.z = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S32_DIV_OR_ZERO(posZ, CAR_WORLD_POSITION_SCALE));
+	whlPos.x =
+		LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(posX, CAR_WORLD_POSITION_SCALE));
+	whlPos.y =
+		LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(posY, CAR_WORLD_POSITION_SCALE));
+	whlPos.z =
+		LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(posZ, CAR_WORLD_POSITION_SCALE));
 
 	for (i = 0; i < CARSTATE_WHEEL_COUNT; ++i) {
 		playerstate->car_surfaceWhl[i] = CAR_SURFACE_PAVED;
@@ -165,20 +152,21 @@ void init_game_state(legacy_s16 initialization_mode)
 
 	if (initialization_mode == GAMESTATE_INIT_RESET_CHECKPOINTS) {
 		elapsed_time1 = 0;
-		for (i = 0; i < GAMESTATE_CHECKPOINT_COUNT; ++i)
+		for (i = 0; i < GAMESTATE_CHECKPOINT_COUNT; ++i) {
 			cvxptr[i].game_checkpoint_valid = GAMESTATE_CHECKPOINT_INVALID;
+		}
 	}
 
-	if (framespersec == GAME_FRAME_RATE_LOW)
+	if (framespersec == GAME_FRAME_RATE_LOW) {
 		steerWhlRespTable_ptr = steerWhlRespTable_10fps;
-	else
+	} else {
 		steerWhlRespTable_ptr = steerWhlRespTable_20fps;
+	}
 
 	checkpoint_frame_interval = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_WRAP_MUL(framespersec,
-			GAMESTATE_CHECKPOINT_INTERVAL_SECONDS));
-	timer_ticks_per_frame = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_DIV_OR_ZERO(TIMER_TICKS_PER_SECOND, framespersec));
+		LEGACY_U16_WRAP_MUL(framespersec, GAMESTATE_CHECKPOINT_INTERVAL_SECONDS));
+	timer_ticks_per_frame =
+		LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(TIMER_TICKS_PER_SECOND, framespersec));
 
 	if (initialization_mode != GAMESTATE_INIT_TIMING_ONLY) {
 		reset_race_loop_state();
@@ -192,30 +180,30 @@ void init_game_state(legacy_s16 initialization_mode)
 		state.game_trackside_camera_index[0] = 0;
 		state.game_trackside_camera_index[1] = 0;
 
-		for (i = 0; i < GAMESTATE_BREAKABLE_OBJECT_COUNT; ++i)
+		for (i = 0; i < GAMESTATE_BREAKABLE_OBJECT_COUNT; ++i) {
 			state.game_object_destroyed[i] = 0;
-		for (i = 0; i < GAMESTATE_PARTICLE_SLOT_COUNT; ++i)
+		}
+		for (i = 0; i < GAMESTATE_PARTICLE_SLOT_COUNT; ++i) {
 			state.game_particle_forward_speed[i] = 0;
+		}
 
-		state.game_follow_camera_position[PLAYER_CAR_INDEX].x =
-			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-				multiply_and_scale(sin_fast(angle_with_offset(
-					track_angle, ANGLE_THREE_QUARTER_TURN)),
+		state.game_follow_camera_position[PLAYER_CAR_INDEX].x = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(
+				multiply_and_scale(
+					sin_fast(angle_with_offset(track_angle, ANGLE_THREE_QUARTER_TURN)),
 					INITIAL_CAMERA_LATERAL_OFFSET),
-				multiply_and_scale(sin_fast(angle_with_offset(
-					track_angle, ANGLE_HALF_TURN)), INITIAL_CAMERA_DISTANCE)),
-				LEGACY_S16_SHL((legacy_s16)start_finish_column,
-					INITIAL_CAMERA_TILE_SHIFT));
-		state.game_follow_camera_position[PLAYER_CAR_INDEX].y = LEGACY_S16_WRAP_ADD(
-			hillHeightConsts[hillFlag], INITIAL_CAMERA_HEIGHT);
-		state.game_follow_camera_position[PLAYER_CAR_INDEX].z =
-			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(
-				multiply_and_scale(cos_fast(angle_with_offset(
-					track_angle, ANGLE_HALF_TURN)), INITIAL_CAMERA_DISTANCE),
+				multiply_and_scale(sin_fast(angle_with_offset(track_angle, ANGLE_HALF_TURN)),
+								   INITIAL_CAMERA_DISTANCE)),
+			LEGACY_S16_SHL((legacy_s16)start_finish_column, INITIAL_CAMERA_TILE_SHIFT));
+		state.game_follow_camera_position[PLAYER_CAR_INDEX].y =
+			LEGACY_S16_WRAP_ADD(hillHeightConsts[hillFlag], INITIAL_CAMERA_HEIGHT);
+		state.game_follow_camera_position[PLAYER_CAR_INDEX].z = LEGACY_S16_WRAP_ADD(
+			LEGACY_S16_WRAP_ADD(
+				multiply_and_scale(cos_fast(angle_with_offset(track_angle, ANGLE_HALF_TURN)),
+								   INITIAL_CAMERA_DISTANCE),
 				track_row_positions[start_finish_row]),
-				multiply_and_scale(cos_fast(angle_with_offset(
-					track_angle, ANGLE_THREE_QUARTER_TURN)),
-					INITIAL_CAMERA_LATERAL_OFFSET));
+			multiply_and_scale(cos_fast(angle_with_offset(track_angle, ANGLE_THREE_QUARTER_TURN)),
+							   INITIAL_CAMERA_LATERAL_OFFSET));
 
 		state.game_follow_camera_position[OPPONENT_CAR_INDEX] =
 			state.game_follow_camera_position[PLAYER_CAR_INDEX];
@@ -232,15 +220,11 @@ void init_game_state(legacy_s16 initialization_mode)
 		state.game_topSpeed = 0;
 		state.game_jumpCount = 0;
 
-		calculate_car_start_offset(track_angle, ANGLE_QUARTER_TURN,
-			&start_column_offset, &start_row_offset);
+		calculate_car_start_offset(track_angle, ANGLE_QUARTER_TURN, &start_column_offset,
+								   &start_row_offset);
 
-		init_car_at_start(
-			&state.playerstate,
-			&simd_player,
-			gameconfig.game_playertransmission,
-			start_column_offset,
-			start_row_offset);
+		init_car_at_start(&state.playerstate, &simd_player, gameconfig.game_playertransmission,
+						  start_column_offset, start_row_offset);
 
 		state.game_player_confirmed_route = 0;
 		state.game_player_route_indicator = ROUTE_INDICATOR_NONE;
@@ -254,39 +238,31 @@ void init_game_state(legacy_s16 initialization_mode)
 
 		if (initialization_mode != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.playerstate.car_route_point_index;
-			get_track_route_point(
-				state.playerstate.car_route_index,
-				&state.playerstate.car_route_target,
-				(legacy_s16)route_point,
-				0);
-			state.playerstate.car_route_point_index = LEGACY_S8_WRAP_ADD(
-				route_point, ROUTE_POINT_STEP);
+			get_track_route_point(state.playerstate.car_route_index,
+								  &state.playerstate.car_route_target, (legacy_s16)route_point, 0);
+			state.playerstate.car_route_point_index =
+				LEGACY_S8_WRAP_ADD(route_point, ROUTE_POINT_STEP);
 		}
 
-		calculate_car_start_offset(track_angle, ANGLE_THREE_QUARTER_TURN,
-			&start_column_offset, &start_row_offset);
+		calculate_car_start_offset(track_angle, ANGLE_THREE_QUARTER_TURN, &start_column_offset,
+								   &start_row_offset);
 
-		init_car_at_start(
-			&state.opponentstate,
-			&simd_opponent,
-			TRANSMISSION_AUTOMATIC,
-			start_column_offset,
-			start_row_offset);
+		init_car_at_start(&state.opponentstate, &simd_opponent, TRANSMISSION_AUTOMATIC,
+						  start_column_offset, start_row_offset);
 
 		if (gameconfig.game_opponenttype &&
 			initialization_mode != GAMESTATE_INIT_SKIP_ROUTE_SETUP) {
 			route_point = (legacy_u8)state.opponentstate.car_route_point_index;
 			opponent_route_advance((legacy_s16)route_point);
-			state.opponentstate.car_route_point_index = LEGACY_S8_WRAP_ADD(
-				route_point, ROUTE_POINT_STEP);
+			state.opponentstate.car_route_point_index =
+				LEGACY_S8_WRAP_ADD(route_point, ROUTE_POINT_STEP);
 		}
 
 		state.game_particles_active = 0;
 	}
 }
 
-static void init_game_state_with_rates(legacy_u16 frame_rate,
-	legacy_u16 stored_frame_rate)
+static void init_game_state_with_rates(legacy_u16 frame_rate, legacy_u16 stored_frame_rate)
 {
 	framespersec = frame_rate;
 	gameconfig.game_framespersec = stored_frame_rate;
@@ -300,37 +276,38 @@ void init_game_state_with_frame_rate(legacy_u16 frame_rate)
 
 void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate)
 {
-	init_game_state_with_rates(frame_rate,
-		LEGACY_U16_REPLACE_LOW_BYTE(
-			gameconfig.game_framespersec, frame_rate));
+	init_game_state_with_rates(
+		frame_rate, LEGACY_U16_REPLACE_LOW_BYTE(gameconfig.game_framespersec, frame_rate));
 }
 
 void restore_gamestate(legacy_u16 frame)
 {
 	legacy_u16 curframe;
 
-	if (frame == 0 && elapsed_time1 == 0)
+	if (frame == 0 && elapsed_time1 == 0) {
 		init_game_state(GAMESTATE_INIT_NORMAL);
+	}
 
 	curframe = LEGACY_U16_DIV_OR_ZERO(frame, checkpoint_frame_interval);
-	if (curframe == GAMESTATE_CHECKPOINT_COUNT)
-		curframe = LEGACY_U16_WRAP_SUB(
-			curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
+	if (curframe == GAMESTATE_CHECKPOINT_COUNT) {
+		curframe = LEGACY_U16_WRAP_SUB(curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
+	}
 
 	/* Find the newest valid checkpoint preceding the requested frame. */
 	if (frame >= state.game_frame) {
 		while (1) {
-			if (LEGACY_U16_WRAP_MUL(curframe, checkpoint_frame_interval) <=
-				state.game_frame)
+			if (LEGACY_U16_WRAP_MUL(curframe, checkpoint_frame_interval) <= state.game_frame) {
 				return;
-			if (cvxptr[curframe].game_checkpoint_valid != GAMESTATE_CHECKPOINT_INVALID)
+			}
+			if (cvxptr[curframe].game_checkpoint_valid != GAMESTATE_CHECKPOINT_INVALID) {
 				break;
+			}
 			/* A newly loaded replay has no checkpoints yet.  Stop at the
 			 * initial state instead of wrapping before the checkpoint array. */
-			if (curframe == 0)
+			if (curframe == 0) {
 				return;
-			curframe = LEGACY_U16_WRAP_SUB(
-				curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
+			}
+			curframe = LEGACY_U16_WRAP_SUB(curframe, GAMESTATE_CHECKPOINT_INDEX_STEP);
 		}
 	}
 

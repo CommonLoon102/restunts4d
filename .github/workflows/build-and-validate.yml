@@ -1,8 +1,8 @@
 name: Build and validate
 
-# Runs the host regression tests, builds the four DOS executables and replays
-# the golden replay set against them. Called by the pull request check and by
-# the release workflow, so both gate on exactly the same validation.
+# Checks C/H formatting, runs the host regression tests, builds the four DOS
+# executables and replays the golden replay set against them. Called by the
+# pull request check and the release workflow, so both gate on the same validation.
 on:
   workflow_call:
     inputs:
@@ -37,6 +37,22 @@ env:
   WINEDLLOVERRIDES: mscoree,mshtml=
 
 jobs:
+  formatting:
+    name: C/H formatting
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install pinned formatting tools
+        run: python3 -m pip install -r tools/scripts/requirements-format.txt
+
+      - name: Validate C/H formatting against .editorconfig
+        run: ec
+
+      - name: Validate C layout and braces with clang-format
+        run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
+
   plan:
     name: Plan the shards
     runs-on: ubuntu-24.04

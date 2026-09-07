@@ -26,8 +26,7 @@ static legacy_u16 dos_mouse_available;
 static legacy_u16 dos_mouse_last_x;
 static legacy_u16 dos_mouse_last_y;
 
-static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal,
-	legacy_u16 vertical)
+static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal, legacy_u16 vertical)
 {
 	union REGS registers;
 
@@ -37,8 +36,8 @@ static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal,
 	int86(DOS_MOUSE_INTERRUPT, &registers, &registers);
 }
 
-void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y,
-	legacy_s16 maximum_x, legacy_s16 maximum_y)
+void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y, legacy_s16 maximum_x,
+						  legacy_s16 maximum_y)
 {
 	union REGS registers;
 	legacy_u16 scale;
@@ -76,13 +75,10 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	installed = (legacy_s16)registers.x.ax;
 	dos_mouse_button_count = registers.x.bx;
 	if (installed != 0) {
-		dos_mouse_horizontal_scale = width == DOS_MOUSE_DOUBLE_WIDTH ?
-			DOS_MOUSE_DOUBLE_WIDTH_SCALE : 0U;
-		dos_mouse_set_minmax(0, 0,
-			LEGACY_S16_WRAP_SUB(width, 1),
-			LEGACY_S16_WRAP_SUB(height, 1));
-		dos_mouse_set_pixel_ratio(DOS_MOUSE_DEFAULT_PIXEL_RATIO,
-			DOS_MOUSE_DEFAULT_PIXEL_RATIO);
+		dos_mouse_horizontal_scale =
+			width == DOS_MOUSE_DOUBLE_WIDTH ? DOS_MOUSE_DOUBLE_WIDTH_SCALE : 0U;
+		dos_mouse_set_minmax(0, 0, LEGACY_S16_WRAP_SUB(width, 1), LEGACY_S16_WRAP_SUB(height, 1));
+		dos_mouse_set_pixel_ratio(DOS_MOUSE_DEFAULT_PIXEL_RATIO, DOS_MOUSE_DEFAULT_PIXEL_RATIO);
 		dos_mouse_available = DOS_MOUSE_AVAILABLE;
 	}
 	return installed;
@@ -100,7 +96,7 @@ void dos_mouse_set_position(legacy_s16 x, legacy_s16 y)
 	int86(DOS_MOUSE_INTERRUPT, &registers, &registers);
 }
 
-void dos_mouse_get_state(legacy_s16* buttons, legacy_s16* x, legacy_s16* y)
+void dos_mouse_get_state(legacy_s16 *buttons, legacy_s16 *x, legacy_s16 *y)
 {
 	union REGS registers;
 

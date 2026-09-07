@@ -13,8 +13,7 @@
  * target supplies the same runtime storage explicitly. */
 legacy_s16 _errno;
 
-static legacy_s16 dos_write_handle(legacy_u16 handle,
-	const legacy_s8* text, legacy_u16 length)
+static legacy_s16 dos_write_handle(legacy_u16 handle, const legacy_s8 *text, legacy_u16 length)
 {
 	legacy_s16 result;
 
@@ -35,12 +34,12 @@ static legacy_s16 dos_write_handle(legacy_u16 handle,
 	return result;
 }
 
-legacy_s16 dos_write_stdout(const legacy_s8* text, legacy_u16 length)
+legacy_s16 dos_write_stdout(const legacy_s8 *text, legacy_u16 length)
 {
 	return dos_write_handle(DOS_RUNTIME_STDOUT_HANDLE, text, length);
 }
 
-legacy_s16 dos_write_stderr(const legacy_s8* text, legacy_u16 length)
+legacy_s16 dos_write_stderr(const legacy_s8 *text, legacy_u16 length)
 {
 	return dos_write_handle(DOS_RUNTIME_STDERR_HANDLE, text, length);
 }
@@ -53,7 +52,8 @@ void dos_process_exit(legacy_s16 status)
 		int     DOS_RUNTIME_INTERRUPT
 	}
 
-	for (;;) {
+	for (;;)
+	{
 	}
 }
 

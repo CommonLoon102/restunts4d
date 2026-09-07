@@ -6,23 +6,17 @@
 struct CARSTATE;
 struct SIMD;
 
-enum GRIP_BEHAVIOR {
-	GRIP_BEHAVIOR_OPPONENT = 0,
-	GRIP_BEHAVIOR_PLAYER = 1
-};
+enum GRIP_BEHAVIOR { GRIP_BEHAVIOR_OPPONENT = 0, GRIP_BEHAVIOR_PLAYER = 1 };
 
 extern legacy_s16 grassDecelDivTab[];
 
-legacy_s16 detect_penalty(legacy_s16* current_track,
-	legacy_s16* penalty_count);
-void update_grip(struct CARSTATE* carstate, struct SIMD* simd,
-	legacy_s16 grip_behavior);
-void update_legacy_grip_stack_words(struct CARSTATE* carstate,
-	struct SIMD* simd, legacy_u16 speed_before_grip,
-	legacy_u16 speed2_before_grip);
-void update_player_state(struct CARSTATE* playerstate,
-	struct SIMD* playersimd, struct CARSTATE* opponentstate,
-	struct SIMD* opponentsimd, legacy_s16 car_index);
+legacy_s16 detect_penalty(legacy_s16 *current_track, legacy_s16 *penalty_count);
+void update_grip(struct CARSTATE *carstate, struct SIMD *simd, legacy_s16 grip_behavior);
+void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd,
+									legacy_u16 speed_before_grip, legacy_u16 speed2_before_grip);
+void update_player_state(struct CARSTATE *playerstate, struct SIMD *playersimd,
+						 struct CARSTATE *opponentstate, struct SIMD *opponentsimd,
+						 legacy_s16 car_index);
 
 void update_player_steering_input(legacy_s8 steering_input);
 

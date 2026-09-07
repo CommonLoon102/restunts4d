@@ -3,7 +3,8 @@
 
 #define HEAPSORT_GAP_DIVISOR 2
 
-void heapsort_by_order(legacy_s16 count, legacy_s16* values, legacy_s16* order) {
+void heapsort_by_order(legacy_s16 count, legacy_s16 *values, legacy_s16 *order)
+{
 	legacy_s16 gap;
 	legacy_s16 counter;
 	legacy_s16 index;

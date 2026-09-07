@@ -37,29 +37,27 @@
 #define MOUSE_SCREEN_INSET 15
 #define MOUSE_TRACK_POSITION_SCALE 4
 
-static const legacy_u8 far input_direction_table[INPUT_DIRECTION_COUNT] = {
-	0, 1, 5, 0, 3, 2, 4, 3, 7, 8, 6, 7, 0, 1, 5, 0
-};
+static const legacy_u8 far input_direction_table[INPUT_DIRECTION_COUNT] = {0, 1, 5, 0, 3, 2, 4, 3,
+																		   7, 8, 6, 7, 0, 1, 5, 0};
 static legacy_u8 input_callback_flags[INPUT_ASCII_KEY_COUNT];
 static legacy_u8 input_extended_callback_flags[INPUT_EXTENDED_KEY_COUNT];
-static void (far* input_callbacks[INPUT_CALLBACK_COUNT])(void);
+static void(far *input_callbacks[INPUT_CALLBACK_COUNT])(void);
 static legacy_u8 input_callback_dispatching;
 static readchar_callback_type input_readchar_callback = kb_read_char;
-struct SPRITE far* mouse_small_sprite;
-struct SPRITE far* mouse_medium_sprite;
-struct SPRITE far* mouse_background_sprite;
+struct SPRITE far *mouse_small_sprite;
+struct SPRITE far *mouse_medium_sprite;
+struct SPRITE far *mouse_background_sprite;
 legacy_s8 mouse_background_dirty;
 static legacy_s8 mouse_transparent_mode;
 static legacy_u8 h_key_toggle;
 static legacy_s16 input_elapsed_frames;
 
 /* A control that has not changed still fires again once the configured repeat
-   delay has elapsed. */
+ * delay has elapsed. */
 static legacy_s16 input_repeat_due(legacy_s16 repeat_at)
 {
-	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(
-		repeat_at, INPUT_REPEAT_DELAY_FRAMES)) <
-		LEGACY_S16_FROM_BITS(input_elapsed_frames);
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(repeat_at, INPUT_REPEAT_DELAY_FRAMES)) <
+		   LEGACY_S16_FROM_BITS(input_elapsed_frames);
 }
 static legacy_s16 input_mouse_repeat_at;
 static legacy_s16 input_joystick_repeat_at;
@@ -72,40 +70,42 @@ static legacy_s16 input_mouse_previous_x;
 static legacy_s16 input_mouse_previous_y;
 static legacy_s16 input_mouse_previous_buttons;
 static legacy_s16 input_mouse_keycode;
-static const legacy_u8 input_key_scancodes[INPUT_KEY_COUNT] = {
-	57, 28, 71, 72, 73, 77, 81, 80, 79, 75
-};
+static const legacy_u8 input_key_scancodes[INPUT_KEY_COUNT] = {57, 28, 71, 72, 73,
+															   77, 81, 80, 79, 75};
 static legacy_u8 input_mode_stack_depth;
 static legacy_s8 input_draw_mode_stack[INPUT_MODE_STACK_LIMIT];
 static legacy_s8 input_device_mode_stack[INPUT_MODE_STACK_LIMIT];
 
-void kb_reg_callback(legacy_s16 code, void (far* callback)(void))
+void kb_reg_callback(legacy_s16 code, void(far *callback)(void))
 {
 	legacy_u16 code_bits;
 	legacy_u16 callback_index;
 	legacy_u16 key_index;
 
-	for (callback_index = 0; callback_index < INPUT_CALLBACK_COUNT;
-		callback_index++) {
-		if (input_callbacks[callback_index] == callback)
+	for (callback_index = 0; callback_index < INPUT_CALLBACK_COUNT; callback_index++) {
+		if (input_callbacks[callback_index] == callback) {
 			break;
+		}
 		if (dos_memory_pointer_segment(input_callbacks[callback_index]) == 0U) {
 			input_callbacks[callback_index] = callback;
 			break;
 		}
 	}
-	if (callback_index == INPUT_CALLBACK_COUNT)
+	if (callback_index == INPUT_CALLBACK_COUNT) {
 		return;
+	}
 
 	code_bits = (legacy_u16)code;
 	if ((code_bits & INPUT_ASCII_BYTE_MASK) != 0) {
-		if (code_bits <= INPUT_ASCII_INDEX_MASK)
+		if (code_bits <= INPUT_ASCII_INDEX_MASK) {
 			input_callback_flags[code_bits] = (legacy_u8)(callback_index + 1U);
+		}
 		return;
 	}
 	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
-	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX)
+	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX) {
 		input_extended_callback_flags[key_index] = (legacy_u8)(callback_index + 1U);
+	}
 }
 
 legacy_s16 kb_parse_key(legacy_s16 code)
@@ -129,8 +129,9 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 		code_bits = key_index;
 	} else {
 		key_index = code_bits >> LEGACY_BYTE_BITS;
-		if (key_index >= INPUT_EXTENDED_KEY_MAX_INDEX)
+		if (key_index >= INPUT_EXTENDED_KEY_MAX_INDEX) {
 			key_index = INPUT_EXTENDED_KEY_MAX_INDEX;
+		}
 		callback_number = input_extended_callback_flags[key_index];
 	}
 
@@ -149,13 +150,15 @@ void kb_remove_callback(legacy_s16 code)
 
 	code_bits = (legacy_u16)code;
 	if ((code_bits & INPUT_ASCII_BYTE_MASK) != 0) {
-		if (code_bits <= INPUT_ASCII_INDEX_MASK)
+		if (code_bits <= INPUT_ASCII_INDEX_MASK) {
 			input_callback_flags[code_bits] = 0;
+		}
 		return;
 	}
 	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
-	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX)
+	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX) {
 		input_extended_callback_flags[key_index] = 0;
+	}
 }
 
 void kb_set_readchar_callback(readchar_callback_type callback)
@@ -191,39 +194,37 @@ legacy_s16 joystick_get_scaled_y(void)
 void load_palandcursor(void)
 {
 	legacy_u8 palette[VGA_PALETTE_BYTE_COUNT];
-	legacy_s8 far* resource;
-	struct SHAPE2D far* mouse_shape;
+	legacy_s8 far *resource;
+	struct SHAPE2D far *mouse_shape;
 	legacy_u16 mouse_width;
 	legacy_u16 mouse_height;
 	legacy_u16 i;
 
-	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
-	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "!pal");
-	for (i = 0; i < sizeof(palette); ++i)
-		palette[i] = ((legacy_u8 far*)mouse_shape)[SHAPE2D_HEADER_SIZE + i];
+	resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
+	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "!pal");
+	for (i = 0; i < sizeof(palette); ++i) {
+		palette[i] = ((legacy_u8 far *)mouse_shape)[SHAPE2D_HEADER_SIZE + i];
+	}
 	dos_video_set_palette(0, VGA_PALETTE_COLOR_COUNT, palette);
 
-	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
-	mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) *
-		video_x_alignment);
+	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "smou");
+	mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) * video_x_alignment);
 	mouse_height = shape2d_get_height(mouse_shape);
 	mmgr_free(resource);
 
-	mouse_small_sprite = sprite_make_wnd(mouse_width, mouse_height,
-		MOUSE_SPRITE_TRANSPARENT_COLOR);
-	mouse_medium_sprite = sprite_make_wnd(mouse_width, mouse_height,
-		MOUSE_SPRITE_TRANSPARENT_COLOR);
-	mouse_background_sprite = sprite_make_wnd(
-		mouse_width + video_x_alignment, mouse_height,
-		MOUSE_SPRITE_TRANSPARENT_COLOR);
+	mouse_small_sprite = sprite_make_wnd(mouse_width, mouse_height, MOUSE_SPRITE_TRANSPARENT_COLOR);
+	mouse_medium_sprite =
+		sprite_make_wnd(mouse_width, mouse_height, MOUSE_SPRITE_TRANSPARENT_COLOR);
+	mouse_background_sprite = sprite_make_wnd(mouse_width + video_x_alignment, mouse_height,
+											  MOUSE_SPRITE_TRANSPARENT_COLOR);
 
-	resource = (legacy_s8 far*)file_load_shape2d_fatal("sdmain");
+	resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
 	sprite_select_target(mouse_small_sprite);
-	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "smou");
+	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "smou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
 	sprite_select_target(mouse_medium_sprite);
-	mouse_shape = (struct SHAPE2D far*)locate_shape_fatal(resource, "mmou");
+	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "mmou");
 	sprite_shape_to_1(mouse_shape, 0, 0);
 
 	mmgr_free(resource);
@@ -233,63 +234,67 @@ void load_palandcursor(void)
 legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 {
 	switch (key) {
-	case KEY_ESCAPE:
-		if (game_replay_mode == REPLAY_MODE_LIVE)
-			update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
-		race_exit_request = 1;
-		return 1;
+		case KEY_ESCAPE:
+			if (game_replay_mode == REPLAY_MODE_LIVE) {
+				update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
+			}
+			race_exit_request = 1;
+			return 1;
 
-	case 'D':
-	case 'd':
-		dashb_toggle ^= 1;
-		return 1;
+		case 'D':
+		case 'd':
+			dashb_toggle ^= 1;
+			return 1;
 
-	case 'H':
-	case 'h':
-		h_key_toggle ^= 1;
-		return 1;
+		case 'H':
+		case 'h':
+			h_key_toggle ^= 1;
+			return 1;
 
-	case 'M':
-	case 'm':
-		select_mouse_driving();
-		mouse_minmax_position(LEGACY_S8_FROM_BITS(mouse_driving_enabled));
-		return 1;
+		case 'M':
+		case 'm':
+			select_mouse_driving();
+			mouse_minmax_position(LEGACY_S8_FROM_BITS(mouse_driving_enabled));
+			return 1;
 
-	case 'R':
-	case 'r':
-		replaybar_toggle ^= 1;
-		return 1;
+		case 'R':
+		case 'r':
+			replaybar_toggle ^= 1;
+			return 1;
 
-	case 'C':
-	case 'c':
-		if (game_replay_mode != REPLAY_MODE_PAUSED) {
-			cameramode++;
-			if (cameramode == CAMERA_MODE_COUNT)
-				cameramode = CAMERA_MODE_COCKPIT;
-		}
-		return 1;
+		case 'C':
+		case 'c':
+			if (game_replay_mode != REPLAY_MODE_PAUSED) {
+				cameramode++;
+				if (cameramode == CAMERA_MODE_COUNT) {
+					cameramode = CAMERA_MODE_COCKPIT;
+				}
+			}
+			return 1;
 
-	case 't':
-		if (gameconfig.game_opponenttype != 0)
-			followOpponentFlag ^= 1;
-		return 1;
+		case 't':
+			if (gameconfig.game_opponenttype != 0) {
+				followOpponentFlag ^= 1;
+			}
+			return 1;
 
-	case KEY_F1:
-		cameramode = CAMERA_MODE_COCKPIT;
-		return 1;
-	case KEY_F2:
-		cameramode = CAMERA_MODE_FOLLOW;
-		return 1;
-	case KEY_F3:
-		cameramode = CAMERA_MODE_CUSTOM;
-		return 1;
-	case KEY_F4:
-		cameramode = CAMERA_MODE_TRACKSIDE;
-		return 1;
+		case KEY_F1:
+			cameramode = CAMERA_MODE_COCKPIT;
+			return 1;
+		case KEY_F2:
+			cameramode = CAMERA_MODE_FOLLOW;
+			return 1;
+		case KEY_F3:
+			cameramode = CAMERA_MODE_CUSTOM;
+			return 1;
+		case KEY_F4:
+			cameramode = CAMERA_MODE_TRACKSIDE;
+			return 1;
 	}
 
-	if (game_replay_mode != REPLAY_MODE_PAUSED)
+	if (game_replay_mode != REPLAY_MODE_PAUSED) {
 		return 0;
+	}
 
 	game_replay_mode = REPLAY_MODE_LIVE;
 	race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
@@ -300,29 +305,32 @@ legacy_s16 handle_ingame_kb_shortcuts(legacy_s16 key)
 void mouse_draw_transparent_check(void)
 {
 	mouse_transparent_mode = 1;
-	if (kbormouse != 0 && mouse_background_dirty == 0)
+	if (kbormouse != 0 && mouse_background_dirty == 0) {
 		mouse_draw_transparent();
+	}
 }
 
 void mouse_draw_opaque_check(void)
 {
 	mouse_transparent_mode = 0;
-	if (mouse_background_dirty != 0)
+	if (mouse_background_dirty != 0) {
 		mouse_draw_opaque();
+	}
 }
 
-legacy_s16 mouse_multi_hittest(legacy_s16 count,
-	const struct BUTTON_AREA* buttons)
+legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *buttons)
 {
 	legacy_s16 i;
 
-	if (kbormouse == 0)
+	if (kbormouse == 0) {
 		return -1;
+	}
 
 	for (i = 0; i < count; i++) {
 		if (buttons[i].x1 <= mouse_xpos && mouse_xpos <= buttons[i].x2 &&
-			buttons[i].y1 <= mouse_ypos && mouse_ypos <= buttons[i].y2)
+			buttons[i].y1 <= mouse_ypos && mouse_ypos <= buttons[i].y2) {
 			return (legacy_s8)i;
+		}
 	}
 
 	return -1;
@@ -331,7 +339,8 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count,
 legacy_s16 get_kb_or_joy_flags(void)
 {
 	static const legacy_u8 action_flags[INPUT_KEY_COUNT] = {
-		INPUT_PRIMARY_ACTION_FLAG, INPUT_SECONDARY_ACTION_FLAG,
+		INPUT_PRIMARY_ACTION_FLAG,
+		INPUT_SECONDARY_ACTION_FLAG,
 		INPUT_ACCELERATE_FLAG | INPUT_STEER_LEFT_FLAG,
 		INPUT_ACCELERATE_FLAG,
 		INPUT_ACCELERATE_FLAG | INPUT_STEER_RIGHT_FLAG,
@@ -339,18 +348,19 @@ legacy_s16 get_kb_or_joy_flags(void)
 		INPUT_BRAKE_FLAG | INPUT_STEER_RIGHT_FLAG,
 		INPUT_BRAKE_FLAG,
 		INPUT_BRAKE_FLAG | INPUT_STEER_LEFT_FLAG,
-		INPUT_STEER_LEFT_FLAG
-	};
+		INPUT_STEER_LEFT_FLAG};
 	legacy_u16 flags;
 	legacy_u16 index;
 
 	flags = 0;
 	for (index = 0; index < INPUT_KEY_COUNT; index++) {
-		if (kb_get_key_state(input_key_scancodes[index]) != 0)
+		if (kb_get_key_state(input_key_scancodes[index]) != 0) {
 			flags |= action_flags[index];
+		}
 	}
-	if (flags == 0)
+	if (flags == 0) {
 		flags = (legacy_u16)dos_get_joy_flags();
+	}
 	return LEGACY_S16_FROM_BITS(flags);
 }
 
@@ -361,51 +371,44 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 	legacy_s16 changed_or_repeating;
 
 	input_elapsed_frames = LEGACY_U16_WRAP_ADD(input_elapsed_frames, frame_delta);
-	if (LEGACY_S16_FROM_BITS(input_elapsed_frames) >
-		INPUT_COUNTER_WRAP_LIMIT) {
-		input_elapsed_frames = LEGACY_U16_WRAP_SUB(input_elapsed_frames,
-			INPUT_COUNTER_WRAP_AMOUNT);
-		input_mouse_repeat_at = LEGACY_U16_WRAP_SUB(input_mouse_repeat_at,
-			INPUT_COUNTER_WRAP_AMOUNT);
-		input_joystick_repeat_at = LEGACY_U16_WRAP_SUB(
-			input_joystick_repeat_at, INPUT_COUNTER_WRAP_AMOUNT);
+	if (LEGACY_S16_FROM_BITS(input_elapsed_frames) > INPUT_COUNTER_WRAP_LIMIT) {
+		input_elapsed_frames = LEGACY_U16_WRAP_SUB(input_elapsed_frames, INPUT_COUNTER_WRAP_AMOUNT);
+		input_mouse_repeat_at =
+			LEGACY_U16_WRAP_SUB(input_mouse_repeat_at, INPUT_COUNTER_WRAP_AMOUNT);
+		input_joystick_repeat_at =
+			LEGACY_U16_WRAP_SUB(input_joystick_repeat_at, INPUT_COUNTER_WRAP_AMOUNT);
 	}
 
 	key = (legacy_u16)dos_kb_get_char();
-	if (key != 0)
+	if (key != 0) {
 		kbormouse = 0;
+	}
 	current_joy_flags = (legacy_u16)dos_get_joy_flags();
 	input_combined_flags = get_kb_or_joy_flags();
 	changed_or_repeating = 0;
 	if ((legacy_u16)input_joystick_flags != current_joy_flags) {
-		input_new_joystick_flags = ((legacy_u16)input_joystick_flags ^ current_joy_flags) &
-			current_joy_flags;
+		input_new_joystick_flags =
+			((legacy_u16)input_joystick_flags ^ current_joy_flags) & current_joy_flags;
 		input_joystick_flags = current_joy_flags;
 		changed_or_repeating = 1;
-	} else if (current_joy_flags != 0 &&
-		input_repeat_due(input_joystick_repeat_at)) {
+	} else if (current_joy_flags != 0 && input_repeat_due(input_joystick_repeat_at)) {
 		changed_or_repeating = 1;
 	}
 
 	if (changed_or_repeating) {
-		if (((legacy_u16)input_new_joystick_flags &
-			INPUT_SECONDARY_ACTION_FLAG) != 0)
+		if (((legacy_u16)input_new_joystick_flags & INPUT_SECONDARY_ACTION_FLAG) != 0) {
 			input_joystick_keycode = KEY_ENTER;
-		else if (((legacy_u16)input_new_joystick_flags &
-			INPUT_PRIMARY_ACTION_FLAG) != 0)
+		} else if (((legacy_u16)input_new_joystick_flags & INPUT_PRIMARY_ACTION_FLAG) != 0) {
 			input_joystick_keycode = KEY_SPACE;
-		else if (((legacy_u16)input_new_joystick_flags &
-			INPUT_ACCELERATE_FLAG) != 0)
+		} else if (((legacy_u16)input_new_joystick_flags & INPUT_ACCELERATE_FLAG) != 0) {
 			input_joystick_keycode = KEY_UP;
-		else if (((legacy_u16)input_new_joystick_flags &
-			INPUT_BRAKE_FLAG) != 0)
+		} else if (((legacy_u16)input_new_joystick_flags & INPUT_BRAKE_FLAG) != 0) {
 			input_joystick_keycode = KEY_DOWN;
-		else if (((legacy_u16)input_new_joystick_flags &
-			INPUT_STEER_LEFT_FLAG) != 0)
+		} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_LEFT_FLAG) != 0) {
 			input_joystick_keycode = KEY_LEFT;
-		else if (((legacy_u16)input_new_joystick_flags &
-			INPUT_STEER_RIGHT_FLAG) != 0)
+		} else if (((legacy_u16)input_new_joystick_flags & INPUT_STEER_RIGHT_FLAG) != 0) {
 			input_joystick_keycode = KEY_RIGHT;
+		}
 
 		if (input_joystick_keycode != 0) {
 			input_joystick_repeat_at = input_elapsed_frames;
@@ -421,19 +424,19 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		kbormouse = 1;
 		input_mouse_idle_frames = 0;
 		if (mouse_transparent_mode != 0) {
-			if (mouse_background_dirty != 0)
+			if (mouse_background_dirty != 0) {
 				mouse_draw_opaque();
+			}
 			mouse_draw_transparent();
 		}
 	} else if (kbormouse != 0) {
-		input_mouse_idle_frames = LEGACY_U16_WRAP_ADD(
-			input_mouse_idle_frames, frame_delta);
-		if (LEGACY_S16_FROM_BITS(input_mouse_idle_frames) >
-			INPUT_IDLE_LIMIT_FRAMES) {
+		input_mouse_idle_frames = LEGACY_U16_WRAP_ADD(input_mouse_idle_frames, frame_delta);
+		if (LEGACY_S16_FROM_BITS(input_mouse_idle_frames) > INPUT_IDLE_LIMIT_FRAMES) {
 			input_mouse_idle_frames = 0;
 			kbormouse = 0;
-			if (mouse_background_dirty != 0)
+			if (mouse_background_dirty != 0) {
 				mouse_draw_opaque();
+			}
 		}
 	}
 
@@ -442,33 +445,35 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 		if (input_mouse_previous_buttons != mouse_butstate) {
 			input_mouse_previous_buttons = mouse_butstate;
 			changed_or_repeating = 1;
-		} else if (mouse_butstate != 0 &&
-			input_repeat_due(input_mouse_repeat_at)) {
+		} else if (mouse_butstate != 0 && input_repeat_due(input_mouse_repeat_at)) {
 			changed_or_repeating = 1;
 		}
 
 		if (changed_or_repeating) {
-			if (((legacy_u16)mouse_butstate & MOUSE_LEFT_BUTTON) != 0)
+			if (((legacy_u16)mouse_butstate & MOUSE_LEFT_BUTTON) != 0) {
 				input_mouse_keycode = KEY_SPACE;
-			else if (((legacy_u16)mouse_butstate & MOUSE_RIGHT_BUTTON) != 0)
+			} else if (((legacy_u16)mouse_butstate & MOUSE_RIGHT_BUTTON) != 0) {
 				input_mouse_keycode = KEY_ENTER;
-			if (input_mouse_keycode != 0)
+			}
+			if (input_mouse_keycode != 0) {
 				input_mouse_repeat_at = input_elapsed_frames;
+			}
 			input_mouse_idle_frames = 0;
 		}
 
 		if (mouse_butstate != 0) {
-			if (((legacy_u16)mouse_butstate & MOUSE_LEFT_BUTTON) != 0)
-				input_combined_flags = (legacy_u16)input_combined_flags |
-					INPUT_SECONDARY_ACTION_FLAG;
-			else if (((legacy_u16)mouse_butstate & MOUSE_RIGHT_BUTTON) != 0)
-				input_combined_flags = (legacy_u16)input_combined_flags |
-					INPUT_PRIMARY_ACTION_FLAG;
+			if (((legacy_u16)mouse_butstate & MOUSE_LEFT_BUTTON) != 0) {
+				input_combined_flags =
+					(legacy_u16)input_combined_flags | INPUT_SECONDARY_ACTION_FLAG;
+			} else if (((legacy_u16)mouse_butstate & MOUSE_RIGHT_BUTTON) != 0) {
+				input_combined_flags = (legacy_u16)input_combined_flags | INPUT_PRIMARY_ACTION_FLAG;
+			}
 		}
 	}
 
-	if (key != 0)
+	if (key != 0) {
 		return key;
+	}
 	if (input_joystick_keycode != 0) {
 		key = (legacy_u16)input_joystick_keycode;
 		input_joystick_keycode = 0;
@@ -482,53 +487,50 @@ legacy_s16 input_checking(legacy_s16 frame_delta)
 	return 0;
 }
 
-static legacy_s16 mouse_track_divide(legacy_s16 numerator,
-	legacy_s16 denominator)
+static legacy_s16 mouse_track_divide(legacy_s16 numerator, legacy_s16 denominator)
 {
-	return LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S32_DIV_OR_ZERO(
-			(legacy_s32)numerator, (legacy_s32)denominator));
+	return LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S32_DIV_OR_ZERO((legacy_s32)numerator, (legacy_s32)denominator));
 }
 
-static legacy_s16 mouse_track_position(legacy_s16 length,
-	legacy_s16 selected, legacy_s16 item_count)
+static legacy_s16 mouse_track_position(legacy_s16 length, legacy_s16 selected,
+									   legacy_s16 item_count)
 {
 	legacy_s16 numerator;
 	legacy_s16 denominator;
 
-	numerator = LEGACY_S16_WRAP_MUL(
-		LEGACY_S16_WRAP_SUB(length, 1), selected);
+	numerator = LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_SUB(length, 1), selected);
 	numerator = LEGACY_S16_WRAP_MUL(numerator, MOUSE_TRACK_POSITION_SCALE);
-	denominator = LEGACY_S16_WRAP_MUL(
-		item_count, MOUSE_TRACK_POSITION_SCALE);
+	denominator = LEGACY_S16_WRAP_MUL(item_count, MOUSE_TRACK_POSITION_SCALE);
 	return mouse_track_divide(numerator, denominator);
 }
 
-static legacy_s16 mouse_track_thumb_size(legacy_s16 length,
-	legacy_s16 selected, legacy_s16 selection_width, legacy_s16 item_count,
-	legacy_s16* thumb_start, legacy_s16* thumb_end)
+static legacy_s16 mouse_track_thumb_size(legacy_s16 length, legacy_s16 selected,
+										 legacy_s16 selection_width, legacy_s16 item_count,
+										 legacy_s16 *thumb_start, legacy_s16 *thumb_end)
 {
 	*thumb_start = mouse_track_position(length, selected, item_count);
-	*thumb_end = mouse_track_position(length,
-		LEGACY_S16_WRAP_ADD(selected, selection_width), item_count);
+	*thumb_end =
+		mouse_track_position(length, LEGACY_S16_WRAP_ADD(selected, selection_width), item_count);
 	return LEGACY_S16_WRAP_SUB(*thumb_end, *thumb_start);
 }
 
 static void mouse_track_draw(legacy_s16 horizontal, legacy_s16 x, legacy_s16 width, legacy_s16 y,
-	legacy_s16 height, legacy_s16 thumb_start, legacy_s16 thumb_size)
+							 legacy_s16 height, legacy_s16 thumb_start, legacy_s16 thumb_size)
 {
 	sprite_fill_rect(x, y, width, height, 0);
 	if (horizontal) {
-		sprite_fill_rect(LEGACY_S16_WRAP_ADD(x, thumb_start), y,
-			thumb_size, height, dialog_fnt_colour);
+		sprite_fill_rect(LEGACY_S16_WRAP_ADD(x, thumb_start), y, thumb_size, height,
+						 dialog_fnt_colour);
 	} else {
-		sprite_fill_rect(x, LEGACY_S16_WRAP_ADD(y, thumb_start),
-			width, thumb_size, dialog_fnt_colour);
+		sprite_fill_rect(x, LEGACY_S16_WRAP_ADD(y, thumb_start), width, thumb_size,
+						 dialog_fnt_colour);
 	}
 }
 
-legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y, legacy_s16 height,
-	legacy_s16 selected, legacy_s16 selection_width, legacy_s16 item_count)
+legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width, legacy_s16 y,
+							legacy_s16 height, legacy_s16 selected, legacy_s16 selection_width,
+							legacy_s16 item_count)
 {
 	legacy_s16 length;
 	legacy_s16 thumb_start;
@@ -542,32 +544,30 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 	legacy_s16 scaled;
 	legacy_s16 horizontal;
 
-	horizontal = LEGACY_S16_FROM_BITS(width) >
-		LEGACY_S16_FROM_BITS(height);
+	horizontal = LEGACY_S16_FROM_BITS(width) > LEGACY_S16_FROM_BITS(height);
 	length = horizontal ? (legacy_s16)width : (legacy_s16)height;
-	thumb_size = mouse_track_thumb_size(length, selected, selection_width,
-		item_count, &thumb_start, &thumb_end);
+	thumb_size = mouse_track_thumb_size(length, selected, selection_width, item_count, &thumb_start,
+										&thumb_end);
 
 	if (operation == 0) {
-		mouse_track_draw(horizontal, x, width, y, height,
-			thumb_start, thumb_size);
+		mouse_track_draw(horizontal, x, width, y, height, thumb_start, thumb_size);
 		return selected;
 	}
-	if (operation != 1)
+	if (operation != 1) {
 		return selected;
+	}
 
-	coordinate = horizontal ?
-		LEGACY_S16_WRAP_SUB(mouse_xpos, x) :
-		LEGACY_S16_WRAP_SUB(mouse_ypos, y);
+	coordinate =
+		horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, x) : LEGACY_S16_WRAP_SUB(mouse_ypos, y);
 	if (coordinate < thumb_start || coordinate > thumb_end) {
 		do {
 			input_checking((legacy_s16)timer_get_delta_alt());
 		} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
 		if (coordinate < thumb_start) {
-			if (selected != 0)
+			if (selected != 0) {
 				selected = LEGACY_S16_WRAP_SUB(selected, 1);
-		} else if (LEGACY_S16_FROM_BITS(selected) <
-			LEGACY_S16_WRAP_SUB(item_count, 1)) {
+			}
+		} else if (LEGACY_S16_FROM_BITS(selected) < LEGACY_S16_WRAP_SUB(item_count, 1)) {
 			selected = LEGACY_S16_WRAP_ADD(selected, 1);
 		}
 	} else {
@@ -575,24 +575,21 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 		previous_start = thumb_start;
 		do {
 			input_checking((legacy_s16)timer_get_delta_alt());
-			current_coordinate = horizontal ?
-				LEGACY_S16_WRAP_SUB(mouse_xpos, x) :
-				LEGACY_S16_WRAP_SUB(mouse_ypos, y);
-			dragged_start = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
-				thumb_start);
-			if (dragged_start < 0)
+			current_coordinate = horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, x)
+											: LEGACY_S16_WRAP_SUB(mouse_ypos, y);
+			dragged_start = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
+												thumb_start);
+			if (dragged_start < 0) {
 				dragged_start = 0;
-			else if (LEGACY_S16_WRAP_ADD(dragged_start, thumb_size) >
-				LEGACY_S16_WRAP_SUB(length, 1))
-				dragged_start = LEGACY_S16_WRAP_SUB(
-					LEGACY_S16_WRAP_SUB(length, thumb_size), 1);
+			} else if (LEGACY_S16_WRAP_ADD(dragged_start, thumb_size) >
+					   LEGACY_S16_WRAP_SUB(length, 1)) {
+				dragged_start = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(length, thumb_size), 1);
+			}
 
 			if (dragged_start != previous_start) {
 				previous_start = dragged_start;
 				mouse_draw_opaque_check();
-				mouse_track_draw(horizontal, x, width, y, height,
-					dragged_start, thumb_size);
+				mouse_track_draw(horizontal, x, width, y, height, dragged_start, thumb_size);
 				mouse_draw_transparent_check();
 			}
 		} while (((legacy_u16)mouse_butstate & MOUSE_BUTTON_MASK) != 0);
@@ -601,16 +598,14 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 	if (selected == -1) {
 		quotient = mouse_track_divide(length, (legacy_s16)item_count);
 		quotient = LEGACY_S16_SAR(quotient, 1U);
-		scaled = LEGACY_S16_WRAP_MUL(
-			LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
+		scaled = LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
 		selected = mouse_track_divide(scaled, length);
 	}
 
-	thumb_size = mouse_track_thumb_size(length, selected, selection_width,
-		item_count, &thumb_start, &thumb_end);
+	thumb_size = mouse_track_thumb_size(length, selected, selection_width, item_count, &thumb_start,
+										&thumb_end);
 	mouse_draw_opaque_check();
-	mouse_track_draw(horizontal, x, width, y, height,
-		thumb_start, thumb_size);
+	mouse_track_draw(horizontal, x, width, y, height, thumb_start, thumb_size);
 	mouse_draw_transparent_check();
 	return selected;
 }
@@ -627,12 +622,11 @@ void check_input(void)
 	do {
 		pressed = (get_kb_or_joy_flags() & INPUT_ACTION_BUTTON_MASK) != 0;
 		if (!pressed) {
-			pressed = input_checking(
-				(legacy_s16)timer_get_delta_alt()) != 0;
+			pressed = input_checking((legacy_s16)timer_get_delta_alt()) != 0;
 		}
-		if (!pressed && kbormouse != 0 &&
-			(mouse_butstate & MOUSE_BUTTON_MASK) != 0)
+		if (!pressed && kbormouse != 0 && (mouse_butstate & MOUSE_BUTTON_MASK) != 0) {
 			pressed = 1;
+		}
 	} while (pressed);
 }
 
@@ -658,15 +652,17 @@ void input_pop_status(void)
 {
 	legacy_s16 index;
 
-	if (input_mode_stack_depth == 0)
+	if (input_mode_stack_depth == 0) {
 		return;
+	}
 
 	input_mode_stack_depth--;
 	index = (legacy_s8)input_mode_stack_depth;
 	mouse_transparent_mode = input_draw_mode_stack[index];
 	kbormouse = input_device_mode_stack[index];
-	if (kbormouse == 0)
+	if (kbormouse == 0) {
 		mouse_draw_opaque_check();
+	}
 }
 
 legacy_s16 input_repeat_check(legacy_s16 duration)
@@ -677,13 +673,13 @@ legacy_s16 input_repeat_check(legacy_s16 duration)
 
 	elapsed = 0;
 	timer_get_delta_alt();
-	while (LEGACY_S16_FROM_BITS((legacy_u16)duration) >
-		LEGACY_S16_FROM_BITS(elapsed)) {
+	while (LEGACY_S16_FROM_BITS((legacy_u16)duration) > LEGACY_S16_FROM_BITS(elapsed)) {
 		delta = (legacy_u16)timer_get_delta_alt();
 		elapsed = LEGACY_U16_WRAP_ADD(elapsed, delta);
 		result = input_do_checking(LEGACY_S16_FROM_BITS(delta));
-		if (result != 0)
+		if (result != 0) {
 			return result;
+		}
 	}
 	return 0;
 }
@@ -691,8 +687,8 @@ legacy_s16 input_repeat_check(legacy_s16 duration)
 void mouse_minmax_position(legacy_s16 inset)
 {
 	if (inset != 0) {
-		dos_mouse_set_minmax(MOUSE_SCREEN_INSET, 0,
-			MCGA_SCREEN_WIDTH - MOUSE_SCREEN_INSET, MCGA_SCREEN_HEIGHT);
+		dos_mouse_set_minmax(MOUSE_SCREEN_INSET, 0, MCGA_SCREEN_WIDTH - MOUSE_SCREEN_INSET,
+							 MCGA_SCREEN_HEIGHT);
 		dos_mouse_set_position(MCGA_SCREEN_CENTER_X, MCGA_SCREEN_CENTER_Y);
 	} else {
 		dos_mouse_set_minmax(0, 0, MCGA_SCREEN_WIDTH, MCGA_SCREEN_HEIGHT);

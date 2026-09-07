@@ -5,7 +5,7 @@
 
 /* Frame rectangles and backbuffer policy shared with screen controllers. */
 
-extern struct RECTANGLE* alternate_frame_rects;
+extern struct RECTANGLE *alternate_frame_rects;
 extern struct RECTANGLE empty_rect;
 extern struct RECTANGLE full_screen_rect;
 

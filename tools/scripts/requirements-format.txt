@@ -1,0 +1,2 @@
+clang-format==18.1.8
+editorconfig-checker==3.11.1

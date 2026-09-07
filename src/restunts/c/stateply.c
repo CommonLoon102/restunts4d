@@ -77,9 +77,8 @@ struct PLAYER_WHEEL_MOTION {
 };
 
 /* Hand a long-precision position back as the word-precision vector the rest
-   of the engine works with. */
-static void physics_position_to_vector(struct VECTOR* destination,
-	const struct VECTORLONG* source)
+ * of the engine works with. */
+static void physics_position_to_vector(struct VECTOR *destination, const struct VECTORLONG *source)
 {
 	destination->x = position_to_word(source->lx);
 	destination->y = position_to_word(source->ly);
@@ -87,57 +86,51 @@ static void physics_position_to_vector(struct VECTOR* destination,
 }
 
 /* Wheel positions are long-precision; the forces acting on them arrive as
-   word-precision vectors, so every step shifts the position the same way. */
-static void physics_position_offset(struct VECTORLONG* destination,
-	const struct VECTORLONG* source, const struct VECTOR* offset)
+ * word-precision vectors, so every step shifts the position the same way. */
+static void physics_position_offset(struct VECTORLONG *destination, const struct VECTORLONG *source,
+									const struct VECTOR *offset)
 {
 	destination->lx = LEGACY_S32_WRAP_ADD_S16(source->lx, offset->x);
 	destination->ly = LEGACY_S32_WRAP_ADD_S16(source->ly, offset->y);
 	destination->lz = LEGACY_S32_WRAP_ADD_S16(source->lz, offset->z);
 }
 
-static void physics_position_pull_back(struct VECTORLONG* position,
-	const struct VECTOR* offset)
+static void physics_position_pull_back(struct VECTORLONG *position, const struct VECTOR *offset)
 {
 	position->lx = LEGACY_S32_WRAP_SUB_S16(position->lx, offset->x);
 	position->ly = LEGACY_S32_WRAP_SUB_S16(position->ly, offset->y);
 	position->lz = LEGACY_S32_WRAP_SUB_S16(position->lz, offset->z);
 }
 
-static void prepare_opponent_rear_wheel(struct VECTOR* wheel,
-	struct VECTOR* rotated, struct MATRIX* angle_rotation,
-	legacy_s16 wheel_index, legacy_s16 y_adjustment)
+static void prepare_opponent_rear_wheel(struct VECTOR *wheel, struct VECTOR *rotated,
+										struct MATRIX *angle_rotation, legacy_s16 wheel_index,
+										legacy_s16 y_adjustment)
 {
 	*wheel = simd_opponent.wheel_coords[wheel_index];
-	wheel->y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(
-		LEGACY_S16_WRAP_ADD(
-			state.opponentstate.car_suspension_deflection[wheel_index],
-			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT)),
-		y_adjustment);
+	wheel->y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
+									   state.opponentstate.car_suspension_deflection[wheel_index],
+									   PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT)),
+								   y_adjustment);
 	if ((state.opponentstate.car_slide_yaw_delta & ANGLE_MASK) != 0) {
 		mat_mul_vector(wheel, angle_rotation, rotated);
 		*wheel = *rotated;
 	}
 }
 
-static legacy_s16 scaled_vector_separation(struct VECTOR* first,
-	struct VECTOR* second, struct VECTOR* intersection,
-	struct VECTOR* delta)
+static legacy_s16 scaled_vector_separation(struct VECTOR *first, struct VECTOR *second,
+										   struct VECTOR *intersection, struct VECTOR *delta)
 {
 	vector_interpolate_at_z(first, second, intersection, 0);
-	delta->x = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->x, intersection->x),
-		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
-	delta->y = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->y, intersection->y),
-		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
-	delta->z = LEGACY_S16_SHL(
-		LEGACY_S16_WRAP_SUB(first->z, intersection->z),
-		PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+	delta->x = LEGACY_S16_SHL(LEGACY_S16_WRAP_SUB(first->x, intersection->x),
+							  PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+	delta->y = LEGACY_S16_SHL(LEGACY_S16_WRAP_SUB(first->y, intersection->y),
+							  PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+	delta->z = LEGACY_S16_SHL(LEGACY_S16_WRAP_SUB(first->z, intersection->z),
+							  PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 	return polarRadius3D(delta);
 }
 
-static void initialize_working_car_pose(struct CARSTATE* carstate)
+static void initialize_working_car_pose(struct CARSTATE *carstate)
 {
 	car_working_x = carstate->car_position.lx;
 	car_working_y = carstate->car_position.ly;
@@ -154,19 +147,17 @@ static void initialize_working_car_pose(struct CARSTATE* carstate)
 }
 
 /* The original zero-speed crash transition reused opponent wheel coordinates
-   as headings. Keep that compatibility detail separate from normal motion. */
-static void restore_crash_wheel_headings(legacy_s16* wheel_plane_headings)
+ * as headings. Keep that compatibility detail separate from normal motion. */
+static void restore_crash_wheel_headings(legacy_s16 *wheel_plane_headings)
 {
 	struct MATRIX wheel_adjustment_rotation;
 	struct VECTOR wheel_vector, transformed_vector;
 	legacy_s16 inverted_wheel_adjustment;
 
-	car_to_world_rotation = *mat_rot_zxy(
-		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
-		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
-		LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
-		MATRIX_ROTATION_ORDER_ZXY
-	);
+	car_to_world_rotation = *mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.z),
+										 LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.y),
+										 LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x),
+										 MATRIX_ROTATION_ORDER_ZXY);
 	inverted_wheel_adjustment = 0;
 	if (state.opponentstate.car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE &&
 		state.opponentstate.car_actual_speed <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
@@ -181,72 +172,61 @@ static void restore_crash_wheel_headings(legacy_s16* wheel_plane_headings)
 
 	/* Prepare the optional auxiliary wheel rotation once for both wheels. */
 	if ((state.opponentstate.car_slide_yaw_delta & ANGLE_MASK) != 0) {
-		wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
-			LEGACY_S16_WRAP_NEGATE(
-				state.opponentstate.car_slide_yaw_delta),
-			MATRIX_ROTATION_ORDER_ZXY);
+		wheel_adjustment_rotation =
+			*mat_rot_zxy(0, 0, LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_slide_yaw_delta),
+						 MATRIX_ROTATION_ORDER_ZXY);
 	}
 
 	/*
 	 * Rebuild the first rear wheel in car-local coordinates, including
 	 * suspension travel and the low-speed inverted-car adjustment.
 	 */
-	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
-		&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_FIRST,
-		inverted_wheel_adjustment);
+	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector, &wheel_adjustment_rotation,
+								PLAYER_PHYSICS_REAR_WHEEL_FIRST, inverted_wheel_adjustment);
 
 	/*
 	 * Rotate the first rear wheel into world axes and recover the high word
 	 * of its world Z coordinate, the first aliased stack word.
 	 */
 	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-	wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] = (legacy_u16)(
-		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-			state.opponentstate.car_position.lz, transformed_vector.z) >>
-			LEGACY_WORD_BITS
-	);
-	legacy_execution_residue.wheel_plane_angles[
-		LEGACY_RESIDUE_FIRST_WORD] =
+	wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD] =
+		(legacy_u16)((legacy_u32)LEGACY_S32_WRAP_ADD_S16(state.opponentstate.car_position.lz,
+														 transformed_vector.z) >>
+					 LEGACY_WORD_BITS);
+	legacy_execution_residue.wheel_plane_angles[LEGACY_RESIDUE_FIRST_WORD] =
 		wheel_plane_headings[LEGACY_RESIDUE_FIRST_WORD];
 
 	/* Rebuild the second rear wheel with the same local adjustments. */
-	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector,
-		&wheel_adjustment_rotation, PLAYER_PHYSICS_REAR_WHEEL_SECOND,
-		inverted_wheel_adjustment);
+	prepare_opponent_rear_wheel(&wheel_vector, &transformed_vector, &wheel_adjustment_rotation,
+								PLAYER_PHYSICS_REAR_WHEEL_SECOND, inverted_wheel_adjustment);
 
 	/*
 	 * Rotate the second rear wheel into world axes and recover the low word
 	 * of its world X coordinate, the second aliased stack word.
 	 */
 	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-	wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] =
-		(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+	wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
 		state.opponentstate.car_position.lx, transformed_vector.x);
 
 	/* Commit the second word and recover world X's high word as the third. */
-	legacy_execution_residue.wheel_plane_angles[
-		LEGACY_RESIDUE_SECOND_WORD] =
+	legacy_execution_residue.wheel_plane_angles[LEGACY_RESIDUE_SECOND_WORD] =
 		wheel_plane_headings[LEGACY_RESIDUE_SECOND_WORD];
-	wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] = (legacy_u16)(
-		(legacy_u32)LEGACY_S32_WRAP_ADD_S16(
-			state.opponentstate.car_position.lx, transformed_vector.x) >>
-			LEGACY_WORD_BITS
-	);
+	wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD] =
+		(legacy_u16)((legacy_u32)LEGACY_S32_WRAP_ADD_S16(state.opponentstate.car_position.lx,
+														 transformed_vector.x) >>
+					 LEGACY_WORD_BITS);
 
 	/* Commit the third word and recover world Y's low word as the fourth. */
-	legacy_execution_residue.wheel_plane_angles[
-		LEGACY_RESIDUE_THIRD_WORD] =
+	legacy_execution_residue.wheel_plane_angles[LEGACY_RESIDUE_THIRD_WORD] =
 		wheel_plane_headings[LEGACY_RESIDUE_THIRD_WORD];
-	wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] =
-		(legacy_u16)LEGACY_S32_WRAP_ADD_S16(
+	wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD] = (legacy_u16)LEGACY_S32_WRAP_ADD_S16(
 		state.opponentstate.car_position.ly, transformed_vector.y);
-	legacy_execution_residue.wheel_plane_angles[
-		LEGACY_RESIDUE_FOURTH_WORD] =
+	legacy_execution_residue.wheel_plane_angles[LEGACY_RESIDUE_FOURTH_WORD] =
 		wheel_plane_headings[LEGACY_RESIDUE_FOURTH_WORD];
 }
 
-static void restore_stopped_wheel_headings(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+static void restore_stopped_wheel_headings(struct CARSTATE *carstate,
+										   struct PLAYER_WHEEL_MOTION *motion, legacy_s16 car_index)
 {
 	legacy_s16 i;
 
@@ -254,9 +234,9 @@ static void restore_stopped_wheel_headings(struct CARSTATE* carstate,
 		return;
 	}
 	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
-		motion->headings[i] = car_index == OPPONENT_CAR_INDEX ?
-			legacy_execution_residue.wheel_angle_stack_words[i] :
-			legacy_execution_residue.wheel_plane_angles[i];
+		motion->headings[i] = car_index == OPPONENT_CAR_INDEX
+								  ? legacy_execution_residue.wheel_angle_stack_words[i]
+								  : legacy_execution_residue.wheel_plane_angles[i];
 	}
 	if (car_index == PLAYER_CAR_INDEX && gameconfig.game_opponenttype != 0 &&
 		carstate->car_lastspeed != CAR_SPEED_STOPPED &&
@@ -265,16 +245,13 @@ static void restore_stopped_wheel_headings(struct CARSTATE* carstate,
 	}
 }
 
-static void prepare_wheel_rotation(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion)
+static void prepare_wheel_rotation(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion)
 {
 	struct VECTOR wheel_vector, transformed_vector;
 
 	car_to_world_rotation = *mat_rot_zxy(
-		LEGACY_S16_WRAP_NEGATE(car_working_roll),
-		LEGACY_S16_WRAP_NEGATE(car_working_pitch),
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw),
-		MATRIX_ROTATION_ORDER_ZXY);
+		LEGACY_S16_WRAP_NEGATE(car_working_roll), LEGACY_S16_WRAP_NEGATE(car_working_pitch),
+		LEGACY_S16_WRAP_NEGATE(car_working_yaw), MATRIX_ROTATION_ORDER_ZXY);
 	if (car_working_pitch != 0 || car_working_roll != 0) {
 		wheel_vector.x = 0;
 		wheel_vector.y = 0;
@@ -289,8 +266,7 @@ static void prepare_wheel_rotation(struct CARSTATE* carstate,
 	wheel_vector.y = PLAYER_PHYSICS_UP_VECTOR_LENGTH;
 	wheel_vector.z = 0;
 	mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE ||
-		transformed_vector.y >= 0) {
+	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE || transformed_vector.y >= 0) {
 		motion->inverted_adjustment = 0;
 	} else if (carstate->car_actual_speed <= PLAYER_PHYSICS_LOW_SPEED_LIMIT) {
 		motion->inverted_adjustment = -PLAYER_PHYSICS_INVERTED_WHEEL_ADJUSTMENT;
@@ -301,13 +277,13 @@ static void prepare_wheel_rotation(struct CARSTATE* carstate,
 	}
 }
 
-static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+static void prepare_wheel_motion(struct CARSTATE *carstate, struct SIMD *simd,
+								 struct PLAYER_WHEEL_MOTION *motion, legacy_s16 car_index)
 {
 	struct MATRIX wheel_adjustment_rotation;
 	struct VECTOR wheel_vector, transformed_vector;
-	struct VECTORLONG* current_wheel_position;
-	struct VECTORLONG* previous_wheel_position;
+	struct VECTORLONG *current_wheel_position;
+	struct VECTORLONG *previous_wheel_position;
 	legacy_s16 wheel_index, front_wheel_heading_offset;
 	int has_slide_rotation;
 
@@ -315,20 +291,20 @@ static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
 		motion->contact_distances[wheel_index] =
 			legacy_execution_residue.grip_stack_words[wheel_index];
 	}
-	front_wheel_heading_offset = carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE ?
-		LEGACY_S16_SAR2(carstate->car_front_wheel_response_angle) : 0;
+	front_wheel_heading_offset = carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE
+									 ? LEGACY_S16_SAR2(carstate->car_front_wheel_response_angle)
+									 : 0;
 	motion->travel = scale_speed_to_travel(carstate->car_actual_speed,
-		framespersec == GAME_FRAME_RATE_LOW ?
-			PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR :
-			PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
+										   framespersec == GAME_FRAME_RATE_LOW
+											   ? PLAYER_PHYSICS_LOW_RATE_TRAVEL_DIVISOR
+											   : PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR);
 	restore_stopped_wheel_headings(carstate, motion, car_index);
 	prepare_wheel_rotation(carstate, motion);
 
 	has_slide_rotation = (carstate->car_slide_yaw_delta & ANGLE_MASK) != 0;
 	if (has_slide_rotation) {
-		wheel_adjustment_rotation = *mat_rot_zxy(0, 0,
-			LEGACY_S16_WRAP_NEGATE(carstate->car_slide_yaw_delta),
-			MATRIX_ROTATION_ORDER_ZXY);
+		wheel_adjustment_rotation = *mat_rot_zxy(
+			0, 0, LEGACY_S16_WRAP_NEGATE(carstate->car_slide_yaw_delta), MATRIX_ROTATION_ORDER_ZXY);
 	}
 	wheel_forward_travel.x = 0;
 	wheel_forward_travel.y = 0;
@@ -337,9 +313,9 @@ static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
 		current_wheel_position = &motion->current[wheel_index];
 		previous_wheel_position = &motion->previous[wheel_index];
 		wheel_vector = simd->wheel_coords[wheel_index];
-		wheel_vector.y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_ADD(
-			carstate->car_suspension_deflection[wheel_index],
-			PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
+		wheel_vector.y = LEGACY_S16_WRAP_NEGATE(
+			LEGACY_S16_WRAP_ADD(carstate->car_suspension_deflection[wheel_index],
+								PLAYER_PHYSICS_SUSPENSION_TRAVEL_LIMIT));
 		if (motion->inverted_adjustment < 0) {
 			wheel_vector.y = LEGACY_S16_WRAP_SUB(wheel_vector.y, motion->inverted_adjustment);
 		}
@@ -348,12 +324,9 @@ static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
 			wheel_vector = transformed_vector;
 		}
 		mat_mul_vector(&wheel_vector, &car_to_world_rotation, &transformed_vector);
-		current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(
-			car_working_x, transformed_vector.x);
-		current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(
-			car_working_y, transformed_vector.y);
-		current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(
-			car_working_z, transformed_vector.z);
+		current_wheel_position->lx = LEGACY_S32_WRAP_ADD_S16(car_working_x, transformed_vector.x);
+		current_wheel_position->ly = LEGACY_S32_WRAP_ADD_S16(car_working_y, transformed_vector.y);
+		current_wheel_position->lz = LEGACY_S32_WRAP_ADD_S16(car_working_z, transformed_vector.z);
 
 		previous_wheel_position->lx = current_wheel_position->lx;
 		previous_wheel_position->ly = current_wheel_position->ly;
@@ -361,27 +334,24 @@ static void prepare_wheel_motion(struct CARSTATE* carstate, struct SIMD* simd,
 		if (motion->travel != 0) {
 			wheel_forward_travel.z = motion->travel;
 			wheel_heading_offset = carstate->car_velocity_heading_offset;
-			if (front_wheel_heading_offset != 0 &&
-				wheel_index < PLAYER_PHYSICS_FRONT_WHEEL_COUNT) {
-				wheel_heading_offset = LEGACY_S16_WRAP_SUB(
-					carstate->car_velocity_heading_offset, front_wheel_heading_offset);
+			if (front_wheel_heading_offset != 0 && wheel_index < PLAYER_PHYSICS_FRONT_WHEEL_COUNT) {
+				wheel_heading_offset = LEGACY_S16_WRAP_SUB(carstate->car_velocity_heading_offset,
+														   front_wheel_heading_offset);
 			}
 			motion->headings[wheel_index] = wheel_heading_offset;
-			legacy_execution_residue.wheel_plane_angles[wheel_index] =
-				wheel_heading_offset;
+			legacy_execution_residue.wheel_plane_angles[wheel_index] = wheel_heading_offset;
 			if (car_index == OPPONENT_CAR_INDEX) {
-				legacy_execution_residue.wheel_angle_stack_words[
-					wheel_index] = wheel_heading_offset;
+				legacy_execution_residue.wheel_angle_stack_words[wheel_index] =
+					wheel_heading_offset;
 			}
 			transform_wheel_travel_to_world();
 			physics_position_offset(current_wheel_position, current_wheel_position,
-				&wheel_world_travel);
+									&wheel_world_travel);
 		}
 	}
 }
 
-static void retain_collision_plane_rotation(struct MATRIX* rotation,
-	legacy_s16 car_index)
+static void retain_collision_plane_rotation(struct MATRIX *rotation, legacy_s16 car_index)
 {
 	legacy_s16 i;
 
@@ -393,20 +363,20 @@ static void retain_collision_plane_rotation(struct MATRIX* rotation,
 	}
 }
 
-static void scale_wheel_displacement(struct VECTOR* displacement,
-	struct VECTORLONG* current, struct VECTORLONG* previous,
-	legacy_s16 retained_travel, legacy_s16 total_travel)
+static void scale_wheel_displacement(struct VECTOR *displacement, struct VECTORLONG *current,
+									 struct VECTORLONG *previous, legacy_s16 retained_travel,
+									 legacy_s16 total_travel)
 {
-	displacement->x = scale_position_delta(current->lx, previous->lx,
-		retained_travel, total_travel);
-	displacement->y = scale_position_delta(current->ly, previous->ly,
-		retained_travel, total_travel);
-	displacement->z = scale_position_delta(current->lz, previous->lz,
-		retained_travel, total_travel);
+	displacement->x =
+		scale_position_delta(current->lx, previous->lx, retained_travel, total_travel);
+	displacement->y =
+		scale_position_delta(current->ly, previous->ly, retained_travel, total_travel);
+	displacement->z =
+		scale_position_delta(current->lz, previous->lz, retained_travel, total_travel);
 }
 
-static void reposition_wheels_at_wall(struct PLAYER_WHEEL_MOTION* motion,
-	legacy_s16 retained_travel, struct VECTOR* wall_response)
+static void reposition_wheels_at_wall(struct PLAYER_WHEEL_MOTION *motion,
+									  legacy_s16 retained_travel, struct VECTOR *wall_response)
 {
 	struct VECTOR retained;
 	legacy_s16 i;
@@ -416,34 +386,34 @@ static void reposition_wheels_at_wall(struct PLAYER_WHEEL_MOTION* motion,
 		retained.y = 0;
 		retained.z = 0;
 		if (retained_travel != 0) {
-			scale_wheel_displacement(&retained, &motion->current[i],
-				&motion->previous[i], retained_travel, motion->travel);
+			scale_wheel_displacement(&retained, &motion->current[i], &motion->previous[i],
+									 retained_travel, motion->travel);
 		}
 		physics_position_offset(&motion->current[i], &motion->previous[i], &retained);
 		physics_position_offset(&motion->current[i], &motion->current[i], wall_response);
 	}
 }
 
-static void apply_wall_impact(struct CARSTATE* carstate, legacy_s16 wall_heading,
-	legacy_s16 car_index)
+static void apply_wall_impact(struct CARSTATE *carstate, legacy_s16 wall_heading,
+							  legacy_s16 car_index)
 {
 	legacy_s16 angle_distance, impact_turn;
 	legacy_u16 wall_safe_speed;
 	int reverse_turn;
 
-	angle_distance = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw), wall_heading) & ANGLE_MASK);
+	angle_distance = LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_NEGATE(car_working_yaw), wall_heading) &
+		ANGLE_MASK);
 	reverse_turn = angle_distance > ANGLE_QUARTER_TURN;
 	if (reverse_turn) {
 		angle_distance = LEGACY_S16_WRAP_SUB(ANGLE_FULL_TURN, angle_distance);
 	}
 	wall_safe_speed = LEGACY_U16_SHL(
-		(legacy_u8)LEGACY_S16_WRAP_NEGATE(
-			LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(
-				LEGACY_S16_WRAP_MUL(angle_distance,
-					PLAYER_PHYSICS_WALL_SPEED_ANGLE_MULTIPLIER),
+		(legacy_u8)LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
+			LEGACY_S16_SAR(
+				LEGACY_S16_WRAP_MUL(angle_distance, PLAYER_PHYSICS_WALL_SPEED_ANGLE_MULTIPLIER),
 				PLAYER_PHYSICS_WALL_SPEED_SHIFT),
-				PLAYER_PHYSICS_WALL_SPEED_BIAS)),
+			PLAYER_PHYSICS_WALL_SPEED_BIAS)),
 		PLAYER_PHYSICS_WALL_SPEED_SHIFT);
 	if (carstate->car_actual_speed > wall_safe_speed) {
 		impact_turn = reverse_turn ? LEGACY_S16_WRAP_NEGATE(angle_distance) : angle_distance;
@@ -453,22 +423,22 @@ static void apply_wall_impact(struct CARSTATE* carstate, legacy_s16 wall_heading
 	carstate->car_sound_flags |= PLAYER_PHYSICS_WALL_SOUND_FLAG;
 }
 
-static legacy_s16 wall_response_heading(struct VECTOR* push,
-	legacy_s16 remaining_travel, int reversed)
+static legacy_s16 wall_response_heading(struct VECTOR *push, legacy_s16 remaining_travel,
+										int reversed)
 {
 	legacy_s16 relative_heading, wall_heading;
 
-	relative_heading = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(car_working_yaw), wallOrientation) & ANGLE_MASK);
+	relative_heading = LEGACY_S16_FROM_BITS(
+		(legacy_u16)LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_NEGATE(car_working_yaw), wallOrientation) &
+		ANGLE_MASK);
 	push->y = 0;
 	push->z = remaining_travel;
-	if (relative_heading < ANGLE_QUARTER_TURN ||
-		relative_heading > ANGLE_THREE_QUARTER_TURN) {
+	if (relative_heading < ANGLE_QUARTER_TURN || relative_heading > ANGLE_THREE_QUARTER_TURN) {
 		wall_heading = wallOrientation;
 		push->x = PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
 	} else {
-		wall_heading = LEGACY_S16_FROM_BITS((legacy_u16)
-			LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
+		wall_heading = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S16_WRAP_ADD(wallOrientation, ANGLE_HALF_TURN) & ANGLE_MASK);
 		push->x = -PLAYER_PHYSICS_WALL_PUSH_DISTANCE;
 	}
 	if (reversed) {
@@ -478,34 +448,35 @@ static legacy_s16 wall_response_heading(struct VECTOR* push,
 }
 
 /* A wall response moves all four wheels, so the caller must restart the scan. */
-static int resolve_wheel_wall_collision(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+static int resolve_wheel_wall_collision(struct CARSTATE *carstate,
+										struct PLAYER_WHEEL_MOTION *motion, legacy_s16 wheel_index,
+										legacy_s16 car_index)
 {
-	struct VECTORLONG* current_wheel_position = &motion->current[wheel_index];
+	struct VECTORLONG *current_wheel_position = &motion->current[wheel_index];
 	struct VECTOR previous_relative, current_relative, start, end;
 	struct VECTOR temporary, intersection_delta, push, response;
 	struct MATRIX collision_plane_rotation;
-	struct MATRIX* response_rotation;
+	struct MATRIX *response_rotation;
 	legacy_s16 retained_travel, remaining_travel, wall_heading;
 	int reversed;
 
-	if (wallindex == PLAYER_PHYSICS_WALL_INDEX_NONE ||
-		nextPosAndNormalIP <= elRdWallRelated || nextPosAndNormalIP >= wallHeight) {
+	if (wallindex == PLAYER_PHYSICS_WALL_INDEX_NONE || nextPosAndNormalIP <= elRdWallRelated ||
+		nextPosAndNormalIP >= wallHeight) {
 		return 0;
 	}
-	previous_relative.x = LEGACY_S16_WRAP_SUB(
-		carstate->car_wheel_contact_positions[wheel_index].x, wallStartX);
+	previous_relative.x =
+		LEGACY_S16_WRAP_SUB(carstate->car_wheel_contact_positions[wheel_index].x, wallStartX);
 	previous_relative.y = 0;
-	previous_relative.z = LEGACY_S16_WRAP_SUB(
-		carstate->car_wheel_contact_positions[wheel_index].z, wallStartZ);
-	current_relative.x = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lx), wallStartX);
+	previous_relative.z =
+		LEGACY_S16_WRAP_SUB(carstate->car_wheel_contact_positions[wheel_index].z, wallStartZ);
+	current_relative.x =
+		LEGACY_S16_WRAP_SUB(position_to_word(current_wheel_position->lx), wallStartX);
 	current_relative.y = 0;
-	current_relative.z = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lz), wallStartZ);
+	current_relative.z =
+		LEGACY_S16_WRAP_SUB(position_to_word(current_wheel_position->lz), wallStartZ);
 
-	mat_rot_y(&collision_plane_rotation, LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
+	mat_rot_y(&collision_plane_rotation,
+			  LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_NEGATE(wallOrientation), ANGLE_QUARTER_TURN));
 	retain_collision_plane_rotation(&collision_plane_rotation, car_index);
 	mat_mul_vector(&previous_relative, &collision_plane_rotation, &start);
 	mat_mul_vector(&current_relative, &collision_plane_rotation, &end);
@@ -525,31 +496,31 @@ static int resolve_wheel_wall_collision(struct CARSTATE* carstate,
 		retained_travel = 0;
 		remaining_travel = motion->travel;
 	} else {
-		remaining_travel = scaled_vector_separation(&end, &start,
-			&temporary, &intersection_delta);
+		remaining_travel = scaled_vector_separation(&end, &start, &temporary, &intersection_delta);
 		retained_travel = LEGACY_S16_WRAP_SUB(motion->travel, remaining_travel);
 	}
 	wall_heading = wall_response_heading(&push, remaining_travel, reversed);
 	response_rotation = mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(car_working_roll),
-		LEGACY_S16_WRAP_NEGATE(car_working_pitch), wall_heading,
-		MATRIX_ROTATION_ORDER_ZXY);
+									LEGACY_S16_WRAP_NEGATE(car_working_pitch), wall_heading,
+									MATRIX_ROTATION_ORDER_ZXY);
 	mat_mul_vector(&push, response_rotation, &response);
 	apply_wall_impact(carstate, wall_heading, car_index);
 	reposition_wheels_at_wall(motion, retained_travel, &response);
 	return 1;
 }
 
-static void measure_wheel_plane_distance(struct VECTORLONG* position)
+static void measure_wheel_plane_distance(struct VECTORLONG *position)
 {
 	struct VECTOR wheel;
 
 	physics_position_to_vector(&wheel, position);
-	nextPosAndNormalIP = state.game_inputmode == GAME_INPUT_MODE_INTRO ? wheel.y :
-		plane_signed_distance(planindex, wheel.x, wheel.y, wheel.z);
+	nextPosAndNormalIP = state.game_inputmode == GAME_INPUT_MODE_INTRO
+							 ? wheel.y
+							 : plane_signed_distance(planindex, wheel.x, wheel.y, wheel.z);
 }
 
-static void apply_wheel_gravity(struct CARSTATE* carstate,
-	struct VECTORLONG* position, legacy_s16 wheel_index)
+static void apply_wheel_gravity(struct CARSTATE *carstate, struct VECTORLONG *position,
+								legacy_s16 wheel_index)
 {
 	legacy_s16 step, step_count;
 
@@ -557,8 +528,8 @@ static void apply_wheel_gravity(struct CARSTATE* carstate,
 	for (step = 0; step < step_count; step++) {
 		carstate->car_wheel_vertical_speed[wheel_index] = LEGACY_S16_WRAP_ADD(
 			carstate->car_wheel_vertical_speed[wheel_index], wheel_gravity_steps[wheel_index]);
-		position->ly = LEGACY_S32_WRAP_SUB_S16(position->ly,
-			carstate->car_wheel_vertical_speed[wheel_index]);
+		position->ly =
+			LEGACY_S32_WRAP_SUB_S16(position->ly, carstate->car_wheel_vertical_speed[wheel_index]);
 	}
 	measure_wheel_plane_distance(position);
 	if (nextPosAndNormalIP > PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT) {
@@ -566,51 +537,48 @@ static void apply_wheel_gravity(struct CARSTATE* carstate,
 	}
 }
 
-static void move_airborne_wheel(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index)
+static void move_airborne_wheel(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion,
+								legacy_s16 wheel_index)
 {
 	if (nextPosAndNormalIP > 0) {
 		if (motion->inverted_adjustment > 0 &&
 			nextPosAndNormalIP < PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT) {
-			physics_position_offset(&motion->current[wheel_index],
-				&motion->current[wheel_index], &motion->inverted_offset);
+			physics_position_offset(&motion->current[wheel_index], &motion->current[wheel_index],
+									&motion->inverted_offset);
 		} else {
 			apply_wheel_gravity(carstate, &motion->current[wheel_index], wheel_index);
 		}
 	}
 }
 
-static void transform_wheel_plane_crossing(struct PLAYER_WHEEL_MOTION* motion,
-	legacy_s16 wheel_index, legacy_s16 car_index,
-	struct VECTOR* start, struct VECTOR* end)
+static void transform_wheel_plane_crossing(struct PLAYER_WHEEL_MOTION *motion,
+										   legacy_s16 wheel_index, legacy_s16 car_index,
+										   struct VECTOR *start, struct VECTOR *end)
 {
-	struct VECTORLONG* current_wheel_position = &motion->current[wheel_index];
-	struct VECTORLONG* previous_wheel_position = &motion->previous[wheel_index];
+	struct VECTORLONG *current_wheel_position = &motion->current[wheel_index];
+	struct VECTORLONG *previous_wheel_position = &motion->previous[wheel_index];
 	struct VECTOR previous_relative, current_relative, plane_world_origin;
 	struct MATRIX collision_plane_rotation, inverse_rotation;
-	struct PLANE far* contact_plane;
+	struct PLANE far *contact_plane;
 
 	contact_plane = &planptr[planindex];
-	plane_world_origin.x = LEGACY_S16_WRAP_ADD(
-		contact_plane->plane_origin.x, elem_xCenter);
-	plane_world_origin.y = LEGACY_S16_WRAP_ADD(
-		contact_plane->plane_origin.y, terrainHeight);
-	plane_world_origin.z = LEGACY_S16_WRAP_ADD(
-		contact_plane->plane_origin.z, elem_zCenter);
+	plane_world_origin.x = LEGACY_S16_WRAP_ADD(contact_plane->plane_origin.x, elem_xCenter);
+	plane_world_origin.y = LEGACY_S16_WRAP_ADD(contact_plane->plane_origin.y, terrainHeight);
+	plane_world_origin.z = LEGACY_S16_WRAP_ADD(contact_plane->plane_origin.z, elem_zCenter);
 
-	previous_relative.x = LEGACY_S16_WRAP_SUB(
-		position_to_word(previous_wheel_position->lx), plane_world_origin.x);
-	previous_relative.y = LEGACY_S16_WRAP_SUB(
-		position_to_word(previous_wheel_position->ly), plane_world_origin.y);
-	previous_relative.z = LEGACY_S16_WRAP_SUB(
-		position_to_word(previous_wheel_position->lz), plane_world_origin.z);
+	previous_relative.x =
+		LEGACY_S16_WRAP_SUB(position_to_word(previous_wheel_position->lx), plane_world_origin.x);
+	previous_relative.y =
+		LEGACY_S16_WRAP_SUB(position_to_word(previous_wheel_position->ly), plane_world_origin.y);
+	previous_relative.z =
+		LEGACY_S16_WRAP_SUB(position_to_word(previous_wheel_position->lz), plane_world_origin.z);
 
-	current_relative.x = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lx), plane_world_origin.x);
-	current_relative.y = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->ly), plane_world_origin.y);
-	current_relative.z = LEGACY_S16_WRAP_SUB(
-		position_to_word(current_wheel_position->lz), plane_world_origin.z);
+	current_relative.x =
+		LEGACY_S16_WRAP_SUB(position_to_word(current_wheel_position->lx), plane_world_origin.x);
+	current_relative.y =
+		LEGACY_S16_WRAP_SUB(position_to_word(current_wheel_position->ly), plane_world_origin.y);
+	current_relative.z =
+		LEGACY_S16_WRAP_SUB(position_to_word(current_wheel_position->lz), plane_world_origin.z);
 
 	collision_plane_rotation = contact_plane->plane_rotation;
 	retain_collision_plane_rotation(&collision_plane_rotation, car_index);
@@ -620,8 +588,8 @@ static void transform_wheel_plane_crossing(struct PLAYER_WHEEL_MOTION* motion,
 	mat_mul_vector(&current_relative, &inverse_rotation, end);
 }
 
-static void prepare_wheel_plane_travel(struct PLAYER_WHEEL_MOTION* motion,
-	legacy_s16 wheel_index, legacy_s16 distance)
+static void prepare_wheel_plane_travel(struct PLAYER_WHEEL_MOTION *motion, legacy_s16 wheel_index,
+									   legacy_s16 distance)
 {
 	wheel_forward_travel.x = 0;
 	wheel_forward_travel.y = 0;
@@ -632,7 +600,7 @@ static void prepare_wheel_plane_travel(struct PLAYER_WHEEL_MOTION* motion,
 }
 
 /* Express height as negative Z for the existing Z-plane intersection helper. */
-static void turn_plane_height_into_depth(struct VECTOR* position)
+static void turn_plane_height_into_depth(struct VECTOR *position)
 {
 	legacy_s16 depth = position->z;
 
@@ -640,9 +608,9 @@ static void turn_plane_height_into_depth(struct VECTOR* position)
 	position->y = depth;
 }
 
-static void split_wheel_plane_travel(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index,
-	struct VECTOR* start, struct VECTOR* end)
+static void split_wheel_plane_travel(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion,
+									 legacy_s16 wheel_index, struct VECTOR *start,
+									 struct VECTOR *end)
 {
 	struct VECTOR intersection, delta, retained;
 	legacy_s16 remaining_travel, total_travel, retained_travel;
@@ -650,19 +618,19 @@ static void split_wheel_plane_travel(struct CARSTATE* carstate,
 	turn_plane_height_into_depth(start);
 	turn_plane_height_into_depth(end);
 	remaining_travel = scaled_vector_separation(end, start, &intersection, &delta);
-	total_travel = LEGACY_S16_WRAP_ADD(
-		carstate->car_wheel_vertical_speed[wheel_index], motion->travel);
+	total_travel =
+		LEGACY_S16_WRAP_ADD(carstate->car_wheel_vertical_speed[wheel_index], motion->travel);
 	retained_travel = LEGACY_S16_WRAP_SUB(total_travel, remaining_travel);
 	scale_wheel_displacement(&retained, &motion->current[wheel_index],
-		&motion->previous[wheel_index], retained_travel, total_travel);
+							 &motion->previous[wheel_index], retained_travel, total_travel);
 	prepare_wheel_plane_travel(motion, wheel_index, remaining_travel);
 	physics_position_offset(&motion->current[wheel_index], &motion->previous[wheel_index],
-		&retained);
+							&retained);
 	physics_position_offset(&motion->current[wheel_index], &motion->current[wheel_index],
-		&wheel_world_travel);
+							&wheel_world_travel);
 }
 
-static void push_wheel_out_of_plane(struct VECTORLONG* position, int reverse_response)
+static void push_wheel_out_of_plane(struct VECTORLONG *position, int reverse_response)
 {
 	struct VECTOR wheel, correction;
 
@@ -671,20 +639,19 @@ static void push_wheel_out_of_plane(struct VECTORLONG* position, int reverse_res
 	nextPosAndNormalIP = plane_signed_distance(planindex, wheel.x, wheel.y, wheel.z);
 	if (nextPosAndNormalIP < 0) {
 		if (reverse_response) {
-			nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
-				PLAYER_PHYSICS_PLANE_PENETRATION_BIAS);
+			nextPosAndNormalIP = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
+													 PLAYER_PHYSICS_PLANE_PENETRATION_BIAS);
 		}
 		wheel.x = 0;
 		wheel.y = LEGACY_S16_SHL(LEGACY_S16_WRAP_NEGATE(nextPosAndNormalIP),
-			PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
+								 PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
 		wheel.z = 0;
 		mat_mul_vector2(&wheel, &planptr[planindex].plane_rotation, &correction);
 		physics_position_offset(position, position, &correction);
 	}
 }
 
-static void use_ground_plane_for_wheel(struct VECTORLONG* position)
+static void use_ground_plane_for_wheel(struct VECTORLONG *position)
 {
 	struct VECTOR wheel;
 
@@ -692,21 +659,21 @@ static void use_ground_plane_for_wheel(struct VECTORLONG* position)
 	current_planptr = planptr;
 	track_wall_collision_enabled = 1;
 	physics_position_to_vector(&wheel, position);
-	nextPosAndNormalIP = plane_signed_distance(PLAYER_PHYSICS_GROUND_PLANE_INDEX,
-		wheel.x, wheel.y, wheel.z);
+	nextPosAndNormalIP =
+		plane_signed_distance(PLAYER_PHYSICS_GROUND_PLANE_INDEX, wheel.x, wheel.y, wheel.z);
 }
 
 /* Return false when the wheel is below an elevated plane and needs to be
-   tested against the ground instead. Ground correction cannot take this path. */
-static int correct_wheel_plane_penetration(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+ * tested against the ground instead. Ground correction cannot take this path. */
+static int correct_wheel_plane_penetration(struct CARSTATE *carstate,
+										   struct PLAYER_WHEEL_MOTION *motion,
+										   legacy_s16 wheel_index, legacy_s16 car_index)
 {
 	struct VECTOR start, end;
 	int reverse_response = 0;
 
 	transform_wheel_plane_crossing(motion, wheel_index, car_index, &start, &end);
-	if (track_wall_collision_enabled == 0 &&
-		start.y < -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT &&
+	if (track_wall_collision_enabled == 0 && start.y < -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT &&
 		end.y < -PLAYER_PHYSICS_CONTACT_DISTANCE_LIMIT) {
 		if (end.y <= -PLAYER_PHYSICS_INVERTED_CONTACT_DISTANCE_LIMIT) {
 			use_ground_plane_for_wheel(&motion->current[wheel_index]);
@@ -723,16 +690,16 @@ static int correct_wheel_plane_penetration(struct CARSTATE* carstate,
 			split_wheel_plane_travel(carstate, motion, wheel_index, &start, &end);
 		} else {
 			prepare_wheel_plane_travel(motion, wheel_index, motion->travel);
-			physics_position_offset(&motion->current[wheel_index],
-				&motion->previous[wheel_index], &wheel_world_travel);
+			physics_position_offset(&motion->current[wheel_index], &motion->previous[wheel_index],
+									&wheel_world_travel);
 		}
 		push_wheel_out_of_plane(&motion->current[wheel_index], reverse_response);
 	}
 	return 1;
 }
 
-static void apply_wheel_landing(struct CARSTATE* carstate,
-	legacy_s16 wheel_index, legacy_s16 car_index)
+static void apply_wheel_landing(struct CARSTATE *carstate, legacy_s16 wheel_index,
+								legacy_s16 car_index)
 {
 	if (carstate->car_wheel_vertical_speed[wheel_index] >
 		PLAYER_PHYSICS_SUSPENSION_SOUND_THRESHOLD) {
@@ -745,8 +712,9 @@ static void apply_wheel_landing(struct CARSTATE* carstate,
 	carstate->car_wheel_vertical_speed[wheel_index] = 0;
 }
 
-static void resolve_wheel_plane_contact(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index, legacy_s16 car_index)
+static void resolve_wheel_plane_contact(struct CARSTATE *carstate,
+										struct PLAYER_WHEEL_MOTION *motion, legacy_s16 wheel_index,
+										legacy_s16 car_index)
 {
 	int resolved;
 
@@ -755,7 +723,7 @@ static void resolve_wheel_plane_contact(struct CARSTATE* carstate,
 		/* Suspension uses the distance before penetration correction. */
 		motion->contact_distances[wheel_index] = nextPosAndNormalIP;
 		resolved = nextPosAndNormalIP >= 0 ||
-			correct_wheel_plane_penetration(carstate, motion, wheel_index, car_index);
+				   correct_wheel_plane_penetration(carstate, motion, wheel_index, car_index);
 	} while (!resolved);
 
 	if (motion->contact_distances[wheel_index] <= 0) {
@@ -763,8 +731,8 @@ static void resolve_wheel_plane_contact(struct CARSTATE* carstate,
 	}
 }
 
-static void look_up_wheel_surface(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 wheel_index)
+static void look_up_wheel_surface(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion,
+								  legacy_s16 wheel_index)
 {
 	struct VECTOR wheel;
 
@@ -782,8 +750,8 @@ static void look_up_wheel_surface(struct CARSTATE* carstate,
 }
 
 /* Stop at the first wall response: its displacement invalidates the whole scan. */
-static int resolve_wheel_contact_pass(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+static int resolve_wheel_contact_pass(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion,
+									  legacy_s16 car_index)
 {
 	legacy_s16 i;
 
@@ -797,8 +765,8 @@ static int resolve_wheel_contact_pass(struct CARSTATE* carstate,
 	return 1;
 }
 
-static void resolve_wheel_contacts(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion, legacy_s16 car_index)
+static void resolve_wheel_contacts(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion,
+								   legacy_s16 car_index)
 {
 	legacy_s16 pass = 1;
 	int resolved = 0;
@@ -820,8 +788,7 @@ static void resolve_wheel_contacts(struct CARSTATE* carstate,
 	}
 }
 
-static void apply_wheel_suspension(struct CARSTATE* carstate,
-	struct PLAYER_WHEEL_MOTION* motion)
+static void apply_wheel_suspension(struct CARSTATE *carstate, struct PLAYER_WHEEL_MOTION *motion)
 {
 	struct VECTOR offset, rotated_offset;
 	legacy_s16 i, deflection;
@@ -842,12 +809,11 @@ static void apply_wheel_suspension(struct CARSTATE* carstate,
 }
 
 static legacy_s32 wheel_axis_average(legacy_s32 front_first, legacy_s32 front_second,
-	legacy_s32 rear_first, legacy_s32 rear_second)
+									 legacy_s32 rear_first, legacy_s32 rear_second)
 {
-	return LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(
-		LEGACY_S32_WRAP_ADD(front_first, front_second),
-		LEGACY_S32_WRAP_ADD(rear_first, rear_second)),
-		PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
+	return LEGACY_S32_SAR(LEGACY_S32_WRAP_ADD(LEGACY_S32_WRAP_ADD(front_first, front_second),
+											  LEGACY_S32_WRAP_ADD(rear_first, rear_second)),
+						  PLAYER_PHYSICS_WHEEL_CENTROID_SHIFT);
 }
 
 static legacy_s32 clamp_car_world_coordinate(legacy_s32 position)
@@ -862,20 +828,20 @@ static legacy_s32 clamp_car_world_coordinate(legacy_s32 position)
 	return position;
 }
 
-static void derive_car_position_from_wheels(struct PLAYER_WHEEL_MOTION* motion,
-	struct VECTOR* wheel_offsets)
+static void derive_car_position_from_wheels(struct PLAYER_WHEEL_MOTION *motion,
+											struct VECTOR *wheel_offsets)
 {
 	legacy_s16 i;
-	struct VECTORLONG* wheels = motion->current;
+	struct VECTORLONG *wheels = motion->current;
 
-	car_working_x = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lx,
-		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lx,
+	car_working_x = wheel_axis_average(
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lx, wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lx,
 		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lx, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lx);
-	car_working_y = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].ly,
-		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].ly,
+	car_working_y = wheel_axis_average(
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].ly, wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].ly,
 		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].ly, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].ly);
-	car_working_z = wheel_axis_average(wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lz,
-		wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lz,
+	car_working_z = wheel_axis_average(
+		wheels[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].lz, wheels[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].lz,
 		wheels[PLAYER_PHYSICS_REAR_WHEEL_FIRST].lz, wheels[PLAYER_PHYSICS_REAR_WHEEL_SECOND].lz);
 	/* Orientation uses offsets from the unclamped wheel centroid. */
 	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
@@ -897,7 +863,7 @@ static legacy_s16 apply_rotation_deadband(legacy_s16 angle)
 	return magnitude < PLAYER_PHYSICS_ROTATION_DEADBAND ? 0 : angle;
 }
 
-static void rotate_wheel_offsets(struct VECTOR* offsets, struct MATRIX* rotation)
+static void rotate_wheel_offsets(struct VECTOR *offsets, struct MATRIX *rotation)
 {
 	legacy_s16 i;
 	struct VECTOR input;
@@ -908,37 +874,34 @@ static void rotate_wheel_offsets(struct VECTOR* offsets, struct MATRIX* rotation
 	}
 }
 
-static void derive_car_yaw(struct VECTOR* wheel_offsets)
+static void derive_car_yaw(struct VECTOR *wheel_offsets)
 {
 	legacy_s16 lateral_delta, longitudinal_delta;
-	lateral_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x);
-	longitudinal_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
-	car_working_yaw = LEGACY_S16_FROM_BITS((legacy_u16)
-		polarAngle(lateral_delta, LEGACY_S16_WRAP_NEGATE(longitudinal_delta)) & ANGLE_MASK);
+	lateral_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x,
+									 wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
+									 wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
+									 wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x);
+	longitudinal_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
+										  wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
+										  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
+										  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
+	car_working_yaw = LEGACY_S16_FROM_BITS(
+		(legacy_u16)polarAngle(lateral_delta, LEGACY_S16_WRAP_NEGATE(longitudinal_delta)) &
+		ANGLE_MASK);
 }
 
-static void derive_car_pitch(struct VECTOR* wheel_offsets)
+static void derive_car_pitch(struct VECTOR *wheel_offsets)
 {
 	legacy_s16 longitudinal_delta, vertical_delta;
 
-	longitudinal_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
-	vertical_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y);
+	longitudinal_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].z,
+										  wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].z,
+										  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].z,
+										  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].z);
+	vertical_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y,
+									  wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
+									  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
+									  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y);
 	car_working_pitch = 0;
 	if (vertical_delta != 0 || longitudinal_delta >= 0) {
 		car_working_pitch = apply_rotation_deadband(LEGACY_S16_WRAP_SUB(
@@ -947,28 +910,26 @@ static void derive_car_pitch(struct VECTOR* wheel_offsets)
 	}
 }
 
-static void derive_car_roll(struct VECTOR* wheel_offsets)
+static void derive_car_roll(struct VECTOR *wheel_offsets)
 {
 	legacy_s16 lateral_delta, vertical_delta;
-	lateral_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x);
-	vertical_delta = wheel_pair_delta(
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
-		wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
-		wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y);
+	lateral_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].x,
+									 wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].x,
+									 wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].x,
+									 wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].x);
+	vertical_delta = wheel_pair_delta(wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_SECOND].y,
+									  wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_FIRST].y,
+									  wheel_offsets[PLAYER_PHYSICS_FRONT_WHEEL_FIRST].y,
+									  wheel_offsets[PLAYER_PHYSICS_REAR_WHEEL_SECOND].y);
 
 	car_working_roll = 0;
 	if (vertical_delta != 0 || lateral_delta <= 0) {
-		car_working_roll = apply_rotation_deadband(LEGACY_S16_WRAP_SUB(
-			polarAngle(lateral_delta, vertical_delta), ANGLE_QUARTER_TURN));
+		car_working_roll = apply_rotation_deadband(
+			LEGACY_S16_WRAP_SUB(polarAngle(lateral_delta, vertical_delta), ANGLE_QUARTER_TURN));
 	}
 }
 
-static void derive_car_pose_from_wheels(struct PLAYER_WHEEL_MOTION* motion)
+static void derive_car_pose_from_wheels(struct PLAYER_WHEEL_MOTION *motion)
 {
 	struct VECTOR wheel_offsets[PLAYER_PHYSICS_WHEEL_COUNT];
 	struct MATRIX rotation;
@@ -985,22 +946,23 @@ static void derive_car_pose_from_wheels(struct PLAYER_WHEEL_MOTION* motion)
 	derive_car_roll(wheel_offsets);
 }
 
-static void sum_front_and_rear_wheel_surfaces(struct CARSTATE* carstate)
+static void sum_front_and_rear_wheel_surfaces(struct CARSTATE *carstate)
 {
-	carstate->car_sumSurfFrontWheels = LEGACY_S8_WRAP_ADD(
-		carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST],
-		carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND]);
-	carstate->car_sumSurfRearWheels = LEGACY_S8_WRAP_ADD(
-		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST],
-		carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND]);
+	carstate->car_sumSurfFrontWheels =
+		LEGACY_S8_WRAP_ADD(carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_FIRST],
+						   carstate->car_surfaceWhl[PLAYER_PHYSICS_FRONT_WHEEL_SECOND]);
+	carstate->car_sumSurfRearWheels =
+		LEGACY_S8_WRAP_ADD(carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_FIRST],
+						   carstate->car_surfaceWhl[PLAYER_PHYSICS_REAR_WHEEL_SECOND]);
 }
 
-static void play_car_impact_sounds(struct CARSTATE* carstate, legacy_s16 car_index)
+static void play_car_impact_sounds(struct CARSTATE *carstate, legacy_s16 car_index)
 {
 #ifndef RESTUNTS_HEADLESS
 	if (is_in_replay == 0) {
-		audio_play_car_events(carstate->car_sound_flags, car_index == PLAYER_CAR_INDEX ?
-			audio_player_engine_channel : audio_opponent_engine_channel);
+		audio_play_car_events(carstate->car_sound_flags, car_index == PLAYER_CAR_INDEX
+															 ? audio_player_engine_channel
+															 : audio_opponent_engine_channel);
 	}
 #else
 	(void)carstate;
@@ -1008,8 +970,8 @@ static void play_car_impact_sounds(struct CARSTATE* carstate, legacy_s16 car_ind
 #endif
 }
 
-static void check_body_corner_plane(struct CARSTATE* carstate,
-	struct VECTOR* current_position, legacy_s16 corner_index, legacy_s16 car_index)
+static void check_body_corner_plane(struct CARSTATE *carstate, struct VECTOR *current_position,
+									legacy_s16 corner_index, legacy_s16 car_index)
 {
 	struct VECTOR sample;
 	legacy_s16 current_distance, previous_distance, current_plane_index;
@@ -1037,16 +999,16 @@ static void check_body_corner_plane(struct CARSTATE* carstate,
 	carstate->car_body_corner_positions[corner_index] = *current_position;
 }
 
-static void check_car_body_planes(struct CARSTATE* carstate, struct SIMD* simd,
-	legacy_s16 car_index)
+static void check_car_body_planes(struct CARSTATE *carstate, struct SIMD *simd,
+								  legacy_s16 car_index)
 {
-	struct MATRIX* rotation;
+	struct MATRIX *rotation;
 	struct VECTOR local, rotated, position;
 	legacy_s16 i;
 
 	rotation = mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(car_working_roll),
-		LEGACY_S16_WRAP_NEGATE(car_working_pitch), LEGACY_S16_WRAP_NEGATE(car_working_yaw),
-		MATRIX_ROTATION_ORDER_ZXY);
+						   LEGACY_S16_WRAP_NEGATE(car_working_pitch),
+						   LEGACY_S16_WRAP_NEGATE(car_working_yaw), MATRIX_ROTATION_ORDER_ZXY);
 	for (i = 0; i < PLAYER_PHYSICS_WHEEL_COUNT; i++) {
 		local = simd->wheel_coords[i];
 		local.y = LEGACY_S16_SHL(simd->collide_points[0].py, PLAYER_PHYSICS_POSITION_SCALE_SHIFT);
@@ -1058,10 +1020,10 @@ static void check_car_body_planes(struct CARSTATE* carstate, struct SIMD* simd,
 	}
 }
 
-static void update_car_surface_contact(struct CARSTATE* carstate, legacy_s16 car_index)
+static void update_car_surface_contact(struct CARSTATE *carstate, legacy_s16 car_index)
 {
-	legacy_s8 surface_sum = LEGACY_S8_WRAP_ADD(
-		carstate->car_sumSurfFrontWheels, carstate->car_sumSurfRearWheels);
+	legacy_s8 surface_sum =
+		LEGACY_S8_WRAP_ADD(carstate->car_sumSurfFrontWheels, carstate->car_sumSurfRearWheels);
 
 	if (car_index != OPPONENT_CAR_INDEX && surface_sum == 0 &&
 		carstate->car_sumSurfAllWheels != CAR_WHEEL_CONTACT_NONE) {
@@ -1070,7 +1032,7 @@ static void update_car_surface_contact(struct CARSTATE* carstate, legacy_s16 car
 	carstate->car_sumSurfAllWheels = surface_sum;
 }
 
-static void prepare_car_collision_pose(struct VECTOR* pose)
+static void prepare_car_collision_pose(struct VECTOR *pose)
 {
 	pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x = position_to_word(car_working_x);
 	pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y = position_to_word(car_working_y);
@@ -1082,10 +1044,10 @@ static void prepare_car_collision_pose(struct VECTOR* pose)
 }
 
 /* Any overlap prevents the working pose from being committed, even when a
-   collision is already latched or the speed response does not cause a crash. */
-static int handle_other_car_collision(struct CARSTATE* carstate, struct SIMD* simd,
-	struct CARSTATE* other_carstate, struct SIMD* other_simd,
-	struct VECTOR* car_pose, legacy_s16 car_index)
+ * collision is already latched or the speed response does not cause a crash. */
+static int handle_other_car_collision(struct CARSTATE *carstate, struct SIMD *simd,
+									  struct CARSTATE *other_carstate, struct SIMD *other_simd,
+									  struct VECTOR *car_pose, legacy_s16 car_index)
 {
 	struct VECTOR other_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
 
@@ -1093,26 +1055,26 @@ static int handle_other_car_collision(struct CARSTATE* carstate, struct SIMD* si
 		return 0;
 	}
 	physics_position_to_vector(&other_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX],
-		&other_carstate->car_position);
+							   &other_carstate->car_position);
 	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = other_carstate->car_rotate.z;
 	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = other_carstate->car_rotate.y;
 	other_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = other_carstate->car_rotate.x;
-	if (car_collision_boxes_overlap(simd->collide_points, car_pose,
-		other_simd->collide_points, other_pose) == 0) {
+	if (car_collision_boxes_overlap(simd->collide_points, car_pose, other_simd->collide_points,
+									other_pose) == 0) {
 		return 0;
 	}
 	if (carstate->car_collision_latch == CAR_COLLISION_LATCH_CLEAR &&
 		resolve_car_collision_speeds(carstate, other_carstate) != 0) {
 		update_crash_state(CRASH_EVENT_COLLISION, car_index);
 		update_crash_state(CRASH_EVENT_COLLISION,
-			car_index == PLAYER_CAR_INDEX ? OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
+						   car_index == PLAYER_CAR_INDEX ? OPPONENT_CAR_INDEX : PLAYER_CAR_INDEX);
 	}
 	return 1;
 }
 
-static int handle_auxiliary_obstacles(struct CARSTATE* carstate, struct SIMD* simd,
-	struct VECTOR* car_pose, struct VECTOR* obstacle_pose,
-	legacy_s16 column, legacy_s16 row, legacy_s16 car_index)
+static int handle_auxiliary_obstacles(struct CARSTATE *carstate, struct SIMD *simd,
+									  struct VECTOR *car_pose, struct VECTOR *obstacle_pose,
+									  legacy_s16 column, legacy_s16 row, legacy_s16 car_index)
 {
 	struct VECTOR positions[PLAYER_PHYSICS_COLLISION_POINT_CAPACITY];
 	legacy_s8 obstacle_count;
@@ -1122,9 +1084,9 @@ static int handle_auxiliary_obstacles(struct CARSTATE* carstate, struct SIMD* si
 	for (i = 0; i < obstacle_count; i++) {
 		obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX] = positions[i];
 		if (car_collision_boxes_overlap(simd->collide_points, car_pose,
-			track_auxiliary_obstacle_bounds, obstacle_pose) != 0) {
-			carstate->car_velocity_heading_offset = LEGACY_S16_WRAP_SUB(
-				carstate->car_velocity_heading_offset, ANGLE_HALF_TURN);
+										track_auxiliary_obstacle_bounds, obstacle_pose) != 0) {
+			carstate->car_velocity_heading_offset =
+				LEGACY_S16_WRAP_SUB(carstate->car_velocity_heading_offset, ANGLE_HALF_TURN);
 			update_crash_state(CRASH_EVENT_COLLISION, car_index);
 			return 1;
 		}
@@ -1132,8 +1094,9 @@ static int handle_auxiliary_obstacles(struct CARSTATE* carstate, struct SIMD* si
 	return 0;
 }
 
-static void handle_breakable_object(struct CARSTATE* carstate, struct SIMD* simd,
-	struct VECTOR* car_pose, struct VECTOR* obstacle_pose, legacy_s16 column, legacy_s16 row)
+static void handle_breakable_object(struct CARSTATE *carstate, struct SIMD *simd,
+									struct VECTOR *car_pose, struct VECTOR *obstacle_pose,
+									legacy_s16 column, legacy_s16 row)
 {
 	legacy_s16 object_index = (legacy_s8)roadside_sign_indices_by_tile[trackrows[row] + column];
 
@@ -1142,19 +1105,19 @@ static void handle_breakable_object(struct CARSTATE* carstate, struct SIMD* simd
 		return;
 	}
 	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX] = roadside_sign_positions[object_index];
-	if (car_collision_boxes_overlap(simd->collide_points, car_pose,
-		breakable_object_bounds, obstacle_pose) != 0) {
+	if (car_collision_boxes_overlap(simd->collide_points, car_pose, breakable_object_bounds,
+									obstacle_pose) != 0) {
 		state.game_object_destroyed[object_index] = 1;
-		emit_crash_particles(LEGACY_S16_WRAP_ADD(object_index,
-			PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
+		emit_crash_particles(
+			LEGACY_S16_WRAP_ADD(object_index, PLAYER_PHYSICS_OBJECT_PARTICLE_KIND_OFFSET),
 			LEGACY_S16_WRAP_NEGATE(carstate->car_rotate.x),
 			scale_speed_to_travel(carstate->car_actual_speed,
-				PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
+								  PLAYER_PHYSICS_NORMAL_RATE_TRAVEL_DIVISOR));
 	}
 }
 
-static int overlaps_start_finish_pole(struct SIMD* simd, struct VECTOR* car_pose,
-	struct VECTOR* obstacle_pose, legacy_s16 angle)
+static int overlaps_start_finish_pole(struct SIMD *simd, struct VECTOR *car_pose,
+									  struct VECTOR *obstacle_pose, legacy_s16 angle)
 {
 	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x = LEGACY_S16_WRAP_ADD(
 		track_column_centers[start_finish_column],
@@ -1162,54 +1125,56 @@ static int overlaps_start_finish_pole(struct SIMD* simd, struct VECTOR* car_pose
 	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z = LEGACY_S16_WRAP_ADD(
 		track_row_centers[start_finish_row],
 		multiply_and_scale(cos_fast(angle), PLAYER_PHYSICS_START_FINISH_POLE_OFFSET));
-	return car_collision_boxes_overlap(simd->collide_points, car_pose,
-		start_finish_pole_bounds, obstacle_pose) != 0;
+	return car_collision_boxes_overlap(simd->collide_points, car_pose, start_finish_pole_bounds,
+									   obstacle_pose) != 0;
 }
 
-static int handle_start_finish_poles(struct SIMD* simd,
-	struct VECTOR* car_pose, struct VECTOR* obstacle_pose,
-	legacy_s16 column, legacy_s16 row, legacy_s16 car_index)
+static int handle_start_finish_poles(struct SIMD *simd, struct VECTOR *car_pose,
+									 struct VECTOR *obstacle_pose, legacy_s16 column,
+									 legacy_s16 row, legacy_s16 car_index)
 {
 	if (column != start_finish_column || row != start_finish_row) {
 		return 0;
 	}
 	obstacle_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].y = hillHeightConsts[hillFlag];
 	if (overlaps_start_finish_pole(simd, car_pose, obstacle_pose,
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)) ||
+								   LEGACY_S16_WRAP_ADD(track_angle, ANGLE_QUARTER_TURN)) ||
 		overlaps_start_finish_pole(simd, car_pose, obstacle_pose,
-			LEGACY_S16_WRAP_ADD(track_angle, ANGLE_THREE_QUARTER_TURN))) {
+								   LEGACY_S16_WRAP_ADD(track_angle, ANGLE_THREE_QUARTER_TURN))) {
 		update_crash_state(CRASH_EVENT_COLLISION, car_index);
 		return 1;
 	}
 	return 0;
 }
 
-static int handle_scenery_collisions(struct CARSTATE* carstate, struct SIMD* simd,
-	struct VECTOR* car_pose, legacy_s16 car_index)
+static int handle_scenery_collisions(struct CARSTATE *carstate, struct SIMD *simd,
+									 struct VECTOR *car_pose, legacy_s16 car_index)
 {
 	struct VECTOR obstacle_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
 	legacy_s16 column, row;
 
 	column = LEGACY_S16_SAR(car_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].x,
-		PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT);
-	row = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
-		LEGACY_S16_SAR(car_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z,
-			PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT), PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE));
+							PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT);
+	row = LEGACY_S16_WRAP_NEGATE(
+		LEGACY_S16_WRAP_SUB(LEGACY_S16_SAR(car_pose[PLAYER_PHYSICS_POSE_POSITION_INDEX].z,
+										   PLAYER_PHYSICS_TRACK_COORDINATE_SHIFT),
+							PLAYER_PHYSICS_TRACK_GRID_LAST_COORDINATE));
 	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].x = 0;
 	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].y = 0;
 	obstacle_pose[PLAYER_PHYSICS_POSE_ROTATION_INDEX].z = 0;
-	if (column < 0 || column >= PLAYER_PHYSICS_TRACK_GRID_SIZE ||
-		row < 0 || row >= PLAYER_PHYSICS_TRACK_GRID_SIZE) {
+	if (column < 0 || column >= PLAYER_PHYSICS_TRACK_GRID_SIZE || row < 0 ||
+		row >= PLAYER_PHYSICS_TRACK_GRID_SIZE) {
 		return 0;
 	}
-	if (handle_auxiliary_obstacles(carstate, simd, car_pose, obstacle_pose, column, row, car_index)) {
+	if (handle_auxiliary_obstacles(carstate, simd, car_pose, obstacle_pose, column, row,
+								   car_index)) {
 		return 1;
 	}
 	handle_breakable_object(carstate, simd, car_pose, obstacle_pose, column, row);
 	return handle_start_finish_poles(simd, car_pose, obstacle_pose, column, row, car_index);
 }
 
-static void commit_working_car_pose(struct CARSTATE* carstate)
+static void commit_working_car_pose(struct CARSTATE *carstate)
 {
 	carstate->car_position.lx = car_working_x;
 	carstate->car_position.ly = car_working_y;
@@ -1220,8 +1185,9 @@ static void commit_working_car_pose(struct CARSTATE* carstate)
 	carstate->car_collision_latch = CAR_COLLISION_LATCH_CLEAR;
 }
 
-void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
-	struct CARSTATE* other_carstate, struct SIMD* other_simd, legacy_s16 car_index)
+void update_player_state(struct CARSTATE *carstate, struct SIMD *simd,
+						 struct CARSTATE *other_carstate, struct SIMD *other_simd,
+						 legacy_s16 car_index)
 {
 	struct PLAYER_WHEEL_MOTION motion;
 	struct VECTOR car_pose[PLAYER_PHYSICS_POSE_VECTOR_COUNT];
@@ -1238,8 +1204,8 @@ void update_player_state(struct CARSTATE* carstate, struct SIMD* simd,
 		check_car_body_planes(carstate, simd, car_index);
 		update_car_surface_contact(carstate, car_index);
 		prepare_car_collision_pose(car_pose);
-		if (handle_other_car_collision(carstate, simd, other_carstate, other_simd,
-				car_pose, car_index) ||
+		if (handle_other_car_collision(carstate, simd, other_carstate, other_simd, car_pose,
+									   car_index) ||
 			handle_scenery_collisions(carstate, simd, car_pose, car_index)) {
 			return;
 		}

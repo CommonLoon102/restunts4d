@@ -10,8 +10,7 @@
 
 #define TEST_SHAPE_COUNT 7U
 #define TEST_VERTEX_COUNT 32U
-#define TEST_SHAPE_BYTES (SHAPE3D_HEADER_SIZE + TEST_VERTEX_COUNT * \
-	SHAPE3D_VERTEX_SIZE + 14U)
+#define TEST_SHAPE_BYTES (SHAPE3D_HEADER_SIZE + TEST_VERTEX_COUNT * SHAPE3D_VERTEX_SIZE + 14U)
 #define TEST_RESOURCE_BYTES (TEST_SHAPE_COUNT * TEST_SHAPE_BYTES)
 #define TEST_FIRST_CAR_SHAPE 116U
 
@@ -21,21 +20,21 @@ legacy_u8 atantable[257];
 legacy_u8 vector_saved_z_low;
 legacy_u8 vector_saved_z_high;
 
-static void* allocated[2];
+static void *allocated[2];
 static unsigned allocation_count;
 static unsigned file_load_count;
 static unsigned cached_release_count;
 static unsigned discarded_release_count;
 
-void fatal_error(const legacy_s8* format, ...)
+void fatal_error(const legacy_s8 *format, ...)
 {
 	(void)format;
 	abort();
 }
 
-void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size)
+void far *mmgr_alloc_resbytes(const legacy_s8 *name, legacy_s32 size)
 {
-	void* resource;
+	void *resource;
 
 	(void)name;
 	assert(size == TEST_RESOURCE_BYTES);
@@ -46,16 +45,16 @@ void far* mmgr_alloc_resbytes(const legacy_s8* name, legacy_s32 size)
 	return resource;
 }
 
-legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far* resource)
+legacy_u32 mmgr_get_chunk_size_bytes(legacy_s8 far *resource)
 {
 	assert(resource == allocated[0]);
 	return TEST_RESOURCE_BYTES;
 }
 
-void far* file_load_3dres(const legacy_s8* name)
+void far *file_load_3dres(const legacy_s8 *name)
 {
-	legacy_u8* resource;
-	legacy_u8* shape;
+	legacy_u8 *resource;
+	legacy_u8 *shape;
 	unsigned shape_index;
 	unsigned vertex_index;
 
@@ -67,22 +66,20 @@ void far* file_load_3dres(const legacy_s8* name)
 		shape[SHAPE3D_PRIMITIVE_COUNT_OFFSET] = 1U;
 		shape[SHAPE3D_PAINT_COUNT_OFFSET] = 1U;
 		for (vertex_index = 0; vertex_index < TEST_VERTEX_COUNT; vertex_index++) {
-			LEGACY_WRITE_U16_LE(shape + SHAPE3D_HEADER_SIZE +
-				vertex_index * SHAPE3D_VERTEX_SIZE,
-				vertex_index + 100U * shape_index);
+			LEGACY_WRITE_U16_LE(shape + SHAPE3D_HEADER_SIZE + vertex_index * SHAPE3D_VERTEX_SIZE,
+								vertex_index + 100U * shape_index);
 		}
 	}
 	return resource;
 }
 
-legacy_s8 far* locate_shape_fatal(legacy_s8 far* resource,
-	const legacy_s8* name)
+legacy_s8 far *locate_shape_fatal(legacy_s8 far *resource, const legacy_s8 *name)
 {
 	unsigned shape_index;
 
-	if (memcmp(name, "car", 3U) == 0)
+	if (memcmp(name, "car", 3U) == 0) {
 		shape_index = (unsigned)(name[3] - '0');
-	else {
+	} else {
 		assert(memcmp(name, "exp", 3U) == 0);
 		shape_index = (unsigned)(name[3] - '0') + 3U;
 	}
@@ -90,7 +87,7 @@ legacy_s8 far* locate_shape_fatal(legacy_s8 far* resource,
 	return resource + shape_index * TEST_SHAPE_BYTES;
 }
 
-static void release_resource(void* resource)
+static void release_resource(void *resource)
 {
 	assert(allocation_count != 0U);
 	assert(resource == allocated[allocation_count - 1U]);
@@ -99,13 +96,13 @@ static void release_resource(void* resource)
 	allocated[--allocation_count] = 0;
 }
 
-void mmgr_release(void far* resource)
+void mmgr_release(void far *resource)
 {
 	discarded_release_count++;
 	release_resource(resource);
 }
 
-void far* mmgr_free(legacy_s8 far* resource)
+void far *mmgr_free(legacy_s8 far *resource)
 {
 	cached_release_count++;
 	release_resource(resource);
@@ -114,13 +111,12 @@ void far* mmgr_free(legacy_s8 far* resource)
 
 static void check_released_shapes(void)
 {
-	struct TRANSFORMEDSHAPE3D instance = { 0 };
+	struct TRANSFORMEDSHAPE3D instance = {0};
 	unsigned index;
 
 	instance.culling_distance = 1024U;
 	polyinfo_reset();
-	for (index = TEST_FIRST_CAR_SHAPE;
-		index <= OPPONENT_CAR_HIGH_SHAPE; index++) {
+	for (index = TEST_FIRST_CAR_SHAPE; index <= OPPONENT_CAR_HIGH_SHAPE; index++) {
 		instance.shapeptr = &game3dshapes[index];
 		assert(instance.shapeptr->shape3d_numverts == 0U);
 		assert(instance.shapeptr->shape3d_numprimitives == 0U);
@@ -137,8 +133,7 @@ static void check_released_shapes(void)
 	assert(allocation_count == 0U);
 }
 
-static void check_cycle(legacy_s8* opponent, unsigned expected_loads,
-	unsigned expected_discards)
+static void check_cycle(legacy_s8 *opponent, unsigned expected_loads, unsigned expected_discards)
 {
 	legacy_s8 player[] = "TEST";
 	struct VECTOR vertex;
@@ -148,14 +143,12 @@ static void check_cycle(legacy_s8* opponent, unsigned expected_loads,
 
 	shape3d_load_car_shapes(player, opponent);
 	assert(file_load_count - previous_loads == expected_loads);
-	assert(game3dshapes[PLAYER_CAR_HIGH_SHAPE].shape3d_numverts ==
-		TEST_VERTEX_COUNT);
+	assert(game3dshapes[PLAYER_CAR_HIGH_SHAPE].shape3d_numverts == TEST_VERTEX_COUNT);
 	shape3d_vertex_read(&game3dshapes[PLAYER_CAR_HIGH_SHAPE], 9U, &vertex);
 	assert(vertex.x == 209);
 	if (opponent[0] != -1) {
 		assert(carresptr != car2resptr);
-		shape3d_vertex_read(&game3dshapes[OPPONENT_CAR_HIGH_SHAPE], 9U,
-			&vertex);
+		shape3d_vertex_read(&game3dshapes[OPPONENT_CAR_HIGH_SHAPE], 9U, &vertex);
 		assert(vertex.x == 209);
 	}
 	shape3d_free_car_shapes();
@@ -170,7 +163,7 @@ static void check_cycle(legacy_s8* opponent, unsigned expected_loads,
 
 int main(void)
 {
-	legacy_s8 no_opponent[] = { -1, 0, 0, 0 };
+	legacy_s8 no_opponent[] = {-1, 0, 0, 0};
 	legacy_s8 same_opponent[] = "TEST";
 	legacy_s8 different_opponent[] = "DIFF";
 	unsigned cycle;

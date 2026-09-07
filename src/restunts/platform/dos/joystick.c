@@ -23,11 +23,9 @@
 static legacy_u8 dos_joystick_enabled;
 static legacy_u16 dos_joystick_axis1;
 static legacy_u16 dos_joystick_axis2;
-static legacy_u16 dos_joystick_axis1_min =
-	DOS_JOYSTICK_AXIS_INITIAL_VALUE;
+static legacy_u16 dos_joystick_axis1_min = DOS_JOYSTICK_AXIS_INITIAL_VALUE;
 static legacy_u16 dos_joystick_axis1_max;
-static legacy_u16 dos_joystick_axis2_min =
-	DOS_JOYSTICK_AXIS_INITIAL_VALUE;
+static legacy_u16 dos_joystick_axis2_min = DOS_JOYSTICK_AXIS_INITIAL_VALUE;
 static legacy_u16 dos_joystick_axis2_max;
 static legacy_u16 dos_joystick_axis1_scale;
 static legacy_u16 dos_joystick_axis2_scale;
@@ -36,14 +34,12 @@ static legacy_u8 dos_joystick_button_mask;
 static legacy_u8 dos_joystick_input;
 static legacy_u16 dos_joystick_axis1_low_candidate;
 static legacy_u16 dos_joystick_axis1_high_candidate;
-static legacy_u16 dos_joystick_axis1_candidate_ticks =
-	DOS_JOYSTICK_CALIBRATION_TICKS;
+static legacy_u16 dos_joystick_axis1_candidate_ticks = DOS_JOYSTICK_CALIBRATION_TICKS;
 static legacy_u16 dos_joystick_axis1_low_threshold;
 static legacy_u16 dos_joystick_axis1_high_threshold;
 static legacy_u16 dos_joystick_axis2_low_candidate;
 static legacy_u16 dos_joystick_axis2_high_candidate;
-static legacy_u16 dos_joystick_axis2_candidate_ticks =
-	DOS_JOYSTICK_CALIBRATION_TICKS;
+static legacy_u16 dos_joystick_axis2_candidate_ticks = DOS_JOYSTICK_CALIBRATION_TICKS;
 static legacy_u16 dos_joystick_axis2_low_threshold;
 static legacy_u16 dos_joystick_axis2_high_threshold;
 
@@ -100,13 +96,13 @@ static void joystick_recalculate_axis1(void)
 	legacy_u16 quarter;
 
 	range = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_max, dos_joystick_axis1_min);
-	if (LEGACY_S16_FROM_BITS(range) > 0)
-		dos_joystick_axis1_scale = (legacy_u16)(
-			DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
+	if (LEGACY_S16_FROM_BITS(range) > 0) {
+		dos_joystick_axis1_scale = (legacy_u16)(DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
+	}
 	half = range >> 1;
 	quarter = half >> 1;
-	dos_joystick_axis1_high_threshold = LEGACY_U16_WRAP_ADD(
-		LEGACY_U16_WRAP_ADD(dos_joystick_axis1_min, half), quarter);
+	dos_joystick_axis1_high_threshold =
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_ADD(dos_joystick_axis1_min, half), quarter);
 	dos_joystick_axis1_low_threshold = LEGACY_U16_WRAP_SUB(
 		LEGACY_U16_WRAP_SUB(dos_joystick_axis1_high_threshold, quarter), quarter);
 }
@@ -118,13 +114,13 @@ static void joystick_recalculate_axis2(void)
 	legacy_u16 quarter;
 
 	range = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_max, dos_joystick_axis2_min);
-	if (LEGACY_S16_FROM_BITS(range) > 0)
-		dos_joystick_axis2_scale = (legacy_u16)(
-			DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
+	if (LEGACY_S16_FROM_BITS(range) > 0) {
+		dos_joystick_axis2_scale = (legacy_u16)(DOS_JOYSTICK_AXIS_SCALE_FACTOR / range);
+	}
 	half = range >> 1;
 	quarter = half >> 1;
-	dos_joystick_axis2_high_threshold = LEGACY_U16_WRAP_ADD(
-		LEGACY_U16_WRAP_ADD(dos_joystick_axis2_min, half), quarter);
+	dos_joystick_axis2_high_threshold =
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_ADD(dos_joystick_axis2_min, half), quarter);
 	dos_joystick_axis2_low_threshold = LEGACY_U16_WRAP_SUB(
 		LEGACY_U16_WRAP_SUB(dos_joystick_axis2_high_threshold, quarter), quarter);
 }
@@ -179,14 +175,14 @@ legacy_s16 dos_joystick_get_scaled_axis(legacy_u16 axis_index)
 		minimum = dos_joystick_axis2_min;
 		scale = dos_joystick_axis2_scale;
 	}
-	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(minimum))
+	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(minimum)) {
 		difference = 0;
-	else
+	} else {
 		difference = LEGACY_U16_WRAP_SUB(axis, minimum);
+	}
 	scaled = (legacy_u32)difference * scale;
-	return LEGACY_S16_FROM_BITS(
-		(legacy_u16)((legacy_u16)(scaled >> DOS_JOYSTICK_SCALE_SHIFT) -
-		DOS_JOYSTICK_SCALED_CENTER_OFFSET));
+	return LEGACY_S16_FROM_BITS((legacy_u16)((legacy_u16)(scaled >> DOS_JOYSTICK_SCALE_SHIFT) -
+											 DOS_JOYSTICK_SCALED_CENTER_OFFSET));
 }
 
 legacy_s16 dos_get_joy_flags(void)
@@ -194,73 +190,78 @@ legacy_s16 dos_get_joy_flags(void)
 	legacy_u16 axis;
 	legacy_u8 buttons;
 
-	if ((dos_joystick_enabled & DOS_JOYSTICK_ENABLED_BIT) == 0)
+	if ((dos_joystick_enabled & DOS_JOYSTICK_ENABLED_BIT) == 0) {
 		return 0;
+	}
 
 	dos_sample_joystick_axes();
 
 	axis = dos_joystick_axis1;
 	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(dos_joystick_axis1_min)) {
-		dos_joystick_axis1_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
+		dos_joystick_axis1_candidate_ticks =
+			LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
 		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <= 0) {
 			dos_joystick_axis1_min = dos_joystick_axis1_low_candidate;
 			joystick_recalculate_axis1();
 			joystick_reset_axis1_candidates();
 		} else if (LEGACY_S16_FROM_BITS(axis) >=
-			LEGACY_S16_FROM_BITS(dos_joystick_axis1_low_candidate)) {
+				   LEGACY_S16_FROM_BITS(dos_joystick_axis1_low_candidate)) {
 			dos_joystick_axis1_low_candidate = axis;
 		}
-	} else if (LEGACY_S16_FROM_BITS(axis) >
-		LEGACY_S16_FROM_BITS(dos_joystick_axis1_max)) {
-		dos_joystick_axis1_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
+	} else if (LEGACY_S16_FROM_BITS(axis) > LEGACY_S16_FROM_BITS(dos_joystick_axis1_max)) {
+		dos_joystick_axis1_candidate_ticks =
+			LEGACY_U16_WRAP_SUB(dos_joystick_axis1_candidate_ticks, 1U);
 		if (LEGACY_S16_FROM_BITS(dos_joystick_axis1_candidate_ticks) <= 0) {
 			dos_joystick_axis1_max = dos_joystick_axis1_high_candidate;
 			joystick_recalculate_axis1();
 			joystick_reset_axis1_candidates();
 		} else if (LEGACY_S16_FROM_BITS(axis) <
-			LEGACY_S16_FROM_BITS(dos_joystick_axis1_high_candidate)) {
+				   LEGACY_S16_FROM_BITS(dos_joystick_axis1_high_candidate)) {
 			dos_joystick_axis1_high_candidate = axis;
 		}
 	} else {
 		joystick_reset_axis1_candidates();
 	}
 
-	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(dos_joystick_axis1_low_threshold))
+	if (LEGACY_S16_FROM_BITS(axis) < LEGACY_S16_FROM_BITS(dos_joystick_axis1_low_threshold)) {
 		dos_joystick_input |= DOS_JOYSTICK_AXIS1_LOW_FLAG;
-	else if (LEGACY_S16_FROM_BITS(axis) >=
-		LEGACY_S16_FROM_BITS(dos_joystick_axis1_high_threshold))
+	} else if (LEGACY_S16_FROM_BITS(axis) >=
+			   LEGACY_S16_FROM_BITS(dos_joystick_axis1_high_threshold)) {
 		dos_joystick_input |= DOS_JOYSTICK_AXIS1_HIGH_FLAG;
+	}
 
 	axis = dos_joystick_axis2;
 	if (axis < dos_joystick_axis2_min) {
-		dos_joystick_axis2_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
+		dos_joystick_axis2_candidate_ticks =
+			LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
 		if (LEGACY_S16_FROM_BITS(dos_joystick_axis2_candidate_ticks) <= 0) {
 			dos_joystick_axis2_min = dos_joystick_axis2_low_candidate;
 			joystick_recalculate_axis2();
 			joystick_reset_axis2_candidates();
 		} else if (LEGACY_S16_FROM_BITS(axis) >=
-			LEGACY_S16_FROM_BITS(dos_joystick_axis2_low_candidate)) {
+				   LEGACY_S16_FROM_BITS(dos_joystick_axis2_low_candidate)) {
 			dos_joystick_axis2_low_candidate = axis;
 		}
-	} else if (LEGACY_S16_FROM_BITS(axis) >
-		LEGACY_S16_FROM_BITS(dos_joystick_axis2_max)) {
-		dos_joystick_axis2_candidate_ticks = LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
+	} else if (LEGACY_S16_FROM_BITS(axis) > LEGACY_S16_FROM_BITS(dos_joystick_axis2_max)) {
+		dos_joystick_axis2_candidate_ticks =
+			LEGACY_U16_WRAP_SUB(dos_joystick_axis2_candidate_ticks, 1U);
 		if (dos_joystick_axis2_candidate_ticks == 0) {
 			dos_joystick_axis2_max = dos_joystick_axis2_high_candidate;
 			joystick_recalculate_axis2();
 			joystick_reset_axis2_candidates();
 		} else if (LEGACY_S16_FROM_BITS(axis) <
-			LEGACY_S16_FROM_BITS(dos_joystick_axis2_high_candidate)) {
+				   LEGACY_S16_FROM_BITS(dos_joystick_axis2_high_candidate)) {
 			dos_joystick_axis2_high_candidate = axis;
 		}
 	} else {
 		joystick_reset_axis2_candidates();
 	}
 
-	if (axis < dos_joystick_axis2_low_threshold)
+	if (axis < dos_joystick_axis2_low_threshold) {
 		dos_joystick_input |= DOS_JOYSTICK_AXIS2_LOW_FLAG;
-	else if (axis >= dos_joystick_axis2_high_threshold)
+	} else if (axis >= dos_joystick_axis2_high_threshold) {
 		dos_joystick_input |= DOS_JOYSTICK_AXIS2_HIGH_FLAG;
+	}
 
 	buttons = (legacy_u8)inp(DOS_JOYSTICK_GAME_PORT);
 	buttons &= dos_joystick_button_mask;

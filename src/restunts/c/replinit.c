@@ -24,47 +24,43 @@ void init_row_tables(void)
 
 	for (i = 0; i < TRACK_GRID_SIZE; i++) {
 		inverse_row = LEGACY_S16_WRAP_SUB(TRACK_GRID_LAST_INDEX, i);
-		track_position = LEGACY_S16_SHL(inverse_row,
-			TRACK_TILE_POSITION_SHIFT);
+		track_position = LEGACY_S16_SHL(inverse_row, TRACK_TILE_POSITION_SHIFT);
 		terrain_position = LEGACY_S16_SHL(i, TRACK_TILE_POSITION_SHIFT);
 		trackrows[i] = LEGACY_S16_WRAP_MUL(TRACK_GRID_SIZE, inverse_row);
 		terrainrows[i] = LEGACY_S16_WRAP_MUL(TRACK_GRID_SIZE, i);
 		track_row_positions[i] = track_position;
 		track_column_positions[i] = terrain_position;
-		track_row_centers[i] = LEGACY_S16_WRAP_ADD(
-			track_position, TRACK_TILE_HALF_SIZE);
+		track_row_centers[i] = LEGACY_S16_WRAP_ADD(track_position, TRACK_TILE_HALF_SIZE);
 		terrainpos[i] = terrain_position;
-		terraincenterpos[i] = LEGACY_S16_WRAP_ADD(
-			terrain_position, TRACK_TILE_HALF_SIZE);
-		track_column_centers[i] = LEGACY_S16_WRAP_ADD(
-			terrain_position, TRACK_TILE_HALF_SIZE);
+		terraincenterpos[i] = LEGACY_S16_WRAP_ADD(terrain_position, TRACK_TILE_HALF_SIZE);
+		track_column_centers[i] = LEGACY_S16_WRAP_ADD(terrain_position, TRACK_TILE_HALF_SIZE);
 	}
 }
 
 void init_trackdata(void)
 {
-	legacy_s8 far* trkptr;
+	legacy_s8 far *trkptr;
 
 	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
-	track_primary_route_links = (legacy_s16 far*)trkptr;
+	track_primary_route_links = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	track_alternate_route_links = (legacy_s16 far*)trkptr;
+	track_alternate_route_links = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	opponent_route_track_indices = trkptr;
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	player_aero_resistance_table = (legacy_s16 far*)trkptr;
+	player_aero_resistance_table = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	opponent_aero_resistance_table = (legacy_s16 far*)trkptr;
+	opponent_aero_resistance_table = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	reserved_trackside_camera_words = (legacy_s16 far*)trkptr;
+	reserved_trackside_camera_words = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	trackside_camera_ground_heights = (legacy_s16 far*)trkptr;
+	trackside_camera_ground_heights = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	roadside_sign_headings = (legacy_s16 far*)trkptr;
+	roadside_sign_headings = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_DIRECTION_TABLE_SIZE;
-	trackside_camera_positions = (struct VECTOR far*)trkptr;
+	trackside_camera_positions = (struct VECTOR far *)trkptr;
 	trkptr += TRACKDATA_CAMERA_VECTOR_SIZE;
-	roadside_sign_positions = (struct VECTOR far*)trkptr;
+	roadside_sign_positions = (struct VECTOR far *)trkptr;
 	trkptr += TRACKDATA_CHECK_VECTOR_SIZE;
 	track_highscore_table = trkptr;
 	trkptr += TRACKDATA_HIGHSCORE_SIZE;

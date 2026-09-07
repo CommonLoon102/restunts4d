@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include "legacy.h"
 
-#define AUDIO_TIMER_COUNT   25U
+#define AUDIO_TIMER_COUNT 25U
 #define AUDIO_CHANNEL_COUNT 24U
 #define AUDIO_CONTEXT_COUNT 16U
 #define AUDIO_MUSIC_CHANNEL_FIRST 0U
@@ -41,17 +41,11 @@
 #define AUDIO_CONTEXT_FADE_OUT_FLAG_OFFSET 12U
 #define AUDIO_CONTEXT_RESOURCE_OFFSET 16U
 #define AUDIO_CONTEXT_TIMER_OFFSET_OFFSET 42U
-enum AUDIO_STATE {
-	AUDIO_STATE_DISABLED = 0,
-	AUDIO_STATE_ENABLED = 1
-};
+enum AUDIO_STATE { AUDIO_STATE_DISABLED = 0, AUDIO_STATE_ENABLED = 1 };
 
-enum AUDIO_UPDATE_STATE {
-	AUDIO_UPDATE_UNLOCKED = 0,
-	AUDIO_UPDATE_LOCKED = 1
-};
+enum AUDIO_UPDATE_STATE { AUDIO_UPDATE_UNLOCKED = 0, AUDIO_UPDATE_LOCKED = 1 };
 
-#pragma pack (push, 1)
+#pragma pack(push, 1)
 
 /* A far pointer as stored in the original DOS data segment. */
 struct AUDIO_FAR_POINTER {
@@ -89,7 +83,7 @@ struct AUDIO_TIMER {
 };
 
 /* One music or effect channel of the sequencer. The sound driver is handed
-   this record directly, so the layout is fixed by the driver ABI. */
+ * this record directly, so the layout is fixed by the driver ABI. */
 struct AUDIO_CHANNEL {
 	struct AUDIO_FAR_POINTER cursor;
 	/* Call stack for the sequence. Slot 0 is seeded from the resource
@@ -149,77 +143,64 @@ struct AUDIO_CONTEXT {
 	legacy_u8 reserved_driver_channel_byte;
 };
 
-#pragma pack (pop)
+#pragma pack(pop)
 
-typedef char audio_far_pointer_must_be_4_bytes[
-	(sizeof(struct AUDIO_FAR_POINTER) == AUDIO_FAR_POINTER_SIZE) ? 1 : -1];
-typedef char audio_engine_definition_must_be_48_bytes[
-	(sizeof(struct AUDIO_ENGINE_DEFINITION) == AUDIO_ENGINE_DEFINITION_SIZE) ?
-	1 : -1];
-typedef char audio_timer_must_be_76_bytes[
-	(sizeof(struct AUDIO_TIMER) == AUDIO_TIMER_SIZE) ? 1 : -1];
-typedef char audio_channel_must_be_76_bytes[
-	(sizeof(struct AUDIO_CHANNEL) == AUDIO_CHANNEL_SIZE) ? 1 : -1];
-typedef char audio_channel_call_stack_must_be_at_05[
-	(offsetof(struct AUDIO_CHANNEL, call_stack) ==
-	AUDIO_CHANNEL_CALL_STACK_OFFSET) ? 1 : -1];
-typedef char audio_channel_active_notes_must_be_at_15[
-	(offsetof(struct AUDIO_CHANNEL, active_notes) ==
-	AUDIO_CHANNEL_ACTIVE_NOTES_OFFSET) ? 1 : -1];
-typedef char audio_channel_note_limit_must_be_at_16[
-	(offsetof(struct AUDIO_CHANNEL, note_limit) ==
-	AUDIO_CHANNEL_NOTE_LIMIT_OFFSET) ? 1 : -1];
-typedef char audio_channel_delay_must_be_at_18[
-	(offsetof(struct AUDIO_CHANNEL, delay) ==
-	AUDIO_CHANNEL_DELAY_OFFSET) ? 1 : -1];
-typedef char audio_channel_resource_must_be_at_1E[
-	(offsetof(struct AUDIO_CHANNEL, resource) ==
-	AUDIO_CHANNEL_RESOURCE_OFFSET) ? 1 : -1];
-typedef char audio_channel_note_velocity_must_be_at_22[
-	(offsetof(struct AUDIO_CHANNEL, note_velocity) ==
-	AUDIO_CHANNEL_NOTE_VELOCITY_OFFSET) ? 1 : -1];
-typedef char audio_channel_pitch_must_be_at_26[
-	(offsetof(struct AUDIO_CHANNEL, pitch) ==
-	AUDIO_CHANNEL_PITCH_OFFSET) ? 1 : -1];
-typedef char audio_channel_volume_must_be_at_28[
-	(offsetof(struct AUDIO_CHANNEL, volume) ==
-	AUDIO_CHANNEL_VOLUME_OFFSET) ? 1 : -1];
-typedef char audio_channel_instruments_must_be_at_2E[
-	(offsetof(struct AUDIO_CHANNEL, instruments) ==
-	AUDIO_CHANNEL_INSTRUMENTS_OFFSET) ? 1 : -1];
-typedef char audio_channel_stack_depth_must_be_at_32[
-	(offsetof(struct AUDIO_CHANNEL, stack_depth) ==
-	AUDIO_CHANNEL_STACK_DEPTH_OFFSET) ? 1 : -1];
-typedef char audio_channel_return_stack_must_be_at_33[
-	(offsetof(struct AUDIO_CHANNEL, return_stack) ==
-	AUDIO_CHANNEL_RETURN_STACK_OFFSET) ? 1 : -1];
-typedef char audio_channel_loop_counts_must_be_at_43[
-	(offsetof(struct AUDIO_CHANNEL, loop_counts) ==
-	AUDIO_CHANNEL_LOOP_COUNTS_OFFSET) ? 1 : -1];
-typedef char audio_channel_driver_channel_must_be_at_47[
-	(offsetof(struct AUDIO_CHANNEL, driver_channel) ==
-	AUDIO_CHANNEL_DRIVER_CHANNEL_OFFSET) ? 1 : -1];
-typedef char audio_channel_finish_callback_must_be_at_48[
-	(offsetof(struct AUDIO_CHANNEL, finish_callback) ==
-	AUDIO_CHANNEL_FINISH_CALLBACK_OFFSET) ? 1 : -1];
-typedef char audio_context_must_be_46_bytes[
-	(sizeof(struct AUDIO_CONTEXT) == AUDIO_CONTEXT_SIZE) ? 1 : -1];
-typedef char audio_timer_definition_must_be_at_1C[
-	(offsetof(struct AUDIO_TIMER, definition) ==
-	AUDIO_TIMER_DEFINITION_OFFSET) ? 1 : -1];
-typedef char audio_context_fade_out_flag_must_be_at_0C[
-	(offsetof(struct AUDIO_CONTEXT, fade_out_flag) ==
-	AUDIO_CONTEXT_FADE_OUT_FLAG_OFFSET) ? 1 : -1];
-typedef char audio_context_resource_must_be_at_10[
-	(offsetof(struct AUDIO_CONTEXT, resource) ==
-	AUDIO_CONTEXT_RESOURCE_OFFSET) ? 1 : -1];
-typedef char audio_context_timer_offset_must_be_at_2A[
-	(offsetof(struct AUDIO_CONTEXT, timer_offset) ==
-	AUDIO_CONTEXT_TIMER_OFFSET_OFFSET) ? 1 : -1];
+typedef char audio_far_pointer_must_be_4_bytes
+	[(sizeof(struct AUDIO_FAR_POINTER) == AUDIO_FAR_POINTER_SIZE) ? 1 : -1];
+typedef char audio_engine_definition_must_be_48_bytes
+	[(sizeof(struct AUDIO_ENGINE_DEFINITION) == AUDIO_ENGINE_DEFINITION_SIZE) ? 1 : -1];
+typedef char
+	audio_timer_must_be_76_bytes[(sizeof(struct AUDIO_TIMER) == AUDIO_TIMER_SIZE) ? 1 : -1];
+typedef char
+	audio_channel_must_be_76_bytes[(sizeof(struct AUDIO_CHANNEL) == AUDIO_CHANNEL_SIZE) ? 1 : -1];
+typedef char audio_channel_call_stack_must_be_at_05
+	[(offsetof(struct AUDIO_CHANNEL, call_stack) == AUDIO_CHANNEL_CALL_STACK_OFFSET) ? 1 : -1];
+typedef char audio_channel_active_notes_must_be_at_15
+	[(offsetof(struct AUDIO_CHANNEL, active_notes) == AUDIO_CHANNEL_ACTIVE_NOTES_OFFSET) ? 1 : -1];
+typedef char audio_channel_note_limit_must_be_at_16
+	[(offsetof(struct AUDIO_CHANNEL, note_limit) == AUDIO_CHANNEL_NOTE_LIMIT_OFFSET) ? 1 : -1];
+typedef char audio_channel_delay_must_be_at_18
+	[(offsetof(struct AUDIO_CHANNEL, delay) == AUDIO_CHANNEL_DELAY_OFFSET) ? 1 : -1];
+typedef char audio_channel_resource_must_be_at_1E
+	[(offsetof(struct AUDIO_CHANNEL, resource) == AUDIO_CHANNEL_RESOURCE_OFFSET) ? 1 : -1];
+typedef char audio_channel_note_velocity_must_be_at_22
+	[(offsetof(struct AUDIO_CHANNEL, note_velocity) == AUDIO_CHANNEL_NOTE_VELOCITY_OFFSET) ? 1
+																						   : -1];
+typedef char audio_channel_pitch_must_be_at_26
+	[(offsetof(struct AUDIO_CHANNEL, pitch) == AUDIO_CHANNEL_PITCH_OFFSET) ? 1 : -1];
+typedef char audio_channel_volume_must_be_at_28
+	[(offsetof(struct AUDIO_CHANNEL, volume) == AUDIO_CHANNEL_VOLUME_OFFSET) ? 1 : -1];
+typedef char audio_channel_instruments_must_be_at_2E
+	[(offsetof(struct AUDIO_CHANNEL, instruments) == AUDIO_CHANNEL_INSTRUMENTS_OFFSET) ? 1 : -1];
+typedef char audio_channel_stack_depth_must_be_at_32
+	[(offsetof(struct AUDIO_CHANNEL, stack_depth) == AUDIO_CHANNEL_STACK_DEPTH_OFFSET) ? 1 : -1];
+typedef char audio_channel_return_stack_must_be_at_33
+	[(offsetof(struct AUDIO_CHANNEL, return_stack) == AUDIO_CHANNEL_RETURN_STACK_OFFSET) ? 1 : -1];
+typedef char audio_channel_loop_counts_must_be_at_43
+	[(offsetof(struct AUDIO_CHANNEL, loop_counts) == AUDIO_CHANNEL_LOOP_COUNTS_OFFSET) ? 1 : -1];
+typedef char audio_channel_driver_channel_must_be_at_47
+	[(offsetof(struct AUDIO_CHANNEL, driver_channel) == AUDIO_CHANNEL_DRIVER_CHANNEL_OFFSET) ? 1
+																							 : -1];
+typedef char
+	audio_channel_finish_callback_must_be_at_48[(offsetof(struct AUDIO_CHANNEL, finish_callback) ==
+												 AUDIO_CHANNEL_FINISH_CALLBACK_OFFSET)
+													? 1
+													: -1];
+typedef char
+	audio_context_must_be_46_bytes[(sizeof(struct AUDIO_CONTEXT) == AUDIO_CONTEXT_SIZE) ? 1 : -1];
+typedef char audio_timer_definition_must_be_at_1C
+	[(offsetof(struct AUDIO_TIMER, definition) == AUDIO_TIMER_DEFINITION_OFFSET) ? 1 : -1];
+typedef char audio_context_fade_out_flag_must_be_at_0C
+	[(offsetof(struct AUDIO_CONTEXT, fade_out_flag) == AUDIO_CONTEXT_FADE_OUT_FLAG_OFFSET) ? 1
+																						   : -1];
+typedef char audio_context_resource_must_be_at_10
+	[(offsetof(struct AUDIO_CONTEXT, resource) == AUDIO_CONTEXT_RESOURCE_OFFSET) ? 1 : -1];
+typedef char audio_context_timer_offset_must_be_at_2A
+	[(offsetof(struct AUDIO_CONTEXT, timer_offset) == AUDIO_CONTEXT_TIMER_OFFSET_OFFSET) ? 1 : -1];
 
 extern struct AUDIO_TIMER audio_timers[AUDIO_TIMER_COUNT];
 extern struct AUDIO_CHANNEL audio_channels[AUDIO_CHANNEL_COUNT];
-extern struct AUDIO_CHANNEL* audio_sfx_channels;
+extern struct AUDIO_CHANNEL *audio_sfx_channels;
 extern struct AUDIO_CONTEXT dos_audio_contexts[AUDIO_CONTEXT_COUNT];
 
 #endif

@@ -88,7 +88,7 @@ enum TRACK_EDITOR_VALIDATION_RESULT {
 	TRACK_EDITOR_ERROR_INVALID_TERRAIN_TILE = 14
 };
 
-static legacy_u8 far* progress_box_shape;
+static legacy_u8 far *progress_box_shape;
 
 void preRender_icons(legacy_u8 page)
 {
@@ -101,31 +101,31 @@ void preRender_icons(legacy_u8 page)
 
 	for (row = 0; row < 6U; row++) {
 		for (column = 0; column < 6U; column++) {
-			tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U +
-				column];
+			tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U + column];
 			x = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_LEFT,
-				LEGACY_U16_WRAP_MUL(column, TRACK_EDITOR_TILE_SIZE));
+									LEGACY_U16_WRAP_MUL(column, TRACK_EDITOR_TILE_SIZE));
 			y = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_TOP,
-				LEGACY_U16_WRAP_MUL(row, TRACK_EDITOR_TILE_SIZE));
+									LEGACY_U16_WRAP_MUL(row, TRACK_EDITOR_TILE_SIZE));
 			if (page == 0) {
 				sprite_shape_to_1(track_editor_terrain_shapes[tile], x, y);
 				continue;
 			}
-			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST)
+			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST) {
 				continue;
+			}
 
 			sprite_shape_to_1(track_editor_terrain_shapes[0], x, y);
 			multi_tile = trkObjectList[tile].ss_multiTileFlag;
-			if (multi_tile == 1U || multi_tile == 3U)
-				sprite_shape_to_1(track_editor_terrain_shapes[0], x,
-					LEGACY_U16_WRAP_ADD(y, 16U));
-			if (multi_tile == 2U || multi_tile == 3U)
-				sprite_shape_to_1(track_editor_terrain_shapes[0],
-					LEGACY_U16_WRAP_ADD(x, 16U), y);
-			if (multi_tile == 3U)
-				sprite_shape_to_1(track_editor_terrain_shapes[0],
-					LEGACY_U16_WRAP_ADD(x, 16U),
-					LEGACY_U16_WRAP_ADD(y, 16U));
+			if (multi_tile == 1U || multi_tile == 3U) {
+				sprite_shape_to_1(track_editor_terrain_shapes[0], x, LEGACY_U16_WRAP_ADD(y, 16U));
+			}
+			if (multi_tile == 2U || multi_tile == 3U) {
+				sprite_shape_to_1(track_editor_terrain_shapes[0], LEGACY_U16_WRAP_ADD(x, 16U), y);
+			}
+			if (multi_tile == 3U) {
+				sprite_shape_to_1(track_editor_terrain_shapes[0], LEGACY_U16_WRAP_ADD(x, 16U),
+								  LEGACY_U16_WRAP_ADD(y, 16U));
+			}
 			putpixel_iconMask(track_editor_tile_masks[tile], x, y);
 			putpixel_iconFillings(track_editor_tile_shapes[tile], x, y);
 		}
@@ -135,12 +135,9 @@ void preRender_icons(legacy_u8 page)
 static legacy_u16 track_menu_previous_row(legacy_u16 row);
 static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row);
 
-void draw_2DtrackMap(
-	legacy_u8 column_offset,
-	legacy_u8 row_offset,
-	legacy_u8* cached_track,
-	legacy_u8* cached_terrain
-) {
+void draw_2DtrackMap(legacy_u8 column_offset, legacy_u8 row_offset, legacy_u8 *cached_track,
+					 legacy_u8 *cached_terrain)
+{
 	legacy_u16 map_row;
 	legacy_u16 map_column;
 	legacy_u16 source_row;
@@ -157,85 +154,74 @@ void draw_2DtrackMap(
 	for (map_row = 0; map_row < 11U; map_row++) {
 		for (map_column = 0; map_column < 12U; map_column++) {
 			source_row = LEGACY_U16_WRAP_ADD(row_offset, map_row);
-			source_column = LEGACY_U16_WRAP_ADD(
-				column_offset, map_column);
-			source_index = LEGACY_U16_WRAP_ADD(
-				(legacy_u16)trackrows[source_row], source_column);
+			source_column = LEGACY_U16_WRAP_ADD(column_offset, map_column);
+			source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[source_row], source_column);
 			tile = track_element_map[source_index];
-			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-				(legacy_u16)terrainrows[source_row], source_column)];
-			cache_index = LEGACY_U16_WRAP_ADD(
-				LEGACY_U16_WRAP_MUL(map_row, 12U), map_column);
-			x = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_MUL((legacy_s16)map_column, 16), 8);
-			y = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_MUL((legacy_s16)map_row, 16), 4);
+			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD((legacy_u16)terrainrows[source_row],
+															source_column)];
+			cache_index = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(map_row, 12U), map_column);
+			x = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_MUL((legacy_s16)map_column, 16), 8);
+			y = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_MUL((legacy_s16)map_row, 16), 4);
 
 			if (tile < TRACK_TILE_CONTINUATION_SOUTHEAST) {
 				if (tile == 0) {
-					if (cached_track[cache_index] == 0 &&
-						cached_terrain[cache_index] == terrain)
+					if (cached_track[cache_index] == 0 && cached_terrain[cache_index] == terrain) {
 						continue;
+					}
 					sprite_shape_to_1(track_editor_terrain_shapes[terrain], x, y);
 					cached_track[cache_index] = 0;
 					cached_terrain[cache_index] = terrain;
 					continue;
 				}
 
-				if (cached_track[cache_index] == tile &&
-					cached_terrain[cache_index] == terrain)
+				if (cached_track[cache_index] == tile && cached_terrain[cache_index] == terrain) {
 					continue;
+				}
 				cached_track[cache_index] = tile;
 				cached_terrain[cache_index] = terrain;
 				sprite_shape_to_1(track_editor_terrain_shapes[terrain], x, y);
-				multi_tile = (legacy_u8)
-					trkObjectList[tile].ss_multiTileFlag;
+				multi_tile = (legacy_u8)trkObjectList[tile].ss_multiTileFlag;
 				switch (multi_tile) {
-				case 0:
-					putpixel_iconMask(track_editor_tile_masks[tile], x, y);
-					putpixel_iconFillings(track_editor_tile_shapes[tile], x, y);
-					break;
+					case 0:
+						putpixel_iconMask(track_editor_tile_masks[tile], x, y);
+						putpixel_iconFillings(track_editor_tile_shapes[tile], x, y);
+						break;
 
-				case 1:
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[source_row + 1U],
-						source_column)];
-					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-						x, LEGACY_S16_WRAP_ADD(y, 16));
-					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
-					sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
-					break;
+					case 1:
+						terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
+							(legacy_u16)terrainrows[source_row + 1U], source_column)];
+						sprite_copy_image_at(track_editor_terrain_shapes[terrain], x,
+											 LEGACY_S16_WRAP_ADD(y, 16));
+						sprite_putimage_and(track_editor_tile_masks[tile], x, y);
+						sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
+						break;
 
-				case 2:
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[source_row],
-						source_column + 1U)];
-					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-						LEGACY_S16_WRAP_ADD(x, 16), y);
-					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
-					sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
-					break;
+					case 2:
+						terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
+							(legacy_u16)terrainrows[source_row], source_column + 1U)];
+						sprite_copy_image_at(track_editor_terrain_shapes[terrain],
+											 LEGACY_S16_WRAP_ADD(x, 16), y);
+						sprite_putimage_and(track_editor_tile_masks[tile], x, y);
+						sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
+						break;
 
-				case 3:
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[source_row],
-						source_column + 1U)];
-					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-						LEGACY_S16_WRAP_ADD(x, 16), y);
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[source_row + 1U],
-						source_column)];
-					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-						x, LEGACY_S16_WRAP_ADD(y, 16));
-					terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[source_row + 1U],
-						source_column + 1U)];
-					sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-						LEGACY_S16_WRAP_ADD(x, 16),
-						LEGACY_S16_WRAP_ADD(y, 16));
-					sprite_putimage_and(track_editor_tile_masks[tile], x, y);
-					sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
-					break;
+					case 3:
+						terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
+							(legacy_u16)terrainrows[source_row], source_column + 1U)];
+						sprite_copy_image_at(track_editor_terrain_shapes[terrain],
+											 LEGACY_S16_WRAP_ADD(x, 16), y);
+						terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
+							(legacy_u16)terrainrows[source_row + 1U], source_column)];
+						sprite_copy_image_at(track_editor_terrain_shapes[terrain], x,
+											 LEGACY_S16_WRAP_ADD(y, 16));
+						terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
+							(legacy_u16)terrainrows[source_row + 1U], source_column + 1U)];
+						sprite_copy_image_at(track_editor_terrain_shapes[terrain],
+											 LEGACY_S16_WRAP_ADD(x, 16),
+											 LEGACY_S16_WRAP_ADD(y, 16));
+						sprite_putimage_and(track_editor_tile_masks[tile], x, y);
+						sprite_putimage_or(track_editor_tile_shapes[tile], x, y);
+						break;
 				}
 				continue;
 			}
@@ -250,41 +236,35 @@ void draw_2DtrackMap(
 			if (tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
 				terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-					(legacy_u16)terrainrows[source_row + 1U],
-					source_column)];
-				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-					x, LEGACY_S16_WRAP_ADD(y, 16));
-				neighbor_tile = track_element_map[
-					LEGACY_U16_WRAP_SUB(source_index, 1U)];
+					(legacy_u16)terrainrows[source_row + 1U], source_column)];
+				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x,
+									 LEGACY_S16_WRAP_ADD(y, 16));
+				neighbor_tile = track_element_map[LEGACY_U16_WRAP_SUB(source_index, 1U)];
 				sprite_putimage_and(track_editor_tile_masks[neighbor_tile],
-					LEGACY_S16_WRAP_SUB(x, 16), y);
+									LEGACY_S16_WRAP_SUB(x, 16), y);
 				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile],
-					LEGACY_S16_WRAP_SUB(x, 16), y);
+								   LEGACY_S16_WRAP_SUB(x, 16), y);
 			} else if (tile == TRACK_TILE_CONTINUATION_SOUTH && map_row == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
-				terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
-					(legacy_u16)terrainrows[source_row],
-					source_column + 1U)];
+				terrain = track_terrain_map[LEGACY_U16_WRAP_ADD((legacy_u16)terrainrows[source_row],
+																source_column + 1U)];
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain],
-					LEGACY_S16_WRAP_ADD(x, 16), y);
+									 LEGACY_S16_WRAP_ADD(x, 16), y);
 				neighbor_tile = track_element_map[LEGACY_U16_WRAP_ADD(
 					track_menu_previous_row(source_row), source_column)];
-				sprite_putimage_and(track_editor_tile_masks[neighbor_tile],
-					x, LEGACY_S16_WRAP_SUB(y, 16));
-				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile],
-					x, LEGACY_S16_WRAP_SUB(y, 16));
-			} else if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST && map_row == 0 && map_column == 0) {
+				sprite_putimage_and(track_editor_tile_masks[neighbor_tile], x,
+									LEGACY_S16_WRAP_SUB(y, 16));
+				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile], x,
+								   LEGACY_S16_WRAP_SUB(y, 16));
+			} else if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST && map_row == 0 &&
+					   map_column == 0) {
 				sprite_copy_image_at(track_editor_terrain_shapes[terrain], x, y);
 				neighbor_tile = track_element_map[LEGACY_U16_WRAP_SUB(
-					LEGACY_U16_WRAP_ADD(
-						track_menu_previous_row(source_row), source_column),
-					1U)];
+					LEGACY_U16_WRAP_ADD(track_menu_previous_row(source_row), source_column), 1U)];
 				sprite_putimage_and(track_editor_tile_masks[neighbor_tile],
-					LEGACY_S16_WRAP_SUB(x, 16),
-					LEGACY_S16_WRAP_SUB(y, 16));
+									LEGACY_S16_WRAP_SUB(x, 16), LEGACY_S16_WRAP_SUB(y, 16));
 				sprite_putimage_or(track_editor_tile_shapes[neighbor_tile],
-					LEGACY_S16_WRAP_SUB(x, 16),
-					LEGACY_S16_WRAP_SUB(y, 16));
+								   LEGACY_S16_WRAP_SUB(x, 16), LEGACY_S16_WRAP_SUB(y, 16));
 			}
 		}
 	}
@@ -292,15 +272,17 @@ void draw_2DtrackMap(
 
 static legacy_u16 track_menu_next_row(legacy_u16 row)
 {
-	if (row == 29U)
+	if (row == 29U) {
 		return dos_mouse_get_button_count();
+	}
 	return (legacy_u16)trackrows[row + 1U];
 }
 
 static legacy_u16 track_menu_previous_row(legacy_u16 row)
 {
-	if (row == 0)
+	if (row == 0) {
 		return (legacy_u16)replay_overflow_acknowledged_word;
+	}
 	return (legacy_u16)trackrows[row - 1U];
 }
 
@@ -315,62 +297,62 @@ void track_editor_remove_invalid_multitile_links(void)
 	legacy_u8 tile;
 	legacy_u8 multi_tile;
 
-	for (current_index = 0; current_index < 900U; current_index++)
+	for (current_index = 0; current_index < 900U; current_index++) {
 		used[current_index] = 0;
+	}
 
 	for (row = 0; row < 30U; row++) {
 		for (column = 0; column < 30U; column++) {
-			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
-				column);
+			current_index = LEGACY_U16_WRAP_ADD(trackrows[row], column);
 			tile = track_element_map[current_index];
-			if (tile == 0)
+			if (tile == 0) {
 				continue;
+			}
 			if (tile >= TRACK_TILE_CONTINUATION_SOUTHEAST) {
-				if (used[current_index] == 0)
+				if (used[current_index] == 0) {
 					track_element_map[current_index] = 0;
+				}
 				continue;
 			}
 
 			multi_tile = trkObjectList[tile].ss_multiTileFlag;
 			switch (multi_tile) {
-			case 1:
-				next_index = LEGACY_U16_WRAP_ADD(
-					track_menu_next_row(row), column);
-				if (used[next_index] != 0 ||
-					track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH)
-					track_element_map[current_index] = 0;
-				else
-					used[next_index] = 1;
-				break;
+				case 1:
+					next_index = LEGACY_U16_WRAP_ADD(track_menu_next_row(row), column);
+					if (used[next_index] != 0 ||
+						track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH) {
+						track_element_map[current_index] = 0;
+					} else {
+						used[next_index] = 1;
+					}
+					break;
 
-			case 2:
-				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
-				if (used[east_index] != 0 ||
-					track_element_map[east_index] !=
-					TRACK_TILE_CONTINUATION_EAST)
-					track_element_map[current_index] = 0;
-				else
-					used[east_index] = 1;
-				break;
+				case 2:
+					east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
+					if (used[east_index] != 0 ||
+						track_element_map[east_index] != TRACK_TILE_CONTINUATION_EAST) {
+						track_element_map[current_index] = 0;
+					} else {
+						used[east_index] = 1;
+					}
+					break;
 
-			case 3:
-				east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
-				next_index = LEGACY_U16_WRAP_ADD(
-					track_menu_next_row(row), column);
-				if (used[east_index] != 0 || used[next_index] != 0 ||
-					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0 ||
-					track_element_map[east_index] !=
-					TRACK_TILE_CONTINUATION_EAST ||
-					track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH ||
-					track_element_map[
-						LEGACY_U16_WRAP_ADD(next_index, 1U)] != TRACK_TILE_CONTINUATION_SOUTHEAST) {
-					track_element_map[current_index] = 0;
-				} else {
-					used[east_index] = 1;
-					used[next_index] = 1;
-					used[LEGACY_U16_WRAP_ADD(next_index, 1U)] = 1;
-				}
-				break;
+				case 3:
+					east_index = LEGACY_U16_WRAP_ADD(current_index, 1U);
+					next_index = LEGACY_U16_WRAP_ADD(track_menu_next_row(row), column);
+					if (used[east_index] != 0 || used[next_index] != 0 ||
+						used[LEGACY_U16_WRAP_ADD(next_index, 1U)] != 0 ||
+						track_element_map[east_index] != TRACK_TILE_CONTINUATION_EAST ||
+						track_element_map[next_index] != TRACK_TILE_CONTINUATION_SOUTH ||
+						track_element_map[LEGACY_U16_WRAP_ADD(next_index, 1U)] !=
+							TRACK_TILE_CONTINUATION_SOUTHEAST) {
+						track_element_map[current_index] = 0;
+					} else {
+						used[east_index] = 1;
+						used[next_index] = 1;
+						used[LEGACY_U16_WRAP_ADD(next_index, 1U)] = 1;
+					}
+					break;
 			}
 		}
 	}
@@ -389,24 +371,22 @@ legacy_s16 track_editor_remove_invalid_terrain_tiles(void)
 	error = TRACK_EDITOR_VALIDATION_OK;
 	for (row = 0; row < 30U; row++) {
 		for (column = 0; column < 30U; column++) {
-			terrain = track_terrain_map[
-				LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
-			current_index = LEGACY_U16_WRAP_ADD(trackrows[row],
-				column);
+			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
+			current_index = LEGACY_U16_WRAP_ADD(trackrows[row], column);
 			tile = track_element_map[current_index];
-			if (tile == 0 || terrain == 0 || terrain == 6U)
+			if (tile == 0 || terrain == 0 || terrain == 6U) {
 				continue;
+			}
 
 			if (terrain >= 1U && terrain <= 5U) {
-				tile = track_editor_map_tile((legacy_u8)column,
-					(legacy_u8)row);
+				tile = track_editor_map_tile((legacy_u8)column, (legacy_u8)row);
 
 				if (!((tile >= TRACK_EDITOR_WATER_RAISED_ROAD_FIRST &&
-					tile <= TRACK_EDITOR_WATER_RAISED_ROAD_LAST) ||
-					(tile >= TRACK_EDITOR_WATER_BRIDGE_FIRST &&
-					tile <= TRACK_EDITOR_WATER_BRIDGE_LAST) ||
-					(tile >= TRACK_EDITOR_WATER_SHIP_FIRST &&
-					tile <= TRACK_EDITOR_WATER_SHIP_LAST))) {
+					   tile <= TRACK_EDITOR_WATER_RAISED_ROAD_LAST) ||
+					  (tile >= TRACK_EDITOR_WATER_BRIDGE_FIRST &&
+					   tile <= TRACK_EDITOR_WATER_BRIDGE_LAST) ||
+					  (tile >= TRACK_EDITOR_WATER_SHIP_FIRST &&
+					   tile <= TRACK_EDITOR_WATER_SHIP_LAST))) {
 					track_element_map[current_index] = 0;
 					error = TRACK_EDITOR_ERROR_INVALID_WATER_TILE;
 				}
@@ -421,29 +401,29 @@ legacy_s16 track_editor_remove_invalid_terrain_tiles(void)
 			}
 		}
 	}
-	if (error != TRACK_EDITOR_VALIDATION_OK)
+	if (error != TRACK_EDITOR_VALIDATION_OK) {
 		track_editor_remove_invalid_multitile_links();
+	}
 	return error;
 }
 
-static legacy_u8 track_editor_palette_tile(legacy_u8 page,
-	legacy_u8 row, legacy_u8 column)
+static legacy_u8 track_editor_palette_tile(legacy_u8 page, legacy_u8 row, legacy_u8 column)
 {
-	return progress_box_shape[(legacy_u16)page * 36U +
-		(legacy_u16)row * 6U + column];
+	return progress_box_shape[(legacy_u16)page * 36U + (legacy_u16)row * 6U + column];
 }
 
-static void track_editor_skip_previous_placeholders(legacy_u8 page,
-	legacy_u8* row, legacy_u8* column)
+static void track_editor_skip_previous_placeholders(legacy_u8 page, legacy_u8 *row,
+													legacy_u8 *column)
 {
 	legacy_u8 tile;
 
 	while (track_editor_palette_tile(page, *row, *column) >= TRACK_TILE_CONTINUATION_SOUTH) {
 		tile = track_editor_palette_tile(page, *row, *column);
-		if (tile == TRACK_TILE_CONTINUATION_EAST)
+		if (tile == TRACK_TILE_CONTINUATION_EAST) {
 			(*column)--;
-		else
+		} else {
 			(*row)--;
+		}
 	}
 }
 
@@ -455,12 +435,11 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 	source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[row], column);
 	tile = track_element_map[source_index];
 	if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
-		source_index = LEGACY_U16_WRAP_SUB(
-			LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column), 1U);
+		source_index =
+			LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column), 1U);
 		tile = track_element_map[source_index];
 	} else if (tile == TRACK_TILE_CONTINUATION_SOUTH) {
-		source_index = LEGACY_U16_WRAP_ADD(
-			track_menu_previous_row(row), column);
+		source_index = LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column);
 		tile = track_element_map[source_index];
 	} else if (tile == TRACK_TILE_CONTINUATION_EAST) {
 		tile = track_element_map[LEGACY_U16_WRAP_SUB(source_index, 1U)];
@@ -468,28 +447,24 @@ static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 	return tile;
 }
 
-static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y,
-	legacy_u8 width, legacy_u8 height)
+static void track_editor_toggle_highlight(legacy_s16 x, legacy_s16 y, legacy_u8 width,
+										  legacy_u8 height)
 {
-	sprite_xor_rect_outline(x, LEGACY_S16_WRAP_SUB(y, 1),
-		LEGACY_S16_WRAP_ADD(x, width),
-		LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(y, height), 1),
-		track_editor_highlight_color);
+	sprite_xor_rect_outline(x, LEGACY_S16_WRAP_SUB(y, 1), LEGACY_S16_WRAP_ADD(x, width),
+							LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(y, height), 1),
+							track_editor_highlight_color);
 }
 
-static void track_editor_show_message(legacy_s8 far* text_resource,
-	const legacy_s8* resource_id)
+static void track_editor_show_message(legacy_s8 far *text_resource, const legacy_s8 *resource_id)
 {
 	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
-		locate_text_res(text_resource, (legacy_s8*)resource_id),
-		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-		performGraphColor, 0, 0);
+				locate_text_res(text_resource, (legacy_s8 *)resource_id), DIALOG_AUTO_POSITION,
+				DIALOG_AUTO_POSITION, performGraphColor, 0, 0);
 }
 
-static void track_editor_save_track(legacy_u8* track_changed,
-	legacy_u8* map_dirty)
+static void track_editor_save_track(legacy_u8 *track_changed, legacy_u8 *map_dirty)
 {
-	legacy_s8 far* text;
+	legacy_s8 far *text;
 	legacy_u8 save_status;
 	legacy_s16 result;
 	legacy_s16 write_result;
@@ -499,21 +474,18 @@ static void track_editor_save_track(legacy_u8* track_changed,
 	while (save_status == 0) {
 		sprite_select_screen_compat();
 		*map_dirty = 1;
-		text = locate_text_res((legacy_s8 far*)mainresptr, "trk");
-		if (do_savefile_dialog(track_directory,
-			gameconfig.game_trackname, text) == 0) {
+		text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
+		if (do_savefile_dialog(track_directory, gameconfig.game_trackname, text) == 0) {
 			save_status = TRACK_EDITOR_SAVE_CANCELLED;
 			break;
 		}
-		file_build_path(track_directory,
-			gameconfig.game_trackname, ".trk", g_path_buf);
+		file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
 		save_status = 1;
 		if (file_find(g_path_buf) != 0) {
-			result = LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_MENU,
-				DIALOG_SAVE_BACKGROUND,
-				locate_text_res((legacy_s8 far*)mainresptr, "fex"),
-				DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-				performGraphColor, 0, 0));
+			result = LEGACY_S16_FROM_BITS(
+				show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+							locate_text_res((legacy_s8 far *)mainresptr, "fex"),
+							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, performGraphColor, 0, 0));
 			if (result == -1) {
 				save_status = TRACK_EDITOR_SAVE_CANCELLED;
 				break;
@@ -523,13 +495,13 @@ static void track_editor_save_track(legacy_u8* track_changed,
 				continue;
 			}
 		}
-		write_result = file_write_fatal(g_path_buf,
-			track_element_map, TRACK_EDITOR_TRACK_FILE_SIZE);
-		if (write_result == 0)
+		write_result =
+			file_write_fatal(g_path_buf, track_element_map, TRACK_EDITOR_TRACK_FILE_SIZE);
+		if (write_result == 0) {
 			highscore_load_or_create(1);
+		}
 		if (write_result != 0) {
-			track_editor_show_message(
-				(legacy_s8 far*)mainresptr, "ser");
+			track_editor_show_message((legacy_s8 far *)mainresptr, "ser");
 			save_status = 0;
 		} else {
 			*track_changed = 0;
@@ -538,8 +510,8 @@ static void track_editor_save_track(legacy_u8* track_changed,
 	g_is_busy = 0;
 }
 
-static void track_editor_swap_tiles(legacy_u8* selected_tile,
-	legacy_u8* saved_tile, legacy_u8* palette_dirty)
+static void track_editor_swap_tiles(legacy_u8 *selected_tile, legacy_u8 *saved_tile,
+									legacy_u8 *palette_dirty)
 {
 	legacy_u8 value;
 
@@ -555,31 +527,26 @@ void load_tracks_menu_shapes(void)
 		"flatlakelak1lak2lak3lak4highgoungouwgousgouegou1gou2gou3gou4gou5gou6gou7gou8";
 	static legacy_s8 cursor_shape_names[] = "crs0crs1crs2crs3";
 	static legacy_s8 under_cursor_shape_names[] = "ucr0ucr1ucr2ucr3";
-	static const legacy_s8 error_resource_ids[] =
-		"eokenseieemseedewwefuenpestejsejdeteewaefteat";
-	static const struct BUTTON_AREA buttons[5] = {
-		{ 9, 199, 181, 187 },
-		{ 202, 206, 4, 179 },
-		{ 220, 315, 132, 139 },
-		{ 8, 199, 4, 179 },
-		{ 220, 315, 36, 187 }
-	};
-	static const legacy_u16 page_keys[10] = {
-		KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
-		KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10
-	};
-	static const legacy_u8 maximum_columns[2] = { 30, 6 };
-	static const legacy_u8 maximum_rows[2] = { 29, 9 };
+	static const legacy_s8 error_resource_ids[] = "eokenseieemseedewwefuenpestejsejdeteewaefteat";
+	static const struct BUTTON_AREA buttons[5] = {{9, 199, 181, 187},
+												  {202, 206, 4, 179},
+												  {220, 315, 132, 139},
+												  {8, 199, 4, 179},
+												  {220, 315, 36, 187}};
+	static const legacy_u16 page_keys[10] = {KEY_F1, KEY_F2, KEY_F3, KEY_F4, KEY_F5,
+											 KEY_F6, KEY_F7, KEY_F8, KEY_F9, KEY_F10};
+	static const legacy_u8 maximum_columns[2] = {30, 6};
+	static const legacy_u8 maximum_rows[2] = {29, 9};
 	legacy_u8 cached_track[132];
 	legacy_u8 cached_terrain[132];
-	struct SPRITE far* cursor_sprites[4];
-	legacy_s8 far* shape_resource;
-	legacy_s8 far* text_resource;
-	legacy_s8 far* shape_name_resource;
-	legacy_s8 far* mask_name_resource;
-	legacy_s8 far* text_name_resource;
-	legacy_s8 far* text;
-	struct SHAPE2D far* terrain_shape;
+	struct SPRITE far *cursor_sprites[4];
+	legacy_s8 far *shape_resource;
+	legacy_s8 far *text_resource;
+	legacy_s8 far *shape_name_resource;
+	legacy_s8 far *mask_name_resource;
+	legacy_s8 far *text_name_resource;
+	legacy_s8 far *text;
+	struct SHAPE2D far *terrain_shape;
 	legacy_u8 selection_column[2];
 	legacy_u8 selection_row[2];
 	legacy_u8 map_column_offset;
@@ -630,28 +597,26 @@ void load_tracks_menu_shapes(void)
 	legacy_s16 cursor_y;
 	legacy_s16 result;
 	legacy_s8 terrain_id[5];
-	legacy_s8* resource_id;
+	legacy_s8 *resource_id;
 
-	shape_resource = (legacy_s8 far*)file_load_shape2d_fatal("sdtedit");
+	shape_resource = (legacy_s8 far *)file_load_shape2d_fatal("sdtedit");
 	locate_many_resources(shape_resource, terrain_shape_names,
-		(legacy_s8 far**)track_editor_terrain_shapes);
+						  (legacy_s8 far **)track_editor_terrain_shapes);
 	locate_many_resources(shape_resource, cursor_shape_names,
-		(legacy_s8 far**)track_editor_cursor_shapes);
+						  (legacy_s8 far **)track_editor_cursor_shapes);
 	locate_many_resources(shape_resource, under_cursor_shape_names,
-		(legacy_s8 far**)track_editor_under_cursor_shapes);
+						  (legacy_s8 far **)track_editor_under_cursor_shapes);
 	for (index = 0; index < 4U; index++) {
 		cursor_sprites[index] = sprite_make_wnd(
-			LEGACY_U16_WRAP_MUL(shape2d_get_width(
-				track_editor_cursor_shapes[index]),
-				(legacy_u16)video_shape_width_scale),
-			shape2d_get_height(track_editor_cursor_shapes[index]),
-			TRACK_EDITOR_TRANSPARENT_COLOR);
+			LEGACY_U16_WRAP_MUL(shape2d_get_width(track_editor_cursor_shapes[index]),
+								(legacy_u16)video_shape_width_scale),
+			shape2d_get_height(track_editor_cursor_shapes[index]), TRACK_EDITOR_TRANSPARENT_COLOR);
 	}
 
-	text_resource = (legacy_s8 far*)file_load_resfile("tedit");
-	render_window_sprite = sprite_make_wnd(TRACK_EDITOR_SCREEN_WIDTH,
-		TRACK_EDITOR_SCREEN_HEIGHT, TRACK_EDITOR_TRANSPARENT_COLOR);
-	progress_box_shape = (legacy_u8 far*)locate_shape_alt(text_resource, "pbox");
+	text_resource = (legacy_s8 far *)file_load_resfile("tedit");
+	render_window_sprite = sprite_make_wnd(TRACK_EDITOR_SCREEN_WIDTH, TRACK_EDITOR_SCREEN_HEIGHT,
+										   TRACK_EDITOR_TRANSPARENT_COLOR);
+	progress_box_shape = (legacy_u8 far *)locate_shape_alt(text_resource, "pbox");
 	shape_name_resource = locate_shape_alt(text_resource, "snam");
 	mask_name_resource = locate_shape_alt(text_resource, "mnam");
 	text_name_resource = locate_shape_alt(text_resource, "tnam");
@@ -662,11 +627,11 @@ void load_tracks_menu_shapes(void)
 	}
 	for (index = 0; index < 186U; index++) {
 		__fmemcpy(&resID_byte1, shape_name_resource + index * 4U, 4U);
-		track_editor_tile_shapes[index] = (struct SHAPE2D far*)
-			locate_shape_fatal(shape_resource, &resID_byte1);
+		track_editor_tile_shapes[index] =
+			(struct SHAPE2D far *)locate_shape_fatal(shape_resource, &resID_byte1);
 		__fmemcpy(&resID_byte1, mask_name_resource + index * 4U, 4U);
-		track_editor_tile_masks[index] = (struct SHAPE2D far*)
-			locate_shape_fatal(shape_resource, &resID_byte1);
+		track_editor_tile_masks[index] =
+			(struct SHAPE2D far *)locate_shape_fatal(shape_resource, &resID_byte1);
 	}
 
 	last_column = TRACK_EDITOR_POSITION_UNSET;
@@ -697,35 +662,31 @@ void load_tracks_menu_shapes(void)
 	path_animation_index = 0;
 
 	sprite_select_render_window_and_clear();
-	draw_button(locate_text_res(text_resource, "bti"),
-		TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y, TRACK_EDITOR_TITLE_WIDTH,
-		TRACK_EDITOR_TITLE_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bti"), TRACK_EDITOR_TITLE_X, TRACK_EDITOR_TITLE_Y,
+				TRACK_EDITOR_TITLE_WIDTH, TRACK_EDITOR_TITLE_HEIGHT, button_top_color,
+				button_bottom_color, button_fill_color, 0);
 	draw_three_color_beveled_border(TRACK_EDITOR_LEFT_FRAME_X, TRACK_EDITOR_LEFT_FRAME_Y,
-		TRACK_EDITOR_LEFT_FRAME_WIDTH, TRACK_EDITOR_LEFT_FRAME_HEIGHT,
-		11, 9, 1);
+									TRACK_EDITOR_LEFT_FRAME_WIDTH, TRACK_EDITOR_LEFT_FRAME_HEIGHT,
+									11, 9, 1);
 	draw_three_color_beveled_border(TRACK_EDITOR_RIGHT_FRAME_X, TRACK_EDITOR_RIGHT_FRAME_Y,
-		TRACK_EDITOR_RIGHT_FRAME_WIDTH, TRACK_EDITOR_RIGHT_FRAME_HEIGHT,
-		11, 9, 1);
-	draw_button(locate_text_res(text_resource, "bsc"),
-		TRACK_EDITOR_WIDE_BUTTON_X, TRACK_EDITOR_WIDE_BUTTON_Y,
-		TRACK_EDITOR_WIDE_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		button_top_color, button_bottom_color, button_fill_color, 0);
-	draw_button(locate_text_res(text_resource, "blo"),
-		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
-		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		button_top_color, button_bottom_color, button_fill_color, 0);
-	draw_button(locate_text_res(text_resource, "bsa"),
-		TRACK_EDITOR_BUTTON_LEFT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
-		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		button_top_color, button_bottom_color, button_fill_color, 0);
-	draw_button(locate_text_res(text_resource, "bcl"),
-		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_UPPER_Y,
-		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		button_top_color, button_bottom_color, button_fill_color, 0);
-	draw_button(locate_text_res(text_resource, "bex"),
-		TRACK_EDITOR_BUTTON_RIGHT_X, TRACK_EDITOR_BUTTON_LOWER_Y,
-		TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
-		button_top_color, button_bottom_color, button_fill_color, 0);
+									TRACK_EDITOR_RIGHT_FRAME_WIDTH, TRACK_EDITOR_RIGHT_FRAME_HEIGHT,
+									11, 9, 1);
+	draw_button(locate_text_res(text_resource, "bsc"), TRACK_EDITOR_WIDE_BUTTON_X,
+				TRACK_EDITOR_WIDE_BUTTON_Y, TRACK_EDITOR_WIDE_BUTTON_WIDTH,
+				TRACK_EDITOR_BUTTON_HEIGHT, button_top_color, button_bottom_color,
+				button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "blo"), TRACK_EDITOR_BUTTON_LEFT_X,
+				TRACK_EDITOR_BUTTON_UPPER_Y, TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bsa"), TRACK_EDITOR_BUTTON_LEFT_X,
+				TRACK_EDITOR_BUTTON_LOWER_Y, TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bcl"), TRACK_EDITOR_BUTTON_RIGHT_X,
+				TRACK_EDITOR_BUTTON_UPPER_Y, TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(locate_text_res(text_resource, "bex"), TRACK_EDITOR_BUTTON_RIGHT_X,
+				TRACK_EDITOR_BUTTON_LOWER_Y, TRACK_EDITOR_BUTTON_WIDTH, TRACK_EDITOR_BUTTON_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
 
 	while (menu_active != 0) {
 		if (palette_dirty != 0 || page != previous_page) {
@@ -733,8 +694,7 @@ void load_tracks_menu_shapes(void)
 			tile_height = 1;
 			multi_tile = 0;
 			if (page != 0) {
-				multi_tile = (legacy_u8)
-					trkObjectList[selected_tile].ss_multiTileFlag;
+				multi_tile = (legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag;
 				if (multi_tile == 1U) {
 					tile_height = 2;
 					multi_tile = 1;
@@ -749,20 +709,24 @@ void load_tracks_menu_shapes(void)
 			}
 
 			if (focus == 0) {
-				if (selection_column[0] == 29U && tile_width == 2U)
+				if (selection_column[0] == 29U && tile_width == 2U) {
 					selection_column[0]--;
-				if (selection_row[0] == 29U && tile_height == 2U)
+				}
+				if (selection_row[0] == 29U && tile_height == 2U) {
 					selection_row[0]--;
-				while ((legacy_s16)(selection_column[0] - map_column_offset +
-					tile_width) > 12)
+				}
+				while ((legacy_s16)(selection_column[0] - map_column_offset + tile_width) > 12) {
 					map_column_offset++;
-				while (selection_column[0] < map_column_offset)
+				}
+				while (selection_column[0] < map_column_offset) {
 					map_column_offset--;
-				while ((legacy_s16)(selection_row[0] - map_row_offset +
-					tile_height) > 11)
+				}
+				while ((legacy_s16)(selection_row[0] - map_row_offset + tile_height) > 11) {
 					map_row_offset++;
-				while (selection_row[0] < map_row_offset)
+				}
+				while (selection_row[0] < map_row_offset) {
 					map_row_offset--;
+				}
 				if (map_column_offset != previous_column_offset ||
 					map_row_offset != previous_row_offset) {
 					previous_column_offset = map_column_offset;
@@ -776,25 +740,24 @@ void load_tracks_menu_shapes(void)
 				palette_dirty = 1;
 				previous_page = page;
 				while (selection_row[1] < 6U &&
-					track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]) >= TRACK_TILE_CONTINUATION_SOUTH) {
-					value = track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]);
-					if (value == TRACK_TILE_CONTINUATION_EAST)
+					   track_editor_palette_tile(page, selection_row[1], selection_column[1]) >=
+						   TRACK_TILE_CONTINUATION_SOUTH) {
+					value = track_editor_palette_tile(page, selection_row[1], selection_column[1]);
+					if (value == TRACK_TILE_CONTINUATION_EAST) {
 						selection_column[1]--;
-					else
+					} else {
 						selection_row[1]--;
+					}
 				}
 				sprite_select_render_window();
 				preRender_icons(page);
-				if (page == 0)
-					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X,
-						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
-						5, 0, 1, 1);
-				else
-					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X,
-						TRACK_EDITOR_PAGE_BAR_WIDTH, TRACK_EDITOR_PAGE_BAR_Y,
-						5, page - 1U, 1, 10);
+				if (page == 0) {
+					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X, TRACK_EDITOR_PAGE_BAR_WIDTH,
+									 TRACK_EDITOR_PAGE_BAR_Y, 5, 0, 1, 1);
+				} else {
+					scrollbar_update(0, TRACK_EDITOR_PAGE_BAR_X, TRACK_EDITOR_PAGE_BAR_WIDTH,
+									 TRACK_EDITOR_PAGE_BAR_Y, 5, page - 1U, 1, 10);
+				}
 			}
 		}
 
@@ -809,21 +772,18 @@ void load_tracks_menu_shapes(void)
 				map_dirty = 0;
 				if (scrollbars_dirty != 0) {
 					scrollbars_dirty = 0;
-					scrollbar_update(0, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
-						TRACK_EDITOR_LABEL_Y,
-						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
-						map_column_offset, 12, 30);
-					scrollbar_update(0, TRACK_EDITOR_VERTICAL_SCROLLBAR_X,
-						5, 4, TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
-						map_row_offset, 11, 30);
+					scrollbar_update(0, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X, TRACK_EDITOR_LABEL_Y,
+									 TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5, map_column_offset,
+									 12, 30);
+					scrollbar_update(0, TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
+									 TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH, map_row_offset, 11,
+									 30);
 				}
-				sprite_set_target_clip_bounds(TRACK_EDITOR_MAP_LEFT,
-					TRACK_EDITOR_MAP_CLIP_RIGHT, TRACK_EDITOR_MAP_TOP,
-					TRACK_EDITOR_MAP_CLIP_BOTTOM);
-				draw_2DtrackMap(map_column_offset, map_row_offset,
-					cached_track, cached_terrain);
-				sprite_set_target_clip_bounds(0, TRACK_EDITOR_SCREEN_WIDTH,
-					0, TRACK_EDITOR_SCREEN_HEIGHT);
+				sprite_set_target_clip_bounds(TRACK_EDITOR_MAP_LEFT, TRACK_EDITOR_MAP_CLIP_RIGHT,
+											  TRACK_EDITOR_MAP_TOP, TRACK_EDITOR_MAP_CLIP_BOTTOM);
+				draw_2DtrackMap(map_column_offset, map_row_offset, cached_track, cached_terrain);
+				sprite_set_target_clip_bounds(0, TRACK_EDITOR_SCREEN_WIDTH, 0,
+											  TRACK_EDITOR_SCREEN_HEIGHT);
 			}
 
 			if (palette_dirty != 0) {
@@ -831,16 +791,14 @@ void load_tracks_menu_shapes(void)
 				sprite_select_target(cursor_sprites[multi_tile]);
 				if (page == 0) {
 					sprite_shape_to_1(track_editor_terrain_shapes[selected_tile], 0, 0);
-					preRender_line(1, 0, TRACK_EDITOR_TILE_PREVIEW_RIGHT,
-						0, performGraphColor);
+					preRender_line(1, 0, TRACK_EDITOR_TILE_PREVIEW_RIGHT, 0, performGraphColor);
 					preRender_line(1, TRACK_EDITOR_TILE_PREVIEW_BOTTOM,
-						TRACK_EDITOR_TILE_PREVIEW_RIGHT,
-						TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
-					preRender_line(1, 0, 1,
-						TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
+								   TRACK_EDITOR_TILE_PREVIEW_RIGHT,
+								   TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
+					preRender_line(1, 0, 1, TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
 					preRender_line(TRACK_EDITOR_TILE_PREVIEW_RIGHT, 0,
-						TRACK_EDITOR_TILE_PREVIEW_RIGHT,
-						TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
+								   TRACK_EDITOR_TILE_PREVIEW_RIGHT,
+								   TRACK_EDITOR_TILE_PREVIEW_BOTTOM, performGraphColor);
 				} else {
 					sprite_shape_to_1(track_editor_cursor_shapes[multi_tile], 0, 0);
 					if (selected_tile != 0) {
@@ -859,17 +817,14 @@ void load_tracks_menu_shapes(void)
 		if (focus == 0) {
 			cursor_width = (legacy_u8)(tile_width << 4);
 			cursor_height = (legacy_u8)(tile_height << 4);
-			cursor_x = (legacy_s16)((selection_column[0] -
-				map_column_offset) * 16U + 8U);
-			cursor_y = (legacy_s16)((selection_row[0] -
-				map_row_offset) * 16U + 4U);
-			hovered_tile = track_editor_map_tile(
-				selection_column[0], selection_row[0]);
+			cursor_x = (legacy_s16)((selection_column[0] - map_column_offset) * 16U + 8U);
+			cursor_y = (legacy_s16)((selection_row[0] - map_row_offset) * 16U + 4U);
+			hovered_tile = track_editor_map_tile(selection_column[0], selection_row[0]);
 		} else {
 			cursor_width = TRACK_EDITOR_TILE_SIZE;
 			cursor_height = TRACK_EDITOR_TILE_SIZE;
-			cursor_y = (legacy_s16)(selection_row[1] *
-				TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_TOP);
+			cursor_y =
+				(legacy_s16)(selection_row[1] * TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_TOP);
 			if (selection_row[1] == 6U) {
 				cursor_x = TRACK_EDITOR_PALETTE_LEFT;
 				cursor_width = TRACK_EDITOR_PALETTE_WIDTH;
@@ -882,45 +837,44 @@ void load_tracks_menu_shapes(void)
 			} else if (selection_row[1] > 7U) {
 				cursor_y = LEGACY_S16_WRAP_SUB(cursor_y, 8);
 				selection_column[1] = selection_column[1] < 3U ? 0U : 3U;
-				cursor_x = (legacy_s16)(selection_column[1] *
-					TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_LEFT);
+				cursor_x = (legacy_s16)(selection_column[1] * TRACK_EDITOR_TILE_SIZE +
+										TRACK_EDITOR_PALETTE_LEFT);
 				cursor_width = TRACK_EDITOR_PALETTE_ACTION_WIDTH;
 			} else {
-				cursor_x = (legacy_s16)(selection_column[1] *
-					TRACK_EDITOR_TILE_SIZE + TRACK_EDITOR_PALETTE_LEFT);
-				if (track_editor_palette_tile(page, selection_row[1],
-					selection_column[1] + 6U) == TRACK_TILE_CONTINUATION_SOUTH)
+				cursor_x = (legacy_s16)(selection_column[1] * TRACK_EDITOR_TILE_SIZE +
+										TRACK_EDITOR_PALETTE_LEFT);
+				if (track_editor_palette_tile(page, selection_row[1], selection_column[1] + 6U) ==
+					TRACK_TILE_CONTINUATION_SOUTH) {
 					cursor_height = TRACK_EDITOR_MULTITILE_CURSOR_SIZE;
+				}
 				if (selection_column[1] < 5U &&
-					track_editor_palette_tile(page, selection_row[1],
-						selection_column[1] + 1U) ==
-						TRACK_TILE_CONTINUATION_EAST)
+					track_editor_palette_tile(page, selection_row[1], selection_column[1] + 1U) ==
+						TRACK_TILE_CONTINUATION_EAST) {
 					cursor_width = TRACK_EDITOR_MULTITILE_CURSOR_SIZE;
+				}
 			}
-			hovered_tile = selection_row[1] < 6U ?
-				track_editor_palette_tile(page, selection_row[1],
-					selection_column[1]) : 0;
-			if (hovered_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST || page == 0)
+			hovered_tile = selection_row[1] < 6U ? track_editor_palette_tile(page, selection_row[1],
+																			 selection_column[1])
+												 : 0;
+			if (hovered_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST || page == 0) {
 				hovered_tile = 0;
+			}
 		}
 
 		if (hovered_tile != previous_hovered_tile) {
 			mouse_draw_opaque_check();
 			font_set_colors(dialog_fnt_colour, 0);
 			resource_id = &resID_byte1;
-			__fmemcpy(resource_id, text_name_resource +
-				(legacy_u16)hovered_tile * 3U, 3U);
+			__fmemcpy(resource_id, text_name_resource + (legacy_u16)hovered_tile * 3U, 3U);
 			resource_id[3] = 0;
 			text = locate_text_res(text_resource, resource_id);
 			copy_string(resource_id, text);
 			label_width = (legacy_s16)font_text_width(resource_id);
-			font_draw_text_opaque(resource_id, TRACK_EDITOR_MAP_LEFT,
-				TRACK_EDITOR_LABEL_Y);
+			font_draw_text_opaque(resource_id, TRACK_EDITOR_MAP_LEFT, TRACK_EDITOR_LABEL_Y);
 			if (previous_label_width > label_width) {
-				sprite_fill_rect(LEGACY_S16_WRAP_ADD(label_width,
-					TRACK_EDITOR_MAP_LEFT), TRACK_EDITOR_LABEL_Y,
-					LEGACY_S16_WRAP_SUB(previous_label_width,
-						label_width), 8, 0);
+				sprite_fill_rect(LEGACY_S16_WRAP_ADD(label_width, TRACK_EDITOR_MAP_LEFT),
+								 TRACK_EDITOR_LABEL_Y,
+								 LEGACY_S16_WRAP_SUB(previous_label_width, label_width), 8, 0);
 			}
 			mouse_draw_transparent_check();
 			previous_label_width = label_width;
@@ -928,8 +882,7 @@ void load_tracks_menu_shapes(void)
 		}
 
 		if (validation_error != TRACK_EDITOR_VALIDATION_OK) {
-			resource_id = (legacy_s8*)error_resource_ids +
-				(legacy_u16)validation_error * 3U;
+			resource_id = (legacy_s8 *)error_resource_ids + (legacy_u16)validation_error * 3U;
 			__fmemcpy(&resID_byte1, resource_id, 3U);
 			*(&resID_byte1 + 3) = 0;
 			track_editor_show_message(text_resource, &resID_byte1);
@@ -940,25 +893,25 @@ void load_tracks_menu_shapes(void)
 		cursor_drawn = 0;
 		mouse_draw_opaque_check();
 		blink_focus = focus;
-		if (blink_focus == 0)
-			sprite_clear_shape_alt(track_editor_under_cursor_shapes[multi_tile],
-				cursor_x, cursor_y);
+		if (blink_focus == 0) {
+			sprite_clear_shape_alt(track_editor_under_cursor_shapes[multi_tile], cursor_x,
+								   cursor_y);
+		}
 
 		key = 0;
 		while (key == 0) {
 			if (blink_timer > TRACK_EDITOR_BLINK_INTERVAL) {
 				mouse_draw_opaque_check();
 				if (blink_focus == 0) {
-					if (cursor_drawn != 0)
-						sprite_shape_to_1(track_editor_under_cursor_shapes[multi_tile],
-							cursor_x, cursor_y);
-					else
-						sprite_shape_to_1(
-							cursor_sprites[multi_tile]->sprite_bitmapptr,
-							cursor_x, cursor_y);
+					if (cursor_drawn != 0) {
+						sprite_shape_to_1(track_editor_under_cursor_shapes[multi_tile], cursor_x,
+										  cursor_y);
+					} else {
+						sprite_shape_to_1(cursor_sprites[multi_tile]->sprite_bitmapptr, cursor_x,
+										  cursor_y);
+					}
 				} else {
-					track_editor_toggle_highlight(cursor_x, cursor_y,
-						cursor_width, cursor_height);
+					track_editor_toggle_highlight(cursor_x, cursor_y, cursor_width, cursor_height);
 				}
 				mouse_draw_transparent_check();
 				cursor_drawn ^= 1U;
@@ -972,127 +925,125 @@ void load_tracks_menu_shapes(void)
 			if (hit != TRACK_EDITOR_MOUSE_NO_HIT) {
 				if (hit == 0U && (mouse_butstate & 3) != 0) {
 					focus = 0;
-					clicked_column = (legacy_u8)scrollbar_update(1,
-						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X,
-						TRACK_EDITOR_LABEL_Y,
-						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5,
-						map_column_offset, 12, 30);
-					selection_column[0] = (legacy_u8)(selection_column[0] +
-						clicked_column - map_column_offset);
+					clicked_column = (legacy_u8)scrollbar_update(
+						1, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X, TRACK_EDITOR_LABEL_Y,
+						TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5, map_column_offset, 12, 30);
+					selection_column[0] =
+						(legacy_u8)(selection_column[0] + clicked_column - map_column_offset);
 					map_column_offset = clicked_column;
 					key = 1;
 				} else if (hit == 1U && (mouse_butstate & 3) != 0) {
 					focus = 0;
-					clicked_row = (legacy_u8)scrollbar_update(1,
-						TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
-						TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
-						map_row_offset, 11, 30);
-					selection_row[0] = (legacy_u8)(selection_row[0] +
-						clicked_row - map_row_offset);
+					clicked_row = (legacy_u8)scrollbar_update(
+						1, TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
+						TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH, map_row_offset, 11, 30);
+					selection_row[0] = (legacy_u8)(selection_row[0] + clicked_row - map_row_offset);
 					map_row_offset = clicked_row;
 					key = 1;
 				} else if (hit == 2U) {
 					if ((mouse_butstate & 3) != 0) {
 						focus = 1;
-						page = (legacy_u8)scrollbar_update(1,
-							TRACK_EDITOR_PAGE_BAR_X,
-							TRACK_EDITOR_PAGE_BAR_WIDTH,
-							TRACK_EDITOR_PAGE_BAR_Y, 5, page - 1U, 1, 10) + 1U;
+						page = (legacy_u8)scrollbar_update(
+								   1, TRACK_EDITOR_PAGE_BAR_X, TRACK_EDITOR_PAGE_BAR_WIDTH,
+								   TRACK_EDITOR_PAGE_BAR_Y, 5, page - 1U, 1, 10) +
+							   1U;
 						key = 1;
 					}
 				} else if (hit == 3U) {
-					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_xpos, 8), 16);
-					clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_ypos, 4), 16);
+					clicked_column =
+						(legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_xpos, 8), 16);
+					clicked_row =
+						(legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_ypos, 4), 16);
 					if (page != 0) {
 						if (clicked_row == 10U &&
-							((legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag & 1U) != 0)
+							((legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag & 1U) != 0) {
 							clicked_row--;
+						}
 						if (clicked_column == 11U &&
-							((legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag & 2U) != 0)
+							((legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag & 2U) != 0) {
 							clicked_column--;
+						}
 					}
 					clicked_column = (legacy_u8)(clicked_column + map_column_offset);
 					clicked_row = (legacy_u8)(clicked_row + map_row_offset);
-					if (focus != 0 ||
-						selection_column[0] != clicked_column ||
+					if (focus != 0 || selection_column[0] != clicked_column ||
 						selection_row[0] != clicked_row) {
 						focus = 0;
 						selection_column[0] = clicked_column;
 						selection_row[0] = clicked_row;
 						key = 1;
 					}
-					if (key == KEY_SPACE)
+					if (key == KEY_SPACE) {
 						key = KEY_ENTER;
+					}
 				} else if (hit == 4U) {
 					clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_xpos,
-							TRACK_EDITOR_PALETTE_LEFT), TRACK_EDITOR_TILE_SIZE);
+						LEGACY_S16_WRAP_SUB(mouse_xpos, TRACK_EDITOR_PALETTE_LEFT),
+						TRACK_EDITOR_TILE_SIZE);
 					clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-						LEGACY_S16_WRAP_SUB(mouse_ypos,
-							TRACK_EDITOR_PALETTE_TOP), TRACK_EDITOR_TILE_SIZE);
+						LEGACY_S16_WRAP_SUB(mouse_ypos, TRACK_EDITOR_PALETTE_TOP),
+						TRACK_EDITOR_TILE_SIZE);
 					if (clicked_row < 6U) {
-						if (track_editor_palette_tile(page, clicked_row,
-							clicked_column) == TRACK_TILE_CONTINUATION_SOUTH)
+						if (track_editor_palette_tile(page, clicked_row, clicked_column) ==
+							TRACK_TILE_CONTINUATION_SOUTH) {
 							clicked_row--;
-						if (track_editor_palette_tile(page, clicked_row,
-							clicked_column) == TRACK_TILE_CONTINUATION_EAST)
+						}
+						if (track_editor_palette_tile(page, clicked_row, clicked_column) ==
+							TRACK_TILE_CONTINUATION_EAST) {
 							clicked_column--;
+						}
 					} else {
 						clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
-							LEGACY_S16_WRAP_SUB(mouse_ypos,
-								TRACK_EDITOR_PALETTE_ACTION_TOP),
+							LEGACY_S16_WRAP_SUB(mouse_ypos, TRACK_EDITOR_PALETTE_ACTION_TOP),
 							TRACK_EDITOR_TILE_SIZE);
-						if (clicked_row == 7U)
+						if (clicked_row == 7U) {
 							clicked_column = 0;
-						else if (clicked_column >= 3U)
+						} else if (clicked_column >= 3U) {
 							clicked_column = 3;
-						else
+						} else {
 							clicked_column = 0;
+						}
 					}
-					if (focus == 0 ||
-						selection_column[1] != clicked_column ||
+					if (focus == 0 || selection_column[1] != clicked_column ||
 						selection_row[1] != clicked_row) {
 						selection_column[1] = clicked_column;
 						selection_row[1] = clicked_row;
 						focus = 1;
 						key = 1;
 					}
-					if (key == KEY_SPACE)
+					if (key == KEY_SPACE) {
 						key = KEY_ENTER;
+					}
 				}
 			}
-			if (key == 1U)
+			if (key == 1U) {
 				last_column = TRACK_EDITOR_POSITION_UNSET;
-			if (key == 0 && path_animation_index != 0)
+			}
+			if (key == 0 && path_animation_index != 0) {
 				key = 1;
+			}
 		}
-		if (path_animation_index != 0)
+		if (path_animation_index != 0) {
 			(void)timer_wait_ticks(10UL);
+		}
 
 		if (cursor_drawn != 0) {
 			mouse_draw_opaque_check();
 			if (blink_focus == 0) {
-				sprite_shape_to_1(track_editor_under_cursor_shapes[multi_tile],
-					cursor_x, cursor_y);
+				sprite_shape_to_1(track_editor_under_cursor_shapes[multi_tile], cursor_x, cursor_y);
 			} else {
-				track_editor_toggle_highlight(cursor_x, cursor_y,
-					cursor_width, cursor_height);
+				track_editor_toggle_highlight(cursor_x, cursor_y, cursor_width, cursor_height);
 			}
 			mouse_draw_transparent_check();
 		}
 
 		if (path_animation_index != 0) {
-			if (key == 1U && focus == 0)
-				path_animation_index = (legacy_u16)
-					(track_pieces_counter - 1);
-			selection_column[0] = (legacy_u8)
-				track_route_columns[path_animation_index];
-			selection_row[0] = (legacy_u8)
-				track_route_rows[path_animation_index];
-			selected_tile = track_editor_map_tile(
-				selection_column[0], selection_row[0]);
+			if (key == 1U && focus == 0) {
+				path_animation_index = (legacy_u16)(track_pieces_counter - 1);
+			}
+			selection_column[0] = (legacy_u8)track_route_columns[path_animation_index];
+			selection_row[0] = (legacy_u8)track_route_rows[path_animation_index];
+			selected_tile = track_editor_map_tile(selection_column[0], selection_row[0]);
 			map_dirty = 1;
 			palette_dirty = 1;
 			path_animation_index++;
@@ -1115,8 +1066,7 @@ void load_tracks_menu_shapes(void)
 
 		if (key == 'c' || key == 'C') {
 			result = (legacy_s8)track_setup();
-			resource_id = (legacy_s8*)error_resource_ids +
-				(legacy_u16)(legacy_u8)result * 3U;
+			resource_id = (legacy_s8 *)error_resource_ids + (legacy_u16)(legacy_u8)result * 3U;
 			__fmemcpy(&resID_byte1, resource_id, 3U);
 			*(&resID_byte1 + 3) = 0;
 			track_editor_show_message(text_resource, &resID_byte1);
@@ -1129,8 +1079,7 @@ void load_tracks_menu_shapes(void)
 					animation_saved_tile = selected_tile;
 					selection_column[0] = (legacy_u8)track_route_columns[0];
 					selection_row[0] = (legacy_u8)track_route_rows[0];
-					selected_tile = track_editor_map_tile(
-						selection_column[0], selection_row[0]);
+					selected_tile = track_editor_map_tile(selection_column[0], selection_row[0]);
 					path_animation_index = 1;
 					palette_dirty = 1;
 				}
@@ -1139,56 +1088,54 @@ void load_tracks_menu_shapes(void)
 		} else if (key == KEY_ENTER) {
 			if (focus != 0) {
 				if (selection_row[1] < 6U) {
-					selected_tile = track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]);
+					selected_tile =
+						track_editor_palette_tile(page, selection_row[1], selection_column[1]);
 					if (page != 0) {
-						multi_tile = (legacy_u8)
-							trkObjectList[selected_tile].ss_multiTileFlag;
-						if ((multi_tile & 1U) != 0 &&
-							selection_row[0] - map_row_offset == 10U)
+						multi_tile = (legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag;
+						if ((multi_tile & 1U) != 0 && selection_row[0] - map_row_offset == 10U) {
 							selection_row[0]--;
+						}
 						if ((multi_tile & 2U) != 0 &&
-							selection_column[0] - map_column_offset == 11U)
+							selection_column[0] - map_column_offset == 11U) {
 							selection_column[0]--;
+						}
 					}
 					palette_dirty = 1;
 					focus = 0;
 				} else if (selection_row[1] == 6U) {
 					page++;
-					if (page > 10U)
+					if (page > 10U) {
 						page = 1;
+					}
 				} else if (selection_row[1] == 7U) {
-					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
-						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-						locate_text_res(text_resource, "mss"),
-						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-						dialog_border_color, 0,
-						track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
+					dialog_result = LEGACY_S8_FROM_BITS(
+						show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+									locate_text_res(text_resource, "mss"), DIALOG_AUTO_POSITION,
+									DIALOG_AUTO_POSITION, dialog_border_color, 0,
+									track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
-						track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX] =
-							dialog_result;
+						track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX] = dialog_result;
 						map_dirty = 1;
 						track_changed = 1;
 					}
-				} else if (selection_row[1] == 8U &&
-					selection_column[1] != 0) {
-					dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
-						DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
-						locate_text_res(text_resource, "men"),
-						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-						dialog_border_color, 0, 0));
+				} else if (selection_row[1] == 8U && selection_column[1] != 0) {
+					dialog_result = LEGACY_S8_FROM_BITS(
+						show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+									locate_text_res(text_resource, "men"), DIALOG_AUTO_POSITION,
+									DIALOG_AUTO_POSITION, dialog_border_color, 0, 0));
 					if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 						dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
-						for (index = 0; index < 900U; index++)
+						for (index = 0; index < 900U; index++) {
 							track_element_map[index] = 0;
+						}
 						terrain_id[0] = 't';
 						terrain_id[1] = 'e';
 						terrain_id[2] = 'r';
 						terrain_id[3] = (legacy_s8)('0' + dialog_result);
 						terrain_id[4] = 0;
-						terrain_shape = (struct SHAPE2D far*)
-							locate_shape_alt(text_resource, terrain_id);
+						terrain_shape =
+							(struct SHAPE2D far *)locate_shape_alt(text_resource, terrain_id);
 						__fmemcpy(track_terrain_map, terrain_shape, 901U);
 						gameconfig.game_trackname[0] = 0;
 						map_dirty = 1;
@@ -1197,24 +1144,21 @@ void load_tracks_menu_shapes(void)
 				} else if (selection_row[1] == 8U) {
 					result = 1;
 					if (track_changed != 0) {
-						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU,
-							DIALOG_SAVE_BACKGROUND,
-							locate_text_res(text_resource, "chl"),
-							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-							performGraphColor, 0, 0);
+						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+														 locate_text_res(text_resource, "chl"),
+														 DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+														 performGraphColor, 0, 0);
 					}
 					if (result == 0) {
-						track_editor_save_track(
-							&track_changed, &map_dirty);
+						track_editor_save_track(&track_changed, &map_dirty);
 					} else {
 						g_is_busy = 1;
 						map_dirty = 1;
-						text = locate_text_res(
-							(legacy_s8 far*)mainresptr, "trk");
-						result = do_fileselect_dialog(track_directory,
-							gameconfig.game_trackname, ".trk", text);
-						file_build_path(track_directory,
-							gameconfig.game_trackname, ".trk", g_path_buf);
+						text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
+						result = do_fileselect_dialog(track_directory, gameconfig.game_trackname,
+													  ".trk", text);
+						file_build_path(track_directory, gameconfig.game_trackname, ".trk",
+										g_path_buf);
 						if (result > 0) {
 							file_read_fatal(g_path_buf, track_element_map);
 							track_setup();
@@ -1227,96 +1171,88 @@ void load_tracks_menu_shapes(void)
 						g_is_busy = 0;
 					}
 				} else if (selection_column[1] == 0) {
-					track_editor_save_track(
-						&track_changed, &map_dirty);
+					track_editor_save_track(&track_changed, &map_dirty);
 				} else {
 					result = 1;
 					if (track_changed != 0) {
-						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU,
-							DIALOG_SAVE_BACKGROUND,
-							locate_text_res(text_resource, "chx"),
-							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
-							performGraphColor, 0, 0);
+						result = (legacy_s16)show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
+														 locate_text_res(text_resource, "chx"),
+														 DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION,
+														 performGraphColor, 0, 0);
 					}
-					if (result == 0)
-						track_editor_save_track(
-							&track_changed, &map_dirty);
-					else
+					if (result == 0) {
+						track_editor_save_track(&track_changed, &map_dirty);
+					} else {
 						menu_active = 0;
+					}
 				}
 			} else if (page == 0) {
-				if (selection_column[0] == last_column &&
-					selection_row[0] == last_row) {
-					track_editor_swap_tiles(&selected_tile,
-						&saved_tile, &palette_dirty);
+				if (selection_column[0] == last_column && selection_row[0] == last_row) {
+					track_editor_swap_tiles(&selected_tile, &saved_tile, &palette_dirty);
 				} else {
-					source_index = LEGACY_U16_WRAP_ADD(
-						(legacy_u16)terrainrows[selection_row[0]],
-						selection_column[0]);
+					source_index = LEGACY_U16_WRAP_ADD((legacy_u16)terrainrows[selection_row[0]],
+													   selection_column[0]);
 					saved_tile = track_terrain_map[source_index];
 					last_column = selection_column[0];
 					last_row = selection_row[0];
 				}
-				source_index = LEGACY_U16_WRAP_ADD(
-					(legacy_u16)terrainrows[last_row], last_column);
+				source_index = LEGACY_U16_WRAP_ADD((legacy_u16)terrainrows[last_row], last_column);
 				track_terrain_map[source_index] = selected_tile;
 				track_changed = 1;
 				validate_track = 1;
 				map_dirty = 1;
 			} else {
-				multi_tile = (legacy_u8)
-					trkObjectList[selected_tile].ss_multiTileFlag;
+				multi_tile = (legacy_u8)trkObjectList[selected_tile].ss_multiTileFlag;
 				if (((multi_tile & 1U) != 0 && selection_row[0] > 28U) ||
 					((multi_tile & 2U) != 0 && selection_column[0] > 28U)) {
 					palette_dirty = 1;
 					map_dirty = 1;
 					continue;
 				}
-				if (selection_column[0] == last_column &&
-					selection_row[0] == last_row) {
-					track_editor_swap_tiles(&selected_tile,
-						&saved_tile, &palette_dirty);
+				if (selection_column[0] == last_column && selection_row[0] == last_row) {
+					track_editor_swap_tiles(&selected_tile, &saved_tile, &palette_dirty);
 				} else {
-					source_index = LEGACY_U16_WRAP_ADD(
-						(legacy_u16)trackrows[selection_row[0]],
-						selection_column[0]);
+					source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[selection_row[0]],
+													   selection_column[0]);
 					saved_tile = track_element_map[source_index];
-					if (saved_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST)
+					if (saved_tile >= TRACK_TILE_CONTINUATION_SOUTHEAST) {
 						saved_tile = 0;
+					}
 					last_column = selection_column[0];
 					last_row = selection_row[0];
 				}
-				source_index = LEGACY_U16_WRAP_ADD(
-					(legacy_u16)trackrows[last_row], last_column);
+				source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[last_row], last_column);
 				track_element_map[source_index] = selected_tile;
 				track_changed = 1;
 				validate_track = 1;
 				map_dirty = 1;
 				if (multi_tile == 1U) {
-					track_element_map[LEGACY_U16_WRAP_ADD(
-						(legacy_u16)trackrows[last_row + 1U],
-						last_column)] = TRACK_TILE_CONTINUATION_SOUTH;
+					track_element_map[LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[last_row + 1U],
+														  last_column)] =
+						TRACK_TILE_CONTINUATION_SOUTH;
 				} else if (multi_tile == 2U) {
-					track_element_map[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
+					track_element_map[LEGACY_U16_WRAP_ADD(source_index, 1U)] =
+						TRACK_TILE_CONTINUATION_EAST;
 				} else if (multi_tile == 3U) {
-					track_element_map[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = TRACK_TILE_CONTINUATION_EAST;
-					source_index = LEGACY_U16_WRAP_ADD(
-						(legacy_u16)trackrows[last_row + 1U], last_column);
+					track_element_map[LEGACY_U16_WRAP_ADD(source_index, 1U)] =
+						TRACK_TILE_CONTINUATION_EAST;
+					source_index =
+						LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[last_row + 1U], last_column);
 					track_element_map[source_index] = TRACK_TILE_CONTINUATION_SOUTH;
-					track_element_map[LEGACY_U16_WRAP_ADD(
-						source_index, 1U)] = TRACK_TILE_CONTINUATION_SOUTHEAST;
+					track_element_map[LEGACY_U16_WRAP_ADD(source_index, 1U)] =
+						TRACK_TILE_CONTINUATION_SOUTHEAST;
 				}
 			}
 		} else if (key == KEY_SPACE || key == KEY_INSERT) {
 			focus ^= 1U;
 		} else if (key == (legacy_u16)'+') {
-			if (page < 10U)
+			if (page < 10U) {
 				page++;
+			}
 		} else if (key == (legacy_u16)'-') {
-			if (page > 1U)
+			if (page > 1U) {
 				page--;
+			}
 		} else if (key == KEY_SHIFT_F1) {
 			page = 0;
 			selected_tile = 0;
@@ -1337,8 +1273,8 @@ void load_tracks_menu_shapes(void)
 				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_row[focus]--;
 				if (focus != 0 && selection_row[1] < 6U) {
-					track_editor_skip_previous_placeholders(page,
-						&selection_row[1], &selection_column[1]);
+					track_editor_skip_previous_placeholders(page, &selection_row[1],
+															&selection_column[1]);
 				}
 			}
 		} else if (key == KEY_DOWN) {
@@ -1346,18 +1282,19 @@ void load_tracks_menu_shapes(void)
 				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_row[focus]++;
 				if (focus != 0 && selection_row[1] < 6U) {
-					value = track_editor_palette_tile(page,
-						selection_row[1], selection_column[1]);
-					if (value == TRACK_TILE_CONTINUATION_EAST)
+					value = track_editor_palette_tile(page, selection_row[1], selection_column[1]);
+					if (value == TRACK_TILE_CONTINUATION_EAST) {
 						selection_column[1]--;
-					else if (value == TRACK_TILE_CONTINUATION_SOUTH)
+					} else if (value == TRACK_TILE_CONTINUATION_SOUTH) {
 						selection_row[1]++;
+					}
 				}
 			}
 		} else if (key == KEY_LEFT) {
 			if (focus != 0 && selection_row[1] == 6U) {
-				if (page > 1U)
+				if (page > 1U) {
 					page--;
+				}
 			} else if (selection_column[focus] != 0) {
 				last_column = TRACK_EDITOR_POSITION_UNSET;
 				selection_column[focus]--;
@@ -1365,36 +1302,36 @@ void load_tracks_menu_shapes(void)
 					if (selection_row[1] > 5U) {
 						selection_column[1] = 0;
 					} else {
-						track_editor_skip_previous_placeholders(page,
-							&selection_row[1], &selection_column[1]);
+						track_editor_skip_previous_placeholders(page, &selection_row[1],
+																&selection_column[1]);
 					}
 				}
 			}
 		} else if (key == KEY_RIGHT) {
 			if (focus != 0 && selection_row[1] == 6U) {
-				if (page < 10U)
+				if (page < 10U) {
 					page++;
+				}
 			} else {
 				step = focus != 0 && selection_row[1] > 5U ? 3U : 1U;
-				while ((legacy_u16)selection_column[focus] + step <
-					maximum_columns[focus]) {
-					if (focus == 0 || selection_row[1] > 5U)
+				while ((legacy_u16)selection_column[focus] + step < maximum_columns[focus]) {
+					if (focus == 0 || selection_row[1] > 5U) {
 						break;
-					value = track_editor_palette_tile(page,
-						selection_row[1],
-						(legacy_u8)(selection_column[1] + step));
-					if (value < TRACK_TILE_CONTINUATION_SOUTH)
+					}
+					value = track_editor_palette_tile(page, selection_row[1],
+													  (legacy_u8)(selection_column[1] + step));
+					if (value < TRACK_TILE_CONTINUATION_SOUTH) {
 						break;
-					if (value == TRACK_TILE_CONTINUATION_EAST)
+					}
+					if (value == TRACK_TILE_CONTINUATION_EAST) {
 						step++;
-					else
+					} else {
 						selection_row[1]--;
+					}
 				}
-				if ((legacy_u16)selection_column[focus] + step <
-					maximum_columns[focus]) {
+				if ((legacy_u16)selection_column[focus] + step < maximum_columns[focus]) {
 					last_column = TRACK_EDITOR_POSITION_UNSET;
-					selection_column[focus] = (legacy_u8)
-						(selection_column[focus] + step);
+					selection_column[focus] = (legacy_u8)(selection_column[focus] + step);
 				}
 			}
 		}
@@ -1406,8 +1343,9 @@ void load_tracks_menu_shapes(void)
 	}
 
 	sprite_free_wnd(render_window_sprite);
-	for (index = 4U; index != 0; index--)
+	for (index = 4U; index != 0; index--) {
 		sprite_free_wnd(cursor_sprites[index - 1U]);
+	}
 	unload_resource(text_resource);
 	mmgr_free(shape_resource);
 }

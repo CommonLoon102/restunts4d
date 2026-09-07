@@ -11,15 +11,14 @@ static legacy_u32 timer_wait_target;
 static legacy_s8 input_callback_overflow_message[] =
 	"NO ROOM LEFT ON TIMER INTERRUPT ROUTINE LIST\r";
 
-void timer_reg_callback(void (far* callback)(void))
+void timer_reg_callback(void(far *callback)(void))
 {
-	if (dos_timer_register_callback(callback) ==
-		DOS_TIMER_CALLBACK_REGISTRATION_FAILED) {
+	if (dos_timer_register_callback(callback) == DOS_TIMER_CALLBACK_REGISTRATION_FAILED) {
 		fatal_error(input_callback_overflow_message);
 	}
 }
 
-void timer_remove_callback(void (far* callback)(void))
+void timer_remove_callback(void(far *callback)(void))
 {
 	dos_timer_unregister_callback(callback);
 }
@@ -30,8 +29,9 @@ legacy_s16 timer_read_key_until_deadline(void)
 
 	do {
 		key = kb_call_readchar_callback();
-		if (key != TIMER_INPUT_KEY_NONE)
+		if (key != TIMER_INPUT_KEY_NONE) {
 			return key;
+		}
 	} while (timer_get_counter() < timer_wait_target);
 	return TIMER_INPUT_KEY_NONE;
 }
@@ -44,8 +44,9 @@ legacy_s16 timer_read_key_with_timeout(legacy_u32 ticks)
 	target = (legacy_u32)(timer_get_counter() + ticks);
 	do {
 		key = kb_call_readchar_callback();
-		if (key != TIMER_INPUT_KEY_NONE)
+		if (key != TIMER_INPUT_KEY_NONE) {
 			return key;
+		}
 	} while ((legacy_u32)timer_get_counter() < target);
 	return TIMER_INPUT_KEY_NONE;
 }
@@ -103,13 +104,10 @@ static legacy_u32 secondary_timer_target(void)
 	return ((legacy_u32)slow_timer_deadline_high << LEGACY_WORD_BITS) | slow_timer_deadline_low;
 }
 
-static legacy_s16 secondary_timer_target_reached(
-	legacy_u32 current,
-	legacy_u32 target
-) {
-	return (legacy_u16)(current >> LEGACY_WORD_BITS) >=
-		(legacy_u16)(target >> LEGACY_WORD_BITS) &&
-		(legacy_u16)current >= (legacy_u16)target;
+static legacy_s16 secondary_timer_target_reached(legacy_u32 current, legacy_u32 target)
+{
+	return (legacy_u16)(current >> LEGACY_WORD_BITS) >= (legacy_u16)(target >> LEGACY_WORD_BITS) &&
+		   (legacy_u16)current >= (legacy_u16)target;
 }
 
 legacy_u32 slow_timer_set_deadline(legacy_u32 ticks)
@@ -124,8 +122,7 @@ legacy_u32 slow_timer_set_deadline(legacy_u32 ticks)
 
 legacy_s16 slow_timer_deadline_reached(void)
 {
-	return secondary_timer_target_reached(
-		timer_get_slow_counter(), secondary_timer_target());
+	return secondary_timer_target_reached(timer_get_slow_counter(), secondary_timer_target());
 }
 
 legacy_u32 slow_timer_wait_ticks(legacy_u32 ticks)

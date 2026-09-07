@@ -6,8 +6,8 @@
 /* Car model resources and wheel geometry shared with scene drawing. */
 
 extern legacy_s8 car_shape_resource_name[];
-extern legacy_s8 far* carresptr;
-extern legacy_s8 far* car2resptr;
+extern legacy_s8 far *carresptr;
+extern legacy_s8 far *car2resptr;
 extern struct VECTOR player_front_wheel_centers[2];
 extern struct VECTOR player_base_wheel_vertices[24];
 extern struct VECTOR opponent_front_wheel_centers[2];

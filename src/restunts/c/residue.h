@@ -27,9 +27,8 @@ struct LEGACY_EXECUTION_RESIDUE {
 	legacy_s16 penalty_route_word;
 };
 
-typedef char legacy_execution_residue_must_have_expected_size[
-	(sizeof(struct LEGACY_EXECUTION_RESIDUE) ==
-		LEGACY_EXECUTION_RESIDUE_SIZE) ? 1 : -1];
+typedef char legacy_execution_residue_must_have_expected_size
+	[(sizeof(struct LEGACY_EXECUTION_RESIDUE) == LEGACY_EXECUTION_RESIDUE_SIZE) ? 1 : -1];
 
 extern struct LEGACY_EXECUTION_RESIDUE legacy_execution_residue;
 

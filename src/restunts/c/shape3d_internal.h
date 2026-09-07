@@ -4,7 +4,7 @@
 #include "shape3d.h"
 
 /* Queued renderer categories, distinct from shape resource primitive types.
-   Their numeric values are stored in the byte-sized polyinfo type field. */
+ * Their numeric values are stored in the byte-sized polyinfo type field. */
 enum RENDER_PRIMITIVE_TYPE {
 	RENDER_PRIMITIVE_POLYGON = 0,
 	RENDER_PRIMITIVE_LINE = 1,
@@ -62,15 +62,13 @@ enum DRAW_LINE_BUFFER_INDEX {
 
 #define DRAW_LINE_WORD_COUNT 14
 
-extern void (*spritefunc)(legacy_s16*, legacy_s16*, legacy_u16,
-	legacy_u16, legacy_u16);
-extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16,
-	legacy_u16, legacy_u16);
-extern legacy_u8* sphere_radius_rows[];
+extern void (*spritefunc)(legacy_s16 *, legacy_s16 *, legacy_u16, legacy_u16, legacy_u16);
+extern void (*imagefunc)(legacy_u16, legacy_u16, legacy_u16, legacy_u16, legacy_u16);
+extern legacy_u8 *sphere_radius_rows[];
 
 extern legacy_s16 polygon_next_index[];
 extern legacy_u16 polyinfonumpolys;
-extern legacy_u8 far* polyinfoptr;
-extern legacy_u8 far* polyinfoptrs[];
+extern legacy_u8 far *polyinfoptr;
+extern legacy_u8 far *polyinfoptrs[];
 
 #endif

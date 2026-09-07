@@ -29,12 +29,12 @@ static legacy_u16 text_edit_cursor_width;
 static legacy_u16 text_edit_x;
 static legacy_u16 text_edit_y;
 static legacy_u16 text_edit_cursor_visible;
-static legacy_s8* text_edit_buffer;
+static legacy_s8 *text_edit_buffer;
 static legacy_u16 text_edit_max_pixels;
 static legacy_u16 text_edit_cursor;
 
-legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
-	legacy_u32 timeout)
+legacy_s16 call_read_line(legacy_s8 *text, legacy_s16 max_characters, legacy_s16 x, legacy_s16 y,
+						  legacy_u32 timeout)
 {
 	legacy_u16 length;
 	legacy_u16 trim_index;
@@ -42,23 +42,22 @@ legacy_s16 call_read_line(legacy_s8* text, legacy_s16 max_characters, legacy_s16
 	legacy_s16 result;
 
 	mouse_draw_opaque_check();
-	max_pixels = LEGACY_U16_WRAP_ADD(
-		LEGACY_U16_WRAP_MUL(max_characters, TEXT_EDIT_CHARACTER_WIDTH),
-		TEXT_EDIT_CHARACTER_WIDTH);
-	result = read_line(READ_LINE_CURSOR_AT_START, text, 0, max_characters,
-		max_pixels, x, y,
-		&dos_kb_clear_numlock, timeout);
+	max_pixels = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(max_characters, TEXT_EDIT_CHARACTER_WIDTH),
+									 TEXT_EDIT_CHARACTER_WIDTH);
+	result = read_line(READ_LINE_CURSOR_AT_START, text, 0, max_characters, max_pixels, x, y,
+					   &dos_kb_clear_numlock, timeout);
 	mouse_draw_transparent_check();
 
 	length = (legacy_u16)strlen(text);
 	trim_index = LEGACY_U16_WRAP_SUB(length, 1U);
-	while (text[trim_index] == ' ')
+	while (text[trim_index] == ' ') {
 		trim_index = LEGACY_U16_WRAP_SUB(trim_index, 1U);
+	}
 	text[LEGACY_U16_WRAP_ADD(trim_index, 1U)] = 0;
 	return result;
 }
 
-legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
+legacy_s16 sprite_blit_to_video(struct SPRITE far *sprite, legacy_s16 mode)
 {
 	legacy_s16 result;
 	legacy_u16 phase;
@@ -74,8 +73,9 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 	result = 0;
 	for (phase = 0; phase < SPRITE_BLIT_PHASE_COUNT; ++phase) {
 		result = input_do_checking((legacy_s16)timer_get_delta_alt());
-		if (result != 0)
+		if (result != 0) {
 			break;
+		}
 		sprite_draw_dissolve_phase(sprite->sprite_bitmapptr, phase);
 	}
 	if (result != 0) {
@@ -86,14 +86,12 @@ legacy_s16 sprite_blit_to_video(struct SPRITE far* sprite, legacy_s16 mode)
 	return result;
 }
 
-static void read_line_delete_character(legacy_s8* text,
-	legacy_s16 max_characters)
+static void read_line_delete_character(legacy_s8 *text, legacy_s16 max_characters)
 {
 	legacy_u16 index;
 
 	index = (legacy_u16)text_edit_cursor;
-	while (LEGACY_S16_FROM_BITS(index) <
-		LEGACY_S16_FROM_BITS(max_characters)) {
+	while (LEGACY_S16_FROM_BITS(index) < LEGACY_S16_FROM_BITS(max_characters)) {
 		text[index] = text[LEGACY_U16_WRAP_ADD(index, 1U)];
 		index = LEGACY_U16_WRAP_ADD(index, 1U);
 	}
@@ -101,19 +99,20 @@ static void read_line_delete_character(legacy_s8* text,
 	text_edit_redraw();
 }
 
-static void read_line_erase_character(legacy_s8* text,
-	legacy_s16 max_characters, legacy_s16 move_left)
+static void read_line_erase_character(legacy_s8 *text, legacy_s16 max_characters,
+									  legacy_s16 move_left)
 {
 	text_edit_toggle_cursor();
-	if (move_left != 0)
+	if (move_left != 0) {
 		text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
+	}
 	read_line_delete_character(text, max_characters);
 	text_edit_toggle_cursor();
 }
 
-legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, legacy_s16 max_characters,
-	legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y, void (far* callback)(void),
-	legacy_u32 timeout)
+legacy_s16 read_line(legacy_s16 flags, legacy_s8 *text, legacy_s16 initial_key,
+					 legacy_s16 max_characters, legacy_s16 max_pixels, legacy_s16 x, legacy_s16 y,
+					 void(far *callback)(void), legacy_u32 timeout)
 {
 	legacy_u8 input_flags;
 	legacy_u16 key;
@@ -130,16 +129,17 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 	text_edit_buffer = text;
 	text_edit_max_pixels = (legacy_u16)max_pixels;
 	text[(legacy_u16)max_characters] = 0;
-	if ((input_flags & READ_LINE_CLEAR_TEXT) != 0)
+	if ((input_flags & READ_LINE_CLEAR_TEXT) != 0) {
 		text[0] = 0;
-	if ((input_flags & READ_LINE_CURSOR_AT_START) != 0)
+	}
+	if ((input_flags & READ_LINE_CURSOR_AT_START) != 0) {
 		text_edit_cursor = 0;
-	else
+	} else {
 		text_edit_cursor = (legacy_u16)strlen(text);
+	}
 
 	length = (legacy_u16)strlen(text);
-	while (LEGACY_S16_FROM_BITS(length) <
-		LEGACY_S16_FROM_BITS(max_characters)) {
+	while (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(max_characters)) {
 		text[length] = ' ';
 		length = LEGACY_U16_WRAP_ADD(length, 1U);
 	}
@@ -160,8 +160,9 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 			do {
 				callback();
 				key = (legacy_u16)kb_call_readchar_callback();
-				if (key != 0)
+				if (key != 0) {
 					break;
+				}
 			} while (slow_timer_deadline_reached() == 0);
 		}
 
@@ -180,19 +181,17 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		timer_set_deadline(timeout);
 		if (key == KEY_ENTER || key == KEY_ESCAPE || key == KEY_UP ||
-			(key == KEY_DOWN &&
-				(input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||
-			(key == KEY_TAB &&
-				(input_flags & READ_LINE_IGNORE_TAB_KEY) == 0)) {
+			(key == KEY_DOWN && (input_flags & READ_LINE_IGNORE_DOWN_KEY) == 0) ||
+			(key == KEY_TAB && (input_flags & READ_LINE_IGNORE_TAB_KEY) == 0)) {
 			text_edit_toggle_cursor();
 			return key;
 		}
 
 		if (key == KEY_RIGHT) {
 			text_edit_toggle_cursor();
-			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(text_edit_cursor))
+			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
+			}
 			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
@@ -200,8 +199,9 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 
 		if (key == KEY_LEFT) {
 			text_edit_toggle_cursor();
-			if (text_edit_cursor != 0)
+			if (text_edit_cursor != 0) {
 				text_edit_cursor = LEGACY_U16_WRAP_SUB(text_edit_cursor, 1U);
+			}
 			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
@@ -226,62 +226,58 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 		if (key == KEY_INSERT) {
 			text_edit_toggle_cursor();
 			insert_mode = !insert_mode;
-			text_edit_cursor_width = insert_mode ?
-				TEXT_EDIT_WIDE_CURSOR_WIDTH : TEXT_EDIT_NARROW_CURSOR_WIDTH;
+			text_edit_cursor_width =
+				insert_mode ? TEXT_EDIT_WIDE_CURSOR_WIDTH : TEXT_EDIT_NARROW_CURSOR_WIDTH;
 			text_edit_toggle_cursor();
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_DELETE) {
-			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(text_edit_cursor) &&
-				text[(legacy_u16)text_edit_cursor] != 0)
+			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor) &&
+				text[(legacy_u16)text_edit_cursor] != 0) {
 				read_line_erase_character(text, max_characters, 0);
+			}
 			first_key = 0;
 			continue;
 		}
 
 		if (key == KEY_BACKSPACE) {
-			if (text_edit_cursor != 0)
+			if (text_edit_cursor != 0) {
 				read_line_erase_character(text, max_characters, 1);
+			}
 			first_key = 0;
 			continue;
 		}
 
 		if (LEGACY_S16_FROM_BITS(key) >= TEXT_EDIT_MINIMUM_CHARACTER &&
 			LEGACY_S16_FROM_BITS(key) <= TEXT_EDIT_MAXIMUM_CHARACTER &&
-			LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+			LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 			text_edit_toggle_cursor();
-			if (first_key &&
-				(input_flags & READ_LINE_RETAIN_INITIAL_TEXT) == 0) {
+			if (first_key && (input_flags & READ_LINE_RETAIN_INITIAL_TEXT) == 0) {
 				text_edit_cursor = 0;
-				for (index = 0;
-					LEGACY_S16_FROM_BITS(index) <
-						LEGACY_S16_FROM_BITS(max_characters);
-					index = LEGACY_U16_WRAP_ADD(index, 1U))
+				for (index = 0; LEGACY_S16_FROM_BITS(index) < LEGACY_S16_FROM_BITS(max_characters);
+					 index = LEGACY_U16_WRAP_ADD(index, 1U)) {
 					text[index] = ' ';
+				}
 			}
 
 			index = (legacy_u16)text_edit_cursor;
-			if (text[index] == 0)
+			if (text[index] == 0) {
 				text[LEGACY_U16_WRAP_ADD(index, 1U)] = 0;
+			}
 			if (insert_mode) {
 				legacy_u16 move_index;
-				move_index = LEGACY_U16_WRAP_SUB(max_characters,
-					TEXT_EDIT_INSERT_MARGIN);
-				while (LEGACY_S16_FROM_BITS(move_index) >=
-					LEGACY_S16_FROM_BITS(text_edit_cursor)) {
-					text[LEGACY_U16_WRAP_ADD(move_index, 1U)] =
-						text[move_index];
+				move_index = LEGACY_U16_WRAP_SUB(max_characters, TEXT_EDIT_INSERT_MARGIN);
+				while (LEGACY_S16_FROM_BITS(move_index) >= LEGACY_S16_FROM_BITS(text_edit_cursor)) {
+					text[LEGACY_U16_WRAP_ADD(move_index, 1U)] = text[move_index];
 					move_index = LEGACY_U16_WRAP_SUB(move_index, 1U);
 				}
 			}
 			text[index] = (legacy_s8)(legacy_u8)key;
-			if (LEGACY_S16_FROM_BITS(max_characters) >
-				LEGACY_S16_FROM_BITS(text_edit_cursor))
+			if (LEGACY_S16_FROM_BITS(max_characters) > LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 				text_edit_cursor = LEGACY_U16_WRAP_ADD(text_edit_cursor, 1U);
+			}
 			text_edit_redraw();
 			text_edit_toggle_cursor();
 		}
@@ -292,7 +288,7 @@ legacy_s16 read_line(legacy_s16 flags, legacy_s8* text, legacy_s16 initial_key, 
 void text_edit_toggle_cursor(void)
 {
 	static const legacy_s8 space[] = " ";
-	legacy_u8 far* font_definition;
+	legacy_u8 far *font_definition;
 	legacy_u16 length;
 	legacy_u16 cursor;
 	legacy_u16 cursor_width;
@@ -300,8 +296,9 @@ void text_edit_toggle_cursor(void)
 	legacy_u16 y;
 	legacy_u16 color;
 
-	if (text_edit_cursor_visible == 0)
+	if (text_edit_cursor_visible == 0) {
 		return;
+	}
 	length = legacy_near_string_length(text_edit_buffer);
 	cursor = (legacy_u16)text_edit_cursor;
 	if (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(cursor)) {
@@ -309,59 +306,57 @@ void text_edit_toggle_cursor(void)
 		text_edit_cursor = cursor;
 	}
 	cursor_width = (legacy_u16)font_prefix_width(text_edit_buffer + cursor, 1);
-	if (cursor_width == 0)
+	if (cursor_width == 0) {
 		cursor_width = (legacy_u16)font_text_width(space);
+	}
 	x = LEGACY_U16_WRAP_ADD(font_prefix_width(text_edit_buffer, cursor), text_edit_x);
 	font_definition = active_font_definition;
-	y = LEGACY_U16_WRAP_ADD(
-		resource_read_u16le(font_definition +
-			FONT_DEFINITION_HEIGHT_OFFSET), text_edit_y);
+	y = LEGACY_U16_WRAP_ADD(resource_read_u16le(font_definition + FONT_DEFINITION_HEIGHT_OFFSET),
+							text_edit_y);
 	y = LEGACY_U16_WRAP_SUB(y, text_edit_cursor_width);
 	color = resource_read_u16le(font_definition);
-	sprite_xor_rect_clipped(LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y),
-		LEGACY_S16_FROM_BITS(cursor_width),
-		LEGACY_S16_FROM_BITS(text_edit_cursor_width),
-		LEGACY_S16_FROM_BITS(color));
+	sprite_xor_rect_clipped(
+		LEGACY_S16_FROM_BITS(x), LEGACY_S16_FROM_BITS(y), LEGACY_S16_FROM_BITS(cursor_width),
+		LEGACY_S16_FROM_BITS(text_edit_cursor_width), LEGACY_S16_FROM_BITS(color));
 }
 
 void text_edit_redraw(void)
 {
-	legacy_u8 far* font_definition;
+	legacy_u8 far *font_definition;
 	legacy_u16 length;
 	legacy_u16 text_width;
 	legacy_u16 remaining_width;
 
 	if (text_edit_max_pixels != 0) {
 		while (LEGACY_S16_FROM_BITS(font_text_width(text_edit_buffer)) >
-			LEGACY_S16_FROM_BITS(text_edit_max_pixels)) {
+			   LEGACY_S16_FROM_BITS(text_edit_max_pixels)) {
 			length = legacy_near_string_length(text_edit_buffer);
-			if (length == 0)
+			if (length == 0) {
 				break;
+			}
 			text_edit_buffer[length - 1U] = 0;
 		}
 	}
 	length = legacy_near_string_length(text_edit_buffer);
-	if (LEGACY_S16_FROM_BITS(length) <
-		LEGACY_S16_FROM_BITS(text_edit_cursor))
+	if (LEGACY_S16_FROM_BITS(length) < LEGACY_S16_FROM_BITS(text_edit_cursor)) {
 		text_edit_cursor = length;
+	}
 	font_draw_text_opaque(text_edit_buffer, LEGACY_S16_FROM_BITS(text_edit_x),
-		LEGACY_S16_FROM_BITS(text_edit_y));
-	if (text_edit_max_pixels == 0)
+						  LEGACY_S16_FROM_BITS(text_edit_y));
+	if (text_edit_max_pixels == 0) {
 		return;
+	}
 
 	text_width = (legacy_u16)font_text_width(text_edit_buffer);
 	remaining_width = LEGACY_U16_WRAP_SUB(text_edit_max_pixels, text_width);
-	if (LEGACY_S16_FROM_BITS(remaining_width) <= 0)
+	if (LEGACY_S16_FROM_BITS(remaining_width) <= 0) {
 		return;
+	}
 	font_definition = active_font_definition;
-	sprite_fill_rect_clipped(LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(text_width, text_edit_x)),
-		LEGACY_S16_FROM_BITS(text_edit_y),
-		LEGACY_S16_FROM_BITS(remaining_width),
+	sprite_fill_rect_clipped(
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(text_width, text_edit_x)),
+		LEGACY_S16_FROM_BITS(text_edit_y), LEGACY_S16_FROM_BITS(remaining_width),
+		LEGACY_S16_FROM_BITS(resource_read_u16le(font_definition + FONT_DEFINITION_HEIGHT_OFFSET)),
 		LEGACY_S16_FROM_BITS(
-			resource_read_u16le(font_definition +
-				FONT_DEFINITION_HEIGHT_OFFSET)),
-		LEGACY_S16_FROM_BITS(
-			resource_read_u16le(font_definition +
-				FONT_DEFINITION_BACKGROUND_COLOR_OFFSET)));
+			resource_read_u16le(font_definition + FONT_DEFINITION_BACKGROUND_COLOR_OFFSET)));
 }

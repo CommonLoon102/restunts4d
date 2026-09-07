@@ -5,7 +5,7 @@
 #define DOS_MEMORY_ALLOCATE_FUNCTION 72
 #define DOS_MEMORY_RESIZE_FUNCTION 74
 
-void far* dos_memory_get_psp(void)
+void far *dos_memory_get_psp(void)
 {
 	legacy_u16 segment;
 	legacy_u16 offset;

@@ -39,12 +39,9 @@
 #define OPPONENT_TEXT_Y 116
 #define PENALTY_TEXT_Y 102
 
-enum DIRECTION_ICON_SHAPE_INDEX {
-	DIRECTION_ICON_LEFT_SHAPE = 3,
-	DIRECTION_ICON_RIGHT_SHAPE = 4
-};
+enum DIRECTION_ICON_SHAPE_INDEX { DIRECTION_ICON_LEFT_SHAPE = 3, DIRECTION_ICON_RIGHT_SHAPE = 4 };
 
-struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
+struct RECTANGLE *do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
 	legacy_s16 duration;
 	legacy_s16 clipped_frame;
@@ -53,27 +50,26 @@ struct RECTANGLE* do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height
 
 	duration = LEGACY_S16_SHL(framespersec, SINK_DURATION_FRAME_SHIFT);
 	clipped_frame = (legacy_s16)frame;
-	if (clipped_frame > duration)
+	if (clipped_frame > duration) {
 		clipped_frame = duration;
-	sink_height = LEGACY_S16_FROM_BITS((legacy_u16)
-		LEGACY_S32_DIV_OR_ZERO(LEGACY_S32_WRAP_MUL(
-			(legacy_s32)height, (legacy_s32)clipped_frame),
-			(legacy_s32)duration));
+	}
+	sink_height = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(
+		LEGACY_S32_WRAP_MUL((legacy_s32)height, (legacy_s32)clipped_frame), (legacy_s32)duration));
 	bottom = LEGACY_S16_WRAP_ADD(top, height);
 	rect_ingame_text.left = 0;
 	rect_ingame_text.right = OVERLAY_SCREEN_WIDTH;
 	rect_ingame_text.top = LEGACY_S16_WRAP_SUB(bottom, sink_height);
 	rect_ingame_text.bottom = bottom;
 	sprite_set_target_clip_bounds(0, OVERLAY_SCREEN_WIDTH, rect_ingame_text.top,
-		rect_ingame_text.bottom);
+								  rect_ingame_text.bottom);
 	sprite_clear_target((legacy_u8)skybox.water_color);
 	return &rect_ingame_text;
 }
 
-struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
+struct RECTANGLE *init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
-	legacy_u8 far* crack_lines;
-	legacy_u8 far* crack_info;
+	legacy_u8 far *crack_lines;
+	legacy_u8 far *crack_info;
 	legacy_s16 frame_count;
 	legacy_s16 frame_index;
 	legacy_s16 line_count;
@@ -88,76 +84,53 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 	struct POINT2D point;
 	legacy_s16 i;
 
-	crack_lines = (legacy_u8 far*)locate_shape_alt(gameresptr, "crak");
-	crack_info = (legacy_u8 far*)locate_shape_alt(gameresptr, "cinf");
-	frame_divisor = LEGACY_S16_FROM_BITS(
-		LEGACY_U16_DIV_OR_ZERO(framespersec, CRACK_FRAME_RATE_DIVISOR));
+	crack_lines = (legacy_u8 far *)locate_shape_alt(gameresptr, "crak");
+	crack_info = (legacy_u8 far *)locate_shape_alt(gameresptr, "cinf");
+	frame_divisor =
+		LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(framespersec, CRACK_FRAME_RATE_DIVISOR));
 	frame_index = LEGACY_S16_DIV_OR_ZERO(frame, frame_divisor);
 	frame_count = LEGACY_READ_S16_LE(crack_info);
-	if (frame_index >= frame_count)
+	if (frame_index >= frame_count) {
 		frame_index = LEGACY_S16_WRAP_SUB(frame_count, 1);
-	line_count = LEGACY_READ_S16_LE(crack_info +
-		((legacy_u16)LEGACY_S16_WRAP_ADD(frame_index,
-			CRACK_INFO_HEADER_WORDS) << CRACK_INFO_INDEX_SHIFT));
+	}
+	line_count = LEGACY_READ_S16_LE(
+		crack_info + ((legacy_u16)LEGACY_S16_WRAP_ADD(frame_index, CRACK_INFO_HEADER_WORDS)
+					  << CRACK_INFO_INDEX_SHIFT));
 	rect_ingame_text = empty_rect;
 
 	for (i = 0; i < line_count; i++) {
 		legacy_u16 line_offset = (legacy_u16)i << CRACK_LINE_RECORD_SHIFT;
 
 		start_x = LEGACY_READ_S16_LE(crack_lines + line_offset);
-		start_y = LEGACY_READ_S16_LE(crack_lines + line_offset +
-			CRACK_START_Y_OFFSET);
-		end_x = LEGACY_READ_S16_LE(crack_lines + line_offset +
-			CRACK_END_X_OFFSET);
-		end_y = LEGACY_READ_S16_LE(crack_lines + line_offset +
-			CRACK_END_Y_OFFSET);
-		scaled_coordinate = LEGACY_S32_WRAP_MUL(
-			(legacy_s32)start_y, (legacy_s32)height);
-		scaled_start_y = LEGACY_S16_FROM_BITS((legacy_u16)
-			LEGACY_S32_DIV_OR_ZERO(scaled_coordinate,
-				OVERLAY_REFERENCE_HEIGHT));
-		scaled_coordinate = LEGACY_S32_WRAP_MUL(
-			(legacy_s32)end_y, (legacy_s32)height);
-		scaled_end_y = LEGACY_S16_FROM_BITS((legacy_u16)
-			LEGACY_S32_DIV_OR_ZERO(scaled_coordinate,
-				OVERLAY_REFERENCE_HEIGHT));
+		start_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_START_Y_OFFSET);
+		end_x = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_X_OFFSET);
+		end_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_Y_OFFSET);
+		scaled_coordinate = LEGACY_S32_WRAP_MUL((legacy_s32)start_y, (legacy_s32)height);
+		scaled_start_y = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, OVERLAY_REFERENCE_HEIGHT));
+		scaled_coordinate = LEGACY_S32_WRAP_MUL((legacy_s32)end_y, (legacy_s32)height);
+		scaled_end_y = LEGACY_S16_FROM_BITS(
+			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, OVERLAY_REFERENCE_HEIGHT));
 
-		preRender_line(start_x,
-			LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
-			end_x,
-			LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1),
-			0);
-		preRender_line(start_x,
-			LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
-			end_x,
-			LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1),
-			0);
-		preRender_line(start_x,
-			LEGACY_S16_WRAP_ADD(scaled_start_y, top),
-			end_x,
-			LEGACY_S16_WRAP_ADD(scaled_end_y, top),
-			dialog_fnt_colour);
+		preRender_line(start_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
+					   end_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
+		preRender_line(start_x, LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
+					   end_x, LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
+		preRender_line(start_x, LEGACY_S16_WRAP_ADD(scaled_start_y, top), end_x,
+					   LEGACY_S16_WRAP_ADD(scaled_end_y, top), dialog_fnt_colour);
 
 		if (slow_video_mgmt_copy != 0) {
 			point.px = start_x;
-			point.py = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
+			point.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
 			point.px = end_x;
-			point.py = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
+			point.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
 			point.px = start_x;
-			point.py = LEGACY_S16_WRAP_ADD(
-				LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
+			point.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
 			point.px = end_x;
-			point.py = LEGACY_S16_WRAP_SUB(
-				LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
+			point.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
 		}
 	}
@@ -165,16 +138,16 @@ struct RECTANGLE* init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 	return &rect_ingame_text;
 }
 
-static void draw_centered_ingame_resource(legacy_s8* resource_id, legacy_s16 y)
+static void draw_centered_ingame_resource(legacy_s8 *resource_id, legacy_s16 y)
 {
 	copy_string(&resID_byte1, locate_text_res(gameresptr, resource_id));
-	rect_union(&rect_ingame_text,
-		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), y,
-			dialog_fnt_colour, 0),
+	rect_union(
+		&rect_ingame_text,
+		intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), y, dialog_fnt_colour, 0),
 		&rect_ingame_text);
 }
 
-struct RECTANGLE* draw_ingame_text(void)
+struct RECTANGLE *draw_ingame_text(void)
 {
 	legacy_u16 replay_frame;
 	legacy_s16 replay_x;
@@ -187,19 +160,20 @@ struct RECTANGLE* draw_ingame_text(void)
 	}
 
 	if (game_replay_mode != REPLAY_MODE_LIVE) {
-		if (game_replay_mode != REPLAY_MODE_PLAYBACK)
+		if (game_replay_mode != REPLAY_MODE_PLAYBACK) {
 			return &rect_ingame_text;
+		}
 		replay_frame = (legacy_u16)state.game_frame % framespersec;
-		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U))
+		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U)) {
 			return &rect_ingame_text;
+		}
 		copy_string(&resID_byte1, locate_text_res(gameresptr, "rpl"));
-		replay_x = LEGACY_S16_WRAP_SUB(REPLAY_TEXT_RIGHT_X,
-			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1),
-				REPLAY_TEXT_CHARACTER_WIDTH));
+		replay_x = LEGACY_S16_WRAP_SUB(
+			REPLAY_TEXT_RIGHT_X,
+			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1), REPLAY_TEXT_CHARACTER_WIDTH));
 		rect_union(&rect_ingame_text,
-			intro_draw_text(&resID_byte1, replay_x, REPLAY_TEXT_Y,
-				dialog_fnt_colour, 0),
-			&rect_ingame_text);
+				   intro_draw_text(&resID_byte1, replay_x, REPLAY_TEXT_Y, dialog_fnt_colour, 0),
+				   &rect_ingame_text);
 		return &rect_ingame_text;
 	}
 
@@ -213,60 +187,55 @@ struct RECTANGLE* draw_ingame_text(void)
 		return &rect_ingame_text;
 	}
 	if (followOpponentFlag != 0 || cameramode != CAMERA_MODE_COCKPIT ||
-		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE)
+		state.playerstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 		return &rect_ingame_text;
+	}
 
 	switch (state.game_player_route_indicator) {
-	case ROUTE_INDICATOR_LEFT:
-		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
-			DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
-		rect_union(&rect_ingame_text, &rect_ingame_text2,
-			&rect_ingame_text);
-		break;
-	case ROUTE_INDICATOR_RIGHT:
-		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
-			DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
-		rect_union(&rect_ingame_text, &rect_ingame_text2,
-			&rect_ingame_text);
-		break;
-	case ROUTE_INDICATOR_WRONG_WAY:
-		draw_centered_ingame_resource("www", WRONG_WAY_TEXT_Y);
-		break;
+		case ROUTE_INDICATOR_LEFT:
+			sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
+										DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
+			rect_union(&rect_ingame_text, &rect_ingame_text2, &rect_ingame_text);
+			break;
+		case ROUTE_INDICATOR_RIGHT:
+			sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
+										DIRECTION_ICON_CENTER_X, DIRECTION_ICON_CENTER_Y);
+			rect_union(&rect_ingame_text, &rect_ingame_text2, &rect_ingame_text);
+			break;
+		case ROUTE_INDICATOR_WRONG_WAY:
+			draw_centered_ingame_resource("www", WRONG_WAY_TEXT_Y);
+			break;
 	}
 
 	resID_byte1 = 0;
 	switch (state.game_opponent_route_indicator) {
-	case ROUTE_INDICATOR_LEFT:
-		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
-			OPPONENT_LEFT_ICON_X, OPPONENT_ICON_Y);
-		rect_union(&rect_ingame_text, &rect_ingame_text3,
-			&rect_ingame_text);
-		copy_string(&resID_byte1,
-			locate_text_res(gameresptr, "opp"));
-		break;
-	case ROUTE_INDICATOR_RIGHT:
-		sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
-			OPPONENT_RIGHT_ICON_X, OPPONENT_ICON_Y);
-		rect_union(&rect_ingame_text, &rect_ingame_text4,
-			&rect_ingame_text);
-		copy_string(&resID_byte1,
-			locate_text_res(gameresptr, "opp"));
-		break;
+		case ROUTE_INDICATOR_LEFT:
+			sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_LEFT_SHAPE],
+										OPPONENT_LEFT_ICON_X, OPPONENT_ICON_Y);
+			rect_union(&rect_ingame_text, &rect_ingame_text3, &rect_ingame_text);
+			copy_string(&resID_byte1, locate_text_res(gameresptr, "opp"));
+			break;
+		case ROUTE_INDICATOR_RIGHT:
+			sprite_putimage_transparent(sdgame2shapes[DIRECTION_ICON_RIGHT_SHAPE],
+										OPPONENT_RIGHT_ICON_X, OPPONENT_ICON_Y);
+			rect_union(&rect_ingame_text, &rect_ingame_text4, &rect_ingame_text);
+			copy_string(&resID_byte1, locate_text_res(gameresptr, "opp"));
+			break;
 	}
-	if (resID_byte1 != 0)
+	if (resID_byte1 != 0) {
 		rect_union(&rect_ingame_text,
-			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
-				OPPONENT_TEXT_Y, dialog_fnt_colour, 0),
-			&rect_ingame_text);
+				   intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
+								   OPPONENT_TEXT_Y, dialog_fnt_colour, 0),
+				   &rect_ingame_text);
+	}
 
 	if (show_penalty_counter != 0) {
 		copy_string(&resID_byte1, locate_text_res(gameresptr, "pen"));
-		format_frame_as_string(&resID_byte1 + strlen(&resID_byte1),
-			penalty_time, 0);
+		format_frame_as_string(&resID_byte1 + strlen(&resID_byte1), penalty_time, 0);
 		rect_union(&rect_ingame_text,
-			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
-				PENALTY_TEXT_Y, dialog_fnt_colour, 0),
-			&rect_ingame_text);
+				   intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), PENALTY_TEXT_Y,
+								   dialog_fnt_colour, 0),
+				   &rect_ingame_text);
 	}
 
 	return &rect_ingame_text;

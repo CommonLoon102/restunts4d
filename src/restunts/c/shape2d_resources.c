@@ -40,22 +40,21 @@
 #define OVERLAP_MARGIN_QUARTER_SHIFT 2U
 #define OVERLAP_RESERVE_EIGHTH_SHIFT 3U
 
-legacy_u32 shape2d_pointer_to_linear(void far* data)
+legacy_u32 shape2d_pointer_to_linear(void far *data)
 {
-	return ((legacy_u32)dos_memory_pointer_segment(data) <<
-		DOS_PARAGRAPH_SHIFT) + dos_memory_pointer_offset(data);
+	return ((legacy_u32)dos_memory_pointer_segment(data) << DOS_PARAGRAPH_SHIFT) +
+		   dos_memory_pointer_offset(data);
 }
 
-void far* shape2d_pointer_from_linear(legacy_u32 linear_address)
+void far *shape2d_pointer_from_linear(legacy_u32 linear_address)
 {
-	return dos_memory_make_pointer(
-		(legacy_u16)(linear_address >> DOS_PARAGRAPH_SHIFT),
-		(legacy_u16)linear_address & DOS_PARAGRAPH_OFFSET_MASK);
+	return dos_memory_make_pointer((legacy_u16)(linear_address >> DOS_PARAGRAPH_SHIFT),
+								   (legacy_u16)linear_address & DOS_PARAGRAPH_OFFSET_MASK);
 }
 
-legacy_s16 shape2d_count_repeated_bytes(void far* data)
+legacy_s16 shape2d_count_repeated_bytes(void far *data)
 {
-	legacy_u8 far* source_ptr;
+	legacy_u8 far *source_ptr;
 	legacy_u16 source_segment;
 	legacy_u16 source;
 	legacy_u16 count;
@@ -63,79 +62,72 @@ legacy_s16 shape2d_count_repeated_bytes(void far* data)
 
 	source_segment = dos_memory_pointer_segment(data);
 	source = dos_memory_pointer_offset(data);
-	source_ptr = (legacy_u8 far*)dos_memory_make_pointer(source_segment, source);
+	source_ptr = (legacy_u8 far *)dos_memory_make_pointer(source_segment, source);
 	value = *source_ptr;
 	count = 0;
 	for (;;) {
-		source_ptr = (legacy_u8 far*)dos_memory_make_pointer(source_segment, source);
+		source_ptr = (legacy_u8 far *)dos_memory_make_pointer(source_segment, source);
 		source++;
-		if (*source_ptr != value)
+		if (*source_ptr != value) {
 			return count;
+		}
 		count++;
 	}
 }
 
-static legacy_u8 shape2d_far_read_byte(legacy_u16 segment,
-	legacy_u16 offset)
+static legacy_u8 shape2d_far_read_byte(legacy_u16 segment, legacy_u16 offset)
 {
-	return *(legacy_u8 far*)dos_memory_make_pointer(segment, offset);
+	return *(legacy_u8 far *)dos_memory_make_pointer(segment, offset);
 }
 
-static void shape2d_far_write_byte(legacy_u16 segment,
-	legacy_u16 offset, legacy_u8 value)
+static void shape2d_far_write_byte(legacy_u16 segment, legacy_u16 offset, legacy_u8 value)
 {
-	*(legacy_u8 far*)dos_memory_make_pointer(segment, offset) = value;
+	*(legacy_u8 far *)dos_memory_make_pointer(segment, offset) = value;
 }
 
-static void shape2d_far_write_dword(legacy_u16 segment,
-	legacy_u16 offset, legacy_u32 value)
+static void shape2d_far_write_dword(legacy_u16 segment, legacy_u16 offset, legacy_u32 value)
 {
 	shape2d_far_write_byte(segment, offset, (legacy_u8)value);
 	offset++;
-	shape2d_far_write_byte(segment, offset,
-		(legacy_u8)(value >> DWORD_SECOND_BYTE_SHIFT));
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> DWORD_SECOND_BYTE_SHIFT));
 	offset++;
-	shape2d_far_write_byte(segment, offset,
-		(legacy_u8)(value >> DWORD_THIRD_BYTE_SHIFT));
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> DWORD_THIRD_BYTE_SHIFT));
 	offset++;
-	shape2d_far_write_byte(segment, offset,
-		(legacy_u8)(value >> DWORD_FOURTH_BYTE_SHIFT));
+	shape2d_far_write_byte(segment, offset, (legacy_u8)(value >> DWORD_FOURTH_BYTE_SHIFT));
 }
 
-static void shape2d_copy_wrapped(legacy_u16 source_segment,
-	legacy_u16* source, legacy_u16 destination_segment,
-	legacy_u16* destination, legacy_u16 count)
+static void shape2d_copy_wrapped(legacy_u16 source_segment, legacy_u16 *source,
+								 legacy_u16 destination_segment, legacy_u16 *destination,
+								 legacy_u16 count)
 {
 	legacy_u16 copied;
 
 	copied = 0;
-	while (LEGACY_S16_FROM_BITS(copied) <
-		LEGACY_S16_FROM_BITS(count)) {
+	while (LEGACY_S16_FROM_BITS(copied) < LEGACY_S16_FROM_BITS(count)) {
 		shape2d_far_write_byte(destination_segment, *destination,
-			shape2d_far_read_byte(source_segment, *source));
+							   shape2d_far_read_byte(source_segment, *source));
 		(*source)++;
 		(*destination)++;
 		copied++;
 	}
 }
 
-static void shape2d_write_run(legacy_u16 source_segment,
-	legacy_u16* source, legacy_u16 destination_segment,
-	legacy_u16* destination, legacy_u16 count)
+static void shape2d_write_run(legacy_u16 source_segment, legacy_u16 *source,
+							  legacy_u16 destination_segment, legacy_u16 *destination,
+							  legacy_u16 count)
 {
-	shape2d_far_write_byte(destination_segment, *destination,
-		(legacy_u8)count);
+	shape2d_far_write_byte(destination_segment, *destination, (legacy_u8)count);
 	(*destination)++;
 	shape2d_far_write_byte(destination_segment, *destination,
-		shape2d_far_read_byte(source_segment, *source));
+						   shape2d_far_read_byte(source_segment, *source));
 	(*destination)++;
 	*source = LEGACY_U16_WRAP_ADD(*source, count);
 }
 
-void parse_shape2d(void far* memchunk, void far* mempages)
+void parse_shape2d(void far *memchunk, void far *mempages)
 {
-	struct SHAPE2D far* shape;
-	void far* output_pointer;
+	struct SHAPE2D far *shape;
+	void far *output_pointer;
 	legacy_u32 initial_output_linear;
 	legacy_u32 output_linear;
 	legacy_u32 output_size;
@@ -163,53 +155,50 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 	pages_segment = dos_memory_pointer_segment(mempages);
 	pages_offset = dos_memory_pointer_offset(mempages);
 	shape_count = file_get_res_shape_count(memchunk);
-	offsets_offset = LEGACY_U16_WRAP_ADD(pages_offset,
-		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count,
-			RESOURCE_TABLE_ENTRY_SIZE), RESOURCE_FILE_HEADER_SIZE));
-	header_size = LEGACY_U16_WRAP_ADD(
-		LEGACY_U16_WRAP_MUL(shape_count, RESOURCE_TABLE_ENTRY_SIZE),
-		RESOURCE_FILE_HEADER_SIZE);
+	offsets_offset = LEGACY_U16_WRAP_ADD(
+		pages_offset,
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, RESOURCE_TABLE_ENTRY_SIZE),
+							RESOURCE_FILE_HEADER_SIZE));
+	header_size = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, RESOURCE_TABLE_ENTRY_SIZE),
+									  RESOURCE_FILE_HEADER_SIZE);
 	copied = 0;
-	while (LEGACY_S16_FROM_BITS(header_size) >
-		LEGACY_S16_FROM_BITS(copied)) {
+	while (LEGACY_S16_FROM_BITS(header_size) > LEGACY_S16_FROM_BITS(copied)) {
 		shape2d_far_write_byte(pages_segment, pages_offset,
-			shape2d_far_read_byte(chunk_segment, chunk_offset));
+							   shape2d_far_read_byte(chunk_segment, chunk_offset));
 		chunk_offset++;
 		pages_offset++;
 		copied++;
 	}
 	output_segment = dos_memory_pointer_segment(mempages);
-	output_offset = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(mempages),
-		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count,
-			PARSED_RESOURCE_TABLE_ENTRY_SIZE), RESOURCE_FILE_HEADER_SIZE));
-	initial_output_linear = shape2d_pointer_to_linear(
-		dos_memory_make_pointer(output_segment, output_offset));
+	output_offset = LEGACY_U16_WRAP_ADD(
+		dos_memory_pointer_offset(mempages),
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_MUL(shape_count, PARSED_RESOURCE_TABLE_ENTRY_SIZE),
+							RESOURCE_FILE_HEADER_SIZE));
+	initial_output_linear =
+		shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset));
 
 	shape_index = 0;
-	while (LEGACY_S16_FROM_BITS(shape_index) <
-		LEGACY_S16_FROM_BITS(shape_count)) {
-		shape = file_get_shape2d((legacy_u8 far*)memchunk, shape_index);
-		output_linear = shape2d_pointer_to_linear(
-			dos_memory_make_pointer(output_segment, output_offset));
+	while (LEGACY_S16_FROM_BITS(shape_index) < LEGACY_S16_FROM_BITS(shape_count)) {
+		shape = file_get_shape2d((legacy_u8 far *)memchunk, shape_index);
+		output_linear =
+			shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset));
 		output_pointer = shape2d_pointer_from_linear(output_linear);
 		output_segment = dos_memory_pointer_segment(output_pointer);
 		output_offset = dos_memory_pointer_offset(output_pointer);
 		shape2d_far_write_dword(pages_segment, offsets_offset,
-			output_linear - initial_output_linear);
-		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset,
-			RESOURCE_TABLE_ENTRY_SIZE);
+								output_linear - initial_output_linear);
+		offsets_offset = LEGACY_U16_WRAP_ADD(offsets_offset, RESOURCE_TABLE_ENTRY_SIZE);
 
 		source_segment = dos_memory_pointer_segment(shape);
 		source_offset = dos_memory_pointer_offset(shape);
-		shape2d_copy_wrapped(source_segment, &source_offset,
-			output_segment, &output_offset,
-			SHAPE2D_HEADER_SIZE);
+		shape2d_copy_wrapped(source_segment, &source_offset, output_segment, &output_offset,
+							 SHAPE2D_HEADER_SIZE);
 		scan_offset = source_offset;
 		literal_offset = scan_offset;
 		literal_count = 0;
-		remaining = LEGACY_U16_WRAP_MUL(
-			shape2d_get_word((legacy_u8 far*)shape),
-			shape2d_get_word((legacy_u8 far*)shape + SHAPE2D_HEIGHT_OFFSET));
+		remaining =
+			LEGACY_U16_WRAP_MUL(shape2d_get_word((legacy_u8 far *)shape),
+								shape2d_get_word((legacy_u8 far *)shape + SHAPE2D_HEIGHT_OFFSET));
 		scan_offset++;
 		literal_count++;
 
@@ -217,62 +206,52 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 			for (;;) {
 				run_count = (legacy_u16)shape2d_count_repeated_bytes(
 					dos_memory_make_pointer(source_segment, scan_offset));
-				if (LEGACY_S16_FROM_BITS(run_count) <=
-					RLE_LITERAL_RUN_LIMIT &&
+				if (LEGACY_S16_FROM_BITS(run_count) <= RLE_LITERAL_RUN_LIMIT &&
 					literal_count < remaining) {
 					scan_offset++;
 					literal_count++;
 					continue;
 				}
 
-				while (LEGACY_S16_FROM_BITS(literal_count) >
-					RLE_BLOCK_LIMIT) {
-					literal_count = LEGACY_U16_WRAP_SUB(
-						literal_count, RLE_BLOCK_LIMIT);
-					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, RLE_BLOCK_LIMIT);
-					shape2d_far_write_byte(output_segment,
-						output_offset, RLE_FULL_LITERAL_CONTROL);
+				while (LEGACY_S16_FROM_BITS(literal_count) > RLE_BLOCK_LIMIT) {
+					literal_count = LEGACY_U16_WRAP_SUB(literal_count, RLE_BLOCK_LIMIT);
+					remaining = LEGACY_U16_WRAP_SUB(remaining, RLE_BLOCK_LIMIT);
+					shape2d_far_write_byte(output_segment, output_offset, RLE_FULL_LITERAL_CONTROL);
 					output_offset++;
-					shape2d_copy_wrapped(source_segment,
-						&literal_offset, output_segment,
-						&output_offset, RLE_BLOCK_LIMIT);
+					shape2d_copy_wrapped(source_segment, &literal_offset, output_segment,
+										 &output_offset, RLE_BLOCK_LIMIT);
 				}
 				if (literal_count != 0) {
-					shape2d_far_write_byte(output_segment,
-						output_offset,
-						(legacy_u8)(0U - literal_count));
+					shape2d_far_write_byte(output_segment, output_offset,
+										   (legacy_u8)(0U - literal_count));
 					output_offset++;
-					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, literal_count);
-					shape2d_copy_wrapped(source_segment,
-						&literal_offset, output_segment,
-						&output_offset, literal_count);
+					remaining = LEGACY_U16_WRAP_SUB(remaining, literal_count);
+					shape2d_copy_wrapped(source_segment, &literal_offset, output_segment,
+										 &output_offset, literal_count);
 				}
 
-				if (run_count > remaining)
+				if (run_count > remaining) {
 					run_count = remaining;
+				}
 				while (LEGACY_S16_FROM_BITS(run_count) > RLE_BLOCK_LIMIT) {
-					run_count = LEGACY_U16_WRAP_SUB(
-						run_count, RLE_BLOCK_LIMIT);
-					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, RLE_BLOCK_LIMIT);
-					shape2d_write_run(source_segment, &scan_offset,
-						output_segment, &output_offset, RLE_BLOCK_LIMIT);
+					run_count = LEGACY_U16_WRAP_SUB(run_count, RLE_BLOCK_LIMIT);
+					remaining = LEGACY_U16_WRAP_SUB(remaining, RLE_BLOCK_LIMIT);
+					shape2d_write_run(source_segment, &scan_offset, output_segment, &output_offset,
+									  RLE_BLOCK_LIMIT);
 				}
 				if (LEGACY_S16_FROM_BITS(run_count) > RLE_LITERAL_RUN_LIMIT) {
-					remaining = LEGACY_U16_WRAP_SUB(
-						remaining, run_count);
-					shape2d_write_run(source_segment, &scan_offset,
-						output_segment, &output_offset, run_count);
+					remaining = LEGACY_U16_WRAP_SUB(remaining, run_count);
+					shape2d_write_run(source_segment, &scan_offset, output_segment, &output_offset,
+									  run_count);
 				}
 
 				literal_offset = scan_offset;
 				literal_count = 0;
 				scan_offset++;
 				literal_count++;
-				if (remaining == 0)
+				if (remaining == 0) {
 					break;
+				}
 			}
 		}
 		shape2d_far_write_byte(output_segment, output_offset, 0);
@@ -280,44 +259,46 @@ void parse_shape2d(void far* memchunk, void far* mempages)
 		shape_index++;
 	}
 
-	output_size = shape2d_pointer_to_linear(
-		dos_memory_make_pointer(output_segment, output_offset)) -
+	output_size =
+		shape2d_pointer_to_linear(dos_memory_make_pointer(output_segment, output_offset)) -
 		shape2d_pointer_to_linear(mempages);
-	if ((legacy_u8)output_size & DOS_PARAGRAPH_OFFSET_MASK)
+	if ((legacy_u8)output_size & DOS_PARAGRAPH_OFFSET_MASK) {
 		output_size = (output_size >> DOS_PARAGRAPH_SHIFT) + 1UL;
-	else
+	} else {
 		output_size >>= DOS_PARAGRAPH_SHIFT;
+	}
 	mmgr_resize_memory(dos_memory_pointer_offset(mempages), dos_memory_pointer_segment(mempages),
-		(legacy_u16)output_size);
+					   (legacy_u16)output_size);
 }
 
-static legacy_u8 far* file_get_shape2d_bytes(legacy_u8 far* memchunk,
-	legacy_s16 index)
+static legacy_u8 far *file_get_shape2d_bytes(legacy_u8 far *memchunk, legacy_s16 index)
 {
 	return resource_file_data(memchunk, (legacy_u16)index);
 }
 
-struct SHAPE2D far* file_get_shape2d(legacy_u8 far* memchunk,
-	legacy_s16 index)
+struct SHAPE2D far *file_get_shape2d(legacy_u8 far *memchunk, legacy_s16 index)
 {
-	return (struct SHAPE2D far*)file_get_shape2d_bytes(memchunk, index);
+	return (struct SHAPE2D far *)file_get_shape2d_bytes(memchunk, index);
 }
 
-void file_get_shape2d_identifier(legacy_u8 far* memchunk, legacy_u16 index, legacy_u32* result) {
+void file_get_shape2d_identifier(legacy_u8 far *memchunk, legacy_u16 index, legacy_u32 *result)
+{
 	*result = LEGACY_READ_U32_LE(resource_file_identifier(memchunk, index));
 }
 
-legacy_u16 file_get_res_shape_count(void far* memchunk) {
-	return resource_file_count((const legacy_u8 far*)memchunk);
+legacy_u16 file_get_res_shape_count(void far *memchunk)
+{
+	return resource_file_count((const legacy_u8 far *)memchunk);
 }
 
-void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
+void file_unflip_shape2d(legacy_u8 far *memchunk, legacy_s8 far *mempages)
+{
 
 	legacy_s16 shapecount, counter, width, height;
 	legacy_s16 evenrows, oddrows;
-	legacy_u8 far* memshape;
-	struct SHAPE2D far* shape_header;
-	legacy_s8 far* membitmapptr;
+	legacy_u8 far *memshape;
+	struct SHAPE2D far *shape_header;
+	legacy_s8 far *membitmapptr;
 	legacy_u8 flag;
 	legacy_s16 i, j;
 
@@ -325,8 +306,8 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	counter = 0;
 	do {
 		memshape = file_get_shape2d_bytes(memchunk, counter);
-		shape_header = (struct SHAPE2D far*)memshape;
-		membitmapptr = (legacy_s8 far*)memshape + SHAPE2D_HEADER_SIZE;
+		shape_header = (struct SHAPE2D far *)memshape;
+		membitmapptr = (legacy_s8 far *)memshape + SHAPE2D_HEADER_SIZE;
 		flag = shape_header->plane_flags[3];
 		if ((flag & SHAPE2D_FLIP_FLAG_MASK) == 0) {
 			flag = shape_header->plane_flags[2] >> SHAPE2D_FLIP_FLAG_SHIFT;
@@ -345,7 +326,7 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 					switch (flag - 1) {
 						case 0:
 							// regular flip
-							for (j = 0; j < height; j++) { // height
+							for (j = 0; j < height; j++) {	  // height
 								for (i = 0; i < width; i++) { // width
 									mempages[i + j * width] = membitmapptr[j + i * height];
 								}
@@ -358,16 +339,16 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 							// height gets one fewer odd row than even rows.
 							for (j = 0; j < height; j += 2) { // even rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[
-										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * height];
+									mempages[i + j * width] =
+										membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * height];
 								}
 							}
 							for (j = 1; j < height; j += 2) { // odd rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[
-										LEGACY_S16_DIV_OR_ZERO(
-											LEGACY_S16_WRAP_ADD(height, j), 2) +
-										i * height];
+									mempages[i + j * width] =
+										membitmapptr[LEGACY_S16_DIV_OR_ZERO(
+														 LEGACY_S16_WRAP_ADD(height, j), 2) +
+													 i * height];
 								}
 							}
 							break;
@@ -379,27 +360,26 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 							// width * ceil(height/2). The original never reloads
 							// bx between the two halves of a pass, which is what
 							// puts the odd rows at that offset.
-							evenrows = LEGACY_S16_DIV_OR_ZERO(
-								LEGACY_S16_WRAP_ADD(height, 1), 2);
+							evenrows = LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_ADD(height, 1), 2);
 							oddrows = LEGACY_S16_DIV_OR_ZERO(height, 2);
 							for (j = 0; j < height; j += 2) { // even rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[
-										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * evenrows];
+									mempages[i + j * width] =
+										membitmapptr[LEGACY_S16_DIV_OR_ZERO(j, 2) + i * evenrows];
 								}
 							}
 							for (j = 1; j < height; j += 2) { // odd rows
 								for (i = 0; i < width; i++) { // width
-									mempages[i + j * width] = membitmapptr[
-										width * evenrows +
-										LEGACY_S16_DIV_OR_ZERO(j, 2) + i * oddrows];
+									mempages[i + j * width] =
+										membitmapptr[width * evenrows +
+													 LEGACY_S16_DIV_OR_ZERO(j, 2) + i * oddrows];
 								}
 							}
 							break;
 					}
 
 					// copy flipped bits from mempages -> subres
-					for (j = 0; j < height; j++) { // height
+					for (j = 0; j < height; j++) {	  // height
 						for (i = 0; i < width; i++) { // width
 							membitmapptr[i + j * width] = mempages[i + j * width];
 						}
@@ -412,22 +392,22 @@ void file_unflip_shape2d(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	} while (shapecount > 0);
 }
 
-void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
+void file_unflip_shape2d_pes(legacy_u8 far *memchunk, legacy_s8 far *mempages)
+{
 	legacy_s16 shapecount, width, height, i, j, x, y;
 	legacy_u8 val;
-	legacy_u8 far* membitmapptr;
-	legacy_u8 far* memshape;
-	struct SHAPE2D far* shape_header;
+	legacy_u8 far *membitmapptr;
+	legacy_u8 far *memshape;
+	struct SHAPE2D far *shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
-		shape_header = (struct SHAPE2D far*)memshape;
+		shape_header = (struct SHAPE2D far *)memshape;
 
 		if (!(shape_header->plane_flags[3] & SHAPE2D_FLIP_FLAG_MASK)) {
-			val = (shape_header->plane_flags[2] >> SHAPE2D_FLIP_FLAG_SHIFT) &
-				SHAPE2D_PATTERN_MASK;
+			val = (shape_header->plane_flags[2] >> SHAPE2D_FLIP_FLAG_SHIFT) & SHAPE2D_PATTERN_MASK;
 
 			if (val) {
 				width = shape_header->width;
@@ -457,18 +437,19 @@ void file_unflip_shape2d_pes(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
 	}
 }
 
-void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) {
+void file_load_shape2d_expand(legacy_u8 far *memchunk, legacy_s8 far *mempages)
+{
 	legacy_s16 shapecount, length, i, j, k, l;
-	legacy_u8 far* memchunkptr, far* mempagesptr, px, pat;
+	legacy_u8 far *memchunkptr, far *mempagesptr, px, pat;
 	legacy_u32 val;
 	legacy_u32 product;
 	legacy_u16 lowterm;
 	legacy_u16 directory_prefix_size;
 	legacy_u32 nextoffset;
-	legacy_u8 far* srcshape;
-	struct SHAPE2D far* source_header;
-	legacy_u8 far* dstshape;
-	struct SHAPE2D far* destination_header;
+	legacy_u8 far *srcshape;
+	struct SHAPE2D far *source_header;
+	legacy_u8 far *dstshape;
+	struct SHAPE2D far *destination_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
@@ -477,42 +458,38 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 	mempagesptr = mempages + RESOURCE_FILE_COUNT_OFFSET;
 
 	// Copy count and ids.
-	directory_prefix_size = LEGACY_U16_WRAP_ADD(RESOURCE_FILE_COUNT_SIZE,
-		LEGACY_U16_WRAP_MUL(shapecount,
-			RESOURCE_FILE_IDENTIFIER_SIZE));
+	directory_prefix_size = LEGACY_U16_WRAP_ADD(
+		RESOURCE_FILE_COUNT_SIZE, LEGACY_U16_WRAP_MUL(shapecount, RESOURCE_FILE_IDENTIFIER_SIZE));
 	fmemcpy(mempagesptr, memchunkptr, directory_prefix_size);
 	nextoffset = 0;
 
 	for (i = 0; i < shapecount; ++i) {
 		srcshape = file_get_shape2d_bytes(memchunk, i);
-		source_header = (struct SHAPE2D far*)srcshape;
-		product = (legacy_u32)source_header->width *
-			source_header->height;
+		source_header = (struct SHAPE2D far *)srcshape;
+		product = (legacy_u32)source_header->width * source_header->height;
 		length = (legacy_s16)(legacy_u16)product;
 
 		// dx:ax at this point is HIWORD(w*h) : (LOWORD(w*h)*8 + 16), each
 		// half 16 bits wide and wrapping on its own - the three shl's and
 		// the `add ax, size SHAPE2D` never carry into dx. Only the
 		// `add ax, bx / adc dx, cx` that folds in the running offset does.
-		lowterm = (legacy_u16)length * SHAPE2D_BITS_PER_PLANE_BYTE +
-			SHAPE2D_HEADER_SIZE;
+		lowterm = (legacy_u16)length * SHAPE2D_BITS_PER_PLANE_BYTE + SHAPE2D_HEADER_SIZE;
 
-		resource_file_set_offset((legacy_u8 far*)mempages,
-			(legacy_u16)shapecount, (legacy_u16)i, nextoffset);
-		nextoffset += (legacy_u32)lowterm
-					+ ((legacy_u32)(legacy_u16)(product >>
-						DWORD_THIRD_BYTE_SHIFT) << DWORD_THIRD_BYTE_SHIFT);
+		resource_file_set_offset((legacy_u8 far *)mempages, (legacy_u16)shapecount, (legacy_u16)i,
+								 nextoffset);
+		nextoffset +=
+			(legacy_u32)lowterm +
+			((legacy_u32)(legacy_u16)(product >> DWORD_THIRD_BYTE_SHIFT) << DWORD_THIRD_BYTE_SHIFT);
 
-		dstshape = file_get_shape2d_bytes((legacy_u8 far*)mempages, i);
-		destination_header = (struct SHAPE2D far*)dstshape;
+		dstshape = file_get_shape2d_bytes((legacy_u8 far *)mempages, i);
+		destination_header = (struct SHAPE2D far *)dstshape;
 		// `mov cx, 6 / rep movsw` - the first six words only, up to and
 		// including s2d_pos_y. s2d_unk3..s2d_unk6 hold the pattern and flip
 		// nibbles and are deliberately left alone in the destination.
-		fmemcpy(dstshape, srcshape,
-			SHAPE2D_COPIED_HEADER_WORDS * sizeof(legacy_u16));
+		fmemcpy(dstshape, srcshape, SHAPE2D_COPIED_HEADER_WORDS * sizeof(legacy_u16));
 
-		destination_header->width = LEGACY_U16_WRAP_MUL(
-			destination_header->width, SHAPE2D_BITS_PER_PLANE_BYTE);
+		destination_header->width =
+			LEGACY_U16_WRAP_MUL(destination_header->width, SHAPE2D_BITS_PER_PLANE_BYTE);
 
 		if (length && length <= SHAPE2D_EXPANDED_PIXEL_LIMIT) {
 			mempagesptr = dstshape + SHAPE2D_HEADER_SIZE;
@@ -541,8 +518,7 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 							mempagesptr++;
 						}
 					}
-				}
-				else {
+				} else {
 					break;
 				}
 			}
@@ -551,60 +527,62 @@ void file_load_shape2d_expand(legacy_u8 far* memchunk, legacy_s8 far* mempages) 
 
 	// Final size. The original folds this in as a 16-bit term too
 	// (bx = shapecount*8 + 6, then `add ax, bx / adc dx, 0`).
-	resource_file_set_size((legacy_u8 far*)mempages,
-		(legacy_u32)resource_file_data_start(
-			(legacy_u16)shapecount) + nextoffset);
+	resource_file_set_size((legacy_u8 far *)mempages,
+						   (legacy_u32)resource_file_data_start((legacy_u16)shapecount) +
+							   nextoffset);
 }
 
-legacy_u16 file_get_unflip_size(legacy_s8 far* memchunk) {
+legacy_u16 file_get_unflip_size(legacy_s8 far *memchunk)
+{
 	legacy_u16 i, shapecount, size, maxsize;
-	legacy_u8 far* memshape;
-	struct SHAPE2D far* shape_header;
+	legacy_u8 far *memshape;
+	struct SHAPE2D far *shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 	maxsize = 0;
 
 	for (i = 0; i < shapecount; i++) {
-		memshape = file_get_shape2d_bytes((legacy_u8 far*)memchunk, i);
-		shape_header = (struct SHAPE2D far*)memshape;
-		size = (shape_header->width *
-			shape_header->height +
-			SHAPE2D_UNFLIP_PARAGRAPH_PADDING) >> DOS_PARAGRAPH_SHIFT;
-		if (size > maxsize)
+		memshape = file_get_shape2d_bytes((legacy_u8 far *)memchunk, i);
+		shape_header = (struct SHAPE2D far *)memshape;
+		size = (shape_header->width * shape_header->height + SHAPE2D_UNFLIP_PARAGRAPH_PADDING) >>
+			   DOS_PARAGRAPH_SHIFT;
+		if (size > maxsize) {
 			maxsize = size;
+		}
 	}
 	return maxsize;
 }
 
-legacy_u16 file_load_shape2d_expandedsize(void far* memchunk) {
+legacy_u16 file_load_shape2d_expandedsize(void far *memchunk)
+{
 	legacy_u16 shapecount, i;
 	legacy_s32 size;
-	legacy_u8 far* memshape;
-	struct SHAPE2D far* shape_header;
+	legacy_u8 far *memshape;
+	struct SHAPE2D far *shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
 	// The original forms this seed in AX, then uses CWD: both the shift and
 	// header addition wrap to 16 bits before the result is sign-extended.
-	size = (legacy_s16)(legacy_u16)((shapecount *
-		PARSED_RESOURCE_TABLE_ENTRY_SIZE) +
-		SHAPE2D_HEADER_SIZE);
+	size = (legacy_s16)(legacy_u16)((shapecount * PARSED_RESOURCE_TABLE_ENTRY_SIZE) +
+									SHAPE2D_HEADER_SIZE);
 
 	for (i = 0; i < shapecount; ++i) {
-		memshape = file_get_shape2d_bytes((legacy_u8 far*)memchunk, i);
-		shape_header = (struct SHAPE2D far*)memshape;
+		memshape = file_get_shape2d_bytes((legacy_u8 far *)memchunk, i);
+		shape_header = (struct SHAPE2D far *)memshape;
 		// `shl ax, 3` then `sub dx, dx / adc`: the per-shape term is a
 		// 16-bit value ZERO-extended into the accumulator, and the header
 		// size is folded in afterwards with its own carry.
-		size += (legacy_u32)(legacy_u16)(shape_header->width *
-			shape_header->height * SHAPE2D_BITS_PER_PLANE_BYTE)
-			  + SHAPE2D_HEADER_SIZE;
+		size += (legacy_u32)(legacy_u16)(shape_header->width * shape_header->height *
+										 SHAPE2D_BITS_PER_PLANE_BYTE) +
+				SHAPE2D_HEADER_SIZE;
 	}
 
 	return (size + SHAPE2D_HEADER_SIZE) >> DOS_PARAGRAPH_SHIFT;
 }
 
-void file_load_shape2d_palmap_init(legacy_u8 far* pal) {
+void file_load_shape2d_palmap_init(legacy_u8 far *pal)
+{
 	legacy_s16 i;
 
 	for (i = 0; i < VGA_PALETTE_COLOR_COUNT; ++i) {
@@ -612,19 +590,19 @@ void file_load_shape2d_palmap_init(legacy_u8 far* pal) {
 	}
 }
 
-void file_load_shape2d_palmap_apply(legacy_u8 far* memchunk, legacy_u8 palmap[]) {
+void file_load_shape2d_palmap_apply(legacy_u8 far *memchunk, legacy_u8 palmap[])
+{
 	legacy_u16 shapecount, length, i, j;
-	legacy_u8 far* memchunkptr;
-	legacy_u8 far* memshape;
-	struct SHAPE2D far* shape_header;
+	legacy_u8 far *memchunkptr;
+	legacy_u8 far *memshape;
+	struct SHAPE2D far *shape_header;
 
 	shapecount = file_get_res_shape_count(memchunk);
 
 	for (i = 0; i < shapecount; ++i) {
 		memshape = file_get_shape2d_bytes(memchunk, i);
-		shape_header = (struct SHAPE2D far*)memshape;
-		length = shape_header->width *
-			shape_header->height;
+		shape_header = (struct SHAPE2D far *)memshape;
+		length = shape_header->width * shape_header->height;
 
 		memchunkptr = memshape + SHAPE2D_HEADER_SIZE;
 
@@ -637,24 +615,24 @@ void file_load_shape2d_palmap_apply(legacy_u8 far* memchunk, legacy_u8 palmap[])
 	}
 }
 
-void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
+void far *file_load_shape2d_esh(void far *memchunk, const legacy_s8 *str)
+{
 	legacy_u16 expandedsize;
-	void far* mempages;
-	void far* palmapres;
+	void far *mempages;
+	void far *palmapres;
 
 	expandedsize = file_load_shape2d_expandedsize(memchunk);
 
 	palmapres = locate_shape_nofatal(memchunk, "!MGA");
 
 	if (palmapres) {
-		file_load_shape2d_palmap_init((legacy_u8 far*)palmapres +
-			SHAPE2D_HEADER_SIZE);
+		file_load_shape2d_palmap_init((legacy_u8 far *)palmapres + SHAPE2D_HEADER_SIZE);
 	}
 
 	mempages = mmgr_alloc_pages(str, expandedsize);
 
-	resource_file_set_size((legacy_u8 far*)mempages,
-		(legacy_u32)expandedsize * DOS_PARAGRAPH_BYTES);
+	resource_file_set_size((legacy_u8 far *)mempages,
+						   (legacy_u32)expandedsize * DOS_PARAGRAPH_BYTES);
 
 	file_load_shape2d_expand(memchunk, mempages);
 	mmgr_release(memchunk);
@@ -664,12 +642,13 @@ void far* file_load_shape2d_esh(void far* memchunk, const legacy_s8* str) {
 	return memchunk;
 }
 
-void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
+void far *file_load_shape2d(const legacy_s8 *shapename, legacy_s16 fatal)
+{
 	legacy_s8 str[SHAPE2D_PATH_BUFFER_SIZE];
-	legacy_s8* strptr;
+	legacy_s8 *strptr;
 	legacy_s16 counter;
-	void far* memchunk;
-	void far* mempages;
+	void far *memchunk;
+	void far *mempages;
 	legacy_s16 unflipsize;
 
 	strcpy(str, shapename);
@@ -681,13 +660,16 @@ void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 
 	if (*strptr != 0) {
 		memchunk = mmgr_get_chunk_by_name(str);
-		if (memchunk) return memchunk; // return existing chunk with same name
-	}
-	else {
+		if (memchunk) {
+			return memchunk; // return existing chunk with same name
+		}
+	} else {
 		for (counter = 0; *shapeexts[counter] != 0; counter++) {
 			strcpy(strptr, shapeexts[counter]);
 			memchunk = mmgr_get_chunk_by_name(str);
-			if (memchunk) return memchunk; // return existing chunk with same name
+			if (memchunk) {
+				return memchunk; // return existing chunk with same name
+			}
 
 			if (file_find(str)) {
 				break;
@@ -699,7 +681,9 @@ void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 
 	if (stricmp(strptr, ".PVS") == 0) {
 		memchunk = file_decomp(str, fatal);
-		if (!memchunk) return dos_memory_make_pointer(0, 0);
+		if (!memchunk) {
+			return dos_memory_make_pointer(0, 0);
+		}
 
 		unflipsize = file_get_unflip_size(memchunk);
 		mempages = mmgr_alloc_pages("UNFLIP", unflipsize);
@@ -707,55 +691,62 @@ void far* file_load_shape2d(const legacy_s8* shapename, legacy_s16 fatal) {
 		mmgr_release(mempages);
 
 		return memchunk;
-	}
-	else if (stricmp(strptr, ".XVS") == 0) {
+	} else if (stricmp(strptr, ".XVS") == 0) {
 		return file_decomp(str, fatal);
-	}
-	else if (stricmp(strptr, ".PES") == 0) {
+	} else if (stricmp(strptr, ".PES") == 0) {
 		memchunk = file_decomp(str, fatal);
-		if (!memchunk) return dos_memory_make_pointer(0, 0);
+		if (!memchunk) {
+			return dos_memory_make_pointer(0, 0);
+		}
 
-		mempages = mmgr_alloc_pages("UNFLIP",
-			PES_UNFLIP_WORKSPACE_PARAGRAPHS);
+		mempages = mmgr_alloc_pages("UNFLIP", PES_UNFLIP_WORKSPACE_PARAGRAPHS);
 		file_unflip_shape2d_pes(memchunk, mempages);
 		mmgr_release(mempages);
 
 		return file_load_shape2d_esh(memchunk, str);
-	}
-	else if (stricmp(strptr, ".ESH") == 0) {
+	} else if (stricmp(strptr, ".ESH") == 0) {
 		memchunk = file_load_binary(str, fatal);
-		if (!memchunk) return dos_memory_make_pointer(0, 0);
+		if (!memchunk) {
+			return dos_memory_make_pointer(0, 0);
+		}
 
 		return file_load_shape2d_esh(memchunk, str);
-	}
-	else { // .VSH or an explicit unknown extension
+	} else { // .VSH or an explicit unknown extension
 		return file_load_binary(str, fatal);
 	}
 }
 
-void far* file_load_shape2d_fatal(const legacy_s8* shapename) {
+void far *file_load_shape2d_fatal(const legacy_s8 *shapename)
+{
 	return file_load_shape2d(shapename, 1);
 }
 
-void far* file_load_shape2d_nofatal(const legacy_s8* shapename) {
+void far *file_load_shape2d_nofatal(const legacy_s8 *shapename)
+{
 	return file_load_shape2d(shapename, 0);
 }
 
-void far* file_load_shape2d_nofatal2(const legacy_s8* shapename) {
+void far *file_load_shape2d_nofatal2(const legacy_s8 *shapename)
+{
 	return file_load_shape2d_nofatal(shapename);
 }
 
-void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
+void far *file_load_shape2d_res(const legacy_s8 *resname, legacy_s16 fatal)
+{
 	legacy_s16 chunksize;
-	const legacy_s8* shapename = mmgr_path_to_name(resname);
-	void far* mempages;
-	void far* memchunk = mmgr_get_chunk_by_name(shapename);
+	const legacy_s8 *shapename = mmgr_path_to_name(resname);
+	void far *mempages;
+	void far *memchunk = mmgr_get_chunk_by_name(shapename);
 	legacy_u16 freeparas, margin, rawseg;
 
-	if (memchunk) return memchunk;
+	if (memchunk) {
+		return memchunk;
+	}
 
 	memchunk = file_load_shape2d(shapename, fatal);
-	if (!memchunk) return 0;
+	if (!memchunk) {
+		return 0;
+	}
 
 	chunksize = mmgr_get_chunk_size(memchunk);
 
@@ -775,17 +766,17 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	freeparas = mmgr_get_ofs_diff();
 	if (freeparas < (legacy_u16)chunksize + MMGR_CHUNK_OVERHEAD_PARAGRAPHS) {
 		margin = ((legacy_u16)chunksize >> OVERLAP_MARGIN_HALF_SHIFT) +
-			((legacy_u16)chunksize >> OVERLAP_MARGIN_QUARTER_SHIFT);
-		if (margin > freeparas - (freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT))
-			margin = freeparas -
-				(freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT);
+				 ((legacy_u16)chunksize >> OVERLAP_MARGIN_QUARTER_SHIFT);
+		if (margin > freeparas - (freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT)) {
+			margin = freeparas - (freeparas >> OVERLAP_RESERVE_EIGHTH_SHIFT);
+		}
 
-		if (margin >= ((legacy_u16)chunksize >>
-			OVERLAP_MARGIN_HALF_SHIFT)) {
+		if (margin >= ((legacy_u16)chunksize >> OVERLAP_MARGIN_HALF_SHIFT)) {
 			rawseg = dos_memory_pointer_segment(memchunk);
 			mmgr_resize_memory(0, rawseg, chunksize + margin);
 			copy_paras_reverse(rawseg, rawseg + margin, chunksize);
-			parse_shape2d(dos_memory_make_pointer(rawseg + margin, 0), dos_memory_make_pointer(rawseg, 0));
+			parse_shape2d(dos_memory_make_pointer(rawseg + margin, 0),
+						  dos_memory_make_pointer(rawseg, 0));
 			mmgr_resize_memory(0, rawseg, chunksize);
 			mmgr_rename_chunk(dos_memory_make_pointer(rawseg, 0), resname);
 			return dos_memory_make_pointer(rawseg, 0);
@@ -800,10 +791,12 @@ void far* file_load_shape2d_res(const legacy_s8* resname, legacy_s16 fatal) {
 	return mmgr_compact_live_chunk(mempages);
 }
 
-void far* file_load_shape2d_res_fatal(const legacy_s8* resname) {
+void far *file_load_shape2d_res_fatal(const legacy_s8 *resname)
+{
 	return file_load_shape2d_res(resname, 1);
 }
 
-void far* file_load_shape2d_res_nofatal(const legacy_s8* resname) {
+void far *file_load_shape2d_res_nofatal(const legacy_s8 *resname)
+{
 	return file_load_shape2d_res(resname, 0);
 }

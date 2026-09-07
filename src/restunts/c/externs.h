@@ -64,7 +64,7 @@
 #include "replay.h"
 #include "gamestate.h"
 
-#pragma pack (push, 1)
+#pragma pack(push, 1)
 
 #define SIMD_GEAR_RATIO_COUNT 7U
 #define SIMD_KNOB_POINT_COUNT 7U
@@ -145,21 +145,20 @@ struct SIMD {
 	struct POINT2D revcenter;
 	legacy_s16 revnumpoints;
 	legacy_s8 revpoints[SIMD_REV_COUNTER_POINT_COUNT];
-	legacy_s16 far* aerorestable;
+	legacy_s16 far *aerorestable;
 };
 
-#pragma pack (pop)
+#pragma pack(pop)
 
 /* These records contain 16-bit near/far pointers.  Their DOS ABI layout is
  * meaningful only when the Borland memory model supplies those pointer sizes. */
 #if defined(__BORLANDC__)
-typedef char legacy_simd_must_be_776_bytes[
-	(sizeof(struct SIMD) == SIMD_DOS_STRUCTURE_SIZE) ? 1 : -1];
+typedef char
+	legacy_simd_must_be_776_bytes[(sizeof(struct SIMD) == SIMD_DOS_STRUCTURE_SIZE) ? 1 : -1];
 
 #endif
 
-legacy_u16 simd_decode(struct SIMD* destination,
-	const legacy_u8 far* source);
+legacy_u16 simd_decode(struct SIMD *destination, const legacy_u8 far *source);
 
 #define OPPONENT_SPEED_COUNT 16U
 
@@ -170,9 +169,9 @@ extern struct GAMESTATE state;
 extern struct SIMD simd_player;
 extern struct SIMD simd_opponent;
 
-void copy_string(legacy_s8* destination, legacy_s8 far* source);
+void copy_string(legacy_s8 *destination, legacy_s8 far *source);
 void setup_legacy_penalty_route_word(void);
-void setup_aero_trackdata(void far* carresptr, legacy_s16 is_opponent);
+void setup_aero_trackdata(void far *carresptr, legacy_s16 is_opponent);
 void load_opponent_data(void);
 
 extern legacy_s16 video_shape_width_scale;
@@ -191,11 +190,11 @@ extern legacy_u8 race_start_sequence_state;
 extern legacy_u8 game_replay_mode;
 extern legacy_s16 start_flag_animation;
 
-extern legacy_s16 unused_legacy_word; // Unused legacy declaration.
+extern legacy_s16 unused_legacy_word;		 // Unused legacy declaration.
 extern legacy_s16 checkpoint_frame_interval; // fps * 30
-extern legacy_s16 timer_ticks_per_frame; // 100 / fps
+extern legacy_s16 timer_ticks_per_frame;	 // 100 / fps
 extern legacy_s16 track_angle;
-extern legacy_s8* steerWhlRespTable_ptr;
+extern legacy_s8 *steerWhlRespTable_ptr;
 extern legacy_s8 steerWhlRespTable_10fps[62];
 extern legacy_s8 steerWhlRespTable_20fps[64];
 extern legacy_s8 start_finish_column, start_finish_row;
@@ -217,8 +216,8 @@ extern legacy_s8 show_penalty_counter;
 extern legacy_s16 reserved_race_word;
 extern legacy_s16 replay_overflow_acknowledged_word;
 extern legacy_s8 mouse_driving_enabled;
-extern void far* gameresptr;
-extern void far* dasmshapeptr;
+extern void far *gameresptr;
+extern void far *dasmshapeptr;
 extern legacy_s8 dashb_toggle_copy;
 extern legacy_s8 replaybar_toggle_copy;
 extern legacy_s8 is_in_replay_copy;
@@ -234,20 +233,20 @@ extern legacy_s16 dastbmp_y;
 extern legacy_s16 dastbmp_y2;
 extern legacy_s16 dashbmp_y;
 extern legacy_s16 roofbmpheight;
-extern struct RECTANGLE* active_frame_rects;
+extern struct RECTANGLE *active_frame_rects;
 
 extern void update_player_tick(legacy_s8);
 extern void emit_crash_particles(legacy_s16, legacy_s16, legacy_s16);
 extern void update_crash_particles(void);
-extern void init_kevinrandom(const legacy_s8* seed);
-extern void get_kevinrandom_seed(legacy_s8* seed);
+extern void init_kevinrandom(const legacy_s8 *seed);
+extern void get_kevinrandom_seed(legacy_s8 *seed);
 extern legacy_s16 get_kevinrandom(void);
 extern void init_row_tables(void);
 extern void init_trackdata(void);
 extern void reset_race_loop_state(void);
 extern void init_video_geometry_flags(void);
 
-extern void update_frame(legacy_s8, struct RECTANGLE* rc);
+extern void update_frame(legacy_s8, struct RECTANGLE *rc);
 
 extern legacy_s16 mouse_butstate;
 extern legacy_s16 mouse_xpos;
@@ -261,10 +260,10 @@ extern legacy_s8 resID_buffer[RESID_BUFFER_SIZE];
 #define resource_text_payload (resID_buffer + RESID_TEXT_OFFSET)
 extern legacy_s16 waitflag;
 
-extern void far* fontnptr;
-extern void far* fontdefptr;
-extern void far* mainresptr;
-extern struct GAMESTATE far* cvxptr;
+extern void far *fontnptr;
+extern void far *fontdefptr;
+extern void far *mainresptr;
+extern struct GAMESTATE far *cvxptr;
 extern legacy_s16 trackrows[];
 extern legacy_s16 terrainrows[];
 extern legacy_s16 track_row_positions[];
@@ -273,32 +272,32 @@ extern legacy_s16 terrainpos[];
 extern legacy_s16 terraincenterpos[];
 extern legacy_s16 track_column_positions[];
 extern legacy_s16 track_column_centers[];
-extern legacy_s16 far* track_primary_route_links; //trackdata1;
-extern legacy_s16 far* track_alternate_route_links; //trackdata2;
-extern legacy_s8 far* opponent_route_track_indices;
-extern legacy_s16 far* player_aero_resistance_table;
-extern legacy_s16 far* opponent_aero_resistance_table;
-extern legacy_s16 far* reserved_trackside_camera_words;
-extern legacy_s16 far* trackside_camera_ground_heights;
-extern legacy_s16 far* roadside_sign_headings; //trackdata8;
+extern legacy_s16 far *track_primary_route_links;	//trackdata1;
+extern legacy_s16 far *track_alternate_route_links; //trackdata2;
+extern legacy_s8 far *opponent_route_track_indices;
+extern legacy_s16 far *player_aero_resistance_table;
+extern legacy_s16 far *opponent_aero_resistance_table;
+extern legacy_s16 far *reserved_trackside_camera_words;
+extern legacy_s16 far *trackside_camera_ground_heights;
+extern legacy_s16 far *roadside_sign_headings; //trackdata8;
 /* TV camera positions, one vector per camera. */
-extern struct VECTOR far* trackside_camera_positions;
+extern struct VECTOR far *trackside_camera_positions;
 /* Point each TV camera looks at, one vector per camera. */
-extern struct VECTOR far* roadside_sign_positions;// trackdata10;
-extern legacy_s8 far* track_highscore_table;
-extern legacy_s8 far* sprite_background_state_stack;
-extern legacy_s8 far* replay_header_buffer;
-extern legacy_u8 far* track_element_map;
-extern legacy_u8 far* track_terrain_map;
-extern legacy_s8 far* replay_input_buffer;
-extern legacy_s8 far* track_route_element_ids;
-extern legacy_s8 far* track_route_traversal_flags;
-extern legacy_u8 far* roadside_sign_indices_by_tile;
+extern struct VECTOR far *roadside_sign_positions; // trackdata10;
+extern legacy_s8 far *track_highscore_table;
+extern legacy_s8 far *sprite_background_state_stack;
+extern legacy_s8 far *replay_header_buffer;
+extern legacy_u8 far *track_element_map;
+extern legacy_u8 far *track_terrain_map;
+extern legacy_s8 far *replay_input_buffer;
+extern legacy_s8 far *track_route_element_ids;
+extern legacy_s8 far *track_route_traversal_flags;
+extern legacy_u8 far *roadside_sign_indices_by_tile;
 /* Saved element/terrain maps followed by the track and replay directories. */
-extern legacy_s8 far* track_and_directory_backup;
-extern legacy_s8 far* track_route_columns;
-extern legacy_s8 far* track_route_rows;
-extern legacy_u8 far* roadside_sign_shape_indices; // indexes into trkObjectList
+extern legacy_s8 far *track_and_directory_backup;
+extern legacy_s8 far *track_route_columns;
+extern legacy_s8 far *track_route_rows;
+extern legacy_u8 far *roadside_sign_shape_indices; // indexes into trkObjectList
 extern legacy_s8 kbormouse;
 extern legacy_s8 passed_security;
 extern legacy_s8 g_is_busy;
@@ -332,15 +331,15 @@ extern legacy_u16 pspseg;
 extern legacy_u16 mmgr_arena_end_segment;
 extern legacy_u16 mmgr_arena_start_segment;
 
-extern struct MEMCHUNK* mmgr_live_sentinel;
-extern struct MEMCHUNK* mmgr_last_live_chunk;
-extern struct MEMCHUNK* mmgr_first_cached_chunk;
-extern struct MEMCHUNK* mmgr_cache_sentinel;
+extern struct MEMCHUNK *mmgr_live_sentinel;
+extern struct MEMCHUNK *mmgr_last_live_chunk;
+extern struct MEMCHUNK *mmgr_first_cached_chunk;
+extern struct MEMCHUNK *mmgr_cache_sentinel;
 extern legacy_u16 mmgr_high_water_segment;
 
 extern legacy_u16 slow_timer_deadline_low;
 extern legacy_u16 slow_timer_deadline_high;
-extern void (far* exitlistfuncs[])(void);
+extern void(far *exitlistfuncs[])(void);
 extern const legacy_s8 exit_handler_overflow_message[];
 
 extern const legacy_s8 resource_slot_exhaustion_message[];
@@ -356,31 +355,35 @@ extern legacy_s8 audiodriverstring[];
 
 extern legacy_u16 gState_frame;
 extern legacy_s8 is_audioloaded;
-extern void far* songfileptr;
-extern void far* voicefileptr;
+extern void far *songfileptr;
+extern void far *voicefileptr;
 extern legacy_s8 textresprefix; // = 'e'
-extern legacy_s8* shapeexts[];
+extern legacy_s8 *shapeexts[];
 extern legacy_u8 palmap[];
 
-extern legacy_s16* material_clrlist_ptr;
-extern legacy_s16* material_clrlist_ptr_cpy;
-extern legacy_s16* material_clrlist2_ptr;
-extern legacy_s16* material_clrlist2_ptr_cpy;
-extern legacy_s16* material_patlist_ptr;
-extern legacy_s16* material_patlist_ptr_cpy;
-extern legacy_s16* material_patlist2_ptr;
-extern legacy_s16* material_patlist2_ptr_cpy;
+extern legacy_s16 *material_clrlist_ptr;
+extern legacy_s16 *material_clrlist_ptr_cpy;
+extern legacy_s16 *material_clrlist2_ptr;
+extern legacy_s16 *material_clrlist2_ptr_cpy;
+extern legacy_s16 *material_patlist_ptr;
+extern legacy_s16 *material_patlist_ptr_cpy;
+extern legacy_s16 *material_patlist2_ptr;
+extern legacy_s16 *material_patlist2_ptr_cpy;
 extern legacy_u16 reserved_material_video_word;
 
-extern legacy_s16 get_track_route_point(legacy_s16 car_route_index, struct VECTOR* car_route_target, legacy_s16 car_route_point_index, legacy_s8* optional_speed);
-extern void init_carstate_from_simd(struct CARSTATE* carstate, struct SIMD* simd, legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY, legacy_s32 posZ, legacy_s16 track_angle);
+extern legacy_s16 get_track_route_point(legacy_s16 car_route_index, struct VECTOR *car_route_target,
+										legacy_s16 car_route_point_index,
+										legacy_s8 *optional_speed);
+extern void init_carstate_from_simd(struct CARSTATE *carstate, struct SIMD *simd,
+									legacy_s8 transmission, legacy_s32 posX, legacy_s32 posY,
+									legacy_s32 posZ, legacy_s16 track_angle);
 extern void init_game_state(legacy_s16 initialization_mode);
 extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);
 extern void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate);
 extern void restore_gamestate(legacy_u16 frame);
 extern void update_gamestate(void);
 extern void init_rect_arrays(void);
-extern void frame_present(struct RECTANGLE* rect);
+extern void frame_present(struct RECTANGLE *rect);
 extern void font_set_fontdef(void);
 
 extern legacy_s16 run_intro_looped(void);
@@ -392,8 +395,8 @@ extern legacy_s8 setup_track(void);
 extern void run_tracks_menu(legacy_s16 reload_track);
 extern void run_opponent_menu(void);
 
-extern void run_car_menu(legacy_s8* carid, legacy_s8* material, legacy_s8* transmission,
-	legacy_u16 opponent_type);
+extern void run_car_menu(legacy_s8 *carid, legacy_s8 *material, legacy_s8 *transmission,
+						 legacy_u16 opponent_type);
 
 extern legacy_u16 end_hiscore(void);
 extern legacy_u16 run_option_menu(void);
@@ -416,19 +419,20 @@ extern void video_set_mode4(void);
 extern void video_set_mode7(void);
 extern void video_set_mode_13h(void);
 
-extern void sprite_set_target_clip_bounds(legacy_u16 left, legacy_u16 right, legacy_u16 top, legacy_u16 bottom);
+extern void sprite_set_target_clip_bounds(legacy_u16 left, legacy_u16 right, legacy_u16 top,
+										  legacy_u16 bottom);
 
 struct SPRITE;
 
 extern void timer_setup_interrupt(void);
 
-extern void* _memcpy(void*, const void*, legacy_u16);
-extern legacy_s8* _strcpy(legacy_s8* dest, const legacy_s8* src);
-extern legacy_s8* _strcat(legacy_s8* dest, const legacy_s8* src);
-extern legacy_s16 _strcmp(const legacy_s8* dest, const legacy_s8* src);
-extern legacy_s16 _stricmp(const legacy_s8* dest, const legacy_s8* src);
-extern legacy_u16 _strlen(const legacy_s8* str);
-extern void far* __fmemcpy(void far*, const void far*, legacy_u16);
+extern void *_memcpy(void *, const void *, legacy_u16);
+extern legacy_s8 *_strcpy(legacy_s8 *dest, const legacy_s8 *src);
+extern legacy_s8 *_strcat(legacy_s8 *dest, const legacy_s8 *src);
+extern legacy_s16 _strcmp(const legacy_s8 *dest, const legacy_s8 *src);
+extern legacy_s16 _stricmp(const legacy_s8 *dest, const legacy_s8 *src);
+extern legacy_u16 _strlen(const legacy_s8 *str);
+extern void far *__fmemcpy(void far *, const void far *, legacy_u16);
 extern legacy_u16 _abs(legacy_u16);
 extern legacy_s16 _rand(void);
 extern void _srand(legacy_u16);

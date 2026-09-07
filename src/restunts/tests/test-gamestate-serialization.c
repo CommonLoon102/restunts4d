@@ -27,23 +27,22 @@ static void test_object_representation(void)
 {
 	struct GAMESTATE state;
 	legacy_u8 output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_GUARD_SIZE];
-	legacy_u8* representation;
+	legacy_u8 *representation;
 	legacy_u16 index;
 	legacy_u16 length;
 
-	representation = (legacy_u8*)&state;
+	representation = (legacy_u8 *)&state;
 	for (index = 0U; index < GAMESTATE_SERIALIZED_SIZE; index++) {
-		representation[index] = (legacy_u8)(index *
-			TEST_PATTERN_MULTIPLIER + TEST_PATTERN_INCREMENT);
+		representation[index] =
+			(legacy_u8)(index * TEST_PATTERN_MULTIPLIER + TEST_PATTERN_INCREMENT);
 	}
 	memset(output, TEST_OUTPUT_GUARD_BYTE, sizeof(output));
 	length = gamestate_serialize(output + TEST_OUTPUT_PREFIX_SIZE, &state);
 	assert(length == GAMESTATE_SERIALIZED_SIZE);
 	assert(output[0] == TEST_OUTPUT_GUARD_BYTE);
-	assert(output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_PREFIX_SIZE] ==
-		TEST_OUTPUT_GUARD_BYTE);
-	assert(memcmp(output + TEST_OUTPUT_PREFIX_SIZE, representation,
-		GAMESTATE_SERIALIZED_SIZE) == 0);
+	assert(output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_PREFIX_SIZE] == TEST_OUTPUT_GUARD_BYTE);
+	assert(memcmp(output + TEST_OUTPUT_PREFIX_SIZE, representation, GAMESTATE_SERIALIZED_SIZE) ==
+		   0);
 }
 
 static void test_little_endian_fields(void)
@@ -58,28 +57,18 @@ static void test_little_endian_fields(void)
 	state.playerstate.car_position.lx = TEST_PLAYER_X_POSITION;
 	gamestate_serialize(output, &state);
 
-	assert(output[TEST_TRAVEL_DISTANCE_OFFSET] ==
-		TEST_NEGATIVE_THREE_LOW_BYTE);
-	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 1U] ==
-		TEST_SIGN_EXTENSION_BYTE);
-	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 2U] ==
-		TEST_SIGN_EXTENSION_BYTE);
-	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 3U] ==
-		TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_TRAVEL_DISTANCE_OFFSET] == TEST_NEGATIVE_THREE_LOW_BYTE);
+	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 1U] == TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 2U] == TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_TRAVEL_DISTANCE_OFFSET + 3U] == TEST_SIGN_EXTENSION_BYTE);
 	assert(output[TEST_FRAME_NUMBER_OFFSET] == TEST_NEGATIVE_TWO_LOW_BYTE);
-	assert(output[TEST_FRAME_NUMBER_OFFSET + 1U] ==
-		TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_FRAME_NUMBER_OFFSET + 1U] == TEST_SIGN_EXTENSION_BYTE);
 	assert(output[TEST_IMPACT_SPEED_OFFSET] == TEST_IMPACT_SPEED_LOW_BYTE);
-	assert(output[TEST_IMPACT_SPEED_OFFSET + 1U] ==
-		TEST_IMPACT_SPEED_HIGH_BYTE);
-	assert(output[TEST_PLAYER_X_POSITION_OFFSET] ==
-		TEST_NEGATIVE_FOUR_LOW_BYTE);
-	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 1U] ==
-		TEST_SIGN_EXTENSION_BYTE);
-	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 2U] ==
-		TEST_SIGN_EXTENSION_BYTE);
-	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 3U] ==
-		TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_IMPACT_SPEED_OFFSET + 1U] == TEST_IMPACT_SPEED_HIGH_BYTE);
+	assert(output[TEST_PLAYER_X_POSITION_OFFSET] == TEST_NEGATIVE_FOUR_LOW_BYTE);
+	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 1U] == TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 2U] == TEST_SIGN_EXTENSION_BYTE);
+	assert(output[TEST_PLAYER_X_POSITION_OFFSET + 3U] == TEST_SIGN_EXTENSION_BYTE);
 }
 
 int main(void)

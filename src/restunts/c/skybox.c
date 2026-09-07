@@ -33,7 +33,7 @@
 #define SKYBOX_LINE_DATA_WORD_COUNT 14
 #define SKYBOX_FORWARD_DIRECTION 1
 
-void skybox_render_level_rect(struct RECTANGLE* rect, legacy_s16 angle, legacy_s16 horizon)
+void skybox_render_level_rect(struct RECTANGLE *rect, legacy_s16 angle, legacy_s16 horizon)
 {
 	legacy_u16 top;
 	legacy_u16 bottom;
@@ -52,97 +52,93 @@ void skybox_render_level_rect(struct RECTANGLE* rect, legacy_s16 angle, legacy_s
 	right = (legacy_u16)rect->right;
 	horizon_bits = (legacy_u16)horizon;
 	sky_lines = LEGACY_U16_WRAP_SUB(horizon_bits, top);
-	if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL)
+	if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL) {
 		sky_lines = LEGACY_U16_WRAP_SUB(sky_lines, skybox.minimum_height);
+	}
 	rect_height = LEGACY_U16_WRAP_SUB(bottom, top);
-	if (LEGACY_S16_FROM_BITS(rect_height) <
-		LEGACY_S16_FROM_BITS(sky_lines))
+	if (LEGACY_S16_FROM_BITS(rect_height) < LEGACY_S16_FROM_BITS(sky_lines)) {
 		sky_lines = rect_height;
+	}
 	if (LEGACY_S16_FROM_BITS(sky_lines) > 0) {
-		sprite_set_target_clip_bounds(left, right, top,
-			LEGACY_U16_WRAP_ADD(top, sky_lines));
+		sprite_set_target_clip_bounds(left, right, top, LEGACY_U16_WRAP_ADD(top, sky_lines));
 		sprite_clear_target((legacy_u8)skybox.sky_color);
 	}
 
 	if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL &&
 		LEGACY_S16_FROM_BITS(top) < LEGACY_S16_FROM_BITS(horizon_bits) &&
-		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
-			horizon_bits, skybox.maximum_height)) <= LEGACY_S16_FROM_BITS(bottom)) {
+		LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(horizon_bits, skybox.maximum_height)) <=
+			LEGACY_S16_FROM_BITS(bottom)) {
 		sprite_set_target_clip_bounds(left, right, top, bottom);
-		image_x = LEGACY_U16_WRAP_SUB(
-			LEGACY_U16_WRAP_ADD(angle, ANGLE_HALF_TURN) & ANGLE_MASK,
-			SKYBOX_IMAGE_FULL_WRAP);
-		sprite_copy_image_at(skyboxes[0],
-			LEGACY_S16_FROM_BITS(image_x), LEGACY_S16_WRAP_SUB(
-				horizon_bits, skybox.heights[0]));
-		sprite_copy_image_at(skyboxes[1], LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_WIDTH)),
-			LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[1]));
-		sprite_copy_image_at(skyboxes[2], LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_HALF_WRAP)),
+		image_x = LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(angle, ANGLE_HALF_TURN) & ANGLE_MASK,
+									  SKYBOX_IMAGE_FULL_WRAP);
+		sprite_copy_image_at(skyboxes[0], LEGACY_S16_FROM_BITS(image_x),
+							 LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[0]));
+		sprite_copy_image_at(skyboxes[1],
+							 LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_WIDTH)),
+							 LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[1]));
+		sprite_copy_image_at(
+			skyboxes[2], LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_HALF_WRAP)),
 			LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[2]));
-		sprite_copy_image_at(skyboxes[3], LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(
-				image_x, SKYBOX_IMAGE_ONE_AND_HALF_WIDTH)),
+		sprite_copy_image_at(
+			skyboxes[3],
+			LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_ONE_AND_HALF_WIDTH)),
 			LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[3]));
-		sprite_copy_image_at(skyboxes[0], LEGACY_S16_FROM_BITS(
-			LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_FULL_WRAP)),
+		sprite_copy_image_at(
+			skyboxes[0], LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(image_x, SKYBOX_IMAGE_FULL_WRAP)),
 			LEGACY_S16_WRAP_SUB(horizon_bits, skybox.heights[0]));
 	}
 
 	ground_top = horizon_bits;
-	if (LEGACY_S16_FROM_BITS(top) > LEGACY_S16_FROM_BITS(horizon_bits))
+	if (LEGACY_S16_FROM_BITS(top) > LEGACY_S16_FROM_BITS(horizon_bits)) {
 		ground_top = top;
+	}
 	ground_lines = LEGACY_U16_WRAP_SUB(bottom, ground_top);
 	if (LEGACY_S16_FROM_BITS(ground_lines) > 0) {
 		sprite_set_target_clip_bounds(left, right, ground_top,
-			LEGACY_U16_WRAP_ADD(ground_top, ground_lines));
+									  LEGACY_U16_WRAP_ADD(ground_top, ground_lines));
 		sprite_clear_target((legacy_u8)skybox.ground_color);
 	}
 }
 
-static legacy_s16 skybox_scaled_constant(legacy_u16 value,
-	legacy_s16 scale)
+static legacy_s16 skybox_scaled_constant(legacy_u16 value, legacy_s16 scale)
 {
-	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(
-		value, (legacy_u16)scale));
+	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_MUL(value, (legacy_u16)scale));
 }
 
-static void skybox_clear_rect(const struct RECTANGLE* rect, legacy_s16 color)
+static void skybox_clear_rect(const struct RECTANGLE *rect, legacy_s16 color)
 {
 	sprite_set_target_clip_bounds(rect->left, rect->right, rect->top, rect->bottom);
 	sprite_clear_target((legacy_u8)color);
 }
 
-static void skybox_collect_changed_rects(struct RECTANGLE* clip)
+static void skybox_collect_changed_rects(struct RECTANGLE *clip)
 {
 	redraw_rect_count = 0;
-	rectlist_add_rects(SKYBOX_CHANGED_RECT_COUNT, frame_rect_change_flags,
-		active_frame_rects,
-		frame_layer_rects, clip, &redraw_rect_count, merged_redraw_rects);
+	rectlist_add_rects(SKYBOX_CHANGED_RECT_COUNT, frame_rect_change_flags, active_frame_rects,
+					   frame_layer_rects, clip, &redraw_rect_count, merged_redraw_rects);
 }
 
-static void skybox_clear_changed_rects(struct RECTANGLE* rect,
-	struct RECTANGLE* clip, legacy_s16 color)
+static void skybox_clear_changed_rects(struct RECTANGLE *rect, struct RECTANGLE *clip,
+									   legacy_s16 color)
 {
 	legacy_s16 i;
 
-	if (rect_intersect(rect, clip) != 0)
+	if (rect_intersect(rect, clip) != 0) {
 		return;
+	}
 	skybox_collect_changed_rects(rect);
-	for (i = 0; i < (legacy_s8)redraw_rect_count; i++)
+	for (i = 0; i < (legacy_s8)redraw_rect_count; i++) {
 		skybox_clear_rect(&merged_redraw_rects[i], color);
+	}
 }
 
-legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s16 direction,
-	struct MATRIX* rotation, legacy_s16 roll, legacy_s16 angle, legacy_s16 camera_y)
+legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE *clip, legacy_s16 direction,
+						 struct MATRIX *rotation, legacy_s16 roll, legacy_s16 angle,
+						 legacy_s16 camera_y)
 {
 	static const legacy_u16 corner_angles[SKYBOX_CORNER_COUNT] = {
-		ANGLE_EIGHTH_TURN,
-		ANGLE_EIGHTH_TURN + ANGLE_QUARTER_TURN,
-		ANGLE_EIGHTH_TURN + ANGLE_HALF_TURN,
-		ANGLE_EIGHTH_TURN + ANGLE_THREE_QUARTER_TURN
-	};
+		ANGLE_EIGHTH_TURN, ANGLE_EIGHTH_TURN + ANGLE_QUARTER_TURN,
+		ANGLE_EIGHTH_TURN + ANGLE_HALF_TURN, ANGLE_EIGHTH_TURN + ANGLE_THREE_QUARTER_TURN};
 	struct VECTOR source;
 	struct VECTOR vectors[SKYBOX_ROLL_VECTOR_COUNT];
 	struct POINT2D points[SKYBOX_ROLL_POINT_COUNT];
@@ -169,15 +165,12 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 	sprite_set_target_clip_bounds(0, SKYBOX_SCREEN_WIDTH, clip->top, clip->bottom);
 
 	if (roll != 0) {
-		source.x = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_POSITIVE_X,
-			(legacy_s16)direction);
+		source.x = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_POSITIVE_X, (legacy_s16)direction);
 		source.y = LEGACY_S16_WRAP_NEGATE((legacy_s16)camera_y);
-		source.z = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_Z,
-			(legacy_s16)direction);
+		source.z = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_Z, (legacy_s16)direction);
 		mat_mul_vector(&source, rotation, &vectors[0]);
-		source.x = skybox_scaled_constant(
-			SKYBOX_ROLL_VECTOR_NEGATIVE_X_BITS,
-			(legacy_s16)direction);
+		source.x =
+			skybox_scaled_constant(SKYBOX_ROLL_VECTOR_NEGATIVE_X_BITS, (legacy_s16)direction);
 		mat_mul_vector(&source, rotation, &vectors[1]);
 
 		if (vectors[0].z < 0 || vectors[1].z < 0) {
@@ -187,29 +180,23 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 		vector_to_point(&vectors[0], &points[0]);
 		vector_to_point(&vectors[1], &points[1]);
 
-		if (points[0].px > SKYBOX_SCREEN_WIDTH &&
-			points[1].px > SKYBOX_SCREEN_WIDTH) {
-			fill_color = points[0].py < points[1].py ?
-				skybox.sky_color : skybox.ground_color;
+		if (points[0].px > SKYBOX_SCREEN_WIDTH && points[1].px > SKYBOX_SCREEN_WIDTH) {
+			fill_color = points[0].py < points[1].py ? skybox.sky_color : skybox.ground_color;
 			sprite_clear_target((legacy_u8)fill_color);
 			return 0;
 		}
 		if (points[0].px < 0 && points[1].px < 0) {
-			fill_color = points[0].py <= points[1].py ?
-				skybox.ground_color : skybox.sky_color;
+			fill_color = points[0].py <= points[1].py ? skybox.ground_color : skybox.sky_color;
 			sprite_clear_target((legacy_u8)fill_color);
 			return 0;
 		}
-		if (clip->bottom < points[0].py &&
-			clip->bottom < points[1].py) {
-			fill_color = points[0].px <= points[1].px ?
-				skybox.ground_color : skybox.sky_color;
+		if (clip->bottom < points[0].py && clip->bottom < points[1].py) {
+			fill_color = points[0].px <= points[1].px ? skybox.ground_color : skybox.sky_color;
 			sprite_clear_target((legacy_u8)fill_color);
 			return 0;
 		}
 		if (clip->top > points[0].py && clip->top > points[1].py) {
-			fill_color = points[0].px >= points[1].px ?
-				skybox.ground_color : skybox.sky_color;
+			fill_color = points[0].px >= points[1].px ? skybox.ground_color : skybox.sky_color;
 			sprite_clear_target((legacy_u8)fill_color);
 			return 0;
 		}
@@ -217,24 +204,22 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 		base_horizon = 0;
 		horizon_delta = 0;
 		has_linear_horizon = 0;
-		if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL &&
-			points[1].px < 0 && points[0].px > SKYBOX_SCREEN_WIDTH &&
-			line_prepare_clipped(points[1].px, points[1].py,
-				points[0].px, points[0].py, line_data) == 0) {
-			absolute_delta = LEGACY_S16_WRAP_SUB(
-				line_data[3], line_data[5]);
-			if (absolute_delta < 0)
+		if (detail_level != SKYBOX_LOWEST_DETAIL_LEVEL && points[1].px < 0 &&
+			points[0].px > SKYBOX_SCREEN_WIDTH &&
+			line_prepare_clipped(points[1].px, points[1].py, points[0].px, points[0].py,
+								 line_data) == 0) {
+			absolute_delta = LEGACY_S16_WRAP_SUB(line_data[3], line_data[5]);
+			if (absolute_delta < 0) {
 				absolute_delta = LEGACY_S16_WRAP_NEGATE(absolute_delta);
+			}
 			if (absolute_delta < SKYBOX_MAX_LINEAR_HORIZON_DELTA) {
 				if (line_data[1] == 0) {
 					base_horizon = LEGACY_S16_FROM_BITS(line_data[3]);
-					horizon_delta = LEGACY_S16_WRAP_SUB(
-						line_data[5], base_horizon);
+					horizon_delta = LEGACY_S16_WRAP_SUB(line_data[5], base_horizon);
 					has_linear_horizon = 1;
 				} else if (line_data[1] == SKYBOX_SCREEN_RIGHT) {
 					base_horizon = LEGACY_S16_FROM_BITS(line_data[5]);
-					horizon_delta = LEGACY_S16_WRAP_SUB(
-						line_data[3], base_horizon);
+					horizon_delta = LEGACY_S16_WRAP_SUB(line_data[3], base_horizon);
 					has_linear_horizon = 1;
 				}
 			}
@@ -250,30 +235,25 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 					rect_skybox.top = clip->top;
 					rect_skybox.bottom = clip->bottom;
 				} else {
-					horizon = LEGACY_S16_WRAP_ADD(
-						base_horizon, horizon_delta);
-					rect_skybox.top = horizon < base_horizon ?
-						horizon : base_horizon;
-					rect_skybox.top = LEGACY_S16_WRAP_SUB(
-						rect_skybox.top, skybox.maximum_height);
-					if (clip->top > rect_skybox.top)
+					horizon = LEGACY_S16_WRAP_ADD(base_horizon, horizon_delta);
+					rect_skybox.top = horizon < base_horizon ? horizon : base_horizon;
+					rect_skybox.top = LEGACY_S16_WRAP_SUB(rect_skybox.top, skybox.maximum_height);
+					if (clip->top > rect_skybox.top) {
 						rect_skybox.top = clip->top;
-					rect_skybox.bottom = horizon > base_horizon ?
-						horizon : base_horizon;
-					for (i = 0; i < SKYBOX_CHANGED_RECT_COUNT; i++)
+					}
+					rect_skybox.bottom = horizon > base_horizon ? horizon : base_horizon;
+					for (i = 0; i < SKYBOX_CHANGED_RECT_COUNT; i++) {
 						frame_rect_change_flags[i] = SKYBOX_RECT_CHANGED;
-					frame_rect_change_flags[SKYBOX_RECT_INDEX] =
-						SKYBOX_RECT_FORCE_REDRAW;
+					}
+					frame_rect_change_flags[SKYBOX_RECT_INDEX] = SKYBOX_RECT_FORCE_REDRAW;
 
 					work_rect.top = 0;
 					work_rect.bottom = rect_skybox.top;
-					skybox_clear_changed_rects(&work_rect, clip,
-						skybox.sky_color);
+					skybox_clear_changed_rects(&work_rect, clip, skybox.sky_color);
 
 					work_rect.top = rect_skybox.bottom;
 					work_rect.bottom = SKYBOX_SCREEN_BOTTOM;
-					skybox_clear_changed_rects(&work_rect, clip,
-						skybox.ground_color);
+					skybox_clear_changed_rects(&work_rect, clip, skybox.ground_color);
 				}
 				work_rect.top = rect_skybox.top;
 				work_rect.bottom = rect_skybox.bottom;
@@ -284,71 +264,71 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 				work_rect.bottom = clip->bottom;
 			}
 
-			if (rect_intersect(&work_rect, clip) != 0)
+			if (rect_intersect(&work_rect, clip) != 0) {
 				return 0;
+			}
 			absolute_delta = horizon_delta;
-			if (absolute_delta < 0)
+			if (absolute_delta < 0) {
 				absolute_delta = LEGACY_S16_WRAP_NEGATE(absolute_delta);
+			}
 			strip_count = LEGACY_S16_WRAP_ADD(absolute_delta, 1);
-			if (strip_count > SKYBOX_MAX_HORIZON_STRIPS)
+			if (strip_count > SKYBOX_MAX_HORIZON_STRIPS) {
 				strip_count = SKYBOX_MAX_HORIZON_STRIPS;
+			}
 			previous_x = 0;
 			for (strip = 0; strip < strip_count; strip++) {
 				work_rect.left = previous_x;
-				work_rect.right = (legacy_s16)((
-					(legacy_s32)SKYBOX_SCREEN_WIDTH * strip +
-					SKYBOX_SCREEN_WIDTH) /
-					strip_count) & video_x_alignment_mask;
-				if (work_rect.left == work_rect.right)
+				work_rect.right =
+					(legacy_s16)(((legacy_s32)SKYBOX_SCREEN_WIDTH * strip + SKYBOX_SCREEN_WIDTH) /
+								 strip_count) &
+					video_x_alignment_mask;
+				if (work_rect.left == work_rect.right) {
 					continue;
-				horizon = LEGACY_S16_WRAP_ADD(base_horizon,
-					(legacy_s16)((legacy_s32)horizon_delta * strip /
-						strip_count));
+				}
+				horizon = LEGACY_S16_WRAP_ADD(
+					base_horizon, (legacy_s16)((legacy_s32)horizon_delta * strip / strip_count));
 				skybox_render_level_rect(&work_rect, angle, horizon);
 				previous_x = work_rect.right;
 			}
 			return 0;
 		}
 
-		angle_offset = (legacy_s16)polarAngle(
-			LEGACY_S16_WRAP_SUB(points[0].px, points[1].px),
-			LEGACY_S16_WRAP_SUB(points[0].py, points[1].py)) & ANGLE_MASK;
-		for (point_index = 0; point_index < SKYBOX_CORNER_COUNT;
-			point_index++) {
+		angle_offset = (legacy_s16)polarAngle(LEGACY_S16_WRAP_SUB(points[0].px, points[1].px),
+											  LEGACY_S16_WRAP_SUB(points[0].py, points[1].py)) &
+					   ANGLE_MASK;
+		for (point_index = 0; point_index < SKYBOX_CORNER_COUNT; point_index++) {
 			base_index = point_index < 2 ? 0 : 1;
 			points[point_index + 2].px = LEGACY_S16_WRAP_ADD(
-				points[base_index].px, multiply_and_scale(
-					sin_fast(LEGACY_S16_WRAP_ADD(
-						corner_angles[point_index], angle_offset)),
+				points[base_index].px,
+				multiply_and_scale(
+					sin_fast(LEGACY_S16_WRAP_ADD(corner_angles[point_index], angle_offset)),
 					SKYBOX_HORIZON_RADIUS));
 			points[point_index + 2].py = LEGACY_S16_WRAP_ADD(
-				points[base_index].py, multiply_and_scale(
-					cos_fast(LEGACY_S16_WRAP_ADD(
-						corner_angles[point_index], angle_offset)),
+				points[base_index].py,
+				multiply_and_scale(
+					cos_fast(LEGACY_S16_WRAP_ADD(corner_angles[point_index], angle_offset)),
 					SKYBOX_HORIZON_RADIUS));
 		}
 		/* The original inline stack arguments order these vertices 0,1,3,2. */
 		point_swap = points[2];
 		points[2] = points[3];
 		points[3] = point_swap;
-		skybox_fill_polygon(
-			skybox.sky_color, SKYBOX_POLYGON_POINT_COUNT, points);
+		skybox_fill_polygon(skybox.sky_color, SKYBOX_POLYGON_POINT_COUNT, points);
 		points[2] = points[4];
 		points[3] = points[5];
-		skybox_fill_polygon(
-			skybox.ground_color, SKYBOX_POLYGON_POINT_COUNT, points);
+		skybox_fill_polygon(skybox.ground_color, SKYBOX_POLYGON_POINT_COUNT, points);
 		return 1;
 	}
 
 	source.x = 0;
 	source.y = LEGACY_S16_WRAP_NEGATE((legacy_s16)camera_y);
-	source.z = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_Z,
-		(legacy_s16)direction);
+	source.z = skybox_scaled_constant(SKYBOX_ROLL_VECTOR_Z, (legacy_s16)direction);
 	mat_mul_vector(&source, rotation, &vectors[0]);
 	if (vectors[0].z < 0) {
 		sprite_clear_target((legacy_u8)skybox.sky_color);
-		if (slow_video_mgmt_copy == 0)
+		if (slow_video_mgmt_copy == 0) {
 			return 0;
+		}
 		rect_skybox.left = 0;
 		rect_skybox.right = SKYBOX_SCREEN_WIDTH;
 		rect_skybox.top = clip->top;
@@ -358,22 +338,25 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 
 	vector_to_point(&vectors[0], &points[0]);
 	horizon = (legacy_s16)points[0].py;
-	if (clip->top > horizon)
+	if (clip->top > horizon) {
 		horizon = clip->top;
+	}
 	if ((legacy_s16)direction == SKYBOX_FORWARD_DIRECTION) {
 		if (slow_video_mgmt_copy != 0) {
-			rect_skybox.top = detail_level == SKYBOX_LOWEST_DETAIL_LEVEL ?
-				LEGACY_S16_WRAP_SUB(horizon, 1) :
-				LEGACY_S16_WRAP_SUB(horizon, skybox.maximum_height);
+			rect_skybox.top = detail_level == SKYBOX_LOWEST_DETAIL_LEVEL
+								  ? LEGACY_S16_WRAP_SUB(horizon, 1)
+								  : LEGACY_S16_WRAP_SUB(horizon, skybox.maximum_height);
 			rect_skybox.left = 0;
 			rect_skybox.right = SKYBOX_SCREEN_WIDTH;
 			rect_skybox.bottom = horizon;
 			if (full_redraw_frames_remaining == 0) {
-				for (i = 0; i < SKYBOX_CHANGED_RECT_COUNT; i++)
+				for (i = 0; i < SKYBOX_CHANGED_RECT_COUNT; i++) {
 					frame_rect_change_flags[i] = SKYBOX_RECT_CHANGED;
+				}
 				track_view_index = (legacy_s16)view_index;
-				if (detail_level == SKYBOX_LOWEST_DETAIL_LEVEL)
+				if (detail_level == SKYBOX_LOWEST_DETAIL_LEVEL) {
 					frame_buffer_camera_headings[track_view_index] = last_rendered_camera_heading;
+				}
 				if (frame_buffer_camera_headings[track_view_index] == angle &&
 					active_frame_rects[SKYBOX_RECT_INDEX].left == rect_skybox.left &&
 					active_frame_rects[SKYBOX_RECT_INDEX].right == rect_skybox.right &&
@@ -381,14 +364,12 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 					active_frame_rects[SKYBOX_RECT_INDEX].bottom == rect_skybox.bottom) {
 					frame_rect_change_flags[SKYBOX_RECT_INDEX] = 0;
 				} else {
-					frame_rect_change_flags[SKYBOX_RECT_INDEX] =
-						SKYBOX_RECT_FORCE_REDRAW;
+					frame_rect_change_flags[SKYBOX_RECT_INDEX] = SKYBOX_RECT_FORCE_REDRAW;
 				}
 				skybox_collect_changed_rects(clip);
-				for (i = 0; i < (legacy_s8)redraw_rect_count;
-					i++)
-					skybox_render_level_rect(&merged_redraw_rects[i],
-						angle, horizon);
+				for (i = 0; i < (legacy_s8)redraw_rect_count; i++) {
+					skybox_render_level_rect(&merged_redraw_rects[i], angle, horizon);
+				}
 				return 0;
 			}
 		}
@@ -402,8 +383,9 @@ legacy_s16 skybox_render(legacy_s16 view_index, struct RECTANGLE* clip, legacy_s
 	}
 
 	fill_height = LEGACY_S16_WRAP_SUB(horizon, clip->top);
-	if (LEGACY_S16_WRAP_SUB(clip->bottom, clip->top) < fill_height)
+	if (LEGACY_S16_WRAP_SUB(clip->bottom, clip->top) < fill_height) {
 		fill_height = LEGACY_S16_WRAP_SUB(clip->bottom, clip->top);
+	}
 	if (fill_height > 0) {
 		work_rect.left = 0;
 		work_rect.right = SKYBOX_SCREEN_WIDTH;

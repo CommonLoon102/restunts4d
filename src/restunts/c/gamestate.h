@@ -8,24 +8,17 @@
 #define CARSTATE_WHEEL_COUNT 4U
 #define GAMESTATE_PARTICLE_SLOT_COUNT 24U
 
-enum GAME_CAR_INDEX {
-	PLAYER_CAR_INDEX = 0,
-	OPPONENT_CAR_INDEX = 1
-};
+enum GAME_CAR_INDEX { PLAYER_CAR_INDEX = 0, OPPONENT_CAR_INDEX = 1 };
 
 #define GAME_CAR_COUNT 2U
 #define GAMESTATE_CAR_VECTOR_COUNT GAME_CAR_COUNT
-#define GAMESTATE_PARTICLE_VELOCITY_BYTES \
-	(GAMESTATE_PARTICLE_SLOT_COUNT * LEGACY_WORD_BYTES)
+#define GAMESTATE_PARTICLE_VELOCITY_BYTES (GAMESTATE_PARTICLE_SLOT_COUNT * LEGACY_WORD_BYTES)
 #define GAMESTATE_RANDOM_SEED_SIZE 6U
 #define GAMESTATE_CAMERA_INDEX_COUNT 2U
 #define GAMESTATE_BREAKABLE_OBJECT_COUNT 48U
 #define GAMESTATE_CHECKPOINT_COUNT 20U
 
-enum GAME_FRAME_RATE {
-	GAME_FRAME_RATE_LOW = 10,
-	GAME_FRAME_RATE_NORMAL = 20
-};
+enum GAME_FRAME_RATE { GAME_FRAME_RATE_LOW = 10, GAME_FRAME_RATE_NORMAL = 20 };
 
 enum GAME_INPUT_MODE {
 	GAME_INPUT_MODE_WAITING = 0,
@@ -46,22 +39,13 @@ enum GAMESTATE_INIT_MODE {
 	GAMESTATE_INIT_TIMING_ONLY = -3
 };
 
-enum TRANSMISSION_MODE {
-	TRANSMISSION_MANUAL = 0,
-	TRANSMISSION_AUTOMATIC = 1
-};
+enum TRANSMISSION_MODE { TRANSMISSION_MANUAL = 0, TRANSMISSION_AUTOMATIC = 1 };
 
-enum CAR_GEAR_CHANGE_STATE {
-	CAR_GEAR_CHANGE_INACTIVE = 0,
-	CAR_GEAR_CHANGE_ACTIVE = 1
-};
+enum CAR_GEAR_CHANGE_STATE { CAR_GEAR_CHANGE_INACTIVE = 0, CAR_GEAR_CHANGE_ACTIVE = 1 };
 
 #define GEAR_CHANGE_DELAY_EXPIRED 0
 
-enum CAR_PEDAL_STATE {
-	CAR_PEDAL_RELEASED = 0,
-	CAR_PEDAL_PRESSED = 1
-};
+enum CAR_PEDAL_STATE { CAR_PEDAL_RELEASED = 0, CAR_PEDAL_PRESSED = 1 };
 
 #define CAR_SPEED_STOPPED 0
 #define CAR_STEERING_CENTERED 0
@@ -74,24 +58,17 @@ enum CAR_SURFACE_TYPE {
 	CAR_SURFACE_WATER = 5
 };
 
-enum CAR_SLIDING_STATE {
-	CAR_SLIDING_INACTIVE = 0,
-	CAR_SLIDING_ACTIVE = 1
-};
+enum CAR_SLIDING_STATE { CAR_SLIDING_INACTIVE = 0, CAR_SLIDING_ACTIVE = 1 };
 
 #define CAR_WHEEL_CONTACT_NONE 0
 
-enum CAR_COLLISION_LATCH_STATE {
-	CAR_COLLISION_LATCH_CLEAR = 0,
-	CAR_COLLISION_LATCH_SET = 1
-};
+enum CAR_COLLISION_LATCH_STATE { CAR_COLLISION_LATCH_CLEAR = 0, CAR_COLLISION_LATCH_SET = 1 };
 
 #define CAR_SOUND_NONE 0U
 #define CAR_SOUND_ENGINE_ACTIVE_FLAG 1U
 #define CAR_SOUND_SKID_PAVED_FLAG 2U
 #define CAR_SOUND_SKID_OFFROAD_FLAG 4U
-#define CAR_SOUND_SKID_MASK \
-	(CAR_SOUND_SKID_PAVED_FLAG | CAR_SOUND_SKID_OFFROAD_FLAG)
+#define CAR_SOUND_SKID_MASK (CAR_SOUND_SKID_PAVED_FLAG | CAR_SOUND_SKID_OFFROAD_FLAG)
 
 enum ROUTE_INDICATOR {
 	ROUTE_INDICATOR_NONE = 0,
@@ -106,23 +83,17 @@ enum ROUTE_TRACKING_STATE {
 	ROUTE_TRACKING_WRONG_WAY = 2
 };
 
-enum ROUTE_CONFIRMATION_STATE {
-	ROUTE_CONFIRMATION_NONE = 0,
-	ROUTE_CONFIRMATION_INITIAL = 1
-};
+enum ROUTE_CONFIRMATION_STATE { ROUTE_CONFIRMATION_NONE = 0, ROUTE_CONFIRMATION_INITIAL = 1 };
 
 #define ROUTE_CONFIRMATION_STEP 1
 #define ROUTE_INDEX_NONE (-1)
 
-enum ROUTE_POINT_INDEX {
-	ROUTE_POINT_FIRST = 0,
-	ROUTE_POINT_SECOND = 1
-};
+enum ROUTE_POINT_INDEX { ROUTE_POINT_FIRST = 0, ROUTE_POINT_SECOND = 1 };
 
 #define ROUTE_POINT_STEP 1
 #define ROUTE_POINT_HEIGHT_UNSPECIFIED (-1)
 
-#pragma pack (push, 1)
+#pragma pack(push, 1)
 
 struct CARSTATE {
 	struct VECTORLONG car_position;
@@ -133,8 +104,8 @@ struct CARSTATE {
 	legacy_s16 car_currpm;
 	legacy_s16 car_lastrpm;
 	legacy_s16 car_initial_rpm;
-	legacy_s16 car_speeddiff; /* Formerly called gripdiff. */
-	legacy_u16 car_rev_speed; /* Rev-coupled speed, scaled by 2^8. */
+	legacy_s16 car_speeddiff;	 /* Formerly called gripdiff. */
+	legacy_u16 car_rev_speed;	 /* Rev-coupled speed, scaled by 2^8. */
 	legacy_u16 car_actual_speed; /* Actual car speed, scaled by 2^8. */
 	legacy_u16 car_lastspeed;
 	legacy_u16 car_gearratio;
@@ -232,14 +203,14 @@ struct GAMESTATE {
 	legacy_s8 game_reserved_trailing_byte;
 };
 
-#pragma pack (pop)
+#pragma pack(pop)
 
-typedef char legacy_carstate_must_be_208_bytes[
-	(sizeof(struct CARSTATE) == CARSTATE_SERIALIZED_SIZE) ? 1 : -1];
-typedef char legacy_gamestate_must_be_1120_bytes[
-	(sizeof(struct GAMESTATE) == GAMESTATE_SERIALIZED_SIZE) ? 1 : -1];
+typedef char legacy_carstate_must_be_208_bytes[(sizeof(struct CARSTATE) == CARSTATE_SERIALIZED_SIZE)
+												   ? 1
+												   : -1];
+typedef char legacy_gamestate_must_be_1120_bytes
+	[(sizeof(struct GAMESTATE) == GAMESTATE_SERIALIZED_SIZE) ? 1 : -1];
 
-legacy_u16 gamestate_serialize(legacy_u8 far* destination,
-	const struct GAMESTATE* source);
+legacy_u16 gamestate_serialize(legacy_u8 far *destination, const struct GAMESTATE *source);
 
 #endif

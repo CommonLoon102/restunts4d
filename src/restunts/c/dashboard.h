@@ -11,14 +11,14 @@ enum DASHBOARD_OPERATION {
 };
 
 extern legacy_s16 meter_needle_color;
-extern legacy_s8 far* stdaresptr;
-extern legacy_s8 far* stdbresptr;
-extern struct SHAPE2D far* whlshapes[];
-extern struct SHAPE2D far* gnobshapes[];
-extern struct SHAPE2D far* digshapes[];
-extern struct SPRITE far* dashboard_instrument_sprite;
-extern struct SPRITE far* dashboard_gearbox_sprite;
-extern struct SPRITE far* dashboard_gearbox_background_sprite;
+extern legacy_s8 far *stdaresptr;
+extern legacy_s8 far *stdbresptr;
+extern struct SHAPE2D far *whlshapes[];
+extern struct SHAPE2D far *gnobshapes[];
+extern struct SHAPE2D far *digshapes[];
+extern struct SPRITE far *dashboard_instrument_sprite;
+extern struct SPRITE far *dashboard_gearbox_sprite;
+extern struct SPRITE far *dashboard_gearbox_background_sprite;
 extern legacy_s16 dashboard_rpm_index_cache[];
 extern legacy_s16 dashboard_gear_knob_x_cache[];
 extern legacy_s16 dashboard_gear_knob_y_cache[];

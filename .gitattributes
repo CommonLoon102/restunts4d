@@ -27,6 +27,9 @@
 # Unix-facing scripts, CI configuration, and repository metadata.
 .gitattributes text eol=lf
 .gitignore text eol=lf
+.editorconfig text eol=lf
+.editorconfig-checker.json text eol=lf
+.clang-format text eol=lf
 *.sh text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf

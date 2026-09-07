@@ -1,61 +1,54 @@
 #include "gamestate.h"
 
 struct GAMESTATE_WRITER {
-	legacy_u8 far* destination;
+	legacy_u8 far *destination;
 	legacy_u16 offset;
 };
 
-static void gamestate_write_u8(struct GAMESTATE_WRITER* writer,
-	legacy_u8 value)
+static void gamestate_write_u8(struct GAMESTATE_WRITER *writer, legacy_u8 value)
 {
 	writer->destination[writer->offset++] = value;
 }
 
-static void gamestate_write_s8(struct GAMESTATE_WRITER* writer,
-	legacy_s8 value)
+static void gamestate_write_s8(struct GAMESTATE_WRITER *writer, legacy_s8 value)
 {
 	gamestate_write_u8(writer, (legacy_u8)value);
 }
 
-static void gamestate_write_u16(struct GAMESTATE_WRITER* writer,
-	legacy_u16 value)
+static void gamestate_write_u16(struct GAMESTATE_WRITER *writer, legacy_u16 value)
 {
 	LEGACY_WRITE_U16_LE(writer->destination + writer->offset, value);
 	writer->offset += LEGACY_WORD_BYTES;
 }
 
-static void gamestate_write_s16(struct GAMESTATE_WRITER* writer,
-	legacy_s16 value)
+static void gamestate_write_s16(struct GAMESTATE_WRITER *writer, legacy_s16 value)
 {
 	gamestate_write_u16(writer, (legacy_u16)value);
 }
 
-static void gamestate_write_s32(struct GAMESTATE_WRITER* writer,
-	legacy_s32 value)
+static void gamestate_write_s32(struct GAMESTATE_WRITER *writer, legacy_s32 value)
 {
-	LEGACY_WRITE_U32_LE(writer->destination + writer->offset,
-		(legacy_u32)value);
+	LEGACY_WRITE_U32_LE(writer->destination + writer->offset, (legacy_u32)value);
 	writer->offset += LEGACY_DWORD_BYTES;
 }
 
-static void gamestate_write_vector(struct GAMESTATE_WRITER* writer,
-	const struct VECTOR* vector)
+static void gamestate_write_vector(struct GAMESTATE_WRITER *writer, const struct VECTOR *vector)
 {
 	gamestate_write_s16(writer, vector->x);
 	gamestate_write_s16(writer, vector->y);
 	gamestate_write_s16(writer, vector->z);
 }
 
-static void gamestate_write_vectorlong(struct GAMESTATE_WRITER* writer,
-	const struct VECTORLONG* vector)
+static void gamestate_write_vectorlong(struct GAMESTATE_WRITER *writer,
+									   const struct VECTORLONG *vector)
 {
 	gamestate_write_s32(writer, vector->lx);
 	gamestate_write_s32(writer, vector->ly);
 	gamestate_write_s32(writer, vector->lz);
 }
 
-static void gamestate_write_s8_array(struct GAMESTATE_WRITER* writer,
-	const legacy_s8* values, legacy_u16 count)
+static void gamestate_write_s8_array(struct GAMESTATE_WRITER *writer, const legacy_s8 *values,
+									 legacy_u16 count)
 {
 	legacy_u16 index;
 
@@ -64,8 +57,8 @@ static void gamestate_write_s8_array(struct GAMESTATE_WRITER* writer,
 	}
 }
 
-static void gamestate_write_s16_array(struct GAMESTATE_WRITER* writer,
-	const legacy_s16* values, legacy_u16 count)
+static void gamestate_write_s16_array(struct GAMESTATE_WRITER *writer, const legacy_s16 *values,
+									  legacy_u16 count)
 {
 	legacy_u16 index;
 
@@ -74,8 +67,8 @@ static void gamestate_write_s16_array(struct GAMESTATE_WRITER* writer,
 	}
 }
 
-static void gamestate_write_s32_array(struct GAMESTATE_WRITER* writer,
-	const legacy_s32* values, legacy_u16 count)
+static void gamestate_write_s32_array(struct GAMESTATE_WRITER *writer, const legacy_s32 *values,
+									  legacy_u16 count)
 {
 	legacy_u16 index;
 
@@ -84,8 +77,8 @@ static void gamestate_write_s32_array(struct GAMESTATE_WRITER* writer,
 	}
 }
 
-static void gamestate_write_vector_array(struct GAMESTATE_WRITER* writer,
-	const struct VECTOR* vectors, legacy_u16 count)
+static void gamestate_write_vector_array(struct GAMESTATE_WRITER *writer,
+										 const struct VECTOR *vectors, legacy_u16 count)
 {
 	legacy_u16 index;
 
@@ -94,8 +87,8 @@ static void gamestate_write_vector_array(struct GAMESTATE_WRITER* writer,
 	}
 }
 
-static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
-	const struct CARSTATE* carstate)
+static void gamestate_write_carstate(struct GAMESTATE_WRITER *writer,
+									 const struct CARSTATE *carstate)
 {
 	gamestate_write_vectorlong(writer, &carstate->car_position);
 	gamestate_write_vectorlong(writer, &carstate->car_previous_position);
@@ -123,20 +116,14 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s16(writer, carstate->car_surfacegrip_sum);
 	gamestate_write_s16(writer, carstate->car_route_heading_error);
 	gamestate_write_s16(writer, carstate->car_route_index);
-	gamestate_write_s16_array(writer, carstate->car_wheel_vertical_speed,
-		CARSTATE_WHEEL_COUNT);
-	gamestate_write_s16_array(writer, carstate->car_suspension_deflection,
-		CARSTATE_WHEEL_COUNT);
-	gamestate_write_s16_array(writer, carstate->car_reserved_wheel_state,
-		CARSTATE_WHEEL_COUNT);
-	gamestate_write_s16_array(writer, carstate->car_reserved_contact_state,
-		CARSTATE_WHEEL_COUNT);
-	gamestate_write_s16_array(writer, carstate->car_suspension_target,
-		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_wheel_vertical_speed, CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_suspension_deflection, CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_reserved_wheel_state, CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_reserved_contact_state, CARSTATE_WHEEL_COUNT);
+	gamestate_write_s16_array(writer, carstate->car_suspension_target, CARSTATE_WHEEL_COUNT);
 	gamestate_write_vector_array(writer, carstate->car_wheel_contact_positions,
-		CARSTATE_WHEEL_COUNT);
-	gamestate_write_vector_array(writer, carstate->car_body_corner_positions,
-		CARSTATE_WHEEL_COUNT);
+								 CARSTATE_WHEEL_COUNT);
+	gamestate_write_vector_array(writer, carstate->car_body_corner_positions, CARSTATE_WHEEL_COUNT);
 	gamestate_write_vector(writer, &carstate->car_route_target);
 	gamestate_write_vector(writer, &carstate->car_route_first_edge);
 	gamestate_write_vector(writer, &carstate->car_route_second_edge);
@@ -149,8 +136,7 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->car_sumSurfFrontWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfRearWheels);
 	gamestate_write_s8(writer, carstate->car_sumSurfAllWheels);
-	gamestate_write_s8_array(writer, carstate->car_surfaceWhl,
-		CARSTATE_WHEEL_COUNT);
+	gamestate_write_s8_array(writer, carstate->car_surfaceWhl, CARSTATE_WHEEL_COUNT);
 	gamestate_write_s8(writer, carstate->car_engineLimiterTimer);
 	gamestate_write_s8(writer, carstate->car_slidingFlag);
 	gamestate_write_s8(writer, carstate->car_collision_latch);
@@ -163,22 +149,18 @@ static void gamestate_write_carstate(struct GAMESTATE_WRITER* writer,
 	gamestate_write_s8(writer, carstate->car_sound_flags);
 }
 
-legacy_u16 gamestate_serialize(legacy_u8 far* destination,
-	const struct GAMESTATE* source)
+legacy_u16 gamestate_serialize(legacy_u8 far *destination, const struct GAMESTATE *source)
 {
 	struct GAMESTATE_WRITER writer;
 
 	writer.destination = destination;
 	writer.offset = 0U;
 
-	gamestate_write_s32_array(&writer, source->game_particle_x,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
-	gamestate_write_s32_array(&writer, source->game_particle_y,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
-	gamestate_write_s32_array(&writer, source->game_particle_z,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s32_array(&writer, source->game_particle_x, GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s32_array(&writer, source->game_particle_y, GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s32_array(&writer, source->game_particle_z, GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_vector_array(&writer, source->game_follow_camera_position,
-		GAMESTATE_CAR_VECTOR_COUNT);
+								 GAMESTATE_CAR_VECTOR_COUNT);
 	gamestate_write_vector(&writer, &source->game_player_camera_previous);
 	gamestate_write_vector(&writer, &source->game_opponent_camera_previous);
 	gamestate_write_s16(&writer, source->game_frame_in_sec);
@@ -202,30 +184,28 @@ legacy_u16 gamestate_serialize(legacy_u8 far* destination,
 	gamestate_write_s16(&writer, source->game_startrow);
 	gamestate_write_s16(&writer, source->game_startrow2);
 	gamestate_write_s16_array(&writer, source->game_particle_rotation_x,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+							  GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s16_array(&writer, source->game_particle_rotation_y,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+							  GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s16_array(&writer, source->game_particle_heading,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+							  GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s16_array(&writer, source->game_particle_forward_speed,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+							  GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s8_array(&writer, source->game_particle_vertical_speed,
-		GAMESTATE_PARTICLE_VELOCITY_BYTES);
-	gamestate_write_s8_array(&writer, source->kevinseed,
-		GAMESTATE_RANDOM_SEED_SIZE);
+							 GAMESTATE_PARTICLE_VELOCITY_BYTES);
+	gamestate_write_s8_array(&writer, source->kevinseed, GAMESTATE_RANDOM_SEED_SIZE);
 	gamestate_write_s8(&writer, source->game_checkpoint_valid);
 	gamestate_write_s8(&writer, source->game_inputmode);
 	gamestate_write_s8(&writer, source->game_end_event);
 	gamestate_write_s8_array(&writer, source->game_trackside_camera_index,
-		GAMESTATE_CAMERA_INDEX_COUNT);
+							 GAMESTATE_CAMERA_INDEX_COUNT);
 	gamestate_write_s8(&writer, source->game_opponent_target_speed);
 	gamestate_write_s8_array(&writer, source->game_object_destroyed,
-		GAMESTATE_BREAKABLE_OBJECT_COUNT);
+							 GAMESTATE_BREAKABLE_OBJECT_COUNT);
 	gamestate_write_s8(&writer, source->game_particles_active);
 	gamestate_write_s8_array(&writer, source->game_particle_shape_index,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
-	gamestate_write_s8_array(&writer, source->game_particle_owner,
-		GAMESTATE_PARTICLE_SLOT_COUNT);
+							 GAMESTATE_PARTICLE_SLOT_COUNT);
+	gamestate_write_s8_array(&writer, source->game_particle_owner, GAMESTATE_PARTICLE_SLOT_COUNT);
 	gamestate_write_s8(&writer, source->game_player_route_status);
 	gamestate_write_s8(&writer, source->game_route_confirmation_count);
 	gamestate_write_s8(&writer, source->game_player_route_indicator);

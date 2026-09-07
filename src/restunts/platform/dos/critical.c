@@ -6,8 +6,8 @@
 
 #define DOS_CRITICAL_ERROR_INTERRUPT_VECTOR 36
 
-typedef void interrupt (far* interrupt_handler_type)();
-typedef legacy_s16 (far* critical_error_callback_type)(void);
+typedef void interrupt(far *interrupt_handler_type)();
+typedef legacy_s16(far *critical_error_callback_type)(void);
 
 static interrupt_handler_type previous_critical_error_handler;
 static critical_error_callback_type critical_error_callback;
@@ -24,16 +24,16 @@ void dos_interrupts_enable(void)
 
 static void far dos_critical_error_restore(void)
 {
-	if (previous_critical_error_handler != 0)
-		_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR,
-			previous_critical_error_handler);
+	if (previous_critical_error_handler != 0) {
+		_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, previous_critical_error_handler);
+	}
 }
 
 #pragma argsused
-static void interrupt dos_critical_error_handler(legacy_u16 bp,
-	legacy_u16 di, legacy_u16 si, legacy_u16 ds, legacy_u16 es,
-	legacy_u16 dx, legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
-	legacy_u16 ip, legacy_u16 cs, legacy_u16 flags)
+static void interrupt dos_critical_error_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
+												 legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
+												 legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
+												 legacy_u16 ip, legacy_u16 cs, legacy_u16 flags)
 {
 	ax = (legacy_u16)critical_error_callback();
 }
@@ -42,8 +42,6 @@ void dos_set_critical_error_handler(critical_error_callback_type callback)
 {
 	add_exit_handler(dos_critical_error_restore);
 	critical_error_callback = callback;
-	previous_critical_error_handler =
-		_getvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR);
-	_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR,
-		dos_critical_error_handler);
+	previous_critical_error_handler = _getvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR);
+	_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, dos_critical_error_handler);
 }

@@ -46,10 +46,7 @@ enum AUDIO_ENVELOPE_STATE {
 	AUDIO_ENVELOPE_STATE_RELEASE = 4
 };
 
-enum AUDIO_RESOURCE_TYPE {
-	AUDIO_RESOURCE_TYPE_SONG = 0,
-	AUDIO_RESOURCE_TYPE_EFFECT = 1
-};
+enum AUDIO_RESOURCE_TYPE { AUDIO_RESOURCE_TYPE_SONG = 0, AUDIO_RESOURCE_TYPE_EFFECT = 1 };
 
 extern legacy_s8 audio_music_enabled;
 extern legacy_s8 audio_effects_enabled;
@@ -59,7 +56,7 @@ extern legacy_u8 dos_audio_context_count;
 extern legacy_u8 dos_audio_uses_direct_channels;
 extern legacy_u8 dos_audio_master_state[];
 extern legacy_u8 dos_audio_master_volume;
-extern void far* dos_audio_driver_binary;
+extern void far *dos_audio_driver_binary;
 extern legacy_u8 audio_music_rate;
 extern legacy_u8 audio_music_channel_count;
 extern legacy_u8 audio_suspended;
@@ -67,30 +64,26 @@ extern legacy_u8 audio_music_active;
 extern legacy_u8 audio_effect_rate;
 extern legacy_u16 audio_sequence_elapsed_ticks;
 extern legacy_u16 audio_sequence_tick_period;
-extern void far* audio_bass_drum_resource;
-extern void far* audio_snare_resource;
-extern void far* audio_tom_resource;
-extern void far* audio_ride_resource;
-extern void far* audio_crash_resource;
-extern void far* audio_closed_hihat_resource;
-extern void far* audio_open_hihat_resource;
+extern void far *audio_bass_drum_resource;
+extern void far *audio_snare_resource;
+extern void far *audio_tom_resource;
+extern void far *audio_ride_resource;
+extern void far *audio_crash_resource;
+extern void far *audio_closed_hihat_resource;
+extern void far *audio_open_hihat_resource;
 
-void far* audio_read_far_pointer(const legacy_u8 far* source);
-void audio_write_far_pointer(legacy_u8 far* destination,
-	const void far* value);
-legacy_s8* pad_id(const legacy_s8 far* source);
+void far *audio_read_far_pointer(const legacy_u8 far *source);
+void audio_write_far_pointer(legacy_u8 far *destination, const void far *value);
+legacy_s8 *pad_id(const legacy_s8 far *source);
 void audio_reset_channels(void);
 void audio_stop_music(void);
 void audio_driver_timer(void);
-void audio_release_channel_range(legacy_s16 first_channel,
-	legacy_s16 last_channel);
+void audio_release_channel_range(legacy_s16 first_channel, legacy_s16 last_channel);
 void audio_update_driver_contexts(void);
-void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel,
-	void far* resource, legacy_u16 resource_data_offset,
-	legacy_u16 rate, legacy_u8 priority);
+void audio_init_channel_range(legacy_s16 first_channel, legacy_s16 last_channel, void far *resource,
+							  legacy_u16 resource_data_offset, legacy_u16 rate, legacy_u8 priority);
 void audio_stop_effect_channel(legacy_s16 channel);
-legacy_s16 audio_sequence_command_has_byte_argument(
-	legacy_u8 command_index);
+legacy_s16 audio_sequence_command_has_byte_argument(legacy_u8 command_index);
 legacy_s16 audio_start_sample(legacy_u16 value, legacy_s16 handle);
 legacy_s16 audio_reserve_effect_channel(legacy_s16 channel, legacy_u8 priority);
 void audio_release_effect_channel(legacy_s16 channel);

@@ -37,7 +37,8 @@
 #define RACE_START_POSITION_SCALE_SHIFT 6U
 #define RACE_RANDOM_VALUE_SHIFT 3U
 
-void run_game(void) {
+void run_game(void)
+{
 	legacy_s16 opponent_progress_text_position[2];
 	legacy_s16 input_key, dashboard_bottom_cache, last_processed_frame;
 	struct RECTANGLE dashboard_mask_rect;
@@ -49,8 +50,7 @@ void run_game(void) {
 	rect_windshield.right = RACE_SCREEN_WIDTH;
 	roof_height_cache = -1;
 	viewport_bottom_cache = -1;
-	run_game_random = LEGACY_S16_SHL(get_kevinrandom(),
-		RACE_RANDOM_VALUE_SHIFT);
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), RACE_RANDOM_VALUE_SHIFT);
 	replaybar_toggle = 1;
 	is_in_replay = 0;
 	if (idle_expired == 0) {
@@ -70,7 +70,7 @@ void run_game(void) {
 
 		game_replay_mode = REPLAY_MODE_PLAYBACK;
 		if (file_load_replay(0, "default") != 0) {
-			return ;
+			return;
 		}
 		track_setup();
 	}
@@ -109,17 +109,16 @@ void run_game(void) {
 
 				state.playerstate.car_position.lx = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_position.lx,
-					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
-						sin_fast(track_angle), RACE_START_POSITION_DISTANCE),
-						RACE_START_POSITION_SCALE_SHIFT));
+					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(sin_fast(track_angle),
+																  RACE_START_POSITION_DISTANCE),
+								   RACE_START_POSITION_SCALE_SHIFT));
 				state.playerstate.car_position.lz = LEGACY_S32_WRAP_ADD(
 					state.playerstate.car_position.lz,
-					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(
-						cos_fast(track_angle), RACE_START_POSITION_DISTANCE),
-						RACE_START_POSITION_SCALE_SHIFT));
+					LEGACY_S32_SHL((legacy_s32)multiply_and_scale(cos_fast(track_angle),
+																  RACE_START_POSITION_DISTANCE),
+								   RACE_START_POSITION_SCALE_SHIFT));
 				state.playerstate.car_position.ly = LEGACY_S32_WRAP_ADD(
-					state.playerstate.car_position.ly,
-					RACE_START_CAMERA_HEIGHT_OFFSET);
+					state.playerstate.car_position.ly, RACE_START_CAMERA_HEIGHT_OFFSET);
 				replay_recording_flags = REPLAY_RECORDING_ACTIVE_FLAG;
 			} else {
 				cameramode = CAMERA_MODE_COCKPIT;
@@ -130,8 +129,9 @@ void run_game(void) {
 				restore_gamestate(gameconfig.game_recordedframes);
 
 				while (gameconfig.game_recordedframes != state.game_frame) {
-					if (input_do_checking(1) == KEY_ESCAPE)
+					if (input_do_checking(1) == KEY_ESCAPE) {
 						break;
+					}
 					update_gamestate();
 				}
 
@@ -152,8 +152,9 @@ void run_game(void) {
 
 			if (game_replay_mode == REPLAY_MODE_LIVE && race_exit_request == 0 &&
 				state.game_inputmode != GAME_INPUT_MODE_WAITING) {
-				if (last_processed_frame == state.game_frame)
+				if (last_processed_frame == state.game_frame) {
 					continue;
+				}
 				last_processed_frame = state.game_frame;
 			}
 
@@ -172,19 +173,18 @@ void run_game(void) {
 			if (recording_limit_warning_requested != 0) {
 				input_push_status();
 				audio_suspend();
-				dialog_choice_or_frame_counter = show_dialog(DIALOG_TYPE_MENU,
-					DIALOG_SAVE_BACKGROUND,
-					locate_text_res(gameresptr, "rbf"), -1, -1,
-					dialog_border_color, 0, 0);
-				if (dialog_choice_or_frame_counter == -1)
+				dialog_choice_or_frame_counter = show_dialog(
+					DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(gameresptr, "rbf"),
+					-1, -1, dialog_border_color, 0, 0);
+				if (dialog_choice_or_frame_counter == -1) {
 					dialog_choice_or_frame_counter = 0;
+				}
 
 				audio_resume();
 				dos_timer_set_callbacks_suspended(0);
 				input_pop_status();
 				if (dialog_choice_or_frame_counter != 0) {
-					update_crash_state(
-						CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
+					update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 					race_exit_request = 1;
 				}
 
@@ -198,7 +198,9 @@ void run_game(void) {
 				sprite_select_render_window();
 			}
 
-			if (game_replay_mode != game_replay_mode_copy || dashb_toggle != dashb_toggle_copy || replaybar_toggle != replaybar_toggle_copy || is_in_replay != is_in_replay_copy || followOpponentFlag != followOpponentFlag_copy) {
+			if (game_replay_mode != game_replay_mode_copy || dashb_toggle != dashb_toggle_copy ||
+				replaybar_toggle != replaybar_toggle_copy || is_in_replay != is_in_replay_copy ||
+				followOpponentFlag != followOpponentFlag_copy) {
 				game_replay_mode_copy = game_replay_mode;
 				dashb_toggle_copy = dashb_toggle;
 				replaybar_toggle_copy = replaybar_toggle;
@@ -207,8 +209,7 @@ void run_game(void) {
 				roofbmpheight_copy = 0;
 				dashboard_visible = 0;
 
-				if (game_replay_mode != REPLAY_MODE_PLAYBACK ||
-					idle_expired != 0 ||
+				if (game_replay_mode != REPLAY_MODE_PLAYBACK || idle_expired != 0 ||
 					(replaybar_toggle == 0 && is_in_replay == 0)) {
 					replaybar_enabled = 0;
 				} else {
@@ -217,8 +218,7 @@ void run_game(void) {
 
 				if (idle_expired != 0) {
 					dashbmp_y_copy = RACE_SCREEN_HEIGHT;
-				} else
-				if (dashb_toggle == 0 || followOpponentFlag != 0) {
+				} else if (dashb_toggle == 0 || followOpponentFlag != 0) {
 					if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
 						if (replaybar_enabled != 0) {
 							dashbmp_y_copy = RACE_REPLAY_BAR_TOP;
@@ -229,8 +229,7 @@ void run_game(void) {
 						dashbmp_y_copy = RACE_SCREEN_HEIGHT;
 					}
 				} else {
-					if (game_replay_mode != REPLAY_MODE_PLAYBACK ||
-						replaybar_enabled == 0) {
+					if (game_replay_mode != REPLAY_MODE_PLAYBACK || replaybar_enabled == 0) {
 						height_above_replaybar = RACE_SCREEN_HEIGHT;
 					} else {
 						height_above_replaybar = RACE_REPLAY_BAR_TOP;
@@ -241,11 +240,13 @@ void run_game(void) {
 					dashbmp_y_copy = dashbmp_y;
 				}
 
-				if (roof_height_cache != roofbmpheight_copy || dashbmp_y_copy != viewport_bottom_cache || dashboard_bottom_cache != height_above_replaybar) {
+				if (roof_height_cache != roofbmpheight_copy ||
+					dashbmp_y_copy != viewport_bottom_cache ||
+					dashboard_bottom_cache != height_above_replaybar) {
 					full_redraw_frames_remaining = video_page_count;
-					set_projection(RACE_PROJECTION_HORIZONTAL_SCALE,
-						LEGACY_S16_DIV_OR_ZERO(dashbmp_y_copy,
-							RACE_PROJECTION_VERTICAL_DIVISOR),
+					set_projection(
+						RACE_PROJECTION_HORIZONTAL_SCALE,
+						LEGACY_S16_DIV_OR_ZERO(dashbmp_y_copy, RACE_PROJECTION_VERTICAL_DIVISOR),
 						RACE_SCREEN_WIDTH, dashbmp_y_copy);
 					rect_windshield.top = roofbmpheight_copy;
 					rect_windshield.bottom = dashbmp_y_copy;
@@ -259,15 +260,13 @@ void run_game(void) {
 				replay_controls_drawn[dashboard_buffer_index] = 0;
 				if (dashboard_visible != 0) {
 					sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
-						height_above_replaybar);
+												  height_above_replaybar);
 					setup_car_shapes(DASHBOARD_OPERATION_REDRAW_STATIC);
 				}
 
 				if (replaybar_enabled != 0) {
-					sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, 0,
-						RACE_SCREEN_HEIGHT);
-					loop_game(REPLAY_LOOP_DRAW_CONTROLS,
-						state.game_frame, state.game_frame);
+					sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, 0, RACE_SCREEN_HEIGHT);
+					loop_game(REPLAY_LOOP_DRAW_CONTROLS, state.game_frame, state.game_frame);
 				}
 			} else {
 				if (replaybar_enabled == 0) {
@@ -294,10 +293,9 @@ void run_game(void) {
 			frame_present(&rect_windshield);
 			if (dashboard_visible != 0) {
 				sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, dashbmp_y_copy,
-					height_above_replaybar);
+											  height_above_replaybar);
 				setup_car_shapes(DASHBOARD_OPERATION_UPDATE);
-				sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, 0,
-					RACE_SCREEN_HEIGHT);
+				sprite_set_target_clip_bounds(0, RACE_SCREEN_WIDTH, 0, RACE_SCREEN_HEIGHT);
 			}
 
 			if (full_redraw_frames_remaining != 0) {
@@ -322,17 +320,15 @@ void run_game(void) {
 				if (race_exit_request != 0) {
 
 					if ((game_replay_mode != REPLAY_MODE_LIVE ||
-						state.game_end_event == CRASH_EVENT_EXIT) &&
+						 state.game_end_event == CRASH_EVENT_EXIT) &&
 						race_exit_request != REPLAY_EXIT_REQUESTED) {
 						race_exit_request = 0;
 						game_replay_mode = REPLAY_MODE_PLAYBACK;
 						mouse_minmax_position(0);
-						loop_game(REPLAY_LOOP_LOAD_RESOURCES,
-							REPLAY_LOOP_UNUSED_ARGUMENT,
-							REPLAY_LOOP_UNUSED_ARGUMENT);
-						loop_game(REPLAY_LOOP_SELECT_CONTROL,
-							REPLAY_CONTROL_PAUSE,
-							REPLAY_LOOP_UNUSED_ARGUMENT);
+						loop_game(REPLAY_LOOP_LOAD_RESOURCES, REPLAY_LOOP_UNUSED_ARGUMENT,
+								  REPLAY_LOOP_UNUSED_ARGUMENT);
+						loop_game(REPLAY_LOOP_SELECT_CONTROL, REPLAY_CONTROL_PAUSE,
+								  REPLAY_LOOP_UNUSED_ARGUMENT);
 						is_in_replay = 1;
 						audio_carstate();
 					} else {
@@ -341,9 +337,8 @@ void run_game(void) {
 				}
 
 				if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
-					loop_game(REPLAY_LOOP_HANDLE_INPUT,
-						REPLAY_LOOP_UNUSED_ARGUMENT,
-						REPLAY_LOOP_UNUSED_ARGUMENT);
+					loop_game(REPLAY_LOOP_HANDLE_INPUT, REPLAY_LOOP_UNUSED_ARGUMENT,
+							  REPLAY_LOOP_UNUSED_ARGUMENT);
 					continue;
 				}
 
@@ -353,14 +348,13 @@ void run_game(void) {
 						handle_ingame_kb_shortcuts(input_key);
 					}
 
-				} while (input_key == KEY_UP || input_key == KEY_LEFT ||
-					input_key == KEY_RIGHT || input_key == KEY_DOWN);
+				} while (input_key == KEY_UP || input_key == KEY_LEFT || input_key == KEY_RIGHT ||
+						 input_key == KEY_DOWN);
 
 				if (game_replay_mode == REPLAY_MODE_PAUSED) {
 					dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
 					if (((mouse_butstate & MOUSE_BUTTON_MASK) != 0) ||
-						((get_kb_or_joy_flags() &
-							INPUT_ACTION_BUTTON_MASK) != 0)) {
+						((get_kb_or_joy_flags() & INPUT_ACTION_BUTTON_MASK) != 0)) {
 						game_replay_mode = REPLAY_MODE_LIVE;
 						race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
 						init_game_state_with_frame_rate(configured_frame_rate);
@@ -368,7 +362,8 @@ void run_game(void) {
 				}
 
 			} else {
-				if (dos_kb_get_char() != 0 || race_exit_request != 0 || get_kb_or_joy_flags() != 0) {
+				if (dos_kb_get_char() != 0 || race_exit_request != 0 ||
+					get_kb_or_joy_flags() != 0) {
 					break;
 				}
 			}
@@ -386,14 +381,11 @@ void run_game(void) {
 		is_in_replay = 1;
 		audio_carstate();
 		audio_remove_driver_timer();
-		if (game_replay_mode == REPLAY_MODE_LIVE &&
-			gameconfig.game_opponenttype != 0 &&
+		if (game_replay_mode == REPLAY_MODE_LIVE && gameconfig.game_opponenttype != 0 &&
 			state.opponentstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
-			show_dialog(DIALOG_TYPE_PLACEHOLDERS,
-				DIALOG_NO_BACKGROUND_SAVE,
-				locate_text_res(gameresptr, "cop"), -1,
-				RACE_OPPONENT_PROGRESS_DIALOG_Y, performGraphColor,
-				opponent_progress_text_position, 0);
+			show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_NO_BACKGROUND_SAVE,
+						locate_text_res(gameresptr, "cop"), -1, RACE_OPPONENT_PROGRESS_DIALOG_Y,
+						performGraphColor, opponent_progress_text_position, 0);
 			replay_overflow_acknowledged_word = LEGACY_S16_FROM_BITS(
 				LEGACY_U16_REPLACE_LOW_BYTE(replay_overflow_acknowledged_word, 1U));
 			dialog_choice_or_frame_counter = framespersec;
@@ -407,17 +399,21 @@ void run_game(void) {
 					dialog_choice_or_frame_counter = 0;
 					format_frame_as_string(&resID_byte1, state.game_frame + elapsed_time1, 1);
 					mouse_draw_opaque_check();
-					font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1), opponent_progress_text_position[1]);
+					font_draw_text_opaque(&resID_byte1, font_centered_text_x(&resID_byte1),
+										  opponent_progress_text_position[1]);
 					mouse_draw_transparent_check();
 				}
 
-				if (input_do_checking(1) == KEY_ESCAPE)
+				if (input_do_checking(1) == KEY_ESCAPE) {
 					break;
-				if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE)
+				}
+				if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 					break;
+				}
 				if (RACE_FRAME_LIMIT_MULTIPLIER * framespersec ==
-					state.game_frame + elapsed_time1)
+					state.game_frame + elapsed_time1) {
 					break;
+				}
 			}
 		}
 
@@ -432,5 +428,5 @@ void run_game(void) {
 	check_input();
 	show_waiting();
 
-	return ;
+	return;
 }

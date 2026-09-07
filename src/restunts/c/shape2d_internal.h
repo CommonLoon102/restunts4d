@@ -16,27 +16,26 @@ extern legacy_s8 window_row_table_overflow_message[];
 extern legacy_s8 video_window_resource_name[];
 extern legacy_s8 window_release_order_message[];
 /* Reserved seg012 storage: SPRITE structs followed by line offsets. */
-extern legacy_u8* far wnd_defs;
+extern legacy_u8 *far wnd_defs;
 /* Near pointer relative to seg012 for the current SPRITE in wnd_defs. */
-extern legacy_s8* far next_wnd_def;
+extern legacy_s8 *far next_wnd_def;
 extern struct SPRITE far drawing_sprite;
 extern struct SPRITE far screen_sprite;
-extern struct SPRITE far* mcga_backbuffer_sprite;
-extern struct SPRITE far* mouse_background_sprite;
-extern struct SPRITE far* mouse_medium_sprite;
-extern struct SPRITE far* mouse_small_sprite;
+extern struct SPRITE far *mcga_backbuffer_sprite;
+extern struct SPRITE far *mouse_background_sprite;
+extern struct SPRITE far *mouse_medium_sprite;
+extern struct SPRITE far *mouse_small_sprite;
 extern legacy_s8 mouse_background_dirty;
 extern legacy_u8 sprite_background_stack_depth;
-extern struct SPRITE far* sprite_ptrs[4];
+extern struct SPRITE far *sprite_ptrs[4];
 extern legacy_s16 sprite_background_saved_x[4];
 extern legacy_s16 sprite_background_saved_y[4];
 extern legacy_u8 far sprite_palette_map[];
 extern legacy_u16 raster_fill_pattern;
 extern legacy_u16 raster_alternate_color;
 
-legacy_u16 shape2d_get_word(const legacy_u8 far* source);
-void shape2d_put_word(legacy_u8 far* destination, legacy_u16 value);
-legacy_u16 shape2d_get_line_offset(legacy_u16 sprite_segment,
-	legacy_u16 y);
+legacy_u16 shape2d_get_word(const legacy_u8 far *source);
+void shape2d_put_word(legacy_u8 far *destination, legacy_u16 value);
+legacy_u16 shape2d_get_line_offset(legacy_u16 sprite_segment, legacy_u16 y);
 
 #endif

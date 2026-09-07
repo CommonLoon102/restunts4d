@@ -3,7 +3,7 @@
 
 #include "legacy.h"
 
-extern void far* eng1ptr;
-extern void far* engptr;
+extern void far *eng1ptr;
+extern void far *engptr;
 
 #endif

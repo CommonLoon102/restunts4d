@@ -33,15 +33,11 @@ enum MAIN_MENU_SELECTION {
 legacy_s8 run_menu(void)
 {
 	static const legacy_u8 previous_selection[MAIN_MENU_BUTTON_COUNT] = {
-		MAIN_MENU_CAR, MAIN_MENU_OPPONENT, MAIN_MENU_OPTIONS,
-		MAIN_MENU_DRIVE, MAIN_MENU_TRACK
-	};
+		MAIN_MENU_CAR, MAIN_MENU_OPPONENT, MAIN_MENU_OPTIONS, MAIN_MENU_DRIVE, MAIN_MENU_TRACK};
 	static const legacy_u8 next_selection[MAIN_MENU_BUTTON_COUNT] = {
-		MAIN_MENU_TRACK, MAIN_MENU_DRIVE, MAIN_MENU_CAR,
-		MAIN_MENU_OPTIONS, MAIN_MENU_OPPONENT
-	};
-	legacy_s8 far* resource;
-	struct SHAPE2D far* shape;
+		MAIN_MENU_TRACK, MAIN_MENU_DRIVE, MAIN_MENU_CAR, MAIN_MENU_OPTIONS, MAIN_MENU_OPPONENT};
+	legacy_s8 far *resource;
+	struct SHAPE2D far *shape;
 	legacy_u8 selected;
 	legacy_u8 previous;
 	legacy_u8 blit_mode;
@@ -54,12 +50,11 @@ legacy_s8 run_menu(void)
 	blit_mode = MENU_BLIT_MODE_INITIAL;
 	show_waiting();
 	waitflag = MAIN_MENU_WAIT_TICKS;
-	render_window_sprite = sprite_make_wnd(MAIN_MENU_SCREEN_WIDTH,
-		MAIN_MENU_SCREEN_HEIGHT, MAIN_MENU_TRANSPARENT_COLOR);
-	resource = (legacy_s8 far*)file_load_resource(
-		FILE_RESOURCE_SHAPE2D, main_menu_shapes_name);
+	render_window_sprite = sprite_make_wnd(MAIN_MENU_SCREEN_WIDTH, MAIN_MENU_SCREEN_HEIGHT,
+										   MAIN_MENU_TRANSPARENT_COLOR);
+	resource = (legacy_s8 far *)file_load_resource(FILE_RESOURCE_SHAPE2D, main_menu_shapes_name);
 	sprite_select_render_window();
-	shape = (struct SHAPE2D far*)locate_shape_fatal(resource, main_menu_background_data);
+	shape = (struct SHAPE2D far *)locate_shape_fatal(resource, main_menu_background_data);
 	sprite_shape_to_1_alt(shape);
 	mmgr_free(resource);
 
@@ -67,20 +62,19 @@ legacy_s8 run_menu(void)
 		if (selected != previous) {
 			previous = selected;
 			sprite_select_render_window();
-			sprite_blit_to_video(render_window_sprite,
-				LEGACY_S8_FROM_BITS(blit_mode));
+			sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
 			blit_mode = MENU_BLIT_MODE_REFRESH;
 			sprite_select_screen_compat();
 			menu_reset_animation_timers();
 		}
 
-		elapsed = (legacy_u16)menu_animate_button_highlight(selected,
-			menu_buttons, menu_highlight_second_color, menu_highlight_first_color);
+		elapsed = (legacy_u16)menu_animate_button_highlight(
+			selected, menu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT,
-			menu_buttons);
-		if (hit != MAIN_MENU_MOUSE_HIT_NONE)
+		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT, menu_buttons);
+		if (hit != MAIN_MENU_MOUSE_HIT_NONE) {
 			selected = (legacy_u8)hit;
+		}
 
 		menu_update_idle_counter(elapsed, MAIN_MENU_IDLE_LIMIT_TICKS);
 		if (idle_expired != MAIN_MENU_IDLE_NOT_EXPIRED) {
@@ -88,18 +82,21 @@ legacy_s8 run_menu(void)
 			key = KEY_ENTER;
 		}
 
-		if (key == MAIN_MENU_KEY_NONE)
+		if (key == MAIN_MENU_KEY_NONE) {
 			continue;
-		if (key == KEY_ENTER || key == KEY_SPACE)
+		}
+		if (key == KEY_ENTER || key == KEY_SPACE) {
 			break;
+		}
 		if (key == KEY_ESCAPE) {
 			selected = MAIN_MENU_NO_SELECTION;
 			break;
 		}
-		if (key == KEY_LEFT)
+		if (key == KEY_LEFT) {
 			selected = previous_selection[selected];
-		else if (key == KEY_RIGHT)
+		} else if (key == KEY_RIGHT) {
 			selected = next_selection[selected];
+		}
 	}
 
 	sprite_free_wnd(render_window_sprite);

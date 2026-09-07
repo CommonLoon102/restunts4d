@@ -3,8 +3,8 @@
 
 #include "legacy.h"
 
-void timer_reg_callback(void (far* callback)(void));
-void timer_remove_callback(void (far* callback)(void));
+void timer_reg_callback(void(far *callback)(void));
+void timer_remove_callback(void(far *callback)(void));
 legacy_u32 timer_get_delta_alt(void);
 legacy_u32 timer_custom_delta(legacy_u32 ticks);
 void timer_reset(void);

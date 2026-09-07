@@ -44,11 +44,11 @@ typedef legacy_s16 FILE;
 
 legacy_s16 g_errno;
 
-FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
+FILE *fopen(const legacy_s8 *path, const legacy_s8 *mode)
 {
 	legacy_u16 segm = FP_SEG(path);
 	legacy_u16 offs = FP_OFF(path);
-	FILE* handle;
+	FILE *handle;
 
 	g_errno = REPLDUMP_IO_SUCCESS;
 
@@ -67,8 +67,7 @@ FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 			mov  handle, ax
 			pop  ds
 		}
-	}
-	else { // Open existing file for reading
+	} else { // Open existing file for reading
 		__asm {
 			push ds
 			mov  ah, REPLDUMP_DOS_OPEN_FILE_FUNCTION
@@ -88,7 +87,7 @@ FILE* fopen(const legacy_s8* path, const legacy_s8* mode)
 	return handle;
 }
 
-legacy_s16 fclose(FILE* file)
+legacy_s16 fclose(FILE *file)
 {
 	legacy_s16 res;
 
@@ -106,7 +105,7 @@ legacy_s16 fclose(FILE* file)
 	return res;
 }
 
-size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
+size_t fwrite(const void far *src, size_t size, size_t nmemb, FILE *file)
 {
 	legacy_u16 segm = FP_SEG(src);
 	legacy_u16 offs = FP_OFF(src);
@@ -133,29 +132,28 @@ size_t fwrite(const void far* src, size_t size, size_t nmemb, FILE* file)
 	return res;
 }
 
-void init_row_tables(void) {
+void init_row_tables(void)
+{
 	legacy_s16 i;
 	for (i = 0; i < TRACK_GRID_SIZE; i++) {
 		trackrows[i] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - i);
 		terrainrows[i] = TRACK_GRID_SIZE * i;
-		track_row_positions[i] = (TRACK_GRID_LAST_INDEX - i) <<
-			TRACK_TILE_POSITION_SHIFT;
-		track_row_centers[i] = ((TRACK_GRID_LAST_INDEX - i) <<
-			TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
+		track_row_positions[i] = (TRACK_GRID_LAST_INDEX - i) << TRACK_TILE_POSITION_SHIFT;
+		track_row_centers[i] =
+			((TRACK_GRID_LAST_INDEX - i) << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 		terrainpos[i] = i << TRACK_TILE_POSITION_SHIFT;
-		terraincenterpos[i] = (i << TRACK_TILE_POSITION_SHIFT) +
-			TRACK_TILE_HALF_SIZE;
+		terraincenterpos[i] = (i << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
 
 	for (i = 0; i < TRACK_GRID_SIZE; i++) {
 		track_column_positions[i] = i << TRACK_TILE_POSITION_SHIFT;
-		track_column_centers[i] = (i << TRACK_TILE_POSITION_SHIFT) +
-			TRACK_TILE_HALF_SIZE;
+		track_column_centers[i] = (i << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
 }
 
-void init_trackdata(void) {
-	legacy_s8 far* trkptr;
+void init_trackdata(void)
+{
+	legacy_s8 far *trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 
 	track_primary_route_links = trkptr;
@@ -232,13 +230,13 @@ void init_trackdata(void) {
 
 typedef legacy_u16 REPLDUMP_OUTPUT;
 
-static REPLDUMP_OUTPUT repldump_output_open(const legacy_s8* path)
+static REPLDUMP_OUTPUT repldump_output_open(const legacy_s8 *path)
 {
 	return dos_file_open(path, DOS_FILE_CREATE);
 }
 
-static legacy_u16 repldump_output_write(REPLDUMP_OUTPUT output,
-	const void far* source, legacy_u16 length)
+static legacy_u16 repldump_output_write(REPLDUMP_OUTPUT output, const void far *source,
+										legacy_u16 length)
 {
 	return dos_file_write(output, source, length);
 }
@@ -251,24 +249,21 @@ static void repldump_output_close(REPLDUMP_OUTPUT output)
 #endif
 
 #ifdef RESTUNTS_ORIGINAL
-typedef FILE* REPLDUMP_OUTPUT;
+typedef FILE *REPLDUMP_OUTPUT;
 #define repldump_output_open(path) fopen(path, "w")
-#define repldump_output_write(output, source, length) \
-	fwrite(source, length, 1U, output)
+#define repldump_output_write(output, source, length) fwrite(source, length, 1U, output)
 #define repldump_output_close(output) fclose(output)
 #endif
 
 #ifndef RESTUNTS_ORIGINAL
 
-static legacy_u8 far* serialized_gamestate;
-static const legacy_s8 serialized_state_chunk_name[
-	REPLDUMP_SERIALIZED_CHUNK_NAME_SIZE] = {
-	'g', 'a', 'm', 'e', 's', 't', 'a', 't', 'e', 0, 0, 0
-};
+static legacy_u8 far *serialized_gamestate;
+static const legacy_s8 serialized_state_chunk_name[REPLDUMP_SERIALIZED_CHUNK_NAME_SIZE] = {
+	'g', 'a', 'm', 'e', 's', 't', 'a', 't', 'e', 0, 0, 0};
 #endif
 
 #ifdef RESTUNTS_HEADLESS
-static void headless_status(const legacy_s8* format, ...)
+static void headless_status(const legacy_s8 *format, ...)
 {
 	(void)format;
 }
@@ -280,7 +275,8 @@ static void headless_status(const legacy_s8* format, ...)
 // If there is a second argument (it can by anything, usually 1), then the filename
 // can contain the .rpl extension. It is useful to call this tool via batch files,
 // in that case this tool will terminate normally after done, no need to press any keys.
-legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
+legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
+{
 	legacy_s16 i, len;
 	legacy_s8 outname[REPLDUMP_OUTPUT_NAME_SIZE];
 	legacy_s8 carid[REPLDUMP_CAR_ID_BUFFER_SIZE];
@@ -295,16 +291,15 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	len = strlen(argv[1]);
 	if (len >= REPLDUMP_REPLAY_EXTENSION_SIZE &&
-		((strcmp(argv[1] + len - REPLDUMP_REPLAY_EXTENSION_SIZE,
-		".rpl") == 0) || strcmp(argv[1] + len -
-		REPLDUMP_REPLAY_EXTENSION_SIZE, ".RPL") == 0)) {
+		((strcmp(argv[1] + len - REPLDUMP_REPLAY_EXTENSION_SIZE, ".rpl") == 0) ||
+		 strcmp(argv[1] + len - REPLDUMP_REPLAY_EXTENSION_SIZE, ".RPL") == 0)) {
 		argv[1][len - REPLDUMP_REPLAY_EXTENSION_SIZE] = '\0';
 	}
 
 	init_main(argc, argv);
 #ifndef RESTUNTS_ORIGINAL
-	serialized_gamestate = (legacy_u8 far*)mmgr_alloc_resbytes(
-		serialized_state_chunk_name, GAMESTATE_SERIALIZED_SIZE);
+	serialized_gamestate = (legacy_u8 far *)mmgr_alloc_resbytes(serialized_state_chunk_name,
+																GAMESTATE_SERIALIZED_SIZE);
 #endif
 	init_div0();
 	init_row_tables();
@@ -320,8 +315,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	/* Shape loading still uses this arena; the matrices and display fonts do not
 	 * participate in headless replay simulation. */
 #ifndef RESTUNTS_HEADLESS
-	polyinfoptr = mmgr_alloc_resbytes("polyinfo",
-		REPLDUMP_POLYINFO_RESOURCE_SIZE);
+	polyinfoptr = mmgr_alloc_resbytes("polyinfo", REPLDUMP_POLYINFO_RESOURCE_SIZE);
 #endif
 #endif
 
@@ -345,10 +339,8 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		track_and_directory_backup[i] = track_element_map[i];
 	}
 	for (i = 0; i < TRACKDATA_CHECKPOINT_DATA_SIZE; i++) {
-		track_and_directory_backup[i + TRACKDATA_LINK_TABLE_SIZE] =
-			track_directory[i];
-		track_and_directory_backup[i + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
-			replay_directory[i];
+		track_and_directory_backup[i + TRACKDATA_LINK_TABLE_SIZE] = track_directory[i];
+		track_and_directory_backup[i + TRACKDATA_CHECKPOINT_SECOND_OFFSET] = replay_directory[i];
 	}
 	printf("OK\n");
 
@@ -366,8 +358,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 
 	// Inits from run_game()...
 	viewport_bottom_cache = -1;
-	run_game_random = LEGACY_S16_SHL(get_kevinrandom(),
-		REPLDUMP_RANDOM_SHIFT);
+	run_game_random = LEGACY_S16_SHL(get_kevinrandom(), REPLDUMP_RANDOM_SHIFT);
 	replaybar_toggle = 1;
 	is_in_replay = 0;
 	idle_expired = 0;
@@ -426,15 +417,12 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	}
 	printf("OK\n");
 
-	#ifdef RESTUNTS_ORIGINAL
-	repldump_output_write(fout, &gameconfig.game_recordedframes,
-		sizeof(legacy_u16));
-	#else
-	LEGACY_WRITE_U16_LE(serialized_gamestate,
-		gameconfig.game_recordedframes);
-	repldump_output_write(fout, serialized_gamestate,
-		sizeof(legacy_u16));
-	#endif
+#ifdef RESTUNTS_ORIGINAL
+	repldump_output_write(fout, &gameconfig.game_recordedframes, sizeof(legacy_u16));
+#else
+	LEGACY_WRITE_U16_LE(serialized_gamestate, gameconfig.game_recordedframes);
+	repldump_output_write(fout, serialized_gamestate, sizeof(legacy_u16));
+#endif
 
 	printf("Processing %d frames... ", gameconfig.game_recordedframes);
 
@@ -443,12 +431,12 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 		input_do_checking(1);
 #endif
 		update_gamestate();
-	#ifdef RESTUNTS_ORIGINAL
+#ifdef RESTUNTS_ORIGINAL
 		repldump_output_write(fout, &state, sizeof(struct GAMESTATE));
-	#else
+#else
 		repldump_output_write(fout, serialized_gamestate,
-			gamestate_serialize(serialized_gamestate, &state));
-	#endif
+							  gamestate_serialize(serialized_gamestate, &state));
+#endif
 		//printf("Current frame %d\n", state.frame);
 	}
 
@@ -460,8 +448,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8* argv[]) {
 	if (argc == 2) {
 		input_do_checking(1);
 		fatal_error("\nDone.\n");
-	}
-	else {
+	} else {
 		legacy_timer_shutdown();
 		audiodrv_atexit();
 		kb_exit_handler();

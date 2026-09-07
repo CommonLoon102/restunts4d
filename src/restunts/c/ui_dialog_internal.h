@@ -15,6 +15,6 @@ extern legacy_s8 waiting_message_id[];
 extern legacy_s8 file_load_dialog_id[];
 extern legacy_s8 file_scroll_up_label_id[];
 extern legacy_s8 file_scroll_down_label_id[];
-extern legacy_s8* findfilenames[];
+extern legacy_s8 *findfilenames[];
 
 #endif

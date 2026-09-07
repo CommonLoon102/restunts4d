@@ -9,11 +9,7 @@
 #define REPLAY_CAR_ID_SIZE 4U
 #define REPLAY_TRACK_NAME_SIZE 9U
 
-enum REPLAY_MODE {
-	REPLAY_MODE_LIVE = 0,
-	REPLAY_MODE_PAUSED = 1,
-	REPLAY_MODE_PLAYBACK = 2
-};
+enum REPLAY_MODE { REPLAY_MODE_LIVE = 0, REPLAY_MODE_PAUSED = 1, REPLAY_MODE_PLAYBACK = 2 };
 
 enum REPLAY_PLAYBACK_RATE {
 	REPLAY_PLAYBACK_NORMAL = 0,
@@ -26,10 +22,10 @@ enum REPLAY_PLAYBACK_RATE {
 #define REPLAY_RECORDING_ACTIVE_FLAG 1U
 #define REPLAY_RECORDING_MODIFIED_FLAG 2U
 #define REPLAY_RECORDING_RESTARTABLE_FLAG 4U
-#define REPLAY_RECORDING_HIGHSCORE_INELIGIBLE_FLAGS \
+#define REPLAY_RECORDING_HIGHSCORE_INELIGIBLE_FLAGS                                                \
 	(REPLAY_RECORDING_MODIFIED_FLAG | REPLAY_RECORDING_RESTARTABLE_FLAG)
 
-#pragma pack (push, 1)
+#pragma pack(push, 1)
 
 struct GAMEINFO {
 	legacy_s8 game_playercarid[REPLAY_CAR_ID_SIZE];
@@ -44,19 +40,16 @@ struct GAMEINFO {
 	legacy_u16 game_recordedframes;
 };
 
-#pragma pack (pop)
+#pragma pack(pop)
 
-typedef char legacy_gameinfo_must_be_26_bytes[
-	(sizeof(struct GAMEINFO) == REPLAY_GAMEINFO_SIZE) ? 1 : -1];
+typedef char
+	legacy_gameinfo_must_be_26_bytes[(sizeof(struct GAMEINFO) == REPLAY_GAMEINFO_SIZE) ? 1 : -1];
 
-void replay_gameinfo_decode(struct GAMEINFO* destination,
-	const legacy_u8 far* source);
-void replay_gameinfo_encode(legacy_u8 far* destination,
-	const struct GAMEINFO* source);
+void replay_gameinfo_decode(struct GAMEINFO *destination, const legacy_u8 far *source);
+void replay_gameinfo_encode(legacy_u8 far *destination, const struct GAMEINFO *source);
 legacy_u32 replay_file_size(legacy_u16 recorded_frames);
-legacy_u16 replay_timeline_position(legacy_u16 frame,
-	legacy_u16 recorded_frames, legacy_u16 width);
-legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount,
-	legacy_u16 frames_remaining, legacy_u16 checkpoint_distance);
+legacy_u16 replay_timeline_position(legacy_u16 frame, legacy_u16 recorded_frames, legacy_u16 width);
+legacy_u16 replay_rewind_interpolate(legacy_u16 rewind_amount, legacy_u16 frames_remaining,
+									 legacy_u16 checkpoint_distance);
 
 #endif

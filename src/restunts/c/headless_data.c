@@ -39,7 +39,7 @@ legacy_s16 track_angle;
 legacy_s8 start_finish_column;
 legacy_s8 start_finish_row;
 legacy_s8 hillFlag;
-legacy_s16 hillHeightConsts[2] = { 0, 450 };
+legacy_s16 hillHeightConsts[2] = {0, 450};
 
 legacy_s16 viewport_bottom_cache;
 legacy_s16 run_game_random;
@@ -61,11 +61,11 @@ legacy_s8 kbormouse;
 legacy_s8 g_is_busy;
 legacy_u16 framespersec;
 
-void far* gameresptr;
-struct PLANE far* planptr;
-struct PLANE far* current_planptr;
-struct TRACK_WALL far* wallptr;
-struct GAMESTATE far* cvxptr;
+void far *gameresptr;
+struct PLANE far *planptr;
+struct PLANE far *current_planptr;
+struct TRACK_WALL far *wallptr;
+struct GAMESTATE far *cvxptr;
 
 legacy_s16 trackrows[30];
 legacy_s16 terrainrows[30];
@@ -76,29 +76,29 @@ legacy_s16 terraincenterpos[30];
 legacy_s16 track_column_positions[30];
 legacy_s16 track_column_centers[30];
 
-legacy_s16 far* track_primary_route_links;
-legacy_s16 far* track_alternate_route_links;
-legacy_s8 far* opponent_route_track_indices;
-legacy_s16 far* player_aero_resistance_table;
-legacy_s16 far* opponent_aero_resistance_table;
-legacy_s16 far* reserved_trackside_camera_words;
-legacy_s16 far* trackside_camera_ground_heights;
-legacy_s16 far* roadside_sign_headings;
-struct VECTOR far* trackside_camera_positions;
-struct VECTOR far* roadside_sign_positions;
-legacy_s8 far* track_highscore_table;
-legacy_s8 far* sprite_background_state_stack;
-legacy_s8 far* replay_header_buffer;
-legacy_u8 far* track_element_map;
-legacy_u8 far* track_terrain_map;
-legacy_s8 far* replay_input_buffer;
-legacy_s8 far* track_route_element_ids;
-legacy_s8 far* track_route_traversal_flags;
-legacy_u8 far* roadside_sign_indices_by_tile;
-legacy_s8 far* track_and_directory_backup;
-legacy_s8 far* track_route_columns;
-legacy_s8 far* track_route_rows;
-legacy_u8 far* roadside_sign_shape_indices;
+legacy_s16 far *track_primary_route_links;
+legacy_s16 far *track_alternate_route_links;
+legacy_s8 far *opponent_route_track_indices;
+legacy_s16 far *player_aero_resistance_table;
+legacy_s16 far *opponent_aero_resistance_table;
+legacy_s16 far *reserved_trackside_camera_words;
+legacy_s16 far *trackside_camera_ground_heights;
+legacy_s16 far *roadside_sign_headings;
+struct VECTOR far *trackside_camera_positions;
+struct VECTOR far *roadside_sign_positions;
+legacy_s8 far *track_highscore_table;
+legacy_s8 far *sprite_background_state_stack;
+legacy_s8 far *replay_header_buffer;
+legacy_u8 far *track_element_map;
+legacy_u8 far *track_terrain_map;
+legacy_s8 far *replay_input_buffer;
+legacy_s8 far *track_route_element_ids;
+legacy_s8 far *track_route_traversal_flags;
+legacy_u8 far *roadside_sign_indices_by_tile;
+legacy_s8 far *track_and_directory_backup;
+legacy_s8 far *track_route_columns;
+legacy_s8 far *track_route_rows;
+legacy_u8 far *roadside_sign_shape_indices;
 
 #define FILE_DIALOG_PATH_BUFFER_SIZE 81U
 
@@ -116,84 +116,60 @@ legacy_s8 gsna_string[32];
 legacy_s8 opponent_highscore_name[3];
 
 legacy_s8 textresprefix = 'e';
-const legacy_s8 missing_shape_error_format[] =
-	"locateshape - %-4.4s SHAPE NOT FOUND\r\n";
-const legacy_s8 missing_sound_error_format[] =
-	"locatesound - %-4.4s SOUND NOT FOUND\r\n";
+const legacy_s8 missing_shape_error_format[] = "locateshape - %-4.4s SHAPE NOT FOUND\r\n";
+const legacy_s8 missing_sound_error_format[] = "locatesound - %-4.4s SOUND NOT FOUND\r\n";
 
 /* Lookup tables whose byte-for-byte values affect replay simulation. */
 legacy_u8 atantable[257] = {
-	0, 1, 1, 2, 3, 3, 4, 4, 5, 6, 6, 7, 8, 8, 9, 10,
-	10, 11, 11, 12, 13, 13, 14, 15, 15, 16, 16, 17, 18, 18, 19, 20,
-	20, 21, 22, 22, 23, 23, 24, 25, 25, 26, 27, 27, 28, 28, 29, 30,
-	30, 31, 31, 32, 33, 33, 34, 34, 35, 36, 36, 37, 38, 38, 39, 39,
-	40, 41, 41, 42, 42, 43, 44, 44, 45, 45, 46, 46, 47, 48, 48, 49,
-	49, 50, 51, 51, 52, 52, 53, 53, 54, 55, 55, 56, 56, 57, 57, 58,
-	58, 59, 60, 60, 61, 61, 62, 62, 63, 63, 64, 65, 65, 66, 66, 67,
-	67, 68, 68, 69, 69, 70, 70, 71, 71, 72, 72, 73, 74, 74, 75, 75,
-	76, 76, 77, 77, 78, 78, 79, 79, 80, 80, 81, 81, 82, 82, 83, 83,
-	84, 84, 84, 85, 85, 86, 86, 87, 87, 88, 88, 89, 89, 90, 90, 91,
-	91, 91, 92, 92, 93, 93, 94, 94, 95, 95, 96, 96, 96, 97, 97, 98,
-	98, 99, 99, 99, 100, 100, 101, 101, 102, 102, 102, 103, 103, 104,
-	104, 104, 105, 105, 106, 106, 106, 107, 107, 108, 108, 108, 109,
-	109, 110, 110, 110, 111, 111, 112, 112, 112, 113, 113, 113, 114,
-	114, 115, 115, 115, 116, 116, 116, 117, 117, 118, 118, 118, 119,
-	119, 119, 120, 120, 120, 121, 121, 121, 122, 122, 122, 123, 123,
-	123, 124, 124, 124, 125, 125, 125, 126, 126, 126, 127, 127, 127,
-	128, 128
-};
+	0,	 1,	  1,   2,	3,	 3,	  4,   4,	5,	 6,	  6,   7,	8,	 8,	  9,   10,	10,	 11,  11,
+	12,	 13,  13,  14,	15,	 15,  16,  16,	17,	 18,  18,  19,	20,	 20,  21,  22,	22,	 23,  23,
+	24,	 25,  25,  26,	27,	 27,  28,  28,	29,	 30,  30,  31,	31,	 32,  33,  33,	34,	 34,  35,
+	36,	 36,  37,  38,	38,	 39,  39,  40,	41,	 41,  42,  42,	43,	 44,  44,  45,	45,	 46,  46,
+	47,	 48,  48,  49,	49,	 50,  51,  51,	52,	 52,  53,  53,	54,	 55,  55,  56,	56,	 57,  57,
+	58,	 58,  59,  60,	60,	 61,  61,  62,	62,	 63,  63,  64,	65,	 65,  66,  66,	67,	 67,  68,
+	68,	 69,  69,  70,	70,	 71,  71,  72,	72,	 73,  74,  74,	75,	 75,  76,  76,	77,	 77,  78,
+	78,	 79,  79,  80,	80,	 81,  81,  82,	82,	 83,  83,  84,	84,	 84,  85,  85,	86,	 86,  87,
+	87,	 88,  88,  89,	89,	 90,  90,  91,	91,	 91,  92,  92,	93,	 93,  94,  94,	95,	 95,  96,
+	96,	 96,  97,  97,	98,	 98,  99,  99,	99,	 100, 100, 101, 101, 102, 102, 102, 103, 103, 104,
+	104, 104, 105, 105, 106, 106, 106, 107, 107, 108, 108, 108, 109, 109, 110, 110, 110, 111, 111,
+	112, 112, 112, 113, 113, 113, 114, 114, 115, 115, 115, 116, 116, 116, 117, 117, 118, 118, 118,
+	119, 119, 119, 120, 120, 120, 121, 121, 121, 122, 122, 122, 123, 123, 123, 124, 124, 124, 125,
+	125, 125, 126, 126, 126, 127, 127, 127, 128, 128};
 
-legacy_s8 steerWhlRespTable_20fps[64] = {
-	0, 8, -8, 0, 0, 7, -7, 0, 0, 6, -6, 0, 0, 5, -5, 0,
-	0, 4, -4, 0, 0, 4, -4, 0, 0, 3, -3, 0, 0, 3, -3, 0,
-	0, 2, -2, 0, 0, 2, -2, 0, 0, 2, -2, 0, 0, 1, -1, 0,
-	0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, 0
-};
+legacy_s8 steerWhlRespTable_20fps[64] = {0, 8, -8, 0, 0, 7, -7, 0, 0, 6, -6, 0, 0, 5, -5, 0,
+										 0, 4, -4, 0, 0, 4, -4, 0, 0, 3, -3, 0, 0, 3, -3, 0,
+										 0, 2, -2, 0, 0, 2, -2, 0, 0, 2, -2, 0, 0, 1, -1, 0,
+										 0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, 1, -1, 0};
 
-legacy_s8 steerWhlRespTable_10fps[62] = {
-	0, 16, -16, 0, 0, 14, -14, 0, 0, 12, -12, 0, 0, 10, -10, 0,
-	0, 8, -8, 0, 0, 8, -8, 0, 0, 6, -6, 0, 0, 6, -6, 0,
-	0, 4, -4, 0, 0, 4, -4, 0, 0, 4, -4, 0, 0, 2, -2, 0,
-	0, 2, -2, 0, 0, 1, -1, 0, 0, 1, -1, 0, 0, 1
-};
+legacy_s8 steerWhlRespTable_10fps[62] = {0, 16, -16, 0, 0, 14, -14, 0, 0, 12, -12, 0, 0, 10, -10, 0,
+										 0, 8,	-8,	 0, 0, 8,  -8,	0, 0, 6,  -6,  0, 0, 6,	 -6,  0,
+										 0, 4,	-4,	 0, 0, 4,  -4,	0, 0, 4,  -4,  0, 0, 2,	 -2,  0,
+										 0, 2,	-2,	 0, 0, 1,  -1,	0, 0, 1,  -1,  0, 0, 1};
 
-legacy_s8* steerWhlRespTable_ptr;
-legacy_s16 grassDecelDivTab[5] = { 255, 256, 192, 128, 64 };
+legacy_s8 *steerWhlRespTable_ptr;
+legacy_s16 grassDecelDivTab[5] = {255, 256, 192, 128, 64};
 
-legacy_u8 roadside_sign_forward_types[6] = { 0, 0, 1, 0, 1, 0 };
-legacy_u8 roadside_sign_reverse_types[6] = { 0, 1, 0, 0, 1, 0 };
-legacy_u8 terrConnDataEtoW[20] = {
-	0, 0, 0, 0, 0, 0, 1, 2, 1, 3, 0, 2, 3, 0, 0, 1, 1, 3, 2, 0
-};
-legacy_u8 terrConnDataWtoE[20] = {
-	0, 0, 0, 0, 0, 0, 1, 2, 0, 3, 1, 0, 0, 3, 2, 2, 3, 1, 1, 0
-};
-legacy_u8 terrConnDataNtoS[20] = {
-	0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 4, 5, 0, 0, 4, 1, 5, 4, 1, 0
-};
-legacy_u8 terrConnDataStoN[19] = {
-	0, 0, 0, 0, 0, 0, 1, 0, 5, 1, 4, 0, 5, 4, 0, 5, 1, 1, 4
-};
+legacy_u8 roadside_sign_forward_types[6] = {0, 0, 1, 0, 1, 0};
+legacy_u8 roadside_sign_reverse_types[6] = {0, 1, 0, 0, 1, 0};
+legacy_u8 terrConnDataEtoW[20] = {0, 0, 0, 0, 0, 0, 1, 2, 1, 3, 0, 2, 3, 0, 0, 1, 1, 3, 2, 0};
+legacy_u8 terrConnDataWtoE[20] = {0, 0, 0, 0, 0, 0, 1, 2, 0, 3, 1, 0, 0, 3, 2, 2, 3, 1, 1, 0};
+legacy_u8 terrConnDataNtoS[20] = {0, 0, 0, 0, 0, 0, 1, 1, 5, 0, 4, 5, 0, 0, 4, 1, 5, 4, 1, 0};
+legacy_u8 terrConnDataStoN[19] = {0, 0, 0, 0, 0, 0, 1, 0, 5, 1, 4, 0, 5, 4, 0, 5, 1, 1, 4};
 
-struct POINT2D breakable_object_bounds[2] = { { 5, 40 }, { 5, 10 } };
-struct POINT2D start_finish_pole_bounds[2] = { { 6, 121 }, { 6, 9 } };
-struct POINT2D track_auxiliary_obstacle_bounds[2] = { { 1, 10 }, { 1, 10 } };
-legacy_s16 wheel_gravity_steps[4] = { 21, 21, 15, 15 };
+struct POINT2D breakable_object_bounds[2] = {{5, 40}, {5, 10}};
+struct POINT2D start_finish_pole_bounds[2] = {{6, 121}, {6, 9}};
+struct POINT2D track_auxiliary_obstacle_bounds[2] = {{1, 10}, {1, 10}};
+legacy_s16 wheel_gravity_steps[4] = {21, 21, 15, 15};
 
-struct VECTOR scenery_collision_points[1] = { { 0, 0, 0 } };
-struct VECTOR elevated_road_collision_points[8] = {
-	{ -120, 0, -281 }, { -120, 0, -231 },
-	{ -120, 0, 281 }, { -120, 0, 231 },
-	{ 120, 0, -281 }, { 120, 0, -231 },
-	{ 120, 0, 281 }, { 120, 0, 231 }
-};
-struct VECTOR corkscrew_lr_collision_points[2] = { { -60, 0, -512 }, { 60, 0, 512 } };
-struct VECTOR corkscrew_up_collision_points[2] = { { -392, 0, 0 }, { -632, 0, 0 } };
-struct VECTOR corkscrew_down_collision_points[2] = { { 392, 0, 0 }, { 632, 0, 0 } };
+struct VECTOR scenery_collision_points[1] = {{0, 0, 0}};
+struct VECTOR elevated_road_collision_points[8] = {{-120, 0, -281}, {-120, 0, -231}, {-120, 0, 281},
+												   {-120, 0, 231},	{120, 0, -281},	 {120, 0, -231},
+												   {120, 0, 281},	{120, 0, 231}};
+struct VECTOR corkscrew_lr_collision_points[2] = {{-60, 0, -512}, {60, 0, 512}};
+struct VECTOR corkscrew_up_collision_points[2] = {{-392, 0, 0}, {-632, 0, 0}};
+struct VECTOR corkscrew_down_collision_points[2] = {{392, 0, 0}, {632, 0, 0}};
 struct VECTOR slalom_collision_points[4] = {
-	{ 23, 0, -255 }, { 97, 0, -255 },
-	{ -97, 0, 255 }, { -23, 0, 255 }
-};
+	{23, 0, -255}, {97, 0, -255}, {-97, 0, 255}, {-23, 0, 255}};
 
 /* Shared simulation scratch data. */
 struct MATRIX car_to_world_rotation;
@@ -243,27 +219,24 @@ legacy_u16 legacy_divide_fault_offset;
 
 /* Track collision bounds.  Adjacent legacy labels intentionally exposed
  * overlapping windows; the C arrays make each window explicit. */
-legacy_s16 loopSurface_ZBounds0[6] = { 0, 224, 389, 449, 389, 224 };
-legacy_s16 loopSurface_ZBounds1[6] = { 224, 389, 449, 389, 224, 0 };
+legacy_s16 loopSurface_ZBounds0[6] = {0, 224, 389, 449, 389, 224};
+legacy_s16 loopSurface_ZBounds1[6] = {224, 389, 449, 389, 224, 0};
 legacy_s16 loopSurface_maxZ = 449;
-legacy_s16 loopSurface_XBounds0[6] = { -400, -400, -352, -304, -270, -235 };
-legacy_s16 loopSurface_XBounds1[6] = { -400, -352, -304, -270, -235, -200 };
-legacy_s16 loopBase_ZBounds0[6] = { 0, 178, 360, 536, 704, 868 };
-legacy_s16 loopBase_ZBounds1[6] = { 178, 360, 536, 704, 868, 2000 };
-legacy_s16 loopBae_InnXBounds0[6] = { 0, -20, -40, -60, -80, -100 };
-legacy_s16 loopBase_InnXBounds1[6] = { -20, -40, -60, -80, -100, -120 };
-legacy_s16 loopBase_OutXBounds0[6] = { 400, 361, 320, 276, 226, 174 };
-legacy_s16 loopBase_OutXBounds1[6] = { 361, 320, 276, 226, 174, 120 };
-legacy_s16 bkRdEntr_triang_zAdjust[4] = { -251, -84, 84, 251 };
-legacy_s16 corkLR_negZBound[12] = {
-	0, -94, -187, -280, -373, -466, -559, -652, -745, -838, -931, -1024
-};
-legacy_s16 corkLR_posZBound[12] = {
-	0, 1024, 931, 838, 745, 652, 559, 466, 373, 280, 187, 94
-};
-legacy_s16 highEntrZBounds0[6] = { -512, -334, -168, 0, 168, 334 };
-legacy_s16 highEntrZBounds1[6] = { -334, -168, 0, 168, 334, 1000 };
-legacy_s16 highEntrXInnBounds0[6] = { 0, 0, 0, 0, 0, 120 };
-legacy_s16 highEntrXInnBounds1[6] = { 0, 0, 0, 0, 120, 120 };
-legacy_s16 highEntrXOutBounds0[6] = { 120, 168, 216, 264, 312, 360 };
-legacy_s16 highEntrXOutBounds1[6] = { 168, 216, 264, 312, 360, 360 };
+legacy_s16 loopSurface_XBounds0[6] = {-400, -400, -352, -304, -270, -235};
+legacy_s16 loopSurface_XBounds1[6] = {-400, -352, -304, -270, -235, -200};
+legacy_s16 loopBase_ZBounds0[6] = {0, 178, 360, 536, 704, 868};
+legacy_s16 loopBase_ZBounds1[6] = {178, 360, 536, 704, 868, 2000};
+legacy_s16 loopBae_InnXBounds0[6] = {0, -20, -40, -60, -80, -100};
+legacy_s16 loopBase_InnXBounds1[6] = {-20, -40, -60, -80, -100, -120};
+legacy_s16 loopBase_OutXBounds0[6] = {400, 361, 320, 276, 226, 174};
+legacy_s16 loopBase_OutXBounds1[6] = {361, 320, 276, 226, 174, 120};
+legacy_s16 bkRdEntr_triang_zAdjust[4] = {-251, -84, 84, 251};
+legacy_s16 corkLR_negZBound[12] = {0,	 -94,  -187, -280, -373, -466,
+								   -559, -652, -745, -838, -931, -1024};
+legacy_s16 corkLR_posZBound[12] = {0, 1024, 931, 838, 745, 652, 559, 466, 373, 280, 187, 94};
+legacy_s16 highEntrZBounds0[6] = {-512, -334, -168, 0, 168, 334};
+legacy_s16 highEntrZBounds1[6] = {-334, -168, 0, 168, 334, 1000};
+legacy_s16 highEntrXInnBounds0[6] = {0, 0, 0, 0, 0, 120};
+legacy_s16 highEntrXInnBounds1[6] = {0, 0, 0, 0, 120, 120};
+legacy_s16 highEntrXOutBounds0[6] = {120, 168, 216, 264, 312, 360};
+legacy_s16 highEntrXOutBounds1[6] = {168, 216, 264, 312, 360, 360};
