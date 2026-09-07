@@ -115,6 +115,11 @@ including macro bodies, empty loops, and bodies spanning preprocessor
 branches. Review those cases manually; a successful clang-format check does
 not prove that those cases have braces.
 
+## Complexity audit
+
+See [the complexity report](docs/complexity.md) for measurements, completed
+refactors and the remaining priorities.
+
 ## How to build
 
 ### On Windows

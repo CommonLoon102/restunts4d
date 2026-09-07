@@ -226,111 +226,100 @@ static void shape3d_transform_vertex(const struct SHAPE3D *shape, legacy_u16 ind
 	transformed->z = LEGACY_S16_WRAP_ADD(transformed->z, translation->z);
 }
 
-legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
-{
-	legacy_u8 far *visibility_masks;
-	legacy_u8 far *front_facing_masks;
-
+/* Per-shape cache stays on the caller's stack, as in the original transform loop. */
+struct SHAPE3D_TRANSFORM_CONTEXT {
 	legacy_u8 vertex_clip_flags[SHAPE3D_VERTEX_FLAG_CAPACITY];
-	struct MATRIX *object_rotation;
-	struct MATRIX inverse_view_rotation;
 	struct MATRIX object_to_view_rotation;
 	struct VECTOR view_translation;
-	struct VECTOR scratch_vector;
-	struct VECTOR transformed_vector;
-	struct VECTOR sphere_radius_endpoint;
+	struct VECTOR view_vertices[SHAPE3D_VERTEX_CAPACITY];
+	struct POINT2D projected_vertices[SHAPE3D_VERTEX_CAPACITY];
 	legacy_s32 visibility_mask;
 	legacy_s32 front_facing_mask;
-	legacy_u16 queued_primitive_count, all_vertices_behind, any_vertex_behind;
-	legacy_u8 common_clip_flags, primitive_type;
-	struct VECTOR view_vertices[SHAPE3D_VERTEX_CAPACITY];
-	legacy_u16 primitive_flags, resource_primitive_type, primitive_visible;
-	legacy_u16 polygon_vertex_count, vertex_index, previous_vertex_index, sphere_screen_radius;
-	legacy_s16 point_x, point_y;
-	legacy_u16 output_point_index;
-	legacy_s32 depth_sum;
-	struct POINT2D projected_point, bounds_point;
-	struct POINT2D polyinfo_points[4];
-	struct POINT2D projected_vertices[SHAPE3D_VERTEX_CAPACITY];
-	struct POINT2D **projected_point_pointer;
+};
 
+static void shape3d_prepare_instance(struct TRANSFORMEDSHAPE3D *instance,
+									 struct SHAPE3D_TRANSFORM_CONTEXT *context)
+{
+	struct MATRIX *object_rotation;
+	struct MATRIX inverse_view_rotation;
+	struct VECTOR forward_vector;
+	struct VECTOR view_direction;
 	legacy_u16 i;
-	legacy_u16 vertex_radius_or_sort_flag, vertex_index_or_depth, vertex_index_or_radius;
 
-	//result = ported_transformed_shape_op_(instance);
-	//return result;
-
-	if (polygon_buffer_full != 0) {
-		return 1;
-	}
-	transshapenumverts = instance->shapeptr->shape3d_numverts;
-	/* Shape files store this count in one byte.  Reject a damaged descriptor
-	 * before it can overrun the fixed-size transformation work arrays. */
-	if (transshapenumverts > SHAPE3D_VERTEX_CAPACITY) {
-		return 1;
-	}
 	transshapeprimitives = instance->shapeptr->shape3d_primitives;
 	transshapenumpaints = instance->shapeptr->shape3d_numpaints;
-	visibility_masks = instance->shapeptr->shape3d_visibility_masks;
-	front_facing_masks = instance->shapeptr->shape3d_front_facing_masks;
 	transshapematerial = instance->material;
 	if (transshapematerial >= transshapenumpaints) {
 		transshapematerial = 0;
 	}
 	transshapeflags = instance->ts_flags;
-
 	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 		transshaperectptr = instance->rectptr;
 	}
-
 	for (i = 0; i < transshapenumverts; i++) {
-		vertex_clip_flags[i] = SHAPE3D_VERTEX_UNTRANSFORMED;
+		context->vertex_clip_flags[i] = SHAPE3D_VERTEX_UNTRANSFORMED;
 	}
 
-	if ((transshapeflags & SHAPE3D_PRETRANSFORMED_FLAG) == 0) {
-		object_rotation = mat_rot_zxy(instance->rotvec.x, instance->rotvec.y, instance->rotvec.z,
-									  MATRIX_ROTATION_ORDER_ZXY);
-		mat_mul_vector(&instance->pos, &mat_temp, &view_translation);
-		mat_multiply(object_rotation, &mat_temp, &object_to_view_rotation);
-		mat_invert(&object_to_view_rotation, &inverse_view_rotation);
-		scratch_vector.x = 0;
-		scratch_vector.y = 0;
-		scratch_vector.z = SHAPE3D_FORWARD_VECTOR_SCALE;
-		mat_mul_vector(&scratch_vector, &inverse_view_rotation, &transformed_vector);
-		if ((transformed_vector.y <= 0 || instance->pos.y >= 0) &&
-			(LEGACY_S16_SHL(instance->culling_distance, 1U) <= absolute_word(view_translation.x) ||
-			 LEGACY_S16_SHL(instance->culling_distance, 1U) <= absolute_word(view_translation.z))) {
-			shape_view_direction_sector = vector_direction_sector(&transformed_vector);
-			visibility_mask = invpow2tbl[shape_view_direction_sector];
-			front_facing_mask = invpow2tbl[shape_view_direction_sector];
-		} else {
-			visibility_mask = -1;
-			front_facing_mask = 0;
-		}
+	context->visibility_mask = -1;
+	context->front_facing_mask = 0;
+	object_rotation = mat_rot_zxy(instance->rotvec.x, instance->rotvec.y, instance->rotvec.z,
+								  MATRIX_ROTATION_ORDER_ZXY);
+	if ((transshapeflags & SHAPE3D_PRETRANSFORMED_FLAG) != 0) {
+		mat_multiply(object_rotation, &mat_temp, &context->object_to_view_rotation);
+		context->view_translation = instance->pos;
+		return;
+	}
+	mat_mul_vector(&instance->pos, &mat_temp, &context->view_translation);
+	mat_multiply(object_rotation, &mat_temp, &context->object_to_view_rotation);
+	mat_invert(&context->object_to_view_rotation, &inverse_view_rotation);
+	forward_vector.x = 0;
+	forward_vector.y = 0;
+	forward_vector.z = SHAPE3D_FORWARD_VECTOR_SCALE;
+	mat_mul_vector(&forward_vector, &inverse_view_rotation, &view_direction);
+	if ((view_direction.y <= 0 || instance->pos.y >= 0) &&
+		(LEGACY_S16_SHL(instance->culling_distance, 1U) <=
+			 absolute_word(context->view_translation.x) ||
+		 LEGACY_S16_SHL(instance->culling_distance, 1U) <=
+			 absolute_word(context->view_translation.z))) {
+		shape_view_direction_sector = vector_direction_sector(&view_direction);
+		context->visibility_mask = invpow2tbl[shape_view_direction_sector];
+		context->front_facing_mask = invpow2tbl[shape_view_direction_sector];
+	}
+}
+
+static void shape3d_cache_vertex(const struct SHAPE3D *shape,
+								 struct SHAPE3D_TRANSFORM_CONTEXT *context, legacy_u16 index)
+{
+	struct VECTOR transformed;
+
+	shape3d_transform_vertex(shape, index, shape_half_scale, &context->object_to_view_rotation,
+							 &context->view_translation, &transformed);
+	context->view_vertices[index] = transformed;
+	if (transformed.z < SHAPE3D_NEAR_CLIP_Z) {
+		context->vertex_clip_flags[index] = 1;
 	} else {
-		object_rotation = mat_rot_zxy(instance->rotvec.x, instance->rotvec.y, instance->rotvec.z,
-									  MATRIX_ROTATION_ORDER_ZXY);
-		mat_multiply(object_rotation, &mat_temp, &object_to_view_rotation);
-		view_translation = instance->pos;
-		visibility_mask = -1;
-		front_facing_mask = 0;
+		context->vertex_clip_flags[index] = 0;
+		vector_to_point(&transformed, &context->projected_vertices[index]);
 	}
+}
 
-	shape_polygon_predecessor = polygon_list_tail;
-	polygon_insertion_cursor = polygon_list_tail;
-	shape_polygon_count = 0;
-	queued_primitive_count = 0;
+static legacy_u16 shape3d_bounds_are_clipped(struct TRANSFORMEDSHAPE3D *instance,
+											 struct SHAPE3D_TRANSFORM_CONTEXT *context)
+{
+	struct VECTOR first_vertex;
+	struct VECTOR fifth_vertex;
+	legacy_u8 common_clip_flags;
+	legacy_u16 all_vertices_behind, any_vertex_behind, i;
 
 	if (transshapenumverts <= 8) {
 		transshapenumvertscopy = transshapenumverts;
 	} else {
 		transshapenumvertscopy = 8;
 	}
-
 	if (transshapenumvertscopy > 4) {
-		shape3d_vertex_read(instance->shapeptr, 0U, &scratch_vector);
-		shape3d_vertex_read(instance->shapeptr, 4U, &transformed_vector);
-		if (scratch_vector.y == transformed_vector.y) {
+		shape3d_vertex_read(instance->shapeptr, 0U, &first_vertex);
+		shape3d_vertex_read(instance->shapeptr, 4U, &fifth_vertex);
+		if (first_vertex.y == fifth_vertex.y) {
 			transshapenumvertscopy = 4;
 		}
 	}
@@ -339,18 +328,13 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 	all_vertices_behind = 1;
 	any_vertex_behind = 0;
 	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
-		polyvertpointptrtab[i] = &projected_vertices[i];
-		shape3d_transform_vertex(instance->shapeptr, i, shape_half_scale, &object_to_view_rotation,
-								 &view_translation, &transformed_vector);
-		view_vertices[i] = transformed_vector;
-		if (transformed_vector.z < SHAPE3D_NEAR_CLIP_Z) {
-			vertex_clip_flags[i] = 1;
+		polyvertpointptrtab[i] = &context->projected_vertices[i];
+		shape3d_cache_vertex(instance->shapeptr, context, i);
+		if (context->vertex_clip_flags[i] != 0) {
 			any_vertex_behind = 1;
 			continue;
 		}
 		all_vertices_behind = 0;
-		vertex_clip_flags[i] = 0;
-		vector_to_point(&transformed_vector, polyvertpointptrtab[i]);
 		if (common_clip_flags != 0) {
 			common_clip_flags &= rect_compare_point(polyvertpointptrtab[i]);
 		}
@@ -358,12 +342,371 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 			break;
 		}
 	}
-	if (i == transshapenumvertscopy &&
-		(all_vertices_behind != 0 || any_vertex_behind == 0 ||
-		 LEGACY_S16_FROM_BITS(instance->culling_distance) < absolute_word(view_translation.x))) {
-		return (legacy_u16)-1;
+	return i == transshapenumvertscopy && (all_vertices_behind != 0 || any_vertex_behind == 0 ||
+										   LEGACY_S16_FROM_BITS(instance->culling_distance) <
+											   absolute_word(context->view_translation.x));
+}
+
+static legacy_u16 shape3d_prepare_primitive_vertices(const struct SHAPE3D *shape,
+													 struct SHAPE3D_TRANSFORM_CONTEXT *context,
+													 legacy_u16 *any_vertex_behind)
+{
+	legacy_u8 common_clip_flags;
+	legacy_u16 all_vertices_behind, vertex_count, vertex_index;
+
+	common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
+	all_vertices_behind = 1;
+	*any_vertex_behind = 0;
+	transshapeprimindexptr = transshapeprimitives;
+	for (vertex_count = 0; vertex_count < transshapenumvertscopy;
+		 vertex_count = LEGACY_U16_WRAP_ADD(vertex_count, 1U)) {
+		vertex_index = transshapeprimindexptr[0];
+		transshapeprimindexptr++;
+		polyvertpointptrtab[vertex_count] = &context->projected_vertices[vertex_index];
+		if (context->vertex_clip_flags[vertex_index] == SHAPE3D_VERTEX_UNTRANSFORMED) {
+			shape3d_cache_vertex(shape, context, vertex_index);
+		}
+		if (context->vertex_clip_flags[vertex_index] == 0) {
+			all_vertices_behind = 0;
+			if (common_clip_flags != 0) {
+				common_clip_flags &= rect_compare_point(polyvertpointptrtab[vertex_count]);
+			}
+		} else if (context->vertex_clip_flags[vertex_index] == 1) {
+			*any_vertex_behind = 1;
+		}
+	}
+	return all_vertices_behind == 0 && (common_clip_flags == 0 || *any_vertex_behind != 0);
+}
+
+static void shape3d_project_near_intersection(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+											  legacy_u16 front_index, legacy_u16 behind_index,
+											  struct POINT2D *point)
+{
+	struct VECTOR intersection;
+
+	vector_interpolate_at_z(&context->view_vertices[front_index],
+							&context->view_vertices[behind_index], &intersection,
+							SHAPE3D_NEAR_CLIP_Z);
+	vector_to_point(&intersection, point);
+}
+
+static void shape3d_emit_polygon_intersection(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+											  legacy_u16 front_index, legacy_u16 behind_index,
+											  legacy_u16 *point_count, legacy_u8 *clip_flags)
+{
+	struct POINT2D point;
+
+	shape3d_project_near_intersection(context, front_index, behind_index, &point);
+	if (point.px != context->projected_vertices[front_index].px ||
+		point.py != context->projected_vertices[front_index].py) {
+		polyinfo_emit_point(point_count, clip_flags, &point);
+	}
+}
+
+static void shape3d_emit_clipped_polygon_edge(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+											  legacy_u16 previous_index, legacy_u16 vertex_index,
+											  legacy_u16 *point_count, legacy_u8 *clip_flags,
+											  struct POINT2D *projected_point)
+{
+	if (context->vertex_clip_flags[vertex_index] != 0) {
+		if (context->vertex_clip_flags[previous_index] == 0) {
+			shape3d_emit_polygon_intersection(context, previous_index, vertex_index, point_count,
+											  clip_flags);
+		}
+	} else {
+		if (context->vertex_clip_flags[previous_index] != 0) {
+			shape3d_emit_polygon_intersection(context, vertex_index, previous_index, point_count,
+											  clip_flags);
+		}
+		polyinfo_emit_point(point_count, clip_flags, projected_point);
+	}
+}
+
+static legacy_u8 shape3d_emit_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+									  legacy_u16 any_vertex_behind, legacy_s32 *depth_sum)
+{
+	legacy_u16 output_point_index, previous_vertex_index, vertex_index, i;
+	legacy_u8 common_clip_flags;
+
+	output_point_index = 0U;
+	transshapeprimindexptr = transshapeprimitives;
+	*depth_sum = 0;
+	common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
+	previous_vertex_index = 0;
+	if (any_vertex_behind != 0) {
+		previous_vertex_index = transshapeprimitives[transshapenumvertscopy - 1];
+	}
+	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
+		vertex_index = transshapeprimindexptr[0];
+		transshapeprimindexptr++;
+		*depth_sum = LEGACY_S32_WRAP_ADD_S16(*depth_sum, context->view_vertices[vertex_index].z);
+		if (any_vertex_behind == 0) {
+			polyinfo_emit_point(&output_point_index, &common_clip_flags, polyvertpointptrtab[i]);
+		} else {
+			shape3d_emit_clipped_polygon_edge(context, previous_vertex_index, vertex_index,
+											  &output_point_index, &common_clip_flags,
+											  polyvertpointptrtab[i]);
+			previous_vertex_index = vertex_index;
+		}
+	}
+	if (any_vertex_behind != 0) {
+		transshapenumvertscopy = output_point_index;
+	}
+	return common_clip_flags;
+}
+
+static void shape3d_adjust_polygon_bounds(void)
+{
+	struct POINT2D point;
+	legacy_u16 i;
+
+	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
+		polyinfo_read_point(transshapepolyinfo, i, &point);
+		if (point.px < transshaperectptr->left) {
+			transshaperectptr->left = point.px;
+		}
+		if (transshaperectptr->right < point.px + 1) {
+			transshaperectptr->right = point.px + 1;
+		}
+		if (transshaperectptr->top > point.py) {
+			transshaperectptr->top = point.py;
+		}
+		if (transshaperectptr->bottom < point.py + 1) {
+			transshaperectptr->bottom = point.py + 1;
+		}
+	}
+}
+
+static legacy_u16 shape3d_prepare_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+										  legacy_u16 any_vertex_behind, legacy_u16 primitive_flags,
+										  const legacy_u8 far *front_facing_masks,
+										  legacy_s32 *depth_sum)
+{
+	legacy_u8 common_clip_flags;
+
+	common_clip_flags = shape3d_emit_polygon(context, any_vertex_behind, depth_sum);
+	if (transshapenumvertscopy == 0 || common_clip_flags != 0) {
+		return 0;
+	}
+	if ((primitive_flags & SHAPE3D_PRIMITIVE_ALWAYS_VISIBLE_FLAG) == 0 &&
+		((legacy_u32)context->front_facing_mask & LEGACY_READ_U32_LE(front_facing_masks)) == 0UL &&
+		polyinfo_is_facing_camera(transshapepolyinfo) == 0) {
+		return 0;
+	}
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
+		shape3d_adjust_polygon_bounds();
+	}
+	return 1;
+}
+
+static legacy_u16 shape3d_prepare_line(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+									   legacy_s32 *depth_sum)
+{
+	legacy_u16 first_index, second_index;
+
+	first_index = transshapeprimitives[0];
+	second_index = transshapeprimitives[1];
+	if (context->vertex_clip_flags[first_index] + context->vertex_clip_flags[second_index] == 2) {
+		return 0;
+	}
+	if (context->vertex_clip_flags[first_index] != 0) {
+		shape3d_project_near_intersection(context, second_index, first_index,
+										  &context->projected_vertices[first_index]);
+	} else if (context->vertex_clip_flags[second_index] != 0) {
+		shape3d_project_near_intersection(context, first_index, second_index,
+										  &context->projected_vertices[second_index]);
 	}
 
+	/* Preserve the signed 16-bit sum used to sort lines, including car wheels. */
+	*depth_sum = (legacy_s32)LEGACY_S16_WRAP_ADD(context->view_vertices[first_index].z,
+												 context->view_vertices[second_index].z);
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
+	polyinfo_write_point(transshapepolyinfo, 1U, polyvertpointptrtab[1]);
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
+		rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
+		rect_adjust_from_point(polyvertpointptrtab[1], transshaperectptr);
+	}
+	transshapenumvertscopy = 2;
+	return 1;
+}
+
+static void shape3d_adjust_round_bounds(const struct POINT2D *center, legacy_u16 radius,
+										legacy_s16 padding)
+{
+	struct POINT2D point;
+
+	point.px = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(center->px, radius), padding);
+	point.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(center->py, radius), padding);
+	rect_adjust_from_point(&point, transshaperectptr);
+	point.px = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(center->px, radius), padding);
+	point.py = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(center->py, radius), padding);
+	rect_adjust_from_point(&point, transshaperectptr);
+}
+
+static legacy_u16 shape3d_prepare_wheel(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+										legacy_u16 any_vertex_behind, legacy_s32 *depth_sum)
+{
+	struct POINT2D points[4];
+	legacy_u16 i, radius, other_radius;
+
+	if (any_vertex_behind != 0) {
+		return 0;
+	}
+	for (i = 0; i < 4; i++) {
+		points[i] = *polyvertpointptrtab[i];
+		polyinfo_write_point(transshapepolyinfo, i, &points[i]);
+	}
+	if (is_facing_camera(points) != 0) {
+		*depth_sum =
+			LEGACY_S32_SHL((legacy_s32)context->view_vertices[transshapeprimitives[0]].z, 2U);
+	} else {
+		points[0] = *polyvertpointptrtab[3];
+		points[1] = *polyvertpointptrtab[4];
+		points[2] = *polyvertpointptrtab[5];
+		points[3] = *polyvertpointptrtab[0];
+		for (i = 0; i < 4; i++) {
+			polyinfo_write_point(transshapepolyinfo, i, &points[i]);
+		}
+		*depth_sum =
+			LEGACY_S32_SHL((legacy_s32)context->view_vertices[transshapeprimitives[3]].z, 2U);
+	}
+
+	radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[1].px),
+						   LEGACY_S16_WRAP_SUB(points[0].py, points[1].py));
+	other_radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[2].px),
+								 LEGACY_S16_WRAP_SUB(points[0].py, points[2].py));
+	if (other_radius > radius) {
+		radius = other_radius;
+	}
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
+		shape3d_adjust_round_bounds(&points[0], radius, 1);
+		shape3d_adjust_round_bounds(&points[3], radius, 1);
+	}
+	transshapenumvertscopy = 4;
+	return 1;
+}
+
+static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+										 legacy_s32 *depth_sum)
+{
+	struct VECTOR center, endpoint, radius_vector;
+	legacy_u16 center_index, radius_index, screen_radius;
+
+	center_index = transshapeprimitives[0];
+	radius_index = transshapeprimitives[1];
+	*depth_sum = (legacy_s32)LEGACY_S16_WRAP_ADD(context->view_vertices[center_index].z,
+												 context->view_vertices[radius_index].z);
+	if (context->vertex_clip_flags[center_index] + context->vertex_clip_flags[radius_index] != 0) {
+		return 0;
+	}
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
+	center = context->view_vertices[center_index];
+	endpoint = context->view_vertices[radius_index];
+	radius_vector.x = LEGACY_S16_WRAP_SUB(center.x, endpoint.x);
+	radius_vector.y = LEGACY_S16_WRAP_SUB(center.y, endpoint.y);
+	radius_vector.z = LEGACY_S16_WRAP_SUB(center.z, endpoint.z);
+	screen_radius = projection_scale_x_wrapped(polarRadius3D(&radius_vector), center.z);
+	polyinfo_write_word(transshapepolyinfo, 5U, screen_radius);
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
+		shape3d_adjust_round_bounds(polyvertpointptrtab[0], screen_radius, 0);
+	}
+	transshapenumvertscopy = 2;
+	return 1;
+}
+
+static legacy_u16 shape3d_prepare_point(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+										legacy_s32 *depth_sum)
+{
+	legacy_u16 vertex_index;
+
+	vertex_index = transshapeprimitives[0];
+	if (context->vertex_clip_flags[vertex_index] != 0) {
+		return 0;
+	}
+	*depth_sum = context->view_vertices[vertex_index].z;
+	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
+	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
+		rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
+	}
+	transshapenumvertscopy = 1;
+	return 1;
+}
+
+static legacy_u16 shape3d_prepare_primitive(struct SHAPE3D_TRANSFORM_CONTEXT *context,
+											legacy_u8 primitive_type, legacy_u16 any_vertex_behind,
+											legacy_u16 primitive_flags,
+											const legacy_u8 far *front_facing_masks,
+											legacy_s32 *depth_sum)
+{
+	switch (primitive_type) {
+		case RENDER_PRIMITIVE_POLYGON:
+			return shape3d_prepare_polygon(context, any_vertex_behind, primitive_flags,
+										   front_facing_masks, depth_sum);
+		case RENDER_PRIMITIVE_LINE:
+			return shape3d_prepare_line(context, depth_sum);
+		case RENDER_PRIMITIVE_WHEEL:
+			return shape3d_prepare_wheel(context, any_vertex_behind, depth_sum);
+		case RENDER_PRIMITIVE_SPHERE:
+			return shape3d_prepare_sphere(context, depth_sum);
+		case RENDER_PRIMITIVE_POINT:
+			return shape3d_prepare_point(context, depth_sum);
+		default:
+			return 0;
+	}
+}
+
+static legacy_u16 shape3d_insert_primitive(legacy_u8 primitive_type, legacy_u16 primitive_flags,
+										   legacy_s32 depth_sum)
+{
+	legacy_u16 depth, sort_by_depth;
+
+	transshapepolyinfo[3] = transshapenumvertscopy;
+	transshapepolyinfo[4] = primitive_type;
+	if (transprimitivepaintjob == BACKLIGHT_PAINT_DEFAULT) {
+		transshapepolyinfo[2] = backlights_paint_override;
+	} else {
+		transshapepolyinfo[2] = transprimitivepaintjob;
+	}
+	depth = shape3d_average_depth(depth_sum, transshapenumvertscopy);
+	polyinfo_write_word(transshapepolyinfo, 0U, depth);
+	if ((transshapeflags & SHAPE3D_NO_DEPTH_SORT_FLAG) != 0 ||
+		(primitive_flags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
+		sort_by_depth = 0;
+	} else {
+		sort_by_depth = 1;
+	}
+	polygon_buffer_full = polygon_insert_newest(depth, sort_by_depth);
+	return polygon_buffer_full;
+}
+
+legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
+{
+	struct SHAPE3D_TRANSFORM_CONTEXT context;
+	legacy_u8 far *visibility_masks;
+	legacy_u8 far *front_facing_masks;
+	legacy_u8 primitive_type;
+	legacy_u16 queued_primitive_count, primitive_flags, primitive_visible, any_vertex_behind;
+	legacy_s32 depth_sum;
+
+	if (polygon_buffer_full != 0) {
+		return 1;
+	}
+	transshapenumverts = instance->shapeptr->shape3d_numverts;
+	/* Shape files store this count in one byte. Reject a damaged descriptor
+	 * before it can overrun the fixed-size transformation work arrays. */
+	if (transshapenumverts > SHAPE3D_VERTEX_CAPACITY) {
+		return 1;
+	}
+	visibility_masks = instance->shapeptr->shape3d_visibility_masks;
+	front_facing_masks = instance->shapeptr->shape3d_front_facing_masks;
+	shape3d_prepare_instance(instance, &context);
+	shape_polygon_predecessor = polygon_list_tail;
+	polygon_insertion_cursor = polygon_list_tail;
+	shape_polygon_count = 0;
+	queued_primitive_count = 0;
+	if (shape3d_bounds_are_clipped(instance, &context) != 0) {
+		return (legacy_u16)-1;
+	}
 	transshapeprimitives = instance->shapeptr->shape3d_primitives;
 
 	for (;;) {
@@ -371,312 +714,18 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 							transshapenumpaints + 2;
 		primitive_flags = transshapeprimitives[1];
 		primitive_visible = 0;
-		if ((LEGACY_READ_U32_LE(visibility_masks) & (legacy_u32)visibility_mask) != 0UL) {
-
-			resource_primitive_type = transshapeprimitives[0];
-			transshapenumvertscopy = primidxcounttab[resource_primitive_type];
-			primitive_type = primtypetab[resource_primitive_type];
-
+		if ((LEGACY_READ_U32_LE(visibility_masks) & (legacy_u32)context.visibility_mask) != 0UL) {
+			transshapenumvertscopy = primidxcounttab[transshapeprimitives[0]];
+			primitive_type = primtypetab[transshapeprimitives[0]];
 			transshapepolyinfo = polyinfoptr + polyinfoptrnext;
 			polyinfoptrs[polyinfonumpolys] = transshapepolyinfo;
-
 			transprimitivepaintjob = transshapeprimitives[2 + transshapematerial];
-			transshapeprimitives +=
-				2 + transshapenumpaints; // <- skip header and materials, -> point at indices
-
-			common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
-			all_vertices_behind = 1;
-			any_vertex_behind = 0;
-			transshapeprimindexptr = transshapeprimitives;
-			polygon_vertex_count = 0;
-			while (polygon_vertex_count < transshapenumvertscopy) {
-				vertex_radius_or_sort_flag = transshapeprimindexptr[0];
-				transshapeprimindexptr++;
-				polyvertpointptrtab[polygon_vertex_count] =
-					&projected_vertices[vertex_radius_or_sort_flag];
-
-				if (vertex_clip_flags[vertex_radius_or_sort_flag] == SHAPE3D_VERTEX_UNTRANSFORMED) {
-					shape3d_transform_vertex(instance->shapeptr, vertex_radius_or_sort_flag,
-											 shape_half_scale, &object_to_view_rotation,
-											 &view_translation, &transformed_vector);
-					view_vertices[vertex_radius_or_sort_flag] = transformed_vector;
-					if (transformed_vector.z >= SHAPE3D_NEAR_CLIP_Z) {
-						all_vertices_behind = 0;
-						vertex_clip_flags[vertex_radius_or_sort_flag] = 0;
-						vector_to_point(&transformed_vector,
-										polyvertpointptrtab[polygon_vertex_count]);
-					} else {
-						vertex_clip_flags[vertex_radius_or_sort_flag] = 1;
-						any_vertex_behind = 1;
-					}
-				} else if (vertex_clip_flags[vertex_radius_or_sort_flag] == 0) {
-					all_vertices_behind = 0;
-				} else if (vertex_clip_flags[vertex_radius_or_sort_flag] == 1) {
-					any_vertex_behind = 1;
-				}
-
-				if (vertex_clip_flags[vertex_radius_or_sort_flag] == 0 && common_clip_flags != 0) {
-					common_clip_flags &=
-						rect_compare_point(polyvertpointptrtab[polygon_vertex_count]);
-				}
-				polygon_vertex_count = LEGACY_U16_WRAP_ADD(polygon_vertex_count, 1U);
-			}
-
-			if (all_vertices_behind == 0 && (common_clip_flags == 0 || any_vertex_behind != 0)) {
-				if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
-					output_point_index = 0U;
-					transshapeprimindexptr = transshapeprimitives;
-					depth_sum = 0;
-					common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
-					if (any_vertex_behind == 0) {
-						for (i = 0; i < transshapenumvertscopy; i++) {
-							vertex_index = transshapeprimindexptr[0];
-							transshapeprimindexptr++;
-							depth_sum =
-								LEGACY_S32_WRAP_ADD_S16(depth_sum, view_vertices[vertex_index].z);
-							projected_point_pointer = &polyvertpointptrtab[i];
-							polyinfo_emit_point(&output_point_index, &common_clip_flags,
-												*projected_point_pointer);
-						}
-					} else {
-						polygon_vertex_count = 0;
-						previous_vertex_index = transshapeprimitives[transshapenumvertscopy - 1];
-						for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
-							vertex_index = transshapeprimindexptr[0];
-							transshapeprimindexptr++;
-							depth_sum =
-								LEGACY_S32_WRAP_ADD_S16(depth_sum, view_vertices[vertex_index].z);
-
-							if (vertex_clip_flags[vertex_index] != 0) {
-								if (vertex_clip_flags[previous_vertex_index] == 0) {
-									vector_interpolate_at_z(&view_vertices[previous_vertex_index],
-															&view_vertices[vertex_index],
-															&scratch_vector, SHAPE3D_NEAR_CLIP_Z);
-									vector_to_point(&scratch_vector, &projected_point);
-									if (projected_point.px !=
-											projected_vertices[previous_vertex_index].px ||
-										projected_point.py !=
-											projected_vertices[previous_vertex_index].py) {
-										polyinfo_emit_point(&output_point_index, &common_clip_flags,
-															&projected_point);
-										polygon_vertex_count++;
-									}
-								}
-							} else {
-								if (vertex_clip_flags[previous_vertex_index] != 0) {
-									vector_interpolate_at_z(&view_vertices[vertex_index],
-															&view_vertices[previous_vertex_index],
-															&scratch_vector, SHAPE3D_NEAR_CLIP_Z);
-									vector_to_point(&scratch_vector, &projected_point);
-									if (projected_point.px != projected_vertices[vertex_index].px ||
-										projected_point.py != projected_vertices[vertex_index].py) {
-										polyinfo_emit_point(&output_point_index, &common_clip_flags,
-															&projected_point);
-										polygon_vertex_count =
-											LEGACY_U16_WRAP_ADD(polygon_vertex_count, 1U);
-									}
-								}
-								polyinfo_emit_point(&output_point_index, &common_clip_flags,
-													polyvertpointptrtab[i]);
-								polygon_vertex_count++;
-							}
-							previous_vertex_index = vertex_index;
-						}
-						transshapenumvertscopy = polygon_vertex_count;
-					}
-
-					if (transshapenumvertscopy != 0 && common_clip_flags == 0) {
-						if ((primitive_flags & SHAPE3D_PRIMITIVE_ALWAYS_VISIBLE_FLAG) != 0 ||
-							((legacy_u32)front_facing_mask &
-							 LEGACY_READ_U32_LE(front_facing_masks)) != 0UL ||
-							polyinfo_is_facing_camera(transshapepolyinfo) != 0) {
-							primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
-						}
-						if (primitive_visible != 0 &&
-							(transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-							for (polygon_vertex_count = 0;
-								 polygon_vertex_count < transshapenumvertscopy;
-								 polygon_vertex_count =
-									 LEGACY_U16_WRAP_ADD(polygon_vertex_count, 1U)) {
-								polyinfo_read_point(transshapepolyinfo, polygon_vertex_count,
-													&projected_point);
-								point_x = projected_point.px;
-								point_y = projected_point.py;
-								if (point_x < transshaperectptr->left) {
-									transshaperectptr->left = point_x;
-								}
-								if (transshaperectptr->right < point_x + 1) {
-									transshaperectptr->right = point_x + 1;
-								}
-								if (transshaperectptr->top > point_y) {
-									transshaperectptr->top = point_y;
-								}
-								if (transshaperectptr->bottom < point_y + 1) {
-									transshaperectptr->bottom = point_y + 1;
-								}
-							}
-						}
-					}
-				} else if (primitive_type == RENDER_PRIMITIVE_LINE) {
-					vertex_index_or_depth = transshapeprimitives[0];
-					vertex_index_or_radius = transshapeprimitives[1];
-					if (vertex_clip_flags[vertex_index_or_depth] +
-							vertex_clip_flags[vertex_index_or_radius] !=
-						2) {
-						if (vertex_clip_flags[vertex_index_or_depth] != 0) {
-							vector_interpolate_at_z(&view_vertices[vertex_index_or_radius],
-													&view_vertices[vertex_index_or_depth],
-													&scratch_vector, SHAPE3D_NEAR_CLIP_Z);
-							vertex_radius_or_sort_flag = vertex_index_or_depth;
-							vector_to_point(&scratch_vector,
-											&projected_vertices[vertex_radius_or_sort_flag]);
-						} else if (vertex_clip_flags[vertex_index_or_radius] != 0) {
-							vector_interpolate_at_z(&view_vertices[vertex_index_or_depth],
-													&view_vertices[vertex_index_or_radius],
-													&scratch_vector, SHAPE3D_NEAR_CLIP_Z);
-							vertex_radius_or_sort_flag = vertex_index_or_radius;
-							vector_to_point(&scratch_vector,
-											&projected_vertices[vertex_radius_or_sort_flag]);
-						}
-
-						// NOTE: when vertex_index_or_depth and vertex_index_or_radius were negative
-						// (ie bogus depth_sum), there
-						// was a sorting error with some of the wheels on the Lamborghini LM-002.
-						depth_sum = (legacy_s32)LEGACY_S16_WRAP_ADD(
-							view_vertices[vertex_index_or_depth].z,
-							view_vertices[vertex_index_or_radius].z);
-						polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
-						polyinfo_write_point(transshapepolyinfo, 1U, polyvertpointptrtab[1]);
-						if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-							rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
-							rect_adjust_from_point(polyvertpointptrtab[1], transshaperectptr);
-						}
-						transshapenumvertscopy = 2;
-						primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
-					}
-				} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
-					if (any_vertex_behind == 0) {
-						for (i = 0; i < 4; i++) {
-							polyinfo_points[i] = *polyvertpointptrtab[i];
-							polyinfo_write_point(transshapepolyinfo, (legacy_u16)i,
-												 &polyinfo_points[i]);
-						}
-						if (is_facing_camera(polyinfo_points) != 0) {
-							depth_sum = LEGACY_S32_SHL(
-								(legacy_s32)view_vertices[transshapeprimitives[0]].z, 2U);
-						} else {
-							polyinfo_points[0] = *polyvertpointptrtab[3];
-							polyinfo_points[1] = *polyvertpointptrtab[4];
-							polyinfo_points[2] = *polyvertpointptrtab[5];
-							polyinfo_points[3] = *polyvertpointptrtab[0];
-							for (i = 0; i < 4; i++) {
-								polyinfo_write_point(transshapepolyinfo, (legacy_u16)i,
-													 &polyinfo_points[i]);
-							}
-							depth_sum = LEGACY_S32_SHL(
-								(legacy_s32)view_vertices[transshapeprimitives[3]].z, 2U);
-						}
-
-						vertex_radius_or_sort_flag = polarRadius2D(
-							LEGACY_S16_WRAP_SUB(polyinfo_points[0].px, polyinfo_points[1].px),
-							LEGACY_S16_WRAP_SUB(polyinfo_points[0].py, polyinfo_points[1].py));
-						vertex_index_or_radius = polarRadius2D(
-							LEGACY_S16_WRAP_SUB(polyinfo_points[0].px, polyinfo_points[2].px),
-							LEGACY_S16_WRAP_SUB(polyinfo_points[0].py, polyinfo_points[2].py));
-						if (vertex_index_or_radius > vertex_radius_or_sort_flag) {
-							vertex_radius_or_sort_flag = vertex_index_or_radius;
-						}
-
-						if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-							bounds_point.px =
-								LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(polyinfo_points[0].px,
-																		vertex_radius_or_sort_flag),
-													1);
-							bounds_point.py =
-								LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(polyinfo_points[0].py,
-																		vertex_radius_or_sort_flag),
-													1);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-							bounds_point.px =
-								LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(polyinfo_points[0].px,
-																		vertex_radius_or_sort_flag),
-													1);
-							bounds_point.py =
-								LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(polyinfo_points[0].py,
-																		vertex_radius_or_sort_flag),
-													1);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-							bounds_point.px =
-								LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(polyinfo_points[3].px,
-																		vertex_radius_or_sort_flag),
-													1);
-							bounds_point.py =
-								LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(polyinfo_points[3].py,
-																		vertex_radius_or_sort_flag),
-													1);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-							bounds_point.px =
-								LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(polyinfo_points[3].px,
-																		vertex_radius_or_sort_flag),
-													1);
-							bounds_point.py =
-								LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(polyinfo_points[3].py,
-																		vertex_radius_or_sort_flag),
-													1);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-						}
-						transshapenumvertscopy = 4;
-						primitive_visible = 1;
-					}
-				} else if (primitive_type == RENDER_PRIMITIVE_SPHERE) {
-					vertex_index_or_depth = transshapeprimitives[0];
-					vertex_index_or_radius = transshapeprimitives[1];
-					//fatal_error("anders: %i %i", vertex_index_or_depth, vertex_index_or_radius);
-					depth_sum =
-						(legacy_s32)LEGACY_S16_WRAP_ADD(view_vertices[vertex_index_or_depth].z,
-														view_vertices[vertex_index_or_radius].z);
-					if (vertex_clip_flags[vertex_index_or_depth] +
-							vertex_clip_flags[vertex_index_or_radius] ==
-						0) {
-						polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
-						transformed_vector = view_vertices[vertex_index_or_depth];
-						sphere_radius_endpoint = view_vertices[vertex_index_or_radius];
-						scratch_vector.x =
-							LEGACY_S16_WRAP_SUB(transformed_vector.x, sphere_radius_endpoint.x);
-						scratch_vector.y =
-							LEGACY_S16_WRAP_SUB(transformed_vector.y, sphere_radius_endpoint.y);
-						scratch_vector.z =
-							LEGACY_S16_WRAP_SUB(transformed_vector.z, sphere_radius_endpoint.z);
-						sphere_screen_radius = projection_scale_x_wrapped(
-							polarRadius3D(&scratch_vector), transformed_vector.z);
-						polyinfo_write_word(transshapepolyinfo, 5U, sphere_screen_radius);
-						if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-							bounds_point.py = LEGACY_S16_WRAP_SUB(polyvertpointptrtab[0]->py,
-																  sphere_screen_radius);
-							bounds_point.px = LEGACY_S16_WRAP_SUB(polyvertpointptrtab[0]->px,
-																  sphere_screen_radius);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-							bounds_point.py = LEGACY_S16_WRAP_ADD(polyvertpointptrtab[0]->py,
-																  sphere_screen_radius);
-							bounds_point.px = LEGACY_S16_WRAP_ADD(polyvertpointptrtab[0]->px,
-																  sphere_screen_radius);
-							rect_adjust_from_point(&bounds_point, transshaperectptr);
-						}
-						transshapenumvertscopy = 2;
-						primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
-					}
-				} else if (primitive_type == RENDER_PRIMITIVE_POINT) {
-					vertex_index_or_depth = transshapeprimitives[0];
-					if (vertex_clip_flags[vertex_index_or_depth] == 0) {
-						depth_sum = view_vertices[vertex_index_or_depth].z;
-						polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
-						if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-							rect_adjust_from_point(polyvertpointptrtab[0], transshaperectptr);
-						}
-						transshapenumvertscopy = 1;
-						primitive_visible = LEGACY_U16_WRAP_ADD(primitive_visible, 1U);
-					}
-				}
+			transshapeprimitives += 2 + transshapenumpaints;
+			if (shape3d_prepare_primitive_vertices(instance->shapeptr, &context,
+												   &any_vertex_behind) != 0) {
+				primitive_visible =
+					shape3d_prepare_primitive(&context, primitive_type, any_vertex_behind,
+											  primitive_flags, front_facing_masks, &depth_sum);
 			}
 		}
 
@@ -685,28 +734,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 		front_facing_masks += 4U;
 		if (primitive_visible != 0) {
 			queued_primitive_count = LEGACY_U16_WRAP_ADD(queued_primitive_count, 1U);
-			transshapepolyinfo[3] = transshapenumvertscopy;
-			transshapepolyinfo[4] = primitive_type;
-			if (transprimitivepaintjob == BACKLIGHT_PAINT_DEFAULT) {
-				transshapepolyinfo[2] = backlights_paint_override;
-			} else {
-				transshapepolyinfo[2] = transprimitivepaintjob;
-			}
-
-			vertex_index_or_depth = shape3d_average_depth(depth_sum, transshapenumvertscopy);
-
-			polyinfo_write_word(transshapepolyinfo, 0U, vertex_index_or_depth);
-
-			if ((transshapeflags & SHAPE3D_NO_DEPTH_SORT_FLAG) != 0 ||
-				(primitive_flags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
-				vertex_radius_or_sort_flag = 0;
-			} else {
-				vertex_radius_or_sort_flag = 1;
-			}
-
-			polygon_buffer_full =
-				polygon_insert_newest(vertex_index_or_depth, vertex_radius_or_sort_flag);
-			if (polygon_buffer_full != 0) {
+			if (shape3d_insert_primitive(primitive_type, primitive_flags, depth_sum) != 0) {
 				return 1;
 			}
 		} else if ((primitive_flags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) == 0) {
@@ -717,7 +745,6 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 				front_facing_masks += 4U;
 			}
 		}
-
 		if (transshapeprimitives[0] == 0) {
 			return queued_primitive_count != 0 ? 0 : (legacy_u16)-1;
 		}
