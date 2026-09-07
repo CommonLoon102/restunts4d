@@ -908,277 +908,323 @@ static void prerender_extend_edge(legacy_s16 *left_edges, legacy_s16 *right_edge
 	}
 }
 
-void polygon_merge_second_edge(const legacy_u16 *line_setup, legacy_u16 choose_edge_per_row,
-							   legacy_u16 needs_clipping, legacy_s16 *edge_tables)
+static void prerender_merge_linear_rows(const legacy_u16 *line, legacy_s16 *left_edges,
+										legacy_s16 *right_edges)
 {
-	const legacy_u16 *line = line_setup;
-	legacy_s16 *left_edges = edge_tables;
-	legacy_s16 *right_edges = left_edges + PRERENDER_EDGE_ROW_CAPACITY;
+	legacy_s16 x_position;
+	legacy_u16 mode;
+	legacy_s16 count;
+	legacy_s16 row_index;
+
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	while (count-- > 0) {
+		if (right_edges[row_index] < x_position) {
+			right_edges[row_index] = x_position;
+		} else if (left_edges[row_index] > x_position) {
+			left_edges[row_index] = x_position;
+		}
+		row_index++;
+		if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT) {
+			x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+		} else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT) {
+			x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
+		}
+	}
+}
+
+static void prerender_merge_fractional_rows(const legacy_u16 *line, legacy_s16 *left_edges,
+											legacy_s16 *right_edges)
+{
+	legacy_s16 x_position;
+	legacy_u16 step;
+	legacy_u16 mode;
+	legacy_u32 fixed_x;
+	legacy_s16 count;
+	legacy_s16 row_index;
+
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+			  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+	fixed_x += DRAW_LINE_FIXED_ROUNDING;
+	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	while (count-- > 0) {
+		x_position = LEGACY_S16_FROM_BITS((legacy_u16)(fixed_x >> LEGACY_WORD_BITS));
+		if (right_edges[row_index] < x_position) {
+			right_edges[row_index] = x_position;
+		} else if (left_edges[row_index] > x_position) {
+			left_edges[row_index] = x_position;
+		}
+		row_index++;
+		if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT) {
+			fixed_x -= step;
+		} else {
+			fixed_x += step;
+		}
+	}
+}
+
+static void prerender_merge_x_major_rows(const legacy_u16 *line, legacy_s16 *left_edges,
+										 legacy_s16 *right_edges)
+{
 	legacy_s16 x_position;
 	legacy_u16 fraction;
 	legacy_u16 step;
 	legacy_u16 mode;
-	legacy_u32 fixed_x;
 	legacy_u32 sum;
 	legacy_s16 count;
 	legacy_s16 row_index;
-	legacy_s16 target_edge;
 	legacy_s16 carry;
 	legacy_s16 to_left;
 	legacy_s16 x_step;
 
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
 	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
 	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	/* Mode 7 walks the span right-to-left and mode 8
+   left-to-right, which only swaps which edge array
+   opens a row and which one closes it. */
+	to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
+	x_step = to_left ? -1 : 1;
+	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	fraction = (legacy_u16)sum;
+	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
+		row_index++;
+	}
+	prerender_extend_edge(left_edges, right_edges, row_index, x_position, !to_left);
+	while (count > 0) {
+		sum = (legacy_u32)fraction + step;
+		fraction = (legacy_u16)sum;
+		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		if (carry) {
+			prerender_extend_edge(left_edges, right_edges, row_index, x_position, to_left);
+			row_index++;
+			x_position = LEGACY_S16_WRAP_ADD(x_position, x_step);
+			count--;
+			if (count > 0) {
+				prerender_extend_edge(left_edges, right_edges, row_index, x_position, !to_left);
+			}
+		} else {
+			x_position = LEGACY_S16_WRAP_ADD(x_position, x_step);
+			count--;
+			if (count == 0) {
+				x_position = LEGACY_S16_WRAP_SUB(x_position, x_step);
+				prerender_extend_edge(left_edges, right_edges, row_index, x_position, to_left);
+			}
+		}
+	}
+}
+
+static void prerender_merge_fixed_y_edge(const legacy_u16 *line, legacy_s16 *left_edges,
+										 legacy_s16 *right_edges)
+{
+	legacy_s16 x_position;
+	legacy_u16 step;
+	legacy_u16 mode;
+	legacy_u32 fixed_x;
+	legacy_s16 count;
+	legacy_s16 row_index;
+	legacy_s16 target_edge;
+
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
 	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+			  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+	fixed_x += DRAW_LINE_FIXED_ROUNDING;
+	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	target_edge = 0;
 
-	if (count > 0 && mode >= DRAW_LINE_MODE_VERTICAL && mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT) {
-		x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	while (count > 0) {
+		x_position = mode >= DRAW_LINE_MODE_Y_MAJOR_LEFT
+						 ? LEGACY_S16_FROM_BITS((legacy_u16)(fixed_x >> LEGACY_WORD_BITS))
+						 : LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+		if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT) {
+			x_position = LEGACY_S16_WRAP_SUB(
+				x_position, LEGACY_S16_WRAP_SUB(
+								LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]), count));
+		} else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT) {
+			x_position = LEGACY_S16_WRAP_ADD(
+				x_position, LEGACY_S16_WRAP_SUB(
+								LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]), count));
+		}
 
-		if (choose_edge_per_row != 0U) {
-			switch (mode) {
-				case DRAW_LINE_MODE_VERTICAL:
-				case DRAW_LINE_MODE_DIAGONAL_LEFT:
-				case DRAW_LINE_MODE_DIAGONAL_RIGHT:
-					while (count-- > 0) {
-						if (right_edges[row_index] < x_position) {
-							right_edges[row_index] = x_position;
-						} else if (left_edges[row_index] > x_position) {
-							left_edges[row_index] = x_position;
-						}
-						row_index++;
-						if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT) {
-							x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-						} else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT) {
-							x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-						}
-					}
-					break;
-
-				case DRAW_LINE_MODE_Y_MAJOR_LEFT:
-				case DRAW_LINE_MODE_Y_MAJOR_RIGHT:
-					fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX]
-							   << LEGACY_WORD_BITS) |
-							  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
-					fixed_x += DRAW_LINE_FIXED_ROUNDING;
-					step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-					while (count-- > 0) {
-						x_position =
-							LEGACY_S16_FROM_BITS((legacy_u16)(fixed_x >> LEGACY_WORD_BITS));
-						if (right_edges[row_index] < x_position) {
-							right_edges[row_index] = x_position;
-						} else if (left_edges[row_index] > x_position) {
-							left_edges[row_index] = x_position;
-						}
-						row_index++;
-						if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT) {
-							fixed_x -= step;
-						} else {
-							fixed_x += step;
-						}
-					}
-					break;
-
-				case DRAW_LINE_MODE_X_MAJOR_LEFT:
-				case DRAW_LINE_MODE_X_MAJOR_RIGHT:
-					/* Mode 7 walks the span right-to-left and mode 8
-				   left-to-right, which only swaps which edge array
-				   opens a row and which one closes it. */
-					to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
-					x_step = to_left ? -1 : 1;
-					step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-					sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] +
-						  DRAW_LINE_FIXED_ROUNDING;
-					fraction = (legacy_u16)sum;
-					if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
-						row_index++;
-					}
-					prerender_extend_edge(left_edges, right_edges, row_index, x_position, !to_left);
-					while (count > 0) {
-						sum = (legacy_u32)fraction + step;
-						fraction = (legacy_u16)sum;
-						carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-						if (carry) {
-							prerender_extend_edge(left_edges, right_edges, row_index, x_position,
-												  to_left);
-							row_index++;
-							x_position = LEGACY_S16_WRAP_ADD(x_position, x_step);
-							count--;
-							if (count > 0) {
-								prerender_extend_edge(left_edges, right_edges, row_index,
-													  x_position, !to_left);
-							}
-						} else {
-							x_position = LEGACY_S16_WRAP_ADD(x_position, x_step);
-							count--;
-							if (count == 0) {
-								x_position = LEGACY_S16_WRAP_SUB(x_position, x_step);
-								prerender_extend_edge(left_edges, right_edges, row_index,
-													  x_position, to_left);
-							}
-						}
-					}
-					break;
+		if (target_edge == 0) {
+			if (left_edges[row_index] > x_position) {
+				target_edge = 1;
+			} else if (right_edges[row_index] < x_position) {
+				target_edge = 2;
 			}
-		} else if (mode <= DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
-			fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
-					  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
-			fixed_x += DRAW_LINE_FIXED_ROUNDING;
-			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-			target_edge = 0;
+		}
+		if (target_edge == 1) {
+			left_edges[row_index] = x_position;
+		} else if (target_edge == 2) {
+			right_edges[row_index] = x_position;
+		}
+		row_index++;
+		count--;
+		if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT) {
+			fixed_x -= step;
+		} else if (mode == DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
+			fixed_x += step;
+		}
+	}
+}
 
+static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *left_edges,
+											legacy_s16 *right_edges)
+{
+	legacy_s16 x_position;
+	legacy_u16 fraction;
+	legacy_u16 step;
+	legacy_u32 sum;
+	legacy_s16 count;
+	legacy_s16 row_index;
+	legacy_s16 carry;
+
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	fraction = (legacy_u16)sum;
+	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
+		row_index++;
+	}
+
+	while (count > 0) {
+		if (right_edges[row_index] < x_position) {
+			right_edges[row_index++] = x_position;
 			while (count > 0) {
-				x_position = mode >= DRAW_LINE_MODE_Y_MAJOR_LEFT
-								 ? LEGACY_S16_FROM_BITS((legacy_u16)(fixed_x >> LEGACY_WORD_BITS))
-								 : LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-				if (mode == DRAW_LINE_MODE_DIAGONAL_LEFT) {
-					x_position = LEGACY_S16_WRAP_SUB(
-						x_position,
-						LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]),
-											count));
-				} else if (mode == DRAW_LINE_MODE_DIAGONAL_RIGHT) {
-					x_position = LEGACY_S16_WRAP_ADD(
-						x_position,
-						LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]),
-											count));
-				}
-
-				if (target_edge == 0) {
-					if (left_edges[row_index] > x_position) {
-						target_edge = 1;
-					} else if (right_edges[row_index] < x_position) {
-						target_edge = 2;
-					}
-				}
-				if (target_edge == 1) {
-					left_edges[row_index] = x_position;
-				} else if (target_edge == 2) {
-					right_edges[row_index] = x_position;
-				}
-				row_index++;
+				x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+				sum = (legacy_u32)fraction + step;
+				fraction = (legacy_u16)sum;
 				count--;
-				if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT) {
-					fixed_x -= step;
-				} else if (mode == DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
-					fixed_x += step;
-				}
-			}
-		} else if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
-			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-			sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] +
-				  DRAW_LINE_FIXED_ROUNDING;
-			fraction = (legacy_u16)sum;
-			if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
-				row_index++;
-			}
-
-			while (count > 0) {
-				if (right_edges[row_index] < x_position) {
+				if (count > 0 && sum > PRERENDER_FIXED_CARRY_LIMIT) {
 					right_edges[row_index++] = x_position;
-					while (count > 0) {
-						x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-						sum = (legacy_u32)fraction + step;
-						fraction = (legacy_u16)sum;
-						count--;
-						if (count > 0 && sum > PRERENDER_FIXED_CARRY_LIMIT) {
-							right_edges[row_index++] = x_position;
-						}
-					}
-					break;
 				}
+			}
+			break;
+		}
 
+		sum = (legacy_u32)fraction + step;
+		fraction = (legacy_u16)sum;
+		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		if (carry && left_edges[row_index] > x_position) {
+			left_edges[row_index++] = x_position;
+			x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+			count--;
+			while (count > 0) {
 				sum = (legacy_u32)fraction + step;
 				fraction = (legacy_u16)sum;
 				carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-				if (carry && left_edges[row_index] > x_position) {
-					left_edges[row_index++] = x_position;
-					x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-					count--;
-					while (count > 0) {
-						sum = (legacy_u32)fraction + step;
-						fraction = (legacy_u16)sum;
-						carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-						if (carry) {
-							left_edges[row_index++] = x_position;
-						}
-						x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-						count--;
-						if (count == 0 && !carry) {
-							x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-							left_edges[row_index] = x_position;
-						}
-					}
-					break;
-				}
 				if (carry) {
-					row_index++;
+					left_edges[row_index++] = x_position;
 				}
 				x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
 				count--;
-			}
-		} else {
-			step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-			sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] +
-				  DRAW_LINE_FIXED_ROUNDING;
-			fraction = (legacy_u16)sum;
-			if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
-				row_index++;
-			}
-
-			while (count > 0) {
-				if (left_edges[row_index] > x_position) {
-					left_edges[row_index++] = x_position;
+				if (count == 0 && !carry) {
 					x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-					count--;
-					while (count > 0) {
-						sum = (legacy_u32)fraction + step;
-						fraction = (legacy_u16)sum;
-						if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
-							left_edges[row_index++] = x_position;
-						}
-						x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-						count--;
-					}
-					break;
+					left_edges[row_index] = x_position;
 				}
+			}
+			break;
+		}
+		if (carry) {
+			row_index++;
+		}
+		x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+		count--;
+	}
+}
 
+static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 *left_edges,
+											 legacy_s16 *right_edges)
+{
+	legacy_s16 x_position;
+	legacy_u16 fraction;
+	legacy_u16 step;
+	legacy_u32 sum;
+	legacy_s16 count;
+	legacy_s16 row_index;
+	legacy_s16 carry;
+
+	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	fraction = (legacy_u16)sum;
+	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
+		row_index++;
+	}
+
+	while (count > 0) {
+		if (left_edges[row_index] > x_position) {
+			left_edges[row_index++] = x_position;
+			x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
+			count--;
+			while (count > 0) {
 				sum = (legacy_u32)fraction + step;
 				fraction = (legacy_u16)sum;
-				carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-				if (carry && right_edges[row_index] < x_position) {
-					right_edges[row_index] = x_position;
-					while (count > 0) {
-						x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
-						sum = (legacy_u32)fraction + step;
-						fraction = (legacy_u16)sum;
-						carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-						if (carry) {
-							row_index++;
-						}
-						count--;
-						if (count > 0 && carry) {
-							right_edges[row_index] = x_position;
-						} else if (count == 0) {
-							if (!carry) {
-								row_index++;
-							}
-							x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-							right_edges[row_index] = x_position;
-						}
-					}
-					break;
-				}
-				if (carry) {
-					row_index++;
+				if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
+					left_edges[row_index++] = x_position;
 				}
 				x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
 				count--;
 			}
+			break;
 		}
-	}
 
-	if (needs_clipping == 0U) {
-		return;
+		sum = (legacy_u32)fraction + step;
+		fraction = (legacy_u16)sum;
+		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		if (carry && right_edges[row_index] < x_position) {
+			right_edges[row_index] = x_position;
+			while (count > 0) {
+				x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
+				sum = (legacy_u32)fraction + step;
+				fraction = (legacy_u16)sum;
+				carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+				if (carry) {
+					row_index++;
+				}
+				count--;
+				if (count > 0 && carry) {
+					right_edges[row_index] = x_position;
+				} else if (count == 0) {
+					if (!carry) {
+						row_index++;
+					}
+					x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
+					right_edges[row_index] = x_position;
+				}
+			}
+			break;
+		}
+		if (carry) {
+			row_index++;
+		}
+		x_position = LEGACY_S16_WRAP_ADD(x_position, 1);
+		count--;
 	}
+}
+
+static void prerender_merge_clip_padding(const legacy_u16 *line, legacy_s16 *left_edges,
+										 legacy_s16 *right_edges)
+{
+	legacy_u32 sum;
+	legacy_s16 count;
+	legacy_s16 row_index;
+	legacy_s16 carry;
 
 	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
 	carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
@@ -1217,5 +1263,35 @@ void polygon_merge_second_edge(const legacy_u16 *line_setup, legacy_u16 choose_e
 			right_edges[row_index++] =
 				LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(drawing_sprite.sprite_raster_right), 1);
 		}
+	}
+}
+
+void polygon_merge_second_edge(const legacy_u16 *line_setup, legacy_u16 choose_edge_per_row,
+							   legacy_u16 needs_clipping, legacy_s16 *edge_tables)
+{
+	legacy_s16 *left_edges = edge_tables;
+	legacy_s16 *right_edges = left_edges + PRERENDER_EDGE_ROW_CAPACITY;
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_u16 mode = (legacy_u8)line_setup[DRAW_LINE_MODE_AND_CLIP_INDEX];
+
+	if (count > 0 && mode >= DRAW_LINE_MODE_VERTICAL && mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT) {
+		if (choose_edge_per_row != 0U) {
+			if (mode <= DRAW_LINE_MODE_DIAGONAL_RIGHT) {
+				prerender_merge_linear_rows(line_setup, left_edges, right_edges);
+			} else if (mode <= DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
+				prerender_merge_fractional_rows(line_setup, left_edges, right_edges);
+			} else {
+				prerender_merge_x_major_rows(line_setup, left_edges, right_edges);
+			}
+		} else if (mode <= DRAW_LINE_MODE_Y_MAJOR_RIGHT) {
+			prerender_merge_fixed_y_edge(line_setup, left_edges, right_edges);
+		} else if (mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
+			prerender_merge_fixed_left_edge(line_setup, left_edges, right_edges);
+		} else {
+			prerender_merge_fixed_right_edge(line_setup, left_edges, right_edges);
+		}
+	}
+	if (needs_clipping != 0U) {
+		prerender_merge_clip_padding(line_setup, left_edges, right_edges);
 	}
 }

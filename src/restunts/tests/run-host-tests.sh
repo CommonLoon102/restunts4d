@@ -47,6 +47,9 @@ run_host_test test-matrix-semantics math.c
 run_host_test test-memmgr-cache memmgr.c \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-braces -Wno-missing-field-initializers
 run_host_test test-pixldump-md5 ../pixldump/md5.c
+run_host_test test-polygon-edges shape3d_prerender.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-replay-serialization replay.c
 run_host_test test-resource-lookup resource.c
 run_host_test test-shape3d-queue shape3d.c \
