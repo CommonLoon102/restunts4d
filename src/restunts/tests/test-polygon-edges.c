@@ -6,6 +6,8 @@
 #include "../c/shape2d_internal.h"
 #include "../c/shape3d_internal.h"
 
+void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line, legacy_s16 clipping_mode);
+
 void polygon_merge_second_edge(const legacy_u16 *line, legacy_u16 choose_edge_per_row,
 							   legacy_u16 needs_clipping, legacy_s16 *edges);
 
@@ -44,6 +46,32 @@ static void test_row_selection(void)
 	assert(edges[100] == 5);
 	assert(edges[101] == 6);
 	assert(edges[102] == 7);
+}
+
+static void test_final_x_major_carry(void)
+{
+	legacy_u16 line[DRAW_LINE_WORD_COUNT] = {0};
+	legacy_s16 edges[EDGE_ROWS * 2U];
+	legacy_u16 mode;
+	unsigned i;
+
+	/* The final sample closes row 100. Its carry must not open row 101,
+	 * which may already contain the endpoint of another polygon edge. */
+	line[DRAW_LINE_START_Y_INDEX] = 100;
+	line[DRAW_LINE_START_X_INDEX] = 20;
+	line[DRAW_LINE_PIXEL_COUNT_INDEX] = 2;
+	line[DRAW_LINE_STEP_INDEX] = 16384;
+	for (mode = DRAW_LINE_MODE_X_MAJOR_LEFT; mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT; mode++) {
+		for (i = 0; i < EDGE_ROWS * 2U; i++) {
+			edges[i] = 99;
+		}
+		line[DRAW_LINE_MODE_AND_CLIP_INDEX] = mode;
+		generate_poly_edges(edges, line, 1);
+		assert(edges[100] == (mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 19 : 20));
+		assert(edges[EDGE_ROWS + 100] == (mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 20 : 21));
+		assert(edges[101] == 99);
+		assert(edges[EDGE_ROWS + 101] == 99);
+	}
 }
 
 static void test_clip_padding(void)
@@ -117,6 +145,7 @@ int main(void)
 	unsigned i;
 
 	test_row_selection();
+	test_final_x_major_carry();
 	test_clip_padding();
 	for (i = 0; i < 4; i++) {
 		assert(edge_fingerprint(i & 1U, i >> 1U) == expected[i]);

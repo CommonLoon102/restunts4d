@@ -857,7 +857,9 @@ void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy
 					edges[row_index] = x_position;
 					x_position--;
 					row_index++;
-					edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
+					if (step_index + 1 < step_count) {
+						edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
+					}
 				}
 				y_fraction =
 					(y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
@@ -883,7 +885,9 @@ void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy
 					edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
 					x_position++;
 					row_index++;
-					edges[row_index] = x_position;
+					if (step_index + 1 < step_count) {
+						edges[row_index] = x_position;
+					}
 				}
 				y_fraction =
 					(y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX]) & LEGACY_U16_MAX;
