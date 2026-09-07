@@ -647,18 +647,272 @@ static legacy_s16 replay_try_zoom(legacy_u16 input)
 	return 1;
 }
 
-void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 current_frame)
+static legacy_u16 replay_pan_input(void)
 {
-	legacy_u16 input;
-	legacy_s16 delta;
-	legacy_s16 midpoint;
 	legacy_s16 x_delta;
 	legacy_s16 y_delta;
 	legacy_u16 angle;
+	legacy_u16 input = 0;
+
+	y_delta = LEGACY_S16_WRAP_SUB(
+		LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(replay_pan_button_top, replay_pan_button_bottom), 1U),
+		(legacy_s16)mouse_ypos);
+	x_delta = LEGACY_S16_WRAP_SUB(
+		(legacy_s16)mouse_xpos,
+		LEGACY_S16_SAR(LEGACY_S16_WRAP_ADD(replay_pan_button_left, replay_pan_button_right), 1U));
+	angle = (legacy_u16)polarAngle(x_delta, y_delta);
+	switch (((angle + ANGLE_EIGHTH_TURN) >> REPLAY_DIRECTION_ANGLE_SHIFT) & REPLAY_DIRECTION_MASK) {
+		case REPLAY_DIRECTION_UP:
+			input = KEY_UP;
+			break;
+		case REPLAY_DIRECTION_RIGHT:
+			input = KEY_RIGHT;
+			break;
+		case REPLAY_DIRECTION_DOWN:
+			input = KEY_DOWN;
+			break;
+		case REPLAY_DIRECTION_LEFT:
+			input = KEY_LEFT;
+			break;
+	}
+	return input;
+}
+
+static legacy_u16 replay_read_control_input(legacy_s16 delta)
+{
+	legacy_u16 input;
+	legacy_s16 midpoint;
 	legacy_u8 hit;
+
+	input = (legacy_u16)input_checking(delta);
+	hit = (legacy_u8)mouse_multi_hittest(
+		(legacy_u8)(game_camera_buttons_count[(legacy_u8)cameramode] + 1U), game_camera_buttons);
+	if (hit != REPLAY_NO_SELECTION) {
+		if (hit != replay_selected_control && input == 0) {
+			input = 1;
+		}
+		replay_selected_control = hit;
+		if ((input == KEY_ENTER || input == KEY_SPACE) &&
+			replay_selected_control >= REPLAY_CONTROL_ZOOM) {
+			if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
+				midpoint = LEGACY_S16_SAR(
+					LEGACY_S16_WRAP_ADD(replay_zoom_button_top, replay_zoom_button_bottom), 1U);
+				input = midpoint < mouse_ypos ? KEY_DOWN : KEY_UP;
+			} else {
+				input = replay_pan_input();
+			}
+		}
+	} else {
+		hit = (legacy_u8)mouse_multi_hittest(1, &replay_hidden_bar_camera_button);
+		if (hit == 0 && (input == KEY_ENTER || input == KEY_SPACE)) {
+			input = 'c';
+		}
+	}
+	return input;
+}
+
+static legacy_u16 replay_adjust_custom_camera(legacy_u16 *input)
+{
+	switch (*input) {
+		case KEY_RIGHT:
+			custom_camera.azimuth_angle =
+				LEGACY_S16_WRAP_ADD(custom_camera.azimuth_angle, REPLAY_CAMERA_ANGLE_STEP);
+			return 1;
+		case KEY_LEFT:
+			custom_camera.azimuth_angle =
+				LEGACY_S16_WRAP_SUB(custom_camera.azimuth_angle, REPLAY_CAMERA_ANGLE_STEP);
+			return 1;
+		case KEY_UP:
+			if (LEGACY_S16_WRAP_ADD(custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP) <
+				REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT) {
+				custom_camera.elevation_angle =
+					LEGACY_S16_WRAP_ADD(custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP);
+				return 1;
+			}
+			*input = 0;
+			break;
+		case KEY_DOWN:
+			if (LEGACY_S16_WRAP_SUB(custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP) >
+				-REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT) {
+				custom_camera.elevation_angle =
+					LEGACY_S16_WRAP_SUB(custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP);
+				return 1;
+			}
+			*input = 0;
+			break;
+		case '+':
+		case '-':
+			break;
+		default:
+			*input = 0;
+			break;
+	}
+	return 0;
+}
+
+static legacy_u16 replay_activate_selected_control(void)
+{
+	if (replay_selected_control > REPLAY_LAST_ACTION_CONTROL) {
+		return 0;
+	}
+	switch (replay_selected_control) {
+		case REPLAY_CONTROL_FAST_FORWARD:
+			replay_fast_forward();
+			return 1;
+		case REPLAY_CONTROL_REWIND:
+			replay_rewind();
+			return 1;
+		case REPLAY_CONTROL_FAST_PLAY:
+			replay_controls_select(REPLAY_CONTROL_FAST_PLAY);
+			replay_playback_speed = REPLAY_PLAYBACK_FAST;
+			is_in_replay = 0;
+			break;
+		case REPLAY_CONTROL_PLAY:
+			replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
+			replay_controls_select(REPLAY_CONTROL_PLAY);
+			is_in_replay = 0;
+			break;
+		case REPLAY_CONTROL_PAUSE:
+			is_in_replay = 1;
+			audio_carstate();
+			replay_controls_select(REPLAY_CONTROL_PAUSE);
+			replay_controls_draw(state.game_frame, state.game_frame);
+			break;
+		case REPLAY_CONTROL_RESTART:
+			is_in_replay = 1;
+			audio_carstate();
+			replay_controls_select(REPLAY_CONTROL_RESTART);
+			replay_controls_draw(state.game_frame, state.game_frame);
+			restore_gamestate(REPLAY_FIRST_FRAME);
+			(void)timer_wait_ticks(REPLAY_RESTART_WAIT_TICKS);
+			replay_controls_select(REPLAY_CONTROL_PAUSE);
+			replay_controls_draw(state.game_frame, state.game_frame);
+			return 1;
+		case REPLAY_CONTROL_MENU:
+			replay_pause_menu();
+			return 1;
+	}
+	return 0;
+}
+
+static legacy_u16 replay_handle_control_input(legacy_u16 input)
+{
 	legacy_u8 next_selection;
+
+	switch (input) {
+		case KEY_ENTER:
+		case KEY_SPACE:
+			return replay_activate_selected_control();
+
+		case KEY_ESCAPE:
+			replay_pause_menu();
+			return 1;
+
+		case KEY_LEFT:
+			next_selection = replay_control_left_neighbor[replay_selected_control];
+			if (next_selection <= game_camera_buttons_count[(legacy_u8)cameramode]) {
+				replay_selected_control = next_selection;
+			}
+			break;
+
+		case KEY_RIGHT:
+			replay_selected_control = replay_control_right_neighbor[replay_selected_control];
+			break;
+
+		case KEY_UP:
+			if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
+				if (replay_try_zoom('+') != 0) {
+					return 1;
+				}
+				break;
+			}
+			replay_selected_control = replay_control_up_neighbor[replay_selected_control];
+			break;
+
+		case KEY_DOWN:
+			if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
+				if (replay_try_zoom('-') != 0) {
+					return 1;
+				}
+				break;
+			}
+			replay_selected_control = replay_control_down_neighbor[replay_selected_control];
+			break;
+	}
+	return 0;
+}
+
+static void replay_refresh_playback_controls(void)
+{
+	if (replaybar_enabled == 0) {
+		is_in_replay_copy = (legacy_s8)REPLAY_BAR_HIDDEN_STATE;
+		viewport_bottom_cache = -1;
+	}
+	if (is_in_replay != 0 &&
+		(replay_legacy_play_active != 0 || replay_legacy_fast_play_active != 0)) {
+		replay_controls_select(REPLAY_CONTROL_PAUSE);
+	}
+	replay_controls_draw(state.game_frame, state.game_frame);
+}
+
+static void replay_handle_input(void)
+{
+	legacy_u16 input;
+	legacy_s16 delta;
 	legacy_u8 custom_camera_active;
 
+	if (LEGACY_S8_FROM_BITS(replay_selected_control) >
+			LEGACY_S8_FROM_BITS(game_camera_buttons_count[(legacy_u8)cameramode]) &&
+		cameramode != CAMERA_MODE_CUSTOM) {
+		replay_selected_control = game_camera_buttons_count[(legacy_u8)cameramode];
+	}
+	sprite_select_screen();
+	if (video_uses_page_flipping != 0) {
+		dashboard_buffer_index = frame_buffer_index ^ 1;
+	}
+
+	for (;;) {
+		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta_alt());
+		input = replay_read_control_input(delta);
+
+		if (input != 0 && input != KEY_ESCAPE &&
+			(legacy_u8)handle_ingame_kb_shortcuts(input) != 0) {
+			return;
+		}
+		if (is_in_replay == 0 && input == 0) {
+			if (replaybar_enabled != 0) {
+				replay_controls_draw(state.game_frame, state.game_frame);
+			}
+			return;
+		}
+		replay_refresh_playback_controls();
+
+		custom_camera_active = 0;
+		if (kb_get_key_state(REPLAY_CUSTOM_CAMERA_MODIFIER_SCAN_CODE) != 0 ||
+			(replay_selected_control == REPLAY_CONTROL_PAN &&
+			 ((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0)) {
+			custom_camera_active = 1;
+		}
+		if (custom_camera_active != 0) {
+			if (replay_adjust_custom_camera(&input) != 0) {
+				return;
+			}
+		}
+
+		if ((input == '-' || input == '+') && replay_try_zoom(input) != 0) {
+			return;
+		}
+
+		if (replay_handle_control_input(input) != 0) {
+			return;
+		}
+
+		replay_controls_draw(state.game_frame, state.game_frame);
+	}
+}
+
+void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 current_frame)
+{
 	if (operation == REPLAY_LOOP_LOAD_RESOURCES) {
 		locate_many_resources((legacy_s8 far *)sdgameresptr, replay_control_shape_ids,
 							  (legacy_s8 far **)rplyshapes);
@@ -677,219 +931,5 @@ void loop_game(legacy_s16 operation, legacy_s16 recorded_frame, legacy_s16 curre
 		return;
 	}
 
-	if (LEGACY_S8_FROM_BITS(replay_selected_control) >
-			LEGACY_S8_FROM_BITS(game_camera_buttons_count[(legacy_u8)cameramode]) &&
-		cameramode != CAMERA_MODE_CUSTOM) {
-		replay_selected_control = game_camera_buttons_count[(legacy_u8)cameramode];
-	}
-	sprite_select_screen();
-	if (video_uses_page_flipping != 0) {
-		dashboard_buffer_index = frame_buffer_index ^ 1;
-	}
-
-	for (;;) {
-		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta_alt());
-		input = (legacy_u16)input_checking(delta);
-		hit = (legacy_u8)mouse_multi_hittest(
-			(legacy_u8)(game_camera_buttons_count[(legacy_u8)cameramode] + 1U),
-			game_camera_buttons);
-		if (hit != REPLAY_NO_SELECTION) {
-			if (hit != replay_selected_control && input == 0) {
-				input = 1;
-			}
-			replay_selected_control = hit;
-			if ((input == KEY_ENTER || input == KEY_SPACE) &&
-				replay_selected_control >= REPLAY_CONTROL_ZOOM) {
-				if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
-					midpoint = LEGACY_S16_SAR(
-						LEGACY_S16_WRAP_ADD(replay_zoom_button_top, replay_zoom_button_bottom), 1U);
-					input = midpoint < mouse_ypos ? KEY_DOWN : KEY_UP;
-				} else {
-					y_delta = LEGACY_S16_WRAP_SUB(
-						LEGACY_S16_SAR(
-							LEGACY_S16_WRAP_ADD(replay_pan_button_top, replay_pan_button_bottom),
-							1U),
-						(legacy_s16)mouse_ypos);
-					x_delta = LEGACY_S16_WRAP_SUB(
-						(legacy_s16)mouse_xpos,
-						LEGACY_S16_SAR(
-							LEGACY_S16_WRAP_ADD(replay_pan_button_left, replay_pan_button_right),
-							1U));
-					angle = (legacy_u16)polarAngle(x_delta, y_delta);
-					switch (((angle + ANGLE_EIGHTH_TURN) >> REPLAY_DIRECTION_ANGLE_SHIFT) &
-							REPLAY_DIRECTION_MASK) {
-						case REPLAY_DIRECTION_UP:
-							input = KEY_UP;
-							break;
-						case REPLAY_DIRECTION_RIGHT:
-							input = KEY_RIGHT;
-							break;
-						case REPLAY_DIRECTION_DOWN:
-							input = KEY_DOWN;
-							break;
-						case REPLAY_DIRECTION_LEFT:
-							input = KEY_LEFT;
-							break;
-					}
-				}
-			}
-		} else {
-			hit = (legacy_u8)mouse_multi_hittest(1, &replay_hidden_bar_camera_button);
-			if (hit == 0 && (input == KEY_ENTER || input == KEY_SPACE)) {
-				input = 'c';
-			}
-		}
-
-		if (input != 0 && input != KEY_ESCAPE &&
-			(legacy_u8)handle_ingame_kb_shortcuts(input) != 0) {
-			return;
-		}
-		if (is_in_replay == 0 && input == 0) {
-			if (replaybar_enabled != 0) {
-				replay_controls_draw(state.game_frame, state.game_frame);
-			}
-			return;
-		}
-		if (replaybar_enabled == 0) {
-			is_in_replay_copy = (legacy_s8)REPLAY_BAR_HIDDEN_STATE;
-			viewport_bottom_cache = -1;
-		}
-		if (is_in_replay != 0 &&
-			(replay_legacy_play_active != 0 || replay_legacy_fast_play_active != 0)) {
-			replay_controls_select(REPLAY_CONTROL_PAUSE);
-		}
-		replay_controls_draw(state.game_frame, state.game_frame);
-
-		custom_camera_active = 0;
-		if (kb_get_key_state(REPLAY_CUSTOM_CAMERA_MODIFIER_SCAN_CODE) != 0 ||
-			(replay_selected_control == REPLAY_CONTROL_PAN &&
-			 ((legacy_u8)input_combined_flags & INPUT_ACTION_BUTTON_MASK) != 0)) {
-			custom_camera_active = 1;
-		}
-		if (custom_camera_active != 0) {
-			switch (input) {
-				case KEY_RIGHT:
-					custom_camera.azimuth_angle =
-						LEGACY_S16_WRAP_ADD(custom_camera.azimuth_angle, REPLAY_CAMERA_ANGLE_STEP);
-					return;
-				case KEY_LEFT:
-					custom_camera.azimuth_angle =
-						LEGACY_S16_WRAP_SUB(custom_camera.azimuth_angle, REPLAY_CAMERA_ANGLE_STEP);
-					return;
-				case KEY_UP:
-					if (LEGACY_S16_WRAP_ADD(custom_camera.elevation_angle,
-											REPLAY_CAMERA_ANGLE_STEP) <
-						REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT) {
-						custom_camera.elevation_angle = LEGACY_S16_WRAP_ADD(
-							custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP);
-						return;
-					}
-					input = 0;
-					break;
-				case KEY_DOWN:
-					if (LEGACY_S16_WRAP_SUB(custom_camera.elevation_angle,
-											REPLAY_CAMERA_ANGLE_STEP) >
-						-REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT) {
-						custom_camera.elevation_angle = LEGACY_S16_WRAP_SUB(
-							custom_camera.elevation_angle, REPLAY_CAMERA_ANGLE_STEP);
-						return;
-					}
-					input = 0;
-					break;
-				case '+':
-				case '-':
-					break;
-				default:
-					input = 0;
-					break;
-			}
-		}
-
-		if ((input == '-' || input == '+') && replay_try_zoom(input) != 0) {
-			return;
-		}
-
-		switch (input) {
-			case KEY_ENTER:
-			case KEY_SPACE:
-				if (replay_selected_control > REPLAY_LAST_ACTION_CONTROL) {
-					break;
-				}
-				switch (replay_selected_control) {
-					case REPLAY_CONTROL_FAST_FORWARD:
-						replay_fast_forward();
-						return;
-					case REPLAY_CONTROL_REWIND:
-						replay_rewind();
-						return;
-					case REPLAY_CONTROL_FAST_PLAY:
-						replay_controls_select(REPLAY_CONTROL_FAST_PLAY);
-						replay_playback_speed = REPLAY_PLAYBACK_FAST;
-						is_in_replay = 0;
-						break;
-					case REPLAY_CONTROL_PLAY:
-						replay_playback_speed = REPLAY_PLAYBACK_NORMAL;
-						replay_controls_select(REPLAY_CONTROL_PLAY);
-						is_in_replay = 0;
-						break;
-					case REPLAY_CONTROL_PAUSE:
-						is_in_replay = 1;
-						audio_carstate();
-						replay_controls_select(REPLAY_CONTROL_PAUSE);
-						replay_controls_draw(state.game_frame, state.game_frame);
-						break;
-					case REPLAY_CONTROL_RESTART:
-						is_in_replay = 1;
-						audio_carstate();
-						replay_controls_select(REPLAY_CONTROL_RESTART);
-						replay_controls_draw(state.game_frame, state.game_frame);
-						restore_gamestate(REPLAY_FIRST_FRAME);
-						(void)timer_wait_ticks(REPLAY_RESTART_WAIT_TICKS);
-						replay_controls_select(REPLAY_CONTROL_PAUSE);
-						replay_controls_draw(state.game_frame, state.game_frame);
-						return;
-					case REPLAY_CONTROL_MENU:
-						replay_pause_menu();
-						return;
-				}
-				break;
-
-			case KEY_ESCAPE:
-				replay_pause_menu();
-				return;
-
-			case KEY_LEFT:
-				next_selection = replay_control_left_neighbor[replay_selected_control];
-				if (next_selection <= game_camera_buttons_count[(legacy_u8)cameramode]) {
-					replay_selected_control = next_selection;
-				}
-				break;
-
-			case KEY_RIGHT:
-				replay_selected_control = replay_control_right_neighbor[replay_selected_control];
-				break;
-
-			case KEY_UP:
-				if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
-					if (replay_try_zoom('+') != 0) {
-						return;
-					}
-					break;
-				}
-				replay_selected_control = replay_control_up_neighbor[replay_selected_control];
-				break;
-
-			case KEY_DOWN:
-				if (replay_selected_control == REPLAY_CONTROL_ZOOM) {
-					if (replay_try_zoom('-') != 0) {
-						return;
-					}
-					break;
-				}
-				replay_selected_control = replay_control_down_neighbor[replay_selected_control];
-				break;
-		}
-
-		replay_controls_draw(state.game_frame, state.game_frame);
-	}
+	replay_handle_input();
 }

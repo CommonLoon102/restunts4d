@@ -1,0 +1,119 @@
+#include <assert.h>
+#include "../c/replay_viewer.c"
+
+static legacy_u16 pressed_key;
+static legacy_s16 button_hit;
+static legacy_s16 hidden_hit;
+
+legacy_s16 input_checking(legacy_s16 delta)
+{
+	assert(delta == 3);
+	return (legacy_s16)pressed_key;
+}
+
+legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *buttons)
+{
+	if (buttons == &replay_hidden_bar_camera_button) {
+		assert(count == 1);
+		return hidden_hit;
+	}
+	assert(buttons == game_camera_buttons);
+	return button_hit;
+}
+
+static void test_mouse_control_translation(void)
+{
+	cameramode = CAMERA_MODE_CUSTOM;
+	button_hit = REPLAY_CONTROL_PLAY;
+	hidden_hit = REPLAY_NO_SELECTION;
+	replay_selected_control = REPLAY_CONTROL_PAUSE;
+	pressed_key = 0;
+	assert(replay_read_control_input(3) == 1);
+	assert(replay_selected_control == REPLAY_CONTROL_PLAY);
+	assert(replay_read_control_input(3) == 0);
+
+	pressed_key = KEY_ENTER;
+	button_hit = REPLAY_CONTROL_ZOOM;
+	replay_zoom_button_top = 20;
+	replay_zoom_button_bottom = 40;
+	mouse_ypos = 30;
+	assert(replay_read_control_input(3) == KEY_UP);
+	mouse_ypos = 31;
+	assert(replay_read_control_input(3) == KEY_DOWN);
+
+	button_hit = REPLAY_NO_SELECTION;
+	hidden_hit = 0;
+	assert(replay_read_control_input(3) == 'c');
+	pressed_key = KEY_SPACE;
+	assert(replay_read_control_input(3) == 'c');
+	pressed_key = KEY_ESCAPE;
+	assert(replay_read_control_input(3) == KEY_ESCAPE);
+}
+
+static void test_pan_quadrants(void)
+{
+	static const legacy_s16 positions[][3] = {
+		{100, 90, KEY_UP}, {110, 100, KEY_RIGHT}, {100, 110, KEY_DOWN}, {90, 100, KEY_LEFT}};
+	unsigned index;
+
+	button_hit = REPLAY_CONTROL_PAN;
+	hidden_hit = REPLAY_NO_SELECTION;
+	pressed_key = KEY_SPACE;
+	replay_pan_button_top = replay_pan_button_left = 90;
+	replay_pan_button_bottom = replay_pan_button_right = 110;
+	for (index = 0; index < sizeof(positions) / sizeof(positions[0]); index++) {
+		mouse_xpos = positions[index][0];
+		mouse_ypos = positions[index][1];
+		assert(replay_read_control_input(3) == positions[index][2]);
+	}
+}
+
+static void test_custom_camera_limits(void)
+{
+	legacy_u16 input;
+
+	custom_camera.azimuth_angle = 32760;
+	input = KEY_RIGHT;
+	assert(replay_adjust_custom_camera(&input) == 1);
+	assert(custom_camera.azimuth_angle == LEGACY_S16_WRAP_ADD(32760, REPLAY_CAMERA_ANGLE_STEP));
+	input = KEY_LEFT;
+	assert(replay_adjust_custom_camera(&input) == 1);
+	assert(custom_camera.azimuth_angle == 32760);
+
+	custom_camera.elevation_angle = REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT - REPLAY_CAMERA_ANGLE_STEP;
+	input = KEY_UP;
+	assert(replay_adjust_custom_camera(&input) == 0);
+	assert(input == 0);
+	custom_camera.elevation_angle--;
+	input = KEY_UP;
+	assert(replay_adjust_custom_camera(&input) == 1);
+	assert(custom_camera.elevation_angle == REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT - 1);
+
+	custom_camera.elevation_angle =
+		-REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT + REPLAY_CAMERA_ANGLE_STEP;
+	input = KEY_DOWN;
+	assert(replay_adjust_custom_camera(&input) == 0);
+	assert(input == 0);
+	custom_camera.elevation_angle++;
+	input = KEY_DOWN;
+	assert(replay_adjust_custom_camera(&input) == 1);
+	assert(custom_camera.elevation_angle == -REPLAY_CUSTOM_CAMERA_ELEVATION_LIMIT + 1);
+
+	input = '+';
+	assert(replay_adjust_custom_camera(&input) == 0);
+	assert(input == '+');
+	input = '-';
+	assert(replay_adjust_custom_camera(&input) == 0);
+	assert(input == '-');
+	input = KEY_ESCAPE;
+	assert(replay_adjust_custom_camera(&input) == 0);
+	assert(input == 0);
+}
+
+int main(void)
+{
+	test_mouse_control_translation();
+	test_pan_quadrants();
+	test_custom_camera_limits();
+	return 0;
+}
