@@ -19,8 +19,8 @@ Create a `stunts` subdirectory beneath the service directory and put all
 replay-processing inputs there:
 
 - `stunts\REPLDUMO.EXE`
+- `stunts\PIXLDUMO.EXE`
 - the numeric `.rpl` input files
-- the `.PDX` renderer reference files
 - all files for custom cars
 - the rest of the files needed for Stunts
 
@@ -33,11 +33,11 @@ in the parent directory. The per-partition `partition_<n>.txt` files and
 combined `partitions_all.txt` result are written to the parent service
 directory, outside the DOSBox mount.
 
-Renderer reference files must end in a four-digit counter and use the `.PDX`
-extension. The part before `.PDX` is the replay base name, so `0000.PDX`
-requires `0000.rpl` (case-insensitive). A `.PDX` file has the same contents as
-a normal `.PDD` hash dump; the different extension prevents `PIXLDUMP.EXE`
-from overwriting the reference.
+Renderer replay filenames must end in a four-digit counter followed by `.rpl`
+(case-insensitive), such as `0000.rpl` or `sl0000.RPL`. The matching replay
+files are sorted by name before renderer sampling and partition assignment.
+No separate renderer reference files are required; `PIXLDUMO.EXE` generates the expected
+output when its `.PDO` file is missing or marked as incomplete.
 
 ## First time setup
 
@@ -70,15 +70,34 @@ New-NetFirewallRule `
 
 Set a long, random API key and choose the partition count expected by
 `rpl2statemain.ps1`. `DosBoxTimeoutSeconds` is the maximum time allowed for
-each DOSBox execution and defaults to 60 seconds:
+each DOSBox execution and defaults to 60 seconds. `RendererTestPercentage`
+sets the percentage of eligible replays tested in the renderer phase. It
+accepts whole numbers from `1` through `100` and defaults to `100`. Pass `5`
+for 5%; physics tests still process their full replay set:
 
 ```powershell
 $env:DUMPSRV_API_KEY = 'replace-with-a-long-random-secret'
 ./dumpsrv.ps1 `
     -PartitionCount 12 `
     -Port 8080 `
-    -DosBoxTimeoutSeconds 60
+    -DosBoxTimeoutSeconds 60 `
+    -RendererTestPercentage 5
 ```
+
+The renderer selects `ceiling(replay count * percentage / 100)` evenly
+spaced entries from the full filename-sorted replay list. For example, 5% of
+7,000 replays selects 350 entries: the first, twenty-first, forty-first, and
+so on. The selected entries are assigned round-robin to the configured
+partitions by their position in the sample, not by the original replay
+counter. With 12 partitions, two get 30 replays and ten get 29.
+
+Partition sizes differ by at most one replay, including when filenames have
+gaps or prefixes. Every worker receives work when the sample contains at
+least as many replays as there are partitions; smaller samples cannot use
+all workers. Replay durations can still differ. Sampling is deterministic:
+the same replay set and percentage select the same files, regardless of the
+partition count. Both `rpl2pixdumpmain.ps1` and `rpl2pixdump.ps1` also accept
+`-RendererTestPercentage` for standalone use.
 
 The service listens on all local interfaces. On Windows, `HttpListener` may
 require a one-time URL reservation from an elevated prompt:
@@ -154,18 +173,32 @@ request fails, an existing result file is left unchanged.
 ## Processing and results
 
 If `physics_tests` is true, the state comparison runs first using the existing
-replay partitions. If `renderer_tests` is true, renderer partitions then
-process every matching `.PDX` reference. For each reference, `PIXLDUMP.EXE`
-runs with camera `2` (F2) and target `0` (player), producing a `.PDD` file that
-is compared byte for byte with the `.PDX` file.
+replay partitions. `REPLDUMO.EXE` produces `.BIN` files, which are retained and
+reused once complete, and `REPLDUMP.EXE` produces `.BNI` files for byte-for-byte
+comparison.
+
+If `renderer_tests` is true, renderer partitions then process the sampled
+`.rpl` inputs selected by `RendererTestPercentage`. For each replay,
+`PIXLDUMO.EXE` and `PIXLDUMP.EXE` run with camera `2` (F2) and target `0`
+(player), producing `.PDO` and `.PDD` files respectively.
+Completed `.PDO` files are retained and reused. `PIXLDUMP.EXE` regenerates its
+`.PDD` file on every run, and the two files are compared byte for byte.
+Existing `.PDD` files are removed before processing so stale output cannot
+mask a failure.
+
+Before generating oracle output, each worker creates a `.BIN.pending` or
+`.PDO.pending` marker. It removes the marker only after the original
+executable finishes successfully and produces its output. If generation
+fails or the worker is interrupted, the marker identifies the incomplete
+dump for regeneration on the next run or removal during service cleanup.
 
 Physics and renderer diagnostics use the same one-line format and are sorted
 by the `input` field in the returned report. Renderer examples include:
 
 ```text
-ERROR|type=missing_input|input=0000.rpl|reference=0000.PDX
+ERROR|type=missing_output|input=0000.rpl|output=0000.PDO
 ERROR|type=missing_output|input=0000.rpl|output=0000.PDD
-ERROR|type=file_mismatch|input=0000.rpl|pdx=0000.PDX|pdd=0000.PDD
+ERROR|type=file_mismatch|input=0000.rpl|pdo=0000.PDO|pdd=0000.PDD
 ```
 
 An empty `partitions_all.txt` means that all enabled comparisons matched and
@@ -188,11 +221,16 @@ Other error responses are:
 - `500 Internal Server Error` if processing fails or the result is missing
 - `504 Gateway Timeout` after 30 minutes of processing
 
-After successful processing and a successful response, every `.bni` and
-generated `.pdd` file in the `stunts` directory and every `.txt` file in the
-service directory is deleted non-recursively. These files are not deleted on
-failure, timeout, missing output, or a failed response. Existing `.bin` files
-are reused because `REPLDUMO.EXE` output does not change between requests.
+After processing finishes and its report is sent successfully, every `.bni`
+and generated `.pdd` file in the `stunts` directory and every `.txt` file in
+the service directory is deleted non-recursively. Remaining `.BIN.pending`
+and `.PDO.pending` markers are also removed, after deleting each associated
+incomplete `.BIN` or `.PDO`.
+If an incomplete dump cannot be deleted, its marker is retained so the dump
+cannot be reused as a completed cache entry. Completed `.bin` and `.pdo`
+files are retained and reused because `REPLDUMO.EXE` and `PIXLDUMO.EXE`
+outputs do not change between requests. If the request fails or times out,
+or its result cannot be sent, generated files are retained.
 
 This service uses plain HTTP. The API key prevents unauthenticated use, but it
 is visible to anyone able to capture traffic on the local network.

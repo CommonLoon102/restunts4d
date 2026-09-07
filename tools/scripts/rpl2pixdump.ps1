@@ -2,23 +2,27 @@
 
 <#
 .SYNOPSIS
-Generates .PDD files and compares them with .PDX reference files for one
-replay partition.
+Generates or reuses .PDO files from PIXLDUMO and compares them with fresh
+.PDD files from PIXLDUMP for one replay partition.
 #>
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory, Position = 0)]
-    [ValidateRange(0, 63)]
+    [ValidateRange(0, 2147483646)]
     [int]$Partition,
 
     [Parameter(Mandatory, Position = 1)]
-    [ValidateRange(1, 64)]
+    [ValidateRange(1, 2147483647)]
     [int]$PartitionCount,
 
     [Parameter()]
     [ValidateRange(1, 2147483)]
-    [int]$DosBoxTimeoutSeconds = 60
+    [int]$DosBoxTimeoutSeconds = 60,
+
+    [Parameter()]
+    [ValidateRange(1, 100)]
+    [int]$RendererTestPercentage = 100
 )
 
 Set-StrictMode -Version Latest
@@ -42,39 +46,46 @@ if (-not (Test-Path -LiteralPath $Config -PathType Leaf)) {
     throw "DOSBox configuration not found: $Config"
 }
 
-# Reference filenames end with a four-digit counter, such as 0000.PDX or
-# sl0000.pdx. Calculate each file's partition from that counter at runtime.
-$ReferenceFilePattern = [regex]::new(
-    '([0-9]{4})\.pdx$',
+# Sort the full eligible set before sampling so the sample spans the whole
+# sequence, including prefixed names and gaps in the numeric counters.
+$ReplayFilePattern = [regex]::new(
+    '[0-9]{4}\.rpl$',
     [System.Text.RegularExpressions.RegexOptions]::IgnoreCase
 )
-$ReferenceFiles = @(
+$AllReplayFiles = @(
     Get-ChildItem -LiteralPath $GameDir -File |
-        Where-Object {
-            $suffixMatch = $ReferenceFilePattern.Match($_.Name)
-            $suffixMatch.Success -and
-            ([long]$suffixMatch.Groups[1].Value % $PartitionCount) -eq
-                $Partition
-        } |
+        Where-Object { $ReplayFilePattern.IsMatch($_.Name) } |
         Sort-Object -Property Name
 )
+$sampleCount = [int][math]::Ceiling(
+    [long]$AllReplayFiles.Count * $RendererTestPercentage / 100.0
+)
 
-if ($ReferenceFiles.Count -eq 0) {
+# Space samples evenly, then partition by sample position rather than replay
+# counter. This keeps partition sizes within one replay of each other even
+# when the sampling interval shares a factor with the partition count.
+$ReplayFiles = @(
+    for ($sampleIndex = $Partition; $sampleIndex -lt $sampleCount;
+        $sampleIndex += $PartitionCount) {
+        $replayIndex = [int][math]::Floor(
+            [long]$sampleIndex * $AllReplayFiles.Count / $sampleCount
+        )
+        $AllReplayFiles[$replayIndex]
+    }
+)
+
+Write-Output (
+    'Renderer partition {0}: {1} of {2} sampled replays ({3}% of {4} eligible).' -f
+    $Partition,
+    $ReplayFiles.Count,
+    $sampleCount,
+    $RendererTestPercentage,
+    $AllReplayFiles.Count
+)
+
+if ($ReplayFiles.Count -eq 0) {
     Write-Output 'No matching files found.'
     return
-}
-
-$ReplayFilesByBaseName = [System.Collections.Generic.Dictionary[string, object]]::new(
-        [System.StringComparer]::OrdinalIgnoreCase
-    )
-foreach ($replayFile in @(
-        Get-ChildItem -LiteralPath $GameDir -File |
-            Where-Object { $_.Extension -ieq '.rpl' } |
-            Sort-Object -Property Name
-    )) {
-    if (-not $ReplayFilesByBaseName.ContainsKey($replayFile.BaseName)) {
-        $ReplayFilesByBaseName.Add($replayFile.BaseName, $replayFile)
-    }
 }
 
 function Write-ReplayError {
@@ -117,7 +128,12 @@ function Invoke-DosBoxExecutable {
     )
 
     $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
-    $startInfo.FileName = 'C:\DOSBox-x\dosbox-X.exe'
+    $startInfo.FileName = if ($IsWindows) {
+        'C:\DOSBox-x\dosbox-X.exe'
+    }
+    else {
+        'dosbox-x'
+    }
     $startInfo.WorkingDirectory = $GameDir
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
@@ -258,52 +274,64 @@ function Test-FilesEqual {
     }
 }
 
-$total = $ReferenceFiles.Count
+$total = $ReplayFiles.Count
 $processed = 0
 
-foreach ($referenceFile in $ReferenceFiles) {
+foreach ($replayFile in $ReplayFiles) {
     $processed++
-    $expectedReplayName = $referenceFile.BaseName + '.rpl'
+    $pdoFile = Join-Path $GameDir ($replayFile.BaseName + '.PDO')
+    $pdoPendingFile = "$pdoFile.pending"
+    $pddFile = Join-Path $GameDir ($replayFile.BaseName + '.PDD')
 
     Write-Output (
-        'Processing renderer reference {0}/{1}: {2}' -f
+        'Processing renderer replay {0}/{1}: {2}' -f
         $processed,
         $total,
-        $referenceFile.Name
+        $replayFile.Name
     )
-
-    if (-not $ReplayFilesByBaseName.ContainsKey($referenceFile.BaseName)) {
-        Write-ReplayError (
-            "ERROR|type=missing_input|input=$expectedReplayName|" +
-            "reference=$($referenceFile.Name)"
-        )
-        continue
-    }
-
-    $replayFile = $ReplayFilesByBaseName[$referenceFile.BaseName]
-    $pddFile = Join-Path $GameDir ($replayFile.BaseName + '.PDD')
 
     # Prevent output from an earlier failed invocation from being accepted.
     if (Test-Path -LiteralPath $pddFile -PathType Leaf) {
         Remove-Item -LiteralPath $pddFile -Force
     }
 
+    # Retain completed PDO files. A pending marker survives even if the worker
+    # is killed, so interrupted oracle output is regenerated on the next run.
+    if ((Test-Path -LiteralPath $pdoPendingFile -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $pdoFile -PathType Leaf)) {
+        [System.IO.File]::WriteAllText($pdoPendingFile, '')
+        if (Test-Path -LiteralPath $pdoFile -PathType Leaf) {
+            Remove-Item -LiteralPath $pdoFile -Force
+        }
+
+        if (-not (Invoke-DosBoxExecutable 'pixldumo.exe' $replayFile.Name)) {
+            continue
+        }
+
+        if (Test-Path -LiteralPath $pdoFile -PathType Leaf) {
+            Remove-Item -LiteralPath $pdoPendingFile -Force
+        }
+    }
+
     if (-not (Invoke-DosBoxExecutable 'pixldump.exe' $replayFile.Name)) {
         continue
     }
 
-    if (-not (Test-Path -LiteralPath $pddFile -PathType Leaf)) {
-        Write-ReplayError (
-            "ERROR|type=missing_output|input=$($replayFile.Name)|" +
-            "output=$([System.IO.Path]::GetFileName($pddFile))"
-        )
-        continue
+    $outputsExist = $true
+    foreach ($dumpFile in @($pdoFile, $pddFile)) {
+        if (-not (Test-Path -LiteralPath $dumpFile -PathType Leaf)) {
+            Write-ReplayError (
+                "ERROR|type=missing_output|input=$($replayFile.Name)|" +
+                "output=$([System.IO.Path]::GetFileName($dumpFile))"
+            )
+            $outputsExist = $false
+        }
     }
 
-    if (-not (Test-FilesEqual $referenceFile.FullName $pddFile)) {
+    if ($outputsExist -and -not (Test-FilesEqual $pdoFile $pddFile)) {
         Write-ReplayError (
             "ERROR|type=file_mismatch|input=$($replayFile.Name)|" +
-            "pdx=$($referenceFile.Name)|" +
+            "pdo=$([System.IO.Path]::GetFileName($pdoFile))|" +
             "pdd=$([System.IO.Path]::GetFileName($pddFile))"
         )
     }

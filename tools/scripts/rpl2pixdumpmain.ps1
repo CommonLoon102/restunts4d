@@ -17,7 +17,11 @@ param(
 
     [Parameter()]
     [ValidateRange(1, 2147483)]
-    [int]$DosBoxTimeoutSeconds = 60
+    [int]$DosBoxTimeoutSeconds = 60,
+
+    [Parameter()]
+    [ValidateRange(1, 100)]
+    [int]$RendererTestPercentage = 100
 )
 
 Set-StrictMode -Version Latest
@@ -47,13 +51,15 @@ try {
                     [string]$WorkerScript,
                     [int]$Partition,
                     [int]$PartitionCount,
-                    [int]$DosBoxTimeoutSeconds
+                    [int]$DosBoxTimeoutSeconds,
+                    [int]$RendererTestPercentage
                 )
 
                 $workerParameters = @{
                     Partition = $Partition
                     PartitionCount = $PartitionCount
                     DosBoxTimeoutSeconds = $DosBoxTimeoutSeconds
+                    RendererTestPercentage = $RendererTestPercentage
                 }
                 & $WorkerScript @workerParameters
             }
@@ -62,6 +68,7 @@ try {
                 $partition
                 $PartitionCount
                 $DosBoxTimeoutSeconds
+                $RendererTestPercentage
             )
         }
 

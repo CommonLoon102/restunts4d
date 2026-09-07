@@ -25,7 +25,11 @@ param(
 
     [Parameter()]
     [ValidateRange(1, 2147483)]
-    [int]$DosBoxTimeoutSeconds = 60
+    [int]$DosBoxTimeoutSeconds = 60,
+
+    [Parameter()]
+    [ValidateRange(1, 100)]
+    [int]$RendererTestPercentage = 100
 )
 
 Set-StrictMode -Version Latest
@@ -146,6 +150,7 @@ $requestHandler = {
         [string]$ResultPath,
         [int]$PartitionCount,
         [int]$DosBoxTimeoutSeconds,
+        [int]$RendererTestPercentage,
         [long]$MaximumExecutableBytes,
         [long]$MaximumUploadBytes,
         [int]$ProcessingTimeoutMilliseconds
@@ -544,6 +549,10 @@ $requestHandler = {
                 )) {
                 [void]$startInfo.ArgumentList.Add($argument)
             }
+            if ($phase.Script -eq $RendererProcessingScript) {
+                [void]$startInfo.ArgumentList.Add('-RendererTestPercentage')
+                [void]$startInfo.ArgumentList.Add([string]$RendererTestPercentage)
+            }
 
             $process = [System.Diagnostics.Process]::new()
             $process.StartInfo = $startInfo
@@ -668,6 +677,28 @@ $requestHandler = {
         }
 
         try {
+            Get-ChildItem -LiteralPath $StuntsDirectory -File |
+                Where-Object {
+                    $_.Name -ilike '*.bin.pending' -or
+                    $_.Name -ilike '*.pdo.pending'
+                } |
+                ForEach-Object {
+                    $dumpFile = Join-Path $_.DirectoryName $_.BaseName
+                    # Remove incomplete output before its marker so a cleanup
+                    # failure cannot leave an apparently completed cache entry.
+                    if (Test-Path -LiteralPath $dumpFile -PathType Leaf) {
+                        Remove-Item -LiteralPath $dumpFile -Force
+                    }
+                    Remove-Item -LiteralPath $_.FullName -Force
+                }
+        }
+        catch {
+            $cleanupErrors += (
+                'Pending BIN/PDO cleanup failed: {0}' -f $_.Exception.Message
+            )
+        }
+
+        try {
             Get-ChildItem -LiteralPath (
                 [System.IO.Path]::GetDirectoryName($StateProcessingScript)
             ) -File |
@@ -682,7 +713,8 @@ $requestHandler = {
 
         if ($cleanupErrors.Count -eq 0) {
             Write-Output (
-                '[{0:O}] Result sent; removed all BNI, PDD, and TXT files.' -f
+                ('[{0:O}] Result sent; removed BNI, PDD, TXT files and ' +
+                'pending BIN/PDO output.') -f
                 [DateTime]::UtcNow
             )
         }
@@ -845,6 +877,7 @@ try {
                     $resultPath,
                     $PartitionCount,
                     $DosBoxTimeoutSeconds,
+                    $RendererTestPercentage,
                     $maximumExecutableBytes,
                     $maximumUploadBytes,
                     $processingTimeoutMilliseconds

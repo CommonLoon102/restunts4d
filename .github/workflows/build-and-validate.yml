@@ -1,8 +1,8 @@
 name: Build and validate
 
-# Checks C/H formatting, runs the host regression tests, builds the four DOS
-# executables and replays the golden replay set against them. Called by the
-# pull request check and the release workflow, so both gate on the same validation.
+# Checks C/H formatting, runs the host regression tests, builds six DOS
+# executables and runs full physics plus sampled renderer replay comparisons.
+# PR and release workflows both gate on this validation.
 on:
   workflow_call:
     inputs:
@@ -22,12 +22,20 @@ on:
         type: number
         default: 12
       replay-timeout-seconds:
-        description: Seconds each executable gets per replay.
+        description: Seconds each physics executable gets per replay.
         type: number
         default: 30
+      renderer-test-percentage:
+        description: Percentage of golden replays sampled for renderer tests (integer 1-100).
+        type: number
+        default: 5
+      renderer-timeout-seconds:
+        description: Seconds each renderer executable gets per replay.
+        type: number
+        default: 120
     outputs:
       exe-artifact:
-        description: Artifact holding the four built executables.
+        description: Artifact holding the six built executables.
         value: ${{ jobs.build.outputs.exe-artifact }}
 
 env:
@@ -66,10 +74,15 @@ jobs:
         env:
           SHARDS: ${{ inputs.shards }}
           PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
           set -u
           if (( SHARDS < 1 || PARTITIONS_PER_SHARD < 1 )); then
               echo "::error::shards and partitions-per-shard must both be positive"
+              exit 1
+          fi
+          if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
+              echo "::error::renderer-test-percentage must be an integer from 1 to 100"
               exit 1
           fi
           echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
@@ -115,9 +128,13 @@ jobs:
           mkdir -p "$HOME/.wine/dosdevices"
           ln -sfn "$GITHUB_WORKSPACE" "$HOME/.wine/dosdevices/s:"
 
-      - name: Build the four executables
+      - name: Build the game and physics executables
         run: |
           xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makerepldump"
+
+      - name: Build the renderer executables
+        run: |
+          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makepixldump"
 
       - name: Collect the executables
         run: |
@@ -126,8 +143,8 @@ jobs:
           missing=0
           # makerepldump.bat never reports failure, and a fresh checkout carries
           # none of these files, so their presence is the build's pass criteria.
-          for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO; do
-              built=$(find stunts src/restunts/dos src/restunts/repldump \
+          for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO PIXLDUMP PIXLDUMO; do
+              built=$(find stunts src/restunts/dos src/restunts/repldump src/restunts/pixldump \
                   -maxdepth 1 -iname "$exe.exe" -print -quit)
               if [[ -z "$built" ]]; then
                   echo "::error::$exe.EXE was not produced by the build"
@@ -193,13 +210,19 @@ jobs:
           cp exes/*.EXE "$game_dir/"
           chmod +x "$game_dir/rpl2state.sh"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
+          # Keep renderer reports separate while sharing the same game inputs.
+          renderer_dir="$RUNNER_TEMP/renderer"
+          mkdir -p "$renderer_dir"
+          ln -s "$game_dir" "$renderer_dir/stunts"
+          cp tools/scripts/rpl2pixdump.ps1 tools/scripts/dosbox.proc.conf "$renderer_dir/"
+          echo "RENDERER_DIR=$renderer_dir" >> "$GITHUB_ENV"
 
       - name: Extract the golden replays
         run: |
           unzip -q tools/scripts/rpls_golden/replays.zip -d "${GAME_DIR:?}"
           echo "Replays in the game directory: $(find "$GAME_DIR" -maxdepth 1 -type f -iname '*.rpl' | wc -l)"
 
-      - name: Run this shard's partitions
+      - name: Run this shard's physics partitions
         env:
           SHARD: ${{ matrix.shard }}
           PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
@@ -229,11 +252,50 @@ jobs:
           done
           exit "$status"
 
+      - name: Run this shard's renderer partitions
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ inputs.shards }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          TOTAL: ${{ needs.plan.outputs.total }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+          RENDERER_TIMEOUT_SECONDS: ${{ inputs.renderer-timeout-seconds }}
+        run: |
+          set -u
+          pids=()
+          partitions=()
+          for (( k = 0; k < PARTITIONS_PER_SHARD; k++ )); do
+              # Interleave partition IDs across shards so any extra samples
+              # are spread across machines as well as workers.
+              partition=$(( k * SHARDS + SHARD ))
+              : > "$RENDERER_DIR/partition_$partition.txt"
+              # Sample globally before assigning to the global partition index.
+              # Sampling within each physics partition would skew coverage.
+              pwsh -NoLogo -NoProfile -NonInteractive \
+                  -File "$RENDERER_DIR/rpl2pixdump.ps1" \
+                  -Partition "$partition" -PartitionCount "$TOTAL" \
+                  -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+                  -DosBoxTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
+                  > "$RENDERER_DIR/renderer_log_$partition.txt" 2>&1 &
+              pids+=("$!")
+              partitions+=("$partition")
+          done
+          status=0
+          for i in "${!pids[@]}"; do
+              if ! wait "${pids[$i]}"; then
+                  echo "::error::renderer partition ${partitions[$i]} exited non-zero"
+                  status=1
+              fi
+          done
+          exit "$status"
+
       - name: Collect this shard's results
         if: always()
         run: |
-          mkdir -p partitions
-          cp "${GAME_DIR:?}"/partition_*.txt "${GAME_DIR:?}"/log_*.txt partitions/
+          mkdir -p partitions/physics partitions/renderer
+          cp "${GAME_DIR:?}"/partition_*.txt "${GAME_DIR:?}"/log_*.txt partitions/physics/
+          cp "${RENDERER_DIR:?}"/partition_*.txt \
+              "$RENDERER_DIR"/renderer_log_*.txt partitions/renderer/
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -263,7 +325,10 @@ jobs:
       - name: Merge the partitions
         env:
           TOTAL: ${{ needs.plan.outputs.total }}
-        run: tools/scripts/rpl2statemerge.sh partitions "$TOTAL" partitions_all.txt
+        run: |
+          tools/scripts/rpl2statemerge.sh partitions/physics "$TOTAL" physics_all.txt
+          tools/scripts/rpl2statemerge.sh partitions/renderer "$TOTAL" renderer_all.txt
+          cat physics_all.txt renderer_all.txt > partitions_all.txt
 
       - uses: actions/upload-artifact@v7
         with:
@@ -274,11 +339,15 @@ jobs:
       - name: Check for mismatches
         env:
           REPLAY_RESULT: ${{ needs.replay.result }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
           set -u
           expected=$(unzip -Z1 tools/scripts/rpls_golden/replays.zip | \
               grep -Eic '[0-9]{4}\.rpl$')
-          processed=$(cat partitions/log_*.txt 2>/dev/null | grep -c '^Processing ' || true)
+          processed=$(cat partitions/physics/log_*.txt 2>/dev/null | grep -c '^Processing ' || true)
+          renderer_expected=$(( (expected * RENDERER_TEST_PERCENTAGE + 99) / 100 ))
+          renderer_processed=$(cat partitions/renderer/renderer_log_*.txt 2>/dev/null | \
+              grep -c '^Processing renderer replay ' || true)
           errors=$(grep -c '' partitions_all.txt || true)
 
           types() {
@@ -295,7 +364,10 @@ jobs:
               echo "| | |"
               echo "|---|---|"
               echo "| Replays in the golden set | $expected |"
-              echo "| Replays processed | $processed |"
+              echo "| Physics replays processed | $processed |"
+              echo "| Renderer sample percentage | $RENDERER_TEST_PERCENTAGE% |"
+              echo "| Renderer replays expected | $renderer_expected |"
+              echo "| Renderer replays processed | $renderer_processed |"
               echo "| Errors | $errors |"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -310,6 +382,13 @@ jobs:
               echo "::error::$processed of $expected replays were processed, so the run is incomplete"
               printf '\n:x: Only **%s** of **%s** replays were processed.\n' \
                   "$processed" "$expected" >> "$GITHUB_STEP_SUMMARY"
+              status=1
+          fi
+
+          if (( renderer_processed != renderer_expected )); then
+              echo "::error::$renderer_processed of $renderer_expected renderer replays were processed"
+              printf '\n:x: Only **%s** of **%s** sampled renderer replays were processed.\n' \
+                  "$renderer_processed" "$renderer_expected" >> "$GITHUB_STEP_SUMMARY"
               status=1
           fi
 
@@ -337,9 +416,9 @@ jobs:
           fi
 
           if (( status == 0 )); then
-              echo "No mismatches: all $processed replays agree byte for byte."
-              printf '\n:white_check_mark: All **%s** replays agree byte for byte.\n' \
-                  "$processed" >> "$GITHUB_STEP_SUMMARY"
+              echo "No mismatches: $processed physics and $renderer_processed renderer replays agree byte for byte."
+              printf '\n:white_check_mark: **%s** physics and **%s** renderer replays agree byte for byte.\n' \
+                  "$processed" "$renderer_processed" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           exit "$status"

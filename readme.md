@@ -272,6 +272,28 @@ to override the default 120-second timeout for each DOSBox run.
 
 **NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
 
+## CI replay validation
+
+Pull requests and releases build the game, physics dump tools, and both
+renderer dump tools. CI compares the full golden replay set for physics and
+an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
+against PIXLDUMO `.PDO` files with camera 2 and player target 0.
+
+Set `renderer-test-percentage` (an integer from 1 to 100) when manually
+starting **PR validation** or **Release** to change renderer coverage. Calls
+to the reusable `build-and-validate.yml` workflow can set the same input;
+pull request events use 5%. The PowerShell service retains its separate
+100% default for `RendererTestPercentage`.
+
+Renderer sampling happens across the entire filename-sorted golden set
+before the selected replay positions are distributed across all shards and
+partitions. Renderer partition IDs are interleaved across shards so both
+worker and shard sample counts differ by at most one replay. For 7,000
+replays at 5%, the default 20 shards get 17 or 18 renderer tests each. The CI
+report checks physics and renderer coverage separately and fails for missing
+coverage, processing errors, or any byte mismatch. The reusable workflow's
+`renderer-timeout-seconds` input defaults to 120 seconds per renderer run.
+
 ## Build options
 
 ### Assembler selection

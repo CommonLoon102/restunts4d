@@ -255,14 +255,26 @@ foreach ($file in $ReplayFiles) {
     $fileName = $file.Name
     $basePath = Join-Path $file.DirectoryName $file.BaseName
     $binFile = "$basePath.BIN"
+    $binPendingFile = "$binFile.pending"
     $bniFile = "$basePath.BNI"
 
     Write-Output ('Processing {0}/{1}: {2}' -f $processed, $total, $fileName)
 
-    # REPLDUMPO.EXE produces stable output, so retain and reuse an existing BIN.
-    if (-not (Test-Path -LiteralPath $binFile -PathType Leaf)) {
+    # Retain completed BIN files. A pending marker survives even if the worker
+    # is killed, so interrupted oracle output is regenerated on the next run.
+    if ((Test-Path -LiteralPath $binPendingFile -PathType Leaf) -or
+        -not (Test-Path -LiteralPath $binFile -PathType Leaf)) {
+        [System.IO.File]::WriteAllText($binPendingFile, '')
+        if (Test-Path -LiteralPath $binFile -PathType Leaf) {
+            Remove-Item -LiteralPath $binFile -Force
+        }
+
         if (-not (Invoke-DosBoxExecutable 'repldumo.exe' $fileName)) {
             continue
+        }
+
+        if (Test-Path -LiteralPath $binFile -PathType Leaf) {
+            Remove-Item -LiteralPath $binPendingFile -Force
         }
     }
 

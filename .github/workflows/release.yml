@@ -1,10 +1,14 @@
 name: Release
 
 # Manually publishes the four executables from any branch. The golden replays
-# are validated first, and no release is created unless they all pass.
+# get full physics and sampled renderer validation before a release is created.
 on:
   workflow_dispatch:
     inputs:
+      renderer-test-percentage:
+        description: Percentage of golden replays sampled for renderer tests (integer 1-100).
+        type: number
+        default: 5
       tag:
         description: Tag to create for this release, for example v1.2.0.
         type: string
@@ -59,6 +63,8 @@ jobs:
     name: Golden replays
     needs: check-tag
     uses: ./.github/workflows/build-and-validate.yml
+    with:
+      renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
 
   release:
     name: Publish the release
