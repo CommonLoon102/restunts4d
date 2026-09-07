@@ -91,412 +91,464 @@ static void car_menu_draw_standard_button(legacy_s8 far *text, legacy_u16 button
 				0);
 }
 
-void run_car_menu(legacy_s8 *car_id, legacy_s8 *material, legacy_s8 *transmission,
-				  legacy_u16 opponent_type)
-{
+struct CAR_MENU_STATE {
 	legacy_s8 car_ids[CAR_MENU_MAXIMUM_CARS][CAR_ID_BUFFER_SIZE];
-	legacy_s8 swap_id[CAR_ID_BUFFER_SIZE];
-	const legacy_s8 *found_path;
 	legacy_s8 far *car_resource;
-	legacy_s8 far *description;
-	legacy_s8 far *transmission_text;
 	void far *selector_resource;
-	struct SHAPE2D far *opponent_shape;
-	struct SHAPE2D far *shape;
 	struct SPRITE far *opponent_sprite;
 	struct TRANSFORMEDSHAPE3D transformed;
 	struct RECTANGLE current_rect;
 	struct RECTANGLE previous_rect;
 	struct RECTANGLE union_rect;
-	legacy_u8 car_count;
-	legacy_u8 car_index;
-	legacy_u8 previous_car_index;
-	legacy_u8 selected;
-	legacy_u8 previous_selected;
-	legacy_u8 blit_mode;
-	legacy_u8 render_phase;
-	legacy_u8 car_ready;
-	legacy_u8 render_deferred;
-	legacy_u8 character;
-	legacy_u16 i;
-	legacy_u16 j;
-	legacy_u16 line_length;
-	legacy_u16 old_frame_rate;
-	legacy_u16 input;
-	legacy_u16 speed;
-	legacy_u16 graph_x;
-	legacy_u16 graph_y;
-	legacy_u16 graph_step;
-	legacy_s16 car_position_angle;
-	legacy_s16 rotation;
-	legacy_s16 rotation_delta;
-	legacy_s16 text_y;
-	legacy_s16 mouse_hit;
+	legacy_u8 car_count, car_index, previous_car_index;
+	legacy_u8 selected, previous_selected, blit_mode;
+	legacy_u8 render_phase, car_ready, render_deferred;
+	legacy_s16 rotation, rotation_delta;
+	legacy_s8 *material;
+	legacy_s8 *transmission;
+	legacy_u16 opponent_type;
+};
 
-	transformed.pos = carmenu_carpos;
-	transformed.shapeptr = &game3dshapes[PLAYER_CAR_LOW_SHAPE];
-	transformed.rotvec.x = 0;
-	transformed.rotvec.y = 0;
-	transformed.culling_distance = CAR_MENU_TRANSFORM_DISTANCE;
-	slow_video_mgmt_copy = slow_video_mgmt;
-	if (slow_video_mgmt_copy != 0) {
-		transformed.rectptr = &current_rect;
-		transformed.ts_flags = CAR_MENU_CLIPPED_TRANSFORM_FLAG;
-	} else {
-		transformed.rectptr = 0;
-		transformed.ts_flags = 0;
-	}
-
+static legacy_s16 car_menu_find_cars(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)
+{
+	legacy_s8 swap_id[CAR_ID_BUFFER_SIZE];
+	const legacy_s8 *found_path;
+	legacy_u16 i, j;
 	ensure_file_exists(GAME_RESOURCE_FILE_INDEX);
 	found_path = file_combine_and_find(0, car_resource_wildcard, car_resource_extension);
 	if (found_path == 0) {
-		return;
+		return 0;
 	}
-	car_count = 0;
+	menu->car_count = 0;
 	do {
 		for (i = 0; i < CAR_ID_LENGTH; i++) {
-			car_ids[car_count][i] = found_path[i + CAR_RESOURCE_ID_OFFSET];
+			menu->car_ids[menu->car_count][i] = found_path[i + CAR_RESOURCE_ID_OFFSET];
 		}
-		car_ids[car_count][CAR_ID_LENGTH] = 0;
-		car_count++;
-		if (car_count >= CAR_MENU_MAXIMUM_CARS) {
+		menu->car_ids[menu->car_count][CAR_ID_LENGTH] = 0;
+		menu->car_count++;
+		if (menu->car_count >= CAR_MENU_MAXIMUM_CARS) {
 			break;
 		}
 		found_path = file_find_next_alt();
 	} while (found_path != 0);
 
-	for (i = 0; i + 1U < car_count; i++) {
-		for (j = i + 1U; j < car_count; j++) {
-			if (strcmp(car_ids[i], car_ids[j]) > 0) {
-				strcpy(swap_id, car_ids[i]);
-				strcpy(car_ids[i], car_ids[j]);
-				strcpy(car_ids[j], swap_id);
+	for (i = 0; i + 1U < menu->car_count; i++) {
+		for (j = i + 1U; j < menu->car_count; j++) {
+			if (strcmp(menu->car_ids[i], menu->car_ids[j]) > 0) {
+				strcpy(swap_id, menu->car_ids[i]);
+				strcpy(menu->car_ids[i], menu->car_ids[j]);
+				strcpy(menu->car_ids[j], swap_id);
 			}
 		}
 	}
 
-	car_index = 0;
-	for (i = 0; i < car_count; i++) {
+	menu->car_index = 0;
+	for (i = 0; i < menu->car_count; i++) {
 		for (j = 0; j < CAR_ID_LENGTH; j++) {
-			if (car_ids[i][j] != car_id[j]) {
+			if (menu->car_ids[i][j] != car_id[j]) {
 				break;
 			}
 		}
 		if (j == CAR_ID_LENGTH) {
-			car_index = (legacy_u8)i;
+			menu->car_index = (legacy_u8)i;
 		}
 	}
 
+	return 1;
+}
+
+static void car_menu_initialize(struct CAR_MENU_STATE *menu)
+{
+	struct SHAPE2D far *opponent_shape;
 	waitflag = CAR_MENU_WAIT_TICKS;
-	blit_mode = MENU_BLIT_MODE_INITIAL;
+	menu->blit_mode = MENU_BLIT_MODE_INITIAL;
 	backlights_paint_override = BACKLIGHT_PAINT_DEFAULT;
-	selector_resource = file_load_shape2d_fatal(car_menu_shapes_name);
-	opponent_sprite = 0;
-	if (opponent_type == CAR_MENU_PLAYER_MODE) {
+	menu->selector_resource = file_load_shape2d_fatal(car_menu_shapes_name);
+	menu->opponent_sprite = 0;
+	if (menu->opponent_type == CAR_MENU_PLAYER_MODE) {
 		miscptr = file_load_resfile(car_misc_resource_name);
 	}
 
-	if (opponent_type != CAR_MENU_PLAYER_MODE) {
+	if (menu->opponent_type != CAR_MENU_PLAYER_MODE) {
 		car_menu_redraw_cliprect.right = CAR_MENU_OPPONENT_PANEL_RIGHT;
 		if (video_uses_page_flipping != 0) {
-			opponent_shape = (struct SHAPE2D far *)oppresources[(legacy_u16)opponent_type];
-			opponent_sprite =
+			opponent_shape = (struct SHAPE2D far *)oppresources[(legacy_u16)menu->opponent_type];
+			menu->opponent_sprite =
 				sprite_make_wnd(shape2d_get_width(opponent_shape),
 								shape2d_get_height(opponent_shape), CAR_MENU_TRANSPARENT_COLOR);
 			sprite_select_mcga_backbuffer();
 			sprite_clear_target(0);
 			sprite_putimage_transparent(opponent_shape, 0, 0);
-			sprite_clear_shape_alt(opponent_sprite->sprite_bitmapptr, 0, 0);
+			sprite_clear_shape_alt(menu->opponent_sprite->sprite_bitmapptr, 0, 0);
 		}
 	} else {
 		car_menu_redraw_cliprect.right = CAR_MENU_SCREEN_WIDTH;
 	}
 
-	previous_car_index = CAR_MENU_NO_SELECTION;
-	rotation = 0;
-	selected = CAR_MENU_DONE_BUTTON;
+	menu->previous_car_index = CAR_MENU_NO_SELECTION;
+	menu->rotation = 0;
+	menu->selected = CAR_MENU_DONE_BUTTON;
 	menu_reset_animation_timers();
-	rotation_delta = 0;
-	previous_selected = CAR_MENU_NO_SELECTION;
+	menu->rotation_delta = 0;
+	menu->previous_selected = CAR_MENU_NO_SELECTION;
 	set_projection(CAR_MENU_PROJECTION_X_SCALE, CAR_MENU_PROJECTION_Y_SCALE, CAR_MENU_SCREEN_WIDTH,
 				   CAR_MENU_PROJECTION_HEIGHT);
 	(void)timer_get_delta_alt();
 	render_window_sprite =
 		sprite_make_wnd(CAR_MENU_SCREEN_WIDTH, CAR_MENU_SCREEN_HEIGHT, CAR_MENU_TRANSPARENT_COLOR);
+}
 
+static void car_menu_draw_graph(void)
+{
+	legacy_u16 old_frame_rate, graph_step, speed, graph_x, graph_y;
+	old_frame_rate = (legacy_u16)framespersec;
+	framespersec = GAME_FRAME_RATE_NORMAL;
+	init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
+	state.playerstate.car_transmission = TRANSMISSION_AUTOMATIC;
+	graph_step = 0;
 	for (;;) {
-		render_deferred = 0;
-		if (previous_car_index != car_index) {
-			if (previous_car_index != CAR_MENU_NO_SELECTION) {
-				unload_resource(car_resource);
-				shape3d_free_car_shapes();
+		update_car_speed(INPUT_ACCELERATE_FLAG, PLAYER_CAR_INDEX, &state.playerstate, &simd_player);
+		speed = (legacy_u16)state.playerstate.car_rev_speed >> 8;
+		graph_y = LEGACY_U16_WRAP_SUB(CAR_MENU_GRAPH_BASELINE_Y,
+									  (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+										  LEGACY_U32_WRAP_MUL(speed, CAR_MENU_GRAPH_SPEED_SCALE),
+										  CAR_MENU_GRAPH_SPEED_DIVISOR));
+		if (graph_y < CAR_MENU_GRAPH_MINIMUM_Y) {
+			break;
+		}
+		graph_x = LEGACY_U16_WRAP_ADD(
+			(legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+				LEGACY_U32_WRAP_MUL(CAR_MENU_GRAPH_WIDTH, graph_step), CAR_MENU_GRAPH_STEPS),
+			CAR_MENU_GRAPH_FIRST_X);
+		sprite_putpixel_clipped(graph_x, graph_y, performGraphColor);
+		graph_step++;
+		if (graph_step >= CAR_MENU_GRAPH_STEPS) {
+			break;
+		}
+	}
+	framespersec = (legacy_s16)old_frame_rate;
+}
+
+static void car_menu_draw_description(struct CAR_MENU_STATE *menu)
+{
+	legacy_s8 far *description;
+	legacy_u16 line_length;
+	legacy_s16 text_y;
+	legacy_u8 character;
+	font_set_fontdef2(fontnptr);
+	description = locate_text_res(menu->car_resource, car_description_id);
+	line_length = 0;
+	text_y = CAR_MENU_DESCRIPTION_FIRST_Y;
+	do {
+		character = (legacy_u8)*description++;
+		if (character == ']') {
+			if (line_length != 0) {
+				(&resID_byte1)[line_length] = 0;
+				font_draw_text(&resID_byte1, CAR_MENU_DESCRIPTION_X, text_y);
 			}
-
-			shape3d_load_car_shapes(car_ids[car_index], gameconfig.game_opponentcarid);
-			for (i = 0; i < CAR_ID_LENGTH; i++) {
-				car_resource_name[i + CAR_RESOURCE_ID_OFFSET] = car_ids[car_index][i];
-			}
-			car_resource = (legacy_s8 far *)file_load_resfile(car_resource_name);
-			setup_aero_trackdata(car_resource, 0);
-
-			sprite_select_render_window_and_clear();
-			draw_button(0, 0, CAR_MENU_BACKGROUND_Y, CAR_MENU_SCREEN_WIDTH,
-						CAR_MENU_BACKGROUND_HEIGHT, button_top_color, button_bottom_color,
-						button_fill_color, 0);
-			draw_button(0, CAR_MENU_LEFT_PANEL_X, CAR_MENU_PANEL_Y, CAR_MENU_LEFT_PANEL_WIDTH,
-						CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color,
-						button_fill_color, 0);
-			draw_button(0, CAR_MENU_RIGHT_PANEL_X, CAR_MENU_PANEL_Y, CAR_MENU_RIGHT_PANEL_WIDTH,
-						CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color,
-						button_fill_color, 0);
-			shape = (struct SHAPE2D far *)locate_shape_fatal(selector_resource, car_graph_shape_id);
-			sprite_shape_to_1_alt(shape);
-
-			font_set_fontdef2(fontnptr);
-			font_set_colors(0, dialog_fnt_colour);
-			font_draw_text(car_graph_one_fifty_label, CAR_MENU_GRAPH_LABEL_X,
-						   CAR_MENU_GRAPH_LABEL_150_Y);
-			font_draw_text(car_graph_hundred_label, CAR_MENU_GRAPH_LABEL_X,
-						   CAR_MENU_GRAPH_LABEL_100_Y);
-			font_draw_text(car_graph_fifty_label, CAR_MENU_GRAPH_LABEL_X,
-						   CAR_MENU_GRAPH_LABEL_50_Y);
-			font_draw_text(car_graph_zero_label, CAR_MENU_GRAPH_LABEL_X, CAR_MENU_GRAPH_LABEL_0_Y);
-			font_draw_text(car_graph_time_labels, CAR_MENU_GRAPH_AXIS_X, CAR_MENU_GRAPH_AXIS_Y);
-			font_set_fontdef();
-
-			car_menu_draw_standard_button(locate_text_res(miscptr, car_done_button_id),
-										  CAR_MENU_DONE_BUTTON);
-			car_menu_draw_standard_button(locate_text_res(miscptr, car_next_button_id),
-										  CAR_MENU_NEXT_BUTTON);
-			car_menu_draw_standard_button(locate_text_res(miscptr, car_previous_button_id),
-										  CAR_MENU_PREVIOUS_BUTTON);
-			transmission_text = locate_text_res(miscptr, *transmission != TRANSMISSION_MANUAL
-															 ? car_automatic_button_id
-															 : car_manual_button_id);
-			car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
-			car_menu_draw_standard_button(locate_text_res(miscptr, car_color_button_id),
-										  CAR_MENU_COLOR_BUTTON);
-
-			old_frame_rate = (legacy_u16)framespersec;
-			framespersec = GAME_FRAME_RATE_NORMAL;
-			init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
-			state.playerstate.car_transmission = TRANSMISSION_AUTOMATIC;
-			graph_step = 0;
-			for (;;) {
-				update_car_speed(INPUT_ACCELERATE_FLAG, PLAYER_CAR_INDEX, &state.playerstate,
-								 &simd_player);
-				speed = (legacy_u16)state.playerstate.car_rev_speed >> 8;
-				graph_y =
-					LEGACY_U16_WRAP_SUB(CAR_MENU_GRAPH_BASELINE_Y,
-										(legacy_u16)LEGACY_U32_DIV_OR_ZERO(
-											LEGACY_U32_WRAP_MUL(speed, CAR_MENU_GRAPH_SPEED_SCALE),
-											CAR_MENU_GRAPH_SPEED_DIVISOR));
-				if (graph_y < CAR_MENU_GRAPH_MINIMUM_Y) {
-					break;
-				}
-				graph_x =
-					LEGACY_U16_WRAP_ADD((legacy_u16)LEGACY_U32_DIV_OR_ZERO(
-											LEGACY_U32_WRAP_MUL(CAR_MENU_GRAPH_WIDTH, graph_step),
-											CAR_MENU_GRAPH_STEPS),
-										CAR_MENU_GRAPH_FIRST_X);
-				sprite_putpixel_clipped(graph_x, graph_y, performGraphColor);
-				graph_step++;
-				if (graph_step >= CAR_MENU_GRAPH_STEPS) {
-					break;
-				}
-			}
-			framespersec = (legacy_s16)old_frame_rate;
-
-			font_set_fontdef2(fontnptr);
-			description = locate_text_res(car_resource, car_description_id);
 			line_length = 0;
-			text_y = CAR_MENU_DESCRIPTION_FIRST_Y;
-			do {
-				character = (legacy_u8)*description++;
-				if (character == ']') {
-					if (line_length != 0) {
-						(&resID_byte1)[line_length] = 0;
-						font_draw_text(&resID_byte1, CAR_MENU_DESCRIPTION_X, text_y);
-					}
-					line_length = 0;
-					text_y = LEGACY_S16_WRAP_ADD(text_y, font_glyph_height);
-				} else {
-					(&resID_byte1)[line_length++] = (legacy_s8)character;
-				}
-			} while (*description != 0);
-			font_set_fontdef();
-			(void)timer_get_delta_alt();
-			previous_selected = CAR_MENU_NO_SELECTION;
-			previous_rect.left = 0;
-			previous_rect.right = CAR_MENU_SCREEN_WIDTH;
-			previous_rect.top = 0;
-			previous_rect.bottom = CAR_MENU_SCREEN_HEIGHT;
-			car_ready = 0;
-			render_phase = CAR_RENDER_START_PHASE;
+			text_y = LEGACY_S16_WRAP_ADD(text_y, font_glyph_height);
+		} else {
+			(&resID_byte1)[line_length++] = (legacy_s8)character;
 		}
+	} while (*description != 0);
+	font_set_fontdef();
+}
 
-		rotation = LEGACY_S16_WRAP_ADD(rotation, rotation_delta);
-		if (render_phase == CAR_RENDER_IDLE_PHASE || render_phase == CAR_RENDER_START_PHASE) {
-			car_position_angle = (legacy_s16)polarAngle(carmenu_carpos.y, carmenu_carpos.z);
-			current_rect = slow_video_mgmt_copy != 0 ? empty_rect : carmenu_cliprect;
-			select_cliprect_rotate(0, car_position_angle, 0, &carmenu_cliprect, 0);
-			if ((legacy_s8)(legacy_u8)*material >=
-				(legacy_s8)(legacy_u8)game3dshapes[PLAYER_CAR_LOW_SHAPE].shape3d_numpaints) {
-				*material = 0;
-			}
-			transformed.rotvec.z = rotation;
-			transformed.material = (legacy_u8)*material;
-			shape3d_transform_and_queue(&transformed);
-			car_menu_redraw_cliprect.bottom = previous_car_index == car_index
-												  ? CAR_MENU_CAR_CLIP_BOTTOM
-												  : CAR_MENU_FULL_CLIP_BOTTOM;
-			(void)rect_intersect(&current_rect, &car_menu_redraw_cliprect);
-			rect_union(&current_rect, &previous_rect, &union_rect);
-			if (render_phase != CAR_RENDER_START_PHASE) {
-				render_phase = CAR_RENDER_DRAW_PHASE;
-				render_deferred = 1;
-			}
+static void car_menu_load_car(struct CAR_MENU_STATE *menu)
+{
+	legacy_u16 i;
+	struct SHAPE2D far *shape;
+	legacy_s8 far *transmission_text;
+
+	if (menu->previous_car_index != CAR_MENU_NO_SELECTION) {
+		unload_resource(menu->car_resource);
+		shape3d_free_car_shapes();
+	}
+
+	shape3d_load_car_shapes(menu->car_ids[menu->car_index], gameconfig.game_opponentcarid);
+	for (i = 0; i < CAR_ID_LENGTH; i++) {
+		car_resource_name[i + CAR_RESOURCE_ID_OFFSET] = menu->car_ids[menu->car_index][i];
+	}
+	menu->car_resource = (legacy_s8 far *)file_load_resfile(car_resource_name);
+	setup_aero_trackdata(menu->car_resource, 0);
+
+	sprite_select_render_window_and_clear();
+	draw_button(0, 0, CAR_MENU_BACKGROUND_Y, CAR_MENU_SCREEN_WIDTH, CAR_MENU_BACKGROUND_HEIGHT,
+				button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(0, CAR_MENU_LEFT_PANEL_X, CAR_MENU_PANEL_Y, CAR_MENU_LEFT_PANEL_WIDTH,
+				CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
+	draw_button(0, CAR_MENU_RIGHT_PANEL_X, CAR_MENU_PANEL_Y, CAR_MENU_RIGHT_PANEL_WIDTH,
+				CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
+	shape = (struct SHAPE2D far *)locate_shape_fatal(menu->selector_resource, car_graph_shape_id);
+	sprite_shape_to_1_alt(shape);
+
+	font_set_fontdef2(fontnptr);
+	font_set_colors(0, dialog_fnt_colour);
+	font_draw_text(car_graph_one_fifty_label, CAR_MENU_GRAPH_LABEL_X, CAR_MENU_GRAPH_LABEL_150_Y);
+	font_draw_text(car_graph_hundred_label, CAR_MENU_GRAPH_LABEL_X, CAR_MENU_GRAPH_LABEL_100_Y);
+	font_draw_text(car_graph_fifty_label, CAR_MENU_GRAPH_LABEL_X, CAR_MENU_GRAPH_LABEL_50_Y);
+	font_draw_text(car_graph_zero_label, CAR_MENU_GRAPH_LABEL_X, CAR_MENU_GRAPH_LABEL_0_Y);
+	font_draw_text(car_graph_time_labels, CAR_MENU_GRAPH_AXIS_X, CAR_MENU_GRAPH_AXIS_Y);
+	font_set_fontdef();
+
+	car_menu_draw_standard_button(locate_text_res(miscptr, car_done_button_id),
+								  CAR_MENU_DONE_BUTTON);
+	car_menu_draw_standard_button(locate_text_res(miscptr, car_next_button_id),
+								  CAR_MENU_NEXT_BUTTON);
+	car_menu_draw_standard_button(locate_text_res(miscptr, car_previous_button_id),
+								  CAR_MENU_PREVIOUS_BUTTON);
+	transmission_text = locate_text_res(miscptr, *menu->transmission != TRANSMISSION_MANUAL
+													 ? car_automatic_button_id
+													 : car_manual_button_id);
+	car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
+	car_menu_draw_standard_button(locate_text_res(miscptr, car_color_button_id),
+								  CAR_MENU_COLOR_BUTTON);
+
+	car_menu_draw_graph();
+	car_menu_draw_description(menu);
+
+	(void)timer_get_delta_alt();
+	menu->previous_selected = CAR_MENU_NO_SELECTION;
+	menu->previous_rect.left = 0;
+	menu->previous_rect.right = CAR_MENU_SCREEN_WIDTH;
+	menu->previous_rect.top = 0;
+	menu->previous_rect.bottom = CAR_MENU_SCREEN_HEIGHT;
+	menu->car_ready = 0;
+	menu->render_phase = CAR_RENDER_START_PHASE;
+}
+
+static void car_menu_prepare_preview(struct CAR_MENU_STATE *menu)
+{
+	legacy_s16 car_position_angle;
+	menu->rotation = LEGACY_S16_WRAP_ADD(menu->rotation, menu->rotation_delta);
+	if (menu->render_phase == CAR_RENDER_IDLE_PHASE ||
+		menu->render_phase == CAR_RENDER_START_PHASE) {
+		car_position_angle = (legacy_s16)polarAngle(carmenu_carpos.y, carmenu_carpos.z);
+		menu->current_rect = slow_video_mgmt_copy != 0 ? empty_rect : carmenu_cliprect;
+		select_cliprect_rotate(0, car_position_angle, 0, &carmenu_cliprect, 0);
+		if ((legacy_s8)(legacy_u8)*menu->material >=
+			(legacy_s8)(legacy_u8)game3dshapes[PLAYER_CAR_LOW_SHAPE].shape3d_numpaints) {
+			*menu->material = 0;
 		}
+		menu->transformed.rotvec.z = menu->rotation;
+		menu->transformed.material = (legacy_u8)*menu->material;
+		shape3d_transform_and_queue(&menu->transformed);
+		car_menu_redraw_cliprect.bottom = menu->previous_car_index == menu->car_index
+											  ? CAR_MENU_CAR_CLIP_BOTTOM
+											  : CAR_MENU_FULL_CLIP_BOTTOM;
+		(void)rect_intersect(&menu->current_rect, &car_menu_redraw_cliprect);
+		rect_union(&menu->current_rect, &menu->previous_rect, &menu->union_rect);
+		if (menu->render_phase != CAR_RENDER_START_PHASE) {
+			menu->render_phase = CAR_RENDER_DRAW_PHASE;
+			menu->render_deferred = 1;
+		}
+	}
+}
 
-		if (render_deferred == 0 &&
-			(render_phase == CAR_RENDER_DRAW_PHASE || render_phase == CAR_RENDER_START_PHASE)) {
-			render_phase = CAR_RENDER_IDLE_PHASE;
-			car_ready = 1;
+static void car_menu_render_preview(struct CAR_MENU_STATE *menu)
+{
+	if (menu->render_deferred == 0 && (menu->render_phase == CAR_RENDER_DRAW_PHASE ||
+									   menu->render_phase == CAR_RENDER_START_PHASE)) {
+		menu->render_phase = CAR_RENDER_IDLE_PHASE;
+		menu->car_ready = 1;
+		sprite_select_render_window();
+		sprite_set_target_clip_bounds(menu->union_rect.left, menu->union_rect.right,
+									  menu->union_rect.top, menu->union_rect.bottom);
+		sprite_putimage((struct SHAPE2D far *)locate_shape_fatal(menu->selector_resource,
+																 car_preview_top_shape_id));
+		shape3d_render_queued_primitives();
+		sprite_select_render_window();
+		sprite_set_target_clip_bounds(menu->union_rect.left, menu->union_rect.right,
+									  menu->union_rect.top, menu->union_rect.bottom);
+		menu->previous_rect = menu->current_rect;
+
+		if (menu->opponent_type != CAR_MENU_PLAYER_MODE &&
+			menu->previous_car_index != menu->car_index) {
 			sprite_select_render_window();
-			sprite_set_target_clip_bounds(union_rect.left, union_rect.right, union_rect.top,
-										  union_rect.bottom);
-			sprite_putimage((struct SHAPE2D far *)locate_shape_fatal(selector_resource,
-																	 car_preview_top_shape_id));
-			shape3d_render_queued_primitives();
-			sprite_select_render_window();
-			sprite_set_target_clip_bounds(union_rect.left, union_rect.right, union_rect.top,
-										  union_rect.bottom);
-			previous_rect = current_rect;
-
-			if (opponent_type != CAR_MENU_PLAYER_MODE && previous_car_index != car_index) {
-				sprite_select_render_window();
-				if (video_uses_page_flipping == 0) {
-					sprite_putimage_transparent(
-						(struct SHAPE2D far *)oppresources[(legacy_u16)opponent_type],
-						CAR_MENU_OPPONENT_PANEL_X, 0);
-				} else {
-					sprite_copy_image_at(opponent_sprite->sprite_bitmapptr,
-										 CAR_MENU_OPPONENT_PANEL_X, 0);
-				}
-			}
-
-			sprite_select_screen_compat();
-			sprite_set_target_clip_bounds(union_rect.left, union_rect.right, union_rect.top,
-										  union_rect.bottom);
-			mouse_draw_opaque_check();
-			if (blit_mode != MENU_BLIT_MODE_REFRESH) {
-				(void)sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(blit_mode));
-				blit_mode = MENU_BLIT_MODE_REFRESH;
+			if (video_uses_page_flipping == 0) {
+				sprite_putimage_transparent(
+					(struct SHAPE2D far *)oppresources[(legacy_u16)menu->opponent_type],
+					CAR_MENU_OPPONENT_PANEL_X, 0);
 			} else {
-				sprite_putimage(render_window_sprite->sprite_bitmapptr);
+				sprite_copy_image_at(menu->opponent_sprite->sprite_bitmapptr,
+									 CAR_MENU_OPPONENT_PANEL_X, 0);
 			}
-			mouse_draw_transparent_check();
-			previous_car_index = car_index;
-		}
-
-		if (previous_selected != selected) {
-			if (previous_selected != CAR_MENU_NO_SELECTION) {
-				sprite_select_screen_compat();
-				sprite_set_target_clip_bounds(
-					carmenu_buttons[0].x1,
-					LEGACY_S16_FROM_BITS((legacy_u16)((LEGACY_U16_WRAP_ADD(carmenu_buttons[0].x2,
-																		   video_x_alignment)) &
-													  (legacy_u16)video_x_alignment_mask)),
-					carmenu_buttons[0].y1,
-					LEGACY_S16_WRAP_ADD(carmenu_buttons[CAR_MENU_COLOR_BUTTON].y2, 1));
-				mouse_draw_opaque_check();
-				sprite_putimage(render_window_sprite->sprite_bitmapptr);
-				mouse_draw_transparent_check();
-				sprite_select_screen_compat();
-			}
-			menu_reset_animation_timers();
-			previous_selected = selected;
 		}
 
 		sprite_select_screen_compat();
-		rotation_delta = (legacy_s16)menu_animate_button_highlight(
-			selected, carmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
-		menu_update_idle_counter((legacy_u16)rotation_delta, CAR_MENU_IDLE_LIMIT_TICKS);
-		input = (legacy_u16)input_checking(rotation_delta);
-		mouse_hit = (legacy_s16)mouse_multi_hittest(CAR_MENU_BUTTON_COUNT, carmenu_buttons);
-		if (mouse_hit != -1) {
-			selected = (legacy_u8)mouse_hit;
-		}
-		if (idle_expired != 0) {
-			selected = CAR_MENU_DONE_BUTTON;
-			input = KEY_ENTER;
-		}
-
-		if (input == 0) {
-			continue;
-		}
-		if (input == KEY_UP) {
-			selected = selected == CAR_MENU_DONE_BUTTON ? CAR_MENU_COLOR_BUTTON
-														: (legacy_u8)(selected - 1U);
-			continue;
-		}
-		if (input == KEY_DOWN) {
-			selected = selected >= CAR_MENU_COLOR_BUTTON ? CAR_MENU_DONE_BUTTON
-														 : (legacy_u8)(selected + 1U);
-			continue;
-		}
-		if (input != KEY_ENTER && input != KEY_ESCAPE && input != KEY_SPACE) {
-			continue;
-		}
-
-		if (selected == CAR_MENU_DONE_BUTTON) {
-			if (car_ready == 0) {
-				continue;
-			}
-			break;
-		} else if (selected == CAR_MENU_NEXT_BUTTON) {
-			car_index++;
-			if (car_index == car_count) {
-				car_index = 0;
-			}
-			continue;
-		} else if (selected == CAR_MENU_PREVIOUS_BUTTON) {
-			car_index = car_index == 0 ? (legacy_u8)(car_count - 1U) : (legacy_u8)(car_index - 1U);
-			continue;
-		} else if (selected == CAR_MENU_TRANSMISSION_BUTTON) {
-			*transmission = (legacy_s8)((legacy_u8)*transmission ^ TRANSMISSION_MODE_MASK);
-			sprite_select_render_window();
-			transmission_text = locate_text_res(miscptr, *transmission != TRANSMISSION_MANUAL
-															 ? car_automatic_toggle_id
-															 : car_manual_toggle_id);
-			car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
-			sprite_select_screen_compat();
-			mouse_draw_opaque_check();
-			car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
-			mouse_draw_transparent_check();
-			continue;
-		} else if (selected == CAR_MENU_COLOR_BUTTON) {
-			*material = (legacy_s8)((legacy_u8)*material + 1U);
-			render_phase = CAR_RENDER_START_PHASE;
-			continue;
+		sprite_set_target_clip_bounds(menu->union_rect.left, menu->union_rect.right,
+									  menu->union_rect.top, menu->union_rect.bottom);
+		mouse_draw_opaque_check();
+		if (menu->blit_mode != MENU_BLIT_MODE_REFRESH) {
+			(void)sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(menu->blit_mode));
+			menu->blit_mode = MENU_BLIT_MODE_REFRESH;
 		} else {
-			continue;
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
 		}
+		mouse_draw_transparent_check();
+		menu->previous_car_index = menu->car_index;
+	}
+}
+
+static void car_menu_draw_selection(struct CAR_MENU_STATE *menu)
+{
+	if (menu->previous_selected != menu->selected) {
+		if (menu->previous_selected != CAR_MENU_NO_SELECTION) {
+			sprite_select_screen_compat();
+			sprite_set_target_clip_bounds(
+				carmenu_buttons[0].x1,
+				LEGACY_S16_FROM_BITS(
+					(legacy_u16)((LEGACY_U16_WRAP_ADD(carmenu_buttons[0].x2, video_x_alignment)) &
+								 (legacy_u16)video_x_alignment_mask)),
+				carmenu_buttons[0].y1,
+				LEGACY_S16_WRAP_ADD(carmenu_buttons[CAR_MENU_COLOR_BUTTON].y2, 1));
+			mouse_draw_opaque_check();
+			sprite_putimage(render_window_sprite->sprite_bitmapptr);
+			mouse_draw_transparent_check();
+			sprite_select_screen_compat();
+		}
+		menu_reset_animation_timers();
+		menu->previous_selected = menu->selected;
+	}
+}
+
+static legacy_u16 car_menu_read_input(struct CAR_MENU_STATE *menu)
+{
+	legacy_u16 input;
+	legacy_s16 mouse_hit;
+	sprite_select_screen_compat();
+	menu->rotation_delta = (legacy_s16)menu_animate_button_highlight(
+		menu->selected, carmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
+	menu_update_idle_counter((legacy_u16)menu->rotation_delta, CAR_MENU_IDLE_LIMIT_TICKS);
+	input = (legacy_u16)input_checking(menu->rotation_delta);
+	mouse_hit = (legacy_s16)mouse_multi_hittest(CAR_MENU_BUTTON_COUNT, carmenu_buttons);
+	if (mouse_hit != -1) {
+		menu->selected = (legacy_u8)mouse_hit;
+	}
+	if (idle_expired != 0) {
+		menu->selected = CAR_MENU_DONE_BUTTON;
+		input = KEY_ENTER;
 	}
 
-	sprite_free_wnd(render_window_sprite);
-	unload_resource(car_resource);
-	shape3d_free_car_shapes();
-	if (opponent_type != CAR_MENU_PLAYER_MODE && video_uses_page_flipping != 0) {
-		sprite_free_wnd(opponent_sprite);
+	return input;
+}
+
+static legacy_s16 car_menu_handle_input(struct CAR_MENU_STATE *menu, legacy_u16 input)
+{
+	legacy_s8 far *transmission_text;
+	if (input == 0) {
+		return 0;
 	}
-	if (opponent_type == CAR_MENU_PLAYER_MODE) {
+	if (input == KEY_UP) {
+		menu->selected = menu->selected == CAR_MENU_DONE_BUTTON ? CAR_MENU_COLOR_BUTTON
+																: (legacy_u8)(menu->selected - 1U);
+		return 0;
+	}
+	if (input == KEY_DOWN) {
+		menu->selected = menu->selected >= CAR_MENU_COLOR_BUTTON ? CAR_MENU_DONE_BUTTON
+																 : (legacy_u8)(menu->selected + 1U);
+		return 0;
+	}
+	if (input != KEY_ENTER && input != KEY_ESCAPE && input != KEY_SPACE) {
+		return 0;
+	}
+
+	if (menu->selected == CAR_MENU_DONE_BUTTON) {
+		if (menu->car_ready == 0) {
+			return 0;
+		}
+		return 1;
+	} else if (menu->selected == CAR_MENU_NEXT_BUTTON) {
+		menu->car_index++;
+		if (menu->car_index == menu->car_count) {
+			menu->car_index = 0;
+		}
+		return 0;
+	} else if (menu->selected == CAR_MENU_PREVIOUS_BUTTON) {
+		menu->car_index = menu->car_index == 0 ? (legacy_u8)(menu->car_count - 1U)
+											   : (legacy_u8)(menu->car_index - 1U);
+		return 0;
+	} else if (menu->selected == CAR_MENU_TRANSMISSION_BUTTON) {
+		*menu->transmission = (legacy_s8)((legacy_u8)*menu->transmission ^ TRANSMISSION_MODE_MASK);
+		sprite_select_render_window();
+		transmission_text = locate_text_res(miscptr, *menu->transmission != TRANSMISSION_MANUAL
+														 ? car_automatic_toggle_id
+														 : car_manual_toggle_id);
+		car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
+		sprite_select_screen_compat();
+		mouse_draw_opaque_check();
+		car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
+		mouse_draw_transparent_check();
+		return 0;
+	} else if (menu->selected == CAR_MENU_COLOR_BUTTON) {
+		*menu->material = (legacy_s8)((legacy_u8)*menu->material + 1U);
+		menu->render_phase = CAR_RENDER_START_PHASE;
+		return 0;
+	} else {
+		return 0;
+	}
+}
+
+static void car_menu_release(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)
+{
+	legacy_u16 i;
+	sprite_free_wnd(render_window_sprite);
+	unload_resource(menu->car_resource);
+	shape3d_free_car_shapes();
+	if (menu->opponent_type != CAR_MENU_PLAYER_MODE && video_uses_page_flipping != 0) {
+		sprite_free_wnd(menu->opponent_sprite);
+	}
+	if (menu->opponent_type == CAR_MENU_PLAYER_MODE) {
 		unload_resource(miscptr);
 	}
-	mmgr_free((legacy_s8 far *)selector_resource);
+	mmgr_free((legacy_s8 far *)menu->selector_resource);
 	mouse_draw_opaque_check();
 	for (i = 0; i < CAR_ID_LENGTH; i++) {
-		car_id[i] = car_ids[car_index][i];
+		car_id[i] = menu->car_ids[menu->car_index][i];
 	}
 	idle_expired = 0;
+}
+
+void run_car_menu(legacy_s8 *car_id, legacy_s8 *material, legacy_s8 *transmission,
+				  legacy_u16 opponent_type)
+{
+	struct CAR_MENU_STATE menu_state;
+	struct CAR_MENU_STATE *menu = &menu_state;
+	legacy_u16 input;
+	menu->material = material;
+	menu->transmission = transmission;
+	menu->opponent_type = opponent_type;
+	menu->transformed.pos = carmenu_carpos;
+	menu->transformed.shapeptr = &game3dshapes[PLAYER_CAR_LOW_SHAPE];
+	menu->transformed.rotvec.x = 0;
+	menu->transformed.rotvec.y = 0;
+	menu->transformed.culling_distance = CAR_MENU_TRANSFORM_DISTANCE;
+	slow_video_mgmt_copy = slow_video_mgmt;
+	if (slow_video_mgmt_copy != 0) {
+		menu->transformed.rectptr = &menu->current_rect;
+		menu->transformed.ts_flags = CAR_MENU_CLIPPED_TRANSFORM_FLAG;
+	} else {
+		menu->transformed.rectptr = 0;
+		menu->transformed.ts_flags = 0;
+	}
+
+	if (!car_menu_find_cars(menu, car_id)) {
+		return;
+	}
+	car_menu_initialize(menu);
+	for (;;) {
+		menu->render_deferred = 0;
+		if (menu->previous_car_index != menu->car_index) {
+			car_menu_load_car(menu);
+		}
+		car_menu_prepare_preview(menu);
+		car_menu_render_preview(menu);
+		car_menu_draw_selection(menu);
+		input = car_menu_read_input(menu);
+		if (car_menu_handle_input(menu, input)) {
+			break;
+		}
+	}
+	car_menu_release(menu, car_id);
 }

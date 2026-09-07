@@ -39,6 +39,10 @@ run_host_test() {
 run_host_test test-race-flow legacy.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/full_data.c" \
     -Wno-pointer-sign -Wno-missing-field-initializers
+run_host_test test-car-menu menu_car.c \
+    "$test_source_dir/legacy.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/full_strings.c" "$test_source_dir/headless_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-car-speed statecar.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c"
 run_host_test test-gamestate-serialization stateio.c
