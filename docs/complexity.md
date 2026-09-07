@@ -1,9 +1,9 @@
 # Cyclomatic complexity work
 
-The first pass prioritizes collision geometry, rendering and per-frame player
-simulation. These routines run throughout a race and combine many independent
-responsibilities. The project-wide scan also identifies the editor and race/UI
-loops as follow-up work.
+Two completed passes cover the critical collision, rendering and player
+simulation routines, followed by all twelve routines in the original remaining
+priorities list. Each follow-up routine has its own refactor and regression-test
+commit. The wider audit still identifies other functions above the threshold.
 
 ## Measurement
 
@@ -49,24 +49,45 @@ to 36. This accounts for every extracted helper, rather than only comparing the
 entry points. Existing state formats, legacy arithmetic and external entry points
 remain in use.
 
-## Remaining priorities
+## Follow-up priorities completed
 
-| Priority | Routine | Complexity | Reason |
-| --- | --- | ---: | --- |
-| 1 | `track_setup` | 79 | Track loading, route construction and validation |
-| 1 | `polygon_merge_second_edge` | 77 | Rasterization decisions and clipping boundaries |
-| 1 | `update_grip` / `update_opponent_tick` | 43 / 45 | Player and opponent simulation |
-| 2 | `load_tracks_menu_shapes` | 177 | Largest remaining routine; editor state and input handling |
-| 2 | `run_game` / `loop_game` | 85 / 69 | Race and replay lifecycle transitions |
-| 2 | `skybox_render` / `line_prepare` | 56 / 50 | Remaining renderer hotspots |
-| 3 | `end_hiscore` / `run_car_menu` / `show_dialog` | 82 / 65 / 64 | UI decisions and dialog state |
+Baseline: commit `608a854a`; measurements taken with Lizard 1.24.0.
+All twelve routines from the remaining priorities list are complete.
 
-Continue by extracting responsibilities with explicit inputs and preserving
-observable ordering. Retain the original disassembly as the replay oracle.
-Use focused boundary tests and byte-for-byte replay comparisons when changing
-simulation or rendering; entry-point complexity alone is insufficient evidence.
+| Priority | Routine | Before | After | Highest new helper |
+| --- | --- | ---: | ---: | ---: |
+| 1 | `track_setup` | 79 | 8 | 16 |
+| 1 | `polygon_merge_second_edge` | 77 | 10 | 15 |
+| 1 | `update_grip` | 43 | 5 | 9 |
+| 1 | `update_opponent_tick` | 45 | 5 | 12 |
+| 2 | `load_tracks_menu_shapes` | 177 | 5 | 20 |
+| 2 | `run_game` | 85 | 3 | 15 |
+| 2 | `loop_game` | 69 | 5 | 20 |
+| 2 | `skybox_render` | 56 | 6 | 13 |
+| 2 | `line_prepare` | 50 | 7 | 19 |
+| 3 | `end_hiscore` | 82 | 3 | 15 |
+| 3 | `run_car_menu` | 65 | 6 | 18 |
+| 3 | `show_dialog` | 64 | 9 | 14 |
 
-## Validation of this pass
+Track setup separates traversal, deferred branches, validation and scenery.
+Grip and opponent updates separate surface forces, steering, route progress,
+overtaking and speed control. Polygon, line and skybox rendering separate edge
+stepping, clipping, projection and drawing while preserving legacy arithmetic.
+
+The editor separates session resources, navigation, drawing and tile edits.
+Race and replay loops separate scheduling, input, camera controls and lifecycle
+transitions. The remaining UI routines separate layout, animation, resource
+management and user interaction. External entry points and observable call
+ordering remain intact.
+
+All 135 new production helpers measure at most 20. Excess complexity above 20
+for these twelve entry points and their extracted helpers falls from 652 to 0.
+Across the complete `src` scan, the number of functions above 20 falls from 41
+to 29, and total excess complexity falls from 933 to 281. Those 29 functions
+were outside the completed priority list; the whole codebase is not yet below
+20 per function.
+
+## Validation of the first pass
 
 - All 14 host tests pass, including new car-speed, collision-geometry and
   primitive-queue regression suites. Clang-format 18.1.8 and EditorConfig pass.
@@ -86,3 +107,33 @@ freshly built PIXLDUMP exit with errorlevel 1 before writing output in the twelv
 renderer scenarios. The original renderer succeeds. This existing startup
 failure remains unresolved; the renderer equivalence evidence for this pass is
 from the native differential and queue tests.
+
+## Validation of the completed priorities
+
+- All 26 host regression suites pass via
+  `bash src/restunts/tests/run-host-tests.sh`, including one new suite for each
+  of the twelve refactored routines.
+- Clang-format 18.1.8, EditorConfig, CRLF checks and `git diff --check` pass.
+- RESTUNTS, REPLDUMP and PIXLDUMP compile and link with the DOS toolchain.
+- All fifteen DOS physics replays (15,346 frames; 15 cars, 14 tracks and four
+  opponent races) match the saved baseline, first-pass result and original
+  disassembly oracle byte for byte. Each run uses the final REPLDUMP executable.
+- Original-code comparisons cover 2,592 rectangular track configurations,
+  branch and validation boundaries, the fifteen replay tracks, 200,000 grip
+  states and 200,000 opponent updates. Opponent comparisons include full game
+  state and dependency call order. Persistent fingerprints retain coverage.
+- Renderer regression fingerprints match the original C implementations across
+  32,768 polygon-edge cases, 200,000 line cases and 32,768 skybox scenes, plus
+  focused clipping and horizon boundaries.
+- Full-entry UI trace fingerprints match the original implementations across
+  420 dialog, 102 car-menu and 360 end-screen scenarios. They cover drawing,
+  input, state changes and resource lifetime. Focused tests also cover race
+  scheduling, replay camera controls and editor placement/navigation boundaries.
+- AddressSanitizer and UndefinedBehaviorSanitizer pass all twelve new suites.
+
+The DOS pixel limitation persists: all twelve fresh renderer cases exit with
+errorlevel 1 before creating a PDD file, using the final PIXLDUMP executable.
+The saved baseline and first-pass executable fail the same cases; the original
+renderer produces valid output in all twelve. DOS pixel equivalence therefore
+remains unverified. Native renderer comparisons and boundary tests provide the
+rendering evidence for these refactors.

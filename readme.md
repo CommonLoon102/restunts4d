@@ -118,7 +118,7 @@ not prove that those cases have braces.
 ## Complexity audit
 
 See [the complexity report](docs/complexity.md) for measurements, completed
-refactors and the remaining priorities.
+refactors and audit results.
 
 ## How to build
 
