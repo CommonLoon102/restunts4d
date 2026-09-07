@@ -46,6 +46,8 @@ run_host_test test-car-menu menu_car.c \
 run_host_test test-car-speed statecar.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c"
 run_host_test test-gamestate-serialization stateio.c
+run_host_test test-grip physics_grip.c \
+    "$test_source_dir/math.c" "$test_source_dir/legacy.c" -Wno-sign-compare
 run_host_test test-legacy-semantics legacy.c
 run_host_test test-line-prepare shape3d_lines.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
