@@ -67,5 +67,6 @@ run_host_test test-track-object trackobj.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" "$test_source_dir/trkutil.c" \
     -Wno-missing-braces
 run_host_test test-track-resource-decoding trackres.c
+run_host_test test-ui-dialog ui_dialog.c "$test_source_dir/legacy.c" -Wno-pointer-sign
 
 echo "All host regression tests passed."
