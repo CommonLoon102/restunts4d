@@ -1,6 +1,7 @@
 namespace DumpSrv;
 
-public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log = null)
+public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log = null,
+    TimeProvider? timeProvider = null)
 {
     private readonly IDosBoxRunner runner = runner ?? new DosBoxRunner();
     private readonly Action<string> log = log ?? Console.WriteLine;
@@ -64,33 +65,50 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             foreach (var phase in phases)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var assigned = ReplayCatalog.Assigned(replays, phase.Renderer, options.RendererTestPercentage,
-                    options.ShardIndex, options.ShardCount);
-                var partitions = ReplayCatalog.RoundRobin(assigned, options.PartitionCount);
-                await Task.WhenAll(partitions.Where(partition => partition.Count > 0).Select(async partition =>
+                var timer = new ProcessingTimer(timeProvider);
+                timer.Start();
+                try
                 {
-                    foreach (var replay in partition)
+                    var assigned = ReplayCatalog.Assigned(replays, phase.Renderer, options.RendererTestPercentage,
+                        options.ShardIndex, options.ShardCount);
+                    var partitions = ReplayCatalog.RoundRobin(assigned, options.PartitionCount);
+                    await Task.WhenAll(partitions.Where(partition => partition.Count > 0).Select(async partition =>
                     {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        log($"Processing {(phase.Renderer ? "renderer" : "physics")} replay: {replay}");
-                        try
+                        foreach (var replay in partition)
                         {
-                            await ProcessReplayAsync(options, replay, phase, Diagnostic, Own, cancellationToken);
+                            cancellationToken.ThrowIfCancellationRequested();
+                            log($"Processing {(phase.Renderer ? "renderer" : "physics")} replay: {replay}");
+                            try
+                            {
+                                await ProcessReplayAsync(options, replay, phase, Diagnostic, Own, cancellationToken);
+                            }
+                            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                            {
+                                throw;
+                            }
+                            catch (Exception exception) when (exception is not OutOfMemoryException)
+                            {
+                                Diagnostic($"ERROR|type=processing_failure|input={replay}|message={ReportFormatter.Safe(exception.Message)}");
+                            }
+                            lock (gate)
+                            {
+                                (phase.Renderer ? result.RendererCompleted : result.PhysicsCompleted).Add(replay);
+                            }
                         }
-                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                        {
-                            throw;
-                        }
-                        catch (Exception exception) when (exception is not OutOfMemoryException)
-                        {
-                            Diagnostic($"ERROR|type=processing_failure|input={replay}|message={ReportFormatter.Safe(exception.Message)}");
-                        }
-                        lock (gate)
-                        {
-                            (phase.Renderer ? result.RendererCompleted : result.PhysicsCompleted).Add(replay);
-                        }
+                    }));
+                }
+                finally
+                {
+                    timer.Stop();
+                    if (phase.Renderer)
+                    {
+                        result.RendererElapsed = timer.Elapsed;
                     }
-                }));
+                    else
+                    {
+                        result.PhysicsElapsed = timer.Elapsed;
+                    }
+                }
             }
             result.Completed = true;
         }

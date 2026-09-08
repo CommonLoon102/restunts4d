@@ -61,5 +61,9 @@ public sealed class ShardResult
     [JsonRequired]
     public string? Failure { get; set; }
     [JsonIgnore]
+    public TimeSpan? PhysicsElapsed { get; set; }
+    [JsonIgnore]
+    public TimeSpan? RendererElapsed { get; set; }
+    [JsonIgnore]
     public List<string> OwnedFiles { get; set; } = [];
 }

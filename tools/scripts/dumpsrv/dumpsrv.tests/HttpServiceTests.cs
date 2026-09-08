@@ -4,11 +4,111 @@ using System.Net.Sockets;
 using System.Text;
 using DumpSrv;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace DumpSrv.Tests;
 
 public sealed class HttpServiceTests
 {
+    [Theory]
+    [InlineData(true, true, "physics and renderer")]
+    [InlineData(true, false, "physics")]
+    [InlineData(false, true, "renderer")]
+    public async Task ElapsedLogsIncludeRequestedPhaseTotalBeforeResponseHeaders(
+        bool physics, bool renderer, string phases)
+    {
+        using var output = new CapturedLog();
+        var clock = new RequestTimeProvider();
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine, logOutput: output, timeProvider: clock);
+        var logger = server.App.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Worker");
+        engine.Handler = async (_, token) =>
+        {
+            clock.Advance(TimeSpan.FromSeconds(3723));
+            await Task.Run(() => logger.LogInformation("Worker progress\r\nSecond line"), token);
+            return new ShardResult
+            {
+                Completed = true,
+                PhysicsElapsed = physics ? TimeSpan.FromSeconds(1220) : null,
+                RendererElapsed = renderer ? TimeSpan.FromSeconds(2500) : null,
+                Diagnostics = ["ERROR|type=file_mismatch|input=race.rpl"]
+            };
+        };
+        var form = Form();
+        form.Add(new StringContent(physics.ToString()), "physics_tests");
+        form.Add(new StringContent(renderer.ToString()), "renderer_tests");
+        using var request = Request(form);
+        using var response = await server.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.All(lines, line => Assert.Matches(@"^\[\d{2,}:\d{2}:\d{2}\] ", line));
+        Assert.Contains($"[00:00:00] Processing requested phases: {phases}.", lines);
+        Assert.Contains("[01:02:03] Second line", lines);
+        Assert.Equal(physics ? 1 : 0, lines.Count(line =>
+            line == "[01:02:03] Physics phase took 00:20:20."));
+        Assert.Equal(renderer ? 1 : 0, lines.Count(line =>
+            line == "[01:02:03] Renderer phase took 00:41:40."));
+        Assert.DoesNotContain(lines, line => line.Contains("phase did not start.", StringComparison.Ordinal));
+        Assert.Single(lines, line => line ==
+            $"[01:02:03] Processing requested phases ({phases}) took 01:02:03.");
+        Assert.Equal("ERROR|type=file_mismatch|input=race.rpl\n",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task FailedProcessingReportsStartedAndUnstartedPhasesBeforeResponse()
+    {
+        using var output = new CapturedLog();
+        var clock = new RequestTimeProvider();
+        var engine = new FakeEngine
+        {
+            Handler = (_, _) =>
+            {
+                clock.Advance(TimeSpan.FromSeconds(17));
+                return Task.FromResult(new ShardResult
+                {
+                    Failure = "cancelled",
+                    PhysicsElapsed = TimeSpan.FromSeconds(17)
+                });
+            }
+        };
+        await using var server = await Server.StartAsync(engine, logOutput: output, timeProvider: clock);
+        using var request = Request(Form());
+        using var response = await server.Client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        var lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.Contains("[00:00:17] Physics phase took 00:00:17.", lines);
+        Assert.Contains("[00:00:17] Renderer phase did not start.", lines);
+    }
+
+    [Fact]
+    public async Task SequentialRequestsEachStartTheirOwnElapsedClock()
+    {
+        using var output = new CapturedLog();
+        var clock = new RequestTimeProvider();
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine, logOutput: output, timeProvider: clock);
+        engine.Handler = (_, _) =>
+        {
+            clock.Advance(TimeSpan.FromSeconds(engine.Calls == 1 ? 37 : 5));
+            return Task.FromResult(new ShardResult { Completed = true });
+        };
+        for (var index = 0; index < 2; index++)
+        {
+            using var request = Request(Form());
+            using var response = await server.Client.SendAsync(request, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        var lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.Equal(2, lines.Count(line =>
+            line == "[00:00:00] Processing requested phases: physics and renderer."));
+        Assert.Contains("[00:00:37] Processing requested phases (physics and renderer) took 00:00:37.", lines);
+        Assert.Contains("[00:00:05] Processing requested phases (physics and renderer) took 00:00:05.", lines);
+    }
+
     [Fact]
     public async Task AmbientAppSettingsCannotAddEndpointsOrOverrideExplicitOptions()
     {
@@ -240,18 +340,22 @@ public sealed class HttpServiceTests
     [Fact]
     public async Task BusyRequestsRejectImmediatelyAfterAuthentication()
     {
+        using var output = new CapturedLog();
+        var clock = new RequestTimeProvider();
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var engine = new FakeEngine
         {
             Handler = async (_, token) =>
             {
+                clock.Advance(TimeSpan.FromHours(1));
                 entered.SetResult();
                 await release.Task.WaitAsync(token);
+                clock.Advance(TimeSpan.FromSeconds(5));
                 return new ShardResult { Completed = true };
             }
         };
-        await using var server = await Server.StartAsync(engine);
+        await using var server = await Server.StartAsync(engine, logOutput: output, timeProvider: clock);
         using var first = Request(Form());
         var firstResponse = server.Client.SendAsync(first, TestContext.Current.CancellationToken);
         await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -271,6 +375,9 @@ public sealed class HttpServiceTests
         }
         using var completed = await firstResponse;
         Assert.Equal(HttpStatusCode.OK, completed.StatusCode);
+        var lines = output.ToString().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+        Assert.Single(lines, line => line.StartsWith("[00:00:00] Processing requested phases:", StringComparison.Ordinal));
+        Assert.Contains("[01:00:05] Processing requested phases (physics and renderer) took 01:00:05.", lines);
     }
 
     [Fact]
@@ -422,7 +529,7 @@ public sealed class HttpServiceTests
         public required HttpClient Client { get; init; }
 
         public static async Task<Server> StartAsync(FakeEngine? engine = null, int timeout = 1800,
-            string? appSettings = null)
+            string? appSettings = null, TextWriter? logOutput = null, TimeProvider? timeProvider = null)
         {
             var directory = Path.Combine(Path.GetTempPath(), "dumpsrv-http-" + Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(Path.Combine(directory, "stunts"));
@@ -438,7 +545,7 @@ public sealed class HttpServiceTests
                 RendererTestPercentage = 23,
                 ResponseProcessingTimeoutSeconds = timeout,
                 ServiceDirectory = directory
-            }, engine ?? new FakeEngine());
+            }, engine ?? new FakeEngine(), logOutput, timeProvider);
             app.Urls.Clear();
             app.Urls.Add("http://127.0.0.1:0");
             await app.StartAsync();
@@ -456,6 +563,35 @@ public sealed class HttpServiceTests
             await App.StopAsync();
             await App.DisposeAsync();
             System.IO.Directory.Delete(Directory, true);
+        }
+    }
+
+    private sealed class RequestTimeProvider : TimeProvider
+    {
+        private long timestamp;
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public override long GetTimestamp() => Interlocked.Read(ref timestamp);
+        public void Advance(TimeSpan elapsed) => Interlocked.Add(ref timestamp, elapsed.Ticks);
+    }
+
+    private sealed class CapturedLog : StringWriter
+    {
+        private readonly object sync = new();
+
+        public override void WriteLine(string? value)
+        {
+            lock (sync)
+            {
+                base.WriteLine(value);
+            }
+        }
+
+        public override string ToString()
+        {
+            lock (sync)
+            {
+                return base.ToString();
+            }
         }
     }
 

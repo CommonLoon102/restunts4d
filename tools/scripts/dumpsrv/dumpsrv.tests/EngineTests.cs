@@ -5,6 +5,57 @@ namespace DumpSrv.Tests;
 
 public sealed class EngineTests
 {
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task PhaseDurationsAreIndependentAndExcludeDisabledPhases(bool physics, bool renderer)
+    {
+        using var directory = CreateGame("race.rpl");
+        var clock = new PhaseTimeProvider();
+        var runner = new FakeRunner((invocation, _) =>
+        {
+            clock.Advance(TimeSpan.FromSeconds(invocation.Executable.StartsWith("repl",
+                StringComparison.Ordinal) ? 11 : 23));
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        });
+        var result = await new RegressionEngine(runner, _ => { }, clock).RunAsync(
+            Options(directory) with { PhysicsTests = physics, RendererTests = renderer },
+            TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Equal(physics ? TimeSpan.FromSeconds(22) : (TimeSpan?)null, result.PhysicsElapsed);
+        Assert.Equal(renderer ? TimeSpan.FromSeconds(46) : (TimeSpan?)null, result.RendererElapsed);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task InterruptedPhaseRetainsDurationIncludingCleanup(bool cancelRenderer)
+    {
+        using var directory = CreateGame("race.rpl");
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken);
+        var clock = new PhaseTimeProvider();
+        var runner = new FakeRunner((invocation, token) =>
+        {
+            clock.Advance(TimeSpan.FromSeconds(11));
+            if (invocation.Executable.StartsWith("pix", StringComparison.Ordinal) == cancelRenderer)
+            {
+                cancellation.Cancel();
+                clock.Advance(TimeSpan.FromSeconds(3));
+                token.ThrowIfCancellationRequested();
+            }
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        });
+        var result = await new RegressionEngine(runner, _ => { }, clock).RunAsync(
+            Options(directory), cancellation.Token);
+        Assert.False(result.Completed);
+        Assert.Equal(TimeSpan.FromSeconds(cancelRenderer ? 22 : 14), result.PhysicsElapsed);
+        Assert.Equal(cancelRenderer ? TimeSpan.FromSeconds(14) : (TimeSpan?)null, result.RendererElapsed);
+    }
+
     [Fact]
     public async Task EngineRunsBothPhasesAndUsesCompletedCachesWithoutTouchingUnownedFiles()
     {
@@ -277,6 +328,14 @@ public sealed class EngineTests
         };
         File.WriteAllText(System.IO.Path.Combine(invocation.GameDirectory,
             $"{invocation.ReplayBaseName.ToUpperInvariant()}.{extension}"), content);
+    }
+
+    private sealed class PhaseTimeProvider : TimeProvider
+    {
+        private long timestamp;
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public override long GetTimestamp() => Interlocked.Read(ref timestamp);
+        public void Advance(TimeSpan elapsed) => Interlocked.Add(ref timestamp, elapsed.Ticks);
     }
 
     private sealed class FakeRunner(Func<DosBoxInvocation, CancellationToken, Task<DosBoxResult>> run) : IDosBoxRunner

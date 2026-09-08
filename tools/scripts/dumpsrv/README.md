@@ -80,6 +80,27 @@ cancels the workers, forcibly terminates their DOSBox processes, and returns
 HTTP `504`. Configure the client's timeout slightly above this limit to allow
 for the upload and response transfer.
 
+Service console lines begin with the request's elapsed processing time in
+`[HH:mm:ss]` format. Each request starts its own timer after validated uploads
+are saved. Immediately before sending the response, the service prints the
+individual durations of the requested physics and renderer phases, followed by
+its total processing time including discovery and report generation. Phase
+durations measure elapsed time across all parallel workers:
+
+```text
+[00:00:00] Processing requested phases: physics and renderer.
+[00:00:12] Processing physics replay: race.rpl
+[00:02:08] Physics phase took 00:00:45.
+[00:02:08] Renderer phase took 00:01:22.
+[00:02:08] Processing requested phases (physics and renderer) took 00:02:08.
+```
+
+Disabled phases are omitted. If processing is interrupted, the summary includes
+time spent in any started phase and identifies requested phases that did not start.
+The final duration excludes response transmission. Startup messages and requests
+that have not started processing show `[00:00:00]`. Elapsed prefixes appear only
+in the console; the returned report retains its existing format.
+
 The service listens on all local interfaces using ASP.NET Core Kestrel. Windows
 HTTP URL reservations are not required. Allow inbound traffic on the selected
 port in the host firewall. For example, in an elevated Windows PowerShell

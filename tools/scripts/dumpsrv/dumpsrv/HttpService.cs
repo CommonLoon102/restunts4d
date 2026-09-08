@@ -11,7 +11,8 @@ public static class HttpService
     private const int MaximumExecutableBytes = 1024 * 1024;
     private const int MaximumUploadBytes = 2 * MaximumExecutableBytes + 64 * 1024;
 
-    public static WebApplication Build(ServiceOptions options, RegressionEngine? engine = null)
+    public static WebApplication Build(ServiceOptions options, RegressionEngine? engine = null,
+        TextWriter? logOutput = null, TimeProvider? timeProvider = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(options.ApiKey);
         ValidateRange(options.PartitionCount, 1, 64, nameof(options.PartitionCount));
@@ -36,14 +37,19 @@ public static class HttpService
         // override the port or add listeners from appsettings or environment.
         builder.Configuration.Sources.Clear();
         builder.Configuration.AddInMemoryCollection();
+        var contextAccessor = new HttpContextAccessor();
+        builder.Services.AddSingleton<IHttpContextAccessor>(contextAccessor);
+        var console = new ElapsedConsoleLog(contextAccessor, logOutput);
+        builder.Logging.ClearProviders();
+        builder.Logging.AddProvider(console);
         builder.WebHost.ConfigureKestrel(server => server.Limits.MaxRequestBodySize = MaximumUploadBytes);
         builder.WebHost.UseUrls($"http://*:{options.Port}");
         var app = builder.Build();
         var gate = new SemaphoreSlim(1, 1);
-        engine ??= new RegressionEngine();
+        engine ??= new RegressionEngine(log: message => console.Write(message), timeProvider: timeProvider);
         var regressionEngine = engine;
         app.Run(context => HandleAsync(context, options, regressionEngine, gate,
-            app.Lifetime.ApplicationStopping));
+            app.Lifetime.ApplicationStopping, console, timeProvider));
         return app;
     }
 
@@ -56,8 +62,11 @@ public static class HttpService
     }
 
     private static async Task HandleAsync(HttpContext context, ServiceOptions options,
-        RegressionEngine engine, SemaphoreSlim gate, CancellationToken stopping)
+        RegressionEngine engine, SemaphoreSlim gate, CancellationToken stopping,
+        ElapsedConsoleLog console, TimeProvider? timeProvider)
     {
+        var timer = new ProcessingTimer(timeProvider);
+        context.Features.Set(timer);
         var rawPath = context.Features.Get<IHttpRequestFeature>()?.RawTarget.Split('?')[0];
         if (!string.Equals(rawPath, "/process", StringComparison.Ordinal))
         {
@@ -89,6 +98,7 @@ public static class HttpService
         CancellationTokenSource? deadline = null;
         var uploadValidated = false;
         ShardResult? partialResult = null;
+        Action? logTotal = null;
         try
         {
             if (context.Request.ContentLength > MaximumUploadBytes)
@@ -115,6 +125,36 @@ public static class HttpService
             await File.WriteAllBytesAsync(DosFiles.Resolve(gameDirectory, "PIXLDUMP.EXE"),
                 parts["pixldump"], disconnected.Token);
 
+            var phases = physics && renderer ? "physics and renderer" : physics ? "physics" : "renderer";
+            timer.Start();
+            console.Write($"Processing requested phases: {phases}.");
+            logTotal = () =>
+            {
+                if (timer.Stop())
+                {
+                    void LogPhase(string name, TimeSpan? elapsed)
+                    {
+                        console.Write(elapsed is { } duration
+                            ? $"{name} phase took {ElapsedConsoleLog.FormatElapsed(duration)}."
+                            : $"{name} phase did not start.", timer);
+                    }
+                    if (physics)
+                    {
+                        LogPhase("Physics", partialResult?.PhysicsElapsed);
+                    }
+                    if (renderer)
+                    {
+                        LogPhase("Renderer", partialResult?.RendererElapsed);
+                    }
+                    console.Write($"Processing requested phases ({phases}) took " +
+                        $"{ElapsedConsoleLog.FormatElapsed(timer.Elapsed)}.", timer);
+                }
+            };
+            context.Response.OnStarting(() =>
+            {
+                logTotal();
+                return Task.CompletedTask;
+            });
             deadline = new CancellationTokenSource(TimeSpan.FromSeconds(
                 options.ResponseProcessingTimeoutSeconds));
             using var processing = CancellationTokenSource.CreateLinkedTokenSource(
@@ -194,8 +234,16 @@ public static class HttpService
         }
         finally
         {
-            deadline?.Dispose();
-            gate.Release();
+            // Aborted requests may never send headers and invoke OnStarting.
+            try
+            {
+                logTotal?.Invoke();
+            }
+            finally
+            {
+                deadline?.Dispose();
+                gate.Release();
+            }
         }
     }
 
