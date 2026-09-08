@@ -159,6 +159,13 @@ which prepares assembler-compatible copies of the preserved original sources.
    make repldump-original pixldump-original
    ```
 
+3. To build the original game as `stunts/RESTUNTO.EXE`, install Python 3.9 or
+   newer and run in the same cmd.exe window:
+
+   ```text
+   make restunts-original
+   ```
+
 ### On Linux (x86-64)
 
 1. Install GNU Make 4.3 or newer, Bash, curl, tar, xz, and
@@ -174,8 +181,15 @@ which prepares assembler-compatible copies of the preserved original sources.
    make -C src/restunts restunts repldump pixldump repldump-original pixldump-original
    ```
 
-Install Python 3.9 or newer to build `restunts-original`. The makefiles use `python3`
-on Linux and `python` on Windows; override `PYTHON` if needed.
+3. To build the original game as `stunts/RESTUNTO.EXE`, run from the repository
+   root after installing Python 3.9 or newer:
+
+   ```sh
+   make -C src/restunts restunts-original
+   ```
+
+The makefiles use `python3` on Linux and `python` on Windows; override
+`PYTHON` if needed.
 
 ### On both platforms
 
