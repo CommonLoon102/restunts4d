@@ -481,12 +481,6 @@ is released before control returns. Draw-only message mode intentionally leaves
 background ownership with its caller. Host dialog tests cover this distinction
 and repeated acknowledgement dialogs without leaking a sprite window.
 
-Also test Clock -> Last by entering the opponent screen and pressing Enter
-with Last selected: it must select opponent 6. Cycle Last and Next through
-all opponents, including their wrap boundaries. The host suite
-(`bash src/restunts/tests/run-host-tests.sh`) checks these transitions,
-the requested opponent resource names, and balanced menu resource ownership.
-
 The archived renderer has a stack-reuse quirk: primitive rendering leaves
 clipping bounds, call-frame words, and arguments in four stack words that
 stopped-wheel physics later reads as headings. This can make
