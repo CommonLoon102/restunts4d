@@ -481,6 +481,17 @@ is released before control returns. Draw-only message mode intentionally leaves
 background ownership with its caller. Host dialog tests cover this distinction
 and repeated acknowledgement dialogs without leaking a sprite window.
 
+The archived renderer has a stack-reuse quirk: primitive rendering leaves
+clipping bounds, call-frame words, and arguments in four stack words that
+stopped-wheel physics later reads as headings. This can make
+continuous rendering settle a crashed car differently from a physics-only run
+or a single requested bitmap. `PIXLDUMP` enables an explicit compatibility
+context for its sampled replay loop and records these values at the primitive
+dispatch calls that wrote them in the archived executable. The context models the
+archived wrapper's call and load layout under DOSBox; it is disabled for
+ordinary gameplay and physics-only dumps. This preserves the frozen reference without relying on
+the new compiler's stack layout or special cases for individual replays.
+
 ## Porting a function from ASM to C
 
 1. Open src\idc\anders.idc in a text editor and locate the PortFuncName()

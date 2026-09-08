@@ -5,6 +5,7 @@
 #include "legacy.h"
 #include "memmgr.h"
 #include "shape3d.h"
+#include "shape2d_internal.h"
 #include "shape3d_internal.h"
 #include "shape2d.h"
 #include "math_internal.h"
@@ -973,6 +974,85 @@ void init_polyinfo(void)
 	init_direction_sector_thresholds();
 }
 
+/* Original get_a_poly_info rasterizer call frames overlap stopped-wheel
+ * headings. The caller opts into this virtual stack layout; ordinary game
+ * rendering does not borrow the archived sampling caller's stack address.
+ * SEG006 return sites: solid131F, patterned1348, two-color13E1, line13FF,
+ * wheel145D, sphere1477 and point148D. Argument counts determine whether
+ * the four retained words hold two locals, one local, or the first argument
+ * alongside the saved BP and far return address. */
+#define SHAPE3D_LEGACY_SOLID_POLYGON_RETURN_IP 4895U
+#define SHAPE3D_LEGACY_PATTERNED_POLYGON_RETURN_IP 4936U
+#define SHAPE3D_LEGACY_TWO_COLOR_POLYGON_RETURN_IP 5089U
+#define SHAPE3D_LEGACY_LINE_RETURN_IP 5119U
+#define SHAPE3D_LEGACY_WHEEL_RETURN_IP 5213U
+#define SHAPE3D_LEGACY_SPHERE_RETURN_IP 5239U
+#define SHAPE3D_LEGACY_POINT_RETURN_IP 5261U
+#define SHAPE3D_LEGACY_POLYGON_POINTS_STACK_OFFSET 50U
+
+static legacy_s16 *legacy_render_wheel_headings;
+static legacy_u16 legacy_render_polygon_frame_pointer;
+static legacy_u16 legacy_render_polygon_code_segment;
+
+void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 polygon_frame_pointer,
+									 legacy_u16 polygon_code_segment)
+{
+	legacy_render_wheel_headings = wheel_headings;
+	legacy_render_polygon_frame_pointer = polygon_frame_pointer;
+	legacy_render_polygon_code_segment = polygon_code_segment;
+}
+
+static void shape3d_retain_render_local_pair(legacy_u16 first, legacy_u16 second,
+											 legacy_u16 return_ip)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(first);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(second);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(return_ip);
+}
+
+static void shape3d_retain_render_local(legacy_u16 first, legacy_u16 return_ip)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(first);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(return_ip);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(legacy_render_polygon_code_segment);
+}
+
+static void shape3d_retain_render_argument(legacy_u16 return_ip, legacy_u16 argument)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(return_ip);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(legacy_render_polygon_code_segment);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(argument);
+}
+
+static void shape3d_retain_sphere_stack(legacy_u16 size)
+{
+	legacy_u16 effective_height;
+	legacy_u16 first;
+
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	effective_height = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_SUB(size, size >> 2), size >> 4);
+	/* preRender_sphere writes BP-2 only after rejecting nonpositive heights
+	 * and the one-pixel shortcut; its saved BP/return words always change. */
+	first = LEGACY_S16_FROM_BITS(effective_height) >= 2
+				? LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U)
+				: (legacy_u16)legacy_render_wheel_headings[0];
+	shape3d_retain_render_local(first, SHAPE3D_LEGACY_SPHERE_RETURN_IP);
+}
+
 void shape3d_render_queued_primitives(void)
 {
 	legacy_u8 far *record;
@@ -998,31 +1078,49 @@ void shape3d_render_queued_primitives(void)
 			polyinfo_read_points(record, points, vertex_count);
 			pattern_type = (legacy_u16)material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
+				shape3d_retain_render_local_pair(
+					LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U),
+					drawing_sprite.sprite_raster_left, SHAPE3D_LEGACY_SOLID_POLYGON_RETURN_IP);
 				preRender_default(material_color, vertex_count, points);
 			} else if (pattern_type == 1U) {
 				pattern_type = (legacy_u16)material_patlist2_ptr_cpy[material_type];
 				if (pattern_type != 0U) {
+					shape3d_retain_render_local(drawing_sprite.sprite_raster_left,
+												SHAPE3D_LEGACY_PATTERNED_POLYGON_RETURN_IP);
 					preRender_patterned(pattern_type, material_color, vertex_count, points);
 				}
 			} else if (pattern_type == 2U) {
+				/* preRender_unk replaces its first argument with the secondary color. */
+				shape3d_retain_render_argument(
+					SHAPE3D_LEGACY_TWO_COLOR_POLYGON_RETURN_IP,
+					(legacy_u16)material_clrlist2_ptr_cpy[material_type]);
 				preRender_two_color((legacy_u16)material_patlist2_ptr_cpy[material_type],
 									(legacy_u16)material_clrlist2_ptr_cpy[material_type],
 									material_color, vertex_count, points);
 			}
 		} else if (primitive_type == RENDER_PRIMITIVE_LINE) {
+			shape3d_retain_render_argument(SHAPE3D_LEGACY_LINE_RETURN_IP,
+										   polyinfo_read_word(record, 3U));
 			preRender_line(polyinfo_read_word(record, 3U), polyinfo_read_word(record, 4U),
 						   polyinfo_read_word(record, 5U), polyinfo_read_word(record, 6U),
 						   material_color);
 		} else if (primitive_type == RENDER_PRIMITIVE_SPHERE) {
+			shape3d_retain_sphere_stack(polyinfo_read_word(record, 5U));
 			preRender_sphere(LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 							 LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 							 polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
+			shape3d_retain_render_argument(
+				SHAPE3D_LEGACY_WHEEL_RETURN_IP,
+				LEGACY_U16_WRAP_SUB(legacy_render_polygon_frame_pointer,
+									SHAPE3D_LEGACY_POLYGON_POINTS_STACK_OFFSET));
 			polyinfo_read_points(record, points, 4U);
 			preRender_wheel(points, WHEEL_INNER_RADIUS_SCALE, material_color,
 							(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 							(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == RENDER_PRIMITIVE_POINT) {
+			shape3d_retain_render_local_pair(record_index, primitive_index,
+											 SHAPE3D_LEGACY_POINT_RETURN_IP);
 			sprite_putpixel_clipped(LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 									LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 									material_color);

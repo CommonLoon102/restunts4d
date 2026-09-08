@@ -74,6 +74,11 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 void init_polyinfo(void);
 void polyinfo_reset(void);
 void shape3d_render_queued_primitives(void);
+/* Optional caller-supplied compatibility for original renderer/physics stack reuse.
+ * Passing a null word buffer disables the context; normal game callers leave it disabled. */
+void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 polygon_frame_pointer,
+									 legacy_u16 polygon_code_segment);
+
 void preRender_default(legacy_u16 color, legacy_u16 vertex_count, const struct POINT2D *vertices);
 void preRender_default_alt(legacy_u16 color, legacy_u16 vertex_count,
 						   const struct POINT2D *vertices);

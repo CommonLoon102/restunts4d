@@ -57,3 +57,10 @@ hashes, asset hashes, oracle executable hashes, camera, and target match before
 copying any cached `.BIN` or `.PDO` files. Incomplete outputs carrying a pending
 marker are excluded. The new `inputs.json` fingerprints every copied cache
 file; candidate outputs are always generated afresh.
+
+The frozen renderer also preserves an original stack alias between primitive
+rendering and stopped-wheel physics. A sampled rendering run can therefore
+produce different crash-settling positions from a physics-only run or a single
+requested bitmap. The C renderer's sampled replay wrapper explicitly models
+that legacy call context. The oracle executable and original `.asm` sources
+remain unchanged; expected hashes are never rewritten to hide a mismatch.

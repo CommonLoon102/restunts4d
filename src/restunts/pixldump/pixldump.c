@@ -10,6 +10,7 @@
 #include "md5.h"
 #include "../c/fatal.h"
 #include "../c/race_resources.h"
+#include "../c/residue.h"
 #include "../c/shape3d.h"
 #include "../c/keyboard.h"
 #include "../c/game_input.h"
@@ -57,6 +58,13 @@
 #define PIXLDUMP_FRAME_TIMER_VALUE 500
 #define PIXLDUMP_PROJECTION_DISTANCE 35
 #define PIXLDUMP_PROJECTION_DIVISOR 6U
+/* Archived PIXLDUMO's sampling caller places update_frame BP at CB66.
+ * update_frame reserves 340 local bytes and saves 4 register bytes; the
+ * following 6-byte far-call frame puts get_a_poly_info BP at CA08. This
+ * virtual frame address belongs to that caller, not to this compiler's stack. */
+#define PIXLDUMP_LEGACY_POLYGON_FRAME_POINTER 51720U
+/* The archived DOSBox context loads SEG006 at 029E + 14D6 = 1774. */
+#define PIXLDUMP_LEGACY_POLYGON_CODE_SEGMENT 6004U
 
 enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 	PIXLDUMP_PALETTE_BLUE_OFFSET = 0,
@@ -428,6 +436,11 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		return 1;
 	}
 
+#ifndef RESTUNTS_ORIGINAL
+	shape3d_set_legacy_render_stack(legacy_execution_residue.wheel_plane_angles,
+									PIXLDUMP_LEGACY_POLYGON_FRAME_POINTER,
+									PIXLDUMP_LEGACY_POLYGON_CODE_SEGMENT);
+#endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
@@ -442,6 +455,9 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		}
 	}
 
+#ifndef RESTUNTS_ORIGINAL
+	shape3d_set_legacy_render_stack(0, 0, 0);
+#endif
 	pixldump_output_close(output);
 	return result;
 }

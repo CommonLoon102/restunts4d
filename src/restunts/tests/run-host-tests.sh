@@ -133,6 +133,8 @@ run_host_test test-shape3d-raster shape3d_prerender.c \
 run_host_test test-shape3d-queue shape3d.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
+run_host_test test-shape3d-render-residue shape3d.c \
+    "$test_source_dir/full_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-shape3d-vertices shape3d.c \
     -Wno-pointer-sign -Wno-unused-variable
 run_host_test test-car-shape-lifetime shape3d_car.c \
