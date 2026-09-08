@@ -29,6 +29,10 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track);
 
 void init_plantrak(void);
 
+/* Position-table indices range from zero through the shared map boundary. */
+legacy_s16 track_row_position(legacy_u16 row);
+legacy_s16 track_column_position(legacy_u16 column);
+
 legacy_s16 track_object_base_x(const struct TRACKOBJECT *track_object, legacy_u8 column);
 
 legacy_s16 track_object_base_z(const struct TRACKOBJECT *track_object, legacy_u8 row);

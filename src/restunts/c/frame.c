@@ -1490,7 +1490,7 @@ static void frame_position_track_element(struct FRAME_TILE *tile, const struct F
 	legacy_s16 track_object_world_x;
 
 	if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_ROW) != 0) {
-		track_object_world_z = track_row_positions[tile->south];
+		track_object_world_z = track_row_position((legacy_u16)tile->south);
 		tile->last_south = LEGACY_S8_WRAP_ADD(tile->south, 1);
 	} else {
 		track_object_world_z = track_row_centers[tile->south];
@@ -1498,7 +1498,7 @@ static void frame_position_track_element(struct FRAME_TILE *tile, const struct F
 	}
 
 	if ((track_object->ss_multiTileFlag & FRAME_MULTITILE_COLUMN) != 0) {
-		track_object_world_x = track_column_positions[LEGACY_S8_WRAP_ADD(tile->east, 1)];
+		track_object_world_x = track_column_position((legacy_u16)LEGACY_S8_WRAP_ADD(tile->east, 1));
 		tile->last_east = LEGACY_S8_WRAP_ADD(tile->east, 1);
 	} else {
 		track_object_world_x = track_column_centers[tile->east];

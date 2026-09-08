@@ -266,11 +266,75 @@ static void test_song_reference_mapping(void)
 	assert(LEGACY_READ_U16_LE(memory_bytes + track + 9) == 0x1000);
 }
 
+static void build_resource_reference(legacy_u16 base, const char *name, legacy_u16 target)
+{
+	put_word((legacy_u16)(base + 4), 1);
+	put_bytes((legacy_u16)(base + 6), name, 4);
+	put_length((legacy_u16)(base + 10), (legacy_u16)(target - base - 14));
+}
+
+static void test_closed_hihat_offset_mapping(void)
+{
+	static const legacy_u16 offsets[] = {0, 1, 0x1234, 0x8000, 0xabcd, 0xffff};
+	unsigned index;
+	for (index = 0; index < sizeof(offsets) / sizeof(offsets[0]); index++) {
+		reset_audio_fixture();
+		build_song(16384, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP, 0);
+		build_resource_reference(4096, "CHHT", offsets[index]);
+		legacy_closed_hihat_offset = (legacy_u16)~offsets[index];
+		audio_map_song_instruments(memory_bytes + 16384, memory_bytes + 4096);
+		/* An offset of zero can still identify a non-null segmented pointer. */
+		assert(audio_closed_hihat_resource == memory_bytes + offsets[index]);
+		assert(legacy_closed_hihat_offset == offsets[index]);
+	}
+}
+
+static void test_closed_hihat_offset_lifetime(void)
+{
+	void *header;
+	reset_audio_fixture();
+	build_song(16384, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP, 0);
+	build_resource_reference(8192, "song", 16384);
+	build_resource_reference(4096, "CHHT", 0x8123);
+	header = init_audio_resources(memory_bytes + 8192, memory_bytes + 4096, "song");
+	assert(header == memory_bytes + 16384 + 30 + 256);
+	assert(audio_closed_hihat_resource == memory_bytes + 0x8123);
+	assert(legacy_closed_hihat_offset == 0x8123);
+
+	/* Reusing an already mapped song does not remap the percussion resources. */
+	build_resource_reference(4096, "CHHT", 0x9234);
+	assert(init_audio_resources(memory_bytes + 8192, memory_bytes + 4096, "song") == header);
+	assert(audio_closed_hihat_resource == memory_bytes + 0x8123);
+	assert(legacy_closed_hihat_offset == 0x8123);
+
+	/* A missing song header leaves the previous instrument mapping intact. */
+	put_bytes(16384 + 6, "NONE", 4);
+	audio_map_song_instruments(memory_bytes + 16384, memory_bytes + 4096);
+	assert(audio_closed_hihat_resource == memory_bytes + 0x8123);
+	assert(legacy_closed_hihat_offset == 0x8123);
+	assert(init_audio_resources(memory_bytes + 8192, memory_bytes + 4096, "song") == 0);
+	assert(legacy_closed_hihat_offset == 0x8123);
+
+	/* A valid song without CHHT replaces both the pointer and its saved offset. */
+	put_bytes(16384 + 6, "hdr1", 4);
+	build_resource_reference(4096, "MISS", 0x9234);
+	audio_map_song_instruments(memory_bytes + 16384, memory_bytes + 4096);
+	assert(audio_closed_hihat_resource == 0);
+	assert(legacy_closed_hihat_offset == 0);
+
+	build_resource_reference(4096, "CHHT", 0x9234);
+	audio_map_song_instruments(memory_bytes + 16384, memory_bytes + 4096);
+	assert(audio_closed_hihat_resource == memory_bytes + 0x9234);
+	assert(legacy_closed_hihat_offset == 0x9234);
+}
+
 int main(void)
 {
 	legacy_u32 driver = driver_fingerprint(), mapping = mapping_fingerprint(),
 			   finalize = finalize_fingerprint();
 	test_song_reference_mapping();
+	test_closed_hihat_offset_mapping();
+	test_closed_hihat_offset_lifetime();
 #ifdef AUDIO_RESOURCES_BASELINE
 	printf("%08lx %08lx %08lx\n", (unsigned long)driver, (unsigned long)mapping,
 		   (unsigned long)finalize);
