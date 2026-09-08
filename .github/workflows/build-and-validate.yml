@@ -1,7 +1,7 @@
 name: Build and validate
 
-# Checks C/H formatting, runs the host regression tests, builds six DOS
-# executables and runs full physics plus sampled renderer replay comparisons.
+# Checks C/H formatting, runs the host regression tests, builds DOS executables
+# on Linux and Windows, and runs physics plus sampled renderer comparisons.
 # PR and release workflows both gate on this validation.
 on:
   workflow_call:
@@ -40,9 +40,6 @@ on:
 
 env:
   EXE_ARTIFACT: restunts-exes
-  WINEDEBUG: -all
-  # Keep wineboot from prompting to download Mono and Gecko.
-  WINEDLLOVERRIDES: mscoree,mshtml=
 
 jobs:
   formatting:
@@ -126,7 +123,7 @@ jobs:
         run: bash src/restunts/tests/run-host-tests.sh
 
   build:
-    name: Build executables
+    name: Build executables (Linux)
     needs: dumpsrv-tests
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -135,9 +132,18 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
       - name: Publish the artifact name
         id: names
         run: echo "value=$EXE_ARTIFACT" >> "$GITHUB_OUTPUT"
+
+      - name: Test assembler compatibility helpers
+        run: |
+          python -m unittest discover -s tools/scripts/tests -p test_prepare_wasm_original.py
+          python tools/scripts/test-compare-dos-artifacts.py
 
       - name: Install pinned Open Watcom 2
         run: bash tools/scripts/install-open-watcom.sh
@@ -146,34 +152,10 @@ jobs:
         working-directory: tools/oracles/borland
         run: sha256sum --check SHA256SUMS
 
-      - name: Install Wine
+      - name: Build with native Open Watcom tools
         run: |
-          sudo dpkg --add-architecture i386
-          sudo apt-get update
-          # wcc.exe, wlink.exe, tasm32.exe, make.exe and bundled DOSBox.exe are
-          # 32 bit PE binaries, so the i386 side of Wine is required.
-          sudo apt-get install -y --no-install-recommends wine wine32:i386 xvfb
-
-      - name: "Create the Wine prefix and map S: to the checkout"
-        run: |
-          xvfb-run -a wineboot --init
-          wineserver -w
-          # The Windows batch entry points use S:, the drive letter that
-          # tools/mount_stunts_to_s.bat creates on Windows.
-          mkdir -p "$HOME/.wine/dosdevices"
-          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.wine/dosdevices/s:"
-
-      - name: Build the game and physics executables
-        run: |
-          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makerepldump"
-
-      - name: Build the renderer executables
-        run: |
-          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makepixldump"
-
-      - name: Build the DOS platform ABI test
-        run: |
-          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && call setpath && make test-dos-platform"
+          make -C src/restunts ASSEMBLER=wasm restunts restunts-original \
+              repldump repldump-original pixldump pixldump-original test-dos-platform
 
       - name: Collect the executables
         run: |
@@ -196,9 +178,85 @@ jobs:
           cp src/restunts/tests/build/watcom/release/DOSPLAT.EXE dist/
           ls -l dist
 
+      - name: Build debug executables with native Open Watcom tools
+        run: |
+          # Release artifacts have already been copied into dist/.
+          make -C src/restunts ASSEMBLER=wasm CONFIG=debug restunts restunts-original \
+              repldump pixldump test-dos-platform
+
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.EXE_ARTIFACT }}
+          path: dist/*.EXE
+          if-no-files-found: error
+          retention-days: 14
+
+  build-windows:
+    name: Build executables (Windows)
+    needs: dumpsrv-tests
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Test assembler compatibility helpers
+        shell: pwsh
+        run: |
+          python -m unittest discover -s tools/scripts/tests -p test_prepare_wasm_original.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python tools/scripts/test-compare-dos-artifacts.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install pinned Open Watcom 2
+        shell: pwsh
+        run: tools/scripts/install-open-watcom.ps1
+
+      - name: Verify archived regression oracles
+        shell: pwsh
+        working-directory: tools/oracles/borland
+        run: |
+          foreach ($line in Get-Content SHA256SUMS) {
+              $parts = $line -split '\s+', 2
+              if ((Get-FileHash -Algorithm SHA256 $parts[1]).Hash -ne $parts[0]) {
+                  throw "Archived oracle checksum mismatch: $($parts[1])"
+              }
+          }
+
+      - name: Build with native Open Watcom tools
+        shell: cmd
+        working-directory: src/restunts
+        run: |
+          call setpath.bat
+          if errorlevel 1 exit /b 1
+          make ASSEMBLER=wasm restunts restunts-original repldump repldump-original pixldump pixldump-original test-dos-platform
+          if errorlevel 1 exit /b 1
+
+      - name: Collect the executables
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path dist | Out-Null
+          foreach ($name in 'RESTUNTS', 'RESTUNTO', 'REPLDUMP', 'REPLDUMO', 'PIXLDUMP', 'PIXLDUMO') {
+              Copy-Item "stunts/$name.EXE" "dist/$name.EXE" -ErrorAction Stop
+          }
+          Copy-Item src/restunts/tests/build/watcom/release/DOSPLAT.EXE dist/ -ErrorAction Stop
+
+      - name: Build debug executables with native Open Watcom tools
+        shell: cmd
+        working-directory: src/restunts
+        run: |
+          rem Release artifacts have already been copied into dist/.
+          call setpath.bat
+          if errorlevel 1 exit /b 1
+          make ASSEMBLER=wasm CONFIG=debug restunts restunts-original repldump pixldump test-dos-platform
+          if errorlevel 1 exit /b 1
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.EXE_ARTIFACT }}-windows
           path: dist/*.EXE
           if-no-files-found: error
           retention-days: 14

@@ -10,10 +10,11 @@ OUTFILE = pixldump.exe
 DESTFILE = PIXLDUMP.EXE
 C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
 PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
-OBJ_FILES = $(PLATFORM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(OBJDIR)/pixlstart.obj $(PLATFORM_OBJECTS) $(PLATFORM_DIR)/dosstack.obj
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(OBJDIR)/pixlstart.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
 START_OPTION = option START=_headless_start
 CFLAGS = -dRESTUNTS_PIXLDUMP
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 SPACE := $(empty) $(empty)
 COMMA := ,

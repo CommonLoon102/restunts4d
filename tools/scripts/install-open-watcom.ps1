@@ -7,7 +7,8 @@ $marker = Join-Path $destination 'restunts-toolchain.version'
 $version = "$($pin.OW2_RELEASE) $($pin.OW2_SHA256)"
 if ((Test-Path $marker) -and ((Get-Content -Raw $marker).Trim() -eq $version) -and
     (Test-Path (Join-Path $destination 'binnt/wcc.exe')) -and
-    (Test-Path (Join-Path $destination 'binnt/wlink.exe'))) {
+    (Test-Path (Join-Path $destination 'binnt/wlink.exe')) -and
+    (Test-Path (Join-Path $destination 'binnt/wasm.exe'))) {
     Write-Host "Open Watcom 2 $($pin.OW2_RELEASE) is already installed in $destination"
     exit 0
 }
@@ -30,7 +31,7 @@ try {
     if ($LASTEXITCODE -ne 0) {
         throw 'Could not extract the Open Watcom snapshot; Windows tar.exe is required.'
     }
-    foreach ($tool in @('binnt/wcc.exe', 'binnt/wlink.exe')) {
+    foreach ($tool in @('binnt/wcc.exe', 'binnt/wlink.exe', 'binnt/wasm.exe')) {
         if (-not (Test-Path (Join-Path $extracted $tool))) {
             throw "Open Watcom snapshot is missing $tool."
         }

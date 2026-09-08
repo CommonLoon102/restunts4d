@@ -10,10 +10,11 @@ OUTFILE = repldump.exe
 DESTFILE = REPLDUMP.EXE
 C_DIR = ../c/build/watcom/$(CONFIG)/dosheadless
 PLATFORM_NAMES = runtime memory file divide
-OBJ_FILES = $(PLATFORM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS) $(PLATFORM_DIR)/dosstack.obj
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
 START_OPTION = option START=_headless_start
 CFLAGS = -dRESTUNTS_HEADLESS
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 SPACE := $(empty) $(empty)
 COMMA := ,

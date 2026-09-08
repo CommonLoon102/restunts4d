@@ -10,8 +10,10 @@ source "$script_dir/open-watcom.conf"
 destination="$repo_dir/tools/watcom"
 marker="$destination/restunts-toolchain.version"
 if [[ -f "$marker" ]] && [[ $(tr -d '\r\n' < "$marker") == "$OW2_RELEASE $OW2_SHA256" ]] \
-    && [[ -f "$destination/binnt/wcc.exe" && -f "$destination/binnt/wlink.exe" ]] \
-    && [[ -x "$destination/binl64/wcc" && -x "$destination/binl64/wlink" ]]; then
+    && [[ -f "$destination/binnt/wcc.exe" && -f "$destination/binnt/wlink.exe" \
+          && -f "$destination/binnt/wasm.exe" ]] \
+    && [[ -x "$destination/binl64/wcc" && -x "$destination/binl64/wlink" \
+          && -x "$destination/binl64/wasm" ]]; then
     echo "Open Watcom 2 $OW2_RELEASE is already installed in $destination"
     exit 0
 fi
@@ -31,8 +33,10 @@ tar -xJf "$archive" -C "$staging/watcom" \
     ./binnt ./binl64 ./h ./lib286 ./license.txt ./readme.txt
 test -f "$staging/watcom/binnt/wcc.exe"
 test -f "$staging/watcom/binnt/wlink.exe"
+test -f "$staging/watcom/binnt/wasm.exe"
 test -x "$staging/watcom/binl64/wcc"
 test -x "$staging/watcom/binl64/wlink"
+test -x "$staging/watcom/binl64/wasm"
 printf '%s %s\n' "$OW2_RELEASE" "$OW2_SHA256" > "$staging/watcom/restunts-toolchain.version"
 mv -- "$staging/watcom" "$destination"
 echo "Installed Open Watcom 2 $OW2_RELEASE in $destination"

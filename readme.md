@@ -23,8 +23,8 @@ Main repository: https://github.com/4d-stunts/restunts
 		Stunts 1.1 the game.
 
 	tools
-		Contains the bundled assembler, make, DOSBox, and setup scripts for
-		Open Watcom 2. The active C compiler and linker are WCC and WLINK.
+		Contains make, DOSBox, legacy tools, and setup scripts for
+		Open Watcom 2. The active tools are WCC, WASM, and WLINK.
 
 
 ### Contents of src\restunts:
@@ -133,28 +133,27 @@ refactors and audit results.
 
 ## How to build
 
-The DOS C compiler and linker are Open Watcom 2, pinned to the official
+The DOS compiler, assembler, and linker are Open Watcom 2, pinned to the official
 [2026-09-01 build](https://github.com/open-watcom/open-watcom-v2/releases/tag/2026-09-01-Build).
 The setup scripts verify its SHA256 and install into ignored `tools/watcom/`.
-The shared release pin is `tools/scripts/open-watcom.conf`. Bundled TASM32
-remains the assembler. GNU Make runs natively on Linux or Windows. On Linux,
-C compilation and linking use native Watcom binaries; assembly uses Wine.
+The shared release pin is `tools/scripts/open-watcom.conf`. WCC, WASM, WLINK,
+and GNU Make 4.3 or newer run natively on Linux or Windows. The standard build
+does not require Wine or DOSBox. Python 3.9 or newer is also required for `restunts-original`,
+which prepares assembler-compatible copies of the preserved original sources.
 
 ### On Windows
 
-1. Install the compiler from PowerShell at the repository root (Windows 10/11
+1. Install the toolchain from PowerShell at the repository root (Windows 10/11
    `tar.exe` and PowerShell are required):
 
    ```powershell
    powershell -ExecutionPolicy Bypass -File tools\scripts\install-open-watcom.ps1
    ```
 
-2. Run `tools\mount_stunts_to_s.bat` once per reboot to map the checkout to S:.
-3. In cmd.exe, run:
+2. In cmd.exe at the repository root, run:
 
    ```text
-   S:
-   cd \src\restunts
+   cd src\restunts
    setpath
    make restunts repldump pixldump
    make repldump-original pixldump-original
@@ -162,7 +161,7 @@ C compilation and linking use native Watcom binaries; assembly uses Wine.
 
 ### On Linux (x86-64)
 
-1. Install Wine with 32-bit Windows support, GNU Make, Bash, curl, tar, xz, and
+1. Install GNU Make 4.3 or newer, Bash, curl, tar, xz, and
    coreutils. Run the setup script from the repository root:
 
    ```sh
@@ -175,14 +174,16 @@ C compilation and linking use native Watcom binaries; assembly uses Wine.
    make -C src/restunts restunts repldump pixldump repldump-original pixldump-original
    ```
 
-To use the Windows batch wrappers or the supplied DOSBox development setup,
-also map the checkout as drive S: using `winecfg`.
+Install Python 3.9 or newer to build `restunts-original`. The makefiles use `python3`
+on Linux and `python` on Windows; override `PYTHON` if needed.
 
 ### On both platforms
 
-Build outputs are copied to `stunts/` (`S:\stunts` on Windows). Run
-`RESTUNTS.EXE` in DOSBox with `core=dynamic` and `cycles=max`. The Windows
-batch wrappers and supplied DOSBox development configuration use drive S:.
+Build outputs are copied to `stunts/`. Run `RESTUNTS.EXE` in DOSBox with
+`core=dynamic` and `cycles=max`. The supplied DOSBox development configuration
+uses drive S:. For that configuration, Windows users can run
+`tools\mount_stunts_to_s.bat` once per reboot; Linux users running the bundled
+Windows tools can map S: in `winecfg`. Native compilation does not need that mapping.
 
 The supported targets are:
 
@@ -202,12 +203,17 @@ The regression oracles are the pre-migration Borland binaries checked into
 are recorded alongside them. Never rebuild these oracle wrappers with Watcom:
 their independence is what lets regression tests detect compiler, ABI, and
 runtime changes. The `*-original` dump targets restore the archived files. The original game
-assembly under `src/restunts/asmorig/` is preserved unchanged; `RESTUNTO.EXE`
-is assembled from those files and linked with Watcom. Its link response file
+assembly under `src/restunts/asmorig/` is preserved unchanged. The WASM build
+runs [the source adapter](tools/scripts/prepare-wasm-original.py) to prepare
+compatible copies under `asmorig/build/watcom/<configuration>/wasm/source/`
+and links `RESTUNTO.EXE` with Watcom. Its link response file
 reproduces the original segment order, disables automatic segment packing,
 and preserves the original 8000-byte stack. The old empty `segments.obj`
 layout helper is replaced by WLINK ordering directives; its ASM source is
 retained unchanged.
+
+See [the assembler guide](docs/assembler.md) for generated-source handling,
+original-code layout requirements, and object/executable comparison commands.
 
 `makerepldump.bat` builds the game and physics tools; `makepixldump.bat` builds
 the renderer tool and restores its archived oracle. Both stop on build errors.
@@ -311,18 +317,23 @@ to override the default 120-second timeout for each DOSBox run.
 
 
 Watcom objects are stored separately under `build/watcom/<configuration>/`,
-including separate full-game and headless C builds. Original assembly objects
-are also separated by configuration and assembler. Release and debug objects
+including separate full-game and headless C builds. Original and platform
+assembly objects are also separated by configuration and assembler; platform
+C objects are shared between assembler choices. Release and debug objects
 do not mix with one another or with historical Borland objects. Reinstalling
-a newer pinned toolchain invalidates the C objects through its version stamp. A linker fixup
+a newer pinned toolchain invalidates C and assembly objects through its version stamp. A linker fixup
 overflow indicates an invalid segment reference or a 16-bit memory limit;
 investigate it rather than treating a successful compile as sufficient.
 
 ## CI replay validation
 
-Pull requests and releases install the pinned Watcom compiler, build the game
-and candidate dump tools, verify the archived oracle hashes, and copy the
-oracles without recompiling them. CI compares the full golden replay set for physics and
+Pull requests and releases install the pinned Watcom toolchain and build the
+game, original game, candidate dump tools, and DOS platform test natively on
+Linux and Windows. Both builds test the source adapter and binary comparator,
+verify the archived oracle hashes, and copy the
+oracles without recompiling them. Linux executables supply the release and
+replay artifact; the Windows build publishes a separate artifact. CI compares
+the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
 against PIXLDUMO `.PDO` files with camera 2 and player target 0.
 
@@ -359,14 +370,21 @@ dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
 
 ### Assembler selection
 
-TASM32 is the default assembler. Windows builds also accept
-`ASSEMBLER=tasmbox` to run the 16-bit TASMX through DOSBox, or
-`ASSEMBLER=tasmx` to invoke it directly. These alternatives do not add
-assembly source-level debugging to the Watcom build.
+Open Watcom WASM is the default assembler, selected by `ASSEMBLER=wasm` and
+configured with `-zcm=tasm`. The makefiles use the assembler from the same
+pinned installation as WCC and WLINK.
+
+Bundled TASM32 remains available as an explicit fallback:
 
 ```text
-make ASSEMBLER=tasmbox restunts
+make ASSEMBLER=tasm32 restunts
 ```
+
+That fallback runs natively on Windows and requires Wine with 32-bit Windows
+support on Linux. Windows builds also accept `ASSEMBLER=tasmbox` to run TASMX
+through DOSBox, or `ASSEMBLER=tasmx` to invoke it directly. Each assembler has
+its own assembly object directory, so switching assemblers cannot reuse
+another assembler's objects.
 
 ### Compiler, linker, and debugging symbols
 
@@ -396,9 +414,9 @@ optimization:
 make CONFIG=debug restunts
 ```
 
-WLINK writes Watcom debug information. The old Turbo Debugger workflow and
-Borland/TASM debug information are not compatible with this configuration;
-assembly source-level debugging is not provided by the current build.
+WLINK writes Watcom debug information; debug builds also request WASM line
+information. The old Turbo Debugger workflow and Borland/TASM debug
+information are not compatible with this configuration.
 
 ## The toolchain
 
@@ -407,8 +425,9 @@ assembly source-level debugging is not provided by the current build.
 | 16-bit DOS C compilation | Open Watcom 2 `binnt/wcc.exe` or native Linux `binl64/wcc` |
 | 16-bit DOS linking | Open Watcom 2 `binnt/wlink.exe` or native Linux `binl64/wlink` |
 | C headers and runtime | Open Watcom 2 `h/` and `lib286/` |
-| Assembly | Bundled TASM32; optional TASMX through DOSBox |
-| Build orchestration | GNU Make (bundled 4.4.1 on Windows) |
+| Assembly | Open Watcom 2 `binnt/wasm.exe` or native Linux `binl64/wasm` |
+| Build orchestration | GNU Make 4.3 or newer (bundled 4.4.1 on Windows) |
+| Original-source preparation | Python 3.9 or newer, for `restunts-original` with WASM |
 | Running and testing | DOSBox / DOSBox-X |
 
 `tools/bin/bcc.exe`, the older bundled `wlink.exe`, TLINK, Borland headers,
@@ -450,7 +469,7 @@ make -C src/restunts test-dos-platform
 python3 tools/scripts/run-dos-platform-test.py
 ```
 
-On Windows, run `make test-dos-platform` after `setpath` in `S:\src\restunts`.
+On Windows, run `make test-dos-platform` after `setpath` in `src\restunts`.
 The Python runner uses an isolated temporary directory, the supplied
 `core=dynamic` / `cycles=max` configuration, and a 30-second timeout. It checks
 the DOS exit status and success message, then terminates its DOSBox process

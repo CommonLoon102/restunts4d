@@ -29,17 +29,19 @@ ifeq ($(TARGET),original)
                clname STUNTSD segment seg038 segment dseg segment seg039 \
                clname STACK segment STACK segment seg041 clname DATA clname BSS clname CODE clname ENDSEG
   CFLAGS = -dRESTUNTS_ORIGINAL
-  START_OPTION = option NOCASEEXACT option PACKCODE=0 option PACKDATA=0 option STACK=8000
+  # Preserve original far-call instructions even when WASM marks them optimizable.
+  START_OPTION = option NOFARCALLS option NOCASEEXACT option PACKCODE=0 option PACKDATA=0 option STACK=8000
 else
   OUTFILE = restunts.exe
   DESTFILE = RESTUNTS.EXE
   RESTUNTS_OBJ_FILES += dosstart.obj headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
-  OBJ_FILES = $(PLATFORM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(PLATFORM_OBJECTS) $(PLATFORM_DIR)/dosstack.obj
+  OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
   START_OPTION = option START=_headless_start
 endif
 C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
 PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 SPACE := $(empty) $(empty)
 COMMA := ,

@@ -7,7 +7,7 @@ endif
 ifeq ($(ASSEMBLER),)
   $(error ASSEMBLER is not defined)
 endif
-SUPPORTED_ASSEMBLERS = tasmbox tasmx tasm32
+SUPPORTED_ASSEMBLERS = wasm tasmbox tasmx tasm32
 ifeq ($(filter $(ASSEMBLER), $(SUPPORTED_ASSEMBLERS)),)
   $(error Unsupported assembler: $(ASSEMBLER))
 endif
@@ -28,7 +28,15 @@ ifeq ($(CONFIG),debug)
   TFLAGS = /zi
 endif
 
+ifeq ($(ASSEMBLER),wasm)
+ASM = $(ASM_COMMAND) $(WASM_AFLAGS) -cx
+GENERATED_DIR = $(OBJDIR)/source
+PREPARE_SCRIPT = ../../../tools/scripts/prepare-wasm-original.py
+GENERATED_FILES = $(addprefix $(GENERATED_DIR)/,$(ASM_FILES) $(notdir $(wildcard *.inc)))
+GENERATED_OUTPUTS = $(GENERATED_DIR)/manifest.json $(GENERATED_FILES)
+else
 ASM = $(ASM_COMMAND) /m2 /s $(TFLAGS)
+endif
 
 .PHONY: all clean
 all: $(OBJ_FILES)
@@ -36,13 +44,17 @@ all: $(OBJ_FILES)
 $(OBJDIR):
 	$(call MKDIR,$@)
 
-$(OBJDIR)/%.obj: %.asm $(wildcard *.inc) makefile ../watcom.mk | $(OBJDIR)
-  # asm file name
-	$(eval ASM_FILE = $<)
-  # obj filepath (slash replaced with backslash for tasmx)
-	$(eval OBJ_FILE = $(subst /,\,$@))
-  # assembler run
-	$(ASM) $(ASM_FILE), "$(OBJ_FILE)"
+ifeq ($(ASSEMBLER),wasm)
+# One preparation pass also recovers a deleted generated source or include.
+$(GENERATED_OUTPUTS) &: $(ASM_FILES) $(wildcard *.inc) $(PREPARE_SCRIPT) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(PYTHON) $(PREPARE_SCRIPT) --source-dir . --output-dir $(GENERATED_DIR)
+
+$(OBJDIR)/%.obj: %.asm $(GENERATED_OUTPUTS) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	cd "$(GENERATED_DIR)" && $(ASM) -fo="../$(@F)" $(<F)
+else
+$(OBJDIR)/%.obj: %.asm $(wildcard *.inc) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(ASM) $<, "$(subst /,\,$@)"
+endif
 
 clean:
 	$(call RMDIR,build/watcom)

@@ -1,6 +1,6 @@
 # Shared Open Watcom 2 settings for the 16-bit DOS targets.
 CONFIG ?= release
-ASSEMBLER ?= tasm32
+ASSEMBLER ?= wasm
 LINKER ?= wlink
 
 ifeq (,$(filter $(CONFIG),release debug))
@@ -16,7 +16,12 @@ ifeq ($(OS),Windows_NT)
   endif
   CC = $(WATCOM)/binnt/wcc.exe
   WLINK = $(WATCOM)/binnt/wlink.exe
+  PYTHON ?= python
+ifeq ($(ASSEMBLER),wasm)
+  ASM_COMMAND = "$(WATCOM)/binnt/wasm.exe"
+else
   ASM_COMMAND = $(ASSEMBLER)
+endif
   MKDIR = if not exist "$(subst /,\,$(1))" mkdir "$(subst /,\,$(1))"
   RMDIR = if exist "$(subst /,\,$(1))" rmdir /s /q "$(subst /,\,$(1))"
   # REMOVE accepts a single filename or wildcard; use RMDIR for object trees.
@@ -26,7 +31,12 @@ else
   WATCOM ?= $(TOOLS_DIR)/watcom
   CC = $(WATCOM)/binl64/wcc
   WLINK = $(WATCOM)/binl64/wlink
+  PYTHON ?= python3
+ifeq ($(ASSEMBLER),wasm)
+  ASM_COMMAND = "$(WATCOM)/binl64/wasm"
+else
   ASM_COMMAND = WINEDEBUG=-all wine $(TOOLS_DIR)/bin/$(ASSEMBLER).exe
+endif
   MKDIR = mkdir -p "$(1)"
   RMDIR = rm -rf "$(1)"
   REMOVE = rm -f $(1)
@@ -34,6 +44,12 @@ else
 endif
 export WATCOM
 WATCOM_STAMP = $(wildcard $(WATCOM)/restunts-toolchain.version)
+WASM_AFLAGS = -zq -zcm=tasm -bt=dos -0
+ifeq ($(CONFIG),debug)
+  WASM_AFLAGS += -d1
+else
+  WASM_AFLAGS += -d0
+endif
 
 # Medium model, stack C calling convention, signed char, byte-packed records.
 # Our DOS startup owns stack/BSS initialization, so omit CRT stack probes.

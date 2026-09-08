@@ -1,6 +1,6 @@
 include watcom.mk
 
-VALID_ASSEMBLERS = tasmbox tasmx tasm32
+VALID_ASSEMBLERS = wasm tasmbox tasmx tasm32
 ifeq (,$(filter $(ASSEMBLER),$(VALID_ASSEMBLERS)))
   $(error Unsupported ASSEMBLER: $(ASSEMBLER))
 endif

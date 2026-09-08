@@ -11,6 +11,8 @@ and external names, groups, and resolved FIXUPP threads. It is deliberately
 strict about different instruction encodings and embedded relocation addends;
 equal linked MZ images remain the stronger final check. Unsupported records,
 iterated-data relocations, and malformed inputs fail instead of being ignored.
+Conflicting overlapping data is also rejected, including compiler -d2 debug
+sections that use this representation; compare linked MZ files in that case.
 """
 
 import argparse

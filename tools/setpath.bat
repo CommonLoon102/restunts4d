@@ -8,6 +8,10 @@ if not exist "%WATCOM%\binnt\wlink.exe" (
     echo Open Watcom 2 linker is missing. Reinstall the pinned toolchain.
     exit /b 1
 )
+if not exist "%WATCOM%\binnt\wasm.exe" (
+    echo Open Watcom 2 assembler is missing. Reinstall the pinned toolchain.
+    exit /b 1
+)
 set "PATH=%WATCOM%\binnt;%~dp0bin;%PATH%"
 set "INCLUDE=%WATCOM%\h"
 exit /b 0

@@ -3,14 +3,15 @@ include ../watcom.mk
 OBJDIR = build/watcom/$(CONFIG)
 OUTFILE = $(OBJDIR)/DOSPLAT.EXE
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
-PLATFORM_NAMES = dosbss runtime memory file dosstack
-PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
-OBJ_FILES = $(PLATFORM_DIR)/dosbss.obj $(OBJDIR)/dosstart.obj $(OBJDIR)/test-dos-platform.obj $(OBJDIR)/resource.obj $(filter-out $(PLATFORM_DIR)/dosbss.obj,$(PLATFORM_OBJECTS))
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_NAMES = runtime memory file
+PLATFORM_OBJECTS = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES))) $(PLATFORM_ASM_DIR)/dosstack.obj
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(OBJDIR)/dosstart.obj $(OBJDIR)/test-dos-platform.obj $(OBJDIR)/resource.obj $(filter-out $(PLATFORM_ASM_DIR)/dosbss.obj,$(PLATFORM_OBJECTS))
 C_HEADERS = $(wildcard ../c/*.h) $(wildcard ../platform/dos/*.h)
 SPACE := $(empty) $(empty)
 COMMA := ,
 
-.PHONY: all platform clean
+.PHONY: all platform clean force-link
 all: $(OUTFILE)
 
 platform:
@@ -30,7 +31,10 @@ $(OBJDIR)/dosstart.obj: ../platform/dos/dosstart.c $(C_HEADERS) makefile ../watc
 $(OBJDIR)/resource.obj: ../c/resource.c $(C_HEADERS) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
 	$(CC) $(WATCOM_CFLAGS) -i=../c -fo=$@ $<
 
-$(OUTFILE): $(OBJ_FILES) makefile ../watcom.mk | platform
+# Relink when switching assembler, including back to older cached objects.
+force-link:
+
+$(OUTFILE): $(OBJ_FILES) makefile ../watcom.mk force-link | platform
 	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
 	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) option START=_headless_start option MAP=$(OBJDIR)/dosplat.map)
 	$(file >>$(OBJDIR)/link.lnk,$(WATCOM_LIBPATH))
