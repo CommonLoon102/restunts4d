@@ -23,9 +23,8 @@ Main repository: https://github.com/4d-stunts/restunts
 		Stunts 1.1 the game.
 
 	tools
-		Contains binaries, libraries, headers with a full toolchain for
-		building restunts on Windows. The toolchain is based on TASM, TLINK,
-		Turbo Debugger, Borland C++, DOSBox, and various other tools.
+		Contains the bundled assembler, make, DOSBox, and setup scripts for
+		Open Watcom 2. The active C compiler and linker are WCC and WLINK.
 
 
 ### Contents of src\restunts:
@@ -134,55 +133,84 @@ refactors and audit results.
 
 ## How to build
 
+The DOS C compiler and linker are Open Watcom 2, pinned to the official
+[2026-09-01 build](https://github.com/open-watcom/open-watcom-v2/releases/tag/2026-09-01-Build).
+The setup scripts verify its SHA256 and install into ignored `tools/watcom/`.
+The shared release pin is `tools/scripts/open-watcom.conf`. Bundled TASM32
+remains the assembler. GNU Make runs natively on Linux or Windows. On Linux,
+C compilation and linking use native Watcom binaries; assembly uses Wine.
+
 ### On Windows
-	1) Double click tools\mount_stunts_to_s.bat (only needed once per reboot)
-	2) Start cmd.exe and enter the following commands:
-		S:
-		cd \src\restunts
-		setpath
-		make
 
-### On Linux
+1. Install the compiler from PowerShell at the repository root (Windows 10/11
+   `tar.exe` and PowerShell are required):
 
-0. You might want to set `git config --worktree core.autocrlf false` before
-   making changes, lest Git meddle with the DOS newlines.
-1. Install Wine.
-2. Mount the restunts directory as drive S using `winecfg`.
-3. In the Linux console, run `wineconsole cmd`.
-4. In the resulting Wine console, run:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File tools\scripts\install-open-watcom.ps1
+   ```
+
+2. Run `tools\mount_stunts_to_s.bat` once per reboot to map the checkout to S:.
+3. In cmd.exe, run:
 
    ```text
-   s:
-   cd src\restunts
+   S:
+   cd \src\restunts
    setpath
+   make restunts repldump pixldump
+   make repldump-original pixldump-original
    ```
+
+### On Linux (x86-64)
+
+1. Install Wine with 32-bit Windows support, GNU Make, Bash, curl, tar, xz, and
+   coreutils. Run the setup script from the repository root:
+
+   ```sh
+   tools/scripts/install-open-watcom.sh
+   ```
+
+2. Build with native GNU Make:
+
+   ```sh
+   make -C src/restunts restunts repldump pixldump repldump-original pixldump-original
+   ```
+
+To use the Windows batch wrappers or the supplied DOSBox development setup,
+also map the checkout as drive S: using `winecfg`.
 
 ### On both platforms
 
-If everything went fine, there should be a new s:\stunts\restunts.exe which can
-be run in DOSBox. Note that the drive letter S: is hardcoded many places in the
-makefiles, and is also mounted inside DOSBox as a fixed point of reference.
+Build outputs are copied to `stunts/` (`S:\stunts` on Windows). Run
+`RESTUNTS.EXE` in DOSBox with `core=dynamic` and `cycles=max`. The Windows
+batch wrappers and supplied DOSBox development configuration use drive S:.
 
-The makefile supports the following targets:
+The supported targets are:
 
-	make <OPTIONS> restunts
-		Builds RESTUNTS.EXE from the ported C game and the DOS platform layer.
+| Target | Result |
+| --- | --- |
+| `restunts` | Builds `RESTUNTS.EXE` from the ported C game and DOS platform layer. |
+| `restunts-original` | Assembles the original game and links `RESTUNTO.EXE` with WLINK. |
+| `repldump` | Builds the C physics dump tool, `REPLDUMP.EXE`. |
+| `pixldump` | Builds the C renderer dump tool, `PIXLDUMP.EXE`. |
+| `repldump-original` | Copies archived `REPLDUMO.EXE` into `stunts/`. |
+| `pixldump-original` | Copies archived `PIXLDUMO.EXE` into `stunts/`. |
+| `test-dos-platform` | Builds the DOS platform ABI test, `tests/build/watcom/<configuration>/DOSPLAT.EXE`. |
+| `clean` | Removes generated build objects and candidate executables. |
 
-	make <OPTIONS> restunts-original
-		Builds an executable based on unpatched disassembly with the original
-		codepaths intact. Does not use any of the ported C code.
+The regression oracles are the pre-migration Borland binaries checked into
+[tools/oracles/borland](tools/oracles/borland/README.md). Their SHA256 hashes
+are recorded alongside them. Never rebuild these oracle wrappers with Watcom:
+their independence is what lets regression tests detect compiler, ABI, and
+runtime changes. The `*-original` dump targets restore the archived files. The original game
+assembly under `src/restunts/asmorig/` is preserved unchanged; `RESTUNTO.EXE`
+is assembled from those files and linked with Watcom. Its link response file
+reproduces the original segment order, disables automatic segment packing,
+and preserves the original 8000-byte stack. The old empty `segments.obj`
+layout helper is replaced by WLINK ordering directives; its ASM source is
+retained unchanged.
 
-	make <OPTIONS> repldump
-		Builds the C-only headless replay engine as REPLDUMP.EXE.
-
-	make <OPTIONS> repldump-original
-		Builds the replay dump oracle from the unpatched disassembly.
-
-	make <OPTIONS> pixldump
-		Builds the ported renderer test tool as PIXLDUMP.EXE.
-
-	make <OPTIONS> pixldump-original
-		Builds the original renderer oracle as PIXLDUMO.EXE.
+`makerepldump.bat` builds the game and physics tools; `makepixldump.bat` builds
+the renderer tool and restores its archived oracle. Both stop on build errors.
 
 ### PIXLDUMP parameters
 
@@ -238,7 +266,7 @@ PIXLDUMP must reproduce the original renderer, including its bugs. In particular
 polygon depth averages use unsigned division for non-power-of-two vertex counts
 even when near-plane clipping retains a negative depth sum. This can put a grille
 behind opaque surfaces, as in `0027.rpl`, camera 2, player, frame 665. Preserve
-this behavior in the C port; `asmorig` and PIXLDUMO remain the unchanged oracle.
+this behavior in the C port; `asmorig` and the archived PIXLDUMO remain the unchanged oracle.
 
 Both modes force maximum graphical detail and hide the dashboard and replay
 controls. Invalid arguments are rejected before an output file is created. The
@@ -248,9 +276,9 @@ characters. BMP filenames require DOS long-filename support; the supplied
 
 ### pixelcheck parameters
 
-On Linux, `pixelcheck.sh` builds or reuses both executables, runs them with the
-same replay, camera, target, and optional BMP frame, and compares the resulting
-files:
+On Linux, `pixelcheck.sh` builds or reuses the candidate, restores the archived
+oracle, runs both with the same replay, camera, target, and optional BMP frame,
+and compares the resulting files:
 
 ```text
 tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target>
@@ -260,7 +288,7 @@ tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target> <frame>
 | Parameter | Accepted values | Description |
 | --- | --- | --- |
 | `replay-file` | Replay filename under `stunts/` | Replay passed to both executables. |
-| `rebuild` | `true` or `false` | `true` rebuilds both executables first; `false` reuses the existing executables in `stunts/`. |
+| `rebuild` | `true` or `false` | `true` rebuilds the candidate first; `false` reuses it. Both restore the archived oracle. |
 | `camera` | `1`, `2`, `3`, or `4` | Camera passed to both executables: F1, F2, F3, or F4 respectively. |
 | `target` | `0` or `1` | Player (`0`) or opponent (`1`) passed to both executables. |
 | `frame` | `0` through `65535` | Present in the BMP form only. It selects the exact frame compared by both executables. |
@@ -268,11 +296,11 @@ tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target> <frame>
 Examples:
 
 ```text
-# Rebuild both executables and compare player/F2 hash dumps.
+# Rebuild the candidate, restore the oracle, and compare player/F2 hashes.
 tools/scripts/pixelcheck.sh 0610.rpl true 2 0
 
 # Reuse existing executables and compare opponent/F4 hash dumps.
-tools/scripts/pixelcheck.sh 0610.rpl false 4 1
+tools/scripts/pixelcheck.sh 0ANSX.RPL false 4 1
 
 # Reuse existing executables and compare player/F1 BMPs at frame 5.
 tools/scripts/pixelcheck.sh 0610.rpl false 1 0 5
@@ -282,12 +310,19 @@ Set the `PIXELDUMP_TIMEOUT_SECONDS` environment variable to a positive integer
 to override the default 120-second timeout for each DOSBox run.
 
 
-**NOTE:** unfortunately, the makefiles are not perfect and some dependencies are not represented correctly. If the linker complains about “fixup overflow” errors when building, try `make clean`. Note that, if you are editing the code, these fixup overflows might be real errors indicating that you exceeded the allowed memory limits.
+Watcom objects are stored separately under `build/watcom/<configuration>/`,
+including separate full-game and headless C builds. Original assembly objects
+are also separated by configuration and assembler. Release and debug objects
+do not mix with one another or with historical Borland objects. Reinstalling
+a newer pinned toolchain invalidates the C objects through its version stamp. A linker fixup
+overflow indicates an invalid segment reference or a 16-bit memory limit;
+investigate it rather than treating a successful compile as sufficient.
 
 ## CI replay validation
 
-Pull requests and releases build the game, physics dump tools, and both
-renderer dump tools. CI compares the full golden replay set for physics and
+Pull requests and releases install the pinned Watcom compiler, build the game
+and candidate dump tools, verify the archived oracle hashes, and copy the
+oracles without recompiling them. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
 against PIXLDUMO `.PDO` files with camera 2 and player target 0.
 
@@ -324,61 +359,63 @@ dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
 
 ### Assembler selection
 
-Restunts builds per default with TASM32 for Windows, but it can be changed to using
-the a 16-bit TASMX by using option `ASSEMBLER=tasmbox` before the target name (or
-`ASSEMBLER=tasmx` if one really likes seeing pop-up windows).
+TASM32 is the default assembler. Windows builds also accept
+`ASSEMBLER=tasmbox` to run the 16-bit TASMX through DOSBox, or
+`ASSEMBLER=tasmx` to invoke it directly. These alternatives do not add
+assembly source-level debugging to the Watcom build.
 
-E.g. to build restunts with TASMX, type
+```text
+make ASSEMBLER=tasmbox restunts
+```
 
-	make ASSEMBLER=tasmbox restunts 
+### Compiler, linker, and debugging symbols
 
-Building with TASMX is much slower since DOSBox is involved, but it allows to include 
-debugging symbols (s. below)
+All DOS C targets use Open Watcom 2 WCC and WLINK. `LINKER=wlink` is the only
+supported linker setting. `setpath.bat` puts the pinned Watcom tools before
+legacy executables on PATH and sets `WATCOM` and `INCLUDE` accordingly.
 
-### Linker selection
+Shared flags live in `src/restunts/watcom.mk`: 8086 instructions, the medium
+memory model (far code and near data), the stack-based C calling convention,
+signed `char`, and byte-packed structures. These settings preserve the
+original game's 16-bit data layout and assembly interfaces. The custom DOS
+startup initializes the stack and BSS; compiler stack probes are disabled.
+The runtime libraries and headers come from the same pinned Watcom release.
+Portable game C uses size optimization (`-os`). The DOS platform layer and
+startup are compiled without optimization (`-od`) because the pinned compiler
+can incorrectly merge branches around inline assembly interrupt calls.
+DOS resource pointers are explicitly normalized to a paragraph plus an offset
+below 16 bytes before they reach fixed-segment sprite code.
+[Watcom huge-pointer arithmetic](https://github.com/open-watcom/open-watcom-v2/blob/2026-09-01-Build/bld/clib/cgsupp/a/pia.asm)
+preserves larger offsets; normalization retains the Borland representation
+and prevents bitmap reads from wrapping at a 64 KiB boundary.
 
-Restunts links per default with TLINK using dosbox but that can changed to using
-the native WLINK executable by using option `LINKER=wlink` before the target name
+Use `CONFIG=debug` to request Watcom C debug information and disable C
+optimization:
 
-E.g. to build Restunts with wlink, type
+```text
+make CONFIG=debug restunts
+```
 
-	make LINKER=wlink restunts 
-
-Note that `WLINK` is experimental, and it does not allow to include debug symbols. Its
-use can slightly speed up the build process since it avoids calling DOSBox.
-
-### Debugging symbols
-
-The executable can be built with debug symbols by means of the `CONFIG=debug`
-option. Note that this requires using TASMX as assembler and TLINK as linker
-(TLINK is currently the default but this might change in future)
-
-E.g. to build Restunts with debug symbols, type
-
-	make ASSEMBLER=tasmbox LINKER=tlink CONFIG=debug restunts 
-
+WLINK writes Watcom debug information. The old Turbo Debugger workflow and
+Borland/TASM debug information are not compatible with this configuration;
+assembly source-level debugging is not provided by the current build.
 
 ## The toolchain
 
-The toolchain has evolved over the years and it can now (2025) use either
-Borland tools or alternative ones. For various reasons, the build process can
-uses both 16 and 32-bit tools. In order to compile on modern 64 bit systems,
-the 16-bit apps run via DOSBox. A couple of batch files (in
-`tools\bin\*box.bat`) take care of starting DOSBox in headless mode to prevent
-pop-ups, and copy the output into the Windows console.
+| Purpose | Active tool |
+| --- | --- |
+| 16-bit DOS C compilation | Open Watcom 2 `binnt/wcc.exe` or native Linux `binl64/wcc` |
+| 16-bit DOS linking | Open Watcom 2 `binnt/wlink.exe` or native Linux `binl64/wlink` |
+| C headers and runtime | Open Watcom 2 `h/` and `lib286/` |
+| Assembly | Bundled TASM32; optional TASMX through DOSBox |
+| Build orchestration | GNU Make (bundled 4.4.1 on Windows) |
+| Running and testing | DOSBox / DOSBox-X |
 
-### Tools used
-Assemblers:
-	- TASMX (16-bit, from Borland Turbo Assembler 4.0)
-	- TASM32 (32-bit)
-
-Linkers:
-	- TLINK (16-bit)
-	- WLINK (32-bit, experimental)
-
-Other:
-	- Borland C++ 5.2 (Win32)
-	- GNU Make 4.4.1 (Win32) - from the Chocolatey Windows Packages
+`tools/bin/bcc.exe`, the older bundled `wlink.exe`, TLINK, Borland headers,
+and extracted Borland CRT objects are historical files. Current makefiles
+select Watcom executables by their full installation paths and do not use
+these old C compiler or linker binaries. Regression oracles retain their
+original Borland-built machine code.
 
 ## Analysis in IDA and the development cycle
 
@@ -400,114 +437,49 @@ the analysis manually. Obviously, the linker will complain about missing
 symbols in case a symbol was renamed in IDA, but not in the C files.
 
 
-## Debugging restunts.exe
+## Compiler migration validation
 
-Restunts can be debugged with Turbo Debugger inside DOSBox. In orger to do
-that, the target program must be built with debug symbols, which is possible by
-setting the option `CONFIG=debug` when calling make (see paragraph “Debugging
-symbols” above).
+The DOS platform test exercises real interrupt wrappers and file operations,
+including offsets beyond 64 KiB, error returns, truncation, far pointers,
+DS/SS consistency, and saved AX/flags in an interrupt frame. It also checks
+a resource payload crossing a 64 KiB boundary and its normalized pointer
+representation, using the same optimized resource code as the game. Build it with:
 
-The DOSBox debugging environment is an extension of the build environment
-described above:
+```sh
+make -C src/restunts test-dos-platform
+python3 tools/scripts/run-dos-platform-test.py
+```
 
-	1) Double click tools\mount_stunts_to_s.bat (only needed once per reboot)
-	2) Start DOSBox and enter the following commands:
-		mount S S:
-		S:
-		cd tools
-		setpath.bat
-		cd \stunts
-		td restunts.exe
+On Windows, run `make test-dos-platform` after `setpath` in `S:\src\restunts`.
+The Python runner uses an isolated temporary directory, the supplied
+`core=dynamic` / `cycles=max` configuration, and a 30-second timeout. It checks
+the DOS exit status and success message, then terminates its DOSBox process
+with SIGKILL. CI runs this check once alongside the replay shards.
 
-Turbo Debugger is preconfigured to automatically find and show the source code.
-Setting breakpoints, stepping etc works. The TD configuration file is stored in
-stunts\tdconfig.td.
+For a manual run, copy
+`src/restunts/tests/build/watcom/release/DOSPLAT.EXE` to a disposable DOSBox-X
+working directory. It creates and removes `DOSABI.TMP` and reports
+`DOS platform ABI checks passed` on success.
 
-## Notes about the toolchain
+The migration check selects 100 evenly spaced replays from the checked-in
+golden corpus and runs physics and renderer comparisons against the archived
+oracles in a fresh directory. With .NET 10 and DOSBox-X installed, run:
 
-### Notes regarding the linker
+```sh
+python3 tools/scripts/validate-toolchain.py --output out/watcom-validation
+```
 
-WLINK from the Open Watcom C/C++ compiler suite was originally chosen because
-it supports detailed control on how to order segment classes in the final
-executable image.
-
-Our requirement is to put the original code and data first in the file, exactly
-as in the original game, only patching up function calls and data access.
-TLINK and OPTLINK were tested in the early days, but after having difficulties
-with segment ordering and subsequent crashes, the project settled on WLINK.
-
-The problems with TLINK were revisited and fixed years later, after an urgent
-need to get debug information for the restunts executable. As WLINK is not able
-to use the debug information format created by BCC/TASM, it became necessary to
-replace either of them. After the initial attempts of using TLINK were
-successful, no further investigation were made into replacing TASM.  It should
-be noted that MASM seems a promising TASM replacement candidate: the syntax is
-close to TASM, and it produces CodeView debug format usable by WLINK.
-
-
-### Notes regarding 16-bit tasmx, tlink and DOSBox
-
-The choice of reverting to TLINK was not easy either. Only the 16-bit version
-of TLINK can produce 16-bit executables such as restunts.exe, and it can only
-use object files produced by the 16-bit TASM. In order to use 16-bit tools on a
-64-bit Windows host, they need to be emulated. And so DOSBox became
-incorporated in the build process. Another problem is the regular 16-bit
-tasm.exe exceeds the available 640k of memory when compiling the largest
-restunts source files. This was overcome by using the DPMI-enabled tasmx.exe
-instead.
-
-
-### Notes regarding the CRT (libc)
-
-When linking with cm.lib from Borland C++ 5.1, TLINK is not able to produce an
-executable. To get around this, the tlib tool was used to extract object files
-from cm.lib, and now restunts links with these instead.
-
-When the project used WLINK, it was able to link with cm.lib from Borland C++
-5.1, but was not able to link correctly with cm.lib from Borland C++ 3.1.
-Before upgrading to Borland C++ 5.1, the makefile would link to single obj
-files from Borland 3.1's CRT.
-
-The linker can complain about weird missing symbols f.ex at first time use of
-some compiler feature or CRT function. This can be fixed by extracting the
-object file from cm.lib, and adding it to the makefile.
-
-cm.lib is the medium model libc from Borland C++ 5.2. tlib.exe is a 16-bit
-Borland utility for manipulating lib files and has to be run via DOSBox.
-
-Using a binary file viewer with cm.lib it's possible to locate missing CRT
-symbol names and work out/guess the object file name by looking at strings in
-the binary data before it.
-
-To extract the object file
-	1) Double click tools\mount_stunts_to_s.bat (only needed once per reboot)
-	2) Start DOSBox and initialize the restunts development environment:
-		mount S S:
-		S:
-		cd tools
-		setpath.bat
-		cd \tools\lib
-	3) Run tlib to extract the object file, some examples:
-		tlib cm.lib * GETVECT
-		tlib cm.lib * LABS
-		tlib cm.lib * STRCPY
-		tlib cm.lib * MEMCPY
-		tlib cm.lib * FMEMCPY
-		tlib cm.lib * H_LDIV
-		tlib cm.lib * F_LXMUL
-		tlib cm.lib * F_SCOPY
-		tlib cm.lib * H_LRSH
-		tlib cm.lib * H_PADD
-		tlib cm.lib * H_PINA
-		tlib cm.lib * H_PADA
-		tlib cm.lib * N_PCMP
-		tlib cm.lib * F_PCMP
-		tlib cm.lib * H_LURSH
-		tlib cm.lib * H_PSBP
-		tlib cm.lib * H_LLSH
-	4) Add new CRT object files in dos\makefile - at the end of the line
-	   starting with CTARGETS =
-
+The output retains the selected replay list, executable hashes, run inputs,
+and comparison reports. It uses full rendering coverage of that selected set.
+Use a new output path for each independent run. Interactive DOSBox checks
+complement these byte-for-byte comparisons by checking menus, gameplay,
+replays, visual corruption, and crashes. Include car and opponent selection,
+track editing and save/load, display/input options, replay cameras, and the
+sequence Drive -> Pause -> Resume -> Replay Menu -> Main Menu. Pause and
+nonbusy disk-error dialogs use acknowledgement mode so their saved background
+is released before control returns. Draw-only message mode intentionally leaves
+background ownership with its caller. Host dialog tests cover this distinction
+and repeated acknowledgement dialogs without leaking a sprite window.
 
 ## Porting a function from ASM to C
 

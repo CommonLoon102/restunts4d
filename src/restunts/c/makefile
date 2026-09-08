@@ -1,14 +1,10 @@
+include ../watcom.mk
 TARGET ?= dosfull
-
-OBJDIR = build\$(TARGET)
-
+OBJDIR = build/watcom/$(CONFIG)/$(TARGET)
 ifeq ($(TARGET),dosheadless)
-  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_HEADLESS
-
+  CFLAGS = -dRESTUNTS_HEADLESS
 else ifeq ($(TARGET),dosfull)
-  CC = bcc /c /u- /mm /v /n$(OBJDIR) /DRESTUNTS_FULL
-
-# Unsupported target
+  CFLAGS = -dRESTUNTS_FULL
 else
   $(error Unsupported C target: $(TARGET))
 endif
@@ -30,19 +26,19 @@ ifeq ($(TARGET),dosfull)
 endif
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(C_FILES:.c=.obj)) $(DOS_STARTUP_OBJ)
-OBJ_FILES_BACKSLASH = $(subst /,\,$(OBJ_FILES))
 C_HEADERS = $(wildcard *.h)
 
+.PHONY: all clean
 all: $(OBJ_FILES)
 
-$(OBJDIR)/%.obj: %.c $(C_HEADERS)
-  # c file name
-	$(eval C_FILE = $<)
-  # compiler run
-	$(CC) $(C_FILE)
+$(OBJDIR):
+	$(call MKDIR,$@)
 
-$(OBJDIR)/dosstart.obj: ../platform/dos/dosstart.c legacy.h platform.h
-	$(CC) ../platform/dos/dosstart.c
+$(OBJDIR)/%.obj: %.c $(C_HEADERS) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WATCOM_CFLAGS) $(CFLAGS) -fo=$@ $<
+
+$(OBJDIR)/dosstart.obj: ../platform/dos/dosstart.c $(C_HEADERS) $(wildcard ../platform/dos/*.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WATCOM_PLATFORM_CFLAGS) $(CFLAGS) -i=. -fo=$@ $<
 
 clean:
-	del $(OBJ_FILES_BACKSLASH)
+	$(call RMDIR,$(OBJDIR))

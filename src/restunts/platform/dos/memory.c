@@ -7,40 +7,40 @@
 
 void far *dos_memory_get_psp(void)
 {
-	legacy_u16 segment;
-	legacy_u16 offset;
+	legacy_u16 memory_segment;
+	legacy_u16 memory_offset;
 
 	__asm {
 		push ds
 		mov ah, DOS_MEMORY_GET_PSP_FUNCTION
 		int DOS_MEMORY_INTERRUPT
-		mov segment, ds
-		mov offset, bx
+		mov memory_segment, ds
+		mov memory_offset, bx
 		pop ds
 	}
-	return dos_memory_make_pointer(segment, offset);
+	return dos_memory_make_pointer(memory_segment, memory_offset);
 }
 
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs)
 {
-	legacy_u16 segment;
+	legacy_u16 memory_segment;
 
 	__asm {
 		mov bx, paragraphs
 		mov ah, DOS_MEMORY_ALLOCATE_FUNCTION
 		int DOS_MEMORY_INTERRUPT
-		mov segment, ax
+		mov memory_segment, ax
 	}
-	return segment;
+	return memory_segment;
 }
 
-legacy_u16 dos_memory_resize(legacy_u16 segment, legacy_u16 paragraphs)
+legacy_u16 dos_memory_resize(legacy_u16 memory_segment, legacy_u16 paragraphs)
 {
 	legacy_u16 maximum;
 
 	__asm {
 		mov bx, paragraphs
-		mov es, segment
+		mov es, memory_segment
 		mov ah, DOS_MEMORY_RESIZE_FUNCTION
 		int DOS_MEMORY_INTERRUPT
 		mov maximum, bx

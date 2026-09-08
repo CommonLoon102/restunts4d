@@ -35,7 +35,7 @@ on:
         default: 120
     outputs:
       exe-artifact:
-        description: Artifact holding the six built executables.
+        description: Artifact holding the game, regression tools, and DOS ABI test.
         value: ${{ jobs.build.outputs.exe-artifact }}
 
 env:
@@ -139,11 +139,18 @@ jobs:
         id: names
         run: echo "value=$EXE_ARTIFACT" >> "$GITHUB_OUTPUT"
 
+      - name: Install pinned Open Watcom 2
+        run: bash tools/scripts/install-open-watcom.sh
+
+      - name: Verify archived regression oracles
+        working-directory: tools/oracles/borland
+        run: sha256sum --check SHA256SUMS
+
       - name: Install Wine
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          # bcc.exe, tasm32.exe, make.exe and the bundled DOSBox.exe are all
+          # wcc.exe, wlink.exe, tasm32.exe, make.exe and bundled DOSBox.exe are
           # 32 bit PE binaries, so the i386 side of Wine is required.
           sudo apt-get install -y --no-install-recommends wine wine32:i386 xvfb
 
@@ -151,7 +158,7 @@ jobs:
         run: |
           xvfb-run -a wineboot --init
           wineserver -w
-          # Every makefile addresses its sources as s:\..., the drive letter
+          # The Windows batch entry points use S:, the drive letter that
           # tools/mount_stunts_to_s.bat creates on Windows.
           mkdir -p "$HOME/.wine/dosdevices"
           ln -sfn "$GITHUB_WORKSPACE" "$HOME/.wine/dosdevices/s:"
@@ -164,13 +171,17 @@ jobs:
         run: |
           xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makepixldump"
 
+      - name: Build the DOS platform ABI test
+        run: |
+          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && call setpath && make test-dos-platform"
+
       - name: Collect the executables
         run: |
           set -u
           mkdir -p dist
           missing=0
-          # makerepldump.bat never reports failure, and a fresh checkout carries
-          # none of these files, so their presence is the build's pass criteria.
+          # Include the archived oracles copied by the build entry points.
+          # Missing files fail even if an external build tool returned success.
           for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO PIXLDUMP PIXLDUMO; do
               built=$(find stunts src/restunts/dos src/restunts/repldump src/restunts/pixldump \
                   -maxdepth 1 -iname "$exe.exe" -print -quit)
@@ -182,6 +193,7 @@ jobs:
               cp -- "$built" "dist/$exe.EXE"
           done
           (( missing == 0 )) || exit 1
+          cp src/restunts/tests/build/watcom/release/DOSPLAT.EXE dist/
           ls -l dist
 
       - uses: actions/upload-artifact@v7
@@ -225,6 +237,10 @@ jobs:
         with:
           name: ${{ needs.build.outputs.exe-artifact }}
           path: exes
+
+      - name: Check the real DOS platform ABI
+        if: matrix.shard == 0
+        run: python3 tools/scripts/run-dos-platform-test.py --executable exes/DOSPLAT.EXE
 
       - name: Assemble the game directory
         run: |

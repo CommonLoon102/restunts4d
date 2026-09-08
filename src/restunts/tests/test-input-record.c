@@ -424,6 +424,41 @@ static void test_event_priority(void)
 	assert(input_checking(1) == KEY_SPACE);
 }
 
+static void test_mouse_button_edges_and_repeat(void)
+{
+	static const legacy_s16 buttons[] = {1, 2, 3};
+	static const legacy_s16 keys[] = {KEY_SPACE, KEY_ENTER, KEY_SPACE};
+	unsigned sample, moving, index;
+
+	for (sample = 0; sample < 3; sample++) {
+		for (moving = 0; moving < 2; moving++) {
+			reset_inputs();
+			for (index = 0; index < 4; index++) {
+				mouse_samples[index][0] = buttons[sample];
+				mouse_samples[index][1] = moving != 0 ? 100 : 0;
+				mouse_samples[index][2] = moving != 0 ? 50 : 0;
+			}
+
+			/* A press fires immediately, even before the repeat clock advances. */
+			assert(input_checking(0) == keys[sample]);
+			assert(kbormouse == 1);
+			assert(input_checking(0) == 0);
+			assert(input_checking(20) == 0);
+			assert(input_checking(1) == keys[sample]);
+			assert(input_checking(0) == 0);
+
+			/* Releasing and pressing again creates a new edge without delay. */
+			mouse_samples[3][0] = 0;
+			assert(input_checking(1) == 0);
+			assert(input_combined_flags == 0);
+			mouse_samples[3][0] = buttons[sample];
+			assert(input_checking(0) == keys[sample]);
+			assert(input_checking(20) == 0);
+			assert(input_checking(1) == keys[sample]);
+		}
+	}
+}
+
 static void test_recording_input_modes(void)
 {
 	static const legacy_s16 positions[] = {141, 142, 143, 160, 177, 178, 179};
@@ -452,6 +487,7 @@ static void test_recording_input_modes(void)
 int main(void)
 {
 	legacy_u32 input_hash, scrollbar_hash, record_hash, callback_hash, shortcut_hash;
+	test_mouse_button_edges_and_repeat();
 	input_hash = input_fingerprint();
 	scrollbar_hash = scrollbar_fingerprint();
 	record_hash = record_fingerprint();

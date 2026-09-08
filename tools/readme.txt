@@ -1,14 +1,20 @@
-the tools directory contains tools for a minimal build environment.
+The tools directory contains the bundled assembler, make, DOSBox, and setup
+scripts for the active Open Watcom 2 C compiler and linker.
 
-included tools: tasm, wlink, make, bcc
+Install the pinned toolchain from the repository root:
+  Windows: powershell -ExecutionPolicy Bypass -File tools\scripts\install-open-watcom.ps1
+  Linux:   tools/scripts/install-open-watcom.sh
 
+Both installers verify the SHA256 in scripts/open-watcom.conf and extract into
+ignored tools/watcom. A different or incomplete installation must be moved
+aside before reinstalling.
 
-setpath.bat modifies the PATH environment variable to point at the assembler, compiler, linker and
-make utilities contained in tools/bin.
+setpath.bat puts watcom\binnt before bin on PATH, sets WATCOM to the pinned
+installation, and selects its C headers. TASM32 and GNU Make remain bundled.
+mount_stunts_to_s.bat maps the repository to S:, which the makefiles require.
 
-mount_stunts_to_s.bat mounts the parent directory to s:. this is useful when testing the stunts
-installation included in the repo, since stunts does not run from too deep directory hierarchies.
+The older bcc, wlink, tlink, include, and lib files are historical tools. The
+current C builds use Open Watcom headers/runtime libraries under watcom.
+The immutable pre-migration regression binaries live in oracles/borland.
 
-the include directory contains include files for borlands crt. the crt obj files are currently 
-located in ..\src\restunts\crt
-
+See the root readme.md for build commands and regression validation.

@@ -803,7 +803,7 @@ legacy_s16 show_disk_error_dialog(void)
 							 locate_text_res(mainresptr, disk_retry_dialog_id), -1, -1,
 							 dialog_border_color, 0, 0) == 0;
 	} else {
-		show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
+		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 					locate_text_res(mainresptr, disk_error_dialog_id), -1, -1, dialog_border_color,
 					0, 0);
 		result = 1;

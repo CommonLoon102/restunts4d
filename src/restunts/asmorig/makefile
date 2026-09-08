@@ -1,3 +1,4 @@
+include ../watcom.mk
 TARGET ?= dos
 ifneq ($(TARGET),dos)
   $(error Unsupported TARGET: $(TARGET))
@@ -11,7 +12,7 @@ ifeq ($(filter $(ASSEMBLER), $(SUPPORTED_ASSEMBLERS)),)
   $(error Unsupported assembler: $(ASSEMBLER))
 endif
 
-OBJDIR = build
+OBJDIR = build/watcom/$(CONFIG)/$(ASSEMBLER)
 
 ASM_FILES = segments.asm seg000.asm seg001.asm seg002.asm seg003.asm seg004.asm seg005.asm \
             seg006.asm seg007.asm seg008.asm seg009.asm seg010.asm seg011.asm seg012.asm \
@@ -21,24 +22,27 @@ ASM_FILES = segments.asm seg000.asm seg001.asm seg002.asm seg003.asm seg004.asm 
             seg034.asm seg035.asm seg036.asm seg037.asm seg038.asm seg039.asm seg041.asm dseg.asm
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(ASM_FILES:.asm=.obj))
-OBJ_FILES_BACKSLASH = $(subst /,\,$(OBJ_FILES))
 
 TFLAGS = /zn
 ifeq ($(CONFIG),debug)
   TFLAGS = /zi
 endif
 
-ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
+ASM = $(ASM_COMMAND) /m2 /s $(TFLAGS)
 
+.PHONY: all clean
 all: $(OBJ_FILES)
 
-$(OBJDIR)/%.obj: %.asm
+$(OBJDIR):
+	$(call MKDIR,$@)
+
+$(OBJDIR)/%.obj: %.asm $(wildcard *.inc) makefile ../watcom.mk | $(OBJDIR)
   # asm file name
 	$(eval ASM_FILE = $<)
   # obj filepath (slash replaced with backslash for tasmx)
 	$(eval OBJ_FILE = $(subst /,\,$@))
   # assembler run
-	$(ASM) $(ASM_FILE), $(OBJ_FILE)
+	$(ASM) $(ASM_FILE), "$(OBJ_FILE)"
 
 clean:
-	del $(OBJ_FILES_BACKSLASH)
+	$(call RMDIR,build/watcom)

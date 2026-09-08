@@ -1,4 +1,8 @@
 .venv/
+tools/watcom/
+tools/.watcom-install.*/
+src/restunts/**/build/watcom/
+src/restunts/**/*.err
 out/*
 tools/scripts/dumpsrv/dumpsrv/bin/
 tools/scripts/dumpsrv/dumpsrv/obj/

@@ -3,11 +3,16 @@
 
 #include <limits.h>
 
-/* Borland's segmented-memory qualifier has no meaning on flat-memory hosts. */
-#if !defined(__BORLANDC__) && !defined(far)
+/* Preserve segmented pointers on both supported 16-bit DOS compilers. */
+#if defined(__BORLANDC__) || (defined(__WATCOMC__) && defined(__I86__))
+#define RESTUNTS_DOS16 1
+#endif
+
+/* Segmented-memory qualifiers have no meaning on flat-memory hosts. */
+#if !defined(RESTUNTS_DOS16) && !defined(far)
 #define far
 #endif
-#if !defined(__BORLANDC__) && !defined(huge)
+#if !defined(RESTUNTS_DOS16) && !defined(huge)
 #define huge
 #endif
 
@@ -59,7 +64,7 @@ legacy_u32 legacy_u32_div_or_zero(legacy_u32 numerator, legacy_u32 denominator);
 legacy_s32 legacy_s32_div_or_zero(legacy_s32 numerator, legacy_s32 denominator);
 
 /* Pass side-effect-free values to these legacy word operations. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 #define LEGACY_S8_FROM_BITS(value) ((legacy_s8)(legacy_u8)(value))
 #define LEGACY_S16_FROM_BITS(value) ((legacy_s16)(legacy_u16)(value))
 #else
@@ -164,7 +169,7 @@ legacy_s32 legacy_s32_div_or_zero(legacy_s32 numerator, legacy_s32 denominator);
 		(bytes)[1] = (legacy_u8)(legacy_write_u16_value_ >> LEGACY_BYTE_BITS);                     \
 	} while (0)
 
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 #define LEGACY_S32_FROM_BITS(value) ((legacy_s32)(legacy_u32)(value))
 #else
 #define LEGACY_S32_FROM_BITS(value)                                                                \

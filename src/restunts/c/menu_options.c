@@ -180,7 +180,7 @@ void show_pause_dialog(void)
 	input_push_status();
 	dos_timer_set_callbacks_suspended(1);
 	audio_suspend();
-	show_dialog(DIALOG_TYPE_MESSAGE, DIALOG_SAVE_BACKGROUND,
+	show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 				locate_text_res(mainresptr, pause_dialog_id), -1, -1, dialog_border_color, 0, 0);
 	dos_timer_set_callbacks_suspended(0);
 	audio_resume();

@@ -8,11 +8,25 @@
 #include "../c/timing.h"
 #include "../c/game_input.h"
 #include "../c/keyboard.h"
+#include "../c/externs.h"
 
 legacy_s16 font_glyph_height;
 legacy_s16 dialog_fnt_colour;
 legacy_s16 dialog_background_color;
 legacy_s16 performGraphColor;
+void *mainresptr;
+legacy_s8 pause_dialog_id[] = "pau";
+legacy_s8 disk_retry_dialog_id[] = "dea";
+legacy_s8 disk_error_dialog_id[] = "der";
+legacy_s8 g_is_busy;
+legacy_u16 dialog_border_color;
+
+static unsigned int dialog_lifecycle_active;
+static unsigned int background_depth;
+static unsigned int background_releases;
+static unsigned int input_status_depth;
+static legacy_s16 timer_suspended;
+static legacy_s16 audio_suspended;
 
 static uint64_t trace_hash = UINT64_C(1469598103934665603);
 static legacy_u16 scripted_keys[16];
@@ -46,6 +60,14 @@ void mouse_draw_transparent_check(void)
 void sprite_pop_background(void)
 {
 	trace_word(3);
+	if (dialog_lifecycle_active != 0U) {
+		assert(background_depth == 1U);
+		if (dialog_lifecycle_active == 1U) {
+			assert(timer_suspended != 0 && audio_suspended != 0);
+		}
+		background_depth--;
+		background_releases++;
+	}
 }
 void sprite_select_screen(void)
 {
@@ -66,6 +88,10 @@ legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 
 {
 	trace_word(7);
 	trace_rectangle(left, right, top, bottom);
+	if (dialog_lifecycle_active != 0U && save_succeeds != 0) {
+		assert(background_depth == 0U);
+		background_depth++;
+	}
 	return save_succeeds;
 }
 
@@ -133,6 +159,12 @@ legacy_s16 input_checking(legacy_s16 delta)
 	trace_word(15);
 	trace_word(delta);
 	assert(input_index < 16U);
+	if (dialog_lifecycle_active != 0U) {
+		assert(background_depth == 1U && input_status_depth == 1U);
+		if (dialog_lifecycle_active == 1U) {
+			assert(timer_suspended != 0 && audio_suspended != 0);
+		}
+	}
 	return (legacy_s16)scripted_keys[input_index++];
 }
 
@@ -145,6 +177,98 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *butto
 		trace_rectangle(buttons[i].x1, buttons[i].x2, buttons[i].y1, buttons[i].y2);
 	}
 	return scripted_hits[input_index - 1U];
+}
+
+legacy_s8 *locate_text_res(legacy_s8 *data, const legacy_s8 *name)
+{
+	static legacy_s8 pause_text[] = "Paused]Press any key]";
+
+	(void)data;
+	assert(name == pause_dialog_id || name == disk_error_dialog_id);
+	return pause_text;
+}
+
+void input_push_status(void)
+{
+	assert(input_status_depth == 0U);
+	input_status_depth++;
+}
+
+void input_pop_status(void)
+{
+	assert(input_status_depth == 1U);
+	assert(background_depth == 0U);
+	input_status_depth--;
+}
+
+void dos_timer_set_callbacks_suspended(legacy_s16 suspended)
+{
+	if (suspended == 0) {
+		assert(background_depth == 0U);
+	}
+	timer_suspended = suspended;
+}
+
+void audio_suspend(void)
+{
+	audio_suspended = 1;
+}
+
+void audio_resume(void)
+{
+	assert(background_depth == 0U);
+	audio_suspended = 0;
+}
+
+static void test_pause_lifecycle(void)
+{
+	static const legacy_u16 resume_keys[] = {KEY_ENTER, KEY_ESCAPE, KEY_SPACE};
+	unsigned int index;
+
+	/* Original do_pau_restext passes acknowledgement type 1. A draw-only
+	 * message returns immediately and leaves its saved window above the race
+	 * window, causing the later race teardown to fail its LIFO check. */
+	dialog_lifecycle_active = 1U;
+	save_succeeds = 1;
+	font_glyph_height = 8;
+	for (index = 0; index < sizeof(resume_keys) / sizeof(resume_keys[0]); index++) {
+		input_index = 0;
+		scripted_keys[0] = 0;
+		scripted_keys[1] = 0;
+		scripted_keys[2] = resume_keys[index];
+		show_pause_dialog();
+		assert(input_index == 3U);
+		assert(background_depth == 0U && background_releases == index + 1U);
+		assert(input_status_depth == 0U);
+		assert(timer_suspended == 0 && audio_suspended == 0);
+	}
+	dialog_lifecycle_active = 0U;
+}
+
+static void test_disk_error_lifecycle(void)
+{
+	static const legacy_u16 acknowledgement_keys[] = {KEY_ENTER, KEY_ESCAPE, KEY_SPACE};
+	unsigned int index;
+	unsigned int previous_releases;
+
+	/* The non-retry disk error uses the same acknowledgement lifecycle as
+	 * pause. Its caller must not return with a saved window still allocated. */
+	dialog_lifecycle_active = 2U;
+	save_succeeds = 1;
+	g_is_busy = 0;
+	previous_releases = background_releases;
+	for (index = 0; index < sizeof(acknowledgement_keys) / sizeof(acknowledgement_keys[0]);
+		 index++) {
+		input_index = 0;
+		scripted_keys[0] = 0;
+		scripted_keys[1] = acknowledgement_keys[index];
+		assert(show_disk_error_dialog() == 1);
+		assert(input_index == 2U);
+		assert(background_depth == 0U);
+		assert(background_releases == previous_releases + index + 1U);
+		assert(input_status_depth == 0U);
+	}
+	dialog_lifecycle_active = 0U;
 }
 
 static void configure_input(unsigned int scenario, legacy_s16 choice_count)
@@ -222,6 +346,8 @@ int main(void)
 	/* Captured from the original dialog implementation. The trace includes drawing,
 	 * geometry, disabled choices, placeholders, input polling and background lifetime. */
 	assert(trace_hash == UINT64_C(0x268e59aba981d897));
-	puts("Dialog interaction snapshots passed (420 scenarios).");
+	test_pause_lifecycle();
+	test_disk_error_lifecycle();
+	puts("Dialog snapshots and pause/disk-error lifecycles passed (420 scenarios).");
 	return 0;
 }

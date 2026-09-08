@@ -49,7 +49,7 @@ struct TRACKOBJECT {
 
 typedef char legacy_track_wall_must_be_6_bytes[(sizeof(struct TRACK_WALL) == 6) ? 1 : -1];
 
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 typedef char legacy_trkobjinfo_must_be_14_bytes[(sizeof(struct TRKOBJINFO) == 14) ? 1 : -1];
 typedef char legacy_trackobject_must_be_14_bytes[(sizeof(struct TRACKOBJECT) == 14) ? 1 : -1];
 

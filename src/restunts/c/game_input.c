@@ -439,6 +439,7 @@ static void input_update_mouse_activity(legacy_s16 frame_delta)
 		input_mouse_previous_buttons != mouse_butstate) {
 		input_mouse_previous_x = mouse_xpos;
 		input_mouse_previous_y = mouse_ypos;
+		/* Keep the button edge pending for input_update_mouse_buttons. */
 		kbormouse = 1;
 		input_mouse_idle_frames = 0;
 		if (mouse_transparent_mode != 0) {

@@ -1,80 +1,54 @@
-# options
-CONFIG ?= release
-ASSEMBLER ?= tasm32
-LINKER ?= tlinkbox
-
-VALID_CONFIGS = debug release
+include watcom.mk
 
 VALID_ASSEMBLERS = tasmbox tasmx tasm32
-
-BORLAND_LINKERS = tlinkbox tlink
-VALID_LINKERS = $(BORLAND_LINKERS) wlink
-
-# valid CONFIG
-ifeq (,$(findstring $(CONFIG),$(VALID_CONFIGS)))
-  $(error unknown CONFIG value: $(CONFIG))
-endif
-
-# valid ASSEMBLER
-ifeq (,$(findstring $(ASSEMBLER),$(VALID_ASSEMBLERS)))
-  $(error unknown ASSEMBLER value: $(ASSEMBLER))
-endif
-
-# valid LINKER
-ifeq (,$(findstring $(LINKER),$(VALID_LINKERS)))
-  $(error unknown LINKER value: $(LINKER))
-endif
-
-# valid option combination
-ifeq ($(CONFIG),debug)
-  ifeq ($(ASSEMBLER),tasm32)
-    $(error ASSEMBLER $(ASSEMBLER) is not supported for CONFIG $(CONFIG))
-  endif
-  ifeq ($(LINKER),wlink)
-    $(error LINKER $(LINKER) is not supported for CONFIG $(CONFIG))
-  endif
+ifeq (,$(filter $(ASSEMBLER),$(VALID_ASSEMBLERS)))
+  $(error Unsupported ASSEMBLER: $(ASSEMBLER))
 endif
 
 MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
+.DEFAULT_GOAL := restunts
+.PHONY: restunts restunts-original asmorig dosplatform c-headless c-full repldump repldump-original pixldump pixldump-original test-dos-platform clean
 
 restunts: dosplatform c-full
-	make -C dos TARGET=full CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+	$(MAKE) -C dos TARGET=full $(MAKE_PARAMS)
 
 restunts-original: asmorig
-	make -C dos TARGET=original $(MAKE_PARAMS)
+	$(MAKE) -C dos TARGET=original $(MAKE_PARAMS)
 
-asmorig: force_me
-	make -C asmorig $(MAKE_PARAMS)
+asmorig:
+	$(MAKE) -C asmorig $(MAKE_PARAMS)
 
-dosplatform: force_me
-	make -C platform/dos $(MAKE_PARAMS)
+dosplatform:
+	$(MAKE) -C platform/dos $(MAKE_PARAMS)
 
-c-headless: force_me
-	make -C c TARGET=dosheadless $(MAKE_PARAMS)
+c-headless:
+	$(MAKE) -C c TARGET=dosheadless $(MAKE_PARAMS)
 
-c-full: force_me
-	make -C c TARGET=dosfull $(MAKE_PARAMS)
+c-full:
+	$(MAKE) -C c TARGET=dosfull $(MAKE_PARAMS)
 
 repldump: dosplatform c-headless
-	make -C repldump TARGET=headless CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+	$(MAKE) -C repldump $(MAKE_PARAMS)
 
-repldump-original: asmorig
-	make -C repldump TARGET=original $(MAKE_PARAMS)
+# The regression oracles are archived Borland builds, never rebuilt by Watcom.
+repldump-original:
+	$(call COPY,../../tools/oracles/borland/REPLDUMO.EXE,../../stunts/REPLDUMO.EXE)
 
 pixldump: dosplatform c-full
-	make -C pixldump TARGET=ported CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=wlink
+	$(MAKE) -C pixldump $(MAKE_PARAMS)
 
-pixldump-original: asmorig dosplatform
-	make -C pixldump TARGET=original $(MAKE_PARAMS)
+pixldump-original:
+	$(call COPY,../../tools/oracles/borland/PIXLDUMO.EXE,../../stunts/PIXLDUMO.EXE)
+
+test-dos-platform:
+	$(MAKE) -C tests $(MAKE_PARAMS)
 
 clean:
-	make -C dos $(MAKE_PARAMS) clean
-	make -C asmorig $(MAKE_PARAMS) clean
-	make -C platform/dos $(MAKE_PARAMS) clean
-	make -C c TARGET=dosheadless $(MAKE_PARAMS) clean
-	make -C c TARGET=dosfull $(MAKE_PARAMS) clean
-	make -C repldump clean
-	make -C pixldump clean
-
-# i have no idea why i need to force pre-targets with an empty target
-force_me: ;
+	$(MAKE) -C dos $(MAKE_PARAMS) clean
+	$(MAKE) -C asmorig $(MAKE_PARAMS) clean
+	$(MAKE) -C platform/dos $(MAKE_PARAMS) clean
+	$(MAKE) -C c TARGET=dosheadless $(MAKE_PARAMS) clean
+	$(MAKE) -C c TARGET=dosfull $(MAKE_PARAMS) clean
+	$(MAKE) -C repldump $(MAKE_PARAMS) clean
+	$(MAKE) -C pixldump $(MAKE_PARAMS) clean
+	$(MAKE) -C tests $(MAKE_PARAMS) clean

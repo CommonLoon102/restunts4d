@@ -1,12 +1,4 @@
-# default target
-TARGET ?= full
-
-VALID_TARGETS = full original
-ifeq (,$(filter $(TARGET),$(VALID_TARGETS)))
-  $(error Unsupported game target: $(TARGET))
-endif
-
-SRC = s:\src\restunts
+include ../watcom.mk
 
 RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj kevinrnd.obj replinit.obj gameinit.obj gamestep.obj simd.obj carsetup.obj trkutil.obj trackres.obj restunts.obj fatal.obj timing.obj game_input.obj ui_text.obj ui_input.obj ui_dialog.obj intro.obj highscore.obj replay_record.obj replay_viewer.obj race.obj race_resources.obj dashboard.obj menu_common.obj menu_main.obj menu_options.obj menu_track.obj menu_track_editor.obj menu_opponent.obj menu_car.obj audio_engine.obj audio_resources.obj audio_car.obj audio_sequence.obj \
                      shape3d.obj shape3d_resources.obj shape3d_car.obj shape3d_prerender.obj shape3d_lines.obj shape2d.obj shape2d_blit.obj shape2d_resources.obj heapsort.obj \
@@ -20,83 +12,55 @@ ASMORIG_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg
                     seg027.obj seg028.obj seg029.obj seg030.obj seg031.obj seg032.obj seg033.obj \
                     seg034.obj seg035.obj seg036.obj seg037.obj seg038.obj seg039.obj seg041.obj dseg.obj
 
-CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
-               fmemcpy.obj h_ldiv.obj f_lxmul.obj f_scopy.obj \
-               h_lrsh.obj h_padd.obj h_pina.obj h_pada.obj \
-               f_pcmp.obj h_lursh.obj h_psbp.obj h_llsh.obj
-
-# prefix with path
-ASMORIG_OBJDIR = $(SRC)\asmorig\build
-DOS_PLATFORM_OBJDIR = $(SRC)\platform\dos\build
-OBJDIR = $(SRC)\dos\build\$(TARGET)
-
-ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASMORIG_OBJ_FILES))
-DOS_PLATFORM_RUNTIME_OBJFILES = $(DOS_PLATFORM_OBJDIR)\timer.obj $(DOS_PLATFORM_OBJDIR)\runtime.obj $(DOS_PLATFORM_OBJDIR)\memory.obj $(DOS_PLATFORM_OBJDIR)\file.obj $(DOS_PLATFORM_OBJDIR)\keyboard.obj $(DOS_PLATFORM_OBJDIR)\divide.obj $(DOS_PLATFORM_OBJDIR)\joystick.obj $(DOS_PLATFORM_OBJDIR)\mouse.obj $(DOS_PLATFORM_OBJDIR)\video.obj $(DOS_PLATFORM_OBJDIR)\audio.obj $(DOS_PLATFORM_OBJDIR)\critical.obj
-DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosbss.obj
-DOS_STACK_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosstack.obj
-
-# C Compiler Flags und Linker
-RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v
-
-ifeq ($(TARGET), original)
-  ALL_OBJ_FILES = $(ASMORIG_OBJFILES) $(OBJDIR)\main.obj
-  CFLAGS = -DRESTUNTS_ORIGINAL
+TARGET ?= full
+ifeq (,$(filter $(TARGET),full original))
+  $(error Unsupported game target: $(TARGET))
+endif
+OBJDIR = build/watcom/$(CONFIG)/$(TARGET)
+ifeq ($(TARGET),original)
   OUTFILE = restunto.exe
-endif
-
-ifeq ($(TARGET), full)
-  RESTUNTS_OBJDIR = $(SRC)\c\build\dosfull
-  RESTUNTS_OBJ_FILES += dosstart.obj headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
-  RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
-  ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(CM_LIB_FILES) $(DOS_STACK_OBJFILE)
-  CFLAGS = -DRESTUNTS_FULL
-  OUTFILE = restunts.exe
-  WLINK_OPTIONS = option START=headless_start option MAP=restunts.map
-  WLINK_LIBRARIES = library s:\tools\lib\cm.lib
-  ENTRY_DEP =
-  FORBIDDEN_GAME_ASM_REFERENCES = $(foreach obj,$(ASMORIG_OBJ_FILES),$(findstring $(obj),$(ALL_OBJ_FILES)))
-  ifneq (,$(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-    $(error Full target must not link game assembly objects: $(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-  endif
+  DESTFILE = RESTUNTO.EXE
+  ASMORIG_DIR = ../asmorig/build/watcom/$(CONFIG)/$(ASSEMBLER)
+  # The empty private segments in segments.obj order TLINK but confuse WLINK.
+  # Keep all original ASM unchanged and express its layout in the response file.
+  OBJ_FILES = $(addprefix $(ASMORIG_DIR)/,$(filter-out segments.obj,$(ASMORIG_OBJ_FILES))) $(OBJDIR)/main.obj
+  ORIGINAL_CODE_OBJECTS = $(filter-out segments.obj seg038.obj seg039.obj seg041.obj dseg.obj,$(ASMORIG_OBJ_FILES))
+  LINK_ORDER = order clname STUNTSC $(foreach obj,$(ORIGINAL_CODE_OBJECTS),segment $(basename $(obj))) \
+               clname STUNTSD segment seg038 segment dseg segment seg039 \
+               clname STACK segment STACK segment seg041 clname DATA clname BSS clname CODE clname ENDSEG
+  CFLAGS = -dRESTUNTS_ORIGINAL
+  START_OPTION = option NOCASEEXACT option PACKCODE=0 option PACKDATA=0 option STACK=8000
 else
-  ENTRY_DEP = $(OBJDIR)/main.obj
+  OUTFILE = restunts.exe
+  DESTFILE = RESTUNTS.EXE
+  RESTUNTS_OBJ_FILES += dosstart.obj headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
+  OBJ_FILES = $(PLATFORM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(PLATFORM_OBJECTS) $(PLATFORM_DIR)/dosstack.obj
+  START_OPTION = option START=_headless_start
 endif
+C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
+PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
+PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
+SPACE := $(empty) $(empty)
+COMMA := ,
 
-# set linker separator
-SEP := +
-ifeq ($(LINKER),wlink)
-  SEP := ,
-endif
-SPACE=$() $()
-CTARGETS = $(subst $(SPACE),$(SEP),$(ALL_OBJ_FILES))
+.PHONY: all clean
+all: $(OBJDIR) $(OBJ_FILES)
+	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
+	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) $(START_OPTION) option MAP=$(basename $(OUTFILE)).map)
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ORDER))
+	$(file >>$(OBJDIR)/link.lnk,$(WATCOM_LIBPATH))
+	$(file >>$(OBJDIR)/link.lnk,file $(subst $(SPACE),$(COMMA),$(OBJ_FILES)))
+	$(WLINK) @$(OBJDIR)/link.lnk
+	$(call COPY,$(OUTFILE),../../../stunts/$(DESTFILE))
 
-CC = bcc $(RESTUNTS_CFLAGS) $(CFLAGS)
+$(OBJDIR):
+	$(call MKDIR,$@)
 
-LFLAGS = 
-ifeq ($(CONFIG), debug)
-  LFLAGS = /v
-endif
-
-TOOLS_LIB = s:\tools\lib
-
-restunts: $(ENTRY_DEP)
-  ifeq ($(LINKER), wlink)
-		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS) $(WLINK_LIBRARIES)
-  else
-    # create linker script for tlink
-		echo $(CTARGETS) > lscript.txt
-		echo $(OUTFILE) >> lscript.txt
-		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
-		del lscript.txt
-  endif
-	copy $(OUTFILE) s:\stunts
-
-$(OBJDIR)/main.obj: main.c
-	$(CC) -I../c $?
+$(OBJDIR)/%.obj: %.c $(wildcard ../c/*.h) $(wildcard *.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WATCOM_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
 
 clean:
-	del build\original\*.obj
-	del restunts.exe
-	del restunts.map
-	del restunto.exe
-	del restunto.map
+	$(call RMDIR,build/watcom)
+	$(call REMOVE,*.exe)
+	$(call REMOVE,*.map)
