@@ -32,7 +32,6 @@
 #define track_route_traversal_flags trackdata18
 #define roadside_sign_indices_by_tile trackdata19
 #define roadside_sign_shape_indices trackdata23
-#define TRACKDATA_SPRITE_STATE_STACK_SIZE TRACKDATA_UNKNOWN_12_SIZE
 #define track_column_positions trackpos2
 #define track_column_centers trackcenterpos2
 #define track_row_positions trackpos

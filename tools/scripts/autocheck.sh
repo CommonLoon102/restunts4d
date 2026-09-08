@@ -31,7 +31,10 @@ BNIFILE="$GAME_DIR/$base.BNI"
 rm -f -- "$BINFILE" "$BNIFILE"
 
 if [[ "$rebuild_exes" == true ]]; then
-    wine cmd.exe /D /S /C "S: && cd S:\src\restunts && makerepldump"
+    if ! make -C "$SCRIPT_DIR/../../src/restunts" repldump repldump-original; then
+        echo "Replay dump build failed." >&2
+        exit 1
+    fi
 fi
 
 run_dosbox_exe() {

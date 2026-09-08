@@ -5,13 +5,6 @@ RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strl
                      frame.obj skybox.obj frame_overlay.obj intro_render.obj track_preview.obj state.obj physics_grip.obj opponent.obj track_setup.obj stateply.obj physics_collision.obj statecrs.obj \
                      statecar.obj trackobj.obj replay.obj
 
-ASMORIG_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.obj seg005.obj \
-                    seg006.obj seg007.obj seg008.obj seg009.obj seg010.obj seg011.obj seg012.obj \
-                    seg013.obj seg014.obj seg015.obj seg016.obj seg017.obj seg018.obj seg019.obj \
-                    seg020.obj seg021.obj seg022.obj seg023.obj seg024.obj seg025.obj seg026.obj \
-                    seg027.obj seg028.obj seg029.obj seg030.obj seg031.obj seg032.obj seg033.obj \
-                    seg034.obj seg035.obj seg036.obj seg037.obj seg038.obj seg039.obj seg041.obj dseg.obj
-
 TARGET ?= full
 ifeq (,$(filter $(TARGET),full original))
   $(error Unsupported game target: $(TARGET))
@@ -20,17 +13,11 @@ OBJDIR = build/watcom/$(CONFIG)/$(TARGET)
 ifeq ($(TARGET),original)
   OUTFILE = restunto.exe
   DESTFILE = RESTUNTO.EXE
-  ASMORIG_DIR = ../asmorig/build/watcom/$(CONFIG)/$(ASSEMBLER)
-  # The empty private segments in segments.obj order TLINK but confuse WLINK.
-  # Keep all original ASM unchanged and express its layout in the response file.
-  OBJ_FILES = $(addprefix $(ASMORIG_DIR)/,$(filter-out segments.obj,$(ASMORIG_OBJ_FILES))) $(OBJDIR)/main.obj
-  ORIGINAL_CODE_OBJECTS = $(filter-out segments.obj seg038.obj seg039.obj seg041.obj dseg.obj,$(ASMORIG_OBJ_FILES))
-  LINK_ORDER = order clname STUNTSC $(foreach obj,$(ORIGINAL_CODE_OBJECTS),segment $(basename $(obj))) \
-               clname STUNTSD segment seg038 segment dseg segment seg039 \
-               clname STACK segment STACK segment seg041 clname DATA clname BSS clname CODE clname ENDSEG
+  include ../asmorig/link.mk
+  OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(OBJDIR)/main.obj
+  LINK_ORDER = $(ORIGINAL_LINK_ORDER)
   CFLAGS = -dRESTUNTS_ORIGINAL
-  # Preserve original far-call instructions even when WASM marks them optimizable.
-  START_OPTION = option NOFARCALLS option NOCASEEXACT option PACKCODE=0 option PACKDATA=0 option STACK=8000
+  START_OPTION = $(ORIGINAL_LINK_OPTIONS)
 else
   OUTFILE = restunts.exe
   DESTFILE = RESTUNTS.EXE
@@ -47,7 +34,7 @@ SPACE := $(empty) $(empty)
 COMMA := ,
 
 .PHONY: all clean
-all: $(OBJDIR) $(OBJ_FILES)
+all: $(OBJDIR) $(OBJ_FILES) $(MAKEFILE_LIST)
 	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
 	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) $(START_OPTION) option MAP=$(basename $(OUTFILE)).map)
 	$(file >>$(OBJDIR)/link.lnk,$(LINK_ORDER))

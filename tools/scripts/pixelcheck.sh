@@ -92,8 +92,7 @@ fi
 rm -f -- "$original_output" "$ported_output"
 
 if [[ "$rebuild_exes" == true ]]; then
-    if ! wine cmd.exe /D /S /C \
-        "S: && cd S:\src\restunts && call makepixldump.bat"; then
+    if ! make -C "$script_dir/../../src/restunts" pixldump pixldump-original; then
         echo "PIXLDUMP build failed." >&2
         exit 1
     fi

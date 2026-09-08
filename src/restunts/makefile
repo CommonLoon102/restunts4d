@@ -28,17 +28,16 @@ c-full:
 	$(MAKE) -C c TARGET=dosfull $(MAKE_PARAMS)
 
 repldump: dosplatform c-headless
-	$(MAKE) -C repldump $(MAKE_PARAMS)
+	$(MAKE) -C repldump TARGET=headless $(MAKE_PARAMS)
 
-# The regression oracles are archived Borland builds, never rebuilt by Watcom.
-repldump-original:
-	$(call COPY,../../tools/oracles/borland/REPLDUMO.EXE,../../stunts/REPLDUMO.EXE)
+repldump-original: asmorig dosplatform
+	$(MAKE) -C repldump TARGET=original $(MAKE_PARAMS)
 
 pixldump: dosplatform c-full
-	$(MAKE) -C pixldump $(MAKE_PARAMS)
+	$(MAKE) -C pixldump TARGET=ported $(MAKE_PARAMS)
 
-pixldump-original:
-	$(call COPY,../../tools/oracles/borland/PIXLDUMO.EXE,../../stunts/PIXLDUMO.EXE)
+pixldump-original: asmorig dosplatform
+	$(MAKE) -C pixldump TARGET=original $(MAKE_PARAMS)
 
 test-dos-platform:
 	$(MAKE) -C tests $(MAKE_PARAMS)

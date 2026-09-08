@@ -2,8 +2,9 @@
 
 These executable files preserve the pre-Open Watcom regression reference. They
 were copied byte for byte from the existing `stunts/` executables on 2026-09-08,
-before compiler/linker migration. The sources are the original disassembly and
-the existing Borland-built dump wrappers; they must not be rebuilt with Watcom.
+before compiler/linker migration. They contain the original disassembly and
+the existing Borland-built dump wrappers. Preserve these exact archived bytes
+when rebuilding development executables with Open Watcom.
 
 | File | Bytes | Original file timestamp (local time) |
 | --- | ---: | --- |
@@ -15,19 +16,26 @@ reproducible build. `SHA256SUMS` identifies the exact archived bytes. The
 pre-migration files are untracked build outputs, so no source commit is claimed
 as their verified build provenance.
 
-From the repository root, verify and restore the references on Linux:
+From the repository root, verify the archived references on Linux:
 
 ```sh
 (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-cp tools/oracles/borland/REPLDUMO.EXE tools/oracles/borland/PIXLDUMO.EXE stunts/
 ```
 
 `REPLDUMO.EXE` writes per-frame game state as `.BIN`; `PIXLDUMO.EXE` writes
 framebuffer MD5 samples as `.PDO` for comparison with the ported `.BNI` and
 `.PDD` outputs. Camera/target options must match on both sides.
 
-Never replace these files while updating the compiler or fixing the C port.
-A deliberate oracle change requires separate provenance and regression review.
+The `repldump-original` and `pixldump-original` Make targets rebuild their
+executables from the original assembly and dump wrapper sources with Open
+Watcom, then place them in `stunts/`. Those builds leave this archive unchanged.
+See [the build instructions](../../../readme.md#how-to-build) for commands.
+
+Never replace these archived files while updating the compiler or fixing the
+C port. A deliberate oracle change requires separate provenance and regression
+review. CI and `validate-toolchain.py` verify these checksums and copy the
+archived references into their isolated validation directories, independently
+of any rebuilt `REPLDUMO.EXE` or `PIXLDUMO.EXE` under `stunts/`.
 
 For a fresh, deterministic 100-replay comparison against these exact oracles:
 

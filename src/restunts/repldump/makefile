@@ -1,10 +1,35 @@
 include ../watcom.mk
 
+TARGET ?= headless
+ifeq (,$(filter $(TARGET),headless original))
+  $(error Unsupported repldump target: $(TARGET))
+endif
+
 RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj \
                      kevinrnd.obj replinit.obj gameinit.obj gamestep.obj \
                      simd.obj carsetup.obj trkutil.obj trackres.obj headless.obj dosstart.obj headless_data.obj headless_trackdata.obj state.obj physics_grip.obj opponent.obj track_setup.obj stateply.obj physics_collision.obj \
                      statecrs.obj statecar.obj trackobj.obj replay.obj stateio.obj
 
+PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
+ifeq ($(TARGET),original)
+include ../asmorig/link.mk
+OBJDIR = build/watcom/$(CONFIG)/original
+OUTFILE = repldumo.exe
+DESTFILE = REPLDUMO.EXE
+PLATFORM_NAMES = runtime
+C_LINK_OBJECTS = $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS)
+OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS)
+START_OPTION = $(ORIGINAL_LINK_OPTIONS)
+LINK_ORDER = $(ORIGINAL_LINK_ORDER)
+CFLAGS = -dRESTUNTS_ORIGINAL
+# The wrapper's inline DOS I/O needs the platform's unoptimized code generation.
+WRAPPER_CFLAGS = $(WATCOM_PLATFORM_CFLAGS)
+ALIAS_SCRIPT = ../../../tools/scripts/generate-original-link-aliases.py
+ALIAS_FILE = $(OBJDIR)/aliases-$(ASSEMBLER).lnk
+LINK_ALIASES = @$(ALIAS_FILE)
+else
 OBJDIR = build/watcom/$(CONFIG)
 OUTFILE = repldump.exe
 DESTFILE = REPLDUMP.EXE
@@ -13,16 +38,17 @@ PLATFORM_NAMES = runtime memory file divide
 OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
 START_OPTION = option START=_headless_start
 CFLAGS = -dRESTUNTS_HEADLESS
-PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
-PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
-PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
+WRAPPER_CFLAGS = $(WATCOM_CFLAGS)
+endif
 SPACE := $(empty) $(empty)
 COMMA := ,
 
 .PHONY: all clean
-all: $(OBJDIR) $(OBJ_FILES)
+all: $(OBJDIR) $(OBJ_FILES) $(ALIAS_FILE) $(MAKEFILE_LIST)
 	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
 	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) $(START_OPTION) option MAP=$(basename $(OUTFILE)).map)
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ORDER))
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ALIASES))
 	$(file >>$(OBJDIR)/link.lnk,$(WATCOM_LIBPATH))
 	$(file >>$(OBJDIR)/link.lnk,file $(subst $(SPACE),$(COMMA),$(OBJ_FILES)))
 	$(WLINK) @$(OBJDIR)/link.lnk
@@ -31,8 +57,13 @@ all: $(OBJDIR) $(OBJ_FILES)
 $(OBJDIR):
 	$(call MKDIR,$@)
 
-$(OBJDIR)/%.obj: %.c $(wildcard ../c/*.h) $(wildcard *.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
-	$(CC) $(WATCOM_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
+ifeq ($(TARGET),original)
+$(ALIAS_FILE): $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS) $(ALIAS_SCRIPT) $(MAKEFILE_LIST) $(WATCOM_STAMP) | $(OBJDIR)
+	$(PYTHON) $(ALIAS_SCRIPT) --asm-dir "$(ASMORIG_DIR)" --output "$@" $(C_LINK_OBJECTS)
+endif
+
+$(OBJDIR)/%.obj: %.c $(wildcard ../c/*.h) $(wildcard ../platform/dos/*.h) $(wildcard *.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WRAPPER_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
 
 clean:
 	$(call RMDIR,build/watcom)

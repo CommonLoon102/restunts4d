@@ -193,9 +193,9 @@ void init_trackdata(void)
 	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	roadside_sign_headings = (legacy_s16 far *)track_pointer;
 	track_pointer += TRACKDATA_DIRECTION_TABLE_SIZE;
-	trackside_camera_positions = (legacy_s16 far *)track_pointer;
+	trackside_camera_positions = (struct VECTOR far *)track_pointer;
 	track_pointer += TRACKDATA_CAMERA_VECTOR_SIZE;
-	roadside_sign_positions = (legacy_s16 far *)track_pointer;
+	roadside_sign_positions = (struct VECTOR far *)track_pointer;
 	track_pointer += TRACKDATA_CHECK_VECTOR_SIZE;
 	track_highscore_table = track_pointer;
 	track_pointer += TRACKDATA_HIGHSCORE_SIZE;

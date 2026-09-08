@@ -143,6 +143,7 @@ jobs:
       - name: Test assembler compatibility helpers
         run: |
           python -m unittest discover -s tools/scripts/tests -p test_prepare_wasm_original.py
+          python -m unittest discover -s tools/scripts/tests -p test_generate_original_link_aliases.py
           python tools/scripts/test-compare-dos-artifacts.py
 
       - name: Install pinned Open Watcom 2
@@ -162,7 +163,7 @@ jobs:
           set -u
           mkdir -p dist
           missing=0
-          # Include the archived oracles copied by the build entry points.
+          # Include fresh source builds of both original dump tools.
           # Missing files fail even if an external build tool returned success.
           for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO PIXLDUMP PIXLDUMO; do
               built=$(find stunts src/restunts/dos src/restunts/repldump src/restunts/pixldump \
@@ -182,7 +183,16 @@ jobs:
         run: |
           # Release artifacts have already been copied into dist/.
           make -C src/restunts ASSEMBLER=wasm CONFIG=debug restunts restunts-original \
-              repldump pixldump test-dos-platform
+              repldump repldump-original pixldump pixldump-original test-dos-platform
+
+      - name: Verify original renderer debug code generation
+        shell: bash
+        run: |
+          for object in pixldump md5; do
+              python3 tools/scripts/compare-dos-artifacts.py omf \
+                  "src/restunts/pixldump/build/watcom/release/original/$object.obj" \
+                  "src/restunts/pixldump/build/watcom/debug/original/$object.obj"
+          done
 
       - uses: actions/upload-artifact@v7
         with:
@@ -207,6 +217,8 @@ jobs:
         shell: pwsh
         run: |
           python -m unittest discover -s tools/scripts/tests -p test_prepare_wasm_original.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          python -m unittest discover -s tools/scripts/tests -p test_generate_original_link_aliases.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           python tools/scripts/test-compare-dos-artifacts.py
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -251,8 +263,18 @@ jobs:
           rem Release artifacts have already been copied into dist/.
           call setpath.bat
           if errorlevel 1 exit /b 1
-          make ASSEMBLER=wasm CONFIG=debug restunts restunts-original repldump pixldump test-dos-platform
+          make ASSEMBLER=wasm CONFIG=debug restunts restunts-original repldump repldump-original pixldump pixldump-original test-dos-platform
           if errorlevel 1 exit /b 1
+
+      - name: Verify original renderer debug code generation
+        shell: pwsh
+        run: |
+          $releaseObjects = 'src/restunts/pixldump/build/watcom/release/original'
+          $debugObjects = 'src/restunts/pixldump/build/watcom/debug/original'
+          foreach ($name in 'pixldump', 'md5') {
+              python tools/scripts/compare-dos-artifacts.py omf "$releaseObjects/$name.obj" "$debugObjects/$name.obj"
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - uses: actions/upload-artifact@v7
         with:
@@ -310,7 +332,12 @@ jobs:
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp tools/scripts/cars/*.RES tools/scripts/cars/*.3SH \
              tools/scripts/cars/*.VSH tools/scripts/cars/*.PVS "$game_dir/"
-          cp exes/*.EXE "$game_dir/"
+          # Publish rebuilt original dumps, but validate against independent oracles.
+          cp exes/RESTUNTS.EXE exes/RESTUNTO.EXE exes/REPLDUMP.EXE \
+             exes/PIXLDUMP.EXE "$game_dir/"
+          (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
+          cp tools/oracles/borland/REPLDUMO.EXE \
+             tools/oracles/borland/PIXLDUMO.EXE "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 

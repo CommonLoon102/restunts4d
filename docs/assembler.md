@@ -7,7 +7,7 @@ The default assembler is Open Watcom WASM from the pinned installation in
 Linux. Compiler and linker selection remains WCC and WLINK in both cases.
 
 GNU Make 4.3 or newer is required. Windows includes GNU Make 4.4.1.
-Building the original game with WASM also requires Python 3.9 or newer.
+Building the `*-original` targets with WASM also requires Python 3.9 or newer.
 The makefiles select `python3` on Linux and `python` on Windows; `PYTHON`
 can override that command. The adapter uses only Python's standard library.
 
@@ -58,16 +58,60 @@ shared between assembler choices within a configuration.
 
 ## Original executable layout
 
-The original target's WLINK response file preserves code/data segment order,
-disables automatic segment packing, and retains the original 8000-byte stack.
+The `restunts-original` target's WLINK response file preserves code/data
+segment order, disables automatic segment packing, and retains the original
+8000-byte stack.
 It uses `NOFARCALLS` to prevent WLINK from rewriting a far call into a
 push-CS/near-call sequence. Although those instructions can have equivalent
 control flow, preserving the original instruction bytes and relocation
 layout is required for the original executable.
 
-The archived `REPLDUMO.EXE` and `PIXLDUMO.EXE` are independent reference
-binaries. Their build targets only copy the archived files; neither this
-adapter nor a new compiler rebuilds them.
+The `repldump-original` and `pixldump-original` targets reuse the prepared
+original assembly objects, compile their dump wrappers with WCC, and link
+`REPLDUMO.EXE` and `PIXLDUMO.EXE` with WLINK. The original assembly sources
+remain unchanged. From the repository root on Linux:
+
+```sh
+make -C src/restunts repldump-original pixldump-original
+```
+
+On Windows, run `setpath` in `src\restunts`, then
+`make repldump-original pixldump-original`. Add `CONFIG=debug` to either
+command for debug builds. Both executables are copied into `stunts/`.
+
+`pixldump-original` compiles its `pixldump.c` and `md5.c` wrapper objects with
+`-os` in both configurations. Debug adds `-d1` line records instead of `-d2`
+local-variable information. This preserves release code generation and the
+caller-stack layout: original rendering leaves stack values that stopped-wheel
+physics can later read. Changing that layout can change replay output.
+Original assembly and DOS platform objects retain their usual debug flags.
+CI compares the normalized release and debug OMF objects for both wrapper
+files to enforce this code-generation requirement.
+
+The original dump wrappers use their own C object directories,
+`repldump/build/watcom/<configuration>/original/` and
+`pixldump/build/watcom/<configuration>/original/`, separate from the ported
+wrappers. The game and both original dump tools share the layout rules in
+[`asmorig/link.mk`](../src/restunts/asmorig/link.mk).
+
+[`generate-original-link-aliases.py`](../tools/scripts/generate-original-link-aliases.py)
+reads public and external symbols from the selected assembly and wrapper OMF
+objects. It emits WLINK aliases that bind Watcom's leading-underscore C names
+to matching original assembly exports and connect the original startup's
+`stuntsmain` call to the wrapper's `_stuntsmain`. Existing C definitions take
+precedence; names without a corresponding assembly export remain for the
+linker to resolve. This preserves the assembly sources and avoids changing
+unrelated runtime symbols. Each original wrapper directory contains its own
+`aliases-<assembler>.lnk`, regenerated when its input objects, makefiles,
+generator, or toolchain stamp change. The alias generator also requires
+Python when selecting a fallback assembler.
+
+These source builds are separate from the independent Borland reference
+binaries under [`tools/oracles/borland`](../tools/oracles/borland/README.md).
+The archived files remain immutable. CI and `validate-toolchain.py` stage
+them into isolated game directories as fixed regression references.
+Developer comparisons through `autocheck.sh` and `pixelcheck.sh` use the
+original dump executables built in `stunts/`.
 
 ## Comparing artifacts
 
@@ -106,5 +150,6 @@ Run the helper unit tests with:
 
 ```sh
 python3 -m unittest discover -s tools/scripts/tests -p test_prepare_wasm_original.py
+python3 -m unittest discover -s tools/scripts/tests -p test_generate_original_link_aliases.py
 python3 tools/scripts/test-compare-dos-artifacts.py
 ```

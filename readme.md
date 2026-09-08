@@ -138,8 +138,9 @@ The DOS compiler, assembler, and linker are Open Watcom 2, pinned to the officia
 The setup scripts verify its SHA256 and install into ignored `tools/watcom/`.
 The shared release pin is `tools/scripts/open-watcom.conf`. WCC, WASM, WLINK,
 and GNU Make 4.3 or newer run natively on Linux or Windows. The standard build
-does not require Wine or DOSBox. Python 3.9 or newer is also required for `restunts-original`,
-which prepares assembler-compatible copies of the preserved original sources.
+does not require Wine or DOSBox. Python 3.9 or newer is also required for the
+`*-original` targets, which prepare assembler-compatible copies of the
+preserved original sources.
 
 ### On Windows
 
@@ -156,14 +157,14 @@ which prepares assembler-compatible copies of the preserved original sources.
    cd src\restunts
    setpath
    make restunts repldump pixldump
-   make repldump-original pixldump-original
    ```
 
-3. To build the original game as `stunts/RESTUNTO.EXE`, install Python 3.9 or
-   newer and run in the same cmd.exe window:
+3. To build the original game and both dump tools from source as
+   `stunts/RESTUNTO.EXE`, `stunts/REPLDUMO.EXE`, and `stunts/PIXLDUMO.EXE`,
+   install Python 3.9 or newer and run in the same cmd.exe window:
 
    ```text
-   make restunts-original
+   make restunts-original repldump-original pixldump-original
    ```
 
 ### On Linux (x86-64)
@@ -178,14 +179,15 @@ which prepares assembler-compatible copies of the preserved original sources.
 2. Build with native GNU Make:
 
    ```sh
-   make -C src/restunts restunts repldump pixldump repldump-original pixldump-original
+   make -C src/restunts restunts repldump pixldump
    ```
 
-3. To build the original game as `stunts/RESTUNTO.EXE`, run from the repository
-   root after installing Python 3.9 or newer:
+3. To build the original game and both dump tools from source as
+   `stunts/RESTUNTO.EXE`, `stunts/REPLDUMO.EXE`, and `stunts/PIXLDUMO.EXE`,
+   run from the repository root after installing Python 3.9 or newer:
 
    ```sh
-   make -C src/restunts restunts-original
+   make -C src/restunts restunts-original repldump-original pixldump-original
    ```
 
 The makefiles use `python3` on Linux and `python` on Windows; override
@@ -207,21 +209,24 @@ The supported targets are:
 | `restunts-original` | Assembles the original game and links `RESTUNTO.EXE` with WLINK. |
 | `repldump` | Builds the C physics dump tool, `REPLDUMP.EXE`. |
 | `pixldump` | Builds the C renderer dump tool, `PIXLDUMP.EXE`. |
-| `repldump-original` | Copies archived `REPLDUMO.EXE` into `stunts/`. |
-| `pixldump-original` | Copies archived `PIXLDUMO.EXE` into `stunts/`. |
+| `repldump-original` | Builds `REPLDUMO.EXE` from the original assembly and physics dump wrapper. |
+| `pixldump-original` | Builds `PIXLDUMO.EXE` from the original assembly and renderer dump wrapper. |
 | `test-dos-platform` | Builds the DOS platform ABI test, `tests/build/watcom/<configuration>/DOSPLAT.EXE`. |
 | `clean` | Removes generated build objects and candidate executables. |
 
-The regression oracles are the pre-migration Borland binaries checked into
-[tools/oracles/borland](tools/oracles/borland/README.md). Their SHA256 hashes
-are recorded alongside them. Never rebuild these oracle wrappers with Watcom:
-their independence is what lets regression tests detect compiler, ABI, and
-runtime changes. The `*-original` dump targets restore the archived files. The original game
-assembly under `src/restunts/asmorig/` is preserved unchanged. The WASM build
-runs [the source adapter](tools/scripts/prepare-wasm-original.py) to prepare
-compatible copies under `asmorig/build/watcom/<configuration>/wasm/source/`
-and links `RESTUNTO.EXE` with Watcom. Its link response file
-reproduces the original segment order, disables automatic segment packing,
+The `*-original` dump targets assemble the original game code with WASM,
+compile the dump wrappers with WCC, and link them with WLINK. The resulting
+executables are rebuilt development tools. Regression validation uses the
+independent Borland binaries preserved under
+[tools/oracles/borland](tools/oracles/borland/README.md), whose SHA256 hashes
+are recorded alongside them. Source builds never replace those archived files.
+
+The original game assembly under `src/restunts/asmorig/` is preserved
+unchanged. The WASM build runs
+[the source adapter](tools/scripts/prepare-wasm-original.py) to prepare
+compatible copies under `asmorig/build/watcom/<configuration>/wasm/source/`.
+All three `*-original` targets reuse these objects. The `RESTUNTO.EXE` link
+response file reproduces the original segment order, disables automatic segment packing,
 and preserves the original 8000-byte stack. The old empty `segments.obj`
 layout helper is replaced by WLINK ordering directives; its ASM source is
 retained unchanged.
@@ -229,8 +234,8 @@ retained unchanged.
 See [the assembler guide](docs/assembler.md) for generated-source handling,
 original-code layout requirements, and object/executable comparison commands.
 
-`makerepldump.bat` builds the game and physics tools; `makepixldump.bat` builds
-the renderer tool and restores its archived oracle. Both stop on build errors.
+`makerepldump.bat` builds both games and both physics dump tools;
+`makepixldump.bat` builds both renderer dump tools. Both stop on build errors.
 
 ### PIXLDUMP parameters
 
@@ -296,9 +301,10 @@ characters. BMP filenames require DOS long-filename support; the supplied
 
 ### pixelcheck parameters
 
-On Linux, `pixelcheck.sh` builds or reuses the candidate, restores the archived
-oracle, runs both with the same replay, camera, target, and optional BMP frame,
-and compares the resulting files:
+On Linux, `pixelcheck.sh` builds or reuses the original assembly and ported C
+renderer tools, runs both with the same replay, camera, target, and optional
+BMP frame, and compares the resulting files. Rebuilds use native Make and
+Open Watcom; execution uses DOSBox-X:
 
 ```text
 tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target>
@@ -308,7 +314,7 @@ tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target> <frame>
 | Parameter | Accepted values | Description |
 | --- | --- | --- |
 | `replay-file` | Replay filename under `stunts/` | Replay passed to both executables. |
-| `rebuild` | `true` or `false` | `true` rebuilds the candidate first; `false` reuses it. Both restore the archived oracle. |
+| `rebuild` | `true` or `false` | `true` rebuilds both renderer tools first; `false` reuses the executables in `stunts/`. |
 | `camera` | `1`, `2`, `3`, or `4` | Camera passed to both executables: F1, F2, F3, or F4 respectively. |
 | `target` | `0` or `1` | Player (`0`) or opponent (`1`) passed to both executables. |
 | `frame` | `0` through `65535` | Present in the BMP form only. It selects the exact frame compared by both executables. |
@@ -316,7 +322,7 @@ tools/scripts/pixelcheck.sh <replay-file> <rebuild> <camera> <target> <frame>
 Examples:
 
 ```text
-# Rebuild the candidate, restore the oracle, and compare player/F2 hashes.
+# Rebuild both renderer tools and compare player/F2 hashes.
 tools/scripts/pixelcheck.sh 0610.rpl true 2 0
 
 # Reuse existing executables and compare opponent/F4 hash dumps.
@@ -342,12 +348,14 @@ investigate it rather than treating a successful compile as sufficient.
 ## CI replay validation
 
 Pull requests and releases install the pinned Watcom toolchain and build the
-game, original game, candidate dump tools, and DOS platform test natively on
-Linux and Windows. Both builds test the source adapter and binary comparator,
-verify the archived oracle hashes, and copy the
-oracles without recompiling them. Linux executables supply the release and
-replay artifact; the Windows build publishes a separate artifact. CI compares
-the full golden replay set for physics and
+game, original game, both versions of the dump tools, and DOS platform test
+natively on Linux and Windows in release and debug configurations. Both builds
+test the source adapter and binary comparator and verify the archived oracle
+hashes. Linux release executables supply the release artifact; the Windows
+build publishes a separate artifact. Replay jobs stage the ported dump tools
+from the Linux artifact together with checksum-verified Borland oracles in an
+isolated game directory, preserving the rebuilt original dump executables in
+the artifact. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
 against PIXLDUMO `.PDO` files with camera 2 and player target 0.
 
@@ -421,12 +429,17 @@ below 16 bytes before they reach fixed-segment sprite code.
 preserves larger offsets; normalization retains the Borland representation
 and prevents bitmap reads from wrapping at a 64 KiB boundary.
 
-Use `CONFIG=debug` to request Watcom C debug information and disable C
-optimization:
+Use `CONFIG=debug` to request Watcom C debug information. C optimization is
+disabled except for the original renderer wrapper described below:
 
 ```text
 make CONFIG=debug restunts
 ```
+
+For `pixldump-original`, `pixldump.c` and `md5.c` retain size optimization
+(`-os`) and use line debugging (`-d1`) without local-variable information.
+This preserves the release code generation and stack layout required by the
+original rendering code. Other objects use their usual debug flags.
 
 WLINK writes Watcom debug information; debug builds also request WASM line
 information. The old Turbo Debugger workflow and Borland/TASM debug
@@ -441,7 +454,7 @@ information are not compatible with this configuration.
 | C headers and runtime | Open Watcom 2 `h/` and `lib286/` |
 | Assembly | Open Watcom 2 `binnt/wasm.exe` or native Linux `binl64/wasm` |
 | Build orchestration | GNU Make 4.3 or newer (bundled 4.4.1 on Windows) |
-| Original-source preparation | Python 3.9 or newer, for `restunts-original` with WASM |
+| Original-source preparation | Python 3.9 or newer, for the `*-original` targets with WASM |
 | Running and testing | DOSBox / DOSBox-X |
 
 `tools/bin/bcc.exe`, the older bundled `wlink.exe`, TLINK, Borland headers,
