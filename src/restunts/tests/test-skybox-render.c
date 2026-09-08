@@ -18,6 +18,7 @@ legacy_s16 video_x_alignment_mask = -1;
 static struct SHAPE2D images[4];
 static legacy_u32 call_hash;
 static unsigned clear_count, image_count, polygon_count;
+static struct POINT2D first_polygon[4];
 
 static void record_word(legacy_u16 value)
 {
@@ -68,6 +69,9 @@ void skybox_fill_polygon(legacy_u16 color, legacy_u16 count, struct POINT2D *poi
 	record_word(color);
 	record_word(count);
 	for (i = 0; i < count; i++) {
+		if (polygon_count == 0 && i < 4U) {
+			first_polygon[i] = points[i];
+		}
 		record_word((legacy_u16)points[i].px);
 		record_word((legacy_u16)points[i].py);
 	}
@@ -78,6 +82,7 @@ static void reset_scene(void)
 {
 	unsigned i;
 
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
 	call_hash = 2166136261UL;
 	clear_count = 0;
 	image_count = 0;
@@ -136,6 +141,106 @@ static void test_level_horizon(void)
 	assert(rect_skybox.right == 320);
 	assert(rect_skybox.top == 20);
 	assert(rect_skybox.bottom == 180);
+}
+
+static void prepare_legacy_handoff(legacy_s16 *player, legacy_s16 *opponent)
+{
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
+
+	player[0] = 11;
+	player[1] = 22;
+	player[2] = 33;
+	player[3] = 44;
+	opponent[0] = 55;
+	opponent[1] = 66;
+	opponent[2] = 77;
+	opponent[3] = -6547;
+	context.wheel_headings = opponent;
+	context.polyinfo_offset = 0;
+	context.polyinfo_segment = 0;
+	context.material_color_offset = 0;
+	shape3d_set_legacy_render_stack(player, 0, 0, &context);
+}
+
+static void assert_words(const legacy_s16 *words, legacy_s16 first, legacy_s16 second,
+						 legacy_s16 third, legacy_s16 fourth)
+{
+	assert(words[0] == first && words[1] == second && words[2] == third && words[3] == fourth);
+}
+
+static void test_legacy_skybox_handoff(void)
+{
+	struct RECTANGLE clip = {0, 320, 37, 180};
+	struct MATRIX rotation;
+	legacy_s16 player[4];
+	legacy_s16 opponent[4];
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
+	/* The archived fourth heading becomes clip.top, not a fixed zero. */
+	assert_words(player, 11, 22, 33, 44);
+	assert_words(opponent, 55, 0, 320, 37);
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
+	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
+	assert_words(player, 11, 22, 33, 44);
+	assert_words(opponent, 55, 66, 77, -6547);
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	/* A sky-only early return never assigns the original local rectangle. */
+	assert(skybox_render(0, &clip, -1, &rotation, 0, 0, 0) == 0);
+	assert_words(player, 11, 22, 33, 44);
+	assert_words(opponent, 55, 66, 77, -6547);
+	/* The inverted horizon uses direct clip arguments in the original,
+	 * although the C implementation uses temporary rectangles to draw it. */
+	rotation = *mat_rot_zxy(0, 512, 0, MATRIX_ROTATION_ORDER_ZXY);
+	assert(skybox_render(0, &clip, -1, &rotation, 0, 0, 0) == 1);
+	assert_words(player, 11, 22, 33, 44);
+	assert_words(opponent, 55, 66, 77, -6547);
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	slow_video_mgmt_copy = 1;
+	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
+	assert_words(opponent, 55, 66, 77, -6547);
+	full_redraw_frames_remaining = 1;
+	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
+	assert_words(opponent, 55, 0, 320, 37);
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	/* The rolled path can project a level horizon: its base is 100 and the
+	 * single textured strip covers x=0..320. It leaves the player points alone. */
+	assert(skybox_render(0, &clip, 1, &rotation, 1, 0, 0) == 0);
+	assert(image_count == 5);
+	assert_words(player, 11, 22, 33, 44);
+	assert_words(opponent, 100, 0, 320, 37);
+	prepare_legacy_handoff(player, opponent);
+	clip.left = 400;
+	clip.right = 500;
+	/* Rejecting the strip rectangle still preserves the writes before clipping. */
+	assert(skybox_render(0, &clip, 1, &rotation, 1, 0, 0) == 0);
+	assert_words(opponent, 100, 0, 320, 37);
+
+	reset_scene();
+	prepare_legacy_handoff(player, opponent);
+	clip.left = 0;
+	clip.right = 320;
+	rotation = *mat_rot_zxy(256, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	assert(skybox_render(0, &clip, 1, &rotation, 1, 0, 0) == 1);
+	assert(polygon_count == 2);
+	/* Original local points 2 and 3 precede their reversed argument order
+	 * in the sky polygon and the C array's reuse for the ground polygon. */
+	assert_words(player, first_polygon[3].px, first_polygon[3].py, first_polygon[2].px,
+				 first_polygon[2].py);
+	assert_words(opponent, 55, 66, 77, -6547);
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
 }
 
 static legacy_u16 random_word(legacy_u32 *seed)
@@ -210,6 +315,7 @@ int main(void)
 	unsigned i;
 
 	test_level_horizon();
+	test_legacy_skybox_handoff();
 	for (i = 0; i < 4; i++) {
 		assert(skybox_fingerprint(i & 1U, i >> 1U) == expected[i]);
 	}

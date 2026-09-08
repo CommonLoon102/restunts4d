@@ -584,6 +584,19 @@ static legacy_u16 shape3d_prepare_wheel(struct SHAPE3D_TRANSFORM_CONTEXT *contex
 	return 1;
 }
 
+static void shape3d_adjust_sphere_bounds(const struct POINT2D *center, legacy_u16 radius)
+{
+	struct POINT2D point;
+
+	point.px = LEGACY_S16_WRAP_SUB(center->px, radius);
+	point.py = LEGACY_S16_WRAP_SUB(center->py, radius);
+	rect_adjust_from_point(&point, transshaperectptr);
+	/* Original SEG006 sphere code overwrites the second point's X with Y + radius;
+	 * its Y stays at Y - radius. Crash explosions scale from these bounds. */
+	point.px = LEGACY_S16_WRAP_ADD(center->py, radius);
+	rect_adjust_from_point(&point, transshaperectptr);
+}
+
 static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 										 legacy_s32 *depth_sum)
 {
@@ -606,7 +619,7 @@ static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *conte
 	screen_radius = projection_scale_x_wrapped(polarRadius3D(&radius_vector), center.z);
 	polyinfo_write_word(transshapepolyinfo, 5U, screen_radius);
 	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-		shape3d_adjust_round_bounds(polyvertpointptrtab[0], screen_radius, 0);
+		shape3d_adjust_sphere_bounds(polyvertpointptrtab[0], screen_radius);
 	}
 	transshapenumvertscopy = 2;
 	return 1;
@@ -989,17 +1002,85 @@ void init_polyinfo(void)
 #define SHAPE3D_LEGACY_SPHERE_RETURN_IP 5239U
 #define SHAPE3D_LEGACY_POINT_RETURN_IP 5261U
 #define SHAPE3D_LEGACY_POLYGON_POINTS_STACK_OFFSET 50U
+#define SHAPE3D_LEGACY_POLYGON_HEADER_SIZE 6U
+#define SHAPE3D_LEGACY_POLYGON_POINT_SIZE 4U
 
 static legacy_s16 *legacy_render_wheel_headings;
 static legacy_u16 legacy_render_polygon_frame_pointer;
 static legacy_u16 legacy_render_polygon_code_segment;
+static struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT legacy_opponent_render_context;
 
 void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 polygon_frame_pointer,
-									 legacy_u16 polygon_code_segment)
+									 legacy_u16 polygon_code_segment,
+									 const struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT *opponent)
 {
 	legacy_render_wheel_headings = wheel_headings;
 	legacy_render_polygon_frame_pointer = polygon_frame_pointer;
 	legacy_render_polygon_code_segment = polygon_code_segment;
+	if (opponent != 0) {
+		legacy_opponent_render_context = *opponent;
+	} else {
+		legacy_opponent_render_context.wheel_headings = 0;
+	}
+}
+
+/* update_frame calls skybox_op with fourteen argument bytes before calling
+ * get_a_poly_info without arguments. Its BP is therefore fourteen bytes
+ * below the polygon renderer's BP: skybox BP-70..BP-64 overlaps the player's
+ * headings, while BP-50..BP-44 overlaps the opponent's headings. */
+void shape3d_retain_legacy_skybox_horizon(legacy_s16 horizon)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[0] = horizon;
+	}
+}
+
+void shape3d_retain_legacy_skybox_rect(const struct RECTANGLE *rect)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[1] = rect->left;
+		legacy_opponent_render_context.wheel_headings[2] = rect->right;
+		legacy_opponent_render_context.wheel_headings[3] = rect->top;
+	}
+}
+
+void shape3d_retain_legacy_skybox_points(const struct POINT2D *points)
+{
+	if (legacy_render_wheel_headings != 0) {
+		legacy_render_wheel_headings[0] = points[0].px;
+		legacy_render_wheel_headings[1] = points[0].py;
+		legacy_render_wheel_headings[2] = points[1].px;
+		legacy_render_wheel_headings[3] = points[1].py;
+	}
+}
+
+/* Opponent headings overlap get_a_poly_info's BP-64 pattern temporary,
+ * BP-62/BP-60 polygon-data far pointer, and the word at BP-58 left by the preceding skybox call.
+ * Rasterizer calls are below this window and leave these locals intact. */
+static void shape3d_retain_opponent_pattern(legacy_u16 value)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[0] = LEGACY_S16_FROM_BITS(value);
+	}
+}
+
+static void shape3d_retain_opponent_polygon_pointer(const legacy_u8 far *record,
+													legacy_u16 vertex_count)
+{
+	legacy_u16 offset;
+
+	if (legacy_opponent_render_context.wheel_headings == 0) {
+		return;
+	}
+	offset = LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.polyinfo_offset,
+								 (legacy_u16)(record - polyinfoptr));
+	offset = LEGACY_U16_WRAP_ADD(offset, SHAPE3D_LEGACY_POLYGON_HEADER_SIZE);
+	offset = LEGACY_U16_WRAP_ADD(
+		offset, LEGACY_U16_WRAP_MUL(vertex_count, SHAPE3D_LEGACY_POLYGON_POINT_SIZE));
+	legacy_opponent_render_context.wheel_headings[1] = LEGACY_S16_FROM_BITS(offset);
+	/* The original increments only the pointer's offset, without normalizing it. */
+	legacy_opponent_render_context.wheel_headings[2] =
+		LEGACY_S16_FROM_BITS(legacy_opponent_render_context.polyinfo_segment);
 }
 
 static void shape3d_retain_render_local_pair(legacy_u16 first, legacy_u16 second,
@@ -1076,6 +1157,7 @@ void shape3d_render_queued_primitives(void)
 		if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
 			vertex_count = record[3];
 			polyinfo_read_points(record, points, vertex_count);
+			shape3d_retain_opponent_polygon_pointer(record, vertex_count);
 			pattern_type = (legacy_u16)material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
 				shape3d_retain_render_local_pair(
@@ -1084,12 +1166,14 @@ void shape3d_render_queued_primitives(void)
 				preRender_default(material_color, vertex_count, points);
 			} else if (pattern_type == 1U) {
 				pattern_type = (legacy_u16)material_patlist2_ptr_cpy[material_type];
+				shape3d_retain_opponent_pattern(pattern_type);
 				if (pattern_type != 0U) {
 					shape3d_retain_render_local(drawing_sprite.sprite_raster_left,
 												SHAPE3D_LEGACY_PATTERNED_POLYGON_RETURN_IP);
 					preRender_patterned(pattern_type, material_color, vertex_count, points);
 				}
 			} else if (pattern_type == 2U) {
+				shape3d_retain_opponent_pattern(LEGACY_U16_WRAP_MUL(material_type, 2U));
 				/* preRender_unk replaces its first argument with the secondary color. */
 				shape3d_retain_render_argument(
 					SHAPE3D_LEGACY_TWO_COLOR_POLYGON_RETURN_IP,
@@ -1110,6 +1194,9 @@ void shape3d_render_queued_primitives(void)
 							 LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 							 polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
+			shape3d_retain_opponent_pattern(
+				LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.material_color_offset,
+									LEGACY_U16_WRAP_MUL(material_type, 2U)));
 			shape3d_retain_render_argument(
 				SHAPE3D_LEGACY_WHEEL_RETURN_IP,
 				LEGACY_U16_WRAP_SUB(legacy_render_polygon_frame_pointer,

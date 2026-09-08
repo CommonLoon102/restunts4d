@@ -74,10 +74,25 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 void init_polyinfo(void);
 void polyinfo_reset(void);
 void shape3d_render_queued_primitives(void);
-/* Optional caller-supplied compatibility for original renderer/physics stack reuse.
- * Passing a null word buffer disables the context; normal game callers leave it disabled. */
+/* Logical original addresses are independent of the host's allocation layout. */
+struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT {
+	legacy_s16 *wheel_headings;
+	legacy_u16 polyinfo_offset;
+	legacy_u16 polyinfo_segment;
+	legacy_u16 material_color_offset;
+};
+
+/* Optional compatibility for original renderer/physics stack reuse.
+ * Null word/context pointers disable the corresponding car's compatibility.
+ * The opponent context is copied; its word buffer retains values between renders. */
 void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 polygon_frame_pointer,
-									 legacy_u16 polygon_code_segment);
+									 legacy_u16 polygon_code_segment,
+									 const struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT *opponent);
+
+/* Retain only skybox locals that the original path actually assigns. */
+void shape3d_retain_legacy_skybox_horizon(legacy_s16 horizon);
+void shape3d_retain_legacy_skybox_rect(const struct RECTANGLE *rect);
+void shape3d_retain_legacy_skybox_points(const struct POINT2D *points);
 
 void preRender_default(legacy_u16 color, legacy_u16 vertex_count, const struct POINT2D *vertices);
 void preRender_default_alt(legacy_u16 color, legacy_u16 vertex_count,

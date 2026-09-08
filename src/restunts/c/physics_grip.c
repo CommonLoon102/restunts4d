@@ -37,7 +37,6 @@ enum PENALTY_ROUTE_TRACK_VISIT_STATE {
 
 enum PENALTY_DETECTION_RESULT { PENALTY_NOT_DETECTED = 0, PENALTY_DETECTED = 1 };
 
-#define LEGACY_GRIP_STACK_SI_VALUE 80
 #define CAR_WHEEL_COUNT 4U
 #define CAR_WHEEL_INDEX_FIRST 0
 #define GRASS_WHEEL_COUNT_NONE 0
@@ -288,7 +287,8 @@ legacy_s16 detect_penalty(legacy_s16 *current_track, legacy_s16 *penalty_count)
  * so its behavior does not depend on a compiler's frame layout or ABI.
  */
 void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd,
-									legacy_u16 speed_before_grip, legacy_u16 speed2_before_grip)
+									legacy_u16 speed_before_grip, legacy_u16 speed2_before_grip,
+									legacy_s16 caller_si)
 {
 	legacy_s16 combined_grip_operand;
 	legacy_s16 sliding_sum;
@@ -300,9 +300,8 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 	legacy_s16 grass_wheels;
 	legacy_s16 i;
 
-	/* The original update_player_tick reaches update_grip with SI == 80. */
-	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] =
-		LEGACY_GRIP_STACK_SI_VALUE;
+	/* update_grip saves its caller's SI in the future fourth contact-distance slot. */
+	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] = caller_si;
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
 		return;
 	}

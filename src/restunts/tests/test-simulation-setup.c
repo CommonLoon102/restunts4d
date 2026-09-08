@@ -11,6 +11,7 @@
 #include "../c/ui_text.h"
 #include "../c/track_objects.h"
 #include "../c/car_speed.h"
+#include "../c/state_internal.h"
 
 extern void update_follow_cameras(void);
 
@@ -79,8 +80,9 @@ void far *__fmemcpy(void far *destination, const void far *source, legacy_u16 co
 	return memcpy(destination, source, count);
 }
 
-void update_player_tick(legacy_s8 input)
+void update_player_tick_with_legacy_si(legacy_s8 input, legacy_s16 caller_si)
 {
+	(void)caller_si;
 	trace_event(6);
 	trace_event(input);
 	trace_event(state.game_frame);

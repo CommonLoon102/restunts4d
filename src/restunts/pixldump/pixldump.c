@@ -8,6 +8,9 @@
 #include <trackdata_layout.h>
 
 #include "md5.h"
+#ifndef RESTUNTS_ORIGINAL
+#include "legacy_context.h"
+#endif
 #include "../c/fatal.h"
 #include "../c/race_resources.h"
 #include "../c/residue.h"
@@ -58,13 +61,6 @@
 #define PIXLDUMP_FRAME_TIMER_VALUE 500
 #define PIXLDUMP_PROJECTION_DISTANCE 35
 #define PIXLDUMP_PROJECTION_DIVISOR 6U
-/* Archived PIXLDUMO's sampling caller places update_frame BP at CB66.
- * update_frame reserves 340 local bytes and saves 4 register bytes; the
- * following 6-byte far-call frame puts get_a_poly_info BP at CA08. This
- * virtual frame address belongs to that caller, not to this compiler's stack. */
-#define PIXLDUMP_LEGACY_POLYGON_FRAME_POINTER 51720U
-/* The archived DOSBox context loads SEG006 at 029E + 14D6 = 1774. */
-#define PIXLDUMP_LEGACY_POLYGON_CODE_SEGMENT 6004U
 
 enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 	PIXLDUMP_PALETTE_BLUE_OFFSET = 0,
@@ -82,6 +78,40 @@ enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 #endif
 
 typedef legacy_u16 PIXLDUMP_OUTPUT;
+
+#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
+/* The original update_grip saves this caller register in a stack slot which
+ * player physics can later consume as the fourth wheel's contact distance.
+ * Sampling inherits the output handle; BMP mode inherits the CRT argv offset. */
+static legacy_s16 pixldump_caller_si;
+#endif
+
+#ifndef RESTUNTS_ORIGINAL
+static legacy_s16 pixldump_argv_si;
+static legacy_u16 pixldump_polyinfo_segment;
+/* Original DSEG offset of the active material color table. */
+#define PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET 20628U
+#endif
+
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#define PIXLDUMP_LEGACY_FRAME far
+static legacy_u16 pixldump_caller_di;
+static legacy_u16 pixldump_saved_si;
+static legacy_u16 pixldump_saved_di;
+
+/* Keep the original engine's caller registers without changing its stack.
+ * The paired inline operations restore the registers expected by Watcom. */
+static void pixldump_enter_original_call(void);
+#pragma aux pixldump_enter_original_call = "mov pixldump_saved_si,si"                              \
+										   "mov pixldump_saved_di,di"                              \
+										   "mov si,pixldump_caller_si"                             \
+										   "mov di,pixldump_caller_di" modify exact[];
+static void pixldump_leave_original_call(void);
+#pragma aux pixldump_leave_original_call = "mov si,pixldump_saved_si"                              \
+										   "mov di,pixldump_saved_di" modify exact[];
+#else
+#define PIXLDUMP_LEGACY_FRAME
+#endif
 
 static PIXLDUMP_OUTPUT pixldump_output_open(const legacy_s8 *path)
 {
@@ -402,13 +432,19 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8 *output_name, const legacy_
 	return result == 0;
 }
 
-static void pixldump_render_frame(void)
+static void PIXLDUMP_LEGACY_FRAME pixldump_render_frame(void)
 {
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_enter_original_call();
+#endif
 	sprite_select_render_window();
 	update_frame(0, &rect_windshield);
 	frame_present(&rect_windshield);
 	/* The normal presentation path draws the software mouse cursor last. */
 	mouse_draw_opaque_check();
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_leave_original_call();
+#endif
 }
 
 #ifndef RESTUNTS_ORIGINAL
@@ -417,15 +453,38 @@ static void pixldump_render_frame(void)
 extern void kb_shift_checking1(void);
 #endif
 
-static void pixldump_update_gamestate(void)
+static void PIXLDUMP_LEGACY_FRAME pixldump_update_gamestate(void)
 {
 #ifdef RESTUNTS_ORIGINAL
-	input_do_checking(1);
+#if defined(__WATCOMC__)
+	pixldump_enter_original_call();
 #endif
+	input_do_checking(1);
 	update_gamestate();
+#if defined(__WATCOMC__)
+	pixldump_leave_original_call();
+#endif
+#else
+	update_gamestate_with_legacy_si(pixldump_caller_si);
+#endif
 }
 
-static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
+#ifndef RESTUNTS_ORIGINAL
+static void pixldump_enable_legacy_render_stack(void)
+{
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT opponent;
+
+	opponent.wheel_headings = legacy_execution_residue.wheel_angle_stack_words;
+	opponent.polyinfo_offset = 0;
+	opponent.polyinfo_segment = pixldump_polyinfo_segment;
+	opponent.material_color_offset = PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET;
+	shape3d_set_legacy_render_stack(legacy_execution_residue.wheel_plane_angles,
+									pixldump_legacy_polygon_frame_pointer(pixldump_argv_si),
+									pixldump_legacy_polygon_code_segment(), &opponent);
+}
+#endif
+
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *output_name)
 {
 	legacy_s16 result;
 	legacy_u8 far *framebuffer;
@@ -436,14 +495,22 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		return 1;
 	}
 
+#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
+	pixldump_caller_si = LEGACY_S16_FROM_BITS(output);
+#endif
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	/* The directory-copy loop leaves DI here until the first sample result. */
+	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
+#endif
 #ifndef RESTUNTS_ORIGINAL
-	shape3d_set_legacy_render_stack(legacy_execution_residue.wheel_plane_angles,
-									PIXLDUMP_LEGACY_POLYGON_FRAME_POINTER,
-									PIXLDUMP_LEGACY_POLYGON_CODE_SEGMENT);
+	pixldump_enable_legacy_render_stack();
 #endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_caller_di = 0;
+#endif
 
 	while (result == 0 && gameconfig.game_recordedframes > (legacy_u16)state.game_frame) {
 		pixldump_update_gamestate();
@@ -456,16 +523,21 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 	}
 
 #ifndef RESTUNTS_ORIGINAL
-	shape3d_set_legacy_render_stack(0, 0, 0);
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
 #endif
 	pixldump_output_close(output);
 	return result;
 }
 
-static legacy_s16 pixldump_write_requested_frame(const legacy_s8 *output_name,
-												 legacy_u16 requested_frame)
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const legacy_s8 *output_name,
+																	   legacy_u16 requested_frame)
 {
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	/* Retain the archived BMP caller's four-byte local stack slot. */
+	legacy_u8 far *volatile framebuffer;
+#else
 	legacy_u8 far *framebuffer;
+#endif
 
 	while ((legacy_u16)state.game_frame < requested_frame) {
 		pixldump_update_gamestate();
@@ -475,10 +547,9 @@ static legacy_s16 pixldump_write_requested_frame(const legacy_s8 *output_name,
 	return pixldump_write_bmp(output_name, framebuffer);
 }
 
-static legacy_s16 pixldump_process_replay(const legacy_s8 *replay_name,
-										  const legacy_s8 *output_name, legacy_s16 camera_number,
-										  legacy_s16 target, legacy_s16 bmp_mode,
-										  legacy_u16 requested_frame)
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
+	const legacy_s8 *replay_name, const legacy_s8 *output_name, legacy_s16 camera_number,
+	legacy_s16 target, legacy_s16 bmp_mode, legacy_u16 requested_frame)
 {
 	legacy_s16 index;
 
@@ -586,6 +657,16 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 		return 1;
 	}
 
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_caller_si = (legacy_s16)argv;
+	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
+#elif !defined(RESTUNTS_ORIGINAL)
+	pixldump_argv_si = pixldump_legacy_argv_si(argc, argv);
+	if (bmp_mode != 0) {
+		pixldump_caller_si = pixldump_argv_si;
+	}
+#endif
+
 	length = (legacy_s16)strlen(argv[1]);
 	if (length >= 4 &&
 		(strcmp(argv[1] + length - 4, ".rpl") == 0 || strcmp(argv[1] + length - 4, ".RPL") == 0)) {
@@ -606,6 +687,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	fontnptr = file_load_resource(0, "fontn.fnt");
 	font_set_fontdef();
 	init_polyinfo();
+#ifndef RESTUNTS_ORIGINAL
+	pixldump_polyinfo_segment = pixldump_legacy_polyinfo_segment();
+#endif
 	init_trackdata();
 	reset_race_loop_state();
 	init_kevinrandom("kevin");

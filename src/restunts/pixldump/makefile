@@ -22,11 +22,14 @@ PLATFORM_NAMES = runtime file
 C_LINK_OBJECTS = $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(PLATFORM_OBJECTS)
 OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS)
 START_OPTION = $(ORIGINAL_LINK_OPTIONS)
-LINK_ORDER = $(ORIGINAL_LINK_ORDER)
+# Resource segment words can survive as stopped-opponent wheel headings. Keep
+# the archived heap boundary; WLINK rejects code that grows past this address.
+LINK_ORDER = $(ORIGINAL_LINK_ORDER) segaddr=0x3a19 offset=0x2
 CFLAGS = -dRESTUNTS_ORIGINAL
 # Original rendering observes caller-stack residue. Full local-variable debug
 # information (-d2) reshapes those frames even with -os; retain line info instead.
-WRAPPER_CFLAGS = $(filter-out -od -os -d2,$(WATCOM_CFLAGS)) -os
+# Far helper calls plus -of retain the archived caller frames as well.
+WRAPPER_CFLAGS = $(filter-out -od -os -d2,$(WATCOM_CFLAGS)) -os -of
 ifeq ($(CONFIG),debug)
 WRAPPER_CFLAGS += -d1
 endif
@@ -39,7 +42,7 @@ OUTFILE = pixldump.exe
 DESTFILE = PIXLDUMP.EXE
 C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
 PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
-OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(OBJDIR)/pixlstart.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(OBJDIR)/legacy_context.obj $(OBJDIR)/pixlstart.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
 START_OPTION = option START=_headless_start
 CFLAGS = -dRESTUNTS_PIXLDUMP
 WRAPPER_CFLAGS = $(WATCOM_CFLAGS)

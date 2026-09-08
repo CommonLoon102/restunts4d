@@ -85,6 +85,12 @@ run_host_test test-fatal-format legacy.c \
     "$test_source_dir/full_data.c" "$test_source_dir/full_strings.c" \
     "$test_source_dir/headless_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-gamestate-serialization stateio.c
+run_host_test test-gameplay-residue gamestep.c \
+    "$test_source_dir/state.c" "$test_source_dir/physics_grip.c" \
+    "$test_source_dir/physics_collision.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/headless_trackdata.c" "$test_source_dir/math.c" \
+    "$test_source_dir/legacy.c" -DRESTUNTS_HEADLESS \
+    -Wno-pointer-sign -Wno-sign-compare -Wno-missing-braces
 run_host_test test-grip physics_grip.c \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" -Wno-sign-compare
 run_host_test test-legacy-semantics legacy.c
@@ -107,6 +113,7 @@ run_host_test test-opponent-tick opponent.c \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \
     "$test_source_dir/trkutil.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-missing-braces
+run_host_test test-pixldump-legacy-context ../pixldump/legacy_context.c
 run_host_test test-pixldump-md5 ../pixldump/md5.c
 run_host_test test-polygon-edges shape3d_prerender.c \
     "$test_source_dir/full_data.c" "$test_source_dir/legacy.c" \
@@ -135,7 +142,9 @@ run_host_test test-shape3d-queue shape3d.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-shape3d-render-residue shape3d.c \
-    "$test_source_dir/full_data.c" -Wno-pointer-sign -Wno-missing-field-initializers
+    "$test_source_dir/full_data.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/physics_collision.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
 run_host_test test-shape3d-vertices shape3d.c \
     -Wno-pointer-sign -Wno-unused-variable
 run_host_test test-car-shape-lifetime shape3d_car.c \
@@ -143,7 +152,7 @@ run_host_test test-car-shape-lifetime shape3d_car.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-skybox-render skybox.c \
-    "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/shape3d.c" "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c

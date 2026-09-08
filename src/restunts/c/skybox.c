@@ -122,8 +122,11 @@ static void skybox_clear_changed_rects(struct RECTANGLE *rect, struct RECTANGLE 
 									   legacy_s16 color)
 {
 	legacy_s16 i;
+	legacy_s16 outside;
 
-	if (rect_intersect(rect, clip) != 0) {
+	outside = rect_intersect(rect, clip);
+	shape3d_retain_legacy_skybox_rect(rect);
+	if (outside != 0) {
 		return;
 	}
 	skybox_collect_changed_rects(rect);
@@ -214,6 +217,9 @@ static legacy_u8 skybox_find_linear_horizon(const struct POINT2D *points, legacy
 			}
 		}
 	}
+	if (has_linear_horizon != 0) {
+		shape3d_retain_legacy_skybox_horizon(base_horizon);
+	}
 	*base = base_horizon;
 	*delta = horizon_delta;
 	return has_linear_horizon;
@@ -262,6 +268,7 @@ static void skybox_prepare_horizon_rect(struct RECTANGLE *clip, legacy_s16 base_
 		work_rect->top = clip->top;
 		work_rect->bottom = clip->bottom;
 	}
+	shape3d_retain_legacy_skybox_rect(work_rect);
 }
 
 static void skybox_render_horizon_strips(struct RECTANGLE *clip, struct RECTANGLE *work_rect,
@@ -273,8 +280,11 @@ static void skybox_render_horizon_strips(struct RECTANGLE *clip, struct RECTANGL
 	legacy_s16 strip_count;
 	legacy_s16 strip;
 	legacy_s16 previous_x;
+	legacy_s16 outside;
 
-	if (rect_intersect(work_rect, clip) != 0) {
+	outside = rect_intersect(work_rect, clip);
+	shape3d_retain_legacy_skybox_rect(work_rect);
+	if (outside != 0) {
 		return;
 	}
 	absolute_delta = horizon_delta;
@@ -300,6 +310,7 @@ static void skybox_render_horizon_strips(struct RECTANGLE *clip, struct RECTANGL
 		skybox_render_level_rect(work_rect, angle, horizon);
 		previous_x = work_rect->right;
 	}
+	shape3d_retain_legacy_skybox_rect(work_rect);
 	return;
 }
 
@@ -329,6 +340,9 @@ static void skybox_render_horizon_polygons(struct POINT2D *points)
 				cos_fast(LEGACY_S16_WRAP_ADD(corner_angles[point_index], angle_offset)),
 				SKYBOX_HORIZON_RADIUS));
 	}
+	/* Retain the original local points before arranging C call arguments or
+	 * reusing their slots for the ground polygon. */
+	shape3d_retain_legacy_skybox_points(points + 2);
 	/* The original inline stack arguments order these vertices 0,1,3,2. */
 	point_swap = points[2];
 	points[2] = points[3];
@@ -404,6 +418,7 @@ static legacy_s16 skybox_render_forward_horizon(legacy_s16 view_index, struct RE
 	work_rect.right = SKYBOX_SCREEN_WIDTH;
 	work_rect.top = clip->top;
 	work_rect.bottom = clip->bottom;
+	shape3d_retain_legacy_skybox_rect(&work_rect);
 	skybox_render_level_rect(&work_rect, angle, horizon);
 	return 0;
 }
