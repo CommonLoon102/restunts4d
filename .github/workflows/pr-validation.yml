@@ -26,4 +26,4 @@ jobs:
     name: Golden replays
     uses: ./.github/workflows/build-and-validate.yml
     with:
-      renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '5') }}
+      renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '100') }}
