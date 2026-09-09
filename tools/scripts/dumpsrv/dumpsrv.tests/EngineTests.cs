@@ -1,4 +1,7 @@
+using System.Buffers.Binary;
 using System.Collections.Concurrent;
+using System.Globalization;
+using System.Text;
 using DumpSrv;
 
 namespace DumpSrv.Tests;
@@ -60,8 +63,8 @@ public sealed class EngineTests
     public async Task EngineRunsBothPhasesAndUsesCompletedCachesWithoutTouchingUnownedFiles()
     {
         using var directory = CreateGame("mix.RpL", "other.rpl");
-        directory.Write("MIX.bin", "dump");
-        directory.Write("MIX.pdo", "dump");
+        File.WriteAllBytes(System.IO.Path.Combine(directory.Path, "MIX.bin"), DumpBytes(false, 6));
+        File.WriteAllBytes(System.IO.Path.Combine(directory.Path, "MIX.pdo"), DumpBytes(true, 6));
         directory.Write("unowned.bni", "keep");
         directory.Write("mix.BNI", "stale");
         var calls = new ConcurrentQueue<DosBoxInvocation>();
@@ -136,7 +139,7 @@ public sealed class EngineTests
             if (!(invocation.Executable == "repldump.exe" && invocation.ReplayBaseName == "missing"))
             {
                 WriteOutput(invocation, invocation.Executable == "repldump.exe" &&
-                    invocation.ReplayBaseName == "mismatch" ? "different" : "dump");
+                    invocation.ReplayBaseName == "mismatch");
             }
             return Task.FromResult(new DosBoxResult(0));
         });
@@ -196,9 +199,10 @@ public sealed class EngineTests
     public async Task BufferedComparisonDetectsEqualLengthDifferencesBeyondFirstBuffer()
     {
         using var directory = CreateGame("long.rpl");
+        WriteReplay(directory, "long.rpl", 150);
         var runner = new FakeRunner((invocation, _) =>
         {
-            WriteOutput(invocation, new string('a', 150000) + (invocation.Executable == "repldump.exe" ? "b" : "a"));
+            WriteOutput(invocation, invocation.Executable == "repldump.exe");
             return Task.FromResult(new DosBoxResult(0));
         });
         var result = await new RegressionEngine(runner, _ => { }).RunAsync(
@@ -298,6 +302,156 @@ public sealed class EngineTests
         return false;
     }
 
+    [Theory]
+    [InlineData(false, "empty")]
+    [InlineData(false, "partial")]
+    [InlineData(false, "record")]
+    [InlineData(false, "extra")]
+    [InlineData(false, "frame")]
+    [InlineData(false, "shorter")]
+    [InlineData(true, "empty")]
+    [InlineData(true, "partial")]
+    [InlineData(true, "record")]
+    [InlineData(true, "extra")]
+    [InlineData(true, "frame")]
+    [InlineData(true, "shorter")]
+    [InlineData(true, "hash")]
+    public async Task InvalidOracleCacheWithoutPendingMarkerIsRegenerated(
+        bool renderer, string damage)
+    {
+        using var directory = CreateGame("track.rpl");
+        var extension = renderer ? "PDO" : "BIN";
+        var path = System.IO.Path.Combine(directory.Path, $"TRACK.{extension}");
+        var bytes = DumpBytes(renderer, 6);
+        bytes = damage switch
+        {
+            "empty" => [],
+            "partial" => bytes[..^1],
+            "record" => bytes[..^(renderer ? 36 : 1120)],
+            "extra" => [.. bytes, 0],
+            "frame" => [(byte)(bytes[0] + 1), .. bytes[1..]],
+            "shorter" => DumpBytes(renderer, 0),
+            "hash" => [.. bytes[..2], (byte)'g', .. bytes[3..]],
+            _ => throw new InvalidOperationException()
+        };
+        File.WriteAllBytes(path, bytes);
+        var calls = new List<string>();
+        var runner = new FakeRunner((invocation, _) =>
+        {
+            calls.Add(invocation.Executable);
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        });
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(
+            Options(directory) with
+            { PhysicsTests = !renderer, RendererTests = renderer, PartitionCount = 1 },
+            TestContext.Current.CancellationToken);
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(renderer ? new[] { "pixldumo.exe", "pixldump.exe" } :
+            new[] { "repldumo.exe", "repldump.exe" }, calls);
+        Assert.Equal(DumpBytes(renderer, 6), File.ReadAllBytes(path));
+        Assert.False(File.Exists(DosFiles.Resolve(directory.Path, $"track.{extension}.pending")));
+    }
+
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(false, true, true)]
+    [InlineData(true, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(true, true, false)]
+    [InlineData(true, true, true)]
+    public async Task SuccessfulProcessCannotValidateOrCacheIncompleteOutput(
+        bool renderer, bool damageOracle, bool empty)
+    {
+        using var directory = CreateGame("track.rpl");
+        var oracleExtension = renderer ? "PDO" : "BIN";
+        var candidateExtension = renderer ? "PDD" : "BNI";
+        var damagedExtension = damageOracle ? oracleExtension : candidateExtension;
+        var oracle = System.IO.Path.Combine(directory.Path, $"TRACK.{oracleExtension}");
+        var runner = new FakeRunner((invocation, _) =>
+        {
+            WriteOutput(invocation);
+            if (invocation.Executable.EndsWith("o.exe", StringComparison.Ordinal) == damageOracle)
+            {
+                var path = System.IO.Path.Combine(directory.Path, $"TRACK.{damagedExtension}");
+                var bytes = File.ReadAllBytes(path);
+                File.WriteAllBytes(path, empty ? [] : bytes[..^1]);
+            }
+            return Task.FromResult(new DosBoxResult(0));
+        });
+        var options = Options(directory) with
+        { PhysicsTests = !renderer, RendererTests = renderer };
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(options,
+            TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Single(result.Diagnostics);
+        Assert.StartsWith($"ERROR|type=invalid_output|input=track.rpl|" +
+            $"output=TRACK.{damagedExtension}|",
+            result.Diagnostics[0]);
+        Assert.Equal(damageOracle,
+            File.Exists(DosFiles.Resolve(directory.Path, $"track.{oracleExtension}.pending")));
+        RegressionEngine.Cleanup(result);
+        Assert.Equal(!damageOracle, File.Exists(oracle));
+        Assert.False(File.Exists(System.IO.Path.Combine(directory.Path,
+            $"TRACK.{candidateExtension}")));
+        var retry = await new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { }).RunAsync(options, TestContext.Current.CancellationToken);
+        Assert.Empty(retry.Diagnostics);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task IdenticalPartialOutputsCannotPassComparison(bool renderer)
+    {
+        using var directory = CreateGame("track.rpl");
+        var calls = 0;
+        var result = await new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            calls++;
+            WriteOutput(invocation);
+            var extension = invocation.Executable switch
+            {
+                "repldumo.exe" => "BIN",
+                "repldump.exe" => "BNI",
+                "pixldumo.exe" => "PDO",
+                _ => "PDD"
+            };
+            var path = System.IO.Path.Combine(directory.Path, $"TRACK.{extension}");
+            File.WriteAllBytes(path, File.ReadAllBytes(path)[..^1]);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { }).RunAsync(
+            Options(directory) with { PhysicsTests = !renderer, RendererTests = renderer },
+            TestContext.Current.CancellationToken);
+        Assert.Single(result.Diagnostics);
+        Assert.StartsWith("ERROR|type=invalid_output|", result.Diagnostics[0]);
+        Assert.Equal(1, calls);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(10)]
+    public async Task CompleteOutputsIncludeZeroFrameAndFinalRendererSample(ushort frames)
+    {
+        using var directory = CreateGame("track.rpl");
+        WriteReplay(directory, "track.rpl", frames);
+        var result = await new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { }).RunAsync(Options(directory), TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Empty(result.Diagnostics);
+    }
+
     private static EngineDirectory CreateGame(params string[] replays)
     {
         var directory = new EngineDirectory();
@@ -305,7 +459,36 @@ public sealed class EngineTests
         {
             directory.Write(name);
         }
+        foreach (var replay in replays)
+        {
+            WriteReplay(directory, replay, 6);
+        }
         return directory;
+    }
+
+    private static void WriteReplay(EngineDirectory directory, string replay, ushort frames)
+    {
+        var bytes = new byte[26 + 1802 + frames];
+        BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(22), 20);
+        BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(24), frames);
+        File.WriteAllBytes(System.IO.Path.Combine(directory.Path, replay), bytes);
+    }
+
+    private static byte[] DumpBytes(bool renderer, ushort frames, bool different = false)
+    {
+        if (renderer)
+        {
+            return Encoding.ASCII.GetBytes(string.Concat(Enumerable.Range(0, frames / 5 + 1)
+                .Select(index => $"{(index * 5).ToString(CultureInfo.InvariantCulture)} " +
+                    new string(different ? '1' : '0', 32) + "\r\n")));
+        }
+        var bytes = new byte[2 + frames * 1120];
+        BinaryPrimitives.WriteUInt16LittleEndian(bytes, frames);
+        if (different)
+        {
+            bytes[^1] = 1;
+        }
+        return bytes;
     }
 
     private static RunOptions Options(EngineDirectory directory) => new()
@@ -316,7 +499,7 @@ public sealed class EngineTests
         PartitionCount = 2
     };
 
-    private static void WriteOutput(DosBoxInvocation invocation, string content = "dump")
+    private static void WriteOutput(DosBoxInvocation invocation, bool different = false)
     {
         var extension = invocation.Executable switch
         {
@@ -326,8 +509,12 @@ public sealed class EngineTests
             "pixldump.exe" => "PDD",
             _ => throw new InvalidOperationException()
         };
-        File.WriteAllText(System.IO.Path.Combine(invocation.GameDirectory,
-            $"{invocation.ReplayBaseName.ToUpperInvariant()}.{extension}"), content);
+        var replay = File.ReadAllBytes(DosFiles.Resolve(invocation.GameDirectory,
+            $"{invocation.ReplayBaseName}.rpl"));
+        var frames = BinaryPrimitives.ReadUInt16LittleEndian(replay.AsSpan(24));
+        File.WriteAllBytes(System.IO.Path.Combine(invocation.GameDirectory,
+            $"{invocation.ReplayBaseName.ToUpperInvariant()}.{extension}"),
+            DumpBytes(extension is "PDO" or "PDD", frames, different));
     }
 
     private sealed class PhaseTimeProvider : TimeProvider

@@ -136,9 +136,13 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
         var candidatePath = Resolve(phase.CandidateExtension);
         own(candidatePath);
         File.Delete(candidatePath);
+        var frames = await DumpOutput.ReadFrameCountAsync(
+            Path.Combine(options.GameDirectory, replay), cancellationToken);
         var oraclePath = Resolve(phase.OracleExtension);
         var pendingPath = Resolve($"{phase.OracleExtension}.pending");
-        if (File.Exists(pendingPath) || !File.Exists(oraclePath))
+        if (File.Exists(pendingPath) ||
+            !await DumpOutput.IsCompleteAsync(oraclePath, phase.Renderer, frames,
+                cancellationToken))
         {
             own(pendingPath);
             await File.WriteAllTextAsync(pendingPath, "", cancellationToken);
@@ -148,10 +152,11 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
                 return;
             }
             oraclePath = Resolve(phase.OracleExtension);
-            if (File.Exists(oraclePath))
+            if (!await ValidateOutputAsync(oraclePath))
             {
-                File.Delete(pendingPath);
+                return;
             }
+            File.Delete(pendingPath);
         }
         if (!await ExecuteAsync(phase.Candidate))
         {
@@ -160,23 +165,34 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
         // DOS may create upper-case paths even for lower-case host replay names.
         candidatePath = Resolve(phase.CandidateExtension);
         own(candidatePath);
-        var oracleExists = File.Exists(oraclePath);
-        var candidateExists = File.Exists(candidatePath);
-        if (!oracleExists)
+        if (!await ValidateOutputAsync(candidatePath))
         {
-            diagnostic($"ERROR|type=missing_output|input={replay}|output={Path.GetFileName(oraclePath)}");
+            return;
         }
-        if (!candidateExists)
-        {
-            diagnostic($"ERROR|type=missing_output|input={replay}|output={Path.GetFileName(candidatePath)}");
-        }
-        if (oracleExists && candidateExists && !await FilesEqualAsync(oraclePath, candidatePath, cancellationToken))
+        if (!await FilesEqualAsync(oraclePath, candidatePath, cancellationToken))
         {
             diagnostic($"ERROR|type=file_mismatch|input={replay}|" +
                 $"{phase.OracleExtension.ToLowerInvariant()}={Path.GetFileName(oraclePath)}|" +
                 $"{phase.CandidateExtension.ToLowerInvariant()}={Path.GetFileName(candidatePath)}");
         }
         return;
+
+        async Task<bool> ValidateOutputAsync(string path)
+        {
+            if (!File.Exists(path))
+            {
+                diagnostic($"ERROR|type=missing_output|input={replay}|" +
+                    $"output={Path.GetFileName(path)}");
+                return false;
+            }
+            if (!await DumpOutput.IsCompleteAsync(path, phase.Renderer, frames, cancellationToken))
+            {
+                diagnostic($"ERROR|type=invalid_output|input={replay}|" +
+                    $"output={Path.GetFileName(path)}|expected_frames={frames}");
+                return false;
+            }
+            return true;
+        }
 
         async Task<bool> ExecuteAsync(string executable)
         {

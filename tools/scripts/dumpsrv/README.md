@@ -242,12 +242,21 @@ Physics compares original `.BIN` output against fresh `.BNI` output. Rendering
 uses camera `2` and target `0`, comparing original `.PDO` output against fresh
 `.PDD` output. Comparisons are byte for byte.
 
-Completed `.BIN` and `.PDO` files are reused. A `.BIN.pending` or `.PDO.pending`
-marker is written before oracle generation and removed only after successful
-completion with an output file. An interrupted oracle dump is regenerated on
-the next run. Candidate outputs are removed before execution so stale files
-cannot hide failures. DOSBox uses `core=dynamic` and `cycles=max`; cancellation
-and execution timeouts kill the process tree forcibly.
+Completed `.BIN` and `.PDO` files are reused only after checking their contents
+against the replay's recorded frame count. Physics dumps must contain the
+matching two-byte frame count and exactly 1,120 bytes per frame. Renderer dumps
+must contain every CRLF-terminated MD5 sample at frames 0, 5, 10, ... through
+the last sampled frame. Empty, truncated, or malformed caches are regenerated,
+including files left by older runners without a pending marker.
+
+A `.BIN.pending` or `.PDO.pending` marker is written before oracle generation
+and removed only after successful execution produces a complete output.
+An interrupted oracle dump is regenerated on the next run. Fresh oracle and
+candidate outputs undergo the same completeness checks; invalid output is
+reported as `type=invalid_output` instead of a replay desync or a successful
+comparison of two partial files. Candidate outputs are removed before execution
+so stale files cannot hide failures. DOSBox uses `core=dynamic` and `cycles=max`;
+cancellation and execution timeouts kill the process tree forcibly.
 
 Diagnostics retain the existing one-line format. Duplicate lines are removed
 and results are ordered by the `input` field:
