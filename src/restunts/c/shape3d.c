@@ -583,6 +583,19 @@ static legacy_u16 shape3d_prepare_wheel(struct SHAPE3D_TRANSFORM_CONTEXT *contex
 	return 1;
 }
 
+static void shape3d_adjust_sphere_bounds(const struct POINT2D *center, legacy_u16 radius)
+{
+	struct POINT2D point;
+
+	point.px = LEGACY_S16_WRAP_SUB(center->px, radius);
+	point.py = LEGACY_S16_WRAP_SUB(center->py, radius);
+	rect_adjust_from_point(&point, transshaperectptr);
+	/* Original SEG006 sphere code overwrites the second point's X with Y + radius;
+	 * its Y stays at Y - radius. Crash explosions scale from these bounds. */
+	point.px = LEGACY_S16_WRAP_ADD(center->py, radius);
+	rect_adjust_from_point(&point, transshaperectptr);
+}
+
 static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 										 legacy_s32 *depth_sum)
 {
@@ -605,7 +618,7 @@ static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *conte
 	screen_radius = projection_scale_x_wrapped(polarRadius3D(&radius_vector), center.z);
 	polyinfo_write_word(transshapepolyinfo, 5U, screen_radius);
 	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
-		shape3d_adjust_round_bounds(polyvertpointptrtab[0], screen_radius, 0);
+		shape3d_adjust_sphere_bounds(polyvertpointptrtab[0], screen_radius);
 	}
 	transshapenumvertscopy = 2;
 	return 1;

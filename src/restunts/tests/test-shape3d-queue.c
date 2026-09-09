@@ -80,55 +80,48 @@ static void test_primitive_records(void)
 		legacy_u8 count;
 		struct POINT2D points[4];
 		legacy_s16 left, right, top, bottom;
-	} cases[] = {{{1, 1, 7, 0}, 100, RENDER_PRIMITIVE_POINT, 1, {{109, 151}}, 109, 110, 151, 152},
-				 {{2, 1, 7, 0, 3},
-				  50,
-				  RENDER_PRIMITIVE_LINE,
-				  2,
-				  {{109, 151}, {118, 142}},
-				  109,
-				  119,
-				  142,
-				  152},
-				 /* Both near-plane intersections precede the associated visible edge.
+	} cases[] = {
+		{{1, 1, 7, 0}, 100, RENDER_PRIMITIVE_POINT, 1, {{109, 151}}, 109, 110, 151, 152},
+		{{2, 1, 7, 0, 3},
+		 50,
+		 RENDER_PRIMITIVE_LINE,
+		 2,
+		 {{109, 151}, {118, 142}},
+		 109,
+		 119,
+		 142,
+		 152},
+		/* Both near-plane intersections precede the associated visible edge.
 		 * The legacy depth average divides by the clipped output count. */
-				 {{3, 1, 7, 0, 1, 3},
-				  50,
-				  RENDER_PRIMITIVE_POLYGON,
-				  4,
-				  {{118, 142}, {109, 151}, {211, 151}, {202, 142}},
-				  109,
-				  212,
-				  142,
-				  152},
-				 {{11, 1, 7, 7, 1},
-				  100,
-				  RENDER_PRIMITIVE_SPHERE,
-				  2,
-				  {{160, 100}, {71, 0}},
-				  89,
-				  232,
-				  29,
-				  172},
-				 {{12, 1, 7, 0, 2, 1, 4, 6, 5},
-				  100,
-				  RENDER_PRIMITIVE_WHEEL,
-				  4,
-				  {{109, 151}, {160, 49}, {211, 151}, {126, 134}},
-				  6,
-				  230,
-				  31,
-				  255},
-				 /* Reversing the first face selects the wheel's opposite face and depth. */
-				 {{12, 1, 7, 0, 1, 2, 4, 5, 6},
-				  150,
-				  RENDER_PRIMITIVE_WHEEL,
-				  4,
-				  {{126, 134}, {194, 134}, {160, 66}, {109, 151}},
-				  40,
-				  196,
-				  65,
-				  221}};
+		{{3, 1, 7, 0, 1, 3},
+		 50,
+		 RENDER_PRIMITIVE_POLYGON,
+		 4,
+		 {{118, 142}, {109, 151}, {211, 151}, {202, 142}},
+		 109,
+		 212,
+		 142,
+		 152},
+		{{11, 1, 7, 7, 1}, 100, RENDER_PRIMITIVE_SPHERE, 2, {{160, 100}, {71, 0}}, 89, 172, 29, 30},
+		{{12, 1, 7, 0, 2, 1, 4, 6, 5},
+		 100,
+		 RENDER_PRIMITIVE_WHEEL,
+		 4,
+		 {{109, 151}, {160, 49}, {211, 151}, {126, 134}},
+		 6,
+		 230,
+		 31,
+		 255},
+		/* Reversing the first face selects the wheel's opposite face and depth. */
+		{{12, 1, 7, 0, 1, 2, 4, 5, 6},
+		 150,
+		 RENDER_PRIMITIVE_WHEEL,
+		 4,
+		 {{126, 134}, {194, 134}, {160, 66}, {109, 151}},
+		 40,
+		 196,
+		 65,
+		 221}};
 	unsigned i, point;
 
 	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
@@ -149,6 +142,37 @@ static void test_primitive_records(void)
 		assert(bounds.top == cases[i].top);
 		assert(bounds.bottom == cases[i].bottom);
 	}
+}
+
+static void test_sphere_bounds_preserve_original_coordinate_write(void)
+{
+	static const legacy_u8 sphere[] = {11, 1, 7, 0, 1, 0, 0};
+	static const struct VECTOR center = {0, 0, 100};
+	static const struct VECTOR endpoint = {1, 0, 100};
+
+	reset_scene();
+	shape3d_vertex_write(&shape, 0, &center);
+	shape3d_vertex_write(&shape, 1, &endpoint);
+	memcpy(primitives, sphere, sizeof(sphere));
+	/* Projected center (160,100), radius2. Original sphere bounds visit
+	 * (158,98) then (102,98): the second X comes from center Y + radius.
+	 * Preserve this expansion of existing bounds, used to scale explosions. */
+	bounds.left = 140;
+	bounds.right = 180;
+	bounds.top = 90;
+	bounds.bottom = 130;
+	assert(shape3d_transform_and_queue(&instance) == 0);
+	assert(polyinfonumpolys == 1);
+	check_point(polyinfo, 0, 160, 100);
+	assert(LEGACY_READ_U16_LE(polyinfo + 10) == 2);
+	assert(bounds.left == 102 && bounds.right == 180);
+	assert(bounds.top == 90 && bounds.bottom == 130);
+	/* Disabling bounds leaves geometry queued without touching the rectangle. */
+	polyinfo_reset();
+	instance.ts_flags = 2;
+	bounds.left = 140;
+	assert(shape3d_transform_and_queue(&instance) == 0);
+	assert(polyinfonumpolys == 1 && bounds.left == 140);
 }
 
 static void test_shared_clipped_vertices(void)
@@ -302,6 +326,7 @@ static void test_queue_limits(void)
 int main(void)
 {
 	test_primitive_records();
+	test_sphere_bounds_preserve_original_coordinate_write();
 	test_shared_clipped_vertices();
 	test_hidden_primitive_children();
 	test_depth_order_and_attached_primitive();
