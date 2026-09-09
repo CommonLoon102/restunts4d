@@ -45,22 +45,6 @@ env:
   WINEDLLOVERRIDES: mscoree,mshtml=
 
 jobs:
-  formatting:
-    name: C/H formatting
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install pinned formatting tools
-        run: python3 -m pip install -r tools/scripts/requirements-format.txt
-
-      - name: Validate C/H formatting against .editorconfig
-        run: ec
-
-      - name: Validate C layout and braces with clang-format
-        run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
-
   dumpsrv-tests:
     name: C# regression service tests
     runs-on: ubuntu-24.04
@@ -80,36 +64,23 @@ jobs:
 
       - name: Check C# formatting
         run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
-
-  plan:
-    name: Plan the shards
+  
+  formatting:
+    name: C/H formatting
     runs-on: ubuntu-24.04
     timeout-minutes: 5
-    outputs:
-      shards: ${{ steps.plan.outputs.shards }}
     steps:
-      - name: Split the golden set into shards
-        id: plan
-        env:
-          SHARDS: ${{ inputs.shards }}
-          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-        run: |
-          set -u
-          if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
-              echo "::error::shards must be an integer from 1 to 2147483647"
-              exit 1
-          fi
-          if [[ ! "$PARTITIONS_PER_SHARD" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]]; then
-              echo "::error::partitions-per-shard must be an integer from 1 to 64"
-              exit 1
-          fi
-          if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
-              echo "::error::renderer-test-percentage must be an integer from 1 to 100"
-              exit 1
-          fi
-          echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
 
+      - name: Install pinned formatting tools
+        run: python3 -m pip install -r tools/scripts/requirements-format.txt
+
+      - name: Validate C/H formatting against .editorconfig
+        run: ec
+
+      - name: Validate C layout and braces with clang-format
+        run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
+        
   host-tests:
     name: Host regression tests
     runs-on: ubuntu-24.04
@@ -122,7 +93,7 @@ jobs:
 
   build:
     name: Build executables
-    needs: [formatting, dumpsrv-tests]
+    needs: [formatting, host-tests]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
@@ -185,10 +156,39 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
           retention-days: 14
+          
+  plan:
+    name: Plan the shards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - name: Split the golden set into shards
+        id: plan
+        env:
+          SHARDS: ${{ inputs.shards }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+        run: |
+          set -u
+          if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
+              echo "::error::shards must be an integer from 1 to 2147483647"
+              exit 1
+          fi
+          if [[ ! "$PARTITIONS_PER_SHARD" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]]; then
+              echo "::error::partitions-per-shard must be an integer from 1 to 64"
+              exit 1
+          fi
+          if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
+              echo "::error::renderer-test-percentage must be an integer from 1 to 100"
+              exit 1
+          fi
+          echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
 
   replay:
     name: Replays (shard ${{ matrix.shard }})
-    needs: [plan, build]
+    needs: [build, plan]
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
