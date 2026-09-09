@@ -80,6 +80,7 @@ enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 typedef legacy_u16 PIXLDUMP_OUTPUT;
 
 #ifndef RESTUNTS_ORIGINAL
+static legacy_s16 pixldump_caller_si;
 static legacy_s16 pixldump_argv_si;
 static legacy_u16 pixldump_polyinfo_segment;
 #define PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET 20628U
@@ -423,8 +424,10 @@ static void pixldump_update_gamestate(void)
 {
 #ifdef RESTUNTS_ORIGINAL
 	input_do_checking(1);
-#endif
 	update_gamestate();
+#else
+	update_gamestate_with_legacy_si(pixldump_caller_si);
+#endif
 }
 
 #ifndef RESTUNTS_ORIGINAL
@@ -454,6 +457,7 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 	}
 
 #ifndef RESTUNTS_ORIGINAL
+	pixldump_caller_si = LEGACY_S16_FROM_BITS(output);
 	pixldump_enable_legacy_render_stack();
 #endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
@@ -603,6 +607,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 
 #ifndef RESTUNTS_ORIGINAL
 	pixldump_argv_si = pixldump_legacy_argv_si(argc, argv);
+	if (bmp_mode != 0) {
+		pixldump_caller_si = pixldump_argv_si;
+	}
 #endif
 	length = (legacy_s16)strlen(argv[1]);
 	if (length >= 4 &&

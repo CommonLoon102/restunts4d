@@ -339,6 +339,11 @@ static void update_player_route_guidance(legacy_s8 previous_route_status)
 
 void update_player_tick(legacy_s8 input_flags)
 {
+	update_player_tick_with_legacy_si(input_flags, LEGACY_DEFAULT_PLAYER_TICK_SI);
+}
+
+void update_player_tick_with_legacy_si(legacy_s8 input_flags, legacy_s16 caller_si)
+{
 	legacy_u16 rev_speed_before_grip;
 	legacy_u16 actual_speed_before_grip;
 	legacy_s8 previous_route_status;
@@ -378,7 +383,7 @@ void update_player_tick(legacy_s8 input_flags)
 	actual_speed_before_grip = state.playerstate.car_actual_speed;
 	update_grip(&state.playerstate, &simd_player, GRIP_BEHAVIOR_PLAYER);
 	update_legacy_grip_stack_words(&state.playerstate, &simd_player, rev_speed_before_grip,
-								   actual_speed_before_grip);
+								   actual_speed_before_grip, caller_si);
 	update_player_state(&state.playerstate, &simd_player, &state.opponentstate, &simd_opponent,
 						PLAYER_CAR_INDEX);
 	state.game_travDist = LEGACY_S32_WRAP_ADD(

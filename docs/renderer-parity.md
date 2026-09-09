@@ -32,6 +32,13 @@ instructions. The existing stopped-wheel physics then consumes these buffers.
 This restores the original simulation after stops and crashes as well as the
 immediately rendered image.
 
+A separate reused stack word holds the SI register saved by `update_grip`.
+After a capped collision scan, physics can consume it as the fourth wheel's
+contact distance. It is not always 80: the sampled dump loop supplies its output
+handle, the single-image loop supplies its original argv offset, and checkpoint
+and race-start paths overwrite it with their own index or distance. Explicit
+caller parameters carry these values through the C simulation.
+
 ## Caller and address calculation
 
 `pixldump/legacy_context.c` describes the archived executable's ABI, not a
@@ -52,7 +59,7 @@ Those modes can therefore reach different states in the original game itself.
 Run `bash src/restunts/tests/run-host-tests.sh` for the host tests. Coverage
 includes sphere versus wheel bounds, rasterizer primitive types, retained values
 on skipped branches, skybox clipping, player and opponent stopped-wheel motion,
-and DOS argv/address calculations.
+caller-register suspension effects, and DOS argv/address calculations.
 
 Use `tools/scripts/pixelcheck.sh REPLAY.rpl false 2 0` for a complete sampled
 comparison with existing executables, or append a frame for a BMP comparison.

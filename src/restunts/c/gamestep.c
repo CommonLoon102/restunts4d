@@ -5,6 +5,7 @@
 #include "car_audio.h"
 #include "externs.h"
 #include "crash_state.h"
+#include "state_internal.h"
 
 #define ACTIVE_CAR_COUNT_WITHOUT_OPPONENT 1U
 #define ACTIVE_CAR_COUNT_WITH_OPPONENT 2U
@@ -169,6 +170,8 @@ static void update_race_end_timing(void)
 
 static void update_race_start_sequence(void)
 {
+	legacy_s16 start_line_distance;
+
 	if (race_start_sequence_state != RACE_START_SEQUENCE_INACTIVE) {
 		if (start_flag_animation < START_FLAG_ANIMATION_LIMIT) {
 			start_flag_animation =
@@ -179,35 +182,41 @@ static void update_race_start_sequence(void)
 			race_start_sequence_state = RACE_START_SEQUENCE_AUTO_DRIVE;
 		}
 		if (race_start_sequence_state == RACE_START_SEQUENCE_AUTO_DRIVE) {
-			if (LEGACY_S16_WRAP_ADD(
-					multiply_and_scale(
-						cos_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(
-							track_row_centers[start_finish_row],
-							LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-								state.playerstate.car_position.lz, CAR_WORLD_POSITION_SHIFT)))),
-					multiply_and_scale(
-						sin_fast(track_angle),
-						LEGACY_S16_WRAP_SUB(
-							track_column_centers[start_finish_column],
-							LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
-								state.playerstate.car_position.lx, CAR_WORLD_POSITION_SHIFT))))) <=
-				START_SEQUENCE_LINE_DISTANCE) {
+			/* The original auto-drive path retains this distance in SI for player_op. */
+			start_line_distance = LEGACY_S16_WRAP_ADD(
+				multiply_and_scale(
+					cos_fast(track_angle),
+					LEGACY_S16_WRAP_SUB(
+						track_row_centers[start_finish_row],
+						LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+							state.playerstate.car_position.lz, CAR_WORLD_POSITION_SHIFT)))),
+				multiply_and_scale(
+					sin_fast(track_angle),
+					LEGACY_S16_WRAP_SUB(
+						track_column_centers[start_finish_column],
+						LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(
+							state.playerstate.car_position.lx, CAR_WORLD_POSITION_SHIFT)))));
+			if (start_line_distance <= START_SEQUENCE_LINE_DISTANCE) {
 				if (state.playerstate.car_rev_speed != CAR_SPEED_STOPPED) {
-					update_player_tick(INPUT_BRAKE_FLAG);
+					update_player_tick_with_legacy_si(INPUT_BRAKE_FLAG, start_line_distance);
 				} else {
 					race_start_sequence_state = RACE_START_SEQUENCE_INACTIVE;
 				}
 			} else if (state.playerstate.car_rev_speed < START_SEQUENCE_AUTO_DRIVE_SPEED_LIMIT) {
-				update_player_tick(INPUT_ACCELERATE_FLAG);
+				update_player_tick_with_legacy_si(INPUT_ACCELERATE_FLAG, start_line_distance);
 			} else {
-				update_player_tick(INPUT_NONE);
+				update_player_tick_with_legacy_si(INPUT_NONE, start_line_distance);
 			}
 		}
 	}
 }
 
 void update_gamestate(void)
+{
+	update_gamestate_with_legacy_si(LEGACY_DEFAULT_PLAYER_TICK_SI);
+}
+
+void update_gamestate_with_legacy_si(legacy_s16 caller_si)
 {
 	legacy_s8 car_input;
 	legacy_u16 checkpoint_index;
@@ -221,6 +230,8 @@ void update_gamestate(void)
 		((legacy_u16)state.game_frame % (legacy_u16)checkpoint_frame_interval) == 0) {
 		get_kevinrandom_seed(state.kevinseed);
 		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(state.game_frame, checkpoint_frame_interval);
+		/* The original checkpoint copy retains its index in SI until this tick returns. */
+		caller_si = LEGACY_S16_FROM_BITS(checkpoint_index);
 		fmemcpy(&cvxptr[checkpoint_index], &state, sizeof(struct GAMESTATE));
 	}
 
@@ -228,7 +239,7 @@ void update_gamestate(void)
 	update_race_end_timing();
 
 	if (state.game_inputmode != GAME_INPUT_MODE_WAITING) {
-		update_player_tick(car_input);
+		update_player_tick_with_legacy_si(car_input, caller_si);
 		if (gameconfig.game_opponenttype != 0) {
 			update_opponent_tick();
 		}

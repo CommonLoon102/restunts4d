@@ -382,6 +382,8 @@ extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);
 extern void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate);
 extern void restore_gamestate(legacy_u16 frame);
 extern void update_gamestate(void);
+/* Supply the original caller register for alternate replay loops. */
+extern void update_gamestate_with_legacy_si(legacy_s16 caller_si);
 extern void init_rect_arrays(void);
 extern void frame_present(struct RECTANGLE *rect);
 extern void font_set_fontdef(void);

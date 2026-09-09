@@ -175,6 +175,13 @@ run_host_test test-ui-file-input ui_dialog.c \
     "$test_source_dir/strlib.c" "$test_source_dir/resource.c" -Wno-pointer-sign
 run_host_test test-ui-dialog ui_dialog.c "$test_source_dir/legacy.c" -Wno-pointer-sign
 
+run_host_test test-gameplay-residue gamestep.c \
+    "$test_source_dir/state.c" "$test_source_dir/physics_grip.c" \
+    "$test_source_dir/physics_collision.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/headless_trackdata.c" "$test_source_dir/math.c" \
+    "$test_source_dir/legacy.c" -DRESTUNTS_HEADLESS \
+    -Wno-pointer-sign -Wno-sign-compare -Wno-missing-braces
+
 run_host_test test-pixldump-legacy-context ../pixldump/legacy_context.c
 
 run_host_test test-shape3d-render-residue shape3d.c \

@@ -71,7 +71,8 @@ static void run_grip(legacy_s16 behavior)
 	legacy_execution_residue = before;
 #endif
 	update_grip(&car, &simd, behavior);
-	update_legacy_grip_stack_words(&car, &simd, speed_before, actual_before);
+	update_legacy_grip_stack_words(&car, &simd, speed_before, actual_before,
+								   LEGACY_DEFAULT_PLAYER_TICK_SI);
 #ifdef GRIP_DIFFERENTIAL
 	assert(memcmp(&expected, &car, sizeof(car)) == 0);
 	assert(memcmp(&expected_residue, &legacy_execution_residue, sizeof(expected_residue)) == 0);
