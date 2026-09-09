@@ -243,7 +243,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.1
+          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.0
         run: |
           set -eu
           for archive in BINs PDOs; do
