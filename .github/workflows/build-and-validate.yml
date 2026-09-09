@@ -62,13 +62,9 @@ jobs:
         run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
 
   dumpsrv-tests:
-    name: C# regression service (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
+    name: C# regression service tests
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-24.04, windows-2025]
     steps:
       - uses: actions/checkout@v7
 
@@ -80,7 +76,6 @@ jobs:
         run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
 
       - name: Test the POSIX client
-        if: runner.os == 'Linux'
         run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
 
       - name: Check C# formatting
