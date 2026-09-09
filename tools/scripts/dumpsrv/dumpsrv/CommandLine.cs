@@ -60,6 +60,19 @@ public static class CommandLine
                     await ResultFiles.WriteAsync(result, run.OutputDirectory, CancellationToken.None);
                     Console.WriteLine(ReportFormatter.RunSummary(result));
                     return result.Completed && result.Failure is null && result.Diagnostics.Count == 0 ? 0 : 1;
+                case "extract-oracles":
+                    var archivePath = Path.GetFullPath(arguments.String("Archive"));
+                    var gameDirectory = Path.GetFullPath(arguments.String("GameDirectory"));
+                    var renderer = arguments.Boolean("Renderer", false);
+                    var percentage = arguments.Number("RendererTestPercentage", 100, 1, 100);
+                    var shardIndex = arguments.Number("ShardIndex", 0, 0, int.MaxValue);
+                    var shardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue);
+                    arguments.CheckUnused();
+                    var extracted = OracleArchive.Extract(archivePath, gameDirectory, renderer,
+                        percentage, shardIndex, shardCount, cancellation);
+                    Console.WriteLine($"Extracted {extracted.Extracted} oracle outputs; " +
+                        $"{extracted.Missing} missing outputs will be generated during testing.");
+                    return 0;
                 case "merge":
                     var merge = new MergeOptions
                     {
@@ -78,7 +91,7 @@ public static class CommandLine
                     Console.WriteLine(merged.Summary);
                     return merged.Success ? 0 : 1;
                 default:
-                    throw new ArgumentException("Expected serve, run, or merge.");
+                    throw new ArgumentException("Expected serve, run, extract-oracles, or merge.");
             }
         }
         catch (ArgumentException e)
@@ -177,6 +190,7 @@ public static class CommandLine
     private const string Help = """
         Usage: dotnet dumpsrv.dll [serve] -PartitionCount N [options]
                dotnet dumpsrv.dll run -GameDirectory DIR -OutputDirectory DIR -PartitionCount N [options]
+               dotnet dumpsrv.dll extract-oracles -GameDirectory DIR -Archive ZIP [options]
                dotnet dumpsrv.dll merge -ReplayDirectory DIR -ResultsDirectory DIR [options]
 
         serve: -ApiKey KEY (or DUMPSRV_API_KEY), -Port 8080,
@@ -185,6 +199,7 @@ public static class CommandLine
         run:   -ShardIndex 0, -ShardCount 1, -PhysicsTests true, -RendererTests true,
                -RendererTestPercentage 100, -DosBoxTimeoutSeconds 60,
                -RendererTimeoutSeconds N (defaults to DosBoxTimeoutSeconds), -DosBoxConfigPath FILE.
+        extract-oracles: -Renderer false, -RendererTestPercentage 100, -ShardIndex 0, -ShardCount 1.
         merge: -ShardCount 1, -PhysicsTests true, -RendererTests true,
                -RendererTestPercentage 100, -OutputFile partitions_all.txt, -SummaryFile FILE.
 

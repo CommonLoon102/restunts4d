@@ -241,6 +241,27 @@ shows physics and renderer coverage separately, errors grouped by type, and up
 to the first 200 diagnostic lines. The existing DOS executable build and
 `restunts-exes` artifact remain separate from the C# regression runner.
 
+## Precomputed oracle archives
+
+The `extract-oracles` command imports precomputed outputs into an existing
+game directory containing the full replay corpus. It uses the same sampling
+and shard assignment as `run`, extracting only the selected top-level `.BIN`
+or `.PDO` entries. For example:
+
+```sh
+dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
+    -GameDirectory stunts -Archive BINs.zip -ShardIndex 0 -ShardCount 20
+dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
+    -GameDirectory stunts -Archive PDOs.zip -Renderer true \
+    -RendererTestPercentage 100 -ShardIndex 0 -ShardCount 20
+```
+
+`Renderer` defaults to `false`, `RendererTestPercentage` to `100`,
+`ShardIndex` to `0`, and `ShardCount` to `1`. Match these settings to the
+subsequent `run` command. Missing entries are reported and left for the
+runner to generate. Invalid archives fail preparation. Imported outputs
+still undergo the runner's completeness checks before reuse.
+
 ## Cached outputs and diagnostics
 
 Physics compares original `.BIN` output against fresh `.BNI` output. Rendering

@@ -291,6 +291,16 @@ renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
 against pixldumo `.PDO` files with camera 2 and player target 0.
 
+Before testing, each CI shard downloads `BINs.zip` and `PDOs.zip` from
+[restunts4d-oracles](https://github.com/CommonLoon102/restunts4d-oracles/tree/master).
+It extracts only the oracle outputs assigned to that shard into the prepared
+game directory, using the same renderer sampling and shard selection as the
+regression runner. This avoids unpacking the full 15 GB physics archive on
+every runner. Complete `.BIN` and `.PDO` files are reused; missing or invalid
+outputs are generated during testing with the archived Borland executables
+from `tools/oracles/borland`. Ported `.BNI` and `.PDD` outputs are always
+generated afresh.
+
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
 same engine. See the [service and runner guide](tools/scripts/dumpsrv/README.md)
