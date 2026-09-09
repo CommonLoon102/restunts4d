@@ -45,26 +45,6 @@ env:
   WINEDLLOVERRIDES: mscoree,mshtml=
 
 jobs:
-  dumpsrv-tests:
-    name: C# regression service tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Test the shared regression engine and HTTP service
-        run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
-
-      - name: Test the POSIX client
-        run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
-
-      - name: Check C# formatting
-        run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
-  
   formatting:
     name: C/H formatting
     runs-on: ubuntu-24.04
@@ -80,7 +60,7 @@ jobs:
 
       - name: Validate C layout and braces with clang-format
         run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
-        
+
   host-tests:
     name: Host regression tests
     runs-on: ubuntu-24.04
@@ -156,7 +136,27 @@ jobs:
           path: dist/*.exe
           if-no-files-found: error
           retention-days: 14
-          
+
+  dumpsrv-tests:
+    name: C# regression service tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test the shared regression engine and HTTP service
+        run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
+
+      - name: Test the POSIX client
+        run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
+
+      - name: Check C# formatting
+        run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
+
   plan:
     name: Plan the shards
     runs-on: ubuntu-24.04
@@ -188,7 +188,7 @@ jobs:
 
   replay:
     name: Replays (shard ${{ matrix.shard }})
-    needs: [build, plan]
+    needs: [build, dumpsrv-tests, plan]
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
