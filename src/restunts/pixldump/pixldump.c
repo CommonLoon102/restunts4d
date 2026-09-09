@@ -8,6 +8,10 @@
 #include <trackdata_layout.h>
 
 #include "md5.h"
+#ifndef RESTUNTS_ORIGINAL
+#include "legacy_context.h"
+#include "../c/residue.h"
+#endif
 #include "../c/fatal.h"
 #include "../c/race_resources.h"
 #include "../c/shape3d.h"
@@ -74,6 +78,12 @@ enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 #endif
 
 typedef legacy_u16 PIXLDUMP_OUTPUT;
+
+#ifndef RESTUNTS_ORIGINAL
+static legacy_s16 pixldump_argv_si;
+static legacy_u16 pixldump_polyinfo_segment;
+#define PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET 20628U
+#endif
 
 static PIXLDUMP_OUTPUT pixldump_output_open(const legacy_s8 *path)
 {
@@ -417,6 +427,21 @@ static void pixldump_update_gamestate(void)
 	update_gamestate();
 }
 
+#ifndef RESTUNTS_ORIGINAL
+static void pixldump_enable_legacy_render_stack(void)
+{
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT opponent;
+
+	opponent.wheel_headings = legacy_execution_residue.wheel_angle_stack_words;
+	opponent.polyinfo_offset = 0;
+	opponent.polyinfo_segment = pixldump_polyinfo_segment;
+	opponent.material_color_offset = PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET;
+	shape3d_set_legacy_render_stack(legacy_execution_residue.wheel_plane_angles,
+									pixldump_legacy_polygon_frame_pointer(pixldump_argv_si),
+									pixldump_legacy_polygon_code_segment(), &opponent);
+}
+#endif
+
 static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 {
 	legacy_s16 result;
@@ -428,6 +453,9 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		return 1;
 	}
 
+#ifndef RESTUNTS_ORIGINAL
+	pixldump_enable_legacy_render_stack();
+#endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
@@ -442,6 +470,9 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		}
 	}
 
+#ifndef RESTUNTS_ORIGINAL
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
+#endif
 	pixldump_output_close(output);
 	return result;
 }
@@ -570,6 +601,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 		return 1;
 	}
 
+#ifndef RESTUNTS_ORIGINAL
+	pixldump_argv_si = pixldump_legacy_argv_si(argc, argv);
+#endif
 	length = (legacy_s16)strlen(argv[1]);
 	if (length >= 4 &&
 		(strcmp(argv[1] + length - 4, ".rpl") == 0 || strcmp(argv[1] + length - 4, ".RPL") == 0)) {
@@ -590,6 +624,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	fontnptr = file_load_resource(0, "fontn.fnt");
 	font_set_fontdef();
 	init_polyinfo();
+#ifndef RESTUNTS_ORIGINAL
+	pixldump_polyinfo_segment = pixldump_legacy_polyinfo_segment();
+#endif
 	init_trackdata();
 	reset_race_loop_state();
 	init_kevinrandom("kevin");

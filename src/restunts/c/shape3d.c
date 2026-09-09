@@ -5,6 +5,7 @@
 #include "legacy.h"
 #include "memmgr.h"
 #include "shape3d.h"
+#include "shape2d_internal.h"
 #include "shape3d_internal.h"
 #include "shape2d.h"
 #include "math_internal.h"
@@ -986,6 +987,153 @@ void init_polyinfo(void)
 	init_direction_sector_thresholds();
 }
 
+/* Original get_a_poly_info rasterizer call frames overlap stopped-wheel
+ * headings. The caller opts into this virtual stack layout; ordinary game
+ * rendering does not borrow the archived sampling caller's stack address.
+ * SEG006 return sites: solid131F, patterned1348, two-color13E1, line13FF,
+ * wheel145D, sphere1477 and point148D. Argument counts determine whether
+ * the four retained words hold two locals, one local, or the first argument
+ * alongside the saved BP and far return address. */
+#define SHAPE3D_LEGACY_SOLID_POLYGON_RETURN_IP 4895U
+#define SHAPE3D_LEGACY_PATTERNED_POLYGON_RETURN_IP 4936U
+#define SHAPE3D_LEGACY_TWO_COLOR_POLYGON_RETURN_IP 5089U
+#define SHAPE3D_LEGACY_LINE_RETURN_IP 5119U
+#define SHAPE3D_LEGACY_WHEEL_RETURN_IP 5213U
+#define SHAPE3D_LEGACY_SPHERE_RETURN_IP 5239U
+#define SHAPE3D_LEGACY_POINT_RETURN_IP 5261U
+#define SHAPE3D_LEGACY_POLYGON_POINTS_STACK_OFFSET 50U
+#define SHAPE3D_LEGACY_POLYGON_HEADER_SIZE 6U
+#define SHAPE3D_LEGACY_POLYGON_POINT_SIZE 4U
+
+static legacy_s16 *legacy_render_wheel_headings;
+static legacy_u16 legacy_render_polygon_frame_pointer;
+static legacy_u16 legacy_render_polygon_code_segment;
+static struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT legacy_opponent_render_context;
+
+void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 polygon_frame_pointer,
+									 legacy_u16 polygon_code_segment,
+									 const struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT *opponent)
+{
+	legacy_render_wheel_headings = wheel_headings;
+	legacy_render_polygon_frame_pointer = polygon_frame_pointer;
+	legacy_render_polygon_code_segment = polygon_code_segment;
+	if (opponent != 0) {
+		legacy_opponent_render_context = *opponent;
+	} else {
+		legacy_opponent_render_context.wheel_headings = 0;
+	}
+}
+
+/* update_frame calls skybox_op with fourteen argument bytes before calling
+ * get_a_poly_info without arguments. Its BP is therefore fourteen bytes
+ * below the polygon renderer's BP: skybox BP-70..BP-64 overlaps the player's
+ * headings, while BP-50..BP-44 overlaps the opponent's headings. */
+void shape3d_retain_legacy_skybox_horizon(legacy_s16 horizon)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[0] = horizon;
+	}
+}
+
+void shape3d_retain_legacy_skybox_rect(const struct RECTANGLE *rect)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[1] = rect->left;
+		legacy_opponent_render_context.wheel_headings[2] = rect->right;
+		legacy_opponent_render_context.wheel_headings[3] = rect->top;
+	}
+}
+
+void shape3d_retain_legacy_skybox_points(const struct POINT2D *points)
+{
+	if (legacy_render_wheel_headings != 0) {
+		legacy_render_wheel_headings[0] = points[0].px;
+		legacy_render_wheel_headings[1] = points[0].py;
+		legacy_render_wheel_headings[2] = points[1].px;
+		legacy_render_wheel_headings[3] = points[1].py;
+	}
+}
+
+/* Opponent headings overlap get_a_poly_info's BP-64 pattern temporary,
+ * BP-62/BP-60 polygon-data far pointer, and the word at BP-58 left by the preceding skybox call.
+ * Rasterizer calls are below this window and leave these locals intact. */
+static void shape3d_retain_opponent_pattern(legacy_u16 value)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[0] = LEGACY_S16_FROM_BITS(value);
+	}
+}
+
+static void shape3d_retain_opponent_polygon_pointer(const legacy_u8 far *record,
+													legacy_u16 vertex_count)
+{
+	legacy_u16 offset;
+
+	if (legacy_opponent_render_context.wheel_headings == 0) {
+		return;
+	}
+	offset = LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.polyinfo_offset,
+								 (legacy_u16)(record - polyinfoptr));
+	offset = LEGACY_U16_WRAP_ADD(offset, SHAPE3D_LEGACY_POLYGON_HEADER_SIZE);
+	offset = LEGACY_U16_WRAP_ADD(
+		offset, LEGACY_U16_WRAP_MUL(vertex_count, SHAPE3D_LEGACY_POLYGON_POINT_SIZE));
+	legacy_opponent_render_context.wheel_headings[1] = LEGACY_S16_FROM_BITS(offset);
+	/* The original increments only the pointer's offset, without normalizing it. */
+	legacy_opponent_render_context.wheel_headings[2] =
+		LEGACY_S16_FROM_BITS(legacy_opponent_render_context.polyinfo_segment);
+}
+
+static void shape3d_retain_render_local_pair(legacy_u16 first, legacy_u16 second,
+											 legacy_u16 return_ip)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(first);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(second);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(return_ip);
+}
+
+static void shape3d_retain_render_local(legacy_u16 first, legacy_u16 return_ip)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(first);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(return_ip);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(legacy_render_polygon_code_segment);
+}
+
+static void shape3d_retain_render_argument(legacy_u16 return_ip, legacy_u16 argument)
+{
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(legacy_render_polygon_frame_pointer);
+	legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(return_ip);
+	legacy_render_wheel_headings[2] = LEGACY_S16_FROM_BITS(legacy_render_polygon_code_segment);
+	legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(argument);
+}
+
+static void shape3d_retain_sphere_stack(legacy_u16 size)
+{
+	legacy_u16 effective_height;
+	legacy_u16 first;
+
+	if (legacy_render_wheel_headings == 0) {
+		return;
+	}
+	effective_height = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_SUB(size, size >> 2), size >> 4);
+	/* preRender_sphere writes BP-2 only after rejecting nonpositive heights
+	 * and the one-pixel shortcut; its saved BP/return words always change. */
+	first = LEGACY_S16_FROM_BITS(effective_height) >= 2
+				? LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U)
+				: (legacy_u16)legacy_render_wheel_headings[0];
+	shape3d_retain_render_local(first, SHAPE3D_LEGACY_SPHERE_RETURN_IP);
+}
+
 void shape3d_render_queued_primitives(void)
 {
 	legacy_u8 far *record;
@@ -1009,33 +1157,57 @@ void shape3d_render_queued_primitives(void)
 		if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
 			vertex_count = record[3];
 			polyinfo_read_points(record, points, vertex_count);
+			shape3d_retain_opponent_polygon_pointer(record, vertex_count);
 			pattern_type = (legacy_u16)material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
+				shape3d_retain_render_local_pair(
+					LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U),
+					drawing_sprite.sprite_raster_left, SHAPE3D_LEGACY_SOLID_POLYGON_RETURN_IP);
 				preRender_default(material_color, vertex_count, points);
 			} else if (pattern_type == 1U) {
 				pattern_type = (legacy_u16)material_patlist2_ptr_cpy[material_type];
+				shape3d_retain_opponent_pattern(pattern_type);
 				if (pattern_type != 0U) {
+					shape3d_retain_render_local(drawing_sprite.sprite_raster_left,
+												SHAPE3D_LEGACY_PATTERNED_POLYGON_RETURN_IP);
 					preRender_patterned(pattern_type, material_color, vertex_count, points);
 				}
 			} else if (pattern_type == 2U) {
+				shape3d_retain_opponent_pattern(LEGACY_U16_WRAP_MUL(material_type, 2U));
+				/* preRender_unk replaces its first argument with the secondary color. */
+				shape3d_retain_render_argument(
+					SHAPE3D_LEGACY_TWO_COLOR_POLYGON_RETURN_IP,
+					(legacy_u16)material_clrlist2_ptr_cpy[material_type]);
 				preRender_two_color((legacy_u16)material_patlist2_ptr_cpy[material_type],
 									(legacy_u16)material_clrlist2_ptr_cpy[material_type],
 									material_color, vertex_count, points);
 			}
 		} else if (primitive_type == RENDER_PRIMITIVE_LINE) {
+			shape3d_retain_render_argument(SHAPE3D_LEGACY_LINE_RETURN_IP,
+										   polyinfo_read_word(record, 3U));
 			preRender_line(polyinfo_read_word(record, 3U), polyinfo_read_word(record, 4U),
 						   polyinfo_read_word(record, 5U), polyinfo_read_word(record, 6U),
 						   material_color);
 		} else if (primitive_type == RENDER_PRIMITIVE_SPHERE) {
+			shape3d_retain_sphere_stack(polyinfo_read_word(record, 5U));
 			preRender_sphere(LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 							 LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 							 polyinfo_read_word(record, 5U), material_color);
 		} else if (primitive_type == RENDER_PRIMITIVE_WHEEL) {
+			shape3d_retain_opponent_pattern(
+				LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.material_color_offset,
+									LEGACY_U16_WRAP_MUL(material_type, 2U)));
+			shape3d_retain_render_argument(
+				SHAPE3D_LEGACY_WHEEL_RETURN_IP,
+				LEGACY_U16_WRAP_SUB(legacy_render_polygon_frame_pointer,
+									SHAPE3D_LEGACY_POLYGON_POINTS_STACK_OFFSET));
 			polyinfo_read_points(record, points, 4U);
 			preRender_wheel(points, WHEEL_INNER_RADIUS_SCALE, material_color,
 							(legacy_u16)material_clrlist_ptr_cpy[material_type + 1U],
 							(legacy_u16)material_clrlist_ptr_cpy[material_type + 2U]);
 		} else if (primitive_type == RENDER_PRIMITIVE_POINT) {
+			shape3d_retain_render_local_pair(record_index, primitive_index,
+											 SHAPE3D_LEGACY_POINT_RETURN_IP);
 			sprite_putpixel_clipped(LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 3U)),
 									LEGACY_S16_FROM_BITS(polyinfo_read_word(record, 4U)),
 									material_color);

@@ -50,6 +50,7 @@ ifeq ($(TARGET),original)
 endif
 
 ifeq ($(TARGET),ported)
+  PIXLDUMP_OBJFILES += $(OBJDIR)\legacy_context.obj
   PIXLDUMP_START_OBJFILE = $(OBJDIR)\pixlstart.obj
   ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(PIXLDUMP_OBJFILES) $(PIXLDUMP_START_OBJFILE) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(CM_LIB_FILES) $(DOS_STACK_OBJFILE)
   CFLAGS = -DRESTUNTS_PIXLDUMP
@@ -79,7 +80,7 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(PIXLDUMP_LINK_DEPS)
+pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(if $(filter ported,$(TARGET)),$(OBJDIR)/legacy_context.obj) $(PIXLDUMP_LINK_DEPS)
   ifeq ($(LINKER),wlink)
 		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS) $(WLINK_LIBRARIES)
   else
@@ -95,8 +96,11 @@ force_me: ;
 $(OBJDIR):
 	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 
-$(OBJDIR)/pixldump.obj: pixldump.c md5.h | $(OBJDIR)
+$(OBJDIR)/pixldump.obj: pixldump.c md5.h legacy_context.h | $(OBJDIR)
 	$(CC) -I../c pixldump.c
+
+$(OBJDIR)/legacy_context.obj: legacy_context.c legacy_context.h ../c/shape3d.h | $(OBJDIR)
+	$(CC) -I../c legacy_context.c
 
 $(OBJDIR)/md5.obj: md5.c md5.h | $(OBJDIR)
 	$(CC) -I../c md5.c
@@ -110,6 +114,7 @@ clean:
 	del build\ported\pixldump.obj
 	del build\ported\md5.obj
 	del build\ported\pixlstart.obj
+	del build\ported\legacy_context.obj
 	del pixldump.exe
 	del pixldump.map
 	del pixldumo.exe

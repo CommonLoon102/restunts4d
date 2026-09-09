@@ -240,6 +240,13 @@ even when near-plane clipping retains a negative depth sum. This can put a grill
 behind opaque surfaces, as in `0027.rpl`, camera 2, player, frame 665. Preserve
 this behavior in the C port; `asmorig` and pixldumo remain the unchanged oracle.
 
+The C renderer also preserves the original sphere bounding-box writes used by
+crash explosions and the renderer stack values reused by stopped-wheel physics.
+The pixel-dump wrapper supplies the archived caller context, deriving addresses
+from the DOS load segment, decoded arguments, and resource allocations. See
+[renderer parity notes](docs/renderer-parity.md) for the assembly evidence and
+regression coverage.
+
 Both modes force maximum graphical detail and hide the dashboard and replay
 controls. Invalid arguments are rejected before an output file is created. The
 complete output path, including its generated suffix, must fit in 127

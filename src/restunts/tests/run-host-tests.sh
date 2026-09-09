@@ -140,7 +140,7 @@ run_host_test test-car-shape-lifetime shape3d_car.c \
     "$test_source_dir/full_data.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-skybox-render skybox.c \
-    "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
+    "$test_source_dir/shape3d.c" "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
@@ -174,5 +174,12 @@ run_host_test test-ui-file-input ui_dialog.c \
     "$test_source_dir/ui_input.c" "$test_source_dir/legacy.c" \
     "$test_source_dir/strlib.c" "$test_source_dir/resource.c" -Wno-pointer-sign
 run_host_test test-ui-dialog ui_dialog.c "$test_source_dir/legacy.c" -Wno-pointer-sign
+
+run_host_test test-pixldump-legacy-context ../pixldump/legacy_context.c
+
+run_host_test test-shape3d-render-residue shape3d.c \
+    "$test_source_dir/full_data.c" "$test_source_dir/headless_data.c" \
+    "$test_source_dir/physics_collision.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers
 
 echo "All host regression tests passed."
