@@ -32,7 +32,10 @@ ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
 
 all: $(OBJ_FILES)
 
-$(OBJDIR)/%.obj: %.asm
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/%.obj: %.asm | $(OBJDIR)
   # asm file name
 	$(eval ASM_FILE = $<)
   # obj filepath (slash replaced with backslash for tasmx)

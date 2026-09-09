@@ -92,13 +92,16 @@ pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(PIXLDUMP_LINK_
 
 force_me: ;
 
-$(OBJDIR)/pixldump.obj: pixldump.c md5.h
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/pixldump.obj: pixldump.c md5.h | $(OBJDIR)
 	$(CC) -I../c pixldump.c
 
-$(OBJDIR)/md5.obj: md5.c md5.h
+$(OBJDIR)/md5.obj: md5.c md5.h | $(OBJDIR)
 	$(CC) -I../c md5.c
 
-$(OBJDIR)/pixlstart.obj: pixlstart.c ../platform/dos/dosstart.c
+$(OBJDIR)/pixlstart.obj: pixlstart.c ../platform/dos/dosstart.c | $(OBJDIR)
 	$(CC) -I../c pixlstart.c
 
 clean:

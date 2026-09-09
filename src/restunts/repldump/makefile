@@ -96,7 +96,10 @@ repldump.exe: force_me $(OBJDIR)/repldump.obj $(REPLDUMP_LINK_DEPS)
 
 force_me: ;
 
-$(OBJDIR)/repldump.obj: repldump.c
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/repldump.obj: repldump.c | $(OBJDIR)
 	$(CC) -I../c $?
 
 clean:

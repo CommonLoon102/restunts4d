@@ -91,7 +91,10 @@ restunts: $(ENTRY_DEP)
   endif
 	copy $(OUTFILE) s:\stunts\$(OUTFILE)
 
-$(OBJDIR)/main.obj: main.c
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/main.obj: main.c | $(OBJDIR)
 	$(CC) -I../c $?
 
 clean:

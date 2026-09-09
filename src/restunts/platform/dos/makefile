@@ -13,40 +13,43 @@ CC = bcc /c /u- /mm /v /n$(OBJDIR)
 
 all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/keyboard.obj $(OBJDIR)/divide.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
 
-$(OBJDIR)/%.obj: %.asm
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/%.obj: %.asm | $(OBJDIR)
 	$(ASM) $<, $(subst /,\,$@)
 
-$(OBJDIR)/timer.obj: timer.c ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/timer.obj: timer.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c timer.c
 
-$(OBJDIR)/runtime.obj: runtime.c ../../c/legacy.h
+$(OBJDIR)/runtime.obj: runtime.c ../../c/legacy.h | $(OBJDIR)
 	$(CC) runtime.c
 
-$(OBJDIR)/memory.obj: memory.c ../../c/legacy.h ../../c/memmgr.h ../../c/platform.h
+$(OBJDIR)/memory.obj: memory.c ../../c/legacy.h ../../c/memmgr.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c memory.c
 
-$(OBJDIR)/file.obj: file.c ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/file.obj: file.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c file.c
 
-$(OBJDIR)/keyboard.obj: keyboard.c ../../c/legacy.h ../../c/keyboard.h
+$(OBJDIR)/keyboard.obj: keyboard.c ../../c/legacy.h ../../c/keyboard.h | $(OBJDIR)
 	$(CC) -I../../c keyboard.c
 
-$(OBJDIR)/divide.obj: divide.c ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/divide.obj: divide.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c divide.c
 
-$(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c joystick.c
 
-$(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c mouse.c
 
-$(OBJDIR)/video.obj: video.c ../../c/legacy.h
+$(OBJDIR)/video.obj: video.c ../../c/legacy.h | $(OBJDIR)
 	$(CC) video.c
 
-$(OBJDIR)/audio.obj: audio.c ../../c/audio.h ../../c/legacy.h ../../c/platform.h
+$(OBJDIR)/audio.obj: audio.c ../../c/audio.h ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
 	$(CC) -I../../c audio.c
 
-$(OBJDIR)/critical.obj: critical.c ../../c/legacy.h
+$(OBJDIR)/critical.obj: critical.c ../../c/legacy.h | $(OBJDIR)
 	$(CC) critical.c
 
 clean:

@@ -35,13 +35,16 @@ C_HEADERS = $(wildcard *.h)
 
 all: $(OBJ_FILES)
 
-$(OBJDIR)/%.obj: %.c $(C_HEADERS)
+$(OBJDIR):
+	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+
+$(OBJDIR)/%.obj: %.c $(C_HEADERS) | $(OBJDIR)
   # c file name
 	$(eval C_FILE = $<)
   # compiler run
 	$(CC) $(C_FILE)
 
-$(OBJDIR)/dosstart.obj: ../platform/dos/dosstart.c legacy.h platform.h
+$(OBJDIR)/dosstart.obj: ../platform/dos/dosstart.c legacy.h platform.h | $(OBJDIR)
 	$(CC) ../platform/dos/dosstart.c
 
 clean:
