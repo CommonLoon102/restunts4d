@@ -334,6 +334,7 @@ public static class HttpService
                 {
                     throw new InvalidDataException($"Duplicate multipart field: {name}");
                 }
+                ValidateUploadFileName(name, disposition);
                 using var partBody = new MemoryStream();
                 await section.Body.CopyToAsync(partBody, cancellationToken);
                 parts.Add(name, partBody.ToArray());
@@ -355,6 +356,39 @@ public static class HttpService
             }
         }
         return parts;
+    }
+
+    private static void ValidateUploadFileName(string name,
+        ContentDispositionHeaderValue disposition)
+    {
+        var expectedFileName = name.ToLowerInvariant() switch
+        {
+            "repldump" => "repldump.exe",
+            "pixldump" => "pixldump.exe",
+            _ => null
+        };
+        var parameters = disposition.Parameters.Where(parameter =>
+            parameter.Name.Equals("filename", StringComparison.OrdinalIgnoreCase) ||
+            parameter.Name.Equals("filename*", StringComparison.OrdinalIgnoreCase)).ToArray();
+        if (expectedFileName is null)
+        {
+            if (parameters.Length != 0)
+            {
+                throw new InvalidDataException($"{name} must be a text field, not a file upload.");
+            }
+            return;
+        }
+        // Check both filename forms so a conflicting fallback cannot hide an invalid name.
+        if (parameters.Length == 0 || parameters
+            .GroupBy(parameter => parameter.Name.Value, StringComparer.OrdinalIgnoreCase)
+            .Any(group => group.Count() > 1) || parameters.Any(parameter => !string.Equals(
+                parameter.Name.Equals("filename*", StringComparison.OrdinalIgnoreCase)
+                    ? disposition.FileNameStar.Value
+                    : HeaderUtilities.RemoveQuotes(parameter.Value).Value,
+                expectedFileName, StringComparison.Ordinal)))
+        {
+            throw new InvalidDataException($"{name} must have filename {expectedFileName}.");
+        }
     }
 
     private static void ValidateEnvelope(MemoryStream body, string boundary)

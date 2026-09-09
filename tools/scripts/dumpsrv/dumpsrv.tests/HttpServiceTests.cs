@@ -234,6 +234,148 @@ public sealed class HttpServiceTests
     }
 
     [Theory]
+    [InlineData("repldump", "other.exe", null)]
+    [InlineData("pixldump", "other.exe", null)]
+    [InlineData("repldump", "pixldump.exe", null)]
+    [InlineData("pixldump", "repldump.exe", null)]
+    [InlineData("pixldump", "pixeldump.exe", null)]
+    [InlineData("repldump", "../../repldump.exe", null)]
+    [InlineData("pixldump", @"C:\uploads\pixldump.exe", null)]
+    [InlineData("repldump", "repldump.exe.bak", null)]
+    [InlineData("pixldump", "pixldump.exe ", null)]
+    [InlineData("repldump", null, null)]
+    [InlineData("pixldump", null, null)]
+    [InlineData("repldump", "\"\"", null)]
+    [InlineData("pixldump", null, "")]
+    [InlineData("repldump", null, "other.exe")]
+    [InlineData("pixldump", null, "../pixldump.exe")]
+    [InlineData("repldump", "repldump.exe", "other.exe")]
+    [InlineData("pixldump", "other.exe", "pixldump.exe")]
+    [InlineData("repldump", "repldump.exe", "")]
+    [InlineData("repldump", "REPLDUMP.EXE", null)]
+    [InlineData("pixldump", "PIXLDUMP.EXE", null)]
+    [InlineData("repldump", "Repldump.exe", null)]
+    [InlineData("pixldump", "pixldump.EXE", null)]
+    [InlineData("repldump", null, "REPLDUMP.EXE")]
+    [InlineData("pixldump", null, "Pixldump.exe")]
+    [InlineData("repldump", "repldump.exe", "REPLDUMP.EXE")]
+    [InlineData("pixldump", "PIXLDUMP.EXE", "pixldump.exe")]
+    public async Task RejectsInvalidUploadFilenamesBeforeSavingEitherExecutable(
+        string field, string? fileName, string? fileNameStar)
+    {
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine);
+        var gameDirectory = Path.Combine(server.Directory, "stunts");
+        var physicsPath = Path.Combine(gameDirectory, "REPLDUMP.EXE");
+        var rendererPath = Path.Combine(gameDirectory, "PIXLDUMP.EXE");
+        await File.WriteAllBytesAsync(physicsPath, new byte[] { 98 },
+            TestContext.Current.CancellationToken);
+        await File.WriteAllBytesAsync(rendererPath, new byte[] { 99 },
+            TestContext.Current.CancellationToken);
+        var form = Form();
+        var disposition = form.ElementAt(field == "repldump" ? 0 : 1).Headers.ContentDisposition!;
+        disposition.FileName = fileName;
+        disposition.FileNameStar = fileNameStar;
+        if (fileNameStar == "")
+        {
+            disposition.Parameters.Add(new NameValueHeaderValue("filename*", "UTF-8''"));
+        }
+        using var request = Request(form);
+        using var response = await server.Client.SendAsync(request,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Contains($"{field} must have filename {field}.exe",
+            await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(0, engine.Calls);
+        Assert.Equal(new byte[] { 98 }, await File.ReadAllBytesAsync(physicsPath,
+            TestContext.Current.CancellationToken));
+        Assert.Equal(new byte[] { 99 }, await File.ReadAllBytesAsync(rendererPath,
+            TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("filename", false)]
+    [InlineData("filename*", false)]
+    [InlineData("both", false)]
+    [InlineData("filename", true)]
+    [InlineData("filename*", true)]
+    [InlineData("both", true)]
+    public async Task AcceptsExpectedUploadFilenames(string header, bool upperCaseField)
+    {
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine);
+        var form = Form();
+        foreach (var part in form)
+        {
+            var disposition = part.Headers.ContentDisposition!;
+            if (upperCaseField)
+            {
+                disposition.Name = disposition.Name!.ToUpperInvariant();
+            }
+            if (header == "filename")
+            {
+                disposition.FileNameStar = null;
+            }
+            else if (header == "filename*")
+            {
+                disposition.FileName = null;
+            }
+        }
+        using var request = Request(form);
+        using var response = await server.Client.SendAsync(request,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, engine.Calls);
+        var gameDirectory = Path.Combine(server.Directory, "stunts");
+        Assert.Equal(new byte[] { 1, 2, 3 }, await File.ReadAllBytesAsync(
+            Path.Combine(gameDirectory, "REPLDUMP.EXE"), TestContext.Current.CancellationToken));
+        Assert.Equal(new byte[] { 4, 5, 6 }, await File.ReadAllBytesAsync(
+            Path.Combine(gameDirectory, "PIXLDUMP.EXE"), TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("filename=repldump.exe; filename=other.exe")]
+    [InlineData("filename*=UTF-8''repldump.exe; FILENAME*=UTF-8''other.exe")]
+    [InlineData("filename=repldump.exe; filename*=invalid")]
+    public async Task RejectsAmbiguousOrMalformedFilenameHeaders(string parameters)
+    {
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine);
+        var form = Form();
+        var headers = form.First().Headers;
+        headers.Remove("Content-Disposition");
+        headers.TryAddWithoutValidation("Content-Disposition",
+            $"form-data; name=repldump; {parameters}");
+        using var request = Request(form);
+        using var response = await server.Client.SendAsync(request,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, engine.Calls);
+        Assert.Empty(System.IO.Directory.EnumerateFiles(Path.Combine(server.Directory, "stunts")));
+        using var next = Request(Form());
+        using var nextResponse = await server.Client.SendAsync(next,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, nextResponse.StatusCode);
+    }
+
+    [Theory]
+    [InlineData("physics_tests")]
+    [InlineData("renderer_tests")]
+    public async Task RejectsFileUploadsInBooleanFields(string field)
+    {
+        var engine = new FakeEngine();
+        await using var server = await Server.StartAsync(engine);
+        var form = Form();
+        form.Add(new StringContent("true"), field, "other.exe");
+        using var request = Request(form);
+        using var response = await server.Client.SendAsync(request,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, engine.Calls);
+        Assert.Empty(System.IO.Directory.EnumerateFiles(Path.Combine(server.Directory, "stunts")));
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task EnforcesTotalUploadLimitWithAndWithoutContentLength(bool chunked)
@@ -486,8 +628,8 @@ public sealed class HttpServiceTests
     private static MultipartFormDataContent Form(byte[]? repldump = null, byte[]? pixldump = null)
     {
         var form = new MultipartFormDataContent();
-        form.Add(new ByteArrayContent(repldump ?? [1, 2, 3]), "repldump", "../../ignored.exe");
-        form.Add(new ByteArrayContent(pixldump ?? [4, 5, 6]), "pixldump", "ignored-too.exe");
+        form.Add(new ByteArrayContent(repldump ?? [1, 2, 3]), "repldump", "repldump.exe");
+        form.Add(new ByteArrayContent(pixldump ?? [4, 5, 6]), "pixldump", "pixldump.exe");
         return form;
     }
 

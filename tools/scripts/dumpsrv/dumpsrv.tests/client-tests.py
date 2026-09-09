@@ -19,7 +19,7 @@ class ClientTests(unittest.TestCase):
         self.directory = Path(self.temporary.name)
         self.client = self.directory / "dumpsrv-client.sh"
         shutil.copy2(CLIENT, self.client)
-        for name in ("REPLDUMP.EXE", "PIXLDUMP.EXE"):
+        for name in ("repldump.exe", "pixldump.exe"):
             (self.directory / name).write_bytes(b"test executable")
         self.arguments = self.directory / "curl-arguments.json"
         self.output = self.directory / "partitions_all.txt"
@@ -65,6 +65,12 @@ class ClientTests(unittest.TestCase):
         self.assertEqual("10", arguments[arguments.index("--connect-timeout") + 1])
         self.assertEqual("POST", arguments[arguments.index("--request") + 1])
         self.assertIn("X-API-Key: test-key", arguments)
+        for name in ("repldump.exe", "pixldump.exe"):
+            self.assertIn(
+                f"{name[:-4]}=@{self.directory / name};"
+                f"type=application/octet-stream;filename={name}",
+                arguments,
+            )
         self.assertIn("physics_tests=true", arguments)
         self.assertIn("renderer_tests=true", arguments)
         self.assertEqual("http://example.invalid/process", arguments[-1])

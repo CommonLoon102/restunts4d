@@ -132,8 +132,8 @@ if ! command -v curl >/dev/null 2>&1; then
 fi
 
 script_directory=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-repldump_file=$script_directory/REPLDUMP.EXE
-pixldump_file=$script_directory/PIXLDUMP.EXE
+repldump_file=$script_directory/repldump.exe
+pixldump_file=$script_directory/pixldump.exe
 output_file=$script_directory/partitions_all.txt
 temporary_output=
 
@@ -162,8 +162,8 @@ if ! curl \
     --max-time "$timeout_seconds" \
     --request POST \
     --header "X-API-Key: $api_key" \
-    --form "repldump=@$repldump_file;type=application/octet-stream;filename=REPLDUMP.EXE" \
-    --form "pixldump=@$pixldump_file;type=application/octet-stream;filename=PIXLDUMP.EXE" \
+    --form "repldump=@$repldump_file;type=application/octet-stream;filename=repldump.exe" \
+    --form "pixldump=@$pixldump_file;type=application/octet-stream;filename=pixldump.exe" \
     --form-string "physics_tests=$physics_tests" \
     --form-string "renderer_tests=$renderer_tests" \
     --output "$temporary_output" \

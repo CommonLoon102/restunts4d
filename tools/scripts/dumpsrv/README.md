@@ -28,8 +28,12 @@ there:
 - The `.rpl` replay corpus, all required custom-car files, and other Stunts data.
 
 The service writes uploads to `stunts/REPLDUMP.EXE` and `stunts/PIXLDUMP.EXE`.
-Uploaded filenames are ignored. DOSBox mounts only this game directory as drive
-`C:`, keeping service binaries, configuration, and reports outside the mount.
+The `repldump` upload must be named exactly `repldump.exe`, and the `pixldump`
+upload exactly `pixldump.exe`, all lowercase. Missing or different filenames,
+including uppercase, mixed case, paths, or swapped names, return HTTP `400` before either
+executable is saved. Both `filename` and `filename*` are checked when supplied.
+DOSBox mounts only this game directory as drive `C:`, keeping service binaries,
+configuration, and reports outside the mount.
 The direct runner accepts an explicit game directory and requires all four
 physics and renderer executables there when both phases are enabled.
 
@@ -143,8 +147,8 @@ The endpoint is `POST /process`, authenticated with `X-API-Key`. Its
 
 | Field | Required | Description |
 | --- | --- | --- |
-| `repldump` | Yes | Replacement `REPLDUMP.EXE`; maximum 1 MiB. |
-| `pixldump` | Yes | Replacement `PIXLDUMP.EXE`; maximum 1 MiB. |
+| `repldump` | Yes | Upload filename `repldump.exe`; maximum 1 MiB. |
+| `pixldump` | Yes | Upload filename `pixldump.exe`; maximum 1 MiB. |
 | `physics_tests` | No | `true` or `false`; defaults to `true`. |
 | `renderer_tests` | No | `true` or `false`; defaults to `true`. |
 
@@ -153,8 +157,9 @@ one test type must be enabled. A completed run returns HTTP `200` and a UTF-8
 `partitions_all.txt` attachment. Comparison errors are recorded in the report;
 an empty report means all enabled comparisons passed.
 
-Copy `dumpsrv-client.sh`, `REPLDUMP.EXE`, and `PIXLDUMP.EXE` into the same client
-directory. Set the API key, then pass the endpoint URL:
+Copy `dumpsrv-client.sh`, `repldump.exe`, and `pixldump.exe` into the same client
+directory, using these lowercase filenames. Set the API key, then pass the
+endpoint URL:
 
 ```sh
 export DUMPSRV_API_KEY='replace-with-the-server-secret'
