@@ -292,7 +292,7 @@ an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
 against pixldumo `.PDO` files with camera 2 and player target 0.
 
 Before testing, each CI shard downloads `BINs.zip` and `PDOs.zip` from
-[restunts4d-oracles](https://github.com/CommonLoon102/restunts4d-oracles/tree/master).
+[restunts4d-oracles v1.0.0](https://github.com/CommonLoon102/restunts4d-oracles/releases/tag/v1.0.0).
 It extracts only the oracle outputs assigned to that shard into the prepared
 game directory, using the same renderer sampling and shard selection as the
 regression runner. This avoids unpacking the full 15 GB physics archive on

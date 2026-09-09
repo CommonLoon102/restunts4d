@@ -243,12 +243,12 @@ jobs:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://media.githubusercontent.com/media/CommonLoon102/restunts4d-oracles/master
+          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.0
         run: |
           set -eu
           for archive in BINs PDOs; do
               zip_path="$RUNNER_TEMP/$archive.zip"
-              # The archives use Git LFS; the media URL serves the ZIP contents.
+              # Download the versioned release assets.
               curl --fail --location --silent --show-error --retry 3 \
                   --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
               renderer=false
