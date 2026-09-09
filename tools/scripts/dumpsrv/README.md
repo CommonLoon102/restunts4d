@@ -27,6 +27,14 @@ there:
 - `repldumo.exe` and `pixldumo.exe`, the original physics and renderer tools.
 - The `.rpl` replay corpus, all required custom-car files, and other Stunts data.
 
+When preparing a Linux game directory from this repository, copy the whole car
+pack with `cp -R tools/scripts/cars/. /path/to/stunts/`. Do not filter by
+uppercase extensions: the pack includes `.3sh`, `.vsh`, and `.res` files as well.
+Omitting these files leaves the original renderer waiting in its resource-error
+dialog and is reported as a timeout. The replays using PACK, PFCR, LANI, LRDE,
+and FUNO require these mixed-case files. Updating the executables alone does
+not repair an already prepared game directory.
+
 The service writes uploads to `stunts/repldump.exe` and `stunts/pixldump.exe`.
 The `repldump` upload must be named exactly `repldump.exe`, and the `pixldump`
 upload exactly `pixldump.exe`, all lowercase. Missing or different filenames,
