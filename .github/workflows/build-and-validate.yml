@@ -24,15 +24,15 @@ on:
       replay-timeout-seconds:
         description: Seconds each physics executable gets per replay.
         type: number
-        default: 30
+        default: 120
       renderer-test-percentage:
         description: Percentage of golden replays sampled for renderer tests (integer 1-100).
         type: number
-        default: 5
+        default: 100
       renderer-timeout-seconds:
         description: Seconds each renderer executable gets per replay.
         type: number
-        default: 120
+        default: 240
     outputs:
       exe-artifact:
         description: Artifact holding the six built executables.

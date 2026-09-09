@@ -3,6 +3,8 @@ name: PR validation
 # Blocks a pull request when any executable fails to build, full physics
 # validation fails, or sampled renderer output differs from pixldumo.
 on:
+  push:
+    branches: [c-port18]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -10,7 +12,7 @@ on:
       renderer-test-percentage:
         description: Percentage of golden replays sampled for renderer tests (integer 1-100).
         type: number
-        default: 5
+        default: 100
 
 permissions:
   contents: read
