@@ -268,6 +268,17 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+      - name: Upload this shard's PDO files
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: renderer-pdo-${{ matrix.shard }}
+          path: ${{ runner.temp }}/gamedir/**/*.[pP][dD][oO]
+          include-hidden-files: true
+          # A shard may have no replays in the renderer sample.
+          if-no-files-found: warn
+          retention-days: 14
+
   report:
     name: Replay report
     needs: [plan, replay]
@@ -311,6 +322,15 @@ jobs:
           name: partitions_all
           path: partitions_all.txt
           if-no-files-found: warn
+          retention-days: 14
+
+      - name: Combine all PDO files into a downloadable ZIP
+        uses: actions/upload-artifact/merge@v7
+        if: always()
+        with:
+          name: renderer-pdo
+          pattern: renderer-pdo-*
+          include-hidden-files: true
           retention-days: 14
 
       - name: Check replay jobs completed successfully
