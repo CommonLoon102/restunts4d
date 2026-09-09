@@ -388,6 +388,11 @@ public sealed class HttpServiceTests
         HttpContent content = chunked ? new ChunkedContent(bytes) : new ByteArrayContent(bytes);
         content.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=test");
         using var request = Request(content);
+        if (!chunked)
+        {
+            // Allow rejection from Content-Length before sending the oversized body.
+            request.Headers.ExpectContinue = true;
+        }
         using var response = await server.Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.RequestEntityTooLarge, response.StatusCode);
     }
