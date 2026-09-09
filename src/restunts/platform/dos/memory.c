@@ -8,17 +8,19 @@
 void far *dos_memory_get_psp(void)
 {
 	legacy_u16 segment;
-	legacy_u16 offset;
+	/* OFFSET is an inline-assembler keyword in Borland C, so name this
+	 * destination explicitly to ensure BX is stored in the local word. */
+	legacy_u16 psp_offset;
 
 	__asm {
 		push ds
 		mov ah, DOS_MEMORY_GET_PSP_FUNCTION
 		int DOS_MEMORY_INTERRUPT
 		mov segment, ds
-		mov offset, bx
+		mov psp_offset, bx
 		pop ds
 	}
-	return dos_memory_make_pointer(segment, offset);
+	return dos_memory_make_pointer(segment, psp_offset);
 }
 
 legacy_u16 dos_memory_allocate(legacy_u16 paragraphs)
