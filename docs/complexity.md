@@ -91,7 +91,7 @@ were outside the completed priority list; the whole codebase is not yet below
 
 - All 14 host tests pass, including new car-speed, collision-geometry and
   primitive-queue regression suites. Clang-format 18.1.8 and EditorConfig pass.
-- RESTUNTS, REPLDUMP and PIXLDUMP compile and link with the DOS toolchain.
+- restunts, repldump and pixldump compile and link with the DOS toolchain.
 - Fifteen DOS physics replays (15,346 frames; 15 cars and 14 tracks) match both
   the saved baseline and original oracle byte for byte.
 - Temporary before/after differential harnesses matched 3,169,124 collision
@@ -102,8 +102,8 @@ were outside the completed priority list; the whole codebase is not yet below
 - AddressSanitizer and UndefinedBehaviorSanitizer pass the new collision and
   renderer tests.
 
-DOS pixel comparison could not complete: both the saved baseline PIXLDUMP and
-freshly built PIXLDUMP exit with errorlevel 1 before writing output in the twelve
+DOS pixel comparison could not complete: both the saved baseline pixldump and
+freshly built pixldump exit with errorlevel 1 before writing output in the twelve
 renderer scenarios. The original renderer succeeds. This existing startup
 failure remains unresolved; the renderer equivalence evidence for this pass is
 from the native differential and queue tests.
@@ -114,10 +114,10 @@ from the native differential and queue tests.
   `bash src/restunts/tests/run-host-tests.sh`, including one new suite for each
   of the twelve refactored routines.
 - Clang-format 18.1.8, EditorConfig, CRLF checks and `git diff --check` pass.
-- RESTUNTS, REPLDUMP and PIXLDUMP compile and link with the DOS toolchain.
+- restunts, repldump and pixldump compile and link with the DOS toolchain.
 - All fifteen DOS physics replays (15,346 frames; 15 cars, 14 tracks and four
   opponent races) match the saved baseline, first-pass result and original
-  disassembly oracle byte for byte. Each run uses the final REPLDUMP executable.
+  disassembly oracle byte for byte. Each run uses the final repldump executable.
 - Original-code comparisons cover 2,592 rectangular track configurations,
   branch and validation boundaries, the fifteen replay tracks, 200,000 grip
   states and 200,000 opponent updates. Opponent comparisons include full game
@@ -132,7 +132,7 @@ from the native differential and queue tests.
 - AddressSanitizer and UndefinedBehaviorSanitizer pass all twelve new suites.
 
 The DOS pixel limitation persists: all twelve fresh renderer cases exit with
-errorlevel 1 before creating a PDD file, using the final PIXLDUMP executable.
+errorlevel 1 before creating a PDD file, using the final pixldump executable.
 The saved baseline and first-pass executable fail the same cases; the original
 renderer produces valid output in all twelve. DOS pixel equivalence therefore
 remains unverified. Native renderer comparisons and boundary tests provide the

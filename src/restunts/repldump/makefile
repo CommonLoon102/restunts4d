@@ -92,7 +92,7 @@ repldump.exe: force_me $(OBJDIR)/repldump.obj $(REPLDUMP_LINK_DEPS)
 		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
 		del lscript.txt
   endif
-	copy $(OUTFILE) s:\stunts
+	copy $(OUTFILE) s:\stunts\$(OUTFILE)
 
 force_me: ;
 

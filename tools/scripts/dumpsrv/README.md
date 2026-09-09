@@ -24,10 +24,10 @@ otherwise it uses `C:\DOSBox-x\dosbox-X.exe` on Windows if present, then
 Create a `stunts` directory alongside `dumpsrv.dll` and put the processing inputs
 there:
 
-- `REPLDUMO.EXE` and `PIXLDUMO.EXE`, the original physics and renderer tools.
+- `repldumo.exe` and `pixldumo.exe`, the original physics and renderer tools.
 - The `.rpl` replay corpus, all required custom-car files, and other Stunts data.
 
-The service writes uploads to `stunts/REPLDUMP.EXE` and `stunts/PIXLDUMP.EXE`.
+The service writes uploads to `stunts/repldump.exe` and `stunts/pixldump.exe`.
 The `repldump` upload must be named exactly `repldump.exe`, and the `pixldump`
 upload exactly `pixldump.exe`, all lowercase. Missing or different filenames,
 including uppercase, mixed case, paths, or swapped names, return HTTP `400` before either

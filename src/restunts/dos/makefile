@@ -89,7 +89,7 @@ restunts: $(ENTRY_DEP)
 		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
 		del lscript.txt
   endif
-	copy $(OUTFILE) s:\stunts
+	copy $(OUTFILE) s:\stunts\$(OUTFILE)
 
 $(OBJDIR)/main.obj: main.c
 	$(CC) -I../c $?

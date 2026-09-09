@@ -94,7 +94,7 @@ rm -f -- "$original_output" "$ported_output"
 if [[ "$rebuild_exes" == true ]]; then
     if ! wine cmd.exe /D /S /C \
         "S: && cd S:\src\restunts && call makepixldump.bat"; then
-        echo "PIXLDUMP build failed." >&2
+        echo "pixldump build failed." >&2
         exit 1
     fi
 fi
@@ -137,12 +137,12 @@ run_dosbox_exe "pixldumo.exe" || exit 1
 run_dosbox_exe "pixldump.exe" || exit 1
 
 if [[ ! -f "$original_output" ]]; then
-    echo "PIXLDUMO.EXE did not produce $original_output." >&2
+    echo "pixldumo.exe did not produce $original_output." >&2
     exit 1
 fi
 
 if [[ ! -f "$ported_output" ]]; then
-    echo "PIXLDUMP.EXE did not produce $ported_output." >&2
+    echo "pixldump.exe did not produce $ported_output." >&2
     exit 1
 fi
 

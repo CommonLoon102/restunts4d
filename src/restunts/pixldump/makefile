@@ -88,7 +88,7 @@ pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(PIXLDUMP_LINK_
 		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
 		del lscript.txt
   endif
-	copy $(OUTFILE) s:\stunts
+	copy $(OUTFILE) s:\stunts\$(OUTFILE)
 
 force_me: ;
 

@@ -1,7 +1,7 @@
 name: PR validation
 
 # Blocks a pull request when any executable fails to build, full physics
-# validation fails, or sampled renderer output differs from PIXLDUMO.
+# validation fails, or sampled renderer output differs from pixldumo.
 on:
   pull_request:
     branches: [master]

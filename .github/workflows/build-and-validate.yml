@@ -171,15 +171,15 @@ jobs:
           missing=0
           # makerepldump.bat never reports failure, and a fresh checkout carries
           # none of these files, so their presence is the build's pass criteria.
-          for exe in RESTUNTS RESTUNTO REPLDUMP REPLDUMO PIXLDUMP PIXLDUMO; do
+          for exe in restunts restunto repldump repldumo pixldump pixldumo; do
               built=$(find stunts src/restunts/dos src/restunts/repldump src/restunts/pixldump \
                   -maxdepth 1 -iname "$exe.exe" -print -quit)
               if [[ -z "$built" ]]; then
-                  echo "::error::$exe.EXE was not produced by the build"
+                  echo "::error::$exe.exe was not produced by the build"
                   missing=1
                   continue
               fi
-              cp -- "$built" "dist/$exe.EXE"
+              cp -- "$built" "dist/$exe.exe"
           done
           (( missing == 0 )) || exit 1
           ls -l dist
@@ -187,7 +187,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ env.EXE_ARTIFACT }}
-          path: dist/*.EXE
+          path: dist/*.exe
           if-no-files-found: error
           retention-days: 14
 
@@ -236,7 +236,7 @@ jobs:
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp tools/scripts/cars/*.RES tools/scripts/cars/*.3SH \
              tools/scripts/cars/*.VSH tools/scripts/cars/*.PVS "$game_dir/"
-          cp exes/*.EXE "$game_dir/"
+          cp exes/*.exe "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 

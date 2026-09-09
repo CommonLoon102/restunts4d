@@ -105,4 +105,4 @@ jobs:
               --title "${TITLE:-$TAG}" \
               --notes "$notes" \
               "${flags[@]}" \
-              dist/RESTUNTS.EXE dist/RESTUNTO.EXE dist/REPLDUMP.EXE dist/REPLDUMO.EXE
+              dist/restunts.exe dist/restunto.exe dist/repldump.exe dist/repldumo.exe

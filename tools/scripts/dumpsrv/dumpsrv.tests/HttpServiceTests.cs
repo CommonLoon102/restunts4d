@@ -230,7 +230,7 @@ public sealed class HttpServiceTests
         using var response = await server.Client.SendAsync(request, TestContext.Current.CancellationToken);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         Assert.Equal(0, engine.Calls);
-        Assert.False(File.Exists(Path.Combine(server.Directory, "stunts", "REPLDUMP.EXE")));
+        Assert.False(File.Exists(Path.Combine(server.Directory, "stunts", "repldump.exe")));
     }
 
     [Theory]
@@ -266,8 +266,8 @@ public sealed class HttpServiceTests
         var engine = new FakeEngine();
         await using var server = await Server.StartAsync(engine);
         var gameDirectory = Path.Combine(server.Directory, "stunts");
-        var physicsPath = Path.Combine(gameDirectory, "REPLDUMP.EXE");
-        var rendererPath = Path.Combine(gameDirectory, "PIXLDUMP.EXE");
+        var physicsPath = Path.Combine(gameDirectory, "repldump.exe");
+        var rendererPath = Path.Combine(gameDirectory, "pixldump.exe");
         await File.WriteAllBytesAsync(physicsPath, new byte[] { 98 },
             TestContext.Current.CancellationToken);
         await File.WriteAllBytesAsync(rendererPath, new byte[] { 99 },
@@ -328,9 +328,12 @@ public sealed class HttpServiceTests
         Assert.Equal(1, engine.Calls);
         var gameDirectory = Path.Combine(server.Directory, "stunts");
         Assert.Equal(new byte[] { 1, 2, 3 }, await File.ReadAllBytesAsync(
-            Path.Combine(gameDirectory, "REPLDUMP.EXE"), TestContext.Current.CancellationToken));
+            Path.Combine(gameDirectory, "repldump.exe"), TestContext.Current.CancellationToken));
         Assert.Equal(new byte[] { 4, 5, 6 }, await File.ReadAllBytesAsync(
-            Path.Combine(gameDirectory, "PIXLDUMP.EXE"), TestContext.Current.CancellationToken));
+            Path.Combine(gameDirectory, "pixldump.exe"), TestContext.Current.CancellationToken));
+        Assert.Equal(new[] { "pixldump.exe", "repldump.exe" },
+            System.IO.Directory.EnumerateFiles(gameDirectory).Select(Path.GetFileName)
+                .Order(StringComparer.Ordinal));
     }
 
     [Theory]

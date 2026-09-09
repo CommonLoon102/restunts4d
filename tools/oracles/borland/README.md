@@ -7,8 +7,8 @@ the existing Borland-built dump wrappers; they must not be rebuilt with Watcom.
 
 | File | Bytes | Original file timestamp (local time) |
 | --- | ---: | --- |
-| `REPLDUMO.EXE` | 244268 | 2026-09-07 09:36 |
-| `PIXLDUMO.EXE` | 248722 | 2026-09-08 00:48 |
+| `repldumo.exe` | 244268 | 2026-09-07 09:36 |
+| `pixldumo.exe` | 248722 | 2026-09-08 00:48 |
 
 The timestamps record the supplied local artifacts, not a claim of a
 reproducible build. `SHA256SUMS` identifies the exact archived bytes. The
@@ -19,10 +19,10 @@ From the repository root, verify and restore the references on Linux:
 
 ```sh
 (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-cp tools/oracles/borland/REPLDUMO.EXE tools/oracles/borland/PIXLDUMO.EXE stunts/
+cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe stunts/
 ```
 
-`REPLDUMO.EXE` writes per-frame game state as `.BIN`; `PIXLDUMO.EXE` writes
+`repldumo.exe` writes per-frame game state as `.BIN`; `pixldumo.exe` writes
 framebuffer MD5 samples as `.PDO` for comparison with the ported `.BNI` and
 `.PDD` outputs. Camera/target options must match on both sides.
 
@@ -35,7 +35,7 @@ For a fresh, deterministic 100-replay comparison against these exact oracles:
 python3 tools/scripts/validate-toolchain.py --output out/watcom-validation
 ```
 
-This requires built `stunts/REPLDUMP.EXE` and `stunts/PIXLDUMP.EXE`, Python 3,
+This requires built `stunts/repldump.exe` and `stunts/pixldump.exe`, Python 3,
 .NET 10, and DOSBox-X. The command copies game assets, selects 100 evenly spaced
 replays from the ordinal-sorted golden ZIP, verifies the archived checksums,
 and runs both physics and renderer comparisons for every selected replay.

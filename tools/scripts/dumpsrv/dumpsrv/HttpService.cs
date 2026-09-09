@@ -120,9 +120,9 @@ public static class HttpService
 
             var serviceDirectory = Path.GetFullPath(options.ServiceDirectory);
             var gameDirectory = Path.Combine(serviceDirectory, "stunts");
-            await File.WriteAllBytesAsync(DosFiles.Resolve(gameDirectory, "REPLDUMP.EXE"),
+            await File.WriteAllBytesAsync(DosFiles.Resolve(gameDirectory, "repldump.exe"),
                 parts["repldump"], disconnected.Token);
-            await File.WriteAllBytesAsync(DosFiles.Resolve(gameDirectory, "PIXLDUMP.EXE"),
+            await File.WriteAllBytesAsync(DosFiles.Resolve(gameDirectory, "pixldump.exe"),
                 parts["pixldump"], disconnected.Token);
 
             var phases = physics && renderer ? "physics and renderer" : physics ? "physics" : "renderer";

@@ -166,35 +166,35 @@ makefiles, and is also mounted inside DOSBox as a fixed point of reference.
 The makefile supports the following targets:
 
 	make <OPTIONS> restunts
-		Builds RESTUNTS.EXE from the ported C game and the DOS platform layer.
+		Builds restunts.exe from the ported C game and the DOS platform layer.
 
 	make <OPTIONS> restunts-original
 		Builds an executable based on unpatched disassembly with the original
 		codepaths intact. Does not use any of the ported C code.
 
 	make <OPTIONS> repldump
-		Builds the C-only headless replay engine as REPLDUMP.EXE.
+		Builds the C-only headless replay engine as repldump.exe.
 
 	make <OPTIONS> repldump-original
 		Builds the replay dump oracle from the unpatched disassembly.
 
 	make <OPTIONS> pixldump
-		Builds the ported renderer test tool as PIXLDUMP.EXE.
+		Builds the ported renderer test tool as pixldump.exe.
 
 	make <OPTIONS> pixldump-original
-		Builds the original renderer oracle as PIXLDUMO.EXE.
+		Builds the original renderer oracle as pixldumo.exe.
 
-### PIXLDUMP parameters
+### pixldump parameters
 
-PIXLDUMP and PIXLDUMO use the same mandatory parameters. The number of
+pixldump and pixldumo use the same mandatory parameters. The number of
 parameters selects the output mode:
 
 ```text
-PIXLDUMP.EXE <replay> <camera> <target>
-PIXLDUMP.EXE <replay> <camera> <target> <frame>
+pixldump.exe <replay> <camera> <target>
+pixldump.exe <replay> <camera> <target> <frame>
 
-PIXLDUMO.EXE <replay> <camera> <target>
-PIXLDUMO.EXE <replay> <camera> <target> <frame>
+pixldumo.exe <replay> <camera> <target>
+pixldumo.exe <replay> <camera> <target> <frame>
 ```
 
 | Parameter | Accepted values | Description |
@@ -204,8 +204,8 @@ PIXLDUMO.EXE <replay> <camera> <target> <frame>
 | `target` | `0` or `1` | Selects the player (`0`) or opponent (`1`). Opponent mode requires a replay containing an opponent. |
 | `frame` | `0` through `65535` | Exact frame to render. It must not exceed the replay's final frame. Supplying it selects BMP mode. |
 
-With three parameters, the tools generate the normal hash dump. PIXLDUMO writes
-`<replay>.PDO` and PIXLDUMP writes `<replay>.PDD`. Each CRLF-terminated row
+With three parameters, the tools generate the normal hash dump. pixldumo writes
+`<replay>.PDO` and pixldump writes `<replay>.PDD`. Each CRLF-terminated row
 contains the decimal frame number, one space, and the lowercase MD5 of the raw
 64,000-byte Mode 13h framebuffer. The tools sample frames 0, 5, 10, ...
 
@@ -225,20 +225,20 @@ Examples:
 
 ```text
 REM Generate a player/F2 hash dump.
-PIXLDUMP.EXE default.rpl 2 0
+pixldump.exe default.rpl 2 0
 
 REM Generate an opponent/F4 hash dump with the original renderer.
-PIXLDUMO.EXE default.rpl 4 1
+pixldumo.exe default.rpl 4 1
 
 REM Generate a player/F1 BMP at frame 5.
-PIXLDUMP.EXE default.rpl 1 0 5
+pixldump.exe default.rpl 1 0 5
 ```
 
-PIXLDUMP must reproduce the original renderer, including its bugs. In particular,
+pixldump must reproduce the original renderer, including its bugs. In particular,
 polygon depth averages use unsigned division for non-power-of-two vertex counts
 even when near-plane clipping retains a negative depth sum. This can put a grille
 behind opaque surfaces, as in `0027.rpl`, camera 2, player, frame 665. Preserve
-this behavior in the C port; `asmorig` and PIXLDUMO remain the unchanged oracle.
+this behavior in the C port; `asmorig` and pixldumo remain the unchanged oracle.
 
 Both modes force maximum graphical detail and hide the dashboard and replay
 controls. Invalid arguments are rejected before an output file is created. The
@@ -288,8 +288,8 @@ to override the default 120-second timeout for each DOSBox run.
 
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
-an evenly spaced 5% sample for rendering, comparing PIXLDUMP `.PDD` files
-against PIXLDUMO `.PDO` files with camera 2 and player target 0.
+an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
+against pixldumo `.PDO` files with camera 2 and player target 0.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
