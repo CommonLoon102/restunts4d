@@ -1,7 +1,7 @@
 #include "legacy.h"
 #include "platform.h"
 
-#include <dos.h>
+#include "dos_interrupts.h"
 #include "restunts.h"
 
 #define HEADLESS_MAX_ARGS 6
@@ -124,7 +124,7 @@ void headless_start(void)
 	legacy_u16 bss_offset;
 	legacy_u16 stack_pointer;
 
-	/* DOS enters an EXE with ES pointing at its PSP.  Borland's medium model
+	/* DOS enters an EXE with ES pointing at its PSP. The medium memory model
 	 * requires SS == DS whenever a pointer to an automatic object is passed as
 	 * an ordinary near pointer, so normalize both registers to DGROUP before
 	 * calling any C routine.  The linker-visible STACK remains last and gives

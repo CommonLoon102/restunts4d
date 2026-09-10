@@ -32,7 +32,6 @@
 #define track_route_traversal_flags trackdata18
 #define roadside_sign_indices_by_tile trackdata19
 #define roadside_sign_shape_indices trackdata23
-#define TRACKDATA_SPRITE_STATE_STACK_SIZE TRACKDATA_UNKNOWN_12_SIZE
 #define track_column_positions trackpos2
 #define track_column_centers trackcenterpos2
 #define track_row_positions trackpos
@@ -151,8 +150,8 @@ struct SIMD {
 #pragma pack(pop)
 
 /* These records contain 16-bit near/far pointers.  Their DOS ABI layout is
- * meaningful only when the Borland memory model supplies those pointer sizes. */
-#if defined(__BORLANDC__)
+ * meaningful only when the DOS memory model supplies those pointer sizes. */
+#if defined(RESTUNTS_DOS16)
 typedef char
 	legacy_simd_must_be_776_bytes[(sizeof(struct SIMD) == SIMD_DOS_STRUCTURE_SIZE) ? 1 : -1];
 
@@ -382,7 +381,7 @@ extern void init_game_state_with_frame_rate(legacy_u16 frame_rate);
 extern void init_game_state_with_frame_rate_byte(legacy_u16 frame_rate);
 extern void restore_gamestate(legacy_u16 frame);
 extern void update_gamestate(void);
-/* Supply the original caller register for alternate replay loops. */
+/* Supply the original caller register when a tool uses a different replay loop. */
 extern void update_gamestate_with_legacy_si(legacy_s16 caller_si);
 extern void init_rect_arrays(void);
 extern void frame_present(struct RECTANGLE *rect);

@@ -1,121 +1,82 @@
-# default target
+include ../watcom.mk
+
 TARGET ?= ported
-
-VALID_TARGETS = ported original
-ifeq (,$(filter $(TARGET),$(VALID_TARGETS)))
-  $(error Unsupported pixel-dump target: $(TARGET))
+ifeq (,$(filter $(TARGET),ported original))
+  $(error Unsupported pixldump target: $(TARGET))
 endif
-
-SRC = s:\src\restunts
 
 RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj \
                      kevinrnd.obj replinit.obj gameinit.obj gamestep.obj simd.obj carsetup.obj trkutil.obj trackres.obj restunts.obj fatal.obj timing.obj game_input.obj ui_text.obj ui_input.obj ui_dialog.obj intro.obj highscore.obj replay_record.obj replay_viewer.obj race.obj race_resources.obj dashboard.obj menu_common.obj menu_main.obj menu_options.obj menu_track.obj menu_track_editor.obj menu_opponent.obj menu_car.obj audio_engine.obj audio_resources.obj audio_car.obj audio_sequence.obj \
                      shape3d.obj shape3d_resources.obj shape3d_car.obj shape3d_prerender.obj shape3d_lines.obj shape2d.obj shape2d_blit.obj shape2d_resources.obj heapsort.obj frame.obj skybox.obj frame_overlay.obj intro_render.obj track_preview.obj state.obj physics_grip.obj opponent.obj track_setup.obj stateply.obj physics_collision.obj statecrs.obj statecar.obj trackobj.obj replay.obj \
                      headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
 
-ASMORIG_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.obj seg005.obj \
-                    seg006.obj seg007.obj seg008.obj seg009.obj seg010.obj seg011.obj seg012.obj \
-                    seg013.obj seg014.obj seg015.obj seg016.obj seg017.obj seg018.obj seg019.obj \
-                    seg020.obj seg021.obj seg022.obj seg023.obj seg024.obj seg025.obj seg026.obj \
-                    seg027.obj seg028.obj seg029.obj seg030.obj seg031.obj seg032.obj seg033.obj \
-                    seg034.obj seg035.obj seg036.obj seg037.obj seg038.obj seg039.obj seg041.obj dseg.obj
-
-DOS_PLATFORM_RUNTIME_OBJ_FILES = timer.obj runtime.obj memory.obj file.obj keyboard.obj divide.obj joystick.obj mouse.obj video.obj audio.obj critical.obj
-CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
-               fmemcpy.obj h_ldiv.obj f_lxmul.obj f_scopy.obj \
-               h_lrsh.obj h_padd.obj h_pina.obj h_pada.obj \
-               f_pcmp.obj h_lursh.obj h_psbp.obj h_llsh.obj
-
-RESTUNTS_OBJDIR = $(SRC)\c\build\dosfull
-ASMORIG_OBJDIR = $(SRC)\asmorig\build
-DOS_PLATFORM_OBJDIR = $(SRC)\platform\dos\build
-OBJDIR = $(SRC)\pixldump\build\$(TARGET)
-
-RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
-ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASMORIG_OBJ_FILES))
-DOS_PLATFORM_RUNTIME_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_RUNTIME_OBJ_FILES))
-DOS_PLATFORM_FILE_OBJFILE = $(DOS_PLATFORM_OBJDIR)\file.obj
-DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosbss.obj
-DOS_STACK_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosstack.obj
-PIXLDUMP_OBJFILES = $(OBJDIR)\pixldump.obj $(OBJDIR)\md5.obj
-PIXLDUMP_LINK_DEPS =
-
-RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v
-
+PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 ifeq ($(TARGET),original)
-  ALL_OBJ_FILES = $(ASMORIG_OBJFILES) $(PIXLDUMP_OBJFILES) $(DOS_PLATFORM_FILE_OBJFILE) $(CM_LIB_FILES)
-  CFLAGS = -DRESTUNTS_ORIGINAL
-  OUTFILE = pixldumo.exe
-  PIXLDUMP_LINK_DEPS = $(DOS_PLATFORM_FILE_OBJFILE)
-endif
-
-ifeq ($(TARGET),ported)
-  PIXLDUMP_OBJFILES += $(OBJDIR)\legacy_context.obj
-  PIXLDUMP_START_OBJFILE = $(OBJDIR)\pixlstart.obj
-  ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(PIXLDUMP_OBJFILES) $(PIXLDUMP_START_OBJFILE) $(DOS_PLATFORM_RUNTIME_OBJFILES) $(CM_LIB_FILES) $(DOS_STACK_OBJFILE)
-  CFLAGS = -DRESTUNTS_PIXLDUMP
-  OUTFILE = pixldump.exe
-  WLINK_OPTIONS = option START=headless_start option MAP=pixldump.map
-  WLINK_LIBRARIES = library s:\tools\lib\cm.lib
-  PIXLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES) $(OBJDIR)/pixlstart.obj
-  FORBIDDEN_GAME_ASM_REFERENCES = $(foreach obj,$(ASMORIG_OBJ_FILES),$(findstring $(obj),$(ALL_OBJ_FILES)))
-  ifneq (,$(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-    $(error Ported target must not link game assembly objects: $(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-  endif
-endif
-
-SEP := +
-ifeq ($(LINKER),wlink)
-  SEP := ,
-endif
-SPACE=$() $()
-CTARGETS = $(subst $(SPACE),$(SEP),$(ALL_OBJ_FILES))
-
-CC = bcc $(RESTUNTS_CFLAGS) $(CFLAGS)
-
-LFLAGS =
+include ../asmorig/link.mk
+OBJDIR = build/watcom/$(CONFIG)/original
+OUTFILE = pixldumo.exe
+DESTFILE = pixldumo.exe
+PLATFORM_NAMES = runtime file
+C_LINK_OBJECTS = $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(PLATFORM_OBJECTS)
+OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS)
+START_OPTION = $(ORIGINAL_LINK_OPTIONS)
+# Resource segment words can survive as stopped-opponent wheel headings. Keep
+# the archived heap boundary; WLINK rejects code that grows past this address.
+LINK_ORDER = $(ORIGINAL_LINK_ORDER) segaddr=0x3a19 offset=0x2
+CFLAGS = -dRESTUNTS_ORIGINAL
+# Original rendering observes caller-stack residue. Full local-variable debug
+# information (-d2) reshapes those frames even with -os; retain line info instead.
+# Far helper calls plus -of retain the archived caller frames as well.
+WRAPPER_CFLAGS = $(filter-out -od -os -d2,$(WATCOM_CFLAGS)) -os -of
 ifeq ($(CONFIG),debug)
-  LFLAGS = /v
+WRAPPER_CFLAGS += -d1
 endif
+ALIAS_SCRIPT = ../../../tools/scripts/generate-original-link-aliases.py
+ALIAS_FILE = $(OBJDIR)/aliases-$(ASSEMBLER).lnk
+LINK_ALIASES = @$(ALIAS_FILE)
+else
+OBJDIR = build/watcom/$(CONFIG)
+OUTFILE = pixldump.exe
+DESTFILE = pixldump.exe
+C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
+PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(OBJDIR)/legacy_context.obj $(OBJDIR)/pixlstart.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
+START_OPTION = option START=_headless_start
+CFLAGS = -dRESTUNTS_PIXLDUMP
+WRAPPER_CFLAGS = $(WATCOM_CFLAGS)
+endif
+SPACE := $(empty) $(empty)
+COMMA := ,
 
-TOOLS_LIB = s:\tools\lib
-
-pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(if $(filter ported,$(TARGET)),$(OBJDIR)/legacy_context.obj) $(PIXLDUMP_LINK_DEPS)
-  ifeq ($(LINKER),wlink)
-		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS) $(WLINK_LIBRARIES)
-  else
-		echo $(CTARGETS) > lscript.txt
-		echo $(OUTFILE) >> lscript.txt
-		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
-		del lscript.txt
-  endif
-	copy $(OUTFILE) s:\stunts\$(OUTFILE)
-
-force_me: ;
+.PHONY: all clean
+all: $(OBJDIR) $(OBJ_FILES) $(ALIAS_FILE) $(MAKEFILE_LIST)
+	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
+	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) $(START_OPTION) option MAP=$(basename $(OUTFILE)).map)
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ORDER))
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ALIASES))
+	$(file >>$(OBJDIR)/link.lnk,$(WATCOM_LIBPATH))
+	$(file >>$(OBJDIR)/link.lnk,file $(subst $(SPACE),$(COMMA),$(OBJ_FILES)))
+	$(WLINK) @$(OBJDIR)/link.lnk
+	$(call COPY,$(OUTFILE),../../../stunts/$(DESTFILE))
 
 $(OBJDIR):
-	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	$(call MKDIR,$@)
 
-$(OBJDIR)/pixldump.obj: pixldump.c md5.h legacy_context.h | $(OBJDIR)
-	$(CC) -I../c pixldump.c
+ifeq ($(TARGET),original)
+$(ALIAS_FILE): $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS) $(ALIAS_SCRIPT) $(MAKEFILE_LIST) $(WATCOM_STAMP) | $(OBJDIR)
+	$(PYTHON) $(ALIAS_SCRIPT) --asm-dir "$(ASMORIG_DIR)" --output "$@" $(C_LINK_OBJECTS)
+endif
 
-$(OBJDIR)/legacy_context.obj: legacy_context.c legacy_context.h ../c/shape3d.h | $(OBJDIR)
-	$(CC) -I../c legacy_context.c
+$(OBJDIR)/%.obj: %.c $(wildcard ../c/*.h) $(wildcard ../platform/dos/*.h) $(wildcard *.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WRAPPER_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
 
-$(OBJDIR)/md5.obj: md5.c md5.h | $(OBJDIR)
-	$(CC) -I../c md5.c
+$(OBJDIR)/pixlstart.obj: pixlstart.c ../platform/dos/dosstart.c $(wildcard ../platform/dos/*.h) $(wildcard ../c/*.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WATCOM_PLATFORM_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
 
-$(OBJDIR)/pixlstart.obj: pixlstart.c ../platform/dos/dosstart.c | $(OBJDIR)
-	$(CC) -I../c pixlstart.c
 
 clean:
-	del build\original\pixldump.obj
-	del build\original\md5.obj
-	del build\ported\pixldump.obj
-	del build\ported\md5.obj
-	del build\ported\pixlstart.obj
-	del build\ported\legacy_context.obj
-	del pixldump.exe
-	del pixldump.map
-	del pixldumo.exe
-	del pixldumo.map
+	$(call RMDIR,build/watcom)
+	$(call REMOVE,*.exe)
+	$(call REMOVE,*.map)

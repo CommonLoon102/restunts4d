@@ -1,6 +1,7 @@
 #include "resource.h"
 #include "fatal.h"
 #include "resource_bytes.h"
+#include "platform.h"
 
 legacy_u16 resource_read_u16le(const legacy_u8 far *source)
 {
@@ -19,6 +20,8 @@ enum RESOURCE_NOT_FOUND_BEHAVIOR {
 };
 
 #define RESOURCE_IDENTIFIER_PADDING ' '
+#define RESOURCE_PARAGRAPH_SHIFT 4U
+#define RESOURCE_PARAGRAPH_OFFSET_MASK 15U
 
 static const legacy_u8 far *resource_file_offset_bytes(const legacy_u8 far *resource,
 													   legacy_u16 count, legacy_u16 index)
@@ -67,7 +70,19 @@ legacy_u8 far *resource_file_data(legacy_u8 far *resource, legacy_u16 index)
 	result = resource;
 	result += (legacy_u32)resource_file_data_start(count) +
 			  LEGACY_READ_U32_LE(resource_file_offset_bytes(resource, count, index));
+#if defined(RESTUNTS_DOS16)
+	/* A huge-pointer addition need not normalize its offset in Watcom. The
+	 * original resource lookup returned paragraph-normalized pointers, and
+	 * the 16-bit blitters deliberately wrap offsets within that segment.
+	 * Preserve that representation so a payload near a 64 KiB boundary is
+	 * read continuously rather than wrapping into an earlier resource. */
+	return (legacy_u8 far *)dos_memory_make_pointer(
+		dos_memory_pointer_segment(result) +
+			(dos_memory_pointer_offset(result) >> RESOURCE_PARAGRAPH_SHIFT),
+		dos_memory_pointer_offset(result) & RESOURCE_PARAGRAPH_OFFSET_MASK);
+#else
 	return (legacy_u8 far *)result;
+#endif
 }
 
 legacy_s8 far *locate_resource(legacy_s8 far *data, const legacy_s8 *name, legacy_u16 fatal)
