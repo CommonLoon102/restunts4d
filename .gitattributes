@@ -39,6 +39,7 @@
 *.conf text eol=lf
 *.php text eol=lf
 makefile text eol=lf
+*.mk text eol=lf
 
 # Formats that must never pass through text conversion.
 *.rpl binary
