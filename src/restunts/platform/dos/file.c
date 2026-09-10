@@ -1,4 +1,4 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 
 #include "platform.h"
 
@@ -19,6 +19,8 @@
 #define DOS_FILE_OPEN_EXISTING_ACTION 1U
 #define DOS_FILE_CREATE_OR_TRUNCATE_ACTION 18U
 #define DOS_FILE_DEFAULT_ATTRIBUTES 0
+#define DOS_FILE_HIDDEN_ATTRIBUTE 2U
+#define DOS_FILE_SYSTEM_ATTRIBUTE 4U
 #define DOS_FILE_INVALID_HANDLE 0
 #define DOS_FILE_IO_ERROR 1
 #define DOS_FILE_SEEK_COMMAND_BASE 16896U
@@ -256,7 +258,8 @@ const legacy_s8 *dos_file_find_first(const legacy_s8 *query)
 	legacy_u8 attributes;
 	legacy_s16 result;
 
-	attributes = FA_NORMAL | FA_HIDDEN | FA_SYSTEM;
+	attributes =
+		DOS_FILE_DEFAULT_ATTRIBUTES | DOS_FILE_HIDDEN_ATTRIBUTE | DOS_FILE_SYSTEM_ATTRIBUTE;
 	__asm {
 		mov ah, DOS_FILE_SET_DTA_FUNCTION
 		mov dx, offset dos_find_data

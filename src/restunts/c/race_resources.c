@@ -56,7 +56,7 @@ void load_sdgame2_shapes(void)
 	legacy_s16 i;
 
 	sdgame2ptr = file_load_resource(FILE_RESOURCE_SHAPE2D_ALTERNATE, "sdgame2");
-	locate_many_resources(sdgame2ptr, "ex01ex02ex03leftrigh", sdgame2shapes);
+	locate_many_resources(sdgame2ptr, "ex01ex02ex03leftrigh", (legacy_s8 far **)sdgame2shapes);
 	for (i = 0; i < SDGAME2_EFFECT_SHAPE_COUNT; i++) {
 		sdgame2_widths[i] = shape2d_get_width((struct SHAPE2D far *)sdgame2shapes[i]);
 	}
@@ -78,7 +78,7 @@ void load_skybox(legacy_s8 skybox_index)
 		loaded_skybox_index = skybox_index;
 		skybox_resources_loaded = 1;
 		skybox_res_ofs = file_load_shape2d_fatal(skybox_resource_names[(legacy_s8)skybox_index]);
-		locate_many_resources(skybox_res_ofs, "scensce2sce3sce4", skyboxes);
+		locate_many_resources(skybox_res_ofs, "scensce2sce3sce4", (legacy_s8 far **)skyboxes);
 
 		for (image_index = 0; image_index < SKYBOX_IMAGE_COUNT; image_index++) {
 			skybox.heights[image_index] =

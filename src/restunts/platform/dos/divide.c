@@ -1,7 +1,6 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 
 #include "platform.h"
-#include "dos_interrupts.h"
 
 typedef void interrupt(far *interrupt_handler_type)();
 
@@ -12,16 +11,15 @@ extern legacy_u16 legacy_divide_fault_offset;
 
 static interrupt_handler_type previous_divide_error_handler;
 
+#ifndef __WATCOMC__
 #pragma argsused
-static void interrupt dos_divide_error_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
-											   legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
-											   legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
-											   legacy_u16 ip, legacy_u16 cs, legacy_u16 flags)
+#endif
+static void interrupt dos_divide_error_handler(DOS_INTERRUPT_REGISTERS)
 {
-	legacy_divide_fault_segment = cs;
-	legacy_divide_fault_offset = ip;
-	ip = LEGACY_U16_WRAP_ADD(ip, DOS_DIVIDE_INSTRUCTION_SIZE);
-	ax = 0;
+	legacy_divide_fault_segment = DOS_INTERRUPT_CS;
+	legacy_divide_fault_offset = DOS_INTERRUPT_IP;
+	DOS_INTERRUPT_IP = LEGACY_U16_WRAP_ADD(DOS_INTERRUPT_IP, DOS_DIVIDE_INSTRUCTION_SIZE);
+	DOS_INTERRUPT_AX = 0;
 }
 
 void dos_install_divide_error_handler(void)

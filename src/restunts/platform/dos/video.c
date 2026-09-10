@@ -1,5 +1,7 @@
+#ifndef __WATCOMC__
 #define int86 _int86
-#include <dos.h>
+#endif
+#include "dos_interrupts.h"
 #include "../../c/legacy.h"
 #include "../../c/fatal.h"
 

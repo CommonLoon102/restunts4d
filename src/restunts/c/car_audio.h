@@ -72,7 +72,7 @@ struct FULL_AUDIO_ENGINE_DEFINITION {
 #pragma pack(pop)
 
 /* The resource-id fields are 16-bit far pointers in the DOS ABI. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 typedef char full_audio_engine_definition_must_be_48_bytes
 	[(sizeof(struct FULL_AUDIO_ENGINE_DEFINITION) == 48) ? 1 : -1];
 #endif

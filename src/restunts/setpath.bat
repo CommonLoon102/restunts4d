@@ -1,2 +1,3 @@
-set PATH=%PATH%;s:\tools\bin
-set WATCOM=s:\tools
+@echo off
+call "%~dp0..\..\tools\setpath.bat"
+exit /b %errorlevel%
