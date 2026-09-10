@@ -1,3 +1,9 @@
+Historical Borland runtime files
+
+These files are retained for reference. Current DOS builds use the pinned
+Open Watcom 2 headers and libraries from tools/watcom, not this directory.
+The extraction notes below describe the former Borland toolchain.
+
 the object files here are extracted from cm.lib using tlib.exe.
 
 cm.lib is the medium model libc from borland c++ 5.2.
