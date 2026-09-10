@@ -1,68 +1,28 @@
-ifeq ($(ASSEMBLER),)
-  $(error ASSEMBLER is not defined)
+include ../../watcom.mk
+OBJDIR = build/watcom/$(CONFIG)
+ASMOBJDIR = $(OBJDIR)/$(ASSEMBLER)
+ifeq ($(ASSEMBLER),wasm)
+ASM = $(ASM_COMMAND) $(WASM_AFLAGS)
+else
+ASM = $(ASM_COMMAND) /m2 /ml /s /zn
+endif
+C_HEADERS = $(wildcard ../../c/*.h) $(wildcard *.h)
+
+.PHONY: all clean
+all: $(ASMOBJDIR)/dosbss.obj $(ASMOBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/keyboard.obj $(OBJDIR)/divide.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
+
+$(OBJDIR) $(ASMOBJDIR):
+	$(call MKDIR,$@)
+
+$(ASMOBJDIR)/%.obj: %.asm makefile ../../watcom.mk $(WATCOM_STAMP) | $(ASMOBJDIR)
+ifeq ($(ASSEMBLER),wasm)
+	$(ASM) -fo="$@" $<
+else
+	$(ASM) $<, "$(subst /,\,$@)"
 endif
 
-OBJDIR = build
-TFLAGS = /zn
-ifeq ($(CONFIG),debug)
-  TFLAGS = /zi
-endif
-
-ASM = $(ASSEMBLER) /m2 /s $(TFLAGS)
-CC = bcc /c /u- /mm /v /n$(OBJDIR)
-
-all: $(OBJDIR)/dosbss.obj $(OBJDIR)/dosstack.obj $(OBJDIR)/timer.obj $(OBJDIR)/runtime.obj $(OBJDIR)/memory.obj $(OBJDIR)/file.obj $(OBJDIR)/keyboard.obj $(OBJDIR)/divide.obj $(OBJDIR)/joystick.obj $(OBJDIR)/mouse.obj $(OBJDIR)/video.obj $(OBJDIR)/audio.obj $(OBJDIR)/critical.obj
-
-$(OBJDIR):
-	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
-
-$(OBJDIR)/%.obj: %.asm | $(OBJDIR)
-	$(ASM) $<, $(subst /,\,$@)
-
-$(OBJDIR)/timer.obj: timer.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c timer.c
-
-$(OBJDIR)/runtime.obj: runtime.c ../../c/legacy.h | $(OBJDIR)
-	$(CC) runtime.c
-
-$(OBJDIR)/memory.obj: memory.c ../../c/legacy.h ../../c/memmgr.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c memory.c
-
-$(OBJDIR)/file.obj: file.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c file.c
-
-$(OBJDIR)/keyboard.obj: keyboard.c ../../c/legacy.h ../../c/keyboard.h | $(OBJDIR)
-	$(CC) -I../../c keyboard.c
-
-$(OBJDIR)/divide.obj: divide.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c divide.c
-
-$(OBJDIR)/joystick.obj: joystick.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c joystick.c
-
-$(OBJDIR)/mouse.obj: mouse.c ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c mouse.c
-
-$(OBJDIR)/video.obj: video.c ../../c/legacy.h | $(OBJDIR)
-	$(CC) video.c
-
-$(OBJDIR)/audio.obj: audio.c ../../c/audio.h ../../c/legacy.h ../../c/platform.h | $(OBJDIR)
-	$(CC) -I../../c audio.c
-
-$(OBJDIR)/critical.obj: critical.c ../../c/legacy.h | $(OBJDIR)
-	$(CC) critical.c
+$(OBJDIR)/%.obj: %.c $(C_HEADERS) makefile ../../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WATCOM_PLATFORM_CFLAGS) -i=../../c -fo=$@ $<
 
 clean:
-	del $(OBJDIR)\dosbss.obj
-	del $(OBJDIR)\dosstack.obj
-	del $(OBJDIR)\timer.obj
-	del $(OBJDIR)\runtime.obj
-	del $(OBJDIR)\memory.obj
-	del $(OBJDIR)\file.obj
-	del $(OBJDIR)\keyboard.obj
-	del $(OBJDIR)\divide.obj
-	del $(OBJDIR)\joystick.obj
-	del $(OBJDIR)\mouse.obj
-	del $(OBJDIR)\video.obj
-	del $(OBJDIR)\audio.obj
-	del $(OBJDIR)\critical.obj
+	$(call RMDIR,$(OBJDIR))

@@ -1,8 +1,7 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 
 #include "../../c/legacy.h"
 #include "../../c/fatal.h"
-#include "dos_interrupts.h"
 
 #define DOS_CRITICAL_ERROR_INTERRUPT_VECTOR 36
 
@@ -29,13 +28,12 @@ static void far dos_critical_error_restore(void)
 	}
 }
 
+#ifndef __WATCOMC__
 #pragma argsused
-static void interrupt dos_critical_error_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si,
-												 legacy_u16 ds, legacy_u16 es, legacy_u16 dx,
-												 legacy_u16 cx, legacy_u16 bx, legacy_u16 ax,
-												 legacy_u16 ip, legacy_u16 cs, legacy_u16 flags)
+#endif
+static void interrupt dos_critical_error_handler(DOS_INTERRUPT_REGISTERS)
 {
-	ax = (legacy_u16)critical_error_callback();
+	DOS_INTERRUPT_AX = (legacy_u16)critical_error_callback();
 }
 
 void dos_set_critical_error_handler(critical_error_callback_type callback)

@@ -28,6 +28,9 @@
 #define REPLDUMP_FRAME_TIMER_VALUE 500
 
 #ifdef RESTUNTS_ORIGINAL
+legacy_s16 _printf(const legacy_s8 *format, ...);
+void kb_shift_checking1(void);
+
 #define REPLDUMP_DOS_INTERRUPT 33
 #define REPLDUMP_DOS_CREATE_FILE_FUNCTION 60
 #define REPLDUMP_DOS_OPEN_FILE_FUNCTION 61
@@ -156,34 +159,34 @@ void init_trackdata(void)
 	legacy_s8 far *trkptr;
 	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 
-	track_primary_route_links = trkptr;
+	track_primary_route_links = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	track_alternate_route_links = trkptr;
+	track_alternate_route_links = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	opponent_route_track_indices = trkptr;
 
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
-	player_aero_resistance_table = trkptr;
+	player_aero_resistance_table = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	opponent_aero_resistance_table = trkptr;
+	opponent_aero_resistance_table = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	reserved_trackside_camera_words = trkptr;
+	reserved_trackside_camera_words = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	trackside_camera_ground_heights = trkptr;
+	trackside_camera_ground_heights = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_AERO_TABLE_SIZE;
-	roadside_sign_headings = trkptr;
+	roadside_sign_headings = (legacy_s16 far *)trkptr;
 
 	trkptr += TRACKDATA_DIRECTION_TABLE_SIZE;
-	trackside_camera_positions = trkptr;
+	trackside_camera_positions = (struct VECTOR far *)trkptr;
 
 	trkptr += TRACKDATA_CAMERA_VECTOR_SIZE;
-	roadside_sign_positions = trkptr;
+	roadside_sign_positions = (struct VECTOR far *)trkptr;
 
 	trkptr += TRACKDATA_CHECK_VECTOR_SIZE;
 	track_highscore_table = trkptr;
@@ -195,10 +198,10 @@ void init_trackdata(void)
 	replay_header_buffer = trkptr;
 
 	trkptr += TRACKDATA_REPLAY_HEADER_SIZE;
-	track_element_map = trkptr;
+	track_element_map = (legacy_u8 far *)trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	track_terrain_map = trkptr;
+	track_terrain_map = (legacy_u8 far *)trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
 	replay_input_buffer = trkptr;
@@ -210,7 +213,7 @@ void init_trackdata(void)
 	track_route_traversal_flags = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	roadside_sign_indices_by_tile = trkptr;
+	roadside_sign_indices_by_tile = (legacy_u8 far *)trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
 	track_and_directory_backup = trkptr;
@@ -222,7 +225,7 @@ void init_trackdata(void)
 	track_route_rows = trkptr;
 
 	trkptr += TRACKDATA_MAP_SIZE;
-	roadside_sign_shape_indices = trkptr;
+	roadside_sign_shape_indices = (legacy_u8 far *)trkptr;
 
 	trkptr += TRACKDATA_OBJECT_INDEX_SIZE;
 }

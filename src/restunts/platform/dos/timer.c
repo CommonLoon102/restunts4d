@@ -1,8 +1,7 @@
 #include "../../c/platform.h"
 
-#include <dos.h>
-#include "../../c/fatal.h"
 #include "dos_interrupts.h"
+#include "../../c/fatal.h"
 
 #define getvect _getvect
 

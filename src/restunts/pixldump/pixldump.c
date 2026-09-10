@@ -10,10 +10,10 @@
 #include "md5.h"
 #ifndef RESTUNTS_ORIGINAL
 #include "legacy_context.h"
-#include "../c/residue.h"
 #endif
 #include "../c/fatal.h"
 #include "../c/race_resources.h"
+#include "../c/residue.h"
 #include "../c/shape3d.h"
 #include "../c/keyboard.h"
 #include "../c/game_input.h"
@@ -79,11 +79,38 @@ enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 
 typedef legacy_u16 PIXLDUMP_OUTPUT;
 
-#ifndef RESTUNTS_ORIGINAL
+#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
+/* The original update_grip saves this caller register in a stack slot which
+ * player physics can later consume as the fourth wheel's contact distance.
+ * Sampling inherits the output handle; BMP mode inherits the CRT argv offset. */
 static legacy_s16 pixldump_caller_si;
+#endif
+
+#ifndef RESTUNTS_ORIGINAL
 static legacy_s16 pixldump_argv_si;
 static legacy_u16 pixldump_polyinfo_segment;
+/* Original DSEG offset of the active material color table. */
 #define PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET 20628U
+#endif
+
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#define PIXLDUMP_LEGACY_FRAME far
+static legacy_u16 pixldump_caller_di;
+static legacy_u16 pixldump_saved_si;
+static legacy_u16 pixldump_saved_di;
+
+/* Keep the original engine's caller registers without changing its stack.
+ * The paired inline operations restore the registers expected by Watcom. */
+static void pixldump_enter_original_call(void);
+#pragma aux pixldump_enter_original_call = "mov pixldump_saved_si,si"                              \
+										   "mov pixldump_saved_di,di"                              \
+										   "mov si,pixldump_caller_si"                             \
+										   "mov di,pixldump_caller_di" modify exact[];
+static void pixldump_leave_original_call(void);
+#pragma aux pixldump_leave_original_call = "mov si,pixldump_saved_si"                              \
+										   "mov di,pixldump_saved_di" modify exact[];
+#else
+#define PIXLDUMP_LEGACY_FRAME
 #endif
 
 static PIXLDUMP_OUTPUT pixldump_output_open(const legacy_s8 *path)
@@ -196,9 +223,9 @@ void init_trackdata(void)
 	track_pointer += TRACKDATA_AERO_TABLE_SIZE;
 	roadside_sign_headings = (legacy_s16 far *)track_pointer;
 	track_pointer += TRACKDATA_DIRECTION_TABLE_SIZE;
-	trackside_camera_positions = (legacy_s16 far *)track_pointer;
+	trackside_camera_positions = (struct VECTOR far *)track_pointer;
 	track_pointer += TRACKDATA_CAMERA_VECTOR_SIZE;
-	roadside_sign_positions = (legacy_s16 far *)track_pointer;
+	roadside_sign_positions = (struct VECTOR far *)track_pointer;
 	track_pointer += TRACKDATA_CHECK_VECTOR_SIZE;
 	track_highscore_table = track_pointer;
 	track_pointer += TRACKDATA_HIGHSCORE_SIZE;
@@ -405,13 +432,19 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8 *output_name, const legacy_
 	return result == 0;
 }
 
-static void pixldump_render_frame(void)
+static void PIXLDUMP_LEGACY_FRAME pixldump_render_frame(void)
 {
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_enter_original_call();
+#endif
 	sprite_select_render_window();
 	update_frame(0, &rect_windshield);
 	frame_present(&rect_windshield);
 	/* The normal presentation path draws the software mouse cursor last. */
 	mouse_draw_opaque_check();
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_leave_original_call();
+#endif
 }
 
 #ifndef RESTUNTS_ORIGINAL
@@ -420,11 +453,17 @@ static void pixldump_render_frame(void)
 extern void kb_shift_checking1(void);
 #endif
 
-static void pixldump_update_gamestate(void)
+static void PIXLDUMP_LEGACY_FRAME pixldump_update_gamestate(void)
 {
 #ifdef RESTUNTS_ORIGINAL
+#if defined(__WATCOMC__)
+	pixldump_enter_original_call();
+#endif
 	input_do_checking(1);
 	update_gamestate();
+#if defined(__WATCOMC__)
+	pixldump_leave_original_call();
+#endif
 #else
 	update_gamestate_with_legacy_si(pixldump_caller_si);
 #endif
@@ -445,7 +484,7 @@ static void pixldump_enable_legacy_render_stack(void)
 }
 #endif
 
-static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *output_name)
 {
 	legacy_s16 result;
 	legacy_u8 far *framebuffer;
@@ -456,13 +495,22 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 		return 1;
 	}
 
-#ifndef RESTUNTS_ORIGINAL
+#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
 	pixldump_caller_si = LEGACY_S16_FROM_BITS(output);
+#endif
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	/* The directory-copy loop leaves DI here until the first sample result. */
+	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
+#endif
+#ifndef RESTUNTS_ORIGINAL
 	pixldump_enable_legacy_render_stack();
 #endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_caller_di = 0;
+#endif
 
 	while (result == 0 && gameconfig.game_recordedframes > (legacy_u16)state.game_frame) {
 		pixldump_update_gamestate();
@@ -481,10 +529,15 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 	return result;
 }
 
-static legacy_s16 pixldump_write_requested_frame(const legacy_s8 *output_name,
-												 legacy_u16 requested_frame)
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const legacy_s8 *output_name,
+																	   legacy_u16 requested_frame)
 {
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	/* Retain the archived BMP caller's four-byte local stack slot. */
+	legacy_u8 far *volatile framebuffer;
+#else
 	legacy_u8 far *framebuffer;
+#endif
 
 	while ((legacy_u16)state.game_frame < requested_frame) {
 		pixldump_update_gamestate();
@@ -494,10 +547,9 @@ static legacy_s16 pixldump_write_requested_frame(const legacy_s8 *output_name,
 	return pixldump_write_bmp(output_name, framebuffer);
 }
 
-static legacy_s16 pixldump_process_replay(const legacy_s8 *replay_name,
-										  const legacy_s8 *output_name, legacy_s16 camera_number,
-										  legacy_s16 target, legacy_s16 bmp_mode,
-										  legacy_u16 requested_frame)
+static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
+	const legacy_s8 *replay_name, const legacy_s8 *output_name, legacy_s16 camera_number,
+	legacy_s16 target, legacy_s16 bmp_mode, legacy_u16 requested_frame)
 {
 	legacy_s16 index;
 
@@ -605,12 +657,16 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 		return 1;
 	}
 
-#ifndef RESTUNTS_ORIGINAL
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_caller_si = (legacy_s16)argv;
+	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
+#elif !defined(RESTUNTS_ORIGINAL)
 	pixldump_argv_si = pixldump_legacy_argv_si(argc, argv);
 	if (bmp_mode != 0) {
 		pixldump_caller_si = pixldump_argv_si;
 	}
 #endif
+
 	length = (legacy_s16)strlen(argv[1]);
 	if (length >= 4 &&
 		(strcmp(argv[1] + length - 4, ".rpl") == 0 || strcmp(argv[1] + length - 4, ".RPL") == 0)) {
