@@ -65,3 +65,8 @@ stunts/*.vsh
 stunts/*.sh
 stunts/.partitions_all.txt.*
 tools/scripts/capture/*
+
+tools/watcom/
+tools/.watcom-install.*/
+src/restunts/**/build/watcom/
+__pycache__/
