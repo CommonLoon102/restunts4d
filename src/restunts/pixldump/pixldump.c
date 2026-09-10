@@ -99,6 +99,14 @@ static legacy_u16 pixldump_caller_di;
 static legacy_u16 pixldump_saved_si;
 static legacy_u16 pixldump_saved_di;
 
+/* Offline playback advances by replay frames, without timer ticks. Mask IRQ0
+ * so interrupt pushes cannot replace renderer stack residue subsequently read
+ * by stopped-car physics. legacy_timer_shutdown restores IRQ0 on exit. */
+static void pixldump_disable_timer_irq(void);
+#pragma aux pixldump_disable_timer_irq = "in al,21h"                                               \
+										 "or al,1"                                                 \
+										 "out 21h,al" modify exact[al];
+
 /* Keep the original engine's caller registers without changing its stack.
  * The paired inline operations restore the registers expected by Watcom. */
 static void pixldump_enter_original_call(void);
@@ -680,6 +688,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	}
 
 	init_main(argc, argv);
+#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+	pixldump_disable_timer_irq();
+#endif
 	init_div0();
 	init_row_tables();
 	mainresptr = file_load_resfile("main");
