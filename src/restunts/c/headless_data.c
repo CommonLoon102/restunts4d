@@ -10,6 +10,7 @@
 #include "wheel_transform.h"
 #include "camera.h"
 #include "car_resources.h"
+#include "residue.h"
 
 /* Mutable engine state formerly allocated by dseg.asm. */
 struct GAMEINFO gameconfig;
@@ -66,6 +67,8 @@ struct PLANE far *planptr;
 struct PLANE far *current_planptr;
 struct TRACK_WALL far *wallptr;
 struct GAMESTATE far *cvxptr;
+
+legacy_u16 legacy_closed_hihat_offset;
 
 legacy_s16 trackrows[30];
 legacy_s16 terrainrows[30];
