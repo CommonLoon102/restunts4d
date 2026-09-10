@@ -26,6 +26,7 @@ legacy_u8 audio_music_rate, audio_music_channel_count, audio_suspended, audio_mu
 legacy_u16 audio_sequence_elapsed_ticks, audio_sequence_tick_period;
 void *audio_bass_drum_resource, *audio_snare_resource, *audio_tom_resource, *audio_ride_resource;
 void *audio_crash_resource, *audio_closed_hihat_resource, *audio_open_hihat_resource;
+legacy_u16 legacy_closed_hihat_offset;
 
 static void hash_word(legacy_u16 word)
 {
@@ -175,6 +176,8 @@ static void reset_audio_fixture(void)
 	memset(dos_audio_driver_data, 0x5a, sizeof(dos_audio_driver_data));
 	external_count = 0;
 	audio_update_lock = 0;
+	audio_closed_hihat_resource = 0;
+	legacy_closed_hihat_offset = 0;
 	segments_match = 1;
 	nested_timer = 0;
 	dos_audio_driver_binary = memory_bytes;

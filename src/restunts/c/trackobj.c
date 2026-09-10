@@ -362,7 +362,7 @@ static void track_object_tile_center(legacy_u8 track_tile, legacy_s16 row_index,
 		elem_zCenter = (legacy_s16)terrainpos[row_index];
 	}
 	if ((multi_tile & MULTI_TILE_COLUMN_EDGE_FLAG) != 0) {
-		elem_xCenter = (legacy_s16)track_column_positions[column_index];
+		elem_xCenter = (legacy_s16)track_column_position((legacy_u16)column_index);
 	}
 }
 
