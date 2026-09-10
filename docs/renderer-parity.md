@@ -54,6 +54,20 @@ wrapper selects its own original caller context. BMP mode simulates without
 intermediate rendering, while hash mode renders frame 0 and every fifth frame.
 Those modes can therefore reach different states in the original game itself.
 
+## Track-boundary values
+
+A multi-tile track object at the map edge can read index 30 of the original
+30-word position tables. In the archived data segment, the following row word
+is the closed hi-hat resource pointer's offset; the following column word is
+the live elapsed replay time. Watcom places globals differently, so indexing
+past the C arrays cannot reproduce those values reliably.
+
+`track_row_position` and `track_column_position` model the boundary words
+explicitly for collision, route, and renderer callers. Audio resource mapping
+retains the original hi-hat offset across replay initialization. The fix applies
+to every multi-tile boundary object, including the false collision in `a0457.rpl`.
+Host tests cover row and column boundaries and the audio offset's lifetime.
+
 ## Regression checks
 
 Run `bash src/restunts/tests/run-host-tests.sh` for the host tests. Coverage

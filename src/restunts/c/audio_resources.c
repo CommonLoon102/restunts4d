@@ -11,6 +11,7 @@
 #include "timing.h"
 #include "audio_control.h"
 #include "resource_bytes.h"
+#include "residue.h"
 
 #define AUDIO_DRIVER_PREFIX_LENGTH 14U
 #define AUDIO_PADDED_ID_LENGTH (AUDIO_RESOURCE_ID_LENGTH + 1U)
@@ -485,6 +486,7 @@ void audio_map_song_instruments(void far *song, void far *instruments)
 	audio_ride_resource = audioresource_find(instruments, "RIDE");
 	audio_crash_resource = audioresource_find(instruments, "CRSH");
 	audio_closed_hihat_resource = audioresource_find(instruments, "CHHT");
+	legacy_closed_hihat_offset = dos_memory_pointer_offset(audio_closed_hihat_resource);
 	audio_open_hihat_resource = audioresource_find(instruments, "OHHT");
 }
 

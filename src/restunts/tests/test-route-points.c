@@ -10,7 +10,7 @@ struct GAMESTATE state;
 struct TRACKOBJECT trkObjectList[215];
 legacy_s16 terrainrows[30];
 legacy_s16 track_row_positions[30], track_row_centers[30];
-legacy_s16 track_column_positions[31], track_column_centers[30];
+legacy_s16 track_column_positions[30], track_column_centers[30];
 legacy_s16 hillHeightConsts[2] = {0, 450};
 legacy_s8 far *track_route_element_ids;
 legacy_s8 far *track_route_traversal_flags;
@@ -20,6 +20,7 @@ legacy_u8 far *track_terrain_map;
 legacy_u8 oppnentSped[16];
 legacy_s8 *steerWhlRespTable_ptr;
 legacy_u16 framespersec;
+legacy_u16 elapsed_time2, legacy_closed_hihat_offset;
 
 static struct VECTOR forward_vectors[256], reverse_vectors[256];
 static struct TRKOBJINFO route_info[2];
@@ -58,7 +59,8 @@ static void reset_route_points(void)
 		track_row_positions[i] = track_column_positions[i] = i * 1024;
 		track_row_centers[i] = track_column_centers[i] = i * 1024 + 512;
 	}
-	track_column_positions[30] = 30720;
+	elapsed_time2 = 30720;
+	legacy_closed_hihat_offset = 0;
 	for (i = 0; i < 256; i++) {
 		forward_vectors[i].x = LEGACY_S16_FROM_BITS((legacy_u16)(i * 997));
 		forward_vectors[i].y = i % 3 == 0 ? -1 : (legacy_s16)(i * 13);
@@ -95,6 +97,36 @@ static void test_route_point_boundaries(void)
 	trkObjectList[1].ss_surfaceType = -1;
 	get_track_route_point(0, result, 0, &speed);
 	assert(speed == 0);
+}
+
+static void test_route_points_at_right_edge(void)
+{
+	struct VECTOR result[4];
+
+	reset_route_points();
+	columns[0] = 29;
+	trkObjectList[1].ss_multiTileFlag = 2;
+	forward_vectors[0].x = -60;
+	forward_vectors[0].y = 0;
+	forward_vectors[0].z = 512;
+	forward_vectors[1].x = 60;
+	forward_vectors[1].y = 0;
+	forward_vectors[1].z = -512;
+
+	/* The original word after the 30-column table is elapsed_time2. */
+	elapsed_time2 = 1234;
+	get_track_route_point(0, result, 0, 0);
+	assert(result[0].x == 1234);
+	assert(result[1].x == 1174);
+	assert(result[2].x == 1294);
+	assert(result[1].z == 6144);
+	assert(result[2].z == 5120);
+
+	elapsed_time2 = 0xf000;
+	get_track_route_point(0, result, 0, 0);
+	assert(result[0].x == -4096);
+	assert(result[1].x == -4156);
+	assert(result[2].x == -4036);
 }
 
 static legacy_u32 route_point_fingerprint(void)
@@ -165,6 +197,7 @@ int main(void)
 	legacy_u32 route_hash, steering_hash;
 
 	test_route_point_boundaries();
+	test_route_points_at_right_edge();
 	route_hash = route_point_fingerprint();
 	steering_hash = steering_fingerprint();
 #ifdef PHYSICS_RECORD_BASELINE
