@@ -1,111 +1,71 @@
-# default target
+include ../watcom.mk
+
 TARGET ?= headless
-
-VALID_TARGETS = headless original
-ifeq (,$(filter $(TARGET),$(VALID_TARGETS)))
-  $(error Unsupported replay-dump target: $(TARGET))
+ifeq (,$(filter $(TARGET),headless original))
+  $(error Unsupported repldump target: $(TARGET))
 endif
-
-SRC = s:\src\restunts
 
 RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strlib.obj numlib.obj \
                      kevinrnd.obj replinit.obj gameinit.obj gamestep.obj \
                      simd.obj carsetup.obj trkutil.obj trackres.obj headless.obj dosstart.obj headless_data.obj headless_trackdata.obj state.obj physics_grip.obj opponent.obj track_setup.obj stateply.obj physics_collision.obj \
                      statecrs.obj statecar.obj trackobj.obj replay.obj stateio.obj
 
-ASMORIG_OBJ_FILES = segments.obj seg000.obj seg001.obj seg002.obj seg003.obj seg004.obj seg005.obj \
-                    seg006.obj seg007.obj seg008.obj seg009.obj seg010.obj seg011.obj seg012.obj \
-                    seg013.obj seg014.obj seg015.obj seg016.obj seg017.obj seg018.obj seg019.obj \
-                    seg020.obj seg021.obj seg022.obj seg023.obj seg024.obj seg025.obj seg026.obj \
-                    seg027.obj seg028.obj seg029.obj seg030.obj seg031.obj seg032.obj seg033.obj \
-                    seg034.obj seg035.obj seg036.obj seg037.obj seg038.obj seg039.obj seg041.obj dseg.obj
-
-# Transitional headless platform: gameplay and game data are supplied by C;
-# only the DOS linker's required stack segment remains platform assembly.
-DOS_BSS_START_OBJ_FILE = dosbss.obj
-DOS_PLATFORM_OBJ_FILES = runtime.obj memory.obj file.obj divide.obj dosstack.obj
-
-CM_LIB_FILES = getvect.obj labs.obj memcpy.obj \
-               fmemcpy.obj h_ldiv.obj f_lxmul.obj f_scopy.obj \
-               h_lrsh.obj h_padd.obj h_pina.obj h_pada.obj \
-               f_pcmp.obj h_lursh.obj h_psbp.obj h_llsh.obj
-
-# prefix with path
-RESTUNTS_OBJDIR = $(SRC)\c\build\dosheadless
-ASMORIG_OBJDIR = $(SRC)\asmorig\build
-DOS_PLATFORM_OBJDIR = $(SRC)\platform\dos\build
-OBJDIR = $(SRC)\repldump\build\$(TARGET)
-
-RESTUNTS_OBJFILES = $(addprefix $(RESTUNTS_OBJDIR)\, $(RESTUNTS_OBJ_FILES))
-ASMORIG_OBJFILES = $(addprefix $(ASMORIG_OBJDIR)\, $(ASMORIG_OBJ_FILES))
-DOS_PLATFORM_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATFORM_OBJ_FILES))
-DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\$(DOS_BSS_START_OBJ_FILE)
-REPLDUMP_LINK_DEPS =
-
-# C Compiler Flags und Linker
-RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v
-
-ifeq ($(TARGET), original)
-  ALL_OBJ_FILES = $(ASMORIG_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES)
-  CFLAGS = -DRESTUNTS_ORIGINAL
-  OUTFILE = repldumo.exe
+PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
+ifeq ($(TARGET),original)
+include ../asmorig/link.mk
+OBJDIR = build/watcom/$(CONFIG)/original
+OUTFILE = repldumo.exe
+DESTFILE = repldumo.exe
+PLATFORM_NAMES = runtime
+C_LINK_OBJECTS = $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS)
+OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS)
+START_OPTION = $(ORIGINAL_LINK_OPTIONS)
+LINK_ORDER = $(ORIGINAL_LINK_ORDER)
+CFLAGS = -dRESTUNTS_ORIGINAL
+# The wrapper's inline DOS I/O needs the platform's unoptimized code generation.
+WRAPPER_CFLAGS = $(WATCOM_PLATFORM_CFLAGS)
+ALIAS_SCRIPT = ../../../tools/scripts/generate-original-link-aliases.py
+ALIAS_FILE = $(OBJDIR)/aliases-$(ASSEMBLER).lnk
+LINK_ALIASES = @$(ALIAS_FILE)
+else
+OBJDIR = build/watcom/$(CONFIG)
+OUTFILE = repldump.exe
+DESTFILE = repldump.exe
+C_DIR = ../c/build/watcom/$(CONFIG)/dosheadless
+PLATFORM_NAMES = runtime memory file divide
+OBJ_FILES = $(PLATFORM_ASM_DIR)/dosbss.obj $(addprefix $(C_DIR)/,$(RESTUNTS_OBJ_FILES)) $(OBJDIR)/repldump.obj $(PLATFORM_OBJECTS) $(PLATFORM_ASM_DIR)/dosstack.obj
+START_OPTION = option START=_headless_start
+CFLAGS = -dRESTUNTS_HEADLESS
+WRAPPER_CFLAGS = $(WATCOM_CFLAGS)
 endif
+SPACE := $(empty) $(empty)
+COMMA := ,
 
-ifeq ($(TARGET), headless)
-  # Keep the BSS start marker first and STACK/BSS end marker last.  The custom
-  # DOS startup uses those bounds and releases memory through the final stack.
-  ALL_OBJ_FILES = $(DOS_BSS_START_OBJFILE) $(RESTUNTS_OBJFILES) $(OBJDIR)\repldump.obj $(CM_LIB_FILES) $(DOS_PLATFORM_OBJFILES)
-  CFLAGS = -DRESTUNTS_HEADLESS
-  OUTFILE = repldump.exe
-  WLINK_OPTIONS = option START=headless_start option MAP=repldump.map
-  REPLDUMP_LINK_DEPS = $(RESTUNTS_OBJFILES)
-  FORBIDDEN_GAME_ASM_REFERENCES = $(foreach obj,$(ASMORIG_OBJ_FILES),$(findstring $(obj),$(ALL_OBJ_FILES)))
-  ifneq (,$(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-    $(error Headless target must not link game assembly objects: $(strip $(FORBIDDEN_GAME_ASM_REFERENCES)))
-  endif
-endif
-
-# set linker separator
-SEP := +
-ifeq ($(LINKER),wlink)
-  SEP := ,
-endif
-SPACE=$() $()
-CTARGETS = $(subst $(SPACE),$(SEP),$(ALL_OBJ_FILES))
-
-CC = bcc $(RESTUNTS_CFLAGS) $(CFLAGS)
-
-LFLAGS = 
-ifeq ($(CONFIG), debug)
-  LFLAGS = /v
-endif
-
-TOOLS_LIB = s:\tools\lib
-
-repldump.exe: force_me $(OBJDIR)/repldump.obj $(REPLDUMP_LINK_DEPS)
-  ifeq ($(LINKER), wlink)
-		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS)
-  else
-    # create linker script for tlink
-		echo $(CTARGETS) > lscript.txt
-		echo $(OUTFILE) >> lscript.txt
-		$(LINKER) /s /P- $(LFLAGS) /j$(TOOLS_LIB) @lscript.txt
-		del lscript.txt
-  endif
-	copy $(OUTFILE) s:\stunts\$(OUTFILE)
-
-force_me: ;
+.PHONY: all clean
+all: $(OBJDIR) $(OBJ_FILES) $(ALIAS_FILE) $(MAKEFILE_LIST)
+	$(file >$(OBJDIR)/link.lnk,name $(OUTFILE))
+	$(file >>$(OBJDIR)/link.lnk,format dos $(WATCOM_LFLAGS) $(START_OPTION) option MAP=$(basename $(OUTFILE)).map)
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ORDER))
+	$(file >>$(OBJDIR)/link.lnk,$(LINK_ALIASES))
+	$(file >>$(OBJDIR)/link.lnk,$(WATCOM_LIBPATH))
+	$(file >>$(OBJDIR)/link.lnk,file $(subst $(SPACE),$(COMMA),$(OBJ_FILES)))
+	$(WLINK) @$(OBJDIR)/link.lnk
+	$(call COPY,$(OUTFILE),../../../stunts/$(DESTFILE))
 
 $(OBJDIR):
-	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
+	$(call MKDIR,$@)
 
-$(OBJDIR)/repldump.obj: repldump.c | $(OBJDIR)
-	$(CC) -I../c $?
+ifeq ($(TARGET),original)
+$(ALIAS_FILE): $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS) $(ALIAS_SCRIPT) $(MAKEFILE_LIST) $(WATCOM_STAMP) | $(OBJDIR)
+	$(PYTHON) $(ALIAS_SCRIPT) --asm-dir "$(ASMORIG_DIR)" --output "$@" $(C_LINK_OBJECTS)
+endif
+
+$(OBJDIR)/%.obj: %.c $(wildcard ../c/*.h) $(wildcard ../platform/dos/*.h) $(wildcard *.h) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
+	$(CC) $(WRAPPER_CFLAGS) $(CFLAGS) -i=../c -fo=$@ $<
 
 clean:
-	del build\original\repldump.obj
-	del build\headless\repldump.obj
-	del repldump.exe
-	del repldump.map
-	del repldumo.exe
-	del repldumo.map
+	$(call RMDIR,build/watcom)
+	$(call REMOVE,*.exe)
+	$(call REMOVE,*.map)
