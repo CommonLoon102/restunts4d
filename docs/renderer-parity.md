@@ -54,6 +54,61 @@ wrapper selects its own original caller context. BMP mode simulates without
 intermediate rendering, while hash mode renders frame 0 and every fifth frame.
 Those modes can therefore reach different states in the original game itself.
 
+## Deterministic original dump capture
+
+The Watcom original pixel-dump wrapper masks timer IRQ0 after `init_main`.
+The existing `legacy_timer_shutdown` restores the timer interrupt and its BIOS
+handler on exit.
+
+During interactive gameplay, the timer provides real-time timing and background
+services:
+
+- It advances counters used for delays, timeouts and pacing, and periodically
+  calls the original BIOS timer handler for system timekeeping.
+- Audio callbacks advance music, sound effects and sound-driver updates.
+- The frame callback schedules input recording and plays queued car-audio
+  updates.
+
+`pixldumo` advances the recorded replay explicitly, one simulation frame at a
+time. It captures images without needing real-time pacing, live input recording
+or audio playback, so these timer services are unnecessary during offline
+capture. The interactive game still needs them; masking IRQ0 is specific to the
+Watcom original pixel-dump wrapper.
+
+The interrupt handler saves CPU registers on the interrupted renderer's stack,
+runs its callbacks, then restores the registers. Restoring the registers does
+not erase their saved bytes from stack memory. Stopped-car physics can later
+reuse those slots without initializing its wheel headings and read the leftover
+values instead. Masking IRQ0 prevents these timing-dependent writes while
+preserving the ordinary renderer residue required by the cached PDOs, without
+changing the original engine's code, stack frames, or physics calculations.
+The rule applies throughout hash and BMP capture, independently of the replay,
+frame number, car, or crash state.
+
+Repeat checks must retain the cached PDO: regenerating it with the unchanged
+Borland executable can encounter the same interrupt-driven variation.
+
+### Why the C dump keeps the timer enabled
+
+The C-based `pixldump` does not need IRQ0 masking to avoid this failure.
+`restore_stopped_wheel_headings` reads the explicit `legacy_execution_residue`
+arrays, which have defined initial values. The renderer updates those arrays
+through `shape3d_set_legacy_render_stack`; physics does not read leftover CPU
+stack bytes. Interrupt register pushes therefore cannot supply wheel headings
+through the original stack-reuse mechanism.
+
+The C dump also bypasses interactive race initialization and does not register
+`frame_callback`. That callback cannot advance `frame_callback_count`, which
+the renderer uses for the material animation phase at frame zero. The registered
+audio callbacks do not write `legacy_execution_residue`, and replay simulation
+advances explicitly by recorded frames rather than timer ticks.
+
+Ten repeated runs of the unchanged C executable, with IRQ0 enabled, produced
+identical complete output for `0696.rpl` and matched the cached PDO every time.
+No equivalent C-renderer failure was reproduced. IRQ0 masking therefore remains
+specific to the Watcom original `pixldumo`; the C `pixldump` keeps its timer
+enabled.
+
 ## Track-boundary values
 
 A multi-tile track object at the map edge can read index 30 of the original
