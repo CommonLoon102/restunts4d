@@ -40,9 +40,6 @@ on:
 
 env:
   EXE_ARTIFACT: restunts-exes
-  WINEDEBUG: -all
-  # Keep wineboot from prompting to download Mono and Gecko.
-  WINEDLLOVERRIDES: mscoree,mshtml=
 
 jobs:
   formatting:
@@ -85,49 +82,34 @@ jobs:
         id: names
         run: echo "value=$EXE_ARTIFACT" >> "$GITHUB_OUTPUT"
 
-      - name: Install Wine
+      - name: Install pinned Open Watcom 2
+        run: bash tools/scripts/install-open-watcom.sh
+
+      - name: Test the assembler and linker adapters
         run: |
-          sudo dpkg --add-architecture i386
+          python3 -m unittest discover -s tools/scripts/tests -p 'test_*.py'
+          python3 tools/scripts/test-compare-dos-artifacts.py
+
+      - name: Build all six DOS executables
+        run: |
+          make -C src/restunts restunts repldump pixldump
+          make -C src/restunts restunts-original repldump-original pixldump-original
+
+      - name: Check the DOS platform ABI
+        run: |
           sudo apt-get update
-          # bcc.exe, tasm32.exe, make.exe and the bundled DOSBox.exe are all
-          # 32 bit PE binaries, so the i386 side of Wine is required.
-          sudo apt-get install -y --no-install-recommends wine wine32:i386 xvfb
-
-      - name: "Create the Wine prefix and map S: to the checkout"
-        run: |
-          xvfb-run -a wineboot --init
-          wineserver -w
-          # Every makefile addresses its sources as s:\..., the drive letter
-          # tools/mount_stunts_to_s.bat creates on Windows.
-          mkdir -p "$HOME/.wine/dosdevices"
-          ln -sfn "$GITHUB_WORKSPACE" "$HOME/.wine/dosdevices/s:"
-
-      - name: Build the game and physics executables
-        run: |
-          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makerepldump"
-
-      - name: Build the renderer executables
-        run: |
-          xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && makepixldump"
+          sudo apt-get install -y --no-install-recommends dosbox-x
+          make -C src/restunts test-dos-platform
+          python3 tools/scripts/run-dos-platform-test.py
 
       - name: Collect the executables
         run: |
-          set -u
+          set -eu
           mkdir -p dist
-          missing=0
-          # makerepldump.bat never reports failure, and a fresh checkout carries
-          # none of these files, so their presence is the build's pass criteria.
           for exe in restunts restunto repldump repldumo pixldump pixldumo; do
-              built=$(find stunts src/restunts/dos src/restunts/repldump src/restunts/pixldump \
-                  -maxdepth 1 -iname "$exe.exe" -print -quit)
-              if [[ -z "$built" ]]; then
-                  echo "::error::$exe.exe was not produced by the build"
-                  missing=1
-                  continue
-              fi
-              cp -- "$built" "dist/$exe.exe"
+              test -s "stunts/$exe.exe"
+              cp -- "stunts/$exe.exe" "dist/$exe.exe"
           done
-          (( missing == 0 )) || exit 1
           ls -l dist
 
       - uses: actions/upload-artifact@v7
