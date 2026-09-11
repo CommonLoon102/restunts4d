@@ -20,8 +20,6 @@ static void hash_word(legacy_u16 value)
 static void record_spans(legacy_s16 *left, legacy_s16 *right, legacy_u16 top, legacy_u16 count,
 						 legacy_u16 color, legacy_u16 kind)
 {
-	unsigned i;
-
 	assert(top < 480 && count <= 480 - top);
 	span_calls++;
 	last_top = top;
@@ -30,7 +28,7 @@ static void record_spans(legacy_s16 *left, legacy_s16 *right, legacy_u16 top, le
 	hash_word(top);
 	hash_word(count);
 	hash_word(color);
-	for (i = 0; i < count; i++) {
+	for (unsigned i = 0; i < count; i++) {
 		hash_word((legacy_u16)left[i]);
 		hash_word((legacy_u16)right[i]);
 	}
@@ -99,10 +97,8 @@ static void reset_raster(void)
 
 static void test_raster_boundaries(void)
 {
-	struct POINT2D rectangle[4] = {{10, 20}, {20, 20}, {20, 30}, {10, 30}};
-	struct POINT2D vertical[2] = {{309, 20}, {309, 30}};
-
 	reset_raster();
+	struct POINT2D rectangle[4] = {{10, 20}, {20, 20}, {20, 30}, {10, 30}};
 	preRender_default(37, 0, rectangle);
 	assert(span_calls == 0 && line_calls == 0);
 	preRender_default(37, 1, rectangle);
@@ -110,6 +106,7 @@ static void test_raster_boundaries(void)
 	preRender_default(37, 4, rectangle);
 	assert(span_calls == 1 && last_top == 20 && last_count == 11);
 	/* The original polygon rejection excludes a vertical edge at right - 1. */
+	struct POINT2D vertical[2] = {{309, 20}, {309, 30}};
 	preRender_default(37, 2, vertical);
 	assert(span_calls == 1 && line_calls == 1);
 	vertical[0].px = vertical[1].px = 308;
@@ -123,16 +120,14 @@ static void test_raster_boundaries(void)
 
 static legacy_u32 polygon_fingerprint(void)
 {
+	reset_raster();
+	struct POINT2D ordered[4];
 	static const legacy_s16 xs[] = {-50, 9, 10, 11, 160, 308, 309, 310, 350};
 	static const legacy_s16 ys[] = {-50, 19, 20, 21, 100, 178, 179, 180, 230};
-	struct POINT2D vertices[4], ordered[4];
-	unsigned x, y, shape, reverse, start, i;
-	legacy_u16 count;
-
-	reset_raster();
-	for (x = 0; x < sizeof(xs) / sizeof(xs[0]); x++) {
-		for (y = 0; y < sizeof(ys) / sizeof(ys[0]); y++) {
-			for (shape = 0; shape < 4; shape++) {
+	struct POINT2D vertices[4];
+	for (unsigned x = 0; x < sizeof(xs) / sizeof(xs[0]); x++) {
+		for (unsigned y = 0; y < sizeof(ys) / sizeof(ys[0]); y++) {
+			for (unsigned shape = 0; shape < 4; shape++) {
 				vertices[0].px = xs[x];
 				vertices[0].py = ys[y];
 				vertices[1].px = xs[x] + 30;
@@ -141,10 +136,10 @@ static legacy_u32 polygon_fingerprint(void)
 				vertices[2].py = ys[y] + 40;
 				vertices[3].px = xs[x];
 				vertices[3].py = ys[y] + 40;
-				count = shape == 3 ? 3 : 4;
-				for (reverse = 0; reverse < 2; reverse++) {
-					for (start = 0; start < count; start++) {
-						for (i = 0; i < count; i++) {
+				legacy_u16 count = shape == 3 ? 3 : 4;
+				for (unsigned reverse = 0; reverse < 2; reverse++) {
+					for (unsigned start = 0; start < count; start++) {
+						for (unsigned i = 0; i < count; i++) {
 							ordered[i] = vertices[(start + (reverse ? count - i : i)) % count];
 						}
 						preRender_default(37, count, ordered);
@@ -161,14 +156,12 @@ static legacy_u32 polygon_fingerprint(void)
 
 static legacy_u32 sphere_fingerprint(void)
 {
-	static const legacy_s16 xs[] = {-100, 9, 10, 11, 160, 308, 309, 310, 400};
-	static const legacy_s16 ys[] = {-100, 19, 20, 21, 100, 178, 179, 180, 300};
-	unsigned x, y, size;
-
 	reset_raster();
-	for (x = 0; x < sizeof(xs) / sizeof(xs[0]); x++) {
-		for (y = 0; y < sizeof(ys) / sizeof(ys[0]); y++) {
-			for (size = 0; size <= 160; size++) {
+	static const legacy_s16 ys[] = {-100, 19, 20, 21, 100, 178, 179, 180, 300};
+	static const legacy_s16 xs[] = {-100, 9, 10, 11, 160, 308, 309, 310, 400};
+	for (unsigned x = 0; x < sizeof(xs) / sizeof(xs[0]); x++) {
+		for (unsigned y = 0; y < sizeof(ys) / sizeof(ys[0]); y++) {
+			for (unsigned size = 0; size <= 160; size++) {
 				preRender_sphere(xs[x], ys[y], size, 37);
 			}
 		}
@@ -178,18 +171,17 @@ static legacy_u32 sphere_fingerprint(void)
 
 static legacy_u32 perimeter_fingerprint(void)
 {
-	legacy_u16 source[6], destination[64];
-	legacy_u32 seed = 314159UL;
-	unsigned sample, i;
-
 	callback_hash = 2166136261UL;
-	for (sample = 0; sample < 8192; sample++) {
-		for (i = 0; i < 6; i++) {
+	legacy_u16 source[6];
+	legacy_u16 destination[64];
+	legacy_u32 seed = 314159UL;
+	for (unsigned sample = 0; sample < 8192; sample++) {
+		for (unsigned i = 0; i < 6; i++) {
 			seed = seed * 1664525UL + 1013904223UL;
 			source[i] = (legacy_u16)(seed >> 16);
 		}
 		sphere_build_perimeter(source, destination);
-		for (i = 0; i < 64; i++) {
+		for (unsigned i = 0; i < 64; i++) {
 			hash_word(destination[i]);
 		}
 	}
@@ -198,12 +190,10 @@ static legacy_u32 perimeter_fingerprint(void)
 
 int main(void)
 {
-	legacy_u32 polygon_hash, sphere_hash, perimeter_hash;
-
 	test_raster_boundaries();
-	polygon_hash = polygon_fingerprint();
-	sphere_hash = sphere_fingerprint();
-	perimeter_hash = perimeter_fingerprint();
+	legacy_u32 polygon_hash = polygon_fingerprint();
+	legacy_u32 sphere_hash = sphere_fingerprint();
+	legacy_u32 perimeter_hash = perimeter_fingerprint();
 #ifdef PRERENDER_RECORD_BASELINE
 	fprintf(stdout, "%08lx %08lx %08lx\n", (unsigned long)polygon_hash, (unsigned long)sphere_hash,
 			(unsigned long)perimeter_hash);

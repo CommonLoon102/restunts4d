@@ -160,13 +160,12 @@ static void test_checkpoint_context_is_local(void)
 
 static void test_start_sequence_uses_start_line_distance(void)
 {
-	static const legacy_s16 distances[] = {5, 256, 256};
-	static const legacy_u16 speeds[] = {1, 1, 1280};
 	static const legacy_s8 expected_inputs[] = {INPUT_BRAKE_FLAG, INPUT_ACCELERATE_FLAG,
 												INPUT_NONE};
-	unsigned int index;
 
-	for (index = 0; index < 3; index++) {
+	static const legacy_u16 speeds[] = {1, 1, 1280};
+	static const legacy_s16 distances[] = {5, 256, 256};
+	for (unsigned int index = 0; index < 3; index++) {
 		prepare_tick(160);
 		state.game_inputmode = GAME_INPUT_MODE_WAITING;
 		state.playerstate.car_rev_speed = speeds[index];

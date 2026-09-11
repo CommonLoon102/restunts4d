@@ -43,9 +43,8 @@ X     - select_cliprect_rotate (10)
 
 void shape3d_vertex_read(const struct SHAPE3D *shape, legacy_u16 index, struct VECTOR *destination)
 {
-	const legacy_u8 far *source;
-
-	source = shape->shape3d_vertex_bytes + LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
+	const legacy_u8 far *source =
+		shape->shape3d_vertex_bytes + LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
 	destination->x = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_X_OFFSET);
 	destination->y = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_Y_OFFSET);
 	destination->z = LEGACY_READ_S16_LE(source + SHAPE3D_VERTEX_Z_OFFSET);
@@ -53,9 +52,8 @@ void shape3d_vertex_read(const struct SHAPE3D *shape, legacy_u16 index, struct V
 
 void shape3d_vertex_write(struct SHAPE3D *shape, legacy_u16 index, const struct VECTOR *source)
 {
-	legacy_u8 far *destination;
-
-	destination = shape->shape3d_vertex_bytes + LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
+	legacy_u8 far *destination =
+		shape->shape3d_vertex_bytes + LEGACY_U16_WRAP_MUL(index, SHAPE3D_VERTEX_SIZE);
 	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_X_OFFSET, (legacy_u16)source->x);
 	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_Y_OFFSET, (legacy_u16)source->y);
 	LEGACY_WRITE_U16_LE(destination + SHAPE3D_VERTEX_Z_OFFSET, (legacy_u16)source->z);
@@ -154,9 +152,7 @@ static void polyinfo_write_word(legacy_u8 far *record, legacy_u16 word_index, le
 static void polyinfo_read_point(const legacy_u8 far *record, legacy_u16 point_index,
 								struct POINT2D *point)
 {
-	legacy_u16 word_index;
-
-	word_index = LEGACY_U16_WRAP_ADD(3U, LEGACY_U16_WRAP_MUL(point_index, 2U));
+	legacy_u16 word_index = LEGACY_U16_WRAP_ADD(3U, LEGACY_U16_WRAP_MUL(point_index, 2U));
 	point->px = LEGACY_S16_FROM_BITS(polyinfo_read_word(record, word_index));
 	point->py =
 		LEGACY_S16_FROM_BITS(polyinfo_read_word(record, LEGACY_U16_WRAP_ADD(word_index, 1U)));
@@ -165,9 +161,7 @@ static void polyinfo_read_point(const legacy_u8 far *record, legacy_u16 point_in
 static void polyinfo_read_points(const legacy_u8 far *record, struct POINT2D *points,
 								 legacy_u16 point_count)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < point_count; index++) {
+	for (legacy_u16 index = 0; index < point_count; index++) {
 		polyinfo_read_point(record, index, &points[index]);
 	}
 }
@@ -175,9 +169,7 @@ static void polyinfo_read_points(const legacy_u8 far *record, struct POINT2D *po
 static void polyinfo_write_point(legacy_u8 far *record, legacy_u16 point_index,
 								 const struct POINT2D *point)
 {
-	legacy_u16 word_index;
-
-	word_index = LEGACY_U16_WRAP_ADD(3U, LEGACY_U16_WRAP_MUL(point_index, 2U));
+	legacy_u16 word_index = LEGACY_U16_WRAP_ADD(3U, LEGACY_U16_WRAP_MUL(point_index, 2U));
 	polyinfo_write_word(record, word_index, (legacy_u16)point->px);
 	polyinfo_write_word(record, LEGACY_U16_WRAP_ADD(word_index, 1U), (legacy_u16)point->py);
 }
@@ -197,9 +189,7 @@ static void polyinfo_emit_point(legacy_u16 *point_index, legacy_u8 *rect_flags,
 static legacy_s8 polyinfo_is_facing_camera(const legacy_u8 far *record)
 {
 	struct POINT2D points[3];
-	legacy_u16 index;
-
-	for (index = 0; index < 3U; index++) {
+	for (legacy_u16 index = 0; index < 3U; index++) {
 		polyinfo_read_point(record, index, &points[index]);
 	}
 	return is_facing_camera(points);
@@ -238,12 +228,6 @@ struct SHAPE3D_TRANSFORM_CONTEXT {
 static void shape3d_prepare_instance(struct TRANSFORMEDSHAPE3D *instance,
 									 struct SHAPE3D_TRANSFORM_CONTEXT *context)
 {
-	struct MATRIX *object_rotation;
-	struct MATRIX inverse_view_rotation;
-	struct VECTOR forward_vector;
-	struct VECTOR view_direction;
-	legacy_u16 i;
-
 	transshapeprimitives = instance->shapeptr->shape3d_primitives;
 	transshapenumpaints = instance->shapeptr->shape3d_numpaints;
 	transshapematerial = instance->material;
@@ -254,14 +238,14 @@ static void shape3d_prepare_instance(struct TRANSFORMEDSHAPE3D *instance,
 	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 		transshaperectptr = instance->rectptr;
 	}
-	for (i = 0; i < transshapenumverts; i++) {
+	for (legacy_u16 i = 0; i < transshapenumverts; i++) {
 		context->vertex_clip_flags[i] = SHAPE3D_VERTEX_UNTRANSFORMED;
 	}
 
 	context->visibility_mask = -1;
 	context->front_facing_mask = 0;
-	object_rotation = mat_rot_zxy(instance->rotvec.x, instance->rotvec.y, instance->rotvec.z,
-								  MATRIX_ROTATION_ORDER_ZXY);
+	struct MATRIX *object_rotation = mat_rot_zxy(instance->rotvec.x, instance->rotvec.y,
+												 instance->rotvec.z, MATRIX_ROTATION_ORDER_ZXY);
 	if ((transshapeflags & SHAPE3D_PRETRANSFORMED_FLAG) != 0) {
 		mat_multiply(object_rotation, &mat_temp, &context->object_to_view_rotation);
 		context->view_translation = instance->pos;
@@ -269,10 +253,13 @@ static void shape3d_prepare_instance(struct TRANSFORMEDSHAPE3D *instance,
 	}
 	mat_mul_vector(&instance->pos, &mat_temp, &context->view_translation);
 	mat_multiply(object_rotation, &mat_temp, &context->object_to_view_rotation);
+	struct MATRIX inverse_view_rotation;
 	mat_invert(&context->object_to_view_rotation, &inverse_view_rotation);
+	struct VECTOR forward_vector;
 	forward_vector.x = 0;
 	forward_vector.y = 0;
 	forward_vector.z = SHAPE3D_FORWARD_VECTOR_SCALE;
+	struct VECTOR view_direction;
 	mat_mul_vector(&forward_vector, &inverse_view_rotation, &view_direction);
 	if ((view_direction.y <= 0 || instance->pos.y >= 0) &&
 		(LEGACY_S16_SHL(instance->culling_distance, 1U) <=
@@ -304,16 +291,13 @@ static void shape3d_cache_vertex(const struct SHAPE3D *shape,
 static legacy_u16 shape3d_bounds_are_clipped(struct TRANSFORMEDSHAPE3D *instance,
 											 struct SHAPE3D_TRANSFORM_CONTEXT *context)
 {
-	struct VECTOR first_vertex;
-	struct VECTOR fifth_vertex;
-	legacy_u8 common_clip_flags;
-	legacy_u16 all_vertices_behind, any_vertex_behind, i;
-
 	if (transshapenumverts <= 8) {
 		transshapenumvertscopy = transshapenumverts;
 	} else {
 		transshapenumvertscopy = 8;
 	}
+	struct VECTOR fifth_vertex;
+	struct VECTOR first_vertex;
 	if (transshapenumvertscopy > 4) {
 		shape3d_vertex_read(instance->shapeptr, 0U, &first_vertex);
 		shape3d_vertex_read(instance->shapeptr, 4U, &fifth_vertex);
@@ -322,9 +306,10 @@ static legacy_u16 shape3d_bounds_are_clipped(struct TRANSFORMEDSHAPE3D *instance
 		}
 	}
 
-	common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
-	all_vertices_behind = 1;
-	any_vertex_behind = 0;
+	legacy_u8 common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
+	legacy_u16 i;
+	legacy_u16 all_vertices_behind = 1;
+	legacy_u16 any_vertex_behind = 0;
 	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
 		polyvertpointptrtab[i] = &context->projected_vertices[i];
 		shape3d_cache_vertex(instance->shapeptr, context, i);
@@ -349,16 +334,13 @@ static legacy_u16 shape3d_prepare_primitive_vertices(const struct SHAPE3D *shape
 													 struct SHAPE3D_TRANSFORM_CONTEXT *context,
 													 legacy_u16 *any_vertex_behind)
 {
-	legacy_u8 common_clip_flags;
-	legacy_u16 all_vertices_behind, vertex_count, vertex_index;
-
-	common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
-	all_vertices_behind = 1;
+	legacy_u8 common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
 	*any_vertex_behind = 0;
 	transshapeprimindexptr = transshapeprimitives;
-	for (vertex_count = 0; vertex_count < transshapenumvertscopy;
+	legacy_u16 all_vertices_behind = 1;
+	for (legacy_u16 vertex_count = 0; vertex_count < transshapenumvertscopy;
 		 vertex_count = LEGACY_U16_WRAP_ADD(vertex_count, 1U)) {
-		vertex_index = transshapeprimindexptr[0];
+		legacy_u16 vertex_index = transshapeprimindexptr[0];
 		transshapeprimindexptr++;
 		polyvertpointptrtab[vertex_count] = &context->projected_vertices[vertex_index];
 		if (context->vertex_clip_flags[vertex_index] == SHAPE3D_VERTEX_UNTRANSFORMED) {
@@ -423,19 +405,16 @@ static void shape3d_emit_clipped_polygon_edge(struct SHAPE3D_TRANSFORM_CONTEXT *
 static legacy_u8 shape3d_emit_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 									  legacy_u16 any_vertex_behind, legacy_s32 *depth_sum)
 {
-	legacy_u16 output_point_index, previous_vertex_index, vertex_index, i;
-	legacy_u8 common_clip_flags;
-
-	output_point_index = 0U;
 	transshapeprimindexptr = transshapeprimitives;
 	*depth_sum = 0;
-	common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
-	previous_vertex_index = 0;
+	legacy_u8 common_clip_flags = SHAPE3D_ALL_RECT_CLIP_FLAGS;
+	legacy_u16 previous_vertex_index = 0;
 	if (any_vertex_behind != 0) {
 		previous_vertex_index = transshapeprimitives[transshapenumvertscopy - 1];
 	}
-	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
-		vertex_index = transshapeprimindexptr[0];
+	legacy_u16 output_point_index = 0U;
+	for (legacy_u16 i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
+		legacy_u16 vertex_index = transshapeprimindexptr[0];
 		transshapeprimindexptr++;
 		*depth_sum = LEGACY_S32_WRAP_ADD_S16(*depth_sum, context->view_vertices[vertex_index].z);
 		if (any_vertex_behind == 0) {
@@ -456,9 +435,7 @@ static legacy_u8 shape3d_emit_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 static void shape3d_adjust_polygon_bounds(void)
 {
 	struct POINT2D point;
-	legacy_u16 i;
-
-	for (i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
+	for (legacy_u16 i = 0; i < transshapenumvertscopy; i = LEGACY_U16_WRAP_ADD(i, 1U)) {
 		polyinfo_read_point(transshapepolyinfo, i, &point);
 		if (point.px < transshaperectptr->left) {
 			transshaperectptr->left = point.px;
@@ -480,9 +457,7 @@ static legacy_u16 shape3d_prepare_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *cont
 										  const legacy_u8 far *front_facing_masks,
 										  legacy_s32 *depth_sum)
 {
-	legacy_u8 common_clip_flags;
-
-	common_clip_flags = shape3d_emit_polygon(context, any_vertex_behind, depth_sum);
+	legacy_u8 common_clip_flags = shape3d_emit_polygon(context, any_vertex_behind, depth_sum);
 	if (transshapenumvertscopy == 0 || common_clip_flags != 0) {
 		return 0;
 	}
@@ -500,10 +475,8 @@ static legacy_u16 shape3d_prepare_polygon(struct SHAPE3D_TRANSFORM_CONTEXT *cont
 static legacy_u16 shape3d_prepare_line(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 									   legacy_s32 *depth_sum)
 {
-	legacy_u16 first_index, second_index;
-
-	first_index = transshapeprimitives[0];
-	second_index = transshapeprimitives[1];
+	legacy_u16 first_index = transshapeprimitives[0];
+	legacy_u16 second_index = transshapeprimitives[1];
 	if (context->vertex_clip_flags[first_index] + context->vertex_clip_flags[second_index] == 2) {
 		return 0;
 	}
@@ -544,13 +517,11 @@ static void shape3d_adjust_round_bounds(const struct POINT2D *center, legacy_u16
 static legacy_u16 shape3d_prepare_wheel(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 										legacy_u16 any_vertex_behind, legacy_s32 *depth_sum)
 {
-	struct POINT2D points[4];
-	legacy_u16 i, radius, other_radius;
-
 	if (any_vertex_behind != 0) {
 		return 0;
 	}
-	for (i = 0; i < 4; i++) {
+	struct POINT2D points[4];
+	for (legacy_u16 i = 0; i < 4; i++) {
 		points[i] = *polyvertpointptrtab[i];
 		polyinfo_write_point(transshapepolyinfo, i, &points[i]);
 	}
@@ -562,17 +533,17 @@ static legacy_u16 shape3d_prepare_wheel(struct SHAPE3D_TRANSFORM_CONTEXT *contex
 		points[1] = *polyvertpointptrtab[4];
 		points[2] = *polyvertpointptrtab[5];
 		points[3] = *polyvertpointptrtab[0];
-		for (i = 0; i < 4; i++) {
+		for (legacy_u16 i = 0; i < 4; i++) {
 			polyinfo_write_point(transshapepolyinfo, i, &points[i]);
 		}
 		*depth_sum =
 			LEGACY_S32_SHL((legacy_s32)context->view_vertices[transshapeprimitives[3]].z, 2U);
 	}
 
-	radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[1].px),
-						   LEGACY_S16_WRAP_SUB(points[0].py, points[1].py));
-	other_radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[2].px),
-								 LEGACY_S16_WRAP_SUB(points[0].py, points[2].py));
+	legacy_u16 radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[1].px),
+									  LEGACY_S16_WRAP_SUB(points[0].py, points[1].py));
+	legacy_u16 other_radius = polarRadius2D(LEGACY_S16_WRAP_SUB(points[0].px, points[2].px),
+											LEGACY_S16_WRAP_SUB(points[0].py, points[2].py));
 	if (other_radius > radius) {
 		radius = other_radius;
 	}
@@ -600,23 +571,21 @@ static void shape3d_adjust_sphere_bounds(const struct POINT2D *center, legacy_u1
 static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 										 legacy_s32 *depth_sum)
 {
-	struct VECTOR center, endpoint, radius_vector;
-	legacy_u16 center_index, radius_index, screen_radius;
-
-	center_index = transshapeprimitives[0];
-	radius_index = transshapeprimitives[1];
+	legacy_u16 center_index = transshapeprimitives[0];
+	legacy_u16 radius_index = transshapeprimitives[1];
 	*depth_sum = (legacy_s32)LEGACY_S16_WRAP_ADD(context->view_vertices[center_index].z,
 												 context->view_vertices[radius_index].z);
 	if (context->vertex_clip_flags[center_index] + context->vertex_clip_flags[radius_index] != 0) {
 		return 0;
 	}
 	polyinfo_write_point(transshapepolyinfo, 0U, polyvertpointptrtab[0]);
-	center = context->view_vertices[center_index];
-	endpoint = context->view_vertices[radius_index];
+	struct VECTOR center = context->view_vertices[center_index];
+	struct VECTOR endpoint = context->view_vertices[radius_index];
+	struct VECTOR radius_vector;
 	radius_vector.x = LEGACY_S16_WRAP_SUB(center.x, endpoint.x);
 	radius_vector.y = LEGACY_S16_WRAP_SUB(center.y, endpoint.y);
 	radius_vector.z = LEGACY_S16_WRAP_SUB(center.z, endpoint.z);
-	screen_radius = projection_scale_x_wrapped(polarRadius3D(&radius_vector), center.z);
+	legacy_u16 screen_radius = projection_scale_x_wrapped(polarRadius3D(&radius_vector), center.z);
 	polyinfo_write_word(transshapepolyinfo, 5U, screen_radius);
 	if ((transshapeflags & SHAPE3D_USE_BOUNDING_RECT_FLAG) != 0) {
 		shape3d_adjust_sphere_bounds(polyvertpointptrtab[0], screen_radius);
@@ -628,9 +597,7 @@ static legacy_u16 shape3d_prepare_sphere(struct SHAPE3D_TRANSFORM_CONTEXT *conte
 static legacy_u16 shape3d_prepare_point(struct SHAPE3D_TRANSFORM_CONTEXT *context,
 										legacy_s32 *depth_sum)
 {
-	legacy_u16 vertex_index;
-
-	vertex_index = transshapeprimitives[0];
+	legacy_u16 vertex_index = transshapeprimitives[0];
 	if (context->vertex_clip_flags[vertex_index] != 0) {
 		return 0;
 	}
@@ -669,8 +636,6 @@ static legacy_u16 shape3d_prepare_primitive(struct SHAPE3D_TRANSFORM_CONTEXT *co
 static legacy_u16 shape3d_insert_primitive(legacy_u8 primitive_type, legacy_u16 primitive_flags,
 										   legacy_s32 depth_sum)
 {
-	legacy_u16 depth, sort_by_depth;
-
 	transshapepolyinfo[3] = transshapenumvertscopy;
 	transshapepolyinfo[4] = primitive_type;
 	if (transprimitivepaintjob == BACKLIGHT_PAINT_DEFAULT) {
@@ -678,8 +643,9 @@ static legacy_u16 shape3d_insert_primitive(legacy_u8 primitive_type, legacy_u16 
 	} else {
 		transshapepolyinfo[2] = transprimitivepaintjob;
 	}
-	depth = shape3d_average_depth(depth_sum, transshapenumvertscopy);
+	legacy_u16 depth = shape3d_average_depth(depth_sum, transshapenumvertscopy);
 	polyinfo_write_word(transshapepolyinfo, 0U, depth);
+	legacy_u16 sort_by_depth;
 	if ((transshapeflags & SHAPE3D_NO_DEPTH_SORT_FLAG) != 0 ||
 		(primitive_flags & SHAPE3D_PRIMITIVE_SKIP_DEPTH_SORT_FLAG) != 0) {
 		sort_by_depth = 0;
@@ -692,13 +658,6 @@ static legacy_u16 shape3d_insert_primitive(legacy_u8 primitive_type, legacy_u16 
 
 legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 {
-	struct SHAPE3D_TRANSFORM_CONTEXT context;
-	legacy_u8 far *visibility_masks;
-	legacy_u8 far *front_facing_masks;
-	legacy_u8 primitive_type;
-	legacy_u16 queued_primitive_count, primitive_flags, primitive_visible, any_vertex_behind;
-	legacy_s32 depth_sum;
-
 	if (polygon_buffer_full != 0) {
 		return 1;
 	}
@@ -708,23 +667,27 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 	if (transshapenumverts > SHAPE3D_VERTEX_CAPACITY) {
 		return 1;
 	}
-	visibility_masks = instance->shapeptr->shape3d_visibility_masks;
-	front_facing_masks = instance->shapeptr->shape3d_front_facing_masks;
+	legacy_u8 far *visibility_masks = instance->shapeptr->shape3d_visibility_masks;
+	legacy_u8 far *front_facing_masks = instance->shapeptr->shape3d_front_facing_masks;
+	struct SHAPE3D_TRANSFORM_CONTEXT context;
 	shape3d_prepare_instance(instance, &context);
 	shape_polygon_predecessor = polygon_list_tail;
 	polygon_insertion_cursor = polygon_list_tail;
 	shape_polygon_count = 0;
-	queued_primitive_count = 0;
 	if (shape3d_bounds_are_clipped(instance, &context) != 0) {
 		return (legacy_u16)-1;
 	}
 	transshapeprimitives = instance->shapeptr->shape3d_primitives;
 
+	legacy_s32 depth_sum;
+	legacy_u16 queued_primitive_count = 0;
+	legacy_u8 primitive_type;
+	legacy_u16 any_vertex_behind;
 	for (;;) {
 		transshapeprimptr = transshapeprimitives + primidxcounttab[transshapeprimitives[0]] +
 							transshapenumpaints + 2;
-		primitive_flags = transshapeprimitives[1];
-		primitive_visible = 0;
+		legacy_u16 primitive_flags = transshapeprimitives[1];
+		legacy_u16 primitive_visible = 0;
 		if ((LEGACY_READ_U32_LE(visibility_masks) & (legacy_u32)context.visibility_mask) != 0UL) {
 			transshapenumvertscopy = primidxcounttab[transshapeprimitives[0]];
 			primitive_type = primtypetab[transshapeprimitives[0]];
@@ -765,23 +728,20 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *instance)
 // parameter points to a far array of 2d points
 legacy_s8 is_facing_camera(struct POINT2D far *pts)
 {
-	legacy_s32 dx0, dy0, dx1, dy1;
-	legacy_s32 signed_area;
-
-	dx0 = (legacy_s32)pts[0].px - pts[1].px;
-	dx1 = (legacy_s32)pts[2].px - pts[1].px;
+	legacy_s32 dx0 = (legacy_s32)pts[0].px - pts[1].px;
+	legacy_s32 dx1 = (legacy_s32)pts[2].px - pts[1].px;
 
 	if (dx0 == 0 && dx1 == 0) {
 		return 0;
 	}
 
-	dy0 = (legacy_s32)pts[0].py - pts[1].py;
-	dy1 = (legacy_s32)pts[2].py - pts[1].py;
+	legacy_s32 dy0 = (legacy_s32)pts[0].py - pts[1].py;
+	legacy_s32 dy1 = (legacy_s32)pts[2].py - pts[1].py;
 
 	if (dy0 == 0 && dy1 == 0) {
 		return 0;
 	}
-	signed_area = (dx1 * dy0) - (dx0 * dy1);
+	legacy_s32 signed_area = (dx1 * dy0) - (dx0 * dy1);
 	return signed_area <= 0 ? 0 : 1;
 }
 
@@ -821,19 +781,18 @@ legacy_u16 projection_scale_y(legacy_u16 value, legacy_u16 divisor)
 
 extern legacy_u16 polygon_insert_newest(legacy_u16 depth, legacy_u16 sort_by_depth)
 {
-	legacy_s16 next_polygon, remaining_polygons, previous_remaining_count;
-
 	//return ported_insert_newest_poly_in_poly_linked_list_40ED6_(depth, sort_by_depth);
 
+	legacy_s16 next_polygon;
 	if (sort_by_depth == 0) {
 		next_polygon = polygon_next_index[polygon_insertion_cursor];
 	} else {
 		polygon_insertion_cursor = shape_polygon_predecessor;
 		next_polygon = polygon_next_index[shape_polygon_predecessor];
-		remaining_polygons = shape_polygon_count;
+		legacy_s16 remaining_polygons = shape_polygon_count;
 
 		while (next_polygon >= 0) {
-			previous_remaining_count = remaining_polygons;
+			legacy_s16 previous_remaining_count = remaining_polygons;
 			remaining_polygons--;
 			if (previous_remaining_count == 0) {
 				break;
@@ -869,21 +828,15 @@ extern legacy_u16 polygon_insert_newest(legacy_u16 depth, legacy_u16 sort_by_dep
 
 static legacy_u16 projection_angle_from_extent(legacy_s16 extent)
 {
-	legacy_s32 scaled;
-	legacy_s32 quotient;
-
-	scaled = LEGACY_S32_WRAP_MUL((legacy_s32)extent, PROJECTION_EXTENT_SCALE);
-	quotient = LEGACY_S32_DIV_OR_ZERO(scaled, PROJECTION_EXTENT_DIVISOR);
+	legacy_s32 scaled = LEGACY_S32_WRAP_MUL((legacy_s32)extent, PROJECTION_EXTENT_SCALE);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(scaled, PROJECTION_EXTENT_DIVISOR);
 	return (legacy_u16)LEGACY_S32_SAR(quotient, 1U);
 }
 
 static legacy_u16 projection_scale_for_angle(legacy_u16 angle, legacy_u16 extent)
 {
-	legacy_s32 product;
-	legacy_s32 quotient;
-
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)cos_fast(angle), (legacy_s32)extent);
-	quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)sin_fast(angle));
+	legacy_s32 product = LEGACY_S32_WRAP_MUL((legacy_s32)cos_fast(angle), (legacy_s32)extent);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)sin_fast(angle));
 	return (legacy_u16)quotient;
 }
 
@@ -908,7 +861,6 @@ static void projection_update_derived(void)
 void set_projection(legacy_s16 horizontal_fov_degrees, legacy_s16 vertical_fov_degrees,
 					legacy_s16 width, legacy_s16 height)
 {
-
 	projection_horizontal_half_fov = projection_angle_from_extent(horizontal_fov_degrees);
 	projection_vertical_half_fov = projection_angle_from_extent(vertical_fov_degrees);
 	projection_half_width = (legacy_u16)LEGACY_S16_SAR(width, 1U);
@@ -942,19 +894,19 @@ extern legacy_s32 direction_sector_cosine_copy;
 legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY,
 								  struct RECTANGLE *cliprect, legacy_s16 half_scale)
 {
-	struct MATRIX *inverse_view_rotation;
-	struct VECTOR forward_axis, view_direction;
-
 	//return ported_select_cliprect_rotate_(angX, angY, angZ, cliprect, half_scale);
 
 	mat_temp = *mat_rot_zxy(angZ, angX, angY, MATRIX_ROTATION_ORDER_YXZ);
 	polyinfo_reset();
 	select_rect_rc = *cliprect;
 	shape_half_scale = half_scale;
-	inverse_view_rotation = mat_rot_zxy(-angZ, -angX, -angY, MATRIX_ROTATION_ORDER_ZXY);
+	struct MATRIX *inverse_view_rotation =
+		mat_rot_zxy(-angZ, -angX, -angY, MATRIX_ROTATION_ORDER_ZXY);
+	struct VECTOR forward_axis;
 	forward_axis.z = PROJECTION_VIEW_VECTOR_LENGTH;
 	forward_axis.y = 0;
 	forward_axis.x = 0;
+	struct VECTOR view_direction;
 	mat_mul_vector(&forward_axis, inverse_view_rotation, &view_direction);
 	return polarAngle(view_direction.x, view_direction.z) & PROJECTION_YAW_MASK;
 }
@@ -1067,13 +1019,11 @@ static void shape3d_retain_opponent_pattern(legacy_u16 value)
 static void shape3d_retain_opponent_polygon_pointer(const legacy_u8 far *record,
 													legacy_u16 vertex_count)
 {
-	legacy_u16 offset;
-
 	if (legacy_opponent_render_context.wheel_headings == 0) {
 		return;
 	}
-	offset = LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.polyinfo_offset,
-								 (legacy_u16)(record - polyinfoptr));
+	legacy_u16 offset = LEGACY_U16_WRAP_ADD(legacy_opponent_render_context.polyinfo_offset,
+											(legacy_u16)(record - polyinfoptr));
 	offset = LEGACY_U16_WRAP_ADD(offset, SHAPE3D_LEGACY_POLYGON_HEADER_SIZE);
 	offset = LEGACY_U16_WRAP_ADD(
 		offset, LEGACY_U16_WRAP_MUL(vertex_count, SHAPE3D_LEGACY_POLYGON_POINT_SIZE));
@@ -1119,46 +1069,35 @@ static void shape3d_retain_render_argument(legacy_u16 return_ip, legacy_u16 argu
 
 static void shape3d_retain_sphere_stack(legacy_u16 size)
 {
-	legacy_u16 effective_height;
-	legacy_u16 first;
-
 	if (legacy_render_wheel_headings == 0) {
 		return;
 	}
-	effective_height = LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_SUB(size, size >> 2), size >> 4);
+	legacy_u16 effective_height =
+		LEGACY_U16_WRAP_ADD(LEGACY_U16_WRAP_SUB(size, size >> 2), size >> 4);
 	/* preRender_sphere writes BP-2 only after rejecting nonpositive heights
 	 * and the one-pixel shortcut; its saved BP/return words always change. */
-	first = LEGACY_S16_FROM_BITS(effective_height) >= 2
-				? LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U)
-				: (legacy_u16)legacy_render_wheel_headings[0];
+	legacy_u16 first = LEGACY_S16_FROM_BITS(effective_height) >= 2
+						   ? LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U)
+						   : (legacy_u16)legacy_render_wheel_headings[0];
 	shape3d_retain_render_local(first, SHAPE3D_LEGACY_SPHERE_RETURN_IP);
 }
 
 void shape3d_render_queued_primitives(void)
 {
-	legacy_u8 far *record;
+	legacy_u16 record_index = POLYINFO_LIST_CAPACITY;
 	struct POINT2D points[POLYINFO_MAX_RENDER_POINTS];
-	legacy_u16 record_index;
-	legacy_u16 primitive_index;
-	legacy_u16 material_type;
-	legacy_u16 material_color;
-	legacy_u16 primitive_type;
-	legacy_u16 vertex_count;
-	legacy_u16 pattern_type;
-
-	record_index = POLYINFO_LIST_CAPACITY;
-	for (primitive_index = 0; primitive_index < polyinfonumpolys; primitive_index++) {
+	for (legacy_u16 primitive_index = 0; primitive_index < polyinfonumpolys; primitive_index++) {
 		record_index = (legacy_u16)polygon_next_index[record_index];
-		record = polyinfoptrs[record_index];
-		material_type = record[2];
-		material_color = (legacy_u16)material_clrlist_ptr_cpy[material_type];
-		primitive_type = record[4];
+		legacy_u8 far *record = polyinfoptrs[record_index];
+		legacy_u16 material_type = record[2];
+		legacy_u16 material_color = (legacy_u16)material_clrlist_ptr_cpy[material_type];
+		legacy_u16 primitive_type = record[4];
 
 		if (primitive_type == RENDER_PRIMITIVE_POLYGON) {
-			vertex_count = record[3];
+			legacy_u16 vertex_count = record[3];
 			polyinfo_read_points(record, points, vertex_count);
 			shape3d_retain_opponent_polygon_pointer(record, vertex_count);
-			pattern_type = (legacy_u16)material_patlist_ptr_cpy[material_type];
+			legacy_u16 pattern_type = (legacy_u16)material_patlist_ptr_cpy[material_type];
 			if (pattern_type == 0U) {
 				shape3d_retain_render_local_pair(
 					LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_raster_right, 1U),

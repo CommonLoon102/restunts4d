@@ -32,8 +32,7 @@ static void trace_word(unsigned int value)
 }
 static void trace_bytes(const legacy_u8 *bytes, unsigned int count)
 {
-	unsigned int i;
-	for (i = 0; i < count; i++) {
+	for (unsigned int i = 0; i < count; i++) {
 		trace_hash = (trace_hash ^ bytes[i]) * UINT64_C(1099511628211);
 	}
 }
@@ -174,15 +173,17 @@ static void write_size(legacy_u8 *bytes, unsigned int length)
 static unsigned int make_vle(legacy_u8 *destination, const legacy_u8 *counts, unsigned int depth,
 							 unsigned int length, unsigned int additive, unsigned int scenario)
 {
-	unsigned int codes[256], widths[256], alphabet_length = 0, code = 0;
-	unsigned int width, i, j, symbol, bit, bit_count = 0, data_offset;
-	legacy_u8 alphabet[256], value = 0;
 	destination[0] = 2;
 	write_size(destination + 1, length);
 	destination[4] = depth | (additive ? 128 : 0);
-	for (width = 1; width <= depth; width++) {
+	legacy_u8 alphabet[256];
+	unsigned int codes[256];
+	unsigned int widths[256];
+	unsigned int alphabet_length = 0;
+	unsigned int code = 0;
+	for (unsigned int width = 1; width <= depth; width++) {
 		destination[4 + width] = counts[width - 1];
-		for (i = 0; i < counts[width - 1]; i++) {
+		for (unsigned int i = 0; i < counts[width - 1]; i++) {
 			codes[alphabet_length] = code++;
 			widths[alphabet_length] = width;
 			alphabet[alphabet_length] = (legacy_u8)(alphabet_length * 19U + scenario * 17U + 123U);
@@ -191,18 +192,20 @@ static unsigned int make_vle(legacy_u8 *destination, const legacy_u8 *counts, un
 		code *= 2;
 	}
 	memcpy(destination + 5 + depth, alphabet, alphabet_length);
-	data_offset = 5 + depth + alphabet_length;
+	unsigned int data_offset = 5 + depth + alphabet_length;
 	memset(destination + data_offset, 0, (length + 1) * 2 + 4);
-	for (i = 0; i <= length; i++) {
-		symbol = (i * 47U + scenario) % alphabet_length;
+	legacy_u8 value = 0;
+	unsigned int bit_count = 0;
+	for (unsigned int i = 0; i <= length; i++) {
+		unsigned int symbol = (i * 47U + scenario) % alphabet_length;
 		if (additive) {
 			value = (legacy_u8)(value + alphabet[symbol]);
 		} else {
 			value = alphabet[symbol];
 		}
 		expected[i] = value;
-		for (j = widths[symbol]; j > 0; j--) {
-			bit = (codes[symbol] >> (j - 1)) & 1U;
+		for (unsigned int j = widths[symbol]; j > 0; j--) {
+			unsigned int bit = (codes[symbol] >> (j - 1)) & 1U;
 			destination[data_offset + bit_count / 8] |= bit << (7 - bit_count % 8);
 			bit_count++;
 		}
@@ -214,14 +217,12 @@ static void test_vle(void)
 {
 	static const unsigned int lengths[] = {0, 1, 7, 15, 31, 257, 65537};
 	legacy_u8 counts[16];
-	unsigned int layout, l, additive, scenario, depth, size, i;
-	legacy_u32 result;
-	for (layout = 0; layout < 5; layout++) {
+	for (unsigned int layout = 0; layout < 5; layout++) {
 		memset(counts, 0, sizeof(counts));
-		depth = 1;
 		if (layout == 0) {
 			counts[0] = 2;
 		}
+		unsigned int depth = 1;
 		if (layout == 1) {
 			depth = 4;
 			counts[0] = 1;
@@ -231,14 +232,14 @@ static void test_vle(void)
 		}
 		if (layout == 2) {
 			depth = 9;
-			for (i = 0; i < 8; i++) {
+			for (unsigned int i = 0; i < 8; i++) {
 				counts[i] = 1;
 			}
 			counts[8] = 2;
 		}
 		if (layout == 3) {
 			depth = 16;
-			for (i = 0; i < 16; i++) {
+			for (unsigned int i = 0; i < 16; i++) {
 				counts[i] = 1;
 			}
 		}
@@ -247,18 +248,19 @@ static void test_vle(void)
 			counts[7] = 254;
 			counts[8] = 2;
 		}
-		for (l = 0; l < sizeof(lengths) / sizeof(lengths[0]); l++) {
-			for (additive = 0; additive < 2; additive++) {
-				for (scenario = 0; scenario < 3; scenario++) {
+		for (unsigned int l = 0; l < sizeof(lengths) / sizeof(lengths[0]); l++) {
+			for (unsigned int additive = 0; additive < 2; additive++) {
+				for (unsigned int scenario = 0; scenario < 3; scenario++) {
 					trace_word(layout);
 					trace_word(lengths[l]);
 					trace_word(lengths[l] >> 16);
 					trace_word(additive);
 					trace_word(scenario);
-					size = make_vle(packed, counts, depth, lengths[l], additive, scenario);
+					unsigned int size =
+						make_vle(packed, counts, depth, lengths[l], additive, scenario);
 					memset(memory, 0xa5, sizeof(memory));
 					memcpy(memory + 0x5fffb, packed, size);
-					result = file_decomp_vle(memory + 0x5fffb, memory + 0x1fffd, 0xffff);
+					legacy_u32 result = file_decomp_vle(memory + 0x5fffb, memory + 0x1fffd, 0xffff);
 					assert(result == lengths[l]);
 					assert(memcmp(memory + 0x1fffd, expected, lengths[l] + 1) == 0);
 					assert(memory[0x1fffc] == 0xa5 && memory[0x1fffd + lengths[l] + 1] == 0xa5);
@@ -273,13 +275,13 @@ static void test_vle(void)
 static unsigned int make_rle_literals(legacy_u8 *destination, const legacy_u8 *source,
 									  unsigned int length)
 {
-	unsigned int i, cursor = 10;
 	destination[0] = 1;
 	write_size(destination + 1, length);
 	destination[7] = 0;
 	destination[8] = 129;
 	destination[9] = 0xe0;
-	for (i = 0; i < length; i++) {
+	unsigned int cursor = 10;
+	for (unsigned int i = 0; i < length; i++) {
 		if (source[i] == 0xe0) {
 			destination[cursor++] = 0xe0;
 			destination[cursor++] = 1;
@@ -308,17 +310,15 @@ static void reset_file(void)
 
 static void test_file_passes(void)
 {
-	unsigned int passes, scenario, i, size, result_size;
-	void *result;
-	for (passes = 1; passes <= 3; passes++) {
-		for (scenario = 0; scenario < 8; scenario++) {
+	for (unsigned int passes = 1; passes <= 3; passes++) {
+		for (unsigned int scenario = 0; scenario < 8; scenario++) {
 			reset_file();
-			result_size = scenario % 2 ? 33 : 16;
-			for (i = 0; i < result_size; i++) {
+			unsigned int result_size = scenario % 2 ? 33 : 16;
+			for (unsigned int i = 0; i < result_size; i++) {
 				expected[i] = (legacy_u8)(scenario + i * 7U);
 			}
-			size = make_rle_literals(packed, expected, result_size);
-			for (i = 1; i < passes; i++) {
+			unsigned int size = make_rle_literals(packed, expected, result_size);
+			for (unsigned int i = 1; i < passes; i++) {
 				memcpy(stage, packed, size);
 				size = make_rle_literals(packed, stage, size);
 			}
@@ -351,7 +351,7 @@ static void test_file_passes(void)
 			}
 			trace_word(passes);
 			trace_word(scenario);
-			result = file_decomp("TEST.PVS", scenario % 2);
+			void *result = file_decomp("TEST.PVS", scenario % 2);
 			if (scenario < 2) {
 				assert(result == memory + 0x20000);
 				assert(memcmp(result, expected, result_size) == 0);
@@ -381,18 +381,16 @@ static void test_file_passes(void)
 
 static void test_file_vle(void)
 {
-	static const unsigned int lengths[] = {1, 15, 257, 65537};
 	legacy_u8 counts[1] = {2};
-	unsigned int i, additive;
-	void *result;
-	for (i = 0; i < sizeof(lengths) / sizeof(lengths[0]); i++) {
-		for (additive = 0; additive < 2; additive++) {
+	static const unsigned int lengths[] = {1, 15, 257, 65537};
+	for (unsigned int i = 0; i < sizeof(lengths) / sizeof(lengths[0]); i++) {
+		for (unsigned int additive = 0; additive < 2; additive++) {
 			reset_file();
 			file_length = make_vle(file_bytes, counts, 1, lengths[i], additive, i);
 			trace_word(lengths[i]);
 			trace_word(lengths[i] >> 16);
 			trace_word(additive);
-			result = file_decomp("VLE.PVS", 0);
+			void *result = file_decomp("VLE.PVS", 0);
 			assert(result == memory + 0x20000);
 			assert(memcmp(result, expected, lengths[i] + 1) == 0);
 			assert(resize_calls == 1 && resized_paragraphs == (lengths[i] + 15) / 16);
@@ -405,11 +403,14 @@ static void test_file_vle(void)
 static unsigned int make_vle_bytes(legacy_u8 *destination, const legacy_u8 *source,
 								   unsigned int length, unsigned int additive)
 {
-	legacy_u8 alphabet[256], deltas[256], previous = 0, value;
-	unsigned int alphabet_length = 0, i, j;
+	legacy_u8 deltas[256];
 	assert(length <= sizeof(deltas));
-	for (i = 0; i < length; i++) {
-		value = additive ? (legacy_u8)(source[i] - previous) : source[i];
+	unsigned int j;
+	legacy_u8 alphabet[256];
+	legacy_u8 previous = 0;
+	unsigned int alphabet_length = 0;
+	for (unsigned int i = 0; i < length; i++) {
+		legacy_u8 value = additive ? (legacy_u8)(source[i] - previous) : source[i];
 		previous = source[i];
 		for (j = 0; j < alphabet_length && alphabet[j] != value; j++) {
 		}
@@ -432,14 +433,13 @@ static unsigned int make_vle_bytes(legacy_u8 *destination, const legacy_u8 *sour
 
 static void test_mixed_passes(void)
 {
-	unsigned int order, additive, i, size;
-	void *result;
-	for (order = 0; order < 2; order++) {
-		for (additive = 0; additive < 2; additive++) {
+	for (unsigned int order = 0; order < 2; order++) {
+		for (unsigned int additive = 0; additive < 2; additive++) {
 			reset_file();
-			for (i = 0; i < 16; i++) {
+			for (unsigned int i = 0; i < 16; i++) {
 				expected[i] = (legacy_u8)(i * 17 + additive * 13);
 			}
+			unsigned int size;
 			if (order == 0) {
 				size = make_rle_literals(stage, expected, 16);
 				size = make_vle_bytes(packed, stage, size, additive);
@@ -453,7 +453,7 @@ static void test_mixed_passes(void)
 			file_length = size + 4;
 			trace_word(order);
 			trace_word(additive);
-			result = file_decomp("MIXED.PVS", 0);
+			void *result = file_decomp("MIXED.PVS", 0);
 			assert(result == memory + 0x20000);
 			assert(memcmp(result, expected, 16) == 0);
 			assert(copy_calls == 1 && resize_calls == 1 && resized_paragraphs == 1);
@@ -466,14 +466,12 @@ static void test_mixed_passes(void)
 static void test_rle_passes(void)
 {
 	static const legacy_u8 escape_flags[] = {2, 3, 128, 129, 131};
-	unsigned int i, scenario, length;
-	legacy_u32 result;
-	for (i = 0; i < sizeof(escape_flags); i++) {
-		for (scenario = 0; scenario < 3; scenario++) {
+	for (unsigned int i = 0; i < sizeof(escape_flags); i++) {
+		for (unsigned int scenario = 0; scenario < 3; scenario++) {
 			reset_file();
 			memset(packed, 0, sizeof(packed));
 			packed[0] = 1;
-			length = 5;
+			unsigned int length = 5;
 			write_size(packed + 1, length);
 			packed[8] = escape_flags[i];
 			packed[9] = 0xe0;
@@ -502,7 +500,7 @@ static void test_rle_passes(void)
 				write_size(packed + 4, 3);
 			}
 			memcpy(memory + 0x5fff9, packed, 32);
-			result = file_decomp_rle(memory + 0x5fff9, memory + 0x20000, 16);
+			legacy_u32 result = file_decomp_rle(memory + 0x5fff9, memory + 0x20000, 16);
 			assert(result == length);
 			trace_word(escape_flags[i]);
 			trace_word(scenario);

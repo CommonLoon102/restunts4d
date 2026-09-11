@@ -13,9 +13,7 @@ void add_exit_handler(void(far *exit_handler)(void))
 
 static void headless_write_text(const legacy_s8 *text)
 {
-	legacy_u16 length;
-
-	length = 0;
+	legacy_u16 length = 0;
 	while (text[length] != 0) {
 		length++;
 	}
@@ -24,15 +22,12 @@ static void headless_write_text(const legacy_s8 *text)
 
 void fatal_error(const legacy_s8 *format, ...)
 {
-	legacy_u16 index;
-	va_list arguments;
-	const legacy_s8 *detail;
-
 	headless_write_text(format);
-	for (index = 0; format[index] != 0; index++) {
+	va_list arguments;
+	for (legacy_u16 index = 0; format[index] != 0; index++) {
 		if (format[index] == '%' && format[index + 1] == 's') {
 			va_start(arguments, format);
-			detail = va_arg(arguments, const legacy_s8 *);
+			const legacy_s8 *detail = va_arg(arguments, const legacy_s8 *);
 			va_end(arguments);
 			headless_write_text(" ");
 			headless_write_text(detail);

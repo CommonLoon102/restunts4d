@@ -31,17 +31,12 @@ static struct find_t dos_find_data;
 
 static legacy_u16 dos_file_open_lfn(const legacy_s8 *path, legacy_s16 create)
 {
-	legacy_u16 path_offset;
-	legacy_u16 access_mode;
-	legacy_u16 action;
-	legacy_u16 handle;
-
-	path_offset = FP_OFF(path);
-	access_mode =
+	legacy_u16 path_offset = FP_OFF(path);
+	legacy_u16 access_mode =
 		create != DOS_FILE_OPEN_EXISTING ? DOS_FILE_READ_WRITE_ACCESS : DOS_FILE_READ_ONLY_ACCESS;
-	action = create != DOS_FILE_OPEN_EXISTING ? DOS_FILE_CREATE_OR_TRUNCATE_ACTION
-											  : DOS_FILE_OPEN_EXISTING_ACTION;
-	handle = 0;
+	legacy_u16 action = create != DOS_FILE_OPEN_EXISTING ? DOS_FILE_CREATE_OR_TRUNCATE_ACTION
+														 : DOS_FILE_OPEN_EXISTING_ACTION;
+	legacy_u16 handle = 0;
 	__asm {
 		push si
 		push di
@@ -63,12 +58,9 @@ static legacy_u16 dos_file_open_lfn(const legacy_s8 *path, legacy_s16 create)
 
 legacy_u16 dos_file_open(const legacy_s8 *path, legacy_s16 create)
 {
-	legacy_u16 path_offset;
-	legacy_u16 handle;
-
-	path_offset = FP_OFF(path);
+	legacy_u16 path_offset = FP_OFF(path);
 	dos_file_errno = 0;
-	handle = dos_file_open_lfn(path, create);
+	legacy_u16 handle = dos_file_open_lfn(path, create);
 	if (handle != 0) {
 		return handle;
 	}
@@ -102,9 +94,7 @@ legacy_u16 dos_file_open(const legacy_s8 *path, legacy_s16 create)
 
 legacy_s16 dos_file_close(legacy_u16 handle)
 {
-	legacy_s16 result;
-
-	result = 0;
+	legacy_s16 result = 0;
 	__asm {
 		mov ah, DOS_FILE_CLOSE_FUNCTION
 		mov bx, handle
@@ -119,12 +109,9 @@ legacy_s16 dos_file_close(legacy_u16 handle)
 
 legacy_u16 dos_file_read(legacy_u16 handle, void far *destination, legacy_u16 length)
 {
-	legacy_u16 segment;
-	legacy_u16 buffer_offset;
+	legacy_u16 segment = FP_SEG(destination);
+	legacy_u16 buffer_offset = FP_OFF(destination);
 	legacy_u16 result;
-
-	segment = FP_SEG(destination);
-	buffer_offset = FP_OFF(destination);
 	__asm {
 		push ds
 		mov ah, DOS_FILE_READ_FUNCTION
@@ -148,12 +135,9 @@ legacy_u16 dos_file_read(legacy_u16 handle, void far *destination, legacy_u16 le
 
 legacy_u16 dos_file_write(legacy_u16 handle, const void far *source, legacy_u16 length)
 {
-	legacy_u16 segment;
-	legacy_u16 buffer_offset;
+	legacy_u16 segment = FP_SEG(source);
+	legacy_u16 buffer_offset = FP_OFF(source);
 	legacy_u16 result;
-
-	segment = FP_SEG(source);
-	buffer_offset = FP_OFF(source);
 	__asm {
 		push ds
 		mov ah, DOS_FILE_WRITE_FUNCTION
@@ -177,13 +161,9 @@ legacy_u16 dos_file_write(legacy_u16 handle, const void far *source, legacy_u16 
 
 legacy_s16 dos_file_seek(legacy_u16 handle, legacy_s32 offset, legacy_s16 origin)
 {
-	legacy_u16 low;
-	legacy_u16 high;
-	legacy_u16 command;
-
-	low = (legacy_u16)offset;
-	high = (legacy_u16)((legacy_u32)offset >> LEGACY_WORD_BITS);
-	command = (legacy_u16)(DOS_FILE_SEEK_COMMAND_BASE | (legacy_u16)origin);
+	legacy_u16 low = (legacy_u16)offset;
+	legacy_u16 high = (legacy_u16)((legacy_u32)offset >> LEGACY_WORD_BITS);
+	legacy_u16 command = (legacy_u16)(DOS_FILE_SEEK_COMMAND_BASE | (legacy_u16)origin);
 	__asm {
 		mov ax, command
 		mov bx, handle
@@ -201,7 +181,6 @@ legacy_s32 dos_file_tell(legacy_u16 handle)
 {
 	legacy_u16 low;
 	legacy_u16 high;
-
 	__asm {
 		mov ah, DOS_FILE_SEEK_FUNCTION
 		mov al, DOS_FILE_SEEK_CURRENT_ASM
@@ -220,21 +199,16 @@ legacy_s32 dos_file_tell(legacy_u16 handle)
 
 legacy_s16 dos_file_error(void)
 {
-	legacy_s16 result;
-
-	result = dos_file_errno;
+	legacy_s16 result = dos_file_errno;
 	dos_file_errno = 0;
 	return result;
 }
 
 legacy_s16 dos_file_remove(const legacy_s8 *path)
 {
-	legacy_u16 segment;
-	legacy_u16 path_offset;
+	legacy_u16 segment = FP_SEG(path);
+	legacy_u16 path_offset = FP_OFF(path);
 	legacy_s16 result;
-
-	segment = FP_SEG(path);
-	path_offset = FP_OFF(path);
 	__asm {
 		push ds
 		mov ah, DOS_FILE_REMOVE_FUNCTION
@@ -255,11 +229,9 @@ legacy_s16 dos_file_remove(const legacy_s8 *path)
 
 const legacy_s8 *dos_file_find_first(const legacy_s8 *query)
 {
-	legacy_u8 attributes;
-	legacy_s16 result;
-
-	attributes =
+	legacy_u8 attributes =
 		DOS_FILE_DEFAULT_ATTRIBUTES | DOS_FILE_HIDDEN_ATTRIBUTE | DOS_FILE_SYSTEM_ATTRIBUTE;
+	legacy_s16 result;
 	__asm {
 		mov ah, DOS_FILE_SET_DTA_FUNCTION
 		mov dx, offset dos_find_data

@@ -48,13 +48,11 @@ void audio_allocate_car_state_records(void)
 {
 	static const legacy_s8 chunk_name[AUDIO_STATE_CHUNK_NAME_SIZE] = {'a', 'u', 'd', 'i', 'o', 's',
 																	  't', 'a', 't', 'e', 0,   0};
-	legacy_u8 far *bytes;
-	legacy_u16 index;
-
 	audio_car_state_records = (struct AUDIO_CAR_STATE far *)mmgr_alloc_resbytes(
 		chunk_name, (legacy_s32)AUDIO_CAR_STATE_RECORD_COUNT * AUDIO_CAR_STATE_RECORD_SIZE);
-	bytes = (legacy_u8 far *)audio_car_state_records;
-	for (index = 0; index < AUDIO_CAR_STATE_RECORD_COUNT * AUDIO_CAR_STATE_RECORD_SIZE; index++) {
+	legacy_u8 far *bytes = (legacy_u8 far *)audio_car_state_records;
+	for (legacy_u16 index = 0; index < AUDIO_CAR_STATE_RECORD_COUNT * AUDIO_CAR_STATE_RECORD_SIZE;
+		 index++) {
 		bytes[index] = 0;
 	}
 }
@@ -136,11 +134,8 @@ void frame_callback(void)
 
 static legacy_s16 replay_read_mouse_input(void)
 {
-	legacy_s16 steering;
-	legacy_s16 input_flags;
-
 	dos_mouse_get_state(&mouse_butstate, &mouse_xpos, &mouse_ypos);
-	steering = LEGACY_S16_WRAP_SUB(mouse_xpos, MOUSE_HORIZONTAL_CENTER);
+	legacy_s16 steering = LEGACY_S16_WRAP_SUB(mouse_xpos, MOUSE_HORIZONTAL_CENTER);
 	if (steering > -MOUSE_STEERING_DEAD_ZONE && steering < MOUSE_STEERING_DEAD_ZONE) {
 		steering = 0;
 	} else if (steering > 0) {
@@ -149,6 +144,7 @@ static legacy_s16 replay_read_mouse_input(void)
 		steering = LEGACY_S16_WRAP_ADD(steering, MOUSE_STEERING_DEAD_ZONE);
 	}
 	input_steering_value = LEGACY_S8_FROM_BITS(steering);
+	legacy_s16 input_flags;
 	if (((legacy_u16)mouse_butstate & MOUSE_LEFT_BUTTON_MASK) != 0) {
 		input_flags = INPUT_BRAKE_FLAG;
 	} else if (((legacy_u16)mouse_butstate & MOUSE_RIGHT_BUTTON_MASK) != 0) {
@@ -161,10 +157,7 @@ static legacy_s16 replay_read_mouse_input(void)
 
 static legacy_s16 replay_read_joystick_input(void)
 {
-	legacy_s8 mapped_steering;
-	legacy_s16 input_flags;
-
-	mapped_steering = LEGACY_S8_FROM_BITS(joystick_get_scaled_x());
+	legacy_s8 mapped_steering = LEGACY_S8_FROM_BITS(joystick_get_scaled_x());
 	input_steering_value = mapped_steering;
 	if (mapped_steering > 0) {
 		input_steering_value = joystick_steering_table[(legacy_u8)mapped_steering];
@@ -174,28 +167,27 @@ static legacy_s16 replay_read_joystick_input(void)
 						(legacy_u8)
 							joystick_steering_table[(legacy_u8)(0U - (legacy_u8)mapped_steering)]));
 	}
-	input_flags = (legacy_s16)((legacy_u16)get_kb_or_joy_flags() & INPUT_NON_STEERING_MASK);
+	legacy_s16 input_flags =
+		(legacy_s16)((legacy_u16)get_kb_or_joy_flags() & INPUT_NON_STEERING_MASK);
 	return input_flags;
 }
 
 static legacy_s16 replay_read_live_input(void)
 {
-	legacy_s16 input_flags;
-	legacy_u16 history_index;
-
 	if (passed_security == 0 && race_start_sequence_state == RACE_START_SEQUENCE_INACTIVE &&
 		(legacy_u16)state.game_frame >
 			LEGACY_U16_WRAP_MUL(framespersec, REPLAY_SECURITY_GRACE_SECONDS)) {
 		update_crash_state(CRASH_EVENT_COLLISION, PLAYER_CAR_INDEX);
 	}
 
+	legacy_s16 input_flags;
 	if (mouse_driving_enabled != 0 || dos_joystick_is_enabled() != 0) {
 		if (mouse_driving_enabled != 0) {
 			input_flags = replay_read_mouse_input();
 		} else {
 			input_flags = replay_read_joystick_input();
 		}
-		history_index = (legacy_u16)elapsed_time2 & INPUT_STEERING_HISTORY_MASK;
+		legacy_u16 history_index = (legacy_u16)elapsed_time2 & INPUT_STEERING_HISTORY_MASK;
 		input_steering_history[history_index] = (legacy_u8)input_steering_value;
 		input_steering_history_valid[history_index] = 1;
 	} else {
@@ -213,21 +205,17 @@ static legacy_s16 replay_read_live_input(void)
 
 static void replay_shift_recording_history(void)
 {
-	legacy_s16 snapshot_index;
-	legacy_s16 snapshot_count;
-	legacy_u16 recording_chunk;
-	legacy_u16 input_index;
-
-	recording_chunk = LEGACY_U16_WRAP_MUL(REPLAY_HISTORY_SHIFT_SECONDS, framespersec);
-	snapshot_count = LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(
-											 REPLAY_INPUT_BUFFER_FRAME_COUNT, recording_chunk)),
-										 1);
-	for (snapshot_index = 0; snapshot_index < snapshot_count; snapshot_index++) {
+	legacy_u16 recording_chunk = LEGACY_U16_WRAP_MUL(REPLAY_HISTORY_SHIFT_SECONDS, framespersec);
+	legacy_s16 snapshot_count =
+		LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(
+								REPLAY_INPUT_BUFFER_FRAME_COUNT, recording_chunk)),
+							1);
+	for (legacy_s16 snapshot_index = 0; snapshot_index < snapshot_count; snapshot_index++) {
 		cvxptr[snapshot_index + 1].game_frame =
 			LEGACY_S16_WRAP_SUB(cvxptr[snapshot_index + 1].game_frame, recording_chunk);
 		fmemcpy(&cvxptr[snapshot_index], &cvxptr[snapshot_index + 1], sizeof(struct GAMESTATE));
 	}
-	for (input_index = 0;
+	for (legacy_u16 input_index = 0;
 		 input_index < (legacy_u16)(REPLAY_INPUT_BUFFER_FRAME_COUNT - recording_chunk);
 		 input_index++) {
 		replay_input_buffer[input_index] = replay_input_buffer[input_index + recording_chunk];
@@ -242,9 +230,6 @@ static void replay_shift_recording_history(void)
 void replay_update_input_tick(legacy_s16 force_neutral_input)
 {
 	legacy_s16 input_flags;
-	legacy_u16 recording_limit;
-	legacy_u16 elapsed_total;
-
 	if (force_neutral_input != 0) {
 		input_flags = 0;
 	} else if (game_replay_mode == REPLAY_MODE_PLAYBACK) {
@@ -266,8 +251,8 @@ void replay_update_input_tick(legacy_s16 force_neutral_input)
 		input_flags = 0;
 	}
 
-	recording_limit = LEGACY_U16_WRAP_MUL(REPLAY_TOTAL_LIMIT_SECONDS, framespersec);
-	elapsed_total = LEGACY_U16_WRAP_ADD(elapsed_time2, elapsed_time1);
+	legacy_u16 recording_limit = LEGACY_U16_WRAP_MUL(REPLAY_TOTAL_LIMIT_SECONDS, framespersec);
+	legacy_u16 elapsed_total = LEGACY_U16_WRAP_ADD(elapsed_time2, elapsed_time1);
 	if (recording_limit <= elapsed_total) {
 		update_crash_state(CRASH_EVENT_EXIT, PLAYER_CAR_INDEX);
 		race_exit_request = 1;
@@ -292,35 +277,26 @@ void replay_update_input_tick(legacy_s16 force_neutral_input)
 
 void replay_apply_analog_steering_history(void)
 {
-	legacy_s16 steering_angle;
-	legacy_s16 target_angle;
-	legacy_s16 response;
-	legacy_s16 adjusted_angle;
-	legacy_u16 frame;
-	legacy_u16 history_index;
-	legacy_u16 speed_index;
-	legacy_u8 action;
-	legacy_s8 *response_table;
-
-	frame = state.game_frame;
-	history_index = frame & INPUT_STEERING_HISTORY_MASK;
+	legacy_u16 frame = state.game_frame;
+	legacy_u16 history_index = frame & INPUT_STEERING_HISTORY_MASK;
 	if (input_steering_history_valid[history_index] == 0) {
 		return;
 	}
 
-	target_angle = LEGACY_S8_FROM_BITS(input_steering_history[history_index]);
-	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index = (state.playerstate.car_actual_speed >> STEERING_RESPONSE_SPEED_SHIFT) &
-				  STEERING_RESPONSE_SPEED_MASK;
-	response_table = steerWhlRespTable_ptr;
-	response = response_table[speed_index + STEERING_RESPONSE_TABLE_OFFSET];
+	legacy_s16 target_angle = LEGACY_S8_FROM_BITS(input_steering_history[history_index]);
+	legacy_s16 steering_angle = state.playerstate.car_steeringAngle;
+	legacy_u16 speed_index = (state.playerstate.car_actual_speed >> STEERING_RESPONSE_SPEED_SHIFT) &
+							 STEERING_RESPONSE_SPEED_MASK;
+	legacy_s8 *response_table = steerWhlRespTable_ptr;
+	legacy_s16 response = response_table[speed_index + STEERING_RESPONSE_TABLE_OFFSET];
 	if ((steering_angle < target_angle && steering_angle < -1) ||
 		(steering_angle > target_angle && steering_angle > 1)) {
 		response = LEGACY_S8_FROM_BITS(
 			(legacy_u8)((legacy_u8)response << STEERING_RESPONSE_RECENTER_SHIFT));
 	}
 
-	action = 0;
+	legacy_s16 adjusted_angle;
+	legacy_u8 action = 0;
 	if (steering_angle > target_angle) {
 		adjusted_angle = LEGACY_S16_WRAP_SUB(steering_angle, response);
 		if (adjusted_angle >= target_angle) {

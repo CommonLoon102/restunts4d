@@ -133,12 +133,10 @@ static void race_initialize_state(void)
 
 static void race_check_recording_limit(void)
 {
-	legacy_s16 dialog_choice;
-
 	if (recording_limit_warning_requested != 0) {
 		input_push_status();
 		audio_suspend();
-		dialog_choice =
+		legacy_s16 dialog_choice =
 			show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 						locate_text_res(gameresptr, "rbf"), -1, -1, dialog_border_color, 0, 0);
 		if (dialog_choice == -1) {
@@ -222,8 +220,6 @@ static void race_update_viewport(struct RACE_VIEWPORT_CACHE *cache)
 
 static void race_draw_frame(void)
 {
-	struct RECTANGLE dashboard_mask_rect;
-
 	if (full_redraw_frames_remaining != 0) {
 		replay_controls_drawn[dashboard_buffer_index] = 0;
 		if (dashboard_visible != 0) {
@@ -243,6 +239,7 @@ static void race_draw_frame(void)
 	}
 
 	update_frame(frame_buffer_index, &rect_windshield);
+	struct RECTANGLE dashboard_mask_rect;
 	if (dastbmp_y != 0 && dashboard_visible != 0) {
 		if (slow_video_mgmt_copy != 0) {
 			dashboard_mask_rect.left = 0;
@@ -305,7 +302,6 @@ static void race_handle_driving_input(void)
 static legacy_u16 race_handle_exit_request(void)
 {
 	if (race_exit_request != 0) {
-
 		if ((game_replay_mode != REPLAY_MODE_LIVE || state.game_end_event == CRASH_EVENT_EXIT) &&
 			race_exit_request != REPLAY_EXIT_REQUESTED) {
 			race_exit_request = 0;
@@ -374,7 +370,6 @@ static void race_run_frames(struct RACE_VIEWPORT_CACHE *cache)
 	legacy_s16 last_processed_frame = -1;
 
 	while (1) {
-
 		if (race_frame_is_ready(&last_processed_frame) == 0) {
 			continue;
 		}
@@ -415,8 +410,6 @@ static void race_run_frames(struct RACE_VIEWPORT_CACHE *cache)
 static void race_finish_opponent(void)
 {
 	legacy_s16 opponent_progress_text_position[2];
-	legacy_s16 frame_counter;
-
 	if (game_replay_mode == REPLAY_MODE_LIVE && gameconfig.game_opponenttype != 0 &&
 		state.opponentstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 		show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_NO_BACKGROUND_SAVE,
@@ -424,7 +417,7 @@ static void race_finish_opponent(void)
 					performGraphColor, opponent_progress_text_position, 0);
 		replay_overflow_acknowledged_word = LEGACY_S16_FROM_BITS(
 			LEGACY_U16_REPLACE_LOW_BYTE(replay_overflow_acknowledged_word, 1U));
-		frame_counter = framespersec;
+		legacy_s16 frame_counter = framespersec;
 		frame_counter--;
 
 		while (1) {
@@ -478,10 +471,9 @@ static void race_release_resources(void)
 
 void run_game(void)
 {
-	struct RACE_VIEWPORT_CACHE cache;
-
 	rect_windshield.left = 0;
 	rect_windshield.right = RACE_SCREEN_WIDTH;
+	struct RACE_VIEWPORT_CACHE cache;
 	cache.roof_height = -1;
 	cache.dashboard_bottom = -1;
 	viewport_bottom_cache = -1;

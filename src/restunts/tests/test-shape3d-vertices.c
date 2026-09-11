@@ -12,12 +12,10 @@
 
 int main(void)
 {
-	legacy_u8 bytes[TEST_VERTEX_STORAGE_SIZE];
 	struct SHAPE3D shape;
-	struct VECTOR source;
-	struct VECTOR destination;
-
+	legacy_u8 bytes[TEST_VERTEX_STORAGE_SIZE];
 	shape.shape3d_vertex_bytes = bytes + TEST_VERTEX_STORAGE_PREFIX_SIZE;
+	struct VECTOR source;
 	source.x = LEGACY_S16_FROM_BITS(LEGACY_U16_SIGN_BIT);
 	source.y = LEGACY_S16_MAX;
 	source.z = -1;
@@ -30,6 +28,7 @@ int main(void)
 	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Z_OFFSET] == LEGACY_U8_MAX);
 	assert(bytes[TEST_VERTEX_BYTE_OFFSET + SHAPE3D_VERTEX_Z_OFFSET + 1U] == LEGACY_U8_MAX);
 
+	struct VECTOR destination;
 	destination.x = 0;
 	destination.y = 0;
 	destination.z = 0;

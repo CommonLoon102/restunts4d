@@ -9,9 +9,7 @@
 
 legacy_s16 sign_word(legacy_s16 value)
 {
-	legacy_s16 signed_value;
-
-	signed_value = LEGACY_S16_FROM_BITS(value);
+	legacy_s16 signed_value = LEGACY_S16_FROM_BITS(value);
 	if (signed_value < 0) {
 		return -1;
 	}
@@ -20,9 +18,7 @@ legacy_s16 sign_word(legacy_s16 value)
 
 legacy_s32 absolute_long(legacy_s32 value)
 {
-	legacy_u32 bits;
-
-	bits = (legacy_u32)value;
+	legacy_u32 bits = (legacy_u32)value;
 	if ((bits & LEGACY_U32_SIGN_BIT) != 0) {
 		bits = (legacy_u32)(0UL - bits);
 	}
@@ -126,11 +122,7 @@ static legacy_s16 polar_angle_quadrant(legacy_u16 flag, legacy_s16 result)
 legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 {
 
-	legacy_u16 flag;
-	legacy_s16 coordinate_swap, result;
-	legacy_u32 index;
-
-	flag = 0;
+	legacy_u16 flag = 0;
 
 	if (z < 0) {
 		flag |= 4;
@@ -142,6 +134,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 		y = LEGACY_S16_WRAP_NEGATE(y);
 	}
 
+	legacy_s16 result;
 	if (z == y) {
 		/* The legacy callers treat a zero-length direction as angle zero. */
 		if (z == 0) {
@@ -150,12 +143,13 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 		result = ANGLE_EIGHTH_TURN;
 	} else {
 		if (z > y) {
-			coordinate_swap = z;
+			legacy_s16 coordinate_swap = z;
 			z = y;
 			y = coordinate_swap;
 			flag |= 1;
 		}
-		index = LEGACY_U32_DIV_OR_ZERO(LEGACY_U32_SHL((legacy_u16)z, 16U), (legacy_u16)y);
+		legacy_u32 index =
+			LEGACY_U32_DIV_OR_ZERO(LEGACY_U32_SHL((legacy_u16)z, 16U), (legacy_u16)y);
 		if ((index & ANGLE_QUARTER_MASK) >= ANGLE_EIGHTH_TURN) {
 			index += ANGLE_QUARTER_TURN;
 		}
@@ -167,9 +161,7 @@ legacy_s16 polarAngle(legacy_s16 z, legacy_s16 y)
 
 legacy_s16 polarRadius2D(legacy_s16 z, legacy_s16 y)
 {
-	legacy_s32 result;
-
-	result = polarAngle(z, y);
+	legacy_s32 result = polarAngle(z, y);
 
 	if (result < 0) {
 		result = -result;
@@ -243,11 +235,8 @@ legacy_u16 rect_compare_point(struct POINT2D *pt)
 
 static legacy_s16 matrix_scaled_product(legacy_s16 left, legacy_s16 right)
 {
-	legacy_s32 product;
-	legacy_u32 scaled_bits;
-
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
-	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, MATH_PRODUCT_SCALE_SHIFT);
+	legacy_s32 product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
+	legacy_u32 scaled_bits = LEGACY_U32_SHL((legacy_u32)product, MATH_PRODUCT_SCALE_SHIFT);
 	return LEGACY_S16_FROM_BITS((legacy_u16)(scaled_bits >> LEGACY_WORD_BITS));
 }
 
@@ -275,7 +264,6 @@ static legacy_s16 matrix_row_product(legacy_s16 row_x, legacy_s16 row_y, legacy_
 
 void mat_mul_vector(struct VECTOR *invec, struct MATRIX *mat, struct VECTOR *outvec)
 {
-
 	outvec->x = matrix_row_product(mat->m._11, mat->m._12, mat->m._13, invec);
 	outvec->y = matrix_row_product(mat->m._21, mat->m._22, mat->m._23, invec);
 	outvec->z = matrix_row_product(mat->m._31, mat->m._32, mat->m._33, invec);
@@ -290,12 +278,11 @@ void mat_mul_vector2(struct VECTOR *invec, struct MATRIX far *mat, struct VECTOR
 
 void mat_multiply(struct MATRIX *rmat, struct MATRIX *lmat, struct MATRIX *outmat)
 {
-	legacy_s16 counter;
 	legacy_s16 *rmatvals = rmat->vals;
 	legacy_s16 *lmatvals = lmat->vals;
 	legacy_s16 *outmatvals = outmat->vals;
 
-	counter = MATRIX_ELEMENT_COUNT;
+	legacy_s16 counter = MATRIX_ELEMENT_COUNT;
 	while (counter > 0) {
 		if (rmatvals[0] != 0 && lmatvals[0] != 0) {
 			outmatvals[0] = matrix_scaled_product(rmatvals[0], lmatvals[0]);
@@ -326,9 +313,8 @@ void mat_multiply(struct MATRIX *rmat, struct MATRIX *lmat, struct MATRIX *outma
 
 void mat_invert(struct MATRIX *inmat, struct MATRIX *outmat)
 {
-	legacy_s16 element_swap;
 	if (inmat == outmat) {
-		element_swap = outmat->m._21;
+		legacy_s16 element_swap = outmat->m._21;
 		outmat->m._21 = outmat->m._12;
 		outmat->m._12 = element_swap;
 
@@ -356,10 +342,8 @@ void mat_invert(struct MATRIX *inmat, struct MATRIX *outmat)
 
 void mat_rot_x(struct MATRIX *outmat, legacy_s16 angle)
 {
-	legacy_s16 c, s;
-
-	c = cos_fast(angle);
-	s = sin_fast(angle);
+	legacy_s16 c = cos_fast(angle);
+	legacy_s16 s = sin_fast(angle);
 	outmat->m._11 = TRIG_FIXED_ONE;
 	outmat->m._21 = 0;
 	outmat->m._31 = 0;
@@ -373,10 +357,8 @@ void mat_rot_x(struct MATRIX *outmat, legacy_s16 angle)
 
 void mat_rot_y(struct MATRIX *outmat, legacy_s16 angle)
 {
-	legacy_s16 c, s;
-
-	c = cos_fast(angle);
-	s = sin_fast(angle);
+	legacy_s16 c = cos_fast(angle);
+	legacy_s16 s = sin_fast(angle);
 	outmat->m._11 = c;
 	outmat->m._21 = 0;
 	outmat->m._31 = -s;
@@ -390,10 +372,8 @@ void mat_rot_y(struct MATRIX *outmat, legacy_s16 angle)
 
 void mat_rot_z(struct MATRIX *outmat, legacy_s16 angle)
 {
-	legacy_s16 c, s;
-
-	c = cos_fast(angle);
-	s = sin_fast(angle);
+	legacy_s16 c = cos_fast(angle);
+	legacy_s16 s = sin_fast(angle);
 	outmat->m._11 = c;
 	outmat->m._21 = s;
 	outmat->m._31 = 0;
@@ -455,13 +435,11 @@ struct MATRIX *mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 
 #ifndef RESTUNTS_HEADLESS
 void rect_adjust_from_point(struct POINT2D *pt, struct RECTANGLE *rc)
 {
-	legacy_s16 exclusive_bound;
-
 	if (rc->left > pt->px) {
 		rc->left = pt->px;
 	}
 
-	exclusive_bound = pt->px + 1;
+	legacy_s16 exclusive_bound = pt->px + 1;
 	if (rc->right < exclusive_bound) {
 		rc->right = exclusive_bound;
 	}
@@ -672,20 +650,19 @@ static void rectlist_split_overlap(struct RECTANGLE *rect, struct RECTANGLE *exi
 void rectlist_add_rect(legacy_s8 *rectangle_count, struct RECTANGLE *rectangles,
 					   struct RECTANGLE *rect)
 {
-	legacy_s16 rectangle_index;
-	struct RECTANGLE merged_rectangle;
-	struct RECTANGLE upper_remainder;
-	struct RECTANGLE lower_remainder;
-	struct RECTANGLE *existing_rectangle;
-	legacy_s16 has_lower_remainder, has_upper_remainder;
-
 	if (video_x_alignment != 1) {
 		// Unreachable, for the same reason as the one in rect_union above:
 		// video_x_alignment is only ever set to 1, in init_main.
 		fatal_error((const legacy_s8 *)"rectlist_add_rect: unexpected code path");
 	}
 
-	for (rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
+	legacy_s16 has_upper_remainder;
+	struct RECTANGLE merged_rectangle;
+	struct RECTANGLE upper_remainder;
+	struct RECTANGLE lower_remainder;
+	struct RECTANGLE *existing_rectangle;
+	legacy_s16 has_lower_remainder;
+	for (legacy_s16 rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
 		existing_rectangle = &rectangles[rectangle_index];
 		if (rect_is_overlapping(rect, existing_rectangle) == 0) {
 			continue;
@@ -714,7 +691,7 @@ void rectlist_add_rect(legacy_s8 *rectangle_count, struct RECTANGLE *rectangles,
 		return;
 	}
 
-	for (rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
+	for (legacy_s16 rectangle_index = 0; rectangle_index < *rectangle_count; rectangle_index++) {
 		existing_rectangle = &rectangles[rectangle_index];
 
 		if (rect_is_adjacent(existing_rectangle, rect) == 0) {
@@ -736,21 +713,18 @@ void rectlist_add_rects(legacy_s8 source_count, legacy_s8 *source_flags,
 						struct RECTANGLE *clip_rectangle, legacy_s8 *output_count,
 						struct RECTANGLE *output_rectangles)
 {
-	struct RECTANGLE *second_rectangle;
-	struct RECTANGLE *first_rectangle;
-	struct RECTANGLE *selected_rectangle;
-	struct RECTANGLE clipped_rectangle;
-	struct RECTANGLE merged_rectangle;
-	legacy_s16 has_rectangle, source_index;
-	legacy_s16 flags;
 	/*
 	return ported_rect_clip_combined_(
 		source_count, source_flags, first_rectangles, second_rectangles, clip_rectangle,
 		output_count, output_rectangles);
 	*/
-	for (source_index = 0; source_index < source_count; source_index++) {
-
-		flags = source_flags[source_index];
+	struct RECTANGLE *second_rectangle;
+	struct RECTANGLE *first_rectangle;
+	struct RECTANGLE *selected_rectangle;
+	struct RECTANGLE clipped_rectangle;
+	struct RECTANGLE merged_rectangle;
+	for (legacy_s16 source_index = 0; source_index < source_count; source_index++) {
+		legacy_s16 flags = source_flags[source_index];
 		if ((flags & 1) != 0) {
 			first_rectangle = &first_rectangles[source_index];
 		}
@@ -759,6 +733,7 @@ void rectlist_add_rects(legacy_s8 source_count, legacy_s8 *source_flags,
 			second_rectangle = &second_rectangles[source_index];
 		}
 
+		legacy_s16 has_rectangle;
 		if (((flags & 1) == 0) || first_rectangle->right <= first_rectangle->left) {
 			if (((flags & 2) == 0) || second_rectangle->right <= second_rectangle->left) {
 				has_rectangle = 0;
@@ -790,11 +765,10 @@ void rectlist_add_rects(legacy_s8 source_count, legacy_s8 *source_flags,
 void rect_array_sort_by_top(legacy_s8 rectangle_count, struct RECTANGLE *rectangles,
 							legacy_s16 *sorted_indices)
 {
-	legacy_s16 rectangle_index;
-	legacy_s16 sort_keys[256];
 	//return ported_rect_array_indexed_op_(rectangle_count, rectangles, sorted_indices);
+	legacy_s16 sort_keys[256];
 	if (rectangle_count > 1) {
-		for (rectangle_index = 0; rectangle_index < rectangle_count; rectangle_index++) {
+		for (legacy_s16 rectangle_index = 0; rectangle_index < rectangle_count; rectangle_index++) {
 			sort_keys[rectangle_index] = -rectangles[rectangle_index].top;
 			sorted_indices[rectangle_index] = rectangle_index;
 		}
@@ -814,18 +788,11 @@ static legacy_u16 math_word_magnitude(legacy_s16 value)
 
 legacy_s16 vector_direction_sector(struct VECTOR *vec)
 {
-	legacy_s32 vertical_magnitude;
-	legacy_s32 horizontal_radius;
-	legacy_s32 scaled_angle;
-	legacy_s16 vertical_sector;
-	legacy_s16 result;
-	legacy_s32 angle;
-
-	vertical_magnitude = (legacy_s32)math_word_magnitude(vec->y);
+	legacy_s32 vertical_magnitude = (legacy_s32)math_word_magnitude(vec->y);
 
 	// The original widens the 16-bit radius with an explicit zero high word
 	// (mov [bp+var_4], ax / mov [bp+var_2], 0), not with a sign extension.
-	horizontal_radius =
+	legacy_s32 horizontal_radius =
 		(legacy_u16)polarRadius2D(LEGACY_S16_FROM_BITS(math_word_magnitude(vec->x)),
 								  LEGACY_S16_FROM_BITS(math_word_magnitude(vec->z)));
 
@@ -835,6 +802,7 @@ legacy_s16 vector_direction_sector(struct VECTOR *vec)
 		horizontal_radius = horizontal_radius * direction_sector_cosine;
 	}
 
+	legacy_s16 vertical_sector;
 	if (horizontal_radius >= vertical_magnitude) {
 		vertical_sector = 0;
 	} else {
@@ -851,18 +819,20 @@ legacy_s16 vector_direction_sector(struct VECTOR *vec)
 		}
 	}
 
+	legacy_s16 result;
 	if (vec->y > 0) {
 		result = VECTOR_DIRECTION_POSITIVE_Y_OFFSET;
 	} else {
 		result = 0;
 	}
 
-	angle = -polarAngle(vec->z, -vec->x);
+	legacy_s32 angle = -polarAngle(vec->z, -vec->x);
 	if (angle < 0) {
 		angle += ANGLE_FULL_TURN;
 	}
 
-	scaled_angle = LEGACY_S32_WRAP_SUB(LEGACY_S32_SHL(angle, VECTOR_DIRECTION_SCALE_SHIFT), angle);
+	legacy_s32 scaled_angle =
+		LEGACY_S32_WRAP_SUB(LEGACY_S32_SHL(angle, VECTOR_DIRECTION_SCALE_SHIFT), angle);
 	result = LEGACY_S16_WRAP_ADD(
 		result, (legacy_s16)LEGACY_S32_SAR(scaled_angle, VECTOR_DIRECTION_INDEX_SHIFT));
 
@@ -904,8 +874,6 @@ static legacy_u16 projection_magnitude(legacy_s16 value)
 
 void vector_to_point(struct VECTOR *vec, struct POINT2D *outpt)
 {
-
-	legacy_u32 proj;
 	// bx in the original: (proj >> 16) << 1 plus the top bit of the low word,
 	// which is exactly proj >> 15 kept in 16 bits. `cmp cx, bx / jle` then
 	// weighs it against z as a signed word.
@@ -917,6 +885,7 @@ void vector_to_point(struct VECTOR *vec, struct POINT2D *outpt)
 		return;
 	}
 
+	legacy_u32 proj;
 	if (vec->x < 0) {
 		proj = (legacy_u32)projection_magnitude(vec->x) * (legacy_u16)projection_focal_length_x;
 		comp = (legacy_s16)(proj >> PROJECTION_DEPTH_COMPARE_SHIFT);
@@ -970,24 +939,19 @@ void vector_to_point(struct VECTOR *vec, struct POINT2D *outpt)
 static legacy_s16 vector_interpolate_axis(legacy_s16 first, legacy_s16 second, legacy_s16 factor,
 										  legacy_s16 divisor)
 {
-	legacy_s32 product;
-	legacy_s32 quotient;
-
-	product =
+	legacy_s32 product =
 		LEGACY_S32_WRAP_MUL((legacy_s32)LEGACY_S16_WRAP_SUB(first, second), (legacy_s32)factor);
-	quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
 	return LEGACY_S16_WRAP_ADD(LEGACY_S16_FROM_BITS((legacy_u16)quotient), second);
 }
 
 void vector_interpolate_at_z(struct VECTOR *first, struct VECTOR *second, struct VECTOR *result,
 							 legacy_s16 depth)
 {
-	legacy_s16 depth_offset, depth_span;
-
 	result->z = depth;
 
-	depth_offset = LEGACY_S16_WRAP_SUB(result->z, second->z);
-	depth_span = LEGACY_S16_WRAP_SUB(first->z, second->z);
+	legacy_s16 depth_offset = LEGACY_S16_WRAP_SUB(result->z, second->z);
+	legacy_s16 depth_span = LEGACY_S16_WRAP_SUB(first->z, second->z);
 	if (depth_span < 0) {
 		/* The original uses a 16-bit logical SHR for both values. */
 		depth_offset = LEGACY_S16_FROM_BITS((legacy_u16)depth_offset >> 1);
@@ -1003,56 +967,43 @@ extern legacy_u8 vector_saved_z_high;
 
 void vector_interpolate_at_saved_z(struct VECTOR *vec1, struct VECTOR *vec2, struct VECTOR *outvec)
 {
-	legacy_u16 interpolation_z;
-
-	interpolation_z = (legacy_u16)(vector_saved_z_low | LEGACY_U16_SHL(vector_saved_z_high, 8U));
+	legacy_u16 interpolation_z =
+		(legacy_u16)(vector_saved_z_low | LEGACY_U16_SHL(vector_saved_z_high, 8U));
 	vector_interpolate_at_z(vec1, vec2, outvec, LEGACY_S16_FROM_BITS(interpolation_z));
 }
 
 legacy_s16 multiply_and_scale(legacy_s16 left, legacy_s16 right)
 {
-	legacy_s32 product;
-	legacy_u32 scaled_bits;
-	legacy_u16 high_word;
-	legacy_u16 round_up;
-
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
-	scaled_bits = LEGACY_U32_SHL((legacy_u32)product, MATH_PRODUCT_SCALE_SHIFT);
-	high_word = (legacy_u16)(scaled_bits >> LEGACY_WORD_BITS);
-	round_up = (legacy_u16)((scaled_bits & MULTIPLY_ROUND_BIT) >> MULTIPLY_ROUND_SHIFT);
+	legacy_s32 product = LEGACY_S32_WRAP_MUL((legacy_s32)left, (legacy_s32)right);
+	legacy_u32 scaled_bits = LEGACY_U32_SHL((legacy_u32)product, MATH_PRODUCT_SCALE_SHIFT);
+	legacy_u16 high_word = (legacy_u16)(scaled_bits >> LEGACY_WORD_BITS);
+	legacy_u16 round_up = (legacy_u16)((scaled_bits & MULTIPLY_ROUND_BIT) >> MULTIPLY_ROUND_SHIFT);
 	return LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(high_word, round_up));
 }
 
 legacy_s16 vec_normalInnerProduct(legacy_s16 x, legacy_s16 y, legacy_s16 z,
 								  struct VECTOR far *normal)
 {
-	legacy_s32 x_product;
-	legacy_s32 y_product;
-	legacy_s32 z_product;
-	legacy_s32 sum;
-	legacy_s32 quotient;
-
-	x_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->x, (legacy_s32)x);
-	y_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->y, (legacy_s32)y);
-	z_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->z, (legacy_s32)z);
-	sum = LEGACY_S32_WRAP_ADD(LEGACY_S32_WRAP_ADD(x_product, z_product), y_product);
-	quotient = LEGACY_S32_DIV_OR_ZERO(sum, NORMAL_INNER_PRODUCT_SCALE);
+	legacy_s32 x_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->x, (legacy_s32)x);
+	legacy_s32 y_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->y, (legacy_s32)y);
+	legacy_s32 z_product = LEGACY_S32_WRAP_MUL((legacy_s32)normal->z, (legacy_s32)z);
+	legacy_s32 sum = LEGACY_S32_WRAP_ADD(LEGACY_S32_WRAP_ADD(x_product, z_product), y_product);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(sum, NORMAL_INNER_PRODUCT_SCALE);
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
 legacy_s16 plane_signed_distance(legacy_s16 plane_index, legacy_s16 x, legacy_s16 y, legacy_s16 z)
 {
 	struct PLANE far *plane;
-	struct VECTOR relative_position;
-	struct VECTOR world_origin;
-
 	if (plane_index == planindex) {
 		plane = current_planptr;
 	} else {
 		plane = &planptr[plane_index];
 	}
 
+	struct VECTOR world_origin;
 	world_origin.y = plane->plane_origin.y + terrainHeight;
+	struct VECTOR relative_position;
 	relative_position.y = y - world_origin.y;
 	if (plane_index < 4) {
 		// NOTE: what is this
@@ -1073,15 +1024,14 @@ extern legacy_s16 cached_wheel_heading;
 
 void transform_wheel_travel_to_world(void)
 {
+	struct VECTOR world_direction;
 	struct PLANE far *plane;
 	struct VECTOR plane_direction;
 	struct MATRIX inverse_plane_rotation;
 	struct MATRIX plane_rotation;
-	struct VECTOR world_direction;
-	legacy_s16 heading;
-
 	if (planindex_copy != -1) {
 		plane = &planptr[planindex_copy];
+		legacy_s16 heading;
 		if (plane->plane_xy == car_initial_pitch && plane->plane_yz == car_initial_roll) {
 			heading = car_initial_yaw;
 		} else {

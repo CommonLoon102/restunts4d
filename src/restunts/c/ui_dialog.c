@@ -62,15 +62,10 @@ static const legacy_u8 far g_ascii_props[256] = {
 void sprite_xor_rect_outline(legacy_s16 left, legacy_s16 top, legacy_s16 right, legacy_s16 bottom,
 							 legacy_s16 color)
 {
-	legacy_s16 x;
-	legacy_s16 y;
-	legacy_s16 width;
-	legacy_s16 height;
-
-	x = LEGACY_S16_FROM_BITS(left);
-	y = LEGACY_S16_FROM_BITS(top);
-	width = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(right, left), 1);
-	height = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(bottom, top), 1);
+	legacy_s16 x = LEGACY_S16_FROM_BITS(left);
+	legacy_s16 y = LEGACY_S16_FROM_BITS(top);
+	legacy_s16 width = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(right, left), 1);
+	legacy_s16 height = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_SUB(bottom, top), 1);
 	if (width > 0) {
 		sprite_xor_rect_clipped(x, y, width, 1, color);
 		sprite_xor_rect_clipped(x, LEGACY_S16_FROM_BITS(bottom), width, 1, color);
@@ -125,8 +120,6 @@ struct DIALOG_CONTENT {
 
 static void dialog_measure(struct DIALOG_CONTENT *dialog, void far *text_resource)
 {
-	legacy_s16 measured_width;
-	legacy_u8 character;
 	dialog->line_height = LEGACY_S16_WRAP_ADD(font_glyph_height, DIALOG_LINE_HEIGHT_PADDING);
 	dialog->dialog_height = 0;
 	dialog->dialog_width = DIALOG_DEFAULT_WIDTH;
@@ -134,10 +127,11 @@ static void dialog_measure(struct DIALOG_CONTENT *dialog, void far *text_resourc
 
 	dialog->cursor = (legacy_s8 far *)text_resource;
 	dialog->line_length = 0;
+	legacy_u8 character;
 	while ((character = (legacy_u8)*dialog->cursor) != 0) {
 		if (character == ']' || character == '}') {
 			dialog->line_buffer[dialog->line_length] = 0;
-			measured_width = (legacy_s16)font_text_width(dialog->line_buffer);
+			legacy_s16 measured_width = (legacy_s16)font_text_width(dialog->line_buffer);
 			if (measured_width > dialog->dialog_width) {
 				dialog->dialog_width = measured_width;
 			}
@@ -159,7 +153,6 @@ static legacy_s16 dialog_draw_frame(struct DIALOG_CONTENT *dialog, legacy_u16 x_
 									legacy_u16 y_argument, legacy_s16 save_background,
 									legacy_s16 border_color)
 {
-	legacy_s16 left, right, top, bottom;
 	dialog->x = LEGACY_S16_FROM_BITS(x_argument);
 	dialog->y = LEGACY_S16_FROM_BITS(y_argument);
 	if (dialog->x == -1) {
@@ -173,10 +166,11 @@ static legacy_s16 dialog_draw_frame(struct DIALOG_CONTENT *dialog, legacy_u16 x_
 								   DIALOG_CENTER_DIVISOR);
 	}
 
-	left = dialog->x;
-	right = LEGACY_S16_WRAP_ADD(dialog->x, dialog->dialog_width);
-	top = LEGACY_S16_WRAP_SUB(dialog->y, 8);
-	bottom = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(dialog->y, dialog->dialog_height), 8);
+	legacy_s16 left = dialog->x;
+	legacy_s16 right = LEGACY_S16_WRAP_ADD(dialog->x, dialog->dialog_width);
+	legacy_s16 top = LEGACY_S16_WRAP_SUB(dialog->y, 8);
+	legacy_s16 bottom =
+		LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(dialog->y, dialog->dialog_height), 8);
 	dialog->x = LEGACY_S16_WRAP_ADD(dialog->x, 8);
 	dialog->dialog_width =
 		LEGACY_S16_WRAP_SUB(dialog->dialog_width, DIALOG_CONTENT_WIDTH_REDUCTION);
@@ -202,11 +196,11 @@ static legacy_s16 dialog_draw_frame(struct DIALOG_CONTENT *dialog, legacy_u16 x_
 static void dialog_draw_message(struct DIALOG_CONTENT *dialog, void far *text_resource,
 								legacy_s16 dialog_type, legacy_s16 *disabled_choices)
 {
-	legacy_u8 character;
 	dialog->cursor = (legacy_s8 far *)text_resource;
 	dialog->line_length = 0;
 	dialog->placeholder_index = 0;
 	dialog->dialog_height = 1;
+	legacy_u8 character;
 	while ((character = (legacy_u8)*dialog->cursor) != 0 && character != '[') {
 		if (character == ']' || character == '}') {
 			dialog->line_buffer[dialog->line_length] = 0;
@@ -235,9 +229,8 @@ static void dialog_draw_message(struct DIALOG_CONTENT *dialog, void far *text_re
 
 static void dialog_measure_choices(struct DIALOG_CONTENT *dialog)
 {
-	legacy_u16 choice_width, character_count, index;
-	legacy_u8 character;
 	dialog->choice_count = 0;
+	legacy_u8 character;
 	while ((legacy_u8)*dialog->cursor == '[') {
 		dialog->cursor++;
 		dialog->choice_texts[dialog->choice_count] = dialog->cursor;
@@ -249,8 +242,8 @@ static void dialog_measure_choices(struct DIALOG_CONTENT *dialog)
 		dialog->choices[dialog->choice_count].y2 =
 			LEGACY_S16_WRAP_ADD(dialog->choices[dialog->choice_count].y1, dialog->line_height);
 		dialog->line_buffer[dialog->line_length++] = ' ';
-		choice_width = 0;
-		character_count = 0;
+		legacy_u16 character_count = 0;
+		legacy_u16 choice_width = 0;
 		while ((character = (legacy_u8)*dialog->cursor) != 0 && character != '[') {
 			if (character == ']' || character == '}') {
 				dialog->line_buffer[dialog->line_length] = 0;
@@ -277,7 +270,7 @@ static void dialog_measure_choices(struct DIALOG_CONTENT *dialog)
 
 	if (dialog->choice_count > 2U && dialog->choices[0].x1 == dialog->choices[1].x1 &&
 		dialog->choices[1].x1 == dialog->choices[2].x1) {
-		for (index = 0; index < dialog->choice_count; index++) {
+		for (legacy_u16 index = 0; index < dialog->choice_count; index++) {
 			dialog->choices[index].x2 =
 				LEGACY_S16_WRAP_ADD(dialog->choices[index].x1, dialog->dialog_width);
 		}
@@ -288,10 +281,10 @@ static void dialog_measure_choices(struct DIALOG_CONTENT *dialog)
 static void dialog_draw_choices(struct DIALOG_CONTENT *dialog, legacy_u8 selected,
 								legacy_s16 *disabled_choices)
 {
-	legacy_s8 choice_buffer[DIALOG_CHOICE_BUFFER_CAPACITY];
-	legacy_u16 index, copied;
 	mouse_draw_opaque_check();
-	for (index = 0; index < dialog->choice_count; index++) {
+	legacy_u16 copied;
+	legacy_s8 choice_buffer[DIALOG_CHOICE_BUFFER_CAPACITY];
+	for (legacy_u16 index = 0; index < dialog->choice_count; index++) {
 		if (selected == (legacy_u8)index) {
 			font_set_colors(dialog_background_color, dialog_fnt_colour);
 		} else {
@@ -377,15 +370,12 @@ static legacy_s16 dialog_apply_menu_input(legacy_u16 input, legacy_u8 *selected,
 static legacy_s16 dialog_run_menu(struct DIALOG_CONTENT *dialog, legacy_s16 *disabled_choices,
 								  legacy_s16 initial_choice)
 {
-	legacy_u8 selected, previous;
-	legacy_u16 input, first_hotkey, second_hotkey;
-	legacy_s16 hit;
-	selected = (legacy_u8)initial_choice;
-	previous = DIALOG_NO_SELECTION;
+	legacy_u8 selected = (legacy_u8)initial_choice;
+	legacy_u8 previous = DIALOG_NO_SELECTION;
 	(void)timer_get_delta_alt();
 	mouse_draw_opaque_check();
-	first_hotkey = 0;
-	second_hotkey = 0;
+	legacy_u16 second_hotkey = 0;
+	legacy_u16 first_hotkey = 0;
 	if (dialog->choice_count == 2U) {
 		first_hotkey = dialog_choice_hotkey(dialog->choice_texts[0]);
 		second_hotkey = dialog_choice_hotkey(dialog->choice_texts[1]);
@@ -398,8 +388,8 @@ static legacy_s16 dialog_run_menu(struct DIALOG_CONTENT *dialog, legacy_s16 *dis
 			}
 			previous = selected;
 		}
-		input = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
-		hit = (legacy_s16)mouse_multi_hittest(dialog->choice_count, dialog->choices);
+		legacy_u16 input = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
+		legacy_s16 hit = (legacy_s16)mouse_multi_hittest(dialog->choice_count, dialog->choices);
 		if (hit != -1 && (disabled_choices == 0 || disabled_choices[hit] == 0)) {
 			selected = (legacy_u8)hit;
 		}
@@ -419,18 +409,17 @@ legacy_u16 show_dialog(legacy_s16 dialog_type, legacy_s16 save_background, void 
 					   legacy_s16 *disabled_choices, legacy_s16 initial_choice)
 {
 	struct DIALOG_CONTENT dialog;
-	legacy_s16 result;
-	legacy_u16 input;
 	dialog_measure(&dialog, text_resource);
 	if (!dialog_draw_frame(&dialog, x_argument, y_argument, save_background, border_color)) {
 		return DIALOG_FAILURE_RESULT;
 	}
 	dialog_draw_message(&dialog, text_resource, dialog_type, disabled_choices);
 	dialog_measure_choices(&dialog);
-	result = 1;
 	if (dialog_type == DIALOG_TYPE_MESSAGE) {
 		return 0;
 	}
+	legacy_u16 input;
+	legacy_s16 result = 1;
 	if (dialog_type == DIALOG_TYPE_ACKNOWLEDGEMENT) {
 		do {
 			input = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
@@ -471,14 +460,13 @@ struct FILE_DIALOG {
 static void file_dialog_draw_frame(struct FILE_DIALOG *dialog, const legacy_s8 *directory,
 								   legacy_s8 far *prompt)
 {
-	legacy_u16 index;
 	preRender_line(dialog->positions[4] - 4, dialog->positions[5] + 4,
 				   dialog->positions[4] + FILE_DIALOG_SEPARATOR_WIDTH, dialog->positions[5] + 4,
 				   dialog_border_color);
 	font_set_colors(dialog_fnt_colour, dialog_background_color);
 	copy_string(&resID_byte1, prompt);
 	font_draw_text_opaque(&resID_byte1, dialog->positions[0], dialog->positions[1]);
-	for (index = 0; index < 10U; index++) {
+	for (legacy_u16 index = 0; index < 10U; index++) {
 		dialog->hit_areas[index].x1 = dialog->positions[2];
 		dialog->hit_areas[index].x2 = dialog->positions[2] + FILE_DIALOG_LIST_WIDTH;
 		if (index == 9U) {
@@ -502,14 +490,13 @@ static legacy_u16 file_dialog_edit_directory(struct FILE_DIALOG *dialog, legacy_
 
 static void file_dialog_collect_names(struct FILE_DIALOG *dialog, const legacy_s8 *found_path)
 {
-	legacy_u16 index;
-	legacy_u16 compare_index;
 	parse_filepath_separators(dialog->filenames[dialog->file_count++], found_path);
 	while (dialog->file_count < 128U && (found_path = file_find_next_alt()) != 0) {
 		parse_filepath_separators(dialog->filenames[dialog->file_count++], found_path);
 	}
-	for (index = 0; index + 1U < dialog->file_count; index++) {
-		for (compare_index = index + 1U; compare_index < dialog->file_count; compare_index++) {
+	for (legacy_u16 index = 0; index + 1U < dialog->file_count; index++) {
+		for (legacy_u16 compare_index = index + 1U; compare_index < dialog->file_count;
+			 compare_index++) {
 			if (strcmp(dialog->filenames[index], dialog->filenames[compare_index]) > 0) {
 				strcpy(&resID_byte1, dialog->filenames[index]);
 				strcpy(dialog->filenames[index], dialog->filenames[compare_index]);
@@ -533,14 +520,11 @@ static void file_dialog_draw_scroll_labels(struct FILE_DIALOG *dialog)
 
 static void file_dialog_draw_rows(struct FILE_DIALOG *dialog)
 {
-	legacy_u16 visible_row;
-	legacy_u16 text_width;
-	legacy_s16 candidate;
 	dialog->previous_selected = dialog->selected;
 	dialog->previous_scroll = dialog->scroll;
 	mouse_draw_opaque_check();
-	for (visible_row = 0; visible_row < 7U; visible_row++) {
-		candidate = (legacy_s16)(dialog->scroll + (legacy_s16)visible_row);
+	for (legacy_u16 visible_row = 0; visible_row < 7U; visible_row++) {
+		legacy_s16 candidate = (legacy_s16)(dialog->scroll + (legacy_s16)visible_row);
 		if (candidate == dialog->selected) {
 			font_set_colors(dialog_background_color, dialog_fnt_colour);
 		} else {
@@ -554,7 +538,7 @@ static void file_dialog_draw_rows(struct FILE_DIALOG *dialog)
 			font_draw_text_opaque("        ", dialog->positions[2],
 								  dialog->hit_areas[visible_row + 2U].y1);
 		}
-		text_width = (legacy_u16)font_text_width(&resID_byte1);
+		legacy_u16 text_width = (legacy_u16)font_text_width(&resID_byte1);
 		sprite_fill_rect(dialog->positions[2] + text_width, dialog->hit_areas[visible_row + 2U].y1,
 						 dialog->positions[2] + FILE_DIALOG_LIST_WIDTH - text_width -
 							 dialog->positions[2],
@@ -566,12 +550,11 @@ static void file_dialog_draw_rows(struct FILE_DIALOG *dialog)
 static legacy_u16 file_dialog_apply_mouse(struct FILE_DIALOG *dialog, legacy_s16 hit,
 										  legacy_u16 key)
 {
-	legacy_s16 candidate;
 	if (hit == -1) {
 		return key;
 	}
 	if (hit != 0 && hit != 1 && hit != 9) {
-		candidate = (legacy_s16)(dialog->scroll + hit - 2);
+		legacy_s16 candidate = (legacy_s16)(dialog->scroll + hit - 2);
 		if (candidate < (legacy_s16)dialog->file_count) {
 			dialog->selected = (legacy_s8)candidate;
 		}
@@ -600,8 +583,6 @@ static legacy_u16 file_dialog_apply_mouse(struct FILE_DIALOG *dialog, legacy_s16
 
 static legacy_s8 file_dialog_apply_key(struct FILE_DIALOG *dialog, legacy_u16 key)
 {
-	legacy_u8 character;
-	legacy_u16 index;
 	if (key == KEY_ENTER || key == KEY_SPACE) {
 		return 1;
 	}
@@ -616,8 +597,8 @@ static legacy_s8 file_dialog_apply_key(struct FILE_DIALOG *dialog, legacy_u16 ke
 		}
 	} else if (key < 256U &&
 			   (g_ascii_props[key] & (RST_ASC_CHAR_UPPER | RST_ASC_CHAR_LOWER)) != 0) {
-		character = (legacy_u8)dialog_ascii_lower(key);
-		for (index = 0; index < dialog->file_count; index++) {
+		legacy_u8 character = (legacy_u8)dialog_ascii_lower(key);
+		for (legacy_u16 index = 0; index < dialog->file_count; index++) {
 			if ((legacy_u8)dialog_ascii_lower((legacy_u8)dialog->filenames[index][0]) ==
 				character) {
 				dialog->selected = (legacy_s8)index;
@@ -631,23 +612,20 @@ static legacy_s8 file_dialog_apply_key(struct FILE_DIALOG *dialog, legacy_u16 ke
 static legacy_s8 file_dialog_choose(struct FILE_DIALOG *dialog, legacy_s8 *directory,
 									legacy_s8 *filename)
 {
-	legacy_u16 key;
-	legacy_s16 hit;
-	legacy_s8 result;
 	dialog->selected = 0;
 	dialog->scroll = 0;
 	dialog->previous_selected = -1;
 	dialog->previous_scroll = -1;
 	(void)timer_get_delta_alt();
-	result = 0;
 	dialog->search_again = 0;
+	legacy_s8 result = 0;
 	for (;;) {
 		if (dialog->selected != dialog->previous_selected ||
 			dialog->scroll != dialog->previous_scroll) {
 			file_dialog_draw_rows(dialog);
 		}
-		key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
-		hit = (legacy_s16)mouse_multi_hittest(10, dialog->hit_areas);
+		legacy_u16 key = (legacy_u16)input_checking((legacy_s16)timer_get_delta_alt());
+		legacy_s16 hit = (legacy_s16)mouse_multi_hittest(10, dialog->hit_areas);
 		key = file_dialog_apply_mouse(dialog, hit, key);
 		result = file_dialog_apply_key(dialog, key);
 		if (dialog->selected < dialog->scroll) {
@@ -683,24 +661,21 @@ legacy_s8 do_fileselect_dialog(legacy_s8 *directory, legacy_s8 *filename, legacy
 							   legacy_s8 far *prompt)
 {
 	struct FILE_DIALOG dialog;
-	const legacy_s8 *found_path;
-	legacy_s16 dialog_result;
-	legacy_s8 result;
-	legacy_u8 saved_busy;
-	dialog_result = LEGACY_S16_FROM_BITS(
+	legacy_s16 dialog_result = LEGACY_S16_FROM_BITS(
 		show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
 					locate_text_res(mainresptr, file_load_dialog_id), DIALOG_AUTO_POSITION,
 					DIALOG_AUTO_POSITION, dialog_border_color, dialog.positions, 0));
 	if (dialog_result < 0) {
 		return 0;
 	}
-	saved_busy = g_is_busy;
+	legacy_u8 saved_busy = g_is_busy;
 	g_is_busy = 1;
 	file_dialog_draw_frame(&dialog, directory, prompt);
+	legacy_s8 result;
 	for (;;) {
 		mouse_draw_transparent_check();
 		dialog.file_count = 0;
-		found_path = file_combine_and_find(directory, "*", extension);
+		const legacy_s8 *found_path = file_combine_and_find(directory, "*", extension);
 		if (found_path == 0) {
 			if (file_dialog_edit_directory(&dialog, directory) == KEY_ESCAPE) {
 				result = 0;
@@ -724,9 +699,8 @@ void ensure_file_exists(legacy_s16 file_index)
 {
 	static legacy_s8 *const message_ids[] = {missing_disk1_message_id, missing_disk2_message_id,
 											 missing_disk3_message_id, missing_disk4_message_id};
-	legacy_s8 *message_id;
 
-	message_id = message_ids[file_index - 1];
+	legacy_s8 *message_id = message_ids[file_index - 1];
 	while (file_find(findfilenames[file_index]) == 0) {
 		show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
 					locate_text_res(mainresptr, message_id), -1, -1, dialog_border_color, 0, 0);
@@ -746,13 +720,10 @@ void show_waiting(void)
 legacy_s16 do_savefile_dialog(legacy_s8 *primary, legacy_s8 *secondary, legacy_s8 far *prompt)
 {
 	legacy_s16 positions[6];
-	legacy_s16 character_index;
-	legacy_s16 key;
-	legacy_s16 result;
-
-	result = LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
-											  locate_text_res(mainresptr, file_save_dialog_id), -1,
-											  -1, dialog_border_color, positions, 0));
+	legacy_s16 result =
+		LEGACY_S16_FROM_BITS(show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND,
+										 locate_text_res(mainresptr, file_save_dialog_id), -1, -1,
+										 dialog_border_color, positions, 0));
 	if (result < 0) {
 		return 0;
 	}
@@ -767,9 +738,9 @@ legacy_s16 do_savefile_dialog(legacy_s8 *primary, legacy_s8 *secondary, legacy_s
 
 	result = 0;
 	for (;;) {
-		key = LEGACY_S16_FROM_BITS(
+		legacy_s16 key = LEGACY_S16_FROM_BITS(
 			call_read_line(secondary, 8, positions[4], positions[5], DIALOG_INPUT_TIMEOUT));
-		for (character_index = 0; secondary[character_index] != 0; character_index++) {
+		for (legacy_s16 character_index = 0; secondary[character_index] != 0; character_index++) {
 			if (secondary[character_index] == ' ') {
 				secondary[character_index] = '_';
 			}
@@ -795,9 +766,8 @@ legacy_s16 do_savefile_dialog(legacy_s8 *primary, legacy_s8 *secondary, legacy_s
 
 legacy_s16 show_disk_error_dialog(void)
 {
-	legacy_s16 result;
-
 	input_push_status();
+	legacy_s16 result;
 	if (g_is_busy != 0) {
 		result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 							 locate_text_res(mainresptr, disk_retry_dialog_id), -1, -1,
@@ -815,26 +785,20 @@ legacy_s16 show_disk_error_dialog(void)
 void security_check(legacy_s16 question_index)
 {
 	legacy_s8 question_id[4] = "q00";
-	legacy_s8 answer_id[4] = "a00";
-	legacy_s8 question_text[1024];
-	legacy_s8 answer[22];
-	legacy_u8 question_parts[6];
-	legacy_s16 positions[8];
-	void far *resource;
-	legacy_u16 answer_length;
-	legacy_u16 attempts;
-	legacy_u16 i;
-
 	question_id[2] = quiz_question_suffixes[(legacy_u16)question_index];
+	legacy_s8 answer_id[4] = "a00";
 	answer_id[2] = question_id[2];
-	resource = file_load_resfile("misc");
+	void far *resource = file_load_resfile("misc");
+	legacy_s8 question_text[1024];
 	copy_string(question_text, locate_text_res(resource, "cop"));
 	copy_string(&resID_byte1, locate_text_res(resource, question_id));
 	strcat(question_text, resource_text_payload);
-	for (i = 0; i < 6U; i++) {
+	legacy_u8 question_parts[6];
+	for (legacy_u16 i = 0; i < 6U; i++) {
 		question_parts[i] = (legacy_u8)(&resID_byte1)[i];
 	}
 
+	legacy_s16 positions[8];
 	show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_SAVE_BACKGROUND, (void far *)question_text,
 				DIALOG_AUTO_POSITION, SECURITY_DIALOG_Y, performGraphColor, positions, 0);
 	(&resID_byte1)[2] = 0;
@@ -849,12 +813,13 @@ void security_check(legacy_s16 question_index)
 	font_draw_text(&resID_byte1, positions[4], positions[5]);
 
 	copy_string(&resID_byte1, locate_text_res(resource, answer_id));
-	answer_length = (legacy_u16)strlen(&resID_byte1);
+	legacy_u16 answer_length = (legacy_u16)strlen(&resID_byte1);
+	legacy_s8 answer[22];
 	answer[0] = 0;
-	attempts = 0;
+	legacy_u16 attempts = 0;
 	for (;;) {
 		call_read_line(answer, answer_length, positions[6], positions[7], DIALOG_INPUT_TIMEOUT);
-		for (i = 0; answer[i] != 0; i++) {
+		for (legacy_u16 i = 0; answer[i] != 0; i++) {
 			legacy_u8 character = (legacy_u8)answer[i];
 
 			if ((g_ascii_props[character] & RST_ASC_CHAR_UPPER) != 0) {

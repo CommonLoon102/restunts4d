@@ -67,10 +67,9 @@ void dos_process_exit(legacy_s16 status)
 
 legacy_s16 dos_data_stack_segments_match(void)
 {
-	legacy_s16 result;
-
 	/* Interrupt callbacks can arrive while foreign code owns SS.  Game code
 	 * may only touch near data when the medium-model DS and SS agree. */
+	legacy_s16 result;
 	__asm {
 		xor     ax, ax
 		mov     bx, ss

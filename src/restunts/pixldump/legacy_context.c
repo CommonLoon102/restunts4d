@@ -19,19 +19,15 @@
 
 static legacy_u16 pixldump_dos_psp_segment(void)
 {
-	void far *psp_reference;
-
 	/* This project's DOS adapter returns DS:PSP-segment, following the original
 	 * mmgr interface. The offset word, rather than the pointer, identifies PSP. */
-	psp_reference = dos_memory_get_psp();
+	void far *psp_reference = dos_memory_get_psp();
 	return psp_reference == 0 ? 0 : dos_memory_pointer_offset(psp_reference);
 }
 
 legacy_u16 pixldump_legacy_load_segment(void)
 {
-	legacy_u16 psp_segment;
-
-	psp_segment = pixldump_dos_psp_segment();
+	legacy_u16 psp_segment = pixldump_dos_psp_segment();
 	return psp_segment == 0 ? 0 : LEGACY_U16_WRAP_ADD(psp_segment, PIXLDUMP_DOS_PSP_PARAGRAPHS);
 }
 
@@ -42,9 +38,7 @@ legacy_u16 pixldump_legacy_polygon_frame_pointer(legacy_s16 argv_si)
 
 legacy_u16 pixldump_legacy_polygon_code_segment(void)
 {
-	legacy_u16 load_segment;
-
-	load_segment = pixldump_legacy_load_segment();
+	legacy_u16 load_segment = pixldump_legacy_load_segment();
 	return load_segment == 0
 			   ? 0
 			   : LEGACY_U16_WRAP_ADD(load_segment, PIXLDUMP_LEGACY_POLYGON_CODE_PARAGRAPH);
@@ -52,9 +46,7 @@ legacy_u16 pixldump_legacy_polygon_code_segment(void)
 
 legacy_u16 pixldump_legacy_polyinfo_segment(void)
 {
-	legacy_u16 segment;
-
-	segment = pixldump_legacy_load_segment();
+	legacy_u16 segment = pixldump_legacy_load_segment();
 	if (segment == 0) {
 		return 0;
 	}
@@ -79,9 +71,7 @@ legacy_u16 pixldump_legacy_polyinfo_segment(void)
 
 static legacy_u16 pixldump_argument_length(const legacy_s8 *argument)
 {
-	legacy_u16 length;
-
-	length = 0;
+	legacy_u16 length = 0;
 	while (length < LEGACY_U16_MAX && argument[length] != 0) {
 		length++;
 	}
@@ -90,36 +80,30 @@ static legacy_u16 pixldump_argument_length(const legacy_s8 *argument)
 
 static legacy_u16 pixldump_dos_program_path_length(void)
 {
-	const legacy_u8 far *psp;
-	const legacy_u8 far *environment;
-	legacy_u16 environment_segment;
-	legacy_u16 psp_segment;
-	legacy_u16 string_count;
-	legacy_u32 offset;
-	legacy_u32 start;
-
-	psp_segment = pixldump_dos_psp_segment();
+	legacy_u16 psp_segment = pixldump_dos_psp_segment();
 	if (psp_segment == 0) {
 		return 0;
 	}
-	psp = (const legacy_u8 far *)dos_memory_make_pointer(psp_segment, 0);
+	const legacy_u8 far *psp = (const legacy_u8 far *)dos_memory_make_pointer(psp_segment, 0);
 	if (psp == 0 || psp[0] != PIXLDUMP_PSP_INTERRUPT_OPCODE ||
 		psp[1] != PIXLDUMP_PSP_EXIT_INTERRUPT) {
 		return 0;
 	}
-	environment_segment =
+	legacy_u16 environment_segment =
 		(legacy_u16)(psp[PIXLDUMP_PSP_ENVIRONMENT_OFFSET] |
 					 ((legacy_u16)psp[PIXLDUMP_PSP_ENVIRONMENT_OFFSET + 1U] << LEGACY_BYTE_BITS));
 	if (environment_segment == 0) {
 		return 0;
 	}
-	environment = (const legacy_u8 far *)dos_memory_make_pointer(environment_segment, 0);
+	const legacy_u8 far *environment =
+		(const legacy_u8 far *)dos_memory_make_pointer(environment_segment, 0);
 	if (environment == 0) {
 		return 0;
 	}
 
 	/* DOS 3+ follows the double NUL with a word count and the executable path.
 	 * Keep every read inside this segment, including malformed environments. */
+	legacy_u32 offset;
 	for (offset = 0; offset < LEGACY_U16_MAX; offset++) {
 		if (environment[(legacy_u16)offset] == 0 && environment[(legacy_u16)(offset + 1U)] == 0) {
 			break;
@@ -128,13 +112,13 @@ static legacy_u16 pixldump_dos_program_path_length(void)
 	if (offset > LEGACY_U16_MAX - 4U) {
 		return 0;
 	}
-	string_count =
+	legacy_u16 string_count =
 		(legacy_u16)(environment[(legacy_u16)(offset + 2U)] |
 					 ((legacy_u16)environment[(legacy_u16)(offset + 3U)] << LEGACY_BYTE_BITS));
 	if (string_count == 0) {
 		return 0;
 	}
-	start = offset + 4U;
+	legacy_u32 start = offset + 4U;
 	for (offset = start; offset <= LEGACY_U16_MAX; offset++) {
 		if (environment[(legacy_u16)offset] == 0) {
 			return (legacy_u16)(offset - start);
@@ -145,18 +129,14 @@ static legacy_u16 pixldump_dos_program_path_length(void)
 
 legacy_s16 pixldump_legacy_argv_si(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_u16 program_path_length;
-	legacy_u16 allocation;
-	legacy_s16 index;
-
-	program_path_length = pixldump_dos_program_path_length();
+	legacy_u16 program_path_length = pixldump_dos_program_path_length();
 	/* Without a valid DOS path, use the supplied program name. This remains
 	 * deterministic without inventing a drive or directory for the fallback. */
 	if (program_path_length == 0) {
 		program_path_length = pixldump_argument_length(argv[0]);
 	}
-	allocation = program_path_length;
-	for (index = 1; index < argc; index++) {
+	legacy_u16 allocation = program_path_length;
+	for (legacy_s16 index = 1; index < argc; index++) {
 		allocation = LEGACY_U16_WRAP_ADD(allocation, pixldump_argument_length(argv[index]));
 	}
 	/* The original CRT starts SP at CC5E. It reserves each argument's NUL,

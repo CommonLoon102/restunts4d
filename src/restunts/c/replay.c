@@ -14,9 +14,7 @@
 /* The header stores the ids and the track name as plain byte runs. */
 static void replay_read_bytes(legacy_s8 *destination, const legacy_u8 far *source, legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		destination[index] = LEGACY_S8_FROM_BITS(source[index]);
 	}
 }
@@ -24,9 +22,7 @@ static void replay_read_bytes(legacy_s8 *destination, const legacy_u8 far *sourc
 static void replay_write_bytes(legacy_u8 far *destination, const legacy_s8 *source,
 							   legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		destination[index] = (legacy_u8)source[index];
 	}
 }

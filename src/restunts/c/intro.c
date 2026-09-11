@@ -65,21 +65,19 @@ static void far *ui_temp_resource;
 
 legacy_s16 run_intro(void)
 {
-	struct SHAPE2D far *shape;
-	legacy_s16 result;
-
 	mouse_draw_opaque_check();
 	sprite_select_screen_and_clear();
 	mouse_draw_transparent_check();
 	sprite_select_render_window_and_clear();
 
-	shape = (struct SHAPE2D far *)locate_shape_fatal((legacy_s8 far *)ui_temp_resource, "prod");
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_fatal((legacy_s8 far *)ui_temp_resource, "prod");
 	waitflag =
 		shape2d_get_pos_y(shape) != 0 ? INTRO_PRODUCTION_RAISED_WAIT : INTRO_DEFAULT_PAGE_WAIT;
 
 	shape = (struct SHAPE2D far *)locate_shape_fatal((legacy_s8 far *)ui_temp_resource, "prod");
 	sprite_shape_to_1_alt(shape);
-	result = sprite_blit_to_video(render_window_sprite, -1);
+	legacy_s16 result = sprite_blit_to_video(render_window_sprite, -1);
 	if (result == 0) {
 		result = input_repeat_check(INTRO_PAGE_INPUT_DELAY);
 	}
@@ -100,13 +98,11 @@ legacy_s16 run_intro(void)
 
 legacy_s16 run_intro_looped(void)
 {
-	legacy_s16 result;
-
 	file_load_audiores("skidtitl", "skidms", "TITL");
 	ui_temp_resource = file_load_resource(FILE_RESOURCE_SHAPE2D, "sdtitl");
 	render_window_sprite =
 		sprite_make_wnd(INTRO_SCREEN_WIDTH, INTRO_SCREEN_HEIGHT, INTRO_SCREEN_COLOR);
-	result = run_intro();
+	legacy_s16 result = run_intro();
 	sprite_free_wnd(render_window_sprite);
 	mmgr_free((legacy_s8 far *)ui_temp_resource);
 
@@ -237,11 +233,10 @@ static legacy_s16 credits_slide_arrow(struct SHAPE2D far *arrow_shape, legacy_s1
 									  legacy_s16 arrow_y, legacy_s16 arrow_width,
 									  legacy_s16 arrow_height)
 {
-	legacy_s16 arrow_x, input, frame_elapsed;
-	arrow_x = CREDITS_ARROW_START_X;
-	input = 0;
+	legacy_s16 arrow_x = CREDITS_ARROW_START_X;
+	legacy_s16 input = 0;
 	for (;;) {
-		frame_elapsed = (legacy_s16)timer_get_delta_alt();
+		legacy_s16 frame_elapsed = (legacy_s16)timer_get_delta_alt();
 		arrow_x =
 			LEGACY_S16_WRAP_SUB(arrow_x, LEGACY_S16_WRAP_MUL(frame_elapsed, CREDITS_ARROW_SPEED));
 		if (target_x > arrow_x) {
@@ -264,11 +259,9 @@ static legacy_s16 credits_slide_arrow(struct SHAPE2D far *arrow_shape, legacy_s1
 static void credits_animate_shapes(struct SHAPE2D far **credit_shapes, legacy_s16 arrow_y,
 								   legacy_s16 input)
 {
-	legacy_s16 animation_target, animation_elapsed, frame_elapsed;
-	legacy_u16 animation_index;
-	animation_target = 0;
-	animation_elapsed = 0;
-	for (animation_index = CREDITS_FIRST_ANIMATION_INDEX;
+	legacy_s16 animation_elapsed = 0;
+	legacy_s16 animation_target = 0;
+	for (legacy_u16 animation_index = CREDITS_FIRST_ANIMATION_INDEX;
 		 animation_index < CREDITS_ANIMATION_END_INDEX && input == 0; animation_index++) {
 		sprite_select_render_window();
 		sprite_set_target_clip_bounds(0, INTRO_SCREEN_WIDTH, arrow_y, INTRO_SCREEN_HEIGHT);
@@ -281,7 +274,7 @@ static void credits_animate_shapes(struct SHAPE2D far **credit_shapes, legacy_s1
 		mouse_draw_transparent_check();
 		animation_target = LEGACY_S16_WRAP_ADD(animation_target, CREDITS_ANIMATION_INTERVAL);
 		while (animation_target > animation_elapsed) {
-			frame_elapsed = (legacy_s16)timer_get_delta_alt();
+			legacy_s16 frame_elapsed = (legacy_s16)timer_get_delta_alt();
 			input = (legacy_s16)input_do_checking(frame_elapsed);
 			animation_elapsed = LEGACY_S16_WRAP_ADD(animation_elapsed, frame_elapsed);
 		}
@@ -306,26 +299,18 @@ static legacy_s8 credits_present_closing(struct SHAPE2D far **credit_shapes, leg
 
 legacy_s8 load_intro_resources(void)
 {
-	legacy_s8 far *credit_resource;
+	legacy_s8 far *credit_resource = (legacy_s8 far *)file_load_resfile(credits_resource_name);
 	struct SHAPE2D far *credit_shapes[CREDITS_RESOURCE_COUNT];
-	struct SHAPE2D far *arrow_shape;
-	legacy_s16 target_x;
-	legacy_s16 arrow_y;
-	legacy_s16 arrow_width;
-	legacy_s16 arrow_height;
-	legacy_s16 input;
-
-	credit_resource = (legacy_s8 far *)file_load_resfile(credits_resource_name);
 	locate_many_resources((legacy_s8 far *)ui_temp_resource, credits_shape_ids,
 						  (legacy_s8 far **)credit_shapes);
 	waitflag = CREDITS_INITIAL_WAIT;
 	sprite_select_render_window_and_clear();
-	arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
-	target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
-	arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
-	arrow_width =
+	struct SHAPE2D far *arrow_shape = credit_shapes[CREDITS_ARROW_INDEX];
+	legacy_s16 target_x = (legacy_s16)shape2d_get_pos_x(arrow_shape);
+	legacy_s16 arrow_y = (legacy_s16)shape2d_get_pos_y(arrow_shape);
+	legacy_s16 arrow_width =
 		LEGACY_S16_WRAP_MUL((legacy_s16)shape2d_get_width(arrow_shape), video_shape_width_scale);
-	arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
+	legacy_s16 arrow_height = (legacy_s16)shape2d_get_height(arrow_shape);
 
 	credits_draw_title(credit_resource);
 	credits_draw_designers(credit_resource);
@@ -337,7 +322,8 @@ legacy_s8 load_intro_resources(void)
 	(void)sprite_blit_to_video(render_window_sprite, -1);
 	sprite_select_screen_compat();
 	(void)timer_get_delta_alt();
-	input = credits_slide_arrow(arrow_shape, target_x, arrow_y, arrow_width, arrow_height);
+	legacy_s16 input =
+		credits_slide_arrow(arrow_shape, target_x, arrow_y, arrow_width, arrow_height);
 	arrow_y = (legacy_s16)shape2d_get_pos_y(credit_shapes[CREDITS_BACKGROUND_INDEX]);
 	credits_animate_shapes(credit_shapes, arrow_y, input);
 	return credits_present_closing(credit_shapes, arrow_y);

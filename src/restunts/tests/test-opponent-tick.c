@@ -75,8 +75,6 @@ static legacy_u16 random_word(void)
 
 static void reset_opponent(void)
 {
-	int index;
-
 	memset(&state, 0, sizeof(state));
 	memset(terrain, 0, sizeof(terrain));
 	memset(trace, 0, sizeof(trace));
@@ -91,14 +89,14 @@ static void reset_opponent(void)
 	track_route_traversal_flags = route_flags;
 	track_route_columns = route_columns;
 	track_route_rows = route_rows;
-	for (index = 0; index < 30; index++) {
+	for (int index = 0; index < 30; index++) {
 		terrainrows[index] = index * 30;
 		track_row_centers[index] = index * 1024 + 512;
 		track_row_positions[index] = index * 1024;
 		track_column_centers[index] = index * 1024 + 512;
 		track_column_positions[index] = index * 1024;
 	}
-	for (index = 0; index < 8; index++) {
+	for (int index = 0; index < 8; index++) {
 		LEGACY_WRITE_U16_LE(route_indices + index * LEGACY_WORD_BYTES, (legacy_u16)index);
 		route_elements[index] = 4;
 		route_flags[index] = 0;
@@ -127,14 +125,11 @@ static void run_opponent(void)
 {
 #ifdef OPPONENT_DIFFERENTIAL
 	struct GAMESTATE initial = state;
-	struct GAMESTATE expected;
-	legacy_u16 expected_trace[8];
-	unsigned int expected_count;
-
 	reference_update_opponent_tick();
-	expected = state;
+	struct GAMESTATE expected = state;
+	legacy_u16 expected_trace[8];
 	memmove(expected_trace, trace, sizeof(trace));
-	expected_count = trace_count;
+	unsigned int expected_count = trace_count;
 	state = initial;
 	memset(trace, 0, sizeof(trace));
 	trace_count = 0;
@@ -153,12 +148,11 @@ static void run_opponent(void)
 
 static void test_pedal_boundaries(void)
 {
-	static const legacy_u16 speeds[] = {9983, 9984, 11008, 11009};
 	static const legacy_s8 inputs[] = {INPUT_ACCELERATE_FLAG, INPUT_NONE, INPUT_NONE,
 									   INPUT_BRAKE_FLAG};
-	int index;
 
-	for (index = 0; index < 4; index++) {
+	static const legacy_u16 speeds[] = {9983, 9984, 11008, 11009};
+	for (int index = 0; index < 4; index++) {
 		reset_opponent();
 		state.opponentstate.car_rev_speed = speeds[index];
 		run_opponent();
@@ -205,11 +199,7 @@ static void test_tick_sweep(void)
 {
 	static const legacy_s16 angles[] = {-1024, -256, -65, -1, 0, 1, 65, 256, 1024};
 	legacy_u32 hash = 2166136261UL;
-	unsigned int sample;
-	unsigned int index;
-	const unsigned char *bytes;
-
-	for (sample = 0; sample < 200000; sample++) {
+	for (unsigned int sample = 0; sample < 200000; sample++) {
 		reset_opponent();
 		framespersec = sample % 2 ? GAME_FRAME_RATE_NORMAL : GAME_FRAME_RATE_LOW;
 		state.game_inputmode = random_word() % 4;
@@ -237,16 +227,16 @@ static void test_tick_sweep(void)
 		state.playerstate.car_position.lx = (10752L + (int)(random_word() % 800) - 400) * 64;
 		state.playerstate.car_position.ly = ((int)(random_word() % 400) - 200) * 64L;
 		state.playerstate.car_position.lz = (10752L + (int)(random_word() % 1400) - 700) * 64;
-		for (index = 0; index < 8; index++) {
+		for (unsigned int index = 0; index < 8; index++) {
 			route_elements[index] = 4 + random_word() % 6;
 			route_flags[index] = random_word() % 2 ? 16 : 0;
 		}
 		run_opponent();
-		bytes = (const unsigned char *)&state;
-		for (index = 0; index < sizeof(state); index++) {
+		const unsigned char *bytes = (const unsigned char *)&state;
+		for (unsigned int index = 0; index < sizeof(state); index++) {
 			hash = (hash ^ bytes[index]) * 16777619UL;
 		}
-		for (index = 0; index < trace_count; index++) {
+		for (unsigned int index = 0; index < trace_count; index++) {
 			hash = (hash ^ trace[index]) * 16777619UL;
 		}
 	}

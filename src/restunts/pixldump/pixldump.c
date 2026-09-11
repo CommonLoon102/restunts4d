@@ -158,14 +158,11 @@ static legacy_s16 pixldump_parse_target(const legacy_s8 *argument)
 
 static legacy_s16 pixldump_parse_frame(const legacy_s8 *argument, legacy_u16 *frame)
 {
-	legacy_u32 value;
-	legacy_u16 index;
-
 	if (argument[0] == 0) {
 		return 0;
 	}
-	value = 0;
-	for (index = 0; argument[index] != 0; index++) {
+	legacy_u32 value = 0;
+	for (legacy_u16 index = 0; argument[index] != 0; index++) {
 		if (argument[index] < '0' || argument[index] > '9') {
 			return 0;
 		}
@@ -190,9 +187,7 @@ static void pixldump_write_usage(void)
 #ifdef RESTUNTS_ORIGINAL
 void init_row_tables(void)
 {
-	legacy_s16 index;
-
-	for (index = 0; index < TRACK_GRID_SIZE; index++) {
+	for (legacy_s16 index = 0; index < TRACK_GRID_SIZE; index++) {
 		trackrows[index] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - index);
 		terrainrows[index] = TRACK_GRID_SIZE * index;
 		track_row_positions[index] = (TRACK_GRID_LAST_INDEX - index) << TRACK_TILE_POSITION_SHIFT;
@@ -202,7 +197,7 @@ void init_row_tables(void)
 		terraincenterpos[index] = (index << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
 
-	for (index = 0; index < TRACK_GRID_SIZE; index++) {
+	for (legacy_s16 index = 0; index < TRACK_GRID_SIZE; index++) {
 		track_column_positions[index] = index << TRACK_TILE_POSITION_SHIFT;
 		track_column_centers[index] = (index << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
@@ -210,9 +205,7 @@ void init_row_tables(void)
 
 void init_trackdata(void)
 {
-	legacy_s8 far *track_pointer;
-
-	track_pointer = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
+	legacy_s8 far *track_pointer = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 	track_primary_route_links = (legacy_s16 far *)track_pointer;
 	track_pointer += TRACKDATA_LINK_TABLE_SIZE;
 	track_alternate_route_links = (legacy_s16 far *)track_pointer;
@@ -264,16 +257,13 @@ void init_trackdata(void)
 static legacy_u16 pixldump_append_frame_number(legacy_s8 *line, legacy_u16 frame)
 {
 	legacy_s8 reversed[PIXLDUMP_FRAME_NUMBER_DIGITS];
-	legacy_u16 count;
-	legacy_u16 index;
-
-	count = 0;
+	legacy_u16 count = 0;
 	do {
 		reversed[count++] = (legacy_s8)('0' + frame % PIXLDUMP_DECIMAL_BASE);
 		frame = (legacy_u16)(frame / PIXLDUMP_DECIMAL_BASE);
 	} while (frame != 0U);
 
-	for (index = 0; index < count; index++) {
+	for (legacy_u16 index = 0; index < count; index++) {
 		line[index] = reversed[count - index - 1U];
 	}
 	return count;
@@ -281,9 +271,7 @@ static legacy_u16 pixldump_append_frame_number(legacy_s8 *line, legacy_u16 frame
 
 static legacy_u16 pixldump_frame_number_length(legacy_u16 frame)
 {
-	legacy_u16 length;
-
-	length = 1;
+	legacy_u16 length = 1;
 	while (frame >= PIXLDUMP_DECIMAL_BASE) {
 		frame = (legacy_u16)(frame / PIXLDUMP_DECIMAL_BASE);
 		length++;
@@ -295,10 +283,8 @@ static legacy_s16 pixldump_build_output_name(legacy_s8 *output_name, const legac
 											 legacy_s16 camera_number, legacy_s16 target,
 											 legacy_s16 bmp_mode, legacy_u16 frame)
 {
-	legacy_u16 length;
+	legacy_u16 length = strlen(replay_name);
 	legacy_u16 required;
-
-	length = strlen(replay_name);
 	if (bmp_mode != 0) {
 		required =
 			(legacy_u16)(PIXLDUMP_BMP_NAME_PREFIX_SIZE + pixldump_frame_number_length(frame) +
@@ -328,16 +314,13 @@ static legacy_s16 pixldump_build_output_name(legacy_s8 *output_name, const legac
 static legacy_s16 pixldump_write_sample(PIXLDUMP_OUTPUT output, legacy_u16 frame,
 										const legacy_u8 far *framebuffer)
 {
-	static const legacy_s8 hex_digits[] = "0123456789abcdef";
 	legacy_u8 digest[PIXLDUMP_MD5_SIZE];
-	legacy_s8 line[PIXLDUMP_SAMPLE_LINE_SIZE];
-	legacy_u16 line_length;
-	legacy_u16 index;
-
 	pixldump_md5(framebuffer, PIXLDUMP_FRAMEBUFFER_SIZE, digest);
-	line_length = pixldump_append_frame_number(line, frame);
+	legacy_s8 line[PIXLDUMP_SAMPLE_LINE_SIZE];
+	legacy_u16 line_length = pixldump_append_frame_number(line, frame);
 	line[line_length++] = ' ';
-	for (index = 0; index < PIXLDUMP_MD5_SIZE; index++) {
+	static const legacy_s8 hex_digits[] = "0123456789abcdef";
+	for (legacy_u16 index = 0; index < PIXLDUMP_MD5_SIZE; index++) {
 		line[line_length++] = hex_digits[digest[index] >> PIXLDUMP_HEX_NIBBLE_SHIFT];
 		line[line_length++] = hex_digits[digest[index] & PIXLDUMP_HEX_NIBBLE_MASK];
 	}
@@ -368,17 +351,12 @@ static legacy_u8 pixldump_expand_palette_channel(legacy_u8 value)
 
 static void pixldump_load_bmp_palette(legacy_u8 *bmp_palette)
 {
-	legacy_s8 far *resource;
-	legacy_u8 far *source;
-	legacy_u16 index;
-	legacy_u16 source_offset;
-	legacy_u16 destination_offset;
-
-	resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
-	source = (legacy_u8 far *)locate_shape_fatal(resource, "!pal") + SHAPE2D_HEADER_SIZE;
-	for (index = 0; index < PIXLDUMP_PALETTE_COLOR_COUNT; index++) {
-		source_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_SOURCE_STRIDE);
-		destination_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_DESTINATION_STRIDE);
+	legacy_s8 far *resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
+	legacy_u8 far *source =
+		(legacy_u8 far *)locate_shape_fatal(resource, "!pal") + SHAPE2D_HEADER_SIZE;
+	for (legacy_u16 index = 0; index < PIXLDUMP_PALETTE_COLOR_COUNT; index++) {
+		legacy_u16 source_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_SOURCE_STRIDE);
+		legacy_u16 destination_offset = (legacy_u16)(index * PIXLDUMP_PALETTE_DESTINATION_STRIDE);
 		bmp_palette[destination_offset + PIXLDUMP_PALETTE_BLUE_OFFSET] =
 			pixldump_expand_palette_channel(source[source_offset + PIXLDUMP_PALETTE_RED_OFFSET]);
 		bmp_palette[destination_offset + PIXLDUMP_PALETTE_GREEN_OFFSET] =
@@ -392,15 +370,8 @@ static void pixldump_load_bmp_palette(legacy_u8 *bmp_palette)
 
 static legacy_s16 pixldump_write_bmp(const legacy_s8 *output_name, const legacy_u8 far *framebuffer)
 {
-	static legacy_u8 bmp_palette[PIXLDUMP_BMP_PALETTE_SIZE];
 	legacy_u8 header[PIXLDUMP_BMP_HEADER_SIZE];
-	const legacy_u8 far *source_row;
-	legacy_u16 index;
-	legacy_u16 row;
-	legacy_s16 result;
-	PIXLDUMP_OUTPUT output;
-
-	for (index = 0; index < PIXLDUMP_BMP_HEADER_SIZE; index++) {
+	for (legacy_u16 index = 0; index < PIXLDUMP_BMP_HEADER_SIZE; index++) {
 		header[index] = 0;
 	}
 	header[0] = 'B';
@@ -415,20 +386,21 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8 *output_name, const legacy_
 	pixldump_store_u32(header + PIXLDUMP_BMP_IMAGE_SIZE_OFFSET, PIXLDUMP_FRAMEBUFFER_SIZE);
 	pixldump_store_u32(header + PIXLDUMP_BMP_COLOR_COUNT_OFFSET, PIXLDUMP_BMP_COLOR_COUNT);
 
+	static legacy_u8 bmp_palette[PIXLDUMP_BMP_PALETTE_SIZE];
 	pixldump_load_bmp_palette(bmp_palette);
-	output = pixldump_output_open(output_name);
+	PIXLDUMP_OUTPUT output = pixldump_output_open(output_name);
 	if (output == 0) {
 		return 1;
 	}
 
-	result =
+	legacy_s16 result =
 		pixldump_output_write(output, header, PIXLDUMP_BMP_HEADER_SIZE) == PIXLDUMP_BMP_HEADER_SIZE;
 	if (result != 0) {
 		result = pixldump_output_write(output, bmp_palette, PIXLDUMP_BMP_PALETTE_SIZE) ==
 				 PIXLDUMP_BMP_PALETTE_SIZE;
 	}
-	for (row = 0; result != 0 && row < PIXLDUMP_SCREEN_HEIGHT; row++) {
-		source_row =
+	for (legacy_u16 row = 0; result != 0 && row < PIXLDUMP_SCREEN_HEIGHT; row++) {
+		const legacy_u8 far *source_row =
 			framebuffer + (legacy_u16)(PIXLDUMP_SCREEN_WIDTH * (PIXLDUMP_SCREEN_HEIGHT - row - 1U));
 		result = pixldump_output_write(output, source_row, PIXLDUMP_SCREEN_WIDTH) ==
 				 PIXLDUMP_SCREEN_WIDTH;
@@ -486,11 +458,7 @@ static void pixldump_enable_legacy_render_stack(void)
 
 static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *output_name)
 {
-	legacy_s16 result;
-	legacy_u8 far *framebuffer;
-	PIXLDUMP_OUTPUT output;
-
-	output = pixldump_output_open(output_name);
+	PIXLDUMP_OUTPUT output = pixldump_output_open(output_name);
 	if (output == 0) {
 		return 1;
 	}
@@ -503,9 +471,9 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 #ifndef RESTUNTS_ORIGINAL
 	pixldump_enable_legacy_render_stack();
 #endif
-	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
+	legacy_u8 far *framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
-	result = !pixldump_write_sample(output, 0U, framebuffer);
+	legacy_s16 result = !pixldump_write_sample(output, 0U, framebuffer);
 #ifdef RESTUNTS_ORIGINAL
 	pixldump_caller_di = 0;
 #endif
@@ -530,16 +498,15 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const legacy_s8 *output_name,
 																	   legacy_u16 requested_frame)
 {
+	while ((legacy_u16)state.game_frame < requested_frame) {
+		pixldump_update_gamestate();
+	}
 #ifdef RESTUNTS_ORIGINAL
 	/* Retain the archived BMP caller's four-byte local stack slot. */
 	legacy_u8 far *volatile framebuffer;
 #else
 	legacy_u8 far *framebuffer;
 #endif
-
-	while ((legacy_u16)state.game_frame < requested_frame) {
-		pixldump_update_gamestate();
-	}
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	return pixldump_write_bmp(output_name, framebuffer);
@@ -549,8 +516,6 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
 	const legacy_s8 *replay_name, const legacy_s8 *output_name, legacy_s16 camera_number,
 	legacy_s16 target, legacy_s16 bmp_mode, legacy_u16 requested_frame)
 {
-	legacy_s16 index;
-
 	if (file_load_replay("", replay_name) != 0) {
 		return 1;
 	}
@@ -564,10 +529,10 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
 	}
 
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-	for (index = 0; index < TRACKDATA_LINK_TABLE_SIZE; index++) {
+	for (legacy_s16 index = 0; index < TRACKDATA_LINK_TABLE_SIZE; index++) {
 		track_and_directory_backup[index] = track_element_map[index];
 	}
-	for (index = 0; index < TRACKDATA_CHECKPOINT_DATA_SIZE; index++) {
+	for (legacy_s16 index = 0; index < TRACKDATA_CHECKPOINT_DATA_SIZE; index++) {
 		track_and_directory_backup[index + TRACKDATA_LINK_TABLE_SIZE] = track_directory[index];
 		track_and_directory_backup[index + TRACKDATA_CHECKPOINT_SECOND_OFFSET] =
 			replay_directory[index];
@@ -626,30 +591,22 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
 
 legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_s16 length;
-	legacy_s16 result;
-	legacy_s16 camera_number;
-	legacy_s16 target;
-	legacy_s16 bmp_mode;
-	legacy_u16 requested_frame;
-	legacy_s8 output_name[PIXLDUMP_OUTPUT_NAME_SIZE];
-
 	if (argc != 4 && argc != 5) {
 		pixldump_write_usage();
 		return 1;
 	}
-	camera_number = pixldump_parse_camera(argv[2]);
+	legacy_s16 camera_number = pixldump_parse_camera(argv[2]);
 	if (camera_number == 0) {
 		pixldump_write_stdout("Camera must be 1 (F1), 2 (F2), 3 (F3), or 4 (F4).\r\n");
 		return 1;
 	}
-	target = pixldump_parse_target(argv[3]);
+	legacy_s16 target = pixldump_parse_target(argv[3]);
 	if (target < 0) {
 		pixldump_write_stdout("Target must be 0 (player) or 1 (opponent).\r\n");
 		return 1;
 	}
-	bmp_mode = argc == 5;
-	requested_frame = 0;
+	legacy_s16 bmp_mode = argc == 5;
+	legacy_u16 requested_frame = 0;
 	if (bmp_mode != 0 && !pixldump_parse_frame(argv[4], &requested_frame)) {
 		pixldump_write_stdout("Frame must be an integer from 0 to 65535.\r\n");
 		return 1;
@@ -665,12 +622,13 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	}
 #endif
 
-	length = (legacy_s16)strlen(argv[1]);
+	legacy_s16 length = (legacy_s16)strlen(argv[1]);
 	if (length >= 4 &&
 		(strcmp(argv[1] + length - 4, ".rpl") == 0 || strcmp(argv[1] + length - 4, ".RPL") == 0)) {
 		argv[1][length - 4] = 0;
 		length -= 4;
 	}
+	legacy_s8 output_name[PIXLDUMP_OUTPUT_NAME_SIZE];
 	if (!pixldump_build_output_name(output_name, argv[1], camera_number, target, bmp_mode,
 									requested_frame)) {
 		pixldump_write_stdout("Output path is too long.\r\n");
@@ -694,8 +652,8 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	init_trackdata();
 	reset_race_loop_state();
 	init_kevinrandom("kevin");
-	result = pixldump_process_replay(argv[1], output_name, camera_number, target, bmp_mode,
-									 requested_frame);
+	legacy_s16 result = pixldump_process_replay(argv[1], output_name, camera_number, target,
+												bmp_mode, requested_frame);
 
 #ifdef RESTUNTS_ORIGINAL
 	legacy_timer_shutdown();

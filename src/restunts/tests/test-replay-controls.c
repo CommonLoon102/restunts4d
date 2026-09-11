@@ -54,14 +54,13 @@ static void test_pan_quadrants(void)
 {
 	static const legacy_s16 positions[][3] = {
 		{100, 90, KEY_UP}, {110, 100, KEY_RIGHT}, {100, 110, KEY_DOWN}, {90, 100, KEY_LEFT}};
-	unsigned index;
 
 	button_hit = REPLAY_CONTROL_PAN;
 	hidden_hit = REPLAY_NO_SELECTION;
 	pressed_key = KEY_SPACE;
 	replay_pan_button_top = replay_pan_button_left = 90;
 	replay_pan_button_bottom = replay_pan_button_right = 110;
-	for (index = 0; index < sizeof(positions) / sizeof(positions[0]); index++) {
+	for (unsigned index = 0; index < sizeof(positions) / sizeof(positions[0]); index++) {
 		mouse_xpos = positions[index][0];
 		mouse_ypos = positions[index][1];
 		assert(replay_read_control_input(3) == positions[index][2]);
@@ -70,10 +69,8 @@ static void test_pan_quadrants(void)
 
 static void test_custom_camera_limits(void)
 {
-	legacy_u16 input;
-
 	custom_camera.azimuth_angle = 32760;
-	input = KEY_RIGHT;
+	legacy_u16 input = KEY_RIGHT;
 	assert(replay_adjust_custom_camera(&input) == 1);
 	assert(custom_camera.azimuth_angle == LEGACY_S16_WRAP_ADD(32760, REPLAY_CAMERA_ANGLE_STEP));
 	input = KEY_LEFT;

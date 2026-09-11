@@ -97,19 +97,17 @@ static legacy_u8 payload_byte(unsigned int resource_id, size_t offset)
 
 static void write_payload(void *pointer, legacy_u16 paragraphs, unsigned int resource_id)
 {
-	size_t i;
 	legacy_u8 *bytes = (legacy_u8 *)pointer;
-	for (i = 0; i < (size_t)paragraphs * TEST_PARAGRAPH_BYTES; i++) {
+	for (size_t i = 0; i < (size_t)paragraphs * TEST_PARAGRAPH_BYTES; i++) {
 		bytes[i] = payload_byte(resource_id, i);
 	}
 }
 
 static void check_payload(const void *pointer, legacy_u16 paragraphs, unsigned int resource_id)
 {
-	size_t i;
 	const legacy_u8 *bytes = (const legacy_u8 *)pointer;
 	assert(pointer != NULL);
-	for (i = 0; i < (size_t)paragraphs * TEST_PARAGRAPH_BYTES; i++) {
+	for (size_t i = 0; i < (size_t)paragraphs * TEST_PARAGRAPH_BYTES; i++) {
 		if (bytes[i] != payload_byte(resource_id, i)) {
 			fprintf(stderr,
 					"Cached resource %u corrupted at byte %lu: "
@@ -123,13 +121,11 @@ static void check_payload(const void *pointer, legacy_u16 paragraphs, unsigned i
 
 static void test_free_last_resource_with_full_table(void)
 {
-	unsigned int i;
-	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
 	void *last_resource = NULL;
-	void *cached_resource;
 
 	reset_arena();
-	for (i = 0; i < TEST_RESOURCE_SLOTS; i++) {
+	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
+	for (unsigned int i = 0; i < TEST_RESOURCE_SLOTS; i++) {
 		make_name(name, i);
 		last_resource = mmgr_alloc_pages(name, 2U);
 		write_payload(last_resource, 2U, i);
@@ -137,7 +133,7 @@ static void test_free_last_resource_with_full_table(void)
 	assert(mmgr_last_live_chunk + 1 == mmgr_first_cached_chunk);
 
 	/* The last live block must survive when its descriptor becomes cached. */
-	cached_resource = mmgr_free((legacy_s8 *)last_resource);
+	void *cached_resource = mmgr_free((legacy_s8 *)last_resource);
 	assert(cached_resource != last_resource);
 	check_payload(cached_resource, 2U, TEST_RESOURCE_SLOTS - 1U);
 	last_resource = mmgr_get_chunk_by_name(name);
@@ -147,29 +143,23 @@ static void test_free_last_resource_with_full_table(void)
 
 static void test_free_non_last_resource_with_full_table(void)
 {
-	unsigned int i;
-	legacy_s8 first_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "FIRST";
-	legacy_s8 last_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "LAST";
-	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
-	void *first_resource;
-	void *last_resource;
-	void *cached_resource;
-	struct MEMCHUNK *last_chunk;
-
 	reset_arena();
-	first_resource = mmgr_alloc_pages(first_name, 2U);
+	legacy_s8 first_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "FIRST";
+	void *first_resource = mmgr_alloc_pages(first_name, 2U);
 	write_payload(first_resource, 2U, 900U);
-	last_resource = mmgr_alloc_pages(last_name, 3U);
+	legacy_s8 last_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "LAST";
+	void *last_resource = mmgr_alloc_pages(last_name, 3U);
 	write_payload(last_resource, 3U, 901U);
-	for (i = 0; i < TEST_RESOURCE_SLOTS - 2U; i++) {
-		void *resource;
+	void *cached_resource;
+	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
+	for (unsigned int i = 0; i < TEST_RESOURCE_SLOTS - 2U; i++) {
 		make_name(name, i);
-		resource = mmgr_alloc_pages(name, 1U);
+		void *resource = mmgr_alloc_pages(name, 1U);
 		write_payload(resource, 1U, i);
 		cached_resource = mmgr_free((legacy_s8 *)resource);
 		check_payload(cached_resource, 1U, i);
 	}
-	last_chunk = mmgr_last_live_chunk;
+	struct MEMCHUNK *last_chunk = mmgr_last_live_chunk;
 	assert(last_chunk + 1 == mmgr_first_cached_chunk);
 
 	/* Freeing an older block must not consume the last live descriptor. */
@@ -197,23 +187,18 @@ static void test_free_non_last_resource_with_full_table(void)
 
 static void test_repeated_cache_churn(void)
 {
-	unsigned int iteration;
-	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
-	legacy_s8 pinned_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "PINNED";
-	void *pinned_resource;
-	unsigned int cache_hits = 0;
-
 	reset_arena();
-	pinned_resource = mmgr_alloc_pages(pinned_name, 7U);
+	legacy_s8 pinned_name[MMGR_RESOURCE_NAME_LENGTH + 1] = "PINNED";
+	void *pinned_resource = mmgr_alloc_pages(pinned_name, 7U);
 	write_payload(pinned_resource, 7U, 999U);
-	for (iteration = 0; iteration < TEST_CHURN_COUNT; iteration++) {
+	unsigned int cache_hits = 0;
+	legacy_s8 name[MMGR_RESOURCE_NAME_LENGTH + 1];
+	for (unsigned int iteration = 0; iteration < TEST_CHURN_COUNT; iteration++) {
 		unsigned int resource_id = iteration % TEST_CHURN_RESOURCE_COUNT;
 		legacy_u16 paragraphs = (legacy_u16)(1U + resource_id % 5U);
-		void *resource;
-		void *cached_resource;
 
 		make_name(name, resource_id);
-		resource = mmgr_get_chunk_by_name(name);
+		void *resource = mmgr_get_chunk_by_name(name);
 		if (resource != NULL) {
 			cache_hits++;
 			check_payload(resource, paragraphs, resource_id);
@@ -221,7 +206,7 @@ static void test_repeated_cache_churn(void)
 			resource = mmgr_alloc_pages(name, paragraphs);
 			write_payload(resource, paragraphs, resource_id);
 		}
-		cached_resource = mmgr_free((legacy_s8 *)resource);
+		void *cached_resource = mmgr_free((legacy_s8 *)resource);
 		check_payload(cached_resource, paragraphs, resource_id);
 		check_payload(pinned_resource, 7U, 999U);
 		assert(mmgr_get_ofs_diff() == TEST_ARENA_END - TEST_ARENA_START - 7U);

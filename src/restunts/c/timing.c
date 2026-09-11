@@ -25,10 +25,8 @@ void timer_remove_callback(void(far *callback)(void))
 
 legacy_s16 timer_read_key_until_deadline(void)
 {
-	legacy_s16 key;
-
 	do {
-		key = kb_call_readchar_callback();
+		legacy_s16 key = kb_call_readchar_callback();
 		if (key != TIMER_INPUT_KEY_NONE) {
 			return key;
 		}
@@ -38,12 +36,9 @@ legacy_s16 timer_read_key_until_deadline(void)
 
 legacy_s16 timer_read_key_with_timeout(legacy_u32 ticks)
 {
-	legacy_u32 target;
-	legacy_s16 key;
-
-	target = (legacy_u32)(timer_get_counter() + ticks);
+	legacy_u32 target = (legacy_u32)(timer_get_counter() + ticks);
 	do {
-		key = kb_call_readchar_callback();
+		legacy_s16 key = kb_call_readchar_callback();
 		if (key != TIMER_INPUT_KEY_NONE) {
 			return key;
 		}
@@ -89,9 +84,9 @@ legacy_s16 timer_deadline_reached(void)
 
 legacy_u32 timer_wait_ticks(legacy_u32 ticks)
 {
-	legacy_u32 target, res;
-	target = timer_get_counter() + ticks;
+	legacy_u32 target = timer_get_counter() + ticks;
 
+	legacy_u32 res;
 	do {
 		res = timer_get_counter();
 	} while (res < target);
@@ -112,9 +107,7 @@ static legacy_s16 secondary_timer_target_reached(legacy_u32 current, legacy_u32 
 
 legacy_u32 slow_timer_set_deadline(legacy_u32 ticks)
 {
-	legacy_u32 target;
-
-	target = (legacy_u32)(timer_get_slow_counter() + ticks);
+	legacy_u32 target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	slow_timer_deadline_low = (legacy_u16)target;
 	slow_timer_deadline_high = (legacy_u16)(target >> LEGACY_WORD_BITS);
 	return target;
@@ -127,10 +120,8 @@ legacy_s16 slow_timer_deadline_reached(void)
 
 legacy_u32 slow_timer_wait_ticks(legacy_u32 ticks)
 {
+	legacy_u32 target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	legacy_u32 current;
-	legacy_u32 target;
-
-	target = (legacy_u32)(timer_get_slow_counter() + ticks);
 	do {
 		current = timer_get_slow_counter();
 	} while (!secondary_timer_target_reached(current, target));

@@ -44,28 +44,20 @@ static const legacy_u32 md5_constants[MD5_ROUND_COUNT] = {
 static void md5_transform(legacy_u32 state[MD5_STATE_WORD_COUNT],
 						  const legacy_u8 block[MD5_BLOCK_SIZE])
 {
-	legacy_u32 words[MD5_BLOCK_WORD_COUNT];
-	legacy_u32 a;
-	legacy_u32 b;
-	legacy_u32 c;
-	legacy_u32 d;
-	legacy_u32 function;
-	legacy_u32 sum;
-	legacy_u32 previous_d;
-	legacy_u16 index;
 	legacy_u16 word_index;
-
-	for (index = 0; index < MD5_BLOCK_WORD_COUNT; index++) {
+	legacy_u32 words[MD5_BLOCK_WORD_COUNT];
+	for (legacy_u16 index = 0; index < MD5_BLOCK_WORD_COUNT; index++) {
 		word_index = (legacy_u16)(index * MD5_WORD_SIZE);
 		words[index] = LEGACY_READ_U32_LE(&block[word_index]);
 	}
 
-	a = state[0];
-	b = state[1];
-	c = state[2];
-	d = state[3];
+	legacy_u32 a = state[0];
+	legacy_u32 b = state[1];
+	legacy_u32 c = state[2];
+	legacy_u32 d = state[3];
 
-	for (index = 0; index < MD5_ROUND_COUNT; index++) {
+	for (legacy_u16 index = 0; index < MD5_ROUND_COUNT; index++) {
+		legacy_u32 function;
 		if (index < MD5_ROUND_1_END) {
 			function = (b & c) | ((~b) & d);
 			word_index = index;
@@ -84,10 +76,10 @@ static void md5_transform(legacy_u32 state[MD5_STATE_WORD_COUNT],
 			word_index = (legacy_u16)((MD5_ROUND_4_WORD_MULTIPLIER * index) & MD5_WORD_INDEX_MASK);
 		}
 
-		previous_d = d;
+		legacy_u32 previous_d = d;
 		d = c;
 		c = b;
-		sum = LEGACY_U32_WRAP_ADD(a, function);
+		legacy_u32 sum = LEGACY_U32_WRAP_ADD(a, function);
 		sum = LEGACY_U32_WRAP_ADD(sum, md5_constants[index]);
 		sum = LEGACY_U32_WRAP_ADD(sum, words[word_index]);
 		b = LEGACY_U32_WRAP_ADD(b, LEGACY_U32_ROL(sum, md5_shifts[index]));
@@ -104,20 +96,15 @@ void pixldump_md5(const legacy_u8 far *source, legacy_u16 length,
 				  legacy_u8 digest[PIXLDUMP_MD5_SIZE])
 {
 	legacy_u32 state[MD5_STATE_WORD_COUNT];
-	legacy_u32 bit_length;
-	legacy_u8 block[MD5_BLOCK_SIZE];
-	legacy_u16 remaining;
-	legacy_u16 block_length;
-	legacy_u16 index;
-
 	state[0] = MD5_INITIAL_A;
 	state[1] = MD5_INITIAL_B;
 	state[2] = MD5_INITIAL_C;
 	state[3] = MD5_INITIAL_D;
-	remaining = length;
+	legacy_u16 remaining = length;
 
+	legacy_u8 block[MD5_BLOCK_SIZE];
 	while (remaining >= MD5_BLOCK_SIZE) {
-		for (index = 0; index < MD5_BLOCK_SIZE; index++) {
+		for (legacy_u16 index = 0; index < MD5_BLOCK_SIZE; index++) {
 			block[index] = source[index];
 		}
 		md5_transform(state, block);
@@ -125,8 +112,8 @@ void pixldump_md5(const legacy_u8 far *source, legacy_u16 length,
 		remaining = (legacy_u16)(remaining - MD5_BLOCK_SIZE);
 	}
 
-	block_length = remaining;
-	for (index = 0; index < block_length; index++) {
+	legacy_u16 block_length = remaining;
+	for (legacy_u16 index = 0; index < block_length; index++) {
 		block[index] = source[index];
 	}
 	block[block_length++] = MD5_PADDING_BYTE;
@@ -142,12 +129,12 @@ void pixldump_md5(const legacy_u8 far *source, legacy_u16 length,
 	while (block_length < MD5_LENGTH_OFFSET) {
 		block[block_length++] = 0;
 	}
-	bit_length = (legacy_u32)length * MD5_BITS_PER_BYTE;
+	legacy_u32 bit_length = (legacy_u32)length * MD5_BITS_PER_BYTE;
 	LEGACY_WRITE_U32_LE(&block[MD5_LENGTH_OFFSET], bit_length);
 	LEGACY_WRITE_U32_LE(&block[MD5_LENGTH_HIGH_OFFSET], 0UL);
 	md5_transform(state, block);
 
-	for (index = 0; index < MD5_STATE_WORD_COUNT; index++) {
+	for (legacy_u16 index = 0; index < MD5_STATE_WORD_COUNT; index++) {
 		LEGACY_WRITE_U32_LE(&digest[index * MD5_WORD_SIZE], state[index]);
 	}
 }

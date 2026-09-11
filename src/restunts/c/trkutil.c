@@ -59,13 +59,10 @@ legacy_s16 track_object_base_z(const struct TRACKOBJECT *track_object, legacy_u8
  * walker is given that track piece. */
 void opponent_route_advance(legacy_s16 route_point)
 {
-	legacy_u16 route_table_offset;
-	legacy_s16 route_track_index;
-
-	route_table_offset =
+	legacy_u16 route_table_offset =
 		LEGACY_U16_WRAP_MUL(state.opponentstate.car_route_index, ROUTE_TRACK_INDEX_SIZE);
-	route_track_index = LEGACY_READ_S16_LE((const legacy_u8 far *)opponent_route_track_indices +
-										   route_table_offset);
+	legacy_s16 route_track_index = LEGACY_READ_S16_LE(
+		(const legacy_u8 far *)opponent_route_track_indices + route_table_offset);
 	get_track_route_point(route_track_index, &state.opponentstate.car_route_target, route_point,
 						  &state.game_opponent_target_speed);
 }
@@ -85,15 +82,12 @@ static const legacy_u8 hillroad_shapes[HILLROAD_TERRAIN_COUNT][HILLROAD_SHAPE_CO
 
 legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 track)
 {
-	legacy_u16 row;
-	legacy_u16 piece;
-
 	if (terrain < HILLROAD_TERRAIN_FIRST || terrain > HILLROAD_TERRAIN_LAST) {
 		return 0;
 	}
 
-	row = terrain - HILLROAD_TERRAIN_FIRST;
-	for (piece = 0U; piece < HILLROAD_PIECE_VARIANT_COUNT; piece++) {
+	legacy_u16 row = terrain - HILLROAD_TERRAIN_FIRST;
+	for (legacy_u16 piece = 0U; piece < HILLROAD_PIECE_VARIANT_COUNT; piece++) {
 		if (hillroad_pieces[row][piece] == track) {
 			return hillroad_shapes[row][piece < HILLROAD_DIRECT_SHAPE_COUNT
 											? piece

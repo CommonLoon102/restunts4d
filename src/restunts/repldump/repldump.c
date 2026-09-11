@@ -51,10 +51,10 @@ FILE *fopen(const legacy_s8 *path, const legacy_s8 *mode)
 {
 	legacy_u16 segm = FP_SEG(path);
 	legacy_u16 offs = FP_OFF(path);
-	FILE *handle;
 
 	g_errno = REPLDUMP_IO_SUCCESS;
 
+	FILE *handle;
 	if (mode[0] == 'w') { // Create new file for writing
 		__asm {
 			push ds
@@ -113,9 +113,9 @@ size_t fwrite(const void far *src, size_t size, size_t nmemb, FILE *file)
 	legacy_u16 segm = FP_SEG(src);
 	legacy_u16 offs = FP_OFF(src);
 
-	size_t res;
 	size *= nmemb;
 
+	size_t res;
 	__asm {
 		push ds
 		mov  ah, REPLDUMP_DOS_WRITE_FILE_FUNCTION
@@ -137,8 +137,7 @@ size_t fwrite(const void far *src, size_t size, size_t nmemb, FILE *file)
 
 void init_row_tables(void)
 {
-	legacy_s16 i;
-	for (i = 0; i < TRACK_GRID_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACK_GRID_SIZE; i++) {
 		trackrows[i] = TRACK_GRID_SIZE * (TRACK_GRID_LAST_INDEX - i);
 		terrainrows[i] = TRACK_GRID_SIZE * i;
 		track_row_positions[i] = (TRACK_GRID_LAST_INDEX - i) << TRACK_TILE_POSITION_SHIFT;
@@ -148,7 +147,7 @@ void init_row_tables(void)
 		terraincenterpos[i] = (i << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
 
-	for (i = 0; i < TRACK_GRID_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACK_GRID_SIZE; i++) {
 		track_column_positions[i] = i << TRACK_TILE_POSITION_SHIFT;
 		track_column_centers[i] = (i << TRACK_TILE_POSITION_SHIFT) + TRACK_TILE_HALF_SIZE;
 	}
@@ -156,8 +155,7 @@ void init_row_tables(void)
 
 void init_trackdata(void)
 {
-	legacy_s8 far *trkptr;
-	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
+	legacy_s8 far *trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 
 	track_primary_route_links = (legacy_s16 far *)trkptr;
 
@@ -280,11 +278,6 @@ static void headless_status(const legacy_s8 *format, ...)
 // in that case this tool will terminate normally after done, no need to press any keys.
 legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_s16 i, len;
-	legacy_s8 outname[REPLDUMP_OUTPUT_NAME_SIZE];
-	legacy_s8 carid[REPLDUMP_CAR_ID_BUFFER_SIZE];
-	REPLDUMP_OUTPUT fout;
-
 	if (argc < 2) {
 		printf("Usage: %s REPLNAME\n\n", argv[0]);
 		printf("Or pass second argument to exit tool automatically on completion:\n");
@@ -292,7 +285,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 		return 1;
 	}
 
-	len = strlen(argv[1]);
+	legacy_s16 len = strlen(argv[1]);
 	if (len >= REPLDUMP_REPLAY_EXTENSION_SIZE &&
 		((strcmp(argv[1] + len - REPLDUMP_REPLAY_EXTENSION_SIZE, ".rpl") == 0) ||
 		 strcmp(argv[1] + len - REPLDUMP_REPLAY_EXTENSION_SIZE, ".RPL") == 0)) {
@@ -332,16 +325,17 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	printf("Loading replay... ");
 	file_load_replay("", argv[1]);
 	printf("OK\n");
+	legacy_s8 carid[REPLDUMP_CAR_ID_BUFFER_SIZE];
 	_memcpy(carid, gameconfig.game_playercarid, REPLDUMP_CAR_ID_SIZE);
 	carid[REPLDUMP_CAR_ID_SIZE] = 0;
 	printf("  Track: '%s' Car: '%s'\n", gameconfig.game_trackname, carid);
 
 	printf("Copying track... ");
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-	for (i = 0; i < TRACKDATA_LINK_TABLE_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACKDATA_LINK_TABLE_SIZE; i++) {
 		track_and_directory_backup[i] = track_element_map[i];
 	}
-	for (i = 0; i < TRACKDATA_CHECKPOINT_DATA_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACKDATA_CHECKPOINT_DATA_SIZE; i++) {
 		track_and_directory_backup[i + TRACKDATA_LINK_TABLE_SIZE] = track_directory[i];
 		track_and_directory_backup[i + TRACKDATA_CHECKPOINT_SECOND_OFFSET] = replay_directory[i];
 	}
@@ -404,6 +398,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	restore_gamestate(gameconfig.game_recordedframes);
 	printf("OK\n");
 
+	legacy_s8 outname[REPLDUMP_OUTPUT_NAME_SIZE];
 	strcpy(outname, argv[1]);
 #ifdef RESTUNTS_ORIGINAL
 	strcat(outname, ".BIN");
@@ -413,7 +408,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	outname[REPLDUMP_OUTPUT_NAME_LAST_INDEX] = 0;
 	printf("Creating output file '%s'... ", outname);
 
-	fout = repldump_output_open(outname);
+	REPLDUMP_OUTPUT fout = repldump_output_open(outname);
 	if (!fout) {
 		printf("FAIL\n");
 		return 1;

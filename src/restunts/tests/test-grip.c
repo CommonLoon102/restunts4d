@@ -31,18 +31,16 @@ static legacy_u16 random_word(void)
 
 static void reset_car(void)
 {
-	int index;
-
 	memset(&car, 0, sizeof(car));
 	memset(&simd, 0, sizeof(simd));
 	memset(&legacy_execution_residue, 0, sizeof(legacy_execution_residue));
 	memset(elements, 0, sizeof(elements));
-	for (index = 0; index < 30; index++) {
+	for (int index = 0; index < 30; index++) {
 		terrainrows[index] = index * 30;
 	}
 	track_element_map = elements;
 	car.car_sumSurfAllWheels = 4;
-	for (index = 0; index < 4; index++) {
+	for (int index = 0; index < 4; index++) {
 		car.car_surfaceWhl[index] = CAR_SURFACE_PAVED;
 	}
 	car.car_actual_speed = 16000;
@@ -51,7 +49,7 @@ static void reset_car(void)
 	car.car_position.lz = 10L << 16;
 	simd.grip = 500;
 	simd.sliding = 256;
-	for (index = 0; index < SIMD_SURFACE_GRIP_COUNT; index++) {
+	for (int index = 0; index < SIMD_SURFACE_GRIP_COUNT; index++) {
 		simd.surface_grip[index] = 256;
 	}
 }
@@ -63,11 +61,9 @@ static void run_grip(legacy_s16 behavior)
 #ifdef GRIP_DIFFERENTIAL
 	struct CARSTATE expected = car;
 	struct LEGACY_EXECUTION_RESIDUE before = legacy_execution_residue;
-	struct LEGACY_EXECUTION_RESIDUE expected_residue;
-
 	reference_update_grip(&expected, &simd, behavior);
 	reference_update_legacy_grip_stack_words(&expected, &simd, speed_before, actual_before);
-	expected_residue = legacy_execution_residue;
+	struct LEGACY_EXECUTION_RESIDUE expected_residue = legacy_execution_residue;
 	legacy_execution_residue = before;
 #endif
 	update_grip(&car, &simd, behavior);
@@ -81,9 +77,6 @@ static void run_grip(legacy_s16 behavior)
 
 static void test_contact_and_grass(void)
 {
-	int grass_count;
-	int index;
-
 	reset_car();
 	car.car_sumSurfAllWheels = 0;
 	car.car_front_wheel_response_angle = 32;
@@ -95,9 +88,9 @@ static void test_contact_and_grass(void)
 	assert(car.car_actual_speed == 16000);
 	assert(car.car_slip_angle == 100);
 	assert(legacy_execution_residue.grip_stack_words[3] == 80);
-	for (grass_count = 1; grass_count <= 4; grass_count++) {
+	for (int grass_count = 1; grass_count <= 4; grass_count++) {
 		reset_car();
-		for (index = 0; index < grass_count; index++) {
+		for (int index = 0; index < grass_count; index++) {
 			car.car_surfaceWhl[index] = CAR_SURFACE_GRASS;
 		}
 		run_grip(GRIP_BEHAVIOR_PLAYER);
@@ -110,11 +103,9 @@ static void test_contact_and_grass(void)
 
 static void test_recenter_and_banking(void)
 {
-	int rotation;
 	static const legacy_s16 expected[] = {-8, -6, 0, 0, 0, 6, 8};
 	static const legacy_s16 input[] = {-8, -7, -1, 0, 1, 7, 8};
-
-	for (rotation = 0; rotation < 7; rotation++) {
+	for (int rotation = 0; rotation < 7; rotation++) {
 		reset_car();
 		car.car_rotate.x = input[rotation];
 		run_grip(GRIP_BEHAVIOR_PLAYER);
@@ -144,11 +135,7 @@ static void test_wrapped_grip_sweep(void)
 	static const legacy_s16 grips[] = {-32768, -1, 0, 1, 256, 500, 16384, 32767};
 	static const legacy_u16 speeds[] = {0, 1, 255, 256, 257, 32767, 32768, 65535};
 	legacy_u32 hash = 2166136261UL;
-	unsigned int sample;
-	unsigned int index;
-	const unsigned char *bytes;
-
-	for (sample = 0; sample < 200000; sample++) {
+	for (unsigned int sample = 0; sample < 200000; sample++) {
 		reset_car();
 		car.car_steeringAngle = angles[random_word() % 13];
 		car.car_velocity_heading_offset = angles[random_word() % 13];
@@ -161,22 +148,22 @@ static void test_wrapped_grip_sweep(void)
 		car.car_slidingFlag = random_word() % 2;
 		car.car_crashBmpFlag = random_word() % 3;
 		car.car_sumSurfAllWheels = random_word() % 5;
-		for (index = 0; index < 4; index++) {
+		for (unsigned int index = 0; index < 4; index++) {
 			car.car_surfaceWhl[index] = random_word() % 6;
 		}
 		simd.grip = grips[random_word() % 8];
 		simd.sliding = grips[random_word() % 8];
-		for (index = 0; index < SIMD_SURFACE_GRIP_COUNT; index++) {
+		for (unsigned int index = 0; index < SIMD_SURFACE_GRIP_COUNT; index++) {
 			simd.surface_grip[index] = grips[random_word() % 8];
 		}
 		elements[terrainrows[10] + 10] = 51 + random_word() % 6;
 		run_grip((legacy_s16)(sample % 3));
-		bytes = (const unsigned char *)&car;
-		for (index = 0; index < sizeof(car); index++) {
+		const unsigned char *bytes = (const unsigned char *)&car;
+		for (unsigned int index = 0; index < sizeof(car); index++) {
 			hash = (hash ^ bytes[index]) * 16777619UL;
 		}
 		bytes = (const unsigned char *)&legacy_execution_residue;
-		for (index = 0; index < sizeof(legacy_execution_residue); index++) {
+		for (unsigned int index = 0; index < sizeof(legacy_execution_residue); index++) {
 			hash = (hash ^ bytes[index]) * 16777619UL;
 		}
 	}

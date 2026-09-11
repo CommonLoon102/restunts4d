@@ -56,9 +56,6 @@ struct OPPONENT_MENU_STATE {
 static void opponent_menu_draw_description(struct OPPONENT_MENU_STATE *menu)
 {
 	legacy_s8 far *description;
-	legacy_u8 character;
-	legacy_u16 line_length;
-	legacy_s16 line_y;
 	if ((legacy_u8)gameconfig.game_opponenttype != OPPONENT_NONE) {
 		description = locate_text_res(menu->opponent_resource, opponent_description_id);
 	} else {
@@ -66,10 +63,10 @@ static void opponent_menu_draw_description(struct OPPONENT_MENU_STATE *menu)
 	}
 	font_set_fontdef2(fontnptr);
 	font_set_colors(0, dialog_fnt_colour);
-	line_length = 0;
-	line_y = 0;
+	legacy_s16 line_y = 0;
+	legacy_u16 line_length = 0;
 	for (;;) {
-		character = (legacy_u8)*description++;
+		legacy_u8 character = (legacy_u8)*description++;
 		if (character == ']') {
 			if (line_length != 0) {
 				*(&resID_byte1 + line_length) = 0;
@@ -93,8 +90,6 @@ static void opponent_menu_draw_background(void)
 	static legacy_s8 *button_resource_ids[OPPONENT_MENU_BUTTON_COUNT] = {
 		opponent_previous_button_id, opponent_next_button_id, opponent_none_button_id,
 		opponent_car_button_id, opponent_done_button_id};
-	struct SHAPE2D far *shape;
-	legacy_u16 index;
 	if (video_uses_page_flipping == 0) {
 		sprite_select_render_window();
 	} else {
@@ -102,9 +97,10 @@ static void opponent_menu_draw_background(void)
 	}
 	sprite_clear_target(0);
 
-	shape = (struct SHAPE2D far *)locate_shape_fatal(opp_res, opponent_menu_background_id);
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_fatal(opp_res, opponent_menu_background_id);
 	sprite_draw_palette_mapped(shape);
-	for (index = 0; index < OPPONENT_MENU_BUTTON_COUNT; index++) {
+	for (legacy_u16 index = 0; index < OPPONENT_MENU_BUTTON_COUNT; index++) {
 		draw_button(locate_text_res((legacy_s8 far *)miscptr, button_resource_ids[index]),
 					LEGACY_S16_WRAP_ADD(OPPONENT_MENU_BUTTON_FIRST_X,
 										LEGACY_U16_WRAP_MUL(index, OPPONENT_MENU_BUTTON_SPACING)),
@@ -156,9 +152,6 @@ static void opponent_menu_refresh(struct OPPONENT_MENU_STATE *menu)
 
 static legacy_u16 opponent_menu_poll_input(struct OPPONENT_MENU_STATE *menu)
 {
-	legacy_u16 elapsed;
-	legacy_u16 key;
-	legacy_s16 hit;
 	if (menu->selected != menu->previous_selection) {
 		menu->previous_selection = menu->selected;
 		sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(menu->blit_mode));
@@ -167,11 +160,12 @@ static legacy_u16 opponent_menu_poll_input(struct OPPONENT_MENU_STATE *menu)
 		menu_reset_animation_timers();
 	}
 
-	elapsed = (legacy_u16)menu_animate_button_highlight(menu->selected, opponentmenu_buttons,
-														menu_highlight_second_color,
-														menu_highlight_first_color);
-	key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-	hit = (legacy_s16)mouse_multi_hittest(OPPONENT_MENU_BUTTON_COUNT, opponentmenu_buttons);
+	legacy_u16 elapsed = (legacy_u16)menu_animate_button_highlight(
+		menu->selected, opponentmenu_buttons, menu_highlight_second_color,
+		menu_highlight_first_color);
+	legacy_u16 key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
+	legacy_s16 hit =
+		(legacy_s16)mouse_multi_hittest(OPPONENT_MENU_BUTTON_COUNT, opponentmenu_buttons);
 	if (hit != -1 && !((legacy_u8)gameconfig.game_opponenttype == OPPONENT_NONE &&
 					   hit == OPPONENT_MENU_CAR_BUTTON)) {
 		menu->selected = (legacy_u8)hit;
@@ -253,10 +247,9 @@ static legacy_u8 opponent_menu_activate_selection(struct OPPONENT_MENU_STATE *me
 
 static void opponent_menu_release(struct OPPONENT_MENU_STATE *menu)
 {
-	legacy_u16 index;
 	if ((legacy_u8)gameconfig.game_opponenttype != OPPONENT_NONE) {
 		if ((legacy_u8)gameconfig.game_opponentcarid[0] == OPPONENT_MENU_NO_SELECTION) {
-			for (index = 0; index < CAR_ID_LENGTH; index++) {
+			for (legacy_u16 index = 0; index < CAR_ID_LENGTH; index++) {
 				gameconfig.game_opponentcarid[index] = gameconfig.game_playercarid[index];
 			}
 			gameconfig.game_opponentmaterial = (legacy_s8)((
@@ -281,7 +274,6 @@ void run_opponent_menu(void)
 {
 	struct OPPONENT_MENU_STATE session;
 	struct OPPONENT_MENU_STATE *menu = &session;
-	legacy_u16 key;
 
 	ensure_file_exists(OPPONENT_RESOURCE_FILE_INDEX);
 	miscptr = file_load_resfile(opponent_misc_resource_name);
@@ -298,7 +290,7 @@ void run_opponent_menu(void)
 	for (;;) {
 		opponent_menu_refresh(menu);
 
-		key = opponent_menu_poll_input(menu);
+		legacy_u16 key = opponent_menu_poll_input(menu);
 
 		if (opponent_menu_activate_key(menu, key) == 0) {
 			continue;

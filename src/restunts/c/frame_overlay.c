@@ -43,19 +43,14 @@ enum DIRECTION_ICON_SHAPE_INDEX { DIRECTION_ICON_LEFT_SHAPE = 3, DIRECTION_ICON_
 
 struct RECTANGLE *do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
-	legacy_s16 duration;
-	legacy_s16 clipped_frame;
-	legacy_s16 sink_height;
-	legacy_s16 bottom;
-
-	duration = LEGACY_S16_SHL(framespersec, SINK_DURATION_FRAME_SHIFT);
-	clipped_frame = (legacy_s16)frame;
+	legacy_s16 duration = LEGACY_S16_SHL(framespersec, SINK_DURATION_FRAME_SHIFT);
+	legacy_s16 clipped_frame = (legacy_s16)frame;
 	if (clipped_frame > duration) {
 		clipped_frame = duration;
 	}
-	sink_height = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(
+	legacy_s16 sink_height = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(
 		LEGACY_S32_WRAP_MUL((legacy_s32)height, (legacy_s32)clipped_frame), (legacy_s32)duration));
-	bottom = LEGACY_S16_WRAP_ADD(top, height);
+	legacy_s16 bottom = LEGACY_S16_WRAP_ADD(top, height);
 	rect_ingame_text.left = 0;
 	rect_ingame_text.right = OVERLAY_SCREEN_WIDTH;
 	rect_ingame_text.top = LEGACY_S16_WRAP_SUB(bottom, sink_height);
@@ -68,48 +63,33 @@ struct RECTANGLE *do_sinking(legacy_s16 frame, legacy_s16 top, legacy_s16 height
 
 struct RECTANGLE *init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 {
-	legacy_u8 far *crack_lines;
-	legacy_u8 far *crack_info;
-	legacy_s16 frame_count;
-	legacy_s16 frame_index;
-	legacy_s16 line_count;
-	legacy_s16 start_x;
-	legacy_s16 start_y;
-	legacy_s16 end_x;
-	legacy_s16 end_y;
-	legacy_s16 scaled_start_y;
-	legacy_s16 scaled_end_y;
-	legacy_s16 frame_divisor;
-	legacy_s32 scaled_coordinate;
-	struct POINT2D point;
-	legacy_s16 i;
-
-	crack_lines = (legacy_u8 far *)locate_shape_alt(gameresptr, "crak");
-	crack_info = (legacy_u8 far *)locate_shape_alt(gameresptr, "cinf");
-	frame_divisor =
+	legacy_u8 far *crack_lines = (legacy_u8 far *)locate_shape_alt(gameresptr, "crak");
+	legacy_u8 far *crack_info = (legacy_u8 far *)locate_shape_alt(gameresptr, "cinf");
+	legacy_s16 frame_divisor =
 		LEGACY_S16_FROM_BITS(LEGACY_U16_DIV_OR_ZERO(framespersec, CRACK_FRAME_RATE_DIVISOR));
-	frame_index = LEGACY_S16_DIV_OR_ZERO(frame, frame_divisor);
-	frame_count = LEGACY_READ_S16_LE(crack_info);
+	legacy_s16 frame_index = LEGACY_S16_DIV_OR_ZERO(frame, frame_divisor);
+	legacy_s16 frame_count = LEGACY_READ_S16_LE(crack_info);
 	if (frame_index >= frame_count) {
 		frame_index = LEGACY_S16_WRAP_SUB(frame_count, 1);
 	}
-	line_count = LEGACY_READ_S16_LE(
+	legacy_s16 line_count = LEGACY_READ_S16_LE(
 		crack_info + ((legacy_u16)LEGACY_S16_WRAP_ADD(frame_index, CRACK_INFO_HEADER_WORDS)
 					  << CRACK_INFO_INDEX_SHIFT));
 	rect_ingame_text = empty_rect;
 
-	for (i = 0; i < line_count; i++) {
+	struct POINT2D point;
+	for (legacy_s16 i = 0; i < line_count; i++) {
 		legacy_u16 line_offset = (legacy_u16)i << CRACK_LINE_RECORD_SHIFT;
 
-		start_x = LEGACY_READ_S16_LE(crack_lines + line_offset);
-		start_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_START_Y_OFFSET);
-		end_x = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_X_OFFSET);
-		end_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_Y_OFFSET);
-		scaled_coordinate = LEGACY_S32_WRAP_MUL((legacy_s32)start_y, (legacy_s32)height);
-		scaled_start_y = LEGACY_S16_FROM_BITS(
+		legacy_s16 start_x = LEGACY_READ_S16_LE(crack_lines + line_offset);
+		legacy_s16 start_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_START_Y_OFFSET);
+		legacy_s16 end_x = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_X_OFFSET);
+		legacy_s16 end_y = LEGACY_READ_S16_LE(crack_lines + line_offset + CRACK_END_Y_OFFSET);
+		legacy_s32 scaled_coordinate = LEGACY_S32_WRAP_MUL((legacy_s32)start_y, (legacy_s32)height);
+		legacy_s16 scaled_start_y = LEGACY_S16_FROM_BITS(
 			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, OVERLAY_REFERENCE_HEIGHT));
 		scaled_coordinate = LEGACY_S32_WRAP_MUL((legacy_s32)end_y, (legacy_s32)height);
-		scaled_end_y = LEGACY_S16_FROM_BITS(
+		legacy_s16 scaled_end_y = LEGACY_S16_FROM_BITS(
 			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, OVERLAY_REFERENCE_HEIGHT));
 
 		preRender_line(start_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
@@ -199,9 +179,6 @@ static void draw_ingame_route_information(void)
 
 struct RECTANGLE *draw_ingame_text(void)
 {
-	legacy_u16 replay_frame;
-	legacy_s16 replay_x;
-
 	rect_ingame_text = empty_rect;
 	if (idle_expired != 0) {
 		draw_centered_ingame_resource("dm1", DEMO_TEXT_FIRST_Y);
@@ -213,12 +190,12 @@ struct RECTANGLE *draw_ingame_text(void)
 		if (game_replay_mode != REPLAY_MODE_PLAYBACK) {
 			return &rect_ingame_text;
 		}
-		replay_frame = (legacy_u16)state.game_frame % framespersec;
+		legacy_u16 replay_frame = (legacy_u16)state.game_frame % framespersec;
 		if (replay_frame >= (legacy_u16)LEGACY_S16_SAR(framespersec, 1U)) {
 			return &rect_ingame_text;
 		}
 		copy_string(&resID_byte1, locate_text_res(gameresptr, "rpl"));
-		replay_x = LEGACY_S16_WRAP_SUB(
+		legacy_s16 replay_x = LEGACY_S16_WRAP_SUB(
 			REPLAY_TEXT_RIGHT_X,
 			LEGACY_U16_WRAP_MUL(strlen(&resID_byte1), REPLAY_TEXT_CHARACTER_WIDTH));
 		rect_union(&rect_ingame_text,

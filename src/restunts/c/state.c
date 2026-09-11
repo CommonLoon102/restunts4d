@@ -73,15 +73,11 @@ static legacy_u8 confirm_player_route(legacy_s16 route_index, legacy_s16 skipped
 
 static void update_player_route_penalty(void)
 {
-	legacy_s16 route_index;
+	legacy_s16 route_index = state.game_player_confirmed_route;
 	legacy_s16 skipped_route_count;
-	legacy_s16 route_distance;
-	legacy_u8 commit_penalty;
-
-	route_index = state.game_player_confirmed_route;
-	route_distance = detect_penalty(&route_index, &skipped_route_count);
+	legacy_s16 route_distance = detect_penalty(&route_index, &skipped_route_count);
 	if (route_distance != 0) {
-		commit_penalty = 0;
+		legacy_u8 commit_penalty = 0;
 		if (skipped_route_count == PENALTY_ROUTE_OUTSIDE_TRACK) {
 			state.game_player_route_status = ROUTE_TRACKING_OUTSIDE_TRACK;
 			state.game_route_confirmation_count = ROUTE_CONFIRMATION_NONE;
@@ -113,11 +109,9 @@ static void update_player_route_penalty(void)
 static legacy_s16 player_route_depth(legacy_s8 previous_route_status,
 									 struct MATRIX *world_to_car_rotation)
 {
-	struct VECTOR world_route_delta;
 	struct VECTOR local_route_delta;
-	legacy_s16 route_depth;
-
-	route_depth = 0;
+	legacy_s16 route_depth = 0;
+	struct VECTOR world_route_delta;
 	if (state.playerstate.car_route_index != ROUTE_INDEX_NONE) {
 		if ((previous_route_status == ROUTE_TRACKING_NORMAL ||
 			 state.game_player_route_status != ROUTE_TRACKING_NORMAL) &&
@@ -139,15 +133,12 @@ static legacy_s16 player_route_depth(legacy_s8 previous_route_status,
 static legacy_s8 select_player_route_point(legacy_s16 route_index,
 										   struct MATRIX *world_to_car_rotation)
 {
+	legacy_s8 candidate_route_point = ROUTE_POINT_FIRST;
+	legacy_s8 selected_route_point;
+	legacy_s8 route_end_reached = 0;
 	struct VECTOR world_route_delta;
 	struct VECTOR local_route_delta;
 	struct VECTOR route_delta_or_best_depth;
-	legacy_s8 route_end_reached;
-	legacy_s8 candidate_route_point;
-	legacy_s8 selected_route_point;
-
-	route_end_reached = 0;
-	candidate_route_point = ROUTE_POINT_FIRST;
 	do {
 		route_end_reached = LEGACY_S8_FROM_BITS(
 			(legacy_u8)get_track_route_point(route_index, &state.playerstate.car_route_target,
@@ -167,10 +158,8 @@ static legacy_s8 select_player_route_point(legacy_s16 route_index,
 
 static void recover_player_route_direction(legacy_s16 route_index, legacy_s8 selected_route_point)
 {
-	struct VECTOR route_segment_end[ROUTE_GEOMETRY_POINT_COUNT];
 	struct VECTOR route_segment_start[ROUTE_GEOMETRY_POINT_COUNT];
-	legacy_s16 route_direction;
-
+	struct VECTOR route_segment_end[ROUTE_GEOMETRY_POINT_COUNT];
 	if (selected_route_point == ROUTE_POINT_FIRST) {
 		get_track_route_point(route_index, route_segment_start, ROUTE_POINT_FIRST, 0);
 		get_track_route_point(route_index, route_segment_end, ROUTE_POINT_SECOND, 0);
@@ -181,7 +170,7 @@ static void recover_player_route_direction(legacy_s16 route_index, legacy_s8 sel
 		get_track_route_point(route_index, route_segment_end,
 							  (legacy_s16)(legacy_u8)selected_route_point, 0);
 	}
-	route_direction = LEGACY_S16_FROM_BITS(
+	legacy_s16 route_direction = LEGACY_S16_FROM_BITS(
 		(legacy_u16)LEGACY_S16_WRAP_SUB(
 			state.playerstate.car_rotate.x,
 			polarAngle(LEGACY_S16_WRAP_SUB(route_segment_start[0].x, route_segment_end[0].x),
@@ -197,9 +186,7 @@ static void recover_player_route_direction(legacy_s16 route_index, legacy_s8 sel
 
 static void advance_player_route_point(void)
 {
-	legacy_u8 route_point;
-
-	route_point = (legacy_u8)state.playerstate.car_route_point_index;
+	legacy_u8 route_point = (legacy_u8)state.playerstate.car_route_point_index;
 	state.playerstate.car_route_point_index = LEGACY_S8_WRAP_ADD(route_point, ROUTE_POINT_STEP);
 	if (get_track_route_point(state.playerstate.car_route_index,
 							  &state.playerstate.car_route_target, (legacy_s16)route_point,
@@ -217,11 +204,9 @@ static void advance_player_route_point(void)
 
 static void update_player_route_indicator(void)
 {
+	struct MATRIX *world_to_car_rotation;
 	struct VECTOR world_route_delta;
 	struct VECTOR local_route_delta;
-	struct MATRIX *world_to_car_rotation;
-	legacy_s16 route_direction;
-
 	if (state.playerstate.car_route_index != ROUTE_INDEX_NONE &&
 		state.game_player_route_status == ROUTE_TRACKING_NORMAL) {
 		route_point_delta(&world_route_delta, ROUTE_HEIGHT_REFERENCE_CAR_LEVEL);
@@ -234,7 +219,7 @@ static void update_player_route_indicator(void)
 														local_route_delta.z) &
 								 ANGLE_MASK);
 		if (state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
-			route_direction = LEGACY_U16_SAR(
+			legacy_s16 route_direction = LEGACY_U16_SAR(
 				LEGACY_U16_WRAP_ADD(state.playerstate.car_route_heading_error, ANGLE_EIGHTH_TURN) &
 					ANGLE_MASK,
 				ROUTE_GUIDANCE_DIRECTION_SHIFT);
@@ -252,10 +237,8 @@ static void update_player_route_indicator(void)
 
 static void check_player_finish(void)
 {
-	legacy_s16 route_distance;
-
 	if (state.playerstate.car_lap_count != 0) {
-		route_distance = multiply_and_scale(
+		legacy_s16 route_distance = multiply_and_scale(
 			cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
 								position_to_word(state.playerstate.car_position.lz)));
@@ -273,23 +256,16 @@ static void check_player_finish(void)
 
 static void update_player_route_guidance(legacy_s8 previous_route_status)
 {
-	struct MATRIX *world_to_car_rotation;
-	legacy_s8 selected_route_point;
-	legacy_s16 route_index;
-	legacy_s16 route_distance_or_direction;
-	legacy_u8 route_selection_required;
-	legacy_u8 route_advance_required;
-	legacy_u8 guidance_required;
-
 	state.game_player_route_indicator = ROUTE_INDICATOR_NONE;
+	legacy_s16 route_index;
+	struct MATRIX *world_to_car_rotation;
 	if (state.game_player_route_status != ROUTE_TRACKING_OUTSIDE_TRACK) {
 		world_to_car_rotation =
 			mat_rot_zxy(state.playerstate.car_rotate.z, state.playerstate.car_rotate.y,
 						state.playerstate.car_rotate.x, MATRIX_ROTATION_ORDER_YXZ);
-		route_selection_required = 0;
-		route_advance_required = 0;
-		guidance_required = 1;
 
+		legacy_u8 route_selection_required = 0;
+		legacy_u8 route_advance_required = 0;
 		if (state.game_player_route_status == ROUTE_TRACKING_WRONG_WAY) {
 			if (state.playerstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 				state.game_player_route_indicator = ROUTE_INDICATOR_WRONG_WAY;
@@ -297,7 +273,7 @@ static void update_player_route_guidance(legacy_s8 previous_route_status)
 			route_index = state.game_player_previous_route;
 			route_selection_required = 1;
 		} else {
-			route_distance_or_direction =
+			legacy_s16 route_distance_or_direction =
 				player_route_depth(previous_route_status, world_to_car_rotation);
 			if (route_distance_or_direction < ROUTE_POINT_ADVANCE_DISTANCE) {
 				if (state.playerstate.car_route_index == ROUTE_INDEX_NONE) {
@@ -309,11 +285,12 @@ static void update_player_route_guidance(legacy_s8 previous_route_status)
 			}
 		}
 
+		legacy_u8 guidance_required = 1;
 		if (route_selection_required != 0) {
 			if (track_alternate_route_links[route_index] != TRACK_ROUTE_LINK_NONE) {
 				guidance_required = 0;
 			} else {
-				selected_route_point =
+				legacy_s8 selected_route_point =
 					select_player_route_point(route_index, world_to_car_rotation);
 				if (state.game_player_route_status == ROUTE_TRACKING_WRONG_WAY) {
 					recover_player_route_direction(route_index, selected_route_point);
@@ -344,10 +321,6 @@ void update_player_tick(legacy_s8 input_flags)
 
 void update_player_tick_with_legacy_si(legacy_s8 input_flags, legacy_s16 caller_si)
 {
-	legacy_u16 rev_speed_before_grip;
-	legacy_u16 actual_speed_before_grip;
-	legacy_s8 previous_route_status;
-
 	if (show_penalty_counter != 0) {
 		show_penalty_counter = LEGACY_S8_WRAP_SUB(show_penalty_counter, 1);
 	}
@@ -379,8 +352,8 @@ void update_player_tick_with_legacy_si(legacy_s8 input_flags, legacy_s16 caller_
 		(legacy_s16)state.playerstate.car_gearratio;
 	update_player_steering_input(LEGACY_S16_SAR((legacy_s16)input_flags, INPUT_STEERING_SHIFT) &
 								 INPUT_PEDAL_MASK);
-	rev_speed_before_grip = state.playerstate.car_rev_speed;
-	actual_speed_before_grip = state.playerstate.car_actual_speed;
+	legacy_u16 rev_speed_before_grip = state.playerstate.car_rev_speed;
+	legacy_u16 actual_speed_before_grip = state.playerstate.car_actual_speed;
 	update_grip(&state.playerstate, &simd_player, GRIP_BEHAVIOR_PLAYER);
 	update_legacy_grip_stack_words(&state.playerstate, &simd_player, rev_speed_before_grip,
 								   actual_speed_before_grip, caller_si);
@@ -388,7 +361,7 @@ void update_player_tick_with_legacy_si(legacy_s8 input_flags, legacy_s16 caller_
 						PLAYER_CAR_INDEX);
 	state.game_travDist = LEGACY_S32_WRAP_ADD(
 		state.game_travDist, (legacy_s32)(legacy_u16)state.playerstate.car_actual_speed);
-	previous_route_status = state.game_player_route_status;
+	legacy_s8 previous_route_status = state.game_player_route_status;
 	update_player_route_penalty();
 	update_player_route_guidance(previous_route_status);
 }

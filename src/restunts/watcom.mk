@@ -45,7 +45,7 @@ endif
 
 # Medium model, stack C calling convention, signed char, byte-packed records.
 # Our DOS startup owns stack/BSS initialization, so omit CRT stack probes.
-WATCOM_CFLAGS = -zq -bt=dos -0 -mm -ecc -j -zp1 -s -i=$(WATCOM)/h
+WATCOM_CFLAGS = -zq -zastd=c99 -bt=dos -0 -mm -ecc -j -zp1 -s -i=$(WATCOM)/h
 ifeq ($(CONFIG),debug)
   WATCOM_CFLAGS += -d2 -od
   WATCOM_LFLAGS = debug watcom all

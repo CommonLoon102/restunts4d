@@ -40,9 +40,7 @@ legacy_u16 file_paras_fatal(const legacy_s8 *filename)
 
 legacy_u16 mmgr_get_chunk_size(legacy_s8 far *pointer)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < 3U; index++) {
+	for (legacy_u16 index = 0; index < 3U; index++) {
 		if ((void *)pointer == &test_shapes[index]) {
 			return test_chunk_sizes[index];
 		}
@@ -80,8 +78,6 @@ void far *dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset)
 
 static void prepare_environment(const char *program_path)
 {
-	static const char variables[] = "PATH=C:\\DOS\0TEMP=C:\\TEMP\0";
-
 	memset(test_psp, 0, sizeof(test_psp));
 	memset(test_environment, 0, sizeof(test_environment));
 	test_psp_available = 1;
@@ -90,6 +86,7 @@ static void prepare_environment(const char *program_path)
 	test_psp[1] = 0x20;
 	test_psp[0x2c] = (legacy_u8)TEST_ENVIRONMENT_SEGMENT;
 	test_psp[0x2d] = (legacy_u8)(TEST_ENVIRONMENT_SEGMENT >> LEGACY_BYTE_BITS);
+	static const char variables[] = "PATH=C:\\DOS\0TEMP=C:\\TEMP\0";
 	memcpy(test_environment, variables, sizeof(variables));
 	test_environment[sizeof(variables)] = 1;
 	strcpy((char *)test_environment + sizeof(variables) + 2U, program_path);
@@ -136,11 +133,9 @@ static void test_archived_argument_addresses(void)
 
 static void test_archived_polyinfo_allocation(void)
 {
-	legacy_u16 index;
-
 	prepare_environment("C:\\PIXLDUMP.EXE");
 	test_driver_paragraphs = 140U;
-	for (index = 0; index < 3U; index++) {
+	for (legacy_u16 index = 0; index < 3U; index++) {
 		test_sprites[index].sprite_bitmapptr = &test_shapes[index];
 		test_chunk_sizes[index] = 12U;
 	}
@@ -150,7 +145,7 @@ static void test_archived_polyinfo_allocation(void)
 	/* Captured load segment 029E and polyinfo segment 3E95. Each allocation
 	 * is supplied independently so resource changes must affect the result. */
 	assert(pixldump_legacy_polyinfo_segment() == 0x3e95);
-	for (index = 0; index < 6U; index++) {
+	for (legacy_u16 index = 0; index < 6U; index++) {
 		test_chunk_sizes[index] += 7U;
 		assert(pixldump_legacy_polyinfo_segment() == 0x3e9c);
 		test_chunk_sizes[index] -= 7U;

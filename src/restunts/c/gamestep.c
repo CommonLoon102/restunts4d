@@ -27,33 +27,28 @@
 
 static void update_trackside_camera(legacy_u16 car_index, legacy_s16 car_x, legacy_s16 car_z)
 {
-	legacy_s16 nearest_distance, distance;
-	legacy_s32 delta_x, delta_z, absolute_x, absolute_z;
-	legacy_u16 divisor;
-	legacy_u8 candidate;
-
-	divisor = LEGACY_U16_SAR(framespersec, TRACK_POINT_UPDATE_DIVISOR_SHIFT);
+	legacy_u16 divisor = LEGACY_U16_SAR(framespersec, TRACK_POINT_UPDATE_DIVISOR_SHIFT);
 	if (divisor != 0 && (legacy_u16)state.game_frame % divisor != 0) {
 		return;
 	}
-	nearest_distance = TRACK_POINT_INITIAL_DISTANCE;
-	for (candidate = 0;
+	legacy_s16 nearest_distance = TRACK_POINT_INITIAL_DISTANCE;
+	for (legacy_u8 candidate = 0;
 		 LEGACY_S8_FROM_BITS(candidate) < LEGACY_S8_FROM_BITS(trackside_camera_count);
 		 candidate++) {
-		delta_x = LEGACY_S32_WRAP_SUB((legacy_s32)trackside_camera_positions[candidate].x,
-									  (legacy_s32)car_x);
-		delta_z = LEGACY_S32_WRAP_SUB((legacy_s32)trackside_camera_positions[candidate].z,
-									  (legacy_s32)car_z);
-		absolute_x = delta_x < 0 ? LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
+		legacy_s32 delta_x = LEGACY_S32_WRAP_SUB(
+			(legacy_s32)trackside_camera_positions[candidate].x, (legacy_s32)car_x);
+		legacy_s32 delta_z = LEGACY_S32_WRAP_SUB(
+			(legacy_s32)trackside_camera_positions[candidate].z, (legacy_s32)car_z);
+		legacy_s32 absolute_x = delta_x < 0 ? LEGACY_S32_WRAP_NEGATE(delta_x) : delta_x;
 		if (absolute_x >= nearest_distance) {
 			continue;
 		}
-		absolute_z = delta_z < 0 ? LEGACY_S32_WRAP_NEGATE(delta_z) : delta_z;
+		legacy_s32 absolute_z = delta_z < 0 ? LEGACY_S32_WRAP_NEGATE(delta_z) : delta_z;
 		if (absolute_z >= nearest_distance) {
 			continue;
 		}
-		distance = polarRadius2D(LEGACY_S16_FROM_BITS((legacy_u16)delta_x),
-								 LEGACY_S16_FROM_BITS((legacy_u16)delta_z));
+		legacy_s16 distance = polarRadius2D(LEGACY_S16_FROM_BITS((legacy_u16)delta_x),
+											LEGACY_S16_FROM_BITS((legacy_u16)delta_z));
 		if (distance < nearest_distance) {
 			state.game_trackside_camera_index[car_index] = LEGACY_S8_FROM_BITS(candidate);
 			nearest_distance = distance;
@@ -75,10 +70,9 @@ static legacy_s16 follow_camera_uses_car_target(legacy_u16 car_index, struct CAR
 
 static void update_follow_camera_height(legacy_u16 car_index, legacy_s16 car_y)
 {
-	legacy_s16 target_y, delta_y;
-
-	target_y = LEGACY_S16_WRAP_ADD(car_y, CAMERA_TARGET_HEIGHT);
-	delta_y = LEGACY_S16_WRAP_SUB(state.game_follow_camera_position[car_index].y, target_y);
+	legacy_s16 target_y = LEGACY_S16_WRAP_ADD(car_y, CAMERA_TARGET_HEIGHT);
+	legacy_s16 delta_y =
+		LEGACY_S16_WRAP_SUB(state.game_follow_camera_position[car_index].y, target_y);
 	if (delta_y != 0) {
 		if (delta_y > CAMERA_VERTICAL_STEP_LIMIT) {
 			delta_y = CAMERA_VERTICAL_STEP_LIMIT;
@@ -92,22 +86,19 @@ static void update_follow_camera_height(legacy_u16 car_index, legacy_s16 car_y)
 
 static void update_car_follow_camera(legacy_u16 car_index)
 {
-	struct VECTOR *previous_position;
-	struct CARSTATE *carstate;
-	struct VECTOR target;
-	legacy_s16 car_x, car_y, car_z, angle, distance, adjustment;
-
-	previous_position = car_index == PLAYER_CAR_INDEX ? &state.game_player_camera_previous
-													  : &state.game_opponent_camera_previous;
+	struct VECTOR *previous_position = car_index == PLAYER_CAR_INDEX
+										   ? &state.game_player_camera_previous
+										   : &state.game_opponent_camera_previous;
 	*previous_position = state.game_follow_camera_position[car_index];
-	carstate = car_index == PLAYER_CAR_INDEX ? &state.playerstate : &state.opponentstate;
-	car_x = LEGACY_S16_FROM_BITS(
+	struct CARSTATE *carstate =
+		car_index == PLAYER_CAR_INDEX ? &state.playerstate : &state.opponentstate;
+	legacy_s16 car_x = LEGACY_S16_FROM_BITS(
 		(legacy_u16)LEGACY_S32_SAR(carstate->car_position.lx, CAR_WORLD_POSITION_SHIFT));
-	car_y = LEGACY_S16_FROM_BITS(
+	legacy_s16 car_y = LEGACY_S16_FROM_BITS(
 		(legacy_u16)LEGACY_S32_SAR(carstate->car_position.ly, CAR_WORLD_POSITION_SHIFT));
-	car_z = LEGACY_S16_FROM_BITS(
+	legacy_s16 car_z = LEGACY_S16_FROM_BITS(
 		(legacy_u16)LEGACY_S32_SAR(carstate->car_position.lz, CAR_WORLD_POSITION_SHIFT));
-	target = carstate->car_route_target;
+	struct VECTOR target = carstate->car_route_target;
 	if (follow_camera_uses_car_target(car_index, carstate)) {
 		target.x = car_x;
 		target.y = car_y;
@@ -116,14 +107,14 @@ static void update_car_follow_camera(legacy_u16 car_index)
 
 	update_follow_camera_height(car_index, car_y);
 
-	angle = (legacy_s16)polarAngle(
+	legacy_s16 angle = (legacy_s16)polarAngle(
 		LEGACY_S16_WRAP_SUB(target.x, state.game_follow_camera_position[car_index].x),
 		LEGACY_S16_WRAP_SUB(target.z, state.game_follow_camera_position[car_index].z));
-	distance = (legacy_s16)polarRadius2D(
+	legacy_s16 distance = (legacy_s16)polarRadius2D(
 		LEGACY_S16_WRAP_SUB(car_x, state.game_follow_camera_position[car_index].x),
 		LEGACY_S16_WRAP_SUB(car_z, state.game_follow_camera_position[car_index].z));
 	if (distance > CAMERA_FOLLOW_DISTANCE) {
-		adjustment = LEGACY_S16_WRAP_SUB(distance, CAMERA_FOLLOW_DISTANCE);
+		legacy_s16 adjustment = LEGACY_S16_WRAP_SUB(distance, CAMERA_FOLLOW_DISTANCE);
 		if (framespersec == GAME_FRAME_RATE_NORMAL) {
 			if (adjustment > CAMERA_FULL_RATE_STEP_LIMIT) {
 				adjustment = CAMERA_FULL_RATE_STEP_LIMIT;
@@ -144,11 +135,9 @@ static void update_car_follow_camera(legacy_u16 car_index)
 
 void update_follow_cameras(void)
 {
-	legacy_u16 car_index, car_count;
-
-	car_count = gameconfig.game_opponenttype == 0 ? ACTIVE_CAR_COUNT_WITHOUT_OPPONENT
-												  : ACTIVE_CAR_COUNT_WITH_OPPONENT;
-	for (car_index = 0; car_index < car_count; car_index++) {
+	legacy_u16 car_count = gameconfig.game_opponenttype == 0 ? ACTIVE_CAR_COUNT_WITHOUT_OPPONENT
+															 : ACTIVE_CAR_COUNT_WITH_OPPONENT;
+	for (legacy_u16 car_index = 0; car_index < car_count; car_index++) {
 		update_car_follow_camera(car_index);
 	}
 }
@@ -170,8 +159,6 @@ static void update_race_end_timing(void)
 
 static void update_race_start_sequence(void)
 {
-	legacy_s16 start_line_distance;
-
 	if (race_start_sequence_state != RACE_START_SEQUENCE_INACTIVE) {
 		if (start_flag_animation < START_FLAG_ANIMATION_LIMIT) {
 			start_flag_animation =
@@ -183,7 +170,7 @@ static void update_race_start_sequence(void)
 		}
 		if (race_start_sequence_state == RACE_START_SEQUENCE_AUTO_DRIVE) {
 			/* The original auto-drive path retains this distance in SI for player_op. */
-			start_line_distance = LEGACY_S16_WRAP_ADD(
+			legacy_s16 start_line_distance = LEGACY_S16_WRAP_ADD(
 				multiply_and_scale(
 					cos_fast(track_angle),
 					LEGACY_S16_WRAP_SUB(
@@ -218,10 +205,7 @@ void update_gamestate(void)
 
 void update_gamestate_with_legacy_si(legacy_s16 caller_si)
 {
-	legacy_s8 car_input;
-	legacy_u16 checkpoint_index;
-
-	car_input = replay_input_buffer[(legacy_u16)state.game_frame];
+	legacy_s8 car_input = replay_input_buffer[(legacy_u16)state.game_frame];
 	if (car_input != INPUT_NONE) {
 		state.game_inputmode = GAME_INPUT_MODE_ACTIVE;
 	}
@@ -229,7 +213,8 @@ void update_gamestate_with_legacy_si(legacy_s16 caller_si)
 	if (checkpoint_frame_interval == 0 ||
 		((legacy_u16)state.game_frame % (legacy_u16)checkpoint_frame_interval) == 0) {
 		get_kevinrandom_seed(state.kevinseed);
-		checkpoint_index = LEGACY_U16_DIV_OR_ZERO(state.game_frame, checkpoint_frame_interval);
+		legacy_u16 checkpoint_index =
+			LEGACY_U16_DIV_OR_ZERO(state.game_frame, checkpoint_frame_interval);
 		/* The original checkpoint copy retains its index in SI until this tick returns. */
 		caller_si = LEGACY_S16_FROM_BITS(checkpoint_index);
 		fmemcpy(&cvxptr[checkpoint_index], &state, sizeof(struct GAMESTATE));

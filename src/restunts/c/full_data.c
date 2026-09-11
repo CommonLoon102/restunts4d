@@ -569,12 +569,10 @@ static void full_initialize_screen_sprite(struct SPRITE far *sprite)
 
 void full_data_initialize(void)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < 200U; index++) {
+	for (legacy_u16 index = 0; index < 200U; index++) {
 		full_screen_line_offsets[index] = (legacy_u16)(index * 320U);
 	}
-	for (index = 0; index < WINDOW_DEFINITION_BUFFER_SIZE; index++) {
+	for (legacy_u16 index = 0; index < WINDOW_DEFINITION_BUFFER_SIZE; index++) {
 		wnd_defs[index] = 0;
 	}
 	next_wnd_def = (legacy_s8 *)dos_memory_make_near_pointer(dos_memory_pointer_offset(wnd_defs));

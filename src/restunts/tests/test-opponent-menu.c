@@ -64,8 +64,7 @@ static void *allocate_resource(unsigned index)
 
 static void release_resource(void *resource)
 {
-	unsigned index;
-	for (index = 0; index < OPPONENT_TEST_RESOURCE_COUNT; index++) {
+	for (unsigned index = 0; index < OPPONENT_TEST_RESOURCE_COUNT; index++) {
 		if (resource == resource_bytes[index]) {
 			assert(resource_live[index] != 0);
 			resource_live[index] = 0;
@@ -142,10 +141,9 @@ legacy_s8 *locate_text_res(legacy_s8 *resource, const legacy_s8 *name)
 
 void locate_many_resources(legacy_s8 *resource, const legacy_s8 *names, legacy_s8 **pointers)
 {
-	unsigned index;
 	assert(resource == (legacy_s8 *)resource_bytes[1]);
 	assert(names == opponent_portrait_shape_ids);
-	for (index = 0; index < 7; index++) {
+	for (unsigned index = 0; index < 7; index++) {
 		pointers[index] = (legacy_s8 *)&fixture_shapes[1];
 	}
 }
@@ -207,14 +205,13 @@ static void begin_case(legacy_u8 opponent, legacy_u8 page_flipping)
 
 static void finish_case(legacy_u8 opponent, unsigned refresh_count)
 {
-	unsigned index;
 	run_opponent_menu();
 	assert(event_index == event_count && load_count == expected_load_count);
 	assert((legacy_u8)gameconfig.game_opponenttype == opponent);
 	assert(resource_allocations == resource_releases && window_allocations == window_releases);
 	assert(resource_allocations == expected_load_count + 2 && window_allocations == refresh_count);
 	assert(window_live == 0);
-	for (index = 0; index < OPPONENT_TEST_RESOURCE_COUNT; index++) {
+	for (unsigned index = 0; index < OPPONENT_TEST_RESOURCE_COUNT; index++) {
 		assert(resource_live[index] == 0);
 	}
 	if (opponent != 0) {
@@ -231,12 +228,11 @@ static void test_direction(legacy_u8 initial, legacy_u8 direction, unsigned repe
 						   legacy_u8 page_flipping)
 {
 	legacy_u8 opponent = initial;
-	unsigned index;
 	begin_case(initial, page_flipping);
 	if (direction != 0) {
 		add_event(KEY_RIGHT, opponent);
 	}
-	for (index = 0; index < repeats; index++) {
+	for (unsigned index = 0; index < repeats; index++) {
 		add_event(KEY_ENTER, opponent);
 		opponent = direction != 0 ? next_opponent[opponent] : previous_opponent[opponent];
 		expect_load(opponent);
@@ -272,10 +268,9 @@ static void test_return_to_clock(legacy_u8 page_flipping)
 
 int main(void)
 {
-	legacy_u8 initial, direction, page_flipping;
-	for (page_flipping = 0; page_flipping < 2; page_flipping++) {
-		for (initial = 0; initial < 7; initial++) {
-			for (direction = 0; direction < 2; direction++) {
+	for (legacy_u8 page_flipping = 0; page_flipping < 2; page_flipping++) {
+		for (legacy_u8 initial = 0; initial < 7; initial++) {
+			for (legacy_u8 direction = 0; direction < 2; direction++) {
 				test_direction(initial, direction, 1, page_flipping);
 				test_direction(initial, direction, 19, page_flipping);
 			}

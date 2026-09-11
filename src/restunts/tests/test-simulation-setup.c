@@ -27,8 +27,7 @@ static legacy_u8 speed_data[OPPONENT_SPEED_COUNT];
 static void trace_bytes(const void *source, unsigned int count)
 {
 	const unsigned char *bytes = source;
-	unsigned int index;
-	for (index = 0; index < count; index++) {
+	for (unsigned int index = 0; index < count; index++) {
 		trace_hash = (trace_hash ^ bytes[index]) * UINT64_C(1099511628211);
 	}
 }
@@ -140,8 +139,6 @@ void copy_string(legacy_s8 *destination, legacy_s8 far *source)
 
 static void configure_simulation(unsigned int scenario)
 {
-	unsigned int index;
-
 	memset(&state, 0x25, sizeof(state));
 	memset(&gameconfig, 0, sizeof(gameconfig));
 	memset(&simd_player, 0, sizeof(simd_player));
@@ -161,7 +158,7 @@ static void configure_simulation(unsigned int scenario)
 	gameconfig.game_playertransmission = scenario % 2U;
 	simd_player.idle_rpm = 800;
 	simd_opponent.idle_rpm = 1000;
-	for (index = 0; index < SIMD_GEAR_RATIO_COUNT; index++) {
+	for (unsigned int index = 0; index < SIMD_GEAR_RATIO_COUNT; index++) {
 		simd_player.gear_ratios[index] = (legacy_u16)(index * 1093U);
 		simd_opponent.gear_ratios[index] = (legacy_u16)(index * 2087U);
 	}
@@ -171,8 +168,7 @@ static void configure_simulation(unsigned int scenario)
 
 static void test_initialization(void)
 {
-	unsigned int scenario;
-	for (scenario = 0; scenario < 48U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 48U; scenario++) {
 		configure_simulation(scenario);
 		init_game_state((legacy_s16)(scenario % 4U));
 		trace_bytes(&state, sizeof(state));
@@ -187,10 +183,6 @@ static void test_initialization(void)
 
 static void configure_cameras(unsigned int scenario)
 {
-	struct CARSTATE *car;
-	unsigned int index;
-	static const legacy_s16 errors[] = {0, 128, 129, 895, 896};
-
 	memset(&state, 0, sizeof(state));
 	gameconfig.game_opponenttype = scenario % 2U;
 	framespersec = scenario % 3U == 0 ? 0 : (scenario % 3U == 1 ? 10 : 20);
@@ -199,7 +191,9 @@ static void configure_cameras(unsigned int scenario)
 	state.game_route_confirmation_count = scenario % 7U == 1;
 	trackside_camera_positions = cameras;
 	trackside_camera_count = scenario % 13U == 0 ? 128U : 4U;
-	for (index = 0; index < 2U; index++) {
+	static const legacy_s16 errors[] = {0, 128, 129, 895, 896};
+	struct CARSTATE *car;
+	for (unsigned int index = 0; index < 2U; index++) {
 		car = index == 0 ? &state.playerstate : &state.opponentstate;
 		car->car_position.lx = ((legacy_s32)scenario * 17 - 1200) * 64;
 		car->car_position.ly = ((legacy_s32)scenario - 50) * 64;
@@ -219,8 +213,7 @@ static void configure_cameras(unsigned int scenario)
 
 static void test_frame_updates(void)
 {
-	unsigned int scenario;
-	for (scenario = 0; scenario < 120U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 120U; scenario++) {
 		configure_cameras(scenario);
 		update_follow_cameras();
 		trace_bytes(&state, sizeof(state));
@@ -256,20 +249,18 @@ static void test_frame_updates(void)
 static void test_opponent_routes(void)
 {
 	static legacy_s16 primary[] = {1, 2, 0, 4, 0, 5};
-	static legacy_s16 alternate[] = {3, -1, -1, -1, -1, -1};
-	static legacy_s8 elements[] = {0, 1, 2, 3, 4, 5};
-	static legacy_s8 route[64];
-	unsigned int scenario, index;
-
 	track_primary_route_links = primary;
+	static legacy_s16 alternate[] = {3, -1, -1, -1, -1, -1};
 	track_alternate_route_links = alternate;
+	static legacy_s8 elements[] = {0, 1, 2, 3, 4, 5};
 	track_route_element_ids = elements;
+	static legacy_s8 route[64];
 	opponent_route_track_indices = route;
-	for (scenario = 0; scenario < 8U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 8U; scenario++) {
 		memset(route, 0x66, sizeof(route));
 		gameconfig.game_opponenttype = scenario;
 		primary[4] = scenario % 3U == 0 ? -1 : (scenario % 3U == 1 ? 3 : 0);
-		for (index = 0; index < OPPONENT_SPEED_COUNT; index++) {
+		for (unsigned int index = 0; index < OPPONENT_SPEED_COUNT; index++) {
 			speed_data[index] = (legacy_u8)(index * (scenario + 1U));
 		}
 		load_opponent_data();

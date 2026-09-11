@@ -53,21 +53,15 @@ static legacy_u16 reference_shl16(legacy_u16 bits, legacy_u16 count)
 
 static legacy_s16 reference_smul_high(legacy_s16 left, legacy_s16 right)
 {
-	legacy_s32 product;
-
-	product = (legacy_s32)left * (legacy_s32)right;
+	legacy_s32 product = (legacy_s32)left * (legacy_s32)right;
 	return LEGACY_S16_FROM_BITS((legacy_u16)reference_sar32((legacy_u32)product, LEGACY_WORD_BITS));
 }
 
 static void test_word_shifts_and_rotates(void)
 {
-	legacy_u32 value;
-	legacy_u16 count;
-	legacy_u16 bits;
-
-	for (value = 0UL; value <= LEGACY_U16_MAX; value++) {
-		bits = (legacy_u16)value;
-		for (count = 0U; count < TEST_SHIFT_COUNT_LIMIT; count++) {
+	for (legacy_u32 value = 0UL; value <= LEGACY_U16_MAX; value++) {
+		legacy_u16 bits = (legacy_u16)value;
+		for (legacy_u16 count = 0U; count < TEST_SHIFT_COUNT_LIMIT; count++) {
 			assert(LEGACY_U16_SAR(bits, count) == reference_sar16(bits, count));
 			assert(LEGACY_U16_SHL(bits, count) == reference_shl16(bits, count));
 			assert(LEGACY_U16_ROL(LEGACY_U16_ROR(bits, count), count) == bits);
@@ -79,11 +73,9 @@ static void test_dword_shifts_and_rotates(void)
 {
 	static const legacy_u32 values[] = {
 		0UL, 1UL, LEGACY_S32_MAX, LEGACY_U32_SIGN_BIT, TEST_DWORD_PATTERN, LEGACY_U32_MAX};
-	size_t index;
-	legacy_u16 count;
 
-	for (index = 0U; index < sizeof(values) / sizeof(values[0]); index++) {
-		for (count = 0U; count < TEST_SHIFT_COUNT_LIMIT; count++) {
+	for (size_t index = 0U; index < sizeof(values) / sizeof(values[0]); index++) {
+		for (legacy_u16 count = 0U; count < TEST_SHIFT_COUNT_LIMIT; count++) {
 			assert(LEGACY_U32_SAR(values[index], count) == reference_sar32(values[index], count));
 			assert(LEGACY_U32_SHL(values[index], count) ==
 				   (values[index] << (count & LEGACY_X86_SHIFT_COUNT_MASK)));
@@ -94,10 +86,6 @@ static void test_dword_shifts_and_rotates(void)
 
 static void test_multiply_and_divide(void)
 {
-	static const legacy_s16 multiply_values[] = {-32768, -32767, -1, 0, 1, 32766, 32767};
-	size_t left_index;
-	size_t right_index;
-
 	assert(LEGACY_U16_LOW_BYTE(TEST_WORD_PATTERN) == TEST_WORD_PATTERN_LOW_BYTE);
 	assert(LEGACY_U16_REPLACE_LOW_BYTE(TEST_WORD_PATTERN, TEST_REPLACEMENT_BYTE) ==
 		   TEST_WORD_WITH_REPLACEMENT_BYTE);
@@ -121,10 +109,11 @@ static void test_multiply_and_divide(void)
 	assert(LEGACY_S32_WRAP_SUB_S16(0L, -32768) == 32768L);
 	assert(LEGACY_S32_WRAP_MUL(LEGACY_S32_FROM_BITS(TEST_QUARTER_DWORD_RANGE), 4L) == 0L);
 	assert(LEGACY_U16_MUL_HIGH(LEGACY_U16_MAX, LEGACY_U16_MAX) == LEGACY_U16_MAX - 1U);
-	for (left_index = 0U; left_index < sizeof(multiply_values) / sizeof(multiply_values[0]);
+	static const legacy_s16 multiply_values[] = {-32768, -32767, -1, 0, 1, 32766, 32767};
+	for (size_t left_index = 0U; left_index < sizeof(multiply_values) / sizeof(multiply_values[0]);
 		 left_index++) {
-		for (right_index = 0U; right_index < sizeof(multiply_values) / sizeof(multiply_values[0]);
-			 right_index++) {
+		for (size_t right_index = 0U;
+			 right_index < sizeof(multiply_values) / sizeof(multiply_values[0]); right_index++) {
 			assert(LEGACY_S16_MUL_HIGH(multiply_values[left_index], multiply_values[right_index]) ==
 				   reference_smul_high(multiply_values[left_index], multiply_values[right_index]));
 		}
@@ -145,9 +134,7 @@ static void test_multiply_and_divide(void)
 static void test_little_endian_access(void)
 {
 	legacy_u8 storage[6];
-	legacy_u8 *bytes;
-
-	bytes = storage + 1;
+	legacy_u8 *bytes = storage + 1;
 
 	LEGACY_WRITE_U16_LE(bytes, TEST_LITTLE_ENDIAN_WORD);
 	assert(bytes[0] == TEST_LITTLE_ENDIAN_WORD_LOW_BYTE &&

@@ -26,17 +26,15 @@ static void trace_word(legacy_u16 value)
 
 static void test_polar_boundaries(void)
 {
-	static const legacy_s16 coordinates[] = {-32767, -1025, -1024, -129, -128, -1,	 0,
-											 1,		 128,	129,   1024, 1025, 32767};
-	unsigned int x, y;
-
 	assert(polarAngle(0, 0) == 0);
 	assert(polarAngle(1, 0) == ANGLE_QUARTER_TURN);
 	assert(polarAngle(0, -1) == ANGLE_HALF_TURN);
 	assert(polarAngle(-1, 0) == -ANGLE_QUARTER_TURN);
 	assert(polarAngle(-32768, -32768) == -384);
-	for (x = 0; x < sizeof(coordinates) / sizeof(coordinates[0]); x++) {
-		for (y = 0; y < sizeof(coordinates) / sizeof(coordinates[0]); y++) {
+	static const legacy_s16 coordinates[] = {-32767, -1025, -1024, -129, -128, -1,	 0,
+											 1,		 128,	129,   1024, 1025, 32767};
+	for (unsigned int x = 0; x < sizeof(coordinates) / sizeof(coordinates[0]); x++) {
+		for (unsigned int y = 0; y < sizeof(coordinates) / sizeof(coordinates[0]); y++) {
 			trace_word(polarAngle(coordinates[x], coordinates[y]));
 		}
 	}
@@ -44,19 +42,17 @@ static void test_polar_boundaries(void)
 
 static void test_rectangle_splits(void)
 {
+	video_x_alignment = 1;
+	legacy_s8 count;
 	static const struct RECTANGLE inputs[] = {{0, 10, 0, 10},  {2, 8, 2, 8},	{-2, 12, -2, 12},
 											  {2, 8, -4, 14},  {-4, 14, 2, 8},	{5, 15, -5, 5},
 											  {5, 15, 5, 15},  {0, 10, 10, 20}, {10, 20, 0, 10},
 											  {-10, 0, 0, 10}, {0, 10, -10, 0}, {30, 40, 30, 40}};
 	struct RECTANGLE rectangles[64];
 	struct RECTANGLE next;
-	legacy_s8 count;
-	unsigned int first, second, third, index;
-
-	video_x_alignment = 1;
-	for (first = 0; first < 12U; first++) {
-		for (second = 0; second < 12U; second++) {
-			for (third = 0; third < 12U; third++) {
+	for (unsigned int first = 0; first < 12U; first++) {
+		for (unsigned int second = 0; second < 12U; second++) {
+			for (unsigned int third = 0; third < 12U; third++) {
 				count = 0;
 				next = inputs[first];
 				rectlist_add_rect(&count, rectangles, &next);
@@ -65,7 +61,7 @@ static void test_rectangle_splits(void)
 				next = inputs[third];
 				rectlist_add_rect(&count, rectangles, &next);
 				trace_word(count);
-				for (index = 0; index < (unsigned int)count; index++) {
+				for (unsigned int index = 0; index < (unsigned int)count; index++) {
 					trace_word(rectangles[index].left);
 					trace_word(rectangles[index].right);
 					trace_word(rectangles[index].top);

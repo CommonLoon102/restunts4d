@@ -111,17 +111,15 @@ struct CAR_MENU_STATE {
 
 static legacy_s16 car_menu_find_cars(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)
 {
-	legacy_s8 swap_id[CAR_ID_BUFFER_SIZE];
-	const legacy_s8 *found_path;
-	legacy_u16 i, j;
 	ensure_file_exists(GAME_RESOURCE_FILE_INDEX);
-	found_path = file_combine_and_find(0, car_resource_wildcard, car_resource_extension);
+	const legacy_s8 *found_path =
+		file_combine_and_find(0, car_resource_wildcard, car_resource_extension);
 	if (found_path == 0) {
 		return 0;
 	}
 	menu->car_count = 0;
 	do {
-		for (i = 0; i < CAR_ID_LENGTH; i++) {
+		for (legacy_u16 i = 0; i < CAR_ID_LENGTH; i++) {
 			menu->car_ids[menu->car_count][i] = found_path[i + CAR_RESOURCE_ID_OFFSET];
 		}
 		menu->car_ids[menu->car_count][CAR_ID_LENGTH] = 0;
@@ -132,7 +130,9 @@ static legacy_s16 car_menu_find_cars(struct CAR_MENU_STATE *menu, legacy_s8 *car
 		found_path = file_find_next_alt();
 	} while (found_path != 0);
 
-	for (i = 0; i + 1U < menu->car_count; i++) {
+	legacy_u16 j;
+	legacy_s8 swap_id[CAR_ID_BUFFER_SIZE];
+	for (legacy_u16 i = 0; i + 1U < menu->car_count; i++) {
 		for (j = i + 1U; j < menu->car_count; j++) {
 			if (strcmp(menu->car_ids[i], menu->car_ids[j]) > 0) {
 				strcpy(swap_id, menu->car_ids[i]);
@@ -143,7 +143,7 @@ static legacy_s16 car_menu_find_cars(struct CAR_MENU_STATE *menu, legacy_s8 *car
 	}
 
 	menu->car_index = 0;
-	for (i = 0; i < menu->car_count; i++) {
+	for (legacy_u16 i = 0; i < menu->car_count; i++) {
 		for (j = 0; j < CAR_ID_LENGTH; j++) {
 			if (menu->car_ids[i][j] != car_id[j]) {
 				break;
@@ -159,7 +159,6 @@ static legacy_s16 car_menu_find_cars(struct CAR_MENU_STATE *menu, legacy_s8 *car
 
 static void car_menu_initialize(struct CAR_MENU_STATE *menu)
 {
-	struct SHAPE2D far *opponent_shape;
 	waitflag = CAR_MENU_WAIT_TICKS;
 	menu->blit_mode = MENU_BLIT_MODE_INITIAL;
 	backlights_paint_override = BACKLIGHT_PAINT_DEFAULT;
@@ -169,6 +168,7 @@ static void car_menu_initialize(struct CAR_MENU_STATE *menu)
 		miscptr = file_load_resfile(car_misc_resource_name);
 	}
 
+	struct SHAPE2D far *opponent_shape;
 	if (menu->opponent_type != CAR_MENU_PLAYER_MODE) {
 		car_menu_redraw_cliprect.right = CAR_MENU_OPPONENT_PANEL_RIGHT;
 		if (video_uses_page_flipping != 0) {
@@ -200,23 +200,22 @@ static void car_menu_initialize(struct CAR_MENU_STATE *menu)
 
 static void car_menu_draw_graph(void)
 {
-	legacy_u16 old_frame_rate, graph_step, speed, graph_x, graph_y;
-	old_frame_rate = (legacy_u16)framespersec;
+	legacy_u16 old_frame_rate = (legacy_u16)framespersec;
 	framespersec = GAME_FRAME_RATE_NORMAL;
 	init_game_state(GAMESTATE_INIT_SKIP_ROUTE_SETUP);
 	state.playerstate.car_transmission = TRANSMISSION_AUTOMATIC;
-	graph_step = 0;
+	legacy_u16 graph_step = 0;
 	for (;;) {
 		update_car_speed(INPUT_ACCELERATE_FLAG, PLAYER_CAR_INDEX, &state.playerstate, &simd_player);
-		speed = (legacy_u16)state.playerstate.car_rev_speed >> 8;
-		graph_y = LEGACY_U16_WRAP_SUB(CAR_MENU_GRAPH_BASELINE_Y,
-									  (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
-										  LEGACY_U32_WRAP_MUL(speed, CAR_MENU_GRAPH_SPEED_SCALE),
-										  CAR_MENU_GRAPH_SPEED_DIVISOR));
+		legacy_u16 speed = (legacy_u16)state.playerstate.car_rev_speed >> 8;
+		legacy_u16 graph_y = LEGACY_U16_WRAP_SUB(
+			CAR_MENU_GRAPH_BASELINE_Y, (legacy_u16)LEGACY_U32_DIV_OR_ZERO(
+										   LEGACY_U32_WRAP_MUL(speed, CAR_MENU_GRAPH_SPEED_SCALE),
+										   CAR_MENU_GRAPH_SPEED_DIVISOR));
 		if (graph_y < CAR_MENU_GRAPH_MINIMUM_Y) {
 			break;
 		}
-		graph_x = LEGACY_U16_WRAP_ADD(
+		legacy_u16 graph_x = LEGACY_U16_WRAP_ADD(
 			(legacy_u16)LEGACY_U32_DIV_OR_ZERO(
 				LEGACY_U32_WRAP_MUL(CAR_MENU_GRAPH_WIDTH, graph_step), CAR_MENU_GRAPH_STEPS),
 			CAR_MENU_GRAPH_FIRST_X);
@@ -231,16 +230,12 @@ static void car_menu_draw_graph(void)
 
 static void car_menu_draw_description(struct CAR_MENU_STATE *menu)
 {
-	legacy_s8 far *description;
-	legacy_u16 line_length;
-	legacy_s16 text_y;
-	legacy_u8 character;
 	font_set_fontdef2(fontnptr);
-	description = locate_text_res(menu->car_resource, car_description_id);
-	line_length = 0;
-	text_y = CAR_MENU_DESCRIPTION_FIRST_Y;
+	legacy_s8 far *description = locate_text_res(menu->car_resource, car_description_id);
+	legacy_s16 text_y = CAR_MENU_DESCRIPTION_FIRST_Y;
+	legacy_u16 line_length = 0;
 	do {
-		character = (legacy_u8)*description++;
+		legacy_u8 character = (legacy_u8)*description++;
 		if (character == ']') {
 			if (line_length != 0) {
 				(&resID_byte1)[line_length] = 0;
@@ -257,17 +252,13 @@ static void car_menu_draw_description(struct CAR_MENU_STATE *menu)
 
 static void car_menu_load_car(struct CAR_MENU_STATE *menu)
 {
-	legacy_u16 i;
-	struct SHAPE2D far *shape;
-	legacy_s8 far *transmission_text;
-
 	if (menu->previous_car_index != CAR_MENU_NO_SELECTION) {
 		unload_resource(menu->car_resource);
 		shape3d_free_car_shapes();
 	}
 
 	shape3d_load_car_shapes(menu->car_ids[menu->car_index], gameconfig.game_opponentcarid);
-	for (i = 0; i < CAR_ID_LENGTH; i++) {
+	for (legacy_u16 i = 0; i < CAR_ID_LENGTH; i++) {
 		car_resource_name[i + CAR_RESOURCE_ID_OFFSET] = menu->car_ids[menu->car_index][i];
 	}
 	menu->car_resource = (legacy_s8 far *)file_load_resfile(car_resource_name);
@@ -280,7 +271,8 @@ static void car_menu_load_car(struct CAR_MENU_STATE *menu)
 				CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
 	draw_button(0, CAR_MENU_RIGHT_PANEL_X, CAR_MENU_PANEL_Y, CAR_MENU_RIGHT_PANEL_WIDTH,
 				CAR_MENU_PANEL_HEIGHT, button_top_color, button_bottom_color, button_fill_color, 0);
-	shape = (struct SHAPE2D far *)locate_shape_fatal(menu->selector_resource, car_graph_shape_id);
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_fatal(menu->selector_resource, car_graph_shape_id);
 	sprite_shape_to_1_alt(shape);
 
 	font_set_fontdef2(fontnptr);
@@ -298,9 +290,9 @@ static void car_menu_load_car(struct CAR_MENU_STATE *menu)
 								  CAR_MENU_NEXT_BUTTON);
 	car_menu_draw_standard_button(locate_text_res(miscptr, car_previous_button_id),
 								  CAR_MENU_PREVIOUS_BUTTON);
-	transmission_text = locate_text_res(miscptr, *menu->transmission != TRANSMISSION_MANUAL
-													 ? car_automatic_button_id
-													 : car_manual_button_id);
+	legacy_s8 far *transmission_text = locate_text_res(
+		miscptr, *menu->transmission != TRANSMISSION_MANUAL ? car_automatic_button_id
+															: car_manual_button_id);
 	car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
 	car_menu_draw_standard_button(locate_text_res(miscptr, car_color_button_id),
 								  CAR_MENU_COLOR_BUTTON);
@@ -320,11 +312,10 @@ static void car_menu_load_car(struct CAR_MENU_STATE *menu)
 
 static void car_menu_prepare_preview(struct CAR_MENU_STATE *menu)
 {
-	legacy_s16 car_position_angle;
 	menu->rotation = LEGACY_S16_WRAP_ADD(menu->rotation, menu->rotation_delta);
 	if (menu->render_phase == CAR_RENDER_IDLE_PHASE ||
 		menu->render_phase == CAR_RENDER_START_PHASE) {
-		car_position_angle = (legacy_s16)polarAngle(carmenu_carpos.y, carmenu_carpos.z);
+		legacy_s16 car_position_angle = (legacy_s16)polarAngle(carmenu_carpos.y, carmenu_carpos.z);
 		menu->current_rect = slow_video_mgmt_copy != 0 ? empty_rect : carmenu_cliprect;
 		select_cliprect_rotate(0, car_position_angle, 0, &carmenu_cliprect, 0);
 		if ((legacy_s8)(legacy_u8)*menu->material >=
@@ -415,14 +406,12 @@ static void car_menu_draw_selection(struct CAR_MENU_STATE *menu)
 
 static legacy_u16 car_menu_read_input(struct CAR_MENU_STATE *menu)
 {
-	legacy_u16 input;
-	legacy_s16 mouse_hit;
 	sprite_select_screen_compat();
 	menu->rotation_delta = (legacy_s16)menu_animate_button_highlight(
 		menu->selected, carmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 	menu_update_idle_counter((legacy_u16)menu->rotation_delta, CAR_MENU_IDLE_LIMIT_TICKS);
-	input = (legacy_u16)input_checking(menu->rotation_delta);
-	mouse_hit = (legacy_s16)mouse_multi_hittest(CAR_MENU_BUTTON_COUNT, carmenu_buttons);
+	legacy_u16 input = (legacy_u16)input_checking(menu->rotation_delta);
+	legacy_s16 mouse_hit = (legacy_s16)mouse_multi_hittest(CAR_MENU_BUTTON_COUNT, carmenu_buttons);
 	if (mouse_hit != -1) {
 		menu->selected = (legacy_u8)mouse_hit;
 	}
@@ -436,7 +425,6 @@ static legacy_u16 car_menu_read_input(struct CAR_MENU_STATE *menu)
 
 static legacy_s16 car_menu_activate_selection(struct CAR_MENU_STATE *menu)
 {
-	legacy_s8 far *transmission_text;
 	if (menu->selected == CAR_MENU_DONE_BUTTON) {
 		if (menu->car_ready == 0) {
 			return 0;
@@ -455,9 +443,9 @@ static legacy_s16 car_menu_activate_selection(struct CAR_MENU_STATE *menu)
 	} else if (menu->selected == CAR_MENU_TRANSMISSION_BUTTON) {
 		*menu->transmission = (legacy_s8)((legacy_u8)*menu->transmission ^ TRANSMISSION_MODE_MASK);
 		sprite_select_render_window();
-		transmission_text = locate_text_res(miscptr, *menu->transmission != TRANSMISSION_MANUAL
-														 ? car_automatic_toggle_id
-														 : car_manual_toggle_id);
+		legacy_s8 far *transmission_text = locate_text_res(
+			miscptr, *menu->transmission != TRANSMISSION_MANUAL ? car_automatic_toggle_id
+																: car_manual_toggle_id);
 		car_menu_draw_standard_button(transmission_text, CAR_MENU_TRANSMISSION_BUTTON);
 		sprite_select_screen_compat();
 		mouse_draw_opaque_check();
@@ -497,7 +485,6 @@ static legacy_s16 car_menu_handle_input(struct CAR_MENU_STATE *menu, legacy_u16 
 
 static void car_menu_release(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)
 {
-	legacy_u16 i;
 	sprite_free_wnd(render_window_sprite);
 	unload_resource(menu->car_resource);
 	shape3d_free_car_shapes();
@@ -509,7 +496,7 @@ static void car_menu_release(struct CAR_MENU_STATE *menu, legacy_s8 *car_id)
 	}
 	mmgr_free((legacy_s8 far *)menu->selector_resource);
 	mouse_draw_opaque_check();
-	for (i = 0; i < CAR_ID_LENGTH; i++) {
+	for (legacy_u16 i = 0; i < CAR_ID_LENGTH; i++) {
 		car_id[i] = menu->car_ids[menu->car_index][i];
 	}
 	idle_expired = 0;
@@ -520,7 +507,6 @@ void run_car_menu(legacy_s8 *car_id, legacy_s8 *material, legacy_s8 *transmissio
 {
 	struct CAR_MENU_STATE menu_state;
 	struct CAR_MENU_STATE *menu = &menu_state;
-	legacy_u16 input;
 	menu->material = material;
 	menu->transmission = transmission;
 	menu->opponent_type = opponent_type;
@@ -550,7 +536,7 @@ void run_car_menu(legacy_s8 *car_id, legacy_s8 *material, legacy_s8 *transmissio
 		car_menu_prepare_preview(menu);
 		car_menu_render_preview(menu);
 		car_menu_draw_selection(menu);
-		input = car_menu_read_input(menu);
+		legacy_u16 input = car_menu_read_input(menu);
 		if (car_menu_handle_input(menu, input)) {
 			break;
 		}

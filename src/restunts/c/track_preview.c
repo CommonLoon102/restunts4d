@@ -40,9 +40,7 @@ enum TRACK_PREVIEW_HILL_BASE_SHAPE_INDEX {
 
 static legacy_s16 track_preview_half(legacy_s16 value)
 {
-	legacy_u16 bits;
-
-	bits = (legacy_u16)value;
+	legacy_u16 bits = (legacy_u16)value;
 	return LEGACY_S16_FROM_BITS(LEGACY_U16_SAR(bits, TRACK_PREVIEW_HALF_SHIFT));
 }
 
@@ -51,12 +49,10 @@ static void track_preview_draw_terrain(legacy_u8 terrain, legacy_u8 column, lega
 									   legacy_s16 camera_z, legacy_s16 use_high_detail,
 									   struct TRANSFORMEDSHAPE3D *transformed)
 {
-	struct TRACKOBJECT *terrain_object;
-
 	if (terrain == 0) {
 		return;
 	}
-	terrain_object = &terrain_scene_objects[terrain];
+	struct TRACKOBJECT *terrain_object = &terrain_scene_objects[terrain];
 	transformed->shapeptr =
 		use_high_detail != 0 ? terrain_object->ss_shapePtr : terrain_object->ss_loShapePtr;
 	transformed->pos.x =
@@ -71,22 +67,17 @@ static void track_preview_draw_terrain(legacy_u8 terrain, legacy_u8 column, lega
 
 static void track_preview_prepare(const struct VECTOR *camera)
 {
-	struct VECTOR projected_vector;
-	struct POINT2D projected_point;
-	struct MATRIX *rotation;
-	legacy_s16 camera_angle;
-	legacy_s16 camera_radius;
-	legacy_s16 horizon;
-
-	camera_radius =
+	legacy_s16 camera_radius =
 		(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(track_preview_target_x, camera->x),
 								  LEGACY_S16_WRAP_SUB(track_preview_target_z, camera->z));
-	camera_angle = (legacy_s16)polarAngle(LEGACY_S16_WRAP_SUB(track_preview_target_y, camera->y),
-										  camera_radius);
-	rotation = mat_rot_zxy(0, camera_angle, 0, MATRIX_ROTATION_ORDER_YXZ);
+	legacy_s16 camera_angle = (legacy_s16)polarAngle(
+		LEGACY_S16_WRAP_SUB(track_preview_target_y, camera->y), camera_radius);
+	struct MATRIX *rotation = mat_rot_zxy(0, camera_angle, 0, MATRIX_ROTATION_ORDER_YXZ);
+	struct VECTOR projected_vector;
 	mat_mul_vector(&track_preview_horizon_vector, rotation, &projected_vector);
+	struct POINT2D projected_point;
 	vector_to_point(&projected_vector, &projected_point);
-	horizon = (legacy_s16)projected_point.py;
+	legacy_s16 horizon = (legacy_s16)projected_point.py;
 	if (horizon < 0) {
 		horizon = 0;
 	}
@@ -110,17 +101,12 @@ static void track_preview_draw_bridge_terrain(legacy_u8 column, legacy_u8 row,
 											  const struct VECTOR *camera,
 											  struct TRANSFORMEDSHAPE3D *transformed)
 {
-	legacy_u8 quadrant;
-	legacy_u8 adjacent_column;
-	legacy_u8 adjacent_row;
-	legacy_u8 terrain;
-
-	for (quadrant = 0; quadrant < TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT; quadrant++) {
-		adjacent_column =
+	for (legacy_u8 quadrant = 0; quadrant < TRACK_PREVIEW_BRIDGE_QUADRANT_COUNT; quadrant++) {
+		legacy_u8 adjacent_column =
 			(legacy_u8)(column + ((quadrant & TRACK_PREVIEW_QUADRANT_COLUMN_BIT) != 0 ? 1U : 0U));
-		adjacent_row =
+		legacy_u8 adjacent_row =
 			(legacy_u8)(row + ((quadrant & TRACK_PREVIEW_QUADRANT_ROW_BIT) != 0 ? 1U : 0U));
-		terrain =
+		legacy_u8 terrain =
 			track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[adjacent_row], adjacent_column)];
 		track_preview_draw_terrain(terrain, adjacent_column, adjacent_row, 0, camera->x, camera->y,
 								   camera->z, 1, transformed);
@@ -156,11 +142,8 @@ static void track_preview_draw_object(legacy_u8 track, legacy_u8 column, legacy_
 									  legacy_s16 terrain_height, const struct VECTOR *camera,
 									  struct TRANSFORMEDSHAPE3D *transformed)
 {
-	struct TRACKOBJECT *track_object;
-	struct TRACKOBJECT *overlay_object;
+	struct TRACKOBJECT *track_object = &trkObjectList[track];
 	struct VECTOR track_position;
-
-	track_object = &trkObjectList[track];
 	track_position.x = track_preview_half(
 		LEGACY_S16_WRAP_SUB(track_object_base_x(track_object, column), camera->x));
 	track_position.y = track_preview_half(LEGACY_S16_WRAP_SUB(terrain_height, camera->y));
@@ -171,6 +154,7 @@ static void track_preview_draw_object(legacy_u8 track, legacy_u8 column, legacy_
 		track_preview_draw_hill_base(track_object, &track_position, transformed);
 	}
 
+	struct TRACKOBJECT *overlay_object;
 	if (track_object->ss_ssOvelay != 0) {
 		overlay_object = frame_track_object_from_legacy_index(track_object->ss_ssOvelay);
 		if (overlay_object->ss_loShapePtr != 0) {
@@ -197,12 +181,8 @@ static void track_preview_draw_object(legacy_u8 track, legacy_u8 column, legacy_
 static void track_preview_draw_cell(legacy_u8 column, legacy_u8 row, const struct VECTOR *camera,
 									struct TRANSFORMEDSHAPE3D *transformed)
 {
-	legacy_u8 track;
-	legacy_u8 terrain;
-	legacy_s16 terrain_height;
-
-	track = track_element_map[LEGACY_U16_WRAP_ADD(trackrows[row], column)];
-	terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
+	legacy_u8 track = track_element_map[LEGACY_U16_WRAP_ADD(trackrows[row], column)];
+	legacy_u8 terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
 	if (track != 0 && terrain >= TRACK_PREVIEW_HILL_ROAD_TERRAIN_FIRST &&
 		terrain < TRACK_PREVIEW_HILL_ROAD_TERRAIN_END) {
 		track = subst_hillroad_track(terrain, track);
@@ -213,7 +193,7 @@ static void track_preview_draw_cell(legacy_u8 column, legacy_u8 row, const struc
 		terrain = 0;
 	}
 
-	terrain_height = 0;
+	legacy_s16 terrain_height = 0;
 	if (terrain == TERRAIN_RAISED_TILE) {
 		terrain_height = hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX];
 		if (track != 0) {
@@ -238,19 +218,16 @@ static void track_preview_draw_cell(legacy_u8 column, legacy_u8 row, const struc
 void draw_track_preview(void)
 {
 	struct VECTOR camera;
-	struct TRANSFORMEDSHAPE3D transformed;
-	legacy_u8 row;
-	legacy_u8 column;
-
 	camera.x = (legacy_s16)track_preview_camera_x;
 	camera.y = (legacy_s16)track_preview_camera_y;
 	camera.z = (legacy_s16)track_preview_camera_z;
 	track_preview_prepare(&camera);
+	struct TRANSFORMEDSHAPE3D transformed;
 	transformed.rotvec.x = 0;
 	transformed.rotvec.y = 0;
 	transformed.culling_distance = TRACK_PREVIEW_TRANSFORM_DISTANCE;
-	for (row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
-		for (column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
+	for (legacy_u8 row = 0; row < TRACK_PREVIEW_GRID_SIZE; row++) {
+		for (legacy_u8 column = 0; column < TRACK_PREVIEW_GRID_SIZE; column++) {
 			track_preview_draw_cell(column, row, &camera, &transformed);
 		}
 	}

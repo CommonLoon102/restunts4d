@@ -25,21 +25,19 @@ static unsigned captured_length, write_count;
 static jmp_buf exit_jump;
 static void trace(legacy_u32 value)
 {
-	unsigned i;
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		trace_hash = (trace_hash ^ (value & 255U)) * UINT32_C(16777619);
 		value >>= 8;
 	}
 }
 legacy_s16 dos_write_stderr(const legacy_s8 *data, legacy_u16 length)
 {
-	unsigned i;
 	assert(length <= 96);
 	assert(captured_length + length < sizeof(captured));
 	trace(1);
 	trace(length);
 	write_count++;
-	for (i = 0; i < length; i++) {
+	for (unsigned i = 0; i < length; i++) {
 		trace((legacy_u8)data[i]);
 	}
 	memcpy(captured + captured_length, data, length);
@@ -70,8 +68,8 @@ static void exit_second(void)
 }
 static void check_format(const legacy_s8 *format, ...)
 {
-	va_list arguments;
 	captured_length = write_count = 0;
+	va_list arguments;
 	va_start(arguments, format);
 	fatal_vprintf(format, arguments);
 	va_end(arguments);
@@ -80,19 +78,17 @@ static void check_format(const legacy_s8 *format, ...)
 }
 int main(void)
 {
-	static const legacy_s16 signed_values[] = {0, 1, -1, 32767, -32768};
-	static const legacy_u32 long_values[] = {0, 1, 0x7fffffffUL, 0x80000000UL, 0xffffffffUL};
 	static const legacy_s8 *formats[] = {
 		"%d/%i/%u/%x/%X/%ld/%li/%lu/%lx/%lX|%c|%s",
 		"%08d/%-8i/%8u/%08x/%8.4X/%015ld/%-15li/%15lu/%015lx/%15.4lX|%4c|%10s",
 		"%.0d/%.5i/%.0u/%.6x/%-8.3X/%.0ld/%.12li/%.0lu/%.12lx/%-15.3lX|%-4c|%-10.3s",
 		"%0008d/%--8i/%65536u/%65537x/%.65536X/%ld/%li/%lu/%lx/%lX|%c|%.0s",
 	};
-	legacy_s8 long_text[195];
-	unsigned a, b, f, length;
-	for (a = 0; a < 5; a++) {
-		for (b = 0; b < 5; b++) {
-			for (f = 0; f < 4; f++) {
+	static const legacy_s16 signed_values[] = {0, 1, -1, 32767, -32768};
+	static const legacy_u32 long_values[] = {0, 1, 0x7fffffffUL, 0x80000000UL, 0xffffffffUL};
+	for (unsigned a = 0; a < 5; a++) {
+		for (unsigned b = 0; b < 5; b++) {
+			for (unsigned f = 0; f < 4; f++) {
 				check_format(formats[f], signed_values[a], signed_values[a],
 							 (legacy_u16)signed_values[a], (legacy_u16)signed_values[a],
 							 (legacy_u16)signed_values[a], (legacy_s32)long_values[b],
@@ -103,8 +99,9 @@ int main(void)
 		}
 	}
 	check_format((legacy_s8 *)"literal %% %q %lq trailing%");
+	legacy_s8 long_text[195];
 	memset(long_text, 'A', sizeof(long_text));
-	for (length = 94; length <= 194; length++) {
+	for (unsigned length = 94; length <= 194; length++) {
 		long_text[length] = 0;
 		check_format((legacy_s8 *)"%s", long_text);
 		long_text[length] = 'A';

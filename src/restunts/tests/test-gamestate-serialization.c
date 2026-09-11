@@ -26,18 +26,14 @@
 static void test_object_representation(void)
 {
 	struct GAMESTATE state;
-	legacy_u8 output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_GUARD_SIZE];
-	legacy_u8 *representation;
-	legacy_u16 index;
-	legacy_u16 length;
-
-	representation = (legacy_u8 *)&state;
-	for (index = 0U; index < GAMESTATE_SERIALIZED_SIZE; index++) {
+	legacy_u8 *representation = (legacy_u8 *)&state;
+	for (legacy_u16 index = 0U; index < GAMESTATE_SERIALIZED_SIZE; index++) {
 		representation[index] =
 			(legacy_u8)(index * TEST_PATTERN_MULTIPLIER + TEST_PATTERN_INCREMENT);
 	}
+	legacy_u8 output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_GUARD_SIZE];
 	memset(output, TEST_OUTPUT_GUARD_BYTE, sizeof(output));
-	length = gamestate_serialize(output + TEST_OUTPUT_PREFIX_SIZE, &state);
+	legacy_u16 length = gamestate_serialize(output + TEST_OUTPUT_PREFIX_SIZE, &state);
 	assert(length == GAMESTATE_SERIALIZED_SIZE);
 	assert(output[0] == TEST_OUTPUT_GUARD_BYTE);
 	assert(output[GAMESTATE_SERIALIZED_SIZE + TEST_OUTPUT_PREFIX_SIZE] == TEST_OUTPUT_GUARD_BYTE);
@@ -48,13 +44,12 @@ static void test_object_representation(void)
 static void test_little_endian_fields(void)
 {
 	struct GAMESTATE state;
-	legacy_u8 output[GAMESTATE_SERIALIZED_SIZE];
-
 	memset(&state, 0, sizeof(state));
 	state.game_travDist = TEST_TRAVEL_DISTANCE;
 	state.game_frame = TEST_FRAME_NUMBER;
 	state.game_impactSpeed = TEST_IMPACT_SPEED;
 	state.playerstate.car_position.lx = TEST_PLAYER_X_POSITION;
+	legacy_u8 output[GAMESTATE_SERIALIZED_SIZE];
 	gamestate_serialize(output, &state);
 
 	assert(output[TEST_TRAVEL_DISTANCE_OFFSET] == TEST_NEGATIVE_THREE_LOW_BYTE);

@@ -63,11 +63,6 @@ struct CRASH_PARTICLE_EMISSION {
 static void emit_crash_particle(const struct CRASH_PARTICLE_EMISSION *emission, legacy_s16 slot,
 								legacy_s16 emitted)
 {
-	legacy_s16 particle_angle;
-	legacy_s16 particle_timer;
-	legacy_s16 particle_lifetime;
-	legacy_s16 random_value;
-
 	state.game_particle_owner[slot] = (legacy_u8)emission->kind;
 	state.game_particle_shape_index[slot] =
 		(legacy_u8)(((legacy_u8)emitted & PARTICLE_TYPE_VARIANT_MASK) +
@@ -76,14 +71,14 @@ static void emit_crash_particle(const struct CRASH_PARTICLE_EMISSION *emission, 
 	state.game_particle_y[slot] = 0;
 	state.game_particle_z[slot] = 0;
 
-	random_value = (legacy_s16)get_kevinrandom();
+	legacy_s16 random_value = (legacy_s16)get_kevinrandom();
 	state.game_particle_rotation_x[slot] =
 		LEGACY_S16_WRAP_MUL(random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 	random_value = (legacy_s16)get_kevinrandom();
 	state.game_particle_rotation_y[slot] =
 		LEGACY_S16_WRAP_MUL(random_value, PARTICLE_RANDOM_ROTATION_SCALE);
 
-	particle_angle = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(
+	legacy_s16 particle_angle = LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(
 		LEGACY_S32_WRAP_MUL((legacy_s32)emission->angular_range, (legacy_s32)emitted),
 		(legacy_s32)emission->free_count));
 	particle_angle = LEGACY_S16_WRAP_ADD(particle_angle, emission->base_angle);
@@ -91,13 +86,13 @@ static void emit_crash_particle(const struct CRASH_PARTICLE_EMISSION *emission, 
 		LEGACY_S16_FROM_BITS((legacy_u16)particle_angle & ANGLE_MASK);
 
 	random_value = (legacy_s16)get_kevinrandom();
-	particle_timer = LEGACY_S16_WRAP_ADD(
+	legacy_s16 particle_timer = LEGACY_S16_WRAP_ADD(
 		LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(random_value, PARTICLE_RANDOM_SPEED_SCALE)),
 		emission->energy_offset);
 	particle_timer = LEGACY_S16_WRAP_ADD(particle_timer, PARTICLE_FORWARD_SPEED_BIAS);
 	state.game_particle_forward_speed[slot] = particle_timer;
 
-	particle_lifetime =
+	legacy_s16 particle_lifetime =
 		LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(emission->lifetime_scale, particle_timer));
 	LEGACY_WRITE_U16_LE(&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES],
 						particle_lifetime);
@@ -107,13 +102,10 @@ void emit_crash_particles(legacy_s16 kind_arg, legacy_s16 base_angle_arg,
 						  legacy_s16 energy_offset_arg)
 {
 	struct CRASH_PARTICLE_EMISSION emission;
-	legacy_s16 particle_limit;
-	legacy_s16 emitted;
-	legacy_s16 slot;
-
 	emission.kind = (legacy_s16)kind_arg;
 	emission.base_angle = (legacy_s16)base_angle_arg;
 	emission.energy_offset = (legacy_s16)energy_offset_arg;
+	legacy_s16 particle_limit;
 	if (emission.kind < CAR_CRASH_PARTICLE_KIND_COUNT) {
 		emission.angular_range = ANGLE_FULL_TURN;
 		particle_limit = CAR_CRASH_PARTICLE_LIMIT;
@@ -132,7 +124,7 @@ void emit_crash_particles(legacy_s16 kind_arg, legacy_s16 base_angle_arg,
 
 	state.game_particles_active = PARTICLE_SYSTEM_ACTIVE;
 	emission.free_count = 0;
-	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
+	for (legacy_s16 slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
 		if (state.game_particle_forward_speed[slot] == PARTICLE_TIMER_INACTIVE) {
 			emission.free_count = LEGACY_S16_WRAP_ADD(emission.free_count, 1);
 		}
@@ -141,8 +133,9 @@ void emit_crash_particles(legacy_s16 kind_arg, legacy_s16 base_angle_arg,
 		emission.free_count = particle_limit;
 	}
 
-	emitted = 0;
-	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT && emitted < emission.free_count; slot++) {
+	legacy_s16 emitted = 0;
+	for (legacy_s16 slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT && emitted < emission.free_count;
+		 slot++) {
 		if (state.game_particle_forward_speed[slot] != 0) {
 			continue;
 		}
@@ -154,16 +147,11 @@ void emit_crash_particles(legacy_s16 kind_arg, legacy_s16 base_angle_arg,
 
 void update_crash_particles(void)
 {
+	legacy_u8 any_active = PARTICLE_SYSTEM_INACTIVE;
+	struct MATRIX *rotation;
 	struct VECTOR direction;
 	struct VECTOR movement;
-	struct MATRIX *rotation;
-	legacy_s16 particle_velocity;
-	legacy_s32 ground_position;
-	legacy_u8 any_active;
-	legacy_s16 slot;
-
-	any_active = PARTICLE_SYSTEM_INACTIVE;
-	for (slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
+	for (legacy_s16 slot = 0; slot < GAMESTATE_PARTICLE_SLOT_COUNT; slot++) {
 		if (state.game_particle_forward_speed[slot] == PARTICLE_TIMER_INACTIVE) {
 			continue;
 		}
@@ -178,7 +166,7 @@ void update_crash_particles(void)
 		state.game_particle_z[slot] =
 			LEGACY_S32_WRAP_ADD_S16(state.game_particle_z[slot], movement.z);
 
-		particle_velocity = LEGACY_S16_FROM_BITS(
+		legacy_s16 particle_velocity = LEGACY_S16_FROM_BITS(
 			LEGACY_READ_U16_LE(&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES]));
 		particle_velocity = LEGACY_S16_WRAP_SUB(particle_velocity, PARTICLE_GRAVITY_STEP);
 		LEGACY_WRITE_U16_LE(&state.game_particle_vertical_speed[slot * LEGACY_WORD_BYTES],
@@ -194,8 +182,8 @@ void update_crash_particles(void)
 				LEGACY_S32_WRAP_ADD_S16(state.game_particle_y[slot], particle_velocity);
 		}
 
-		ground_position = LEGACY_S32_WRAP_ADD((legacy_s32)state.game_particle_y[slot],
-											  (legacy_s32)state.playerstate.car_position.ly);
+		legacy_s32 ground_position = LEGACY_S32_WRAP_ADD(
+			(legacy_s32)state.game_particle_y[slot], (legacy_s32)state.playerstate.car_position.ly);
 		if (ground_position < 0) {
 			state.game_particle_forward_speed[slot] = PARTICLE_TIMER_INACTIVE;
 			continue;
@@ -246,7 +234,6 @@ static void finish_crash_event(struct CARSTATE *carstate, legacy_s16 crash_event
 // previously set_AV_event_triggers
 void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index)
 {
-	legacy_s8 stop_car;
 	struct CARSTATE *carstate;
 	if (car_index == PLAYER_CAR_INDEX) {
 		carstate = &state.playerstate;
@@ -257,7 +244,7 @@ void update_crash_state(legacy_s16 crash_event, legacy_s16 car_index)
 		return;
 	}
 
-	stop_car = CRASH_CAR_MOTION_PRESERVED;
+	legacy_s8 stop_car = CRASH_CAR_MOTION_PRESERVED;
 	switch (crash_event) {
 		case CRASH_EVENT_IMMEDIATE_STOP:
 			crash_event = CRASH_EVENT_COLLISION;

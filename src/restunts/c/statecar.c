@@ -54,43 +54,32 @@ enum CAR_GEAR_SHIFT_DIRECTION {
 
 static legacy_s16 scale_acceleration_by_mass(legacy_s16 acceleration, legacy_s16 mass)
 {
-	legacy_u32 product;
-	legacy_u32 quotient;
-	legacy_s16 low_word;
-
-	product =
+	legacy_u32 product =
 		(legacy_u32)LEGACY_S32_WRAP_MUL((legacy_s32)acceleration, ACCELERATION_MASS_NUMERATOR);
-	quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
-	low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
+	legacy_u32 quotient = LEGACY_U32_DIV_OR_ZERO(product, (legacy_u16)mass);
+	legacy_s16 low_word = LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 	return LEGACY_S16_SAR(low_word, ACCELERATION_MASS_RESULT_SHIFT);
 }
 
 static legacy_s16 apply_opponent_acceleration_drag(legacy_s16 acceleration, legacy_u8 drag)
 {
-	legacy_s32 product;
-	legacy_s32 reduction;
-
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_u16)drag, (legacy_s32)acceleration);
-	reduction = LEGACY_S32_DIV_OR_ZERO(product, ACCELERATION_DRAG_SCALE);
+	legacy_s32 product =
+		LEGACY_S32_WRAP_MUL((legacy_s32)(legacy_u16)drag, (legacy_s32)acceleration);
+	legacy_s32 reduction = LEGACY_S32_DIV_OR_ZERO(product, ACCELERATION_DRAG_SCALE);
 	return LEGACY_S16_WRAP_SUB(acceleration, LEGACY_S16_FROM_BITS((legacy_u16)reduction));
 }
 
 static legacy_s8 gear_change_delay(legacy_u16 frame_rate)
 {
-	legacy_s16 signed_rate;
-	legacy_s16 half_rate;
-
-	signed_rate = LEGACY_S8_FROM_BITS((legacy_u8)frame_rate);
-	half_rate = LEGACY_S16_SAR(signed_rate, GEAR_CHANGE_DELAY_HALF_SHIFT);
+	legacy_s16 signed_rate = LEGACY_S8_FROM_BITS((legacy_u8)frame_rate);
+	legacy_s16 half_rate = LEGACY_S16_SAR(signed_rate, GEAR_CHANGE_DELAY_HALF_SHIFT);
 	return LEGACY_S8_FROM_BITS(
 		(legacy_u8)LEGACY_U16_WRAP_ADD((legacy_u8)half_rate, (legacy_u8)frame_rate));
 }
 
 static legacy_s16 move_gear_knob_toward(legacy_s16 current, legacy_s16 target, legacy_s16 step)
 {
-	legacy_s16 difference;
-
-	difference = LEGACY_S16_WRAP_SUB(target, current);
+	legacy_s16 difference = LEGACY_S16_WRAP_SUB(target, current);
 	if (absolute_word(difference) <= step) {
 		return target;
 	}
@@ -116,9 +105,7 @@ legacy_u16 update_rpm_from_speed(legacy_u16 currpm, legacy_u16 speed, legacy_u16
 static legacy_s16 gear_shift_direction(legacy_s8 input_flags, struct CARSTATE *carstate,
 									   const struct SIMD *simd)
 {
-	legacy_s16 shift_direction;
-
-	shift_direction = CAR_GEAR_SHIFT_NONE;
+	legacy_s16 shift_direction = CAR_GEAR_SHIFT_NONE;
 	if (carstate->car_transmission == TRANSMISSION_MANUAL &&
 		carstate->car_changing_gear == CAR_GEAR_CHANGE_INACTIVE) {
 		if ((input_flags & INPUT_SHIFT_UP_FLAG) != INPUT_NONE) {
@@ -141,9 +128,7 @@ static legacy_s16 gear_shift_direction(legacy_s8 input_flags, struct CARSTATE *c
 static void request_gear_change(legacy_s8 input_flags, struct CARSTATE *carstate,
 								const struct SIMD *simd)
 {
-	legacy_s16 shift_direction;
-
-	shift_direction = gear_shift_direction(input_flags, carstate, simd);
+	legacy_s16 shift_direction = gear_shift_direction(input_flags, carstate, simd);
 	if (shift_direction == CAR_GEAR_SHIFT_UP && carstate->car_current_gear != simd->num_gears) {
 		carstate->car_current_gear =
 			LEGACY_S8_WRAP_ADD(carstate->car_current_gear, CAR_GEAR_INDEX_STEP);
@@ -164,14 +149,12 @@ static void request_gear_change(legacy_s8 input_flags, struct CARSTATE *carstate
 
 static void update_gear_knob(struct CARSTATE *carstate, const struct SIMD *simd)
 {
-	legacy_s16 knob_delta;
-	legacy_s16 gear_knob_step;
-
-	gear_knob_step =
+	legacy_s16 gear_knob_step =
 		framespersec == GAME_FRAME_RATE_NORMAL ? NORMAL_GEAR_KNOB_STEP : LOW_RATE_GEAR_KNOB_STEP;
 	if (carstate->car_changing_gear != CAR_GEAR_CHANGE_INACTIVE) {
 		if (carstate->car_knob_x == carstate->car_knob_x2) {
-			knob_delta = LEGACY_S16_WRAP_SUB(carstate->car_knob_y2, carstate->car_knob_y);
+			legacy_s16 knob_delta =
+				LEGACY_S16_WRAP_SUB(carstate->car_knob_y2, carstate->car_knob_y);
 			if (knob_delta == GEAR_KNOB_ALIGNED) {
 				carstate->car_changing_gear = CAR_GEAR_CHANGE_INACTIVE;
 				carstate->car_gearratio = simd->gear_ratios[carstate->car_current_gear];
@@ -254,9 +237,7 @@ static legacy_s16 accelerate_car(legacy_s16 car_index, struct CARSTATE *carstate
 static legacy_s16 pedal_speed_delta(legacy_s8 input_flags, legacy_s16 car_index,
 									struct CARSTATE *carstate, const struct SIMD *simd)
 {
-	legacy_s16 speed_delta;
-
-	speed_delta = LEGACY_S16_WRAP_SUB(
+	legacy_s16 speed_delta = LEGACY_S16_WRAP_SUB(
 		carstate->car_pseudoGravity,
 		simd->aerorestable[carstate->car_rev_speed >> AERODYNAMIC_RESISTANCE_SPEED_SHIFT]);
 	if ((legacy_u16)carstate->car_currpm > (legacy_u16)simd->max_rpm) {
@@ -309,12 +290,10 @@ static legacy_u16 apply_speed_delta(legacy_u16 updated_speed, legacy_s16 speed_d
 
 static void synchronize_wheel_speed(struct CARSTATE *carstate, legacy_u16 updated_speed)
 {
-	legacy_s16 speed_difference;
-
 	if (carstate->car_sumSurfRearWheels == CAR_WHEEL_CONTACT_NONE) {
 		carstate->car_rev_speed = updated_speed;
 	} else {
-		speed_difference =
+		legacy_s16 speed_difference =
 			absolute_word(LEGACY_S16_WRAP_SUB(carstate->car_actual_speed, updated_speed));
 		if (speed_difference > WHEEL_SPEED_SYNC_THRESHOLD) {
 			carstate->car_rev_speed =
@@ -351,9 +330,6 @@ static void update_engine_limiter(struct CARSTATE *carstate, const struct SIMD *
 void update_car_speed(legacy_s8 input_flags, legacy_s16 car_index, struct CARSTATE *carstate,
 					  struct SIMD *simd)
 {
-	legacy_s16 speed_delta;
-	legacy_u16 updated_speed;
-
 	if (carstate->car_engineLimiterTimer != ENGINE_LIMITER_INACTIVE) {
 		carstate->car_engineLimiterTimer =
 			LEGACY_S8_WRAP_SUB(carstate->car_engineLimiterTimer, ENGINE_LIMITER_TICK_STEP);
@@ -365,8 +341,8 @@ void update_car_speed(legacy_s8 input_flags, legacy_s16 car_index, struct CARSTA
 
 	request_gear_change(input_flags, carstate, simd);
 	update_gear_knob(carstate, simd);
-	speed_delta = pedal_speed_delta(input_flags, car_index, carstate, simd);
-	updated_speed = apply_speed_delta(carstate->car_rev_speed, speed_delta);
+	legacy_s16 speed_delta = pedal_speed_delta(input_flags, car_index, carstate, simd);
+	legacy_u16 updated_speed = apply_speed_delta(carstate->car_rev_speed, speed_delta);
 	synchronize_wheel_speed(carstate, updated_speed);
 	carstate->car_currpm =
 		update_rpm_from_speed(carstate->car_currpm, carstate->car_rev_speed,

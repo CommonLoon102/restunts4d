@@ -143,8 +143,6 @@ static legacy_s16 penalty_route_visit(struct PENALTY_ROUTE_SEARCH *search, legac
 static void penalty_route_bounds(legacy_s16 next_track, struct PENALTY_ROUTE_BOUNDS *bounds)
 {
 	legacy_u8 tile_element;
-	legacy_u8 multi_tile_flags;
-
 	if (next_track == PENALTY_ROUTE_SENTINEL) {
 		bounds->minimum_row = (legacy_u8)track_route_columns[PENALTY_ROUTE_START_TRACK_INDEX];
 		tile_element = (legacy_u8)replay_input_buffer[PENALTY_ROUTE_START_TILE_INDEX];
@@ -152,7 +150,7 @@ static void penalty_route_bounds(legacy_s16 next_track, struct PENALTY_ROUTE_BOU
 		bounds->minimum_row = (legacy_u8)track_route_rows[next_track];
 		tile_element = (legacy_u8)track_route_element_ids[next_track];
 	}
-	multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+	legacy_u8 multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 	bounds->maximum_row = bounds->minimum_row;
 	if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != MULTI_TILE_FLAGS_NONE) {
 		bounds->maximum_row = LEGACY_U8_WRAP_ADD(bounds->maximum_row, TRACK_TILE_COORDINATE_STEP);
@@ -212,19 +210,17 @@ static legacy_s16 penalty_route_record_match(struct PENALTY_ROUTE_SEARCH *search
 static legacy_s16 search_penalty_route(struct PENALTY_ROUTE_SEARCH *search,
 									   legacy_s16 *current_track, legacy_s16 *penalty_count)
 {
-	legacy_s16 next_track;
-	legacy_s16 alternate_track;
-	legacy_u16 index;
-
 	search->best_distance = PENALTY_ROUTE_DISTANCE_NONE;
 	search->best_track = TRACK_START_FINISH_PIECE_INDEX;
 	search->pending_count = PENALTY_ROUTE_PENDING_NONE;
 	search->distance = PENALTY_ROUTE_DISTANCE_NONE;
 	search->sentinel_visited = PENALTY_ROUTE_SENTINEL_UNVISITED;
-	for (index = PENALTY_ROUTE_INDEX_FIRST; index < (legacy_u16)track_pieces_counter; index++) {
+	for (legacy_u16 index = PENALTY_ROUTE_INDEX_FIRST; index < (legacy_u16)track_pieces_counter;
+		 index++) {
 		search->visited[index] = PENALTY_ROUTE_TRACK_UNVISITED;
 	}
 	search->track_index = (legacy_s16)*current_track;
+	legacy_s16 next_track;
 	for (;;) {
 		next_track = penalty_route_next(search->track_index);
 		if (!penalty_route_visit(search, next_track)) {
@@ -241,7 +237,7 @@ static legacy_s16 search_penalty_route(struct PENALTY_ROUTE_SEARCH *search,
 		if (penalty_route_record_match(search, &next_track, current_track, penalty_count)) {
 			return PENALTY_DETECTED;
 		}
-		alternate_track = penalty_route_alternate(search->track_index);
+		legacy_s16 alternate_track = penalty_route_alternate(search->track_index);
 		if (alternate_track != PENALTY_ROUTE_SENTINEL) {
 			search->pending_distance[search->pending_count] = search->distance;
 			search->pending_track[search->pending_count] = alternate_track;
@@ -290,16 +286,6 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 									legacy_u16 speed_before_grip, legacy_u16 speed2_before_grip,
 									legacy_s16 caller_si)
 {
-	legacy_s16 combined_grip_operand;
-	legacy_s16 sliding_sum;
-	legacy_s16 *sliding_values;
-	legacy_u16 grip_speed;
-	legacy_u16 speed_shr8;
-	legacy_u32 speed_squared;
-	legacy_s32 scaled_combined_grip;
-	legacy_s16 grass_wheels;
-	legacy_s16 i;
-
 	/* update_grip saves its caller's SI in the future fourth contact-distance slot. */
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FOURTH_WORD] = caller_si;
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
@@ -310,10 +296,10 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 	 * Reproduce update_grip's first operands: twice the car's base grip and
 	 * the sum of the four surface-specific sliding coefficients.
 	 */
-	combined_grip_operand = LEGACY_S16_SHL(simd->grip, 1U);
-	sliding_sum = 0;
-	sliding_values = &simd->sliding;
-	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
+	legacy_s16 combined_grip_operand = LEGACY_S16_SHL(simd->grip, 1U);
+	legacy_s16 *sliding_values = &simd->sliding;
+	legacy_s16 sliding_sum = 0;
+	for (legacy_s16 i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
 										  sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
 	}
@@ -332,13 +318,13 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 	 * Sliding grip uses the post-deceleration speed when any wheel is on
 	 * grass, with the divisor selected by the number of grass wheels.
 	 */
-	grass_wheels = GRASS_WHEEL_COUNT_NONE;
-	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
+	legacy_s16 grass_wheels = GRASS_WHEEL_COUNT_NONE;
+	for (legacy_s16 i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		if (carstate->car_surfaceWhl[i] == CAR_SURFACE_GRASS) {
 			grass_wheels = LEGACY_S16_WRAP_ADD(grass_wheels, GRASS_WHEEL_COUNT_STEP);
 		}
 	}
-	grip_speed = speed_before_grip;
+	legacy_u16 grip_speed = speed_before_grip;
 	if (grass_wheels != GRASS_WHEEL_COUNT_NONE) {
 		speed2_before_grip = LEGACY_U16_WRAP_SUB(
 			speed2_before_grip,
@@ -347,9 +333,9 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 	}
 
 	/* Operand words left by the sliding-grip signed long division. */
-	speed_shr8 = grip_speed >> CAR_SPEED_INTEGER_SHIFT;
-	speed_squared = LEGACY_U32_WRAP_MUL((legacy_u32)speed_shr8, (legacy_u32)speed_shr8);
-	scaled_combined_grip =
+	legacy_u16 speed_shr8 = grip_speed >> CAR_SPEED_INTEGER_SHIFT;
+	legacy_u32 speed_squared = LEGACY_U32_WRAP_MUL((legacy_u32)speed_shr8, (legacy_u32)speed_shr8);
+	legacy_s32 scaled_combined_grip =
 		LEGACY_S32_WRAP_MUL((legacy_s32)carstate->car_surfacegrip_sum, GRIP_FIXED_SCALE);
 	legacy_execution_residue.grip_stack_words[LEGACY_RESIDUE_FIRST_WORD] =
 		(legacy_s16)((legacy_u32)scaled_combined_grip >> LEGACY_LONG_HIGH_WORD_SHIFT);
@@ -361,11 +347,8 @@ void update_legacy_grip_stack_words(struct CARSTATE *carstate, struct SIMD *simd
 
 static void grip_grass_drag(struct CARSTATE *carstate)
 {
-	legacy_u16 grass_wheels;
-	legacy_u16 i;
-
-	grass_wheels = GRASS_WHEEL_COUNT_NONE;
-	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
+	legacy_u16 grass_wheels = GRASS_WHEEL_COUNT_NONE;
+	for (legacy_u16 i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		if (carstate->car_surfaceWhl[i] == CAR_SURFACE_GRASS) {
 			grass_wheels = LEGACY_U16_WRAP_ADD(grass_wheels, GRASS_WHEEL_COUNT_STEP);
 		}
@@ -380,35 +363,24 @@ static void grip_grass_drag(struct CARSTATE *carstate)
 
 static legacy_u16 grip_demanded(legacy_s16 initial_angle, legacy_u16 speed_shr8)
 {
-	legacy_s16 absolute_angle;
-	legacy_s16 angle_factor;
-	legacy_u16 demanded_grip;
-	legacy_u16 square_low;
-
-	absolute_angle = absolute_word(initial_angle);
-	angle_factor = LEGACY_S16_SAR(absolute_angle, DEMANDED_GRIP_ANGLE_SHIFT);
-	square_low = LEGACY_U16_WRAP_MUL(speed_shr8, speed_shr8);
+	legacy_s16 absolute_angle = absolute_word(initial_angle);
+	legacy_s16 angle_factor = LEGACY_S16_SAR(absolute_angle, DEMANDED_GRIP_ANGLE_SHIFT);
+	legacy_u16 square_low = LEGACY_U16_WRAP_MUL(speed_shr8, speed_shr8);
 	square_low = (legacy_u16)(square_low >> DEMANDED_GRIP_SPEED_SQUARE_SHIFT);
-	demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
+	legacy_u16 demanded_grip = LEGACY_U16_WRAP_MUL(square_low, angle_factor);
 	return demanded_grip;
 }
 
 static legacy_s16 grip_surface_sum(struct CARSTATE *carstate, struct SIMD *simd)
 {
-	legacy_s16 combined_grip;
-	legacy_s16 sliding_sum;
-	legacy_s16 *sliding_values;
-	legacy_u16 i;
-	legacy_s32 product;
-
-	combined_grip = LEGACY_S16_SHL(simd->grip, 1U);
-	sliding_sum = 0;
-	sliding_values = &simd->sliding;
-	for (i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
+	legacy_s16 combined_grip = LEGACY_S16_SHL(simd->grip, 1U);
+	legacy_s16 *sliding_values = &simd->sliding;
+	legacy_s16 sliding_sum = 0;
+	for (legacy_u16 i = CAR_WHEEL_INDEX_FIRST; i < CAR_WHEEL_COUNT; i++) {
 		sliding_sum = LEGACY_S16_WRAP_ADD(sliding_sum,
 										  sliding_values[(legacy_u8)carstate->car_surfaceWhl[i]]);
 	}
-	product = LEGACY_S32_WRAP_MUL((legacy_s32)combined_grip, (legacy_s32)sliding_sum);
+	legacy_s32 product = LEGACY_S32_WRAP_MUL((legacy_s32)combined_grip, (legacy_s32)sliding_sum);
 	combined_grip =
 		LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(product, COMBINED_GRIP_PRODUCT_SHIFT));
 	return combined_grip;
@@ -416,13 +388,10 @@ static legacy_s16 grip_surface_sum(struct CARSTATE *carstate, struct SIMD *simd)
 
 static void grip_recenter(struct CARSTATE *carstate)
 {
-	legacy_s16 absolute_angle;
-	legacy_s16 rotation_low;
-
 	if (carstate->car_steeringAngle == CAR_STEERING_CENTERED) {
-		rotation_low = LEGACY_S8_FROM_BITS((legacy_u8)carstate->car_rotate.x);
+		legacy_s16 rotation_low = LEGACY_S8_FROM_BITS((legacy_u8)carstate->car_rotate.x);
 		if (rotation_low != ROTATION_OFFSET_NONE) {
-			absolute_angle = rotation_low;
+			legacy_s16 absolute_angle = rotation_low;
 			if (absolute_angle < 0) {
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			}
@@ -443,16 +412,12 @@ static legacy_s16 grip_slip_angle(struct CARSTATE *carstate, legacy_s16 initial_
 								  legacy_s16 combined_grip, legacy_u16 demanded_grip,
 								  legacy_u16 speed_shr8)
 {
-	legacy_s16 adjusted_angle;
-	legacy_s16 absolute_angle;
-	legacy_s32 numerator;
-	legacy_s32 denominator;
-
-	adjusted_angle = initial_angle;
+	legacy_s16 adjusted_angle = initial_angle;
 	if (LEGACY_S16_FROM_BITS(demanded_grip) > combined_grip) {
 		carstate->car_slidingFlag = CAR_SLIDING_ACTIVE;
-		numerator = LEGACY_S32_WRAP_MUL((legacy_s32)combined_grip, GRIP_FIXED_SCALE);
-		denominator = LEGACY_S32_WRAP_MUL((legacy_s32)speed_shr8, (legacy_s32)speed_shr8);
+		legacy_s32 numerator = LEGACY_S32_WRAP_MUL((legacy_s32)combined_grip, GRIP_FIXED_SCALE);
+		legacy_s32 denominator =
+			LEGACY_S32_WRAP_MUL((legacy_s32)speed_shr8, (legacy_s32)speed_shr8);
 		adjusted_angle =
 			LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_DIV_OR_ZERO(numerator, denominator));
 		if (initial_angle < 0) {
@@ -469,7 +434,7 @@ static legacy_s16 grip_slip_angle(struct CARSTATE *carstate, legacy_s16 initial_
 			carstate->car_slip_angle = LEGACY_S16_WRAP_SUB(
 				carstate->car_slip_angle,
 				LEGACY_S16_SAR(carstate->car_slip_angle, SLIDE_ANGLE_DECAY_SHIFT));
-			absolute_angle = carstate->car_slip_angle;
+			legacy_s16 absolute_angle = carstate->car_slip_angle;
 			if (absolute_angle < 0) {
 				absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 			}
@@ -484,19 +449,16 @@ static legacy_s16 grip_slip_angle(struct CARSTATE *carstate, legacy_s16 initial_
 
 static void grip_banked_steering(struct CARSTATE *carstate)
 {
-	legacy_s16 absolute_angle;
-	legacy_u8 tile_x;
-	legacy_u8 tile_z;
-	legacy_u8 track;
-
-	absolute_angle = carstate->car_rotate.z;
+	legacy_s16 absolute_angle = carstate->car_rotate.z;
 	if (absolute_angle < 0) {
 		absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 	}
 	if (absolute_angle > BANK_EFFECT_ROTATION_THRESHOLD) {
-		tile_x = (legacy_u8)((legacy_u32)carstate->car_position.lx >> TRACK_WORLD_TILE_SHIFT);
-		tile_z = (legacy_u8)((legacy_u32)carstate->car_position.lz >> TRACK_WORLD_TILE_SHIFT);
-		track = track_element_map[LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
+		legacy_u8 tile_x =
+			(legacy_u8)((legacy_u32)carstate->car_position.lx >> TRACK_WORLD_TILE_SHIFT);
+		legacy_u8 tile_z =
+			(legacy_u8)((legacy_u32)carstate->car_position.lz >> TRACK_WORLD_TILE_SHIFT);
+		legacy_u8 track = track_element_map[LEGACY_U16_WRAP_ADD(terrainrows[tile_z], tile_x)];
 		if (track == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 			tile_x = LEGACY_U8_WRAP_SUB(tile_x, TRACK_TILE_COORDINATE_STEP);
 			tile_z = LEGACY_U8_WRAP_ADD(tile_z, TRACK_TILE_COORDINATE_STEP);
@@ -518,10 +480,8 @@ static void grip_player_yaw(struct CARSTATE *carstate, legacy_s16 initial_angle,
 							legacy_s16 adjusted_angle, legacy_s16 combined_grip,
 							legacy_u16 demanded_grip)
 {
-	legacy_s16 correction;
-
-	correction = LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(adjusted_angle, initial_angle),
-										SLIDE_CORRECTION_DIVISOR);
+	legacy_s16 correction = LEGACY_S16_DIV_OR_ZERO(
+		LEGACY_S16_WRAP_SUB(adjusted_angle, initial_angle), SLIDE_CORRECTION_DIVISOR);
 	if (LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_ADD(combined_grip, SLIDE_GRIP_TOLERANCE)) <
 		LEGACY_S16_FROM_BITS(demanded_grip)) {
 		carstate->car_slide_yaw_delta =
@@ -559,16 +519,14 @@ static void grip_heading_offset(struct CARSTATE *carstate)
 
 static void grip_sliding_speed(struct CARSTATE *carstate)
 {
-	legacy_s16 absolute_angle;
-	legacy_s16 penalty;
 	legacy_u16 i;
 
 	if (carstate->car_slidingFlag != CAR_SLIDING_INACTIVE) {
-		absolute_angle = carstate->car_slip_angle;
+		legacy_s16 absolute_angle = carstate->car_slip_angle;
 		if (absolute_angle < 0) {
 			absolute_angle = LEGACY_S16_WRAP_NEGATE(absolute_angle);
 		}
-		penalty = LEGACY_S16_SHL(absolute_angle, SLIDE_SPEED_PENALTY_SHIFT);
+		legacy_s16 penalty = LEGACY_S16_SHL(absolute_angle, SLIDE_SPEED_PENALTY_SHIFT);
 		if (carstate->car_rev_speed <= (legacy_u16)penalty) {
 			carstate->car_rev_speed = CAR_SPEED_STOPPED;
 			carstate->car_actual_speed = CAR_SPEED_STOPPED;
@@ -597,10 +555,8 @@ static void grip_player_response(struct CARSTATE *carstate, legacy_s16 initial_a
 								 legacy_s16 combined_grip, legacy_u16 demanded_grip,
 								 legacy_u16 speed_shr8)
 {
-	legacy_s16 adjusted_angle;
-
 	grip_recenter(carstate);
-	adjusted_angle =
+	legacy_s16 adjusted_angle =
 		grip_slip_angle(carstate, initial_angle, combined_grip, demanded_grip, speed_shr8);
 	if (carstate->car_slide_yaw_delta == 0 && carstate->car_crashBmpFlag != CRASH_EVENT_COLLISION) {
 		carstate->car_front_wheel_response_angle = adjusted_angle;
@@ -613,22 +569,17 @@ static void grip_player_response(struct CARSTATE *carstate, legacy_s16 initial_a
 
 void update_grip(struct CARSTATE *carstate, struct SIMD *simd, legacy_s16 grip_behavior)
 {
-	legacy_s16 initial_angle;
-	legacy_s16 combined_grip;
-	legacy_u16 speed_shr8;
-	legacy_u16 demanded_grip;
-
 	if (carstate->car_sumSurfAllWheels == CAR_WHEEL_CONTACT_NONE) {
 		carstate->car_front_wheel_response_angle = 0;
 		carstate->car_slidingFlag = CAR_SLIDING_INACTIVE;
 		return;
 	}
 	grip_grass_drag(carstate);
-	initial_angle =
+	legacy_s16 initial_angle =
 		LEGACY_S16_WRAP_ADD(carstate->car_steeringAngle, carstate->car_velocity_heading_offset);
-	speed_shr8 = (legacy_u16)(carstate->car_rev_speed >> CAR_SPEED_INTEGER_SHIFT);
-	demanded_grip = grip_demanded(initial_angle, speed_shr8);
-	combined_grip = grip_surface_sum(carstate, simd);
+	legacy_u16 speed_shr8 = (legacy_u16)(carstate->car_rev_speed >> CAR_SPEED_INTEGER_SHIFT);
+	legacy_u16 demanded_grip = grip_demanded(initial_angle, speed_shr8);
+	legacy_s16 combined_grip = grip_surface_sum(carstate, simd);
 	carstate->car_demandedGrip = LEGACY_S16_FROM_BITS(demanded_grip);
 	carstate->car_surfacegrip_sum = combined_grip;
 	if (grip_behavior == GRIP_BEHAVIOR_OPPONENT) {

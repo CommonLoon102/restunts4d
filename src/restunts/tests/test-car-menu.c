@@ -56,18 +56,17 @@ static void trace_text(const legacy_s8 *text)
 
 static void trace_pointer(const void *pointer)
 {
-	unsigned int i;
 	if (pointer == 0) {
 		trace_word(0);
 		return;
 	}
-	for (i = 0; i < 64U; i++) {
+	for (unsigned int i = 0; i < 64U; i++) {
 		if (pointer == resource_bytes[i]) {
 			trace_word(100U + i);
 			return;
 		}
 	}
-	for (i = 0; i < 4U; i++) {
+	for (unsigned int i = 0; i < 4U; i++) {
 		if (pointer == &fixture_sprites[i]) {
 			trace_word(200U + i);
 			return;
@@ -283,14 +282,13 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *butto
 	trace_word(1022);
 	trace_word((legacy_u16)count);
 	trace_pointer(buttons);
-	legacy_s16 result = -1;
-	unsigned int i;
-	for (i = 0; i < (unsigned int)count; i++) {
+	for (unsigned int i = 0; i < (unsigned int)count; i++) {
 		trace_word(buttons[i].x1);
 		trace_word(buttons[i].x2);
 		trace_word(buttons[i].y1);
 		trace_word(buttons[i].y2);
 	}
+	legacy_s16 result = -1;
 	if (frame_index == 10U && scenario % 3U == 0U) {
 		result = 4;
 	}
@@ -546,10 +544,8 @@ void update_car_speed(legacy_s8 input, legacy_s16 car_index, struct CARSTATE *ca
 
 static void run_car_case(unsigned int index)
 {
-	legacy_s8 car_id[5] = "COUN";
 	legacy_s8 material = index % 6U;
 	legacy_s8 transmission = index % 2U;
-	unsigned int i;
 	scenario = index;
 	frame_index = 0;
 	file_index = 0;
@@ -563,10 +559,11 @@ static void run_car_case(unsigned int index)
 	fontnptr = (legacy_s8 *)resource_bytes[62];
 	font_glyph_height = 8;
 	game3dshapes[PLAYER_CAR_LOW_SHAPE].shape3d_numpaints = 3;
-	for (i = 0; i < 7U; i++) {
+	for (unsigned int i = 0; i < 7U; i++) {
 		oppresources[i] = (legacy_s8 *)&fixture_shapes[1];
 	}
 	trace_word(index);
+	legacy_s8 car_id[5] = "COUN";
 	run_car_menu(car_id, &material, &transmission, index % 3U == 0U ? 2U : 0U);
 	trace_text(car_id);
 	trace_word((legacy_u8)material);
@@ -578,8 +575,7 @@ static void run_car_case(unsigned int index)
 
 int main(void)
 {
-	unsigned int index;
-	for (index = 0; index < 102U; index++) {
+	for (unsigned int index = 0; index < 102U; index++) {
 		run_car_case(index);
 	}
 	/* Original implementation trace: car discovery and sorting, car changes,

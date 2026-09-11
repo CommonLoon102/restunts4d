@@ -78,10 +78,7 @@ static legacy_s8 input_device_mode_stack[INPUT_MODE_STACK_LIMIT];
 
 void kb_reg_callback(legacy_s16 code, void(far *callback)(void))
 {
-	legacy_u16 code_bits;
 	legacy_u16 callback_index;
-	legacy_u16 key_index;
-
 	for (callback_index = 0; callback_index < INPUT_CALLBACK_COUNT; callback_index++) {
 		if (input_callbacks[callback_index] == callback) {
 			break;
@@ -95,14 +92,14 @@ void kb_reg_callback(legacy_s16 code, void(far *callback)(void))
 		return;
 	}
 
-	code_bits = (legacy_u16)code;
+	legacy_u16 code_bits = (legacy_u16)code;
 	if ((code_bits & INPUT_ASCII_BYTE_MASK) != 0) {
 		if (code_bits <= INPUT_ASCII_INDEX_MASK) {
 			input_callback_flags[code_bits] = (legacy_u8)(callback_index + 1U);
 		}
 		return;
 	}
-	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
+	legacy_u16 key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
 	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX) {
 		input_extended_callback_flags[key_index] = (legacy_u8)(callback_index + 1U);
 	}
@@ -110,11 +107,7 @@ void kb_reg_callback(legacy_s16 code, void(far *callback)(void))
 
 legacy_s16 kb_parse_key(legacy_s16 code)
 {
-	legacy_u16 code_bits;
-	legacy_u16 key_index;
-	legacy_u8 callback_number;
-
-	code_bits = (legacy_u16)code;
+	legacy_u16 code_bits = (legacy_u16)code;
 	dos_interrupts_disable();
 	if (input_callback_dispatching != 0) {
 		dos_interrupts_enable();
@@ -123,6 +116,8 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 	input_callback_dispatching = 1;
 	dos_interrupts_enable();
 
+	legacy_u8 callback_number;
+	legacy_u16 key_index;
 	if ((code_bits & INPUT_ASCII_BYTE_MASK) != 0) {
 		key_index = code_bits & INPUT_ASCII_INDEX_MASK;
 		callback_number = input_callback_flags[key_index];
@@ -145,17 +140,14 @@ legacy_s16 kb_parse_key(legacy_s16 code)
 
 void kb_remove_callback(legacy_s16 code)
 {
-	legacy_u16 code_bits;
-	legacy_u16 key_index;
-
-	code_bits = (legacy_u16)code;
+	legacy_u16 code_bits = (legacy_u16)code;
 	if ((code_bits & INPUT_ASCII_BYTE_MASK) != 0) {
 		if (code_bits <= INPUT_ASCII_INDEX_MASK) {
 			input_callback_flags[code_bits] = 0;
 		}
 		return;
 	}
-	key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
+	legacy_u16 key_index = (legacy_u16)(code_bits >> LEGACY_BYTE_BITS);
 	if (key_index <= INPUT_EXTENDED_KEY_MAX_INDEX) {
 		input_extended_callback_flags[key_index] = 0;
 	}
@@ -193,23 +185,17 @@ legacy_s16 joystick_get_scaled_y(void)
 
 void load_palandcursor(void)
 {
+	legacy_s8 far *resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
+	struct SHAPE2D far *mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "!pal");
 	legacy_u8 palette[VGA_PALETTE_BYTE_COUNT];
-	legacy_s8 far *resource;
-	struct SHAPE2D far *mouse_shape;
-	legacy_u16 mouse_width;
-	legacy_u16 mouse_height;
-	legacy_u16 i;
-
-	resource = (legacy_s8 far *)file_load_shape2d_fatal("sdmain");
-	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "!pal");
-	for (i = 0; i < sizeof(palette); ++i) {
+	for (legacy_u16 i = 0; i < sizeof(palette); ++i) {
 		palette[i] = ((legacy_u8 far *)mouse_shape)[SHAPE2D_HEADER_SIZE + i];
 	}
 	dos_video_set_palette(0, VGA_PALETTE_COLOR_COUNT, palette);
 
 	mouse_shape = (struct SHAPE2D far *)locate_shape_fatal(resource, "smou");
-	mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) * video_x_alignment);
-	mouse_height = shape2d_get_height(mouse_shape);
+	legacy_u16 mouse_width = (legacy_u16)(shape2d_get_width(mouse_shape) * video_x_alignment);
+	legacy_u16 mouse_height = shape2d_get_height(mouse_shape);
 	mmgr_free(resource);
 
 	mouse_small_sprite = sprite_make_wnd(mouse_width, mouse_height, MOUSE_SPRITE_TRANSPARENT_COLOR);
@@ -335,13 +321,11 @@ void mouse_draw_opaque_check(void)
 
 legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *buttons)
 {
-	legacy_s16 i;
-
 	if (kbormouse == 0) {
 		return -1;
 	}
 
-	for (i = 0; i < count; i++) {
+	for (legacy_s16 i = 0; i < count; i++) {
 		if (buttons[i].x1 <= mouse_xpos && mouse_xpos <= buttons[i].x2 &&
 			buttons[i].y1 <= mouse_ypos && mouse_ypos <= buttons[i].y2) {
 			return (legacy_s8)i;
@@ -364,11 +348,9 @@ legacy_s16 get_kb_or_joy_flags(void)
 		INPUT_BRAKE_FLAG,
 		INPUT_BRAKE_FLAG | INPUT_STEER_LEFT_FLAG,
 		INPUT_STEER_LEFT_FLAG};
-	legacy_u16 flags;
-	legacy_u16 index;
 
-	flags = 0;
-	for (index = 0; index < INPUT_KEY_COUNT; index++) {
+	legacy_u16 flags = 0;
+	for (legacy_u16 index = 0; index < INPUT_KEY_COUNT; index++) {
 		if (kb_get_key_state(input_key_scancodes[index]) != 0) {
 			flags |= action_flags[index];
 		}
@@ -410,9 +392,7 @@ static void input_translate_joystick_key(void)
 
 static void input_update_joystick(legacy_u16 current_joy_flags)
 {
-	legacy_s16 changed_or_repeating;
-
-	changed_or_repeating = 0;
+	legacy_s16 changed_or_repeating = 0;
 	if ((legacy_u16)input_joystick_flags != current_joy_flags) {
 		input_new_joystick_flags =
 			((legacy_u16)input_joystick_flags ^ current_joy_flags) & current_joy_flags;
@@ -461,10 +441,8 @@ static void input_update_mouse_activity(legacy_s16 frame_delta)
 
 static void input_update_mouse_buttons(void)
 {
-	legacy_s16 changed_or_repeating;
-
 	if (kbormouse != 0) {
-		changed_or_repeating = 0;
+		legacy_s16 changed_or_repeating = 0;
 		if (input_mouse_previous_buttons != mouse_butstate) {
 			input_mouse_previous_buttons = mouse_butstate;
 			changed_or_repeating = 1;
@@ -497,15 +475,12 @@ static void input_update_mouse_buttons(void)
 
 legacy_s16 input_checking(legacy_s16 frame_delta)
 {
-	legacy_u16 current_joy_flags;
-	legacy_u16 key;
-
 	input_advance_clock(frame_delta);
-	key = (legacy_u16)dos_kb_get_char();
+	legacy_u16 key = (legacy_u16)dos_kb_get_char();
 	if (key != 0) {
 		kbormouse = 0;
 	}
-	current_joy_flags = (legacy_u16)dos_get_joy_flags();
+	legacy_u16 current_joy_flags = (legacy_u16)dos_get_joy_flags();
 	input_combined_flags = get_kb_or_joy_flags();
 	input_update_joystick(current_joy_flags);
 	input_update_mouse_activity(frame_delta);
@@ -535,12 +510,9 @@ static legacy_s16 mouse_track_divide(legacy_s16 numerator, legacy_s16 denominato
 static legacy_s16 mouse_track_position(legacy_s16 length, legacy_s16 selected,
 									   legacy_s16 item_count)
 {
-	legacy_s16 numerator;
-	legacy_s16 denominator;
-
-	numerator = LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_SUB(length, 1), selected);
+	legacy_s16 numerator = LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_SUB(length, 1), selected);
 	numerator = LEGACY_S16_WRAP_MUL(numerator, MOUSE_TRACK_POSITION_SCALE);
-	denominator = LEGACY_S16_WRAP_MUL(item_count, MOUSE_TRACK_POSITION_SCALE);
+	legacy_s16 denominator = LEGACY_S16_WRAP_MUL(item_count, MOUSE_TRACK_POSITION_SCALE);
 	return mouse_track_divide(numerator, denominator);
 }
 
@@ -596,15 +568,13 @@ static legacy_s16 mouse_track_page(legacy_s16 coordinate, legacy_s16 thumb_start
 
 static legacy_s16 mouse_track_drag(const struct MOUSE_TRACK_DRAG *track, legacy_s16 coordinate)
 {
-	legacy_s16 previous_start;
-	legacy_s16 current_coordinate;
+	legacy_s16 previous_start = track->thumb_start;
 	legacy_s16 dragged_start;
-
-	previous_start = track->thumb_start;
 	do {
 		input_checking((legacy_s16)timer_get_delta_alt());
-		current_coordinate = track->horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, track->x)
-											   : LEGACY_S16_WRAP_SUB(mouse_ypos, track->y);
+		legacy_s16 current_coordinate = track->horizontal
+											? LEGACY_S16_WRAP_SUB(mouse_xpos, track->x)
+											: LEGACY_S16_WRAP_SUB(mouse_ypos, track->y);
 		dragged_start = LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_SUB(current_coordinate, coordinate),
 											track->thumb_start);
 		if (dragged_start < 0) {
@@ -630,21 +600,12 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 							legacy_s16 height, legacy_s16 selected, legacy_s16 selection_width,
 							legacy_s16 item_count)
 {
-	struct MOUSE_TRACK_DRAG track;
-	legacy_s16 length;
-	legacy_s16 thumb_start;
+	legacy_s16 horizontal = LEGACY_S16_FROM_BITS(width) > LEGACY_S16_FROM_BITS(height);
+	legacy_s16 length = horizontal ? (legacy_s16)width : (legacy_s16)height;
 	legacy_s16 thumb_end;
-	legacy_s16 thumb_size;
-	legacy_s16 coordinate;
-	legacy_s16 dragged_start;
-	legacy_s16 quotient;
-	legacy_s16 scaled;
-	legacy_s16 horizontal;
-
-	horizontal = LEGACY_S16_FROM_BITS(width) > LEGACY_S16_FROM_BITS(height);
-	length = horizontal ? (legacy_s16)width : (legacy_s16)height;
-	thumb_size = mouse_track_thumb_size(length, selected, selection_width, item_count, &thumb_start,
-										&thumb_end);
+	legacy_s16 thumb_start;
+	legacy_s16 thumb_size = mouse_track_thumb_size(length, selected, selection_width, item_count,
+												   &thumb_start, &thumb_end);
 
 	if (operation == 0) {
 		mouse_track_draw(horizontal, x, width, y, height, thumb_start, thumb_size);
@@ -654,8 +615,10 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 		return selected;
 	}
 
-	coordinate =
+	legacy_s16 coordinate =
 		horizontal ? LEGACY_S16_WRAP_SUB(mouse_xpos, x) : LEGACY_S16_WRAP_SUB(mouse_ypos, y);
+	legacy_s16 dragged_start;
+	struct MOUSE_TRACK_DRAG track;
 	if (coordinate < thumb_start || coordinate > thumb_end) {
 		selected = mouse_track_page(coordinate, thumb_start, selected, item_count);
 	} else {
@@ -672,9 +635,10 @@ legacy_s16 scrollbar_update(legacy_s16 operation, legacy_s16 x, legacy_s16 width
 	}
 
 	if (selected == -1) {
-		quotient = mouse_track_divide(length, (legacy_s16)item_count);
+		legacy_s16 quotient = mouse_track_divide(length, (legacy_s16)item_count);
 		quotient = LEGACY_S16_SAR(quotient, 1U);
-		scaled = LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
+		legacy_s16 scaled =
+			LEGACY_S16_WRAP_MUL(LEGACY_S16_WRAP_ADD(dragged_start, quotient), item_count);
 		selected = mouse_track_divide(scaled, length);
 	}
 
@@ -726,14 +690,12 @@ void input_push_status(void)
 
 void input_pop_status(void)
 {
-	legacy_s16 index;
-
 	if (input_mode_stack_depth == 0) {
 		return;
 	}
 
 	input_mode_stack_depth--;
-	index = (legacy_s8)input_mode_stack_depth;
+	legacy_s16 index = (legacy_s8)input_mode_stack_depth;
 	mouse_transparent_mode = input_draw_mode_stack[index];
 	kbormouse = input_device_mode_stack[index];
 	if (kbormouse == 0) {
@@ -743,16 +705,12 @@ void input_pop_status(void)
 
 legacy_s16 input_repeat_check(legacy_s16 duration)
 {
-	legacy_u16 delta;
-	legacy_u16 elapsed;
-	legacy_s16 result;
-
-	elapsed = 0;
 	timer_get_delta_alt();
+	legacy_u16 elapsed = 0;
 	while (LEGACY_S16_FROM_BITS((legacy_u16)duration) > LEGACY_S16_FROM_BITS(elapsed)) {
-		delta = (legacy_u16)timer_get_delta_alt();
+		legacy_u16 delta = (legacy_u16)timer_get_delta_alt();
 		elapsed = LEGACY_U16_WRAP_ADD(elapsed, delta);
-		result = input_do_checking(LEGACY_S16_FROM_BITS(delta));
+		legacy_s16 result = input_do_checking(LEGACY_S16_FROM_BITS(delta));
 		if (result != 0) {
 			return result;
 		}

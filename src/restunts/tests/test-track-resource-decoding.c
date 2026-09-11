@@ -19,20 +19,17 @@ static legacy_s16 expected_s16(const legacy_u8 *source, legacy_u16 offset)
 int main(void)
 {
 	legacy_u8 plane_source[TRACK_PLAN_RESOURCE_COUNT * PLANE_RECORD_SIZE];
-	legacy_u8 wall_source[TRACK_WALL_RESOURCE_COUNT * WALL_RECORD_SIZE];
-	legacy_u16 index;
-	legacy_u16 component;
-	legacy_u16 offset;
-
-	for (index = 0U; index < TRACK_PLAN_RESOURCE_COUNT * PLANE_RECORD_SIZE; index++) {
+	for (legacy_u16 index = 0U; index < TRACK_PLAN_RESOURCE_COUNT * PLANE_RECORD_SIZE; index++) {
 		plane_source[index] = (legacy_u8)(index * 29U + 3U);
 	}
-	for (index = 0U; index < TRACK_WALL_RESOURCE_COUNT * WALL_RECORD_SIZE; index++) {
+	legacy_u8 wall_source[TRACK_WALL_RESOURCE_COUNT * WALL_RECORD_SIZE];
+	for (legacy_u16 index = 0U; index < TRACK_WALL_RESOURCE_COUNT * WALL_RECORD_SIZE; index++) {
 		wall_source[index] = (legacy_u8)(index * 43U + 7U);
 	}
 
 	track_collision_resources_decode(plane_source, wall_source);
-	for (index = 0U; index < TRACK_PLAN_RESOURCE_COUNT; index++) {
+	legacy_u16 offset;
+	for (legacy_u16 index = 0U; index < TRACK_PLAN_RESOURCE_COUNT; index++) {
 		offset = (legacy_u16)(index * PLANE_RECORD_SIZE);
 		assert(planptr[index].plane_yz == expected_s16(plane_source, offset));
 		assert(planptr[index].plane_xy == expected_s16(plane_source, (legacy_u16)(offset + 2U)));
@@ -48,12 +45,12 @@ int main(void)
 			   expected_s16(plane_source, (legacy_u16)(offset + 12U)));
 		assert(planptr[index].plane_normal.z ==
 			   expected_s16(plane_source, (legacy_u16)(offset + 14U)));
-		for (component = 0U; component < 9U; component++) {
+		for (legacy_u16 component = 0U; component < 9U; component++) {
 			assert(planptr[index].plane_rotation.vals[component] ==
 				   expected_s16(plane_source, (legacy_u16)(offset + 16U + component * 2U)));
 		}
 	}
-	for (index = 0U; index < TRACK_WALL_RESOURCE_COUNT; index++) {
+	for (legacy_u16 index = 0U; index < TRACK_WALL_RESOURCE_COUNT; index++) {
 		offset = (legacy_u16)(index * WALL_RECORD_SIZE);
 		assert(wallptr[index].orientation == expected_s16(wall_source, offset));
 		assert(wallptr[index].x == expected_s16(wall_source, (legacy_u16)(offset + 2U)));

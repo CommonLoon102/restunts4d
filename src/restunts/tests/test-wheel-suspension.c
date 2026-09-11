@@ -35,26 +35,22 @@ static void test_suspension_boundaries(void)
 
 static legacy_u32 suspension_fingerprint(void)
 {
+	legacy_u32 hash = 2166136261UL;
 	static const legacy_s16 values[] = {-32768, -385, -384, -289, -288, -193, -192, -129, -128, -5,
 										-4,		-3,	  -1,	0,	  1,	3,	  4,	5,	  127,	128,
 										129,	191,  192,	193,  383,	384,  385,	32767};
 	struct CARSTATE car;
-	legacy_u32 hash = 2166136261UL;
-	legacy_s16 result;
-	unsigned deflection, target, delta, wheel, i;
-	const unsigned char *bytes;
-
-	for (deflection = 0; deflection < sizeof(values) / sizeof(values[0]); deflection++) {
-		for (target = 0; target < sizeof(values) / sizeof(values[0]); target++) {
-			for (delta = 0; delta < sizeof(values) / sizeof(values[0]); delta++) {
+	for (unsigned deflection = 0; deflection < sizeof(values) / sizeof(values[0]); deflection++) {
+		for (unsigned target = 0; target < sizeof(values) / sizeof(values[0]); target++) {
+			for (unsigned delta = 0; delta < sizeof(values) / sizeof(values[0]); delta++) {
 				memset(&car, 0x5a, sizeof(car));
-				wheel = (deflection + target + delta) % 4;
+				unsigned wheel = (deflection + target + delta) % 4;
 				car.car_suspension_deflection[wheel] = values[deflection];
 				car.car_suspension_target[wheel] = values[target];
-				result = update_wheel_suspension(&car, values[delta], wheel);
+				legacy_s16 result = update_wheel_suspension(&car, values[delta], wheel);
 				hash = (hash ^ (legacy_u16)result) * 16777619UL;
-				bytes = (const unsigned char *)&car;
-				for (i = 0; i < sizeof(car); i++) {
+				const unsigned char *bytes = (const unsigned char *)&car;
+				for (unsigned i = 0; i < sizeof(car); i++) {
 					hash = (hash ^ bytes[i]) * 16777619UL;
 				}
 			}
@@ -65,10 +61,8 @@ static legacy_u32 suspension_fingerprint(void)
 
 int main(void)
 {
-	legacy_u32 hash;
-
 	test_suspension_boundaries();
-	hash = suspension_fingerprint();
+	legacy_u32 hash = suspension_fingerprint();
 #ifdef PHYSICS_RECORD_BASELINE
 	printf("%08lx\n", (unsigned long)hash);
 #else

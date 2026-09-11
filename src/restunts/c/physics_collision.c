@@ -45,23 +45,16 @@ enum COLLISION_BOUNDING_POINT_INDEX {
 legacy_s16 scale_position_delta(legacy_s32 current, legacy_s32 previous, legacy_s16 factor,
 								legacy_s16 divisor)
 {
-	legacy_s32 delta;
-	legacy_s32 product;
-	legacy_s32 quotient;
-
-	delta = LEGACY_S32_WRAP_SUB(current, previous);
-	product = LEGACY_S32_WRAP_MUL(delta, (legacy_s32)factor);
-	quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
+	legacy_s32 delta = LEGACY_S32_WRAP_SUB(current, previous);
+	legacy_s32 product = LEGACY_S32_WRAP_MUL(delta, (legacy_s32)factor);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(product, (legacy_s32)divisor);
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
 legacy_s16 scale_speed_to_travel(legacy_u16 speed, legacy_u16 divisor)
 {
-	legacy_u32 product;
-	legacy_u32 quotient;
-
-	product = LEGACY_U32_WRAP_MUL((legacy_u32)speed, SPEED_TO_TRAVEL_NUMERATOR);
-	quotient = LEGACY_U32_DIV_OR_ZERO(product, divisor);
+	legacy_u32 product = LEGACY_U32_WRAP_MUL((legacy_u32)speed, SPEED_TO_TRAVEL_NUMERATOR);
+	legacy_u32 quotient = LEGACY_U32_DIV_OR_ZERO(product, divisor);
 	return LEGACY_S16_FROM_BITS((legacy_u16)quotient);
 }
 
@@ -101,9 +94,7 @@ static void collision_tile_center(legacy_u8 tile_element, legacy_u16 row_index,
 								  legacy_u16 column_index, legacy_u16 *center_z,
 								  legacy_u16 *center_x)
 {
-	legacy_u8 multi_tile_flags;
-
-	multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
+	legacy_u8 multi_tile_flags = trkObjectList[tile_element].ss_multiTileFlag;
 	if ((multi_tile_flags & MULTI_TILE_ROW_FLAG) != 0) {
 		*center_z = (legacy_u16)track_row_position(row_index);
 	}
@@ -115,20 +106,16 @@ static void collision_tile_center(legacy_u8 tile_element, legacy_u16 row_index,
 static legacy_u16 collision_model_points(legacy_u8 tile_element,
 										 const struct VECTOR **dependency_points)
 {
-	legacy_u16 count;
-	legacy_u16 index;
-	legacy_s8 physical_model;
-
 	*dependency_points = 0;
-	count = 0;
-	physical_model = (legacy_s8)trkObjectList[tile_element].ss_physicalModel;
+	legacy_s8 physical_model = (legacy_s8)trkObjectList[tile_element].ss_physicalModel;
+	legacy_u16 count = 0;
 	if (physical_model == PHYSICAL_MODEL_HIGHWAY ||
 		(physical_model >= PHYSICAL_MODEL_SCENERY_FIRST &&
 		 physical_model <= PHYSICAL_MODEL_SCENERY_LAST)) {
 		*dependency_points = scenery_collision_points;
 		count = SCENERY_COLLISION_POINT_COUNT;
 	} else {
-		for (index = 0U; index < COLLISION_MODEL_COUNT; index++) {
+		for (legacy_u16 index = 0U; index < COLLISION_MODEL_COUNT; index++) {
 			if (collision_models[index].physical_model == physical_model) {
 				*dependency_points = collision_models[index].points;
 				count = collision_models[index].count;
@@ -144,18 +131,12 @@ static void transform_collision_points(const struct VECTOR *dependency_points,
 									   legacy_u16 orientation, legacy_u16 center_x,
 									   legacy_u16 center_z, legacy_u16 terrain_height)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < count; index++) {
-		legacy_u16 source_x;
-		legacy_u16 source_y;
-		legacy_u16 source_z;
-		legacy_u16 rotated_x;
+	for (legacy_u16 index = 0; index < count; index++) {
+		legacy_u16 source_x = (legacy_u16)dependency_points[index].x;
+		legacy_u16 source_y = (legacy_u16)dependency_points[index].y;
+		legacy_u16 source_z = (legacy_u16)dependency_points[index].z;
 		legacy_u16 rotated_z;
-
-		source_x = (legacy_u16)dependency_points[index].x;
-		source_y = (legacy_u16)dependency_points[index].y;
-		source_z = (legacy_u16)dependency_points[index].z;
+		legacy_u16 rotated_x;
 		if (orientation == 0) {
 			rotated_x = source_x;
 			rotated_z = source_z;
@@ -180,27 +161,16 @@ static void transform_collision_points(const struct VECTOR *dependency_points,
 legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 									  struct VECTOR *output)
 {
-	const struct VECTOR *dependency_points;
-	legacy_u16 column;
-	legacy_u16 row;
-	legacy_u16 previous_row_base;
-	legacy_u16 center_x;
-	legacy_u16 center_z;
-	legacy_u16 terrain_height;
-	legacy_u16 orientation;
-	legacy_u16 count;
-	legacy_u8 tile_element;
-
-	column = (legacy_u16)column_arg;
-	row = (legacy_u16)row_arg;
-	tile_element = track_element_map[trackrows[row] + column];
+	legacy_u16 column = (legacy_u16)column_arg;
+	legacy_u16 row = (legacy_u16)row_arg;
+	legacy_u8 tile_element = track_element_map[trackrows[row] + column];
 	if (tile_element == 0) {
 		return 0;
 	}
 
-	center_x = (legacy_u16)track_column_centers[column];
-	center_z = (legacy_u16)track_row_centers[row];
-	previous_row_base =
+	legacy_u16 center_x = (legacy_u16)track_column_centers[column];
+	legacy_u16 center_z = (legacy_u16)track_row_centers[row];
+	legacy_u16 previous_row_base =
 		row == 0 ? (legacy_u16)replay_overflow_acknowledged_word : (legacy_u16)trackrows[row - 1U];
 	if (tile_element == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		tile_element = track_element_map[LEGACY_U16_WRAP_SUB(previous_row_base + column, 1U)];
@@ -215,15 +185,16 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 		collision_tile_center(tile_element, row, column + 1U, &center_z, &center_x);
 	}
 
-	count = collision_model_points(tile_element, &dependency_points);
+	const struct VECTOR *dependency_points;
+	legacy_u16 count = collision_model_points(tile_element, &dependency_points);
 	if (count == 0) {
 		return 0;
 	}
 
-	terrain_height = track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE
-						 ? (legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]
-						 : 0;
-	orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
+	legacy_u16 terrain_height = track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE
+									? (legacy_u16)hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]
+									: 0;
+	legacy_u16 orientation = (legacy_u16)trkObjectList[tile_element].ss_rotY;
 	transform_collision_points(dependency_points, output, count, orientation, center_x, center_z,
 							   terrain_height);
 	return count;
@@ -233,10 +204,8 @@ struct LEGACY_EXECUTION_RESIDUE legacy_execution_residue;
 
 static legacy_s16 decay_suspension_target(struct CARSTATE *carstate, legacy_s16 wheel_index)
 {
-	legacy_s16 target;
-
 	/* Decay the per-wheel target by four toward zero each frame. */
-	target = (legacy_s16)carstate->car_suspension_target[wheel_index];
+	legacy_s16 target = (legacy_s16)carstate->car_suspension_target[wheel_index];
 	if (target < 0) {
 		target = LEGACY_S16_WRAP_ADD(target, SUSPENSION_TARGET_DECAY);
 		if (target > 0) {
@@ -255,9 +224,7 @@ static legacy_s16 decay_suspension_target(struct CARSTATE *carstate, legacy_s16 
 static legacy_s16 return_wheel_suspension(struct CARSTATE *carstate, legacy_s16 wheel_index,
 										  legacy_s16 target, legacy_s16 previous_deflection)
 {
-	legacy_s16 adjustment;
-
-	adjustment = 0;
+	legacy_s16 adjustment = 0;
 
 	if ((legacy_s16)carstate->car_suspension_deflection[wheel_index] > target) {
 		carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_SUB(
@@ -280,23 +247,17 @@ static legacy_s16 return_wheel_suspension(struct CARSTATE *carstate, legacy_s16 
 legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact_delta_arg,
 								   legacy_s16 wheel_index)
 {
-	legacy_s16 previous_deflection;
-	legacy_s16 contact_delta;
-	legacy_s16 adjustment;
-	legacy_s16 scaled_delta;
-	legacy_s16 target;
+	legacy_s16 previous_deflection = (legacy_s16)carstate->car_suspension_deflection[wheel_index];
+	legacy_s16 contact_delta = (legacy_s16)contact_delta_arg;
 
-	previous_deflection = (legacy_s16)carstate->car_suspension_deflection[wheel_index];
-	contact_delta = (legacy_s16)contact_delta_arg;
-	adjustment = 0;
-
-	target = decay_suspension_target(carstate, wheel_index);
+	legacy_s16 target = decay_suspension_target(carstate, wheel_index);
 
 	if (contact_delta < 0 && (legacy_s16)carstate->car_suspension_deflection[wheel_index] >
 								 LEGACY_S16_WRAP_NEGATE(contact_delta)) {
 		contact_delta = 0;
 	}
 
+	legacy_s16 adjustment = 0;
 	if (contact_delta == 0) {
 		adjustment = return_wheel_suspension(carstate, wheel_index, target, previous_deflection);
 	} else if (contact_delta > 0) {
@@ -316,7 +277,7 @@ legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact
 			carstate->car_suspension_deflection[wheel_index] = LEGACY_S16_WRAP_ADD(
 				carstate->car_suspension_deflection[wheel_index], contact_delta);
 		} else {
-			scaled_delta =
+			legacy_s16 scaled_delta =
 				LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(contact_delta, HARD_CONTACT_SCALE_NUMERATOR));
 			carstate->car_suspension_deflection[wheel_index] =
 				LEGACY_S16_WRAP_ADD(carstate->car_suspension_deflection[wheel_index], scaled_delta);
@@ -336,35 +297,25 @@ legacy_s16 update_wheel_suspension(struct CARSTATE *carstate, legacy_s16 contact
 
 legacy_s16 resolve_car_collision_speeds(struct CARSTATE *first_state, struct CARSTATE *second_state)
 {
-	legacy_s16 first_angle;
-	legacy_s16 second_angle;
-	legacy_s16 first_sin_speed;
-	legacy_s16 second_sin_speed;
-	legacy_s16 first_cos_speed;
-	legacy_s16 second_cos_speed;
-	legacy_s16 relative_speed;
-	legacy_s16 slowdown;
-	legacy_s16 angle_delta;
-
 	first_state->car_collision_latch = CAR_COLLISION_LATCH_SET;
 	second_state->car_collision_latch = CAR_COLLISION_LATCH_SET;
-	first_angle = (legacy_s16)first_state->car_rotate.x;
-	second_angle = (legacy_s16)second_state->car_rotate.x;
+	legacy_s16 first_angle = (legacy_s16)first_state->car_rotate.x;
+	legacy_s16 second_angle = (legacy_s16)second_state->car_rotate.x;
 
-	first_sin_speed = multiply_and_scale(
+	legacy_s16 first_sin_speed = multiply_and_scale(
 		(legacy_s16)(first_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		sin_fast((legacy_u16)first_angle));
-	second_sin_speed = multiply_and_scale(
+	legacy_s16 second_sin_speed = multiply_and_scale(
 		(legacy_s16)(second_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		sin_fast((legacy_u16)second_angle));
-	first_cos_speed = multiply_and_scale(
+	legacy_s16 first_cos_speed = multiply_and_scale(
 		(legacy_s16)(first_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		cos_fast((legacy_u16)first_angle));
-	second_cos_speed = multiply_and_scale(
+	legacy_s16 second_cos_speed = multiply_and_scale(
 		(legacy_s16)(second_state->car_actual_speed >> COLLISION_SPEED_FIXED_SHIFT),
 		cos_fast((legacy_u16)second_angle));
 
-	relative_speed =
+	legacy_s16 relative_speed =
 		(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(second_sin_speed, first_sin_speed),
 								  LEGACY_S16_WRAP_SUB(second_cos_speed, first_cos_speed));
 	if (relative_speed < COLLISION_MIN_RELATIVE_SPEED) {
@@ -372,7 +323,8 @@ legacy_s16 resolve_car_collision_speeds(struct CARSTATE *first_state, struct CAR
 	}
 
 	/* The original keeps only the low product word before shifting it. */
-	slowdown = LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(COLLISION_SLOWDOWN_SCALE, relative_speed));
+	legacy_s16 slowdown =
+		LEGACY_S16_SAR2(LEGACY_S16_WRAP_MUL(COLLISION_SLOWDOWN_SCALE, relative_speed));
 	if ((legacy_u16)first_state->car_actual_speed < (legacy_u16)slowdown) {
 		first_state->car_actual_speed = CAR_SPEED_STOPPED;
 	} else {
@@ -380,7 +332,7 @@ legacy_s16 resolve_car_collision_speeds(struct CARSTATE *first_state, struct CAR
 			LEGACY_U16_WRAP_SUB(first_state->car_actual_speed, slowdown);
 	}
 
-	angle_delta = LEGACY_S16_WRAP_SUB(second_angle, first_angle);
+	legacy_s16 angle_delta = LEGACY_S16_WRAP_SUB(second_angle, first_angle);
 	if (angle_delta >= ANGLE_HALF_TURN) {
 		angle_delta = LEGACY_S16_WRAP_SUB(angle_delta, ANGLE_FULL_TURN);
 	}
@@ -415,15 +367,13 @@ static void build_collision_corners(struct POINT2D *collision_points,
 									struct VECTOR *world_coordinates,
 									struct VECTOR corners[COLLISION_CORNER_COUNT])
 {
-	struct MATRIX *rotation;
+	struct MATRIX *rotation =
+		mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].x),
+					LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].y),
+					LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].z),
+					MATRIX_ROTATION_ORDER_ZXY);
 	struct VECTOR local_corner;
-	legacy_s16 corner;
-
-	rotation = mat_rot_zxy(LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].x),
-						   LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].y),
-						   LEGACY_S16_WRAP_NEGATE(world_coordinates[COLLISION_ROTATION_INDEX].z),
-						   MATRIX_ROTATION_ORDER_ZXY);
-	for (corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
+	for (legacy_s16 corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
 		if (corner == COLLISION_LEFT_FIRST_CORNER || corner == COLLISION_LEFT_LAST_CORNER) {
 			local_corner.x =
 				LEGACY_S16_WRAP_NEGATE(collision_points[COLLISION_EXTENT_POINT_INDEX].px);
@@ -452,17 +402,13 @@ static legacy_s16 collision_corners_inside(struct VECTOR corners[COLLISION_CORNE
 										   struct POINT2D *collision_points,
 										   struct VECTOR *world_coordinates)
 {
-	struct MATRIX *rotation;
-	struct VECTOR relative_corner;
-	struct VECTOR local_corner;
-	legacy_s16 negative_extent;
-	legacy_s16 corner;
-
-	rotation =
+	struct MATRIX *rotation =
 		mat_rot_zxy(world_coordinates[COLLISION_ROTATION_INDEX].x,
 					world_coordinates[COLLISION_ROTATION_INDEX].y,
 					world_coordinates[COLLISION_ROTATION_INDEX].z, MATRIX_ROTATION_ORDER_YXZ);
-	for (corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
+	struct VECTOR local_corner;
+	struct VECTOR relative_corner;
+	for (legacy_s16 corner = 0; corner < COLLISION_CORNER_COUNT; corner++) {
 		relative_corner.x =
 			LEGACY_S16_WRAP_SUB(world_coordinates[COLLISION_POSITION_INDEX].x, corners[corner].x);
 		relative_corner.y =
@@ -475,7 +421,8 @@ static legacy_s16 collision_corners_inside(struct VECTOR corners[COLLISION_CORNE
 			local_corner.y > (legacy_s16)collision_points[COLLISION_EXTENT_POINT_INDEX].py) {
 			continue;
 		}
-		negative_extent = LEGACY_S16_WRAP_NEGATE(collision_points[COLLISION_EXTENT_POINT_INDEX].px);
+		legacy_s16 negative_extent =
+			LEGACY_S16_WRAP_NEGATE(collision_points[COLLISION_EXTENT_POINT_INDEX].px);
 		if (local_corner.x < negative_extent ||
 			local_corner.x > (legacy_s16)collision_points[COLLISION_EXTENT_POINT_INDEX].px) {
 			continue;
@@ -496,12 +443,9 @@ legacy_s16 car_collision_boxes_overlap(struct POINT2D *first_collision_points,
 									   struct POINT2D *second_collision_points,
 									   struct VECTOR *second_world_coordinates)
 {
-	struct VECTOR position_delta;
-	struct VECTOR corners[COLLISION_CORNER_COUNT];
-	legacy_s16 combined_radius;
-
-	combined_radius = LEGACY_S16_WRAP_ADD(first_collision_points[COLLISION_RADIUS_POINT_INDEX].py,
-										  second_collision_points[COLLISION_RADIUS_POINT_INDEX].py);
+	legacy_s16 combined_radius =
+		LEGACY_S16_WRAP_ADD(first_collision_points[COLLISION_RADIUS_POINT_INDEX].py,
+							second_collision_points[COLLISION_RADIUS_POINT_INDEX].py);
 	if (collision_axis_distance(first_world_coordinates[COLLISION_POSITION_INDEX].x,
 								second_world_coordinates[COLLISION_POSITION_INDEX].x) >
 		combined_radius) {
@@ -518,6 +462,7 @@ legacy_s16 car_collision_boxes_overlap(struct POINT2D *first_collision_points,
 		return 0;
 	}
 
+	struct VECTOR position_delta;
 	position_delta.x = LEGACY_S16_WRAP_SUB(first_world_coordinates[COLLISION_POSITION_INDEX].x,
 										   second_world_coordinates[COLLISION_POSITION_INDEX].x);
 	position_delta.y = LEGACY_S16_WRAP_SUB(first_world_coordinates[COLLISION_POSITION_INDEX].y,
@@ -528,6 +473,7 @@ legacy_s16 car_collision_boxes_overlap(struct POINT2D *first_collision_points,
 		return 0;
 	}
 
+	struct VECTOR corners[COLLISION_CORNER_COUNT];
 	build_collision_corners(first_collision_points, first_world_coordinates, corners);
 	if (collision_corners_inside(corners, second_collision_points, second_world_coordinates)) {
 		return 1;

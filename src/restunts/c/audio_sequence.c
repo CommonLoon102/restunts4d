@@ -64,10 +64,8 @@ legacy_s16 audio_sequence_command_has_byte_argument(legacy_u8 command_index)
 
 static legacy_u32 audio_parse_variable_length(const legacy_u8 far *source, legacy_u16 *size)
 {
-	legacy_u32 value;
 	legacy_u8 byte_value;
-
-	value = 0;
+	legacy_u32 value = 0;
 	do {
 		byte_value = source[*size];
 		*size = LEGACY_U16_WRAP_ADD(*size, 1U);
@@ -80,20 +78,16 @@ static legacy_u32 audio_parse_variable_length(const legacy_u8 far *source, legac
 static void audio_parse_sequence_event(const legacy_u8 far *source,
 									   struct audio_sequence_event *event)
 {
-	legacy_u16 payload_size;
-	legacy_u16 index;
-	legacy_u16 size;
-	legacy_u8 command_index;
-
-	size = 0;
+	legacy_u16 size = 0;
 	event->delay = audio_parse_variable_length(source, &size);
 	event->command = source[size++];
 	event->argument = 0;
 	event->value = 0;
 
+	legacy_u16 payload_size;
 	if (event->command >= AUDIO_SEQUENCE_COMMAND_BASE &&
 		event->command <= AUDIO_SEQUENCE_COMMAND_LAST) {
-		command_index = (legacy_u8)(event->command - AUDIO_SEQUENCE_COMMAND_BASE);
+		legacy_u8 command_index = (legacy_u8)(event->command - AUDIO_SEQUENCE_COMMAND_BASE);
 		if (audio_sequence_command_has_byte_argument(command_index)) {
 			event->argument = source[size++];
 		} else {
@@ -117,7 +111,7 @@ static void audio_parse_sequence_event(const legacy_u8 far *source,
 					break;
 				case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
 					payload_size = source[size++];
-					for (index = 0; index < payload_size; index++) {
+					for (legacy_u16 index = 0; index < payload_size; index++) {
 						dos_audio_driver_data[index] = source[size + index];
 					}
 					size = LEGACY_U16_WRAP_ADD(size, payload_size);
@@ -137,24 +131,21 @@ static void audio_parse_sequence_event(const legacy_u8 far *source,
 
 static void far *audio_sequence_instrument(struct AUDIO_CHANNEL *chunk, legacy_u8 instrument)
 {
-	const legacy_u8 far *instruments;
-
-	instruments = (const legacy_u8 far *)audio_read_far_pointer((legacy_u8 *)&chunk->instruments);
+	const legacy_u8 far *instruments =
+		(const legacy_u8 far *)audio_read_far_pointer((legacy_u8 *)&chunk->instruments);
 	return audio_read_far_pointer(instruments + (legacy_u16)instrument * AUDIO_FAR_POINTER_SIZE);
 }
 
 static void audio_sequence_bind_instrument(legacy_s16 channel, struct AUDIO_CHANNEL *chunk,
 										   legacy_u8 instrument)
 {
-	void far *resource;
-	legacy_u8 driver_channel;
-
-	resource = audio_sequence_instrument(chunk, instrument);
+	void far *resource = audio_sequence_instrument(chunk, instrument);
 	audio_write_far_pointer((legacy_u8 *)&chunk->resource, resource);
 	if (dos_audio_uses_direct_channels == 0) {
 		return;
 	}
 
+	legacy_u8 driver_channel;
 	if (((legacy_u8 far *)resource)[AUDIO_INSTRUMENT_DIRECT_CHANNEL_OFFSET] <
 		AUDIO_DIRECT_CHANNEL_COUNT) {
 		driver_channel = ((legacy_u8 far *)resource)[AUDIO_INSTRUMENT_DIRECT_CHANNEL_OFFSET];
@@ -170,9 +161,6 @@ static void audio_sequence_bind_instrument(legacy_s16 channel, struct AUDIO_CHAN
 static void audio_sequence_set_control(struct AUDIO_CHANNEL *chunk, legacy_u8 control,
 									   legacy_u16 value)
 {
-	struct AUDIO_CONTEXT *context;
-	legacy_u16 context_index;
-
 	if (control == MIDI_SUSTAIN_CONTROL) {
 		chunk->sustain = (legacy_u8)value;
 	}
@@ -181,8 +169,8 @@ static void audio_sequence_set_control(struct AUDIO_CHANNEL *chunk, legacy_u8 co
 		dos_audio_driver_set_control(chunk->driver_channel, 0, control, value);
 	}
 
-	context = dos_audio_contexts;
-	for (context_index = 0; context_index < dos_audio_context_count; context_index++) {
+	struct AUDIO_CONTEXT *context = dos_audio_contexts;
+	for (legacy_u16 context_index = 0; context_index < dos_audio_context_count; context_index++) {
 		if (context->channel == chunk->channel) {
 			if (dos_audio_uses_direct_channels == 0) {
 				dos_audio_driver_set_control((legacy_s16)context_index, context, control, value);
@@ -198,15 +186,12 @@ static void audio_sequence_set_control(struct AUDIO_CHANNEL *chunk, legacy_u8 co
 
 static void audio_sequence_set_pitch(struct AUDIO_CHANNEL *chunk, legacy_u16 value)
 {
-	legacy_s16 low_value;
-	legacy_s16 pitch;
-
 	if ((value & AUDIO_PITCH_LOW_SIGN_FLAG) != 0) {
 		value = LEGACY_U16_REPLACE_LOW_BYTE(value,
 											LEGACY_U16_LOW_BYTE(value) | AUDIO_PITCH_LOW_SIGN_BIT);
 	}
-	low_value = LEGACY_S8_FROM_BITS(LEGACY_U16_LOW_BYTE(value));
-	pitch = LEGACY_S16_WRAP_ADD(
+	legacy_s16 low_value = LEGACY_S8_FROM_BITS(LEGACY_U16_LOW_BYTE(value));
+	legacy_s16 pitch = LEGACY_S16_WRAP_ADD(
 		LEGACY_S16_FROM_BITS((value & LEGACY_U16_HIGH_BYTE_MASK) >> AUDIO_PITCH_HIGH_SCALE_SHIFT),
 		low_value);
 	pitch = LEGACY_S16_WRAP_SUB(pitch, AUDIO_PITCH_CENTER);
@@ -217,9 +202,7 @@ static void audio_sequence_set_pitch(struct AUDIO_CHANNEL *chunk, legacy_u16 val
 static void audio_sequence_finish_channel(legacy_s16 channel, struct AUDIO_CHANNEL *chunk,
 										  legacy_s16 reset_channel)
 {
-	audio_channel_callback_type callback;
-
-	callback =
+	audio_channel_callback_type callback =
 		(audio_channel_callback_type)audio_read_far_pointer((legacy_u8 *)&chunk->finish_callback);
 	chunk->cursor.offset = 0;
 	chunk->cursor.segment = 0;
@@ -236,9 +219,7 @@ static legacy_s16 audio_sequence_flow_command(legacy_s16 channel, struct AUDIO_C
 											  const struct audio_sequence_event *event)
 {
 	legacy_u8 depth;
-	legacy_u8 count;
 	void far *pointer;
-
 	switch ((legacy_u8)(event->command - AUDIO_SEQUENCE_COMMAND_BASE)) {
 		case AUDIO_SEQUENCE_COMMAND_RETURN:
 			depth = chunk->call_depth;
@@ -271,7 +252,7 @@ static legacy_s16 audio_sequence_flow_command(legacy_s16 channel, struct AUDIO_C
 			if (depth != 0) {
 				pointer = audio_read_far_pointer((legacy_u8 *)&chunk->return_stack[depth - 1U]);
 				audio_write_far_pointer((legacy_u8 *)&chunk->cursor, pointer);
-				count = chunk->loop_counts[depth - 1U];
+				legacy_u8 count = chunk->loop_counts[depth - 1U];
 				chunk->loop_counts[depth - 1U]--;
 				if (count == 0) {
 					chunk->stack_depth--;
@@ -344,20 +325,16 @@ static void audio_sequence_apply_command(legacy_s16 channel, struct AUDIO_CHANNE
 
 static void audio_service_sequence_channel(legacy_s16 channel)
 {
-	struct audio_sequence_event event;
+	struct AUDIO_CHANNEL *chunk = &audio_channels[channel];
 	struct audio_sequence_event next_event;
-	struct AUDIO_CHANNEL *chunk;
-	legacy_u32 delay;
-	void far *pointer;
-
-	chunk = &audio_channels[channel];
+	struct audio_sequence_event event;
 	for (;;) {
-		delay = chunk->delay;
+		legacy_u32 delay = chunk->delay;
 		if (delay != 0) {
 			chunk->delay = LEGACY_U32_WRAP_SUB(delay, 1UL);
 			return;
 		}
-		pointer = audio_read_far_pointer((legacy_u8 *)&chunk->cursor);
+		void far *pointer = audio_read_far_pointer((legacy_u8 *)&chunk->cursor);
 		if (pointer == 0) {
 			return;
 		}
@@ -386,11 +363,8 @@ static void audio_service_sequence_channel(legacy_s16 channel)
 
 static void audio_advance_music_contexts(void)
 {
-	struct AUDIO_CONTEXT *context;
-	legacy_u16 context_index;
-
-	context = dos_audio_contexts;
-	for (context_index = 0; context_index < dos_audio_context_count; context_index++) {
+	struct AUDIO_CONTEXT *context = dos_audio_contexts;
+	for (legacy_u16 context_index = 0; context_index < dos_audio_context_count; context_index++) {
 		if (context->state != AUDIO_CONTEXT_STATE_FREE &&
 			context->channel < AUDIO_DIRECT_CHANNEL_COUNT) {
 			audio_advance_driver_context(context);
@@ -401,8 +375,6 @@ static void audio_advance_music_contexts(void)
 
 void audio_sequence_timer(void)
 {
-	legacy_u16 channel;
-
 	if (dos_data_stack_segments_match() == 0 || dos_audio_driver_binary == 0 ||
 		audio_update_lock != AUDIO_UPDATE_UNLOCKED ||
 		audio_sequence_timer_active != AUDIO_SEQUENCE_TIMER_INACTIVE) {
@@ -419,15 +391,15 @@ void audio_sequence_timer(void)
 			audio_advance_music_contexts();
 			audio_sequence_elapsed_ticks =
 				LEGACY_U16_WRAP_SUB(audio_sequence_elapsed_ticks, audio_sequence_tick_period);
-			for (channel = 0; channel < audio_music_channel_count; channel++) {
+			for (legacy_u16 channel = 0; channel < audio_music_channel_count; channel++) {
 				audio_service_sequence_channel((legacy_s16)channel);
 			}
 		}
 	} else {
 		audio_advance_music_contexts();
 	}
-	for (channel = AUDIO_EFFECT_CHANNEL_FIRST; channel < AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE;
-		 channel++) {
+	for (legacy_u16 channel = AUDIO_EFFECT_CHANNEL_FIRST;
+		 channel < AUDIO_LAST_EFFECT_CHANNEL_EXCLUSIVE; channel++) {
 		audio_service_sequence_channel((legacy_s16)channel);
 	}
 	audio_sequence_timer_active = AUDIO_SEQUENCE_TIMER_INACTIVE;

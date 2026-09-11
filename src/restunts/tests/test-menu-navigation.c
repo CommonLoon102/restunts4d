@@ -77,11 +77,10 @@ void *file_load_resource(legacy_s16 type, const legacy_s8 *name)
 }
 void locate_many_resources(legacy_s8 *resource, const legacy_s8 *names, legacy_s8 **pointers)
 {
-	unsigned int i;
 	trace_word(2007);
 	trace_pointer(resource);
 	trace_text(names);
-	for (i = 0; i < 7; i++) {
+	for (unsigned int i = 0; i < 7; i++) {
 		pointers[i] = (legacy_s8 *)&fixture_shapes[1];
 	}
 }
@@ -92,10 +91,9 @@ void sprite_draw_palette_mapped(struct SHAPE2D *shape)
 }
 void run_car_menu(legacy_s8 *id, legacy_s8 *material, legacy_s8 *transmission, legacy_u16 opponent)
 {
-	unsigned int i;
 	trace_word(2009);
 	trace_word(opponent);
-	for (i = 0; i < 4U; i++) {
+	for (unsigned int i = 0; i < 4U; i++) {
 		trace_word((legacy_u8)id[i]);
 		id[i] = "VETT"[i];
 	}
@@ -121,13 +119,13 @@ legacy_s8 *locate_shape_alt(legacy_s8 *resource, const legacy_s8 *name)
 struct RECTANGLE *intro_draw_text(legacy_s8 *text, legacy_s16 x, legacy_s16 y, legacy_s16 color,
 								  legacy_s16 flag)
 {
-	static struct RECTANGLE rectangle;
 	trace_word(2011);
 	trace_text(text);
 	trace_word(x);
 	trace_word(y);
 	trace_word(color);
 	trace_word(flag);
+	static struct RECTANGLE rectangle;
 	return &rectangle;
 }
 legacy_s16 font_centered_text_x(const legacy_s8 *text)
@@ -178,10 +176,9 @@ legacy_s16 highscore_load_or_create(legacy_s16 create)
 }
 void print_highscore_entry(legacy_s16 entry, legacy_u8 *offsets)
 {
-	unsigned int i;
 	trace_word(2021);
 	trace_word(entry);
-	for (i = 0; i < 4; i++) {
+	for (unsigned int i = 0; i < 4; i++) {
 		offsets[i] = i * 2;
 		*(&resID_byte1 + i * 2) = 'a' + i;
 		*(&resID_byte1 + i * 2 + 1) = 0;
@@ -216,7 +213,6 @@ void *file_read_fatal(const legacy_s8 *name, void *destination)
 
 static void reset_menu_case(unsigned int index, unsigned int kind)
 {
-	unsigned int i;
 	scenario = index;
 	active_menu = kind;
 	frame_index = allocation_index = sprite_index = 0;
@@ -234,7 +230,7 @@ static void reset_menu_case(unsigned int index, unsigned int kind)
 	gameconfig.game_opponenttype = index % 7U;
 	gameconfig.game_opponentcarid[0] = -1;
 	if (index % 2U) {
-		for (i = 0; i < 4U; i++) {
+		for (unsigned int i = 0; i < 4U; i++) {
 			gameconfig.game_opponentcarid[i] = "VETT"[i];
 		}
 	}
@@ -243,7 +239,7 @@ static void reset_menu_case(unsigned int index, unsigned int kind)
 	}
 	track_element_map = menu_track_map;
 	menu_track_map[900] = index % 5U;
-	for (i = 0; i < 16; i++) {
+	for (unsigned int i = 0; i < 16; i++) {
 		menu_keys[i] = KEY_ENTER;
 		menu_hits[i] = kind == 0 ? 4 : 2;
 	}
@@ -253,8 +249,7 @@ static void reset_menu_case(unsigned int index, unsigned int kind)
 
 static void test_opponent_navigation(void)
 {
-	unsigned int index, i;
-	for (index = 0; index < 42U; index++) {
+	for (unsigned int index = 0; index < 42U; index++) {
 		reset_menu_case(index, 0);
 		switch (index % 6U) {
 			case 0:
@@ -296,7 +291,7 @@ static void test_opponent_navigation(void)
 		}
 		run_opponent_menu();
 		trace_word(gameconfig.game_opponenttype);
-		for (i = 0; i < 4U; i++) {
+		for (unsigned int i = 0; i < 4U; i++) {
 			trace_word((legacy_u8)gameconfig.game_opponentcarid[i]);
 		}
 		trace_word(gameconfig.game_opponentmaterial);
@@ -306,8 +301,7 @@ static void test_opponent_navigation(void)
 
 static void test_track_navigation(void)
 {
-	unsigned int index;
-	for (index = 0; index < 18U; index++) {
+	for (unsigned int index = 0; index < 18U; index++) {
 		reset_menu_case(index, 1);
 		switch (index % 6U) {
 			case 0:

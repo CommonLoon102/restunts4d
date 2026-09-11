@@ -27,9 +27,7 @@ const legacy_s8 missing_sound_error_format[] = "missing test sound";
 
 static void test_message(const legacy_s8 *message)
 {
-	legacy_u16 length;
-
-	length = 0;
+	legacy_u16 length = 0;
 	while (message[length] != 0) {
 		length++;
 	}
@@ -65,17 +63,15 @@ static void interrupt test_interrupt_handler(union INTPACK registers)
 
 static legacy_s16 test_psp_pointer(void)
 {
-	legacy_u16 psp_segment;
 	legacy_u16 data_segment;
-	void far *psp;
-
+	legacy_u16 psp_segment;
 	__asm {
 		mov ah, 62h
 		int 21h
 		mov psp_segment, bx
 		mov data_segment, ds
 	}
-	psp = dos_memory_get_psp();
+	void far *psp = dos_memory_get_psp();
 	/* This legacy API encodes the PSP segment in the offset of a DS pointer. */
 	CHECK(dos_memory_pointer_offset(psp) == psp_segment, "PSP pointer offset");
 	CHECK(dos_memory_pointer_segment(psp) == data_segment, "PSP pointer segment");
@@ -84,12 +80,10 @@ static legacy_s16 test_psp_pointer(void)
 
 static legacy_s16 test_interrupt_frame(void)
 {
-	dos_interrupt_handler_type previous_handler;
-	legacy_u16 result;
-	legacy_u16 flags;
-
-	previous_handler = _dos_getvect(TEST_INTERRUPT_VECTOR);
+	dos_interrupt_handler_type previous_handler = _dos_getvect(TEST_INTERRUPT_VECTOR);
 	_dos_setvect(TEST_INTERRUPT_VECTOR, test_interrupt_handler);
+	legacy_u16 flags;
+	legacy_u16 result;
 	__asm {
 		mov ax, 1
 		or ax, ax
@@ -107,17 +101,9 @@ static legacy_s16 test_interrupt_frame(void)
 
 static legacy_s16 test_resource_pointer(void)
 {
-	legacy_u16 memory_segment;
-	legacy_u16 payload_segment;
-	legacy_u16 payload_offset;
-	legacy_u16 index;
-	legacy_u32 position;
-	legacy_u8 far *resource;
-	legacy_u8 far *payload;
-	legacy_u8 far *byte;
-
-	memory_segment = dos_memory_allocate((legacy_u16)(TEST_RESOURCE_SIZE >> TEST_PARAGRAPH_SHIFT));
-	resource = dos_memory_make_pointer(memory_segment, 0);
+	legacy_u16 memory_segment =
+		dos_memory_allocate((legacy_u16)(TEST_RESOURCE_SIZE >> TEST_PARAGRAPH_SHIFT));
+	legacy_u8 far *resource = dos_memory_make_pointer(memory_segment, 0);
 	resource_file_set_size(resource, TEST_RESOURCE_SIZE);
 	LEGACY_WRITE_U16_LE(resource + RESOURCE_FILE_COUNT_OFFSET, 1U);
 	resource_file_set_offset(resource, 1U, 0U,
@@ -125,17 +111,18 @@ static legacy_s16 test_resource_pointer(void)
 
 	/* Initialize by physical address so the test does not depend on a compiler's
 	 * huge-pointer arithmetic to prepare its own expected bytes. */
-	for (index = 0; index < TEST_RESOURCE_PAYLOAD_SIZE; index++) {
-		position = TEST_RESOURCE_PAYLOAD_OFFSET + index;
+	legacy_u8 far *byte;
+	for (legacy_u16 index = 0; index < TEST_RESOURCE_PAYLOAD_SIZE; index++) {
+		legacy_u32 position = TEST_RESOURCE_PAYLOAD_OFFSET + index;
 		byte =
 			dos_memory_make_pointer(memory_segment + (legacy_u16)(position >> TEST_PARAGRAPH_SHIFT),
 									(legacy_u16)position & TEST_PARAGRAPH_MASK);
 		*byte = (legacy_u8)(index ^ (index >> LEGACY_BYTE_BITS));
 	}
 
-	payload = resource_file_data(resource, 0);
-	payload_segment = dos_memory_pointer_segment(payload);
-	payload_offset = dos_memory_pointer_offset(payload);
+	legacy_u8 far *payload = resource_file_data(resource, 0);
+	legacy_u16 payload_segment = dos_memory_pointer_segment(payload);
+	legacy_u16 payload_offset = dos_memory_pointer_offset(payload);
 	CHECK(payload_offset <= TEST_PARAGRAPH_MASK, "resource payload pointer is normalized");
 	CHECK(payload_segment ==
 			  memory_segment + (legacy_u16)(TEST_RESOURCE_PAYLOAD_OFFSET >> TEST_PARAGRAPH_SHIFT),
@@ -143,7 +130,7 @@ static legacy_s16 test_resource_pointer(void)
 
 	/* The DOS rasterizers advance a 16-bit offset within one fixed segment.
 	 * A payload beginning near FFF0 would wrap into unrelated resource bytes. */
-	for (index = 0; index < TEST_RESOURCE_PAYLOAD_SIZE; index++) {
+	for (legacy_u16 index = 0; index < TEST_RESOURCE_PAYLOAD_SIZE; index++) {
 		byte = dos_memory_make_pointer(payload_segment, (legacy_u16)(payload_offset + index));
 		CHECK(*byte == (legacy_u8)(index ^ (index >> LEGACY_BYTE_BITS)),
 			  "resource payload crosses original 64 KiB boundary");
@@ -153,14 +140,10 @@ static legacy_s16 test_resource_pointer(void)
 
 static legacy_s16 test_file_io(legacy_u8 far *buffer)
 {
-	legacy_u16 handle;
-	legacy_u16 index;
-	legacy_u8 expected;
-
-	for (index = 0; index < TEST_DATA_SIZE; index++) {
+	for (legacy_u16 index = 0; index < TEST_DATA_SIZE; index++) {
 		buffer[index] = (legacy_u8)(index + 1U);
 	}
-	handle = dos_file_open(TEST_FILENAME, DOS_FILE_CREATE);
+	legacy_u16 handle = dos_file_open(TEST_FILENAME, DOS_FILE_CREATE);
 	CHECK(handle != 0, "create");
 	CHECK(dos_file_write(handle, buffer, TEST_DATA_SIZE) == TEST_DATA_SIZE, "far write");
 	CHECK(dos_file_tell(handle) == TEST_DATA_SIZE, "tell after write");
@@ -181,10 +164,10 @@ static legacy_s16 test_file_io(legacy_u8 far *buffer)
 	CHECK(dos_file_error() == 0, "error is cleared after reading");
 	CHECK(dos_file_read(handle, buffer, TEST_BUFFER_SIZE) == TEST_TRUNCATED_SIZE,
 		  "short read at end of file");
-	for (index = 0; index < TEST_TRUNCATED_SIZE; index++) {
-		expected = index < TEST_REPLACEMENT_OFFSET
-					   ? (legacy_u8)(index + 1U)
-					   : (legacy_u8)('X' + index - TEST_REPLACEMENT_OFFSET);
+	for (legacy_u16 index = 0; index < TEST_TRUNCATED_SIZE; index++) {
+		legacy_u8 expected = index < TEST_REPLACEMENT_OFFSET
+								 ? (legacy_u8)(index + 1U)
+								 : (legacy_u8)('X' + index - TEST_REPLACEMENT_OFFSET);
 		CHECK(buffer[index] == expected, "read contents");
 	}
 	CHECK(dos_file_read(handle, buffer, 1) == 0, "end-of-file read");
@@ -216,14 +199,11 @@ static legacy_s16 test_file_io(legacy_u8 far *buffer)
 
 legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_u16 memory_segment;
-	legacy_u8 far *buffer;
-
 	(void)argc;
 	(void)argv;
 	CHECK(dos_data_stack_segments_match() != 0, "startup DS equals SS");
-	memory_segment = dos_memory_allocate(TEST_BUFFER_SIZE / 16U);
-	buffer = dos_memory_make_pointer(memory_segment, 0);
+	legacy_u16 memory_segment = dos_memory_allocate(TEST_BUFFER_SIZE / 16U);
+	legacy_u8 far *buffer = dos_memory_make_pointer(memory_segment, 0);
 	CHECK(dos_memory_pointer_segment(buffer) == memory_segment, "far pointer segment");
 	CHECK(dos_memory_pointer_offset(buffer) == 0, "far pointer offset");
 	CHECK(test_psp_pointer() == 0, "PSP pointer ABI");

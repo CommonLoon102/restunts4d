@@ -81,13 +81,12 @@ legacy_s16 audio_sequence_command_has_byte_argument(legacy_u8 command)
 }
 static legacy_u32 driver_fingerprint(void)
 {
-	static const char *names[] = {"adlib", "c:adlib", "c:\\snd\\mt32.drv", "pc", "xx\\snd"};
-	static const legacy_u8 counts[] = {0, 1, 16, 127, 128, 254, 255};
-	unsigned variant, name, count;
 	trace_hash = 2166136261UL;
-	for (variant = 0; variant < 32; variant++) {
-		for (name = 0; name < 5; name++) {
-			for (count = 0; count < 7; count++) {
+	static const legacy_u8 counts[] = {0, 1, 16, 127, 128, 254, 255};
+	static const char *names[] = {"adlib", "c:adlib", "c:\\snd\\mt32.drv", "pc", "xx\\snd"};
+	for (unsigned variant = 0; variant < 32; variant++) {
+		for (unsigned name = 0; name < 5; name++) {
+			for (unsigned count = 0; count < 7; count++) {
 				reset_audio_fixture();
 				load_count = 0;
 				driver_variant = variant;
@@ -125,8 +124,7 @@ static void put_byte(legacy_u16 *offset, legacy_u8 value)
 static void put_bytes(legacy_u16 offset, const void *source, unsigned length)
 {
 	const legacy_u8 *bytes = source;
-	unsigned index;
-	for (index = 0; index < length; index++) {
+	for (unsigned index = 0; index < length; index++) {
 		put_byte(&offset, bytes[index]);
 	}
 }
@@ -142,7 +140,7 @@ static void put_length(legacy_u16 offset, legacy_u16 value)
 }
 static unsigned sequence_bytes(legacy_u8 *buffer, unsigned command, unsigned variant)
 {
-	unsigned size = 0, index;
+	unsigned size = 0;
 	if (variant & 1) {
 		buffer[size++] = 0x81;
 	}
@@ -174,7 +172,7 @@ static unsigned sequence_bytes(legacy_u8 *buffer, unsigned command, unsigned var
 		case AUDIO_SEQUENCE_COMMAND_SKIP_PAYLOAD:
 		case AUDIO_SEQUENCE_COMMAND_SEND_DRIVER_DATA:
 			buffer[size++] = variant & 3;
-			for (index = 0; index < (variant & 3); index++) {
+			for (unsigned index = 0; index < (variant & 3); index++) {
 				buffer[size++] = index + 17;
 			}
 			break;
@@ -183,19 +181,16 @@ static unsigned sequence_bytes(legacy_u8 *buffer, unsigned command, unsigned var
 }
 static void build_song(legacy_u16 base, unsigned command, unsigned variant)
 {
-	legacy_u16 offset, header, track, end;
-	legacy_u8 bytes[32];
-	unsigned length, index;
 	put_word((legacy_u16)(base + 4), 3);
 	put_bytes((legacy_u16)(base + 6), variant & 4 ? "NONEtrk1trk2" : "hdr1trk1trk2", 12);
 	put_length((legacy_u16)(base + 18), 256);
 	put_length((legacy_u16)(base + 22), 768);
 	put_length((legacy_u16)(base + 26), 1536);
-	header = (legacy_u16)(base + 30 + 256);
+	legacy_u16 header = (legacy_u16)(base + 30 + 256);
 	put_length(header, 32);
-	offset = (legacy_u16)(header + 6);
+	legacy_u16 offset = (legacy_u16)(header + 6);
 	put_byte(&offset, variant % 3);
-	for (index = 0; index < variant % 3; index++) {
+	for (unsigned index = 0; index < variant % 3; index++) {
 		put_bytes(offset, "SNAR", 4);
 		offset = (legacy_u16)(offset + 4);
 	}
@@ -206,22 +201,22 @@ static void build_song(legacy_u16 base, unsigned command, unsigned variant)
 	if (variant & 4) {
 		put_length(header, 4);
 	}
-	track = (legacy_u16)(base + 30 + 768);
-	length = sequence_bytes(bytes, command, variant);
+	legacy_u16 track = (legacy_u16)(base + 30 + 768);
+	legacy_u8 bytes[32];
+	unsigned length = sequence_bytes(bytes, command, variant);
 	put_length(track, 4 + length);
 	put_bytes((legacy_u16)(track + 4), bytes, length);
-	end = (legacy_u16)(base + 30 + 1536);
+	legacy_u16 end = (legacy_u16)(base + 30 + 1536);
 	put_length(end, 6);
 	put_word((legacy_u16)(end + 4), (AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP)
 										<< 8);
 }
 static legacy_u32 mapping_fingerprint(void)
 {
-	static const legacy_u16 offsets[] = {0, 1, 32768, 65500};
-	unsigned command, variant;
 	trace_hash = 2166136261UL;
-	for (command = 0; command < 256; command++) {
-		for (variant = 0; variant < 8; variant++) {
+	static const legacy_u16 offsets[] = {0, 1, 32768, 65500};
+	for (unsigned command = 0; command < 256; command++) {
+		for (unsigned variant = 0; variant < 8; variant++) {
 			reset_audio_fixture();
 			build_song(offsets[variant & 3], command, variant);
 			audio_map_song_tracks(memory_bytes + offsets[variant & 3]);
@@ -232,9 +227,8 @@ static legacy_u32 mapping_fingerprint(void)
 }
 static legacy_u32 finalize_fingerprint(void)
 {
-	unsigned sample;
 	trace_hash = 2166136261UL;
-	for (sample = 0; sample < 256; sample++) {
+	for (unsigned sample = 0; sample < 256; sample++) {
 		reset_audio_fixture();
 		memory_bytes[4] = sample & 1;
 		memory_bytes[5] = (sample >> 1) & 1;
@@ -251,13 +245,12 @@ static legacy_u32 finalize_fingerprint(void)
 }
 static void test_song_reference_mapping(void)
 {
-	legacy_u16 base, header, track, target;
-	base = 65500;
 	reset_audio_fixture();
+	legacy_u16 base = 65500;
 	build_song(base, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_CALL, 0);
-	header = (legacy_u16)(base + 30 + 256);
-	track = (legacy_u16)(base + 30 + 768);
-	target = (legacy_u16)(base + 30 + 1536);
+	legacy_u16 header = (legacy_u16)(base + 30 + 256);
+	legacy_u16 track = (legacy_u16)(base + 30 + 768);
+	legacy_u16 target = (legacy_u16)(base + 30 + 1536);
 	audio_map_song_tracks(memory_bytes + base);
 	assert(LEGACY_READ_U16_LE(memory_bytes + header + 8) == track);
 	assert(LEGACY_READ_U16_LE(memory_bytes + header + 10) == 0x1000);
@@ -276,8 +269,7 @@ static void build_resource_reference(legacy_u16 base, const char *name, legacy_u
 static void test_closed_hihat_offset_mapping(void)
 {
 	static const legacy_u16 offsets[] = {0, 1, 0x1234, 0x8000, 0xabcd, 0xffff};
-	unsigned index;
-	for (index = 0; index < sizeof(offsets) / sizeof(offsets[0]); index++) {
+	for (unsigned index = 0; index < sizeof(offsets) / sizeof(offsets[0]); index++) {
 		reset_audio_fixture();
 		build_song(16384, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP, 0);
 		build_resource_reference(4096, "CHHT", offsets[index]);
@@ -291,12 +283,11 @@ static void test_closed_hihat_offset_mapping(void)
 
 static void test_closed_hihat_offset_lifetime(void)
 {
-	void *header;
 	reset_audio_fixture();
 	build_song(16384, AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP, 0);
 	build_resource_reference(8192, "song", 16384);
 	build_resource_reference(4096, "CHHT", 0x8123);
-	header = init_audio_resources(memory_bytes + 8192, memory_bytes + 4096, "song");
+	void *header = init_audio_resources(memory_bytes + 8192, memory_bytes + 4096, "song");
 	assert(header == memory_bytes + 16384 + 30 + 256);
 	assert(audio_closed_hihat_resource == memory_bytes + 0x8123);
 	assert(legacy_closed_hihat_offset == 0x8123);
@@ -330,8 +321,9 @@ static void test_closed_hihat_offset_lifetime(void)
 
 int main(void)
 {
-	legacy_u32 driver = driver_fingerprint(), mapping = mapping_fingerprint(),
-			   finalize = finalize_fingerprint();
+	legacy_u32 driver = driver_fingerprint();
+	legacy_u32 mapping = mapping_fingerprint();
+	legacy_u32 finalize = finalize_fingerprint();
 	test_song_reference_mapping();
 	test_closed_hihat_offset_mapping();
 	test_closed_hihat_offset_lifetime();
