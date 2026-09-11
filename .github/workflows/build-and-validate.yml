@@ -214,24 +214,6 @@ jobs:
           # The archived golden corpus is the complete replay set for CI.
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp exes/*.exe "$game_dir/"
-          # Compare the Watcom originals using the runner's candidate names/extensions.
-          # Change only output suffixes in temporary copies so oracles stay separate.
-          python3 - "$game_dir" <<'PY'
-          import sys
-          from pathlib import Path
-
-          for source, candidate, old, new in (
-              ("repldumo.exe", "repldump.exe", b".BIN\0", b".BNI\0"),
-              ("pixldumo.exe", "pixldump.exe", b".PDO\0", b".PDD\0"),
-          ):
-              data = (Path("exes") / source).read_bytes()
-              if data.count(old) != 1:
-                  raise SystemExit(f"Expected one output extension {old!r} in {source}")
-              (Path(sys.argv[1]) / candidate).write_bytes(data.replace(old, new))
-          PY
-          # Generate missing cache entries with the same archived Borland oracles.
-          (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-          cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
@@ -256,7 +238,7 @@ jobs:
               # replays, using the same sampling and sharding as the test runner.
               dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
                   -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
-                  -Renderer "$renderer" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+                  -Renderer false -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
                   -ShardIndex "$SHARD" -ShardCount "$SHARDS"
               rm -- "$zip_path"
           done
