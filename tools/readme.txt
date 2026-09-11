@@ -1,4 +1,4 @@
-The tools directory contains make, DOSBox, optional legacy tools, and setup
+The tools directory contains make and setup
 scripts for the active Open Watcom 2 compiler, assembler, and linker.
 
 Install the pinned toolchain from the repository root:
@@ -17,13 +17,7 @@ binl64 tools with system GNU Make, without Wine or DOSBox for compilation.
 Python 3.9 or newer is needed for the WASM original-game source adapter. The source ASM
 files remain unchanged; generated compatible copies live in the build tree.
 
-TASM32 remains bundled as an explicit ASSEMBLER=tasm32 fallback. On Linux,
-that fallback requires Wine with 32-bit Windows support. DOSBox is needed to
-run and test the game. mount_stunts_to_s.bat maps the repository to S: for the
-supplied DOSBox development setup; native builds do not require that mapping.
-
-The older bcc, wlink, tlink, include, and lib files are historical tools. The
-current C builds use Open Watcom headers/runtime libraries under watcom.
+C builds use only Open Watcom headers and runtime libraries under watcom.
 The immutable pre-migration regression binaries live in oracles/borland.
 
 See the root readme.md for build commands and regression validation, and

@@ -21,12 +21,7 @@ enum DOS_TIMER_CALLBACK_REGISTRATION_RESULT {
 };
 
 void far *dos_memory_get_psp(void);
-#if defined(__BORLANDC__)
-#define dos_memory_make_pointer(segment, offset) ((void _seg *)(segment) + (void near *)(offset))
-#define dos_memory_make_near_pointer(offset) ((void near *)(offset))
-#define dos_memory_pointer_segment(pointer) ((legacy_u16)(void _seg *)(void far *)(pointer))
-#define dos_memory_pointer_offset(pointer) ((legacy_u16)(pointer))
-#elif defined(__WATCOMC__) && defined(__I86__)
+#if defined(__WATCOMC__) && defined(__I86__)
 #define dos_memory_make_pointer(segment, offset)                                                   \
 	((void far *)(((legacy_u32)(legacy_u16)(segment) << LEGACY_WORD_BITS) | (legacy_u16)(offset)))
 #define dos_memory_make_near_pointer(offset) ((void near *)(legacy_u16)(offset))

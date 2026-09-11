@@ -57,13 +57,29 @@ void fatal_error(const legacy_s8 *format, ...)
 		}                                                                                          \
 	} while (0)
 
-#ifndef __WATCOMC__
-#pragma argsused
-#endif
-static void interrupt test_interrupt_handler(DOS_INTERRUPT_REGISTERS)
+static void interrupt test_interrupt_handler(union INTPACK registers)
 {
-	DOS_INTERRUPT_AX = TEST_INTERRUPT_RESULT;
-	DOS_INTERRUPT_FLAGS |= TEST_ZERO_FLAG;
+	registers.w.ax = TEST_INTERRUPT_RESULT;
+	registers.w.flags |= TEST_ZERO_FLAG;
+}
+
+static legacy_s16 test_psp_pointer(void)
+{
+	legacy_u16 psp_segment;
+	legacy_u16 data_segment;
+	void far *psp;
+
+	__asm {
+		mov ah, 62h
+		int 21h
+		mov psp_segment, bx
+		mov data_segment, ds
+	}
+	psp = dos_memory_get_psp();
+	/* This legacy API encodes the PSP segment in the offset of a DS pointer. */
+	CHECK(dos_memory_pointer_offset(psp) == psp_segment, "PSP pointer offset");
+	CHECK(dos_memory_pointer_segment(psp) == data_segment, "PSP pointer segment");
+	return 0;
 }
 
 static legacy_s16 test_interrupt_frame(void)
@@ -72,8 +88,8 @@ static legacy_s16 test_interrupt_frame(void)
 	legacy_u16 result;
 	legacy_u16 flags;
 
-	previous_handler = _getvect(TEST_INTERRUPT_VECTOR);
-	_setvect(TEST_INTERRUPT_VECTOR, test_interrupt_handler);
+	previous_handler = _dos_getvect(TEST_INTERRUPT_VECTOR);
+	_dos_setvect(TEST_INTERRUPT_VECTOR, test_interrupt_handler);
 	__asm {
 		mov ax, 1
 		or ax, ax
@@ -83,7 +99,7 @@ static legacy_s16 test_interrupt_frame(void)
 		pop ax
 		mov flags, ax
 	}
-	_setvect(TEST_INTERRUPT_VECTOR, previous_handler);
+	_dos_setvect(TEST_INTERRUPT_VECTOR, previous_handler);
 	CHECK(result == TEST_INTERRUPT_RESULT, "interrupt return AX");
 	CHECK((flags & TEST_ZERO_FLAG) != 0, "interrupt return ZF");
 	return 0;
@@ -210,6 +226,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	buffer = dos_memory_make_pointer(memory_segment, 0);
 	CHECK(dos_memory_pointer_segment(buffer) == memory_segment, "far pointer segment");
 	CHECK(dos_memory_pointer_offset(buffer) == 0, "far pointer offset");
+	CHECK(test_psp_pointer() == 0, "PSP pointer ABI");
 	CHECK(test_interrupt_frame() == 0, "interrupt frame");
 	CHECK(test_resource_pointer() == 0, "resource pointer ABI");
 	CHECK(test_file_io(buffer) == 0, "DOS file I/O");

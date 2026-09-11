@@ -1,11 +1,6 @@
 include watcom.mk
 
-VALID_ASSEMBLERS = wasm tasmbox tasmx tasm32
-ifeq (,$(filter $(ASSEMBLER),$(VALID_ASSEMBLERS)))
-  $(error Unsupported ASSEMBLER: $(ASSEMBLER))
-endif
-
-MAKE_PARAMS = CONFIG=$(CONFIG) ASSEMBLER=$(ASSEMBLER) LINKER=$(LINKER)
+MAKE_PARAMS = CONFIG=$(CONFIG) LINKER=$(LINKER)
 .DEFAULT_GOAL := restunts
 .PHONY: restunts restunts-original asmorig dosplatform c-headless c-full repldump repldump-original pixldump pixldump-original test-dos-platform clean
 

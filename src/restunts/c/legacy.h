@@ -3,8 +3,8 @@
 
 #include <limits.h>
 
-/* Preserve segmented pointers on both supported 16-bit DOS compilers. */
-#if defined(__BORLANDC__) || (defined(__WATCOMC__) && defined(__I86__))
+/* Preserve segmented pointers for the Open Watcom 16-bit DOS build. */
+#if defined(__WATCOMC__) && defined(__I86__)
 #define RESTUNTS_DOS16 1
 #endif
 

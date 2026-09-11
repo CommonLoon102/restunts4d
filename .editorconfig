@@ -1,5 +1,4 @@
-# Project C sources/headers and C# tools. Bundled headers in tools/include
-# are intentionally excluded. CRLF matches .gitattributes.
+# Project C sources/headers and C# tools. CRLF matches .gitattributes.
 root = true
 
 [src/**.{c,h}]

@@ -13,33 +13,30 @@ static critical_error_callback_type critical_error_callback;
 
 void dos_interrupts_disable(void)
 {
-	disable();
+	_disable();
 }
 
 void dos_interrupts_enable(void)
 {
-	enable();
+	_enable();
 }
 
 static void far dos_critical_error_restore(void)
 {
 	if (previous_critical_error_handler != 0) {
-		_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, previous_critical_error_handler);
+		_dos_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, previous_critical_error_handler);
 	}
 }
 
-#ifndef __WATCOMC__
-#pragma argsused
-#endif
-static void interrupt dos_critical_error_handler(DOS_INTERRUPT_REGISTERS)
+static void interrupt dos_critical_error_handler(union INTPACK registers)
 {
-	DOS_INTERRUPT_AX = (legacy_u16)critical_error_callback();
+	registers.w.ax = (legacy_u16)critical_error_callback();
 }
 
 void dos_set_critical_error_handler(critical_error_callback_type callback)
 {
 	add_exit_handler(dos_critical_error_restore);
 	critical_error_callback = callback;
-	previous_critical_error_handler = _getvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR);
-	_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, dos_critical_error_handler);
+	previous_critical_error_handler = _dos_getvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR);
+	_dos_setvect(DOS_CRITICAL_ERROR_INTERRUPT_VECTOR, dos_critical_error_handler);
 }

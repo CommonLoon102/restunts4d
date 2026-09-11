@@ -1,6 +1,3 @@
-#ifndef __WATCOMC__
-#define int86 _int86
-#endif
 #include "dos_interrupts.h"
 #include "../../c/legacy.h"
 #include "../../c/fatal.h"
@@ -139,7 +136,7 @@ static void dos_video_set_mode3(void)
 
 legacy_s16 dos_video_get_status(void)
 {
-	return (legacy_s16)(inport(DOS_VIDEO_STATUS_PORT) & DOS_VIDEO_RETRACE_STATUS_BIT);
+	return (legacy_s16)(inpw(DOS_VIDEO_STATUS_PORT) & DOS_VIDEO_RETRACE_STATUS_BIT);
 }
 
 /* A dormant translated-assembly fallback still imports this legacy name. */

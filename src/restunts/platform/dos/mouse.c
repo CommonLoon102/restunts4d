@@ -1,6 +1,3 @@
-#ifndef __WATCOMC__
-#define int86 _int86
-#endif
 #include "dos_interrupts.h"
 #include "../../c/platform.h"
 
@@ -68,9 +65,6 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 	registers.x.si = 0;
 	registers.x.di = 0;
 	registers.x.cflag = 0;
-#ifndef __WATCOMC__
-	registers.x.flags = 0;
-#endif
 	registers.x.ax = DOS_MOUSE_BIOS_DISABLE_POINTING_DEVICE;
 	int86(DOS_MOUSE_BIOS_INTERRUPT, &registers, &registers);
 

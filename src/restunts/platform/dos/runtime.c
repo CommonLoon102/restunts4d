@@ -1,9 +1,7 @@
 #include "../../c/legacy.h"
 #include "../../c/platform.h"
 
-#ifdef __WATCOMC__
 #include <string.h>
-#endif
 
 #define DOS_RUNTIME_INTERRUPT 33
 #define DOS_RUNTIME_WRITE_FUNCTION 64
@@ -12,12 +10,6 @@
 #define DOS_RUNTIME_STDERR_HANDLE 2U
 #define DOS_RUNTIME_WRITE_ERROR (-1)
 
-/* Borland's DOS interrupt wrapper records failures here.  The original
- * executable obtained this word from its C startup module; the assembly-free
- * target supplies the same runtime storage explicitly. */
-#ifndef __WATCOMC__
-legacy_s16 _errno;
-#else
 /* Keep the game's legacy entry points while using the Watcom memory routines. */
 void *_memcpy(void *destination, const void *source, legacy_u16 length)
 {
@@ -28,7 +20,6 @@ void far *__fmemcpy(void far *destination, const void far *source, legacy_u16 le
 {
 	return _fmemcpy(destination, source, length);
 }
-#endif
 
 static legacy_s16 dos_write_handle(legacy_u16 handle, const legacy_s8 *text, legacy_u16 length)
 {

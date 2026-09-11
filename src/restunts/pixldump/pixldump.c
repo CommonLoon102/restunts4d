@@ -79,12 +79,10 @@ enum PIXLDUMP_PALETTE_COMPONENT_OFFSET {
 
 typedef legacy_u16 PIXLDUMP_OUTPUT;
 
-#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
 /* The original update_grip saves this caller register in a stack slot which
  * player physics can later consume as the fourth wheel's contact distance.
  * Sampling inherits the output handle; BMP mode inherits the CRT argv offset. */
 static legacy_s16 pixldump_caller_si;
-#endif
 
 #ifndef RESTUNTS_ORIGINAL
 static legacy_s16 pixldump_argv_si;
@@ -93,7 +91,7 @@ static legacy_u16 pixldump_polyinfo_segment;
 #define PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET 20628U
 #endif
 
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 #define PIXLDUMP_LEGACY_FRAME far
 static legacy_u16 pixldump_caller_di;
 static legacy_u16 pixldump_saved_si;
@@ -442,7 +440,7 @@ static legacy_s16 pixldump_write_bmp(const legacy_s8 *output_name, const legacy_
 
 static void PIXLDUMP_LEGACY_FRAME pixldump_render_frame(void)
 {
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	pixldump_enter_original_call();
 #endif
 	sprite_select_render_window();
@@ -450,28 +448,22 @@ static void PIXLDUMP_LEGACY_FRAME pixldump_render_frame(void)
 	frame_present(&rect_windshield);
 	/* The normal presentation path draws the software mouse cursor last. */
 	mouse_draw_opaque_check();
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	pixldump_leave_original_call();
 #endif
 }
 
-#ifndef RESTUNTS_ORIGINAL
-
-#else
+#ifdef RESTUNTS_ORIGINAL
 extern void kb_shift_checking1(void);
 #endif
 
 static void PIXLDUMP_LEGACY_FRAME pixldump_update_gamestate(void)
 {
 #ifdef RESTUNTS_ORIGINAL
-#if defined(__WATCOMC__)
 	pixldump_enter_original_call();
-#endif
 	input_do_checking(1);
 	update_gamestate();
-#if defined(__WATCOMC__)
 	pixldump_leave_original_call();
-#endif
 #else
 	update_gamestate_with_legacy_si(pixldump_caller_si);
 #endif
@@ -503,10 +495,8 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 		return 1;
 	}
 
-#if !defined(RESTUNTS_ORIGINAL) || defined(__WATCOMC__)
 	pixldump_caller_si = LEGACY_S16_FROM_BITS(output);
-#endif
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	/* The directory-copy loop leaves DI here until the first sample result. */
 	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
 #endif
@@ -516,7 +506,7 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
 	result = !pixldump_write_sample(output, 0U, framebuffer);
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	pixldump_caller_di = 0;
 #endif
 
@@ -540,7 +530,7 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const legacy_s8 *output_name,
 																	   legacy_u16 requested_frame)
 {
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	/* Retain the archived BMP caller's four-byte local stack slot. */
 	legacy_u8 far *volatile framebuffer;
 #else
@@ -665,10 +655,10 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 		return 1;
 	}
 
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	pixldump_caller_si = (legacy_s16)argv;
 	pixldump_caller_di = TRACKDATA_CHECKPOINT_DATA_SIZE;
-#elif !defined(RESTUNTS_ORIGINAL)
+#else
 	pixldump_argv_si = pixldump_legacy_argv_si(argc, argv);
 	if (bmp_mode != 0) {
 		pixldump_caller_si = pixldump_argv_si;
@@ -688,7 +678,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	}
 
 	init_main(argc, argv);
-#if defined(RESTUNTS_ORIGINAL) && defined(__WATCOMC__)
+#ifdef RESTUNTS_ORIGINAL
 	pixldump_disable_timer_irq();
 #endif
 	init_div0();

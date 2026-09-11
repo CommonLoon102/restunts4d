@@ -11,7 +11,7 @@ RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strl
                      headless_data.obj headless_trackdata.obj full_data.obj full_strings.obj full_tables.obj
 
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
-PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/wasm
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 ifeq ($(TARGET),original)
 include ../asmorig/link.mk
@@ -34,7 +34,7 @@ ifeq ($(CONFIG),debug)
 WRAPPER_CFLAGS += -d1
 endif
 ALIAS_SCRIPT = ../../../tools/scripts/generate-original-link-aliases.py
-ALIAS_FILE = $(OBJDIR)/aliases-$(ASSEMBLER).lnk
+ALIAS_FILE = $(OBJDIR)/aliases.lnk
 LINK_ALIASES = @$(ALIAS_FILE)
 else
 OBJDIR = build/watcom/$(CONFIG)
