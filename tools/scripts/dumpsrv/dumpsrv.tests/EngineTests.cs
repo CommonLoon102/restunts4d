@@ -294,12 +294,16 @@ public sealed class EngineTests
     private static bool IsRunning(int pid)
     {
         var statusPath = $"/proc/{pid}/stat";
-        if (File.Exists(statusPath))
+        try
         {
             var state = File.ReadAllText(statusPath).Split(' ')[2];
             return state is not "Z" and not "X";
         }
-        return false;
+        catch (IOException) when (!File.Exists(statusPath))
+        {
+            // A process can exit while its proc entry is being opened or read.
+            return false;
+        }
     }
 
     [Theory]
