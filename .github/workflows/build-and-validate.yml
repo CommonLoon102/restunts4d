@@ -203,7 +203,7 @@ jobs:
     name: Replays (shard ${{ matrix.shard }})
     needs: [build, dumpsrv-tests, plan]
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -251,32 +251,6 @@ jobs:
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
-      - name: Download and extract this shard's precomputed oracle outputs
-        env:
-          SHARD: ${{ matrix.shard }}
-          SHARDS: ${{ inputs.shards }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.0
-        run: |
-          set -eu
-          for archive in BINs PDOs; do
-              zip_path="$RUNNER_TEMP/$archive.zip"
-              # Download the versioned release assets.
-              curl --fail --location --silent --show-error --retry 3 \
-                  --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
-              renderer=false
-              if [[ "$archive" == "PDOs" ]]; then
-                  renderer=true
-              fi
-              # The full BIN archive expands to over 15 GB. Extract only assigned
-              # replays, using the same sampling and sharding as the test runner.
-              dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
-                  -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
-                  -Renderer "$renderer" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-                  -ShardIndex "$SHARD" -ShardCount "$SHARDS"
-              rm -- "$zip_path"
-          done
-
       - name: Run this shard's physics and renderer tests
         env:
           SHARD: ${{ matrix.shard }}
@@ -305,6 +279,17 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
 
+      - name: Upload this shard's BIN files
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: physics-bin-${{ matrix.shard }}
+          path: ${{ runner.temp }}/gamedir/**/*.[bB][iI][nN]
+          include-hidden-files: true
+          # A shard may fail before producing any physics output.
+          if-no-files-found: warn
+          retention-days: 14
+
       - name: Upload this shard's PDO files
         uses: actions/upload-artifact@v7
         if: always()
@@ -321,7 +306,7 @@ jobs:
     needs: [plan, replay]
     if: always()
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
 
@@ -359,6 +344,23 @@ jobs:
           name: partitions_all
           path: partitions_all.txt
           if-no-files-found: warn
+          retention-days: 14
+
+      - name: Free disk space for the combined BIN archive
+        if: always()
+        run: |
+          # The merge action extracts over 15 GB of physics dumps at once.
+          # This report job does not use the runner's preinstalled Android SDK.
+          sudo rm -rf /usr/local/lib/android
+          df -h "$GITHUB_WORKSPACE"
+
+      - name: Combine all BIN files into a downloadable ZIP
+        uses: actions/upload-artifact/merge@v7
+        if: always()
+        with:
+          name: physics-bin
+          pattern: physics-bin-*
+          include-hidden-files: true
           retention-days: 14
 
       - name: Combine all PDO files into a downloadable ZIP
