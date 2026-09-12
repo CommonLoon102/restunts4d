@@ -15,6 +15,9 @@
 #include "../c/track_objects.h"
 #include "../c/camera.h"
 #include "../c/audio_control.h"
+#ifdef RESTUNTS_ORIGINAL
+#include "../platform/dos/dump_timer.h"
+#endif
 
 #define REPLDUMP_OUTPUT_NAME_SIZE 13U
 #define REPLDUMP_OUTPUT_NAME_LAST_INDEX 12U
@@ -297,7 +300,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	}
 
 	init_main(argc, argv);
-#ifndef RESTUNTS_ORIGINAL
+#ifdef RESTUNTS_ORIGINAL
+	dump_disable_timer_irq();
+#else
 	serialized_gamestate = (legacy_u8 far *)mmgr_alloc_resbytes(serialized_state_chunk_name,
 																GAMESTATE_SERIALIZED_SIZE);
 #endif
@@ -373,6 +378,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	if (setup_player_cars_without_dashboard() != 0) {
 #endif
 		printf("FAIL (out of memory)\n");
+#ifdef RESTUNTS_ORIGINAL
+		call_exitlist();
+#endif
 		return 1;
 	}
 	kbormouse = 0;
@@ -413,6 +421,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	fout = repldump_output_open(outname);
 	if (!fout) {
 		printf("FAIL\n");
+#ifdef RESTUNTS_ORIGINAL
+		call_exitlist();
+#endif
 		return 1;
 	}
 	printf("OK\n");
