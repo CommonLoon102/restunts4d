@@ -99,8 +99,8 @@ force_me: ;
 $(OBJDIR):
 	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 
-$(OBJDIR)/repldump.obj: repldump.c | $(OBJDIR)
-	$(CC) -I../c $?
+$(OBJDIR)/repldump.obj: repldump.c ../platform/dos/dump_timer.h | $(OBJDIR)
+	$(CC) -I../c repldump.c
 
 clean:
 	del build\original\repldump.obj

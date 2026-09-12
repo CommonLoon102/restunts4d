@@ -20,6 +20,9 @@
 #include "../c/track_objects.h"
 #include "../c/camera.h"
 #include "../c/audio_control.h"
+#ifdef RESTUNTS_ORIGINAL
+#include "../platform/dos/dump_timer.h"
+#endif
 
 #define PIXLDUMP_FRAMEBUFFER_SIZE 64000U
 #define PIXLDUMP_SAMPLE_INTERVAL 5U
@@ -624,6 +627,9 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	}
 
 	init_main(argc, argv);
+#ifdef RESTUNTS_ORIGINAL
+	dump_disable_timer_irq();
+#endif
 	init_div0();
 	init_row_tables();
 	mainresptr = file_load_resfile("main");

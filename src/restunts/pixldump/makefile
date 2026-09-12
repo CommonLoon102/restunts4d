@@ -96,7 +96,7 @@ force_me: ;
 $(OBJDIR):
 	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 
-$(OBJDIR)/pixldump.obj: pixldump.c md5.h legacy_context.h | $(OBJDIR)
+$(OBJDIR)/pixldump.obj: pixldump.c md5.h legacy_context.h ../platform/dos/dump_timer.h | $(OBJDIR)
 	$(CC) -I../c pixldump.c
 
 $(OBJDIR)/legacy_context.obj: legacy_context.c legacy_context.h ../c/shape3d.h | $(OBJDIR)
