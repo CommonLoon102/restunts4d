@@ -238,7 +238,7 @@ pixldump must reproduce the original renderer, including its bugs. In particular
 polygon depth averages use unsigned division for non-power-of-two vertex counts
 even when near-plane clipping retains a negative depth sum. This can put a grille
 behind opaque surfaces, as in `0027.rpl`, camera 2, player, frame 665. Preserve
-this behavior in the C port; `asmorig` and pixldumo remain the unchanged oracle.
+this behavior in the C port; the original engine in `asmorig` remains the oracle.
 
 The C renderer also preserves the original sphere bounding-box writes used by
 crash explosions and the renderer stack values reused by stopped-wheel physics.
@@ -298,15 +298,11 @@ renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
 against pixldumo `.PDO` files with camera 2 and player target 0.
 
-Before testing, each CI shard downloads `BINs.zip` and `PDOs.zip` from
-[restunts4d-oracles v1.0.0](https://github.com/CommonLoon102/restunts4d-oracles/releases/tag/v1.0.0).
-It extracts only the oracle outputs assigned to that shard into the prepared
-game directory, using the same renderer sampling and shard selection as the
-regression runner. This avoids unpacking the full 15 GB physics archive on
-every runner. Complete `.BIN` and `.PDO` files are reused; missing or invalid
-outputs are generated during testing with the archived Borland executables
-from `tools/oracles/borland`. Ported `.BNI` and `.PDD` outputs are always
-generated afresh.
+Each CI shard verifies the checksums and copies the independent Borland
+executables from `tools/oracles/borland`, then generates fresh `.BIN` and `.PDO`
+outputs alongside the ported `.BNI` and `.PDD` outputs. Both original dump
+wrappers disable timer IRQ0 during offline capture, preventing timing-dependent
+reference data. No precomputed oracle archive is downloaded by the workflow.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
