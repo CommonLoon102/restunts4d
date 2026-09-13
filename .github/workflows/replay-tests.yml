@@ -1,0 +1,220 @@
+name: Replay tests
+
+# Run and validate one replay phase. The caller gates rendering on physics.
+on:
+  workflow_call:
+    inputs:
+      phase:
+        description: Replay phase to run (physics or renderer).
+        type: string
+        required: true
+      exe-artifact:
+        description: Artifact holding the built executables.
+        type: string
+        required: true
+      shard-matrix:
+        description: JSON array of shard indices from the validated plan.
+        type: string
+        required: true
+      shards:
+        type: number
+        required: true
+      partitions-per-shard:
+        type: number
+        required: true
+      replay-timeout-seconds:
+        type: number
+        required: true
+      renderer-test-percentage:
+        type: number
+        required: true
+      renderer-timeout-seconds:
+        type: number
+        required: true
+
+env:
+  PHYSICS_TESTS: ${{ inputs.phase == 'physics' }}
+  RENDERER_TESTS: ${{ inputs.phase == 'renderer' }}
+
+jobs:
+  replay:
+    name: Replays (shard ${{ matrix.shard }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ${{ fromJSON(inputs.shard-matrix) }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish the shared regression runner
+        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+
+      - name: Install DOSBox-X
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends dosbox-x
+
+      - name: Initialize DOSBox-X before concurrent runs
+        run: |
+          timeout --signal=KILL 30s dosbox-x -silent \
+              -conf tools/scripts/dosbox.proc.conf \
+              -c "mount c $RUNNER_TEMP" -c "c:" -c "exit"
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.exe-artifact }}
+          path: exes
+
+      - name: Assemble the game directory
+        run: |
+          set -u
+          game_dir="$RUNNER_TEMP/gamedir"
+          mkdir -p "$game_dir"
+          cp -R stunts/. "$game_dir/"
+          # Custom cars use mixed-case extensions; copy the complete asset pack.
+          cp -R tools/scripts/cars/. "$game_dir/"
+          # The archived golden corpus is the complete replay set for CI.
+          find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
+          cp exes/*.exe "$game_dir/"
+          # Generate missing cache entries with the same archived Borland oracles.
+          (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
+          cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
+          unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
+          echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
+
+      - name: Download and extract this shard's precomputed oracle outputs
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ inputs.shards }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.2
+        run: |
+          set -eu
+          archive=BINs
+          if [[ "$RENDERER_TESTS" == "true" ]]; then
+              archive=PDOs
+          fi
+          zip_path="$RUNNER_TEMP/$archive.zip"
+          # Download only the oracle archive needed by this phase.
+          curl --fail --location --silent --show-error --retry 3 \
+              --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
+          # The full BIN archive expands to over 15 GB. Extract only assigned
+          # replays, using the same sampling and sharding as the test runner.
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
+              -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
+              -Renderer "$RENDERER_TESTS" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+              -ShardIndex "$SHARD" -ShardCount "$SHARDS"
+          rm -- "$zip_path"
+
+      - name: Run this shard's ${{ inputs.phase }} tests
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ inputs.shards }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          REPLAY_TIMEOUT_SECONDS: ${{ inputs.replay-timeout-seconds }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+          RENDERER_TIMEOUT_SECONDS: ${{ inputs.renderer-timeout-seconds }}
+        run: |
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" run \
+              -GameDirectory "$GAME_DIR" \
+              -OutputDirectory partitions \
+              -DosBoxConfigPath tools/scripts/dosbox.proc.conf \
+              -PartitionCount "$PARTITIONS_PER_SHARD" \
+              -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
+              -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
+              -DosBoxTimeoutSeconds "$REPLAY_TIMEOUT_SECONDS" \
+              -RendererTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
+              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ${{ inputs.phase }}-partitions-${{ matrix.shard }}
+          path: partitions/*.json
+          # Missing shards are diagnosed by the shared merge command.
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload this shard's PDO files
+        uses: actions/upload-artifact@v7
+        if: ${{ always() && inputs.phase == 'renderer' }}
+        with:
+          name: renderer-pdo-${{ matrix.shard }}
+          path: ${{ runner.temp }}/gamedir/**/*.[pP][dD][oO]
+          include-hidden-files: true
+          # A shard may have no replays in the renderer sample.
+          if-no-files-found: warn
+          retention-days: 14
+
+  report:
+    name: Check replay coverage
+    needs: replay
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish the shared regression runner
+        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
+
+      - uses: actions/download-artifact@v8
+        continue-on-error: true
+        with:
+          pattern: ${{ inputs.phase }}-partitions-*
+          merge-multiple: true
+          path: partitions
+
+      - name: Merge the shard results and check coverage
+        env:
+          SHARDS: ${{ inputs.shards }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+        run: |
+          mkdir -p partitions "$RUNNER_TEMP/replays"
+          unzip -q tools/scripts/rpls_golden/replays.zip -d "$RUNNER_TEMP/replays"
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" merge \
+              -ReplayDirectory "$RUNNER_TEMP/replays" \
+              -ResultsDirectory partitions -ShardCount "$SHARDS" \
+              -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
+              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+              -OutputFile partitions_all.txt \
+              -SummaryFile "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ${{ inputs.phase }}-report
+          path: partitions_all.txt
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Combine all PDO files into a downloadable ZIP
+        uses: actions/upload-artifact/merge@v7
+        if: ${{ always() && inputs.phase == 'renderer' }}
+        with:
+          name: renderer-pdo
+          pattern: renderer-pdo-*
+          include-hidden-files: true
+          retention-days: 14
+
+      - name: Check replay jobs completed successfully
+        if: always()
+        env:
+          REPLAY_RESULT: ${{ needs.replay.result }}
+        run: |
+          if [[ "$REPLAY_RESULT" != "success" ]]; then
+              echo "::error::a replay shard did not finish successfully (result: $REPLAY_RESULT)"
+              printf '\n:x: A replay shard did not finish successfully (result: **%s**).\n' \
+                  "$REPLAY_RESULT" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+          fi

@@ -1,7 +1,7 @@
 name: Build and validate
 
-# Checks C/H formatting, runs the host regression tests, builds six DOS
-# executables and runs full physics plus sampled renderer replay comparisons.
+# Checks formatting, the regression services and host tests, and plans shards
+# in parallel. Then builds, validates physics, validates rendering, and reports.
 # PR and release workflows both gate on this validation.
 on:
   workflow_call:
@@ -61,6 +61,26 @@ jobs:
       - name: Validate C layout and braces with clang-format
         run: git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
 
+  dumpsrv-tests:
+    name: C# regression service tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Test the shared regression engine and HTTP service
+        run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
+
+      - name: Test the POSIX client
+        run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
+
+      - name: Check C# formatting
+        run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
+
   host-tests:
     name: Host regression tests
     runs-on: ubuntu-24.04
@@ -71,9 +91,38 @@ jobs:
       - name: Compile and run the host tests
         run: bash src/restunts/tests/run-host-tests.sh
 
+  plan:
+    name: Plan the shards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      shards: ${{ steps.plan.outputs.shards }}
+    steps:
+      - name: Split the golden set into shards
+        id: plan
+        env:
+          SHARDS: ${{ inputs.shards }}
+          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+        run: |
+          set -u
+          if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
+              echo "::error::shards must be an integer from 1 to 2147483647"
+              exit 1
+          fi
+          if [[ ! "$PARTITIONS_PER_SHARD" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]]; then
+              echo "::error::partitions-per-shard must be an integer from 1 to 64"
+              exit 1
+          fi
+          if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
+              echo "::error::renderer-test-percentage must be an integer from 1 to 100"
+              exit 1
+          fi
+          echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build executables
-    needs: [formatting, host-tests]
+    needs: [formatting, dumpsrv-tests, host-tests, plan]
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     outputs:
@@ -147,208 +196,49 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  dumpsrv-tests:
-    name: C# regression service tests
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@v7
+  physics:
+    name: Physics replays
+    needs: [build, plan]
+    uses: ./.github/workflows/replay-tests.yml
+    with:
+      phase: physics
+      exe-artifact: ${{ needs.build.outputs.exe-artifact }}
+      shard-matrix: ${{ needs.plan.outputs.shards }}
+      shards: ${{ inputs.shards }}
+      partitions-per-shard: ${{ inputs.partitions-per-shard }}
+      replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
+      renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
+      renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Test the shared regression engine and HTTP service
-        run: dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
-
-      - name: Test the POSIX client
-        run: python3 tools/scripts/dumpsrv/dumpsrv.tests/client-tests.py
-
-      - name: Check C# formatting
-        run: dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes --no-restore
-
-  plan:
-    name: Plan the shards
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    outputs:
-      shards: ${{ steps.plan.outputs.shards }}
-    steps:
-      - name: Split the golden set into shards
-        id: plan
-        env:
-          SHARDS: ${{ inputs.shards }}
-          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-        run: |
-          set -u
-          if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
-              echo "::error::shards must be an integer from 1 to 2147483647"
-              exit 1
-          fi
-          if [[ ! "$PARTITIONS_PER_SHARD" =~ ^([1-9]|[1-5][0-9]|6[0-4])$ ]]; then
-              echo "::error::partitions-per-shard must be an integer from 1 to 64"
-              exit 1
-          fi
-          if [[ ! "$RENDERER_TEST_PERCENTAGE" =~ ^([1-9][0-9]?|100)$ ]]; then
-              echo "::error::renderer-test-percentage must be an integer from 1 to 100"
-              exit 1
-          fi
-          echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
-
-  replay:
-    name: Replays (shard ${{ matrix.shard }})
-    needs: [build, dumpsrv-tests, plan]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 90
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: ${{ fromJSON(needs.plan.outputs.shards) }}
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Publish the shared regression runner
-        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
-
-      - name: Install DOSBox-X
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends dosbox-x
-
-      - name: Initialize DOSBox-X before concurrent runs
-        run: |
-          timeout --signal=KILL 30s dosbox-x -silent \
-              -conf tools/scripts/dosbox.proc.conf \
-              -c "mount c $RUNNER_TEMP" -c "c:" -c "exit"
-
-      - uses: actions/download-artifact@v8
-        with:
-          name: ${{ needs.build.outputs.exe-artifact }}
-          path: exes
-
-      - name: Assemble the game directory
-        run: |
-          set -u
-          game_dir="$RUNNER_TEMP/gamedir"
-          mkdir -p "$game_dir"
-          cp -R stunts/. "$game_dir/"
-          # Custom cars use mixed-case extensions; copy the complete asset pack.
-          cp -R tools/scripts/cars/. "$game_dir/"
-          # The archived golden corpus is the complete replay set for CI.
-          find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
-          cp exes/*.exe "$game_dir/"
-          # Generate missing cache entries with the same archived Borland oracles.
-          (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-          cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
-          unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
-          echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
-
-      - name: Download and extract this shard's precomputed oracle outputs
-        env:
-          SHARD: ${{ matrix.shard }}
-          SHARDS: ${{ inputs.shards }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.0
-        run: |
-          set -eu
-          for archive in BINs PDOs; do
-              zip_path="$RUNNER_TEMP/$archive.zip"
-              # Download the versioned release assets.
-              curl --fail --location --silent --show-error --retry 3 \
-                  --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
-              renderer=false
-              if [[ "$archive" == "PDOs" ]]; then
-                  renderer=true
-              fi
-              # The full BIN archive expands to over 15 GB. Extract only assigned
-              # replays, using the same sampling and sharding as the test runner.
-              dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
-                  -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
-                  -Renderer "$renderer" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-                  -ShardIndex "$SHARD" -ShardCount "$SHARDS"
-              rm -- "$zip_path"
-          done
-
-      - name: Run this shard's physics and renderer tests
-        env:
-          SHARD: ${{ matrix.shard }}
-          SHARDS: ${{ inputs.shards }}
-          PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
-          REPLAY_TIMEOUT_SECONDS: ${{ inputs.replay-timeout-seconds }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          RENDERER_TIMEOUT_SECONDS: ${{ inputs.renderer-timeout-seconds }}
-        run: |
-          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" run \
-              -GameDirectory "$GAME_DIR" \
-              -OutputDirectory partitions \
-              -DosBoxConfigPath tools/scripts/dosbox.proc.conf \
-              -PartitionCount "$PARTITIONS_PER_SHARD" \
-              -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
-              -DosBoxTimeoutSeconds "$REPLAY_TIMEOUT_SECONDS" \
-              -RendererTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
-              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE"
-
-      - uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: partitions-${{ matrix.shard }}
-          path: partitions/*.json
-          # Missing shards are diagnosed by the shared merge command.
-          if-no-files-found: warn
-          retention-days: 14
-
-      - name: Upload this shard's PDO files
-        uses: actions/upload-artifact@v7
-        if: always()
-        with:
-          name: renderer-pdo-${{ matrix.shard }}
-          path: ${{ runner.temp }}/gamedir/**/*.[pP][dD][oO]
-          include-hidden-files: true
-          # A shard may have no replays in the renderer sample.
-          if-no-files-found: warn
-          retention-days: 14
+  renderer:
+    name: Renderer replays
+    needs: [build, plan, physics]
+    uses: ./.github/workflows/replay-tests.yml
+    with:
+      phase: renderer
+      exe-artifact: ${{ needs.build.outputs.exe-artifact }}
+      shard-matrix: ${{ needs.plan.outputs.shards }}
+      shards: ${{ inputs.shards }}
+      partitions-per-shard: ${{ inputs.partitions-per-shard }}
+      replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
+      renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
+      renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 
   report:
     name: Replay report
-    needs: [plan, replay]
-    if: always()
+    needs: [physics, renderer]
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Publish the shared regression runner
-        run: dotnet publish tools/scripts/dumpsrv/dumpsrv/dumpsrv.csproj --configuration Release --output "$RUNNER_TEMP/dumpsrv"
-
       - uses: actions/download-artifact@v8
-        continue-on-error: true
         with:
-          pattern: partitions-*
-          merge-multiple: true
-          path: partitions
+          pattern: '*-report'
+          path: reports
 
-      - name: Merge the shard results and check coverage
-        env:
-          SHARDS: ${{ inputs.shards }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+      - name: Combine physics and renderer diagnostics
         run: |
-          mkdir -p partitions "$RUNNER_TEMP/replays"
-          unzip -q tools/scripts/rpls_golden/replays.zip -d "$RUNNER_TEMP/replays"
-          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" merge \
-              -ReplayDirectory "$RUNNER_TEMP/replays" \
-              -ResultsDirectory partitions -ShardCount "$SHARDS" \
-              -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-              -OutputFile partitions_all.txt \
-              -SummaryFile "$GITHUB_STEP_SUMMARY"
+          cat reports/physics-report/partitions_all.txt \
+              reports/renderer-report/partitions_all.txt > partitions_all.txt
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -357,24 +247,3 @@ jobs:
           path: partitions_all.txt
           if-no-files-found: warn
           retention-days: 14
-
-      - name: Combine all PDO files into a downloadable ZIP
-        uses: actions/upload-artifact/merge@v7
-        if: always()
-        with:
-          name: renderer-pdo
-          pattern: renderer-pdo-*
-          include-hidden-files: true
-          retention-days: 14
-
-      - name: Check replay jobs completed successfully
-        if: always()
-        env:
-          REPLAY_RESULT: ${{ needs.replay.result }}
-        run: |
-          if [[ "$REPLAY_RESULT" != "success" ]]; then
-              echo "::error::a replay shard did not finish successfully (result: $REPLAY_RESULT)"
-              printf '\n:x: A replay shard did not finish successfully (result: **%s**).\n' \
-                  "$REPLAY_RESULT" >> "$GITHUB_STEP_SUMMARY"
-              exit 1
-          fi

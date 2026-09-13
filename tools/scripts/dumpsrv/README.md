@@ -243,10 +243,16 @@ It writes the text report even when validation fails and returns nonzero for
 errors or incomplete coverage. Optional `-SummaryFile PATH` writes the Markdown
 summary used by GitHub Actions.
 
-CI uploads each shard's JSON as `partitions-<index>` and the combined text report
-as `partitions_all`, including diagnostics when validation fails. The summary
-shows physics and renderer coverage separately, errors grouped by type, and up
-to the first 200 diagnostic lines. The existing DOS executable build and
+CI first runs formatting, service and host tests, and shard planning in
+parallel, then builds the DOS executables after all four jobs pass. Physics
+replays run after the build, and renderer replays run only after every physics
+shard and its coverage check pass. Each shard's JSON is uploaded as
+`physics-partitions-<index>` or `renderer-partitions-<index>`. Phase reports are
+uploaded as `physics-report` and `renderer-report`, including diagnostics when
+validation fails. The final Replay report job runs only after renderer
+validation passes and publishes the combined text report as `partitions_all`.
+The summaries show physics and renderer coverage separately, errors grouped by
+type, and up to the first 200 diagnostic lines. The DOS executable build and
 `restunts-exes` artifact remain separate from the C# regression runner.
 
 ## Precomputed oracle archives

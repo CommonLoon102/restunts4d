@@ -293,6 +293,18 @@ to override the default 120-second timeout for each DOSBox run.
 
 ## CI replay validation
 
+CI runs in five phases, each requiring the previous phase to pass:
+
+1. C/H formatting, C# regression service tests, host regression tests, and shard
+   planning run in parallel.
+2. Build the executables, including the DOS timer/cleanup checks.
+3. Run all physics replay shards and validate their coverage.
+4. Run the renderer replay shards and validate their coverage.
+5. Publish the combined replay report as `partitions_all`.
+
+A failed phase skips the later phases. Physics and renderer phase diagnostics
+remain available in their individual artifacts if replay validation fails.
+
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
@@ -325,8 +337,8 @@ processing errors, and byte mismatches fail validation.
 
 The reusable workflow defaults to 20 shards with 12 workers each, 30 seconds
 per physics execution, and 120 seconds per renderer execution. It tests the
-C# application and checks its formatting on Linux and Windows before building
-the DOS executables. Run these checks locally with the .NET 10 SDK:
+C# application and checks its formatting on Linux before building the DOS
+executables. Run these checks locally with the .NET 10 SDK:
 
 ```sh
 dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
