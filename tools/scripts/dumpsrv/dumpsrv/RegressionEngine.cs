@@ -1,10 +1,16 @@
 namespace DumpSrv;
 
 public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log = null,
-    TimeProvider? timeProvider = null)
+    TimeProvider? timeProvider = null, int? processorCount = null)
 {
     private readonly IDosBoxRunner runner = runner ?? new DosBoxRunner();
     private readonly Action<string> log = log ?? Console.WriteLine;
+    private readonly int processorCount = processorCount switch
+    {
+        null => Environment.ProcessorCount,
+        > 0 => processorCount.Value,
+        _ => throw new ArgumentOutOfRangeException(nameof(processorCount))
+    };
 
     private sealed record Phase(bool Renderer, string Oracle, string Candidate, string OracleExtension,
         string CandidateExtension, string Arguments, int TimeoutSeconds);
@@ -72,14 +78,18 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
                     var assigned = ReplayCatalog.Assigned(replays, phase.Renderer, options.RendererTestPercentage,
                         options.ShardIndex, options.ShardCount);
                     var partitions = ReplayCatalog.RoundRobin(assigned, options.PartitionCount);
+                    // Keep partition assignment stable while avoiding CPU contention between emulators.
+                    var concurrency = Math.Min(options.PartitionCount, processorCount);
+                    using var slots = new SemaphoreSlim(concurrency, concurrency);
                     await Task.WhenAll(partitions.Where(partition => partition.Count > 0).Select(async partition =>
                     {
                         foreach (var replay in partition)
                         {
-                            cancellationToken.ThrowIfCancellationRequested();
-                            log($"Processing {(phase.Renderer ? "renderer" : "physics")} replay: {replay}");
+                            await slots.WaitAsync(cancellationToken);
                             try
                             {
+                                cancellationToken.ThrowIfCancellationRequested();
+                                log($"Processing {(phase.Renderer ? "renderer" : "physics")} replay: {replay}");
                                 await ProcessReplayAsync(options, replay, phase, Diagnostic, Own, cancellationToken);
                             }
                             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -89,6 +99,10 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
                             catch (Exception exception) when (exception is not OutOfMemoryException)
                             {
                                 Diagnostic($"ERROR|type=processing_failure|input={replay}|message={ReportFormatter.Safe(exception.Message)}");
+                            }
+                            finally
+                            {
+                                slots.Release();
                             }
                             lock (gate)
                             {

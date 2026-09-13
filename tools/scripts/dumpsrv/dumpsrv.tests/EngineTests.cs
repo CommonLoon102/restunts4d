@@ -155,10 +155,93 @@ public sealed class EngineTests
         Assert.True(File.Exists(DosFiles.Resolve(directory.Path, "timeout.BIN.pending")));
     }
 
-    [Fact]
-    public async Task CancellationWaitsForAllWorkersAndKeepsPartialDiagnostics()
+    [Theory]
+    [InlineData(12, 2)]
+    [InlineData(2, 12)]
+    [InlineData(3, 1)]
+    [InlineData(12, null)]
+    public async Task ActiveReplaysRespectCpuAndPartitionLimits(int partitions, int? processors)
     {
-        using var directory = CreateGame("alpha.rpl", "beta.rpl", "gamma.rpl");
+        var replays = Enumerable.Range(0, 24).Select(index => $"r{index:D2}.rpl").ToArray();
+        using var directory = CreateGame(replays);
+        var expected = Math.Min(partitions, processors ?? Environment.ProcessorCount);
+        var active = new int[2];
+        var maximum = new int[2];
+        var started = new int[2];
+        var full = Enumerable.Range(0, 2).Select(_ =>
+            new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
+        var release = Enumerable.Range(0, 2).Select(_ =>
+            new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
+        var gate = new object();
+        var runner = new FakeRunner(async (invocation, token) =>
+        {
+            var phase = invocation.Executable.StartsWith("pix", StringComparison.Ordinal) ? 1 : 0;
+            var count = Interlocked.Increment(ref active[phase]);
+            lock (gate)
+            {
+                maximum[phase] = Math.Max(maximum[phase], count);
+            }
+            if (count == expected)
+            {
+                full[phase].TrySetResult();
+            }
+            try
+            {
+                await release[phase].Task.WaitAsync(token);
+                WriteOutput(invocation);
+                return new DosBoxResult(0);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref active[phase]);
+            }
+        });
+        void Log(string message)
+        {
+            if (message.StartsWith("Processing ", StringComparison.Ordinal))
+            {
+                var phase = message.StartsWith("Processing renderer", StringComparison.Ordinal) ? 1 : 0;
+                Interlocked.Increment(ref started[phase]);
+            }
+        }
+        var execution = new RegressionEngine(runner, Log, processorCount: processors).RunAsync(
+            Options(directory) with { PartitionCount = partitions }, TestContext.Current.CancellationToken);
+        try
+        {
+            for (var phase = 0; phase < 2; phase++)
+            {
+                await full[phase].Task.WaitAsync(TimeSpan.FromSeconds(5),
+                    TestContext.Current.CancellationToken);
+                Assert.Equal(expected, Volatile.Read(ref active[phase]));
+                // All logical partitions have been scheduled, but queued replays must not start.
+                Assert.Equal(expected, Volatile.Read(ref started[phase]));
+                release[phase].SetResult();
+            }
+        }
+        finally
+        {
+            foreach (var signal in release)
+            {
+                signal.TrySetResult();
+            }
+        }
+        var result = await execution.WaitAsync(TimeSpan.FromSeconds(5),
+            TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(partitions, result.PartitionCount);
+        Assert.Equal(replays, result.PhysicsCompleted);
+        Assert.Equal(replays, result.RendererCompleted);
+        Assert.Equal(new[] { expected, expected }, maximum);
+        Assert.Equal(new[] { 0, 0 }, active);
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    public async Task CancellationWaitsForActiveWorkersWithoutStartingQueuedReplays(int processors)
+    {
+        using var directory = CreateGame("alpha.rpl", "beta.rpl", "gamma.rpl", "delta.rpl", "epsilon.rpl");
         using var cancellation = new CancellationTokenSource();
         var started = 0;
         var active = 0;
@@ -166,7 +249,7 @@ public sealed class EngineTests
         var runner = new FakeRunner(async (invocation, token) =>
         {
             Interlocked.Increment(ref active);
-            if (Interlocked.Increment(ref started) == 3)
+            if (Interlocked.Increment(ref started) == processors)
             {
                 allStarted.SetResult();
             }
@@ -180,19 +263,19 @@ public sealed class EngineTests
                 Interlocked.Decrement(ref active);
             }
         });
-        var execution = new RegressionEngine(runner, _ => { }).RunAsync(
-            Options(directory) with { PartitionCount = 3 }, cancellation.Token);
+        var execution = new RegressionEngine(runner, _ => { }, processorCount: processors).RunAsync(
+            Options(directory) with { PartitionCount = 5 }, cancellation.Token);
         await allStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         cancellation.Cancel();
         var result = await execution;
         Assert.False(result.Completed);
         Assert.NotNull(result.Failure);
         Assert.Equal(0, active);
-        Assert.Equal(3, started);
+        Assert.Equal(processors, started);
         Assert.Empty(result.PhysicsCompleted);
         Assert.Empty(result.RendererCompleted);
-        Assert.Contains(result.Diagnostics, line => line.StartsWith("ERROR|type=cancelled|", StringComparison.Ordinal));
-        Assert.Equal(3, Directory.GetFiles(directory.Path, "*.pending").Length);
+        Assert.StartsWith("ERROR|type=cancelled|", Assert.Single(result.Diagnostics));
+        Assert.Equal(processors, Directory.GetFiles(directory.Path, "*.pending").Length);
     }
 
     [Fact]

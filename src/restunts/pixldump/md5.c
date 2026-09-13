@@ -4,6 +4,18 @@
 #define MD5_BLOCK_SIZE 64U
 #define MD5_BLOCK_WORD_COUNT 16U
 #define MD5_WORD_SIZE 4U
+#define MD5_PADDING_BYTE 128U
+#define MD5_LENGTH_OFFSET 56U
+#define MD5_LENGTH_HIGH_OFFSET 60U
+#define MD5_BITS_PER_BYTE 8UL
+#define MD5_INITIAL_A 1732584193UL
+#define MD5_INITIAL_B 4023233417UL
+#define MD5_INITIAL_C 2562383102UL
+#define MD5_INITIAL_D 271733878UL
+
+/* Original physics consumes addresses and stack residue from its renderer.
+ * Preserve the oracle's code/data layout while optimizing the C port. */
+#ifdef RESTUNTS_ORIGINAL
 #define MD5_ROUND_COUNT 64U
 #define MD5_ROUND_1_END 16U
 #define MD5_ROUND_2_END 32U
@@ -14,14 +26,6 @@
 #define MD5_ROUND_3_WORD_MULTIPLIER 3U
 #define MD5_ROUND_3_WORD_OFFSET 5U
 #define MD5_ROUND_4_WORD_MULTIPLIER 7U
-#define MD5_PADDING_BYTE 128U
-#define MD5_LENGTH_OFFSET 56U
-#define MD5_LENGTH_HIGH_OFFSET 60U
-#define MD5_BITS_PER_BYTE 8UL
-#define MD5_INITIAL_A 1732584193UL
-#define MD5_INITIAL_B 4023233417UL
-#define MD5_INITIAL_C 2562383102UL
-#define MD5_INITIAL_D 271733878UL
 
 static const legacy_u8 md5_shifts[MD5_ROUND_COUNT] = {
 	7,	12, 17, 22, 7,	12, 17, 22, 7,	12, 17, 22, 7,	12, 17, 22, 5,	9,	14, 20, 5,	9,
@@ -99,6 +103,144 @@ static void md5_transform(legacy_u32 state[MD5_STATE_WORD_COUNT],
 	state[2] = LEGACY_U32_WRAP_ADD(state[2], c);
 	state[3] = LEGACY_U32_WRAP_ADD(state[3], d);
 }
+
+#else
+
+#define MD5_F(b, c, d) ((d) ^ ((b) & ((c) ^ (d))))
+#define MD5_G(b, c, d) ((c) ^ ((d) & ((b) ^ (c))))
+#define MD5_H(b, c, d) ((b) ^ (c) ^ (d))
+#define MD5_I(b, c, d) ((c) ^ ((b) | (~(d))))
+#define MD5_HALF_ROTATION_MASK 15U
+
+/* Both shift counts stay below 16, including the unused zero-rotation case. */
+#define MD5_ROTATE_HALF(low, high, shift)                                                          \
+	((legacy_u16)(((low) << ((shift) & MD5_HALF_ROTATION_MASK)) |                                  \
+				  ((high) >> ((LEGACY_WORD_BITS - (shift)) & MD5_HALF_ROTATION_MASK))))
+
+/* Constant rounds avoid table dispatch and rotate the state by argument order.
+ * Split each rotation into 16-bit halves: the DOS compiler otherwise calls two
+ * far runtime shift helpers for every one of the 64 steps in every block. */
+#define MD5_STEP(function, a, b, c, d, word, shift, constant)                                      \
+	do {                                                                                           \
+		legacy_u16 md5_low_;                                                                       \
+		legacy_u16 md5_high_;                                                                      \
+		(a) = LEGACY_U32_WRAP_ADD((a), function((b), (c), (d)));                                   \
+		(a) = LEGACY_U32_WRAP_ADD((a), (constant));                                                \
+		(a) = LEGACY_U32_WRAP_ADD((a), words[(word)]);                                             \
+		md5_low_ =                                                                                 \
+			(shift) < LEGACY_WORD_BITS ? (legacy_u16)(a) : (legacy_u16)((a) >> LEGACY_WORD_BITS);  \
+		md5_high_ =                                                                                \
+			(shift) < LEGACY_WORD_BITS ? (legacy_u16)((a) >> LEGACY_WORD_BITS) : (legacy_u16)(a);  \
+		(a) = ((shift) & MD5_HALF_ROTATION_MASK) != 0U                                             \
+				  ? (legacy_u32)MD5_ROTATE_HALF(md5_low_, md5_high_, (shift)) |                    \
+						((legacy_u32)MD5_ROTATE_HALF(md5_high_, md5_low_, (shift))                 \
+						 << LEGACY_WORD_BITS)                                                      \
+				  : (legacy_u32)md5_low_ | ((legacy_u32)md5_high_ << LEGACY_WORD_BITS);            \
+		(a) = LEGACY_U32_WRAP_ADD((a), (b));                                                       \
+	} while (0)
+
+static void md5_transform(legacy_u32 state[MD5_STATE_WORD_COUNT],
+						  const legacy_u8 block[MD5_BLOCK_SIZE])
+{
+	legacy_u32 words[MD5_BLOCK_WORD_COUNT];
+	legacy_u32 a;
+	legacy_u32 b;
+	legacy_u32 c;
+	legacy_u32 d;
+	legacy_u16 low;
+	legacy_u16 high;
+	legacy_u16 index;
+	legacy_u16 word_index;
+
+	for (index = 0; index < MD5_BLOCK_WORD_COUNT; index++) {
+		word_index = (legacy_u16)(index * MD5_WORD_SIZE);
+		low = (legacy_u16)(block[word_index] |
+						   ((legacy_u16)block[word_index + 1U] << LEGACY_BYTE_BITS));
+		high = (legacy_u16)(block[word_index + 2U] |
+							((legacy_u16)block[word_index + 3U] << LEGACY_BYTE_BITS));
+		words[index] = (legacy_u32)low | ((legacy_u32)high << LEGACY_WORD_BITS);
+	}
+
+	a = state[0];
+	b = state[1];
+	c = state[2];
+	d = state[3];
+
+	MD5_STEP(MD5_F, a, b, c, d, 0U, 7U, 3614090360UL);
+	MD5_STEP(MD5_F, d, a, b, c, 1U, 12U, 3905402710UL);
+	MD5_STEP(MD5_F, c, d, a, b, 2U, 17U, 606105819UL);
+	MD5_STEP(MD5_F, b, c, d, a, 3U, 22U, 3250441966UL);
+	MD5_STEP(MD5_F, a, b, c, d, 4U, 7U, 4118548399UL);
+	MD5_STEP(MD5_F, d, a, b, c, 5U, 12U, 1200080426UL);
+	MD5_STEP(MD5_F, c, d, a, b, 6U, 17U, 2821735955UL);
+	MD5_STEP(MD5_F, b, c, d, a, 7U, 22U, 4249261313UL);
+	MD5_STEP(MD5_F, a, b, c, d, 8U, 7U, 1770035416UL);
+	MD5_STEP(MD5_F, d, a, b, c, 9U, 12U, 2336552879UL);
+	MD5_STEP(MD5_F, c, d, a, b, 10U, 17U, 4294925233UL);
+	MD5_STEP(MD5_F, b, c, d, a, 11U, 22U, 2304563134UL);
+	MD5_STEP(MD5_F, a, b, c, d, 12U, 7U, 1804603682UL);
+	MD5_STEP(MD5_F, d, a, b, c, 13U, 12U, 4254626195UL);
+	MD5_STEP(MD5_F, c, d, a, b, 14U, 17U, 2792965006UL);
+	MD5_STEP(MD5_F, b, c, d, a, 15U, 22U, 1236535329UL);
+
+	MD5_STEP(MD5_G, a, b, c, d, 1U, 5U, 4129170786UL);
+	MD5_STEP(MD5_G, d, a, b, c, 6U, 9U, 3225465664UL);
+	MD5_STEP(MD5_G, c, d, a, b, 11U, 14U, 643717713UL);
+	MD5_STEP(MD5_G, b, c, d, a, 0U, 20U, 3921069994UL);
+	MD5_STEP(MD5_G, a, b, c, d, 5U, 5U, 3593408605UL);
+	MD5_STEP(MD5_G, d, a, b, c, 10U, 9U, 38016083UL);
+	MD5_STEP(MD5_G, c, d, a, b, 15U, 14U, 3634488961UL);
+	MD5_STEP(MD5_G, b, c, d, a, 4U, 20U, 3889429448UL);
+	MD5_STEP(MD5_G, a, b, c, d, 9U, 5U, 568446438UL);
+	MD5_STEP(MD5_G, d, a, b, c, 14U, 9U, 3275163606UL);
+	MD5_STEP(MD5_G, c, d, a, b, 3U, 14U, 4107603335UL);
+	MD5_STEP(MD5_G, b, c, d, a, 8U, 20U, 1163531501UL);
+	MD5_STEP(MD5_G, a, b, c, d, 13U, 5U, 2850285829UL);
+	MD5_STEP(MD5_G, d, a, b, c, 2U, 9U, 4243563512UL);
+	MD5_STEP(MD5_G, c, d, a, b, 7U, 14U, 1735328473UL);
+	MD5_STEP(MD5_G, b, c, d, a, 12U, 20U, 2368359562UL);
+
+	MD5_STEP(MD5_H, a, b, c, d, 5U, 4U, 4294588738UL);
+	MD5_STEP(MD5_H, d, a, b, c, 8U, 11U, 2272392833UL);
+	MD5_STEP(MD5_H, c, d, a, b, 11U, 16U, 1839030562UL);
+	MD5_STEP(MD5_H, b, c, d, a, 14U, 23U, 4259657740UL);
+	MD5_STEP(MD5_H, a, b, c, d, 1U, 4U, 2763975236UL);
+	MD5_STEP(MD5_H, d, a, b, c, 4U, 11U, 1272893353UL);
+	MD5_STEP(MD5_H, c, d, a, b, 7U, 16U, 4139469664UL);
+	MD5_STEP(MD5_H, b, c, d, a, 10U, 23U, 3200236656UL);
+	MD5_STEP(MD5_H, a, b, c, d, 13U, 4U, 681279174UL);
+	MD5_STEP(MD5_H, d, a, b, c, 0U, 11U, 3936430074UL);
+	MD5_STEP(MD5_H, c, d, a, b, 3U, 16U, 3572445317UL);
+	MD5_STEP(MD5_H, b, c, d, a, 6U, 23U, 76029189UL);
+	MD5_STEP(MD5_H, a, b, c, d, 9U, 4U, 3654602809UL);
+	MD5_STEP(MD5_H, d, a, b, c, 12U, 11U, 3873151461UL);
+	MD5_STEP(MD5_H, c, d, a, b, 15U, 16U, 530742520UL);
+	MD5_STEP(MD5_H, b, c, d, a, 2U, 23U, 3299628645UL);
+
+	MD5_STEP(MD5_I, a, b, c, d, 0U, 6U, 4096336452UL);
+	MD5_STEP(MD5_I, d, a, b, c, 7U, 10U, 1126891415UL);
+	MD5_STEP(MD5_I, c, d, a, b, 14U, 15U, 2878612391UL);
+	MD5_STEP(MD5_I, b, c, d, a, 5U, 21U, 4237533241UL);
+	MD5_STEP(MD5_I, a, b, c, d, 12U, 6U, 1700485571UL);
+	MD5_STEP(MD5_I, d, a, b, c, 3U, 10U, 2399980690UL);
+	MD5_STEP(MD5_I, c, d, a, b, 10U, 15U, 4293915773UL);
+	MD5_STEP(MD5_I, b, c, d, a, 1U, 21U, 2240044497UL);
+	MD5_STEP(MD5_I, a, b, c, d, 8U, 6U, 1873313359UL);
+	MD5_STEP(MD5_I, d, a, b, c, 15U, 10U, 4264355552UL);
+	MD5_STEP(MD5_I, c, d, a, b, 6U, 15U, 2734768916UL);
+	MD5_STEP(MD5_I, b, c, d, a, 13U, 21U, 1309151649UL);
+	MD5_STEP(MD5_I, a, b, c, d, 4U, 6U, 4149444226UL);
+	MD5_STEP(MD5_I, d, a, b, c, 11U, 10U, 3174756917UL);
+	MD5_STEP(MD5_I, c, d, a, b, 2U, 15U, 718787259UL);
+	MD5_STEP(MD5_I, b, c, d, a, 9U, 21U, 3951481745UL);
+
+	state[0] = LEGACY_U32_WRAP_ADD(state[0], a);
+	state[1] = LEGACY_U32_WRAP_ADD(state[1], b);
+	state[2] = LEGACY_U32_WRAP_ADD(state[2], c);
+	state[3] = LEGACY_U32_WRAP_ADD(state[3], d);
+}
+
+#endif
 
 void pixldump_md5(const legacy_u8 far *source, legacy_u16 length,
 				  legacy_u8 digest[PIXLDUMP_MD5_SIZE])

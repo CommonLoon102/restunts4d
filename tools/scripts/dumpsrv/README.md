@@ -47,7 +47,7 @@ physics and renderer executables there when both phases are enabled.
 
 ## Start the service
 
-Set a long, random API key and choose the number of concurrent workers. These
+Set a long, random API key and choose the number of replay partitions. These
 examples start the same application on either platform.
 
 Linux:
@@ -73,7 +73,7 @@ dotnet out/dumpsrv/dumpsrv.dll serve `
 | Parameter | Default | Meaning |
 | --- | --- | --- |
 | `ApiKey` | `DUMPSRV_API_KEY` | Secret required in the `X-API-Key` request header. |
-| `PartitionCount` | Required | Number of concurrent workers, from 1 through 64. |
+| `PartitionCount` | Required | Number of logical replay partitions, from 1 through 64. |
 | `Port` | `8080` | HTTP port, from 1 through 65535. |
 | `DosBoxTimeoutSeconds` | `60` | Positive time limit for each DOSBox execution. |
 | `RendererTestPercentage` | `100` | Whole-number renderer coverage, from 1 through 100. |
@@ -138,10 +138,16 @@ the entire corpus. Renderer tests select
 complete list before any work is assigned.
 
 The selected lists are distributed round robin across shards and then round
-robin into each shard's worker lists. Each worker processes its list in order,
-and workers run as asynchronous C# tasks. No filename counter, hash, or numeric
-suffix controls assignment. Partition and shard sizes differ by at most one
-replay. Selection is independent of the number of shards or workers.
+robin into each shard's partition lists. Each partition processes its list in order
+as an asynchronous C# task. No filename counter, hash, or numeric suffix controls
+assignment. Partition and shard sizes differ by at most one replay. Selection is
+independent of the number of shards or partitions.
+
+Active replay processing is limited to the smaller of `PartitionCount` and the
+logical CPUs available to the runner process. Extra partitions wait for capacity;
+this queue time does not consume an individual DOSBox execution timeout. This
+reduces emulator contention on long replays. The cap applies to both physics and
+rendering, preserving partition assignments and the configured execution timeouts.
 
 The service uses one shard. GitHub Actions assigns one shard to each matrix job;
 all jobs use the same complete replay corpus and renderer percentage. Physics
