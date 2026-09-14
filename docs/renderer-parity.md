@@ -51,6 +51,15 @@ wrapper changes must keep this model synchronized with the original link map.
 Thus replay names, optional extensions, DOS directories, and environment
 placement do not require special cases.
 
+The Watcom original renderer must retain the same heap boundary too. Its linker
+places `ENDSEG` at physical offset `0x39E27`, matching the archived Murmur32
+Borland map. Original startup uses `seg endseg + 1`, retaining `0x39E3`
+paragraphs. Keeping the former MD5 boundary (`0x3A1A` retained paragraphs)
+shifts resource addresses by 55 paragraphs, or 880 bytes. Polygon-buffer segment
+words left on the stack can then become different stopped-opponent wheel
+headings, even though both executables use the same game assembly. Wrapper or
+oracle layout changes must update both this link boundary and the C model.
+
 The original engine assembly remains unchanged. Ordinary C
 game callers keep their existing default simulation contract; the pixel-dump
 wrapper selects its own original caller context. BMP mode simulates without

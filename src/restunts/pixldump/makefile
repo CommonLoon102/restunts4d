@@ -22,9 +22,10 @@ PLATFORM_NAMES = runtime file
 C_LINK_OBJECTS = $(OBJDIR)/pixldump.obj $(OBJDIR)/murmur3.obj $(PLATFORM_OBJECTS)
 OBJ_FILES = $(ASMORIG_LINK_OBJECTS) $(C_LINK_OBJECTS)
 START_OPTION = $(ORIGINAL_LINK_OPTIONS)
-# Resource segment words can survive as stopped-opponent wheel headings. Keep
-# the archived heap boundary; WLINK rejects code that grows past this address.
-LINK_ORDER = $(ORIGINAL_LINK_ORDER) segaddr=0x3a19 offset=0x2
+# Resource segment words can survive as stopped-opponent wheel headings. Match
+# the Murmur32 Borland oracle's ENDSEG (0x39e27), retaining 0x39e3 paragraphs.
+# WLINK rejects code that grows past this archived heap boundary.
+LINK_ORDER = $(ORIGINAL_LINK_ORDER) segaddr=0x39e2 offset=0x7
 CFLAGS = -dRESTUNTS_ORIGINAL
 # Original rendering observes caller-stack residue. Full local-variable debug
 # information (-d2) reshapes those frames even with -os; retain line info instead.
