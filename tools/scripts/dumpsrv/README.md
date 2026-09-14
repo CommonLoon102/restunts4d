@@ -137,11 +137,26 @@ the entire corpus. Renderer tests select
 `ceiling(replay count * percentage / 100)` evenly spaced entries from that same
 complete list before any work is assigned.
 
-The selected lists are distributed round robin across shards and then round
-robin into each shard's worker lists. Each worker processes its list in order,
-and workers run as asynchronous C# tasks. No filename counter, hash, or numeric
-suffix controls assignment. Partition and shard sizes differ by at most one
-replay. Selection is independent of the number of shards or workers.
+For distributed runs, `tools/scripts/plan-replay-shards.py` reads the recorded
+tick count from each replay's header and assigns longer replays to the shard
+with the lowest total first. It then improves the totals with replay moves
+and swaps until every shard is within ±2% of the average or no improving move
+or swap remains. Small samples or indivisible replay lengths can prevent that
+target; the planner reports the remaining deviation. Physics and renderer
+lists are balanced independently, after renderer sampling. Shards can contain
+different numbers of replays, and repeated planning is deterministic.
+
+The planner writes a JSON object with `version`, `rendererTestPercentage`, and
+a `shards` array indexed by `ShardIndex`. Each entry contains `physics` and
+`renderer` filename arrays, plus `physicsTicks` and `rendererTicks` totals.
+The C# application validates the plan's settings and complete replay coverage,
+then uses the lists for its shard ID without computing assignments. Oracle
+extraction and report merging use the same JSON plan.
+
+Within each shard, lists are distributed round robin to workers, whose replay
+counts differ by at most one. Each worker processes its list in order, and
+workers run as asynchronous C# tasks. Selection is independent of the number
+of shards or workers.
 
 The service uses one shard. GitHub Actions assigns one shard to each matrix job;
 all jobs use the same complete replay corpus and renderer percentage. Physics
@@ -218,9 +233,21 @@ dotnet out/dumpsrv/dumpsrv.dll run \
     -RendererTimeoutSeconds 120 -RendererTestPercentage 5
 ```
 
-`ShardIndex` defaults to `0` and `ShardCount` to `1`. For a distributed run, pass
-both explicitly and retain the full replay corpus on every shard. `PhysicsTests`
-and `RendererTests` default to `true`; use `-PhysicsTests false` or
+`ShardIndex` defaults to `0` and `ShardCount` to `1`. Single-shard runs, including
+the HTTP service, work without a plan. For a distributed run, generate a plan
+once from the complete replay directory or ZIP:
+
+```sh
+python3 tools/scripts/plan-replay-shards.py \
+    --replays stunts --shards 20 \
+    --renderer-test-percentage 5 --output shard-plan.json
+```
+
+Pass `-ShardPlan shard-plan.json -ShardCount 20 -ShardIndex 0` to `run`, changing
+the index for each job, and use `-RendererTestPercentage 5` to match this plan.
+Retain the complete replay corpus on every shard. `ShardPlan` is required when
+`ShardCount` exceeds one. `PhysicsTests` and `RendererTests` default to `true`;
+use `-PhysicsTests false` or
 `-RendererTests false` to disable a phase. `DosBoxConfigPath` defaults to the
 configuration alongside the application. Progress is written to the console.
 
@@ -237,6 +264,7 @@ dotnet out/dumpsrv/dumpsrv.dll merge \
 ```
 
 Pass the same shard count, percentage, and enabled test phases used by `run`.
+For distributed runs, also pass the same `-ShardPlan shard-plan.json` to `merge`.
 `merge` reads shard identity from the JSON content, checks actual completed
 replay names against expected coverage, and rejects missing or duplicate shards.
 It writes the text report even when validation fails and returns nonzero for
@@ -244,8 +272,11 @@ errors or incomplete coverage. Optional `-SummaryFile PATH` writes the Markdown
 summary used by GitHub Actions.
 
 CI first runs formatting, service and host tests, and shard planning in
-parallel, then builds the DOS executables after all four jobs pass. Physics
-replays run after the build, and renderer replays run only after every physics
+parallel, then builds the DOS executables after all four jobs pass. The planning
+job publishes `shard-plan.json` in the `replay-shard-plan` artifact and reports
+each phase's tick balance in its job summary. Replay jobs and coverage checks
+download that artifact. Physics replays run after the build, and renderer
+replays run only after every physics
 shard and its coverage check pass. Each shard's JSON is uploaded as
 `physics-partitions-<index>` or `renderer-partitions-<index>`. Phase reports are
 uploaded as `physics-report` and `renderer-report`, including diagnostics when
@@ -264,16 +295,19 @@ or `.PDO` entries. For example:
 
 ```sh
 dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
-    -GameDirectory stunts -Archive BINs.zip -ShardIndex 0 -ShardCount 20
+    -GameDirectory stunts -Archive BINs.zip -ShardIndex 0 -ShardCount 20 \
+    -ShardPlan shard-plan.json -RendererTestPercentage 5
 dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
     -GameDirectory stunts -Archive PDOs.zip -Renderer true \
-    -RendererTestPercentage 100 -ShardIndex 0 -ShardCount 20
+    -RendererTestPercentage 5 -ShardIndex 0 -ShardCount 20 \
+    -ShardPlan shard-plan.json
 ```
 
 `Renderer` defaults to `false`, `RendererTestPercentage` to `100`,
 `ShardIndex` to `0`, and `ShardCount` to `1`. Match these settings to the
-subsequent `run` command. Missing entries are reported and left for the
-runner to generate. Invalid archives fail preparation. Imported outputs
+subsequent `run` command and supply the same `ShardPlan` for distributed runs.
+Missing entries are reported and left for the runner to generate. Invalid
+archives fail preparation. Imported outputs
 still undergo the runner's completeness checks before reuse.
 
 ## Cached outputs and diagnostics

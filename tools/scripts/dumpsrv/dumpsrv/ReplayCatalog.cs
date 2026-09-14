@@ -72,13 +72,6 @@ public static class ReplayCatalog
         return lists;
     }
 
-    public static IReadOnlyList<string> Assigned(IReadOnlyList<string> replays, bool renderer,
-        int percentage, int shardIndex, int shardCount)
-    {
-        ArgumentOutOfRangeException.ThrowIfLessThan(shardIndex, 0);
-        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(shardIndex, shardCount);
-        return RoundRobin(renderer ? Sample(replays, percentage) : replays, shardCount)[shardIndex];
-    }
 }
 
 public static class DosFiles

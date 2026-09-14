@@ -84,6 +84,7 @@ public sealed record MergeOptions
     public required string ResultsDirectory { get; init; }
     public required string OutputFile { get; init; }
     public string? SummaryFile { get; init; }
+    public string? ShardPlanPath { get; init; }
     public int ShardCount { get; init; } = 1;
     public bool PhysicsTests { get; init; } = true;
     public bool RendererTests { get; init; } = true;
@@ -106,6 +107,18 @@ public static class ResultMerger
         catch (Exception e) when (e is ArgumentException or InvalidDataException or IOException or UnauthorizedAccessException)
         {
             diagnostics.Add($"ERROR|type=invalid_corpus|message={ReportFormatter.Safe(e.Message)}");
+        }
+
+        ShardPlan? plan = null;
+        try
+        {
+            plan = ShardPlan.Load(options.ShardPlanPath, corpus,
+                options.RendererTestPercentage, options.ShardCount);
+        }
+        catch (Exception e) when (e is ArgumentException or JsonException or InvalidDataException or
+            IOException or UnauthorizedAccessException)
+        {
+            diagnostics.Add($"ERROR|type=invalid_shard_plan|message={ReportFormatter.Safe(e.Message)}");
         }
 
         string[] files = [];
@@ -156,10 +169,10 @@ public static class ResultMerger
                     diagnostics.Add($"ERROR|type=inconsistent_shard|shard={result.ShardIndex}");
                 }
                 CheckCoverage(result.PhysicsCompleted, options.PhysicsTests
-                    ? ReplayCatalog.Assigned(corpus, false, options.RendererTestPercentage, result.ShardIndex, options.ShardCount)
+                    ? plan?.Assigned(false, result.ShardIndex) ?? []
                     : [], result.ShardIndex, "physics", diagnostics);
                 CheckCoverage(result.RendererCompleted, options.RendererTests
-                    ? ReplayCatalog.Assigned(corpus, true, options.RendererTestPercentage, result.ShardIndex, options.ShardCount)
+                    ? plan?.Assigned(true, result.ShardIndex) ?? []
                     : [], result.ShardIndex, "renderer", diagnostics);
             }
             catch (Exception e) when (e is JsonException or InvalidDataException or IOException or UnauthorizedAccessException)

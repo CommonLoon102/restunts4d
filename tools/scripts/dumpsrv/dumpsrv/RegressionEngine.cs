@@ -43,6 +43,8 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             Validate(options);
             var replays = ReplayCatalog.Discover(options.GameDirectory, cancellationToken);
             result.ReplayFiles = replays.ToList();
+            var plan = ShardPlan.Load(options.ShardPlanPath, replays,
+                options.RendererTestPercentage, options.ShardCount);
             var phases = new List<Phase>();
             if (options.PhysicsTests)
             {
@@ -69,8 +71,7 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
                 timer.Start();
                 try
                 {
-                    var assigned = ReplayCatalog.Assigned(replays, phase.Renderer, options.RendererTestPercentage,
-                        options.ShardIndex, options.ShardCount);
+                    var assigned = plan.Assigned(phase.Renderer, options.ShardIndex);
                     var partitions = ReplayCatalog.RoundRobin(assigned, options.PartitionCount);
                     await Task.WhenAll(partitions.Where(partition => partition.Count > 0).Select(async partition =>
                     {

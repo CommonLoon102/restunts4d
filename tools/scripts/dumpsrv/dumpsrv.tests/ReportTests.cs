@@ -15,6 +15,10 @@ public sealed class ReportTests : IDisposable
         {
             File.WriteAllText(Path.Combine(directory, "replays", name), "replay");
         }
+        TestShardPlans.Write(directory, 40,
+            new ReplayShard { Physics = ["z.RPL", "ALPHA.RPL"], Renderer = ["race-2.rpl"] },
+            new ReplayShard { Physics = ["b.RpL"], Renderer = [] },
+            new ReplayShard { Physics = ["race-2.rpl", "track.rpl"], Renderer = ["ALPHA.RPL"] });
     }
 
     [Fact]
@@ -111,6 +115,19 @@ public sealed class ReportTests : IDisposable
     }
 
     [Fact]
+    public async Task InvalidShardPlanStillProducesAFailureReport()
+    {
+        await WriteShards();
+        await File.WriteAllTextAsync(Options().ShardPlanPath!, "{}",
+            TestContext.Current.CancellationToken);
+        var result = await ResultMerger.MergeAsync(Options(), TestContext.Current.CancellationToken);
+        Assert.False(result.Success);
+        Assert.Contains(result.Diagnostics, line => line.Contains("type=invalid_shard_plan"));
+        Assert.NotEmpty(await File.ReadAllTextAsync(Options().OutputFile,
+            TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
     public async Task RendererOnlyMergeChecksThatPhysicsResultsAreAbsent()
     {
         var shards = await WriteShards();
@@ -152,6 +169,7 @@ public sealed class ReportTests : IDisposable
         ResultsDirectory = Path.Combine(directory, "results"),
         OutputFile = Path.Combine(directory, "partitions_all.txt"),
         SummaryFile = Path.Combine(directory, "summary.md"),
+        ShardPlanPath = Path.Combine(directory, "shard-plan.json"),
         ShardCount = 3,
         RendererTestPercentage = 40
     };
@@ -159,6 +177,7 @@ public sealed class ReportTests : IDisposable
     private async Task<List<ShardResult>> WriteShards()
     {
         var corpus = ReplayCatalog.Discover(Options().ReplayDirectory);
+        var plan = ShardPlan.Load(Options().ShardPlanPath, corpus, 40, 3);
         var results = new List<ShardResult>();
         for (var index = 0; index < 3; index++)
         {
@@ -171,8 +190,8 @@ public sealed class ReportTests : IDisposable
                 RendererTests = true,
                 RendererTestPercentage = 40,
                 ReplayFiles = corpus.ToList(),
-                PhysicsCompleted = ReplayCatalog.Assigned(corpus, false, 40, index, 3).ToList(),
-                RendererCompleted = ReplayCatalog.Assigned(corpus, true, 40, index, 3).ToList(),
+                PhysicsCompleted = plan.Shards[index].Physics.ToList(),
+                RendererCompleted = plan.Shards[index].Renderer.ToList(),
                 Completed = true
             };
             await File.WriteAllTextAsync(Path.Combine(directory, "results", $"arbitrary-{(char)('a' + index)}.json"),

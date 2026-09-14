@@ -42,6 +42,7 @@ public static class CommandLine
                         DosBoxConfigPath = Path.GetFullPath(arguments.String("DosBoxConfigPath",
                             Path.Combine(AppContext.BaseDirectory, "dosbox.proc.conf"))),
                         PartitionCount = arguments.Number("PartitionCount", null, 1, 64),
+                        ShardPlanPath = arguments.Optional("ShardPlan"),
                         ShardIndex = arguments.Number("ShardIndex", 0, 0, int.MaxValue),
                         ShardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue),
                         PhysicsTests = arguments.Boolean("PhysicsTests", true),
@@ -65,11 +66,12 @@ public static class CommandLine
                     var gameDirectory = Path.GetFullPath(arguments.String("GameDirectory"));
                     var renderer = arguments.Boolean("Renderer", false);
                     var percentage = arguments.Number("RendererTestPercentage", 100, 1, 100);
+                    var shardPlanPath = arguments.Optional("ShardPlan");
                     var shardIndex = arguments.Number("ShardIndex", 0, 0, int.MaxValue);
                     var shardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue);
                     arguments.CheckUnused();
                     var extracted = OracleArchive.Extract(archivePath, gameDirectory, renderer,
-                        percentage, shardIndex, shardCount, cancellation);
+                        percentage, shardIndex, shardCount, shardPlanPath, cancellation);
                     Console.WriteLine($"Extracted {extracted.Extracted} oracle outputs; " +
                         $"{extracted.Missing} missing outputs will be generated during testing.");
                     return 0;
@@ -78,6 +80,7 @@ public static class CommandLine
                     {
                         ReplayDirectory = Path.GetFullPath(arguments.String("ReplayDirectory")),
                         ResultsDirectory = Path.GetFullPath(arguments.String("ResultsDirectory")),
+                        ShardPlanPath = arguments.Optional("ShardPlan"),
                         OutputFile = Path.GetFullPath(arguments.String("OutputFile", "partitions_all.txt")),
                         SummaryFile = arguments.Optional("SummaryFile"),
                         ShardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue),
@@ -203,6 +206,7 @@ public static class CommandLine
         merge: -ShardCount 1, -PhysicsTests true, -RendererTests true,
                -RendererTestPercentage 100, -OutputFile partitions_all.txt, -SummaryFile FILE.
 
+        run, extract-oracles, merge: -ShardPlan FILE (required when ShardCount is greater than 1).
         PartitionCount: 1-64. Timeouts: 1-2147483 seconds. Renderer percentage: 1-100.
         DUMPSRV_DOSBOX_PATH overrides DOSBox-X discovery for serve and run.
         """;

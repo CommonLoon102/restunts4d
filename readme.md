@@ -345,11 +345,15 @@ for `RendererTestPercentage`.
 
 Every top-level `.rpl` file is eligible, regardless of filename structure.
 Renderer sampling happens across the complete, ordinal-sorted corpus before
-work is distributed round robin into shard lists and then worker lists.
-The sample is independent of shard and worker counts, and both shard and
-worker lists differ in size by at most one replay. CI validates completed replay
-identities from the JSON shard results, so missing or duplicate coverage,
-processing errors, and byte mismatches fail validation.
+shard planning. The CI planning job reads recorded tick counts from replay
+headers and balances physics and renderer shards separately, targeting totals
+within ±2% of each phase's average. It publishes `shard-plan.json` as the
+`replay-shard-plan` artifact. Replay jobs, oracle extraction, and coverage checks
+all consume that same plan; the C# application selects its lists by shard ID.
+Workers within a shard still receive round-robin lists whose replay counts
+differ by at most one. Sampling is independent of shard and worker counts.
+CI validates completed replay identities from the JSON shard results, so missing
+or duplicate coverage, processing errors, and byte mismatches fail validation.
 
 The reusable workflow defaults to 20 shards with 12 workers each, 30 seconds
 per physics execution, and 120 seconds per renderer execution. It tests the
@@ -357,6 +361,7 @@ C# application and checks its formatting on Linux before building the DOS
 executables. Run these checks locally with the .NET 10 SDK:
 
 ```sh
+python3 tools/scripts/test-plan-replay-shards.py
 dotnet test tools/scripts/dumpsrv/dumpsrv.slnx --configuration Release
 dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
 ```

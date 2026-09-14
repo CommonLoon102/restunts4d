@@ -1,5 +1,4 @@
 using DumpSrv;
-using System.IO.Compression;
 
 namespace DumpSrv.Tests;
 
@@ -81,45 +80,13 @@ public sealed class CatalogTests
     }
 
     [Fact]
-    public void SamplingPrecedesShardingAndPartitioning()
+    public void SingleShardRendererSamplingUsesEvenlySpacedEntries()
     {
         var corpus = Enumerable.Range(0, 37).Select(index => $"replay-{index}").ToArray();
         var sample = ReplayCatalog.Sample(corpus, 13);
         Assert.Equal(new[] { "replay-0", "replay-7", "replay-14", "replay-22", "replay-29" }, sample);
-        foreach (var shards in new[] { 1, 3, 20 })
-        {
-            foreach (var partitions in new[] { 1, 4, 12 })
-            {
-                var distributed = Enumerable.Range(0, shards).SelectMany(shard =>
-                    ReplayCatalog.RoundRobin(ReplayCatalog.Assigned(corpus, true, 13, shard, shards), partitions)
-                        .SelectMany(partition => partition));
-                Assert.Equal(sample.Order(), distributed.Order());
-            }
-        }
     }
 
-    [Fact]
-    public void CompleteGoldenCorpusHasBalancedExactlyOnceCoverageAtCiDefaults()
-    {
-        using var directory = new EngineDirectory();
-        ZipFile.ExtractToDirectory(Path.Combine(AppContext.BaseDirectory, "replays.zip"), directory.Path);
-        var corpus = ReplayCatalog.Discover(directory.Path, TestContext.Current.CancellationToken);
-        foreach (var renderer in new[] { false, true })
-        {
-            var expected = renderer ? ReplayCatalog.Sample(corpus, 5) : corpus;
-            var shards = Enumerable.Range(0, 20).Select(shard =>
-                ReplayCatalog.Assigned(corpus, renderer, 5, shard, 20)).ToArray();
-            var partitions = shards.SelectMany(shard => ReplayCatalog.RoundRobin(shard, 12)).ToArray();
-            Assert.Equal(expected.Order(StringComparer.Ordinal),
-                partitions.SelectMany(partition => partition).Order(StringComparer.Ordinal));
-            Assert.True(shards.Max(shard => shard.Count) - shards.Min(shard => shard.Count) <= 1);
-            Assert.True(partitions.Max(partition => partition.Count) - partitions.Min(partition => partition.Count) <= 1);
-            if (renderer)
-            {
-                Assert.Equal((corpus.Count * 5 + 99) / 100, expected.Count);
-            }
-        }
-    }
 }
 
 internal sealed class EngineDirectory : IDisposable

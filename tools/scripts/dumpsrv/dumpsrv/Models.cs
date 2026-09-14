@@ -8,6 +8,7 @@ public sealed record RunOptions
     public required string OutputDirectory { get; init; }
     public string DosBoxConfigPath { get; init; } = Path.Combine(AppContext.BaseDirectory, "dosbox.proc.conf");
     public int PartitionCount { get; init; } = 1;
+    public string? ShardPlanPath { get; init; }
     public int ShardIndex { get; init; }
     public int ShardCount { get; init; } = 1;
     public bool PhysicsTests { get; init; } = true;

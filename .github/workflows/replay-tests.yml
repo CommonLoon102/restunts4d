@@ -16,6 +16,10 @@ on:
         description: JSON array of shard indices from the validated plan.
         type: string
         required: true
+      shard-plan-artifact:
+        description: Artifact containing the precomputed shard-plan.json.
+        type: string
+        required: true
       shards:
         type: number
         required: true
@@ -47,6 +51,12 @@ jobs:
         shard: ${{ fromJSON(inputs.shard-matrix) }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Download the replay shard plan
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.shard-plan-artifact }}
+          path: shard-plan
 
       - uses: actions/setup-dotnet@v6
         with:
@@ -104,11 +114,12 @@ jobs:
           curl --fail --location --silent --show-error --retry 3 \
               --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
           # The full BIN archive expands to over 15 GB. Extract only assigned
-          # replays, using the same sampling and sharding as the test runner.
+          # replays from the same JSON plan used by the test runner.
           dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
               -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
               -Renderer "$RENDERER_TESTS" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-              -ShardIndex "$SHARD" -ShardCount "$SHARDS"
+              -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
+              -ShardPlan shard-plan/shard-plan.json
           rm -- "$zip_path"
 
       - name: Run this shard's ${{ inputs.phase }} tests
@@ -127,6 +138,7 @@ jobs:
               -PartitionCount "$PARTITIONS_PER_SHARD" \
               -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
               -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
+              -ShardPlan shard-plan/shard-plan.json \
               -DosBoxTimeoutSeconds "$REPLAY_TIMEOUT_SECONDS" \
               -RendererTimeoutSeconds "$RENDERER_TIMEOUT_SECONDS" \
               -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE"
@@ -160,6 +172,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Download the replay shard plan
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ inputs.shard-plan-artifact }}
+          path: shard-plan
+
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 10.0.x
@@ -184,6 +202,7 @@ jobs:
           dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" merge \
               -ReplayDirectory "$RUNNER_TEMP/replays" \
               -ResultsDirectory partitions -ShardCount "$SHARDS" \
+              -ShardPlan shard-plan/shard-plan.json \
               -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
               -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
               -OutputFile partitions_all.txt \

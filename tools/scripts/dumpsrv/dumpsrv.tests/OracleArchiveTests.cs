@@ -26,6 +26,13 @@ public sealed class OracleArchiveTests
             archive.CreateEntry("../unrelated.txt");
             archive.CreateEntry("repldump.exe");
         }
+        var sample = ReplayCatalog.Sample(replays, percentage);
+        var assignments = Enumerable.Range(0, 5).Select(index => new ReplayShard
+        {
+            Physics = replays.Skip(index * 8).Take(8).Reverse().ToList(),
+            Renderer = sample.Skip(index * 8).Take(8).Reverse().ToList()
+        }).ToArray();
+        var planPath = TestShardPlans.Write(source.Path, percentage, assignments);
         for (var shard = 0; shard < 5; shard++)
         {
             using var game = new EngineDirectory();
@@ -33,12 +40,12 @@ public sealed class OracleArchiveTests
             {
                 game.Write(replay);
             }
-            var expected = ReplayCatalog.Assigned(replays, renderer, percentage, shard, 5);
+            var expected = renderer ? assignments[shard].Renderer : assignments[shard].Physics;
             var result = OracleArchive.Extract(zipPath, game.Path, renderer, percentage, shard, 5,
-                TestContext.Current.CancellationToken);
+                planPath, TestContext.Current.CancellationToken);
             Assert.Equal(expected.Count, result.Extracted);
             Assert.Equal(0, result.Missing);
-            Assert.Equal(expected.Select(replay => Path.ChangeExtension(replay, extension)),
+            Assert.Equal(expected.Select(replay => Path.ChangeExtension(replay, extension)).Order(),
                 Directory.GetFiles(game.Path, "*" + extension).Select(Path.GetFileName).Order());
             foreach (var replay in expected)
             {

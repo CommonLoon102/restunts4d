@@ -6,10 +6,11 @@ public static class OracleArchive
 {
     public static (int Extracted, int Missing) Extract(string archivePath, string gameDirectory,
         bool renderer, int percentage, int shardIndex, int shardCount,
-        CancellationToken cancellation = default)
+        string? shardPlanPath = null, CancellationToken cancellation = default)
     {
         var replays = ReplayCatalog.Discover(gameDirectory, cancellation);
-        var assigned = ReplayCatalog.Assigned(replays, renderer, percentage, shardIndex, shardCount);
+        var plan = ShardPlan.Load(shardPlanPath, replays, percentage, shardCount);
+        var assigned = plan.Assigned(renderer, shardIndex);
         using var archive = ZipFile.OpenRead(archivePath);
         var entries = archive.Entries.ToDictionary(entry => entry.FullName,
             StringComparer.OrdinalIgnoreCase);

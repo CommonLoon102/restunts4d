@@ -98,6 +98,11 @@ jobs:
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
     steps:
+      - uses: actions/checkout@v7
+
+      - name: Test tick-based shard planning
+        run: python3 tools/scripts/test-plan-replay-shards.py
+
       - name: Split the golden set into shards
         id: plan
         env:
@@ -105,7 +110,7 @@ jobs:
           PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
-          set -u
+          set -eu
           if [[ ! "$SHARDS" =~ ^[1-9][0-9]{0,9}$ ]] || (( SHARDS > 2147483647 )); then
               echo "::error::shards must be an integer from 1 to 2147483647"
               exit 1
@@ -118,7 +123,18 @@ jobs:
               echo "::error::renderer-test-percentage must be an integer from 1 to 100"
               exit 1
           fi
+          python3 tools/scripts/plan-replay-shards.py \
+              --replays tools/scripts/rpls_golden/replays.zip \
+              --shards "$SHARDS" --renderer-test-percentage "$RENDERER_TEST_PERCENTAGE" \
+              --output shard-plan.json --summary "$GITHUB_STEP_SUMMARY"
           echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: replay-shard-plan
+          path: shard-plan.json
+          if-no-files-found: error
+          retention-days: 14
 
   build:
     name: Build executables
@@ -204,6 +220,7 @@ jobs:
       phase: physics
       exe-artifact: ${{ needs.build.outputs.exe-artifact }}
       shard-matrix: ${{ needs.plan.outputs.shards }}
+      shard-plan-artifact: replay-shard-plan
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
@@ -218,6 +235,7 @@ jobs:
       phase: renderer
       exe-artifact: ${{ needs.build.outputs.exe-artifact }}
       shard-matrix: ${{ needs.plan.outputs.shards }}
+      shard-plan-artifact: replay-shard-plan
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}

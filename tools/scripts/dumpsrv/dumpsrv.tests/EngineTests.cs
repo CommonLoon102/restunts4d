@@ -217,13 +217,66 @@ public sealed class EngineTests
         using var directory = CreateGame("one.rpl");
         var runner = new FakeRunner((_, _) => throw new Xunit.Sdk.XunitException("An empty shard ran DOSBox."));
         var engine = new RegressionEngine(runner, _ => { });
-        var emptyShard = await engine.RunAsync(Options(directory) with { ShardCount = 20, ShardIndex = 19 }, TestContext.Current.CancellationToken);
+        var assignments = Enumerable.Range(0, 20).Select(index => new ReplayShard
+        {
+            Physics = index == 0 ? ["one.rpl"] : [],
+            Renderer = index == 0 ? ["one.rpl"] : []
+        }).ToArray();
+        var planPath = TestShardPlans.Write(directory.Path, 100, assignments);
+        var emptyShard = await engine.RunAsync(Options(directory) with
+        {
+            ShardCount = 20,
+            ShardIndex = 19,
+            ShardPlanPath = planPath
+        }, TestContext.Current.CancellationToken);
         Assert.True(emptyShard.Completed);
         Assert.Empty(emptyShard.PhysicsCompleted);
         directory.Write("too-long-name.rpl");
         var invalid = await engine.RunAsync(Options(directory), TestContext.Current.CancellationToken);
         Assert.False(invalid.Completed);
         Assert.Contains("Unsupported DOS 8.3", invalid.Failure);
+    }
+
+    [Fact]
+    public async Task RunnerAndMergerHonorTheJsonListsForEachShardAndPhase()
+    {
+        using var directory = CreateGame("alpha.rpl", "beta.rpl", "gamma.rpl");
+        var assignments = new[]
+        {
+            new ReplayShard { Physics = ["gamma.rpl"], Renderer = ["alpha.rpl"] },
+            new ReplayShard
+            {
+                Physics = ["beta.rpl", "alpha.rpl"], Renderer = ["gamma.rpl", "beta.rpl"]
+            }
+        };
+        var planPath = TestShardPlans.Write(directory.Path, 100, assignments);
+        var options = Options(directory) with { ShardCount = 2, ShardPlanPath = planPath };
+        var engine = new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { });
+        for (var index = 0; index < assignments.Length; index++)
+        {
+            var result = await engine.RunAsync(options with { ShardIndex = index },
+                TestContext.Current.CancellationToken);
+            Assert.True(result.Completed);
+            Assert.Empty(result.Diagnostics);
+            Assert.Equal(assignments[index].Physics.Order(), result.PhysicsCompleted);
+            Assert.Equal(assignments[index].Renderer.Order(), result.RendererCompleted);
+            await ResultFiles.WriteAsync(result, options.OutputDirectory,
+                TestContext.Current.CancellationToken);
+        }
+        var merged = await ResultMerger.MergeAsync(new MergeOptions
+        {
+            ReplayDirectory = directory.Path,
+            ResultsDirectory = options.OutputDirectory,
+            OutputFile = Path.Combine(directory.Path, "merged.txt"),
+            ShardCount = 2,
+            ShardPlanPath = planPath
+        }, TestContext.Current.CancellationToken);
+        Assert.True(merged.Success);
+        Assert.Empty(merged.Diagnostics);
     }
 
     [Fact]
