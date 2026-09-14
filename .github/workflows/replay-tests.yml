@@ -82,13 +82,15 @@ jobs:
           # The archived golden corpus is the complete replay set for CI.
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp exes/*.exe "$game_dir/"
-          # Generate missing cache entries with the same archived Borland oracles.
+          # Physics retains its archived Borland oracle. Rendering uses the
+          # freshly built original-assembly pixldumo from the executable artifact.
           (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-          cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
+          cp tools/oracles/borland/repldumo.exe "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
       - name: Download and extract this shard's precomputed oracle outputs
+        if: inputs.phase == 'physics'
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
@@ -97,9 +99,6 @@ jobs:
         run: |
           set -eu
           archive=BINs
-          if [[ "$RENDERER_TESTS" == "true" ]]; then
-              archive=PDOs
-          fi
           zip_path="$RUNNER_TEMP/$archive.zip"
           # Download only the oracle archive needed by this phase.
           curl --fail --location --silent --show-error --retry 3 \

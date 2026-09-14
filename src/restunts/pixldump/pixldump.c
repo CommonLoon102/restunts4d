@@ -25,7 +25,8 @@
 #endif
 
 #define PIXLDUMP_FRAMEBUFFER_SIZE 64000U
-#define PIXLDUMP_SAMPLE_INTERVAL 5U
+#define PIXLDUMP_SAMPLE_INTERVAL 1U
+#define PIXLDUMP_DUMP_HEADER "PIXLDUMP 2\r\n"
 #define PIXLDUMP_SCREEN_WIDTH 320U
 #define PIXLDUMP_SCREEN_HEIGHT 200U
 #define PIXLDUMP_BMP_HEADER_SIZE 54U
@@ -418,6 +419,9 @@ static void PIXLDUMP_LEGACY_FRAME pixldump_render_frame(void)
 #ifdef RESTUNTS_ORIGINAL
 	pixldump_leave_original_call();
 #endif
+	if (full_redraw_frames_remaining != 0) {
+		full_redraw_frames_remaining--;
+	}
 }
 
 #ifdef RESTUNTS_ORIGINAL
@@ -468,15 +472,19 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 #endif
 	legacy_u8 far *framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
-	legacy_s16 result = !pixldump_write_sample(output, 0U, framebuffer);
+	legacy_s16 result =
+		pixldump_output_write(output, PIXLDUMP_DUMP_HEADER, sizeof(PIXLDUMP_DUMP_HEADER) - 1U) !=
+			sizeof(PIXLDUMP_DUMP_HEADER) - 1U ||
+		!pixldump_write_sample(output, 0U, framebuffer);
 #ifdef RESTUNTS_ORIGINAL
 	pixldump_caller_di = 0;
 #endif
 
 	while (result == 0 && gameconfig.game_recordedframes > (legacy_u16)state.game_frame) {
 		pixldump_update_gamestate();
+		/* Dirty regions describe consecutive rendered frames. */
+		pixldump_render_frame();
 		if ((legacy_u16)state.game_frame % PIXLDUMP_SAMPLE_INTERVAL == 0U) {
-			pixldump_render_frame();
 			if (!pixldump_write_sample(output, (legacy_u16)state.game_frame, framebuffer)) {
 				result = 1;
 			}
@@ -493,9 +501,17 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_frames(const legacy_s8 *o
 static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const legacy_s8 *output_name,
 																	   legacy_u16 requested_frame)
 {
+#ifndef RESTUNTS_ORIGINAL
+	pixldump_enable_legacy_render_stack();
+#endif
+	pixldump_render_frame();
 	while ((legacy_u16)state.game_frame < requested_frame) {
 		pixldump_update_gamestate();
+		pixldump_render_frame();
 	}
+#ifndef RESTUNTS_ORIGINAL
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
+#endif
 #ifdef RESTUNTS_ORIGINAL
 	/* Retain the archived BMP caller's four-byte local stack slot. */
 	legacy_u8 far *volatile framebuffer;
@@ -503,7 +519,6 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_write_requested_frame(const leg
 	legacy_u8 far *framebuffer;
 #endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
-	pixldump_render_frame();
 	return pixldump_write_bmp(output_name, framebuffer);
 }
 
@@ -546,8 +561,8 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
 	cameramode = (legacy_s8)(camera_number - 1);
 	game_replay_mode = REPLAY_MODE_PLAYBACK;
 	detail_level = 0;
-	slow_video_mgmt = 0;
-	slow_video_mgmt_copy = 0;
+	slow_video_mgmt = 1;
+	slow_video_mgmt_copy = 1;
 
 #ifdef RESTUNTS_ORIGINAL
 	if (setup_player_cars() != 0) {
@@ -578,6 +593,10 @@ static legacy_s16 PIXLDUMP_LEGACY_FRAME pixldump_process_replay(
 
 	restore_gamestate(0);
 	restore_gamestate(gameconfig.game_recordedframes);
+	/* The capture uses one render buffer. Initialize it once, then retain
+	 * the normal incremental redraw history through the entire replay. */
+	init_rect_arrays();
+	full_redraw_frames_remaining = 1;
 	if (bmp_mode != 0) {
 		return pixldump_write_requested_frame(output_name, requested_frame);
 	}

@@ -321,6 +321,8 @@ public sealed class EngineTests
     [InlineData(true, "shorter")]
     [InlineData(true, "hash")]
     [InlineData(true, "md5")]
+    [InlineData(true, "full-redraw")]
+    [InlineData(true, "sampled")]
     public async Task InvalidOracleCacheWithoutPendingMarkerIsRegenerated(
         bool renderer, string damage)
     {
@@ -334,9 +336,12 @@ public sealed class EngineTests
             "partial" => bytes[..^1],
             "record" => bytes[..^(renderer ? 12 : 1120)],
             "extra" => [.. bytes, 0],
+            "frame" when renderer => [.. bytes[..12], (byte)'1', .. bytes[13..]],
             "frame" => [(byte)(bytes[0] + 1), .. bytes[1..]],
             "shorter" => DumpBytes(renderer, 0),
-            "hash" => [.. bytes[..2], (byte)'g', .. bytes[3..]],
+            "hash" => [.. bytes[..14], (byte)'g', .. bytes[15..]],
+            "full-redraw" => Encoding.ASCII.GetBytes("0 00000000\r\n5 00000000\r\n"),
+            "sampled" => Encoding.ASCII.GetBytes("PIXLDUMP 2\r\n0 00000000\r\n5 00000000\r\n"),
             "md5" => Encoding.ASCII.GetBytes(
                 "0 cf7cf997851fba0edbb0524841ce37bd\r\n" +
                 "5 cf7cf997851fba0edbb0524841ce37bd\r\n"),
@@ -443,11 +448,12 @@ public sealed class EngineTests
 
     [Theory]
     [InlineData(0)]
+    [InlineData(1)]
     [InlineData(4)]
     [InlineData(5)]
     [InlineData(6)]
     [InlineData(10)]
-    public async Task CompleteOutputsIncludeZeroFrameAndFinalRendererSample(ushort frames)
+    public async Task CompleteOutputsIncludeZeroFrameAndFinalRendererFrame(ushort frames)
     {
         using var directory = CreateGame("track.rpl");
         WriteReplay(directory, "track.rpl", frames);
@@ -486,9 +492,10 @@ public sealed class EngineTests
     {
         if (renderer)
         {
-            return Encoding.ASCII.GetBytes(string.Concat(Enumerable.Range(0, frames / 5 + 1)
-                .Select(index => $"{(index * 5).ToString(CultureInfo.InvariantCulture)} " +
-                    new string(different ? '1' : '0', 8) + "\r\n")));
+            return Encoding.ASCII.GetBytes("PIXLDUMP 2\r\n" +
+                string.Concat(Enumerable.Range(0, frames + 1)
+                    .Select(frame => $"{frame.ToString(CultureInfo.InvariantCulture)} " +
+                        new string(different ? '1' : '0', 8) + "\r\n")));
         }
         var bytes = new byte[2 + frames * 1120];
         BinaryPrimitives.WriteUInt16LittleEndian(bytes, frames);

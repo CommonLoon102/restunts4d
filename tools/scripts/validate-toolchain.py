@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compare fresh DOS builds with the archived Borland replay oracles."""
+"""Compare DOS builds with Borland physics and freshly built original rendering."""
 
 import argparse
 import hashlib
@@ -74,8 +74,9 @@ def prepare(args):
         source = ORACLES / name
         if digest(source) != expected:
             raise ValueError(f"Archived oracle checksum mismatch: {source}")
-        shutil.copyfile(source, game / name.upper())
-    for name in ("REPLDUMP.EXE", "PIXLDUMP.EXE"):
+        if name.lower() == "repldumo.exe":
+            shutil.copyfile(source, game / name.upper())
+    for name in ("REPLDUMP.EXE", "PIXLDUMP.EXE", "PIXLDUMO.EXE"):
         candidates = [p for p in args.candidate_directory.iterdir()
                       if p.is_file() and p.name.upper() == name]
         if len(candidates) != 1:
