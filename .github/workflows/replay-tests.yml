@@ -90,7 +90,7 @@ jobs:
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
       - name: Download and extract this shard's precomputed oracle outputs
-        if: inputs.phase == 'physics'
+        if: inputs.phase == 'skip_physics'
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
