@@ -439,7 +439,7 @@ static void pixldump_update_gamestate(void)
 }
 
 #ifndef RESTUNTS_ORIGINAL
-static void pixldump_enable_legacy_render_stack(void)
+static void pixldump_enable_legacy_render_stack(legacy_s16 bmp_mode)
 {
 	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT opponent;
 
@@ -447,9 +447,10 @@ static void pixldump_enable_legacy_render_stack(void)
 	opponent.polyinfo_offset = 0;
 	opponent.polyinfo_segment = pixldump_polyinfo_segment;
 	opponent.material_color_offset = PIXLDUMP_LEGACY_MATERIAL_COLOR_OFFSET;
-	shape3d_set_legacy_render_stack(legacy_execution_residue.wheel_plane_angles,
-									pixldump_legacy_polygon_frame_pointer(pixldump_argv_si),
-									pixldump_legacy_polygon_code_segment(), &opponent);
+	shape3d_set_legacy_render_stack(
+		legacy_execution_residue.wheel_plane_angles,
+		pixldump_legacy_polygon_frame_pointer(pixldump_argv_si, bmp_mode),
+		pixldump_legacy_polygon_code_segment(), &opponent);
 }
 #endif
 
@@ -466,7 +467,7 @@ static legacy_s16 pixldump_write_frames(const legacy_s8 *output_name)
 
 #ifndef RESTUNTS_ORIGINAL
 	pixldump_caller_si = LEGACY_S16_FROM_BITS(output);
-	pixldump_enable_legacy_render_stack();
+	pixldump_enable_legacy_render_stack(0);
 #endif
 	framebuffer = (legacy_u8 far *)dos_memory_make_pointer(PIXLDUMP_VGA_SEGMENT, 0);
 	pixldump_render_frame();
@@ -499,7 +500,7 @@ static legacy_s16 pixldump_write_requested_frame(const legacy_s8 *output_name,
 	legacy_u8 far *framebuffer;
 
 #ifndef RESTUNTS_ORIGINAL
-	pixldump_enable_legacy_render_stack();
+	pixldump_enable_legacy_render_stack(1);
 #endif
 	pixldump_render_frame();
 	while ((legacy_u16)state.game_frame < requested_frame) {

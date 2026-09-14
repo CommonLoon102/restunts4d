@@ -195,6 +195,9 @@ jobs:
           (( missing == 0 )) || exit 1
           ls -l dist
 
+      - name: Check the renderer address model against the built oracle
+        run: python3 tools/scripts/test-pixldump-legacy-layout.py --executable dist/pixldumo.exe
+
       - name: Build the standalone dump timer IRQ test
         run: |
           xvfb-run -a wine cmd /D /S /C "S: && cd S:\src\restunts && call setpath.bat && cd tests && bcc -c -u- -mm -Is:\src\restunts\c;s:\tools\include test-dos-platform.c && wlink name dosplat.exe format dos option NOCASEEXACT option start=test_start file test-dos-platform.obj,../platform/dos/build/dosstack.obj"

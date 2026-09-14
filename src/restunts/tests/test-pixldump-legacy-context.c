@@ -113,8 +113,9 @@ static void test_archived_argument_addresses(void)
 	assert_context(0xcc38, 4, sample);
 	assert(pixldump_legacy_load_segment() == 0x029e);
 	assert(pixldump_legacy_polygon_code_segment() == 0x1774);
-	assert(pixldump_legacy_polygon_frame_pointer(pixldump_legacy_argv_si(4, sample)) == 0xca0a);
+	assert(pixldump_legacy_polygon_frame_pointer(pixldump_legacy_argv_si(4, sample), 0) == 0xca0a);
 	assert_context(0xcc32, 5, bmp);
+	assert(pixldump_legacy_polygon_frame_pointer(pixldump_legacy_argv_si(5, bmp), 1) == 0xca06);
 	bmp[1] = (legacy_s8 *)"my0000.rpl";
 	assert_context(0xcc2e, 5, bmp);
 	test_psp_segment += 16U;
@@ -147,18 +148,18 @@ static void test_archived_polyinfo_allocation(void)
 	test_chunk_sizes[3] = 94U;
 	test_chunk_sizes[4] = 115U;
 	test_chunk_sizes[5] = 91U;
-	/* Murmur32 oracle: load segment 029E and polyinfo segment 3E5E. Each allocation
+	/* Incremental Borland oracle: load segment 029E and polyinfo segment 3E61. Each allocation
 	 * is supplied independently so resource changes must affect the result. */
-	assert(pixldump_legacy_polyinfo_segment() == 0x3e5e);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e61);
 	for (index = 0; index < 6U; index++) {
 		test_chunk_sizes[index] += 7U;
-		assert(pixldump_legacy_polyinfo_segment() == 0x3e65);
+		assert(pixldump_legacy_polyinfo_segment() == 0x3e68);
 		test_chunk_sizes[index] -= 7U;
 	}
 	test_driver_paragraphs += 9U;
-	assert(pixldump_legacy_polyinfo_segment() == 0x3e67);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e6a);
 	test_psp_segment += 16U;
-	assert(pixldump_legacy_polyinfo_segment() == 0x3e77);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e7a);
 	test_psp_available = 0;
 	assert(pixldump_legacy_load_segment() == 0);
 	assert(pixldump_legacy_polygon_code_segment() == 0);

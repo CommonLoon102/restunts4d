@@ -144,7 +144,7 @@ run_host_test test-car-shape-lifetime shape3d_car.c \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-skybox-render skybox.c \
     "$test_source_dir/shape3d.c" "$test_source_dir/shape3d_lines.c" "$test_source_dir/full_data.c" \
-    "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    "$test_source_dir/physics_collision.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
 run_host_test test-simd-decoding simd.c
 run_host_test test-editor-boundaries legacy.c \

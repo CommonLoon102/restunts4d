@@ -33,6 +33,32 @@ instructions. The existing stopped-wheel physics then consumes these buffers.
 This restores the original simulation after stops and crashes as well as the
 immediately rendered image.
 
+Camera setup also writes the opponent's fourth heading word, at
+`get_a_poly_info` BP-58. `select_cliprect_rotate` calls `mat_rot_zxy` for the
+forward and inverse view rotations. With multiple rotation axes, its nested
+`mat_multiply` leaves the far return code segment in that word. A single-axis
+constructor leaves its return instruction offset instead. Identity and cardinal
+yaw reuse existing matrices and leave the word unchanged. Incremental sky
+rendering can skip assigning its local rectangle, so its top coordinate no
+longer replaces this camera value. `shape3d_retain_legacy_view_rotation` models
+these calls before the skybox and polygon paths apply their own writes.
+
+This dependency affects simulation, even while the stopped opponent is outside
+the camera view. In `r0136.rpl`, the opponent stops at frame 434 and the first
+visible hash mismatch was at frame 807 in the Borland comparison. `0696.rpl`
+also exposed the missing camera value after a crash. The fix uses
+rotation operations and the relocated code segment, independent of replay
+names, frame numbers, cars, or tracks.
+
+The renderer handoff also takes precedence at the first stopped player tick.
+The physics-only caller reconstructs headings from opponent wheel coordinates
+at that transition. When rendering has overwritten those slots, repeating that
+reconstruction discards the actual values. In `0701.rpl`, the original player
+physics enters frame 1138 with the preceding line rasterizer's retained words;
+the C fallback instead substituted opponent coordinates and changed the player's
+pose. `legacy_render_player_headings_active` selects the supplied renderer
+buffer while it is bound, preserving the physics-only caller's existing behavior.
+
 A separate reused stack word holds the SI register saved by `update_grip`.
 After a capped collision scan, physics can consume it as the fourth wheel's
 contact distance. It is not always 80: the sampled dump loop supplies its output
@@ -42,13 +68,22 @@ caller parameters carry these values through the C simulation.
 
 ## Caller and address calculation
 
-`pixldump/legacy_context.c` describes the archived executable's ABI, not a
+`pixldump/legacy_context.c` describes the original Borland executable's ABI, not a
 particular replay. It derives the load segment from the DOS PSP and calculates
 original stack placement from the executable path and decoded argument lengths.
+The Borland hash loop places `get_a_poly_info` BP 558 bytes below argv; the BMP
+loop places it 556 bytes below argv. BMP passes one more argument word but saves
+two fewer registers. The wrapper selects the matching depth for each mode.
 The polygon buffer's logical segment follows the original allocation order,
-using the sizes of the loaded resources. Its retained image size is 39E3 DOS
-paragraphs for the Murmur32 oracle (the previous MD5 build used 3A1A). Hash
-wrapper changes must keep this model synchronized with the original link map.
+using the sizes of the loaded resources. Its retained image size is 39E6 DOS
+paragraphs for the incremental Borland oracle (the earlier sampled Murmur32
+build used 39E3). That three-paragraph difference shifts the polygon buffer's
+segment, which is itself consumed as the opponent's third stopped-wheel
+heading. It accounts for the `0698.rpl` mismatch even when visible geometry
+initially agrees. Wrapper changes must keep this model synchronized with the
+original link map. CI runs `tools/scripts/test-pixldump-legacy-layout.py` against
+the freshly built oracle to check the retained image size, initial CRT stack
+pointer, and polygon code segment.
 Thus replay names, optional extensions, DOS directories, and environment
 placement do not require special cases.
 
@@ -176,8 +211,8 @@ includes sphere versus wheel bounds, rasterizer primitive types, retained values
 on skipped branches, skybox clipping, player and opponent stopped-wheel motion,
 caller-register suspension effects, and DOS argv/address calculations.
 
-Use `tools/scripts/pixelcheck.sh REPLAY.rpl false 2 0` for a complete sampled
+Use `tools/scripts/pixelcheck.sh REPLAY.rpl false 2 0` for a complete incremental
 comparison with existing executables, or append a frame for a BMP comparison.
 Both sides must use the same camera, target, arguments and DOS environment.
-A match requires complete output through the replay's last sampled frame; equal
+A match requires complete output through the replay's final frame; equal
 partial files are not evidence of renderer parity.

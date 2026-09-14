@@ -12,9 +12,10 @@
 #define PIXLDUMP_PSP_EXIT_INTERRUPT 32U
 #define PIXLDUMP_ARGUMENT_STORAGE_OVERHEAD 3U
 #define PIXLDUMP_DOS_PSP_PARAGRAPHS 16U
-#define PIXLDUMP_LEGACY_POLYGON_FRAME_DEPTH 558U
+#define PIXLDUMP_LEGACY_HASH_POLYGON_FRAME_DEPTH 558U
+#define PIXLDUMP_LEGACY_BMP_POLYGON_FRAME_DEPTH 556U
 #define PIXLDUMP_LEGACY_POLYGON_CODE_PARAGRAPH 5334U
-#define PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS 14819U
+#define PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS 14822U
 #define PIXLDUMP_DOS_MCB_PARAGRAPHS 1U
 
 static legacy_u16 pixldump_dos_psp_segment(void)
@@ -35,9 +36,13 @@ legacy_u16 pixldump_legacy_load_segment(void)
 	return psp_segment == 0 ? 0 : LEGACY_U16_WRAP_ADD(psp_segment, PIXLDUMP_DOS_PSP_PARAGRAPHS);
 }
 
-legacy_u16 pixldump_legacy_polygon_frame_pointer(legacy_s16 argv_si)
+legacy_u16 pixldump_legacy_polygon_frame_pointer(legacy_s16 argv_si, legacy_s16 bmp_mode)
 {
-	return LEGACY_U16_WRAP_SUB((legacy_u16)argv_si, PIXLDUMP_LEGACY_POLYGON_FRAME_DEPTH);
+	/* The BMP loop has two argument words but does not save SI/DI, making
+	 * its render call two bytes shallower than the hash loop. */
+	return LEGACY_U16_WRAP_SUB((legacy_u16)argv_si, bmp_mode
+														? PIXLDUMP_LEGACY_BMP_POLYGON_FRAME_DEPTH
+														: PIXLDUMP_LEGACY_HASH_POLYGON_FRAME_DEPTH);
 }
 
 legacy_u16 pixldump_legacy_polygon_code_segment(void)
@@ -58,8 +63,9 @@ legacy_u16 pixldump_legacy_polyinfo_segment(void)
 	if (segment == 0) {
 		return 0;
 	}
-	/* The Murmur32 oracle CRT retains 39E3 paragraphs after its load segment. DOS
-	 * places an MCB between that block and the memory manager's arena. */
+	/* The incremental Borland oracle CRT retains 39E6 paragraphs after its load
+	 * segment. DOS places an MCB between that block and the memory manager's arena.
+	 * test-pixldump-legacy-layout.py checks this against the linked oracle. */
 	segment = LEGACY_U16_WRAP_ADD(segment, PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS);
 	segment = LEGACY_U16_WRAP_ADD(segment, PIXLDUMP_DOS_MCB_PARAGRAPHS);
 	/* Rebuild the original live allocation order from shared resource sizes.

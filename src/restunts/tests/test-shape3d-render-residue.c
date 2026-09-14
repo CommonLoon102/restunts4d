@@ -192,6 +192,91 @@ static void test_opponent_render_handoff(void)
 	assert_headings(headings, 20630, 6, 512, 44);
 }
 
+static void test_rendered_player_crash_transition(void)
+{
+	struct PLAYER_WHEEL_MOTION motion;
+	legacy_s16 *headings = legacy_execution_residue.wheel_plane_angles;
+
+	memset(&state, 0, sizeof(state));
+	memset(&simd_opponent, 0, sizeof(simd_opponent));
+	memset(&motion, 0, sizeof(motion));
+	drawing_sprite.sprite_raster_left = 0;
+	drawing_sprite.sprite_raster_right = 320;
+	gameconfig.game_opponenttype = 1;
+	state.playerstate.car_lastspeed = 200;
+	state.playerstate.car_crashBmpFlag = CRASH_EVENT_COLLISION;
+	shape3d_set_legacy_render_stack(headings, 256, 512, 0);
+	queue_polygon(0);
+	shape3d_render_queued_primitives();
+	assert_headings(headings, 319, 0, 256, 4895);
+	restore_stopped_wheel_headings(&state.playerstate, &motion, PLAYER_CAR_INDEX);
+	assert_headings(motion.headings, 319, 0, 256, 4895);
+	car_to_world_rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	planindex = -1;
+	prepare_wheel_plane_travel(&motion, 2, 64);
+	assert(wheel_world_travel.x == -64 && wheel_world_travel.z == 0);
+
+	/* Disabling capture restores the physics-only caller's existing contract. */
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
+	restore_stopped_wheel_headings(&state.playerstate, &motion, PLAYER_CAR_INDEX);
+	assert_headings(motion.headings, 0, 0, 0, -384);
+	gameconfig.game_opponenttype = 0;
+}
+
+static void test_view_rotation_stopped_wheel_handoff(void)
+{
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
+	struct RECTANGLE clip = {0, 320, 17, 200};
+	struct PLAYER_WHEEL_MOTION motion;
+	legacy_s16 *headings = legacy_execution_residue.wheel_angle_stack_words;
+
+	memset(&context, 0, sizeof(context));
+	context.wheel_headings = headings;
+	/* A relocated return CS supplies a quarter-turn heading in this fixture. */
+	shape3d_set_legacy_render_stack(0, 51720U, 256U, &context);
+	headings[3] = 44;
+	select_cliprect_rotate(0, 7, 19, &clip, 0);
+	assert(headings[3] == 256);
+	/* The incremental sky path leaves its local rectangle untouched. Polygon
+	 * output also leaves this word intact, before stopped physics consumes it. */
+	queue_opponent_primitive(RENDER_PRIMITIVE_POLYGON, 0);
+	shape3d_render_queued_primitives();
+	memset(&motion, 0, sizeof(motion));
+	restore_stopped_wheel_headings(&state.opponentstate, &motion, OPPONENT_CAR_INDEX);
+	car_to_world_rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	planindex = -1;
+	prepare_wheel_plane_travel(&motion, 3, 64);
+	assert(wheel_world_travel.x == -64 && wheel_world_travel.z == 0);
+
+	shape3d_set_legacy_render_stack(0, 51720U, 512U, &context);
+	select_cliprect_rotate(7, 19, 0, &clip, 0);
+	assert(headings[3] == 512);
+	select_cliprect_rotate(7, 0, 19, &clip, 0);
+	assert(headings[3] == 512);
+	select_cliprect_rotate(7, 11, 19, &clip, 0);
+	assert(headings[3] == 512);
+
+	select_cliprect_rotate(7, 0, 0, &clip, 0);
+	assert(headings[3] == 0x14ba);
+	select_cliprect_rotate(0, -7, 0, &clip, 0);
+	assert(headings[3] == 0x14d3);
+	select_cliprect_rotate(0, 0, 19, &clip, 0);
+	assert(headings[3] == 0x1513);
+	select_cliprect_rotate(0, 0, -19, &clip, 0);
+	assert(headings[3] == 0x1513);
+	select_cliprect_rotate(1024, -1024, 256, &clip, 0);
+	assert(headings[3] == 0x1513);
+	select_cliprect_rotate(0, 0, 0, &clip, 0);
+	assert(headings[3] == 0x1513);
+
+	/* Full sky redraws still replace the camera residue with their rectangle. */
+	shape3d_retain_legacy_skybox_rect(&clip);
+	assert(headings[3] == 17);
+	shape3d_set_legacy_render_stack(0, 0, 0, 0);
+	select_cliprect_rotate(7, 11, 19, &clip, 0);
+	assert(headings[3] == 17);
+}
+
 int main(void)
 {
 	legacy_s16 headings[4] = {11, 22, 33, 44};
@@ -285,5 +370,7 @@ int main(void)
 	assert(solid_calls == 4);
 	assert_headings(headings, 319, 32767, 5239, 6005);
 	test_opponent_render_handoff();
+	test_view_rotation_stopped_wheel_handoff();
+	test_rendered_player_crash_transition();
 	return 0;
 }

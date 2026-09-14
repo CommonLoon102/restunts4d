@@ -230,6 +230,7 @@ legacy_s16 get_track_collision_points(legacy_s16 column_arg, legacy_s16 row_arg,
 }
 
 struct LEGACY_EXECUTION_RESIDUE legacy_execution_residue;
+legacy_s16 legacy_render_player_headings_active;
 
 static legacy_s16 decay_suspension_target(struct CARSTATE *carstate, legacy_s16 wheel_index)
 {

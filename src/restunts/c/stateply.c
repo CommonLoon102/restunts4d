@@ -238,8 +238,10 @@ static void restore_stopped_wheel_headings(struct CARSTATE *carstate,
 								  ? legacy_execution_residue.wheel_angle_stack_words[i]
 								  : legacy_execution_residue.wheel_plane_angles[i];
 	}
-	if (car_index == PLAYER_CAR_INDEX && gameconfig.game_opponenttype != 0 &&
-		carstate->car_lastspeed != CAR_SPEED_STOPPED &&
+	/* The physics-only caller reconstructs overwritten opponent coordinates.
+	 * A renderer caller has already supplied the later writes to these slots. */
+	if (!legacy_render_player_headings_active && car_index == PLAYER_CAR_INDEX &&
+		gameconfig.game_opponenttype != 0 && carstate->car_lastspeed != CAR_SPEED_STOPPED &&
 		carstate->car_crashBmpFlag != CRASH_EVENT_NONE) {
 		restore_crash_wheel_headings(motion->headings);
 	}

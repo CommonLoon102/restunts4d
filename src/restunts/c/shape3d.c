@@ -11,6 +11,7 @@
 #include "math_internal.h"
 #include "car_model.h"
 #include "projection.h"
+#include "residue.h"
 
 /*
 
@@ -939,6 +940,8 @@ extern struct MATRIX mat_y0, mat_y100, mat_y200, mat_y300;
 extern legacy_s32 direction_sector_sine_copy;
 extern legacy_s32 direction_sector_cosine_copy;
 
+static void shape3d_retain_legacy_view_rotation(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY);
+
 legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY,
 								  struct RECTANGLE *cliprect, legacy_s16 half_scale)
 {
@@ -952,6 +955,7 @@ legacy_u16 select_cliprect_rotate(legacy_s16 angZ, legacy_s16 angX, legacy_s16 a
 	select_rect_rc = *cliprect;
 	shape_half_scale = half_scale;
 	inverse_view_rotation = mat_rot_zxy(-angZ, -angX, -angY, MATRIX_ROTATION_ORDER_ZXY);
+	shape3d_retain_legacy_view_rotation(angZ, angX, angY);
 	forward_axis.z = PROJECTION_VIEW_VECTOR_LENGTH;
 	forward_axis.y = 0;
 	forward_axis.x = 0;
@@ -1015,6 +1019,8 @@ void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 poly
 									 const struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT *opponent)
 {
 	legacy_render_wheel_headings = wheel_headings;
+	legacy_render_player_headings_active =
+		wheel_headings == legacy_execution_residue.wheel_plane_angles;
 	legacy_render_polygon_frame_pointer = polygon_frame_pointer;
 	legacy_render_polygon_code_segment = polygon_code_segment;
 	if (opponent != 0) {
@@ -1022,6 +1028,44 @@ void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 poly
 	} else {
 		legacy_opponent_render_context.wheel_headings = 0;
 	}
+}
+
+/* select_cliprect_rotate's mat_rot_zxy calls reuse the word at get_a_poly_info
+ * BP-58, later read as the opponent's fourth stopped-wheel heading. With two
+ * or more axes, mat_multiply leaves its far return CS there. A single-axis
+ * matrix constructor instead leaves its return IP. Incremental sky rendering
+ * can skip the local rectangle assignment which normally overwrites this word.
+ * The inverse yaw is computed after the forward yaw, so a non-cardinal single
+ * yaw always misses the matrix cache; cardinal yaw and identity make no call. */
+#define SHAPE3D_LEGACY_ROTATE_Z_RETURN_IP 5306U
+#define SHAPE3D_LEGACY_ROTATE_X_RETURN_IP 5331U
+#define SHAPE3D_LEGACY_ROTATE_Y_RETURN_IP 5395U
+
+static void shape3d_retain_legacy_view_rotation(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY)
+{
+	legacy_s16 rotate_z;
+	legacy_s16 rotate_x;
+	legacy_s16 rotate_y;
+	legacy_u16 value;
+
+	if (legacy_opponent_render_context.wheel_headings == 0) {
+		return;
+	}
+	rotate_z = (angZ & ANGLE_MASK) != 0;
+	rotate_x = (angX & ANGLE_MASK) != 0;
+	rotate_y = (angY & ANGLE_MASK) != 0;
+	if ((rotate_z && rotate_x) || (rotate_z && rotate_y) || (rotate_x && rotate_y)) {
+		value = legacy_render_polygon_code_segment;
+	} else if (rotate_z) {
+		value = SHAPE3D_LEGACY_ROTATE_Z_RETURN_IP;
+	} else if (rotate_x) {
+		value = SHAPE3D_LEGACY_ROTATE_X_RETURN_IP;
+	} else if ((angY & ANGLE_QUARTER_MASK) != 0) {
+		value = SHAPE3D_LEGACY_ROTATE_Y_RETURN_IP;
+	} else {
+		return;
+	}
+	legacy_opponent_render_context.wheel_headings[3] = LEGACY_S16_FROM_BITS(value);
 }
 
 /* update_frame calls skybox_op with fourteen argument bytes before calling

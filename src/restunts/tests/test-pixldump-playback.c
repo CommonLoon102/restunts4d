@@ -17,6 +17,7 @@ static legacy_u8 output_bytes[65535];
 static legacy_u8 palette_resource[SHAPE2D_HEADER_SIZE + 768];
 static unsigned output_length, render_count, present_count, close_count;
 static int render_stack_enabled;
+static legacy_s16 expected_bmp_mode;
 
 void far *dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset)
 {
@@ -90,8 +91,9 @@ void shape3d_set_legacy_render_stack(legacy_s16 *headings, legacy_u16 frame_poin
 	render_stack_enabled = headings != 0;
 }
 
-legacy_u16 pixldump_legacy_polygon_frame_pointer(legacy_s16 argv_si)
+legacy_u16 pixldump_legacy_polygon_frame_pointer(legacy_s16 argv_si, legacy_s16 bmp_mode)
 {
+	assert(bmp_mode == expected_bmp_mode);
 	return (legacy_u16)argv_si;
 }
 
@@ -138,6 +140,7 @@ static void reset_capture(void)
 static void test_hash_capture(void)
 {
 	reset_capture();
+	expected_bmp_mode = 0;
 	gameconfig.game_recordedframes = 12;
 	assert(pixldump_write_frames((const legacy_s8 *)"test.PDD") == 0);
 	static const char expected[] = "PIXLDUMP 2\r\n"
@@ -165,6 +168,7 @@ static void test_bmp_capture(void)
 {
 	for (legacy_u16 frame = 0; frame <= 6; frame++) {
 		reset_capture();
+		expected_bmp_mode = 1;
 		assert(pixldump_write_requested_frame((const legacy_s8 *)"test.bmp", frame) == 0);
 		assert(output_length == 65078);
 		assert(output_bytes[0] == 'B' && output_bytes[1] == 'M');
