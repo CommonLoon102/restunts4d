@@ -63,11 +63,8 @@ legacy_u16 resource_file_data_start(legacy_u16 count)
 
 legacy_u8 far *resource_file_data(legacy_u8 far *resource, legacy_u16 index)
 {
-	legacy_u16 count;
-	legacy_u8 huge *result;
-
-	count = resource_file_count(resource);
-	result = resource;
+	legacy_u16 count = resource_file_count(resource);
+	legacy_u8 huge *result = resource;
 	result += (legacy_u32)resource_file_data_start(count) +
 			  LEGACY_READ_U32_LE(resource_file_offset_bytes(resource, count, index));
 #if defined(RESTUNTS_DOS16)
@@ -87,17 +84,12 @@ legacy_u8 far *resource_file_data(legacy_u8 far *resource, legacy_u16 index)
 
 legacy_s8 far *locate_resource(legacy_s8 far *data, const legacy_s8 *name, legacy_u16 fatal)
 {
-	legacy_u16 chunk_count;
-	legacy_u16 index;
-	legacy_u16 character;
-	const legacy_u8 far *identifier;
-	legacy_s8 padded_name[RESOURCE_FILE_IDENTIFIER_SIZE];
-	legacy_u16 padding;
-
-	chunk_count = resource_file_count((const legacy_u8 far *)data);
+	legacy_u16 chunk_count = resource_file_count((const legacy_u8 far *)data);
 	/* Compare through a local padded key.  Several callers pass string
 	 * literals, so the original in-place padding is not portable. */
-	padding = 0;
+	legacy_u16 padding = 0;
+	legacy_s8 padded_name[RESOURCE_FILE_IDENTIFIER_SIZE];
+	legacy_u16 character;
 	for (character = 0; character < RESOURCE_FILE_IDENTIFIER_SIZE; character++) {
 		if (padding == 0 && name[character] != 0) {
 			padded_name[character] = name[character];
@@ -110,8 +102,9 @@ legacy_s8 far *locate_resource(legacy_s8 far *data, const legacy_s8 *name, legac
 	/* The original runs this compare chunks+1 times.  The extra slot is the
 	 * first offset dword, which is zero for normal resources and cannot match
 	 * any space-padded name used by callers. */
-	for (index = 0; index < chunk_count; index++) {
-		identifier = resource_file_identifier((const legacy_u8 far *)data, index);
+	for (legacy_u16 index = 0; index < chunk_count; index++) {
+		const legacy_u8 far *identifier =
+			resource_file_identifier((const legacy_u8 far *)data, index);
 		for (character = 0; character < RESOURCE_FILE_IDENTIFIER_SIZE; character++) {
 			if (identifier[character] != (legacy_u8)padded_name[character]) {
 				break;

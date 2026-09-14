@@ -40,9 +40,8 @@ static void reset_frame(void)
 
 static void test_frame_scheduling(void)
 {
-	legacy_s16 last_frame = -1;
-
 	reset_frame();
+	legacy_s16 last_frame = -1;
 	assert(race_frame_is_ready(&last_frame) == 1);
 	assert(last_frame == 12);
 	assert(race_frame_is_ready(&last_frame) == 0);
@@ -58,11 +57,10 @@ static void test_frame_scheduling(void)
 
 static void test_frame_catchup(void)
 {
-	legacy_s16 last_frame = -1;
-
 	reset_frame();
 	elapsed_time2 = 13;
 	mouse_driving_enabled = 1;
+	legacy_s16 last_frame = -1;
 	assert(race_frame_is_ready(&last_frame) == 0);
 	assert(updates == 1);
 	assert(analog_updates == 1);
@@ -107,9 +105,8 @@ static void test_dashboard_layout(void)
 		{REPLAY_MODE_PLAYBACK, 0, 1, 0, 0, 0, 140, 1, 0},
 		{REPLAY_MODE_PLAYBACK, 1, 1, 0, 1, 1, 200, 0, 0},
 	};
-	unsigned index;
 
-	for (index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+	for (unsigned index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
 		game_replay_mode = cases[index].mode;
 		idle_expired = cases[index].idle;
 		dashb_toggle = cases[index].dashboard;

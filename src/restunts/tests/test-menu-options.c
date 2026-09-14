@@ -108,7 +108,6 @@ void sprite_fill_rect(legacy_s16 x, legacy_s16 y, legacy_s16 w, legacy_s16 h, le
 legacy_u16 show_dialog(legacy_s16 type, legacy_s16 save, void *text, legacy_u16 x, legacy_u16 y,
 					   legacy_s16 border, legacy_s16 *positions, legacy_s16 selected)
 {
-	unsigned i;
 	trace_word(2017);
 	trace_word(type);
 	trace_word(save);
@@ -118,7 +117,7 @@ legacy_u16 show_dialog(legacy_s16 type, legacy_s16 save, void *text, legacy_u16 
 	trace_word(border);
 	trace_word(selected);
 	if (positions != 0) {
-		for (i = 0; i < 15U; i++) {
+		for (unsigned i = 0; i < 15U; i++) {
 			positions[i] = LEGACY_S16_FROM_BITS(32750U + i * 43U);
 		}
 	}
@@ -181,7 +180,6 @@ legacy_s16 file_load_replay(const legacy_s8 *dir, const legacy_s8 *name)
 
 static void reset_options(unsigned index)
 {
-	unsigned i;
 	scenario = index;
 	allocation_index = 0;
 	dialog_index = 0;
@@ -202,7 +200,7 @@ static void reset_options(unsigned index)
 	waitflag = 65530;
 	replay_directory[0] = 0;
 	replay_filename_input[0] = 0;
-	for (i = 0; i < 24U; i++) {
+	for (unsigned i = 0; i < 24U; i++) {
 		dialog_answers[i] = -1;
 	}
 	trace_word(index);
@@ -218,8 +216,7 @@ static void record_options(void)
 }
 static void test_calibration(void)
 {
-	unsigned i;
-	for (i = 0; i < 6U; i++) {
+	for (unsigned i = 0; i < 6U; i++) {
 		reset_options(i);
 		dialog_answers[0] = i < 2U ? (legacy_s16)i - 1 : 1;
 		joystick_limit = i == 2U ? 0 : i == 3U ? 16 : 18;
@@ -230,10 +227,9 @@ static void test_calibration(void)
 }
 static void test_graphics(void)
 {
-	unsigned i, j;
-	for (i = 0; i < 10U; i++) {
+	for (unsigned i = 0; i < 10U; i++) {
 		reset_options(i + 10U);
-		for (j = 0; j < 9U; j++) {
+		for (unsigned j = 0; j < 9U; j++) {
 			dialog_answers[j] = (legacy_s16)((i + j) % 9U);
 		}
 		dialog_answers[9] = i % 2U ? 9 : -1;
@@ -243,8 +239,7 @@ static void test_graphics(void)
 }
 static void test_options(void)
 {
-	unsigned i;
-	for (i = 0; i < 16U; i++) {
+	for (unsigned i = 0; i < 16U; i++) {
 		reset_options(i + 20U);
 		dialog_answers[0] = (legacy_s16)(i / 2U) - 1;
 		if (dialog_answers[0] == 0) {

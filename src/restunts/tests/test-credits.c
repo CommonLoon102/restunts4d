@@ -20,8 +20,7 @@ static legacy_s8 resource[16];
 
 static void trace(legacy_u32 value)
 {
-	unsigned i;
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		trace_hash = (trace_hash ^ (value & 255U)) * UINT32_C(16777619);
 		value >>= 8;
 	}
@@ -41,11 +40,10 @@ void far *file_load_resfile(const legacy_s8 *name)
 }
 void locate_many_resources(legacy_s8 far *chunk, const legacy_s8 *ids, legacy_s8 far **result)
 {
-	unsigned i;
 	assert(chunk == resource);
 	trace(2);
 	trace_text(ids);
-	for (i = 0; i < 11; i++) {
+	for (unsigned i = 0; i < 11; i++) {
 		legacy_s8 *shape = (legacy_s8 *)&shapes[i];
 		memcpy(result + i, &shape, sizeof(shape));
 	}
@@ -194,11 +192,10 @@ legacy_s16 input_repeat_check(legacy_s16 ticks)
 
 int main(void)
 {
-	unsigned scenario, i;
-	for (scenario = 0; scenario < 32; scenario++) {
+	for (unsigned scenario = 0; scenario < 32; scenario++) {
 		trace(scenario);
 		memset(shapes, 0, sizeof(shapes));
-		for (i = 0; i < 11; i++) {
+		for (unsigned i = 0; i < 11; i++) {
 			shapes[i].position_x = 200;
 			shapes[i].position_y = 130 + i;
 			shapes[i].width = 20;

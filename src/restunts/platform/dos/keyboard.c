@@ -106,11 +106,8 @@ static const legacy_u8 dos_kb_keymap5[DOS_KB_ALT_KEYMAP_SIZE] = {
 // no code here depends on being re-entered.
 void interrupt kb_int9_handler(void)
 {
-	legacy_u8 kbc, kbp;
-	legacy_u16 kbval, kbdata;
-
-	kbc = inp(DOS_KB_DATA_PORT);
-	kbp = inp(DOS_KB_CONTROL_PORT);
+	legacy_u8 kbc = inp(DOS_KB_DATA_PORT);
+	legacy_u8 kbp = inp(DOS_KB_CONTROL_PORT);
 	outp(DOS_KB_CONTROL_PORT, kbp | DOS_KB_INTERRUPT_ACK_MASK);
 	outp(DOS_KB_CONTROL_PORT, kbp);
 
@@ -121,6 +118,7 @@ void interrupt kb_int9_handler(void)
 		dos_kb_last_input = kbc;
 		dos_kb_input[kbc] = 1;
 
+		legacy_u16 kbval;
 		if (dos_kb_input[DOS_KB_ALT_SCANCODE] == 1) {
 			kbval = dos_kb_keymap5[kbc];
 		} else if (dos_kb_input[DOS_KB_CONTROL_SCANCODE] == 1) {
@@ -142,7 +140,7 @@ void interrupt kb_int9_handler(void)
 			kbval <<= DOS_KB_ASCII_BYTE_SHIFT;
 		}
 
-		kbdata = dos_kb_buffer_write;
+		legacy_u16 kbdata = dos_kb_buffer_write;
 		disable();
 		dos_kb_buffer[kbdata / DOS_KB_BUFFER_ENTRY_BYTES] = kbval;
 		kbdata += DOS_KB_BUFFER_ENTRY_BYTES;
@@ -231,11 +229,10 @@ static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right)
 #endif
 void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 {
-
-	legacy_u16 result, kbdata;
-	legacy_u8 shiftleft, shiftright;
 	legacy_u8 bioscall = DOS_INTERRUPT_AX >> LEGACY_BYTE_BITS;
 	disable();
+	legacy_u16 kbdata;
+	legacy_u16 result;
 	if (bioscall == DOS_KB_BIOS_READ_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
@@ -275,8 +272,8 @@ void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 	}
 
 	if (bioscall == DOS_KB_BIOS_SHIFT_STATUS_FUNCTION) {
-		shiftleft = dos_kb_input[DOS_KB_LEFT_SHIFT_SCANCODE];
-		shiftright = dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE];
+		legacy_u8 shiftleft = dos_kb_input[DOS_KB_LEFT_SHIFT_SCANCODE];
+		legacy_u8 shiftright = dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE];
 		result = shiftleft | shiftright;
 		enable();
 		DOS_INTERRUPT_AX = result & LEGACY_U8_MAX;
@@ -291,15 +288,11 @@ void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 
 void kb_init_interrupt(void)
 {
-	legacy_u8 irqmask;
-	legacy_s16 i;
-	voidinterruptfunctype current_kb_int9_handler;
-
-	irqmask = inp(DOS_PIC_MASK_PORT);
+	legacy_u8 irqmask = inp(DOS_PIC_MASK_PORT);
 	outp(DOS_PIC_MASK_PORT, irqmask | DOS_KB_IRQ_MASK);
 
 	// The original compares only the offset word read from vector 9.
-	current_kb_int9_handler = getvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR);
+	voidinterruptfunctype current_kb_int9_handler = getvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR);
 	if (FP_OFF(current_kb_int9_handler) != FP_OFF(kb_int9_handler)) {
 		old_kb_int9_handler = current_kb_int9_handler;
 		setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, kb_int9_handler);
@@ -311,7 +304,7 @@ void kb_init_interrupt(void)
 	outp(DOS_PIC_MASK_PORT, irqmask);
 
 	/* Clear every tracked hardware scancode state. */
-	for (i = 0; i < DOS_KB_SCANCODE_COUNT; i++) {
+	for (legacy_s16 i = 0; i < DOS_KB_SCANCODE_COUNT; i++) {
 		dos_kb_input[i] = 0;
 	}
 
@@ -320,9 +313,7 @@ void kb_init_interrupt(void)
 
 void kb_exit_handler(void)
 {
-	legacy_u8 irqmask;
-
-	irqmask = inp(DOS_PIC_MASK_PORT);
+	legacy_u8 irqmask = inp(DOS_PIC_MASK_PORT);
 	outp(DOS_PIC_MASK_PORT, irqmask | DOS_KB_IRQ_MASK);
 
 	// The original guards this block with the saved offset word alone.
@@ -343,12 +334,11 @@ legacy_s16 kb_get_key_state(legacy_s16 key)
 
 static legacy_u32 dos_kb_bios_call(legacy_u8 function)
 {
-	legacy_u16 result;
-	legacy_u16 result_flags;
-
 	/* Watcom's int86 REGS does not expose ZF. Preserve the actual BIOS flags
 	 * before the compiler or interrupt wrapper can change them. Returning both
 	 * words also avoids passing a near pointer into a possibly foreign stack. */
+	legacy_u16 result;
+	legacy_u16 result_flags;
 	__asm {
 		mov ah, function
 		int DOS_KB_BIOS_INTERRUPT_VECTOR
@@ -362,11 +352,8 @@ static legacy_u32 dos_kb_bios_call(legacy_u8 function)
 
 legacy_s16 dos_kb_get_char(void)
 {
-	legacy_u32 status;
-	legacy_u16 key;
-
-	status = dos_kb_bios_call(DOS_KB_BIOS_STATUS_FUNCTION);
-	key = (legacy_u16)status;
+	legacy_u32 status = dos_kb_bios_call(DOS_KB_BIOS_STATUS_FUNCTION);
+	legacy_u16 key = (legacy_u16)status;
 	if (((legacy_u16)(status >> LEGACY_WORD_BITS) & DOS_KB_X86_ZERO_FLAG) != 0) {
 		return 0;
 	}
@@ -406,9 +393,9 @@ legacy_s16 kb_read_char(void)
 {
 	// we could've called kb_int16_handler_c() directly
 	union REGS inregs;
-	union REGS outregs;
 
 	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+	union REGS outregs;
 	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	if (!outregs.x.ax) {
 		return 0;
@@ -428,9 +415,8 @@ legacy_s16 kb_read_char(void)
 legacy_s16 kb_checking(void)
 {
 	union REGS inregs;
-	union REGS outregs;
-
 	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
+	union REGS outregs;
 	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
 	if (outregs.h.al == 0) {
 		return outregs.x.ax;
@@ -450,7 +436,6 @@ legacy_s16 kb_check(void)
 {
 	union REGS inregs;
 	union REGS outregs;
-
 	while (1) {
 		inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
 		int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);

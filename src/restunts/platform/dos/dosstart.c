@@ -58,21 +58,14 @@ static void headless_release_extra_memory(void)
 
 static legacy_s16 headless_parse_command_line(void)
 {
-	legacy_u8 far *source;
-	legacy_u16 source_length;
-	legacy_u16 source_index;
-	legacy_u16 destination_index;
-	legacy_s16 argc;
-	legacy_u8 character;
-	legacy_u8 quoted;
-
-	source = (legacy_u8 far *)MK_FP(headless_psp_segment, HEADLESS_PSP_COMMAND_LINE_OFFSET);
-	source_length = source[0];
-	source_index = 1;
-	destination_index = 0;
-	argc = 1;
+	legacy_u8 far *source =
+		(legacy_u8 far *)MK_FP(headless_psp_segment, HEADLESS_PSP_COMMAND_LINE_OFFSET);
+	legacy_u16 source_length = source[0];
 	headless_argv[0] = headless_program_name;
 
+	legacy_u16 source_index = 1;
+	legacy_u16 destination_index = 0;
+	legacy_s16 argc = 1;
 	while (source_index <= source_length && argc < HEADLESS_MAX_ARGS &&
 		   destination_index + 1U < HEADLESS_COMMAND_LINE_SIZE) {
 		while (source_index <= source_length &&
@@ -84,9 +77,9 @@ static legacy_s16 headless_parse_command_line(void)
 		}
 
 		headless_argv[argc++] = &headless_command_line[destination_index];
-		quoted = 0;
+		legacy_u8 quoted = 0;
 		while (source_index <= source_length) {
-			character = source[source_index++];
+			legacy_u8 character = source[source_index++];
 			if (character == '"') {
 				quoted ^= 1U;
 				continue;
@@ -106,32 +99,25 @@ static legacy_s16 headless_parse_command_line(void)
 
 static void headless_run(void)
 {
-	legacy_s16 argc;
-	legacy_s16 result;
-
 	headless_release_extra_memory();
 #if defined(RESTUNTS_FULL) || defined(RESTUNTS_PIXLDUMP)
 	full_data_initialize();
 #endif
-	argc = headless_parse_command_line();
-	result = dos_program_main(argc, headless_argv);
+	legacy_s16 argc = headless_parse_command_line();
+	legacy_s16 result = dos_program_main(argc, headless_argv);
 	headless_exit(result);
 }
 
 void headless_start(void)
 {
-	legacy_u16 bss_length;
-	legacy_u16 bss_offset;
-	legacy_u16 stack_pointer;
-
 	/* DOS enters an EXE with ES pointing at its PSP. The medium memory model
 	 * requires SS == DS whenever a pointer to an automatic object is passed as
 	 * an ordinary near pointer, so normalize both registers to DGROUP before
 	 * calling any C routine.  The linker-visible STACK remains last and gives
 	 * us both the initial entry stack and the final near offset. */
-	bss_offset = FP_OFF(&headless_bss_start);
-	bss_length = (legacy_u16)(FP_OFF(&headless_bss_end) - bss_offset);
-	stack_pointer = FP_OFF(&headless_stack_top);
+	legacy_u16 bss_offset = FP_OFF(&headless_bss_start);
+	legacy_u16 bss_length = (legacy_u16)(FP_OFF(&headless_bss_end) - bss_offset);
+	legacy_u16 stack_pointer = FP_OFF(&headless_stack_top);
 	__asm {
 		cld
 		mov bx, es

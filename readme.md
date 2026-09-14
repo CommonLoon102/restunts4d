@@ -66,6 +66,12 @@ Conventional `else if` chains are allowed. Empty loops also need braces. Keep
 CRLF line endings, as required by `.gitattributes`. Bundled compiler headers
 under `tools/include/` are excluded.
 
+C sources use the C99 features supported by Open Watcom (`-zastd=c99`).
+Declare local variables close to their first use, combining the declaration
+and first assignment when possible. Keep declarations in the enclosing scope
+when values are shared across branches or loops, and preserve initialization
+order and object lifetime.
+
 Two standard tools check the style directly:
 
 - [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker)

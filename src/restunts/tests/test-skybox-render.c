@@ -63,12 +63,10 @@ void sprite_copy_image_at(struct SHAPE2D far *shape, legacy_s16 x, legacy_s16 y)
 
 void skybox_fill_polygon(legacy_u16 color, legacy_u16 count, struct POINT2D *points)
 {
-	unsigned i;
-
 	record_word(4);
 	record_word(color);
 	record_word(count);
-	for (i = 0; i < count; i++) {
+	for (unsigned i = 0; i < count; i++) {
 		if (polygon_count == 0 && i < 4U) {
 			first_polygon[i] = points[i];
 		}
@@ -80,8 +78,6 @@ void skybox_fill_polygon(legacy_u16 color, legacy_u16 count, struct POINT2D *poi
 
 static void reset_scene(void)
 {
-	unsigned i;
-
 	shape3d_set_legacy_render_stack(0, 0, 0, 0);
 	call_hash = 2166136261UL;
 	clear_count = 0;
@@ -95,11 +91,11 @@ static void reset_scene(void)
 	skybox.maximum_height = 40;
 	skybox.sky_color = 3;
 	skybox.ground_color = 6;
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		skybox.heights[i] = 20 + i * 5;
 		skyboxes[i] = &images[i];
 	}
-	for (i = 0; i < 15; i++) {
+	for (unsigned i = 0; i < 15; i++) {
 		frame_rects_page0[i].left = i * 20;
 		frame_rects_page0[i].right = i * 20 + 20;
 		frame_rects_page0[i].top = 30 + i * 3;
@@ -120,11 +116,9 @@ static void reset_scene(void)
 
 static void test_level_horizon(void)
 {
-	struct RECTANGLE clip = {0, 320, 20, 180};
-	struct MATRIX rotation;
-
 	reset_scene();
-	rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	struct MATRIX rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	struct RECTANGLE clip = {0, 320, 20, 180};
 	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
 	assert(clear_count == 2);
 	assert(image_count == 5);
@@ -145,8 +139,6 @@ static void test_level_horizon(void)
 
 static void prepare_legacy_handoff(legacy_s16 *player, legacy_s16 *opponent)
 {
-	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
-
 	player[0] = 11;
 	player[1] = 22;
 	player[2] = 33;
@@ -155,6 +147,7 @@ static void prepare_legacy_handoff(legacy_s16 *player, legacy_s16 *opponent)
 	opponent[1] = 66;
 	opponent[2] = 77;
 	opponent[3] = -6547;
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
 	context.wheel_headings = opponent;
 	context.polyinfo_offset = 0;
 	context.polyinfo_segment = 0;
@@ -170,14 +163,12 @@ static void assert_words(const legacy_s16 *words, legacy_s16 first, legacy_s16 s
 
 static void test_legacy_skybox_handoff(void)
 {
-	struct RECTANGLE clip = {0, 320, 37, 180};
-	struct MATRIX rotation;
-	legacy_s16 player[4];
-	legacy_s16 opponent[4];
-
 	reset_scene();
+	legacy_s16 opponent[4];
+	legacy_s16 player[4];
 	prepare_legacy_handoff(player, opponent);
-	rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	struct MATRIX rotation = *mat_rot_zxy(0, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+	struct RECTANGLE clip = {0, 320, 37, 180};
 	assert(skybox_render(0, &clip, 1, &rotation, 0, 0, 0) == 0);
 	/* The archived fourth heading becomes clip.top, not a fixed zero. */
 	assert_words(player, 11, 22, 33, 44);
@@ -251,26 +242,22 @@ static legacy_u16 random_word(legacy_u32 *seed)
 
 static legacy_u32 skybox_fingerprint(legacy_s16 rolled, legacy_s16 slow_copy)
 {
+	legacy_u32 hash = 2166136261UL;
 	struct MATRIX rotation;
 	struct RECTANGLE clip;
-	legacy_s16 angle, camera_y, direction, result;
-	legacy_u16 rotate_z, rotate_x, rotate_y;
 	legacy_u32 seed = 161803UL;
-	legacy_u32 hash = 2166136261UL;
-	unsigned iteration, i;
-
-	for (iteration = 0; iteration < 8192; iteration++) {
+	for (unsigned iteration = 0; iteration < 8192; iteration++) {
 		reset_scene();
 		clip.left = 0;
 		clip.right = 320;
 		clip.top = random_word(&seed) % 80;
 		clip.bottom = 120 + random_word(&seed) % 81;
-		angle = random_word(&seed) % 1024;
-		camera_y = LEGACY_S16_FROM_BITS(random_word(&seed));
-		direction = iteration % 2 == 0 ? 1 : -1;
-		rotate_z = random_word(&seed) % 1024;
-		rotate_x = random_word(&seed) % 1024;
-		rotate_y = random_word(&seed) % 1024;
+		legacy_s16 angle = random_word(&seed) % 1024;
+		legacy_s16 camera_y = LEGACY_S16_FROM_BITS(random_word(&seed));
+		legacy_s16 direction = iteration % 2 == 0 ? 1 : -1;
+		legacy_u16 rotate_z = random_word(&seed) % 1024;
+		legacy_u16 rotate_x = random_word(&seed) % 1024;
+		legacy_u16 rotate_y = random_word(&seed) % 1024;
 		rotation = *mat_rot_zxy(rotate_z, rotate_x, rotate_y, MATRIX_ROTATION_ORDER_ZXY);
 		if (iteration % 3 == 0) {
 			/* Small bank angles exercise the textured horizon-strip path. */
@@ -283,17 +270,18 @@ static legacy_u32 skybox_fingerprint(legacy_s16 rolled, legacy_s16 slow_copy)
 		full_redraw_frames_remaining = iteration % 3 == 1;
 		last_rendered_camera_heading = angle;
 		frame_buffer_camera_headings[iteration % 2] = angle;
-		result = skybox_render(iteration % 2, &clip, direction, &rotation, rolled, angle, camera_y);
+		legacy_s16 result =
+			skybox_render(iteration % 2, &clip, direction, &rotation, rolled, angle, camera_y);
 		record_word((legacy_u16)result);
 		record_word((legacy_u16)redraw_rect_count);
-		for (i = 0; i < 15; i++) {
+		for (unsigned i = 0; i < 15; i++) {
 			record_word((legacy_u16)frame_rect_change_flags[i]);
 			record_word((legacy_u16)frame_layer_rects[i].left);
 			record_word((legacy_u16)frame_layer_rects[i].right);
 			record_word((legacy_u16)frame_layer_rects[i].top);
 			record_word((legacy_u16)frame_layer_rects[i].bottom);
 		}
-		for (i = 0; i < (unsigned)redraw_rect_count; i++) {
+		for (unsigned i = 0; i < (unsigned)redraw_rect_count; i++) {
 			record_word((legacy_u16)merged_redraw_rects[i].left);
 			record_word((legacy_u16)merged_redraw_rects[i].right);
 			record_word((legacy_u16)merged_redraw_rects[i].top);
@@ -312,11 +300,10 @@ int main(void)
 	 * callbacks fingerprint their arguments and order without a video device.
 	 * Rolled-view baselines include the original long-line slope rounding. */
 	static const legacy_u32 expected[] = {1958318220UL, 1443166741UL, 1150680283UL, 2189361964UL};
-	unsigned i;
 
 	test_level_horizon();
 	test_legacy_skybox_handoff();
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		assert(skybox_fingerprint(i & 1U, i >> 1U) == expected[i]);
 	}
 	return 0;

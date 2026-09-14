@@ -76,12 +76,11 @@ static void track_menu_draw_preview(void)
 
 static void track_menu_draw_highscore(void)
 {
-	struct HIGHSCORE_ENTRY far *scores;
 	legacy_u8 text_offsets[TRACK_MENU_HIGHSCORE_FIELD_COUNT];
-	legacy_u16 score;
+	struct HIGHSCORE_ENTRY far *scores;
 	if (highscore_load_or_create(0) == 0) {
 		scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
-		score = scores[ranking_entry_order[0]].time;
+		legacy_u16 score = scores[ranking_entry_order[0]].time;
 		if (score != HIGHSCORE_UNSET_TIME) {
 			copy_string(&resID_byte1, locate_text_res(mainresptr, "hs0"));
 			intro_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1),
@@ -104,8 +103,7 @@ static void track_menu_draw_highscore(void)
 
 static void track_menu_draw_buttons(void)
 {
-	legacy_s8 far *text_resource;
-	text_resource = (legacy_s8 far *)file_load_resfile("tedit");
+	legacy_s8 far *text_resource = (legacy_s8 far *)file_load_resfile("tedit");
 	draw_button(locate_text_res(text_resource, "bmt"), TRACK_MENU_FIRST_BUTTON_X,
 				TRACK_MENU_BUTTON_Y, TRACK_MENU_BUTTON_WIDTH, TRACK_MENU_BUTTON_HEIGHT,
 				button_top_color, button_bottom_color, button_fill_color, 0);
@@ -122,9 +120,6 @@ static void track_menu_draw_buttons(void)
 
 static legacy_u16 track_menu_poll_input(struct TRACK_MENU_STATE *menu)
 {
-	legacy_u16 elapsed;
-	legacy_u16 key;
-	legacy_s16 hit;
 	if (menu->selected != menu->previous) {
 		menu->previous = menu->selected;
 		sprite_blit_to_video(render_window_sprite, LEGACY_S8_FROM_BITS(menu->blit_mode));
@@ -133,11 +128,11 @@ static legacy_u16 track_menu_poll_input(struct TRACK_MENU_STATE *menu)
 		menu_reset_animation_timers();
 	}
 
-	elapsed = (legacy_u16)menu_animate_button_highlight(
+	legacy_u16 elapsed = (legacy_u16)menu_animate_button_highlight(
 		menu->selected, trackmenu_buttons, menu_highlight_second_color, menu_highlight_first_color);
 	menu_update_idle_counter(elapsed, TRACK_MENU_IDLE_LIMIT_TICKS);
-	key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-	hit = (legacy_s16)mouse_multi_hittest(TRACK_MENU_BUTTON_COUNT, trackmenu_buttons);
+	legacy_u16 key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
+	legacy_s16 hit = (legacy_s16)mouse_multi_hittest(TRACK_MENU_BUTTON_COUNT, trackmenu_buttons);
 	if (hit != -1) {
 		menu->selected = (legacy_u8)hit;
 	}
@@ -175,14 +170,9 @@ static legacy_u8 track_menu_activate_key(struct TRACK_MENU_STATE *menu, legacy_u
 
 void run_tracks_menu(legacy_s16 reload_track)
 {
-	struct TRACK_MENU_STATE menu;
-	legacy_s8 far *prompt;
-	legacy_u16 key;
-	legacy_s8 chosen;
-	legacy_s16 needs_track_setup;
-
 	ensure_file_exists(TRACK_EDITOR_RESOURCE_FILE_INDEX);
-	needs_track_setup = reload_track != 0;
+	legacy_s16 needs_track_setup = reload_track != 0;
+	struct TRACK_MENU_STATE menu;
 	for (;;) {
 		if (needs_track_setup != 0) {
 			check_input();
@@ -208,16 +198,16 @@ void run_tracks_menu(legacy_s16 reload_track)
 		track_menu_draw_buttons();
 
 		for (;;) {
-			key = track_menu_poll_input(&menu);
+			legacy_u16 key = track_menu_poll_input(&menu);
 
 			if (track_menu_activate_key(&menu, key) == 0) {
 				continue;
 			}
 
 			if (menu.selected == TRACK_MENU_LOAD_BUTTON) {
-				prompt = locate_text_res(mainresptr, "trk");
-				chosen = do_fileselect_dialog(track_directory, gameconfig.game_trackname, ".trk",
-											  prompt);
+				legacy_s8 far *prompt = locate_text_res(mainresptr, "trk");
+				legacy_s8 chosen = do_fileselect_dialog(track_directory, gameconfig.game_trackname,
+														".trk", prompt);
 				file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
 				if (chosen != 0) {
 					file_read_fatal(g_path_buf, track_element_map);

@@ -58,8 +58,7 @@ void putpixel_iconFillings(struct SHAPE2D *shape, legacy_s16 x, legacy_s16 y)
 
 static void record_maps(void)
 {
-	unsigned int i;
-	for (i = 0; i < 900U; i++) {
+	for (unsigned int i = 0; i < 900U; i++) {
 		record_editor_word(element_tiles[i]);
 		record_editor_word(terrain_tiles[i]);
 	}
@@ -68,12 +67,11 @@ static void record_maps(void)
 static void test_validation_boundaries(void)
 {
 	static const legacy_u8 tiles[] = {1, 33, 34, 35, 36, 102, 103, 108, 109, 170, 171, 174, 175};
-	unsigned int terrain, index;
 	struct TRACKOBJECT saved;
-	for (index = 0; index < sizeof(tiles); index++) {
+	for (unsigned int index = 0; index < sizeof(tiles); index++) {
 		saved = trkObjectList[tiles[index]];
 		trkObjectList[tiles[index]].ss_multiTileFlag = 0;
-		for (terrain = 0; terrain <= 11U; terrain++) {
+		for (unsigned int terrain = 0; terrain <= 11U; terrain++) {
 			reset_editor();
 			element_tiles[10 * 30 + 10] = tiles[index];
 			terrain_tiles[19 * 30 + 10] = terrain;
@@ -86,10 +84,9 @@ static void test_validation_boundaries(void)
 
 static void test_multitile_cleanup(void)
 {
-	unsigned int flags, missing, index;
 	struct TRACKOBJECT saved = trkObjectList[1];
-	for (flags = 1; flags < 4; flags++) {
-		for (missing = 0; missing < 8; missing++) {
+	for (unsigned int flags = 1; flags < 4; flags++) {
+		for (unsigned int missing = 0; missing < 8; missing++) {
 			reset_editor();
 			trkObjectList[1].ss_multiTileFlag = flags;
 			element_tiles[310] = 1;
@@ -98,7 +95,7 @@ static void test_multitile_cleanup(void)
 			element_tiles[341] = missing & 4U ? 0 : TRACK_TILE_CONTINUATION_SOUTHEAST;
 			element_tiles[313] = TRACK_TILE_CONTINUATION_SOUTH;
 			track_editor_remove_invalid_multitile_links();
-			for (index = 0; index < 900U; index++) {
+			for (unsigned int index = 0; index < 900U; index++) {
 				record_editor_word(element_tiles[index]);
 			}
 		}
@@ -108,16 +105,16 @@ static void test_multitile_cleanup(void)
 
 static void test_map_drawing(void)
 {
-	legacy_u8 track_cache[132], terrain_cache[132];
-	unsigned int flags, viewport, index;
 	struct TRACKOBJECT saved = trkObjectList[1];
-	for (index = 0; index < 19U; index++) {
+	for (unsigned int index = 0; index < 19U; index++) {
 		track_editor_terrain_shapes[index] = &drawing_shapes[index];
 	}
 	track_editor_tile_masks[1] = &drawing_shapes[30];
 	track_editor_tile_shapes[1] = &drawing_shapes[31];
-	for (flags = 0; flags < 4; flags++) {
-		for (viewport = 0; viewport < 4; viewport++) {
+	legacy_u8 terrain_cache[132];
+	legacy_u8 track_cache[132];
+	for (unsigned int flags = 0; flags < 4; flags++) {
+		for (unsigned int viewport = 0; viewport < 4; viewport++) {
 			reset_editor();
 			memset(track_cache, 255, sizeof(track_cache));
 			memset(terrain_cache, 255, sizeof(terrain_cache));
@@ -138,7 +135,7 @@ static void test_map_drawing(void)
 			terrain_tiles[551] = 4;
 			draw_2DtrackMap(10U + viewport % 2U, 10U + viewport / 2U, track_cache, terrain_cache);
 			draw_2DtrackMap(10U + viewport % 2U, 10U + viewport / 2U, track_cache, terrain_cache);
-			for (index = 0; index < 132U; index++) {
+			for (unsigned int index = 0; index < 132U; index++) {
 				record_editor_word(track_cache[index]);
 				record_editor_word(terrain_cache[index]);
 			}
@@ -152,8 +149,7 @@ static legacy_u8 fixture_terrain[901];
 
 void *__fmemcpy(void *dst, const void *src, legacy_u16 count)
 {
-	unsigned i;
-	for (i = 0; i < count; i++) {
+	for (unsigned i = 0; i < count; i++) {
 		((legacy_u8 *)dst)[i] = ((const legacy_u8 *)src)[i];
 	}
 	return dst;
@@ -253,7 +249,6 @@ legacy_s16 highscore_load_or_create(legacy_s16 mode)
 
 static void record_editor_selection(void)
 {
-	unsigned i;
 	record_editor_word(editor.key);
 	record_editor_word(editor.page);
 	record_editor_word(editor.focus);
@@ -266,7 +261,7 @@ static void record_editor_selection(void)
 	record_editor_word(editor.validate_track);
 	record_editor_word(editor.last_column);
 	record_editor_word(editor.last_row);
-	for (i = 0; i < 2U; i++) {
+	for (unsigned i = 0; i < 2U; i++) {
 		record_editor_word(editor.selection_row[i]);
 		record_editor_word(editor.selection_column[i]);
 	}
@@ -278,10 +273,9 @@ static void test_key_dispatch(void)
 	static const legacy_u16 keys[] = {KEY_ENTER,	KEY_SPACE, KEY_INSERT, '+',		   '-',
 									  KEY_SHIFT_F1, KEY_HOME,  KEY_UP,	   KEY_DOWN,   KEY_LEFT,
 									  KEY_RIGHT,	'c',	   'C',		   KEY_ESCAPE, 0};
-	unsigned focus, page, i;
-	for (focus = 0; focus < 2U; focus++) {
-		for (page = 0; page <= 10U; page += 5U) {
-			for (i = 0; i < sizeof(keys) / sizeof(keys[0]) + 10U; i++) {
+	for (unsigned focus = 0; focus < 2U; focus++) {
+		for (unsigned page = 0; page <= 10U; page += 5U) {
+			for (unsigned i = 0; i < sizeof(keys) / sizeof(keys[0]) + 10U; i++) {
 				reset_editor();
 				editor.focus = focus;
 				editor.page = page;
@@ -297,11 +291,10 @@ static void test_key_dispatch(void)
 }
 static void test_palette_activation(void)
 {
-	unsigned flags, page, row, column, dialog;
 	struct TRACKOBJECT saved = trkObjectList[1];
-	for (flags = 0; flags < 4U; flags++) {
+	for (unsigned flags = 0; flags < 4U; flags++) {
 		trkObjectList[1].ss_multiTileFlag = flags;
-		for (page = 0; page <= 10U; page += 5U) {
+		for (unsigned page = 0; page <= 10U; page += 5U) {
 			reset_editor();
 			memset(palette, 1, sizeof(palette));
 			editor.page = page;
@@ -312,9 +305,9 @@ static void test_palette_activation(void)
 		}
 	}
 	trkObjectList[1] = saved;
-	for (row = 6; row <= 9U; row++) {
-		for (column = 0; column <= 3U; column += 3U) {
-			for (dialog = 0; dialog < 3U; dialog++) {
+	for (unsigned row = 6; row <= 9U; row++) {
+		for (unsigned column = 0; column <= 3U; column += 3U) {
+			for (unsigned dialog = 0; dialog < 3U; dialog++) {
 				reset_editor();
 				editor.selection_row[1] = row;
 				editor.selection_column[1] = column;

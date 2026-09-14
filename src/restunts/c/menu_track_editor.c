@@ -92,20 +92,13 @@ static legacy_u8 far *progress_box_shape;
 
 void preRender_icons(legacy_u8 page)
 {
-	legacy_u16 row;
-	legacy_u16 column;
-	legacy_u16 x;
-	legacy_u16 y;
-	legacy_u8 tile;
-	legacy_u8 multi_tile;
-
-	for (row = 0; row < 6U; row++) {
-		for (column = 0; column < 6U; column++) {
-			tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U + column];
-			x = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_LEFT,
-									LEGACY_U16_WRAP_MUL(column, TRACK_EDITOR_TILE_SIZE));
-			y = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_TOP,
-									LEGACY_U16_WRAP_MUL(row, TRACK_EDITOR_TILE_SIZE));
+	for (legacy_u16 row = 0; row < 6U; row++) {
+		for (legacy_u16 column = 0; column < 6U; column++) {
+			legacy_u8 tile = progress_box_shape[(legacy_u16)page * 36U + row * 6U + column];
+			legacy_u16 x = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_LEFT,
+											   LEGACY_U16_WRAP_MUL(column, TRACK_EDITOR_TILE_SIZE));
+			legacy_u16 y = LEGACY_U16_WRAP_ADD(TRACK_EDITOR_PALETTE_TOP,
+											   LEGACY_U16_WRAP_MUL(row, TRACK_EDITOR_TILE_SIZE));
 			if (page == 0) {
 				sprite_shape_to_1(track_editor_terrain_shapes[tile], x, y);
 				continue;
@@ -115,7 +108,7 @@ void preRender_icons(legacy_u8 page)
 			}
 
 			sprite_shape_to_1(track_editor_terrain_shapes[0], x, y);
-			multi_tile = trkObjectList[tile].ss_multiTileFlag;
+			legacy_u8 multi_tile = trkObjectList[tile].ss_multiTileFlag;
 			if (multi_tile == 1U || multi_tile == 3U) {
 				sprite_shape_to_1(track_editor_terrain_shapes[0], x, LEGACY_U16_WRAP_ADD(y, 16U));
 			}
@@ -148,8 +141,7 @@ struct TRACK_EDITOR_MAP_CELL {
 
 static void track_editor_draw_map_element(struct TRACK_EDITOR_MAP_CELL *cell)
 {
-	legacy_u8 multi_tile;
-	multi_tile = (legacy_u8)trkObjectList[cell->tile].ss_multiTileFlag;
+	legacy_u8 multi_tile = (legacy_u8)trkObjectList[cell->tile].ss_multiTileFlag;
 	switch (multi_tile) {
 		case 0:
 			putpixel_iconMask(track_editor_tile_masks[cell->tile], cell->x, cell->y);
@@ -223,7 +215,6 @@ static void track_editor_draw_map_continuation(struct TRACK_EDITOR_MAP_CELL *cel
 											   legacy_u16 map_row, legacy_u16 map_column,
 											   legacy_u8 *cached_track, legacy_u8 *cached_terrain)
 {
-	legacy_u8 neighbor_tile;
 	if (map_row != 0 && map_column != 0) {
 		cached_track[cell->cache_index] = TRACK_EDITOR_CACHE_INVALID;
 		cached_terrain[cell->cache_index] = TRACK_EDITOR_CACHE_INVALID;
@@ -231,6 +222,7 @@ static void track_editor_draw_map_continuation(struct TRACK_EDITOR_MAP_CELL *cel
 	}
 	cached_track[cell->cache_index] = TRACK_EDITOR_CACHE_INVALID;
 
+	legacy_u8 neighbor_tile;
 	if (cell->tile == TRACK_TILE_CONTINUATION_EAST && map_column == 0) {
 		sprite_copy_image_at(track_editor_terrain_shapes[cell->terrain], cell->x, cell->y);
 		cell->terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(
@@ -269,12 +261,10 @@ static void track_editor_draw_map_continuation(struct TRACK_EDITOR_MAP_CELL *cel
 void draw_2DtrackMap(legacy_u8 column_offset, legacy_u8 row_offset, legacy_u8 *cached_track,
 					 legacy_u8 *cached_terrain)
 {
-	legacy_u16 map_row;
-	legacy_u16 map_column;
 	struct TRACK_EDITOR_MAP_CELL cell;
 
-	for (map_row = 0; map_row < 11U; map_row++) {
-		for (map_column = 0; map_column < 12U; map_column++) {
+	for (legacy_u16 map_row = 0; map_row < 11U; map_row++) {
+		for (legacy_u16 map_column = 0; map_column < 12U; map_column++) {
 			cell.source_row = LEGACY_U16_WRAP_ADD(row_offset, map_row);
 			cell.source_column = LEGACY_U16_WRAP_ADD(column_offset, map_column);
 			cell.source_index =
@@ -333,10 +323,9 @@ static void track_editor_validate_square_links(legacy_u8 *used, legacy_u16 curre
 static void track_editor_validate_tile_links(legacy_u8 *used, legacy_u16 row, legacy_u16 column,
 											 legacy_u16 current_index, legacy_u8 tile)
 {
-	legacy_u16 next_index;
+	legacy_u8 multi_tile = trkObjectList[tile].ss_multiTileFlag;
 	legacy_u16 east_index;
-	legacy_u8 multi_tile;
-	multi_tile = trkObjectList[tile].ss_multiTileFlag;
+	legacy_u16 next_index;
 	switch (multi_tile) {
 		case 1:
 			next_index = LEGACY_U16_WRAP_ADD(track_menu_next_row(row), column);
@@ -368,20 +357,16 @@ static void track_editor_validate_tile_links(legacy_u8 *used, legacy_u16 row, le
 
 void track_editor_remove_invalid_multitile_links(void)
 {
-	legacy_u8 used[900];
-	legacy_u16 row;
-	legacy_u16 column;
 	legacy_u16 current_index;
-	legacy_u8 tile;
-
+	legacy_u8 used[900];
 	for (current_index = 0; current_index < 900U; current_index++) {
 		used[current_index] = 0;
 	}
 
-	for (row = 0; row < 30U; row++) {
-		for (column = 0; column < 30U; column++) {
+	for (legacy_u16 row = 0; row < 30U; row++) {
+		for (legacy_u16 column = 0; column < 30U; column++) {
 			current_index = LEGACY_U16_WRAP_ADD(trackrows[row], column);
-			tile = track_element_map[current_index];
+			legacy_u8 tile = track_element_map[current_index];
 			if (tile == 0) {
 				continue;
 			}
@@ -426,26 +411,18 @@ static legacy_u8 track_editor_terrain_error(legacy_u16 row, legacy_u16 column, l
 
 legacy_s16 track_editor_remove_invalid_terrain_tiles(void)
 {
-	legacy_u16 row;
-	legacy_u16 column;
-	legacy_u16 current_index;
-	legacy_u8 terrain;
-	legacy_u8 tile;
-	legacy_u8 error;
-	legacy_u8 tile_error;
-
 	track_editor_remove_invalid_multitile_links();
-	error = TRACK_EDITOR_VALIDATION_OK;
-	for (row = 0; row < 30U; row++) {
-		for (column = 0; column < 30U; column++) {
-			terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
-			current_index = LEGACY_U16_WRAP_ADD(trackrows[row], column);
-			tile = track_element_map[current_index];
+	legacy_u8 error = TRACK_EDITOR_VALIDATION_OK;
+	for (legacy_u16 row = 0; row < 30U; row++) {
+		for (legacy_u16 column = 0; column < 30U; column++) {
+			legacy_u8 terrain = track_terrain_map[LEGACY_U16_WRAP_ADD(terrainrows[row], column)];
+			legacy_u16 current_index = LEGACY_U16_WRAP_ADD(trackrows[row], column);
+			legacy_u8 tile = track_element_map[current_index];
 			if (tile == 0 || terrain == 0 || terrain == 6U) {
 				continue;
 			}
 
-			tile_error = track_editor_terrain_error(row, column, terrain, tile);
+			legacy_u8 tile_error = track_editor_terrain_error(row, column, terrain, tile);
 			if (tile_error != TRACK_EDITOR_VALIDATION_OK) {
 				track_element_map[current_index] = 0;
 				error = tile_error;
@@ -466,10 +443,8 @@ static legacy_u8 track_editor_palette_tile(legacy_u8 page, legacy_u8 row, legacy
 static void track_editor_skip_previous_placeholders(legacy_u8 page, legacy_u8 *row,
 													legacy_u8 *column)
 {
-	legacy_u8 tile;
-
 	while (track_editor_palette_tile(page, *row, *column) >= TRACK_TILE_CONTINUATION_SOUTH) {
-		tile = track_editor_palette_tile(page, *row, *column);
+		legacy_u8 tile = track_editor_palette_tile(page, *row, *column);
 		if (tile == TRACK_TILE_CONTINUATION_EAST) {
 			(*column)--;
 		} else {
@@ -480,11 +455,8 @@ static void track_editor_skip_previous_placeholders(legacy_u8 page, legacy_u8 *r
 
 static legacy_u8 track_editor_map_tile(legacy_u8 column, legacy_u8 row)
 {
-	legacy_u16 source_index;
-	legacy_u8 tile;
-
-	source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[row], column);
-	tile = track_element_map[source_index];
+	legacy_u16 source_index = LEGACY_U16_WRAP_ADD((legacy_u16)trackrows[row], column);
+	legacy_u8 tile = track_element_map[source_index];
 	if (tile == TRACK_TILE_CONTINUATION_SOUTHEAST) {
 		source_index =
 			LEGACY_U16_WRAP_SUB(LEGACY_U16_WRAP_ADD(track_menu_previous_row(row), column), 1U);
@@ -515,17 +487,12 @@ static void track_editor_show_message(legacy_s8 far *text_resource, const legacy
 
 static void track_editor_save_track(legacy_u8 *track_changed, legacy_u8 *map_dirty)
 {
-	legacy_s8 far *text;
-	legacy_u8 save_status;
-	legacy_s16 result;
-	legacy_s16 write_result;
-
-	save_status = 0;
 	g_is_busy = 1;
+	legacy_u8 save_status = 0;
 	while (save_status == 0) {
 		sprite_select_screen_compat();
 		*map_dirty = 1;
-		text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
+		legacy_s8 far *text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
 		if (do_savefile_dialog(track_directory, gameconfig.game_trackname, text) == 0) {
 			save_status = TRACK_EDITOR_SAVE_CANCELLED;
 			break;
@@ -533,7 +500,7 @@ static void track_editor_save_track(legacy_u8 *track_changed, legacy_u8 *map_dir
 		file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
 		save_status = 1;
 		if (file_find(g_path_buf) != 0) {
-			result = LEGACY_S16_FROM_BITS(
+			legacy_s16 result = LEGACY_S16_FROM_BITS(
 				show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND,
 							locate_text_res((legacy_s8 far *)mainresptr, "fex"),
 							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, performGraphColor, 0, 0));
@@ -546,7 +513,7 @@ static void track_editor_save_track(legacy_u8 *track_changed, legacy_u8 *map_dir
 				continue;
 			}
 		}
-		write_result =
+		legacy_s16 write_result =
 			file_write_fatal(g_path_buf, track_element_map, TRACK_EDITOR_TRACK_FILE_SIZE);
 		if (write_result == 0) {
 			highscore_load_or_create(1);
@@ -564,9 +531,7 @@ static void track_editor_save_track(legacy_u8 *track_changed, legacy_u8 *map_dir
 static void track_editor_swap_tiles(legacy_u8 *selected_tile, legacy_u8 *saved_tile,
 									legacy_u8 *palette_dirty)
 {
-	legacy_u8 value;
-
-	value = *selected_tile;
+	legacy_u8 value = *selected_tile;
 	*selected_tile = *saved_tile;
 	*saved_tile = value;
 	*palette_dirty = 1;
@@ -637,10 +602,6 @@ struct TRACK_EDITOR_SESSION {
 
 static void track_editor_load_resources(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s8 far *shape_name_resource;
-	legacy_s8 far *mask_name_resource;
-	legacy_u16 index;
-
 	editor->shape_resource = (legacy_s8 far *)file_load_shape2d_fatal("sdtedit");
 	locate_many_resources(editor->shape_resource, track_editor_terrain_shape_names,
 						  (legacy_s8 far **)track_editor_terrain_shapes);
@@ -648,7 +609,7 @@ static void track_editor_load_resources(struct TRACK_EDITOR_SESSION *editor)
 						  (legacy_s8 far **)track_editor_cursor_shapes);
 	locate_many_resources(editor->shape_resource, track_editor_under_cursor_shape_names,
 						  (legacy_s8 far **)track_editor_under_cursor_shapes);
-	for (index = 0; index < 4U; index++) {
+	for (legacy_u16 index = 0; index < 4U; index++) {
 		editor->cursor_sprites[index] = sprite_make_wnd(
 			LEGACY_U16_WRAP_MUL(shape2d_get_width(track_editor_cursor_shapes[index]),
 								(legacy_u16)video_shape_width_scale),
@@ -659,15 +620,15 @@ static void track_editor_load_resources(struct TRACK_EDITOR_SESSION *editor)
 	render_window_sprite = sprite_make_wnd(TRACK_EDITOR_SCREEN_WIDTH, TRACK_EDITOR_SCREEN_HEIGHT,
 										   TRACK_EDITOR_TRANSPARENT_COLOR);
 	progress_box_shape = (legacy_u8 far *)locate_shape_alt(editor->text_resource, "pbox");
-	shape_name_resource = locate_shape_alt(editor->text_resource, "snam");
-	mask_name_resource = locate_shape_alt(editor->text_resource, "mnam");
+	legacy_s8 far *shape_name_resource = locate_shape_alt(editor->text_resource, "snam");
+	legacy_s8 far *mask_name_resource = locate_shape_alt(editor->text_resource, "mnam");
 	editor->text_name_resource = locate_shape_alt(editor->text_resource, "tnam");
 
-	for (index = 0; index < 132U; index++) {
+	for (legacy_u16 index = 0; index < 132U; index++) {
 		editor->cached_track[index] = TRACK_EDITOR_CACHE_INVALID;
 		editor->cached_terrain[index] = TRACK_EDITOR_CACHE_INVALID;
 	}
-	for (index = 0; index < 186U; index++) {
+	for (legacy_u16 index = 0; index < 186U; index++) {
 		__fmemcpy(&resID_byte1, shape_name_resource + index * 4U, 4U);
 		track_editor_tile_shapes[index] =
 			(struct SHAPE2D far *)locate_shape_fatal(editor->shape_resource, &resID_byte1);
@@ -770,16 +731,14 @@ static void track_editor_keep_selection_visible(struct TRACK_EDITOR_SESSION *edi
 
 static void track_editor_draw_palette_page(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 value;
-
 	editor->palette_dirty = 1;
 	editor->previous_page = editor->page;
 	while (editor->selection_row[1] < 6U &&
 		   track_editor_palette_tile(editor->page, editor->selection_row[1],
 									 editor->selection_column[1]) >=
 			   TRACK_TILE_CONTINUATION_SOUTH) {
-		value = track_editor_palette_tile(editor->page, editor->selection_row[1],
-										  editor->selection_column[1]);
+		legacy_u8 value = track_editor_palette_tile(editor->page, editor->selection_row[1],
+													editor->selection_column[1]);
 		if (value == TRACK_TILE_CONTINUATION_EAST) {
 			editor->selection_column[1]--;
 		} else {
@@ -937,20 +896,16 @@ static void track_editor_position_cursor(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_draw_tile_label(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s8 far *text;
-	legacy_s16 label_width;
-	legacy_s8 *resource_id;
-
 	if (editor->hovered_tile != editor->previous_hovered_tile) {
 		mouse_draw_opaque_check();
 		font_set_colors(dialog_fnt_colour, 0);
-		resource_id = &resID_byte1;
+		legacy_s8 *resource_id = &resID_byte1;
 		__fmemcpy(resource_id, editor->text_name_resource + (legacy_u16)editor->hovered_tile * 3U,
 				  3U);
 		resource_id[3] = 0;
-		text = locate_text_res(editor->text_resource, resource_id);
+		legacy_s8 far *text = locate_text_res(editor->text_resource, resource_id);
 		copy_string(resource_id, text);
-		label_width = (legacy_s16)font_text_width(resource_id);
+		legacy_s16 label_width = (legacy_s16)font_text_width(resource_id);
 		font_draw_text_opaque(resource_id, TRACK_EDITOR_MAP_LEFT, TRACK_EDITOR_LABEL_Y);
 		if (editor->previous_label_width > label_width) {
 			sprite_fill_rect(LEGACY_S16_WRAP_ADD(label_width, TRACK_EDITOR_MAP_LEFT),
@@ -965,11 +920,9 @@ static void track_editor_draw_tile_label(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_report_validation(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s8 *resource_id;
-
 	if (editor->validation_error != TRACK_EDITOR_VALIDATION_OK) {
-		resource_id = (legacy_s8 *)track_editor_error_resource_ids +
-					  (legacy_u16)editor->validation_error * 3U;
+		legacy_s8 *resource_id = (legacy_s8 *)track_editor_error_resource_ids +
+								 (legacy_u16)editor->validation_error * 3U;
 		__fmemcpy(&resID_byte1, resource_id, 3U);
 		*(&resID_byte1 + 3) = 0;
 		track_editor_show_message(editor->text_resource, &resID_byte1);
@@ -979,11 +932,10 @@ static void track_editor_report_validation(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_hover_map(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 clicked_column;
-	legacy_u8 clicked_row;
-
-	clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_xpos, 8), 16);
-	clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_ypos, 4), 16);
+	legacy_u8 clicked_column =
+		(legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_xpos, 8), 16);
+	legacy_u8 clicked_row =
+		(legacy_u8)LEGACY_S16_DIV_OR_ZERO(LEGACY_S16_WRAP_SUB(mouse_ypos, 4), 16);
 	if (editor->page != 0) {
 		if (clicked_row == 10U &&
 			((legacy_u8)trkObjectList[editor->selected_tile].ss_multiTileFlag & 1U) != 0) {
@@ -1010,12 +962,9 @@ static void track_editor_hover_map(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_hover_palette(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 clicked_column;
-	legacy_u8 clicked_row;
-
-	clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+	legacy_u8 clicked_column = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
 		LEGACY_S16_WRAP_SUB(mouse_xpos, TRACK_EDITOR_PALETTE_LEFT), TRACK_EDITOR_TILE_SIZE);
-	clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
+	legacy_u8 clicked_row = (legacy_u8)LEGACY_S16_DIV_OR_ZERO(
 		LEGACY_S16_WRAP_SUB(mouse_ypos, TRACK_EDITOR_PALETTE_TOP), TRACK_EDITOR_TILE_SIZE);
 	if (clicked_row < 6U) {
 		if (track_editor_palette_tile(editor->page, clicked_row, clicked_column) ==
@@ -1052,15 +1001,11 @@ static void track_editor_hover_palette(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_mouse_input(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 hit;
-	legacy_u8 clicked_column;
-	legacy_u8 clicked_row;
-
-	hit = (legacy_u8)mouse_multi_hittest(5, track_editor_buttons);
+	legacy_u8 hit = (legacy_u8)mouse_multi_hittest(5, track_editor_buttons);
 	if (hit != TRACK_EDITOR_MOUSE_NO_HIT) {
 		if (hit == 0U && (mouse_butstate & 3) != 0) {
 			editor->focus = 0;
-			clicked_column = (legacy_u8)scrollbar_update(
+			legacy_u8 clicked_column = (legacy_u8)scrollbar_update(
 				1, TRACK_EDITOR_HORIZONTAL_SCROLLBAR_X, TRACK_EDITOR_LABEL_Y,
 				TRACK_EDITOR_HORIZONTAL_SCROLLBAR_LENGTH, 5, editor->map_column_offset, 12, 30);
 			editor->selection_column[0] = (legacy_u8)(editor->selection_column[0] + clicked_column -
@@ -1069,9 +1014,9 @@ static void track_editor_mouse_input(struct TRACK_EDITOR_SESSION *editor)
 			editor->key = 1;
 		} else if (hit == 1U && (mouse_butstate & 3) != 0) {
 			editor->focus = 0;
-			clicked_row = (legacy_u8)scrollbar_update(1, TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4,
-													  TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
-													  editor->map_row_offset, 11, 30);
+			legacy_u8 clicked_row = (legacy_u8)scrollbar_update(
+				1, TRACK_EDITOR_VERTICAL_SCROLLBAR_X, 5, 4, TRACK_EDITOR_VERTICAL_SCROLLBAR_LENGTH,
+				editor->map_row_offset, 11, 30);
 			editor->selection_row[0] =
 				(legacy_u8)(editor->selection_row[0] + clicked_row - editor->map_row_offset);
 			editor->map_row_offset = clicked_row;
@@ -1095,8 +1040,6 @@ static void track_editor_mouse_input(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_wait_for_input(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u16 delta;
-
 	editor->blink_timer = TRACK_EDITOR_BLINK_INITIAL_COUNT;
 	editor->cursor_drawn = 0;
 	mouse_draw_opaque_check();
@@ -1127,7 +1070,7 @@ static void track_editor_wait_for_input(struct TRACK_EDITOR_SESSION *editor)
 			editor->blink_timer = 0;
 		}
 
-		delta = (legacy_u16)timer_get_delta_alt();
+		legacy_u16 delta = (legacy_u16)timer_get_delta_alt();
 		editor->blink_timer = LEGACY_U16_WRAP_ADD(editor->blink_timer, delta);
 		editor->key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(delta));
 		track_editor_mouse_input(editor);
@@ -1178,11 +1121,9 @@ static void track_editor_advance_path_animation(struct TRACK_EDITOR_SESSION *edi
 
 static void track_editor_check_route(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s16 result;
-	legacy_s8 *resource_id;
-
-	result = (legacy_s8)track_setup();
-	resource_id = (legacy_s8 *)track_editor_error_resource_ids + (legacy_u16)(legacy_u8)result * 3U;
+	legacy_s16 result = (legacy_s8)track_setup();
+	legacy_s8 *resource_id =
+		(legacy_s8 *)track_editor_error_resource_ids + (legacy_u16)(legacy_u8)result * 3U;
 	__fmemcpy(&resID_byte1, resource_id, 3U);
 	*(&resID_byte1 + 3) = 0;
 	track_editor_show_message(editor->text_resource, &resID_byte1);
@@ -1206,9 +1147,7 @@ static void track_editor_check_route(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_select_skybox(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 dialog_result;
-
-	dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
+	legacy_u8 dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
 		DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(editor->text_resource, "mss"),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, 0,
 		track_element_map[TRACK_EDITOR_SKYBOX_MAP_INDEX]));
@@ -1222,17 +1161,14 @@ static void track_editor_select_skybox(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_select_terrain(struct TRACK_EDITOR_SESSION *editor)
 {
-	struct SHAPE2D far *terrain_shape;
-	legacy_u8 dialog_result;
-	legacy_u16 index;
-	legacy_s8 terrain_id[5];
-
-	dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
+	legacy_u8 dialog_result = LEGACY_S8_FROM_BITS(show_dialog(
 		DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(editor->text_resource, "men"),
 		DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, 0, 0));
+	legacy_s8 terrain_id[5];
+	struct SHAPE2D far *terrain_shape;
 	if (dialog_result != TRACK_EDITOR_DIALOG_CANCELLED &&
 		dialog_result != TRACK_EDITOR_DIALOG_NO_CHANGE) {
-		for (index = 0; index < 900U; index++) {
+		for (legacy_u16 index = 0; index < 900U; index++) {
 			track_element_map[index] = 0;
 		}
 		terrain_id[0] = 't';
@@ -1250,10 +1186,7 @@ static void track_editor_select_terrain(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_load_track(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s8 far *text;
-	legacy_s16 result;
-
-	result = 1;
+	legacy_s16 result = 1;
 	if (editor->track_changed != 0) {
 		result = (legacy_s16)show_dialog(
 			DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(editor->text_resource, "chl"),
@@ -1264,7 +1197,7 @@ static void track_editor_load_track(struct TRACK_EDITOR_SESSION *editor)
 	} else {
 		g_is_busy = 1;
 		editor->map_dirty = 1;
-		text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
+		legacy_s8 far *text = locate_text_res((legacy_s8 far *)mainresptr, "trk");
 		result = do_fileselect_dialog(track_directory, gameconfig.game_trackname, ".trk", text);
 		file_build_path(track_directory, gameconfig.game_trackname, ".trk", g_path_buf);
 		if (result > 0) {
@@ -1282,9 +1215,7 @@ static void track_editor_load_track(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_exit(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_s16 result;
-
-	result = 1;
+	legacy_s16 result = 1;
 	if (editor->track_changed != 0) {
 		result = (legacy_s16)show_dialog(
 			DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, locate_text_res(editor->text_resource, "chx"),
@@ -1363,8 +1294,6 @@ static void track_editor_place_terrain(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_place_element(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u16 source_index;
-
 	editor->multi_tile = (legacy_u8)trkObjectList[editor->selected_tile].ss_multiTileFlag;
 	if (((editor->multi_tile & 1U) != 0 && editor->selection_row[0] > 28U) ||
 		((editor->multi_tile & 2U) != 0 && editor->selection_column[0] > 28U)) {
@@ -1372,6 +1301,7 @@ static void track_editor_place_element(struct TRACK_EDITOR_SESSION *editor)
 		editor->map_dirty = 1;
 		return;
 	}
+	legacy_u16 source_index;
 	if (editor->selection_column[0] == editor->last_column &&
 		editor->selection_row[0] == editor->last_row) {
 		track_editor_swap_tiles(&editor->selected_tile, &editor->saved_tile,
@@ -1436,14 +1366,12 @@ static void track_editor_move_up(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_move_down(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 value;
-
 	if (editor->selection_row[editor->focus] < track_editor_maximum_rows[editor->focus]) {
 		editor->last_column = TRACK_EDITOR_POSITION_UNSET;
 		editor->selection_row[editor->focus]++;
 		if (editor->focus != 0 && editor->selection_row[1] < 6U) {
-			value = track_editor_palette_tile(editor->page, editor->selection_row[1],
-											  editor->selection_column[1]);
+			legacy_u8 value = track_editor_palette_tile(editor->page, editor->selection_row[1],
+														editor->selection_column[1]);
 			if (value == TRACK_TILE_CONTINUATION_EAST) {
 				editor->selection_column[1]--;
 			} else if (value == TRACK_TILE_CONTINUATION_SOUTH) {
@@ -1475,22 +1403,20 @@ static void track_editor_move_left(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_move_right(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u8 step;
-	legacy_u8 value;
-
 	if (editor->focus != 0 && editor->selection_row[1] == 6U) {
 		if (editor->page < 10U) {
 			editor->page++;
 		}
 	} else {
-		step = editor->focus != 0 && editor->selection_row[1] > 5U ? 3U : 1U;
+		legacy_u8 step = editor->focus != 0 && editor->selection_row[1] > 5U ? 3U : 1U;
 		while ((legacy_u16)editor->selection_column[editor->focus] + step <
 			   track_editor_maximum_columns[editor->focus]) {
 			if (editor->focus == 0 || editor->selection_row[1] > 5U) {
 				break;
 			}
-			value = track_editor_palette_tile(editor->page, editor->selection_row[1],
-											  (legacy_u8)(editor->selection_column[1] + step));
+			legacy_u8 value =
+				track_editor_palette_tile(editor->page, editor->selection_row[1],
+										  (legacy_u8)(editor->selection_column[1] + step));
 			if (value < TRACK_TILE_CONTINUATION_SOUTH) {
 				break;
 			}
@@ -1537,9 +1463,7 @@ static void track_editor_handle_navigation_key(struct TRACK_EDITOR_SESSION *edit
 
 static void track_editor_handle_key(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u16 key_index;
-
-	for (key_index = 0; key_index < 10U; key_index++) {
+	for (legacy_u16 key_index = 0; key_index < 10U; key_index++) {
 		if (editor->key == track_editor_page_keys[key_index]) {
 			editor->page = (legacy_u8)(key_index + 1U);
 			editor->key = 0;
@@ -1566,10 +1490,8 @@ static void track_editor_handle_key(struct TRACK_EDITOR_SESSION *editor)
 
 static void track_editor_release_resources(struct TRACK_EDITOR_SESSION *editor)
 {
-	legacy_u16 index;
-
 	sprite_free_wnd(render_window_sprite);
-	for (index = 4U; index != 0; index--) {
+	for (legacy_u16 index = 4U; index != 0; index--) {
 		sprite_free_wnd(editor->cursor_sprites[index - 1U]);
 	}
 	unload_resource(editor->text_resource);

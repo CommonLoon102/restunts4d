@@ -17,9 +17,7 @@ struct FATAL_OUTPUT_STATE {
 
 void add_exit_handler(void(far *exit_handler)(void))
 {
-	legacy_s16 index;
-
-	for (index = 0; index < EXIT_HANDLER_MAX_COUNT; index++) {
+	for (legacy_s16 index = 0; index < EXIT_HANDLER_MAX_COUNT; index++) {
 		if (exitlistfuncs[index] == exit_handler) {
 			return;
 		}
@@ -34,9 +32,7 @@ void add_exit_handler(void(far *exit_handler)(void))
 
 void call_exitlist(void)
 {
-	legacy_s16 index;
-
-	for (index = EXIT_HANDLER_MAX_COUNT; index >= 0; index--) {
+	for (legacy_s16 index = EXIT_HANDLER_MAX_COUNT; index >= 0; index--) {
 		if (exitlistfuncs[index] != 0) {
 			exitlistfuncs[index]();
 		}
@@ -76,15 +72,13 @@ static void fatal_emit_padding(struct FATAL_OUTPUT_STATE *output, legacy_s8 char
 static void fatal_emit_text(struct FATAL_OUTPUT_STATE *output, const legacy_s8 *text,
 							legacy_s16 width, legacy_s16 precision, legacy_s16 left_aligned)
 {
-	legacy_s16 length;
-	legacy_s16 emitted_length;
-
 	if (text == 0) {
 		text = "(null)";
 	}
+	legacy_s16 length;
 	for (length = 0; text[length] != 0 && (precision < 0 || length < precision); length++) {
 	}
-	emitted_length = length;
+	legacy_s16 emitted_length = length;
 	if (!left_aligned) {
 		fatal_emit_padding(output, ' ', (legacy_s16)(width - length));
 	}
@@ -101,15 +95,9 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE *output, legacy_u32 valu
 							  legacy_s16 width, legacy_s16 precision, legacy_s16 left_aligned,
 							  legacy_s16 zero_padded)
 {
+	const legacy_s8 *alphabet = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
 	legacy_s8 digits[FATAL_NUMBER_SCRATCH_SIZE];
-	legacy_s16 digit_count;
-	legacy_s16 zero_count;
-	legacy_s16 space_count;
-	legacy_s16 index;
-	const legacy_s8 *alphabet;
-
-	alphabet = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
-	digit_count = 0;
+	legacy_s16 digit_count = 0;
 	do {
 		if (radix == 0U) {
 			digits[digit_count++] = alphabet[0];
@@ -119,14 +107,14 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE *output, legacy_u32 valu
 			value = LEGACY_U32_DIV_OR_ZERO(value, radix);
 		}
 	} while (value != 0);
-	zero_count = precision > digit_count ? precision - digit_count : 0;
+	legacy_s16 zero_count = precision > digit_count ? precision - digit_count : 0;
 	if (zero_padded && precision < 0 && !left_aligned) {
 		zero_count = width - digit_count - (negative != 0);
 		if (zero_count < 0) {
 			zero_count = 0;
 		}
 	}
-	space_count = width - digit_count - zero_count - (negative != 0);
+	legacy_s16 space_count = width - digit_count - zero_count - (negative != 0);
 	if (!left_aligned) {
 		fatal_emit_padding(output, ' ', space_count);
 	}
@@ -134,7 +122,7 @@ static void fatal_emit_number(struct FATAL_OUTPUT_STATE *output, legacy_u32 valu
 		fatal_emit_character(output, '-');
 	}
 	fatal_emit_padding(output, '0', zero_count);
-	for (index = digit_count - 1; index >= 0; index--) {
+	for (legacy_s16 index = digit_count - 1; index >= 0; index--) {
 		fatal_emit_character(output, digits[index]);
 	}
 	if (left_aligned) {
@@ -200,8 +188,7 @@ static void fatal_emit_field_character(struct FATAL_OUTPUT_STATE *output,
 static void fatal_emit_signed_field(struct FATAL_OUTPUT_STATE *output,
 									const struct FATAL_CONVERSION *field, legacy_s32 value)
 {
-	legacy_u32 magnitude;
-	magnitude = value < 0 ? (legacy_u32)(0UL - (legacy_u32)value) : (legacy_u32)value;
+	legacy_u32 magnitude = value < 0 ? (legacy_u32)(0UL - (legacy_u32)value) : (legacy_u32)value;
 	fatal_emit_number(output, magnitude, value < 0, FATAL_FORMAT_DECIMAL_RADIX, 0, field->width,
 					  field->precision, field->left_aligned, field->zero_padded);
 }
@@ -227,11 +214,11 @@ static void fatal_emit_unknown_field(struct FATAL_OUTPUT_STATE *output, legacy_s
 static void fatal_vprintf(const legacy_s8 *format, va_list arguments)
 {
 	struct FATAL_OUTPUT_STATE output;
+	output.length = 0;
+	legacy_u32 unsigned_value;
 	struct FATAL_CONVERSION field;
 	legacy_s16 value;
 	legacy_s32 long_signed_value;
-	legacy_u32 unsigned_value;
-	output.length = 0;
 	while (*format != 0) {
 		if (*format != '%') {
 			fatal_emit_character(&output, *format++);
@@ -273,9 +260,8 @@ static void fatal_vprintf(const legacy_s8 *format, va_list arguments)
 
 void fatal_error(const legacy_s8 *format, ...)
 {
-	va_list arguments;
-
 	sprite_select_screen();
+	va_list arguments;
 	va_start(arguments, format);
 	fatal_vprintf(format, arguments);
 	va_end(arguments);

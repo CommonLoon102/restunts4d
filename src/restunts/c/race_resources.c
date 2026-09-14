@@ -53,21 +53,15 @@ void free_sdgame2(void)
 
 void load_sdgame2_shapes(void)
 {
-	legacy_s16 i;
-
 	sdgame2ptr = file_load_resource(FILE_RESOURCE_SHAPE2D_ALTERNATE, "sdgame2");
 	locate_many_resources(sdgame2ptr, "ex01ex02ex03leftrigh", (legacy_s8 far **)sdgame2shapes);
-	for (i = 0; i < SDGAME2_EFFECT_SHAPE_COUNT; i++) {
+	for (legacy_s16 i = 0; i < SDGAME2_EFFECT_SHAPE_COUNT; i++) {
 		sdgame2_widths[i] = shape2d_get_width((struct SHAPE2D far *)sdgame2shapes[i]);
 	}
 }
 
 void load_skybox(legacy_s8 skybox_index)
 {
-	legacy_u16 minimum;
-	legacy_u16 maximum;
-	legacy_u16 image_index;
-
 	if (((legacy_u8)skybox_index & SKYBOX_NO_IMAGES_FLAG) == 0) {
 		if (skybox_resources_loaded != 0 &&
 			(legacy_u8)skybox_index == (legacy_u8)loaded_skybox_index) {
@@ -80,13 +74,13 @@ void load_skybox(legacy_s8 skybox_index)
 		skybox_res_ofs = file_load_shape2d_fatal(skybox_resource_names[(legacy_s8)skybox_index]);
 		locate_many_resources(skybox_res_ofs, "scensce2sce3sce4", (legacy_s8 far **)skyboxes);
 
-		for (image_index = 0; image_index < SKYBOX_IMAGE_COUNT; image_index++) {
+		for (legacy_u16 image_index = 0; image_index < SKYBOX_IMAGE_COUNT; image_index++) {
 			skybox.heights[image_index] =
 				shape2d_get_height((struct SHAPE2D far *)skyboxes[image_index]);
 		}
-		minimum = skybox.heights[0];
-		maximum = skybox.heights[0];
-		for (image_index = 1; image_index < SKYBOX_IMAGE_COUNT; image_index++) {
+		legacy_u16 minimum = skybox.heights[0];
+		legacy_u16 maximum = skybox.heights[0];
+		for (legacy_u16 image_index = 1; image_index < SKYBOX_IMAGE_COUNT; image_index++) {
 			if (minimum > skybox.heights[image_index]) {
 				minimum = skybox.heights[image_index];
 			}
@@ -128,9 +122,6 @@ static void setup_car_engine_resources(void)
 
 static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 {
-	void far *carresptr;
-	legacy_u32 window_pixel_bytes;
-
 	setup_legacy_penalty_route_word();
 	render_window_sprite = 0;
 	ensure_file_exists(2);
@@ -139,7 +130,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 	car_resource_name[4] = gameconfig.game_playercarid[1];
 	car_resource_name[5] = gameconfig.game_playercarid[2];
 	car_resource_name[6] = gameconfig.game_playercarid[3];
-	carresptr = file_load_resfile(car_resource_name);
+	void far *carresptr = file_load_resfile(car_resource_name);
 	setup_aero_trackdata(carresptr, 0);
 	unload_resource(carresptr);
 
@@ -182,7 +173,7 @@ static legacy_s16 setup_player_cars_impl(legacy_s16 load_dashboard_shapes)
 	}
 
 	if (video_uses_page_flipping == 0) {
-		window_pixel_bytes = LEGACY_U16_DIV_OR_ZERO(
+		legacy_u32 window_pixel_bytes = LEGACY_U16_DIV_OR_ZERO(
 			RENDER_WINDOW_PIXEL_BYTES,
 			LEGACY_U16_WRAP_MUL(video_shape_width_scale, video_buffer_height_divisor));
 		if (mmgr_get_res_ofs_diff_scaled() <= window_pixel_bytes) {
