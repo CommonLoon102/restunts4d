@@ -56,6 +56,7 @@
 #define frame_buffer_index byte_44346
 #define dashboard_buffer_index byte_4432A
 #define start_flag_animation word_44DCA
+#define full_redraw_frames_remaining byte_454A4
 #endif
 
 #include "math.h"

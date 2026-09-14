@@ -1,6 +1,7 @@
 # Renderer parity with the original game
 
-Pixel comparisons use the independent Borland oracle in `tools/oracles/borland`.
+Pixel comparisons use the original assembly built by `pixldump-original`.
+The archived Borland renderer retains its historical full-redraw capture mode.
 Rendering and simulation are not independent in the original executable: its
 physics reads values left in stack slots by earlier rendering calls. The C port
 represents those values explicitly instead of depending on undefined C locals,
@@ -26,7 +27,7 @@ on branches that clip away the whole sky rectangle. A slot retains its earlier
 value on branches that do not write it.
 
 `shape3d_set_legacy_render_stack` binds those logical slots to the existing
-`legacy_execution_residue` buffers during sampled replay rendering. Rasterizer
+`legacy_execution_residue` buffers during replay rendering. Rasterizer
 and skybox paths retain the values written by their corresponding original
 instructions. The existing stopped-wheel physics then consumes these buffers.
 This restores the original simulation after stops and crashes as well as the
@@ -53,9 +54,16 @@ placement do not require special cases.
 
 The original engine assembly remains unchanged. Ordinary C
 game callers keep their existing default simulation contract; the pixel-dump
-wrapper selects its own original caller context. BMP mode simulates without
-intermediate rendering, while hash mode renders frame 0 and every fifth frame.
-Those modes can therefore reach different states in the original game itself.
+wrapper selects its own original caller context. Both BMP and hash modes render
+frame 0 and every subsequent frame with incremental redraws. Hash mode records
+every frame; BMP mode records only the requested frame. Their caller
+register contexts still differ as described above.
+
+The wrapper initializes the changed-region arrays and requests one full redraw
+for the first frame, then decrements that request after presentation. This keeps
+both erasing and presenting dirty regions active throughout capture. Hash dumps
+start with `PIXLDUMP 2` and CRLF so the regression runner regenerates caches from
+the old full-redraw, sampled-rendering wrapper.
 
 ## Deterministic original dump capture
 

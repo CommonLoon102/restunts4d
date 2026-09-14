@@ -53,8 +53,8 @@ Main repository: https://github.com/4d-stunts/restunts
 		state contents at each frame in a file for further analysis.
 
 	src\restunts\pixldump
-		Replay-driven renderer test tool. It hashes the selected 320x200 camera
-		framebuffer at frame 0 and every fifth frame thereafter.
+		Replay-driven renderer test tool. It renders every frame incrementally
+		and hashes the 320x200 camera framebuffer at frame 0 and every subsequent frame.
 
 
 ## C coding style
@@ -184,6 +184,12 @@ The makefile supports the following targets:
 	make <OPTIONS> pixldump-original
 		Builds the original renderer oracle as pixldumo.exe.
 
+`pixldump-original` builds `pixldumo.exe` from the original game assembly and
+the current capture wrapper. Renderer comparisons use that freshly built
+executable. Physics validation uses the archived Borland reference under
+[tools/oracles/borland](tools/oracles/borland/README.md), whose SHA256 hashes
+are recorded alongside it. Source builds never replace those archived files.
+
 ### pixldump parameters
 
 pixldump and pixldumo use the same mandatory parameters. The number of
@@ -205,12 +211,16 @@ pixldumo.exe <replay> <camera> <target> <frame>
 | `frame` | `0` through `65535` | Exact frame to render. It must not exceed the replay's final frame. Supplying it selects BMP mode. |
 
 With three parameters, the tools generate the normal hash dump. pixldumo writes
-`<replay>.PDO` and pixldump writes `<replay>.PDD`. Each CRLF-terminated row
+`<replay>.PDO` and pixldump writes `<replay>.PDD`. The first line is `PIXLDUMP 2`,
+terminated by CRLF, identifying capture with incremental redraws on every frame.
+Each subsequent CRLF-terminated row
 contains the decimal frame number, one space, and the MurmurHash3_x86_32 of the
 raw 64,000-byte Mode 13h framebuffer, with seed 0. The hash is eight lowercase
 hexadecimal digits, most significant digit first, including leading zeroes.
-The tools sample frames 0, 5, 10, ... Old MD5 dumps are incompatible and the
-regression runner regenerates them automatically.
+The tools hash every frame from frame 0 through the replay's final frame.
+Old full-redraw, MD5, and five-frame sampled dumps are incompatible; the
+regression runner rejects their missing version header or missing frames and
+regenerates them automatically.
 
 With four parameters, the tools generate only the requested 320x200 indexed BMP
 using the game's VGA palette. The filename includes the camera, target, frame,
@@ -250,8 +260,10 @@ from the DOS load segment, decoded arguments, and resource allocations. See
 [renderer parity notes](docs/renderer-parity.md) for the assembly evidence and
 regression coverage.
 
-Both modes force maximum graphical detail and hide the dashboard and replay
-controls. Invalid arguments are rejected before an output file is created. The
+Both modes render every frame from frame 0 with incremental redraws, maximum
+graphical detail, and hidden dashboard and replay controls. BMP capture retains
+the preceding framebuffer history up to the requested frame. Invalid arguments
+are rejected before an output file is created. The
 complete output path, including its generated suffix, must fit in 127
 characters. BMP filenames require DOS long-filename support; the supplied
 `tools/scripts/dosbox.proc.conf` enables it for DOSBox-X.
@@ -313,11 +325,12 @@ renderer dump tools. CI compares the full golden replay set for physics and
 an evenly spaced 5% sample for rendering, comparing pixldump `.PDD` files
 against pixldumo `.PDO` files with camera 2 and player target 0.
 
-Each CI shard verifies the checksums and copies the independent Borland
-executables from `tools/oracles/borland`, then generates fresh `.BIN` and `.PDO`
-outputs alongside the ported `.BNI` and `.PDD` outputs. Both original dump
+Each CI shard verifies the archived checksums and uses the independent Borland
+`repldumo.exe` for physics. Renderer shards use the freshly built original-assembly
+`pixldumo.exe` and generate incremental `.PDO` references locally. Physics shards
+reuse the published `.BIN` cache, generating missing entries. Both original dump
 wrappers disable timer IRQ0 during offline capture, preventing timing-dependent
-reference data. No precomputed oracle archive is downloaded by the workflow.
+reference data. Renderer shards do not download the old full-redraw `.PDO` archive.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the

@@ -10,8 +10,9 @@ internal static class DumpOutput
     private const int RecordedFramesOffset = 24;
     private const int PhysicsHeaderSize = 2;
     private const int GameStateSize = 1120;
-    private const int RendererSampleInterval = 5;
+    private const int RendererSampleInterval = 1;
     private const int DigestLength = 8;
+    private const string RendererHeader = "PIXLDUMP 2";
 
     public static async Task<ushort> ReadFrameCountAsync(string replayPath,
         CancellationToken cancellationToken)
@@ -54,7 +55,13 @@ internal static class DumpOutput
         CancellationToken cancellationToken)
     {
         using var reader = new StreamReader(stream, Encoding.ASCII, false, leaveOpen: true);
-        long expectedBytes = 0;
+        // Version 2 renders every frame with incremental redraws. Older dumps
+        // have the same hash width but contain different rendering history.
+        if (await reader.ReadLineAsync(cancellationToken) != RendererHeader)
+        {
+            return false;
+        }
+        long expectedBytes = RendererHeader.Length + 2;
         for (var frame = 0; frame <= frames; frame += RendererSampleInterval)
         {
             var prefix = frame.ToString(CultureInfo.InvariantCulture) + " ";

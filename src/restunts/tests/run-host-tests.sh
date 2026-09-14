@@ -108,6 +108,8 @@ run_host_test test-opponent-tick opponent.c \
     "$test_source_dir/trkutil.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
     -Wno-missing-braces
 run_host_test test-pixldump-murmur3 ../pixldump/murmur3.c
+run_host_test test-pixldump-playback legacy.c -I"$test_source_dir" \
+    -Wno-pointer-sign -Wno-sign-compare
 run_host_test test-polygon-edges shape3d_prerender.c \
     "$test_source_dir/full_data.c" "$test_source_dir/legacy.c" \
     -Wno-pointer-sign -Wno-unused-variable -Wno-missing-field-initializers
