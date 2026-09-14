@@ -186,22 +186,39 @@ public static class ResultMerger
         var renderer = results.Values.Sum(result => result.RendererCompleted.Count);
         var expectedPhysics = options.PhysicsTests ? corpus.Count : 0;
         var expectedRenderer = options.RendererTests ? ReplayCatalog.Sample(corpus, options.RendererTestPercentage).Count : 0;
-        var summary = $"{physics}/{expectedPhysics} physics and {renderer}/{expectedRenderer} renderer replays; " +
-            $"{lines.Count} error(s).";
+        var phases = new List<(string Name, int Processed, int Expected)>();
+        if (options.PhysicsTests)
+        {
+            phases.Add(("physics", physics, expectedPhysics));
+        }
+        if (options.RendererTests)
+        {
+            phases.Add(("renderer", renderer, expectedRenderer));
+        }
+        var coverage = string.Join(" and ", phases.Select(phase =>
+            $"{phase.Processed}/{phase.Expected} {phase.Name}"));
+        var summary = $"{coverage} replays; {lines.Count} error(s).";
         await ResultFiles.WriteTextAsync(options.OutputFile, ReportFormatter.Text(lines), cancellation);
         if (options.SummaryFile is not null)
         {
             var markdown = new StringBuilder("## Replay validation\n\n| | |\n|---|---|\n")
-                .AppendLine($"| Replays in the golden set | {corpus.Count} |")
-                .AppendLine($"| Physics replays processed | {physics} |")
-                .AppendLine($"| Renderer sample percentage | {options.RendererTestPercentage}% |")
-                .AppendLine($"| Renderer replays expected | {expectedRenderer} |")
-                .AppendLine($"| Renderer replays processed | {renderer} |")
-                .AppendLine($"| Errors | {lines.Count} |")
-                .AppendLine();
+                .AppendLine($"| Replays in the golden set | {corpus.Count} |");
+            if (options.PhysicsTests)
+            {
+                markdown.AppendLine($"| Physics replays processed | {physics} |");
+            }
+            if (options.RendererTests)
+            {
+                markdown.AppendLine($"| Renderer sample percentage | {options.RendererTestPercentage}% |")
+                    .AppendLine($"| Renderer replays expected | {expectedRenderer} |")
+                    .AppendLine($"| Renderer replays processed | {renderer} |");
+            }
+            markdown.AppendLine($"| Errors | {lines.Count} |").AppendLine();
             if (lines.Count == 0)
             {
-                markdown.AppendLine($"{physics} physics and {renderer} renderer replays agree byte for byte.");
+                var matches = string.Join(" and ", phases.Select(phase =>
+                    $"{phase.Processed} {phase.Name}"));
+                markdown.AppendLine($"{matches} replays agree byte for byte.");
             }
             else
             {

@@ -88,17 +88,18 @@ jobs:
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
-      # Published PDO archives still use MD5; generate Murmur32 references locally.
-      - name: Download and extract this shard's precomputed physics outputs
-        if: inputs.phase == 'physics'
+      - name: Download and extract this shard's precomputed oracle outputs
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.2
+          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.3
         run: |
           set -eu
           archive=BINs
+          if [[ "$RENDERER_TESTS" == "true" ]]; then
+              archive=PDOs
+          fi
           zip_path="$RUNNER_TEMP/$archive.zip"
           # Download only the oracle archive needed by this phase.
           curl --fail --location --silent --show-error --retry 3 \
