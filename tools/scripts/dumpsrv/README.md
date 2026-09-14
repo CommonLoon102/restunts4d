@@ -285,7 +285,8 @@ uses camera `2` and target `0`, comparing original `.PDO` output against fresh
 Completed `.BIN` and `.PDO` files are reused only after checking their contents
 against the replay's recorded frame count. Physics dumps must contain the
 matching two-byte frame count and exactly 1,120 bytes per frame. Renderer dumps
-must contain every CRLF-terminated MD5 sample at frames 0, 5, 10, ... through
+must contain every CRLF-terminated MurmurHash3_x86_32 sample (seed 0, eight
+lowercase hexadecimal digits) at frames 0, 5, 10, ... through
 the last sampled frame. Empty, truncated, or malformed caches are regenerated,
 including files left by older runners without a pending marker.
 

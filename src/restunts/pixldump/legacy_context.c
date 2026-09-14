@@ -14,7 +14,7 @@
 #define PIXLDUMP_DOS_PSP_PARAGRAPHS 16U
 #define PIXLDUMP_LEGACY_POLYGON_FRAME_DEPTH 558U
 #define PIXLDUMP_LEGACY_POLYGON_CODE_PARAGRAPH 5334U
-#define PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS 14874U
+#define PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS 14819U
 #define PIXLDUMP_DOS_MCB_PARAGRAPHS 1U
 
 static legacy_u16 pixldump_dos_psp_segment(void)
@@ -58,7 +58,7 @@ legacy_u16 pixldump_legacy_polyinfo_segment(void)
 	if (segment == 0) {
 		return 0;
 	}
-	/* The archived CRT retains 3A1A paragraphs after its load segment. DOS
+	/* The Murmur32 oracle CRT retains 39E3 paragraphs after its load segment. DOS
 	 * places an MCB between that block and the memory manager's arena. */
 	segment = LEGACY_U16_WRAP_ADD(segment, PIXLDUMP_LEGACY_IMAGE_PARAGRAPHS);
 	segment = LEGACY_U16_WRAP_ADD(segment, PIXLDUMP_DOS_MCB_PARAGRAPHS);

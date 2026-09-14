@@ -45,8 +45,11 @@ caller parameters carry these values through the C simulation.
 particular replay. It derives the load segment from the DOS PSP and calculates
 original stack placement from the executable path and decoded argument lengths.
 The polygon buffer's logical segment follows the original allocation order,
-using the sizes of the loaded resources. Thus replay names, optional extensions,
-DOS directories, and environment placement do not require special cases.
+using the sizes of the loaded resources. Its retained image size is 39E3 DOS
+paragraphs for the Murmur32 oracle (the previous MD5 build used 3A1A). Hash
+wrapper changes must keep this model synchronized with the original link map.
+Thus replay names, optional extensions, DOS directories, and environment
+placement do not require special cases.
 
 The original engine assembly remains unchanged. Ordinary C
 game callers keep their existing default simulation contract; the pixel-dump

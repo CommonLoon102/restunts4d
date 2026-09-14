@@ -37,7 +37,7 @@ DOS_PLATFORM_RUNTIME_OBJFILES = $(addprefix $(DOS_PLATFORM_OBJDIR)\, $(DOS_PLATF
 DOS_PLATFORM_FILE_OBJFILE = $(DOS_PLATFORM_OBJDIR)\file.obj
 DOS_BSS_START_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosbss.obj
 DOS_STACK_OBJFILE = $(DOS_PLATFORM_OBJDIR)\dosstack.obj
-PIXLDUMP_OBJFILES = $(OBJDIR)\pixldump.obj $(OBJDIR)\md5.obj
+PIXLDUMP_OBJFILES = $(OBJDIR)\pixldump.obj $(OBJDIR)\murmur3.obj
 PIXLDUMP_LINK_DEPS =
 
 RESTUNTS_CFLAGS = -c -u- -mm -n$(OBJDIR) -v
@@ -80,7 +80,7 @@ endif
 
 TOOLS_LIB = s:\tools\lib
 
-pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/md5.obj $(if $(filter ported,$(TARGET)),$(OBJDIR)/legacy_context.obj) $(PIXLDUMP_LINK_DEPS)
+pixldump.exe: force_me $(OBJDIR)/pixldump.obj $(OBJDIR)/murmur3.obj $(if $(filter ported,$(TARGET)),$(OBJDIR)/legacy_context.obj) $(PIXLDUMP_LINK_DEPS)
   ifeq ($(LINKER),wlink)
 		$(LINKER) name $(OUTFILE) format dos option NOCASEEXACT $(WLINK_OPTIONS) PATH $(TOOLS_LIB) file $(CTARGETS) $(WLINK_LIBRARIES)
   else
@@ -96,23 +96,23 @@ force_me: ;
 $(OBJDIR):
 	if not exist "$(OBJDIR)" mkdir "$(OBJDIR)"
 
-$(OBJDIR)/pixldump.obj: pixldump.c md5.h legacy_context.h ../platform/dos/dump_timer.h | $(OBJDIR)
+$(OBJDIR)/pixldump.obj: pixldump.c murmur3.h legacy_context.h ../platform/dos/dump_timer.h | $(OBJDIR)
 	$(CC) -I../c pixldump.c
 
 $(OBJDIR)/legacy_context.obj: legacy_context.c legacy_context.h ../c/shape3d.h | $(OBJDIR)
 	$(CC) -I../c legacy_context.c
 
-$(OBJDIR)/md5.obj: md5.c md5.h | $(OBJDIR)
-	$(CC) -I../c md5.c
+$(OBJDIR)/murmur3.obj: murmur3.c murmur3.h | $(OBJDIR)
+	$(CC) -I../c murmur3.c
 
 $(OBJDIR)/pixlstart.obj: pixlstart.c ../platform/dos/dosstart.c | $(OBJDIR)
 	$(CC) -I../c pixlstart.c
 
 clean:
 	del build\original\pixldump.obj
-	del build\original\md5.obj
+	del build\original\murmur3.obj
 	del build\ported\pixldump.obj
-	del build\ported\md5.obj
+	del build\ported\murmur3.obj
 	del build\ported\pixlstart.obj
 	del build\ported\legacy_context.obj
 	del pixldump.exe

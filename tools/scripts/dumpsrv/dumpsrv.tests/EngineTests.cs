@@ -320,6 +320,7 @@ public sealed class EngineTests
     [InlineData(true, "frame")]
     [InlineData(true, "shorter")]
     [InlineData(true, "hash")]
+    [InlineData(true, "md5")]
     public async Task InvalidOracleCacheWithoutPendingMarkerIsRegenerated(
         bool renderer, string damage)
     {
@@ -331,11 +332,14 @@ public sealed class EngineTests
         {
             "empty" => [],
             "partial" => bytes[..^1],
-            "record" => bytes[..^(renderer ? 36 : 1120)],
+            "record" => bytes[..^(renderer ? 12 : 1120)],
             "extra" => [.. bytes, 0],
             "frame" => [(byte)(bytes[0] + 1), .. bytes[1..]],
             "shorter" => DumpBytes(renderer, 0),
             "hash" => [.. bytes[..2], (byte)'g', .. bytes[3..]],
+            "md5" => Encoding.ASCII.GetBytes(
+                "0 cf7cf997851fba0edbb0524841ce37bd\r\n" +
+                "5 cf7cf997851fba0edbb0524841ce37bd\r\n"),
             _ => throw new InvalidOperationException()
         };
         File.WriteAllBytes(path, bytes);
@@ -484,7 +488,7 @@ public sealed class EngineTests
         {
             return Encoding.ASCII.GetBytes(string.Concat(Enumerable.Range(0, frames / 5 + 1)
                 .Select(index => $"{(index * 5).ToString(CultureInfo.InvariantCulture)} " +
-                    new string(different ? '1' : '0', 32) + "\r\n")));
+                    new string(different ? '1' : '0', 8) + "\r\n")));
         }
         var bytes = new byte[2 + frames * 1120];
         BinaryPrimitives.WriteUInt16LittleEndian(bytes, frames);

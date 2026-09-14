@@ -147,18 +147,18 @@ static void test_archived_polyinfo_allocation(void)
 	test_chunk_sizes[3] = 94U;
 	test_chunk_sizes[4] = 115U;
 	test_chunk_sizes[5] = 91U;
-	/* Captured load segment 029E and polyinfo segment 3E95. Each allocation
+	/* Murmur32 oracle: load segment 029E and polyinfo segment 3E5E. Each allocation
 	 * is supplied independently so resource changes must affect the result. */
-	assert(pixldump_legacy_polyinfo_segment() == 0x3e95);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e5e);
 	for (index = 0; index < 6U; index++) {
 		test_chunk_sizes[index] += 7U;
-		assert(pixldump_legacy_polyinfo_segment() == 0x3e9c);
+		assert(pixldump_legacy_polyinfo_segment() == 0x3e65);
 		test_chunk_sizes[index] -= 7U;
 	}
 	test_driver_paragraphs += 9U;
-	assert(pixldump_legacy_polyinfo_segment() == 0x3e9e);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e67);
 	test_psp_segment += 16U;
-	assert(pixldump_legacy_polyinfo_segment() == 0x3eae);
+	assert(pixldump_legacy_polyinfo_segment() == 0x3e77);
 	test_psp_available = 0;
 	assert(pixldump_legacy_load_segment() == 0);
 	assert(pixldump_legacy_polygon_code_segment() == 0);

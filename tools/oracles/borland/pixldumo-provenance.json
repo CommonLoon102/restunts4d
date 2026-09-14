@@ -1,0 +1,152 @@
+{
+  "description": "Intentional Borland pixldumo oracle migration from MD5 to MurmurHash3_x86_32, seed 0.",
+  "date": "2026-09-13",
+  "baseline_source_commit": "4827fb521711e7a773d3a6888b1be6ed2bdbe9be",
+  "baseline_rebuild_matches_archived_oracle": true,
+  "previous_executable_sha256": "bb6ced50060c36b9fddc45c29c414155ef3e85a60b58872f9f1cd58ced94f7a1",
+  "executable_sha256": "1c99292d7724da5f59c48c5eb36ff4e2141c00e2a51b6218056328b2eef0e24c",
+  "executable_bytes": 247847,
+  "source_changes": "Replace pixldump/md5.c and md5.h with murmur3.c and murmur3.h; update pixldump.c and its makefile. Original engine assembly is unchanged from the baseline commit.",
+  "changed_build_inputs_sha256": {
+    "src/restunts/pixldump/pixldump.c": "a4fbbbae3e31ccd223fd679e8a404f06ecc6233845696a16ec595dc2280c8c33",
+    "src/restunts/pixldump/murmur3.c": "bfb4de06d50594e220d29e35b89691ec184a105b0ea4e77f24a87aa939424b5a",
+    "src/restunts/pixldump/murmur3.h": "7dac8724be77f903bed1c20678e3894e2f64230bd6be9c4cb5a041bfb82552f0",
+    "src/restunts/pixldump/makefile": "8a5b1813247ddebcdc9c038b7575a19824790222a7827545c1f521173a673b68"
+  },
+  "text_hash_convention": "Working-tree bytes: C/H use CRLF, makefile uses LF.",
+  "build": "src/restunts: call setpath.bat, then make pixldump-original (CONFIG=release, ASSEMBLER=tasm32, LINKER=tlinkbox).",
+  "compiler": "Borland C++ 5.2, -c -u- -mm -v -DRESTUNTS_ORIGINAL -I../c",
+  "linker": "Borland Turbo Link 7.1.32.2, /s /P-, bundled cm.lib helpers and DOS file adapter",
+  "tools_sha256": {
+    "tools/bin/bcc.exe": "2bb13b2f8d26d1819b6daf28033c6ece38a6d3e22198d011d897a59e8adcacc0",
+    "tools/bin/tasm32.exe": "60a3de9a8eeece00581b7fba88b930c2142a245d4d4c42655399d399c6ee0618",
+    "tools/bin/tlink.exe": "56119244595b4568daf3a049bcf46f117bd3f9b2266cb1e6a7429a9f68f04859",
+    "tools/lib/cm.lib": "fafc79772a6f45d94507004d96ca2a75ba167fee9bd60016c5577355698cc564"
+  },
+  "retained_image_paragraphs": 14819,
+  "retained_image_derivation": "ENDSEG physical offset 0x39E27 in the link map; original CRT retains (ENDSEG >> 4) + 1 = 0x39E3 paragraphs. The C legacy-context model was updated from 0x3A1A accordingly.",
+  "validation": {
+    "environment": "DOSBox-X 2024.03.01, core=dynamic, cycles=max",
+    "hash_checks_against_upstream": 303,
+    "hash_input_coverage": "Zero, deterministic random, and captured VGA data; lengths 0..80 and boundaries through 65535, including unaligned inputs and 64000-byte framebuffers.",
+    "host_regression_suite_passed": true,
+    "runner_tests_passed": 169,
+    "ported_executable_sha256": "f62b9319eaaef5ba846373eea8bdccc364452864d06c4136cb949b976b914b94",
+    "full_replay_comparisons": [
+      {
+        "replay": "0027",
+        "camera": 2,
+        "target": 0,
+        "samples": 230,
+        "sha256": "bd4d858963bd2b62085d95abf3980b9cd19e0f08224f9fa05c638de783c8c647"
+      },
+      {
+        "replay": "0094",
+        "camera": 2,
+        "target": 0,
+        "samples": 223,
+        "sha256": "d34438221a8fe51b9728fab8deb88897d19bcea794fc2894f3dba9b9ae42a61d"
+      },
+      {
+        "replay": "0259",
+        "camera": 2,
+        "target": 0,
+        "samples": 2398,
+        "sha256": "21a2a4dba203351e81f198a8d29c448654bb129cc1ec485450b1b56454f6fa77"
+      },
+      {
+        "replay": "0364",
+        "camera": 2,
+        "target": 0,
+        "samples": 643,
+        "sha256": "9ad443a3e8876c8059533d56cdd2222d0630e1c05210e25aa66e961c1725935a"
+      },
+      {
+        "replay": "0664",
+        "camera": 2,
+        "target": 0,
+        "samples": 369,
+        "sha256": "428a01f1f84a4236d4323fa5fe8d8b46e23d1c5e208d08fd51cfd083e1f720bf"
+      },
+      {
+        "replay": "0696",
+        "camera": 2,
+        "target": 0,
+        "samples": 239,
+        "sha256": "40fb3812dc6c500afe16b18d7a3c5194ce4dc7e7f619ee8df56ebafa42e83d9f"
+      },
+      {
+        "replay": "0698",
+        "camera": 2,
+        "target": 0,
+        "samples": 221,
+        "sha256": "d77abd7e79b606c0ecf2f1f8bb1e3b33578159877cef66e714352f4253615055"
+      },
+      {
+        "replay": "my0000",
+        "camera": 2,
+        "target": 0,
+        "samples": 51,
+        "sha256": "075c17c6400b6fc84786e5cfe25dcef17dabf9744c64396725b5c9aea3f1e2d1"
+      },
+      {
+        "replay": "r0933",
+        "camera": 2,
+        "target": 0,
+        "samples": 361,
+        "sha256": "3571f5efa53bfac9952c6ee71e48b77a0806535810143c606ae7852baf606199"
+      },
+      {
+        "replay": "c0001",
+        "camera": 2,
+        "target": 0,
+        "samples": 665,
+        "sha256": "5ae5db7733c1f7b5353663605585d4569ed99d708bee52bd991e16f18ef8a48b"
+      }
+    ],
+    "sample_pairs": 5400,
+    "bmp_comparisons_old_original_new_original_new_ported": [
+      {
+        "replay": "my0000",
+        "camera": 2,
+        "target": 0,
+        "frame": 170,
+        "sha256": "99175d4c3ce33e8e348b75c69aa4bc1faccb76234c43520214a13d90d0abd985",
+        "framebuffer_murmur32": "8c131cd6"
+      },
+      {
+        "replay": "r0933",
+        "camera": 2,
+        "target": 0,
+        "frame": 220,
+        "sha256": "42ab9f5303c0b4a77b32af07b1c880fe619fd6e60a0561f1a8e6f1e96c727e20",
+        "framebuffer_murmur32": "8bccbd22"
+      },
+      {
+        "replay": "0094",
+        "camera": 1,
+        "target": 0,
+        "frame": 755,
+        "sha256": "c861135803c211367aaea0f8145d5d9084cd1c63f73009ec240e6f9ebab4b483",
+        "framebuffer_murmur32": "7d40e4d4"
+      },
+      {
+        "replay": "0698",
+        "camera": 4,
+        "target": 1,
+        "frame": 1065,
+        "sha256": "46e5907267bbff5758eaa38acead8911cc5bb82c208f8b1ed4cd630332a1bb97",
+        "framebuffer_murmur32": "4642657e"
+      },
+      {
+        "replay": "0027",
+        "camera": 2,
+        "target": 0,
+        "frame": 665,
+        "sha256": "0ed148e0743783a0752e0749017b0f42f93eec22a2e2ec44528411dad5a7ae5e",
+        "framebuffer_murmur32": "6e46c485"
+      }
+    ],
+    "scope": "Selected replay coverage, not the entire golden corpus. BMP mode does not perform intermediate rendering. Sampled runs can differ from the old MD5 executable because its retained image size changed; original and ported Murmur32 outputs must agree."
+  }
+}

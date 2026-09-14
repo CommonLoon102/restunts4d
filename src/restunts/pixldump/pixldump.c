@@ -7,7 +7,7 @@
 #include <shape3d.h>
 #include <trackdata_layout.h>
 
-#include "md5.h"
+#include "murmur3.h"
 #ifndef RESTUNTS_ORIGINAL
 #include "legacy_context.h"
 #include "../c/residue.h"
@@ -37,9 +37,10 @@
 #define PIXLDUMP_DECIMAL_BASE 10UL
 #define PIXLDUMP_FRAME_NUMBER_DIGITS 5U
 #define PIXLDUMP_BMP_NAME_PREFIX_SIZE 5U
-#define PIXLDUMP_SAMPLE_LINE_SIZE 40U
+#define PIXLDUMP_SAMPLE_LINE_SIZE                                                                  \
+	(PIXLDUMP_FRAME_NUMBER_DIGITS + 1U + PIXLDUMP_MURMUR3_HEX_DIGITS + 2U)
+#define PIXLDUMP_HASH_HIGH_NIBBLE_SHIFT 28U
 #define PIXLDUMP_HEX_NIBBLE_SHIFT 4U
-#define PIXLDUMP_HEX_NIBBLE_MASK 15U
 #define PIXLDUMP_PALETTE_COLOR_COUNT 256U
 #define PIXLDUMP_PALETTE_SOURCE_STRIDE 3U
 #define PIXLDUMP_PALETTE_DESTINATION_STRIDE 4U
@@ -299,17 +300,17 @@ static legacy_s16 pixldump_write_sample(PIXLDUMP_OUTPUT output, legacy_u16 frame
 										const legacy_u8 far *framebuffer)
 {
 	static const legacy_s8 hex_digits[] = "0123456789abcdef";
-	legacy_u8 digest[PIXLDUMP_MD5_SIZE];
+	legacy_u32 hash;
 	legacy_s8 line[PIXLDUMP_SAMPLE_LINE_SIZE];
 	legacy_u16 line_length;
 	legacy_u16 index;
 
-	pixldump_md5(framebuffer, PIXLDUMP_FRAMEBUFFER_SIZE, digest);
+	hash = pixldump_murmur3(framebuffer, PIXLDUMP_FRAMEBUFFER_SIZE);
 	line_length = pixldump_append_frame_number(line, frame);
 	line[line_length++] = ' ';
-	for (index = 0; index < PIXLDUMP_MD5_SIZE; index++) {
-		line[line_length++] = hex_digits[digest[index] >> PIXLDUMP_HEX_NIBBLE_SHIFT];
-		line[line_length++] = hex_digits[digest[index] & PIXLDUMP_HEX_NIBBLE_MASK];
+	for (index = 0; index < PIXLDUMP_MURMUR3_HEX_DIGITS; index++) {
+		line[line_length++] = hex_digits[(legacy_u16)(hash >> PIXLDUMP_HASH_HIGH_NIBBLE_SHIFT)];
+		hash <<= PIXLDUMP_HEX_NIBBLE_SHIFT;
 	}
 	line[line_length++] = '\r';
 	line[line_length++] = '\n';

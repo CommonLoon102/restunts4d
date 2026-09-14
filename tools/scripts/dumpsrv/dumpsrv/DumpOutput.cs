@@ -11,7 +11,7 @@ internal static class DumpOutput
     private const int PhysicsHeaderSize = 2;
     private const int GameStateSize = 1120;
     private const int RendererSampleInterval = 5;
-    private const int DigestLength = 32;
+    private const int DigestLength = 8;
 
     public static async Task<ushort> ReadFrameCountAsync(string replayPath,
         CancellationToken cancellationToken)

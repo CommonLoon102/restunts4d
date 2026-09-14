@@ -1,19 +1,25 @@
 # Archived Borland regression oracles
 
-These executable files preserve the pre-Open Watcom regression reference. They
-were copied byte for byte from the existing `stunts/` executables on 2026-09-08,
-before compiler/linker migration. The sources are the original disassembly and
-the existing Borland-built dump wrappers; they must not be rebuilt with Watcom.
+These executable files use the original game disassembly and Borland-built dump
+wrappers as independent regression references. They must not be rebuilt with
+Watcom or replaced while fixing the C port.
 
-| File | Bytes | Original file timestamp (local time) |
+| File | Bytes | Purpose |
 | --- | ---: | --- |
-| `repldumo.exe` | 244268 | 2026-09-07 09:36 |
-| `pixldumo.exe` | 248722 | 2026-09-08 00:48 |
+| `repldumo.exe` | 244284 | Per-frame game state (`.BIN`) |
+| `pixldumo.exe` | 247847 | MurmurHash3_x86_32 framebuffer samples (`.PDO`) |
 
-The timestamps record the supplied local artifacts, not a claim of a
-reproducible build. `SHA256SUMS` identifies the exact archived bytes. The
-pre-migration files are untracked build outputs, so no source commit is claimed
-as their verified build provenance.
+`SHA256SUMS` identifies the exact archived bytes. The initial references were
+copied from `stunts/` before compiler/linker migration. The physics oracle is
+unchanged by the Murmur32 migration.
+
+The renderer oracle was deliberately rebuilt with Borland on 2026-09-13 to
+replace MD5 with MurmurHash3_x86_32, seed 0. Its pre-change rebuild matched the
+previous archived executable byte for byte. Source fingerprints, tool hashes,
+and regression results are recorded in [pixldumo-provenance.json](pixldumo-provenance.json).
+The original engine assembly is unchanged. The C port's legacy memory model
+tracks the new oracle's smaller retained image size; see
+[renderer parity](../../../docs/renderer-parity.md).
 
 From the repository root, verify and restore the references on Linux:
 
@@ -22,38 +28,13 @@ From the repository root, verify and restore the references on Linux:
 cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe stunts/
 ```
 
-`repldumo.exe` writes per-frame game state as `.BIN`; `pixldumo.exe` writes
-framebuffer MD5 samples as `.PDO` for comparison with the ported `.BNI` and
-`.PDD` outputs. Camera/target options must match on both sides.
+Compare `.BIN` against ported `.BNI`, and `.PDO` against ported `.PDD`.
+Framebuffer rows contain a decimal frame number, one space, eight lowercase
+hexadecimal hash digits (most significant first), and CRLF. Camera and target
+options must match on both sides. Old MD5 `.PDO`/`.PDD` files are incompatible;
+the shared regression runner rejects and regenerates those caches.
 
-Never replace these files while updating the compiler or fixing the C port.
-A deliberate oracle change requires separate provenance and regression review.
-
-For a fresh, deterministic 100-replay comparison against these exact oracles:
-
-```sh
-python3 tools/scripts/validate-toolchain.py --output out/watcom-validation
-```
-
-This requires built `stunts/repldump.exe` and `stunts/pixldump.exe`, Python 3,
-.NET 10, and DOSBox-X. The command copies game assets, selects 100 evenly spaced
-replays from the ordinal-sorted golden ZIP, verifies the archived checksums,
-and runs both physics and renderer comparisons for every selected replay.
-Rendering uses camera 2 and player target 0. A new output directory is required
-to exclude stale caches. `inputs.json` records SHA-256 hashes of the archive,
-selected replays, assets, and executables; `summary.md` and `partitions_all.txt`
-record coverage and results. Use `--count`, `--workers`, `--physics-timeout`,
-`--renderer-timeout`, or `--candidate-directory` to override defaults.
-
-The existing shared C# runner enforces `core=dynamic` and `cycles=max`, kills
-owned emulator processes forcibly on timeout, and verifies byte-for-byte state
-and framebuffer hash equality. Its merger checks that every selected replay
-completed exactly once in both phases. `--prepare-only` creates and fingerprints
-the isolated inputs without running DOSBox.
-
-To reuse completed archived outputs from a previous invocation, add
-`--oracle-cache PATH`. The preparation checks that the corpus, selected replay
-hashes, asset hashes, oracle executable hashes, camera, and target match before
-copying any cached `.BIN` or `.PDO` files. Incomplete outputs carrying a pending
-marker are excluded. The new `inputs.json` fingerprints every copied cache
-file; candidate outputs are always generated afresh.
+See the [shared regression runner](../../scripts/dumpsrv/README.md) for running
+and merging replay comparisons. CI uses these checked-in oracles, generates
+Murmur32 renderer references locally, and continues using the published physics
+cache. A deliberate oracle change requires provenance and regression review.

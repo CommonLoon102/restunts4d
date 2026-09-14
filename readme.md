@@ -206,8 +206,11 @@ pixldumo.exe <replay> <camera> <target> <frame>
 
 With three parameters, the tools generate the normal hash dump. pixldumo writes
 `<replay>.PDO` and pixldump writes `<replay>.PDD`. Each CRLF-terminated row
-contains the decimal frame number, one space, and the lowercase MD5 of the raw
-64,000-byte Mode 13h framebuffer. The tools sample frames 0, 5, 10, ...
+contains the decimal frame number, one space, and the MurmurHash3_x86_32 of the
+raw 64,000-byte Mode 13h framebuffer, with seed 0. The hash is eight lowercase
+hexadecimal digits, most significant digit first, including leading zeroes.
+The tools sample frames 0, 5, 10, ... Old MD5 dumps are incompatible and the
+regression runner regenerates them automatically.
 
 With four parameters, the tools generate only the requested 320x200 indexed BMP
 using the game's VGA palette. The filename includes the camera, target, frame,
