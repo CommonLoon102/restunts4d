@@ -18,6 +18,7 @@ legacy_s16 video_x_alignment_mask = -1;
 static struct SHAPE2D images[4];
 static legacy_u32 call_hash;
 static unsigned clear_count, image_count, polygon_count;
+static legacy_u8 clear_color;
 static struct POINT2D first_polygon[4];
 
 static void record_word(legacy_u16 value)
@@ -49,6 +50,7 @@ void sprite_clear_target(legacy_u8 color)
 {
 	record_word(2);
 	record_word(color);
+	clear_color = color;
 	clear_count++;
 }
 
@@ -141,6 +143,40 @@ static void test_level_horizon(void)
 	assert(rect_skybox.right == 320);
 	assert(rect_skybox.top == 20);
 	assert(rect_skybox.bottom == 180);
+}
+
+static void test_rolled_full_viewport_redraw(void)
+{
+	static const struct {
+		legacy_s16 roll, direction, camera_y;
+		legacy_u8 color;
+	} cases[] = {
+		{1, -1, 0, 3}, {256, 1, 16000, 3}, {256, 1, -16000, 6}, {1, 1, 12000, 3}, {1, 1, -12000, 6},
+	};
+	/* Real projections put the horizon behind the camera, then beyond the
+	 * right, left, bottom and top edges. Every whole-viewport fill must tell
+	 * frame_finish to retain the full clip for presentation and the next frame.
+	 * Otherwise a following level view can leave old ground in the sky. */
+	for (unsigned index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+		for (legacy_s16 slow_copy = 0; slow_copy <= 1; slow_copy++) {
+			for (legacy_s16 detail = 0; detail <= 4; detail++) {
+				reset_scene();
+				slow_video_mgmt_copy = slow_copy;
+				detail_level = detail;
+				struct MATRIX rotation =
+					*mat_rot_zxy(cases[index].roll, 0, 0, MATRIX_ROTATION_ORDER_ZXY);
+				struct RECTANGLE clip = {0, 320, 20, 180};
+				assert(skybox_render(0, &clip, cases[index].direction, &rotation, cases[index].roll,
+									 0, cases[index].camera_y) == 1);
+				assert(clear_count == 1 && clear_color == cases[index].color);
+				assert(image_count == 0 && polygon_count == 0);
+				assert(drawing_sprite.sprite_raster_left == clip.left);
+				assert(drawing_sprite.sprite_raster_right == clip.right);
+				assert(drawing_sprite.sprite_top == clip.top);
+				assert(drawing_sprite.sprite_bottom == clip.bottom);
+			}
+		}
+	}
 }
 
 static void prepare_legacy_handoff(legacy_s16 *player, legacy_s16 *opponent)
@@ -310,11 +346,13 @@ int main(void)
 {
 	/* Geometry and rectangle merging use the real implementations. Raster
 	 * callbacks fingerprint their arguments and order without a video device.
-	 * Rolled-view baselines include the original long-line slope rounding. */
-	static const legacy_u32 expected[] = {1958318220UL, 1443166741UL, 1150680283UL, 2189361964UL};
+	 * Rolled-view baselines include the original long-line slope rounding and
+	 * full-redraw return flag for whole-viewport fills. */
+	static const legacy_u32 expected[] = {1958318220UL, 2563688993UL, 1150680283UL, 1407887372UL};
 	unsigned i;
 
 	test_level_horizon();
+	test_rolled_full_viewport_redraw();
 	test_legacy_skybox_handoff();
 	for (i = 0; i < 4; i++) {
 		assert(skybox_fingerprint(i & 1U, i >> 1U) == expected[i]);
