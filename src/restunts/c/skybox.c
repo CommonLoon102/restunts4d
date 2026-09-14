@@ -327,7 +327,9 @@ static legacy_s16 skybox_render_rolled(struct RECTANGLE *clip, legacy_s16 direct
 	struct POINT2D points[SKYBOX_ROLL_POINT_COUNT];
 	if (skybox_project_rolled_horizon(direction, rotation, camera_y, points) != 0 ||
 		skybox_clear_outside_horizon(clip, points) != 0) {
-		return 0;
+		/* These paths fill the entire viewport. Retain that dirty region for
+		 * presentation and the next frame, as in asmorig's loc_1CB72. */
+		return 1;
 	}
 	legacy_s16 horizon_delta;
 	struct RECTANGLE work_rect;
