@@ -1,10 +1,11 @@
 # DOS assembly builds
 
-The default assembler is Open Watcom WASM from the pinned installation in
+All assembly targets use Open Watcom WASM from the pinned installation in
 `tools/watcom`. The makefiles use native `binl64/wasm` on Linux and
-`binnt/wasm.exe` on Windows, with `-zcm=tasm` and 8086 code generation.
-`ASSEMBLER=tasm32` selects the bundled fallback; that fallback needs Wine on
-Linux. Compiler and linker selection remains WCC and WLINK in both cases.
+`binnt/wasm.exe` on Windows, with 8086 code generation. `-zcm=tasm` enables
+WASM's built-in compatibility mode for the preserved assembly syntax; it does
+not invoke or require Turbo Assembler. C compilation and linking use WCC and
+WLINK from that same installation.
 
 GNU Make 4.3 or newer is required. Windows includes GNU Make 4.4.1.
 Building the `*-original` targets with WASM also requires Python 3.9 or newer.
@@ -52,9 +53,8 @@ The standard generated directory is
 Generated files are disposable: edit the adapter when its translation needs
 correction, then let Make regenerate them. A grouped Make rule regenerates
 the complete set when an input, include, adapter, or toolchain stamp changes,
-or when any generated source/include is missing. Release/debug and each
-assembler use separate assembly object directories. Platform C objects remain
-shared between assembler choices within a configuration.
+or when any generated source/include is missing. Release and debug builds
+use separate object directories.
 
 ## Original executable layout
 
@@ -102,9 +102,8 @@ to matching original assembly exports and connect the original startup's
 precedence; names without a corresponding assembly export remain for the
 linker to resolve. This preserves the assembly sources and avoids changing
 unrelated runtime symbols. Each original wrapper directory contains its own
-`aliases-<assembler>.lnk`, regenerated when its input objects, makefiles,
-generator, or toolchain stamp change. The alias generator also requires
-Python when selecting a fallback assembler.
+`aliases.lnk`, regenerated when its input objects, makefiles, generator,
+or toolchain stamp change.
 
 These source builds are separate from the independent Borland reference
 binaries under [`tools/oracles/borland`](../tools/oracles/borland/README.md).

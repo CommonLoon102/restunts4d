@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepare deterministic WASM inputs without changing the original TASM sources.
+"""Convert TASM syntax to deterministic WASM inputs without changing the sources.
 
 The adapter preserves 8086 instruction encodings where TASM's accumulator
 selection or SMART state differs from WASM. Unsupported new syntax is rejected

@@ -28,7 +28,7 @@ endif
 C_DIR = ../c/build/watcom/$(CONFIG)/dosfull
 PLATFORM_NAMES = timer runtime memory file keyboard divide joystick mouse video audio critical
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
-PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/wasm
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 SPACE := $(empty) $(empty)
 COMMA := ,

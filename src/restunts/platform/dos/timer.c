@@ -3,8 +3,6 @@
 #include "dos_interrupts.h"
 #include "../../c/fatal.h"
 
-#define getvect _getvect
-
 typedef void interrupt(far *interrupt_handler_type)(void);
 
 #define DOS_TIMER_CALLBACK_CAPACITY 6U
@@ -79,11 +77,11 @@ legacy_s16 dos_timer_register_callback(void(far *callback)(void))
 		return DOS_TIMER_CALLBACK_REGISTRATION_FAILED;
 	}
 
-	disable();
+	_disable();
 	dos_timer_callbacks[callback_index] = 0;
 	dos_timer_callbacks[callback_index] = callback;
 	dos_timer_callbacks[callback_index + 1U] = 0;
-	enable();
+	_enable();
 	return DOS_TIMER_CALLBACK_REGISTRATION_SUCCEEDED;
 }
 
@@ -100,13 +98,13 @@ void dos_timer_unregister_callback(void(far *callback)(void))
 		return;
 	}
 
-	disable();
+	_disable();
 	while (callback_index < DOS_TIMER_LAST_CALLBACK_INDEX) {
 		dos_timer_callbacks[callback_index] = dos_timer_callbacks[callback_index + 1U];
 		callback_index++;
 	}
 	dos_timer_callbacks[DOS_TIMER_LAST_CALLBACK_INDEX] = 0;
-	enable();
+	_enable();
 }
 
 void dos_timer_reset_counter(void)
@@ -123,7 +121,7 @@ static void interrupt dos_timer_interrupt(void)
 {
 	/* Match the original IRQ0 handler: allow nested interrupts after the
 	 * compiler's interrupt prologue has saved the interrupted registers. */
-	enable();
+	_enable();
 	dos_timer_divider = (legacy_u16)(dos_timer_divider - 1U);
 	if (LEGACY_S16_FROM_BITS(dos_timer_divider) <= 0) {
 		dos_timer_slow_low = (legacy_u16)(dos_timer_slow_low + 1U);
@@ -153,10 +151,10 @@ static void interrupt dos_timer_interrupt(void)
 	}
 
 	dos_timer_increment_counter(&dos_timer_counter);
-	disable();
+	_disable();
 	if (dos_timer_in_callbacks == DOS_TIMER_CALLBACKS_IDLE) {
 		dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_RUNNING;
-		enable();
+		_enable();
 		for (legacy_u16 callback_index = 0; callback_index < DOS_TIMER_CALLBACK_CAPACITY;
 			 callback_index++) {
 			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U) {
@@ -199,7 +197,7 @@ static void dos_timer_write_vector(interrupt_handler_type handler)
 
 void dos_timer_shutdown(void)
 {
-	interrupt_handler_type installed_handler = getvect(DOS_TIMER_INTERRUPT_VECTOR);
+	interrupt_handler_type installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt) {
 		return;
 	}
@@ -222,10 +220,10 @@ void dos_timer_setup_interrupt(void)
 	dos_timer_chain_timeout_active = 0;
 	dos_timer_chain_enabled = 1U;
 
-	disable();
+	_disable();
 	dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_IDLE;
 	dos_timer_callbacks[0] = 0;
-	enable();
+	_enable();
 
 	outp(DOS_TIMER_SPEAKER_CONTROL_PORT,
 		 inp(DOS_TIMER_SPEAKER_CONTROL_PORT) & DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK);
@@ -233,7 +231,7 @@ void dos_timer_setup_interrupt(void)
 	legacy_u8 interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
 	outp(DOS_TIMER_PIC_MASK_PORT, interrupt_mask | DOS_TIMER_IRQ_DISABLE_MASK);
 
-	interrupt_handler_type installed_handler = getvect(DOS_TIMER_INTERRUPT_VECTOR);
+	interrupt_handler_type installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt) {
 		previous_timer_interrupt = installed_handler;
 		dos_timer_write_vector(dos_timer_interrupt);
@@ -266,7 +264,7 @@ legacy_u32 timer_get_counter(void)
 legacy_u32 timer_get_delta(void)
 {
 	/* Read and update the 32-bit counters as the original 8086 routine did;
-	 * Borland otherwise emits two independently interruptible word loads. */
+	 * ordinary C reads can be split into independently interruptible words. */
 	legacy_u32 result;
 	__asm {
 		mov     bx, word ptr dos_timer_last_counter
