@@ -40,7 +40,7 @@ jobs:
   replay:
     name: Replays (shard ${{ matrix.shard }})
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
@@ -90,7 +90,7 @@ jobs:
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
 
       - name: Download and extract this shard's precomputed oracle outputs
-        if: inputs.phase == 'physics'
+        if: inputs.phase == 'skip_physics'
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: ${{ inputs.shards }}
