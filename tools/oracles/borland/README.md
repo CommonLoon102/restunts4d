@@ -35,6 +35,7 @@ options must match on both sides. Old MD5 `.PDO`/`.PDD` files are incompatible;
 the shared regression runner rejects and regenerates those caches.
 
 See the [shared regression runner](../../scripts/dumpsrv/README.md) for running
-and merging replay comparisons. CI uses these checked-in oracles, generates
-Murmur32 renderer references locally, and continues using the published physics
-cache. A deliberate oracle change requires provenance and regression review.
+and merging replay comparisons. CI uses these checked-in oracles to generate
+fresh physics and Murmur32 renderer references, then compares them against the
+Watcom-built originals. CI does not download or extract precomputed oracle
+archives. A deliberate oracle change requires provenance and regression review.

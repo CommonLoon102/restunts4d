@@ -1,7 +1,7 @@
 name: Release
 
 # Manually publishes the four executables from any branch. The golden replays
-# get full physics and sampled renderer validation before a release is created.
+# compare Borland and Watcom originals before a release is created.
 on:
   workflow_dispatch:
     inputs:
@@ -98,7 +98,7 @@ jobs:
           notes=$(printf '%s\n' \
               "Built from $GITHUB_REF_NAME at commit $GITHUB_SHA." \
               "" \
-              "The golden replay set was validated against these executables before this release was created.")
+              "The golden replay set was used to compare the Borland and Watcom builds of the original physics and renderer tools.")
           gh release create "$TAG" \
               --repo "$GITHUB_REPOSITORY" \
               --target "$GITHUB_SHA" \

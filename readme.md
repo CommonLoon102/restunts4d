@@ -258,8 +258,9 @@ pixldumo.exe <replay> <camera> <target> <frame>
 | `target` | `0` or `1` | Selects the player (`0`) or opponent (`1`). Opponent mode requires a replay containing an opponent. |
 | `frame` | `0` through `65535` | Exact frame to render. It must not exceed the replay's final frame. Supplying it selects BMP mode. |
 
-With three parameters, the tools generate the normal hash dump. pixldumo writes
-`<replay>.PDO` and pixldump writes `<replay>.PDD`. Each CRLF-terminated row
+With three parameters, both rebuilt tools write the normal hash dump to
+`<replay>.PDD`. The archived Borland pixldumo writes `<replay>.PDO`.
+Each CRLF-terminated row
 contains the decimal frame number, one space, and the MurmurHash3_x86_32 of the
 raw 64,000-byte Mode 13h framebuffer, with seed 0. The hash is eight lowercase
 hexadecimal digits, most significant digit first, including leading zeroes.
@@ -271,7 +272,6 @@ using the game's VGA palette. The filename includes the camera, target, frame,
 and renderer:
 
 ```text
-<replay>.<camera>.<target>.<frame>.PDO.bmp
 <replay>.<camera>.<target>.<frame>.PDD.bmp
 ```
 
@@ -364,14 +364,20 @@ remain available in their individual artifacts if replay validation fails.
 
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
-rendering by default, comparing pixldump `.PDD` files
-against pixldumo `.PDO` files with camera 2 and player target 0.
+rendering by default, using camera 2 and player target 0 for rendering.
 
-Each CI shard verifies the checksums and copies the independent Borland
-executables from `tools/oracles/borland`, then generates fresh `.BIN` and `.PDO`
-outputs alongside the ported `.BNI` and `.PDD` outputs. Both original dump
+Each CI shard replaces the ported `repldump.exe` and `pixldump.exe` candidates
+with the Watcom-built originals, renamed from `repldumo.exe` and `pixldumo.exe`.
+It then verifies the checksums and copies the independent Borland executables
+from `tools/oracles/borland` under the original names. This compares the Borland
+and Watcom builds of the original game code. The build artifact retains all
+six executables under their normal names.
+
+The Borland references write `.BIN` and `.PDO`; the Watcom-built dump tools
+write `.BNI` and `.PDD` directly. Every shard generates fresh oracle outputs;
+no precomputed oracle archive is downloaded or extracted. Both original dump
 wrappers disable timer IRQ0 during offline capture, preventing timing-dependent
-reference data. No precomputed oracle archive is downloaded by the workflow.
+reference data.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
