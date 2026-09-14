@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #define plane_signed_distance frame_test_plane_distance
+#define subst_hillroad_track frame_test_subst_hillroad_track
 #define transform_wheel_travel_to_world frame_test_transform_wheel_travel
 #include "../c/frame.c"
 

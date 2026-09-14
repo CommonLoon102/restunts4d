@@ -32,4 +32,8 @@ typedef char legacy_execution_residue_must_have_expected_size
 
 extern struct LEGACY_EXECUTION_RESIDUE legacy_execution_residue;
 
+/* The word after the original track row-position table belongs to CHHT.
+ * Audio updates its offset; it persists across replay initialization. */
+extern legacy_u16 legacy_closed_hihat_offset;
+
 #endif

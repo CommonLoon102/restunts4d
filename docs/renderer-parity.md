@@ -147,6 +147,20 @@ failed outputs and reference hashes when repeating a test. Historical unmasked
 BIN/PDO caches must be regenerated or checked against the refreshed oracle;
 complete length alone does not prove deterministic contents.
 
+## Track-boundary values
+
+A multi-tile track object at the map edge can read index 30 of the original
+30-word position tables. In the archived data segment, the following row word
+is the closed hi-hat resource pointer's offset; the following column word is
+the live elapsed replay time. Watcom places globals differently, so indexing
+past the C arrays cannot reproduce those values reliably.
+
+`track_row_position` and `track_column_position` model the boundary words
+explicitly for collision, route, and renderer callers. Audio resource mapping
+retains the original hi-hat offset across replay initialization. The fix applies
+to every multi-tile boundary object, including the false collision in `a0457.rpl`.
+Host tests cover row and column boundaries and the audio offset's lifetime.
+
 ## Regression checks
 
 Run `bash src/restunts/tests/run-host-tests.sh` for the host tests. Coverage
