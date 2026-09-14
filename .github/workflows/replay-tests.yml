@@ -92,6 +92,30 @@ jobs:
           # Always generate fresh Borland outputs for this comparison.
           find "$game_dir" -maxdepth 1 -type f \( -iname '*.bin' -o -iname '*.pdo' \) -delete
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
+          
+      - name: Download and extract this shard's precomputed oracle outputs
+        env:
+          SHARD: ${{ matrix.shard }}
+          SHARDS: ${{ inputs.shards }}
+          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
+          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.3
+        run: |
+          set -eu
+          archive=BINs
+          if [[ "$RENDERER_TESTS" == "true" ]]; then
+              archive=PDOs
+          fi
+          zip_path="$RUNNER_TEMP/$archive.zip"
+          # Download only the oracle archive needed by this phase.
+          curl --fail --location --silent --show-error --retry 3 \
+              --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
+          # The full BIN archive expands to over 15 GB. Extract only assigned
+          # replays, using the same sampling and sharding as the test runner.
+          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
+              -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
+              -Renderer "$RENDERER_TESTS" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+              -ShardIndex "$SHARD" -ShardCount "$SHARDS"
+          rm -- "$zip_path"
 
       - name: Run this shard's ${{ inputs.phase }} tests
         env:
