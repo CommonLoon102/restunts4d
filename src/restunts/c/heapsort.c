@@ -5,18 +5,13 @@
 
 void heapsort_by_order(legacy_s16 count, legacy_s16 *values, legacy_s16 *order)
 {
-	legacy_s16 gap;
-	legacy_s16 counter;
-	legacy_s16 index;
-	legacy_s16 temp;
-
-	gap = LEGACY_S16_DIV_OR_ZERO(count, HEAPSORT_GAP_DIVISOR);
+	legacy_s16 gap = LEGACY_S16_DIV_OR_ZERO(count, HEAPSORT_GAP_DIVISOR);
 	while (gap > 0) {
-		counter = gap;
+		legacy_s16 counter = gap;
 		while (counter < count) {
-			index = counter - gap;
+			legacy_s16 index = counter - gap;
 			while (index >= 0 && values[index + gap] > values[index]) {
-				temp = values[index];
+				legacy_s16 temp = values[index];
 				values[index] = values[index + gap];
 				values[index + gap] = temp;
 

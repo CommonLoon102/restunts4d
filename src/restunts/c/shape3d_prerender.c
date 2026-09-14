@@ -109,9 +109,7 @@ static void preRender_default_alt_words(legacy_u16 color, legacy_u16 vertex_coun
 										const legacy_u16 *words)
 {
 	struct POINT2D vertices[SPHERE_VERTEX_COUNT];
-	legacy_u16 index;
-
-	for (index = 0; index < vertex_count; index++) {
+	for (legacy_u16 index = 0; index < vertex_count; index++) {
 		vertices[index].px = LEGACY_S16_FROM_BITS(words[index * PRERENDER_POINT_WORD_COUNT]);
 		vertices[index].py = LEGACY_S16_FROM_BITS(
 			words[index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET]);
@@ -133,16 +131,12 @@ static legacy_u16 sphere_scale_difference(legacy_u16 left, legacy_u16 right, leg
 
 static void sphere_build_coordinate(legacy_u16 *destination)
 {
-	legacy_u16 half_first, quarter_first, three_quarters_first;
-	legacy_u16 half_second, quarter_second, three_quarters_second;
-	legacy_u16 negative_first;
-
-	half_first = sar1_word(destination[0]);
-	quarter_first = sar1_word(half_first);
-	three_quarters_first = LEGACY_U16_WRAP_ADD(half_first, quarter_first);
-	half_second = sar1_word(destination[16]);
-	quarter_second = sar1_word(half_second);
-	three_quarters_second = LEGACY_U16_WRAP_ADD(half_second, quarter_second);
+	legacy_u16 half_first = sar1_word(destination[0]);
+	legacy_u16 quarter_first = sar1_word(half_first);
+	legacy_u16 three_quarters_first = LEGACY_U16_WRAP_ADD(half_first, quarter_first);
+	legacy_u16 half_second = sar1_word(destination[16]);
+	legacy_u16 quarter_second = sar1_word(half_second);
+	legacy_u16 three_quarters_second = LEGACY_U16_WRAP_ADD(half_second, quarter_second);
 	destination[8] =
 		sphere_scale_sum(destination[16], destination[0], SPHERE_DIAGONAL_NORMALIZATION);
 	destination[4] = sphere_scale_sum(destination[0], half_second, SPHERE_HALF_STEP_NORMALIZATION);
@@ -155,7 +149,7 @@ static void sphere_build_coordinate(legacy_u16 *destination)
 									  SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
 	destination[10] = sphere_scale_sum(destination[16], three_quarters_first,
 									   SPHERE_THREE_QUARTER_STEP_NORMALIZATION);
-	negative_first = LEGACY_U16_WRAP_SUB(0, destination[0]);
+	legacy_u16 negative_first = LEGACY_U16_WRAP_SUB(0, destination[0]);
 	destination[24] =
 		sphere_scale_sum(destination[16], negative_first, SPHERE_DIAGONAL_NORMALIZATION);
 	destination[28] = sphere_scale_sum(half_second, negative_first, SPHERE_HALF_STEP_NORMALIZATION);
@@ -173,10 +167,6 @@ static void sphere_build_coordinate(legacy_u16 *destination)
 
 void sphere_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 {
-	legacy_u16 index;
-	legacy_u16 center_x;
-	legacy_u16 center_y;
-
 	destination[0] = LEGACY_U16_WRAP_SUB(source[2], source[0]);
 	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
 	destination[16] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
@@ -184,9 +174,9 @@ void sphere_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 	sphere_build_coordinate(destination);
 	sphere_build_coordinate(destination + PRERENDER_POINT_Y_OFFSET);
 
-	center_x = (legacy_u16)source[0];
-	center_y = (legacy_u16)source[1];
-	for (index = 0; index < SPHERE_PERIMETER_POINT_COUNT; index++) {
+	legacy_u16 center_x = (legacy_u16)source[0];
+	legacy_u16 center_y = (legacy_u16)source[1];
+	for (legacy_u16 index = 0; index < SPHERE_PERIMETER_POINT_COUNT; index++) {
 		destination[SPHERE_MIRROR_WORD_OFFSET + index * PRERENDER_POINT_WORD_COUNT] =
 			LEGACY_U16_WRAP_SUB(center_x, destination[index * PRERENDER_POINT_WORD_COUNT]);
 		destination[SPHERE_MIRROR_WORD_OFFSET + index * PRERENDER_POINT_WORD_COUNT +
@@ -213,14 +203,6 @@ void sphere_draw_polygon(legacy_u16 *source, legacy_u16 color)
 
 void wheel_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 {
-	legacy_u16 half_x1;
-	legacy_u16 half_y1;
-	legacy_u16 half_x2;
-	legacy_u16 half_y2;
-	legacy_u16 index;
-	legacy_u16 center_x;
-	legacy_u16 center_y;
-
 	destination[0] = LEGACY_U16_WRAP_SUB(source[2], source[0]);
 	destination[1] = LEGACY_U16_WRAP_SUB(source[3], source[1]);
 	destination[8] = LEGACY_U16_WRAP_SUB(source[4], source[0]);
@@ -229,12 +211,12 @@ void wheel_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 		sphere_scale_sum(destination[8], destination[0], SPHERE_DIAGONAL_NORMALIZATION);
 	destination[5] =
 		sphere_scale_sum(destination[1], destination[9], SPHERE_DIAGONAL_NORMALIZATION);
-	half_x2 = sar1_word((legacy_u16)destination[8]);
-	half_y2 = sar1_word((legacy_u16)destination[9]);
+	legacy_u16 half_x2 = sar1_word((legacy_u16)destination[8]);
+	legacy_u16 half_y2 = sar1_word((legacy_u16)destination[9]);
 	destination[2] = sphere_scale_sum(destination[0], half_x2, SPHERE_HALF_STEP_NORMALIZATION);
 	destination[3] = sphere_scale_sum(destination[1], half_y2, SPHERE_HALF_STEP_NORMALIZATION);
-	half_x1 = sar1_word((legacy_u16)destination[0]);
-	half_y1 = sar1_word((legacy_u16)destination[1]);
+	legacy_u16 half_x1 = sar1_word((legacy_u16)destination[0]);
+	legacy_u16 half_y1 = sar1_word((legacy_u16)destination[1]);
 	destination[6] = sphere_scale_sum(destination[8], half_x1, SPHERE_HALF_STEP_NORMALIZATION);
 	destination[7] = sphere_scale_sum(destination[9], half_y1, SPHERE_HALF_STEP_NORMALIZATION);
 	destination[12] =
@@ -250,9 +232,9 @@ void wheel_build_perimeter(legacy_u16 *source, legacy_u16 *destination)
 	destination[11] =
 		sphere_scale_difference(destination[9], half_y1, SPHERE_HALF_STEP_NORMALIZATION);
 
-	center_x = (legacy_u16)source[0];
-	center_y = (legacy_u16)source[1];
-	for (index = 0; index < 8U; index++) {
+	legacy_u16 center_x = (legacy_u16)source[0];
+	legacy_u16 center_y = (legacy_u16)source[1];
+	for (legacy_u16 index = 0; index < 8U; index++) {
 		destination[16U + index * 2U] = LEGACY_U16_WRAP_SUB(center_x, destination[index * 2U]);
 		destination[17U + index * 2U] = LEGACY_U16_WRAP_SUB(center_y, destination[index * 2U + 1U]);
 		destination[index * 2U] = LEGACY_U16_WRAP_ADD(destination[index * 2U], center_x);
@@ -270,14 +252,10 @@ static legacy_u16 wheel_interpolate(legacy_u16 center, legacy_u16 target, legacy
 
 void wheel_build_rim_perimeters(legacy_u16 *source, legacy_u16 *destination, legacy_u16 scale)
 {
+	legacy_u16 center_x = (legacy_u16)source[0];
+	legacy_u16 center_y = (legacy_u16)source[1];
+	legacy_u16 scale_bits = (legacy_u16)scale;
 	legacy_u16 inner_source[6];
-	legacy_u16 center_x;
-	legacy_u16 center_y;
-	legacy_u16 scale_bits;
-
-	center_x = (legacy_u16)source[0];
-	center_y = (legacy_u16)source[1];
-	scale_bits = (legacy_u16)scale;
 	inner_source[0] = center_x;
 	inner_source[1] = center_y;
 	inner_source[2] = wheel_interpolate(center_x, (legacy_u16)source[2], scale_bits);
@@ -290,14 +268,10 @@ void wheel_build_rim_perimeters(legacy_u16 *source, legacy_u16 *destination, leg
 
 void wheel_build_vertices(legacy_u16 *source, legacy_u16 *destination, legacy_u16 scale)
 {
-	legacy_u16 offset_x;
-	legacy_u16 offset_y;
-	legacy_u16 index;
-
 	wheel_build_rim_perimeters(source, destination, scale);
-	offset_x = LEGACY_U16_WRAP_SUB(source[6], source[0]);
-	offset_y = LEGACY_U16_WRAP_SUB(source[7], source[1]);
-	for (index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+	legacy_u16 offset_x = LEGACY_U16_WRAP_SUB(source[6], source[0]);
+	legacy_u16 offset_y = LEGACY_U16_WRAP_SUB(source[7], source[1]);
+	for (legacy_u16 index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
 		destination[WHEEL_DEPTH_WORD_OFFSET + index * PRERENDER_POINT_WORD_COUNT] =
 			LEGACY_U16_WRAP_ADD(destination[index * PRERENDER_POINT_WORD_COUNT], offset_x);
 		destination[WHEEL_DEPTH_WORD_OFFSET + index * PRERENDER_POINT_WORD_COUNT +
@@ -312,18 +286,15 @@ static void preRender_wheel_side(const legacy_u16 *wheel_points, legacy_u16 mini
 								 legacy_u16 reverse, legacy_u16 color)
 {
 	legacy_u16 side[WHEEL_SIDE_WORD_COUNT];
-	legacy_u16 step;
-	legacy_u16 point_index;
-	legacy_u16 destination_index;
-
-	for (step = 0; step < WHEEL_SIDE_HALF_POINT_COUNT; step++) {
+	for (legacy_u16 step = 0; step < WHEEL_SIDE_HALF_POINT_COUNT; step++) {
+		legacy_u16 point_index;
 		if (reverse == 0U) {
 			point_index = (legacy_u16)((minimum_index + step) & WHEEL_PERIMETER_INDEX_MASK);
 		} else {
 			point_index = (legacy_u16)((minimum_index + WHEEL_PERIMETER_POINT_COUNT - step) &
 									   WHEEL_PERIMETER_INDEX_MASK);
 		}
-		destination_index = (legacy_u16)(step * PRERENDER_POINT_WORD_COUNT);
+		legacy_u16 destination_index = (legacy_u16)(step * PRERENDER_POINT_WORD_COUNT);
 		side[destination_index] = wheel_points[point_index * PRERENDER_POINT_WORD_COUNT];
 		side[destination_index + PRERENDER_POINT_Y_OFFSET] =
 			wheel_points[point_index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET];
@@ -342,21 +313,16 @@ void preRender_wheel(const struct POINT2D *source, legacy_u16 scale, legacy_u16 
 					 legacy_u16 side_color, legacy_u16 inner_color)
 {
 	legacy_u16 source_words[WHEEL_SOURCE_WORD_COUNT];
-	legacy_u16 wheel_points[WHEEL_POINT_WORD_COUNT];
-	legacy_u16 quad[WHEEL_QUAD_WORD_COUNT];
-	legacy_u16 index;
-	legacy_u16 next_index;
-	legacy_u16 minimum_index;
-	legacy_u16 minimum_y;
-
-	for (index = 0; index < WHEEL_SOURCE_POINT_COUNT; index++) {
+	for (legacy_u16 index = 0; index < WHEEL_SOURCE_POINT_COUNT; index++) {
 		source_words[index * PRERENDER_POINT_WORD_COUNT] = (legacy_u16)source[index].px;
 		source_words[index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET] =
 			(legacy_u16)source[index].py;
 	}
+	legacy_u16 wheel_points[WHEEL_POINT_WORD_COUNT];
 	wheel_build_vertices(source_words, wheel_points, scale);
-	for (index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
-		next_index = (legacy_u16)((index + 1U) & WHEEL_PERIMETER_INDEX_MASK);
+	legacy_u16 quad[WHEEL_QUAD_WORD_COUNT];
+	for (legacy_u16 index = 0; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+		legacy_u16 next_index = (legacy_u16)((index + 1U) & WHEEL_PERIMETER_INDEX_MASK);
 		quad[0] = wheel_points[index * PRERENDER_POINT_WORD_COUNT];
 		quad[1] = wheel_points[index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET];
 		quad[2] = wheel_points[next_index * PRERENDER_POINT_WORD_COUNT];
@@ -370,9 +336,9 @@ void preRender_wheel(const struct POINT2D *source, legacy_u16 scale, legacy_u16 
 		preRender_default_alt_words(outer_color, WHEEL_QUAD_POINT_COUNT, quad);
 	}
 
-	minimum_index = 0;
-	minimum_y = (legacy_u16)wheel_points[1];
-	for (index = 1; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
+	legacy_u16 minimum_y = (legacy_u16)wheel_points[1];
+	legacy_u16 minimum_index = 0;
+	for (legacy_u16 index = 1; index < WHEEL_PERIMETER_POINT_COUNT; index++) {
 		if (LEGACY_S16_FROM_BITS(
 				wheel_points[index * PRERENDER_POINT_WORD_COUNT + PRERENDER_POINT_Y_OFFSET]) <
 			LEGACY_S16_FROM_BITS(minimum_y)) {
@@ -404,20 +370,14 @@ struct SPHERE_RASTER {
 static legacy_s16 sphere_build_spans(struct SPHERE_RASTER *sphere, legacy_s16 *left_edges,
 									 legacy_s16 *right_edges)
 {
-	legacy_u16 left, right;
-	legacy_u16 output_index;
-	legacy_u8 *radii;
-	legacy_u8 radius;
-	legacy_s16 mirror_offset;
-
-	radii = sphere_radius_rows[sphere->half_width];
+	legacy_u8 *radii = sphere_radius_rows[sphere->half_width];
 	sphere->line_count = sphere->effective_height;
-	mirror_offset = (legacy_s16)((sphere->effective_height - 1U) << 1);
-	output_index = 0;
+	legacy_s16 mirror_offset = (legacy_s16)((sphere->effective_height - 1U) << 1);
+	legacy_u16 output_index = 0;
 	for (;;) {
-		radius = *radii++;
-		left = LEGACY_U16_WRAP_SUB(sphere->x_bits, radius);
-		right = LEGACY_U16_WRAP_ADD(sphere->x_bits, radius);
+		legacy_u8 radius = *radii++;
+		legacy_u16 left = LEGACY_U16_WRAP_SUB(sphere->x_bits, radius);
+		legacy_u16 right = LEGACY_U16_WRAP_ADD(sphere->x_bits, radius);
 		if (LEGACY_S16_FROM_BITS(left) > LEGACY_S16_FROM_BITS(sphere->right_bound) ||
 			LEGACY_S16_FROM_BITS(right) < LEGACY_S16_FROM_BITS(sphere->left_bound)) {
 			sphere->top = LEGACY_U16_WRAP_ADD(sphere->top, 1U);
@@ -451,11 +411,8 @@ static legacy_s16 sphere_build_spans(struct SPHERE_RASTER *sphere, legacy_s16 *l
 static void sphere_draw_spans(struct SPHERE_RASTER *sphere, legacy_s16 *left_edges,
 							  legacy_s16 *right_edges, legacy_u16 color)
 {
-	legacy_u16 skip_lines;
-	legacy_s16 clip_delta;
-
-	skip_lines = 0;
-	clip_delta = LEGACY_S16_WRAP_SUB(drawing_sprite.sprite_top, sphere->top);
+	legacy_s16 clip_delta = LEGACY_S16_WRAP_SUB(drawing_sprite.sprite_top, sphere->top);
+	legacy_u16 skip_lines = 0;
 	if (clip_delta > 0) {
 		sphere->line_count = LEGACY_U16_WRAP_SUB(sphere->line_count, clip_delta);
 		skip_lines = (legacy_u16)clip_delta;
@@ -473,10 +430,6 @@ static void sphere_draw_spans(struct SPHERE_RASTER *sphere, legacy_s16 *left_edg
 void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 color)
 {
 	struct SPHERE_RASTER sphere;
-	legacy_s16 left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	legacy_s16 right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
-	legacy_u16 helper_points[6];
-
 	sphere.x_bits = (legacy_u16)x;
 	sphere.y_bits = (legacy_u16)y;
 	sphere.size_bits = (legacy_u16)size;
@@ -517,6 +470,7 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 	}
 
 	sphere.half_width = LEGACY_U16_WRAP_SUB(sphere.effective_height, sphere.half_height);
+	legacy_u16 helper_points[6];
 	if (sphere.half_width >= SPHERE_RASTER_TABLE_LIMIT) {
 		helper_points[0] = sphere.x_bits;
 		helper_points[1] = sphere.y_bits;
@@ -528,6 +482,8 @@ void preRender_sphere(legacy_s16 x, legacy_s16 y, legacy_u16 size, legacy_u16 co
 		return;
 	}
 
+	legacy_s16 right_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
+	legacy_s16 left_edges[SPHERE_RASTER_TABLE_LIMIT * 2U];
 	if (sphere_build_spans(&sphere, left_edges, right_edges)) {
 		sphere_draw_spans(&sphere, left_edges, right_edges, color);
 	}
@@ -580,8 +536,6 @@ struct POLYGON_RASTER {
 static void polygon_find_bounds(const struct POINT2D *vertices, legacy_u16 vertex_count,
 								struct POLYGON_RASTER *raster)
 {
-	legacy_s16 vertex_index;
-
 	raster->clip_left = drawing_sprite.sprite_raster_left;
 	raster->clip_right = drawing_sprite.sprite_raster_right - 1;
 	raster->clip_top = drawing_sprite.sprite_top;
@@ -592,7 +546,7 @@ static void polygon_find_bounds(const struct POINT2D *vertices, legacy_u16 verte
 	raster->bottom_vertex = vertices;
 	raster->bottom_y = raster->top_y = vertices->py;
 	raster->max_x = raster->min_x = vertices->px;
-	for (vertex_index = 1; vertex_index < vertex_count; vertex_index++) {
+	for (legacy_s16 vertex_index = 1; vertex_index < vertex_count; vertex_index++) {
 		if (vertices[vertex_index].py <= raster->top_y) {
 			raster->top_y = vertices[vertex_index].py;
 			raster->top_vertex = &vertices[vertex_index];
@@ -629,10 +583,8 @@ static void polygon_prepare_segment(const struct POINT2D *start, const struct PO
 static void polygon_generate_first_side(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
 										legacy_u16 *line_setup)
 {
-	const struct POINT2D *current_vertex;
+	const struct POINT2D *current_vertex = raster->top_vertex;
 	const struct POINT2D *start_vertex;
-
-	current_vertex = raster->top_vertex;
 	do {
 		start_vertex = current_vertex;
 		current_vertex++;
@@ -652,10 +604,8 @@ static void polygon_generate_first_side(const struct POLYGON_RASTER *raster, leg
 static void polygon_merge_second_side(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
 									  legacy_u16 *line_setup, legacy_u16 choose_edge_per_row)
 {
-	const struct POINT2D *current_vertex;
+	const struct POINT2D *current_vertex = raster->top_vertex;
 	const struct POINT2D *start_vertex;
-
-	current_vertex = raster->top_vertex;
 	do {
 		start_vertex = current_vertex;
 		if (current_vertex == raster->first_vertex) {
@@ -675,17 +625,15 @@ static void polygon_merge_second_side(const struct POLYGON_RASTER *raster, legac
 static void polygon_draw_spans(const struct POLYGON_RASTER *raster, legacy_s16 *edges,
 							   legacy_u16 color)
 {
-	legacy_s16 bottom, top, line_count;
-
-	bottom = raster->bottom_y;
+	legacy_s16 bottom = raster->bottom_y;
 	if (bottom >= raster->clip_bottom) {
 		bottom = raster->clip_bottom - 1;
 	}
-	top = raster->top_y;
+	legacy_s16 top = raster->top_y;
 	if (top < raster->clip_top) {
 		top = raster->clip_top;
 	}
-	line_count = bottom - top;
+	legacy_s16 line_count = bottom - top;
 	if (line_count <= 0) {
 		return;
 	}
@@ -696,13 +644,10 @@ static void polygon_draw_spans(const struct POLYGON_RASTER *raster, legacy_s16 *
 static void polygon_rasterize(legacy_u16 color, legacy_u16 vertex_count,
 							  const struct POINT2D *vertices, legacy_u16 choose_edge_per_row)
 {
-	legacy_s16 edge_tables[PRERENDER_EDGE_ROW_CAPACITY * PRERENDER_EDGE_TABLE_COUNT];
-	legacy_u16 line_setup[DRAW_LINE_WORD_COUNT * PRERENDER_LINE_BUFFER_COUNT];
-	struct POLYGON_RASTER raster;
-
 	if (vertex_count == 0U) {
 		return;
 	}
+	struct POLYGON_RASTER raster;
 	polygon_find_bounds(vertices, vertex_count, &raster);
 	if (vertex_count == 1U) {
 		imagefunc(vertices->px, vertices->py, vertices->px, vertices->py, color);
@@ -720,6 +665,8 @@ static void polygon_rasterize(legacy_u16 color, legacy_u16 vertex_count,
 		imagefunc(raster.min_x, raster.top_y, raster.max_x, raster.bottom_y, color);
 		return;
 	}
+	legacy_u16 line_setup[DRAW_LINE_WORD_COUNT * PRERENDER_LINE_BUFFER_COUNT];
+	legacy_s16 edge_tables[PRERENDER_EDGE_ROW_CAPACITY * PRERENDER_EDGE_TABLE_COUNT];
 	polygon_generate_first_side(&raster, edge_tables, line_setup);
 	polygon_merge_second_side(&raster, edge_tables, line_setup, choose_edge_per_row);
 	polygon_draw_spans(&raster, edge_tables, color);
@@ -728,9 +675,7 @@ static void polygon_rasterize(legacy_u16 color, legacy_u16 vertex_count,
 static void generate_poly_edge_fill(legacy_s16 *edges, legacy_s16 offset, legacy_s16 count,
 									legacy_s16 boundary)
 {
-	legacy_s16 index;
-
-	for (index = 0; index < count; index++) {
+	for (legacy_s16 index = 0; index < count; index++) {
 		edges[offset + index] = boundary;
 		edges[PRERENDER_EDGE_ROW_CAPACITY + offset + index] = boundary - 1;
 	}
@@ -740,13 +685,11 @@ static void generate_poly_edge_padding(legacy_s16 *edges, const legacy_u16 *setu
 									   legacy_u16 count_index, legacy_s16 boundary,
 									   legacy_s16 leading)
 {
-	legacy_s16 count;
-	legacy_s16 offset;
-
-	count = LEGACY_S16_FROM_BITS(setup[count_index]);
+	legacy_s16 count = LEGACY_S16_FROM_BITS(setup[count_index]);
 	if (count <= 0) {
 		return;
 	}
+	legacy_s16 offset;
 	if (leading != 0) {
 		offset = LEGACY_S16_WRAP_SUB(LEGACY_S16_FROM_BITS(setup[DRAW_LINE_START_Y_INDEX]), count);
 		if (LEGACY_S16_FROM_BITS(setup[DRAW_LINE_START_Y_FRACTION_INDEX]) < 0) {
@@ -761,8 +704,7 @@ static void generate_poly_edge_padding(legacy_s16 *edges, const legacy_u16 *setu
 static void generate_poly_vertical(legacy_s16 *edges, const legacy_u16 *line_setup,
 								   legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		edges[row_index + step_index] = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
 		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
 			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]);
@@ -772,8 +714,7 @@ static void generate_poly_vertical(legacy_s16 *edges, const legacy_u16 *line_set
 static void generate_poly_diagonal_left(legacy_s16 *edges, const legacy_u16 *line_setup,
 										legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		edges[row_index + step_index] = LEGACY_S16_WRAP_SUB(
 			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
 		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_SUB(
@@ -784,8 +725,7 @@ static void generate_poly_diagonal_left(legacy_s16 *edges, const legacy_u16 *lin
 static void generate_poly_diagonal_right(legacy_s16 *edges, const legacy_u16 *line_setup,
 										 legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		edges[row_index + step_index] = LEGACY_S16_WRAP_ADD(
 			LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_X_INDEX]), step_index);
 		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] = LEGACY_S16_WRAP_ADD(
@@ -796,13 +736,11 @@ static void generate_poly_diagonal_right(legacy_s16 *edges, const legacy_u16 *li
 static void generate_poly_y_major(legacy_s16 *edges, const legacy_u16 *line_setup,
 								  legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	legacy_u32 x_position;
-	x_position =
+	legacy_u32 x_position =
 		LEGACY_U32_WRAP_ADD(LEGACY_U32_FROM_WORDS(line_setup[DRAW_LINE_START_X_FRACTION_INDEX],
 												  line_setup[DRAW_LINE_START_X_INDEX]),
 							DRAW_LINE_FIXED_ROUNDING);
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		edges[row_index + step_index] =
 			LEGACY_S16_FROM_BITS((legacy_u16)(x_position >> LEGACY_WORD_BITS));
 		edges[PRERENDER_EDGE_ROW_CAPACITY + row_index + step_index] =
@@ -820,17 +758,14 @@ static void generate_poly_y_major(legacy_s16 *edges, const legacy_u16 *line_setu
 static void generate_poly_x_major_left(legacy_s16 *edges, const legacy_u16 *line_setup,
 									   legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	legacy_u32 x_position;
-	legacy_u32 y_fraction;
-	x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
-	y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
+	legacy_u32 x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
+	legacy_u32 y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
 	if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
 		row_index++;
 	}
 	y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
 	edges[PRERENDER_EDGE_ROW_CAPACITY + row_index] = x_position;
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
 			PRERENDER_FIXED_CARRY_LIMIT) {
 			x_position--;
@@ -852,17 +787,14 @@ static void generate_poly_x_major_left(legacy_s16 *edges, const legacy_u16 *line
 static void generate_poly_x_major_right(legacy_s16 *edges, const legacy_u16 *line_setup,
 										legacy_s16 step_count, legacy_s16 row_index)
 {
-	legacy_s16 step_index;
-	legacy_u32 x_position;
-	legacy_u32 y_fraction;
-	x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
-	y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
+	legacy_u32 x_position = (legacy_u16)line_setup[DRAW_LINE_START_X_INDEX];
+	legacy_u32 y_fraction = (legacy_u16)line_setup[DRAW_LINE_START_Y_FRACTION_INDEX];
 	if (y_fraction + DRAW_LINE_FIXED_ROUNDING > PRERENDER_FIXED_CARRY_LIMIT) {
 		row_index++;
 	}
 	y_fraction = (y_fraction + DRAW_LINE_FIXED_ROUNDING) & LEGACY_U16_MAX;
 	edges[row_index] = x_position;
-	for (step_index = 0; step_index < step_count; step_index++) {
+	for (legacy_s16 step_index = 0; step_index < step_count; step_index++) {
 		if (y_fraction + (legacy_u16)line_setup[DRAW_LINE_STEP_INDEX] <=
 			PRERENDER_FIXED_CARRY_LIMIT) {
 			x_position++;
@@ -883,10 +815,8 @@ static void generate_poly_x_major_right(legacy_s16 *edges, const legacy_u16 *lin
 
 void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy_s16 clipping_mode)
 {
-
 	legacy_s16 clip_left = drawing_sprite.sprite_raster_left;
 	legacy_s16 clip_right = drawing_sprite.sprite_raster_right;
-	legacy_s16 step_count, row_index;
 
 	if (clipping_mode != PRERENDER_EDGE_UNCLIPPED_MODE) {
 		generate_poly_edge_padding(edges, line_setup, DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX,
@@ -899,12 +829,12 @@ void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy
 								   clip_right, 0);
 	}
 
-	step_count = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 step_count = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_PIXEL_COUNT_INDEX]);
 	if (step_count <= 0) {
 		return;
 	}
 
-	row_index = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_Y_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line_setup[DRAW_LINE_START_Y_INDEX]);
 
 	switch ((legacy_u8)line_setup[DRAW_LINE_MODE_AND_CLIP_INDEX]) {
 		case DRAW_LINE_MODE_HORIZONTAL_REVERSED:
@@ -957,15 +887,10 @@ static void prerender_extend_edge(legacy_s16 *left_edges, legacy_s16 *right_edge
 static void prerender_merge_linear_rows(const legacy_u16 *line, legacy_s16 *left_edges,
 										legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 mode;
-	legacy_s16 count;
-	legacy_s16 row_index;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_u16 mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
 	while (count-- > 0) {
 		if (right_edges[row_index] < x_position) {
 			right_edges[row_index] = x_position;
@@ -984,21 +909,15 @@ static void prerender_merge_linear_rows(const legacy_u16 *line, legacy_s16 *left
 static void prerender_merge_fractional_rows(const legacy_u16 *line, legacy_s16 *left_edges,
 											legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 step;
-	legacy_u16 mode;
-	legacy_u32 fixed_x;
-	legacy_s16 count;
-	legacy_s16 row_index;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
-	fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
-			  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_u16 mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_u32 fixed_x =
+		((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+		(legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
 	fixed_x += DRAW_LINE_FIXED_ROUNDING;
-	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	legacy_u16 step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
 	while (count-- > 0) {
 		x_position = LEGACY_S16_FROM_BITS((legacy_u16)(fixed_x >> LEGACY_WORD_BITS));
 		if (right_edges[row_index] < x_position) {
@@ -1018,29 +937,19 @@ static void prerender_merge_fractional_rows(const legacy_u16 *line, legacy_s16 *
 static void prerender_merge_x_major_rows(const legacy_u16 *line, legacy_s16 *left_edges,
 										 legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 fraction;
-	legacy_u16 step;
-	legacy_u16 mode;
-	legacy_u32 sum;
-	legacy_s16 count;
-	legacy_s16 row_index;
-	legacy_s16 carry;
-	legacy_s16 to_left;
-	legacy_s16 x_step;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_u16 mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
 	/* Mode 7 walks the span right-to-left and mode 8
 	 * left-to-right, which only swaps which edge array
 	 * opens a row and which one closes it. */
-	to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
-	x_step = to_left ? -1 : 1;
-	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
-	fraction = (legacy_u16)sum;
+	legacy_s16 to_left = mode == DRAW_LINE_MODE_X_MAJOR_LEFT ? 1 : 0;
+	legacy_s16 x_step = to_left ? -1 : 1;
+	legacy_u16 step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	legacy_u32 sum =
+		(legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	legacy_u16 fraction = (legacy_u16)sum;
 	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
 		row_index++;
 	}
@@ -1048,7 +957,7 @@ static void prerender_merge_x_major_rows(const legacy_u16 *line, legacy_s16 *lef
 	while (count > 0) {
 		sum = (legacy_u32)fraction + step;
 		fraction = (legacy_u16)sum;
-		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		legacy_s16 carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 		if (carry) {
 			prerender_extend_edge(left_edges, right_edges, row_index, x_position, to_left);
 			row_index++;
@@ -1071,23 +980,16 @@ static void prerender_merge_x_major_rows(const legacy_u16 *line, legacy_s16 *lef
 static void prerender_merge_fixed_y_edge(const legacy_u16 *line, legacy_s16 *left_edges,
 										 legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 step;
-	legacy_u16 mode;
-	legacy_u32 fixed_x;
-	legacy_s16 count;
-	legacy_s16 row_index;
-	legacy_s16 target_edge;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
-	fixed_x = ((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
-			  (legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_u16 mode = (legacy_u8)line[DRAW_LINE_MODE_AND_CLIP_INDEX];
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_u32 fixed_x =
+		((legacy_u32)(legacy_u16)line[DRAW_LINE_START_X_INDEX] << LEGACY_WORD_BITS) |
+		(legacy_u16)line[DRAW_LINE_START_X_FRACTION_INDEX];
 	fixed_x += DRAW_LINE_FIXED_ROUNDING;
-	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-	target_edge = 0;
+	legacy_u16 step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	legacy_s16 target_edge = 0;
 
 	while (count > 0) {
 		x_position = mode >= DRAW_LINE_MODE_Y_MAJOR_LEFT
@@ -1129,11 +1031,9 @@ static void prerender_finish_fixed_left(legacy_s16 *right_edges, legacy_s16 x_po
 										legacy_s16 count, legacy_s16 row_index, legacy_u16 fraction,
 										legacy_u16 step)
 {
-	legacy_u32 sum;
-
 	while (count > 0) {
 		x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
-		sum = (legacy_u32)fraction + step;
+		legacy_u32 sum = (legacy_u32)fraction + step;
 		fraction = (legacy_u16)sum;
 		count--;
 		if (count > 0 && sum > PRERENDER_FIXED_CARRY_LIMIT) {
@@ -1145,20 +1045,13 @@ static void prerender_finish_fixed_left(legacy_s16 *right_edges, legacy_s16 x_po
 static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *left_edges,
 											legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 fraction;
-	legacy_u16 step;
-	legacy_u32 sum;
-	legacy_s16 count;
-	legacy_s16 row_index;
-	legacy_s16 carry;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
-	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
-	fraction = (legacy_u16)sum;
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_u16 step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	legacy_u32 sum =
+		(legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	legacy_u16 fraction = (legacy_u16)sum;
 	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
 		row_index++;
 	}
@@ -1172,7 +1065,7 @@ static void prerender_merge_fixed_left_edge(const legacy_u16 *line, legacy_s16 *
 
 		sum = (legacy_u32)fraction + step;
 		fraction = (legacy_u16)sum;
-		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		legacy_s16 carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 		if (carry && left_edges[row_index] > x_position) {
 			left_edges[row_index++] = x_position;
 			x_position = LEGACY_S16_WRAP_SUB(x_position, 1);
@@ -1205,10 +1098,8 @@ static void prerender_finish_fixed_right(legacy_s16 *left_edges, legacy_s16 x_po
 										 legacy_s16 count, legacy_s16 row_index,
 										 legacy_u16 fraction, legacy_u16 step)
 {
-	legacy_u32 sum;
-
 	while (count > 0) {
-		sum = (legacy_u32)fraction + step;
+		legacy_u32 sum = (legacy_u32)fraction + step;
 		fraction = (legacy_u16)sum;
 		if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
 			left_edges[row_index++] = x_position;
@@ -1221,20 +1112,13 @@ static void prerender_finish_fixed_right(legacy_s16 *left_edges, legacy_s16 x_po
 static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 *left_edges,
 											 legacy_s16 *right_edges)
 {
-	legacy_s16 x_position;
-	legacy_u16 fraction;
-	legacy_u16 step;
-	legacy_u32 sum;
-	legacy_s16 count;
-	legacy_s16 row_index;
-	legacy_s16 carry;
-
-	x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
-	row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
-	step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
-	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
-	fraction = (legacy_u16)sum;
+	legacy_s16 x_position = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]);
+	legacy_s16 row_index = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]);
+	legacy_u16 step = (legacy_u16)line[DRAW_LINE_STEP_INDEX];
+	legacy_u32 sum =
+		(legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	legacy_u16 fraction = (legacy_u16)sum;
 	if (sum > PRERENDER_FIXED_CARRY_LIMIT) {
 		row_index++;
 	}
@@ -1250,7 +1134,7 @@ static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 
 
 		sum = (legacy_u32)fraction + step;
 		fraction = (legacy_u16)sum;
-		carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+		legacy_s16 carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
 		if (carry && right_edges[row_index] < x_position) {
 			right_edges[row_index] = x_position;
 			while (count > 0) {
@@ -1285,15 +1169,12 @@ static void prerender_merge_fixed_right_edge(const legacy_u16 *line, legacy_s16 
 static void prerender_merge_clip_padding(const legacy_u16 *line, legacy_s16 *left_edges,
 										 legacy_s16 *right_edges)
 {
-	legacy_u32 sum;
-	legacy_s16 count;
+	legacy_u32 sum =
+		(legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
+	legacy_s16 carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
+
+	legacy_s16 count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX]);
 	legacy_s16 row_index;
-	legacy_s16 carry;
-
-	sum = (legacy_u32)(legacy_u16)line[DRAW_LINE_START_Y_FRACTION_INDEX] + DRAW_LINE_FIXED_ROUNDING;
-	carry = sum > PRERENDER_FIXED_CARRY_LIMIT;
-
-	count = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX]);
 	if (count > 0) {
 		row_index = LEGACY_S16_WRAP_SUB(
 			LEGACY_S16_WRAP_ADD(LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_Y_INDEX]), carry), count);

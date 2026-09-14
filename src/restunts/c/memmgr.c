@@ -92,11 +92,8 @@ struct MEMCHUNK *mmgr_last_live_chunk = resources;
 
 const legacy_s8 *mmgr_path_to_name(const legacy_s8 *filename)
 {
-	const legacy_s8 *c;
-	const legacy_s8 *result;
-
-	result = filename;
-	for (c = filename; *c; c++) {
+	const legacy_s8 *result = filename;
+	for (const legacy_s8 *c = filename; *c; c++) {
 		if (*c == ':' || *c == '\\') {
 			result = c + 1;
 		}
@@ -107,15 +104,9 @@ const legacy_s8 *mmgr_path_to_name(const legacy_s8 *filename)
 
 void far *mmgr_alloc_pages(const legacy_s8 *name, legacy_u16 paragraphs)
 {
-	legacy_s16 name_index;
-	struct MEMCHUNK *live_chunk;
-	struct MEMCHUNK *cached_chunk;
-	const legacy_s8 *chunkname;
-	legacy_u16 size_or_end_segment, start_segment;
-
-	live_chunk = mmgr_last_live_chunk;
-	cached_chunk = mmgr_first_cached_chunk;
-	start_segment = live_chunk->resofs + live_chunk->ressize;
+	struct MEMCHUNK *live_chunk = mmgr_last_live_chunk;
+	struct MEMCHUNK *cached_chunk = mmgr_first_cached_chunk;
+	legacy_u16 start_segment = live_chunk->resofs + live_chunk->ressize;
 
 	live_chunk++;
 	if (cached_chunk <= live_chunk) {
@@ -128,12 +119,12 @@ void far *mmgr_alloc_pages(const legacy_s8 *name, legacy_u16 paragraphs)
 	}
 
 	mmgr_last_live_chunk = live_chunk;
-	chunkname = mmgr_path_to_name(name);
-	for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+	const legacy_s8 *chunkname = mmgr_path_to_name(name);
+	for (legacy_s16 name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 		live_chunk->resname[name_index] = chunkname[name_index];
 	}
 
-	size_or_end_segment = paragraphs;
+	legacy_u16 size_or_end_segment = paragraphs;
 	live_chunk->resofs = start_segment;
 	live_chunk->ressize = size_or_end_segment;
 	live_chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
@@ -172,19 +163,14 @@ void far *mmgr_alloc_resbytes(const legacy_s8 *name, legacy_s32 size)
 
 void mmgr_alloc_resmem(legacy_u16 end_segment)
 {
-
-	void far *psp;
-	legacy_u16 maxblocks;
-	struct MEMCHUNK *chunk;
-
-	psp = dos_memory_get_psp();
+	void far *psp = dos_memory_get_psp();
 	pspseg = dos_memory_pointer_segment(psp);
 	pspofs = dos_memory_pointer_offset(psp);
 
 	if (mmgr_arena_end_segment == 0) {
 		mmgr_live_sentinel->resofs = dos_memory_allocate(MMGR_INITIAL_ARENA_PARAS);
 		mmgr_arena_start_segment = mmgr_live_sentinel->resofs;
-		maxblocks =
+		legacy_u16 maxblocks =
 			dos_memory_resize(mmgr_live_sentinel->resofs, end_segment - mmgr_live_sentinel->resofs);
 		maxblocks = dos_memory_resize(mmgr_live_sentinel->resofs, maxblocks);
 		mmgr_cache_sentinel->resofs = mmgr_arena_start_segment + maxblocks;
@@ -194,7 +180,7 @@ void mmgr_alloc_resmem(legacy_u16 end_segment)
 	mmgr_first_cached_chunk = mmgr_cache_sentinel;
 	mmgr_last_live_chunk = mmgr_live_sentinel;
 
-	chunk = mmgr_live_sentinel;
+	struct MEMCHUNK *chunk = mmgr_live_sentinel;
 	for (;;) {
 		chunk++;
 		if (chunk == mmgr_cache_sentinel) {
@@ -239,34 +225,28 @@ legacy_u16 mmgr_allocated_paragraphs(void)
 
 void far *mmgr_free(legacy_s8 far *ptr)
 {
-	legacy_s16 name_index;
-	legacy_u16 free_paragraphs, unused_bx, unused_cx, unused_dx, unused_di;
-	legacy_u16 ptrseg, source_segment, source_paragraphs;
-	struct MEMCHUNK *chunk;
-	struct MEMCHUNK *unused_chunk;
-
-	chunk = mmgr_last_live_chunk;
-	ptrseg = dos_memory_pointer_segment(ptr);
+	struct MEMCHUNK *chunk = mmgr_last_live_chunk;
+	legacy_u16 ptrseg = dos_memory_pointer_segment(ptr);
 
 	MMGR_FIND_ARENA_CHUNK(chunk, ptrseg);
 
 	ptrseg = 0;
 	chunk->resstate = MMGR_RESOURCE_STATE_FREE;
-	free_paragraphs = mmgr_first_cached_chunk->resofs - mmgr_last_live_chunk->resofs -
-					  mmgr_last_live_chunk->ressize;
+	legacy_u16 free_paragraphs = mmgr_first_cached_chunk->resofs - mmgr_last_live_chunk->resofs -
+								 mmgr_last_live_chunk->ressize;
 	/* Only the last live block can reuse its own descriptor for caching. */
 	if (chunk == mmgr_last_live_chunk ||
 		(mmgr_first_cached_chunk > mmgr_last_live_chunk + 1 && free_paragraphs >= chunk->ressize)) {
 		/* A full table reuses the source descriptor for the cached block. */
-		source_segment = chunk->resofs;
-		source_paragraphs = chunk->ressize;
+		legacy_u16 source_segment = chunk->resofs;
+		legacy_u16 source_paragraphs = chunk->ressize;
 		ptrseg = mmgr_first_cached_chunk->resofs - source_paragraphs;
 		mmgr_first_cached_chunk--;
 		mmgr_first_cached_chunk->resofs = ptrseg;
 		mmgr_first_cached_chunk->ressize = source_paragraphs;
 		mmgr_first_cached_chunk->resstate = MMGR_RESOURCE_STATE_CACHED;
 
-		for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+		for (legacy_s16 name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 			mmgr_first_cached_chunk->resname[name_index] = chunk->resname[name_index];
 		}
 
@@ -292,8 +272,6 @@ void far *mmgr_free(legacy_s8 far *ptr)
 void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 {
 	legacy_u16 count; // number of words to copy
-	legacy_u16 far *srcptr;
-	legacy_u16 far *destptr;
 
 	while (paras != 0) {
 		count = DOS_WORDS_PER_COPY_CHUNK;
@@ -302,8 +280,8 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 			count = (paras + DOS_PARAGRAPHS_PER_COPY_CHUNK) << DOS_WORDS_PER_PARAGRAPH_SHIFT;
 			paras = 0;
 		}
-		srcptr = dos_memory_make_pointer(srcseg, 0);
-		destptr = dos_memory_make_pointer(destseg, 0);
+		legacy_u16 far *srcptr = dos_memory_make_pointer(srcseg, 0);
+		legacy_u16 far *destptr = dos_memory_make_pointer(destseg, 0);
 
 		while (count) {
 			*destptr = *srcptr;
@@ -321,15 +299,11 @@ void mmgr_copy_paras(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 // subtracts 4096 paragraphs and uses an unsigned no-borrow branch.
 void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 {
-	legacy_u16 count, ofs;
-	legacy_u16 far *destptr;
-	legacy_u16 far *srcptr;
-
 	srcseg += paras;
 	destseg += paras;
 
 	while (paras != 0) {
-		count = DOS_PARAGRAPHS_PER_COPY_CHUNK;
+		legacy_u16 count = DOS_PARAGRAPHS_PER_COPY_CHUNK;
 		paras -= DOS_PARAGRAPHS_PER_COPY_CHUNK;
 		if (paras < 0) {
 			count = paras + DOS_PARAGRAPHS_PER_COPY_CHUNK;
@@ -338,10 +312,10 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 		srcseg -= count;
 		destseg -= count;
 		count <<= DOS_WORDS_PER_PARAGRAPH_SHIFT;
-		ofs = (count << DOS_BYTES_PER_WORD_SHIFT) - DOS_BYTES_PER_WORD;
+		legacy_u16 ofs = (count << DOS_BYTES_PER_WORD_SHIFT) - DOS_BYTES_PER_WORD;
 
-		srcptr = dos_memory_make_pointer(srcseg, ofs);
-		destptr = dos_memory_make_pointer(destseg, ofs);
+		legacy_u16 far *srcptr = dos_memory_make_pointer(srcseg, ofs);
+		legacy_u16 far *destptr = dos_memory_make_pointer(destseg, ofs);
 		while (count) {
 			*destptr = *srcptr;
 			srcptr--;
@@ -353,30 +327,25 @@ void copy_paras_reverse(legacy_u16 srcseg, legacy_u16 destseg, legacy_s16 paras)
 
 void mmgr_find_free(void)
 {
-	legacy_s16 name_index;
-	legacy_u16 destination_segment, free_paragraphs, resstate;
-	struct MEMCHUNK *source_chunk;
-	struct MEMCHUNK *destination_chunk;
-
-	source_chunk = mmgr_cache_sentinel;
-	destination_chunk = source_chunk;
-	free_paragraphs = 0;
+	struct MEMCHUNK *source_chunk = mmgr_cache_sentinel;
+	struct MEMCHUNK *destination_chunk = source_chunk;
+	legacy_u16 free_paragraphs = 0;
 
 	do {
 		if ((source_chunk->resstate & 1) == 0) {
 			free_paragraphs += source_chunk->ressize;
 		} else {
-
 			if (free_paragraphs != 0) {
 				destination_chunk++;
-				destination_segment = destination_chunk->resofs - source_chunk->ressize;
+				legacy_u16 destination_segment = destination_chunk->resofs - source_chunk->ressize;
 				destination_chunk--;
 				destination_chunk->ressize = source_chunk->ressize;
 				destination_chunk->resofs = destination_segment;
-				resstate = source_chunk->resstate;
+				legacy_u16 resstate = source_chunk->resstate;
 				source_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
 				destination_chunk->resstate = resstate;
-				for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+				for (legacy_s16 name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH;
+					 name_index++) {
 					destination_chunk->resname[name_index] = source_chunk->resname[name_index];
 				}
 				copy_paras_reverse(source_chunk->resofs, destination_segment,
@@ -397,23 +366,18 @@ void mmgr_find_free(void)
 
 void far *mmgr_get_chunk_by_name(const legacy_s8 *name)
 {
-	const legacy_s8 *wanted_name;
-	legacy_s16 name_index, allocation_end_segment;
-	legacy_u16 srcofs, srcsize, destofs;
-	struct MEMCHUNK *cached_chunk;
-	struct MEMCHUNK *live_chunk;
+	const legacy_s8 *wanted_name = mmgr_path_to_name(name);
+
+	struct MEMCHUNK *cached_chunk = mmgr_first_cached_chunk;
+
 	legacy_s16 found = 0;
-
-	wanted_name = mmgr_path_to_name(name);
-
-	cached_chunk = mmgr_first_cached_chunk;
-
+	struct MEMCHUNK *live_chunk;
 	for (; cached_chunk < mmgr_cache_sentinel; cached_chunk++) {
-		name_index = 0;
 		if (cached_chunk->resstate == MMGR_RESOURCE_STATE_FREE) {
 			return 0;
 		}
 
+		legacy_s16 name_index = 0;
 		for (; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 			if (wanted_name[name_index] == 0) {
 				if (cached_chunk->resname[name_index] == '.' ||
@@ -428,9 +392,9 @@ void far *mmgr_get_chunk_by_name(const legacy_s8 *name)
 		}
 		if (name_index == MMGR_RESOURCE_NAME_LENGTH || found == 1) {
 			/* Restore the cached block exactly as the original allocator does. */
-			srcofs = cached_chunk->resofs;
-			srcsize = cached_chunk->ressize;
-			destofs = mmgr_last_live_chunk->resofs + mmgr_last_live_chunk->ressize;
+			legacy_u16 srcofs = cached_chunk->resofs;
+			legacy_u16 srcsize = cached_chunk->ressize;
+			legacy_u16 destofs = mmgr_last_live_chunk->resofs + mmgr_last_live_chunk->ressize;
 			cached_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
 			live_chunk = mmgr_last_live_chunk + 1;
 			mmgr_last_live_chunk = live_chunk;
@@ -443,7 +407,7 @@ void far *mmgr_get_chunk_by_name(const legacy_s8 *name)
 				mmgr_first_cached_chunk++;
 			}
 			mmgr_copy_paras(srcofs, destofs, srcsize);
-			allocation_end_segment = destofs + srcsize;
+			legacy_s16 allocation_end_segment = destofs + srcsize;
 			while (allocation_end_segment > mmgr_first_cached_chunk->resofs) {
 				mmgr_first_cached_chunk->resstate = MMGR_RESOURCE_STATE_FREE;
 				mmgr_first_cached_chunk++;
@@ -458,12 +422,9 @@ void far *mmgr_get_chunk_by_name(const legacy_s8 *name)
 
 legacy_u16 mmgr_has_cached_resource(const legacy_s8 *name)
 {
-	const legacy_s8 *wanted;
+	const legacy_s8 *wanted = mmgr_path_to_name(name);
+	struct MEMCHUNK *chunk = mmgr_first_cached_chunk;
 	legacy_s16 i;
-	struct MEMCHUNK *chunk;
-
-	wanted = mmgr_path_to_name(name);
-	chunk = mmgr_first_cached_chunk;
 	while (chunk < mmgr_cache_sentinel) {
 		if (chunk->resstate == MMGR_RESOURCE_STATE_FREE) {
 			return 0;
@@ -489,14 +450,8 @@ legacy_u16 mmgr_has_cached_resource(const legacy_s8 *name)
 
 void mmgr_release(void far *ptr)
 {
-	legacy_s16 unused_index;
-	legacy_u16 segment, unused_bx, unused_cx, unused_dx;
-	legacy_s8 *unused_name;
-	struct MEMCHUNK *chunk;
-	struct MEMCHUNK *unused_chunk;
-
-	segment = dos_memory_pointer_segment(ptr);
-	chunk = mmgr_last_live_chunk;
+	legacy_u16 segment = dos_memory_pointer_segment(ptr);
+	struct MEMCHUNK *chunk = mmgr_last_live_chunk;
 
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
@@ -513,32 +468,21 @@ void mmgr_release(void far *ptr)
 // on under the name the caller expects.
 void mmgr_rename_chunk(legacy_s8 far *ptr, const legacy_s8 *name)
 {
-	legacy_s16 name_index;
-	legacy_u16 segment;
-	const legacy_s8 *chunkname;
-	struct MEMCHUNK *chunk;
-
-	segment = dos_memory_pointer_segment(ptr);
-	chunk = mmgr_last_live_chunk;
+	legacy_u16 segment = dos_memory_pointer_segment(ptr);
+	struct MEMCHUNK *chunk = mmgr_last_live_chunk;
 
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
-	chunkname = mmgr_path_to_name(name);
-	for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+	const legacy_s8 *chunkname = mmgr_path_to_name(name);
+	for (legacy_s16 name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 		chunk->resname[name_index] = chunkname[name_index];
 	}
 }
 
 legacy_u16 mmgr_get_chunk_size(legacy_s8 far *ptr)
 {
-	legacy_s16 unused_index;
-	legacy_u16 segment, unused_bx, unused_cx, unused_dx;
-	legacy_s8 *unused_name;
-	struct MEMCHUNK *chunk;
-	struct MEMCHUNK *unused_chunk;
-
-	segment = dos_memory_pointer_segment(ptr);
-	chunk = mmgr_last_live_chunk;
+	legacy_u16 segment = dos_memory_pointer_segment(ptr);
+	struct MEMCHUNK *chunk = mmgr_last_live_chunk;
 
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 	return chunk->ressize;
@@ -546,15 +490,9 @@ legacy_u16 mmgr_get_chunk_size(legacy_s8 far *ptr)
 
 legacy_u16 mmgr_resize_memory(legacy_u16 unused_offset, legacy_u16 segment, legacy_u16 paragraphs)
 {
-	legacy_s16 unused_index;
-	legacy_u16 size_or_end_segment, unused_bx, unused_cx, unused_dx;
-	legacy_s8 *unused_name;
-	struct MEMCHUNK *chunk;
-	struct MEMCHUNK *limit_chunk;
-
 	(void)unused_offset;
-	size_or_end_segment = segment;
-	chunk = mmgr_last_live_chunk;
+	legacy_u16 size_or_end_segment = segment;
+	struct MEMCHUNK *chunk = mmgr_last_live_chunk;
 
 	MMGR_FIND_ARENA_CHUNK(chunk, segment);
 
@@ -568,7 +506,7 @@ legacy_u16 mmgr_resize_memory(legacy_u16 unused_offset, legacy_u16 segment, lega
 		fatal_error("resizememory - CANNOT EXPAND BLOCK NOT AT TOP");
 	}
 	chunk->ressize = size_or_end_segment;
-	limit_chunk = mmgr_first_cached_chunk;
+	struct MEMCHUNK *limit_chunk = mmgr_first_cached_chunk;
 	size_or_end_segment += chunk->resofs;
 	if (size_or_end_segment >= mmgr_high_water_segment) {
 		mmgr_high_water_segment = size_or_end_segment;
@@ -599,21 +537,14 @@ legacy_u16 mmgr_resize_memory(legacy_u16 unused_offset, legacy_u16 segment, lega
 
 void far *mmgr_compact_live_chunk(legacy_s8 far *ptr)
 {
-	legacy_s16 name_index;
-	legacy_u16 destination_segment, unused_bx, unused_cx, unused_dx;
-	legacy_s8 *unused_name;
-	struct MEMCHUNK *source_chunk;
-	struct MEMCHUNK *destination_chunk;
-
-	destination_segment = dos_memory_pointer_segment(ptr);
-	source_chunk = mmgr_last_live_chunk;
+	legacy_u16 destination_segment = dos_memory_pointer_segment(ptr);
+	struct MEMCHUNK *source_chunk = mmgr_last_live_chunk;
 
 	MMGR_FIND_ARENA_CHUNK(source_chunk, destination_segment);
 
-	destination_chunk = source_chunk;
+	struct MEMCHUNK *destination_chunk = source_chunk;
 	destination_chunk--;
 	if (destination_chunk->resstate == MMGR_RESOURCE_STATE_FREE) {
-
 		do {
 			destination_chunk--;
 		} while (destination_chunk->resstate == MMGR_RESOURCE_STATE_FREE);
@@ -628,7 +559,7 @@ void far *mmgr_compact_live_chunk(legacy_s8 far *ptr)
 		destination_chunk->resofs = destination_segment;
 		destination_chunk->ressize = source_chunk->ressize;
 		destination_chunk->resstate = MMGR_RESOURCE_STATE_LIVE;
-		for (name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
+		for (legacy_s16 name_index = 0; name_index < MMGR_RESOURCE_NAME_LENGTH; name_index++) {
 			destination_chunk->resname[name_index] = source_chunk->resname[name_index];
 		}
 		mmgr_copy_paras(source_chunk->resofs, destination_segment, source_chunk->ressize);

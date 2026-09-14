@@ -92,10 +92,9 @@ legacy_s16 get_super_random(void)
 
 legacy_s16 random_wait(void)
 {
-	legacy_s16 status1, i;
+	legacy_s16 status1 = dos_video_get_status();
 
-	status1 = dos_video_get_status();
-
+	legacy_s16 i;
 	for (i = 0; status1 == dos_video_get_status() && i < RANDOM_WAIT_SPIN_LIMIT; ++i) {
 		;
 	}
@@ -201,11 +200,10 @@ static void startup_select_audio_driver(const legacy_s8 *argument)
 static void startup_parse_options(legacy_s16 argc, legacy_s8 *argv[],
 								  struct STARTUP_OPTIONS *options)
 {
-	legacy_u16 i;
 	options->mode4_requested = 0;
 	options->sound_disabled = 0;
 	options->unused_nd_option = 0;
-	for (i = 1; argc > i; ++i) {
+	for (legacy_u16 i = 1; argc > i; ++i) {
 		if (argv[i][0] == '/') {
 			switch (argv[i][1]) {
 				case 'h':
@@ -230,27 +228,25 @@ static void startup_parse_options(legacy_s16 argc, legacy_s8 *argv[],
 
 static void startup_measure_video(void)
 {
-	legacy_u16 i, j;
-	legacy_u32 full_clear_ticks, partial_redraw_ticks, geometry_benchmark_ticks;
-	struct POINT2D benchmark_point;
-	struct RECTANGLE benchmark_bounds;
 	// Timing measures.
 	sprite_select_screen();
 	sprite_set_target_clip_bounds(0, 320, 0, 120);
 
 	timer_get_delta_alt();
-	for (i = 0; i < 15; ++i) {
+	for (legacy_u16 i = 0; i < 15; ++i) {
 		sprite_clear_target(0);
 	}
-	full_clear_ticks = timer_get_delta_alt();
+	legacy_u32 full_clear_ticks = timer_get_delta_alt();
 
 	sprite_set_target_clip_bounds(0, 320, 0, 60);
 
-	for (i = 0; i < 15; ++i) {
+	struct RECTANGLE benchmark_bounds;
+	struct POINT2D benchmark_point;
+	for (legacy_u16 i = 0; i < 15; ++i) {
 		benchmark_bounds.left = benchmark_bounds.right = benchmark_bounds.top =
 			benchmark_bounds.bottom = 0;
 
-		for (j = 0; j < 400; ++j) {
+		for (legacy_u16 j = 0; j < 400; ++j) {
 			benchmark_point.px = benchmark_point.py = j;
 			rect_adjust_from_point(&benchmark_point, &benchmark_bounds);
 		}
@@ -258,15 +254,15 @@ static void startup_measure_video(void)
 		sprite_clear_target(0);
 	}
 
-	partial_redraw_ticks = timer_get_delta_alt();
+	legacy_u32 partial_redraw_ticks = timer_get_delta_alt();
 
-	for (i = 0; i < 146; ++i) {
-		for (j = 0; j < 255; ++j) {
+	for (legacy_u16 i = 0; i < 146; ++i) {
+		for (legacy_u16 j = 0; j < 255; ++j) {
 			rect_adjust_from_point(&benchmark_point, &benchmark_bounds);
 		}
 	}
 
-	geometry_benchmark_ticks = timer_get_delta_alt();
+	legacy_u32 geometry_benchmark_ticks = timer_get_delta_alt();
 
 	slow_video_mgmt = (partial_redraw_ticks <= full_clear_ticks);
 	configured_frame_rate =
@@ -292,7 +288,6 @@ static void startup_measure_video(void)
 
 void init_main(legacy_s16 argc, legacy_s8 *argv[])
 {
-	struct STARTUP_OPTIONS options;
 	startup_install_keyboard_callbacks();
 	// Video
 	init_video_geometry_flags();
@@ -305,6 +300,7 @@ void init_main(legacy_s16 argc, legacy_s8 *argv[])
 
 	textresprefix = 'e';
 
+	struct STARTUP_OPTIONS options;
 	startup_parse_options(argc, argv, &options);
 
 	// Unused "/nd" switch. Maybe used when loading other video drivers?
@@ -377,13 +373,7 @@ static void init_main_input_state(void)
 
 legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_s16 result;
-	legacy_s8 far *textresptr;
-	legacy_s16 carposangle;
 	struct SPRITE far *unused_preview_window;
-	legacy_s16 counter;
-	legacy_s16 input_flags;
-	legacy_s16 shapeindex;
 
 	// initialization
 	init_full_game(argc, argv);
@@ -401,7 +391,7 @@ legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8 *argv[])
 
 	//run_intro_looped();
 
-	carposangle = polarAngle(carpos.y, carpos.z);
+	legacy_s16 carposangle = polarAngle(carpos.y, carpos.z);
 
 	shape3d_load_all();
 	shape3d_load_car_shapes("coun", "coun");
@@ -417,10 +407,10 @@ legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8 *argv[])
 	transshape.ts_flags = 0;
 	transshape.rectptr = &shaperect;
 
-	counter = 0;
-	shapeindex = 24;
+	legacy_s16 input_flags;
+	legacy_s16 counter = 0;
+	legacy_s16 shapeindex = 24;
 	for (;; counter++) {
-
 		transshape.rotvec.z = 0; // An abandoned experiment added 560.
 
 		// The original adds 2728 bytes, or 124 22-byte SHAPE3D records,
@@ -450,10 +440,10 @@ legacy_s16 run_shape_preview(legacy_s16 argc, legacy_s8 *argv[])
 			shapeindex--;
 			shapeindex = (shapeindex + STARTUP_SHAPE_COUNT) % STARTUP_SHAPE_COUNT;
 		} else if (input_flags != 0) {
-			textresptr = locate_text_res(mainresptr, "dos");
+			legacy_s8 far *textresptr = locate_text_res(mainresptr, "dos");
 			// DIALOG_AUTO_POSITION centers both dialog coordinates.
-			result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, textresptr, 0, 170,
-								 dialog_border_color, 0, 0);
+			legacy_s16 result = show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, textresptr, 0,
+											170, dialog_border_color, 0, 0);
 			if (result >= 1) {
 				break;
 			}
@@ -520,12 +510,11 @@ static legacy_s16 main_menu_select_race(legacy_s16 result, legacy_s8 *start_in_r
 
 static void main_menu_backup_track(void)
 {
-	legacy_s16 i;
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-	for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+	for (legacy_s16 i = 0; i < REPLAY_TRACK_SIZE; i++) {
 		track_and_directory_backup[i] = track_element_map[i];
 	}
-	for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
 		track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET] = track_directory[i];
 		track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET] = replay_directory[i];
 	}
@@ -533,12 +522,11 @@ static void main_menu_backup_track(void)
 
 static void main_menu_restore_track(void)
 {
-	legacy_s16 i;
 	_memcpy(&gameconfigcopy, &gameconfig, sizeof(struct GAMEINFO));
-	for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+	for (legacy_s16 i = 0; i < REPLAY_TRACK_SIZE; i++) {
 		track_element_map[i] = track_and_directory_backup[i];
 	}
-	for (i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
+	for (legacy_s16 i = 0; i < TRACK_PATH_STORAGE_SIZE; i++) {
 		track_directory[i] = track_and_directory_backup[i + TRACK_PRIMARY_PATH_OFFSET];
 		replay_directory[i] = track_and_directory_backup[i + TRACK_SECONDARY_PATH_OFFSET];
 	}
@@ -546,9 +534,8 @@ static void main_menu_restore_track(void)
 
 static legacy_s16 main_menu_prepare_track(void)
 {
-	legacy_s16 result;
 	if (idle_expired == 0) {
-		result = track_setup();
+		legacy_s16 result = track_setup();
 		//result = setup_track();
 		if (result != 0) {
 			run_tracks_menu(1);
@@ -569,14 +556,12 @@ static legacy_s16 main_menu_prepare_track(void)
 
 static void main_menu_run_race(legacy_s8 start_in_replay)
 {
-	legacy_s16 result;
 	cvxptr = mmgr_alloc_resbytes("cvx", sizeof(struct GAMESTATE) * GAMESTATE_CHECKPOINT_COUNT);
 	init_game_state(GAMESTATE_INIT_RESET_CHECKPOINTS);
 
 	if (start_in_replay != 0) {
 		replay_recording_flags = 0;
 	} else {
-
 		gameconfig.game_recordedframes = 0;
 	}
 
@@ -584,7 +569,7 @@ static void main_menu_run_race(legacy_s8 start_in_replay)
 		show_waiting();
 		run_game();
 		if (idle_expired == 0 && replay_recording_flags != 0) {
-			result = end_hiscore();
+			legacy_s16 result = end_hiscore();
 			if (result == 0) {
 				// view replay
 				replay_recording_flags = REPLAY_RECORDING_RESTARTABLE_FLAG;
@@ -605,19 +590,15 @@ static void main_menu_run_race(legacy_s8 start_in_replay)
 
 legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8 *argv[])
 {
-	legacy_s16 result, reload_track;
-	legacy_s8 start_in_replay;
-	legacy_s8 far *textresptr;
 	init_full_game(argc, argv);
 
 	//fatal_error("ai");
 	init_main_input_state();
 	set_default_car();
 
-	reload_track = 1;
-
+	legacy_s8 start_in_replay;
+	legacy_s16 reload_track = 1;
 	while (1) {
-
 		ensure_file_exists(2);
 
 		if (reload_track != 0) {
@@ -626,9 +607,9 @@ legacy_s16 run_main_menu_loop(legacy_s16 argc, legacy_s8 *argv[])
 		}
 
 		idle_expired = 0;
-		result = run_intro_looped();
+		legacy_s16 result = run_intro_looped();
 		if (result == 27) {
-			textresptr = locate_text_res(mainresptr, "dos");
+			legacy_s8 far *textresptr = locate_text_res(mainresptr, "dos");
 			result =
 				show_dialog(DIALOG_TYPE_MENU, DIALOG_SAVE_BACKGROUND, textresptr,
 							DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, 0, 0);

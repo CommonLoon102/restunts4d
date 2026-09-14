@@ -43,14 +43,13 @@ static void hash_channel_state(void)
 }
 static legacy_u32 parse_fingerprint(void)
 {
-	struct audio_sequence_event parsed;
-	unsigned command, variant, index;
 	trace_hash = 2166136261UL;
-	for (command = 0; command < 256; command++) {
-		for (variant = 0; variant < 16; variant++) {
+	struct audio_sequence_event parsed;
+	for (unsigned command = 0; command < 256; command++) {
+		for (unsigned variant = 0; variant < 16; variant++) {
 			reset_audio_fixture();
 			memory_bytes[0] = variant & 1 ? 0x81 : 0;
-			index = variant & 1 ? 2 : 1;
+			unsigned index = variant & 1 ? 2 : 1;
 			memory_bytes[1] = 0x7f;
 			memory_bytes[index++] = command;
 			memory_bytes[index++] = variant * 17;
@@ -71,7 +70,6 @@ static legacy_u32 parse_fingerprint(void)
 }
 static void configure_channel(unsigned channel, unsigned variant)
 {
-	unsigned index;
 	struct AUDIO_CHANNEL *chunk = &audio_channels[channel];
 	chunk->channel = channel;
 	chunk->note_velocity = 87;
@@ -83,7 +81,7 @@ static void configure_channel(unsigned channel, unsigned variant)
 	audio_write_far_pointer((legacy_u8 *)&chunk->return_stack[0], memory_bytes + 200);
 	audio_write_far_pointer((legacy_u8 *)&chunk->finish_callback, (void *)finish_callback);
 	audio_write_far_pointer((legacy_u8 *)&chunk->instruments, memory_bytes + 1024);
-	for (index = 0; index < 256; index++) {
+	for (unsigned index = 0; index < 256; index++) {
 		audio_write_far_pointer(memory_bytes + 1024 + index * 4, memory_bytes + 3000);
 	}
 	memory_bytes[3067] = variant & 2 ? 255 : 3;
@@ -92,20 +90,19 @@ static void configure_channel(unsigned channel, unsigned variant)
 	chunk->loop_counts[0] = (variant >> 2) & 1;
 	memory_bytes[200] = 1;
 	memory_bytes[201] = AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP;
-	for (index = 0; index < 4; index++) {
+	for (unsigned index = 0; index < 4; index++) {
 		dos_audio_contexts[index].channel = index & 1 ? channel : channel + 1;
 		dos_audio_contexts[index].state = index % 3;
 	}
 }
 static legacy_u32 command_fingerprint(void)
 {
-	unsigned command, variant, channel, tick;
-	struct audio_sequence_event parsed;
 	trace_hash = 2166136261UL;
-	for (command = 0; command < 256; command++) {
-		for (variant = 0; variant < 16; variant++) {
+	struct audio_sequence_event parsed;
+	for (unsigned command = 0; command < 256; command++) {
+		for (unsigned variant = 0; variant < 16; variant++) {
 			reset_audio_fixture();
-			channel = variant & 8 ? 19 : 2;
+			unsigned channel = variant & 8 ? 19 : 2;
 			dos_audio_uses_direct_channels = variant & 1;
 			configure_channel(channel, variant);
 			memory_bytes[100] = 0;
@@ -123,7 +120,7 @@ static legacy_u32 command_fingerprint(void)
 			memory_bytes[100 + parsed.size] = 1;
 			memory_bytes[101 + parsed.size] =
 				AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_STOP;
-			for (tick = 0; tick < 4; tick++) {
+			for (unsigned tick = 0; tick < 4; tick++) {
 				audio_service_sequence_channel(channel);
 				hash_channel_state();
 			}
@@ -133,9 +130,8 @@ static legacy_u32 command_fingerprint(void)
 }
 static legacy_u32 timer_fingerprint(void)
 {
-	unsigned sample, channel, tick;
 	trace_hash = 2166136261UL;
-	for (sample = 0; sample < 512; sample++) {
+	for (unsigned sample = 0; sample < 512; sample++) {
 		reset_audio_fixture();
 		audio_sequence_timer_active = 0;
 		segments_match = sample & 1;
@@ -149,14 +145,14 @@ static legacy_u32 timer_fingerprint(void)
 		}
 		audio_sequence_elapsed_ticks = sample & 128 ? 65500 : 0;
 		audio_sequence_tick_period = sample & 256 ? 64 : 200;
-		for (channel = 0; channel < 24; channel++) {
+		for (unsigned channel = 0; channel < 24; channel++) {
 			audio_channels[channel].delay = channel;
 		}
-		for (channel = 0; channel < 4; channel++) {
+		for (unsigned channel = 0; channel < 4; channel++) {
 			dos_audio_contexts[channel].state = channel % 3;
 			dos_audio_contexts[channel].channel = channel & 1 ? 17 : 2;
 		}
-		for (tick = 0; tick < 4; tick++) {
+		for (unsigned tick = 0; tick < 4; tick++) {
 			audio_sequence_timer();
 			hash_channel_state();
 		}
@@ -179,10 +175,9 @@ static void test_cursor_wrap(void)
 }
 static void test_call_return_and_loop_end(void)
 {
-	struct AUDIO_CHANNEL *chunk;
 	reset_audio_fixture();
 	configure_channel(2, 0);
-	chunk = &audio_channels[2];
+	struct AUDIO_CHANNEL *chunk = &audio_channels[2];
 	memory_bytes[100] = 0;
 	memory_bytes[101] = AUDIO_SEQUENCE_COMMAND_BASE + AUDIO_SEQUENCE_COMMAND_CALL;
 	memory_bytes[102] = 0;
@@ -208,8 +203,9 @@ static void test_call_return_and_loop_end(void)
 
 int main(void)
 {
-	legacy_u32 parse = parse_fingerprint(), commands = command_fingerprint(),
-			   timer = timer_fingerprint();
+	legacy_u32 parse = parse_fingerprint();
+	legacy_u32 commands = command_fingerprint();
+	legacy_u32 timer = timer_fingerprint();
 	test_cursor_wrap();
 	test_call_return_and_loop_end();
 #ifdef AUDIO_SEQUENCE_BASELINE

@@ -14,9 +14,7 @@ void copy_string(legacy_s8 *destination, legacy_s8 far *source)
 
 legacy_s8 *_strcpy(legacy_s8 *destination, const legacy_s8 *source)
 {
-	legacy_s8 *result;
-
-	result = destination;
+	legacy_s8 *result = destination;
 	do {
 		*destination = *source;
 		destination++;
@@ -26,9 +24,7 @@ legacy_s8 *_strcpy(legacy_s8 *destination, const legacy_s8 *source)
 
 legacy_u16 _strlen(const legacy_s8 *string)
 {
-	const legacy_s8 *end;
-
-	end = string;
+	const legacy_s8 *end = string;
 	while (*end != '\0') {
 		end++;
 	}
@@ -43,11 +39,8 @@ legacy_s8 *_strcat(legacy_s8 *destination, const legacy_s8 *source)
 
 legacy_s16 _strcmp(const legacy_s8 *left, const legacy_s8 *right)
 {
-	const legacy_u8 *left_bytes;
-	const legacy_u8 *right_bytes;
-
-	left_bytes = (const legacy_u8 *)left;
-	right_bytes = (const legacy_u8 *)right;
+	const legacy_u8 *left_bytes = (const legacy_u8 *)left;
+	const legacy_u8 *right_bytes = (const legacy_u8 *)right;
 	while (*left_bytes == *right_bytes) {
 		if (*left_bytes == '\0') {
 			return 0;
@@ -69,11 +62,9 @@ static legacy_u8 legacy_ascii_lower(legacy_u8 character)
 legacy_s16 _stricmp(const legacy_s8 *left, const legacy_s8 *right)
 {
 	legacy_u8 left_character;
-	legacy_u8 right_character;
-
 	do {
 		left_character = legacy_ascii_lower((legacy_u8)*left++);
-		right_character = legacy_ascii_lower((legacy_u8)*right++);
+		legacy_u8 right_character = legacy_ascii_lower((legacy_u8)*right++);
 		if (left_character != right_character) {
 			return left_character < right_character ? -1 : 1;
 		}

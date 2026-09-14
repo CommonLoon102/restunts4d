@@ -7,35 +7,27 @@ struct SIMD_READER {
 
 static legacy_u8 simd_read_u8(struct SIMD_READER *reader)
 {
-	legacy_u8 value;
-
-	value = reader->source[reader->offset];
+	legacy_u8 value = reader->source[reader->offset];
 	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, 1U);
 	return value;
 }
 
 static legacy_s8 simd_read_s8(struct SIMD_READER *reader)
 {
-	legacy_u8 value;
-
-	value = simd_read_u8(reader);
+	legacy_u8 value = simd_read_u8(reader);
 	return LEGACY_S8_FROM_BITS(value);
 }
 
 static legacy_u16 simd_read_u16(struct SIMD_READER *reader)
 {
-	legacy_u16 value;
-
-	value = LEGACY_READ_U16_LE(reader->source + reader->offset);
+	legacy_u16 value = LEGACY_READ_U16_LE(reader->source + reader->offset);
 	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, LEGACY_WORD_BYTES);
 	return value;
 }
 
 static legacy_s16 simd_read_s16(struct SIMD_READER *reader)
 {
-	legacy_u16 value;
-
-	value = simd_read_u16(reader);
+	legacy_u16 value = simd_read_u16(reader);
 	return LEGACY_S16_FROM_BITS(value);
 }
 
@@ -54,27 +46,21 @@ static void simd_read_vector(struct SIMD_READER *reader, struct VECTOR *vector)
 
 static void simd_read_s8_array(struct SIMD_READER *reader, legacy_s8 *values, legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		values[index] = simd_read_s8(reader);
 	}
 }
 
 static void simd_read_u16_array(struct SIMD_READER *reader, legacy_u16 *values, legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		values[index] = simd_read_u16(reader);
 	}
 }
 
 static void simd_read_s16_array(struct SIMD_READER *reader, legacy_s16 *values, legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		values[index] = simd_read_s16(reader);
 	}
 }
@@ -82,9 +68,7 @@ static void simd_read_s16_array(struct SIMD_READER *reader, legacy_s16 *values, 
 static void simd_read_point_array(struct SIMD_READER *reader, struct POINT2D *points,
 								  legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		simd_read_point(reader, &points[index]);
 	}
 }
@@ -92,9 +76,7 @@ static void simd_read_point_array(struct SIMD_READER *reader, struct POINT2D *po
 static void simd_read_vector_array(struct SIMD_READER *reader, struct VECTOR *vectors,
 								   legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		simd_read_vector(reader, &vectors[index]);
 	}
 }

@@ -101,8 +101,8 @@ void font_set_colors(legacy_s16 color, legacy_s16 background_color)
 
 legacy_s16 font_text_width(const legacy_s8 *text)
 {
-	legacy_s16 width = 0;
 	trace_word(11);
+	legacy_s16 width = 0;
 	while (*text != 0) {
 		trace_word((legacy_u8)*text);
 		width += 2 + ((legacy_u8)*text++ % 5);
@@ -146,10 +146,9 @@ legacy_s16 input_checking(legacy_s16 delta)
 
 legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *buttons)
 {
-	legacy_s16 i;
 	trace_word(16);
 	trace_word(count);
-	for (i = 0; i < count; i++) {
+	for (legacy_s16 i = 0; i < count; i++) {
 		trace_rectangle(buttons[i].x1, buttons[i].x2, buttons[i].y1, buttons[i].y2);
 	}
 	mouse_butstate = scripted_buttons[input_index - 1U];
@@ -190,9 +189,9 @@ static void trace_text(const legacy_s8 *text)
 
 legacy_s16 font_prefix_width(const legacy_s8 *text, legacy_s16 count)
 {
-	legacy_s16 width = 0;
 	trace_word(20);
 	trace_word(count);
+	legacy_s16 width = 0;
 	while (count-- > 0 && *text != 0) {
 		trace_word((legacy_u8)*text);
 		width += 2 + ((legacy_u8)*text++ % 5);
@@ -270,11 +269,11 @@ void preRender_line(legacy_s16 x1, legacy_s16 y1, legacy_s16 x2, legacy_s16 y2, 
 }
 void far *locate_text_res(void far *resource, const legacy_s8 *id)
 {
-	static legacy_s8 layout[] =
-		"Prompt @]Directory @]Up @]Row @]Row @]Row @]Row @]Row @]Row @]Row @]";
 	(void)resource;
 	trace_word(33);
 	trace_text(id);
+	static legacy_s8 layout[] =
+		"Prompt @]Directory @]Up @]Row @]Row @]Row @]Row @]Row @]Row @]Row @]";
 	if (strcmp(id, "loa") == 0) {
 		return layout;
 	}
@@ -317,8 +316,7 @@ const legacy_s8 *file_find_next_alt(void)
 
 static void reset_case(void)
 {
-	unsigned int i;
-	for (i = 0; i < 512; i++) {
+	for (unsigned int i = 0; i < 512; i++) {
 		scripted_keys[i] = KEY_ENTER;
 		scripted_hits[i] = -1;
 		scripted_buttons[i] = 0;
@@ -361,16 +359,15 @@ static void check_hash(const char *name, uint64_t expected)
 
 static void test_file_dialog(void)
 {
+	legacy_s8 filename[16];
 	static const unsigned int counts[] = {0, 1, 6, 7, 8, 127, 128, 130};
-	unsigned int c, scenario, i;
-	legacy_s8 directory[32], filename[16];
-	legacy_s16 result;
-	for (c = 0; c < sizeof(counts) / sizeof(counts[0]); c++) {
-		for (scenario = 0; scenario < 14; scenario++) {
+	legacy_s8 directory[32];
+	for (unsigned int c = 0; c < sizeof(counts) / sizeof(counts[0]); c++) {
+		for (unsigned int scenario = 0; scenario < 14; scenario++) {
 			reset_case();
 			listed_count = counts[c];
 			g_is_busy = (legacy_s8)(scenario * 23);
-			for (i = 0; i < listed_count; i++) {
+			for (unsigned int i = 0; i < listed_count; i++) {
 				unsigned int value = (i * 47) % 131;
 				snprintf(listed_names[i], 13, "%c%03u.RPL", 'A' + value % 26, value);
 			}
@@ -392,7 +389,7 @@ static void test_file_dialog(void)
 				keyboard_keys[0] = KEY_ESCAPE;
 			}
 			if (scenario == 4) {
-				for (i = 0; i < 140; i++) {
+				for (unsigned int i = 0; i < 140; i++) {
 					scripted_keys[i] = KEY_DOWN;
 				}
 			}
@@ -437,7 +434,7 @@ static void test_file_dialog(void)
 			if (listed_count == 0) {
 				keyboard_keys[0] = KEY_ESCAPE;
 			}
-			result = do_fileselect_dialog(directory, filename, "RPL", "Choose file");
+			legacy_s16 result = do_fileselect_dialog(directory, filename, "RPL", "Choose file");
 			trace_word(result);
 			trace_text(directory);
 			trace_text(filename);
@@ -465,26 +462,24 @@ static void test_read_line(void)
 		KEY_INSERT, 'X',	   KEY_DELETE, KEY_BACKSPACE, KEY_HOME, KEY_BACKSPACE,
 		KEY_INSERT, 'z',	   123,		   0xffff,		  KEY_DOWN, KEY_TAB,
 		0,			0,		   KEY_ENTER};
-	static const legacy_s16 widths[] = {0, 1, 10, 100, -1};
 	static const legacy_s16 endings[] = {KEY_ENTER, KEY_ESCAPE, KEY_UP, KEY_DOWN, KEY_TAB};
-	unsigned int flags, w, scenario, i;
 	legacy_s8 text[32];
-	legacy_s16 result, initial;
-	for (flags = 0; flags < 32; flags++) {
-		for (w = 0; w < 5; w++) {
-			for (scenario = 0; scenario < 5; scenario++) {
+	static const legacy_s16 widths[] = {0, 1, 10, 100, -1};
+	for (unsigned int flags = 0; flags < 32; flags++) {
+		for (unsigned int w = 0; w < 5; w++) {
+			for (unsigned int scenario = 0; scenario < 5; scenario++) {
 				reset_case();
 				strcpy(text, "Ab cd");
-				initial = 0;
 				if (scenario == 0) {
 					keyboard_keys[0] = 'Q';
 					keyboard_keys[1] = endings[flags % 5];
 				}
 				if (scenario == 1) {
-					for (i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
+					for (unsigned int i = 0; i < sizeof(keys) / sizeof(keys[0]); i++) {
 						keyboard_keys[i] = keys[i];
 					}
 				}
+				legacy_s16 initial = 0;
 				if (scenario == 2) {
 					initial = 'R';
 					keyboard_keys[0] = KEY_ESCAPE;
@@ -502,7 +497,7 @@ static void test_read_line(void)
 				trace_word(flags);
 				trace_word(w);
 				trace_word(scenario);
-				result =
+				legacy_s16 result =
 					read_line(flags, text, initial, 8, widths[w], 32760, -4, edit_callback, 77);
 				trace_word(result);
 				trace_text(text);
@@ -517,13 +512,11 @@ static void test_read_line(void)
 static void test_read_line_wrapper(void)
 {
 	legacy_s8 text[32];
-	legacy_s16 result;
-	unsigned int scenario;
-	for (scenario = 0; scenario < 3; scenario++) {
+	for (unsigned int scenario = 0; scenario < 3; scenario++) {
 		reset_case();
 		strcpy(text, "Name ");
 		keyboard_keys[0] = (scenario == 0 ? KEY_ENTER : (scenario == 1 ? KEY_ESCAPE : 'Z'));
-		result = call_read_line(text, 8, 4, 5, 0x12345678UL);
+		legacy_s16 result = call_read_line(text, 8, 4, 5, 0x12345678UL);
 		trace_word(result);
 		trace_text(text);
 		trace_word(keyboard_index);
@@ -534,12 +527,11 @@ static void test_read_line_wrapper(void)
 
 static void test_character_limit(void)
 {
-	static const legacy_u16 capacities[] = {0, 1, 2, 8, 0x8000, 0xffff};
 	static legacy_s8 text[65536];
-	unsigned int capacity, scenario;
-	legacy_s16 result;
-	for (capacity = 0; capacity < sizeof(capacities) / sizeof(capacities[0]); capacity++) {
-		for (scenario = 0; scenario < 4; scenario++) {
+	static const legacy_u16 capacities[] = {0, 1, 2, 8, 0x8000, 0xffff};
+	for (unsigned int capacity = 0; capacity < sizeof(capacities) / sizeof(capacities[0]);
+		 capacity++) {
+		for (unsigned int scenario = 0; scenario < 4; scenario++) {
 			reset_case();
 			memset(text, 0, sizeof(text));
 			strcpy(text, "A");
@@ -554,8 +546,8 @@ static void test_character_limit(void)
 			keyboard_keys[8] = KEY_ENTER;
 			trace_word(capacities[capacity]);
 			trace_word(scenario);
-			result = read_line(scenario, text, 0, (legacy_s16)capacities[capacity], 0, -32768,
-							   32767, edit_callback, 0);
+			legacy_s16 result = read_line(scenario, text, 0, (legacy_s16)capacities[capacity], 0,
+										  -32768, 32767, edit_callback, 0);
 			trace_word(result);
 			trace_text(text);
 			trace_word(keyboard_index);

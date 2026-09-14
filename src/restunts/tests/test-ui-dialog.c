@@ -93,8 +93,8 @@ void font_set_colors(legacy_s16 color, legacy_s16 background_color)
 
 legacy_s16 font_text_width(const legacy_s8 *text)
 {
-	legacy_s16 width = 0;
 	trace_word(11);
+	legacy_s16 width = 0;
 	while (*text != 0) {
 		trace_word((legacy_u8)*text);
 		width += 2 + ((legacy_u8)*text++ % 5);
@@ -138,10 +138,9 @@ legacy_s16 input_checking(legacy_s16 delta)
 
 legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *buttons)
 {
-	legacy_s16 i;
 	trace_word(16);
 	trace_word(count);
-	for (i = 0; i < count; i++) {
+	for (legacy_s16 i = 0; i < count; i++) {
 		trace_rectangle(buttons[i].x1, buttons[i].x2, buttons[i].y1, buttons[i].y2);
 	}
 	return scripted_hits[input_index - 1U];
@@ -150,12 +149,11 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *butto
 static void configure_input(unsigned int scenario, legacy_s16 choice_count)
 {
 	static const legacy_u16 navigation[] = {0, KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, 'X'};
-	unsigned int i;
-	for (i = 0; i < 16U; i++) {
+	for (unsigned int i = 0; i < 16U; i++) {
 		scripted_keys[i] = KEY_ENTER;
 		scripted_hits[i] = -1;
 	}
-	for (i = 0; i < 6U; i++) {
+	for (unsigned int i = 0; i < 6U; i++) {
 		scripted_keys[i] = navigation[(scenario + i) % 6U];
 		if ((scenario + i) % 3U == 0U) {
 			scripted_hits[i] = (scenario + i) % choice_count;
@@ -183,12 +181,10 @@ static void run_dialog_case(unsigned int scenario)
 									   (const legacy_s8 *)"Heading]Text} [ Alpha] [ Beta] [ Gamma]",
 									   (const legacy_s8 *)"Prompt}[ Alpha] [ Beta]",
 									   (const legacy_s8 *)"Heading] [ Alpha][ Beta][ Gamma]"};
-	legacy_s16 choices[40];
-	unsigned int i;
-	legacy_u16 result;
 	legacy_s16 type = scenario % 7U;
 	legacy_s16 count = scenario % 2U == 0U ? 2 : 3;
-	for (i = 0; i < 40U; i++) {
+	legacy_s16 choices[40];
+	for (unsigned int i = 0; i < 40U; i++) {
 		choices[i] = 0;
 	}
 	if (scenario % 5U == 0U) {
@@ -201,13 +197,13 @@ static void run_dialog_case(unsigned int scenario)
 	dialog_background_color = 7;
 	performGraphColor = 9;
 	trace_word((legacy_u16)scenario);
-	result = show_dialog(type, scenario % 2U, (void *)texts[scenario % 4U],
-						 scenario % 3U == 0U ? DIALOG_AUTO_POSITION : (legacy_u16)(scenario % 400U),
-						 scenario % 3U == 1U ? DIALOG_AUTO_POSITION : (legacy_u16)(scenario % 250U),
-						 3, scenario % 3U == 0U && type != DIALOG_TYPE_PLACEHOLDERS ? 0 : choices,
-						 scenario % count);
+	legacy_u16 result = show_dialog(
+		type, scenario % 2U, (void *)texts[scenario % 4U],
+		scenario % 3U == 0U ? DIALOG_AUTO_POSITION : (legacy_u16)(scenario % 400U),
+		scenario % 3U == 1U ? DIALOG_AUTO_POSITION : (legacy_u16)(scenario % 250U), 3,
+		scenario % 3U == 0U && type != DIALOG_TYPE_PLACEHOLDERS ? 0 : choices, scenario % count);
 	trace_word(result);
-	for (i = 0; i < 40U; i++) {
+	for (unsigned int i = 0; i < 40U; i++) {
 		trace_word(choices[i]);
 	}
 	trace_word(dialog_background_color);
@@ -215,8 +211,7 @@ static void run_dialog_case(unsigned int scenario)
 
 int main(void)
 {
-	unsigned int scenario;
-	for (scenario = 0; scenario < 420U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 420U; scenario++) {
 		run_dialog_case(scenario);
 	}
 	/* Captured from the original dialog implementation. The trace includes drawing,

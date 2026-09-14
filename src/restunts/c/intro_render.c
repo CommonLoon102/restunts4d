@@ -77,14 +77,11 @@ static void intro_draw_stars(legacy_s16 camera_x, legacy_s16 camera_y, legacy_s1
 							 struct VECTOR *stars, struct POINT2D *previous_points,
 							 legacy_s16 *previous_point_count, struct RECTANGLE *point_rect)
 {
+	struct POINT2D point;
+	legacy_u16 new_point_count = 0;
 	struct VECTOR translated;
 	struct VECTOR projected;
-	struct POINT2D point;
-	legacy_u16 new_point_count;
-	legacy_u16 i;
-
-	new_point_count = 0;
-	for (i = 0; i < INTRO_STAR_COUNT; i++) {
+	for (legacy_u16 i = 0; i < INTRO_STAR_COUNT; i++) {
 		translated.x = LEGACY_S16_WRAP_SUB(stars[i].x, camera_x);
 		translated.y = LEGACY_S16_WRAP_SUB(stars[i].y, camera_y);
 		translated.z = LEGACY_S16_WRAP_SUB(stars[i].z, camera_z);
@@ -117,15 +114,9 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 									struct RECTANGLE *previous_rect, struct RECTANGLE *shape_rect,
 									struct RECTANGLE *combined_rect)
 {
-	struct TRANSFORMEDSHAPE3D transformed;
-	struct RECTANGLE current_shape_rect;
-	struct RECTANGLE point_rect;
-	struct RECTANGLE redraw_rect;
-	legacy_u16 old_point_count;
-	legacy_u16 i;
-
-	current_shape_rect = empty_rect;
+	struct RECTANGLE current_shape_rect = empty_rect;
 	select_cliprect_rotate(0, rotate_x, rotate_y, &intro_cliprect, 0);
+	struct TRANSFORMEDSHAPE3D transformed;
 	transformed.shapeptr = primary_logo != 0 ? &logoshape : &logo2shape;
 	transformed.pos.x = LEGACY_S16_WRAP_SUB(INTRO_LOGO_WORLD_CENTER, camera_x);
 	transformed.pos.y = LEGACY_S16_WRAP_NEGATE(camera_y);
@@ -144,9 +135,11 @@ static void intro_render_scene_impl(legacy_s16 camera_x, legacy_s16 camera_y, le
 									 LEGACY_S16_WRAP_NEGATE(state.opponentstate.car_rotate.x));
 	}
 
+	struct RECTANGLE redraw_rect;
+	struct RECTANGLE point_rect;
 	if (slow_video_mgmt_copy != 0) {
-		old_point_count = (legacy_u16)*previous_point_count;
-		for (i = 0; i < old_point_count; i++) {
+		legacy_u16 old_point_count = (legacy_u16)*previous_point_count;
+		for (legacy_u16 i = 0; i < old_point_count; i++) {
 			sprite_putpixel_clipped(previous_points[i].px, previous_points[i].py, 0);
 		}
 		rect_union(shape_rect, previous_rect, &redraw_rect);
@@ -219,9 +212,8 @@ struct INTRO_SESSION {
 
 static void intro_load_title(struct INTRO_SESSION *intro)
 {
-	legacy_s8 far *title_shapes[INTRO_TITLE_SHAPE_COUNT];
-
 	intro->title_resource = (legacy_s8 far *)file_load_3dres("title");
+	legacy_s8 far *title_shapes[INTRO_TITLE_SHAPE_COUNT];
 	locate_many_resources(intro->title_resource, "logolog2brav", title_shapes);
 	shape3d_init_shape(title_shapes[0], &logoshape);
 	shape3d_init_shape(title_shapes[1], &logo2shape);
@@ -234,9 +226,7 @@ static void intro_load_title(struct INTRO_SESSION *intro)
 
 static void intro_create_stars(struct VECTOR *stars)
 {
-	legacy_u16 i;
-
-	for (i = 0; i < INTRO_STAR_COUNT; i++) {
+	for (legacy_u16 i = 0; i < INTRO_STAR_COUNT; i++) {
 		stars[i].x = LEGACY_S16_WRAP_SUB(
 			LEGACY_U16_WRAP_MUL(get_kevinrandom(), INTRO_STAR_RANDOM_SCALE), INTRO_STAR_XZ_OFFSET);
 		stars[i].y = LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
@@ -248,8 +238,6 @@ static void intro_create_stars(struct VECTOR *stars)
 
 static void intro_prepare_session(struct INTRO_SESSION *intro)
 {
-	void far *opponent_resource;
-
 	set_projection(INTRO_PROJECTION_SCALE_X, INTRO_PROJECTION_SCALE_Y, INTRO_SCREEN_MAX_X,
 				   INTRO_SCREEN_MAX_Y);
 	intro->camera_x = INTRO_LOGO_WORLD_CENTER;
@@ -257,7 +245,7 @@ static void intro_prepare_session(struct INTRO_SESSION *intro)
 	intro->camera_z = INTRO_LOGO_WORLD_CENTER;
 	intro->logo_changed = 0;
 	intro->frame_count = 0;
-	opponent_resource = file_load_resfile("carcoun");
+	void far *opponent_resource = file_load_resfile("carcoun");
 	setup_aero_trackdata(opponent_resource, 1);
 	unload_resource(opponent_resource);
 	init_plantrak();
@@ -277,10 +265,6 @@ static void intro_prepare_session(struct INTRO_SESSION *intro)
 
 static void intro_advance_session(struct INTRO_SESSION *intro, legacy_s16 delta)
 {
-	legacy_s16 elapsed_limit;
-	legacy_s16 difference;
-	legacy_s16 absolute_difference;
-
 	intro_elapsed_ticks = LEGACY_S16_WRAP_ADD(intro_elapsed_ticks, delta);
 
 	while ((legacy_s16)intro_elapsed_ticks > (legacy_s16)timer_ticks_per_frame) {
@@ -288,13 +272,13 @@ static void intro_advance_session(struct INTRO_SESSION *intro, legacy_s16 delta)
 		update_opponent();
 		intro->needs_render = 1;
 		intro->frame_count = LEGACY_S16_WRAP_ADD(intro->frame_count, 1);
-		elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
+		legacy_s16 elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_LOGO_PHASE_SECONDS);
 		if (intro->frame_count > elapsed_limit) {
 			intro->logo_changed = 1;
 			intro->camera_y = LEGACY_S16_WRAP_ADD(intro->camera_y, INTRO_CAMERA_RISE_STEP);
 			intro->camera_z = LEGACY_S16_WRAP_SUB(intro->camera_z, INTRO_CAMERA_RETREAT_STEP);
-			difference = LEGACY_S16_WRAP_SUB(intro->camera_x, INTRO_LOGO_WORLD_CENTER);
-			absolute_difference = absolute_word(difference);
+			legacy_s16 difference = LEGACY_S16_WRAP_SUB(intro->camera_x, INTRO_LOGO_WORLD_CENTER);
+			legacy_s16 absolute_difference = absolute_word(difference);
 			if (absolute_difference < INTRO_CAMERA_CENTER_SNAP_DISTANCE) {
 				intro->camera_x = INTRO_LOGO_WORLD_CENTER;
 			} else if (difference > 0) {
@@ -312,19 +296,16 @@ static void intro_advance_session(struct INTRO_SESSION *intro, legacy_s16 delta)
 static void intro_aim_camera(struct INTRO_SESSION *intro, legacy_s16 *horizontal_angle,
 							 legacy_s16 *vertical_angle, legacy_s16 *draw_car)
 {
-	legacy_s16 opponent_x;
-	legacy_s16 opponent_y;
-	legacy_s16 opponent_z;
-	legacy_s16 elapsed_limit;
-	legacy_s16 target_distance;
-
 	(*draw_car) = 1;
 	(*horizontal_angle) = -1;
-	opponent_x = intro_shift_position((legacy_s32)state.opponentstate.car_position.lx, 0);
-	opponent_y = intro_shift_position((legacy_s32)state.opponentstate.car_position.ly, 0);
-	opponent_z = intro_shift_position((legacy_s32)state.opponentstate.car_position.lz, 0);
+	legacy_s16 opponent_x =
+		intro_shift_position((legacy_s32)state.opponentstate.car_position.lx, 0);
+	legacy_s16 opponent_y =
+		intro_shift_position((legacy_s32)state.opponentstate.car_position.ly, 0);
+	legacy_s16 opponent_z =
+		intro_shift_position((legacy_s32)state.opponentstate.car_position.lz, 0);
 
-	elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_CAR_PHASE_SECONDS);
+	legacy_s16 elapsed_limit = LEGACY_S16_WRAP_MUL(framespersec, INTRO_CAR_PHASE_SECONDS);
 	if (intro->frame_count < elapsed_limit) {
 		(*draw_car) = 0;
 		(*horizontal_angle) =
@@ -351,7 +332,7 @@ static void intro_aim_camera(struct INTRO_SESSION *intro, legacy_s16 *horizontal
 									 LEGACY_S16_WRAP_SUB(intro->target_x, intro->camera_x),
 									 LEGACY_S16_WRAP_SUB(intro->target_z, intro->camera_z))) &
 								 ANGLE_MASK);
-		target_distance =
+		legacy_s16 target_distance =
 			(legacy_s16)polarRadius2D(LEGACY_S16_WRAP_SUB(intro->target_x, intro->camera_x),
 									  LEGACY_S16_WRAP_SUB(intro->target_z, intro->camera_z));
 		(*vertical_angle) = LEGACY_S16_FROM_BITS(
@@ -396,21 +377,18 @@ static void intro_present_session(struct INTRO_SESSION *intro)
 
 static void intro_render_session(struct INTRO_SESSION *intro)
 {
-	legacy_s16 horizontal_angle;
-	legacy_s16 vertical_angle;
-	legacy_s16 draw_car;
-	legacy_s16 *active_point_count;
-	struct POINT2D *active_points;
-
 	intro->needs_render = 0;
 	if (video_uses_page_flipping != 0) {
 		sprite_select_mcga_backbuffer();
 	} else {
 		sprite_select_render_window();
 	}
+	legacy_s16 draw_car;
+	legacy_s16 horizontal_angle;
+	legacy_s16 vertical_angle;
 	intro_aim_camera(intro, &horizontal_angle, &vertical_angle, &draw_car);
-	active_points = intro->point_buffers[intro->rect_index];
-	active_point_count = &intro->point_counts[intro->rect_index];
+	struct POINT2D *active_points = intro->point_buffers[intro->rect_index];
+	legacy_s16 *active_point_count = &intro->point_counts[intro->rect_index];
 	intro_render_scene_impl(
 		intro->camera_x, intro->camera_y, intro->camera_z, horizontal_angle, vertical_angle,
 		draw_car, intro->logo_changed, intro->stars, active_points, active_point_count,
@@ -438,16 +416,12 @@ static void intro_finish_session(struct INTRO_SESSION *intro)
 legacy_s8 setup_intro(void)
 {
 	struct INTRO_SESSION intro;
-	legacy_s16 delta;
-	legacy_s16 elapsed_limit;
-	legacy_s8 interrupted;
-
-	interrupted = 0;
 	intro_load_title(&intro);
 	intro_create_stars(intro.stars);
 	intro_prepare_session(&intro);
+	legacy_s8 interrupted = 0;
 	for (;;) {
-		delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
+		legacy_s16 delta = LEGACY_S16_FROM_BITS((legacy_u16)timer_get_delta());
 		intro_advance_session(&intro, delta);
 		if (intro.needs_render != 0) {
 			intro_render_session(&intro);
@@ -456,7 +430,7 @@ legacy_s8 setup_intro(void)
 			interrupted = 1;
 			break;
 		}
-		elapsed_limit = LEGACY_S16_WRAP_MUL(INTRO_TOTAL_SECONDS, framespersec);
+		legacy_s16 elapsed_limit = LEGACY_S16_WRAP_MUL(INTRO_TOTAL_SECONDS, framespersec);
 		if (intro.frame_count >= elapsed_limit) {
 			break;
 		}

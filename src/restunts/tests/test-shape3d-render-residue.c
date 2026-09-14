@@ -129,13 +129,13 @@ static void assert_stopped_opponent_travel(legacy_s16 expected_x, legacy_s16 exp
 
 static void test_opponent_render_handoff(void)
 {
-	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
 	legacy_s16 *headings = legacy_execution_residue.wheel_angle_stack_words;
 
 	headings[0] = 11;
 	headings[1] = 22;
 	headings[2] = 33;
 	headings[3] = 44;
+	struct SHAPE3D_LEGACY_OPPONENT_RENDER_CONTEXT context;
 	context.wheel_headings = headings;
 	context.polyinfo_offset = 65500U;
 	context.polyinfo_segment = 256U;
@@ -194,13 +194,12 @@ static void test_opponent_render_handoff(void)
 
 int main(void)
 {
-	legacy_s16 headings[4] = {11, 22, 33, 44};
-
 	drawing_sprite.sprite_raster_left = 13;
 	drawing_sprite.sprite_raster_right = 247;
 	queue_polygon(0);
 	shape3d_render_queued_primitives();
 	assert(solid_calls == 1);
+	legacy_s16 headings[4] = {11, 22, 33, 44};
 	assert_headings(headings, 11, 22, 33, 44);
 
 	shape3d_set_legacy_render_stack(headings, 51720U, 6004U, 0);

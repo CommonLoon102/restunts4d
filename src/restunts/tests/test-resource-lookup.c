@@ -45,14 +45,13 @@ int main(void)
 											  TEST_RESOURCE_MARKER_BYTE_1,
 											  TEST_RESOURCE_MARKER_BYTE_2,
 											  TEST_RESOURCE_MARKER_BYTE_3};
-	const legacy_s8 literal_name[] = "abc";
-	legacy_s8 four_byte_name[RESOURCE_FILE_IDENTIFIER_SIZE] = {'a', 'b', 'c', 0};
-	legacy_s8 far *result;
 
-	result = locate_resource((legacy_s8 far *)resource, literal_name, 0U);
+	const legacy_s8 literal_name[] = "abc";
+	legacy_s8 far *result = locate_resource((legacy_s8 far *)resource, literal_name, 0U);
 	assert(result == (legacy_s8 far *)&resource[TEST_RESOURCE_DATA_OFFSET]);
 	assert(literal_name[TEST_NAME_TERMINATOR_OFFSET] == 0);
 
+	legacy_s8 four_byte_name[RESOURCE_FILE_IDENTIFIER_SIZE] = {'a', 'b', 'c', 0};
 	result = locate_shape_nofatal((legacy_s8 far *)resource, four_byte_name);
 	assert(result == (legacy_s8 far *)&resource[TEST_RESOURCE_DATA_OFFSET]);
 	assert(four_byte_name[TEST_NAME_TERMINATOR_OFFSET] == 0);

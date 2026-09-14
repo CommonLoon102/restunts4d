@@ -17,15 +17,10 @@ void init_video_geometry_flags(void)
 
 void init_row_tables(void)
 {
-	legacy_s16 i;
-	legacy_s16 inverse_row;
-	legacy_s16 track_position;
-	legacy_s16 terrain_position;
-
-	for (i = 0; i < TRACK_GRID_SIZE; i++) {
-		inverse_row = LEGACY_S16_WRAP_SUB(TRACK_GRID_LAST_INDEX, i);
-		track_position = LEGACY_S16_SHL(inverse_row, TRACK_TILE_POSITION_SHIFT);
-		terrain_position = LEGACY_S16_SHL(i, TRACK_TILE_POSITION_SHIFT);
+	for (legacy_s16 i = 0; i < TRACK_GRID_SIZE; i++) {
+		legacy_s16 inverse_row = LEGACY_S16_WRAP_SUB(TRACK_GRID_LAST_INDEX, i);
+		legacy_s16 track_position = LEGACY_S16_SHL(inverse_row, TRACK_TILE_POSITION_SHIFT);
+		legacy_s16 terrain_position = LEGACY_S16_SHL(i, TRACK_TILE_POSITION_SHIFT);
 		trackrows[i] = LEGACY_S16_WRAP_MUL(TRACK_GRID_SIZE, inverse_row);
 		terrainrows[i] = LEGACY_S16_WRAP_MUL(TRACK_GRID_SIZE, i);
 		track_row_positions[i] = track_position;
@@ -39,9 +34,7 @@ void init_row_tables(void)
 
 void init_trackdata(void)
 {
-	legacy_s8 far *trkptr;
-
-	trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
+	legacy_s8 far *trkptr = mmgr_alloc_resbytes("trakdata", TRACKDATA_ALLOCATION_SIZE);
 	track_primary_route_links = (legacy_s16 far *)trkptr;
 	trkptr += TRACKDATA_LINK_TABLE_SIZE;
 	track_alternate_route_links = (legacy_s16 far *)trkptr;
