@@ -92,8 +92,7 @@ jobs:
           # The archived golden corpus is the complete replay set for CI.
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp exes/*.exe "$game_dir/"
-          # Physics retains its archived Borland oracle. Rendering uses the
-          # freshly built original-assembly pixldumo from the executable artifact.
+          # Use the archived Borland built oracle on cache-miss
           (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
           cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
