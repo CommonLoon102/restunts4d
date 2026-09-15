@@ -213,8 +213,10 @@ static legacy_u8 opponent_menu_activate_key(struct OPPONENT_MENU_STATE *menu, le
 static legacy_u8 opponent_menu_activate_selection(struct OPPONENT_MENU_STATE *menu)
 {
 	if (menu->selected == OPPONENT_MENU_PREVIOUS_BUTTON) {
-		gameconfig.game_opponenttype = (legacy_s8)((legacy_u8)gameconfig.game_opponenttype - 1U);
-		if (LEGACY_S8_FROM_BITS((legacy_u8)gameconfig.game_opponenttype) < OPPONENT_FIRST) {
+		gameconfig.game_opponenttype = LEGACY_S8_WRAP_SUB(gameconfig.game_opponenttype, 1U);
+		/* Preserve the signed comparison: Clock (0) decrements to -1 before wrapping. */
+		if (LEGACY_S8_FROM_BITS((legacy_u8)gameconfig.game_opponenttype) <
+			(legacy_s16)OPPONENT_FIRST) {
 			gameconfig.game_opponenttype = OPPONENT_LAST;
 		}
 		return 0;
