@@ -1,4 +1,4 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 #include "../../c/audio.h"
 #include "../../c/platform.h"
 #include "../../c/timing.h"

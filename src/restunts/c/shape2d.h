@@ -59,7 +59,7 @@ legacy_u16 shape2d_anchored_x(const struct SHAPE2D far *shape, legacy_s16 x);
 legacy_u16 shape2d_anchored_y(const struct SHAPE2D far *shape, legacy_s16 y);
 
 /* SPRITE contains both 16-bit near and far pointers. */
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 typedef char legacy_sprite_must_be_30_bytes[(sizeof(struct SPRITE) == 30) ? 1 : -1];
 #endif
 

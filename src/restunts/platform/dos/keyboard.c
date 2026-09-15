@@ -1,15 +1,16 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 #include "keyboard.h"
 #include "../../c/platform.h"
 #include "../../c/fatal.h"
 #include "../../c/game_input.h"
-#include "dos_interrupts.h"
 
 // need these since we are referncing external symbols without an underscore
 #define getvect _getvect
 #define setvect _setvect
+#ifndef __WATCOMC__
 #define int86 _int86
 legacy_s16 _Cdecl _int86(legacy_s16 __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs);
+#endif
 
 typedef void interrupt(far *voidinterruptfunctype)();
 
@@ -172,8 +173,8 @@ void interrupt kb_int9_handler(void)
 
 // The original returns with the status flags left by its final XOR, SUB, CMP
 // or OR, plus IF set by STI. Capture those operations directly instead of
-// merging only ZF into the caller's saved flags; Borland's interrupt epilogue
-// will IRET with the value assigned to the `flags` pseudo-parameter.
+// merging only ZF into the caller's saved flags. The interrupt epilogue uses
+// the flags in the compiler's saved-register frame when executing IRET.
 static legacy_u16 kb_flags_after_zero(void)
 {
 	legacy_u16 result;
@@ -225,22 +226,22 @@ static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right)
 	return result;
 }
 
+#ifndef __WATCOMC__
 #pragma argsused
-void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si, legacy_u16 ds,
-								legacy_u16 es, legacy_u16 dx, legacy_u16 cx, legacy_u16 bx,
-								legacy_u16 ax, legacy_u16 ip, legacy_u16 cs, legacy_u16 flags)
+#endif
+void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 {
 
 	legacy_u16 result, kbdata;
 	legacy_u8 shiftleft, shiftright;
-	legacy_u8 bioscall = ax >> LEGACY_BYTE_BITS;
+	legacy_u8 bioscall = DOS_INTERRUPT_AX >> LEGACY_BYTE_BITS;
 	disable();
 	if (bioscall == DOS_KB_BIOS_READ_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
-			ax = 0;
-			flags = kb_flags_after_zero();
+			DOS_INTERRUPT_AX = 0;
+			DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
 			return;
 		}
 		kbdata = dos_kb_buffer_read;
@@ -253,8 +254,8 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si, leg
 		kbdata = dos_kb_buffer_count;
 		dos_kb_buffer_count = kbdata - DOS_KB_BUFFER_ENTRY_BYTES;
 		enable();
-		ax = result;
-		flags = kb_flags_after_subtract_two(kbdata);
+		DOS_INTERRUPT_AX = result;
+		DOS_INTERRUPT_FLAGS = kb_flags_after_subtract_two(kbdata);
 		return;
 	}
 
@@ -262,14 +263,14 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si, leg
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
 			enable();
-			ax = 0;
-			flags = kb_flags_after_zero();
+			DOS_INTERRUPT_AX = 0;
+			DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
 			return;
 		}
 		result = dos_kb_buffer[dos_kb_buffer_read / DOS_KB_BUFFER_ENTRY_BYTES];
 		enable();
-		ax = result;
-		flags = kb_flags_after_compare_zero(kbdata);
+		DOS_INTERRUPT_AX = result;
+		DOS_INTERRUPT_FLAGS = kb_flags_after_compare_zero(kbdata);
 		return;
 	}
 
@@ -278,13 +279,13 @@ void interrupt kb_int16_handler(legacy_u16 bp, legacy_u16 di, legacy_u16 si, leg
 		shiftright = dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE];
 		result = shiftleft | shiftright;
 		enable();
-		ax = result & LEGACY_U8_MAX;
-		flags = kb_flags_after_or(shiftleft, shiftright);
+		DOS_INTERRUPT_AX = result & LEGACY_U8_MAX;
+		DOS_INTERRUPT_FLAGS = kb_flags_after_or(shiftleft, shiftright);
 		return;
 	}
 	enable();
-	ax = 0;
-	flags = kb_flags_after_zero();
+	DOS_INTERRUPT_AX = 0;
+	DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
 	//return 0;
 }
 
@@ -340,26 +341,44 @@ legacy_s16 kb_get_key_state(legacy_s16 key)
 	return dos_kb_input[key];
 }
 
+static legacy_u32 dos_kb_bios_call(legacy_u8 function)
+{
+	legacy_u16 result;
+	legacy_u16 result_flags;
+
+	/* Watcom's int86 REGS does not expose ZF. Preserve the actual BIOS flags
+	 * before the compiler or interrupt wrapper can change them. Returning both
+	 * words also avoids passing a near pointer into a possibly foreign stack. */
+	__asm {
+		mov ah, function
+		int DOS_KB_BIOS_INTERRUPT_VECTOR
+		mov result, ax
+		pushf
+		pop ax
+		mov result_flags, ax
+	}
+	return LEGACY_U32_FROM_WORDS(result, result_flags);
+}
+
 legacy_s16 dos_kb_get_char(void)
 {
-	union REGS inregs;
-	union REGS outregs;
+	legacy_u32 status;
+	legacy_u16 key;
 
-	inregs.h.ah = DOS_KB_BIOS_STATUS_FUNCTION;
-	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
-	if ((outregs.x.flags & DOS_KB_X86_ZERO_FLAG) != 0) {
+	status = dos_kb_bios_call(DOS_KB_BIOS_STATUS_FUNCTION);
+	key = (legacy_u16)status;
+	if (((legacy_u16)(status >> LEGACY_WORD_BITS) & DOS_KB_X86_ZERO_FLAG) != 0) {
 		return 0;
 	}
 
-	/* A timer callback may ask while a foreign stack is active.  The original
+	/* A timer callback may ask while a foreign stack is active. The original
 	 * reports the pending key but postpones consuming and dispatching it. */
 	if (dos_data_stack_segments_match() == 0) {
-		return outregs.x.ax;
+		return key;
 	}
 
-	inregs.h.ah = DOS_KB_BIOS_READ_FUNCTION;
-	int86(DOS_KB_BIOS_INTERRUPT_VECTOR, &inregs, &outregs);
-	return kb_parse_key(outregs.x.ax);
+	key = (legacy_u16)dos_kb_bios_call(DOS_KB_BIOS_READ_FUNCTION);
+	return kb_parse_key(key);
 }
 
 void dos_kb_set_numlock(void)

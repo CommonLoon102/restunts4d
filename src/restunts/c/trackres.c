@@ -4,7 +4,7 @@
 #include "track_types.h"
 #include "track_collision.h"
 
-#if !defined(__BORLANDC__)
+#if !defined(RESTUNTS_DOS16)
 static struct PLANE decoded_planes[TRACK_PLAN_RESOURCE_COUNT];
 static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
 #endif
@@ -20,7 +20,7 @@ void load_track_collision_resources(void)
 	track_collision_resources_decode(plane_resource, wall_resource);
 }
 
-#if !defined(__BORLANDC__)
+#if !defined(RESTUNTS_DOS16)
 struct TRACK_RESOURCE_READER {
 	const legacy_u8 far *source;
 	legacy_u16 offset;
@@ -48,7 +48,7 @@ static void track_resource_next_vector(struct TRACK_RESOURCE_READER *reader, str
 void track_collision_resources_decode(const legacy_u8 far *plane_source,
 									  const legacy_u8 far *wall_source)
 {
-#if defined(__BORLANDC__)
+#if defined(RESTUNTS_DOS16)
 	/* DOS is little-endian and these packed records have their original ABI
 	 * sizes. Keep the resource-backed tables instead of duplicating nearly
 	 * 19 KiB in scarce conventional memory. */

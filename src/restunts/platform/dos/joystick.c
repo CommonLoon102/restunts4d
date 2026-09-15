@@ -1,4 +1,4 @@
-#include <dos.h>
+#include "dos_interrupts.h"
 #include "../../c/platform.h"
 
 #define DOS_JOYSTICK_GAME_PORT 513
