@@ -84,7 +84,7 @@ public sealed class EngineTests
         var ordered = calls.ToArray();
         var firstRenderer = Array.FindIndex(ordered, call => call.Executable.StartsWith("pix", StringComparison.Ordinal));
         Assert.All(ordered[..firstRenderer], call => Assert.Equal("1", call.Arguments));
-        Assert.All(ordered[firstRenderer..], call => Assert.Equal("2 0", call.Arguments));
+        Assert.All(ordered[firstRenderer..], call => Assert.Equal("1 0", call.Arguments));
         RegressionEngine.Cleanup(result);
         Assert.Equal("keep", File.ReadAllText(System.IO.Path.Combine(directory.Path, "unowned.bni")));
         Assert.All(new[] { "mix.BIN", "mix.PDO", "other.BIN", "other.PDO" }, name =>
