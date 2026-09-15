@@ -122,6 +122,10 @@ jobs:
               -ShardPlan shard-plan/shard-plan.json
           rm -- "$zip_path"
 
+      - name: Normalize unsupported scenery in renderer input copies
+        if: inputs.phase == 'renderer'
+        run: python3 tools/scripts/normalize-track-skybox.py --in-place "$GAME_DIR"
+
       - name: Run this shard's ${{ inputs.phase }} tests
         env:
           SHARD: ${{ matrix.shard }}

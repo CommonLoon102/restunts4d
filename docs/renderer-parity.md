@@ -7,6 +7,60 @@ physics reads values left in stack slots by earlier rendering calls. The C port
 represents those values explicitly instead of depending on undefined C locals,
 adjacent allocations, or the host compiler's stack layout.
 
+## Unsupported track skybox selectors
+
+A track's byte 900 selects one of five horizon resources: 0 desert, 1 tropical,
+2 alpine, 3 city, or 4 country. In a replay, the embedded track follows the
+26-byte header, so its selector is at file offset 926 (`0x39E`).
+
+ZCT77 and its six golden replays contain `0xFF` here. Original `load_skybox`
+checks bit `0x08` before indexing the resource table. When that bit is set,
+it skips image loading and leaves the previous image pointers and heights
+untouched. On a fresh replay start, the pointers and heights are zero. With
+incremental redraws, the zero maximum height creates an empty horizon rectangle;
+`rectlist_add_rect` can then split and merge recursively without making progress,
+corrupting the stack and hanging. The captured original-engine failure in 0691
+occurs at frame 122, with horizon rectangle `[0,320,28,28]`.
+The missing images do not guarantee a hang: interactive `restunts.exe` can play
+unmodified 0707 from a fresh start with plain blue sky. Recursion requires a
+particular combination of dirty rectangles, which varies with the render path.
+
+Visiting a normal track preview first loads and then frees its skybox. The loader
+for ZCT77 skips loading replacements, while the preview draws through the stale
+pointers. Reused image memory explains the multicolored horizon. Retained nonzero
+heights can avoid the empty-rectangle failure, but the result depends on earlier
+menu activity. This is not a stable initialization workaround.
+
+Keep the original assembly and executable intact by repairing unsupported
+selectors in the renderer's input copies. `tools/scripts/normalize-track-skybox.py`
+retains values 0 through 4 and maps every other value to desert by default. It
+changes only the scenery selector, preserving the geometry, terrain, replay
+header, and recorded controls byte for byte. This deliberately compares a
+supported scenery selection; it does not reproduce the undefined appearance of
+the original invalid input. Other invalid values can also index outside the
+five resource names, so merely clearing bit `0x08` is insufficient.
+
+For interactive playback, make repaired copies of both the track and replay:
+
+```sh
+python3 tools/scripts/normalize-track-skybox.py \
+    --output-directory out/skybox-fixed stunts/ZCT77.TRK stunts/0707.rpl
+```
+
+Load these repaired files in a game directory. Repairing the `.TRK` alone does
+not repair the track embedded in an existing `.RPL`. `--skybox 1` through
+`--skybox 4` select another fallback; already valid scenery is preserved.
+`--check` audits files or directories without changing them. The tool accepts
+1802-byte tracks and this branch's 26-byte-header replay format and rejects
+inconsistent file lengths before modifying a batch.
+
+CI runs the normalizer only on its temporary renderer game directory, before
+either executable starts. The archived corpus and physics phase retain their
+original inputs. A changed replay gets a `.PDO.pending` marker so the shared
+runner regenerates an old renderer cache. Valid inputs and their caches are
+untouched. Run `python3 tools/scripts/test-normalize-track-skybox.py` for the
+all-selector and corpus-preservation checks.
+
 ## Sphere bounds
 
 In `asmorig/seg006.asm`, `loc_25C92` first submits `(x - radius, y - radius)`

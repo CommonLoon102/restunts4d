@@ -103,6 +103,9 @@ jobs:
       - name: Test tick-based shard planning
         run: python3 tools/scripts/test-plan-replay-shards.py
 
+      - name: Test renderer input scenery normalization
+        run: python3 tools/scripts/test-normalize-track-skybox.py
+
       - name: Split the golden set into shards
         id: plan
         env:

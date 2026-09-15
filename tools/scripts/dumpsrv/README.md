@@ -35,6 +35,21 @@ dialog and is reported as a timeout. The replays using PACK, PFCR, LANI, LRDE,
 and FUNO require these mixed-case files. Updating the executables alone does
 not repair an already prepared game directory.
 
+Some custom tracks have unsupported skybox selectors. ZCT77's `0xFF` skips
+skybox initialization in the original engine, causing blank or corrupted
+horizons and renderer hangs. For renderer runs, prepare a separate copy of the
+game directory and normalize it before starting the service or direct runner:
+
+```sh
+python3 tools/scripts/normalize-track-skybox.py --in-place /path/to/renderer-stunts
+```
+
+This replaces selectors outside 0 through 4 with desert, preserving all other
+input bytes, and marks affected PDO caches for regeneration. Use the original
+corpus for physics regressions. CI performs this step only in its temporary
+renderer directory. See [the skybox diagnosis](../../../docs/renderer-parity.md#unsupported-track-skybox-selectors)
+for details and instructions for creating repaired interactive track/replay copies.
+
 The service writes uploads to `stunts/repldump.exe` and `stunts/pixldump.exe`.
 The `repldump` upload must be named exactly `repldump.exe`, and the `pixldump`
 upload exactly `pixldump.exe`, all lowercase. Missing or different filenames,
