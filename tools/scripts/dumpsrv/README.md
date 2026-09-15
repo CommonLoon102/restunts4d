@@ -328,7 +328,7 @@ still undergo the runner's completeness checks before reuse.
 ## Cached outputs and diagnostics
 
 Physics compares original `.BIN` output against fresh `.BNI` output. Rendering
-uses camera `2` and target `0`, comparing original `.PDO` output against fresh
+uses camera `1` (cockpit) and target `0`, comparing original `.PDO` output against fresh
 `.PDD` output. Build `pixldump` and `pixldump-original` together so both use
 incremental redraws and hashes on every frame. Comparisons are byte for byte.
 

@@ -388,7 +388,7 @@ remain available in their individual artifacts if replay validation fails.
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
 rendering by default, comparing pixldump `.PDD` files
-against pixldumo `.PDO` files with camera 2 and player target 0.
+against pixldumo `.PDO` files with camera 1 (cockpit) and player target 0.
 
 Each CI shard verifies the archived checksums and uses the independent Borland
 `repldumo.exe` for physics. Renderer shards use the freshly built original-assembly
@@ -445,7 +445,7 @@ Use a new output directory. This verifies the archived Borland checksums,
 uses the archived physics oracle and freshly built incremental renderer reference,
 records SHA-256 fingerprints of executables and inputs, and generates fresh
 outputs in an isolated DOS directory. The shared C# runner checks complete
-per-frame physics data and camera-2/player framebuffer hashes byte for byte.
+per-frame physics data and camera-1/player framebuffer hashes byte for byte.
 See [the oracle guide](tools/oracles/borland/README.md) for coverage, timeout,
 and cache options. Run the platform ABI check separately:
 
