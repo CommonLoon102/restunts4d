@@ -141,6 +141,15 @@ pointer, and polygon code segment.
 Thus replay names, optional extensions, DOS directories, and environment
 placement do not require special cases.
 
+The Watcom original renderer must retain the same heap boundary. Its linker
+places `ENDSEG` at physical offset `0x39E50`; original startup uses
+`seg endseg + 1`, retaining `0x39E6` paragraphs. The former MD5 boundary retained
+`0x3A1A` paragraphs and shifted resource addresses by 52 paragraphs, or 832 bytes.
+Polygon-buffer segment words left on the stack can then become different
+stopped-opponent wheel headings, even with the same original game assembly.
+WLINK rejects code that grows past the fixed boundary. Keep this linker setting
+and the C address model synchronized when the reference wrapper changes.
+
 The original engine assembly remains unchanged. Ordinary C
 game callers keep their existing default simulation contract; the pixel-dump
 wrapper selects its own original caller context. Both BMP and hash modes render
