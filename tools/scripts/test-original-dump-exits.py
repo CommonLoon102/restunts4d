@@ -92,7 +92,7 @@ def main():
         (game / "CHECK.BAT").write_bytes(batch.replace("\n", "\r\n").encode())
         # DOS create cannot replace a directory. This reaches the output-open
         # error after initialization has registered the game's interrupt handlers.
-        (game / "0000.BIN").mkdir()
+        (game / "0000.BNI").mkdir()
         command = [
             args.dosbox, "-silent", "-conf", str(ROOT / "tools/scripts/dosbox.proc.conf"),
             "-noautoexec", "-set", "cpu core=dynamic", "-set", "cpu cycles=max",
@@ -126,7 +126,7 @@ def main():
                 failures.append(f"Standalone DOS timer IRQ checks failed: {timer.strip()}")
         if read("DONE.TXT").strip() != b"DONE" or read("STATUS.TXT").strip() != b"EXPECTED":
             failures.append("Expected a completed run with a nonzero dump exit status")
-        if "Creating output file '0000.BIN'... FAIL" not in dump:
+        if "Creating output file '0000.BNI'... FAIL" not in dump:
             failures.append("The intended DOS output-create failure was not reached")
         if len(before) != 7 or len(after) != 7:
             failures.append("Missing independent IRQ snapshots")

@@ -413,11 +413,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 	printf("OK\n");
 
 	strcpy(outname, argv[1]);
-#ifdef RESTUNTS_ORIGINAL
-	strcat(outname, ".BIN");
-#else
 	strcat(outname, ".BNI");
-#endif
 	outname[REPLDUMP_OUTPUT_NAME_LAST_INDEX] = 0;
 	printf("Creating output file '%s'... ", outname);
 

@@ -363,6 +363,16 @@ to override the default 120-second timeout for each DOSBox run.
 
 ## CI replay validation
 
+Temporary toolchain comparison: CI builds all six executables, removes the
+ported dump tools, and renames the freshly built Watcom `repldumo.exe` and
+`pixldumo.exe` to `repldump.exe` and `pixldump.exe`. These candidates write
+`.BNI` and `.PDD` and are checked against the archived Borland originals,
+which retain `.BIN` and `.PDO`. The artifact contains the two games and
+the two renamed Watcom dump tools. During this comparison, local original
+builds also write `.BNI` and `.PDD` (including `.PDD.bmp`); `autocheck.sh`
+and `pixelcheck.sh` save their outputs under the reference extensions
+before running the ported tools.
+
 CI runs in five phases, each requiring the previous phase to pass:
 
 1. C/H formatting, C# regression service tests, host regression tests, and shard

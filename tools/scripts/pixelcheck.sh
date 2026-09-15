@@ -133,13 +133,14 @@ run_dosbox_exe() {
 }
 
 run_dosbox_exe "pixldumo.exe" || exit 1
-run_dosbox_exe "pixldump.exe" || exit 1
-
-if [[ ! -f "$original_output" ]]; then
-    echo "pixldumo.exe did not produce $original_output." >&2
+if [[ ! -f "$ported_output" ]]; then
+    echo "pixldumo.exe did not produce $ported_output." >&2
     exit 1
 fi
+# Both tools write .PDD (also in BMP mode); preserve the original before the C run.
+mv -- "$ported_output" "$original_output" || exit 1
 
+run_dosbox_exe "pixldump.exe" || exit 1
 if [[ ! -f "$ported_output" ]]; then
     echo "pixldump.exe did not produce $ported_output." >&2
     exit 1

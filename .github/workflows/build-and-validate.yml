@@ -35,7 +35,7 @@ on:
         default: 980
     outputs:
       exe-artifact:
-        description: Artifact holding the six built executables.
+        description: Artifact holding the two games and the renamed original dump tools.
         value: ${{ jobs.build.outputs.exe-artifact }}
 
 env:
@@ -163,6 +163,12 @@ jobs:
           make -C src/restunts restunts repldump pixldump
           make -C src/restunts restunts-original repldump-original pixldump-original
 
+      - name: Temporarily compare Watcom originals against Borland oracles
+        run: |
+          rm -- stunts/repldump.exe stunts/pixldump.exe
+          mv -- stunts/repldumo.exe stunts/repldump.exe
+          mv -- stunts/pixldumo.exe stunts/pixldump.exe
+
       - name: Check the DOS platform ABI and dump timer masking
         run: |
           sudo apt-get update
@@ -174,17 +180,17 @@ jobs:
         run: |
           set -eu
           mkdir -p dist
-          for exe in restunts restunto repldump repldumo pixldump pixldumo; do
+          for exe in restunts restunto repldump pixldump; do
               test -s "stunts/$exe.exe"
               cp -- "stunts/$exe.exe" "dist/$exe.exe"
           done
           ls -l dist
 
       - name: Check the renderer address model against the built oracle
-        run: python3 tools/scripts/test-pixldump-legacy-layout.py --executable dist/pixldumo.exe
+        run: python3 tools/scripts/test-pixldump-legacy-layout.py --executable dist/pixldump.exe
 
       - name: Check original dump failure cleanup
-        run: python3 tools/scripts/test-original-dump-exits.py --executable dist/repldumo.exe
+        run: python3 tools/scripts/test-original-dump-exits.py --executable dist/repldump.exe
 
       - uses: actions/upload-artifact@v7
         with:
