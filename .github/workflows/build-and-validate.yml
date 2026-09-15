@@ -32,7 +32,7 @@ on:
       renderer-timeout-seconds:
         description: Seconds each renderer executable gets per replay.
         type: number
-        default: 480
+        default: 980
     outputs:
       exe-artifact:
         description: Artifact holding the six built executables.
