@@ -9,7 +9,8 @@ public static class OracleArchive
         string? shardPlanPath = null, CancellationToken cancellation = default)
     {
         var replays = ReplayCatalog.Discover(gameDirectory, cancellation);
-        var plan = ShardPlan.Load(shardPlanPath, replays, percentage, shardCount);
+        var opponents = ReplayCatalog.WithOpponent(gameDirectory, replays, cancellation);
+        var plan = ShardPlan.Load(shardPlanPath, replays, opponents, percentage, shardCount);
         var assigned = plan.Assigned(renderer, shardIndex);
         using var archive = ZipFile.OpenRead(archivePath);
         var entries = archive.Entries.ToDictionary(entry => entry.FullName,

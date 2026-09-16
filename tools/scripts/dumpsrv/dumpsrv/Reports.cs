@@ -100,9 +100,11 @@ public static class ResultMerger
         var diagnostics = new List<string>();
         var results = new Dictionary<int, ShardResult>();
         IReadOnlyList<string> corpus = [];
+        IReadOnlyList<string> opponents = [];
         try
         {
-            corpus = ReplayCatalog.Discover(options.ReplayDirectory);
+            corpus = ReplayCatalog.Discover(options.ReplayDirectory, cancellation);
+            opponents = ReplayCatalog.WithOpponent(options.ReplayDirectory, corpus, cancellation);
         }
         catch (Exception e) when (e is ArgumentException or InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -112,7 +114,7 @@ public static class ResultMerger
         ShardPlan? plan = null;
         try
         {
-            plan = ShardPlan.Load(options.ShardPlanPath, corpus,
+            plan = ShardPlan.Load(options.ShardPlanPath, corpus, opponents,
                 options.RendererTestPercentage, options.ShardCount);
         }
         catch (Exception e) when (e is ArgumentException or JsonException or InvalidDataException or
@@ -198,7 +200,8 @@ public static class ResultMerger
         var physics = results.Values.Sum(result => result.PhysicsCompleted.Count);
         var renderer = results.Values.Sum(result => result.RendererCompleted.Count);
         var expectedPhysics = options.PhysicsTests ? corpus.Count : 0;
-        var expectedRenderer = options.RendererTests ? ReplayCatalog.Sample(corpus, options.RendererTestPercentage).Count : 0;
+        var expectedRenderer = options.RendererTests
+            ? ReplayCatalog.Sample(opponents, options.RendererTestPercentage).Count : 0;
         var phases = new List<(string Name, int Processed, int Expected)>();
         if (options.PhysicsTests)
         {
@@ -222,7 +225,8 @@ public static class ResultMerger
             }
             if (options.RendererTests)
             {
-                markdown.AppendLine($"| Renderer sample percentage | {options.RendererTestPercentage}% |")
+                markdown.AppendLine($"| Replays containing an opponent | {opponents.Count} |")
+                    .AppendLine($"| Renderer sample percentage | {options.RendererTestPercentage}% |")
                     .AppendLine($"| Renderer replays expected | {expectedRenderer} |")
                     .AppendLine($"| Renderer replays processed | {renderer} |");
             }

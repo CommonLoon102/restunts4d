@@ -60,7 +60,7 @@ public sealed class EngineTests
     }
 
     [Fact]
-    public async Task EngineRunsBothPhasesAndUsesCompletedCachesWithoutTouchingUnownedFiles()
+    public async Task EngineRunsBothPhasesAndReusesOnlyPhysicsCachesWithoutTouchingUnownedFiles()
     {
         using var directory = CreateGame("mix.RpL", "other.rpl");
         File.WriteAllBytes(System.IO.Path.Combine(directory.Path, "MIX.bin"), DumpBytes(false, 6));
@@ -79,12 +79,13 @@ public sealed class EngineTests
         Assert.Empty(result.Diagnostics);
         Assert.Equal(new[] { "mix.RpL", "other.rpl" }, result.PhysicsCompleted);
         Assert.Equal(result.PhysicsCompleted, result.RendererCompleted);
-        Assert.DoesNotContain(calls, call => call.ReplayBaseName == "mix" && call.Executable.EndsWith("o.exe"));
+        Assert.DoesNotContain(calls, call => call.ReplayBaseName == "mix" &&
+            call.Executable == "repldumo.exe");
         Assert.All(calls, call => Assert.DoesNotContain('.', call.ReplayBaseName));
         var ordered = calls.ToArray();
         var firstRenderer = Array.FindIndex(ordered, call => call.Executable.StartsWith("pix", StringComparison.Ordinal));
         Assert.All(ordered[..firstRenderer], call => Assert.Equal("1", call.Arguments));
-        Assert.All(ordered[firstRenderer..], call => Assert.Equal("1 0", call.Arguments));
+        Assert.All(ordered[firstRenderer..], call => Assert.Equal("1 1", call.Arguments));
         RegressionEngine.Cleanup(result);
         Assert.Equal("keep", File.ReadAllText(System.IO.Path.Combine(directory.Path, "unowned.bni")));
         Assert.All(new[] { "mix.BIN", "mix.PDO", "other.BIN", "other.PDO" }, name =>
@@ -92,6 +93,43 @@ public sealed class EngineTests
         Assert.DoesNotContain(Directory.GetFiles(directory.Path), path =>
             System.IO.Path.GetExtension(path).Equals(".pdd", StringComparison.OrdinalIgnoreCase));
         Assert.False(File.Exists(DosFiles.Resolve(directory.Path, "mix.BNI")));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    [InlineData(4)]
+    [InlineData(5)]
+    [InlineData(6)]
+    [InlineData(255)]
+    public async Task RendererSkipsSoloReplaysAndRegeneratesOpponentReferences(byte opponentType)
+    {
+        using var directory = CreateGame("race.rpl");
+        WriteReplay(directory, "race.rpl", 6, opponentType);
+        var replayPath = Path.Combine(directory.Path, "race.rpl");
+        var replayBytes = File.ReadAllBytes(replayPath);
+        File.WriteAllBytes(Path.Combine(directory.Path, "RACE.pdo"),
+            DumpBytes(true, 6, different: true));
+        var calls = new List<DosBoxInvocation>();
+        var runner = new FakeRunner((invocation, _) =>
+        {
+            calls.Add(invocation);
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        });
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(
+            Options(directory) with { PhysicsTests = false },
+            TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Empty(result.Diagnostics);
+        Assert.Equal(opponentType == 0 ? Array.Empty<string>() : new[] { "race.rpl" },
+            result.RendererCompleted);
+        Assert.Equal(opponentType == 0 ? Array.Empty<string>() :
+            new[] { "pixldumo.exe", "pixldump.exe" }, calls.Select(call => call.Executable));
+        Assert.All(calls, call => Assert.Equal("1 1", call.Arguments));
+        Assert.Equal(replayBytes, File.ReadAllBytes(replayPath));
     }
 
     [Fact]
@@ -241,9 +279,10 @@ public sealed class EngineTests
     public async Task RunnerAndMergerHonorTheJsonListsForEachShardAndPhase()
     {
         using var directory = CreateGame("alpha.rpl", "beta.rpl", "gamma.rpl");
+        WriteReplay(directory, "alpha.rpl", 6, opponentType: 0);
         var assignments = new[]
         {
-            new ReplayShard { Physics = ["gamma.rpl"], Renderer = ["alpha.rpl"] },
+            new ReplayShard { Physics = ["gamma.rpl"], Renderer = [] },
             new ReplayShard
             {
                 Physics = ["beta.rpl", "alpha.rpl"], Renderer = ["gamma.rpl", "beta.rpl"]
@@ -277,6 +316,7 @@ public sealed class EngineTests
         }, TestContext.Current.CancellationToken);
         Assert.True(merged.Success);
         Assert.Empty(merged.Diagnostics);
+        Assert.Contains("3/3 physics and 2/2 renderer", merged.Summary);
     }
 
     [Fact]
@@ -533,9 +573,11 @@ public sealed class EngineTests
         return directory;
     }
 
-    private static void WriteReplay(EngineDirectory directory, string replay, ushort frames)
+    private static void WriteReplay(EngineDirectory directory, string replay, ushort frames,
+        byte opponentType = 1)
     {
         var bytes = new byte[26 + 1802 + frames];
+        bytes[6] = opponentType;
         BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(22), 20);
         BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(24), frames);
         File.WriteAllBytes(System.IO.Path.Combine(directory.Path, replay), bytes);

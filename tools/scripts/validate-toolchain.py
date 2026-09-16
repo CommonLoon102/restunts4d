@@ -38,7 +38,7 @@ def copy_assets(source, destination):
 
 def copy_oracle_cache(source, game, manifest):
     cached = json.loads((source / "inputs.json").read_text())
-    for key in ("corpus_sha256", "camera", "target", "replays", "assets"):
+    for key in ("corpus_sha256", "camera", "target", "renderer_selection", "replays", "assets"):
         if cached[key] != manifest[key]:
             raise ValueError(f"Oracle cache inputs differ: {key}")
     for name in ("REPLDUMO.EXE", "PIXLDUMO.EXE"):
@@ -104,8 +104,9 @@ def prepare(args):
         "selection": "ordinal sort; index * corpus_count // selected_count",
         "corpus_count": len(names),
         "selected_count": len(selected),
-        "camera": 2,
-        "target": 0,
+        "camera": 1,
+        "target": 1,
+        "renderer_selection": "replays containing an opponent",
         "executables": {p.name: digest(p) for p in sorted(game.glob("*.EXE"))},
         "replays": {name: digest(game / name) for name in selected},
         "assets": {p.name: digest(p) for p in sorted(game.iterdir())

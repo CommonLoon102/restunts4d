@@ -43,7 +43,8 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             Validate(options);
             var replays = ReplayCatalog.Discover(options.GameDirectory, cancellationToken);
             result.ReplayFiles = replays.ToList();
-            var plan = ShardPlan.Load(options.ShardPlanPath, replays,
+            var opponents = ReplayCatalog.WithOpponent(options.GameDirectory, replays, cancellationToken);
+            var plan = ShardPlan.Load(options.ShardPlanPath, replays, opponents,
                 options.RendererTestPercentage, options.ShardCount);
             var phases = new List<Phase>();
             if (options.PhysicsTests)
@@ -53,7 +54,7 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             }
             if (options.RendererTests)
             {
-                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD", "1 0",
+                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD", "1 1",
                     options.RendererTimeoutSeconds));
             }
             foreach (var executable in phases.SelectMany(phase => new[] { phase.Oracle, phase.Candidate }))
@@ -137,11 +138,12 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
         var candidatePath = Resolve(phase.CandidateExtension);
         own(candidatePath);
         File.Delete(candidatePath);
-        var frames = await DumpOutput.ReadFrameCountAsync(
-            Path.Combine(options.GameDirectory, replay), cancellationToken);
+        var frames = ReplayCatalog.ReadHeader(Path.Combine(options.GameDirectory, replay)).Frames;
         var oraclePath = Resolve(phase.OracleExtension);
         var pendingPath = Resolve($"{phase.OracleExtension}.pending");
-        if (File.Exists(pendingPath) ||
+        // PDO files do not identify their camera target. Regenerate renderer references
+        // so a complete cached player view cannot stand in for an opponent view.
+        if (phase.Renderer || File.Exists(pendingPath) ||
             !await DumpOutput.IsCompleteAsync(oraclePath, phase.Renderer, frames,
                 cancellationToken))
         {

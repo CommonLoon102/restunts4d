@@ -87,6 +87,31 @@ public sealed class CatalogTests
         Assert.Equal(new[] { "replay-0", "replay-7", "replay-14", "replay-22", "replay-29" }, sample);
     }
 
+    [Fact]
+    public void OpponentSelectionReadsReplayHeadersAndKeepsCorpusOrder()
+    {
+        using var directory = new EngineDirectory();
+        directory.WriteReplay("z.rpl", 255);
+        directory.WriteReplay("solo.rpl", 0);
+        directory.WriteReplay("Alpha.RPL", 1);
+        directory.WriteReplay("beta.rpl", 6);
+        var corpus = ReplayCatalog.Discover(directory.Path, TestContext.Current.CancellationToken);
+        Assert.Equal(new[] { "Alpha.RPL", "beta.rpl", "z.rpl" },
+            ReplayCatalog.WithOpponent(directory.Path, corpus, TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(6)]
+    [InlineData(25)]
+    public void IncompleteHeadersCannotSilentlyExcludeRendererCoverage(int length)
+    {
+        using var directory = new EngineDirectory();
+        File.WriteAllBytes(Path.Combine(directory.Path, "short.rpl"), new byte[length]);
+        Assert.Throws<InvalidDataException>(() => ReplayCatalog.WithOpponent(
+            directory.Path, ["short.rpl"], TestContext.Current.CancellationToken));
+    }
+
 }
 
 internal sealed class EngineDirectory : IDisposable
@@ -99,6 +124,13 @@ internal sealed class EngineDirectory : IDisposable
     }
 
     public void Write(string relativePath, string content = "") => File.WriteAllText(System.IO.Path.Combine(Path, relativePath), content);
+
+    public void WriteReplay(string relativePath, byte opponentType = 1)
+    {
+        var header = new byte[26];
+        header[6] = opponentType;
+        File.WriteAllBytes(System.IO.Path.Combine(Path, relativePath), header);
+    }
 
     public void Dispose() => Directory.Delete(Path, true);
 }

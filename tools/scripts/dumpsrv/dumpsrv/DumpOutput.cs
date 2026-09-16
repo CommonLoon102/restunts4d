@@ -6,27 +6,11 @@ namespace DumpSrv;
 
 internal static class DumpOutput
 {
-    private const int ReplayHeaderSize = 26;
-    private const int RecordedFramesOffset = 24;
     private const int PhysicsHeaderSize = 2;
     private const int GameStateSize = 1120;
     private const int RendererSampleInterval = 1;
     private const int DigestLength = 8;
     private const string RendererHeader = "PIXLDUMP 2";
-
-    public static async Task<ushort> ReadFrameCountAsync(string replayPath,
-        CancellationToken cancellationToken)
-    {
-        await using var stream = File.OpenRead(replayPath);
-        var header = new byte[ReplayHeaderSize];
-        var count = await stream.ReadAtLeastAsync(header, header.Length, false, cancellationToken);
-        if (count != header.Length)
-        {
-            throw new InvalidDataException(
-                $"Incomplete replay header: {Path.GetFileName(replayPath)}");
-        }
-        return BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(RecordedFramesOffset));
-    }
 
     public static async Task<bool> IsCompleteAsync(string path, bool renderer, ushort frames,
         CancellationToken cancellationToken)

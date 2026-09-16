@@ -13,7 +13,7 @@ public sealed class ShardPlanTests
     {
         using var directory = new EngineDirectory();
         var path = WritePlan(directory);
-        var plan = ShardPlan.Load(path, Replays, 50, 2);
+        var plan = ShardPlan.Load(path, Replays, Replays, 50, 2);
         Assert.Equal(new[] { "z.rpl", "beta.RPL" }, plan.Assigned(false, 0));
         Assert.Equal(new[] { "race.rpl", "Alpha.rpl" }, plan.Assigned(false, 1));
         Assert.Equal(new[] { "race.rpl" }, plan.Assigned(true, 0));
@@ -25,10 +25,10 @@ public sealed class ShardPlanTests
     [Fact]
     public void OnlySingleShardRunsMayOmitThePlan()
     {
-        var plan = ShardPlan.Load(null, Replays, 50, 1);
+        var plan = ShardPlan.Load(null, Replays, Replays, 50, 1);
         Assert.Equal(Replays, plan.Assigned(false, 0));
         Assert.Equal(new[] { "Alpha.rpl", "race.rpl" }, plan.Assigned(true, 0));
-        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(null, Replays, 50, 2));
+        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(null, Replays, Replays, 50, 2));
     }
 
     [Theory]
@@ -64,7 +64,7 @@ public sealed class ShardPlanTests
             case "wrong_renderer_sample": shards[0]!["renderer"]![0] = "beta.RPL"; break;
         }
         File.WriteAllText(path, json.ToJsonString());
-        var exception = Record.Exception(() => ShardPlan.Load(path, Replays, 50, 2));
+        var exception = Record.Exception(() => ShardPlan.Load(path, Replays, Replays, 50, 2));
         Assert.True(exception is InvalidDataException or JsonException);
     }
 
@@ -73,17 +73,36 @@ public sealed class ShardPlanTests
     {
         using var directory = new EngineDirectory();
         var path = WritePlan(directory);
-        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(path, Replays, 50, 3));
-        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(path, Replays, 100, 2));
+        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(path, Replays, Replays, 50, 3));
+        Assert.Throws<InvalidDataException>(() => ShardPlan.Load(path, Replays, Replays, 100, 2));
         var json = File.ReadAllText(path);
         File.WriteAllText(path, "{\"version\":1," + json[1..]);
-        Assert.Throws<JsonException>(() => ShardPlan.Load(path, Replays, 50, 2));
+        Assert.Throws<JsonException>(() => ShardPlan.Load(path, Replays, Replays, 50, 2));
     }
 
     private static string WritePlan(EngineDirectory directory) => TestShardPlans.Write(
         directory.Path, 50,
         new ReplayShard { Physics = ["z.rpl", "beta.RPL"], Renderer = ["race.rpl"] },
         new ReplayShard { Physics = ["race.rpl", "Alpha.rpl"], Renderer = ["Alpha.rpl"] });
+
+    [Fact]
+    public void RendererSamplingUsesOnlyOpponentsAndRejectsPlansContainingSoloReplays()
+    {
+        using var directory = new EngineDirectory();
+        string[] opponents = ["beta.RPL", "z.rpl"];
+        var plan = ShardPlan.Load(null, Replays, opponents, 50, 1);
+        Assert.Equal(Replays, plan.Assigned(false, 0));
+        Assert.Equal(new[] { "beta.RPL" }, plan.Assigned(true, 0));
+        Assert.Empty(ShardPlan.Load(null, Replays, [], 100, 1).Assigned(true, 0));
+
+        var path = TestShardPlans.Write(directory.Path, 50, plan.Shards.ToArray());
+        Assert.Equal(new[] { "beta.RPL" },
+            ShardPlan.Load(path, Replays, opponents, 50, 1).Assigned(true, 0));
+        plan.Shards[0].Renderer[0] = "Alpha.rpl";
+        TestShardPlans.Write(directory.Path, 50, plan.Shards.ToArray());
+        Assert.Throws<InvalidDataException>(() =>
+            ShardPlan.Load(path, Replays, opponents, 50, 1));
+    }
 }
 
 internal static class TestShardPlans

@@ -18,6 +18,7 @@ RESERVED_NAMES = {"CON", "PRN", "AUX", "NUL", "CLOCK$", "CONIN$", "CONOUT$"} | {
 def read_replays(source):
     """Read only the 26-byte headers, from a directory or the golden ZIP."""
     ticks = {}
+    opponents = []
     identities = set()
 
     def add(name, header):
@@ -32,6 +33,8 @@ def read_replays(source):
             raise ValueError(f"Incomplete replay header: {name}")
         identities.add(name.lower())
         ticks[name] = struct.unpack_from("<H", header, 24)[0]
+        if header[6] != 0:
+            opponents.append(name)
 
     if source.is_dir():
         for path in source.iterdir():
@@ -46,7 +49,7 @@ def read_replays(source):
                         add(entry.filename, stream.read(26))
     if not ticks:
         raise ValueError(f"No replay files found in {source}.")
-    return dict(sorted(ticks.items()))
+    return dict(sorted(ticks.items())), sorted(opponents)
 
 
 def sample(replays, percentage):
@@ -105,14 +108,14 @@ def balance(replays, ticks, count):
     return [sorted(shard) for shard in shards], totals
 
 
-def create_plan(ticks, shard_count, percentage):
+def create_plan(ticks, opponents, shard_count, percentage):
     if not 1 <= shard_count <= 2147483647:
         raise ValueError("shards must be an integer from 1 to 2147483647")
     if not 1 <= percentage <= 100:
         raise ValueError("renderer-test-percentage must be an integer from 1 to 100")
     replays = sorted(ticks)
     physics, physics_ticks = balance(replays, ticks, shard_count)
-    renderer, renderer_ticks = balance(sample(replays, percentage), ticks, shard_count)
+    renderer, renderer_ticks = balance(sample(sorted(opponents), percentage), ticks, shard_count)
     return {
         "version": 1,
         "rendererTestPercentage": percentage,
@@ -156,7 +159,8 @@ def main():
     parser.add_argument("--summary", type=Path, help="Append a Markdown balance summary")
     args = parser.parse_args()
     try:
-        plan = create_plan(read_replays(args.replays), args.shards, args.renderer_test_percentage)
+        ticks, opponents = read_replays(args.replays)
+        plan = create_plan(ticks, opponents, args.shards, args.renderer_test_percentage)
     except (OSError, ValueError, zipfile.BadZipFile) as exception:
         parser.error(str(exception))
     args.output.write_text(json.dumps(plan, indent=2) + "\n", encoding="utf-8")

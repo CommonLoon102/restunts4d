@@ -14,6 +14,7 @@ public sealed class OracleArchiveTests
         using var source = new EngineDirectory();
         var extension = renderer ? ".PDO" : ".BIN";
         var replays = Enumerable.Range(0, 37).Select(index => $"t{index:000}.rpl").ToArray();
+        var opponents = replays.Where((_, index) => index % 2 == 0).ToArray();
         var zipPath = Path.Combine(source.Path, "oracles.zip");
         using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
         {
@@ -26,7 +27,7 @@ public sealed class OracleArchiveTests
             archive.CreateEntry("../unrelated.txt");
             archive.CreateEntry("repldump.exe");
         }
-        var sample = ReplayCatalog.Sample(replays, percentage);
+        var sample = ReplayCatalog.Sample(opponents, percentage);
         var assignments = Enumerable.Range(0, 5).Select(index => new ReplayShard
         {
             Physics = replays.Skip(index * 8).Take(8).Reverse().ToList(),
@@ -38,7 +39,7 @@ public sealed class OracleArchiveTests
             using var game = new EngineDirectory();
             foreach (var replay in replays)
             {
-                game.Write(replay);
+                game.WriteReplay(replay, (byte)(opponents.Contains(replay) ? 1 : 0));
             }
             var expected = renderer ? assignments[shard].Renderer : assignments[shard].Physics;
             var result = OracleArchive.Extract(zipPath, game.Path, renderer, percentage, shard, 5,
@@ -60,8 +61,8 @@ public sealed class OracleArchiveTests
     public async Task CommandExtractsMixedCaseCachesAndLeavesMissingOutputsForTheRunner()
     {
         using var game = new EngineDirectory();
-        game.Write("track.rpl");
-        game.Write("missing.rpl");
+        game.WriteReplay("track.rpl");
+        game.WriteReplay("missing.rpl");
         game.Write("track.bin", "stale");
         game.Write("TRACK.BIN.pending");
         var zipPath = Path.Combine(game.Path, "oracles.zip");
@@ -88,7 +89,7 @@ public sealed class OracleArchiveTests
     public async Task CommandRejectsInvalidSelection(string option, string value)
     {
         using var game = new EngineDirectory();
-        game.Write("track.rpl");
+        game.WriteReplay("track.rpl");
         var code = await CommandLine.ExecuteAsync(
             ["extract-oracles", "-Archive", "unused.zip", "-GameDirectory", game.Path, option, value],
             TestContext.Current.CancellationToken);
@@ -99,7 +100,7 @@ public sealed class OracleArchiveTests
     public async Task CommandFailsForInvalidArchives()
     {
         using var game = new EngineDirectory();
-        game.Write("track.rpl");
+        game.WriteReplay("track.rpl");
         game.Write("oracles.zip", "not a zip");
         var code = await CommandLine.ExecuteAsync(
             ["extract-oracles", "-Archive", Path.Combine(game.Path, "oracles.zip"),

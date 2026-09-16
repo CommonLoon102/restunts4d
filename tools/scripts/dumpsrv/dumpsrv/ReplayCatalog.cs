@@ -1,7 +1,40 @@
+using System.Buffers.Binary;
+
 namespace DumpSrv;
 
 public static class ReplayCatalog
 {
+    private const int HeaderSize = 26;
+    private const int OpponentTypeOffset = 6;
+    private const int RecordedFramesOffset = 24;
+
+    public static (ushort Frames, bool HasOpponent) ReadHeader(string path)
+    {
+        using var stream = File.OpenRead(path);
+        Span<byte> header = stackalloc byte[HeaderSize];
+        if (stream.ReadAtLeast(header, header.Length, throwOnEndOfStream: false) != header.Length)
+        {
+            throw new InvalidDataException($"Incomplete replay header: {Path.GetFileName(path)}");
+        }
+        return (BinaryPrimitives.ReadUInt16LittleEndian(header[RecordedFramesOffset..]),
+            header[OpponentTypeOffset] != 0);
+    }
+
+    public static IReadOnlyList<string> WithOpponent(string directory,
+        IReadOnlyList<string> replays, CancellationToken cancellationToken = default)
+    {
+        var opponents = new List<string>();
+        foreach (var replay in replays)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (ReadHeader(Path.Combine(directory, replay)).HasOpponent)
+            {
+                opponents.Add(replay);
+            }
+        }
+        return opponents;
+    }
+
     public static IReadOnlyList<string> Discover(string directory, CancellationToken cancellationToken = default)
     {
         var names = new List<string>();

@@ -376,16 +376,18 @@ A failed phase skips the later phases. Physics and renderer phase diagnostics
 remain available in their individual artifacts if replay validation fails.
 
 Pull requests and releases build the game, physics dump tools, and both
-renderer dump tools. CI compares the full golden replay set for physics and
-rendering by default, comparing pixldump `.PDD` files
-against pixldumo `.PDO` files with camera 2 and player target 0.
+renderer dump tools. CI compares the full golden replay set for physics and all
+replays containing an opponent for rendering by default. Renderer tests compare
+pixldump `.PDD` files against pixldumo `.PDO` files with camera 1 (F1 cockpit) and
+opponent target 1, without the dashboard. Solo replays are skipped only in rendering.
 
 Each CI shard verifies the archived checksums and uses the independent Borland
 `repldumo.exe` for physics. Renderer shards use the freshly built original-assembly
-`pixldumo.exe` and generate incremental `.PDO` references locally. Physics shards
-reuse the published `.BIN` cache, generating missing entries. Both original dump
-wrappers disable timer IRQ0 during offline capture, preventing timing-dependent
-reference data. Renderer shards do not download the old full-redraw `.PDO` archive.
+`pixldumo.exe`. They generate opponent/F1 references locally on every run, because
+`.PDO` files do not record their camera target. CI does not download player-view
+renderer caches. Both original dump wrappers disable timer IRQ0 during offline
+capture, preventing timing-dependent reference data. The archived full-redraw
+renderer executable is not used in CI.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
@@ -393,15 +395,16 @@ same engine. See the [service and runner guide](tools/scripts/dumpsrv/README.md)
 for publishing, service parameters, client options, and local execution.
 
 Set `renderer-test-percentage` (an integer from 1 to 100) when manually
-starting **PR validation** or **Release** to change renderer coverage. Calls
+starting **PR validation** or **Release** to change coverage of opponent replays. Calls
 to the reusable `build-and-validate.yml` workflow can set the same input;
 pull request events use 100%. The HTTP service retains its separate 100% default
 for `RendererTestPercentage`.
 
-Every top-level `.rpl` file is eligible, regardless of filename structure.
-Renderer sampling happens across the complete, ordinal-sorted corpus before
-shard planning. The CI planning job reads recorded tick counts from replay
-headers and balances physics and renderer shards separately, targeting totals
+Every top-level `.rpl` file is eligible for physics, regardless of filename structure.
+Renderer sampling happens across the ordinal-sorted replays containing an opponent,
+before shard planning. The CI planning job reads opponent types and recorded tick
+counts from replay headers and balances physics and renderer shards separately,
+targeting totals
 within ±2% of each phase's average. It publishes `shard-plan.json` as the
 `replay-shard-plan` artifact. Replay jobs, oracle extraction, and coverage checks
 all consume that same plan; the C# application selects its lists by shard ID.
@@ -435,7 +438,8 @@ Use a new output directory. This verifies the archived Borland checksums,
 uses the archived physics oracle and freshly built incremental renderer reference,
 records SHA-256 fingerprints of executables and inputs, and generates fresh
 outputs in an isolated DOS directory. The shared C# runner checks complete
-per-frame physics data and camera-2/player framebuffer hashes byte for byte.
+per-frame physics data and opponent/F1 cockpit framebuffer hashes byte for byte.
+Solo replays are included only in physics validation.
 See [the oracle guide](tools/oracles/borland/README.md) for coverage, timeout,
 and cache options. Run the platform ABI check separately:
 

@@ -20,18 +20,19 @@ SPEC.loader.exec_module(planner)
 
 
 class PlannerTests(unittest.TestCase):
-    def assert_coverage_and_totals(self, plan, ticks, percentage):
+    def assert_coverage_and_totals(self, plan, ticks, percentage, opponents=None):
+        opponents = sorted(ticks) if opponents is None else sorted(opponents)
         for phase, expected in (
             ("physics", sorted(ticks)),
-            ("renderer", planner.sample(sorted(ticks), percentage)),
+            ("renderer", planner.sample(opponents, percentage)),
         ):
             actual = sorted(name for shard in plan["shards"] for name in shard[phase])
             self.assertEqual(expected, actual)
             for shard in plan["shards"]:
                 self.assertEqual(sum(ticks[name] for name in shard[phase]), shard[phase + "Ticks"])
 
-    def assert_balanced(self, plan):
-        for phase in ("physics", "renderer"):
+    def assert_balanced(self, plan, phases=("physics", "renderer")):
+        for phase in phases:
             totals = [shard[phase + "Ticks"] for shard in plan["shards"]]
             average = sum(totals) / len(totals)
             for total in totals:
@@ -39,17 +40,17 @@ class PlannerTests(unittest.TestCase):
 
     def test_tick_balance_can_require_different_replay_counts(self):
         ticks = {f"s{index}.rpl": 100 for index in range(10)} | {"long.rpl": 1000}
-        plan = planner.create_plan(ticks, 2, 100)
+        plan = planner.create_plan(ticks, sorted(ticks), 2, 100)
         self.assert_balanced(plan)
         self.assertEqual([1, 10], sorted(len(shard["physics"]) for shard in plan["shards"]))
         self.assert_coverage_and_totals(plan, ticks, 100)
-        self.assertEqual(plan, planner.create_plan(dict(reversed(list(ticks.items()))), 2, 100))
+        self.assertEqual(plan, planner.create_plan(dict(reversed(list(ticks.items()))), list(reversed(ticks)), 2, 100))
 
     def test_moves_and_swaps_repair_longest_first_assignment(self):
         for weights in ([800, 700, 600, 500, 400], [300, 300, 200, 200, 200]):
             with self.subTest(weights=weights):
                 ticks = {f"r{index}.rpl": weight for index, weight in enumerate(weights)}
-                plan = planner.create_plan(ticks, 2, 100)
+                plan = planner.create_plan(ticks, sorted(ticks), 2, 100)
                 self.assert_balanced(plan)
                 self.assert_coverage_and_totals(plan, ticks, 100)
 
@@ -58,32 +59,45 @@ class PlannerTests(unittest.TestCase):
             for count in (1, 2, 20):
                 with self.subTest(weights=weights, count=count):
                     ticks = {f"r{index}.rpl": weight for index, weight in enumerate(weights)}
-                    plan = planner.create_plan(ticks, count, 100)
+                    plan = planner.create_plan(ticks, sorted(ticks), count, 100)
                     self.assertEqual(count, len(plan["shards"]))
                     self.assert_coverage_and_totals(plan, ticks, 100)
-                    self.assertEqual(plan, planner.create_plan(ticks, count, 100))
+                    self.assertEqual(plan, planner.create_plan(ticks, sorted(ticks), count, 100))
                     if not any(weights):
                         sizes = [len(shard["physics"]) for shard in plan["shards"]]
                         self.assertLessEqual(max(sizes) - min(sizes), 1)
         self.assertIn("Warning: physics exceeds", planner.describe_plan(
-            planner.create_plan({"long.rpl": 1000, "short.rpl": 1}, 2, 100)))
+            planner.create_plan({"long.rpl": 1000, "short.rpl": 1}, [], 2, 100)))
 
     def test_sampling_precedes_sharding_and_does_not_depend_on_shard_count(self):
         ticks = {f"r{index:02}.rpl": index * 100 for index in range(37)}
         expected = ["r00.rpl", "r07.rpl", "r14.rpl", "r22.rpl", "r29.rpl"]
         for count in (1, 3, 20):
-            plan = planner.create_plan(ticks, count, 13)
+            plan = planner.create_plan(ticks, sorted(ticks), count, 13)
             actual = sorted(name for shard in plan["shards"] for name in shard["renderer"])
             self.assertEqual(expected, actual)
             self.assert_coverage_and_totals(plan, ticks, 13)
 
-    def test_golden_corpus_balances_default_shards_even_with_small_renderer_samples(self):
-        ticks = planner.read_replays(GOLDEN)
+    def test_golden_corpus_keeps_physics_balanced_and_samples_only_opponents(self):
+        ticks, opponents = planner.read_replays(GOLDEN)
+        self.assertGreater(len(opponents), 0)
+        self.assertLess(len(opponents), len(ticks))
         for percentage in (1, 2, 3, 5, 100):
             with self.subTest(percentage=percentage):
-                plan = planner.create_plan(ticks, 20, percentage)
-                self.assert_balanced(plan)
-                self.assert_coverage_and_totals(plan, ticks, percentage)
+                plan = planner.create_plan(ticks, opponents, 20, percentage)
+                self.assert_balanced(plan, phases=("physics",))
+                self.assert_coverage_and_totals(plan, ticks, percentage, opponents)
+
+    def test_solo_replays_are_excluded_before_renderer_sampling(self):
+        ticks = {f"{name}.rpl": 100 for name in "abcdefgh"}
+        opponents = ["b.rpl", "d.rpl", "f.rpl", "h.rpl"]
+        for count in (1, 3, 20):
+            plan = planner.create_plan(ticks, opponents, count, 50)
+            self.assertEqual(["b.rpl", "f.rpl"], sorted(
+                name for shard in plan["shards"] for name in shard["renderer"]))
+            self.assert_coverage_and_totals(plan, ticks, 50, opponents)
+            solo_plan = planner.create_plan(ticks, [], count, 100)
+            self.assert_coverage_and_totals(solo_plan, ticks, 100, [])
 
     def test_directory_and_archive_use_headers_not_file_size_or_frequency(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -93,12 +107,13 @@ class PlannerTests(unittest.TestCase):
                 for name, ticks in expected.items():
                     data = bytearray(100000 if ticks == 0 else 26)
                     struct.pack_into("<HH", data, 22, 10, ticks)
+                    data[6] = 255 if ticks == 65535 else 0
                     (directory / name).write_bytes(data)
                     archive.writestr(name, data)
                 archive.writestr("nested/ignored.rpl", b"")
                 archive.writestr("readme.txt", b"")
-            self.assertEqual(expected, planner.read_replays(directory))
-            self.assertEqual(expected, planner.read_replays(directory / "replays.zip"))
+            self.assertEqual((expected, ["maximum.rpl"]), planner.read_replays(directory))
+            self.assertEqual((expected, ["maximum.rpl"]), planner.read_replays(directory / "replays.zip"))
 
     def test_bad_headers_names_and_collisions_are_rejected(self):
         for entries in (
@@ -120,7 +135,7 @@ class PlannerTests(unittest.TestCase):
     def test_invalid_settings_are_rejected(self):
         for count, percentage in ((0, 100), (-1, 100), (2, 0), (2, 101)):
             with self.assertRaises(ValueError):
-                planner.create_plan({"race.rpl": 100}, count, percentage)
+                planner.create_plan({"race.rpl": 100}, ["race.rpl"], count, percentage)
 
     def test_command_writes_the_json_contract_and_balance_summary(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -136,7 +151,10 @@ class PlannerTests(unittest.TestCase):
             self.assertEqual(1, plan["version"])
             self.assertEqual(5, plan["rendererTestPercentage"])
             self.assertEqual(20, len(plan["shards"]))
-            self.assert_balanced(plan)
+            self.assert_balanced(plan, phases=("physics",))
+            ticks, opponents = planner.read_replays(GOLDEN)
+            self.assert_coverage_and_totals(plan, ticks, 5, opponents)
+            self.assertIn("Warning: renderer exceeds", result.stdout)
             self.assertEqual(result.stdout, summary.read_text())
             self.assertIn("Largest deviation", result.stdout)
 

@@ -92,37 +92,11 @@ jobs:
           # The archived golden corpus is the complete replay set for CI.
           find "$game_dir" -maxdepth 1 -type f -iname '*.rpl' -delete
           cp exes/*.exe "$game_dir/"
-          # Use the archived Borland built oracle on cache-miss
+          # Use the archived physics oracle and the freshly built renderer oracle.
           (cd tools/oracles/borland && sha256sum --check SHA256SUMS)
-          cp tools/oracles/borland/repldumo.exe tools/oracles/borland/pixldumo.exe "$game_dir/"
+          cp tools/oracles/borland/repldumo.exe "$game_dir/"
           unzip -q tools/scripts/rpls_golden/replays.zip -d "$game_dir"
           echo "GAME_DIR=$game_dir" >> "$GITHUB_ENV"
-
-      - name: Download and extract this shard's precomputed oracle outputs
-        if: inputs.phase == 'renderer'
-        env:
-          SHARD: ${{ matrix.shard }}
-          SHARDS: ${{ inputs.shards }}
-          RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
-          ORACLE_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.4-cam1
-        run: |
-          set -eu
-          archive=BINs
-          if [[ "$RENDERER_TESTS" == "true" ]]; then
-              archive=PDOs
-          fi
-          zip_path="$RUNNER_TEMP/$archive.zip"
-          # Download only the oracle archive needed by this phase.
-          curl --fail --location --silent --show-error --retry 3 \
-              --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
-          # The full BIN archive expands to over 15 GB. Extract only assigned
-          # replays from the same JSON plan used by the test runner.
-          dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
-              -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
-              -Renderer "$RENDERER_TESTS" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
-              -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
-              -ShardPlan shard-plan/shard-plan.json
-          rm -- "$zip_path"
 
       - name: Normalize unsupported scenery in renderer input copies
         if: inputs.phase == 'renderer'

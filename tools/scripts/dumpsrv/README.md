@@ -91,7 +91,7 @@ dotnet out/dumpsrv/dumpsrv.dll serve `
 | `PartitionCount` | Required | Number of concurrent workers, from 1 through 64. |
 | `Port` | `8080` | HTTP port, from 1 through 65535. |
 | `DosBoxTimeoutSeconds` | `60` | Positive time limit for each DOSBox execution. |
-| `RendererTestPercentage` | `100` | Whole-number renderer coverage, from 1 through 100. |
+| `RendererTestPercentage` | `100` | Percentage of opponent replays tested for rendering, from 1 through 100. |
 | `ResponseProcessingTimeoutSeconds` | `1800` | Positive overall processing limit, in seconds. |
 
 The `serve` command is optional; named service parameters can follow
@@ -148,13 +148,14 @@ require DOS-compatible basenames of 1 through 8 characters. Unsupported names,
 reserved DOS device names, and case-insensitive name collisions are reported
 as errors instead of being skipped. The application sorts the corpus once
 using ordinal ordering to make repeated runs deterministic. Physics tests use
-the entire corpus. Renderer tests select
-`ceiling(replay count * percentage / 100)` evenly spaced entries from that same
-complete list before any work is assigned.
+the entire corpus. Renderer tests first exclude replays whose opponent-type byte
+at header offset 6 is zero, then select `ceiling(opponent replay count * percentage / 100)`
+evenly spaced entries from the remaining list before any work is assigned.
+A corpus without opponents has no renderer work; its physics coverage is unchanged.
 
 For distributed runs, `tools/scripts/plan-replay-shards.py` reads the recorded
-tick count from each replay's header and assigns longer replays to the shard
-with the lowest total first. It then improves the totals with replay moves
+tick count and opponent type from each replay's header and assigns longer replays
+to the shard with the lowest total first. It then improves the totals with replay moves
 and swaps until every shard is within ±2% of the average or no improving move
 or swap remains. Small samples or indivisible replay lengths can prevent that
 target; the planner reports the remaining deviation. Physics and renderer
@@ -322,20 +323,25 @@ dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
 `ShardIndex` to `0`, and `ShardCount` to `1`. Match these settings to the
 subsequent `run` command and supply the same `ShardPlan` for distributed runs.
 Missing entries are reported and left for the runner to generate. Invalid
-archives fail preparation. Imported outputs
-still undergo the runner's completeness checks before reuse.
+archives fail preparation. Imported physics outputs undergo completeness checks
+before reuse. Renderer references are regenerated regardless of imported outputs.
 
 ## Cached outputs and diagnostics
 
 Physics compares original `.BIN` output against fresh `.BNI` output. Rendering
-uses camera `2` and target `0`, comparing original `.PDO` output against fresh
+uses camera `1` (F1 cockpit) and opponent target `1`, with the dashboard hidden.
+Solo replays are excluded from renderer tests. Both executables
+receive the same camera and target, comparing original `.PDO` output against fresh
 `.PDD` output. Build `pixldump` and `pixldump-original` together so both use
 incremental redraws and hashes on every frame. Comparisons are byte for byte.
 
-Completed `.BIN` and `.PDO` files are reused only after checking their contents
-against the replay's recorded frame count. Physics dumps must contain the
-matching two-byte frame count and exactly 1,120 bytes per frame. Renderer dumps
-must start with `PIXLDUMP 2` and CRLF, followed by every CRLF-terminated
+Completed `.BIN` files are reused only after checking their contents against the
+replay's recorded frame count.
+Opponent/F1 references are regenerated on every run: the `.PDO` format does not
+record the camera target, so a complete cached player view cannot be trusted for
+an opponent comparison. Physics dumps must contain the matching two-byte frame
+count and exactly 1,120 bytes per frame. Renderer dumps must start with `PIXLDUMP 2`
+and CRLF, followed by every CRLF-terminated
 MurmurHash3_x86_32 sample (seed 0, eight lowercase hexadecimal digits) at
 frames 0, 1, 2, ... through the replay's final frame. Empty, truncated, or
 malformed caches are regenerated, including five-frame sampled dumps and files

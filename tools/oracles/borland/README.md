@@ -45,5 +45,6 @@ the shared regression runner rejects and regenerates those caches.
 
 See the [shared regression runner](../../scripts/dumpsrv/README.md) for running
 and merging replay comparisons. CI generates current original-assembly renderer
-references locally and continues using the Borland oracle and published physics
-cache. A deliberate oracle change requires provenance and regression review.
+opponent/F1 references locally on every run and skips solo replays in renderer tests.
+Physics uses the archived Borland oracle for the full corpus. A deliberate oracle change
+requires provenance and regression review.

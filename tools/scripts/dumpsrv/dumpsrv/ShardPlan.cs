@@ -21,7 +21,7 @@ public sealed class ShardPlan
     public List<ReplayShard> Shards { get; init; } = [];
 
     public static ShardPlan Load(string? path, IReadOnlyList<string> replays,
-        int percentage, int shardCount)
+        IReadOnlyList<string> opponentReplays, int percentage, int shardCount)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(shardCount, 1);
         if (path is null)
@@ -36,7 +36,7 @@ public sealed class ShardPlan
                 Shards = [new ReplayShard
                 {
                     Physics = replays.ToList(),
-                    Renderer = ReplayCatalog.Sample(replays, percentage).ToList()
+                    Renderer = ReplayCatalog.Sample(opponentReplays, percentage).ToList()
                 }]
             };
         }
@@ -56,7 +56,7 @@ public sealed class ShardPlan
         }
         ValidateCoverage(plan.Shards.SelectMany(shard => shard.Physics), replays, "physics");
         ValidateCoverage(plan.Shards.SelectMany(shard => shard.Renderer),
-            ReplayCatalog.Sample(replays, percentage), "renderer");
+            ReplayCatalog.Sample(opponentReplays, percentage), "renderer");
         return plan;
     }
 

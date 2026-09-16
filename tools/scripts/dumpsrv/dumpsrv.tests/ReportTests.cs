@@ -13,7 +13,9 @@ public sealed class ReportTests : IDisposable
         Directory.CreateDirectory(Path.Combine(directory, "results"));
         foreach (var name in new[] { "ALPHA.RPL", "b.RpL", "race-2.rpl", "track.rpl", "z.RPL" })
         {
-            File.WriteAllText(Path.Combine(directory, "replays", name), "replay");
+            var header = new byte[26];
+            header[6] = 1;
+            File.WriteAllBytes(Path.Combine(directory, "replays", name), header);
         }
         TestShardPlans.Write(directory, 40,
             new ReplayShard { Physics = ["z.RPL", "ALPHA.RPL"], Renderer = ["race-2.rpl"] },
@@ -177,7 +179,9 @@ public sealed class ReportTests : IDisposable
     private async Task<List<ShardResult>> WriteShards()
     {
         var corpus = ReplayCatalog.Discover(Options().ReplayDirectory);
-        var plan = ShardPlan.Load(Options().ShardPlanPath, corpus, 40, 3);
+        var opponents = ReplayCatalog.WithOpponent(Options().ReplayDirectory, corpus,
+            TestContext.Current.CancellationToken);
+        var plan = ShardPlan.Load(Options().ShardPlanPath, corpus, opponents, 40, 3);
         var results = new List<ShardResult>();
         for (var index = 0; index < 3; index++)
         {

@@ -26,7 +26,7 @@ on:
         type: number
         default: 120
       renderer-test-percentage:
-        description: Percentage of golden replays sampled for renderer tests (integer 1-100).
+        description: Percentage of opponent replays sampled for cockpit renderer tests (integer 1-100).
         type: number
         default: 100
       renderer-timeout-seconds:
