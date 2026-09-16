@@ -46,7 +46,7 @@ void skybox_render_level_rect(struct RECTANGLE *rect, legacy_s16 angle, legacy_s
 	legacy_u16 ground_lines;
 	legacy_u16 horizon_bits;
 
-	top = (legacy_u16)rect->top + 5;
+	top = (legacy_u16)rect->top;
 	bottom = (legacy_u16)rect->bottom;
 	left = (legacy_u16)rect->left;
 	right = (legacy_u16)rect->right;
