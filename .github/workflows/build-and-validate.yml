@@ -25,10 +25,10 @@ on:
         description: Seconds each physics executable gets per replay.
         type: number
         default: 120
-      camera:
-        description: Renderer camera (integer 1-4, corresponding to F1-F4).
-        type: number
-        default: 2
+      cameras:
+        description: Nonempty JSON array of unique renderer camera IDs (integers 1-4).
+        type: string
+        default: '[2]'
       target:
         description: Renderer target (0 for player, 1 for opponent).
         type: number
@@ -102,8 +102,25 @@ jobs:
     timeout-minutes: 5
     outputs:
       shards: ${{ steps.plan.outputs.shards }}
+      cameras: ${{ steps.cameras.outputs.cameras }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Validate renderer cameras
+        id: cameras
+        env:
+          CAMERAS: ${{ inputs.cameras }}
+        run: |
+          if ! cameras=$(jq -ces '
+              select(length == 1) | .[0] |
+              select(type == "array" and length > 0) |
+              select(all(.[]; type == "number" and . >= 1 and . <= 4 and . == floor)) |
+              select(length == (unique | length))
+          ' <<< "$CAMERAS"); then
+              echo "::error::cameras must be a nonempty JSON array of unique integers from 1 to 4"
+              exit 1
+          fi
+          echo "cameras=$cameras" >> "$GITHUB_OUTPUT"
 
       - name: Test tick-based shard planning
         run: python3 tools/scripts/test-plan-replay-shards.py
@@ -214,14 +231,19 @@ jobs:
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
-      camera: ${{ inputs.camera }}
+      # Physics runs once; the first camera is used only for report metadata.
+      camera: ${{ fromJSON(needs.plan.outputs.cameras)[0] }}
       target: ${{ inputs.target }}
       renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
       renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 
   renderer:
-    name: Renderer replays
+    name: Renderer replays (camera ${{ matrix.camera }})
     needs: [build, plan, physics]
+    strategy:
+      fail-fast: false
+      matrix:
+        camera: ${{ fromJSON(needs.plan.outputs.cameras) }}
     uses: ./.github/workflows/replay-tests.yml
     with:
       phase: renderer
@@ -231,31 +253,42 @@ jobs:
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
-      camera: ${{ inputs.camera }}
+      camera: ${{ matrix.camera }}
       target: ${{ inputs.target }}
       renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
       renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 
   report:
-    name: Replay report
-    needs: [physics, renderer]
+    name: Replay report (camera ${{ matrix.camera }})
+    needs: [plan, physics, renderer]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        camera: ${{ fromJSON(needs.plan.outputs.cameras) }}
     steps:
-      - uses: actions/download-artifact@v8
+      - name: Download the shared physics report
+        uses: actions/download-artifact@v8
         with:
-          pattern: '*-report'
-          path: reports
+          name: physics-cam${{ fromJSON(needs.plan.outputs.cameras)[0] }}-target${{ inputs.target }}-report
+          path: reports/physics
+
+      - name: Download this camera's renderer report
+        uses: actions/download-artifact@v8
+        with:
+          name: renderer-cam${{ matrix.camera }}-target${{ inputs.target }}-report
+          path: reports/renderer
 
       - name: Combine physics and renderer diagnostics
         run: |
-          cat reports/physics-report/partitions_all.txt \
-              reports/renderer-report/partitions_all.txt > partitions_all.txt
+          cat reports/physics/partitions_all.txt \
+              reports/renderer/partitions_all.txt > partitions_all.txt
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: partitions_all
+          name: partitions_all-cam${{ matrix.camera }}-target${{ inputs.target }}
           path: partitions_all.txt
           if-no-files-found: warn
           retention-days: 14

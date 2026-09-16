@@ -9,10 +9,10 @@ on:
     branches: [master]
   workflow_dispatch:
     inputs:
-      camera:
-        description: Renderer camera (integer 1-4, corresponding to F1-F4).
-        type: number
-        default: 2
+      cameras:
+        description: Nonempty JSON array of unique renderer camera IDs (integers 1-4).
+        type: string
+        default: '[2]'
       target:
         description: Renderer target (0 for player, 1 for opponent).
         type: number
@@ -34,6 +34,6 @@ jobs:
     name: Golden replays
     uses: ./.github/workflows/build-and-validate.yml
     with:
-      camera: ${{ fromJSON(github.event.inputs.camera || '2') }}
+      cameras: ${{ github.event.inputs.cameras || '[2]' }}
       target: ${{ fromJSON(github.event.inputs.target || '0') }}
       renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '100') }}

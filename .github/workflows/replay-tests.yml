@@ -243,7 +243,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: ${{ inputs.phase }}-report
+          name: ${{ inputs.phase }}-cam${{ inputs.camera }}-target${{ inputs.target }}-report
           path: partitions_all.txt
           if-no-files-found: warn
           retention-days: 14

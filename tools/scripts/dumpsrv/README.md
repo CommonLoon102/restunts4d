@@ -306,15 +306,20 @@ CI first runs formatting, service and host tests, and shard planning in
 parallel, then builds the DOS executables after all four jobs pass. The planning
 job publishes `shard-plan.json` in the `replay-shard-plan` artifact and reports
 each phase's tick balance in its job summary. Replay jobs and coverage checks
-download that artifact. Physics replays run after the build, and renderer
-replays run only after every physics
-shard and its coverage check pass. Each shard's JSON is uploaded as
+download that artifact. Physics replays run once after the build. A separate
+renderer job runs for each requested camera after every physics shard and its
+coverage check pass. All cameras share the same plan and renderer sample.
+Each shard's JSON is uploaded as
 `<phase>-partitions-cam<camera>-target<target>-<index>`. Renderer oracle files
 are uploaded as `renderer-pdo-cam<camera>-target<target>-<index>` and combined
 into `renderer-pdo-cam<camera>-target<target>`. Phase reports are uploaded as
-`physics-report` and `renderer-report`, including diagnostics when
-validation fails. The final Replay report job runs only after renderer
-validation passes and publishes the combined text report as `partitions_all`.
+`<phase>-cam<camera>-target<target>-report`, including diagnostics when
+validation fails. The physics report uses the first requested camera in its
+metadata; physics results do not depend on the camera. The final Replay report
+jobs run once per camera after all cameras pass renderer validation. Each job
+combines the shared physics diagnostics with only its camera's renderer
+diagnostics and publishes `partitions_all-cam<camera>-target<target>`, containing
+`partitions_all.txt`. Renderer diagnostics from different cameras stay separate.
 The summaries show physics and renderer coverage separately, errors grouped by
 type, and up to the first 200 diagnostic lines. The DOS executable build and
 `restunts-exes` artifact remain separate from the C# regression runner.
@@ -345,8 +350,10 @@ Missing entries are reported and left for the runner to generate. Invalid
 archives fail preparation. Imported outputs
 still undergo the runner's completeness checks before reuse.
 
-The **Replay tests** workflow accepts `camera` and `target`, passed through
-**Build and validate** and the manual **PR validation** and **Release** inputs.
+**Build and validate** and the manual **PR validation** and **Release**
+workflows accept `cameras` as a JSON array, such as `[1,2,3,4]`, defaulting to
+`[2]`. The list must be nonempty and contain unique integers from 1 through 4.
+Each renderer job passes one `camera` and the shared `target` to **Replay tests**.
 CI downloads `PDOs-cam<camera>-target<target>.zip` for rendering and `BINs.zip`
 for physics from oracle release `v1.0.4`.
 The oracle download/extraction step runs for both targets. If a cache download

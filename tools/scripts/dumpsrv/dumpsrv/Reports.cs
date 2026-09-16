@@ -251,7 +251,8 @@ public static class ResultMerger
             }
             else
             {
-                markdown.AppendLine("Validation failed. Full diagnostics are in the `partitions_all` artifact.\n")
+                markdown.AppendLine(
+                    "Validation failed. Full diagnostics are in the replay report artifact.\n")
                     .AppendLine("### Errors by type\n");
                 foreach (var group in lines.GroupBy(line => line.Split('|')
                     .FirstOrDefault(field => field.StartsWith("type=", StringComparison.Ordinal)) ?? "type=unknown")

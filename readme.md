@@ -369,8 +369,9 @@ CI runs in five phases, each requiring the previous phase to pass:
    planning run in parallel.
 2. Build the executables, including the DOS timer/cleanup checks.
 3. Run all physics replay shards and validate their coverage.
-4. Run the renderer replay shards and validate their coverage.
-5. Publish the combined replay report as `partitions_all`.
+4. Run the renderer replay shards and validate coverage separately for each camera.
+5. Publish a combined physics/renderer report for each camera as
+   `partitions_all-cam<camera>-target<target>`.
 
 A failed phase skips the later phases. Physics and renderer phase diagnostics
 remain available in their individual artifacts if replay validation fails.
@@ -378,11 +379,19 @@ remain available in their individual artifacts if replay validation fails.
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
 rendering by default, comparing pixldump `.PDD` files
-against pixldumo `.PDO` files. The `camera` and `target` inputs select camera
-1 through 4 and player (`0`) or opponent (`1`), defaulting to camera 2 and
-player target 0. They are available in the manual **PR validation** and
-**Release** workflows and passed through **Build and validate** to
-**Replay tests**. Opponent rendering selects only replays containing an opponent.
+against pixldumo `.PDO` files. The `cameras` input is a nonempty JSON array
+of unique camera IDs from 1 through 4, defaulting to `[2]`. For example,
+`cameras: '[1,2,3,4]'` runs a separate **Renderer replays** job for each camera.
+Invalid IDs and duplicates fail validation before the build. The `target`
+input selects player (`0`, the default) or opponent (`1`). Both inputs are
+available in the manual **PR validation** and **Release** workflows and passed
+to **Build and validate**, which calls **Replay tests** for each camera.
+Push and pull-request runs use the fallback values in `pr-validation.yml`.
+Physics runs once, and every camera uses the same shard plan. A failed camera
+does not cancel the other camera jobs. The final reports require every
+camera to pass. Each report combines the shared physics diagnostics with only
+that camera's renderer diagnostics. Opponent rendering selects only replays
+containing an opponent.
 
 Each CI shard verifies the archived checksums and uses the preserved Borland
 dump executables to generate missing references. Renderer shards download
