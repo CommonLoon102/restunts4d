@@ -431,7 +431,7 @@ void mat_rot_z(struct MATRIX *outmat, legacy_s16 angle)
 struct MATRIX *mat_rot_zxy(legacy_s16 z, legacy_s16 x, legacy_s16 y, legacy_s16 rotation_order)
 {
 	mat_rot_z(&math_mat_z_rot, z);
-	mat_rot_x(&math_mat_x_rot, x);
+	mat_rot_x(&math_mat_x_rot, y);
 
 	// y rotation matrix cache
 	/*if (mat_y_rot_angle != y) {
