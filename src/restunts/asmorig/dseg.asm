@@ -21120,7 +21120,7 @@ material_color_list     dw 0
     dw 14
     dw 15
     dw 108
-    dw 116
+    dw 202
     dw 15
     dw 28
     dw 29
