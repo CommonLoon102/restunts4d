@@ -34,6 +34,6 @@ jobs:
     name: Golden replays
     uses: ./.github/workflows/build-and-validate.yml
     with:
-      cameras: ${{ github.event.inputs.cameras || '[3, 4]' }}
-      target: ${{ fromJSON(github.event.inputs.target || '0') }}
+      cameras: ${{ github.event.inputs.cameras || '[1, 2, 3, 4]' }}
+      target: ${{ fromJSON(github.event.inputs.target || '1') }}
       renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '100') }}
