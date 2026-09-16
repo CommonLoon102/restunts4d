@@ -29,6 +29,14 @@ on:
       replay-timeout-seconds:
         type: number
         required: true
+      camera:
+        description: Renderer camera (integer 1-4, corresponding to F1-F4).
+        type: number
+        default: 2
+      target:
+        description: Renderer target (0 for player, 1 for opponent).
+        type: number
+        default: 0
       renderer-test-percentage:
         type: number
         required: true
@@ -37,6 +45,8 @@ on:
         required: true
 
 env:
+  CAMERA: ${{ inputs.camera }}
+  TARGET: ${{ inputs.target }}
   PHYSICS_TESTS: ${{ inputs.phase == 'physics' }}
   RENDERER_TESTS: ${{ inputs.phase == 'renderer' }}
 
@@ -51,6 +61,17 @@ jobs:
         shard: ${{ fromJSON(inputs.shard-matrix) }}
     steps:
       - uses: actions/checkout@v7
+
+      - name: Validate camera and target
+        run: |
+          if [[ ! "$CAMERA" =~ ^[1-4]$ ]]; then
+              echo "::error::camera must be an integer from 1 to 4"
+              exit 1
+          fi
+          if [[ ! "$TARGET" =~ ^[01]$ ]]; then
+              echo "::error::target must be 0 (player) or 1 (opponent)"
+              exit 1
+          fi
 
       - name: Download the replay shard plan
         uses: actions/download-artifact@v8
@@ -108,20 +129,24 @@ jobs:
           set -eu
           archive=BINs
           if [[ "$RENDERER_TESTS" == "true" ]]; then
-              archive=PDOs
+              archive="PDOs-cam$CAMERA-target$TARGET"
           fi
           zip_path="$RUNNER_TEMP/$archive.zip"
+          trap 'rm -f -- "$zip_path"' EXIT
           # Download only the oracle archive needed by this phase.
-          curl --fail --location --silent --show-error --retry 3 \
-              --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"
+          if ! curl --fail --location --silent --show-error --retry 3 \
+              --connect-timeout 20 "$ORACLE_URL/$archive.zip" --output "$zip_path"; then
+              echo "::warning::Could not download $archive.zip; missing oracle outputs will be generated locally."
+              exit 0
+          fi
           # The full BIN archive expands to over 15 GB. Extract only assigned
           # replays from the same JSON plan used by the test runner.
           dotnet "$RUNNER_TEMP/dumpsrv/dumpsrv.dll" extract-oracles \
               -GameDirectory "$GAME_DIR" -Archive "$zip_path" \
               -Renderer "$RENDERER_TESTS" -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
+              -Camera "$CAMERA" -Target "$TARGET" \
               -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
               -ShardPlan shard-plan/shard-plan.json
-          rm -- "$zip_path"
 
       - name: Normalize unsupported scenery in renderer input copies
         if: inputs.phase == 'renderer'
@@ -142,6 +167,7 @@ jobs:
               -DosBoxConfigPath tools/scripts/dosbox.proc.conf \
               -PartitionCount "$PARTITIONS_PER_SHARD" \
               -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
+              -Camera "$CAMERA" -Target "$TARGET" \
               -ShardIndex "$SHARD" -ShardCount "$SHARDS" \
               -ShardPlan shard-plan/shard-plan.json \
               -DosBoxTimeoutSeconds "$REPLAY_TIMEOUT_SECONDS" \
@@ -151,7 +177,7 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: ${{ inputs.phase }}-partitions-${{ matrix.shard }}
+          name: ${{ inputs.phase }}-partitions-cam${{ inputs.camera }}-target${{ inputs.target }}-${{ matrix.shard }}
           path: partitions/*.json
           # Missing shards are diagnosed by the shared merge command.
           if-no-files-found: warn
@@ -161,7 +187,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: ${{ always() && inputs.phase == 'renderer' }}
         with:
-          name: renderer-pdo-${{ matrix.shard }}
+          name: renderer-pdo-cam${{ inputs.camera }}-target${{ inputs.target }}-${{ matrix.shard }}
           path: ${{ runner.temp }}/gamedir/**/*.[pP][dD][oO]
           include-hidden-files: true
           # A shard may have no replays in the renderer sample.
@@ -193,7 +219,7 @@ jobs:
       - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
-          pattern: ${{ inputs.phase }}-partitions-*
+          pattern: ${{ inputs.phase }}-partitions-cam${{ inputs.camera }}-target${{ inputs.target }}-*
           merge-multiple: true
           path: partitions
 
@@ -209,6 +235,7 @@ jobs:
               -ResultsDirectory partitions -ShardCount "$SHARDS" \
               -ShardPlan shard-plan/shard-plan.json \
               -PhysicsTests "$PHYSICS_TESTS" -RendererTests "$RENDERER_TESTS" \
+              -Camera "$CAMERA" -Target "$TARGET" \
               -RendererTestPercentage "$RENDERER_TEST_PERCENTAGE" \
               -OutputFile partitions_all.txt \
               -SummaryFile "$GITHUB_STEP_SUMMARY"
@@ -225,8 +252,8 @@ jobs:
         uses: actions/upload-artifact/merge@v7
         if: ${{ always() && inputs.phase == 'renderer' }}
         with:
-          name: renderer-pdo
-          pattern: renderer-pdo-*
+          name: renderer-pdo-cam${{ inputs.camera }}-target${{ inputs.target }}
+          pattern: renderer-pdo-cam${{ inputs.camera }}-target${{ inputs.target }}-*
           include-hidden-files: true
           retention-days: 14
 

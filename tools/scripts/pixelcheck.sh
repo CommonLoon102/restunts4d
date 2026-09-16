@@ -90,6 +90,10 @@ if [[ ! -f "$game_dir/$filename" ]]; then
 fi
 
 rm -f -- "$original_output" "$ported_output"
+if [[ "$bmp_mode" == false ]]; then
+    # The new dump may use a different view than the regression runner's cache.
+    find "$game_dir" -maxdepth 1 -type f -iname "$base.PDO.settings" -delete
+fi
 
 if [[ "$rebuild_exes" == true ]]; then
     if ! make -C "$script_dir/../../src/restunts" pixldump-original pixldump; then

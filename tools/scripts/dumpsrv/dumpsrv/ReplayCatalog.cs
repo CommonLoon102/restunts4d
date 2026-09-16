@@ -46,6 +46,34 @@ public static class ReplayCatalog
         }
     }
 
+    public static IReadOnlyList<string> RendererReplays(string directory,
+        IReadOnlyList<string> replays, int target, CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThan(target, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(target, 1);
+        if (target == 0)
+        {
+            return replays;
+        }
+        const int opponentTypeOffset = 6;
+        Span<byte> header = stackalloc byte[26];
+        var opponents = new List<string>();
+        foreach (var replay in replays)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            using var stream = File.OpenRead(Path.Combine(directory, replay));
+            if (stream.ReadAtLeast(header, header.Length, false) != header.Length)
+            {
+                throw new InvalidDataException($"Incomplete replay header: {replay}");
+            }
+            if (header[opponentTypeOffset] != 0)
+            {
+                opponents.Add(replay);
+            }
+        }
+        return opponents;
+    }
+
     public static IReadOnlyList<string> Sample(IReadOnlyList<string> replays, int percentage)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(percentage, 1);

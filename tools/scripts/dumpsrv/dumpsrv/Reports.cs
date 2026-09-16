@@ -21,7 +21,9 @@ public static class ReportFormatter
 
     public static string RunSummary(ShardResult result) =>
         $"Shard {result.ShardIndex}: {result.PhysicsCompleted.Count} physics, " +
-        $"{result.RendererCompleted.Count} renderer replays; {result.Diagnostics.Count} diagnostic(s); " +
+        $"{result.RendererCompleted.Count} renderer replays " +
+        $"(camera {result.Camera}, target {result.Target}); " +
+        $"{result.Diagnostics.Count} diagnostic(s); " +
         (result.Completed ? "complete." : $"incomplete: {result.Failure}");
 
     public static IEnumerable<string> Diagnostics(ShardResult result)
@@ -89,6 +91,8 @@ public sealed record MergeOptions
     public bool PhysicsTests { get; init; } = true;
     public bool RendererTests { get; init; } = true;
     public int RendererTestPercentage { get; init; } = 100;
+    public int Camera { get; init; } = 2;
+    public int Target { get; init; } = 0;
 }
 
 public sealed record MergeResult(bool Success, string Summary, IReadOnlyList<string> Diagnostics);
@@ -97,12 +101,19 @@ public static class ResultMerger
 {
     public static async Task<MergeResult> MergeAsync(MergeOptions options, CancellationToken cancellation = default)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.Camera, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.Camera, 4);
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.Target, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.Target, 1);
         var diagnostics = new List<string>();
         var results = new Dictionary<int, ShardResult>();
         IReadOnlyList<string> corpus = [];
+        IReadOnlyList<string> rendererReplays = [];
         try
         {
-            corpus = ReplayCatalog.Discover(options.ReplayDirectory);
+            corpus = ReplayCatalog.Discover(options.ReplayDirectory, cancellation);
+            rendererReplays = ReplayCatalog.RendererReplays(options.ReplayDirectory, corpus,
+                options.Target, cancellation);
         }
         catch (Exception e) when (e is ArgumentException or InvalidDataException or IOException or UnauthorizedAccessException)
         {
@@ -112,8 +123,8 @@ public static class ResultMerger
         ShardPlan? plan = null;
         try
         {
-            plan = ShardPlan.Load(options.ShardPlanPath, corpus,
-                options.RendererTestPercentage, options.ShardCount);
+            plan = ShardPlan.Load(options.ShardPlanPath, corpus, rendererReplays,
+                options.RendererTestPercentage, options.ShardCount, options.Target);
         }
         catch (Exception e) when (e is ArgumentException or JsonException or InvalidDataException or
             IOException or UnauthorizedAccessException)
@@ -164,6 +175,7 @@ public static class ResultMerger
                     result.RendererTimeoutSeconds is < 1 or > 2147483 ||
                     result.PhysicsTests != options.PhysicsTests || result.RendererTests != options.RendererTests ||
                     result.RendererTestPercentage != options.RendererTestPercentage ||
+                    result.Camera != options.Camera || result.Target != options.Target ||
                     !result.ReplayFiles.SequenceEqual(corpus, StringComparer.Ordinal))
                 {
                     diagnostics.Add($"ERROR|type=inconsistent_shard|shard={result.ShardIndex}");
@@ -198,7 +210,8 @@ public static class ResultMerger
         var physics = results.Values.Sum(result => result.PhysicsCompleted.Count);
         var renderer = results.Values.Sum(result => result.RendererCompleted.Count);
         var expectedPhysics = options.PhysicsTests ? corpus.Count : 0;
-        var expectedRenderer = options.RendererTests ? ReplayCatalog.Sample(corpus, options.RendererTestPercentage).Count : 0;
+        var expectedRenderer = options.RendererTests
+            ? ReplayCatalog.Sample(rendererReplays, options.RendererTestPercentage).Count : 0;
         var phases = new List<(string Name, int Processed, int Expected)>();
         if (options.PhysicsTests)
         {
@@ -222,7 +235,10 @@ public static class ResultMerger
             }
             if (options.RendererTests)
             {
-                markdown.AppendLine($"| Renderer sample percentage | {options.RendererTestPercentage}% |")
+                markdown.AppendLine($"| Camera | {options.Camera} |")
+                    .AppendLine($"| Target | {options.Target} |")
+                    .AppendLine(
+                        $"| Renderer sample percentage | {options.RendererTestPercentage}% |")
                     .AppendLine($"| Renderer replays expected | {expectedRenderer} |")
                     .AppendLine($"| Renderer replays processed | {renderer} |");
             }

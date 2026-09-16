@@ -378,14 +378,20 @@ remain available in their individual artifacts if replay validation fails.
 Pull requests and releases build the game, physics dump tools, and both
 renderer dump tools. CI compares the full golden replay set for physics and
 rendering by default, comparing pixldump `.PDD` files
-against pixldumo `.PDO` files with camera 2 and player target 0.
+against pixldumo `.PDO` files. The `camera` and `target` inputs select camera
+1 through 4 and player (`0`) or opponent (`1`), defaulting to camera 2 and
+player target 0. They are available in the manual **PR validation** and
+**Release** workflows and passed through **Build and validate** to
+**Replay tests**. Opponent rendering selects only replays containing an opponent.
 
-Each CI shard verifies the archived checksums and uses the independent Borland
-`repldumo.exe` for physics. Renderer shards use the freshly built original-assembly
-`pixldumo.exe` and generate incremental `.PDO` references locally. Physics shards
-reuse the published `.BIN` cache, generating missing entries. Both original dump
-wrappers disable timer IRQ0 during offline capture, preventing timing-dependent
-reference data. Renderer shards do not download the old full-redraw `.PDO` archive.
+Each CI shard verifies the archived checksums and uses the preserved Borland
+dump executables to generate missing references. Renderer shards download
+`PDOs-cam<camera>-target<target>.zip` for the selected camera and target.
+Physics shards download `BINs.zip` from oracle release `v1.0.4`. Oracle
+downloads run for both targets. Unavailable or failed cache downloads produce
+a warning and allow testing to continue. Missing or invalid references are
+generated locally. Renderer cache metadata records the camera and target so
+a changed view cannot reuse an incompatible reference.
 
 The C# application in `tools/scripts/dumpsrv` runs these comparisons on Linux, Windows,
 and GitHub Actions. Its HTTP service, direct runner, and report merger share the
@@ -398,13 +404,18 @@ to the reusable `build-and-validate.yml` workflow can set the same input;
 pull request events use 100%. The HTTP service retains its separate 100% default
 for `RendererTestPercentage`.
 
-Every top-level `.rpl` file is eligible, regardless of filename structure.
-Renderer sampling happens across the complete, ordinal-sorted corpus before
-shard planning. The CI planning job reads recorded tick counts from replay
-headers and balances physics and renderer shards separately, targeting totals
+Every top-level `.rpl` file is considered, regardless of filename structure.
+Physics uses the full corpus. With `target: 1`, renderer selection first
+filters for a nonzero opponent type in the replay header. Renderer sampling
+then uses the eligible, ordinal-sorted list before shard balancing; the
+percentage applies to that list. With `target: 0`, all replays remain eligible.
+The CI planning job reads recorded tick counts from replay headers and
+balances physics and renderer shards separately, targeting totals
 within ±2% of each phase's average. It publishes `shard-plan.json` as the
 `replay-shard-plan` artifact. Replay jobs, oracle extraction, and coverage checks
-all consume that same plan; the C# application selects its lists by shard ID.
+all consume that same plan and validate its target; the C# application selects
+its lists by shard ID. A corpus with no opponents has empty renderer shards
+when `target: 1`, while physics still covers every replay.
 Workers within a shard still receive round-robin lists whose replay counts
 differ by at most one. Sampling is independent of shard and worker counts.
 CI validates completed replay identities from the JSON shard results, so missing

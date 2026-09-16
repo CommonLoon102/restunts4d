@@ -24,7 +24,10 @@ public static class CommandLine
                         PartitionCount = arguments.Number("PartitionCount", null, 1, 64),
                         Port = arguments.Number("Port", 8080, 1, 65535),
                         DosBoxTimeoutSeconds = arguments.Timeout("DosBoxTimeoutSeconds", 60),
-                        RendererTestPercentage = arguments.Number("RendererTestPercentage", 100, 1, 100),
+                        RendererTestPercentage =
+                            arguments.Number("RendererTestPercentage", 100, 1, 100),
+                        Camera = arguments.Number("Camera", 2, 1, 4),
+                        Target = arguments.Number("Target", 0, 0, 1),
                         ResponseProcessingTimeoutSeconds = arguments.Timeout("ResponseProcessingTimeoutSeconds", 1800)
                     };
                     arguments.CheckUnused();
@@ -47,7 +50,10 @@ public static class CommandLine
                         ShardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue),
                         PhysicsTests = arguments.Boolean("PhysicsTests", true),
                         RendererTests = arguments.Boolean("RendererTests", true),
-                        RendererTestPercentage = arguments.Number("RendererTestPercentage", 100, 1, 100),
+                        RendererTestPercentage =
+                            arguments.Number("RendererTestPercentage", 100, 1, 100),
+                        Camera = arguments.Number("Camera", 2, 1, 4),
+                        Target = arguments.Number("Target", 0, 0, 1),
                         DosBoxTimeoutSeconds = timeout,
                         RendererTimeoutSeconds = arguments.Timeout("RendererTimeoutSeconds", timeout)
                     };
@@ -66,12 +72,15 @@ public static class CommandLine
                     var gameDirectory = Path.GetFullPath(arguments.String("GameDirectory"));
                     var renderer = arguments.Boolean("Renderer", false);
                     var percentage = arguments.Number("RendererTestPercentage", 100, 1, 100);
+                    var camera = arguments.Number("Camera", 2, 1, 4);
+                    var target = arguments.Number("Target", 0, 0, 1);
                     var shardPlanPath = arguments.Optional("ShardPlan");
                     var shardIndex = arguments.Number("ShardIndex", 0, 0, int.MaxValue);
                     var shardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue);
                     arguments.CheckUnused();
                     var extracted = OracleArchive.Extract(archivePath, gameDirectory, renderer,
-                        percentage, shardIndex, shardCount, shardPlanPath, cancellation);
+                        percentage, shardIndex, shardCount, camera, target,
+                        shardPlanPath, cancellation);
                     Console.WriteLine($"Extracted {extracted.Extracted} oracle outputs; " +
                         $"{extracted.Missing} missing outputs will be generated during testing.");
                     return 0;
@@ -86,7 +95,10 @@ public static class CommandLine
                         ShardCount = arguments.Number("ShardCount", 1, 1, int.MaxValue),
                         PhysicsTests = arguments.Boolean("PhysicsTests", true),
                         RendererTests = arguments.Boolean("RendererTests", true),
-                        RendererTestPercentage = arguments.Number("RendererTestPercentage", 100, 1, 100)
+                        RendererTestPercentage =
+                            arguments.Number("RendererTestPercentage", 100, 1, 100),
+                        Camera = arguments.Number("Camera", 2, 1, 4),
+                        Target = arguments.Number("Target", 0, 0, 1)
                     };
                     arguments.CheckUnused();
                     RequireTests(merge.PhysicsTests, merge.RendererTests);
@@ -206,6 +218,8 @@ public static class CommandLine
         merge: -ShardCount 1, -PhysicsTests true, -RendererTests true,
                -RendererTestPercentage 100, -OutputFile partitions_all.txt, -SummaryFile FILE.
 
+        All commands: -Camera 2 (1-4), -Target 0 (0 = player, 1 = opponent).
+        serve accepts Camera and Target at startup only.
         run, extract-oracles, merge: -ShardPlan FILE (required when ShardCount is greater than 1).
         PartitionCount: 1-64. Timeouts: 1-2147483 seconds. Renderer percentage: 1-100.
         DUMPSRV_DOSBOX_PATH overrides DOSBox-X discovery for serve and run.

@@ -92,13 +92,16 @@ dotnet out/dumpsrv/dumpsrv.dll serve `
 | `Port` | `8080` | HTTP port, from 1 through 65535. |
 | `DosBoxTimeoutSeconds` | `60` | Positive time limit for each DOSBox execution. |
 | `RendererTestPercentage` | `100` | Whole-number renderer coverage, from 1 through 100. |
+| `Camera` | `2` | Renderer camera, from 1 through 4 (F1 through F4). |
+| `Target` | `0` | Renderer target: player (`0`) or opponent (`1`). |
 | `ResponseProcessingTimeoutSeconds` | `1800` | Positive overall processing limit, in seconds. |
 
 The `serve` command is optional; named service parameters can follow
 `dumpsrv.dll` directly.
 
-`ResponseProcessingTimeoutSeconds` is accepted only at service startup. HTTP
-requests cannot set or override it.
+`Camera`, `Target`, and `ResponseProcessingTimeoutSeconds` are accepted only
+at service startup. HTTP requests cannot set or override them. Opponent
+rendering selects only replays containing an opponent.
 
 The processing timeout starts after validated uploads are saved and covers the
 enabled test phases and report generation together. It is separate from the
@@ -148,9 +151,13 @@ require DOS-compatible basenames of 1 through 8 characters. Unsupported names,
 reserved DOS device names, and case-insensitive name collisions are reported
 as errors instead of being skipped. The application sorts the corpus once
 using ordinal ordering to make repeated runs deterministic. Physics tests use
-the entire corpus. Renderer tests select
-`ceiling(replay count * percentage / 100)` evenly spaced entries from that same
-complete list before any work is assigned.
+the entire corpus. With `Target 1`, renderer selection filters for a nonzero
+opponent type at byte offset 6 in the 26-byte replay header. With `Target 0`,
+all replays are eligible. Renderer tests select
+`ceiling(eligible replay count * percentage / 100)` evenly spaced entries from
+that ordered list before balancing or assigning work. A corpus with no
+opponents produces an empty renderer phase for `Target 1`; physics still
+uses every replay. The HTTP service uses the same selection rules.
 
 For distributed runs, `tools/scripts/plan-replay-shards.py` reads the recorded
 tick count from each replay's header and assigns longer replays to the shard
@@ -161,12 +168,13 @@ target; the planner reports the remaining deviation. Physics and renderer
 lists are balanced independently, after renderer sampling. Shards can contain
 different numbers of replays, and repeated planning is deterministic.
 
-The planner writes a JSON object with `version`, `rendererTestPercentage`, and
-a `shards` array indexed by `ShardIndex`. Each entry contains `physics` and
+The planner writes a JSON object with `version`, `rendererTestPercentage`,
+`target`, and a `shards` array indexed by `ShardIndex`. Each entry contains `physics` and
 `renderer` filename arrays, plus `physicsTicks` and `rendererTicks` totals.
-The C# application validates the plan's settings and complete replay coverage,
-then uses the lists for its shard ID without computing assignments. Oracle
-extraction and report merging use the same JSON plan.
+The C# application validates the plan's target, percentage, full physics
+coverage, and eligible renderer sample, then uses the lists for its shard ID
+without computing assignments. Oracle extraction and report merging use the
+same JSON plan and opponent filter. Plans missing the target must be regenerated.
 
 Within each shard, lists are distributed round robin to workers, whose replay
 counts differ by at most one. Each worker processes its list in order, and
@@ -245,8 +253,12 @@ dotnet out/dumpsrv/dumpsrv.dll run \
     -GameDirectory stunts -OutputDirectory results \
     -DosBoxConfigPath tools/scripts/dosbox.proc.conf \
     -PartitionCount 12 -DosBoxTimeoutSeconds 30 \
-    -RendererTimeoutSeconds 120 -RendererTestPercentage 5
+    -RendererTimeoutSeconds 120 -RendererTestPercentage 5 -Camera 2 -Target 0
 ```
+
+`Camera` accepts integers from `1` through `4` and defaults to `2`. `Target`
+accepts `0` (player, the default) or `1` (opponent). These settings are passed
+to both renderer executables; physics output is independent of them.
 
 `ShardIndex` defaults to `0` and `ShardCount` to `1`. Single-shard runs, including
 the HTTP service, work without a plan. For a distributed run, generate a plan
@@ -255,30 +267,34 @@ once from the complete replay directory or ZIP:
 ```sh
 python3 tools/scripts/plan-replay-shards.py \
     --replays stunts --shards 20 \
-    --renderer-test-percentage 5 --output shard-plan.json
+    --renderer-test-percentage 5 --target 0 --output shard-plan.json
 ```
 
 Pass `-ShardPlan shard-plan.json -ShardCount 20 -ShardIndex 0` to `run`, changing
-the index for each job, and use `-RendererTestPercentage 5` to match this plan.
+the index for each job, and use `-RendererTestPercentage 5 -Target 0` to match
+this plan. For an opponent run, generate the plan with `--target 1` and use
+`-Target 1` for `run`, `extract-oracles`, and `merge`.
 Retain the complete replay corpus on every shard. `ShardPlan` is required when
 `ShardCount` exceeds one. `PhysicsTests` and `RendererTests` default to `true`;
 use `-PhysicsTests false` or
 `-RendererTests false` to disable a phase. `DosBoxConfigPath` defaults to the
 configuration alongside the application. Progress is written to the console.
 
-Each run writes `shard-<index>.json` with shard identity, completed replay names,
-and diagnostics, plus a local `partitions_all.txt` report. `run` returns zero
-only when the assigned work finishes without errors. Copy every shard's JSON
+Each run writes `shard-<index>.json` with shard identity, camera and target,
+completed replay names, and diagnostics, plus a local `partitions_all.txt`
+report. `run` returns zero only when the assigned work finishes without errors. Copy every shard's JSON
 result into one directory, then merge against the complete replay corpus:
 
 ```sh
 dotnet out/dumpsrv/dumpsrv.dll merge \
     -ReplayDirectory stunts -ResultsDirectory results \
-    -ShardCount 1 -RendererTestPercentage 5 \
+    -ShardCount 1 -RendererTestPercentage 5 -Camera 2 -Target 0 \
     -OutputFile partitions_all.txt
 ```
 
-Pass the same shard count, percentage, and enabled test phases used by `run`.
+Pass the same shard count, percentage, camera, target, and enabled test phases
+used by `run`. Shards with missing or inconsistent camera/target settings
+are rejected.
 For distributed runs, also pass the same `-ShardPlan shard-plan.json` to `merge`.
 `merge` reads shard identity from the JSON content, checks actual completed
 replay names against expected coverage, and rejects missing or duplicate shards.
@@ -293,8 +309,10 @@ each phase's tick balance in its job summary. Replay jobs and coverage checks
 download that artifact. Physics replays run after the build, and renderer
 replays run only after every physics
 shard and its coverage check pass. Each shard's JSON is uploaded as
-`physics-partitions-<index>` or `renderer-partitions-<index>`. Phase reports are
-uploaded as `physics-report` and `renderer-report`, including diagnostics when
+`<phase>-partitions-cam<camera>-target<target>-<index>`. Renderer oracle files
+are uploaded as `renderer-pdo-cam<camera>-target<target>-<index>` and combined
+into `renderer-pdo-cam<camera>-target<target>`. Phase reports are uploaded as
+`physics-report` and `renderer-report`, including diagnostics when
 validation fails. The final Replay report job runs only after renderer
 validation passes and publishes the combined text report as `partitions_all`.
 The summaries show physics and renderer coverage separately, errors grouped by
@@ -313,24 +331,41 @@ dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
     -GameDirectory stunts -Archive BINs.zip -ShardIndex 0 -ShardCount 20 \
     -ShardPlan shard-plan.json -RendererTestPercentage 5
 dotnet out/dumpsrv/dumpsrv.dll extract-oracles \
-    -GameDirectory stunts -Archive PDOs.zip -Renderer true \
+    -GameDirectory stunts -Archive PDOs-cam2-target0.zip -Renderer true -Camera 2 -Target 0 \
     -RendererTestPercentage 5 -ShardIndex 0 -ShardCount 20 \
     -ShardPlan shard-plan.json
 ```
 
 `Renderer` defaults to `false`, `RendererTestPercentage` to `100`,
-`ShardIndex` to `0`, and `ShardCount` to `1`. Match these settings to the
-subsequent `run` command and supply the same `ShardPlan` for distributed runs.
+`ShardIndex` to `0`, `ShardCount` to `1`, `Camera` to `2`, and `Target` to `0`.
+Match these settings to the subsequent `run` command and supply the same
+`ShardPlan` for distributed runs. Renderer imports record the selected camera
+and target beside each `.PDO`; the archive must contain outputs for that view.
 Missing entries are reported and left for the runner to generate. Invalid
 archives fail preparation. Imported outputs
 still undergo the runner's completeness checks before reuse.
 
+The **Replay tests** workflow accepts `camera` and `target`, passed through
+**Build and validate** and the manual **PR validation** and **Release** inputs.
+CI downloads `PDOs-cam<camera>-target<target>.zip` for rendering and `BINs.zip`
+for physics from oracle release `v1.0.4`.
+The oracle download/extraction step runs for both targets. If a cache download
+fails (including HTTP 404, server errors, or network failures), CI logs a warning
+and continues. Missing references are generated locally during replay testing.
+Partial downloads are discarded. A successfully downloaded archive must still
+pass extraction and shard-plan validation.
+
 ## Cached outputs and diagnostics
 
 Physics compares original `.BIN` output against fresh `.BNI` output. Rendering
-uses camera `2` and target `0`, comparing original `.PDO` output against fresh
-`.PDD` output. Build `pixldump` and `pixldump-original` together so both use
+uses the selected camera and target, comparing original `.PDO` output against
+fresh `.PDD` output. Build `pixldump` and `pixldump-original` together so both use
 incremental redraws and hashes on every frame. Comparisons are byte for byte.
+
+Renderer caches also require a matching `<replay>.PDO.settings` file containing
+the camera and target, separated by one space. The runner and oracle extractor
+write this metadata; missing metadata or a changed view forces regeneration.
+`pixelcheck.sh` clears this metadata when replacing a hash dump.
 
 Completed `.BIN` and `.PDO` files are reused only after checking their contents
 against the replay's recorded frame count. Physics dumps must contain the

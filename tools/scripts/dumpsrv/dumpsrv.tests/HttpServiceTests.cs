@@ -410,7 +410,7 @@ public sealed class HttpServiceTests
     public async Task AcceptsMaximumExecutablesAndOptionalSettings()
     {
         var engine = new FakeEngine();
-        await using var server = await Server.StartAsync(engine);
+        await using var server = await Server.StartAsync(engine, camera: 4, target: 1);
         var form = Form(new byte[1024 * 1024], new byte[1024 * 1024]);
         form.Add(new StringContent(" FALSE "), "PHYSICS_TESTS");
         form.Add(new StringContent(" TrUe "), "renderer_tests");
@@ -423,6 +423,8 @@ public sealed class HttpServiceTests
         Assert.Equal(19, engine.LastOptions.DosBoxTimeoutSeconds);
         Assert.Equal(19, engine.LastOptions.RendererTimeoutSeconds);
         Assert.Equal(23, engine.LastOptions.RendererTestPercentage);
+        Assert.Equal(4, engine.LastOptions.Camera);
+        Assert.Equal(1, engine.LastOptions.Target);
     }
 
     [Fact]
@@ -679,7 +681,8 @@ public sealed class HttpServiceTests
         public required HttpClient Client { get; init; }
 
         public static async Task<Server> StartAsync(FakeEngine? engine = null, int timeout = 1800,
-            string? appSettings = null, TextWriter? logOutput = null, TimeProvider? timeProvider = null)
+            string? appSettings = null, TextWriter? logOutput = null,
+            TimeProvider? timeProvider = null, int camera = 2, int target = 0)
         {
             var directory = Path.Combine(Path.GetTempPath(), "dumpsrv-http-" + Guid.NewGuid().ToString("N"));
             System.IO.Directory.CreateDirectory(Path.Combine(directory, "stunts"));
@@ -693,6 +696,8 @@ public sealed class HttpServiceTests
                 PartitionCount = 7,
                 DosBoxTimeoutSeconds = 19,
                 RendererTestPercentage = 23,
+                Camera = camera,
+                Target = target,
                 ResponseProcessingTimeoutSeconds = timeout,
                 ServiceDirectory = directory
             }, engine ?? new FakeEngine(), logOutput, timeProvider);

@@ -18,12 +18,16 @@ public sealed class ShardPlan
     [JsonRequired]
     public int RendererTestPercentage { get; init; }
     [JsonRequired]
+    public int Target { get; init; }
+    [JsonRequired]
     public List<ReplayShard> Shards { get; init; } = [];
 
     public static ShardPlan Load(string? path, IReadOnlyList<string> replays,
-        int percentage, int shardCount)
+        IReadOnlyList<string> rendererReplays, int percentage, int shardCount, int target = 0)
     {
         ArgumentOutOfRangeException.ThrowIfLessThan(shardCount, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(target, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(target, 1);
         if (path is null)
         {
             if (shardCount != 1)
@@ -33,10 +37,11 @@ public sealed class ShardPlan
             return new ShardPlan
             {
                 RendererTestPercentage = percentage,
+                Target = target,
                 Shards = [new ReplayShard
                 {
                     Physics = replays.ToList(),
-                    Renderer = ReplayCatalog.Sample(replays, percentage).ToList()
+                    Renderer = ReplayCatalog.Sample(rendererReplays, percentage).ToList()
                 }]
             };
         }
@@ -47,6 +52,7 @@ public sealed class ShardPlan
                 AllowDuplicateProperties = false
             });
         if (plan is null || plan.Version != 1 || plan.RendererTestPercentage != percentage ||
+            plan.Target != target ||
             plan.Shards is null || plan.Shards.Count != shardCount || plan.Shards.Any(shard =>
                 shard is null || shard.Physics is null || shard.Renderer is null ||
                 shard.Physics.Any(replay => replay is null) ||
@@ -56,7 +62,7 @@ public sealed class ShardPlan
         }
         ValidateCoverage(plan.Shards.SelectMany(shard => shard.Physics), replays, "physics");
         ValidateCoverage(plan.Shards.SelectMany(shard => shard.Renderer),
-            ReplayCatalog.Sample(replays, percentage), "renderer");
+            ReplayCatalog.Sample(rendererReplays, percentage), "renderer");
         return plan;
     }
 

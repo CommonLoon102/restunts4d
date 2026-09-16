@@ -59,12 +59,22 @@ public sealed class EngineTests
         Assert.Equal(cancelRenderer ? TimeSpan.FromSeconds(14) : (TimeSpan?)null, result.RendererElapsed);
     }
 
-    [Fact]
-    public async Task EngineRunsBothPhasesAndUsesCompletedCachesWithoutTouchingUnownedFiles()
+    [Theory]
+    [InlineData(1, 0)]
+    [InlineData(2, 0)]
+    [InlineData(3, 0)]
+    [InlineData(4, 0)]
+    [InlineData(1, 1)]
+    [InlineData(2, 1)]
+    [InlineData(3, 1)]
+    [InlineData(4, 1)]
+    public async Task EngineRunsBothPhasesAndUsesCompletedCachesWithoutTouchingUnownedFiles(
+        int camera, int target)
     {
         using var directory = CreateGame("mix.RpL", "other.rpl");
         File.WriteAllBytes(System.IO.Path.Combine(directory.Path, "MIX.bin"), DumpBytes(false, 6));
         File.WriteAllBytes(System.IO.Path.Combine(directory.Path, "MIX.pdo"), DumpBytes(true, 6));
+        directory.Write("mix.PDO.settings", $"{camera} {target}");
         directory.Write("unowned.bni", "keep");
         directory.Write("mix.BNI", "stale");
         var calls = new ConcurrentQueue<DosBoxInvocation>();
@@ -74,9 +84,13 @@ public sealed class EngineTests
             WriteOutput(invocation);
             return Task.FromResult(new DosBoxResult(0));
         });
-        var result = await new RegressionEngine(runner, _ => { }).RunAsync(Options(directory), TestContext.Current.CancellationToken);
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(
+            Options(directory) with { Camera = camera, Target = target },
+            TestContext.Current.CancellationToken);
         Assert.True(result.Completed);
         Assert.Empty(result.Diagnostics);
+        Assert.Equal(camera, result.Camera);
+        Assert.Equal(target, result.Target);
         Assert.Equal(new[] { "mix.RpL", "other.rpl" }, result.PhysicsCompleted);
         Assert.Equal(result.PhysicsCompleted, result.RendererCompleted);
         Assert.DoesNotContain(calls, call => call.ReplayBaseName == "mix" && call.Executable.EndsWith("o.exe"));
@@ -84,7 +98,8 @@ public sealed class EngineTests
         var ordered = calls.ToArray();
         var firstRenderer = Array.FindIndex(ordered, call => call.Executable.StartsWith("pix", StringComparison.Ordinal));
         Assert.All(ordered[..firstRenderer], call => Assert.Equal("1", call.Arguments));
-        Assert.All(ordered[firstRenderer..], call => Assert.Equal("2 0", call.Arguments));
+        Assert.All(ordered[firstRenderer..], call =>
+            Assert.Equal($"{camera} {target}", call.Arguments));
         RegressionEngine.Cleanup(result);
         Assert.Equal("keep", File.ReadAllText(System.IO.Path.Combine(directory.Path, "unowned.bni")));
         Assert.All(new[] { "mix.BIN", "mix.PDO", "other.BIN", "other.PDO" }, name =>
@@ -92,6 +107,69 @@ public sealed class EngineTests
         Assert.DoesNotContain(Directory.GetFiles(directory.Path), path =>
             System.IO.Path.GetExtension(path).Equals(".pdd", StringComparison.OrdinalIgnoreCase));
         Assert.False(File.Exists(DosFiles.Resolve(directory.Path, "mix.BNI")));
+        Assert.Equal($"{camera} {target}", File.ReadAllText(
+            DosFiles.Resolve(directory.Path, "other.PDO.settings")));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("1 0")]
+    [InlineData("2 1")]
+    [InlineData("4 1")]
+    public async Task RendererCacheWithUnknownOrDifferentViewIsRegeneratedAndThenReused(
+        string? previousSettings)
+    {
+        using var directory = CreateGame("track.rpl");
+        File.WriteAllBytes(Path.Combine(directory.Path, "TRACK.PDO"), DumpBytes(true, 6, true));
+        if (previousSettings is not null)
+        {
+            directory.Write("track.pdo.SETTINGS", previousSettings);
+        }
+        var calls = new List<string>();
+        var engine = new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            calls.Add(invocation.Executable);
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { });
+        var options = Options(directory) with { PhysicsTests = false };
+        for (var run = 0; run < 2; run++)
+        {
+            var result = await engine.RunAsync(options, TestContext.Current.CancellationToken);
+            Assert.True(result.Completed);
+            Assert.Empty(result.Diagnostics);
+            RegressionEngine.Cleanup(result);
+        }
+        Assert.Equal(new[] { "pixldumo.exe", "pixldump.exe", "pixldump.exe" }, calls);
+        Assert.Equal("2 0",
+            File.ReadAllText(DosFiles.Resolve(directory.Path, "track.PDO.settings")));
+
+        calls.Clear();
+        var changed = await engine.RunAsync(options with { Camera = 4, Target = 1 },
+            TestContext.Current.CancellationToken);
+        Assert.Empty(changed.Diagnostics);
+        Assert.Equal(new[] { "pixldumo.exe", "pixldump.exe" }, calls);
+        Assert.Equal("4 1",
+            File.ReadAllText(DosFiles.Resolve(directory.Path, "track.PDO.settings")));
+    }
+
+    [Theory]
+    [InlineData(0, 0)]
+    [InlineData(5, 0)]
+    [InlineData(2, -1)]
+    [InlineData(2, 2)]
+    public async Task InvalidViewDoesNotStartDosBox(int camera, int target)
+    {
+        using var directory = CreateGame("track.rpl");
+        var runner = new FakeRunner((_, _) => throw new Xunit.Sdk.XunitException("DOSBox ran."));
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(
+            Options(directory) with { Camera = camera, Target = target },
+            TestContext.Current.CancellationToken);
+        Assert.False(result.Completed);
+        Assert.NotNull(result.Failure);
+        Assert.Empty(result.PhysicsCompleted);
+        Assert.Empty(result.RendererCompleted);
     }
 
     [Fact]
@@ -237,6 +315,32 @@ public sealed class EngineTests
         Assert.Contains("Unsupported DOS 8.3", invalid.Failure);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task RunCommandRecordsDefaultAndExplicitViewInShardResults(bool explicitView)
+    {
+        using var directory = CreateGame("one.rpl");
+        var planPath = TestShardPlans.Write(directory.Path, 100, explicitView ? 1 : 0,
+            new ReplayShard { Physics = ["one.rpl"], Renderer = ["one.rpl"] },
+            new ReplayShard { Physics = [], Renderer = [] });
+        var options = Options(directory);
+        string[] view = explicitView ? ["-Camera", "4", "-Target", "1"] : [];
+        var code = await CommandLine.ExecuteAsync(
+            ["run", "-GameDirectory", directory.Path, "-OutputDirectory", options.OutputDirectory,
+                "-DosBoxConfigPath", options.DosBoxConfigPath, "-PartitionCount", "1",
+                "-ShardPlan", planPath, "-ShardCount", "2", "-ShardIndex", "1", .. view],
+            TestContext.Current.CancellationToken);
+        Assert.Equal(0, code);
+        var json = await File.ReadAllTextAsync(
+            Path.Combine(options.OutputDirectory, "shard-1.json"),
+            TestContext.Current.CancellationToken);
+        var result = System.Text.Json.JsonSerializer.Deserialize<ShardResult>(json)!;
+        Assert.True(result.Completed);
+        Assert.Equal(explicitView ? 4 : 2, result.Camera);
+        Assert.Equal(explicitView ? 1 : 0, result.Target);
+    }
+
     [Fact]
     public async Task RunnerAndMergerHonorTheJsonListsForEachShardAndPhase()
     {
@@ -277,6 +381,99 @@ public sealed class EngineTests
         }, TestContext.Current.CancellationToken);
         Assert.True(merged.Success);
         Assert.Empty(merged.Diagnostics);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task OpponentRunsAndCoverageUseFilteredSampleWhilePhysicsKeepsAllReplays(
+        bool distributed)
+    {
+        using var directory = CreateGame("a.rpl", "b.rpl", "c.rpl", "d.rpl", "e.rpl");
+        WriteReplay(directory, "a.rpl", 6, opponentType: 0);
+        WriteReplay(directory, "c.rpl", 6, opponentType: 0);
+        var planPath = distributed ? TestShardPlans.Write(directory.Path, 50, 1,
+            new ReplayShard { Physics = ["e.rpl", "a.rpl"], Renderer = ["d.rpl"] },
+            new ReplayShard { Physics = ["b.rpl"], Renderer = [] },
+            new ReplayShard { Physics = ["c.rpl", "d.rpl"], Renderer = ["b.rpl"] }) : null;
+        var options = Options(directory) with
+        {
+            Target = 1,
+            RendererTestPercentage = 50,
+            ShardCount = distributed ? 3 : 1,
+            ShardPlanPath = planPath
+        };
+        var calls = new ConcurrentQueue<DosBoxInvocation>();
+        var engine = new RegressionEngine(new FakeRunner((invocation, _) =>
+        {
+            calls.Enqueue(invocation);
+            WriteOutput(invocation);
+            return Task.FromResult(new DosBoxResult(0));
+        }), _ => { });
+        var results = new List<ShardResult>();
+        for (var index = 0; index < options.ShardCount; index++)
+        {
+            var result = await engine.RunAsync(options with { ShardIndex = index },
+                TestContext.Current.CancellationToken);
+            Assert.True(result.Completed);
+            Assert.Empty(result.Diagnostics);
+            results.Add(result);
+            await ResultFiles.WriteAsync(result, options.OutputDirectory,
+                TestContext.Current.CancellationToken);
+        }
+        Assert.Equal(new[] { "b", "b", "d", "d" }, calls
+            .Where(call => call.Executable.StartsWith("pix", StringComparison.Ordinal))
+            .Select(call => call.ReplayBaseName).Order());
+        Assert.Equal(10, calls.Count(call =>
+            call.Executable.StartsWith("repl", StringComparison.Ordinal)));
+        var mergeOptions = new MergeOptions
+        {
+            ReplayDirectory = directory.Path,
+            ResultsDirectory = options.OutputDirectory,
+            OutputFile = Path.Combine(directory.Path, "merged.txt"),
+            ShardPlanPath = planPath,
+            ShardCount = options.ShardCount,
+            RendererTestPercentage = 50,
+            Target = 1
+        };
+        var merged = await ResultMerger.MergeAsync(mergeOptions,
+            TestContext.Current.CancellationToken);
+        Assert.True(merged.Success);
+        Assert.Contains("5/5 physics and 2/2 renderer", merged.Summary);
+
+        results[0].RendererCompleted.Add("a.rpl");
+        await ResultFiles.WriteAsync(results[0], options.OutputDirectory,
+            TestContext.Current.CancellationToken);
+        var invalid = await ResultMerger.MergeAsync(mergeOptions,
+            TestContext.Current.CancellationToken);
+        Assert.False(invalid.Success);
+        Assert.Contains(invalid.Diagnostics, line => line.Contains("type=unexpected_replay"));
+    }
+
+    [Fact]
+    public async Task RendererOnlyOpponentRunWithNoOpponentsCompletesWithoutDosBox()
+    {
+        using var directory = CreateGame("solo.rpl");
+        WriteReplay(directory, "solo.rpl", 6, opponentType: 0);
+        var runner = new FakeRunner((_, _) => throw new Xunit.Sdk.XunitException("DOSBox ran."));
+        var options = Options(directory) with { Target = 1, PhysicsTests = false };
+        var result = await new RegressionEngine(runner, _ => { }).RunAsync(options,
+            TestContext.Current.CancellationToken);
+        Assert.True(result.Completed);
+        Assert.Empty(result.Diagnostics);
+        Assert.Empty(result.RendererCompleted);
+        await ResultFiles.WriteAsync(result, options.OutputDirectory,
+            TestContext.Current.CancellationToken);
+        var merged = await ResultMerger.MergeAsync(new MergeOptions
+        {
+            ReplayDirectory = directory.Path,
+            ResultsDirectory = options.OutputDirectory,
+            OutputFile = Path.Combine(directory.Path, "merged.txt"),
+            Target = 1,
+            PhysicsTests = false
+        }, TestContext.Current.CancellationToken);
+        Assert.True(merged.Success);
+        Assert.Contains("0/0 renderer", merged.Summary);
     }
 
     [Fact]
@@ -401,6 +598,10 @@ public sealed class EngineTests
             _ => throw new InvalidOperationException()
         };
         File.WriteAllBytes(path, bytes);
+        if (renderer)
+        {
+            directory.Write("track.PDO.settings", "2 0");
+        }
         var calls = new List<string>();
         var runner = new FakeRunner((invocation, _) =>
         {
@@ -533,9 +734,11 @@ public sealed class EngineTests
         return directory;
     }
 
-    private static void WriteReplay(EngineDirectory directory, string replay, ushort frames)
+    private static void WriteReplay(EngineDirectory directory, string replay, ushort frames,
+        byte opponentType = 1)
     {
         var bytes = new byte[26 + 1802 + frames];
+        bytes[6] = opponentType;
         BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(22), 20);
         BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(24), frames);
         File.WriteAllBytes(System.IO.Path.Combine(directory.Path, replay), bytes);

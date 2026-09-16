@@ -6,10 +6,18 @@ public static class OracleArchive
 {
     public static (int Extracted, int Missing) Extract(string archivePath, string gameDirectory,
         bool renderer, int percentage, int shardIndex, int shardCount,
-        string? shardPlanPath = null, CancellationToken cancellation = default)
+        int camera = 2, int target = 0, string? shardPlanPath = null,
+        CancellationToken cancellation = default)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(camera, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(camera, 4);
+        ArgumentOutOfRangeException.ThrowIfLessThan(target, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(target, 1);
         var replays = ReplayCatalog.Discover(gameDirectory, cancellation);
-        var plan = ShardPlan.Load(shardPlanPath, replays, percentage, shardCount);
+        var rendererReplays = ReplayCatalog.RendererReplays(gameDirectory, replays,
+            target, cancellation);
+        var plan = ShardPlan.Load(shardPlanPath, replays, rendererReplays,
+            percentage, shardCount, target);
         var assigned = plan.Assigned(renderer, shardIndex);
         using var archive = ZipFile.OpenRead(archivePath);
         var entries = archive.Entries.ToDictionary(entry => entry.FullName,
@@ -25,8 +33,15 @@ public static class OracleArchive
                 // The regression engine generates any missing oracle outputs.
                 continue;
             }
+            var pendingPath = DosFiles.Resolve(gameDirectory, name + ".pending");
+            File.WriteAllText(pendingPath, "");
             entry.ExtractToFile(DosFiles.Resolve(gameDirectory, name), overwrite: true);
-            File.Delete(DosFiles.Resolve(gameDirectory, name + ".pending"));
+            if (renderer)
+            {
+                File.WriteAllText(DosFiles.Resolve(gameDirectory, name + ".settings"),
+                    $"{camera} {target}");
+            }
+            File.Delete(pendingPath);
             extracted++;
         }
         return (extracted, assigned.Count - extracted);

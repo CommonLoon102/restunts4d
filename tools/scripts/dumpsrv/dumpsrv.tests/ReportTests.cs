@@ -13,7 +13,9 @@ public sealed class ReportTests : IDisposable
         Directory.CreateDirectory(Path.Combine(directory, "results"));
         foreach (var name in new[] { "ALPHA.RPL", "b.RpL", "race-2.rpl", "track.rpl", "z.RPL" })
         {
-            File.WriteAllText(Path.Combine(directory, "replays", name), "replay");
+            var header = new byte[26];
+            header[6] = 1;
+            File.WriteAllBytes(Path.Combine(directory, "replays", name), header);
         }
         TestShardPlans.Write(directory, 40,
             new ReplayShard { Physics = ["z.RPL", "ALPHA.RPL"], Renderer = ["race-2.rpl"] },
@@ -42,6 +44,10 @@ public sealed class ReportTests : IDisposable
     [InlineData("incomplete", "incomplete_run")]
     [InlineData("wrong_settings", "inconsistent_shard")]
     [InlineData("wrong_timeout", "inconsistent_shard")]
+    [InlineData("wrong_camera", "inconsistent_shard")]
+    [InlineData("wrong_target", "inconsistent_shard")]
+    [InlineData("missing_camera", "invalid_result")]
+    [InlineData("missing_target", "invalid_result")]
     [InlineData("wrong_corpus", "inconsistent_shard")]
     [InlineData("missing_replay", "missing_replay")]
     [InlineData("duplicate_replay", "duplicate_replay")]
@@ -61,12 +67,20 @@ public sealed class ReportTests : IDisposable
             case "truncated":
                 await File.WriteAllTextAsync(path, "{", TestContext.Current.CancellationToken);
                 break;
+            case "missing_camera":
+            case "missing_target":
             case "missing_diagnostics":
             case "null_diagnostics":
                 var json = System.Text.Json.Nodes.JsonNode.Parse(JsonSerializer.Serialize(shards[0]))!;
-                if (mutation == "missing_diagnostics")
+                if (mutation.StartsWith("missing_", StringComparison.Ordinal))
                 {
-                    json.AsObject().Remove("Diagnostics");
+                    var property = mutation switch
+                    {
+                        "missing_camera" => "Camera",
+                        "missing_target" => "Target",
+                        _ => "Diagnostics"
+                    };
+                    json.AsObject().Remove(property);
                 }
                 else
                 {
@@ -86,6 +100,8 @@ public sealed class ReportTests : IDisposable
                     case "incomplete": shard.Completed = false; break;
                     case "wrong_settings": shard.RendererTestPercentage = 100; break;
                     case "wrong_timeout": shard.DosBoxTimeoutSeconds = 120; break;
+                    case "wrong_camera": shard.Camera = 4; break;
+                    case "wrong_target": shard.Target = 1; break;
                     case "wrong_corpus": shard.ReplayFiles = ["different.rpl"]; break;
                     case "missing_replay": shard.PhysicsCompleted.RemoveAt(0); break;
                     case "duplicate_replay": shard.PhysicsCompleted.Add(shard.PhysicsCompleted[0]); break;
@@ -99,6 +115,38 @@ public sealed class ReportTests : IDisposable
         Assert.Contains(result.Diagnostics, line => line.Contains($"type={expectedType}|", StringComparison.Ordinal) ||
             line.EndsWith($"type={expectedType}", StringComparison.Ordinal));
         Assert.NotEmpty(await File.ReadAllTextAsync(Options().OutputFile, TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task MergeCommandAcceptsMatchingNondefaultViewAndReportsIt()
+    {
+        var shards = await WriteShards();
+        foreach (var shard in shards)
+        {
+            shard.Camera = 3;
+            shard.Target = 1;
+            var path = Path.Combine(directory, "results",
+                $"arbitrary-{(char)('a' + shard.ShardIndex)}.json");
+            await File.WriteAllTextAsync(path, JsonSerializer.Serialize(shard),
+                TestContext.Current.CancellationToken);
+        }
+        var options = Options();
+        var corpus = ReplayCatalog.Discover(options.ReplayDirectory,
+            TestContext.Current.CancellationToken);
+        var plan = ShardPlan.Load(options.ShardPlanPath, corpus, corpus, 40, 3);
+        TestShardPlans.Write(directory, 40, 1, plan.Shards.ToArray());
+        var code = await CommandLine.ExecuteAsync(
+            ["merge", "-ReplayDirectory", options.ReplayDirectory,
+                "-ResultsDirectory", options.ResultsDirectory, "-OutputFile", options.OutputFile,
+                "-SummaryFile", options.SummaryFile!, "-ShardPlan", options.ShardPlanPath!,
+                "-ShardCount", "3", "-RendererTestPercentage", "40",
+                "-Camera", "3", "-Target", "1"],
+            TestContext.Current.CancellationToken);
+        Assert.Equal(0, code);
+        var summary = await File.ReadAllTextAsync(options.SummaryFile!,
+            TestContext.Current.CancellationToken);
+        Assert.Contains("| Camera | 3 |", summary);
+        Assert.Contains("| Target | 1 |", summary);
     }
 
     [Fact]
@@ -177,7 +225,7 @@ public sealed class ReportTests : IDisposable
     private async Task<List<ShardResult>> WriteShards()
     {
         var corpus = ReplayCatalog.Discover(Options().ReplayDirectory);
-        var plan = ShardPlan.Load(Options().ShardPlanPath, corpus, 40, 3);
+        var plan = ShardPlan.Load(Options().ShardPlanPath, corpus, corpus, 40, 3);
         var results = new List<ShardResult>();
         for (var index = 0; index < 3; index++)
         {

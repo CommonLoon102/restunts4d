@@ -15,6 +15,8 @@ public static class HttpService
         TextWriter? logOutput = null, TimeProvider? timeProvider = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(options.ApiKey);
+        ValidateRange(options.Camera, 1, 4, nameof(options.Camera));
+        ValidateRange(options.Target, 0, 1, nameof(options.Target));
         ValidateRange(options.PartitionCount, 1, 64, nameof(options.PartitionCount));
         ValidateRange(options.Port, 1, 65535, nameof(options.Port));
         ValidateRange(options.DosBoxTimeoutSeconds, 1, 2147483, nameof(options.DosBoxTimeoutSeconds));
@@ -168,6 +170,8 @@ public static class HttpService
                 PhysicsTests = physics,
                 RendererTests = renderer,
                 RendererTestPercentage = options.RendererTestPercentage,
+                Camera = options.Camera,
+                Target = options.Target,
                 DosBoxTimeoutSeconds = options.DosBoxTimeoutSeconds,
                 RendererTimeoutSeconds = options.DosBoxTimeoutSeconds
             }, processing.Token);

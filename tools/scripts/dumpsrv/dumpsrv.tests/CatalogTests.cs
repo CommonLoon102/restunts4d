@@ -80,6 +80,39 @@ public sealed class CatalogTests
     }
 
     [Fact]
+    public void RendererSelectionUsesOpponentTypeBeforeSamplingAndPreservesOrder()
+    {
+        using var directory = new EngineDirectory();
+        byte[] types = [0, 1, 0, 6, 255];
+        for (var index = 0; index < types.Length; index++)
+        {
+            directory.WriteReplay($"r{index}.rpl", types[index]);
+        }
+        var replays = ReplayCatalog.Discover(directory.Path,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(replays, ReplayCatalog.RendererReplays(directory.Path, replays, 0,
+            TestContext.Current.CancellationToken));
+        var opponents = ReplayCatalog.RendererReplays(directory.Path, replays, 1,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(new[] { "r1.rpl", "r3.rpl", "r4.rpl" }, opponents);
+        Assert.Equal(new[] { "r1.rpl", "r3.rpl" }, ReplayCatalog.Sample(opponents, 50));
+    }
+
+    [Fact]
+    public void OpponentSelectionRejectsTruncatedHeadersAndHonorsCancellation()
+    {
+        using var directory = new EngineDirectory();
+        directory.Write("short.rpl", new string('x', 25));
+        Assert.Throws<InvalidDataException>(() =>
+            ReplayCatalog.RendererReplays(directory.Path, ["short.rpl"], 1,
+                TestContext.Current.CancellationToken));
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.Throws<OperationCanceledException>(() =>
+            ReplayCatalog.RendererReplays(directory.Path, ["short.rpl"], 1, cancellation.Token));
+    }
+
+    [Fact]
     public void SingleShardRendererSamplingUsesEvenlySpacedEntries()
     {
         var corpus = Enumerable.Range(0, 37).Select(index => $"replay-{index}").ToArray();
@@ -99,6 +132,13 @@ internal sealed class EngineDirectory : IDisposable
     }
 
     public void Write(string relativePath, string content = "") => File.WriteAllText(System.IO.Path.Combine(Path, relativePath), content);
+
+    public void WriteReplay(string relativePath, byte opponentType = 1)
+    {
+        var header = new byte[26];
+        header[6] = opponentType;
+        File.WriteAllBytes(System.IO.Path.Combine(Path, relativePath), header);
+    }
 
     public void Dispose() => Directory.Delete(Path, true);
 }

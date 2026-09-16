@@ -25,6 +25,14 @@ on:
         description: Seconds each physics executable gets per replay.
         type: number
         default: 120
+      camera:
+        description: Renderer camera (integer 1-4, corresponding to F1-F4).
+        type: number
+        default: 2
+      target:
+        description: Renderer target (0 for player, 1 for opponent).
+        type: number
+        default: 0
       renderer-test-percentage:
         description: Percentage of golden replays sampled for renderer tests (integer 1-100).
         type: number
@@ -108,6 +116,7 @@ jobs:
         env:
           SHARDS: ${{ inputs.shards }}
           PARTITIONS_PER_SHARD: ${{ inputs.partitions-per-shard }}
+          TARGET: ${{ inputs.target }}
           RENDERER_TEST_PERCENTAGE: ${{ inputs.renderer-test-percentage }}
         run: |
           set -eu
@@ -126,7 +135,7 @@ jobs:
           python3 tools/scripts/plan-replay-shards.py \
               --replays tools/scripts/rpls_golden/replays.zip \
               --shards "$SHARDS" --renderer-test-percentage "$RENDERER_TEST_PERCENTAGE" \
-              --output shard-plan.json --summary "$GITHUB_STEP_SUMMARY"
+              --target "$TARGET" --output shard-plan.json --summary "$GITHUB_STEP_SUMMARY"
           echo "shards=[$(seq 0 $(( SHARDS - 1 )) | paste -sd, -)]" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v7
@@ -205,6 +214,8 @@ jobs:
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
+      camera: ${{ inputs.camera }}
+      target: ${{ inputs.target }}
       renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
       renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 
@@ -220,6 +231,8 @@ jobs:
       shards: ${{ inputs.shards }}
       partitions-per-shard: ${{ inputs.partitions-per-shard }}
       replay-timeout-seconds: ${{ inputs.replay-timeout-seconds }}
+      camera: ${{ inputs.camera }}
+      target: ${{ inputs.target }}
       renderer-test-percentage: ${{ inputs.renderer-test-percentage }}
       renderer-timeout-seconds: ${{ inputs.renderer-timeout-seconds }}
 

@@ -20,10 +20,11 @@ SPEC.loader.exec_module(planner)
 
 
 class PlannerTests(unittest.TestCase):
-    def assert_coverage_and_totals(self, plan, ticks, percentage):
+    def assert_coverage_and_totals(self, plan, ticks, percentage, opponents=()):
+        eligible = sorted(name for name in ticks if plan["target"] == 0 or name in opponents)
         for phase, expected in (
             ("physics", sorted(ticks)),
-            ("renderer", planner.sample(sorted(ticks), percentage)),
+            ("renderer", planner.sample(eligible, percentage)),
         ):
             actual = sorted(name for shard in plan["shards"] for name in shard[phase])
             self.assertEqual(expected, actual)
@@ -78,7 +79,7 @@ class PlannerTests(unittest.TestCase):
             self.assert_coverage_and_totals(plan, ticks, 13)
 
     def test_golden_corpus_balances_default_shards_even_with_small_renderer_samples(self):
-        ticks = planner.read_replays(GOLDEN)
+        ticks, _ = planner.read_replays(GOLDEN)
         for percentage in (1, 2, 3, 5, 100):
             with self.subTest(percentage=percentage):
                 plan = planner.create_plan(ticks, 20, percentage)
@@ -93,12 +94,15 @@ class PlannerTests(unittest.TestCase):
                 for name, ticks in expected.items():
                     data = bytearray(100000 if ticks == 0 else 26)
                     struct.pack_into("<HH", data, 22, 10, ticks)
+                    data[6] = 0 if name == "zero.rpl" else 6
                     (directory / name).write_bytes(data)
                     archive.writestr(name, data)
                 archive.writestr("nested/ignored.rpl", b"")
                 archive.writestr("readme.txt", b"")
-            self.assertEqual(expected, planner.read_replays(directory))
-            self.assertEqual(expected, planner.read_replays(directory / "replays.zip"))
+            for source in (directory, directory / "replays.zip"):
+                ticks, opponents = planner.read_replays(source)
+                self.assertEqual(expected, ticks)
+                self.assertEqual({"Alpha.RpL", "maximum.rpl"}, opponents)
 
     def test_bad_headers_names_and_collisions_are_rejected(self):
         for entries in (
@@ -122,6 +126,40 @@ class PlannerTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 planner.create_plan({"race.rpl": 100}, count, percentage)
 
+    def test_opponents_are_filtered_before_sampling_and_balancing(self):
+        ticks = {f"r{index:02}.rpl": 100 if index % 2 else 60000 for index in range(10)}
+        opponents = {f"r{index:02}.rpl" for index in (1, 3, 5, 7, 9)}
+        for count in (1, 3, 20):
+            plan = planner.create_plan(ticks, count, 40, target=1, opponents=opponents)
+            self.assertEqual(["r01.rpl", "r05.rpl"], sorted(
+                name for shard in plan["shards"] for name in shard["renderer"]))
+            self.assert_coverage_and_totals(plan, ticks, 40, opponents)
+            player_plan = planner.create_plan(ticks, count, 40)
+            self.assertEqual([shard["physics"] for shard in player_plan["shards"]],
+                             [shard["physics"] for shard in plan["shards"]])
+
+    def test_no_opponents_leaves_empty_renderer_shards_and_full_physics_coverage(self):
+        ticks = {"solo.rpl": 100}
+        for count in (1, 20):
+            plan = planner.create_plan(ticks, count, 100, target=1)
+            self.assert_coverage_and_totals(plan, ticks, 100)
+            self.assertTrue(all(not shard["renderer"] for shard in plan["shards"]))
+            self.assertNotIn("Warning: renderer", planner.describe_plan(plan))
+
+    def test_golden_opponent_selection_is_independent_of_shard_count(self):
+        ticks, opponents = planner.read_replays(GOLDEN)
+        self.assertTrue(opponents)
+        self.assertLess(len(opponents), len(ticks))
+        for percentage in (1, 50, 100):
+            for count in (1, 20):
+                plan = planner.create_plan(ticks, count, percentage, target=1, opponents=opponents)
+                self.assert_coverage_and_totals(plan, ticks, percentage, opponents)
+
+    def test_invalid_targets_are_rejected(self):
+        for target in (-1, 2):
+            with self.assertRaisesRegex(ValueError, "target must be"):
+                planner.create_plan({"race.rpl": 100}, 1, 100, target=target)
+
     def test_command_writes_the_json_contract_and_balance_summary(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary) / "shard-plan.json"
@@ -135,10 +173,20 @@ class PlannerTests(unittest.TestCase):
             plan = json.loads(output.read_text())
             self.assertEqual(1, plan["version"])
             self.assertEqual(5, plan["rendererTestPercentage"])
+            self.assertEqual(0, plan["target"])
             self.assertEqual(20, len(plan["shards"]))
             self.assert_balanced(plan)
             self.assertEqual(result.stdout, summary.read_text())
             self.assertIn("Largest deviation", result.stdout)
+            subprocess.run(
+                [sys.executable, str(SCRIPT), "--replays", str(GOLDEN), "--shards", "20",
+                 "--renderer-test-percentage", "100", "--target", "1", "--output", str(output)],
+                capture_output=True, text=True, check=True, timeout=30,
+            )
+            plan = json.loads(output.read_text())
+            self.assertEqual(1, plan["target"])
+            ticks, opponents = planner.read_replays(GOLDEN)
+            self.assert_coverage_and_totals(plan, ticks, 100, opponents)
 
 
 if __name__ == "__main__":

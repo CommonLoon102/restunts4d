@@ -41,6 +41,7 @@ stunts/*.HIG
 stunts/*.P3S
 stunts/*.PDD
 stunts/*.PDO
+stunts/*.[pP][dD][oO].settings
 stunts/*.PDD.bmp
 stunts/*.PDO.bmp
 stunts/*.3SH

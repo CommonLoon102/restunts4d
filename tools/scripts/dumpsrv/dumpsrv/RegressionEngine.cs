@@ -19,6 +19,8 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             PhysicsTests = options.PhysicsTests,
             RendererTests = options.RendererTests,
             RendererTestPercentage = options.RendererTestPercentage,
+            Camera = options.Camera,
+            Target = options.Target,
             DosBoxTimeoutSeconds = options.DosBoxTimeoutSeconds,
             RendererTimeoutSeconds = options.RendererTimeoutSeconds
         };
@@ -43,8 +45,10 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             Validate(options);
             var replays = ReplayCatalog.Discover(options.GameDirectory, cancellationToken);
             result.ReplayFiles = replays.ToList();
-            var plan = ShardPlan.Load(options.ShardPlanPath, replays,
-                options.RendererTestPercentage, options.ShardCount);
+            var rendererReplays = ReplayCatalog.RendererReplays(options.GameDirectory, replays,
+                options.Target, cancellationToken);
+            var plan = ShardPlan.Load(options.ShardPlanPath, replays, rendererReplays,
+                options.RendererTestPercentage, options.ShardCount, options.Target);
             var phases = new List<Phase>();
             if (options.PhysicsTests)
             {
@@ -53,8 +57,8 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             }
             if (options.RendererTests)
             {
-                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD", "2 0",
-                    options.RendererTimeoutSeconds));
+                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD",
+                    $"{options.Camera} {options.Target}", options.RendererTimeoutSeconds));
             }
             foreach (var executable in phases.SelectMany(phase => new[] { phase.Oracle, phase.Candidate }))
             {
@@ -141,13 +145,20 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             Path.Combine(options.GameDirectory, replay), cancellationToken);
         var oraclePath = Resolve(phase.OracleExtension);
         var pendingPath = Resolve($"{phase.OracleExtension}.pending");
-        if (File.Exists(pendingPath) ||
+        var settingsPath = phase.Renderer ? Resolve("PDO.settings") : null;
+        var settingsMatch = settingsPath is null || (File.Exists(settingsPath) &&
+            await File.ReadAllTextAsync(settingsPath, cancellationToken) == phase.Arguments);
+        if (!settingsMatch || File.Exists(pendingPath) ||
             !await DumpOutput.IsCompleteAsync(oraclePath, phase.Renderer, frames,
                 cancellationToken))
         {
             own(pendingPath);
             await File.WriteAllTextAsync(pendingPath, "", cancellationToken);
             File.Delete(oraclePath);
+            if (settingsPath is not null)
+            {
+                File.Delete(settingsPath);
+            }
             if (!await ExecuteAsync(phase.Oracle))
             {
                 return;
@@ -156,6 +167,10 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             if (!await ValidateOutputAsync(oraclePath))
             {
                 return;
+            }
+            if (settingsPath is not null)
+            {
+                await File.WriteAllTextAsync(settingsPath, phase.Arguments, cancellationToken);
             }
             File.Delete(pendingPath);
         }
@@ -224,6 +239,11 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
                 var incompletePath = DosFiles.Resolve(Path.GetDirectoryName(path)!,
                     Path.GetFileName(path)[..^".pending".Length]);
                 File.Delete(incompletePath);
+                if (incompletePath.EndsWith(".PDO", StringComparison.OrdinalIgnoreCase))
+                {
+                    File.Delete(DosFiles.Resolve(Path.GetDirectoryName(path)!,
+                        Path.GetFileName(incompletePath) + ".settings"));
+                }
             }
             File.Delete(path);
         }
@@ -256,6 +276,10 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
 
     private static void Validate(RunOptions options)
     {
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.Camera, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.Camera, 4);
+        ArgumentOutOfRangeException.ThrowIfLessThan(options.Target, 0);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(options.Target, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(options.PartitionCount, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(options.PartitionCount, 64);
         ArgumentOutOfRangeException.ThrowIfLessThan(options.ShardCount, 1);

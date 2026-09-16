@@ -6,10 +6,14 @@ namespace DumpSrv.Tests;
 public sealed class OracleArchiveTests
 {
     [Theory]
-    [InlineData(false, 100)]
-    [InlineData(true, 100)]
-    [InlineData(true, 13)]
-    public void ExtractionUsesTheRunnersSamplingAndShardAssignment(bool renderer, int percentage)
+    [InlineData(false, 100, 0)]
+    [InlineData(true, 100, 0)]
+    [InlineData(true, 13, 0)]
+    [InlineData(false, 100, 1)]
+    [InlineData(true, 100, 1)]
+    [InlineData(true, 13, 1)]
+    public void ExtractionUsesTheRunnersSamplingAndShardAssignment(
+        bool renderer, int percentage, int target)
     {
         using var source = new EngineDirectory();
         var extension = renderer ? ".PDO" : ".BIN";
@@ -26,23 +30,25 @@ public sealed class OracleArchiveTests
             archive.CreateEntry("../unrelated.txt");
             archive.CreateEntry("repldump.exe");
         }
-        var sample = ReplayCatalog.Sample(replays, percentage);
+        var opponents = replays.Where((_, index) => index % 3 == 1).ToArray();
+        var sample = ReplayCatalog.Sample(target == 1 ? opponents : replays, percentage);
         var assignments = Enumerable.Range(0, 5).Select(index => new ReplayShard
         {
             Physics = replays.Skip(index * 8).Take(8).Reverse().ToList(),
             Renderer = sample.Skip(index * 8).Take(8).Reverse().ToList()
         }).ToArray();
-        var planPath = TestShardPlans.Write(source.Path, percentage, assignments);
+        var planPath = TestShardPlans.Write(source.Path, percentage, target, assignments);
         for (var shard = 0; shard < 5; shard++)
         {
             using var game = new EngineDirectory();
             foreach (var replay in replays)
             {
-                game.Write(replay);
+                game.WriteReplay(replay, opponents.Contains(replay) ? (byte)1 : (byte)0);
             }
             var expected = renderer ? assignments[shard].Renderer : assignments[shard].Physics;
             var result = OracleArchive.Extract(zipPath, game.Path, renderer, percentage, shard, 5,
-                planPath, TestContext.Current.CancellationToken);
+                camera: 4, target: target, shardPlanPath: planPath,
+                cancellation: TestContext.Current.CancellationToken);
             Assert.Equal(expected.Count, result.Extracted);
             Assert.Equal(0, result.Missing);
             Assert.Equal(expected.Select(replay => Path.ChangeExtension(replay, extension)).Order(),
@@ -52,33 +58,53 @@ public sealed class OracleArchiveTests
                 Assert.Equal(replay, File.ReadAllText(
                     Path.Combine(game.Path, Path.ChangeExtension(replay, extension))));
             }
-            Assert.Equal(replays.Length + expected.Count, Directory.GetFiles(game.Path).Length);
+            if (renderer)
+            {
+                foreach (var replay in expected)
+                {
+                    Assert.Equal($"4 {target}", File.ReadAllText(Path.Combine(game.Path,
+                        Path.ChangeExtension(replay, ".PDO.settings"))));
+                }
+            }
+            Assert.Equal(replays.Length + expected.Count * (renderer ? 2 : 1),
+                Directory.GetFiles(game.Path).Length);
         }
     }
 
-    [Fact]
-    public async Task CommandExtractsMixedCaseCachesAndLeavesMissingOutputsForTheRunner()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CommandExtractsMixedCaseCachesAndLeavesMissingOutputsForTheRunner(
+        bool renderer)
     {
         using var game = new EngineDirectory();
         game.Write("track.rpl");
         game.Write("missing.rpl");
-        game.Write("track.bin", "stale");
-        game.Write("TRACK.BIN.pending");
+        var extension = renderer ? "PDO" : "BIN";
+        game.Write($"track.{extension.ToLowerInvariant()}", "stale");
+        game.Write($"TRACK.{extension}.pending");
         var zipPath = Path.Combine(game.Path, "oracles.zip");
         using (var archive = ZipFile.Open(zipPath, ZipArchiveMode.Create))
         {
-            using var writer = new StreamWriter(archive.CreateEntry("TRACK.BIN").Open());
+            using var writer = new StreamWriter(archive.CreateEntry($"TRACK.{extension}").Open());
             writer.Write("precomputed");
         }
         var code = await CommandLine.ExecuteAsync(
-            ["extract-oracles", "-Archive", zipPath, "-GameDirectory", game.Path],
+            ["extract-oracles", "-Archive", zipPath, "-GameDirectory", game.Path,
+                "-Renderer", renderer.ToString(), "-Camera", "3", "-Target", "0"],
             TestContext.Current.CancellationToken);
         Assert.Equal(0, code);
-        Assert.Equal("precomputed", File.ReadAllText(Path.Combine(game.Path, "track.bin")));
+        Assert.Equal("precomputed",
+            File.ReadAllText(DosFiles.Resolve(game.Path, $"track.{extension}")));
         Assert.Single(Directory.GetFiles(game.Path), path =>
-            Path.GetExtension(path).Equals(".BIN", StringComparison.OrdinalIgnoreCase));
-        Assert.False(File.Exists(Path.Combine(game.Path, "TRACK.BIN.pending")));
-        Assert.False(File.Exists(Path.Combine(game.Path, "missing.BIN")));
+            Path.GetExtension(path).Equals($".{extension}", StringComparison.OrdinalIgnoreCase));
+        Assert.False(File.Exists(Path.Combine(game.Path, $"TRACK.{extension}.pending")));
+        Assert.False(File.Exists(Path.Combine(game.Path, $"missing.{extension}")));
+        if (renderer)
+        {
+            Assert.Equal("3 0",
+                File.ReadAllText(DosFiles.Resolve(game.Path, "track.PDO.settings")));
+        }
     }
 
     [Theory]
