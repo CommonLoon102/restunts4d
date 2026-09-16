@@ -43,7 +43,7 @@ on:
         default: 980
     outputs:
       exe-artifact:
-        description: Artifact holding the six built executables.
+        description: Artifact holding the games and Watcom assembly dump candidates.
         value: ${{ jobs.build.outputs.exe-artifact }}
 
 env:
@@ -211,6 +211,13 @@ jobs:
 
       - name: Check original dump failure cleanup
         run: python3 tools/scripts/test-original-dump-exits.py --executable dist/repldumo.exe
+
+      - name: Temporarily use the Watcom assembly dump tools as candidates
+        run: |
+          set -eu
+          rm -- dist/repldump.exe dist/pixldump.exe
+          mv -- dist/repldumo.exe dist/repldump.exe
+          mv -- dist/pixldumo.exe dist/pixldump.exe
 
       - uses: actions/upload-artifact@v7
         with:

@@ -363,6 +363,15 @@ to override the default 120-second timeout for each DOSBox run.
 
 ## CI replay validation
 
+Temporarily, CI compares the archived Borland-built original assembly against
+the Watcom-built original assembly. After the build checks, it deletes the
+ported dump candidates and renames `repldumo.exe` to `repldump.exe` and
+`pixldumo.exe` to `pixldump.exe` in the executable artifact. Releases use these
+same names. Both source-built physics tools currently write `.BNI`, and both
+source-built renderer tools write `.PDD` (also in BMP filenames), overriding
+the usual original-tool extensions documented above. The archived Borland
+references still write `.BIN` and `.PDO`.
+
 CI runs in five phases, each requiring the previous phase to pass:
 
 1. C/H formatting, C# regression service tests, host regression tests, and shard

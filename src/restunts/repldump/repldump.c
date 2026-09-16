@@ -414,7 +414,7 @@ legacy_s16 stuntsmain(legacy_s16 argc, legacy_s8 *argv[])
 
 	strcpy(outname, argv[1]);
 #ifdef RESTUNTS_ORIGINAL
-	strcat(outname, ".BIN");
+	strcat(outname, ".BNI");
 #else
 	strcat(outname, ".BNI");
 #endif
