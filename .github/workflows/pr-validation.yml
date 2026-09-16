@@ -36,4 +36,4 @@ jobs:
     with:
       cameras: ${{ github.event.inputs.cameras || '[1, 2, 3, 4]' }}
       target: ${{ fromJSON(github.event.inputs.target || '0') }}
-      renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '10') }}
+      renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '100') }}
