@@ -4,7 +4,7 @@ name: PR validation
 # validation fails, or sampled renderer output differs from pixldumo.
 on:
   push:
-    branches: [c-port32-skip-ci]
+    branches: [c-port32-cam4-target1]
   pull_request:
     branches: [master]
   workflow_dispatch:
@@ -34,6 +34,6 @@ jobs:
     name: Golden replays
     uses: ./.github/workflows/build-and-validate.yml
     with:
-      camera: ${{ fromJSON(github.event.inputs.camera || '2') }}
-      target: ${{ fromJSON(github.event.inputs.target || '0') }}
+      camera: ${{ fromJSON(github.event.inputs.camera || '4') }}
+      target: ${{ fromJSON(github.event.inputs.target || '1') }}
       renderer-test-percentage: ${{ fromJSON(github.event.inputs.renderer-test-percentage || '100') }}
