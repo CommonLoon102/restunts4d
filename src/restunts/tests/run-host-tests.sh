@@ -70,6 +70,11 @@ run_host_test test-frame-render math.c \
     "$test_source_dir/legacy.c" "$test_source_dir/heapsort.c" "$test_source_dir/trkutil.c" \
     -Wno-pointer-sign -Wno-sign-compare -Wno-missing-field-initializers -Wno-maybe-uninitialized \
     -Wno-missing-braces
+run_host_test test-frame-overlay frame_overlay.c \
+    "$test_source_dir/shape3d.c" "$test_source_dir/shape3d_prerender.c" \
+    "$test_source_dir/shape3d_lines.c" "$test_source_dir/math.c" "$test_source_dir/legacy.c" \
+    "$test_source_dir/full_data.c" "$test_source_dir/headless_data.c" \
+    -Wno-pointer-sign -Wno-missing-field-initializers -Wno-unused-variable
 run_host_test test-intro-preview intro_render.c \
     "$test_source_dir/track_preview.c" "$test_source_dir/full_data.c" \
     "$test_source_dir/headless_data.c" "$test_source_dir/headless_trackdata.c" \

@@ -87,14 +87,15 @@ instructions. The existing stopped-wheel physics then consumes these buffers.
 This restores the original simulation after stops and crashes as well as the
 immediately rendered image.
 
-Camera setup also writes the opponent's fourth heading word, at
-`get_a_poly_info` BP-58. `select_cliprect_rotate` calls `mat_rot_zxy` for the
-forward and inverse view rotations. With multiple rotation axes, its nested
-`mat_multiply` leaves the far return code segment in that word. A single-axis
-constructor leaves its return instruction offset instead. Identity and cardinal
-yaw reuse existing matrices and leave the word unchanged. Incremental sky
-rendering can skip assigning its local rectangle, so its top coordinate no
-longer replaces this camera value. `shape3d_retain_legacy_view_rotation` models
+Camera setup also writes the opponent's four heading words, at
+`get_a_poly_info` BP-64 through BP-58. `select_cliprect_rotate` calls
+`mat_rot_zxy` for the forward and inverse view rotations. With multiple rotation
+axes, its nested `mat_multiply` leaves the axis flags, saved frame pointer, and
+far return address. A single-axis constructor leaves the inverse angle's sine
+and cosine, saved frame pointer, and return instruction offset. Identity and
+cardinal yaw reuse existing matrices and leave the words unchanged. Incremental
+sky rendering can leave these values intact, and a final solid polygon does not
+replace the first or fourth word. `shape3d_retain_legacy_view_rotation` models
 these calls before the skybox and polygon paths apply their own writes.
 
 This dependency affects simulation, even while the stopped opponent is outside
@@ -104,6 +105,13 @@ also exposed the missing camera value after a crash. The fix uses
 rotation operations and the relocated code segment, independent of replay
 names, frame numbers, cars, or tracks.
 
+Retaining only the fourth word was insufficient for cockpit replay `r0136`.
+The inverse-yaw constructor's sine remains in the first word after rendering
+frame 694, changing stopped-opponent physics at frame 695 and the first visible
+hash at frame 803. The handoff now retains all four words. The host regression
+checks every rotation-axis combination, cached matrices, and stopped physics
+consuming both the first and fourth words after a solid polygon.
+
 The renderer handoff also takes precedence at the first stopped player tick.
 The physics-only caller reconstructs headings from opponent wheel coordinates
 at that transition. When rendering has overwritten those slots, repeating that
@@ -112,6 +120,26 @@ physics enters frame 1138 with the preceding line rasterizer's retained words;
 the C fallback instead substituted opponent coordinates and changed the player's
 pose. `legacy_render_player_headings_active` selects the supplied renderer
 buffer while it is bound, preserving the physics-only caller's existing behavior.
+
+Cockpit crash overlays write the heading slots again after the scene renderer.
+In `seg003.asm`, `init_crak` calls `preRender_line` three times per crack segment.
+With incremental redraws, its pending `rect_union` arguments place the line's
+28-byte setup buffer at `get_a_poly_info` BP-84. Its first four words become the
+player's stopped-wheel headings. The four clipping counters initially replace
+the opponent's headings; subsequent `rect_adjust_from_point` calls save the crack
+line index (SI) and normalized resource offset (DI) over the last two words.
+Ignoring these writes leaves the earlier scene's values in physics, changing the
+car's pose on later stopped ticks. Cockpit replay `n0013` first diverged at frame
+333, although the crack pixels themselves were drawn correctly.
+
+`preRender_crack_line` retains the actual clipped line setup, including rejected
+lines that draw no pixels. The overlay then retains the later bounds-call writes.
+For direct redraws, the buffer is four bytes higher: the player also reads its
+address and either the setup call's end-Y argument or the pixel call's return
+code segment. These values use the existing caller context and original segment
+layout. Ordinary line drawing does not select this crack-call context.
+`test-frame-overlay.c` covers animation progression, scaling, clipped and rejected
+lines, both redraw modes, resource-offset changes, and an inactive handoff.
 
 A separate reused stack word holds the SI register saved by `update_grip`.
 After a capped collision scan, physics can consume it as the fourth wheel's

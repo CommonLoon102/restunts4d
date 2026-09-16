@@ -43,16 +43,34 @@ void generate_poly_edges(legacy_s16 *edges, const legacy_u16 *line_setup, legacy
 void polygon_merge_second_edge(const legacy_u16 *line_setup, legacy_u16 choose_edge_per_row,
 							   legacy_u16 needs_clipping, legacy_s16 *edge_tables);
 
+static legacy_s16 prerender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
+								 legacy_u16 end_y, legacy_u16 color, legacy_u16 *line)
+{
+	line[DRAW_LINE_COLOR_INDEX] = color;
+	if (line_prepare_clipped(start_x, start_y, end_x, end_y, line) == 0 &&
+		LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]) > 0) {
+		sprite_draw_line_from_setup(line);
+		return 1;
+	}
+	return 0;
+}
+
 void preRender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y,
 					legacy_u16 color)
 {
 	legacy_u16 line[DRAW_LINE_WORD_COUNT];
 
-	line[DRAW_LINE_COLOR_INDEX] = color;
-	if (line_prepare_clipped(start_x, start_y, end_x, end_y, line) == 0 &&
-		LEGACY_S16_FROM_BITS(line[DRAW_LINE_PIXEL_COUNT_INDEX]) > 0) {
-		sprite_draw_line_from_setup(line);
-	}
+	prerender_line(start_x, start_y, end_x, end_y, color, line);
+}
+
+void preRender_crack_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
+						  legacy_u16 end_y, legacy_u16 color)
+{
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
+	legacy_s16 drawn;
+
+	drawn = prerender_line(start_x, start_y, end_x, end_y, color, line);
+	shape3d_retain_legacy_crack_line(line, end_y, slow_video_mgmt_copy, drawn);
 }
 
 void draw_beveled_border(legacy_s16 x, legacy_s16 y, legacy_s16 width, legacy_s16 height,

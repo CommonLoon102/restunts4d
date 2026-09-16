@@ -229,6 +229,7 @@ static void test_view_rotation_stopped_wheel_handoff(void)
 	struct RECTANGLE clip = {0, 320, 17, 200};
 	struct PLAYER_WHEEL_MOTION motion;
 	legacy_s16 *headings = legacy_execution_residue.wheel_angle_stack_words;
+	legacy_s16 rotation_bp = LEGACY_S16_FROM_BITS(51678U);
 
 	memset(&context, 0, sizeof(context));
 	context.wheel_headings = headings;
@@ -236,7 +237,7 @@ static void test_view_rotation_stopped_wheel_handoff(void)
 	shape3d_set_legacy_render_stack(0, 51720U, 256U, &context);
 	headings[3] = 44;
 	select_cliprect_rotate(0, 7, 19, &clip, 0);
-	assert(headings[3] == 256);
+	assert_headings(headings, 3, rotation_bp, 0x156a, 256);
 	/* The incremental sky path leaves its local rectangle untouched. Polygon
 	 * output also leaves this word intact, before stopped physics consumes it. */
 	queue_opponent_primitive(RENDER_PRIMITIVE_POLYGON, 0);
@@ -250,24 +251,37 @@ static void test_view_rotation_stopped_wheel_handoff(void)
 
 	shape3d_set_legacy_render_stack(0, 51720U, 512U, &context);
 	select_cliprect_rotate(7, 19, 0, &clip, 0);
-	assert(headings[3] == 512);
+	assert_headings(headings, 6, rotation_bp, 0x156a, 512);
 	select_cliprect_rotate(7, 0, 19, &clip, 0);
-	assert(headings[3] == 512);
+	assert_headings(headings, 5, rotation_bp, 0x156a, 512);
 	select_cliprect_rotate(7, 11, 19, &clip, 0);
-	assert(headings[3] == 512);
+	assert_headings(headings, 7, rotation_bp, 0x15fa, 512);
 
 	select_cliprect_rotate(7, 0, 0, &clip, 0);
-	assert(headings[3] == 0x14ba);
+	assert_headings(headings, sin_fast(-7), cos_fast(-7), rotation_bp, 0x14ba);
 	select_cliprect_rotate(0, -7, 0, &clip, 0);
-	assert(headings[3] == 0x14d3);
+	assert_headings(headings, sin_fast(7), cos_fast(7), rotation_bp, 0x14d3);
 	select_cliprect_rotate(0, 0, 19, &clip, 0);
-	assert(headings[3] == 0x1513);
+	assert_headings(headings, sin_fast(-19), cos_fast(-19), rotation_bp, 0x1513);
 	select_cliprect_rotate(0, 0, -19, &clip, 0);
-	assert(headings[3] == 0x1513);
+	assert_headings(headings, sin_fast(19), cos_fast(19), rotation_bp, 0x1513);
 	select_cliprect_rotate(1024, -1024, 256, &clip, 0);
-	assert(headings[3] == 0x1513);
+	assert_headings(headings, sin_fast(19), cos_fast(19), rotation_bp, 0x1513);
 	select_cliprect_rotate(0, 0, 0, &clip, 0);
-	assert(headings[3] == 0x1513);
+	assert_headings(headings, sin_fast(19), cos_fast(19), rotation_bp, 0x1513);
+
+	/* A final solid polygon can also leave the constructor's sine intact.
+	 * Stopped physics must consume that first heading on the following tick. */
+	select_cliprect_rotate(256, 0, 0, &clip, 0);
+	assert_headings(headings, -16384, 0, rotation_bp, 0x14ba);
+	queue_opponent_primitive(RENDER_PRIMITIVE_POLYGON, 0);
+	shape3d_render_queued_primitives();
+	assert(headings[0] == -16384);
+	restore_stopped_wheel_headings(&state.opponentstate, &motion, OPPONENT_CAR_INDEX);
+	prepare_wheel_plane_travel(&motion, 0, 64);
+	assert(wheel_world_travel.x == 0 && wheel_world_travel.z == 64);
+	select_cliprect_rotate(0, -256, 0, &clip, 0);
+	assert_headings(headings, 16384, 0, rotation_bp, 0x14d3);
 
 	/* Full sky redraws still replace the camera residue with their rectangle. */
 	shape3d_retain_legacy_skybox_rect(&clip);

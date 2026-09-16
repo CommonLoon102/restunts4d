@@ -93,6 +93,9 @@ void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 poly
 void shape3d_retain_legacy_skybox_horizon(legacy_s16 horizon);
 void shape3d_retain_legacy_skybox_rect(const struct RECTANGLE *rect);
 void shape3d_retain_legacy_skybox_points(const struct POINT2D *points);
+void shape3d_retain_legacy_crack_line(const legacy_u16 *line, legacy_u16 end_y,
+									  legacy_s16 dirty_rects, legacy_s16 drawn);
+void shape3d_retain_legacy_crack_bounds(legacy_s16 line_index, legacy_u16 crack_offset);
 
 void preRender_default(legacy_u16 color, legacy_u16 vertex_count, const struct POINT2D *vertices);
 void preRender_default_alt(legacy_u16 color, legacy_u16 vertex_count,
@@ -103,6 +106,8 @@ void preRender_two_color(legacy_u16 pattern, legacy_u16 color, legacy_u16 altern
 						 legacy_u16 vertex_count, const struct POINT2D *vertices);
 void preRender_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x, legacy_u16 end_y,
 					legacy_u16 color);
+void preRender_crack_line(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
+						  legacy_u16 end_y, legacy_u16 color);
 legacy_u16 line_prepare_clipped(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,
 								legacy_u16 end_y, legacy_u16 *line_data);
 legacy_u16 line_prepare_unclipped(legacy_u16 start_x, legacy_u16 start_y, legacy_u16 end_x,

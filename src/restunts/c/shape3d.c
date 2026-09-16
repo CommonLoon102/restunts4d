@@ -1030,23 +1030,31 @@ void shape3d_set_legacy_render_stack(legacy_s16 *wheel_headings, legacy_u16 poly
 	}
 }
 
-/* select_cliprect_rotate's mat_rot_zxy calls reuse the word at get_a_poly_info
- * BP-58, later read as the opponent's fourth stopped-wheel heading. With two
- * or more axes, mat_multiply leaves its far return CS there. A single-axis
- * matrix constructor instead leaves its return IP. Incremental sky rendering
- * can skip the local rectangle assignment which normally overwrites this word.
+/* select_cliprect_rotate's inverse mat_rot_zxy call reuses get_a_poly_info
+ * BP-64..BP-58, later read as the opponent's stopped-wheel headings. With two
+ * or more axes, mat_multiply leaves the axis flags, saved BP and far return
+ * address. A single-axis constructor leaves sine, cosine, saved BP and return
+ * IP. Incremental sky rendering can leave these words untouched, and a solid
+ * polygon does not replace the first or fourth word.
  * The inverse yaw is computed after the forward yaw, so a non-cardinal single
  * yaw always misses the matrix cache; cardinal yaw and identity make no call. */
 #define SHAPE3D_LEGACY_ROTATE_Z_RETURN_IP 5306U
 #define SHAPE3D_LEGACY_ROTATE_X_RETURN_IP 5331U
 #define SHAPE3D_LEGACY_ROTATE_Y_RETURN_IP 5395U
+#define SHAPE3D_LEGACY_ROTATE_PAIR_RETURN_IP 5482U
+#define SHAPE3D_LEGACY_ROTATE_TRIPLE_RETURN_IP 5626U
+#define SHAPE3D_LEGACY_VIEW_ROTATION_STACK_OFFSET 42U
 
 static void shape3d_retain_legacy_view_rotation(legacy_s16 angZ, legacy_s16 angX, legacy_s16 angY)
 {
 	legacy_s16 rotate_z;
 	legacy_s16 rotate_x;
 	legacy_s16 rotate_y;
-	legacy_u16 value;
+	legacy_s16 angle;
+	legacy_s16 *headings;
+	legacy_u16 frame_pointer;
+	legacy_u16 return_ip;
+	legacy_u16 axes;
 
 	if (legacy_opponent_render_context.wheel_headings == 0) {
 		return;
@@ -1054,18 +1062,33 @@ static void shape3d_retain_legacy_view_rotation(legacy_s16 angZ, legacy_s16 angX
 	rotate_z = (angZ & ANGLE_MASK) != 0;
 	rotate_x = (angX & ANGLE_MASK) != 0;
 	rotate_y = (angY & ANGLE_MASK) != 0;
+	headings = legacy_opponent_render_context.wheel_headings;
+	frame_pointer = (legacy_u16)(legacy_render_polygon_frame_pointer -
+								 SHAPE3D_LEGACY_VIEW_ROTATION_STACK_OFFSET);
 	if ((rotate_z && rotate_x) || (rotate_z && rotate_y) || (rotate_x && rotate_y)) {
-		value = legacy_render_polygon_code_segment;
+		axes = (legacy_u16)((rotate_z ? 4 : 0) | (rotate_x ? 2 : 0) | (rotate_y ? 1 : 0));
+		headings[0] = LEGACY_S16_FROM_BITS(axes);
+		headings[1] = LEGACY_S16_FROM_BITS(frame_pointer);
+		headings[2] = LEGACY_S16_FROM_BITS(axes == 7 ? SHAPE3D_LEGACY_ROTATE_TRIPLE_RETURN_IP
+													 : SHAPE3D_LEGACY_ROTATE_PAIR_RETURN_IP);
+		headings[3] = LEGACY_S16_FROM_BITS(legacy_render_polygon_code_segment);
+		return;
 	} else if (rotate_z) {
-		value = SHAPE3D_LEGACY_ROTATE_Z_RETURN_IP;
+		angle = LEGACY_S16_WRAP_NEGATE(angZ);
+		return_ip = SHAPE3D_LEGACY_ROTATE_Z_RETURN_IP;
 	} else if (rotate_x) {
-		value = SHAPE3D_LEGACY_ROTATE_X_RETURN_IP;
+		angle = LEGACY_S16_WRAP_NEGATE(angX);
+		return_ip = SHAPE3D_LEGACY_ROTATE_X_RETURN_IP;
 	} else if ((angY & ANGLE_QUARTER_MASK) != 0) {
-		value = SHAPE3D_LEGACY_ROTATE_Y_RETURN_IP;
+		angle = LEGACY_S16_WRAP_NEGATE(angY);
+		return_ip = SHAPE3D_LEGACY_ROTATE_Y_RETURN_IP;
 	} else {
 		return;
 	}
-	legacy_opponent_render_context.wheel_headings[3] = LEGACY_S16_FROM_BITS(value);
+	headings[0] = sin_fast(angle);
+	headings[1] = cos_fast(angle);
+	headings[2] = LEGACY_S16_FROM_BITS(frame_pointer);
+	headings[3] = LEGACY_S16_FROM_BITS(return_ip);
 }
 
 /* update_frame calls skybox_op with fourteen argument bytes before calling
@@ -1095,6 +1118,57 @@ void shape3d_retain_legacy_skybox_points(const struct POINT2D *points)
 		legacy_render_wheel_headings[1] = points[0].py;
 		legacy_render_wheel_headings[2] = points[1].px;
 		legacy_render_wheel_headings[3] = points[1].py;
+	}
+}
+
+/* init_crak's line buffer starts at get_a_poly_info BP-80. The dirty-rectangle
+ * path pushes two pending rect_union arguments, shifting the buffer to BP-84.
+ * Its clipped coordinates and clip counts replace the stopped-wheel headings
+ * after scene rendering, even when the crack line is entirely outside the view. */
+#define SHAPE3D_LEGACY_CRACK_LINE_STACK_OFFSET 80U
+#define SHAPE3D_LEGACY_LINE_CODE_PARAGRAPH_DELTA 2508U
+
+void shape3d_retain_legacy_crack_line(const legacy_u16 *line, legacy_u16 end_y,
+									  legacy_s16 dirty_rects, legacy_s16 drawn)
+{
+	legacy_u16 i;
+	legacy_u16 opponent_index;
+
+	if (legacy_render_wheel_headings != 0) {
+		if (dirty_rects != 0) {
+			for (i = 0; i < LEGACY_RESIDUE_WORD_COUNT; i++) {
+				legacy_render_wheel_headings[i] = LEGACY_S16_FROM_BITS(line[i]);
+			}
+		} else {
+			/* Drawing replaces the setup call's end-Y argument with its return CS. */
+			legacy_render_wheel_headings[0] = LEGACY_S16_FROM_BITS(
+				drawn != 0 ? LEGACY_U16_WRAP_ADD(legacy_render_polygon_code_segment,
+												 SHAPE3D_LEGACY_LINE_CODE_PARAGRAPH_DELTA)
+						   : end_y);
+			legacy_render_wheel_headings[1] = LEGACY_S16_FROM_BITS(LEGACY_U16_WRAP_SUB(
+				legacy_render_polygon_frame_pointer, SHAPE3D_LEGACY_CRACK_LINE_STACK_OFFSET));
+			legacy_render_wheel_headings[2] =
+				LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_FRACTION_INDEX]);
+			legacy_render_wheel_headings[3] = LEGACY_S16_FROM_BITS(line[DRAW_LINE_START_X_INDEX]);
+		}
+	}
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		opponent_index =
+			dirty_rects != 0 ? DRAW_LINE_START_LEFT_CLIP_COUNT_INDEX : DRAW_LINE_COLOR_INDEX;
+		for (i = 0; i < LEGACY_RESIDUE_WORD_COUNT; i++) {
+			legacy_opponent_render_context.wheel_headings[i] =
+				LEGACY_S16_FROM_BITS(line[opponent_index + i]);
+		}
+	}
+}
+
+/* rect_adjust_from_point saves init_crak's SI (line index) and DI (normalized
+ * crack resource offset) over the last two opponent words after each line. */
+void shape3d_retain_legacy_crack_bounds(legacy_s16 line_index, legacy_u16 crack_offset)
+{
+	if (legacy_opponent_render_context.wheel_headings != 0) {
+		legacy_opponent_render_context.wheel_headings[2] = line_index;
+		legacy_opponent_render_context.wheel_headings[3] = LEGACY_S16_FROM_BITS(crack_offset);
 	}
 }
 

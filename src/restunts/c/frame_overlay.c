@@ -11,6 +11,7 @@
 #include "memmgr.h"
 #include "resource.h"
 #include "crash_state.h"
+#include "platform.h"
 
 #define OVERLAY_SCREEN_WIDTH 320
 #define OVERLAY_REFERENCE_HEIGHT 200L
@@ -112,12 +113,14 @@ struct RECTANGLE *init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 		scaled_end_y = LEGACY_S16_FROM_BITS(
 			(legacy_u16)LEGACY_S32_DIV_OR_ZERO(scaled_coordinate, OVERLAY_REFERENCE_HEIGHT));
 
-		preRender_line(start_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
-					   end_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
-		preRender_line(start_x, LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1),
-					   end_x, LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
-		preRender_line(start_x, LEGACY_S16_WRAP_ADD(scaled_start_y, top), end_x,
-					   LEGACY_S16_WRAP_ADD(scaled_end_y, top), dialog_fnt_colour);
+		preRender_crack_line(
+			start_x, LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1), end_x,
+			LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
+		preRender_crack_line(
+			start_x, LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_start_y, top), 1), end_x,
+			LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1), 0);
+		preRender_crack_line(start_x, LEGACY_S16_WRAP_ADD(scaled_start_y, top), end_x,
+							 LEGACY_S16_WRAP_ADD(scaled_end_y, top), dialog_fnt_colour);
 
 		if (slow_video_mgmt_copy != 0) {
 			point.px = start_x;
@@ -132,6 +135,7 @@ struct RECTANGLE *init_crak(legacy_s16 frame, legacy_s16 top, legacy_s16 height)
 			point.px = end_x;
 			point.py = LEGACY_S16_WRAP_SUB(LEGACY_S16_WRAP_ADD(scaled_end_y, top), 1);
 			rect_adjust_from_point(&point, &rect_ingame_text);
+			shape3d_retain_legacy_crack_bounds(i, dos_memory_pointer_offset(crack_lines));
 		}
 	}
 
