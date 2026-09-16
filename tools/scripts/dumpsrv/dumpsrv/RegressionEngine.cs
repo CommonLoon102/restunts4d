@@ -53,7 +53,7 @@ public class RegressionEngine(IDosBoxRunner? runner = null, Action<string>? log 
             }
             if (options.RendererTests)
             {
-                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD", "2 0",
+                phases.Add(new Phase(true, "pixldumo.exe", "pixldump.exe", "PDO", "PDD", "1 0",
                     options.RendererTimeoutSeconds));
             }
             foreach (var executable in phases.SelectMany(phase => new[] { phase.Oracle, phase.Candidate }))
