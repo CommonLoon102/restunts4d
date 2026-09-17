@@ -5,7 +5,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include "../c/legacy.h"
-/* Borland int is 16 bits. Promote short va_arg reads in this host-only fixture
+/* DOS int is 16 bits. Promote short va_arg reads in this host-only fixture
  * so the unchanged DOS implementation can be compared with default-promoted
  * host arguments. Both baseline and refactored implementations use this shim. */
 #undef va_arg

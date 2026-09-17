@@ -4,15 +4,7 @@ ifneq ($(TARGET),dos)
   $(error Unsupported TARGET: $(TARGET))
 endif
 
-ifeq ($(ASSEMBLER),)
-  $(error ASSEMBLER is not defined)
-endif
-SUPPORTED_ASSEMBLERS = wasm tasmbox tasmx tasm32
-ifeq ($(filter $(ASSEMBLER), $(SUPPORTED_ASSEMBLERS)),)
-  $(error Unsupported assembler: $(ASSEMBLER))
-endif
-
-OBJDIR = build/watcom/$(CONFIG)/$(ASSEMBLER)
+OBJDIR = build/watcom/$(CONFIG)/wasm
 
 ASM_FILES = segments.asm seg000.asm seg001.asm seg002.asm seg003.asm seg004.asm seg005.asm \
             seg006.asm seg007.asm seg008.asm seg009.asm seg010.asm seg011.asm seg012.asm \
@@ -23,20 +15,11 @@ ASM_FILES = segments.asm seg000.asm seg001.asm seg002.asm seg003.asm seg004.asm 
 
 OBJ_FILES = $(addprefix $(OBJDIR)/, $(ASM_FILES:.asm=.obj))
 
-TFLAGS = /zn
-ifeq ($(CONFIG),debug)
-  TFLAGS = /zi
-endif
-
-ifeq ($(ASSEMBLER),wasm)
-ASM = $(ASM_COMMAND) $(WASM_AFLAGS) -cx
+ASM = $(WASM) $(WASM_AFLAGS) -cx
 GENERATED_DIR = $(OBJDIR)/source
 PREPARE_SCRIPT = ../../../tools/scripts/prepare-wasm-original.py
 GENERATED_FILES = $(addprefix $(GENERATED_DIR)/,$(ASM_FILES) $(notdir $(wildcard *.inc)))
 GENERATED_OUTPUTS = $(GENERATED_DIR)/manifest.json $(GENERATED_FILES)
-else
-ASM = $(ASM_COMMAND) /m2 /s $(TFLAGS)
-endif
 
 .PHONY: all clean
 all: $(OBJ_FILES)
@@ -44,17 +27,12 @@ all: $(OBJ_FILES)
 $(OBJDIR):
 	$(call MKDIR,$@)
 
-ifeq ($(ASSEMBLER),wasm)
 # One preparation pass also recovers a deleted generated source or include.
 $(GENERATED_OUTPUTS) &: $(ASM_FILES) $(wildcard *.inc) $(PREPARE_SCRIPT) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
 	$(PYTHON) $(PREPARE_SCRIPT) --source-dir . --output-dir $(GENERATED_DIR)
 
 $(OBJDIR)/%.obj: %.asm $(GENERATED_OUTPUTS) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
 	cd "$(GENERATED_DIR)" && $(ASM) -fo="../$(@F)" $(<F)
-else
-$(OBJDIR)/%.obj: %.asm $(wildcard *.inc) makefile ../watcom.mk $(WATCOM_STAMP) | $(OBJDIR)
-	$(ASM) $<, "$(subst /,\,$@)"
-endif
 
 clean:
 	$(call RMDIR,build/watcom)

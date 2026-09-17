@@ -11,7 +11,7 @@ RESTUNTS_OBJ_FILES = fileio.obj legacy.obj resource.obj math.obj memmgr.obj strl
                      statecrs.obj statecar.obj trackobj.obj replay.obj stateio.obj
 
 PLATFORM_DIR = ../platform/dos/build/watcom/$(CONFIG)
-PLATFORM_ASM_DIR = $(PLATFORM_DIR)/$(ASSEMBLER)
+PLATFORM_ASM_DIR = $(PLATFORM_DIR)/wasm
 PLATFORM_OBJECTS = $(addprefix $(PLATFORM_DIR)/,$(addsuffix .obj,$(PLATFORM_NAMES)))
 ifeq ($(TARGET),original)
 include ../asmorig/link.mk
@@ -27,7 +27,7 @@ CFLAGS = -dRESTUNTS_ORIGINAL
 # The wrapper's inline DOS I/O needs the platform's unoptimized code generation.
 WRAPPER_CFLAGS = $(WATCOM_PLATFORM_CFLAGS)
 ALIAS_SCRIPT = ../../../tools/scripts/generate-original-link-aliases.py
-ALIAS_FILE = $(OBJDIR)/aliases-$(ASSEMBLER).lnk
+ALIAS_FILE = $(OBJDIR)/aliases.lnk
 LINK_ALIASES = @$(ALIAS_FILE)
 else
 OBJDIR = build/watcom/$(CONFIG)

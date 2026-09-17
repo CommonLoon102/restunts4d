@@ -632,14 +632,7 @@ static void file_vle_write_symbol(struct VLE_DECODER *decoder, legacy_u8 huge *d
 
 static legacy_u8 file_vle_read_byte(struct VLE_DECODER *decoder)
 {
-	legacy_u8 huge *source = decoder->source;
-	legacy_u8 value;
-
-	/* Borland updates huge pointer members through ES; a local keeps the
-	 * pointer update in the correct segment after destination writes. */
-	value = *source++;
-	decoder->source = source;
-	return value;
+	return *decoder->source++;
 }
 
 static legacy_u8 file_vle_expand_escape(struct VLE_DECODER *decoder, legacy_u8 huge *destination)

@@ -1,4 +1,4 @@
-"""Focused tests for source lowering; assembler parity is checked separately."""
+"""Tests for TASM-to-WASM syntax conversion; assembler parity is checked separately."""
 
 import importlib.util
 import json

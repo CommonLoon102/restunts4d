@@ -4,14 +4,6 @@
 #include "../../c/fatal.h"
 #include "../../c/game_input.h"
 
-// need these since we are referncing external symbols without an underscore
-#define getvect _getvect
-#define setvect _setvect
-#ifndef __WATCOMC__
-#define int86 _int86
-legacy_s16 _Cdecl _int86(legacy_s16 __intno, union REGS _FAR *__inregs, union REGS _FAR *__outregs);
-#endif
-
 typedef void interrupt(far *voidinterruptfunctype)();
 
 static voidinterruptfunctype old_kb_int9_handler;
@@ -101,9 +93,8 @@ static const legacy_u8 dos_kb_keymap5[DOS_KB_ALT_KEYMAP_SIZE] = {
 
 // The original opens with `sti` before it touches anything, so the rest of
 // the handler runs with interrupts on and only the buffer update is fenced by
-// cli/sti. A Borland `interrupt` function has no way to say that in its
-// prologue, so this one stays inside the IF=0 the gate left. Latency only -
-// no code here depends on being re-entered.
+// cli/sti. This C handler leaves interrupts disabled through its prologue.
+// Only latency differs; no code here depends on being re-entered.
 void interrupt kb_int9_handler(void)
 {
 	legacy_u8 kbc, kbp;
@@ -143,7 +134,7 @@ void interrupt kb_int9_handler(void)
 		}
 
 		kbdata = dos_kb_buffer_write;
-		disable();
+		_disable();
 		dos_kb_buffer[kbdata / DOS_KB_BUFFER_ENTRY_BYTES] = kbval;
 		kbdata += DOS_KB_BUFFER_ENTRY_BYTES;
 		if (kbdata >= dos_kb_buffer_size) { // data3 = kb_buffer_pos
@@ -158,7 +149,7 @@ void interrupt kb_int9_handler(void)
 			dos_kb_buffer_read = dos_kb_buffer_write;
 		}
 		dos_kb_buffer_count = kbdata;
-		enable();
+		_enable();
 
 	} else {
 		kbc &= DOS_KB_SCANCODE_MASK;
@@ -226,22 +217,19 @@ static legacy_u16 kb_flags_after_or(legacy_u8 left, legacy_u8 right)
 	return result;
 }
 
-#ifndef __WATCOMC__
-#pragma argsused
-#endif
-void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
+void interrupt kb_int16_handler(union INTPACK registers)
 {
 
 	legacy_u16 result, kbdata;
 	legacy_u8 shiftleft, shiftright;
-	legacy_u8 bioscall = DOS_INTERRUPT_AX >> LEGACY_BYTE_BITS;
-	disable();
+	legacy_u8 bioscall = registers.w.ax >> LEGACY_BYTE_BITS;
+	_disable();
 	if (bioscall == DOS_KB_BIOS_READ_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
-			enable();
-			DOS_INTERRUPT_AX = 0;
-			DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
+			_enable();
+			registers.w.ax = 0;
+			registers.w.flags = kb_flags_after_zero();
 			return;
 		}
 		kbdata = dos_kb_buffer_read;
@@ -253,24 +241,24 @@ void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 		dos_kb_buffer_read = kbdata;
 		kbdata = dos_kb_buffer_count;
 		dos_kb_buffer_count = kbdata - DOS_KB_BUFFER_ENTRY_BYTES;
-		enable();
-		DOS_INTERRUPT_AX = result;
-		DOS_INTERRUPT_FLAGS = kb_flags_after_subtract_two(kbdata);
+		_enable();
+		registers.w.ax = result;
+		registers.w.flags = kb_flags_after_subtract_two(kbdata);
 		return;
 	}
 
 	if (bioscall == DOS_KB_BIOS_STATUS_FUNCTION) {
 		kbdata = dos_kb_buffer_count;
 		if (kbdata == 0) {
-			enable();
-			DOS_INTERRUPT_AX = 0;
-			DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
+			_enable();
+			registers.w.ax = 0;
+			registers.w.flags = kb_flags_after_zero();
 			return;
 		}
 		result = dos_kb_buffer[dos_kb_buffer_read / DOS_KB_BUFFER_ENTRY_BYTES];
-		enable();
-		DOS_INTERRUPT_AX = result;
-		DOS_INTERRUPT_FLAGS = kb_flags_after_compare_zero(kbdata);
+		_enable();
+		registers.w.ax = result;
+		registers.w.flags = kb_flags_after_compare_zero(kbdata);
 		return;
 	}
 
@@ -278,14 +266,14 @@ void interrupt kb_int16_handler(DOS_INTERRUPT_REGISTERS)
 		shiftleft = dos_kb_input[DOS_KB_LEFT_SHIFT_SCANCODE];
 		shiftright = dos_kb_input[DOS_KB_RIGHT_SHIFT_SCANCODE];
 		result = shiftleft | shiftright;
-		enable();
-		DOS_INTERRUPT_AX = result & LEGACY_U8_MAX;
-		DOS_INTERRUPT_FLAGS = kb_flags_after_or(shiftleft, shiftright);
+		_enable();
+		registers.w.ax = result & LEGACY_U8_MAX;
+		registers.w.flags = kb_flags_after_or(shiftleft, shiftright);
 		return;
 	}
-	enable();
-	DOS_INTERRUPT_AX = 0;
-	DOS_INTERRUPT_FLAGS = kb_flags_after_zero();
+	_enable();
+	registers.w.ax = 0;
+	registers.w.flags = kb_flags_after_zero();
 	//return 0;
 }
 
@@ -299,13 +287,13 @@ void kb_init_interrupt(void)
 	outp(DOS_PIC_MASK_PORT, irqmask | DOS_KB_IRQ_MASK);
 
 	// The original compares only the offset word read from vector 9.
-	current_kb_int9_handler = getvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR);
+	current_kb_int9_handler = _dos_getvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR);
 	if (FP_OFF(current_kb_int9_handler) != FP_OFF(kb_int9_handler)) {
 		old_kb_int9_handler = current_kb_int9_handler;
-		setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, kb_int9_handler);
+		_dos_setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, kb_int9_handler);
 
-		old_kb_int16_handler = getvect(DOS_KB_BIOS_INTERRUPT_VECTOR);
-		setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, kb_int16_handler);
+		old_kb_int16_handler = _dos_getvect(DOS_KB_BIOS_INTERRUPT_VECTOR);
+		_dos_setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, kb_int16_handler);
 	}
 
 	outp(DOS_PIC_MASK_PORT, irqmask);
@@ -327,8 +315,8 @@ void kb_exit_handler(void)
 
 	// The original guards this block with the saved offset word alone.
 	if (FP_OFF(old_kb_int9_handler) != 0) {
-		setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, old_kb_int9_handler);
-		setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, old_kb_int16_handler);
+		_dos_setvect(DOS_KB_HARDWARE_INTERRUPT_VECTOR, old_kb_int9_handler);
+		_dos_setvect(DOS_KB_BIOS_INTERRUPT_VECTOR, old_kb_int16_handler);
 		pokeb(0, DOS_KB_BIOS_FLAGS_LINEAR_OFFSET,
 			  peekb(0, DOS_KB_BIOS_FLAGS_LINEAR_OFFSET) & DOS_KB_BIOS_SHIFT_FLAGS_CLEAR_MASK);
 	}
