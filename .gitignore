@@ -31,7 +31,7 @@ src/restunts/pixldump/build/ported/*obj
 **/stderr.txt
 **/stdout.txt
 stunts/*
-!stunts/placeholder
+!stunts/placeholder.txt
 tools/scripts/capture/*
 
 tools/watcom/
