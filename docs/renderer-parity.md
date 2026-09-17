@@ -1,7 +1,9 @@
 # Renderer parity with the original game
 
-Pixel comparisons use the original assembly built by `pixldump-original`.
-The archived Borland renderer retains its historical full-redraw capture mode.
+CI pixel comparisons use the archived Borland `pixldumo.exe`. Local builds
+with `pixldump-original` produce a Watcom executable from the original
+assembly and current capture wrapper. Both renderer references capture
+every frame with incremental redraws and write `PIXLDUMP 2` hash dumps.
 Rendering and simulation are not independent in the original executable: its
 physics reads values left in stack slots by earlier rendering calls. The C port
 represents those values explicitly instead of depending on undefined C locals,
@@ -164,8 +166,8 @@ segment, which is itself consumed as the opponent's third stopped-wheel
 heading. It accounts for the `0698.rpl` mismatch even when visible geometry
 initially agrees. Wrapper changes must keep this model synchronized with the
 original link map. CI runs `tools/scripts/test-pixldump-legacy-layout.py` against
-the freshly built oracle to check the retained image size, initial CRT stack
-pointer, and polygon code segment.
+the freshly built Watcom renderer to check the retained image size, initial CRT
+stack pointer, and polygon code segment.
 Thus replay names, optional extensions, DOS directories, and environment
 placement do not require special cases.
 

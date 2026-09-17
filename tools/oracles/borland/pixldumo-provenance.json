@@ -1,5 +1,15 @@
 {
-  "description": "Intentional Borland pixldumo oracle migration from MD5 to MurmurHash3_x86_32, seed 0.",
+  "description": "Historical Borland pixldumo oracle migration from MD5 to MurmurHash3_x86_32, seed 0.",
+  "record_scope": "The top-level build inputs, executable fingerprints, retained image size, and validation results describe the earlier sampled, full-redraw executable.",
+  "superseded_by": {
+    "archive_commit": "b900ca1bdb1e3ee83be9d807dc27e01ea6a7f7f6",
+    "archive_date": "2026-09-15",
+    "executable_sha256": "371c3b8c9e2c429e4f4c31349022985c3d6dc109094fb71fc617217c1736a907",
+    "executable_bytes": 247895,
+    "capture_mode": "Incremental rendering and hashing of every replay frame, including frame 0.",
+    "dump_header": "PIXLDUMP 2",
+    "scope": "Identifies the current archived executable. The historical build and validation evidence below applies only to the earlier executable."
+  },
   "date": "2026-09-13",
   "baseline_source_commit": "4827fb521711e7a773d3a6888b1be6ed2bdbe9be",
   "baseline_rebuild_matches_archived_oracle": true,

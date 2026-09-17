@@ -43,86 +43,6 @@ Main repository: https://github.com/4d-stunts/restunts
 		and hashes the 320x200 camera framebuffer at frame 0 and every subsequent frame.
 
 
-## C coding style
-
-Project `.c` and `.h` files under `src/` use tabs with a width of four columns,
-a 100-column target, K&R braces (function opening braces on their own line),
-and a required braced body for every `if`, `else`, `for`, `while`, and `do`.
-Conventional `else if` chains are allowed. Empty loops also need braces. Keep
-CRLF line endings, as required by `.gitattributes`.
-
-C sources use the C99 features supported by Open Watcom (`-zastd=c99`).
-Declare local variables close to their first use, combining the declaration
-and first assignment when possible. Keep declarations in the enclosing scope
-when values are shared across branches or loops, and preserve initialization
-order and object lifetime.
-
-Two standard tools check the style directly:
-
-- [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker)
-  reads the whitespace rules in `.editorconfig`. Its Python package installs
-  the `ec` command. `.editorconfig-checker.json` limits discovery to `src/`
-  and permits alignment spaces after indentation tabs. Only C/H files have
-  EditorConfig rules.
-- [clang-format](https://clang.llvm.org/docs/ClangFormat.html) reads C layout
-  and brace rules from `.clang-format`. Keep its whitespace settings consistent
-  with `.editorconfig`. Include order is preserved.
-
-Install the pinned tools once in a Python virtual environment:
-
-```sh
-python3 -m venv .venv
-# Linux/macOS:
-. .venv/bin/activate
-# Windows cmd.exe: .venv\Scripts\activate.bat
-python -m pip install -r tools/scripts/requirements-format.txt
-```
-
-From the repository root, check against `.editorconfig` with one command:
-
-```sh
-ec
-```
-
-Check C formatting too (Bash or Git Bash):
-
-```sh
-git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
-```
-
-Format all tracked project C/H files:
-
-```sh
-git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format -i
-```
-
-For an individual file, use `clang-format -i path/to/file.c`. Add new files to
-Git before running the commands based on `git ls-files`. CI runs both checks
-for pull requests and before releases. No project-specific formatter or checker
-script is needed.
-
-Braces are required even where clang-format cannot insert them automatically,
-including macro bodies, empty loops, and bodies spanning preprocessor
-branches. Review those cases manually; a successful clang-format check does
-not prove that those cases have braces.
-
-## C# coding style
-
-The regression application and its tests under `tools/scripts/dumpsrv` use four-space
-indentation, opening braces on their own line, braced control-flow bodies, a
-100-column target, and CRLF line endings. `.editorconfig` defines these rules.
-Use the .NET 10 SDK to check or apply formatting:
-
-```sh
-dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
-dotnet format tools/scripts/dumpsrv/dumpsrv.slnx
-```
-
-## Complexity audit
-
-See [the complexity report](docs/complexity.md) for measurements, completed
-refactors and audit results.
-
 ## How to build
 
 The DOS compiler, assembler, and linker are Open Watcom 2, pinned to the official
@@ -130,7 +50,7 @@ The DOS compiler, assembler, and linker are Open Watcom 2, pinned to the officia
 The setup scripts verify its SHA256 and install into ignored `tools/watcom/`.
 The shared release pin is `tools/scripts/open-watcom.conf`. WCC, WASM, WLINK,
 and GNU Make 4.3 or newer run natively on Linux or Windows. The standard build
-does not require Wine or DOSBox. Python 3.9 or newer is also required for the
+does not require Wine or DOSBox. Python 3.9 or newer is required for the
 `*-original` targets, which prepare assembler-compatible copies of the
 preserved original sources.
 
@@ -187,11 +107,9 @@ The makefiles use `python3` on Linux and `python` on Windows; override
 
 ### On both platforms
 
-Build outputs are copied to `stunts/`. Run `restunts.exe` in DOSBox with
-`core=dynamic` and `cycles=max`. The supplied DOSBox development configuration
-uses drive S:. For that configuration, Windows users can run
-`tools\mount_stunts_to_s.bat` once per reboot; Linux users running the bundled
-Windows tools can map S: in `winecfg`. Native compilation does not need that mapping.
+Build outputs are copied to `stunts/`. Run `restunts.exe` in DOSBox or DOSBox-X
+with `core=dynamic` and `cycles=max`. Mount `stunts/` directly as a DOS drive
+in the emulator.
 
 The supported targets are:
 
@@ -208,11 +126,11 @@ The supported targets are:
 
 The `*-original` dump targets assemble the original game code with WASM,
 compile the dump wrappers with WCC, and link them with WLINK. The resulting
-executables are rebuilt development tools. Physics validation uses the
-independent Borland `repldumo.exe` preserved under
-[tools/oracles/borland](tools/oracles/borland/README.md), whose SHA256 hash
-is recorded alongside it. Renderer validation uses the freshly built
-`pixldumo.exe` with incremental capture. Source builds never replace the archived files.
+executables are rebuilt development tools. CI uses the independent Borland
+`repldumo.exe` and `pixldumo.exe` preserved under
+[tools/oracles/borland](tools/oracles/borland/README.md), whose SHA256 hashes
+are recorded alongside them. The archived renderer captures every frame
+incrementally. Source builds never replace the archived files.
 
 The original game assembly under `src/restunts/asmorig/` is preserved
 unchanged. The WASM build runs
@@ -230,11 +148,12 @@ original-code layout requirements, and object/executable comparison commands.
 `makerepldump.bat` builds both games and both physics dump tools;
 `makepixldump.bat` builds both renderer dump tools. Both stop on build errors.
 
-`pixldump-original` builds `pixldumo.exe` from the original game assembly and
-the current capture wrapper. Renderer comparisons use that freshly built
-executable. Physics validation uses the archived Borland reference under
-[tools/oracles/borland](tools/oracles/borland/README.md), whose SHA256 hashes
-are recorded alongside it. Source builds never replace those archived files.
+`pixldump-original` builds `stunts/pixldumo.exe` from the original game assembly
+and the current capture wrapper. Local `pixelcheck.sh` runs use the renderer
+reference in `stunts/`. `validate-toolchain.py` takes it from
+`--candidate-directory`, which defaults to `stunts/`, and uses the archived
+physics oracle. CI copies both archived Borland oracles into its isolated
+test directory after copying the source-built executables.
 
 ### pixldump parameters
 
@@ -350,6 +269,85 @@ Set the `PIXELDUMP_TIMEOUT_SECONDS` environment variable to a positive integer
 to override the default 120-second timeout for each DOSBox run.
 
 
+## C coding style
+
+Project `.c` and `.h` files under `src/` use tabs with a width of four columns,
+a 100-column target, K&R braces (function opening braces on their own line),
+and a required braced body for every `if`, `else`, `for`, `while`, and `do`.
+Conventional `else if` chains are allowed. Empty loops also need braces. Keep
+CRLF line endings, as required by `.gitattributes`.
+
+C sources use the C99 features supported by Open Watcom (`-zastd=c99`).
+Declare local variables close to their first use, combining the declaration
+and first assignment when possible. Keep declarations in the enclosing scope
+when values are shared across branches or loops, and preserve initialization
+order and object lifetime.
+
+Two standard tools check the style directly:
+
+- [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker)
+  reads the whitespace rules in `.editorconfig`. Its Python package installs
+  the `ec` command. `.editorconfig-checker.json` limits discovery to `src/`
+  and permits alignment spaces after indentation tabs. Only C/H files have
+  EditorConfig rules.
+- [clang-format](https://clang.llvm.org/docs/ClangFormat.html) reads C layout
+  and brace rules from `.clang-format`. Keep its whitespace settings consistent
+  with `.editorconfig`. Include order is preserved.
+
+Install the pinned tools once in a Python virtual environment:
+
+```sh
+python3 -m venv .venv
+# Linux/macOS:
+. .venv/bin/activate
+# Windows cmd.exe: .venv\Scripts\activate.bat
+python -m pip install -r tools/scripts/requirements-format.txt
+```
+
+From the repository root, check against `.editorconfig` with one command:
+
+```sh
+ec
+```
+
+Check C formatting too (Bash or Git Bash):
+
+```sh
+git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format --dry-run --Werror
+```
+
+Format all tracked project C/H files:
+
+```sh
+git ls-files -z 'src/*.c' 'src/*.h' | xargs -0 -r clang-format -i
+```
+
+For an individual file, use `clang-format -i path/to/file.c`. Add new files to
+Git before running the commands based on `git ls-files`. CI runs both checks
+for pull requests and before releases. No project-specific formatter or checker
+script is needed.
+
+Braces are required even where clang-format cannot insert them automatically,
+including macro bodies, empty loops, and bodies spanning preprocessor
+branches. Review those cases manually; a successful clang-format check does
+not prove that those cases have braces.
+
+## C# coding style
+
+The regression application and its tests under `tools/scripts/dumpsrv` use four-space
+indentation, opening braces on their own line, braced control-flow bodies, a
+100-column target, and CRLF line endings. `.editorconfig` defines these rules.
+Use the .NET 10 SDK to check or apply formatting:
+
+```sh
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx --verify-no-changes
+dotnet format tools/scripts/dumpsrv/dumpsrv.slnx
+```
+
+## Complexity audit
+
+See [the complexity report](docs/complexity.md) for measurements, completed
+refactors and audit results.
 
 
 ## CI replay validation

@@ -366,8 +366,11 @@ pass extraction and shard-plan validation.
 
 Physics compares original `.BIN` output against fresh `.BNI` output. Rendering
 uses the selected camera and target, comparing original `.PDO` output against
-fresh `.PDD` output. Build `pixldump` and `pixldump-original` together so both use
-incremental redraws and hashes on every frame. Comparisons are byte for byte.
+fresh `.PDD` output. Both renderer executables must use incremental redraws and
+hashes on every frame. CI uses the archived Borland `pixldumo.exe`; for local
+runs, use that archive or build `pixldump-original` alongside `pixldump`.
+See the [oracle guide](../../oracles/borland/README.md) for preparing archived
+references. Comparisons are byte for byte.
 
 Renderer caches also require a matching `<replay>.PDO.settings` file containing
 the camera and target, separated by one space. The runner and oracle extractor
@@ -382,8 +385,10 @@ MurmurHash3_x86_32 sample (seed 0, eight lowercase hexadecimal digits) at
 frames 0, 1, 2, ... through the replay's final frame. Empty, truncated, or
 malformed caches are regenerated, including five-frame sampled dumps and files
 left by older runners without a pending marker. The header
-also invalidates full-redraw caches from the old renderer wrapper. Use the
-freshly built original-assembly renderer to regenerate these references.
+also invalidates full-redraw caches from the old renderer wrapper. Regeneration
+uses `pixldumo.exe` from the game directory: CI supplies the current archived
+Borland renderer, while local runs can also use a current `pixldump-original`
+source build.
 
 A `.BIN.pending` or `.PDO.pending` marker is written before oracle generation
 and removed only after successful execution produces a complete output.

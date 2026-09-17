@@ -107,11 +107,14 @@ or toolchain stamp change.
 
 These source builds are separate from the independent Borland reference
 binaries under [`tools/oracles/borland`](../tools/oracles/borland/README.md).
-The archived files remain immutable. CI and `validate-toolchain.py` use the
-archived physics oracle and freshly built incremental renderer reference.
-The archived renderer retains its historical full-redraw capture mode.
-Developer comparisons through `autocheck.sh` and `pixelcheck.sh` use the
-original dump executables built in `stunts/`.
+Source builds never replace the archived files. CI replay validation uses
+both archived dump executables. The archived renderer captures every frame
+with incremental redraws and writes `PIXLDUMP 2` hash dumps.
+`validate-toolchain.py` uses the archived physics oracle and the renderer
+reference from `--candidate-directory` (default: `stunts/`), normally built
+with `pixldump-original`. Developer comparisons through `autocheck.sh` and
+`pixelcheck.sh` use the original dump executables in `stunts/`; requesting
+a rebuild generates them from source.
 
 ## Comparing artifacts
 
