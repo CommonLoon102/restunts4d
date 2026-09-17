@@ -45,8 +45,6 @@ static void record_rect(const struct RECTANGLE *rect)
 
 static legacy_u16 shape_id(const struct SHAPE3D *shape)
 {
-	unsigned index;
-
 	if (shape == NULL) {
 		return 0;
 	}
@@ -59,7 +57,7 @@ static legacy_u16 shape_id(const struct SHAPE3D *shape)
 	if (shape == &bravshape) {
 		return 133;
 	}
-	for (index = 0; index < 130; index++) {
+	for (unsigned index = 0; index < 130; index++) {
 		if (shape == &game3dshapes[index]) {
 			return index + 1;
 		}
@@ -121,7 +119,6 @@ legacy_u16 select_cliprect_rotate(legacy_s16 z, legacy_s16 x, legacy_s16 y, stru
 
 legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *shape)
 {
-	struct POINT2D corner;
 	legacy_u16 id = shape_id(shape->shapeptr);
 
 	record_word(6);
@@ -135,6 +132,7 @@ legacy_u16 shape3d_transform_and_queue(struct TRANSFORMEDSHAPE3D *shape)
 	record_word(shape->culling_distance);
 	record_word(shape->ts_flags);
 	record_word(shape->material);
+	struct POINT2D corner;
 	if ((shape->ts_flags & 8) != 0) {
 		assert(shape->rectptr != NULL);
 		record_rect(shape->rectptr);
@@ -181,28 +179,22 @@ static void reset_projection(void)
 
 static void intro_case(unsigned scenario)
 {
-	static const legacy_s16 offsets[] = {0, 200, -200, 32767, -32768};
-	struct VECTOR stars[100];
-	struct POINT2D previous_points[100];
-	struct RECTANGLE previous_rect = {-40, 360, -20, 220};
-	struct RECTANGLE shape_rect = {30, 110, 25, 75};
-	struct RECTANGLE combined_rect = {1, 2, 3, 4};
-	legacy_s16 count, old_count, camera_x, camera_y, camera_z;
-	unsigned index, rotation, draw_car, logo;
-
 	reset_projection();
 	slow_video_mgmt_copy = scenario & 1;
-	draw_car = (scenario >> 1) & 1;
-	logo = (scenario >> 2) & 1;
-	rotation = (scenario >> 3) % 4;
-	camera_x = offsets[(scenario >> 5) % 5];
-	camera_y = offsets[((scenario >> 5) + 1) % 5];
-	camera_z = offsets[((scenario >> 5) + 2) % 5];
-	old_count = scenario % 3 == 0 ? 0 : (scenario % 3 == 1 ? 3 : 100);
-	count = old_count;
+	unsigned draw_car = (scenario >> 1) & 1;
+	unsigned logo = (scenario >> 2) & 1;
+	unsigned rotation = (scenario >> 3) % 4;
+	static const legacy_s16 offsets[] = {0, 200, -200, 32767, -32768};
+	legacy_s16 camera_x = offsets[(scenario >> 5) % 5];
+	legacy_s16 camera_y = offsets[((scenario >> 5) + 1) % 5];
+	legacy_s16 camera_z = offsets[((scenario >> 5) + 2) % 5];
+	legacy_s16 old_count = scenario % 3 == 0 ? 0 : (scenario % 3 == 1 ? 3 : 100);
+	legacy_s16 count = old_count;
 	intro_palette_color_count = scenario % 2 ? 16 : 3;
 	intro_colorvalue = intro_palette_color_count - 1;
 	intro_redraw_cliprect = intro_cliprect;
+	struct RECTANGLE shape_rect = {30, 110, 25, 75};
+	struct RECTANGLE previous_rect = {-40, 360, -20, 220};
 	if (scenario % 3 == 0) {
 		previous_rect.left = shape_rect.left = 400;
 		previous_rect.right = shape_rect.right = 420;
@@ -211,7 +203,9 @@ static void intro_case(unsigned scenario)
 	state.opponentstate.car_position.ly = -321;
 	state.opponentstate.car_position.lz = -327681;
 	state.opponentstate.car_rotate.x = (legacy_s16)(scenario * 97);
-	for (index = 0; index < 100; index++) {
+	struct VECTOR stars[100];
+	struct POINT2D previous_points[100];
+	for (unsigned index = 0; index < 100; index++) {
 		stars[index].x = LEGACY_S16_WRAP_ADD(camera_x, (legacy_s16)(index * 173 - 8000));
 		stars[index].y = LEGACY_S16_WRAP_ADD(camera_y, (legacy_s16)(index * 113 - 5000));
 		stars[index].z = LEGACY_S16_WRAP_ADD(camera_z, (legacy_s16)(index * 73 - 2400));
@@ -221,6 +215,7 @@ static void intro_case(unsigned scenario)
 	stars[0].z = LEGACY_S16_WRAP_ADD(camera_z, 199);
 	stars[1].z = LEGACY_S16_WRAP_ADD(camera_z, 200);
 	stars[2].z = LEGACY_S16_WRAP_ADD(camera_z, 201);
+	struct RECTANGLE combined_rect = {1, 2, 3, 4};
 	intro_render_scene(camera_x, camera_y, camera_z, rotation * 256, 0, draw_car, logo, stars,
 					   previous_points, &count, previous_rect, &shape_rect, &combined_rect);
 	assert(queued_count == 1 + draw_car);
@@ -235,7 +230,7 @@ static void intro_case(unsigned scenario)
 	record_word(intro_colorvalue);
 	record_rect(&shape_rect);
 	record_rect(&combined_rect);
-	for (index = 0; index < 100; index++) {
+	for (unsigned index = 0; index < 100; index++) {
 		record_word(previous_points[index].px);
 		record_word(previous_points[index].py);
 	}
@@ -243,11 +238,9 @@ static void intro_case(unsigned scenario)
 
 static void preview_map(unsigned variant)
 {
-	unsigned row, column, tile;
-
 	track_element_map = elements;
 	track_terrain_map = terrain;
-	for (row = 0; row < 30; row++) {
+	for (unsigned row = 0; row < 30; row++) {
 		trackrows[row] = row * 30;
 		terrainrows[row] = (29 - row) * 30;
 		track_column_positions[row] = row * 1024;
@@ -255,9 +248,9 @@ static void preview_map(unsigned variant)
 		track_row_positions[row] = (30 - row) * 1024;
 		track_row_centers[row] = (29 - row) * 1024 + 512;
 	}
-	for (row = 0; row < 30; row++) {
-		for (column = 0; column < 30; column++) {
-			tile = (row * 30 + column + variant * 43) % 215;
+	for (unsigned row = 0; row < 30; row++) {
+		for (unsigned column = 0; column < 30; column++) {
+			unsigned tile = (row * 30 + column + variant * 43) % 215;
 			if ((column == 29 && (trkObjectList[tile].ss_multiTileFlag & 2) != 0) ||
 				(row == 29 && tile >= 105 && tile <= 108)) {
 				tile = 0;
@@ -274,8 +267,6 @@ static void preview_map(unsigned variant)
 
 static void preview_case(unsigned scenario)
 {
-	unsigned index;
-
 	reset_projection();
 	preview_map(scenario % 4);
 	track_preview_camera_x = (legacy_s16)(scenario * 1027 - 16000);
@@ -290,7 +281,7 @@ static void preview_case(unsigned scenario)
 	skybox.minimum_height = 20;
 	skybox.sky_color = 3;
 	skybox.ground_color = 6;
-	for (index = 0; index < 4; index++) {
+	for (unsigned index = 0; index < 4; index++) {
 		skybox.heights[index] = 20 + index * 5;
 		skyboxes[index] = &sky_images[index];
 	}
@@ -313,11 +304,10 @@ void *file_load_3dres(const legacy_s8 *name)
 }
 void locate_many_resources(legacy_s8 *data, const legacy_s8 *names, legacy_s8 **result)
 {
-	unsigned index;
 	assert(data == title_data);
 	assert(strcmp((const char *)names, "logolog2brav") == 0);
 	record_word(21);
-	for (index = 0; index < 3; index++) {
+	for (unsigned index = 0; index < 3; index++) {
 		result[index] = &title_data[index];
 	}
 }
@@ -451,9 +441,6 @@ void sprite_copy_rect_shifted(legacy_s16 x, legacy_s16 y, legacy_s16 width, lega
  * with explicit previous-frame inputs instead. */
 static void lifecycle_case(unsigned scenario)
 {
-	static const unsigned cancellations[] = {0, 1, 80, 160};
-	legacy_s8 interrupted;
-
 	reset_projection();
 	memset(&state, 0, sizeof(state));
 	framespersec = 20;
@@ -464,13 +451,14 @@ static void lifecycle_case(unsigned scenario)
 	slow_video_mgmt = 0;
 	video_uses_page_flipping = scenario & 1;
 	copy_backbuffer = (scenario >> 1) & 1;
+	static const unsigned cancellations[] = {0, 1, 80, 160};
 	cancel_after = cancellations[(scenario >> 2) & 3];
 	input_polls = 0;
 	random_value = 1;
 	state.opponentstate.car_position.lx = 64000;
 	state.opponentstate.car_position.ly = 1280;
 	state.opponentstate.car_position.lz = 64000;
-	interrupted = setup_intro();
+	legacy_s8 interrupted = setup_intro();
 	assert(interrupted == (cancel_after != 0));
 	assert(input_polls > 0);
 	record_word(interrupted);
@@ -482,27 +470,24 @@ static void lifecycle_case(unsigned scenario)
 
 int main(void)
 {
-	unsigned scenario;
-	legacy_u32 intro_hash, preview_hash, lifecycle_hash;
-
 	trace_hash = 2166136261UL;
-	for (scenario = 0; scenario < 480; scenario++) {
+	for (unsigned scenario = 0; scenario < 480; scenario++) {
 		record_word(scenario);
 		intro_case(scenario);
 	}
-	intro_hash = trace_hash;
+	legacy_u32 intro_hash = trace_hash;
 	trace_hash = 2166136261UL;
-	for (scenario = 0; scenario < 32; scenario++) {
+	for (unsigned scenario = 0; scenario < 32; scenario++) {
 		record_word(scenario);
 		preview_case(scenario);
 	}
-	preview_hash = trace_hash;
+	legacy_u32 preview_hash = trace_hash;
 	trace_hash = 2166136261UL;
-	for (scenario = 0; scenario < 16; scenario++) {
+	for (unsigned scenario = 0; scenario < 16; scenario++) {
 		record_word(scenario);
 		lifecycle_case(scenario);
 	}
-	lifecycle_hash = trace_hash;
+	legacy_u32 lifecycle_hash = trace_hash;
 #ifdef INTRO_PREVIEW_RECORD_BASELINE
 	fprintf(stdout, "intro=0x%08lx preview=0x%08lx lifecycle=0x%08lx\n", (unsigned long)intro_hash,
 			(unsigned long)preview_hash, (unsigned long)lifecycle_hash);

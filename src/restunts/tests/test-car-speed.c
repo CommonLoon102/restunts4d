@@ -15,8 +15,6 @@ static legacy_s16 aerodynamic_drag[64];
 
 static void reset_car(void)
 {
-	unsigned index;
-
 	memset(&state, 0, sizeof(state));
 	memset(&simd, 0, sizeof(simd));
 	memset(&car, 0, sizeof(car));
@@ -32,7 +30,7 @@ static void reset_car(void)
 	simd.max_rpm = 12000;
 	simd.idle_torque = 32;
 	simd.aerorestable = aerodynamic_drag;
-	for (index = 0; index < SIMD_GEAR_RATIO_COUNT; index++) {
+	for (unsigned index = 0; index < SIMD_GEAR_RATIO_COUNT; index++) {
 		simd.gear_ratios[index] = 4096;
 		simd.knob_points[index].px = (legacy_s16)(index * 12);
 		simd.knob_points[index].py = 12;

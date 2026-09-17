@@ -318,22 +318,16 @@ extern legacy_s16 highEntrXOutBounds1[];
 static legacy_s16 track_interpolate(legacy_s16 position, legacy_s16 position0, legacy_s16 position1,
 									legacy_s16 value0, legacy_s16 value1)
 {
-	legacy_s32 numerator;
-	legacy_s32 quotient;
-	legacy_s16 denominator;
-
-	numerator = (legacy_s32)LEGACY_S16_WRAP_SUB(position, position0) *
-				(legacy_s32)LEGACY_S16_WRAP_SUB(value1, value0);
-	denominator = LEGACY_S16_WRAP_SUB(position1, position0);
-	quotient = LEGACY_S32_DIV_OR_ZERO(numerator, (legacy_s32)denominator);
+	legacy_s32 numerator = (legacy_s32)LEGACY_S16_WRAP_SUB(position, position0) *
+						   (legacy_s32)LEGACY_S16_WRAP_SUB(value1, value0);
+	legacy_s16 denominator = LEGACY_S16_WRAP_SUB(position1, position0);
+	legacy_s32 quotient = LEGACY_S32_DIV_OR_ZERO(numerator, (legacy_s32)denominator);
 	return LEGACY_S16_WRAP_ADD(value0, LEGACY_S16_FROM_BITS((legacy_u16)quotient));
 }
 
 static void track_rotate_local(struct VECTOR *position, legacy_s16 orientation)
 {
-	legacy_s16 old_x;
-
-	old_x = position->x;
+	legacy_s16 old_x = position->x;
 	switch ((legacy_u16)orientation) {
 		case ANGLE_QUARTER_TURN:
 			position->x = LEGACY_S16_WRAP_NEGATE(position->z);
@@ -355,9 +349,7 @@ static void track_rotate_local(struct VECTOR *position, legacy_s16 orientation)
 static void track_object_tile_center(legacy_u8 track_tile, legacy_s16 row_index,
 									 legacy_s16 column_index)
 {
-	legacy_u8 multi_tile;
-
-	multi_tile = (legacy_u8)trkObjectList[track_tile].ss_multiTileFlag;
+	legacy_u8 multi_tile = (legacy_u8)trkObjectList[track_tile].ss_multiTileFlag;
 	if ((multi_tile & MULTI_TILE_ROW_EDGE_FLAG) != 0) {
 		elem_zCenter = (legacy_s16)terrainpos[row_index];
 	}
@@ -390,9 +382,7 @@ static void track_object_building_wall(const struct VECTOR *next_position, legac
 /* A corner surface is the ring between two radii around the arc centre. */
 static legacy_s16 track_radius_in_band(legacy_s16 x, legacy_s16 z, legacy_s16 low, legacy_s16 high)
 {
-	legacy_s16 radius;
-
-	radius = (legacy_s16)polarRadius2D(x, z);
+	legacy_s16 radius = (legacy_s16)polarRadius2D(x, z);
 	return radius > low && radius < high;
 }
 
@@ -409,14 +399,13 @@ static legacy_s16 track_arc_radius(const struct VECTOR *position)
 
 static legacy_s16 track_arc_segment(const struct VECTOR *position)
 {
-	legacy_s16 value;
-
-	value = (legacy_s16)((((legacy_u16)polarAngle(
-							   LEGACY_S16_WRAP_ADD(position->x, TRACK_ARC_CENTER_OFFSET),
-							   LEGACY_S16_WRAP_ADD(position->z, TRACK_ARC_CENTER_OFFSET)) &
-						   ANGLE_QUARTER_MASK) *
-						  TRACK_ARC_SEGMENT_COUNT) >>
-						 TRACK_ARC_ANGLE_SCALE_SHIFT);
+	legacy_s16 value =
+		(legacy_s16)((((legacy_u16)polarAngle(
+						   LEGACY_S16_WRAP_ADD(position->x, TRACK_ARC_CENTER_OFFSET),
+						   LEGACY_S16_WRAP_ADD(position->z, TRACK_ARC_CENTER_OFFSET)) &
+					   ANGLE_QUARTER_MASK) *
+					  TRACK_ARC_SEGMENT_COUNT) >>
+					 TRACK_ARC_ANGLE_SCALE_SHIFT);
 	return LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(value, TRACK_ARC_LAST_SEGMENT));
 }
 
@@ -481,16 +470,14 @@ static void track_object_chicane(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_sharp_corner(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 x;
-
 	if (sample->physical_model != PHYSICAL_MODEL_SHARP_CORNER &&
 		sample->absolute_x < ROAD_HALF_WIDTH) {
 		current_surf_type = (legacy_u8)sample->surface_type;
 		return;
 	}
-	x = sample->physical_model == PHYSICAL_MODEL_SHARP_SPLIT_B
-			? LEGACY_S16_WRAP_SUB(SHARP_CORNER_CENTER_OFFSET, sample->position.x)
-			: LEGACY_S16_WRAP_ADD(sample->position.x, SHARP_CORNER_CENTER_OFFSET);
+	legacy_s16 x = sample->physical_model == PHYSICAL_MODEL_SHARP_SPLIT_B
+					   ? LEGACY_S16_WRAP_SUB(SHARP_CORNER_CENTER_OFFSET, sample->position.x)
+					   : LEGACY_S16_WRAP_ADD(sample->position.x, SHARP_CORNER_CENTER_OFFSET);
 	if (track_radius_in_band(x, LEGACY_S16_WRAP_ADD(sample->position.z, SHARP_CORNER_CENTER_OFFSET),
 							 SHARP_CORNER_INNER_RADIUS, SHARP_CORNER_OUTER_RADIUS)) {
 		current_surf_type = (legacy_u8)sample->surface_type;
@@ -524,23 +511,18 @@ static void track_object_large_split(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_highway_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 value;
-	legacy_s16 value2;
-	legacy_s16 value3;
-	legacy_u16 index;
-
-	value = absolute_word(sample->position.x);
-	index = 0;
+	legacy_s16 value = absolute_word(sample->position.x);
+	legacy_u16 index = 0;
 	while (highEntrZBounds1[index] < sample->position.z) {
 		index++;
 	}
-	value2 = highEntrXInnBounds0[index];
+	legacy_s16 value2 = highEntrXInnBounds0[index];
 	if (highEntrXInnBounds1[index] != value2) {
 		value2 =
 			track_interpolate(sample->position.z, highEntrZBounds0[index], highEntrZBounds1[index],
 							  highEntrXInnBounds0[index], highEntrXInnBounds1[index]);
 	}
-	value3 = highEntrXOutBounds0[index];
+	legacy_s16 value3 = highEntrXOutBounds0[index];
 	if (highEntrXOutBounds1[index] != value3) {
 		value3 =
 			track_interpolate(sample->position.z, highEntrZBounds0[index], highEntrZBounds1[index],
@@ -670,13 +652,10 @@ static void track_object_elevated_road(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_elevated_corner(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 radius;
-	legacy_s16 value;
-
 	if (sample->height <= ELEVATED_DECK_CLEARANCE) {
 		return;
 	}
-	radius = track_arc_radius(&sample->position);
+	legacy_s16 radius = track_arc_radius(&sample->position);
 	if (radius <= -ELEVATED_CORNER_OUTER_OFFSET || radius >= ELEVATED_CORNER_OUTER_OFFSET) {
 		return;
 	}
@@ -686,7 +665,7 @@ static void track_object_elevated_corner(struct TRACK_OBJECT_SAMPLE *sample)
 	if (radius >= -ELEVATED_CORNER_INNER_OFFSET && radius <= ELEVATED_CORNER_INNER_OFFSET) {
 		return;
 	}
-	value = track_arc_segment(&sample->position);
+	legacy_s16 value = track_arc_segment(&sample->position);
 	wallHeight = ELEVATED_SIDE_WALL_HEIGHT;
 	elRdWallRelated = ELEVATED_WALL_VERTICAL_OFFSET;
 	wallindex = LEGACY_S16_WRAP_ADD(value, radius < 0 ? ELEVATED_CORNER_INNER_WALL_BASE
@@ -695,12 +674,9 @@ static void track_object_elevated_corner(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_banked_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 {
+	legacy_s16 terrain_angle;
 	legacy_s16 value;
 	legacy_s16 value2;
-	legacy_s16 value3;
-	legacy_s16 terrain_angle;
-	legacy_u16 index;
-
 	if (sample->physical_model == PHYSICAL_MODEL_BANKED_ENTRANCE_A) {
 		value = BANKED_ENTRANCE_A_PLAN_BASE;
 		value2 = BANKED_ENTRANCE_A_VARIANT;
@@ -729,6 +705,7 @@ static void track_object_banked_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 		planindex = LEGACY_S16_WRAP_ADD(value, BANKED_ENTRANCE_POSITIVE_END_PLAN_OFFSET);
 		return;
 	}
+	legacy_u16 index;
 	if (sample->position.z < -BANKED_ENTRANCE_INNER_Z) {
 		planindex = LEGACY_S16_WRAP_ADD(value, BANKED_ENTRANCE_NEGATIVE_OUTER_PLAN_OFFSET);
 		index = BANKED_ENTRANCE_NEGATIVE_OUTER_ADJUST_INDEX;
@@ -742,7 +719,7 @@ static void track_object_banked_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 		planindex = LEGACY_S16_WRAP_ADD(value, BANKED_ENTRANCE_POSITIVE_OUTER_PLAN_OFFSET);
 		index = BANKED_ENTRANCE_POSITIVE_OUTER_ADJUST_INDEX;
 	}
-	value3 = LEGACY_S16_WRAP_SUB(sample->position.z, bkRdEntr_triang_zAdjust[index]);
+	legacy_s16 value3 = LEGACY_S16_WRAP_SUB(sample->position.z, bkRdEntr_triang_zAdjust[index]);
 	value3 = LEGACY_S16_WRAP_ADD(
 		multiply_and_scale(sin_fast((legacy_u16)terrain_angle), value3),
 		multiply_and_scale(cos_fast((legacy_u16)terrain_angle), sample->position.x));
@@ -765,14 +742,11 @@ static void track_object_banked_road(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_banked_corner(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 radius;
-	legacy_s16 value;
-
-	radius = track_arc_radius(&sample->position);
+	legacy_s16 radius = track_arc_radius(&sample->position);
 	if (radius <= -BANKED_CORNER_INNER_OFFSET || radius >= BANKED_CORNER_OUTER_OFFSET) {
 		return;
 	}
-	value = track_arc_segment(&sample->position);
+	legacy_s16 value = track_arc_segment(&sample->position);
 	planindex = LEGACY_S16_WRAP_ADD(value, BANKED_CORNER_PLAN_BASE);
 	current_surf_type = (legacy_u8)sample->surface_type;
 	if (radius > BANKED_CORNER_WALL_THRESHOLD) {
@@ -785,8 +759,6 @@ static void track_object_banked_corner(struct TRACK_OBJECT_SAMPLE *sample)
 static void track_object_loop_upper(struct TRACK_OBJECT_SAMPLE *sample, legacy_s16 value,
 									legacy_s16 effective_x, legacy_s16 value2, legacy_u16 index)
 {
-	legacy_s16 value3;
-
 	index = (legacy_u16)(LOOP_SURFACE_LAST_INDEX - index);
 	if (effective_x < loopSurface_XBounds0[index] ||
 		effective_x > LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION)) {
@@ -794,8 +766,9 @@ static void track_object_loop_upper(struct TRACK_OBJECT_SAMPLE *sample, legacy_s
 	}
 	if (effective_x <= loopSurface_XBounds1[index] ||
 		effective_x >= LEGACY_S16_WRAP_ADD(loopSurface_XBounds0[index], LOOP_LANE_SEPARATION)) {
-		value3 = track_interpolate(value2, loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
-								   loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
+		legacy_s16 value3 =
+			track_interpolate(value2, loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
+							  loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
 		if (effective_x <= value3 ||
 			effective_x >= LEGACY_S16_WRAP_ADD(value3, LOOP_LANE_SEPARATION)) {
 			return;
@@ -811,8 +784,6 @@ static legacy_s16 track_object_loop_lower(struct TRACK_OBJECT_SAMPLE *sample, le
 										  legacy_s16 effective_x, legacy_s16 value2,
 										  legacy_u16 index)
 {
-	legacy_s16 value3;
-
 	if (!((index > LOOP_LOW_CLEARANCE_LAST_SEGMENT && sample->height < LOOP_LOW_CLEARANCE) ||
 		  effective_x < loopSurface_XBounds0[index] ||
 		  effective_x > LEGACY_S16_WRAP_ADD(loopSurface_XBounds1[index], LOOP_LANE_SEPARATION))) {
@@ -824,7 +795,7 @@ static legacy_s16 track_object_loop_lower(struct TRACK_OBJECT_SAMPLE *sample, le
 			return 1;
 		}
 		if (loopSurface_XBounds0[index] != loopSurface_XBounds1[index]) {
-			value3 =
+			legacy_s16 value3 =
 				track_interpolate(value2, loopSurface_ZBounds0[index], loopSurface_ZBounds1[index],
 								  loopSurface_XBounds0[index], loopSurface_XBounds1[index]);
 			if (effective_x > value3 &&
@@ -841,13 +812,9 @@ static legacy_s16 track_object_loop_lower(struct TRACK_OBJECT_SAMPLE *sample, le
 
 static void track_object_loop(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 value;
-	legacy_s16 value2;
-	legacy_s16 value3;
-	legacy_s16 effective_x;
 	legacy_s16 effective_z;
-	legacy_u16 index;
-
+	legacy_s16 value;
+	legacy_s16 effective_x;
 	if (sample->position.z < 0) {
 		value = LOOP_REAR_PLAN_BASE;
 		effective_x = LEGACY_S16_WRAP_NEGATE(sample->position.x);
@@ -857,6 +824,8 @@ static void track_object_loop(struct TRACK_OBJECT_SAMPLE *sample)
 		effective_x = sample->position.x;
 		effective_z = sample->position.z;
 	}
+	legacy_u16 index;
+	legacy_s16 value2;
 	if (effective_z <= LEGACY_S16_WRAP_ADD(loopSurface_maxZ, LOOP_SURFACE_END_PADDING)) {
 		if (effective_z > LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1)) {
 			value2 = LEGACY_S16_WRAP_SUB(loopSurface_maxZ, 1);
@@ -882,8 +851,9 @@ static void track_object_loop(struct TRACK_OBJECT_SAMPLE *sample)
 	}
 	value2 = track_interpolate(effective_z, loopBase_ZBounds0[index], loopBase_ZBounds1[index],
 							   loopBae_InnXBounds0[index], loopBase_InnXBounds1[index]);
-	value3 = track_interpolate(effective_z, loopBase_ZBounds0[index], loopBase_ZBounds1[index],
-							   loopBase_OutXBounds0[index], loopBase_OutXBounds1[index]);
+	legacy_s16 value3 =
+		track_interpolate(effective_z, loopBase_ZBounds0[index], loopBase_ZBounds1[index],
+						  loopBase_OutXBounds0[index], loopBase_OutXBounds1[index]);
 	if (effective_x >= value2 && effective_x <= value3) {
 		current_surf_type = (legacy_u8)sample->surface_type;
 	}
@@ -917,10 +887,6 @@ static void track_object_tunnel(struct TRACK_OBJECT_SAMPLE *sample)
 
 static void track_object_pipe_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 value;
-	legacy_s16 value2;
-	legacy_s16 terrain_angle;
-
 	if (absolute_word(sample->next_position.x) >= PIPE_ENTRANCE_WALL_INNER_X &&
 		sample->absolute_x <= PIPE_HALF_WIDTH) {
 		wallHeight = PIPE_WALL_HEIGHT;
@@ -937,6 +903,8 @@ static void track_object_pipe_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 		planindex = PIPE_ENTRANCE_CENTER_PLAN_INDEX;
 		return;
 	}
+	legacy_s16 terrain_angle;
+	legacy_s16 value;
 	if (sample->position.x < -PIPE_ENTRANCE_SIDE_SPLIT_X) {
 		planindex = PIPE_ENTRANCE_LEFT_OUTER_PLAN_BASE;
 		value = -PIPE_ENTRANCE_OUTER_CENTER_X;
@@ -954,7 +922,7 @@ static void track_object_pipe_entrance(struct TRACK_OBJECT_SAMPLE *sample)
 		value = PIPE_ENTRANCE_INNER_CENTER_X;
 		terrain_angle = PIPE_ENTRANCE_INNER_ANGLE;
 	}
-	value2 = LEGACY_S16_WRAP_ADD(
+	legacy_s16 value2 = LEGACY_S16_WRAP_ADD(
 		multiply_and_scale(sin_fast((legacy_u16)terrain_angle), sample->position.z),
 		multiply_and_scale(cos_fast((legacy_u16)terrain_angle),
 						   LEGACY_S16_WRAP_SUB(sample->position.x, value)));
@@ -1023,10 +991,8 @@ static void track_object_pipe(struct TRACK_OBJECT_SAMPLE *sample)
 		 PIPE_UPPER_CENTER_PLAN_INDEX, PIPE_UPPER_LEFT_OUTER_PLAN_INDEX,
 		 PIPE_UPPER_LEFT_INNER_PLAN_INDEX, PIPE_UPPER_RIGHT_OUTER_PLAN_INDEX,
 		 PIPE_UPPER_RIGHT_INNER_PLAN_INDEX}};
-	legacy_s16 value;
-	legacy_s16 value2;
 
-	value = sample->physical_model == PHYSICAL_MODEL_PIPE ? PIPE_FULL : PIPE_HALF;
+	legacy_s16 value = sample->physical_model == PHYSICAL_MODEL_PIPE ? PIPE_FULL : PIPE_HALF;
 	if (absolute_word(sample->next_position.x) >= PIPE_HALF_WIDTH &&
 		sample->absolute_x <= PIPE_HALF_WIDTH) {
 		wallHeight = PIPE_WALL_HEIGHT;
@@ -1039,7 +1005,7 @@ static void track_object_pipe(struct TRACK_OBJECT_SAMPLE *sample)
 	if (sample->absolute_x < PIPE_SURFACE_HALF_WIDTH) {
 		current_surf_type = (legacy_u8)sample->surface_type;
 	}
-	value2 = sample->height > PIPE_WALL_HEIGHT ? PIPE_UPPER_HALF : PIPE_LOWER_HALF;
+	legacy_s16 value2 = sample->height > PIPE_WALL_HEIGHT ? PIPE_UPPER_HALF : PIPE_LOWER_HALF;
 	if (track_object_half_pipe_floor(sample, value, value2)) {
 		return;
 	}
@@ -1056,15 +1022,14 @@ static void track_object_corkscrew_left_right(struct TRACK_OBJECT_SAMPLE *sample
 		 CORK_LR_UPPER_CENTER_SEGMENT, CORK_LR_UPPER_LEFT_OUTER_SEGMENT,
 		 CORK_LR_UPPER_LEFT_INNER_SEGMENT, CORK_LR_UPPER_RIGHT_OUTER_SEGMENT,
 		 CORK_LR_UPPER_RIGHT_INNER_SEGMENT}};
-	legacy_s16 value2;
-	legacy_s16 value3;
 
 	if (sample->absolute_x >= CORK_LR_HALF_WIDTH || sample->height >= CORK_LR_MAX_HEIGHT) {
 		return;
 	}
 	current_surf_type = (legacy_u8)sample->surface_type;
-	value2 = sample->height > CORK_LR_UPPER_HEIGHT ? CORK_LR_UPPER_HALF : CORK_LR_LOWER_HALF;
-	value3 = segments[value2][track_object_pipe_section(sample)];
+	legacy_s16 value2 =
+		sample->height > CORK_LR_UPPER_HEIGHT ? CORK_LR_UPPER_HALF : CORK_LR_LOWER_HALF;
+	legacy_s16 value3 = segments[value2][track_object_pipe_section(sample)];
 	if (value3 != CORK_LR_NO_SEGMENT && sample->position.z > corkLR_negZBound[value3] &&
 		sample->position.z < corkLR_posZBound[value3]) {
 		planindex = LEGACY_S16_WRAP_ADD(value3, CORK_LR_PLAN_BASE);
@@ -1080,14 +1045,11 @@ static void track_object_corkscrew_arc(struct TRACK_OBJECT_SAMPLE *sample, legac
 									   legacy_s16 value2, legacy_s16 value3,
 									   legacy_s16 terrain_angle)
 {
-	legacy_s16 radius;
-	legacy_s16 angle_step;
-
-	radius = (legacy_s16)polarRadius2D(value, sample->position.z);
+	legacy_s16 radius = (legacy_s16)polarRadius2D(value, sample->position.z);
 	if (radius <= CORK_UD_INNER_RADIUS || radius >= CORK_UD_OUTER_RADIUS) {
 		return;
 	}
-	angle_step =
+	legacy_s16 angle_step =
 		(legacy_s16)((((legacy_u16)LEGACY_S16_WRAP_NEGATE(LEGACY_S16_WRAP_SUB(
 						   (legacy_s16)polarAngle(value, sample->position.z), ANGLE_QUARTER_TURN)) &
 					   ANGLE_MASK) *
@@ -1109,11 +1071,10 @@ static void track_object_corkscrew_arc(struct TRACK_OBJECT_SAMPLE *sample, legac
 
 static void track_object_corkscrew_up_down(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_s16 value;
-	legacy_s16 value2;
 	legacy_s16 value3;
 	legacy_s16 terrain_angle;
-
+	legacy_s16 value;
+	legacy_s16 value2;
 	if (sample->physical_model == PHYSICAL_MODEL_CORKSCREW_UP_DOWN_A) {
 		value = LEGACY_S16_WRAP_NEGATE(sample->position.x);
 		value2 = CORK_UD_A_PLAN_BASE;
@@ -1302,10 +1263,8 @@ static const struct TRACK_OBJECT_HANDLER track_object_handlers[] = {
 
 static void track_object_model(struct TRACK_OBJECT_SAMPLE *sample)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < sizeof(track_object_handlers) / sizeof(track_object_handlers[0]);
-		 index++) {
+	for (legacy_u16 index = 0;
+		 index < sizeof(track_object_handlers) / sizeof(track_object_handlers[0]); index++) {
 		if (track_object_handlers[index].physical_model == sample->physical_model) {
 			track_object_handlers[index].handle(sample);
 			return;
@@ -1317,17 +1276,15 @@ static void track_object_terrain(const struct VECTOR *world_position, legacy_u8 
 {
 	static const legacy_s16 water_angles[4] = {TERRAIN_SLOPE_2_ANGLE, TERRAIN_SLOPE_3_ANGLE,
 											   TERRAIN_SLOPE_4_ANGLE, TERRAIN_SLOPE_5_ANGLE};
-	struct VECTOR position;
-	legacy_s16 terrain_angle;
-	legacy_s16 value;
 
+	struct VECTOR position;
 	if (terrain_tile == TERRAIN_WATER_TILE) {
 		current_surf_type = CAR_SURFACE_WATER;
 	} else if (terrain_tile >= TERRAIN_WATER_SLOPE_2 && terrain_tile <= TERRAIN_WATER_SLOPE_5) {
-		terrain_angle = water_angles[terrain_tile - TERRAIN_WATER_SLOPE_2];
+		legacy_s16 terrain_angle = water_angles[terrain_tile - TERRAIN_WATER_SLOPE_2];
 		position.x = LEGACY_S16_WRAP_SUB(world_position->x, elem_xCenter);
 		position.z = LEGACY_S16_WRAP_SUB(world_position->z, elem_zCenter);
-		value = LEGACY_S16_WRAP_ADD(
+		legacy_s16 value = LEGACY_S16_WRAP_ADD(
 			multiply_and_scale(sin_fast((legacy_u16)terrain_angle), position.z),
 			multiply_and_scale(cos_fast((legacy_u16)terrain_angle), position.x));
 		if (value < 0) {
@@ -1344,9 +1301,8 @@ static legacy_s16 track_object_hill(const struct VECTOR *world_position, legacy_
 {
 	static const legacy_s16 orientations[4] = {0, ANGLE_THREE_QUARTER_TURN, ANGLE_HALF_TURN,
 											   ANGLE_QUARTER_TURN};
-	struct VECTOR position;
-	legacy_s16 value;
 
+	struct VECTOR position;
 	position.x =
 		LEGACY_S16_WRAP_SUB(world_position->x, (legacy_s16)track_column_centers[track_column]);
 	position.z = LEGACY_S16_WRAP_SUB(world_position->z, (legacy_s16)terraincenterpos[track_row]);
@@ -1360,7 +1316,7 @@ static legacy_s16 track_object_hill(const struct VECTOR *world_position, legacy_
 			planindex = TERRAIN_FLAT_PLANE_INDEX;
 		}
 	} else {
-		value = LEGACY_S16_WRAP_ADD(
+		legacy_s16 value = LEGACY_S16_WRAP_ADD(
 			multiply_and_scale(sin_fast((legacy_u16)TERRAIN_SLOPE_5_ANGLE), position.z),
 			multiply_and_scale(cos_fast((legacy_u16)TERRAIN_SLOPE_5_ANGLE), position.x));
 		if (terrain_tile <= TERRAIN_SLOPE_DOWN_LAST_TILE) {
@@ -1382,9 +1338,6 @@ static void track_object_world_collision(const struct VECTOR *world_position,
 										 legacy_s16 element_orientation,
 										 legacy_s16 wall_orientation_modifier)
 {
-	struct TRACK_WALL far *wall;
-	legacy_s16 value;
-
 	if (planindex > NO_PLANE_INDEX) {
 		planindex = LEGACY_S16_WRAP_MUL(planindex, PLANE_ORIENTATION_COUNT);
 		switch ((legacy_u16)element_orientation) {
@@ -1401,7 +1354,8 @@ static void track_object_world_collision(const struct VECTOR *world_position,
 	}
 	current_planptr = &planptr[planindex];
 	if (current_surf_type == CAR_SURFACE_GRASS) {
-		value = LEGACY_S16_FROM_BITS((legacy_u16)(world_position->z ^ world_position->x));
+		legacy_s16 value =
+			LEGACY_S16_FROM_BITS((legacy_u16)(world_position->z ^ world_position->x));
 		terrainHeight = LEGACY_S16_WRAP_ADD(
 			terrainHeight, (legacy_s16)(LEGACY_U16_SAR(value, GRASS_HEIGHT_HASH_SHIFT) &
 										GRASS_HEIGHT_VARIATION_MASK));
@@ -1412,7 +1366,7 @@ static void track_object_world_collision(const struct VECTOR *world_position,
 	if (wallindex < 0) {
 		return;
 	}
-	wall = &wallptr[wallindex];
+	struct TRACK_WALL far *wall = &wallptr[wallindex];
 	wallOrientation =
 		(legacy_s16)((LEGACY_S16_WRAP_ADD(
 						 LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_NEGATE(wall->orientation),
@@ -1447,12 +1401,8 @@ static legacy_s16 track_object_sample(struct TRACK_OBJECT_SAMPLE *sample,
 									  legacy_s16 track_row, legacy_s16 track_column,
 									  legacy_u8 terrain_tile)
 {
-	struct TRACKOBJECT *track_object;
-	legacy_s16 element_orientation;
-	legacy_u8 track_tile;
-
-	element_orientation = 0;
-	track_tile = track_element_map[terrainrows[track_row] + track_column];
+	legacy_u8 track_tile = track_element_map[terrainrows[track_row] + track_column];
+	legacy_s16 element_orientation = 0;
 	if (track_tile == TRACK_TILE_EMPTY) {
 		return element_orientation;
 	}
@@ -1478,7 +1428,7 @@ static legacy_s16 track_object_sample(struct TRACK_OBJECT_SAMPLE *sample,
 		track_tile = subst_hillroad_track(terrain_tile, track_tile);
 	}
 
-	track_object = &trkObjectList[track_tile];
+	struct TRACKOBJECT *track_object = &trkObjectList[track_tile];
 	sample->physical_model = (legacy_s8)track_object->ss_physicalModel;
 	element_orientation = (legacy_s16)track_object->ss_rotY;
 	track_rotate_local(&sample->position, element_orientation);
@@ -1503,12 +1453,6 @@ static legacy_s16 track_object_sample(struct TRACK_OBJECT_SAMPLE *sample,
 
 void build_track_object(struct VECTOR *world_position, struct VECTOR *next_world_position)
 {
-	struct TRACK_OBJECT_SAMPLE sample;
-	legacy_s16 element_orientation;
-	legacy_s16 track_column;
-	legacy_s16 track_row;
-	legacy_u8 terrain_tile;
-
 	planindex = NO_PLANE_INDEX;
 	wallindex = TRACK_WALL_NONE;
 	wallHeight = TRACK_WALL_DEFAULT_HEIGHT;
@@ -1516,17 +1460,17 @@ void build_track_object(struct VECTOR *world_position, struct VECTOR *next_world
 	corkFlag = CORKSCREW_INACTIVE;
 	current_surf_type = CAR_SURFACE_GRASS;
 	track_wall_collision_enabled = TRACK_COLLISION_ENABLED;
+	struct TRACK_OBJECT_SAMPLE sample;
 	sample.wall_orientation_modifier = 0;
-	element_orientation = 0;
 	terrainHeight = 0;
-	terrain_tile = TERRAIN_TILE_NONE;
+	legacy_u8 terrain_tile = TERRAIN_TILE_NONE;
 
-	track_column = LEGACY_S16_SAR(world_position->x, TRACK_TILE_POSITION_SHIFT);
-	track_row = LEGACY_S16_SAR(world_position->z, TRACK_TILE_POSITION_SHIFT);
+	legacy_s16 track_column = LEGACY_S16_SAR(world_position->x, TRACK_TILE_POSITION_SHIFT);
+	legacy_s16 track_row = LEGACY_S16_SAR(world_position->z, TRACK_TILE_POSITION_SHIFT);
 	sample.physical_model = PHYSICAL_MODEL_NONE;
+	legacy_s16 element_orientation = 0;
 	if (track_column >= 0 && track_column <= TRACK_GRID_LAST_INDEX && track_row >= 0 &&
 		track_row <= TRACK_GRID_LAST_INDEX) {
-
 		elem_xCenter = (legacy_s16)track_column_centers[track_column];
 		elem_zCenter = (legacy_s16)terraincenterpos[track_row];
 		terrain_tile = track_terrain_map[trackrows[track_row] + track_column];

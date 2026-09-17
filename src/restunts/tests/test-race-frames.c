@@ -14,8 +14,7 @@ static struct RECTANGLE dirty_rect;
 static legacy_s8 text_resource[8];
 static void trace(legacy_u32 value)
 {
-	unsigned i;
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		trace_hash = (trace_hash ^ (value & 255U)) * UINT32_C(16777619);
 		value >>= 8;
 	}

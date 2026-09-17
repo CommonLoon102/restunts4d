@@ -114,18 +114,14 @@ struct file_find_dos {
 // FIXME: DOS specific implementation.
 const legacy_s8 *file_find(const legacy_s8 *query)
 {
-	legacy_s8 const *chsrc;
-	legacy_s8 *chdst;
-	const legacy_s8 *found_name;
-
-	found_name = dos_file_find_first(query);
+	const legacy_s8 *found_name = dos_file_find_first(query);
 	if (found_name == 0) {
 		return 0;
 	}
 
 	// Copy path from query.
-	chdst = g_find.dirdelim = g_find.path;
-	for (chsrc = query; *chsrc; ++chsrc, ++chdst) {
+	legacy_s8 *chdst = g_find.dirdelim = g_find.path;
+	for (legacy_s8 const *chsrc = query; *chsrc; ++chsrc, ++chdst) {
 		*chdst = *chsrc;
 
 		if (*chdst == ':' || *chdst == '\\') {
@@ -143,9 +139,7 @@ const legacy_s8 *file_find(const legacy_s8 *query)
 // FIXME: DOS specific implementation.
 const legacy_s8 *file_find_next(void)
 {
-	const legacy_s8 *found_name;
-
-	found_name = dos_file_find_next();
+	const legacy_s8 *found_name = dos_file_find_next();
 	if (found_name == 0) {
 		return 0;
 	}
@@ -203,11 +197,10 @@ static legacy_u16 file_bytes_to_paras(legacy_s32 length)
 // Get number of 16-byte blocks needed to store entire file.
 legacy_u16 file_paras(const legacy_s8 *filename, legacy_s16 fatal)
 {
-	legacy_s32 length;
 	fileio_handle file;
 	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) != FILEIO_INVALID_HANDLE) {
 		fileio_seek(file, 0, DOS_FILE_SEEK_END);
-		length = fileio_tell(file);
+		legacy_s32 length = fileio_tell(file);
 		fileio_close(file);
 
 		if (!fileio_error()) {
@@ -236,7 +229,6 @@ legacy_u16 file_paras_nofatal(const legacy_s8 *filename)
 // Get number of 16-byte blocks needed to store the final result of an assumed compressed file.
 legacy_u16 file_decomp_paras(const legacy_s8 *filename, legacy_s16 fatal)
 {
-	legacy_s32 length;
 	fileio_handle file;
 	legacy_u8 header[COMPR_HEADER_SIZE];
 	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) != FILEIO_INVALID_HANDLE) {
@@ -245,8 +237,8 @@ legacy_u16 file_decomp_paras(const legacy_s8 *filename, legacy_s16 fatal)
 
 		if (!fileio_error()) {
 			// May overflow, but all Stunts files are rather small.
-			length = (legacy_s32)LEGACY_READ_U16_LE(header + COMPR_SIZE_LOW_OFFSET) |
-					 ((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
+			legacy_s32 length = (legacy_s32)LEGACY_READ_U16_LE(header + COMPR_SIZE_LOW_OFFSET) |
+								((legacy_s32)header[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
 			return file_bytes_to_paras(length);
 		}
 	}
@@ -271,10 +263,10 @@ legacy_u16 file_decomp_paras_nofatal(const legacy_s8 *filename)
 // Read entire file to given destination. Optionally handle errors as fatal.
 void far *file_read(const legacy_s8 *filename, void far *dst, legacy_s16 fatal)
 {
-	legacy_s16 readlen;
 	void far *curdst = dst;
-	fileio_handle file;
 
+	legacy_s16 readlen;
+	fileio_handle file;
 	if ((file = fileio_open(filename, DOS_FILE_OPEN_EXISTING)) != FILEIO_INVALID_HANDLE) {
 		// Read one page at a time.
 		do {
@@ -321,16 +313,12 @@ void far *file_read_nofatal(const legacy_s8 *filename, void far *dst)
 // panel - so it is reproduced rather than corrected.
 legacy_s16 file_write(const legacy_s8 *filename, void far *src, legacy_u32 length, legacy_s16 fatal)
 {
-	legacy_u16 retval;
-	legacy_u16 wrtlen;
 	fileio_handle file;
-
-	retval = 0;
-
+	legacy_u16 retval = 0;
 	if ((file = fileio_open(filename, DOS_FILE_CREATE)) != FILEIO_INVALID_HANDLE) {
 		// Write one page at a time.
 		while (length != 0) {
-			wrtlen = length > FILE_IO_PAGE_SIZE ? FILE_IO_PAGE_SIZE : length;
+			legacy_u16 wrtlen = length > FILE_IO_PAGE_SIZE ? FILE_IO_PAGE_SIZE : length;
 
 			if (fileio_write(src, wrtlen, 1, file) != wrtlen) {
 				// Either DOS interrupt 33 function 64 set carry, or it wrote
@@ -394,18 +382,15 @@ legacy_s16 file_write_nofatal(const legacy_s8 *filename, void far *src, legacy_u
 legacy_u32 file_decomp_rle_seq(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u32 srclen,
 							   legacy_u8 esc)
 {
-	legacy_u8 cur, rep;
-	legacy_u8 huge *seqstart, huge *seqend;
-
 	legacy_u8 huge *srcend = src + srclen;
 	legacy_u8 huge *dststart = dst;
 
 	while (src < srcend) {
-		cur = *src++;
+		legacy_u8 cur = *src++;
 
 		// Byte sequence start.
 		if (cur == esc) {
-			seqstart = src;
+			legacy_u8 huge *seqstart = src;
 
 			// Copy sequence.
 			while ((cur = *src++) != esc) {
@@ -413,8 +398,8 @@ legacy_u32 file_decomp_rle_seq(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_
 			}
 
 			// Number of repetitions, already written once.
-			rep = (*src++) - 1;
-			seqend = src;
+			legacy_u8 rep = (*src++) - 1;
+			legacy_u8 huge *seqend = src;
 
 			// Copy remaining repetitions. The original is a do-while
 			// (`dec dl / jnz short loc_30D5A`), so a stored count of 1
@@ -444,14 +429,13 @@ legacy_u32 file_decomp_rle_seq(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_
 legacy_u32 file_decomp_rle_single(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u32 len,
 								  legacy_u8 *esclookup)
 {
-	legacy_u8 cur, rep;
-	legacy_u16 repw;
-
 	legacy_u8 huge *dststart = dst;
 	legacy_u8 huge *dstend = dst + len;
 
+	legacy_u16 repw;
+	legacy_u8 rep;
 	while (dst < dstend) {
-		cur = *src++;
+		legacy_u8 cur = *src++;
 
 		if (esclookup[cur]) {
 			switch (esclookup[cur]) {
@@ -494,12 +478,10 @@ legacy_u32 file_decomp_rle_single(legacy_u8 huge *src, legacy_u8 huge *dst, lega
 static void far *file_relocate_decomp_output(void far *destination, legacy_u16 decompparas,
 											 legacy_u32 length)
 {
-	legacy_u16 paras;
-	void far *source;
-
-	paras = file_bytes_to_paras((legacy_s32)length);
-	source = dos_memory_make_pointer(decompparas - paras + dos_memory_pointer_segment(destination),
-									 dos_memory_pointer_offset(destination));
+	legacy_u16 paras = file_bytes_to_paras((legacy_s32)length);
+	void far *source =
+		dos_memory_make_pointer(decompparas - paras + dos_memory_pointer_segment(destination),
+								dos_memory_pointer_offset(destination));
 	copy_paras_reverse(dos_memory_pointer_segment(destination), dos_memory_pointer_segment(source),
 					   paras);
 	return source;
@@ -508,47 +490,41 @@ static void far *file_relocate_decomp_output(void far *destination, legacy_u16 d
 // Decompress run-length encoded sub-file.
 legacy_u32 file_decomp_rle(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u16 decompparas)
 {
-	legacy_u32 len, srclen, passlen;
-	legacy_u16 skipseq, i;
-	legacy_u8 esclookup[RS_RLE_ESCLOOKUP_LEN];
-	legacy_u8 huge *origsrc;
-	legacy_u8 huge *escapes;
-	legacy_u8 esclen;
-
 	(void)decompparas;
 
 	// Get decompressed size from header.
-	len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
-		  ((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
-	origsrc = src += COMPR_HEADER_SIZE;
+	legacy_u32 len = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
+					 ((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
+	legacy_u8 huge *origsrc = src += COMPR_HEADER_SIZE;
 
 	// Get source size and escape codes.
-	srclen =
+	legacy_u32 srclen =
 		LEGACY_READ_U16_LE(src) | ((legacy_u32)src[COMPR_RLE_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
-	esclen = src[COMPR_RLE_ESCLEN_OFFSET];
-	escapes = src + COMPR_RLE_HEADER_SIZE;
+	legacy_u8 esclen = src[COMPR_RLE_ESCLEN_OFFSET];
+	legacy_u8 huge *escapes = src + COMPR_RLE_HEADER_SIZE;
 
 	// MSB denotes skipping the initial pass for byte sequence runs. Match the
 	// original's strict compare against 128: exactly 128 still runs the pass,
 	// using the byte in the sequence-escape slot even though the declared
 	// escape-code count is zero.
-	skipseq = esclen > BYTE_HIGH_BIT;
+	legacy_u16 skipseq = esclen > BYTE_HIGH_BIT;
 	esclen &= (legacy_u8)~BYTE_HIGH_BIT;
 
 	// Set pos to after escape codes.
 	src = origsrc + COMPR_RLE_HEADER_SIZE + esclen;
 
 	// Escape code lookup.
-	for (i = 0; i < RS_RLE_ESCLOOKUP_LEN; ++i) {
+	legacy_u8 esclookup[RS_RLE_ESCLOOKUP_LEN];
+	for (legacy_u16 i = 0; i < RS_RLE_ESCLOOKUP_LEN; ++i) {
 		esclookup[i] = 0;
 	}
 
-	for (i = 0; i < esclen; ++i) {
+	for (legacy_u16 i = 0; i < esclen; ++i) {
 		esclookup[escapes[i]] = i + 1;
 	}
 
 	if (!skipseq) {
-		passlen = file_decomp_rle_seq(src, dst, srclen, escapes[RS_RLE_ESCSEQ_POS]);
+		legacy_u32 passlen = file_decomp_rle_seq(src, dst, srclen, escapes[RS_RLE_ESCSEQ_POS]);
 
 		// In main decomp func:
 		src = file_relocate_decomp_output(dst, decompparas, passlen);
@@ -580,13 +556,14 @@ struct VLE_DECODER {
 static legacy_u8 huge *file_vle_read_alphabet(struct VLE_DECODER *decoder, legacy_u8 huge *source,
 											  legacy_u8 escape_length)
 {
-	legacy_u16 index, code_limit, alphabet_length;
-	legacy_u8 width_symbol_count;
 	// Generate the canonical code limits and alphabet offsets for each width.
+	legacy_u16 index;
+	legacy_u16 alphabet_length;
+	legacy_u16 code_limit;
 	for (index = 0, code_limit = 0, alphabet_length = 0; index < escape_length;
 		 ++index, code_limit *= VLE_ALPHABET_BRANCH_FACTOR) {
 		decoder->escape_alphabet_offsets[index] = alphabet_length - code_limit;
-		width_symbol_count = *source++;
+		legacy_u8 width_symbol_count = *source++;
 		code_limit += width_symbol_count;
 		alphabet_length += width_symbol_count;
 		decoder->escape_code_limits[index] = code_limit;
@@ -600,15 +577,17 @@ static legacy_u8 huge *file_vle_read_alphabet(struct VLE_DECODER *decoder, legac
 static void file_vle_prepare_lookup(struct VLE_DECODER *decoder, legacy_u8 huge *source,
 									legacy_u8 escape_length)
 {
-	legacy_u16 width, width_distribution, index, alphabet_index;
-	legacy_u8 symbol_width, symbol_count, symbols_left;
 	// Expand short codes into byte lookup tables; pad longer prefixes as escapes.
-	width = 1;
-	width_distribution = (escape_length >= BYTE_BIT_COUNT ? BYTE_BIT_COUNT : escape_length);
-	symbol_count = RS_VLE_NUM_SYMB;
+	legacy_u16 width = 1;
+	legacy_u16 width_distribution =
+		(escape_length >= BYTE_BIT_COUNT ? BYTE_BIT_COUNT : escape_length);
+	legacy_u8 symbol_count = RS_VLE_NUM_SYMB;
+	legacy_u16 alphabet_index;
+	legacy_u16 index;
 	for (index = 0, alphabet_index = 0; width <= width_distribution; ++width, symbol_count >>= 1) {
-		for (symbol_width = *source++; symbol_width > 0; --symbol_width, ++alphabet_index) {
-			for (symbols_left = symbol_count; symbols_left; --symbols_left, ++index) {
+		for (legacy_u8 symbol_width = *source++; symbol_width > 0;
+			 --symbol_width, ++alphabet_index) {
+			for (legacy_u8 symbols_left = symbol_count; symbols_left; --symbols_left, ++index) {
 				decoder->symbols[index] = decoder->alphabet[alphabet_index];
 				decoder->widths[index] = width;
 			}
@@ -637,11 +616,9 @@ static legacy_u8 file_vle_read_byte(struct VLE_DECODER *decoder)
 
 static legacy_u8 file_vle_expand_escape(struct VLE_DECODER *decoder, legacy_u8 huge *destination)
 {
-	legacy_u16 index;
-	legacy_u8 code, next_width;
-	code = decoder->current_word;
+	legacy_u8 code = decoder->current_word;
 	decoder->current_word >>= BYTE_SHIFT;
-	index = VLE_EXTENDED_CODE_START_WIDTH;
+	legacy_u16 index = VLE_EXTENDED_CODE_START_WIDTH;
 	while (1) {
 		if (!decoder->current_width) {
 			code = file_vle_read_byte(decoder);
@@ -659,7 +636,7 @@ static legacy_u8 file_vle_expand_escape(struct VLE_DECODER *decoder, legacy_u8 h
 		}
 	}
 	decoder->current_word = (code << decoder->current_width) | file_vle_read_byte(decoder);
-	next_width = BYTE_BIT_COUNT - decoder->current_width;
+	legacy_u8 next_width = BYTE_BIT_COUNT - decoder->current_width;
 	decoder->current_width = BYTE_BIT_COUNT;
 	return next_width;
 }
@@ -680,14 +657,13 @@ static legacy_u8 file_vle_decode_direct(struct VLE_DECODER *decoder, legacy_u8 h
 // Decompress variable-length encoded sub-file.
 legacy_u32 file_decomp_vle(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u16 decompparas)
 {
-	struct VLE_DECODER decoder;
-	legacy_u32 len, lenleft;
-	legacy_u8 escape_length, code, next_width;
 	(void)decompparas;
-	len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
-					((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
+	legacy_u32 lenleft;
+	legacy_u32 len = lenleft = LEGACY_READ_U16_LE(src + COMPR_SIZE_LOW_OFFSET) |
+							   ((legacy_u32)src[COMPR_SIZE_HIGH_OFFSET] << LEGACY_WORD_BITS);
 	src += COMPR_HEADER_SIZE;
-	escape_length = *src++;
+	legacy_u8 escape_length = *src++;
+	struct VLE_DECODER decoder;
 	decoder.additive = (escape_length & BYTE_HIGH_BIT) == BYTE_HIGH_BIT;
 	escape_length &= (legacy_u8)~BYTE_HIGH_BIT;
 	// Save the code stream while revisiting the width data for direct lookups.
@@ -701,8 +677,8 @@ legacy_u32 file_decomp_vle(legacy_u8 huge *src, legacy_u8 huge *dst, legacy_u16 
 	// The original writes len + 1 bytes but returns the declared header length.
 	++lenleft;
 	while (lenleft) {
-		code = decoder.current_word >> BYTE_SHIFT;
-		next_width = decoder.widths[code];
+		legacy_u8 code = decoder.current_word >> BYTE_SHIFT;
+		legacy_u8 next_width = decoder.widths[code];
 		if (next_width > BYTE_BIT_COUNT) {
 			next_width = file_vle_expand_escape(&decoder, dst);
 		} else {
@@ -733,34 +709,30 @@ static legacy_s16 file_decomp_pass(legacy_u8 far *source, legacy_u8 far *destina
 // Decompress file. Returns pointer to result, NULL or raises fatal error.
 void far *file_decomp(const legacy_s8 *filename, legacy_s16 fatal)
 {
-	legacy_u32 passlen;
-	legacy_u16 paras, decompparas;
-	legacy_u8 passes;
-	legacy_u8 far *src;
-	legacy_u8 far *dst;
-	legacy_s16 err = 0;
-
 	// Check if resource archive is already loaded.
-	dst = mmgr_get_chunk_by_name(filename);
+	legacy_u8 far *dst = mmgr_get_chunk_by_name(filename);
 	if (dst) {
 		return dst;
 	}
 
-	decompparas = file_decomp_paras(filename, fatal);
+	legacy_u16 decompparas = file_decomp_paras(filename, fatal);
 
+	legacy_s16 err = 0;
+	legacy_u32 passlen;
 	if (decompparas) {
 		// Allocate extra paragraphs for alphabet and escape tables
 		// overhead used during decompression.
 		decompparas += COMPRESSION_WORKSPACE_PARAGRAPHS;
 		dst = mmgr_alloc_pages(filename, decompparas);
 
-		paras = file_paras(filename, fatal);
+		legacy_u16 paras = file_paras(filename, fatal);
 		if (paras) {
-			src = dos_memory_make_pointer(decompparas - paras + dos_memory_pointer_segment(dst),
-										  dos_memory_pointer_offset(dst));
+			legacy_u8 far *src =
+				dos_memory_make_pointer(decompparas - paras + dos_memory_pointer_segment(dst),
+										dos_memory_pointer_offset(dst));
 			src = file_read(filename, src, fatal);
 			if (src) {
-				passes = *src;
+				legacy_u8 passes = *src;
 
 				// If the multi-pass flag is set, the first byte contains the
 				// number of compression passes and the next three bytes holds
@@ -819,15 +791,12 @@ void far *file_decomp_nofatal(const legacy_s8 *filename)
 // Allocates, reads and returns a pointer to the contents of a binary file
 void far *file_load_binary(const legacy_s8 *filename, legacy_s16 fatal)
 {
-	void far *memptr;
-	legacy_s16 numparas;
-
-	memptr = mmgr_get_chunk_by_name(filename);
+	void far *memptr = mmgr_get_chunk_by_name(filename);
 	if (dos_memory_pointer_segment(memptr) != 0) {
 		return memptr;
 	}
 
-	numparas = file_paras(filename, fatal);
+	legacy_s16 numparas = file_paras(filename, fatal);
 	if (numparas == 0) {
 		return 0;
 	}
@@ -897,7 +866,6 @@ void far *file_load_resource(legacy_s16 resource_type, const legacy_s8 *filename
 	}
 	return result;
 #else
-	legacy_s16 dearesult;
 	while (1) {
 		result = file_try_load_resource(resource_type, filename);
 		// Optional resource types report failure to the caller; every other
@@ -907,7 +875,7 @@ void far *file_load_resource(legacy_s16 resource_type, const legacy_s8 *filename
 			return result;
 		}
 
-		dearesult = show_disk_error_dialog();
+		legacy_s16 dearesult = show_disk_error_dialog();
 		if (dearesult == FILE_ERROR_DIALOG_ABORT) {
 			return 0;
 		}
@@ -927,7 +895,6 @@ void far *file_load_resfile(const legacy_s8 *filename)
 {
 	legacy_s8 name[RESOURCE_NAME_BUFFER_SIZE];
 	void far *result;
-
 #ifdef RESTUNTS_HEADLESS
 	result = file_load_suffixed_resource(FILE_RESOURCE_BINARY_OPTIONAL, filename, ".res", name);
 	if (result != 0) {
@@ -965,10 +932,8 @@ void unload_resource(void far *resptr)
 void far *file_load_3dres(const legacy_s8 *filename)
 {
 	legacy_s8 name[RESOURCE_NAME_BUFFER_SIZE];
-	void far *result;
-
 	while (1) {
-		result =
+		void far *result =
 			file_load_suffixed_resource(FILE_RESOURCE_COMPRESSED_OPTIONAL, filename, ".p3s", name);
 		if (result != 0) {
 			return result;
@@ -986,10 +951,9 @@ void far *file_load_3dres(const legacy_s8 *filename)
 void file_load_audiores(const legacy_s8 *songfile, const legacy_s8 *voicefile,
 						const legacy_s8 *name)
 {
-	void far *audiores;
 	voicefileptr = file_load_resource(FILE_RESOURCE_VOICE, voicefile);
 	songfileptr = file_load_resource(FILE_RESOURCE_SONG, songfile);
-	audiores = init_audio_resources(songfileptr, voicefileptr, name);
+	void far *audiores = init_audio_resources(songfileptr, voicefileptr, name);
 	load_audio_finalize(audiores);
 	is_audioloaded = 1;
 }
@@ -1008,13 +972,11 @@ legacy_s16 file_load_replay(const legacy_s8 *dir, const legacy_s8 *name)
 
 legacy_s16 file_write_replay(const legacy_s8 *filename)
 {
-	legacy_s16 ret;
-
 	replay_gameinfo_encode((legacy_u8 far *)replay_header_buffer, &gameconfig);
 
 	g_is_busy = 1;
-	ret = file_write_fatal(filename, replay_header_buffer,
-						   replay_file_size(gameconfig.game_recordedframes));
+	legacy_s16 ret = file_write_fatal(filename, replay_header_buffer,
+									  replay_file_size(gameconfig.game_recordedframes));
 	g_is_busy = 0;
 
 	return ret;

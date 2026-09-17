@@ -29,11 +29,10 @@ static void test_line_modes(void)
 				 {3, 10, DRAW_LINE_MODE_Y_MAJOR_RIGHT, 11},
 				 {-10, 3, DRAW_LINE_MODE_X_MAJOR_LEFT, 11},
 				 {10, 3, DRAW_LINE_MODE_X_MAJOR_RIGHT, 11}};
-	legacy_u16 line[DRAW_LINE_WORD_COUNT];
-	unsigned i;
 
 	reset_clip();
-	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
+	for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
 		memset(line, 0, sizeof(line));
 		line[DRAW_LINE_COLOR_INDEX] = 37;
 		assert(line_prepare_clipped(100, 100, 100 + cases[i].dx, 100 + cases[i].dy, line) == 0);
@@ -57,20 +56,18 @@ static void test_step_rounding(void)
 		legacy_u16 major, minor, step;
 	} cases[] = {{48, 1, 1365}, {49, 2, 2674},	 {50, 1, 1311}, {50, 2, 2621}, {50, 25, 32768},
 				 {51, 1, 1285}, {51, 25, 32125}, {52, 2, 2521}, {64, 1, 1024}, {150, 1, 437}};
-	legacy_u16 line[DRAW_LINE_WORD_COUNT];
-	legacy_u16 mode;
-	legacy_s16 dx, dy;
-	unsigned i, reverse;
 
 	reset_clip();
-	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
-		for (mode = DRAW_LINE_MODE_Y_MAJOR_LEFT; mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT; mode++) {
-			dx = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].minor : cases[i].major;
-			dy = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].major : cases[i].minor;
+	legacy_u16 line[DRAW_LINE_WORD_COUNT];
+	for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		for (legacy_u16 mode = DRAW_LINE_MODE_Y_MAJOR_LEFT; mode <= DRAW_LINE_MODE_X_MAJOR_RIGHT;
+			 mode++) {
+			legacy_s16 dx = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].minor : cases[i].major;
+			legacy_s16 dy = mode < DRAW_LINE_MODE_X_MAJOR_LEFT ? cases[i].major : cases[i].minor;
 			if (mode == DRAW_LINE_MODE_Y_MAJOR_LEFT || mode == DRAW_LINE_MODE_X_MAJOR_LEFT) {
 				dx = -dx;
 			}
-			for (reverse = 0; reverse < 2; reverse++) {
+			for (unsigned reverse = 0; reverse < 2; reverse++) {
 				memset(line, 0, sizeof(line));
 				assert(line_prepare_unclipped(reverse ? 160 + dx : 160, reverse ? 25 + dy : 25,
 											  reverse ? 160 : 160 + dx, reverse ? 25 : 25 + dy,
@@ -90,9 +87,8 @@ static void test_step_rounding(void)
 
 static void test_clipped_endpoints(void)
 {
-	legacy_u16 line[DRAW_LINE_WORD_COUNT] = {0};
-
 	reset_clip();
+	legacy_u16 line[DRAW_LINE_WORD_COUNT] = {0};
 	assert(line_prepare_clipped(100, 190, 100, 10, line) == 0);
 	assert(line[DRAW_LINE_START_Y_INDEX] == 20);
 	assert(line[DRAW_LINE_END_Y_INDEX] == 179);
@@ -117,19 +113,16 @@ static legacy_u16 random_word(legacy_u32 *seed)
 
 static legacy_u32 line_fingerprint(legacy_u16 unclipped, legacy_u16 wide_coordinates)
 {
+	reset_clip();
 	static const legacy_u16 boundaries[] = {0,	   1,	  9,	 10,	19,	  20,	 179,
 											180,   309,	  310,	 319,	320,  15999, 16000,
 											32767, 32768, 49536, 49537, 65535};
 	legacy_u16 line[DRAW_LINE_WORD_COUNT];
 	legacy_u16 coordinates[4];
-	legacy_u16 result;
 	legacy_u32 seed = 271828UL;
 	legacy_u32 hash = 2166136261UL;
-	unsigned iteration, i;
-
-	reset_clip();
-	for (iteration = 0; iteration < 50000; iteration++) {
-		for (i = 0; i < 4; i++) {
+	for (unsigned iteration = 0; iteration < 50000; iteration++) {
+		for (unsigned i = 0; i < 4; i++) {
 			coordinates[i] = random_word(&seed);
 			if (wide_coordinates == 0) {
 				coordinates[i] = (legacy_u16)(coordinates[i] % 1000 - 300);
@@ -143,9 +136,10 @@ static legacy_u32 line_fingerprint(legacy_u16 unclipped, legacy_u16 wide_coordin
 			coordinates[0] %= 320;
 			coordinates[2] %= 320;
 		}
-		for (i = 0; i < DRAW_LINE_WORD_COUNT; i++) {
+		for (unsigned i = 0; i < DRAW_LINE_WORD_COUNT; i++) {
 			line[i] = random_word(&seed);
 		}
+		legacy_u16 result;
 		if (unclipped != 0) {
 			result = line_prepare_unclipped(coordinates[0], coordinates[1], coordinates[2],
 											coordinates[3], line);
@@ -154,7 +148,7 @@ static legacy_u32 line_fingerprint(legacy_u16 unclipped, legacy_u16 wide_coordin
 										  coordinates[3], line);
 		}
 		hash = (hash ^ result) * 16777619UL;
-		for (i = 0; i < DRAW_LINE_WORD_COUNT; i++) {
+		for (unsigned i = 0; i < DRAW_LINE_WORD_COUNT; i++) {
 			hash = (hash ^ line[i]) * 16777619UL;
 		}
 	}
@@ -166,12 +160,11 @@ int main(void)
 	/* All setup words, including words retained on rejection, contribute to
 	 * these baselines, updated for the original long-line slope rounding. */
 	static const legacy_u32 expected[] = {2774831423UL, 1964948289UL, 3864549147UL, 4141859671UL};
-	unsigned i;
 
 	test_line_modes();
 	test_step_rounding();
 	test_clipped_endpoints();
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		assert(line_fingerprint(i & 1U, i >> 1U) == expected[i]);
 	}
 	return 0;

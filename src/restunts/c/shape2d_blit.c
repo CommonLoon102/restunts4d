@@ -50,41 +50,30 @@ static void shape2d_write_raster(legacy_u8 far *bitmap, legacy_u16 destination, 
 static void shape2d_render_rle(struct SHAPE2D far *shape, legacy_u16 x, legacy_u16 y,
 							   legacy_s16 operation)
 {
-	legacy_u8 far *source_ptr;
-	legacy_u8 far *bitmap;
-	legacy_u16 shape_segment;
-	legacy_u16 source;
-	legacy_u16 line_entry;
-	legacy_u16 destination;
-	legacy_u16 width;
-	legacy_u16 remaining;
-	legacy_u16 old_remaining;
-	legacy_u16 count;
-	legacy_u8 control_bits;
-	legacy_s8 control;
-	legacy_u8 value;
-	legacy_s16 literal;
-
-	shape_segment = dos_memory_pointer_segment(shape);
-	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
-	width = shape2d_get_width(shape);
-	line_entry = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(drawing_sprite.sprite_lineofs),
-									 LEGACY_U16_WRAP_MUL(y, LEGACY_WORD_BYTES));
-	destination = LEGACY_U16_WRAP_ADD(shape2d_get_word((legacy_u8 far *)dos_memory_make_pointer(
-										  dos_memory_pointer_segment(&drawing_sprite), line_entry)),
-									  x);
-	bitmap = (legacy_u8 far *)dos_memory_make_pointer(
+	legacy_u16 shape_segment = dos_memory_pointer_segment(shape);
+	legacy_u16 source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
+	legacy_u16 width = shape2d_get_width(shape);
+	legacy_u16 line_entry =
+		LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(drawing_sprite.sprite_lineofs),
+							LEGACY_U16_WRAP_MUL(y, LEGACY_WORD_BYTES));
+	legacy_u16 destination =
+		LEGACY_U16_WRAP_ADD(shape2d_get_word((legacy_u8 far *)dos_memory_make_pointer(
+								dos_memory_pointer_segment(&drawing_sprite), line_entry)),
+							x);
+	legacy_u8 far *bitmap = (legacy_u8 far *)dos_memory_make_pointer(
 		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
-	remaining = width;
+	legacy_u16 remaining = width;
+	legacy_u8 value;
 	for (;;) {
-		source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, source);
-		control_bits = *source_ptr;
+		legacy_u8 far *source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, source);
+		legacy_u8 control_bits = *source_ptr;
 		source++;
-		control = LEGACY_S8_FROM_BITS(control_bits);
+		legacy_s8 control = LEGACY_S8_FROM_BITS(control_bits);
 		if (control == 0) {
 			return;
 		}
-		literal = control < 0;
+		legacy_s16 literal = control < 0;
+		legacy_u16 count;
 		if (literal != 0) {
 			count = (legacy_u8)(0U - control_bits);
 		} else {
@@ -101,7 +90,7 @@ static void shape2d_render_rle(struct SHAPE2D far *shape, legacy_u16 x, legacy_u
 			}
 			shape2d_write_raster(bitmap, destination, value, operation);
 			destination++;
-			old_remaining = remaining;
+			legacy_u16 old_remaining = remaining;
 			remaining = LEGACY_U16_WRAP_SUB(remaining, 1U);
 			if (old_remaining == LEGACY_U16_SIGN_BIT || LEGACY_S16_FROM_BITS(remaining) <= 0) {
 				line_entry = LEGACY_U16_WRAP_ADD(line_entry, LEGACY_WORD_BYTES);
@@ -147,9 +136,7 @@ void shape2d_rle_mask(struct SHAPE2D far *shape, legacy_s16 x, legacy_s16 y)
 
 void shape2d_rle_or_far_pointer(legacy_u16 offset, legacy_u16 segment)
 {
-	struct SHAPE2D far *shape;
-
-	shape = (struct SHAPE2D far *)dos_memory_make_pointer(segment, offset);
+	struct SHAPE2D far *shape = (struct SHAPE2D far *)dos_memory_make_pointer(segment, offset);
 	shape2d_render_rle_at_position(shape, SHAPE2D_RASTER_OR);
 }
 
@@ -170,26 +157,16 @@ void shape2d_rle_copy_at_anchor(struct SHAPE2D far *shape, legacy_s16 x, legacy_
 
 struct SPRITE far *sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u16 unused_flags)
 {
-	legacy_s16 pages, i;
-	legacy_s8 *wnd;
-	legacy_s8 *nextwnd;
-	struct SPRITE far *farwnd;
-	legacy_s8 far *shapebuf;
-	struct SHAPE2D far *header;
-	legacy_u16 lineofs;
-	legacy_u8 *lineofsptr;
-	legacy_u8 far *farlineofsptr;
-	legacy_u16 wnddefseg;
-
 	(void)unused_flags;
 
-	wnddefseg = dos_memory_pointer_segment(&wnd_defs);
+	legacy_u16 wnddefseg = dos_memory_pointer_segment(&wnd_defs);
 
-	pages = ((width * height + SHAPE2D_HEADER_SIZE) >> DOS_PARAGRAPH_SHIFT) +
-			DOS_WINDOW_EXTRA_PARAGRAPH_COUNT;
-	shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
+	legacy_s16 pages = ((width * height + SHAPE2D_HEADER_SIZE) >> DOS_PARAGRAPH_SHIFT) +
+					   DOS_WINDOW_EXTRA_PARAGRAPH_COUNT;
+	legacy_s8 far *shapebuf = mmgr_alloc_pages("MCGA WINDOW", pages);
 
-	header = (struct SHAPE2D far *)dos_memory_make_pointer(dos_memory_pointer_segment(shapebuf), 0);
+	struct SHAPE2D far *header =
+		(struct SHAPE2D far *)dos_memory_make_pointer(dos_memory_pointer_segment(shapebuf), 0);
 	header->width = width;
 	header->height = height;
 	header->position_x = 0U;
@@ -198,8 +175,8 @@ struct SPRITE far *sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	header->centre_y = 0U;
 
 	// it is safe to read/write the pointers to next_wnd_def/wnd_defs, but not the contents
-	wnd = next_wnd_def;
-	nextwnd = next_wnd_def + sizeof(struct SPRITE) + height * sizeof(legacy_u16);
+	legacy_s8 *wnd = next_wnd_def;
+	legacy_s8 *nextwnd = next_wnd_def + sizeof(struct SPRITE) + height * sizeof(legacy_u16);
 	if (dos_memory_pointer_offset(nextwnd) >=
 		dos_memory_pointer_offset(&wnd_defs) + WINDOW_DEFINITION_TABLE_BYTES) {
 		fatal_error(window_row_table_overflow_message);
@@ -207,9 +184,9 @@ struct SPRITE far *sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	next_wnd_def = nextwnd;
 
 	// get a writable far pointer to the render_window_sprite
-	farwnd = dos_memory_make_pointer(wnddefseg, dos_memory_pointer_offset(wnd));
+	struct SPRITE far *farwnd = dos_memory_make_pointer(wnddefseg, dos_memory_pointer_offset(wnd));
 
-	lineofsptr = (legacy_u8 *)(wnd + sizeof(struct SPRITE));
+	legacy_u8 *lineofsptr = (legacy_u8 *)(wnd + sizeof(struct SPRITE));
 	farwnd->sprite_bitmapptr = header;
 	farwnd->sprite_lineofs = lineofsptr;
 	farwnd->sprite_left = 0;
@@ -222,14 +199,14 @@ struct SPRITE far *sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 	farwnd->sprite_raster_right = width;
 
 	// create a writable far pointer to the line offsets
-	farlineofsptr =
+	legacy_u8 far *farlineofsptr =
 		(legacy_u8 far *)dos_memory_make_pointer(wnddefseg, dos_memory_pointer_offset(lineofsptr));
-	lineofs = SHAPE2D_HEADER_SIZE;
+	legacy_u16 lineofs = SHAPE2D_HEADER_SIZE;
 	// One of several counted loops where the original uses `loop`, which runs
 	// 65536 times on a count of zero while this runs none. Reaching it needs a
 	// zero-height window; the same applies to the unflip and palette loops in
 	// this file.
-	for (i = 0; i < height; i++) {
+	for (legacy_s16 i = 0; i < height; i++) {
 		shape2d_put_word(farlineofsptr, lineofs);
 		farlineofsptr += LEGACY_WORD_BYTES;
 		lineofs += width;
@@ -240,15 +217,14 @@ struct SPRITE far *sprite_make_wnd(legacy_u16 width, legacy_u16 height, legacy_u
 
 void sprite_free_wnd(struct SPRITE far *render_window_sprite)
 {
-	legacy_u16 spritesize;
-
 	// The height comes from the bitmap header, not from the SPRITE: the
 	// original walks through sprite_bitmapptr to reach SHAPE2D.s2d_height.
 	// sprite_make_wnd initializes both heights alike, and normal clipping edits
 	// the drawing_sprite working copy rather than the stored window SPRITE, so using
 	// the bitmap field here is structural parity rather than a clipping repair.
-	spritesize = sizeof(struct SPRITE) +
-				 shape2d_get_height(render_window_sprite->sprite_bitmapptr) * sizeof(legacy_u16);
+	legacy_u16 spritesize =
+		sizeof(struct SPRITE) +
+		shape2d_get_height(render_window_sprite->sprite_bitmapptr) * sizeof(legacy_u16);
 	if (dos_memory_pointer_offset(render_window_sprite) + spritesize !=
 		dos_memory_pointer_offset(next_wnd_def)) {
 		fatal_error(window_release_order_message);
@@ -302,28 +278,23 @@ void sprite_restore_context(struct SPRITE *saved_context)
 legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 top,
 								  legacy_s16 bottom)
 {
-	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
-	struct SPRITE far *window;
-	legacy_u16 index;
-	legacy_s16 width;
-	legacy_s16 height;
-	legacy_s32 required;
-
-	width = LEGACY_S16_WRAP_SUB(right, left);
-	height = LEGACY_S16_WRAP_SUB(bottom, top);
-	required = ((legacy_s32)width * height) /
-				   ((legacy_s32)video_shape_width_scale * video_buffer_height_divisor) +
-			   WINDOW_ALLOCATION_OVERHEAD;
+	legacy_s16 width = LEGACY_S16_WRAP_SUB(right, left);
+	legacy_s16 height = LEGACY_S16_WRAP_SUB(bottom, top);
+	legacy_s32 required = ((legacy_s32)width * height) /
+							  ((legacy_s32)video_shape_width_scale * video_buffer_height_divisor) +
+						  WINDOW_ALLOCATION_OVERHEAD;
 	if (mmgr_get_res_ofs_diff_scaled() <= (legacy_u32)required) {
 		return 0;
 	}
 
 	mouse_draw_opaque_check();
-	window = sprite_make_wnd((legacy_u16)width, (legacy_u16)height, SPRITE_WINDOW_LEGACY_ARGUMENT);
-	index = sprite_background_stack_depth;
+	struct SPRITE far *window =
+		sprite_make_wnd((legacy_u16)width, (legacy_u16)height, SPRITE_WINDOW_LEGACY_ARGUMENT);
+	legacy_u16 index = sprite_background_stack_depth;
 	sprite_ptrs[index] = window;
 	sprite_background_saved_x[index] = left;
 	sprite_background_saved_y[index] = top;
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	sprite_save_context(saved_sprites);
 	fmemcpy(sprite_background_state_stack + index * sizeof(saved_sprites), saved_sprites,
 			sizeof(saved_sprites));
@@ -335,17 +306,15 @@ legacy_s16 sprite_push_background(legacy_s16 left, legacy_s16 right, legacy_s16 
 
 void sprite_pop_background(void)
 {
-	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
-	legacy_u16 index;
-
 	if (sprite_background_stack_depth == 0) {
 		return;
 	}
 	sprite_background_stack_depth--;
-	index = sprite_background_stack_depth;
+	legacy_u16 index = sprite_background_stack_depth;
 	mouse_draw_opaque_check();
 	sprite_shape_to_1(sprite_ptrs[index]->sprite_bitmapptr, sprite_background_saved_x[index],
 					  sprite_background_saved_y[index]);
+	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
 	fmemcpy(saved_sprites, sprite_background_state_stack + index * sizeof(saved_sprites),
 			sizeof(saved_sprites));
 	sprite_restore_context(saved_sprites);
@@ -366,10 +335,8 @@ void mouse_draw_opaque(void)
 
 void mouse_draw_transparent(void)
 {
+	legacy_s16 aligned_x = mouse_xpos - mouse_xpos % video_x_alignment;
 	struct SPRITE saved_sprites[SPRITE_STATE_COUNT];
-	legacy_s16 aligned_x;
-
-	aligned_x = mouse_xpos - mouse_xpos % video_x_alignment;
 	sprite_save_context(saved_sprites);
 	sprite_select_screen();
 	sprite_clear_shape_alt(mouse_background_sprite->sprite_bitmapptr, aligned_x, mouse_ypos);
@@ -381,35 +348,30 @@ void mouse_draw_transparent(void)
 
 void sprite_clear_target(legacy_u8 color)
 {
+	legacy_s16 top = drawing_sprite.sprite_top;
+	legacy_s16 left = drawing_sprite.sprite_left;
+	legacy_s16 right = drawing_sprite.sprite_right;
+	legacy_s16 pitch = drawing_sprite.sprite_pitch;
+	legacy_u8 far *bitmapptr = (legacy_u8 far *)drawing_sprite.sprite_bitmapptr;
 
-	legacy_s16 height, top, left, right, pitch, lines, width, widthdiff, i, j;
-	legacy_u16 ofs;
-	legacy_u8 far *bitmapptr;
-
-	top = drawing_sprite.sprite_top;
-	left = drawing_sprite.sprite_left;
-	right = drawing_sprite.sprite_right;
-	pitch = drawing_sprite.sprite_pitch;
-	bitmapptr = (legacy_u8 far *)drawing_sprite.sprite_bitmapptr;
-
-	lines = drawing_sprite.sprite_bottom - top;
+	legacy_s16 lines = drawing_sprite.sprite_bottom - top;
 	if (lines <= 0) {
 		return;
 	}
 
-	ofs = LEGACY_U16_WRAP_ADD(
+	legacy_u16 ofs = LEGACY_U16_WRAP_ADD(
 		shape2d_get_line_offset(dos_memory_pointer_segment(&drawing_sprite), (legacy_u16)top),
 		(legacy_u16)left);
 
-	width = right - left;
+	legacy_s16 width = right - left;
 	if (width <= 0) {
 		return;
 	}
 
-	widthdiff = pitch - width;
+	legacy_s16 widthdiff = pitch - width;
 
-	for (i = 0; i < lines; i++) {
-		for (j = 0; j < width; j++) {
+	for (legacy_s16 i = 0; i < lines; i++) {
+		for (legacy_s16 j = 0; j < width; j++) {
 			bitmapptr[ofs++] = color;
 		}
 		ofs += widthdiff;
@@ -420,15 +382,13 @@ static legacy_s16 shape2d_clip_blit_rows(legacy_u16 width, legacy_u16 *y, legacy
 										 legacy_u16 *clipped_rows)
 {
 	legacy_u16 sum;
-	legacy_u16 visible;
 	legacy_u16 overflow;
-
 	if (LEGACY_S16_FROM_BITS((*y)) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
 		sum = LEGACY_U16_WRAP_ADD((*y), (*clipped_rows));
 		if (LEGACY_S16_FROM_BITS(sum) <= LEGACY_S16_FROM_BITS(drawing_sprite.sprite_top)) {
 			return 0;
 		}
-		visible = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_top);
+		legacy_u16 visible = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_top);
 		overflow = LEGACY_U16_WRAP_SUB((*clipped_rows), visible);
 		(*source) = LEGACY_U16_WRAP_ADD((*source), (legacy_u16)((legacy_u32)overflow * width));
 		(*clipped_rows) = visible;
@@ -449,25 +409,18 @@ static legacy_s16 shape2d_clip_blit_rows(legacy_u16 width, legacy_u16 *y, legacy
 static legacy_s16 shape2d_clip_blit(struct SHAPE2D far *shape, legacy_u16 x, legacy_u16 y,
 									struct SHAPE2D_CLIP *clip)
 {
-	legacy_u16 width;
-	legacy_u16 height;
-	legacy_u16 source;
-	legacy_u16 clipped_rows;
-	legacy_u16 visible;
-	legacy_u16 overflow;
-	legacy_u16 sprite_width;
-	legacy_u16 sum;
-
-	width = shape2d_get_width(shape);
-	height = shape2d_get_height(shape);
-	source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
-	clipped_rows = height;
+	legacy_u16 width = shape2d_get_width(shape);
+	legacy_u16 height = shape2d_get_height(shape);
+	legacy_u16 source = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
+	legacy_u16 clipped_rows = height;
 	if (!shape2d_clip_blit_rows(width, &y, &source, &clipped_rows)) {
 		return 0;
 	}
 
-	visible = width;
+	legacy_u16 visible = width;
 	clip->source_advance = 0;
+	legacy_u16 sum;
+	legacy_u16 overflow;
 	if (LEGACY_S16_FROM_BITS(x) < LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left)) {
 		sum = LEGACY_U16_WRAP_ADD(x, visible);
 		if (LEGACY_S16_FROM_BITS(sum) <= LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left)) {
@@ -476,7 +429,8 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far *shape, legacy_u16 x, leg
 		visible = LEGACY_U16_WRAP_SUB(sum, drawing_sprite.sprite_left);
 		overflow = LEGACY_U16_WRAP_SUB(width, visible);
 		source = LEGACY_U16_WRAP_ADD(source, overflow);
-		sprite_width = LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_right, drawing_sprite.sprite_left);
+		legacy_u16 sprite_width =
+			LEGACY_U16_WRAP_SUB(drawing_sprite.sprite_right, drawing_sprite.sprite_left);
 		if (LEGACY_S16_FROM_BITS(drawing_sprite.sprite_right) <=
 			LEGACY_S16_FROM_BITS(drawing_sprite.sprite_left)) {
 			return 0;
@@ -513,15 +467,12 @@ static legacy_s16 shape2d_clip_blit(struct SHAPE2D far *shape, legacy_u16 x, leg
 static legacy_s16 shape2d_rle_next(struct SHAPE2D_RLE_CURSOR *cursor, legacy_u8 *value)
 {
 	legacy_u8 far *source_ptr;
-	legacy_u8 control_bits;
-	legacy_s8 control;
-
 	if (cursor->remaining == 0) {
 		source_ptr =
 			(legacy_u8 far *)dos_memory_make_pointer(cursor->shape_segment, cursor->source);
-		control_bits = *source_ptr;
+		legacy_u8 control_bits = *source_ptr;
 		cursor->source++;
-		control = LEGACY_S8_FROM_BITS(control_bits);
+		legacy_s8 control = LEGACY_S8_FROM_BITS(control_bits);
 		if (control == 0) {
 			return 0;
 		}
@@ -563,43 +514,35 @@ static legacy_s16 shape2d_rle_skip(struct SHAPE2D_RLE_CURSOR *cursor, legacy_u16
 static void shape2d_render_rle_clipped(struct SHAPE2D far *shape, legacy_u16 x, legacy_u16 y)
 {
 	struct SHAPE2D_CLIP clip;
-	struct SHAPE2D_RLE_CURSOR cursor;
-	legacy_u8 far *bitmap;
-	legacy_u16 data_start;
-	legacy_u16 skip;
-	legacy_u16 count;
-	legacy_u16 rows;
-	legacy_u16 destination;
-	legacy_u16 width;
-	legacy_u16 height;
-	legacy_u8 value;
-
 	if (!shape2d_clip_blit(shape, x, y, &clip)) {
 		return;
 	}
-	width = shape2d_get_width(shape);
-	height = shape2d_get_height(shape);
-	data_start = LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
+	legacy_u16 width = shape2d_get_width(shape);
+	legacy_u16 height = shape2d_get_height(shape);
+	legacy_u16 data_start =
+		LEGACY_U16_WRAP_ADD(dos_memory_pointer_offset(shape), SHAPE2D_HEADER_SIZE);
 	if (clip.source == data_start && clip.source_advance == 0 && clip.width == width &&
 		clip.rows == height) {
 		shape2d_render_rle(shape, x, y, SHAPE2D_RASTER_COPY);
 		return;
 	}
+	struct SHAPE2D_RLE_CURSOR cursor;
 	cursor.shape_segment = dos_memory_pointer_segment(shape);
 	cursor.source = data_start;
 	cursor.remaining = 0;
 	cursor.value = 0;
 	cursor.literal = 0;
-	skip = LEGACY_U16_WRAP_SUB(clip.source, data_start);
+	legacy_u16 skip = LEGACY_U16_WRAP_SUB(clip.source, data_start);
 	if (!shape2d_rle_skip(&cursor, skip)) {
 		return;
 	}
-	bitmap = (legacy_u8 far *)dos_memory_make_pointer(
+	legacy_u8 far *bitmap = (legacy_u8 far *)dos_memory_make_pointer(
 		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
-	destination = clip.destination;
-	rows = clip.rows;
+	legacy_u16 destination = clip.destination;
+	legacy_u16 rows = clip.rows;
+	legacy_u8 value;
 	do {
-		count = clip.width;
+		legacy_u16 count = clip.width;
 		do {
 			if (!shape2d_rle_next(&cursor, &value)) {
 				return;
@@ -639,27 +582,21 @@ static void sprite_putimage_at(struct SHAPE2D far *shape, legacy_u16 x, legacy_u
 							   legacy_s16 operation)
 {
 	struct SHAPE2D_CLIP clip;
-	legacy_u8 far *source_ptr;
-	legacy_u8 far *bitmap;
-	legacy_u16 shape_segment;
-	legacy_u16 column_count;
-	legacy_u16 row_count;
-	legacy_u16 old_row_count;
-	legacy_u8 mapped_color;
-
 	if (!shape2d_clip_blit(shape, x, y, &clip)) {
 		return;
 	}
-	shape_segment = dos_memory_pointer_segment(shape);
-	bitmap = (legacy_u8 far *)dos_memory_make_pointer(
+	legacy_u16 shape_segment = dos_memory_pointer_segment(shape);
+	legacy_u8 far *bitmap = (legacy_u8 far *)dos_memory_make_pointer(
 		dos_memory_pointer_segment(drawing_sprite.sprite_bitmapptr), 0);
-	row_count = clip.rows;
+	legacy_u16 row_count = clip.rows;
+	legacy_u16 old_row_count;
 	do {
-		column_count = clip.width;
+		legacy_u16 column_count = clip.width;
 		do {
-			source_ptr = (legacy_u8 far *)dos_memory_make_pointer(shape_segment, clip.source);
+			legacy_u8 far *source_ptr =
+				(legacy_u8 far *)dos_memory_make_pointer(shape_segment, clip.source);
 			if (operation == SHAPE2D_RASTER_MAP) {
-				mapped_color = sprite_palette_map[*source_ptr];
+				legacy_u8 mapped_color = sprite_palette_map[*source_ptr];
 				if (mapped_color != PALETTE_MAP_TRANSPARENT) {
 					bitmap[clip.destination] = mapped_color;
 				}

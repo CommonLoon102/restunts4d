@@ -56,7 +56,6 @@ static void trace_text(const legacy_s8 *text)
 
 static void trace_pointer(const void *pointer)
 {
-	unsigned int i;
 	if (pointer == 0) {
 		trace_word(0);
 		return;
@@ -73,13 +72,13 @@ static void trace_pointer(const void *pointer)
 		trace_word(4);
 		return;
 	}
-	for (i = 0; i < 16U; i++) {
+	for (unsigned int i = 0; i < 16U; i++) {
 		if (pointer == resource_bytes[i]) {
 			trace_word(100U + i);
 			return;
 		}
 	}
-	for (i = 0; i < 4U; i++) {
+	for (unsigned int i = 0; i < 4U; i++) {
 		if (pointer == &fixture_sprites[i]) {
 			trace_word(200U + i);
 			return;
@@ -252,8 +251,7 @@ legacy_s16 file_write_fatal(const legacy_s8 *filename, void *src, legacy_u32 len
 	trace_pointer(src);
 	trace_word((legacy_u16)length);
 	const legacy_u8 *bytes = src;
-	legacy_u32 i;
-	for (i = 0; i < length; i++) {
+	for (legacy_u32 i = 0; i < length; i++) {
 		trace_word(bytes[i]);
 	}
 	return scenario % 7U == 0U;
@@ -403,8 +401,7 @@ legacy_s16 mouse_multi_hittest(legacy_s16 count, const struct BUTTON_AREA *butto
 	trace_word(1035);
 	trace_word((legacy_u16)count);
 	trace_pointer(buttons);
-	unsigned int i;
-	for (i = 0; i < (unsigned int)count; i++) {
+	for (unsigned int i = 0; i < (unsigned int)count; i++) {
 		trace_word(buttons[i].x1);
 		trace_word(buttons[i].x2);
 		trace_word(buttons[i].y1);
@@ -558,18 +555,17 @@ void unload_resource(void *resptr)
 
 static void initialize_score_fixture(unsigned int index)
 {
-	unsigned int i;
 	legacy_u8 *bytes = (legacy_u8 *)fixture_scores;
-	for (i = 0; i < sizeof(fixture_scores); i++) {
+	for (unsigned int i = 0; i < sizeof(fixture_scores); i++) {
 		bytes[i] = 0;
 	}
-	for (i = 0; i < HIGHSCORE_ENTRY_COUNT; i++) {
+	for (unsigned int i = 0; i < HIGHSCORE_ENTRY_COUNT; i++) {
 		_strcpy(fixture_scores[i].player_name, (const legacy_s8 *)"Player");
 		_strcpy(fixture_scores[i].car_name, (const legacy_s8 *)"Car");
 		_strcpy(fixture_scores[i].opponent, (const legacy_s8 *)"Opp");
 		fixture_scores[i].time = 1000U + 20U * i;
 	}
-	for (i = 0; i < 1802U; i++) {
+	for (unsigned int i = 0; i < 1802U; i++) {
 		fixture_track[i] = fixture_map[i] = i % 256U;
 	}
 	if (index % 5U == 3U) {
@@ -619,11 +615,9 @@ static void initialize_end_screen(unsigned int index)
 
 static void run_end_screen_case(unsigned int index)
 {
-	unsigned int i;
-	legacy_u16 result;
 	initialize_end_screen(index);
 	trace_word(index);
-	result = end_hiscore();
+	legacy_u16 result = end_hiscore();
 	trace_word(result);
 	trace_word(end_opening_variant);
 	trace_word(end_closing_variant);
@@ -631,18 +625,17 @@ static void run_end_screen_case(unsigned int index)
 	trace_word(previous_end_opening_variant);
 	trace_word(previous_end_closing_variant);
 	trace_word(previous_end_outcome_variant);
-	for (i = 0; i < sizeof(fixture_scores); i++) {
+	for (unsigned int i = 0; i < sizeof(fixture_scores); i++) {
 		trace_word(((legacy_u8 *)fixture_scores)[i]);
 	}
-	for (i = 0; i < HIGHSCORE_ENTRY_COUNT; i++) {
+	for (unsigned int i = 0; i < HIGHSCORE_ENTRY_COUNT; i++) {
 		trace_word(ranking_entry_order[i]);
 	}
 }
 
 int main(void)
 {
-	unsigned int index;
-	for (index = 0; index < 360U; index++) {
+	for (unsigned int index = 0; index < 360U; index++) {
 		run_end_screen_case(index);
 	}
 	/* Original full-entry trace includes race outcomes, score eligibility, disk

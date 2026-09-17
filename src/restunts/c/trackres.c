@@ -11,12 +11,11 @@ static struct TRACK_WALL decoded_walls[TRACK_WALL_RESOURCE_COUNT];
 
 void load_track_collision_resources(void)
 {
-	const legacy_u8 far *plane_resource;
-	const legacy_u8 far *wall_resource;
-
 	gameresptr = file_load_resfile("game");
-	plane_resource = (const legacy_u8 far *)locate_shape_alt(gameresptr, "plan");
-	wall_resource = (const legacy_u8 far *)locate_shape_alt(gameresptr, "wall");
+	const legacy_u8 far *plane_resource =
+		(const legacy_u8 far *)locate_shape_alt(gameresptr, "plan");
+	const legacy_u8 far *wall_resource =
+		(const legacy_u8 far *)locate_shape_alt(gameresptr, "wall");
 	track_collision_resources_decode(plane_resource, wall_resource);
 }
 
@@ -30,9 +29,7 @@ struct TRACK_RESOURCE_READER {
  * the same way and the cursor always advances by one word. */
 static legacy_s16 track_resource_next_s16(struct TRACK_RESOURCE_READER *reader)
 {
-	legacy_s16 value;
-
-	value = LEGACY_READ_S16_LE(reader->source + reader->offset);
+	legacy_s16 value = LEGACY_READ_S16_LE(reader->source + reader->offset);
 	reader->offset = LEGACY_U16_WRAP_ADD(reader->offset, LEGACY_WORD_BYTES);
 	return value;
 }
@@ -56,28 +53,23 @@ void track_collision_resources_decode(const legacy_u8 far *plane_source,
 	wallptr = (struct TRACK_WALL far *)wall_source;
 #else
 	struct TRACK_RESOURCE_READER reader;
-	legacy_u16 index;
-	legacy_u16 component;
-	struct PLANE *plane;
-	struct TRACK_WALL *wall;
-
 	reader.source = plane_source;
 	reader.offset = 0U;
-	for (index = 0U; index < TRACK_PLAN_RESOURCE_COUNT; index++) {
-		plane = &decoded_planes[index];
+	for (legacy_u16 index = 0U; index < TRACK_PLAN_RESOURCE_COUNT; index++) {
+		struct PLANE *plane = &decoded_planes[index];
 		plane->plane_yz = track_resource_next_s16(&reader);
 		plane->plane_xy = track_resource_next_s16(&reader);
 		track_resource_next_vector(&reader, &plane->plane_origin);
 		track_resource_next_vector(&reader, &plane->plane_normal);
-		for (component = 0U; component < MATRIX_ELEMENT_COUNT; component++) {
+		for (legacy_u16 component = 0U; component < MATRIX_ELEMENT_COUNT; component++) {
 			plane->plane_rotation.vals[component] = track_resource_next_s16(&reader);
 		}
 	}
 
 	reader.source = wall_source;
 	reader.offset = 0U;
-	for (index = 0U; index < TRACK_WALL_RESOURCE_COUNT; index++) {
-		wall = &decoded_walls[index];
+	for (legacy_u16 index = 0U; index < TRACK_WALL_RESOURCE_COUNT; index++) {
+		struct TRACK_WALL *wall = &decoded_walls[index];
 		wall->orientation = track_resource_next_s16(&reader);
 		wall->x = track_resource_next_s16(&reader);
 		wall->z = track_resource_next_s16(&reader);

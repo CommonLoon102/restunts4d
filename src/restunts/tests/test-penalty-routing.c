@@ -32,8 +32,6 @@ static legacy_u16 random_word(void)
 
 static void reset_route(legacy_s16 column, legacy_s16 row)
 {
-	unsigned i;
-
 	memset(&state, 0, sizeof(state));
 	memset(trkObjectList, 0, sizeof(trkObjectList));
 	memset(columns, 0, sizeof(columns));
@@ -50,7 +48,7 @@ static void reset_route(legacy_s16 column, legacy_s16 row)
 	track_and_directory_backup = backup;
 	track_pieces_counter = 12;
 	legacy_execution_residue.penalty_route_word = -1;
-	for (i = 0; i < 904; i++) {
+	for (unsigned i = 0; i < 904; i++) {
 		primary[i] = -1;
 		alternate[i] = -1;
 	}
@@ -62,9 +60,9 @@ static void reset_route(legacy_s16 column, legacy_s16 row)
 
 static void test_route_boundaries(void)
 {
-	legacy_s16 current = 0, penalty = 99;
-
 	reset_route(30, 5);
+	legacy_s16 penalty = 99;
+	legacy_s16 current = 0;
 	assert(detect_penalty(&current, &penalty) == 1);
 	assert(penalty == PENALTY_ROUTE_OUTSIDE_TRACK);
 	assert(current == 0 && state.game_startcol == -1);
@@ -85,8 +83,6 @@ static void test_route_boundaries(void)
 
 static void test_branch_and_finish(void)
 {
-	legacy_s16 current = 0, penalty;
-
 	reset_route(6, 6);
 	primary[0] = 1;
 	alternate[0] = 3;
@@ -95,6 +91,8 @@ static void test_branch_and_finish(void)
 	columns[4] = rows[4] = 5;
 	elements[4] = 1;
 	trkObjectList[1].ss_multiTileFlag = 3;
+	legacy_s16 penalty;
+	legacy_s16 current = 0;
 	assert(detect_penalty(&current, &penalty) == 1);
 	assert(current == 4 && penalty == 0);
 	assert(state.game_startcol == 5 && state.game_startcol2 == 6);
@@ -110,15 +108,14 @@ static void test_branch_and_finish(void)
 
 static legacy_u32 route_fingerprint(void)
 {
+	legacy_s16 penalty;
 	legacy_u32 hash = 2166136261UL;
-	legacy_s16 current, penalty, result, column, row;
-	unsigned sample, i;
-
-	for (sample = 0; sample < 8192; sample++) {
-		column = random_word() % 34 - 2;
-		row = random_word() % 34 - 2;
+	legacy_s16 current;
+	for (unsigned sample = 0; sample < 8192; sample++) {
+		legacy_s16 column = random_word() % 34 - 2;
+		legacy_s16 row = random_word() % 34 - 2;
 		reset_route(column, row);
-		for (i = 0; i < 12; i++) {
+		for (unsigned i = 0; i < 12; i++) {
 			primary[i] = random_word() % 15 - 2;
 			alternate[i] = random_word() % 13 - 1;
 			columns[i] = random_word() % 30;
@@ -133,7 +130,7 @@ static legacy_u32 route_fingerprint(void)
 		legacy_execution_residue.penalty_route_word = random_word() % 13 - 1;
 		current = random_word() % 13 - 1;
 		penalty = LEGACY_S16_FROM_BITS(random_word());
-		result = detect_penalty(&current, &penalty);
+		legacy_s16 result = detect_penalty(&current, &penalty);
 		hash = (hash ^ (legacy_u16)result) * 16777619UL;
 		hash = (hash ^ (legacy_u16)current) * 16777619UL;
 		hash = (hash ^ (legacy_u16)penalty) * 16777619UL;
@@ -147,11 +144,9 @@ static legacy_u32 route_fingerprint(void)
 
 int main(void)
 {
-	legacy_u32 hash;
-
 	test_route_boundaries();
 	test_branch_and_finish();
-	hash = route_fingerprint();
+	legacy_u32 hash = route_fingerprint();
 #ifdef PHYSICS_RECORD_BASELINE
 	fprintf(stdout, "%08lx\n", (unsigned long)hash);
 #else

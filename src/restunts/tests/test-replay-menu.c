@@ -131,7 +131,7 @@ legacy_s8 far *locate_text_res(legacy_s8 far *resource, const legacy_s8 *name)
 legacy_u16 show_dialog(legacy_s16 type, legacy_s16 save, void far *text, legacy_u16 x, legacy_u16 y,
 					   legacy_s16 color, legacy_s16 *disabled, legacy_s16 initial)
 {
-	unsigned index, count = text == replay_pause_menu_id ? 8 : 5;
+	unsigned count = text == replay_pause_menu_id ? 8 : 5;
 	(void)text;
 	event(17);
 	hash_word(type);
@@ -141,7 +141,7 @@ legacy_u16 show_dialog(legacy_s16 type, legacy_s16 save, void far *text, legacy_
 	hash_word(color);
 	hash_word(initial);
 	if (disabled != 0) {
-		for (index = 0; index < count; index++) {
+		for (unsigned index = 0; index < count; index++) {
 			hash_word(disabled[index]);
 		}
 	}
@@ -254,7 +254,6 @@ void show_graphic_levels_menu(void)
 
 static void reset_viewer(void)
 {
-	unsigned index;
 	memset(&state, 0, sizeof(state));
 	memset(&gameconfig, 0, sizeof(gameconfig));
 	memset(replay_controls_drawn, 0, 2 * sizeof(replay_controls_drawn[0]));
@@ -265,7 +264,7 @@ static void reset_viewer(void)
 	memset(replay_displayed_time_cache, 0, sizeof(replay_displayed_time_cache));
 	memset(replay_recorded_position_cache, 0, sizeof(replay_recorded_position_cache));
 	memset(replay_current_position_cache, 0, sizeof(replay_current_position_cache));
-	for (index = 0; index < 23; index++) {
+	for (unsigned index = 0; index < 23; index++) {
 		rplyshapes[index] = &shapes[index];
 	}
 	dialog_count = save_count = write_count = check_count = 0;
@@ -303,7 +302,6 @@ static void reset_viewer(void)
 }
 static void hash_viewer_state(void)
 {
-	unsigned index;
 	event(100);
 	hash_word(state.game_frame);
 	hash_word(state.game_frame_in_sec);
@@ -324,7 +322,7 @@ static void hash_viewer_state(void)
 	hash_word(write_count);
 	hash_word(replaybar_toggle);
 	hash_word(replay_selected_control);
-	for (index = 0; index < 2; index++) {
+	for (unsigned index = 0; index < 2; index++) {
 		hash_word(replay_controls_drawn[index]);
 		hash_word(replay_camera_mode_cache[index]);
 		hash_word(replay_selection_cache[index]);
@@ -332,10 +330,10 @@ static void hash_viewer_state(void)
 		hash_word(replay_recorded_position_cache[index]);
 		hash_word(replay_current_position_cache[index]);
 	}
-	for (index = 0; index < 18; index++) {
+	for (unsigned index = 0; index < 18; index++) {
 		hash_word(replay_control_active_cache[index]);
 	}
-	for (index = 0; index < 9; index++) {
+	for (unsigned index = 0; index < 9; index++) {
 		hash_word(replay_control_active[index]);
 	}
 }
@@ -362,13 +360,12 @@ static legacy_u32 menu_fingerprint(void)
 }
 static legacy_u32 draw_fingerprint(void)
 {
-	unsigned index, tick;
 	trace_hash = 2166136261UL;
-	for (index = 0; index < 256; index++) {
+	for (unsigned index = 0; index < 256; index++) {
 		reset_viewer();
 		gameconfig.game_recordedframes = index % 3 ? 65535 : 0;
 		elapsed_time1 = index * 257;
-		for (tick = 0; tick < 8; tick++) {
+		for (unsigned tick = 0; tick < 8; tick++) {
 			dashboard_buffer_index = tick & 1;
 			cameramode = (index + tick / 2) & 3;
 			replay_selected_control = tick % 3 ? tick % 9 : REPLAY_NO_SELECTION;
@@ -437,7 +434,8 @@ static void test_save_cleanup(void)
 
 int main(void)
 {
-	legacy_u32 menu = menu_fingerprint(), draw = draw_fingerprint();
+	legacy_u32 menu = menu_fingerprint();
+	legacy_u32 draw = draw_fingerprint();
 	test_pause_cleanup();
 	test_save_cleanup();
 #ifdef REPLAY_MENU_BASELINE

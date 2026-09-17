@@ -38,10 +38,8 @@ static void dos_mouse_set_pixel_ratio(legacy_u16 horizontal, legacy_u16 vertical
 void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y, legacy_s16 maximum_x,
 						  legacy_s16 maximum_y)
 {
+	legacy_u16 scale = dos_mouse_horizontal_scale;
 	union REGS registers;
-	legacy_u16 scale;
-
-	scale = dos_mouse_horizontal_scale;
 	registers.x.ax = DOS_MOUSE_SET_HORIZONTAL_RANGE_FUNCTION;
 	registers.x.cx = (legacy_u16)minimum_x << scale;
 	registers.x.dx = (legacy_u16)maximum_x << scale;
@@ -56,8 +54,6 @@ void dos_mouse_set_minmax(legacy_s16 minimum_x, legacy_s16 minimum_y, legacy_s16
 legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 {
 	union REGS registers;
-	legacy_s16 installed;
-
 	registers.x.ax = 0;
 	registers.x.bx = 0;
 	registers.x.cx = 0;
@@ -70,7 +66,7 @@ legacy_s16 dos_mouse_init(legacy_s16 width, legacy_s16 height)
 
 	registers.x.ax = DOS_MOUSE_RESET_FUNCTION;
 	int86(DOS_MOUSE_INTERRUPT, &registers, &registers);
-	installed = (legacy_s16)registers.x.ax;
+	legacy_s16 installed = (legacy_s16)registers.x.ax;
 	dos_mouse_button_count = registers.x.bx;
 	if (installed != 0) {
 		dos_mouse_horizontal_scale =

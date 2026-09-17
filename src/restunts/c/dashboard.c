@@ -75,11 +75,8 @@ enum DASHBOARD_SPEED_COORDINATE_INDEX {
 
 static legacy_s16 dashboard_steering_position(legacy_s16 angle)
 {
-	legacy_s16 magnitude;
-	legacy_u16 bits;
-
-	magnitude = angle < 0 ? LEGACY_S16_WRAP_NEGATE(angle) : angle;
-	bits = (legacy_u16)magnitude;
+	legacy_s16 magnitude = angle < 0 ? LEGACY_S16_WRAP_NEGATE(angle) : angle;
+	legacy_u16 bits = (legacy_u16)magnitude;
 	bits = LEGACY_U16_SAR(bits, DASHBOARD_STEERING_SCALE_SHIFT);
 	magnitude = LEGACY_S16_FROM_BITS(bits);
 	return angle < 0 ? LEGACY_S16_WRAP_NEGATE(magnitude) : magnitude;
@@ -104,9 +101,7 @@ static void dashboard_set_viewport(void)
 
 static void dashboard_load_resources(void)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < DASHBOARD_CAR_ID_LENGTH; index++) {
+	for (legacy_u16 index = 0; index < DASHBOARD_CAR_ID_LENGTH; index++) {
 		dashboard_primary_resource_name[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
 			gameconfig.game_playercarid[index];
 		dashboard_secondary_resource_name[index + DASHBOARD_CAR_ID_RESOURCE_OFFSET] =
@@ -127,9 +122,6 @@ static void dashboard_load_resources(void)
 
 static void dashboard_create_sprites(void)
 {
-	struct SHAPE2D far *dashboard_shape;
-	struct SHAPE2D far *gearbox_shape;
-
 	dashboard_instrument_sprite = sprite_make_wnd(
 		LEGACY_U16_WRAP_MUL(shape2d_get_width(whlshapes[DASHBOARD_INSTRUMENT_PANEL_SHAPE]),
 							(legacy_u16)video_shape_width_scale),
@@ -146,9 +138,9 @@ static void dashboard_create_sprites(void)
 						shape2d_get_height(whlshapes[DASHBOARD_GEARBOX_SHAPE]),
 						DASHBOARD_SPRITE_WINDOW_LEGACY_ARGUMENT);
 
-	dashboard_shape =
+	struct SHAPE2D far *dashboard_shape =
 		(struct SHAPE2D far *)locate_shape_fatal(stdaresptr, dashboard_background_shape_id);
-	gearbox_shape = whlshapes[DASHBOARD_GEARBOX_SHAPE];
+	struct SHAPE2D far *gearbox_shape = whlshapes[DASHBOARD_GEARBOX_SHAPE];
 	sprite_select_target(dashboard_gearbox_background_sprite);
 	shape2d_rle_copy_clipped(dashboard_shape,
 							 LEGACY_S16_WRAP_SUB((legacy_s16)shape2d_get_pos_x(dashboard_shape),
@@ -161,9 +153,8 @@ static void dashboard_create_sprites(void)
 
 static void dashboard_load_optional_shapes(void)
 {
-	struct SHAPE2D far *shape;
-
-	shape = (struct SHAPE2D far *)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
 	if (shape != 0) {
 		shape = (struct SHAPE2D far *)locate_shape_fatal(stdaresptr, dashboard_roof_shape_id);
 		roofbmpheight = shape2d_get_height(shape);
@@ -192,11 +183,9 @@ static void dashboard_load(void)
 
 static void dashboard_redraw_static(void)
 {
-	struct SHAPE2D far *shape;
-	legacy_u16 buffer_index;
-
 	mouse_draw_opaque_check();
-	shape = (struct SHAPE2D far *)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_nofatal(stdaresptr, dashboard_roof_shape_id);
 	if (shape != 0) {
 		shape2d_rle_copy_at_position(
 			(struct SHAPE2D far *)locate_shape_fatal(stdaresptr, dashboard_roof_shape_id));
@@ -206,7 +195,7 @@ static void dashboard_redraw_static(void)
 	shape2d_rle_copy_position_clipped(whlshapes[DASHBOARD_WHEEL_CENTER_SHAPE]);
 	mouse_draw_transparent_check();
 
-	buffer_index = (legacy_u8)dashboard_buffer_index;
+	legacy_u16 buffer_index = (legacy_u8)dashboard_buffer_index;
 	replay_controls_drawn[buffer_index] = 0;
 	dashboard_gear_knob_visible_cache[buffer_index] = 0;
 	dashboard_steering_dot_y_cache[buffer_index] = 0;
@@ -327,12 +316,7 @@ static void dashboard_select_gauges(struct DASHBOARD_UPDATE *update)
 
 static void dashboard_draw_digital_speed(legacy_u16 speed_index)
 {
-	legacy_u16 digit;
-	legacy_u16 digit_group;
-	legacy_u8 digit_started;
-
-	digit_started = 0;
-	digit_group = 0;
+	legacy_u16 digit_group = 0;
 	if (speed_index >= DASHBOARD_TWO_HUNDRED) {
 		digit_group = DASHBOARD_TWO_HUNDRED_DIGIT;
 		speed_index -= DASHBOARD_TWO_HUNDRED;
@@ -340,13 +324,14 @@ static void dashboard_draw_digital_speed(legacy_u16 speed_index)
 		digit_group = DASHBOARD_ONE_HUNDRED_DIGIT;
 		speed_index -= DASHBOARD_ONE_HUNDRED;
 	}
+	legacy_u8 digit_started = 0;
 	if (digit_group != 0) {
 		sprite_putimage_or(digshapes[digit_group],
 						   (legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_HUNDREDS_X],
 						   (legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_HUNDREDS_Y]);
 		digit_started = 1;
 	}
-	digit = LEGACY_U16_DIV_OR_ZERO(speed_index, DASHBOARD_DECIMAL_BASE);
+	legacy_u16 digit = LEGACY_U16_DIV_OR_ZERO(speed_index, DASHBOARD_DECIMAL_BASE);
 	if (digit != 0 || digit_started != 0) {
 		sprite_putimage_or(digshapes[digit],
 						   (legacy_u8)simd_player.spdpoints[DASHBOARD_SPEED_TENS_X],
@@ -421,11 +406,6 @@ static void dashboard_update_instruments(struct DASHBOARD_UPDATE *update)
 
 static void dashboard_update_steering_dot(struct DASHBOARD_UPDATE *update)
 {
-	legacy_u8 *steering_dots;
-	legacy_u16 dot_index;
-	legacy_s16 dot_x;
-	legacy_s16 dot_y;
-
 	if (dashboard_steering_position_cache[update->buffer_index] != update->steering_position ||
 		full_redraw_frames_remaining != 0 || update->steering_dot_cleared != 0) {
 		if (video_uses_page_flipping == 0) {
@@ -433,13 +413,13 @@ static void dashboard_update_steering_dot(struct DASHBOARD_UPDATE *update)
 		}
 		dashboard_set_viewport();
 		(void)dashboard_clear_steering_dot(update->buffer_index);
-		steering_dots = (legacy_u8 *)simd_player.steeringdots;
-		dot_index = (legacy_u16)(update->steering_position < 0
-									 ? LEGACY_S16_WRAP_NEGATE(update->steering_position)
-									 : update->steering_position) *
-					DASHBOARD_POINT_COORDINATE_STRIDE;
-		dot_x = steering_dots[dot_index];
-		dot_y = steering_dots[dot_index + DASHBOARD_POINT_Y_OFFSET];
+		legacy_u8 *steering_dots = (legacy_u8 *)simd_player.steeringdots;
+		legacy_u16 dot_index = (legacy_u16)(update->steering_position < 0
+												? LEGACY_S16_WRAP_NEGATE(update->steering_position)
+												: update->steering_position) *
+							   DASHBOARD_POINT_COORDINATE_STRIDE;
+		legacy_s16 dot_x = steering_dots[dot_index];
+		legacy_s16 dot_y = steering_dots[dot_index + DASHBOARD_POINT_Y_OFFSET];
 		if (update->steering_position < 0) {
 			dot_x = (legacy_u8)(dot_x - (legacy_u8)((legacy_u8)(dot_x - steering_dots[0])
 													<< DASHBOARD_STEERING_MIRROR_SHIFT));

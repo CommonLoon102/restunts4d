@@ -123,8 +123,6 @@ struct RECTANGLE *hiscore_draw_text(legacy_s8 *text, legacy_s16 x, legacy_s16 y,
 void far *highscore_read_with_retry(legacy_s16 operation, const legacy_s8 *filename,
 									void far *destination)
 {
-	void far *result;
-
 	if (operation == HIGHSCORE_READ_ONCE_OPERATION) {
 		return file_read_nofatal(filename, destination);
 	}
@@ -132,7 +130,7 @@ void far *highscore_read_with_retry(legacy_s16 operation, const legacy_s8 *filen
 		return 0;
 	}
 	do {
-		result = file_read_nofatal(filename, destination);
+		void far *result = file_read_nofatal(filename, destination);
 		if (result != 0) {
 			return result;
 		}
@@ -142,28 +140,22 @@ void far *highscore_read_with_retry(legacy_s16 operation, const legacy_s8 *filen
 
 legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 {
-	struct HIGHSCORE_ENTRY record;
-	legacy_u8 *record_bytes;
-	struct HIGHSCORE_ENTRY far *scores;
-	void far *read_result;
-	legacy_u16 entry;
-	legacy_u16 offset;
-
 	ranking_highlight = HIGHSCORE_NO_HIGHLIGHT;
-	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
+	for (legacy_u16 entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		ranking_entry_order[entry] = entry;
 	}
 	file_build_path(track_directory, gameconfig.game_trackname, ".hig", g_path_buf);
 	if (create_default == 0) {
 		g_is_busy = 1;
-		read_result = highscore_read_with_retry(HIGHSCORE_READ_ONCE_OPERATION, g_path_buf,
-												track_highscore_table);
+		void far *read_result = highscore_read_with_retry(HIGHSCORE_READ_ONCE_OPERATION, g_path_buf,
+														  track_highscore_table);
 		g_is_busy = 0;
 		return read_result == 0 ? 1 : 0;
 	}
 
-	record_bytes = (legacy_u8 *)&record;
-	for (offset = 0; offset < HIGHSCORE_COMBINED_NAME_TEXT_BYTES; offset++) {
+	struct HIGHSCORE_ENTRY record;
+	legacy_u8 *record_bytes = (legacy_u8 *)&record;
+	for (legacy_u16 offset = 0; offset < HIGHSCORE_COMBINED_NAME_TEXT_BYTES; offset++) {
 		record_bytes[offset] = '.';
 	}
 	record_bytes[HIGHSCORE_COMBINED_NAME_TEXT_BYTES] = 0;
@@ -171,13 +163,13 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 	record.opponent[0] = '.';
 	record.opponent[1] = '.';
 	record.opponent[2] = '/';
-	for (offset = 3U; offset < HIGHSCORE_OPPONENT_TEXT_BYTES; offset++) {
+	for (legacy_u16 offset = 3U; offset < HIGHSCORE_OPPONENT_TEXT_BYTES; offset++) {
 		record.opponent[offset] = '.';
 	}
 	record.opponent[HIGHSCORE_OPPONENT_TEXT_BYTES] = 0;
 	record.time = HIGHSCORE_EMPTY_TIME;
-	scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
-	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
+	struct HIGHSCORE_ENTRY far *scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
+	for (legacy_u16 entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		scores[entry] = record;
 	}
 	return file_write_fatal(g_path_buf, track_highscore_table, HIGHSCORE_TABLE_SIZE_BYTES) != 0;
@@ -185,14 +177,10 @@ legacy_s16 highscore_load_or_create(legacy_s16 create_default)
 
 void highscore_save_sorted(void)
 {
+	struct HIGHSCORE_ENTRY far *scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
 	struct HIGHSCORE_ENTRY ordered_scores[HIGHSCORE_ENTRY_COUNT];
-	struct HIGHSCORE_ENTRY far *scores;
-	legacy_u16 entry;
-	legacy_u16 source_entry;
-
-	scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
-	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
-		source_entry = (legacy_u16)ranking_entry_order[entry];
+	for (legacy_u16 entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
+		legacy_u16 source_entry = (legacy_u16)ranking_entry_order[entry];
 		ordered_scores[entry] = scores[source_entry];
 	}
 	file_build_path(track_directory, gameconfig.game_trackname, ".hig", g_path_buf);
@@ -203,27 +191,19 @@ void highscore_save_sorted(void)
 
 void print_highscore_entry(legacy_s16 entry, legacy_u8 *text_offsets)
 {
-	struct HIGHSCORE_ENTRY record;
-	struct HIGHSCORE_ENTRY far *scores;
-	legacy_u16 output_offset;
-	legacy_s16 saved_frame_rate;
-	legacy_s16 frame_count;
-	legacy_s8 formatted_time[HIGHSCORE_FORMAT_BUFFER_SIZE];
-	legacy_s8 *output;
-
-	scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
-	record = scores[ranking_entry_order[entry]];
+	struct HIGHSCORE_ENTRY far *scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
+	struct HIGHSCORE_ENTRY record = scores[ranking_entry_order[entry]];
 
 	text_offsets[0] = 0;
 	strcpy(&resID_byte1, record.player_name);
-	output_offset = (legacy_u16)strlen(&resID_byte1) + 1U;
+	legacy_u16 output_offset = (legacy_u16)strlen(&resID_byte1) + 1U;
 	text_offsets[1] = (legacy_u8)output_offset;
 	strcpy(&resID_byte1 + output_offset, record.car_name);
 	output_offset =
 		LEGACY_U16_WRAP_ADD(output_offset, (legacy_u16)strlen(&resID_byte1 + output_offset) + 1U);
 	text_offsets[2] = (legacy_u8)output_offset;
 
-	output = &resID_byte1 + output_offset;
+	legacy_s8 *output = &resID_byte1 + output_offset;
 	*output = 0;
 	if (record.car_flag == 1) {
 		strcat(output, "(");
@@ -234,9 +214,10 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8 *text_offsets)
 	}
 	output_offset = LEGACY_U16_WRAP_ADD(output_offset, (legacy_u16)strlen(output) + 1U);
 
-	saved_frame_rate = framespersec;
+	legacy_s16 saved_frame_rate = framespersec;
 	framespersec = GAME_FRAME_RATE_NORMAL;
-	frame_count = LEGACY_S16_FROM_BITS(record.time);
+	legacy_s16 frame_count = LEGACY_S16_FROM_BITS(record.time);
+	legacy_s8 formatted_time[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	format_frame_as_string(formatted_time, frame_count == -1 ? 0 : frame_count, 1);
 	text_offsets[3] = (legacy_u8)output_offset;
 	strcpy(&resID_byte1 + output_offset, formatted_time);
@@ -245,12 +226,6 @@ void print_highscore_entry(legacy_s16 entry, legacy_u8 *text_offsets)
 
 void highscore_draw_table(void)
 {
-	legacy_u8 text_offsets[HIGHSCORE_TEXT_FIELD_COUNT];
-	legacy_s16 row;
-	legacy_u16 entry;
-	legacy_s16 color;
-	legacy_s8 far *text;
-
 	sprite_select_render_window();
 	copy_string(&resID_byte1, locate_text_res(mainresptr, "hs1"));
 	strcat(&resID_byte1, " '");
@@ -259,7 +234,7 @@ void highscore_draw_table(void)
 	hiscore_draw_text(&resID_byte1, font_centered_text_x(&resID_byte1), HIGHSCORE_TITLE_Y,
 					  dialog_fnt_colour, 0);
 
-	text = locate_text_res(mainresptr, "hs2");
+	legacy_s8 far *text = locate_text_res(mainresptr, "hs2");
 	copy_string(&resID_byte1, text);
 	hiscore_draw_text(&resID_byte1, HIGHSCORE_PLAYER_COLUMN_X, HIGHSCORE_HEADING_Y,
 					  dialog_fnt_colour, 0);
@@ -277,11 +252,12 @@ void highscore_draw_table(void)
 					  0);
 
 	font_set_fontdef2(fontnptr);
-	for (entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
+	legacy_u8 text_offsets[HIGHSCORE_TEXT_FIELD_COUNT];
+	for (legacy_u16 entry = 0; entry < HIGHSCORE_ENTRY_COUNT; entry++) {
 		print_highscore_entry(entry, text_offsets);
-		row = LEGACY_S16_WRAP_ADD(LEGACY_U16_WRAP_MUL(entry, HIGHSCORE_ROW_HEIGHT),
-								  HIGHSCORE_FIRST_ROW_Y);
-		color = entry == (legacy_u8)ranking_highlight ? dialog_border_color : 0;
+		legacy_s16 row = LEGACY_S16_WRAP_ADD(LEGACY_U16_WRAP_MUL(entry, HIGHSCORE_ROW_HEIGHT),
+											 HIGHSCORE_FIRST_ROW_Y);
+		legacy_s16 color = entry == (legacy_u8)ranking_highlight ? dialog_border_color : 0;
 		font_set_colors(color, 0);
 		font_draw_text(&resID_byte1 + text_offsets[0], HIGHSCORE_PLAYER_COLUMN_X, row);
 		font_draw_text(&resID_byte1 + text_offsets[1], HIGHSCORE_CAR_COLUMN_X, row);
@@ -298,26 +274,17 @@ static legacy_u16 read_highscore_u16(legacy_u8 far *address)
 
 void enter_hiscore(legacy_s16 frame_count, void far *prompt, legacy_u8 car_flag)
 {
-	struct HIGHSCORE_ENTRY record;
-	legacy_u8 *record_bytes;
-	struct HIGHSCORE_ENTRY far *scores;
-	legacy_u16 entry;
-	legacy_u16 copied;
-	legacy_u16 rank;
-	legacy_u16 time_bits;
-	legacy_s16 positions[2];
-
-	time_bits = (legacy_u16)frame_count;
+	legacy_u16 time_bits = (legacy_u16)frame_count;
 	if (framespersec == GAME_FRAME_RATE_LOW) {
 		time_bits = LEGACY_U16_WRAP_MUL(time_bits, HIGHSCORE_LOW_FRAME_RATE_TIME_SCALE);
 	}
-	scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
+	struct HIGHSCORE_ENTRY far *scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
 	if (scores[HIGHSCORE_LAST_ENTRY_INDEX].time <= time_bits) {
 		highscore_draw_table();
 		return;
 	}
 
-	entry = 0;
+	legacy_u16 entry = 0;
 	while (scores[entry].time <= time_bits) {
 		if (entry >= HIGHSCORE_ENTRY_COUNT) {
 			break;
@@ -325,7 +292,7 @@ void enter_hiscore(legacy_s16 frame_count, void far *prompt, legacy_u8 car_flag)
 		ranking_entry_order[entry] = (legacy_s16)entry;
 		entry++;
 	}
-	rank = entry;
+	legacy_u16 rank = entry;
 	ranking_highlight = (legacy_u8)rank;
 	while (entry < HIGHSCORE_LAST_ENTRY_INDEX) {
 		ranking_entry_order[entry + 1U] = (legacy_s16)entry;
@@ -333,8 +300,9 @@ void enter_hiscore(legacy_s16 frame_count, void far *prompt, legacy_u8 car_flag)
 	}
 	ranking_entry_order[rank] = HIGHSCORE_LAST_ENTRY_INDEX;
 
-	record_bytes = (legacy_u8 *)&record;
-	for (copied = 0; copied < sizeof(record); copied++) {
+	struct HIGHSCORE_ENTRY record;
+	legacy_u8 *record_bytes = (legacy_u8 *)&record;
+	for (legacy_u16 copied = 0; copied < sizeof(record); copied++) {
 		record_bytes[copied] = 0;
 	}
 	strcpy(record.car_name, gnam_string);
@@ -352,6 +320,7 @@ void enter_hiscore(legacy_s16 frame_count, void far *prompt, legacy_u8 car_flag)
 	sprite_select_render_window();
 	highscore_draw_table();
 	sprite_blit_to_video(render_window_sprite, -1);
+	legacy_s16 positions[2];
 	show_dialog(DIALOG_TYPE_PLACEHOLDERS, DIALOG_NO_BACKGROUND_SAVE, prompt, DIALOG_AUTO_POSITION,
 				DIALOG_AUTO_POSITION, dialog_border_color, positions, 0);
 	check_input();
@@ -389,10 +358,8 @@ static void end_hiscore_draw_animation_frame(legacy_s8 far *animation_resource,
 											 struct SPRITE far *animation_sprite,
 											 legacy_u8 draw_direct_copy)
 {
-	struct SHAPE2D far *frame_shape;
-
 	opponent_animation_frame_id[3] = (legacy_s8)(frame_sequence[frame_index] + '0');
-	frame_shape =
+	struct SHAPE2D far *frame_shape =
 		(struct SHAPE2D far *)locate_shape_fatal(animation_resource, opponent_animation_frame_id);
 	mouse_draw_opaque_check();
 	if (video_uses_page_flipping != 0) {
@@ -451,12 +418,12 @@ static legacy_s8 far *end_hiscore_result_text(legacy_s8 far *opponent_resource, 
 											  legacy_u8 text_prefix, legacy_u16 resource_index)
 {
 	legacy_s8 text_id[END_SCREEN_TEXT_ID_SIZE];
-	legacy_s16 selector;
 	if (outcome == END_SCREEN_OUTCOME_NONE) {
 		return locate_text_res(opponent_resource, opponent_neutral_result_text_id);
 	} else {
 		text_id[0] = (legacy_s8)text_prefix;
 		text_id[1] = (legacy_s8)('1' + resource_index);
+		legacy_s16 selector;
 		if (resource_index == 0) {
 			selector = end_opening_variant;
 		} else if (resource_index == 1) {
@@ -472,15 +439,13 @@ static legacy_s8 far *end_hiscore_result_text(legacy_s8 far *opponent_resource, 
 
 static void end_hiscore_append_text_word(struct END_SCREEN_TEXT_LINE *line, legacy_s16 animation_x)
 {
-	legacy_s16 word_width;
-	legacy_u16 copy_index, first_character;
 	line->word[line->word_length] = 0;
-	word_width = (legacy_s16)font_text_width(line->word);
+	legacy_s16 word_width = (legacy_s16)font_text_width(line->word);
 	if (LEGACY_S16_WRAP_ADD(word_width, line->line_width) <
 			LEGACY_S16_WRAP_SUB(animation_x, END_SCREEN_TEXT_RIGHT_MARGIN) &&
 		LEGACY_U16_WRAP_ADD(line->output_length, line->word_length) <
 			END_SCREEN_TEXT_OUTPUT_CAPACITY) {
-		for (copy_index = 0; copy_index < line->word_length; copy_index++) {
+		for (legacy_u16 copy_index = 0; copy_index < line->word_length; copy_index++) {
 			(&resID_byte1)[line->output_length++] = line->word[copy_index];
 		}
 		line->line_width = LEGACY_S16_WRAP_ADD(line->line_width, word_width);
@@ -488,9 +453,10 @@ static void end_hiscore_append_text_word(struct END_SCREEN_TEXT_LINE *line, lega
 		(&resID_byte1)[line->output_length] = 0;
 		font_draw_text(&resID_byte1, END_SCREEN_TEXT_LEFT, line->line_y);
 		line->line_y = LEGACY_S16_WRAP_ADD(line->line_y, END_SCREEN_TEXT_LINE_HEIGHT);
-		first_character = line->word[0] == ' ' ? 1U : 0U;
+		legacy_u16 first_character = line->word[0] == ' ' ? 1U : 0U;
 		line->output_length = 0;
-		for (copy_index = first_character; copy_index < line->word_length; copy_index++) {
+		for (legacy_u16 copy_index = first_character; copy_index < line->word_length;
+			 copy_index++) {
 			(&resID_byte1)[line->output_length++] = line->word[copy_index];
 		}
 		(&resID_byte1)[line->output_length] = 0;
@@ -501,9 +467,8 @@ static void end_hiscore_append_text_word(struct END_SCREEN_TEXT_LINE *line, lega
 static void end_hiscore_consume_text(struct END_SCREEN_TEXT_LINE *line, legacy_s8 far *text,
 									 legacy_s16 animation_x)
 {
-	legacy_u8 character;
 	for (;;) {
-		character = (legacy_u8)*text++;
+		legacy_u8 character = (legacy_u8)*text++;
 		if (character != ' ' && character != 0) {
 			line->word[line->word_length++] = (legacy_s8)character;
 			continue;
@@ -522,15 +487,15 @@ static void end_hiscore_draw_opponent_text(legacy_s8 far *opponent_resource, leg
 										   legacy_u8 text_prefix, legacy_s16 animation_x)
 {
 	struct END_SCREEN_TEXT_LINE line;
-	legacy_s8 far *text;
-	legacy_u16 resource_index, resource_count;
 	line.line_y = END_SCREEN_TEXT_TOP;
 	line.output_length = 0;
 	line.line_width = 0;
 	line.word_length = 0;
-	resource_count = outcome == END_SCREEN_OUTCOME_NONE ? 1U : END_SCREEN_TEXT_VARIANT_COUNT;
-	for (resource_index = 0; resource_index < resource_count; resource_index++) {
-		text = end_hiscore_result_text(opponent_resource, outcome, text_prefix, resource_index);
+	legacy_u16 resource_count =
+		outcome == END_SCREEN_OUTCOME_NONE ? 1U : END_SCREEN_TEXT_VARIANT_COUNT;
+	for (legacy_u16 resource_index = 0; resource_index < resource_count; resource_index++) {
+		legacy_s8 far *text =
+			end_hiscore_result_text(opponent_resource, outcome, text_prefix, resource_index);
 		font_set_fontdef2(fontnptr);
 		end_hiscore_consume_text(&line, text, animation_x);
 		font_set_fontdef();
@@ -583,9 +548,9 @@ static void end_hiscore_initialize(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_draw_player_time(struct END_SCREEN_STATE *screen)
 {
-	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	screen->text_y = END_SCREEN_TEXT_START_Y;
 	end_hiscore_set_text(screen->misc_resource, elapsed_time_label_id);
+	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	if (gState_total_finish_time != 0) {
 		format_frame_as_string(number,
 							   LEGACY_S16_WRAP_SUB(gState_total_finish_time, gState_penalty), 1);
@@ -608,8 +573,8 @@ static void end_hiscore_draw_player_time(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_draw_opponent_time(struct END_SCREEN_STATE *screen)
 {
-	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	screen->outcome = END_SCREEN_OUTCOME_NONE;
+	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	if (gameconfig.game_opponenttype != 0) {
 		if (gState_opponent_finish_time == 0) {
 			end_hiscore_set_text(screen->misc_resource, opponent_unfinished_time_label_id);
@@ -651,10 +616,9 @@ static void end_hiscore_load_music(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_draw_statistics(struct END_SCREEN_STATE *screen)
 {
-	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
-	legacy_u16 duration, average_speed;
 	end_hiscore_set_text(screen->misc_resource, average_speed_label_id);
-	duration = LEGACY_U16_WRAP_ADD(gState_pEndFrame, elapsed_time1);
+	legacy_u16 duration = LEGACY_U16_WRAP_ADD(gState_pEndFrame, elapsed_time1);
+	legacy_u16 average_speed;
 	if (duration != 0) {
 		average_speed = (legacy_u16)(LEGACY_U32_DIV_OR_ZERO((legacy_u32)gState_travDist,
 															(legacy_u32)duration) >>
@@ -662,6 +626,7 @@ static void end_hiscore_draw_statistics(struct END_SCREEN_STATE *screen)
 	} else {
 		average_speed = 0;
 	}
+	legacy_s8 number[HIGHSCORE_FORMAT_BUFFER_SIZE];
 	format_integer(number, average_speed, 0, END_SCREEN_NUMBER_WIDTH);
 	strcat(&resID_byte1, number);
 	end_hiscore_append_text(screen->misc_resource, average_speed_units_id);
@@ -693,12 +658,10 @@ static void end_hiscore_draw_statistics(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_choose_text_variants(struct END_SCREEN_STATE *screen)
 {
-	legacy_s16 random_value;
-
 	previous_end_opening_variant = end_opening_variant;
 	previous_end_outcome_variant = end_outcome_variant;
 	previous_end_closing_variant = end_closing_variant;
-	random_value = (legacy_s16)get_super_random();
+	legacy_s16 random_value = (legacy_s16)get_super_random();
 	end_opening_variant = (legacy_s16)(random_value % END_SCREEN_TEXT_VARIANT_COUNT);
 	if (end_opening_variant == previous_end_opening_variant) {
 		end_opening_variant = end_text_alternate_variant[(legacy_u16)end_opening_variant];
@@ -764,22 +727,22 @@ static void end_hiscore_prepare_animation(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_validate_track(struct END_SCREEN_STATE *screen)
 {
-	legacy_u8 far *track_resource;
-	legacy_u16 i, result;
 	screen->score_status = 0;
 	file_build_path(track_directory, gameconfig.game_trackname, track_file_extension, g_path_buf);
-	track_resource = (legacy_u8 far *)file_load_resource(FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
+	legacy_u8 far *track_resource =
+		(legacy_u8 far *)file_load_resource(FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 	if (track_resource == 0) {
-		result = show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
-							 locate_text_res(mainresptr, highscore_track_disk_prompt_id),
-							 DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, 0, 0);
+		legacy_u16 result =
+			show_dialog(DIALOG_TYPE_ACKNOWLEDGEMENT, DIALOG_SAVE_BACKGROUND,
+						locate_text_res(mainresptr, highscore_track_disk_prompt_id),
+						DIALOG_AUTO_POSITION, DIALOG_AUTO_POSITION, dialog_border_color, 0, 0);
 		if (result != 0) {
 			track_resource =
 				(legacy_u8 far *)file_load_resource(FILE_RESOURCE_BINARY_OPTIONAL, g_path_buf);
 		}
 	}
 	if (track_resource != 0) {
-		for (i = 0; i < END_SCREEN_TRACK_VALIDATION_BYTES; i++) {
+		for (legacy_u16 i = 0; i < END_SCREEN_TRACK_VALIDATION_BYTES; i++) {
 			if (track_resource[i] != track_element_map[i]) {
 				screen->score_status = -1;
 				break;
@@ -793,7 +756,6 @@ static void end_hiscore_validate_track(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_check_score(struct END_SCREEN_STATE *screen)
 {
-	struct HIGHSCORE_ENTRY far *scores;
 	end_hiscore_validate_track(screen);
 	if (screen->score_status == 0 && highscore_load_or_create(0) != 0) {
 		if (highscore_load_or_create(1) != 0) {
@@ -801,6 +763,7 @@ static void end_hiscore_check_score(struct END_SCREEN_STATE *screen)
 		}
 	}
 	screen->finish_time = 0;
+	struct HIGHSCORE_ENTRY far *scores;
 	if (screen->score_status == 0 && gState_total_finish_time != 0) {
 		screen->finish_time = gState_total_finish_time;
 		scores = (struct HIGHSCORE_ENTRY far *)track_highscore_table;
@@ -814,12 +777,11 @@ static void end_hiscore_check_score(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_show_opponent(struct END_SCREEN_STATE *screen)
 {
-	struct SHAPE2D far *frame_shape;
-	legacy_s16 animation_width;
 	opponent_animation_frame_id[3] = '1';
-	frame_shape = (struct SHAPE2D far *)locate_shape_fatal(screen->animation_resource,
-														   opponent_animation_frame_id);
-	animation_width = LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape), video_shape_width_scale);
+	struct SHAPE2D far *frame_shape = (struct SHAPE2D far *)locate_shape_fatal(
+		screen->animation_resource, opponent_animation_frame_id);
+	legacy_s16 animation_width =
+		LEGACY_S16_WRAP_MUL(shape2d_get_width(frame_shape), video_shape_width_scale);
 	screen->animation_x = LEGACY_S16_WRAP_SUB(END_SCREEN_ANIMATION_RIGHT, animation_width);
 	screen->animation_y =
 		LEGACY_S16_WRAP_SUB(END_SCREEN_ANIMATION_BOTTOM, shape2d_get_height(frame_shape));
@@ -845,9 +807,6 @@ static void end_hiscore_show_opponent(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_enter_opponent_score(struct END_SCREEN_STATE *screen)
 {
-	struct BUTTON_AREA menu_areas[END_SCREEN_MENU_AREA_COUNT];
-	legacy_u16 i, text_resource_count, input;
-	legacy_s16 delta;
 	screen->score_status = 0;
 	screen->evaluation_screen = 1;
 	draw_button(locate_text_res(screen->misc_resource, result_continue_button_id),
@@ -859,23 +818,24 @@ static void end_hiscore_enter_opponent_score(struct END_SCREEN_STATE *screen)
 	menu_reset_animation_timers();
 	check_input();
 	sprite_select_screen_compat();
-	for (i = 0; i < END_SCREEN_MENU_AREA_COUNT; i++) {
+	struct BUTTON_AREA menu_areas[END_SCREEN_MENU_AREA_COUNT];
+	for (legacy_u16 i = 0; i < END_SCREEN_MENU_AREA_COUNT; i++) {
 		menu_areas[i].x1 = result_button_left[i];
 		menu_areas[i].x2 = result_button_right[i];
 		menu_areas[i].y1 = hiscore_buttons_y1[i];
 		menu_areas[i].y2 = hiscore_buttons_y2[i];
 	}
-	text_resource_count =
+	legacy_u16 text_resource_count =
 		screen->outcome == END_SCREEN_OUTCOME_NONE ? 1U : END_SCREEN_TEXT_VARIANT_COUNT;
 	for (;;) {
-		delta = (legacy_s16)menu_animate_button_highlight(END_SCREEN_BUTTON_COUNT, menu_areas,
-														  menu_highlight_second_color,
-														  menu_highlight_first_color);
+		legacy_s16 delta = (legacy_s16)menu_animate_button_highlight(
+			END_SCREEN_BUTTON_COUNT, menu_areas, menu_highlight_second_color,
+			menu_highlight_first_color);
 		end_hiscore_update_animation(delta, &screen->animation_timer, &screen->animation_frame,
 									 &screen->previous_animation_frame, screen->animation_resource,
 									 screen->animation_sequence, screen->animation_x,
 									 screen->animation_y, screen->animation_sprite, 0);
-		input = (legacy_u16)input_checking((legacy_s16)text_resource_count);
+		legacy_u16 input = (legacy_u16)input_checking((legacy_s16)text_resource_count);
 		if (input == KEY_ENTER || input == KEY_SPACE || input == KEY_ESCAPE) {
 			break;
 		}
@@ -934,12 +894,11 @@ static void end_hiscore_draw_evaluation(struct END_SCREEN_STATE *screen)
 
 static void end_hiscore_draw_menu(struct END_SCREEN_STATE *screen)
 {
-	legacy_s16 menu_offset;
-	legacy_u16 i;
 	screen->selected = 1;
 	screen->previous_selection = 1;
 	menu_reset_animation_timers();
 	sprite_select_render_window();
+	legacy_s16 menu_offset;
 	if (screen->opponent_active == 0 || screen->score_status == -1) {
 		menu_offset = END_SCREEN_MENU_OFFSET_WITHOUT_FIRST_BUTTON;
 	} else {
@@ -965,7 +924,7 @@ static void end_hiscore_draw_menu(struct END_SCREEN_STATE *screen)
 				LEGACY_S16_WRAP_ADD(LEGACY_S16_WRAP_ADD(result_button_left[3], menu_offset), 1),
 				END_SCREEN_BUTTON_Y, END_SCREEN_BUTTON_WIDTH, END_SCREEN_BUTTON_HEIGHT,
 				button_top_color, button_bottom_color, button_fill_color, 0);
-	for (i = 0; i < END_SCREEN_BUTTON_COUNT; i++) {
+	for (legacy_u16 i = 0; i < END_SCREEN_BUTTON_COUNT; i++) {
 		screen->button_areas[i].x1 = LEGACY_S16_WRAP_ADD(result_button_left[i], menu_offset);
 		screen->button_areas[i].x2 = LEGACY_S16_WRAP_ADD(result_button_right[i], menu_offset);
 		screen->button_areas[i].y1 = hiscore_buttons_y1[i];
@@ -1057,13 +1016,11 @@ static legacy_s16 end_hiscore_handle_menu_input(struct END_SCREEN_STATE *screen,
 
 static legacy_s16 end_hiscore_run_menu(struct END_SCREEN_STATE *screen)
 {
-	legacy_s16 delta, result;
-	legacy_u16 input;
 	for (;;) {
 		end_hiscore_redraw_selection(screen);
-		delta = (legacy_s16)menu_animate_button_highlight(screen->selected, screen->button_areas,
-														  menu_highlight_second_color,
-														  menu_highlight_first_color);
+		legacy_s16 delta = (legacy_s16)menu_animate_button_highlight(
+			screen->selected, screen->button_areas, menu_highlight_second_color,
+			menu_highlight_first_color);
 		if (screen->evaluation_screen == 0 && screen->outcome != END_SCREEN_OUTCOME_NONE) {
 			end_hiscore_update_animation(delta, &screen->animation_timer, &screen->animation_frame,
 										 &screen->previous_animation_frame,
@@ -1072,8 +1029,8 @@ static legacy_s16 end_hiscore_run_menu(struct END_SCREEN_STATE *screen)
 										 screen->animation_sprite, 1);
 		}
 		end_hiscore_select_mouse(screen);
-		input = (legacy_u16)input_checking(delta);
-		result = end_hiscore_handle_menu_input(screen, input);
+		legacy_u16 input = (legacy_u16)input_checking(delta);
+		legacy_s16 result = end_hiscore_handle_menu_input(screen, input);
 		if (result != 0) {
 			return result;
 		}

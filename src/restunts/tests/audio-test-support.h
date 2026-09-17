@@ -35,8 +35,7 @@ static void hash_word(legacy_u16 word)
 static void hash_bytes(const void *data, unsigned length)
 {
 	const legacy_u8 *bytes = data;
-	unsigned index;
-	for (index = 0; index < length; index++) {
+	for (unsigned index = 0; index < length; index++) {
 		hash_word(bytes[index]);
 	}
 }
@@ -67,7 +66,6 @@ void *dos_memory_make_pointer(legacy_u16 segment, legacy_u16 offset)
 legacy_u16 dos_memory_pointer_segment(const void *pointer)
 {
 	uintptr_t address = (uintptr_t)pointer;
-	unsigned index;
 	if (pointer == 0) {
 		return 0;
 	}
@@ -77,7 +75,7 @@ legacy_u16 dos_memory_pointer_segment(const void *pointer)
 	if (address >= (uintptr_t)memory_bytes && address < (uintptr_t)(memory_bytes + 131072)) {
 		return address - (uintptr_t)memory_bytes < 65536 ? 0x1000 : 0x2000;
 	}
-	for (index = 0; index < external_count; index++) {
+	for (unsigned index = 0; index < external_count; index++) {
 		if (external_pointers[index] == pointer) {
 			return 0x8000 + index;
 		}
@@ -100,8 +98,8 @@ void *audio_read_far_pointer(const legacy_u8 *source)
 }
 void audio_write_far_pointer(legacy_u8 *destination, const void *pointer)
 {
-	legacy_u16 offset = dos_memory_pointer_offset(pointer),
-			   segment = dos_memory_pointer_segment(pointer);
+	legacy_u16 offset = dos_memory_pointer_offset(pointer);
+	legacy_u16 segment = dos_memory_pointer_segment(pointer);
 	destination[0] = offset;
 	destination[1] = offset >> 8;
 	destination[2] = segment;

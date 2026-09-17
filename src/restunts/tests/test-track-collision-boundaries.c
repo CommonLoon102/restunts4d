@@ -11,8 +11,6 @@ static legacy_u8 elements[900], terrain[900];
 
 static void reset_collision_track(void)
 {
-	unsigned index;
-
 	memset(elements, 0, sizeof(elements));
 	memset(terrain, 0, sizeof(terrain));
 	memset(trkObjectList, 0, sizeof(trkObjectList));
@@ -20,7 +18,7 @@ static void reset_collision_track(void)
 	track_terrain_map = terrain;
 	legacy_closed_hihat_offset = 0;
 	elapsed_time2 = 0;
-	for (index = 0; index < 30; index++) {
+	for (unsigned index = 0; index < 30; index++) {
 		trackrows[index] = terrainrows[index] = index * 30;
 		track_row_positions[index] = (30 - index) * 1024;
 		track_row_centers[index] = (30 - index) * 1024 - 512;
@@ -32,16 +30,14 @@ static void reset_collision_track(void)
 
 static void test_coordinate_aliases(void)
 {
-	static const legacy_u16 words[] = {0, 1234, 0x8000, 0xfedc, 0xffff};
-	static const legacy_s16 signed_words[] = {0, 1234, -32768, -292, -1};
-	unsigned index;
-
 	reset_collision_track();
-	for (index = 0; index < 30; index++) {
+	for (unsigned index = 0; index < 30; index++) {
 		assert(track_row_position(index) == (legacy_s16)((30 - index) * 1024));
 		assert(track_column_position(index) == (legacy_s16)(index * 1024));
 	}
-	for (index = 0; index < sizeof(words) / sizeof(words[0]); index++) {
+	static const legacy_s16 signed_words[] = {0, 1234, -32768, -292, -1};
+	static const legacy_u16 words[] = {0, 1234, 0x8000, 0xfedc, 0xffff};
+	for (unsigned index = 0; index < sizeof(words) / sizeof(words[0]); index++) {
 		legacy_closed_hihat_offset = words[index];
 		elapsed_time2 = words[4 - index];
 		assert(track_row_position(30) == signed_words[index]);
@@ -84,11 +80,10 @@ static void test_collision_continuations(void)
 		{255, 12, 7, 12, 6, 3, 123, 456, 7168, 18432},
 		{1, 12, 7, 12, 7, 3, 123, 456, 8192, 18432},
 		{1, 12, 7, 12, 7, 0, 123, 456, 7680, 17920}};
-	struct VECTOR result[8];
-	const struct BOUNDARY_CASE *sample;
-	unsigned index;
 
-	for (index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
+	const struct BOUNDARY_CASE *sample;
+	struct VECTOR result[8];
+	for (unsigned index = 0; index < sizeof(cases) / sizeof(cases[0]); index++) {
 		reset_collision_track();
 		sample = &cases[index];
 		elements[sample->anchor_row * 30 + sample->anchor_column] = 1;
@@ -107,8 +102,6 @@ static void test_collision_continuations(void)
 
 static void test_rotated_corkscrew_at_boundary(void)
 {
-	struct VECTOR result[8];
-
 	reset_collision_track();
 	elements[28 * 30 + 14] = 1;
 	elements[29 * 30 + 14] = TRACK_TILE_CONTINUATION_SOUTH;
@@ -116,6 +109,7 @@ static void test_rotated_corkscrew_at_boundary(void)
 	trkObjectList[1].ss_multiTileFlag = 1;
 	trkObjectList[1].ss_rotY = ANGLE_QUARTER_TURN;
 	terrain[29 * 30 + 14] = TERRAIN_RAISED_TILE;
+	struct VECTOR result[8];
 	assert(get_track_collision_points(14, 29, result) == 2);
 	assert(result[0].x == 14336);
 	assert(result[1].x == 15360);

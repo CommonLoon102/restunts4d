@@ -207,17 +207,13 @@ struct VECTOR *track_vector_from_legacy_offset(legacy_u16 offset)
 
 static legacy_s16 opponent_route_word(legacy_s16 index)
 {
-	legacy_u16 offset;
-
-	offset = LEGACY_U16_WRAP_MUL(index, LEGACY_WORD_BYTES);
+	legacy_u16 offset = LEGACY_U16_WRAP_MUL(index, LEGACY_WORD_BYTES);
 	return LEGACY_READ_S16_LE((const legacy_u8 far *)opponent_route_track_indices + offset);
 }
 
 static void opponent_advance_route(void)
 {
-	legacy_u8 route_point;
-
-	route_point = (legacy_u8)state.opponentstate.car_route_point_index;
+	legacy_u8 route_point = (legacy_u8)state.opponentstate.car_route_point_index;
 	state.opponentstate.car_route_point_index = LEGACY_S8_WRAP_ADD(route_point, ROUTE_POINT_STEP);
 	if (get_track_route_point(opponent_route_word(state.opponentstate.car_route_index),
 							  &state.opponentstate.car_route_target, route_point,
@@ -236,9 +232,7 @@ static void opponent_advance_route(void)
 
 static legacy_s16 opponent_average(legacy_s16 first, legacy_s16 second)
 {
-	legacy_s32 sum;
-
-	sum = (legacy_s32)first + (legacy_s32)second;
+	legacy_s32 sum = (legacy_s32)first + (legacy_s32)second;
 	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, OPPONENT_AVERAGE_SHIFT));
 }
 
@@ -253,11 +247,9 @@ struct OPPONENT_GUIDANCE {
 
 static void opponent_check_route_distance(struct OPPONENT_GUIDANCE *guidance)
 {
-	struct VECTOR route_target;
-	struct VECTOR relative;
+	struct VECTOR route_target = state.opponentstate.car_route_target;
 	legacy_s16 route_distance;
-
-	route_target = state.opponentstate.car_route_target;
+	struct VECTOR relative;
 	if (route_target.y != ROUTE_POINT_HEIGHT_UNSPECIFIED) {
 		relative.x = LEGACY_S16_WRAP_SUB(route_target.x, guidance->opponent.x);
 		relative.y = LEGACY_S16_WRAP_SUB(route_target.y, guidance->opponent.y);
@@ -275,21 +267,16 @@ static void opponent_check_route_distance(struct OPPONENT_GUIDANCE *guidance)
 
 static void opponent_passing_target(struct OPPONENT_GUIDANCE *guidance, struct VECTOR *route_target)
 {
+	const struct VECTOR *edge;
 	struct VECTOR relative;
 	struct VECTOR transformed;
-	legacy_s16 absolute_value;
-	legacy_s16 player_forward;
-
-	const struct VECTOR *edge;
-	legacy_s8 indicator;
-
 	if (state.game_inputmode != GAME_INPUT_MODE_INTRO) {
 		relative.x = LEGACY_S16_WRAP_SUB(guidance->player.x, guidance->opponent.x);
 		relative.y = LEGACY_S16_WRAP_SUB(guidance->player.y, guidance->opponent.y);
 		relative.z = LEGACY_S16_WRAP_SUB(guidance->player.z, guidance->opponent.z);
 		mat_mul_vector(&relative, guidance->rotation, &transformed);
-		player_forward = transformed.z;
-		absolute_value = transformed.x;
+		legacy_s16 player_forward = transformed.z;
+		legacy_s16 absolute_value = transformed.x;
 		if (absolute_value < 0) {
 			absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
 		}
@@ -306,6 +293,7 @@ static void opponent_passing_target(struct OPPONENT_GUIDANCE *guidance, struct V
 			relative.z =
 				LEGACY_S16_WRAP_SUB(guidance->player.z, state.opponentstate.car_route_target.z);
 			mat_mul_vector(&relative, guidance->rotation, &transformed);
+			legacy_s8 indicator;
 			if (transformed.x < 0) {
 				edge = &state.opponentstate.car_route_second_edge;
 				indicator = ROUTE_INDICATOR_RIGHT;
@@ -329,12 +317,9 @@ static void opponent_passing_target(struct OPPONENT_GUIDANCE *guidance, struct V
 
 static legacy_s16 opponent_steering_target(struct OPPONENT_GUIDANCE *guidance)
 {
+	struct VECTOR transformed;
 	struct VECTOR route_target;
 	struct VECTOR relative;
-	struct VECTOR transformed;
-	legacy_s16 steering_target;
-	legacy_s16 absolute_value;
-
 	for (;;) {
 		route_target = state.opponentstate.car_route_target;
 		opponent_passing_target(guidance, &route_target);
@@ -345,9 +330,9 @@ static legacy_s16 opponent_steering_target(struct OPPONENT_GUIDANCE *guidance)
 						 : LEGACY_S16_WRAP_SUB(route_target.y, guidance->opponent.y);
 		relative.z = LEGACY_S16_WRAP_SUB(route_target.z, guidance->opponent.z);
 		mat_mul_vector(&relative, guidance->rotation, &transformed);
-		steering_target = (legacy_s16)polarAngle(transformed.x, transformed.z);
+		legacy_s16 steering_target = (legacy_s16)polarAngle(transformed.x, transformed.z);
 		if (state.opponentstate.car_slidingFlag == CAR_SLIDING_INACTIVE) {
-			absolute_value = steering_target;
+			legacy_s16 absolute_value = steering_target;
 			if (absolute_value < 0) {
 				absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
 			}
@@ -376,14 +361,12 @@ static legacy_s16 opponent_steering_target(struct OPPONENT_GUIDANCE *guidance)
 
 static void opponent_apply_steering(legacy_s16 steering_target, legacy_s16 steering_step)
 {
-	legacy_s16 steering_delta;
-	legacy_s16 absolute_value;
-
 	if (state.opponentstate.car_sumSurfFrontWheels == CAR_WHEEL_CONTACT_NONE) {
 		steering_target = CAR_STEERING_CENTERED;
 	}
-	steering_delta = LEGACY_S16_WRAP_SUB(steering_target, state.opponentstate.car_steeringAngle);
-	absolute_value = steering_delta;
+	legacy_s16 steering_delta =
+		LEGACY_S16_WRAP_SUB(steering_target, state.opponentstate.car_steeringAngle);
+	legacy_s16 absolute_value = steering_delta;
 	if (absolute_value < 0) {
 		absolute_value = LEGACY_S16_WRAP_NEGATE(absolute_value);
 	}
@@ -402,16 +385,12 @@ static void opponent_apply_steering(legacy_s16 steering_target, legacy_s16 steer
 
 static legacy_u8 opponent_speed_input(legacy_s16 speed_step)
 {
-	legacy_u16 target_speed;
-	legacy_u16 speed_threshold;
-	legacy_u8 input;
-
-	input = INPUT_NONE;
+	legacy_u8 input = INPUT_NONE;
 	if (state.opponentstate.car_sumSurfRearWheels != CAR_WHEEL_CONTACT_NONE) {
 		if (state.opponentstate.car_crashBmpFlag != CRASH_EVENT_NONE) {
 			input = INPUT_BRAKE_FLAG;
 		} else if (state.opponentstate.car_velocity_heading_offset != 0) {
-			speed_threshold = LEGACY_U16_SHL(speed_step, OPPONENT_COAST_SPEED_SHIFT);
+			legacy_u16 speed_threshold = LEGACY_U16_SHL(speed_step, OPPONENT_COAST_SPEED_SHIFT);
 			if (speed_threshold > state.opponentstate.car_actual_speed) {
 				state.opponentstate.car_actual_speed = CAR_SPEED_STOPPED;
 				state.opponentstate.car_velocity_heading_offset = 0;
@@ -421,10 +400,11 @@ static legacy_u8 opponent_speed_input(legacy_s16 speed_step)
 			}
 		} else if (state.opponentstate.car_demandedGrip <=
 				   state.opponentstate.car_surfacegrip_sum) {
-			target_speed = state.game_inputmode == GAME_INPUT_MODE_INTRO
-							   ? OPPONENT_EMERGENCY_TARGET_SPEED
-							   : LEGACY_U16_SHL((legacy_u8)state.game_opponent_target_speed,
-												OPPONENT_SPEED_TO_TARGET_SHIFT);
+			legacy_u16 target_speed =
+				state.game_inputmode == GAME_INPUT_MODE_INTRO
+					? OPPONENT_EMERGENCY_TARGET_SPEED
+					: LEGACY_U16_SHL((legacy_u8)state.game_opponent_target_speed,
+									 OPPONENT_SPEED_TO_TARGET_SHIFT);
 			if (LEGACY_U16_WRAP_SUB(target_speed, OPPONENT_ACCELERATE_MARGIN) >
 				state.opponentstate.car_rev_speed) {
 				input = INPUT_ACCELERATE_FLAG;
@@ -441,10 +421,9 @@ static legacy_u8 opponent_speed_input(legacy_s16 speed_step)
 
 static void opponent_heading_error(void)
 {
-	struct VECTOR relative;
 	struct VECTOR transformed;
-
 	struct MATRIX *rotation;
+	struct VECTOR relative;
 	if (state.opponentstate.car_crashBmpFlag == CRASH_EVENT_NONE) {
 		relative.x =
 			LEGACY_S16_WRAP_SUB(state.opponentstate.car_route_target.x,
@@ -466,10 +445,8 @@ static void opponent_heading_error(void)
 
 static void opponent_check_finish(void)
 {
-	legacy_s16 finish_distance;
-
 	if (state.opponentstate.car_lap_count != OPPONENT_LAP_NONE) {
-		finish_distance = multiply_and_scale(
+		legacy_s16 finish_distance = multiply_and_scale(
 			cos_fast(track_angle),
 			LEGACY_S16_WRAP_SUB(track_row_centers[start_finish_row],
 								position_to_word((legacy_s32)state.opponentstate.car_position.lz)));
@@ -488,12 +465,8 @@ static void opponent_check_finish(void)
 
 void update_opponent_tick(void)
 {
-	struct OPPONENT_GUIDANCE guidance;
-	legacy_s16 steering_step;
 	legacy_s16 speed_step;
-	legacy_s16 steering_target;
-	legacy_u8 input;
-
+	legacy_s16 steering_step;
 	if (framespersec == GAME_FRAME_RATE_NORMAL) {
 		steering_step = OPPONENT_NORMAL_STEERING_STEP;
 		speed_step = OPPONENT_NORMAL_SPEED_STEP;
@@ -501,6 +474,7 @@ void update_opponent_tick(void)
 		steering_step = OPPONENT_LOW_RATE_STEERING_STEP;
 		speed_step = OPPONENT_LOW_RATE_SPEED_STEP;
 	}
+	struct OPPONENT_GUIDANCE guidance;
 	guidance.forced_route = state.opponentstate.car_velocity_heading_offset != 0 ||
 							state.game_inputmode == GAME_INPUT_MODE_INTRO;
 	guidance.opponent.x = position_to_word((legacy_s32)state.opponentstate.car_position.lx);
@@ -521,10 +495,10 @@ void update_opponent_tick(void)
 		}
 	} else {
 		opponent_check_route_distance(&guidance);
-		steering_target = opponent_steering_target(&guidance);
+		legacy_s16 steering_target = opponent_steering_target(&guidance);
 		opponent_apply_steering(steering_target, steering_step);
 	}
-	input = opponent_speed_input(speed_step);
+	legacy_u8 input = opponent_speed_input(speed_step);
 	update_car_speed(input, OPPONENT_CAR_INDEX, &state.opponentstate, &simd_opponent);
 	update_grip(&state.opponentstate, &simd_opponent, GRIP_BEHAVIOR_OPPONENT);
 	update_player_state(&state.opponentstate, &simd_opponent, &state.playerstate, &simd_player,
@@ -536,8 +510,6 @@ void update_opponent_tick(void)
 static legacy_s16 player_steering_response(legacy_s16 steering_angle, legacy_s16 response,
 										   legacy_u8 speed_index, const legacy_s8 *response_table)
 {
-	legacy_s16 centering_limit;
-
 	/* Turning farther from center gets the original fourfold response. */
 	if ((response > 0 && steering_angle < -STEERING_AWAY_FROM_CENTER_THRESHOLD) ||
 		(response < 0 && steering_angle > STEERING_AWAY_FROM_CENTER_THRESHOLD)) {
@@ -547,7 +519,7 @@ static legacy_s16 player_steering_response(legacy_s16 steering_angle, legacy_s16
 	/* With no steering input, bring a moving car back toward center. */
 	if (response == 0 && state.playerstate.car_actual_speed != CAR_SPEED_STOPPED &&
 		steering_angle != CAR_STEERING_CENTERED) {
-		centering_limit = LEGACY_S16_SHL(
+		legacy_s16 centering_limit = LEGACY_S16_SHL(
 			(legacy_s16)response_table[speed_index + STEERING_CENTERING_SAMPLE_OFFSET],
 			STEERING_CENTERING_LIMIT_SHIFT);
 		if (steering_angle < 0) {
@@ -570,19 +542,14 @@ static legacy_s16 player_steering_response(legacy_s16 steering_angle, legacy_s16
 
 void update_player_steering_input(legacy_s8 steering_input)
 {
-	legacy_s8 *response_table;
-	legacy_s16 steering_angle;
-	legacy_s16 response;
-	legacy_s16 response_index;
-	legacy_u8 speed_index;
-
-	response_table = steerWhlRespTable_ptr;
-	steering_angle = state.playerstate.car_steeringAngle;
-	speed_index =
+	legacy_s8 *response_table = steerWhlRespTable_ptr;
+	legacy_s16 steering_angle = state.playerstate.car_steeringAngle;
+	legacy_u8 speed_index =
 		(legacy_u8)((state.playerstate.car_actual_speed >> STEERING_RESPONSE_SPEED_SHIFT) &
 					STEERING_RESPONSE_INDEX_MASK);
-	response_index = LEGACY_S16_WRAP_ADD((legacy_s16)speed_index, (legacy_s16)steering_input);
-	response = response_table[response_index];
+	legacy_s16 response_index =
+		LEGACY_S16_WRAP_ADD((legacy_s16)speed_index, (legacy_s16)steering_input);
+	legacy_s16 response = response_table[response_index];
 
 	response = player_steering_response(steering_angle, response, speed_index, response_table);
 
@@ -620,9 +587,7 @@ void update_player_steering_input(legacy_s8 steering_input)
 
 static legacy_s16 route_average(legacy_s16 first, legacy_s16 second)
 {
-	legacy_s32 sum;
-
-	sum = LEGACY_S32_WRAP_ADD(first, second);
+	legacy_s32 sum = LEGACY_S32_WRAP_ADD(first, second);
 	return LEGACY_S16_FROM_BITS((legacy_u16)LEGACY_S32_SAR(sum, OPPONENT_AVERAGE_SHIFT));
 }
 
@@ -674,12 +639,8 @@ static void store_route_points(legacy_s16 track_index, struct TRACKOBJECT *track
 							   struct VECTOR *first_point, struct VECTOR *second_point,
 							   struct VECTOR *output, legacy_u8 has_opponent_path)
 {
-	legacy_u8 column;
-	legacy_u8 row;
-	legacy_s16 base_position;
-
-	column = (legacy_u8)track_route_columns[track_index];
-	row = (legacy_u8)track_route_rows[track_index];
+	legacy_u8 column = (legacy_u8)track_route_columns[track_index];
+	legacy_u8 row = (legacy_u8)track_route_rows[track_index];
 	if (first_point->y != ROUTE_POINT_HEIGHT_UNSPECIFIED &&
 		track_terrain_map[terrainrows[row] + column] == TERRAIN_RAISED_TILE) {
 		first_point->y =
@@ -688,7 +649,7 @@ static void store_route_points(legacy_s16 track_index, struct TRACKOBJECT *track
 			LEGACY_S16_WRAP_ADD(second_point->y, hillHeightConsts[TERRAIN_RAISED_HEIGHT_INDEX]);
 	}
 
-	base_position = track_object_base_z(track_object, row);
+	legacy_s16 base_position = track_object_base_z(track_object, row);
 	first_point->z = LEGACY_S16_WRAP_ADD(first_point->z, base_position);
 	second_point->z = LEGACY_S16_WRAP_ADD(second_point->z, base_position);
 
@@ -711,10 +672,8 @@ static void store_route_points(legacy_s16 track_index, struct TRACKOBJECT *track
 static void store_route_speed(const struct TRKOBJINFO *track_info,
 							  const struct TRACKOBJECT *track_object, legacy_s8 *optional_speed)
 {
-	legacy_u16 speed_index;
-
 	if (optional_speed != 0) {
-		speed_index = (legacy_u8)track_info->opponent_speed_code;
+		legacy_u16 speed_index = (legacy_u8)track_info->opponent_speed_code;
 		speed_index = LEGACY_U16_WRAP_ADD(speed_index, (legacy_u8)track_object->ss_surfaceType);
 		*optional_speed = LEGACY_S8_FROM_BITS(opponent_speed_at(speed_index));
 	}
@@ -723,36 +682,23 @@ static void store_route_speed(const struct TRKOBJINFO *track_info,
 legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *output,
 								 legacy_s16 route_index_arg, legacy_s8 *optional_speed)
 {
-	struct TRACKOBJECT *track_object;
-	struct TRKOBJINFO *track_info;
-	struct VECTOR *route_vectors;
-	struct VECTOR first_point;
-	struct VECTOR second_point;
-	legacy_s16 track_index;
-	legacy_u16 packed_opponent_offset;
-	legacy_u16 route_index_word;
-	legacy_u8 tile_element;
-	legacy_u8 track_subtype;
-	legacy_u8 connection_status;
-	legacy_u8 route_point_count;
-	legacy_u8 route_index;
-	legacy_u8 vector_index;
-	legacy_u8 has_opponent_path;
-
-	track_index = (legacy_s16)track_index_arg;
-	tile_element = (legacy_u8)track_route_element_ids[track_index];
-	track_subtype = (legacy_u8)track_route_traversal_flags[track_index] & TRACK_ROUTE_SUBTYPE_MASK;
-	connection_status =
+	legacy_s16 track_index = (legacy_s16)track_index_arg;
+	legacy_u8 tile_element = (legacy_u8)track_route_element_ids[track_index];
+	legacy_u8 track_subtype =
+		(legacy_u8)track_route_traversal_flags[track_index] & TRACK_ROUTE_SUBTYPE_MASK;
+	legacy_u8 connection_status =
 		(legacy_u8)track_route_traversal_flags[track_index] & TRACK_ROUTE_REVERSED_FLAG;
-	track_object = &trkObjectList[tile_element];
+	struct TRACKOBJECT *track_object = &trkObjectList[tile_element];
+	struct TRKOBJINFO *track_info;
 	if (track_object->ss_trkObjInfoPtr == 0) {
 		track_info = &legacy_null_track_info;
 	} else {
 		track_info = &track_object->ss_trkObjInfoPtr[track_subtype];
 	}
-	route_point_count = (legacy_u8)track_info->route_point_count;
-	route_index = (legacy_u8)route_index_arg;
+	legacy_u8 route_point_count = (legacy_u8)track_info->route_point_count;
+	legacy_u8 route_index = (legacy_u8)route_index_arg;
 
+	legacy_u8 vector_index;
 	if (connection_status == 0) {
 		vector_index = LEGACY_U8_WRAP_MUL(route_index, TRACK_ROUTE_VECTORS_PER_SEGMENT);
 	} else {
@@ -763,17 +709,20 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 
 	store_route_speed(track_info, track_object, optional_speed);
 
-	packed_opponent_offset =
+	legacy_u16 packed_opponent_offset =
 		(legacy_u16)((legacy_u8)track_info->reverse_path_offset_low |
 					 LEGACY_U16_SHL((legacy_u8)track_info->reverse_path_offset_high,
 									LEGACY_BYTE_BITS));
-	has_opponent_path = packed_opponent_offset != 0;
+	legacy_u8 has_opponent_path = packed_opponent_offset != 0;
+	struct VECTOR *route_vectors;
 	if (connection_status != 0 && has_opponent_path != 0) {
 		route_vectors = track_vector_from_legacy_offset(packed_opponent_offset);
 	} else {
 		route_vectors = track_info->route_vectors;
 	}
 
+	struct VECTOR second_point;
+	struct VECTOR first_point;
 	if (connection_status != 0 && has_opponent_path == 0) {
 		first_point = route_vectors[vector_index + TRACK_ROUTE_SECOND_VECTOR_OFFSET];
 		second_point = route_vectors[vector_index];
@@ -787,7 +736,7 @@ legacy_s16 get_track_route_point(legacy_s16 track_index_arg, struct VECTOR *outp
 	store_route_points(track_index, track_object, &first_point, &second_point, output,
 					   has_opponent_path);
 
-	route_index_word = route_index;
+	legacy_u16 route_index_word = route_index;
 	if ((route_index & LEGACY_U8_SIGN_BIT) != 0) {
 		route_index_word |= LEGACY_U16_HIGH_BYTE_MASK;
 	}

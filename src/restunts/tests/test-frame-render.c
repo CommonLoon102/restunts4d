@@ -117,10 +117,6 @@ legacy_u8 subst_hillroad_track(legacy_u8 terrain, legacy_u8 element)
 
 static void test_camera_modes(void)
 {
-	static struct VECTOR track_cameras[] = {{200, -20, 700}, {-400, 40, -300}};
-	struct FRAME_CAMERA camera;
-	unsigned int scenario;
-
 	memset(&state, 0, sizeof(state));
 	state.playerstate.car_position.lx = -80000;
 	state.playerstate.car_position.ly = 1280;
@@ -128,6 +124,7 @@ static void test_camera_modes(void)
 	state.opponentstate.car_position.lx = 120000;
 	state.opponentstate.car_position.ly = -640;
 	state.opponentstate.car_position.lz = -40000;
+	static struct VECTOR track_cameras[] = {{200, -20, 700}, {-400, 40, -300}};
 	state.game_follow_camera_position[0] = track_cameras[1];
 	state.game_follow_camera_position[1] = track_cameras[0];
 	state.game_trackside_camera_index[0] = 0;
@@ -137,7 +134,8 @@ static void test_camera_modes(void)
 	simd_opponent.car_height = 90;
 	camera_track_height_offset = 25;
 	planindex = 2;
-	for (scenario = 0; scenario < 64U; scenario++) {
+	struct FRAME_CAMERA camera;
+	for (unsigned int scenario = 0; scenario < 64U; scenario++) {
 		memset(&camera, 0, sizeof(camera));
 		followOpponentFlag = (scenario / 4U) % 2U;
 		cameramode = scenario % 4U;
@@ -163,30 +161,28 @@ static void test_camera_modes(void)
 
 static void test_covered_tiles(void)
 {
+	struct FRAME_TILE tile;
+	memset(&tile, 0, sizeof(tile));
 	static const legacy_s8 offsets[] = {-128, -1, 0, 126, 127};
 	struct FRAME_LOOKAHEAD_TILE lookahead[24];
 	struct FRAME_TILE_SELECTION tiles;
-	struct FRAME_TILE tile;
-	unsigned int flag, east, south, index;
-
-	memset(&tile, 0, sizeof(tile));
-	for (flag = 0; flag < 5U; flag++) {
+	for (unsigned int flag = 0; flag < 5U; flag++) {
 		trkObjectList[1].ss_multiTileFlag = flag;
-		for (east = 0; east < 5U; east++) {
-			for (south = 0; south < 5U; south++) {
+		for (unsigned int east = 0; east < 5U; east++) {
+			for (unsigned int south = 0; south < 5U; south++) {
 				memset(&tiles, 0, sizeof(tiles));
 				tiles.lookahead = lookahead;
 				tile.element = 1;
 				tile.east = offsets[east];
 				tile.south = offsets[south];
-				for (index = 0; index < 24U; index++) {
+				for (unsigned int index = 0; index < 24U; index++) {
 					lookahead[index].east = LEGACY_S8_WRAP_ADD(offsets[east], (index % 3U) - 1U);
 					lookahead[index].south =
 						LEGACY_S8_WRAP_ADD(offsets[south], (index / 3U) % 3U - 1U);
 					tiles.markers[index] = index % 3U;
 				}
 				frame_mark_covered_tiles(&tiles, &tile, 22);
-				for (index = 0; index < 24U; index++) {
+				for (unsigned int index = 0; index < 24U; index++) {
 					trace_word(tiles.markers[index]);
 				}
 			}
@@ -209,14 +205,13 @@ static void reset_shapes(void)
 
 static void configure_track(void)
 {
-	unsigned int index;
 	memset(terrain_map, 0, sizeof(terrain_map));
 	memset(element_map, 0, sizeof(element_map));
 	memset(sign_map, 255, sizeof(sign_map));
 	track_terrain_map = terrain_map;
 	track_element_map = element_map;
 	roadside_sign_indices_by_tile = sign_map;
-	for (index = 0; index < 30U; index++) {
+	for (unsigned int index = 0; index < 30U; index++) {
 		terrainrows[index] = trackrows[index] = index * 30U;
 		track_column_centers[index] = index * 1024U + 512U;
 		track_row_centers[index] = 30000 - index * 1024U;
@@ -227,12 +222,10 @@ static void configure_track(void)
 
 static void test_tile_selection(void)
 {
+	struct FRAME_LOOKAHEAD_TILE lookahead[24];
 	struct FRAME_CAMERA camera;
 	struct FRAME_TILE_SELECTION tiles;
-	struct FRAME_LOOKAHEAD_TILE lookahead[24];
-	unsigned int scenario, index;
-
-	for (scenario = 0; scenario < 30U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 30U; scenario++) {
 		memset(&camera, 0, sizeof(camera));
 		memset(&tiles, 0x35, sizeof(tiles));
 		configure_track();
@@ -242,7 +235,7 @@ static void test_tile_selection(void)
 		state.playerstate.car_position.lx = 10L * 65536L;
 		state.playerstate.car_position.lz = 19L * 65536L;
 		tiles.lookahead = lookahead;
-		for (index = 0; index < 24U; index++) {
+		for (unsigned int index = 0; index < 24U; index++) {
 			lookahead[index].east = (legacy_s8)(index % 5U - 2U);
 			lookahead[index].south = (legacy_s8)(index / 5U - 2U);
 			lookahead[index].detail = index % 3U;
@@ -255,7 +248,7 @@ static void test_tile_selection(void)
 		element_map[11 + 11 * 30] = TRACK_TILE_CONTINUATION_SOUTHEAST;
 		terrain_map[10 + 10 * 30] = scenario % 3U == 0 ? 7 : 0;
 		frame_select_tiles(&tiles, &camera);
-		for (index = 0; index < 24U; index++) {
+		for (unsigned int index = 0; index < 24U; index++) {
 			trace_word(tiles.markers[index]);
 			trace_word(tiles.east[index]);
 			trace_word(tiles.south[index]);
@@ -268,15 +261,13 @@ static void test_tile_selection(void)
 
 static void test_terrain_exhaustion(void)
 {
-	struct FRAME_TILE tile;
 	struct FRAME_CAMERA camera;
-	unsigned int scenario;
-
 	memset(&camera, 0, sizeof(camera));
 	camera.position.x = -100;
 	camera.position.y = 250;
 	camera.position.z = 400;
-	for (scenario = 0; scenario < 24U; scenario++) {
+	struct FRAME_TILE tile;
+	for (unsigned int scenario = 0; scenario < 24U; scenario++) {
 		configure_track();
 		reset_shapes();
 		memset(&tile, 0, sizeof(tile));
@@ -300,9 +291,7 @@ static void test_terrain_exhaustion(void)
 static void test_sorted_shapes(void)
 {
 	struct FRAME_CAR_RENDER cars[2];
-	unsigned int scenario, index;
-
-	for (scenario = 0; scenario < 36U; scenario++) {
+	for (unsigned int scenario = 0; scenario < 36U; scenario++) {
 		reset_shapes();
 		memset(cars, 0, sizeof(cars));
 		state.playerstate.car_is_braking = scenario % 2U;
@@ -310,7 +299,7 @@ static void test_sorted_shapes(void)
 		state.playerstate.car_crashBmpFlag = CRASH_EVENT_COLLISION;
 		state.opponentstate.car_crashBmpFlag = scenario % 2U == 0 ? CRASH_EVENT_COLLISION : 0;
 		transformedshape_counter = scenario % 5U;
-		for (index = 0; index < 5U; index++) {
+		for (unsigned int index = 0; index < 5U; index++) {
 			currenttransshape[index].shapeptr = &game3dshapes[index];
 			transformed_shape_sort_types[index] = index % 4U;
 			transformedshape_indices[index] = index;
@@ -326,17 +315,15 @@ static void test_sorted_shapes(void)
 
 static void test_track_elements_and_flags(void)
 {
-	struct FRAME_TILE tile;
 	struct FRAME_CAMERA camera;
-	struct FRAME_CAR_RENDER cars[2];
-	legacy_s8 overlay;
-	unsigned int scenario, index;
-
 	memset(&camera, 0, sizeof(camera));
 	camera.position.x = 100;
 	camera.position.y = 200;
 	camera.position.z = -100;
-	for (scenario = 0; scenario < 32U; scenario++) {
+	struct FRAME_TILE tile;
+	struct FRAME_CAR_RENDER cars[2];
+	legacy_s8 overlay;
+	for (unsigned int scenario = 0; scenario < 32U; scenario++) {
 		configure_track();
 		reset_shapes();
 		memset(&tile, 0, sizeof(tile));
@@ -370,14 +357,14 @@ static void test_track_elements_and_flags(void)
 		start_flag_animation = scenario * 33U;
 		track_angle = scenario * 17U;
 		hillFlag = scenario % 2U;
-		for (index = 0; index < 4U; index++) {
+		for (unsigned int index = 0; index < 4U; index++) {
 			flag_vertices[index].x = index;
 			flag_vertices[index].y = index * 30U;
 			flag_vertices[index].z = -10;
 		}
 		frame_add_start_flag(&tile, &camera, 8);
 		trace_word(transformedshape_counter);
-		for (index = 0; index < (unsigned int)transformedshape_counter; index++) {
+		for (unsigned int index = 0; index < (unsigned int)transformedshape_counter; index++) {
 			trace_shape(&currenttransshape[index]);
 			trace_word(transformedshape_zarray[index]);
 		}

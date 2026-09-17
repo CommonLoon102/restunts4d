@@ -50,9 +50,7 @@ static void gamestate_write_vectorlong(struct GAMESTATE_WRITER *writer,
 static void gamestate_write_s8_array(struct GAMESTATE_WRITER *writer, const legacy_s8 *values,
 									 legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		gamestate_write_s8(writer, values[index]);
 	}
 }
@@ -60,9 +58,7 @@ static void gamestate_write_s8_array(struct GAMESTATE_WRITER *writer, const lega
 static void gamestate_write_s16_array(struct GAMESTATE_WRITER *writer, const legacy_s16 *values,
 									  legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		gamestate_write_s16(writer, values[index]);
 	}
 }
@@ -70,9 +66,7 @@ static void gamestate_write_s16_array(struct GAMESTATE_WRITER *writer, const leg
 static void gamestate_write_s32_array(struct GAMESTATE_WRITER *writer, const legacy_s32 *values,
 									  legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		gamestate_write_s32(writer, values[index]);
 	}
 }
@@ -80,9 +74,7 @@ static void gamestate_write_s32_array(struct GAMESTATE_WRITER *writer, const leg
 static void gamestate_write_vector_array(struct GAMESTATE_WRITER *writer,
 										 const struct VECTOR *vectors, legacy_u16 count)
 {
-	legacy_u16 index;
-
-	for (index = 0U; index < count; index++) {
+	for (legacy_u16 index = 0U; index < count; index++) {
 		gamestate_write_vector(writer, &vectors[index]);
 	}
 }

@@ -9,7 +9,6 @@ void far *dos_memory_get_psp(void)
 {
 	legacy_u16 memory_segment;
 	legacy_u16 memory_offset;
-
 	__asm {
 		push ds
 		mov ah, DOS_MEMORY_GET_PSP_FUNCTION

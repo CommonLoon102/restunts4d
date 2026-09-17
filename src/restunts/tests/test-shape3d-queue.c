@@ -27,11 +27,6 @@ static struct RECTANGLE bounds;
 
 static void reset_scene(void)
 {
-	static const struct VECTOR points[] = {{-20, -20, 100}, {20, -20, 100},	 {0, 20, 100},
-										   {0, 0, 0},		{-20, -20, 150}, {20, -20, 150},
-										   {0, 20, 150},	{0, 0, 100}};
-	unsigned i;
-
 	memset(&shape, 0, sizeof(shape));
 	memset(&instance, 0, sizeof(instance));
 	memset(primitives, 0, sizeof(primitives));
@@ -51,7 +46,10 @@ static void reset_scene(void)
 	bounds.top = 32767;
 	bounds.right = -32768;
 	bounds.bottom = -32768;
-	for (i = 0; i < 8; i++) {
+	static const struct VECTOR points[] = {{-20, -20, 100}, {20, -20, 100},	 {0, 20, 100},
+										   {0, 0, 0},		{-20, -20, 150}, {20, -20, 150},
+										   {0, 20, 150},	{0, 0, 100}};
+	for (unsigned i = 0; i < 8; i++) {
 		shape3d_vertex_write(&shape, i, &points[i]);
 	}
 	projection_focal_length_x = 256;
@@ -122,9 +120,8 @@ static void test_primitive_records(void)
 		 196,
 		 65,
 		 221}};
-	unsigned i, point;
 
-	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
 		reset_scene();
 		memcpy(primitives, cases[i].primitive, sizeof(cases[i].primitive));
 		assert(shape3d_transform_and_queue(&instance) == 0);
@@ -134,7 +131,7 @@ static void test_primitive_records(void)
 		assert(polyinfo[2] == 7);
 		assert(polyinfo[3] == cases[i].count);
 		assert(polyinfo[4] == cases[i].type);
-		for (point = 0; point < cases[i].count; point++) {
+		for (unsigned point = 0; point < cases[i].count; point++) {
 			check_point(polyinfo, point, cases[i].points[point].px, cases[i].points[point].py);
 		}
 		assert(bounds.left == cases[i].left);
@@ -146,13 +143,12 @@ static void test_primitive_records(void)
 
 static void test_sphere_bounds_preserve_original_coordinate_write(void)
 {
-	static const legacy_u8 sphere[] = {11, 1, 7, 0, 1, 0, 0};
-	static const struct VECTOR center = {0, 0, 100};
-	static const struct VECTOR endpoint = {1, 0, 100};
-
 	reset_scene();
+	static const struct VECTOR center = {0, 0, 100};
 	shape3d_vertex_write(&shape, 0, &center);
+	static const struct VECTOR endpoint = {1, 0, 100};
 	shape3d_vertex_write(&shape, 1, &endpoint);
+	static const legacy_u8 sphere[] = {11, 1, 7, 0, 1, 0, 0};
 	memcpy(primitives, sphere, sizeof(sphere));
 	/* Projected center (160,100), radius2. Original sphere bounds visit
 	 * (158,98) then (102,98): the second X comes from center Y + radius.
@@ -181,13 +177,12 @@ static void test_shared_clipped_vertices(void)
 		2, 1, 7, 0, 3,	  /* Clipping a line projects its shared behind-plane vertex. */
 		3, 1, 8, 7, 1, 3, /* Polygon clipping must still use its original clip flag. */
 		0, 0};
-	const legacy_u8 *polygon;
 
 	reset_scene();
 	memcpy(primitives, records, sizeof(records));
 	assert(shape3d_transform_and_queue(&instance) == 0);
 	assert(polyinfonumpolys == 2);
-	polygon = polyinfoptrs[1];
+	const legacy_u8 *polygon = polyinfoptrs[1];
 	/* The intersection at the center equals vertex 7 and must not be duplicated. */
 	assert(polygon[3] == 3);
 	assert(LEGACY_READ_U16_LE(polygon) == 66);
@@ -232,6 +227,7 @@ static void test_depth_order_and_attached_primitive(void)
 
 static void test_clipped_depth_signedness(void)
 {
+	struct VECTOR vertex;
 	static const struct {
 		legacy_u8 source_count;
 		legacy_u8 output_count;
@@ -242,21 +238,18 @@ static void test_clipped_depth_signedness(void)
 				 {3, 4, {100, 100, -401, 0}, -51, 1},
 				 {4, 5, {40, 50, 60, -600}, 13017, 0}};
 	static const struct VECTOR points[] = {{-20, -20, 0}, {20, -20, 0}, {20, 20, 0}, {-20, 20, 0}};
-	struct VECTOR vertex;
-	unsigned i, j, next;
-
-	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+	for (unsigned i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
 		reset_scene();
 		primitives[0] = cases[i].source_count;
 		primitives[1] = 1;
 		primitives[2] = 7;
-		for (j = 0; j < cases[i].source_count; j++) {
+		for (unsigned j = 0; j < cases[i].source_count; j++) {
 			vertex = points[j];
 			vertex.z = cases[i].depths[j];
 			shape3d_vertex_write(&shape, j, &vertex);
 			primitives[3U + j] = (legacy_u8)j;
 		}
-		next = 3U + cases[i].source_count;
+		unsigned next = 3U + cases[i].source_count;
 		primitives[next] = 1;
 		primitives[next + 1U] = 1;
 		primitives[next + 2U] = 8;
@@ -279,9 +272,8 @@ static void test_clipped_depth_signedness(void)
 
 static void test_backface_and_material_override(void)
 {
-	static const legacy_u8 triangle[] = {3, 0, 7, 0, 1, 2, 0, 0};
-
 	reset_scene();
+	static const legacy_u8 triangle[] = {3, 0, 7, 0, 1, 2, 0, 0};
 	memcpy(primitives, triangle, sizeof(triangle));
 	assert(shape3d_transform_and_queue(&instance) == LEGACY_U16_MAX);
 	assert(polyinfonumpolys == 0);
@@ -296,13 +288,10 @@ static void test_backface_and_material_override(void)
 
 static void test_queue_limits(void)
 {
-	static const legacy_u8 point[] = {1, 1, 7, 0, 0, 0};
-	static const legacy_u8 polygon[] = {10, 1, 7, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 0, 0};
-	unsigned i;
-
 	reset_scene();
+	static const legacy_u8 point[] = {1, 1, 7, 0, 0, 0};
 	memcpy(primitives, point, sizeof(point));
-	for (i = 0; i < 399; i++) {
+	for (unsigned i = 0; i < 399; i++) {
 		assert(shape3d_transform_and_queue(&instance) == 0);
 	}
 	assert(shape3d_transform_and_queue(&instance) == 1);
@@ -310,8 +299,9 @@ static void test_queue_limits(void)
 	assert(polygon_buffer_full == 1);
 	assert(shape3d_transform_and_queue(0) == 1);
 	reset_scene();
+	static const legacy_u8 polygon[] = {10, 1, 7, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 0, 0};
 	memcpy(primitives, polygon, sizeof(polygon));
-	for (i = 0; i < 225; i++) {
+	for (unsigned i = 0; i < 225; i++) {
 		assert(shape3d_transform_and_queue(&instance) == 0);
 	}
 	assert(shape3d_transform_and_queue(&instance) == 1);

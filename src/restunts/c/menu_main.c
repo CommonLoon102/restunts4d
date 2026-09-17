@@ -36,25 +36,19 @@ legacy_s8 run_menu(void)
 		MAIN_MENU_CAR, MAIN_MENU_OPPONENT, MAIN_MENU_OPTIONS, MAIN_MENU_DRIVE, MAIN_MENU_TRACK};
 	static const legacy_u8 next_selection[MAIN_MENU_BUTTON_COUNT] = {
 		MAIN_MENU_TRACK, MAIN_MENU_DRIVE, MAIN_MENU_CAR, MAIN_MENU_OPTIONS, MAIN_MENU_OPPONENT};
-	legacy_s8 far *resource;
-	struct SHAPE2D far *shape;
-	legacy_u8 selected;
-	legacy_u8 previous;
-	legacy_u8 blit_mode;
-	legacy_u16 elapsed;
-	legacy_u16 key;
-	legacy_s16 hit;
 
-	selected = MAIN_MENU_DRIVE;
-	previous = MAIN_MENU_NO_SELECTION;
-	blit_mode = MENU_BLIT_MODE_INITIAL;
+	legacy_u8 selected = MAIN_MENU_DRIVE;
+	legacy_u8 previous = MAIN_MENU_NO_SELECTION;
+	legacy_u8 blit_mode = MENU_BLIT_MODE_INITIAL;
 	show_waiting();
 	waitflag = MAIN_MENU_WAIT_TICKS;
 	render_window_sprite = sprite_make_wnd(MAIN_MENU_SCREEN_WIDTH, MAIN_MENU_SCREEN_HEIGHT,
 										   MAIN_MENU_TRANSPARENT_COLOR);
-	resource = (legacy_s8 far *)file_load_resource(FILE_RESOURCE_SHAPE2D, main_menu_shapes_name);
+	legacy_s8 far *resource =
+		(legacy_s8 far *)file_load_resource(FILE_RESOURCE_SHAPE2D, main_menu_shapes_name);
 	sprite_select_render_window();
-	shape = (struct SHAPE2D far *)locate_shape_fatal(resource, main_menu_background_data);
+	struct SHAPE2D far *shape =
+		(struct SHAPE2D far *)locate_shape_fatal(resource, main_menu_background_data);
 	sprite_shape_to_1_alt(shape);
 	mmgr_free(resource);
 
@@ -68,10 +62,10 @@ legacy_s8 run_menu(void)
 			menu_reset_animation_timers();
 		}
 
-		elapsed = (legacy_u16)menu_animate_button_highlight(
+		legacy_u16 elapsed = (legacy_u16)menu_animate_button_highlight(
 			selected, menu_buttons, menu_highlight_second_color, menu_highlight_first_color);
-		key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
-		hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT, menu_buttons);
+		legacy_u16 key = (legacy_u16)input_checking(LEGACY_S16_FROM_BITS(elapsed));
+		legacy_s16 hit = (legacy_s16)mouse_multi_hittest(MAIN_MENU_BUTTON_COUNT, menu_buttons);
 		if (hit != MAIN_MENU_MOUSE_HIT_NONE) {
 			selected = (legacy_u8)hit;
 		}

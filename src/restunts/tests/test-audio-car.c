@@ -50,7 +50,6 @@ void audio_reset_channels(void)
 }
 static void record_result(void)
 {
-	unsigned i;
 	const legacy_u8 *bytes = (const legacy_u8 *)records;
 	trace_word(audio_car_state_ready);
 	trace_word(audio_player_car_flags);
@@ -58,7 +57,7 @@ static void record_result(void)
 	trace_word(audio_car_state_read_index);
 	trace_word(audio_car_state_write_index);
 	trace_word(audio_previous_replay_mode);
-	for (i = 0; i < sizeof(records); i++) {
+	for (unsigned i = 0; i < sizeof(records); i++) {
 		trace_word(bytes[i]);
 	}
 }
@@ -105,11 +104,11 @@ static void reset_audio_car(unsigned index)
 }
 static void test_recording_modes(void)
 {
-	unsigned mode, opponent, follow, flags, index = 0;
-	for (mode = 0; mode < 6U; mode++) {
-		for (opponent = 0; opponent < 2U; opponent++) {
-			for (follow = 0; follow <= opponent; follow++) {
-				for (flags = 0; flags < 16U; flags++) {
+	unsigned index = 0;
+	for (unsigned mode = 0; mode < 6U; mode++) {
+		for (unsigned opponent = 0; opponent < 2U; opponent++) {
+			for (unsigned follow = 0; follow <= opponent; follow++) {
+				for (unsigned flags = 0; flags < 16U; flags++) {
 					reset_audio_car(index++);
 					gameconfig.game_opponenttype = opponent;
 					followOpponentFlag = follow;
@@ -130,11 +129,11 @@ static void test_recording_modes(void)
 }
 static void test_replay_shutdown(void)
 {
-	unsigned replay, opponent, flags, ready, index = 400;
-	for (replay = 1; replay <= 2U; replay++) {
-		for (opponent = 0; opponent < 2U; opponent++) {
-			for (flags = 0; flags < 16U; flags++) {
-				for (ready = 0; ready < 2U; ready++) {
+	unsigned index = 400;
+	for (unsigned replay = 1; replay <= 2U; replay++) {
+		for (unsigned opponent = 0; opponent < 2U; opponent++) {
+			for (unsigned flags = 0; flags < 16U; flags++) {
+				for (unsigned ready = 0; ready < 2U; ready++) {
 					reset_audio_car(index++);
 					gameconfig.game_opponenttype = opponent;
 					is_in_replay = replay;

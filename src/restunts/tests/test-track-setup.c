@@ -63,8 +63,6 @@ void mmgr_release(void far *pointer)
 
 static void initialize(void)
 {
-	int index;
-
 	memset(&output, 0, sizeof(output));
 	track_element_map = output.elements;
 	track_terrain_map = output.terrain;
@@ -90,7 +88,7 @@ static void initialize(void)
 	roadside_sign_count = 0;
 	trackside_camera_count = 0;
 	hillFlag = 0;
-	for (index = 0; index < 30; index++) {
+	for (int index = 0; index < 30; index++) {
 		trackrows[index] = index * 30;
 		terrainrows[index] = (29 - index) * 30;
 		track_column_positions[index] = index * 1024;
@@ -121,14 +119,12 @@ legacy_s16 reference_track_setup(void);
 static legacy_s16 run_setup(void)
 {
 #ifdef TRACK_SETUP_DIFFERENTIAL
-	struct SETUP_OUTPUT reference;
 	legacy_u8 input_elements[TEST_TILE_COUNT];
-	legacy_u8 input_terrain[TEST_TILE_COUNT];
-
 	memcpy(input_elements, output.elements, sizeof(input_elements));
+	legacy_u8 input_terrain[TEST_TILE_COUNT];
 	memcpy(input_terrain, output.terrain, sizeof(input_terrain));
 	capture_globals(reference_track_setup());
-	reference = output;
+	struct SETUP_OUTPUT reference = output;
 	initialize();
 	memcpy(output.elements, input_elements, sizeof(input_elements));
 	memcpy(output.terrain, input_terrain, sizeof(input_terrain));
@@ -149,16 +145,15 @@ static void put_tile(int column, int row, legacy_u8 tile)
 
 static void rectangle(int width, int height, int start_side)
 {
-	int index;
 	int right = width + 4;
 	int bottom = height + 4;
 
 	initialize();
-	for (index = 6; index < right; index++) {
+	for (int index = 6; index < right; index++) {
 		put_tile(index, 5, 5);
 		put_tile(index, bottom, 5);
 	}
-	for (index = 6; index < bottom; index++) {
+	for (int index = 6; index < bottom; index++) {
 		put_tile(5, index, 4);
 		put_tile(right, index, 4);
 	}
@@ -184,29 +179,22 @@ static void rectangle(int width, int height, int start_side)
 
 static void test_closed_routes(void)
 {
-	int width;
-	int height;
-	int side;
-	int raised;
-	int index;
-	int expected_pieces;
-
-	for (width = 3; width <= 20; width++) {
-		for (height = 3; height <= 20; height++) {
-			for (side = 0; side < 4; side++) {
-				for (raised = 0; raised <= 1; raised++) {
+	for (int width = 3; width <= 20; width++) {
+		for (int height = 3; height <= 20; height++) {
+			for (int side = 0; side < 4; side++) {
+				for (int raised = 0; raised <= 1; raised++) {
 					rectangle(width, height, side);
 					memset(output.terrain, raised * 6, sizeof(output.terrain));
 					assert(run_setup() == 0);
-					expected_pieces = 2 * (width + height) - 4;
+					int expected_pieces = 2 * (width + height) - 4;
 					assert(track_pieces_counter == expected_pieces);
 					assert(trackside_camera_count == expected_pieces / 3);
 					assert(track_angle == side * 256);
-					for (index = 0; index < expected_pieces; index++) {
+					for (int index = 0; index < expected_pieces; index++) {
 						assert(output.primary[index] == (index + 1) % expected_pieces);
 						assert(output.alternate[index] == -1);
 					}
-					for (index = 0; index < trackside_camera_count; index++) {
+					for (int index = 0; index < trackside_camera_count; index++) {
 						assert(output.camera_height[index] == raised * 450);
 						assert(output.camera_reserved[index] == 0);
 					}
@@ -220,14 +208,9 @@ static void test_closed_routes(void)
  * same owner tile with a distinct subtype, preserving both predecessor links. */
 static void test_deferred_branch(void)
 {
-	struct TRACKOBJECT saved_object;
-	struct TRKOBJINFO split[2];
-	int index;
-	int first_split = -1;
-	int second_split = -1;
-
 	rectangle(8, 8, 0);
-	saved_object = trkObjectList[2];
+	struct TRACKOBJECT saved_object = trkObjectList[2];
+	struct TRKOBJINFO split[2];
 	split[0] = trkObjectList[4].ss_trkObjInfoPtr[0];
 	split[1] = split[0];
 	split[0].si_noOfBlocks = 2;
@@ -237,7 +220,9 @@ static void test_deferred_branch(void)
 	put_tile(5, 7, 2);
 	assert(run_setup() == 0);
 	assert(track_pieces_counter == 29);
-	for (index = 0; index < track_pieces_counter; index++) {
+	int second_split = -1;
+	int first_split = -1;
+	for (int index = 0; index < track_pieces_counter; index++) {
 		if (output.element_ids[index] == 2) {
 			if (output.traversal[index] == 0) {
 				first_split = index;
@@ -283,10 +268,8 @@ static void test_failures(void)
  * for real multi-tile pieces, split routes, jumps and terrain substitutions. */
 static void test_replay(const char *path)
 {
-	FILE *file;
-
 	initialize();
-	file = fopen(path, "rb");
+	FILE *file = fopen(path, "rb");
 	assert(file != NULL);
 	assert(fseek(file, REPLAY_GAMEINFO_SIZE, SEEK_SET) == 0);
 	assert(fread(output.elements, 1, TEST_TILE_COUNT, file) == TEST_TILE_COUNT);
@@ -297,12 +280,10 @@ static void test_replay(const char *path)
 
 int main(int argc, char **argv)
 {
-	int index;
-
 	test_closed_routes();
 	test_deferred_branch();
 	test_failures();
-	for (index = 1; index < argc; index++) {
+	for (int index = 1; index < argc; index++) {
 		test_replay(argv[index]);
 	}
 	return 0;

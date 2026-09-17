@@ -18,8 +18,7 @@ static jmp_buf exit_jump;
 
 static void trace(legacy_u32 value)
 {
-	unsigned i;
-	for (i = 0; i < 4; i++) {
+	for (unsigned i = 0; i < 4; i++) {
 		trace_hash = (trace_hash ^ (value & 255U)) * UINT32_C(16777619);
 		value >>= 8;
 	}
@@ -43,10 +42,9 @@ void kb_reg_callback(legacy_s16 code, void(far *callback)(void))
 								 select_keyboard_driving,	toggle_music_with_dialog,
 								 show_pause_dialog,			show_exit_to_dos_dialog,
 								 toggle_effects_with_dialog};
-	unsigned i;
 	trace(4);
 	trace(code);
-	for (i = 0; i < 7; i++) {
+	for (unsigned i = 0; i < 7; i++) {
 		if (callback == callbacks[i]) {
 			trace(i);
 			return;
@@ -360,13 +358,13 @@ void file_load_audiores(const legacy_s8 *song, const legacy_s8 *voice, const leg
 }
 legacy_s8 run_menu(void)
 {
-	static const legacy_s8 actions[] = {1, 2, 3, 4, 7, 0, -1};
 	unsigned call = menu_calls++;
 	trace(52);
 	assert(menu_calls < 10);
 	if (menu_scenario & 1) {
 		idle_expired = 1;
 	}
+	static const legacy_s8 actions[] = {1, 2, 3, 4, 7, 0, -1};
 	return actions[call];
 }
 void audio_unload(void)
@@ -460,11 +458,10 @@ void mmgr_release(void far *pointer)
 static void test_menu_lifecycle(void)
 {
 	legacy_s8 *arguments[] = {(legacy_s8 *)"game"};
-	unsigned i;
 	for (menu_scenario = 0; menu_scenario < 16; menu_scenario++) {
 		trace(1000 + menu_scenario);
 		memset(&gameconfig, 0, sizeof(gameconfig));
-		for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+		for (unsigned i = 0; i < REPLAY_TRACK_SIZE; i++) {
 			menu_track_data[i] = (legacy_u8)i;
 		}
 		track_element_map = menu_track_data;
@@ -486,7 +483,7 @@ static void test_menu_lifecycle(void)
 		trace(intro_calls);
 		trace(game_calls);
 		trace(score_calls);
-		for (i = 0; i < REPLAY_TRACK_SIZE; i++) {
+		for (unsigned i = 0; i < REPLAY_TRACK_SIZE; i++) {
 			trace(menu_track_data[i]);
 		}
 		trace(track_directory[0]);
@@ -505,9 +502,9 @@ int main(void)
 		{(legacy_s8 *)"game", (legacy_s8 *)"/ssb", (legacy_s8 *)"/sAD", (legacy_s8 *)"/s"},
 		{(legacy_s8 *)"game", (legacy_s8 *)"/sxy", (legacy_s8 *)"/sSb", (legacy_s8 *)"ignore"},
 	};
-	static legacy_s16 counts[] = {1, 4, 3, 4, 4};
 	static legacy_u32 boundaries[] = {0, 34, 35, 54, 55, 74, 75, 99, 100, 65535};
 	static unsigned scenario;
+	static legacy_s16 counts[] = {1, 4, 3, 4, 4};
 	for (scenario = 0; scenario < 110; scenario++) {
 		trace(scenario);
 		geometry_ticks = boundaries[scenario % 10];

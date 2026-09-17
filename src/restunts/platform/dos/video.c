@@ -51,9 +51,8 @@ static const legacy_u8 mode7_crtc_registers[DOS_VIDEO_CRTC_REGISTER_COUNT] = {
 
 static void dos_video_set_equipment_bits(legacy_u16 display_bits)
 {
-	legacy_u16 equipment;
-
-	equipment = (legacy_u16)peek(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET);
+	legacy_u16 equipment =
+		(legacy_u16)peek(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET);
 	equipment = (legacy_u16)((equipment & DOS_VIDEO_EQUIPMENT_DISPLAY_CLEAR_MASK) | display_bits);
 	poke(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET, equipment);
 }
@@ -78,20 +77,15 @@ static void dos_video_reset_palette(void)
 
 static void dos_video_fill(legacy_u16 segment, legacy_u16 value, legacy_u16 word_count)
 {
-	legacy_u16 far *destination;
-	legacy_u16 index;
-
-	destination = (legacy_u16 far *)MK_FP(segment, 0);
-	for (index = 0; index < word_count; ++index) {
+	legacy_u16 far *destination = (legacy_u16 far *)MK_FP(segment, 0);
+	for (legacy_u16 index = 0; index < word_count; ++index) {
 		destination[index] = value;
 	}
 }
 
 static void dos_video_program_crtc(const legacy_u8 *values)
 {
-	legacy_u16 index;
-
-	for (index = 0; index < DOS_VIDEO_CRTC_REGISTER_COUNT; ++index) {
+	for (legacy_u16 index = 0; index < DOS_VIDEO_CRTC_REGISTER_COUNT; ++index) {
 		outp(DOS_VIDEO_CRTC_INDEX_PORT, index);
 		outp(DOS_VIDEO_CRTC_DATA_PORT, values[index]);
 	}
@@ -99,12 +93,10 @@ static void dos_video_program_crtc(const legacy_u8 *values)
 
 static void far dos_video_on_exit(void)
 {
-	legacy_u8 equipment;
-
 	pokeb(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET, saved_equipment_byte);
 	dos_video_set_bios_mode(saved_video_mode);
 	pokeb(DOS_VIDEO_BIOS_DATA_SEGMENT, DOS_VIDEO_BIOS_EQUIPMENT_OFFSET, saved_equipment_byte);
-	equipment = saved_equipment_byte;
+	legacy_u8 equipment = saved_equipment_byte;
 	if ((equipment & DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS) == DOS_VIDEO_EQUIPMENT_MONOCHROME_BITS) {
 		dos_video_fill(DOS_VIDEO_GRAPHICS_SEGMENT, 0, DOS_VIDEO_GRAPHICS_CLEAR_WORDS);
 	}
@@ -113,11 +105,10 @@ static void far dos_video_on_exit(void)
 
 static void dos_video_add_exit_handler(void)
 {
-	union REGS registers;
-
 	if (saved_video_mode != 0) {
 		return;
 	}
+	union REGS registers;
 	registers.h.ah = DOS_VIDEO_BIOS_GET_MODE_FUNCTION;
 	int86(DOS_VIDEO_BIOS_INTERRUPT, &registers, &registers);
 	saved_video_mode = registers.h.al;

@@ -119,9 +119,6 @@ void dos_timer_set_callbacks_suspended(legacy_s16 suspended)
 
 static void interrupt dos_timer_interrupt(void)
 {
-	legacy_u16 callback_index;
-	legacy_s16 reentry_count;
-
 	/* Match the original IRQ0 handler: allow nested interrupts after the
 	 * compiler's interrupt prologue has saved the interrupted registers. */
 	_enable();
@@ -158,7 +155,8 @@ static void interrupt dos_timer_interrupt(void)
 	if (dos_timer_in_callbacks == DOS_TIMER_CALLBACKS_IDLE) {
 		dos_timer_in_callbacks = DOS_TIMER_CALLBACKS_RUNNING;
 		_enable();
-		for (callback_index = 0; callback_index < DOS_TIMER_CALLBACK_CAPACITY; callback_index++) {
+		for (legacy_u16 callback_index = 0; callback_index < DOS_TIMER_CALLBACK_CAPACITY;
+			 callback_index++) {
 			if (FP_SEG(dos_timer_callbacks[callback_index]) == 0U) {
 				break;
 			}
@@ -168,7 +166,7 @@ static void interrupt dos_timer_interrupt(void)
 	}
 
 	dos_timer_reentry = (legacy_u16)(dos_timer_reentry + 1U);
-	reentry_count = LEGACY_S16_FROM_BITS(dos_timer_reentry);
+	legacy_s16 reentry_count = LEGACY_S16_FROM_BITS(dos_timer_reentry);
 	if (LEGACY_S16_FROM_BITS(dos_timer_max_reentry) < reentry_count) {
 		dos_timer_max_reentry = dos_timer_reentry;
 	}
@@ -181,11 +179,8 @@ callbacks_finished:
 
 static void dos_timer_write_vector(interrupt_handler_type handler)
 {
-	legacy_u16 handler_offset;
-	legacy_u16 handler_segment;
-
-	handler_offset = FP_OFF(handler);
-	handler_segment = FP_SEG(handler);
+	legacy_u16 handler_offset = FP_OFF(handler);
+	legacy_u16 handler_segment = FP_SEG(handler);
 	__asm {
 		cli
 		push    es
@@ -202,15 +197,12 @@ static void dos_timer_write_vector(interrupt_handler_type handler)
 
 void dos_timer_shutdown(void)
 {
-	interrupt_handler_type installed_handler;
-	legacy_u8 interrupt_mask;
-
-	installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
+	interrupt_handler_type installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt) {
 		return;
 	}
 
-	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	legacy_u8 interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
 	outp(DOS_TIMER_PIC_MASK_PORT, interrupt_mask | DOS_TIMER_IRQ_DISABLE_MASK);
 	dos_timer_write_vector(previous_timer_interrupt);
 	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
@@ -223,9 +215,6 @@ void dos_timer_shutdown(void)
 
 void dos_timer_setup_interrupt(void)
 {
-	interrupt_handler_type installed_handler;
-	legacy_u8 interrupt_mask;
-
 	dos_timer_divider_period = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
 	dos_timer_divider = DOS_TIMER_DEFAULT_DIVIDER_PERIOD;
 	dos_timer_chain_timeout_active = 0;
@@ -239,10 +228,10 @@ void dos_timer_setup_interrupt(void)
 	outp(DOS_TIMER_SPEAKER_CONTROL_PORT,
 		 inp(DOS_TIMER_SPEAKER_CONTROL_PORT) & DOS_TIMER_SPEAKER_CONTROL_CLEAR_MASK);
 	outp(DOS_TIMER_PIT_CONTROL_PORT, DOS_TIMER_PIT_CONTROL_WORD);
-	interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
+	legacy_u8 interrupt_mask = (legacy_u8)inp(DOS_TIMER_PIC_MASK_PORT);
 	outp(DOS_TIMER_PIC_MASK_PORT, interrupt_mask | DOS_TIMER_IRQ_DISABLE_MASK);
 
-	installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
+	interrupt_handler_type installed_handler = _dos_getvect(DOS_TIMER_INTERRUPT_VECTOR);
 	if (installed_handler != dos_timer_interrupt) {
 		previous_timer_interrupt = installed_handler;
 		dos_timer_write_vector(dos_timer_interrupt);
@@ -257,10 +246,9 @@ void dos_timer_setup_interrupt(void)
 
 legacy_u32 timer_get_counter(void)
 {
-	legacy_u32 result;
-
 	/* The DOS timer interrupt can update either half between ordinary C
 	 * loads.  Keep interrupts disabled for the paired 16-bit read. */
+	legacy_u32 result;
 	__asm {
 		cli
 		mov     ax, word ptr dos_timer_counter
@@ -275,10 +263,9 @@ legacy_u32 timer_get_counter(void)
 
 legacy_u32 timer_get_delta(void)
 {
-	legacy_u32 result;
-
 	/* Read and update the 32-bit counters as the original 8086 routine did;
 	 * ordinary C reads can be split into independently interruptible words. */
+	legacy_u32 result;
 	__asm {
 		mov     bx, word ptr dos_timer_last_counter
 		mov     cx, word ptr dos_timer_last_counter+DOS_TIMER_DWORD_HIGH_WORD_OFFSET
@@ -299,10 +286,9 @@ legacy_u32 timer_get_delta(void)
 
 legacy_u32 timer_get_slow_counter(void)
 {
-	legacy_u32 result;
-
 	/* This counter advances when the interrupt divider expires, rather than
 	 * on every hardware timer interrupt. */
+	legacy_u32 result;
 	__asm {
 		cli
 		mov     ax, dos_timer_slow_low
