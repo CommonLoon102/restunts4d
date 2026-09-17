@@ -184,6 +184,17 @@ jobs:
           python3 -m unittest discover -s tools/scripts/tests -p 'test_*.py'
           python3 tools/scripts/test-compare-dos-artifacts.py
 
+      - name: Download and extract the game assets
+        env:
+          STUNTS_URL: https://github.com/CommonLoon102/restunts4d-oracles/releases/download/v1.0.1/BB11.zip
+        run: |
+          set -eu
+          zip_path="$RUNNER_TEMP/BB11.zip"
+          trap 'rm -f -- "$zip_path"' EXIT
+          curl --fail --location --silent --show-error --retry 3 \
+              --connect-timeout 20 "$STUNTS_URL" --output "$zip_path"
+          unzip -oq "$zip_path" -d stunts
+
       - name: Build all six DOS executables
         run: |
           make -C src/restunts restunts repldump pixldump
